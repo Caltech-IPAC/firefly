@@ -25,6 +25,13 @@
     right: 175px;
 }
 
+.dropdown-menu__ignore {
+    position: absolute;
+    top: 0;
+    left: auto;
+    right: 0;
+}
+
 
 .dropdown-menu__right {
     position: absolute;

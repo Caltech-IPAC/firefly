@@ -1,11 +1,10 @@
 import Enum from 'enum';
 import React, {useContext, useEffect, useState} from 'react';
-import {getAppOptions} from 'firefly/api/ApiUtil';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
 import {ListBoxInputField} from 'firefly/ui/ListBoxInputField';
 import {
     makeFieldErrorList, getPanelPrefix, LableSaptail, makePanelStatusUpdater,
-    SpatialWidth, Width_Column, DebugObsCore, makeCollapsibleCheckHeader, getTapObsCoreOptions
+    Width_Column, DebugObsCore, makeCollapsibleCheckHeader, getTapObsCoreOptions, SpatialWidth
 } from 'firefly/ui/tap/TableSearchHelpers';
 import {tapHelpId} from 'firefly/ui/tap/TapUtil';
 import {ValidationField} from 'firefly/ui/ValidationField';
@@ -18,6 +17,7 @@ import {ConstraintContext} from './Constraints.js';
 const panelTitle = 'Observation Type and Source';
 const panelValue = 'ObsCore';
 const panelPrefix = getPanelPrefix(panelValue);
+const labelWidth= 105;
 
 
 const multiConstraint = (value, columnName, siaName, quote, checkForNull) => {
@@ -183,7 +183,7 @@ export function ObsCoreSearch({cols, serviceLabel, initArgs={}}) {
                                                  options={calibrationOptions}
                                                  tooltip={obsCoreCalibrationLevelOptions.tooltip || 'Select ObsCore Calibration Level (calibration_level)'}
                                                  label={'Calibration Level:'}
-                                                 labelWidth={LableSaptail}
+                                                 labelWidth={labelWidth}
                                                  multiple={true}
                                                  initialState={{value: urlApi.obsCoreCalibrationLevel || ''}}
                         />
@@ -197,7 +197,7 @@ export function ObsCoreSearch({cols, serviceLabel, initArgs={}}) {
                         <ListBoxInputField fieldKey='obsCoreTypeSelection'
                                            tooltip='Select ObsCore Data Product Type'
                                            label={'Data Product Type:'}
-                                           labelWidth={LableSaptail}
+                                           labelWidth={labelWidth}
                                            initialState={{value: urlApi.obsCoreTypeSelection || 'image'}}
                                            options={typeOptions()}
                                            wrapperStyle={{marginRight: 15, padding: '8px 0 5px 0', display: 'flex'}}
@@ -211,7 +211,7 @@ export function ObsCoreSearch({cols, serviceLabel, initArgs={}}) {
                                          tooltip={obsCoreInstrumentNameOptions.tooltip || 'Select ObsCore Instrument Name'}
                                          placeholder={obsCoreInstrumentNameOptions.placeholder}
                                          label={'Instrument Name:'}
-                                         labelWidth={LableSaptail}
+                                         labelWidth={labelWidth}
                                          initialState={{ value: urlApi.obsCoreInstrumentName || '' }}
                         />
                         {obsCoreInstrumentNameOptions.helptext &&
@@ -227,7 +227,7 @@ export function ObsCoreSearch({cols, serviceLabel, initArgs={}}) {
                                          tooltip={obsCoreCollectionOptions.tooltip || 'Select ObsCore Collection Name'}
                                          placeholder={obsCoreCollectionOptions.placeholder}
                                          label={'Collection:'}
-                                         labelWidth={LableSaptail}
+                                         labelWidth={labelWidth}
                                          initialState={{ value: urlApi.obsCoreCollection || ''
                                          }}
                         />
@@ -244,7 +244,7 @@ export function ObsCoreSearch({cols, serviceLabel, initArgs={}}) {
                                          tooltip={obsCoreSubTypeOptions.tooltip || 'Select ObsCore Dataproduct Subtype Name'}
                                          placeholder={obsCoreSubTypeOptions.placeholder}
                                          label='Data Product Subtype:'
-                                         labelWidth={LableSaptail}
+                                         labelWidth={labelWidth}
                                          initialState={{ value: urlApi.obsCoreSubType || '' }}
                         />
                         {obsCoreSubTypeOptions.helptext &&

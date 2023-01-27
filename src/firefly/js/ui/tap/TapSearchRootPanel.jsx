@@ -18,13 +18,17 @@ import {dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
 import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil.jsx';
 import {dispatchHideDialog} from 'firefly/core/ComponentCntlr.js';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr.js';
-import {ConstraintContext, getHelperConstraints} from './Constraints.js';
+import {
+    ConstraintContext, getTapUploadSchemaEntry, getUploadServerFile, getUploadTableName,
+    getHelperConstraints, getUploadConstraint,
+    isTapUpload
+} from './Constraints.js';
 
-import {tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints.jsx';
+import {makeColsLines, tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints.jsx';
 import {commonSelectStyles, selectTheme} from 'firefly/ui/tap/Select.jsx';
 import {
     getMaxrecHardLimit, tapHelpId, getTapServices,
-    loadObsCoreSchemaTables, maybeQuote, defTapBrowserState
+    loadObsCoreSchemaTables, maybeQuote, defTapBrowserState, TAP_UPLOAD_SCHEMA,
 } from 'firefly/ui/tap/TapUtil.js';
 import { SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
@@ -150,6 +154,7 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
                             extraWidgets={makeExtraWidgets(initArgs,selectBy,tapState)}
                             buttonStyle={{justifyContent: 'left'}}
                             submitBarStyle={{padding: '2px 3px 3px'}}
+                            includeUnmounted={true}
                             help_id = {tapHelpId('form')} >
                     <TapSearchPanelComponents {...{
                         initArgs, selectBy, serviceUrl, onTapServiceOptionSelect, titleOn, tapOps, obsCoreEnabled}} />
@@ -249,7 +254,9 @@ function TapSearchPanelComponents({initArgs, serviceUrl, onTapServiceOptionSelec
                     {queryTypeEpilogue}
                 </div>
                 { selectBy === 'adql' ?
-                    <AdqlUI {...{serviceUrl}}/> : <BasicUI  {...{serviceUrl, serviceLabel: label, selectBy, initArgs, obsCoreTableModel}}/>}
+                    <AdqlUI {...{serviceUrl}}/> :
+                    <BasicUI  {...{serviceUrl, serviceLabel: label, selectBy, initArgs, obsCoreTableModel}}/>
+                }
             </div>
         </FieldGroup>
     );
@@ -276,11 +283,14 @@ function makeExtraWidgets(initArgs, selectBy, tapBrowserState) {
 function populateAndEditAdql(tapBrowserState,inAdql) {
     const adql = inAdql ?? getAdqlQuery(tapBrowserState);
     if (!adql) return;
+    const {TAP_UPLOAD,uploadFile}=  isTapUpload(tapBrowserState) ? getUploadConstraint(tapBrowserState) : {};
     dispatchMultiValueChange(TAP_PANEL_GROUP_KEY,   //set adql and switch tab to ADQL
         [
             {fieldKey: 'defAdqlKey', value: adql},
             {fieldKey: 'adqlQuery', value: adql},
-            {fieldKey: 'selectBy', value: 'adql'}
+            {fieldKey: 'selectBy', value: 'adql'},
+            {fieldKey: 'TAP_UPLOAD', value: TAP_UPLOAD},
+            {fieldKey: 'uploadFile', value: uploadFile},
         ]
     );
 }
@@ -306,51 +316,71 @@ function getTitle(adql, serviceUrl) {
     return tname || host;
 }
 
+const disableRowLimitMsg = (
+    <div style={{width: 260}}>
+        Disabling the row limit is not recommended. <br/>
+        You are about to submit a query without a TOP or WHERE constraint. <br/>
+        This may results in a HUGE amount of data. <br/><br/>
+        Are you sure you want to continue?
+    </div>
+);
 
 
 function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
     const isADQL = (request.selectBy === 'adql');
-    let adql = isADQL ? request.adqlQuery : getAdqlQuery(tapBrowserState);
+    let adql;
+    let isUpload;
+    let serverFile;
+    let uploadTableName;
+
+    if (isADQL) {
+        adql = request.adqlQuery;
+        const {TAP_UPLOAD,uploadFile}= request;
+        isUpload = Boolean(TAP_UPLOAD && uploadFile);
+        serverFile = isUpload && TAP_UPLOAD[uploadFile].serverFile;
+        uploadTableName = isUpload && TAP_UPLOAD[uploadFile].table;
+    }
+    else {
+        adql = getAdqlQuery(tapBrowserState);
+        isUpload = isTapUpload(tapBrowserState);
+        serverFile = isUpload && getUploadServerFile(tapBrowserState);
+        uploadTableName = isUpload && getUploadTableName(tapBrowserState);
+    }
+
+    if (!adql) return false;
+
     const maxrec = request.maxrec;
-
-    if (adql) {
-        const hasMaxrec = !isNaN(parseInt(maxrec));
-        adql = adql.replace(/\s/g, ' ');    // replace all whitespaces with spaces
-        const doSubmit = () => {
-            const params = {serviceUrl, QUERY: adql};
-            if (hasMaxrec) params.MAXREC = maxrec;
-            const options = {};
-
-            const treq = makeTblRequest('AsyncTapQuery', getTitle(adql,serviceUrl), params, options);
-            setNoCache(treq);
-
-            if (!isADQL) set(treq, `META_INFO.${PREF_KEY}`, `${tapBrowserState.schemaName}-${tapBrowserState.tableName}`);
-            dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true});
-
-        };
-        if (!hasMaxrec && !adql.toUpperCase().match(/ TOP | WHERE /)) {
-            const msg = (
-                <div style={{width: 260}}>
-                    Disabling the row limit is not recommended. <br/>
-                    You are about to submit a query without a TOP or WHERE constraint. <br/>
-                    This may results in a HUGE amount of data. <br/><br/>
-                    Are you sure you want to continue?
-                </div>
-            );
-            showYesNoPopup(msg,(id, yes) => {
-                if (yes) {
-                    doSubmit();
-                    dispatchHideDropDown();
-                }
-                dispatchHideDialog(id);
-            });
-        } else {
-            doSubmit();
-            return true;
+    const hasMaxrec = !isNaN(parseInt(maxrec));
+    const doSubmit = () => {
+        const adqlClean = adql.replace(/\s/g, ' ');    // replace all whitespaces with spaces
+        const params = {serviceUrl, QUERY: adqlClean};
+        if (isUpload) {
+            params.UPLOAD= serverFile;
+            params.adqlUploadSelectTable= uploadTableName;
         }
+        if (hasMaxrec) params.MAXREC = maxrec;
+        const treq = makeTblRequest('AsyncTapQuery', getTitle(adqlClean,serviceUrl), params);
+        setNoCache(treq);
+        if (!isADQL) set(treq, `META_INFO.${PREF_KEY}`, `${tapBrowserState.schemaName}-${tapBrowserState.tableName}`);
+        dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true});
+    };
+
+    if (!hasMaxrec && !adql.toUpperCase().match(/ TOP | WHERE /)) {
+        showYesNoPopup(disableRowLimitMsg,(id, yes) => {
+            if (yes) {
+                doSubmit();
+                dispatchHideDropDown();
+            }
+            dispatchHideDialog(id);
+        });
+    } else {
+        doSubmit();
+        return true;
     }
     return false;
 }
+
+
 
 
 /**
@@ -362,8 +392,16 @@ function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
 function getAdqlQuery(tapBrowserState, showErrors= true) {
     const tableName = maybeQuote(tapBrowserState?.tableName, true);
     if (!tableName) return;
+    const isUpload= isTapUpload(tapBrowserState);
     const helperFragment = getHelperConstraints(tapBrowserState);
-    const tableCol = tableColumnsConstraints(tapBrowserState.columnsModel);
+    const tableCol = tableColumnsConstraints(tapBrowserState.columnsModel, isUpload?tableName[0]:undefined);
+
+    const { table:uploadTable, asTable:uploadAsTable, columns:uploadColumns}= isUpload ?
+        getTapUploadSchemaEntry(tapBrowserState) : {};
+
+    const fromTables= isUpload ?
+        `${tableName} AS ${tableName[0]}, ${TAP_UPLOAD_SCHEMA}.${uploadTable} ${uploadAsTable ? 'AS '+uploadAsTable : ''}` :
+        tableName;
 
     // check for errors
     if (!helperFragment.valid) {
@@ -376,7 +414,12 @@ function getAdqlQuery(tapBrowserState, showErrors= true) {
     }
 
     // build columns
-    const selcols = tableCol.selcols || '*';
+    let selcols = tableCol.selcols || (isUpload ? `${tableName}.*` : '*');
+    if (isUpload) {
+        const ut= uploadAsTable ?? uploadTable ?? '';
+        const tCol= uploadColumns.map( ({name}) => ut+'.'+name);
+        selcols+= ',\n' + makeColsLines(tCol,true);
+    }
 
     // build up constraints
     let constraints = helperFragment.where || '';
@@ -390,5 +433,5 @@ function getAdqlQuery(tapBrowserState, showErrors= true) {
     // if we use TOP  when maxrec is set `${maxrec ? `TOP ${maxrec} `:''}`,
     // overflow indicator will not be included with the results
     // and we will not know if the results were truncated
-    return `SELECT ${selcols} \nFROM ${tableName} \n${constraints}`;
+    return `SELECT ${selcols} \nFROM ${fromTables} \n${constraints}`;
 }

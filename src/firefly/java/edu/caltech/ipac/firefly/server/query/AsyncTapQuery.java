@@ -4,9 +4,18 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.io.VoTableWriter;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
+
+import java.io.File;
+import java.io.IOException;
+
+import static edu.caltech.ipac.table.TableUtil.Format.VO_TABLE;
 
 
 @SearchProcessorImpl(id = AsyncTapQuery.ID, params = {
@@ -41,6 +50,20 @@ public class AsyncTapQuery extends UwsJobProcessor {
         if (maxrec > -1) { inputs.setParam("MAXREC", Integer.toString(maxrec)); }
         inputs.setParam("LANG", lang); // in tap 1.0, lang param is required
         inputs.setParam("request", "doQuery"); // in tap 1.0, request param is required
+        var uploadTable= request.getParam("adqlUploadSelectTable");
+        if (request.containsParam("UPLOAD") && uploadTable!=null) {
+            try {
+                inputs.setParam("UPLOAD",uploadTable+","+"param:temp.xml");
+                DataGroup dg= TableUtil.readAnyFormat(ServerContext.convertToFile(request.getParam("UPLOAD")));
+                File tempXml= File.createTempFile("tap-upload",".xml", ServerContext.getTempWorkDir());
+                VoTableWriter.save(tempXml,dg, VO_TABLE);
+                inputs.setFile("temp.xml",tempXml);
+            } catch (IOException e) {
+                throw new DataAccessException("AsyncTapQuery: Could not read uploaded file", e);
+            }
+
+
+        }
         return inputs;
     }
 }

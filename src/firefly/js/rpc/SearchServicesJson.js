@@ -257,6 +257,10 @@ export function reportUserAction(channel, desc, data) {
     ).then( () => true);
 }
 
+export function getCapabilities(url) {
+    return doJsonRequest(ServerParams.GET_CAPABILITIES, {URL:url});
+}
+
 
 /**
  *

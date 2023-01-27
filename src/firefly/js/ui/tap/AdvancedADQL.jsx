@@ -9,14 +9,20 @@ import SplitPane from 'react-split-pane';
 import Tree, { TreeNode } from 'rc-tree';
 import 'rc-tree/assets/index.css';
 import {cloneDeep, defer, isArray, isObject} from 'lodash';
+import {getSizeAsString} from '../../util/WebUtil.js';
 import {FieldGroupCtx} from '../FieldGroup.jsx';
+import {ExtraButton} from '../FormPanel.jsx';
 
 import {InputAreaFieldConnected} from '../InputAreaField.jsx';
 import {SplitContent} from '../panel/DockLayoutPanel';
-import {loadTapSchemas, loadTapTables, loadTapColumns, getTapServices, maybeQuote} from './TapUtil';
+import {useFieldGroupValue} from '../SimpleComponent.jsx';
+import {showUploadTableChooser} from '../UploadTableChooser.js';
+import {
+    loadTapSchemas, loadTapTables, loadTapColumns, getTapServices, maybeQuote, TAP_UPLOAD_SCHEMA,
+    ADQL_UPLOAD_TABLE_NAME, defaultADQLExamples, makeUploadSchema
+} from './TapUtil';
 import {getColumnIdx} from '../../tables/TableUtil.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
-import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 
 import Prism from 'prismjs';
 // bliss is needed for prism-live
@@ -31,36 +37,11 @@ const code = {className: 'language-sql'};
 let cFetchKey = Date.now();
 const SB_TIP= 'Clicking on a table or column name below will insert it into the ADQL Query field to the right';
 
-const defaultExamples=[
-    {
-        description: 'From the IRSA TAP service, a 1 degree cone search of the 2MASS point source catalog around M101 would be:',
-        /* eslint-disable-next-line quotes */
-        statement:
-`SELECT * FROM fp_psc 
-WHERE CONTAINS(POINT('J2000', ra, dec), CIRCLE('J2000', 210.80225, 54.34894, 1.0)) = 1`
-    },
-    {
-        description: 'From the Gaia TAP service, a 1 degree by 1 degree box of the Gaia data release 3 point source catalog around M101 would be:',
-        /* eslint-disable-next-line quotes */
-        statement:
-`SELECT * FROM gaiaedr3.gaia_source 
-WHERE CONTAINS(POINT('ICRS', ra, dec), BOX('ICRS', 210.80225, 54.34894, 1.0, 1.0))=1`
-    },
-    {
-        description: 'From the IRSA TAP service, a triangle search of the AllWISE point source catalog around M101 would be:',
-        /* eslint-disable-next-line quotes */
-        statement:
-`SELECT designation, ra, dec, w2mpro 
-FROM allwise_p3as_psd 
-WHERE CONTAINS (POINT('J2000' , ra , dec), POLYGON('J2000' , 209.80225 , 54.34894 , 209.80225 , 55.34894 , 210.80225 , 54.34894))=1`,
-    }
-];
-
 
 function getExamples(serviceUrl) {
     const configEx= getTapServices().find( ({value}) => value===serviceUrl)?.examples;
     const ex= isArray(configEx) ?
-        defaultExamples.map( (e,idx) => (isObject(configEx?.[idx])) ? configEx[idx] : e) : defaultExamples;
+        defaultADQLExamples.map( (e,idx) => (isObject(configEx?.[idx])) ? configEx[idx] : e) : defaultADQLExamples;
 
     return ex.map( ({description, statement},idx) =>
         (<Fragment key={description}>
@@ -72,13 +53,33 @@ function getExamples(serviceUrl) {
     );
 }
 
-export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, style={}}) {
+export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, style={}}) {
 
     const [treeData, setTreeData] = useState([]);                               // using a useState hook
+    const {canUpload=false}= capabilities ?? {};
     const adqlEl = useRef(null);                                                // using a useRef hook
     const ffcn = useRef(null);                                                  // using a useRef hook
     const prismLiveRef = useRef(null);
-    const {groupKey}= useContext(FieldGroupCtx);
+    const {groupKey, setVal, getVal} = useContext(FieldGroupCtx);
+    const [getUploadSchema, setUploadSchema]= useFieldGroupValue(TAP_UPLOAD_SCHEMA);
+    const [getUploadFile, setUploadFile]= useFieldGroupValue('uploadFile');
+    const uploadSchema= getUploadSchema();
+
+    const setUploadInfo = (uploadInfo) => {
+        if (uploadInfo) {
+            const {serverFile, fileName, columns, totalRows, fileSize, }= uploadInfo;
+            setUploadSchema(makeUploadSchema(fileName,serverFile,columns,totalRows,fileSize,ADQL_UPLOAD_TABLE_NAME,''));
+            setUploadFile(fileName);
+        }
+        else {
+            setUploadSchema(false);
+            setUploadFile('');
+        }
+    };
+
+    useEffect(() => {
+        if (!canUpload) setUploadInfo(undefined);
+    }, [canUpload]);
 
     useEffect(() => {
         cFetchKey = Date.now();
@@ -88,12 +89,14 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, style={}}) {
             if (key === cFetchKey) {
                 const tableData = tm?.tableData?.data ?? [];
                 const cidx = getColumnIdx(tm, 'schema_name');
-                const treeData = tableData.map( (row) => ({key: `schema--${key}--${row[cidx]}`, title: row[cidx]}) );
+                const baseTD = tableData.map( (row) => ({key: `schema--${key}--${row[cidx]}`, title: row[cidx]}) );
+                const treeData= (canUpload && uploadSchema) ?
+                    [{key: `schema--${key}--${TAP_UPLOAD_SCHEMA}`, title: TAP_UPLOAD_SCHEMA}, ...baseTD] : baseTD;
                 setTreeData(treeData);
             }
         });
         window.setTimeout( () => prismLiveRef.current.syncStyles?.(), 10);
-    }, [serviceUrl]);
+    }, [serviceUrl, uploadSchema]);
 
     useEffect(() => {
         // highlight help text/code snippets
@@ -111,13 +114,19 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, style={}}) {
         const textArea = document.getElementById('adqlEditor');
 
         const [key=''] = p;
-        const [type, , tname, cname] = key.split('--');
+        const [type, , tname, cname,upload] = key.split('--');
         const taVal = getUnselectedValue(textArea);
         if (type === 'table') {
             if (taVal) {
                 insertAtCursor(textArea, tname, adqlKey, groupKey, prismLiveRef.current);
             } else {
-                dispatchValueChange({fieldKey: adqlKey, groupKey, value: `SELECT TOP 1000 * FROM ${maybeQuote(tname,true)}`, valid: true});
+                let insertTname= tname;
+                if (upload) {
+                    insertTname= TAP_UPLOAD_SCHEMA+'.'+tname;
+                    const asTable= Object.values(uploadSchema).find( (o) => o.table===tname)?.asTable;
+                    if (asTable) insertTname+= ' AS '+asTable;
+                }
+                setVal(adqlKey, `SELECT TOP 1000 * FROM ${maybeQuote(insertTname,true)}`);
                 window.setTimeout( () => prismLiveRef.current.syncStyles?.(), 10);
             }
         } else if (type === 'column') {
@@ -131,30 +140,32 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, style={}}) {
             const {eventKey, schema, title} = treeNode.props;
             if (schema) {
                 // it has schema info.. must be a table node.
-                expandColumns(serviceUrl, title, schema, treeData, eventKey, setTreeData)
+                expandColumns(serviceUrl, title, schema, uploadSchema, treeData, eventKey, setTreeData)
                     .then(() => resolve());
             } else {
-                expandTables(serviceUrl, title, treeData, eventKey, setTreeData)
+                expandTables(serviceUrl, title, uploadSchema, treeData, eventKey, setTreeData)
                     .then(() => resolve());
             }
         });
     };
 
     const onClear = () => {
-        dispatchValueChange({fieldKey:adqlKey, groupKey, value: '', valid: true});
+        setVal(adqlKey, '');
         // trigger prismLive style sync
         window.setTimeout( () => prismLiveRef.current.syncStyles?.(), 10);
     };
 
     const onReset = () => {
-        const value = getFieldVal(groupKey, defAdqlKey, '');
-        dispatchValueChange({fieldKey:adqlKey, groupKey, value, valid: true});
+        const value = getVal(defAdqlKey) ?? '';
+        setVal(adqlKey, value);
         // trigger prismLive style sync
         window.setTimeout( () => prismLiveRef.current.syncStyles?.(), 10);
     };
 
+    const fileName= getUploadFile();
     const treeNodes = convertToTreeNode(treeData);
-
+    const haveTable= Boolean(fileName && uploadSchema);
+    const {serverFile,totalRows,fileSize}= uploadSchema?.[fileName] ?? {};
 
 
     return (
@@ -190,6 +201,34 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, style={}}) {
                                 <div>Type ADQL text; you can use the Schema Browser on the left to insert table and column names.</div>
                                 <label style={{display: 'flex', alignItems: 'center', marginLeft: 20}}> <input type='checkbox' ref={ffcn} defaultChecked={true} />Insert fully-qualified column names (recommended for table joins)</label>
                             </div>
+                            {canUpload && <div style={{margin: '15px 0 0 5px'}}>
+                                <div style={{display:'flex', alignItems:'center'}}>
+                                    <div style={{whiteSpace:'nowrap'}}>Upload Table:</div>
+                                    <div style={{display:'flex', alignItems:'center'}}>
+                                        <ExtraButton text={serverFile ? 'Change...' : 'Add...'}
+                                                     onClick={() => showUploadTableChooser(setUploadInfo)} style={{marginLeft: 10}} />
+                                        {serverFile && <ExtraButton text='Clear' onClick={() => setUploadInfo(undefined)} />}
+                                        {haveTable &&
+                                            <div style={{width:200, overflow:'hidden', whiteSpace:'nowrap',fontSize:'larger',
+                                                textOverflow:'ellipsis', lineHeight:'2em', paddingLeft:20}}>
+                                                {`${fileName}`}
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>}
+                            {haveTable &&
+                                <div style={{display:'flex', flexDirection:'row', margin: '0 0 15px 217px', justifyContent:'flex-start'}}>
+                                    <div style={{whiteSpace:'nowrap'}}>
+                                        <span>Rows: </span>
+                                        <span>{totalRows},</span>
+                                    </div>
+                                    <div style={{paddingLeft: 8, whiteSpace:'nowrap'}}>
+                                        <span>Size: </span>
+                                        <span>{getSizeAsString(fileSize)}</span>
+                                    </div>
+                                </div>
+                            }
                             <h3>Popular Functions</h3>
                             <div style={{marginLeft: 5}}>
                                 <pre><code {...code}>{(`\
@@ -225,33 +264,60 @@ AdvancedADQL.propTypes= {
     tblNameKey:     PropTypes.string,
     defAdqlKey:     PropTypes.string,      // used for reset
     serviceUrl:     PropTypes.string,
+    capabilities:   PropTypes.string,
     style:          PropTypes.object
 };
 
 
-function expandTables(serviceUrl, title, treeData, eventKey, setTreeData) {
+function expandTables(serviceUrl, title, uploadSchema, treeData, eventKey, setTreeData) {
     const key = cFetchKey;
+
+    const makeTabKey= (key,tname) => `table--${key}--${tname}`;
+
+    if (eventKey.endsWith(TAP_UPLOAD_SCHEMA)) {
+
+        const tList= Object.entries(uploadSchema)
+            .map(([file,info]) => ({key: makeTabKey(key,info.table)+'----upload', title:`${info.table} (${file})`, schema:TAP_UPLOAD_SCHEMA}));
+        addChildNodes(treeData, eventKey, tList);
+        setTreeData(cloneDeep(treeData));
+        return Promise.resolve();
+    }
     return loadTapTables(serviceUrl, title).then( (tm) => {
         if (cFetchKey === key) {
             const tableData = tm?.tableData?.data ?? [];
             const cidx = getColumnIdx(tm, 'table_name');
-            const tables = tableData.map( (row) => ({key: `table--${key}--${row[cidx]}`, title: row[cidx], schema: title}) );
+            const tables = tableData.map( (row) => ({key: makeTabKey(key,row[cidx])+'--upload', title: row[cidx], schema: title}) );
             addChildNodes(treeData, eventKey, tables);
             setTreeData(cloneDeep(treeData));
         }
     });
 }
 
-function expandColumns(serviceUrl, title, schema, treeData, eventKey, setTreeData) {
+function expandColumns(serviceUrl, title, schema, uploadSchema, treeData, eventKey, setTreeData) {
     const tname = title;
     const key = cFetchKey;
+
+    const makeColKey= (key,tname,cname) => `column--${key}--${tname}--${cname}`;
+    
+
+    if (uploadSchema && schema===TAP_UPLOAD_SCHEMA) {
+        const startT= title?.match(/\(.*\)/)?.[0];
+        const tableKey= startT?.substring(1,startT.length-1);
+        const schemaEntry=uploadSchema[tableKey];
+        if (!schemaEntry) return Promise.resolve();
+        const cols= schemaEntry.columns
+            .map( ({name}) => ( {key:makeColKey(key,schemaEntry.asTable?? schemaEntry.table,name),c: name, title:name, isLeaf:true}));
+        addChildNodes(treeData, eventKey, cols);
+        setTreeData(cloneDeep(treeData));
+        return Promise.resolve();
+    }
     return loadTapColumns(serviceUrl, schema, title).then( (tm) => {
         if (cFetchKey === key) {
             const tableData = tm?.tableData?.data ?? [];
             const nidx = getColumnIdx(tm, 'column_name');
             const didx = getColumnIdx(tm, 'description');
             const cols = tableData.map( (row) => {
-                const colkey = `column--${key}--${tname}--${row[nidx]}`;
+                const colkey = makeColKey(key,tname,row[nidx]);
                 const title = row[nidx] + (row[didx] ? ` (${row[didx]})` : '');
                 return {key: colkey, title, isLeaf: true};
             });

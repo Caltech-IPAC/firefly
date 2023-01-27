@@ -4,7 +4,8 @@
 /* eslint-disable  quotes */
 import {Logger} from 'firefly/util/Logger.js';
 
-const tapEntry= (label,url,examples,hipsUrl, fovDeg,centerWP) => ({ label, value: url, examples, fovDeg, centerWP});
+const tapEntry= (label,url,examples,hipsUrl, fovDeg,centerWP) =>
+    ({ label, value: url, examples, fovDeg, hipsUrl, centerWP});
 
 export function getTAPServices(nameList) {
     const services= makeServices();

@@ -74,6 +74,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.RESEND_EMAIL,           new SearchServerCommands.ResendEmail());
         _cmdMap.put(ServerParams.CREATE_DOWNLOAD_SCRIPT, new SearchServerCommands.CreateDownloadScript());
         _cmdMap.put(ServerParams.UWS_JOB_INFO,           new SearchServerCommands.UwsJobInfo());
+        _cmdMap.put(ServerParams.GET_CAPABILITIES,       new SearchServerCommands.GetCapabilities());
 
         _cmdMap.put(ServerParams.REPORT_USER_ACTION,     new SearchServerCommands.ReportUserAction());
         _cmdMap.put(ServerParams.PACKAGE_REQUEST,        new SearchServerCommands.PackageRequest());

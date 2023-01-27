@@ -1,5 +1,6 @@
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 import {isArray, isUndefined} from 'lodash';
+import {getCapabilities} from '../../rpc/SearchServicesJson.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.js';
@@ -10,6 +11,19 @@ const logger = Logger('TapUtil');
 const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
 
 export const ADQL_LINE_LENGTH = 100;
+export const ADQL_UPLOAD_TABLE_NAME= 'upload_table';
+export const TAP_UPLOAD_SCHEMA= 'TAP_UPLOAD';
+
+
+// cache objects - they only grow, but I don't think they will ever get too big
+const capabilityCache={};
+const schemaCache={};
+const obsCoreSchemaCache={};
+const tableCache={};
+const columnCache={};
+// end cache objects
+
+
 
 export function getMaxrecHardLimit() {
     const defaultValue = Number.parseInt(getProp('tap.maxrec.hardlimit'));
@@ -21,6 +35,12 @@ export function getMaxrecHardLimit() {
 }
 
 export const tapHelpId = (id) => `tapSearches.${id}`;
+
+export function makeUploadSchema(uploadFileName,serverFile, columns, totalRows, fileSize, table=ADQL_UPLOAD_TABLE_NAME, asTable= 'ut') {
+    return {
+        [uploadFileName] : { serverFile, uploadFileName, totalRows, fileSize, table, asTable, columns}
+    };
+}
 
 
 /**
@@ -47,12 +67,20 @@ export function getColumnsTblId(serviceUrl, tableName) {
     return `${tableName}-tapCols-${hashCode(serviceUrl)}`;
 }
 
-export function loadTapSchemas(serviceUrl) {
+export async function loadTapSchemas(serviceUrl) {
+    if (schemaCache[serviceUrl]) return schemaCache[serviceUrl];
+    const tableModel= await doLoadTapSchemas(serviceUrl);
+    schemaCache[serviceUrl]= tableModel;
+    return tableModel;
+}
+
+async function doLoadTapSchemas(serviceUrl) {
 
     const url = serviceUrl + qFragment + 'QUERY=SELECT+*+FROM+TAP_SCHEMA.schemas';
     const request = makeFileRequest('schemas', url, null, {pageSize: MAX_ROW});
 
-    return doFetchTable(request).then((tableModel) => {
+    try {
+        const tableModel= await doFetchTable(request);
         if (tableModel.error) {
             tableModel.error = `Failed to get schemas for ${serviceUrl}: ${tableModel.error}`;
             logger.error(tableModel.error);
@@ -69,20 +97,27 @@ export function loadTapSchemas(serviceUrl) {
             tableModel.error = 'No schemas available';
         }
         return tableModel;
-
-    }).catch((reason) => {
+    } catch(reason) {
         const error = `Failed to get schemas for ${serviceUrl}: ${reason?.message ?? reason}`;
         logger.error(error);
         return {error};
-    });
+    }
 }
 
-export function loadObsCoreSchemaTables(serviceUrl) {
+export async function loadObsCoreSchemaTables(serviceUrl) {
+    if (obsCoreSchemaCache[serviceUrl]) return obsCoreSchemaCache[serviceUrl];
+    const tableModel= await doLoadObsCoreSchemaTables(serviceUrl);
+    obsCoreSchemaCache[serviceUrl]= tableModel;
+    return tableModel;
+}
+
+async function doLoadObsCoreSchemaTables(serviceUrl) {
 
     const url = serviceUrl + qFragment + 'QUERY=SELECT+s.schema_name,+t.table_name+FROM+TAP_SCHEMA.schemas+s+JOIN+TAP_SCHEMA.tables+t+on+(s.schema_name=t.schema_name)+WHERE+s.schema_name=\'ivoa\'+AND+t.table_name+IN+(\'ivoa.obscore\',\'ivoa.ObsCore\')';
     const request = makeFileRequest('schemas', url, null, {pageSize: MAX_ROW});
 
-    return doFetchTable(request).then((tableModel) => {
+    try {
+        const tableModel= await doFetchTable(request);
         if (tableModel.error) {
             tableModel.error = `Failed to get ObsCore tables for ${serviceUrl}: ${tableModel.error}`;
             logger.error(tableModel.error);
@@ -110,20 +145,31 @@ export function loadObsCoreSchemaTables(serviceUrl) {
             logger.debug(`no obsCore tables found for ${serviceUrl}`);
         }
         return tableModel;
-
-    }).catch((reason) => {
+    } catch (reason) {
         const error = `Failed to get ObsCore-like tables for ${serviceUrl}: ${reason?.message ?? reason}`;
         logger.error(error);
         return {error};
-    });
+    }
 }
 
-export function loadTapTables(serviceUrl, schemaName) {
+
+
+export async function loadTapTables(serviceUrl, schemaName) {
+    const key= serviceUrl+'----'+schemaName;
+    if (tableCache[key]) return tableCache[key];
+    const tableModel= await doLoadTapTables(serviceUrl,schemaName);
+    tableCache[key]= tableModel;
+    return tableModel;
+}
+
+
+async function doLoadTapTables(serviceUrl, schemaName) {
 
     const url = serviceUrl + qFragment + 'QUERY=SELECT+*+FROM+TAP_SCHEMA.tables+WHERE+schema_name+like+\'' + schemaName + '\'';
     const request = makeFileRequest('tables', url, null, {pageSize: MAX_ROW});
 
-    return doFetchTable(request).then((tableModel) => {
+    try {
+        const tableModel= await doFetchTable(request);
         if (tableModel.error) {
             tableModel.error = `Failed to get tables for ${serviceUrl} schema ${schemaName}: ${tableModel.error}`;
             logger.error(tableModel.error);
@@ -142,16 +188,37 @@ export function loadTapTables(serviceUrl, schemaName) {
             logger.error(tableModel.error);
         }
         return tableModel;
-
-    }).catch((reason) => {
+    } catch(reason) {
         const error = `Failed to get tables for ${serviceUrl} schema ${schemaName}: ${reason?.message ?? reason}`;
         logger.error(error);
         return {error};
-    });
+    }
 }
 
 
-export function loadTapColumns(serviceUrl, schemaName, tableName) {
+export async function loadTapCapabilities(serviceUrl) {
+    if (capabilityCache[serviceUrl]) return capabilityCache[serviceUrl];
+    const capResult= await getCapabilities(serviceUrl+'/capabilities');
+    if (capResult && capResult.success) capabilityCache[serviceUrl]= capResult.data?.tapCapability;
+    return capabilityCache[serviceUrl];
+}
+
+export const isCapabilityLoaded= (serviceUrl) => Boolean(capabilityCache[serviceUrl]);
+export const getLoadedCapability= (serviceUrl) => capabilityCache[serviceUrl];
+
+
+
+export async function loadTapColumns(serviceUrl, schemaName, tableName) {
+    const key= serviceUrl+'----'+schemaName+'---'+tableName;
+    if (columnCache[key]) return columnCache[key];
+    const tableModel= await doLoadTapColumns(serviceUrl,schemaName,tableName);
+    columnCache[key]= tableModel;
+    return tableModel;
+}
+
+
+
+async function doLoadTapColumns(serviceUrl, schemaName, tableName) {
 
     const url = serviceUrl + qFragment +
         'QUERY=SELECT+*+FROM+TAP_SCHEMA.columns+WHERE+table_name+like+\'' + tableName + '\'';
@@ -160,7 +227,8 @@ export function loadTapColumns(serviceUrl, schemaName, tableName) {
 
     const request = makeFileRequest('columns', url, undefined, {tbl_id: getColumnsTblId(serviceUrl, tableName), pageSize: MAX_ROW});
 
-    return doFetchTable(request).then((tableModel) => {
+    try {
+        const tableModel= await doFetchTable(request);
         if (tableModel.error) {
             tableModel.error = `Failed to get columns for ${serviceUrl} schema ${schemaName}: ${tableModel.error}`;
             logger.error(tableModel.error);
@@ -180,11 +248,11 @@ export function loadTapColumns(serviceUrl, schemaName, tableName) {
         }
         return tableModel;
 
-    }).catch((reason) => {
+    } catch (reason) {
         const error = `Failed to get columns for ${serviceUrl} schema ${schemaName} table ${tableName}: ${reason?.message ?? reason}`;
         logger.error(error);
         return {error};
-    });
+    }
 }
 
 /**
@@ -249,6 +317,31 @@ export function maybeQuote(name, isTable=false) {
     return  (name.match(re)) ? name : `"${name}"`;
 }
 
+
+export const defaultADQLExamples=[
+    {
+        description: 'From the IRSA TAP service, a 1 degree cone search of the 2MASS point source catalog around M101 would be:',
+        /* eslint-disable-next-line quotes */
+        statement:
+            `SELECT * FROM fp_psc 
+WHERE CONTAINS(POINT('J2000', ra, dec), CIRCLE('J2000', 210.80225, 54.34894, 1.0)) = 1`
+    },
+    {
+        description: 'From the Gaia TAP service, a 1 degree by 1 degree box of the Gaia data release 3 point source catalog around M101 would be:',
+        /* eslint-disable-next-line quotes */
+        statement:
+            `SELECT * FROM gaiaedr3.gaia_source 
+WHERE CONTAINS(POINT('ICRS', ra, dec), BOX('ICRS', 210.80225, 54.34894, 1.0, 1.0))=1`
+    },
+    {
+        description: 'From the IRSA TAP service, a triangle search of the AllWISE point source catalog around M101 would be:',
+        /* eslint-disable-next-line quotes */
+        statement:
+            `SELECT designation, ra, dec, w2mpro 
+FROM allwise_p3as_psd 
+WHERE CONTAINS (POINT('J2000' , ra , dec), POLYGON('J2000' , 209.80225 , 54.34894 , 209.80225 , 55.34894 , 210.80225 , 54.34894))=1`,
+    }
+];
 
 
 

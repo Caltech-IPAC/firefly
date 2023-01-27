@@ -2,10 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isFunction, hasIn, isBoolean, isEmpty, pick} from 'lodash';
+import {isFunction, hasIn, isBoolean, isEmpty, pick, isUndefined} from 'lodash';
 import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
 import {smartMerge} from '../tables/TableUtil.js';
+import {isDefined} from '../util/WebUtil.js';
 import {FIELD_GROUP_KEY,dispatchValueChange,dispatchMultiValueChange} from './FieldGroupCntlr.js';
 import {Logger} from '../util/Logger.js';
 
@@ -179,7 +180,6 @@ export function setField(groupKey,fieldKey,fieldUpdates) {
  * @param {Object} fieldUpdates
  */
 export function setFieldValue(groupKey,fieldKey,value=undefined,fieldUpdates) {
-    if (isEmpty(fieldUpdates) && !value) return;
     const sendUpdates = {...fieldUpdates};
     const valueUpdates = {displayValue: '', value, valid: true};
     setField(groupKey,fieldKey,{...valueUpdates, ...sendUpdates});

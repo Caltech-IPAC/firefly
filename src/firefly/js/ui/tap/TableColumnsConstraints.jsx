@@ -165,7 +165,7 @@ function reorganizeTableModel(tableModel, columnNames, reset) {
 
     // add constraints column
     const constraintsColIdx = 1;
-    const constraintsCol = {name: 'constraints', idx: constraintsColIdx, type: 'char', width: 10};
+    const constraintsCol = {name: 'constraints', idx: constraintsColIdx, type: 'char', width: 10, fixed: true};
     columns.splice(constraintsColIdx, 0, cloneDeep(constraintsCol));
     data.map((e) => {
         e.splice(constraintsColIdx, 0, '');
@@ -185,18 +185,27 @@ function reorganizeTableModel(tableModel, columnNames, reset) {
         defaultSelected.forEach((idx)=>selectInfoCls.setRowSelect(idx, true));
     }
 
+    columns.forEach((c) => {
+        if (c.name==='column_name') {
+            c.fixed=true;
+            c.label='Name';
+            c.prefWidth= 11;
+        }
+    });
+
     modifiedTableModel = {tbl_id, totalRows: data.length, tableData: {columns, data},
         selectInfo: selectInfoCls.data, request: {tbl_id}};
 
     return modifiedTableModel;
 }
 
-function makeColsLines(selcolsArray) {
+export function makeColsLines(selcolsArray, firstLineOffset=false) {
+    const firstOff= firstLineOffset ? '       ' : '';
     const colSingleLine= selcolsArray?.join(',') ?? '';
-    if (colSingleLine.length < ADQL_LINE_LENGTH) return colSingleLine;
+    if (colSingleLine.length < ADQL_LINE_LENGTH) return `${firstOff}${colSingleLine}`;
 
     let multiLineCols = '';
-    let line = selcolsArray[0];
+    let line = `${firstOff}${selcolsArray[0]}`;
     const colsCopy = selcolsArray.slice(1);
     colsCopy.forEach((value) => {
         if (value) line+=',';
@@ -213,9 +222,10 @@ function makeColsLines(selcolsArray) {
 /**
  * Get constraints as ADQL
  * @param {object} columnsModel
- * @returns {AdqlFragment}
+ * @param {string} tableName
+ * @returns {Object}
  */
-export function tableColumnsConstraints(columnsModel) {
+export function tableColumnsConstraints(columnsModel,tableName) {
     const tbl_id = columnsModel?.tbl_id;
     if (!tbl_id) {
         return {valid: false, message: 'Unable to retrieve table column constraints'};
@@ -228,6 +238,6 @@ export function tableColumnsConstraints(columnsModel) {
     const {whereFragment, selcolsArray, errors} = tableConstraints;
     if (errors) return {valid: false, message: errors};
 
-    const selcols= makeColsLines(selcolsArray);
+    const selcols= tableName ? makeColsLines(selcolsArray.map( (c) => `${tableName}.${c}`)) : makeColsLines(selcolsArray);
     return {valid: true, where: whereFragment, selcols, selcolsArray};
 }

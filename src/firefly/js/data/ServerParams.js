@@ -131,6 +131,7 @@ export const ServerParams = {
         RESEND_EMAIL: 'resendEmail',
         CREATE_DOWNLOAD_SCRIPT: 'createDownoadScript',
 
+        GET_CAPABILITIES: 'getCapabilities',
         CLEAR_PUSH_ENTRY: 'clearPushEntry',
         REPORT_USER_ACTION: 'reportUserAction',
         DS9_REGION: 'ds9Region',

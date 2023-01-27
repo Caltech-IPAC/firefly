@@ -387,8 +387,7 @@ export function renderPolygonDataArea({imageCornerCalc, labelWidth, labelStyle, 
     }
     const wp= parseWorldPt(centerWP);
     return (
-        <div
-            style={{padding:5, border:'solid #a3aeb9 1px' }}>
+        <div style={{}}>
             <div style={{paddingTop: 10, paddingLeft: 5}}>
                 {pv && <RadioGroupInputField
                     inline={false}
