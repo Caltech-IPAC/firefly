@@ -32,7 +32,7 @@ const tableOnlyDefaultAcceptList = [
 
 export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, onSubmit=resultSuccess, keepState=true,
                                       groupKey=panelKey, acceptList= getAppOptions()?.uploadPanelLimit==='tablesOnly'?
-        tableOnlyDefaultAcceptList: defaultAcceptList}) =>{
+        tableOnlyDefaultAcceptList: defaultAcceptList, acceptOneItem=false}) =>{
     const [submitText,setSubmitText]= useState('Load');
     const [doMask, changeMasking]= useState(() => false);
     const helpId = getAppOptions()?.uploadPanelHelpId ?? 'basics.searching';
@@ -50,7 +50,7 @@ export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, onSu
                     changeMasking={changeMasking}
                     inputStyle={{height:'100%'}}
                     submitBarStyle={{padding: '2px 3px 3px'}} help_id={helpId}>
-                    <FileUploadViewPanel setSubmitText={setSubmitText} acceptList={acceptList}/>
+                    <FileUploadViewPanel {...{setSubmitText, acceptList, acceptOneItem}}/>
                 </FormPanel>
             </FieldGroup>
             {doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
@@ -62,7 +62,7 @@ export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, onSu
 
 const DIALOG_ID= 'FileUploadDialog';
 
-export function showUploadDialog(acceptList, keepState, groupKey) {
+export function showUploadDialog(acceptList, keepState, groupKey, acceptOneItem) {
 
     DialogRootContainer.defineDialog(DIALOG_ID,
         <PopupPanel title={'Upload'}
@@ -82,6 +82,7 @@ export function showUploadDialog(acceptList, keepState, groupKey) {
                     keepState={keepState}
                     groupKey={groupKey}
                     acceptList={acceptList}
+                    acceptOneItem={acceptOneItem}
                 />
             </div>
         </PopupPanel>
