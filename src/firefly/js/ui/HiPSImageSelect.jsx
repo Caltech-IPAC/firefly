@@ -33,6 +33,7 @@ import {getDefaultMOCList} from 'firefly/visualize/HiPSMocUtil.js';
 import {FieldGroupTabs, Tab} from 'firefly/ui/panel/TabPanel';
 import {FileUploadViewPanel} from 'firefly/visualize/ui/FileUploadViewPanel';
 import {resultSuccess} from 'firefly/ui/FileUploadProcessor';
+import {MOC_TABLES} from 'firefly/ui/FileUploadUtil';
 
 const useSourceHiPS = 'useSourceHiPS';
 const useSourceMOC = 'useSourceMOC';
@@ -119,7 +120,7 @@ export function showHiPSSurveysPopup(pv, moc= false) {
 
                             <Tab name='Use my MOC' id='uploadMoc'>
                                 <div style={{width:'100%', minWidth:715, minHeight:500}} >
-                                    <FileUploadViewPanel acceptMoc={true}/>
+                                    <FileUploadViewPanel acceptList={[MOC_TABLES]}/>
                                 </div>
                             </Tab>
                         </FieldGroupTabs>}

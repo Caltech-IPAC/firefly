@@ -5,22 +5,34 @@
 import React, {useState} from 'react';
 import {FormPanel} from './FormPanel.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
-import {
-    FileUploadViewPanel,
-    resultFail
-} from '../visualize/ui/FileUploadViewPanel.jsx';
+import { FileUploadViewPanel, resultFail} from '../visualize/ui/FileUploadViewPanel.jsx';
 import {getAppOptions} from 'firefly/api/ApiUtil.js';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchHideDialog, dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
 import {PopupPanel} from 'firefly/ui/PopupPanel.jsx';
 import {resultSuccess} from 'firefly/ui/FileUploadProcessor';
 import {FieldGroup} from 'firefly/ui/FieldGroup';
+import {DATA_LINK_TABLES, IMAGES, MOC_TABLES, REGIONS, SPECTRUM_TABLES, TABLES} from 'firefly/ui/FileUploadUtil';
 
 const maskWrapper= { position:'absolute', left:0, top:0, width:'100%', height:'100%' };
 const panelKey = 'FileUploadAnalysis';
 
-export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, acceptMoc=false, onSubmit=resultSuccess, keepState=true,
-                                      groupKey=panelKey}) =>{
+const defaultAcceptList = [
+    TABLES,
+    REGIONS,
+    DATA_LINK_TABLES,
+    SPECTRUM_TABLES,
+    MOC_TABLES,
+    IMAGES
+];
+
+const tableOnlyDefaultAcceptList = [
+    TABLES
+];
+
+export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, onSubmit=resultSuccess, keepState=true,
+                                      groupKey=panelKey, acceptList= getAppOptions()?.uploadPanelLimit==='tablesOnly'?
+        tableOnlyDefaultAcceptList: defaultAcceptList}) =>{
     const [submitText,setSubmitText]= useState('Load');
     const [doMask, changeMasking]= useState(() => false);
     const helpId = getAppOptions()?.uploadPanelHelpId ?? 'basics.searching';
@@ -38,7 +50,7 @@ export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, acce
                     changeMasking={changeMasking}
                     inputStyle={{height:'100%'}}
                     submitBarStyle={{padding: '2px 3px 3px'}} help_id={helpId}>
-                    <FileUploadViewPanel setSubmitText={setSubmitText} acceptMoc={acceptMoc}/>
+                    <FileUploadViewPanel setSubmitText={setSubmitText} acceptList={acceptList}/>
                 </FormPanel>
             </FieldGroup>
             {doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
@@ -50,7 +62,7 @@ export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, acce
 
 const DIALOG_ID= 'FileUploadDialog';
 
-export function showUploadDialog(acceptMoc, keepState, groupKey) {
+export function showUploadDialog(acceptList, keepState, groupKey) {
 
     DialogRootContainer.defineDialog(DIALOG_ID,
         <PopupPanel title={'Upload'}
@@ -62,7 +74,6 @@ export function showUploadDialog(acceptMoc, keepState, groupKey) {
                 <FileUploadDropdown
                     style={{height: '100%'}}
                     onCancel={() => dispatchHideDialog(DIALOG_ID)}
-                    acceptMoc={acceptMoc}
                     onSubmit={
                         (request) => {
                             if (resultSuccess(request)) dispatchHideDialog(DIALOG_ID);
@@ -70,6 +81,7 @@ export function showUploadDialog(acceptMoc, keepState, groupKey) {
                     }
                     keepState={keepState}
                     groupKey={groupKey}
+                    acceptList={acceptList}
                 />
             </div>
         </PopupPanel>

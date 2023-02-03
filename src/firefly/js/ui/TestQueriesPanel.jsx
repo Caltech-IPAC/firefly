@@ -45,6 +45,9 @@ import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
 import {NaifidPanel} from './NaifidPanel';
 
+import {showUploadDialog} from 'firefly/ui/FileUploadDropdown';
+import {DATA_LINK_TABLES, IMAGES, MOC_TABLES, REGIONS, SPECTRUM_TABLES, TABLES} from 'firefly/ui/FileUploadUtil';
+
 const dynamic1Params= [
     makeTargetDef(
         {hipsUrl:'ivo://CDS/P/DSS2/color', centerPt:makeWorldPt(10,10), hipsFOVInDeg:10, raKey:'ra', decKey:'dec'}),
@@ -170,6 +173,9 @@ export class TestQueriesPanel extends PureComponent {
                             <Tab name='Dynamic 3' id='dynamic3'>
                                 {makeDynamic3()}
                             </Tab>
+                            <Tab name='Uploads' id='upload'>
+                                {uploadButtons()}
+                            </Tab>
                         </FieldGroupTabs>
 
                     </FieldGroup>
@@ -243,6 +249,46 @@ function makeDynamic3() {
                                style={{margin: 3}}
                                fieldDefAry={dynamic3Params}
                                onSuccess={(request) => showDymResult(request)}/>
+        </div>
+    );
+}
+
+function uploadButtons() {
+    return (
+        <div style={{padding:10}}>
+
+            <button type='button' className='button std hl' onClick={() => showUploadDialog([TABLES],true,'FileUploadAnalysis_Only_Table')}>
+                <b>Tables Only Upload</b>
+            </button>
+
+            <button type='button' className='button std hl' onClick={() => showUploadDialog([MOC_TABLES,DATA_LINK_TABLES,TABLES,SPECTRUM_TABLES],true,'FileUploadAnalysis_All_Tables')}>
+                <b>All Tables Upload</b>
+            </button>
+            <br/><br/>
+            <button type='button' className='button std hl' onClick={() => showUploadDialog([REGIONS],true,'FileUploadAnalysis_Region')}>
+                <b>Region Upload</b>
+            </button>
+
+            <button type='button' className='button std hl' onClick={() => showUploadDialog([IMAGES],true,'FileUploadAnalysis_Image')}>
+                <b>Image Upload</b>
+            </button>
+            <br/><br/>
+            <button type='button' className='button std hl' onClick={() => showUploadDialog([DATA_LINK_TABLES],true,'FileUploadAnalysis_DataLink_Only')}>
+                <b>DataLink Tables Only</b>
+            </button>
+            <button type='button' className='button std hl' onClick={() => showUploadDialog([MOC_TABLES],true,'FileUploadAnalysis_MocFits_Only')}>
+                <b>MOC FITS Only</b>
+            </button>
+            <br/><br/>
+            <button type='button' className='button std hl' onClick={() => showUploadDialog([MOC_TABLES,DATA_LINK_TABLES,TABLES,SPECTRUM_TABLES,REGIONS,IMAGES],true,'FileUploadAnalysis_Region')}>
+                <b>Accept Everything (Default)</b>
+            </button>
+
+
+            <br/>
+
+
+            <br/>
         </div>
     );
 }
