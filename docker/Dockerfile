@@ -67,6 +67,8 @@ ARG build_dir
 ARG target
 ARG env
 ARG BranchOverride
+ARG checkoutFirefly
+
 
 WORKDIR /opt/work
 COPY . .
@@ -74,6 +76,7 @@ COPY --from=node_module /opt/work/lib/node_modules ./firefly/node_modules
 
 WORKDIR /opt/work/${build_dir}
 ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false"
+RUN if [ -z "$checkoutFirefly" ] ; then echo skip checkout ; else gradle firefly:checkoutFirefly ; fi
 RUN gradle -Penv=${env} -PBranchOverride=${BranchOverride} ${target}
 
 
