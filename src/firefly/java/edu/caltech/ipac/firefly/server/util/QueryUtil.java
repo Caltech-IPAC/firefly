@@ -86,14 +86,28 @@ public class QueryUtil {
      * @return
      */
     public static File getTempDir(TableServerRequest tsr) {
-        String sessId = ServerContext.getRequestOwner().getRequestAgent().getSessId();
-        if (tsr != null && tsr.getParam(FF_SESSION_ID) != null) {
-            sessId = Math.abs(tsr.getParam(FF_SESSION_ID).hashCode()) + "";
-        }
         File rootDir = tsr == null || tsr.getJobId() == null ? ServerContext.getTempWorkDir() : ServerContext.getPermWorkDir();
-        File tempDir = new File(rootDir, sessId.substring(0, 3));
+        File tempDir = new File(rootDir, getSessPrefix(tsr));
         if (!tempDir.exists()) tempDir.mkdirs();
         return tempDir;
+    }
+
+    /**
+     * returns a hierarchical temporary directory.
+     * @return
+     */
+    public static File getTempDir(ServerRequest req) {
+        File tempDir = new File(ServerContext.getTempWorkDir(), getSessPrefix(req));
+        if (!tempDir.exists()) tempDir.mkdirs();
+        return tempDir;
+    }
+
+    private static String getSessPrefix(ServerRequest req) {
+        String sessId = ServerContext.getRequestOwner().getRequestAgent().getSessId();
+        if (req != null && req.getParam(FF_SESSION_ID) != null) {
+            sessId = Math.abs(req.getParam(FF_SESSION_ID).hashCode()) + "";
+        }
+        return sessId.substring(0, 3);
     }
 
     public static DownloadRequest convertToDownloadRequest(String dlReqStr, String searchReqStr, String selInfoStr) {

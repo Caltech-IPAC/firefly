@@ -9,6 +9,9 @@ import edu.caltech.ipac.firefly.server.ExternalTaskLauncher;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -20,7 +23,7 @@ import java.util.List;
  * @author tatianag
  */
 @SearchProcessorImpl(id = "JsonFromExternalTask")
-public class JsonFromExternalTask implements SearchProcessor {
+public class JsonFromExternalTask extends JsonStringProcessor {
 
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
 
@@ -38,13 +41,14 @@ public class JsonFromExternalTask implements SearchProcessor {
     }
 
     @Override
-    public String getData(ServerRequest request) throws DataAccessException {
+    public String fetchData(ServerRequest request) throws DataAccessException {
         String launcher = request.getParam(ExternalTaskHandler.LAUNCHER);
         if (launcher == null) {
             throw new DataAccessException(ExternalTaskHandler.LAUNCHER+" parameter is not found in request.");
         }
         ExternalTaskLauncher taskLauncher = new ExternalTaskLauncher(launcher);
 
+        String jsonText = null;
         try {
 
             ExternalTaskHandlerImpl handler = new ExternalTaskHandlerImpl(request.getParam(ExternalTaskHandler.TASK), request.getParam(ExternalTaskHandler.TASK_PARAMS));
@@ -61,35 +65,20 @@ public class JsonFromExternalTask implements SearchProcessor {
                 throw new SecurityException("Access to "+outFile.getAbsolutePath()+" is not permitted.");
             }
 
-            return FileUtil.readFile(outFile);
+            jsonText = FileUtil.readFile(outFile);
+
+            // validate JSON and replace file paths with prefixes
+            JSONParser parser = new JSONParser();
+            Object obj = parser.parse(jsonText);
+            Object json = ServerContext.replaceWithPrefixes(obj);
+            jsonText = JSONValue.toJSONString(json);
+            return jsonText;
+        } catch(ParseException pe){
+            LOGGER.error(getUniqueID(request) + " Can not parse returned JSON: " + pe.toString() + "\n" + jsonText);
+            throw new DataAccessException(request.getRequestId()+" Can not parse returned JSON: " + pe.toString());
         } catch (Exception e) {
             LOGGER.error(e, "Unable get to data from external task: "+request.toString());
             throw new DataAccessException("Unable to get data from external task: "+e.getMessage());
         }
-    }
-
-    @Override
-    public boolean doCache() {
-        return false;
-    }
-
-    @Override
-    public void onComplete(ServerRequest request, Object results) throws DataAccessException {
-
-    }
-
-    @Override
-    public boolean doLogging() {
-        return false;
-    }
-
-    @Override
-    public QueryDescResolver getDescResolver() {
-        return null;
-    }
-
-    @Override
-    public void prepareTableMeta(TableMeta defaults, List columns, ServerRequest request) {
-        /* this only applies to table-based results... do nothing here */
     }
 }

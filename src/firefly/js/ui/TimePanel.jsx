@@ -19,7 +19,7 @@ const iconMap = {'calendar': {icon: CALENDAR, title: 'Show the calendar for sele
 
 function TimePanelView({showHelp, feedback, feedbackStyle, examples, label, labelStyle, labelPosition,
                            valid, message, onChange, value, icon, onClickIcon, tooltip = 'select time',
-                           inputStyle, wrapperStyle, inputWidth, timeMode=ISO}) {
+                           inputStyle, wrapperStyle, inputWidth, timeMode=ISO, isTimeModeFixed}) {
     const ImagePadding = 3;
 
     const iconStyle = {
@@ -60,13 +60,13 @@ function TimePanelView({showHelp, feedback, feedbackStyle, examples, label, labe
                                   </div>)
                                 : timeField;
 
-    const newFeedbackStyle = {...feedbackStyle, width: inputWidth};
+    const newFeedbackStyle = {width: inputWidth, ...feedbackStyle};
     const lStyle = {...labelStyle, whiteSpace:'nowrap'};
     const labelDiv = (<div style={lStyle}>{label}</div>);
     const timeDiv = (
         <div>
             {timePart}
-            <TimeFeedback {...{showHelp, feedback, feedbackStyle: newFeedbackStyle, examples, timeMode}}/>
+            <TimeFeedback {...{showHelp, feedback, style: newFeedbackStyle, examples, timeMode, isTimeModeFixed}}/>
         </div>
     );
     const flexDirection = (labelPosition === 'top') ? 'column' : 'row';
@@ -97,7 +97,8 @@ TimePanelView.propTypes = {
     icon: PropTypes.string,
     onClickIcon: PropTypes.func,
     labelPosition: PropTypes.oneOf(['top', 'left']),
-    inputWidth: PropTypes.number
+    inputWidth: PropTypes.number,
+    isTimeModeFixed: PropTypes.bool
 };
 
 TimePanelView.defaultProps = {
@@ -120,12 +121,13 @@ const defaulISOtExample = (<div style={{display: 'inline-block', fontSize: 11}}>
 const defaultMJDExample = (<div style={{display: 'inline-block'}}>
                             {'56800, 56800.3333'}
                            </div>);
-const defaultStyle =  {paddingTop: 5, height: 50, display:'flex', contentJustify: 'center'};
 
-function TimeFeedback({showHelp, feedback, style={}, examples={}, timeMode=ISO}) {
 
-    examples = timeMode===ISO ? {...defaulISOtExample, examples} : {...defaultMJDExample, examples};
-    style = {...defaultStyle, style};
+function TimeFeedback({showHelp, feedback, style={}, examples, timeMode=ISO, isTimeModeFixed}) {
+
+    examples = timeMode===ISO ? (examples?.[ISO] ?? defaulISOtExample) : (examples?.[MJD] ?? defaultMJDExample);
+    style = {paddingTop: 5, height: isTimeModeFixed ? 'auto' : 36, // so that layout doesn't jump on toggling radio button
+        display:'flex', contentJustify: 'center', ...style};
 
     if (showHelp) {
          return (
@@ -150,14 +152,15 @@ function TimeFeedback({showHelp, feedback, style={}, examples={}, timeMode=ISO})
 TimeFeedback.propTypes = {
     showHelp: PropTypes.bool,
     feedback: PropTypes.string,
-    style: PropTypes.string,
+    style: PropTypes.object,
     examples: PropTypes.object,
-    timeMode: PropTypes.string
+    timeMode: PropTypes.string,
+    isTimeModeFixed: PropTypes.bool
 };
 
 function handleOnChange(ev, params, fireValueChange) {
     const v = ev.target.value;
-    const {timeMode = ISO} = params;
+    const {timeMode = ISO, isTimeModeFixed} = params;
     const result = {UTC: '', MJD: ''};
     let validateRet = {valid: true};
 
@@ -165,13 +168,13 @@ function handleOnChange(ev, params, fireValueChange) {
         validateRet = validateDateTime(v);
         if (validateRet.valid) {
             result.UTC = v ? (formatMoment(validateRet.moment)): v;
-            result.MJD = convertISOToMJD(validateRet.moment);
+            if (!isTimeModeFixed) result.MJD = convertISOToMJD(validateRet.moment);
         }
     } else if (timeMode === MJD) {
         validateRet = validateMJD(v);
         if (validateRet.valid) {
             result.MJD = validateRet.value;
-            result.UTC = convertMJDToISO(v);
+            if (!isTimeModeFixed) result.UTC = convertMJDToISO(v);
         }
     }
     if (!validateRet.valid) {
@@ -187,7 +190,7 @@ function handleOnChange(ev, params, fireValueChange) {
                     message: validateRet.message,
                     value: v,
                     showHelp, feedback,
-                    timeMode});
+                    timeMode, isTimeModeFixed});
 }
 
 export const TimePanel= memo( (props) => {
@@ -205,6 +208,7 @@ TimePanel.propTypes = {
     feedbackStyle: PropTypes.object,
     labelPosition: PropTypes.oneOf(['top', 'left']),
     inputStyle: PropTypes.object,
-    inputWidth: PropTypes.number
+    inputWidth: PropTypes.number,
+    isTimeModeFixed: PropTypes.bool
 };
 
