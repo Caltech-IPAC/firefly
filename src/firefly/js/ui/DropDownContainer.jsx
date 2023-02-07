@@ -23,8 +23,6 @@ import {MultiSearchPanel} from 'firefly/ui/MultiSearchPanel.jsx';
 import {TapSearchPanel} from 'firefly/ui/tap/TapSearchRootPanel.jsx';
 import {VersionInfo} from 'firefly/ui/VersionInfo.jsx';
 import {DLGeneratedDropDown} from './dynamic/DLGeneratedDropDown.js';
-import {DATA_LINK_TABLES, IMAGES, MOC_TABLES, REGIONS, SPECTRUM_TABLES, TABLES
-}  from 'firefly/visualize/ui/FileUploadViewPanel';
 
 const flexGrowWithMax = {width: '100%', maxWidth: 1400};
 

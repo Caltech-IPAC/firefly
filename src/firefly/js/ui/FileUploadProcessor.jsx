@@ -49,12 +49,14 @@ const tableWarning = 'Only loading the image(s), ignoring any selected table(s).
 
 export function resultSuccess(request) {
 
-    const {currentReport, currentDetailsModel, summaryModel, groupKey, acceptList, uniqueTypes}= request.additionalParams ?? {};
+    const {report, detailsModel, summaryModel, groupKey, acceptList, uniqueTypes,
+        acceptOneItem}= request.additionalParams ?? {};
     const summaryTblId = groupKey; //FileUploadAnalysis
     const fileCacheKey = getFileCacheKey(groupKey);
 
     //determine if the file type or selections are valid to be loaded
-    const {valid, errorMsg, title} = determineValidity(acceptList, uniqueTypes, summaryModel, summaryTblId, currentReport);
+    const {valid, errorMsg, title} = determineValidity(acceptList, uniqueTypes, summaryModel,
+        summaryTblId, report, acceptOneItem);
 
     if (!valid) {
         showInfoPopup(errorMsg, title);
@@ -62,18 +64,18 @@ export function resultSuccess(request) {
     }
 
     const {loadType, tableIndices, imageIndices} = determineLoadType(acceptList, uniqueTypes, summaryModel,
-        summaryTblId, currentReport, fileCacheKey, request, currentDetailsModel);
+        summaryTblId, report, fileCacheKey, request, detailsModel, acceptOneItem);
 
     switch(loadType) {
         case LOAD_REGION:
-            sendRegionRequest(fileCacheKey, currentReport);
+            sendRegionRequest(fileCacheKey, report);
             return true;
 
         case LOAD_MOC:
             const mocMeta= {[MetaConst.PREFERRED_HIPS]: getAppHiPSForMoc()};
             if (request.mocOp==='table') mocMeta[MetaConst.IGNORE_MOC]='true';
             //loadToUI = true if request.mocOp==='table', else loadToUI=false
-            sendTableRequest(tableIndices, fileCacheKey, Boolean(request.tablesAsSpectrum==='spectrum'), currentReport, Boolean(request.mocOp==='table'), mocMeta);
+            sendTableRequest(tableIndices, fileCacheKey, request.tablesAsSpectrum==='spectrum', report, request.mocOp==='table', mocMeta);
             return true;
 
         case LOAD_DL:
@@ -85,16 +87,16 @@ export function resultSuccess(request) {
             return true;
 
         case LOAD_IMAGE_AND_TABLES:
-            sendTableRequest(tableIndices, fileCacheKey, Boolean(request.tablesAsSpectrum==='spectrum'), currentReport);
-            sendImageRequest(imageIndices, request, fileCacheKey, currentReport);
+            sendTableRequest(tableIndices, fileCacheKey, request.tablesAsSpectrum==='spectrum', report);
+            sendImageRequest(imageIndices, request, fileCacheKey, report);
             return true;
 
         case LOAD_IMAGE_ONLY:
             if (tableIndices > 0) {
-                showWarning(tableWarning, () =>  sendImageRequest(imageIndices, request, fileCacheKey, currentReport));
+                showWarning(tableWarning, () =>  sendImageRequest(imageIndices, request, fileCacheKey, report));
             }
             else {
-                sendImageRequest(imageIndices, request, fileCacheKey, currentReport);
+                sendImageRequest(imageIndices, request, fileCacheKey, report);
                 return true;
             }
             return false;
@@ -102,10 +104,10 @@ export function resultSuccess(request) {
         case LOAD_TABLE_ONLY:
             if (imageIndices > 0) {
                  showWarning(imageWarning,
-                    () => sendTableRequest(tableIndices, fileCacheKey, Boolean(request.tablesAsSpectrum==='spectrum'), currentReport));
+                    () => sendTableRequest(tableIndices, fileCacheKey, request.tablesAsSpectrum==='spectrum', report));
             }
             else {
-                sendTableRequest(tableIndices, fileCacheKey, Boolean(request.tablesAsSpectrum==='spectrum'), currentReport);
+                sendTableRequest(tableIndices, fileCacheKey, request.tablesAsSpectrum==='spectrum', report);
                 return true;
             }
             return false;
@@ -135,11 +137,22 @@ const warningPrompt = (warningMsg) => {
     </div>);
 };
 
-function determineLoadType(acceptList, uniqueTypes, summaryModel, summaryTblId, currentReport, fileCacheKey, request, currentDetailsModel) {
-    const tableIndices = getSelectedRows(FileAnalysisType.Table, summaryTblId, currentReport, summaryModel);
-    const imageIndices = getSelectedRows(FileAnalysisType.Image, summaryTblId, currentReport, summaryModel);
-    const isMocFits =  isMOCFitsFromUploadAnalsysis(currentReport);
-    const isDL=  isAnalysisTableDatalink(currentReport);
+function determineLoadType(acceptList, uniqueTypes, summaryModel, summaryTblId, report, fileCacheKey,
+                           request, detailsModel, acceptOneItem) {
+
+    //highlighted row and entryType is used when acceptOneItem === true
+    const highlightedRowIdx = summaryModel?.highlightedRow;
+    const highlightedRow = summaryModel?.tableData?.data?.[highlightedRowIdx];
+    const entryType = highlightedRow?
+        highlightedRow[1]: summaryModel?.tableData?.data?.[0]?.[1];
+
+    const tableIndices = acceptOneItem && entryType === FileAnalysisType.Table? [highlightedRowIdx] :
+        getSelectedRows(FileAnalysisType.Table, summaryTblId, report, summaryModel);
+    const imageIndices = acceptOneItem && entryType === FileAnalysisType.Image? [highlightedRowIdx] :
+        getSelectedRows(FileAnalysisType.Image, summaryTblId, report, summaryModel);
+
+    const isMocFits =  isMOCFitsFromUploadAnalsysis(report);
+    const isDL=  isAnalysisTableDatalink(report);
 
     if (isRegion(summaryModel)) {
         return {loadType: LOAD_REGION};
@@ -153,7 +166,7 @@ function determineLoadType(acceptList, uniqueTypes, summaryModel, summaryTblId, 
     else if (isDL && request.datalinkOp === 'datalinkUI') { // handle Datalink / service descriptor UI
         return {loadType: LOAD_DL, tableIndices};
     }
-    else if ( isLsstFootprintTable(currentDetailsModel) ) {
+    else if ( isLsstFootprintTable(detailsModel) ) {
         return {loadType: LOAD_FOOTPRINT, tableIndices};
     }
     else { //either an image/table or combined FITS file
@@ -181,27 +194,51 @@ const errorObj = {
     tblNotAcceptedErr: {valid: false, errorMsg: 'You may not load tables from here.', title: 'File Type Mismatch'},
 };
 
-function determineValidity(acceptList, uniqueTypes, summaryModel, summaryTblId, currentReport) {
+function determineValidity(acceptList, uniqueTypes, summaryModel, summaryTblId,
+                           report, acceptOneItem) {
     let {errorMsg, title} = '';
     let valid = true;
-    const tableIndices = getSelectedRows(FileAnalysisType.Table, summaryTblId, currentReport, summaryModel);
-    const imageIndices = getSelectedRows(FileAnalysisType.Image, summaryTblId, currentReport, summaryModel);
-    const isMocFits =  isMOCFitsFromUploadAnalsysis(currentReport);
-    const isDL=  isAnalysisTableDatalink(currentReport);
+
+    //highlighted row and entryType is used when acceptOneItem === true
+    const highlightedRowIdx = summaryModel?.highlightedRow;
+    const highlightedRow = summaryModel?.tableData?.data?.[highlightedRowIdx];
+    const entryType = highlightedRow?
+        highlightedRow[1]: summaryModel?.tableData?.data?.[0]?.[1];
+
+    const tableIndices = acceptOneItem && entryType === FileAnalysisType.Table? [highlightedRowIdx] :
+        getSelectedRows(FileAnalysisType.Table, summaryTblId, report, summaryModel);
+    const imageIndices = acceptOneItem && entryType === FileAnalysisType.Image? [highlightedRowIdx] :
+        getSelectedRows(FileAnalysisType.Image, summaryTblId, report, summaryModel);
+    const isMocFits =  isMOCFitsFromUploadAnalsysis(report);
+    const isDL=  isAnalysisTableDatalink(report);
+
 
     if (uniqueTypes.includes(REGIONS) && !acceptRegions(acceptList)) {
         return errorObj.regionMismatchErr;
     }
 
-    if (!isFileSupported(summaryModel, currentReport)) {
+    if (!isFileSupported(summaryModel, report)) {
         errorMsg = getFirstPartType(summaryModel) ? `File type of ${getFirstPartType(summaryModel)} is not supported.`: 'Could not recognize the file type';
         title = 'File Type Error';
         valid = false;
         return {valid, errorMsg, title};
     }
 
+    //Intentionally put this code block under the regions & files not supported check, to avoid checking for those 2 again here
+    if (acceptOneItem) {
+        switch (entryType) {
+            case FileAnalysisType.Table:
+                if (!acceptAnyTables(acceptList)) return errorObj.tblNotAcceptedErr;
+                break;
+            case FileAnalysisType.Image:
+                if (!acceptImages(acceptList)) return errorObj.imgNotAcceptedErr;
+                break;
+            case FileAnalysisType.HeaderOnly: return errorObj.headerOnlyErr;
+        }
+    }
+
     if (!uniqueTypes.includes(REGIONS) && tableIndices.length + imageIndices.length === 0) {
-        if (getSelectedRows('HeaderOnly', summaryTblId, currentReport, summaryModel)?.length) {
+        if (getSelectedRows('HeaderOnly', summaryTblId, report, summaryModel)?.length) {
             return errorObj.headerOnlyErr;
         }
         else {
@@ -245,7 +282,8 @@ function determineValidity(acceptList, uniqueTypes, summaryModel, summaryTblId, 
             (acceptList.length===1 || !acceptNonDataLinkTables(acceptList) )) {
             return errorObj.nonDLErr;
         }
-        if (acceptMocTables((acceptList)) && acceptDataLinkTables(acceptList) && !isDL && !isMocFits.valid) {
+        if (acceptMocTables((acceptList)) && acceptDataLinkTables(acceptList) && !isDL && !isMocFits.valid
+            && !acceptTableOrSpectrum(acceptList)) {
             //edge case - in case acceptList= [DATA_LINK_TABLES, MOC_TABLES] and user uploads some other table file
             return errorObj.nonMocAndDLErr;
         }

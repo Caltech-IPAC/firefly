@@ -64,7 +64,7 @@ const uploadOptions = 'uploadOptions';
 const FILE_UPLOAD_KEY= 'file-upload-key-';
 let keyCnt=0;
 
-export function FileUploadViewPanel({setSubmitText, acceptList}) {
+export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem}) {
 
     const {groupKey, keepState}= useContext(FieldGroupCtx);
 
@@ -83,7 +83,8 @@ export function FileUploadViewPanel({setSubmitText, acceptList}) {
             const loadingOp= getLoadingOp();
             const {analysisResult, message}= getField(groupKey, loadingOp) || {};
             const summaryTbl= getTblById(summaryTblId);
-            return getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, message, getUploadMetaInfo(), acceptList);
+            return getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, message,
+                getUploadMetaInfo(), acceptList, acceptOneItem);
         });
 
     const {isLoading,statusKey} = getUploadMetaInfo();
@@ -172,9 +173,10 @@ export function FileUploadViewPanel({setSubmitText, acceptList}) {
                                                        }}/> }
                         </div>
                     </div>
-                    <FileAnalysis {...{report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList, isDatalink}}/>
+                    <FileAnalysis {...{report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList, isDatalink, acceptOneItem}}/>
                     <ImageDisplayOption {...{summaryTblId, currentReport:report, currentSummaryModel:summaryModel, acceptList}}/>
-                    <TableDisplayOption {...{isMoc, isDatalink, summaryTblId, currentReport:report, currentSummaryModel:summaryModel, acceptList}}/>
+                    <TableDisplayOption {...{isMoc, isDatalink, summaryTblId, currentReport:report, currentSummaryModel:summaryModel,
+                        acceptList, acceptOneItem}}/>
                 </div>
                 {(isLoading) && <LoadingMessage message={loadingMsg}/>}
         </div>
@@ -243,7 +245,7 @@ function getFirstExtWithData(parts, acceptList, summaryModel) {
 
 /*-----------------------------------------------------------------------------------------*/
 
-function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, message, oldState, acceptList) {
+function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, message, oldState, acceptList, acceptOneItem) {
     // because this value is stored in different fields, so we have to check on what options were selected to determine the active value
     const UNKNOWN_FORMAT = 'UNKNOWN';
 
@@ -274,14 +276,19 @@ function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, me
             const firstExtWithData= getFirstExtWithData(currentReport.parts, acceptList, currentSummaryModel);
             if (firstExtWithData >= 0) {
                 const selectInfo = SelectInfo.newInstance({rowCount: currentSummaryModel.tableData.data.length});
-                selectInfo.setRowSelect(firstExtWithData, true);        // default select first extension/part with data
-                currentSummaryModel.selectInfo = selectInfo.data;
+                !acceptOneItem && selectInfo.setRowSelect(firstExtWithData, true);        // default select first extension/part with data
+                !acceptOneItem && (currentSummaryModel.selectInfo = selectInfo.data);
                 modelToUseForDetails.highlightedRow= firstExtWithData;
             }
 
         }
     }
-    let detailsModel = getDetailsModel( modelToUseForDetails,currentReport,detailsTblId,UNKNOWN_FORMAT);
+    let detailsModel = getDetailsModel(modelToUseForDetails,currentReport,detailsTblId,UNKNOWN_FORMAT);
+    if (modelToUseForDetails) {
+        const {highlightedRow=0} = modelToUseForDetails;
+        currentSummaryModel.highlightedRow = highlightedRow;
+    }
+
     if (shallowequal(detailsModel, currentDetailsModel)) {
         detailsModel = currentDetailsModel;
     }
@@ -390,12 +397,19 @@ function getDetailsModel(tableModel, report, detailsTblId, UNKNOWN_FORMAT) {
     return details;
 }
 
-function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, currentSummaryModel, acceptList}) {
+function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, currentSummaryModel, acceptList, acceptOneItem}) {
+
+    const highlightedRowIdx = currentSummaryModel?.highlightedRow;
+    const highlightedRow = currentSummaryModel?.tableData?.data?.[highlightedRowIdx];
+    //this is to make sure we show TableDisplayOptions even if only one table entry is selected when acceptOneItem === true
+    const entryType = highlightedRow?
+        highlightedRow[1]: currentSummaryModel?.tableData?.data?.[0]?.[1];
 
     const selectedTables = getFileFormat(currentReport) ?
         getSelectedRows('Table', summaryTblId, currentReport, currentSummaryModel) : [];
 
-    if ( selectedTables.length < 1) return null;
+    if ( selectedTables.length < 1 && !acceptOneItem) return null;
+    if (!currentReport || (acceptOneItem && (!highlightedRowIdx || entryType !== FileAnalysisType.Table))) return null;
 
     //Possibly from the Upload Panel in the HiPS/MOC 'Add MOC Layer' tab
     if (isMoc && acceptMocTables(acceptList) && !(acceptTableOrSpectrum(acceptList))) {
@@ -529,16 +543,17 @@ function AnalysisInfo({report,supported=true,UNKNOWN_FORMAT}) {
     );
 }
 
-const tblOptions = {showToolbar:false, border:false, showOptionButton: false, showFilters: true};
+const tblOptions = {showToolbar:false, border:false, showOptionButton:false, showFilters:true};
 
-function AnalysisTable({summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMAT, acceptList}) {
+function AnalysisTable({summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMAT, acceptList, acceptOneItem}) {
     if (!summaryModel) return null;
 
     // Details table needs to render first to create a stub to collect data when Summary table is loaded.
     return (
         <div className='FileUpload__summary'>
             {(summaryModel.tableData.data.length>1) ?
-                <MultiDataSet summaryModel={summaryModel} detailsModel={detailsModel} isMoc={isMoc}/> :
+                <MultiDataSet summaryModel={summaryModel} detailsModel={detailsModel} isMoc={isMoc}
+                              acceptOneItem={acceptOneItem}/> :
                 <SingleDataSet type={summaryModel.tableData.data[0][1]} desc={summaryModel.tableData.data[0][2]}
                                detailsModel={detailsModel} report={report} UNKNOWN_FORMAT={UNKNOWN_FORMAT}
                                currentSummaryModel={summaryModel} acceptList={acceptList}
@@ -565,7 +580,7 @@ function SingleDataSet({type, desc, detailsModel, report, UNKNOWN_FORMAT, curren
     );
 }
 
-function MultiDataSet({summaryModel, detailsModel, isMoc}) {
+function MultiDataSet({summaryModel, detailsModel, isMoc, acceptOneItem}) {
     return (
         <div style={{display: 'flex', flexDirection: 'column', width: '100%'}}>
             {
@@ -576,7 +591,10 @@ function MultiDataSet({summaryModel, detailsModel, isMoc}) {
             }
             <div style={{height:'100%', position:'relative'}}>
                 <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={350}>
-                    <TablePanel showTypes={false} title='File Summary' tableModel={summaryModel} {...tblOptions} />
+                    {acceptOneItem && <TablePanel {...{showTypes:false, title:'File Summary', tableModel:summaryModel,
+                        ...tblOptions, selectable:false}} />}
+                    {!acceptOneItem && <TablePanel {...{showTypes:false, title:'File Summary', tableModel:summaryModel,
+                        ...tblOptions}} />}
                     <Details detailsModel={detailsModel}/>
                 </SplitPane>
             </div>
@@ -597,7 +615,7 @@ function Details({detailsModel}) {
 }
 
 
-function getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList) {
+function getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList, acceptOneItem) {
     if (report?.fileFormat === UNKNOWN_FORMAT) {
         return (
             <div style={{flexGrow: 1, marginTop: 40, textAlign:'center', fontSize: 'larger', color: 'red'}}>
@@ -605,7 +623,7 @@ function getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT,
             </div>
         );
     }
-    return <AnalysisTable {...{summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMAT, acceptList}} />;
+    return <AnalysisTable {...{summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMAT, acceptList, acceptOneItem}} />;
 }
 
 function buildAllowedTypes(acceptList) {
@@ -647,7 +665,7 @@ const NotAccepted = (props) => {
 
 const determineAccepted = (acceptList, uniqueTypes, isMoc, isDL) => {
     const notAcceptedTypes = [];
-    let accepted = false;
+    let accepted;
     if (uniqueTypes.includes(REGIONS)) {
         if (!acceptRegions(acceptList)) {
             notAcceptedTypes.push('Region');
@@ -695,7 +713,7 @@ const warningMessage = (acceptList, uniqueTypes) => {
     }
 };
 
-const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList, isDL}) => {
+const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList, isDL, acceptOneItem}) => {
     //getting FieldGroup context and adding required params to the request object (used in resultSuccess in FileUploadProcessor)
     const {groupKey, register, unregister}= useContext(FieldGroupCtx);
 
@@ -704,8 +722,7 @@ const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT
     //types will have repeated 'Image', 'Table', etc. - getting only unique values from types
     const uniqueTypes = types.filter((value, index, self) => self.indexOf(value) === index);
 
-    const additionalReqObjs = {summaryModel, currentReport: report, currentDetailsModel: detailsModel,
-        groupKey, acceptList, uniqueTypes};
+    const additionalReqObjs = {summaryModel, report, detailsModel, groupKey, acceptList, uniqueTypes, acceptOneItem};
     useEffect(() => {
         register('additionalParams', () => additionalReqObjs);
         return () => unregister('additionalParams');
@@ -720,7 +737,7 @@ const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT
                 <div className='FileUpload__report'>
                     {summaryModel.tableData.data.length>1 && <AnalysisInfo report={report} />}
                     {warningMessage(acceptList, uniqueTypes)}
-                    {getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList)}
+                    {getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList, acceptOneItem)}
                 </div>
             );
         }

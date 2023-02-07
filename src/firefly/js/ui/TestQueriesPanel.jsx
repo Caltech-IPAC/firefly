@@ -257,34 +257,32 @@ function uploadButtons() {
     return (
         <div style={{padding:10}}>
 
-            <button type='button' className='button std hl' onClick={() => showUploadDialog([TABLES],true,'FileUploadAnalysis_Only_Table')}>
+            <button type='button' className='button std hl' onClick={() => showUploadDialog([TABLES],true,'FileUploadAnalysis_Only_Table',true)}>
                 <b>Tables Only Upload</b>
             </button>
 
-            <button type='button' className='button std hl' onClick={() => showUploadDialog([MOC_TABLES,DATA_LINK_TABLES,TABLES,SPECTRUM_TABLES],true,'FileUploadAnalysis_All_Tables')}>
+            <button type='button' className='button std hl' onClick={() => showUploadDialog([MOC_TABLES,DATA_LINK_TABLES,TABLES,SPECTRUM_TABLES],true,'FileUploadAnalysis_All_Tables',true)}>
                 <b>All Tables Upload</b>
             </button>
             <br/><br/>
-            <button type='button' className='button std hl' onClick={() => showUploadDialog([REGIONS],true,'FileUploadAnalysis_Region')}>
+            <button type='button' className='button std hl' onClick={() => showUploadDialog([REGIONS],true,'FileUploadAnalysis_Region',true)}>
                 <b>Region Upload</b>
             </button>
 
-            <button type='button' className='button std hl' onClick={() => showUploadDialog([IMAGES],true,'FileUploadAnalysis_Image')}>
+            <button type='button' className='button std hl' onClick={() => showUploadDialog([IMAGES],true,'FileUploadAnalysis_Image',true)}>
                 <b>Image Upload</b>
             </button>
             <br/><br/>
-            <button type='button' className='button std hl' onClick={() => showUploadDialog([DATA_LINK_TABLES],true,'FileUploadAnalysis_DataLink_Only')}>
+            <button type='button' className='button std hl' onClick={() => showUploadDialog([DATA_LINK_TABLES],true,'FileUploadAnalysis_DataLink_Only',true)}>
                 <b>DataLink Tables Only</b>
             </button>
-            <button type='button' className='button std hl' onClick={() => showUploadDialog([MOC_TABLES],true,'FileUploadAnalysis_MocFits_Only')}>
+            <button type='button' className='button std hl' onClick={() => showUploadDialog([MOC_TABLES],true,'FileUploadAnalysis_MocFits_Only',true)}>
                 <b>MOC FITS Only</b>
             </button>
             <br/><br/>
-            <button type='button' className='button std hl' onClick={() => showUploadDialog([MOC_TABLES,DATA_LINK_TABLES,TABLES,SPECTRUM_TABLES,REGIONS,IMAGES],true,'FileUploadAnalysis_Region')}>
+            <button type='button' className='button std hl' onClick={() => showUploadDialog([MOC_TABLES,DATA_LINK_TABLES,TABLES,SPECTRUM_TABLES,REGIONS,IMAGES],true,'FileUploadAnalysis_Everything',true)}>
                 <b>Accept Everything (Default)</b>
             </button>
-
-
             <br/>
 
 
