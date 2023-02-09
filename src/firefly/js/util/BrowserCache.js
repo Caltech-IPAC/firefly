@@ -41,6 +41,10 @@ class BrowserCache {
     static put(key, data, lifespanInSecs= 0) {
         ls.set(key, makeCacheEntry(data, lifespanInSecs));
     }
+
+    static remove(key) {
+        ls.remove(key);
+    }
 }
 
 export default BrowserCache;

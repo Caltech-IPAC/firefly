@@ -51,15 +51,16 @@ export function TablePanel(props) {
     const searchActions= getSearchActions();
 
     useEffect( () => {
-        if (!getTableUiByTblId(tbl_id)) {
-            dispatchTableUiUpdate({tbl_ui_id, tbl_id, options});
-        }
+        dispatchTableUiUpdate({tbl_ui_id, tbl_id, options});
+    }, [tbl_id, tbl_ui_id]);
+
+    useEffect( () => {
         if (tableModel && !tableModel.origTableModel) {
             tableModel.tbl_id = tbl_id;
             set(tableModel, 'request.tbl_id', tbl_id);
             dispatchTableAddLocal(tableModel, undefined, false);
         }
-    }, [tbl_id, tbl_ui_id, tableModel]);
+    }, [tbl_id, tableModel]);
 
     const {selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
         showToolbar, showTitle, showInfoButton, showMetaInfo, showOptions,
@@ -78,7 +79,7 @@ export function TablePanel(props) {
     const clearFilter = () => connector.applyFilterChanges({filterInfo: '', sqlFilter: ''});
     const toggleOptions = () => connector.onToggleOptions(!showOptions);
     const onOptionUpdate = (value) => connector.onOptionUpdate(value);
-    const onOptionReset = () => connector.onOptionReset(props);
+    const onOptionReset = () => connector.onOptionReset();
 
     const expandTable = () => {
         dispatchTblExpanded(tbl_ui_id, tbl_id);
@@ -99,7 +100,7 @@ export function TablePanel(props) {
         .map((f) => f(uiState))
         .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
 
-    const showOptionsDialog = () => showTableOptionDialog(onOptionUpdate, onOptionReset, tbl_ui_id, tbl_id);
+    const showOptionsDialog = () => showTableOptionDialog(onOptionUpdate, onOptionReset, clearFilter, tbl_ui_id, tbl_id);
     const showInfoDialog = () => showTableInfoDialog(tbl_id);
 
     const tstate = getTableState(uiState);
@@ -191,13 +192,14 @@ function getTableState(state) {
 }
 
 
-function showTableOptionDialog(onChange, onOptionReset, tbl_ui_id, tbl_id) {
+function showTableOptionDialog(onChange, onOptionReset, clearFilter, tbl_ui_id, tbl_id) {
 
     const content = (
          <div className='TablePanelOptionsWrapper'>
                <TablePanelOptions
                   onChange={onChange}
                   onOptionReset={onOptionReset}
+                  clearFilter={clearFilter}
                   tbl_ui_id={tbl_ui_id}
                   tbl_id={tbl_id}
                />

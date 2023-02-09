@@ -6,7 +6,7 @@ import React, {useCallback, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {Column, Table} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
-import {get, isEmpty, isUndefined, omitBy, pick} from 'lodash';
+import {get, set, isEmpty, isUndefined, omitBy, pick} from 'lodash';
 
 import {calcColumnWidths, getCellValue, getProprietaryInfo, getTableUiById, getTblById, hasNoData, hasRowAccess, isClientTable, tableTextView, uniqueTblUiId} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
@@ -39,12 +39,15 @@ const BasicTableViewInternal = React.memo((props) => {
     useEffect( () => {
         if (!isEmpty(columns)) {
             const changes = omitBy(pick(props, 'showTypes', 'showFilters', 'showUnits', 'filterInfo','selectable', 'sortInfo', 'textView'), isUndefined);
-            if (isUndefined(changes.showUnits)) {
-                changes.showUnits = !!columns.find?.((col) => col?.units);
-            }
-            if (isUndefined(changes.showFilters)) {
-                changes.showFilters = !!tbl_id && !isClientTable(tbl_id);    // false if no tbl_id or is a client table
-            }
+
+            const showUnits = !!columns.find?.((col) => col?.units);
+            if (isUndefined(changes.showUnits)) changes.showUnits = showUnits;
+            if (isUndefined(changes.options?.showUnits)) set(changes,'options.showUnits', showUnits);
+
+            const showFilters = !(!tbl_id || isClientTable(tbl_id));    // false if no tbl_id or is a client table
+            if (isUndefined(changes.showFilters)) changes.showFilters = showFilters;
+            if (isUndefined(changes.options?.showFilters)) set(changes,'options.showFilters', showFilters);
+
             if (!isEmpty(changes)) {
                 dispatchTableUiUpdate({tbl_ui_id, ...changes});
             }

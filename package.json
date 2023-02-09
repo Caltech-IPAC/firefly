@@ -41,7 +41,8 @@
     "fixed-data-table-2": "~1.2",
     "prismjs": "~1.26",
     "blissfuljs": "~1.0",
-    "json-bigint": "https://github.com/Caltech-IPAC/json-bigint"
+    "json-bigint": "https://github.com/Caltech-IPAC/json-bigint",
+    "md5": "~2.3.0"
   },
   "devDependencies": {
     "@babel/core": "~7.16",

@@ -4,15 +4,15 @@
 
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {get, cloneDeep, isEmpty} from 'lodash';
+import {cloneDeep, get, isEmpty} from 'lodash';
 
-import {SqlTableFilter, setSqlFilter} from './FilterEditor.jsx';
+import {setSqlFilter, SqlTableFilter} from './FilterEditor.jsx';
 import {InputField} from '../../ui/InputField.jsx';
 import {intValidator} from '../../util/Validate.js';
-import {getTableUiById, isClientTable} from '../TableUtil.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {dispatchTableAddLocal, dispatchTableRemove, TABLE_SELECT, dispatchTableFilter} from '../TablesCntlr.js';
-import {COL_TYPE,  getTblById, isOfType, parsePrecision, getColumnValues, watchTableChanges, getFilterCount, getColumn} from '../TableUtil.js';
+import {dispatchTableAddLocal, dispatchTableFilter, dispatchTableRemove, TABLE_SELECT} from '../TablesCntlr.js';
+import {COL_TYPE, getColumn, getColumnValues, getFilterCount, getSqlFilter, getTableUiById,
+        getTblById, isClientTable, isOfType, parsePrecision, watchTableChanges} from '../TableUtil.js';
 import {TablePanel} from './TablePanel';
 import {FILTER_CONDITION_TTIPS, FilterInfo} from '../FilterInfo';
 import {inputColumnRenderer} from './TableRenderer.js';
@@ -20,14 +20,15 @@ import {dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {POPUP_DIALOG_ID} from '../../ui/PopupUtil.jsx';
 import {StatefulTabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {SelectInfo} from '../SelectInfo.js';
-import {getSqlFilter} from '../TableUtil';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
+import {getTblPrefKey} from '../TablePref.js';
 
-export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOptionReset}) => {
+export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOptionReset, clearFilter}) => {
 
     const uiState = useStoreConnector(() => getTableUiById(tbl_ui_id));
     const ctm_tbl_id = `${tbl_ui_id}-columnOptions`;
     const showAdvFilter = !isClientTable(tbl_id);
+    const showTblPrefMsg = getTblPrefKey(tbl_ui_id);
 
     const {sql=''} = getSqlFilter(tbl_id);
     const advFilterName = 'Advanced Filter';
@@ -50,12 +51,18 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
     const onReset = () => {
         if (onOptionReset) {
             onOptionReset();
-            const ctm = createColumnTableModel(tbl_id, tbl_ui_id);
-            ctm.tbl_id = ctm_tbl_id;
-            dispatchTableAddLocal(ctm, undefined, false);
+            createColumnTableModel(tbl_id, tbl_ui_id, ctm_tbl_id);
+        }
+    };
+
+    const onRemoveFilters = () => {
+        if (clearFilter) {
+            clearFilter();
+            createColumnTableModel(tbl_id, tbl_ui_id, ctm_tbl_id);
             setSqlFilter('', '');
         }
     };
+
 
     const onClose = () => {
         dispatchHideDialog(POPUP_DIALOG_ID);
@@ -79,9 +86,13 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
                     </Tab>
                 }
             </StatefulTabs>
+            {showTblPrefMsg && <TablePrefMsg/>}
             <div style={{margin: '5px 15px 0 0'}}>
                 <button type='button' className='button std' style={{marginRight: 5}}
-                        onClick={onReset}>Reset
+                        onClick={onReset}>Reset column selection
+                </button>
+                <button type='button' className='button std' style={{marginRight: 5}}
+                        onClick={onRemoveFilters}>Remove all filters
                 </button>
                 <button type='button' className='button std'
                         onClick={onClose}>Close
@@ -96,7 +107,8 @@ TablePanelOptions.propTypes = {
     tbl_ui_id: PropTypes.string,
     tbl_id: PropTypes.string,
     onChange: PropTypes.func,
-    onOptionReset: PropTypes.func
+    onOptionReset: PropTypes.func,
+    clearFilter: PropTypes.func
 };
 
 function OptionsFilterStats({tbl_id}) {
@@ -187,14 +199,13 @@ const typeIdx = 4;
 export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChange}) => {
 
     const columns =  useStoreConnector( () => getTableUiById(tbl_ui_id)?.columns || []);
+    const ckey = columns?.map((c) => c.name).join('|');
 
     useEffect(() => {
         if (!isEmpty(columns)) {
-            const ctm = createColumnTableModel(tbl_id, tbl_ui_id);
-            ctm.tbl_id = ctm_tbl_id;
-            dispatchTableAddLocal(ctm, undefined, false);
+            createColumnTableModel(tbl_id, tbl_ui_id, ctm_tbl_id);
         }
-    }, [columns]);
+    }, [ckey]);
 
     useEffect(() => {
         watchTableChanges(ctm_tbl_id, [TABLE_SELECT], ({payload}) => {
@@ -244,7 +255,16 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
     );
 });
 
-function createColumnTableModel(tbl_id, tbl_ui_id) {
+function TablePrefMsg() {
+
+    return (
+        <div className='TablePanelOptions__pref'>
+            Column selection will apply to future searches of this table.
+        </div>
+    );
+}
+
+function createColumnTableModel(tbl_id, tbl_ui_id, ctm_tbl_id) {
     const filterInfoCls = FilterInfo.parse(get(getTblById(tbl_id), 'request.filters'));
     const data =  get(getTableUiById(tbl_ui_id), 'columns', [])
         .filter((c) => c.visibility !== 'hidden')
@@ -276,7 +296,9 @@ function createColumnTableModel(tbl_id, tbl_ui_id) {
             getColumn(ctm, cname).visibility = 'hidden';
         }
     });
-    return ctm;
+
+    ctm.tbl_id = ctm_tbl_id;
+    dispatchTableAddLocal(ctm, undefined, false);
 }
 
 

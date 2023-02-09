@@ -404,7 +404,7 @@ export function getFilterCount(tableModel) {
 
 export function clearFilters(tableModel) {
     const {request, tbl_id} = tableModel || {};
-    if (request && request.filters) {
+    if (request && (request.filters || request.sqlFilters)) {
         TblCntlr.dispatchTableFilter({tbl_id, filters: '', sqlFilters: ''});
     }
 }

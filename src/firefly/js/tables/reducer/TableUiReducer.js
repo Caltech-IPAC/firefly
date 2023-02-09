@@ -9,6 +9,7 @@ import * as Cntlr from '../TablesCntlr.js';
 import {getTblInfo, isTableLoaded, smartMerge, getAllColumns} from '../TableUtil.js';
 import {getNumFilters} from '../FilterInfo.js';
 import {makeDefaultRenderer} from '../ui/TableRenderer.js';
+import {applyTblPref} from '../TablePref.js';
 
 
 /*---------------------------- REDUCERS -----------------------------*/
@@ -44,7 +45,7 @@ function handleTableUpdates(root, action, state) {
         case (Cntlr.TABLE_LOADED) :
         case (Cntlr.TABLE_HIGHLIGHT)  :
             // state is in-progress(fresh) data.. use it to reduce ui state.
-            return uiStateReducer(root, get(state, ['data', tbl_id]));
+            return uiStateReducer(root, get(state, ['data', tbl_id]), action.type);
         default:
             return root;
     }
@@ -55,8 +56,10 @@ function handleUiUpdates(root, action, state) {
     const {tbl_ui_id, tbl_id} = action.payload;
     switch (action.type) {
         case (Cntlr.TBL_UI_UPDATE)    :
-            const changes = onUiUpdate(action.payload);
-            return updateMerge(root, [tbl_ui_id], {triggeredBy: action.type, ...changes});
+            const changes = onUiUpdate(omit(action.payload, 'options'));
+            let ui = updateMerge(root, [tbl_ui_id], {triggeredBy: action.type, ...changes});
+            if (action.payload.options)  ui = updateMerge(ui, [tbl_ui_id, 'options'], action.payload.options);
+            return ui;
 
         case (Cntlr.TBL_UI_EXPANDED) :
             const tbl_group = findKey(get(state, 'results'), (o) =>  has(o, ['tables', tbl_id]));
@@ -80,7 +83,7 @@ function removeTable(root, action) {
     return root;
 }
 
-function uiStateReducer(ui, tableModel) {
+function uiStateReducer(ui, tableModel, action) {
     // if (!get(tableModel, 'tableData')) return ui;
     const {startIdx, endIdx, tbl_id, request, ...others} = getTblInfo(tableModel);
     const {sortInfo, filters:filterInfo, sqlFilter} = request || {};
@@ -106,6 +109,8 @@ function uiStateReducer(ui, tableModel) {
         }
         uiData.columns = ensureColumns({tableModel, columns});
 
+        if (action === Cntlr.TABLE_LOADED) applyTblPref(tbl_ui_id, uiData);
+
         if (!isEmpty(columns) && get(tableModel, 'tableData.columns') && !hasSameCnames(tableModel, columns)) {
             uiData.columnWidths = undefined;
         }
@@ -123,10 +128,11 @@ function onUiUpdate(uiData) {
 }
 
 function ensureColumns({tableModel, columns}) {
+    const origCols = cloneDeep(get(tableModel, 'tableData.columns', []));
     if (isEmpty(columns) || !hasSameCnames(tableModel, columns)) {
-        return cloneDeep(get(tableModel, 'tableData.columns', []));
+        return origCols;
     } else {
-        return smartMerge(get(tableModel, 'tableData.columns', []), columns);
+        return smartMerge(origCols, columns);
     }
 }
 
