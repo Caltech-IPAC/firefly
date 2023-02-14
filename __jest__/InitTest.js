@@ -30,6 +30,25 @@ jest.mock('firefly/util/BrowserInfo.js', () => {
     };
 });
 
+jest.mock('firefly/core/background/BackgroundMonitor.jsx', () => {
+    return {
+        showBackgroundMonitor: () => '',
+    };
+});
+
+jest.mock('firefly/core/LayoutCntlr.js', () => {
+    return {
+        CHART_ADD: 'CHART_ADD', CHART_REMOVE: 'CHART_REMOVE', CHART_SPACE_PAT:'CHART_SPACE_PAT'
+    };
+});
+
+jest.mock('firefly/ui/UploadTableChooser.js', () => {
+    return {
+        showUploadTableChooser: () => '',
+    };
+});
+
+
 jest.mock('firefly/ui/ExampleDialog.jsx', () => {
     return {
         showExampleDialog: () => '',
