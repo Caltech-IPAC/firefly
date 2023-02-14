@@ -20,6 +20,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.xml.crypto.Data;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayOutputStream;
@@ -42,14 +43,23 @@ import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase;
 @SearchProcessorImpl(id = UwsJobProcessor.ID, params = {
         @ParamDoc(name = UwsJobProcessor.JOB_URL, desc = "URL of a submitted UWS job")
 })
-public abstract class UwsJobProcessor extends EmbeddedDbProcessor {
+public class UwsJobProcessor extends EmbeddedDbProcessor {
     public static final String ID = "UwsJob";
     public static final String JOB_URL = "jobUrl";
 
     private static final Logger.LoggerImpl logger = Logger.getLogger();
     private String jobUrl;
 
-    abstract HttpServiceInput createInput(TableServerRequest request) throws DataAccessException;
+    /**
+     * override this method to be able to create a HttpServiceInput object
+     * @param request request info needed to create HttpServiceInput object
+     * @return HttpServiceInput object or null
+     * @throws DataAccessException
+     */
+     HttpServiceInput createInput(TableServerRequest request) throws DataAccessException {
+        return null;
+     }
+
 
     public Job.Type getType() { return Job.Type.UWS; }
 
@@ -106,6 +116,7 @@ public abstract class UwsJobProcessor extends EmbeddedDbProcessor {
      */
     String submitJob(TableServerRequest req) throws DataAccessException {
         HttpServiceInput input = createInput(req);
+        if (input == null) throw new DataAccessException("createInput returned null");
         final Ref<String> jobUrl = new Ref<>();
         input.setFollowRedirect(false);         // ensure redirect is off, although this is handled by HttpServices already.
         HttpServices.Status status = HttpServices.postData(input, (method) -> {

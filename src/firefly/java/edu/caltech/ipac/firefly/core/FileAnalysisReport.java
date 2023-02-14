@@ -25,7 +25,7 @@ public class FileAnalysisReport {
         Normal,             // a report with all parts populated, but not details
         Details}            // a full report with details
 
-    public enum Type {Image, Table, Spectrum, HeaderOnly, PDF, TAR, REGION, PNG, ErrorResponse, LoadInBrowser, Unknown}
+    public enum Type {Image, Table, Spectrum, HeaderOnly, PDF, TAR, REGION, PNG, ErrorResponse, LoadInBrowser, UWS, Unknown}
     public enum UIRender {Table, Chart, Image, NotSpecified}
     public enum UIEntry {UseSpecified, UseGuess, UseAll}
     public enum ChartTableDefOption {auto, showChart, showTable, showImage};
@@ -182,7 +182,8 @@ public class FileAnalysisReport {
     public static class Part {
         private final Type type;
         private UIRender uiRender=UIRender.NotSpecified;
-        private UIEntry uiEntry= UIEntry.UseAll;;
+        private UIEntry uiEntry= UIEntry.UseAll;
+        private String url; //this is only used by UWS for now
         private int index= 0;
         private String desc;
         private int fileLocationIndex = -1;   // todo: populate: fits (hdu idx) or VO (table idx)
@@ -263,6 +264,9 @@ public class FileAnalysisReport {
         public UIEntry getUiEntry() { return uiEntry; }
         public void setUiEntry(UIEntry uiEntry) { this.uiEntry = uiEntry; }
 
+        public String getUrl() { return url; }
+        public void setUrl(String url) { this.url = url; }
+
         public ChartTableDefOption getChartTableDefOption() { return chartTableDefOption; }
         public void setChartTableDefOption(ChartTableDefOption chartTableDefOption) {
             this.chartTableDefOption = chartTableDefOption;
@@ -273,6 +277,7 @@ public class FileAnalysisReport {
             p.details= details;
             p.uiRender= uiRender;
             p.uiEntry= uiEntry;
+            p.url = url;
             p.index= index;
             p.fileLocationIndex = fileLocationIndex;
             p.convertedFileName= convertedFileName;

@@ -88,6 +88,9 @@ public class FileAnalysis {
             case PDF:
                 report =  analyzePDF(infile, mtype);
                 break;
+            case UWS:
+                report =  analyzeUWS(infile, mtype, params);
+                break;
             case TAR:
                 report =  analyzeTAR(infile, mtype);
                 break;
@@ -145,6 +148,7 @@ public class FileAnalysis {
                 putPartVal(h, p.getUiRender().name(), i, "uiRender");
 
                 putPartVal(h, p.getDesc(), i, "desc");
+                putPartVal(h, p.getUrl(), i, "url");
                 putPartVal(h, p.getConvertedFileName(),i,"convertedFileName");
                 putPartVal(h, p.getConvertedFileFormat(),i,"convertedFileFormat");
                 putPartVal(h, p.getTableColumnNames(),i,"tableColumnNames");
@@ -197,6 +201,14 @@ public class FileAnalysis {
     public static FileAnalysisReport analyzePDF(File infile, FileAnalysisReport.ReportType type) {
         FileAnalysisReport report = new FileAnalysisReport(type, TableUtil.Format.PDF.name(), infile.length(), infile.getPath());
         report.addPart(new FileAnalysisReport.Part(FileAnalysisReport.Type.PDF, "PDF File"));
+        return report;
+    }
+
+    public static FileAnalysisReport analyzeUWS(File infile, FileAnalysisReport.ReportType type, Map<String, String> params) {
+        FileAnalysisReport report = new FileAnalysisReport(type, TableUtil.Format.UWS.name(), infile.length(), infile.getPath());
+        FileAnalysisReport.Part part= new FileAnalysisReport.Part(FileAnalysisReport.Type.UWS, "UWS Job File");
+        part.setUrl(params.get("URL")); //make URL accessible on client side
+        report.addPart(part);
         return report;
     }
 
