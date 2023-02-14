@@ -393,7 +393,11 @@ function getDetailsModel(tableModel, report, detailsTblId, UNKNOWN_FORMAT) {
     const type = getCellValue(tableModel, highlightedRow, 'Type');
     if (type===UNKNOWN_FORMAT) return undefined;
     const details = report?.parts?.[partNum]?.details;
-    if (details) details.tbl_id = detailsTblId;
+    const rowCnt= report?.parts?.[partNum]?.totalTableRows ?? 0;
+    if (details) {
+        details.tbl_id = detailsTblId;
+        details.tableMeta= {...details?.tableMeta, TOTAL_TABLE_ROWS:rowCnt};
+    }
     return details;
 }
 

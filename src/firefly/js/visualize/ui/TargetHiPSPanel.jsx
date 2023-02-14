@@ -76,14 +76,14 @@ export function VisualPolygonPanel({label, initValue, tooltip, fieldKey, style,
     );
 }
 
-export function VisualTargetPanel({fieldKey, labelWidth= 100, label, labelStyle,
+export function VisualTargetPanel({fieldKey, labelWidth= 100, label, labelStyle, feedbackStyle,
                                       targetPanelExampleRow1, targetPanelExampleRow2, ...restOfProps}) {
     const popupButton= (
         <div style={{paddingRight: 2}}>
             <HiPSPanelPopupButton {...{targetKey:fieldKey, whichOverlay:CONE_CHOICE_KEY, ...restOfProps}} />
         </div>
     );
-    return ( <TargetPanel {...{fieldKey, button:popupButton, labelStyle, labelWidth, label,
+    return ( <TargetPanel {...{fieldKey, button:popupButton, labelStyle, labelWidth, label, feedbackStyle,
         targetPanelExampleRow1, targetPanelExampleRow2}}/> );
 }
 

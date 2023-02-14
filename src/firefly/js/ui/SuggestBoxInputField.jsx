@@ -2,6 +2,9 @@ import React, {memo, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import {get, isArray, isUndefined, debounce} from 'lodash';
+import {dispatchHideDialog, dispatchShowDialog, isDialogVisible} from '../core/ComponentCntlr.js';
+import DialogRootContainer from './DialogRootContainer.jsx';
+import {DropDownMenuWrapper} from './DropDownMenu.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {logger} from '../util/Logger.js';
 
@@ -97,6 +100,33 @@ const SuggestBox = (props) => {
     );
 };
 
+function computeDropdownXY(element) {
+    const bodyRect = document.body.parentElement.getBoundingClientRect();
+    const elemRect = element.getBoundingClientRect();
+    const x = elemRect.left - bodyRect.left;
+    const y = elemRect.bottom -10;
+    return {x,y};
+}
+
+const dropKey= 'suggestion-box-drop';
+
+function showDrop(entryElement,dropDown, offComponentCB) {
+
+    const beforeVisible= (e) =>{
+        if (!e) return;
+        const {x,y}= computeDropdownXY(entryElement);
+        e.style.left= x+'px';
+        e.style.top= y+'px';
+    };
+    const dd= <DropDownMenuWrapper x={0} y={0} content={dropDown} beforeVisible={beforeVisible}/>;
+    DialogRootContainer.defineDialog(dropKey,dd);
+    dispatchShowDialog(dropKey);
+    document.removeEventListener('mousedown', offComponentCB);
+    setTimeout(() => {
+        document.addEventListener('mousedown', offComponentCB);
+    },10);
+}
+
 export class SuggestBoxInputFieldView extends PureComponent {
     constructor(props) {
         super(props);
@@ -116,6 +146,7 @@ export class SuggestBoxInputFieldView extends PureComponent {
         this.changeHighlighted = this.changeHighlighted.bind(this);
         this.handleKeyPress = this.handleKeyPress.bind(this);
         this.updateSuggestions = debounce(this.updateSuggestions.bind(this), 200);
+        this.offComponentCallback= this.offComponentCallback.bind(this);
     }
 
 
@@ -135,6 +166,18 @@ export class SuggestBoxInputFieldView extends PureComponent {
         this.setState({displayValue, valid, message, inputWidth});
         this.updateSuggestions(displayValue);
         this.props.fireValueChange({ value : displayValue, message, valid});
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener('mousedown', this.offComponentCallback);// just in case
+        setTimeout(() => {
+            if (isDialogVisible(dropKey)) dispatchHideDialog(dropKey);
+        },5);
+    }
+
+    offComponentCallback(ev) {
+        this.setState({isOpen: false, highlightedIdx: undefined});
+        document.removeEventListener('mousedown', this.offComponentCallback);// just in case
     }
 
     updateSuggestions(displayValue) {
@@ -192,6 +235,7 @@ export class SuggestBoxInputFieldView extends PureComponent {
 
     handleKeyPress(ev) {
         const {isOpen, highlightedIdx, suggestions} = this.state;
+        this.divElement= ev.target;
 
         switch (ev.keyCode) {
             case 13: // enter
@@ -216,12 +260,32 @@ export class SuggestBoxInputFieldView extends PureComponent {
     render() {
 
         const {displayValue, valid, message, highlightedIdx, isOpen, inputWidth, suggestions, mouseTrigger } = this.state;
-        var {label, labelWidth, tooltip, inline, renderSuggestion, wrapperStyle, popStyle, popupIndex, inputStyle, readonly=false, required=false} = this.props;
+        const {label, labelWidth, tooltip, inline, renderSuggestion, wrapperStyle, popStyle, popupIndex, inputStyle, readonly=false, required=false} = this.props;
 
-        const leftOffset = (labelWidth?labelWidth:0)+4;
+        const leftOffset = 0;
         const minWidth = (inputWidth?inputWidth-4:50);
         const style = Object.assign({display: inline?'inline-block':'block'}, wrapperStyle);
         const pStyle = Object.assign({left: leftOffset, minWidth, zIndex: popupIndex}, popStyle);
+
+        if (isOpen) {
+            const box= (
+                <div className={'SuggestBoxPopup'} style={pStyle} onMouseLeave={() => this.setState({highlightedIdx : undefined})}>
+                    <SuggestBox
+                        suggestions={suggestions}
+                        highlightedIdx={highlightedIdx}
+                        renderSuggestion={renderSuggestion || ((suggestion) => <span>{suggestion}</span>)}
+                        onChange={this.changeHighlighted.bind(this, true)}
+                        onComplete={this.changeValue}
+                        mouseTrigger={mouseTrigger}
+                    />
+                </div>);
+            setTimeout(() => {
+                showDrop(this.divElement,box,this.offComponentCallback);
+            },5);
+        }
+        else {
+            setTimeout(() => dispatchHideDialog(dropKey),5);
+        }
 
         return (
             <div className={'SuggestBoxInputField'} style={style} onKeyDown={this.handleKeyPress}>
@@ -229,7 +293,10 @@ export class SuggestBoxInputFieldView extends PureComponent {
                     <InputFieldView
                         valid={Boolean(valid)}
                         onChange={this.onValueChange}
-                        onBlur={() => {isOpen && this.changeValue(undefined);}}
+                        onBlur={
+                        () => {
+                            isOpen && this.changeValue(undefined);
+                        }}
                         value={displayValue}
                         message={message}
                         label={label}
@@ -240,17 +307,6 @@ export class SuggestBoxInputFieldView extends PureComponent {
                         required={required}
                     />
                 </div>
-
-                {isOpen && <div className={'SuggestBoxPopup'} style={pStyle} onMouseLeave={() => this.setState({highlightedIdx : undefined})}>
-                    <SuggestBox
-                        suggestions={suggestions}
-                        highlightedIdx={highlightedIdx}
-                        renderSuggestion={renderSuggestion || ((suggestion) => <span>{suggestion}</span>)}
-                        onChange={this.changeHighlighted.bind(this, true)}
-                        onComplete={this.changeValue}
-                        mouseTrigger={mouseTrigger}
-                    />
-                </div>}
             </div>
         );
     }

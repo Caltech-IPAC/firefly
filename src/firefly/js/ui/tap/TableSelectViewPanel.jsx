@@ -12,7 +12,11 @@ import {NameSelect} from './Select.jsx';
 import {TableColumnsConstraints, TableColumnsConstraintsToolbar} from './TableColumnsConstraints.jsx';
 import {SpatialPanelWidth} from './TableSearchHelpers.jsx';
 import {TableSearchMethods} from './TableSearchMethods.jsx';
-import { defTapBrowserState, loadTapColumns, loadTapSchemas, loadTapTables, tapHelpId, } from './TapUtil.js';
+import {
+    defTapBrowserState, getLoadedCapability, isCapabilityLoaded, loadTapCapabilities, loadTapColumns, loadTapSchemas,
+    loadTapTables,
+    tapHelpId,
+} from './TapUtil.js';
 
 import './TableSelectViewPanel.css';
 
@@ -25,17 +29,28 @@ export const SectionTitle= ({title,helpId,tip}) => (
     <div className='TapSearch__section--title' title={tip}>{title}<HelpIcon helpId={tapHelpId(helpId)}/></div>);
 
 export function AdqlUI({serviceUrl}) {
+    const [,setCapabilitiesChange] = useState(); // this is just to force a rerender
+    const capabilities= getLoadedCapability(serviceUrl);
+    useEffect(() => {
+        !isCapabilityLoaded(serviceUrl) && loadTapCapabilities(serviceUrl).then((c) => setCapabilitiesChange(c??{}));
+    }, [serviceUrl]);
+
     return (
         <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
             <div style={{ display: 'inline-flex', alignItems: 'center'}}>
                 <div className='TapSearch__section--title'>3. Advanced ADQL  <HelpIcon helpId={tapHelpId('adql')}/> </div>
                 <div style={{color: 'brown', fontSize: 'larger'}}>ADQL edits below will not be reflected in <b>Single Table</b> view</div>
             </div>
-            <div className='expandable'>
-                <div style={{flexGrow: 1}}>
-                    <AdvancedADQL adqlKey='adqlQuery' defAdqlKey='defAdqlKey' tblNameKey='tableName' serviceUrl={serviceUrl}/>
+
+            {(capabilities) ?
+                <div className='expandable'>
+                    <div style={{flexGrow: 1}}>
+                        <AdvancedADQL adqlKey='adqlQuery' defAdqlKey='defAdqlKey' tblNameKey='tableName'
+                                      serviceUrl={serviceUrl} capabilities={capabilities}/>
+                    </div>
                 </div>
-            </div>
+                : <div className='loading-mask'/>
+            }
         </div>
     );
 }
@@ -51,10 +66,9 @@ function useStateRef(initialState){
 }
 
 export function BasicUI(props) {
-    const {initArgs={}}= props;
+    const {initArgs={}, selectBy, obsCoreTableModel}= props;
     const {urlApi={},searchParams={}}= initArgs;
     const [getTapBrowserState,setTapBrowserState]= useFieldGroupMetaState(defTapBrowserState);
-    const {selectBy, obsCoreTableModel}= props;
     const initState = getTapBrowserState();
     const [error, setError] = useState(undefined);
     const mountedRef = useRef(false);
@@ -64,16 +78,22 @@ export function BasicUI(props) {
     const [schemaName, schemaRef, setSchemaName] = useStateRef(searchParams.schema || initState.schemaName || urlApi.schema);
     const [tableName, tableRef, setTableName] = useStateRef(searchParams.table || initState.tableName || urlApi.table);
     const [obsCoreEnabled, setObsCoreEnabled] = useState(initState.obsCoreEnabled || initArgs.urlApi?.selectBy === 'obscore');
+    const [,setCapabilitiesChange] = useState(); // this is just to force a rerender
     const [schemaOptions, setSchemaOptions] = useState();
     const [tableOptions, setTableOptions] = useState();
     const [columnsModel, setColumnsModel] = useState();
 
+    const capabilities= getLoadedCapability(serviceUrl);
+
+    useEffect(() => {
+        !isCapabilityLoaded(serviceUrl) && loadTapCapabilities(serviceUrl).then((c) => setCapabilitiesChange(c??{}));
+    }, [serviceUrl]);
 
     const obsCoreSelected = selectBy === 'obscore';
     const tableSectionNumber = !obsCoreSelected ? '4' : '3';
 
-    const splitDef = SpatialPanelWidth+80;
-    const splitMax = SpatialPanelWidth+80;
+    const splitDef = SpatialPanelWidth+10;
+    const splitMax = SpatialPanelWidth+10;
 
     const loadSchemas = (requestServiceUrl, requestSchemaName=undefined) => {
         setError(undefined);
@@ -261,8 +281,8 @@ export function BasicUI(props) {
                 <div className='expandable'>
                     <SplitPane split='vertical' maxSize={splitMax} mixSize={20} defaultSize={splitDef}>
                         <SplitContent>
-                            {columnsModel ?
-                                <TableSearchMethods {...{initArgs, serviceUrl, serviceLabel, columnsModel, obsCoreEnabled}}/>
+                            {(capabilities && columnsModel) ?
+                                <TableSearchMethods {...{initArgs, serviceUrl, serviceLabel, columnsModel, obsCoreEnabled, capabilities}}/>
                                 : <div className='loading-mask'/>
                             }
                         </SplitContent>

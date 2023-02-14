@@ -30,6 +30,7 @@ import edu.caltech.ipac.firefly.core.background.ServCmdJob;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 
 import static edu.caltech.ipac.firefly.data.ServerParams.EMAIL;
@@ -246,6 +247,47 @@ public class SearchServerCommands {
             return url;
         }
     }
+
+
+    public static class GetCapabilities extends ServCommand {
+        public String doCommand(SrvParam params) throws Exception {
+            String urlStr = params.getRequired(ServerParams.URL);
+            URL url= new URL(urlStr);
+            JSONObject map = new JSONObject();
+            VosiCapabilityRetrieve.Capabilities vosiC= VosiCapabilityRetrieve.getCapabilities(url);
+            if (vosiC==null) {
+                map.put("success", false);
+                return map.toJSONString();
+            }
+            VosiCapabilityRetrieve.TapCapability c= vosiC.tapCapability();
+            JSONObject tapCapJson = new JSONObject();
+            tapCapJson.put("canUpload", c.canUpload());
+            tapCapJson.put("canUsePoint", c.canUsePoint());
+            tapCapJson.put("canUseCircle", c.canUseCircle());
+            tapCapJson.put("canUseBox", c.canUseBox());
+            tapCapJson.put("canUsePolygon", c.canUsePolygon());
+            tapCapJson.put("canUseRegion", c.canUseRegion());
+            tapCapJson.put("canUseContains", c.canUseContains());
+            tapCapJson.put("canUseIntersects", c.canUseIntersects());
+            tapCapJson.put("canUseArea", c.canUseArea());
+            tapCapJson.put("canUseCentroid", c.canUseCentroid());
+            tapCapJson.put("canUseCoord1", c.canUseCoord1());
+            tapCapJson.put("canUseCoord2", c.canUseCoord2());
+            tapCapJson.put("canUseCoordSys", c.canUseCoordSys());
+            tapCapJson.put("canUseDistance", c.canUseDistance());
+            tapCapJson.put("foundGeoLanguageFeatures", c.foundGeoLanguageFeatures());
+            
+            JSONObject capJson = new JSONObject();
+            capJson.put("tapCapability", tapCapJson);
+            map.put("success", true);
+            map.put("data", capJson);
+            return map.toJSONString();
+        }
+    }
+
+
+
+
 
 }
 

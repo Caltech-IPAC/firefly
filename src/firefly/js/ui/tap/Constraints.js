@@ -3,6 +3,33 @@ import React from 'react';
 
 export const ConstraintContext = React.createContext({});
 
+export function isTapUpload(tapBrowserState) {
+    const {constraintFragments}= tapBrowserState;
+    return [...constraintFragments.values()]
+        .some( (c) => Boolean(c.uploadFile && c.TAP_UPLOAD && c.adqlConstraint));
+}
+
+/**
+ *
+ * @param tapBrowserState
+ * @returns {ConstraintResult}
+ */
+export function getUploadConstraint(tapBrowserState) {
+    const {constraintFragments}= tapBrowserState;
+    return [...constraintFragments.values()].find( (c) => Boolean(c.uploadFile && c.TAP_UPLOAD && c.adqlConstraint));
+}
+
+export function getTapUploadSchemaEntry(tapBrowserState) {
+    const c= getUploadConstraint(tapBrowserState);
+    if (!c) return {};
+    return c.TAP_UPLOAD[c.uploadFile];
+}
+
+export const getUploadServerFile= (tapBrowserState) => getTapUploadSchemaEntry(tapBrowserState).serverFile;
+
+export const getUploadTableName= (tapBrowserState) => getTapUploadSchemaEntry(tapBrowserState).table;
+
+
 
 /**
  *

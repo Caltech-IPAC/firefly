@@ -10,7 +10,7 @@ import {ObsCoreWavelengthSearch} from './WavelengthPanel.jsx';
 
 const TAP_SEARCH_METHODS_GROUP= 'TAP_SEARCH_METHODS_GROUP';
 
-export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serviceUrl, serviceLabel}) => {
+export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serviceUrl, serviceLabel, capabilities}) => {
 
     const [controlConnected, setControlConnected] = useState(false);
 
@@ -18,25 +18,25 @@ export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serv
         <ConnectionCtx.Provider value={{controlConnected, setControlConnected}}>
             <FieldGroup style={{height: '100%', overflow: 'auto'}} groupKey={TAP_SEARCH_METHODS_GROUP} keepState={true}>
                 <HelperComponents {...{initArgs,cols:getAvailableColumns(columnsModel),
-                    columnsModel,serviceUrl,serviceLabel,obsCoreEnabled}}/>
+                    columnsModel,serviceUrl,serviceLabel,obsCoreEnabled,capabilities}}/>
             </FieldGroup>
         </ConnectionCtx.Provider>
     );
 };
 
-function HelperComponents({initArgs, cols, columnsModel, serviceUrl, serviceLabel, obsCoreEnabled}) {
+function HelperComponents({initArgs, cols, columnsModel, serviceUrl, serviceLabel, obsCoreEnabled, capabilities}) {
     return obsCoreEnabled ?
         (
             <React.Fragment>
                 <ObsCoreSearch {...{cols, serviceLabel, initArgs}} />
-                <SpatialSearch {...{cols, serviceUrl, columnsModel, initArgs, obsCoreEnabled}} />
+                <SpatialSearch {...{cols, serviceUrl, columnsModel, initArgs, obsCoreEnabled, capabilities}} />
                 <ExposureDurationSearch {...{initArgs}} />
                 <ObsCoreWavelengthSearch {...{initArgs, serviceLabel}} />
             </React.Fragment>
         ) :
         (
             <React.Fragment>
-                <SpatialSearch {...{cols, serviceUrl, columnsModel, initArgs, obsCoreEnabled}} />
+                <SpatialSearch {...{cols, serviceUrl, columnsModel, initArgs, obsCoreEnabled, capabilities}} />
                 <TemporalSearch {...{cols, columnsModel,}} />
             </React.Fragment>
         );

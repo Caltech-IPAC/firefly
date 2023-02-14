@@ -13,8 +13,8 @@ export const HeaderFont = {fontSize: 12, fontWeight: 'bold', alignItems: 'center
 // Style Helpers
 export const LeftInSearch = 24;
 export const LabelWidth = 110;
-export const LableSaptail = 110;
-export const SpatialWidth = 440;
+export const LableSaptail = 65;
+export const SpatialWidth = 520;
 export const Width_Column = 175;
 export const SmallFloatNumericWidth = 12;
 export const Width_Time_Wrapper = Width_Column + 30;
@@ -69,13 +69,15 @@ export function makePanelStatusUpdater(panelActive,panelTitle,defErrorMessage) {
      * @String string - panel message
      */
     return (constraints, lastConstraintResult, setConstraintResult) => {
-        const {valid:constraintsValid,errAry, adqlConstraintsAry, siaConstraints, siaConstraintErrors}= constraints;
+        const {valid:constraintsValid,errAry, adqlConstraintsAry, siaConstraints, siaConstraintErrors,
+            uploadFile, TAP_UPLOAD }= constraints;
 
         const simpleError= constraintsValid ? '' : (errAry[0]|| defErrorMessage || '');
 
         const {adqlConstraint, adqlConstraintErrors}=
             getPanelAdqlConstraint(panelActive,panelTitle, constraintsValid,adqlConstraintsAry,errAry[0], defErrorMessage);
-        const cr = { adqlConstraint, adqlConstraintErrors, siaConstraints, siaConstraintErrors, simpleError};
+        const cr = { adqlConstraint, adqlConstraintErrors, siaConstraints, siaConstraintErrors, simpleError,
+            uploadFile, TAP_UPLOAD};
         if (constrainResultDiffer(cr, lastConstraintResult)) setConstraintResult(cr);
 
         return simpleError;
@@ -88,7 +90,13 @@ function constrainResultDiffer(c1, c2) {
         (c1.simpleError!==c2.simpleError) ||
         !isEqual(c1.adqlConstraintErrors, c2.adqlConstraintErrors) ||
         !isEqual(c1.siaConstraints, c2.siaConstraints) ||
-        !isEqual(c1.siaConstraintErrors, c2.siaConstraintErrors));
+        !isEqual(c1.siaConstraintErrors, c2.siaConstraintErrors) ||
+        c1.upload!==c2.upload ||
+        c1.uploadFrom!==c2.uploadFrom ||
+        c1.serverFile!==c2.serverFile ||
+        c1.uploadFileName!==c2.uploadFileName||
+        !isEqual(c1.uploadColumns, c2.uploadColumns)
+    );
 }
 
 
@@ -229,5 +237,8 @@ export function DebugObsCore({constraintResult, includeSia=false}) {
  * @props {Array.<String>} siaConstraints
  * @props {Array.<String>} siaConstraintErrors
  * @prop {String} simpleError
- *
+ * @prop {boolean } upload
+ * @prop {Array.<String>} uploadColumns
+ * @prop {Object} TAP_UPLOAD
+ * @prop {String} uploadFile
  */

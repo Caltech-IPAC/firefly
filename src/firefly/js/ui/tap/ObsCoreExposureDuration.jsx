@@ -9,7 +9,7 @@ import {ValidationField} from '../ValidationField.jsx';
 import {ConstraintContext, makeAdqlQueryRangeFragment, siaQueryRange} from './Constraints.js';
 import {TimeRangePanel} from './TimeRangePanel.jsx';
 import {
-    DebugObsCore, getPanelPrefix, LableSaptail, LeftInSearch, makeCollapsibleCheckHeader, makeFieldErrorList,
+    DebugObsCore, getPanelPrefix, LeftInSearch, makeCollapsibleCheckHeader, makeFieldErrorList,
     makePanelStatusUpdater,
     SmallFloatNumericWidth
 } from './TableSearchHelpers.jsx';
@@ -17,6 +17,7 @@ import {tapHelpId} from './TapUtil.js';
 
 const START_EXP_GREATER_MSG= 'exposure time max must be greater than time min';
 const ONE_POPULATED= 'at least one field must be populated';
+const labelWidth= 105;
 
 const panelTitle = 'Timing';
 const panelValue = 'Exposure';
@@ -145,7 +146,7 @@ export function ExposureDurationSearch({initArgs}) {
                     <div style={{display: 'block', marginTop: '5px'}}>
                         <ListBoxInputField
                             {...{fieldKey:'exposureRangeType', options: exposureRangeOptions, alignment:'horizontal',
-                                label:'Time of Observation:', labelWidth: LableSaptail,
+                                label:'Time of Observation:', labelWidth,
                                 initialState:{value: initArgs?.urlApi?.exposureRangeType || 'since'} }} />
                         <div>
                             {isRange ?
@@ -181,7 +182,7 @@ function ExposureSince({initArgs, turnOnPanel}) {
                 inputStyle={{overflow: 'auto', height: 16}}
                 validator={() => ({valid: true, message: '' })}
                 wrapperStyle={{
-                    marginLeft: LableSaptail,
+                    marginLeft: labelWidth,
                     paddingLeft: 4 /* Extra padding because there's no label */,
                     paddingBottom: 5
                 }}
@@ -230,7 +231,7 @@ function ExposureLength({initArgs, panelActive, turnOnPanel}) {
                 inputStyle={inputStyle}
                 label='Exposure Duration:'
                 tooltip='Cumulative shutter-open exposure duration in seconds'
-                labelWidth={LableSaptail}
+                labelWidth={labelWidth}
                 validator={minimumPositiveFloatValidator('Minimum Exposure Length')}
                 placeholder='-Inf'
                 initialState={{value: initArgs?.urlApi?.exposureLengthMin}}/>
