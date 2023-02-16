@@ -180,8 +180,8 @@ export function dispatchTableAddLocal(tableModel, options, addUI=true, dispatche
 /**
  * Fetch table data from the server.
  * @param request a table request params object.
- * @param hlRowIdx set the highlightedRow.  default to startIdx.
- * @param invokedBy used to indicate what trigger the fetch.
+ * @param [hlRowIdx] set the highlightedRow.  default to startIdx.
+ * @param [invokedBy] used to indicate what trigger the fetch.
  * @param {function} dispatcher only for special dispatching uses such as remote
  */
 export function dispatchTableFetch(request, hlRowIdx, invokedBy, dispatcher= flux.process) {

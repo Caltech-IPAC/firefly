@@ -1,15 +1,18 @@
-import {isEmpty, once} from 'lodash';
+import {isArray, isEmpty, once} from 'lodash';
 import React, {useEffect, useRef, useState} from 'react';
-import {dispatchActiveTarget, dispatchAddPreference, getPreference} from '../../core/AppDataCntlr.js';
-import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
-import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {getCellValue, getColumnIdx, getTblById} from '../../tables/TableUtil.js';
+import {dispatchActiveTarget} from '../../core/AppDataCntlr.js';
+import {getComponentState} from '../../core/ComponentCntlr.js';
+import {MetaConst} from '../../data/MetaConst.js';
+import {getJsonProperty} from '../../rpc/CoreServices.js';
+import {sortInfoString} from '../../tables/SortInfo.js';
+import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
+import {dispatchTableFetch, dispatchTableHighlight, dispatchTableSearch} from '../../tables/TablesCntlr.js';
+import { getCellValue, getColumnIdx, getTblById, onTableLoaded, } from '../../tables/TableUtil.js';
+import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {Logger} from '../../util/Logger.js';
 import {cisxAdhocServiceUtype, getServiceDescriptors, standardIDs} from '../../util/VOAnalyzer.js';
 import {pointEquals} from '../../visualize/Point.js';
-import {fetchDatalinkUITable} from './FetchDatalinkTable.js';
-import {
-    ingestInitArgs,
+import { ingestInitArgs,
     isSIAStandardID, makeFieldDefs, makeSearchAreaInfo, makeServiceDescriptorSearchRequest
 } from './ServiceDefTools.js';
 import {convertRequest, DynLayoutPanelTypes} from './DynamicUISearchPanel.jsx';
@@ -27,50 +30,183 @@ const SEMANTICS= 'semantics';
 const ID= 'id';
 const DESC= 'description';
 
-export function DLGeneratedDropDown({initArgs={}}) {// eslint-disable-line no-unused-vars
-    const {currentTblId, tblIdList=[]}=  useStoreConnector(() => getComponentState(DL_UI_LIST));
-    const [urlAry, setUrlAry]=  useState([]);
+let regLoaded= false;
+let regLoading= false;
+let loadedTblIdCache={};
+
+const findUrl = async () => {
+    const servicesRootUrl= await getJsonProperty('inventory.serverURLAry');
+    return servicesRootUrl;
+};
 
 
-    useEffect(() => {
-        if (!tblIdList.length) {
-            const newUrlAry= getPreference('dlGeneratedTableUrls');
-            newUrlAry.forEach( (url) =>  fetchDatalinkUITable(url));
-        }
-    }, []);
-
-    useEffect(() => {
-        const genUrlAry= tblIdList
-            .map( (tbl_id) => getTblById(tbl_id))
-            .map( ({request}={}) => request?.source)
-            .filter( (source) => source);
-        if (urlAry?.length!==genUrlAry.length &&  !genUrlAry.every( (url) => urlAry.includes(url))) {
-            setUrlAry(genUrlAry);
-            dispatchAddPreference('dlGeneratedTableUrls', genUrlAry);
-        }
-    });
-
-    return <DLGeneratedDropDownTables {...{currentTblId,tblIdList,initArgs}}/>;
+//todo these next 3 functions could be refactored when this is generalize, we might pass an object with them
+function getCollectionUrl(registryTblId, rowIdx) {
+    const table= getTblById(registryTblId);
+    if (!table) return;
+    return getCellValue(table,rowIdx,'access_url');
 }
 
-export function DLGeneratedDropDownTables({tblIdList=[], currentTblId, initArgs}) {// eslint-disable-line no-unused-vars
+function findUrlInReg(url, registryTblId) {
+    const table= getTblById(registryTblId);
+    if (!table) return false;
+    const idx= getColumnIdx(table, 'access_url');
+    if (idx===-1) return false;
+    return table?.tableData?.data?.findIndex( (d) => d[idx]===url);
+}
 
-    if (tblIdList.length<2) return (<DLGeneratedTableSearch {...{currentTblId,initArgs}}/>);
+function makeRegistryRequest(url, registryTblId) {
+    return makeFileRequest('registry', url, undefined,
+        {
+            pageSize: MAX_ROW,
+            sortInfo: sortInfoString('facility_name'),
+            tbl_id: registryTblId,
+            META_INFO: {
+                'col.facility_name.PrefWidth':15,
+                'col.obs_collection.PrefWidth':15,
+                'col.collection_label.PrefWidth':12,
+                'col.instrument_name.PrefWidth':9,
+                'col.coverage.PrefWidth':6,
+                'col.band.PrefWidth':6,
 
-    const changeActiveTable= (tbl_id) =>
-        dispatchComponentStateChange(DL_UI_LIST, {currentTblId:tbl_id, tblIdList});
+                'col.facility_name.label':'Facility',
+                'col.instrument_name.label':'Ins',
+                'col.coverage.label':'Cov',
+                'col.dataproduct_type.label':'Type',
+                'col.collection_label.label':'Collections',
+                'col.band.label':'Band',
 
-    return (
-        <div className='SearchPanel' style={{width:'100%'}}>
-            <SideBar {...{tblIdList,currentTblId,changeActiveTable}}/>
-            <DLGeneratedTableSearch {...{currentTblId, initArgs}}/>
-        </div>
+                'col.dataproduct_type.PrefWidth':5,
+                'col.obs_collection.visibility':'hidden',
+                'col.description.visibility':'hidden',
+                'col.desc_details.visibility':'hidden',
+                'col.access_url.visibility':'hide',
+                'col.info_url.visibility':'hidden',
+                'col.access_format.visibility':'hidden',
+            }
+        }
     );
 }
 
 
 
+function isURLInRegistry(url, registryTblId) {
+    return findUrlInReg(url, registryTblId)>-1;
+}
 
+async function doLoadRegistry(url, registryTblId) {
+    try {
+        dispatchTableFetch(makeRegistryRequest(url,registryTblId));
+        const result= await onTableLoaded(registryTblId);
+        const {tableModel}= result ?? {};
+        if (tableModel.error) {
+            tableModel.error = `Failed to get data for ${url}: ${tableModel.error}`;
+        } else if (!tableModel.tableData) {
+            tableModel.error = 'No data available';
+        }
+        regLoaded= true;
+    } catch(reason) {
+        const error = `Failed to get schemas for ${url}: ${reason?.message ?? reason}`;
+        regLoading=false;
+        return {error};
+    }
+}
+
+async function loadRegistry(registryTblId) {
+    if (regLoaded) return;
+    regLoading= true;
+    const url= await findUrl();
+    await doLoadRegistry(url[0], registryTblId);
+    regLoading=false;
+}
+
+
+export function DLGeneratedDropDown({initArgs={}}) {// eslint-disable-line no-unused-vars
+    const COLLECTIONS_NAV_TABLE= 'COLLECTIONS_NAV_TABLE';
+    const registryTblId= COLLECTIONS_NAV_TABLE;
+    const {urlApi,searchParams}= initArgs;
+    const {fetchedTables={}}=  useStoreConnector(() => getComponentState(DL_UI_LIST));
+
+    const [useCurrentIdx,setUseCurrentIdx]= useState(false);
+    const [loadedTblIds, setLoadedTblIds]=  useState(loadedTblIdCache);
+    const [isRegLoaded, setIsRegLoaded]= useState(regLoaded);
+    const [initialRow]= useState(() => getTblById(registryTblId)?.highlightedRow ?? 0);
+    const currentIdx= useStoreConnector(() => getTblById(registryTblId)?.highlightedRow ?? -1);
+    const [url,setUrl]= useState();
+
+    loadedTblIdCache= loadedTblIds;
+
+    useEffect(() => {// load registry and merge any already fetched tables
+        const load= async () =>  {
+            if (regLoaded || regLoading) return;
+            await loadRegistry(registryTblId);
+            setIsRegLoaded(true);
+        };
+        void load();
+        if (!isEmpty(fetchedTables)) setLoadedTblIds({...loadedTblIds, ...fetchedTables});
+    },[fetchedTables]);
+
+    useEffect(() => {
+        const inUrl=  urlApi?.url ?? searchParams?.url;
+        if (!inUrl) {
+            setUseCurrentIdx(true);
+            return;
+        }
+        const newUrl= isArray(inUrl) ? inUrl[0] : inUrl;
+        if (!newUrl) return;
+        if (isRegLoaded) {
+            const rowIdx = findUrlInReg(newUrl, registryTblId);
+            if (rowIdx > -1) {
+                setUseCurrentIdx(true);
+                dispatchTableHighlight(registryTblId, rowIdx);
+            }
+            else {
+                setUrl(newUrl);
+            }
+        }
+        else {
+            setUrl(newUrl);
+        }
+    }, [urlApi?.url, searchParams?.url, isRegLoaded]);
+
+    useEffect(() => {
+        if (!useCurrentIdx && currentIdx>-1 && currentIdx!==initialRow) setUseCurrentIdx(true);
+    }, [currentIdx]);
+
+    useEffect(() => {
+        if (!isRegLoaded || !useCurrentIdx) return;
+        const newUrl= getCollectionUrl(registryTblId, currentIdx);
+        if (newUrl) setUrl(newUrl);
+    }, [currentIdx, isRegLoaded, useCurrentIdx]);
+
+    return <DLGeneratedDropDownTables {...{registryTblId,isRegLoaded, loadedTblIds, setLoadedTblIds, url, initArgs}}/>;
+}
+
+export function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTblIds, setLoadedTblIds, url, initArgs}) {
+
+    const currentTblId= loadedTblIds?.[url];
+    useEffect(() => {
+        if (isRegLoaded && !currentTblId) {
+            const loadOptions=  {META_INFO:{[MetaConst.LOAD_TO_DATALINK_UI]: 'true'}};
+            if (!url) return;
+            const req= makeFileRequest('Data link UI', url, undefined, loadOptions);
+            const {tbl_id}= req.META_INFO;
+            dispatchTableFetch(req);
+            onTableLoaded(tbl_id).then(() => {
+                setLoadedTblIds({...loadedTblIds, [url]:tbl_id});
+            });
+
+        }
+    }, [currentTblId,url,isRegLoaded]);
+
+    const sideBar= <SideBarTable {...{registryTblId}}/>;
+    const regHasUrl= isURLInRegistry(url,registryTblId);
+    return (
+        <div className='SearchPanel' style={{width:'100%', height:'100%'}}>
+            <DLGeneratedTableSearch {...{currentTblId, initArgs, sideBar, regHasUrl, url}}/>
+        </div>
+    );
+}
 
 const ServDescPanel= ({fds, style, desc, docRows}) => {
     return  (
@@ -108,35 +244,38 @@ const TabView= ({tabsKey, searchObjFds,qAna, docRows}) => (
     </FieldGroupTabs>
 );
 
-const SideBar= ({tblIdList, currentTblId, changeActiveTable}) => (
-    <div className='SearchPanel__sidebar'>
-        {
-            tblIdList.map( (tbl_id) => {
-                const table= getTblById(tbl_id);
-                const desc= getCellValue(table,0,DESC);
-                return (<SearchItem {...{desc, key:tbl_id, tbl_id, active:currentTblId===tbl_id, changeActiveTable}}/>);
-            })
-        }
-    </div> );
-
-const SearchItem= ({desc, tbl_id, active, changeActiveTable}) => (
-    <div className='SearchPanel__searchItem' title={'todo - add tip'}
-        onClick={() => changeActiveTable(tbl_id)}>
-        <span className={active ? 'selected' : 'normal'}>{desc}</span>
-    </div>
-);
+function SideBarTable({registryTblId}) {
+    return (
+        <div style={{display:'flex', flexDirection:'column', backgroundColor:'rgb(255,255,255)'}}>
+            <div style={{fontSize:'large', fontWeight:'bold', alignSelf:'center', padding:'6px 0 0 0'}}>
+                Choose Data Set
+            </div>
+            <div style={{minWidth:460, flexGrow:1, backgroundColor:'inherit', padding: '4px 4px 0 2px'}}>
+                <TablePanel {...{
+                    key:registryTblId,
+                    tbl_id:registryTblId,
+                    showToolbar: false,
+                    selectable:false,
+                    showFilters:true,
+                    showOptions: false,
+                    showUnits: false,
+                    showTypes: false,
+                    textView: false,
+                    showOptionButton: false
+                }}/>
+            </div>
+        </div>
+    );
+}
 
 
 const initTargetOnce= once((wp) => wp && dispatchActiveTarget(wp));
-
 const doSearchOnce= once((clickFunc) => clickFunc() );
 
 
-function DLGeneratedTableSearch({currentTblId, initArgs}) {
+function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url}) {
 
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
-
-
     useEffect(() => {
         if (initArgs?.urlApi?.execute) {
             setTimeout(() => {
@@ -148,16 +287,7 @@ function DLGeneratedTableSearch({currentTblId, initArgs}) {
 
     const qAna= analyzeQueries(currentTblId);
     const tabsKey= 'Tabs='+currentTblId;
-    if (!qAna) {
-        return (
-            <div style={{width:'100%', display:'flex', flexDirection:'column', justifyContent:'center'}}>
-                <div style={{alignSelf:'center', fontSize:'large'}}>No collections to load</div>
-            </div>
-        );
-    }
-
-
-    const fdAry= qAna.primarySearchDef.map( (fd) => {
+    const fdAry= qAna?.primarySearchDef.map( (fd) => {
         const {serviceDef}= fd; //todo handle case with only an access url
         const standId= (serviceDef.standardID??'').toLowerCase();
         const utype= (serviceDef.utype||'').toLowerCase();
@@ -181,11 +311,11 @@ function DLGeneratedTableSearch({currentTblId, initArgs}) {
 
     });
 
-    const docRows= qAna.urlRows.filter( ({semantic}) => semantic?.toLowerCase().endsWith('documentation'));
+    const docRows= qAna?.urlRows.filter( ({semantic}) => semantic?.toLowerCase().endsWith('documentation'));
 
 
     const searchObjFds= fdAry
-        .map((fds,idx) => {
+        ?.map((fds,idx) => {
             fds= fds.filter( (entry) => entry.type!==RANGE);
             const primeSd= qAna.primarySearchDef[idx].serviceDef;
             const desc= qAna.primarySearchDef[idx].desc;
@@ -217,11 +347,22 @@ function DLGeneratedTableSearch({currentTblId, initArgs}) {
                        getDoOnClickFunc={(clickFunc) => clickFuncRef.clickFunc= clickFunc}
                        onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
                        help_id  = {'todo-AtReplaceHelpId-todo'}>
-                <FieldGroup groupKey='DL_UI' keepState={true} style={{height:'100%', width:'100%'}}>
-                    {searchObjFds.length===1 ?
-                        <ServDescPanel{...{initArgs, fds:searchObjFds[0].fds, style:{width:'100%',height:'100%'}, desc:searchObjFds[0].desc, docRows}} /> :
-                        <TabView{...{initArgs, tabsKey,searchObjFds,qAna, docRows}}/>}
-                </FieldGroup>
+                <div className='SearchPanel' style={{width:'100%', height:'100%'}}>
+                    {sideBar}
+                    {qAna ?
+                        <FieldGroup groupKey='DL_UI' keepState={true} style={{height:'100%', width:'100%'}}>
+                            {searchObjFds.length===1 ?
+                                <ServDescPanel{...{initArgs, fds:searchObjFds[0].fds, style:{width:'100%',height:'100%'}, desc:searchObjFds[0].desc, docRows}} /> :
+                                <TabView{...{initArgs, tabsKey,searchObjFds,qAna, docRows}}/>}
+                        </FieldGroup>
+                        :
+                        regHasUrl ?
+                            <div className='loading-mask'/> :
+                            <div style={{alignSelf:'center', fontSize:'large', paddingLeft:40}}>
+                                {`No collections to load from: ${url}`}
+                            </div>
+                    }
+                </div>
             </FormPanel>
         </div>
     );

@@ -63,6 +63,7 @@ async function getServerAndLoadTablesById(cmd,params) {
     const urlRoot= urlRootAry[0];
     const makeUrl= (id) =>  urlRoot +'?'+ new URLSearchParams({collection:id}).toString();
     const urlAry=  (isArray(params.id)) ? params.id.map( (id) => makeUrl(id))  : [makeUrl(params.id)];
+    initArgs.urlApi.url= urlAry;
     urlAry.forEach( (url) =>  void fetchDatalinkUITable(url,0,initArgs));
 }
 
