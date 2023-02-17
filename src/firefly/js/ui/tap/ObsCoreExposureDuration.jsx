@@ -153,7 +153,7 @@ export function ExposureDurationSearch({initArgs}) {
                                 <TimeRangePanel {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive(),
                                     fromTip:"'Exposure start from' time (t_min)",
                                     toTip:"'Exposure end to' time (t_min)",
-                                    style:{marginLeft: LeftInSearch, marginTop: 10}}}/> :
+                                    style:{marginLeft: LeftInSearch, marginTop: 12, marginBottom: 12}}}/> :
                                 <ExposureSince {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()}} /> }
                             <ExposureLength {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()}}/>
                         </div>

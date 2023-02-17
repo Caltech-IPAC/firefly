@@ -34,23 +34,16 @@ public class SearchManager {
      * For SearchProcessor's interface, see JsonSearchServices.
      */
     public String getJSONData(ServerRequest request) throws DataAccessException {
+
+        if (request == null) throw new DataAccessException("Operation failed because request parameter is null.");
+
         SearchProcessor processor = getProcessor(request.getRequestId());
-        if (request != null) {
-            String jsonText = (String) processor.getData(request);
-            // validate JSON and replace file paths with prefixes
-            JSONParser parser = new JSONParser();
-            try{
-                Object obj = parser.parse(jsonText);
-                Object json = ServerContext.replaceWithPrefixes(obj);
-                jsonText = JSONValue.toJSONString(json);
-                return jsonText;
-            }
-            catch(ParseException pe){
-                LOGGER.error(processor.getUniqueID(request) + " Can not parse returned JSON: " + pe.toString() + "\n" + jsonText);
-                throw new DataAccessException(request.getRequestId()+" Can not parse returned JSON: " + pe.toString());
-            }
+        if (processor instanceof JsonStringProcessor) {
+            String jsonText = ((JsonStringProcessor)processor).getData(request);
+            return jsonText;
         } else {
-            throw new DataAccessException("Request fail inspection.  Operation aborted.");
+            throw new DataAccessException("Unexpected Exception: request id: " + request.getRequestId()
+                    + " resolves to a search processor that is not an instance of JsonStringProcessor");
         }
     }
 

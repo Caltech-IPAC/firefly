@@ -139,10 +139,13 @@ export function getTimeInfo(timeMode, value, valid, message) {
 }
 
 export function formFeedback(utc, mjd)  {
-    return isTimeUndefined(utc, mjd) ? '' :
-        '<div style="font-size:11px">' +
-        `<i>UTC:&nbsp</i>${utc}<br/>` +
-        `<div style="padding-top: 6px"><i>MJD:&nbsp</i>${mjd}</div>` + '</div>';
+    if (isTimeUndefined(utc, mjd)) return '';
+    else {
+        const feedbackHtmlStr = utc && !mjd ? `<i>UTC:&nbsp</i>${utc}`
+            : (!utc && mjd ? `<i>MJD:&nbsp</i>${mjd}`
+                : `<i>UTC:&nbsp</i>${utc}<br/> <div style="padding-top: 6px"> <i>MJD:&nbsp</i>${mjd} </div>`)
+        return '<div style="font-size:11px">' + feedbackHtmlStr + '</div>';
+    }
 }
 
 export const isTimeUndefined = (utc, mjd) => !utc && !mjd;

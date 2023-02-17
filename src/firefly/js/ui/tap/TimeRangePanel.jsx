@@ -17,11 +17,14 @@ const timeLabelStyle= { paddingRight: '4px', width: labelWidth, paddingTop:4, he
 
 
 export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, style={},
-                                       minKey= 'exposureMin', maxKey= 'exposureMax',
-                                       fromTip="'from' time",
-                                       toTip="'to' time"}) {
+                                   minKey= 'exposureMin', maxKey= 'exposureMax',
+                                   minLabel='Start Time', maxLabel='End Time',
+                                   fromTip="'from' time", toTip="'to' time",
+                                   fixedTimeMode, examples, feedbackStyle, labelStyle={}}) {
     const {setFld,getFld,getVal} = useContext(FieldGroupCtx);
-    const [getExposureTimeMode] = useFieldGroupValue('exposureTimeMode');
+    const [getExposureTimeMode] = useFieldGroupValue('exposureTimeMode'); //user-controlled through RadioGroupInputField
+    const timeMode = fixedTimeMode || getExposureTimeMode(); // if no fixed time mode passed, time mode is as chosen by user
+
     useFieldGroupRerender([minKey,maxKey]);
 
     useEffect(() => {
@@ -48,41 +51,44 @@ export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, style={
     }, [getExposureTimeMode]);
 
     const setNewTimeValue= (key, value) => {
-        const {[ISO]:{value:isoVal}, [MJD]:{value:mjdVal}}= getTimeInfo(getExposureTimeMode(), value, true, '');
-        setFld(key, {value, timeMode: getExposureTimeMode(),
-            feedback: formFeedback(isoVal, mjdVal), showHelp: isTimeUndefined(isoVal, mjdVal) });
+        const {[ISO]:{value:isoVal}, [MJD]:{value:mjdVal}}= getTimeInfo(timeMode, value, true, '');
+        const feedback = fixedTimeMode === ISO ? formFeedback(isoVal, '')
+            : (fixedTimeMode === MJD ? formFeedback('', mjdVal) : formFeedback(isoVal, mjdVal));
+        setFld(key, {value, timeMode, feedback, showHelp: isTimeUndefined(isoVal, mjdVal) });
     };
 
     return (
         <div style={{display: 'block', ...style}}>
-            <RadioGroupInputField
+            {!fixedTimeMode && <RadioGroupInputField
                 fieldKey='exposureTimeMode' options={timeOptions} alignment={'horizontal'}
-                wrapperStyle={{marginTop: 5, marginLeft: 0}}
+                wrapperStyle={{marginTop: 5, marginLeft: 0, marginBottom: 12}}
                 label='Use' tooltip={timeOptionsTip}
                 labelWidth={labelWidth}
                 initialState={{value: initArgs?.urlApi?.exposureTimeMode || ISO}}
-            />
-            <div style={{display: 'flex', marginTop: 10}}>
-                <div title={fromTip} style={timeLabelStyle}>Start Time</div>
+            />}
+            <div style={{display: 'flex', marginBottom: 12}}>
+                <div title={fromTip} style={{...timeLabelStyle, ...labelStyle}}>{minLabel}</div>
                 <TimePanel
-                    fieldKey={minKey} timeMode={getExposureTimeMode()} icon={icon}
-                    tooltip={fromTip} feedbackStyle={{height: 100}}
+                    fieldKey={minKey} timeMode={timeMode} icon={icon}
+                    tooltip={fromTip} feedbackStyle={feedbackStyle}
                     inputWidth={timePanelInputWidth} inputStyle={{overflow: 'auto', height: 16}}
                     onClickIcon={
-                        makeDatePickerPopup('select "from" time', getVal(minKey), getExposureTimeMode(),
+                        makeDatePickerPopup('select "from" time', getVal(minKey), timeMode,
                             (value) => setNewTimeValue(minKey,value) )}
-                    value={initArgs?.urlApi?.exposureMin || getVal(minKey)} />
+                    value={initArgs?.urlApi?.exposureMin || getVal(minKey)}
+                    isTimeModeFixed={Boolean(fixedTimeMode)} examples={examples}/>
             </div>
-            <div style={{display: 'flex', marginTop: 5}}>
-                <div title={toTip} style={timeLabelStyle}>End Time</div>
+            <div style={{display: 'flex'}}>
+                <div title={toTip} style={{...timeLabelStyle, ...labelStyle}}>{maxLabel}</div>
                 <TimePanel
-                    fieldKey={maxKey} timeMode={getExposureTimeMode()} icon={icon}
-                    tooltip={toTip} feedbackStyle={{height: 100}}
+                    fieldKey={maxKey} timeMode={timeMode} icon={icon}
+                    tooltip={toTip} feedbackStyle={feedbackStyle}
                     inputWidth={timePanelInputWidth} labelStyle={{overflow: 'auto', height: 16}}
                     onClickIcon={
-                        makeDatePickerPopup('select "to" time', getVal(maxKey), getExposureTimeMode(),
+                        makeDatePickerPopup('select "to" time', getVal(maxKey), timeMode,
                             (value) => setNewTimeValue(maxKey,value) )}
-                    value={initArgs?.urlApi?.exposureMax || getVal(maxKey)} />
+                    value={initArgs?.urlApi?.exposureMax || getVal(maxKey)}
+                    isTimeModeFixed={Boolean(fixedTimeMode)} examples={examples}/>
             </div>
         </div>
     );
@@ -95,6 +101,12 @@ TimeRangePanel.propTypes = {
     style: PropTypes.object,
     minKey: PropTypes.string,
     maxKey: PropTypes.string,
+    minLabel: PropTypes.string,
+    maxLabel: PropTypes.string,
     fromTip: PropTypes.string,
     toTip: PropTypes.string,
+    fixedTimeMode : PropTypes.oneOf([ISO, MJD]),
+    examples: PropTypes.object,
+    feedbackStyle: PropTypes.object,
+    labelStyle: PropTypes.object
 };
