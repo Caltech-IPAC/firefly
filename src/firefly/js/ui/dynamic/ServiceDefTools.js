@@ -217,8 +217,8 @@ export function makeSearchAreaInfo(cisxUI) {
             case 'hips_initial_fov':
                 obj[name] = Number(value);
                 break;
-            case 'centerDec':
-            case 'centerRa':
+            case 'hips_initial_dec':
+            case 'hips_initial_ra':
                 obj[name] = Number(value);
                 obj.ptIsGalactic= UCD?.includes('galactic');
                 break;
@@ -232,10 +232,10 @@ export function makeSearchAreaInfo(cisxUI) {
         }
         return obj;
     }, {});
-    const {examples, moc, mocDesc, HiPS, hips_initial_fov, centerRa, centerDec, hips_frame, ptIsGalactic} = tmpObj;
+    const {examples, moc, mocDesc, HiPS, hips_initial_fov, hips_initial_ra, hips_initial_dec, hips_frame, ptIsGalactic} = tmpObj;
     const hipsProjCsys = hips_frame?.trim().toLowerCase()==='galactic';
     const ptCsys= ptIsGalactic ? CoordinateSys.GALACTIC : CoordinateSys.EQ_J2000;
-    const centerWp = makeWorldPt(centerRa, centerDec, ptCsys);
+    const centerWp = makeWorldPt(hips_initial_ra, hips_initial_dec, ptCsys);
     return {examples, moc, mocDesc, HiPS, hips_initial_fov, centerWp, coordinateSys: hipsProjCsys.toString()};
 }
 

@@ -26,3 +26,4 @@ irsa.gator.service.periodogram.keys=x y alg step_method pmin pmax step_size peak
 
 # IRSA HiPS map service
 irsa.hips.masterUrl=@irsa.hips.masterUrl@
+inventory.serverURLAry=@inventory.serverURLAry@

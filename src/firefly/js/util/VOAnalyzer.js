@@ -1139,7 +1139,7 @@ export function hasObsCoreLikeDataProducts(tableOrId) {
  * @prop {string} value
  * @prop {boolean} allowsInput - use may change the parameter
  * @prop {boolean} inputRequired - user must enter something
- * @prop {Array.<ServiceDescriptorInputParam>} [cisxUI] - names should be one of: HiPS, FOV, centerRA, centerDec, moc, examples, hipsCtype1, hipsCtype2
+ * @prop {Array.<ServiceDescriptorInputParam>} [cisxUI] - names should be one of: HiPS, FOV, hips_initial_ra, hips_initial_dec, moc, examples, hipsCtype1, hipsCtype2
  * @prop {Array.<ServiceDescriptorInputParam>} [cisxTokenSub]
  * @prop {Array.<ServiceDescriptorInputParam>} serDefParams
  */
