@@ -210,16 +210,13 @@ function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiS
                 setShowError(true);
             });
     }, []);
+
     const {wp,type, radius}= initArgs?.searchParams ?? {};
-    const [, setTargetM]= useFieldGroupValue(DEF_TARGET_PANEL_KEY,FG_KEYS.main);
-    const [, setTargetS]= useFieldGroupValue(DEF_TARGET_PANEL_KEY,FG_KEYS.single);
-    const [, setTargetH]= useFieldGroupValue(DEF_TARGET_PANEL_KEY,FG_KEYS.hips);
+    const [, setTarget]= useFieldGroupValue(DEF_TARGET_PANEL_KEY,FG_KEYS.targetSelect);
     const [, setType]= useFieldGroupValue(FD_KEYS.type,FG_KEYS.main);
     useEffect(() => {
         if (!wp) return;
-        setTargetM(wp);
-        setTargetS(wp);
-        setTargetH(wp);
+        setTarget(wp);
     }, [wp]);
     useEffect(() => {
         (type) && setType(type);
