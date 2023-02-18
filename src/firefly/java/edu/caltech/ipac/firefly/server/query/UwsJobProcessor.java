@@ -17,6 +17,7 @@ import edu.caltech.ipac.util.FileUtil;
 import org.apache.commons.httpclient.HttpMethod;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -28,6 +29,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
@@ -269,30 +271,42 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         Document doc = builder.parse(is);
         if (doc != null) {
             Element root = doc.getDocumentElement();
-            String id = getVal(root, "uws:jobId");
-            if (root.getTagName().equals("uws:job") && !isEmpty(id)) {              // verify that this is a UWS job doc
+
+            final Ref<String> prefix = new Ref<>();
+            // resolve uws prefix:  normally empty-string for default namespace or 'uws' when prefix is used.
+            NamedNodeMap attribs = root.getAttributes();
+            for (int i = 0; i < attribs.getLength(); i++) {
+                String name = attribs.item(i).getNodeName();
+                String val = attribs.item(i).getNodeValue();
+                if (name.startsWith("xmlns") && val != null && val.toLowerCase().contains("www.ivoa.net/xml/uws")) {
+                    String[] parts = name.split(":");
+                    prefix.set(parts.length == 1 ? "" : parts[1].trim() + ":");
+                }
+            }
+            if (prefix.has() && root.getTagName().equals(prefix + "job")) {              // verify that this is a UWS job doc
+                String id = getVal(root, prefix + "jobId");
                 JobInfo jobInfo = new JobInfo(id);
-                applyIfNotEmpty(getVal(root, "uws:runId"), jobInfo::setRunId);
-                applyIfNotEmpty(getVal(root, "uws:ownerId"), jobInfo::setOwner);
-                applyIfNotEmpty(getVal(root, "uws:phase"), v -> jobInfo.setPhase(Phase.valueOf(v)));
+                applyIfNotEmpty(getVal(root, prefix + "runId"), jobInfo::setRunId);
+                applyIfNotEmpty(getVal(root, prefix + "ownerId"), jobInfo::setOwner);
+                applyIfNotEmpty(getVal(root, prefix + "phase"), v -> jobInfo.setPhase(Phase.valueOf(v)));
 
-                applyIfNotEmpty(getVal(root, "uws:quote"), v -> jobInfo.setQuote(Instant.parse(v)));
-                applyIfNotEmpty(getVal(root, "uws:creationTime"), v -> jobInfo.setCreationTime(Instant.parse(v)));
-                applyIfNotEmpty(getVal(root, "uws:startTime"), v -> jobInfo.setStartTime(Instant.parse(v)));
-                applyIfNotEmpty(getVal(root, "uws:endTime"), v -> jobInfo.setEndTime(Instant.parse(v)));
-                applyIfNotEmpty(getVal(root, "uws:executionDuration"), v -> jobInfo.setExecutionDuration(Integer.parseInt(v)));
-                applyIfNotEmpty(getVal(root, "uws:destruction"), v -> jobInfo.setDestruction(Instant.parse(v)));
+                applyIfNotEmpty(getVal(root, prefix + "quote"), v -> jobInfo.setQuote(Instant.parse(v)));
+                applyIfNotEmpty(getVal(root, prefix + "creationTime"), v -> jobInfo.setCreationTime(Instant.parse(v)));
+                applyIfNotEmpty(getVal(root, prefix + "startTime"), v -> jobInfo.setStartTime(Instant.parse(v)));
+                applyIfNotEmpty(getVal(root, prefix + "endTime"), v -> jobInfo.setEndTime(Instant.parse(v)));
+                applyIfNotEmpty(getVal(root, prefix + "executionDuration"), v -> jobInfo.setExecutionDuration(Integer.parseInt(v)));
+                applyIfNotEmpty(getVal(root, prefix + "destruction"), v -> jobInfo.setDestruction(Instant.parse(v)));
 
-                applyIfNotEmpty(getEl(root, "uws:parameters"), params -> {
-                    NodeList plist = params.getElementsByTagName("uws:parameter");
+                applyIfNotEmpty(getEl(root, prefix + "parameters"), params -> {
+                    NodeList plist = params.getElementsByTagName(prefix + "parameter");
                     for (int i = 0; i < plist.getLength(); i++) {
                         Node p = plist.item(i);
                         jobInfo.getParams().put(getAttr(p, "id"), p.getTextContent());
                     }
                 });
 
-                applyIfNotEmpty(getEl(root, "uws:results"), results -> {
-                    NodeList rlist = results.getElementsByTagName("uws:result");
+                applyIfNotEmpty(getEl(root, prefix + "results"), results -> {
+                    NodeList rlist = results.getElementsByTagName(prefix + "result");
                     for (int i = 0; i < rlist.getLength(); i++) {
                         Node r = rlist.item(i);
                         jobInfo.getResults().add(getAttr(r,"xlink:href"));
@@ -302,7 +316,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 applyIfNotEmpty(getEl(root, "uws:errorSummary"), errsum -> {
                     String type = errsum.getAttribute("type");
                     int code = type == null || type.equals("transient") ? 500 : 400;
-                    jobInfo.setError(new JobInfo.Error(code, getVal(errsum, "uws:message")));
+                    jobInfo.setError(new JobInfo.Error(code, getVal(errsum, prefix + "message")));
                 });
 
                 return jobInfo;

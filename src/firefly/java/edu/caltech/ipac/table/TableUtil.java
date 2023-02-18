@@ -120,7 +120,7 @@ public class TableUtil {
                 } else if (line.startsWith("<VOTABLE") ||
                         (line.contains("<?xml") && line.contains("<VOTABLE "))) {
                     return Format.VO_TABLE;
-                } else if (line.trim().startsWith("<uws:job ")) {
+                } else if (isUwsEl(line)) {
                     return Format.UWS;
                 } else if (row == 0 && line.toLowerCase().indexOf("pdf") > 0) {
                     return Format.PDF;
@@ -170,6 +170,12 @@ public class TableUtil {
             FileUtil.silentClose(reader);
         }
 
+    }
+
+    private static boolean isUwsEl(String line) {
+        line = line.trim().toLowerCase();
+        boolean isUws = line.contains("www.ivoa.net/xml/uws");
+        return isUws && line.matches("<(.+:)?job .*");
     }
 
     private static int getColCount(CSVFormat format, String line) {
