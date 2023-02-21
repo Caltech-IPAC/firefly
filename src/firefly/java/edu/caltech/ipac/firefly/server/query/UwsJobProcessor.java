@@ -21,7 +21,6 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import javax.xml.crypto.Data;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayOutputStream;
@@ -29,7 +28,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.time.Instant;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;

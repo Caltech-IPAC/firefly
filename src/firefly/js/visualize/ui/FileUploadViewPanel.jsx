@@ -582,13 +582,13 @@ function SingleDataSet({type, desc, detailsModel, report, UNKNOWN_FORMAT, curren
     const jobUrl = report.parts[0].url;
 
     return (
-        <div style={{display:'flex', flex:'1 1 auto', justifyContent: showDetails?'start':'center'}}>
-            <div style={{padding:'30px 20px 0 0'}}>
+        <div style={{display:'flex', flex:'1 1 auto', justifyContent: showDetails || isUWSJobFile?'start':'center'}}>
+            <div style={{padding:'30px 20px 0 0', marginLeft: isUWSJobFile?'30px':'0'}}>
                 <div style={{whiteSpace:'nowrap', fontSize:'larger', fontWeight:'bold', paddingBottom:40}}>
                     {type}{desc ? ` - ${desc}` : ''}
                 </div>
                 <AnalysisInfo {...{report, supported, UNKNOWN_FORMAT}} />
-                {isUWSJobFile && <UWSInfoButton {...{jobUrl}}/>}
+                {isUWSJobFile && <UWSInfo {...{jobUrl}}/>}
                 <div style={{paddingTop:15}}>No other detail about this file</div>
             </div>
             {  showDetails && <Details detailsModel={detailsModel}/>}
@@ -735,16 +735,26 @@ const warningMessage = (acceptList, uniqueTypes) => {
     }
 };
 
-function UWSInfoButton ({jobUrl}) {
+function UWSInfo ({jobUrl}) {
     const [jobInfo, setJobInfo] = useState('');
+    const [errMsg, setErrMsg] = useState(null);
     useEffect(  () => {
         uwsJobInfo(jobUrl).then((info) => {
             setJobInfo(info);
         })
             .catch((err) => {
-                showInfoPopup('Please upload UWS files via the \'Upload from URL\' option', 'Failed to fetch UWS Job Info');
+                setErrMsg('Error: Please upload UWS files via the \'Upload from URL\' option');
             });
-    },[]);
+    },[jobUrl]);
+
+    if (!jobUrl) { //user uploaded a UWS file from 'Upload file' option (instead of 'Upload from URL')
+        return (
+            <div className='FileUpload__uws'>
+                {errMsg && <div style={{color: 'gray', margin: '20px 0 0 0', fontSize: 'larger', lineHeight: '1.3em'}}>
+                    {errMsg}
+                </div>}
+            </div>);
+    }
 
     return (
         <div className='FileUpload__uws'>
