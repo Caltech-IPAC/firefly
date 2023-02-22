@@ -12,7 +12,7 @@ import {dispatchHideDialog, dispatchShowDialog} from 'firefly/core/ComponentCntl
 import {PopupPanel} from 'firefly/ui/PopupPanel.jsx';
 import {resultSuccess} from 'firefly/ui/FileUploadProcessor';
 import {FieldGroup} from 'firefly/ui/FieldGroup';
-import {DATA_LINK_TABLES, IMAGES, MOC_TABLES, REGIONS, SPECTRUM_TABLES, TABLES} from 'firefly/ui/FileUploadUtil';
+import {DATA_LINK_TABLES, IMAGES, MOC_TABLES, REGIONS, SPECTRUM_TABLES, TABLES, UWS} from 'firefly/ui/FileUploadUtil';
 
 const maskWrapper= { position:'absolute', left:0, top:0, width:'100%', height:'100%' };
 const panelKey = 'FileUploadAnalysis';
@@ -23,7 +23,8 @@ const defaultAcceptList = [
     DATA_LINK_TABLES,
     SPECTRUM_TABLES,
     MOC_TABLES,
-    IMAGES
+    IMAGES,
+    UWS
 ];
 
 const tableOnlyDefaultAcceptList = [

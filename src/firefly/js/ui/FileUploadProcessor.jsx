@@ -3,7 +3,7 @@ import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil';
 import {getAppHiPSForMoc, isMOCFitsFromUploadAnalsysis} from 'firefly/visualize/HiPSMocUtil';
 import {MetaConst} from 'firefly/data/MetaConst';
 import {isLsstFootprintTable} from 'firefly/visualize/task/LSSTFootprintTask';
-import {makeFileRequest} from 'firefly/tables/TableRequestUtil';
+import {makeFileRequest, makeTblRequest} from 'firefly/tables/TableRequestUtil';
 import {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils';
 import {createNewRegionLayerId} from 'firefly/drawingLayers/RegionPlot';
 import {dispatchCreateImageLineBasedFootprintLayer, dispatchCreateRegionLayer, getDlAry} from 'firefly/visualize/DrawLayerCntlr';
@@ -22,7 +22,7 @@ import {dispatchHideDialog} from 'firefly/core/ComponentCntlr';
 import React from 'react';
 import {
     acceptAnyTables, acceptDataLinkTables, acceptImages, acceptMocTables, acceptNonDataLinkTables,
-    acceptNonMocTables, acceptRegions, acceptTableOrSpectrum, IMAGES, REGIONS, TABLES
+    acceptNonMocTables, acceptRegions, acceptTableOrSpectrum, acceptUWS, IMAGES, REGIONS, TABLES, UWS
 } from 'firefly/ui/FileUploadUtil';
 
 const FILE_ID = 'fileUpload';
@@ -32,7 +32,8 @@ const SUPPORTED_TYPES=[
     FileAnalysisType.REGION,
     FileAnalysisType.Image,
     FileAnalysisType.Table,
-    FileAnalysisType.Spectrum
+    FileAnalysisType.Spectrum,
+    FileAnalysisType.UWS
 ];
 
 const LOAD_REGION=0;
@@ -42,6 +43,7 @@ const LOAD_FOOTPRINT=3;
 const LOAD_IMAGE_AND_TABLES=4;
 const LOAD_IMAGE_ONLY=5;
 const LOAD_TABLE_ONLY=6;
+const LOAD_UWS=7;
 
 const imageWarning = 'Only loading the table(s), ignoring any selected image(s).';
 const tableWarning = 'Only loading the image(s), ignoring any selected table(s).';
@@ -111,6 +113,14 @@ export function resultSuccess(request) {
                 return true;
             }
             return false;
+
+        case LOAD_UWS:
+            const title= report.fileName ?? 'UWS Job File';
+            const jobUrl = report?.parts[0].url;
+            const req = makeTblRequest('UwsJob', title, {jobUrl});
+            dispatchTableSearch(req);
+            return true;
+
         default: return false;
     }
     return false;
@@ -157,6 +167,9 @@ function determineLoadType(acceptList, uniqueTypes, summaryModel, summaryTblId, 
     if (isRegion(summaryModel)) {
         return {loadType: LOAD_REGION};
     }
+    else if (isUWS(report)) {
+        return {loadType: LOAD_UWS};
+    }
     else if (isMocFits.valid) {
         const mocMeta= {[MetaConst.PREFERRED_HIPS]: getAppHiPSForMoc()};
         if (request.mocOp==='table') mocMeta[MetaConst.IGNORE_MOC]='true';
@@ -182,6 +195,7 @@ function determineLoadType(acceptList, uniqueTypes, summaryModel, summaryTblId, 
 
 const errorObj = {
     regionMismatchErr: {valid: false, errorMsg: 'You may not load a Region file from here', title: 'File Type Mismatch'},
+    uwsMismatchErr: {valid: false, errorMsg: 'You may not load a UWS Job File from here', title: 'File Type Mismatch'},
     headerOnlyErr: {valid: false, errorMsg: 'FITS HDU type of HeaderOnly is not supported. A header-only HDU contains no additional data',title:'Validation Error'},
     noExtensionErr: {valid: false, errorMsg: 'No extension is selected', title:'Validation Error'},
     nonMocFitsErr: {valid: false, errorMsg: 'Warning: Loading a non-MOC FITS file from this dialog is not supported.', title: 'File Type Mismatch'},
@@ -217,6 +231,11 @@ function determineValidity(acceptList, uniqueTypes, summaryModel, summaryTblId,
         return errorObj.regionMismatchErr;
     }
 
+    //check for url because user may try and upload a uws job xml file from the 'Upload File' option instead of 'Upload from URL'
+    if (uniqueTypes.includes(UWS) && (!acceptUWS(acceptList) || !report.parts[0].url)) {
+        return errorObj.uwsMismatchErr;
+    }
+
     if (!isFileSupported(summaryModel, report)) {
         errorMsg = getFirstPartType(summaryModel) ? `File type of ${getFirstPartType(summaryModel)} is not supported.`: 'Could not recognize the file type';
         title = 'File Type Error';
@@ -237,7 +256,7 @@ function determineValidity(acceptList, uniqueTypes, summaryModel, summaryTblId,
         }
     }
 
-    if (!uniqueTypes.includes(REGIONS) && tableIndices.length + imageIndices.length === 0) {
+    if (!uniqueTypes.includes(REGIONS) && !uniqueTypes.includes(UWS) && tableIndices.length + imageIndices.length === 0) {
         if (getSelectedRows('HeaderOnly', summaryTblId, report, summaryModel)?.length) {
             return errorObj.headerOnlyErr;
         }
@@ -304,6 +323,7 @@ export const getPartCnt= (currentReport) => currentReport?.parts?.length ?? 1;
 export const getFirstPartType= (currentSummaryModel) => currentSummaryModel?.tableData.data[0]?.[1];
 export const getFileFormat= (currentReport) => currentReport?.fileFormat;
 export const isRegion= (currentSummaryModel) => getFirstPartType(currentSummaryModel)===FileAnalysisType.REGION;
+export const isUWS= (report) => report.fileFormat === 'UWS';
 
 function isFileSupported(summaryModel, currentReport) {
     return getFirstPartType(summaryModel) && (SUPPORTED_TYPES.includes(getFirstPartType(summaryModel)) || getFileFormat(currentReport)===Format.FITS);

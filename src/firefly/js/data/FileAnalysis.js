@@ -12,7 +12,8 @@ export const FileAnalysisType = {
     Unknown: 'UNKNOWN',
     HTML: 'HTML',
     REGION: 'REGION',
-    PNG: 'PNG'
+    PNG: 'PNG',
+    UWS: 'UWS'
 };
 
 export const DataProductTypes = {

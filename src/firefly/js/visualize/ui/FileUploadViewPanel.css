@@ -35,6 +35,18 @@
     position: relative;
 }
 
+.FileUpload__uws {
+    width: 100%;
+    position: relative;
+    min-height: 100px;
+    min-width: 250px;
+    max-width: 1000px;
+    display: flex;
+    resize: both;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 .FileUpload__noDetails {
     text-align: center;
     font-size: larger;

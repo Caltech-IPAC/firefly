@@ -29,4 +29,16 @@ public class Ref<T> {
     public boolean has() {
         return source != null;
     }
+
+    public String toString() {
+        return source == null ? super.toString() : source.toString();
+    }
+
+    public boolean equals(Object obj) {
+        return source == null ? super.equals(obj) : source.equals(obj);
+    }
+
+    public int hashCode() {
+        return source == null ? super.hashCode() : source.hashCode();
+    }
 }

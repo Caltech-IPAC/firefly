@@ -96,7 +96,7 @@ function FinalMsg({phase, summary, error}) {
     } else return null;
 }
 
-export function UwsJobInfo({jobInfo, style}) {
+export function UwsJobInfo({jobInfo, style, isOpen=false}) {
 
     return (
         <div className='JobInfo__main' style={style}>
@@ -107,19 +107,19 @@ export function UwsJobInfo({jobInfo, style}) {
                         .map(([k,v]) => <KeywordBlock key={k} label={k} value={v}/>)
                 }</>
 
-                <OptionalBlock label='parameters' value={jobInfo.parameters}/>
-                <OptionalBlock label='results' value={jobInfo.results} asLink={true}/>
-                <OptionalBlock label='errorSummary' value={jobInfo.errorSummary}/>
+                <OptionalBlock label='parameters' value={jobInfo.parameters} isOpen={isOpen}/>
+                <OptionalBlock label='results' value={jobInfo.results} asLink={true} isOpen={isOpen}/>
+                <OptionalBlock label='errorSummary' value={jobInfo.errorSummary} isOpen={isOpen}/>
 
             </div>
         </div>
     );
 }
 
-function OptionalBlock({label, value, asLink}) {
+function OptionalBlock({label, value, asLink, isOpen}) {
     if (!value) return null;
     return (
-        <CollapsiblePanel componentKey={`JobInfo-${label}`} header={label} isOpen={false}>
+        <CollapsiblePanel componentKey={`JobInfo-${label}`} header={label} isOpen={isOpen}>
             <div className='JobInfo__items'>
                 <> {
                     Object.entries(value).map(([k,v]) => <KeywordBlock key={k} label={k} value={v} asLink={asLink}/>)

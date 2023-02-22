@@ -120,6 +120,8 @@ public class TableUtil {
                 } else if (line.startsWith("<VOTABLE") ||
                         (line.contains("<?xml") && line.contains("<VOTABLE "))) {
                     return Format.VO_TABLE;
+                } else if (isUwsEl(line)) {
+                    return Format.UWS;
                 } else if (row == 0 && line.toLowerCase().indexOf("pdf") > 0) {
                     return Format.PDF;
                 } else if (isRegLine(line)) {
@@ -168,6 +170,12 @@ public class TableUtil {
             FileUtil.silentClose(reader);
         }
 
+    }
+
+    private static boolean isUwsEl(String line) {
+        line = line.trim().toLowerCase();
+        boolean isUws = line.contains("www.ivoa.net/xml/uws");
+        return isUws && line.matches("<(.+:)?job .*");
     }
 
     private static int getColCount(CSVFormat format, String line) {
@@ -310,7 +318,7 @@ public class TableUtil {
     public enum Format { TSV(CSVFormat.TDF, ".tsv"), CSV(CSVFormat.DEFAULT, ".csv"), IPACTABLE(".tbl"), UNKNOWN(null),
                          FIXEDTARGETS(".tbl"), FITS(".fits"), JSON(".json"), PDF(".pdf"), TAR(".tar"), HTML(".html"),
                          VO_TABLE(".xml"), VO_TABLE_TABLEDATA(".vot"), VO_TABLE_BINARY(".vot"), VO_TABLE_BINARY2(".vot"),
-                         VO_TABLE_FITS(".vot"), REGION(".reg"), PNG(".png");
+                         VO_TABLE_FITS(".vot"), REGION(".reg"), PNG(".png"), UWS(".xml");
         public CSVFormat type;
         String fileNameExt;
         Format(String ext) {this.fileNameExt = ext;}
@@ -335,6 +343,7 @@ public class TableUtil {
         allFormats.put("fits", Format.FITS);
         allFormats.put("pdf", Format.PDF);
         allFormats.put("png", Format.PNG);
+        allFormats.put("uws", Format.UWS);
     }
 
     public static Map<String, Format> getAllFormats() { return allFormats; }

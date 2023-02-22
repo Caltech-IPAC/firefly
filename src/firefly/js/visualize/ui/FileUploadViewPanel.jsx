@@ -33,10 +33,14 @@ import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {CompleteButton,NONE} from 'firefly/ui/CompleteButton.jsx';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField.jsx';
-import {getFileFormat, getFirstPartType, getSelectedRows, isRegion} from 'firefly/ui/FileUploadProcessor';
-import {acceptAnyTables, acceptDataLinkTables, acceptImages, acceptMocTables, acceptNonDataLinkTables,
-    acceptNonMocTables, acceptOnlyTables, acceptRegions, acceptTableOrSpectrum, DATA_LINK_TABLES,
-    IMAGES, REGIONS, SPECTRUM_TABLES, TABLES} from 'firefly/ui/FileUploadUtil';
+import {getFileFormat, getFirstPartType, getSelectedRows, isRegion, isUWS} from 'firefly/ui/FileUploadProcessor';
+import {
+    acceptAnyTables, acceptDataLinkTables, acceptImages, acceptMocTables, acceptNonDataLinkTables,
+    acceptNonMocTables, acceptOnlyTables, acceptRegions, acceptTableOrSpectrum, acceptUWS, DATA_LINK_TABLES,
+    IMAGES, REGIONS, SPECTRUM_TABLES, TABLES, UWS
+} from 'firefly/ui/FileUploadUtil';
+import {UwsJobInfo} from 'firefly/core/background/JobInfo';
+import {uwsJobInfo} from 'firefly/rpc/SearchServicesJson';
 
 const  FILE_ID = 'fileUpload';
 const  URL_ID = 'urlUpload';
@@ -47,12 +51,15 @@ const REGION_MSG = 'A Region file';
 const IMAGE_MSG = 'Any FITS file with images (including multiple HDUs)';
 const MOC_MSG = 'A MOC FITS file';
 const DL_MSG = 'A Data Link Table file';
+const UWS_MSG = 'A UWS Job File';
+
 
 const SUPPORTED_TYPES=[
     FileAnalysisType.REGION,
     FileAnalysisType.Image,
     FileAnalysisType.Table,
-    FileAnalysisType.Spectrum
+    FileAnalysisType.Spectrum,
+    FileAnalysisType.UWS
 ];
 
 const TABLES_ONLY_SUPPORTED_TYPES=[
@@ -173,7 +180,8 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem}) 
                                                        }}/> }
                         </div>
                     </div>
-                    <FileAnalysis {...{report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList, isDatalink, acceptOneItem}}/>
+                    <FileAnalysis {...{report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList,
+                        isDatalink, acceptOneItem, summaryTblId}}/>
                     <ImageDisplayOption {...{summaryTblId, currentReport:report, currentSummaryModel:summaryModel, acceptList}}/>
                     <TableDisplayOption {...{isMoc, isDatalink, summaryTblId, currentReport:report, currentSummaryModel:summaryModel,
                         acceptList, acceptOneItem}}/>
@@ -570,13 +578,17 @@ function AnalysisTable({summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMA
 function SingleDataSet({type, desc, detailsModel, report, UNKNOWN_FORMAT, currentSummaryModel, acceptList}) {
     const supported = isSinglePartFileSupported(currentSummaryModel, acceptList);
     const showDetails= supported && detailsModel;
+    const isUWSJobFile = isUWS(report);
+    const jobUrl = report.parts[0].url;
+
     return (
-        <div style={{display:'flex', flex:'1 1 auto', justifyContent: showDetails?'start':'center'}}>
-            <div style={{padding:'30px 20px 0 0'}}>
+        <div style={{display:'flex', flex:'1 1 auto', justifyContent: showDetails || isUWSJobFile?'start':'center'}}>
+            <div style={{padding:'30px 20px 0 0', marginLeft: isUWSJobFile?'30px':'0'}}>
                 <div style={{whiteSpace:'nowrap', fontSize:'larger', fontWeight:'bold', paddingBottom:40}}>
                     {type}{desc ? ` - ${desc}` : ''}
                 </div>
-                <AnalysisInfo report={report} supported={supported} UNKNOWN_FORMAT={UNKNOWN_FORMAT} />
+                <AnalysisInfo {...{report, supported, UNKNOWN_FORMAT}} />
+                {isUWSJobFile && <UWSInfo {...{jobUrl}}/>}
                 <div style={{paddingTop:15}}>No other detail about this file</div>
             </div>
             {  showDetails && <Details detailsModel={detailsModel}/>}
@@ -637,6 +649,7 @@ function buildAllowedTypes(acceptList) {
     acceptImages(acceptList) && allowedTypes.push(IMAGE_MSG);
     acceptMocTables(acceptList) && allowedTypes.push(MOC_MSG);
     acceptDataLinkTables(acceptList) && allowedTypes.push(DL_MSG);
+    acceptUWS(acceptList) && allowedTypes.push(UWS_MSG);
     return allowedTypes;
 }
 
@@ -673,6 +686,11 @@ const determineAccepted = (acceptList, uniqueTypes, isMoc, isDL) => {
     if (uniqueTypes.includes(REGIONS)) {
         if (!acceptRegions(acceptList)) {
             notAcceptedTypes.push('Region');
+        }
+    }
+    else if (uniqueTypes.includes(UWS)) {
+        if (!acceptUWS(acceptList)) {
+            notAcceptedTypes.push('UWS');
         }
     }
     else if (uniqueTypes.includes(IMAGES) && uniqueTypes.includes(TABLES)) { //possibly FITs
@@ -717,7 +735,37 @@ const warningMessage = (acceptList, uniqueTypes) => {
     }
 };
 
-const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList, isDL, acceptOneItem}) => {
+function UWSInfo ({jobUrl}) {
+    const [jobInfo, setJobInfo] = useState('');
+    const [errMsg, setErrMsg] = useState(null);
+    useEffect(  () => {
+        uwsJobInfo(jobUrl).then((info) => {
+            setJobInfo(info);
+        })
+            .catch((err) => {
+                setErrMsg('Error: Please upload UWS files via the \'Upload from URL\' option');
+            });
+    },[jobUrl]);
+
+    if (!jobUrl) { //user uploaded a UWS file from 'Upload file' option (instead of 'Upload from URL')
+        return (
+            <div className='FileUpload__uws'>
+                {errMsg && <div style={{color: 'gray', margin: '20px 0 0 0', fontSize: 'larger', lineHeight: '1.3em'}}>
+                    {errMsg}
+                </div>}
+            </div>);
+    }
+
+    return (
+        <div className='FileUpload__uws'>
+            <UwsJobInfo jobInfo={jobInfo} isOpen={true}/>
+        </div>
+    );
+}
+
+
+const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList,
+                          isDL, acceptOneItem}) => {
     //getting FieldGroup context and adding required params to the request object (used in resultSuccess in FileUploadProcessor)
     const {groupKey, register, unregister}= useContext(FieldGroupCtx);
 
@@ -739,7 +787,7 @@ const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT
         if  (accepted) { //no errors/warnings: show the AnalysisInfo
             return (
                 <div className='FileUpload__report'>
-                    {summaryModel.tableData.data.length>1 && <AnalysisInfo report={report} />}
+                    {summaryModel.tableData.data.length>1 && <AnalysisInfo {...{report}} />}
                     {warningMessage(acceptList, uniqueTypes)}
                     {getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList, acceptOneItem)}
                 </div>

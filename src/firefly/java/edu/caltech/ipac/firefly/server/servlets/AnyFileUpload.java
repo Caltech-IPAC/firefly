@@ -73,7 +73,7 @@ public class AnyFileUpload extends BaseHttpServlet {
     private static final String FILE_ANALYSIS= "fileAnalysis";
 
     private static final List<String> allParams= Arrays.asList(
-            FILE_NAME, CACHE_KEY, WORKSPACE_PUT, WS_CMD, ANALYZER_ID, URL,HIPS_CACHE,
+            FILE_NAME, CACHE_KEY, WORKSPACE_PUT, WS_CMD, ANALYZER_ID,HIPS_CACHE,
             WEB_PLOT_REQUEST, FILE_ANALYSIS, ServerParams.COMMAND);
 
 

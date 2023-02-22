@@ -46,7 +46,7 @@ import {RegionFactory} from '../visualize/region/RegionFactory.js';
 import {NaifidPanel} from './NaifidPanel';
 
 import {showUploadDialog} from 'firefly/ui/FileUploadDropdown';
-import {DATA_LINK_TABLES, IMAGES, MOC_TABLES, REGIONS, SPECTRUM_TABLES, TABLES} from 'firefly/ui/FileUploadUtil';
+import {DATA_LINK_TABLES, IMAGES, MOC_TABLES, REGIONS, SPECTRUM_TABLES, TABLES, UWS} from 'firefly/ui/FileUploadUtil';
 
 const dynamic1Params= [
     makeTargetDef(
@@ -280,7 +280,7 @@ function uploadButtons() {
                 <b>MOC FITS Only</b>
             </button>
             <br/><br/>
-            <button type='button' className='button std hl' onClick={() => showUploadDialog([MOC_TABLES,DATA_LINK_TABLES,TABLES,SPECTRUM_TABLES,REGIONS,IMAGES],true,'FileUploadAnalysis_Everything',true)}>
+            <button type='button' className='button std hl' onClick={() => showUploadDialog([MOC_TABLES,DATA_LINK_TABLES,TABLES,SPECTRUM_TABLES,REGIONS,IMAGES,UWS],true,'FileUploadAnalysis_Everything',true)}>
                 <b>Accept Everything (Default)</b>
             </button>
             <br/>
