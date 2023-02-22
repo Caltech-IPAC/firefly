@@ -1,8 +1,10 @@
 import {isArray, isEmpty, once} from 'lodash';
 import React, {useEffect, useRef, useState} from 'react';
-import {dispatchActiveTarget} from '../../core/AppDataCntlr.js';
+import {makeWorldPt, visRoot} from '../../api/ApiUtilImage.jsx';
+import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
 import {getComponentState} from '../../core/ComponentCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
+import {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
 import {getJsonProperty} from '../../rpc/CoreServices.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
@@ -11,11 +13,17 @@ import { getCellValue, getColumnIdx, getTblById, onTableLoaded, } from '../../ta
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {Logger} from '../../util/Logger.js';
 import {cisxAdhocServiceUtype, getServiceDescriptors, standardIDs} from '../../util/VOAnalyzer.js';
+import {toBoolean} from '../../util/WebUtil.js';
+import CoordSys from '../../visualize/CoordSys.js';
+import {dispatchChangeCenterOfProjection, dispatchChangeHiPS} from '../../visualize/ImagePlotCntlr.js';
+import {getPlotViewById, primePlot} from '../../visualize/PlotViewUtil.js';
 import {pointEquals} from '../../visualize/Point.js';
+import {isHiPS} from '../../visualize/WebPlot.js';
+import {confirmDLMenuItem} from './FetchDatalinkTable.js';
 import { ingestInitArgs,
     isSIAStandardID, makeFieldDefs, makeSearchAreaInfo, makeServiceDescriptorSearchRequest
 } from './ServiceDefTools.js';
-import {convertRequest, DynLayoutPanelTypes} from './DynamicUISearchPanel.jsx';
+import {convertRequest, DynLayoutPanelTypes, findTargetFromRequest} from './DynamicUISearchPanel.jsx';
 import {CIRCLE, POSITION, RANGE} from './DynamicDef.js';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {FormPanel} from '../FormPanel.jsx';
@@ -23,16 +31,20 @@ import {FieldGroupTabs, Tab} from '../panel/TabPanel.jsx';
 import {showInfoPopup} from '../PopupUtil.jsx';
 import {useStoreConnector} from '../SimpleComponent.jsx';
 
+import './DLGeneratedDropDown.css';
+
 export const DL_UI_LIST= 'DL_UI_LIST';
 const ACCESS_URL= 'access_url';
 const SD= 'service_def';
 const SEMANTICS= 'semantics';
 const ID= 'id';
 const DESC= 'description';
+const HIPS_PLOT_ID= 'dlGeneratedHipsPlotId';
 
 let regLoaded= false;
 let regLoading= false;
 let loadedTblIdCache={};
+const linkStyle= {color:'blue', whiteSpace:'noWrap'};
 
 const findUrl = async () => {
     const servicesRootUrl= await getJsonProperty('inventory.serverURLAry');
@@ -136,6 +148,10 @@ export function DLGeneratedDropDown({initArgs={}}) {// eslint-disable-line no-un
 
     loadedTblIdCache= loadedTblIds;
 
+    useEffect(() => {
+        setTimeout(() => confirmDLMenuItem(), 20);
+    }, []);
+
     useEffect(() => {// load registry and merge any already fetched tables
         const load= async () =>  {
             if (regLoaded || regLoading) return;
@@ -184,6 +200,7 @@ export function DLGeneratedDropDown({initArgs={}}) {// eslint-disable-line no-un
 
 export function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTblIds, setLoadedTblIds, url, initArgs}) {
 
+    const [sideBarShowing, setSideBarShowing]= useState(true);
     const currentTblId= loadedTblIds?.[url];
     useEffect(() => {
         if (isRegLoaded && !currentTblId) {
@@ -199,22 +216,57 @@ export function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTbl
         }
     }, [currentTblId,url,isRegLoaded]);
 
-    const sideBar= <SideBarTable {...{registryTblId}}/>;
+    useEffect(() => {
+        const showChooser= toBoolean(initArgs.urlApi?.showChooser ?? true, false, ['true','']);
+        setSideBarShowing(showChooser);
+    },[]);
+
+
+    const sideBar= <SideBarTable {...{registryTblId, setSideBarShowing}}/>;
     const regHasUrl= isURLInRegistry(url,registryTblId);
     return (
         <div className='SearchPanel' style={{width:'100%', height:'100%'}}>
-            <DLGeneratedTableSearch {...{currentTblId, initArgs, sideBar, regHasUrl, url}}/>
+            <DLGeneratedTableSearch {...{currentTblId, initArgs, sideBar, regHasUrl, url, sideBarShowing, setSideBarShowing}}/>
         </div>
     );
 }
 
-const ServDescPanel= ({fds, style, desc, docRows}) => {
+const ServDescPanel= ({fds, style, desc, setSideBarShowing, sideBarShowing, docRows}) => {
+
+    let title;
+    if (sideBarShowing) {
+        title= (
+            <div style={{display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center'}}>
+                <div className='DLGeneratedDropDown__section--title'>
+                    {desc}
+                </div>
+            </div>
+        );
+    }
+    else {
+        title= (
+            <div style={{display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'flex-start'}}>
+                <ExpandButton style={linkStyle} text={'>>> Show Other Data Sets'} onClick={()  => setSideBarShowing(true)}/>
+                <div style={{display:'flex', flexDirection:'row', flexGrow:1, justifyContent:'center'}}>
+                    <div className='DLGeneratedDropDown__section--title' style={{marginLeft:-60}}>
+                        {desc}
+                    </div>
+                </div>
+            </div>
+        );
+
+    }
+
+
+
     return  (
         <div style={{display:'flex', flexDirection:'column', justifyContent:'space-between', ...style}}>
-            <div style={{fontSize:'large', fontWeight:'bold', alignSelf:'center', padding:'5px 0 4px 0'}}>
-                {desc}
-            </div>
-            <DynLayoutPanelTypes.Simple fieldDefAry={fds} popupHiPS={false} style={{height:'100%'}}/>
+
+            {title}
+            <DynLayoutPanelTypes.Simple fieldDefAry={fds}
+                                        plotId={HIPS_PLOT_ID}
+                                        popupHiPS={false}
+                                        style={{height:'100%', marginTop:4}}/>
             <div style={{fontSize:'larger', padding:'1px 5px 5px 0', alignSelf:'flex-end'}}>
                 {
                     docRows.map( (row, idx) => (
@@ -229,14 +281,14 @@ const ServDescPanel= ({fds, style, desc, docRows}) => {
 };
 
 
-const TabView= ({tabsKey, searchObjFds,qAna, docRows}) => (
+const TabView= ({tabsKey, setSideBarShowing, sideBarShowing, searchObjFds,qAna, docRows}) => (
     <FieldGroupTabs style ={{height:'100%', width:'100%'}} initialState={{ value:searchObjFds[0].ID}} fieldKey={tabsKey}>
         {
             searchObjFds.map((sFds) => {
                 const {fds, idx, ID, desc}= sFds;
                 return (
                     <Tab name={`${qAna.primarySearchDef[idx].desc}`} id={ID} key={idx+''}>
-                        <ServDescPanel{...{fds, style:{width:'100%'}, desc, docRows}}/>
+                        <ServDescPanel{...{fds, setSideBarShowing, sideBarShowing, style:{width:'100%'}, desc, docRows}}/>
                     </Tab>
                 );
             })
@@ -244,11 +296,15 @@ const TabView= ({tabsKey, searchObjFds,qAna, docRows}) => (
     </FieldGroupTabs>
 );
 
-function SideBarTable({registryTblId}) {
+function SideBarTable({registryTblId, setSideBarShowing}) {
     return (
         <div style={{display:'flex', flexDirection:'column', backgroundColor:'rgb(255,255,255)'}}>
-            <div style={{fontSize:'large', fontWeight:'bold', alignSelf:'center', padding:'6px 0 0 0'}}>
-                Choose Data Set
+            <div style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
+                {<ExpandButton style={linkStyle} text={'<<< Hide'} tip={'Hide data set chooser'}
+                               onClick={()  => setSideBarShowing(false)}/> }
+                <div className='DLGeneratedDropDown__section--title' style={{marginLeft:110}} >
+                    Choose Data Set
+                </div>
             </div>
             <div style={{minWidth:460, flexGrow:1, backgroundColor:'inherit', padding: '4px 4px 0 2px'}}>
                 <TablePanel {...{
@@ -273,9 +329,13 @@ const initTargetOnce= once((wp) => wp && dispatchActiveTarget(wp));
 const doSearchOnce= once((clickFunc) => clickFunc() );
 
 
-function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url}) {
+function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url, sideBarShowing, setSideBarShowing}) {
+
 
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
+    const qAna= analyzeQueries(currentTblId);
+    const tabsKey= 'Tabs='+currentTblId;
+
     useEffect(() => {
         if (initArgs?.urlApi?.execute) {
             setTimeout(() => {
@@ -285,8 +345,6 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
     }, []);
 
 
-    const qAna= analyzeQueries(currentTblId);
-    const tabsKey= 'Tabs='+currentTblId;
     const fdAry= qAna?.primarySearchDef.map( (fd) => {
         const {serviceDef}= fd; //todo handle case with only an access url
         const standId= (serviceDef.standardID??'').toLowerCase();
@@ -314,6 +372,7 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
     const docRows= qAna?.urlRows.filter( ({semantic}) => semantic?.toLowerCase().endsWith('documentation'));
 
 
+
     const searchObjFds= fdAry
         ?.map((fds,idx) => {
             fds= fds.filter( (entry) => entry.type!==RANGE);
@@ -323,11 +382,36 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
             return {fds, standardID, idx, ID, desc};
         });
 
-    const submitSearch= (r) => {
-        const {fds, standardID, idx}= searchObjFds.length===1 ?
-            searchObjFds[0] :
-            searchObjFds.find(({ID}) => ID===r[tabsKey]) ?? {};
+    const findFieldDefInfo= (request) =>
+        searchObjFds.length===1 ? searchObjFds[0] : searchObjFds.find(({ID}) => ID===request[tabsKey]) ?? {};
 
+
+    useEffect(() => { // on table change: recenter hips if no target entered, change hips if new one is specified
+        if (!currentTblId) return;
+        const plot= primePlot(visRoot(),HIPS_PLOT_ID);
+        if (!plot || !isHiPS(plot)) return;
+        if (!qAna?.primarySearchDef?.[0]?.serviceDef?.cisxUI) return;
+        const {cisxUI}= qAna.primarySearchDef[0].serviceDef;
+        const raStr= cisxUI.find( (e) => e.name==='hips_initial_ra')?.value;
+        const decStr= cisxUI.find( (e) => e.name==='hips_initial_dec')?.value;
+        const ucdStr= cisxUI.find( (e) => e.name==='hips_initial_ra')?.UCD;
+        const hipsUrl= cisxUI.find( (e) => e.name==='HiPS')?.value;
+        const csys= ucdStr==='pos.galactic.lon' ? CoordSys.GALACTIC : CoordSys.EQ_J2000;
+        const centerProjPt= makeWorldPt(raStr, decStr, csys);
+        if (!centerProjPt) return;
+        const request= getFieldGroupResults('DL_UI'); // todo: this might not be right, there might be an array of field groups
+        const {fds}= findFieldDefInfo(request);
+        const tgt= findTargetFromRequest(request,fds);
+        if (!tgt) {
+            dispatchChangeCenterOfProjection({plotId:HIPS_PLOT_ID, centerProjPt});
+        }
+        if (hipsUrl &&  hipsUrl!==plot.hipsUrlRoot) {
+            dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: hipsUrl});
+        }
+    }, [currentTblId]);
+
+    const submitSearch= (r) => {
+        const {fds, standardID, idx}= findFieldDefInfo(r);
         const convertedR= convertRequest(r,fds,isSIAStandardID(standardID));
 
         const numKeys= [...new Set(fds.map( ({key}) => key))].length;
@@ -339,8 +423,18 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
         return true;
     };
 
+    const notLoaded= (
+        regHasUrl ?
+            <div style={{position:'relative', width:'100%', height:'100%'}}>
+                <div className='loading-mask'/>
+            </div> :
+            <div style={{alignSelf:'center', fontSize:'large', paddingLeft:40}}>
+                {`No collections to load from: ${url}`}
+            </div>
+    );
+
     return (
-        <div style={{display: 'flex', flexDirection:'column', width:'100%', height:'100%', justifyContent:'center'}}>
+        <div style={{display: 'flex', flexDirection:'column', width:'100%', justifyContent:'center', padding: '15px 8px 0 8px'}}>
             <FormPanel submitText = 'Search' groupKey = 'DL_UI'
                        onSubmit = {submitSearch}
                        params={{hideOnInvalid: false}}
@@ -348,20 +442,16 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
                        onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
                        help_id  = {'todo-AtReplaceHelpId-todo'}>
                 <div className='SearchPanel' style={{width:'100%', height:'100%'}}>
-                    {sideBar}
-                    {qAna ?
-                        <FieldGroup groupKey='DL_UI' keepState={true} style={{height:'100%', width:'100%'}}>
-                            {searchObjFds.length===1 ?
-                                <ServDescPanel{...{initArgs, fds:searchObjFds[0].fds, style:{width:'100%',height:'100%'}, desc:searchObjFds[0].desc, docRows}} /> :
-                                <TabView{...{initArgs, tabsKey,searchObjFds,qAna, docRows}}/>}
-                        </FieldGroup>
-                        :
-                        regHasUrl ?
-                            <div className='loading-mask'/> :
-                            <div style={{alignSelf:'center', fontSize:'large', paddingLeft:40}}>
-                                {`No collections to load from: ${url}`}
-                            </div>
-                    }
+                    {sideBarShowing && sideBar}
+                    <FieldGroup groupKey='DL_UI' keepState={true} style={{width:'100%'}}>
+                        {qAna ? searchObjFds.length===1 ?
+                                <ServDescPanel{...{initArgs, setSideBarShowing, sideBarShowing, fds:searchObjFds[0].fds,
+                                    style:{width:'100%',height:'100%'}, desc:searchObjFds[0].desc, docRows}} /> :
+                                <TabView{...{initArgs, tabsKey, setSideBarShowing, sideBarShowing, searchObjFds, qAna, docRows}}/>
+                            :
+                            notLoaded
+                        }
+                    </FieldGroup>
                 </div>
             </FormPanel>
         </div>
@@ -446,3 +536,16 @@ function analyzeQueries(tbl_id) {
 
     return {primarySearchDef, concurrentSearchDef, urlRows};
 }
+
+
+export function ExpandButton({text, tip='$text',style={}, onClick}) {
+    const s= Object.assign({cursor:'pointer', verticalAlign:'bottom'},style);
+    return (
+        <div style={s} title={tip} onClick={onClick}>
+                {text}
+        </div>
+    );
+}
+
+
+

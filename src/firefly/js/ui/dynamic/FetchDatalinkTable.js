@@ -9,18 +9,21 @@ import {DL_UI_LIST} from './DLGeneratedDropDown.js';
 
 function loadDatalinkUITable(tbl_id, url, initArgs={}) {
     const {fetchedTables={}}=  getComponentState(DL_UI_LIST) ?? {};
-    const {menuItems,selected,showBgMonitor}= getMenu();
+    const newFetchedTables= {...fetchedTables, [url]:tbl_id};
 
+    confirmDLMenuItem();
+    dispatchComponentStateChange(DL_UI_LIST, {currentTblId:tbl_id, fetchedTables:newFetchedTables});
+    dispatchShowDropDown( { view: 'DLGeneratedDropDownCmd', initArgs});
+}
+
+export function confirmDLMenuItem() {
+    const {menuItems,selected,showBgMonitor}= getMenu();
     if (!menuItems?.find(({action}) => action==='DLGeneratedDropDownCmd')) { // add the toolbar option
         const newMenuItems= [...menuItems];
         const dlDrop= {label:'Collections', action:'DLGeneratedDropDownCmd'};
         newMenuItems.splice(1,0,dlDrop);
         dispatchSetMenu({selected,showBgMonitor,menuItems:newMenuItems});
     }
-    const newFetchedTables= {...fetchedTables, [url]:tbl_id};
-
-    dispatchComponentStateChange(DL_UI_LIST, {currentTblId:tbl_id, fetchedTables:newFetchedTables});
-    dispatchShowDropDown( { view: 'DLGeneratedDropDownCmd', initArgs});
 }
 
 /**

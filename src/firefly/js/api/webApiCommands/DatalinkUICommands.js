@@ -19,9 +19,16 @@ const idExamples= [
         }
     },
     {
-        desc:'load to UI more than one id',
+        desc:'load to UI using id',
         params:{
-            id: ['iras_issa','iras_iris']
+            id: 'wise_z0mgs',
+        }
+    },
+    {
+        desc:'load to UI using id and show the data set chooser',
+        params:{
+            id: 'dss',
+            showChooser: 'true'
         }
     },
 ];
@@ -57,8 +64,9 @@ function loadDLUITable(cmd,params, includeIdType) {
     }
 }
 
-async function getServerAndLoadTablesById(cmd,params) {
+async function getServerAndLoadTablesById(cmd,inParams) {
     const urlRootAry= await getJsonProperty('inventory.serverURLAry');
+    const params= {showChooser:false, ...inParams};
     const initArgs={urlApi:params};
     const urlRoot= urlRootAry[0];
     const makeUrl= (id) =>  urlRoot +'?'+ new URLSearchParams({collection:id}).toString();
@@ -80,9 +88,11 @@ export function getDatalinkUICommands(includeIdType) {
     const execute= (cmd,params) => loadDLUITable(cmd,params,includeIdType);
     const overview= [ 'Load Service Descriptor UI' ];
 
-    const urlOnlyParameters= { url: {desc:'url to datalink UI file'},
+    const urlOnlyParameters= {
+        url: {desc:'url to datalink UI file'},
         [ReservedParams.POSITION.name]: ['coordinates of the search',...ReservedParams.POSITION.desc],
         [ReservedParams.SR.name]: ['radius of search  (optional)',...ReservedParams.SR.desc],
+        showChooser: {desc:'show the dataset chooser'},
         execute: 'true or false - if true execute the search'
     };
     const bothParameters= {...urlOnlyParameters, id : {desc:'ID to predefined data link UI service'}};

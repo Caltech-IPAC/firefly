@@ -19,9 +19,9 @@ import './DynamicUI.css';
 
 const defaultOnError= () => showInfoPopup('One or more fields are not valid', 'Invalid Data');
 
-export const DynamicFieldGroupPanel = ({DynLayoutPanel, groupKey, fieldDefAry, keepState = true}) => (
+export const DynamicFieldGroupPanel = ({DynLayoutPanel, groupKey, fieldDefAry, keepState = true, plotId='defaultHiPSTargetSearch'}) => (
     <FieldGroup groupKey={groupKey} keepState={keepState}>
-        <DynLayoutPanel fieldDefAry={fieldDefAry} style={{margin: '8px 3px 15px 3px', width: '100%'}}/>
+        <DynLayoutPanel fieldDefAry={fieldDefAry} style={{margin: '8px 3px 15px 3px', width: '100%'}} plotId={plotId}/>
     </FieldGroup>
 );
 
@@ -111,10 +111,25 @@ export function convertRequest(request, fieldDefAry, treatAsSia= false) {
     return {...retReq,...hiddenFields};
 }
 
+export function findTargetFromRequest(request, fieldDefAry) {
+    let wp;
+    fieldDefAry?.forEach( ({key,type, targetDetails:{raKey,decKey, targetKey}={} }) => {
+        switch (type) {
+            case POSITION:
+                if (raKey && decKey) wp= convert(parseWorldPt(request[key]), CoordinateSys.EQ_J2000);
+                return;
+            case CIRCLE:
+                wp= convert(parseWorldPt(request[targetKey]), CoordinateSys.EQ_J2000);
+                return;
+        }
+    });
+    return wp;
+}
 
-function SimpleDynSearchPanel({style={}, fieldDefAry, popupHiPS= true}) {
+
+function SimpleDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='defaultHiPSTargetSearch'}) {
     const { spacialPanel, areaFields, polyPanel, checkBoxFields, fieldsInputAry, opsInputAry,
-        useSpacial, useArea}= makeAllFields(fieldDefAry,false,popupHiPS);
+        useSpacial, useArea}= makeAllFields(fieldDefAry,false,popupHiPS, plotId);
 
     let iFieldLayout;
     if (fieldsInputAry.length || opsInputAry.length) {
@@ -151,7 +166,7 @@ function SimpleDynSearchPanel({style={}, fieldDefAry, popupHiPS= true}) {
     );
 }
 
-function GridDynSearchPanel({style={}, fieldDefAry, popupHiPS= true}) {
+function GridDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='defaultHiPSTargetSearch'}) {
     const { spacialPanel, areaFields, checkBoxFields, fieldsInputAry, opsInputAry,
         useArea, useSpacial}= makeAllFields(fieldDefAry, true, popupHiPS);
 
@@ -190,6 +205,6 @@ function GridDynSearchPanel({style={}, fieldDefAry, popupHiPS= true}) {
 
 
 export const DynLayoutPanelTypes= {
-    'Simple': SimpleDynSearchPanel,
-    'Grid': GridDynSearchPanel,
+    Simple: SimpleDynSearchPanel,
+    Grid: GridDynSearchPanel,
 };

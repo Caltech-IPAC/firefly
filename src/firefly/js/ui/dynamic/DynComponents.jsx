@@ -58,11 +58,12 @@ export function getSpacialSearchType(request, fieldDefAry) {
  * @param inFieldDefAry
  * @param noLabels
  * @param popupHiPS
+ * @param plotId
  * @return {{opsInputAry, fieldsInputAry, checkBoxFields, polyPanel, spacialPanel, areaFields, fieldsInputAry, opsInputAry, useArea, useSpacial, useCirclePolyField}}
  */
-export const makeAllFields = (inFieldDefAry, noLabels=false, popupHiPS) => {
+export const makeAllFields = (inFieldDefAry, noLabels=false, popupHiPS, plotId='defaultHiPSTargetSearch') => {
 
-       // polygon is not created directly, we need to determine who will create creat a polygon field if it exist
+    // polygon is not created directly, we need to determine who will create creat a polygon field if it exist
     const fieldDefAry= inFieldDefAry.filter( ({hide}) => !hide);
     const hasPoly = Boolean(findType(fieldDefAry,POLYGON));
     const circle= findType(fieldDefAry,CIRCLE);
@@ -71,8 +72,8 @@ export const makeAllFields = (inFieldDefAry, noLabels=false, popupHiPS) => {
     const spacialManagesArea= hasSpacialAndArea && countType(fieldDefAry,AREA)===1;
 
     const panels = {
-        spacialPanel: popupHiPS ? makeDynSpacialPanel(fieldDefAry, true, popupHiPS) :
-                                  makeDynSpacialPanel(fieldDefAry, hasCircle && hasPoly, popupHiPS),
+        spacialPanel: popupHiPS ? makeDynSpacialPanel(fieldDefAry, true, popupHiPS, plotId) :
+                                  makeDynSpacialPanel(fieldDefAry, hasCircle && hasPoly, popupHiPS, plotId),
         areaFields: spacialManagesArea ? [] : makeAllAreaFields(fieldDefAry),
         checkBoxFields: makeCheckboxFields(fieldDefAry),
         ...makeInputFields(fieldDefAry, noLabels)
@@ -104,7 +105,7 @@ function makeInputFields(fieldDefAry, noLabels) {
     return {fieldsInputAry, opsInputAry};
 }
 
-function CircleAndPolyFieldPopup({fieldDefAry, typeForCircle= CIRCLE}) {
+function CircleAndPolyFieldPopup({fieldDefAry, typeForCircle= CIRCLE, plotId='defaultHiPSTargetSearch'}) {
     const polyType = findType(fieldDefAry, POLYGON);
     const cirType = findType(fieldDefAry, typeForCircle);
     const [getConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY);
@@ -145,7 +146,7 @@ function CircleAndPolyFieldPopup({fieldDefAry, typeForCircle= CIRCLE}) {
             {taToggle}
             {getChoice() === CONE_CHOICE_KEY &&
                 <CircleField {...{
-                    hideHiPSPopupPanelOnDismount: false, fieldKey: targetKey, ...cirType,
+                    hideHiPSPopupPanelOnDismount: false, fieldKey: targetKey, ...cirType, plotId,
                     targetKey, sizeKey, polygonKey, initValue, minValue, maxValue,
                 }}/>}
             {getChoice() === POLY_CHOICE_KEY &&
@@ -158,7 +159,7 @@ function CircleAndPolyFieldPopup({fieldDefAry, typeForCircle= CIRCLE}) {
     );
 }
 
-function PositionAndPolyFieldEmbed({fieldDefAry}) {
+function PositionAndPolyFieldEmbed({fieldDefAry, plotId}) {
 
     const polyType = findType(fieldDefAry, POLYGON);
     const posType = findType(fieldDefAry, POSITION);
@@ -206,7 +207,7 @@ function PositionAndPolyFieldEmbed({fieldDefAry}) {
              style={{display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch', height:'100%',
                  paddingBottom:20}}>
             <HiPSTargetView {...{
-                hipsUrl, centerPt:initCenterPt, hipsFOVInDeg, mocList, coordinateSys, sRegion,
+                hipsUrl, centerPt:initCenterPt, hipsFOVInDeg, mocList, coordinateSys, sRegion, plotId,
                 minSize: minValue, maxSize: maxValue, whichOverlay: doGetConeAreaOp(),
                 targetKey, sizeKey, polygonKey, style: {minHeight: 300, alignSelf: 'stretch', flexGrow:1}
             }}/>
@@ -365,7 +366,7 @@ function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', style={}
     );
 }
 
-function makeDynSpacialPanel(fieldDefAry, manageAllSpacial= true, popupHiPS= false) {
+function makeDynSpacialPanel(fieldDefAry, manageAllSpacial= true, popupHiPS= false, plotId= 'defaultHiPSTargetSearch') {
     const posType = findType(fieldDefAry, POSITION);
     const areaType = findType(fieldDefAry, AREA);
     const circleType = findType(fieldDefAry, CIRCLE);
@@ -387,12 +388,12 @@ function makeDynSpacialPanel(fieldDefAry, manageAllSpacial= true, popupHiPS= fal
 
     if (manageAllSpacial && sizeKey) {
         return popupHiPS ?
-            <CircleAndPolyFieldPopup {...{fieldDefAry,typeForCircle:circleType?CIRCLE:POSITION}}/> : <PositionAndPolyFieldEmbed {...{fieldDefAry}}/>;
+            <CircleAndPolyFieldPopup {...{fieldDefAry,typeForCircle:circleType?CIRCLE:POSITION, plotId}}/> : <PositionAndPolyFieldEmbed {...{fieldDefAry, plotId}}/>;
     }
     else {
         if (popupHiPS) {
             return (<VisualTargetPanel {...{
-                hipsUrl, centerPt, hipsFOVInDeg, mocList, nullAllowed, coordinateSys, sizeKey,
+                hipsUrl, centerPt, hipsFOVInDeg, mocList, nullAllowed, coordinateSys, sizeKey, plotId,
                 minSize: minValue, maxSize: maxValue,
                 targetPanelExampleRow1, targetPanelExampleRow2 }} />);
         }
@@ -403,6 +404,7 @@ function makeDynSpacialPanel(fieldDefAry, manageAllSpacial= true, popupHiPS= fal
                     <HiPSTargetView {...{
                         hipsUrl, centerPt, hipsFOVInDeg, mocList, coordinateSys,
                         minSize: minValue, maxSize: maxValue,
+                        plotId,
                         targetKey: 'UserTargetWorldPt', sizeKey, style: {flexGrow:1, alignSelf: 'stretch'}
                     }}/>
                     <div style={{display: 'flex', flexDirection: 'column'}}>
