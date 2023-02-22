@@ -5,6 +5,7 @@
 import {get, isEmpty, isArray} from 'lodash';
 import {RangeValues, SIGMA, STRETCH_LINEAR} from '../visualize/RangeValues.js';
 import {makeWiseViewCreate, makeWisePlotRequest} from './WiseRequestList.js';
+import {makeShaPlotRequest} from './ShaRequestList';
 import {make2MassPlotRequest} from './TwoMassRequestList.js';
 import {makeAtlasPlotRequest} from './AtlasRequestList.js';
 import {makeZtfPlotRequest} from './ZtfRequestList.js';
@@ -176,6 +177,17 @@ function initConverterTemplates() {
             getSingleDataProduct: getSingleDataProductWrapper(makeWisePlotRequest),
             getGridDataProduct: getGridDataProductWrapper(makeWisePlotRequest),
             getRelatedDataProduct: getRelatedDataProductWrapper(makeWisePlotRequest),
+        },
+        {
+            converterId: 'sha',
+            tableMatches: (table) => matchById(table, 'sha'),
+            create: simpleCreate,
+            threeColor: false,
+            hasRelatedBands: false,
+            canGrid: false,
+            getSingleDataProduct: makeAnalysisGetSingleDataProduct(makeShaPlotRequest),
+            getRelatedDataProduct: () => Promise.reject('related data products not supported'),
+            getGridDataProduct: () => Promise.reject('grid not supported'),
         },
         {
             converterId: 'atlas',
