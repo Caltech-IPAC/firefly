@@ -27,7 +27,8 @@ const titleStyle= {width: '100%', textAlign:'center', padding:'10px 0 5px 0', fo
 
 
 export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDefParams, setSearchParams,
-                                               title, makeDropDown, sRegion}) => {
+                                               title, makeDropDown, sRegion,
+                                               plotId= 'defaultHiPSTargetSearch'}) => {
 
     const fieldDefAry= makeFieldDefs(serDefParams, sRegion, undefined, true);
 
@@ -43,6 +44,7 @@ export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDefParams,
                 <div style= {titleStyle}> {title} </div>
                 <DynamicFieldGroupPanel groupKey={GROUP_KEY} keepState={false}
                                         DynLayoutPanel={DynLayoutPanelTypes.Simple}
+                                        plotId={plotId}
                                         fieldDefAry={fieldDefAry} />
                 <CompleteButton style={{padding: '20px 0 0 0'}}
                                    onSuccess={(r) => submitSearch(r)}

@@ -81,7 +81,7 @@ export function resultSuccess(request) {
             return true;
 
         case LOAD_DL:
-            tableIndices.forEach((idx) => void fetchDatalinkUITable(fileCacheKey,idx) );
+            tableIndices.forEach((idx) => void fetchDatalinkUITable(fileCacheKey,idx,{searchParams:{url:fileCacheKey}}) );
             return true;
 
         case LOAD_FOOTPRINT:

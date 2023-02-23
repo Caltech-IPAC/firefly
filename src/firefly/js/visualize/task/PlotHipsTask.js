@@ -320,7 +320,7 @@ export async function createHiPSMocLayer(ivoid, title, hipsUrl, plot, visible=fa
             const isMocFits = isMOCFitsFromUploadAnalsysis(report);
             if (isMocFits.valid) {
                 dl = addNewMocLayer(tblId, title, cacheKey, mocUrl, isMocFits?.[MOCInfo]?.[UNIQCOL]);
-                if (dl && plot.plotId) {
+                if (dl && plot?.plotId) {
                     dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, true, visible, true);
                 }
             }

@@ -7,20 +7,23 @@ import {dispatchTableFetch} from '../../tables/TablesCntlr.js';
 import {onTableLoaded} from '../../tables/TableUtil.js';
 import {DL_UI_LIST} from './DLGeneratedDropDown.js';
 
-function loadDatalinkUITable(tbl_id, initArgs={}) {
-    const {tblIdList=[]}=  getComponentState(DL_UI_LIST);
-    const {menuItems,selected,showBgMonitor}= getMenu();
+function loadDatalinkUITable(tbl_id, url, initArgs={}) {
+    const {fetchedTables={}}=  getComponentState(DL_UI_LIST) ?? {};
+    const newFetchedTables= {...fetchedTables, [url]:tbl_id};
 
+    confirmDLMenuItem();
+    dispatchComponentStateChange(DL_UI_LIST, {currentTblId:tbl_id, fetchedTables:newFetchedTables});
+    dispatchShowDropDown( { view: 'DLGeneratedDropDownCmd', initArgs});
+}
+
+export function confirmDLMenuItem() {
+    const {menuItems,selected,showBgMonitor}= getMenu();
     if (!menuItems?.find(({action}) => action==='DLGeneratedDropDownCmd')) { // add the toolbar option
         const newMenuItems= [...menuItems];
         const dlDrop= {label:'Collections', action:'DLGeneratedDropDownCmd'};
         newMenuItems.splice(1,0,dlDrop);
         dispatchSetMenu({selected,showBgMonitor,menuItems:newMenuItems});
     }
-
-    const newTblIdList= [... new Set([...tblIdList,tbl_id])];  // add the new tbl_id to list, insure list is unique
-    dispatchComponentStateChange(DL_UI_LIST, {currentTblId:tbl_id, tblIdList:newTblIdList});
-    dispatchShowDropDown( { view: 'DLGeneratedDropDownCmd', initArgs});
 }
 
 /**
@@ -36,5 +39,5 @@ export async function fetchDatalinkUITable(url, idx=0, initArgs={}) {
     const {tbl_id}= req.META_INFO;
     dispatchTableFetch(req);
     await onTableLoaded(tbl_id);
-    loadDatalinkUITable(tbl_id, initArgs);
+    loadDatalinkUITable(tbl_id, url, initArgs);
 }

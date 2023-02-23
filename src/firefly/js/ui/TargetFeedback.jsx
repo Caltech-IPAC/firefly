@@ -1,3 +1,4 @@
+import {isArray} from 'lodash';
 import React from 'react';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 
@@ -16,8 +17,10 @@ const defExampleEntries= {
     };
 
 const defaultExamples= (targetPanelExampleRow1, targetPanelExampleRow2) => {
-    const row1Op= targetPanelExampleRow1 ?? getAppOptions()?.targetPanelExampleRow1 ?? defExampleEntries.row1;
-    const row2Op= targetPanelExampleRow2 ?? getAppOptions()?.targetPanelExampleRow2 ?? defExampleEntries.row2;
+    const tpR1= !targetPanelExampleRow1 || isArray(targetPanelExampleRow1) ? targetPanelExampleRow1 : [targetPanelExampleRow1];
+    const tpR2= !targetPanelExampleRow2 || isArray(targetPanelExampleRow2) ? targetPanelExampleRow2 : [targetPanelExampleRow2];
+    const row1Op= tpR1 ?? getAppOptions()?.targetPanelExampleRow1 ?? defExampleEntries.row1;
+    const row2Op= tpR2 ?? getAppOptions()?.targetPanelExampleRow2 ?? defExampleEntries.row2;
     return (
         <div style={{ display : 'inline-block', lineHeight : '1.2em'}}>
             {row1Op?.map( (s,idx) => <span key={s} style={{paddingLeft: (idx===0) ? 5 : 15}}>{s}</span> )}
