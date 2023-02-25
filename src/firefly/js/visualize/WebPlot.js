@@ -689,9 +689,10 @@ export const getScreenPixScaleArcSec= memorizeLastCall((plot) => {
         const cc= CysConverter.make(tmpPlot);
         const scrP= cc.getScreenCoords( pt00);
         const pt2= cc.getWorldCoords( makeScreenPt(scrP.x-1, scrP.y), plot.imageCoordSys);
-        return Math.abs(0-pt2.x)*3600; // note have to use angular distance formula here, because of the location of the point
+        return Math.abs(0-pt2.x)*3600; // note don't have to use angular distance formula here, because of the location of the point
     }
 },8);
+
 
 export const getFluxUnits= (plot,band) => (!plot || !band || !isImage(plot)) ? '' : plot.fluxUnitAry[band.value];
 
@@ -726,7 +727,7 @@ export function getPixScaleDeg(plot) {
 export function getDevPixScaleDeg(plot) {
     if (!plot?.projection || !isKnownType(plot) ) return 0;
     if (isImage(plot)) {
-        return plot.projection.getPixelScaleArcSec() / plot.zoomFactor;
+        return (plot.projection.getPixelScaleArcSec()/3600) / plot.zoomFactor;
     }
     else if (isHiPS(plot)) {
         const pt00= makeWorldPt(0,0, plot.imageCoordSys);

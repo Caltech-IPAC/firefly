@@ -351,7 +351,8 @@ function makeCroppedPlot(pc,plotCreateHeader, pv, cubeCtx) {
     const plot= WebPlot.makeWebPlotData(pv.plotId, pv.viewDim,pc,
         {...oldPlot.attributes,
             [PlotAttribute.IMAGE_BOUNDS_SELECTION]:undefined,
-            [PlotAttribute.SELECTION]: undefined
+            [PlotAttribute.SELECTION]: undefined,
+            [PlotAttribute.SELECTION_SOURCE]: undefined
         },
     false, cubeCtx);
     plot.title= oldPlot.title;

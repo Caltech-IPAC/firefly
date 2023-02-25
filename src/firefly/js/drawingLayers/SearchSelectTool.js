@@ -131,8 +131,8 @@ function drawSearchSelectionCircle(plot, drawLayer) {
         drawAry.push(PointDataObj.make(wp,3, DrawSymbol.CROSS));
         radius && drawAry.push(
             {...ShapeDataObj.makeCircleWithRadius(wp, drawRadius*3600,UnitType.ARCSEC),
-                lineWidth:1,
-                renderOptions:{lineDash:[5,5]}
+                lineWidth:2,
+                renderOptions:{lineDash:[7,3]}
             });
     }
     return drawAry;

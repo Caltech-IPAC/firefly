@@ -32,8 +32,17 @@ const isCoverageFail= (covState,tbl_id) => covState.find( (e) => e.tbl_id===tbl_
 
 const getActiveOrFirstTblId= () => getActiveTableId() || getTblIdsByGroup()[0];
 
+const anyTblHasCoverage= (covState) =>
+    getTblIdsByGroup().some( (tbl_id) => hasCoverageData(tbl_id) && !isCoverageFail(covState,tbl_id));
 
-export function CoverageViewer({viewerId='coverageImages',insideFlex=true, noCovMessage='No Coverage Available',
+function makeNovCovMsg(covState, baseNoCovMsg, tbl_id) {
+    const titleStr= getTblById(tbl_id)?.request?.META_INFO?.title;
+    return (anyTblHasCoverage(covState) && titleStr) ?
+        `${baseNoCovMsg} for ${titleStr}, other tables have coverage` : baseNoCovMsg;
+}
+
+
+export function CoverageViewer({viewerId='coverageImages',insideFlex=true, noCovMessage='No coverage available',
                                 workingMessage='Working...', noCovStyle={}}) {
 
     startWatcher(viewerId);
@@ -67,13 +76,15 @@ export function CoverageViewer({viewerId='coverageImages',insideFlex=true, noCov
         );
     }
     else {
-        let msg= noCovMessage;
+        let msg;
         if (tblHasCoverage || isFetching) {
-            msg= isCoverageFail(covState,tbl_id) ? noCovMessage : workingMessage;
+            msg= isCoverageFail(covState,tbl_id) ? makeNovCovMsg(noCovMessage,tbl_id) : workingMessage;
         }
         else if (forceShow) {
-            msg= getTblIdsByGroup().some( (tbl_id) => hasCoverageData(tbl_id) && !isCoverageFail(covState,tbl_id))
-                ? workingMessage : noCovMessage;
+            msg= anyTblHasCoverage(covState) ? workingMessage : makeNovCovMsg(covState, noCovMessage,tbl_id);
+        }
+        else {
+            msg= makeNovCovMsg(covState, noCovMessage,tbl_id);
         }
         return (
             <div style={{...{background: '#c8c8c8', paddingTop:35, width:'100%',textAlign:'center',fontSize:'14pt'},...noCovStyle}}>
@@ -83,9 +94,11 @@ export function CoverageViewer({viewerId='coverageImages',insideFlex=true, noCov
 }
 
 
+
 CoverageViewer.propTypes= {
     viewerId: PropTypes.string,
     noCovMessage: PropTypes.string,
     workingMessage: PropTypes.string,
     insideFlex: PropTypes.bool,
+    noCovStyle: PropTypes.object
 };

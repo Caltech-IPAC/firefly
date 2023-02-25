@@ -3,8 +3,7 @@
  */
 
 import Enum from 'enum';
-import {isEmpty, isObject, isString, flattenDeep, values, isUndefined, isNil} from 'lodash';
-import {makeRelativePolygonAry} from '../ui/VisualSearchUtils.js';
+import {isEmpty, isObject, isString, flattenDeep, values, isUndefined, isNil, pick} from 'lodash';
 import {WebPlotRequest} from '../WebPlotRequest.js';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
         TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
@@ -107,7 +106,7 @@ const defOptions= {
         title : '2MASS K_s'
     },
 
-    fovDegFallOver: .13,
+    fovDegFallOver: .08,
     fovMaxFitsSize: .2,
     autoConvertOnZoom: false,
     fovDegMinSize: .1,
@@ -117,6 +116,15 @@ const defOptions= {
 
 export const COVERAGE_WATCH_CID= 'COVERAGE_WATCH_CID';
 export const COVERAGE_FAIL= 'fail';
+
+const baseAttributePickList= [ PlotAttribute.USER_SEARCH_WP, PlotAttribute.USER_SEARCH_RADIUS_DEG,
+    PlotAttribute.POLYGON_ARY, PlotAttribute.USE_POLYGON, ];
+const selAttributePickList= [
+    PlotAttribute.SELECTION,
+    PlotAttribute.SELECTION_SOURCE,
+    PlotAttribute.SELECTION_TYPE,
+    PlotAttribute.IMAGE_BOUNDS_SELECTION,
+];
 
 const overlayCoverageDrawing= makeOverlayCoverageDrawing();
 
@@ -397,19 +405,16 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     }
 
     const tblIdAry= Object.keys(preparedTables).filter( (v) => !isString(preparedTables[v]));
-    const oldAtt= primePlot(visRoot(), PLOT_ID)?.attributes ?? {};
+    const plot= primePlot(visRoot(), PLOT_ID);
+    const oldAtt= plot?.attributes ?? {};
 
+    const pickList= (isHiPS(plot)) ? [...baseAttributePickList, ...selAttributePickList] : [...baseAttributePickList];
     const attributes= {
         [COVERAGE_TARGET]: avgOfCenters,
         [COVERAGE_FOV]: fovSize,
         [PlotAttribute.VISUALIZED_TABLE_IDS]: tblIdAry,
         [PlotAttribute.REPLOT_WITH_NEW_CENTER]: true,
-
-        // search area
-        [PlotAttribute.USER_SEARCH_WP]: oldAtt[PlotAttribute.USER_SEARCH_WP],
-        [PlotAttribute.USER_SEARCH_RADIUS_DEG]: oldAtt[PlotAttribute.USER_SEARCH_RADIUS_DEG],
-        [PlotAttribute.POLYGON_ARY]: oldAtt[PlotAttribute.POLYGON_ARY],
-        [PlotAttribute.USE_POLYGON]: oldAtt[PlotAttribute.USE_POLYGON]
+        ...pick(oldAtt,pickList)
     };
     if (commonSearchTarget) attributes[PlotAttribute.CENTER_ON_FIXED_TARGET]= commonSearchTarget;
 

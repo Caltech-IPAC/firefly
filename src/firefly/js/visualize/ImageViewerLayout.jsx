@@ -25,8 +25,7 @@ import { visRoot, ActionScope, dispatchPlotProgressUpdate, dispatchZoom, dispatc
     dispatchChangeCenterOfProjection, dispatchChangeActivePlotView,
     dispatchUpdateViewSize, dispatchRequestLocalData } from './ImagePlotCntlr.js';
 import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseSync.js';
-import {getDevPixScaleDeg, isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
-import Color from '../util/Color.js';
+import {isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
 import {plotMove} from './PlotMove';
 import {getAppOptions} from 'firefly/api/ApiUtil.js';
 

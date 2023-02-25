@@ -251,9 +251,6 @@ export const VisCtxToolbarView= memo((props) => {
 
     const makeButtons= () => (
         <Fragment>
-            {showOptions &&
-            <div style={{padding: '0 0 2px 2px', fontStyle: 'italic', fontWeight: 'bold'}}>Options:</div> }
-
 
             {showSelectionTools && image &&
             <ToolbarButton icon={CROP} tip='Crop the image to the selected area'

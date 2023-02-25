@@ -52,6 +52,9 @@ export const PlotAttribute= {
     /** the selection type, a string - 'rect' or 'circle' */
     SELECTION_TYPE: 'SELECTION_TYPE',
 
+    /** the component who created the selection eg ('SelectArea' or 'SearchRefinementTool') */
+    SELECTION_SOURCE: 'SELECTION_SOURCE',
+
 
     IMAGE_BOUNDS_SELECTION: 'IMAGE_BOUNDS_SELECTION',
 

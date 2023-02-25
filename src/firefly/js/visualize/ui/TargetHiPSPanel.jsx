@@ -6,9 +6,9 @@ import {dispatchHideDialog, dispatchShowDialog, isDialogVisible} from 'firefly/c
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {LayoutType, PopupPanel} from 'firefly/ui/PopupPanel.jsx';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
-import {closeToolbarModalLayers} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 import {computeCentralPointAndRadius,} from 'firefly/visualize/VisUtil.js';
 import CLICK from 'html/images/20x20_click.png';
+import SELECT_NONE from 'images/icons-2014/28x28_Rect_DD.png';
 import PropTypes, {arrayOf, bool, number, object, oneOf, shape, string} from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
@@ -36,8 +36,9 @@ import {HelpIcon} from './../../ui/HelpIcon.jsx';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
+import {closeToolbarModalLayers} from './ToolbarToolModalEnd.js';
 import {
-    convertStrToWpAry, HelpLines, initSearchSelectTool, updatePlotOverlayFromUserInput,
+    convertStrToWpAry, initSearchSelectTool, updatePlotOverlayFromUserInput,
     updateUIFromPlot
 } from './VisualSearchUtils.js';
 
@@ -131,7 +132,10 @@ export const HiPSTargetView = ({style, hipsDisplayKey='none',
     },[hipsDisplayKey]);
 
     useEffect(() => { // if plot view changes then update the target or polygon field
-        updateUIFromPlot(plotId,whichOverlay,setTargetWp,getTargetWp,setHiPSRadius,setHiPSRadius,setPolygon,getPolygon,minSize,maxSize);
+        updateUIFromPlot({plotId,whichOverlay,setTargetWp,getTargetWp,
+            setHiPSRadius,getHiPSRadius,setPolygon,getPolygon,minSize,maxSize,
+            canUpdateModalEndInfo:false
+        });
     },[pv]);
 
     useEffect(() => { // if target or radius field change then hips plot to reflect it
@@ -169,6 +173,20 @@ HiPSTargetView.propTypes= {
     sizeKey: string,
     targetKey: string,
 };
+
+export const HelpLines= ({whichOverlay}) =>
+    (whichOverlay===CONE_CHOICE_KEY ?
+        ( <div>
+            <span>Click to choose a search center, or use the Selection Tools (</span>
+            <img style={{width:15, height:15, verticalAlign:'text-top'}} src={SELECT_NONE}/>
+            <span>) to choose a search center and radius.</span>
+        </div> ) :
+        ( <div>
+            <span>Use the Selection Tools (</span>
+            <img style={{width:15, height:15, verticalAlign:'text-top'}} src={SELECT_NONE}/>
+            <span>)  to choose a search polygon. Click to change the center. </span>
+        </div> ));
+
 
 
 
@@ -359,7 +377,7 @@ async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg,
     dispatchPlotHiPS({plotId, wpRequest, viewerId,
         pvOptions: {canBeExpanded:false, useForSearchResults:false, displayFixedTarget:false, userCanDeletePlots: false,
             menuItemKeys: {
-                zoomDropDownMenu: false, overlayColorLock: false, matchLockDropDown: false,
+                zoomDropDownMenu: false, overlayColorLock: false, matchLockDropDown: false, clickToSearch:false,
                 recenter: false, selectArea: true,
             }
         }

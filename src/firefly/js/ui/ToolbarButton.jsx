@@ -220,7 +220,10 @@ export function ToolbarHorizontalSeparator({top=0, style={}}) {
 }
 ToolbarHorizontalSeparator.propTypes= { style:PropTypes.object, top : PropTypes.number };
 
-export function DropDownVerticalSeparator({useLine=false}) {
-    return <div className={useLine? 'ff-vertical-line-separator' : 'ff-vertical-separator'}/>;
+export function DropDownVerticalSeparator({useLine=false, style={}}) {
+    return <div style={style} className={useLine? 'ff-vertical-line-separator' : 'ff-vertical-separator'}/>;
 }
-DropDownVerticalSeparator.propTypes= { useLine: PropTypes.bool };
+DropDownVerticalSeparator.propTypes= {
+    useLine: PropTypes.bool,
+    style: PropTypes.object
+};

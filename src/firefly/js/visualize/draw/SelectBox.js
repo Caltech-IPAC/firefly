@@ -188,14 +188,19 @@ function drawBox(ctx, pt0, pt2, drawParams,renderOptions) {
         DrawUtil.strokeRec(ctx, color, lineWidth, pt0.x, pt0.y, sWidth, sHeight);
     } else if (selectedShape === SelectedShape.circle.key) {
         DrawUtil.drawCircleWithHandles(ctx, color, lineWidth, pt0.x, pt0.y, pt2.x, pt2.y);
+    } else if (selectedShape === SelectedShape.ellipse.key) {
+        DrawUtil.drawEclipseWithHandles(ctx, color, lineWidth, pt0.x, pt0.y, pt2.x, pt2.y);
     }
 
     if (style === Style.HANDLED) {
 
         if (selectedShape === SelectedShape.rect.key) {    // no rectangle for handle only case
             DrawUtil.drawInnerRecWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y, lineWidth);
-        } else {
+        } else if (selectedShape === SelectedShape.circle.key) {
             DrawUtil.drawCircleWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y, lineWidth);
+        } else if (selectedShape === SelectedShape.circle.key) {
+            DrawUtil.drawEclipseWithHandles(ctx, innerBoxColor, 2, pt0.x, pt0.y, pt2.x, pt2.y, lineWidth);
+
         }
 
         const pt1= makeDevicePt(pt0.x+sWidth,pt0.y);

@@ -10,4 +10,4 @@ import Enum from 'enum';
  * @prop circle
  * @type {Enum}
  */
-export const SelectedShape = new Enum(['rect', 'circle']);
+export const SelectedShape = new Enum(['rect', 'circle', 'ellipse', 'polygon']);
