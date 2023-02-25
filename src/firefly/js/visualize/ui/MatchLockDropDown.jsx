@@ -18,7 +18,7 @@ function changeMatchType(vr, matchType, lockMatch) {
     if(matchType.key === 'Standard' || matchType.key === 'Target') {
         const warningTitles= getPlotViewAry(vr)
                 .filter( (pv) => !hasWCSProjection(primePlot(pv)) )
-                .map ( (pv) => primePlot(pv).title);
+                .map ( (pv) => primePlot(pv)?.title ?? '');
         if (warningTitles.length !== 0) { //at least one image without WCS
             const msgTitle = 'The following image(s) do not have WCS:';
             const msgDesc = warningTitles.join(', ');

@@ -239,14 +239,17 @@ export function makeSearchAreaInfo(cisxUI) {
     return {examples, moc, mocDesc, HiPS, hips_initial_fov, centerWp, coordinateSys: hipsProjCsys.toString()};
 }
 
+let tblCnt=1;
+
 export function makeServiceDescriptorSearchRequest(request, serviceDescriptor) {
     const {standardID = '', accessURL, utype, serDefParams, title} = serviceDescriptor;
     const MAXREC = 50000;
+    const tblTitle= `${title} - ${tblCnt++}`;
 
     if (isSIAStandardID(standardID)) {
         // we know this is a table so make a table request
         const url = accessURL + '?' + new URLSearchParams(request).toString();
-        return makeFileRequest(title, url);   //todo- figure out title
+        return makeFileRequest(tblTitle, url);   //todo- figure out title
     } else if (isCisxTapStandardID(standardID, utype)) {
         // we know this is a table so make a table request either sync or async
         const doAsync = standardID.toLowerCase().includes('async');
@@ -258,7 +261,7 @@ export function makeServiceDescriptorSearchRequest(request, serviceDescriptor) {
 
         if (!query) return;
         if (doAsync) {
-            const asyncReq = makeTblRequest('AsyncTapQuery', title, {serviceUrl, QUERY: finalQuery, MAXREC});
+            const asyncReq = makeTblRequest('AsyncTapQuery', tblTitle, {serviceUrl, QUERY: finalQuery, MAXREC});
             setNoCache(asyncReq);
             return asyncReq;
         } else {
@@ -270,7 +273,7 @@ export function makeServiceDescriptorSearchRequest(request, serviceDescriptor) {
     } else {
         //todo: we should to call file analysis first
         const url = accessURL + '?' + new URLSearchParams(request).toString();
-        return makeFileRequest(serviceDescriptor.title, url);   //todo- figure out title
+        return makeFileRequest(tblTitle, url);   //todo- figure out title
     }
 }
 

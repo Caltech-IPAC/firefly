@@ -279,6 +279,7 @@ export function getHiPSZoomLevelForFOV(pv, fov) {
     const cc= CysConverter.make(tmpPlot);
     const pt1= cc.getDeviceCoords( makeWorldPt(0,0, plot.imageCoordSys));
     const pt2= cc.getDeviceCoords( makeWorldPt(fov/2,0, plot.imageCoordSys));
+    if (!pt1 || !pt2) return 0;
     const devSize= Math.abs(pt2.x-pt1.x)*2;
     return width / devSize;
 }
@@ -511,9 +512,11 @@ export function makeSpatialVector(wp) {
  */
 function getSearchRadiusInRadians(fov) {
 
-    if (fov>60) return toRadians((fov/2)* 1.6);
-    else if (fov>12) return toRadians((fov/2)*1.45);
-    else return toRadians((fov/2)* 1.1);
+    let v;
+    if (fov>60) v= toRadians((fov/2)* 1.6);
+    else if (fov>12) v= toRadians((fov/2)*1.45);
+    else v= toRadians((fov/2)* 1.1);
+    return v>Math.PI ? Math.PI : v;
 }
 
 

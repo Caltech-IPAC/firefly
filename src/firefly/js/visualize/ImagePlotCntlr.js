@@ -2,39 +2,39 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {has, isArray} from 'lodash';
 import Enum from 'enum';
-import {flux} from '../core/ReduxFlux.js';
-import {ZoomType} from './ZoomType.js';
-import {reducer as plotChangeReducer} from './reducer/HandlePlotChange.js';
-import {reducer as plotCreationReducer} from './reducer/HandlePlotCreation.js';
-import {reducer as plotAdminReducer} from './reducer/HandlePlotAdmin.js';
-import {getPlotGroupById} from './PlotGroup.js';
-import {getOnePvOrGroup, getPlotViewById, isActivePlotView, isImageExpanded, primePlot} from './PlotViewUtil.js';
-
-import {dispatchReplaceViewerItems, EXPANDED_MODE_RESERVED, IMAGE} from './MultiViewCntlr.js';
+import {has, isArray} from 'lodash';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
-
-import {UserZoomTypes} from './ZoomUtil.js';
-import {zoomActionCreator} from './task/ZoomTask.js';
+import {flux} from '../core/ReduxFlux.js';
 import {convertToIdentityObj} from '../util/WebUtil.js';
 import {changePrime} from './ChangePrime.js';
-import {makePlotImageAction} from './task/PlotImageTask.js';
-import {makeChangeHiPSAction, makeImageOrHiPSAction, makePlotHiPSAction} from './task/PlotHipsTask.js';
+
+import {dispatchReplaceViewerItems, EXPANDED_MODE_RESERVED, IMAGE} from './MultiViewCntlr.js';
+import {getPlotGroupById} from './PlotGroup.js';
+import {getOnePvOrGroup, getPlotViewById, isActivePlotView, isImageExpanded, primePlot} from './PlotViewUtil.js';
+import {reducer as plotAdminReducer} from './reducer/HandlePlotAdmin.js';
+import {reducer as plotChangeReducer} from './reducer/HandlePlotChange.js';
+import {reducer as plotCreationReducer} from './reducer/HandlePlotCreation.js';
 import {
     overlayPlotChangeAttributeActionCreator, plotImageMaskActionCreator, plotImageMaskLazyActionCreator
 } from './task/ImageOverlayTask.js';
-import {
-    colorChangeActionCreator, cropActionCreator, requestLocalDataActionCreator, stretchChangeActionCreator
-} from './task/PlotChangeTask.js';
-import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
 import {
     autoPlayActionCreator, changePointSelectionActionCreator, deletePlotViewActionCreator, restoreDefaultsActionCreator
 } from './task/PlotAdminTask.js';
 import {
     flipActionCreator, processScrollActionCreator, recenterActionCreator, rotateActionCreator
 } from './task/PlotChangeTask';
+import {
+    colorChangeActionCreator, cropActionCreator, requestLocalDataActionCreator, stretchChangeActionCreator
+} from './task/PlotChangeTask.js';
 import {makeAbortHiPSAction} from './task/PlotHipsTask';
+import {makeChangeHiPSAction, makeImageOrHiPSAction, makePlotHiPSAction} from './task/PlotHipsTask.js';
+import {makePlotImageAction} from './task/PlotImageTask.js';
+import {wcsMatchActionCreator} from './task/WcsMatchTask.js';
+import {zoomActionCreator} from './task/ZoomTask.js';
+import {ZoomType} from './ZoomType.js';
+
+import {UserZoomTypes} from './ZoomUtil.js';
 
 /** @typedef ExpandType
  * enum can be one of
@@ -165,7 +165,6 @@ const API_TOOLS_VIEW= `${PLOTS_PREFIX}.apiToolsView`;
 
 /** Action Type: enable/disable wcs matching*/
 export const IMAGE_PLOT_KEY= 'allPlots';
-
 
 /**
  * @returns {VisRoot}
@@ -1099,6 +1098,4 @@ function validateState(state,originalState,action) {
     console.log('action', action);
     if (console.groupEnd) console.groupEnd();
 }
-
-
 

@@ -40,7 +40,7 @@ import {getPlotViewAry} from 'firefly/visualize/PlotViewUtil.js';
  */
 export function TriViewImageSection({showCoverage=false, showFits=false, selectedTab='fits',
                                      showMeta=false, imageExpandedMode=false, closeable=true,
-                                     dataProductTableId, style={}}) {
+                                     coverageSide= 'LEFT', dataProductTableId, style={}}) {
 
     if (imageExpandedMode) {
         return  ( <ImageExpandedMode key='results-plots-expanded' closeFunc={closeable ? closeExpanded : null}/> );
@@ -50,14 +50,17 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
     const title= table?.tableMeta?.title || table?.title || '';
     const metaTitle= `Data Product${title?': ' : ''}${title}`;
 
+    const key= (showCoverage&&coverageSide==='LEFT') +'--'+ showFits +'--' + showMeta;
+
+
     if (showCoverage || showFits || showMeta) {
         return (
-            <Tabs style={{height: '100%', ...style}} onTabSelect={onTabSelect} defaultSelected={selectedTab} useFlex={true} resizable={true}>
-                { showFits &&
-                    <Tab name='Images' removable={false} id='fits'>
-                        <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID} insideFlex={true}
-                                          canReceiveNewPlots={NewPlotMode.create_replace.key}
-                                          Toolbar={MultiViewStandardToolbar}/>
+            <Tabs key={key} style={{height: '100%', ...style}} onTabSelect={onTabSelect}
+                  defaultSelected={getDefSelected(showCoverage,showFits,showMeta)}
+                  useFlex={true} resizable={true}>
+                { showCoverage && coverageSide==='LEFT' &&
+                    <Tab name='Coverage' removable={false} id='coverage'>
+                        <CoverageViewer/>
                     </Tab>
                 }
                 { showMeta &&
@@ -65,9 +68,11 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                         <MetaDataMultiProductViewer dataProductTableId={dataProductTableId} enableExtraction={true}/>
                     </Tab>
                 }
-                { showCoverage &&
-                    <Tab name='Coverage' removable={false} id='coverage'>
-                        <CoverageViewer/>
+                { showFits &&
+                    <Tab name='Pinned Images' removable={false} id='fits'>
+                        <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID} insideFlex={true}
+                                          canReceiveNewPlots={NewPlotMode.create_replace.key}
+                                          Toolbar={MultiViewStandardToolbar}/>
                     </Tab>
                 }
             </Tabs>
@@ -89,14 +94,18 @@ TriViewImageSection.propTypes= {
     dataProductTableId: PropTypes.string,
     chartMetaId: PropTypes.string,
     selectedTab: PropTypes.oneOf(['fits', 'meta', 'coverage']),
+    coverageSide: PropTypes.string,
     style: PropTypes.object
 };
 
-export function launchTableTypeWatchers() {
-    startLayoutWatcher();
+
+function getDefSelected(showCoverage, showFits, showMeta) {
+    if (showFits) return 'fits';
+    if (showMeta) return 'meta';
+    if (showCoverage) return 'coverage';
 }
 
-function startLayoutWatcher() {
+export function startImagesLayoutWatcher() {
     const actions = [
         ImagePlotCntlr.PLOT_IMAGE_START, ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS,
         ImagePlotCntlr.DELETE_PLOT_VIEW, REPLACE_VIEWER_ITEMS,TABLE_HIGHLIGHT,
@@ -187,15 +196,15 @@ function handleNewTable(layoutInfo, action) {
     const {tbl_id} = action.payload;
     const {images={}, showTables}  = layoutInfo;
     let {showImages} = layoutInfo;
-    let {showFits, showMeta, showCoverage, selectedTab, dataProductTableId} = images;
+    let {showFits, showMeta, selectedTab, dataProductTableId} = images;
     const isMeta = isDataProductsTable(tbl_id);
 
+    const tblList= getTblIdsByGroup();
+    const showCoverage= hasCoverageTable(tblList)|| hasCoverageData(tbl_id) || isOrbitalPathTable(tbl_id) || isCatalog(tbl_id);
 
-    if ((isMeta || hasCoverageData(tbl_id)|| isOrbitalPathTable(tbl_id) || isCatalog(tbl_id)) && showTables ) {
+    if (isMeta || showTables ) {
         if (!showFits) selectedTab = 'coverage';
         showFits= showFits || shouldShowFits();
-        showCoverage = true;
-        showImages = true;
     }
     if (isMeta && showTables) {
         showImages = true;
@@ -226,15 +235,13 @@ function onActiveTable (layoutInfo, action) {
     if (isEmpty(tblList)) return smartMerge(layoutInfo, {showImages});
 
     // check for catalog or meta images
-    const anyHasCoverage= hasCoverageTable(tblList);
-    const hasOrbitalPath=  hasOrbitalPathTable(tblList);
     const anyHasMeta= hasDataProductsTable(tblList);
 
-    if (anyHasCoverage || anyHasMeta || hasOrbitalPath) {
-        showCoverage = true;
+    showCoverage= hasCoverageTable(tblList) || hasOrbitalPathTable(tblList);
+
+    if (anyHasMeta) {
         showImages = true;
     } else {
-        showCoverage = false;
         showImages= showFits;
     }
     if (anyHasMeta) {
@@ -263,7 +270,7 @@ function onNewImage(layoutInfo, action) {
     const {images={}} = layoutInfo;
     let {selectedTab, showMeta, showFits} = images;
 
-    const showImages= getPlotViewAry(visRoot()).some( (pv) => pv.plotViewCtx.useForSearchResults);
+    const showImages= getPlotViewAry(visRoot()).some( (pv) => pv.plotViewCtx.useForSearchResults && !pv.plotViewCtx.useForCoverage);
     if (!showImages) return layoutInfo;
 
     const {viewerId} = action.payload || {};
@@ -278,5 +285,5 @@ function onNewImage(layoutInfo, action) {
     }
 
 
-    return smartMerge(layoutInfo, {showImages:true, images: {selectedTab, showMeta, showFits}});
+    return smartMerge(layoutInfo, {showImages, images: {selectedTab, showMeta, showFits}});
 }

@@ -3,42 +3,48 @@
  */
 
 import Enum from 'enum';
-import {isEmpty, isObject, isString, flattenDeep, values, isUndefined, isNil, pick} from 'lodash';
-import {WebPlotRequest} from '../WebPlotRequest.js';
-import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_UPDATE,
-        TABLE_REMOVE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
-import ImagePlotCntlr, { visRoot, dispatchDeletePlotView, dispatchPlotImageOrHiPS, dispatchPlotHiPS } from '../ImagePlotCntlr.js';
-import {primePlot, getDrawLayerById} from '../PlotViewUtil.js';
+import {flattenDeep, isEmpty, isNil, isObject, isString, isUndefined, pick, values} from 'lodash';
+import {getAppOptions} from '../../core/AppDataCntlr';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
-import {
-    doFetchTable, getTblById, getActiveTableId, getTableInGroup, isTableUsingRadians,
-    getMetaEntry, getBooleanMetaEntry } from '../../tables/TableUtil.js';
-import {cloneRequest, makeTableFunctionRequest, MAX_ROW } from '../../tables/TableRequestUtil.js';
-import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
-import {serializeDecimateInfo} from '../../tables/Decimate.js';
-import {DrawSymbol} from '../draw/DrawSymbol.js';
-import {computeCentralPtRadiusAverage} from '../VisUtil.js';
-import {makeWorldPt, pointEquals} from '../Point.js';
-import {logger} from '../../util/Logger.js';
-import {getCornersColumns} from '../../tables/TableInfoUtil.js';
-import {dispatchCreateDrawLayer,dispatchDestroyDrawLayer, dispatchModifyCustomField,
-                         dispatchAttachLayerToPlot, getDlAry} from '../DrawLayerCntlr.js';
+import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga';
+import {MetaConst} from '../../data/MetaConst.js';
 import Catalog, {CatalogType} from '../../drawingLayers/Catalog.js';
 import {TableSelectOptions} from '../../drawingLayers/CatalogUI.jsx';
-import {getNextColor} from '../draw/DrawingDef.js';
-import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga';
-import {findTableCenterColumns, isCatalog, isTableWithRegion, hasCoverageData, findTableRegionColumn} from '../../util/VOAnalyzer.js';
-import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
-import {getAppOptions} from '../../core/AppDataCntlr';
-import {getSearchTarget} from './CatalogWatcher';
-import {MetaConst} from '../../data/MetaConst.js';
-import {BLANK_HIPS_URL, isBlankHiPSURL, isHiPS} from '../WebPlot';
-import {PlotAttribute} from '../PlotAttribute.js';
-import {isDrawLayerVisible} from '../PlotViewUtil';
 import SearchTarget from '../../drawingLayers/SearchTarget.js';
+import {serializeDecimateInfo} from '../../tables/Decimate.js';
+import {getCornersColumns} from '../../tables/TableInfoUtil.js';
+import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
+import {
+    TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_REMOVE, TABLE_SELECT, TABLE_UPDATE, TBL_RESULTS_ACTIVE
+} from '../../tables/TablesCntlr.js';
+import {
+    doFetchTable, getActiveTableId, getBooleanMetaEntry, getMetaEntry, getTableInGroup, getTblById, isTableUsingRadians
+} from '../../tables/TableUtil.js';
 import {darker} from '../../util/Color';
+import {logger} from '../../util/Logger.js';
+import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
 import {isOrbitalPathTable} from '../../util/VOAnalyzer';
-import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {
+    findTableCenterColumns, findTableRegionColumn, hasCoverageData, isCatalog, isTableWithRegion
+} from '../../util/VOAnalyzer.js';
+import {getNextColor} from '../draw/DrawingDef.js';
+import {DrawSymbol} from '../draw/DrawSymbol.js';
+import {
+    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchModifyCustomField, getDlAry
+} from '../DrawLayerCntlr.js';
+import ImagePlotCntlr, {
+    dispatchDeletePlotView, dispatchPlotHiPS, dispatchPlotImageOrHiPS, visRoot
+} from '../ImagePlotCntlr.js';
+import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
+import {PlotAttribute} from '../PlotAttribute.js';
+import {DEFAULT_COVERAGE_PLOT_ID, isDrawLayerVisible} from '../PlotViewUtil';
+import {getDrawLayerById, primePlot} from '../PlotViewUtil.js';
+import {makeWorldPt, pointEquals} from '../Point.js';
+import {computeCentralPtRadiusAverage} from '../VisUtil.js';
+import {BLANK_HIPS_URL, isBlankHiPSURL, isHiPS} from '../WebPlot';
+import {WebPlotRequest} from '../WebPlotRequest.js';
+import {getSearchTarget} from './CatalogWatcher';
 
 /**
  * @typedef {Object} CoverageType
@@ -56,8 +62,6 @@ const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
 
 const COVERAGE_TARGET = 'COVERAGE_TARGET';
 const COVERAGE_FOV = 'COVERAGE_FOV';
-
-export const PLOT_ID= 'CoveragePlot';
 
 
 /**
@@ -258,7 +262,7 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
 
         case ImagePlotCntlr.PLOT_IMAGE:
         case ImagePlotCntlr.PLOT_HIPS:
-            if (action.payload.plotId===PLOT_ID) {
+            if (action.payload.plotId===DEFAULT_COVERAGE_PLOT_ID) {
                 setTimeout( () => overlayCoverageDrawing(preparedTables,options, tblCatIdMap, undefined), 5);
             }
             break;
@@ -272,7 +276,7 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
 function removeCoverage(tbl_id, preparedTables) {
     if (tbl_id) Reflect.deleteProperty(preparedTables, tbl_id);
     if (isEmpty(Object.keys(preparedTables))) {
-        dispatchDeletePlotView({plotId:PLOT_ID});
+        dispatchDeletePlotView({plotId:DEFAULT_COVERAGE_PLOT_ID});
     }
 }
 
@@ -394,10 +398,10 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     }
     let imageRequest= WebPlotRequest.makeFromObj(imageSourceParams) ||
                             WebPlotRequest.make2MASSRequest(avgOfCenters, 'asky', 'k', fovSize);
-    imageRequest= initRequest(imageRequest, viewerId, PLOT_ID, overlayPosition, avgOfCenters);
+    imageRequest= initRequest(imageRequest, viewerId, DEFAULT_COVERAGE_PLOT_ID, overlayPosition, avgOfCenters);
 
     const hipsRequest= initRequest(WebPlotRequest.makeHiPSRequest(hipsUrl, null),
-                       viewerId, PLOT_ID, overlayPosition, avgOfCenters);
+                       viewerId, DEFAULT_COVERAGE_PLOT_ID, overlayPosition, avgOfCenters);
     hipsRequest.setSizeInDeg(fovSize>180?300:fovSize);
     if (options.gridOn) {
         imageRequest.setGridOn(options.gridOn);
@@ -405,7 +409,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     }
 
     const tblIdAry= Object.keys(preparedTables).filter( (v) => !isString(preparedTables[v]));
-    const plot= primePlot(visRoot(), PLOT_ID);
+    const plot= primePlot(visRoot(), DEFAULT_COVERAGE_PLOT_ID);
     const oldAtt= plot?.attributes ?? {};
 
     const pickList= (isHiPS(plot)) ? [...baseAttributePickList, ...selAttributePickList] : [...baseAttributePickList];
@@ -419,13 +423,13 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
     if (commonSearchTarget) attributes[PlotAttribute.CENTER_ON_FIXED_TARGET]= commonSearchTarget;
 
     if (blankHips) {
-        dispatchPlotHiPS({plotId: PLOT_ID, viewerId, wpRequest:hipsRequest, attributes,
+        dispatchPlotHiPS({plotId: DEFAULT_COVERAGE_PLOT_ID, viewerId, wpRequest:hipsRequest, attributes,
             pvOptions: {userCanDeletePlots:false, displayFixedTarget:false, useForCoverage:true}
         });
     }
     else {
         dispatchPlotImageOrHiPS({
-            plotId: PLOT_ID, viewerId, hipsRequest, imageRequest,
+            plotId: DEFAULT_COVERAGE_PLOT_ID, viewerId, hipsRequest, imageRequest,
             fovDegFallOver, fovMaxFitsSize, autoConvertOnZoom, plotAllSkyFirst,
             pvOptions: {userCanDeletePlots:false, displayFixedTarget:false, useForCoverage:true},
             attributes,
@@ -517,7 +521,7 @@ function makeOverlayCoverageDrawing() {
      * @param {String} affectedTblId - the table id that is affected
      */
     return (preparedTables, options, tblCatIdMap, affectedTblId) => {
-        const plot=  primePlot(visRoot(),PLOT_ID);
+        const plot=  primePlot(visRoot(),DEFAULT_COVERAGE_PLOT_ID);
         if (!plot && !affectedTblId) return;
         const tblIdAry=  plot ? plot.attributes[PlotAttribute.VISUALIZED_TABLE_IDS] : [affectedTblId];
         if (isEmpty(tblIdAry)) return;
@@ -571,7 +575,7 @@ function makeOverlayCoverageDrawing() {
                 });
                 const oriTable= getTblById(id);
                 const arTable= preparedTables[id];
-                if (oriTable && arTable) addToCoverageDrawing(PLOT_ID, options, oriTable, arTable, drawingOptions, visibleMap);
+                if (oriTable && arTable) addToCoverageDrawing(DEFAULT_COVERAGE_PLOT_ID, options, oriTable, arTable, drawingOptions, visibleMap);
 
             });
         });
@@ -803,7 +807,7 @@ function findPreferredHiPS(tbl_id,prevPreferredHipsSourceURL, optionHipsSourceUR
         if (covHips) return makeRet(covHips,covHips);
         if (sim) return makeRet(BLANK_HIPS_URL, BLANK_HIPS_URL);
     }
-    const plot= primePlot(visRoot(), PLOT_ID);
+    const plot= primePlot(visRoot(), DEFAULT_COVERAGE_PLOT_ID);
     if (isHiPS(plot)) {
         return makeRet(plot.hipsUrlRoot, plot.hipsUrlRoot);
     }

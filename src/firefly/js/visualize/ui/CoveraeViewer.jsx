@@ -10,7 +10,7 @@ import {
 } from '../MultiViewCntlr';
 import {COVERAGE_WATCH_CID, startCoverageWatcher, COVERAGE_FAIL} from '../saga/CoverageWatcher.js';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar';
-import {getActivePlotView} from '../PlotViewUtil';
+import {DEFAULT_COVERAGE_VIEWER_ID, getActivePlotView} from '../PlotViewUtil';
 import {visRoot} from '../ImagePlotCntlr';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
@@ -42,7 +42,7 @@ function makeNovCovMsg(covState, baseNoCovMsg, tbl_id) {
 }
 
 
-export function CoverageViewer({viewerId='coverageImages',insideFlex=true, noCovMessage='No coverage available',
+export function CoverageViewer({viewerId=DEFAULT_COVERAGE_VIEWER_ID,insideFlex=true, noCovMessage='No coverage available',
                                 workingMessage='Working...', noCovStyle={}}) {
 
     startWatcher(viewerId);

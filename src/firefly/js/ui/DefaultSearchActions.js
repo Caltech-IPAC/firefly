@@ -1,4 +1,4 @@
-import {makeSearchAction, SearchTypes} from '../core/ClickToAction.js';
+import {makeSearchActionObj, SearchTypes} from '../core/ClickToAction.js';
 import {flux} from '../core/ReduxFlux.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {sprintf} from '../externalSource/sprintf.js';
@@ -26,54 +26,159 @@ const showImage= (initArgs) => dispatchShowDropDown( { view: 'ImageSelectDropDow
 
 export const makeDefTapSearchActions = () => {
     return [
-        makeSearchAction('tapRadius', 'tap', 'TAP ', 'Cone Search', SearchTypes.pointRadius, .001, 2.25,
-            (sa, cenWpt, radius) => showTapSearchPanel( {radiusInArcSec: radius, wp: cenWpt}), ),
-        makeSearchAction('tapArea', 'tap', 'TAP', 'Area Search', SearchTypes.area, undefined, undefined,
-            (sa, cenWpt, radius, corners) => showTapSearchPanel({corners}), ),
-        makeSearchAction('tableTapRadius', 'tap', 'TAP ', 'Cone Search', SearchTypes.point_table_only, .001, 2.25,
-            (sa, cenWpt) => showTapSearchPanel({wp: cenWpt}), ),
+        makeSearchActionObj({
+            cmd:'tapRadius',
+            groupId: 'tap',
+            label:'TAP ',
+            tip:'Cone Search',
+            searchType:SearchTypes.pointRadius,
+            min:.001,
+            max:2.25,
+            execute: (sa, cenWpt, radius) => showTapSearchPanel( {radiusInArcSec: radius, wp: cenWpt})
+        } ),
+        makeSearchActionObj({
+            cmd:'tapArea',
+            groupId:'tap',
+            label:'TAP',
+            tip:'Area Search',
+            searchType:SearchTypes.area,
+            execute: (sa, cenWpt, radius, corners) => showTapSearchPanel({corners}),
+        } ),
+        makeSearchActionObj({
+            cmd:'tableTapRadius',
+            groupId:'tap',
+            label:'TAP ',
+            tip:'Cone Search',
+            searchType:SearchTypes.point_table_only,
+            min:.001,
+            max:2.25,
+            execute: (sa, cenWpt) => showTapSearchPanel({wp: cenWpt}),
+        } ),
     ];
 };
 
 
 export const makeDefImageSearchActions = () => {
     return [
-        makeSearchAction('imageFits', 'image', 'FITS', 'Load a FITS Image at this point', SearchTypes.point, undefined, undefined,
-            (sa, wp) => showImage( {searchParams: {wp, type: 'singleChannel'}}) ),
-        makeSearchAction('HiPS', 'image', 'HiPS', 'HiPS tip', SearchTypes.pointRadius, .0025, 180,
-            (sa, wp, radius) => showImage( {searchParams: {wp, type: 'hipsImage', radius}}), 'Display HiPS at region center'),
+        makeSearchActionObj({
+            cmd:'imageFits',
+            groupId:'image',
+            label:'FITS',
+            tip:'Load a FITS Image at this point',
+            searchType: SearchTypes.point,
+            execute:(sa, wp) => showImage( {searchParams: {wp, type: 'singleChannel'}})
+        } ),
+        makeSearchActionObj({
+            cmd:'HiPS',
+            groupId:'image',
+            label:'HiPS',
+            tip:'HiPS tip',
+            searchType: SearchTypes.pointRadius,
+            min:.0025,
+            max:180,
+            execute:(sa, wp, radius) => showImage( {searchParams: {wp, type: 'hipsImage', radius}}),
+            searchDesc:'Display HiPS at region center',
+        } ),
     ];
 };
 
 export const makeDefTableSearchActions= () => {
     return [
-        makeSearchAction('tableNed', 'resolver', 'NED', 'Search NED and load the table',
-            SearchTypes.point_table_only, undefined, undefined,
-            (sa, wp) => searchNed(wp,5/3600), 'Search NED at row with 5" radius'),
-        makeSearchAction('tableSimbad', 'resolver', 'Simbad', 'Search Simbad and load the table',
-            SearchTypes.point_table_only, undefined, undefined,
-            (sa, wp) => searchSimbad(wp,5/3600), 'Search Simbad at row with 5" radius'),
-        makeSearchAction('tableSimbadGoto', 'resolver', 'Simbad', 'Launch Simbad in a browser tab and show the table there',
-            SearchTypes.point_table_only, undefined, undefined,
-            (sa, wp) => gotoAndSearchSimbad(wp,5/3600), 'Go to and Search Simbad at row with 5" radius'),
-        makeSearchAction('imageFits', 'image', 'FITS', 'Fits tip', SearchTypes.point_table_only, undefined, undefined,
-            (sa, wp) => showImage( {searchParams: {wp, type: 'singleChannel'}}), 'Display FITS for row'),
-        makeSearchAction('tableHiPS', 'image', 'HiPS', 'HiPS tip', SearchTypes.point_table_only, undefined, undefined,
-            (sa, wp) => showImage( {searchParams: {wp, type: 'hipsImage'}}), 'Display HiPS for row'),
-    ];
+        makeSearchActionObj({cmd:'tableNed',
+            groupId:'resolver',
+            label:'NED',
+            tip:'Search NED and load the table',
+            searchType: SearchTypes.point_table_only,
+            execute: (sa, wp) => searchNed(wp,5/3600),
+            searchDesc:'Search NED at row with 5" radius',
+        } ),
+        makeSearchActionObj({
+            cmd:'tableSimbad',
+            groupId: 'resolver',
+            label: 'Simbad',
+            tip:'Search Simbad and load the table',
+            searchType: SearchTypes.point_table_only,
+            execute: (sa, wp) => searchSimbad(wp,5/3600),
+            searchDesc: 'Search Simbad at row with 5" radius'
+        } ),
+        makeSearchActionObj({cmd:'tableSimbadGoto',
+            groupId:'resolver',
+            label:'Simbad',
+            tip:'Launch Simbad in a browser tab and show the table there',
+            searchType: SearchTypes.point_table_only,
+            execute: (sa, wp) => gotoAndSearchSimbad(wp,5/3600),
+            searchDesc: 'Go to and Search Simbad at row with 5" radius'
+        } ),
+        makeSearchActionObj({
+            cmd: 'imageFits',
+            groupId: 'image',
+            label: 'FITS',
+            tip:'Fits tip',
+            searchType: SearchTypes.point_table_only,
+            execute: (sa, wp) => showImage( {searchParams: {wp, type: 'singleChannel'}}),
+            searchDesc: 'Display FITS for row'
+        } ),
+        makeSearchActionObj({
+            cmd: 'tableHiPS',
+            groupId: 'image',
+            label: 'HiPS',
+            tip: 'HiPS tip',
+            searchType: SearchTypes.point_table_only,
+            execute: (sa, wp) => showImage( {searchParams: {wp, type: 'hipsImage'}}),
+            searchDesc: 'Display HiPS for row'
+        } ),
+
+        // for example of a whole table search
+        // makeSearchActionObj({
+        //     cmd: 'tableTapUpload',
+        //     groupId: 'tableTap',
+        //     label: 'Upload',
+        //     tip: 'test table',
+        //     searchType: SearchTypes.wholeTable,
+        //     execute: (sa, table) => {
+        //         console.log(`execute action for ${table?.tbl_id}`);
+        //     },
+        //     supported: (table) => {
+        //         console.log(`execute action for ${table.tbl_id}`);
+        //         return true;
+        //     }
+        // })
+];
 
 };
 
 export const makeExternalSearchActions = () => {
     return [
-        makeSearchAction('nedRadius','resolver', 'NED', 'Cone Search', SearchTypes.pointRadius, .001, 5,
-            (sa,cenWpt,radius) => searchNed(cenWpt,radius)),
-        makeSearchAction('simbadRadius','resolver', 'Simbad', 'Cone Search', SearchTypes.pointRadius, .001, 5,
-            (sa,cenWpt,radius) => searchSimbad(cenWpt,radius)),
-        makeSearchAction('gotoSimbadRadius','resolver', 'Simbad goto', 'Launch Simbad in a browser tab and show the table there',
-            SearchTypes.pointRadius, .001, 5,
-            (sa,cenWpt,radius) => gotoAndSearchSimbad(cenWpt,radius),
-            (wp,size) => `Go to Simbad and search (cone) with radius of ${sprintf('%.4f',size)} degrees`, ),
+        makeSearchActionObj({
+            cmd:'nedRadius',
+            groupId:'resolver',
+            label:'NED',
+            tip:'Cone Search',
+            searchType: SearchTypes.pointRadius,
+            min:.001,
+            max:1,
+            execute: (sa,cenWpt,radius) => searchNed(cenWpt,radius)
+        } ),
+        makeSearchActionObj({
+            cmd:'simbadRadius',
+            groupId:'resolver',
+            label:'Simbad',
+            tip:'Cone Search',
+            searchType: SearchTypes.pointRadius,
+            min:.001,
+            max:5,
+            execute: (sa,cenWpt,radius) => searchSimbad(cenWpt,radius)
+        } ),
+        makeSearchActionObj({
+            cmd: 'gotoSimbadRadius',
+            groupId: 'resolver',
+            label: 'Simbad goto',
+            tip: 'Launch Simbad in a browser tab and show the table there',
+            searchType: SearchTypes.pointRadius,
+            min: .001,
+            max: 5,
+            execute: (sa,cenWpt,radius) => gotoAndSearchSimbad(cenWpt,radius),
+            searchDesc: (wp,size) => `Go to Simbad and search (cone) with radius of ${sprintf('%.4f',size)} degrees`} ),
     ];
 };
 

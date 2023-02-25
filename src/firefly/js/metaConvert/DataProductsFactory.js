@@ -101,7 +101,8 @@ function getGridDataProductWrapper(makeReq) {
             .filter( (r) => r);
 
         const activate= createGridImagesActivate(reqAry,imageViewerId,table.tbl_id,plotRows);
-        return Promise.resolve( dpdtImage('Image Grid', activate));
+        const extraction= createSingleImageExtraction(reqAry);
+        return Promise.resolve( dpdtImage('Image Grid', activate, extraction, undefined, {extractionText:'Pin Image'}));
     };
 }
 

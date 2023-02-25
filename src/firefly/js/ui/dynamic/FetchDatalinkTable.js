@@ -20,7 +20,7 @@ export function confirmDLMenuItem() {
     const {menuItems,selected,showBgMonitor}= getMenu();
     if (!menuItems?.find(({action}) => action==='DLGeneratedDropDownCmd')) { // add the toolbar option
         const newMenuItems= [...menuItems];
-        const dlDrop= {label:'Collections', action:'DLGeneratedDropDownCmd'};
+        const dlDrop= {label:'Search Collections', action:'DLGeneratedDropDownCmd'};
         newMenuItems.splice(1,0,dlDrop);
         dispatchSetMenu({selected,showBgMonitor,menuItems:newMenuItems});
     }
@@ -41,3 +41,4 @@ export async function fetchDatalinkUITable(url, idx=0, initArgs={}) {
     await onTableLoaded(tbl_id);
     loadDatalinkUITable(tbl_id, url, initArgs);
 }
+

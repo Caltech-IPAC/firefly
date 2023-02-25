@@ -34,7 +34,7 @@ const TargetPanelView = (props) =>{
     const connectContext= useContext(ConnectionCtx);
 
     const positionField = (
-        <InputFieldView valid={valid} visible= {true} message={message} style={inputStyle}
+        <InputFieldView valid={valid} visible= {true} message={message} inputStyle={{width:200, ...inputStyle}}
                         onChange={(ev) => onChange(ev.target.value, TARGET)}
                         label={label} value={value} tooltip='Enter a target'
                         connectedMarker={connectedMarker||connectContext.controlConnected}

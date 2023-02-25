@@ -40,10 +40,13 @@ import {
     dispatchChangeActivePlotView, dispatchChangeExpandedMode, dispatchChangeHiPS, dispatchFlip,
     dispatchOverlayColorLocking, dispatchRestoreDefaults, dispatchRotate, ExpandType, visRoot
 } from '../ImagePlotCntlr.js';
+import {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {
-    findPlotGroup, getActivePlotView, getAllDrawLayersForPlot, hasOverlayColorLock, hasWCSProjection, isImageCube,
+    findPlotGroup, getActivePlotView, getAllDrawLayersForPlot, getPlotViewById, hasOverlayColorLock, hasWCSProjection,
+    isImageCube,
     isThreeColor, primePlot, pvEqualExScroll
 } from '../PlotViewUtil.js';
+import {MouseState} from '../VisMouseSync.js';
 import {ImageCenterDropDown, TARGET_LIST_PREF} from './ImageCenterDropDown.jsx';
 import {
     clearModalEndInfo, closeToolbarModalLayers, createModalEndUI,
@@ -126,11 +129,11 @@ function getStoreState(oldState) {
     return (needsUpdate) ? newState : oldState;
 }
 
-export const VisMiniToolbar = memo( ({style, manageExpand=true, expandGrid=false}) => {
+export const VisMiniToolbar = memo( ({style, manageExpand=true, expandGrid=false, viewerId}) => {
     const {visRoot,dlCount, recentTargetAry, modalEndInfo} = useStoreConnector(getStoreState);
 
     return (
-        <VisMiniTBWrapper {...{visRoot, dlCount, style, recentTargetAry,
+        <VisMiniTBWrapper {...{visRoot, dlCount, style, recentTargetAry, viewerId,
                           manageExpand, expandGrid, modalEndInfo}} />
     );
 });
@@ -138,7 +141,8 @@ export const VisMiniToolbar = memo( ({style, manageExpand=true, expandGrid=false
 VisMiniToolbar.propTypes= {
     style : PropTypes.object,
     manageExpand : PropTypes.bool,
-    expandGrid: PropTypes.bool
+    expandGrid: PropTypes.bool,
+    viewerId: PropTypes.string,
 };
 
 const rS= {
@@ -152,14 +156,26 @@ const rS= {
 };
 
 const VisMiniTBWrapper= wrapResizer(
-    ({visRoot, dlCount, style= {}, size:{width}, manageExpand, expandGrid, modalEndInfo}) => (
+    ({visRoot, dlCount, style= {}, size:{width}, manageExpand, expandGrid, viewerId, modalEndInfo}) => (
         <div style={{...rS, ...style}} className='disable-select' >
-            <VisMiniToolbarView {...{visRoot, dlCount, availableWidth:width, manageExpand, expandGrid,modalEndInfo}} />
+            <VisMiniToolbarView {...{visRoot, dlCount, availableWidth:width, manageExpand, expandGrid,modalEndInfo, viewerId}} />
         </div>
     ));
 
 
-const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, expandGrid, modalEndInfo}) => {
+function getCorrectPlotView(visRoot, viewerId) {
+    const pv= getActivePlotView(visRoot);
+    if (!viewerId || !pv) return pv;
+    const v= getViewer(getMultiViewRoot(), viewerId);
+    if (!v) return pv;
+    const itemIdAry= v.itemIdAry ?? [];
+    if (itemIdAry.includes(pv.plotId)) return pv;
+    if (!itemIdAry.length) return undefined;
+    return getPlotViewById(visRoot,itemIdAry[0]);
+}
+
+
+const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, expandGrid, modalEndInfo, viewerId}) => {
     const {apiToolsView}= visRoot;
     const {current:divref}= useRef({element:undefined});
     const [colorDrops,setColorDrops]= useState(true);
@@ -176,7 +192,7 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
         };
     }, []);
 
-    const pv= getActivePlotView(visRoot);
+    const pv= getCorrectPlotView(visRoot, viewerId);
     const plot= primePlot(pv);
     const image= !isHiPS(plot);
     const hips= isHiPS(plot);
@@ -186,14 +202,21 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
     const isExpanded= visRoot.expandedMode!==ExpandType.COLLAPSE;
     const farLeftButtonEnabled= mi.overlayColorLock && mi.matchLockDropDown && mi.expand;
 
+    const onMouseEnter= () => {
+            if (getActivePlotView(visRoot)?.plotId !== pv?.plotId && pv.plotId) {
+                dispatchChangeActivePlotView(pv.plotId);
+            }
+    };
+
     let showRotateLocked= false;
     if (plot) showRotateLocked = image ? pv.plotViewCtx.rotateNorthLock : plot.imageCoordSys===CoordinateSys.EQ_J2000;
     const unavailableCnt= getUnavailableCnt(availableWidth, mi, apiToolsView,image, isExpanded, manageExpand);
     const rS= { display: 'flex', alignItems:'center', position: 'relative', whiteSpace: 'nowrap' };
 
     return (
-        <div style={rS} ref={ (c) => divref.element=c}>
-
+        <div style={rS} ref={ (c) => divref.element=c}
+             onMouseEnter={onMouseEnter} >
+            
 
             {createModalEndUI(modalEndInfo,plot?.plotId) &&
                 <React.Fragment>
@@ -268,6 +291,7 @@ VisMiniToolbarView.propTypes= {
     expandGrid: PropTypes.bool,
     availableWidth: PropTypes.number,
     modalEndInfo: PropTypes.object,
+    viewerId: PropTypes.string
 };
 
 

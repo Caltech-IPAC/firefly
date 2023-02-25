@@ -4,6 +4,7 @@
 
 import {take, fork} from 'redux-saga/effects';
 import {filter} from 'lodash';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 import {LO_VIEW, SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo, dispatchUpdateLayoutInfo, dropDownManager} from '../../core/LayoutCntlr.js';
 import {smartMerge} from '../../tables/TableUtil.js';
@@ -22,7 +23,7 @@ import {REPLACE_VIEWER_ITEMS} from '../../visualize/MultiViewCntlr.js';
  * @param {string} [p.title] title to display
  * @param {string} [p.views] defaults to tri-view if not given.
  */
-export function* layoutManager({title, views='tables | images | xyPlots'}) {
+export function* layoutManager({title, views='tables | images | xyplots'}) {
     views = LO_VIEW.get(views) || LO_VIEW.none;
 
     yield fork(dropDownManager);        // start the dropdown manager
@@ -56,6 +57,7 @@ export function* layoutManager({title, views='tables | images | xyPlots'}) {
 
         newLayoutInfo = onAnyAction(newLayoutInfo, action, views);
         // newLayoutInfo = dropDownHandler(newLayoutInfo, action);     // replaced with manager up above
+        if (!newLayoutInfo.coverageSide) newLayoutInfo.coverageSide= getAppOptions()?.triViewCoverageSide;
 
         if (newLayoutInfo !== layoutInfo) {
             dispatchUpdateLayoutInfo(newLayoutInfo);

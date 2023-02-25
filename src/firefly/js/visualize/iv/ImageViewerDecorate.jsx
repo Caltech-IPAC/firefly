@@ -181,11 +181,11 @@ function contextToolbar(plotView,dlAry,extensionList, width) {
 
 
 function getBorderColor(pv,visRoot) {
-    if (!pv && !pv.plotId) return 'rgba(0,0,0,.4)';
+    if (!pv?.plotId) return 'rgba(0,0,0,.4)';
+    if (!pv.plotViewCtx.highlightFeedback) return 'rgba(0,0,0,.1)';
     if (isActivePlotView(visRoot,pv.plotId)) return 'orange';
     const group= getPlotGroupById(visRoot,pv.plotGroupId);
-    // if (group && group.overlayColorLock) return 'rgba(0, 93, 164, .2)';
-    if (group && group.overlayColorLock) return 'rgba(0, 0, 0, .1)';
+    if (group?.overlayColorLock) return 'rgba(0, 0, 0, .1)';
     else return 'rgba(0,0,0,.2)';
 }
 

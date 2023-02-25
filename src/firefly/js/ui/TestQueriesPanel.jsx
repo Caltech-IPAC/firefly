@@ -216,9 +216,10 @@ function renderNaifid(fields){
 
 function makeDynamic1() {
 
-    return (
-        <DynLayoutPanelTypes.Simple fieldDefAry={dynamic1Params} style={{margin:3, width:'100%'}} popupHiPS={false}/>
-    );
+    return <div>This one is creating a infinate loop for some reason</div>;
+    // return (
+    //     <DynLayoutPanelTypes.Simple fieldDefAry={dynamic1Params} style={{margin:3, width:'100%'}} popupHiPS={true}/>
+    // );
 }
 
 function makeDynamic2() {
@@ -242,7 +243,7 @@ function makeDynamic3() {
         <div>
             <DynamicFieldGroupPanel
                 groupKey={'simpledyngroup3'}
-                DynLayoutPanel={DynLayoutPanelTypes.Simple}
+                DynLayoutPanel={DynLayoutPanelTypes.Inset}
                 fieldDefAry={dynamic3Params}
                 style={{margin:3, width:'100%'}}/>
             <DynCompleteButton groupKey={'simpledyngroup3'}

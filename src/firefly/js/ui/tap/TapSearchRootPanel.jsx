@@ -28,7 +28,7 @@ import {makeColsLines, tableColumnsConstraints} from 'firefly/ui/tap/TableColumn
 import {commonSelectStyles, selectTheme} from 'firefly/ui/tap/Select.jsx';
 import {
     getMaxrecHardLimit, tapHelpId, getTapServices,
-    loadObsCoreSchemaTables, maybeQuote, defTapBrowserState, TAP_UPLOAD_SCHEMA,
+    loadObsCoreSchemaTables, maybeQuote, defTapBrowserState, TAP_UPLOAD_SCHEMA, getAsEntryForTableName,
 } from 'firefly/ui/tap/TapUtil.js';
 import { SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
@@ -394,13 +394,14 @@ function getAdqlQuery(tapBrowserState, showErrors= true) {
     if (!tableName) return;
     const isUpload= isTapUpload(tapBrowserState);
     const helperFragment = getHelperConstraints(tapBrowserState);
-    const tableCol = tableColumnsConstraints(tapBrowserState.columnsModel, isUpload?tableName[0]:undefined);
+    const tableCol = tableColumnsConstraints(tapBrowserState.columnsModel,
+        isUpload?getAsEntryForTableName(tableName):undefined);
 
     const { table:uploadTable, asTable:uploadAsTable, columns:uploadColumns}= isUpload ?
         getTapUploadSchemaEntry(tapBrowserState) : {};
 
     const fromTables= isUpload ?
-        `${tableName} AS ${tableName[0]}, ${TAP_UPLOAD_SCHEMA}.${uploadTable} ${uploadAsTable ? 'AS '+uploadAsTable : ''}` :
+        `${tableName} AS ${getAsEntryForTableName(tableName)}, ${TAP_UPLOAD_SCHEMA}.${uploadTable} ${uploadAsTable ? 'AS '+uploadAsTable : ''}` :
         tableName;
 
     // check for errors

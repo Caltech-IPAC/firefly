@@ -8,8 +8,7 @@ import {LayoutType, PopupPanel} from 'firefly/ui/PopupPanel.jsx';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 import {computeCentralPointAndRadius,} from 'firefly/visualize/VisUtil.js';
 import CLICK from 'html/images/20x20_click.png';
-import SELECT_NONE from 'images/icons-2014/28x28_Rect_DD.png';
-import PropTypes, {arrayOf, bool, number, object, oneOf, shape, string} from 'prop-types';
+import PropTypes, {arrayOf, bool, number, object, oneOf, shape, string, func} from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
@@ -23,20 +22,21 @@ import {DEF_TARGET_PANEL_KEY, TargetPanel} from '../../ui/TargetPanel.jsx';
 import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {
-    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dlRoot
+    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dlRoot, getDlAry
 } from '../DrawLayerCntlr.js';
-import {dispatchDeletePlotView, dispatchPlotHiPS, visRoot} from '../ImagePlotCntlr.js';
+import {dispatchChangeActivePlotView, dispatchDeletePlotView, dispatchPlotHiPS, visRoot} from '../ImagePlotCntlr.js';
 import {NewPlotMode} from '../MultiViewCntlr.js';
 import {onPlotComplete} from '../PlotCompleteMonitor.js';
-import {getDrawLayersByType, getPlotViewById, isDrawLayerAttached, primePlot} from '../PlotViewUtil.js';
+import {
+    getActivePlotView, getDrawLayersByType, getPlotViewById, isDrawLayerAttached, primePlot
+} from '../PlotViewUtil.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
 import {createHiPSMocLayer} from '../task/PlotHipsTask.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
-import {HelpIcon} from './../../ui/HelpIcon.jsx';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
-import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 import {closeToolbarModalLayers} from './ToolbarToolModalEnd.js';
+import {TargetHipsPanelToolbar} from './TargetHipsPanelToolbar.jsx';
 import {
     convertStrToWpAry, initSearchSelectTool, updatePlotOverlayFromUserInput,
     updateUIFromPlot
@@ -58,6 +58,7 @@ const sharedPropTypes= {
     minSize: number,
     maxSize: number,
     whichOverlay: string,
+    setWhichOverlay: func,
     coordinateSys: oneOf([CoordinateSys.GALACTIC, CoordinateSys.EQ_J2000]),
     mocList: arrayOf( shape({ mocUrl: string, title: string }) ),
 };
@@ -100,7 +101,7 @@ VisualTargetPanel.propTypes= {
 export const HiPSTargetView = ({style, hipsDisplayKey='none',
                                    hipsUrl=DEFAULT_HIPS, hipsFOVInDeg= DEFAULT_FOV, centerPt=makeWorldPt(0,0, CoordinateSys.GALACTIC),
                                    targetKey=DEF_TARGET_PANEL_KEY, sizeKey='none---Size', polygonKey='non---Polygon',
-                                   whichOverlay= CONE_CHOICE_KEY, sRegion,
+                                   whichOverlay= CONE_CHOICE_KEY, setWhichOverlay, sRegion,
                                    coordinateSys, mocList, minSize=1/3600, maxSize=100,
                                    plotId='defaultHiPSTargetSearch', cleanup= false, groupKey}) => {
 
@@ -117,7 +118,7 @@ export const HiPSTargetView = ({style, hipsDisplayKey='none',
 
     useEffect(() => { // show HiPS plot
         if (!pv || hipsUrl!==pv.request.getHipsRootUrl()) {
-            initHiPSPlot({plotId,hipsUrl, viewerId,centerPt,hipsFOVInDeg, coordinateSys, mocList,
+            initHiPSPlot({plotId,hipsUrl, viewerId,centerPt,hipsFOVInDeg, coordinateSys,
                 userEnterWorldPt, userEnterSearchRadius,
                 whichOverlay, userEnterPolygon,
             });
@@ -125,14 +126,20 @@ export const HiPSTargetView = ({style, hipsDisplayKey='none',
         else {
             updatePlotOverlayFromUserInput(plotId, whichOverlay, userEnterWorldPt(), userEnterSearchRadius(),
                 userEnterPolygon(), true);
+
+            if (getActivePlotView(visRoot())?.plotId !== plotId ) dispatchChangeActivePlotView(plotId);
         }
         return () => {
             if (cleanup) dispatchDeletePlotView({plotId});
         };
     },[hipsDisplayKey]);
 
+    useEffect(() => {
+        void queueUpdateMOCLayer(mocList, plotId) ;
+    }, [mocList]);
+
     useEffect(() => { // if plot view changes then update the target or polygon field
-        updateUIFromPlot({plotId,whichOverlay,setTargetWp,getTargetWp,
+        updateUIFromPlot({plotId,setWhichOverlay, whichOverlay,setTargetWp,getTargetWp,
             setHiPSRadius,getHiPSRadius,setPolygon,getPolygon,minSize,maxSize,
             canUpdateModalEndInfo:false
         });
@@ -149,21 +156,11 @@ export const HiPSTargetView = ({style, hipsDisplayKey='none',
 
     return (
         <div style={{minHeight:200, ...style, display:'flex', flexDirection:'column'}}>
-            <div style={{padding: '5px 5px 10px 5px',
-                alignSelf: 'stretch', marginBottom: 1,
-                display: 'flex', flexDirection:'row',
-                justifyContent: 'space-between',
-                background: 'rgb(200,200,200',
-                borderBottom: '1px solid rgba(0,0,0,.07)'}}>
-                <div style={{fontSize:'9pt', paddingRight: 10}}>
-                    {<HelpLines whichOverlay={whichOverlay} />}
-                </div>
-                <HelpIcon style={{alignSelf:'center'}} helpId={'hips.VisualSelection'} />
-            </div>
             <MultiImageViewer viewerId= {viewerId} insideFlex={true}
-                              canReceiveNewPlots={NewPlotMode.create_replace.key}
+                              canReceiveNewPlots={NewPlotMode.none.key}
                               showWhenExpanded={true}
-                              Toolbar={MultiViewStandardToolbar}/>
+                              whichOverlay={whichOverlay}
+                              Toolbar={TargetHipsPanelToolbar}/>
         </div>
     );
 };
@@ -173,21 +170,6 @@ HiPSTargetView.propTypes= {
     sizeKey: string,
     targetKey: string,
 };
-
-export const HelpLines= ({whichOverlay}) =>
-    (whichOverlay===CONE_CHOICE_KEY ?
-        ( <div>
-            <span>Click to choose a search center, or use the Selection Tools (</span>
-            <img style={{width:15, height:15, verticalAlign:'text-top'}} src={SELECT_NONE}/>
-            <span>) to choose a search center and radius.</span>
-        </div> ) :
-        ( <div>
-            <span>Use the Selection Tools (</span>
-            <img style={{width:15, height:15, verticalAlign:'text-top'}} src={SELECT_NONE}/>
-            <span>)  to choose a search polygon. Click to change the center. </span>
-        </div> ));
-
-
 
 
 export const TargetHiPSPanel = ({searchAreaInDeg, style,
@@ -352,14 +334,13 @@ const createMocTableId= () => `moc-table-${++mocCnt}`;
  * @param obj.centerPt
  * @param obj.hipsFOVInDeg
  * @param obj.coordinateSys
- * @param obj.mocList
  * @param {Function} obj.userEnterWorldPt
  * @param {Function} obj.userEnterSearchRadius
  * @param obj.whichOverlay
  * @param {Function} obj.userEnterPolygon
  * @return {Promise<void>}
  */
-async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg, coordinateSys, mocList,
+async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg, coordinateSys,
                                 userEnterWorldPt, userEnterSearchRadius, whichOverlay, userEnterPolygon}) {
     getDrawLayersByType(dlRoot(), HiPSMOC.TYPE_ID)
         .forEach( ({drawLayerId}) => dispatchDestroyDrawLayer(drawLayerId));// clean up any old moc layers
@@ -367,6 +348,10 @@ async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg,
     wpRequest.setPlotGroupId(plotId+'-group');
     wpRequest.setOverlayIds([HiPSMOC.TYPE_ID]);
     wpRequest.setPlotId(plotId);
+    const overlayIds= wpRequest.getOverlayIds();
+    wpRequest.setOverlayIds(
+        overlayIds.filter((id) => id!==HiPSMOC.TYPE_ID)
+    );
     if (coordinateSys) {
         wpRequest.setHipsUseCoordinateSys(coordinateSys);
     }
@@ -375,7 +360,12 @@ async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg,
     }
     wpRequest.setHipsUseAitoffProjection(hipsFOVInDeg>130);
     dispatchPlotHiPS({plotId, wpRequest, viewerId,
-        pvOptions: {canBeExpanded:false, useForSearchResults:false, displayFixedTarget:false, userCanDeletePlots: false,
+        pvOptions: {
+            canBeExpanded:false,
+            useForSearchResults:false,
+            displayFixedTarget:false,
+            userCanDeletePlots: false,
+            highlightFeedback: false,
             menuItemKeys: {
                 zoomDropDownMenu: false, overlayColorLock: false, matchLockDropDown: false, clickToSearch:false,
                 recenter: false, selectArea: true,
@@ -383,16 +373,52 @@ async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg,
         }
     });
     await onPlotComplete(plotId);
-    if (mocList) {
-        const pList= mocList.map( ({mocUrl,title}) =>
-            createHiPSMocLayer(createMocTableId(),title, mocUrl, primePlot(visRoot(),plotId), true, '') );
-        await Promise.all(pList);
-    }
+    dispatchChangeActivePlotView(plotId);
 
     initSearchSelectTool(plotId);
     if (userEnterWorldPt?.() || userEnterPolygon?.()?.length) {
         updatePlotOverlayFromUserInput(plotId,whichOverlay, userEnterWorldPt?.(), userEnterSearchRadius?.(), userEnterPolygon?.(), true);
     }
+}
+
+
+async function queueUpdateMOCLayer(mocList, plotId) {
+    if (updateRunning) {
+        updateQueue.push({mocList, plotId});
+        return;
+    }
+    await updateMOCLayer(mocList,plotId);
+    if (!updateQueue.length) return;
+    const {mocList:qMocList,plotId:qPlotId}= updateQueue.shift();
+    await queueUpdateMOCLayer(qMocList,qPlotId);
+}
+
+let updateRunning= false;
+const updateQueue= [];
+
+async function updateMOCLayer(mocList, plotId) {
+    updateRunning= true;
+    await  onPlotComplete(plotId);
+    if (!mocList?.length) { // if no MOCs then remove any on HiPS
+        getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID)
+            ?.forEach( (dl) => dispatchDestroyDrawLayer(dl.drawLayerId));
+        updateRunning= false;
+        return;
+    }
+    const mocDlAry= getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID);
+    const existingMocUrlsAry= mocDlAry?.map( (dl) => dl.mocFitsInfo.mocUrl);
+    const newMocUrls= mocList.map( ({mocUrl}) => mocUrl);
+    mocDlAry.forEach((dl) => { // remove any MOC not in mocList
+        const url= dl?.mocFitsInfo?.mocUrl;
+        if (!newMocUrls.includes(url)) dispatchDestroyDrawLayer(dl.drawLayerId);
+    });
+    for( const moc of mocList) {
+        const {mocUrl,title}= moc;
+        if (!existingMocUrlsAry.includes(mocUrl)) {
+            await createHiPSMocLayer(createMocTableId(),title, mocUrl, primePlot(visRoot(),plotId), true, '');
+        }
+    }
+    updateRunning= false;
 }
 
 

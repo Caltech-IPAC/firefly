@@ -80,9 +80,9 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
                      src={PAGE_RIGHT}
                      onClick={() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])} />
                 }
-                {makeDropDown && makeDropDown()}
+                {makeDropDown?.()}
             </div>
-            <VisMiniToolbar/>
+            <VisMiniToolbar viewerId={viewerId}/>
         </div>
     );
 }

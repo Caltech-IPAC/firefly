@@ -26,7 +26,9 @@ import {
     DebugObsCore, getPanelPrefix, LableSaptail, makeCollapsibleCheckHeader, makeFieldErrorList, makePanelStatusUpdater,
     SpatialWidth} from './TableSearchHelpers.jsx';
 import {showUploadTableChooser} from '../UploadTableChooser.js';
-import { getColumnAttribute, getTapServices, makeUploadSchema, maybeQuote, tapHelpId } from './TapUtil.js';
+import {
+    getAsEntryForTableName, getColumnAttribute, getTapServices, makeUploadSchema, maybeQuote, tapHelpId
+} from './TapUtil.js';
 
 const CenterLonColumns = 'centerLonColumns';
 const CenterLatColumns = 'centerLatColumns';
@@ -65,7 +67,7 @@ const fldListAry= [ServerParams.USER_TARGET_WORLD_PT,SpatialRegOp,SPATIAL_TYPE,
             SpatialMethod,RadiusSize, PolygonCorners,CenterLonColumns,CenterLatColumns,
     UploadCenterLonColumns, UploadCenterLatColumns, cornerCalcType];
 
-export function SpatialSearch({cols, serviceUrl, columnsModel, initArgs={}, obsCoreEnabled:requestObsCore, capabilities}) {
+export function SpatialSearch({cols, serviceUrl, columnsModel, tableName, initArgs={}, obsCoreEnabled:requestObsCore, capabilities}) {
     const {searchParams={}}= initArgs ?? {};
     const obsCoreEnabled= requestObsCore && canSupportAtLeastOneObsCoreOption(capabilities);
     const panelTitle = !obsCoreEnabled ? Spatial : 'Location';
@@ -153,7 +155,7 @@ export function SpatialSearch({cols, serviceUrl, columnsModel, initArgs={}, obsC
     useFieldGroupWatch([cornerCalcType], () => onChangeToPolygonMethod());
 
     useEffect(() => {
-        const constraints= makeSpatialConstraints(columnsModel, obsCoreEnabled, makeFldObj(fldListAry), uploadInfo);
+        const constraints= makeSpatialConstraints(columnsModel, obsCoreEnabled, makeFldObj(fldListAry), uploadInfo, tableName);
         updatePanelStatus(constraints, constraintResult, setConstraintResult);
     });
     
@@ -624,7 +626,7 @@ function makeUserAreaConstraint(regionOp, userArea, adqlCoordSys ) {
 }
 
 
-function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo) {
+function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo, tableName) {
     const {fileName,serverFile, columns:uploadColumns, totalRows, fileSize}= uploadInfo ?? {};
     const {[CenterLonColumns]:cenLonField, [CenterLatColumns]:cenLatField,
         [ServerParams.USER_TARGET_WORLD_PT]:wpField, [RadiusSize]:radiusSizeField,
@@ -642,6 +644,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
     const errList= makeFieldErrorList();
     const tabAs= 'ut';
     const validUpload= Boolean(serverFile && upLonCol && upLatCol);
+    const preFix= validUpload ? `${getAsEntryForTableName(tableName)}.` : '';
     if (!validUpload && spatialType===MULTI) {
         if (!serverFile) errList.addError('Upload file is not been specified');
         if (!upLonCol && !upLatCol) errList.addError('Upload columns have not been specified');
@@ -657,7 +660,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
         const ucdCoord = getUCDCoord(columnsModel, cenLon);
         const worldSys = posCol[ucdCoord.key].coord;
         const adqlCoordSys = posCol[ucdCoord.key].adqlCoord;
-        const point = `POINT('${adqlCoordSys}', ${maybeQuote(cenLon)}, ${maybeQuote(cenLat)})`;
+        const point = `POINT('${adqlCoordSys}', ${maybeQuote(preFix+cenLon)}, ${maybeQuote(preFix+cenLat)})`;
 
 
         if (spatialType===SINGLE) {
@@ -672,7 +675,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
             const {valid, userArea}=
                 getUploadConeUserArea(tabAs, upLonCol, upLatCol, uploadColumns,
                     radiusSizeField, adqlCoordSys, errList);
-            if (valid) adqlConstraint= `CONTAINS(${point}, ${userArea})`;
+            if (valid) adqlConstraint= `CONTAINS(${point}, ${userArea})=1`;
             else errList.addError('Spacial input not complete');
         }
 

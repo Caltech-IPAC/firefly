@@ -1,7 +1,7 @@
 import {isFunction, isString} from 'lodash';
 import {sprintf} from '../externalSource/sprintf.js';
 
-export const SearchTypes =  { point: 'point', pointRadius: 'pointRadius', pointSide: 'pointSide', area: 'area',point_table_only:'point_table_only', table:'table' };
+export const SearchTypes =  { point: 'point', pointRadius: 'pointRadius', pointSide: 'pointSide', area: 'area',point_table_only:'point_table_only', wholeTable:'wholeTable' };
 export const DEFAULT_VERB= 'Search';
 const DEF_SUPPORTED= () => true;
 
@@ -47,6 +47,13 @@ export function makeSearchAction(cmd, groupId, label, tip, searchType, min, max,
     return { cmd, label, tip, searchType, min, max, supported, execute, verb, searchDesc, groupId};
 }
 
+export function makeSearchActionObj({ cmd, groupId, label='', tip, searchType, min, max, execute,
+                                        searchDesc=undefined,
+                                        verb=DEFAULT_VERB, supported= DEF_SUPPORTED
+                                    }, ) {
+    if (searchType!==SearchTypes[searchType]) searchType= SearchTypes.point;
+    return { cmd, label, tip, searchType, min, max, supported, execute, verb, searchDesc, groupId};
+}
 
 export function getSearchTypeDesc(sa, wp, size, areaPtsLength) {
 
@@ -72,7 +79,7 @@ export function getSearchTypeDesc(sa, wp, size, areaPtsLength) {
             return `${verb} using ${label}  with side of ${s}`;
         case SearchTypes.area:
             return `${verb} (polygon) using ${label} around an area (${areaPtsLength??0} points)`;
-        case SearchTypes.table:
+        case SearchTypes.wholeTable:
             return `${verb} ${label}`;
         default:
             return 'Search';

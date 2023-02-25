@@ -5,9 +5,11 @@ import React, {memo, useContext, useState, useEffect} from 'react';
 import {string,array,object,bool} from 'prop-types';
 import {get, isFunction, isArray} from 'lodash';
 import {useStoreConnector} from '../../ui/SimpleComponent';
-import { NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted, IMAGE, PLOT2D, SINGLE, GRID
+import {
+    NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted, IMAGE, PLOT2D, SINGLE, GRID, getMultiViewRoot
 } from '../MultiViewCntlr.js';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
+import {isDefaultCoverageActive} from '../PlotViewUtil.js';
 import {ImageMetaDataToolbar} from './ImageMetaDataToolbar.jsx';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {MultiChartViewer} from '../../charts/ui/MultiChartViewer';
@@ -35,7 +37,7 @@ import {
     dispatchSetSearchParams, dispatchUpdateDataProducts
 } from '../../metaConvert/DataProductsCntlr';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView';
-import {dispatchChangeActivePlotView} from '../ImagePlotCntlr';
+import {dispatchChangeActivePlotView, visRoot} from '../ImagePlotCntlr';
 import {ServiceDescriptorPanel} from '../../ui/dynamic/ServiceDescriptorPanel.jsx';
 import {getServiceParamsAry} from '../../metaConvert/DataProductsCntlr.js';
 
@@ -91,7 +93,11 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, 
         };
     }, [imageViewerId, chartViewerId, renderTreeId]);
 
-    useEffect(() => void (displayType!==DPtypes.IMAGE && dispatchChangeActivePlotView(undefined)), [displayType] );
+    // useEffect(() => {
+    //     if (displayType!==DPtypes.IMAGE && displayType!==DPtypes.PROMISE && !isDefaultCoverageActive(visRoot(), getMultiViewRoot())) {
+    //         dispatchChangeActivePlotView(undefined);
+    //     }
+    // }, [displayType] );
 
     let ctLookupKey;
     let initCTIChoice;

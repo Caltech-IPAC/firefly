@@ -87,6 +87,7 @@ import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
  * @prop {boolean} [rotateNorthLock]
  * @prop {boolean} [flipYLock]
  * @prop {boolean} [useSticky]
+ * @prop {boolean} [highlightFeedback]
  * @prop {boolean} [useForCoverage=false]
  */
 
@@ -108,6 +109,7 @@ import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
  * @prop {number} plotCounter index of how many plots, used for making next ID
  * @prop {boolean} multiHdu true if there is more than one HDUs
  * @prop {number} cubeCnt - total number of cube in PlotView
+ * @prop {boolean} [highlightFeedback]
  * @prop {Array.<number>} hduPlotStartIndexes: start indexes of each hdu
  */
 
@@ -165,6 +167,7 @@ function createPlotViewContextData(req, pvOptions={}) {
         zoomLockingEnabled : false,
         zoomLockingType: UserZoomTypes.FIT, // can be FIT or FILL
         lastCollapsedZoomLevel: 0,
+        highlightFeedback: pvOptions.highlightFeedback ?? true,
         preferenceColorKey: attributes[PlotAttribute.PREFERENCE_COLOR_KEY],
         defThumbnailSize: DEFAULT_THUMBNAIL_SIZE,  // todo - this option might need some cleanup
         plotCounter:0, // index of how many plots, used for making next ID

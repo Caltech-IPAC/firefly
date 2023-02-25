@@ -1,7 +1,9 @@
 import {get, isEmpty, uniqueId} from 'lodash';
+import {getAppOptions} from '../core/AppDataCntlr.js';
+import {tokenSub} from '../util/WebUtil.js';
 import {RangeValues, SIGMA, STRETCH_LINEAR} from '../visualize/RangeValues.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
-import {getCellValue, doFetchTable, hasRowAccess} from '../tables/TableUtil.js';
+import {getCellValue, doFetchTable, hasRowAccess, getColumn, getColumns} from '../tables/TableUtil.js';
 import {
     getObsCoreAccessURL,
     getObsCoreProdType,
@@ -16,7 +18,7 @@ import {
 } from '../util/VOAnalyzer';
 import {makeFileRequest} from '../tables/TableRequestUtil';
 import {ZoomType} from '../visualize/ZoomType.js';
-import {createGridImagesActivate} from './ImageDataProductsUtil.js';
+import {createGridImagesActivate, createSingleImageExtraction} from './ImageDataProductsUtil.js';
 import {makeAnalysisGetSingleDataProduct} from './MultiProductFileAnalyzer';
 import {dpdtFromMenu, dpdtImage, dpdtMessage, dpdtMessageWithDownload, dpdtPNG, DPtypes,} from './DataProductsType';
 import {createGuessDataType, processDatalinkTable} from './DataLinkProcessor';
@@ -77,7 +79,8 @@ export function getObsCoreGridDataProduct(table, plotRows, activateParams) {
                 result.displayType===DPtypes.ANALYZE) )
             .map( (result) => result.request);
         const activate= createGridImagesActivate(requestAry,imageViewerId, table.tbl_id, plotRows);
-        return dpdtImage('image grid', activate,undefined, 'image-grid-0',{requestAry});
+        const extraction= createSingleImageExtraction(requestAry);
+        return dpdtImage('image grid', activate,extraction, 'image-grid-0',{requestAry, extractionText:'Pin Image'});
     });
 }
 
@@ -164,6 +167,7 @@ function singleResultWithServiceDesc(dpId, primResult, size, serviceDescMenuList
 
 function getObsCoreRowMetaInfo(table,row) {
     if (!table) return {};
+    let titleStr;
     const dataSource= getObsCoreAccessURL(table,row);
     const prodType= (getObsCoreProdType(table,row) || '').toLocaleLowerCase();
     const isVoTable= isFormatVoTable(table, row);
@@ -176,8 +180,32 @@ function getObsCoreRowMetaInfo(table,row) {
     let obsTitle= getCellValue(table,row,'obs_title') || '';
     if (obsCollect===iName) obsCollect= '';
 
-    const titleStr= obsTitle || `${obsCollect?obsCollect+', ':''}${iName?iName+', ':''}${obsId}`;
+    const template= getAppOptions().tapObsCore?.productTitleTemplate;
+    const templateColNames= template && getColNameFromTemplate(template);
+
+    const columns= getColumns(table);
+    if (templateColNames?.length && columns?.length) {
+        const cNames= columns.map( ({name}) => name);
+        const colObj= templateColNames.reduce((obj, v) => {
+            if (cNames.includes(v)) {
+                obj[v]= getCellValue(table,row,v);
+            }
+            return obj;
+        },{});
+        if (Object.keys(colObj).length===templateColNames.length) {
+            titleStr= tokenSub(colObj,template);
+        }
+    }
+    if (!titleStr) { // no template, use dynamic
+        const defTemplate= '${obs_collection}, ${instrument_name}, ${obs_id}'; // todo: should I use?
+        titleStr= obsTitle || `${obsCollect?obsCollect+', ':''}${iName?iName+', ':''}${obsId}`;
+    }
+
     return {iName,obsId,size,titleStr,dataSource,prodType,isVoTable,isDataLink,isPng};
+}
+
+function getColNameFromTemplate(template) {
+    return template.match(/\${[\w -.]+}/g)?.map( (s) => s.substring(2,s.length-1));
 }
 
 
