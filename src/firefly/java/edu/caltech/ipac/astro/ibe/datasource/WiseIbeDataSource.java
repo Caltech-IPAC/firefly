@@ -413,8 +413,8 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
             }
 
             if (mergeImageSet.contains(DataProduct.NEOWISER_1B.dataset)) {
-                if (n>0) imageSetConstraint += ",6,7,8,9,10,11,12,13";
-                else imageSetConstraint += ",6,7,8,9,10,11,12,13";
+                if (n>0) imageSetConstraint += ",6,7,8,9,10,11,12,13,14";
+                else imageSetConstraint += ",6,7,8,9,10,11,12,13,14";
                 n++;
             }
 

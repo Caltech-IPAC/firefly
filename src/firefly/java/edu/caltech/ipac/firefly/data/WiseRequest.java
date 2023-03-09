@@ -73,7 +73,8 @@ public class WiseRequest extends TableServerRequest {
     public final static String NEOWISER_YR6 = "neowiser_yr6";
     public final static String NEOWISER_YR7 = "neowiser_yr7";
     public final static String NEOWISER_YR8 = "neowiser_yr8";
-    public final static String NEOWISER_YR9 = "neowiser_yr9";       //this is the on-going yr9 internal neowiser
+    public final static String NEOWISER_YR9 = "neowiser_yr9";       //yr9  neowiser going public
+    public final static String NEOWISER_YR10 = "neowiser_yr10";
     public final static String PASS2_4BAND = "pass2-4band";
     public final static String PASS2_3BAND = "pass2-3band";
     public final static String PASS2_2BAND = "pass2-2band";
@@ -99,8 +100,9 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR5,"neowiser_p1bs_psd");
             put(NEOWISER_YR6,"neowiser_p1bs_psd");
             put(NEOWISER_YR7,"neowiser_p1bs_psd");
-            put(NEOWISER_YR8,"neowiser_i1bs_psd");      //todo  change to pibs when year 8 goes public
-            put(NEOWISER_YR9,"neowiser_i1bs_psd");
+            put(NEOWISER_YR8,"neowiser_p1bs_psd");
+            put(NEOWISER_YR9,"neowiser_p1bs_psd");   //yr9  neowiser going public
+            put(NEOWISER_YR10,"neowiser_i1bs_psd");  //yr10 internal ongoing ingestion
 
         }
     };
@@ -126,6 +128,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR7,"NEOWISER YR7 (2 Bands)");
             put(NEOWISER_YR8,"NEOWISER YR8 (2 Bands)");
             put(NEOWISER_YR9,"NEOWISER YR9 (2 Bands)");
+            put(NEOWISER_YR10,"NEOWISER YR10 (2 Bands)");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
             put(PASS2_2BAND, "Pass 2 (2 Bands)");
@@ -157,37 +160,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR7,"wise_neowiser_yr7");
             put(NEOWISER_YR8,"wise_neowiser_yr8");
             put(NEOWISER_YR9,"wise_neowiser_yr9");
-        }
-    };
-    // Scan ID ranges from Roc Cutri:
-    // prelim 00936a - 04125a
-    // pass 1 all 00712a - 12514a
-    // pass 2 4-bands 00712a - 07101a
-    // pass 2 3-bands 07101b - 08744a
-    // post-cryo 2-bands 08745a - 12514a
-    private static HashMap<String, Integer[]> SCANID_MAP = new HashMap<String, Integer[]>(){
-        {
-            put(PRELIM, new Integer[]{936, 4125});
-            put(PRELIM_POSTCRYO, new Integer[]{8745, 12514});
-            put(ALLSKY_4BAND, new Integer[]{712, 7101});
-            put(CRYO_3BAND, new Integer[]{7101, 8744});
-            put(POSTCRYO, new Integer[]{8745, 12514});
-            put(NEOWISER, new Integer[]{44212, 99799});  //public data to end of the yr5
-
-            put(PASS1, new Integer[]{712, 12514});
-            put(PASS2_4BAND, new Integer[]{712, 7101});
-            put(PASS2_3BAND, new Integer[]{7101, 8744});
-            put(PASS2_2BAND, new Integer[]{8745, 12514});
-            put(NEOWISER_PROV, new Integer[]{44212, 55289});
-            put(NEOWISER_YR1, new Integer[]{44212, 55289});
-            put(NEOWISER_YR2, new Integer[]{55290, 66418});   // 66418a is the last scan for yr2
-            put(NEOWISER_YR3, new Integer[]{66418, 77590});  // 66418b is the first scan for yr3 and 77509a is the last scan
-            put(NEOWISER_YR4, new Integer[]{77590, 88733}); // 77590b is the first scan for yr4 and 88733a is the last scan
-            put(NEOWISER_YR5, new Integer[]{88734, 99799}); // 88734a is the first scan for yr5
-            put(NEOWISER_YR6, new Integer[]{1090, 12253}); // 01090r is the first scan for yr6 , 12253r is the last scan
-            put(NEOWISER_YR7, new Integer[]{12254, 23446}); // 12254r is the first scan for yr7, 23446r is the last scan
-            put(NEOWISER_YR8, new Integer[]{23447, 34601}); // 23447r is the first scan for yr8, 34601r is the last scan
-            put(NEOWISER_YR9, new Integer[]{34601, 99999}); // 34601s is the first scan for yr9
+            put(NEOWISER_YR10,"wise_neowiser_yr10");
         }
     };
     // mappings of the dataset selected to the wise table and table source values.
@@ -220,6 +193,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR7 +"|1b", new String[]{"yr7_p1bm_frm", "yr7_p1bs_psd"});  //  yr7 goes public March 2021
             put(NEOWISER_YR8 +"|1b", new String[]{"yr8_i1bm_frm", "yr8_i1bs_psd"});  //  yr8 internal for iwise
             put(NEOWISER_YR9 +"|1b", new String[]{"yr9_i1bm_frm", "yr9_i1bs_psd"});  //  yr9 internal for iwise
+            put(NEOWISER_YR10 +"|1b", new String[]{"yr10_i1bm_frm", "yr10_i1bs_psd"});  //  yr10 internal for iwise
             put(MERGE_INT+"|1b", new String[]{"merge_i1bm_frm", "merge_i1bs_psd"});
             put(MERGE_INT+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
             put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
@@ -228,6 +202,39 @@ public class WiseRequest extends TableServerRequest {
             put(PASS2_3BAND+"|3a", new String[]{"3band_i3am_cdd", "3band_i3as_psd"});
             put(PASS2_2BAND+"|1b",  new String[]{"2band_i1bm_frm", "2band_i1bs_psd"});
           //put(PASS2_2BAND+"|3a",  new String[]{"notknown", "notknown"});
+        }
+    };
+    // Scan ID ranges from Roc Cutri:
+    // prelim 00936a - 04125a
+    // pass 1 all 00712a - 12514a
+    // pass 2 4-bands 00712a - 07101a
+    // pass 2 3-bands 07101b - 08744a
+    // post-cryo 2-bands 08745a - 12514a
+    private static HashMap<String, Integer[]> SCANID_MAP = new HashMap<String, Integer[]>(){
+        {
+            put(PRELIM, new Integer[]{936, 4125});
+            put(PRELIM_POSTCRYO, new Integer[]{8745, 12514});
+            put(ALLSKY_4BAND, new Integer[]{712, 7101});
+            put(CRYO_3BAND, new Integer[]{7101, 8744});
+            put(POSTCRYO, new Integer[]{8745, 12514});
+            put(NEOWISER, new Integer[]{44212, 99799});  //public data to end of the yr5
+
+            put(PASS1, new Integer[]{712, 12514});
+            put(PASS2_4BAND, new Integer[]{712, 7101});
+            put(PASS2_3BAND, new Integer[]{7101, 8744});
+            put(PASS2_2BAND, new Integer[]{8745, 12514});
+            put(NEOWISER_PROV, new Integer[]{44212, 55289});
+            put(NEOWISER_YR1, new Integer[]{44212, 55289});
+            put(NEOWISER_YR2, new Integer[]{55290, 66418});   // 66418a is the last scan for yr2
+            put(NEOWISER_YR3, new Integer[]{66418, 77590});  // 66418b is the first scan for yr3 and 77509a is the last scan
+            put(NEOWISER_YR4, new Integer[]{77590, 88733}); // 77590b is the first scan for yr4 and 88733a is the last scan
+            put(NEOWISER_YR5, new Integer[]{88734, 99799}); // 88734a is the first scan for yr5
+            put(NEOWISER_YR6, new Integer[]{1090, 12253}); // 01090r is the first scan for yr6 , 12253r is the last scan
+            put(NEOWISER_YR7, new Integer[]{12254, 23446}); // 12254r is the first scan for yr7, 23446r is the last scan
+            put(NEOWISER_YR8, new Integer[]{23447, 34601}); // 23447r is the first scan for yr8, 34601r is the last scan
+            put(NEOWISER_YR9, new Integer[]{34601, 45803}); // 34601s is the first scan for yr9, 45803r is the last scan
+            put(NEOWISER_YR10, new Integer[]{45804, 99999}); // 45804r is the first scan for yr10
+
         }
     };
 
