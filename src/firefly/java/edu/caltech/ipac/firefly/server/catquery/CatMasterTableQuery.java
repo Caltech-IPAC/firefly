@@ -36,9 +36,11 @@ import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
 public class CatMasterTableQuery extends EmbeddedDbProcessor {
 
     private static final String MASTER_LOC = QueryUtil.makeUrlBase(BaseGator.DEF_HOST) + "/cgi-bin/Gator/nph-scan?mode=ascii";
-    private static final String IRSA_HOST = AppProperties.getProperty("irsa.base.url", "https://irsa.ipac.caltech.edu");
-    private static final String IRSA_BASE_URL = QueryUtil.makeUrlBase(IRSA_HOST);
 
+    static String getIrsaBaseUrl() {
+        String baseUrl = AppProperties.getProperty("irsa.base.url", "https://irsa.ipac.caltech.edu");
+        return baseUrl.contains("irsasearchops") ? "https://irsa.ipac.caltech.edu" : baseUrl;
+    }
 
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
 
@@ -104,7 +106,7 @@ public class CatMasterTableQuery extends EmbeddedDbProcessor {
             // create <a> with linkDesc
             if (!href.toLowerCase().startsWith("http")) {
                 href = href.startsWith("/") ? href : "/" + href;
-                href = IRSA_BASE_URL + href;
+                href = getIrsaBaseUrl() + href;
             }
             String url = "<a href='" + href + "' target='" + linkDesc + "'>" + linkDesc + "</a>";
             row.setDataElement(col, url);
@@ -146,7 +148,7 @@ public class CatMasterTableQuery extends EmbeddedDbProcessor {
                         String replaceStr= s.substring(start,end);
                         if (!replaceStr.toLowerCase().startsWith("http")) {
                             url = replaceStr.startsWith("/") ? replaceStr : "/" + replaceStr;
-                            url = IRSA_BASE_URL + url;
+                            url = getIrsaBaseUrl() + url;
                             retval= inStr.replace(replaceStr,url);
                         }
 

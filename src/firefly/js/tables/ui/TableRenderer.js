@@ -447,18 +447,18 @@ export const createLinkCell = ({hrefColIdx, value}) => {
 
     return ({rowIndex, data, colIdx, height, width, columnKey}) => {
         hrefColIdx = hrefColIdx || colIdx;
-        const href = get(data, [rowIndex, hrefColIdx], 'undef');
-        const val = value || get(data, [rowIndex, colIdx], 'undef');
-        if (href === 'undef' || href === '#') {
+        const href = get(data, [rowIndex, hrefColIdx], '#');
+        const val = value || get(data, [rowIndex, colIdx], '#');
+        if (href && href !== '#') {
             return (
                 <Cell {...{rowIndex, height, width, columnKey}}>
-                    {val}
+                    <a target='_blank' href={href}>{val}</a>
                 </Cell>
             );
         } else {
             return (
                 <Cell {...{rowIndex, height, width, columnKey}}>
-                    <a target='_blank' href={href}>{val}</a>
+                    {val}
                 </Cell>
             );
         }

@@ -180,11 +180,12 @@ export class CatalogConstraintsPanel extends PureComponent {
         }
 
         const request = createDDRequest(); //Fetch DD master table
-        const urlDef = get(FieldGroupUtils.getGroupFields(groupKey), ['cattable', 'coldef'], 'null');
 
         fetchTable(request).then((tableModel) => {
-            const tableModelFetched = tableModel;
 
+            const urlDef = get(FieldGroupUtils.getGroupFields(groupKey), ['cattable', 'coldef'], 'null');
+
+            const tableModelFetched = tableModel;
             tableModelFetched.tbl_id = tblid;
             addConstraintColumn(tableModelFetched, groupKey);
             addColumnDef(tableModelFetched, urlDef);
@@ -300,10 +301,10 @@ function addSelColumn(tableModelFetched, filterAry, errors) {
  */
 function addColumnDef(tableModelFetched, urlDef) {
     const nCols = tableModelFetched.tableData.columns.length;
-    const u = (isEmpty(urlDef) || urlDef === 'null') ? '#' : urlDef.match(/href='([^']+)'/)[1] + '#';
+    const u = urlDef ? urlDef.match(/href='([^']+)'/)[1] + '#' : null;
     tableModelFetched.tableData.columns.splice(nCols, 0, {visibility: 'hide', name: 'coldef', type: 'char'});
     tableModelFetched.tableData.data.map((e) => {
-        e.splice(nCols, 0, u + e[0]);
+        e.splice(nCols, 0, (u ? u + e[0] : null));
     });
 }
 
