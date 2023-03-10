@@ -75,10 +75,25 @@ public class ResolveServerCommands {
 
             try {
                 HorizonsEphPairs.HorizonsResults[] horizons_results = TargetNetwork.getEphInfo(sp.getRequired(ServerParams.OBJ_NAME));
+                String naifIdFormat = sp.getOptional(ServerParams.NAIFID_FORMAT, "");
 
                 Map<String, Integer> values = new HashMap<>();
                 for (HorizonsEphPairs.HorizonsResults element : horizons_results) {
-                    values.put(element.getName(), Integer.parseInt(element.getNaifID()));
+                    String naifID = element.getNaifID();
+
+                    if (naifIdFormat.equals("7digit") && naifID.length() > 7) {
+                        for (String alias : element.getAliases()) {
+                            try {
+                                Integer.parseInt(alias);
+                                if (naifID.equals(alias.charAt(0) + "0" + alias.substring(1))) {
+                                    naifID = alias;
+                                    break;
+                                }
+                            } catch (NumberFormatException ignore) { }
+                        }
+                    }
+
+                    values.put(element.getName(), Integer.parseInt(naifID));
                 }
 
                 JSONObject naifids = new JSONObject(values);

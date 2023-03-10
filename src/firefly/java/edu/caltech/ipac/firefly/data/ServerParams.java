@@ -114,6 +114,7 @@ public class ServerParams {
 
     public static final String GEOSHAPE = "shape";
     public static final String ROTATION = "rotation";
+    public static final String NAIFID_FORMAT = "naifIdFormat";
 
     // commands
     public static final String FILE_FLUX = "CmdFileFlux";

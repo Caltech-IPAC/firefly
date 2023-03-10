@@ -16,11 +16,11 @@ const searchHistory = []; // defining as global to persist it throughout the lif
 
 
 function NaifidPanelView({showHelp, valid, message, examples, feedback, value, labelWidth, feedbackStyle, popStyle,
-                             label= LABEL_DEFAULT, fireValueChange, updateNaifNameValue}){
+                             label= LABEL_DEFAULT, fireValueChange, updateNaifNameValue, naifIdFormat}){
     const getSuggestions = (val= '') => {
         if (!val) return [];
 
-        const rval = resolveNaifidObj(val);
+        const rval = resolveNaifidObj(val, naifIdFormat);
         if (!rval.p) return [];
 
         const getResSuggestionsList = (suggestionsList) => {
@@ -99,7 +99,8 @@ NaifidPanelView.propTypes = {
     onUnmountCB : PropTypes.func,
     feedbackStyle: PropTypes.object,
     fireValueChange: PropTypes.func,
-    updateNaifNameValue: PropTypes.func
+    updateNaifNameValue: PropTypes.func,
+    naifIdFormat: PropTypes.string
 };
 
 

@@ -8,7 +8,7 @@ import {getCmdSrvSyncURL, toBoolean} from '../util/WebUtil';
 import {fetchUrl} from '../util/fetch';
 
 
-function makeResolverPromise(objName) {
+function makeResolverPromise(objName, naifIdFormat) {
     let ignoreSearchResults= null;
     let aborted= false;
 
@@ -24,7 +24,7 @@ function makeResolverPromise(objName) {
                     reject();
                 }
                 else {
-                    const {p, rejectFunc}= makeSearchPromise(objName);
+                    const {p, rejectFunc}= makeSearchPromise(objName, naifIdFormat);
                     ignoreSearchResults= rejectFunc;
                     resolve(p);
                 }
@@ -37,9 +37,10 @@ function makeResolverPromise(objName) {
 
 
 
-function makeSearchPromise(objName) {
+function makeSearchPromise(objName, naifIdFormat) {
     let rejectFunc= null;
-    const url= `${getCmdSrvSyncURL()}?objName=${objName}&cmd=${ServerParams.RESOLVE_NAIFID}`;
+    let url= `${getCmdSrvSyncURL()}?objName=${objName}&cmd=${ServerParams.RESOLVE_NAIFID}`;
+    if (naifIdFormat) url += `&naifIdFormat=${naifIdFormat}`;
     const searchPromise= new Promise(
         function(resolve, reject) {
             let fetchOptions = {};
@@ -71,15 +72,15 @@ function makeSearchPromise(objName) {
 }
 
 
-export function resolveNaifidObj(object){
-    let result = resolveObject(object);
+export function resolveNaifidObj(object, naifIdFormat){
+    let result = resolveObject(object, naifIdFormat);
     return result;
 }
 
 
 
 
-function resolveObject(objName) {
+function resolveObject(objName, naifIdFormat) {
     if (!objName) {
         return {
             showHelp: true,
@@ -88,7 +89,7 @@ function resolveObject(objName) {
         };
     }
 
-    let {p}= makeResolverPromise(objName);
+    let {p}= makeResolverPromise(objName, naifIdFormat);
     p= p.then( (results) =>
         {
             if (results) {
