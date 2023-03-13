@@ -80,6 +80,7 @@ function getFeedback(unit, min, max, showFeedback) {
 
 const SizeInputFieldView= (props) => {
     const {nullAllowed, min, max, style= {}, wrapperStyle={} /*wrapperStyle is deprecated*/,
+        inputStyle={},
         connectedMarker= false,
         feedbackStyle={}, labelWidth, label, labelStyle, showFeedback, onChange} = props;
     const [{value, valid, displayValue, unit},setState]= useState(() => updateSizeInfo(props));
@@ -129,6 +130,7 @@ const SizeInputFieldView= (props) => {
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'flex-start'}} >
                 <InputFieldView
                     valid={valid}
+                    inputStyle={inputStyle}
                     onChange={onSizeChange} onBlur={onSizeChange}
                     value={displayValue} message={errmsg} label={label} labelWidth={labelWidth} labelStyle={labelStyle}
                     connectedMarker={connectedMarker||connectContext.controlConnected}
@@ -160,6 +162,7 @@ SizeInputFieldView.propTypes = {
     valid: PropTypes.bool,
     showFeedback: PropTypes.bool,
     wrapperStyle: PropTypes.object, // deprecated
+    inputStyle: PropTypes.object,
     style: PropTypes.object,  // replaces wrapper style
     connectedMarker: bool,
     feedbackStyle: PropTypes.object

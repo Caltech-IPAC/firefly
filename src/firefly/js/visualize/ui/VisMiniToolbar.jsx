@@ -2,92 +2,91 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import React, {memo, useEffect, useRef, useState} from 'react';
-import PropTypes from 'prop-types';
 import {omit} from 'lodash';
 import shallowequal from 'shallowequal';
+import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from 'firefly/core/LayoutCntlr.js';
+import DistanceTool from 'firefly/drawingLayers/DistanceTool.js';
+import NorthUpCompass from 'firefly/drawingLayers/NorthUpCompass.js';
+import WebGrid from 'firefly/drawingLayers/WebGrid.js';
+import {SingleColumnMenu} from 'firefly/ui/DropDownMenu.jsx';
+import {DropDownToolbarButton} from 'firefly/ui/DropDownToolbarButton.jsx';
+import {showFitsDownloadDialog} from 'firefly/ui/FitsDownloadDialog.jsx';
+import {showFitsRotationDialog} from 'firefly/ui/FitsRotationDialog.jsx';
+import {HelpIcon} from 'firefly/ui/HelpIcon.jsx';
+import {ToolbarButton, ToolbarHorizontalSeparator} from 'firefly/ui/ToolbarButton.jsx';
+import CoordinateSys from 'firefly/visualize/CoordSys.js';
+import {getDefMenuItemKeys} from 'firefly/visualize/MenuItemKeys.js';
+import {RotateType} from 'firefly/visualize/PlotState.js';
+import {showRegionFileUploadPanel} from 'firefly/visualize/region/RegionFileUploadView.jsx';
+import {findUnactivatedRelatedData} from 'firefly/visualize/RelatedDataUtil.js';
+import {ColorTableDropDownView, showColorDialog} from 'firefly/visualize/ui/ColorTableDropDownView.jsx';
+import {showDrawingLayerPopup} from 'firefly/visualize/ui/DrawLayerPanel.jsx';
+import {endExtraction, LINE, POINTS, showExtractionDialog, Z_AXIS} from 'firefly/visualize/ui/ExtractionDialog.jsx';
+import {showImageSelPanel} from 'firefly/visualize/ui/ImageSearchPanelV2.jsx';
+import {MarkerDropDownView} from 'firefly/visualize/ui/MarkerDropDownView.jsx';
+import {showMaskDialog} from 'firefly/visualize/ui/MaskAddPanel.jsx';
+import {MatchLockDropDown} from 'firefly/visualize/ui/MatchLockDropDown.jsx';
+import {showPlotInfoPopup} from 'firefly/visualize/ui/PlotInfoPopup.js';
+import {SelectAreaButton} from 'firefly/visualize/ui/SelectAreaDropDownView.jsx';
+import {SimpleLayerOnOffButton} from 'firefly/visualize/ui/SimpleLayerOnOffButton.jsx';
+import {StretchDropDownView} from 'firefly/visualize/ui/StretchDropDownView.jsx';
+import {ZoomButton, ZoomType} from 'firefly/visualize/ui/ZoomButton.jsx';
+import {isHiPS} from 'firefly/visualize/WebPlot.js';
+import {getPreference} from '../../core/AppDataCntlr.js';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {wrapResizer} from '../../ui/SizeMeConfig.js';
+import {getDlAry} from '../DrawLayerCntlr.js';
 import {
     dispatchChangeActivePlotView, dispatchChangeExpandedMode, dispatchChangeHiPS, dispatchFlip,
     dispatchOverlayColorLocking, dispatchRestoreDefaults, dispatchRotate, ExpandType, visRoot
 } from '../ImagePlotCntlr.js';
-import {dispatchComponentStateChange, getComponentState} from 'firefly/core/ComponentCntlr.js';
-import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from 'firefly/core/LayoutCntlr.js';
-import {getDlAry} from '../DrawLayerCntlr.js';
 import {
-    getAllDrawLayersForPlot, getActivePlotView, primePlot, hasWCSProjection,
-    findPlotGroup, hasOverlayColorLock, isImageCube, isThreeColor, pvEqualExScroll
+    findPlotGroup, getActivePlotView, getAllDrawLayersForPlot, hasOverlayColorLock, hasWCSProjection, isImageCube,
+    isThreeColor, primePlot, pvEqualExScroll
 } from '../PlotViewUtil.js';
-import {isHiPS} from 'firefly/visualize/WebPlot.js';
-import {getPreference} from '../../core/AppDataCntlr.js';
 import {ImageCenterDropDown, TARGET_LIST_PREF} from './ImageCenterDropDown.jsx';
-import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import CoordinateSys from 'firefly/visualize/CoordSys.js';
-import {ToolbarButton, ToolbarHorizontalSeparator} from 'firefly/ui/ToolbarButton.jsx';
-import {showFitsDownloadDialog} from 'firefly/ui/FitsDownloadDialog.jsx';
-import {ZoomButton, ZoomType} from 'firefly/visualize/ui/ZoomButton.jsx';
-import {DropDownToolbarButton} from 'firefly/ui/DropDownToolbarButton.jsx';
-import {ColorTableDropDownView, showColorDialog} from 'firefly/visualize/ui/ColorTableDropDownView.jsx';
-import {StretchDropDownView} from 'firefly/visualize/ui/StretchDropDownView.jsx';
-import {showFitsRotationDialog} from 'firefly/ui/FitsRotationDialog.jsx';
-import {SimpleLayerOnOffButton} from 'firefly/visualize/ui/SimpleLayerOnOffButton.jsx';
-import {getSelectedAreaIcon, SelectAreaDropDownView} from 'firefly/visualize/ui/SelectAreaDropDownView.jsx';
-import {MarkerDropDownView} from 'firefly/visualize/ui/MarkerDropDownView.jsx';
-import {showRegionFileUploadPanel} from 'firefly/visualize/region/RegionFileUploadView.jsx';
-import {showMaskDialog} from 'firefly/visualize/ui/MaskAddPanel.jsx';
-import {MatchLockDropDown} from 'firefly/visualize/ui/MatchLockDropDown.jsx';
-import {HelpIcon} from 'firefly/ui/HelpIcon.jsx';
-import {RotateType} from 'firefly/visualize/PlotState.js';
-import {showImageSelPanel} from 'firefly/visualize/ui/ImageSearchPanelV2.jsx';
-import {findUnactivatedRelatedData} from 'firefly/visualize/RelatedDataUtil.js';
-import {showDrawingLayerPopup} from 'firefly/visualize/ui/DrawLayerPanel.jsx';
-import {SingleColumnMenu} from 'firefly/ui/DropDownMenu.jsx';
-import {wrapResizer} from '../../ui/SizeMeConfig.js';
-import {endExtraction, LINE, POINTS, showExtractionDialog, Z_AXIS} from 'firefly/visualize/ui/ExtractionDialog.jsx';
+import {
+    clearModalEndInfo, closeToolbarModalLayers, createModalEndUI,
+    getModalEndInfo, setModalEndInfo
+} from './ToolbarToolModalEnd.js';
 
-import SAVE from 'images/icons-2014/Save.png';
-import NEW_IMAGE from 'images/icons-2014/28x28_FITS_NewImage.png';
+import DRILL_DOWN from 'images/drill-down.png';
+import GRID_EXPAND from 'images/icons-2014/24x24_ExpandArrows-grid-3.png';
+import OUTLINE_EXPAND from 'images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import COLOR from 'images/icons-2014/28x28_ColorPalette.png';
+import COMPASS_OFF from 'images/icons-2014/28x28_Compass.png';
+import COMPASS_ON from 'images/icons-2014/28x28_CompassON.png';
+import FITS_HEADER from 'images/icons-2014/28x28_FITS_Information.png';
+import NEW_IMAGE from 'images/icons-2014/28x28_FITS_NewImage.png';
 import STRETCH from 'images/icons-2014/28x28_Log.png';
+import DS9_REGION from 'images/icons-2014/DS9.png';
+import GRID_ON from 'images/icons-2014/GreenGrid-ON.png';
+import GRID_OFF from 'images/icons-2014/GreenGrid.png';
+import MARKER from 'images/icons-2014/MarkerCirclesIcon_28x28.png';
+import DIST_ON from 'images/icons-2014/Measurement-ON.png';
+import DIST_OFF from 'images/icons-2014/Measurement.png';
+import FLIP_Y_ON from 'images/icons-2014/Mirror-ON.png';
+import FLIP_Y from 'images/icons-2014/Mirror.png';
+import RESTORE from 'images/icons-2014/RevertToDefault.png';
 import ROTATE from 'images/icons-2014/Rotate.png';
 import ROTATE_NORTH_ON from 'images/icons-2014/RotateToNorth-ON.png';
 import ROTATE_NORTH_OFF from 'images/icons-2014/RotateToNorth.png';
-import FLIP_Y_ON from 'images/icons-2014/Mirror-ON.png';
-import FLIP_Y from 'images/icons-2014/Mirror.png';
-import SelectArea from 'firefly/drawingLayers/SelectArea.js';
-import DistanceTool from 'firefly/drawingLayers/DistanceTool.js';
-import DIST_ON from 'images/icons-2014/Measurement-ON.png';
-import DIST_OFF from 'images/icons-2014/Measurement.png';
-import MARKER from 'images/icons-2014/MarkerCirclesIcon_28x28.png';
-import NorthUpCompass from 'firefly/drawingLayers/NorthUpCompass.js';
-import COMPASS_ON from 'images/icons-2014/28x28_CompassON.png';
-import COMPASS_OFF from 'images/icons-2014/28x28_Compass.png';
-import WebGrid from 'firefly/drawingLayers/WebGrid.js';
-import GRID_ON from 'images/icons-2014/GreenGrid-ON.png';
-import GRID_OFF from 'images/icons-2014/GreenGrid.png';
-import DS9_REGION from 'images/icons-2014/DS9.png';
+
+import SAVE from 'images/icons-2014/Save.png';
+import LAYER_ICON from 'images/icons-2014/TurnOnLayers.png';
+import LINE_EXTRACTION from 'images/line-extract.png';
 import MASK from 'images/mask_28x28.png';
-import RESTORE from 'images/icons-2014/RevertToDefault.png';
 import LOCKED from 'images/OverlayLocked.png';
 import UNLOCKED from 'images/OverlayUnlocked.png';
-import FITS_HEADER from 'images/icons-2014/28x28_FITS_Information.png';
-import LAYER_ICON from 'images/icons-2014/TurnOnLayers.png';
-import ZOOM_DROP from 'images/Zoom-drop.png';
-import TOOL_DROP from 'images/tools-again-try2.png';
-import GRID_EXPAND from 'images/icons-2014/24x24_ExpandArrows-grid-3.png';
-import OUTLINE_EXPAND from 'images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
-import DRILL_DOWN from 'images/drill-down.png';
-import LINE_EXTRACTION from 'images/line-extract.png';
 import POINT_EXTRACTION from 'images/points.png';
-import {showPlotInfoPopup} from 'firefly/visualize/ui/PlotInfoPopup.js';
-import {getDefMenuItemKeys} from 'firefly/visualize/MenuItemKeys.js';
+import TOOL_DROP from 'images/tools-again-try2.png';
+import ZOOM_DROP from 'images/Zoom-drop.png';
+import PropTypes from 'prop-types';
 
 const omList= ['plotViewAry'];
 const image24x24={width:24, height:24};
-const emptyModalEndInfo= {f:undefined,s:undefined};
 
-export function closeToolbarModalLayers() {
-    const modalEndInfo= getComponentState('ModalEndInfo', emptyModalEndInfo);
-    modalEndInfo?.f?.();
-}
+
 
 /**
  * Return a new State if some values have changed in the store. If critical check show nothing has changed
@@ -107,7 +106,7 @@ function getStoreState(oldState) {
     const recentTargetAry= getPreference(TARGET_LIST_PREF, []);
     const dlCount= activePlotId ?
             getAllDrawLayersForPlot(getDlAry(),activePlotId).length + (newPv?.overlayPlotViews?.length??0)  : 0;
-    const modalEndInfo= getComponentState('ModalEndInfo', emptyModalEndInfo);
+    const modalEndInfo= getModalEndInfo();
 
     const newState= {visRoot:vr, dlCount, recentTargetAry, modalEndInfo};
     if (!oldState) return newState;
@@ -129,11 +128,10 @@ function getStoreState(oldState) {
 
 export const VisMiniToolbar = memo( ({style, manageExpand=true, expandGrid=false}) => {
     const {visRoot,dlCount, recentTargetAry, modalEndInfo} = useStoreConnector(getStoreState);
-    const setModalEndInfo= (info) => dispatchComponentStateChange('ModalEndInfo',  {...emptyModalEndInfo, ...info});
 
     return (
         <VisMiniTBWrapper {...{visRoot, dlCount, style, recentTargetAry,
-                          manageExpand, expandGrid, modalEndInfo, setModalEndInfo}} />
+                          manageExpand, expandGrid, modalEndInfo}} />
     );
 });
 
@@ -154,16 +152,14 @@ const rS= {
 };
 
 const VisMiniTBWrapper= wrapResizer(
-    ({visRoot, dlCount, style= {}, size:{width}, manageExpand, expandGrid, modalEndInfo, setModalEndInfo}) => (
+    ({visRoot, dlCount, style= {}, size:{width}, manageExpand, expandGrid, modalEndInfo}) => (
         <div style={{...rS, ...style}} className='disable-select' >
-            <VisMiniToolbarView {...{visRoot, dlCount, availableWidth:width,
-                                manageExpand, expandGrid,modalEndInfo, setModalEndInfo}} />
+            <VisMiniToolbarView {...{visRoot, dlCount, availableWidth:width, manageExpand, expandGrid,modalEndInfo}} />
         </div>
     ));
 
 
-const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, expandGrid,
-                                            modalEndInfo, setModalEndInfo}) => {
+const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, expandGrid, modalEndInfo}) => {
     const {apiToolsView}= visRoot;
     const {current:divref}= useRef({element:undefined});
     const [colorDrops,setColorDrops]= useState(true);
@@ -175,7 +171,7 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
             setColorDrops(Boolean(window.innerHeight-rect.bottom>560));
         }
         return () => {
-            const modalEndInfo= getComponentState('ModalEndInfo', emptyModalEndInfo);
+            const modalEndInfo= getModalEndInfo();
             if (modalEndInfo.offOnNewPlot) closeToolbarModalLayers();
         };
     }, []);
@@ -199,12 +195,12 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
         <div style={rS} ref={ (c) => divref.element=c}>
 
 
-            {modalEndInfo.f  && modalEndInfo.s &&
+            {createModalEndUI(modalEndInfo,plot?.plotId) &&
                 <React.Fragment>
                     <ToolbarButton
                         style={{color:'#f60a0a'}}
-                        text={modalEndInfo.s} tip={modalEndInfo.s}
-                        horizontal={true} onClick={modalEndInfo.f}/>
+                        text={modalEndInfo.closeText} tip={modalEndInfo.closeText}
+                        horizontal={true} onClick={() => modalEndInfo.closeLayer(modalEndInfo.key)}/>
                     <ToolbarHorizontalSeparator/>
                 </React.Fragment>
             }
@@ -216,7 +212,6 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
             <DropDownToolbarButton icon={TOOL_DROP} tip='Tools drop down' enabled={enabled} horizontal={true}
                                    imageStyle={image24x24}
                                    dropDown={<ToolsDrop pv={pv} mi={mi} image={image} hips={hips} visRoot={visRoot}
-                                                        setModalEndInfo={setModalEndInfo}
                                                         modalEndInfo={modalEndInfo}
                                                         plot={plot} unavailableCnt={unavailableCnt}
                                                         plotGroupAry={plotGroupAry}
@@ -236,15 +231,8 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
 
             <ImageCenterDropDown visRoot={visRoot} visible={mi.recenter} mi={mi} />
 
-            <SimpleLayerOnOffButton plotView={pv} typeId={SelectArea.TYPE_ID}
-                                    tip='Select Drop down. Select an area for cropping or statistics'
-                                    iconOn={getSelectedAreaIcon()} iconOff={getSelectedAreaIcon(false)}
-                                    visible={mi.selectArea} imageStyle={image24x24}
-                                    modalEndInfo={modalEndInfo}
-                                    setModalEndInfo={setModalEndInfo}
-                                    dropDown={<SelectAreaDropDownView plotView={pv}
-                                                                      modalEndInfo={modalEndInfo}
-                                                                      setModalEndInfo={setModalEndInfo} />} />
+            <SelectAreaButton {...{pv,visible:mi.selectArea,modalEndInfo,
+                tip:'Select Drop down. Select an area for cropping or statistics'}}/>
 
 
             <LayerButton pv={pv} dlCount={dlCount}/>
@@ -280,7 +268,6 @@ VisMiniToolbarView.propTypes= {
     expandGrid: PropTypes.bool,
     availableWidth: PropTypes.number,
     modalEndInfo: PropTypes.object,
-    setModalEndInfo: PropTypes.func,
 };
 
 
@@ -371,7 +358,7 @@ const ZoomDrop= ({pv,mi, image}) => (
 );
 
 
-function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, setModalEndInfo, modalEndInfo,
+function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, modalEndInfo,
                        showRotateLocked, unavailableCnt, plotGroupAry}) {
 
     const makeMatchLock= mi.matchLockDropDown && unavailableCnt>0;
@@ -387,10 +374,9 @@ function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, setModalEndInfo,
                            showRotateLocked={showRotateLocked} image={image}/>
             <LayersRow style={{paddingTop:10}} pv={pv} mi={mi} enabled={enabled} image={image}
                        modalEndInfo={modalEndInfo}
-                       setModalEndInfo={setModalEndInfo}
             />
             {showExtract && <ExtractRow style={{paddingTop:10}} pv={pv} mi={mi} enabled={enabled} image={image}
-                                        modalEndInfo={modalEndInfo} setModalEndInfo={setModalEndInfo} />
+                                        modalEndInfo={modalEndInfo}/>
             }
             {(makeMatchLock || makeColorLock) && <div style={{display:'flex', alignItems:'center', paddingTop:10}}>
                 <div style={{width:130, fontSize:'larger'}}>More: </div>
@@ -443,43 +429,44 @@ const RotateFlipRow= ({style,image,mi,showRotateLocked,pv,enabled}) => (
 );
 
 
-function startExtraction(element,type,setModalEndInfo, modalEndInfo) {
-    modalEndInfo?.f?.();
+function startExtraction(element,type,modalEndInfo) {
+    modalEndInfo?.closeLayer?.('Extraction');
     let ended= false;
     showExtractionDialog(element, type, () => {
         if (!ended) setModalEndInfo({});
     });
     setModalEndInfo({
-        s: 'End Extraction',
-        f: () => {
+        closeText: 'End Extraction',
+        key: 'Extraction',
+        closeLayer: () => {
             ended= true;
             endExtraction();
-            setModalEndInfo({});
+            clearModalEndInfo();
         },
         offOnNewPlot: false
     });
 
 }
 
-const ExtractRow= ({style,pv,enabled,setModalEndInfo, modalEndInfo,mi}) => {
+const ExtractRow= ({style,pv,enabled,modalEndInfo,mi}) => {
     const standIm= !isThreeColor(pv);
     return (
         <div style={{display:'flex', alignItems:'center', ...style}}>
             <div style={{width:130, fontSize:'larger'}}>Extract: </div>
             <ToolbarButton icon={DRILL_DOWN} tip='Extract Z-axis from cube' enabled={standIm&&isImageCube(primePlot(pv))&&enabled}
-                           horizontal={true} onClick={(element) => startExtraction(element,Z_AXIS,setModalEndInfo,modalEndInfo)}
+                           horizontal={true} onClick={(element) => startExtraction(element,Z_AXIS,modalEndInfo)}
                            visible={mi.extractZAxis}/>
             <ToolbarButton icon={LINE_EXTRACTION} tip='Extract line from image' enabled={standIm&&enabled}
-                           horizontal={true} onClick={(element) => startExtraction(element,LINE,setModalEndInfo,modalEndInfo)}
+                           horizontal={true} onClick={(element) => startExtraction(element,LINE,modalEndInfo)}
                            visible={mi.extractLine}/>
             <ToolbarButton icon={POINT_EXTRACTION} tip='Extract points from image' enabled={standIm&&enabled}
-                           horizontal={true} onClick={(element) => startExtraction(element,POINTS,setModalEndInfo,modalEndInfo)}
+                           horizontal={true} onClick={(element) => startExtraction(element,POINTS,modalEndInfo)}
                            visible={mi.extractPoint}/>
         </div>
         );
 };
 
-const LayersRow= ({style,image, pv,mi,enabled,setModalEndInfo, modalEndInfo}) => (
+const LayersRow= ({style,image, pv,mi,enabled, modalEndInfo}) => (
 
     <div style={{display:'flex', alignItems:'center', ...style}}>
         <div style={{width:130, fontSize:'larger'}}>Layers: </div>
@@ -493,7 +480,6 @@ const LayersRow= ({style,image, pv,mi,enabled,setModalEndInfo, modalEndInfo}) =>
                                 tip='Select, then click and drag to measure a distance on the image'
                                 endText={'End Distance'}
                                 modalEndInfo={modalEndInfo}
-                                setModalEndInfo={setModalEndInfo}
                                 iconOn={DIST_ON} iconOff={DIST_OFF} visible={mi.distanceTool} />
         <ToolbarButton icon={DS9_REGION} tip='Load a DS9 Region File' enabled={enabled}
                        horizontal={true} visible={mi.ds9Region} onClick={showRegionFileUploadPanel}/>

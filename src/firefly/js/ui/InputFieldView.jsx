@@ -106,7 +106,7 @@ export class InputFieldView extends PureComponent {
 
         const currValue= (type==='file') ? undefined : value;
 
-        const inputStyle= {display:'inline-block'};
+        const inputStyle= {display:'inline-block', ...this.props.inputStyle??{}};
         if (connectedMarker) inputStyle.backgroundColor= 'yellow';
 
         return (

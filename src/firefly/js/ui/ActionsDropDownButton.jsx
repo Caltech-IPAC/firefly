@@ -2,6 +2,7 @@ import {isArray} from 'lodash';
 import React, {Fragment, useRef} from 'react';
 import {getTblById} from '../tables/TableUtil.js';
 import {getWorldPtFromTableRow} from '../util/VOAnalyzer.js';
+import {getDefMenuItemKeys} from '../visualize/MenuItemKeys.js';
 import {SingleColumnMenu} from './DropDownMenu.jsx';
 import {DropDownToolbarButton} from './DropDownToolbarButton.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
@@ -11,18 +12,19 @@ import CysConverter from '../visualize/CsysConverter.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {getActivePlotView, primePlot} from '../visualize/PlotViewUtil.js';
-import {markOutline, showSearchRefinementTool} from '../visualize/SearchRefinementTool.jsx';
-import {convertWpAryToStr, getDetailsFromSelection} from '../visualize/ui/VisualSearchUtils.js';
+import {showSearchRefinementTool} from '../visualize/SearchRefinementTool.jsx';
+import {convertWpAryToStr, getDetailsFromSelection, markOutline} from '../visualize/ui/VisualSearchUtils.js';
 import {formatWorldPt} from '../visualize/ui/WorldPtFormat.jsx';
 
 import BINOCULARS from 'images/b4.png';
 
 export function ActionsDropDownButton({searchActions, pv, tbl_id}) {
+    const mi= pv?.plotViewCtx.menuItemKeys ?? getDefMenuItemKeys();
     const buttonRef = useRef();
     const spacial= Boolean(pv);
     const {cenWpt} = spacial ? getDetailsFromSelection(primePlot(pv)) :
                                 {cenWpt:getWorldPtFromTableRow(getTblById(tbl_id))};
-    if (!cenWpt) return <div/>;
+    if (!cenWpt || !mi?.clickToSearch) return <div/>;
     const dropDown = <SearchDropDown {...{searchActions, buttonRef, spacial, tbl_id, key:'searchDropDown'}}/>;
 
     return (
@@ -73,9 +75,10 @@ function isSupported(sa,cenWpt,radius,cornerStr,table) {
 function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
 
     const pv = useStoreConnector(() => spacial? getActivePlotView(visRoot()) : undefined);
+    const plot= primePlot(pv);
     const table= tbl_id && getTblById(tbl_id);
-    const {cenWpt, radius, corners} = spacial ?
-        getDetailsFromSelection(primePlot(pv)) : {cenWpt:getWorldPtFromTableRow(table)};
+    const {cenWpt, radius, corners, cone} = spacial ?
+        getDetailsFromSelection(plot) : {cenWpt:getWorldPtFromTableRow(table), cone:true};
 
     const cornerStr = isArray(corners) ? convertWpAryToStr(corners, primePlot(pv)) : undefined;
     const includeTypes= spacial ? spacialTypes : tableTypes;
@@ -86,10 +89,58 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
         .filter(({searchType}) => includeTypes.includes(searchType))
         .filter((sa) => spacial ? sa.supported(pv,cenWpt, radius, corners) : sa.supported(table));
 
-    const spacialSearchActions= supportedSearchActions.filter(({searchType}) => searchType!==SearchTypes.table);
+    // const spacialSearchActions= supportedSearchActions.filter(({searchType}) => searchType!==SearchTypes.table);
     const tableNonSpacialSearchActions= supportedSearchActions.filter(({searchType}) => searchType===SearchTypes.table);
 
+    const coneSearchActions= supportedSearchActions
+        .filter(({searchType}) => searchType===SearchTypes.point ||  searchType===SearchTypes.pointRadius ||  searchType===SearchTypes.point_table_only );
+    const areaSearchActions= supportedSearchActions
+        .filter(({searchType}) => searchType===SearchTypes.area ||  searchType===SearchTypes.pointSide );
 
+    const saOrder= (cone ? [coneSearchActions, areaSearchActions] : [areaSearchActions, coneSearchActions])
+        .filter( (list) => list.length);
+
+    const makePartialList= (sActions, cenWpt, asCone) => {
+
+        const buttons= sActions.map((sa,idx) => {
+            const text = getSearchTypeDesc(sa, cenWpt, radius, corners?.length);
+            let useSep = false;
+            if (lastGroupId && sa.groupId !== lastGroupId && idx!==sActions.length-1) {
+                lastGroupId = sa.groupId;
+                useSep = true;
+            }
+            if (!lastGroupId) lastGroupId = sa.groupId;
+            return (
+                <React.Fragment key={'frag=' + idx}>
+                    {useSep && <DropDownVerticalSeparator key={sa.cmd + '---separator'} useLine={true} style={{marginLeft:30}}/>}
+                    <ToolbarButton text={text} tip={`${sa.tip} for\n${text}`}
+                                   style={{paddingLeft:30}}
+                                   enabled={true} horizontal={false} key={sa.cmd}
+                                   visible={isSupported(sa, cenWpt, radius, cornerStr, table)}
+                                   onClick={() => doExecute(sa, cenWpt, radius, cornerStr, table)}/>
+                </React.Fragment>
+            );
+        });
+
+        return (
+            <>
+                <div style={{whiteSpace: 'nowrap', fontSize: '10pt', padding: '5px 1px 5px 0'}}>
+                    {asCone ?
+                        <>
+                            <span style={{fontStyle: 'italic'}}> {'Cone and Point Actions based on center: '} </span>
+                            <span> {formatWorldPt(cenWpt, 3)} </span>
+                        </> :
+                        <>
+                            <span style={{fontStyle: 'italic'}}> {'Polygon Actions '} </span>
+                        </>
+                    }
+                </div>
+                {buttons}
+            </>
+        );
+
+
+    };
 
     return (
         <SingleColumnMenu key='searchMenu'>
@@ -102,40 +153,32 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
                                    onClick={() => doExecute(sa, cenWpt, radius, cornerStr, table)}/>
                 );
             })}
-            <div style={{whiteSpace: 'nowrap', fontSize: '10pt', padding: '5px 1px 5px 15px'}}>
-                <span style={{fontStyle: 'italic'}}>
-                    {'Actions based on center: '}
-                </span>
-                <span>
-                    {formatWorldPt(cenWpt, 3)}
-                </span>
-            </div>
-            {spacialSearchActions.map((sa,idx) => {
-                const text = getSearchTypeDesc(sa, cenWpt, radius, corners?.length);
-                let useSep= false;
-                if (lastGroupId && sa.groupId!==lastGroupId) {
-                    lastGroupId= sa.groupId;
-                    useSep= true;
-                }
-                if (!lastGroupId) lastGroupId= sa.groupId;
-                return (
-                    <React.Fragment key={'frag='+idx}>
-                        {useSep && <DropDownVerticalSeparator key={sa.cmd+'---separator'} useLine={true}/>}
-                        <ToolbarButton text={text} tip={`${sa.tip} for\n${text}`}
-                                       enabled={true} horizontal={false} key={sa.cmd}
-                                       visible={isSupported(sa,cenWpt,radius,cornerStr,table) }
-                                       onClick={() => doExecute(sa,cenWpt,radius,cornerStr,table) }/>
-                    </React.Fragment>
-                );
-            })}
+            {
+                saOrder.map( (saList,idx) => {
+                    const pList= makePartialList(saList, cenWpt, (cone) ? idx===0 : idx===1);
+                    if (idx===1 && saOrder[0].length>0 && saList.length>0) {
+                        return (
+                            <React.Fragment key={'frag-part-'+idx}>
+                                <DropDownVerticalSeparator key={'parts'+idx+'---separator'} useLine={false} style={{marginBottom:8}}/>
+                                {pList}
+                            </React.Fragment>
+                        );
+                    }
+                    else {
+                        return pList;
+                    }
+                } )
+
+            }
             {spacial &&
                 <>
-                    <DropDownVerticalSeparator useLine={true} key='refine---separator'/>
+                    <DropDownVerticalSeparator useLine={false} key='refine---separator' style={{marginBottom:8}}/>
                     <ToolbarButton text='Refine search region' tip='Refine search region'
+                                   style={{fontWeight:'bold'}}
                                    enabled={true} horizontal={false} key='refine' visible={true}
                                    onClick={() =>
                                        showSearchRefinementTool({
-                                           element: buttonRef.current, plotId: pv.plotId,
+                                           element: buttonRef.current, plotId: pv.plotId, cone,
                                            searchActions:supportedSearchActions,
                                            wp: cenWpt, searchAreaInDeg: radius, polygonValue: corners}) }/>
                 </>

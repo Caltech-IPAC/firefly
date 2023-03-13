@@ -730,8 +730,8 @@ export function getCenterPtOfPlot(plot) {
 /**
  * Return a WorldPt that is offset by the relative ra and dec from the passed in position
  * @param {WorldPt} pos1
- * @param {number} offsetRa
- * @param {number} offsetDec
+ * @param {number} offsetRa in arcseconds
+ * @param {number} offsetDec in arcseconds
  * @return {WorldPt}
  */
 function calculatePosition(pos1, offsetRa, offsetDec ) {

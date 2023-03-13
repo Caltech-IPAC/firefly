@@ -173,9 +173,10 @@ function getObsCoreRowMetaInfo(table,row) {
     const size= Number(getCellValue(table,row,'access_estsize')) || 0;
     const isPng= isFormatPng(table,row);
     let obsCollect= getCellValue(table,row,'obs_collection') || '';
+    let obsTitle= getCellValue(table,row,'obs_title') || '';
     if (obsCollect===iName) obsCollect= '';
 
-    const titleStr= `${obsCollect?obsCollect+', ':''}${iName?iName+', ':''}${obsId}`;
+    const titleStr= obsTitle || `${obsCollect?obsCollect+', ':''}${iName?iName+', ':''}${obsId}`;
     return {iName,obsId,size,titleStr,dataSource,prodType,isVoTable,isDataLink,isPng};
 }
 

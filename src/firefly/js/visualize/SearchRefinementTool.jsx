@@ -1,11 +1,13 @@
 import React, {useEffect} from 'react';
-import {dispatchHideDialog, dispatchShowDialog} from '../core/ComponentCntlr.js';
+import {DEFAULT_VERB, getSearchTypeDesc, getValidSize, searchMatches} from '../core/ClickToAction.js';
+import { dispatchHideDialog, dispatchShowDialog, } from '../core/ComponentCntlr.js';
 import SearchSelectTool from '../drawingLayers/SearchSelectTool.js';
+import {ConnectionCtx} from '../ui/ConnectionCtx.js';
 import DialogRootContainer from '../ui/DialogRootContainer.jsx';
 import {SingleColumnMenu} from '../ui/DropDownMenu.jsx';
-import {DROP_DOWN_KEY, DropDownToolbarButton} from '../ui/DropDownToolbarButton.jsx';
-import {AREA} from '../ui/dynamic/DynamicDef.js';
+import {DropDownToolbarButton} from '../ui/DropDownToolbarButton.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
+import HelpIcon from '../ui/HelpIcon.jsx';
 import {InputAreaFieldConnected} from '../ui/InputAreaField.jsx';
 import {LayoutType, PopupPanel} from '../ui/PopupPanel.jsx';
 import {RadioGroupInputField} from '../ui/RadioGroupInputField.jsx';
@@ -13,50 +15,44 @@ import {useFieldGroupValue, useStoreConnector} from '../ui/SimpleComponent.jsx';
 import {SizeInputFields} from '../ui/SizeInputField.jsx';
 import {DEF_TARGET_PANEL_KEY, TargetPanel} from '../ui/TargetPanel.jsx';
 import {ToolbarButton} from '../ui/ToolbarButton.jsx';
-import {DEFAULT_VERB, getSearchTypeDesc, getValidSize, searchMatches} from '../core/ClickToAction.js';
-import {
-    dispatchChangeDrawingDef, dispatchForceDrawLayerUpdate, dispatchModifyCustomField, getDlAry
-} from './DrawLayerCntlr.js';
-import {dispatchAttributeChange, visRoot} from './ImagePlotCntlr.js';
-import {PlotAttribute} from './PlotAttribute.js';
+import {getDlAry} from './DrawLayerCntlr.js';
+import {visRoot} from './ImagePlotCntlr.js';
 import {getDrawLayerByType, getPlotViewById, primePlot} from './PlotViewUtil.js';
 import {parseWorldPt} from './Point.js';
 import {CONE_AREA_OPTIONS, CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './ui/CommonUIKeys.js';
-import {closeToolbarModalLayers} from './ui/VisMiniToolbar.jsx';
-import {ConnectionCtx} from '../ui/ConnectionCtx.js';
+import {SelectAreaButton} from './ui/SelectAreaDropDownView.jsx';
+import {closeToolbarModalLayers, getModalEndInfo} from './ui/ToolbarToolModalEnd.js';
 import {
-    convertStrToWpAry, convertWpAryToStr, initSearchSelectTool, makeRelativePolygonAry, removeSearchSelectTool,
-    updatePlotOverlayFromUserInput,
-    updateUIFromPlot
+    convertStrToWpAry, convertWpAryToStr, initSearchSelectTool, markOutline, SEARCH_REFINEMENT_DIALOG_ID,
+    updateModalEndInfo, updatePlotOverlayFromUserInput, updateUIFromPlot
 } from './ui/VisualSearchUtils.js';
 
-const DIALOG_ID = 'SEARCH_REFINEMENT_DIALOG';
-const CONE_AREA_KEY = 'CONE_AREA_KEY';
 export const POLY_CONE= 'POLY_CONE';
 const SIZE_KEY= 'SIZE';
+const CONE_AREA_KEY = 'CONE_AREA_KEY';
 const POLYGON_KEY= 'POLYGON';
 const GROUP_KEY= 'SearchRefinementToolGroup';
-
 const DD_KEY= 'moreSearches';
 
-export function showSearchRefinementTool({popupClosing, element, plotId,
+export function showSearchRefinementTool({popupClosing, element, plotId, cone,
                                       searchActions, searchAreaInDeg, wp, polygonValue}) {
 
 
     const doClose= () => {
-        closeToolbarModalLayers();
-        dispatchHideDialog(DD_KEY);
+        dispatchHideDialog(SEARCH_REFINEMENT_DIALOG_ID);
         popupClosing?.();
+        const dl = getDrawLayerByType(getDlAry(), SearchSelectTool.TYPE_ID);
+        if (dl?.isInteractive) closeToolbarModalLayers();
     };
 
     const panel= (
         <PopupPanel title='Search refinement tool' layoutPosition={LayoutType.TOP_LEFT} element={element}
                     closeCallback={() => doClose()} initTop={220} initLeft={8} >
-            <SearchRefinementTool {...{searchActions, plotId, searchAreaInDeg, wp, polygonValue}} />
+            <SearchRefinementTool {...{searchActions, plotId, searchAreaInDeg, wp, polygonValue, cone}} />
         </PopupPanel>
     );
-    DialogRootContainer.defineDialog(DIALOG_ID, panel, element );
-    dispatchShowDialog(DIALOG_ID);
+    DialogRootContainer.defineDialog(SEARCH_REFINEMENT_DIALOG_ID, panel, element );
+    dispatchShowDialog(SEARCH_REFINEMENT_DIALOG_ID);
 }
 
 
@@ -80,8 +76,10 @@ function evalSearchActions(searchActions) {
     return {min,max,hasRadius};
 }
 
+function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polygonValue, cone}) {
 
-function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polygonValue}) {
+    const modalEndInfo = useStoreConnector(() => getModalEndInfo());
+
     const pv= useStoreConnector(() => getPlotViewById(visRoot(),plotId));
     const [getConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY, GROUP_KEY);
     const [getWP,setWP] = useFieldGroupValue(DEF_TARGET_PANEL_KEY, GROUP_KEY);
@@ -95,12 +93,13 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
     const whichOverlay= searchTypes===POLY_CONE ? getConeAreaOp() :
                               searchTypes===CONE_CHOICE_KEY ? CONE_CHOICE_KEY : POLY_CHOICE_KEY;
 
+
     useEffect(() => {
         initSearchSelectTool(plotId);
         updatePlotOverlayFromUserInput(plotId, whichOverlay, parseWorldPt(getWP()),
             Number(hasRadius ? getSize() : .0002), convertStrToWpAry(getPoly()));
+        updateModalEndInfo(plotId);
         return () => {
-            // removeSearchSelectTool(plotId);
         };
     },[plotId]);
 
@@ -114,8 +113,16 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
     }, [wp, searchAreaInDeg]);
 
     useEffect(() => { // if plot view changes then update the target or polygon field
-        updateUIFromPlot(plotId,whichOverlay,setWP,getWP,setSize,getSize,setPoly,getPoly,
-            hasRadius?min:.00001,hasRadius?max:.0002);
+        updateUIFromPlot({
+            plotId, whichOverlay,
+            setTargetWp:setWP,
+            getTargetWp:getWP,
+            setHiPSRadius:setSize,
+            getHiPSRadius:getSize,
+            setPolygon:setPoly,
+            getPolygon:getPoly,
+            minSize:hasRadius?min:.00001,
+            maxSize:hasRadius?max:.0002 });
     },[pv]);
 
     useEffect(() => { // if target or radius field change then hips plot to reflect it
@@ -130,25 +137,31 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
             <FieldGroup groupKey={GROUP_KEY} style={{display:'flex', flexDirection:'column', padding: '10px 5px 5px 5px'}}>
                 <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 480}}>
                     <div style={{fontSize:'9pt', paddingRight: 10}}>
-                        {<HelpLines/>}
+                        {<HelpLines {...{whichOverlay, usingToggle}}/>}
                     </div>
                     {usingToggle &&
-                        <RadioGroupInputField {...{
-                            inline: true, fieldKey: CONE_AREA_KEY, wrapperStyle: {paddingBottom: 10},
-                            tooltip: 'Chose type of search', initialState: {value: CONE_CHOICE_KEY}, options: CONE_AREA_OPTIONS
-                        }} />
+                        <div style={{display:'flex', justifyContent:'space-around', alignItems:'center'}}>
+                            <RadioGroupInputField {...{
+                                inline: true, fieldKey: CONE_AREA_KEY, wrapperStyle: {padding: '10px 0 10px 0'},
+                                tooltip: 'Chose type of search',
+                                initialState: {value: cone ? CONE_CHOICE_KEY : POLY_CHOICE_KEY},
+                                options: CONE_AREA_OPTIONS
+                            }} />
+                        </div>
                     }
                     {whichOverlay === CONE_CHOICE_KEY &&
                         <div style={{display:'flex', flexDirection:'column'}}>
-                            <TargetPanel labelWidth={50} label='Center'
+                            <TargetPanel labelWidth={40} label='Center'
                                          feedbackStyle={{height:35}}
-                                         labelStyle={{paddingRight:10, textAlign:'right'}}
+                                         defaultToActiveTarget={false}
+                                         labelStyle={{paddingRight:0, textAlign:'right'}}
                                          inputStyle={{width:250}}/>
                             {hasRadius && <SizeInputFields {...{
-                                fieldKey:SIZE_KEY, showFeedback:true, labelWidth:50, nullAllowed:false,
+                                fieldKey:SIZE_KEY, showFeedback:true, labelWidth:40, nullAllowed:false,
                                 label: 'Size',
                                 feedbackStyle:{textAlign:'center', marginLeft:0},
-                                labelStyle:{textAlign:'right', paddingRight:10},
+                                labelStyle:{textAlign:'right', paddingRight:0},
+                                inputStyle:{width:250},
                                 initialState:{ unit: 'arcsec', value: searchAreaInDeg+'', min, max }
                             }} />}
                         </div> }
@@ -162,28 +175,41 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
                             initialState:{value:convertWpAryToStr(polygonValue,primePlot(pv))},
                         }} /> }
                 </div>
-                <ActionsDrop {...{searchActions, whichOverlay, polyStr:getPoly()??polyStr, size:getSize()??searchAreaInDeg, cenWpt}}/>
+                <div style={{display:'flex', justifyContent:'space-between', margin: '20px 0 3px 10px', alignItems:'center'}}>
+                    <ActionsDrop {...{searchActions, whichOverlay, polyStr:getPoly()??polyStr,
+                        size:getSize()??searchAreaInDeg, cenWpt, op:getConeAreaOp()}}/>
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                            <div style={{fontStyle:'italic'}}>Select Again:</div>
+                            <SelectAreaButton {...{pv,modalEndInfo,tip:'Reselect an area for search'}}/>
+                        </div>
+                        <HelpIcon helpId={'SearchRefinementTool'} style={{marginLeft:15}}/>
+                    </div>
+                </div>
             </FieldGroup>
         </ConnectionCtx.Provider>
     );
 }
 
-const ActionsDrop= ({searchActions, polyStr, size, cenWpt, whichOverlay}) => (
-        <DropDownToolbarButton text={searchActions.every( (sa) => sa.verb===DEFAULT_VERB) ? 'Searches' : 'Actions'}
-                               tip='Search this area'
-                               disableHiding={true} dropDownKey={DD_KEY}
+const ActionsDrop= ({searchActions, polyStr, size, cenWpt, whichOverlay, op}) => {
+    const post= op===CONE_CHOICE_KEY ? 'cone' : 'polygon';
+    const allDefault= searchActions.every((sa) => sa.verb === DEFAULT_VERB);
+    const searchText=  (allDefault) ? 'Search ' + post : 'Actions for ' + post;
+    return (
+        <DropDownToolbarButton text={searchText} tip='Search this area' disableHiding={true} dropDownKey={DD_KEY}
                                useDropDownIndicator={true} enabled={true} horizontal={true} visible={true}
                                style={{
-                                   margin: '15px 0 3px 10px',
                                    alignSelf: 'flex-start',
-                                   height: 20,
+                                   height: 22,
                                    borderRadius: '3px',
                                    border: '1px outset rgba(0,0,0,.4)',
                                    padding: '0 6px 0 0',
+                                   marginTop:2,
                                }}
                                dropDown={<SearchDropDown {...{searchActions, cenWpt, size, polyStr, whichOverlay}}/>}
-                               />
-);
+        />
+    );
+};
 
 function SearchDropDown({searchActions, cenWpt, size, polyStr, whichOverlay}) {
     const polyStrLen= polyStr ? polyStr.split(' ').length/2 : 0;
@@ -199,63 +225,48 @@ function SearchDropDown({searchActions, cenWpt, size, polyStr, whichOverlay}) {
                                        enabled={true} horizontal={false} key={sa.cmd}
                                        visible={sa.supported()}
                                        onClick={() => {
-                                           dispatchHideDialog(DIALOG_ID);
-                                           sa.execute(sa,cenWpt,getValidSize(sa,size),polyStr);
-                                           // markOutline(cenWpt,getValidSize(sa,size),polyStr);
                                            markOutline(sa,
                                                primePlot(visRoot())?.plotId,{
-                                               wp:cenWpt,
-                                               radius:Number(getValidSize(sa,size)),
-                                               polyStr});
+                                                   wp:cenWpt,
+                                                   radius:Number(getValidSize(sa,size)),
+                                                   polyStr});
+                                           dispatchHideDialog(SEARCH_REFINEMENT_DIALOG_ID);
+                                           sa.execute(sa,cenWpt,getValidSize(sa,size),polyStr);
                                        }
                                        }/>
                     );
                 }) }
         </SingleColumnMenu>
     );
-
 }
 
-const HelpLines= () => (
-    <div style={{margin:'0 0 5px 5px'}}>
-            <span>
-            Click on the image to choose a new search center,
-            or enter new values in the boxes below to adjust the search region.
-            Then initiate the search of your choice from the menu below.
-            </span>
-    </div>);
+function HelpLines({usingToggle, whichOverlay}) {
+    const isCone= whichOverlay===CONE_CHOICE_KEY;
 
-/**
- *
- * @param {ClickToActionCommand} sa
- * @param plotId
- * @param obj
- * @param obj.wp
- * @param obj.radius
- * @param obj.polyStr
- */
-export function markOutline(sa, plotId, {wp,radius,polyStr}) {
-    initSearchSelectTool(plotId);
-    const dl = getDrawLayerByType(getDlAry(), SearchSelectTool.TYPE_ID);
-    if (!dl) return;
-    if ((!wp || !radius) && !polygonAry) return;
-    let isCone= wp && radius;
-    const polygonAry= convertStrToWpAry(polyStr);
-    if (polygonAry && sa.searchType===AREA) isCone= false;
+    const reSelectMsg= isCone ?
+        'Or reselect the cone area' :
+        'Or reselect the polygon area';
+    const entryMsg= isCone ?
+        'Or enter new values for center (name or coordinate) and size' :
+        'Or enter new values for polygon ';
+    const otherSearchMsg=  isCone ?
+        'Or switch to polygon searches' :
+        'Or switch cone searches';
 
-    dispatchChangeDrawingDef(dl.drawLayerId,{...dl.drawingDef,color:'red'},plotId);
-    dispatchModifyCustomField(dl.drawLayerId,{isInteractive: false},plotId);
-
-    dispatchAttributeChange({
-        plotId,
-        changes: {
-            [PlotAttribute.USER_SEARCH_WP]: isCone ? wp : undefined,
-            [PlotAttribute.USER_SEARCH_RADIUS_DEG]: isCone ? radius : undefined,
-            [PlotAttribute.POLYGON_ARY]: isCone ? undefined : polygonAry,
-            [PlotAttribute.RELATIVE_IMAGE_POLYGON_ARY]: isCone ? undefined : makeRelativePolygonAry(primePlot(visRoot(), plotId), polygonAry),
-            [PlotAttribute.USE_POLYGON]: !isCone,
-        }
-    });
-    dispatchForceDrawLayerUpdate(dl.drawLayerId, plotId);
+    return (
+        <div style={{margin:'0 0 5px 5px', fontSize:'smaller'}}>
+            <div>
+                <div style={{fontStyle:'italic', marginBottom:5}}>
+                    Try the following:
+                </div>
+                <div style={{marginLeft: 10}}>
+                    <li>Click on the image to choose a new search center</li>
+                    <li>{entryMsg}</li>
+                    <li>{reSelectMsg}</li>
+                    {usingToggle && <li>{otherSearchMsg}</li>}
+                    <li>Then initiate the search of your choice from the menu below.</li>
+                </div>
+            </div>
+        </div>);
 }
 

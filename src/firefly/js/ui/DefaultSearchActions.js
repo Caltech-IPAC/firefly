@@ -5,6 +5,7 @@ import {sprintf} from '../externalSource/sprintf.js';
 import {makeFileRequest} from '../api/ApiUtilTable.jsx';
 import {makeVOCatalogRequest} from '../tables/TableRequestUtil.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
+import {setMultiSearchPanelTab} from './MultiSearchPanel.jsx';
 
 //note - these two redundant function are here because of circular dependencies.
 // this file is imported very early and webpack is creating errors
@@ -18,6 +19,7 @@ const dispatchShowDropDown= ({view, initArgs}) =>
 export const showTapSearchPanel= (searchParams={}) => {
     const view= getAppOptions()?.multiTableSearchCmdOptions?.find(({id}) => id === 'tap') ? 'MultiTableSearchCmd' : 'TAPSearch';
     dispatchShowDropDown({ view, initArgs:{defaultSelectedId: 'tap', searchParams}});
+    if (view==='MultiTableSearchCmd') setMultiSearchPanelTab('tap');
 };
 
 const showImage= (initArgs) => dispatchShowDropDown( { view: 'ImageSelectDropDownCmd', initArgs});
