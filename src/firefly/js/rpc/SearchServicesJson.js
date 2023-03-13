@@ -116,10 +116,22 @@ export function queryTable(tableRequest, {filters, sortInfo, inclCols}) {
  * @param colAttribs      column attributes.  i.e. name, type, expression, etc
  * @returns {Promise.<number>}
  */
-export function addTableColumn(tableRequest, colAttribs) {
+export function addOrUpdateColumn(tableRequest, colAttribs) {
 
     const params = Object.assign(pickBy(colAttribs), {[ServerParams.REQUEST]: JSON.stringify(tableRequest)});
-    return doJsonRequest(ServerParams.ADD_TABLE_COLUMN, params);
+    return doJsonRequest(ServerParams.ADD_OR_UPDATE_COLUMN, params);
+}
+
+/**
+ * delete a column from the table backed by this tableRequest
+ * @param {TableRequest} tableRequest is a table request params object
+ * @param cname      column name to delete
+ * @returns {Promise.<number>}
+ */
+export function deleteColumn(tableRequest, cname) {
+
+    const params = {[ServerParams.REQUEST]: JSON.stringify(tableRequest), cname};
+    return doJsonRequest(ServerParams.DELETE_COLUMN, params);
 }
 
 /**

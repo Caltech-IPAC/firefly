@@ -56,11 +56,11 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 	 * test add new column
 	 */
 	@Test
-	public void testAddTableColumn() {
+	public void testAddColumn() {
 
 		DataType nCol = new DataType("NEW_COL_1", Double.class, "label", "units", null, "desc");
 		nCol.setUCD("ucd");
-		EmbeddedDbUtil.addNewColumn(dbFile, DbAdapter.getAdapter(), nCol, "\"dec\" + 3");
+		EmbeddedDbUtil.addColumn(dbFile, DbAdapter.getAdapter(), nCol, "\"dec\" + 3");
 		DataGroup res = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, String.format("select * from %s", MAIN_DB_TBL), MAIN_DB_TBL);
 
 		DataType c = res.getDataDefintion("NEW_COL_1");
@@ -80,7 +80,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		// bad expression:  dec + 3 is a bad expression since DEC is not a column; dec without quotes is treated as uppercase
 		nCol.setKeyName("NEW_COL_2");
 		try {
-			EmbeddedDbUtil.addNewColumn(dbFile, DbAdapter.getAdapter(), nCol, "dec + 3");
+			EmbeddedDbUtil.addColumn(dbFile, DbAdapter.getAdapter(), nCol, "dec + 3");
 		} catch (Exception ignored){}
 		res = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, String.format("select * from %s", MAIN_DB_TBL), MAIN_DB_TBL);
 		Assert.assertEquals("same number of columns as before", 10, res.getDataDefinitions().length);
@@ -89,7 +89,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		// bad column name:  exceeded 128 characters
 		nCol.setKeyName("c12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890");
 		try {
-			EmbeddedDbUtil.addNewColumn(dbFile, DbAdapter.getAdapter(), nCol , "\"dec\" + 3");
+			EmbeddedDbUtil.addColumn(dbFile, DbAdapter.getAdapter(), nCol , "\"dec\" + 3");
 		} catch (Exception ignored){}
 		res = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, String.format("select * from %s", MAIN_DB_TBL), MAIN_DB_TBL);
 		Assert.assertEquals("same number of columns as before", 10, res.getDataDefinitions().length);

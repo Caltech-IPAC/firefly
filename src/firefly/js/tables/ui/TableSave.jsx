@@ -26,6 +26,8 @@ import {getWorkspaceConfig} from '../../visualize/WorkspaceCntlr.js';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {download, makeDefaultDownloadFileName} from '../../util/fetch';
 import {getCmdSrvSyncURL} from '../../util/WebUtil';
+import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField.jsx';
+import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 
 const fKeyDef = {
     fileName: {fKey: 'fileName', label: 'File name:'},
@@ -89,78 +91,94 @@ const popupPanelResizableStyle = {
 export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
     return () => {
         const popupId = 'TABLE_DOWNLOAD_POPUP';
-        const isWs = getWorkspaceConfig();
-        const currentFileLocation = getFieldVal(tblDownloadGroupKey, 'fileLocation', LOCALFILE);
-        if (currentFileLocation === WORKSPACE) {
-            dispatchWorkspaceUpdate();
-        }
-        const adHeight = (currentFileLocation === WORKSPACE) ? dialogHeightWS
-                                                             : (isWs ? dialogHeightLOCAL : dialogHeightLOCAL/2);
-        const minHeight = (currentFileLocation === LOCALFILE) && (!isWs) ? dialogHeightLOCAL/2 : dialogHeightLOCAL;
-
-        const fileFormatOptions = () => {
-            const fileOptions = tableFormats.enums.reduce((options, eItem) => {
-                options.push({label: eItem.value, value: eItem.key});
-                return options;
-            }, []);
-
-            return (
-                <div style={{display: 'flex', marginTop: mTop}}>
-                    <div>
-                        <ListBoxInputField
-                            options={ fileOptions}
-                            fieldKey = {fKeyDef.fileFormat.fKey}
-                            multiple={false}
-                        />
-                    </div>
+        const onComplete = () =>{
+            dispatchHideDialog(popupId);
+            if (isDialogVisible(INFO_POPUP)) {
+                dispatchHideDialog(INFO_POPUP);
+            }
+        };
+        const popup = (
+            <PopupPanel title={'Save table'}>
+                <div style={{...popupPanelResizableStyle}}>
+                    <TableSavePanel {...{tbl_id, tbl_ui_id, onComplete}}/>
                 </div>
-            );
-        };
-        const startTableDownloadPopup = () => {
-            const popup = (
-                <PopupPanel title={'Save table'}>
-                    <div style={{...popupPanelResizableStyle, height: adHeight, minHeight}}>
-                        <FieldGroup style={{ boxSizing: 'border-box', paddingLeft:5, paddingRight:5,
-                                             height: 'calc(100% - 70px)', width: '100%'}}
-                                    groupKey={tblDownloadGroupKey}
-                                    reducerFunc={TableDLReducer(tbl_id)}>
-                            <DownloadOptionsDialog fromGroupKey={tblDownloadGroupKey}
-                                                   children={fileFormatOptions()}
-                                                   workspace={isWs}
-                                                   dialogWidth={'100%'}
-                                                   dialogHeight={'calc(100% - 60pt)'}/>
-                        </FieldGroup>
-                        <div style={{display: 'flex', justifyContent: 'space-between',
-                                     marginTop: 30, marginBottom: 10, marginLeft: 5, marginRight: 5}}>
-                            <div style={{display: 'flex', width: '60%', alignItems: 'flex-end'}}>
-                                <div style={{marginRight: 10}}>
-                                    <CompleteButton
-                                        groupKey={tblDownloadGroupKey}
-                                        onSuccess={resultSuccess(tbl_id, tbl_ui_id, popupId)}
-                                        onFail={resultFail()}
-                                        text={'Save'}/>
-                                </div>
-                                <div>
-                                    <button type='button' className='button std hl'
-                                            onClick={() => closePopup(popupId)}>Cancel
-                                    </button>
-                                </div>
-                            </div>
-                            <div style={{ textAlign:'right', marginRight: 10}}>
-                                <HelpIcon helpId={'tables.save'}/>
-                            </div>
-                        </div>
-                    </div>
-                </PopupPanel>
-            );
+            </PopupPanel>
+        );
 
-            DialogRootContainer.defineDialog(popupId, popup);
-            dispatchShowDialog(popupId);
-        };
-
-        startTableDownloadPopup();
+        DialogRootContainer.defineDialog(popupId, popup);
+        dispatchShowDialog(popupId);
     };
 }
+
+function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
+    const isWs = getWorkspaceConfig();
+    const currentFileLocation = getFieldVal(tblDownloadGroupKey, 'fileLocation', LOCALFILE);
+    if (currentFileLocation === WORKSPACE) {
+        dispatchWorkspaceUpdate();
+    }
+
+    const mode = useStoreConnector(() => getFieldVal(tblDownloadGroupKey, 'mode', 'displayed'));
+    const asDisplayedMsg = 'The table will be saved in its current state, including its sorting order and derived columns, but excluding rows not accepted by any filters applied, as well as any hidden columns.';
+    const asOriginalMsg  = 'The table will be saved in the form originally retrieved into this tool, without filtering, sorting, or any additional columns.';
+
+    const fileFormatOptions = () => {
+        const fileOptions = tableFormats.enums.reduce((options, eItem) => {
+            options.push({label: eItem.value, value: eItem.key});
+            return options;
+        }, []);
+
+        return (
+            <div style={{display: 'flex', marginTop: mTop}}>
+                <div>
+                    <ListBoxInputField
+                        options={ fileOptions}
+                        fieldKey = {fKeyDef.fileFormat.fKey}
+                        multiple={false}
+                    />
+                </div>
+            </div>
+        );
+    };
+    return (
+        <div style={{display: 'flex', flexDirection: 'column'}}>
+            <FieldGroup style={{ boxSizing: 'border-box', paddingLeft:5, paddingRight:5}}
+                        groupKey={tblDownloadGroupKey}
+                        reducerFunc={TableDLReducer(tbl_id)}>
+                <DownloadOptionsDialog fromGroupKey={tblDownloadGroupKey}
+                                       children={fileFormatOptions()}
+                                       workspace={isWs}
+                                       dialogHeight={0}/>
+                <RadioGroupInputField fieldKey='mode' initialState={{value: 'displayed'}} wrapperStyle={{marginTop:10}}
+                                      options={[{value:'displayed', label:'Save table as displayed'}, {value:'original', label:'Save table as originally retrieved'}]}/>
+                <div style={{margin: '5px 22px', color: 'gray'}}>
+                    {mode === 'original' ? asOriginalMsg : asDisplayedMsg}
+                </div>
+
+            </FieldGroup>
+            <div style={{display: 'flex', justifyContent: 'space-between',
+                marginTop: 30, marginBottom: 10, marginLeft: 5, marginRight: 5}}>
+                <div style={{display: 'flex', width: '60%', alignItems: 'flex-end'}}>
+                    <div style={{marginRight: 10}}>
+                        <CompleteButton
+                            groupKey={tblDownloadGroupKey}
+                            onSuccess={resultSuccess(tbl_id, tbl_ui_id, onComplete)}
+                            onFail={resultFail()}
+                            text={'Save'}/>
+                    </div>
+                    <div>
+                        <button type='button' className='button std hl'
+                                onClick={() => onComplete?.()}>Cancel
+                        </button>
+                    </div>
+                </div>
+                <div style={{ textAlign:'right', marginRight: 10}}>
+                    <HelpIcon helpId={'tables.save'}/>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 
 function TableDLReducer(tbl_id) {
     return (inFields, action) => {
@@ -214,14 +232,6 @@ function TableDLReducer(tbl_id) {
     };
 }
 
-function closePopup(popupId) {
-    dispatchHideDialog(popupId);
-    if (isDialogVisible(INFO_POPUP)) {
-        dispatchHideDialog(INFO_POPUP);
-    }
-}
-
-
 function resultFail() {
     return (request) => {
         const {wsSelect, fileLocation} = request;
@@ -239,9 +249,9 @@ function resultFail() {
     };
 }
 
-function resultSuccess(tbl_id, tbl_ui_id, popupId) {
+function resultSuccess(tbl_id, tbl_ui_id, onComplete) {
     return (request) => {
-        const {fileName, fileLocation, wsSelect, fileFormat} = request || {};
+        const {fileName, fileLocation, wsSelect, fileFormat, mode} = request || {};
         const isWorkspace = () => (fileLocation && fileLocation === WORKSPACE);
 
         if (isWorkspace()) {
@@ -254,7 +264,7 @@ function resultSuccess(tbl_id, tbl_ui_id, popupId) {
                                       [WS_SERVER_PARAM.currentrelpath.key]: getWorkspacePath(wsSelect, fName),
                                       [WS_SERVER_PARAM.newpath.key] : fName,
                                       [WS_SERVER_PARAM.should_overwrite.key]: true};
-            return Object.assign(params, {file_format : fileFormat});
+            return Object.assign(params, {file_format : fileFormat, mode});
         };
 
         const downloadFile = (urlOrOp) => {
@@ -264,12 +274,7 @@ function resultSuccess(tbl_id, tbl_ui_id, popupId) {
                 download(urlOrOp);
             }
 
-            if (popupId) {
-                dispatchHideDialog(popupId);
-                if (isDialogVisible(INFO_POPUP)) {
-                    dispatchHideDialog(INFO_POPUP);
-                }
-            }
+            onComplete?.();
         };
 
         const {origTableModel} = getTblById(tbl_id) || {};
@@ -290,3 +295,4 @@ function resultSuccess(tbl_id, tbl_ui_id, popupId) {
         }
     };
 }
+

@@ -4,17 +4,25 @@
 package edu.caltech.ipac.firefly.server.db;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.SelectionInfo;
+import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.firefly.server.events.FluxAction;
+import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.*;
+import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
+import org.json.simple.JSONObject;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
@@ -31,12 +39,15 @@ import java.util.*;
 import java.util.Date;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_PATH;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
+import static edu.caltech.ipac.firefly.server.db.DbAdapter.NULL_TOKEN;
 import static edu.caltech.ipac.firefly.server.db.DbCustomFunctions.createCustomFunctions;
 import static edu.caltech.ipac.firefly.server.db.DbInstance.USE_REAL_AS_DOUBLE;
 import static edu.caltech.ipac.table.DataGroup.ROW_IDX;
+import static edu.caltech.ipac.table.DataType.descToType;
 import static edu.caltech.ipac.table.TableMeta.DERIVED_FROM;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
@@ -47,6 +58,7 @@ import static edu.caltech.ipac.util.StringUtils.isEmpty;
  */
 public class EmbeddedDbUtil {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
+    private static final int MAX_COL_ENUM_COUNT = AppProperties.getIntProperty("max.col.enum.count", 32);
 
     /**
      * setup a database
@@ -276,13 +288,74 @@ public class EmbeddedDbUtil {
         return new DataGroupPart(data, treq.getStartIndex(), data.size());
     }
 
-    public static void addNewColumn(File dbFile, DbAdapter dbAdapter, DataType dtype, String expression) {
+    public static void updateColumn(File dbFile, DbAdapter dbAdapter, DataType dtype, String expression, String editColName, String preset, String resultSetID, SelectionInfo si) {
+
+        if (isEmpty(editColName)) return;
+
         DbAdapter.EmbeddedDbInstance dbInstance = (DbAdapter.EmbeddedDbInstance) dbAdapter.getDbInstance(dbFile);
         JdbcTemplate jdbc = JdbcFactory.getTemplate(dbInstance);
 
         try {
+            // change column type if different
+            String oldType = String.valueOf(jdbc.queryForObject(String.format("SELECT type from DATA_DD where cname='%s'", editColName), String.class));
+            if (!oldType.equals(dtype.getTypeDesc())) {
+                // race condition; cannot change double values into boolean even when they are NULLs
+                // add new column, drop the old instead
+                List cols = jdbc.query("SELECT COLUMN_NAME  FROM INFORMATION_SCHEMA.COLUMNS where table_name = 'DATA'", (rs, i) -> rs.getString(1));
+                String nextCname = (String) cols.get(cols.indexOf(editColName)+1);
+                deleteColumn(dbFile, dbAdapter, editColName, false);
+                addColumn(dbFile, dbAdapter, dtype, expression, preset, resultSetID, si, nextCname);
+                return;
+            } else {
+                // rename column if different
+                if (!dtype.getKeyName().equals(editColName)) {
+                    jdbc.update(String.format("ALTER TABLE %s ALTER COLUMN \"%s\" RENAME TO \"%s\"", MAIN_DB_TBL, editColName, dtype.getKeyName()));
+                }
+            }
+        } catch (Exception e) {
+            // DDL statement are transactionally isolated, therefore need to manually rollback if this succeed but the next few statements failed.
+            throw e;
+        }
+        try {
+            TransactionTemplate txnJdbc = JdbcFactory.getTransactionTemplate(jdbc.getDataSource());
+            txnJdbc.execute((st) -> {
+                // update DD table
+                String sql = "UPDATE DATA_DD SET cname=?, type=?, precision=?, units=?, ucd=?, desc=? WHERE cname=?";
+                String desc = getFieldDesc(dtype, expression, preset);
+                Object[] params = {dtype.getKeyName(), dtype.getTypeDesc(), dtype.getPrecision(), dtype.getUnits(), dtype.getUCD(), desc, editColName};
+                jdbc.update(sql, params);
+
+                populateColumnValues(jdbc, dtype, expression, preset, resultSetID, si);
+
+                // purge all cached tables
+                BaseDbAdapter.compact(dbInstance);
+                return st;
+            });
+            enumeratedValuesCheck(dbFile, dbAdapter, new DataType[]{dtype});        // if successful, check for enum values of this new updated column
+        } catch (Exception e) {
+            // manually revert the name change
+            if (!dtype.getKeyName().equals(editColName)) {
+                jdbc.update(String.format("ALTER TABLE %s ALTER COLUMN \"%s\" RENAME TO \"%s\"", MAIN_DB_TBL, dtype.getKeyName(), editColName));
+            }
+            throw e;
+        }
+    }
+
+    public static void addColumn(File dbFile, DbAdapter dbAdapter, DataType dtype, String expression) {
+        addColumn(dbFile, dbAdapter, dtype, expression, null, null, null, null);
+    }
+    public static void addColumn(File dbFile, DbAdapter dbAdapter, DataType dtype, String expression, String preset, String resultSetID, SelectionInfo si) {
+        addColumn(dbFile, dbAdapter, dtype, expression, preset, resultSetID, si, null);
+
+    }
+    static void addColumn(File dbFile, DbAdapter dbAdapter, DataType dtype, String expression, String preset, String resultSetID, SelectionInfo si, String beforeCname) {
+        DbAdapter.EmbeddedDbInstance dbInstance = (DbAdapter.EmbeddedDbInstance) dbAdapter.getDbInstance(dbFile);
+        JdbcTemplate jdbc = JdbcFactory.getTemplate(dbInstance);
+        beforeCname = isEmpty(beforeCname) ? "ROW_IDX" : beforeCname;
+
+        try {
             // add column to main table
-            jdbc.update(String.format("ALTER TABLE %s ADD COLUMN \"%s\" %s BEFORE ROW_IDX", MAIN_DB_TBL, dtype.getKeyName(), dbAdapter.toDbDataType(dtype)));
+            jdbc.update(String.format("ALTER TABLE %s ADD COLUMN \"%s\" %s BEFORE \"%s\"", MAIN_DB_TBL, dtype.getKeyName(), dbAdapter.toDbDataType(dtype), beforeCname));
         } catch (Exception e) {
             // DDL statement are transactionally isolated, therefore need to manually rollback if this succeed but the next few statements failed.
             throw e;
@@ -292,18 +365,17 @@ public class EmbeddedDbUtil {
             txnJdbc.execute((st) -> {
                 // add a record to DD table
                 String sql = dbAdapter.insertDDSql(MAIN_DB_TBL);
-                String desc = isEmpty(dtype.getDesc()) ? "" : dtype.getDesc();
-                desc = String.format("(%s=%s) ", DERIVED_FROM, expression) + desc;     // prepend DERIVED_FROM expression into the description.  This is how we determine if a column is derived.
+                String desc = getFieldDesc(dtype, expression, preset);
                 dtype.setDesc(desc);
                 jdbc.update(sql, getDDfrom(dtype));
 
-                // populate column with new values
-                jdbc.update(String.format("UPDATE %s SET \"%s\" = %s", MAIN_DB_TBL, dtype.getKeyName(), expression));
+                populateColumnValues(jdbc, dtype, expression, preset, resultSetID, si);
 
                 // purge all cached tables
                 BaseDbAdapter.compact(dbInstance);
                 return st;
             });
+            enumeratedValuesCheck(dbFile, dbAdapter, new DataType[]{dtype});        // if successful, check for enum values of this new column
         } catch (Exception e) {
             // manually remove the added column
             jdbc.update(String.format("ALTER TABLE %s DROP COLUMN \"%s\"", MAIN_DB_TBL, dtype.getKeyName()));
@@ -311,6 +383,61 @@ public class EmbeddedDbUtil {
         }
     }
 
+    static String getFieldDesc(DataType dtype, String expression, String preset) {
+        String desc = isEmpty(dtype.getDesc()) ? "" : dtype.getDesc();
+        String derivedFrom = isEmpty(preset) ? expression : "preset:" + preset;
+        return String.format("(%s=%s) ", DERIVED_FROM, derivedFrom) + desc;     // prepend DERIVED_FROM value into the description.  This is how we determine if a column is derived.
+    }
+
+    static void populateColumnValues(JdbcTemplate jdbc, DataType dtype, String expression, String preset, String resultSetID, SelectionInfo si) {
+        // populate column with new values
+        if (isEmpty(preset)) {
+            jdbc.update(String.format("UPDATE %s SET \"%s\" = %s", MAIN_DB_TBL, dtype.getKeyName(), expression));
+        } else {
+            jdbc.update(String.format("CREATE INDEX  IF NOT EXISTS data_idx ON %s (row_idx)", MAIN_DB_TBL));
+            if (!resultSetID.equals(MAIN_DB_TBL)) {
+                jdbc.update(String.format("CREATE INDEX  IF NOT EXISTS %s_idx ON %s (row_idx)", resultSetID, resultSetID));
+            }
+            if (preset.equals("filtered")) {
+                String sql = resultSetID.equals(MAIN_DB_TBL) ? "TRUE" : String.format("(SELECT 1 from %s as t WHERE t.ROW_IDX = d.ROW_IDX)", resultSetID);
+                jdbc.update(String.format("UPDATE %s as d SET \"%s\" = %s", MAIN_DB_TBL, dtype.getKeyName(), sql));
+            } else if (preset.equals("selected")) {
+                String sql = "FALSE";
+                if (si != null && si.getSelectedCount() > 0) {
+                    if (resultSetID.equals(MAIN_DB_TBL)) {
+                        sql =  si.isSelectAll() ? "TRUE" : String.format("(ROW_IDX in (%s))", StringUtils.toString(si.getSelected()));
+                    } else {
+                        String rowNums = StringUtils.toString(si.getSelected());
+                        List<Integer> rowIdxs = new SimpleJdbcTemplate(jdbc).query(String.format("Select ROW_IDX from %s where ROW_NUM in (%s)", resultSetID, rowNums), (resultSet, i) -> resultSet.getInt(1));
+                        sql = String.format("(ROW_IDX in (%s))", StringUtils.toString(rowIdxs));
+                    }
+                }
+                jdbc.update(String.format("UPDATE %s SET \"%s\" = %s", MAIN_DB_TBL, dtype.getKeyName(), sql));
+            } else if (preset.equals("ROW_NUM")) {
+                String sql = resultSetID.equals(MAIN_DB_TBL) ? "(ROW_NUM + 1)" : String.format("(SELECT t.ROW_NUM+1 from %s as t WHERE t.ROW_IDX = d.ROW_IDX)", resultSetID);
+                jdbc.update(String.format("UPDATE %s as d SET \"%s\" = %s", MAIN_DB_TBL, dtype.getKeyName(), sql));
+            }
+        }
+    }
+
+    public static void deleteColumn(File dbFile, DbAdapter dbAdapter, String cname) {
+        deleteColumn(dbFile, dbAdapter, cname, true);
+    }
+    public static void deleteColumn(File dbFile, DbAdapter dbAdapter, String cname, boolean doCompact) {
+        DbAdapter.EmbeddedDbInstance dbInstance = (DbAdapter.EmbeddedDbInstance) dbAdapter.getDbInstance(dbFile);
+        JdbcTemplate jdbc = JdbcFactory.getTemplate(dbInstance);
+
+        // drop column from DATA table
+        jdbc.update(String.format("ALTER TABLE %s DROP COLUMN \"%s\"", MAIN_DB_TBL, cname));
+
+        // remove column from DD table
+        String sql = "DELETE FROM DATA_DD WHERE cname=?";
+        Object[] params = {cname};
+        jdbc.update(sql, params);
+
+        // purge all cached tables
+        if (doCompact) BaseDbAdapter.compact(dbInstance);
+    }
 
 
 //====================================================================
@@ -477,7 +604,7 @@ public class EmbeddedDbUtil {
 
                 String typeDesc = rs.getString("type");
                 dtype.setTypeDesc(typeDesc);
-                dtype.setDataType(DataType.descToType(typeDesc));
+                dtype.setDataType(descToType(typeDesc));
 
                 applyIfNotEmpty(rs.getString("label"), dtype::setLabel);
                 applyIfNotEmpty(rs.getString("units"), dtype::setUnits);
@@ -544,9 +671,77 @@ public class EmbeddedDbUtil {
     }
 
 
+    public static void enumeratedValuesCheckBG(File dbFile, DataGroupPart results, TableServerRequest treq) {
+        RequestOwner owner = ServerContext.getRequestOwner();
+        ServerEvent.EventTarget target = new ServerEvent.EventTarget(ServerEvent.Scope.SELF, owner.getEventConnID(),
+                owner.getEventChannel(), owner.getUserKey());
+        SHORT_TASK_EXEC.submit(() -> {
+            enumeratedValuesCheck(dbFile, results, treq);
+            DataGroup updates = new DataGroup(null, results.getData().getDataDefinitions());
+            updates.getTableMeta().setTblId(results.getData().getTableMeta().getTblId());
+            JSONObject changes = JsonTableUtil.toJsonDataGroup(updates);
+            changes.remove("totalRows");        //changes contains only the columns with 0 rows.. we don't want to update totalRows
+
+            FluxAction action = new FluxAction(FluxAction.TBL_UPDATE, changes);
+            ServerEventManager.fireAction(action, target);
+        });
+    }
+    public static void enumeratedValuesCheck(File dbFile, DataGroupPart results, TableServerRequest treq) {
+        StopWatch.getInstance().start("enumeratedValuesCheck: " + treq.getRequestId());
+        enumeratedValuesCheck(dbFile, DbAdapter.getAdapter(treq), results.getData().getDataDefinitions());
+        StopWatch.getInstance().stop("enumeratedValuesCheck: " + treq.getRequestId()).printLog("enumeratedValuesCheck: " + treq.getRequestId());
+    }
+
+    public static void enumeratedValuesCheck(File dbFile, DbAdapter dbAdapter, DataType[] inclCols) {
+        if (inclCols != null && inclCols.length > 0)
+        try {
+            String cols = Arrays.stream(inclCols)
+                    .filter(dt -> maybeEnums(dt))
+                    .map(dt -> String.format("count(distinct \"%s\") as \"%s\"", dt.getKeyName(), dt.getKeyName()))
+                    .collect(Collectors.joining(", "));
+
+            List<Map<String, Object>> rs = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                    .queryForList(String.format("SELECT %s FROM data where rownum < 500", cols));
+
+            rs.get(0).forEach( (cname,v) -> {
+                Long count = (Long) v ;
+                if (count > 0 && count <= MAX_COL_ENUM_COUNT) {
+                    List<Map<String, Object>> vals = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                            .queryForList(String.format("SELECT distinct \"%s\" FROM data order by 1", cname));
+
+                    if (vals.size() <= MAX_COL_ENUM_COUNT) {
+                        String enumVals = vals.stream()
+                                .map(m -> m.get(cname) == null ? NULL_TOKEN : m.get(cname).toString())  // list of map to list of string(colname)
+                                .collect(Collectors.joining(","));                          // combine the names into comma separated string.
+                        DataType col = findColByName(inclCols, cname);
+                        if (col != null)  col.setEnumVals(enumVals);
+                        // update dd table
+                        JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                                .update("UPDATE data_dd SET enumVals = ? WHERE cname = ?", enumVals, cname);
+                    }
+                }
+            });
+        } catch (Exception ex) {
+            // do nothing.. ok to ignore errors.
+        }
+    }
+    private static DataType findColByName(DataType[] cols, String name) {
+        for(DataType dt : cols) {
+            if (dt.getKeyName().equals(name)) return dt;
+        }
+        return  null;
+    }
+
 //====================================================================
 //  privates functions
 //====================================================================
+
+    private static List<Class> onlyCheckTypes = Arrays.asList(String.class, Integer.class, Long.class, Character.class, Boolean.class, Short.class, Byte.class);
+    private static List<String> excludeColNames = Arrays.asList(DataGroup.ROW_IDX, DataGroup.ROW_NUM);
+    private static boolean maybeEnums(DataType dt) {
+        return onlyCheckTypes.contains(dt.getDataType()) && !excludeColNames.contains(dt.getKeyName());
+
+    }
 
     private static Class convertToClass(int val, DbInstance dbInstance) {
         JDBCType type = JDBCType.valueOf(val);
@@ -637,7 +832,4 @@ public class EmbeddedDbUtil {
         String v = getStrVal(meta, tag, col, null);
         return v == null ? def : Integer.parseInt(v);
     }
-
-
-
 }

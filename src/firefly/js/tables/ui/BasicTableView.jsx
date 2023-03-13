@@ -23,7 +23,7 @@ const logger = Logger('Tables').tag('BasicTable');
 const noDataMsg = 'No Data Found';
 const noDataFromFilter = 'No data match these criteria';
 
-const BY_SCROLL = 'byScroll';
+export const BY_SCROLL = 'byScroll';
 
 
 const BasicTableViewInternal = React.memo((props) => {

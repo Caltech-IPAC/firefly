@@ -69,26 +69,47 @@ public class SearchServerCommands {
             return json.toJSONString();
         }
     }
-    public static class AddTableColumn extends ServCommand {
+    public static class AddOrUpdateColumn extends ServCommand {
 
         public boolean getCanCreateJson() { return false; }
 
         public String doCommand(SrvParam params) throws Exception {
             TableServerRequest tsr = params.getTableServerRequest();
-            String expression = params.getRequired("expression");
             String cname = params.getRequired("cname");
             String dtype = params.getRequired("dtype");
             String desc = params.getOptional("desc");
             String units = params.getOptional("units");
             String ucd = params.getOptional("ucd");
             String precision = params.getOptional("precision");
-            DataType dt = new DataType(cname, DataType.descToType(dtype), null, units, "null", desc);       // fixed nullString to 'null'
+            String editColName = params.getOptional("editColName");
+
+            String expression = params.getOptional("expression");
+            String preset = params.getOptional("preset");
+
+            DataType dt = new DataType(cname, DataType.descToType(dtype), null, units, null, desc);
             if (ucd != null) dt.setUCD(ucd);
             if (dt.isFloatingPoint() && !isEmpty(precision)) dt.setPrecision(precision);
 
             try {
                 EmbeddedDbProcessor processor = (EmbeddedDbProcessor)SearchManager.getProcessor(tsr.getRequestId());
-                processor.addNewColumn(tsr, dt, expression);
+                processor.addOrUpdateColumn(tsr, dt, expression, editColName, preset);
+            } catch (ClassCastException cce) {
+                throw new RuntimeException(String.format("Invalid Search Processor ID: %s", tsr.getRequestId()));
+            }
+            return "ok";
+        }
+    }
+
+    public static class DeleteColumn extends ServCommand {
+
+        public boolean getCanCreateJson() { return false; }
+
+        public String doCommand(SrvParam params) throws Exception {
+            TableServerRequest tsr = params.getTableServerRequest();
+            String cname = params.getRequired("cname");
+            try {
+                EmbeddedDbProcessor processor = (EmbeddedDbProcessor)SearchManager.getProcessor(tsr.getRequestId());
+                processor.deleteColumn(tsr, cname);
             } catch (ClassCastException cce) {
                 throw new RuntimeException(String.format("Invalid Search Processor ID: %s", tsr.getRequestId()));
             }

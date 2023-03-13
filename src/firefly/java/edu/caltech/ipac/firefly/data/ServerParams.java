@@ -172,7 +172,8 @@ public class ServerParams {
     public static final String SELECTED_VALUES = "selectedValues";
     public static final String TABLE_SAVE = "tableSave";
     public static final String UPLOAD = "upload";
-    public static final String ADD_TABLE_COLUMN = "addTableColumn";
+    public static final String ADD_OR_UPDATE_COLUMN = "addOrUpdateColumn";
+    public static final String DELETE_COLUMN = "deleteColumn";
 
     public static final String INIT_APP = "CmdInitApp";
     public static final String JSON_PROPERTY= "CmdJsonProperty";

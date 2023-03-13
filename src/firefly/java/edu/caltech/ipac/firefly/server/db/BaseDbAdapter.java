@@ -380,7 +380,8 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 String dataSql = String.format("drop table %s if exists", tblName);
                 String metaSql = String.format("drop table %s if exists", tblName + "_meta");
                 String ddSql = String.format("drop table %s if exists", tblName + "_dd");
-                Arrays.asList(dataSql, metaSql, ddSql).stream().forEach(
+                String idxSql = String.format("drop index %s_idx IF EXISTS", tblName);
+                Arrays.asList(dataSql, metaSql, ddSql, idxSql).stream().forEach(
                         (sql) -> JdbcFactory.getSimpleTemplate(db).update(sql));
             }
         }
