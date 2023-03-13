@@ -70,13 +70,13 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
                                horizontal={true}
                                onClick={() => dispatchChangeViewerLayout(viewerId,SINGLE, undefined, activeTable?.tbl_id)}/>}
 
-                {converter.canGrid && <ToolbarButton icon={FULL_GRID} tip={'Show full grid'}
+                {converter.canGrid && <ToolbarButton icon={FULL_GRID} tip={'Tile all images in the search result table'}
                                enabled={true} visible={true} horizontal={true}
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                                onClick={() => dispatchChangeViewerLayout(viewerId,GRID,GRID_FULL,activeTable?.tbl_id)}/>}
 
                 {converter.hasRelatedBands  &&
-                            <ToolbarButton icon={GRID_GROUP} tip={'View all images from this image set, tiled'}
+                            <ToolbarButton icon={GRID_GROUP} tip={'Tile all data products associated with the highlighted table row'}
                                enabled={true} visible={true} horizontal={true}
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                                style={{marginLeft: 20}}
