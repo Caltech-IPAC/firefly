@@ -418,8 +418,8 @@ function getAdqlQuery(tapBrowserState, showErrors= true) {
     let selcols = tableCol.selcols || (isUpload ? `${tableName}.*` : '*');
     if (isUpload) {
         const ut= uploadAsTable ?? uploadTable ?? '';
-        const tCol= uploadColumns.map( ({name}) => ut+'.'+name);
-        selcols+= ',\n' + makeColsLines(tCol,true);
+        const tCol= uploadColumns.filter(({use}) => use).map( ({name}) => ut+'.'+name);
+        selcols+= tCol.length ? ',\n' + makeColsLines(tCol,true) : '';
     }
 
     // build up constraints
