@@ -16,7 +16,7 @@ export function BgMonitorButton () {
 
     const {jobs={}} = useStoreConnector(() => getBackgroundInfo());
 
-    const monitoredJobs = Object.values(jobs).filter( (info) => info.jobInfo?.monitored );
+    const monitoredJobs = Object.values(jobs).filter( (info) => info?.jobInfo?.monitored );
     const working = monitoredJobs.some( (info) => isActive(info) );
 
     return makeMenuItem(showBgMonAction, false, working, monitoredJobs.length);
