@@ -29,11 +29,13 @@ const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10
 export function makeShaPlotRequest(table, row, includeSingle) {
     const ra = getCellValue(table, row, 'ra');
     const dec = getCellValue(table, row, 'dec');
-    const docFile = getCellValue(table, row, 'heritagefilename');
     const aorKey = getCellValue(table, row, 'reqkey');
     const bandpass = getCellValue(table, row, 'wavelength');
     const datatitle = table.title;
     const dataType = table.tbl_id === 'LEVEL_1' ? 'BCD' : table.tbl_id === 'LEVEL_2' ? 'PBCD' : 'AOR';
+
+    const docFile = dataType === 'AOR' ? getCellValue(table, row, 'depthofcoverage')
+        : getCellValue(table, row, 'heritagefilename');
 
     /*
      const url = https://irsa.ipac.caltech.edu/data/SPITZER/SHA/archive/proc/MIPS003600/r5572864/ch2/bcd/SPITZER_M2_5572864_0007_0061_9_bcd.fits
