@@ -104,6 +104,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
             return;
         }
         if (paused && imView && dpView) paused= false;
+        if (paused && imView?.mounted) paused= false;
     }
     else {
         if (getActiveTableId()!==tbl_id) return {...params, firstTime};
