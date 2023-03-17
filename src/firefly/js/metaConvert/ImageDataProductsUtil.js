@@ -2,7 +2,7 @@
 import {union, get, isEmpty, difference, isArray} from 'lodash';
 import {
     dispatchReplaceViewerItems, getViewerItemIds, getMultiViewRoot,
-    getLayoutType, GRID, DEFAULT_FITS_VIEWER_ID, IMAGE
+    getLayoutType, GRID, DEFAULT_FITS_VIEWER_ID, IMAGE, getViewer
 } from '../visualize/MultiViewCntlr.js';
 import ImagePlotCntlr, {
     dispatchPlotImage, dispatchDeletePlotView, visRoot, dispatchZoom,
@@ -10,7 +10,10 @@ import ImagePlotCntlr, {
 import {getPlotGroupById} from '../visualize/PlotGroup.js';
 import {AnnotationOps, isImageDataRequestedEqual, WebPlotRequest} from '../visualize/WebPlotRequest.js';
 import {
-    getPlotViewAry, getPlotViewById, isImageExpanded, primePlot } from '../visualize/PlotViewUtil.js';
+    DEFAULT_COVERAGE_VIEWER_ID,
+    getActivePlotView,
+    getPlotViewAry, getPlotViewById, isDefaultCoverageActive, isImageExpanded, primePlot
+} from '../visualize/PlotViewUtil.js';
 import {allBandAry} from '../visualize/Band.js';
 import {getActiveTableId, getTblById} from '../tables/TableUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
@@ -26,7 +29,7 @@ import {logger} from 'firefly/util/Logger.js';
 export function createRelatedDataGridActivate(reqRet, imageViewerId, tbl_id, highlightPlotId) {
     reqRet.highlightPlotId = highlightPlotId;
     if (isEmpty(reqRet.standard)) return;
-    return () => replotImageDataProducts(highlightPlotId, imageViewerId, tbl_id, reqRet.standard, reqRet.threeColor);
+    return () => replotImageDataProducts(highlightPlotId, true, imageViewerId, tbl_id, reqRet.standard, reqRet.threeColor);
 }
 
 
@@ -55,7 +58,7 @@ export function createGridImagesActivate(inReqAry, imageViewerId, tbl_id, plotRo
         .filter( (r) =>r);
     const pR= plotRows.filter( (pR) => pR.highlight).find( (pR) => pR.plotId);
     const highlightPlotId= pR && pR.plotId;
-    return () => replotImageDataProducts(highlightPlotId, imageViewerId, tbl_id, reqAry);
+    return () => replotImageDataProducts(highlightPlotId, true, imageViewerId, tbl_id, reqAry);
 }
 
 /**
@@ -73,7 +76,11 @@ export function createSingleImageActivate(request, imageViewerId, tbl_id, highli
         request.setAttributes({[PlotAttribute.DATALINK_TABLE_ROW]: highlightedRow+'',
             [PlotAttribute.DATALINK_TABLE_ID]: tbl_id});
     }
-    return () => replotImageDataProducts(request.getPlotId(), imageViewerId, tbl_id, [request]);
+    return () => {
+        // const covViewer= ;
+        const makeActive= !isDefaultCoverageActive(visRoot(),getMultiViewRoot());
+        replotImageDataProducts(request.getPlotId(), makeActive, imageViewerId, tbl_id, [request]);
+    }
 }
 
 let extractedPlotId= 1;
@@ -91,14 +98,21 @@ function copyRequest(inR) {
 export function createSingleImageExtraction(request) {
     if (!request) return undefined;
     const wpRequest= isArray(request) ? request.map( (r) => copyRequest(r)) : copyRequest(request);
+    const plotIds= isArray(request) ? request.map( (r) => r.getPlotId()) : copyRequest(request);
     return () => {
-        dispatchPlotImage({
-            plotId:isArray(wpRequest)?wpRequest.getPlotId():undefined,
-            viewerId:DEFAULT_FITS_VIEWER_ID, wpRequest});
+        if (isArray(wpRequest)) {
+            const activePlotId= getActivePlotView(visRoot())?.plotId;
+            const idx= plotIds.findIndex( (id) => id===activePlotId);
+            if (idx<0) return;
+            dispatchPlotImage({ viewerId:DEFAULT_FITS_VIEWER_ID,
+                plotId:wpRequest[idx].getPlotId(),wpRequest:wpRequest[idx]});
+        }
+        else {
+            dispatchPlotImage({ viewerId:DEFAULT_FITS_VIEWER_ID, wpRequest});
+        }
         showPinMessage('Pinning to Image Area');
     };
 }
-
 
 /** @type actionWatcherCallback */
 function watchForCompletedPlot(action, cancelSelf, params) {
@@ -175,12 +189,13 @@ export function changeActivePlotView(plotId,tbl_id) {
 /**
  *
  * @param {string} activePlotId the new active plot id after the replot
+ * @param {string} if true, make the plotId active
  * @param {string} imageViewerId the id of the viewer
  * @param {string} tbl_id table id of the table with the data products
  * @param {Array.<WebPlotRequest>} reqAry an array of request to execute
  * @param {Array.<WebPlotRequest>} [threeReqAry] an array of request for a three color plot, optional, max 3 entries, r,g,b
  */
-function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, threeReqAry)  {
+function replotImageDataProducts(activePlotId, makeActive, imageViewerId, tbl_id, reqAry, threeReqAry)  {
     const groupId= `${imageViewerId}-${tbl_id||'no-table-group'}-standard`;
     reqAry= reqAry.filter( (r) => r);
     reqAry.forEach( (r) => {
@@ -237,12 +252,12 @@ function replotImageDataProducts(activePlotId, imageViewerId, tbl_id, reqAry, th
     const wpRequestAry= makePlottingList(reqAry);
     if (!isEmpty(wpRequestAry)) {
         dispatchPlotGroup({wpRequestAry, viewerId:imageViewerId, holdWcsMatch:true,
-            setNewPlotAsActive: !activePlotId,
+            setNewPlotAsActive: makeActive && !activePlotId,
             pvOptions: { userCanDeletePlots: false, menuItemKeys:{imageSelect : false}, useSticky:true },
             attributes: { tbl_id }
         });
     }
-    if (activePlotId) dispatchChangeActivePlotView(activePlotId);
+    if (makeActive && activePlotId) dispatchChangeActivePlotView(activePlotId);
 
 
     // prepare three color Plot

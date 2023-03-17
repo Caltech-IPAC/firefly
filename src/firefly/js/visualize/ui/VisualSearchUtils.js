@@ -73,9 +73,9 @@ export function getDetailsFromSelection(plot) {
     if (!dPt0 || !dPt1) return {};
     const cen= makeDevicePt( (dPt0.x+dPt1.x)/2, (dPt0.y+dPt1.y)/2 );
     const cenWpt= cc.getWorldCoords(cen);
-    if (!cenWpt) return {};
     const sideWPx= cc.getWorldCoords( makeDevicePt( dPt0.x,cen.y));
     const sideWPy= cc.getWorldCoords( makeDevicePt( cen.x,dPt0.y));
+    if (!cenWpt || !sideWPx || !sideWPy) return {};
     const radiusInit= Math.min(computeDistance(sideWPx,cenWpt), computeDistance(sideWPy,cenWpt));
     const radius= Math.trunc(radiusInit*3600)/3600;
     let corners;
@@ -90,13 +90,18 @@ export function getDetailsFromSelection(plot) {
     else {
         const ptCorner01= cc.getWorldCoords(makeDevicePt(dPt0.x, dPt1.y));
         const ptCorner10= cc.getWorldCoords(makeDevicePt(dPt1.x, dPt0.y));
-        corners= [pt0,ptCorner01,pt1,ptCorner10];
+        corners= [pt0,ptCorner01,pt1,ptCorner10].filter( (pt) => pt);
     }
 
-    const relativeDevCorners= corners.map( (pt) => {
-        const dPt= cc.getDeviceCoords(pt);
-        return makeDevicePt( cen.x-dPt.x, cen.y-dPt.y );
-    });
+    let relativeDevCorners= corners
+        .map( (pt) => {
+            const dPt= cc.getDeviceCoords(pt);
+            if (!dPt) return;
+            return makeDevicePt( cen.x-dPt.x, cen.y-dPt.y );
+        })
+        .filter( (pt) => pt);
+
+    if (relativeDevCorners?.length!==corners.length) relativeDevCorners= undefined;
 
 
     return {cenWpt, radius, corners, relativeDevCorners, cone};
@@ -129,6 +134,7 @@ export function convertStrToWpAry(str) {
 
 export function convertWpAryToStr(wpAry, plot) {
     const cc = CsysConverter.make(plot);
+    if (!cc || !wpAry?.length) return '';
     return wpAry.reduce((fullStr, pt, idx) => {
         const wpt = cc.getWorldCoords(pt);
         return wpt ? `${fullStr}${idx > 0 ? ', ' : ''}${sprintf('%.6f', wpt.x)} ${sprintf('%.6f', wpt.y)}` : fullStr;
@@ -163,7 +169,7 @@ export function removeSearchSelectTool(plotId) {
     });
 }
 
-export function updateUIFromPlot({plotId, whichOverlay, setTargetWp, getTargetWp, canUpdateModalEndInfo=true,
+export function updateUIFromPlot({plotId, setWhichOverlay, whichOverlay, setTargetWp, getTargetWp, canUpdateModalEndInfo=true,
                                      setHiPSRadius, getHiPSRadius, setPolygon, getPolygon, minSize, maxSize }) {
 
     const userEnterWorldPt = () => parseWorldPt(getTargetWp());
@@ -173,8 +179,13 @@ export function updateUIFromPlot({plotId, whichOverlay, setTargetWp, getTargetWp
     if (whichOverlay !== CONE_CHOICE_KEY && whichOverlay !== POLY_CHOICE_KEY) return;
     const plot = primePlot(visRoot(), plotId);
     if (!plot) return;
-    const isCone = whichOverlay === CONE_CHOICE_KEY;
+    let isCone = whichOverlay === CONE_CHOICE_KEY;
     const {cenWpt, radius, corners} = plot.attributes[PlotAttribute.SELECTION] ? getDetailsFromSelection(plot) : {};
+    const plotSelType= plot.attributes[PlotAttribute.SELECTION_TYPE];
+    if (setWhichOverlay && plotSelType) {
+        isCone= plotSelType!==SelectedShape.rect.key; // if future, if something not supported just default to cone
+        setWhichOverlay(isCone ? CONE_CHOICE_KEY : POLY_CHOICE_KEY);
+    }
 
     if (isCone) {
         if (plot.attributes[PlotAttribute.SELECTION] && plot.attributes[PlotAttribute.SELECTION_SOURCE]===SelectArea.TYPE_ID) {
@@ -183,7 +194,7 @@ export function updateUIFromPlot({plotId, whichOverlay, setTargetWp, getTargetWp
             if (pointEquals(userEnterWorldPt(), cenWpt) && drawRadius === userEnterSearchRadius()) return;
             setTargetWp(cenWpt.toString());
             setHiPSRadius(drawRadius + '');
-            updatePlotOverlayFromUserInput(plotId, whichOverlay, cenWpt, drawRadius, undefined);
+            updatePlotOverlayFromUserInput(plotId, CONE_CHOICE_KEY, cenWpt, drawRadius, undefined);
             setTimeout(() => {
                 canUpdateModalEndInfo ? updateModalEndInfo(plot.plotId) : closeToolbarModalLayers();
             }, 10);
@@ -303,11 +314,10 @@ export function updateModalEndInfo(plotId) {
     if (modalEndInfo?.key!=='SearchRefinement') modalEndInfo?.closeLayer?.();
     setModalEndInfo({
         closeLayer:(key) => {
-            if (key!==SelectArea.TYPE_ID)  {
-                dispatchHideDialog(SEARCH_REFINEMENT_DIALOG_ID);
-                removeSearchSelectTool(plotId);
-                clearModalEndInfo();
-            }
+            if (key===SelectArea.TYPE_ID)  return;
+            dispatchHideDialog(SEARCH_REFINEMENT_DIALOG_ID);
+            removeSearchSelectTool(plotId);
+            clearModalEndInfo();
         },
         closeText:'End Search Marker',
         key: 'SearchRefinement',

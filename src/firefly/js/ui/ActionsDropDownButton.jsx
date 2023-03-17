@@ -38,7 +38,7 @@ export function ActionsDropDownButton({searchActions, pv, tbl_id}) {
 }
 
 const spacialTypes= [SearchTypes.point,SearchTypes.pointSide,SearchTypes.area,SearchTypes.pointRadius];
-const tableTypes= [SearchTypes.point_table_only, SearchTypes.table];
+const tableTypes= [SearchTypes.point_table_only, SearchTypes.wholeTable];
 
 function doExecute(sa,cenWpt,radius,cornerStr,table) {
     switch (sa.searchType) {
@@ -53,7 +53,7 @@ function doExecute(sa,cenWpt,radius,cornerStr,table) {
         case SearchTypes.point_table_only:
             sa.execute(sa, cenWpt);
             break;
-        case SearchTypes.table:
+        case SearchTypes.wholeTable:
             sa.execute(sa, table);
     }
 }
@@ -67,7 +67,7 @@ function isSupported(sa,cenWpt,radius,cornerStr,table) {
         case SearchTypes.point:
         case SearchTypes.point_table_only:
             return sa.supported(sa, cenWpt);
-        case SearchTypes.table:
+        case SearchTypes.wholeTable:
             return sa.supported(sa, table);
     }
 }
@@ -89,8 +89,7 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
         .filter(({searchType}) => includeTypes.includes(searchType))
         .filter((sa) => spacial ? sa.supported(pv,cenWpt, radius, corners) : sa.supported(table));
 
-    // const spacialSearchActions= supportedSearchActions.filter(({searchType}) => searchType!==SearchTypes.table);
-    const tableNonSpacialSearchActions= supportedSearchActions.filter(({searchType}) => searchType===SearchTypes.table);
+    const wholeTableSearchActions= supportedSearchActions.filter(({searchType}) => searchType===SearchTypes.wholeTable);
 
     const coneSearchActions= supportedSearchActions
         .filter(({searchType}) => searchType===SearchTypes.point ||  searchType===SearchTypes.pointRadius ||  searchType===SearchTypes.point_table_only );
@@ -142,12 +141,20 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
 
     };
 
+    const doWholeTable= Boolean(wholeTableSearchActions.length);
+
     return (
         <SingleColumnMenu key='searchMenu'>
-            {Boolean(tableNonSpacialSearchActions.length) && tableNonSpacialSearchActions.map((sa) => {
+            {doWholeTable &&
+                <div style={{whiteSpace: 'nowrap', fontSize: '10pt', padding: '5px 1px 5px 0', fontStyle: 'italic'}}>
+                    Whole table actions
+                </div>
+            }
+            { doWholeTable && wholeTableSearchActions.map((sa) => {
                 const text = getSearchTypeDesc(sa, cenWpt, radius, corners?.length);
                 return (
                     <ToolbarButton text={text} tip={`${sa.tip} for\n${text}`}
+                                   style={{paddingLeft:30}}
                                    enabled={true} horizontal={false} key={sa.cmd}
                                    visible={isSupported(sa, cenWpt, radius, cornerStr, table)}
                                    onClick={() => doExecute(sa, cenWpt, radius, cornerStr, table)}/>

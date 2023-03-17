@@ -1,24 +1,28 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {ExpandType} from 'firefly/visualize/ImagePlotCntlr.js';
 import {has, isArray, isEmpty, isObject, isString, isUndefined} from 'lodash';
 import shallowequal from 'shallowequal';
-import {getPlotGroupById} from './PlotGroup.js';
-import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
-import {makeTransform} from './PlotTransformUtils.js';
-import CysConverter, {CCUtil} from './CsysConverter';
-import {isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
 import {isDefined, memorizeLastCall} from '../util/WebUtil';
-import {getWavelength, isWLAlgorithmImplemented, PLANE, TAB} from './projection/Wavelength.js';
+import CysConverter, {CCUtil} from './CsysConverter';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
-import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from './VisUtil';
+import {getViewer} from './MultiViewCntlr.js';
+import {getPlotGroupById} from './PlotGroup.js';
+import {makeTransform} from './PlotTransformUtils.js';
+import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
+import {getWavelength, isWLAlgorithmImplemented, PLANE, TAB} from './projection/Wavelength.js';
 import {removeRawData} from './rawData/RawDataCache.js';
 import {hasClearedDataInStore, hasLocalStretchByteDataInStore} from './rawData/RawDataOps.js';
-import {ExpandType} from 'firefly/visualize/ImagePlotCntlr.js';
+import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from './VisUtil';
+import {isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
 
 
 export const CANVAS_IMAGE_ID_START= 'image-';
 export const CANVAS_DL_ID_START= 'dl-';
+export const DEFAULT_COVERAGE_PLOT_ID = 'CoveragePlot';
+export const DEFAULT_COVERAGE_VIEWER_ID = 'CoverageImages';
+
 /**
  * 
  * @param {VisRoot | PlotView[]| undefined} ref
@@ -1127,6 +1131,17 @@ export function isAllStretchDataLoaded(vr) {
         .map( (pv) => primePlot(pv))
         .filter( (p) => isImage(p))
         .every( (p) => hasLocalStretchByteData(p));
+}
+
+/**
+ *
+ * @param {VisRoot} vr
+ * @param {MultiViewerRoot} mvr
+ * @returns {boolean}
+ */
+export function isDefaultCoverageActive(vr, mvr) {
+    if (getActivePlotView(vr)?.plotId!==DEFAULT_COVERAGE_PLOT_ID) return false;
+    return Boolean(getViewer(mvr,DEFAULT_COVERAGE_VIEWER_ID)?.mounted);
 }
 
 export const isImageExpanded = (expandedMode) => expandedMode === true ||

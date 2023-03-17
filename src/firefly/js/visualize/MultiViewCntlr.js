@@ -1,16 +1,15 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {without,union,difference,has} from 'lodash';
-import {race,call} from 'redux-saga/effects';
-import {take} from 'redux-saga/effects';
 import Enum from 'enum';
+import {difference, has, union, without} from 'lodash';
+import {call, race, take} from 'redux-saga/effects';
+import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {dispatchAddSaga} from '../core/MasterSaga.js';
 import {flux} from '../core/ReduxFlux.js';
-import ImagePlotCntlr, {dispatchRecenter, visRoot, ExpandType, WcsMatchType} from './ImagePlotCntlr.js';
+import ImagePlotCntlr, {dispatchRecenter, ExpandType, visRoot, WcsMatchType} from './ImagePlotCntlr.js';
 import {PlotAttribute} from './PlotAttribute.js';
-import {primePlot, getPlotViewById} from './PlotViewUtil.js';
-import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {getPlotViewById, primePlot} from './PlotViewUtil.js';
 
 export const META_VIEWER_ID = 'triViewImageMetaData';
 export const IMAGE_MULTI_VIEW_KEY= 'imageMultiView';
@@ -28,6 +27,9 @@ export const UPDATE_VIEWER_CUSTOM_DATA= `${IMAGE_MULTI_VIEW_PREFIX}.updateViewer
 export const ADD_TO_AUTO_RECEIVER = `${IMAGE_MULTI_VIEW_PREFIX}.addToAutoReceiver`;
 
 
+/**
+ * @return {MultiViewerRoot}
+ */
 export const getMultiViewRoot= () => flux.getState()[IMAGE_MULTI_VIEW_KEY];
 
 export default {

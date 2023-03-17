@@ -1,7 +1,7 @@
 import {isArray, isEmpty, once} from 'lodash';
 import React, {useEffect, useRef, useState} from 'react';
 import {makeWorldPt, visRoot} from '../../api/ApiUtilImage.jsx';
-import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
+import {dispatchActiveTarget} from '../../core/AppDataCntlr.js';
 import {getComponentState} from '../../core/ComponentCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
@@ -15,10 +15,12 @@ import {Logger} from '../../util/Logger.js';
 import {cisxAdhocServiceUtype, getServiceDescriptors, standardIDs} from '../../util/VOAnalyzer.js';
 import {toBoolean} from '../../util/WebUtil.js';
 import CoordSys from '../../visualize/CoordSys.js';
-import {dispatchChangeCenterOfProjection, dispatchChangeHiPS} from '../../visualize/ImagePlotCntlr.js';
+import {getHiPSZoomLevelForFOV} from '../../visualize/HiPSUtil.js';
+import {dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchZoom} from '../../visualize/ImagePlotCntlr.js';
 import {getPlotViewById, primePlot} from '../../visualize/PlotViewUtil.js';
 import {pointEquals} from '../../visualize/Point.js';
 import {isHiPS} from '../../visualize/WebPlot.js';
+import {UserZoomTypes} from '../../visualize/ZoomUtil.js';
 import {confirmDLMenuItem} from './FetchDatalinkTable.js';
 import { ingestInitArgs,
     isSIAStandardID, makeFieldDefs, makeSearchAreaInfo, makeServiceDescriptorSearchRequest
@@ -32,6 +34,8 @@ import {showInfoPopup} from '../PopupUtil.jsx';
 import {useStoreConnector} from '../SimpleComponent.jsx';
 
 import './DLGeneratedDropDown.css';
+import SHOW_RIGHT from 'images/show-right-3.png';
+import HIDE_LEFT from 'images/hide-left-3.png';
 
 export const DL_UI_LIST= 'DL_UI_LIST';
 const ACCESS_URL= 'access_url';
@@ -44,7 +48,7 @@ const HIPS_PLOT_ID= 'dlGeneratedHipsPlotId';
 let regLoaded= false;
 let regLoading= false;
 let loadedTblIdCache={};
-const linkStyle= {color:'blue', whiteSpace:'noWrap'};
+const linkStyle= {whiteSpace:'noWrap', fontStyle:'italic', fontWeight: 'bold'};
 
 const findUrl = async () => {
     const servicesRootUrl= await getJsonProperty('inventory.serverURLAry');
@@ -67,6 +71,12 @@ function findUrlInReg(url, registryTblId) {
     return table?.tableData?.data?.findIndex( (d) => d[idx]===url);
 }
 
+const getDataSetChooserTitle= () =>
+    ({
+        title: 'Choose Data Set',
+        details: 'Click on data collection to search; filter or sort table to find a data set.'
+   });
+
 function makeRegistryRequest(url, registryTblId) {
     return makeFileRequest('registry', url, undefined,
         {
@@ -82,11 +92,11 @@ function makeRegistryRequest(url, registryTblId) {
                 'col.band.PrefWidth':6,
 
                 'col.facility_name.label':'Facility',
-                'col.instrument_name.label':'Ins',
-                'col.coverage.label':'Cov',
-                'col.dataproduct_type.label':'Type',
-                'col.collection_label.label':'Collections',
-                'col.band.label':'Band',
+                'col.instrument_name.label':'Inst.',
+                'col.coverage.label':'Type',
+                'col.dataproduct_type.label':'Data',
+                'col.collection_label.label':'Collection',
+                'col.band.label':'Bands',
 
                 'col.dataproduct_type.PrefWidth':5,
                 'col.obs_collection.visibility':'hidden',
@@ -231,7 +241,7 @@ export function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTbl
     );
 }
 
-const ServDescPanel= ({fds, style, desc, setSideBarShowing, sideBarShowing, docRows}) => {
+const ServDescPanel= ({fds, style, desc, setSideBarShowing, sideBarShowing, docRows, clickFuncRef, submitSearch}) => {
 
     let title;
     if (sideBarShowing) {
@@ -246,7 +256,7 @@ const ServDescPanel= ({fds, style, desc, setSideBarShowing, sideBarShowing, docR
     else {
         title= (
             <div style={{display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'flex-start'}}>
-                <ExpandButton style={linkStyle} text={'>>> Show Other Data Sets'} onClick={()  => setSideBarShowing(true)}/>
+                <ExpandButton style={linkStyle} icon={SHOW_RIGHT} text={'Show Other Data Sets'} onClick={()  => setSideBarShowing(true)}/>
                 <div style={{display:'flex', flexDirection:'row', flexGrow:1, justifyContent:'center'}}>
                     <div className='DLGeneratedDropDown__section--title' style={{marginLeft:-60}}>
                         {desc}
@@ -257,38 +267,63 @@ const ServDescPanel= ({fds, style, desc, setSideBarShowing, sideBarShowing, docR
 
     }
 
+    const docRowsComponents= (
+        <div key='help' style={{fontSize:'larger', padding:'0 10px 3px 0', alignSelf:'flex-end'}}>
+            {
+                docRows.map( (row, idx) => (
+                    <a href={row.accessUrl} key={idx + ''} target={'documentation'} >
+                        <span style={{fontStyle:'italic'}}>Documentation: </span>
+                        <span> {`${row.desc}`}</span>
+                    </a> ))
+            }
+        </div>);
+
+    const Wrapper= ({children}) => {
+        return (
+
+            <FormPanel submitText = 'Search' groupKey = 'DL_UI'
+                       onSubmit = {submitSearch}
+                       params={{hideOnInvalid: false}}
+                       inputStyle={{border:'none', padding:0, marginBottom:5}}
+                       getDoOnClickFunc={(clickFunc) => clickFuncRef.clickFunc= clickFunc}
+                       onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
+                       extraWidgets={[docRowsComponents]}
+                       help_id  = {'search-collections-general'}>
+                <div style={{
+                    display:'flex',
+                    flexDirection:'column',
+                    alignItems:'center',
+                }}>
+                    {children}
+                </div>
+            </FormPanel>
+            );
+    };
 
 
     return  (
         <div style={{display:'flex', flexDirection:'column', justifyContent:'space-between', ...style}}>
 
             {title}
-            <DynLayoutPanelTypes.Simple fieldDefAry={fds}
+            <DynLayoutPanelTypes.Inset fieldDefAry={fds}
                                         plotId={HIPS_PLOT_ID}
-                                        popupHiPS={false}
-                                        style={{height:'100%', marginTop:4}}/>
-            <div style={{fontSize:'larger', padding:'1px 5px 5px 0', alignSelf:'flex-end'}}>
-                {
-                    docRows.map( (row, idx) => (
-                        <a href={row.accessUrl} key={idx + ''} target={'documentation'} >
-                            <span style={{fontStyle:'italic'}}>Documentation: </span>
-                            <span> {`${row.desc}`}</span>
-                        </a> ))
-                }
-            </div>
+                                        style={{height:'100%', marginTop:4}}
+                                       WrapperComponent={Wrapper}
+                                       // childComponents={docRowsComponents}
+            />
         </div>
     );
 };
 
 
-const TabView= ({tabsKey, setSideBarShowing, sideBarShowing, searchObjFds,qAna, docRows}) => (
+const TabView= ({tabsKey, setSideBarShowing, sideBarShowing, searchObjFds,qAna, docRows, clickFuncRef, submitSearch}) => (
     <FieldGroupTabs style ={{height:'100%', width:'100%'}} initialState={{ value:searchObjFds[0].ID}} fieldKey={tabsKey}>
         {
             searchObjFds.map((sFds) => {
                 const {fds, idx, ID, desc}= sFds;
                 return (
                     <Tab name={`${qAna.primarySearchDef[idx].desc}`} id={ID} key={idx+''}>
-                        <ServDescPanel{...{fds, setSideBarShowing, sideBarShowing, style:{width:'100%'}, desc, docRows}}/>
+                        <ServDescPanel{...{fds, setSideBarShowing, sideBarShowing, style:{width:'100%'}, desc, docRows, clickFuncRef, submitSearch}}/>
                     </Tab>
                 );
             })
@@ -298,12 +333,12 @@ const TabView= ({tabsKey, setSideBarShowing, sideBarShowing, searchObjFds,qAna, 
 
 function SideBarTable({registryTblId, setSideBarShowing}) {
     return (
-        <div style={{display:'flex', flexDirection:'column', backgroundColor:'rgb(255,255,255)'}}>
+        <div style={{display:'flex', flexDirection:'column'}}>
             <div style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
-                {<ExpandButton style={linkStyle} text={'<<< Hide'} tip={'Hide data set chooser'}
+                {<ExpandButton style={linkStyle} icon={HIDE_LEFT} text={'Hide'} tip={'Hide data set chooser'}
                                onClick={()  => setSideBarShowing(false)}/> }
                 <div className='DLGeneratedDropDown__section--title' style={{marginLeft:110}} >
-                    Choose Data Set
+                    {getDataSetChooserTitle().title}
                 </div>
             </div>
             <div style={{minWidth:460, flexGrow:1, backgroundColor:'inherit', padding: '4px 4px 0 2px'}}>
@@ -319,6 +354,11 @@ function SideBarTable({registryTblId, setSideBarShowing}) {
                     textView: false,
                     showOptionButton: false
                 }}/>
+            </div>
+            <div style={{fontSize:'larger', display:'flex', justifyContent:'space-around', padding: '12px 0 5px 0'} }>
+                <div>
+                    {getDataSetChooserTitle().details}
+                </div>
             </div>
         </div>
     );
@@ -395,6 +435,7 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
         const raStr= cisxUI.find( (e) => e.name==='hips_initial_ra')?.value;
         const decStr= cisxUI.find( (e) => e.name==='hips_initial_dec')?.value;
         const ucdStr= cisxUI.find( (e) => e.name==='hips_initial_ra')?.UCD;
+        const fovStr= cisxUI.find( (e) => e.name==='hips_initial_fov')?.value;
         const hipsUrl= cisxUI.find( (e) => e.name==='HiPS')?.value;
         const csys= ucdStr==='pos.galactic.lon' ? CoordSys.GALACTIC : CoordSys.EQ_J2000;
         const centerProjPt= makeWorldPt(raStr, decStr, csys);
@@ -404,6 +445,16 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
         const tgt= findTargetFromRequest(request,fds);
         if (!tgt) {
             dispatchChangeCenterOfProjection({plotId:HIPS_PLOT_ID, centerProjPt});
+
+            const fov= Number(fovStr);
+            const pv= getPlotViewById(visRoot(),HIPS_PLOT_ID);
+            if (fov && pv) {
+                const MIN_FOV_SIZE= .0025; // 9 arcsec - minimum fov for initial size
+                const cleanFov= fov<MIN_FOV_SIZE ? MIN_FOV_SIZE : fov;
+                const level= getHiPSZoomLevelForFOV(pv,cleanFov);
+                if (!level) return;
+                dispatchZoom({plotId:pv.plotId, userZoomType: UserZoomTypes.LEVEL, level});
+            }
         }
         if (hipsUrl &&  hipsUrl!==plot.hipsUrlRoot) {
             dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: hipsUrl});
@@ -434,26 +485,20 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
     );
 
     return (
-        <div style={{display: 'flex', flexDirection:'column', width:'100%', justifyContent:'center', padding: '15px 8px 0 8px'}}>
-            <FormPanel submitText = 'Search' groupKey = 'DL_UI'
-                       onSubmit = {submitSearch}
-                       params={{hideOnInvalid: false}}
-                       getDoOnClickFunc={(clickFunc) => clickFuncRef.clickFunc= clickFunc}
-                       onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
-                       help_id  = {'todo-AtReplaceHelpId-todo'}>
-                <div className='SearchPanel' style={{width:'100%', height:'100%'}}>
-                    {sideBarShowing && sideBar}
-                    <FieldGroup groupKey='DL_UI' keepState={true} style={{width:'100%'}}>
-                        {qAna ? searchObjFds.length===1 ?
-                                <ServDescPanel{...{initArgs, setSideBarShowing, sideBarShowing, fds:searchObjFds[0].fds,
-                                    style:{width:'100%',height:'100%'}, desc:searchObjFds[0].desc, docRows}} /> :
-                                <TabView{...{initArgs, tabsKey, setSideBarShowing, sideBarShowing, searchObjFds, qAna, docRows}}/>
-                            :
-                            notLoaded
-                        }
-                    </FieldGroup>
-                </div>
-            </FormPanel>
+        <div style={{display: 'flex', flexDirection:'column', width:'100%', justifyContent:'center', padding: '12px 0px 0 6px'}}>
+            <div className='SearchPanel' style={{width:'100%', height:'100%'}}>
+                {sideBarShowing && sideBar}
+                <FieldGroup groupKey='DL_UI' keepState={true} style={{width:'100%'}}>
+                    {qAna ? searchObjFds.length===1 ?
+                            <ServDescPanel{...{initArgs, setSideBarShowing, sideBarShowing, fds:searchObjFds[0].fds,
+                                clickFuncRef, submitSearch,
+                                style:{width:'100%',height:'100%'}, desc:searchObjFds[0].desc, docRows}} /> :
+                            <TabView{...{initArgs, tabsKey, setSideBarShowing, sideBarShowing, searchObjFds, qAna, docRows, clickFuncRef, submitSearch}}/>
+                        :
+                        notLoaded
+                    }
+                </FieldGroup>
+            </div>
         </div>
     );
 }
@@ -477,6 +522,7 @@ function handleSearch(request, qAna, idx) {
         }
     });
 }
+
 
 function makeAllSearchRequest(request, primeSd, concurrentSDAry) {
     const primeRequest= makeServiceDescriptorSearchRequest(request,primeSd);
@@ -538,11 +584,14 @@ function analyzeQueries(tbl_id) {
 }
 
 
-export function ExpandButton({text, tip='$text',style={}, onClick}) {
+export function ExpandButton({text, icon, tip='$text',style={}, onClick}) {
     const s= Object.assign({cursor:'pointer', verticalAlign:'bottom'},style);
     return (
         <div style={s} title={tip} onClick={onClick}>
-                {text}
+            <div style={{display:'flex'}}>
+                <img src={icon} height={12}/>
+                <div style={{marginLeft:5}}>{text}</div>
+            </div>
         </div>
     );
 }

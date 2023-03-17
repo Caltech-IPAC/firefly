@@ -2,10 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React, {memo} from 'react';
 import PropTypes from 'prop-types';
-import {pick, filter} from 'lodash';
-
+import {pick} from 'lodash';
 import DockLayoutPanel from '../../ui/panel/DockLayoutPanel.jsx';
 import {LO_VIEW} from '../../core/LayoutCntlr.js';
 
@@ -16,23 +15,16 @@ const triView = {east: {index: 0, defaultSize: '50%'}, west: {index: 1}, south: 
 const singleView = {center: {index: 0,  defaultSize: '100%',  resize: false}};
 
 
-export class ResultsPanel extends PureComponent {
-
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        var {expanded=LO_VIEW.none} = this.props;
-        expanded = LO_VIEW.get(expanded);
-        const expandedProps = pick(this.props, ['expanded','imagePlot','xyPlot','tables'] );
-        return (
-            expanded === LO_VIEW.none
-                ? <StandardView key='res-std-view' {...this.props} />
-                : <ExpandedView key='res-exp-view' {...expandedProps} />
-        );
-    }
-}
+export const ResultsPanel= memo((props) =>{
+    const {expanded:expandedIn=LO_VIEW.none} = props;
+    const expanded = LO_VIEW.get(expandedIn);
+    const expandedProps = pick(props, ['expanded','imagePlot','xyPlot','tables'] );
+    return (
+        expanded === LO_VIEW.none
+            ? <StandardView key='res-std-view' {...props} />
+            : <ExpandedView key='res-exp-view' {...expandedProps} />
+    );
+});
 
 ResultsPanel.propTypes = {
     visToolbar: PropTypes.element,
@@ -52,8 +44,7 @@ ResultsPanel.propTypes = {
 
 const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
     const view = expanded === LO_VIEW.tables ? tables
-                : expanded === LO_VIEW.xyPlots ? xyPlot
-                : imagePlot;
+        : expanded === LO_VIEW.xyPlots ? xyPlot : imagePlot;
     return (
         <div style={wrapperStyle}>
             {view}
@@ -62,10 +53,10 @@ const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
 };
 
 
-const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, xyPlot, tables}) => {
+const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, tables, rightSide}) => {
     standard = LO_VIEW.get(standard) || LO_VIEW.none;
-    const components = resolveComponents(standard, imagePlot, xyPlot, tables);
-    const config = generateLayout(standard, components);
+    const components = resolveComponents(standard, imagePlot, tables, rightSide);
+    const config = generateLayout(standard, components.length);
 
     return (
         <div style={wrapperStyle}>
@@ -79,39 +70,29 @@ const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, xyPlo
     );
 };
 
-function generateLayout(standard, results) {
+const getShow= (standard) => ( {
+    showTables: LO_VIEW.tables.has(standard),
+    showRightSide: LO_VIEW.xyPlots.has(standard),
+    showLeftSide: LO_VIEW.images.has(standard),
+});
 
-    if ( results.length === 3 ) {
-        if (standard == LO_VIEW.get('images | tables').value) {
-            return eastWest;
-        } else if (standard == LO_VIEW.get('images | xyPlots').value) {
-            return northSouth;
-        } else if (standard == LO_VIEW.get('xyPlots | tables').value) {
-            return northSouth;
-        } else {
-            return triView;
-        }
-    } else if (results.length === 2 ) {
-        if (standard == LO_VIEW.get('images | tables').value) {
-            return eastWest;
-        } else {
-            return northSouth;
-        }
+function generateLayout(standard, componentCnt) {
+    const {showTables,showRightSide, showLeftSide}= getShow(standard);
+
+    if (componentCnt===3 && showLeftSide && showRightSide && showTables) return triView;
+
+    if ( componentCnt === 3 ) {
+        if ( showLeftSide && showTables) return eastWest;
+        else if (showLeftSide && showRightSide) return northSouth;
+        else if (showRightSide && showTables) return northSouth;
+    } else if (componentCnt === 2 ) {
+        return (showLeftSide && showTables) ? eastWest : northSouth;
     } else {
         return singleView;
     }
 }
-function resolveComponents(standard, imagePlot, xyPlot, tables) {
-    var components = [];
-    if(standard.has(LO_VIEW.images)) {
-        components.push(imagePlot);
-    }
-    if(standard.has(LO_VIEW.xyPlots)) {
-        components.push(xyPlot);
-    }
-    if(standard.has(LO_VIEW.tables)) {
-        components.push(tables);
-    }
-    return filter(components);  // only takes declared items
-}
 
+function resolveComponents(standard, imagePlot, tables, rightSide) {
+    const {showTables,showRightSide, showLeftSide}= getShow(standard);
+    return [showLeftSide&&imagePlot, showRightSide&&rightSide, showTables&&tables].filter( (v) => v);
+}

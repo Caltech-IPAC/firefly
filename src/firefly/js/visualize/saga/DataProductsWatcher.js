@@ -8,7 +8,7 @@ import {TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACT
 import ImagePlotCntlr, {visRoot, dispatchDeletePlotView, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../../tables/TableUtil.js';
-import {primePlot} from '../PlotViewUtil.js';
+import {isDefaultCoverageActive, primePlot} from '../PlotViewUtil.js';
 import MultiViewCntlr, {
     getViewerItemIds, dispatchChangeViewerLayout,
     getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE, getLayoutType, getLayoutDetails
@@ -161,7 +161,10 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
             break;
 
         case ImagePlotCntlr.ANY_REPLOT:
-            if (!paused) resetImageFullGridActivePlot(tbl_id, action.payload.plotIdAry);
+            if (!paused) {
+                const makeActive= !isDefaultCoverageActive(visRoot(),getMultiViewRoot());
+                if (makeActive) resetImageFullGridActivePlot(tbl_id, action.payload.plotIdAry);
+            }
             zoomOnNextViewSizeChange= false;
             break;
 

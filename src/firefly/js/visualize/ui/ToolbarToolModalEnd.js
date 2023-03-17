@@ -47,5 +47,5 @@ export function setModalEndInfo(info) {
     const oldInfo= getModalEndInfo();
     dispatchComponentStateChange('ModalEndInfo',  {...emptyModalEndInfo, ...info});
     if ((!oldInfo.key && !info.key) || oldInfo.key!==info.key) return;
-    if (oldInfo?.callIfReplaced) oldInfo?.closeLayer?.(info.key);
+    if (oldInfo?.callIfReplaced && info.key!==oldInfo.key) oldInfo?.closeLayer?.(info.key);
 }

@@ -282,7 +282,8 @@ export function BasicUI(props) {
                     <SplitPane split='vertical' maxSize={splitMax} mixSize={20} defaultSize={splitDef}>
                         <SplitContent>
                             {(capabilities && columnsModel) ?
-                                <TableSearchMethods {...{initArgs, serviceUrl, serviceLabel, columnsModel, obsCoreEnabled, capabilities}}/>
+                                <TableSearchMethods {...{initArgs, serviceUrl, serviceLabel, columnsModel, obsCoreEnabled, capabilities,
+                                    tableName:getTapBrowserState().tableName}}/>
                                 : <div className='loading-mask'/>
                             }
                         </SplitContent>

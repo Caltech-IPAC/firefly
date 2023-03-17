@@ -167,7 +167,8 @@ function watchForHiPSViewDim(action, cancelSelf, params) {
             }
             else { // set to zoom to the size, if less than minimum, use minimum
                 const cleanFov= fovSize<MIN_FOV_SIZE ? MIN_FOV_SIZE : fovSize;
-                dispatchZoom({plotId, userZoomType: UserZoomTypes.LEVEL, level:getHiPSZoomLevelForFOV(pv,cleanFov) });
+                const level= getHiPSZoomLevelForFOV(pv,cleanFov);
+                if (level) dispatchZoom({plotId, userZoomType: UserZoomTypes.LEVEL, level});
             }
 
             if (wp) dispatchChangeCenterOfProjection({plotId, centerProjPt: wp});

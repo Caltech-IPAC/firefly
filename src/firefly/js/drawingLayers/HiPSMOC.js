@@ -39,10 +39,7 @@ const LayerUpdateMethod = new Enum(['byEmptyAry', 'byTrueAry', 'none']);
 
 
 function getVisiblePlotIdsByDrawlayerId(id, getState) {
-    const dl = getDrawLayerById(getState()[DRAWING_LAYER_KEY], id);
-    const {visiblePlotIdAry = []} = dl;
-
-    return visiblePlotIdAry;
+    return getDrawLayerById(getState()[DRAWING_LAYER_KEY], id)?.visiblePlotIdAry ?? [];
 }
 
 function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
@@ -74,10 +71,10 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
                     if (tableModel.tableData) {
                         dispatchModifyCustomField(tbl_id, {mocTable:tableModel});
                         const visiblePlotIdAry =getVisiblePlotIdsByDrawlayerId(id, getState);
-                        visiblePlotIdAry .forEach((pId) => {
+                        visiblePlotIdAry.forEach((pId) => {
                             dispatch({type: ImagePlotCntlr.ANY_REPLOT, payload: {plotId: pId}});
                         });
-                        plotIdAry.forEach( (plotId) => removeTask(plotId, 'fetchMOC'));
+                        plotIdAry?.forEach( (plotId) => removeTask(plotId, 'fetchMOC'));
                     }
                 }
             ).catch(
@@ -233,7 +230,7 @@ function getLayerChanges(drawLayer, action) {
 
             const {visible} = action.payload;
             const pIdAry = plotIdAry ? plotIdAry :[plotId];
-            const tObj = getTitle(drawLayer, pIdAry, visible);
+            const tObj = getTitle(drawLayer, pIdAry, visible && !drawLayer.mocTable);
             const updateStatusAry = pIdAry.reduce((prev, pId) => {
                     if (!prev[pId]) {
                         prev[pId] = new UpdateStatus();
@@ -382,7 +379,9 @@ function updateMocData(dl, plotId) {
  * @returns {Function}
  */
 function makeUpdateDeferred(drawLayerId, plotId) {
-    const {updateStatusAry} = getDrawLayerById(dlRoot(), drawLayerId);
+    const dl = getDrawLayerById(dlRoot(), drawLayerId);
+    if (!dl) return () => window.clearInterval(id);
+    const {updateStatusAry} = dl;
 
     updateStatusAry[plotId].startUpdate();
     const {updateTaskId}= updateStatusAry[plotId];

@@ -55,31 +55,35 @@ export function getSpacialSearchType(request, fieldDefAry) {
 
 
 /**
- * @param inFieldDefAry
- * @param noLabels
- * @param popupHiPS
- * @param plotId
- * @return {{opsInputAry, fieldsInputAry, checkBoxFields, polyPanel, spacialPanel, areaFields, fieldsInputAry, opsInputAry, useArea, useSpacial, useCirclePolyField}}
+ *
+ * @param params
+ * @param params.fieldDefAry
+ * @param params.noLabels
+ * @param params.popupHiPS
+ * @param params.plotId
+ * @param params.insetSpacial
+ * @returns {{}}
  */
-export const makeAllFields = (inFieldDefAry, noLabels=false, popupHiPS, plotId='defaultHiPSTargetSearch') => {
+export function makeAllFields({fieldDefAry, noLabels=false, popupHiPS,
+                                  plotId='defaultHiPSTargetSearch', insetSpacial=false} )  {
 
     // polygon is not created directly, we need to determine who will create creat a polygon field if it exist
-    const fieldDefAry= inFieldDefAry.filter( ({hide}) => !hide);
-    const hasPoly = Boolean(findType(fieldDefAry,POLYGON));
-    const circle= findType(fieldDefAry,CIRCLE);
+    const workingFieldDefAry= fieldDefAry.filter( ({hide}) => !hide);
+    const hasPoly = Boolean(findType(workingFieldDefAry,POLYGON));
+    const circle= findType(workingFieldDefAry,CIRCLE);
     const hasCircle= Boolean(circle);
-    const hasSpacialAndArea= Boolean(findType(fieldDefAry,POSITION) && findType(fieldDefAry,AREA));
-    const spacialManagesArea= hasSpacialAndArea && countType(fieldDefAry,AREA)===1;
+    const hasSpacialAndArea= Boolean(findType(workingFieldDefAry,POSITION) && findType(workingFieldDefAry,AREA));
+    const spacialManagesArea= hasSpacialAndArea && countType(workingFieldDefAry,AREA)===1;
 
     const panels = {
-        spacialPanel: popupHiPS ? makeDynSpacialPanel(fieldDefAry, true, popupHiPS, plotId) :
-                                  makeDynSpacialPanel(fieldDefAry, hasCircle && hasPoly, popupHiPS, plotId),
-        areaFields: spacialManagesArea ? [] : makeAllAreaFields(fieldDefAry),
-        checkBoxFields: makeCheckboxFields(fieldDefAry),
-        ...makeInputFields(fieldDefAry, noLabels)
+        DynSpacialPanel: popupHiPS ? makeDynSpacialPanel(workingFieldDefAry, true, popupHiPS, plotId) :
+            makeDynSpacialPanel(workingFieldDefAry, hasCircle && hasPoly, popupHiPS, plotId,insetSpacial),
+        areaFields: spacialManagesArea ? [] : makeAllAreaFields(workingFieldDefAry),
+        checkBoxFields: makeCheckboxFields(workingFieldDefAry),
+        ...makeInputFields(workingFieldDefAry, noLabels)
     };
     panels.useArea = Boolean(panels.areaFields.length);
-    panels.useSpacial = Boolean(panels.spacialPanel);
+    panels.useSpacial = Boolean(panels.DynSpacialPanel);
     return panels;
 };
 
@@ -159,14 +163,14 @@ function CircleAndPolyFieldPopup({fieldDefAry, typeForCircle= CIRCLE, plotId='de
     );
 }
 
-function PositionAndPolyFieldEmbed({fieldDefAry, plotId}) {
+function PositionAndPolyFieldEmbed({fieldDefAry, plotId, insetSpacial, otherComponents, WrapperComponent}) {
 
     const polyType = findType(fieldDefAry, POLYGON);
     const posType = findType(fieldDefAry, POSITION);
     const areaType = findType(fieldDefAry, AREA);
     const circleType= findType(fieldDefAry, CIRCLE);
     const {targetDetails, nullAllowed = false} = posType ?? circleType ?? {};
-    const [getConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY);
+    const [getConeAreaOp, setConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY);
 
 
 
@@ -193,33 +197,34 @@ function PositionAndPolyFieldEmbed({fieldDefAry, plotId}) {
 
 
     const doGetConeAreaOp= () => {
-        if (polyType && (posType||circleType)) {
-            const op= getConeAreaOp();
-            return op ?? initToggle;
-        }
+        if (doToggle) return getConeAreaOp() ?? initToggle;
         if (polyType) return POLY_CHOICE_KEY;
         return CONE_CHOICE_KEY;
     };
 
+    const insetStyle= insetSpacial ? {
+        borderRadius: '5px 5px 2px 2px',
+        background: 'white',
+        border: '3px solid rgba(0,0,0,.3)',
+        alignSelf: 'auto',
+        position:'absolute',
+        padding: '0 4px 0 4px',
+        bottom: 30,
+        left: 7
+    } : {};
 
-    return (
-        <div key='targetGroup'
-             style={{display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch', height:'100%',
-                 paddingBottom:20}}>
-            <HiPSTargetView {...{
-                hipsUrl, centerPt:initCenterPt, hipsFOVInDeg, mocList, coordinateSys, sRegion, plotId,
-                minSize: minValue, maxSize: maxValue, whichOverlay: doGetConeAreaOp(),
-                targetKey, sizeKey, polygonKey, style: {minHeight: 300, alignSelf: 'stretch', flexGrow:1}
-            }}/>
-            <div style={{paddingTop:10}}/>
+    const internals= (
+        <>
+            {!insetSpacial && <div style={{paddingTop:10}}/>}
             {doToggle && <RadioGroupInputField {...{
-                inline: true, fieldKey: CONE_AREA_KEY, wrapperStyle: {paddingBottom: 10, paddingTop: 10},
+                inline: true, fieldKey: CONE_AREA_KEY, wrapperStyle: {paddingBottom: 5, paddingTop: 5},
                 tooltip: 'Chose type of search', initialState: {value: initToggle}, options: CONE_AREA_OPTIONS
             }} />}
             {doGetConeAreaOp() === CONE_CHOICE_KEY &&
                 <div style={{paddingTop:5}}>
                     <TargetPanel {...{
-                        fieldKey:targetKey, labelWidth:100, nullAllowed,
+                        fieldKey:targetKey, labelWidth:60, nullAllowed,
+                        inputStyle:{width: 225},
                         targetPanelExampleRow1, targetPanelExampleRow2
                     }}/>
                     <SizeInputFields {...{
@@ -238,6 +243,25 @@ function PositionAndPolyFieldEmbed({fieldDefAry, plotId}) {
                     desc: 'Coordinates',
                     targetKey, sizeKey, manageHiPS:false,
                 }} />}
+            {otherComponents && otherComponents}
+        </>
+    );
+
+    const wrappedInternals= WrapperComponent ? <WrapperComponent>{internals}</WrapperComponent> : internals;
+
+    return (
+        <div key='targetGroup'
+             style={{display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch', height:'100%',
+                 paddingBottom:insetSpacial?0:20, position: 'relative'}}>
+            <HiPSTargetView {...{
+                hipsUrl, centerPt:initCenterPt, hipsFOVInDeg, mocList, coordinateSys, sRegion, plotId,
+                minSize: minValue, maxSize: maxValue,
+                whichOverlay: doGetConeAreaOp(), setWhichOverlay: doToggle ? setConeAreaOp : undefined,
+                targetKey, sizeKey, polygonKey, style: {minHeight: 300, alignSelf: 'stretch', flexGrow:1}
+            }}/>
+            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch', ...insetStyle}}>
+                {wrappedInternals}
+            </div>
         </div>
     );
 }
@@ -366,55 +390,59 @@ function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', style={}
     );
 }
 
-function makeDynSpacialPanel(fieldDefAry, manageAllSpacial= true, popupHiPS= false, plotId= 'defaultHiPSTargetSearch') {
-    const posType = findType(fieldDefAry, POSITION);
-    const areaType = findType(fieldDefAry, AREA);
-    const circleType = findType(fieldDefAry, CIRCLE);
-    const polyType= manageAllSpacial && findType(fieldDefAry, POLYGON);
-    if (!posType && !circleType) return;
-    const {targetDetails, nullAllowed = false, minValue, maxValue} = posType ?? circleType;
-    const {labelWidth = DEF_LABEL_WIDTH} = posType ?? circleType;
+function makeDynSpacialPanel(fieldDefAry, manageAllSpacial= true, popupHiPS= false, plotId= 'defaultHiPSTargetSearch', insetSpacial) {
+    const DynSpacialPanel= ({otherComponents, WrapperComponent}) => {
+        const posType = findType(fieldDefAry, POSITION);
+        const areaType = findType(fieldDefAry, AREA);
+        const circleType = findType(fieldDefAry, CIRCLE);
+        const polyType= manageAllSpacial && findType(fieldDefAry, POLYGON);
+        if (!posType && !circleType) return <div/>;
+        const {targetDetails, nullAllowed = false, minValue, maxValue} = posType ?? circleType;
+        const {labelWidth = DEF_LABEL_WIDTH} = posType ?? circleType;
 
-    const {
-        hipsUrl, centerPt, hipsFOVInDeg = 240, coordinateSys: csysStr = 'EQ_J2000', mocList,
-        targetPanelExampleRow1, targetPanelExampleRow2
-    } = targetDetails ?? polyType?.targetDetails ?? {};
-    const coordinateSys = CoordinateSys.parse(csysStr) ?? CoordinateSys.EQ_J2000;
-    const sizeKey = areaType?.key ?? circleType?.targetDetails.sizeKey;
+        const {
+            hipsUrl, centerPt, hipsFOVInDeg = 240, coordinateSys: csysStr = 'EQ_J2000', mocList,
+            targetPanelExampleRow1, targetPanelExampleRow2
+        } = targetDetails ?? polyType?.targetDetails ?? {};
+        const coordinateSys = CoordinateSys.parse(csysStr) ?? CoordinateSys.EQ_J2000;
+        const sizeKey = areaType?.key ?? circleType?.targetDetails.sizeKey;
 
-    if (!hipsUrl && !targetDetails) {
-        return <TargetPanel {...{labelWidth, nullAllowed, targetPanelExampleRow1, targetPanelExampleRow2}}/>;
-    }
+        if (!hipsUrl && !targetDetails) {
+            return <TargetPanel {...{labelWidth, nullAllowed, targetPanelExampleRow1, targetPanelExampleRow2}}/>;
+        }
 
-    if (manageAllSpacial && sizeKey) {
-        return popupHiPS ?
-            <CircleAndPolyFieldPopup {...{fieldDefAry,typeForCircle:circleType?CIRCLE:POSITION, plotId}}/> : <PositionAndPolyFieldEmbed {...{fieldDefAry, plotId}}/>;
-    }
-    else {
-        if (popupHiPS) {
-            return (<VisualTargetPanel {...{
-                hipsUrl, centerPt, hipsFOVInDeg, mocList, nullAllowed, coordinateSys, sizeKey, plotId,
-                minSize: minValue, maxSize: maxValue,
-                targetPanelExampleRow1, targetPanelExampleRow2 }} />);
+        if (manageAllSpacial && sizeKey) {
+            return popupHiPS ?
+                <CircleAndPolyFieldPopup {...{fieldDefAry,typeForCircle:circleType?CIRCLE:POSITION, plotId}}/> :
+                <PositionAndPolyFieldEmbed {...{fieldDefAry, plotId, insetSpacial, otherComponents, WrapperComponent}}/>;
         }
         else {
-            return (
-                <div key='targetGroup'
-                     style={{display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch', height:'100%'}}>
-                    <HiPSTargetView {...{
-                        hipsUrl, centerPt, hipsFOVInDeg, mocList, coordinateSys,
-                        minSize: minValue, maxSize: maxValue,
-                        plotId,
-                        targetKey: 'UserTargetWorldPt', sizeKey, style: {flexGrow:1, alignSelf: 'stretch'}
-                    }}/>
-                    <div style={{display: 'flex', flexDirection: 'column'}}>
-                        <TargetPanel {...{
-                            style: {paddingTop: 10}, key: 'targetPanel', labelWidth, nullAllowed,
-                            targetPanelExampleRow1, targetPanelExampleRow2
+            if (popupHiPS) {
+                return (<VisualTargetPanel {...{
+                    hipsUrl, centerPt, hipsFOVInDeg, mocList, nullAllowed, coordinateSys, sizeKey, plotId,
+                    minSize: minValue, maxSize: maxValue,
+                    targetPanelExampleRow1, targetPanelExampleRow2 }} />);
+            }
+            else {
+                return (
+                    <div key='targetGroup'
+                         style={{display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch', height:'100%'}}>
+                        <HiPSTargetView {...{
+                            hipsUrl, centerPt, hipsFOVInDeg, mocList, coordinateSys,
+                            minSize: minValue, maxSize: maxValue,
+                            plotId,
+                            targetKey: 'UserTargetWorldPt', sizeKey, style: {flexGrow:1, alignSelf: 'stretch'}
                         }}/>
-                    </div>
-                </div> );
+                        <div style={{display: 'flex', flexDirection: 'column'}}>
+                            <TargetPanel {...{
+                                style: {paddingTop: 10}, key: 'targetPanel', labelWidth, nullAllowed,
+                                targetPanelExampleRow1, targetPanelExampleRow2
+                            }}/>
+                        </div>
+                    </div> );
+            }
         }
-    }
+    };
+    return DynSpacialPanel;
 }
 

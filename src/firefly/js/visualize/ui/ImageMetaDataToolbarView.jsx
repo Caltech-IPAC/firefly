@@ -90,7 +90,7 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
                 }
             </div> }
             {showPager && <ImagePager pageSize={converter.maxPlots} tbl_id={activeTable.tbl_id} style={{marginLeft:10}}/>}
-            <VisMiniToolbar/>
+            <VisMiniToolbar viewerId={viewerId}/>
         </div>
     );
 }

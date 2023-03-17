@@ -114,7 +114,8 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
 
     useEffect(() => { // if plot view changes then update the target or polygon field
         updateUIFromPlot({
-            plotId, whichOverlay,
+            plotId,
+            undefined, whichOverlay,
             setTargetWp:setWP,
             getTargetWp:getWP,
             setHiPSRadius:setSize,

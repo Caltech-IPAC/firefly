@@ -282,6 +282,8 @@ export function getColumnAttribute(columnsModel, colName, attrName) {
 
 const hasElements= (a) => Boolean(isArray(a) && a?.length);
 
+export const getAsEntryForTableName= (tableName) => tableName?.[0] ?? 'x';
+
 function mergeAdditionalServices(tapServices, additional) {
     if (!hasElements(additional)) return tapServices;
 

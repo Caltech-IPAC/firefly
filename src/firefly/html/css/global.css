@@ -60,7 +60,7 @@ div.rootStyle img {
 #App > main {
     display: flex;
     margin: 4px;
-    padding: 5px;
+    padding: 0;
     -webkit-flex: auto;
     -ms-flex: auto;
     flex: auto;

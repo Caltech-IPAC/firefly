@@ -8,8 +8,10 @@ import PropTypes from 'prop-types';
 import {pickBy} from 'lodash';
 
 import {flux} from '../../core/ReduxFlux.js';
-import {getMenu, isAppReady, dispatchSetMenu,
-    dispatchOnAppReady, dispatchNotifyRemoteAppReady} from '../../core/AppDataCntlr.js';
+import {
+    getMenu, isAppReady, dispatchSetMenu,
+    dispatchOnAppReady, dispatchNotifyRemoteAppReady, getAppOptions
+} from '../../core/AppDataCntlr.js';
 import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
 import {layoutManager} from './FireflyViewerManager.js';
 import {Menu} from '../../ui/Menu.jsx';
@@ -17,7 +19,7 @@ import {Banner} from '../../ui/Banner.jsx';
 import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
 import {TriViewPanel} from './TriViewPanel.jsx';
 import {getActionFromUrl} from '../../core/History.js';
-import {launchTableTypeWatchers} from '../../visualize/ui/TriViewImageSection.jsx';
+import {startImagesLayoutWatcher} from '../../visualize/ui/TriViewImageSection.jsx';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {getImageMasterData} from '../../visualize/ui/AllImageSearchConfig.js';
 import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.js';
@@ -49,7 +51,7 @@ export class FireflyViewer extends PureComponent {
         const views = LO_VIEW.get(props.views) || LO_VIEW.none;
         this.state = this.getNextState();
         startTTFeatureWatchers();
-        if (views.has(LO_VIEW.images) ) launchTableTypeWatchers();
+        if (views.has(LO_VIEW.images) ) startImagesLayoutWatcher();
         dispatchAddSaga(layoutManager,{views: props.views});
         if (getWorkspaceConfig()) { initWorkspace(); }
     }
@@ -82,7 +84,7 @@ export class FireflyViewer extends PureComponent {
     render() {
         const {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown, showUserInfo, initLoadCompleted, initLoadingMessage,
             dropdownPanels, views, footer, style, showViewsSwitch, leftButtons,
-            centerButtons, rightButtons, bannerLeftStyle, bannerMiddleStyle} = this.state;
+            centerButtons, rightButtons, bannerLeftStyle, bannerMiddleStyle, coverageSide} = this.state;
         const {visible, view, initArgs} = dropDown || {};
 
         if (!isReady) {
@@ -102,7 +104,7 @@ export class FireflyViewer extends PureComponent {
                             {...{dropdownPanels} } />
                     </header>
                     <main>
-                        <DynamicResults {...{views, showViewsSwitch, leftButtons, centerButtons,
+                        <DynamicResults {...{views, showViewsSwitch, leftButtons, centerButtons, coverageSide,
                                              rightButtons, initLoadingMessage, initLoadCompleted}}/>
                     </main>
                 </div>
@@ -138,7 +140,7 @@ FireflyViewer.propTypes = {
 
 FireflyViewer.defaultProps = {
     appTitle: 'Firefly',
-    views: 'images | tables | xyPlots'
+    views: 'images | tables | xyplots'
 };
 
 function onReady({menu, views, options={}, initLoadingMessage, initLoadCompleted, normalInit}) {
@@ -182,8 +184,5 @@ DynamicResults.propTypes = {
     leftButtons: PropTypes.arrayOf( PropTypes.func ),
     centerButtons: PropTypes.arrayOf( PropTypes.func ),
     rightButtons: PropTypes.arrayOf( PropTypes.func )
-};
-DynamicResults.defaultProps = {
-    showViewsSwitch: true
 };
 

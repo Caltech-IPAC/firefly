@@ -128,8 +128,8 @@ export function findTargetFromRequest(request, fieldDefAry) {
 
 
 function SimpleDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='defaultHiPSTargetSearch'}) {
-    const { spacialPanel, areaFields, polyPanel, checkBoxFields, fieldsInputAry, opsInputAry,
-        useSpacial, useArea}= makeAllFields(fieldDefAry,false,popupHiPS, plotId);
+    const { DynSpacialPanel, areaFields, polyPanel, checkBoxFields, fieldsInputAry, opsInputAry,
+        useSpacial, useArea}= makeAllFields({ fieldDefAry,popupHiPS, plotId});
 
     let iFieldLayout;
     if (fieldsInputAry.length || opsInputAry.length) {
@@ -146,7 +146,7 @@ function SimpleDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='d
     return (
         <div style={style}>
             {useSpacial &&
-                <div style={{display:'flex', flexDirection:'column', alignItems:'center', height:'100%'}}> {spacialPanel} </div>}
+                <div style={{display:'flex', flexDirection:'column', alignItems:'center', height:'100%'}}> {<DynSpacialPanel/>} </div>}
             {Boolean(polyPanel) &&
                 <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}> {polyPanel} </div>}
             <div style={{paddingLeft:5, display:'flex', flexDirection:'column'}}>
@@ -166,11 +166,60 @@ function SimpleDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='d
     );
 }
 
-function GridDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='defaultHiPSTargetSearch'}) {
-    const { spacialPanel, areaFields, checkBoxFields, fieldsInputAry, opsInputAry,
-        useArea, useSpacial}= makeAllFields(fieldDefAry, true, popupHiPS);
+function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='defaultHiPSTargetSearch', childComponents, WrapperComponent}) {
+    const { DynSpacialPanel, areaFields, polyPanel, checkBoxFields, fieldsInputAry, opsInputAry,
+        useSpacial, useArea}= makeAllFields({ fieldDefAry,popupHiPS, plotId, insetSpacial:true});
 
-    const labelAry= fieldDefAry
+    let iFieldLayout;
+    if (fieldsInputAry.length || opsInputAry.length) {
+        iFieldLayout= (
+            <>
+                <div key='top' style={{paddingTop:5}}/>
+                {fieldsInputAry}
+                {Boolean(fieldsInputAry.length) && <div key='pad' style={{paddingTop:5}}/>}
+                {opsInputAry}
+            </>);
+    }
+
+
+
+    const nonSpacial= (
+        <>
+            {Boolean(polyPanel) &&
+                <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}> {polyPanel} </div>}
+            <div style={{paddingLeft:5, display:'flex', flexDirection:'column'}}>
+                {useArea &&
+                    <div key='a' style={{paddingTop:5, display:'flex', flexDirection:'column'}}>
+                        {areaFields}
+                    </div>}
+                <div style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
+                    {Boolean(iFieldLayout) && <div>{iFieldLayout}</div>}
+                    {Boolean(checkBoxFields) &&
+                        <div style={{padding: '5px 0 0 45px', display:'flex', flexDirection:'column', alignSelf:'center'}}>
+                            {checkBoxFields}
+                        </div> }
+                </div>
+            </div>
+            {childComponents && childComponents}
+        </>
+    );
+
+    return (
+        <div style={style}>
+            {useSpacial &&
+                <div style={{display:'flex', flexDirection:'column', alignItems:'center', height:'100%'}}>
+                    <DynSpacialPanel otherComponents={nonSpacial} WrapperComponent={WrapperComponent}/>
+                </div>}
+            {!useSpacial  && nonSpacial}
+        </div>
+    );
+}
+
+function GridDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='defaultHiPSTargetSearch'}) {
+    const { DynSpacialPanel, areaFields, checkBoxFields, fieldsInputAry, opsInputAry,
+        useArea, useSpacial}= makeAllFields({ fieldDefAry,noLabels:true, plotId, popupHiPS});
+
+const labelAry= fieldDefAry
         .filter( ({type}) => type===INT || type===FLOAT || type===ENUM || type===UNKNOWN)
         .map( ({desc,units}) => `${desc}${makeUnitsStr(units)}` );
 
@@ -191,7 +240,7 @@ function GridDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='def
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch', ...style}}>
             {useSpacial &&
                 <div style={{display:'flex', flexDirection:'column', alignItems:'center', alignSelf:'stretch'}}>
-                    {spacialPanel}
+                    {<DynSpacialPanel/>}
                     {useArea && <> {areaFields} </>}
                 </div>
             }
@@ -206,5 +255,6 @@ function GridDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='def
 
 export const DynLayoutPanelTypes= {
     Simple: SimpleDynSearchPanel,
+    Inset: InsetDynSearchPanel,
     Grid: GridDynSearchPanel,
 };

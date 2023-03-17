@@ -63,6 +63,16 @@
     padding-left: 10px
 }
 
+.DD-ToolBar__footer--links a {
+    font-family: "Varela", sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 16px;
+    color: #fff;
+    text-decoration: none;
+}
+
+
 .DD-ToolBar__footer--links ul li a {
     font-family: "Varela", sans-serif;
     font-weight: 400;
