@@ -93,10 +93,11 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
 
     if (payload.viewerId && payload.viewerId!==imageViewerId) return {...params,firstTime};
 
+    const payloadTblId= payload.tbl_id ?? payload.associatedTblId;
 
 
-    if (payload.tbl_id) {
-        if (payload.tbl_id!==tbl_id) return {...params,firstTime};
+    if (payloadTblId) {
+        if (payloadTblId!==tbl_id) return {...params,firstTime};
         if (action.type===TABLE_REMOVE) {
             removeAllProducts(activateParams,tbl_id);
             // todo might need to remove other stuff as well: charts, images, jpeg
@@ -107,7 +108,9 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
         if (paused && imView?.mounted) paused= false;
     }
     else {
-        if (getActiveTableId()!==tbl_id) return {...params, firstTime};
+        if (getActiveTableId()!==tbl_id) {
+            return {...params, firstTime};
+        }
     }
 
 
