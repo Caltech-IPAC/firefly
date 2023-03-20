@@ -42,14 +42,15 @@ function watchViewDim(action, cancelSelf, {plotId, resolve, reject, failureAsRej
     const {type} = action;
     const vr = visRoot();
     const pv = getPlotViewById(vr, plotId);
-    const {width, height} = pv.viewDim;
+    const {width=0, height=0} = pv.viewDim;
     if (failActions.includes(type)) {
         failureAsReject ? reject(Error(action)) : resolve();
         cancelSelf();
         return;
     }
     if (succActions.includes(type)) foundSuccComplete = true;
-    if (foundSuccComplete && width && height && width > 30 && height > 30) {
+    if (action.type===ImagePlotCntlr.UPDATE_VIEW_SIZE) foundSuccComplete = true;
+    if (foundSuccComplete && width > 30 && height > 30) {
         resolve(pv);
         cancelSelf();
     }

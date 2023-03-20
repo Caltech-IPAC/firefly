@@ -244,14 +244,14 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
             break;
 
         case TABLE_SELECT:
-            tblCatIdMap[tbl_id].forEach(( cId ) => {
+            tblCatIdMap[tbl_id]?.forEach(( cId ) => {
                 dispatchModifyCustomField(cId, {selectInfo: action.payload.selectInfo});
             });
             break;
 
         case TABLE_HIGHLIGHT:
         case TABLE_UPDATE:
-            tblCatIdMap[tbl_id].forEach(( cId ) => {
+            tblCatIdMap[tbl_id]?.forEach(( cId ) => {
                 dispatchModifyCustomField(cId, {highlightedRow: action.payload.highlightedRow});
             });
             break;

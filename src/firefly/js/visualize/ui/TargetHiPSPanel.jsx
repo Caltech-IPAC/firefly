@@ -10,9 +10,14 @@ import {computeCentralPointAndRadius,} from 'firefly/visualize/VisUtil.js';
 import CLICK from 'html/images/20x20_click.png';
 import PropTypes, {arrayOf, bool, number, object, oneOf, shape, string, func} from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
+import {getTblById, makeFileRequest, onTableLoaded} from '../../api/ApiUtilTable.jsx';
+import {dispatchAddTaskCount, dispatchRemoveTaskCount} from '../../core/AppDataCntlr.js';
+import {MetaConst} from '../../data/MetaConst.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
+import {upload} from '../../rpc/CoreServices.js';
+import {dispatchTableFetch} from '../../tables/TablesCntlr.js';
 import {ConnectionCtx} from '../../ui/ConnectionCtx.js';
 import {FieldGroupCtx} from '../../ui/FieldGroup.jsx';
 import {InputAreaFieldConnected} from '../../ui/InputAreaField.jsx';
@@ -31,7 +36,7 @@ import {
     getActivePlotView, getDrawLayersByType, getPlotViewById, isDrawLayerAttached, primePlot
 } from '../PlotViewUtil.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
-import {createHiPSMocLayer} from '../task/PlotHipsTask.js';
+import {createHiPSMocLayerFromPreloadedTable} from '../task/PlotHipsTask.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
@@ -135,7 +140,7 @@ export const HiPSTargetView = ({style, hipsDisplayKey='none',
     },[hipsDisplayKey]);
 
     useEffect(() => {
-        void queueUpdateMOCLayer(mocList, plotId) ;
+        void updateMoc(mocList,plotId);
     }, [mocList]);
 
     useEffect(() => { // if plot view changes then update the target or polygon field
@@ -318,12 +323,6 @@ function showHiPSPanelPopup({popupClosing, element, plotId= defPopupPlotId,
     dispatchShowDialog(DIALOG_ID);
 }
 
-
-
-
-let mocCnt=0;
-const createMocTableId= () => `moc-table-${++mocCnt}`;
-
 /**
  * plot the HiPS, set the center, FOV, user target selection layer, and the MOC layers.
  * Note this many options are disabled that do not make sense when using the HiPS for user input
@@ -346,12 +345,8 @@ async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg,
         .forEach( ({drawLayerId}) => dispatchDestroyDrawLayer(drawLayerId));// clean up any old moc layers
     const wpRequest= WebPlotRequest.makeHiPSRequest(hipsUrl, centerPt, hipsFOVInDeg);
     wpRequest.setPlotGroupId(plotId+'-group');
-    wpRequest.setOverlayIds([HiPSMOC.TYPE_ID]);
+    wpRequest.setOverlayIds([]);
     wpRequest.setPlotId(plotId);
-    const overlayIds= wpRequest.getOverlayIds();
-    wpRequest.setOverlayIds(
-        overlayIds.filter((id) => id!==HiPSMOC.TYPE_ID)
-    );
     if (coordinateSys) {
         wpRequest.setHipsUseCoordinateSys(coordinateSys);
     }
@@ -382,43 +377,90 @@ async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg,
 }
 
 
-async function queueUpdateMOCLayer(mocList, plotId) {
-    if (updateRunning) {
-        updateQueue.push({mocList, plotId});
-        return;
-    }
-    await updateMOCLayer(mocList,plotId);
-    if (!updateQueue.length) return;
-    const {mocList:qMocList,plotId:qPlotId}= updateQueue.shift();
-    await queueUpdateMOCLayer(qMocList,qPlotId);
-}
+let abortFunc= undefined;
 
-let updateRunning= false;
-const updateQueue= [];
-
-async function updateMOCLayer(mocList, plotId) {
-    updateRunning= true;
+async function updateMoc(mocList, plotId) {
+    abortFunc?.();
+    abortFunc= undefined;
     await  onPlotComplete(plotId);
     if (!mocList?.length) { // if no MOCs then remove any on HiPS
-        getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID)
-            ?.forEach( (dl) => dispatchDestroyDrawLayer(dl.drawLayerId));
-        updateRunning= false;
+        removeAllMocs();
         return;
     }
-    const mocDlAry= getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID);
-    const existingMocUrlsAry= mocDlAry?.map( (dl) => dl.mocFitsInfo.mocUrl);
     const newMocUrls= mocList.map( ({mocUrl}) => mocUrl);
-    mocDlAry.forEach((dl) => { // remove any MOC not in mocList
+    removeAllMocs(newMocUrls);
+    abortFunc= loadMocWithAbort(mocList,plotId);
+}
+
+function removeAllMocs(excludeList= []) {
+    getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID)?.forEach( (dl) => {
         const url= dl?.mocFitsInfo?.mocUrl;
-        if (!newMocUrls.includes(url)) dispatchDestroyDrawLayer(dl.drawLayerId);
+        if (url && excludeList.includes(url)) return;
+        dispatchDestroyDrawLayer(dl.drawLayerId);
     });
-    for( const moc of mocList) {
-        const {mocUrl,title}= moc;
-        if (!existingMocUrlsAry.includes(mocUrl)) {
-            await createHiPSMocLayer(createMocTableId(),title, mocUrl, primePlot(visRoot(),plotId), true, '');
-        }
+}
+
+
+function loadMocWithAbort(mocList, plotId) {
+    let abort= false;
+    const doAbort= () => abort=true;
+    const existingMocUrlsAry= getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID)?.map( (dl) => dl.mocFitsInfo.mocUrl);
+    const mocAddList= mocList.filter(({mocUrl}) => !existingMocUrlsAry.includes(mocUrl));
+    if (!mocAddList.length) {
+        return doAbort;
     }
-    updateRunning= false;
+
+    const loadMOCList= async () => {
+        const colors=['yellow', 'red'];
+
+        try {
+            for(let i=0; (i<mocAddList.length); i++) {
+                const {mocUrl,title}= mocAddList[i];
+
+                const tbl_id= 'MOC---'+mocUrl;
+                let add= true;
+                await  onPlotComplete(plotId);
+                if (abort) return;
+                if (!getTblById(tbl_id)) {
+                    dispatchAddTaskCount(plotId, tbl_id);
+                    const {status, cacheKey}=  await upload(mocUrl, 'details', {hipsCache:true});
+                    dispatchRemoveTaskCount(plotId, tbl_id);
+                    if (abort) return;
+                    const request= makeFileRequest(title, cacheKey, undefined, {
+                        tbl_id,
+                        pageSize: 1,
+                        META_INFO: {[MetaConst.IGNORE_MOC]: 'true' }
+                    } );
+                    dispatchTableFetch(request);
+                    dispatchAddTaskCount(plotId, tbl_id);
+                    await onTableLoaded(tbl_id);
+                    dispatchRemoveTaskCount(plotId, tbl_id);
+                    if (abort) return;
+                    add= (status === '200');
+                }
+
+                if (add) {
+                    createHiPSMocLayerFromPreloadedTable({
+                        plotId,
+                        tbl_id,
+                        visible: true,
+                        fitsPath: mocUrl,
+                        title,
+                        color: colors[i % 2],
+                        mocUrl,
+                        mocGroupDefColorId: `mocForTargetHipsPanelID-${i}`,
+                    });
+                }
+            }
+            const newMocUrls= mocList.map( ({mocUrl}) => mocUrl);
+            removeAllMocs(newMocUrls);
+        } catch (e) {
+            console.log(`loadMOCList, exceptions: ${mocList?.[0]?.mocUrl}`, e);
+        }
+    };
+
+    setTimeout(() => loadMOCList(),5);
+    return () => doAbort;
 }
 
 

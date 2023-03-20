@@ -31,7 +31,7 @@ function generateStyles(alignment, option){
 }
 
 
-function makeButtonGroup(options,value,onChange,tooltip, labelStyle) {
+function makeButtonGroup(options,value,onChange) {
 
     return options.map((option,idx) => (
         <button type='button'   key={'' + idx} title={option.tooltip}
@@ -39,7 +39,10 @@ function makeButtonGroup(options,value,onChange,tooltip, labelStyle) {
                 value={option.value}
                 disabled={option.disabled || false}
                 onClick={(ev) => ev.target.value!==value && onChange(ev)}>
-            {option.label}
+            {option.icon ?
+                <img src={option.icon} alt={options.label} /> :
+                 option.label
+            }
         </button>
     ));
 }
@@ -64,7 +67,7 @@ export function RadioGroupInputFieldView({options,alignment,value,
 
     return (
         <div style={style}>
-            {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} /> }
+            {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} labelStyle={labelStyle}/> }
             <div style={innerStyle} >
                 {buttonGroup ?
                      makeButtonGroup(options,value,onChange,tooltip,labelStyle) :

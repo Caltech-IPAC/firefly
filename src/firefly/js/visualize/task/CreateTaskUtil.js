@@ -324,7 +324,7 @@ export function addDrawLayers(request, pv, plot) {
             if (dl.canAttachNewPlot && !isDrawLayerAttached(dl, plotId)) {
                 const visibility = !((dl.drawLayerTypeId === HiPSGrid.TYPE_ID) || //HiPSGrid and HiPSMOC don't come up visible by default
                     (dl.drawLayerTypeId === HiPSMOC.TYPE_ID && !dl.visiblePlotIdAry.length));
-                dispatchAttachLayerToPlot(dl.drawLayerId, plotId, true, visibility, false);
+                dispatchAttachLayerToPlot(dl.drawLayerId, plotId, true, visibility, true);
             }
         });
     });

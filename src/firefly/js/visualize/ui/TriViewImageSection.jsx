@@ -46,35 +46,17 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
         return  ( <ImageExpandedMode key='results-plots-expanded' closeFunc={closeable ? closeExpanded : null}/> );
     }
     const onTabSelect = (idx, id) => dispatchUpdateLayoutInfo({images:{selectedTab:id}});
-    const table= getTblById(dataProductTableId);
-    const title= table?.tableMeta?.title || table?.title || '';
-    const metaTitle= `Data Product${title?': ' : ''}${title}`;
 
     const key= (showCoverage&&coverageSide==='LEFT') +'--'+ showFits +'--' + showMeta;
-
 
     if (showCoverage || showFits || showMeta) {
         return (
             <Tabs key={key} style={{height: '100%', ...style}} onTabSelect={onTabSelect}
                   defaultSelected={getDefSelected(showCoverage,showFits,showMeta)}
                   useFlex={true} resizable={true}>
-                { showCoverage && coverageSide==='LEFT' &&
-                    <Tab name='Coverage' removable={false} id='coverage'>
-                        <CoverageViewer/>
-                    </Tab>
-                }
-                { showMeta &&
-                    <Tab name={metaTitle} removable={false} id='meta'>
-                        <MetaDataMultiProductViewer dataProductTableId={dataProductTableId} enableExtraction={true}/>
-                    </Tab>
-                }
-                { showFits &&
-                    <Tab name='Pinned Images' removable={false} id='fits'>
-                        <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID} insideFlex={true}
-                                          canReceiveNewPlots={NewPlotMode.create_replace.key}
-                                          Toolbar={MultiViewStandardToolbar}/>
-                    </Tab>
-                }
+                { showCoverage && coverageSide==='LEFT' && makeCoverageTab() }
+                { showMeta && makeMultiProductViewerTab({dataProductTableId}) }
+                { showFits && makeFitsTab() }
             </Tabs>
         );
 
@@ -83,6 +65,32 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
         return <div/>;
     }
 }
+
+export const makeCoverageTab= () => (
+    <Tab key= 'coverage' name='Coverage' removable={false} id='coverage'>
+        <CoverageViewer/>
+    </Tab>
+);
+
+export const makeMultiProductViewerTab= ({dataProductTableId}) => {
+    const table= getTblById(dataProductTableId);
+    const title= table?.tableMeta?.title || table?.title || '';
+    const metaTitle= `Data Product${title?': ' : ''}${title}`;
+    return (
+        <Tab key='meta' name={metaTitle} removable={false} id='meta'>
+            <MetaDataMultiProductViewer dataProductTableId={dataProductTableId} enableExtraction={true}/>
+        </Tab>
+    );
+};
+
+
+export const makeFitsTab= () => (
+    <Tab key='fits' name='Pinned Images' removable={false} id='fits'>
+        <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID} insideFlex={true}
+                          canReceiveNewPlots={NewPlotMode.create_replace.key}
+                          Toolbar={MultiViewStandardToolbar}/>
+    </Tab>
+);
 
 
 TriViewImageSection.propTypes= {

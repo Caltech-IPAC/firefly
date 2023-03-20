@@ -11,11 +11,12 @@ import {
 import {Tab, Tabs} from '../../ui/panel/TabPanel.jsx';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {CoverageViewer} from '../../visualize/ui/CoveraeViewer.jsx';
 import {ResultsPanel} from './ResultsPanel.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
-import {TriViewImageSection} from '../../visualize/ui/TriViewImageSection.jsx';
+import {
+    makeCoverageTab, makeFitsTab, makeMultiProductViewerTab, TriViewImageSection
+} from '../../visualize/ui/TriViewImageSection.jsx';
 import {AppInitLoadingMessage} from '../../ui/AppInitLoadingMessage.jsx';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
@@ -23,6 +24,10 @@ import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 const stateKeys= ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'images'];
 const LEFT= 'LEFT';
 const RIGHT= 'RIGHT';
+const triViewKey= 'images | tables | xyplots';
+const tblImgKey= 'tables | images';
+const imgXyKey= 'images | xyplots';
+const tblXyKey= 'tables | xyplots';
 
 export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButtons, rightButtons,
                                       coverageSide=LEFT, initLoadingMessage, initLoadCompleted} ) => {
@@ -30,45 +35,26 @@ export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButt
     const {title, mode, showTables, showImages, showXyPlots, images={}} = state;
     const {expanded, standard, closeable} = mode ?? {};
     const content = {};
-    const coverageRight= images.showCoverage && coverageSide===RIGHT;
-    const coverageLeft= images.showCoverage && coverageSide===LEFT;
-
-    const onTabSelect = (idx, id) => dispatchUpdateLayoutInfo({rightSide:{selectedTab:id}});
+    const {showMeta, showFits, dataProductTableId, showCoverage} = images;
+    const coverageRight= showCoverage && coverageSide===RIGHT;
+    const coverageLeft= showCoverage && coverageSide===LEFT;
+    const currLayoutMode= getLayouInfo()?.mode?.standard?.toString() ?? triViewKey;
+    const imagesWithCharts= currLayoutMode===tblXyKey;
 
     if (initLoadingMessage && !initLoadCompleted) return (<AppInitLoadingMessage message={initLoadingMessage}/>);
+    if (!showImages && !showXyPlots && !showTables) return <div/>;
 
-    if (showImages || coverageLeft) {
+    if (!imagesWithCharts && (showImages || coverageLeft)) {
         content.imagePlot = (<TriViewImageSection key='res-tri-img'
                                                   closeable={closeable}
                                                   coverageSide={coverageSide}
                                                   imageExpandedMode={expanded===LO_VIEW.images}
                                                   {...images}  />);
     }
-    if (showXyPlots || coverageRight) {
-        const chartExpandedMode= expanded===LO_VIEW.xyPlots;
-        const {expandedViewerId}= getExpandedChartProps();
-        const xyPlot = (<ChartsContainer key='res-xyplots' closeable={closeable} expandedMode={chartExpandedMode}
-                                         viewerId={chartExpandedMode ? expandedViewerId : DEFAULT_PLOT2D_VIEWER_ID}
-                                         useOnlyChartsInViewer={chartExpandedMode && expandedViewerId!==DEFAULT_PLOT2D_VIEWER_ID}
-                                         tbl_group='main' addDefaultChart={true}/>);
-        if (showXyPlots) content.xyPlot= xyPlot;
-        if (coverageRight) {
-            content.rightSide= (
-                <Tabs key='res-right' style={{height: '100%'}}
-                      onTabSelect={onTabSelect} defaultSelected={'coverage'}
-                      useFlex={true} resizable={true}>
-                    {showXyPlots && <Tab name='Charts' removable={false} id='xyplot'>
-                        {xyPlot}
-                    </Tab>}
-                    <Tab name='Coverage' removable={false} id='coverage'>
-                        <CoverageViewer/>
-                    </Tab>
-                </Tabs>
-            );
-        }
-        else if (showXyPlots) {
-            content.rightSide= xyPlot;
-        }
+    if (showXyPlots || coverageRight || imagesWithCharts) {
+        content.rightSide= <RightSide {...{key:'rightSide', expanded,closeable,showXyPlots, showMeta, showFits,
+            dataProductTableId, coverageRight, imagesWithCharts}}/>;
+        if (expanded===LO_VIEW.xyPlots) content.xyPlot= content.rightSide;
     }
     if (showTables) {
         content.tables = (<TablesContainer key='res-tables'
@@ -76,13 +62,12 @@ export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButt
                                            closeable={closeable}
                                            expandedMode={expanded===LO_VIEW.tables}/>);
     }
-    if (!showImages && !showXyPlots && !showTables) return <div/>;
 
     const isTriView = (showImages||coverageLeft) && (showXyPlots||coverageRight) && showTables;
     return (
         <ResultsPanel {...{key:'results', title,
                       searchDesc:searchDesc({showViewsSwitch, showImages, isTriView, leftButtons, centerButtons,
-                          rightButtons, showCoverage:images.showCoverage, coverageSide}),
+                          rightButtons, showCoverage:images.showCoverage, coverageSide, currLayoutMode}),
                       expanded, standard}}
                       { ...content} />
     );
@@ -99,39 +84,58 @@ TriViewPanel.propTypes = {
 };
 
 
-const triViewKey= 'images | tables | xyplots';
-const tblImgKey= 'tables | images';
-const imgXyKey= 'images | xyplots';
-const tblXyKey= 'tables | xyplots';
+function RightSide({expanded, closeable, showXyPlots, showMeta, showFits, dataProductTableId, coverageRight, imagesWithCharts }) {
+    const onTabSelect = (idx, id) => dispatchUpdateLayoutInfo({rightSide:{selectedTab:id}});
+    const chartExpandedMode= expanded===LO_VIEW.xyPlots;
+    const cov= imagesWithCharts || coverageRight;
+    const meta= imagesWithCharts && showMeta;
+    const fits= imagesWithCharts && showFits;
+    const {expandedViewerId}= getExpandedChartProps();
+    const xyPlot = (<ChartsContainer key='res-xyplots' closeable={closeable} expandedMode={chartExpandedMode}
+                                     viewerId={chartExpandedMode ? expandedViewerId : DEFAULT_PLOT2D_VIEWER_ID}
+                                     useOnlyChartsInViewer={chartExpandedMode && expandedViewerId!==DEFAULT_PLOT2D_VIEWER_ID}
+                                     tbl_group='main' addDefaultChart={true}/>);
+    if (chartExpandedMode  || (!coverageRight && !imagesWithCharts)) return xyPlot;
+
+
+    const style= {height: '100%'};
+    const defaultSelected= coverageRight ? 'coverage' : showXyPlots ? 'xyplot' : 'fits';
+    const key= `${showXyPlots&&'xyplot'}-${cov&&'cov'}-${meta&&'meta'}-${fits&&'fits'}`;
+    return(
+        <Tabs {...{key, style, onTabSelect, defaultSelected, useFlex:true, resizable:true}}>
+            {showXyPlots && (<Tab key='res-xyplots' name='Charts' removable={false} id='xyplot'>{xyPlot}</Tab>)}
+            {cov && makeCoverageTab()}
+            {meta && makeMultiProductViewerTab(dataProductTableId)}
+            {fits && makeFitsTab()}
+        </Tabs>
+    );
+}
 
 
 function getCovSideOptions(currLayoutMode, showImages) {
-    const make= (l,r) => [ {label:l, value:LEFT}, {label:r, value:RIGHT}]
+    const make= (l,r) => [ {label:l, value:LEFT}, {label:r, value:RIGHT}];
 
     switch (currLayoutMode) {
-        case triViewKey: return make('Coverage left', showImages?'Coverage right':'Coverage w/Charts');
+        case triViewKey: return make('Left', showImages?'Right':'Coverage w/Charts');
         case tblImgKey: return make('Coverage showing', 'Coverage hidden');
-        case imgXyKey: return make('Coverage top', showImages? 'Coverage bottom':'Coverage w/Charts');
+        case imgXyKey: return make('Left', 'Right');
         case tblXyKey: return make('Coverage hidden', 'Coverage showing');
         default: return make('Coverage left', 'Coverage right');
     }
 }
 
 
-function searchDesc({showViewsSwitch, showImages, isTriView, showCoverage, leftButtons, centerButtons, rightButtons, coverageSide}) {
+function searchDesc({showViewsSwitch, showImages, isTriView, showCoverage, leftButtons, centerButtons, rightButtons, coverageSide, currLayoutMode}) {
 
     const hasContent = showViewsSwitch || leftButtons || centerButtons || rightButtons;
     if (!hasContent) return  <div/>;
-    const rightStr= coverageSide===RIGHT ? 'xy/cov' : 'xy';
 
-    const currLayoutMode= getLayouInfo()?.mode?.standard?.toString() ?? triViewKey;
     const covSideOptions= getCovSideOptions(currLayoutMode, showImages);
 
     const options= [
-        {label:'tri-view', value:triViewKey},
-        {label:'img-tbl', value:tblImgKey},
-        {label:`img-${rightStr}`, value:imgXyKey},
-        {label:`${rightStr}-tbl`, value:tblXyKey},
+        {label:'Tri-view', value:triViewKey},
+        {label:'Bi-view Images', value:imgXyKey},
+        {label:'Bi-view Tables', value:tblXyKey},
     ];
 
     return (
@@ -147,16 +151,21 @@ function searchDesc({showViewsSwitch, showImages, isTriView, showCoverage, leftB
                 <div style={{width: 20}}/>
                 {showViewsSwitch &&
                     <div style={ {display: 'inline-block', float: 'right'} }>
-                        {showCoverage && <RadioGroupInputFieldView
-                            {...{
-                                options:covSideOptions, value:coverageSide, labelWidth:0, buttonGroup:true, inline:true,
+                        {showCoverage && currLayoutMode!==tblXyKey &&
+                            <RadioGroupInputFieldView {...{
+                                wrapperStyle:{display:'inline-flex', alignItems:'center'},
+                                options:covSideOptions, value:coverageSide, labelWidth:60,
+                                labelStyle:{fontSize:'larger'}, label:'Coverage: ',
+                                buttonGroup:true, inline:true,
                                 onChange:(ev) => dispatchUpdateLayoutInfo({coverageSide:ev.target.value}),
                             }} /> }
                         {isTriView &&
                             <RadioGroupInputFieldView
                                 {...{
-                                    wrapperStyle:{paddingLeft: 30, width:270},
-                                    options, value:currLayoutMode, labelWidth:0, buttonGroup:true, inline:true,
+                                    wrapperStyle:{paddingLeft: 30, width:320, display:'inline-flex', alignItems:'center'},
+                                    options, value:currLayoutMode, labelWidth:43,
+                                    labelStyle:{fontSize:'larger'}, label:'Layout: ',
+                                    buttonGroup:true, inline:true,
                                     onChange:(ev) => dispatchSetLayoutMode(LO_MODE.standard, ev.target.value),
                                 }} />
                         }

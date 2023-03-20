@@ -29,7 +29,7 @@ import {CoordinateSys} from '../visualize/CoordSys.js';
 const ID= 'MOC_PLOT';
 const TYPE_ID= 'MOC_PLOT_TYPE';
 const MocPrefix = 'MOC - ';
-const factoryDef= makeFactoryDef(TYPE_ID, creator, null, getLayerChanges, null, getUIComponent, null, asyncComputeDrawData);
+const factoryDef= makeFactoryDef(TYPE_ID, creator, null, getLayerChanges, onDetach, getUIComponent, null, asyncComputeDrawData);
 export default {factoryDef, TYPE_ID};
 
 let idCnt=0;
@@ -37,6 +37,16 @@ const colorList = ['green', 'cyan', 'magenta', 'orange', 'lime', 'red', 'blue', 
 const colorN = colorList.length;
 const LayerUpdateMethod = new Enum(['byEmptyAry', 'byTrueAry', 'none']);
 
+const defColors={};
+
+
+function onDetach(dl,action) {
+    if (!dl?.updateStatusAry) return;
+    Object.entries(dl.updateStatusAry).forEach( ([plotId,obj]) => {
+        removeTask(plotId, obj.updateTaskId);
+        obj.abortUpdate();
+    });
+}
 
 function getVisiblePlotIdsByDrawlayerId(id, getState) {
     return getDrawLayerById(getState()[DRAWING_LAYER_KEY], id)?.visiblePlotIdAry ?? [];
@@ -53,14 +63,14 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
 
         if (!dl.mocTable) { // moc table is not yet loaded
             let tReq;
-            if (fitsPath) {       // load by getting file on server
+            if (preloadedTbl){ //load by getting the full version of a already loaded table
+                tReq= cloneRequest(preloadedTbl.request,
+                    { startIdx : 0, pageSize : MAX_ROW, inclCols: mocFitsInfo.uniqColName });
+            }
+            else if (fitsPath) {       // load by getting file on server
                 tReq = makeTblRequest('userCatalogFromFile', 'Table Upload',
                     {filePath: fitsPath, sourceFrom: 'isLocal'},
                     {tbl_id: mocFitsInfo.tbl_id, pageSize: MAX_ROW, inclCols: mocFitsInfo.uniqColName});
-            }
-            else if (preloadedTbl){ //load by getting the full version of a already loaded table
-                tReq= cloneRequest(preloadedTbl.request,
-                    { startIdx : 0, pageSize : MAX_ROW, inclCols: mocFitsInfo.uniqColName });
             }
             if (!tReq) return;
 
@@ -101,13 +111,10 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
  */
 function creator(initPayload) {
 
-
     const drawingDef= makeDrawingDef(colorList[idCnt%colorN],
                                      {style: Style.STANDARD,
                                       textLoc: TextLocation.CENTER,
                                       canUseOptimization: true});
-
-
     idCnt++;
     const options= {
         canUseMouse:true,
@@ -120,14 +127,17 @@ function creator(initPayload) {
 
     // const actionTypes = [DrawLayerCntlr.REGION_SELECT, TABLE_LOADED];
     const actionTypes = [DrawLayerCntlr.REGION_SELECT];
-    const {mocFitsInfo={},color= getNextColor()}= initPayload || {};
+    const {mocFitsInfo={},color= getNextColor(), mocGroupDefColorId}= initPayload || {};
     const {tbl_id, tablePreloaded} = mocFitsInfo;
-    const id =  tbl_id || get(initPayload, 'drawLayerId', `${ID}-${idCnt}`);
+    const id =  tbl_id || (initPayload?.drawLayerId ?? `${ID}-${idCnt}`);
 
 
+    if (color && mocGroupDefColorId) { // if mocGroupDefColorId is defined, treet color as fallback they might be replaced by a user pref
+        if (!defColors[mocGroupDefColorId]) defColors[mocGroupDefColorId]= color;
+    }
 
     const preloadedTbl= tablePreloaded && getTblById(tbl_id);
-    drawingDef.color = get(preloadedTbl, ['tableMeta',MetaConst.DEFAULT_COLOR], color);
+    drawingDef.color = preloadedTbl?.tableMeta?.[MetaConst.DEFAULT_COLOR] ?? defColors[mocGroupDefColorId] ?? color;
     const style = preloadedTbl?.tableMeta?.[MetaConst.MOC_DEFAULT_STYLE] ?? 'outline';
     drawingDef.style = style === 'outline' ? Style.STANDARD : Style.FILL;
 
@@ -139,6 +149,7 @@ function creator(initPayload) {
     dl.mocFitsInfo = mocFitsInfo;
     dl.mocTable= undefined;
     dl.rootTitle= dl.title;
+    dl.mocGroupDefColorId= mocGroupDefColorId;
 
     dispatchAddActionWatcher({
         callback:loadMocFitsWatcher,
@@ -167,7 +178,7 @@ class UpdateStatus {
         this.newMocObj = null;
         this.totalTiles = 0;
         this.processedTiles = [];
-        this.updateTaskId = makeTaskId();
+        this.updateTaskId = makeTaskId('moc');
     }
 
     abortUpdate() {
@@ -276,6 +287,7 @@ function getLayerChanges(drawLayer, action) {
 
             if (newMocObj && newMocObj.color!==color) {
                 newMocObj.color = color;
+                if (drawLayer.mocGroupDefColorId) defColors[drawLayer.mocGroupDefColorId]= color;
                 return {mocObj: newMocObj};
             }
             break;
@@ -289,6 +301,7 @@ function getLayerChanges(drawLayer, action) {
  * create MocObj base on cell nuniq numbers and the coordinate systems
  * @param dl
  * @param moc_nuniq_nums
+ * @param mocCsys
  * @returns {Object}
  */
 function createMocObj(dl, moc_nuniq_nums = [], mocCsys= undefined) {
@@ -327,7 +340,7 @@ function removeTask(plotId, taskId) {
 
 function addTask(plotId, taskId) {
     if (plotId && taskId) {
-        setTimeout( () => dispatchAddTaskCount(plotId, taskId, true) ,0);
+        setTimeout( () => dispatchAddTaskCount(plotId, taskId) ,0);
     }
 }
 
@@ -340,7 +353,7 @@ function addTask(plotId, taskId) {
 function updateMocData(dl, plotId) {
     const {updateStatusAry, mocObj} = dl;
     const plot = primePlot(visRoot(), plotId);
-    if (!plot) return;
+    if (!plot?.viewDim) return;
     const updateStatus = updateStatusAry[plotId];
 
      if (isEmpty(updateStatus.newMocObj)) {    // find visible cells first

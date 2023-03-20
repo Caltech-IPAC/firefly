@@ -37,7 +37,10 @@ public class HiPSListUtil {
         HiPSMasterListEntry.setParamsMap(defParamMap, HiPSMasterListEntry.PARAMS.PIXELSCALE, "hips_pixel_scale");
     }
 
-
+    /**
+     * @param bPropCall - if true, then call every HiPS int list to get a complete set of hips properties,
+     *                  warning this slows down HiPS initialization
+     */
     public static List<HiPSMasterListEntry> createHiPSListFromUrl(String url, String source, boolean bPropCall, String childExt)
             throws IOException {
         Map<String, String> defParamMap = new HashMap<>();
@@ -54,7 +57,10 @@ public class HiPSListUtil {
         return createHiPSListFromUrl(url, source, defParamMap, bPropCall, childExt);
     }
 
-
+    /**
+     * @param bPropCall - if true, then call every HiPS int list to get a complete set of hips properties,
+     *                  warning this slows down HiPS initialization
+     */
     public static List<HiPSMasterListEntry> createHiPSListFromUrl(String url, String source,
                                                                   Map<String, String> keyMap, boolean bPropCall, String childExt)
                                                                                                 throws IOException {

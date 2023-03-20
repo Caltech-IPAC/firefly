@@ -120,7 +120,12 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
         }).catch(() => {
             renderedCnt++;
             if (abortRender) return;
-            drawOneHiPSTile(offscreenCtx, emptyTileCanvas, tile.devPtCorners, 512, {x:tile.dx,y:tile.dy}, tile.nside);
+            if (tile.devPtCorners.filter( (t) => t).length ===4) {
+                drawOneHiPSTile(offscreenCtx, emptyTileCanvas, tile.devPtCorners, 512, {x:tile.dx,y:tile.dy}, tile.nside);
+            }
+            else {
+                console.log('********************* found one');
+            }
             addFailedImage(src);
             if (doRenderNow()) {
                 removeTask();
@@ -192,9 +197,9 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
          */
         drawAllTilesAsync(tilesToLoad, plot) {
             if (abortRender) return;
-            plotTaskId= makeTaskId();
+            plotTaskId= makeTaskId('hips-render');
             setTimeout( () => {
-                if (!abortRender && !renderComplete) dispatchAddTaskCount(plot.plotId,plotTaskId, true);
+                if (!abortRender && !renderComplete) dispatchAddTaskCount(plot.plotId,plotTaskId);
             }, 500);
             const {bias,contrast}= plot.rawData.bandData[0];
             const colorTableId= colorId(plot);

@@ -83,17 +83,17 @@ export function dispatchAppOptions(appOptions) {
 /**
  * @param componentId the id or array of ids of the component to record the task count
  * @param taskId id of task, you create with makeTaskId()
- * @param replace
+ * @param [replace=true] if true, replace the taskId in the list
  */
-export function dispatchAddTaskCount(componentId,taskId, replace= false) {
+export function dispatchAddTaskCount(componentId,taskId, replace= true) {
     flux.process({type: ADD_TASK_COUNT, payload: {componentId,taskId, replace}});
 }
 
 
 let taskCnt= 0;
-export function makeTaskId() {
+export function makeTaskId(key='task') {
     taskCnt++;
-    return `task-${taskCnt}`;
+    return `${key}-${taskCnt}`;
 }
 
 /**

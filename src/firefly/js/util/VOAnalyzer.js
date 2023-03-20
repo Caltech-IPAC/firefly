@@ -12,13 +12,13 @@ import {
     getTblById,
     getCellValue,
     columnIDToName,
-    getColumnByRef, isTableUsingRadians
+    getColumnByRef, isTableUsingRadians,
+    getBooleanMetaEntry, getMetaEntry
 } from '../tables/TableUtil.js';
 import {getCornersColumns} from '../tables/TableInfoUtil.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
 import {makeAnyPt, makeWorldPt} from '../visualize/Point';
-import {getBooleanMetaEntry, getMetaEntry} from '../tables/TableUtil';
 
 
 export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
@@ -1042,6 +1042,9 @@ export function isDataProductsTable(tableOrId) {
 
     const dataSourceColumn= getDataSourceColumn(table);
     if (dataSourceColumn===false) return false;  // DataSource meta data may be specifically set to false, if so disable all metadata processing
+
+    const checkFalse= getMetaEntry(table,MetaConst.IMAGE_SOURCE_ID)?.toUpperCase();
+    if (checkFalse==='FALSE')  return false;
 
     return Boolean(
         tableMeta[MetaConst.IMAGE_SOURCE_ID] ||

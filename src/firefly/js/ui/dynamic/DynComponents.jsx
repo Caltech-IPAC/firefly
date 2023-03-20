@@ -231,7 +231,7 @@ function PositionAndPolyFieldEmbed({fieldDefAry, plotId, insetSpacial, otherComp
                         style:{paddingBottom:10},
                         fieldKey: sizeKey, showFeedback: true, labelWidth: 100, nullAllowed: false,
                         labelStyle:{textAlign:'right', paddingRight:4},
-                        label: 'Search Area:',
+                        label: 'Search Radius:',
                         initialState: {unit: 'arcsec', value: searchAreaInDeg + '', min:minValue, max:maxValue}
                     }} />
                 </div>
@@ -270,7 +270,7 @@ function makeAllAreaFields(fieldDefAry) {
     return fieldDefAry.filter( ({type}) => type===AREA).map( (param) => makeAreaField(param));
 }
 
-function makeAreaField({ key, desc = 'Search Area', initValue, tooltip, nullAllowed = false,
+function makeAreaField({ key, desc = 'Search Radius', initValue, tooltip, nullAllowed = false,
                            minValue = 1 / 3600, maxValue = 1, labelWidth = DEF_LABEL_WIDTH }) {
     return (
         <SizeInputFields {...{
@@ -349,7 +349,7 @@ function CircleField({ fieldKey, desc, tooltip = '', initValue, minValue, maxVal
                 targetLabelStyle:{paddingRight:4},
                 targetKey:targetKey??targetDetails.targetKey,
                 sizeKey:sizeKey??targetDetails.sizeKey,
-                sizeLabel:'Search Area:',
+                sizeLabel:'Search Radius:',
                 polygonKey:polygonKey??targetDetails.polygonKey,
                 sizeFeedbackStyle:{textAlign:'center', marginLeft:0}
             }} />

@@ -86,7 +86,8 @@ function generateLayout(standard, componentCnt) {
         else if (showLeftSide && showRightSide) return northSouth;
         else if (showRightSide && showTables) return northSouth;
     } else if (componentCnt === 2 ) {
-        return (showLeftSide && showTables) ? eastWest : northSouth;
+        return eastWest;
+        // return (showLeftSide && showTables) ? eastWest : northSouth;
     } else {
         return singleView;
     }
@@ -94,5 +95,6 @@ function generateLayout(standard, componentCnt) {
 
 function resolveComponents(standard, imagePlot, tables, rightSide) {
     const {showTables,showRightSide, showLeftSide}= getShow(standard);
+    if (showRightSide&&rightSide && showTables&&tables && !showLeftSide) return [tables,rightSide];
     return [showLeftSide&&imagePlot, showRightSide&&rightSide, showTables&&tables].filter( (v) => v);
 }
