@@ -22,7 +22,7 @@ export function PagingBar(props) {
     const nchar = totalPages.toString().length;
 
     const pagestr = (totalRows === 0) ? '' :
-                    `(${(startIdx+1).toLocaleString()} - ${endIdx.toLocaleString()} of ${totalRows.toLocaleString()})`;
+                    `(${(startIdx+1).toLocaleString()} - ${endIdx.toLocaleString()} of ${totalRows?.toLocaleString()??''})`;
     const showingLabel = (  <div style={{fontSize: 'smaller', marginLeft: 3, display: 'inline-flex', alignItems: 'center', width: `${3 * nchar + 7}ch`}} >
                                 {pagestr}
                             </div>
