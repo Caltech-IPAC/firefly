@@ -9,6 +9,12 @@ import {TABLES} from './FileUploadUtil.js';
 import {FieldGroupTabs, Tab} from './panel/TabPanel.jsx';
 import {LayoutType, PopupPanel} from './PopupPanel.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
+import {getTableGroup, getTableUiByTblId, getTblById} from 'firefly/tables/TableUtil';
+import {TablePanel} from 'firefly/tables/ui/TablePanel';
+import {FormPanel} from 'firefly/ui/FormPanel';
+import {ServerParams} from 'firefly/data/ServerParams';
+import {doJsonRequest} from 'firefly/core/JsonUtils';
+import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr';
 
 const dialogId = 'Upload-spatial-table';
 const UPLOAD_TBL_SOURCE= 'UPLOAD_TBL_SOURCE';
@@ -82,23 +88,97 @@ function uploadSubmit(request, setUploadInfo)  {
     return false;
 }
 
-
 function existingTableSubmit(request,setUploadInfo) {
-    // todo: call this function for preloaded tables
-    const uploadInfo = {
-        serverFile: '${upload}//stuff/somename.tbl',
-        title: 'tbl title',
-        tbl_id: 'someTblId',
-        columns: [],
-        totalRows: 123,
-        tableSource: EXISTING_TBL_SOURCE,
+    if (!request) return false;
+    const tbl = getTblById('existing-table-list-ui');
+    const idx = tbl.highlightedRow;
+    const activeTblId = tbl.tableData.data[idx][3]; //tbl_id
+    const activeTbl = getTableUiByTblId(activeTblId);
+    const tableRequest = activeTbl.request;
+    const columnData = activeTbl.columns;
+    const columns = columnData.map((col) => col.visibility === 'hide' || col.visibility === 'hidden'? ({...col, use:false}) :  ({...col, use:true}));
+
+    const params ={
+        [ServerParams.COMMAND]: ServerParams.TABLE_SAVE,
+        [ServerParams.REQUEST]: JSON.stringify(tableRequest),
+        file_name: tableRequest?.META_INFO?.title ?? 'existing_tbl_upload',
+        file_format: Format.IPACTABLE,
+        save_to_temp: 'true'
     };
-    setUploadInfo(uploadInfo);
-    dispatchHideDialog(dialogId);
+
+    doJsonRequest(ServerParams.TABLE_SAVE, params).then((result) => {
+        if (!result.success) {
+            showInfoPopup('Error loading this table', result.error);
+            return false;
+        }
+        const uploadInfo = {
+            serverFile: result?.serverFile ?? null,
+            title: activeTbl.title,
+            fileName: activeTbl.title,
+            tbl_id: activeTblId,
+            columns,
+            totalRows: activeTbl.totalRows,
+            tableSource: EXISTING_TBL_SOURCE,
+        };
+        setUploadInfo(uploadInfo);
+        dispatchHideDialog(dialogId);
+    });
     return false;
 }
 
+const NoTables = () => {
+    return (
+        <div style={{margin: '40px 10px 10px 10px', fontSize: 'large',
+            padding: '5px 0 5px 0', textAlign: 'center', width: '100%'}}>
+            {'No tables available to load.'}
+        </div>
+    );
+};
 
+const LoadedTables= (props) => {
+    const {onSubmit, onCancel=dispatchHideDropDown, keepState=true, groupKey} = props;
+    const tables = getTableGroup()?.tables ?? null;
+    if (!tables) {
+        return <NoTables/>;
+    }
+    const data = []; //row entry [title, num of cols, num of rows, tbl_id (hidden)]
+    for (const tblId in tables) {
+        const tbl = getTblById(tblId);
+        if (!tbl.tableData) continue;
+        //ToFix: converted row and col to string because searching their columns as number gives an error
+        const title = [tables[tblId].title, (tbl.tableData.columns.length).toString(), (tbl.totalRows).toString(), tblId];
+        data.push(title);
+    }
+    if (data.length === 0) {
+        return <NoTables/>;
+    }
+    const columns = [{name: 'Table Title', width: 45}, {name: 'No. of Cols', width: 15}, {name: 'No. of Rows', width:15},
+        {name: 'tblId', visibility: 'hidden'}];
+    const highlightedRow = 0; //default selection
+    const tbl_id = 'existing-table-list';
+
+    const tableModel = {tbl_id, tableData: {columns, data}, highlightedRow, totalRows: data.length};
+
+    return (
+        <div style={{margin: '10px', position: 'relative', width: '100%', display: 'flex', alignItems: 'stretch', flexDirection: 'column'}}>
+            <div style={{color: 'gray', fontSize: 'larger', lineHeight: '1.3em'}}>
+                {'Select one of the existing tables below to load into the TAP panel: '}
+            </div>
+            <FieldGroup groupKey={groupKey} keepState={keepState} style={{height:'100%', width: '100%',
+                display: 'flex', alignItems: 'stretch', flexDirection: 'column'}}>
+                <FormPanel
+                    onSubmit={onSubmit}
+                    onCancel={onCancel}
+                    params={{hideOnInvalid: false}}
+                    inputStyle={{height:'100%'}}
+                    submitText={'Load Table'}
+                    submitBarStyle={{padding: '2px 3px 3px'}} >
+                    <TablePanel tbl_id={tbl_id+'-ui'} tbl_ui_id={tbl_id+'-ui'} tableModel={tableModel} border={false} showTypes={false}
+                                showToolbar={false} showFilters={true} selectable={false} showOptionButton={false}/>
+                </FormPanel>
+            </FieldGroup>
+        </div>);
+};
 
 
 export function showUploadTableChooser(setUploadInfo) {
@@ -110,7 +190,8 @@ export function showUploadTableChooser(setUploadInfo) {
     dispatchShowDialog(dialogId);
 }
 
-const TapUploadPanel= ({setUploadInfo,groupKey= 'table-chooser'}) => (
+const TapUploadPanel= ({setUploadInfo,groupKey= 'table-chooser'}) => {
+   return (
     <FieldGroup groupKey={groupKey}>
         <div style={{ resize: 'both', overflow: 'hidden', zIndex: 1, paddingTop:8, minWidth: 600, minHeight: 500, display: 'flex' }}>
             <FieldGroupTabs initialState={{value: 'upload'}} fieldKey='upload-type-tabs' groupKey={groupKey}
@@ -123,11 +204,13 @@ const TapUploadPanel= ({setUploadInfo,groupKey= 'table-chooser'}) => (
                         onSubmit:(request) => uploadSubmit(request,setUploadInfo),
                     }}/>
                 </Tab>
-                <Tab name='Loaded Tables' id='current-table' style={{fontSize:'larger'}}>
-                    <div style={{margin: 20, fontSize: 'large'}}>
-                        TODO: Add Support for using an already loaded table
-                    </div>
+                <Tab name='Loaded Tables' id='tableLoad' style={{fontSize:'larger'}}>
+                        <LoadedTables {...{
+                            style:{height: '100%', width:'100%'}, keepState: true, groupKey:groupKey+'-tableLoad',
+                            onCancel:() => dispatchHideDialog(dialogId),
+                            onSubmit:(request) => existingTableSubmit(request, setUploadInfo)
+                        }}/>
                 </Tab>
             </FieldGroupTabs>
         </div>
-    </FieldGroup> );
+    </FieldGroup> );};

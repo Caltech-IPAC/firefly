@@ -43,7 +43,7 @@ export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, onSu
             <FieldGroup groupKey={groupKey} keepState={keepState} style={{height:'100%', width: '100%',
                 display: 'flex', alignItems: 'stretch', flexDirection: 'column'}}>
                 <FormPanel
-                    width='auto' height='auto' groupKey={groupKey} onSubmit={onSubmit}
+                    groupKey={groupKey} onSubmit={onSubmit}
                     onError={resultFail}
                     onCancel={onCancel}
                     submitText={submitText}
