@@ -59,7 +59,7 @@ import {resolveHiPSIvoURL} from '../HiPSListUtil.js';
 import {addNewMocLayer, isMOCFitsFromUploadAnalsysis, makeMocTableId, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import {getRowCenterWorldPt} from '../saga/ActiveRowCenterWatcher';
-import {getActiveTableId} from '../../tables/TableUtil';
+import {getActiveTableId, getTblById} from '../../tables/TableUtil';
 import {locateOtherIfMatched, matchHiPStoPlotView} from './WcsMatchTask';
 import {upload} from '../../rpc/CoreServices.js';
 import {fetchUrl} from '../../util/fetch';
@@ -113,8 +113,8 @@ function validateProperties(hipsProperties) {
 }
 
 function initCorrectCoordinateSys(pv) {
-    if (!pv) return;
     const plot= primePlot(pv);
+    if (!plot) return;
     const vr= visRoot();
     const {plotId}= pv;
     if (vr.positionLock) {
@@ -274,8 +274,12 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         let plot= WebPlot.makeWebPlotDataHIPS(plotId, resolvedHipsRootUrl, wpRequest, hipsProperties, attributes, PROXY);
 
         if (!blank && wpRequest.getOverlayIds()?.includes(HiPSMOC.TYPE_ID)) {
-            await createHiPSMocLayer(getPropertyItem(hipsProperties, 'ivoid'),
-                getPropertyItem(hipsProperties, 'obs_title'), resolvedHipsRootUrl, plot);
+            await createHiPSMocLayer({
+                ivoid: getPropertyItem(hipsProperties, 'ivoid'),
+                title: getPropertyItem(hipsProperties, 'obs_title'),
+                hipsUrl: resolvedHipsRootUrl,
+                plot
+            });
         }
         if (getActiveRequestKey(plotId)!==requestKey) {
             // hipsFail('hips plot expired or aborted');
@@ -299,14 +303,25 @@ async function makeHiPSPlot(rawAction, dispatcher) {
 
 
 
+export function createHiPSMocLayerFromPreloadedTable({tbl_id,title, fitsPath, mocUrl, plotId, visible=false, color, mocGroupDefColorId} ) {
+    const table= getTblById(tbl_id);
+    if (!table) return;
+    const uniqColName= table.tableData.columns[0].name;
+    const dl = addNewMocLayer({ tbl_id, title, fitsPath, mocUrl, uniqColName, color, tablePreloaded:true,  mocGroupDefColorId });
+    if (dl && plotId) {
+        dispatchAttachLayerToPlot(dl.drawLayerId, plotId, true, visible, true);
+    }
+}
 
 
-export async function createHiPSMocLayer(ivoid, title, hipsUrl, plot, visible=false, mocFile = 'Moc.fits') {
+
+export async function createHiPSMocLayer({ivoid, title, hipsUrl, plot, visible=false, mocFile = 'Moc.fits',
+                                         color, mocGroupDefColorId}) {
     const mocUrl = (mocFile && isString(mocFile))  ? hipsUrl.endsWith('/') ? hipsUrl + mocFile : hipsUrl+'/'+mocFile : hipsUrl;
-    const tblId = makeMocTableId(ivoid);
+    const tbl_id = makeMocTableId(ivoid);
     const dls = getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID);
 
-    let   dl = dls.find((oneLayer) => oneLayer.drawLayerId === tblId);
+    let   dl = dls.find((oneLayer) => oneLayer.drawLayerId === tbl_id);
     if (dl) {
         dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, false, visible, true);
         if (visible) dispatchChangeVisibility({id:dl.drawLayerId, visible:true, plotId:plot.plotId});
@@ -320,7 +335,9 @@ export async function createHiPSMocLayer(ivoid, title, hipsUrl, plot, visible=fa
 
             const isMocFits = isMOCFitsFromUploadAnalsysis(report);
             if (isMocFits.valid) {
-                dl = addNewMocLayer(tblId, title, cacheKey, mocUrl, isMocFits?.[MOCInfo]?.[UNIQCOL]);
+                dl = addNewMocLayer({
+                    tbl_id, title, fitsPath: cacheKey, mocUrl, uniqColName: isMocFits?.[MOCInfo]?.[UNIQCOL],
+                    color, mocGroupDefColorId });
                 if (dl && plot?.plotId) {
                     dispatchAttachLayerToPlot(dl.drawLayerId, plot.plotId, true, visible, true);
                 }
@@ -387,7 +404,7 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
         dispatcher(
             {
                 type: ImagePlotCntlr.CHANGE_HIPS,
-                payload: {...payload, hipsUrlRoot, hipsProperties, coordSys: plot.imageCoordSys, blank},
+                payload: {...payload, hipsUrlRoot:resolvedHipsRootUrl, hipsProperties, coordSys: plot.imageCoordSys, blank},
             });
         initCorrectCoordinateSys(getPlotViewById(visRoot(), plotId));
         locateOtherIfMatched(visRoot(),plotId);

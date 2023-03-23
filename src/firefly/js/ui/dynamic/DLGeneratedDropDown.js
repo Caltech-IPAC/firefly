@@ -13,8 +13,9 @@ import { getCellValue, getColumnIdx, getTblById, onTableLoaded, } from '../../ta
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {Logger} from '../../util/Logger.js';
 import {cisxAdhocServiceUtype, getServiceDescriptors, standardIDs} from '../../util/VOAnalyzer.js';
-import {toBoolean} from '../../util/WebUtil.js';
+import {getBoolean, toBoolean} from '../../util/WebUtil.js';
 import CoordSys from '../../visualize/CoordSys.js';
+import {ensureHiPSInit, resolveHiPSIvoURL} from '../../visualize/HiPSListUtil.js';
 import {getHiPSZoomLevelForFOV} from '../../visualize/HiPSUtil.js';
 import {dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchZoom} from '../../visualize/ImagePlotCntlr.js';
 import {getPlotViewById, primePlot} from '../../visualize/PlotViewUtil.js';
@@ -56,7 +57,7 @@ const findUrl = async () => {
 };
 
 
-//todo these next 3 functions could be refactored when this is generalize, we might pass an object with them
+//todo these next 4 functions could be refactored when this is generalize, we might pass an object with them
 function getCollectionUrl(registryTblId, rowIdx) {
     const table= getTblById(registryTblId);
     if (!table) return;
@@ -73,7 +74,7 @@ function findUrlInReg(url, registryTblId) {
 
 const getDataSetChooserTitle= () =>
     ({
-        title: 'Choose Data Set',
+        title: 'Choose Data Collection',
         details: 'Click on data collection to search; filter or sort table to find a data set.'
    });
 
@@ -84,12 +85,14 @@ function makeRegistryRequest(url, registryTblId) {
             sortInfo: sortInfoString('facility_name'),
             tbl_id: registryTblId,
             META_INFO: {
-                'col.facility_name.PrefWidth':15,
-                'col.obs_collection.PrefWidth':15,
+                'col.facility_name.PrefWidth':6,
                 'col.collection_label.PrefWidth':12,
                 'col.instrument_name.PrefWidth':9,
-                'col.coverage.PrefWidth':6,
-                'col.band.PrefWidth':6,
+                'col.coverage.PrefWidth':8,
+                'col.band.PrefWidth':13,
+                'col.dataproduct_type.PrefWidth':5,
+
+                'col.obs_collection.PrefWidth':15,
 
                 'col.facility_name.label':'Facility',
                 'col.instrument_name.label':'Inst.',
@@ -98,13 +101,14 @@ function makeRegistryRequest(url, registryTblId) {
                 'col.collection_label.label':'Collection',
                 'col.band.label':'Bands',
 
-                'col.dataproduct_type.PrefWidth':5,
                 'col.obs_collection.visibility':'hidden',
                 'col.description.visibility':'hidden',
                 'col.desc_details.visibility':'hidden',
                 'col.access_url.visibility':'hide',
                 'col.info_url.visibility':'hidden',
                 'col.access_format.visibility':'hidden',
+
+                [MetaConst.IMAGE_SOURCE_ID] : 'FALSE'
             }
         }
     );
@@ -166,6 +170,7 @@ export function DLGeneratedDropDown({initArgs={}}) {// eslint-disable-line no-un
         const load= async () =>  {
             if (regLoaded || regLoading) return;
             await loadRegistry(registryTblId);
+            await ensureHiPSInit();
             setIsRegLoaded(true);
         };
         void load();
@@ -214,7 +219,10 @@ export function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTbl
     const currentTblId= loadedTblIds?.[url];
     useEffect(() => {
         if (isRegLoaded && !currentTblId) {
-            const loadOptions=  {META_INFO:{[MetaConst.LOAD_TO_DATALINK_UI]: 'true'}};
+            const loadOptions=  {META_INFO:{
+                    [MetaConst.LOAD_TO_DATALINK_UI]: 'true',
+                    [MetaConst.IMAGE_SOURCE_ID] : 'FALSE'}
+            };
             if (!url) return;
             const req= makeFileRequest('Data link UI', url, undefined, loadOptions);
             const {tbl_id}= req.META_INFO;
@@ -236,36 +244,52 @@ export function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTbl
     const regHasUrl= isURLInRegistry(url,registryTblId);
     return (
         <div className='SearchPanel' style={{width:'100%', height:'100%'}}>
-            <DLGeneratedTableSearch {...{currentTblId, initArgs, sideBar, regHasUrl, url, sideBarShowing, setSideBarShowing}}/>
+            <DLGeneratedTableSearch {...{currentTblId, initArgs, sideBar, regHasUrl, url, isRegLoaded,sideBarShowing, setSideBarShowing}}/>
         </div>
     );
 }
 
-const ServDescPanel= ({fds, style, desc, setSideBarShowing, sideBarShowing, docRows, clickFuncRef, submitSearch}) => {
 
-    let title;
+function SearchTitle({desc, isAllSky, sideBarShowing, setSideBarShowing}) {
+    const titleDiv= (
+        <div>
+            { !isAllSky ? desc :
+                <>
+                    <span>{desc}</span>
+                    <span className='DLGeneratedDropDown__section--title-allsky' style={{paddingLeft: 20}}>
+                        (Covers Whole Sky)
+                    </span>
+                </> }
+        </div>
+    );
+
     if (sideBarShowing) {
-        title= (
+        return (
             <div style={{display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center'}}>
                 <div className='DLGeneratedDropDown__section--title'>
-                    {desc}
+                    {titleDiv}
                 </div>
             </div>
         );
     }
     else {
-        title= (
+        return (
             <div style={{display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'flex-start'}}>
                 <ExpandButton style={linkStyle} icon={SHOW_RIGHT} text={'Show Other Data Sets'} onClick={()  => setSideBarShowing(true)}/>
                 <div style={{display:'flex', flexDirection:'row', flexGrow:1, justifyContent:'center'}}>
                     <div className='DLGeneratedDropDown__section--title' style={{marginLeft:-60}}>
-                        {desc}
+                        {titleDiv}
                     </div>
                 </div>
             </div>
         );
 
     }
+
+}
+
+
+function ServDescPanel({fds, style, desc, setSideBarShowing, sideBarShowing, docRows, clickFuncRef, submitSearch, isAllSky})  {
 
     const docRowsComponents= (
         <div key='help' style={{fontSize:'larger', padding:'0 10px 3px 0', alignSelf:'flex-end'}}>
@@ -278,52 +302,47 @@ const ServDescPanel= ({fds, style, desc, setSideBarShowing, sideBarShowing, docR
             }
         </div>);
 
-    const Wrapper= ({children}) => {
-        return (
-
-            <FormPanel submitText = 'Search' groupKey = 'DL_UI'
-                       onSubmit = {submitSearch}
-                       params={{hideOnInvalid: false}}
-                       inputStyle={{border:'none', padding:0, marginBottom:5}}
-                       getDoOnClickFunc={(clickFunc) => clickFuncRef.clickFunc= clickFunc}
-                       onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
-                       extraWidgets={[docRowsComponents]}
-                       help_id  = {'search-collections-general'}>
-                <div style={{
-                    display:'flex',
-                    flexDirection:'column',
-                    alignItems:'center',
-                }}>
-                    {children}
-                </div>
-            </FormPanel>
-            );
-    };
+    const Wrapper= ({children}) => (
+        <FormPanel submitText = 'Search' groupKey = 'DL_UI'
+                   onSubmit = {submitSearch}
+                   params={{hideOnInvalid: false}}
+                   inputStyle={{border:'none', padding:0, marginBottom:5}}
+                   getDoOnClickFunc={(clickFunc) => clickFuncRef.clickFunc= clickFunc}
+                   onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
+                   extraWidgets={[docRowsComponents]}
+                   help_id  = {'search-collections-general'}>
+            <div style={{
+                display:'flex',
+                flexDirection:'column',
+                alignItems:'center',
+            }}>
+                {children}
+            </div>
+        </FormPanel>
+    );
 
 
     return  (
         <div style={{display:'flex', flexDirection:'column', justifyContent:'space-between', ...style}}>
 
-            {title}
-            <DynLayoutPanelTypes.Inset fieldDefAry={fds}
-                                        plotId={HIPS_PLOT_ID}
-                                        style={{height:'100%', marginTop:4}}
+            <SearchTitle {...{desc,isAllSky,sideBarShowing,setSideBarShowing}}/>
+            <DynLayoutPanelTypes.Inset fieldDefAry={fds} plotId={HIPS_PLOT_ID} style={{height:'100%', marginTop:4}}
                                        WrapperComponent={Wrapper}
-                                       // childComponents={docRowsComponents}
             />
         </div>
     );
-};
+}
 
 
-const TabView= ({tabsKey, setSideBarShowing, sideBarShowing, searchObjFds,qAna, docRows, clickFuncRef, submitSearch}) => (
+const TabView= ({tabsKey, setSideBarShowing, sideBarShowing, searchObjFds,qAna, docRows, isAllSky, clickFuncRef, submitSearch}) => (
     <FieldGroupTabs style ={{height:'100%', width:'100%'}} initialState={{ value:searchObjFds[0].ID}} fieldKey={tabsKey}>
         {
             searchObjFds.map((sFds) => {
                 const {fds, idx, ID, desc}= sFds;
                 return (
                     <Tab name={`${qAna.primarySearchDef[idx].desc}`} id={ID} key={idx+''}>
-                        <ServDescPanel{...{fds, setSideBarShowing, sideBarShowing, style:{width:'100%'}, desc, docRows, clickFuncRef, submitSearch}}/>
+                        <ServDescPanel{...{fds, setSideBarShowing, sideBarShowing, style:{width:'100%'}, desc, docRows,
+                            isAllSky, clickFuncRef, submitSearch}}/>
                     </Tab>
                 );
             })
@@ -369,7 +388,7 @@ const initTargetOnce= once((wp) => wp && dispatchActiveTarget(wp));
 const doSearchOnce= once((clickFunc) => clickFunc() );
 
 
-function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url, sideBarShowing, setSideBarShowing}) {
+function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url, sideBarShowing, isRegLoaded, setSideBarShowing}) {
 
 
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
@@ -457,9 +476,19 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
             }
         }
         if (hipsUrl &&  hipsUrl!==plot.hipsUrlRoot) {
-            dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: hipsUrl});
+            resolveHiPSIvoURL(hipsUrl).then((resolvedHiPsUrl) => {
+                if (resolvedHiPsUrl!==plot.hipsUrlRoot) {
+                    dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: hipsUrl});
+                }
+            });
         }
     }, [currentTblId]);
+
+    const {cisxUI}= qAna?.primarySearchDef?.[0].serviceDef ?? [];
+    const isAllSky= toBoolean(cisxUI?.find( (e) => e.name==='data_covers_allsky')?.value);
+
+
+
 
     const submitSearch= (r) => {
         const {fds, standardID, idx}= findFieldDefInfo(r);
@@ -475,7 +504,7 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
     };
 
     const notLoaded= (
-        regHasUrl ?
+        (regHasUrl || !isRegLoaded) ?
             <div style={{position:'relative', width:'100%', height:'100%'}}>
                 <div className='loading-mask'/>
             </div> :
@@ -489,11 +518,12 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
             <div className='SearchPanel' style={{width:'100%', height:'100%'}}>
                 {sideBarShowing && sideBar}
                 <FieldGroup groupKey='DL_UI' keepState={true} style={{width:'100%'}}>
-                    {qAna ? searchObjFds.length===1 ?
+                    {(isRegLoaded && qAna) ? searchObjFds.length===1 ?
                             <ServDescPanel{...{initArgs, setSideBarShowing, sideBarShowing, fds:searchObjFds[0].fds,
-                                clickFuncRef, submitSearch,
+                                clickFuncRef, submitSearch, isAllSky,
                                 style:{width:'100%',height:'100%'}, desc:searchObjFds[0].desc, docRows}} /> :
-                            <TabView{...{initArgs, tabsKey, setSideBarShowing, sideBarShowing, searchObjFds, qAna, docRows, clickFuncRef, submitSearch}}/>
+                            <TabView{...{initArgs, tabsKey, setSideBarShowing, sideBarShowing, searchObjFds, qAna,
+                                docRows, isAllSky, clickFuncRef, submitSearch}}/>
                         :
                         notLoaded
                     }

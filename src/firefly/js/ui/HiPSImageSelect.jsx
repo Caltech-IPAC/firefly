@@ -90,8 +90,15 @@ export function showHiPSSurveysPopup(pv, moc= false) {
             if (rootUrl) {
                 const plot = pv ? primePlot(pv) : primePlot(visRoot());
                 // update the table highlight of the other one which is not shown in table panel
-                moc ? createHiPSMocLayer(getIvoaId(), getTitle(), rootUrl, primePlot(pv), true) :
-                    dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: rootUrl});
+                moc ? createHiPSMocLayer({
+                        ivoid: getIvoaId(),
+                        title: getTitle(),
+                        hipsUrl: rootUrl,
+                        plot: primePlot(pv),
+                        visible: true
+                    } ) :
+                    dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: rootUrl}
+                    );
                 dispatchHideDialog(DIALOG_ID);
             }
         }

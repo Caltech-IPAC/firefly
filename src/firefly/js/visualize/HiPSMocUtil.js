@@ -177,15 +177,19 @@ export function getMocOrderIndex(Nuniq) {
 
 /**
  * add new layer on MOC table
- * @param {string} tbl_id moc table id
- * @param {string} [title] optional title
- * @param {string} fitsPath moc fits path at the server after upload
- * @param {string} mocUrl  moc fits url
- * @param {string} uniqColName column name for uniq number
- * @param {boolean} tablePreloaded - true if the MOC table has already been loaded
+ * @param {Object} params moc table id
+ * @param {string} params.tbl_id moc table id
+ * @param {string} [params.title] optional title
+ * @param {string} params.fitsPath moc fits path at the server after upload
+ * @param {string} params.mocUrl  moc fits url
+ * @param {string} params.uniqColName column name for uniq number
+ * @param {boolean} params.tablePreloaded - true if the MOC table has already been loaded
+ * @param {string} [params.color] - color string
+ * @param {string} [params.mocGroupDefColorId ] - group color id
  * @returns {T|SelectInfo|*|{}}
  */
-export function addNewMocLayer(tbl_id, title, fitsPath, mocUrl, uniqColName = 'NUNIQ', tablePreloaded=false) {
+export function addNewMocLayer({tbl_id, title, fitsPath, mocUrl, uniqColName = 'NUNIQ',
+                                   tablePreloaded=false, color, mocGroupDefColorId }) {
     const dls = getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID);
     let   dl = dls.find((oneLayer) => oneLayer.drawLayerId === tbl_id);
 
@@ -193,7 +197,8 @@ export function addNewMocLayer(tbl_id, title, fitsPath, mocUrl, uniqColName = 'N
         if (!title && tablePreloaded && tbl_id) title= getTblById(tbl_id)?.title;
         if (title) title= 'MOC - ' + title;
         const mocFitsInfo = {fitsPath, mocUrl, uniqColName, tbl_id, tablePreloaded};
-        dl = dispatchCreateDrawLayer(HiPSMOC.TYPE_ID, {mocFitsInfo,title,layersPanelLayoutId:'mocUIGroup'});
+        dl = dispatchCreateDrawLayer(HiPSMOC.TYPE_ID,
+            {mocFitsInfo,title,layersPanelLayoutId:'mocUIGroup', color, mocGroupDefColorId });
     }
     return dl;
 }

@@ -35,7 +35,7 @@ export class Drawer {
         this.selectCanvas= null;
         this.highlightCanvas= null;
         this.drawingCanceler= null;
-        this.plotTaskId= makeTaskId();
+        this.plotTaskId= makeTaskId('drawer');
         this.isPointData= false;
         this.decimate= false;
 
@@ -439,7 +439,7 @@ export class Drawer {
     addTask() {
         const {plot}= this;
         if (plot) {
-            setTimeout( () => dispatchAddTaskCount(plot.plotId,this.plotTaskId, true) ,0);
+            setTimeout( () => dispatchAddTaskCount(plot.plotId,this.plotTaskId) ,0);
         }
     }
 

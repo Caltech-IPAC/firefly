@@ -113,7 +113,7 @@ export function colorChangeActionCreator(rawAction) {
         if (rawAction.payload.actionScope===ActionScope.SINGLE){
             const taskId= makeTaskId();
             if (!isThreeColor(plot)) {
-                dispatchAddTaskCount(plot.plotId,taskId, true);
+                dispatchAddTaskCount(plot.plotId,taskId);
                 queueChangeLocalRawDataColor(plot,cbarId,biasToUse,contrastToUse, undefined, makeOnComplete(dispatcher, plotId, taskId));
             }
             else {
@@ -126,7 +126,7 @@ export function colorChangeActionCreator(rawAction) {
         else {
             const taskId= makeTaskId();
             if (!isThreeColor(plot)) {
-                dispatchAddTaskCount(plot.plotId,taskId, true);
+                dispatchAddTaskCount(plot.plotId,taskId);
                 queueChangeLocalRawDataColor(plot,cbarId,biasToUse,contrastToUse, undefined, makeOnComplete(dispatcher, plotId, taskId));
             }
             else {
@@ -139,7 +139,7 @@ export function colorChangeActionCreator(rawAction) {
                 if (isThreeColor(p)!==basePlotThreeColor) return;
                 const taskId= makeTaskId();
                 if (!isThreeColor(p)) { // only do others that are not three color
-                    dispatchAddTaskCount(p.plotId,taskId, true);
+                    dispatchAddTaskCount(p.plotId,taskId);
                     queueChangeLocalRawDataColor(p,cbarId,biasToUse,contrastToUse, undefined, makeOnComplete(dispatcher, pv.plotId, taskId));
                 }
                 else {

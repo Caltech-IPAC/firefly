@@ -123,3 +123,11 @@ export function resolveHiPSIvoURL(ivoOrUrl) {
     }
 
 }
+
+let hipsInit= false;
+
+export async function ensureHiPSInit() {
+    if (hipsInit) return;
+    hipsInit= true;
+    void await resolveHiPSIvoURL('ivoa://nothing');
+}

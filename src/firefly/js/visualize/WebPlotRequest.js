@@ -1,5 +1,5 @@
 /* eslint prefer-template:0 */
-import {get, isString, isFunction, isPlainObject, isArray, join, omit, pick, isObject} from 'lodash';
+import {get, isString, isFunction, isPlainObject, isArray, join, omit, pick, isObject, isUndefined} from 'lodash';
 import Enum from 'enum';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {RequestType} from './RequestType.js';
@@ -12,7 +12,7 @@ import CoordinateSys from 'firefly/visualize/CoordSys.js';
 
 const DEFAULT_IMAGE_OVERLAYS= ['ACTIVE_TARGET_TYPE','POINT_SELECTION_TYPE', 'NORTH_UP_COMPASS_TYPE',
     'WEB_GRID_TYPE', 'OVERLAY_MARKER_TYPE', 'OVERLAY_FOOTPRINT_TYPE', 'REGION_PLOT_TYPE',
-    'HIPS_GRID_TYPE', 'MOC_PLOT_TYPE'];
+    ];
 
 const DEFAULT_HIPS_OVERLAYS= ['ACTIVE_TARGET_TYPE','POINT_SELECTION_TYPE', 'NORTH_UP_COMPASS_TYPE',
     'OVERLAY_MARKER_TYPE', 'OVERLAY_FOOTPRINT_TYPE', 'REGION_PLOT_TYPE', 'HIPS_GRID_TYPE', 'MOC_PLOT_TYPE'];
@@ -831,8 +831,8 @@ export class WebPlotRequest extends ServerRequest {
      * @return {Array.<String>} array of string DrawLayerType IDs
      */
     getOverlayIds() {
-        if (this.containsParam(WPConst.OVERLAY_IDS)) {
-            return this.getParam(WPConst.OVERLAY_IDS).split(';');
+        if (!isUndefined(this.params[WPConst.OVERLAY_IDS])) {
+            return this.getParam(WPConst.OVERLAY_IDS).split(';').filter((s) => s);
         }
         else {
             return this.getRequestType()!==RequestType.HiPS ? DEFAULT_IMAGE_OVERLAYS : DEFAULT_HIPS_OVERLAYS;
