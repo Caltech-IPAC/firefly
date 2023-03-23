@@ -10,9 +10,11 @@ import {setSqlFilter, SqlTableFilter} from './FilterEditor.jsx';
 import {InputField} from '../../ui/InputField.jsx';
 import {intValidator} from '../../util/Validate.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {dispatchTableAddLocal, dispatchTableFilter, dispatchTableRemove, TABLE_SELECT} from '../TablesCntlr.js';
-import {COL_TYPE, getColumn, getColumnValues, getFilterCount, getSqlFilter, getTableUiById,
-        getTblById, isClientTable, isOfType, parsePrecision, watchTableChanges} from '../TableUtil.js';
+import {dispatchTableAddLocal, dispatchTableFilter, dispatchTableRemove, dispatchTableUiUpdate, TABLE_SELECT} from '../TablesCntlr.js';
+import {
+    calcColumnWidths, COL_TYPE, getColumn, getColumnValues, getFilterCount, getSqlFilter, getTableUiById,
+    getTblById, isClientTable, isOfType, parsePrecision, watchTableChanges
+} from '../TableUtil.js';
 import {TablePanel} from './TablePanel';
 import {FILTER_CONDITION_TTIPS, FilterInfo} from '../FilterInfo';
 import {inputColumnRenderer} from './TableRenderer.js';
@@ -22,6 +24,11 @@ import {StatefulTabs, Tab} from '../../ui/panel/TabPanel.jsx';
 import {SelectInfo} from '../SelectInfo.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {getTblPrefKey} from '../TablePref.js';
+import {showAddOrUpdateColumn} from './AddOrUpdateColumn.jsx';
+import {BY_SCROLL} from './BasicTableView.jsx';
+
+import EDIT from 'html/images/16x16_edit_icon.png';
+
 
 export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOptionReset, clearFilter}) => {
 
@@ -175,7 +182,7 @@ function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChang
 
 
 const columns = [
-    {name: 'name', fixed: true, width: 12},
+    {name: 'name', fixed: true, width: 20},
     {name: 'filter', fixed: true, width: 10, sortable: false, filterable: false},
     {name: 'format'},
     {name: 'null_string'},
@@ -200,6 +207,7 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
 
     const columns =  useStoreConnector( () => getTableUiById(tbl_ui_id)?.columns || []);
     const ckey = columns?.map((c) => c.name).join('|');
+    const cmt_tbl_ui_id = ctm_tbl_id + '_ui';
 
     useEffect(() => {
         if (!isEmpty(columns)) {
@@ -228,19 +236,22 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
 
     }, [tbl_ui_id, tbl_id, ctm_tbl_id]);     // run only if table changes
 
+
+
     // filters state are kept in tablemodel
     // the rest of the state are kept in the source table ui data
     const renderers =  {
-        filter:     {cellRenderer: makeFilterRenderer(tbl_id, ctm_tbl_id, onChange)},
-        // format:  {cellRenderer: makePrecisionRenderer(tbl_ui_id, ctm_tbl_id, onChange)},
-        // null_string:   {cellRenderer: makeNullStringRenderer(tbl_ui_id, ctm_tbl_id, onChange)}
+                name: {cellRenderer: makeNameRenderer(tbl_id, tbl_ui_id, cmt_tbl_ui_id)},
+                filter:     {cellRenderer: makeFilterRenderer(tbl_id, ctm_tbl_id, onChange)},
+                // format:  {cellRenderer: makePrecisionRenderer(tbl_ui_id, ctm_tbl_id, onChange)},
+                // null_string:   {cellRenderer: makeNullStringRenderer(tbl_ui_id, ctm_tbl_id, onChange)}
     };
 
     return (
         <div style={{flex: '1 1 0'}}>
             <TablePanel
                 border={false}
-                tbl_ui_id = {tbl_ui_id + '-columnOptions'}
+                tbl_ui_id = {cmt_tbl_ui_id}
                 tbl_id = {ctm_tbl_id}
                 renderers = {renderers}
                 showToolbar = {false}
@@ -288,6 +299,8 @@ function createColumnTableModel(tbl_id, tbl_ui_id, ctm_tbl_id) {
         selectInfoCls.setRowSelect(idx, get(data,[idx, showIdx]));
     }
     const ctm = {selectInfo: selectInfoCls.data,  tableData: {columns, data}, totalRows: data.length};
+    const widths = calcColumnWidths(columns, data);
+    columns[0].width = widths[0] + 2;
 
     // hide empty columns
     ['format', 'null_string', 'arraySize', 'utype', 'UCD', 'links', 'description'].forEach((cname) => {
@@ -311,6 +324,39 @@ function getActiveInput(data, rowIdx, tbl_ui_id) {
     const selCol = nColumns.find((col) => col.name === selColName);
     return {selColName, nColumns, selCol};
 }
+
+
+/**
+ * src/firefly/js/tables/ui/TableRenderer.js:45
+ * @param tbl_id        ID of the data table
+ * @param tbl_ui_id     ID of the UI table
+ * @param cmt_tbl_ui_id UI ID of the column model table
+ * @return Custom cell renderer for 'name' column
+ */
+function makeNameRenderer(tbl_id, tbl_ui_id, cmt_tbl_ui_id) {
+    const tableModel = getTblById(tbl_id);
+
+    return ({cellInfo}) => {
+        const {value} = cellInfo;
+        const c = getColumn(tableModel, value);
+        const editCol = () => {
+            const onChange = () => {
+                // because we always rebuild the column table, it will be sorted ascending.  so, scroll to the bottom for derived columns.
+                setTimeout(() => dispatchTableUiUpdate( {tbl_ui_id:cmt_tbl_ui_id, scrollTop:10000, triggeredBy:BY_SCROLL}), 200);
+            };
+            showAddOrUpdateColumn({tbl_ui_id, tbl_id, editColName:c.name, onChange});
+        };
+        if (c?.DERIVED_FROM) {
+            return (
+                <div style={{color:'maroon', display: 'inline-flex', alignItems: 'center'}} onClick={editCol}>
+                    {value} <img className='clickable' style={{marginLeft: 5}} src={EDIT}/>
+                </div>
+            );
+        } else return <div>{value}</div>;
+    };
+}
+
+
 
 function makePrecisionRenderer(tbl_ui_id, ctm_tbl_id, onChange) {
     const tooltips = 'A string Tn where T is either F, E, G, HMS, or DMS\n' +

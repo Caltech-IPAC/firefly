@@ -24,7 +24,7 @@ import {showTableDownloadDialog} from './TableSave.jsx';
 import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {BgMaskPanel} from '../../core/background/BgMaskPanel.jsx';
 import {Logger} from '../../util/Logger.js';
-import {AddColumnBtn} from 'firefly/tables/ui/AddColumn.jsx';
+import {AddColumnBtn} from './AddOrUpdateColumn.jsx';
 
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';

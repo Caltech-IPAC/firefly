@@ -81,7 +81,8 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.TABLE_SEARCH,           new SearchServerCommands.TableSearch());
         _cmdMap.put(ServerParams.QUERY_TABLE,            new SearchServerCommands.QueryTable());
         _cmdMap.put(ServerParams.SELECTED_VALUES,        new SearchServerCommands.SelectedValues());
-        _cmdMap.put(ServerParams.ADD_TABLE_COLUMN,       new SearchServerCommands.AddTableColumn());
+        _cmdMap.put(ServerParams.ADD_OR_UPDATE_COLUMN,   new SearchServerCommands.AddOrUpdateColumn());
+        _cmdMap.put(ServerParams.DELETE_COLUMN,          new SearchServerCommands.DeleteColumn());
 
         _cmdMap.put(ServerParams.TABLE_SAVE,             new HttpServCommands.TableSave());
         _cmdMap.put(ServerParams.UPLOAD,                 new HttpServCommands.Upload());

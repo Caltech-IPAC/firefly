@@ -3,10 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.firefly.data.ServerEvent;
-import edu.caltech.ipac.firefly.server.RequestOwner;
-import edu.caltech.ipac.firefly.server.events.FluxAction;
-import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableWriter;
@@ -17,17 +13,14 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.table.TableMeta;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbInstance;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.JsonTableUtil;
-import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
@@ -35,7 +28,6 @@ import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.core.background.JobInfo;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.json.simple.JSONObject;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
@@ -57,10 +49,8 @@ import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX;
-import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
-import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
-import static edu.caltech.ipac.firefly.server.db.DbAdapter.NULL_TOKEN;
-import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.execRequestQuery;
+import static edu.caltech.ipac.firefly.server.db.DbAdapter.*;
+import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.*;
 import static edu.caltech.ipac.util.StringUtils.*;
 
 /**
@@ -94,8 +84,6 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                                                      SearchProcessor.CanFetchDataGroup, Job.Worker {
     private static final Map<String, ReentrantLock> activeRequests = new HashMap<>();
     private static final ReentrantLock lockChecker = new ReentrantLock();
-    private static final Logger.LoggerImpl LOGGER = Logger.getLogger();
-    private static final int MAX_COL_ENUM_COUNT = AppProperties.getIntProperty("max.col.enum.count", 32);
     private Job job;
 
     public void setJob(Job job) {
@@ -271,18 +259,29 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     }
 
     public File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
-        request.cloneRequest();
-        request.setPageSize(Integer.MAX_VALUE);
-        DataGroupPart results = getData(request);
-        File ipacTable = createTempFile(request, ".tbl");
+        TableServerRequest cr = (TableServerRequest) request.cloneRequest();
+        cr.setPageSize(Integer.MAX_VALUE);
+        DataGroupPart results = getData(cr);
+        File ipacTable = createTempFile(cr, ".tbl");
         IpacTableWriter.save(ipacTable, results.getData());
         return ipacTable;
     }
 
-    public FileInfo writeData(OutputStream out, ServerRequest request, TableUtil.Format format) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest request, TableUtil.Format format, TableUtil.Mode mode) throws DataAccessException {
         try {
             TableServerRequest treq = (TableServerRequest) request;
-            DataGroupPart page = getData(request);
+            if (mode.equals(TableUtil.Mode.original)) {
+                treq = (TableServerRequest) treq.cloneRequest();
+                treq.keepBaseParamOnly();
+                DataGroup table = EmbeddedDbUtil.execQuery(getAdapter(treq), getDbFile(treq), "Select * from DATA limit 1", MAIN_DB_TBL);  // just the headers.
+                String[] cols = Arrays.stream(table.getDataDefinitions())
+                                        .filter(c -> c.getDerivedFrom() == null)
+                                        .map(dt -> "\"" + dt.getKeyName() + "\"")
+                                        .toArray(String[]::new);
+                treq.setInclColumns(cols);
+            }
+
+            DataGroupPart page = getData(treq);
 
             switch(format) {
                 case CSV:
@@ -466,10 +465,27 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
     public boolean isSecurityAware() { return false; }
 
-    public void addNewColumn(TableServerRequest tsr, DataType dtype, String expression) {
+    public void addOrUpdateColumn(TableServerRequest tsr, DataType dtype, String expression, String editColName, String preset) throws DataAccessException {
+        File dbFile = getDbFile(tsr);
+        // ensure resultSetID table exists
+        TableServerRequest cr = (TableServerRequest) tsr.cloneRequest();
+        cr.setPageSize(1);
+        getResultSet(cr, dbFile);
+
+        String resultSetID = getResultSetID(tsr);
+        SelectionInfo si = tsr.getSelectInfo();
+        DbAdapter dbAdapter = DbAdapter.getAdapter(tsr);
+        if (isEmpty(editColName)) {
+            EmbeddedDbUtil.addColumn(dbFile, dbAdapter, dtype, expression, preset, resultSetID, si);
+        } else {
+            EmbeddedDbUtil.updateColumn(dbFile, dbAdapter, dtype, expression, editColName, preset, resultSetID, si);
+        }
+    }
+
+    public void deleteColumn(TableServerRequest tsr, String cname) {
         File dbFile = getDbFile(tsr);
         DbAdapter dbAdapter = DbAdapter.getAdapter(tsr);
-        EmbeddedDbUtil.addNewColumn(dbFile, dbAdapter, dtype, expression);
+        EmbeddedDbUtil.deleteColumn(dbFile, dbAdapter, cname);
     }
 
 //====================================================================
@@ -585,63 +601,6 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         return e.getMessage();
     }
 
-    private static void enumeratedValuesCheckBG(File dbFile, DataGroupPart results, TableServerRequest treq) {
-        RequestOwner owner = ServerContext.getRequestOwner();
-        ServerEvent.EventTarget target = new ServerEvent.EventTarget(ServerEvent.Scope.SELF, owner.getEventConnID(),
-                                                                        owner.getEventChannel(), owner.getUserKey());
-        SHORT_TASK_EXEC.submit(() -> {
-            enumeratedValuesCheck(dbFile, results, treq);
-            DataGroup updates = new DataGroup(null, results.getData().getDataDefinitions());
-            updates.getTableMeta().setTblId(results.getData().getTableMeta().getTblId());
-            JSONObject changes = JsonTableUtil.toJsonDataGroup(updates);
-            changes.remove("totalRows");        //changes contains only the columns with 0 rows.. we don't want to update totalRows
-
-            FluxAction action = new FluxAction(FluxAction.TBL_UPDATE, changes);
-            ServerEventManager.fireAction(action, target);
-        });
-    }
-
-    private static void enumeratedValuesCheck(File dbFile, DataGroupPart results, TableServerRequest treq) {
-        try {
-            StopWatch.getInstance().start("enumeratedValuesCheck: " + treq.getRequestId());
-            DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-            String cols = Arrays.stream(results.getData().getDataDefinitions())
-                    .filter(dt -> maybeEnums(dt))
-                    .map(dt -> String.format("count(distinct \"%s\") as \"%s\"", dt.getKeyName(), dt.getKeyName()))
-                    .collect(Collectors.joining(", "));
-
-            List<Map<String, Object>> rs = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
-                    .queryForList(String.format("SELECT %s FROM data where rownum < 500", cols));
-            rs.get(0).forEach( (cname,v) -> {
-                Long count = (Long) v ;
-                if (count > 0 && count <= MAX_COL_ENUM_COUNT) {
-                    List<Map<String, Object>> vals = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
-                            .queryForList(String.format("SELECT distinct \"%s\" FROM data order by 1", cname));
-
-                    if (vals.size() <= MAX_COL_ENUM_COUNT) {
-                        String enumVals = vals.stream()
-                                .map(m -> m.get(cname) == null ? NULL_TOKEN : m.get(cname).toString())  // list of map to list of string(colname)
-                                .collect(Collectors.joining(","));                          // combine the names into comma separated string.
-                        results.getData().getDataDefintion(cname).setEnumVals(enumVals);
-                        // update dd table
-                        JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
-                                .update("UPDATE data_dd SET enumVals = ? WHERE cname = ?", enumVals, cname);
-                    }
-                }
-            });
-            StopWatch.getInstance().stop("enumeratedValuesCheck: " + treq.getRequestId()).printLog("enumeratedValuesCheck: " + treq.getRequestId());
-        } catch (Exception ex) {
-            // do nothing.. ok to ignore errors.
-        }
-    }
-
-    private static List<Class> onlyCheckTypes = Arrays.asList(String.class, Integer.class, Long.class, Character.class, Boolean.class, Short.class, Byte.class);
-    private static List<String> excludeColNames = Arrays.asList(DataGroup.ROW_IDX, DataGroup.ROW_NUM);
-    private static boolean maybeEnums(DataType dt) {
-        return onlyCheckTypes.contains(dt.getDataType()) && !excludeColNames.contains(dt.getKeyName());
-
-    }
-
     /**
      * execute the given task if job is still in executing phase.  if job is aborted, throw exception to stop the process.
      * @param f
@@ -654,7 +613,5 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             if (phase == JobInfo.Phase.ABORTED) throw new DataAccessException.Aborted();
         }
     }
-
-
 }
 

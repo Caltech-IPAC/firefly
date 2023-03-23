@@ -67,10 +67,14 @@ public class SearchManager {
     }
 
     public FileInfo save(OutputStream saveTo, TableServerRequest dataRequest, TableUtil.Format format) throws DataAccessException {
+        return save(saveTo, dataRequest, format, TableUtil.Mode.displayed);
+    }
+
+    public FileInfo save(OutputStream saveTo, TableServerRequest dataRequest, TableUtil.Format format, TableUtil.Mode mode) throws DataAccessException {
         try {
             SearchProcessor processor = getProcessor(dataRequest.getRequestId());
             if (dataRequest != null) {
-                return processor.writeData(saveTo, dataRequest, format);
+                return processor.writeData(saveTo, dataRequest, format, mode);
             } else {
                 throw new DataAccessException("Request fail inspection.  Operation aborted.");
             }

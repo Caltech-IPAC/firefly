@@ -22,6 +22,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileOutputStream;
 
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
+
 public class HttpServCommands {
 
     static abstract class BaseServletCommand extends ServerCommandAccess.HttpCommand {
@@ -37,13 +39,14 @@ public class HttpServCommands {
             if (request == null) throw new IllegalArgumentException("Invalid request");
 
             String fileName = sp.getOptional("file_name");
+            TableUtil.Mode mode = sp.contains("mode") ? TableUtil.Mode.valueOf(sp.getOptional("mode")) : TableUtil.Mode.displayed;
 
             boolean tableSave = sp.getOptionalBoolean("save_to_temp", false); //if this is true, don't want to download tbl, instead load it into a tmp file
 
             TableUtil.Format tblFormat = sp.getTableFormat();
             String fileNameExt = tblFormat.getFileNameExt();
 
-            if (StringUtils.isEmpty(fileName)) {
+            if (isEmpty(fileName)) {
                 fileName = request.getRequestId();
             }
             if (fileName.toLowerCase().endsWith(fileNameExt)) {
@@ -58,7 +61,7 @@ public class HttpServCommands {
                     File myTmpFile = File.createTempFile("TableSave-", ".tbl", QueryUtil.getTempDir(request));
                     String replacedPrefix = ServerContext.replaceWithPrefix(myTmpFile);
                     FileOutputStream out= new FileOutputStream(myTmpFile);
-                    am.save(out, request, tblFormat);
+                    am.save(out, request, tblFormat, mode);
                     json.put("success", true);
                     json.put("serverFile", replacedPrefix);
                     out.close();
@@ -76,7 +79,7 @@ public class HttpServCommands {
             }
 
             res.setHeader("Content-Disposition", "attachment; filename=" + fileName + fileNameExt);
-            FileInfo fi = am.save(res.getOutputStream(), request, tblFormat);
+            FileInfo fi = am.save(res.getOutputStream(), request, tblFormat, mode);
             if (fi != null) {
                 long length = fi.getSizeInBytes(); // if written from the db, the length is 0
                 logStats(length, "fileName", fi.getExternalName());

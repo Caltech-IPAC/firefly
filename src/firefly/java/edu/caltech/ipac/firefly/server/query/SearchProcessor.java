@@ -37,7 +37,7 @@ public interface SearchProcessor<Type> {
 
     String getUniqueID(ServerRequest request);
     Type getData(ServerRequest request) throws DataAccessException;
-    default FileInfo writeData(OutputStream out, ServerRequest request, TableUtil.Format format) throws DataAccessException {
+    default FileInfo writeData(OutputStream out, ServerRequest request, TableUtil.Format format, TableUtil.Mode mode) throws DataAccessException {
         return null;
     };
     boolean doCache();
