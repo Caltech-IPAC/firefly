@@ -29,6 +29,7 @@ import {showUploadTableChooser} from '../UploadTableChooser.js';
 import {
     getAsEntryForTableName, getColumnAttribute, getTapServices, makeUploadSchema, maybeQuote, tapHelpId
 } from './TapUtil.js';
+import {showColSelectPopup} from 'firefly/charts/ui/ColSelectView';
 
 const CenterLonColumns = 'centerLonColumns';
 const CenterLatColumns = 'centerLatColumns';
@@ -232,6 +233,14 @@ function UploadTableSelector({uploadInfo, setUploadInfo}) {
 
     const haveTable= Boolean(fileName && columns);
 
+    const onColsSelected = (selectedColNames) => {
+        const columns = uploadInfo.columns.map((col) => (
+                {...col, use:selectedColNames.includes(col.name)}));
+
+        uploadInfo = {...uploadInfo, columns};
+        setUploadInfo(uploadInfo);
+    };
+
     return (
         <div style={{margin: '10px 0 0 0'}}>
             <div style={{display:'flex', alignItems:'center'}}>
@@ -254,8 +263,11 @@ function UploadTableSelector({uploadInfo, setUploadInfo}) {
                         <span>{totalRows},</span>
                     </div>
                     <div style={{paddingLeft: 8, whiteSpace:'nowrap'}}>
-                        <span>Columns: </span>
-                        <span>{columns.length} (using {columnsUsed}),</span>
+                        <a className='ff-href'onClick={() => showColSelectPopup(columns, onColsSelected, 'Choose Columns', 'OK',
+                            null,true)}>
+                            <span>Columns: </span>
+                            <span>{columns.length} (using {columnsUsed}),</span>
+                        </a>
                     </div>
                     <div style={{paddingLeft: 8, whiteSpace:'nowrap'}}>
                         <span>Size: </span>
@@ -270,7 +282,8 @@ function UploadTableSelector({uploadInfo, setUploadInfo}) {
                     headerStyle:{paddingLeft:1},
                     style:{margin:'0 0 10px 195px'},
                     labelStyle:{paddingRight:10},
-                    lonKey:UploadCenterLonColumns, latKey:UploadCenterLatColumns}} />}
+                    lonKey:UploadCenterLonColumns, latKey:UploadCenterLatColumns}} />
+            }
         </div>
     );
 }

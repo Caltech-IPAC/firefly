@@ -78,14 +78,14 @@ export function makePanelStatusUpdater(panelActive,panelTitle,defErrorMessage) {
             getPanelAdqlConstraint(panelActive,panelTitle, constraintsValid,adqlConstraintsAry,errAry[0], defErrorMessage);
         const cr = { adqlConstraint, adqlConstraintErrors, siaConstraints, siaConstraintErrors, simpleError,
             uploadFile, TAP_UPLOAD};
-        if (constrainResultDiffer(cr, lastConstraintResult)) setConstraintResult(cr);
+        if (constraintResultDiffer(cr, lastConstraintResult)) setConstraintResult(cr);
 
         return simpleError;
     };
 }
 
 
-function constrainResultDiffer(c1, c2) {
+function constraintResultDiffer(c1, c2) {
     return (c1?.adqlConstraint !== c2?.adqlConstraint ||
         (c1.simpleError!==c2.simpleError) ||
         !isEqual(c1.adqlConstraintErrors, c2.adqlConstraintErrors) ||
@@ -95,7 +95,8 @@ function constrainResultDiffer(c1, c2) {
         c1.uploadFrom!==c2.uploadFrom ||
         c1.serverFile!==c2.serverFile ||
         c1.uploadFileName!==c2.uploadFileName||
-        !isEqual(c1.uploadColumns, c2.uploadColumns)
+        !isEqual(c1.uploadColumns, c2.uploadColumns) ||
+        !isEqual(c1.TAP_UPLOAD, c2.TAP_UPLOAD)
     );
 }
 
