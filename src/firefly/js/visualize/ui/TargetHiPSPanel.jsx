@@ -415,7 +415,7 @@ function loadMocWithAbort(mocList, plotId) {
 
         try {
             for(let i=0; (i<mocAddList.length); i++) {
-                const {mocUrl,title}= mocAddList[i];
+                const {mocUrl,title,mocColor}= mocAddList[i];
 
                 const tbl_id= 'MOC---'+mocUrl;
                 let add= true;
@@ -446,7 +446,7 @@ function loadMocWithAbort(mocList, plotId) {
                         visible: true,
                         fitsPath: mocUrl,
                         title,
-                        color: colors[i % 2],
+                        color: mocColor ?? colors[i % 2],
                         mocUrl,
                         mocGroupDefColorId: `mocForTargetHipsPanelID-${i}`,
                     });

@@ -143,7 +143,8 @@ export function makeFieldDefs(serDefParams, sRegion, searchAreaInfo = {}, hidePr
                 const {targetPanelExampleRow1,targetPanelExampleRow2}= makeExamples(searchAreaInfo?.examples );
                 const mocList = searchAreaInfo?.moc ? [{
                     mocUrl: searchAreaInfo.moc,
-                    title: searchAreaInfo?.mocDesc ?? 'MOC'
+                    title: searchAreaInfo?.mocDesc ?? 'MOC',
+                    mocColor: searchAreaInfo?.mocColor,
                 }] : undefined;
                 return makeCircleDef({
                     key: name, desc: name, tooltip, units,
@@ -232,11 +233,12 @@ export function makeSearchAreaInfo(cisxUI) {
         }
         return obj;
     }, {});
-    const {examples, moc, mocDesc, HiPS, hips_initial_fov, hips_initial_ra, hips_initial_dec, hips_frame, ptIsGalactic} = tmpObj;
+    const {examples, moc, mocDesc, HiPS, hips_initial_fov, hips_initial_ra, hips_initial_dec, hips_frame, ptIsGalactic, moc_color} = tmpObj;
     const hipsProjCsys = hips_frame?.trim().toLowerCase()==='galactic';
     const ptCsys= ptIsGalactic ? CoordinateSys.GALACTIC : CoordinateSys.EQ_J2000;
     const centerWp = makeWorldPt(hips_initial_ra, hips_initial_dec, ptCsys);
-    return {examples, moc, mocDesc, HiPS, hips_initial_fov, centerWp, coordinateSys: hipsProjCsys.toString()};
+    return {examples, moc, mocDesc, mocColor: moc_color, HiPS, hips_initial_fov,
+        centerWp, coordinateSys: hipsProjCsys.toString()};
 }
 
 let tblCnt=1;
