@@ -111,7 +111,12 @@ export function SpatialSearch({cols, serviceUrl, columnsModel, tableName, initAr
             setVal(PolygonCorners,searchParams.corners);
             checkHeaderCtl.setPanelActive(true);
         }
-    }, [searchParams.radiusInArcSec, searchParams.wp, searchParams.corners]);
+        if (searchParams.uploadInfo) {
+            setVal(SPATIAL_TYPE,MULTI);
+            setUploadInfo(searchParams.uploadInfo);
+            checkHeaderCtl.setPanelActive(true);
+        }
+    }, [searchParams.radiusInArcSec, searchParams.wp, searchParams.corners, searchParams.uploadInfo]);
 
 
     useEffect(() => {
@@ -148,9 +153,8 @@ export function SpatialSearch({cols, serviceUrl, columnsModel, tableName, initAr
     useFieldGroupWatch([SpatialMethod],
         ([spatialMethod]) => spatialMethod==='Polygon' && onChangeToPolygonMethod()
     );
-
     useFieldGroupWatch([SPATIAL_TYPE],
-        ([spacialType]) => (spacialType===MULTI) && !uploadInfo?.fileName && showUploadTableChooser(setUploadInfo),
+        ([spacialType]) => (spacialType===MULTI) && !uploadInfo?.fileName && (!searchParams.uploadInfo && showUploadTableChooser(setUploadInfo)),
         [uploadInfo]);
 
     useFieldGroupWatch([cornerCalcType], () => onChangeToPolygonMethod());
@@ -236,7 +240,6 @@ function UploadTableSelector({uploadInfo, setUploadInfo}) {
     const onColsSelected = (selectedColNames) => {
         const columns = uploadInfo.columns.map((col) => (
                 {...col, use:selectedColNames.includes(col.name)}));
-
         uploadInfo = {...uploadInfo, columns};
         setUploadInfo(uploadInfo);
     };

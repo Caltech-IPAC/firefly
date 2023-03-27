@@ -11,6 +11,8 @@ import {getTblById, calcColumnWidths, getSelectedData, getColumnValues} from '..
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../core/ComponentCntlr.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {quoteNonAlphanumeric}  from '../../util/expr/Variable.js';
+import {SelectInfo} from 'firefly/tables/SelectInfo';
+import {merge} from 'lodash';
 
 //import HelpIcon from '../../ui/HelpIcon.jsx';
 const popupId = 'XYColSelect';
@@ -41,9 +43,9 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
    if (getTblById(TBL_ID)) {
        hideColSelectPopup();
        dispatchTableRemove(TBL_ID);
-}
+    }
 
-    colValStats = colValStats.filter((col) => col.visibility !== 'hide' && col.visibility !== 'hidden');
+    colValStats = colValStats.filter((col) => col.visibility !== 'hidden');
     const colNames = colValStats.map((colVal) => {return colVal.name;});
     const hlRowNum = getHlRow(currentVal,colNames) || 0;
 
@@ -80,6 +82,17 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
     }
 
     const tableModel = {totalRows: data.length, tbl_id:TBL_ID, tableData: {columns,  data }, highlightedRow: hlRowNum};
+
+    if (multiSelect) { //select all columns where use:true
+        const selectInfoCls = SelectInfo.newInstance({rowCount: tableModel.totalRows});
+        tableModel.tableData.data.forEach((row, index) => {
+            if (colValStats[index].use) {
+                selectInfoCls.setRowSelect(index, true);
+            }
+        });
+        const selectInfo = selectInfoCls.data;
+        merge(tableModel, {selectInfo});
+    }
 
     // 360 is the width of table options
     const minWidth = Math.max(columns.reduce((rval, c) => isFinite(c.prefWidth) ? rval+c.prefWidth : rval, 0), 360);
