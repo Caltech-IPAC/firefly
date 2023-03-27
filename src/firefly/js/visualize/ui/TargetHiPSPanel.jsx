@@ -448,7 +448,7 @@ function loadMocWithAbort(mocList, plotId) {
                         title,
                         color: mocColor ?? colors[i % 2],
                         mocUrl,
-                        mocGroupDefColorId: `mocForTargetHipsPanelID-${i}`,
+                        mocGroupDefColorId: `mocForTargetHipsPanelID-${i}-${mocColor??''}`,
                     });
                 }
             }
