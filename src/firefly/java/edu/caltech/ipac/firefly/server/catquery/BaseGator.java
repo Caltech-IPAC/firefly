@@ -73,8 +73,12 @@ public abstract class BaseGator extends EmbeddedDbProcessor {
     }
 
     protected File loadDataFile(TableServerRequest request) throws DataAccessException {
-        CatalogRequest req = QueryUtil.assureType(CatalogRequest.class, request);
+        CatalogRequest req = getCatalogRequest(request);
         return searchGator(req);
+    }
+
+    protected CatalogRequest getCatalogRequest(TableServerRequest request) throws DataAccessException {
+        return QueryUtil.assureType(CatalogRequest.class, request);
     }
 
     protected abstract String getDefService();
