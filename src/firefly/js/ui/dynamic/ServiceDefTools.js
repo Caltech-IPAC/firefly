@@ -110,7 +110,7 @@ function makeExamples(inExample) {
         };
     }
     else {
-        return { targetPanelExampleRow1: inExample, targetPanelExampleRow2: undefined };
+        return { targetPanelExampleRow1: [inExample], targetPanelExampleRow2: [] };
     }
 }
 
