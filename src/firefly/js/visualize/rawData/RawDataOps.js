@@ -19,6 +19,8 @@ import {Logger} from 'firefly/util/Logger.js';
 const nextColorChangeParams= new Map();
 const colorChangeDonePromises= new Map();
 const imageIdsRequested= new Map();
+const QUARTER_ZOOM_FACT= .15;
+const HALF_ZOOM_FACT= .15;
 
 
 /**
@@ -211,10 +213,12 @@ function clearLocalStretchData(plot) {
     entry.dataType= CLEARED;
 }
 
+// keep code around
 // function isNoisyImage(plot) {
 //     if (isNaN(plot?.webFitsData?.[Band.NO_BAND.value]?.largeBinPercent)) return false;
 //     return (!isThreeColor(plot) && plot.webFitsData[Band.NO_BAND.value].largeBinPercent>.03);
 // }
+
 
 /**
  * @param {WebPlot} plot
@@ -227,20 +231,24 @@ function getFirstDataCompress(plot, mask) {
     const size= dataWidth*dataHeight;
     if (size < 6*MEG) return zoomFactor<.3 ? HALF : FULL;
 
-    if (zoomFactor<.15) return QUARTER;
-    else if (zoomFactor<.3) return HALF;
+    if (zoomFactor<QUARTER_ZOOM_FACT) return QUARTER;
+    else if (zoomFactor<HALF_ZOOM_FACT) return HALF;
     else return size < MAX_FULL_DATA_SIZE ? FULL : HALF;
 }
 
 
-function getZoomBasedNextDataCompress(firstCompress, plot) {
+/**
+ * @param {String} firstCompress - the result of getFirstDataCompress
+ * @param {WebPlot} plot
+ * @return {string} -  should be 'FULL' or 'HALF' or 'QUARTER'
+ */
+function getNextDataCompress(firstCompress, plot) {
     if (firstCompress===FULL) return FULL;
-
     const {zoomFactor, dataWidth, dataHeight}= plot;
-    if (zoomFactor<.1) {
+    if (zoomFactor<QUARTER_ZOOM_FACT) {
         return firstCompress;
     }
-    else if (zoomFactor<.3) {
+    else if (zoomFactor<HALF_ZOOM_FACT) {
         return (firstCompress===QUARTER) ? HALF : firstCompress;
     }
     else {
@@ -299,7 +307,7 @@ export async function updateStretchDataAfterZoom(plotId,dispatcher, secondTry=fa
     const entry = getEntry(plot.plotImageId);
     if (!entry?.rawTileDataGroup) return;
     const {dataCompress}=  entry.rawTileDataGroup;
-    const nextDataCompress= getZoomBasedNextDataCompress(dataCompress,plot);
+    const nextDataCompress= getNextDataCompress(dataCompress,plot);
     if (dataCompress===FULL || nextDataCompress===dataCompress) return; // if the compression target is already achieved then return
 
     const workerKey= getEntry(plot.plotImageId)?.workerKey ?? getNextWorkerKey();
