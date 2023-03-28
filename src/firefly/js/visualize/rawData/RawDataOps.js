@@ -5,7 +5,7 @@ import {createCanvas, isGPUAvailableInWorker, isImageBitmap, MEG} from '../../ut
 import ImagePlotCntlr, {dispatchRequestLocalData, visRoot} from '../ImagePlotCntlr.js';
 import {PlotState} from '../PlotState.js';
 import {getNextWorkerKey, postToWorker} from '../../threadWorker/WorkerAccess.js';
-import {addRawDataToCache, CLEARED, getEntry, STRETCH_ONLY} from './RawDataCache.js';
+import {addRawDataToCache, CLEARED, FULL, getEntry, HALF, QUARTER, STRETCH_ONLY} from './RawDataCache.js';
 import {getColorModel} from './rawAlgorithm/ColorTable.js';
 import {getGPUOps} from './RawImageTilesGPU.js';
 import {getGpuJs} from './GpuJsConfig.js';
@@ -19,6 +19,8 @@ import {Logger} from 'firefly/util/Logger.js';
 const nextColorChangeParams= new Map();
 const colorChangeDonePromises= new Map();
 const imageIdsRequested= new Map();
+const QUARTER_ZOOM_FACT= .15;
+const HALF_ZOOM_FACT= .15;
 
 
 /**
@@ -211,10 +213,12 @@ function clearLocalStretchData(plot) {
     entry.dataType= CLEARED;
 }
 
-function isNoisyImage(plot) {
-    if (isNaN(plot?.webFitsData?.[Band.NO_BAND.value]?.largeBinPercent)) return false;
-    return (!isThreeColor(plot) && plot.webFitsData[Band.NO_BAND.value].largeBinPercent>.03);
-}
+// keep code around
+// function isNoisyImage(plot) {
+//     if (isNaN(plot?.webFitsData?.[Band.NO_BAND.value]?.largeBinPercent)) return false;
+//     return (!isThreeColor(plot) && plot.webFitsData[Band.NO_BAND.value].largeBinPercent>.03);
+// }
+
 
 /**
  * @param {WebPlot} plot
@@ -222,35 +226,35 @@ function isNoisyImage(plot) {
  * @return {string} -  should be 'FULL' or 'HALF' or 'QUARTER'
  */
 function getFirstDataCompress(plot, mask) {
-    if (mask) return 'FULL';
-    const {dataWidth, dataHeight}= plot;
+    if (mask) return FULL;
+    const {dataWidth, dataHeight, zoomFactor}= plot;
     const size= dataWidth*dataHeight;
-    if (isNoisyImage(plot)) { //these type of image don't seem to compress very well
-        return (size < 55*MEG) ? 'FULL' : 'QUARTER';
-    }
-    if (size < 6*MEG) return 'FULL';
-    if (size < 10*MEG) return 'HALF';
-    return 'QUARTER';
-    // if (zoomFactor===1)  return 'QUARTER'; // this is probably the init, zoom will change probably to smaller;
-    // // if (zoomFactor<.2) return 'QUARTER';
-    // return (zoomFactor<.4) ? 'HALF' : 'FULL';
+    if (size < 6*MEG) return zoomFactor<.3 ? HALF : FULL;
+
+    if (zoomFactor<QUARTER_ZOOM_FACT) return QUARTER;
+    else if (zoomFactor<HALF_ZOOM_FACT) return HALF;
+    else return size < MAX_FULL_DATA_SIZE ? FULL : HALF;
 }
+
 
 /**
  * @param {String} firstCompress - the result of getFirstDataCompress
  * @param {WebPlot} plot
- * @return {string} should be 'FULL' or 'HALF'
+ * @return {string} -  should be 'FULL' or 'HALF' or 'QUARTER'
  */
 function getNextDataCompress(firstCompress, plot) {
+    if (firstCompress===FULL) return FULL;
     const {zoomFactor, dataWidth, dataHeight}= plot;
-    const size= dataWidth*dataHeight;
-    if (firstCompress!=='QUARTER' && size < MAX_FULL_DATA_SIZE) return 'FULL';
-    if (size > MAX_FULL_DATA_SIZE) return 'HALF';
-    if (isNoisyImage(plot)) { //these type of image don't seem to compress very well
-        return 'FULL';
+    if (zoomFactor<QUARTER_ZOOM_FACT) {
+        return firstCompress;
     }
-    if (size > 70*MEG && zoomFactor<.4) return 'HALF';
-    return 'FULL';
+    else if (zoomFactor<HALF_ZOOM_FACT) {
+        return (firstCompress===QUARTER) ? HALF : firstCompress;
+    }
+    else {
+        const size= dataWidth*dataHeight;
+        return (size > MAX_FULL_DATA_SIZE) ? HALF : FULL;
+    }
 }
 
 const delay = async (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -275,40 +279,48 @@ export async function loadStretchData(pv, plot, dispatcher) {
     const oPv= mask ? getOverlayById(pv,imageOverlayId) : undefined;
     const maskOptions= mask ? {maskColor:oPv?.colorAttributes.color, maskBits: oPv?.maskValue } : undefined;
     const dataCompress= getFirstDataCompress(plot,mask);
-    const dataSize= plot.dataWidth*plot.dataHeight;
     const {success:firstSuccess, fatal}= await loadStandardStretchData(workerKey, plot,
                   {dataCompress, backgroundUpdate:false, checkForPlotUpdate:!mask}, maskOptions);
 
     if (plotInvalid()) return;
     if (firstSuccess) {
         dispatcher({ type: ImagePlotCntlr.BYTE_DATA_REFRESH, payload:{plotId, imageOverlayId, plotImageId}});
-        if (dataCompress==='FULL') return;
+        if (dataCompress===FULL) return;
     }
     else {
         if (fatal) {
             Logger('RawDataOps').warn(`dispatch the the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
-            if (dataCompress!=='FULL') {
-                await requestAgain(reqId, plotId, plot, 1, 'FULL', workerKey, dispatcher);
+            if (dataCompress!==FULL) {
+                await requestAgain(reqId, plotId, plot, 1, FULL, workerKey, dispatcher);
             }
             else {
                 dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
                     payload:{plotId, description:'Failed: Could not retrieve image render data' }});
             }
-            return;
         }
     }
+}
 
-    if (plotInvalid()) return;
-    let currPlot= primePlot(visRoot(),plotId);
-    const waitTime= currPlot.zoomFactor<.3 ? 4000 : 1000; // wait 4 sec if small zoom level is otherwise 1 sec
-    const nextDataCompress= getNextDataCompress(dataCompress,currPlot);
-    const secondSuccess= await requestAgain(reqId, plotId, currPlot, waitTime, nextDataCompress, workerKey, dispatcher);
-    if (secondSuccess && nextDataCompress==='HALF' &&  dataSize < MAX_FULL_DATA_SIZE) {
-        if (plotInvalid()) return;
-        currPlot= primePlot(visRoot(),plotId);
-        const waitTime= currPlot.zoomFactor<.5 ? 7000 : 1500; // This image could be very big, wait longer before the load
-        await requestAgain(reqId, plotId,currPlot, waitTime,'FULL', workerKey,dispatcher);
-    }
+export async function updateStretchDataAfterZoom(plotId,dispatcher, secondTry=false) {
+    const plot= primePlot(visRoot(),plotId);
+    if (!plot) return;
+    const entry = getEntry(plot.plotImageId);
+    if (!entry?.rawTileDataGroup) return;
+    const {dataCompress}=  entry.rawTileDataGroup;
+    const nextDataCompress= getNextDataCompress(dataCompress,plot);
+    if (dataCompress===FULL || nextDataCompress===dataCompress) return; // if the compression target is already achieved then return
+
+    const workerKey= getEntry(plot.plotImageId)?.workerKey ?? getNextWorkerKey();
+    const reqId= getStretchReqId();
+    imageIdsRequested.set(plot.plotImageId,reqId);
+    const success= await requestAgain(reqId, plot.plotId, plot, 100, nextDataCompress, workerKey, dispatcher);
+    if (success || secondTry) return;
+
+               // only to this code if first try and request failed
+    await delay(3000);
+    if (getEntry(plot.plotImageId)?.rawTileDataGroup.dataCompress===nextDataCompress) return; // image already achieved target via another request
+    if (imageIdsRequested.get(plot.plotImageId)!==reqId) return; // abort another request for this image is running
+    void await updateStretchDataAfterZoom(plotId, dispatcher, true); // second try if mainly a fallback, code will rarely get here
 }
 
 /**
@@ -357,7 +369,7 @@ async function requestAgain(reqId, plotId, plot, waitTime, dataCompress, workerK
  * @return {Promise<{success:boolean, fatal: boolean}>}
  */
 async function loadStandardStretchData(workerKey, plot, loadingOptions, maskOptions) {
-    const {dataCompress='FULL', backgroundUpdate=false, checkForPlotUpdate=true}= loadingOptions;
+    const {dataCompress=FULL, backgroundUpdate=false, checkForPlotUpdate=true}= loadingOptions;
     const {processHeader} = plot.rawData.bandData[0];
     const {plotImageId,colorTableId:originalColorTableId}= plot;
     const veryLargeData= plot.dataWidth*plot.dataHeight > MAX_FULL_DATA_SIZE;

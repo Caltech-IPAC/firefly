@@ -1,12 +1,14 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {updateStretchDataAfterZoom} from '../rawData/RawDataOps.js';
 import {UserZoomTypes, getArcSecPerPix, getEstimatedFullZoomFactor,
     getNextZoomLevel, getZoomLevelForScale, FullType} from '../ZoomUtil.js';
 import {isImage, isHiPS} from '../WebPlot.js';
 import ImagePlotCntlr, {
     ActionScope, IMAGE_PLOT_KEY, WcsMatchType,
-    dispatchUpdateViewSize, dispatchRecenter, dispatchChangeCenterOfProjection } from '../ImagePlotCntlr.js';
+    dispatchUpdateViewSize, dispatchRecenter, dispatchChangeCenterOfProjection, visRoot
+} from '../ImagePlotCntlr.js';
 import { getPlotViewById, primePlot, operateOnOthersInPositionGroup, applyToOnePvOrAll} from '../PlotViewUtil.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js';
 import {doHiPSImageConversionIfNecessary} from './PlotHipsTask.js';
@@ -206,4 +208,5 @@ function processFitsImageZoom(dispatcher, plot, zoomLevel, userZoomType, zoomLoc
         type: ImagePlotCntlr.ZOOM_IMAGE,
         payload: { zoomLevel, zoomLockingEnabled,userZoomType, devicePt, plotId, primaryStateJson:undefined}});
     dispatcher( { type: ImagePlotCntlr.ANY_REPLOT, payload:{plotIdAry:[plotId]}} );
+    void updateStretchDataAfterZoom(plotId, dispatcher);
 }
