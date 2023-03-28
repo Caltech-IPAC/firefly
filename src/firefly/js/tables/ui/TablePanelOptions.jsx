@@ -28,6 +28,7 @@ import {showAddOrUpdateColumn} from './AddOrUpdateColumn.jsx';
 import {BY_SCROLL} from './BasicTableView.jsx';
 
 import EDIT from 'html/images/16x16_edit_icon.png';
+import {MAX_ROW} from 'firefly/tables/TableRequestUtil';
 
 
 export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOptionReset, clearFilter}) => {
@@ -163,7 +164,7 @@ function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChang
                 </div>
             </div>
             <div>
-                {showPaging &&
+                {showPaging && pageSize!==MAX_ROW &&
                 <InputField
                     validator={intValidator(1,10000)}
                     tooltip='Set page size'
