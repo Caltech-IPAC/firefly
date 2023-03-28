@@ -20,7 +20,7 @@ const nextColorChangeParams= new Map();
 const colorChangeDonePromises= new Map();
 const imageIdsRequested= new Map();
 const QUARTER_ZOOM_FACT= .15;
-const HALF_ZOOM_FACT= .15;
+const HALF_ZOOM_FACT= .42;
 
 
 /**
@@ -263,7 +263,14 @@ let reqIdCounter= 0;
 const getStretchReqId= () => `stretch-req-${++reqIdCounter}`;
 
 
-
+/**
+ * load the stretch data from the server for a given stretch parameters. The loading will determine how much it compresses
+ * this data it could be QUARTER, HALF, or FULL
+ * @param pv
+ * @param plot
+ * @param dispatcher
+ * @return {Promise<void>}
+ */
 export async function loadStretchData(pv, plot, dispatcher) {
 
     const workerKey= getEntry(plot.plotImageId)?.workerKey ?? getNextWorkerKey();
@@ -285,7 +292,6 @@ export async function loadStretchData(pv, plot, dispatcher) {
     if (plotInvalid()) return;
     if (firstSuccess) {
         dispatcher({ type: ImagePlotCntlr.BYTE_DATA_REFRESH, payload:{plotId, imageOverlayId, plotImageId}});
-        if (dataCompress===FULL) return;
     }
     else {
         if (fatal) {
@@ -301,6 +307,13 @@ export async function loadStretchData(pv, plot, dispatcher) {
     }
 }
 
+/**
+ * load the stretch data again if it is either QUARTER or HALF, if it is already FULL then return
+ * @param {String} plotId
+ * @param dispatcher
+ * @param {boolean} secondTry - true if call recursively
+ * @return {Promise<void>}
+ */
 export async function updateStretchDataAfterZoom(plotId,dispatcher, secondTry=false) {
     const plot= primePlot(visRoot(),plotId);
     if (!plot) return;
