@@ -52,7 +52,7 @@ export function makeSearchActionObj({ cmd, groupId, label='', tip, searchType, m
                                         verb=DEFAULT_VERB, supported= DEF_SUPPORTED
                                     }, ) {
     if (searchType!==SearchTypes[searchType]) searchType= SearchTypes.point;
-    return { cmd, label, tip, searchType, min, max, supported, execute, verb, searchDesc, groupId};
+    return {cmd, label, tip, searchType, min, max, supported, execute, verb, searchDesc, groupId};
 }
 
 export function getSearchTypeDesc(sa, wp, size, areaPtsLength) {

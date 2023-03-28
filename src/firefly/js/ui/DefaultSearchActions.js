@@ -2,14 +2,19 @@ import {makeSearchActionObj, SearchTypes} from '../core/ClickToAction.js';
 import {flux} from '../core/ReduxFlux.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {sprintf} from '../externalSource/sprintf.js';
-import {makeFileRequest} from '../api/ApiUtilTable.jsx';
+import {getTableUiByTblId, makeFileRequest} from '../api/ApiUtilTable.jsx';
 import {makeVOCatalogRequest} from '../tables/TableRequestUtil.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
 import {setMultiSearchPanelTab} from './MultiSearchPanel.jsx';
+import {Format} from 'firefly/data/FileAnalysis';
+import {doJsonRequest} from 'firefly/core/JsonUtils';
+import {showInfoPopup} from 'firefly/ui/PopupUtil';
 
 //note - these two redundant function are here because of circular dependencies.
 // this file is imported very early and webpack is creating errors
 //-----------------
+const SEARCH_TBL_SOURCE= 'EXISTING_TBL_SOURCE';
+
 const getAppOptions= () => flux.getState().app_data.appOptions ?? window.firefly?.options ?? {};
 
 const dispatchShowDropDown= ({view, initArgs}) =>
@@ -128,21 +133,15 @@ export const makeDefTableSearchActions= () => {
             searchDesc: 'Display HiPS for row'
         } ),
 
-        // for example of a whole table search
-        // makeSearchActionObj({
-        //     cmd: 'tableTapUpload',
-        //     groupId: 'tableTap',
-        //     label: 'Upload',
-        //     tip: 'test table',
-        //     searchType: SearchTypes.wholeTable,
-        //     execute: (sa, table) => {
-        //         console.log(`execute action for ${table?.tbl_id}`);
-        //     },
-        //     supported: (table) => {
-        //         console.log(`execute action for ${table.tbl_id}`);
-        //         return true;
-        //     }
-        // })
+        makeSearchActionObj({
+            cmd: 'tableTapUpload',
+            groupId: 'tableTap',
+            label: 'Upload Table',
+            tip: 'Upload Whole Table',
+            searchType: SearchTypes.wholeTable,
+            execute: (sa,table) => searchWholeTable(sa,table),
+            searchDesc: 'Use table as an upload to TAP search'
+        })
 ];
 
 };
@@ -182,8 +181,33 @@ export const makeExternalSearchActions = () => {
     ];
 };
 
-
-
+async function searchWholeTable(sa,table) {
+        const params ={
+            [ServerParams.COMMAND]: ServerParams.TABLE_SAVE,
+            [ServerParams.REQUEST]: JSON.stringify(table.request),
+            file_name: table.request?.META_INFO?.title ?? 'search_tbl_upload',
+            file_format: Format.IPACTABLE,
+            save_to_temp: 'true'
+        };
+        const tbl = getTableUiByTblId(table?.tbl_id);
+        const columns = tbl.columns.map((col) =>
+            col.visibility === 'hide' || col.visibility === 'hidden'? ({...col, use:false}) :  ({...col, use:true}));
+        const result = await doJsonRequest(ServerParams.TABLE_SAVE, params);
+        if (!result.success) {
+            showInfoPopup('Error loading this table', result.error);
+            return false;
+        }
+        const uploadInfo = {
+            serverFile: result?.serverFile ?? null,
+            title: tbl.title,
+            fileName: tbl.title,
+            tbl_id: tbl.tbl_id,
+            columns,
+            totalRows: tbl.totalRows,
+            tableSource: SEARCH_TBL_SOURCE,
+        };
+        showTapSearchPanel( {uploadInfo});
+}
 
 function searchNed(cenWpt,radius) {
     const accessUrl = 'http://ned.ipac.caltech.edu/cgi-bin/NEDobjsearch?search_type=Near+Position+Search&of=xml_main&';
