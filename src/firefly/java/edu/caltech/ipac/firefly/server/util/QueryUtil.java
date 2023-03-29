@@ -602,7 +602,7 @@ public class QueryUtil {
             double xval = xValGetter.getValue(row);
             double yval = yValGetter.getValue(row);
 
-            if (Double.isNaN(xval) || Double.isNaN(yval)) {
+            if (Double.isNaN(xval) || Double.isNaN(yval) || Double.isInfinite(xval) || Double.isInfinite(yval)) {
                 outRows--;
                 continue;
             }
