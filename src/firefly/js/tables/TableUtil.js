@@ -1304,9 +1304,13 @@ export function hasRowAccess(tableModel, rowIdx) {
     }
     if (rcname) {
         const rdate = getCellValue(tableModel, rowIdx, rcname);
-        if ( rdate && new Date() > new Date(rdate)) {
-            return true;
+        if (!rdate) return false;
+        let rDateObj= new Date(rdate);
+        if (rDateObj.toString()==='Invalid Date') {
+            rDateObj= new Date(rdate.split(' ',2)?.join('T'));
+            if (rDateObj.toString()==='Invalid Date') return false;
         }
+        if (Date.now() > rDateObj) return true;
     }
     return false;
 }
