@@ -26,7 +26,7 @@ import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.
 import {warningDivId} from '../../ui/LostConnection.jsx';
 
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-42x42.png';
-import {startTTFeatureWatchers} from '../common/ttFeatureWatchers';
+import {getAllStartIds, startTTFeatureWatchers} from '../common/ttFeatureWatchers';
 
 /**
  * This FireflyViewer is a generic application with some configurable behaviors.
@@ -50,7 +50,7 @@ export class FireflyViewer extends PureComponent {
         getImageMasterData();
         const views = LO_VIEW.get(props.views) || LO_VIEW.none;
         this.state = this.getNextState();
-        startTTFeatureWatchers();
+        startTTFeatureWatchers(getAllStartIds());
         if (views.has(LO_VIEW.images) ) startImagesLayoutWatcher();
         dispatchAddSaga(layoutManager,{views: props.views});
         if (getWorkspaceConfig()) { initWorkspace(); }

@@ -89,7 +89,7 @@ export function TablePanel(props) {
 
     const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
     const viewIcoStyle = 'PanelToolbar__button ' + (textView ? 'tableView' : 'textView');
-    const tableTopPos = showToolbar && (leftButtons && showTitle ? 41 : 29) || 0;
+    const tableTopPos = showToolbar  ? 29 : 0;
     const TT_VIEW = textView ? TT_TABLE_VIEW : TT_TEXT_VIEW;
 
     // converts the additional left/right buttons into elements
@@ -284,14 +284,14 @@ TablePanel.defaultProps = {
 
 
 function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
-    const style = {display: 'flex'};
+    const style = {display: 'flex', flexDirection: 'row'};
     if (leftButtons) {
-        Object.assign(style, {flexDirection: 'column', justifyContent: 'center'});
+            Object.assign(style, {flexDirection: showTitle ? 'row' : 'column', justifyContent: 'center'});
     }
     return (
         <div style={style}>
             { showTitle && <Title {...{title, removable, tbl_id}}/>}
-            {leftButtons && <div>{leftButtons}</div>}
+            {leftButtons && <div style={showTitle ? {paddingLeft:10, alignSelf:'center'} : {}}>{leftButtons}</div>}
         </div>
     );
 }
