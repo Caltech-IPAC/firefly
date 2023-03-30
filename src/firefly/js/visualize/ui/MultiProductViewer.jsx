@@ -4,6 +4,7 @@
 import React, {memo, useContext, useState, useEffect} from 'react';
 import {string,array,object,bool} from 'prop-types';
 import {get, isFunction, isArray} from 'lodash';
+import {getMetaEntry, getTableGroup, getTblById, onTableLoaded} from '../../tables/TableUtil.js';
 import {useStoreConnector} from '../../ui/SimpleComponent';
 import {
     NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted, IMAGE, PLOT2D, SINGLE, GRID, getMultiViewRoot
@@ -200,10 +201,6 @@ const MultiProductViewerImpl= memo(({ dpId='DataProductsType', metaDataTableId, 
 const makeChartTableLookupKey= (activeItemLookupKey, fileMenuKey) => `${activeItemLookupKey}-charTable-${fileMenuKey}`;
 
 
-const chartTableOptions= [
-    {label: 'Table', value: SHOW_TABLE},
-    {label: 'Chart', value: SHOW_CHART}
-    ];
 const imageOp= {label: 'Image', value: SHOW_IMAGE};
 
 const choiceTBStyle= {display:'flex', flexDirection: 'column', background: '#c8c8c8', width:'100%', height:'100%'};
@@ -212,8 +209,19 @@ const tbInternalStyle= {display:'flex', flexDirection: 'row', alignItems:'center
 
 function MultiProductChoice({makeDropDown, chartViewerId, imageViewerId, metaDataTableId,
                                     tableGroupViewerId,whatToShow, onChange, mayToggle=false}) {
-
+    const chartTableOptions= [ {label: 'Table', value: SHOW_TABLE}, {label: 'Chart', value: SHOW_CHART} ];
     const options= !imageViewerId ? chartTableOptions : [...chartTableOptions, imageOp];
+    const [chartName,setChartName]= useState('Chart');
+    options[1].label= chartName;
+    const tbl_id= getTableGroup(tableGroupViewerId)?.active;
+    const table= tbl_id ? getTblById(tbl_id) : undefined;
+    useEffect(() => {
+        if (!table) return;
+        onTableLoaded(tbl_id).then(() => {
+            const name= (getMetaEntry(tbl_id, 'utype')==='spec:Spectrum') ? 'Spectrum' : 'Chart';
+            setChartName(name);
+        });
+    }, [table]);
     const toolbar= (
         <div style={tbInternalStyle}>
             {makeDropDown && <div style={{height:30}}> {makeDropDown()} </div>}
