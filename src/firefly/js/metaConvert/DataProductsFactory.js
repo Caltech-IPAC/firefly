@@ -186,7 +186,8 @@ function initConverterTemplates() {
             threeColor: false,
             hasRelatedBands: false,
             canGrid: false,
-            getSingleDataProduct: makeAnalysisGetSingleDataProduct(makeShaPlotRequest),
+            getSingleDataProduct: (table, row, activateParams) =>
+                makeAnalysisGetSingleDataProduct(makeShaPlotRequest)(table, row, activateParams, 'spectrum'),
             getRelatedDataProduct: () => Promise.reject('related data products not supported'),
             getGridDataProduct: () => Promise.reject('grid not supported'),
         },
