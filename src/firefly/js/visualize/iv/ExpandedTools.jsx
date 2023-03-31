@@ -12,7 +12,6 @@ import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
 import { dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
-// import {VisToolbar} from '../ui/VisToolbar.jsx';
 import {getMultiViewRoot, getExpandedViewerItemIds} from '../MultiViewCntlr.js';
 
 import './ExpandedTools.css';

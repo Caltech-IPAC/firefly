@@ -9,7 +9,9 @@ import {getJsonProperty} from '../../rpc/CoreServices.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchTableFetch, dispatchTableHighlight, dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import { getCellValue, getColumnIdx, getTblById, onTableLoaded, } from '../../tables/TableUtil.js';
+import {
+    getCellValue, getColumnIdx, getMetaEntry, getTblById, getTblRowAsObj, onTableLoaded,
+} from '../../tables/TableUtil.js';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {Logger} from '../../util/Logger.js';
 import {cisxAdhocServiceUtype, getServiceDescriptors, standardIDs} from '../../util/VOAnalyzer.js';
@@ -62,6 +64,13 @@ function getCollectionUrl(registryTblId, rowIdx) {
     const table= getTblById(registryTblId);
     if (!table) return;
     return getCellValue(table,rowIdx,'access_url');
+}
+
+function getCollectionAttributes(registryTblId, rowIdx) {
+    const table= getTblById(registryTblId);
+    if (!table) return {};
+    const {band,coverage}= getTblRowAsObj(table,rowIdx);
+    return {bandDesc:band, coverage};
 }
 
 function findUrlInReg(url, registryTblId) {
@@ -159,6 +168,7 @@ export function DLGeneratedDropDown({initArgs={}}) {// eslint-disable-line no-un
     const [initialRow]= useState(() => getTblById(registryTblId)?.highlightedRow ?? 0);
     const currentIdx= useStoreConnector(() => getTblById(registryTblId)?.highlightedRow ?? -1);
     const [url,setUrl]= useState();
+    const [searchAttributes,setSearchAttributes]= useState({});
 
     loadedTblIdCache= loadedTblIds;
 
@@ -207,13 +217,16 @@ export function DLGeneratedDropDown({initArgs={}}) {// eslint-disable-line no-un
     useEffect(() => {
         if (!isRegLoaded || !useCurrentIdx) return;
         const newUrl= getCollectionUrl(registryTblId, currentIdx);
-        if (newUrl) setUrl(newUrl);
+        if (newUrl) {
+            setUrl(newUrl);
+            setSearchAttributes(getCollectionAttributes(registryTblId,currentIdx));
+        }
     }, [currentIdx, isRegLoaded, useCurrentIdx]);
 
-    return <DLGeneratedDropDownTables {...{registryTblId,isRegLoaded, loadedTblIds, setLoadedTblIds, url, initArgs}}/>;
+    return <DLGeneratedDropDownTables {...{registryTblId,isRegLoaded, loadedTblIds, setLoadedTblIds, url, searchAttributes, initArgs}}/>;
 }
 
-export function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTblIds, setLoadedTblIds, url, initArgs}) {
+export function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTblIds, setLoadedTblIds, url, searchAttributes, initArgs}) {
 
     const [sideBarShowing, setSideBarShowing]= useState(true);
     const currentTblId= loadedTblIds?.[url];
@@ -221,7 +234,9 @@ export function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTbl
         if (isRegLoaded && !currentTblId) {
             const loadOptions=  {META_INFO:{
                     [MetaConst.LOAD_TO_DATALINK_UI]: 'true',
-                    [MetaConst.IMAGE_SOURCE_ID] : 'FALSE'}
+                    [MetaConst.IMAGE_SOURCE_ID] : 'FALSE',
+                    ...searchAttributes,
+                },
             };
             if (!url) return;
             const req= makeFileRequest('Data link UI', url, undefined, loadOptions);
@@ -499,7 +514,7 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
             showInfoPopup('Please enter all of the fields', 'Error');
             return false;
         }
-        handleSearch(convertedR,qAna,idx);
+        handleSearch(convertedR,qAna,idx, docRows?.[0]?.accessUrl);
         return true;
     };
 
@@ -534,16 +549,17 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
 }
 
 
-function handleSearch(request, qAna, idx) {
+function handleSearch(request, qAna, idx, helpUrl) {
     const primeSd= qAna.primarySearchDef[idx].serviceDef;
     const primeSdId= primeSd.ID ?? primeSd.id;
+    const {coverage,bandDesc}= qAna.primarySearchDef[idx];
 
     const concurrentSDAry= qAna.concurrentSearchDef.filter( (searchDef) => {
         const id= searchDef.serviceDef.ID ?? searchDef.serviceDef.id ?? '';
         return id.startsWith(primeSdId);
     });
 
-    const tableRequestAry= makeAllSearchRequest(request, primeSd,concurrentSDAry);
+    const tableRequestAry= makeAllSearchRequest(request, primeSd,concurrentSDAry, {coverage,bandDesc,helpUrl});
 
     tableRequestAry.forEach( (dataTableReq) => {
         Logger('DLGeneratedDropDown').debug(dataTableReq);
@@ -554,8 +570,8 @@ function handleSearch(request, qAna, idx) {
 }
 
 
-function makeAllSearchRequest(request, primeSd, concurrentSDAry) {
-    const primeRequest= makeServiceDescriptorSearchRequest(request,primeSd);
+function makeAllSearchRequest(request, primeSd, concurrentSDAry, extraPrimaryMeta) {
+    const primeRequest= makeServiceDescriptorSearchRequest(request,primeSd,extraPrimaryMeta);
     const concurrentRequestAry= concurrentSDAry
         .map( (sd) => makeServiceDescriptorSearchRequest(request,sd))
         .filter( (url) => url);
@@ -578,12 +594,16 @@ function analyzeQueries(tbl_id) {
     const accessUrlIdx= getColumnIdx(table,ACCESS_URL,true);
     const descIdx= getColumnIdx(table,DESC,true);
 
+    const bandDesc= getMetaEntry(table,'bandDesc');
+    const coverage= getMetaEntry(table,'coverage');
+
+
     const makeSearchDef= (row) => {
         const serviceDef= sdAry.find( (sd) => {
             const id= sd.ID ?? sd.id ?? '';
             return id===row[sdIdx];
         });
-        return {serviceDef, accessUrl: row[accessUrlIdx], id:row[idIdx], desc:row[descIdx], semantic: row[semIdx] };
+        return {serviceDef, accessUrl: row[accessUrlIdx], id:row[idIdx], desc:row[descIdx], semantic: row[semIdx], bandDesc, coverage};
     };
 
     const primarySearchDef= data

@@ -17,6 +17,7 @@ import {createSingleImageActivate, createSingleImageExtraction} from './ImageDat
 import {dispatchUpdateActiveKey, getActiveMenuKey} from './DataProductsCntlr';
 import {GIG} from '../util/WebUtil.js';
 import {dpdtDownloadMenuItem, dpdtMessageWithDownload} from './DataProductsType.js';
+import {makeObsCoreRequest} from './ObsCoreConverter.js';
 
 
 
@@ -28,13 +29,12 @@ import {dpdtDownloadMenuItem, dpdtMessageWithDownload} from './DataProductsType.
  * @param {TableModel} datalinkTable
  * @param {WorldPt|undefined} positionWP
  * @param {ActivateParams} activateParams
- * @param {Function} makeReq
  * @param additionalServiceDescMenuList
  * @param {boolean} doFileAnalysis
  * @return {DataProductsDisplayType}
  */
 export function processDatalinkTable(sourceTable, row, datalinkTable, positionWP, activateParams,
-                                     makeReq, additionalServiceDescMenuList, doFileAnalysis=true) {
+                                     additionalServiceDescMenuList, doFileAnalysis=true) {
     const dataSource= getObsCoreAccessURL(sourceTable,row);
     const dataLinkData= getDataLinkData(datalinkTable);
     const prodType= (getObsCoreProdType(sourceTable,row) || '').toLocaleLowerCase();
@@ -43,7 +43,7 @@ export function processDatalinkTable(sourceTable, row, datalinkTable, positionWP
     const descriptors= getServiceDescriptors(datalinkTable);
     const menu=  dataLinkData.length &&
          createDataLinkMenuRet({dataSource,dataLinkData,positionWP, sourceTable, row, activateParams,
-             makeReq,prodType,descriptors, additionalServiceDescMenuList, doFileAnalysis,
+             prodType,descriptors, additionalServiceDescMenuList, doFileAnalysis,
              obsTitle, sRegion });
 
     const hasData= menu.length>0;
@@ -121,7 +121,6 @@ const isAuxSem= (semantics) => semantics==='#auxiliary';
  * @param {TableModel} obj.sourceTable
  * @param {number} obj.row
  * @param {ActivateParams} obj.activateParams
- * @param obj.makeReq
  * @param obj.prodType
  * @param {Array.<DataProductsDisplayType>} [obj.additionalServiceDescMenuList]
  * @param {Array.<ServiceDescriptorDef>} [obj.descriptors]
@@ -130,7 +129,7 @@ const isAuxSem= (semantics) => semantics==='#auxiliary';
  * @param obj.sRegion
  * @return {Array.<DataProductsDisplayType>}
  */
-function createDataLinkMenuRet({dataSource, dataLinkData, positionWP, sourceTable, row, activateParams, makeReq,
+function createDataLinkMenuRet({dataSource, dataLinkData, positionWP, sourceTable, row, activateParams,
                                prodType, descriptors, additionalServiceDescMenuList, doFileAnalysis=true,
                                obsTitle, sRegion }) {
     const auxTot= dataLinkData.filter( (e) => e.semantics==='#auxiliary').length;
@@ -149,7 +148,7 @@ function createDataLinkMenuRet({dataSource, dataLinkData, positionWP, sourceTabl
             const servDesc= descriptors.find( ({ID}) => ID===serviceDefRef);
             if (servDesc) {
                 const {title,accessURL,standardID,serDefParams, ID}= servDesc;
-                const request= makeReq(accessURL,positionWP,title);
+                const request= makeObsCoreRequest(accessURL,positionWP,title, sourceTable, row);
                 const allowsInput=serDefParams.some( (p) => p.allowsInput);
                 const activate= makeFileAnalysisActivate(sourceTable,row, request, positionWP,activateParams,menuKey,
                                        undefined, serDefParams, name);
@@ -176,12 +175,12 @@ function createDataLinkMenuRet({dataSource, dataLinkData, positionWP, sourceTabl
             }
             else if (isAnalysisType(contentType)) {
                 if (doFileAnalysis) {
-                    const request= makeReq(url,positionWP,name);
+                    const request= makeObsCoreRequest(url,positionWP,name,sourceTable,row);
                     const activate= makeFileAnalysisActivate(sourceTable,row, request, positionWP,activateParams,menuKey, prodType);
                     menuEntry= dpdtAnalyze('Show: '+name,activate,url,undefined, menuKey,{semantics, size, activeMenuLookupKey,request});
                 }
                 else {
-                    menuEntry= createGuessDataType(name,menuKey,url,contentType,makeReq,semantics, activateParams, positionWP,sourceTable,row,size);
+                    menuEntry= createGuessDataType(name,menuKey,url,contentType,semantics, activateParams, positionWP,sourceTable,row,size);
                 }
             }
         }
@@ -246,10 +245,10 @@ function makeName(s='', url, auxTot, autCnt, primeCnt=0) {
  * @param size
  * @return {DataProductsDisplayType}
  */
-export function createGuessDataType(name, menuKey, url,ct,makeReq, semantics, activateParams, positionWP, table,row,size) {
+export function createGuessDataType(name, menuKey, url,ct,semantics, activateParams, positionWP, table,row,size) {
     const {imageViewerId}= activateParams;
     if (ct.includes('image') || ct.includes('fits') || ct.includes('cube')) {
-        const request= makeReq(url,positionWP,name);
+        const request= makeObsCoreRequest(url,positionWP,name,table,row);
         return dpdtImage(name,
             createSingleImageActivate(request,imageViewerId,table.tbl_id,row),
             createSingleImageExtraction(request),

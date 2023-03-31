@@ -19,7 +19,7 @@ import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TBL_RESULTS_ACTIVE, TBL_RESULTS_ADDED} from '../../tables/TablesCntlr.js';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {hasCoverageData, isCatalog, isDataProductsTable} from '../../util/VOAnalyzer.js';
-import {MetaDataMultiProductViewer} from './MetaDataMultiProductViewer';
+import {MetaDataMultiProductViewer} from './multiProduct/MetaDataMultiProductViewer.jsx';
 import {CoverageViewer} from './CoveraeViewer';
 import {isOrbitalPathTable} from '../../util/VOAnalyzer';
 import {getPlotViewAry} from 'firefly/visualize/PlotViewUtil.js';
@@ -88,6 +88,7 @@ export const makeFitsTab= () => (
     <Tab key='fits' name='Pinned Images' removable={false} id='fits'>
         <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID} insideFlex={true}
                           canReceiveNewPlots={NewPlotMode.create_replace.key}
+                          useImageList={true}
                           Toolbar={MultiViewStandardToolbar}/>
     </Tab>
 );

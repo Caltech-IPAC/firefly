@@ -1,9 +1,11 @@
 import {get, isEmpty, uniqueId} from 'lodash';
 import {getAppOptions} from '../core/AppDataCntlr.js';
+import {sprintf} from '../externalSource/sprintf.js';
 import {tokenSub} from '../util/WebUtil.js';
+import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {RangeValues, SIGMA, STRETCH_LINEAR} from '../visualize/RangeValues.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
-import {getCellValue, doFetchTable, hasRowAccess, getColumn, getColumns} from '../tables/TableUtil.js';
+import {getCellValue, doFetchTable, hasRowAccess, getColumn, getColumns, getMetaEntry} from '../tables/TableUtil.js';
 import {
     getObsCoreAccessURL,
     getObsCoreProdType,
@@ -96,7 +98,7 @@ export function getObsCoreDataProduct(table, row, activateParams, doFileAnalysis
 
     const positionWP= makeWorldPtUsingCenterColumns(table,row);
     const activeMenuLookupKey= `${descriptors[0].accessURL}--${table.tbl_id}--${row}`;
-    let serDescMenu= createServDescMenuRet(descriptors,positionWP,table,row,activateParams,makeObsCoreRequest,activeMenuLookupKey);
+    let serDescMenu= createServDescMenuRet(descriptors,positionWP,table,row,activateParams,activeMenuLookupKey);
 
     serDescMenu= serDescMenu.map( (m) =>
         ({...m,
@@ -131,7 +133,7 @@ export async function getObsCoreSingleDataProduct(table, row, activateParams, se
     if (isDataLink) {
         try {
             const datalinkTable= await doFetchTable(makeFileRequest('dl table', dataSource));
-            return processDatalinkTable(table,row,datalinkTable,positionWP,activateParams, makeObsCoreRequest, serviceDescMenuList, doFileAnalysis);
+            return processDatalinkTable(table,row,datalinkTable,positionWP,activateParams, serviceDescMenuList, doFileAnalysis);
         } catch (reason) {
                                   //todo - what about if when the data link fetch fails but there is a serviceDescMenuList - what to do? does it matter?
             dpdtMessageWithDownload(`No data to display: Could not retrieve datalink data, ${reason}`, 'Download File: '+titleStr, dataSource);
@@ -143,12 +145,12 @@ export async function getObsCoreSingleDataProduct(table, row, activateParams, se
     else {
         if (size>GIG) return dpdtMessageWithDownload('Data is too large to load', 'Download File: '+titleStr, dataSource);
         if (doFileAnalysis) {
-            const analyzerFunc= makeAnalysisGetSingleDataProduct(() => makeObsCoreRequest(dataSource, positionWP, titleStr));
+            const analyzerFunc= makeAnalysisGetSingleDataProduct(() => makeObsCoreRequest(dataSource, positionWP, titleStr,table,row));
             const result= await analyzerFunc(table,row,activateParams,prodType);
             return singleResultWithServiceDesc(activateParams.dpId, result, size, serviceDescMenuList);
         }
         else {
-            const result= createGuessDataType(titleStr,'guess-0',dataSource,prodType,makeObsCoreRequest,undefined,activateParams, positionWP,table,row,size);
+            const result= createGuessDataType(titleStr,'guess-0',dataSource,prodType,undefined,activateParams, positionWP,table,row,size);
             return singleResultWithServiceDesc(activateParams.dpId, result,size, serviceDescMenuList);
         }
     }
@@ -214,10 +216,13 @@ function getColNameFromTemplate(template) {
  * @param dataSource
  * @param positionWP
  * @param titleStr
+ * @param {TableModel} table
+ * @param {number} row
  * @return {undefined|WebPlotRequest}
  */
-export function makeObsCoreRequest(dataSource, positionWP, titleStr) {
+export function makeObsCoreRequest(dataSource, positionWP, titleStr, table, row) {
     if (!dataSource) return undefined;
+
 
     const r = WebPlotRequest.makeURLPlotRequest(dataSource, 'DataProduct');
     r.setZoomType(ZoomType.FULL_SCREEN);
@@ -229,6 +234,30 @@ export function makeObsCoreRequest(dataSource, positionWP, titleStr) {
         r.setTitleOptions(TitleOptions.FILE_NAME);
     }
     r.setPlotId(uniqueId('obscore-'));
+
+    const col= getColumn(table,'em_max',true);
+    const v= col && Number(getCellValue(table, row, 'em_max'));
+    if (col && v) {
+        const {units}= col;
+        let vToUse;
+        if (units==='m' || units==='meters') vToUse= v*100000;
+        if (units==='um') vToUse= v;
+        if (vToUse) {
+            r.setAttributes({
+                [PlotAttribute.WAVE_LENGTH_UM]:  sprintf('%.2f', vToUse),
+            });
+        }
+    }
+    const bandDesc= getMetaEntry(table,'bandDesc');
+    if (bandDesc) r.setAttributes({ [PlotAttribute.WAVE_TYPE]:  bandDesc });
+
+    const coverage= getMetaEntry(table,'coverage');
+    if (coverage) r.setAttributes({ [PlotAttribute.PROJ_TYPE_DESC]:  coverage });
+
+    const helpUrl= getMetaEntry(table,'helpUrl');
+    if (helpUrl) r.setAttributes({ [PlotAttribute.DATA_HELP_URL]:  helpUrl });
+
+
 
     if (positionWP) r.setOverlayPosition(positionWP);
     r.setInitialRangeValues(RangeValues.make2To10SigmaLinear());

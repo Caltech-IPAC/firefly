@@ -11,8 +11,8 @@ import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {visRoot, dispatchChangeActivePlotView, dispatchDeletePlotView} from '../ImagePlotCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {
-    getMultiViewRoot, getExpandedViewerItemIds, dispatchReplaceViewerItems,
-    EXPANDED_MODE_RESERVED, IMAGE
+    getMultiViewRoot, dispatchReplaceViewerItems,
+    EXPANDED_MODE_RESERVED, IMAGE, dispatchAddViewer, dispatchAddViewerItems
 } from '../MultiViewCntlr.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {TablePanel} from '../../tables/ui/TablePanel';
@@ -28,12 +28,14 @@ import {SelectInfo} from '../../tables/SelectInfo';
 
 const TABLE_ID = 'active-image-view-list-table';
 
+const HIDDEN='_HIDDEN';
 
 
-export function showExpandedOptionsPopup(plotViewAry) {
+export function showExpandedOptionsPopup(title= 'Loaded Images', viewerId= EXPANDED_MODE_RESERVED) {
+    dispatchAddViewer(viewerId+HIDDEN, true, IMAGE, false);
     const popup = (
-        <PopupPanel title={'Loaded Images'}>
-            <ImageViewOptionsPanel plotViewAry={plotViewAry}/>
+        <PopupPanel title={title}>
+            <ImageViewOptionsPanel viewerId={viewerId}/>
         </PopupPanel>
     );
     DialogRootContainer.defineDialog('ExpandedOptionsPopup', popup);
@@ -61,8 +63,9 @@ const getAttribute = (attributes, attribute, def='') => attributes?.[attribute] 
 
 const makeEnumValues = (data, idx) => uniq(data.map((d) => d[idx]).filter((d) => d)).join(',');
 
-function makeModel(tbl_id, plotViewAry, expandedIds, oldModel) {
-    const data = plotViewAry.map((pv) => {
+function makeModel(tbl_id, plotViewAry, allIds, oldModel) {
+    const pvAry= allIds.map( (id) => getPlotViewById(visRoot(),id));
+    const data = pvAry.map((pv) => {
         const plot = primePlot(pv);
         const attributes = plot ? plot.attributes : pv.request.getAttributes();
         const {plotId, serverCall, plottingStatusMsg, request} = pv;
@@ -131,18 +134,18 @@ function makeModel(tbl_id, plotViewAry, expandedIds, oldModel) {
     return newModel;
 }
 
-function dialogComplete(tbl_id) {
+function dialogComplete(tbl_id, viewerId) {
     const model = getTblById(tbl_id);
     if (!model) return;
     const plotIdAry = model.tableData.data.map((d) => d[PID_IDX]);
     if (isEmpty(plotIdAry)) return;
 
-    const currentPlotIdAry = getViewerItemIds(getMultiViewRoot(), EXPANDED_MODE_RESERVED);
+    const currentPlotIdAry = getViewerItemIds(getMultiViewRoot(), viewerId);
     if (plotIdAry.join('') === currentPlotIdAry.join('')) return;
     if (!plotIdAry.includes(visRoot().activePlotId)) {
         dispatchChangeActivePlotView(plotIdAry[0]);
     }
-    dispatchReplaceViewerItems(EXPANDED_MODE_RESERVED, plotIdAry, IMAGE);
+    dispatchReplaceViewerItems(viewerId, plotIdAry, IMAGE);
 }
 
 const deleteFailed = () => {
@@ -159,7 +162,7 @@ const removeSelected = () => {
     selectedPlotIds.forEach((plotId) => {
         dispatchDeletePlotView({plotId});
     });
-}
+};
 
 
 function getSelectedPlotIds(){
@@ -178,35 +181,45 @@ const pvKeys = ['plotId', 'request', 'serverCall', 'plottingStatusMsg'];
 const plotKeys = ['plotImageId'];
 
 
-function getPvAry(oldPvAry) {
-    const pvAry = getPlotViewAry(visRoot());
+function getPvAry(oldPvAry, viewerId) {
+    const itemIds= getViewerItemIds(getMultiViewRoot(),viewerId) ?? [];
+    const pvAry = getPlotViewAry(visRoot()).filter( (pv) => itemIds.includes(pv.plotId));
     if (!oldPvAry) return pvAry;
     return isPlotViewArysEqual(oldPvAry, pvAry, pvKeys, plotKeys) ? oldPvAry : pvAry;
 }
 
-function getExpandedIds(oldIdAry) {
-    const expandedIds = getExpandedViewerItemIds(getMultiViewRoot());
-    return isEqual(oldIdAry, expandedIds) ? oldIdAry : expandedIds;
+function getAllViewerIds(oldIdAry,viewerId, hiddenViewerId) {
+    const itemIds= getViewerItemIds(getMultiViewRoot(),viewerId) ?? [];
+    const moreIds= getViewerItemIds(getMultiViewRoot(),hiddenViewerId) ?? [];
+    const allIds=
+        [...new Set([...itemIds,...moreIds])]
+        .filter((id) => Boolean(getPlotViewById(visRoot(),id)));
+    return isEqual(oldIdAry, allIds) ? oldIdAry : allIds;
 }
 
 
-function ImageViewOptionsPanel() {
+function ImageViewOptionsPanel({viewerId}) {
 
     const tbl_ui_id = TABLE_ID + '-ui';
 
 
-    const plotViewAry = useStoreConnector(getPvAry);
-    const expandedIds = useStoreConnector(getExpandedIds);
+    const plotViewAry = useStoreConnector((oldPvAry) => getPvAry(oldPvAry,viewerId));
+    const allIds = useStoreConnector((old) => getAllViewerIds(old,viewerId, viewerId+HIDDEN));
     const [model, setModel] = useState(undefined);
 
 
     useEffect(() => {
         const oldModel = getTblById(TABLE_ID);
         if (!oldModel) {
-            watchTableChanges(TABLE_ID, [TABLE_LOADED, TABLE_FILTER, TABLE_FILTER_SELROW, TABLE_SORT], () => dialogComplete(TABLE_ID));
+            watchTableChanges(TABLE_ID, [TABLE_LOADED, TABLE_FILTER, TABLE_FILTER_SELROW, TABLE_SORT],
+                () => dialogComplete(TABLE_ID, viewerId));
         }
-        setModel(makeModel(TABLE_ID, plotViewAry, expandedIds, oldModel));
-    }, [plotViewAry, expandedIds]);
+        setModel(makeModel(TABLE_ID, plotViewAry, allIds, oldModel));
+    }, [plotViewAry, allIds]);
+
+    useEffect(() => {
+       dispatchAddViewerItems(viewerId+HIDDEN,allIds,IMAGE);
+    }, [viewerId, allIds]);
 
     if (!model) return null;
 

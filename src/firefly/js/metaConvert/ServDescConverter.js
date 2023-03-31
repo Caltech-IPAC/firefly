@@ -26,7 +26,7 @@ export async function getServiceDescSingleDataProduct(table, row, activateParams
 
 
     const activeMenuLookupKey= `${descriptors[0].accessURL}--${table.tbl_id}--${row}`;
-    const menu= createServDescMenuRet(descriptors,positionWP,table,row,activateParams,makeObsCoreRequest,activeMenuLookupKey);
+    const menu= createServDescMenuRet(descriptors,positionWP,table,row,activateParams,activeMenuLookupKey);
     const activeMenuKey= getActiveMenuKey(activateParams.dpId, activeMenuLookupKey);
     let index= menu.findIndex( (m) => m.menuKey===activeMenuKey);
     if (index<0) index= 0;
@@ -37,7 +37,7 @@ export async function getServiceDescSingleDataProduct(table, row, activateParams
             const datalinkTable= await doFetchTable(makeFileRequest('dl table', dlUrl));
             const positionWP= makeWorldPtUsingCenterColumns(table,row);
             return processDatalinkTable(table,row,datalinkTable,positionWP,activateParams,
-                makeObsCoreRequest, !isEmpty(menu)?menu:undefined);
+                !isEmpty(menu)?menu:undefined);
         }
         catch (reason) {
             return isEmpty(menu) ?
@@ -68,18 +68,17 @@ function makeDlUrl(dlServDesc, table, row) {
  * @param {TableModel} sourceTable
  * @param {number} row
  * @param {ActivateParams} activateParams
- * @param {Function} makeReq
  * @param {String} activeMenuLookupKey
  * @return {Array.<DataProductsDisplayType>}
  */
-export function createServDescMenuRet(descriptors, positionWP, sourceTable, row, activateParams, makeReq, activeMenuLookupKey) {
+export function createServDescMenuRet(descriptors, positionWP, sourceTable, row, activateParams, activeMenuLookupKey) {
     return descriptors
         .filter( (sDesc) => !isDataLinkServiceDesc(sDesc))
         .map( (sDesc,idx) => {
             const {title,accessURL,standardID,serDefParams, ID}= sDesc;
             const menuKey= 'serdesc-dlt-'+idx;
             const allowsInput= serDefParams.some( (p) => p.allowsInput);
-            const request= makeReq(accessURL,positionWP,title);
+            const request= makeObsCoreRequest(accessURL,positionWP,title,sourceTable,row);
             const name= 'Show: '+title;
             const activate= makeFileAnalysisActivate(sourceTable,row, request, positionWP,activateParams,menuKey, undefined, serDefParams, name);
             return dpdtAnalyze(name,activate,accessURL,serDefParams,menuKey,{activeMenuLookupKey,request, allowsInput, standardID, ID});
