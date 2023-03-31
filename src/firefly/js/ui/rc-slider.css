@@ -27,7 +27,7 @@
 }
 .rc-slider-handle {
   position: absolute;
-  margin-left: -4px;
+  margin-left: 0;
   /* margin-top: -5px; //original, edited by firefly */
   margin-top: -2px;
   /*
