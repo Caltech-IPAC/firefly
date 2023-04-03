@@ -29,6 +29,7 @@ import {dispatchChartAdd} from '../../charts/ChartsCntlr.js';
 import {logger} from '../../util/Logger.js';
 
 
+const MAX_ROW = Math.pow(2,31) - 1; // same as in '../../tables/TableRequestUtil.js', couldn't import from there
 
 export const LC = {
     RAW_TABLE: 'raw_table',          // raw table id
@@ -72,7 +73,7 @@ export const LC = {
     MISSION_DATA: 'missionEntries',
     GENERAL_DATA:'generalEntries',
 
-    TABLE_PAGESIZE: 30000
+    TABLE_PAGESIZE: MAX_ROW
 };
 
 const plotIdRoot= 'LC_FRAME-';

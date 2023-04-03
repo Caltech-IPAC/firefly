@@ -378,6 +378,8 @@ function fixClientTable(tableModel) {
         tableModel = TblUtil.cloneClientTable(tableModel);
     }
 
+    if (!tableModel?.request?.pageSize) set(tableModel, 'request.pageSize', MAX_ROW);
+
     return tableModel;
 }
 
