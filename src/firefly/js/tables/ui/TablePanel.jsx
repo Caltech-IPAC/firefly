@@ -119,13 +119,13 @@ export function TablePanel(props) {
                         {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:connector}} /> }
                         <div className='PanelToolbar__group'>
                             {rightButtons}
+                            {showSearchButton &&  isTableActionsDropVisible(searchActions,tbl_id ) &&
+                                <ActionsDropDownButton {...{searchActions, tbl_id}}/>
+                            }
                             {showFilterButton && filterCount > 0 &&
                             <div onClick={clearFilter}
                                  title={TT_CLEAR_FILTER}
                                  className='PanelToolbar__button clearFilters'/>}
-                            {showSearchButton &&  isTableActionsDropVisible(searchActions,tbl_id ) &&
-                                <ActionsDropDownButton {...{searchActions, tbl_id}}/>
-                            }
                             {showFilterButton &&
                             <ToolbarButton icon={FILTER}
                                            tip={TT_SHOW_FILTER}

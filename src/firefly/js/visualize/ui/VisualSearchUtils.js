@@ -277,7 +277,7 @@ function convertToSelection(plot, wp,radius,polygonAry,whichOverlay) {
 
 }
 
-export function updatePlotOverlayFromUserInput(plotId, whichOverlay, wp, radius, polygonAry, forceCenterOn = false) {
+export function updatePlotOverlayFromUserInput(plotId, whichOverlay, wp, radius, polygonAry, forceCenterOn = false, canGeneratePolygon= false) {
     const dl = getDrawLayerByType(getDlAry(), SearchSelectTool.TYPE_ID);
     if (!dl) return;
     const isCone = whichOverlay === CONE_CHOICE_KEY;
@@ -285,6 +285,14 @@ export function updatePlotOverlayFromUserInput(plotId, whichOverlay, wp, radius,
 
     dispatchChangeDrawingDef(dl.drawLayerId,{...dl.drawingDef,color:'yellow'},plotId);
     dispatchModifyCustomField(dl.drawLayerId,{isInteractive: true},plotId);
+
+    if (!polygonAry && !isCone && wp && radius) {
+        const cc= CsysConverter.make(plot);
+        const cen= cc.getDeviceCoords(wp);
+        const ptOnCone= cc.getDeviceCoords(makeWorldPt(wp.x,wp.y+radius));
+        const dist= Math.abs(cen.y-ptOnCone.y);
+        polygonAry= getCircumscribedCorners(cc,cen,dist,dist);
+    }
 
     let changes= {
         [PlotAttribute.USER_SEARCH_WP]: isCone ? wp : undefined,

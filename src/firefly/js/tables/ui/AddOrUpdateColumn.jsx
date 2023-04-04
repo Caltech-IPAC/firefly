@@ -165,7 +165,7 @@ function reloadTable(request, editColName, newColName) {
 }
 
 export const AddColumnBtn = ({tbl_ui_id, tbl_id}) => (
-    <ToolbarButton icon={INSERT_COLUMN} tip='Browse available columns'
+    <ToolbarButton icon={INSERT_COLUMN} tip='Add a column'
                    onClick={() => showAddOrUpdateColumn({tbl_ui_id, tbl_id})}/>
 );
 

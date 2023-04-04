@@ -69,7 +69,11 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
             "ivo://jvo/P/spcam/W-S-Z+",
             "ivo://jvo/P/spcam/W-S-ZB",
             "ivo://jvo/P/spcam/W-S-ZR",
-            "ivo://nasa.heasarc/P/Swift/UVOT/int_U_UVW1_UVW2"
+            "ivo://nasa.heasarc/P/Swift/UVOT/int_U_UVW1_UVW2",
+            "ivo://CDS/P/ZTF/DR7/color",
+            "ivo://CDS/P/ZTF/DR7/g",
+            "ivo://CDS/P/ZTF/DR7/i",
+            "ivo://CDS/P/ZTF/DR7/r"
     );
 
 

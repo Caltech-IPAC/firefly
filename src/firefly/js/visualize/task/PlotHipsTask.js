@@ -3,7 +3,6 @@
  */
 
 import {isEmpty, isString} from 'lodash';
-import CoordSys, {CoordinateSys} from '../CoordSys.js';
 import ImagePlotCntlr, {
     dispatchChangeCenterOfProjection,
     dispatchPlotHiPS,
@@ -362,7 +361,7 @@ function createHiPSGridLayer() {
 async function doHiPSChange(rawAction, dispatcher, getState) {
 
     const {payload}= rawAction;
-    const {hipsUrlRoot:inHipsUrlRoot}= payload;
+    const {hipsUrlRoot:inHipsUrlRoot,coordSys}= payload;
     const {plotId}= payload;
 
     const hipsUrlRoot= resolveHiPSConstant(inHipsUrlRoot);
@@ -404,8 +403,9 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
         dispatcher(
             {
                 type: ImagePlotCntlr.CHANGE_HIPS,
-                payload: {...payload, hipsUrlRoot:resolvedHipsRootUrl, hipsProperties, coordSys: plot.imageCoordSys, blank},
+                payload: {...payload, hipsUrlRoot:resolvedHipsRootUrl, hipsProperties, coordSys: coordSys? coordSys : plot.imageCoordSys, blank},
             });
+        // if (coordSys) dispatcher( { type: ImagePlotCntlr.CHANGE_HIPS, payload: {coordSys}, });
         initCorrectCoordinateSys(getPlotViewById(visRoot(), plotId));
         locateOtherIfMatched(visRoot(),plotId);
         dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload});

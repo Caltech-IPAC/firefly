@@ -321,6 +321,7 @@ export function addDrawLayers(request, pv, plot) {
     request.getOverlayIds().forEach((drawLayerTypeId) => {
         const dls = getDrawLayersByType(dlRoot(), drawLayerTypeId);
         dls.forEach((dl) => {
+            if (drawLayerTypeId===HiPSMOC.TYPE_ID && pv.plotViewCtx.useForCoverage) return;
             if (dl.canAttachNewPlot && !isDrawLayerAttached(dl, plotId)) {
                 const visibility = !((dl.drawLayerTypeId === HiPSGrid.TYPE_ID) || //HiPSGrid and HiPSMOC don't come up visible by default
                     (dl.drawLayerTypeId === HiPSMOC.TYPE_ID && !dl.visiblePlotIdAry.length));
