@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isNil, get, isEmpty, once} from 'lodash';
+import {isNil, get, isEmpty, once, isNaN} from 'lodash';
 import Enum from 'enum';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import {SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer,
@@ -270,17 +270,43 @@ export function getSearchTarget(r, tableModel, searchTargetStr, overlayPositionS
     const pos= getMetaEntry(tableModel,MetaConst.OVERLAY_POSITION);
     if (pos) return parseWorldPt(pos);
     if (r.UserTargetWorldPt) return parseWorldPt(r.UserTargetWorldPt);
-    if (!r.QUERY) return;
+    if (r.QUERY) return extractCircleFromADQL(r.QUERY);
+    if (r.source?.toLowerCase()?.includes('circle')) return extractCircleFromUrl(r.source);
+}
+
+function extractCircleFromUrl(url) {
+    const params=new URL(url)?.searchParams;
+    if (!params) return;
+    if (params.has('ADQL')) return extractCircleFromADQL(params.get('ADQL'));
+    if (params.has('POS')) return extractCircleFromPOS(params.get('POS'));
+    const pts= [...params.entries()]
+        .map(([,v]) => v)
+        .filter( (v) => v.toLowerCase()?.includes('circle'))
+        .map( (cStr) => extractCircleFromPOS(cStr))
+        .filter( (wp) => wp);
+    return (pts.length > 0) ? pts[0] : undefined;
+}
+
+function extractCircleFromPOS(circleStr) {
+    const c= circleStr?.toLowerCase();
+    if (!c?.startsWith('circle')) return;
+    const cAry= c.split(' ').filter( (s) => s);
+    const raNum= cAry[1];
+    const decNum= cAry[2];
+    if (isNaN(raNum) || isNaN(decNum)) return;
+    return makeWorldPt(raNum,decNum);
+}
+
+function extractCircleFromADQL(adql) {
     const regEx= /CIRCLE\s?\(.*\)/;
-    const result= regEx.exec(r.QUERY);
-    if (!result) return;
+    const result= regEx.exec(adql);
     const circle= result[0];
     const parts= circle.split(',');
     if (parts.length<4) return;
     let cStr= parts[0].split('(')[1];
     if (!cStr) return;
     if (cStr.startsWith(`\'`) && cStr.endsWith(`\'`)) { // eslint-disable-line quotes
-       cStr= cStr.substring(1, cStr.length-1) ;
+        cStr= cStr.substring(1, cStr.length-1) ;
     }
     if (!isNaN(Number(parts[1]))  && !isNaN(Number(parts[1]))) {
         return makeWorldPt(parts[1], parts[2], CoordinateSys.parse(cStr));

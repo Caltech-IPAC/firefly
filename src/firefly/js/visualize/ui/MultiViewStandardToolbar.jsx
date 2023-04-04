@@ -12,6 +12,8 @@ import ONE from 'html/images/icons-2014/Images-One.png';
 import GRID from 'html/images/icons-2014/Images-Tiled.png';
 import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
 import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
+import LIST from 'html/images/icons-2014/ListOptions.png';
+import {showExpandedOptionsPopup} from './ExpandedOptionsPopup.jsx';
 import {VisMiniToolbar} from './VisMiniToolbar.jsx';
 import {getActivePlotView} from '../PlotViewUtil.js';
 
@@ -32,7 +34,8 @@ const toolsStyle= {
 
 
 export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
-                                          layoutType= 'grid', makeDropDown, toolbarStyle={}}) {
+                                          layoutType= 'grid', makeDropDown, useImageList= false,
+                                             toolbarStyle={}}) {
     
     let cIdx= viewerPlotIds.findIndex( (plotId) => plotId===visRoot.activePlotId);
 
@@ -64,13 +67,18 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
             <div style={{display:'flex', flexDirection:'row', alignItems: 'center', flexWrap:'nowrap'}}>
                 {moreThanOne && <ToolbarButton icon={ONE} tip={'Show single image at full size'}
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
-                               enabled={true} visible={true}
                                horizontal={true}
                                onClick={() => dispatchChangeViewerLayout(viewerId,'single')}/>}
                 {moreThanOne && <ToolbarButton icon={GRID} tip={'Show all as tiles'}
-                               enabled={true} visible={true} horizontal={true}
+                               horizontal={true}
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                                onClick={() => dispatchChangeViewerLayout(viewerId,'grid')}/>}
+                {useImageList && moreThanOne &&
+                    <ToolbarButton icon={LIST} tip={'Choose which plots to show'}
+                                   imageStyle={{width:24,height:24}}
+                                   horizontal={true}
+                                   onClick={() =>showExpandedOptionsPopup('Pinned Images', viewerId) }/>
+                }
                 {layoutType==='single' && moreThanOne &&
                 <img style={leftImageStyle} src={PAGE_LEFT}
                      onClick={() => dispatchChangeActivePlotView(viewerPlotIds[prevIdx])} />
@@ -96,6 +104,7 @@ MultiViewStandardToolbar.propTypes= {
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
     makeDropDownFunc: PropTypes.func,
     makeDropDown: PropTypes.bool,
+    useImageList: PropTypes.bool,
     toolbarStyle: PropTypes.object,
 };
 

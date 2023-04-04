@@ -15,7 +15,7 @@ import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {LO_VIEW, getGridDim, dispatchUpdateGridView} from '../../core/LayoutCntlr.js';
 import {NewPlotMode} from '../../visualize/MultiViewCntlr.js';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
-import {MultiProductViewer} from '../../visualize/ui/MultiProductViewer.jsx';
+import {MultiProductViewer} from '../../visualize/ui/multiProduct/MultiProductViewer.jsx';
 import {getActiveTableId} from '../../tables/TableUtil.js';
 
 import './react-grid-layout_styles.css';

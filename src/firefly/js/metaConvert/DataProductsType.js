@@ -7,12 +7,21 @@
  * @prop {string} displayType one of 'image', 'message', 'promise', 'table', 'png', 'download, 'xyplot', 'analyze'
  * @prop {String} menuKey - unique key of this item
  * @prop {Function} [activate] - function to plot 'image', 'table', 'xyplot', require for those
+ * @prop {Function} [imageActivate] function to plot 'image', used with there is already an activate for a table
  * @prop {String} [url] - required if display type is 'png' or 'download'
  * @prop {String} [message] - required it type is 'message' or 'promise'
  * @prop {String} [name]
  * @prop {WebPlotRequest} [request]
  * @prop {boolean} [isWorkingState] - if defined this means we are in a transitive/loading state. expect regular updates
  * @prop {Promise} [promise] - required it type is 'promise'
+ * @prop {String} activeMenuLookupKey
+ * @prop {boolean} complexMessage
+ * @prop {String} serviceDefRef
+ * @prop {String} sRegion
+ * @prop {Array.<String>} detailMsgAry
+ * @prop {String} resetMenuKey
+ * @prop {String} semantics
+ * @prop {String} badUrl - a url that is not working, for just showing to the user
  * @prop {Array.<DataProductsDisplayType>|undefined} menu - if defined, then menu to display
  *
  */

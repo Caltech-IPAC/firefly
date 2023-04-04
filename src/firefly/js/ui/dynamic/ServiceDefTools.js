@@ -243,7 +243,7 @@ export function makeSearchAreaInfo(cisxUI) {
 
 let tblCnt=1;
 
-export function makeServiceDescriptorSearchRequest(request, serviceDescriptor) {
+export function makeServiceDescriptorSearchRequest(request, serviceDescriptor, extraMeta={}) {
     const {standardID = '', accessURL, utype, serDefParams, title} = serviceDescriptor;
     const MAXREC = 50000;
     const tblTitle= `${title} - ${tblCnt++}`;
@@ -251,8 +251,8 @@ export function makeServiceDescriptorSearchRequest(request, serviceDescriptor) {
     if (isSIAStandardID(standardID)) {
         // we know this is a table so make a table request
         const url = accessURL + '?' + new URLSearchParams(request).toString();
-        return makeFileRequest(tblTitle, url);   //todo- figure out title
-    } else if (isCisxTapStandardID(standardID, utype)) {
+        return makeFileRequest(tblTitle, url, undefined, {META_INFO:extraMeta});   //todo- figure out title
+    } else if (isCisxTapStandardID(standardID, utype, undefined, {META_INFO:extraMeta})) {
         // we know this is a table so make a table request either sync or async
         const doAsync = standardID.toLowerCase().includes('async');
         const query = serDefParams.find(({name}) => name === 'QUERY')?.value;
@@ -263,13 +263,13 @@ export function makeServiceDescriptorSearchRequest(request, serviceDescriptor) {
 
         if (!query) return;
         if (doAsync) {
-            const asyncReq = makeTblRequest('AsyncTapQuery', tblTitle, {serviceUrl, QUERY: finalQuery, MAXREC});
+            const asyncReq = makeTblRequest('AsyncTapQuery', tblTitle, {serviceUrl, QUERY: finalQuery, MAXREC, META_INFO:extraMeta});
             setNoCache(asyncReq);
             return asyncReq;
         } else {
             const serParam = new URLSearchParams({QUERY: finalQuery, REQUEST: 'doQuery', LANG: 'ADQL', MAXREC});
             const completeUrl = serviceUrl + '/sync?' + serParam.toString();
-            return makeFileRequest(title, completeUrl);   //todo- figure out title
+            return makeFileRequest(title, completeUrl,undefined, {META_INFO:extraMeta});   //todo- figure out title
         }
 
     } else {

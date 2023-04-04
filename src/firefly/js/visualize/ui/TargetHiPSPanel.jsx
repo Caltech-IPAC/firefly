@@ -32,9 +32,7 @@ import {
 import {dispatchChangeActivePlotView, dispatchDeletePlotView, dispatchPlotHiPS, visRoot} from '../ImagePlotCntlr.js';
 import {NewPlotMode} from '../MultiViewCntlr.js';
 import {onPlotComplete} from '../PlotCompleteMonitor.js';
-import {
-    getActivePlotView, getDrawLayersByType, getPlotViewById, isDrawLayerAttached, primePlot
-} from '../PlotViewUtil.js';
+import { getActivePlotView, getDrawLayersByType, getPlotViewById, isDrawLayerAttached } from '../PlotViewUtil.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
 import {createHiPSMocLayerFromPreloadedTable} from '../task/PlotHipsTask.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
