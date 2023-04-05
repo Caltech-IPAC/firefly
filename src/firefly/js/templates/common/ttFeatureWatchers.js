@@ -1,5 +1,5 @@
 import React from 'react';
-import {once} from 'lodash';
+import {cloneDeep, once} from 'lodash';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {dispatchTableUiUpdate} from '../../tables/TablesCntlr.js';
 import {getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
@@ -9,6 +9,7 @@ import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {getActiveRowCenterDef } from '../../visualize/saga/ActiveRowCenterWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
+import {getAppOptions} from 'firefly/api/ApiUtil';
 
 export const getAllStartIds= ()=> [
     getMocWatcherDef().id,
@@ -24,7 +25,7 @@ export function startTTFeatureWatchers(startIds=[
     startIds.includes(getCatalogWatcherDef().id) && dispatchAddTableTypeWatcherDef(getCatalogWatcherDef());
     startIds.includes(getUrlLinkWatcherDef().id) && dispatchAddTableTypeWatcherDef(getUrlLinkWatcherDef());
     startIds.includes(getActiveRowCenterDef().id) && dispatchAddTableTypeWatcherDef(getActiveRowCenterDef());
-    // startIds.includes(getObsCoreWatcherDef().id) && dispatchAddTableTypeWatcherDef(getObsCoreWatcherDef());
+    startIds.includes(getObsCoreWatcherDef().id) && dispatchAddTableTypeWatcherDef(getObsCoreWatcherDef());
 }
 
 
@@ -54,12 +55,25 @@ function setupObsCorePackaging(tbl_id) {
     dispatchTableUiUpdate({ tbl_ui_id, leftButtons: [() => <PrepareDownload/>] });
 }
 
+function updateSearchRequest( tbl_id='', dlParams='', sRequest=null) {
+    const template= getAppOptions().tapObsCore?.productTitleTemplate;
+    const searchRequest = cloneDeep( sRequest);
+    searchRequest.template = template;
+    return searchRequest;
+}
 
 const PrepareDownload = React.memo(() => (
-    <div>
-        <DownloadButton>
-            <DownloadOptionPanel {...{dlParams:{FileGroupProcessor:'ObsCorePackager',
-                    help_id:'table.obsCorePackage', BaseFileName:'download'}}}/>
-        </DownloadButton>
-    </div>
+        <div>
+            <DownloadButton>
+                <DownloadOptionPanel {...{
+                    updateSearchRequest: updateSearchRequest,
+                    showZipStructure: false, //flattened files, except for datalink
+                    dlParams: {
+                            FileGroupProcessor:'ObsCorePackager',
+                            dlCutout: 'orig',
+                            TitlePrefix: 'ObsCore',
+                            help_id:'table.obsCorePackage',
+                            BaseFileName:'ObsCore_Files'}}}/>
+            </DownloadButton>
+        </div>
 ));
