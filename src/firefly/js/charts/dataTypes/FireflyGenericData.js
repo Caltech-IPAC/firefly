@@ -329,7 +329,7 @@ export function addScatterChanges({changes, chartId, traceNum, tablesource, tabl
     }
     const hasXErrors = xErrLow.length > 0 || xErr.length > 0;
     const xErrorType = get({fireflyData}, errorTypeFieldKey(traceNum, 'x'));
-    changes[`data.${traceNum}.error_x.visible`] = hasXErrors && xErrorType !== 'none';
+    // changes[`data.${traceNum}.error_x.visible`] = hasXErrors && xErrorType !== 'none';
     changes[`data.${traceNum}.error_x.symmetric`] = xErrorType==='sym' || xErr.length > 0;
 
     let yErr = get(changes, [`data.${traceNum}.error_y.array`], []);
@@ -346,7 +346,7 @@ export function addScatterChanges({changes, chartId, traceNum, tablesource, tabl
     }
     const hasYErrors =  yErrLow.length > 0 || yErr.length > 0;
     const yErrorType = get({fireflyData}, errorTypeFieldKey(traceNum, 'y'));
-    changes[`data.${traceNum}.error_y.visible`] = hasYErrors && yErrorType !== 'none';
+    // changes[`data.${traceNum}.error_y.visible`] = hasYErrors && yErrorType !== 'none';
     changes[`data.${traceNum}.error_y.symmetric`] = yErrorType==='sym' || yErr.length > 0;
 
     // set tooltips

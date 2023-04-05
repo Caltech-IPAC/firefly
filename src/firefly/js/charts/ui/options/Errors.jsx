@@ -1,157 +1,38 @@
-import React, {PureComponent} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
 
-import FieldGroupUtils, {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
+import {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
-import ColValuesStatistics from '../../ColValuesStatistics.js';
 import {getChartProps} from '../../ChartUtil.js';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
+import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField.jsx';
+import {toBoolean} from '../../../util/WebUtil.js';
 
 
 export const ERR_TYPE_OPTIONS = [
-    {label: 'None', value: 'none'},
     {label: 'Symm', value: 'sym'},
     {label: 'Asym', value: 'asym'}
 
 ];
 
+export function errorShowFieldKey(activeTrace, axis) { return `fireflyData.${activeTrace}.error_${axis}.visible`; }
 export function errorTypeFieldKey(activeTrace, axis) { return `fireflyData.${activeTrace}.error_${axis}.errorsType`; }
 export function errorFieldKey(activeTrace, axis) { return `_tables.data.${activeTrace}.error_${axis}.array`; }
 export function errorMinusFieldKey(activeTrace, axis) { return `_tables.data.${activeTrace}.error_${axis}.arrayminus`; }
 
 export function getDefaultErrorType(chartData, activeTrace, axis) {
     const errorMinus = get(chartData, errorMinusFieldKey(activeTrace, axis).replace(/^_tables./, ''));
-    if (errorMinus) {
-        return 'asym';
-    } else {
-        const error = get(chartData, errorFieldKey(activeTrace, axis).replace(/^_tables./, ''));
-        if (error) {
-            return 'sym';
-        } else {
-            return 'none';
-        }
-    }
-}
-
-export class Errors extends PureComponent {
-
-    constructor(props) {
-        super(props);
-        const {axis, groupKey, activeTrace} = props;
-        this.state = {
-            selectedErrType : getFieldVal(groupKey, errorTypeFieldKey(activeTrace, axis), 'none')
-        };
-    }
-
-    static getDerivedStateFromProps(props,state) {
-        const {axis, groupKey, activeTrace} = props;
-        return {
-            selectedErrType : getFieldVal(groupKey, errorTypeFieldKey(activeTrace, axis), 'none')
-        };
-
-    }
-
-    componentDidMount() {
-        const {axis, groupKey, activeTrace} = this.props;
-        this.unbinder = FieldGroupUtils.bindToStore(groupKey,
-            (fields) => {
-                if (this.iAmMounted) {
-                    const v = get(fields, [errorTypeFieldKey(activeTrace, axis), 'value'], 'none');
-                    if (v !== this.state.selectedErrType) {
-                        this.setState({selectedErrType: v});
-                    }
-                }
-            });
-        this.iAmMounted = true;
-    }
-
-    componentWillUnmount() {
-        this.iAmMounted= false;
-        if (this.unbinder) this.unbinder();
-    }
-
-
-    renderErrFld(props) {
-        const {colValStats, groupKey} = this.props;
-        const commonProps = {colValStats, groupKey, labelWidth: 5, nullAllowed:true};
-        const allProps = Object.assign({}, commonProps, props);
-        return  (<ColumnOrExpression {...allProps}/>);
-    }
-
-
-    render() {
-        const {groupKey, axis, activeTrace=0, labelWidth=30, readonly} = this.props;
-        const errType = this.state.selectedErrType;
-        const axisU = axis.toUpperCase();
-
-        return (
-            <div style={{display: 'flex', alignItems: 'center', paddinngTop: 3}}>
-                <ListBoxInputField
-                    initialState= {{
-                        //value: errType,
-                        tooltip: 'Select type of the errors',
-                        label: 'Error:',
-                        labelWidth
-                    }}
-                    options={ERR_TYPE_OPTIONS}
-                    fieldKey={errorTypeFieldKey(activeTrace, axis)}
-                    groupKey={groupKey}
-                    readonly={readonly}
-                />
-                <div style={{paddingLeft: 10}}>
-                    {(errType==='sym') && this.renderErrFld({fldPath:errorFieldKey(activeTrace, axis), label: ' ', labelWidth: 6, name:`${axisU} Error`, readonly})}
-                    {(errType==='asym') && this.renderErrFld({fldPath:errorFieldKey(activeTrace, axis), label: '\u2191', name:`${axisU} Upper Error`, readonly})}
-                    {(errType==='asym') && this.renderErrFld({fldPath:errorMinusFieldKey(activeTrace, axis), label: '\u2193', name:`${axisU} Lower Error`, readonly})}
-                </div>
-            </div>
-        );
-    }
+    return errorMinus ? 'asym' : 'sym';
 }
 
 
-Errors.propTypes = {
-    groupKey: PropTypes.string.isRequired,
-    colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
-    axis: PropTypes.string.isRequired,
-    activeTrace: PropTypes.number,
-    labelWidth: PropTypes.number,
-    readonly: PropTypes.bool
-};
-
-
-
-export function Error_X({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey, error, errorMinus, labelWidth, readonly}) {
-    const chartProps = getChartProps(chartId, ptbl_id, pActiveTrace);
-    const {tbl_id, activeTrace, mappings} = chartProps;
-    const fldName = errorTypeFieldKey(activeTrace, 'x');
-    const defType = get(chartProps, fldName, getDefaultErrorType(chartProps, activeTrace, 'x'));
-    error = error || get(mappings, [activeTrace, 'error_x.array'], '');
-    errorMinus = errorMinus || get(mappings, [activeTrace, 'error_x.arrayminus'], '');
-    const colValStats = getColValStats(tbl_id);
-
-    const type = useStoreConnector(() => getFieldVal(groupKey, fldName, defType));
-
-    return <Error {...{axis: 'x', groupKey, colValStats, activeTrace, type, error, errorMinus, labelWidth, readonly}}/>;
+export function Error_X({activeTrace, tbl_id, chartId, groupKey, error, errorMinus, labelWidth, readonly}) {
+    return <Error {...{tbl_id, chartId, groupKey, axis: 'x', activeTrace, error, errorMinus, readonly}}/>;
 }
-
-export function Error_Y({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey, error, errorMinus, labelWidth, readonly}) {
-    const chartProps = getChartProps(chartId, ptbl_id, pActiveTrace);
-    const {tbl_id, activeTrace, mappings} = chartProps;
-    const fldName = errorTypeFieldKey(activeTrace, 'y');
-    const defType = get(chartProps, fldName, getDefaultErrorType(chartProps, activeTrace, 'y'));
-    error = error || get(mappings, ['error_y.array'], '');
-    errorMinus = errorMinus || get(mappings, ['error_y.arrayminus'], '');
-    const colValStats = getColValStats(tbl_id);
-
-    const type = useStoreConnector(() => getFieldVal(groupKey, fldName, defType));
-
-    return <Error {...{axis: 'y', groupKey, colValStats, activeTrace, type, error, errorMinus, labelWidth, readonly}}/>;
-}
-
-Error_X.propTypes = Error_Y.propTypes = {
+Error_X.propTypes = {
     activeTrace: PropTypes.number,
     tbl_id: PropTypes.string,
     groupKey: PropTypes.string.isRequired,
@@ -162,36 +43,62 @@ Error_X.propTypes = Error_Y.propTypes = {
     readonly: PropTypes.bool
 };
 
+export function Error_Y({activeTrace, tbl_id, chartId, groupKey, error, errorMinus, labelWidth, readonly}) {
+    return <Error {...{tbl_id, chartId, groupKey, axis: 'y', activeTrace, error, errorMinus, readonly}}/>;
+}
+Error_Y.propTypes = Error_X.propTypes;
 
+function Error({tbl_id:ptbl_id, chartId, groupKey, axis, activeTrace:pActiveTrace, error, errorMinus, readonly}) {
+    const chartProps = getChartProps(chartId, ptbl_id, pActiveTrace);
+    const {tbl_id, activeTrace, mappings} = chartProps;
 
-function Error({axis, groupKey, colValStats, activeTrace, type, error, errorMinus, labelWidth, readonly}) {
+    error = error || get(mappings, [`error_${axis}.array`], '');
+    errorMinus = errorMinus || get(mappings, [`error_${axis}.arrayminus`], '');
+    const colValStats = getColValStats(tbl_id);
+
+    const fldName = errorTypeFieldKey(activeTrace, axis);
+    const defType = get(chartProps, fldName, getDefaultErrorType(chartProps, activeTrace, axis));
+    const type = useStoreConnector(() => getFieldVal(groupKey, fldName, defType));
+
+    const showKey = errorShowFieldKey(activeTrace, axis);
+    const showError = toBoolean(useStoreConnector(() => getFieldVal(groupKey, showKey, get(chartProps, showKey))));
+
+    readonly = readonly || !showError;
 
     const ErrFld = ({path, ...rest}) => {
         const props = {groupKey, colValStats, readonly, fldPath:path(activeTrace, axis), labelWidth:5, nullAllowed:true, ...rest};
         return  (<ColumnOrExpression {...props}/>);
     };
-
     const axisU = axis.toUpperCase();
-    labelWidth -= type==='asym' ? 10 : 0;
+
 
     return (
-        <div style={{display: 'flex', alignItems: 'center', paddinngTop: 3}}>
-            <ListBoxInputField
-                initialState= {{
-                    value: type,
-                    tooltip: 'Select type of the errors',
-                    label: 'Error:',
-                }}
-                labelWidth={labelWidth}
-                options={ERR_TYPE_OPTIONS}
-                fieldKey={errorTypeFieldKey(activeTrace, axis)}
-                groupKey={groupKey}
-                readonly={readonly}
-            />
-            <div style={{paddingLeft: 10}}>
-                {(type==='sym')  && <ErrFld name={`${axisU} Error`}       initValue={error}      path={errorFieldKey} label='' labelWidth={6}/>}
-                {(type==='asym') && <ErrFld name={`${axisU} Upper Error`} initValue={error}      path={errorFieldKey} label={'\u2191'}/>}
-                {(type==='asym') && <ErrFld name={`${axisU} Lower Error`} initValue={errorMinus} path={errorMinusFieldKey} label={'\u2193'}/>}
+        <div style={{display: 'flex'}}>
+            <CheckboxGroupInputField fieldKey={showKey}
+                                     initialState= {{value: (showError ? 'true' : undefined)}}
+                                     label='Error:'
+                                     labelWidth={25}
+                                     tooltip='Turn error bars on/off'
+                                     options={[{value: 'true'}]}
+                                     wrapperStyle={{display: 'inline-flex', alignItems: 'center'}}/>
+
+
+            <div style={{display: 'flex', alignItems: 'center', paddinngTop: 3, marginLeft: 4}}>
+                <ListBoxInputField
+                    initialState= {{
+                        value: type,
+                        tooltip: 'Select type of the errors',
+                    }}
+                    options={ERR_TYPE_OPTIONS}
+                    fieldKey={errorTypeFieldKey(activeTrace, axis)}
+                    groupKey={groupKey}
+                    readonly={readonly}
+                />
+                <div style={{paddingLeft: 10}}>
+                    {(type==='sym')  && <ErrFld name={`${axisU} Error`}       initValue={error}      path={errorFieldKey} label='' labelWidth={6}/>}
+                    {(type==='asym') && <ErrFld name={`${axisU} Upper Error`} initValue={error}      path={errorFieldKey} label={'\u2191'}/>}
+                    {(type==='asym') && <ErrFld name={`${axisU} Lower Error`} initValue={errorMinus} path={errorMinusFieldKey} label={'\u2193'}/>}
+                </div>
             </div>
         </div>
     );

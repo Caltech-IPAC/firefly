@@ -9,12 +9,12 @@ import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {basicFieldReducer, basicOptions, helpStyle, LayoutOptions, submitChanges,} from './BasicOptions.jsx';
-import {updateSet} from '../../../util/WebUtil.js';
+import {toBoolean, updateSet} from '../../../util/WebUtil.js';
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 import {
-    Error_X, Error_Y, errorFieldKey, errorMinusFieldKey, errorTypeFieldKey, getDefaultErrorType
+    Error_X, Error_Y, errorFieldKey, errorMinusFieldKey, errorShowFieldKey, errorTypeFieldKey, getDefaultErrorType
 } from './Errors.jsx';
 import {getAppOptions} from '../../../core/AppDataCntlr.js';
 import {getTblById} from '../../../tables/TableUtil.js';
@@ -38,11 +38,11 @@ export function yLimitUI() {
 }
 
 /**
- *
- * @param pActiveTrace  given when adding a new chart or a new trace
- * @param tbl_id        given when adding a new chart
- * @param chartId
- * @param groupKey
+ * @param p
+ * @param p.activeTrace  given when adding a new chart or a new trace
+ * @param p.tbl_id       given when adding a new chart
+ * @param p.chartId
+ * @param p.groupKey
  * @returns {*}
  * @constructor
  */
@@ -145,7 +145,7 @@ export function fieldReducer({chartId, activeTrace, tbl_id}) {
             // when field changes, clear error fields
             ['x','y'].forEach((a) => {
                 if (fieldKey === `_tables.data.${activeTrace}.${a}`) {
-                    inFields = updateSet(inFields, [errorTypeFieldKey(activeTrace, `${a}`), 'value'], 'none');
+                    inFields = updateSet(inFields, [errorTypeFieldKey(activeTrace, `${a}`), 'value'], undefined);
                     inFields = updateSet(inFields, [errorFieldKey(activeTrace, `${a}`), 'value'], undefined);
                     inFields = updateSet(inFields, [errorMinusFieldKey(activeTrace, `${a}`), 'value'], undefined);
                 }
@@ -214,7 +214,7 @@ export function submitChangesScatter({chartId, activeTrace, fields, tbl_id, rend
     // check if error should be visible or symmetric
     ['x','y'].forEach((a) => {
         const errorsType = fields[errorTypeFieldKey(activeTrace, a)];
-        const errorsVisible = errorsType && errorsType !== 'none';
+        const errorsVisible = toBoolean(fields[errorShowFieldKey(activeTrace, a)]);
         changes[`data.${activeTrace}.error_${a}.visible`] = errorsVisible;
         if (highlighted) { changes[`highlighted.error_${a}.visible`] = errorsVisible; }
         if (selected) { changes[`selected.error_${a}.visible`] = errorsVisible; }

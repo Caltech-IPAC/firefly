@@ -50,19 +50,27 @@ function updateViewer(viewerId, tblGroup) {
     };
 }
 
-function ensureDefaultChart(tbl_id) {
-    if (getChartIdsInGroup(tbl_id).length === 0) {
+/**
+ * Ensure there's a chart for the given tbl_id.  If not, create a default one.
+ * @param tbl_id
+ * @return {string} return the chartId for the given tbl_id
+ */
+export function ensureDefaultChart(tbl_id) {
+    const chartIds = getChartIdsInGroup(tbl_id);
+    if (chartIds.length === 0) {
         const defaultChartProps = getDefaultChartProps(tbl_id);
         if (!isEmpty(defaultChartProps))  {
             // default chart
+            const chartId = 'default-' + tbl_id;
             dispatchChartAdd({
-                chartId: 'default-' + tbl_id,
+                chartId,
                 chartType: 'plot.ly',
                 groupId: tbl_id,
                 ...defaultChartProps
             });
+            return chartId;
         }
-    }
+    } else return chartIds[0];
 }
 
 function doUpdateViewer(viewerId, tblGroup, chartId, useOnlyChartsInViewer) {
@@ -150,6 +158,7 @@ export const DefaultChartsContainer = (props) => {
                     key: 'chart-expanded',
                     closeable,
                     chartId,
+                    tbl_group,
                     noChartToolbar,
                     viewerId
                 }}/>
@@ -160,6 +169,7 @@ export const DefaultChartsContainer = (props) => {
                     key: chartId,
                     expandable: true,
                     chartId,
+                    tbl_group,
                     showToolbar: !Boolean(noChartToolbar),
                 }}/>
             );
@@ -169,6 +179,7 @@ export const DefaultChartsContainer = (props) => {
                 <MultiChartViewer {...{
                     closeable,
                     viewerId,
+                    tbl_group,
                     expandedMode,
                     noChartToolbar}}
                 />
@@ -219,13 +230,13 @@ export function closeExpandedChart(viewerId) {
     dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
 }
 
-const ChartToolbarExt = ({chartId, viewerId, noChartToolbar, closeable=true}) => {
+const ChartToolbarExt = ({chartId, viewerId, tbl_group, noChartToolbar, closeable=true}) => {
     if (!closeable && noChartToolbar) return null;
 
     return (
         <div style={{display: 'inline-flex', justifyContent: 'space-between'}}>
             {closeable && <CloseButton onClick={() => closeExpandedChart(viewerId)}/>}
-            {!noChartToolbar && <ChartToolbar {...{chartId, expandable:false, expandedMode:true}}/>}
+            {!noChartToolbar && <ChartToolbar {...{chartId, viewerId, tbl_group, expandable:false, expandedMode:true}}/>}
         </div>
     );
 };

@@ -45,6 +45,7 @@ const USE_STRING = [...TEXT, ...DATE];
 
 // export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT', 'INT', 'FLOAT']);
 export const COL_TYPE = new Enum({ANY:[],TEXT, INT, FLOAT, BOOL, DATE, NUMBER, USE_STRING});
+export const TBL_STATE = new Enum(['ERROR', 'LOADING', 'NO_DATA', 'NO_MATCH', 'OK']);
 
 
 /**
@@ -595,13 +596,14 @@ export function getSelectedData(tbl_id, columnNames=[]) {
  * It will not attempt to fetch required data.  This is good for client table.
  * @param tbl_id
  * @param columnNames
+ * @return {TableModel}
  */
 export function getSelectedDataSync(tbl_id, columnNames=[]) {
     const {tableModel, tableMeta, selectInfo} = local.getTblInfoById(tbl_id);
     const selectedRows = [...SelectInfo.newInstance(selectInfo).getSelected()];  // get selected row idx as an array
 
     if (columnNames.length === 0) {
-        columnNames = local.getColumns(tableModel).map( (c) => c.name);       // return all columns
+        columnNames = getAllColumns(tableModel).map( (c) => c.name);       // return all columns
     }
     const meta = cloneDeep(tableMeta);
 
@@ -1377,17 +1379,28 @@ export function getBooleanMetaEntry(tableOrId,metaKey,defVal= false) {
  * @returns {boolean}
  */
 export function hasAuxData(tbl_id) {
-    const {keywords, links, params, resources, groups} = getTblById(tbl_id);
+    const {keywords, links, params, resources, groups} = getTblById(tbl_id) || {};
     return !isEmpty(keywords) || !isEmpty(links) || !isEmpty(params) || !isEmpty(resources) || !isEmpty(groups);
 }
 
 /**
- * returns true only if a table is successfully fetched, but does not contains any data.
- * @param tbl_id
+ * @param tbl_id  ID of the table
+ * @return TBL_STATE of the table.
  */
-export function hasNoData(tbl_id) {
-    const tableModel = getTblById(tbl_id);
-    return tableModel?.totalRows === 0;
+export function getTableState(tbl_id) {
+    const {error, status, isFetching, totalRows, filters, sqlFilter} = getTblById(tbl_id) || {};
+
+    if (error) return TBL_STATE.ERROR;
+    if (isFetching) return TBL_STATE.LOADING;
+    if (totalRows === 0) return TBL_STATE.NO_DATA;
+
+    // check status
+    if (status?.code && (status.code < 200 || status.code >= 400) ) return TBL_STATE.ERROR;
+    if (status?.code === 204) return TBL_STATE.NO_MATCH;     // (204 No Content) - No data found matching the given filter criteria
+
+    if (totalRows === 0 && (filters || sqlFilter)) return TBL_STATE.NO_MATCH;
+
+    return TBL_STATE.OK;
 }
 
 /*-------------------------------------private------------------------------------------------*/

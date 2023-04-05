@@ -34,8 +34,8 @@ import {getComponentState, dispatchComponentStateChange} from '../../core/Compon
 import {SplitPanel} from '../../ui/panel/DockLayoutPanel';
 import {hideInfoPopup, showInfoPopup, showPinMessage} from '../../ui/PopupUtil.jsx';
 import {TextButton} from '../../ui/TextButton.jsx';
-import {CombineChart} from './CombineChart.jsx';
 import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga';
+import {makeBadge} from '../../ui/ToolbarButton.jsx';
 
 export const PINNED_CHART_PREFIX = 'pinned-';
 export const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
@@ -46,29 +46,18 @@ const PINNED_MAX = 12;
 export const PinnedChartPanel = (props) => {
     const {viewerId, tbl_group} = props;
 
-    const chartIds = useStoreConnector(() =>  getChartIdsInGroup(PINNED_GROUP));
-    const tabs = useStoreConnector(() =>  getComponentState(PINNED_VIEWER_ID));
+    const chartIds      = useStoreConnector(() =>  getChartIdsInGroup(PINNED_GROUP));
+    const tabs          = useStoreConnector(() =>  getComponentState(PINNED_VIEWER_ID));
+    const activeLabel   = useStoreConnector(() => getViewerItemIds(getMultiViewRoot(), viewerId)?.length > 1 ? 'Active Charts' : 'Active Chart');
 
-    const activeLabel = useStoreConnector(() => getViewerItemIds(getMultiViewRoot(), viewerId)?.length > 1 ? 'Active Charts' : 'Active Chart');
     const pinnedLabel = chartIds?.length > 1 ? 'Pinned Charts' : 'Pinned Chart';
-
-    if (!chartIds?.length)  {           // use the default container if there's no pinned charts
-        return (
-            <div className='ChartPanel__container'>
-                <div className='ChartPanel__section--title' style={{justifyContent: 'flex-end'}}><PinChart {...{viewerId, tbl_group}}/> <Help/> </div>
-                <DefaultChartsContainer {...props}/>
-            </div>
-        );
-    }
-
-    const PinToolbar = () => <div style={{display: 'inline-flex'}}><CombineChart /><ShowTable tbl_group={tbl_group}/><ToggleLayout/><Help/></div>;
-    const ActiveToolbar = () => <div style={{display: 'inline-flex'}}><PinChart {...{viewerId, tbl_group}}/><ToggleLayout/><Help/></div>;
+    const showPinnedTab = chartIds?.length >= 1;
 
     const TabToolbar = () => {
-        const {selectedIdx=0} = getComponentState(PINNED_VIEWER_ID);
         return (
             <div className='ChartPanel__section--title tabs'>
-                { selectedIdx === 0 ? <ActiveToolbar/> : <PinToolbar/>}
+                <ToggleLayout/>
+                <Help/>
             </div>
         );
     };
@@ -81,14 +70,13 @@ export const PinnedChartPanel = (props) => {
                         <div className='ChartPanel__section' style={{marginRight: 5}}>
                             <div className='ChartPanel__section--title'>
                                 <div className='label'>{activeLabel}</div>
-                                <PinChart {...{viewerId, tbl_group}}/>
                             </div>
                             <DefaultChartsContainer {...props}/>
                         </div>
                         <div className='ChartPanel__section' style={{marginLeft: 5}}>
                             <div className='ChartPanel__section--title'>
                                 <div className='label'>{pinnedLabel}</div>
-                                <PinToolbar/>
+                                {/*<TabToolbar/>*/}
                             </div>
                             <PinnedCharts {...props}/>
                         </div>
@@ -99,14 +87,16 @@ export const PinnedChartPanel = (props) => {
     } else {
         return (
             <div className='ChartPanel__container'>
-                <TabToolbar/>
+                {/*<TabToolbar/>*/}
                 <StatefulTabs componentKey={PINNED_VIEWER_ID} defaultSelected={0} useFlex={true} style={{flex: '1 1 0', marginTop: 1}}>
                     <Tab name={activeLabel}>
                         <DefaultChartsContainer {...props}/>
                     </Tab>
-                    <Tab name='Pinned Charts'>
-                        <PinnedCharts {...props}/>
-                    </Tab>
+                    {showPinnedTab &&
+                        <Tab name='Pinned Charts' label={<BadgeLabel labelStr='Pinned Charts'/>}>
+                            <PinnedCharts {...props}/>
+                        </Tab>
+                    }
                 </StatefulTabs>
             </div>
         );
@@ -129,8 +119,9 @@ const Help = () => <HelpIcon helpId={'chartarea.info'} style={{marginLeft:10}}/>
 // --------------------- Pin Chart ---------------------------
 
 export const PinChart = ({viewerId, tbl_group}) => {
-    const {sideBySide=false, selectedIdx} = getComponentState(PINNED_VIEWER_ID);
-    const canPin = sideBySide || selectedIdx !== 1;
+
+    if (viewerId === PINNED_VIEWER_ID) return null;
+
     const doPinChart = () => {
         let chartId = getActiveViewerItemId(viewerId);      // viewerId is Active Charts viewer
         if (!chartId) {
@@ -139,10 +130,10 @@ export const PinChart = ({viewerId, tbl_group}) => {
         }
         pinChart({chartId});
     };
-    return canPin ? <TextButton onClick={doPinChart} title='Pin the active chart'>Pin Chart</TextButton> : null;
+    return <TextButton onClick={doPinChart} title='Pin the active chart'>Pin Chart</TextButton>;
 };
 
-export function pinChart({chartId, autoLayout=true }) {
+export function pinChart({chartId, autoLayout=false }) {
 
 
     if (!isChartLoading(chartId)) {
@@ -164,6 +155,16 @@ export function pinChart({chartId, autoLayout=true }) {
     });
 }
 
+function BadgeLabel({labelStr}) {
+    const badgeCnt= useStoreConnector(() => getViewerItemIds(getMultiViewRoot(),PINNED_VIEWER_ID)?.length??0);
+    return badgeCnt===0 ?  labelStr:
+        (
+            <div>
+                <div className='text-ellipsis' style={{marginRight: 17}}>{labelStr}</div>
+                {makeBadge(badgeCnt, {borderWidth: 1, margin:'2px 5px', paddingRight:2})}
+            </div>
+        );
+}
 
 function doPinChart({chartId, autoLayout=true }) {
 
@@ -208,21 +209,20 @@ function doPinChart({chartId, autoLayout=true }) {
 
 // --------------------- simple toolbar actions ---------------------------
 
-export const ShowTable = ({tbl_group}) => {
+export const ShowTable = ({viewerId, tbl_group}) => {
 
+    const activeTblId = useStoreConnector(() => getActiveTableId());
     const activeChartTblId = useStoreConnector(() => {
         const chartId = getActiveViewerItemId(PINNED_VIEWER_ID, true);
         return getTblIdFromChart(chartId);
     });
-    const activeTblId = useStoreConnector(() => getActiveTableId());
+
+    if (viewerId !== PINNED_VIEWER_ID) return null;
 
     const showTable = () => dispatchActiveTableChanged(activeChartTblId, tbl_group);
-
-    const {sideBySide=false, selectedIdx} = getComponentState(PINNED_VIEWER_ID);
-    const canShowTable = activeChartTblId && (sideBySide || selectedIdx === 1);
     const disabled = activeChartTblId === activeTblId;
 
-    return canShowTable ? <TextButton disabled={disabled} onClick={showTable} title='Show the table associated with this chart'>Show Table</TextButton> : null;
+    return activeChartTblId ? <TextButton disabled={disabled} onClick={showTable} title='Show the table associated with this chart'>Show Table</TextButton> : null;
 };
 
 export const ToggleLayout = () => {
@@ -309,7 +309,7 @@ const PinnedCharts = (props) => {
              onClick={(ev)=>onChartSelect(ev,chartId)}
              onTouchStart={stopPropagation}
              onMouseDown={stopPropagation}>
-            <ChartPanel key={chartId} showToolbar={false} chartId={chartId} deletable={deletable}/>
+            <ChartPanel key={chartId} showToolbar={false} chartId={chartId} deletable={deletable} thumbnail={layoutType === 'grid'}/>
         </div>
     );
 
@@ -330,7 +330,7 @@ const PinnedCharts = (props) => {
     return (
         <div className='ChartPanel__container'>
             <div className='ChartPanel__wrapper'>
-                <ToolBar chartId={activeItemId} expandable={!expandedMode} {...{expandedMode, closeable, viewerId, layoutType, activeItemId}}/>
+                <ToolBar chartId={activeItemId} expandable={!expandedMode} {...{expandedMode, closeable, viewerId, tbl_group, layoutType, activeItemId}}/>
                 <MultiItemViewerView {...props} {...{layoutType, makeItemViewer, makeItemViewerFull, activeItemId, viewerItemIds}}/>
             </div>
         </div>

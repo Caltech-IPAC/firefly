@@ -16,7 +16,7 @@ public class DataGroupPart implements HasAccessInfos {
 
     public static final String LOADING_STATUS = "Loading-Status";
 
-    public static enum State {COMPLETED, INPROGRESS, FAILED;
+    public enum State {COMPLETED, INPROGRESS, FAILED;
                             public String toString() {
                                 return StringUtils.pad(20, name());
                             }
@@ -26,7 +26,7 @@ public class DataGroupPart implements HasAccessInfos {
     private int startRow;
     private int rowCount;
     private String hasAccessCName = null;
-    private String errorMsg;
+    private Status status;
 
     public DataGroupPart() {
     }
@@ -69,9 +69,12 @@ public class DataGroupPart implements HasAccessInfos {
         this.startRow = startRow;
     }
 
-    public String getErrorMsg() { return errorMsg; }
+    public String getErrorMsg() { return status != null && status.isError() ? status.message : null; }
 
-    public void setErrorMsg(String errorMsg) { this.errorMsg = errorMsg; }
+    public void setErrorMsg(String errorMsg) { setStatus(new Status(500, errorMsg)); }
+
+    public Status getStatus() { return status; }
+    public void setStatus(Status status) { this.status = status; }
 
 //====================================================================
 //  implements HasAccessInfos
@@ -92,5 +95,7 @@ public class DataGroupPart implements HasAccessInfos {
 //====================================================================
 //
 //====================================================================
-
+    public record Status (int code, String message) {
+        public boolean isError() { return code < 200 || code >= 400; }
+    }
 }

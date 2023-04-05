@@ -8,7 +8,7 @@ import {Column, Table} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, set, isEmpty, isUndefined, omitBy, pick} from 'lodash';
 
-import {calcColumnWidths, getCellValue, getProprietaryInfo, getTableUiById, getTblById, hasNoData, hasRowAccess, isClientTable, tableTextView, uniqueTblUiId} from '../TableUtil.js';
+import {calcColumnWidths, getCellValue, getProprietaryInfo, getTableState, getTableUiById, getTblById, hasRowAccess, isClientTable, tableTextView, TBL_STATE, uniqueTblUiId} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
@@ -93,11 +93,11 @@ const BasicTableViewInternal = React.memo((props) => {
     const rowClassNameGetter = highlightedRowHandler || defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx);
 
 
-    const tstate = getTableState(props, uiStates);
+    const tstate = getTableState(tbl_id);
     logger.debug(`render.. state:[${tstate}] -- ${tbl_id}`);
 
-    if (tstate === 'ERROR')   return  <div style={{padding: 10}}>{error}</div>;
-    if (tstate === 'LOADING') return <div style={{top: 0}} className='loading-mask'/>;
+    if (tstate === TBL_STATE.ERROR)   return  <div style={{padding: 10}}>{error}</div>;
+    if (tstate === TBL_STATE.LOADING || isEmpty(columnWidths)) return <div style={{top: 0}} className='loading-mask'/>;
 
     const content = () => {
         if (textView) {
@@ -123,18 +123,20 @@ const BasicTableViewInternal = React.memo((props) => {
         }
     };
 
-    const status = () => {
-        switch (tstate) {
-            case 'NO_DATA_FOUND':   return <div className='TablePanel_NoData'> {filterInfo ? noDataFromFilter : noDataMsg} </div>;
-            case 'META_ONLY':       return <div className='TablePanel_NoData'> Loading... </div>;
-        }
-        return null;
+    const Status = () => {
+        const msg = getTblById(tbl_id)?.status?.message;
+        const status = tstate === TBL_STATE.NO_DATA ? msg || noDataMsg :
+                       tstate === TBL_STATE.NO_MATCH ? msg || noDataFromFilter :
+                       tstate === TBL_STATE.LOADING ? 'Loading...' : '';
+
+        if (status) return <div className='TablePanel_NoData'> {status} </div>;
+        else return null;
     };
 
     return (
         <div tabIndex='-1' onKeyDown={onKeyDown} className='TablePanel__frame'>
             {content()}
-            {status()}
+            <Status/>
         </div>
     );
 });
@@ -196,18 +198,18 @@ export const BasicTableViewWithConnector = React.memo((props) => {
 
 /*---------------------------------------------------------------------------*/
 
-function getTableState(props, uiStates) {
-    const {columns, error, data, size, showMask} = props;
-    const {tbl_id, columnWidths} = uiStates;
-
-    if (error) return 'ERROR';
-    if (showMask || isEmpty(columns) || size.width === 0 || isEmpty(columnWidths)) {
-        return 'LOADING';
-    }
-    if (hasNoData(tbl_id)) return 'NO_DATA_FOUND';
-    if (isEmpty(data)) return 'META_ONLY';
-    return 'OK';
-}
+// function getTableState(props, uiStates) {
+//     const {columns, error, data, size, showMask} = props;
+//     const {tbl_id, columnWidths} = uiStates;
+//
+//     if (error) return 'ERROR';
+//     if (showMask || isEmpty(columns) || size.width === 0 || isEmpty(columnWidths)) {
+//         return 'LOADING';
+//     }
+//     if (hasNoData(tbl_id)) return 'NO_DATA_FOUND';
+//     if (isEmpty(data)) return 'META_ONLY';
+//     return 'OK';
+// }
 
 function doScrollEnd(scrollLeft, scrollTop) {
     const {tbl_ui_id} = this;

@@ -8,11 +8,11 @@ import {canUnitConv, getUnitInfo, getUnitConvExpr} from '../../dataTypes/Spectru
 
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
-import {errorFieldKey, errorMinusFieldKey} from './Errors.jsx';
+import {errorFieldKey, errorMinusFieldKey, errorShowFieldKey} from './Errors.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {fieldReducer, submitChangesScatter, scatterInputs, ScatterCommonOptions} from './ScatterOptions.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
-import {updateSet} from '../../../util/WebUtil.js';
+import {updateSet, toBoolean} from '../../../util/WebUtil.js';
 import {isSpectralOrder, getChartProps} from '../../ChartUtil.js';
 import {basicOptions, LayoutOptions} from './BasicOptions.jsx';
 import {getSpectrumProps} from '../../dataTypes/FireflySpectrum.js';
@@ -107,7 +107,7 @@ export const applyUnitConversion = ({fireflyData, data, inFields, axisType, newU
 
     const layoutAxis = axisType === 'x' ? 'xaxis' : 'yaxis';
 
-    const label = getUnitInfo(newUnit, axisType === 'x').label;
+    const label = getUnitInfo(newUnit, axis.value).label;
     inFields = updateSet(inFields, path(`layout.${layoutAxis}.title.text`), label);
 
     const colOrExpr = getUnitConvExpr({cname: axis.value, from: axis.unit, to: newUnit});
@@ -153,17 +153,37 @@ export function submitChangesSpectrum({chartId, activeTrace, fields, tbl_id, ren
         if (idx !== activeTrace) {
             const xUnitTrace = fireflyData?.[idx]?.xUnit;
             const yUnitTrace = fireflyData?.[idx]?.yUnit;
-            if (canUnitConv({from: xUnitTrace, to: xUnit}) ||
-                canUnitConv({from: yUnitTrace, to: yUnit})) {
-                // resetting unit resets the field,
-                // both fields must be updated even if only one changed
+            // resetting unit resets the field,
+            if (canUnitConv({from: xUnitTrace, to: xUnit})) {
                 fields = updateSet(fields, [`fireflyData.${idx}.xUnit`], xUnit);
-                fields = updateSet(fields, [`fireflyData.${idx}.yUnit`], yUnit || yUnitTrace);
                 fields = applyUnitConversion({fireflyData, data, inFields:fields, axisType:'x', newUnit:xUnit, traceNum:idx, axis:spectralAxis});
+            }
+            if (canUnitConv({from: yUnitTrace, to: yUnit})) {
+                fields = updateSet(fields, [`fireflyData.${idx}.yUnit`], yUnit || yUnitTrace);
                 fields = applyUnitConversion({fireflyData, data, inFields:fields, axisType:'y', newUnit:yUnit || yUnitTrace, traceNum:idx, axis:fluxAxis});
             }
         }
     });
+
+    // when show/hide error changes for spectrum with 'order', apply it to other traces as well
+    if (isSpectralOrder(chartId)) {
+        const xShowError = fields[errorShowFieldKey(activeTrace, 'x')] || 'false';
+        const yShowError = fields[errorShowFieldKey(activeTrace, 'y')] || 'false';
+        range(data.length).forEach((idx) => {
+            if (idx !== activeTrace) {
+                const xShowErrorTrace = get({fireflyData}, errorShowFieldKey(idx, 'x')) || 'false';
+                const yShowErrorTrace = get({fireflyData}, errorShowFieldKey(idx, 'y')) || 'false';
+                if (xShowError !== xShowErrorTrace) {
+                    fields = updateSet(fields, [errorShowFieldKey(idx, 'x')], xShowError);
+                    fields = updateSet(fields, [`data.${idx}.error_x.visible`], toBoolean(xShowError));
+                }
+                if (yShowError !== yShowErrorTrace) {
+                    fields = updateSet(fields, [errorShowFieldKey(idx, 'y')], yShowError);
+                    fields = updateSet(fields, [`data.${idx}.error_y.visible`], toBoolean(yShowError));
+                }
+            }
+        });
+    }
 
     // Object.assign(changes, fields);
     submitChangesScatter({chartId, activeTrace, fields, tbl_id, renderTreeId});
