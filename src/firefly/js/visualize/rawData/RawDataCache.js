@@ -15,9 +15,6 @@ import {RawDataThreadActions} from '../../threadWorker/WorkerThreadActions.js';
  * @prop {number} loadingCnt - number of times this is loading, it should be 0,1,2
  */
 
-export const HALF= 'HALF';
-export const QUARTER= 'QUARTER';
-export const FULL= 'FULL';
 export const STRETCH_ONLY= 'STRETCH_ONLY';
 export const CLEARED= 'CLEARED';
 
@@ -33,7 +30,7 @@ export const {addRawDataToCache, getEntry, removeRawData}= (() => {
      * @param band
      * @param dataType
      */
-    const addRawDataToCache= (plotImageId, processHeader, workerKey, band= Band.NO_BAND, dataType=FULL) => {
+    const addRawDataToCache= (plotImageId, processHeader, workerKey, band= Band.NO_BAND, dataType='FULL') => {
         const bandEntry= {processHeader, rawTileDataAry:[], thumbnailEncodedImage: undefined};
         const entry= rawDataStore.find( (e) => e.plotImageId===plotImageId);
         if (entry) {

@@ -413,7 +413,7 @@ function modScreenPt(cc, p) {
 }
 
 
-function makeImageBoundingBox(sel,cc, shape, rotation) {
+export function makeImageBoundingBox(sel,cc, shape, rotation) {
     const {pt0,pt1}= sel;
     const dev0= cc.getDeviceCoords(pt0);
     const dev1= cc.getDeviceCoords(pt1);

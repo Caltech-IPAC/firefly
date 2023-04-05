@@ -20,12 +20,7 @@ import {isImage} from 'firefly/visualize/WebPlot.js';
 export const MOUSE_READOUT_DIALOG_ID= 'MouseReadoutPopoutAll';
 
 export function showMouseReadoutPopout(closeCallback) {
-    const popup = (
-        <PopupPanel title={primePlot(visRoot())?.title || 'Mouse Readout'} closeCallback={closeCallback} layoutPosition={LayoutType.TOP_RIGHT}>
-            <PopoutMouseReadoutContents/>
-        </PopupPanel>
-    );
-    DialogRootContainer.defineDialog(MOUSE_READOUT_DIALOG_ID, popup);
+    DialogRootContainer.defineDialog(MOUSE_READOUT_DIALOG_ID, <MousePopup closeCallback={closeCallback}/>);
     dispatchShowDialog(MOUSE_READOUT_DIALOG_ID);
 }
 
@@ -35,13 +30,24 @@ function makeState() {
     return {vr:visRoot(), currMouseState:lastMouseCtx(), readoutData:lastMouseImageReadout(), readout:readoutRoot()};
 }
 
-
-function PopoutMouseReadoutContents() {
+function MousePopup({closeCallback,visible, requestOnTop, dialogId, zIndex, requestToClose}) {
     const {vr,currMouseState, readout, readoutData}= useMouseStoreConnector(makeState);
+    return (
+        <div>
+            <PopupPanel {...{title:primePlot(visRoot(),currMouseState.plotId)?.title || 'Mouse Readout',
+                closeCallback, layoutPosition:LayoutType.TOP_RIGHT,
+                visible, requestOnTop, dialogId, zIndex, requestToClose} }>
+                <PopoutMouseReadoutContents {...{vr,currMouseState, readout, readoutData}}/>
+            </PopupPanel>
+        </div>
+    );
+}
+
+function PopoutMouseReadoutContents({vr,currMouseState, readout, readoutData}) {
     const showHealpixPixel= getAppOptions()?.hips?.readoutShowsPixel ?? false;
     const pv= getActivePlotView(vr);
     const mousePv= getPlotViewById(vr,currMouseState.plotId);
-    const pvForThumbnail= currMouseState.mouseState===MouseState.EXIT ? pv : mousePv
+    const pvForThumbnail= currMouseState.mouseState===MouseState.EXIT ? pv : mousePv;
     const image= isImage(primePlot(pvForThumbnail));
     const lockByClick= isLockByClick(readoutRoot());
 

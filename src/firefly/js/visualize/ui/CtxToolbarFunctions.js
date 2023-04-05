@@ -46,7 +46,7 @@ import {detachSelectArea, isOutlineImageForSelectArea, SELECT_AREA_TITLE} from '
 import ImageOutline from '../../drawingLayers/ImageOutline';
 import {convertAngle} from '../VisUtil';
 import ShapeDataObj from '../draw/ShapeDataObj';
-import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dlRoot} from '../DrawLayerCntlr';
+import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dlRoot} from '../DrawLayerCntlr';
 import {UserZoomTypes} from '../ZoomUtil';
 import {isHiPS, isImage} from '../WebPlot';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView';
@@ -195,56 +195,54 @@ export function crop(pv) {
     const ip1=  cc.getImageCoords(sel.pt1);
     const cropMultiAll= isMultiImageFitsWithSameArea(pv);
     dispatchCrop({plotId:pv.plotId, imagePt1:ip0, imagePt2:ip1, cropMultiAll});
-    attachImageOutline(pv);
+    attachImageOutline(pv, 'Crop Outline');
     detachSelectArea(pv, true);
 }
 
 
 
 // attach image outline drawing layer on top of the cropped image, zoom-to-fit image and recenter image
-function attachImageOutline(pv) {
+function attachImageOutline(pv, title) {
     const selectedShape = getSelectedShape(pv);
     //if (selectedShape === SelectedShape.rect.key) return;
 
-    const outlineAry = getDrawLayersByType(dlRoot(), ImageOutline.TYPE_ID);
-    let   dl = outlineAry.find((dl) => isOutlineImageForSelectArea(dl));
+    getDrawLayersByType(dlRoot(), ImageOutline.TYPE_ID)
+        ?.filter( (dl) => dl.title===title )
+        .forEach( (dl) => dispatchDestroyDrawLayer(dl.drawLayerId));
 
-    if (!dl) {
-        const title = SELECT_AREA_TITLE;
-        const plot = primePlot(pv);
-        const cc= CysConverter.make(plot);
-        const sel = plot.attributes[PlotAttribute.SELECTION];
-        const devPt0= cc.getDeviceCoords(sel.pt0);
-        const devPt2= cc.getDeviceCoords(sel.pt1);
-        const devPt1= makeDevicePt(devPt2.x, devPt0.y);
+    const plot = primePlot(pv);
+    const cc= CysConverter.make(plot);
+    const sel = plot.attributes[PlotAttribute.SELECTION];
+    const devPt0= cc.getDeviceCoords(sel.pt0);
+    const devPt2= cc.getDeviceCoords(sel.pt1);
+    const devPt1= makeDevicePt(devPt2.x, devPt0.y);
 
-        // create ellipse dimension on image domain
-        const imgPt = [devPt0, devPt1, devPt2].map((devP) => cc.getImageCoords(devP));
-        const dist = (dx, dy) => {
-            return Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
-        };
+    // create ellipse dimension on image domain
+    const imgPt = [devPt0, devPt1, devPt2].map((devP) => cc.getImageCoords(devP));
+    const dist = (dx, dy) => {
+        return Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+    };
 
-        const r1 = dist((imgPt[0].x - imgPt[1].x), (imgPt[0].y - imgPt[1].y));
-        const r2 = dist((imgPt[1].x - imgPt[2].x), (imgPt[1].y - imgPt[2].y));
-        const center = cc.getWorldCoords(makeImagePt((imgPt[0].x + imgPt[2].x)/2, (imgPt[0].y + imgPt[2].y)/2));
-        const rotArc = pv.rotation === 0.0 ? 0.0 : convertAngle('deg', 'arcsec', (360 - pv.rotation));
+    const r1 = dist((imgPt[0].x - imgPt[1].x), (imgPt[0].y - imgPt[1].y));
+    const r2 = dist((imgPt[1].x - imgPt[2].x), (imgPt[1].y - imgPt[2].y));
+    const center = cc.getWorldCoords(makeImagePt((imgPt[0].x + imgPt[2].x)/2, (imgPt[0].y + imgPt[2].y)/2));
+    const rotArc = pv.rotation === 0.0 ? 0.0 : convertAngle('deg', 'arcsec', (360 - pv.rotation));
 
 
-        const drawObj = selectedShape === SelectedShape.rect.key ?
-            ShapeDataObj.makeRectangleByCenter(center, r1, r2, ShapeDataObj.UnitType.IMAGE_PIXEL,
-                rotArc,  ShapeDataObj.UnitType.ARCSEC, false, true) :
-            ShapeDataObj.makeEllipse(center, r1/2, r2/2, ShapeDataObj.UnitType.IMAGE_PIXEL,
-                rotArc, ShapeDataObj.UnitType.ARCSEC, false);
-        dl = dispatchCreateDrawLayer(ImageOutline.TYPE_ID,
-            {drawObj, color: 'red', title, destroyWhenAllDetached: true});
-    }
+    const drawObj = selectedShape === SelectedShape.rect.key ?
+        ShapeDataObj.makeRectangleByCenter(center, r1, r2, ShapeDataObj.UnitType.IMAGE_PIXEL,
+            rotArc,  ShapeDataObj.UnitType.ARCSEC, false, true) :
+        ShapeDataObj.makeEllipse(center, r1/2, r2/2, ShapeDataObj.UnitType.IMAGE_PIXEL,
+            rotArc, ShapeDataObj.UnitType.ARCSEC, false);
+    const dl = dispatchCreateDrawLayer(ImageOutline.TYPE_ID,
+        {drawObj, color: 'red', title, destroyWhenAllDetached: true});
 
     if (!isDrawLayerAttached(dl, pv.plotId)) {
         dispatchAttachLayerToPlot(dl.drawLayerId, pv.plotId, false);
     }
 }
 
-export function zoomIntoSelection(pv) {
+export function zoomIntoSelection(pv, try2=false) {
 
     let p= primePlot(pv);
     if (!p) return;
@@ -255,6 +253,13 @@ export function zoomIntoSelection(pv) {
 
     const sp0=  cc.getScreenCoords(sel.pt0);
     const sp2=  cc.getScreenCoords(sel.pt1);
+
+    if (!sp0 || !sp2) {
+        if (isImage(p) || try2) return;
+        dispatchChangeCenterOfProjection({plotId,centerProjPt:sel.pt0});
+        zoomIntoSelection(getPlotViewById(pv.plotId), true);
+        return;
+    }
 
     const level= Math.min(viewDim.width/Math.abs(sp0.x-sp2.x),
         viewDim.height/Math.abs(sp0.y-sp2.y)) * p.zoomFactor;
@@ -272,17 +277,27 @@ export function zoomIntoSelection(pv) {
         dispatchProcessScroll({plotId,scrollPt:proposedSP});
     }
     else if (isHiPS(p)) {
-        const centerPt= makeScreenPt( Math.abs(sp0.x-sp2.x)/2+ Math.min(sp0.x,sp2.x),
-            Math.abs(sp0.y-sp2.y)/2 + Math.min(sp0.y,sp2.y));
-        const centerProjPt= cc.getWorldCoords(centerPt, p.imageCoordSys);
-        if (centerProjPt) dispatchChangeCenterOfProjection({plotId,centerProjPt});
-
+        const userSearchWP= p.attributes[PlotAttribute.USER_SEARCH_WP];
+        if (userSearchWP) {
+            dispatchChangeCenterOfProjection({plotId,centerProjPt:userSearchWP});
+        }
+        else {
+            p= primePlot(visRoot(),pv.plotId);
+            dispatchChangeCenterOfProjection({plotId,centerProjPt:sel.pt2});
+            cc= CysConverter.make(p);
+            const dev0=  cc.getDeviceCoords(sel.pt0);
+            const dev2=  cc.getDeviceCoords(sel.pt1);
+            const centerPt= makeDevicePt( Math.abs(dev0.x-dev2.x)/2+ Math.min(dev0.x,dev2.x),
+                Math.abs(dev0.y-dev2.y)/2 + Math.min(dev0.y,dev2.y));
+            const centerProjPt= cc.getWorldCoords(centerPt, p.imageCoordSys);
+            if (centerProjPt) dispatchChangeCenterOfProjection({plotId,centerProjPt});
+        }
     }
     else {
         return;
     }
 
-    attachImageOutline(pv);
+    if (pv?.plotViewCtx.useForSearchResults) attachImageOutline(pv, 'Last Zoom to Selection');
     detachSelectArea(pv, true);
 
 }

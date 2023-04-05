@@ -5,14 +5,14 @@ import {createCanvas, isGPUAvailableInWorker, isImageBitmap, MEG} from '../../ut
 import ImagePlotCntlr, {dispatchRequestLocalData, visRoot} from '../ImagePlotCntlr.js';
 import {PlotState} from '../PlotState.js';
 import {getNextWorkerKey, postToWorker} from '../../threadWorker/WorkerAccess.js';
-import {addRawDataToCache, CLEARED, FULL, getEntry, HALF, QUARTER, STRETCH_ONLY} from './RawDataCache.js';
+import {addRawDataToCache, CLEARED, getEntry, STRETCH_ONLY} from './RawDataCache.js';
 import {getColorModel} from './rawAlgorithm/ColorTable.js';
 import {getGPUOps} from './RawImageTilesGPU.js';
 import {getGpuJs} from './GpuJsConfig.js';
 import {
     makeAbortFetchAction, makeColorAction, makeRetrieveStretchByteDataAction,
 } from './RawDataThreadActionCreators.js';
-import {MAX_FULL_DATA_SIZE} from './RawDataCommon.js';
+import {FULL, HALF, MAX_FULL_DATA_SIZE, QUARTER} from './RawDataCommon.js';
 import {makeThumbnailCanvas} from 'firefly/visualize/rawData/RawTileDrawer.js';
 import {Logger} from 'firefly/util/Logger.js';
 
@@ -219,6 +219,9 @@ function clearLocalStretchData(plot) {
 //     return (!isThreeColor(plot) && plot.webFitsData[Band.NO_BAND.value].largeBinPercent>.03);
 // }
 
+export function getDataCompress(plotImageId) {
+    return getEntry(plotImageId)?.rawTileDataGroup?.dataCompress;
+}
 
 /**
  * @param {WebPlot} plot
@@ -288,6 +291,7 @@ export async function loadStretchData(pv, plot, dispatcher) {
     const dataCompress= getFirstDataCompress(plot,mask);
     const {success:firstSuccess, fatal}= await loadStandardStretchData(workerKey, plot,
                   {dataCompress, backgroundUpdate:false, checkForPlotUpdate:!mask}, maskOptions);
+    imageIdsRequested.delete(plot.plotImageId);
 
     if (plotInvalid()) return;
     if (firstSuccess) {
@@ -325,14 +329,22 @@ export async function updateStretchDataAfterZoom(plotId,dispatcher, secondTry=fa
 
     const workerKey= getEntry(plot.plotImageId)?.workerKey ?? getNextWorkerKey();
     const reqId= getStretchReqId();
+    const runningReqId= imageIdsRequested.get(plot.plotImageId);
+    if (runningReqId && runningReqId!==reqId) return; // abort another request for this image is running
     imageIdsRequested.set(plot.plotImageId,reqId);
     const success= await requestAgain(reqId, plot.plotId, plot, 100, nextDataCompress, workerKey, dispatcher);
-    if (success || secondTry) return;
+    imageIdsRequested.delete(plot.plotImageId);
+    if (success) {
+        if (secondTry) return;
+        void await updateStretchDataAfterZoom(plotId,dispatcher); // try again the zoom may have changed
+    }
+
 
                // only to this code if first try and request failed
     await delay(3000);
     if (getEntry(plot.plotImageId)?.rawTileDataGroup.dataCompress===nextDataCompress) return; // image already achieved target via another request
-    if (imageIdsRequested.get(plot.plotImageId)!==reqId) return; // abort another request for this image is running
+    const runningReqId2= imageIdsRequested.get(plot.plotImageId);
+    if (runningReqId2 && runningReqId2!==reqId) return; // abort another request for this image is running
     void await updateStretchDataAfterZoom(plotId, dispatcher, true); // second try if mainly a fallback, code will rarely get here
 }
 
