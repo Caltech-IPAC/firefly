@@ -15,7 +15,7 @@ import {clearModalEndInfo, setModalEndInfo} from './ToolbarToolModalEnd.js';
 
 
 export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,visible=true,
-                                           modalEndInfo, endText,
+                                           modalEndInfo, endText, modalLayer= false,
                                             plotTypeMustMatch= false, style={}, enabled= true, imageStyle,
                                             todo= false, isIconOn, onClick, dropDown, allPlots= true }) {
     const enableButton= Boolean(primePlot(pv)) && enabled;
@@ -46,7 +46,7 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,vi
                            style={style}
                            imageStyle={imageStyle}
                            onClick={() => onClick ? onClick(pv,!isOn) :
-                               onOff(pv,typeId,allPlots,plotTypeMustMatch,todo,modalEndInfo, endText)}/>
+                               onOff(pv,typeId,allPlots,plotTypeMustMatch,todo,modalEndInfo, endText,modalLayer)}/>
         );
     }
 }
@@ -65,6 +65,7 @@ SimpleLayerOnOffButton.propTypes= {
     plotTypeMustMatch: PropTypes.bool,
     dropDown: PropTypes.object,
     enabled: PropTypes.bool,
+    modalLayer: PropTypes.bool,
     style : PropTypes.object,
     modalEndInfo: PropTypes.object,
     endText: PropTypes.string,
@@ -77,7 +78,7 @@ SimpleLayerOnOffButton.defaultProps= {
 
 
 
-export function onOff(pv,typeId,allPlots, plotTypeMustMatch, todo, modalEndInfo, endText) {
+export function onOff(pv,typeId,allPlots, plotTypeMustMatch, todo, modalEndInfo, endText, modalLayer= false) {
     if (!pv || !typeId) return;
 
     if (todo) {
@@ -90,14 +91,16 @@ export function onOff(pv,typeId,allPlots, plotTypeMustMatch, todo, modalEndInfo,
 
     if (!isDrawLayerAttached(dl,pv.plotId)) {
         dispatchAttachLayerToPlot(typeId,pv.plotId,allPlots,true, plotTypeMustMatch);
-        modalEndInfo?.closeLayer?.();
-        setModalEndInfo?.({
-            closeLayer: () => {
-                onOff(pv,typeId,allPlots,plotTypeMustMatch,todo, modalEndInfo, endText);
-            },
-            closeText: endText,
-            offOnNewPlot: true,
-        });
+        if (modalLayer) {
+            modalEndInfo?.closeLayer?.();
+            setModalEndInfo?.({
+                closeLayer: () => {
+                    onOff(pv,typeId,allPlots,plotTypeMustMatch,todo, modalEndInfo, endText, modalLayer);
+                },
+                closeText: endText,
+                offOnNewPlot: true,
+            });
+        }
     }
     else {
         dispatchDetachLayerFromPlot(typeId,pv.plotId,allPlots,dl.destroyWhenAllDetached);

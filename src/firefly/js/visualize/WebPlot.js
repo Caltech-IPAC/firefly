@@ -740,6 +740,22 @@ export function getDevPixScaleDeg(plot) {
     return 0;
 }
 
+export function getImagePixScaleDeg(plot) {
+    if (!plot?.projection || !isKnownType(plot) ) return 0;
+    if (isImage(plot)) {
+        return (plot.projection.getPixelScaleArcSec()/3600) / plot.zoomFactor;
+    }
+    else if (isHiPS(plot)) {
+        const pt00= makeWorldPt(0,0, plot.imageCoordSys);
+        const tmpPlot= changeProjectionCenter(plot, pt00);
+        const cc= CysConverter.make(tmpPlot);
+        const devP= cc.getImageCoords( pt00);
+        const pt2= cc.getWorldCoords( makeImagePt(devP.x-1, devP.y), plot.imageCoordSys);
+        return Math.abs(0-pt2.x);
+    }
+    return 0;
+}
+
 export const isBlankHiPSURL= (url) => url.toLowerCase()===BLANK_HIPS_URL;
 
 /**

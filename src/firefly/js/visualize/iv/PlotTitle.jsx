@@ -7,8 +7,12 @@ import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import Enum from 'enum';
 import {sprintf} from '../../externalSource/sprintf';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {FULL, HALF, QUARTER} from '../rawData/RawDataCommon.js';
+import {getDataCompress} from '../rawData/RawDataOps.js';
+// import {FULL, getDataCompress, HALF, QUARTER} from '../rawData/RawDataCommon.js';
 import {getZoomDesc} from '../ZoomUtil.js';
-import {hasLocalStretchByteData, primePlot} from '../PlotViewUtil.js';
+import {primePlot} from '../PlotViewUtil.js';
 import {isImage} from '../WebPlot.js';
 import {hasWCSProjection, pvEqualExScroll} from '../PlotViewUtil';
 
@@ -18,13 +22,31 @@ import LOADING from 'html/images/gxt/loading.gif';
 export const TitleType= new Enum(['INLINE', 'HEAD', 'EXPANDED']);
 
 export const PlotTitle= memo(({plotView:pv, titleType, brief, working}) => {
+        const dataCompress= useStoreConnector(() => getDataCompress(primePlot(pv).plotImageId));
         const plot= primePlot(pv);
         const world= hasWCSProjection(plot);
         const zlRet= getZoomDesc(pv);
-        let zlStr= world ? `FOV: ${zlRet.fovFormatted}` : zlRet.zoomLevelFormatted;
+
+        let colons= ':';
+        let spaces= '';
+        switch (dataCompress) {
+            case QUARTER:
+                spaces= '&nbsp;&nbsp;';
+                colons= ':::';
+            break;
+            case HALF:
+                spaces= '&nbsp;';
+                colons= '::';
+            break;
+            case FULL:
+                spaces= '';
+                colons= ':';
+            break;
+        }
+        let zlStr= world ? `${spaces}FOV:${zlRet.fovFormatted}` : zlRet.zoomLevelFormatted;
         let tooltip= world ? `${plot.title}\nHorizontal field of view: ${zlRet.fovFormatted}` : plot.title;
         if (isImage(plot)) {
-            tooltip+= `\nZoom Level: ${zlRet.zoomLevelFormatted}`;
+            tooltip+= `\nZoom Level${colons} ${zlRet.zoomLevelFormatted}`;
         }
         let rotString;
         let flipString;

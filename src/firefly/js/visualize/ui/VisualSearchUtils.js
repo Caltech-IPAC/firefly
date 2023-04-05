@@ -2,22 +2,23 @@ import React from 'react';
 import {isString} from 'lodash';
 import {dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import SearchSelectTool from '../../drawingLayers/SearchSelectTool.js';
-import SelectArea, {getImageBoundsSelection} from '../../drawingLayers/SelectArea.js';
+import SelectArea, {getImageBoundsSelection, makeImageBoundingBox} from '../../drawingLayers/SelectArea.js';
 import {SelectedShape} from '../../drawingLayers/SelectedShape.js';
 import {sprintf} from '../../externalSource/sprintf.js';
 import {AREA} from '../../ui/dynamic/DynamicDef.js';
 import {splitByWhiteSpace} from '../../util/WebUtil.js';
-import CsysConverter from '../CsysConverter.js';
+import CsysConverter, {CysConverter} from '../CsysConverter.js';
 import {
     dispatchAttachLayerToPlot, dispatchChangeDrawingDef, dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
     dispatchForceDrawLayerUpdate, dispatchModifyCustomField, getDlAry
 } from '../DrawLayerCntlr.js';
+import {changeProjectionCenter} from '../HiPSUtil.js';
 import {dispatchAttributeChange, dispatchChangeCenterOfProjection, visRoot} from '../ImagePlotCntlr.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {getDrawLayerByType, getPlotViewById, isDrawLayerAttached, primePlot} from '../PlotViewUtil.js';
 import {isValidPoint, makeDevicePt, makeImagePt, makeWorldPt, parseWorldPt, pointEquals} from '../Point.js';
 import {computeCentralPointAndRadius, computeDistance, getPointOnEllipse} from '../VisUtil.js';
-import {getDevPixScaleDeg, isImage} from '../WebPlot.js';
+import {getDevPixScaleDeg, getImagePixScaleDeg, isImage} from '../WebPlot.js';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
 import {
     clearModalEndInfo, closeToolbarModalLayers, getModalEndInfo, setModalEndInfo
@@ -230,51 +231,58 @@ export function updateUIFromPlot({plotId, setWhichOverlay, whichOverlay, setTarg
 }
 
 
-
-function convertToSelection(plot, wp,radius,polygonAry,whichOverlay) {
-    if (!plot) return {};
-    const cc= CsysConverter.make(plot);
-    let type;
-    let sel;
-
-    if (whichOverlay===CONE_CHOICE_KEY) {
-        if (!wp) return {};
-        const cen= cc.getDeviceCoords(wp);
-        if (!cen) return {};
-        const dist= radius/(getDevPixScaleDeg(plot));
-        const pt0= cc.getWorldCoords(makeDevicePt(cen.x-dist, cen.y+dist));
-        const pt1= cc.getWorldCoords(makeDevicePt(cen.x+dist, cen.y-dist));
-        if (!pt0 || !pt1) return {};
-        sel= {pt0,pt1};
-        type= SelectedShape.circle.key;
-    }
-    else {
-        if (!polygonAry?.length) return {};
-        const devAry= polygonAry.map( (pt) => cc.getDeviceCoords(pt)).filter( (pt) => pt);
-        if (devAry.length<3) return {};
-        const xAry= devAry.map( ({x}) => x);
-        const yAry= devAry.map( ({y}) => y);
-        const minX= Math.min(...xAry);
-        const minY= Math.min(...yAry);
-        const maxX= Math.max(...xAry);
-        const maxY= Math.max(...yAry);
-        const pt0= cc.getWorldCoords(makeDevicePt(minX,maxY));
-        const pt1= cc.getWorldCoords(makeDevicePt(maxX,minY));
-        sel= {pt0,pt1};
-        type= SelectedShape.circle.rect;
-    }
-
-    const imBoundSel= getImageBoundsSelection(sel,CsysConverter.make(plot), type,
+function convertConeToSelection(plot,wp,radius) {
+    if (!wp) return {};
+    const tmpPlot= changeProjectionCenter(plot, wp);
+    const dist= radius/(getDevPixScaleDeg(tmpPlot));
+    const ccTmpPlot= CysConverter.make(tmpPlot);
+    const cen= ccTmpPlot.getDeviceCoords(wp);
+    if (!cen) return {};
+    const pt0= ccTmpPlot.getWorldCoords(makeDevicePt(cen.x-dist, cen.y+dist));
+    const pt1= ccTmpPlot.getWorldCoords(makeDevicePt(cen.x+dist, cen.y-dist));
+    if (!pt0 || !pt1) return {};
+    const sel= {pt0,pt1};
+    const imBoundSel= getImageBoundsSelection(sel,ccTmpPlot, SelectedShape.circle.key,
         getPlotViewById(visRoot(),plot.plotId)?.rotation ?? 0);
-
-
     return {
         [PlotAttribute.SELECTION]: sel,
-        [PlotAttribute.SELECTION_TYPE]: type,
+        [PlotAttribute.SELECTION_TYPE]: SelectedShape.circle.key,
         [PlotAttribute.IMAGE_BOUNDS_SELECTION]: imBoundSel,
         [PlotAttribute.SELECTION_SOURCE]: 'SearchRefinementTool'
     };
+}
 
+function convertPolygonToSelection(plot,polygonAry) {
+    if (!polygonAry?.length) return {};
+    const cc= CsysConverter.make(plot);
+    const devAry= polygonAry.map( (pt) => cc.getDeviceCoords(pt)).filter( (pt) => pt);
+    if (devAry.length<3) return {};
+    const xAry= devAry.map( ({x}) => x);
+    const yAry= devAry.map( ({y}) => y);
+    const minX= Math.min(...xAry);
+    const minY= Math.min(...yAry);
+    const maxX= Math.max(...xAry);
+    const maxY= Math.max(...yAry);
+    const pt0= cc.getWorldCoords(makeDevicePt(minX,maxY));
+    const pt1= cc.getWorldCoords(makeDevicePt(maxX,minY));
+    const sel= {pt0,pt1};
+    const imBoundSel= getImageBoundsSelection(sel,CsysConverter.make(plot), SelectedShape.rect.key,
+        getPlotViewById(visRoot(),plot.plotId)?.rotation ?? 0);
+    return {
+        [PlotAttribute.SELECTION]: sel,
+        [PlotAttribute.SELECTION_TYPE]: SelectedShape.rect.key,
+        [PlotAttribute.IMAGE_BOUNDS_SELECTION]: imBoundSel,
+        [PlotAttribute.SELECTION_SOURCE]: 'SearchRefinementTool'
+    };
+    
+}
+
+
+function convertToSelection(plot, wp,radius,polygonAry,whichOverlay) {
+    if (!plot) return {};
+    return (whichOverlay===CONE_CHOICE_KEY) ?
+        convertConeToSelection(plot,wp,radius) :
+        convertPolygonToSelection(plot,polygonAry);
 }
 
 export function updatePlotOverlayFromUserInput(plotId, whichOverlay, wp, radius, polygonAry, forceCenterOn = false, canGeneratePolygon= false) {

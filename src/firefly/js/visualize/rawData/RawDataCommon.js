@@ -12,6 +12,9 @@ import {
 import {getColorModel} from './rawAlgorithm/ColorTable.js';
 import {RawDataThreadActions} from 'firefly/threadWorker/WorkerThreadActions.js';
 
+export const HALF= 'HALF';
+export const QUARTER= 'QUARTER';
+export const FULL= 'FULL';
 
 const abortControllers= new Map(); // map of imagePlotId and AbortController
 export const TILE_SIZE = 3000;
@@ -119,7 +122,7 @@ export function getTransferable(result) {
 
 export function getRealDataDim( dataCompress, dataWidth, dataHeight) {
 
-    const tileSize= dataCompress==='FULL' ? TILE_SIZE : dataCompress==='HALF' ? TILE_SIZE/2 : TILE_SIZE/4;
+    const tileSize= dataCompress===FULL ? TILE_SIZE : dataCompress===HALF ? TILE_SIZE/2 : TILE_SIZE/4;
 
     let xPanels= Math.trunc(dataWidth / TILE_SIZE);
     let yPanels= Math.trunc(dataHeight / TILE_SIZE);
@@ -128,11 +131,11 @@ export function getRealDataDim( dataCompress, dataWidth, dataHeight) {
 
     let realDataWidth= dataWidth;
     let realDataHeight= dataHeight;
-    if (dataCompress==='QUARTER') {
+    if (dataCompress===QUARTER) {
         realDataWidth = dataWidth % 4 === 0 ? Math.trunc(dataWidth / 4) : Math.trunc(dataWidth / 4) + 1;
         realDataHeight = dataHeight % 4 === 0 ? Math.trunc(dataHeight / 4) : Math.trunc(dataHeight / 4) + 1;
     }
-    else if (dataCompress==='HALF') {
+    else if (dataCompress===HALF) {
         realDataWidth= dataWidth % 2 === 0 ? Math.trunc(dataWidth /2) : Math.trunc(dataWidth /2) + 1;
         realDataHeight= dataHeight % 2 === 0 ? Math.trunc(dataHeight /2) : Math.trunc(dataHeight /2) + 1;
     }
@@ -140,6 +143,10 @@ export function getRealDataDim( dataCompress, dataWidth, dataHeight) {
     return {tileSize,xPanels,yPanels, realDataWidth, realDataHeight};
 
 }
+
+// export function getDataCompress(plotImageId) {
+//     return getEntry(plotImageId)?.rawTileDataGroup?.dataCompress;
+// }
 
 
 /**
