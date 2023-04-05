@@ -150,7 +150,7 @@ export const HiPSTargetView = ({style, hipsDisplayKey='none',
 
     useEffect(() => { // if target or radius field change then hips plot to reflect it
         updatePlotOverlayFromUserInput(plotId, whichOverlay, userEnterWorldPt(),
-            userEnterSearchRadius(), userEnterPolygon());
+            userEnterSearchRadius(), userEnterPolygon(), false, true);
     }, [getTargetWp, getHiPSRadius, getPolygon, whichOverlay]);
 
     useEffect(() => {
@@ -361,7 +361,7 @@ async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg,
             highlightFeedback: false,
             menuItemKeys: {
                 zoomDropDownMenu: false, overlayColorLock: false, matchLockDropDown: false, clickToSearch:false,
-                recenter: false, selectArea: true,
+                recenter: false, selectArea: true, restore: false,
             }
         }
     });
@@ -370,6 +370,7 @@ async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg,
 
     initSearchSelectTool(plotId);
     if (userEnterWorldPt?.() || userEnterPolygon?.()?.length) {
+        await onPlotComplete(plotId);
         updatePlotOverlayFromUserInput(plotId,whichOverlay, userEnterWorldPt?.(), userEnterSearchRadius?.(), userEnterPolygon?.(), true);
     }
 }

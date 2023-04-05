@@ -73,7 +73,8 @@ export function TargetHipsPanelToolbar({visRoot, viewerPlotIds, toolbarStyle={},
         <div style={style}>
             <HelpLines whichOverlay={whichOverlay}/>
             <div style={{display:'flex', justifyContent:'flex-start'}}>
-                <VisMiniToolbar style={{width:'unset'}} viewerId={viewerId}/>
+                <VisMiniToolbar style={{width:'unset'}} viewerId={viewerId}
+                                tips={{selectArea:'Select an area to search'}}/>
                 <HelpIcon style={{alignSelf:'center', paddingLeft:5}} helpId={'hips.VisualSelection'} />
             </div>
         </div>

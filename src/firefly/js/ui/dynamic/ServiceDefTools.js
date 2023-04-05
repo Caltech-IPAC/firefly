@@ -234,7 +234,7 @@ export function makeSearchAreaInfo(cisxUI) {
         return obj;
     }, {});
     const {examples, moc, mocDesc, HiPS, hips_initial_fov, hips_initial_ra, hips_initial_dec, hips_frame, ptIsGalactic, moc_color} = tmpObj;
-    const hipsProjCsys = hips_frame?.trim().toLowerCase()==='galactic';
+    const hipsProjCsys = hips_frame?.trim().toLowerCase()==='galactic' ? CoordinateSys.GALACTIC : CoordinateSys.EQ_J2000;
     const ptCsys= ptIsGalactic ? CoordinateSys.GALACTIC : CoordinateSys.EQ_J2000;
     const centerWp = makeWorldPt(hips_initial_ra, hips_initial_dec, ptCsys);
     return {examples, moc, mocDesc, mocColor: moc_color, HiPS, hips_initial_fov,

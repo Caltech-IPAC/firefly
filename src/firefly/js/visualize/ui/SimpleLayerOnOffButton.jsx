@@ -28,7 +28,7 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,vi
     if (dropDown && !isOn) {
         return (
             <DropDownToolbarButton  icon={iconOff}
-                                    tip='Select an area for cropping or statistics'
+                                    tip={tip}
                                     enabled={enableButton}
                                     horizontal={true}
                                     visible={visible}

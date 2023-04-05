@@ -129,12 +129,12 @@ function getStoreState(oldState) {
     return (needsUpdate) ? newState : oldState;
 }
 
-export const VisMiniToolbar = memo( ({style, manageExpand=true, expandGrid=false, viewerId}) => {
+export const VisMiniToolbar = memo( ({style, manageExpand=true, expandGrid=false, viewerId, tips={}}) => {
     const {visRoot,dlCount, recentTargetAry, modalEndInfo} = useStoreConnector(getStoreState);
 
     return (
         <VisMiniTBWrapper {...{visRoot, dlCount, style, recentTargetAry, viewerId,
-                          manageExpand, expandGrid, modalEndInfo}} />
+                          manageExpand, expandGrid, modalEndInfo, tips}} />
     );
 });
 
@@ -143,6 +143,7 @@ VisMiniToolbar.propTypes= {
     manageExpand : PropTypes.bool,
     expandGrid: PropTypes.bool,
     viewerId: PropTypes.string,
+    tips: PropTypes.object
 };
 
 const rS= {
@@ -156,9 +157,9 @@ const rS= {
 };
 
 const VisMiniTBWrapper= wrapResizer(
-    ({visRoot, dlCount, style= {}, size:{width}, manageExpand, expandGrid, viewerId, modalEndInfo}) => (
+    ({visRoot, dlCount, style= {}, size:{width}, manageExpand, expandGrid, viewerId, modalEndInfo, tips={}}) => (
         <div style={{...rS, ...style}} className='disable-select' >
-            <VisMiniToolbarView {...{visRoot, dlCount, availableWidth:width, manageExpand, expandGrid,modalEndInfo, viewerId}} />
+            <VisMiniToolbarView {...{visRoot, dlCount, availableWidth:width, manageExpand, expandGrid,modalEndInfo, viewerId, tips}} />
         </div>
     ));
 
@@ -175,7 +176,7 @@ function getCorrectPlotView(visRoot, viewerId) {
 }
 
 
-const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, expandGrid, modalEndInfo, viewerId}) => {
+const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, expandGrid, modalEndInfo, viewerId, tips}) => {
     const {apiToolsView}= visRoot;
     const {current:divref}= useRef({element:undefined});
     const [colorDrops,setColorDrops]= useState(true);
@@ -255,7 +256,7 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
             <ImageCenterDropDown visRoot={visRoot} visible={mi.recenter} mi={mi} />
 
             <SelectAreaButton {...{pv,visible:mi.selectArea,modalEndInfo,
-                tip:'Select Drop down. Select an area for cropping or statistics'}}/>
+                tip:tips?.selectArea ?? 'Select Drop down. Select an area for cropping or statistics'}}/>
 
 
             <LayerButton pv={pv} dlCount={dlCount}/>

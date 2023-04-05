@@ -15,11 +15,11 @@ import {
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {Logger} from '../../util/Logger.js';
 import {cisxAdhocServiceUtype, getServiceDescriptors, standardIDs} from '../../util/VOAnalyzer.js';
-import {getBoolean, toBoolean} from '../../util/WebUtil.js';
+import {toBoolean} from '../../util/WebUtil.js';
 import CoordSys from '../../visualize/CoordSys.js';
-import {ensureHiPSInit, resolveHiPSIvoURL} from '../../visualize/HiPSListUtil.js';
+import {ensureHiPSInit } from '../../visualize/HiPSListUtil.js';
 import {getHiPSZoomLevelForFOV} from '../../visualize/HiPSUtil.js';
-import {dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchZoom} from '../../visualize/ImagePlotCntlr.js';
+import {dispatchChangeCenterOfProjection, dispatchZoom} from '../../visualize/ImagePlotCntlr.js';
 import {getPlotViewById, primePlot} from '../../visualize/PlotViewUtil.js';
 import {pointEquals} from '../../visualize/Point.js';
 import {isHiPS} from '../../visualize/WebPlot.js';
@@ -59,7 +59,11 @@ const findUrl = async () => {
 };
 
 
-//todo these next 4 functions could be refactored when this is generalize, we might pass an object with them
+//todo these next 5 functions could be refactored when this is generalize, we might pass an object with them
+//========================
+//========================
+//========================
+//========================
 function getCollectionUrl(registryTblId, rowIdx) {
     const table= getTblById(registryTblId);
     if (!table) return;
@@ -81,11 +85,15 @@ function findUrlInReg(url, registryTblId) {
     return table?.tableData?.data?.findIndex( (d) => d[idx]===url);
 }
 
-const getDataSetChooserTitle= () =>
-    ({
-        title: 'Choose Data Collection',
-        details: 'Click on data collection to search; filter or sort table to find a data set.'
-   });
+const uiLabels= {
+    showOtherDataLabel: 'Show Other Data Collections',
+    hideLabel: 'Hide',
+    hideTip: 'Hide data collections chooser',
+    chooserTitle: 'Choose Data Collection',
+    chooserDetails: 'Click on data collection to search; filter or sort table to find a data collection.'
+
+};
+
 
 function makeRegistryRequest(url, registryTblId) {
     return makeFileRequest('registry', url, undefined,
@@ -122,6 +130,11 @@ function makeRegistryRequest(url, registryTblId) {
         }
     );
 }
+
+//========================
+//========================
+//========================
+//========================
 
 
 
@@ -290,7 +303,7 @@ function SearchTitle({desc, isAllSky, sideBarShowing, setSideBarShowing}) {
     else {
         return (
             <div style={{display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'flex-start'}}>
-                <ExpandButton style={linkStyle} icon={SHOW_RIGHT} text={'Show Other Data Sets'} onClick={()  => setSideBarShowing(true)}/>
+                <ExpandButton style={linkStyle} icon={SHOW_RIGHT} text={uiLabels.showOtherDataLabel} onClick={()  => setSideBarShowing(true)}/>
                 <div style={{display:'flex', flexDirection:'row', flexGrow:1, justifyContent:'center'}}>
                     <div className='DLGeneratedDropDown__section--title' style={{marginLeft:-60}}>
                         {titleDiv}
@@ -369,10 +382,10 @@ function SideBarTable({registryTblId, setSideBarShowing}) {
     return (
         <div style={{display:'flex', flexDirection:'column'}}>
             <div style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
-                {<ExpandButton style={linkStyle} icon={HIDE_LEFT} text={'Hide'} tip={'Hide data set chooser'}
+                {<ExpandButton style={linkStyle} icon={HIDE_LEFT} text={uiLabels.hideLabel} tip={uiLabels.hideTip}
                                onClick={()  => setSideBarShowing(false)}/> }
                 <div className='DLGeneratedDropDown__section--title' style={{marginLeft:110}} >
-                    {getDataSetChooserTitle().title}
+                    {uiLabels.chooserTitle}
                 </div>
             </div>
             <div style={{minWidth:460, flexGrow:1, backgroundColor:'inherit', padding: '4px 4px 0 2px'}}>
@@ -391,7 +404,7 @@ function SideBarTable({registryTblId, setSideBarShowing}) {
             </div>
             <div style={{fontSize:'larger', display:'flex', justifyContent:'space-around', padding: '12px 0 5px 0'} }>
                 <div>
-                    {getDataSetChooserTitle().details}
+                    {uiLabels.chooserDetails}
                 </div>
             </div>
         </div>
@@ -465,37 +478,27 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
         const plot= primePlot(visRoot(),HIPS_PLOT_ID);
         if (!plot || !isHiPS(plot)) return;
         if (!qAna?.primarySearchDef?.[0]?.serviceDef?.cisxUI) return;
+        const request= getFieldGroupResults('DL_UI'); // todo: this might not be right, there might be an array of field groups
+        const {fds}= findFieldDefInfo(request);
+        const tgt= findTargetFromRequest(request,fds);
+        if (tgt) return;
+
         const {cisxUI}= qAna.primarySearchDef[0].serviceDef;
         const raStr= cisxUI.find( (e) => e.name==='hips_initial_ra')?.value;
         const decStr= cisxUI.find( (e) => e.name==='hips_initial_dec')?.value;
         const ucdStr= cisxUI.find( (e) => e.name==='hips_initial_ra')?.UCD;
         const fovStr= cisxUI.find( (e) => e.name==='hips_initial_fov')?.value;
-        const hipsUrl= cisxUI.find( (e) => e.name==='HiPS')?.value;
-        const csys= ucdStr==='pos.galactic.lon' ? CoordSys.GALACTIC : CoordSys.EQ_J2000;
-        const centerProjPt= makeWorldPt(raStr, decStr, csys);
+        const coordSys= ucdStr==='pos.galactic.lon' ? CoordSys.GALACTIC : CoordSys.EQ_J2000;
+        const centerProjPt= makeWorldPt(raStr, decStr, coordSys);
         if (!centerProjPt) return;
-        const request= getFieldGroupResults('DL_UI'); // todo: this might not be right, there might be an array of field groups
-        const {fds}= findFieldDefInfo(request);
-        const tgt= findTargetFromRequest(request,fds);
-        if (!tgt) {
-            dispatchChangeCenterOfProjection({plotId:HIPS_PLOT_ID, centerProjPt});
-
-            const fov= Number(fovStr);
-            const pv= getPlotViewById(visRoot(),HIPS_PLOT_ID);
-            if (fov && pv) {
-                const MIN_FOV_SIZE= .0025; // 9 arcsec - minimum fov for initial size
-                const cleanFov= fov<MIN_FOV_SIZE ? MIN_FOV_SIZE : fov;
-                const level= getHiPSZoomLevelForFOV(pv,cleanFov);
-                if (!level) return;
-                dispatchZoom({plotId:pv.plotId, userZoomType: UserZoomTypes.LEVEL, level});
-            }
-        }
-        if (hipsUrl &&  hipsUrl!==plot.hipsUrlRoot) {
-            resolveHiPSIvoURL(hipsUrl).then((resolvedHiPsUrl) => {
-                if (resolvedHiPsUrl!==plot.hipsUrlRoot) {
-                    dispatchChangeHiPS({plotId: plot.plotId, hipsUrlRoot: hipsUrl});
-                }
-            });
+        dispatchChangeCenterOfProjection({plotId:HIPS_PLOT_ID, centerProjPt});
+        const fov= Number(fovStr);
+        const pv= getPlotViewById(visRoot(),HIPS_PLOT_ID);
+        if (fov && pv) {
+            const MIN_FOV_SIZE= .0025; // 9 arcsec - minimum fov for initial size
+            const cleanFov= Math.max(fov,MIN_FOV_SIZE);
+            const level= getHiPSZoomLevelForFOV(pv,cleanFov);
+            if (level) dispatchZoom({plotId:pv.plotId, userZoomType: UserZoomTypes.LEVEL, level});
         }
     }, [currentTblId]);
 
@@ -520,12 +523,12 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
 
     const notLoaded= (
         (regHasUrl || !isRegLoaded) ?
-            <div style={{position:'relative', width:'100%', height:'100%'}}>
+            (<div style={{position:'relative', width:'100%', height:'100%'}}>
                 <div className='loading-mask'/>
-            </div> :
-            <div style={{alignSelf:'center', fontSize:'large', paddingLeft:40}}>
+            </div>) :
+            (<div style={{alignSelf:'center', fontSize:'large', paddingLeft:40}}>
                 {`No collections to load from: ${url}`}
-            </div>
+            </div>)
     );
 
     return (
@@ -554,12 +557,20 @@ function handleSearch(request, qAna, idx, helpUrl) {
     const primeSdId= primeSd.ID ?? primeSd.id;
     const {coverage,bandDesc}= qAna.primarySearchDef[idx];
 
+
+    const {cisxUI}= qAna.primarySearchDef[0].serviceDef;
+    const preferredHips= cisxUI.find( (e) => e.name==='HiPS')?.value;
+
+
     const concurrentSDAry= qAna.concurrentSearchDef.filter( (searchDef) => {
         const id= searchDef.serviceDef.ID ?? searchDef.serviceDef.id ?? '';
         return id.startsWith(primeSdId);
     });
 
-    const tableRequestAry= makeAllSearchRequest(request, primeSd,concurrentSDAry, {coverage,bandDesc,helpUrl});
+    const extraMeta= {coverage,bandDesc,helpUrl};
+    if (preferredHips) extraMeta[MetaConst.COVERAGE_HIPS]=preferredHips;
+
+    const tableRequestAry= makeAllSearchRequest(request, primeSd,concurrentSDAry, extraMeta);
 
     tableRequestAry.forEach( (dataTableReq) => {
         Logger('DLGeneratedDropDown').debug(dataTableReq);
