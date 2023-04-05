@@ -172,10 +172,10 @@ export function makeCircleDef({ key, targetKey, sizeKey, minValue, maxValue, des
     });
 }
 
-export const makePolygonDef = ({key, desc, tooltip, initValue, targetPanelExampleRow1, sRegion,
+export const makePolygonDef = ({key, desc, tooltip, initValue, targetPanelExampleRow1, targetPanelExampleRow2, sRegion,
                                    nullAllowed}) =>
     ({type: POLYGON, key, desc, tooltip, initValue, nullAllowed,
-        targetDetails: {targetPanelExampleRow1,polygonKey:key+'-polygon', sRegion}
+        targetDetails: {targetPanelExampleRow1,targetPanelExampleRow2,polygonKey:key+'-polygon', sRegion}
     });
 
 export const makeRangeDef = ({key, desc, tooltip,

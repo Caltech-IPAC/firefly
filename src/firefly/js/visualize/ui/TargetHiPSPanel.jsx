@@ -29,10 +29,14 @@ import {CoordinateSys} from '../CoordSys.js';
 import {
     dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dlRoot, getDlAry
 } from '../DrawLayerCntlr.js';
-import {dispatchChangeActivePlotView, dispatchDeletePlotView, dispatchPlotHiPS, visRoot} from '../ImagePlotCntlr.js';
+import {
+    dispatchChangeActivePlotView, dispatchChangeHiPS, dispatchDeletePlotView, dispatchPlotHiPS, visRoot
+} from '../ImagePlotCntlr.js';
 import {NewPlotMode} from '../MultiViewCntlr.js';
 import {onPlotComplete} from '../PlotCompleteMonitor.js';
-import { getActivePlotView, getDrawLayersByType, getPlotViewById, isDrawLayerAttached } from '../PlotViewUtil.js';
+import {
+    getActivePlotView, getDrawLayersByType, getPlotViewById, isDrawLayerAttached, primePlot
+} from '../PlotViewUtil.js';
 import {makeWorldPt, parseWorldPt} from '../Point.js';
 import {createHiPSMocLayerFromPreloadedTable} from '../task/PlotHipsTask.js';
 import {WebPlotRequest} from '../WebPlotRequest.js';
@@ -127,6 +131,9 @@ export const HiPSTargetView = ({style, hipsDisplayKey='none',
             });
         }
         else {
+            if (coordinateSys && coordinateSys!==primePlot(pv).projection.coordSys) {
+                dispatchChangeHiPS({plotId,coordSys:coordinateSys});
+            }
             updatePlotOverlayFromUserInput(plotId, whichOverlay, userEnterWorldPt(), userEnterSearchRadius(),
                 userEnterPolygon(), true);
 

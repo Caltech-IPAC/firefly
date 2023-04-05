@@ -253,6 +253,7 @@ export function zoomIntoSelection(pv, try2=false) {
 
     const sp0=  cc.getScreenCoords(sel.pt0);
     const sp2=  cc.getScreenCoords(sel.pt1);
+    const userSearchWP= p.attributes[PlotAttribute.USER_SEARCH_WP];
 
     if (!sp0 || !sp2) {
         if (isImage(p) || try2) return;
@@ -277,7 +278,6 @@ export function zoomIntoSelection(pv, try2=false) {
         dispatchProcessScroll({plotId,scrollPt:proposedSP});
     }
     else if (isHiPS(p)) {
-        const userSearchWP= p.attributes[PlotAttribute.USER_SEARCH_WP];
         if (userSearchWP) {
             dispatchChangeCenterOfProjection({plotId,centerProjPt:userSearchWP});
         }
@@ -297,7 +297,7 @@ export function zoomIntoSelection(pv, try2=false) {
         return;
     }
 
-    if (pv?.plotViewCtx.useForSearchResults) attachImageOutline(pv, 'Last Zoom to Selection');
+    if (!userSearchWP) attachImageOutline(pv, 'Last Zoom to Selection'); // if userSearchWP, we are in click-to-search mode
     detachSelectArea(pv, true);
 
 }
@@ -314,13 +314,14 @@ export function recenterToSelection(pv) {
     const sp2=  cc.getScreenCoords(sel.pt1);
     const centerPt= makeScreenPt( Math.abs(sp0.x-sp2.x)/2+ Math.min(sp0.x,sp2.x),
         Math.abs(sp0.y-sp2.y)/2 + Math.min(sp0.y,sp2.y));
+    const userSearchWP= p.attributes[PlotAttribute.USER_SEARCH_WP];
 
     if (isImage(p)) {
         const newScrollPt= makeScreenPt(centerPt.x - viewDim.width/2, centerPt.y - viewDim.height/2);
         dispatchProcessScroll({plotId,scrollPt:newScrollPt});
     }
     else { // hips
-        const centerProjPt= cc.getWorldCoords(centerPt, p.imageCoordSys);
+        const centerProjPt = userSearchWP ? userSearchWP : cc.getWorldCoords(centerPt, p.imageCoordSys);
         if (centerProjPt) dispatchChangeCenterOfProjection({plotId,centerProjPt});
     }
 

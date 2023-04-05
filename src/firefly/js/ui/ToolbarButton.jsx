@@ -12,9 +12,9 @@ import CHECK_BOX from 'html/images/black_check-on_10x10.gif';
 import BrowserInfo, {Platform} from 'firefly/util/BrowserInfo.js';
 
 
-export function makeBadge(cnt) {
+export function makeBadge(cnt, style={}) {
     const cName= `ff-badge ${cnt<10 ? 'badge-1-digit' : 'badge-2-digit'}`;
-    return <div className={cName}>{Math.trunc(cnt)}</div>;
+    return <div style={style} className={cName}>{Math.trunc(cnt)}</div>;
 }
 
 const checkBoxBaseStyle= {width: 10, height: 10, paddingRight: 4, alignSelf: 'center'};

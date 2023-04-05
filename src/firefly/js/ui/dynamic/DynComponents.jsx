@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isString} from 'lodash';
+import {isArray, isString} from 'lodash';
 import React, {useEffect} from 'react';
 import {CoordinateSys} from '../../api/ApiUtilImage.jsx';
 import {floatRange, intRange} from '../../util/Validate.js';
@@ -360,13 +360,18 @@ function CircleField({ fieldKey, desc, tooltip = '', initValue, minValue, maxVal
 
 function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', style={},
                           labelWidth = DEF_LABEL_WIDTH, tooltip = 'Enter polygon coordinates search',
-                          targetDetails: {targetPanelExampleRow1 = DEF_AREA_EXAMPLE, sRegion}, ...restOfProps }) {
+                          targetDetails: {targetPanelExampleRow1 = DEF_AREA_EXAMPLE, targetPanelExampleRow2, sRegion}, ...restOfProps }) {
+
+    const helpRow2= isArray(targetPanelExampleRow2) && targetPanelExampleRow2.length ?
+        targetPanelExampleRow2[0] : isString(targetPanelExampleRow2) ?
+            targetPanelExampleRow2 : undefined;
 
     const help = [
         'Each vertex is defined by a J2000 RA and Dec position pair',
         'A max of 15 and min of 3 vertices is allowed',
         'Vertices must be separated by a comma (,)',
-        targetPanelExampleRow1
+        isArray(targetPanelExampleRow1) ? targetPanelExampleRow1[0] :targetPanelExampleRow1,
+        helpRow2
     ];
     return (
         <div key={fieldKey} style={style}>
@@ -384,7 +389,7 @@ function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', style={}
             }}
             />
             <ul style={{marginTop: 7}}>
-                {help.map((h) => <li key={h} style={{listStyleType: `'${BULLET}'`}}>{h}</li>)}
+                {help.filter((h) => h).map((h) => <li key={h} style={{paddingBottom: 2, listStyleType: `'${BULLET}'`}}>{h}</li>)}
             </ul>
         </div>
     );

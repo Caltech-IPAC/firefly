@@ -5,14 +5,17 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {makeBadge} from '../../ui/ToolbarButton.jsx';
 
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
 import {Tab, Tabs} from '../../ui/panel/TabPanel.jsx';
 import {MultiViewStandardToolbar} from './MultiViewStandardToolbar.jsx';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
-import {DEFAULT_FITS_VIEWER_ID, REPLACE_VIEWER_ITEMS, NewPlotMode, getViewerItemIds, getMultiViewRoot,
-        META_VIEWER_ID} from '../MultiViewCntlr.js';
+import {
+    DEFAULT_FITS_VIEWER_ID, REPLACE_VIEWER_ITEMS, NewPlotMode, getViewerItemIds, getMultiViewRoot,
+    META_VIEWER_ID} from '../MultiViewCntlr.js';
 import {getTblById, findGroupByTblId, getTblIdsByGroup, smartMerge} from '../../tables/TableUtil.js';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode, dispatchUpdateLayoutInfo, getLayouInfo} from '../../core/LayoutCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
@@ -84,14 +87,26 @@ export const makeMultiProductViewerTab= ({dataProductTableId}) => {
 };
 
 
-export const makeFitsTab= () => (
-    <Tab key='fits' name='Pinned Images' removable={false} id='fits'>
-        <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID} insideFlex={true}
-                          canReceiveNewPlots={NewPlotMode.create_replace.key}
-                          useImageList={true}
-                          Toolbar={MultiViewStandardToolbar}/>
-    </Tab>
-);
+function BadgeLabel({labelStr}) {
+    const badgeCnt= useStoreConnector(() => getViewerItemIds(getMultiViewRoot(),DEFAULT_FITS_VIEWER_ID)?.length??0);
+    return badgeCnt===0 ?  labelStr:
+        (
+            <div style={{display:'flex', justifyContent:'center', alignItems:'center'}}>
+                <div>{labelStr}</div>
+                {makeBadge(badgeCnt, {position:'relative', borderWidth: 1, paddingRight:2})}
+            </div>
+        );
+}
+
+export function makeFitsTab()  {
+    return (
+        <Tab key='fits' name='Pinned Images'  removable={false} id='fits'
+             label={<BadgeLabel labelStr={'Pinned Images'}/>}>
+            <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID} insideFlex={true} useImageList={true}
+                              Toolbar={MultiViewStandardToolbar} canReceiveNewPlots={NewPlotMode.create_replace.key} />
+        </Tab>
+    );
+};
 
 
 TriViewImageSection.propTypes= {
