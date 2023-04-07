@@ -190,7 +190,7 @@ function JobHeader({jobInfo}) {
 
 function JobProgress({jobInfo}) {
     const {jobId} = jobInfo;
-    const {progressDesc, progress} = jobInfo.jobInfo || {};
+    const {progressDesc, progress, type} = jobInfo.jobInfo || {};
     if (isActive(jobInfo)) {
         return (
             <div className='BGMon__packageItem'>
@@ -200,7 +200,7 @@ function JobProgress({jobInfo}) {
     } else if (isAborted(jobInfo)) {
         return <div>{jobInfo?.error || 'Job aborted'}</div>;
     } else if (isSuccess(jobInfo)) {
-        if (jobInfo?.type === 'PACKAGE') {
+        if (type === 'PACKAGE') {
             return jobInfo?.results?.length === 1 ? <PackageItem {...{SINGLE:true, jobId, index:0}} /> : <div/> ;
         } else {
             const showTable = () => {
