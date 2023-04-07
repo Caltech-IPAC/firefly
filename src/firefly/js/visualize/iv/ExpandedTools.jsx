@@ -142,8 +142,7 @@ ExpandedTools.propTypes= {
 
 
 
-function WhichView({visRoot}) {
-    var {plotViewAry}= visRoot;
+function WhichView() {
     const showViewButtons= getExpandedViewerItemIds(getMultiViewRoot()).length>1;
     return (
         <div style={{display: 'inline-block', verticalAlign:'top'}}>
@@ -159,7 +158,7 @@ function WhichView({visRoot}) {
                                   imageStyle={{width:24,height:24}}
                                   onClick={() => dispatchChangeExpandedMode(ExpandType.GRID)}/>
             }
-            {plotViewAry.length>1 &&
+            {showViewButtons &&
                    <ToolbarButton icon={LIST} tip={'Choose which plots to show'}
                                   imageStyle={{width:24,height:24}}
                                   enabled={true} visible={true} horizontal={true}

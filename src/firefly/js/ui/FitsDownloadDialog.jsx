@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import React, {memo, useEffect, useState} from 'react';
+import React, {memo, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, capitalize} from 'lodash';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
@@ -13,12 +13,7 @@ import {FieldGroup} from './FieldGroup.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
-import {
-    primePlot,
-    getActivePlotView,
-    getAllCanvasLayersForPlot,
-    isThreeColor
-} from '../visualize/PlotViewUtil.js';
+import { primePlot, getActivePlotView, getAllCanvasLayersForPlot, isThreeColor } from '../visualize/PlotViewUtil.js';
 import {Band} from '../visualize/Band.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {isImage} from '../visualize/WebPlot.js';
@@ -215,7 +210,7 @@ function resultsSuccess(request, plotView, popupId) {
 
     if (isEmpty(request)) return resultsFail(request);
 
-    const {threeBandColor:bandSelect, operationOption:whichOp, fileLocation, wsSelect} = request;
+    const {threeBandColor:bandSelect, operationOption:whichOp='fileTypeOrig', fileLocation, wsSelect} = request;
     const isWorkspace= (fileLocation === WORKSPACE);
     const ext= (request.fileType??'').toLowerCase();
 
@@ -247,9 +242,9 @@ function resultsSuccess(request, plotView, popupId) {
                                  [WS_SERVER_PARAM.newpath.key] : fileName,
                                  [WS_SERVER_PARAM.should_overwrite.key]: true} : {};
     if (ext === 'fits') {
-        const fitsFile = !plotState.getOriginalFitsFileStr(band) || !whichOp ?
-                          plotState.getWorkingFitsFileStr(band) :
-                          plotState.getOriginalFitsFileStr(band);
+        const fitsFile = plotState.getOriginalFitsFileStr(band) && whichOp==='fileTypeOrig' ?
+                          plotState.getOriginalFitsFileStr(band) :
+                          plotState.getWorkingFitsFileStr(band);
         downloadFileAndClose({file: fitsFile, return: fileName, log: true, fileLocation,...wsCmd});
     }
     else if ( ext === 'png') {
