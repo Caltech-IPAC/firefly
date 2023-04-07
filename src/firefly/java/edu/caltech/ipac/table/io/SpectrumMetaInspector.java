@@ -30,6 +30,7 @@ class SpectrumMetaInspector {
     private static final String[] errHiColNames= new String[] {"err_hi", "error_hi", "err_high", "error_high","flerr_high", "flerrs_hi"};
     private static final String[] errLowColNames= new String[] {"err_lo", "error_lo", "err_low", "error_low","flerr_low", "flerrs_lo"};
     private static final String[] orderColNames= new String[] {"order", "ord", "spec_order"};
+    private static final String[] relOrderColNames= {};
     private static final String[] timeColNames= new String[] {"time", "ti"};
     private static final String[] timeErrColNames= new String[] {"time_err", "ti_err", "terr", "terrs"};
     private static final String[] timeErrLoColNames= new String[] {"time_elo", "ti_elo"};
@@ -44,7 +45,8 @@ class SpectrumMetaInspector {
     private static final String SPEC_FL_AXIS_ACCURACY= SPEC_FL_AXIS+ACCURACY;
     private static final String SPEC_TI_AXIS= "spec:Data.TimeAxis";
     private static final String SPEC_TI_AXIS_ACCURACY= SPEC_TI_AXIS+ACCURACY;
-    private static final String IPAC_ORDER= "ipac:Data.SpectralAxis.Order";
+    private static final String SPEC_ORDER = "spec:Data.SpectralAxis.Order";
+    private static final String SPEC_REL_ORDER= "spec:Data.SpectralAxis.RelOrder";
     private static final String spec10Version= "Spectrum v1.0";
     private static final String VOCLASS= "VOCLASS";
 
@@ -94,7 +96,8 @@ class SpectrumMetaInspector {
         if (hasCol(specColNames,dtAry, SPEC_SPECT_AXIS+".Value")) {
             List<GroupInfo.RefInfo> l= new ArrayList<>();
             addSpectrumRef(dtAry,l);
-            findAndAddRef(orderColNames,dtAry,l, IPAC_ORDER);
+            findAndAddRef(orderColNames,dtAry,l, SPEC_ORDER);
+            findAndAddRef(relOrderColNames,dtAry,l, SPEC_REL_ORDER);
             findAndAddRef(waveLoColName,dtAry,l, SPEC_SPECT_AXIS+ACCURACY+".BinLow");
             findAndAddRef(waveHiColName,dtAry,l, SPEC_SPECT_AXIS+ACCURACY+".BinHigh");
             groupInfosList.add(new GroupInfo(SPEC_SPECT_AXIS, "",l));

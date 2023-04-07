@@ -4,8 +4,6 @@
 package edu.caltech.ipac.firefly.server.packagedata;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
@@ -20,8 +18,8 @@ import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLEncoder;
 import java.nio.file.AccessDeniedException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
@@ -34,46 +32,27 @@ import java.util.zip.ZipOutputStream;
  */
 public class ZipHandler {
 
-    public final static String DOWNLOAD_SERVLET_PATH = "servlet/Download";
     public final static int COMPRESSION_LEVEL = AppProperties.getIntProperty("download.compression.level", 1);
-    private static Logger.LoggerImpl logger = Logger.getLogger();
+    private final static Logger.LoggerImpl logger = Logger.getLogger();
 
+    private File baseDir;
+    private final Map<String,Integer> dupMap= new HashMap<>();      // used to resolve duplicate zip entry
 
-    public static String makeDownloadUrl(File f, String suggestedName) {
-        String fileStr = ServerContext.replaceWithPrefix(f);
-        try {
-            fileStr = URLEncoder.encode(fileStr, "UTF-8");
-            suggestedName = suggestedName == null ? "DownloadPackage" : suggestedName;
-            if (f.getName().contains("_")) {        // has multiple idx
-                suggestedName += "-part" + f.getName().split("_")[1];
-            }
-            suggestedName = URLEncoder.encode(suggestedName, "UTF-8");
-        } catch (Exception e) {/*ignore*/}
-
-        return ServerContext.getRequestOwner().getBaseUrl() + DOWNLOAD_SERVLET_PATH + "?" +
-                AnyFileDownload.FILE_PARAM + "=" + fileStr + "&" +
-                AnyFileDownload.RETURN_PARAM + "=" + suggestedName + "&" +
-                AnyFileDownload.LOG_PARAM + "=true&";
+    public ZipHandler() {
     }
 
-    public static File getZipFile(String jobId, int packageIdx) {
-        File stagingDir = ServerContext.getStageWorkDir();
-        String fname = String.format("%s%s.zip", jobId, (packageIdx > 0 ? "_" + packageIdx : ""));
-        return new File(stagingDir, fname);
-
+    public ZipHandler(File baseDir) {
+        this.baseDir = baseDir;
     }
-
 
     /**
      *
      * @param zout      ZipOutputStream to add to
-     * @param zipEntryFileName the name of the file for the zip entry
      * @param fi        file to add
-     * @param baseDir   base path of the added file
      * @return          the number of bytes added
      * @throws Exception
      */
-    public static long addZipEntry(ZipOutputStream zout, String zipEntryFileName, FileInfo fi, File baseDir) throws Exception {
+    public long addZipEntry(ZipOutputStream zout, FileInfo fi) throws Exception {
 
         if (!fi.hasAccess()) {
             throw new AccessDeniedException("");
@@ -85,11 +64,12 @@ public class ZipHandler {
         ZipEntry zipEntry = null;
         long totalBytes = 0;
 
+        String filename = fi.getExternalName();     // file name before it has gone through FileNameResolver
         try {
 
-            is = getInputStream(fi.getInternalFilename(), fi, baseDir);
+            is = getInputStream(fi.getInternalFilename(), fi, baseDir);  // filename may change if FileNameResolver is set
             String zipEntryComment = "(" + fi.getSizeInBytes() + "b) ";
-            String filename = zipEntryFileName;
+            filename = FileUtil.getUniqueFileNameForGroup(fi.getExternalName(), dupMap);
 
             int inBufSize = 4096;
             if (filename != null && FileUtil.isExtension(filename, FileUtil.GZ)) {
@@ -126,13 +106,13 @@ public class ZipHandler {
             if (zipError.startsWith("duplicate entry:")) {
                 Logger.info("Packaging warning: " + zipError);
             } else {
-                String error = "Failed packaging " + zipEntryFileName + " - " + zipError;
+                String error = "Failed packaging " + filename + " - " + zipError;
                 Logger.error(error);
                 throw new Exception(fi.getExternalName());
             }
 
         } catch (Exception e) {
-            String error = "Failed packaging " + zipEntryFileName + " - " + e.getMessage();
+            String error = "Failed packaging " + filename + " - " + e.getMessage();
             Logger.error(error);
             throw new Exception(fi.getExternalName());
 

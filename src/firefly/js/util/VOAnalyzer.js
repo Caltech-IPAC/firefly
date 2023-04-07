@@ -1478,24 +1478,49 @@ export function isObsCoreLike(tableModel) {
  * @prop {string}  [statErrHigh]
  * @prop {string}  [lowerLimit]
  * @prop {string}  [upperLimit]
+ * @prop {string}  [binLow]
+ * @prop {string}  [binHigh]
  * @prop {string}  [order]
+ * @prop {string}  [relOrder]
  */
 
-const spectralAxisPrefix = ['spec:Spectrum.Data.SpectralAxis', 'spec:Data.SpectralAxis', 'ipac:Spectrum.Data.SpectralAxis', 'ipac:Data.SpectralAxis'];
-const fluxAxisPrefix = ['spec:Spectrum.Data.FluxAxis', 'spec:Data.FluxAxis', 'ipac:Spectrum.Data.FluxAxis', 'ipac:Data.FluxAxis'];
-const timeAxisPrefix = ['spec:Spectrum.Data.TimeAxis', 'spec:Data.TimeAxis'];
-const dataAxis = {
+
+const axisData = {
     value: 'Value',
     statError: 'Accuracy.StatError',
     statErrLow: 'Accuracy.StatErrLow',
     statErrHigh: 'Accuracy.StatErrHigh',
-    upperLimit: 'Accuracy.UpperLimit',
-    lowerLimit: 'Accuracy.LowerLimit',
-    binLow: 'Accuracy.BinLow',
-    binHigh: 'Accuracy.BinHigh',
-    // binSize: 'Accuracy.BinSize',
-    order: 'Order'
 };
+
+const spectralAxisDef = {
+    prefix: ['spec:Spectrum.Data.SpectralAxis', 'spec:Data.SpectralAxis', 'ipac:Spectrum.Data.SpectralAxis', 'ipac:Data.SpectralAxis'],
+    /** @type {DataAxis} */
+    data: { ...axisData,
+        binLow: 'Accuracy.BinLow',
+        binHigh: 'Accuracy.BinHigh',
+        order: 'Order',
+        relOrder: 'RelOrder'
+    }
+};
+
+const fluxAxisDef = {
+    prefix: ['spec:Spectrum.Data.FluxAxis', 'spec:Data.FluxAxis', 'ipac:Spectrum.Data.FluxAxis', 'ipac:Data.FluxAxis'],
+    /** @type {DataAxis} */
+    data: { ...axisData,
+        upperLimit: 'Accuracy.UpperLimit',
+        lowerLimit: 'Accuracy.LowerLimit',
+    }
+};
+
+const timeAxisDef = {
+    prefix: ['spec:Spectrum.Data.TimeAxis', 'spec:Data.TimeAxis'],
+    /** @type {DataAxis} */
+    data: { ...axisData,
+        binLow: 'Accuracy.BinLow',
+        binHigh: 'Accuracy.BinHigh',
+    }
+};
+
 
 /**
  *
@@ -1510,22 +1535,22 @@ export function getSpectrumDM(tableModel) {
 
     if (!isSpectrum && !isSED) return;
 
-    const findAxisData = (prefix) => {
+    const findAxisData = (axis) => {
         const data = {};
-        Object.entries(dataAxis).forEach(([key, utype]) => {
-            const col = findColByUtype(tableModel, prefix, utype);
+        Object.entries(axis.data).forEach(([key, utype]) => {
+            const col = findColByUtype(tableModel, axis.prefix, utype);
             if (col) {
                 data[key] = col.name;
                 if (key === 'value') {      // defaults to column's attribs if not given as params
-                    data.ucd = findParamByUtype(tableModel, prefix, 'UCD')?.value || col.UCD;
-                    data.unit = findParamByUtype(tableModel, prefix, 'Unit')?.value || col.units;
+                    data.ucd = findParamByUtype(tableModel, axis.prefix, 'UCD')?.value || col.UCD;
+                    data.unit = findParamByUtype(tableModel, axis.prefix, 'Unit')?.value || col.units;
                 }
             }
         });
 
-        return isEmpty(data) ? undefined : data;
+        return isEmpty(data) ? undefined : fixStatErr(data);
     };
-    const fixStatErr = (axis, isSpectral) => {
+    const fixStatErr = (axis) => {
         if (!axis) return;
         const {statError, statErrLow, statErrHigh} = axis;
         if (statError) {
@@ -1534,23 +1559,12 @@ export function getSpectrumDM(tableModel) {
             axis.statError = statErrLow || statErrHigh;             // treat it as statError
             axis.statErrLow = axis.statErrHigh = undefined;
         }
-        if (isSpectral) {
-            unset(axis, 'upperLimit');
-            unset(axis, 'lowerLimit');
-        } else {
-            unset(axis, 'binHigh');
-            unset(axis, 'binLow');
-        }
+        return axis;
     };
 
-    const spectralAxis  = findAxisData(spectralAxisPrefix);
-    const fluxAxis      = findAxisData(fluxAxisPrefix);
-    const timeAxis      = findAxisData(timeAxisPrefix);
-
-    fixStatErr(spectralAxis, true);
-    fixStatErr(fluxAxis, false);
-
-    if (fluxAxis?.order && !spectralAxis?.order)  spectralAxis.order = fluxAxis.order;      // temporarily: if order is given for the flux axis, treat it as a spectral order.. in the case for Spitzer
+    const spectralAxis  = findAxisData(spectralAxisDef);
+    const fluxAxis      = findAxisData(fluxAxisDef);
+    const timeAxis      = findAxisData(timeAxisDef);
 
     if (spectralAxis && (fluxAxis || timeAxis)) {
         return {spectralAxis, fluxAxis, timeAxis, isSED};
