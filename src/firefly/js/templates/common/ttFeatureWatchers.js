@@ -52,28 +52,38 @@ function setupObsCorePackaging(tbl_id) {
     if (!table) return;
     const {tbl_ui_id}= getTableUiByTblId(tbl_id) ?? {} ;
     if (!tbl_ui_id) return;
-    dispatchTableUiUpdate({ tbl_ui_id, leftButtons: [() => <PrepareDownload/>] });
+    dispatchTableUiUpdate({ tbl_ui_id, leftButtons: [() => <PrepareDownload tbl_id={tbl_id}/>] });
 }
 
 function updateSearchRequest( tbl_id='', dlParams='', sRequest=null) {
     const template= getAppOptions().tapObsCore?.productTitleTemplate;
+    const templateColNames= template && getColNameFromTemplate(template);
     const searchRequest = cloneDeep( sRequest);
     searchRequest.template = template;
+    searchRequest.templateColNames = templateColNames?.toString();
     return searchRequest;
 }
 
-const PrepareDownload = React.memo(() => (
+function getColNameFromTemplate(template) {
+    return template.match(/\${[\w -.]+}/g)?.map( (s) => s.substring(2,s.length-1));
+}
+
+const PrepareDownload = React.memo(({tbl_id}) => {
+    const tblTitle = getTblById(tbl_id)?.title ?? 'unknown';
+    const baseFileName = tblTitle.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_.-]/g, '_');
+    return (
         <div>
             <DownloadButton>
                 <DownloadOptionPanel {...{
                     updateSearchRequest: updateSearchRequest,
-                    showZipStructure: false, //flattened files, except for datalink
+                    showZipStructure: false, //flattened files, except for datalink (with more than one valid file)
                     dlParams: {
-                            FileGroupProcessor:'ObsCorePackager',
-                            dlCutout: 'orig',
-                            TitlePrefix: 'ObsCore',
-                            help_id:'table.obsCorePackage',
-                            BaseFileName:'ObsCore_Files'}}}/>
+                        FileGroupProcessor:'ObsCorePackager',
+                        dlCutout: 'orig',
+                        TitlePrefix: 'ObsCore',
+                        help_id:'table.obsCorePackage',
+                        BaseFileName:`${baseFileName}`}}}/>
             </DownloadButton>
         </div>
-));
+    );
+});
