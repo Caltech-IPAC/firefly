@@ -32,7 +32,7 @@ import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import infoIcon from 'html/images/info-icon.png';
 import {dd2sex} from '../../visualize/CoordUtil.js';
 
-const html_regex = /^<.+>$/;                    // A very limited check.  Will limit or remove the use of embedded HTML in the future
+const html_regex = /<.+>|&.+;/;           // A rough detection of html elements or entities
 const filterStyle = {width: '100%', boxSizing: 'border-box'};
 
 const imageStubMap = {
@@ -568,7 +568,7 @@ export const inputColumnRenderer = ({tbl_id, cname, tooltips, style={}, isReadOn
  * a checkbox renderer that update tableModel.
  * @param p
  * @param p.tbl_id
- * @param p.col         the column for this render
+ * @param p.cname       the column name of this renderer
  * @param p.tooltips
  * @param p.style
  * @param p.isReadOnly  a function returning true if this row is read only
@@ -742,6 +742,8 @@ export const ATag = React.memo(({cellInfo, label, title, href, target, style={},
 
     if (imgStubKey) {
         label = imageStubMap[imgStubKey] || <img data-src={imgStubKey}/>;   // if a src is given but, not found.. show bad img.
+    } else {
+        label = html_regex.test(label) ? <div dangerouslySetInnerHTML={{__html: label}}/> : label;
     }
 
     return <a {...{title, href, target, style}}> {label} </a>;
@@ -750,7 +752,7 @@ export const ATag = React.memo(({cellInfo, label, title, href, target, style={},
 export const TextCell = React.memo(({cellInfo, text, ...rest}) => {
     const {absRowIdx, tableModel, value, text:fmtVal} = cellInfo || getCellInfo(rest);
     text  = applyTokenSub(tableModel, text, absRowIdx, fmtVal);
-    return (text?.search && text.search(html_regex) >= 0) ? <div dangerouslySetInnerHTML={{__html: text}}/> : text;
+    return html_regex.test(text) ? <div dangerouslySetInnerHTML={{__html: text}}/> : text;
 });
 
 /**

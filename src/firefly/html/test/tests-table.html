@@ -25,22 +25,22 @@
     <div id="actual" class="box x3"/>
     <script>
         function onFireflyLoaded(firefly) {
-            tblReq1 = firefly.util.table.makeFileRequest(null, 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl',null,
-                { META_INFO: {
-                    "col.in_row_id.label": 'location',
-                    "col.in_row_id.type": 'location',
-                    "col.in_ra.label": 'multi links',
-                    "col.in_ra.width": '15',
-                    "col.in_ra.links": [
-                            {href: "https://irsa.ipac.caltech.edu/?id="},
-                            {href: "https://ivoa.net/?id=${band}", value: 'ivoa-${band}'}
-                        ],
-                    "col.in_dec.label": 'bad href',
-                    "col.in_dec.links": [{href: "${abc}"}],
-                    "col.band.label": 'one link',
-                    "col.band.links": [{href: "https://irsa.ipac.caltech.edu/?id="}],
-                }});
-            firefly.showTable('actual', tblReq1);
+            const columns = [
+                {name: 'location', type: 'location', width: 20},
+                {name: 'multi links', links: [
+                        {href: "https://irsa.ipac.caltech.edu/?id="},
+                        {href: "https://ivoa.net/?id=${multi links}", value: 'ivoa-${multi links}'}
+                    ]},
+                {name: 'with html', width: 10, links: [{href: "https://ivoa.net/?id=${with html}", value: '${with html}'}]},
+                {name: 'bad url',  links:[{href: "${abc}"}]},
+            ];
+
+            const data = [
+                ['https://irsa.ipac.caltech.edu', 'links', '<b>dollar</b> = &pound;0.81', 'bad url']
+            ];
+            const table = { tableData: { columns, data } };
+
+            firefly.showClientTable('actual', table, {selectable: false});
         }
     </script>
 </template>
