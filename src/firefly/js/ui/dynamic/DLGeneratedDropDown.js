@@ -99,7 +99,7 @@ function makeRegistryRequest(url, registryTblId) {
     return makeFileRequest('registry', url, undefined,
         {
             pageSize: MAX_ROW,
-            sortInfo: sortInfoString('facility_name'),
+            sortInfo: sortInfoString(['facility_name','obs_collection']),
             tbl_id: registryTblId,
             META_INFO: {
                 'col.facility_name.PrefWidth':6,
