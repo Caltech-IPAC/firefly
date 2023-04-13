@@ -7,31 +7,40 @@ import {cloneDeep, get, pick, set} from 'lodash';
 
 import {getMultiViewRoot, getViewerItemIds} from '../../visualize/MultiViewCntlr.js';
 import {dispatchChartAdd, getChartData} from '../ChartsCntlr.js';
-import {getNewTraceDefaults, getTblIdFromChart, uniqueChartId} from '../ChartUtil.js';
+import {getNewTraceDefaults, getTblIdFromChart, isSpectralOrder, uniqueChartId} from '../ChartUtil.js';
 import {TextButton} from '../../ui/TextButton.jsx';
 import {PINNED_VIEWER_ID, PINNED_GROUP, PINNED_CHART_PREFIX} from './PinnedChartPanel.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {basicOptions, evalChangesFromFields} from './options/BasicOptions.jsx';
-import {getColumnValues, getSelectedDataSync, getTblById} from '../../tables/TableUtil.js';
+import {getCellValue, getColumnValues, getSelectedDataSync, getTblById} from '../../tables/TableUtil.js';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getGroupFields} from '../../fieldGroup/FieldGroupUtils.js';
 import {getActiveViewerItemId} from './MultiChartViewer.jsx';
 import {CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
 import {dispatchTableAddLocal} from '../../tables/TablesCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
-import {showInfoPopup, showOptionsPopup} from '../../ui/PopupUtil.jsx';
+import {showInfoPopup, showPopup} from '../../ui/PopupUtil.jsx';
 import {getSpectrumDM} from '../../util/VOAnalyzer.js';
 import {applyUnitConversion} from './options/SpectrumOptions.jsx';
 import {canUnitConv} from '../dataTypes/SpectrumUnitConversion.js';
-import {SelectInfo} from 'firefly/tables/SelectInfo.js';
+import {SelectInfo} from '../../tables/SelectInfo.js';
+import {dispatchHideDialog} from '../../core/ComponentCntlr.js';
+
+const POPUP_ID = 'CombineChart-popup';
 
 
 /**
  * This component is hard-wired to work with only PINNED_VIEWER_ID.  Will need to change if this ever changes.
- * @returns {JSX.Element|null}
+ * @param p
+ * @param p.viewerId
+ * @return {JSX.Element|null}
+ * @constructor
  */
-export const CombineChart = () => {
+export const CombineChart = ({viewerId}) => {
+
+    if (viewerId !== PINNED_VIEWER_ID) return null;
+
     const chartIds = getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID);
     const showCombine = chartIds?.length > 1;
 
@@ -48,7 +57,7 @@ export const CombineChart = () => {
             mounted: true
         });
     };
-    return showCombine ? <TextButton onClick={doCombine} title='Combine chart'>Combine Chart</TextButton> : null;
+    return showCombine ? <TextButton onClick={doCombine} title='Add charts to current chart'>Combine Chart</TextButton> : null;
 };
 
 function getChartTitle(cdata, defTitle) {
@@ -72,10 +81,9 @@ function createTableModel(showAll, tbl_id) {
     const selChartId = getSelChartId();
 
     const columns = [
-        {name: 'Title'},
-        {name: 'Type'},
+        {name: 'Title', width: 30},
         {name: 'From Table'},
-        {name: 'ChartId', visibility: 'hide'},
+        {name: 'ChartId', visibility: 'hidden'},
     ];
     const data = chartIds
         ?.filter((id) => id !== selChartId)      // exclude already selected chart
@@ -83,15 +91,16 @@ function createTableModel(showAll, tbl_id) {
         ?.map((id) => getChartData(id))
         ?.map((cdata, idx) => {
             const title = getChartTitle(cdata, `chart-${idx}`);
-            const type = cdata.data?.[0].type;
             const table = getTblById(cdata.tablesources?.[0].tbl_id)?.title;
-            return [title, type, table, cdata.chartId];});
+            return [title, table, cdata.chartId];});
 
     const table =  {title: 'Charts to combine', tableData:{columns, data}, totalRows: data.length};
     table.tbl_id = tbl_id;
     set(table, 'request.tbl_id', table.tbl_id);
     if (table.totalRows === 1) {
         table.selectInfo  = SelectInfo.newInstance({selectAll:true, rowCount:1}).data;
+    } else if (table.totalRows === 0) {
+        table.status = {code: 204, message: 'no compatible charts found'};
     }
 
     return table;
@@ -122,7 +131,7 @@ const CombineChartDialog = ({onComplete}) => {
             closePopup();
         }
     };
-    const closePopup = () => showOptionsPopup({show:false});
+    const closePopup = () => dispatchHideDialog(POPUP_ID);
 
     const {Title} = basicOptions({groupKey, fieldProps:{labelWidth: 50, size: 40}});
     const showAllHint = 'Show all charts even ones that may not combine well';
@@ -141,11 +150,12 @@ const CombineChartDialog = ({onComplete}) => {
             </div>
             <FieldGroup keepState={false} groupKey={groupKey} style={{overflow: 'hidden', display: 'flex', flexDirection: 'column'}}>
                 <Title initialState={{value: 'combined'}}/>
-                <div style={{overflow: 'auto'}}>
+                <div style={{marginTop:5}}>Choose trace names below.</div>
+                <div style={{overflow: 'auto', maxHeight: 400}}>
                     <SelChartProps {...{tbl_id, groupKey}}/>
                 </div>
             </FieldGroup>
-            <div>
+            <div className='CombineChart__popup--tbar'>
                 <button type='button' className='button std' style={{marginRight: 5}} onClick={doApply}>Ok</button>
                 <button type='button' className='button std' onClick={closePopup}>Cancel </button>
                 <HelpIcon helpId={'chartarea.combineCharts'} style={{float: 'right', marginTop: 4}}/>
@@ -156,7 +166,7 @@ const CombineChartDialog = ({onComplete}) => {
 
 let totalTraces = 0;
 
-const SelChartOpt = ({groupKey, ctitle, traces, idx}) => {
+const SelChartOpt = ({chartId, groupKey, ctitle, traces, idx}) => {
     const key = `cOpt-${idx}`;
 
     const TraceOpt = ({traceNum, title}) => {
@@ -169,9 +179,9 @@ const SelChartOpt = ({groupKey, ctitle, traces, idx}) => {
             </div>
         ) ;
     };
-    
+    const isOpen = !isSpectralOrder(chartId);
     return (
-        <CollapsiblePanel componentKey={key} header={ctitle} isOpen={true}>
+        <CollapsiblePanel componentKey={key} header={ctitle} isOpen={isOpen}>
             {traces.map((title, idx) => <TraceOpt {...{key:idx, traceNum: totalTraces++, title}}/>)}
         </CollapsiblePanel>
     );
@@ -182,7 +192,7 @@ function SelChartProps ({tbl_id, groupKey}) {
 
     useStoreConnector(() => getTblById(tbl_id)?.selectInfo);     // rerender when selectInfo changes
     const selChartId = getSelChartId();
-    const selectedData = getSelectedDataSync(tbl_id);       // this always return new objects.  that's why it's not used for useStoreConnector
+    const selectedData = getSelectedDataSync(tbl_id, ['ChartId']);       // this always return new objects.  that's why it's not used for useStoreConnector
 
     const getSelCharInfo = (id) => {
         const cTitle = getChartTitle(getChartData(id));
@@ -194,15 +204,17 @@ function SelChartProps ({tbl_id, groupKey}) {
     const charts = [getSelCharInfo(selChartId)];
     totalTraces = 0;
 
-    selectedData.tableData.data.map( (tr) => tr[3])         // get all selected chartId
-        .forEach((id) => charts.push(getSelCharInfo(id)));
+    for(let idx = 0; idx < selectedData.totalRows; idx++) {
+        const cid = getCellValue(selectedData, idx, 'ChartId');
+        charts.push(getSelCharInfo(cid));
+    }
 
     return (
         <React.Fragment>
             {
                 charts.map(([chartId, ctitle, traces], idx) => {
                     if (idx === 0) ctitle = <b>{ctitle}</b>;
-                    return <SelChartOpt key={idx} {...{groupKey, ctitle, traces, idx}}/>;
+                    return <SelChartOpt key={idx} {...{chartId, groupKey, ctitle, traces, idx}}/>;
                 })
             }
         </React.Fragment>
@@ -213,7 +225,7 @@ function getCombineChartParams() {
     return new Promise((resolve) => {
         const onComplete = (props) => resolve(props);
         const content = <CombineChartDialog {...{onComplete}}/>;
-        showOptionsPopup({content, title: 'Combine Charts', modal: true, show: true});
+        showPopup({ID: POPUP_ID, content, title: 'Add charts to current chart', modal: true});
     });
 }
 
@@ -332,13 +344,16 @@ function doUnitConversion({chartId, chartData, axisType, to}) {
     return unit;
 }
 
-
-/* return unit for the give axisType */
+/**
+ * @param chartId  chart ID of the chart to combine
+ * @return {boolean} true if the selected chart and the given chart have the same unit for its x-axis and y-axis.
+ */
 function canCombine(chartId) {
 
     const activeTrace = 0;          // hard-code to only use the first trace from each chart
     const selChartId = getSelChartId();
     const {xUnit, yUnit} = getChartData(selChartId)?.fireflyData?.[activeTrace];
+    if (!xUnit || !yUnit) return false;
 
     const chartData = cloneDeep(getChartData(chartId));
 

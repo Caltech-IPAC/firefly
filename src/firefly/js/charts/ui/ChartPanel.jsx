@@ -9,11 +9,14 @@ import {dispatchChartMounted, dispatchChartRemove, dispatchChartUnmounted, getCh
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
 import DELETE from 'html/images/blue_delete_10x10.png';
+import {allowPinnedCharts} from '../ChartUtil.js';
+import {PinChart, ShowTable} from './PinnedChartPanel.jsx';
+import {CombineChart} from './CombineChart.jsx';
 
 
 function ChartPanelView(props) {
 
-    const {chartId, chartData, expandable, expandedMode, Toolbar, showToolbar} = props;
+    const {chartId, tbl_group, chartData, expandable, expandedMode, Toolbar, showToolbar} = props;
 
     useEffect(() => {
         dispatchChartMounted(chartId);
@@ -30,7 +33,7 @@ function ChartPanelView(props) {
         // chart with toolbar
         return (
             <div className='ChartPanel__container'>
-                <ChartToolbar {...{chartId, expandable, expandedMode, Toolbar}}/>
+                <ChartToolbar {...{chartId, tbl_group, expandable, expandedMode, Toolbar}}/>
                 <ChartArea glass={true} {...props}/>
             </div>
         );
@@ -42,6 +45,7 @@ function ChartPanelView(props) {
 
 ChartPanelView.propTypes = {
     chartId: PropTypes.string.isRequired,
+    tbl_group: PropTypes.string,
     chartData: PropTypes.object,
     deletable: PropTypes.bool,
     expandable: PropTypes.bool,
@@ -76,7 +80,19 @@ const ResizableChartAreaInternal = React.memo((props) => {
 });
 
 export const ChartToolbar = (props={}) => {
-    const {Toolbar=PlotlyToolbar, chartId, expandable, expandedMode} = props;
+    const {Toolbar=PlotlyToolbar, chartId, expandable, expandedMode, viewerId, tbl_group} = props;
+
+    // logic for PinnedChartPanel toolbar added here
+    if (allowPinnedCharts()) {
+        return (
+            <div className='ChartToolbar container'>
+                <CombineChart {...{viewerId, tbl_group}} />
+                <ShowTable {...{viewerId, tbl_group}} />
+                <PinChart {...{viewerId, tbl_group}}/>
+                <Toolbar {...{chartId, expandable, expandedMode}}/>
+            </div>
+        );
+    }
     return <Toolbar {...{chartId, expandable, expandedMode}}/>;
 };
 
@@ -140,6 +156,7 @@ ChartPanel.propTypes = {
     expandedMode: PropTypes.bool,
     deletable: PropTypes.bool,
     showToolbar: PropTypes.bool,
-    showChart: PropTypes.bool
+    showChart: PropTypes.bool,
+    thumbnail: PropTypes.bool
 };
 

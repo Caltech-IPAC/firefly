@@ -142,23 +142,23 @@ function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChang
         }
     };
 
-    const labelStyle = {display: 'inline-block', whiteSpace: 'nowrap', width: 50};
+    const optStyle = {display: 'inline-flex', alignItems: 'center', marginLeft: 5};
 
     return (
         <div style={{display: 'inline-flex', justifyContent: 'space-between', marginBottom: 10}}>
-            <div>
-                <div style={{...labelStyle, width: 35, fontWeight: 'bold'}}>Show:</div>
+            <div style={{display: 'inline-flex', alignItems: 'center'}}>
+                <div style={{marginLeft: 5, fontWeight: 'bold'}}>Show:</div>
                 {allowUnits &&
-                <div style={labelStyle}>
+                <div style={optStyle}>
                     <input type='checkbox'  checked={showUnits} onChange={(e) => onChange({showUnits: e.target.checked})}/>
                     Units
                 </div>
                 }
-                <div style={{...labelStyle, width: 80}}>
+                <div style={optStyle}>
                     <input type='checkbox' checked={showTypes} onChange={(e) => onChange({showTypes: e.target.checked})}/>
                     Data Type
                 </div>
-                <div style={labelStyle}>
+                <div style={optStyle}>
                     <input type='checkbox' checked={showFilters} onChange={(e) => onChange({showFilters: e.target.checked})} />
                     Filters
                 </div>
@@ -169,7 +169,7 @@ function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChang
                     validator={intValidator(1,10000)}
                     tooltip='Set page size'
                     label='Page Size:'
-                    labelStyle={{...labelStyle, fontWeight: 'bold', width: 60}}
+                    labelStyle={{...optStyle, fontWeight: 'bold', width: 60}}
                     size={5}
                     value={pageSize+''}
                     onChange={onPageSize}

@@ -28,6 +28,7 @@
  * @prop {number}   highlightedRow  the current highlighted row index.  index is natural order starting from 0.
  * @prop {object}   selectInfo  selection information.  use SelectInfo.newInstance take advantage of helper's functions.
  * @prop {boolean}  isFetching  true if data is being fetched and not ready for display.
+ * @prop {Status}   status      status of the table.  loosely modeled after HTTP status
  * @prop {string}   error       error message if the request fail to create a table.
  * @prop {Group[]} groups    groups if any.
  * @prop {Link[]}  links     links if any.
@@ -37,6 +38,14 @@
  * @global
  * @public
  */
+
+/**
+ * Table data.  Table data object.
+ * @typedef {object} Status
+ * @prop {number} code     status code
+ * @prop {message} message  a message to display with this code
+ */
+
 
 /**
  * Table data.  Table data object.

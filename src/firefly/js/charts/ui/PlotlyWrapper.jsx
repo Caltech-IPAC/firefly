@@ -333,7 +333,7 @@ export class PlotlyWrapper extends Component {
      */
     syncLayout(chartId, changes) {
         const {layout} = getChartData(chartId);
-        if (layout) {
+        if (layout && !this.props.thumbnail) {
             Object.entries(changes).forEach( ([k, v]) => {
                 if (k === 'xaxis' && Array.isArray(v)) {
                     set(layout, 'xaxis.range', v);
@@ -421,7 +421,8 @@ PlotlyWrapper.propTypes = {
 
     autoSizePlot : PropTypes.bool,
     autoDetectResizing : PropTypes.bool,
-    doingResize: PropTypes.bool
+    doingResize: PropTypes.bool,
+    thumbnail: PropTypes.bool
 };
 
 PlotlyWrapper.defaultProps = {

@@ -16,6 +16,7 @@ import {WORKSPACE} from '../../ui/WorkspaceSelectPane.jsx';
 import {validateFileName} from '../../ui/WorkspaceViewer.jsx';
 import {dispatchWorkspaceUpdate} from '../../visualize/WorkspaceCntlr.js';
 import {download} from '../../util/fetch';
+import * as TblUtil from 'firefly/tables/TableUtil.js';
 
 export const BACKGROUND_PATH = 'background';
 
@@ -214,7 +215,11 @@ function reducer(state={}, action={}) {
     switch (action.type) {
         case BG_JOB_INFO:
             const {jobId} = action.payload;
-            const nstate = jobId ? updateSet(state, ['jobs', jobId], action.payload) : state;
+            let nstate = state;
+            if (jobId) {
+                const updates = {jobs: {[jobId]: action.payload}};
+                nstate = TblUtil.smartMerge(nstate, updates);
+            }
             return nstate;
             break;
         case BG_SET_EMAIL : {

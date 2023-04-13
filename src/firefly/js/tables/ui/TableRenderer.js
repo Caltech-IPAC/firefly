@@ -52,11 +52,11 @@ const imageStubMap = {
  * @prop {TableColumn} col
  * @prop {string} value of the cell to render
  * @prop {string[]} rvalues values of cell after it gone through a resolver, e.g. Links
- * @prop {string} text text represenation of the value, e.g. after number format
+ * @prop {string} text text representation of the value, e.g. after number format
  * @prop {boolean} isArray true if value is an array
  * @prop {int} absRowIdx the absolute row index
  * @prop {string} textAlign one of middle, right, left
- * @prop {TableModel} tableModel the absolute row index
+ * @prop {TableModel} tableModel the full table model; data, columns, meta, etc
  */
 
 

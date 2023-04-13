@@ -298,7 +298,7 @@ function ExpandBtn({style={}, chartId} ){
         const expandedViewerId= findViewerWithItemId(getMultiViewRoot(), chartId,PLOT2D);
         const layout = getLayoutType(getMultiViewRoot(), expandedViewerId);                // record the current layout before expanding
         dispatchChartExpanded({chartId, expandedViewerId, layout});
-        dispatchChangeViewerLayout(expandedViewerId,'single');                      // auto-switch to single view so that the active chart is fully expanded
+        // dispatchChangeViewerLayout(expandedViewerId,'single');                      // auto-switch to single view so that the active chart is fully expanded
         dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.xyPlots);
     };
 

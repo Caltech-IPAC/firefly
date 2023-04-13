@@ -82,14 +82,10 @@
     margin-bottom: -1px;
 }
 
-.ChartPanel__section--title .button.text {
-    line-height: 15px;
-}
-
 .ChartPanel__section--title.tabs {
     position: absolute;
     right: 1px;
-    top: 2px;
+    top: 0;
     z-index: 1;
 }
 
@@ -127,6 +123,19 @@
     display: inline-flex;
     height: 30px;
     align-items: center;
+}
+
+.ChartToolbar.container {
+    display: inline-flex;
+    align-items: center;
+}
+.ChartToolbar.container .button {
+    line-height: 2;
+    margin-right: 10px;
+}
+
+.TabPanel__Content .ChartPanel__wrapper {
+    border: unset;
 }
 
 .ChartToolbar__buttons {
@@ -221,8 +230,8 @@
 }
 
 .CombineChart__popup {
-    min-width: 450px;
-    min-height: 250px;
+    min-width: 600px;
+    min-height: 300px;
     display: flex;
     flex-direction: column;
     padding: 4px;
@@ -245,6 +254,12 @@
     font-style: italic;
     color: grey;
 }
+
+.CombineChart__popup--tbar {
+    border-top: solid 1px #c4c4c4;
+    padding: 5px;
+    margin: 0 -4px -4px -4px;
+;}
 
 
 /* hide the popup doubleclick tooltips since we turned it off */

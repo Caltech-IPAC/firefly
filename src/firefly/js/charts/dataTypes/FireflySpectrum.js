@@ -91,6 +91,9 @@ export function spectrumPlot({tbl_id, spectrumDM}) {
     const firefly = { dataType: spectrumType, useSpectrum: 'true', xMax, xMin, yMax, yMin, xUnit, yUnit};
     const data = [ pickBy({tbl_id, type, x, y, error_x, error_y, firefly, mode}, (a) => !isEmpty(a))];
 
+    if (!isEmpty(error_x)) set(firefly, 'error_x.visible', 'true');
+    if (!isEmpty(error_y)) set(firefly, 'error_y.visible', 'true');
+
     const layout = {
         xaxis: {
             title: xLabel,
@@ -137,8 +140,8 @@ export function getSpectrumProps(tbl_id, spectrumDM) {
     const xUnit = spectralAxis.unit;
     const yUnit = fluxAxis.unit;
 
-    const xLabel = getUnitInfo(spectralAxis.unit, true)?.label;
-    const yLabel = getUnitInfo(fluxAxis.unit, false)?.label;
+    const xLabel = getUnitInfo(spectralAxis.unit, x)?.label;
+    const yLabel = getUnitInfo(fluxAxis.unit, y)?.label;
 
     const mode = isSED ? 'markers' : 'lines+markers';
 

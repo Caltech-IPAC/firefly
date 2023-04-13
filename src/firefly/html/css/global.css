@@ -444,7 +444,6 @@ div.rootStyle img {
 
 
 .text-ellipsis {
-    display: inline-block;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;

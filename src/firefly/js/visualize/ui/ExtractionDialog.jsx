@@ -50,8 +50,8 @@ import {showInfoPopup, showPinMessage} from 'firefly/ui/PopupUtil.jsx';
 import {MetaConst} from 'firefly/data/MetaConst.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 import {allowPinnedCharts} from 'firefly/charts/ChartUtil';
-import {CHART_ADD} from 'firefly/charts/ChartsCntlr.js';
 import {pinChart} from 'firefly/charts/ui/PinnedChartPanel.jsx';
+import {ensureDefaultChart} from 'firefly/charts/ui/ChartsContainer.jsx';
 
 
 
@@ -447,30 +447,6 @@ function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
 
 const pointSizeTip= 'Extract and manipulate the pixel values in the specified aperture centered on the pixel closest to where you clicked.';
 
-function doPinChart (tbl_id) {
-    // when a new table is added, an 'active chart' will be added when ChartContainer is mounted.
-    // watch for chart_add to extract chart_id, then pin it.
-    dispatchAddActionWatcher({actions: [TABLE_UPDATE, CHART_ADD], callback: (action, cancelSelf) => {
-            const aType = action?.type;
-            const payload = action?.payload;
-            if (aType === CHART_ADD) {
-                const {chartId, tbl_id:cTblId} = extractAddedChartInfo({payload});
-                if (cTblId === tbl_id) {  // only pin the chart from the table that just got created
-                    cancelSelf?.();
-                    pinChart({chartId});
-                }
-                cancelSelf?.();
-            } else {
-                // this flow assumes CHART_ADD will happen immediately after table is pinned
-                // have a fallback to cancel this watcher in cases when this is not true.
-                // since we have tbl_id, we will watch for any TABLE_UPDATE to catch cases where CHART_ADD was not called
-                const aTblId = action?.payload?.tbl_id;
-                if (aTblId !== tbl_id) cancelSelf?.();
-            }
-        }
-    });
-}
-
 const extractAddedChartInfo = ({payload}) => ( {chartId: payload.chartId, tbl_id: payload.data?.[0].tbl_id});
 
 function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivStyle,
@@ -516,7 +492,10 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
                     {plotlyData && canCreateExtractionTable && allowPinnedCharts() &&
                         <CompleteButton style={{paddingLeft: 15}} text='Pin Chart/Table' onSuccess={() => {
                             const tbl_id = callKeepExtraction(false,true);
-                            doPinChart(tbl_id);
+                            onTableLoaded(tbl_id).then(() => {
+                                const chartId = ensureDefaultChart(tbl_id);
+                                if (chartId) pinChart({chartId});
+                            });
                         }} />}
                     {plotlyData &&
                     <CompleteButton style={{paddingLeft: 15}} text='Download as Table' onSuccess={()=> callKeepExtraction(true,false)}/>}

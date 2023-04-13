@@ -55,7 +55,8 @@ function handleTableUpdates(root, action) {
     const doUpdate = () => {
         if (TblUtil.getTblById(tbl_id)) {
             const updates = {[tbl_id] : {isFetching:false, ...action.payload}};
-            return TblUtil.smartMerge(root, updates);
+            root = TblUtil.smartMerge(root, updates);
+            return fixStatus(root, tbl_id);
         } else {
             logger.debug('table update (skipped), table no longer exists');
             return root;
@@ -72,7 +73,8 @@ function handleTableUpdates(root, action) {
     const doReplace = () => {
         const rowCount = action.payload.totalRows || get(action, 'payload.tableData.data.length', 0);
         const nTable = Object.assign({ isFetching: false, selectInfo: SelectInfo.newInstance({rowCount}).data }, action.payload);
-        return updateSet(root, [tbl_id], nTable);
+        root =  updateSet(root, [tbl_id], nTable);
+        return fixStatus(root, tbl_id);
     };
 
     switch (action.type) {
@@ -161,4 +163,31 @@ function clientTableSelectionSync(root, tbl_id, selectInfo) {
         origSelectInfoCls.setRowSelect(origIdx, selectInfoCls.isSelected(i));
     });
     return updateSet(root, [tbl_id, 'origTableModel', 'selectInfo'], origSelectInfoCls.data);
+}
+
+function fixStatus(root, tbl_id) {
+    const table = root[tbl_id];
+    if (!table) return root;
+    const {filters, sqlFilter} = table?.request || {};
+
+    if (table.status) {
+        const {code, message} = table.status;
+        if (code && (code < 200 || code >= 400)) {
+            if (table.error) {          // if there status with error but no error, add error for backward compatible.
+                return updateSet(root, [tbl_id, 'error'],  message || 'Unable to load table.');
+            }
+        }
+    } else {
+        let status = {code: 200, message:''};
+        if (table.error) status = parseStatus(table.error);
+        if (table.totalRows === 0) status = {code: 204, message: filters || sqlFilter ? 'No data match these criteria' : 'No Data Found'};
+        return updateSet(root, [tbl_id, 'status'], status);
+    }
+    return root;
+}
+
+function parseStatus(error) {
+    if (!error) return {code:200, message: ''};
+    const [,code=500,message=error] = error.trim().match(/^(\d{3})\W+(.*)/) || [,,];
+    return {code, message};
 }

@@ -49,13 +49,15 @@ export class PlotlyChartArea extends Component {
             handleTableSourceConnections({chartId, data, fireflyData});
         }
         this.state = this.getNextState();
-        
         this.afterRedraw = this.afterRedraw.bind(this);
     }
 
     shouldComponentUpdate(np, ns) {
-        const {widthPx, heightPx, chartId} = np;
-        const propsEqual = widthPx === this.props.widthPx && heightPx === this.props.heightPx && chartId === this.props.chartId;
+        const {widthPx, heightPx, chartId, thumbnail} = np;
+        const propsEqual =  widthPx === this.props.widthPx &&
+                            heightPx === this.props.heightPx &&
+                            chartId === this.props.chartId &&
+                            thumbnail === this.props.thumbnail;
         const stateEqual = shallowequal(ns, this.state);
         return !(propsEqual && stateEqual);
     }
@@ -97,7 +99,7 @@ export class PlotlyChartArea extends Component {
     }
 
     render() {
-        const {widthPx, heightPx, } = this.props;
+        const {chartId, widthPx, heightPx, thumbnail} = this.props;
         const {data=[], isLoading, highlighted, selected, layout={}, activeTrace=0, xyratio, stretch} = this.state;
         if (isLoading) {
             return (
@@ -128,7 +130,7 @@ export class PlotlyChartArea extends Component {
         pdata.push(traceShallowCopy(data[activeTrace]));
 
         //let pdata = data.map((e) => Object.assign({}, e)); // create shallow copy of data elements to avoid sharing x,y,z arrays
-        let annotations = getAnnotations(this.props.chartId);
+        let annotations = getAnnotations(chartId);
         if (!data[activeTrace] || isScatter2d(get(data[activeTrace], 'type', ''))) {
             // highlight makes sense only for scatter at the moment
             // 3d scatter highlight and selected appear in front - not good: disable for the moment
@@ -156,12 +158,16 @@ export class PlotlyChartArea extends Component {
             Object.assign(style, {overflow: 'auto', width: widthPx, height: heightPx});
         }
 
+        if (thumbnail) renderAsThumbnail(playout);
+
         return (
             <div style={style}>
                 <PlotlyWrapper newPlotCB={this.afterRedraw} data={pdata} layout={playout}
-                               chartId={this.props.chartId}
+                               chartId={chartId}
                                autoDetectResizing={false}
-                               doingResize={doingResize}/>
+                               thumbnail={thumbnail}
+                               doingResize={doingResize}
+                               key={chartId + thumbnail}/>
             </div>
         );
     }
@@ -170,8 +176,26 @@ export class PlotlyChartArea extends Component {
 PlotlyChartArea.propTypes = {
     chartId: PropTypes.string.isRequired,
     widthPx: PropTypes.number,
-    heightPx: PropTypes.number
+    heightPx: PropTypes.number,
+    thumbnail: PropTypes.bool
 };
+
+function renderAsThumbnail(layout) {
+    const axisOverride = {
+        autorange: true,
+        showgrid: false,
+        zeroline: false,
+        showline: false,
+        autotick: true,
+        ticks: '',
+        showticklabels: false
+    };
+    layout.xaxis = {...layout.xaxis, ...axisOverride};
+    layout.yaxis = {...layout.yaxis, ...axisOverride};
+    layout.margin = {l:0, r:0, b:0, t:20, pad: 0};
+    layout.titlefont = {...(layout.titlefont||{}), size: 9};
+    layout.showlegend = false;
+}
 
 function calculateChartSize(widthPx, heightPx, xyratio, stretch) {
 

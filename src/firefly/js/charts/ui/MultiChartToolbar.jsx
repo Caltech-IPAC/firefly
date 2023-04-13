@@ -20,14 +20,14 @@ import {CloseButton} from '../../ui/CloseButton';
 import {closeExpandedChart} from 'firefly/charts/ui/ChartsContainer.jsx';
 
 
-export function MultiChartToolbarStandard({viewerId, chartId, expandable, expandedMode,
+export function MultiChartToolbarStandard({viewerId, chartId, tbl_group, expandable, expandedMode,
     layoutType=getLayoutType(getMultiViewRoot(), viewerId),
     activeItemId=getViewer(getMultiViewRoot(), viewerId).customData.activeItemId}) {
 
     return (
         <div style={tbstyle}>
             <MultiChartStd {...{viewerId, layoutType, activeItemId}}/>
-            <ChartToolbar {...{chartId, expandable, expandedMode}}/>
+            <ChartToolbar {...{chartId, tbl_group, viewerId, expandable, expandedMode}}/>
         </div>
     );
 }
@@ -37,6 +37,7 @@ MultiChartToolbarStandard.propTypes= {
     layoutType : PropTypes.string,
     activeItemId : PropTypes.string,
     chartId: PropTypes.string.isRequired,
+    tbl_group: PropTypes.string,
     expandable: PropTypes.bool,
     expandedMode: PropTypes.bool
 };
@@ -61,7 +62,7 @@ const viewerTitleStyle= {
     alignSelf : 'center'
 };
 
-export function MultiChartToolbarExpanded({viewerId, chartId, expandable, expandedMode, closeable, layoutType, activeItemId}) {
+export function MultiChartToolbarExpanded({viewerId, chartId, tbl_group, expandable, expandedMode, closeable, layoutType, activeItemId}) {
 
     layoutType = layoutType || getLayoutType(getMultiViewRoot(), viewerId);
     activeItemId = activeItemId || getViewer(getMultiViewRoot(), viewerId)?.customData?.activeItemId;
@@ -70,7 +71,7 @@ export function MultiChartToolbarExpanded({viewerId, chartId, expandable, expand
         <div style={tbstyle}>
             {closeable && <CloseButton onClick={() => closeExpandedChart(viewerId)}/>}
             <MultiChartExt {...{viewerId, layoutType, activeItemId}}/>
-            <ChartToolbar {...{chartId, expandable, expandedMode}}/>
+            <ChartToolbar {...{chartId, tbl_group, expandable, expandedMode, viewerId}}/>
         </div>
     );
 
@@ -78,6 +79,7 @@ export function MultiChartToolbarExpanded({viewerId, chartId, expandable, expand
 
 MultiChartToolbarExpanded.propTypes= {
     viewerId : PropTypes.string.isRequired,
+    tbl_group: PropTypes.string,
     layoutType : PropTypes.string,
     activeItemId : PropTypes.string,
     chartId: PropTypes.string.isRequired,

@@ -39,12 +39,16 @@ export function getUnitConvExpr({cname, from, to, alias, args=[]}) {
 /**
  * returns an object containing the axis label and an array of options for unit conversion.
  * @param {string} unit         the unit to get the info for
- * @param {string} isSpectral   true if this unit is for a spectral axis
+ * @param {string} cname        the name of the column being evaluated
  * @returns {Object}
  */
-export function getUnitInfo(unit, isSpectral=true) {
+export function getUnitInfo(unit, cname) {
+    cname = cname?.match(/^"(.+)"$/)?.[1] ?? cname;          // remove enclosing double-quotes if exists
     const meas =  Object.values(UnitXref.measurement).find((m) => m?.options.find( (o) => o?.value === unit)) || {};
-    const label = meas.label ? sprintf(meas.label, unit) : isSpectral ? `𝛎 [${unit || 'Hz'}]` : `F𝛎 [${unit || 'Jy'}]`;
+    let label = meas.label ? sprintf(meas.label, unit) : '';
+    if (!label && cname) {
+        label = cname + (unit ? `[${unit}]` : '');
+    }
     return {options: meas.options, label};
 }
 

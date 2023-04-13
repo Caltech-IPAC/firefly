@@ -10,7 +10,7 @@ import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/Actions
 
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableUiUpdate} from '../TablesCntlr.js';
-import {uniqueTblId, getTableUiById, getTableUiByTblId, makeBgKey, getResultSetRequest, isClientTable} from '../TableUtil.js';
+import {uniqueTblId, getTableUiById, getTableUiByTblId, makeBgKey, getResultSetRequest, isClientTable, getTableState, TBL_STATE} from '../TableUtil.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableInfo, MetaInfo} from './TableInfo.jsx';
@@ -65,7 +65,7 @@ export function TablePanel(props) {
     const {selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
         showToolbar, showTitle, showInfoButton, showMetaInfo, showOptions,
         showOptionButton, showPaging, showSave, showFilterButton,showSearchButton,
-        totalRows, showLoading, columns, showUnits, allowUnits, showTypes, showFilters, textView,
+        totalRows, showLoading, columns, showUnits, allowUnits, showTypes, showFilters, textView, status,
         error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask, showToggleTextView,
         filterInfo, filterCount, sortInfo, data, backgroundable, highlightedRowHandler, cellRenderers} = {...options, ...uiState};
     let {leftButtons, rightButtons, showAddColumn} = {...options, ...uiState};
@@ -103,10 +103,10 @@ export function TablePanel(props) {
     const showOptionsDialog = () => showTableOptionDialog(onOptionUpdate, onOptionReset, clearFilter, tbl_ui_id, tbl_id);
     const showInfoDialog = () => showTableInfoDialog(tbl_id);
 
-    const tstate = getTableState(uiState);
+    const tstate = getTableState(tbl_id);
     logger.debug(`render.. state:[${tstate}] -- ${tbl_id}  ${tbl_ui_id}`);
 
-    if (['ERROR','LOADING'].includes(tstate))  return <NotReady {...{showTitle, tbl_id, title, removable, backgroundable, error}}/>;
+    if ([TBL_STATE.ERROR,TBL_STATE.LOADING].includes(tstate))  return <NotReady {...{showTitle, tbl_id, title, removable, backgroundable, error}}/>;
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '100%'}}>
@@ -183,14 +183,6 @@ export function TablePanel(props) {
         </div>
     );
 }
-
-function getTableState(state) {
-    const {error, columns} = state;
-    if (error) return 'ERROR';
-    if (isEmpty(columns)) return 'LOADING';
-    return 'OK';
-}
-
 
 function showTableOptionDialog(onChange, onOptionReset, clearFilter, tbl_ui_id, tbl_id) {
 
