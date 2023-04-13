@@ -4,8 +4,8 @@
 /* eslint-disable  quotes */
 import {Logger} from 'firefly/util/Logger.js';
 
-const tapEntry= (label,url,examples,hipsUrl, fovDeg,centerWP) =>
-    ({ label, value: url, examples, fovDeg, hipsUrl, centerWP});
+const tapEntry= (label,url,hipsUrl, fovDeg,centerWP, schemaLabel, examples) =>
+    ({ label, value: url, examples, fovDeg, hipsUrl, centerWP, schemaLabel});
 
 export function getTAPServices(nameList) {
     const services= makeServices();
@@ -21,7 +21,7 @@ export function getTAPServices(nameList) {
 
 function makeServices() {
     return [
-        tapEntry('IRSA', 'https://irsa.ipac.caltech.edu/TAP',
+        tapEntry('IRSA', 'https://irsa.ipac.caltech.edu/TAP', undefined,undefined,undefined, 'Project',
             [
                 {
                     description: 'From the IRSA TAP service, a 1 degree cone search of the 2MASS point source catalog around M101 would be:',
@@ -54,7 +54,7 @@ WHERE CONTAINS (POINT('J2000' , ra , dec) , POLYGON('J2000' , 209.80225 , 54.348
         tapEntry('VizieR (CDS)', 'http://tapvizier.u-strasbg.fr/TAPVizieR/tap/'),
         tapEntry('Simbad (CDS)', 'https://simbad.u-strasbg.fr/simbad/sim-tap'),
         // more ESA??
-        tapEntry('Gaia', 'https://gea.esac.esa.int/tap-server/tap',
+        tapEntry('Gaia', 'https://gea.esac.esa.int/tap-server/tap',undefined,undefined,undefined, undefined,
             [
                 {
                     description: 'From the Gaia TAP service, a .25 degree cone search Gaia data release 3 point source catalog around M31 would be:',

@@ -3,6 +3,7 @@
  */
 
 import {isEmpty, isString} from 'lodash';
+import {CoordinateSys} from '../CoordSys.js';
 import ImagePlotCntlr, {
     dispatchChangeCenterOfProjection,
     dispatchPlotHiPS,

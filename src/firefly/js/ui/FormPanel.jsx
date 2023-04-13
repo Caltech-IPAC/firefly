@@ -50,7 +50,7 @@ export const FormPanel = function (props) {
     const { children, onSuccess, onSubmit, onCancel=dispatchHideDropDown, onError, groupKey, groupsToUse,
         action, params, title, getDoOnClickFunc,
         submitText='Search',cancelText='Cancel', help_id, changeMasking,
-        includeUnmounted=false, extraWidgets=[]} = props;
+        includeUnmounted=false, extraWidgets=[], extraWidgetsRight=[]} = props;
     let { style, inputStyle, submitBarStyle, buttonStyle} = props;
 
     inputStyle = Object.assign({
@@ -87,7 +87,10 @@ export const FormPanel = function (props) {
                     </div>
                     {extraWidgets}
                 </div>
-                {help_id && <HelpIcon helpId={help_id} />}
+                <>
+                    {extraWidgetsRight}
+                    {help_id && <HelpIcon helpId={help_id} />}
+                </>
             </div>
         </div>
     );

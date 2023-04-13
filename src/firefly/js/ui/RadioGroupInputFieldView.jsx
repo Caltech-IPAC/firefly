@@ -30,15 +30,19 @@ function generateStyles(alignment, option){
     return option.disabled ? Object.assign(style, {opacity: 0.5}) : style;
 }
 
+const startR= '4px 0 0 4px';
+const midR= '0';
+const endR= '0 4px 4px 0';
 
-function makeButtonGroup(options,value,onChange) {
+function makeButtonGroup(options,value,onChange, tooltip,style) {
 
     return options.map((option,idx) => (
         <button type='button'   key={'' + idx} title={option.tooltip}
+                style={{borderRadius: idx===0?startR : idx===options.length-1 ? endR : midR, ...style,  }}
                 className={value===option.value ? 'buttonGroupButton On' : 'buttonGroupButton Off'}
                 value={option.value}
                 disabled={option.disabled || false}
-                onClick={(ev) => ev.target.value!==value && onChange(ev)}>
+                onClick={(ev) => option.value!==value && onChange(ev)}>
             {option.icon ?
                 <img src={option.icon} alt={options.label} /> :
                  option.label
@@ -51,9 +55,10 @@ function makeButtonGroup(options,value,onChange) {
 
 
 export function RadioGroupInputFieldView({options,alignment,value,
-                                          onChange,label,inline,tooltip,
-                                          buttonGroup= false,
-                                          labelWidth, wrapperStyle={}, labelStyle=undefined}) {
+                                             onChange,label,inline,tooltip,
+                                             buttonGroup= false,
+                                             buttonGroupButtonStyle= undefined,
+                                             labelWidth, wrapperStyle={}, labelStyle=undefined}) {
 
     const style= Object.assign({whiteSpace:'nowrap',display: inline?'inline-block':'block'},wrapperStyle);
     let innerStyle;
@@ -70,7 +75,7 @@ export function RadioGroupInputFieldView({options,alignment,value,
             {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} labelStyle={labelStyle}/> }
             <div style={innerStyle} >
                 {buttonGroup ?
-                     makeButtonGroup(options,value,onChange,tooltip,labelStyle) :
+                     makeButtonGroup(options,value,onChange,tooltip,buttonGroupButtonStyle) :
                      makeRadioGroup(options,alignment,value,onChange,tooltip,labelStyle)}
             </div>
         </div>
