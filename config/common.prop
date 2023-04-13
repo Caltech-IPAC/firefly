@@ -60,7 +60,7 @@ mail.smtp.starttls.enable = @mail.smtp.starttls.enable@
 sso.server.url=@sso.server.url@
 sso.user.profile.url=@sso.user.profile.url@
 
-help.base.url=@help.base.url@
+__$help.base.url=@__$help.base.url@
 
 tap.maxrec.maxval=@__$tap.maxrec.hardlimit@
 

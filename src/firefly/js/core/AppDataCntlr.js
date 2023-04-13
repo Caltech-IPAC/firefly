@@ -297,7 +297,7 @@ function grabWindowFocus() {
 function onlineHelpLoad( action )
 {
     return () => {
-        let url = getAppOptions()?.['help.base.url'] || '';
+        let url = getAppOptions()?.['help.base.url'] || getProp('help.base.url');
         url = url.endsWith('/') ? url : url + '/';
         url += action?.payload?.helpId ? '#id=' + action.payload.helpId : '';
         url = new URL(url, getRootURL());                   // use rootURL instead of document.baseURI if relative
