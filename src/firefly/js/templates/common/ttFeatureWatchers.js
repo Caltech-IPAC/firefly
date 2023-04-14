@@ -35,8 +35,6 @@ const getObsCoreWatcherDef= once(() => ({
     id : 'ObsCorePackage',
     watcher : watchForObsCoreTable,
     testTable : isObsCoreLike,
-    stopPropagation: true,
-    allowMultiples: false,
     actions: []
 }));
 
@@ -80,7 +78,7 @@ const PrepareDownload = React.memo(() => {
                     dlParams: {
                         FileGroupProcessor:'ObsCorePackager',
                         dlCutout: 'orig',
-                        TitlePrefix: 'ObsCore',
+                        TitlePrefix: tblTitle,
                         help_id:'table.obsCorePackage',
                         BaseFileName:`${baseFileName}`}}}/>
             </DownloadButton>
