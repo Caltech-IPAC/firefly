@@ -2,7 +2,7 @@ import React from 'react';
 import {cloneDeep, once} from 'lodash';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {dispatchTableUiUpdate} from '../../tables/TablesCntlr.js';
-import {getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
+import {getActiveTableId, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {isObsCoreLike} from '../../util/VOAnalyzer.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
@@ -52,7 +52,7 @@ function setupObsCorePackaging(tbl_id) {
     if (!table) return;
     const {tbl_ui_id}= getTableUiByTblId(tbl_id) ?? {} ;
     if (!tbl_ui_id) return;
-    dispatchTableUiUpdate({ tbl_ui_id, leftButtons: [() => <PrepareDownload tbl_id={tbl_id}/>] });
+    dispatchTableUiUpdate({ tbl_ui_id, leftButtons: [() => <PrepareDownload/>] });
 }
 
 function updateSearchRequest( tbl_id='', dlParams='', sRequest=null) {
@@ -68,8 +68,8 @@ function getColNameFromTemplate(template) {
     return template.match(/\${[\w -.]+}/g)?.map( (s) => s.substring(2,s.length-1));
 }
 
-const PrepareDownload = React.memo(({tbl_id}) => {
-    const tblTitle = getTblById(tbl_id)?.title ?? 'unknown';
+const PrepareDownload = React.memo(() => {
+    const tblTitle = getTblById(getActiveTableId())?.title ?? 'unknown';
     const baseFileName = tblTitle.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_.-]/g, '_');
     return (
         <div>

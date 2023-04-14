@@ -399,7 +399,10 @@ public class FileUtil
      */
     public static String getUniqueFileNameForGroup(String inFileNameStr, Map<String,Integer> dupMap) {
         int dupCnt= dupMap.getOrDefault(inFileNameStr,0);
-        if (dupCnt==0) return inFileNameStr;
+        if (dupCnt==0) {
+            dupMap.put(inFileNameStr, 1);
+            return inFileNameStr;
+        }
         dupMap.put(inFileNameStr,dupCnt+1);
         String ext= FileUtil.getExtension(inFileNameStr);
         String extStr=  ext.length()>0 ? "."+ext : "";
