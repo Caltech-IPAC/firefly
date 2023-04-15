@@ -20,6 +20,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
@@ -388,6 +389,25 @@ public class FileUtil
         return toFile;
     }
 
+
+    /**
+     * pass a filename as a string and a map. Using the map change to see it the file name has already been use. If it
+     * has been used then create another version of the file
+     * @param inFileNameStr the string of the file name
+     * @param dupMap - a map that keeps track of the file duplicates. This should be created before repeated calls to thei function
+     * @return either the original inFileNameStr or a modified version
+     */
+    public static String getUniqueFileNameForGroup(String inFileNameStr, Map<String,Integer> dupMap) {
+        int dupCnt= dupMap.getOrDefault(inFileNameStr,0);
+        if (dupCnt==0) {
+            dupMap.put(inFileNameStr, 1);
+            return inFileNameStr;
+        }
+        dupMap.put(inFileNameStr,dupCnt+1);
+        String ext= FileUtil.getExtension(inFileNameStr);
+        String extStr=  ext.length()>0 ? "."+ext : "";
+        return FileUtil.getBase(inFileNameStr)+'-'+dupCnt+extStr;
+    }
 
     public static File gUnzipFile(File f) throws IOException {
         return gUnzipFile(f,BUFFER_SIZE);

@@ -53,12 +53,6 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
         setSizeInBytes(sizeInBytes);
     }
 
-//    public FileInfo(String internalFilename, FileNameResolver resolver, long sizeInBytes) {
-//        setInternalName(internalFilename);
-//        setSizeInBytes(sizeInBytes);
-//        this.resolver = resolver;
-//    }
-//
     public FileInfo(File file, String desc) { this(file, null, desc, 200, "OK", null); }
 
     public FileInfo(File file) { this(file, file.getName(), 200, ResponseMessage.getHttpResponseMessage(200)); }

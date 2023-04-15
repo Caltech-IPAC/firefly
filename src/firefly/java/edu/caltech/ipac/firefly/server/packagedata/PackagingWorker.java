@@ -25,6 +25,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
@@ -86,6 +88,7 @@ public final class PackagingWorker implements Job.Worker {
             newZipFile();
 
             totalFiles = result.stream().mapToInt(fg -> fg.getSize()).sum();
+            Map<String,Integer> dupMap= new HashMap<>();
 
             for (FileGroup fg : result) {
                 for (FileInfo fi : fg) {
@@ -96,7 +99,8 @@ public final class PackagingWorker implements Job.Worker {
 
                     curFileInfoIdx++;
                     try {
-                        zippedBytes += ZipHandler.addZipEntry(zout, fi, fg.getBaseDir());
+                        String fname= FileUtil.getUniqueFileNameForGroup(fi.getExternalName(),dupMap);
+                        zippedBytes += ZipHandler.addZipEntry(zout, fname,fi, fg.getBaseDir());
                         totalBytes += zippedBytes;
                     } catch (AccessDeniedException e) {
                         denied.add(e.getMessage());

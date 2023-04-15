@@ -67,12 +67,13 @@ public class ZipHandler {
     /**
      *
      * @param zout      ZipOutputStream to add to
+     * @param zipEntryFileName the name of the file for the zip entry
      * @param fi        file to add
      * @param baseDir   base path of the added file
      * @return          the number of bytes added
      * @throws Exception
      */
-    public static long addZipEntry(ZipOutputStream zout, FileInfo fi, File baseDir) throws Exception {
+    public static long addZipEntry(ZipOutputStream zout, String zipEntryFileName, FileInfo fi, File baseDir) throws Exception {
 
         if (!fi.hasAccess()) {
             throw new AccessDeniedException("");
@@ -88,7 +89,7 @@ public class ZipHandler {
 
             is = getInputStream(fi.getInternalFilename(), fi, baseDir);
             String zipEntryComment = "(" + fi.getSizeInBytes() + "b) ";
-            String filename = fi.getExternalName();
+            String filename = zipEntryFileName;
 
             int inBufSize = 4096;
             if (filename != null && FileUtil.isExtension(filename, FileUtil.GZ)) {
@@ -125,13 +126,13 @@ public class ZipHandler {
             if (zipError.startsWith("duplicate entry:")) {
                 Logger.info("Packaging warning: " + zipError);
             } else {
-                String error = "Failed packaging " + fi.getExternalName() + " - " + zipError;
+                String error = "Failed packaging " + zipEntryFileName + " - " + zipError;
                 Logger.error(error);
                 throw new Exception(fi.getExternalName());
             }
 
         } catch (Exception e) {
-            String error = "Failed packaging " + fi.getExternalName() + " - " + e.getMessage();
+            String error = "Failed packaging " + zipEntryFileName + " - " + e.getMessage();
             Logger.error(error);
             throw new Exception(fi.getExternalName());
 

@@ -1,14 +1,15 @@
 import React from 'react';
-import {once} from 'lodash';
+import {cloneDeep, once} from 'lodash';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {dispatchTableUiUpdate} from '../../tables/TablesCntlr.js';
-import {getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
+import {getActiveTableId, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {isObsCoreLike} from '../../util/VOAnalyzer.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {getActiveRowCenterDef } from '../../visualize/saga/ActiveRowCenterWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
+import {getAppOptions} from 'firefly/api/ApiUtil';
 
 export const getAllStartIds= ()=> [
     getMocWatcherDef().id,
@@ -24,7 +25,7 @@ export function startTTFeatureWatchers(startIds=[
     startIds.includes(getCatalogWatcherDef().id) && dispatchAddTableTypeWatcherDef(getCatalogWatcherDef());
     startIds.includes(getUrlLinkWatcherDef().id) && dispatchAddTableTypeWatcherDef(getUrlLinkWatcherDef());
     startIds.includes(getActiveRowCenterDef().id) && dispatchAddTableTypeWatcherDef(getActiveRowCenterDef());
-    // startIds.includes(getObsCoreWatcherDef().id) && dispatchAddTableTypeWatcherDef(getObsCoreWatcherDef());
+    startIds.includes(getObsCoreWatcherDef().id) && dispatchAddTableTypeWatcherDef(getObsCoreWatcherDef());
 }
 
 
@@ -54,12 +55,35 @@ function setupObsCorePackaging(tbl_id) {
     dispatchTableUiUpdate({ tbl_ui_id, leftButtons: [() => <PrepareDownload/>] });
 }
 
+function updateSearchRequest( tbl_id='', dlParams='', sRequest=null) {
+    const template= getAppOptions().tapObsCore?.productTitleTemplate;
+    const templateColNames= template && getColNameFromTemplate(template);
+    const searchRequest = cloneDeep( sRequest);
+    searchRequest.template = template;
+    searchRequest.templateColNames = templateColNames?.toString();
+    return searchRequest;
+}
 
-const PrepareDownload = React.memo(() => (
-    <div>
-        <DownloadButton>
-            <DownloadOptionPanel {...{dlParams:{FileGroupProcessor:'ObsCorePackager',
-                    help_id:'table.obsCorePackage', BaseFileName:'download'}}}/>
-        </DownloadButton>
-    </div>
-));
+function getColNameFromTemplate(template) {
+    return template.match(/\${[\w -.]+}/g)?.map( (s) => s.substring(2,s.length-1));
+}
+
+const PrepareDownload = React.memo(() => {
+    const tblTitle = getTblById(getActiveTableId())?.title ?? 'unknown';
+    const baseFileName = tblTitle.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_.-]/g, '_');
+    return (
+        <div>
+            <DownloadButton>
+                <DownloadOptionPanel {...{
+                    updateSearchRequest: updateSearchRequest,
+                    showZipStructure: false, //flattened files, except for datalink (with more than one valid file)
+                    dlParams: {
+                        FileGroupProcessor:'ObsCorePackager',
+                        dlCutout: 'orig',
+                        TitlePrefix: 'ObsCore',
+                        help_id:'table.obsCorePackage',
+                        BaseFileName:`${baseFileName}`}}}/>
+            </DownloadButton>
+        </div>
+    );
+});
