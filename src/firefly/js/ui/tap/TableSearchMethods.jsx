@@ -30,14 +30,14 @@ function HelperComponents({initArgs, cols, columnsModel, serviceUrl, serviceLabe
         (
             <React.Fragment>
                 <ObsCoreSearch {...{cols, serviceLabel, initArgs}} />
-                <SpatialSearch {...{cols, serviceUrl, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
+                <SpatialSearch {...{cols, serviceUrl, serviceLabel, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
                 <ExposureDurationSearch {...{initArgs}} />
                 <ObsCoreWavelengthSearch {...{initArgs, serviceLabel}} />
             </React.Fragment>
         ) :
         (
             <React.Fragment>
-                <SpatialSearch {...{cols, serviceUrl, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
+                <SpatialSearch {...{cols, serviceUrl, serviceLabel, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
                 <TemporalSearch {...{cols, columnsModel,}} />
             </React.Fragment>
         );

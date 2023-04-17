@@ -74,7 +74,7 @@ export function makePanelStatusUpdater(panelActive,panelTitle,defErrorMessage) {
      */
     return (constraints, lastConstraintResult, setConstraintResult) => {
         const {valid:constraintsValid,errAry, adqlConstraintsAry, siaConstraints, siaConstraintErrors,
-            uploadFile, TAP_UPLOAD }= constraints;
+            uploadFile, TAP_UPLOAD}= constraints;
 
         const simpleError= constraintsValid ? '' : (errAry[0]|| defErrorMessage || '');
 
