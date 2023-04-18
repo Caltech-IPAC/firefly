@@ -297,7 +297,7 @@ public class IpacTableUtil {
         if (line != null && line.startsWith("|")) {
             String[] types = parseHeadings(line.trim());
             for (int i = 0; i < types.length; i++) {
-                String typeDesc = types[i].trim();
+                String typeDesc = types[i].trim().toLowerCase();
                 cols.get(i).setTypeDesc(typeDesc);
                 cols.get(i).setDataType(DataType.descToType(typeDesc));
             }
