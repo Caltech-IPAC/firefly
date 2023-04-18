@@ -81,7 +81,7 @@ public class ClientFitsHeader implements Serializable, Iterable<String> {
     public double getCDelt2() { return getDoubleHeader(CDELT2); }
     public double getBScale() { return getDoubleHeader(BSCALE); }
     public double getBZero() { return getDoubleHeader(BZERO); }
-    public double getBlankValue() { return getDoubleHeader(BLANK_VALUE); }
+    public double getBlankValue() { return getDoubleHeader(BLANK_VALUE, Double.NaN); }
     public long getDataOffset() { return getLongHeader(DATA_OFFSET); }
 
     public int getIntHeader(String key) { return getIntHeader(key,0); }
