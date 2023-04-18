@@ -85,13 +85,14 @@ function findUrlInReg(url, registryTblId) {
     return table?.tableData?.data?.findIndex( (d) => d[idx]===url);
 }
 
-const uiLabels= {
+const uiConfig= {
     showOtherDataLabel: 'Show Other Data Collections',
     hideLabel: 'Hide',
     hideTip: 'Hide data collections chooser',
     chooserTitle: 'Choose Data Collection',
-    chooserDetails: 'Click on data collection to search; filter or sort table to find a data collection.'
-
+    chooserDetails: 'Click on data collection to search; filter or sort table to find a data collection.',
+    sideBarWidth:460,
+    sideTransition: 'all .5s ease-in-out'
 };
 
 
@@ -268,7 +269,7 @@ export function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTbl
     },[]);
 
 
-    const sideBar= <SideBarTable {...{registryTblId, setSideBarShowing}}/>;
+    const sideBar= <SideBarTable {...{registryTblId, setSideBarShowing,width:uiConfig.sideBarWidth}}/>;
     const regHasUrl= isURLInRegistry(url,registryTblId);
     return (
         <div className='SearchPanel' style={{width:'100%', height:'100%'}}>
@@ -303,7 +304,7 @@ function SearchTitle({desc, isAllSky, sideBarShowing, setSideBarShowing}) {
     else {
         return (
             <div style={{display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'flex-start'}}>
-                <ExpandButton style={linkStyle} icon={SHOW_RIGHT} text={uiLabels.showOtherDataLabel} onClick={()  => setSideBarShowing(true)}/>
+                <ExpandButton style={linkStyle} icon={SHOW_RIGHT} text={uiConfig.showOtherDataLabel} onClick={()  => setSideBarShowing(true)}/>
                 <div style={{display:'flex', flexDirection:'row', flexGrow:1, justifyContent:'center'}}>
                     <div className='DLGeneratedDropDown__section--title' style={{marginLeft:-60}}>
                         {titleDiv}
@@ -378,17 +379,17 @@ const TabView= ({tabsKey, setSideBarShowing, sideBarShowing, searchObjFds,qAna, 
     </FieldGroupTabs>
 );
 
-function SideBarTable({registryTblId, setSideBarShowing}) {
+function SideBarTable({registryTblId, setSideBarShowing, width}) {
     return (
         <div style={{display:'flex', flexDirection:'column'}}>
             <div style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
-                {<ExpandButton style={linkStyle} icon={HIDE_LEFT} text={uiLabels.hideLabel} tip={uiLabels.hideTip}
+                {<ExpandButton style={linkStyle} icon={HIDE_LEFT} text={uiConfig.hideLabel} tip={uiConfig.hideTip}
                                onClick={()  => setSideBarShowing(false)}/> }
                 <div className='DLGeneratedDropDown__section--title' style={{marginLeft:110}} >
-                    {uiLabels.chooserTitle}
+                    {uiConfig.chooserTitle}
                 </div>
             </div>
-            <div style={{minWidth:460, flexGrow:1, backgroundColor:'inherit', padding: '4px 4px 0 2px'}}>
+            <div style={{minWidth:width, flexGrow:1, backgroundColor:'inherit', padding: '4px 4px 0 2px'}}>
                 <TablePanel {...{
                     key:registryTblId,
                     tbl_id:registryTblId,
@@ -404,7 +405,7 @@ function SideBarTable({registryTblId, setSideBarShowing}) {
             </div>
             <div style={{fontSize:'larger', display:'flex', justifyContent:'space-around', padding: '12px 0 5px 0'} }>
                 <div>
-                    {uiLabels.chooserDetails}
+                    {uiConfig.chooserDetails}
                 </div>
             </div>
         </div>
@@ -534,7 +535,7 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
     return (
         <div style={{display: 'flex', flexDirection:'column', width:'100%', justifyContent:'center', padding: '12px 0px 0 6px'}}>
             <div className='SearchPanel' style={{width:'100%', height:'100%'}}>
-                {sideBarShowing && sideBar}
+                <SideBarAnimation {...{sideBar,sideBarShowing,width:uiConfig.sideBarWidth}}/>
                 <FieldGroup groupKey='DL_UI' keepState={true} style={{width:'100%'}}>
                     {(isRegLoaded && qAna) ? searchObjFds.length===1 ?
                             <ServDescPanel{...{initArgs, setSideBarShowing, sideBarShowing, fds:searchObjFds[0].fds,
@@ -547,6 +548,15 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
                     }
                 </FieldGroup>
             </div>
+        </div>
+    );
+}
+
+function SideBarAnimation({sideBar,sideBarShowing,width}) {
+    const w= sideBarShowing?width:0;
+    return (
+        <div style={{minWidth:w, width:w, overflow:'hidden', display:'flex', transition:uiConfig.sideTransition}} >
+            {sideBar}
         </div>
     );
 }
