@@ -27,7 +27,7 @@ public class PixelValue {
 
 	static public double pixelVal(RandomAccessFile fits_file, int x, int y, ClientFitsHeader header) throws IOException{
 		int plane_number   = header.getPlaneNumber();
-		int bitpix         = header.getBixpix();
+		int bitpix         = header.getBitpix();
 		long naxis1        = header.getNaxis1();
 		long naxis2        = header.getNaxis2();
 		double cdelt2      = header.getCDelt2();

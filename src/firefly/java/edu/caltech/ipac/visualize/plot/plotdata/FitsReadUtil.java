@@ -501,7 +501,10 @@ public class FitsReadUtil {
     public static int getNaxis4(Header h) { return (getNaxis3(h) > 2) ? h.getIntValue("NAXIS4") : 1; }
     public static double getBscale(Header h) { return h.getDoubleValue("BSCALE", 1.0); }
     public static double getBzero(Header h) { return h.getDoubleValue("BZERO", 0.0); }
-    public static double getBlankValue(Header h) { return h.getDoubleValue("BLANK", Double.NaN); }
+    public static double getBlankValue(Header h) {
+        // blank value is only applicable to integer values (BITPIX > 0)
+        return getBitPix(h) > 0 ? h.getDoubleValue("BLANK", Double.NaN) : Double.NaN;
+    }
     public static String getExtName(Header h) { return h.getStringValue("EXTNAME"); }
     public static String getExtType(Header h) { return h.getStringValue("EXTTYPE"); }
     public static String getUtype(Header h) { return h.getStringValue("UTYPE"); }
