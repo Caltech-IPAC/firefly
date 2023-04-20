@@ -131,7 +131,8 @@ export const HiPSTargetView = ({style, hipsDisplayKey='none',
             });
         }
         else {
-            if (coordinateSys && coordinateSys!==primePlot(pv).projection.coordSys) {
+            const plot= primePlot(pv);
+            if (coordinateSys && plot && coordinateSys!==plot.projection.coordSys) {
                 dispatchChangeHiPS({plotId,coordSys:coordinateSys});
             }
             updatePlotOverlayFromUserInput(plotId, whichOverlay, userEnterWorldPt(), userEnterSearchRadius(),
