@@ -245,7 +245,8 @@ public class ImageStretch {
      * @return flux value to display
      */
     public static double getFluxPalomar(double  raw_dn, double blank_value, Header header) {
-        if ((raw_dn == blank_value) || (Double.isNaN(raw_dn))) {
+        int bitpix = header.getIntValue("BITPIX");
+        if ((bitpix > 0 && raw_dn == blank_value) || (Double.isNaN(raw_dn))) {
             return Double.NaN;
         }
         double exptime = header.getDoubleValue(ImageHeader.EXPTIME, 0.0);
@@ -260,8 +261,8 @@ public class ImageStretch {
 
 
 
-    public static double getFluxStandard(double  raw_dn, double blank_value, double bscale, double bzero){
-        if ((raw_dn == blank_value) || (Double.isNaN(raw_dn))) {
+    public static double getFluxStandard(double  raw_dn, double blank_value, double bscale, double bzero, int bitpix){
+        if ((bitpix > 0 && raw_dn == blank_value) || (Double.isNaN(raw_dn))) {
             return Double.NaN;
         }
         return raw_dn * bscale + bzero;

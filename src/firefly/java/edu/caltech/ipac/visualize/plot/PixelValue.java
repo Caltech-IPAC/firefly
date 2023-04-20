@@ -88,7 +88,7 @@ public class PixelValue {
 			case  64 -> fits_file.readLong();
 			default ->  blank_value;
 		};
-		if (value == blank_value) return Double.NaN;
+		if (bitpix > 0 && value == blank_value) return Double.NaN;
 		return value;
 	}
 
@@ -143,7 +143,7 @@ public class PixelValue {
 			double bscale = header.getDoubleValue("BSCALE", 1);
 			double bzero = header.getDoubleValue("BZERO", 0);
 			double cdelt2 = header.getDoubleValue("CDELT2", 0);
-			double blank_value = header.getDoubleValue("BLANK", Double.NaN);
+			double blank_value = bitpix > 0 ? header.getDoubleValue("BLANK", Double.NaN) : Double.NaN;
 			System.out.println("naxis3 = " + naxis3);
 			RandomAccessFile fits_file = null;
 
