@@ -37,15 +37,15 @@ function showHiPSPropsPopup(plot, element, initLeft,initTop, onMove) {
     dispatchShowDialog(HIPS_PROPERTY_POPUP_ID);
 }
 
-function makeHiPSPropModel(hipsProps,tableId) {
+function makeHiPSPropModel(hipsProps,hipsUrlRoot, tableId) {
     const columns = [{name: 'Property', width: 20, type: 'char'}, {name: 'Value', width: 60, type: 'char'}];
-    const data = Object.entries(hipsProps);
+    const data = [['hips_service_url',hipsUrlRoot], ...Object.entries(hipsProps)];
     return {totalRows: data.length, tbl_id: tableId, tableData:{columns, data}, highlightedRow: 0 };
 }
 
 function popupForm(plot, tableId, popupId) {
     if (!plot?.hipsProperties) return <NotFound/>;
-    const tableModel= getTblById(tableId) || makeHiPSPropModel(plot.hipsProperties,tableId);
+    const tableModel= getTblById(tableId) || makeHiPSPropModel(plot.hipsProperties, plot.hipsUrlRoot,tableId);
     return (
         <div style={popupPanelResizableStyle}>
             {renderTable(tableModel)}
