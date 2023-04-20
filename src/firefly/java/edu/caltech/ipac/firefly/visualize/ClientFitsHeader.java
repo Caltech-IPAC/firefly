@@ -75,13 +75,18 @@ public class ClientFitsHeader implements Serializable, Iterable<String> {
     }
 
     public int getPlaneNumber() { return getIntHeader(PLANE_NUMBER); }
-    public int getBixpix() { return getIntHeader(BITPIX); }
+    public int getBitpix() { return getIntHeader(BITPIX); }
     public int getNaxis1() { return getIntHeader(NAXIS1); }
     public int getNaxis2() { return getIntHeader(NAXIS2); }
     public double getCDelt2() { return getDoubleHeader(CDELT2); }
     public double getBScale() { return getDoubleHeader(BSCALE); }
     public double getBZero() { return getDoubleHeader(BZERO); }
-    public double getBlankValue() { return getDoubleHeader(BLANK_VALUE); }
+
+    public double getBlankValue() {
+        // blank value is only applicable to integer values (BITPIX > 0)
+        return this.getBitpix() > 0 ? getDoubleHeader(BLANK_VALUE, Double.NaN) : Double.NaN;
+    }
+
     public long getDataOffset() { return getLongHeader(DATA_OFFSET); }
 
     public int getIntHeader(String key) { return getIntHeader(key,0); }

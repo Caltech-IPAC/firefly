@@ -211,7 +211,7 @@ public class FitsRead implements Serializable, HasSizeOf {
         double raw_dn = getRawFloatAry()[index];
 
         return (!getOrigin().startsWith(ImageHeader.PALOMAR_ID)) ?
-                ImageStretch.getFluxStandard(raw_dn,getBlankValue(),getBscale(),getBzero()) :
+                ImageStretch.getFluxStandard(raw_dn, getBlankValue(), getBscale(), getBzero(), getBitPix()) :
                 ImageStretch.getFluxPalomar(raw_dn,getBlankValue(), this.header);
     }
 

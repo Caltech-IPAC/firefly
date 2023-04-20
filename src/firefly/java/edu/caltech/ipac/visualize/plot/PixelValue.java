@@ -27,7 +27,7 @@ public class PixelValue {
 
 	static public double pixelVal(RandomAccessFile fits_file, int x, int y, ClientFitsHeader header) throws IOException{
 		int plane_number   = header.getPlaneNumber();
-		int bitpix         = header.getBixpix();
+		int bitpix         = header.getBitpix();
 		long naxis1        = header.getNaxis1();
 		long naxis2        = header.getNaxis2();
 		double cdelt2      = header.getCDelt2();
@@ -45,7 +45,11 @@ public class PixelValue {
 
 		if (!isPalomar(header)) return file_value * bscale + bzero; // normal case
 
-		 // if we are a palomar fits file then to special things to it, todo- can we generalize?
+		 // If this is a Palomar Transient Factory single-epoch FITS image, then
+		 // convert pixel values to magnitudes and apply photometric and airmass corrections.
+		 // (200x-era request from PTF scientists)
+		 // See other uses of PALOMAR_ID elsewhere in Firefly for other pieces of this.
+		 // TODO- generalize or retire?
 		double airmass= header.getDoubleHeader(ImageHeader.AIRMASS);
 		double extinct= header.getDoubleHeader(ImageHeader.EXTINCT);
 		double imagezpt= header.getDoubleHeader(ImageHeader.IMAGEZPT);
@@ -55,6 +59,7 @@ public class PixelValue {
 	}
 
 	private static boolean isPalomar(ClientFitsHeader h) {
+		// Identify Palomar Transient Factory single-epoch images based on FITS headers
 		return
 				h.getStringHeader(ImageHeader.ORIGIN).startsWith(ImageHeader.PALOMAR_ID)  &&
 				h.containsKey(ImageHeader.AIRMASS) && h.containsKey(ImageHeader.EXTINCT) &&
@@ -83,7 +88,7 @@ public class PixelValue {
 			case  64 -> fits_file.readLong();
 			default ->  blank_value;
 		};
-		if (value == blank_value) return Double.NaN;
+		if (bitpix > 0 && value == blank_value) return Double.NaN;
 		return value;
 	}
 
@@ -138,7 +143,7 @@ public class PixelValue {
 			double bscale = header.getDoubleValue("BSCALE", 1);
 			double bzero = header.getDoubleValue("BZERO", 0);
 			double cdelt2 = header.getDoubleValue("CDELT2", 0);
-			double blank_value = header.getDoubleValue("BLANK", Double.NaN);
+			double blank_value = bitpix > 0 ? header.getDoubleValue("BLANK", Double.NaN) : Double.NaN;
 			System.out.println("naxis3 = " + naxis3);
 			RandomAccessFile fits_file = null;
 

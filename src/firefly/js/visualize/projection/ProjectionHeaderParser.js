@@ -67,14 +67,17 @@ const startsWithAny= (s,strAry) => Boolean(strAry.find( (sTest) => s.startsWith(
 
 function getBasicHeaderValues(parse) {
 
+    const bitpix = parse.getIntValue('BITPIX');
+    // blank value is only applicable to integer values (BITPIX > 0)
+    const blank_value = bitpix > 0 ? parse.getDoubleValue('BLANK', NaN) : NaN;
     return {
         naxis1: parse.getIntValue('NAXIS1'),
         naxis2: parse.getIntValue('NAXIS2'),
         cdelt2: parse.getDoubleValue('CDELT2', 0),
         bscale: parse.getDoubleValue('BSCALE', 1.0),
         bzero: parse.getDoubleValue('BZERO', 0.0),
-        blank_value: parse.getDoubleValue('BLANK', NaN),
-        bitpix: parse.getIntValue('BITPIX'),
+        blank_value,
+        bitpix,
     };
 }
 

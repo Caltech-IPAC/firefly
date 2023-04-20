@@ -348,7 +348,7 @@ public class ImageHeader implements Serializable
 
 
 
-	blank_value = header.getDoubleValue("BLANK", Double.NaN);
+	blank_value = bitpix > 0 ? header.getDoubleValue("BLANK", Double.NaN) : Double.NaN;
 	if (SUTDebug.isDebug())
 	    System.out.println("blank_value = " + blank_value);
 

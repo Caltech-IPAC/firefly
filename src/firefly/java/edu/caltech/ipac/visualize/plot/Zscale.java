@@ -574,7 +574,7 @@ public static void main(String args[])
 	int naxis = header.getIntValue("NAXIS");
 	int naxis1 = header.getIntValue("NAXIS1");
 	int naxis2 = header.getIntValue("NAXIS2");
-	double blank_value = header.getDoubleValue("BLANK", Double.NaN);
+	double blank_value = bitpix > 0 ? header.getDoubleValue("BLANK", Double.NaN) : Double.NaN;
 
     contrast = 0.25;
     opt_size = 600;    /* desired number of pixels in sample   */
