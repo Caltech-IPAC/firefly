@@ -1,4 +1,5 @@
 import {isArray} from 'lodash';
+import {splitCols} from 'firefly/tables/TableUtil.js';
 
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
@@ -45,16 +46,16 @@ export function sortInfoString(colName, isAscending=true) {
     }
 
     /**
-     * returns the sortInfo string of the next toggle state.
-     * @param colName
-     * @returns {string}
+     * returns the sortInfo of the next toggle state.
+     * @param {string[]} cnames an array of the column(s) to sort
+     * @returns {SortInfo}
      */
-    toggle(colName) {
-        const name = colName.split(',')[0].trim();
-        const dir = this.getDirection(name);
+    toggle(cnames=[]) {
+        if (cnames.length === 0) return;
+        const dir = this.getDirection(cnames[0]);
         const direction = dir === UNSORTED ? SORT_ASC :
                           dir === SORT_ASC ? SORT_DESC : UNSORTED;
-        const sortColumns = direction === UNSORTED ? [] : colName.split(',').map((cn) => cn?.trim());
+        const sortColumns = direction === UNSORTED ? [] : cnames;
         return new SortInfo(direction, sortColumns).serialize();
     }
 
@@ -64,7 +65,7 @@ export function sortInfoString(colName, isAscending=true) {
 
     static parse(sortInfo) {
         if (sortInfo) {
-            const parts = sortInfo.split(',').map((s) => s.trim());
+            const parts = splitCols(sortInfo).map((s) => s.trim());
             if (parts) {
                 const direction = parts[0] && parts[0].toUpperCase();
                 const sortColumns = parts[1] && parts.slice(1).map( (c) => c.replace(/^"(.+)"$/, '$1'));           // strip quotes if any

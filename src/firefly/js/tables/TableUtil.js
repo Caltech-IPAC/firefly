@@ -1403,6 +1403,14 @@ export function getTableState(tbl_id) {
     return TBL_STATE.OK;
 }
 
+/**
+ * @param {string} cnames
+ * @return {string[]} array of column names split from a comma separated string, ignoring commas inside double-quotes
+ */
+export function splitCols(cnames='') {
+    return cnames.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
+}
+
 /*-------------------------------------private------------------------------------------------*/
 
 /**

@@ -7,8 +7,10 @@ import {Cell} from 'fixed-data-table-2';
 import {set, get, isEqual, pick, omit, isEmpty, isString, toNumber} from 'lodash';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
-import {isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue, getTypeLabel,
-        getColumnIdx, getRowValues, getCellValue, getTableUiByTblId} from '../TableUtil.js';
+import {
+    isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue, getTypeLabel,
+    getColumnIdx, getRowValues, getCellValue, getTableUiByTblId, splitCols
+} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
@@ -74,7 +76,7 @@ export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, 
     const {label, name, desc, sortByCols, sortable} = col || {};
     const cdesc = desc || label || name;
     const sortDir = SortInfo.parse(sortInfo).getDirection(name);
-    const sortCol = sortByCols || name;
+    const sortCol = sortByCols ? splitCols(sortByCols) : [name];
     const typeVal = getTypeLabel(col);
     const unitsVal = col.units ? `(${col.units})`: '';
     let  className = toBoolean(sortable, true) ? 'clickable' : undefined;

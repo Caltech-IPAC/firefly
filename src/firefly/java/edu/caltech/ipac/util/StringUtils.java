@@ -315,7 +315,7 @@ public class StringUtils {
      * @return Returns true is the given string is either null, or an empty string.
      */
     public static boolean isEmpty(String s) {
-        return s == null || trim(s).length() == 0;
+        return s == null || s.trim().length() == 0;
     }
 
     public static boolean isAnyEmpty(String... sAry) {
@@ -462,19 +462,12 @@ public class StringUtils {
     }
 
     public static String[] split(String source, String delimiter) {
-        return split(source, delimiter, Integer.MAX_VALUE);
+        return split(source, delimiter, 0);
     }
 
     public static String[] split(String source, String delimiter, int limit) {
-        ArrayList<String> rvals = new ArrayList<String>();
-        StringTokenizer vals = new StringTokenizer(source, delimiter);
-        while (vals.hasMoreToken()) {
-            if (rvals.size() >= limit) {
-                break;
-            }
-            rvals.add(trim(vals.nextToken()));
-        }
-        return rvals.toArray(new String[rvals.size()]);
+        return Arrays.stream(source.split(delimiter, limit))
+                .map(String::trim).toArray(String[]::new);
     }
 
     public static List<String> split(String source, int chunkSize) {
@@ -483,39 +476,7 @@ public class StringUtils {
                 .mapToObj(index -> source.substring(index * chunkSize, Math.min((index + 1) * chunkSize, source.length())))
                 .collect(Collectors.toList());
     }
-
-
-    /**
-     * this implementation is much faster than GWt's String.trim() once
-     * compiled into javascript, especially in Firefox
-     * @param str
-     * @return
-     */
-    public static String trim(String str) {
-        if (str == null || str.length() == 0) return str;
-
-        String whitespace = " \t\n\f\r";
-        int i = 0; int len = str.length();
-        for (; i < str.length(); i++) {
-            if (whitespace.indexOf(str.charAt(i)) == -1) {
-                str = str.substring(i);
-                break;
-            }
-        }
-        if (i == len) {
-            // empty string...
-            return "";
-        }
-
-        for (i = str.length() - 1; i >= 0; i--) {
-            if (whitespace.indexOf(str.charAt(i)) == -1) {
-                str = str.substring(0, i + 1);
-                break;
-            }
-        }
-        return str;
-    }
-
+    
     /**
      * returns the length of the given string.
      * 0 if str is null
