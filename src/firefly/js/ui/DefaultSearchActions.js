@@ -139,7 +139,7 @@ export const makeDefTableSearchActions= () => {
             label: 'Upload Table',
             tip: 'Upload Whole Table',
             searchType: SearchTypes.wholeTable,
-            execute: (sa,table) => searchWholeTable(sa,table),
+            execute: (sa,table) => searchWholeTable(table),
             searchDesc: 'Use table as an upload to TAP search'
         })
 ];
@@ -181,7 +181,7 @@ export const makeExternalSearchActions = () => {
     ];
 };
 
-async function searchWholeTable(sa,table) {
+async function searchWholeTable(table) {
         const params ={
             [ServerParams.COMMAND]: ServerParams.TABLE_SAVE,
             [ServerParams.REQUEST]: JSON.stringify(table.request),

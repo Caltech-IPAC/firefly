@@ -30,6 +30,7 @@ import {
     getAsEntryForTableName, getColumnAttribute, getTapServices, makeUploadSchema, maybeQuote, tapHelpId
 } from './TapUtil.js';
 import {showColSelectPopup} from 'firefly/charts/ui/ColSelectView';
+import InputFieldLabel from 'firefly/ui/InputFieldLabel';
 
 const CenterLonColumns = 'centerLonColumns';
 const CenterLatColumns = 'centerLatColumns';
@@ -68,7 +69,7 @@ const fldListAry= [ServerParams.USER_TARGET_WORLD_PT,SpatialRegOp,SPATIAL_TYPE,
             SpatialMethod,RadiusSize, PolygonCorners,CenterLonColumns,CenterLatColumns,
     UploadCenterLonColumns, UploadCenterLatColumns, cornerCalcType];
 
-export function SpatialSearch({cols, serviceUrl, columnsModel, tableName, initArgs={}, obsCoreEnabled:requestObsCore, capabilities}) {
+export function SpatialSearch({cols, serviceUrl, serviceLabel, columnsModel, tableName, initArgs={}, obsCoreEnabled:requestObsCore, capabilities}) {
     const {searchParams={}}= initArgs ?? {};
     const obsCoreEnabled= requestObsCore && canSupportAtLeastOneObsCoreOption(capabilities);
     const panelTitle = !obsCoreEnabled ? Spatial : 'Location';
@@ -78,7 +79,7 @@ export function SpatialSearch({cols, serviceUrl, columnsModel, tableName, initAr
     const {canUpload=false}= capabilities ?? {};
 
     const {setConstraintFragment}= useContext(ConstraintContext);
-    const {setVal,getVal,makeFldObj,groupKey}= useContext(FieldGroupCtx);
+    const {setVal,getVal,makeFldObj}= useContext(FieldGroupCtx);
     const [constraintResult, setConstraintResult] = useState({});
     const [getUploadInfo, setUploadInfo]= useFieldGroupValue('uploadInfo');
     const [posOpenMsg, setPosOpenMsg]= useState(TAB_COLUMNS_MSG);
@@ -92,8 +93,10 @@ export function SpatialSearch({cols, serviceUrl, columnsModel, tableName, initAr
     const updatePanelStatus= makePanelStatusUpdater(checkHeaderCtl.isPanelActive(), Spatial);
 
     useEffect(() => {
-        if (canUpload) return;
-        setUploadInfo(false);
+        if (canUpload) {
+            if (uploadInfo) setVal(SPATIAL_TYPE,MULTI);
+            return;
+        }
         setVal(SPATIAL_TYPE,SINGLE);
     }, [serviceUrl,canUpload]);
 
@@ -112,7 +115,13 @@ export function SpatialSearch({cols, serviceUrl, columnsModel, tableName, initAr
             checkHeaderCtl.setPanelActive(true);
         }
         if (searchParams.uploadInfo) {
+            if (!canUpload) return;
             setVal(SPATIAL_TYPE,MULTI);
+            const columns = searchParams.uploadInfo.columns;
+            const centerCols = findTableCenterColumns({tableData:{columns}}) ?? {};
+            const {lonCol='', latCol=''}= centerCols;
+            setVal(UploadCenterLonColumns, lonCol, {validator: getColValidator(searchParams.uploadInfo.columns, true, false), valid: true});
+            setVal(UploadCenterLatColumns, latCol, {validator: getColValidator(searchParams.uploadInfo.columns, true, false), valid: true});
             setUploadInfo(searchParams.uploadInfo);
             checkHeaderCtl.setPanelActive(true);
         }
@@ -160,7 +169,7 @@ export function SpatialSearch({cols, serviceUrl, columnsModel, tableName, initAr
     useFieldGroupWatch([cornerCalcType], () => onChangeToPolygonMethod());
 
     useEffect(() => {
-        const constraints= makeSpatialConstraints(columnsModel, obsCoreEnabled, makeFldObj(fldListAry), uploadInfo, tableName);
+        const constraints= makeSpatialConstraints(columnsModel, obsCoreEnabled, makeFldObj(fldListAry), uploadInfo, tableName, canUpload);
         updatePanelStatus(constraints, constraintResult, setConstraintResult);
     });
     
@@ -169,14 +178,20 @@ export function SpatialSearch({cols, serviceUrl, columnsModel, tableName, initAr
         return () => setConstraintFragment(panelPrefix, '');
     }, [constraintResult]);
 
-
     return (
         <CollapsibleCheckHeader title={panelTitle} helpID={tapHelpId(panelPrefix)}
-                                message={constraintResult?.simpleError??''}
+                                message={constraintResult?.simpleError ?? ''}
                                 initialStateOpen={true} initialStateChecked={true}>
             <div style={{marginTop: 5}}>
                 <ForceFieldGroupValid forceValid={!checkHeaderCtl.isPanelActive()}>
 
+                    {!canUpload && (searchParams?.uploadInfo || uploadInfo) &&
+                        <div>
+                            {<InputFieldLabel label={'Spatial Type:'} tooltip={'tooltip'} labelWidth={SpatialLabelSpatial}/>}
+                            {warningMsg(`Single Shape selected: ${serviceLabel || 'This service'} does not support upload`)}
+                        </div>
+
+                    }
                     {canUpload &&
                         <RadioGroupInputField
                             fieldKey={SPATIAL_TYPE} options={spacialTypeOps} alignment={'horizontal'}
@@ -208,6 +223,14 @@ SpatialSearch.propTypes = {
     obsCoreEnabled: PropTypes.bool,
     serviceUrl: PropTypes.string,
     columnsModel: PropTypes.object,
+};
+
+const warningMsg = (msg) => {
+    return (
+        <div style={{display : 'inline-block'}}>
+            <i>{msg}</i>
+        </div>
+    );
 };
 
 function UploadTableSelector({uploadInfo, setUploadInfo}) {
@@ -345,8 +368,8 @@ const OBSCORE_SINGLE_LAYOUT= 1;
 const NORMAL_UPLOAD_LAYOUT= 2;
 const NORMAL_SINGLE_LAYOUT= 3;
 
-function getSpacialLayoutMode(spacialType, obsCoreEnabled) {
-    const upload= spacialType===MULTI;
+function getSpacialLayoutMode(spacialType, obsCoreEnabled, canUpload) {
+    const upload= spacialType===MULTI && canUpload;
     if (!upload && obsCoreEnabled) return OBSCORE_SINGLE_LAYOUT;
     if (!upload && !obsCoreEnabled) return NORMAL_SINGLE_LAYOUT;
     if (upload && !obsCoreEnabled) return  NORMAL_UPLOAD_LAYOUT;
@@ -364,7 +387,7 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
     const cornerCalcTypeValue= getVal(cornerCalcType)??'image';
     const spatialRegOpValue= getVal(SpatialRegOp) ?? 'contains_point';
     const polygonLabelWidth= 105;
-    const layoutMode= getSpacialLayoutMode(spacialType,obsCoreEnabled);
+    const layoutMode= getSpacialLayoutMode(spacialType,obsCoreEnabled,capabilities?.canUpload);
     const isCone= spatialMethod === 'Cone';
     const containsPoint= spatialRegOpValue === 'contains_point';
     const style= {display:'flex', flexDirection:'column', flexWrap:'no-wrap', width: SpatialWidth, marginTop: 5};
@@ -642,7 +665,7 @@ function makeUserAreaConstraint(regionOp, userArea, adqlCoordSys ) {
 }
 
 
-function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo, tableName) {
+function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo, tableName, canUpload) {
     const {fileName,serverFile, columns:uploadColumns, totalRows, fileSize}= uploadInfo ?? {};
     const {[CenterLonColumns]:cenLonField, [CenterLatColumns]:cenLatField,
         [ServerParams.USER_TARGET_WORLD_PT]:wpField, [RadiusSize]:radiusSizeField,
@@ -659,7 +682,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
     let adqlConstraint = '';
     const errList= makeFieldErrorList();
     const tabAs= 'ut';
-    const validUpload= Boolean(serverFile && upLonCol && upLatCol);
+    const validUpload= Boolean(serverFile && upLonCol && upLatCol && canUpload);
     const preFix= validUpload ? `${getAsEntryForTableName(tableName)}.` : '';
     if (!validUpload && spatialType===MULTI) {
         if (!serverFile) errList.addError('Upload file is not been specified');
@@ -729,7 +752,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
         valid:  errAry.length===0, errAry,
         adqlConstraintsAry: adqlConstraint ? [adqlConstraint] : [],
         siaConstraints:[],
-        siaConstraintErrors:[],
+        siaConstraintErrors:[]
     };
     if (spatialType===MULTI) {
         retObj.TAP_UPLOAD= makeUploadSchema(fileName,serverFile,uploadColumns, totalRows, fileSize);
