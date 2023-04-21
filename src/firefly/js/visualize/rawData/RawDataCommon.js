@@ -1,4 +1,5 @@
 import {isArrayBuffer} from 'lodash';
+import BrowserInfo from '../../util/BrowserInfo.js';
 import {getGpuJs} from './GpuJsConfig.js';
 import {getGPUOps} from './RawImageTilesGPU.js';
 import {createTransitionalTileWithCPU} from './RawImageTilesCPU.js';
@@ -21,6 +22,11 @@ export const TILE_SIZE = 3000;
 export const MAX_FULL_DATA_SIZE = 1500*MEG; //max size of byte data that can be loaded, file size will be 4x to 8x bigger
 const USE_GPU = true;
 
+export function shouldUseGpuInWorker() {
+    if (BrowserInfo.isSafari()) return false;
+    return isGPUAvailableInWorker();
+}
+
 /**
  *
  * @param rawTileDataAry
@@ -42,7 +48,7 @@ async function populateRawTileDataArray(rawTileDataAry, colorModel, isThreeColor
 }
 
 export async function populateRawImagePixelDataInWorker(rawTileDataGroup, colorTableId, isThreeColor, mask, maskColor, bias, contrast, bandUse, rootUrl) {
-    if (isGPUAvailableInWorker() && !mask) {
+    if (shouldUseGpuInWorker() && !mask) {
         const colorModel = getColorModel(colorTableId);
         const rawTileDataAry = await populateRawTileDataArray(rawTileDataGroup.rawTileDataAry, colorModel, isThreeColor,  mask, maskColor, bias, contrast, bandUse, rootUrl);
 

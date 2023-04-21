@@ -55,7 +55,7 @@ import {
 import ImageOutline from '../../drawingLayers/ImageOutline.js';
 import Artifact from '../../drawingLayers/Artifact.js';
 import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
-import {resolveHiPSIvoURL} from '../HiPSListUtil.js';
+import {isUrlInHipsList, resolveHiPSIvoURL} from '../HiPSListUtil.js';
 import {addNewMocLayer, isMOCFitsFromUploadAnalsysis, makeMocTableId, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
 import {getRowCenterWorldPt} from '../saga/ActiveRowCenterWatcher';
@@ -272,6 +272,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         const str= await result.text();
         const hipsProperties= parseProperties(str);
         let plot= WebPlot.makeWebPlotDataHIPS(plotId, resolvedHipsRootUrl, wpRequest, hipsProperties, attributes, PROXY);
+        plot.hipsFromHipsList= await isUrlInHipsList(resolvedHipsRootUrl);
 
         if (!blank && wpRequest.getOverlayIds()?.includes(HiPSMOC.TYPE_ID)) {
             await createHiPSMocLayer({
@@ -386,7 +387,7 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
 
     const resolvedHipsRootUrl= await resolveHiPSIvoURL(hipsUrlRoot);
 
-    const url= makeHipsUrl(`${resolvedHipsRootUrl}/properties`, true);
+    const url= makeHipsUrl(`${resolvedHipsRootUrl}/properties`, true, false);
 
     dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
     try {

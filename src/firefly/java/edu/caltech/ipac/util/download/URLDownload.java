@@ -240,8 +240,8 @@ public class URLDownload {
                                                   File outfile, DownloadListener dl,
                                                   int timeoutInSec) throws FailedRequestException {
         try {
-            Options ops= new Options(true,true,0L,false,false, dl);
-            return getDataToFile(makeConnection(url, cookies, requestHeader), outfile, ops, timeoutInSec,postData,0);
+            Options ops= new Options(true,true,0L,false,false, timeoutInSec, dl);
+            return getDataToFile(makeConnection(url, cookies, requestHeader), outfile, ops, postData,0);
         } catch (IOException e) {
             logError(url, postData, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e);
@@ -299,7 +299,7 @@ public class URLDownload {
                     if (!credentials.keySet().stream().allMatch(h::containsKey)) h.putAll(credentials);
                 }
             }
-            return getDataToFile(makeConnection(url, cookies, h), outfile, ops, 0, null, ops.allowRedirect?2:0);
+            return getDataToFile(makeConnection(url, cookies, h), outfile, ops, null, ops.allowRedirect?2:0);
         } catch (IOException e) {
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e);
         }
@@ -312,7 +312,6 @@ public class URLDownload {
      * @param conn                 the URLConnection
      * @param outfile              The name of the file to write the data to.
      * @param ops                  download options
-     * @param timeoutInSec         timeout in seconds, 0 is use default, normally 0
      * @param postData             If non-null then send as post data
      * @return an array of FileInfo objects
      * @throws FailedRequestException Any Network Error with simple message, cause will probably be IOException
@@ -320,7 +319,6 @@ public class URLDownload {
     public static FileInfo getDataToFile(URLConnection conn,
                                          File outfile,
                                          Options ops,
-                                         int timeoutInSec,
                                          Map<String,String> postData,
                                          int redirectCnt) throws FailedRequestException {
 
@@ -330,9 +328,9 @@ public class URLDownload {
             Map<String,List<String>> sendHeaders= null;
             long start = System.currentTimeMillis();
             try {
-                if (timeoutInSec>0) {
-                    conn.setConnectTimeout(timeoutInSec * 1000);//Sets a specified timeout value, in milliseconds
-                    conn.setReadTimeout(timeoutInSec * 1000);
+                if (ops.timeoutInSec>0) {
+                    conn.setConnectTimeout(ops.timeoutInSec * 1000);//Sets a specified timeout value, in milliseconds
+                    conn.setReadTimeout(ops.timeoutInSec * 1000);
                 }
                 if (conn instanceof HttpURLConnection) {
                     pushPostData(conn,postData);
@@ -363,7 +361,7 @@ public class URLDownload {
 
             if (responseCode>=300 && responseCode<400) {
                 if (redirectCnt>0 && (responseCode==301 || responseCode==302 || responseCode==303) )  {
-                   return redirect(conn,outfile,reqProp, ops,timeoutInSec,redirectCnt-1) ;
+                   return redirect(conn,outfile,reqProp, ops,redirectCnt-1) ;
                 }
                 outFileData.putAttribute("Location", conn.getHeaderField("Location"));
                 throw new FailedRequestException(ResponseMessage.getHttpResponseMessage(responseCode),
@@ -381,7 +379,6 @@ public class URLDownload {
                                              File outfile,
                                              Map<String,List<String>> reqProp,
                                              Options ops,
-                                             int timeoutInSec,
                                              int redirectCnt) throws FailedRequestException, IOException {
 
         outfile.delete();
@@ -394,8 +391,7 @@ public class URLDownload {
             newConn.setRequestProperty("Cookie", conn.getHeaderField("Set-Cookie"));
         }
         newConn.setRequestProperty("Accept-Encoding", "gzip, deflate");
-        return getDataToFile(newConn,
-                outfile, ops, timeoutInSec, null, redirectCnt);
+        return getDataToFile(newConn, outfile, ops, null, redirectCnt);
     }
 
     private static String postDataToString(Map<String,String> postData) {
@@ -455,7 +451,8 @@ public class URLDownload {
             if (outfile != null && outfile.canRead() && outfile.length() > 0) {
                 urlConn.setIfModifiedSince(outfile.lastModified());
                 if (getResponseCode(urlConn) == HttpURLConnection.HTTP_NOT_MODIFIED) {
-                    _log.briefInfo(outfile.getName() + ": Not downloading, already have current version");
+                    String urlStr= urlConn.getURL().toString();
+                    _log.briefInfo(outfile.getName() + ": Not downloading, already have current version, from "+urlStr);
                     retval = new FileInfo(outfile, getSugestedFileName(urlConn), HttpURLConnection.HTTP_NOT_MODIFIED,
                                      ResponseMessage.getHttpResponseMessage(HttpURLConnection.HTTP_NOT_MODIFIED));
                     retval.putAttribute(FileInfo.FILE_DOWNLOADED,false+"");
@@ -672,7 +669,7 @@ public class URLDownload {
     }
 
     public record Options (boolean onlyIfModified, boolean uncompress, long maxFileSize, boolean allowRedirect,
-                           boolean useCredentials, DownloadListener dl) {
+                           boolean useCredentials, int timeoutInSec, DownloadListener dl) {
 
         /**
          * convenience function
@@ -681,7 +678,7 @@ public class URLDownload {
          * set false: allowRedirect
          * @return Options
          */
-        public static Options def() {return new Options(true,true,0,false,true,null);}
+        public static Options def() {return new Options(true,true,0,false,true,0,null);}
 
         /**
          * convenience function
@@ -691,7 +688,19 @@ public class URLDownload {
          * @return Options
          */
         public static Options modifiedOp(boolean onlyIfModified) {
-            return new Options (onlyIfModified,true,0,true,true,null);
+            return new Options (onlyIfModified,true,0,true,true,0,null);
+        }
+
+        /**
+         * convenience function
+         * set no size limit,
+         * sets true: uncompress, allowRedirect, use credentials
+         * @param onlyIfModified - check for file modification
+         * @param timeoutInSec - timeout in seconds, 0 use the default timeout
+         * @return Options
+         */
+        public static Options modifiedAndTimeoutOp(boolean onlyIfModified, int timeoutInSec) {
+            return new Options (onlyIfModified,true,0,true,true,timeoutInSec,null);
         }
 
         /**
@@ -702,7 +711,7 @@ public class URLDownload {
          * @return Options
          */
         public static Options listenerOp(long maxFileSize, DownloadListener dl) {
-            return new Options (true,true,maxFileSize,true,true,dl);
+            return new Options (true,true,maxFileSize,true,true,0,dl);
         }
     }
 

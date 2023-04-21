@@ -356,8 +356,7 @@ function ServDescPanel({fds, style, desc, setSideBarShowing, sideBarShowing, doc
 
             <SearchTitle {...{desc,isAllSky,sideBarShowing,setSideBarShowing}}/>
             <DynLayoutPanelTypes.Inset fieldDefAry={fds} plotId={HIPS_PLOT_ID} style={{height:'100%', marginTop:4}}
-                                       WrapperComponent={Wrapper}
-            />
+                                       WrapperComponent={Wrapper} toolbarHelpId={'dlGenerated.VisualSelection'} />
         </div>
     );
 }

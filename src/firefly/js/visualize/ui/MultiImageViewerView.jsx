@@ -28,7 +28,7 @@ function makeState() {
 export const MultiImageViewerView = forwardRef( (props, ref) => {
 
     const {readout, readoutData, readoutShowing}= useMouseStoreConnector(makeState);
-    const {Toolbar, visRoot, viewerPlotIds, showWhenExpanded=false, mouseReadoutEmbedded=true,
+    const {Toolbar, visRoot, viewerPlotIds=[], showWhenExpanded=false, mouseReadoutEmbedded=true,
         inlineTitle= true, aboveTitle=false, layoutType=GRID}= props;
 
     const makeItemViewer = (plotId) =>  {
@@ -44,6 +44,7 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
     );
 
     const makeToolbar = Toolbar ? () => (<Toolbar {...props} />) : undefined;
+    const doReadoutAndShowing= readoutShowing && viewerPlotIds.includes(readoutData?.plotId);
 
     const newProps = Object.assign(omit(props, ['Toolbar', 'visRoot', 'viewerPlotIds', 'showWhenExpanded']),
         {activeItemId: visRoot.activePlotId, viewerItemIds: viewerPlotIds, makeToolbar, makeItemViewer, makeItemViewerFull});
@@ -62,7 +63,7 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
                 <MultiItemViewerView {...{...newProps, ref, insideFlex:true, style:props.style}} />
                 <MouseReadoutBottomLine readout={readout} readoutData={readoutData}
                                         slightlyTransparent={mouseReadoutEmbedded}
-                                        readoutShowing={readoutShowing}
+                                        readoutShowing={doReadoutAndShowing}
                                         showOnInactive={!mouseReadoutEmbedded}
                                         style={mouseReadoutEmbedded? {position:'absolute', left:0, right:1, bottom:3, margin:'0 3px 0 3px'}:{}} />
             </div>
@@ -74,7 +75,7 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
                 <MultiItemViewerView {...{...newProps, ref, insideFlex:true, style:props.style}} />
                 <MouseReadoutBottomLine readout={readout} readoutData={readoutData}
                                         style={mouseReadoutEmbedded?{position:'absolute', left:4, bottom:4, right:4}:{}}
-                                        readoutShowing={readoutShowing}
+                                        readoutShowing={doReadoutAndShowing}
                                         showOnInactive={!mouseReadoutEmbedded}
                                         slightlyTransparent={mouseReadoutEmbedded}
                 />

@@ -52,7 +52,9 @@ export const HelpLines= ({whichOverlay}) => {
 }
 
 
-export function TargetHipsPanelToolbar({visRoot, viewerPlotIds, toolbarStyle={}, whichOverlay= CONE_CHOICE_KEY, viewerId }) {
+export function TargetHipsPanelToolbar({visRoot, viewerPlotIds, toolbarStyle={},
+                                           whichOverlay= CONE_CHOICE_KEY, viewerId,
+                                           toolbarHelpId='hips.VisualSelection'}) {
 
     const leftImageStyle= {
         verticalAlign:'bottom',
@@ -75,7 +77,7 @@ export function TargetHipsPanelToolbar({visRoot, viewerPlotIds, toolbarStyle={},
             <div style={{display:'flex', justifyContent:'flex-start'}}>
                 <VisMiniToolbar style={{width:'unset'}} viewerId={viewerId}
                                 tips={{selectArea:'Select an area to search'}}/>
-                <HelpIcon style={{alignSelf:'center', paddingLeft:5}} helpId={'hips.VisualSelection'} />
+                <HelpIcon style={{alignSelf:'cenTer', paddingLeft:5}} helpId={toolbarHelpId} />
             </div>
         </div>
     );

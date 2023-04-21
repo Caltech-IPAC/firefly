@@ -16,7 +16,7 @@ import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {
     DEFAULT_FITS_VIEWER_ID, REPLACE_VIEWER_ITEMS, NewPlotMode, getViewerItemIds, getMultiViewRoot,
     META_VIEWER_ID} from '../MultiViewCntlr.js';
-import {getTblById, findGroupByTblId, getTblIdsByGroup, smartMerge} from '../../tables/TableUtil.js';
+import {getTblById, findGroupByTblId, getTblIdsByGroup, smartMerge, getActiveTableId} from '../../tables/TableUtil.js';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode, dispatchUpdateLayoutInfo, getLayouInfo} from '../../core/LayoutCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TBL_RESULTS_ACTIVE, TBL_RESULTS_ADDED} from '../../tables/TablesCntlr.js';
@@ -59,7 +59,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
                   useFlex={true} resizable={true}>
                 { showCoverage && coverageSide==='LEFT' && makeCoverageTab() }
                 { showMeta && makeMultiProductViewerTab({dataProductTableId}) }
-                { showFits && makeFitsTab() }
+                { showFits && makeFitsPinnedTab() }
             </Tabs>
         );
 
@@ -76,9 +76,10 @@ export const makeCoverageTab= () => (
 );
 
 export const makeMultiProductViewerTab= ({dataProductTableId}) => {
+    const activeTbl= getTblById(getActiveTableId());
     const table= getTblById(dataProductTableId);
     const title= table?.tableMeta?.title || table?.title || '';
-    const metaTitle= `Data Product${title?': ' : ''}${title}`;
+    const metaTitle= activeTbl.isFetching ? 'Data Products' : `Data Product${title?': ' : ''}${title}`;
     return (
         <Tab key='meta' name={metaTitle} removable={false} id='meta'>
             <MetaDataMultiProductViewer dataProductTableId={dataProductTableId} enableExtraction={true}/>
@@ -98,7 +99,7 @@ function BadgeLabel({labelStr}) {
         );
 }
 
-export function makeFitsTab()  {
+export function makeFitsPinnedTab()  {
     return (
         <Tab key='fits' name='Pinned Images'  removable={false} id='fits'
              label={<BadgeLabel labelStr={'Pinned Images'}/>}>

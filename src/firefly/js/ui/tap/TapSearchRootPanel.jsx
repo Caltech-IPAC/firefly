@@ -49,6 +49,7 @@ let webApiUserAddedService;
 const initServiceUsingAPIOnce= makeSearchOnce(false); // call one time during first construction
 const searchFromAPIOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
 const activateInitArgsAdqlOnce= once((tapBrowserState,initArgs) => initArgs?.urlApi?.adql && setTimeout(() => populateAndEditAdql(tapBrowserState,initArgs.urlApi?.adql), 5));
+let lastServicesShowing= false;
 
 /** if an extra service is found from the api that is not in the list then set webApiUserAddedService */
 const initApiAddedServiceOnce= once((initArgs) => {
@@ -99,10 +100,15 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
     const tapOps= getTapServiceOptions();
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
     const [selectBy, setSelectBy]= useState(initArgs?.urlApi?.selectBy || 'basic');
-    const [servicesShowing, setServicesShowing]= useState(false);
+    const [servicesShowing, setServicesShowingInternal]= useState(lastServicesShowing);
     const [obsCoreTableModel, setObsCoreTableModel] = useState();
     const [serviceUrl, setServiceUrl]= useState(() => getInitServiceUrl(tapState,initArgs,tapOps));
     activateInitArgsAdqlOnce(tapState,initArgs);
+
+    const setServicesShowing= (showing) => {
+        setServicesShowingInternal((showing));
+        lastServicesShowing= showing;
+    };
 
     const obsCoreEnabled = obsCoreTableModel?.tableData?.data?.length > 0;
 
