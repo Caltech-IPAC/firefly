@@ -15,6 +15,7 @@ import {FormPanel} from 'firefly/ui/FormPanel';
 import {ServerParams} from 'firefly/data/ServerParams';
 import {doJsonRequest} from 'firefly/core/JsonUtils';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr';
+import {findTableCenterColumns} from 'firefly/util/VOAnalyzer';
 
 const dialogId = 'Upload-spatial-table';
 const UPLOAD_TBL_SOURCE= 'UPLOAD_TBL_SOURCE';
@@ -80,9 +81,8 @@ function uploadSubmit(request, setUploadInfo)  {
     const columns= report.fileFormat===Format.FITS ?
         getFitsColumnInfo(data) :
         data.map(([name,type,u,d]) => ({name, type, units: u?u:'', description: d?d:'', use:true}));
-
-
-    const uploadInfo = {serverFile, fileName, columns, totalRows, fileSize, tableSource: UPLOAD_TBL_SOURCE};
+    const columnsSelected = getSelectedColumns(columns);
+    const uploadInfo = {serverFile, fileName, columns:columnsSelected, totalRows, fileSize, tableSource: UPLOAD_TBL_SOURCE};
     setUploadInfo(uploadInfo);
     dispatchHideDialog(dialogId);
     return false;
@@ -96,7 +96,8 @@ function existingTableSubmit(request,setUploadInfo) {
     const activeTbl = getTableUiByTblId(activeTblId);
     const tableRequest = activeTbl.request;
     const columnData = activeTbl.columns;
-    const columns = columnData.map((col) => col.visibility === 'hide' || col.visibility === 'hidden'? ({...col, use:false}) :  ({...col, use:true}));
+    const columns = columnData.map((col) => col.visibility === 'hide' || col.visibility === 'hidden'? ({...col, use:false}) :  ({...col, use:true})); //filter out hidden cols
+    const columnsSelected = getSelectedColumns(columns);
 
     const params ={
         [ServerParams.COMMAND]: ServerParams.TABLE_SAVE,
@@ -116,7 +117,7 @@ function existingTableSubmit(request,setUploadInfo) {
             title: activeTbl.title,
             fileName: activeTbl.title,
             tbl_id: activeTblId,
-            columns,
+            columns:columnsSelected,
             totalRows: activeTbl.totalRows,
             tableSource: EXISTING_TBL_SOURCE,
         };
@@ -124,6 +125,12 @@ function existingTableSubmit(request,setUploadInfo) {
         dispatchHideDialog(dialogId);
     });
     return false;
+}
+
+function getSelectedColumns(columns) {
+    const {lonCol='', latCol=''} = findTableCenterColumns({tableData:{columns}}) ?? {}; //centerCols
+    const columnsSelected = columns.map((col) => col.name === lonCol || col.name === latCol? ({...col, use:true}) :  ({...col, use:false})); //select position cols only
+    return columnsSelected;
 }
 
 const NoTables = () => {

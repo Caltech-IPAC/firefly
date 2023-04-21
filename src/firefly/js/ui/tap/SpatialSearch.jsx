@@ -244,6 +244,15 @@ function UploadTableSelector({uploadInfo, setUploadInfo}) {
     const openKey= 'upload-pos-columns';
 
     useEffect(() => {
+        //if user changes position column(s), make the new columns entries selectable in the columns/search
+        const columns = uploadInfo?.columns;
+        if (getLon()) columns.find((col) => col.name === getLon()).use = true;
+        if (getLat()) columns.find((col) => col.name === getLat()).use = true;
+        uploadInfo = {...uploadInfo, columns};
+        setUploadInfo(uploadInfo);
+    }, [getLon, getLat]);
+
+    useEffect(() => {
         if (!columns) return;
         const centerCols = findTableCenterColumns({tableData:{columns}}) ?? {};
         const {lonCol='', latCol=''}= centerCols;
@@ -261,8 +270,12 @@ function UploadTableSelector({uploadInfo, setUploadInfo}) {
     const haveTable= Boolean(fileName && columns);
 
     const onColsSelected = (selectedColNames) => {
+        //get rid of extra quotes within each selectedColNames - because non-alphanumeric entries may have
+        //been quoted by calling quoteNonAlphanumeric
+        // , e.g.: ['"Object Name"', 'RA', 'Notes']
+        selectedColNames = selectedColNames.map((col) => col.replace(/^"(.*)"$/, '$1'));
         const columns = uploadInfo.columns.map((col) => (
-                {...col, use:selectedColNames.includes(col.name)}));
+                {...col, use:selectedColNames.includes((col.name))}));
         uploadInfo = {...uploadInfo, columns};
         setUploadInfo(uploadInfo);
     };
@@ -397,7 +410,6 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
     const radiusOrPolygon= isCone ?
         radiusField :
         renderPolygonDataArea({ cornerCalcTypeValue, hipsUrl, centerWP, fovDeg, labelWidth: polygonLabelWidth });
-
 
     switch (layoutMode) {
         case OBSCORE_SINGLE_LAYOUT:

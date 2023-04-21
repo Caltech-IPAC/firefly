@@ -9,6 +9,7 @@ import {setMultiSearchPanelTab} from './MultiSearchPanel.jsx';
 import {Format} from 'firefly/data/FileAnalysis';
 import {doJsonRequest} from 'firefly/core/JsonUtils';
 import {showInfoPopup} from 'firefly/ui/PopupUtil';
+import {findTableCenterColumns} from 'firefly/util/VOAnalyzer';
 
 //note - these two redundant function are here because of circular dependencies.
 // this file is imported very early and webpack is creating errors
@@ -192,6 +193,8 @@ async function searchWholeTable(table) {
         const tbl = getTableUiByTblId(table?.tbl_id);
         const columns = tbl.columns.map((col) =>
             col.visibility === 'hide' || col.visibility === 'hidden'? ({...col, use:false}) :  ({...col, use:true}));
+        const {lonCol='', latCol=''}= findTableCenterColumns({tableData:{columns}}) ?? {};
+        const columnsSelected = columns.map((col) => col.name === lonCol || col.name === latCol? ({...col, use:true}) :  ({...col, use:false})); //select position cols
         const result = await doJsonRequest(ServerParams.TABLE_SAVE, params);
         if (!result.success) {
             showInfoPopup('Error loading this table', result.error);
@@ -202,7 +205,7 @@ async function searchWholeTable(table) {
             title: tbl.title,
             fileName: tbl.title,
             tbl_id: tbl.tbl_id,
-            columns,
+            columns: columnsSelected,
             totalRows: tbl.totalRows,
             tableSource: SEARCH_TBL_SOURCE,
         };

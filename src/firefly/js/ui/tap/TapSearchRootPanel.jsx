@@ -343,6 +343,8 @@ function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
     let isUpload;
     let serverFile;
     let uploadTableName;
+    let schemaEntry;
+    let userColumns;
 
     if (isADQL) {
         adql = request.adqlQuery;
@@ -354,6 +356,9 @@ function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
     else {
         adql = getAdqlQuery(tapBrowserState);
         isUpload = isTapUpload(tapBrowserState);
+        schemaEntry = getTapUploadSchemaEntry(tapBrowserState);
+        const cols = schemaEntry.columns;
+        userColumns = cols?.filter((col) => col.use).map((col) => col.name).join(',');
         serverFile = isUpload && getUploadServerFile(tapBrowserState);
         uploadTableName = isUpload && getUploadTableName(tapBrowserState);
     }
@@ -368,6 +373,7 @@ function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
         if (isUpload) {
             params.UPLOAD= serverFile;
             params.adqlUploadSelectTable= uploadTableName;
+            if (!isADQL) params.UPLOAD_COLUMNS= userColumns;
         }
         if (hasMaxrec) params.MAXREC = maxrec;
         const treq = makeTblRequest('AsyncTapQuery', getTitle(adqlClean,serviceUrl), params);
