@@ -185,11 +185,12 @@ function initConverterTemplates() {
             create: simpleCreate,
             threeColor: false,
             hasRelatedBands: false,
-            canGrid: false,
+            canGrid: true,
+            maxPlots: 12,
             getSingleDataProduct: (table, row, activateParams) =>
                 makeAnalysisGetSingleDataProduct(makeShaPlotRequest)(table, row, activateParams, 'spectrum'),
             getRelatedDataProduct: () => Promise.reject('related data products not supported'),
-            getGridDataProduct: () => Promise.reject('grid not supported'),
+            getGridDataProduct: getGridDataProductWrapper(makeShaPlotRequest),
         },
         {
             converterId: 'atlas',
