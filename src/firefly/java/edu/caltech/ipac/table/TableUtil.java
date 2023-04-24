@@ -74,7 +74,7 @@ public class TableUtil {
 
     private static boolean isRegLine(String line) {
         if (StringUtils.isEmpty(line)) return false;
-        line= StringUtils.trim(line).toLowerCase();
+        line= line.trim().toLowerCase();
         for(String sw : regStartWith) {
             if (line.startsWith(sw)) return true;
         }
@@ -309,6 +309,14 @@ public class TableUtil {
             }
         }
         return Arrays.asList(val);
+    }
+
+    /**
+     * @param cnames a string of column name(s)
+     * @return an array of column names split from a comma separated string, ignoring commas inside double-quotes
+     */
+    public static String[] splitCols(String cnames) {
+        return cnames == null ? new String[0] : cnames.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
     }
 
 //====================================================================

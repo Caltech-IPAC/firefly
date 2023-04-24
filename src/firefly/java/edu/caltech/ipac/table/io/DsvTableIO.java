@@ -116,7 +116,7 @@ public class DsvTableIO {
                 s = s.substring(1);//LZ fixed the issue with the BOM character
             }
             if (!StringUtils.isEmpty(s)) {
-                columns.add(new DataType(s, null)); // unknown type
+                columns.add(new DataType(s.trim(), null)); // unknown type
             }
         }
         return columns;

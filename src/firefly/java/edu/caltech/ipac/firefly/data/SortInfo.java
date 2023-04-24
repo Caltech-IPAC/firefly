@@ -9,6 +9,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import static edu.caltech.ipac.table.TableUtil.splitCols;
+
 /**
  * Date: Feb 11, 2009
  *
@@ -58,7 +60,7 @@ public class SortInfo implements Serializable, Comparable {
     public static SortInfo parse(String str) {
         if (StringUtils.isEmpty(str)) return null;
         str = str.replaceFirst("SortInfo=", "");  // to support old format used by external code.
-        String[] values = str.split(",");
+        String[] values = splitCols(str);
         if (values.length > 1) {
             if (values[0] != null) {
                 Direction dir = values[0].equals(Direction.ASC.name()) ? Direction.ASC : Direction.DESC;
