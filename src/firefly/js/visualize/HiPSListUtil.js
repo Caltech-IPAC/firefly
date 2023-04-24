@@ -91,38 +91,51 @@ export function makeHiPSRequest(tableType, sources=getHiPSSources(), mocSources,
     return makeTblRequest('HiPSSearch', 'HiPS Maps', params, {tbl_id, pageSize: MAX_ROW});
 }
 
+function convertIvoToUrl(tableModel,ivo)  {
+    const ivoIdx= getColumnIdx(tableModel, IVO_ID_COL);
+    const urlIdx= getColumnIdx(tableModel, URL_COL);
+    if (ivoIdx<0 || urlIdx<1) return undefined;
+    const lowerIvo= ivo.toLowerCase();
+    // now match the table
+    const allRows= tableModel?.tableData.data ?? [];
+    const foundRow= allRows.find( (row) =>
+        row?.[ivoIdx]?.toLowerCase().includes(lowerIvo) );
+    return foundRow?.[urlIdx] || ivo;
+}
+
+async function ensureInitFullHipsTable() {
+    if (FULL_HIPS_TABLE) return;
+    const request = makeHiPSRequest('hips');
+    const tableModel= await doFetchTable(request);
+    FULL_HIPS_TABLE = tableModel;
+}
+
+
 /**
  * resolve a ivo hips id to a URL if a url is passed just return it.
  * @param {string} ivoOrUrl - a url or a IVO id
  * @return {Promise} a promise the resolves to a url
  */
-export function resolveHiPSIvoURL(ivoOrUrl) {
-    if (!ivoOrUrl) return Promise.reject(new Error('empty url'));
-    if (ivoOrUrl.startsWith('http')) return Promise.resolve(ivoOrUrl);
+export async function resolveHiPSIvoURL(ivoOrUrl) {
+    await ensureInitFullHipsTable();
+    if (!ivoOrUrl) throw new Error('empty url');
+    if (ivoOrUrl.startsWith('http')) return ivoOrUrl;
     if (isBlankHiPSURL(ivoOrUrl)) ivoOrUrl= BLANK_HIPS_URL;
-
-    const findInTable = (tableModel) => {
-        const ivoIdx= getColumnIdx(tableModel, IVO_ID_COL);
-        const urlIdx= getColumnIdx(tableModel, URL_COL);
-        if (ivoIdx<0 || urlIdx<1) return undefined;
-        const lowerIvo= ivoOrUrl.toLowerCase();
-        // now match the table
-        const foundRow= get(tableModel,'tableData.data', []).find( (row) =>
-            row?.[ivoIdx]?.toLowerCase().includes(lowerIvo) );
-        return foundRow?.[urlIdx] || ivoOrUrl;
-    };
-
-    if (FULL_HIPS_TABLE) {
-        return Promise.resolve(findInTable(FULL_HIPS_TABLE));
-    } else {
-        const request = makeHiPSRequest('hips');
-        return doFetchTable(request).then( (tableModel) => {
-            FULL_HIPS_TABLE = tableModel;
-            return findInTable(tableModel);
-        });
-    }
-
+    return convertIvoToUrl(FULL_HIPS_TABLE,ivoOrUrl);
 }
+
+export async function isUrlInHipsList(url='') {
+    await ensureInitFullHipsTable();
+    const urlIdx= getColumnIdx(FULL_HIPS_TABLE, URL_COL);
+    if (urlIdx<1) return false;
+    const allRows= FULL_HIPS_TABLE?.tableData.data ?? [];
+    const urlLower= url.toLowerCase();
+    const foundRow= allRows.find( (row=[]) => row[urlIdx]?.toLowerCase().includes(urlLower) );
+    return Boolean(foundRow?.[urlIdx]);
+}
+
+
+
 
 let hipsInit= false;
 

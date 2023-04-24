@@ -105,6 +105,7 @@ function getValueOnSuggestion(cols, canBeExpression=true) {
 }
 
 export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,name,tooltip,nullAllowed,readonly,initValue}) {
+    if (!colValStats) return <div/>;
     return (
         <ColumnFld
             cols={colValStats.map((c)=>{return {name: c.name, units: c.unit, type: c.type, desc: c.descr};})}
@@ -117,7 +118,7 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
 }
 
 ColumnOrExpression.propTypes = {
-    colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)).isRequired,
+    colValStats: PropTypes.arrayOf(PropTypes.instanceOf(ColValuesStatistics)),
     params: PropTypes.object,
     groupKey: PropTypes.string.isRequired,
     fldPath: PropTypes.string.isRequired,

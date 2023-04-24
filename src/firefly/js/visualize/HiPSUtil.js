@@ -174,7 +174,8 @@ export function makeHiPSTileUrl(plot, nOrder, tileNumber) {
     const exts= plot.hipsProperties?.hips_tile_format ?? 'jpg';
     const cubeExt= plot.cubeDepth>1 && plot.cubeIdx>0 ? '_'+plot.cubeIdx : '';
     const root= plot.hipsUrlRoot.endsWith('/') ? plot.hipsUrlRoot : plot.hipsUrlRoot+'/';
-    return makeHipsUrl(`${root}Norder${nOrder}/Dir${dir}/Npix${tileNumber}${cubeExt}.${getHiPSTileExt(exts)}`, plot.proxyHips);
+    return makeHipsUrl(`${root}Norder${nOrder}/Dir${dir}/Npix${tileNumber}${cubeExt}.${getHiPSTileExt(exts)}`,
+        plot.proxyHips, plot.hipsFromHipsList);
 }
 
 /**
@@ -188,12 +189,12 @@ export function makeHiPSAllSkyUrl(urlRoot,exts,cubeIdx= 0, proxy= false) {
     if (!urlRoot || !exts) return null;
     const cubeExt= cubeIdx? '_'+cubeIdx : '';
     const root= urlRoot.endsWith('/') ? urlRoot : urlRoot+'/';
-    return makeHipsUrl(`${root}Norder3/Allsky${cubeExt}.${getHiPSTileExt(exts)}`, proxy);
+    return makeHipsUrl(`${root}Norder3/Allsky${cubeExt}.${getHiPSTileExt(exts)}`, proxy, true);
 }
 
 export function makeHiPSPropertiesUrl(urlRoot,proxy) {
     const root= urlRoot.endsWith('/') ? urlRoot : urlRoot+'/';
-    return makeHipsUrl(`${root}properties`, proxy);
+    return makeHipsUrl(`${root}properties`, proxy, false);
 }
 
 export function makeHiPSAllSkyUrlFromPlot(plot) {
@@ -209,13 +210,15 @@ export function makeHiPSAllSkyUrlFromPlot(plot) {
  * Build the HiPS url
  * @param {String} url
  * @param {boolean} proxy - make a URL the uses proxying
+ * @param {boolean} alwaysUseCached- true if this url references a hips tile
  * @return {String} the modified url
  */
-export function makeHipsUrl(url, proxy) {
+export function makeHipsUrl(url, proxy, alwaysUseCached=false) {
     if (proxy) {
         const params= {
             downloadSessionId: getFireflySessionId(),
-            hipsUrl : url
+            hipsUrl : url,
+            alwaysUseCached,
         };
         return encodeServerUrl(getRootURL() + 'servlet/Download', params);
     }

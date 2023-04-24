@@ -13,12 +13,11 @@ import {DPtypes, SHOW_CHART, SHOW_IMAGE, SHOW_TABLE} from '../../../metaConvert/
 import {ServiceDescriptorPanel} from '../../../ui/dynamic/ServiceDescriptorPanel.jsx';
 import {RenderTreeIdCtx} from '../../../ui/RenderTreeIdCtx.jsx';
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
-import {AdvancedADQL} from '../../../ui/tap/AdvancedADQL.jsx';
 import {
     dispatchAddViewer, dispatchViewerUnmounted, GRID, IMAGE, NewPlotMode, PLOT2D, SINGLE
 } from '../../MultiViewCntlr.js';
 import {createMakeDropdownFunc} from './DPDropdown.jsx';
-import {AdvancedMessage, ComplexMessage, ProductMessage} from './MPMessages.jsx';
+import {AdvancedMessage, ProductMessage} from './MPMessages.jsx';
 import {MultiProductChoice} from './MultiProductChoice.jsx';
 
 

@@ -108,8 +108,8 @@ VisualTargetPanel.propTypes= {
 export const HiPSTargetView = ({style, hipsDisplayKey='none',
                                    hipsUrl=DEFAULT_HIPS, hipsFOVInDeg= DEFAULT_FOV, centerPt=makeWorldPt(0,0, CoordinateSys.GALACTIC),
                                    targetKey=DEF_TARGET_PANEL_KEY, sizeKey='none---Size', polygonKey='non---Polygon',
-                                   whichOverlay= CONE_CHOICE_KEY, setWhichOverlay, sRegion,
-                                   coordinateSys, mocList, minSize=1/3600, maxSize=100,
+                                   whichOverlay= CONE_CHOICE_KEY, toolbarHelpId,
+                                   setWhichOverlay, sRegion, coordinateSys, mocList, minSize=1/3600, maxSize=100,
                                    plotId='defaultHiPSTargetSearch', cleanup= false, groupKey}) => {
 
     const viewerId= plotId+'-viewer';
@@ -171,6 +171,7 @@ export const HiPSTargetView = ({style, hipsDisplayKey='none',
                               canReceiveNewPlots={NewPlotMode.none.key}
                               showWhenExpanded={true}
                               whichOverlay={whichOverlay}
+                              toolbarHelpId={toolbarHelpId}
                               Toolbar={TargetHipsPanelToolbar}/>
         </div>
     );

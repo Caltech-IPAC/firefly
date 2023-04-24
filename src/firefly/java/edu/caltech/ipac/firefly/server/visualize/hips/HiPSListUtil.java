@@ -69,7 +69,7 @@ public class HiPSListUtil {
 
             long cTime = System.currentTimeMillis();
 
-            FileInfo listFileInfo = HiPSRetrieve.retrieveHiPSData(url, childExt);
+            FileInfo listFileInfo = HiPSRetrieve.retrieveHiPSData(url, childExt, false);
             File listFile= listFileInfo.getFile();
             if (listFile==null) throw new IOException("Could not retrieve file: "+ listFileInfo.getResponseCode());
 
@@ -181,7 +181,7 @@ public class HiPSListUtil {
         if (propUrl == null) return;
 
         try {
-            FileInfo propFileInfo = HiPSRetrieve.retrieveHiPSData(propUrl, null);
+            FileInfo propFileInfo = HiPSRetrieve.retrieveHiPSData(propUrl, null, false);
             File propFile= propFileInfo.getFile();
             if (propFile==null) throw new IOException("Could not retrieve file: "+ propFileInfo.getResponseCode());
 

@@ -34,6 +34,7 @@ public class AnyFileDownload extends BaseHttpServlet {
 
     public static final String EXT_URL  = "externalURL"; // required for downloading something through the firefly server
     public static final String HIPS_PARAM  = "hipsUrl"; // required for HiPS
+    public static final String ALWAYS_USE_CACHED = "alwaysUseCached"; // true if use the cached without checking
     public static final String FILE_PARAM  = "file"; // required for other request
     public static final String RETURN_PARAM= "return"; // a name for the file, if empty or USE_SERVER_NAME the use file name on server
     public static final String LOG_PARAM   = "log"; // if true, log status
@@ -101,7 +102,8 @@ public class AnyFileDownload extends BaseHttpServlet {
             throws IOException {
         SrvParam sp= new SrvParam(req.getParameterMap());
         String hips= sp.getRequired(HIPS_PARAM);
-        FileInfo fi= HiPSRetrieve.retrieveHiPSData(hips, null);
+        boolean alwaysUseCached= sp.getOptionalBoolean(ALWAYS_USE_CACHED,false);
+        FileInfo fi= HiPSRetrieve.retrieveHiPSData(hips, null, alwaysUseCached);
 
         if (fi.getFile()==null) {
             if (fi.getResponseCode()==204) {

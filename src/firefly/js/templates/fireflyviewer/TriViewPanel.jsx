@@ -15,7 +15,7 @@ import {ResultsPanel} from './ResultsPanel.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {
-    makeCoverageTab, makeFitsTab, makeMultiProductViewerTab, TriViewImageSection
+    makeCoverageTab, makeFitsPinnedTab, makeMultiProductViewerTab, TriViewImageSection
 } from '../../visualize/ui/TriViewImageSection.jsx';
 import {AppInitLoadingMessage} from '../../ui/AppInitLoadingMessage.jsx';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
@@ -106,7 +106,7 @@ function RightSide({expanded, closeable, showXyPlots, showMeta, showFits, dataPr
             {showXyPlots && (<Tab key='res-xyplots' name='Charts' removable={false} id='xyplot'>{xyPlot}</Tab>)}
             {cov && makeCoverageTab()}
             {meta && makeMultiProductViewerTab(dataProductTableId)}
-            {fits && makeFitsTab()}
+            {fits && makeFitsPinnedTab()}
         </Tabs>
     );
 }

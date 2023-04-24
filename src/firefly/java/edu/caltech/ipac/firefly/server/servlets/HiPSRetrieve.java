@@ -20,16 +20,16 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
 
+import static java.net.HttpURLConnection.HTTP_CLIENT_TIMEOUT;
+import static java.net.HttpURLConnection.HTTP_GATEWAY_TIMEOUT;
+import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
+
 /**
  * @author Trey Roby
  */
 public class HiPSRetrieve {
 
-    public static FileInfo retrieveHiPSData(String urlStr, String pathExt) {
-        return retrieveHiPSData(urlStr,pathExt,3);
-    }
-
-    public static FileInfo retrieveHiPSData(String urlStr, String pathExt, int depth) {
+    public static FileInfo retrieveHiPSData(String urlStr, String pathExt, boolean alwaysUseCached) {
         try {
             URL url= new URL(urlStr);
 
@@ -38,25 +38,35 @@ public class HiPSRetrieve {
             if (!dir.exists()) dir.mkdirs();
 
             File targetFile= new File(dir, new File((pathExt == null ? url.getFile() : pathExt)).getName());
-            FileInfo fi= URLDownload.getDataToFile(url,targetFile,null, null, URLDownload.Options.modifiedOp(true));
-            int rCode= fi.getResponseCode();
-            File retFile= fi.getFile();
+            boolean fileExistLocal= targetFile.canRead() && targetFile.length()>400;
+            FileInfo preFetchFileInfo= new FileInfo(targetFile);
+            if (alwaysUseCached && fileExistLocal) return preFetchFileInfo;
+
+            // if we already have a version of the file set the download modified only option. Also set a very time timeout,
+            // so that if the server is down we don't wait long.
+            URLDownload.Options options= fileExistLocal ? URLDownload.Options.modifiedAndTimeoutOp(true,4) : URLDownload.Options.def();
+            FileInfo fetchedFileInfo= URLDownload.getDataToFile(url,targetFile,null, null, options);
+            int rCode= fetchedFileInfo.getResponseCode();
+            File retFile= fetchedFileInfo.getFile();
 
             switch (rCode) {
-                case 200:
-                    if (isValid(retFile)) {
-                        return fi;
-                    }
-                    else {
-                        retFile.delete();
-                        return new FileInfo(rCode);
-                    }
-                case 304:
-                    return fi;
-                default:
-                    if (retFile!=null)  retFile.delete();
-                    if (rCode==404 && imageRequest(retFile)) return new FileInfo(204);
+                case 200 -> {
+                    if (isValid(retFile)) return fetchedFileInfo;
+                    retFile.delete();
+                    return new FileInfo(rCode);
+                }
+                case HTTP_NOT_MODIFIED -> {
+                    return fetchedFileInfo;
+                }
+                case HTTP_GATEWAY_TIMEOUT, HTTP_CLIENT_TIMEOUT -> {
+                    return fileExistLocal ? preFetchFileInfo : new FileInfo(rCode);
+                }
+                default -> {
+                    if (fileExistLocal && targetFile.length() > 400) return preFetchFileInfo; // if the file existed and it still has content, return it
+                    if (retFile != null) retFile.delete();
+                    if (rCode == 404 && imageRequest(retFile)) return new FileInfo(204);
                     else return new FileInfo(rCode);
+                }
             }
         } catch (MalformedURLException | FailedRequestException e) {
             return new FileInfo(null, null, 404, e.toString());

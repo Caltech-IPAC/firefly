@@ -78,7 +78,7 @@ export function getDetailsFromSelection(plot) {
     const sideWPy= cc.getWorldCoords( makeDevicePt( cen.x,dPt0.y));
     if (!cenWpt || !sideWPx || !sideWPy) return {};
     const radiusInit= Math.min(computeDistance(sideWPx,cenWpt), computeDistance(sideWPy,cenWpt));
-    const radius= Math.trunc(radiusInit*3600)/3600;
+    const radius= plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG] ?? Math.trunc(radiusInit*3600)/3600;
     let corners;
     const rx= cen.x-dPt0.x;
     const ry= cen.y-dPt0.y;

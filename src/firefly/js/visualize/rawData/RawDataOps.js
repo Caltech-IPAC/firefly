@@ -1,7 +1,7 @@
 import {isArray, isArrayBuffer} from 'lodash';
 import {Band} from '../Band.js';
 import {findPlot, getOverlayById, getPlotViewById, isThreeColor, primePlot} from '../PlotViewUtil.js';
-import {createCanvas, isGPUAvailableInWorker, isImageBitmap, MEG} from '../../util/WebUtil.js';
+import {createCanvas, isImageBitmap, MEG} from '../../util/WebUtil.js';
 import ImagePlotCntlr, {dispatchRequestLocalData, visRoot} from '../ImagePlotCntlr.js';
 import {PlotState} from '../PlotState.js';
 import {getNextWorkerKey, postToWorker} from '../../threadWorker/WorkerAccess.js';
@@ -12,7 +12,7 @@ import {getGpuJs} from './GpuJsConfig.js';
 import {
     makeAbortFetchAction, makeColorAction, makeRetrieveStretchByteDataAction,
 } from './RawDataThreadActionCreators.js';
-import {FULL, HALF, MAX_FULL_DATA_SIZE, QUARTER} from './RawDataCommon.js';
+import {FULL, HALF, MAX_FULL_DATA_SIZE, QUARTER, shouldUseGpuInWorker} from './RawDataCommon.js';
 import {makeThumbnailCanvas} from 'firefly/visualize/rawData/RawTileDrawer.js';
 import {Logger} from 'firefly/util/Logger.js';
 
@@ -154,7 +154,7 @@ export async function changeLocalRawDataColor(plot, colorTableId, bias, contrast
     });
     colorChangeDonePromises.set(plot.plotImageId, donePromise);
 
-    if (isGPUAvailableInWorker()) {
+    if (shouldUseGpuInWorker()) {
         const colorResult= await postToWorker(makeColorAction(plot,colorTableId,bias,contrast,bandUse, entry.workerKey));
         plotStateSerialized = colorResult.plotStateSerialized;
         rawTileDataGroup= colorResult.rawTileDataGroup;

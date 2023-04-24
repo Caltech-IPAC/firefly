@@ -127,9 +127,9 @@ export function findTargetFromRequest(request, fieldDefAry) {
 }
 
 
-function SimpleDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='defaultHiPSTargetSearch'}) {
+function SimpleDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='defaultHiPSTargetSearch', toolbarHelpId}) {
     const { DynSpacialPanel, areaFields, polyPanel, checkBoxFields, fieldsInputAry, opsInputAry,
-        useSpacial, useArea}= makeAllFields({ fieldDefAry,popupHiPS, plotId});
+        useSpacial, useArea}= makeAllFields({ fieldDefAry,popupHiPS, plotId, toolbarHelpId});
 
     let iFieldLayout;
     if (fieldsInputAry.length || opsInputAry.length) {
@@ -166,9 +166,10 @@ function SimpleDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='d
     );
 }
 
-function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='defaultHiPSTargetSearch', childComponents, WrapperComponent}) {
+function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='defaultHiPSTargetSearch', toolbarHelpId,
+                                 childComponents, WrapperComponent}) {
     const { DynSpacialPanel, areaFields, polyPanel, checkBoxFields, fieldsInputAry, opsInputAry,
-        useSpacial, useArea}= makeAllFields({ fieldDefAry,popupHiPS, plotId, insetSpacial:true});
+        useSpacial, useArea}= makeAllFields({ fieldDefAry,popupHiPS, plotId, toolbarHelpId, insetSpacial:true});
 
     let iFieldLayout;
     if (fieldsInputAry.length || opsInputAry.length) {
@@ -215,9 +216,9 @@ function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='d
     );
 }
 
-function GridDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='defaultHiPSTargetSearch'}) {
+function GridDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='defaultHiPSTargetSearch', toolbarHelpId}) {
     const { DynSpacialPanel, areaFields, checkBoxFields, fieldsInputAry, opsInputAry,
-        useArea, useSpacial}= makeAllFields({ fieldDefAry,noLabels:true, plotId, popupHiPS});
+        useArea, useSpacial}= makeAllFields({ fieldDefAry,noLabels:true, plotId, popupHiPS, toolbarHelpId});
 
 const labelAry= fieldDefAry
         .filter( ({type}) => type===INT || type===FLOAT || type===ENUM || type===UNKNOWN)
