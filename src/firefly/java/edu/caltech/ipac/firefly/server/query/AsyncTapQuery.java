@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.VoTableWriter;
 import edu.caltech.ipac.util.AppProperties;
@@ -14,6 +15,7 @@ import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.*;
 
 import static edu.caltech.ipac.table.TableUtil.Format.VO_TABLE;
 
@@ -34,6 +36,7 @@ public class AsyncTapQuery extends UwsJobProcessor {
         String queryStr = request.getParam("QUERY");
         String lang = request.getParam("LANG");
         String maxrecStr = request.getParam("MAXREC");
+        String serverFile = request.getParam("UPLOAD");
         int maxrec = -1; // maxrec is not set
         if (!StringUtils.isEmpty(maxrecStr)) {
             maxrec = Integer.parseInt(maxrecStr);
@@ -55,6 +58,16 @@ public class AsyncTapQuery extends UwsJobProcessor {
             try {
                 inputs.setParam("UPLOAD",uploadTable+","+"param:temp.xml");
                 DataGroup dg= TableUtil.readAnyFormat(ServerContext.convertToFile(request.getParam("UPLOAD")));
+                String uploadCols = request.getParam("UPLOAD_COLUMNS");
+                if (!StringUtils.isEmpty(uploadCols)) {
+                    List<String> cols = Arrays.stream(TableUtil.splitCols(uploadCols))      // use this to allow commas in double-quotes
+                            .map(cname -> cname.trim().replaceAll("^\"|\"$", ""))  // remove double-quotes if exists
+                            .toList();
+
+                    Arrays.asList(dg.getDataDefinitions()).forEach(c -> {
+                        if (!cols.contains(c.getKeyName())) dg.removeDataDefinition(c.getKeyName());
+                    });
+                }
                 File tempXml= File.createTempFile("tap-upload",".xml", ServerContext.getTempWorkDir());
                 VoTableWriter.save(tempXml,dg, VO_TABLE);
                 inputs.setFile("temp.xml",tempXml);
