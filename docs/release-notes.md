@@ -89,14 +89,14 @@
 
 ##### _Patches 2022.2_
 - 2022.2.1
-  - Added IPAC Logo to version dialog([Firefly-1037](https://github.com/Caltech-IPAC/firefly/pull/1225))
+  - Added IPAC Logo to version dialog ([Firefly-1037](https://github.com/Caltech-IPAC/firefly/pull/1225))
   - Stretch dropdown shows checkbox if stretch selected ([Firefly-1029](https://github.com/Caltech-IPAC/firefly/pull/1225))
   - Fixed: TAP column table showing filters (Firefly-1036, [PR](https://github.com/Caltech-IPAC/firefly/pull/1244))
   - Fixed: Cube planes all change stretch ([Firefly-1038](https://github.com/Caltech-IPAC/firefly/pull/1225))
 - 2022.2.2
-  - Chart functions: now support `radians()` and `degrees()` [Firefly-1047](https://github.com/Caltech-IPAC/firefly/pull/1254))
-  - Fixed: Table: Filter by selected row returned more than it should [Firefly-1049](https://github.com/Caltech-IPAC/firefly/pull/1250))
-  - Multiple issues: [Firefly-1045](https://github.com/Caltech-IPAC/firefly/pull/1248))
+  - Chart functions: now support `radians()` and `degrees()` ([Firefly-1047](https://github.com/Caltech-IPAC/firefly/pull/1254))
+  - Fixed: Table: Filter by selected row returned more than it should ([Firefly-1049](https://github.com/Caltech-IPAC/firefly/pull/1250))
+  - Multiple issues: ([Firefly-1045](https://github.com/Caltech-IPAC/firefly/pull/1248))
     - Fixed: Expanding/restoring an image in MultiProductViewer causes reload: stretch and color are reset
     - Fixed: draw layer panel is hidden at times (zIndex was not correct)
     - Fixed: on resize or when popping up mouse readout: display wrongly zoomed to fit 
@@ -106,13 +106,14 @@
     - Fixed: TAP search api did not init table correctly, some bugs in the examples
     - Stretch should be sticky: on MultiProductViewer, for multi HDU images, if the same extension type
 - 2022.2.3
-  - Fixed: Naif resolver too many results [Firefly-1065](https://github.com/Caltech-IPAC/firefly/pull/1264))
-  - Fixed: Navigation icons sometimes do not show up in IRSA apps [IRSA-4769](https://github.com/Caltech-IPAC/firefly/pull/1263))
-  - Improved: Recognize a "flux" column with charts in DataProduct Viewer  [Firefly-1068](https://github.com/Caltech-IPAC/firefly/pull/1265))
+  - Fixed: Naif resolver too many results ([Firefly-1065](https://github.com/Caltech-IPAC/firefly/pull/1264))
+  - Fixed: Rendering of service-descriptor-based searches on TAP results (Rubin) ([Firefly-1066](https://github.com/Caltech-IPAC/firefly/pull/1263))
+  - Fixed: Navigation icons sometimes do not show up in IRSA apps ([IRSA-4769](https://github.com/Caltech-IPAC/firefly/pull/1263))
+  - Improved: Recognize a "flux" column with charts in DataProduct Viewer ([Firefly-1068](https://github.com/Caltech-IPAC/firefly/pull/1265))
 - 2022.2.4
-  - Improved: Grouping in multi-product viewer is not per table [IRSA-4815](https://github.com/Caltech-IPAC/firefly/pull/1270))
-  - Fixed: tap date selection feedback not updating [Firefly-1075](https://github.com/Caltech-IPAC/firefly/pull/1271))
-  - Fixed: regression issue, pixel readout re-enabled for images, DM-36291
+  - Improved: Grouping in multi-product viewer is not per table ([IRSA-4815](https://github.com/Caltech-IPAC/firefly/pull/1270))
+  - Fixed: tap date selection feedback not updating ([Firefly-1075](https://github.com/Caltech-IPAC/firefly/pull/1271))
+  - Fixed: regression issue, pixel readout re-enabled for images ([DM-36291](https://jira.lsstcorp.org/browse/DM-36291))
 - 2022.2.5
   - Fixed: null pointer exception in `BaseIUbeDataSource.java`
 - 2022.2.6
