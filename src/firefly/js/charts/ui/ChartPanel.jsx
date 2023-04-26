@@ -10,7 +10,7 @@ import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
 import DELETE from 'html/images/blue_delete_10x10.png';
 import {allowPinnedCharts} from '../ChartUtil.js';
-import {PinChart, ShowTable} from './PinnedChartPanel.jsx';
+import {PinChart, ShowTable} from './PinnedChartContainer.jsx';
 import {CombineChart} from './CombineChart.jsx';
 
 
@@ -82,7 +82,7 @@ const ResizableChartAreaInternal = React.memo((props) => {
 export const ChartToolbar = (props={}) => {
     const {Toolbar=PlotlyToolbar, chartId, expandable, expandedMode, viewerId, tbl_group} = props;
 
-    // logic for PinnedChartPanel toolbar added here
+    // logic for PinnedChartContainer toolbar added here
     if (allowPinnedCharts()) {
         return (
             <div className='ChartToolbar container'>

@@ -16,7 +16,7 @@ import {getDefaultChartProps, allowPinnedCharts} from '../ChartUtil.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {ChartPanel, ChartToolbar} from './ChartPanel.jsx';
 import {MultiChartViewer, getActiveViewerItemId} from './MultiChartViewer.jsx';
-import {PinnedChartPanel} from 'firefly/charts/ui/PinnedChartPanel.jsx';
+import {PinnedChartContainer} from 'firefly/charts/ui/PinnedChartContainer.jsx';
 
 
 
@@ -106,8 +106,8 @@ export const ChartsContainer = (props)  =>{
     const {chartId, expandedMode} = props;
 
     return expandedMode || chartId || !allowPinnedCharts() ?
-        <DefaultChartsContainer {...props}/>:
-        <PinnedChartPanel {...props}/> ;
+        <ActiveChartsPanel {...props}/>:
+        <PinnedChartContainer {...props}/> ;
 };
 
 ChartsContainer.propTypes = {
@@ -128,7 +128,7 @@ ChartsContainer.propTypes = {
  * When addDefaultChart is true, a default chart is created for each table in the group
  * @param props properties for this component
  */
-export const DefaultChartsContainer = (props) => {
+export const ActiveChartsPanel = (props) => {
 
     const {viewerId=DEFAULT_PLOT2D_VIEWER_ID, tbl_group, addDefaultChart, chartId, useOnlyChartsInViewer, expandedMode, closeable, noChartToolbar} = props;
 
@@ -187,16 +187,8 @@ export const DefaultChartsContainer = (props) => {
     }
 };
 
-ChartsContainer.propTypes = {
-    expandedMode: PropTypes.bool,
-    closeable: PropTypes.bool,
-    chartId: PropTypes.string,
-    viewerId : PropTypes.string,
-    tbl_group : PropTypes.string,
-    addDefaultChart : PropTypes.bool,
-    noChartToolbar : PropTypes.bool,
-    useOnlyChartsInViewer :PropTypes.bool
-};
+ActiveChartsPanel.propTypes = ChartsContainer.propTypes;
+
 
 function ExpandedView(props) {
     const {closeable, chartId, viewerId} = props;

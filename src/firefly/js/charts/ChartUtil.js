@@ -93,7 +93,7 @@ export function getMinScatterGLRows() {
 }
 
 /**
- * @returns {boolean} return true if PinnedChartPanel is used.
+ * @returns {boolean} return true if Pin Charts feature is enabled
  */
 export function allowPinnedCharts() {
     return getAppOptions()?.charts?.allowPinnedCharts ?? false;

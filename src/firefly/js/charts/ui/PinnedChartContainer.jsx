@@ -27,7 +27,7 @@ import {findGroupByTblId, getActiveTableId, getTblById, monitorChanges} from '..
 import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_REMOVE, dispatchActiveTableChanged} from '../../tables/TablesCntlr';
 import {getTblIdFromChart, isChartLoading, uniqueChartId} from '../ChartUtil';
 import {getActiveViewerItemId} from './MultiChartViewer';
-import {DefaultChartsContainer} from './ChartsContainer';
+import {ActiveChartsPanel} from './ChartsContainer';
 import {StatefulTabs, switchTab, Tab} from '../../ui/panel/TabPanel';
 import {HelpIcon} from '../../ui/HelpIcon';
 import {getComponentState, dispatchComponentStateChange} from '../../core/ComponentCntlr';
@@ -40,18 +40,14 @@ import {makeBadge} from '../../ui/ToolbarButton.jsx';
 export const PINNED_CHART_PREFIX = 'pinned-';
 export const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
 export const PINNED_GROUP = PINNED_VIEWER_ID;                 // use same id for now.
-const logger = Logger('PinnedChartPanel');
+const logger = Logger('PinnedChartContainer');
 const PINNED_MAX = 12;
 
-export const PinnedChartPanel = (props) => {
-    const {viewerId, tbl_group} = props;
+export const PinnedChartContainer = (props) => {
+    const {viewerId} = props;
 
-    const chartIds      = useStoreConnector(() =>  getChartIdsInGroup(PINNED_GROUP));
     const tabs          = useStoreConnector(() =>  getComponentState(PINNED_VIEWER_ID));
-    const activeLabel   = useStoreConnector(() => getViewerItemIds(getMultiViewRoot(), viewerId)?.length > 1 ? 'Active Charts' : 'Active Chart');
-
-    const pinnedLabel = chartIds?.length > 1 ? 'Pinned Charts' : 'Pinned Chart';
-    const showPinnedTab = chartIds?.length >= 1;
+    const {showPinnedTab, activeLabel, pinnedLabel} = usePinnedChartInfo(({viewerId}));
 
     const TabToolbar = () => {
         return (
@@ -71,14 +67,14 @@ export const PinnedChartPanel = (props) => {
                             <div className='ChartPanel__section--title'>
                                 <div className='label'>{activeLabel}</div>
                             </div>
-                            <DefaultChartsContainer {...props}/>
+                            <ActiveChartsPanel {...props}/>
                         </div>
                         <div className='ChartPanel__section' style={{marginLeft: 5}}>
                             <div className='ChartPanel__section--title'>
                                 <div className='label'>{pinnedLabel}</div>
                                 {/*<TabToolbar/>*/}
                             </div>
-                            <PinnedCharts {...props}/>
+                            <PinnedChartPanel {...props}/>
                         </div>
                     </SplitPanel>
                 </div>
@@ -90,11 +86,11 @@ export const PinnedChartPanel = (props) => {
                 {/*<TabToolbar/>*/}
                 <StatefulTabs componentKey={PINNED_VIEWER_ID} defaultSelected={0} useFlex={true} style={{flex: '1 1 0', marginTop: 1}}>
                     <Tab name={activeLabel}>
-                        <DefaultChartsContainer {...props}/>
+                        <ActiveChartsPanel {...props}/>
                     </Tab>
                     {showPinnedTab &&
                         <Tab name='Pinned Charts' label={<BadgeLabel labelStr='Pinned Charts'/>}>
-                            <PinnedCharts {...props}/>
+                            <PinnedChartPanel {...props}/>
                         </Tab>
                     }
                 </StatefulTabs>
@@ -102,7 +98,7 @@ export const PinnedChartPanel = (props) => {
         );
     }
 };
-PinnedChartPanel.propTypes = {
+PinnedChartContainer.propTypes = {
     expandedMode: PropTypes.bool,
     closeable: PropTypes.bool,
     chartId: PropTypes.string,
@@ -112,6 +108,17 @@ PinnedChartPanel.propTypes = {
     noChartToolbar : PropTypes.bool,
     useOnlyChartsInViewer :PropTypes.bool
 };
+
+export const usePinnedChartInfo = ({viewerId}) => {
+    const chartIds      = useStoreConnector(() =>  getChartIdsInGroup(PINNED_GROUP));
+    const activeLabel   = useStoreConnector(() => getViewerItemIds(getMultiViewRoot(), viewerId)?.length > 1 ? 'Active Charts' : 'Active Chart');
+
+    const pinnedLabel = chartIds?.length > 1 ? 'Pinned Charts' : 'Pinned Chart';
+    const showPinnedTab = chartIds?.length >= 1;
+    return {chartIds, showPinnedTab, activeLabel, pinnedLabel};
+
+};
+
 
 const Help = () => <HelpIcon helpId={'chartarea.info'} style={{marginLeft:10}}/>;
 
@@ -155,7 +162,7 @@ export function pinChart({chartId, autoLayout=false }) {
     });
 }
 
-function BadgeLabel({labelStr}) {
+export function BadgeLabel({labelStr}) {
     const badgeCnt= useStoreConnector(() => getViewerItemIds(getMultiViewRoot(),PINNED_VIEWER_ID)?.length??0);
     return badgeCnt===0 ?  labelStr:
         (
@@ -255,10 +262,10 @@ export const showAsTabs = (showPinnedCharts=false) => {
 
 
 
-const PinnedCharts = (props) => {
+export const PinnedChartPanel = (props) => {
 
-    const {tbl_group='main', expandedMode} = props;
-    const canReceiveNewItems=NewPlotMode.create_replace.key, closeable=false;
+    const {tbl_group='main', expandedMode, closeable} = props;
+    const canReceiveNewItems=NewPlotMode.create_replace.key;
     const viewerId = 'PINNED_CHARTS_VIEWER';
 
     const {renderTreeId} = useContext(RenderTreeIdCtx);
@@ -337,9 +344,10 @@ const PinnedCharts = (props) => {
     );
 };
 
-PinnedCharts.propTypes= {
+PinnedChartPanel.propTypes= {
     tbl_group: PropTypes.string,
     expandedMode: PropTypes.bool,
+    closeable: PropTypes.bool
 };
 
 
