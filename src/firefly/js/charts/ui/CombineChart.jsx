@@ -9,7 +9,7 @@ import {getMultiViewRoot, getViewerItemIds} from '../../visualize/MultiViewCntlr
 import {dispatchChartAdd, getChartData} from '../ChartsCntlr.js';
 import {getNewTraceDefaults, getTblIdFromChart, isSpectralOrder, uniqueChartId} from '../ChartUtil.js';
 import {TextButton} from '../../ui/TextButton.jsx';
-import {PINNED_VIEWER_ID, PINNED_GROUP, PINNED_CHART_PREFIX} from './PinnedChartPanel.jsx';
+import {PINNED_VIEWER_ID, PINNED_GROUP, PINNED_CHART_PREFIX} from './PinnedChartContainer.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {basicOptions, evalChangesFromFields} from './options/BasicOptions.jsx';

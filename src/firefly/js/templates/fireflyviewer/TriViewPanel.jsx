@@ -13,13 +13,15 @@ import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {ResultsPanel} from './ResultsPanel.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
-import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
+import {ActiveChartsPanel} from '../../charts/ui/ChartsContainer.jsx';
 import {
     makeCoverageTab, makeFitsPinnedTab, makeMultiProductViewerTab, TriViewImageSection
 } from '../../visualize/ui/TriViewImageSection.jsx';
 import {AppInitLoadingMessage} from '../../ui/AppInitLoadingMessage.jsx';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
+import {usePinnedChartInfo, PinnedChartPanel, PINNED_VIEWER_ID, BadgeLabel} from 'firefly/charts/ui/PinnedChartContainer.jsx';
+import {allowPinnedCharts} from '../../charts/ChartUtil.js';
 
 const stateKeys= ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'images'];
 const LEFT= 'LEFT';
@@ -52,8 +54,8 @@ export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButt
                                                   {...images}  />);
     }
     if (showXyPlots || coverageRight || imagesWithCharts) {
-        content.rightSide= <RightSide {...{key:'rightSide', expanded,closeable,showXyPlots, showMeta, showFits,
-            dataProductTableId, coverageRight, imagesWithCharts}}/>;
+        content.rightSide= (<RightSide {...{key:'rightSide', expanded,closeable,showXyPlots, showMeta, showFits,
+            dataProductTableId, coverageRight, imagesWithCharts}}/>);
         if (expanded===LO_VIEW.xyPlots) content.xyPlot= content.rightSide;
     }
     if (showTables) {
@@ -85,31 +87,54 @@ TriViewPanel.propTypes = {
 
 
 function RightSide({expanded, closeable, showXyPlots, showMeta, showFits, dataProductTableId, coverageRight, imagesWithCharts }) {
+
     const onTabSelect = (idx, id) => dispatchUpdateLayoutInfo({rightSide:{selectedTab:id}});
     const chartExpandedMode= expanded===LO_VIEW.xyPlots;
     const cov= imagesWithCharts || coverageRight;
     const meta= imagesWithCharts && showMeta;
     const fits= imagesWithCharts && showFits;
     const {expandedViewerId}= getExpandedChartProps();
-    const xyPlot = (<ChartsContainer key='res-xyplots' closeable={closeable} expandedMode={chartExpandedMode}
-                                     viewerId={chartExpandedMode ? expandedViewerId : DEFAULT_PLOT2D_VIEWER_ID}
-                                     useOnlyChartsInViewer={chartExpandedMode && expandedViewerId!==DEFAULT_PLOT2D_VIEWER_ID}
-                                     tbl_group='main' addDefaultChart={true}/>);
-    if (chartExpandedMode  || (!coverageRight && !imagesWithCharts)) return xyPlot;
+    const viewerId = DEFAULT_PLOT2D_VIEWER_ID;
 
+    const {showPinnedTab, activeLabel, pinnedLabel} = usePinnedChartInfo({viewerId});
+
+    if (chartExpandedMode || !allowPinnedCharts() ) {
+        if (expandedViewerId === PINNED_VIEWER_ID) {
+            return makePinnedChartTab({viewerId, activeLabel, chartExpandedMode, closeable});
+        } else {
+            return makeActiveChartTab({viewerId, activeLabel, chartExpandedMode, closeable});
+        }
+    };
 
     const style= {height: '100%'};
-    const defaultSelected= coverageRight ? 'coverage' : showXyPlots ? 'xyplot' : 'fits';
+    const defaultSelected= coverageRight ? 'coverage' : showXyPlots ? 'activeCharts' : 'fits';
     const key= `${showXyPlots&&'xyplot'}-${cov&&'cov'}-${meta&&'meta'}-${fits&&'fits'}`;
     return(
         <Tabs {...{key, style, onTabSelect, defaultSelected, useFlex:true, resizable:true}}>
-            {showXyPlots && (<Tab key='res-xyplots' name='Charts' removable={false} id='xyplot'>{xyPlot}</Tab>)}
+            {showXyPlots && makeActiveChartTab({activeLabel, chartExpandedMode, closeable, asTab:true}) }
+            {showPinnedTab && makePinnedChartTab({pinnedLabel, chartExpandedMode, closeable, asTab:true}) }
             {cov && makeCoverageTab()}
             {meta && makeMultiProductViewerTab(dataProductTableId)}
             {fits && makeFitsPinnedTab()}
         </Tabs>
     );
 }
+
+function makeActiveChartTab({activeLabel, chartExpandedMode, closeable, asTab}) {
+    const chartpanel = (<ActiveChartsPanel closeable={closeable} expandedMode={chartExpandedMode}
+                              useOnlyChartsInViewer={false}
+                              tbl_group='main' addDefaultChart={true}/>);
+
+    return asTab ? <Tab name={activeLabel} removable={false} id='activeCharts'>{chartpanel}</Tab> : chartpanel;
+}
+
+function makePinnedChartTab({pinnedLabel, chartExpandedMode, closeable, asTab}) {
+    const chartpanel =(<PinnedChartPanel closeable={closeable} expandedMode={chartExpandedMode}
+                             useOnlyChartsInViewer={false}
+                             tbl_group='main' addDefaultChart={true}/>);
+
+    return asTab ? <Tab name={pinnedLabel} removable={false} id='pinnedCharts' label={<BadgeLabel labelStr={pinnedLabel}/>}>{chartpanel}</Tab> : chartpanel;
+    }
 
 
 function getCovSideOptions(currLayoutMode, showImages) {

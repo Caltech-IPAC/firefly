@@ -50,7 +50,7 @@ import {showInfoPopup, showPinMessage} from 'firefly/ui/PopupUtil.jsx';
 import {MetaConst} from 'firefly/data/MetaConst.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 import {allowPinnedCharts} from 'firefly/charts/ChartUtil';
-import {pinChart} from 'firefly/charts/ui/PinnedChartPanel.jsx';
+import {pinChart} from 'firefly/charts/ui/PinnedChartContainer.jsx';
 import {ensureDefaultChart} from 'firefly/charts/ui/ChartsContainer.jsx';
 
 
