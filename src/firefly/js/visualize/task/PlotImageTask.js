@@ -133,11 +133,11 @@ function getRelatedData(successAry) {
     successAry.forEach( (s) => s.PlotCreate.forEach( (pc) => {
         const tTypeAry= pc.relatedData && pc.relatedData.filter( (r) => r.dataType==='WAVELENGTH_TABLE');
         if (tTypeAry?.length) {
-            tTypeAry.forEach( ({searchParams,dataKey,hduIdx,hduName}) => {
+            tTypeAry.forEach( ({searchParams, dataKey, hduIdx, hduName, hduVersion, hduLevel}) => {
                 const p= doFetchTable(searchParams).then( (wlTable) => {
                     pc.relatedData.push({
-                        dataType:RDConst.WAVELENGTH_TABLE_RESOLVED,dataKey:dataKey+'-resolved',
-                        table:wlTable, hduIdx, hduName
+                        dataType:RDConst.WAVELENGTH_TABLE_RESOLVED, dataKey:dataKey+'-resolved',
+                        table:wlTable, hduIdx, hduName, hduVersion, hduLevel
                     });
                 });
                 promiseAry.push(p);

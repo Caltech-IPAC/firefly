@@ -3,17 +3,11 @@
  */
 
 package edu.caltech.ipac.firefly.server.visualize.fitseval;
-/**
- * User: roby
- * Date: 7/13/18
- * Time: 10:39 AM
- */
 
 
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.BasicHDU;
@@ -30,21 +24,22 @@ import java.util.Map;
  */
 class SpectralCubeEval implements FitsEvaluation.Eval {
     @Override
-    public List<RelatedData> evaluate(File f, FitsRead[] frAry, BasicHDU[] HDUs, int fitsReadIndex, int hduIndex, WebPlotRequest req) {
+    public List<RelatedData> evaluate(File f, FitsRead[] frAry, BasicHDU<?>[] HDUs, int fitsReadIndex, int hduIndex, WebPlotRequest req) {
         var tableHduList = findWaveTabHDU(HDUs);
-        if (tableHduList.size()==0)  return null;
+        if (tableHduList.size() == 0) return null;
 
 
-        var relatedDataList= new ArrayList<RelatedData>();
-        for(TableHdu tableHdu : tableHduList) {
-            Map<String,String> params= new HashMap<>(10);
+        var relatedDataList = new ArrayList<RelatedData>();
+        for (TableHdu tableHdu : tableHduList) {
+            Map<String, String> params = new HashMap<>(10);
             params.put("id", "IpacTableFromSource");
             params.put("startIdx", "0");
             params.put("pageSize", "30000");
-            params.put("tbl_index", tableHdu.hduIdx+"");
+            params.put("tbl_index", tableHdu.hduIdx + "");
             params.put("source", ServerContext.replaceWithPrefix(f));
             relatedDataList.add(
-                    RelatedData.makeWavelengthTabularRelatedData(params, "WAVE-TAB", "Table Wavelength information", tableHdu.hduName, tableHdu.hduIdx));
+                    RelatedData.makeWavelengthTabularRelatedData(params, "WAVE-TAB", "Table Wavelength information",
+                            tableHdu.hduName, tableHdu.hduVersion, tableHdu.hduLevel, tableHdu.hduIdx));
 
         }
         return relatedDataList;
@@ -52,145 +47,120 @@ class SpectralCubeEval implements FitsEvaluation.Eval {
 
 
     public static List<TableHdu> findWaveTabHDU(BasicHDU<?>[] HDUs) {
-        List<TableHdu> tableHduList= new ArrayList<>();
-        for(int i=0; (i<HDUs.length); i++) {
-            var altProjList= FitsReadUtil.getAtlProjectionIDs(HDUs[i].getHeader());
-            var tabHdu= findWaveTabHDU(HDUs,i,"");
-            if (tabHdu!=null) tableHduList.add(tabHdu);
-            for(String alt : altProjList) {
-                tabHdu= findWaveTabHDU(HDUs,i,alt);
-                if (tabHdu!=null) tableHduList.add(tabHdu);
+        List<TableHdu> tableHduList = new ArrayList<>();
+        for (int i = 0; (i < HDUs.length); i++) {
+            var altProjList = FitsReadUtil.getAtlProjectionIDs(HDUs[i].getHeader());
+            var tabHdu = findWaveTabHDU(HDUs, i, "");
+            if (tabHdu != null) tableHduList.add(tabHdu);
+            for (String alt : altProjList) {
+                tabHdu = findWaveTabHDU(HDUs, i, alt);
+                if (tabHdu != null) tableHduList.add(tabHdu);
             }
         }
         return tableHduList;
     }
 
-    private record TableHdu(int hduIdx, String hduName) {};
+    private record TableHdu(int hduIdx, String hduName, int hduVersion, int hduLevel) {}
 
+    private record ExtId(String extName, int extVer, int extLevel) {}
 
     /**
      * If a FITS file contains multiple XTENSION HDUs (headerdata
-     * units) with the specified EXTNAME, EXTLEVEL, and
-     * EXTVER, then the result of the WCS table lookup is undefined.
+     * units) with the specified EXTNAME, EXTVER, and EXTLEVEL,
+     * then the result of the WCS table lookup is undefined.
      * If the specified FITS BINTABLE contains no column, or multiple
      * columns, with the specified TTYPEn, then the result of the
      * WCS table lookup is undefined. The specified FITS BINTABLE
      * must contain only one row.
-     * No units conversions are to
-     * @return
+     *
+     * @param HDUs FITS HDUs
+     * @param tabExtId Extension ID of the table lookup extension
+     * @return matching tab extension null if it can not be found
      */
-    private static boolean isValidWCSForTab(BasicHDU<?>[] HDUs){
+    private static TableHdu findTabExtension(BasicHDU<?>[] HDUs, ExtId tabExtId) {
 
-        List<String> extNames = new ArrayList<>();
-        List<Integer> extLevels= new ArrayList<>();
-        List<Integer> extVers  = new ArrayList<>();
-
-
-        for (int i=0; i<HDUs.length; i++){
-            Header header= HDUs[i].getHeader();
-            String xtension= header.getStringValue("XTENSION");
+        TableHdu tabExtHdu = null;
+        for (int i = 0; i < HDUs.length; i++) {
+            Header header = HDUs[i].getHeader();
+            String xtension = header.getStringValue("XTENSION");
             if ("BINTABLE".equals(xtension)) {
-                extNames.add(header.getStringValue("EXTNAME"));
-                extLevels.add( header.getIntValue("EXTLEVEL"));
-                extVers.add( header.getIntValue("EXTVER"));
-
-            }
-        }
-
-
-        for (int i=0; i<extNames.size(); i++){
-            for (int j=i+1; j<extNames.size();j++){
-                if (ComparisonUtil.equals(extNames.get(i), extNames.get(j)) &&
-                    ComparisonUtil.equals(extLevels.get(i),extLevels.get(j)) &&
-                    ComparisonUtil.equals(extVers.get(i),extVers.get(j)) ){
-                    return false;
+                ExtId extId = new ExtId(header.getStringValue("EXTNAME"),
+                        header.getIntValue("EXTVER", 1),
+                        header.getIntValue("EXTLEVEL", 1));
+                if (extId.equals(tabExtId)) {
+                    if (tabExtHdu == null) {
+                        tabExtHdu = new TableHdu(i, extId.extName, extId.extVer, extId.extLevel);
+                    }
+                    } else {
+                        // duplicate extension ids - the result of table lookup is undefined
+                        return null;
                 }
             }
         }
 
-
-        return true;
+        return tabExtHdu;
     }
+
     /**
-     * NOTE:  HDUs here is the array of all HDUs in the FITs file.
-     *        For each image HDU, look for its corresponding BinaryTableHDU.  This only applies for WAVE-TAB case.
-     *        The -TAB implementation is more complicated than most other WCS conventions because the coordinate system
-     *        is not completely defined by keywords in a single FITS header.
-     *        The necessary WCS parameters that are in general distributed over two FITS HDUs and in the body
-     *        of the WCS extension table.
-     * @param HDUs
-     * @param hduIdx
-     * @return
+     * For each image HDU, look for its corresponding BinaryTableHDU.  This only applies for WAVE-TAB case.
+     * The -TAB implementation is more complicated than most other WCS conventions because the coordinate system
+     * is not completely defined by keywords in a single FITS header.
+     * The necessary WCS parameters that are in general distributed over two FITS HDUs and in the body
+     * of the WCS extension table.
+     *
+     * @param HDUs   the array of all HDUs in the FITS file
+     * @param hduIdx image HDU
+     * @return info lookup table
      */
     public static TableHdu findWaveTabHDU(BasicHDU<?>[] HDUs, int hduIdx, String alt) {
 
-        if (HDUs.length<2) return null;
+        if (HDUs.length < 2) return null;
 
+        BasicHDU<?> hdu = HDUs[hduIdx];
+        Header header = hdu.getHeader();
 
-        BasicHDU<?> hdu= HDUs[hduIdx];
-        Header header= hdu.getHeader();
-        String xtensionPrim= header.getStringValue("XTENSION");
+        // no support for -TAB usage in tables
+        String xtensionPrim = header.getStringValue("XTENSION");
         if (("BINTABLE").equals(xtensionPrim)) return null;
-        List<Integer> ctypeList= getCtypeWithWave(header,alt);
-        if (ctypeList.size()==0) return null;
 
-        //If it is WAVE-TAB, validate it first
-        if (!isValidWCSForTab(HDUs)) return null;
-        for(int idx : ctypeList) {
-            TableHdu tableHdu= findWaveTabHDUForCtypeIdx(HDUs,header,hduIdx,alt,idx);
-            if (tableHdu!=null) return tableHdu;
+        // check if -TAB coordinate is present in the hdu
+        List<Integer> ctypeList = getCtypeWithWave(header, alt);
+        if (ctypeList.size() == 0) return null;
+
+        for (int idx : ctypeList) {
+            TableHdu tableHdu = findWaveTabHDUForCtypeIdx(HDUs, header, alt, idx);
+            if (tableHdu != null) return tableHdu;
         }
         return null;
     }
 
 
-    public static TableHdu findWaveTabHDUForCtypeIdx(BasicHDU<?>[] HDUs, Header header, int hduIdx, String alt, int idx) {
+    public static TableHdu findWaveTabHDUForCtypeIdx(BasicHDU<?>[] HDUs, Header header, String alt, int idx) {
 
-        String waveHDUName= header.getStringValue("PS"+idx+"_0"+alt);
+        // parameter keywords used for the -TAB algorithm to find the extension with lookup table
+        // PSi_0a table extension name (EXTNAME)
+        // PVi_1a table version number (EXTVER)
+        // PVi_2a table level number (EXTLEVEL)
 
-        ////When PSi_0["",A-Z] is undefined, use the binary table whose name starts with "WCS-".
-        if (waveHDUName==null){
-            for(int i=0; i<HDUs.length; i++) {
-                if (i!=hduIdx) {
-                    Header hIHeader= HDUs[i].getHeader();
-                    String xtension= hIHeader.getStringValue("XTENSION");
-                    String extName= hIHeader.getStringValue("EXTNAME");
-                    if ("BINTABLE".equals(xtension) && extName.startsWith("WCS-")) {
-                        return new TableHdu(i,extName);
-                    }
-                }
-            }
+        String tabExtName = header.getStringValue("PS" + idx + "_0" + alt);
 
+        // for images PSi_0a has no default
+        if (tabExtName != null) {
+            int tabExtVer = header.getIntValue("PV" + idx + "_1" + alt, 1);
+            int tabExtLevel = header.getIntValue("PV" + idx + "_2" + alt, 1);
+            ExtId tabExtId = new ExtId(tabExtName, tabExtVer, tabExtLevel);
+            return findTabExtension(HDUs, tabExtId);
         }
 
-        //The hdu= HDUs[hduIdx] is an image HDU, it has a corresponding BinaryTableHDU
-        //that contains the WAVE-TAB information. The loop below, is to find the index number of the BinaryTableHDU.
-        for(int i=0; i<HDUs.length; i++) {
-            if (i!=hduIdx) {
-                Header hIHeader= HDUs[i].getHeader();
-                String xtension= hIHeader.getStringValue("XTENSION");
-                String extName= hIHeader.getStringValue("EXTNAME");
-                if ("BINTABLE".equals(xtension) && waveHDUName.equals(extName)) {
-                    return new TableHdu(i,extName);
-                }
-
-            }
-        }
         return null;
     }
-
-
-
 
 
     private static List<Integer> getCtypeWithWave(Header h, String alt) {
-        var retList= new ArrayList<Integer>();
-        for(int i= 1; (i<=4); i++) {
-            if ("WAVE-TAB".equals(h.getStringValue("CTYPE"+i+alt))) retList.add(i);
+        var retList = new ArrayList<Integer>();
+        for (int i = 1; (i <= 4); i++) {
+            if ("WAVE-TAB".equals(h.getStringValue("CTYPE" + i + alt))) retList.add(i);
         }
         return retList;
-
-
-
     }
 }

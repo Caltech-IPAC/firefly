@@ -12,15 +12,17 @@ import {isDefined} from '../../util/WebUtil.js';
  *
  * @prop {String} dataType - for wavelength, the dataType should always be RDConst.WAVELENGTH_TABLE_RESOLVED
  * @prop {String} hduName - the name of the table hdu
+ * @prop {int} hduVersion - table version number
+ * @prop {int} hduLevel - table level number
  * @prop {String} hduIdx - the index of the table hdu
  * @prop {TableModel} table - the table with wavelength algorythm
  */
 
 /**
  *
- * @param {Header} header
+ * @param {FitsHeader} header
  * @param {String} altWcs
- * @param {Header} zeroHeader
+ * @param {FitsHeader} zeroHeader
  * @param {Array.<WavelengthTabRelatedData>} wlTableRelatedAry
  * @return {*}
  */
@@ -41,8 +43,10 @@ export function parseWavelengthHeaderInfo(header, altWcs = '', zeroHeader, wlTab
 
 function findWLTableToMatch(parse, altWcs, which, wlTableRelatedAry) {
     if (!wlTableRelatedAry?.length) return;
-    const tName = parse.getValue(`PS${which}_0${altWcs}`);
-    return wlTableRelatedAry.find((entry) => entry.hduName === tName)?.table;
+    const tName = parse.getValue(`PS${which}_0${altWcs}`);  // table name
+    const tVersion = parse.getIntValue(`PV${which}_1${altWcs}`, 1);  // table version
+    const tLevel = parse.getIntValue(`PV${which}_2${altWcs}`, 1);  // table level
+    return wlTableRelatedAry.find((entry) => entry.hduName === tName && entry.hduVersion === tVersion && entry.hduLevel === tLevel)?.table;
 }
 
 
@@ -57,7 +61,7 @@ const L_10 = Math.log(10);
  * https://www.aanda.org/articles/aa/full/2002/45/aah3859/aah3859.html
  * the CD_ij is for the older FITS header. The newer FITS header has PC only.
  * 1. If both PC and CD exist, it is wrong. Instead of throwing exception, no wavelength is displayed.
- * 2. If PC is not exist, one or more CD is exist, use CD_ij (j=1..N); if any of CD_ij
+ * 2. If PC does not exist, one or more CD is exist, use CD_ij (j=1..N); if any of CD_ij
  *   is not defined, the default is 0.0;
  * 3. If any PC_ij is defined or neither PC nor CD is defined, we use PC, the default
  *    is 0 for j!=i and 1 if j==i
@@ -199,8 +203,7 @@ function getCoreSpectralHeaders(parse, altWcs, which, defaultUnits = '') {
 
 /**
  * NOTE:
- *   pc_3j, means the the wavelength axis is 3.  In fact, the wavelength can be in any axis.
- *   Which means which axis has the wavelength
+ *   pc_3j, means the wavelength axis is 3.  In fact, the wavelength can be in any axis.
  * @param parse
  * @param altWcs
  * @param which
@@ -228,17 +231,16 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key, wlTable) {
     pc_3j = applyDefaultValues(pc_3j, pc_3j_key, which, N);
     r_j = applyDefaultValues(r_j, 'CRPIX', which, N);
 
-    const ps3_0 = parse.getValue(`PS${which}_0${altWcs}`, '');
-    const ps3_1 = parse.getValue(`PS${which}_1${altWcs}`, '');
-    const ps3_2 = parse.getValue(`PS${which}_2${altWcs}`, '');
-    //pv3_1: EXTLEVEL, pv3_2: EXTVER, pv3_3: axis number associated with the coordinate array in ps3_1
-    //The pv3_i values are not used in our case, since we only handle the FITS with one axis related to TAB wavelength.
-    //We processed those values just in case there is need to handle the FITS with more than one TAB axes.
-    const pv3_1 = parse.getValue(`PV${which}_1${altWcs}`, '');
-    const pv3_2 = parse.getValue(`PV${which}_2${altWcs}`, '');
-    const pv3_3 = parse.getValue(`PV${which}_3${altWcs}`, '');
+    const ps3_0 = parse.getValue(`PS${which}_0${altWcs}`, '');  // table EXTNAME
+    const ps3_1 = parse.getValue(`PS${which}_1${altWcs}`, '');  // column name for the coordinate array (TTYPEn1)
+    const ps3_2 = parse.getValue(`PS${which}_2${altWcs}`, '');  // column name for the indexing vector (TTYPEn2)
 
-    const {algorithm, wlType} = getAlgorithmAndType(ctype, N);
+    //The pv3_i values are needed to handle the FITS with more than one TAB axes.
+    const pv3_1 = parse.getValue(`PV${which}_1${altWcs}`, '');  // EXTLEVEL
+    const pv3_2 = parse.getValue(`PV${which}_2${altWcs}`, '');  // EXTVER
+    const pv3_3 = parse.getValue(`PV${which}_3${altWcs}`, '');  // axis number associated with the coordinate array in ps3_1
+
+    const {algorithm, wlType} = getAlgorithmAndType(ctype);
 
 
     const canDoPlaneCalc = allGoodValues(crpix, crval, cdelt && nAxis === 3);
@@ -256,12 +258,11 @@ function calculateWavelengthParams(parse, altWcs, which, pc_3j_key, wlTable) {
         /* There are two cases for wavelength planes:
         *  1. The FITS has wavelength planes, and each plane has the same wavelength, ie. the third axis
         *     is wavelength.  Then the algorithm is PLANE
-        *  2. The FITS has wavelength planes,and the wavelength on each plane is changing with the image point
+        *  2. The FITS has wavelength planes and the wavelength on each plane is changing with the image point
         *     position.  For example, the algorithm is TAB.
         */
         const algorithmForPlane = isWL ? algorithm : PLANE;
-        //const wlType = whichType;
-        //todo - if we are not table then we will table plan
+        //todo - do we need to support planeOnlyWL for TAB algorithm?
         if (algorithm !== 'TAB') {
             return makeSimplePlaneBased(crpix, crval, cdelt, nAxis, algorithmForPlane, wlType, units,
                 'use PLANE since is cube and parameters missing');

@@ -71,7 +71,6 @@ export function getWavelength(pt, cubeIdx, wlData) {
     const {algorithm, wlType} = wlData;
     if (wlTypes[algorithm] && wlTypes[algorithm].implemented && wlTypes[algorithm].getWaveLength) {
         const wl = wlTypes[algorithm].getWaveLength(pt, cubeIdx, wlData);
-        if (wlType === WAVE || wlType === VRAD) return wl;
         if (wlType === AWAV) return convertAirToVacuum(wl);
         return wl;
     }

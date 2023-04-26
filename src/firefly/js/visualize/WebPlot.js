@@ -222,7 +222,7 @@ const HIPS_DATA_HEIGHT= 10000000000;
  * @prop desc
  * @prop dataDesc
  * @prop {Array.<Header>} headerAry passed with non-cube images, length 1 for normal images, up to 3 for 3 color images
- * @prop {Header} zeroHeaderAry  passed with non-cube images, length 1 for normal images, up to 3 for 3 color images
+ * @prop {Array.<Header>} zeroHeaderAry  passed with non-cube images, length 1 for normal images, up to 3 for 3 color images
  * @prop {Array.<RelatedData>} relatedData
  */
 

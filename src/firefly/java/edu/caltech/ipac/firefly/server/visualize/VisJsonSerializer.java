@@ -245,7 +245,11 @@ public class VisJsonSerializer {
         putStr(retObj, "desc", rData.getDesc());
         putStr(retObj, "dataKey", rData.getDataKey());
         putStrNotNull(retObj, "hduName", rData.getHduName());
-        if (rData.getHduIdx()>-1) putNum(retObj, "hduIdx", rData.getHduIdx());
+        if (rData.getHduIdx()>-1) {
+            putNum(retObj, "hduIdx", rData.getHduIdx());
+            putNum(retObj, "hduVersion", rData.getHduVersion());
+            putNum(retObj, "hduLevel", rData.getHduLevel());
+        }
         return retObj;
     }
 
