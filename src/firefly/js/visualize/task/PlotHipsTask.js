@@ -81,7 +81,7 @@ const PROXY= true;
 
 function parseProperties(str) {
     if (!str) {
-        throw new Error('Could not retrieve HiPS properties file');
+        throw new Error('Could not parse HiPS properties file');
     }
     const hipsProperties= str.split('\n')
         .map( (s) => s.trim())
@@ -97,7 +97,7 @@ function parseProperties(str) {
 
 function validateProperties(hipsProperties) {
     if (isEmpty(hipsProperties)) {
-        throw new Error('Could not retrieve HiPS properties file');
+        throw new Error('Could not validate HiPS properties file');
     }
     const {dataproduct_type= 'image'}= hipsProperties;
     if (dataproduct_type!=='image' && dataproduct_type!=='cube') {

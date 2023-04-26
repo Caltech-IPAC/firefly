@@ -163,6 +163,9 @@ const defFireflyOptions = {
         defaultColorTable: 1,
         canCreateExtractionTable: false,
     },
+    tapObsCore: {
+        enableObsCoreDownload: true,
+    },
     coverage : {
         // TODO: need to define all options with defaults here.  used in FFEntryPoint.js
     },

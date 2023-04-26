@@ -199,10 +199,10 @@ function makeDrawing(pv,width,height) {
     const spt3= cc.getScreenCoords(wpt3);
     // don't use spt3 because of funny effects near the celestial poles
     // the sign of the cross product of compass vectors tells us if the image is mirror-reversed from the sky
-    const cross_product= (spt3.x - sptC.x)*(sptN.y - sptC.y) -
-                       (spt3.y - sptC.y)*(sptN.x - sptC.x);
-    const [x, y] = [Math.sign(cross_product)*(sptN.y - sptC.y) + sptC.x,
-                    Math.sign(cross_product)*(-sptN.x + sptC.x)+sptC.y];
+    const cross_product= spt3 ? ((spt3.x - sptC.x)*(sptN.y - sptC.y) - (spt3.y - sptC.y)*(sptN.x - sptC.x)) : 1;
+    const sign= Math.sign(cross_product);
+
+    const [x, y] = [sign*(sptN.y - sptC.y) + sptC.x, sign*(-sptN.x + sptC.x)+sptC.y];
     const wptE2 = cc.getWorldCoords(makeScreenPt(x, y));
 
     const spt1= cc.getDeviceCoords(wpt1, thumbZoomFact, thumbnailTrans);

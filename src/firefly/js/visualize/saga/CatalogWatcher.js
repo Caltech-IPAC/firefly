@@ -300,6 +300,7 @@ function extractCircleFromPOS(circleStr) {
 function extractCircleFromADQL(adql) {
     const regEx= /CIRCLE\s?\(.*\)/;
     const result= regEx.exec(adql);
+    if (!result) return;
     const circle= result[0];
     const parts= circle.split(',');
     if (parts.length<4) return;

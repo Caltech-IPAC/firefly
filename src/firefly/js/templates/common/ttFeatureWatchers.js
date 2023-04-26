@@ -1,15 +1,16 @@
 import React from 'react';
 import {cloneDeep, once} from 'lodash';
+import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {dispatchTableUiUpdate} from '../../tables/TablesCntlr.js';
-import {getActiveTableId, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
+import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
+import {getTapObsCoreOptions} from '../../ui/tap/TableSearchHelpers.jsx';
 import {isObsCoreLike} from '../../util/VOAnalyzer.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {getActiveRowCenterDef } from '../../visualize/saga/ActiveRowCenterWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
-import {getAppOptions} from 'firefly/api/ApiUtil';
 
 export const getAllStartIds= ()=> [
     getMocWatcherDef().id,
@@ -31,7 +32,7 @@ export function startTTFeatureWatchers(startIds=[
 
 
 /** @type {TableWatcherDef} */
-const getObsCoreWatcherDef= once(() => ({
+export const getObsCoreWatcherDef= once(() => ({
     id : 'ObsCorePackage',
     watcher : watchForObsCoreTable,
     testTable : isObsCoreLike,
@@ -48,8 +49,18 @@ function watchForObsCoreTable(tbl_id, action, cancelSelf) {
 function setupObsCorePackaging(tbl_id) {
     const table= getTblById(tbl_id);
     if (!table) return;
+
+    const {request}=table;
+    let enabled;
+    if (request.QUERY && request.serviceUrl && getMetaEntry(table,'serviceLabel')) { // if known TAP service request
+        enabled= getTapObsCoreOptions(getMetaEntry(table,'serviceLabel'))?.enableObsCoreDownload;
+    }
+    else {
+        enabled= getAppOptions()?.tapObsCore?.enableObsCoreDownload;
+    }
+    if (!enabled) return;
+
     const {tbl_ui_id}= getTableUiByTblId(tbl_id) ?? {} ;
-    if (!tbl_ui_id) return;
     dispatchTableUiUpdate({ tbl_ui_id, leftButtons: [() => <PrepareDownload/>] });
 }
 

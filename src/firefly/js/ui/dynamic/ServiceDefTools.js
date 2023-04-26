@@ -2,18 +2,40 @@ import {isString} from 'lodash';
 import {ReservedParams} from '../../api/WebApi.js';
 import {sprintf} from '../../externalSource/sprintf.js';
 import {makeFileRequest, makeTblRequest, setNoCache} from '../../tables/TableRequestUtil.js';
-import {
-    AREA, CHECKBOX, CIRCLE, ENUM, FLOAT, INT,
-    makeAreaDef, makeCircleDef, makeEnumDef, makeFloatDef, makeIntDef, makePolygonDef, makeRangeDef, makeTargetDef,
-    makeUnknownDef, POLYGON, POSITION, UNKNOWN
-} from './DynamicDef.js';
 import {cisxAdhocServiceUtype, standardIDs} from '../../util/VOAnalyzer.js';
 import {splitByWhiteSpace, tokenSub} from '../../util/WebUtil.js';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
+import {
+    AREA, CHECKBOX, CIRCLE, ENUM, FLOAT, INT, makeAreaDef, makeCircleDef, makeEnumDef, makeFloatDef, makeIntDef,
+    makePolygonDef, makeRangeDef, makeTargetDef, makeUnknownDef, POLYGON, POSITION, UNKNOWN
+} from './DynamicDef.js';
 
+/**
+ * @param {Array.<FieldDef>} fieldDefAry
+ * @param {string} type
+ * @return {FieldDef}
+ */
+export const findFieldDefType = (fieldDefAry, type) => fieldDefAry.find((entry) => entry.type === type);
+
+export function hasAnySpacial(fieldDefAry) {
+    return Boolean(
+        findFieldDefType(fieldDefAry,POLYGON) ||
+        findFieldDefType(fieldDefAry,CIRCLE) ||
+        findFieldDefType(fieldDefAry,POSITION) ||
+        findFieldDefType(fieldDefAry,AREA)
+    );
+}
 
 export const isSIAStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.sia);
+export const isSODAStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.soda);
+export const isTAPStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.tap);
+
+export function getStandardIdType(standardID) {
+    if (isSIAStandardID(standardID))  return standardIDs.sia;
+    if (isSODAStandardID(standardID)) return standardIDs.soda;
+    if (isTAPStandardID(standardID)) return standardIDs.tap;
+}
 
 export const isCisxTapStandardID = (standardID, utype) =>
     standardID.toLowerCase().startsWith(standardIDs.tap) && utype.toLowerCase() === cisxAdhocServiceUtype;
@@ -122,7 +144,7 @@ function makeExamples(inExample) {
  * @param {boolean} [hidePredefinedStringFields]
  * @returns {Array.<FieldDef>}
  */
-export function makeFieldDefs(serDefParams, sRegion, searchAreaInfo = {}, hidePredefinedStringFields = false) {
+export function makeFieldDefs(serDefParams, sRegion, searchAreaInfo = {}, hidePredefinedStringFields = false, hipsUrl, fovSize) {
 
     const {filteredParams, posDef} = prefilterRADec(serDefParams, searchAreaInfo);
 
@@ -139,8 +161,9 @@ export function makeFieldDefs(serDefParams, sRegion, searchAreaInfo = {}, hidePr
                 });
             }
             if (isCircleField(sdP) || isCircleFieldLenient(sdP)) {
-                const {wpt: centerPt, radius = 1, minValue, maxValue} = getCircleInfo(sdP);
+                const {wpt: centerPt, radius, minValue, maxValue} = getCircleInfo(sdP);
                 const {targetPanelExampleRow1,targetPanelExampleRow2}= makeExamples(searchAreaInfo?.examples );
+                const hipsFOVInDeg= searchAreaInfo?.hips_initial_fov ?? fovSize ?? radius * 2 + radius * .2;
                 const mocList = searchAreaInfo?.moc ? [{
                     mocUrl: searchAreaInfo.moc,
                     title: searchAreaInfo?.mocDesc ?? 'MOC',
@@ -148,11 +171,11 @@ export function makeFieldDefs(serDefParams, sRegion, searchAreaInfo = {}, hidePr
                 }] : undefined;
                 return makeCircleDef({
                     key: name, desc: name, tooltip, units,
-                    hipsUrl: searchAreaInfo?.HiPS,
+                    hipsUrl: searchAreaInfo?.HiPS ?? hipsUrl,
                     targetKey: 'circleTarget', sizeKey: 'circleSize',
                     initValue: radius,
                     centerPt: searchAreaInfo?.centerWp ?? centerPt, minValue, maxValue,
-                    hipsFOVInDeg: searchAreaInfo?.hips_initial_fov ?? radius * 2 + radius * .2,
+                    hipsFOVInDeg,
                     coordinateSys: searchAreaInfo?.coordinateSys,
                     sRegion,
                     mocList,
@@ -347,6 +370,4 @@ export function ingestInitArgs(fdAry, args) {
         }
     });
 }
-
-
 

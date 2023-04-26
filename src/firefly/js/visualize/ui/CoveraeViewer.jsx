@@ -87,7 +87,7 @@ export function CoverageViewer({viewerId=DEFAULT_COVERAGE_VIEWER_ID,insideFlex=t
             msg= makeNovCovMsg(covState, noCovMessage,tbl_id);
         }
         return (
-            <div style={{...{background: '#c8c8c8', paddingTop:35, width:'100%',textAlign:'center',fontSize:'14pt'},...noCovStyle}}>
+            <div className='ComponentBackground' style={{...{paddingTop:35, width:'100%',textAlign:'center',fontSize:'14pt'},...noCovStyle}}>
                 {msg}</div>
         );
     }

@@ -27,7 +27,8 @@ export const cisxAdhocServiceUtype= 'cisx:adhoc:service';
 
 export const standardIDs = {
     tap: 'ivo://ivoa.net/std/tap',
-    sia: 'ivo://ivoa.net/std/sia'
+    sia: 'ivo://ivoa.net/std/sia',
+    soda: 'ivo://ivoa.net/std/soda',
 };
 
 // known service IDs from service descriptor's standardId field (so far just one)

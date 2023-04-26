@@ -20,6 +20,7 @@ import {SizeInputFields} from '../SizeInputField.jsx';
 import {TargetPanel} from '../TargetPanel.jsx';
 import {ValidationField} from '../ValidationField.jsx';
 import {AREA, CHECKBOX, CIRCLE, CONE_AREA_KEY, ENUM, FLOAT, INT, POLYGON, POSITION, UNKNOWN} from './DynamicDef.js';
+import {findFieldDefType} from './ServiceDefTools.js';
 
 const DEF_LABEL_WIDTH = 100;
 const DEF_AREA_EXAMPLE = 'Example: 20.7 21.5, 20.5 20.5, 21.5 20.5, 21.5 21.5';
@@ -29,12 +30,12 @@ export const makeUnitsStr = (units) => !units ? '' : ` (${getFormattedWaveLength
 
 export function hasValidSpacialSearch(request, fieldDefAry) {
     if (!request[CONE_AREA_KEY] || request[CONE_AREA_KEY]===CONE_CHOICE_KEY) {
-        const posType = findType(fieldDefAry, POSITION) ?? findType(fieldDefAry, CIRCLE);
+        const posType = findFieldDefType(fieldDefAry, POSITION) ?? findFieldDefType(fieldDefAry, CIRCLE);
         if (!posType || posType.nullAllowed) return true;
         return Boolean(parseWorldPt(request[posType.targetDetails.targetKey]));
     }
     else if (request[CONE_AREA_KEY]===POLY_CHOICE_KEY) {
-        const polygonType = findType(fieldDefAry, POLYGON);
+        const polygonType = findFieldDefType(fieldDefAry, POLYGON);
         if (!polygonType || polygonType.nullAllowed) return true;
         return convertStrToWpAry(request[polygonType.targetDetails.polygonKey]).length>2;
     }
@@ -44,10 +45,10 @@ export function getSpacialSearchType(request, fieldDefAry) {
     if (request[CONE_AREA_KEY]) {
         return request[CONE_AREA_KEY];
     }
-    else if (findType(fieldDefAry, POSITION) || findType(fieldDefAry, CIRCLE)){
+    else if (findFieldDefType(fieldDefAry, POSITION) || findFieldDefType(fieldDefAry, CIRCLE)){
         return CONE_CHOICE_KEY;
     }
-    else if (findType(fieldDefAry, POLYGON)) {
+    else if (findFieldDefType(fieldDefAry, POLYGON)) {
         return POLY_CHOICE_KEY;
     }
 }
@@ -69,33 +70,32 @@ export function makeAllFields({fieldDefAry, noLabels=false, popupHiPS, toolbarHe
 
     // polygon is not created directly, we need to determine who will create creat a polygon field if it exist
     const workingFieldDefAry= fieldDefAry.filter( ({hide}) => !hide);
-    const hasPoly = Boolean(findType(workingFieldDefAry,POLYGON));
-    const circle= findType(workingFieldDefAry,CIRCLE);
+    const hasPoly = Boolean(findFieldDefType(workingFieldDefAry,POLYGON));
+    const circle= findFieldDefType(workingFieldDefAry,CIRCLE);
     const hasCircle= Boolean(circle);
-    const hasSpacialAndArea= Boolean(findType(workingFieldDefAry,POSITION) && findType(workingFieldDefAry,AREA));
-    const spacialManagesArea= hasSpacialAndArea && countType(workingFieldDefAry,AREA)===1;
+    const hasSpacialAndArea= Boolean(findFieldDefType(workingFieldDefAry,POSITION) && findFieldDefType(workingFieldDefAry,AREA));
+    const spacialManagesArea= hasSpacialAndArea && countFieldDefType(workingFieldDefAry,AREA)===1;
+
+    let dynSpacialPanel= undefined;
+    if (hasCircle || hasSpacialAndArea || hasCircle) {
+        dynSpacialPanel= popupHiPS ?
+                        makeDynSpacialPanel({fieldDefAry:workingFieldDefAry, popupHiPS, plotId, toolbarHelpId}) :
+                        makeDynSpacialPanel({fieldDefAry:workingFieldDefAry, manageAllSpacial:hasCircle && hasPoly, popupHiPS,
+                            plotId,toolbarHelpId, insetSpacial});
+    }
 
     const panels = {
-        DynSpacialPanel: popupHiPS ?
-            makeDynSpacialPanel({fieldDefAry:workingFieldDefAry, popupHiPS, plotId, toolbarHelpId}) :
-            makeDynSpacialPanel({fieldDefAry:workingFieldDefAry, manageAllSpacial:hasCircle && hasPoly, popupHiPS,
-                plotId,toolbarHelpId, insetSpacial}),
+        DynSpacialPanel: dynSpacialPanel,
         areaFields: spacialManagesArea ? [] : makeAllAreaFields(workingFieldDefAry),
         checkBoxFields: makeCheckboxFields(workingFieldDefAry),
         ...makeInputFields(workingFieldDefAry, noLabels)
     };
     panels.useArea = Boolean(panels.areaFields.length);
-    panels.useSpacial = Boolean(panels.DynSpacialPanel);
+    panels.useSpacial = Boolean(dynSpacialPanel);
     return panels;
 };
 
-/**
- * @param {Array.<FieldDef>} fieldDefAry
- * @param {string} type
- * @return {FieldDef}
- */
-const findType= (fieldDefAry, type) => fieldDefAry.find( (entry) => entry.type===type);
-const countType= (fieldDefAry, type) => fieldDefAry.filter( (entry) => entry.type===type).length;
+const countFieldDefType= (fieldDefAry, type) => fieldDefAry.filter( (entry) => entry.type===type).length;
 
 function makeInputFields(fieldDefAry, noLabels) {
     const noLabelOp= noLabels ? {labelWidth:0,desc:''} : {};
@@ -112,8 +112,8 @@ function makeInputFields(fieldDefAry, noLabels) {
 }
 
 function CircleAndPolyFieldPopup({fieldDefAry, typeForCircle= CIRCLE, plotId='defaultHiPSTargetSearch', toolbarHelpId}) {
-    const polyType = findType(fieldDefAry, POLYGON);
-    const cirType = findType(fieldDefAry, typeForCircle);
+    const polyType = findFieldDefType(fieldDefAry, POLYGON);
+    const cirType = findFieldDefType(fieldDefAry, typeForCircle);
     const [getConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY);
 
     useEffect(() => {
@@ -131,7 +131,7 @@ function CircleAndPolyFieldPopup({fieldDefAry, typeForCircle= CIRCLE, plotId='de
         return cirType ? CONE_CHOICE_KEY : POLY_CHOICE_KEY;
     };
 
-    const sizeType= (cirType && typeForCircle!==CIRCLE) ? findType(fieldDefAry, AREA) : undefined;
+    const sizeType= (cirType && typeForCircle!==CIRCLE) ? findFieldDefType(fieldDefAry, AREA) : undefined;
 
     const polygonKey= polyType?.targetDetails.polygonKey;
     const targetKey= typeForCircle===CIRCLE ? cirType.targetDetails.targetKey : cirType?.targetDetails.targetKey;
@@ -168,10 +168,10 @@ function CircleAndPolyFieldPopup({fieldDefAry, typeForCircle= CIRCLE, plotId='de
 function PositionAndPolyFieldEmbed({fieldDefAry, plotId, toolbarHelpId, insetSpacial,
                                        otherComponents, WrapperComponent}) {
 
-    const polyType = findType(fieldDefAry, POLYGON);
-    const posType = findType(fieldDefAry, POSITION);
-    const areaType = findType(fieldDefAry, AREA);
-    const circleType= findType(fieldDefAry, CIRCLE);
+    const polyType = findFieldDefType(fieldDefAry, POLYGON);
+    const posType = findFieldDefType(fieldDefAry, POSITION);
+    const areaType = findFieldDefType(fieldDefAry, AREA);
+    const circleType= findFieldDefType(fieldDefAry, CIRCLE);
     const {targetDetails, nullAllowed = false} = posType ?? circleType ?? {};
     const [getConeAreaOp, setConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY);
 
@@ -371,8 +371,7 @@ function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', style={}
 
     const help = [
         'Each vertex is defined by a J2000 RA and Dec position pair',
-        'A max of 15 and min of 3 vertices is allowed',
-        'Vertices must be separated by a comma (,)',
+        '3 to 15 vertices is allowed, separated by a comma (,)',
         isArray(targetPanelExampleRow1) ? targetPanelExampleRow1[0] :targetPanelExampleRow1,
         helpRow2
     ];
@@ -401,10 +400,10 @@ function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', style={}
 function makeDynSpacialPanel({fieldDefAry, manageAllSpacial= true, popupHiPS= false,
                              plotId= 'defaultHiPSTargetSearch', toolbarHelpId, insetSpacial}) {
     const DynSpacialPanel= ({otherComponents, WrapperComponent}) => {
-        const posType = findType(fieldDefAry, POSITION);
-        const areaType = findType(fieldDefAry, AREA);
-        const circleType = findType(fieldDefAry, CIRCLE);
-        const polyType= manageAllSpacial && findType(fieldDefAry, POLYGON);
+        const posType = findFieldDefType(fieldDefAry, POSITION);
+        const areaType = findFieldDefType(fieldDefAry, AREA);
+        const circleType = findFieldDefType(fieldDefAry, CIRCLE);
+        const polyType= manageAllSpacial && findFieldDefType(fieldDefAry, POLYGON);
         if (!posType && !circleType) return <div/>;
         const {targetDetails, nullAllowed = false, minValue, maxValue} = posType ?? circleType;
         const {labelWidth = DEF_LABEL_WIDTH} = posType ?? circleType;

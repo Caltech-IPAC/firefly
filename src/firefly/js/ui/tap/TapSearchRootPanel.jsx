@@ -92,6 +92,13 @@ function getInitServiceUrl(tapBrowserState,initArgs,tapOps) {
     return serviceUrl;
 }
 
+export function getServiceLabel(serviceUrl) {
+    const tapOps= getTapServiceOptions();
+    return (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.labelOnly)) || '';
+}
+
+
+
 export function TapSearchPanel({initArgs= {}, titleOn=true}) {
     const [getTapBrowserState]= useFieldGroupMetaState(defTapBrowserState,TAP_PANEL_GROUP_KEY);
     const tapState= getTapBrowserState();
@@ -200,7 +207,7 @@ const makePlaceHolderBeforeStyle= (l) =>
 
 function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setServicesShowing, onTapServiceOptionSelect, tapOps, titleOn=true, selectBy, setSelectBy}) {
 
-    const label= (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.labelOnly)) || '';
+    const label= getServiceLabel(serviceUrl);
     const [obsCoreTableModel, setObsCoreTableModel] = useState();
     const hasObsCoreTable = obsCoreTableModel?.tableData?.data?.length > 0;
 
@@ -365,9 +372,11 @@ function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
 
     if (!adql) return false;
 
+
     const maxrec = request.maxrec;
     const hasMaxrec = !isNaN(parseInt(maxrec));
     const doSubmit = () => {
+        const serviceLabel= getServiceLabel(serviceUrl);
         const adqlClean = adql.replace(/\s/g, ' ');    // replace all whitespaces with spaces
         const params = {serviceUrl, QUERY: adqlClean};
         if (isUpload) {
@@ -378,7 +387,12 @@ function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
         if (hasMaxrec) params.MAXREC = maxrec;
         const treq = makeTblRequest('AsyncTapQuery', getTitle(adqlClean,serviceUrl), params);
         setNoCache(treq);
-        if (!isADQL) set(treq, `META_INFO.${PREF_KEY}`, `${tapBrowserState.schemaName}-${tapBrowserState.tableName}`);
+        const additionalMeta= {};
+        if (!isADQL) {
+            additionalMeta[PREF_KEY]= `${tapBrowserState.schemaName}-${tapBrowserState.tableName}`;
+        }
+        additionalMeta.serviceLabel= serviceLabel;
+        treq.META_INFO= {...treq.META_INFO, ...additionalMeta };
         dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true});
     };
 

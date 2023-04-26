@@ -167,8 +167,10 @@ export function setField(groupKey,fieldKey,fieldUpdates) {
     if (!fieldUpdates) return;
     const cField= getField(groupKey,fieldKey) ?? {};
     if (!fieldUpdates) return;
-    const originObj= pick(cField,Object.keys(fieldUpdates));
-    if (shallowequal(originObj,fieldUpdates)) return;
+
+    const forComparison= {displayValue:'',...fieldUpdates};
+    const originObj= pick({displayValue:'',...cField},Object.keys(forComparison));
+    if (shallowequal(originObj,forComparison)) return;
     dispatchValueChange({...cField, ...fieldUpdates, groupKey, fieldKey});
 }
 

@@ -25,8 +25,9 @@ import {pointEquals} from '../../visualize/Point.js';
 import {isHiPS} from '../../visualize/WebPlot.js';
 import {UserZoomTypes} from '../../visualize/ZoomUtil.js';
 import {confirmDLMenuItem} from './FetchDatalinkTable.js';
-import { ingestInitArgs,
-    isSIAStandardID, makeFieldDefs, makeSearchAreaInfo, makeServiceDescriptorSearchRequest
+import {
+    getStandardIdType, ingestInitArgs,
+    makeFieldDefs, makeSearchAreaInfo, makeServiceDescriptorSearchRequest
 } from './ServiceDefTools.js';
 import {convertRequest, DynLayoutPanelTypes, findTargetFromRequest} from './DynamicUISearchPanel.jsx';
 import {CIRCLE, POSITION, RANGE} from './DynamicDef.js';
@@ -510,7 +511,7 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
 
     const submitSearch= (r) => {
         const {fds, standardID, idx}= findFieldDefInfo(r);
-        const convertedR= convertRequest(r,fds,isSIAStandardID(standardID));
+        const convertedR= convertRequest(r,fds,getStandardIdType(standardID));
 
         const numKeys= [...new Set(fds.map( ({key}) => key))].length;
         if (Object.keys(convertedR).length<numKeys) {

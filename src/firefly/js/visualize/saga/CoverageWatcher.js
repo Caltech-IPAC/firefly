@@ -82,6 +82,7 @@ const COVERAGE_FOV = 'COVERAGE_FOV';
  * @prop {number} fovDegFallOver - the field of view size to determine when to move between and HiPS and an image
  * @prop {boolean} multiCoverage - overlay more than one table  on the coverage
  * @prop {string} gridOn - one of 'FALSE','TRUE','TRUE_LABELS_FALSE'
+ * @prop {boolean} exclusiveHiPS - only show hips for coverage, never fits
  */
 
 
@@ -100,7 +101,7 @@ const defOptions= {
     fitType : FitType.WIDTH_HEIGHT,
     ignoreCatalogs:false,
 
-    useHiPS: true,
+    exclusiveHiPS: false,
     hipsSourceURL : 'ivo://CDS/P/2MASS/color', // url
     hipsSource360URL : 'ivo://ov-gso/P/DIRBE/ZSMA1', // url
     imageSourceParams: {
@@ -426,6 +427,13 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
         dispatchPlotHiPS({plotId: DEFAULT_COVERAGE_PLOT_ID, viewerId, wpRequest:hipsRequest, attributes,
             pvOptions: {userCanDeletePlots:false, displayFixedTarget:false, useForCoverage:true}
         });
+    }
+    else if (options.exclusiveHiPS) {
+        dispatchPlotHiPS({
+            plotId: DEFAULT_COVERAGE_PLOT_ID, viewerId, wpRequest:hipsRequest, attributes,
+            pvOptions: {userCanDeletePlots:false, displayFixedTarget:false, useForCoverage:true},
+        });
+
     }
     else {
         dispatchPlotImageOrHiPS({

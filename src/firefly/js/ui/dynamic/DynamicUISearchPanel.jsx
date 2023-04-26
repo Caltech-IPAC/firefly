@@ -4,6 +4,7 @@
 
 import React from 'react';
 import {CoordinateSys, parseWorldPt} from '../../api/ApiUtilImage.jsx';
+import {standardIDs} from '../../util/VOAnalyzer.js';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
 import {convert} from '../../visualize/VisUtil.js';
 import CompleteButton from '../CompleteButton.jsx';
@@ -19,8 +20,9 @@ import './DynamicUI.css';
 
 const defaultOnError= () => showInfoPopup('One or more fields are not valid', 'Invalid Data');
 
-export const DynamicFieldGroupPanel = ({DynLayoutPanel, groupKey, fieldDefAry, keepState = true, plotId='defaultHiPSTargetSearch'}) => (
-    <FieldGroup groupKey={groupKey} keepState={keepState}>
+export const DynamicFieldGroupPanel = ({DynLayoutPanel, groupKey, fieldDefAry, style,
+                                           keepState = true, plotId='defaultHiPSTargetSearch'}) => (
+    <FieldGroup groupKey={groupKey} keepState={keepState} style={style}>
         <DynLayoutPanel fieldDefAry={fieldDefAry} style={{margin: '8px 3px 15px 3px', width: '100%'}} plotId={plotId}/>
     </FieldGroup>
 );
@@ -59,7 +61,7 @@ export function DynamicForm({DynLayoutPanel, groupKey,fieldDefAry, onSubmit, onE
 }
 
 
-export function convertRequest(request, fieldDefAry, treatAsSia= false) {
+export function convertRequest(request, fieldDefAry, standardIDType) {
     const retReq= fieldDefAry.reduce( (out, {key,type, targetDetails:{raKey,decKey, targetKey,polygonKey, sizeKey}={} }) => {
         const coneOrArea= request[CONE_AREA_KEY] ?? (targetKey ? CONE_CHOICE_KEY : POLY_CHOICE_KEY);
         if (coneOrArea) {
@@ -75,8 +77,9 @@ export function convertRequest(request, fieldDefAry, treatAsSia= false) {
             case UNKNOWN:
                 return out;
             case POLYGON:
-                out[key]= treatAsSia ?
-                    'POLYGON ' +request[polygonKey].replaceAll(',', '') : request[polygonKey];
+                if (standardIDType===standardIDs.sia) out[key]= 'POLYGON ' +request[polygonKey].replaceAll(',', '');
+                else if (standardIDType===standardIDs.soda) out[key]= request[polygonKey].replaceAll(',', '');
+                else out[key]=request[polygonKey];
                 return out;
             case CHECKBOX:
                 const value= Object.entries(request)
@@ -97,7 +100,7 @@ export function convertRequest(request, fieldDefAry, treatAsSia= false) {
                 const radius= request[sizeKey];
                 const wp= convert(parseWorldPt(request[targetKey]), CoordinateSys.EQ_J2000);
                 if (radius && wp) {
-                    out[key]= `${treatAsSia?'CIRCLE ':''}${wp.x} ${wp.y} ${radius}`;
+                    out[key]= `${standardIDType===standardIDs.sia?'CIRCLE ':''}${wp.x} ${wp.y} ${radius}`;
                 }
                 return out;
             default: return out;
@@ -176,7 +179,9 @@ function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='d
         iFieldLayout= (
             <>
                 <div key='top' style={{paddingTop:5}}/>
-                {fieldsInputAry}
+                <div style={{display:'flex', flexDirection:'column', alignItems:'flex-start', alignSelf:'flex-start'}}>
+                    {fieldsInputAry}
+                </div>
                 {Boolean(fieldsInputAry.length) && <div key='pad' style={{paddingTop:5}}/>}
                 {opsInputAry}
             </>);
@@ -188,13 +193,13 @@ function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='d
         <>
             {Boolean(polyPanel) &&
                 <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}> {polyPanel} </div>}
-            <div style={{paddingLeft:5, display:'flex', flexDirection:'column'}}>
+            <div style={{paddingLeft:5, display:'flex', flexDirection:'column', alignSelf:'flex-start'}}>
                 {useArea &&
                     <div key='a' style={{paddingTop:5, display:'flex', flexDirection:'column'}}>
                         {areaFields}
                     </div>}
                 <div style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
-                    {Boolean(iFieldLayout) && <div>{iFieldLayout}</div>}
+                    {Boolean(iFieldLayout) && <div >{iFieldLayout}</div>}
                     {Boolean(checkBoxFields) &&
                         <div style={{padding: '5px 0 0 45px', display:'flex', flexDirection:'column', alignSelf:'center'}}>
                             {checkBoxFields}
@@ -205,13 +210,18 @@ function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='d
         </>
     );
 
+    if (!useSpacial) {
+        const wrappedInternals= WrapperComponent ? <WrapperComponent>{nonSpacial}</WrapperComponent> : nonSpacial;
+        return (
+            <div style={style}> {wrappedInternals} </div>
+        );
+    }
+
     return (
         <div style={style}>
-            {useSpacial &&
-                <div style={{display:'flex', flexDirection:'column', alignItems:'center', height:'100%'}}>
-                    <DynSpacialPanel otherComponents={nonSpacial} WrapperComponent={WrapperComponent}/>
-                </div>}
-            {!useSpacial  && nonSpacial}
+            <div style={{display:'flex', flexDirection:'column', alignItems:'center', height:'100%'}}>
+                <DynSpacialPanel otherComponents={nonSpacial} WrapperComponent={WrapperComponent}/>
+            </div>
         </div>
     );
 }

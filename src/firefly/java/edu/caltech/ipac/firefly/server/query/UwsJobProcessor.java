@@ -25,6 +25,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.time.Instant;
@@ -161,12 +162,28 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
     public String getJobUrl() { return jobUrl; }
 
     public DataGroup getResult(TableServerRequest request) throws DataAccessException {
-        HttpServiceInput input = createSingleResultInput(jobUrl).setFollowRedirect(true);            // ensure redirects are followed
+        HttpServiceInput input = createSingleResultInput(jobUrl).setFollowRedirect(false);            // no redirects
         try {
             //download file first: failing to parse gaia results with topcat SAX parser from url
             String filename = getFilename(jobUrl);
             File outFile = File.createTempFile(filename, ".vot", QueryUtil.getTempDir(request));
-            HttpServices.Status status = HttpServices.getData(input, outFile);
+
+            HttpServices.Status status= HttpServices.getData(input, (method -> {
+                    if(HttpServices.isOk(method)) {
+                        try {
+                            return HttpServices.defaultHandler(outFile).handleResponse(method);
+                        } catch (FileNotFoundException ignore) {/*can't happen, file already exist*/ }
+                        return new HttpServices.Status(0,""); // should never get here
+                    } else if (HttpServices.isRedirected(method)) {
+                        String location = HttpServices.getResHeader(method, "Location", null);
+                        if (location==null) return new HttpServices.Status(422,"redirect without a location header");
+                        HttpServiceInput redirectInput = HttpServiceInput.createWithCredential(location).setFollowRedirect(true); // follow redirects this time
+                        return HttpServices.getData(redirectInput, outFile);
+                    } else {
+                        return new HttpServices.Status(method.getStatusCode(),method.getStatusText());
+                    }
+            }));
+
             if (status.isError()) {
                 throw new DataAccessException(String.format("Fail to fetch result at: %s \n\t with exception: %s",
                         input.getRequestUrl(), status.getErrMsg()));
