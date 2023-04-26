@@ -114,6 +114,29 @@ public class VoTableWriter {
             return isEmpty(descVal) ? "" : "<"+tagDesc+">" + descVal + "</"+tagDesc+">";
         }
 
+        private String xmlTABLE() {
+            long nrow = dataGroup.size();
+            String tname = dataGroup.getTableMeta().getAttribute(TableMeta.NAME);
+            String res = "<TABLE";
+            String ucd = dataGroup.getTableMeta().getAttribute(TableMeta.UCD);
+            String utype = dataGroup.getTableMeta().getAttribute(TableMeta.UTYPE);
+
+            if (!StringUtils.isEmpty(tname)) {
+                res += VOSerializer.formatAttribute(TableMeta.NAME, tname.trim());
+            }
+            if (nrow > 0) {
+                res += VOSerializer.formatAttribute("nrows", Long.toString(nrow));
+            }
+            if (ucd != null) {
+                res += VOSerializer.formatAttribute(TableMeta.UCD, ucd);
+            }
+            if (utype != null) {
+                res += VOSerializer.formatAttribute(TableMeta.UTYPE, utype);
+            }
+            res += ">";
+            return res;
+        }
+
         private String xmlLINK(LinkInfo link) {
             List<String> atts = new ArrayList<>();
 
@@ -346,12 +369,12 @@ public class VoTableWriter {
 
                 VOSerializer serializer = VOSerializer.makeSerializer( getDataFormat(), getVotableVersion(), startab );
 
-                /* Begin TABLE element including FIELDs etc. */
-                serializer.writePreDataXML( writer );
-
                 /* Now add our additional info */
-                DataGroupXML dgXML = new DataGroupXML( dataGroup);
+                DataGroupXML dgXML = new DataGroupXML(dataGroup);
+                //note: in accordance with the IVOA standard for VOTable, the order of the tags below needs to be maintained
+                outputElement(writer, dgXML.xmlTABLE());     // TABLE tag
                 outputElement(writer, dgXML.xmlDESCRIPTION());     // DESCRIPTION tag
+                serializer.writeFields(writer);     // FIELDS tags
                 outputElement(writer, dgXML.xmlGROUPs(dataGroup.getGroupInfos()));          // GROUP
                 outputElement(writer, dgXML.xmlPARAMs(dataGroup.getParamInfos())); // PARAM
                 outputElement(writer, dgXML.xmlLINKs(dataGroup.getLinkInfos()));
