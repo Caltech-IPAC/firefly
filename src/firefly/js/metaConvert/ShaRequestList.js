@@ -3,18 +3,13 @@
  */
 
 
-import {get, isNil} from 'lodash';
-import {makeServerRequestBuilder} from './converterUtils.js';
 import {RangeValues,STRETCH_LINEAR,SIGMA} from '../visualize/RangeValues.js';
 import {getCellValue, getMetaEntry} from '../tables/TableUtil.js';
 import {makeWorldPt, parseWorldPt} from '../visualize/Point.js';
-import {convertAngle} from '../visualize/VisUtil.js';
-import {PlotAttribute} from '../visualize/PlotAttribute';
 import {CoordinateSys} from '../visualize/CoordSys.js';
 import {WebPlotRequest} from '../visualize/WebPlotRequest.js';
-import {ServerRequest} from '../data/ServerRequest.js';
-import {ERROR_MSG_KEY} from '../templates/lightcurve/generic/errorMsg.js';
 import {addCommonReqParams} from '../templates/lightcurve/LcConverterFactory.js';
+import {GRID_FULL, SINGLE} from '../visualize/MultiViewCntlr';
 
 const colToUse= ['reqkey', 'heritgefilename', 'fname'];
 const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
@@ -90,4 +85,27 @@ export function makeShaPlotRequest(table, row, includeSingle,includeStandard) {
     }
     return retval;
 }
+
+/**
+ *
+ * @param {TableModel} table
+ * @param {DataProductsConvertType} converterTemplate
+ * @return {DataProductsConvertType}
+ */
+export function makeShaViewCreate(table,converterTemplate) {
+    const defShaView = {...converterTemplate,
+        threeColor: false,
+        hasRelatedBands: false,
+        canGrid: true,
+        maxPlots: 12,
+        initialLayout: SINGLE};
+    if (!table) return defShaView;
+    const tblid = table.tbl_id;
+    if (tblid === 'precovery-data') {
+        return {...defShaView, initialLayout: GRID_FULL};
+    } else {
+        return defShaView;
+    }
+}
+
 
