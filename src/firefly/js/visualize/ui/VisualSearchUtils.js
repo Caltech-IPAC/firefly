@@ -26,6 +26,7 @@ import {
 
 
 export const SEARCH_REFINEMENT_DIALOG_ID = 'SEARCH_REFINEMENT_DIALOG';
+const SEARCH_REFINEMENT_SELECTION_SOURCE= 'SearchRefinementTool';
 const radians= [Math.PI/4, 2*Math.PI/4, 3*Math.PI/4, 4*Math.PI/4, 5*Math.PI/4, 6*Math.PI/4, 7*Math.PI/4, 8*Math.PI/4];
 
 function getInscribedCorners(cc,cen,rx,ry) {
@@ -78,7 +79,9 @@ export function getDetailsFromSelection(plot) {
     const sideWPy= cc.getWorldCoords( makeDevicePt( cen.x,dPt0.y));
     if (!cenWpt || !sideWPx || !sideWPy) return {};
     const radiusInit= Math.min(computeDistance(sideWPx,cenWpt), computeDistance(sideWPy,cenWpt));
-    const radius= plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG] ?? Math.trunc(radiusInit*3600)/3600;
+    const radius= plot.attributes[PlotAttribute.SELECTION_SOURCE]===SEARCH_REFINEMENT_SELECTION_SOURCE &&
+                  plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG] ?
+               plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG] : Math.trunc(radiusInit*3600)/3600;
     let corners;
     const rx= cen.x-dPt0.x;
     const ry= cen.y-dPt0.y;
@@ -185,7 +188,9 @@ export function updateUIFromPlot({plotId, setWhichOverlay, whichOverlay, setTarg
     const plotSelType= plot.attributes[PlotAttribute.SELECTION_TYPE];
     if (setWhichOverlay && plotSelType) {
         isCone= plotSelType!==SelectedShape.rect.key; // if future, if something not supported just default to cone
-        setWhichOverlay(isCone ? CONE_CHOICE_KEY : POLY_CHOICE_KEY);
+        if (plot.attributes[PlotAttribute.SELECTION_SOURCE]!==SEARCH_REFINEMENT_SELECTION_SOURCE) {
+            setWhichOverlay(isCone ? CONE_CHOICE_KEY : POLY_CHOICE_KEY);
+        }
     }
 
     if (isCone) {
@@ -248,9 +253,10 @@ function convertConeToSelection(plot,wp,radius) {
         [PlotAttribute.SELECTION]: sel,
         [PlotAttribute.SELECTION_TYPE]: SelectedShape.circle.key,
         [PlotAttribute.IMAGE_BOUNDS_SELECTION]: imBoundSel,
-        [PlotAttribute.SELECTION_SOURCE]: 'SearchRefinementTool'
+        [PlotAttribute.SELECTION_SOURCE]: SEARCH_REFINEMENT_SELECTION_SOURCE,
     };
 }
+
 
 function convertPolygonToSelection(plot,polygonAry) {
     if (!polygonAry?.length) return {};
@@ -272,7 +278,7 @@ function convertPolygonToSelection(plot,polygonAry) {
         [PlotAttribute.SELECTION]: sel,
         [PlotAttribute.SELECTION_TYPE]: SelectedShape.rect.key,
         [PlotAttribute.IMAGE_BOUNDS_SELECTION]: imBoundSel,
-        [PlotAttribute.SELECTION_SOURCE]: 'SearchRefinementTool'
+        [PlotAttribute.SELECTION_SOURCE]: SEARCH_REFINEMENT_SELECTION_SOURCE,
     };
     
 }

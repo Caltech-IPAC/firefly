@@ -5,7 +5,7 @@
 
 import {isEmpty,isArray} from 'lodash';
 import Enum from 'enum';
-import {primePlot,getAllDrawLayersForPlot} from '../visualize/PlotViewUtil.js';
+import {primePlot, getAllDrawLayersForPlot, getCenterOfProjection} from '../visualize/PlotViewUtil.js';
 import {visRoot, dispatchUseTableAutoScroll} from '../visualize/ImagePlotCntlr.js';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
 import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
@@ -16,7 +16,7 @@ import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr, {dlRoot, SUBGROUP} from '../visualize/DrawLayerCntlr.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
-import {makeImagePt, makeWorldPt} from '../visualize/Point.js';
+import {makeImagePt, makeWorldPt, pointEquals} from '../visualize/Point.js';
 import {dispatchTableHighlight,dispatchTableFilter, dispatchTableSelect} from '../tables/TablesCntlr.js';
 import {COLOR_HIGHLIGHTED_PT} from '../visualize/draw/DrawingDef.js';
 import {MetaConst} from '../data/MetaConst.js';
@@ -30,7 +30,7 @@ import {FilterInfo} from '../tables/FilterInfo.js';
 import DrawUtil from '../visualize/draw/DrawUtil.js';
 import SelectArea from './SelectArea.js';
 import {detachSelectArea} from '../visualize/ui/SelectAreaDropDownView.jsx';
-import {CysConverter} from '../visualize/CsysConverter.js';
+import CsysConverter, {CysConverter} from '../visualize/CsysConverter.js';
 import {parseObsCoreRegion} from '../util/ObsCoreSRegionParser.js';
 import {darker} from '../util/Color';
 import {isDefined} from '../util/WebUtil';
@@ -51,6 +51,7 @@ const TYPE_ID= 'CATALOG_TYPE';
  * @type {Enum}
  */
 export const CatalogType = new Enum(['POINT', 'BOX', 'REGION', 'ORBITAL_PATH', 'POINT_IMAGE_PT']);
+let lastProjectionCenter= undefined;
 
 
 const findColIdx= (columns,colId) => columns.findIndex( (c) => c.name===colId);
@@ -86,7 +87,10 @@ function creator(initPayload, presetDefaults={}) {
             symbol: DrawSymbol.get(symbol) || DrawSymbol.get(tableMeta?.[MetaConst.DEFAULT_SYMBOL]) || DrawSymbol.SQUARE,
         ...presetDefaults};
 
-    const pairs= { [MouseState.DOWN.key]: highlightChange };
+    const pairs= {
+        [MouseState.UP.key]: highlightChange,
+        [MouseState.DOWN.key]: saveLastDown
+    };
 
     drawingDef.color= (color || tableMeta?.[MetaConst.DEFAULT_COLOR] || getNextColor());
 
@@ -139,6 +143,11 @@ function layerRemoved(drawLayer,action) {
     releaseColor(drawLayer.drawingDef.color);
 }
 
+function saveLastDown(mouseStatePayload) {
+    const {plotId}= mouseStatePayload;
+    const plot= primePlot(visRoot(),plotId);
+    lastProjectionCenter= {center:getCenterOfProjection(plot), plotId};
+}
 
 /**
  * This function is mapped to the mouse down key
@@ -146,6 +155,10 @@ function layerRemoved(drawLayer,action) {
  */
 function highlightChange(mouseStatePayload) {
     const {drawLayer,plotId,screenPt}= mouseStatePayload;
+    const plot= primePlot(visRoot(),plotId);
+    const center= getCenterOfProjection(plot);
+    if (lastProjectionCenter && (!pointEquals(center, lastProjectionCenter?.center) || lastProjectionCenter.plotId!==plotId)) return;
+    lastProjectionCenter= undefined;
     makeHighlightDeferred(drawLayer,plotId,screenPt);
 }
 

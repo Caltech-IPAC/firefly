@@ -189,7 +189,7 @@ export function computeCentralPointAndRadius(inPoints) {
  *
  * @param {Array.<Array.<WorldPt>>} inPoints2dAry  a 2d array of world points. Each array represents a group of points
  * @param {number} minSizeDeg
- * @return {{centralPoint:WorldPt, maxRadius:number, avgOfCenters:WorldPt}}
+ * @return {{centralPoint:WorldPt, avgOfCenters:WorldPt, fovSize:number}}
  */
 export function computeCentralPtRadiusAverage(inPoints2dAry,minSizeDeg=.11) {
 

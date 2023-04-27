@@ -10,9 +10,13 @@ import {pickBy} from 'lodash';
 import {flux} from '../../core/ReduxFlux.js';
 import {
     getMenu, isAppReady, dispatchSetMenu,
-    dispatchOnAppReady, dispatchNotifyRemoteAppReady, getAppOptions
+    dispatchOnAppReady, dispatchNotifyRemoteAppReady, getAppOptions,
 } from '../../core/AppDataCntlr.js';
 import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
+import {getActiveRowCenterDef} from '../../visualize/saga/ActiveRowCenterWatcher.js';
+import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
+import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
+import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {layoutManager} from './FireflyViewerManager.js';
 import {Menu} from '../../ui/Menu.jsx';
 import {Banner} from '../../ui/Banner.jsx';
@@ -26,7 +30,7 @@ import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.
 import {warningDivId} from '../../ui/LostConnection.jsx';
 
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-42x42.png';
-import {getAllStartIds, startTTFeatureWatchers} from '../common/ttFeatureWatchers';
+import {getAllStartIds, getObsCoreWatcherDef, startTTFeatureWatchers} from '../common/ttFeatureWatchers';
 
 /**
  * This FireflyViewer is a generic application with some configurable behaviors.
@@ -51,6 +55,15 @@ export class FireflyViewer extends PureComponent {
         const views = LO_VIEW.get(props.views) || LO_VIEW.none;
         this.state = this.getNextState();
         startTTFeatureWatchers(getAllStartIds());
+        startTTFeatureWatchers(
+            [
+                getMocWatcherDef().id,
+                getCatalogWatcherDef().id,
+                getUrlLinkWatcherDef().id,
+                getActiveRowCenterDef().id,
+                getAppOptions().enableObsCoreDownload && getObsCoreWatcherDef().id,
+            ]
+        );
         if (views.has(LO_VIEW.images) ) startImagesLayoutWatcher();
         dispatchAddSaga(layoutManager,{views: props.views});
         if (getWorkspaceConfig()) { initWorkspace(); }

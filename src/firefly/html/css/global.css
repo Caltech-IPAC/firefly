@@ -257,6 +257,10 @@ div.rootStyle img {
     align-items: center;
 }
 
+.ComponentBackground {
+    background-color: #c8c8c8;
+}
+
 .PanelToolbar__button {
     width: 24px;
     height: 24px;

@@ -117,13 +117,13 @@ const MultiProductViewerImpl= memo(({ dpId, activateParams, metaDataTableId, noP
 function ViewerRender({dpId, dataProductsState, noProductMessage, metaDataTableId, makeDropDown, activateParams,
                           setCurrentCTIChoice, ctiChoice, ctLookupKey, getInput, doResetButton}) {
     const {displayType='unsupported', menu, singleDownload, isWorkingState, message, activeMenuLookupKey,
-        menuKey, imageActivate, url, serDefParams, serviceDefRef, sRegion, name:title }= dataProductsState;
+        menuKey, imageActivate, url, serDefParams, serviceDefRef, sRegion, name:title, standardID }= dataProductsState;
     const {imageViewerId,chartViewerId,tableGroupViewerId}=  activateParams;
     switch (displayType) {
         case DPtypes.ANALYZE :
             if (!getInput) return (<ProductMessage {...{menu, singleDownload, makeDropDown, isWorkingState, message}}/>);
             return (<ServiceDescriptorPanel {...{
-                serDefParams, serviceDefRef, title, makeDropDown, sRegion,
+                serDefParams, serviceDefRef, title, makeDropDown, sRegion, standardID,
                 setSearchParams: (params) => dispatchSetSearchParams({dpId,activeMenuLookupKey,menuKey,params}),
             }} />);
         case DPtypes.MESSAGE :
@@ -161,7 +161,7 @@ function ViewerRender({dpId, dataProductsState, noProductMessage, metaDataTableI
 }
 
 const ProductPNG = ( {makeDropDown, url}) => (
-    <div style={{display:'flex', flexDirection: 'column', background: '#c8c8c8', width:'100%', height:'100%'}}>
+    <div className='ComponentBackground' style={{display:'flex', flexDirection: 'column', background: '#c8c8c8', width:'100%', height:'100%'}}>
         {makeDropDown &&  <div style={{height:30, width:'100%'}}>
             {makeDropDown()}
         </div>}

@@ -237,6 +237,11 @@ export function BasicUI(props) {
         tableName && loadColumns(serviceUrl, schemaName, tableName);
     }, [serviceUrl, schemaName, tableName]);
 
+    useEffect(() => {
+        if (error) setServicesShowing(true);
+    }, [error]);
+
+
     if (error) {
         return (
             <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '10px 5px'}}>

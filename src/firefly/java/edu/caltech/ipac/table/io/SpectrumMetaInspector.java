@@ -75,12 +75,18 @@ class SpectrumMetaInspector {
         String utype;
         if (hdu!=null) {
             Header h= hdu.getHeader();
-            utype= FitsReadUtil.getUtype(h);
             String voclass= h.getStringValue(VOCLASS);
             if (voclass==null) voclass= "";
+            utype= FitsReadUtil.getUtype(h);
             if (utype==null && !spectrumHint &&
                     !voclass.equals(spec10Version) &&
-                    !voclass.toLowerCase().startsWith("spectrum") ) return;
+                    !voclass.toLowerCase().startsWith("spectrum") ) {
+                utype= SPEC_SPECTRUM;
+            }
+            if (utype!=null) {
+                dg.getTableMeta().addKeyword(TableMeta.UTYPE,utype);
+                return;
+            }
         }
         else {
             utype= dg.getAttribute(TableMeta.UTYPE);

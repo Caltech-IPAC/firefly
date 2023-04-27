@@ -223,6 +223,8 @@ SpatialSearch.propTypes = {
     obsCoreEnabled: PropTypes.bool,
     serviceUrl: PropTypes.string,
     columnsModel: PropTypes.object,
+    serviceLabel: PropTypes.string,
+    tableName: PropTypes.string,
 };
 
 const warningMsg = (msg) => {
@@ -246,8 +248,14 @@ function UploadTableSelector({uploadInfo, setUploadInfo}) {
     useEffect(() => {
         //if user changes position column(s), make the new columns entries selectable in the columns/search
         const columns = uploadInfo?.columns;
-        if (getLon()) columns.find((col) => col.name === getLon()).use = true;
-        if (getLat()) columns.find((col) => col.name === getLat()).use = true;
+        if (getLon()) {
+            const cObj= columns.find((col) => col.name === getLon());
+            if (cObj) cObj.use = true;
+        }
+        if (getLat()) {
+            const cObj= columns.find((col) => col.name === getLat());
+            if (cObj) cObj.use = true;
+        }
         uploadInfo = {...uploadInfo, columns};
         setUploadInfo(uploadInfo);
     }, [getLon, getLat]);
@@ -305,13 +313,14 @@ function UploadTableSelector({uploadInfo, setUploadInfo}) {
                         <a className='ff-href'onClick={() => showColSelectPopup(columns, onColsSelected, 'Choose Columns', 'OK',
                             null,true)}>
                             <span>Columns: </span>
-                            <span>{columns.length} (using {columnsUsed}),</span>
+                            <span>{columns.length} (using {columnsUsed})</span>
                         </a>
+                        {fileSize &&<span>,</span>}
                     </div>
-                    <div style={{paddingLeft: 8, whiteSpace:'nowrap'}}>
+                    {fileSize && <div style={{paddingLeft: 8, whiteSpace:'nowrap'}}>
                         <span>Size: </span>
                         <span>{getSizeAsString(fileSize)}</span>
-                    </div>
+                    </div>}
                 </div>
             }
             {haveTable &&

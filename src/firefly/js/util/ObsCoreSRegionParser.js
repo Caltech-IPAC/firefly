@@ -105,6 +105,7 @@ const resetPos = (count) => {
  * @returns {object}
  */
 export function parseObsCoreRegion(sRegionVal, unit='deg', isCorners=false) {
+    if (!sRegionVal) return {valid:false};
     let  shapeObj = null;
     let  valid = true;
     let  message = '';

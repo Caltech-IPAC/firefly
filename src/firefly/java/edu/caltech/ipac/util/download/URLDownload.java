@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
@@ -85,6 +86,8 @@ public class URLDownload {
         if (conn==null) return -1;
         try {
             return (conn instanceof HttpURLConnection) ? ((HttpURLConnection)conn).getResponseCode() : 200;
+        } catch (SocketTimeoutException e) {
+            return 408;
         } catch (IOException e) {
             return -1;
         }
@@ -338,6 +341,9 @@ public class URLDownload {
                     if (ops.onlyIfModified) {
                         outFileData = checkAlreadyDownloaded(conn, outfile);
                         if (outFileData != null) return outFileData;
+                        if (getResponseCode(conn)==408) {
+                            throw new FailedRequestException("Timeout", "Timeout", 408);
+                        }
                     }
                 }
                 else if (postData!=null) {

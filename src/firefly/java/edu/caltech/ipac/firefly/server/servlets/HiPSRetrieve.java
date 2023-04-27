@@ -45,14 +45,22 @@ public class HiPSRetrieve {
             // if we already have a version of the file set the download modified only option. Also set a very time timeout,
             // so that if the server is down we don't wait long.
             URLDownload.Options options= fileExistLocal ? URLDownload.Options.modifiedAndTimeoutOp(true,4) : URLDownload.Options.def();
-            FileInfo fetchedFileInfo= URLDownload.getDataToFile(url,targetFile,null, null, options);
-            int rCode= fetchedFileInfo.getResponseCode();
-            File retFile= fetchedFileInfo.getFile();
+            int rCode;
+            File retFile;
+            FileInfo fetchedFileInfo;
+            try {
+                fetchedFileInfo= URLDownload.getDataToFile(url,targetFile,null, null, options);
+                rCode= fetchedFileInfo.getResponseCode();
+                retFile= fetchedFileInfo.getFile();
+            }
+            catch (FailedRequestException e) {
+                return fileExistLocal ? preFetchFileInfo : new FileInfo(e.getResponseCode());
+            }
 
             switch (rCode) {
                 case 200 -> {
                     if (isValid(retFile)) return fetchedFileInfo;
-                    retFile.delete();
+                    if (retFile!=null) retFile.delete();
                     return new FileInfo(rCode);
                 }
                 case HTTP_NOT_MODIFIED -> {
@@ -68,20 +76,22 @@ public class HiPSRetrieve {
                     else return new FileInfo(rCode);
                 }
             }
-        } catch (MalformedURLException | FailedRequestException e) {
+        } catch (MalformedURLException e) {
             return new FileInfo(null, null, 404, e.toString());
         }
     }
 
     private static boolean imageRequest(File f) {
+        if (f==null) return false;
         String fLowStr= f.getAbsolutePath().toLowerCase();
         return fLowStr.endsWith("jpg") || fLowStr.endsWith("jpeg") || fLowStr.endsWith("png");
     }
 
     private static boolean isValid(File f) {
+        if (f==null) return false;
         try {
             String fLowStr= f.getAbsolutePath().toLowerCase();
-            if (fLowStr.equals("properties") || fLowStr.equals("list")) {
+            if (fLowStr.endsWith("properties") || fLowStr.endsWith("list")) {
                 Properties p = new Properties();
                 p.load(new FileReader(f));
                 if (p.size()<2) return false;
