@@ -5,6 +5,7 @@ package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.io.IpacTableReader;
@@ -56,7 +57,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 	 * test add new column
 	 */
 	@Test
-	public void testAddColumn() {
+	public void testAddColumn() throws DataAccessException {
 
 		DataType nCol = new DataType("NEW_COL_1", Double.class, "label", "units", null, "desc");
 		nCol.setUCD("ucd");
@@ -155,7 +156,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 	 * a lower level access based on a SQL statement
 	 */
 	@Test
-	public void testExecQuery() {
+	public void testExecQuery() throws DataAccessException{
 		HsqlDbAdapter dbAdapter = new HsqlDbAdapter();
 		String sql = "select d.* from (select \"designation\", \"RA(deg)\"+1 as ABC from data where \"sigdec\" > 0.0750) as d order by d.ABC";
 		DataGroup data = EmbeddedDbUtil.execQuery(dbAdapter, dbFile, sql, MAIN_DB_TBL);
@@ -169,7 +170,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 	 * test data retrieval based on selected rows
 	 */
 	@Test
-	public void testGetSelectedData() {
+	public void testGetSelectedData() throws DataAccessException {
 		TableServerRequest treq = new TableServerRequest(IpacTableFromSource.PROC_ID);
 		treq.setParam(ServerParams.SOURCE, testFile.toString());
 		treq.setPageSize(Integer.MAX_VALUE);
@@ -233,4 +234,64 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		StopWatch.getInstance().printLog("sort DATA table");
 
 	}
+
+	@Test
+	public void testSqlErrors() {
+		try {
+			EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, "select * from xyz", MAIN_DB_TBL);
+			Assert.fail("test bad table name failed");
+		}catch (DataAccessException e) {
+			Assert.assertEquals("[XYZ] not found; SQL=[select * from xyz]", e.getMessage());
+		}
+
+		try {
+			EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, "select xyz from data", MAIN_DB_TBL);
+			Assert.fail("test bad column name failed");
+		}catch (DataAccessException e) {
+			Assert.assertEquals("[XYZ] not found; SQL=[select xyz from data]", e.getMessage());
+		}
+
+		try {
+			EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, "not an sql statement", MAIN_DB_TBL);
+			Assert.fail("test invalid sql statement failed");
+		}catch (DataAccessException e) {
+			Assert.assertEquals("Unexpected token [NOT]; SQL=[not an sql statement]", e.getMessage());
+		}
+
+		try {
+			EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, "select * from data where \"dec\" = 'ac'", MAIN_DB_TBL);
+			Assert.fail("test type mismatched(comparing char to double) failed");
+		}catch (DataAccessException e) {
+			Assert.assertEquals("Type mismatch; SQL=[select * from data where \"dec\" = 'ac']", e.getMessage());
+		}
+	}
+
+	@Test
+	public void testAddColumnErrors() {
+		try {
+			DataType aCol = new DataType("col", Double.class);
+			EmbeddedDbUtil.addColumn(dbFile, DbAdapter.getAdapter(), aCol, "\"dummy\" + 3");
+			Assert.fail("test bad column name in expression failed");
+		}catch (DataAccessException e) {
+			Assert.assertEquals("[dummy] not found; SQL=[UPDATE DATA SET \"col\" = \"dummy\" + 3]", e.getMessage());
+		}
+
+		try {
+			DataType aCol = new DataType("col", Double.class);
+			EmbeddedDbUtil.addColumn(dbFile, DbAdapter.getAdapter(), aCol, "'abc'");
+			Assert.fail("test column data type mismatch failed");		// setting string 'abc' into a double column
+		}catch (DataAccessException e) {
+			Assert.assertEquals("Type mismatch; SQL=[UPDATE DATA SET \"col\" = 'abc']", e.getMessage());
+		}
+
+		try {
+			DbAdapter.getAdapter().close(dbFile, true); 	// close the database and delete the file.  this should not happen under normal operation
+			DataType aCol = new DataType("col", Double.class);
+			EmbeddedDbUtil.addColumn(dbFile, DbAdapter.getAdapter(), aCol, "'abc'");
+			Assert.fail("test stale database file failed");
+		}catch (DataAccessException e) {
+			Assert.assertEquals("TABLE out-of-sync; Reload table to resume", e.getMessage());
+		}
+	}
+
 }

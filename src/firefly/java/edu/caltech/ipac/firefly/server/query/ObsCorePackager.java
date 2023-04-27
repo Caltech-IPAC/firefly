@@ -31,11 +31,11 @@ public class ObsCorePackager extends FileGroupsProcessor {
             return computeFileGroup((DownloadRequest) request);
         } catch (Exception e) {
             LOGGER.error(e);
-            throw new DataAccessException(e.getMessage());
+            throw e;
         }
     }
 
-    private List<FileGroup> computeFileGroup(DownloadRequest request) {
+    private List<FileGroup> computeFileGroup(DownloadRequest request) throws DataAccessException{
         var selectedRows = new ArrayList<>(request.getSelectedRows());
 
         List<FileInfo> fileInfos = new ArrayList<>();
