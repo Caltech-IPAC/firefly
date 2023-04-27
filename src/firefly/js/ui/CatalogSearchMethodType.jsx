@@ -280,7 +280,7 @@ function SizeArea({groupKey, searchType, imageCornerCalc}) {
             if (!cornerCalcV) {
                 if (sel) setVal('imageCornerCalc', 'area-selection');
             }
-            setVal('polygoncoords', calcCornerString(pv, cornerCalcV));
+            setTimeout( () => setVal('polygoncoords', calcCornerString(pv, cornerCalcV)), 4);
         }
     };
 
@@ -430,7 +430,7 @@ function renderTargetPanel(groupKey, searchType) {
                      searchType === SpatialMethod.Elliptical.value);
     return (
         <div className='intarget'>
-            {visible && <TargetPanel labelWidth={100} groupKey={groupKey}/>}
+            {visible && <TargetPanel labelWidth={60} groupKey={groupKey}/>}
         </div>
     );
 
