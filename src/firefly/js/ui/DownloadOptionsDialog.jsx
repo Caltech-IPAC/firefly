@@ -26,7 +26,7 @@ export function getTypeData(key, val='', tip = '', labelV='', labelW) {
 }
 
 
-export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWidth, dialogWidth=500, dialogHeight=300,
+export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWidth, style={}, dialogWidth=500, dialogHeight=300,
                                       workspace}) {
 
     const isUpdating = useStoreConnector(isAccessWorkspace);
@@ -51,6 +51,7 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
         );
 
         const showSave = (
+            <div  style={{width: dialogWidth, height: dialogHeight}}>
                 <div style={{marginTop: 10,
                              boxSizing: 'border-box',
                              width: 'calc(100%)', height: 'calc(100% - 10px)',
@@ -60,6 +61,7 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
                     <WorkspaceSave fieldKey={'wsSelect'} files={wsList} value={wsSelect}
                         tooltip='workspace file system'/>
                 </div>
+            </div>
         );
 
         const showNoWSFiles = (
@@ -90,7 +92,7 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
     );
 
     return (
-        <div style={{height: '100%', width: '100%'}}>
+        <div style={{height: '100%', width: '100%', ...style}}>
             <div>
                 {children}
             </div>
@@ -108,9 +110,7 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
 
             {workspace && showLocation}
 
-            <div  style={{width: dialogWidth, height: dialogHeight}}>
-                {where === WORKSPACE && <ShowWorkspace/>}
-            </div>
+            {where === WORKSPACE && <ShowWorkspace/>}
         </div>
     );
 }

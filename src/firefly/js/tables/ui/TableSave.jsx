@@ -140,14 +140,16 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
         );
     };
     return (
-        <div style={{display: 'flex', flexDirection: 'column'}}>
-            <FieldGroup style={{ boxSizing: 'border-box', paddingLeft:5, paddingRight:5}}
+        <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
+            <FieldGroup style={{ boxSizing: 'border-box', paddingLeft:5, paddingRight:5, flexGrow: 1}}
                         groupKey={tblDownloadGroupKey}
                         reducerFunc={TableDLReducer(tbl_id)}>
-                <DownloadOptionsDialog fromGroupKey={tblDownloadGroupKey}
+                <DownloadOptionsDialog fromGroupKey={tblDownloadGroupKey} style={{width: 'unset', height: 'unset'}}
                                        children={fileFormatOptions()}
                                        workspace={isWs}
-                                       dialogHeight={0}/>
+                                       dialogWidth='100%'
+                                       dialogHeight='300px'
+                />
                 <RadioGroupInputField fieldKey='mode' initialState={{value: 'displayed'}} wrapperStyle={{marginTop:10}}
                                       options={[{value:'displayed', label:'Save table as displayed'}, {value:'original', label:'Save table as originally retrieved'}]}/>
                 <div style={{margin: '5px 22px', color: 'gray'}}>
