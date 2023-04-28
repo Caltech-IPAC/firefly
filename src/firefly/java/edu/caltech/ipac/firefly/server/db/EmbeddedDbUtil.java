@@ -23,6 +23,8 @@ import edu.caltech.ipac.table.*;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
@@ -49,8 +51,7 @@ import static edu.caltech.ipac.firefly.server.db.DbInstance.USE_REAL_AS_DOUBLE;
 import static edu.caltech.ipac.table.DataGroup.ROW_IDX;
 import static edu.caltech.ipac.table.DataType.descToType;
 import static edu.caltech.ipac.table.TableMeta.DERIVED_FROM;
-import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
-import static edu.caltech.ipac.util.StringUtils.isEmpty;
+import static edu.caltech.ipac.util.StringUtils.*;
 
 /**
  * @author loi
@@ -143,7 +144,7 @@ public class EmbeddedDbUtil {
      * @param forTable  table to run the query on.  the from part of the statement
      * @return
      */
-    public static DataGroupPart execRequestQuery(TableServerRequest treq, File dbFile, String forTable) {
+    public static DataGroupPart execRequestQuery(TableServerRequest treq, File dbFile, String forTable) throws DataAccessException {
         DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
         String selectPart = dbAdapter.selectPart(treq);
         String wherePart = dbAdapter.wherePart(treq);
@@ -179,7 +180,7 @@ public class EmbeddedDbUtil {
      * @param refTable      use meta information from this table
      * @return
      */
-    public static DataGroup execQuery(DbAdapter dbAdapter, File dbFile, String sql, String refTable) {
+    public static DataGroup execQuery(DbAdapter dbAdapter, File dbFile, String sql, String refTable) throws DataAccessException {
         DbInstance dbInstance = dbAdapter.getDbInstance(dbFile);
         sql = dbAdapter.translateSql(sql);
         String ddSql = refTable == null ? null : dbAdapter.getDDSql(refTable);
@@ -213,10 +214,9 @@ public class EmbeddedDbUtil {
         } catch (Exception e) {
             // catch for debugging
             logger.debug(String.format("execQuery failed with error: %s \n\t sql: %s \n\t refTable: %s \n\t dbFile: %s", e.getMessage(), sql, refTable, dbFile.getAbsolutePath()) );
-            throw e;
+            throw handleSqlExp(e);
         }
     }
-
 
 //====================================================================
 //  common util functions
@@ -229,7 +229,7 @@ public class EmbeddedDbUtil {
      * @param cols              columns to return.  Will return all columns if not given.
      * @return
      */
-    public static DataGroup getSelectedData(ServerRequest searchRequest, List<Integer> selRows, String... cols) {
+    public static DataGroup getSelectedData(ServerRequest searchRequest, List<Integer> selRows, String... cols) throws DataAccessException {
         TableServerRequest treq = (TableServerRequest)searchRequest;
         EmbeddedDbProcessor proc = (EmbeddedDbProcessor) SearchManager.getProcessor(searchRequest.getRequestId());
         String selCols = cols == null || cols.length == 0 ? "*" : Arrays.stream(cols).map( c -> (c.contains("\"") ? c : "\"" + c + "\"")).collect(Collectors.joining(","));
@@ -258,7 +258,7 @@ public class EmbeddedDbUtil {
      * @param cols              columns to return.  Will return all columns if not given.
      * @return
      */
-    public static MappedData getSelectedMappedData(ServerRequest searchRequest, List<Integer> selRows, String... cols) {
+    public static MappedData getSelectedMappedData(ServerRequest searchRequest, List<Integer> selRows, String... cols) throws DataAccessException {
         if (cols != null && cols.length > 0) {
             ArrayList<String> colsAry = new ArrayList<>(Arrays.asList(cols));
             if (!colsAry.contains(DataGroup.ROW_NUM)) {
@@ -280,7 +280,7 @@ public class EmbeddedDbUtil {
         return results;
     }
 
-    public static DataGroupPart getSelectedDataAsDGPart(ServerRequest searchRequest, List<Integer> selRows, String... cols) {
+    public static DataGroupPart getSelectedDataAsDGPart(ServerRequest searchRequest, List<Integer> selRows, String... cols) throws DataAccessException{
         return toDataGroupPart(getSelectedData(searchRequest, selRows, cols), (TableServerRequest) searchRequest);
     }
 
@@ -288,7 +288,7 @@ public class EmbeddedDbUtil {
         return new DataGroupPart(data, treq.getStartIndex(), data.size());
     }
 
-    public static void updateColumn(File dbFile, DbAdapter dbAdapter, DataType dtype, String expression, String editColName, String preset, String resultSetID, SelectionInfo si) {
+    public static void updateColumn(File dbFile, DbAdapter dbAdapter, DataType dtype, String expression, String editColName, String preset, String resultSetID, SelectionInfo si) throws DataAccessException {
 
         if (isEmpty(editColName)) return;
 
@@ -314,7 +314,7 @@ public class EmbeddedDbUtil {
             }
         } catch (Exception e) {
             // DDL statement are transactionally isolated, therefore need to manually rollback if this succeed but the next few statements failed.
-            throw e;
+            throw handleSqlExp(e);
         }
         try {
             TransactionTemplate txnJdbc = JdbcFactory.getTransactionTemplate(jdbc.getDataSource());
@@ -337,18 +337,18 @@ public class EmbeddedDbUtil {
             if (!dtype.getKeyName().equals(editColName)) {
                 jdbc.update(String.format("ALTER TABLE %s ALTER COLUMN \"%s\" RENAME TO \"%s\"", MAIN_DB_TBL, dtype.getKeyName(), editColName));
             }
-            throw e;
+            throw handleSqlExp(e);
         }
     }
 
-    public static void addColumn(File dbFile, DbAdapter dbAdapter, DataType dtype, String expression) {
+    public static void addColumn(File dbFile, DbAdapter dbAdapter, DataType dtype, String expression) throws DataAccessException {
         addColumn(dbFile, dbAdapter, dtype, expression, null, null, null, null);
     }
-    public static void addColumn(File dbFile, DbAdapter dbAdapter, DataType dtype, String expression, String preset, String resultSetID, SelectionInfo si) {
+    public static void addColumn(File dbFile, DbAdapter dbAdapter, DataType dtype, String expression, String preset, String resultSetID, SelectionInfo si) throws DataAccessException {
         addColumn(dbFile, dbAdapter, dtype, expression, preset, resultSetID, si, null);
 
     }
-    static void addColumn(File dbFile, DbAdapter dbAdapter, DataType dtype, String expression, String preset, String resultSetID, SelectionInfo si, String beforeCname) {
+    static void addColumn(File dbFile, DbAdapter dbAdapter, DataType dtype, String expression, String preset, String resultSetID, SelectionInfo si, String beforeCname) throws DataAccessException {
         DbAdapter.EmbeddedDbInstance dbInstance = (DbAdapter.EmbeddedDbInstance) dbAdapter.getDbInstance(dbFile);
         JdbcTemplate jdbc = JdbcFactory.getTemplate(dbInstance);
         beforeCname = isEmpty(beforeCname) ? "ROW_IDX" : beforeCname;
@@ -358,7 +358,7 @@ public class EmbeddedDbUtil {
             jdbc.update(String.format("ALTER TABLE %s ADD COLUMN \"%s\" %s BEFORE \"%s\"", MAIN_DB_TBL, dtype.getKeyName(), dbAdapter.toDbDataType(dtype), beforeCname));
         } catch (Exception e) {
             // DDL statement are transactionally isolated, therefore need to manually rollback if this succeed but the next few statements failed.
-            throw e;
+            throw handleSqlExp(e);
         }
         try {
             TransactionTemplate txnJdbc = JdbcFactory.getTransactionTemplate(jdbc.getDataSource());
@@ -379,7 +379,7 @@ public class EmbeddedDbUtil {
         } catch (Exception e) {
             // manually remove the added column
             jdbc.update(String.format("ALTER TABLE %s DROP COLUMN \"%s\"", MAIN_DB_TBL, dtype.getKeyName()));
-            throw e;
+            throw handleSqlExp(e);
         }
     }
 
@@ -731,6 +731,35 @@ public class EmbeddedDbUtil {
         }
         return  null;
     }
+
+    private static DataAccessException handleSqlExp(Exception e) {
+        String msg = e.getMessage();
+        if (e instanceof BadSqlGrammarException) {
+            // org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [select * from xyz order by aab]; nested exception is java.sql.SQLSyntaxErrorException: user lacks privilege or object not found: XYZ\n
+            String[] parts = groupMatch(".*\\[(.+)\\].* object not found: (.+)", msg);
+            if (parts != null && parts.length == 2) {
+                if (parts[1].equals("PUBLIC.DATA")) {
+                    return new DataAccessException("TABLE out-of-sync; Reload table to resume");
+                } else {
+                    return new DataAccessException(String.format("[%s] not found; SQL=[%s]", parts[1], parts[0]));
+                }
+            }
+            //org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [invalid sql]; nested exception is java.sql.SQLSyntaxErrorException: unexpected token: INVALID
+            parts = groupMatch(".*\\[(.+)\\].* unexpected token: (.+)", msg);
+            if (parts != null && parts.length == 2) {
+                return new DataAccessException(String.format("Unexpected token [%s]; SQL=[%s]", parts[1], parts[0]));
+            }
+        }
+        if (e instanceof DataIntegrityViolationException) {
+            String[] parts = groupMatch(".*\\[(.+)\\].*", msg);
+            if (parts != null && parts.length == 1) {
+                return new DataAccessException(String.format("Type mismatch; SQL=[%s]", parts[0]));
+            }
+        }
+
+        return new DataAccessException(e);
+    }
+
 
 //====================================================================
 //  privates functions
