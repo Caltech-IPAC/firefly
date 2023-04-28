@@ -300,7 +300,7 @@ export function updatePlotOverlayFromUserInput(plotId, whichOverlay, wp, radius,
     dispatchChangeDrawingDef(dl.drawLayerId,{...dl.drawingDef,color:'yellow'},plotId);
     dispatchModifyCustomField(dl.drawLayerId,{isInteractive: true},plotId);
 
-    if (!polygonAry && !isCone && wp && radius) {
+    if (!polygonAry && !isCone && wp && radius && canGeneratePolygon) {
         const cc= CsysConverter.make(plot);
         const cen= cc.getDeviceCoords(wp);
         const ptOnCone= cc.getDeviceCoords(makeWorldPt(wp.x,wp.y+radius));
