@@ -9,7 +9,7 @@ import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 import {computeCentralPointAndRadius,} from 'firefly/visualize/VisUtil.js';
 import CLICK from 'html/images/20x20_click.png';
 import PropTypes, {arrayOf, bool, number, object, oneOf, shape, string, func} from 'prop-types';
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useEffect, useRef, useState} from 'react';
 import {getTblById, makeFileRequest, onTableLoaded} from '../../api/ApiUtilTable.jsx';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount} from '../../core/AppDataCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
@@ -118,6 +118,7 @@ export const HiPSTargetView = ({style, hipsDisplayKey='none',
     const [getTargetWp,setTargetWp]= useFieldGroupValue(targetKey, groupKey);
     const [getHiPSRadius, setHiPSRadius]= useFieldGroupValue(sizeKey, groupKey);
     const [getPolygon, setPolygon]= useFieldGroupValue(polygonKey, groupKey);
+    const {current:lastWhichOverlay}= useRef({lastValue:undefined});
 
     const userEnterWorldPt= () =>  parseWorldPt(getTargetWp());
     const userEnterSearchRadius= () =>  Number(getHiPSRadius());
@@ -157,8 +158,10 @@ export const HiPSTargetView = ({style, hipsDisplayKey='none',
     },[pv]);
 
     useEffect(() => { // if target or radius field change then hips plot to reflect it
+        const canGeneratePolygon= whichOverlay!==lastWhichOverlay.lastValue;
         updatePlotOverlayFromUserInput(plotId, whichOverlay, userEnterWorldPt(),
-            userEnterSearchRadius(), userEnterPolygon(), false, true);
+            userEnterSearchRadius(), userEnterPolygon(), false, canGeneratePolygon);
+        lastWhichOverlay.lastValue= whichOverlay;
     }, [getTargetWp, getHiPSRadius, getPolygon, whichOverlay]);
 
     useEffect(() => {
