@@ -10,7 +10,7 @@ import {SqlTableFilter, code} from './FilterEditor.jsx';
 import {addOrUpdateColumn, deleteColumn} from '../../rpc/SearchServicesJson.js';
 import {getGroupFields, validateFieldGroup, getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
-import {getAllColumns, getColumn, getTableUiById, getTblById} from '../TableUtil.js';
+import {getAllColumns, getColumn, getTblById} from '../TableUtil.js';
 import {showPopup, showInfoPopup, showYesNoPopup} from '../../ui/PopupUtil.jsx';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
@@ -304,15 +304,16 @@ const Samples = () => {
 };
 
 
-function parseError(err, params={}) {
-    // samples: "StatementCallback; bad SQL grammar [ALTER TABLE DATA ADD COLUMN newCol double]; nested exception is java.sql.SQLSyntaxErrorException: object name already exists in statement [ALTER TABLE DATA ADD COLUMN newCol double]"
-    //          "StatementCallback; bad SQL grammar [ALTER TABLE DATA ADD COLUMN newCol-2 double]; nested exception is java.sql.SQLSyntaxErrorException: unexpected token: -"
-    const {cname, expression} = params;
-    // column exists in table
-    if (err?.message?.match(/name already exists/)) return `ERROR: A column with the name "${cname}" already exists in the table`;
-
-    // unexpected error
-    return err?.message;
+function parseError(err) {
+    if (err) {
+        const [main, details] = err.message.split(';');
+        return  (
+            <div>
+                <div style={{fontWeight: 'bold', marginBottom: 5}}>{main}</div>
+                <code>{details}</code>
+            </div>
+        );
+    } else return 'Operation failed with unexpected error.';
 }
 
 
