@@ -14,7 +14,7 @@
 #### This release some significant new features and code clean up
 
 #### New Features
-- TAP Upload: [Firefly-1142](https://github.com/Caltech-IPAC/firefly/pull/1317), [Firefly-1148](https://github.com/Caltech-IPAC/firefly/pull/1331), [Firefly-1189](https://github.com/Caltech-IPAC/firefly/pull/1340)
+- TAP Upload: [Firefly-1142](https://github.com/Caltech-IPAC/firefly/pull/1317), [Firefly-1148](https://github.com/Caltech-IPAC/firefly/pull/1331), [Firefly-1189](https://github.com/Caltech-IPAC/firefly/pull/1337)
 - Improve TAP UI: [Firefly-1215](https://github.com/Caltech-IPAC/firefly/pull/1354)
 - Improved Click to search UI:  [Firefly-1152](https://github.com/Caltech-IPAC/firefly/pull/1326)
 - Improved Derived columns UI:  [Firefly-1153](https://github.com/Caltech-IPAC/firefly/pull/1330)
