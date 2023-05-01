@@ -709,11 +709,11 @@ public class EmbeddedDbUtil {
                     List<Map<String, Object>> vals = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
                             .queryForList(String.format("SELECT distinct \"%s\" FROM data order by 1", cname));
 
-                    if (vals.size() <= MAX_COL_ENUM_COUNT) {
+                    DataType col = findColByName(inclCols, cname);
+                    if (col != null && vals.size() <= MAX_COL_ENUM_COUNT) {
                         String enumVals = vals.stream()
-                                .map(m -> m.get(cname) == null ? NULL_TOKEN : m.get(cname).toString())  // list of map to list of string(colname)
-                                .collect(Collectors.joining(","));                          // combine the names into comma separated string.
-                        DataType col = findColByName(inclCols, cname);
+                                .map(m -> m.get(cname) == null ? NULL_TOKEN : m.get(cname).toString())   // convert to list of value as string
+                                .collect(Collectors.joining(","));                              // combine the values into a comma separated values string.
                         if (col != null)  col.setEnumVals(enumVals);
                         // update dd table
                         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))

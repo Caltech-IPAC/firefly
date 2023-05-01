@@ -182,7 +182,6 @@ PlotlyChartArea.propTypes = {
 
 function renderAsThumbnail(layout) {
     const axisOverride = {
-        autorange: true,
         showgrid: false,
         zeroline: false,
         showline: false,
