@@ -615,10 +615,16 @@ class TableRecognizer {
             let lonCol;
             let latCol;
             if (useReg) {
-                const reLon= new RegExp(`^[A-z]*[-_]?(${lon})[1-9]*$`);
-                const reLat= new RegExp(`^[A-z]*[-_]?(${lat})[1-9]*$`);
+                let reLon= new RegExp(`^[A-z]*[-_]?(${lon})[1-9]*$`);
+                let reLat= new RegExp(`^[A-z]*[-_]?(${lat})[1-9]*$`);
                 lonCol = findColumn(lon,reLon);
                 latCol = findColumn(lat,reLat);
+                if (!lonCol || !latCol) {
+                    reLon= new RegExp(`^${lon}[-_].*$`);
+                    reLat= new RegExp(`^${lat}[-_].*$`);
+                    lonCol = findColumn(lon,reLon);
+                    latCol = findColumn(lat,reLat);
+                }
                 if (lonCol && latCol) {
                     if (lonCol.name.replace(lon,'') !== latCol.name.replace(lat,'')) return undefined;
                 }
