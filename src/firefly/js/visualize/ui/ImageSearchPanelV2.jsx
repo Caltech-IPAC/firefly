@@ -74,13 +74,14 @@ export const genHiPSPlotId = getHiPSPlotId();
 /**
  * returns the context information
  * @param [renderTreeId]
+ * @param [presetViewerId] if defined, then use as viewerId
  * @returns {ContextInfo}
  */
-function getContexInfo(renderTreeId) {
+function getContexInfo(renderTreeId, presetViewerId) {
     const mvroot = getMultiViewRoot();
-    let plotId = get(visRoot(), 'activePlotId');
-    let viewerId = plotId && findViewerWithItemId(mvroot, plotId, IMAGE);
-    let viewer = viewerId && getViewer(mvroot, viewerId);
+    let plotId = visRoot()?.activePlotId;
+    let viewerId= presetViewerId ? presetViewerId : (plotId && findViewerWithItemId(mvroot, plotId, IMAGE));
+    let viewer = getViewer(mvroot, viewerId);
 
     if (viewer && renderTreeId && viewer.renderTreeId && renderTreeId!==viewer.renderTreeId) {
         viewer = getAViewFromMultiView(mvroot, IMAGE, renderTreeId);
@@ -136,7 +137,8 @@ function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiS
 
 export function ImageSearchDropDown({gridSupport, resizable=false, initArgs}) {
     const {renderTreeId} = useContext(RenderTreeIdCtx);
-    const {plotId, viewerId, multiSelect} = getContexInfo(renderTreeId);
+    const {viewerId:presetViewerId}= initArgs?.searchParams ?? {viewerId:undefined};
+    const {plotId, viewerId, multiSelect} = getContexInfo(renderTreeId, presetViewerId);
     const onSubmit = (request) => onSearchSubmit({request, plotId, viewerId, gridSupport, renderTreeId});
     return <ImageSearchPanel {...{resizable, gridSupport, onSubmit, multiSelect, onCancel:dispatchHideDropDown, initArgs}}/>;
 }

@@ -706,7 +706,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
     const validUpload= Boolean(serverFile && upLonCol && upLatCol && canUpload);
     const preFix= validUpload ? `${getAsEntryForTableName(tableName)}.` : '';
     if (!validUpload && spatialType===MULTI) {
-        if (!serverFile) errList.addError('Upload file is not been specified');
+        if (!serverFile) errList.addError('Upload file has not been specified');
         if (!upLonCol && !upLatCol) errList.addError('Upload columns have not been specified');
         if (!upLonCol) errList.addError('Upload Longitude column have not been specified');
         if (!upLatCol) errList.addError('Upload Latitude column have not been specified');

@@ -20,7 +20,7 @@
 - Improved Derived columns UI:  [Firefly-1153](https://github.com/Caltech-IPAC/firefly/pull/1330)
 - Improved Charting and Spectral UI layout: [Firefly-1183](https://github.com/Caltech-IPAC/firefly/pull/1348)
 - Improve 3-color selection: [Firefly-1134](https://github.com/Caltech-IPAC/firefly/pull/1310)
-- UCS support: [Firefly-1128](https://github.com/Caltech-IPAC/firefly/pull/1308), [Firefly-1129](https://github.com/Caltech-IPAC/firefly/pull/1319)
+- UWS support: [Firefly-1128](https://github.com/Caltech-IPAC/firefly/pull/1308), [Firefly-1129](https://github.com/Caltech-IPAC/firefly/pull/1319)
 - Faster image loading: [Firefly-1190](https://github.com/Caltech-IPAC/firefly/pull/1338)
 - Table of loaded image available in pinned image section: [Firefly-1081](https://github.com/Caltech-IPAC/firefly/pull/1344)
 - Obscore table packaging: [Firefly-1193](https://github.com/Caltech-IPAC/firefly/pull/1351)

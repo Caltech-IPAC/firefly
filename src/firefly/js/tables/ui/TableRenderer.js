@@ -9,7 +9,7 @@ import {set, get, isEqual, pick, omit, isEmpty, isString, toNumber} from 'lodash
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
 import {
     isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue, getTypeLabel,
-    getColumnIdx, getRowValues, getCellValue, getTableUiByTblId, splitCols
+    getColumnIdx, getRowValues, getCellValue, getTableUiByTblId, splitCols, isOfType
 } from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
@@ -166,7 +166,9 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
     const options = enumVals.split(',')
                         .map( (s) => {
                             const value = s === '' ? '%EMPTY' : s;                  // because CheckboxGroupInputField does not support '' as an option, use '%EMPTY' as substitute
-                            const label = value === NULL_TOKEN ? '<NULL>' : value === '%EMPTY' ? '<EMPTY_STR>' : value;
+                            let label = value;
+                            if (value === NULL_TOKEN)       label = isOfType(col.type, COL_TYPE.BOOL) ? 'false' : '<NULL>';  // handle null value
+                            else if (value === '%EMPTY')    label = '<EMPTY_STR>';                                           // handle empty string
                             return {label, value};
                         } );
     let value;
