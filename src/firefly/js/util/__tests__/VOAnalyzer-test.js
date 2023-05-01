@@ -45,11 +45,29 @@ describe('VOAnalyzer:', () => {
         expect(actual.lonCol).toEqual('ra1');
         expect(actual.latCol).toEqual('dec1');
 
+        // test ra_obj/dec_obj
+        table.tableData.columns = [
+            {name: 'ra_obj'},
+            {name: 'dec_obj'},
+        ];
+        actual = findTableCenterColumns(table);
+        expect(actual).toBeTruthy();
+        expect(actual.lonCol).toEqual('ra_obj');
+        expect(actual.latCol).toEqual('dec_obj');
+
 
         // test fail
         table.tableData.columns = [
-            {name: 'ra_unrecognized'},
-            {name: 'dec_unrecognized'}
+            {name: 'my_ra_unrecognized'},
+            {name: 'my_dec_unrecognized'}
+        ];
+        actual = findTableCenterColumns(table);
+        expect(actual).toBeFalsy();
+
+        // test fail
+        table.tableData.columns = [
+            {name: 'rastuff'},
+            {name: 'decstuff'}
         ];
         actual = findTableCenterColumns(table);
         expect(actual).toBeFalsy();
