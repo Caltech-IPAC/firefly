@@ -5,6 +5,7 @@ import {sprintf} from '../externalSource/sprintf.js';
 import {getTableUiByTblId, makeFileRequest} from '../api/ApiUtilTable.jsx';
 import {makeVOCatalogRequest} from '../tables/TableRequestUtil.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
+import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 import {setMultiSearchPanelTab} from './MultiSearchPanel.jsx';
 import {Format} from 'firefly/data/FileAnalysis';
 import {doJsonRequest} from 'firefly/core/JsonUtils';
@@ -28,7 +29,10 @@ export const showTapSearchPanel= (searchParams={}) => {
     if (view==='MultiTableSearchCmd') setMultiSearchPanelTab('tap');
 };
 
-const showImage= (initArgs) => dispatchShowDropDown( { view: 'ImageSelectDropDownCmd', initArgs});
+const showImage= (initArgs) => {
+    const modInitArgs= {...initArgs, searchParams: {...initArgs.searchParams, viewerId:DEFAULT_FITS_VIEWER_ID}};
+    dispatchShowDropDown( { view: 'ImageSelectDropDownCmd', initArgs:modInitArgs});
+};
 
 export const makeDefTapSearchActions = () => {
     return [
