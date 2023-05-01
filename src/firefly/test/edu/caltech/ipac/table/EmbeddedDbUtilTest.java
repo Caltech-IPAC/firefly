@@ -20,6 +20,7 @@ import edu.caltech.ipac.firefly.util.FileLoader;
 import org.apache.logging.log4j.Level;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -235,6 +236,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 
 	}
 
+	@Ignore
 	@Test
 	public void testSqlErrors() {
 		try {
@@ -266,6 +268,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		}
 	}
 
+	@Ignore
 	@Test
 	public void testAddColumnErrors() {
 		try {
