@@ -40,7 +40,6 @@ class SpectralCubeEval implements FitsEvaluation.Eval {
             relatedDataList.add(
                     RelatedData.makeWavelengthTabularRelatedData(params, "WAVE-TAB", "Table Wavelength information",
                             tableHdu.hduName, tableHdu.hduVersion, tableHdu.hduLevel, tableHdu.hduIdx));
-
         }
         return relatedDataList;
     }
@@ -75,7 +74,7 @@ class SpectralCubeEval implements FitsEvaluation.Eval {
      *
      * @param HDUs FITS HDUs
      * @param tabExtId Extension ID of the table lookup extension
-     * @return matching tab extension null if it can not be found
+     * @return matching tab extension; null if it can not be found or there are more than one matching extension
      */
     private static TableHdu findTabExtension(BasicHDU<?>[] HDUs, ExtId tabExtId) {
 
@@ -90,10 +89,10 @@ class SpectralCubeEval implements FitsEvaluation.Eval {
                 if (extId.equals(tabExtId)) {
                     if (tabExtHdu == null) {
                         tabExtHdu = new TableHdu(i, extId.extName, extId.extVer, extId.extLevel);
-                    }
                     } else {
                         // duplicate extension ids - the result of table lookup is undefined
                         return null;
+                    }
                 }
             }
         }
