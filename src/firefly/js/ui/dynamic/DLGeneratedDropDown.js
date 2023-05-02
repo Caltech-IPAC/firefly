@@ -22,8 +22,10 @@ import {getHiPSZoomLevelForFOV} from '../../visualize/HiPSUtil.js';
 import {dispatchChangeCenterOfProjection, dispatchZoom} from '../../visualize/ImagePlotCntlr.js';
 import {getPlotViewById, primePlot} from '../../visualize/PlotViewUtil.js';
 import {pointEquals} from '../../visualize/Point.js';
+import {CONE_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
 import {isHiPS} from '../../visualize/WebPlot.js';
 import {UserZoomTypes} from '../../visualize/ZoomUtil.js';
+import {getSpacialSearchType, hasValidSpacialSearch} from './DynComponents.jsx';
 import {confirmDLMenuItem} from './FetchDatalinkTable.js';
 import {
     getStandardIdType, ingestInitArgs,
@@ -511,6 +513,14 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
 
     const submitSearch= (r) => {
         const {fds, standardID, idx}= findFieldDefInfo(r);
+
+        if (!hasValidSpacialSearch(r,fds)) {
+            showInfoPopup( getSpacialSearchType(r,fds)===CONE_CHOICE_KEY ?
+                'Target is required' :
+                'Search Area is require and must have at least 3 point pairs, each separated by commas');
+            return false;
+        }
+        
         const convertedR= convertRequest(r,fds,getStandardIdType(standardID));
 
         const numKeys= [...new Set(fds.map( ({key}) => key))].length;
