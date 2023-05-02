@@ -28,6 +28,8 @@ public class RelatedData implements Serializable, HasSizeOf {
     private Map<String,String> searchParams= new HashMap<>();
     private Map<String,String> availableMask= new HashMap<>();
     private String hduName= null;
+    private int hduVersion= 1;
+    private int hduLevel= 1;
     private int hduIdx= -1;
     private long size= 0;
 
@@ -113,11 +115,14 @@ public class RelatedData implements Serializable, HasSizeOf {
 
     public static RelatedData makeWavelengthTabularRelatedData(Map<String,String> searchParams,
                                                                String dataKey, String desc,
-                                                               String hduName, int hduIdx ) {
+                                                               String hduName, int hduVersion, int hduLevel,
+                                                               int hduIdx ) {
         RelatedData d= new RelatedData(WAVELENGTH_TABLE, dataKey, desc);
         d.searchParams= searchParams;
         d.hduIdx= hduIdx;
         d.hduName= hduName;
+        d.hduVersion= hduVersion;
+        d.hduLevel= hduLevel;
         return d;
     }
 
@@ -140,6 +145,8 @@ public class RelatedData implements Serializable, HasSizeOf {
     public String getDesc() { return desc;}
     public Map<String,String> getSearchParams() { return searchParams;}
     public String getHduName() { return hduName;}
+    public int getHduVersion() { return hduVersion;}
+    public int getHduLevel() {return hduLevel;}
     public int getHduIdx() { return hduIdx;}
 }
 
