@@ -72,7 +72,7 @@ public class ZipHandler {
             filename = FileUtil.getUniqueFileNameForGroup(fi.getExternalName(), dupMap);
 
             int inBufSize = 4096;
-            if (filename != null && FileUtil.isExtension(filename, FileUtil.GZ)) {
+            if (filename != null && FileUtil.isExtension(filename, FileUtil.GZ)) { //if the file to be downloaded is gzipped, not that inputstream (from server) is gzipped
                 InputStream decompressedIs = null;
                 try {// try to uncompress the data
                     decompressedIs = new GZIPInputStream(is);  // for uncompressed data, throw an exception
@@ -169,7 +169,8 @@ public class ZipHandler {
             try {
                 URL url = new URL(filename);
                 Map<String, String> cookies = fi.getRequestInfo() != null ? fi.getRequestInfo().getCookies() : null;
-                Map<String, String> headers = fi.getRequestInfo() != null ? fi.getRequestInfo().getHeaders() : null;
+                Map<String, String> headers = fi.getRequestInfo() != null ? fi.getRequestInfo().getHeaders() : new HashMap<>();
+                headers.put("Accept-Encoding", "identity"); // comment for gzip case
                 URLConnection uc = URLDownload.makeConnection(url, cookies, headers);
                 uc.setRequestProperty("Accept", "text/plain");
 
