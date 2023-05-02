@@ -12,17 +12,16 @@ const precision = 10;
  * This is the unit test suits for Wavelength.  For each algorithm, the expected value is calculated independently based
  * on the algorithm in the reference paper and the known header data values.
  *
- * For Linear, Log, F2W, V2W, the four known points (pointArray) are used.
- * For TAB, the known simulated testing data wavelengthTable.fits stored in firefly_test_data under the same path as
- * projection is used.  The coordinates and index arrays are known and so are the psi_m and the pixIndex array.
+ * The testing data is stored as a json format. FitsHeaderToJson.java utility class can be used to convert FITS header
+ * to JSON.
+ *
+ * For Linear, Log, F2W, V2W the four known world points (pointArray) and test files are used.
+ * The TAB algorithm is tested with the header and lookup table in a JSON string (jsonTAB).
+ *
  * The expected value is calculated according to the algorithm in the reference paper.
+ * The actual values are calculated using Wavelength.js.
  *
- * For all the algorithm, the calculated values are the values that calculated using the Wavelength.js.
- *
- * The unit tests verify the the calculated values against the expected values.
- *
- * The testing data is stored as a json format.  The testing data wavelengthTableHeader.json was created using
- * the utility class FitsHeaderToJson.java.
+ * The unit tests verify the calculated values against the expected values.
  *
  */
 const pointArray = [
@@ -153,15 +152,9 @@ function getParamValues(header, algorithm) {
         if (pc_3j[i] === undefined) {
             throw Error('Either PC3_i or CD3_i has to be defined');
         }
-
-        if (algorithm === 'LOG') {
-            //the values in CRPIXk and CDi_j (PC_i_j) are log based on 10 rather than natural log, so a factor is needed.
-            r_j[i] *= Math.log(10);
-            pc_3j[i] *= Math.log(10);
-        }
     }
 
-    const cdelt = parseFloat(getHeader(header, 'CDELT3', '0'));
+    const cdelt = parseFloat(getHeader(header, 'CDELT3', '1.0'));
     const crval = parseFloat(getHeader(header, 'CRVAL3', '0.0'));
     return {N, r_j, pc_3j, cdelt, crval};
 }

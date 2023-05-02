@@ -487,6 +487,29 @@ export function getRowValues(tableModel, rowIdx) {
 }
 
 /**
+ * Shape values according to arraySize specification.
+ * @param {TableColumn} col
+ * @param {Object} val
+ * @returns {*} shaped value, if a column is an array or an unchanged value
+ */
+export function convertToArraySize(col, val) {
+
+    const aryDim = (col.arraySize || '').split('x');
+
+    if (col.type === 'char' && aryDim.length > 0) {
+        aryDim.shift();    // remove first dimension because char array is presented as string
+    }
+
+    if (aryDim.length > 1) {
+        for(let i = 0; i < aryDim.length-1; i++) {
+            val = chunk(val, parseInt(aryDim[i]));
+        }
+    }
+    return val;
+}
+
+
+/**
  * Firefly has 3 column meta that affect the formatting of the column's data.  They are
  * listed below in order of highest to lowest precedence.
  *
@@ -511,17 +534,7 @@ export function formatValue(col, val) {
     if (isNil(val)) return (nullString || '');
 
     if (Array.isArray(val)) {
-        const aryDim = (col.arraySize || '').split('x');
-
-        if (col.type === 'char' && aryDim.length > 0) {
-           aryDim.shift();    // remove first dimension because char array is presented as string
-        }
-
-        if (aryDim.length > 1) {
-            for(let i = 0; i < aryDim.length-1; i++) {
-                val = chunk(val, aryDim[i]);
-            }
-        }
+        val = convertToArraySize(col, val);
         return isString(val) ? val : JSON.stringify(val);
     }
 
