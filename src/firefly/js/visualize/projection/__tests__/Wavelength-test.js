@@ -257,7 +257,7 @@ describe('A test suite for Wavelength.js', function () {
         const header = jsonTAB.header;
         const wlTable = jsonTAB.wlTable;
         const wlData= parseWavelengthHeaderInfo(header, 'w', undefined,
-            [ {dataType:RDConst.WAVELENGTH_TABLE_RESOLVED, table:wlTable, hduName:'WCS-table'} ]);
+            [ {dataType:RDConst.WAVELENGTH_TABLE_RESOLVED, table:wlTable, hduName:'WCS-table', hduVersion: 1, hduLevel: 1} ]);
 
         const calculatedWl = [];
         for (let i = 0; i < pointArrayTAB.length; i++) {
