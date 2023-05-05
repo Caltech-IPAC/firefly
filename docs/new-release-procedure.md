@@ -32,14 +32,14 @@
    - _example:_ from the example above the release would be built with: `rc-2021.2`, `2021.2`,`2021.2.1`, `latest`
    - `BUILD_ENV`: Select 'ops'
    - `ACTION`: Select 'both'  
-   - `DEPLOY_ENV`: Select 'ops' to have this release deploy to fireflyops.ipac.caltech.edu
+   - `DEPLOY_ENV`: Select 'ops' to have this release deploy to `fireflyops.ipac.caltech.edu`
    - _notes:_ 
        - the `rc-yyyy.m` docker tag does not represent the release, it is just the most recent build of the branch
        - the `yyyy.m` docker tag always represents the latest release of the version
        - the `latest` tag is always the latest formal release. (note- development release use `nightly`)
        
 ### Test the Build
-    - Try in in the firefly dev build you just main
+    - Try in in the firefly dev build you just made
    
 ### Merge RC and Start a new development cycle
    - merge rc into dev, use `--no-ff` to create a new commit
@@ -52,7 +52,7 @@
      - For example- If you just did the 2022.1.0 release, and we are beginning work on the 2022.2 cycle: 
        - on the dev branch
        - `git tag cycle-2022.2`
-       -
+
 ### Update Docs
    - add any improvements to this file
    - commit and push dev, _example message_ - "Post 2021.1 release: dev clean up"
@@ -62,7 +62,7 @@
    - Go to the Firefly page on docker hub. https://cloud.docker.com/u/ipac/repository/docker/ipac/firefly
    - Edit the markdown to include the recent tags
    
-### Publish on Github
+### Publish on GitHub
    - The text should use the [release-page-template.md](release-page-template.md)
    - After using the template, copy the markdown (for this release only) from the release-notes.md
     - paste markdown at the end of the template
