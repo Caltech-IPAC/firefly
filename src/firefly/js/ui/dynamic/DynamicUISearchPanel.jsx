@@ -60,6 +60,12 @@ export function DynamicForm({DynLayoutPanel, groupKey,fieldDefAry, onSubmit, onE
     );
 }
 
+function cleanupPolygonString(inStr='') {
+   return inStr.replaceAll(',', ' ')
+       .split(' ')
+       .filter( (s) => s)
+       .join(' ');
+}
 
 export function convertRequest(request, fieldDefAry, standardIDType) {
     const retReq= fieldDefAry.reduce( (out, {key,type, targetDetails:{raKey,decKey, targetKey,polygonKey, sizeKey}={} }) => {
@@ -77,8 +83,8 @@ export function convertRequest(request, fieldDefAry, standardIDType) {
             case UNKNOWN:
                 return out;
             case POLYGON:
-                if (standardIDType===standardIDs.sia) out[key]= 'POLYGON ' +request[polygonKey].replaceAll(',', '');
-                else if (standardIDType===standardIDs.soda) out[key]= request[polygonKey].replaceAll(',', '');
+                if (standardIDType===standardIDs.sia) out[key]= 'POLYGON ' +cleanupPolygonString(request[polygonKey]);
+                else if (standardIDType===standardIDs.soda) out[key]= cleanupPolygonString(request[polygonKey]);
                 else out[key]=request[polygonKey];
                 return out;
             case CHECKBOX:
