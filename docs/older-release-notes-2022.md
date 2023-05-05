@@ -23,7 +23,7 @@
 - Improved MOC uploading: [Firefly-1124](https://github.com/Caltech-IPAC/firefly/pull/1294)
 - Datalink driven searchform: [Firefly-993](https://github.com/Caltech-IPAC/firefly/pull/1298)
 - Improving chart/table pinning: [Firefly-1024](https://github.com/Caltech-IPAC/firefly/pull/1299)
-- Improved mask layer UI: [Firefly-1033](https://github.com/Caltech-IPAC/firefly/pull/1304)
+- Improved mask layer UI: [Firefly-1133](https://github.com/Caltech-IPAC/firefly/pull/1304)
 - TAP panel stability and features: [Firefly-1115](https://github.com/Caltech-IPAC/firefly/pull/1286)
 
 #### Infrastructure Enhancements
