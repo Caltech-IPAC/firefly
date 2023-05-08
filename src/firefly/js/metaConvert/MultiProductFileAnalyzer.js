@@ -1,5 +1,4 @@
 import {FileAnalysisType} from '../data/FileAnalysis';
-import {Logger} from '../util/Logger.js';
 import {
     createGridImagesActivate,
     createSingleImageActivate,

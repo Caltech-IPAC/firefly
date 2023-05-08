@@ -36,8 +36,8 @@ export async function getServiceDescSingleDataProduct(table, row, activateParams
         try {
             const datalinkTable= await doFetchTable(makeFileRequest('dl table', dlUrl));
             const positionWP= makeWorldPtUsingCenterColumns(table,row);
-            return processDatalinkTable(table,row,datalinkTable,positionWP,activateParams,
-                !isEmpty(menu)?menu:undefined);
+            return processDatalinkTable({sourceTable:table,row,datalinkTable,positionWP,activateParams,
+                additionalServiceDescMenuList:!isEmpty(menu)?menu:undefined});
         }
         catch (reason) {
             return isEmpty(menu) ?
