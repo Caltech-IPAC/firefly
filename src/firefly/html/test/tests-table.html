@@ -445,6 +445,44 @@ added in this test.  Open console, then
     </script>
 </template>
 
+
+<template title="Data Discovery NED" class="tpl">
+    <div id="expected" >
+        <div style="margin: 10px">
+            <p>
+                Even with bad pageSize placement, Firefly should default to MAX_ROWS and not fail.
+            </p>
+
+        </div>
+    </div>
+    <div id="actual"  class="box x3"/>
+    <script>
+        function onFireflyLoaded(firefly) {
+            firefly.action.dispatchAppOptions({"help.base.url": "/onlinehelp/discovery/"});
+            firefly.debug = true;
+
+            var tblReq = firefly.util.table.makeFileRequest(
+                'SED: raw',
+                'http://ned.ipac.caltech.edu/cgi-bin/datasearch?search_type=Photometry&objname=MESSIER+101&of=xml_main',
+                null,
+                {}
+            );
+
+            var wrapperReq = firefly.util.table.makeTblRequest(
+                'IpacTableFromSource',
+                'NED SED',
+                {searchRequest: tblReq},
+                {filters: '"NED Units" = \'Jy\''},
+                {pageSize: 50}
+            );
+
+            firefly.showTable('actual', wrapperReq, {setAsActive: false});
+        }
+    </script>
+</template>
+
+
+
 <!-- this is where test cases will be attached-->
 <div id="tst-container"/>
 

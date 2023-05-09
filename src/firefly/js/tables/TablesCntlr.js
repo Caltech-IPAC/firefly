@@ -18,6 +18,7 @@ import { trackBackgroundJob, isSuccess, isDone, getErrMsg} from '../core/backgro
 import {REINIT_APP, getAppOptions} from '../core/AppDataCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
+import {fixPageSize} from './TableUtil.js';
 
 
 export const TABLE_SPACE_PATH = 'table_space';
@@ -333,7 +334,8 @@ function tableSearch(action) {
             const {tbl_id} = request;
             const title = get(request, 'META_INFO.title');
             // use pageSize when given.  otherwise, use default or max if paging is not shown.
-            request.pageSize = options.pageSize = options.pageSize ?? request.pageSize ?? (showPaging ? getAppOptions()?.table?.pageSize : MAX_ROW);
+            const pageSize = options.pageSize ?? request.pageSize ?? (showPaging ? getAppOptions()?.table?.pageSize : MAX_ROW);
+            request.pageSize = options.pageSize = fixPageSize(pageSize);
             if (TblUtil.getTblById(tbl_id)) {
                 // table exists... this is a new search.  old data should be removed.
                 dispatchTableRemove(tbl_id, false);
@@ -378,7 +380,7 @@ function fixClientTable(tableModel) {
         tableModel = TblUtil.cloneClientTable(tableModel);
     }
 
-    if (!tableModel?.request?.pageSize) set(tableModel, 'request.pageSize', MAX_ROW);
+    set(tableModel, 'request.pageSize', fixPageSize(tableModel.request?.pageSize));
 
     return tableModel;
 }
@@ -390,10 +392,8 @@ function tblResultsAdded(action) {
             var {tbl_id, title, options={}, tbl_ui_id} = action.payload;
 
             options = Object.assign({tbl_group: 'main', removable: true, setAsActive:true}, options);
-            const pageSize = get(options, 'pageSize');
-            if ( pageSize && !Number.isInteger(pageSize)) {
-                options.pageSize = parseInt(pageSize);
-            }
+            if (options.pageSize)   options.pageSize = fixPageSize(options.pageSize);
+
             if (!TblUtil.getTableInGroup(tbl_id, options.tbl_group)) {
                 tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
                 dispatch({type: TBL_RESULTS_ADDED, payload: {tbl_id, title, tbl_ui_id, options}});
