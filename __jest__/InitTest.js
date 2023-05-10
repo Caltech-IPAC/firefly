@@ -38,7 +38,11 @@ jest.mock('firefly/core/background/BackgroundMonitor.jsx', () => {
 
 jest.mock('firefly/core/LayoutCntlr.js', () => {
     return {
-        CHART_ADD: 'CHART_ADD', CHART_REMOVE: 'CHART_REMOVE', CHART_SPACE_PAT:'CHART_SPACE_PAT'
+        CHART_ADD: 'CHART_ADD',
+        CHART_REMOVE: 'CHART_REMOVE',
+        CHART_SPACE_PAT:'CHART_SPACE_PAT',
+        LAYOUT_PATH: 'layout',
+        reducer: (x) => x ?? {},
     };
 });
 
