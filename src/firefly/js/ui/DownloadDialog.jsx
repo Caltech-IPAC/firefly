@@ -141,10 +141,10 @@ const preTitleCss = {
 let dlTitleIdx = 0;
 const newBgKey = () => 'DownloadOptionPanel-' + Date.now();
 
-export function DownloadOptionPanel (props) {
-    const {groupKey, cutoutSize, help_id, children, style, title, dlParams, updateSearchRequest=null, updateDownloadRequest=null} = props;
-    const { cancelText='Cancel', showZipStructure=true, showEmailNotify=true, showFileLocation=true, showTitle=true } = props;
-
+export function DownloadOptionPanel ({groupKey, cutoutSize, help_id, children, style, title, dlParams,
+                                         updateSearchRequest, updateDownloadRequest, validateOnSubmit,
+                                         cancelText='Cancel', showZipStructure=true, showEmailNotify=true,
+                                         showFileLocation=true, showTitle=true, ...props}) {
     const {tbl_id:p_tbl_id, checkSelectedRow} = React.useContext(OptionsContext);
     const tbl_id = props.tbl_id || p_tbl_id;
 
@@ -159,6 +159,12 @@ export function DownloadOptionPanel (props) {
         const selectInfoCls = SelectInfo.newInstance(selectInfo);
         if (checkSelectedRow && !selectInfoCls.getSelectedCount()) {
             return showInfoPopup('You have not chosen any data to download', 'No Data Selected');
+        }
+
+        const {valid, message} = validateOnSubmit?.(formInputs) ?? {valid : true};
+        if (!valid) {
+            showInfoPopup(message ?? 'Invalid form input(s)', 'Error in form inputs');
+            return false; // to prevent FormPanel to submit
         }
 
         formInputs.wsSelect = formInputs.wsSelect && formInputs.wsSelect.replace(WS_HOME, '');
@@ -256,6 +262,7 @@ DownloadOptionPanel.propTypes = {
     showFileLocation: PropTypes.bool,           // layout FileLocation field
     updateSearchRequest: PropTypes.func,   // customized parameters to be added or updated in request
     updateDownloadRequest:PropTypes.func,
+    validateOnSubmit: PropTypes.func,      // to validate form inputs on submit
     dlParams:   PropTypes.shape({               // these params should be used as defaults value if they appears as input fields
         TitlePrefix:    PropTypes.string,           // default title of the download..  an index number will be appended to this.
         FilePrefix:     PropTypes.string,           // packaged file prefix

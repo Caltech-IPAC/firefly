@@ -3,21 +3,15 @@ import {getAppOptions} from '../core/AppDataCntlr.js';
 import {sprintf} from '../externalSource/sprintf.js';
 import {tokenSub} from '../util/WebUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
-import {RangeValues, SIGMA, STRETCH_LINEAR} from '../visualize/RangeValues.js';
+import {RangeValues} from '../visualize/RangeValues.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {getCellValue, doFetchTable, hasRowAccess, getColumn, getColumns, getMetaEntry} from '../tables/TableUtil.js';
 import {
-    getObsCoreAccessURL,
-    getObsCoreProdType,
-    getServiceDescriptors,
-    isDataLinkServiceDesc, isFormatPng
+    getObsCoreAccessURL, getObsCoreProdType, getObsTitle,
+    getServiceDescriptors, isDataLinkServiceDesc, isFormatPng
 } from '../util/VOAnalyzer.js';
-import {
-    getObsCoreProdTypeCol,
-    isFormatDataLink,
-    isFormatVoTable,
-    makeWorldPtUsingCenterColumns
-} from '../util/VOAnalyzer';
+import { getObsCoreProdTypeCol, isFormatDataLink, isFormatVoTable,
+    makeWorldPtUsingCenterColumns } from '../util/VOAnalyzer';
 import {makeFileRequest} from '../tables/TableRequestUtil';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {createGridImagesActivate, createSingleImageExtraction} from './ImageDataProductsUtil.js';
@@ -133,10 +127,11 @@ export async function getObsCoreSingleDataProduct(table, row, activateParams, se
     if (isDataLink) {
         try {
             const datalinkTable= await doFetchTable(makeFileRequest('dl table', dataSource));
-            return processDatalinkTable(table,row,datalinkTable,positionWP,activateParams, serviceDescMenuList, doFileAnalysis);
+            return processDatalinkTable({sourceTable:table,row,datalinkTable,positionWP,activateParams, baseTitle:titleStr,
+                additionalServiceDescMenuList:serviceDescMenuList, doFileAnalysis});
         } catch (reason) {
                                   //todo - what about if when the data link fetch fails but there is a serviceDescMenuList - what to do? does it matter?
-            dpdtMessageWithDownload(`No data to display: Could not retrieve datalink data, ${reason}`, 'Download File: '+titleStr, dataSource);
+            return dpdtMessageWithDownload(`No data to display: Could not retrieve datalink data, ${reason}`, 'Download File: '+titleStr, dataSource);
         }
     }
     else if (isPng) {
@@ -168,23 +163,23 @@ function singleResultWithServiceDesc(dpId, primResult, size, serviceDescMenuList
 
 
 function getObsCoreRowMetaInfo(table,row) {
-    if (!table) return {};
-    let titleStr;
+    if (!table || row<0) return {};
+    const titleStr= createObsCoreTitle(table,row);
     const dataSource= getObsCoreAccessURL(table,row);
-    const prodType= (getObsCoreProdType(table,row) || '').toLocaleLowerCase();
+    const prodType= getObsCoreProdType(table,row)?.toLocaleLowerCase() ?? '';
     const isVoTable= isFormatVoTable(table, row);
     const isDataLink= isFormatDataLink(table,row);
     const iName= getCellValue(table,row,'instrument_name') || '';
     const obsId= getCellValue(table,row,'obs_id') || '';
     const size= Number(getCellValue(table,row,'access_estsize')) || 0;
-    const isPng= isFormatPng(table,row);
-    let obsCollect= getCellValue(table,row,'obs_collection') || '';
-    let obsTitle= getCellValue(table,row,'obs_title') || '';
-    if (obsCollect===iName) obsCollect= '';
 
+    return {iName,obsId,size,titleStr,dataSource,prodType,isVoTable,isDataLink,isPng:isFormatPng(table,row)};
+}
+
+function createObsCoreTitle(table,row) {
+ // 1. try a template
     const template= getAppOptions().tapObsCore?.productTitleTemplate;
     const templateColNames= template && getColNameFromTemplate(template);
-
     const columns= getColumns(table);
     if (templateColNames?.length && columns?.length) {
         const cNames= columns.map( ({name}) => name);
@@ -195,15 +190,19 @@ function getObsCoreRowMetaInfo(table,row) {
             return obj;
         },{});
         if (Object.keys(colObj).length===templateColNames.length) {
-            titleStr= tokenSub(colObj,template);
+            const titleStr= tokenSub(colObj,template);
+            if (titleStr) return titleStr;
         }
     }
-    if (!titleStr) { // no template, use dynamic
-        const defTemplate= '${obs_collection}, ${instrument_name}, ${obs_id}'; // todo: should I use?
-        titleStr= obsTitle || `${obsCollect?obsCollect+', ':''}${iName?iName+', ':''}${obsId}`;
-    }
+ // 2. try obs_title
+    if (getObsTitle(table,row)) return getObsTitle(table,row);
 
-    return {iName,obsId,size,titleStr,dataSource,prodType,isVoTable,isDataLink,isPng};
+ // 3. compute a name
+    let obsCollect= getCellValue(table,row,'obs_collection') || '';
+    const obsId= getCellValue(table,row,'obs_id') || '';
+    const iName= getCellValue(table,row,'instrument_name') || '';
+    if (obsCollect===iName) obsCollect= '';
+    return `${obsCollect?obsCollect+', ':''}${iName?iName+', ':''}${obsId}`;
 }
 
 function getColNameFromTemplate(template) {
@@ -235,18 +234,17 @@ export function makeObsCoreRequest(dataSource, positionWP, titleStr, table, row)
     }
     r.setPlotId(uniqueId('obscore-'));
 
-    const col= getColumn(table,'em_max',true);
-    const v= col && Number(getCellValue(table, row, 'em_max'));
-    if (col && v) {
-        const {units}= col;
+    const emMinCol= getColumn(table,'em_max',true);
+    const emMaxCol= getColumn(table,'em_max',true);
+    const emMin= emMinCol && Number(getCellValue(table, row, 'em_min'));
+    const emMax= emMaxCol && Number(getCellValue(table, row, 'em_max'));
+    if (emMinCol && emMinCol && !isNaN(emMin) && !isNaN(emMax)) {
+        const v= (emMin + emMax)/2;
+        const {units}= emMaxCol;
         let vToUse;
-        if (units==='m' || units==='meters') vToUse= v*100000;
+        if (units==='m' || units==='meters') vToUse= v*1000000;
         if (units==='um') vToUse= v;
-        if (vToUse) {
-            r.setAttributes({
-                [PlotAttribute.WAVE_LENGTH_UM]:  sprintf('%.2f', vToUse),
-            });
-        }
+        if (vToUse) r.setAttributes({ [PlotAttribute.WAVE_LENGTH_UM]:  sprintf('%.2f', vToUse), });
     }
     const bandDesc= getMetaEntry(table,'bandDesc');
     if (bandDesc) r.setAttributes({ [PlotAttribute.WAVE_TYPE]:  bandDesc });

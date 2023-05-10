@@ -126,6 +126,7 @@ const OBSTAPCOLUMNS = [
     ['pol_states',        'meta.code;phys.polarization','Char.PolarizationAxis.stateList'],
     ['pol_xel',           'meta.number',                'Char.PolarizationAxis.numBins'],
     ['facility_name',     'meta.id;instr.tel',          'Provenance.ObsConfig.Facility.name'],
+    ['obs_title',         'meta.title;obs',             'DataID.title'],
     ['instrument_name',   'meta.id;instr',              'Provenance.ObsConfig.Instrument.name']
 ];
 
@@ -1277,7 +1278,9 @@ export const getObsCoreSRegion= (tableOrId, rowIdx) => getObsCoreCellValue(table
  * @param rowIdx
  * @return {string}
  */
-export const getObsTitle= (tableOrId, rowIdx) => getObsCoreCellValue(tableOrId,rowIdx, 'obs_title');
+export const getObsTitle= (tableOrId, rowIdx) => {
+   return  getObsCoreCellValue(tableOrId,rowIdx, 'obs_title');
+};
 
 
 /**

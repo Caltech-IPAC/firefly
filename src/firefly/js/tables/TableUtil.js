@@ -761,7 +761,7 @@ export function processRequest(tableModel, tableRequest, hlRowIdx) {
     let {data, columns} = nTable.tableData;
 
     nTable.request = tableRequest;
-    pageSize = pageSize || data.length || MAX_ROW;
+    pageSize = pageSize > 0 ? pageSize : data.length || MAX_ROW;
 
     if (filters) {
         filterTable(nTable, filters);
@@ -847,7 +847,7 @@ export function getTblInfo(tableModel, aPageSize) {
     if (!tableModel) return {};
     var {tbl_id, request, highlightedRow=0, totalRows=0, tableMeta={}, selectInfo, error} = tableModel;
     const title = tableMeta.title || request?.META_INFO?.title;
-    const pageSize = aPageSize || get(request, 'pageSize', MAX_ROW);  // there should be a pageSize.. default to 1 in case of error.  pageSize cannot be 0 because it'll overflow.
+    const pageSize = aPageSize > 0 ? aPageSize : fixPageSize(request?.pageSize);
     if (highlightedRow < 0 ) {
         highlightedRow = 0;
     } else  if (highlightedRow >= totalRows-1) {
@@ -1401,6 +1401,12 @@ export function getTableState(tbl_id) {
     if (totalRows === 0 && (filters || sqlFilter)) return TBL_STATE.NO_MATCH;
 
     return TBL_STATE.OK;
+}
+
+export function fixPageSize(pageSize) {
+    if ( !Number.isInteger(pageSize) )                  pageSize = parseInt(pageSize);
+    if ( !Number.isInteger(pageSize) || pageSize <= 0)  pageSize = MAX_ROW;
+    return pageSize;
 }
 
 /**

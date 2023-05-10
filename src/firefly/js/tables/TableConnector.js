@@ -4,7 +4,7 @@
 
 import {isEmpty, omitBy, isUndefined, cloneDeep, get, range, pick} from 'lodash';
 import * as TblCntlr from './TablesCntlr.js';
-import {getTblById, getTblInfoById} from './TableUtil.js';
+import {fixPageSize, getTblById, getTblInfoById} from './TableUtil.js';
 import {SelectInfo} from './SelectInfo.js';
 import {getTableUiById} from './TableUtil';
 import {setTblPref, clearTblPref} from './TablePref.js';
@@ -53,7 +53,7 @@ export function onFilterSelected(tbl_id, selected) {
 }
 
 export function onPageSizeChange(tbl_id, nPageSize) {
-    nPageSize = Number.parseInt(nPageSize);
+    nPageSize = fixPageSize(nPageSize);
     const {pageSize, highlightedRow} = getTblInfoById(tbl_id);
     if (Number.isInteger(nPageSize) && nPageSize !== pageSize) {
         const request = {tbl_id, pageSize: nPageSize};

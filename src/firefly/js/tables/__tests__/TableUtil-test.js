@@ -1,12 +1,13 @@
 import {get} from 'lodash';
 
 import * as TblUtil from '../TableUtil.js';         // used for named import
-import TableUtil, {formatValue} from '../TableUtil.js';            // using default import
+import TableUtil, {formatValue, fixPageSize, getTblInfo} from '../TableUtil.js';            // using default import
 import {SelectInfo} from '../SelectInfo';
 import {MetaConst} from '../../data/MetaConst';
 import {dataReducer} from '../reducer/TableDataReducer.js';
 import {TABLE_LOADED} from '../TablesCntlr.js';
 import {NULL_TOKEN} from '../FilterInfo.js';
+import {MAX_ROW} from '../TableRequestUtil.js';
 
 
 describe('TableUtil: ', () => {
@@ -217,6 +218,63 @@ describe('TableUtil: ', () => {
 
         res = formatValue({type: 'double', precision: 'F3'}, 45.19256); //3 significant digits after decimal
         expect(res).toEqual('45.193');
+    });
+
+    test('fixPageSize', () => {
+
+        expect(fixPageSize(123)).toEqual(123);
+        expect(fixPageSize('123')).toEqual(123);
+        expect(fixPageSize(12.3)).toEqual(12);
+        expect(fixPageSize('12.3')).toEqual(12);
+        expect(fixPageSize('12a')).toEqual(12);
+        expect(fixPageSize('')).toEqual(MAX_ROW);
+        expect(fixPageSize('abc')).toEqual(MAX_ROW);
+        expect(fixPageSize(undefined)).toEqual(MAX_ROW);
+        expect(fixPageSize(null)).toEqual(MAX_ROW);
+        expect(fixPageSize(NaN)).toEqual(MAX_ROW);
+    });
+
+    test('getTblInfo: paging', () => {
+
+        const table = {
+            totalRows: 999,
+            request:{pageSize:100},
+            highlightedRow: 0,
+        };
+        let info = getTblInfo(table);
+        expect(info.totalRows).toEqual(999);
+        expect(info.highlightedRow).toEqual(0);
+        expect(info.startIdx).toEqual(0);
+        expect(info.endIdx).toEqual(100);
+        expect(info.hlRowIdx).toEqual(0);
+        expect(info.currentPage).toEqual(1);
+        expect(info.pageSize).toEqual(100);
+        expect(info.totalPages).toEqual(10);
+
+        // override pageSize
+        info = getTblInfo(table, 200);
+        expect(info.startIdx).toEqual(0);
+        expect(info.endIdx).toEqual(200);
+        expect(info.pageSize).toEqual(200);
+        expect(info.totalPages).toEqual(5);
+
+        // highlightedRow in the middle of the table
+        table.highlightedRow = 125;
+        info = getTblInfo(table);           // page size is still 100
+        expect(info.startIdx).toEqual(100);
+        expect(info.endIdx).toEqual(200);
+        expect(info.hlRowIdx).toEqual(25);      // hlRowIdx is relative to current page
+        expect(info.currentPage).toEqual(2);
+
+        // missing pageSize with highlighted row in the middle
+        table.request.pageSize = undefined;
+        table.highlightedRow = 125;
+        info = getTblInfo(table);
+        expect(info.hlRowIdx).toEqual(125);
+        expect(info.startIdx).toEqual(0);
+        expect(info.endIdx).toEqual(999);
+        expect(info.pageSize).toEqual(MAX_ROW);
+        expect(info.totalPages).toEqual(1);
     });
 
 });
@@ -432,6 +490,7 @@ describe('TableUtil: client_table', () => {
         res = TblUtil.processRequest(table, {filters: 'c2 IS NOT NULL'});
         expect(TblUtil.getColumnValues(res, 'c1')).toEqual(['abc', undefined, '123', null]); // testing IS NOT NULL
     });
+
 
 });
 

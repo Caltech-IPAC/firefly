@@ -5,8 +5,8 @@ import {CompleteButton} from '../../../ui/CompleteButton.jsx';
 
 
 
-export function AdvancedMessage({dpId, dataProductsState, noProductMessage, doResetButton}) {
-    const {complexMessage, menu, makeDropDown, message, noProductsAvailable= false, isWorkingState,
+export function AdvancedMessage({dpId, dataProductsState, noProductMessage, doResetButton, makeDropDown}) {
+    const {complexMessage, menu, message, noProductsAvailable= false, isWorkingState,
         singleDownload, activeMenuLookupKey, detailMsgAry, badUrl, resetMenuKey}= dataProductsState;
 
 
