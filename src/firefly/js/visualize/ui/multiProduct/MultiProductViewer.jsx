@@ -128,7 +128,7 @@ function ViewerRender({dpId, dataProductsState, noProductMessage, metaDataTableI
             }} />);
         case DPtypes.MESSAGE :
         case DPtypes.PROMISE :
-            return <AdvancedMessage {...{dpId, dataProductsState, noProductMessage, doResetButton }}/>;
+            return <AdvancedMessage {...{dpId, dataProductsState, noProductMessage, doResetButton, makeDropDown}}/>;
         case DPtypes.DOWNLOAD_MENU_ITEM :
             return (<ProductMessage {...{menu, singleDownload, makeDropDown, message}} />);
         case DPtypes.IMAGE :

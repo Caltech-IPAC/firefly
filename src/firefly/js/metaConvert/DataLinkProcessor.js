@@ -1,5 +1,5 @@
 import {
-    getDataLinkData, getObsCoreAccessURL, getObsCoreProdType, getObsCoreSRegion, getObsTitle, getServiceDescriptors
+    getDataLinkData, getObsCoreAccessURL, getObsCoreProdType, getObsCoreSRegion, getServiceDescriptors
 } from '../util/VOAnalyzer';
 import {
     dpdtAnalyze,
@@ -16,7 +16,7 @@ import {makeFileAnalysisActivate} from './MultiProductFileAnalyzer';
 import {createSingleImageActivate, createSingleImageExtraction} from './ImageDataProductsUtil';
 import {dispatchUpdateActiveKey, getActiveMenuKey} from './DataProductsCntlr';
 import {GIG} from '../util/WebUtil.js';
-import {dpdtDownloadMenuItem, dpdtMessageWithDownload} from './DataProductsType.js';
+import {dpdtDownloadMenuItem} from './DataProductsType.js';
 import {makeObsCoreRequest} from './ObsCoreConverter.js';
 
 
@@ -24,27 +24,28 @@ import {makeObsCoreRequest} from './ObsCoreConverter.js';
 
 /**
  *
- * @param {TableModel} sourceTable
- * @param {number} row
- * @param {TableModel} datalinkTable
- * @param {WorldPt|undefined} positionWP
- * @param {ActivateParams} activateParams
- * @param additionalServiceDescMenuList
- * @param {boolean} doFileAnalysis
+ * @param {Object} params
+ * @param {TableModel} params.sourceTable
+ * @param {number} params.row
+ * @param {TableModel} params.datalinkTable
+ * @param {WorldPt|undefined} params.positionWP
+ * @param {ActivateParams} params.activateParams
+ * @param params.additionalServiceDescMenuList
+ * @param {boolean} [params.doFileAnalysis]
+ * @param {string} [params.baseTitle]
  * @return {DataProductsDisplayType}
  */
-export function processDatalinkTable(sourceTable, row, datalinkTable, positionWP, activateParams,
-                                     additionalServiceDescMenuList, doFileAnalysis=true) {
+export function processDatalinkTable({sourceTable, row, datalinkTable, positionWP, activateParams, baseTitle=undefined,
+                                     additionalServiceDescMenuList, doFileAnalysis=true}) {
     const dataSource= getObsCoreAccessURL(sourceTable,row);
     const dataLinkData= getDataLinkData(datalinkTable);
     const prodType= (getObsCoreProdType(sourceTable,row) || '').toLocaleLowerCase();
-    const obsTitle= getObsTitle(sourceTable,row);
     const sRegion= getObsCoreSRegion(sourceTable,row);
     const descriptors= getServiceDescriptors(datalinkTable);
     const menu=  dataLinkData.length &&
-         createDataLinkMenuRet({dataSource,dataLinkData,positionWP, sourceTable, row, activateParams,
+         createDataLinkMenuRet({dataSource,dataLinkData,positionWP, sourceTable, row, activateParams, baseTitle,
              prodType,descriptors, additionalServiceDescMenuList, doFileAnalysis,
-             obsTitle, sRegion });
+             sRegion });
 
     const hasData= menu.length>0;
     const canShow= menu.length>0 && menu.some( (m) => m.displayType!==DPtypes.DOWNLOAD && m.size<GIG);
@@ -125,20 +126,20 @@ const isAuxSem= (semantics) => semantics==='#auxiliary';
  * @param {Array.<DataProductsDisplayType>} [obj.additionalServiceDescMenuList]
  * @param {Array.<ServiceDescriptorDef>} [obj.descriptors]
  * @param obj.doFileAnalysis
- * @param obj.obsTitle
+ * @param obj.baseTitle
  * @param obj.sRegion
  * @return {Array.<DataProductsDisplayType>}
  */
-function createDataLinkMenuRet({dataSource, dataLinkData, positionWP, sourceTable, row, activateParams,
+function createDataLinkMenuRet({dataSource, dataLinkData, positionWP, sourceTable, row, activateParams, baseTitle,
                                prodType, descriptors, additionalServiceDescMenuList, doFileAnalysis=true,
-                               obsTitle, sRegion }) {
+                               sRegion }) {
     const auxTot= dataLinkData.filter( (e) => e.semantics==='#auxiliary').length;
     let auxCnt=0;
     let primeCnt=0;
     const menu=[];
     dataLinkData.forEach( (e,idx) => {
         const contentType= e.contentType.toLowerCase();
-        const name= makeName(e.semantics, e.url, auxTot, auxCnt, primeCnt);
+        const name= makeName(e.semantics, e.url, auxTot, auxCnt, primeCnt, baseTitle);
         const {semantics,size,url, serviceDefRef}= e;
         const activeMenuLookupKey= dataSource;
         const menuKey= 'dlt-'+idx;
@@ -147,15 +148,15 @@ function createDataLinkMenuRet({dataSource, dataLinkData, positionWP, sourceTabl
         if (serviceDefRef) {
             const servDesc= descriptors.find( ({ID}) => ID===serviceDefRef);
             if (servDesc) {
-                const {title,accessURL,standardID,serDefParams, ID}= servDesc;
-                const request= makeObsCoreRequest(accessURL,positionWP,title, sourceTable, row);
+                const {title:servDescTitle='',accessURL,standardID,serDefParams, ID}= servDesc;
+                const titleStr= baseTitle ? `${baseTitle} (${servDescTitle})` : servDescTitle;
+                const request= makeObsCoreRequest(accessURL,positionWP,titleStr, sourceTable, row);
                 const allowsInput=serDefParams.some( (p) => p.allowsInput);
                 const activate= makeFileAnalysisActivate(sourceTable,row, request, positionWP,activateParams,menuKey,
                                        undefined, serDefParams, name);
-                menuEntry= dpdtAnalyze(`Show: ${title??name} ${allowsInput?' (Input Required)':''}` ,
-                    activate,accessURL,serDefParams,menuKey,
-                    {activeMenuLookupKey,request, allowsInput, serviceDefRef,
-                        standardID, ID, semantics,size, obsTitle, sRegion});
+                const entryName= `Show: ${servDescTitle||`Service #${idx}: ${name}`} ${allowsInput?' (Input Required)':''}`;
+                menuEntry= dpdtAnalyze( entryName, activate,accessURL,serDefParams,menuKey,
+                    {activeMenuLookupKey,request, allowsInput, serviceDefRef, standardID, ID, semantics,size, sRegion});
             }
         }
         else if (url) {
@@ -221,12 +222,22 @@ const isDownloadType= (ct) => ct.includes('tar') || ct.includes('gz') || ct.incl
 const isAnalysisType= (ct) => (ct==='' || analysisTypes.some( (a) => ct.includes(a)));
 const isTooBig= (size) => size>GIG;
 
-function makeName(s='', url, auxTot, autCnt, primeCnt=0) {
+function makeName(s='', url, auxTot, autCnt, primeCnt=0, baseTitle) {
+    if (baseTitle) return makeNameWithBaseTitle(s,auxTot,autCnt,primeCnt,baseTitle);
     let name= (s==='#this' && primeCnt>0) ? '#this '+primeCnt  : s;
     name= s.startsWith('#this') ? `Primary product (${name})` : s;
     name= name[0]==='#' ? name.substring(1) : name;
     name= (name==='auxiliary' && auxTot>1) ? `${name}: ${autCnt}` : name;
     return name || url;
+}
+
+function makeNameWithBaseTitle(s='', auxTot, autCnt, primeCnt=0, baseTitle) {
+    if (!s) return baseTitle;
+    if (s.startsWith('#this')) {
+       return primeCnt<1 ? `${baseTitle} (#this)` : `${baseTitle} (#this ${primeCnt})`;
+    }
+    if (s==='auxiliary' || s==='#auxiliary') return `auxiliary${auxTot>0?' '+autCnt:''}: ${baseTitle}`;
+    return s[0]==='#' ? `${s.substring(1)}: ${baseTitle}` : `${s}: ${baseTitle}`;
 }
 
 
@@ -236,7 +247,6 @@ function makeName(s='', url, auxTot, autCnt, primeCnt=0) {
  * @param menuKey
  * @param url
  * @param ct
- * @param makeReq
  * @param semantics
  * @param activateParams
  * @param positionWP

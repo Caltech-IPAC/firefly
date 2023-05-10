@@ -363,6 +363,7 @@ public class URLDownload {
             int responseCode= getResponseCode(conn);
             outFileData = new FileInfo(outfile, getSugestedFileName(conn), responseCode,
                     ResponseMessage.getHttpResponseMessage(responseCode), conn.getContentType());
+            if (conn.getContentEncoding()!=null) outFileData.putAttribute("content-encoding", conn.getContentEncoding());
             logDownload(outFileData, conn.getURL().toString(), elapse );
 
             if (responseCode>=300 && responseCode<400) {

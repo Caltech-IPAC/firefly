@@ -80,10 +80,6 @@ public class URLFileRetriever implements FileRetriever {
                     params.addCookie(name, cookies.get(name));
                 }
             }
-            if (!ro.getUserInfo().isGuestUser()) {
-                params.setLoginName(ro.getUserInfo().getLoginName());
-                params.setSecurityCookie(ro.getRequestAgent().getAuthKey());
-            }
             params.setCheckForNewer(request.getUrlCheckForNewer());
             params.setLocalFileExtensions(extsList);
             params.setMaxSizeToDownload(VisContext.FITS_MAX_SIZE);

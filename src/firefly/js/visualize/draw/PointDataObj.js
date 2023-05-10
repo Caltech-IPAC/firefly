@@ -29,18 +29,20 @@ const DEFAULT_SYMBOL = DrawSymbol.X;
  * @param {number} [size]
  * @param {Enum} [symbol]
  * @param {string} [text]
+ * @param {Object} [renderOptions]
  * @return {object}
  */
-export function make(pt,size,symbol,text) {
+export function make(pt,size,symbol,text, renderOptions) {
     if (!pt) return null;
 
-    var obj= DrawObj.makeDrawObj();
+    const obj= DrawObj.makeDrawObj();
     obj.type= POINT_DATA_OBJ;
     obj.pt= pt;
 
     if (size) obj.size= size;
     if (symbol) obj.symbol= symbol;
     if (text) obj.text= text;
+    if (renderOptions) obj.renderOptions= renderOptions;
     return obj;
 }
 

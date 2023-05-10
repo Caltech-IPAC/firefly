@@ -123,16 +123,19 @@ function drawSearchSelectionCircle(plot, drawLayer) {
     const radius= plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG];
     const drawAry= [];
     const drawRadius= radius<=maxSize ? (radius >= minSize ? radius : minSize) : maxSize;
+    const shadow={offX:1,offY:1,color:'black',blur:1};
     if (drawLayer.isInteractive) {
-        drawAry.push(PointDataObj.make(wp,7, DrawSymbol.EMP_SQUARE_X));
-        radius && drawAry.push( {...ShapeDataObj.makeCircleWithRadius(wp, drawRadius*3600,UnitType.ARCSEC), lineWidth:3} );
+        const x= PointDataObj.make(wp,7, DrawSymbol.EMP_SQUARE_X,undefined,{shadow});
+        drawAry.push(x);
+        radius && drawAry.push( {...ShapeDataObj.makeCircleWithRadius(wp, drawRadius*3600,UnitType.ARCSEC), lineWidth:3, renderOptions:{shadow}} );
     }
     else {
-        drawAry.push(PointDataObj.make(wp,3, DrawSymbol.CROSS));
+        const cross= PointDataObj.make(wp,3, DrawSymbol.CROSS, undefined, {shadow});
+        drawAry.push(cross);
         radius && drawAry.push(
             {...ShapeDataObj.makeCircleWithRadius(wp, drawRadius*3600,UnitType.ARCSEC),
                 lineWidth:2,
-                renderOptions:{lineDash:[7,3]}
+                renderOptions:{lineDash:[7,3], shadow}
             });
     }
     return drawAry;
