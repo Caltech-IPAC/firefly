@@ -90,6 +90,7 @@ export class UploadOptionsDialog extends PureComponent {
                     <FileUpload
                         wrapperStyle={{margin: (this.workspace ? '2px 10px 8px 10px' : '15px 10px 21px 10px')}}
                         fieldKey={this.fileUpload}
+                        fileNameStyle={{marginLeft: 14}}
                         initialState={
                              {tooltip: get(this.props, ['tooltips', ULOptionsKey.local.key], 'Select a file to upload')}}
                     />
