@@ -4,7 +4,8 @@
 
 import {loadScript, getRootURL, getGlobalObj} from '../../util/WebUtil.js';
 
-const GPU_JS_SCRIPT= 'gpu-browser.min-2.15.0.js';
+// const GPU_JS_SCRIPT= 'gpu-browser.min-2.15.0.js';
+const GPU_JS_SCRIPT= 'gpu-browser.min-2.15.0-FIX-GPUX.js';
 const LOAD_ERR_MSG= 'Load Failed: could not load gpu.js';
 
 let foundGPU;
@@ -25,7 +26,7 @@ function initGpuJsRetriever(loadNow) {
         if (!gpuJsLoadBegin) {
             gpuJsLoadBegin= true;
             loadScript(script).then( () => {
-                loadedGpuJs= getGlobalObj().GPU;
+                loadedGpuJs= getGlobalObj().GPUX;
                 if (loadedGpuJs) {
                     foundGPU= loadedGpuJs;
                     waitingResolvers.forEach((r) => r(loadedGpuJs));
