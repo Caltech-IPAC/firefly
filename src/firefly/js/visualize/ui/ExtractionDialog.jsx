@@ -6,6 +6,7 @@
 
 import React, {useEffect, useState} from 'react';
 import ReactDOM from 'react-dom';
+import sizeMe from 'react-sizeme';
 import {downloadChart, PlotlyWrapper} from '../../charts/ui/PlotlyWrapper.jsx';
 import {PopupPanel} from 'firefly/ui/PopupPanel.jsx';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
@@ -26,7 +27,6 @@ import {PlotAttribute} from 'firefly/visualize/PlotAttribute.js';
 import {CCUtil, CysConverter} from 'firefly/visualize/CsysConverter.js';
 import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField.jsx';
 import {callGetCubeDrillDownAry, callGetPointExtractionAry } from 'firefly/rpc/PlotServicesJson.js';
-import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {getExtName, hasFloatingData} from 'firefly/visualize/FitsHeaderUtil.js';
 import {dispatchTableFetch, dispatchTableSearch, TABLE_UPDATE} from 'firefly/tables/TablesCntlr.js';
 import {makeTblRequest} from 'firefly/tables/TableRequestUtil.js';
@@ -207,7 +207,7 @@ function afterPointsChartRedraw(pv, chart,pl,chartXAxis, imPtAry) {
 
 function ExtractionChart({plotlyDivStyle, plotlyData, plotlyLayout, afterRedraw, size:{width,height}}) {
     return (
-        <div style={{width:'100%', height:'100%'}}>
+        <div style={{width:'100%', display:'flex', flexDirection: 'column', overflow:'hidden'}}>
             <PlotlyWrapper data={plotlyData} layout={{width,height,...plotlyLayout}}  style={plotlyDivStyle}
                            autoSizePlot={true}
                            autoDetectResizing={true}
@@ -218,7 +218,12 @@ function ExtractionChart({plotlyDivStyle, plotlyData, plotlyLayout, afterRedraw,
     );
 }
 
-const ExtractionChartResizeable= wrapResizer(ExtractionChart);
+export const wrapResizerForExtraction = sizeMe( {
+        monitorWidth: true, monitorHeight: false, monitorPosition: false,
+        refreshRate: 100, refreshMode: 'debounce', noPlaceholder: false
+    } );
+
+const ExtractionChartResizeable= wrapResizerForExtraction(ExtractionChart);
 
 function makeLineExtractionTitle(pv,x1,y1,x2,y2) {
     const plot= primePlot(pv);
@@ -474,7 +479,7 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
                         multiple={false} />}
                 </div>
             </div>
-            <div style={{minWidth:440, minHeight:200, width:'100%', height:'100%',
+            <div style={{minWidth:440, minHeight:200, width:'100%', height:'100%', display:'flex',
                 flex: '1 1 auto', boxSizing: 'border-box',
                 border: plotlyData ? '1px solid rgba(0,0,0,.3' : 'none' }}>
                 {plotlyData ?
