@@ -7,9 +7,11 @@
   - [Notes on next version](next-release-details.md)
 
 ## Version 2023.1
+- 2023.1.3 - (May 16, 2023)
+  - docker tag: `latest`, `2023.1`, `2023.1.3`
 - 2023.1.2 - (May 10, 2023)
-  - docker tag: `latest`, `2023.1`, `2023.1.2`
-- 2023.1.1 - (May 5, 2023)
+  - docker tag: `2023.1.2`
+- 2023.1.1 - (May 1, 2023)
   - docker tag: `2023.1.1`
 - 2023.1.0 - (May 1, 2023)
   - docker tag: `2023.1.0`
@@ -32,6 +34,9 @@
 
 
 ##### _Patches 2023.1_
+- 2023.1.2
+  - Latest chrome release breaking GPU processing [Firefly-1247](https://github.com/Caltech-IPAC/firefly/pull/1384) 
+  - Additional small bug fixes [Firefly-1248](https://github.com/Caltech-IPAC/firefly/pull/1386) 
 - 2023.1.2
   - fixed: Handle undefined page size [Firefly-1245](https://github.com/Caltech-IPAC/firefly/pull/1380)
   - fixed: `obs_title` not showing up, wavelength wrong [Firefly-1246](https://github.com/Caltech-IPAC/firefly/pull/1381)
