@@ -66,8 +66,8 @@ import java.util.Locale;
         })
 public class SDSSQuery extends IpacTablePartProcessor {
 
-    public final static String SERVICE_URL="http://skyserver.sdss.org/dr10/en/tools/search/x_sql.aspx?";
-    public final static String SERVICE_URL_UPLOAD="http://skyserver.sdss.org/dr10/en/tools/crossid/x_crossid.aspx?";
+    public final static String SERVICE_URL="https://skyserver.sdss.org/dr10/en/tools/search/x_sql.aspx?";
+    public final static String SERVICE_URL_UPLOAD="https://skyserver.sdss.org/dr10/en/tools/crossid/x_crossid.aspx?";
 
     private static final Logger.LoggerImpl _log = Logger.getLogger();
     private MultiPartPostBuilder _postBuilder = null;
@@ -287,7 +287,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
     }
 
     /**
-     http://skyserver.sdss3.org/dr10/en/tools/search/x_sql.aspx?format=html
+     https://skyserver.sdss3.org/dr10/en/tools/search/x_sql.aspx?format=html
      &cmd=SELECT p.objId,p.run,p.rerun,p.camcol,p.field,
                  dbo.fPhotoModeN(mode) as mode,nChild,dbo.fPhotoTypeN(p.type) as type,clean,flags,
                  psfMag_u,psfMag_g,psfMag_r,psfMag_i,psfMag_z,
