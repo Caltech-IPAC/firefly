@@ -847,8 +847,9 @@ export function getTopmostVisiblePoint(plot,viewDim,xOff, yOff) {
     const foundSegs= lineSegs
         .filter((lineSeg) => {
                  const {pt1,pt2}= lineSeg;
+                 if (!pt1 || !pt2) return false;
                  const iPt= findIntersectionPt(pt1.x,pt1.y,pt2.x,pt2.y, 0,0,viewDim.width-1,0);
-                 return iPt && iPt.onSeg1 && iPt.onSeg2;
+                 return Boolean(iPt && iPt.onSeg1 && iPt.onSeg2);
              })
         .sort( (l1, l2) => l1.pt1.x - l2.pt1.x);
 

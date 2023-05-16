@@ -505,6 +505,7 @@ const LayersRow= ({style,image, pv,mi,enabled, modalEndInfo}) => (
                                 tip='Select, then click and drag to measure a distance on the image'
                                 endText={'End Distance'}
                                 modalEndInfo={modalEndInfo}
+                                modalLayer={true}
                                 iconOn={DIST_ON} iconOff={DIST_OFF} visible={mi.distanceTool} />
         <ToolbarButton icon={DS9_REGION} tip='Load a DS9 Region File' enabled={enabled}
                        horizontal={true} visible={mi.ds9Region} onClick={showRegionFileUploadPanel}/>
