@@ -958,7 +958,7 @@ export function getFormattedWaveLengthUnits(plotOrStr, anyPartOfStr=false) {
  * @return {number}
  */
 export const getPtWavelength= (plot, pt, cubeIdx) =>
-    (plot && hasWLInfo(plot) && getWavelength(CCUtil.getImageCoords(plot,pt),cubeIdx,plot.wlData)) ?? 0;
+    (plot && hasWLInfo(plot) && getWavelength(CCUtil.getImageCoords(plot,pt),cubeIdx,plot.wlData))?.[0] ?? 0;
 
 
 //=============================================================

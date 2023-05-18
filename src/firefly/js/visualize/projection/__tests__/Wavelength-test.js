@@ -196,7 +196,7 @@ function doTest(jsonStr, algorithm) {
 
     for (let i = 0; i < pointArray.length; i++) {
         const pt = makeWorldPt(pointArray[i].ra, pointArray[i].dec);
-        const calculatedWL = getWavelength(pt, 0, wlData);
+        const calculatedWL = getWavelength(pt, 0, wlData)[0];
         const expectedValue = calculatedExpectedValue(pt, algorithm, header);
         assert.equal(calculatedWL.toFixed(precision), expectedValue.toFixed(precision), 'The current calculated wavelength value in' +
             '  is not the same as previously stored value');
@@ -254,7 +254,7 @@ describe('A test suite for Wavelength.js', function () {
 
         const calculatedWl = [];
         for (let i = 0; i < pointArrayTAB.length; i++) {
-            calculatedWl[i] = getWavelength(pointArrayTAB[i], 0, wlData);
+            calculatedWl[i] = getWavelength(pointArrayTAB[i], 0, wlData)[0];
         }
         for (let i = 0; i < pointArrayTAB.length; i++) {
             assert.equal(calculatedWl[i].toFixed(precision), expectedWlTAB[i].toFixed(precision),

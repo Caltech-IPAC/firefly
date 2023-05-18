@@ -3,8 +3,10 @@
  */
 
 import {makeDoubleHeaderParse} from '../FitsHeaderUtil.js';
+import {convertToArraySize} from '../../tables/TableUtil.js';
 import {algorithmTypes, spectralCoordTypes, LINEAR, TAB, WAVE, VRAD} from './Wavelength.js';  // eslint-disable-line no-unused-vars
 import {isDefined} from '../../util/WebUtil.js';
+import {Logger} from '../../util/Logger.js';
 
 
 /**
@@ -18,6 +20,7 @@ import {isDefined} from '../../util/WebUtil.js';
  * @prop {TableModel} table - the table with wavelength algorythm
  */
 
+const logger = Logger('SpectralCoord');
 
 /**
  *
@@ -28,6 +31,23 @@ import {isDefined} from '../../util/WebUtil.js';
  * @return {SpectralWCSData|undefined}
  */
 export function parseWavelengthHeaderInfo(header, altWcs = '', zeroHeader, wlTableRelatedAry) {
+    try {
+        return doParse(header, altWcs, zeroHeader, wlTableRelatedAry);
+    } catch (e) {
+        logger.error(`Exception parsing wavelength header: ${e?.message}`);
+        logger.error(e.stack);
+    }
+}
+
+/**
+ *
+ * @param {FitsHeader} header
+ * @param {String} altWcs
+ * @param {FitsHeader} zeroHeader
+ * @param {Array.<WavelengthTabRelatedData>} wlTableRelatedAry
+ * @return {SpectralWCSData|undefined}
+ */
+function doParse(header, altWcs = '', zeroHeader, wlTableRelatedAry) {
     const parse = makeDoubleHeaderParse(header, zeroHeader, altWcs);
 
     // identify spectral coordinates and the subset that requires table lookup (-TAB) algorithm
@@ -36,7 +56,7 @@ export function parseWavelengthHeaderInfo(header, altWcs = '', zeroHeader, wlTab
     if (iCtypeSupported.length === 0) return;
 
     const spectralCoords = [];
-    const failWarnings = []
+    const failWarnings = [];
 
     // fields that belong to WCS, not to a specific spectral coordinate
     const {nAxis, N, r_j, restWAV} = calculateSharedParams(parse, altWcs);
@@ -63,7 +83,8 @@ export function parseWavelengthHeaderInfo(header, altWcs = '', zeroHeader, wlTab
 
         const {algorithm, coordType} = getAlgorithmAndType(ctype);
 
-        const canDoPlaneCalc = nAxis === 3 && pc_3j?.length === 3 && pc_3j[0] === 0 && pc_3j[1] === 0 &&
+        // per-plane readout is possible only for the coordinates that do not depend on any axis but the 3rd (index 2)
+        const canDoPlaneCalc = nAxis === 3 && pc_3j?.every((v, i) => i === 2 ? v !== 0 : v === 0) &&
             allGoodValues(crpix, crval, cdelt && nAxis === 3);
 
         const spectralCoord = {
@@ -73,32 +94,14 @@ export function parseWavelengthHeaderInfo(header, altWcs = '', zeroHeader, wlTab
             planeOnly: canDoPlaneCalc,
             algorithm, coordType,
             ctype, crpix, crval, cdelt,
-            pc_3j, N, r_j, restWAV}
+            pc_3j, N, r_j, restWAV};
 
         if (iCtypeTab.includes(which)) {
+            // get lookup table data
+            const tab = calculateTabParameters(parse, altWcs, which, wlTableRelatedAry, ctype, failWarnings);
+            if (!tab) return;  // parsing error - return
 
-            // matching lookup table must be present
-            const table = findWLTableToMatch(parse, altWcs, which, wlTableRelatedAry);
-            if (!table) {
-                failWarnings.push(`${ctype}: lookup table is not found`);
-                return;
-            }
-
-            // column name for the coordinate array (TTYPEn1) - must be present
-            const ps3_1 = parse.getValue(`PS${which}_1${altWcs}`);
-            if (!ps3_1) {
-                failWarnings.push(`${ctype}: column name for the coordinate array is not found`);
-                return;
-            }
-
-            // column name for the indexing vector (TTYPEn2) - no index if not present
-            const ps3_2 = parse.getValue(`PS${which}_2${altWcs}`);
-
-            // The pv3_i values are needed to handle the FITS with more than one TAB axes.
-            // axis number associated with the coordinate array in ps3_1
-            const pv3_3 = parse.getIntValue(`PV${which}_3${altWcs}`, 1);
-
-            Object.assign(spectralCoord, {ps3_1, ps3_2, pv3_3, table})
+            Object.assign(spectralCoord, {tab});
         }
         spectralCoords.push(spectralCoord);
     });
@@ -121,7 +124,7 @@ export function parseWavelengthHeaderInfo(header, altWcs = '', zeroHeader, wlTab
     return spectralWCSData;
 }
 
-const MAX_CTYPES = 4
+const MAX_CTYPES = 4;
 
 /**
  * Get indices of CTYPEs that we need to preserve: all and those requiring table lookup algorithm.
@@ -142,7 +145,7 @@ function findSupportedCTYPEs(parse, altWcs = '', supportedCoordTypes=Object.keys
             iCtypeSupported.push(i);
         }
         if (algorithm === TAB) {
-            iCtypeTab.push(i)
+            iCtypeTab.push(i);
         }
     }
     return {iCtypeSupported, iCtypeTab};
@@ -163,9 +166,9 @@ function isNonSeparableTABGroup(spectralCoords) {
     if (spectralCoords.some((c) => c.algorithm !== TAB)) return false;
 
     // all coordinates refer to the same table and output column
-    const table = spectralCoords[0].table;
-    const ps3_1 = spectralCoords[0].ps3_1.toUpperCase();
-    return spectralCoords.slice(1).every((c) => c.table === table || c.ps3_1.toUpperCase() === ps3_1);
+    const table = spectralCoords[0].tab.table;
+    const ps3_1 = spectralCoords[0].tab.ps3_1.toUpperCase();
+    return spectralCoords.slice(1).every((c) => c.tab.table === table || c.tab.ps3_1.toUpperCase() === ps3_1);
 }
 
 
@@ -198,6 +201,107 @@ function calculateSharedParams(parse, altWcs) {
     const restWAV = parse.getDoubleValue('RESTWAV' + altWcs, 0);
 
     return {nAxis, N, r_j, restWAV};
+}
+
+
+/**
+ * Get table lookup parameters
+ * @param parse
+ * @param altWcs
+ * @param which
+ * @param wlTableRelatedAry
+ * @param ctype
+ * @param failWarnings
+ * @returns {LookupTableData|undefined}
+ */
+function calculateTabParameters(parse, altWcs, which, wlTableRelatedAry, ctype, failWarnings) {
+
+    // matching lookup table must be present
+    const table = findWLTableToMatch(parse, altWcs, which, wlTableRelatedAry);
+    if (!table) {
+        failWarnings.push(`${ctype}: lookup table is not found`);
+        return;
+    }
+
+    // column name for the coordinate array (TTYPEn1) - PSi_1a must be present
+    const ps3_1 = parse.getValue(`PS${which}_1${altWcs}`);
+    if (!ps3_1) {
+        failWarnings.push(`${ctype}: column name for the coordinate array is not found`);
+        return;
+    }
+
+    // column name for the indexing vector (TTYPEn2) - no index if PSi_2a is not present
+    const ps3_2 = parse.getValue(`PS${which}_2${altWcs}`);
+
+    //coordinate array column must be defined
+    const coordData = getArrayDataFromTable(table, ps3_1);
+    if (!coordData) {
+        failWarnings.push(`${ctype}: column for the coordinate array is not found in lookup table`);
+        return;
+    }
+    if (coordData.length === 0) {
+        failWarnings.push(`${ctype}: coordinate array should not be empty`);
+        return;
+    }
+
+    // indexing vector column can be undefined in no index case
+    const indexData = getArrayDataFromTable(table, ps3_2);
+
+    // PVi_3a values are needed to handle more than one TAB axes
+    // axis number (m) in the coordinate array
+    const m = parse.getIntValue(`PV${which}_3${altWcs}`, 1);
+
+    // confirm that innermost coordinate array dimension is big enough
+    const arraySize = getArraySize(coordData);
+    if (arraySize[0] < m) {
+        failWarnings.push(`${ctype}: coordinate array innermost dimension ${arraySize[0]} has less than ${m} elements`);
+        return;
+    }
+
+    return {coordData, indexData, m, table, ps3_1};
+}
+
+
+/**
+ * According to the reference papers above, the coordinate has M+1 dimension where the M means the
+ *  dependence on the M axis, Coords[M][K1][K2[]...[Km].  In our case, the M=1, the coordinate is the
+ *  two-dimensional array, and the first dimension is M=1 and the second dimension is K1, which is the sampling
+ *  number the data has been sampled. Thus, for each image point, the corresponding index or coordinate array value
+ *  is coords[1][K1].  For example, if the sampling count is K1=100, each cell in the coordinate table, contains 100
+ *  data values. The coordinate column can convert to 100 rows of the single value table.
+ *
+ *
+ * @param table
+ * @param columnName
+ * @returns {*}
+ */
+const getArrayDataFromTable = (table, columnName) => {
+    if (!columnName) return undefined;
+    const tableData = table.tableData;
+    const arrayData = tableData.data;
+    const columns = tableData.columns;
+    for (let i = 0; i < columns.length; i++) {
+        if (columns[i].name.toUpperCase() === columnName.toUpperCase()) {
+            // array data are flat array that need to be folded
+            // according to array size, which is a string where
+            // dimensions are separated by 'x'
+            return convertToArraySize(columns[i], arrayData[0][i]);
+        }
+    }
+    return undefined;
+};
+
+/**
+ * Get lengths for all dimensions of the array, innermost dimension is the first
+ * @param array
+ * @returns {number[]}
+ */
+function getArraySize(array) {
+    if (Array.isArray(array)) {
+        return getArraySize(array[0]).concat([array.length]);
+    } else {
+        return [];
+    }
 }
 
 
@@ -351,13 +455,13 @@ function getCoreSpectralHeaders(parse, altWcs, which, defaultUnits = ' ') {
  * @return {{algorithm:string,coordType:string}}
  */
 function getAlgorithmAndType(ctype) {
-    let coordType, algorithm;
+    let algorithm;
     if (!ctype.trim()) return {algorithm: undefined, coordType: undefined};
     ctype = ctype.toUpperCase();
 
     const sArray = ctype.split('-');
 
-    coordType = sArray[0];
+    const coordType = sArray[0];
 
     if (sArray.length === 1 ) {
         algorithm = LINEAR;
@@ -368,9 +472,11 @@ function getAlgorithmAndType(ctype) {
     // verify that coordinate type is valid
     const validCoordTypes = Object.keys(spectralCoordTypes);
     if (!validCoordTypes.includes(coordType)) {
-        return {algorithm, coordType: undefined};
+        // handle non-conforming coordinates: check if coordinate type matches one of the aliases
+        const matchingType = validCoordTypes.find((c) => spectralCoordTypes[c].aliases?.includes(coordType));
+        return {algorithm, coordType: matchingType};
     }
     // the standard does not limit the algorithm to the known algorithms
-    return {algorithm, coordType}
+    return {algorithm, coordType};
 }
 

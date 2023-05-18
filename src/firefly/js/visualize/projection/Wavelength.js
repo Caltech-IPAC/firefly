@@ -7,7 +7,6 @@
  *  3. https://www.aanda.org/articles/aa/full/2002/45/aah3859/aah3859.html,
  *
  */
-import {convertToArraySize} from '../../tables/TableUtil.js';
 import {isDefined} from '../../util/WebUtil.js';
 
 export const PLANE = 'PLANE';
@@ -26,17 +25,16 @@ export const VRAD = 'VRAD';
 /**
  * @global
  * @public
- * @typedef {Object} SpectralWCSData
+ * @typedef {Object} LookupTableData
+ * @summary The information needed to calculate spectral coordinate using lookup table
  *
- * @prop {Array.<SpectralCoord>} spectralCoords  parameters specific to each spectral coordinate
- * @prop {string} failReason
- * @prop {boolean} hasPlainOnlyCoordInfo
- * @prop {boolean} hasPixelLevelCoordInfo
- * @prop {boolean} isNonSeparableTABGroup all spectral coordinates are TAB that should be processed together
+
+ * @prop {Array} coordData    coordinate data
+ * @prop {Array} indexData    indexData
+ * @prop {number} m           axis number (m) in array PSi_1a
+ * @prop {number} [ps3_1]     column name for the coordinate array (PSi_1a)
+ * @prop {Table} [table]      lookup table
  */
-
-
-
 
 /**
  * @global
@@ -57,10 +55,19 @@ export const VRAD = 'VRAD';
  * @prop {number} cdelt          scaling factor CDELTi or 1.0
  * @prop {number} crval          spectral coordinate value at reference point
  * @prop {number} [restWAV]      (WCS Level) rest wavelength (used for V2W algorithm)
- * @prop {string} [ps3_1]        column name for the coordinate array (PSi_1a in table lookup algorithm)
- * @prop {string} [ps3_2]        column name for indexing vector (PSi_2a in table lookup algorithm)
- * @prop {int} [pv3_3]           axis number (m) in array PSi_1a (table lookup algorithm)
- * @prop {Table} [table]         lookup table (table lookup algorithm)
+ * @prop {LookupTableData} [tab] lookup table data for TAB algorithm
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} SpectralWCSData
+ *
+ * @prop {Array.<SpectralCoord>} spectralCoords  parameters specific to each spectral coordinate
+ * @prop {string} failReason
+ * @prop {boolean} hasPlainOnlyCoordInfo  WCS includes plane level spectral coordinate
+ * @prop {boolean} hasPixelLevelCoordInfo WCS includes pixel level spectral coordinate
+ * @prop {boolean} isNonSeparableTABGroup all spectral coordinates are TAB that should be processed together
  */
 
 
@@ -83,12 +90,13 @@ export const spectralCoordTypes = {
         symbol: 'k',
         defaultUnits: '1/m',
     },
-    ['VRAD']: {
+    [VRAD]: {
         type: 'Radio velocity',
         symbol: 'V',
         defaultUnits: 'm/s',
     },
-    ['WAVE']: {
+    [WAVE]: {
+        aliases: ['WAVELENGTH', 'LAMBDA'],
         type: 'Vacuum wavelength',
         symbol: String.fromCharCode(0x03BB), // λ
         defaultUnits: 'm',
@@ -103,7 +111,7 @@ export const spectralCoordTypes = {
         symbol: 'z',
         defaultUnits: ' ',
     },
-    ['AWAV']: {
+    [AWAV]: {
         type: 'Air wavelength',
         symbol: String.fromCharCode(0x03BB, 0x2090), // λₐ
         defaultUnits: 'm',
@@ -118,7 +126,7 @@ export const spectralCoordTypes = {
         symbol: '0x03B2', // β
         defaultUnits: ' ',
     }
-}
+};
 
 
 export const algorithmTypes = {
@@ -153,24 +161,28 @@ export const algorithmTypes = {
  * @param pt
  * @param cubeIdx
  * @param {SpectralWCSData} spectralWCSData
- * @param {Array<{SpectralCoord}>} spectralWCSData.spectralCoords
+ * @param {Array<SpectralCoord>} spectralWCSData.spectralCoords
  * @returns {*}
  */
 export function getWavelength(pt, cubeIdx, spectralWCSData) {
-    let coordValArray;
-    if (spectralWCSData.isNonSeparableTABGroup) {
-        coordValArray = getWaveLengthTabMultiD(pt, cubeIdx, spectralWCSData);
-    } else {
-        coordValArray = spectralWCSData.spectralCoords.map((coordData) => {
-            const {algorithm, coordType} = coordData
-            if (algorithmTypes[algorithm]?.implemented && algorithmTypes[algorithm].getWaveLength) {
-                let wl = algorithmTypes[algorithm].getWaveLength(pt, cubeIdx, coordData);
-                if (coordType === AWAV) wl = convertAirToVacuum(wl);
-                return wl;
-            }
-        });
+    try {
+        let coordValArray;
+        if (spectralWCSData.isNonSeparableTABGroup) {
+            coordValArray = getWaveLengthTabMultiD(pt, cubeIdx, spectralWCSData);
+        } else {
+            coordValArray = spectralWCSData.spectralCoords.map((c) => {
+                const {algorithm, coordType} = c;
+                if (algorithmTypes[algorithm]?.implemented && algorithmTypes[algorithm].getWaveLength) {
+                    let wl = algorithmTypes[algorithm].getWaveLength(pt, cubeIdx, c);
+                    if (coordType === AWAV) wl = convertAirToVacuum(wl);
+                    return wl;
+                }
+            });
+        }
+        return coordValArray;
+    } catch (e) {
+        return NaN;
     }
-    return coordValArray[0];
 }
 
 //TODO check here to see the cubeIdx??
@@ -285,34 +297,6 @@ function getWaveLengthNonLinear(ipt, cubeIdx, wlData) {
     return lambda;
 }
 
-/**
- * According to the reference papers above, the coordinate has M+1 dimension where the M means the
- *  dependence on the M axis, Coords[M][K1][K2[]...[Km].  In our case, the M=1, the coordinate is the
- *  two-dimensional array, and the first dimension is M=1 and the second dimension is K1, which is the sampling
- *  number the data has been sampled. Thus, for each image point, the corresponding index or coordinate array value
- *  is coords[1][K1].  For example, if the sampling count is K1=100, each cell in the coordinate table, contains 100
- *  data values. The coordinate column can convert to 100 rows of the single value table.
- *
- *
- * @param table
- * @param columnName
- * @returns {*}
- */
-const getArrayDataFromTable = (table, columnName) => {
-    if (!columnName) return undefined;
-    const tableData = table.tableData;
-    const arrayData = tableData.data;
-    const columns = tableData.columns;
-    for (let i = 0; i < columns.length; i++) {
-        if (columns[i].name.toUpperCase() === columnName.toUpperCase()) {
-            // array data are flat array that need to be folded
-            // according to array size, which is a string where
-            // dimensions are separated by 'x'
-            return convertToArraySize(columns[i], arrayData[0][i]);
-        }
-    }
-    return undefined;
-};
 
 /**
  * Get non-linear spectral coordinate using table lookup, see Section 6 of Paper2.
@@ -338,29 +322,26 @@ const getArrayDataFromTable = (table, columnName) => {
  * @param {Array.<number>} wlData.pc_3j
  * @param {Number} wlData.cdelt scaling factor
  * @param {Number} wlData.crval value at the reference point
- * @param wlData.wlTable lookup table
- * @param wlData.ps3_1 column name for the coordinate array
- * @param wlData.ps3_2 column name for the indexing vector
+ * @param {LookupTableData} wlData.tab lookup table data
  * @return {number} spectral coordinate value
  */
 function getWaveLengthTab(ipt, cubeIdx, wlData) {
 
-    const {N, r_j, cdelt, crval, pc_3j, table, ps3_1, ps3_2} = wlData;
-    if (!table) return NaN;
+    const {N, r_j, cdelt, crval, pc_3j, tab} = wlData;
 
     //coordinate array column must be defined
-    const coordData = getArrayDataFromTable(table, ps3_1);
+    const coordData = tab?.coordData;
     if (!coordData) return NaN;
 
     // indexing vector column can be undefined in no index case
-    const indexDataArr = getArrayDataFromTable(table, ps3_2);
+    const indexData = tab.indexData;
 
     const pixCoord = getPixelCoords(ipt, cubeIdx);
 
     // intermediate pixel coordinates (array of psi_m)
     const psi_ms = crval + getOmega(pixCoord, N, r_j, pc_3j, cdelt);
 
-    const val = tabInterpolate1D(indexDataArr, coordData, psi_ms);
+    const val = tabInterpolate1D(indexData, coordData, psi_ms);
 
     return Array.isArray(val) ? val[0] : val;
 }
@@ -400,10 +381,7 @@ function getWaveLengthTab(ipt, cubeIdx, wlData) {
  * @param {Array.<number>} wcsData.spectralCoord.pc_3j linear transformation matrix row
  * @param {Number} wcsData.spectralCoord.cdelt scaling factor
  * @param {Number} wcsData.spectralCoord.crval value at the reference point
- * @param wcsData.spectralCoord.table lookup table, shared for non-separable coordinates case
- * @param wcsData.spectralCoord.ps3_1 column name for the coordinate array, shared for non-separable coordinates case
- * @param wcsData.spectralCoord.ps3_2 column name for the indexing vector
- * @param wcsData.spectralCoord.pv3_3 axis number (m) in array ps3_1
+ * @param {LookupTableData} wcsData.spectralCoord.tab lookup table data
  * @return {Array<number>|number} spectral coordinate value
  */
 function getWaveLengthTabMultiD(ipt, cubeIdx, wcsData) {
@@ -411,21 +389,20 @@ function getWaveLengthTabMultiD(ipt, cubeIdx, wcsData) {
     const {spectralCoords} = wcsData;
 
     const c1 = spectralCoords[0];
-    const {N, r_j, table:tbl=undefined, ps3_1} = c1;
-    if (!tbl) return spectralCoords.map(() => NaN);
+    const {N, r_j, tab} = c1;
 
     //coordinate array column must be defined
-    const coordData = getArrayDataFromTable(tbl, ps3_1);
+    const coordData = tab?.coordData;
     if (!coordData) return spectralCoords.map(() => NaN);
 
     const pixCoord = getPixelCoords(ipt, cubeIdx);
 
     // spectral coordinates must be sorted by axis number m (pv3_3 field)
-    const sortedSpectralCoords = spectralCoords.sort((a, b) => a.pv3_3 - b.pv3_3);
+    const sortedSpectralCoords = spectralCoords.sort((a, b) => a.tab.m - b.tab.m);
     const sortingOrder = spectralCoords.map((c) => sortedSpectralCoords.indexOf(c));
 
     // indexing vector column can be undefined in no index case
-    const indexDataArr = sortedSpectralCoords.map((c) => getArrayDataFromTable(tbl, c.ps3_2));
+    const indexDataArr = sortedSpectralCoords.map((c) => c.tab.indexData);
 
     // intermediate pixel coordinates (array of psi_m)
     const psi_ms = sortedSpectralCoords.map((c) => c.crval + getOmega(pixCoord, N, r_j, c.pc_3j, c.cdelt));
@@ -457,7 +434,7 @@ export function tabInterpolateMultiD(indexDataArr, coordData, psi_ms, nprocessed
         const psiIndexRange = searchIndexRange(indexDataArr[m], psi_ms[m]); // bounding indexes
         if (!psiIndexRange) return undefined;
 
-        const [psiIndex1, psiIndex2] = psiIndexRange
+        const [psiIndex1, psiIndex2] = psiIndexRange;
         // spectral coordinate values for bounding points
         const coordData1 = [psiIndex1, psiIndex2].map(
             (idx) => tabInterpolateMultiD(indexDataArr.slice(0,-1), coordData[idx], psi_ms.slice(0,-1), nprocessed+1)
@@ -546,7 +523,7 @@ export function calculateC_m(Y_m, coordData, kMax) {
             // coordinate value along the non-separable dimension.
             return lerp(coordData[i1], coordData[i2], i);
         }
-    }
+    };
 
     if (Y_m >= 1 && Y_m < kMax) {
         // In the case of a single separable coordinate with 1 ≤ k ≤ Y_m < k+1 ≤ kMax, the coordinate value is given by
@@ -621,7 +598,7 @@ export function calculateY_m(indexVec, psi_m) {
     const [psiIndex1, psiIndex2] = psiIndexRange;
 
     if (psiIndex1 === psiIndex2) {
-        Y_m = psiIndex1
+        Y_m = psiIndex1;
     } else {
         Y_m = findY(psiIndex1, psiIndex2, psi_m);
     }
