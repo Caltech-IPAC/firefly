@@ -4,6 +4,7 @@
 
 export const CONE_AREA_KEY = 'CONE_AREA_KEY_RESERVED';
 export const POSITION = 'position';
+export const POINT = 'point';
 export const ENUM = 'enum';
 export const CHECKBOX = 'checkbox';
 export const INT = 'int';
@@ -33,7 +34,9 @@ export const CIRCLE = 'circle';
 export function makeTargetDef({
                                   hipsUrl, centerPt, hipsFOVInDeg, coordinateSys, mocList, nullAllowed,
                                   minValue, maxValue,
-                                  targetPanelExampleRow1, targetPanelExampleRow2, raKey, decKey
+                                  targetPanelExampleRow1, targetPanelExampleRow2, raKey, decKey,
+                                  sRegion,
+
                               }) {
     const defTargetKey= 'UserTargetWorldPt';
     return {
@@ -44,10 +47,14 @@ export function makeTargetDef({
         maxValue,
         targetDetails: {
             raKey, decKey, hipsUrl, centerPt, hipsFOVInDeg, coordinateSys, mocList,
-            targetKey: defTargetKey,
+            targetKey: defTargetKey, sRegion,
             targetPanelExampleRow1, targetPanelExampleRow2
         }
     };
+}
+
+export function makePointDef(obj) {
+    return {...makeTargetDef(obj), type: POINT, key:obj.key};
 }
 
 /**

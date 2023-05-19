@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isArray} from 'lodash';
+import {getProdTypeGuess} from '../util/VOAnalyzer.js';
 import {dpdtChartTable, dpdtImage, dpdtTable, DPtypes, SHOW_CHART, SHOW_TABLE, AUTO} from './DataProductsType';
 import {DataProductTypes, FileAnalysisType, Format, UIEntry, UIRender} from '../data/FileAnalysis';
 import {RequestType} from '../visualize/RequestType.js';
@@ -34,10 +35,10 @@ export function analyzePart(part, request, table, row, fileFormat, dataTypeHint,
             analyzeImageResult(part, request, table, row, fileFormat, part.convertedFileName,desc,activateParams,fileLocationIndex);
 
     let tableResult= availableTypes.includes(DPtypes.CHART) &&
-                   analyzeChartTableResult(false, part, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex);
+                   analyzeChartTableResult(false, table, row, part, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex);
     if (!tableResult) {
         tableResult= availableTypes.includes(DPtypes.TABLE) &&
-            analyzeChartTableResult(true, part, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex);
+            analyzeChartTableResult(true, part, table, row, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex);
     }
     return {imageResult, tableResult};
 }
@@ -206,6 +207,8 @@ function getTableDropTitleStr(title,part,fileFormat,tableOnly) {
 /**
  *
  * @param {boolean} tableOnly
+ * @param {TableModel} table
+ * @param {Number} row
  * @param {FileAnalysisPart} part
  * @param {String} fileFormat
  * @param {String} fileOnServer - server key to access the file
@@ -215,7 +218,7 @@ function getTableDropTitleStr(title,part,fileFormat,tableOnly) {
  * @param {number} tbl_index
  * @return {DataProductsDisplayType|undefined}
  */
-function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, title, dataTypeHint='', activateParams, tbl_index=0) {
+function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOnServer, title, dataTypeHint='', activateParams, tbl_index=0) {
     const {uiEntry,uiRender,chartParamsAry, interpretedData=false, defaultPart:requestDefault= false}= part;
     const partFormat= part.convertedFileFormat||fileFormat;
     if (uiEntry===UIEntry.UseSpecified) {
@@ -254,6 +257,7 @@ function analyzeChartTableResult(tableOnly, part, fileFormat, fileOnServer, titl
                 undefined, {extractionText: 'Pin Table', paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
         else {
+            if (getProdTypeGuess(table,row).toLowerCase().startsWith('spec')) chartTableDefOption= SHOW_CHART;
             const imageAsTableColCnt= isImageAsTable(part,partFormat) ? getImageAsTableColCount(part,partFormat) : 0;
             const chartInfo= {xAxis:xCol, yAxis:yCol, chartParamsAry, useChartChooser};
             if (chartTableDefOption===AUTO) chartTableDefOption= imageAsTableColCnt===2 ? SHOW_CHART : SHOW_TABLE;

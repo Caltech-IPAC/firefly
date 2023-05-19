@@ -8,6 +8,7 @@ import CoordinateSys from '../../visualize/CoordSys.js';
 import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
 import {
     AREA, CHECKBOX, CIRCLE, ENUM, FLOAT, INT, makeAreaDef, makeCircleDef, makeEnumDef, makeFloatDef, makeIntDef,
+    makePointDef,
     makePolygonDef, makeRangeDef, makeTargetDef, makeUnknownDef, POLYGON, POSITION, UNKNOWN
 } from './DynamicDef.js';
 
@@ -28,11 +29,13 @@ export function hasAnySpacial(fieldDefAry) {
 }
 
 export const isSIAStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.sia);
+export const isSSAStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.ssa);
 export const isSODAStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.soda);
 export const isTAPStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.tap);
 
 export function getStandardIdType(standardID) {
     if (isSIAStandardID(standardID))  return standardIDs.sia;
+    if (isSSAStandardID(standardID))  return standardIDs.ssa;
     if (isSODAStandardID(standardID)) return standardIDs.soda;
     if (isTAPStandardID(standardID)) return standardIDs.tap;
 }
@@ -48,6 +51,9 @@ const isCircleField = ({type, arraySize, xtype = '', units = ''}) =>
 const isCircleFieldLenient = ({xtype = '', units = ''}) =>
     (xtype.toLowerCase() === 'circle' && (units.toLowerCase() === 'deg' || units.toLowerCase() === ''));
 
+const isPointField = ({xtype = '', units = ''}) =>
+    (xtype.toLowerCase() === 'point' && (units.toLowerCase() === 'deg' || units.toLowerCase() === ''));
+
 const isPolygonField = ({type, xtype = '', units = ''}) =>
     (isFloatingType(type) && xtype.toLowerCase() === 'polygon' && units.toLowerCase() === 'deg');
 
@@ -58,7 +64,7 @@ const isRangeField = ({xtype = '', units = ''}) =>
     (xtype.toLowerCase() === 'range' && (units.toLowerCase() === 'deg' || units.toLowerCase() === ''));
 
 const isAreaField = ({ UCD = '', units = '' }) =>
-    UCD.toLowerCase() === 'phys.size.radius' && units.toLowerCase() === 'deg';
+    UCD.toLowerCase().startsWith('phys.size') && units.toLowerCase() === 'deg';
 
 function getCircleValues(s) {
     const strAry = splitByWhiteSpace(s);
@@ -86,6 +92,11 @@ const getCircleInfo = ({minValue = '', maxValue = '', value = ''}) => {
     return {};
 };
 
+const getPointInfo = ({value = ''}) => {
+    const [raStr='', decStr='']= splitByWhiteSpace(value);
+    return (raStr && decStr) ? makeWorldPt(raStr,decStr) : undefined;
+};
+
 const getPolygonInfo = ({minValue = '', maxValue = '', value = ''}) => {
     const vStr = value || minValue || maxValue;
     const validAryStr = splitByWhiteSpace(vStr).filter((s) => !isNaN(Number(s))).map((s) => sprintf('%.5f', Number(s)));
@@ -101,7 +112,7 @@ const isNumberField = ({type, minValue, maxValue, value}) =>
 function prefilterRADec(serDefParams, searchAreaInfo = {}) {
     const foundRa = serDefParams.find(({UCD}) => UCD === 'pos.eq.ra');
     const foundDec = serDefParams.find(({UCD}) => UCD === 'pos.eq.dec');
-    if (!foundRa && !foundDec) return {filteredParams: serDefParams, posDef: undefined};
+    if (!foundRa?.name || !foundDec?.name) return {filteredParams: serDefParams, posDef: undefined};
 
     const filteredParams = serDefParams.filter(({UCD}) => UCD !== 'pos.eq.ra' && UCD !== 'pos.eq.dec');
 
@@ -139,9 +150,11 @@ function makeExamples(inExample) {
 /**
  *
  * @param serDefParams
- * @param sRegion
+ * @param {String} [sRegion]
  * @param {SearchAreaInfo} [searchAreaInfo]
  * @param {boolean} [hidePredefinedStringFields]
+ * @param {String} [hipsUrl]
+ * @param {Number} [fovSize]
  * @returns {Array.<FieldDef>}
  */
 export function makeFieldDefs(serDefParams, sRegion, searchAreaInfo = {}, hidePredefinedStringFields = false, hipsUrl, fovSize) {
@@ -152,6 +165,12 @@ export function makeFieldDefs(serDefParams, sRegion, searchAreaInfo = {}, hidePr
         .filter((sdP) => !sdP.ref)
         .map((sdP) => {
             const {type, optionalParam: nullAllowed, value = '', name, options, desc: tooltip, units = ''} = sdP;
+            const mocList = searchAreaInfo?.moc ? [{
+                mocUrl: searchAreaInfo.moc,
+                title: searchAreaInfo?.mocDesc ?? 'MOC',
+                mocColor: searchAreaInfo?.mocColor,
+            }] : undefined;
+            const {targetPanelExampleRow1,targetPanelExampleRow2}= makeExamples(searchAreaInfo?.examples );
 
             if (options) {
                 const fieldOps = options.split(',').map((op) => ({label: op, value: op}));
@@ -162,13 +181,7 @@ export function makeFieldDefs(serDefParams, sRegion, searchAreaInfo = {}, hidePr
             }
             if (isCircleField(sdP) || isCircleFieldLenient(sdP)) {
                 const {wpt: centerPt, radius, minValue, maxValue} = getCircleInfo(sdP);
-                const {targetPanelExampleRow1,targetPanelExampleRow2}= makeExamples(searchAreaInfo?.examples );
                 const hipsFOVInDeg= searchAreaInfo?.hips_initial_fov ?? fovSize ?? radius * 2 + radius * .2;
-                const mocList = searchAreaInfo?.moc ? [{
-                    mocUrl: searchAreaInfo.moc,
-                    title: searchAreaInfo?.mocDesc ?? 'MOC',
-                    mocColor: searchAreaInfo?.mocColor,
-                }] : undefined;
                 return makeCircleDef({
                     key: name, desc: name, tooltip, units,
                     hipsUrl: searchAreaInfo?.HiPS ?? hipsUrl,
@@ -182,14 +195,29 @@ export function makeFieldDefs(serDefParams, sRegion, searchAreaInfo = {}, hidePr
                     targetPanelExampleRow1,
                     targetPanelExampleRow2
                 });
-            } else if (isPolygonField(sdP) || isPolygonFieldLenient(sdP)) {
+            }
+            if (isPointField(sdP)) {
+                const wpt = getPointInfo(sdP);
+                return makePointDef({
+                    key: name, desc: name, tooltip, units,
+                    hipsUrl: searchAreaInfo?.HiPS ?? hipsUrl,
+                    targetKey: 'circleTarget',
+                    centerPt: wpt,
+                    hipsFOVInDeg: searchAreaInfo?.hips_initial_fov ?? fovSize ?? 2,
+                    coordinateSys: searchAreaInfo?.coordinateSys,
+                    sRegion, mocList, targetPanelExampleRow1, targetPanelExampleRow2
+                });
+            }
+            else if (isPolygonField(sdP) || isPolygonFieldLenient(sdP)) {
                 const {targetPanelExampleRow1,targetPanelExampleRow2}= makeExamples(searchAreaInfo?.polygon_examples);
                 const {value} = getPolygonInfo(sdP);
                 return makePolygonDef({key: name, desc: name, tooltip, units, initValue: value, sRegion,
                     targetPanelExampleRow1,targetPanelExampleRow2});
-            } else if (isRangeField(sdP)) {
+            }
+            else if (isRangeField(sdP)) {
                 return makeRangeDef({key: name, desc: name, tooltip, units});
-            } else if (isAreaField(sdP)) {
+            }
+            else if (isAreaField(sdP)) {
                 const maxNum = Number(sdP.maxValue);
                 const valNum = Number(value);
                 const minValue = Number(sdP.minValue) || .000277778;
@@ -199,7 +227,8 @@ export function makeFieldDefs(serDefParams, sRegion, searchAreaInfo = {}, hidePr
                     initValue: valNum < maxValue && valNum > minValue ? valNum : maxValue,
                     minValue, maxValue
                 });
-            } else if (isNumberField(sdP)) {
+            }
+            else if (isNumberField(sdP)) {
                 const minNum = Number(sdP.minValue);
                 const maxNum = Number(sdP.maxValue);
                 const vNum = Number(value);
@@ -210,14 +239,16 @@ export function makeFieldDefs(serDefParams, sRegion, searchAreaInfo = {}, hidePr
                         minValue: !isNaN(minNum) ? minNum : undefined,
                         maxValue: !isNaN(maxNum) ? maxNum : undefined,
                     });
-                } else if (isFloatingType(type)) {
+                }
+                else if (isFloatingType(type)) {
                     return makeFloatDef({
                         key: name, desc: name, tooltip, units, precision: 4, nullAllowed,
                         initValue: !isNaN(vNum) ? vNum : undefined,
                         minValue: !isNaN(minNum) ? minNum : undefined,
                         maxValue: !isNaN(maxNum) ? maxNum : undefined,
                     });
-                } else {
+                }
+                else {
                     return makeUnknownDef({key: name, desc: name, tooltip, units, initValue: value});
                 }
             } else {
@@ -276,8 +307,13 @@ export function makeServiceDescriptorSearchRequest(request, serviceDescriptor, e
     if (isSIAStandardID(standardID)) {
         // we know this is a table so make a table request
         const url = accessURL + '?' + new URLSearchParams(request).toString();
-        return makeFileRequest(tblTitle, url, undefined, {META_INFO:extraMeta});   //todo- figure out title
-    } else if (isCisxTapStandardID(standardID, utype, undefined, {META_INFO:extraMeta})) {
+        return makeFileRequest(tblTitle, url, undefined, {META_INFO: extraMeta});   //todo- figure out title
+    }
+    else if (isSSAStandardID(standardID)) {
+            const url = accessURL + '?' + new URLSearchParams(request).toString();
+            return makeFileRequest(tblTitle, url, undefined, {META_INFO:extraMeta});   //todo- figure out title
+    }
+    else if (isCisxTapStandardID(standardID, utype, undefined, {META_INFO:extraMeta})) {
         // we know this is a table so make a table request either sync or async
         const doAsync = standardID.toLowerCase().includes('async');
         const query = serDefParams.find(({name}) => name === 'QUERY')?.value;
@@ -297,7 +333,8 @@ export function makeServiceDescriptorSearchRequest(request, serviceDescriptor, e
             return makeFileRequest(title, completeUrl,undefined, {META_INFO:extraMeta});   //todo- figure out title
         }
 
-    } else {
+    }
+    else {
         //todo: we should to call file analysis first
         const url = accessURL + '?' + new URLSearchParams(request).toString();
         return makeFileRequest(tblTitle, url);   //todo- figure out title

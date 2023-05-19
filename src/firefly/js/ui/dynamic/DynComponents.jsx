@@ -19,7 +19,9 @@ import {useFieldGroupValue} from '../SimpleComponent.jsx';
 import {SizeInputFields} from '../SizeInputField.jsx';
 import {TargetPanel} from '../TargetPanel.jsx';
 import {ValidationField} from '../ValidationField.jsx';
-import {AREA, CHECKBOX, CIRCLE, CONE_AREA_KEY, ENUM, FLOAT, INT, POLYGON, POSITION, UNKNOWN} from './DynamicDef.js';
+import {
+    AREA, CHECKBOX, CIRCLE, CONE_AREA_KEY, ENUM, FLOAT, INT, POINT, POLYGON, POSITION, UNKNOWN
+} from './DynamicDef.js';
 import {findFieldDefType} from './ServiceDefTools.js';
 
 const DEF_LABEL_WIDTH = 100;
@@ -71,16 +73,20 @@ export function makeAllFields({fieldDefAry, noLabels=false, popupHiPS, toolbarHe
     // polygon is not created directly, we need to determine who will create creat a polygon field if it exist
     const workingFieldDefAry= fieldDefAry.filter( ({hide}) => !hide);
     const hasPoly = Boolean(findFieldDefType(workingFieldDefAry,POLYGON));
+    const hasPoint = Boolean(findFieldDefType(workingFieldDefAry,POINT));
     const circle= findFieldDefType(workingFieldDefAry,CIRCLE);
     const hasCircle= Boolean(circle);
-    const hasSpacialAndArea= Boolean(findFieldDefType(workingFieldDefAry,POSITION) && findFieldDefType(workingFieldDefAry,AREA));
+    const hasSpacialAndArea= Boolean((findFieldDefType(workingFieldDefAry,POINT) || findFieldDefType(workingFieldDefAry,POSITION)) &&
+        findFieldDefType(workingFieldDefAry,AREA));
+    const hasPointAndArea= hasPoint && findFieldDefType(workingFieldDefAry,AREA);
     const spacialManagesArea= hasSpacialAndArea && countFieldDefType(workingFieldDefAry,AREA)===1;
 
     let dynSpacialPanel= undefined;
-    if (hasCircle || hasSpacialAndArea || hasCircle) {
+    const manageAllSpacial= (hasCircle || hasPointAndArea);
+    if (hasCircle || hasSpacialAndArea || hasPointAndArea) {
         dynSpacialPanel= popupHiPS ?
-                        makeDynSpacialPanel({fieldDefAry:workingFieldDefAry, popupHiPS, plotId, toolbarHelpId}) :
-                        makeDynSpacialPanel({fieldDefAry:workingFieldDefAry, manageAllSpacial:hasCircle && hasPoly, popupHiPS,
+                        makeDynSpacialPanel({fieldDefAry:workingFieldDefAry, popupHiPS, manageAllSpacial, plotId, toolbarHelpId}) :
+                        makeDynSpacialPanel({fieldDefAry:workingFieldDefAry, popupHiPS,
                             plotId,toolbarHelpId, insetSpacial});
     }
 
@@ -169,7 +175,7 @@ function PositionAndPolyFieldEmbed({fieldDefAry, plotId, toolbarHelpId, insetSpa
                                        otherComponents, WrapperComponent}) {
 
     const polyType = findFieldDefType(fieldDefAry, POLYGON);
-    const posType = findFieldDefType(fieldDefAry, POSITION);
+    const posType = findFieldDefType(fieldDefAry, POINT) ?? findFieldDefType(fieldDefAry, POSITION);
     const areaType = findFieldDefType(fieldDefAry, AREA);
     const circleType= findFieldDefType(fieldDefAry, CIRCLE);
     const {targetDetails, nullAllowed = false} = posType ?? circleType ?? {};
@@ -400,7 +406,7 @@ function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', style={}
 function makeDynSpacialPanel({fieldDefAry, manageAllSpacial= true, popupHiPS= false,
                              plotId= 'defaultHiPSTargetSearch', toolbarHelpId, insetSpacial}) {
     const DynSpacialPanel= ({otherComponents, WrapperComponent}) => {
-        const posType = findFieldDefType(fieldDefAry, POSITION);
+        const posType = findFieldDefType(fieldDefAry, POINT) ?? findFieldDefType(fieldDefAry, POSITION) ;
         const areaType = findFieldDefType(fieldDefAry, AREA);
         const circleType = findFieldDefType(fieldDefAry, CIRCLE);
         const polyType= manageAllSpacial && findFieldDefType(fieldDefAry, POLYGON);

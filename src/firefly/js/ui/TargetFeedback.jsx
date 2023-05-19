@@ -5,7 +5,7 @@ import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 const topDivStyle= {
     paddingTop: 5,
     position: 'relative',
-    height : 50,
+    height : 40,
     textAlign : 'center'
 };
 

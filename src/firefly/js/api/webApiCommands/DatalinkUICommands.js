@@ -93,6 +93,7 @@ export function getDatalinkUICommands(includeIdType) {
         [ReservedParams.POSITION.name]: ['coordinates of the search',...ReservedParams.POSITION.desc],
         [ReservedParams.SR.name]: ['radius of search  (optional)',...ReservedParams.SR.desc],
         showChooser: {desc:'show the dataset chooser'},
+        user: {desc:'internal only'},
         execute: 'true or false - if true execute the search'
     };
     const bothParameters= {...urlOnlyParameters, id : {desc:'ID to predefined data link UI service'}};
