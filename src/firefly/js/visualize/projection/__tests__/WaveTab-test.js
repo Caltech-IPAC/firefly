@@ -69,7 +69,7 @@ test('Test tabInterpolateMultiD',   ()=> {
         for (let col = 0; col < 5; col++) {
             const psi_m = [col+1, row+1];  // FITS image pixels
             const val = tabInterpolateMultiD(indexDataArr, coordData, psi_m);
-            assert.deepEqual(val, expectedVals[row][col], `tabInterpolateMultiD psi_m=${psi_m}`)
+            assert.deepEqual(val, expectedVals[row][col], `tabInterpolateMultiD psi_m=${psi_m}`);
         }
     }
 });

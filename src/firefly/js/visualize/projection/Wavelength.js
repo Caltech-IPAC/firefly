@@ -9,7 +9,6 @@
  */
 import {isDefined} from '../../util/WebUtil.js';
 
-export const PLANE = 'PLANE';
 export const LINEAR = 'LINEAR';
 export const LOG = 'LOG';
 export const F2W = 'F2W';
@@ -52,8 +51,8 @@ export const VRAD = 'VRAD';
  * @prop {Number} N              (WCS level) the dimensionality of WCS representation given either by NAXIS or WCSAXES
  * @prop {Array.<number>} r_j    (WCS Level) pixel coordinates of the reference point given by CRPIXj
  * @prop {Array.<number>} pc_3j  the linear transformation matrix row corresponding to the spectral coordinate i (given either by PCi_j or CDi_j)
- * @prop {number} cdelt          scaling factor CDELTi or 1.0
  * @prop {number} crval          spectral coordinate value at reference point
+ * @prop {number} cdelt          scaling factor CDELTi or 1.0
  * @prop {number} [restWAV]      (WCS Level) rest wavelength (used for V2W algorithm)
  * @prop {LookupTableData} [tab] lookup table data for TAB algorithm
  */
@@ -130,10 +129,6 @@ export const spectralCoordTypes = {
 
 
 export const algorithmTypes = {
-    [PLANE]: {
-        getWaveLength: getWaveLengthPlane,
-        implemented: true,
-    },
     [LINEAR]: {
         getWaveLength: getWaveLengthLinear,
         implemented: true,
@@ -165,31 +160,22 @@ export const algorithmTypes = {
  * @returns {*}
  */
 export function getWavelength(pt, cubeIdx, spectralWCSData) {
-    try {
-        let coordValArray;
-        if (spectralWCSData.isNonSeparableTABGroup) {
-            coordValArray = getWaveLengthTabMultiD(pt, cubeIdx, spectralWCSData);
-        } else {
-            coordValArray = spectralWCSData.spectralCoords.map((c) => {
-                const {algorithm, coordType} = c;
-                if (algorithmTypes[algorithm]?.implemented && algorithmTypes[algorithm].getWaveLength) {
-                    let wl = algorithmTypes[algorithm].getWaveLength(pt, cubeIdx, c);
-                    if (coordType === AWAV) wl = convertAirToVacuum(wl);
-                    return wl;
-                }
-            });
-        }
-        return coordValArray;
-    } catch (e) {
-        return NaN;
-    }
-}
 
-//TODO check here to see the cubeIdx??
-function getWaveLengthPlane(ipt, cubeIdx, wlData) {
-    const {crpix, crval, cdelt} = wlData;
-    // pixel count starts from 1 to naxisn
-    return crval + (cubeIdx + 1 - Math.round(crpix)) * cdelt;
+    let coordValArray;
+    if (spectralWCSData.isNonSeparableTABGroup) {
+        coordValArray = getWaveLengthTabMultiD(pt, cubeIdx, spectralWCSData);
+    } else {
+        coordValArray = spectralWCSData.spectralCoords.map((c) => {
+            const {algorithm, coordType} = c;
+            if (algorithmTypes[algorithm]?.implemented && algorithmTypes[algorithm].getWaveLength) {
+
+                let wl = algorithmTypes[algorithm].getWaveLength(pt, cubeIdx, c);
+                if (coordType === AWAV) wl = convertAirToVacuum(wl);
+                return wl;
+            }
+        });
+    }
+    return coordValArray;
 }
 
 /**
@@ -411,7 +397,7 @@ function getWaveLengthTabMultiD(ipt, cubeIdx, wcsData) {
     const valsSortedByM = tabInterpolateMultiD(indexDataArr, coordData, psi_ms);
 
     // put values in the order corresponding to the order of the spectral coordinates
-    return sortingOrder.map((idx) => valsSortedByM[idx]);
+    return sortingOrder.map((idx) => valsSortedByM?.[idx] ?? NaN);
 }
 
 /**
@@ -421,7 +407,7 @@ function getWaveLengthTabMultiD(ipt, cubeIdx, wcsData) {
  * @param coordData multi-d coordinate data array
  * @param psi_ms intermediate pixel coordinates
  * @param nprocessed the number of processed coordinates
- * @returns {number|*|undefined}
+ * @returns {number|*}
  */
 export function tabInterpolateMultiD(indexDataArr, coordData, psi_ms, nprocessed = 0) {
     // the number of spectral coordinates should match the dimension of indexDataArr or psi_ms
@@ -432,7 +418,7 @@ export function tabInterpolateMultiD(indexDataArr, coordData, psi_ms, nprocessed
     if (nprocessed < psi_ms.length) {
         // m > 0
         const psiIndexRange = searchIndexRange(indexDataArr[m], psi_ms[m]); // bounding indexes
-        if (!psiIndexRange) return undefined;
+        if (!psiIndexRange) return NaN;
 
         const [psiIndex1, psiIndex2] = psiIndexRange;
         // spectral coordinate values for bounding points
@@ -467,7 +453,7 @@ function tabInterpolate1D(indexData, coordData, psi_m) {
         const Y_m = calculateY_m(indexData, psi_m);
 
         if (isDefined(Y_m)) {
-            return calculateC_m(Y_m, coordData, coordData.length);
+            return calculateC_m(Y_m, coordData) ?? NaN;
         }
     }
     return NaN;
@@ -483,18 +469,11 @@ function tabInterpolate1D(indexData, coordData, psi_m) {
  *
  * @param Y_m index in coordinate data array with range from 0.5 to kMax+0.5
  * @param coordData coordinate data array
- * @param kMax index data length (should match coordData.length, at least in 1d case)
  * @returns {*}
  */
-export function calculateC_m(Y_m, coordData, kMax) {
+export function calculateC_m(Y_m, coordData) {
 
-    if (kMax !== coordData.length) {
-        // this could happen in 2d case - not yet implemented
-        // the index data length is not matching coordinate data length
-        // the function will produce wrong results,
-        // better not to pretend we know the result
-        return NaN;
-    }
+    const kMax = coordData.length;
 
     // The value of Y_m derived from ψm must lie in the range 0.5 ≤ Y_m ≤ K + 0.5;
     // K > 1: degenerate axes are forbidden

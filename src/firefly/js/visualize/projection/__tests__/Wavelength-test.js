@@ -125,7 +125,7 @@ function getOmega(pixCoords, N, r_j, pc_3j, s_3) {
     return omega;
 }
 
-function getParamValues(header, algorithm) {
+function getParamValues(header) {
 
     let N = parseInt(getHeader(header, 'WCSAXES', '-1'));
     if (N === -1) {
@@ -163,7 +163,7 @@ function getParamValues(header, algorithm) {
 function calculatedExpectedValue(pt, algorithm, header) {
 
     const pixCoords = getPixelCoordinates(pt, header);
-    const {N, r_j, pc_3j, cdelt, crval} = getParamValues(header, algorithm);
+    const {N, r_j, pc_3j, cdelt, crval} = getParamValues(header);
 
     const omega = getOmega(pixCoords, N, r_j, pc_3j, cdelt);
     let wl;

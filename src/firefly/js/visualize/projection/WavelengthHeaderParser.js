@@ -88,18 +88,19 @@ function doParse(header, altWcs = '', zeroHeader, wlTableRelatedAry) {
             allGoodValues(crpix, crval, cdelt && nAxis === 3);
 
         const spectralCoord = {
+            planeOnly: canDoPlaneCalc,
             name: cname.trim() || spectralCoordTypes[coordType].type,
             symbol: spectralCoordTypes[coordType].symbol,
             units: units.trim() || spectralCoordTypes[coordType].defaultUnits,
-            planeOnly: canDoPlaneCalc,
-            algorithm, coordType,
-            ctype, crpix, crval, cdelt,
-            pc_3j, N, r_j, restWAV};
+            coordType, algorithm,
+            ctype, N, r_j, pc_3j,
+            crval, cdelt,
+            restWAV};
 
         if (iCtypeTab.includes(which)) {
             // get lookup table data
             const tab = calculateTabParameters(parse, altWcs, which, wlTableRelatedAry, ctype, failWarnings);
-            if (!tab) return;  // parsing error - return
+            if (!tab) return;  // parsing error
 
             Object.assign(spectralCoord, {tab});
         }
@@ -117,7 +118,7 @@ function doParse(header, altWcs = '', zeroHeader, wlTableRelatedAry) {
         isNonSeparableTABGroup: isNonSeparableTABGroup(spectralCoords)  // always pixel level, must be processed together
     };
 
-    if (spectralCoords.length === 0) {
+    if (failWarnings.length === 0) {
         spectralWCSData.failReason = failWarnings.join(', ');
     }
 
