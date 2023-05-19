@@ -12,17 +12,16 @@ const precision = 10;
  * This is the unit test suits for Wavelength.  For each algorithm, the expected value is calculated independently based
  * on the algorithm in the reference paper and the known header data values.
  *
- * For Linear, Log, F2W, V2W, the four known points (pointArray) are used.
- * For TAB, the known simulated testing data wavelengthTable.fits stored in firefly_test_data under the same path as
- * projection is used.  The coordinates and index arrays are known and so are the psi_m and the pixIndex array.
+ * The testing data is stored as a json format. FitsHeaderToJson.java utility class can be used to convert FITS header
+ * to JSON.
+ *
+ * For Linear, Log, F2W, V2W the four known world points (pointArray) and test files are used.
+ * The TAB algorithm is tested with the header and lookup table in a JSON string (jsonTAB).
+ *
  * The expected value is calculated according to the algorithm in the reference paper.
+ * The actual values are calculated using Wavelength.js.
  *
- * For all the algorithm, the calculated values are the values that calculated using the Wavelength.js.
- *
- * The unit tests verify the the calculated values against the expected values.
- *
- * The testing data is stored as a json format.  The testing data wavelengthTableHeader.json was created using
- * the utility class FitsHeaderToJson.java.
+ * The unit tests verify the calculated values against the expected values.
  *
  */
 const pointArray = [
@@ -126,7 +125,7 @@ function getOmega(pixCoords, N, r_j, pc_3j, s_3) {
     return omega;
 }
 
-function getParamValues(header, algorithm) {
+function getParamValues(header) {
 
     let N = parseInt(getHeader(header, 'WCSAXES', '-1'));
     if (N === -1) {
@@ -153,15 +152,9 @@ function getParamValues(header, algorithm) {
         if (pc_3j[i] === undefined) {
             throw Error('Either PC3_i or CD3_i has to be defined');
         }
-
-        if (algorithm === 'LOG') {
-            //the values in CRPIXk and CDi_j (PC_i_j) are log based on 10 rather than natural log, so a factor is needed.
-            r_j[i] *= Math.log(10);
-            pc_3j[i] *= Math.log(10);
-        }
     }
 
-    const cdelt = parseFloat(getHeader(header, 'CDELT3', '0'));
+    const cdelt = parseFloat(getHeader(header, 'CDELT3', '1.0'));
     const crval = parseFloat(getHeader(header, 'CRVAL3', '0.0'));
     return {N, r_j, pc_3j, cdelt, crval};
 }
@@ -170,7 +163,7 @@ function getParamValues(header, algorithm) {
 function calculatedExpectedValue(pt, algorithm, header) {
 
     const pixCoords = getPixelCoordinates(pt, header);
-    const {N, r_j, pc_3j, cdelt, crval} = getParamValues(header, algorithm);
+    const {N, r_j, pc_3j, cdelt, crval} = getParamValues(header);
 
     const omega = getOmega(pixCoords, N, r_j, pc_3j, cdelt);
     let wl;
@@ -203,7 +196,7 @@ function doTest(jsonStr, algorithm) {
 
     for (let i = 0; i < pointArray.length; i++) {
         const pt = makeWorldPt(pointArray[i].ra, pointArray[i].dec);
-        const calculatedWL = getWavelength(pt, 0, wlData);
+        const calculatedWL = getWavelength(pt, 0, wlData)[0];
         const expectedValue = calculatedExpectedValue(pt, algorithm, header);
         assert.equal(calculatedWL.toFixed(precision), expectedValue.toFixed(precision), 'The current calculated wavelength value in' +
             '  is not the same as previously stored value');
@@ -261,7 +254,7 @@ describe('A test suite for Wavelength.js', function () {
 
         const calculatedWl = [];
         for (let i = 0; i < pointArrayTAB.length; i++) {
-            calculatedWl[i] = getWavelength(pointArrayTAB[i], 0, wlData);
+            calculatedWl[i] = getWavelength(pointArrayTAB[i], 0, wlData)[0];
         }
         for (let i = 0; i < pointArrayTAB.length; i++) {
             assert.equal(calculatedWl[i].toFixed(precision), expectedWlTAB[i].toFixed(precision),

@@ -18,7 +18,7 @@ import {fetchTable, queryTable, selectedValues} from '../rpc/SearchServicesJson.
 import {ServerParams} from '../data/ServerParams.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
 import {MetaConst} from '../data/MetaConst';
-import {getCmdSrvSyncURL, toBoolean} from '../util/WebUtil';
+import {getCmdSrvSyncURL, toBoolean, strictParseInt} from '../util/WebUtil';
 import {upload} from '../rpc/CoreServices.js';
 import {dd2sex} from '../visualize/CoordUtil.js';
 
@@ -487,6 +487,30 @@ export function getRowValues(tableModel, rowIdx) {
 }
 
 /**
+ * Fold 1d array value according to column's arraySize specification.
+ * For example, if `col.arraySize` is `'2x3'` and `val` is `[1,2,3,4,5,6]`, the result will be `[[1,2],[3,4],[5,6]]`.
+ * @param {TableColumn} col
+ * @param {Object} val
+ * @returns {*} array value with right dimensions, if a column is an array, or an unchanged value
+ */
+export function convertToArraySize(col, val) {
+
+    const aryDim = (col.arraySize || '').split('x');
+
+    if (col.type === 'char' && aryDim.length > 0) {
+        aryDim.shift();    // remove first dimension because char array is presented as string
+    }
+
+    if (aryDim.length > 1) {
+        for(let i = 0; i < aryDim.length-1; i++) {
+            val = chunk(val, strictParseInt(aryDim[i]));
+        }
+    }
+    return val;
+}
+
+
+/**
  * Firefly has 3 column meta that affect the formatting of the column's data.  They are
  * listed below in order of highest to lowest precedence.
  *
@@ -511,17 +535,7 @@ export function formatValue(col, val) {
     if (isNil(val)) return (nullString || '');
 
     if (Array.isArray(val)) {
-        const aryDim = (col.arraySize || '').split('x');
-
-        if (col.type === 'char' && aryDim.length > 0) {
-           aryDim.shift();    // remove first dimension because char array is presented as string
-        }
-
-        if (aryDim.length > 1) {
-            for(let i = 0; i < aryDim.length-1; i++) {
-                val = chunk(val, aryDim[i]);
-            }
-        }
+        val = convertToArraySize(col, val);
         return isString(val) ? val : JSON.stringify(val);
     }
 

@@ -8,7 +8,7 @@
  *
  */
 import {isDefined} from '../../util/WebUtil.js';
-export const PLANE = 'PLANE';
+
 export const LINEAR = 'LINEAR';
 export const LOG = 'LOG';
 export const F2W = 'F2W';
@@ -24,26 +24,111 @@ export const VRAD = 'VRAD';
 /**
  * @global
  * @public
- * @typedef {Object} WaveLengthData
+ * @typedef {Object} LookupTableData
+ * @summary The information needed to calculate spectral coordinate using lookup table
  *
- * @prop {string} algorithm
- * @prop {string} wlType
- * @prop {Number} N
- * @prop {Array.<number>} r_j
- * @prop {Array.<number>} pc_3j
- * @prop {number} restWAV
- * @prop {number} crpix
- * @prop {number} cdelt
- * @prop {number} crval
+
+ * @prop {Array} coordData    coordinate data
+ * @prop {Array} indexData    indexData
+ * @prop {number} m           axis number (m) in array PSi_1a
+ * @prop {number} [ps3_1]     column name for the coordinate array (PSi_1a)
+ * @prop {Table} [table]      lookup table
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} SpectralCoord
+ * @summary The information needed to calculate and present (public interface) spectral coordinate value
+ *
+ * @prop {boolean} planeOnly     coordinate can be calculated per plane (public interface)
+ * @prop {string} name           spectral coordinate name (public interface)
+ * @prop {string} symbol         spectral coordinate symbol (public interface)
+ * @prop {string} units          spectral coordinate units (public interface)
+ * @prop {string} coordType      spectral coordinate type
+ * @prop {string} algorithm      the algorithm used to calculate spectral coordinate value
+ * @prop {string} ctype          spectral coordinate type in the form XXXX-YYY, where XXXX is coordinate type, YYY is algorithm
+ * @prop {Number} N              (WCS level) the dimensionality of WCS representation given either by NAXIS or WCSAXES
+ * @prop {Array.<number>} r_j    (WCS Level) pixel coordinates of the reference point given by CRPIXj
+ * @prop {Array.<number>} pc_3j  the linear transformation matrix row corresponding to the spectral coordinate i (given either by PCi_j or CDi_j)
+ * @prop {number} crval          spectral coordinate value at reference point
+ * @prop {number} cdelt          scaling factor CDELTi or 1.0
+ * @prop {number} [restWAV]      (WCS Level) rest wavelength (used for V2W algorithm)
+ * @prop {LookupTableData} [tab] lookup table data for TAB algorithm
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} SpectralWCSData
+ *
+ * @prop {Array.<SpectralCoord>} spectralCoords  parameters specific to each spectral coordinate
+ * @prop {string} failReason
+ * @prop {boolean} hasPlainOnlyCoordInfo  WCS includes plane level spectral coordinate
+ * @prop {boolean} hasPixelLevelCoordInfo WCS includes pixel level spectral coordinate
+ * @prop {boolean} isNonSeparableTABGroup all spectral coordinates are TAB that should be processed together
  */
 
 
-
-const wlTypes = {
-    [PLANE]: {
-        getWaveLength: getWaveLengthPlane,
-        implemented: true,
+/**
+ * Spectral-coordinate type codes.
+ */
+export const spectralCoordTypes = {
+    ['FREQ']: {
+        type: 'Frequency',
+        symbol: String.fromCharCode(0x03BD), // ν (nu)
+        defaultUnits: 'Hz',
     },
+    ['ENER']: {
+        type: 'Energy',
+        symbol: 'E',
+        defaultUnits: 'J',
+    },
+    ['WAVN']: {
+        type: 'Wavenumber',
+        symbol: 'k',
+        defaultUnits: '1/m',
+    },
+    [VRAD]: {
+        type: 'Radio velocity',
+        symbol: 'V',
+        defaultUnits: 'm/s',
+    },
+    [WAVE]: {
+        aliases: ['WAVELENGTH', 'LAMBDA'],
+        type: 'Vacuum wavelength',
+        symbol: String.fromCharCode(0x03BB), // λ
+        defaultUnits: 'm',
+    },
+    ['VOPT']: {
+        type: 'Optical velocity',
+        symbol: 'Z',
+        defaultUnits: 'm/s',
+    },
+    ['ZOPT']: {
+        type: 'Redshift',
+        symbol: 'z',
+        defaultUnits: ' ',
+    },
+    [AWAV]: {
+        type: 'Air wavelength',
+        symbol: String.fromCharCode(0x03BB, 0x2090), // λₐ
+        defaultUnits: 'm',
+    },
+    ['VELO']: {
+        type: 'Apparent radial velocity',
+        symbol: 'v',
+        defaultUnits: 'm/s',
+    },
+    ['BETA']: {
+        type: 'Beta factor',
+        symbol: '0x03B2', // β
+        defaultUnits: ' ',
+    }
+};
+
+
+export const algorithmTypes = {
     [LINEAR]: {
         getWaveLength: getWaveLengthLinear,
         implemented: true,
@@ -61,31 +146,36 @@ const wlTypes = {
         implemented: true,
     },
     [TAB]: {
-        getWaveLength: getWaveLengthTable,
+        getWaveLength: getWaveLengthTab,
         implemented: true,
     },
 };
 
+/**
+ *
+ * @param pt
+ * @param cubeIdx
+ * @param {SpectralWCSData} spectralWCSData
+ * @param {Array<SpectralCoord>} spectralWCSData.spectralCoords
+ * @returns {*}
+ */
+export function getWavelength(pt, cubeIdx, spectralWCSData) {
 
-export function getWavelength(pt, cubeIdx, wlData) {
-    const {algorithm, wlType} = wlData;
-    if (wlTypes[algorithm] && wlTypes[algorithm].implemented && wlTypes[algorithm].getWaveLength) {
-        const wl = wlTypes[algorithm].getWaveLength(pt, cubeIdx, wlData);
-        if (wlType === AWAV) return convertAirToVacuum(wl);
-        return wl;
+    let coordValArray;
+    if (spectralWCSData.isNonSeparableTABGroup) {
+        coordValArray = getWaveLengthTabMultiD(pt, cubeIdx, spectralWCSData);
+    } else {
+        coordValArray = spectralWCSData.spectralCoords.map((c) => {
+            const {algorithm, coordType} = c;
+            if (algorithmTypes[algorithm]?.implemented && algorithmTypes[algorithm].getWaveLength) {
+
+                let wl = algorithmTypes[algorithm].getWaveLength(pt, cubeIdx, c);
+                if (coordType === AWAV) wl = convertAirToVacuum(wl);
+                return wl;
+            }
+        });
     }
-}
-
-//TODO check here to see the cubeIdx??
-function getWaveLengthPlane(ipt, cubeIdx, wlData) {
-    const {crpix, crval, cdelt} = wlData;
-    // pixel count starts from 1 to naxisn
-    const wl = crval + (cubeIdx + 1 - Math.round(crpix)) * cdelt;
-    return wl;
-}
-
-export function isWLAlgorithmImplemented(wlData) {
-    return wlTypes[wlData?.algorithm]?.implemented ?? false;
+    return coordValArray;
 }
 
 /**
@@ -132,7 +222,7 @@ function getWaveLengthLinear(ipt, cubeIdx, wlData) {
  *
  * @param {ImagePt} ipt
  * @param {number} cubeIdx
- * @param {WaveLengthData} wlData
+ * @param {SpectralCoord} wlData
  * @param {Number} wlData.N
  * @param {Array.<number>} wlData.r_j
  * @param {Array.<number>} wlData.pc_3j
@@ -159,11 +249,11 @@ function getWaveLengthLog(ipt, cubeIdx, wlData) {
  *
  * for ex. CTYPE3 = WAVE-V2W: see eq. (57) and (58)
  *
- * Other non-linear algorithms may be supported from Table 5 can be added in future.
+ * Other non-linear algorithms may be supported from Table 5 can be added in the future.
  *
  * @param {ImagePt} ipt
  * @param {number} cubeIdx
- * @param {WaveLengthData} wlData
+ * @param {SpectralCoord} wlData
  * @param {Number} wlData.N
  * @param {Array.<number>} wlData.r_j
  * @param {Array.<number>} wlData.pc_3j
@@ -193,30 +283,6 @@ function getWaveLengthNonLinear(ipt, cubeIdx, wlData) {
     return lambda;
 }
 
-/**
- * According to the reference papers above, the coordinate has M+1 dimension where the M means the
- *  dependence on the M axis, Coords[M][K1][K2[]...[Km].  In our case, the M=1, the coordinate is the
- *  two-dimensional array, and the first dimension is M=1 and the second dimension is K1, which is the sampling
- *  number the data has been sampled. Thus, for each image point, the corresponding index or coordinate array value
- *  is coords[1][K1].  For example, if the sampling count is K1=100, each cell in the coordinate table, contains 100
- *  data values. The coordinate column can convert to 100 rows of the single value table.
- *
- *
- * @param table
- * @param columnName
- * @returns {*}
- */
-const getArrayDataFromTable = (table, columnName) => {
-    const tableData = table.tableData;
-    const arrayData = tableData.data;
-    const columns = tableData.columns;
-    for (let i = 0; i < columns.length; i++) {
-        if (columns[i].name.toUpperCase() === columnName.toUpperCase()) {
-            return arrayData[0][i];
-        }
-    }
-    return undefined;
-};
 
 /**
  * Get non-linear spectral coordinate using table lookup, see Section 6 of Paper2.
@@ -236,31 +302,146 @@ const getArrayDataFromTable = (table, columnName) => {
  *
  * @param {ImagePt} ipt
  * @param {number} cubeIdx
- * @param {WaveLengthData} wlData
+ * @param {SpectralCoord} wlData
  * @param {Number} wlData.N number of world coordinate axes
  * @param {Array.<number>} wlData.r_j
  * @param {Array.<number>} wlData.pc_3j
  * @param {Number} wlData.cdelt scaling factor
  * @param {Number} wlData.crval value at the reference point
- * @param wlData.wlTable lookup table
- * @param wlData.ps3_1 column name for the coordinate array
- * @param wlData.ps3_2 column name for the indexing vector
+ * @param {LookupTableData} wlData.tab lookup table data
  * @return {number} spectral coordinate value
  */
-function getWaveLengthTable(ipt, cubeIdx, wlData) {
+function getWaveLengthTab(ipt, cubeIdx, wlData) {
 
-    const {N, r_j, cdelt, crval, pc_3j, wlTable, ps3_1, ps3_2} = wlData;
+    const {N, r_j, cdelt, crval, pc_3j, tab} = wlData;
 
-    const omega = getOmega(getPixelCoords(ipt, cubeIdx), N, r_j, pc_3j, cdelt);
-    const psi_m = crval + omega;
-    if (!wlTable) return NaN;
-
-    //read the cell coordinate from the FITS table and save to two one dimensional arrays
-    const coordData = getArrayDataFromTable(wlTable, ps3_1 || 'COORDS');
+    //coordinate array column must be defined
+    const coordData = tab?.coordData;
     if (!coordData) return NaN;
 
-    const indexData = getArrayDataFromTable(wlTable, ps3_2 || 'INDEX');
+    // indexing vector column can be undefined in no index case
+    const indexData = tab.indexData;
 
+    const pixCoord = getPixelCoords(ipt, cubeIdx);
+
+    // intermediate pixel coordinates (array of psi_m)
+    const psi_ms = crval + getOmega(pixCoord, N, r_j, pc_3j, cdelt);
+
+    const val = tabInterpolate1D(indexData, coordData, psi_ms);
+
+    return Array.isArray(val) ? val[0] : val;
+}
+
+/**
+ * Get non-separable spectral coordinate values using multi-d table lookup, see Section 6 of Paper2.
+ *
+ * The intermediate world coordinate for axis i is calculated as
+ *
+ * psi_m = x_i + CRVALia, eq. (87)
+ *
+ * where   x_i = omega = cdelt_i * Sum [ mi_j * (p_j - r_j) ]
+ *
+ * Using linear interpolation, if necessary, in the indexing vector
+ * for intermediate world coordinate axis i, one determines the
+ * location, Ym, corresponding to psi_m. Then the coordinate value,
+ * Cm, of type specified by the first four characters of CTYPEia,
+ * is that at location (m,Y1,Y2,...Y_M) in the coordinate array,
+ * again using linear interpolation.
+ *
+ * The concept described above is extended to M non-separable axes
+ * so long as the indexing vectors for each of the M axes are separable.
+ * M coordinate values are required for each of the possible index positions.
+ * Therefore, the coordinates will be in a single (1 + M)-dimensional array.
+ * This coordinate array will have dimensions (M, K1, K2,... KM), where Km is the
+ * maximum value of the index on axis m + 1 of the coordinate array.
+ * For simplicity, degenerate axes are forbidden; therefore, Km > 1.
+ * The indexing vectors for each of the M axes each contain a one-dimensional
+ * array of length Km.
+ *
+ * @param {ImagePt} ipt
+ * @param {number} cubeIdx
+ * @param {SpectralWCSData} wcsData
+ * @param {Array.<SpectralCoord>} wcsData.spectralCoords
+ * @param {Number} wcsData.spectralCoords.N number of world coordinate axes, shared for all spectral coords in WCS
+ * @param {Array.<number>} wcsData.spectralCoord.r_j array of reference pixels, shared for all spectral coords in WCS
+ * @param {Array.<number>} wcsData.spectralCoord.pc_3j linear transformation matrix row
+ * @param {Number} wcsData.spectralCoord.cdelt scaling factor
+ * @param {Number} wcsData.spectralCoord.crval value at the reference point
+ * @param {LookupTableData} wcsData.spectralCoord.tab lookup table data
+ * @return {Array<number>|number} spectral coordinate value
+ */
+function getWaveLengthTabMultiD(ipt, cubeIdx, wcsData) {
+
+    const {spectralCoords} = wcsData;
+
+    const c1 = spectralCoords[0];
+    const {N, r_j, tab} = c1;
+
+    //coordinate array column must be defined
+    const coordData = tab?.coordData;
+    if (!coordData) return spectralCoords.map(() => NaN);
+
+    const pixCoord = getPixelCoords(ipt, cubeIdx);
+
+    // spectral coordinates must be sorted by axis number m (pv3_3 field)
+    const sortedSpectralCoords = spectralCoords.sort((a, b) => a.tab.m - b.tab.m);
+    const sortingOrder = spectralCoords.map((c) => sortedSpectralCoords.indexOf(c));
+
+    // indexing vector column can be undefined in no index case
+    const indexDataArr = sortedSpectralCoords.map((c) => c.tab.indexData);
+
+    // intermediate pixel coordinates (array of psi_m)
+    const psi_ms = sortedSpectralCoords.map((c) => c.crval + getOmega(pixCoord, N, r_j, c.pc_3j, c.cdelt));
+
+    // array of coordinate values sorted by axis index m
+    const valsSortedByM = tabInterpolateMultiD(indexDataArr, coordData, psi_ms);
+
+    // put values in the order corresponding to the order of the spectral coordinates
+    return sortingOrder.map((idx) => valsSortedByM?.[idx] ?? NaN);
+}
+
+/**
+ * Recursive linear interpolation:
+ * start from the last coordinate, replace index array with the two that are necessary to find Y.
+ * @param indexDataArr indexing vectors
+ * @param coordData multi-d coordinate data array
+ * @param psi_ms intermediate pixel coordinates
+ * @param nprocessed the number of processed coordinates
+ * @returns {number|*}
+ */
+export function tabInterpolateMultiD(indexDataArr, coordData, psi_ms, nprocessed = 0) {
+    // the number of spectral coordinates should match the dimension of indexDataArr or psi_ms
+
+    // index of currently processing coord, corresponds to coordinate axis numbers m
+    const m = psi_ms.length - 1 - nprocessed;
+
+    if (nprocessed < psi_ms.length) {
+        // m > 0
+        const psiIndexRange = searchIndexRange(indexDataArr[m], psi_ms[m]); // bounding indexes
+        if (!psiIndexRange) return NaN;
+
+        const [psiIndex1, psiIndex2] = psiIndexRange;
+        // spectral coordinate values for bounding points
+        const coordData1 = [psiIndex1, psiIndex2].map(
+            (idx) => tabInterpolateMultiD(indexDataArr.slice(0,-1), coordData[idx], psi_ms.slice(0,-1), nprocessed+1)
+        );
+        const indexData = psiIndexRange.map((idx) => indexDataArr[m][idx]);
+        return tabInterpolate1D(indexData, coordData1, psi_ms[m]);
+    } else {
+        // m === 0
+        return tabInterpolate1D(indexDataArr[0], coordData, psi_ms[0]);
+    }
+}
+
+
+/**
+ * Get spectral coordinate value using linear interpolation in one dimension case.
+ * @param indexData
+ * @param coordData
+ * @param psi_m  intermediate pixel coordinate along axis m
+ * @returns {number|*}
+ */
+function tabInterpolate1D(indexData, coordData, psi_m) {
     if (!indexData) {
         // No indexing vector, psi_m is a direct index into the coordinate array.
         // psi_m should be an integer between 1 and coordData.length
@@ -272,7 +453,7 @@ function getWaveLengthTable(ipt, cubeIdx, wlData) {
         const Y_m = calculateY_m(indexData, psi_m);
 
         if (isDefined(Y_m)) {
-            return calculateC_m(Y_m, coordData, indexData.length);
+            return calculateC_m(Y_m, coordData) ?? NaN;
         }
     }
     return NaN;
@@ -288,18 +469,11 @@ function getWaveLengthTable(ipt, cubeIdx, wlData) {
  *
  * @param Y_m index in coordinate data array with range from 0.5 to kMax+0.5
  * @param coordData coordinate data array
- * @param kMax index data length (should match coordData.length, at least in 1d case)
  * @returns {*}
  */
-export function calculateC_m(Y_m, coordData, kMax) {
+export function calculateC_m(Y_m, coordData) {
 
-    if (kMax !== coordData.length) {
-        // this could happen in 2d case - not yet implemented
-        // the index data length is not matching coordinate data length
-        // the function will produce wrong results,
-        // better not to pretend we know the result
-        return NaN;
-    }
+    const kMax = coordData.length;
 
     // The value of Y_m derived from ψm must lie in the range 0.5 ≤ Y_m ≤ K + 0.5;
     // K > 1: degenerate axes are forbidden
@@ -313,7 +487,22 @@ export function calculateC_m(Y_m, coordData, kMax) {
     const lerp = (v1, v2, i) => v1 + i * (v2 - v1);
 
     // function to get C_m; the range of i is from -0.5 to 1.5
-    const findC_m = (i1, i2, i) => lerp(coordData[i1], coordData[i2], i);
+    const findC_m = (i1, i2, i) => {
+        if (Array.isArray(coordData[i1])) {
+            // If there are multiple non-separable coordinates, the coordinate data
+            // must be represented as a multi-dimensional array.
+            // The first dimension of the array represents the number of non-separable
+            // coordinates, while the remaining dimensions represent the coordinate values
+            // along each dimension.
+            return coordData[i1].map((_,ic) => lerp(coordData[i1][ic], coordData[i2][ic], i));
+        } else {
+            // If there is only one non-separable coordinate, the coordinate data
+            // can be represented as a one-dimensional array.
+            // In this case, each element of the array would correspond to a single
+            // coordinate value along the non-separable dimension.
+            return lerp(coordData[i1], coordData[i2], i);
+        }
+    };
 
     if (Y_m >= 1 && Y_m < kMax) {
         // In the case of a single separable coordinate with 1 ≤ k ≤ Y_m < k+1 ≤ kMax, the coordinate value is given by
@@ -378,56 +567,19 @@ export function calculateY_m(indexVec, psi_m) {
     // function to get Y: 1-based index in indexVec; Y range is from 0.5 to indexVec.length+0.5
     const findY = (i1, i2, v) => i2 + invlerp(indexVec[i1], indexVec[i2], v);
 
-    // Indexing vector should be monotonically increasing or decreasing.
-    const sort = isSorted(indexVec); // 1: ascending, -1: descending, 0: not sorted
-    if (sort === 0) {
-        return undefined;
-    }
+    // get zero-based indexes k, k+1 for linear interpolation or extrapolation
+    // for interpolation, k and k+1 are such that Ψk ≤ ψm ≤ Ψk+1 or Ψk ≥ ψm ≥ Ψk+1
+    // for extrapolation they are the first or the last indexes of the array
+    // if extrapolation is not allowed or index vector is not sorted, undefined is returned
+    const psiIndexRange = searchIndexRange(indexVec, psi_m);
+    if (!psiIndexRange) return undefined;
 
-    // get zero-based index k of index vector that Ψk ≤ ψm ≤ Ψk+1 or Ψk ≥ ψm ≥ Ψk+1
-    // k is -1 if psi_m is outside the index array
-    const psiIndex = searchIndex(indexVec, psi_m, sort);
+    const [psiIndex1, psiIndex2] = psiIndexRange;
 
-    if (psiIndex !== -1) {
-        // calculate Y_m using interpolation
-
-        if (indexVec[psiIndex] !== indexVec[psiIndex + 1]) {
-            // Υm = k + (ψm − Ψk) / (Ψk+1− Ψk) where k = 1,... Kmax,
-            // psiIndex here is from 0, so the k = psiIndex+1.  For example when psiIndex=0, it means k=1, Ψ1=ψm
-            Y_m = findY(psiIndex, psiIndex + 1, psi_m);
-        }
-
+    if (psiIndex1 === psiIndex2) {
+        Y_m = psiIndex1;
     } else {
-        // calculate Y_m using extrapolation: psi_m is out of the indexVector's range
-
-        if (indexVec.length === 1) {
-            // When the index vector's length  = 1 with ψm in the range Ψ1 − 0.5 ≤ ψm ≤ Ψ1 + 0.5
-            // (noting that Ψ1 should be equal to 1 in this case) hence Υm = ψm
-            if (indexVec[0] - 0.5 <= psi_m && psi_m <= indexVec[0] + 0.5) {
-                Y_m = psi_m;
-            }
-        } else { //do extrapolation
-            const kMax = indexVec.length;
-            const left = indexVec[0] - (indexVec[1] - indexVec[0]) / 2;
-            const right = indexVec[kMax - 1] + (indexVec[kMax - 1] - indexVec[kMax - 2]) / 2;
-
-            switch (sort) {
-                case 1:
-                    if (left <= psi_m && psi_m < indexVec[0]) {
-                        Y_m = findY(0, 1, psi_m);
-                    } else if (indexVec[kMax - 1] < psi_m && psi_m <= right) {
-                        Y_m = findY(kMax - 2, kMax - 1, psi_m);
-                    }
-                    break;
-                case -1:
-                    if (left >= psi_m && psi_m > indexVec[0]) {
-                        Y_m = findY(0, 1, psi_m);
-                    } else if (indexVec[kMax - 1] > psi_m && psi_m >= right) {
-                        Y_m = findY(kMax - 2, kMax - 1, psi_m);
-                    }
-                    break;
-            }
-        }
+        Y_m = findY(psiIndex1, psiIndex2, psi_m);
     }
     return Y_m;
 }
@@ -453,42 +605,93 @@ function isSorted(intArray) {
 }
 
 /**
- * Get lower array index k for linear interpolation in ****-TAB algorithm. See eq. (88) in Paper2.
+ * Get lower and upper array indexes k and k+1 for linear interpolation in ****-TAB algorithm.
+ * See eq. (88) in Paper2 and the text for extrapolation cases.
  *
  * Scan the indexing vector, (Ψ1, Ψ2,...), sequentially starting from the first element, Ψ1,
  * until a successive pair of index values is found that encompass ψm (i.e. such that Ψk ≤ ψm ≤ Ψk+1
  * for monotonically increasing index values or Ψk ≥ ψm ≥ Ψk+1 for monotonically decreasing index values
- * for some k). Return the value of k.
+ * for some k). Return the value of [k, k+1].
+ *
+ * If ψm is outside indexing vector, check if extrapolation is allowed; if so, return the indices [k, k+1]
+ * to be used for extrapolation.
+ *
+ * Linear extrapolation is allowed for values of ψm such that
+ * Ψ1 − (Ψ2 − Ψ1)/2 ≤ ψm < Ψ1 or Ψk < ψm ≤ Ψk + (Ψk − Ψk-1)/2
+ *     for monotonic increasing index values,
+ * and for Ψ1 + (Ψ1 − Ψ2)/2 ≥ ψm > Ψ1 or Ψk > ψm ≥ Ψk − (Ψk − Ψk-1)/2
+ *     for monotonic decreasing index values.
+ * Extrapolation is also allowed for k = 1 with ψm in the range Ψ1 − 0.5 ≤ ψm ≤ Ψ1 + 0.5
  *
  * The data in the indexing vectors must be monotonically increasing or decreasing, although two adjacent
  * index values in the vector may have the same value.
+ *
  * However, it is not valid for an index value to appear more than twice in an index vector,
  * nor for an index value to be repeated at the start or at the end of an index vector.
  *
  * NOTE: the index in the algorthm is starting with 1, in Javascript, the index is starting from 0.
  *
- * @param arrayData
+ * @param indexVec
  * @param psi_m
- * @param sort 1 if index values are monotonically increasing, -1 o
- * @returns {number} zero-based k such that Ψk ≤ ψm ≤ Ψk+1 or Ψk ≥ ψm ≥ Ψk+1; -1 if such index does not exist
+ * @returns {[number, number]} zero-based k and k+1 such that Ψk ≤ ψm ≤ Ψk+1 or Ψk ≥ ψm ≥ Ψk+1; [0, 1] or [k_max-1, k_max] if such index does not exist.
  */
-export function searchIndex(arrayData, psi_m, sort) {
+export function searchIndexRange(indexVec, psi_m) {
 
-    for (let i = 0; i < arrayData.length - 1; i++) {
+    // determine the sort order of the indexing vector
+    const sort = isSorted(indexVec); // 1: ascending, -1: descending, 0: not sorted
+    // indexing vector should be monotonically increasing or decreasing
+    if (sort === 0) return undefined;
+
+    // get zero-based index k of index vector that Ψk ≤ ψm ≤ Ψk+1 or Ψk ≥ ψm ≥ Ψk+1
+    for (let i = 0; i < indexVec.length - 1; i++) {
         // monotonically increasing array data
-        if (sort === 1 && arrayData[i] <= psi_m && psi_m <= arrayData[i + 1]) {
-            return i;
+        if (sort === 1 && indexVec[i] <= psi_m && psi_m <= indexVec[i + 1]) {
+            return [i, i+1];
         }
         // monotonically decreasing array data
-        if (sort === -1 && arrayData[i] >= psi_m && psi_m >= arrayData[i + 1]) {
-            return i;
-
+        if (sort === -1 && indexVec[i] >= psi_m && psi_m >= indexVec[i + 1]) {
+            return [i, i+1];
         }
     }
 
-    // no range found, the psi_m is outside the indexVector's range
-    return -1;
+    // extrapolation cases
+
+    // Linear extrapolation is allowed for values of ψm such that
+    // Ψ0 − (Ψ1 − Ψ0)/2 ≤ ψm < Ψ0 or Ψk-1 < ψm ≤ Ψk-1 + (Ψk-1 − Ψk-2)/2 for monotonic increasing index values,
+    // and for Ψ0 + (Ψ0 − Ψ1)/2 ≥ ψm > Ψ0 or Ψk-1 > ψm ≥ Ψk-1 − (Ψk-1 − Ψk-2)/2 for monotonic decreasing index values.
+
+    if (indexVec.length === 1) {
+        // extrapolation is allowed with ψm in the range Ψ0 − 0.5 ≤ ψm ≤ Ψ0 + 0.5
+        if (indexVec[0] - 0.5 <= psi_m && psi_m <= indexVec[0] + 0.5) {
+            return [0,0];
+        }
+    } else {
+        const kMax = indexVec.length;
+        const left = indexVec[0] - (indexVec[1] - indexVec[0]) / 2;
+        const right = indexVec[kMax - 1] + (indexVec[kMax - 1] - indexVec[kMax - 2]) / 2;
+
+        switch (sort) {
+            case 1:
+                if (left <= psi_m && psi_m < indexVec[0]) {
+                    return [0, 1];
+                } else if (indexVec[kMax - 1] < psi_m && psi_m <= right) {
+                    return [kMax - 2, kMax - 1];
+                }
+                break;
+            case -1:
+                if (left >= psi_m && psi_m > indexVec[0]) {
+                    return [0, 1];
+                } else if (indexVec[kMax - 1] > psi_m && psi_m >= right) {
+                    return[kMax - 2, kMax - 1];
+                }
+                break;
+        }
+    }
+
+    // no valid range found and extrapolation is not allowed
+    return undefined;
 }
+
 
 /**
  *

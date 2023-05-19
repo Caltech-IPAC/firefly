@@ -459,8 +459,8 @@ export const WebPlot= {
             plot.relatedData= relatedData.map( (d) => ({...d,relatedDataId: plotId+relatedIdRoot+d.dataKey}));
         }
 
-        if ((!cubeCtx || cubeCtx.cubePlane===0) && wlData && wlData.failWarning)  {
-            console.warn(`ImagePlot (${plotId}): Wavelength projection parse error: ${wlData.failWarning}`);
+        if ((!cubeCtx || cubeCtx.cubePlane===0) && wlData && wlData.failReason)  {
+            console.warn(`ImagePlot (${plotId}): Wavelength projection parse error: ${wlData.failReason}`);
         }
 
         return plot;

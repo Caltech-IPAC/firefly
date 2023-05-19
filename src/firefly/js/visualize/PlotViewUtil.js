@@ -4,14 +4,14 @@
 import {ExpandType} from 'firefly/visualize/ImagePlotCntlr.js';
 import {has, isArray, isEmpty, isObject, isString, isUndefined} from 'lodash';
 import shallowequal from 'shallowequal';
-import {isDefined, memorizeLastCall} from '../util/WebUtil';
+import {memorizeLastCall} from '../util/WebUtil';
 import CysConverter, {CCUtil} from './CsysConverter';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {getViewer} from './MultiViewCntlr.js';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeTransform} from './PlotTransformUtils.js';
 import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
-import {getWavelength, isWLAlgorithmImplemented, PLANE, TAB} from './projection/Wavelength.js';
+import {getWavelength} from './projection/Wavelength.js';
 import {removeRawData} from './rawData/RawDataCache.js';
 import {hasClearedDataInStore, hasLocalStretchByteDataInStore} from './rawData/RawDataOps.js';
 import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from './VisUtil';
@@ -888,25 +888,15 @@ export function convertImageIdxToHDU(pv, imageIdx) {
  * @return {boolean}
  */
 export const hasWLInfo= (plot) =>
-           Boolean(plot && plot.wlData && isDefined(plot.wlData.wlType) && isWLAlgorithmImplemented(plot.wlData) );
+           Boolean(plot?.wlData?.hasPlainOnlyCoordInfo || plot?.wlData?.hasPixelLevelCoordInfo );
 
-export const wavelengthInfoParsedSuccessfully= (plot) => hasWLInfo(plot) && !Boolean(plot.wlData.failReason);
+export const wavelengthInfoParsedSuccessfully= (plot) => !Boolean(plot?.wlData?.failReason);
 
-export const getWavelengthParseFailReason= (plot) => hasWLInfo(plot) && plot.wlData.failReason;
+export const getWavelengthParseFailReason= (plot) => plot?.wlData?.failReason;
 
-/**
- * check to see if wavelength data is available as the plain level (not pixel level) only
- * @param {WebPlot|undefined} plot
- * @return {boolean}
- */
-export function hasPlaneOnlyWLInfo(plot) {
-    if (!hasWLInfo(plot)) return false;
-    if(plot.wlData.planeOnlyWL) return true;
-    const {algorithm, pc_3j}= plot.wlData;
-    return (algorithm===PLANE ||
-        (isImageCube(plot) &&  algorithm===TAB && pc_3j?.length===3 && !pc_3j[0] && !pc_3j[1]) );
-}
+export const hasPixelLevelWLInfo= (plot) => Boolean(plot?.wlData?.hasPixelLevelCoordInfo);
 
+export const hasPlaneOnlyWLInfo= (plot) => Boolean(plot?.wlData?.hasPlainOnlyCoordInfo);
 
 /**
  * if this is a spectral cube and each plane has a single wavelength then return an array of wavelengths for each plane.
@@ -919,9 +909,8 @@ export function getAllWaveLengthsForCube(pv,imPt) {
     if (!plot || !isImageCube(plot) || !hasWLInfo(plot)) return;
     const len= getCubePlaneCnt(pv);
     if (!len) return;
-    return Array(len).fill('').map( (v,i) => getPtWavelength(plot,imPt, i));
+    return Array(len).fill('').map( (v,i) => getPtWavelength(plot, imPt, i));
 }
-
 
 export function getCubePlaneFromWavelength(pv,wl,imPt) {
     const wlAry= getAllWaveLengthsForCube(pv,imPt);
@@ -930,10 +919,6 @@ export function getCubePlaneFromWavelength(pv,wl,imPt) {
     return wlAry.findIndex( (testWl) => Math.trunc(testWl*1000000)===wlInt);
 }
 
-
-
-export const hasPixelLevelWLInfo= (plot) => hasWLInfo(plot) && !hasPlaneOnlyWLInfo(plot);
-
 /**
  * Return the units string
  * @param plot
@@ -941,7 +926,7 @@ export const hasPixelLevelWLInfo= (plot) => hasWLInfo(plot) && !hasPlaneOnlyWLIn
  */
 export function getWaveLengthUnits(plot) {
     if (!plot || !hasWLInfo(plot)) return '';
-    return plot.wlData?.units ?? '';
+    return plot.wlData?.spectralCoords?.[0].units ?? '';
 }
 
 
@@ -964,6 +949,7 @@ export function getFormattedWaveLengthUnits(plotOrStr, anyPartOfStr=false) {
     }
 }
 
+
 /**
  *
  * @param {WebPlot|undefined} plot
@@ -972,7 +958,7 @@ export function getFormattedWaveLengthUnits(plotOrStr, anyPartOfStr=false) {
  * @return {number}
  */
 export const getPtWavelength= (plot, pt, cubeIdx) =>
-    (plot && hasWLInfo(plot) && getWavelength(CCUtil.getImageCoords(plot,pt),cubeIdx,plot.wlData)) ?? 0;
+    (plot && hasWLInfo(plot) && getWavelength(CCUtil.getImageCoords(plot,pt),cubeIdx,plot.wlData))?.[0] ?? 0;
 
 
 //=============================================================

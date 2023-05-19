@@ -3,8 +3,10 @@
  */
 
 import {makeDoubleHeaderParse} from '../FitsHeaderUtil.js';
-import {AWAV, F2W, LINEAR, LOG, PLANE, TAB, V2W, WAVE, VRAD} from './Wavelength.js';  // eslint-disable-line no-unused-vars
+import {convertToArraySize} from '../../tables/TableUtil.js';
+import {algorithmTypes, spectralCoordTypes, LINEAR, TAB, WAVE, VRAD} from './Wavelength.js';  // eslint-disable-line no-unused-vars
 import {isDefined} from '../../util/WebUtil.js';
+import {Logger} from '../../util/Logger.js';
 
 
 /**
@@ -18,25 +20,288 @@ import {isDefined} from '../../util/WebUtil.js';
  * @prop {TableModel} table - the table with wavelength algorythm
  */
 
+const logger = Logger('SpectralCoord');
+
 /**
  *
  * @param {FitsHeader} header
  * @param {String} altWcs
  * @param {FitsHeader} zeroHeader
  * @param {Array.<WavelengthTabRelatedData>} wlTableRelatedAry
- * @return {*}
+ * @return {SpectralWCSData|undefined}
  */
 export function parseWavelengthHeaderInfo(header, altWcs = '', zeroHeader, wlTableRelatedAry) {
+    try {
+        return doParse(header, altWcs, zeroHeader, wlTableRelatedAry);
+    } catch (e) {
+        logger.error(`Exception parsing wavelength header: ${e?.message}`);
+        logger.error(e.stack);
+    }
+}
+
+/**
+ *
+ * @param {FitsHeader} header
+ * @param {String} altWcs
+ * @param {FitsHeader} zeroHeader
+ * @param {Array.<WavelengthTabRelatedData>} wlTableRelatedAry
+ * @return {SpectralWCSData|undefined}
+ */
+function doParse(header, altWcs = '', zeroHeader, wlTableRelatedAry) {
     const parse = makeDoubleHeaderParse(header, zeroHeader, altWcs);
-    const which = altWcs ? '1' : getWCSAXES(parse);
-    const whatType = parse.getValue(`CTYPE${which}${altWcs}`, ' ');
-    const mijMatrixKeyRoot = getPC_ijKey(parse, which);
-    if (!mijMatrixKeyRoot) return; //When both PC i_j and CD i_j are present, we don't show the wavelength
+
+    // identify spectral coordinates and the subset that requires table lookup (-TAB) algorithm
+    const {iCtypeSupported, iCtypeTab} = findSupportedCTYPEs(parse, altWcs, [WAVE, VRAD]); // array of i, for which CTYPEi=XXXX-TAB
+
+    if (iCtypeSupported.length === 0) return;
+
+    const spectralCoords = [];
+    const failWarnings = [];
+
+    // fields that belong to WCS, not to a specific spectral coordinate
+    const {nAxis, N, r_j, restWAV} = calculateSharedParams(parse, altWcs);
+    if (N < 0) return;  // Dimension value is not available, must be NAXIS or WCSAXES
+
+    // loop through spectral coordinates, assemble per-coordinate parameters
+    iCtypeSupported.forEach((which) => {
+        const {ctype, cname, units, crpix, crval, cdelt} = getCoreSpectralHeaders(parse, altWcs, which);
+
+        const mijMatrixKeyRoot = getPC_ijKey(parse, which);
+        if (!mijMatrixKeyRoot) {
+            failWarnings.push(`${ctype}: both PC i_j and CD i_j are present`);
+            return;
+        }
+
+        let pc_3j = parse.getDoubleAry(`${mijMatrixKeyRoot}${which}_`, altWcs, 1, N, undefined);
+        if (!pc_3j && mijMatrixKeyRoot === 'CD') {
+            // CD matrix values default to 0.0 - the spectral coordinate value is constant
+            failWarnings.push(`CD3_i${altWcs} is not defined: ${ctype} value is constant`);
+        }
+
+        //check if any value is not defined, use default
+        pc_3j = applyDefaultValues(pc_3j, mijMatrixKeyRoot, which, N);
+
+        const {algorithm, coordType} = getAlgorithmAndType(ctype);
+
+        // per-plane readout is possible only for the coordinates that do not depend on any axis but the 3rd (index 2)
+        const canDoPlaneCalc = nAxis === 3 && pc_3j?.every((v, i) => i === 2 ? v !== 0 : v === 0) &&
+            allGoodValues(crpix, crval, cdelt && nAxis === 3);
+
+        const spectralCoord = {
+            planeOnly: canDoPlaneCalc,
+            name: cname.trim() || spectralCoordTypes[coordType].type,
+            symbol: spectralCoordTypes[coordType].symbol,
+            units: units.trim() || spectralCoordTypes[coordType].defaultUnits,
+            coordType, algorithm,
+            ctype, N, r_j, pc_3j,
+            crval, cdelt,
+            restWAV};
+
+        if (iCtypeTab.includes(which)) {
+            // get lookup table data
+            const tab = calculateTabParameters(parse, altWcs, which, wlTableRelatedAry, ctype, failWarnings);
+            if (!tab) return;  // parsing error
+
+            Object.assign(spectralCoord, {tab});
+        }
+        spectralCoords.push(spectralCoord);
+    });
+
+    // In theory, WCS could contain multiple spectral coordinates of different kind.
+    // In practice, there will be one spectral coordinate in a WCS.
+    // If there are more than two, they are likely related to each other.
+
+    const spectralWCSData = {
+        spectralCoords,
+        hasPlainOnlyCoordInfo: spectralCoords.some((c) => c.planeOnly),
+        hasPixelLevelCoordInfo: spectralCoords.some((c) => !c.planeOnly),
+        isNonSeparableTABGroup: isNonSeparableTABGroup(spectralCoords)  // always pixel level, must be processed together
+    };
+
+    if (failWarnings.length === 0) {
+        spectralWCSData.failReason = failWarnings.join(', ');
+    }
+
+    return spectralWCSData;
+}
+
+const MAX_CTYPES = 4;
+
+/**
+ * Get indices of CTYPEs that we need to preserve: all and those requiring table lookup algorithm.
+ * @param parse
+ * @param {String} altWcs alternate WCS character
+ * @param supportedCoordTypes list of the supported coordinate type codes
+ * @returns {{iCtypeSupported: Array.<int>, iCtypeTab: Array.<int>}} indices of the supported coordinates and those requiring TAB algorithm
+ */
+function findSupportedCTYPEs(parse, altWcs = '', supportedCoordTypes=Object.keys(spectralCoordTypes)) {
+    const iCtypeSupported = [];  // supported ctype indexes
+    const iCtypeTab = [];  // ctype indexes requiring TAB algorithm
+
+    for (let i = 1; i <= MAX_CTYPES; i++) {
+        const ctype = parse.getValue(`CTYPE${i}${altWcs}`, ' ');
+        const {algorithm, coordType} = getAlgorithmAndType(ctype);
+
+        if (algorithmTypes[algorithm]?.implemented && supportedCoordTypes.includes(coordType)) {
+            iCtypeSupported.push(i);
+        }
+        if (algorithm === TAB) {
+            iCtypeTab.push(i);
+        }
+    }
+    return {iCtypeSupported, iCtypeTab};
+}
+
+/**
+ * Check if spectral coordinates form a non-separable group.
+ * @param {Array.<SpectralCoord>} spectralCoords
+ * @returns {boolean} True if the coordinates form non-separable TAB group
+ */
+function isNonSeparableTABGroup(spectralCoords) {
+    // check if the spectral coordinates form a non-separable table lookup group
+
+    // there must be more than one coordinate in a group
+    if (spectralCoords.length < 2) return false;
+
+    // all of them must be table lookup coordinates
+    if (spectralCoords.some((c) => c.algorithm !== TAB)) return false;
+
+    // all coordinates refer to the same table and output column
+    const table = spectralCoords[0].tab.table;
+    const ps3_1 = spectralCoords[0].tab.ps3_1.toUpperCase();
+    return spectralCoords.slice(1).every((c) => c.tab.table === table || c.tab.ps3_1.toUpperCase() === ps3_1);
+}
+
+
+/**
+ * Get parameters that can be relevant to multiple spectral coordinates in a WCS.
+ * @param parse
+ * @param altWcs
+ * @returns {{nAxis: int, restWAV: number, r_j: Array.<int>, N: int}}
+ */
+function calculateSharedParams(parse, altWcs) {
+
+    // todo should N be max(WCSAXESa, NAXIS)?
+    // WCSAXES – [integer; default: NAXIS, or larger of WCS indices i
+    // or j]. Number of axes in the WCS description. This keyword,
+    // if present, must precede all WCS keywords except NAXIS in
+    // the HDU. The value of WCSAXES may exceed the number of
+    // pixel axes for the HDU.
+    //
+    // It is not recommended for WCSAXES to be smaller than NAXIS,
+    // as this would imply that some of the data dimensions are not included in the WCS.
+    const N = parse.getIntOneOfValue(['WCSAXES', 'WCSAXIS', 'NAXIS'], -1);
+
+    const nAxis = parse.getIntValue('NAXIS');
+
+    // reference pixel, CRPIXj default is 0.0
+    let r_j = parse.getDoubleAry('CRPIX', altWcs, 1, N, undefined);
+    r_j = applyDefaultValues(r_j, 'CRPIX', 1, N);  // for CRPIX, "which" does not matter
+
+    // rest wavelength
+    const restWAV = parse.getDoubleValue('RESTWAV' + altWcs, 0);
+
+    return {nAxis, N, r_j, restWAV};
+}
+
+
+/**
+ * Get table lookup parameters
+ * @param parse
+ * @param altWcs
+ * @param which
+ * @param wlTableRelatedAry
+ * @param ctype
+ * @param failWarnings
+ * @returns {LookupTableData|undefined}
+ */
+function calculateTabParameters(parse, altWcs, which, wlTableRelatedAry, ctype, failWarnings) {
+
+    // matching lookup table must be present
     const table = findWLTableToMatch(parse, altWcs, which, wlTableRelatedAry);
-    if (whatType.toUpperCase().startsWith('WAVE')) {
-        return calculateWavelengthParams(parse, altWcs, which, mijMatrixKeyRoot, table);
-    } else if (whatType.toUpperCase() === VRAD) {
-        return calculateVradParams(parse, altWcs, which, mijMatrixKeyRoot, table);
+    if (!table) {
+        failWarnings.push(`${ctype}: lookup table is not found`);
+        return;
+    }
+
+    // column name for the coordinate array (TTYPEn1) - PSi_1a must be present
+    const ps3_1 = parse.getValue(`PS${which}_1${altWcs}`);
+    if (!ps3_1) {
+        failWarnings.push(`${ctype}: column name for the coordinate array is not found`);
+        return;
+    }
+
+    // column name for the indexing vector (TTYPEn2) - no index if PSi_2a is not present
+    const ps3_2 = parse.getValue(`PS${which}_2${altWcs}`);
+
+    //coordinate array column must be defined
+    const coordData = getArrayDataFromTable(table, ps3_1);
+    if (!coordData) {
+        failWarnings.push(`${ctype}: column for the coordinate array is not found in lookup table`);
+        return;
+    }
+    if (coordData.length === 0) {
+        failWarnings.push(`${ctype}: coordinate array should not be empty`);
+        return;
+    }
+
+    // indexing vector column can be undefined in no index case
+    const indexData = getArrayDataFromTable(table, ps3_2);
+
+    // PVi_3a values are needed to handle more than one TAB axes
+    // axis number (m) in the coordinate array
+    const m = parse.getIntValue(`PV${which}_3${altWcs}`, 1);
+
+    // confirm that innermost coordinate array dimension is big enough
+    const arraySize = getArraySize(coordData);
+    if (arraySize[0] < m) {
+        failWarnings.push(`${ctype}: coordinate array innermost dimension ${arraySize[0]} has less than ${m} elements`);
+        return;
+    }
+
+    return {coordData, indexData, m, table, ps3_1};
+}
+
+
+/**
+ * According to the reference papers above, the coordinate has M+1 dimension where the M means the
+ *  dependence on the M axis, Coords[M][K1][K2[]...[Km].  In our case, the M=1, the coordinate is the
+ *  two-dimensional array, and the first dimension is M=1 and the second dimension is K1, which is the sampling
+ *  number the data has been sampled. Thus, for each image point, the corresponding index or coordinate array value
+ *  is coords[1][K1].  For example, if the sampling count is K1=100, each cell in the coordinate table, contains 100
+ *  data values. The coordinate column can convert to 100 rows of the single value table.
+ *
+ *
+ * @param table
+ * @param columnName
+ * @returns {*}
+ */
+const getArrayDataFromTable = (table, columnName) => {
+    if (!columnName) return undefined;
+    const tableData = table.tableData;
+    const arrayData = tableData.data;
+    const columns = tableData.columns;
+    for (let i = 0; i < columns.length; i++) {
+        if (columns[i].name.toUpperCase() === columnName.toUpperCase()) {
+            // array data are flat array that need to be folded
+            // according to array size, which is a string where
+            // dimensions are separated by 'x'
+            return convertToArraySize(columns[i], arrayData[0][i]);
+        }
+    }
+    return undefined;
+};
+
+/**
+ * Get lengths for all dimensions of the array, innermost dimension is the first
+ * @param array
+ * @returns {number[]}
+ */
+function getArraySize(array) {
+    if (Array.isArray(array)) {
+        return getArraySize(array[0]).concat([array.length]);
+    } else {
+        return [];
     }
 }
 
@@ -46,14 +311,15 @@ function findWLTableToMatch(parse, altWcs, which, wlTableRelatedAry) {
     const tName = parse.getValue(`PS${which}_0${altWcs}`);  // table name
     const tVersion = parse.getIntValue(`PV${which}_1${altWcs}`, 1);  // table version
     const tLevel = parse.getIntValue(`PV${which}_2${altWcs}`, 1);  // table level
-    return wlTableRelatedAry.find((entry) => entry.hduName === tName && entry.hduVersion === tVersion && entry.hduLevel === tLevel)?.table;
+    return wlTableRelatedAry.find((entry) =>
+        entry.hduName.toUpperCase() === tName.toUpperCase() &&
+        entry.hduVersion === tVersion &&
+        entry.hduLevel === tLevel)?.table;
 }
 
 
 const allGoodValues = (...numbers) => numbers.every((n) => !isNaN(n));
 
-
-const L_10 = Math.log(10);
 
 /**
  * According to A&A 395, 1061-1075 (2002) DOI: 10.1051/0004-6361:20021326
@@ -65,7 +331,6 @@ const L_10 = Math.log(10);
  *   is not defined, the default is 0.0;
  * 3. If any PC_ij is defined or neither PC nor CD is defined, we use PC, the default
  *    is 0 for j!=i and 1 if j==i
- *
  *
  * @param parser
  * @param which
@@ -85,32 +350,6 @@ function getPC_ijKey(parser, which) {
     return 'PC';
 }
 
-
-/**
- * This method will return the value of the WCSAXES.  NOTE: the WCSAXES can be any naxis, it does
- * not have to be 3.  In general, if the wavelength is depending on two dimensional images, it most likely
- * is 3.  But the axis 3 can also be other quantity such as Frequency etc.
- *
- * If the FITS header has 'WCSAXES', this will be the wavelength axis.
- * If 'WCSAXES' is not defined, the default will be the larger of naxis and the j where j=1, 2, 3, ..)
- * @param parse
- * @returns {*}
- */
-function getWCSAXES(parse) {
-    const wcsAxis = parse.getValue('WCSAXES');
-
-    if (wcsAxis) return wcsAxis;
-
-    const nAxis = parse.getIntValue('NAXIS');
-
-    const ctype = parse.getValue(`CTYPE${nAxis + 1}`, undefined);
-
-    if (ctype) {
-        return (nAxis + 1).toString();
-    } else {
-        return nAxis.toString();
-    }
-}
 
 /**
  *
@@ -157,9 +396,15 @@ function applyDefaultValues(inArr, keyRoot, which, N) {
         }
         switch (keyRoot) { //either inArr is undefined, or inArr[i] is undefined
             case 'PC':
+                // PCi_j – [floating point; defaults: 1.0 when i = j, 0.0 otherwise].
+                // Linear transformation matrix between Pixel Axes j
+                // and Intermediate-coordinate Axes i.
                 retAry[i] = (i + 1) === parseInt(which) ? 1 : 0;
                 break;
-            case 'CRPIX' || 'CD':
+            case 'CRPIX':
+            case 'CD':
+                // CRPIXj – [floating point; default: 0.0]
+                // CDi_j – [floating point; defaults: 0.0]
                 retAry[i] = 0.0;
                 break;
         }
@@ -167,224 +412,72 @@ function applyDefaultValues(inArr, keyRoot, which, N) {
     return retAry;
 }
 
-function isWaveLength(ctype, pc_3j) {
-
-    if (ctype.trim() === '') return false;
-
-    const sArray = ctype.split('-');
-
-    if (sArray[0] !== 'WAVE') return false;
-
-    //The header has the axis dependency information, ie. pc_31 (naxis1) or pc_32 (naxis2) are defined.
-    //If no such information, and it is not a "TAB", thus there is no dependency.  The wavelength will not
-    // be displayed in the mouse readout.
-
-    return ((pc_3j[0] !== 0 || pc_3j[1] !== 0) || sArray[1] === 'TAB');
-}
 
 /**
- * Get the key Spectra headers
+ * Get the key headers for a coordinate.
  * @param parse
  * @param {string} altWcs one character alternative WCS version, '' for primary
  * @param {number} which index of the world coordinate
  * @param {string} defaultUnits default units
  * @returns {*}
  */
-function getCoreSpectralHeaders(parse, altWcs, which, defaultUnits = '') {
+function getCoreSpectralHeaders(parse, altWcs, which, defaultUnits = ' ') {
+
+    // Based on https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf
+    // The default values defined below:
+    // CTYPEi	' ' (i.e. a linear undefined axis)
+    // CUNITi	' ' (i.e. undefined)
+    // CRPIXj   0.0
+    // CRVALi   0.0
+    // CDELTi	1.0
+
     const ctype = parse.getValue(`CTYPE${which}${altWcs}`, ' ');
+    const cname = parse.getValue(`CNAME${which}${altWcs}`, ' '); // spectral coordinate description
     const units = parse.getValue(`CUNIT${which}${altWcs}`, defaultUnits);
     const crpix = parse.getDoubleValue(`CRPIX${which}${altWcs}`, 0.0);
     const crval = parse.getDoubleValue(`CRVAL${which}${altWcs}`, 0.0);
     const cdelt = parse.getDoubleValue(`CDELT${which}${altWcs}`, 1.0);
-    const nAxis = parse.getIntValue('NAXIS');
-    const N = parse.getIntOneOfValue(['WCSAXES', 'WCSAXIS', 'NAXIS'], -1);
-    return {ctype, units, crpix, crval, cdelt, nAxis, N};
+    return {ctype, cname, units, crpix, crval, cdelt};
 }
 
-/**
- * NOTE:
- *   pc_3j, means the wavelength axis is 3.  In fact, the wavelength can be in any axis.
- * @param parse
- * @param altWcs
- * @param which
- * @param pc_3j_key
- * @param wlTable
- * @returns {*}
- */
-function calculateWavelengthParams(parse, altWcs, which, pc_3j_key, wlTable) {
-
-    /*
-    * Base on the reference: A&A 395, 1061-1075 (2002) DOI: 10.1051/0004-6361:20021326
-    * Representations of world coordinates in FITS E. W. Greisen.  The default values
-    * defined below:
-    * CDELT i	1.0
-    * CTYPE i	' ' (i.e. a linear undefined axis)
-    * CUNIT i	' ' (i.e. undefined)
-    * NOTE: i is the which variable here.
-    */
-    const {ctype, units, crpix, crval, cdelt, nAxis, N} = getCoreSpectralHeaders(parse, altWcs, which);
-    const restWAV = parse.getDoubleValue('RESTWAV' + altWcs, 0);
-    let pc_3j = parse.getDoubleAry(`${pc_3j_key}${which}_`, altWcs, 1, N, undefined);
-    let r_j = parse.getDoubleAry('CRPIX', altWcs, 1, N, undefined);
-
-    //check if any value is not defined, use default
-    pc_3j = applyDefaultValues(pc_3j, pc_3j_key, which, N);
-    r_j = applyDefaultValues(r_j, 'CRPIX', which, N);
-
-    const ps3_0 = parse.getValue(`PS${which}_0${altWcs}`, '');  // table EXTNAME
-    const ps3_1 = parse.getValue(`PS${which}_1${altWcs}`, '');  // column name for the coordinate array (TTYPEn1)
-    const ps3_2 = parse.getValue(`PS${which}_2${altWcs}`, '');  // column name for the indexing vector (TTYPEn2)
-
-    //The pv3_i values are needed to handle the FITS with more than one TAB axes.
-    const pv3_1 = parse.getValue(`PV${which}_1${altWcs}`, '');  // EXTLEVEL
-    const pv3_2 = parse.getValue(`PV${which}_2${altWcs}`, '');  // EXTVER
-    const pv3_3 = parse.getValue(`PV${which}_3${altWcs}`, '');  // axis number associated with the coordinate array in ps3_1
-
-    const {algorithm, wlType} = getAlgorithmAndType(ctype);
-
-
-    const canDoPlaneCalc = allGoodValues(crpix, crval, cdelt && nAxis === 3);
-
-    // We only support the standard format in the FITS header. The standard means the CTYPEka='WAVE-ccc" where
-    // ccc can be 'F2W', 'V2W', 'LOG', 'TAB' or empty that means linear. If the header does not have this kind
-    // CTYPEka defined, we check if it is a spectra cube.  If it is a spectra cube,and it is independent of the
-    // images we display the wavelength at each plane.  If it is a spectra cube and it is wavelength is depending on
-    // the image coordinates, we display the wavelength at the mouse readout at each plane.
-    // This is to check if the ctype is WAVE and the wavelength depends on the two-dimension image coordinates.
-    const isWL = isWaveLength(ctype, pc_3j);
-
-    //If it is a cube plane FITS, plot and display the wavelength at each plane
-    if (canDoPlaneCalc && nAxis === 3 && (!isWL || isWL && algorithm === 'TAB')) {
-        /* There are two cases for wavelength planes:
-        *  1. The FITS has wavelength planes, and each plane has the same wavelength, ie. the third axis
-        *     is wavelength.  Then the algorithm is PLANE
-        *  2. The FITS has wavelength planes and the wavelength on each plane is changing with the image point
-        *     position.  For example, the algorithm is TAB.
-        */
-        const algorithmForPlane = isWL ? algorithm : PLANE;
-        //todo - do we need to support planeOnlyWL for TAB algorithm?
-        if (algorithm !== 'TAB') {
-            return makeSimplePlaneBased(crpix, crval, cdelt, nAxis, algorithmForPlane, wlType, units,
-                'use PLANE since is cube and parameters missing');
-        }
-        return {
-            N, algorithm, ctype, restWAV, pc_3j, r_j,
-            ps3_0, ps3_1, ps3_2, pv3_1, pv3_2, pv3_3,
-            crpix, crval, cdelt, nAxis, wlType, units,
-            wlTable,
-        };
-
-    }
-
-    //Plot and display the wavelength as one of the mouse readout only if the FITS header
-    //contains the required parameters and the wavelength is depending on the image axes.
-    /* We don't show the wavelength in the mouse readout in following three situations:
-     *  1. Algorithm is not defined
-     *  2. wlType is not defined or the type is not supported
-     *  3. The FITS file is not wavelength type (may be plane)
-     *
-     */
-    if (!algorithm || !wlType || !isWL) return;
-
-
-    if (algorithm === LOG) {  //the values in CRPIXk and CDi_j (PC_i_j) are log based on 10 rather than natural log, so a factor is needed.
-        r_j && (r_j = r_j.map((v) => v * L_10));
-        pc_3j && (pc_3j = pc_3j.map((v) => v * L_10));
-    }
-
-    let failReason = '';
-    let failWarning = '';
-    if (N < 0) {
-        failReason += 'Dimension value is not available, must be NAXIS or WCSAXES';
-    } else {
-        // if (!pc_3j) failReason+= `, PC3_i${altWcs} or CD3_i${altWcs} is not defined`;
-        // if (!r_j) failReason+= `, CRPIXi${altWcs} is not defined`;
-        if (!pc_3j) failWarning += `, PC3_i${altWcs} or CD3_i${altWcs} is not defined`;
-        if (!r_j) failWarning += `, CRPIXi${altWcs} is not defined`;
-    }
-
-    return {
-        N, algorithm, ctype, restWAV, wlType, crpix, crval, cdelt,
-        failReason, failWarning, units, pc_3j, r_j,
-        ps3_0, ps3_1, ps3_2, pv3_1, pv3_2, pv3_3,
-        wlTable
-    };
-}
 
 /**
- * NOTE:
- *   pc_3j, means the the wavelength axis is 3.
+ * Get algorithm and type of the spectral coordinate from the CTYPEka value.
  *
- * @param parse
- * @param altWcs
- * @param which
- * @param pc_3j_key
- * @param vradTable
- * @returns {*}
+ * CTYPEka has the form XXXX-AAA, where the first four characters specify the coordinate type,
+ * the fifth character is ’-’ and the next three characters specify a predefined algorithm
+ * for computing the world coordinates from intermediate physical coordinates.
+ * (If only the type is present, the algorithm is assumed to be linear.)
+ *
+ * When k is the spectral axis, the first four characters shall be one of:
+ * FREQ, ENER, WAVN, VRAD, WAVE, VOPT, ZOPT, AWAV, VELO, BETA
+ * per Table 1 of E. W. Greisen et al.: Representations of spectral coordinates in FITS
+ * @param {String} ctype
+ * @return {{algorithm:string,coordType:string}}
  */
-function calculateVradParams(parse, altWcs, which, pc_3j_key, vradTable) { // eslint-disable-line no-unused-vars
+function getAlgorithmAndType(ctype) {
+    let algorithm;
+    if (!ctype.trim()) return {algorithm: undefined, coordType: undefined};
+    ctype = ctype.toUpperCase();
 
-    /*
-    * Only consider VRAD plane case for now
-    * the pc_3j_key, vradTalble not used in Plane case
-    */
-    const {ctype, units, crpix, crval, cdelt, nAxis} = getCoreSpectralHeaders(parse, altWcs, which, 'm/s');
-    const {algorithm, wlType} = getAlgorithmAndType(ctype);
+    const sArray = ctype.split('-');
 
-    //If it is a cube plane FITS, plot and display the Vrad at each plane
-    if (allGoodValues(crpix, crval, cdelt) && nAxis === 3) {
-        return makeSimplePlaneBased(crpix, crval, cdelt, nAxis, algorithm, wlType, units,
-            'use PLANE since is cube and parameters missing');
-    }
-}
+    const coordType = sArray[0];
 
-function makeSimplePlaneBased(crpix, crval, cdelt, nAxis, algorithm, wlType, units, reason) {
-    if (allGoodValues(crpix, crval, cdelt) && nAxis === 3) {
-        //return {algorithm: PLANE, wlType: wlType || WAVE, crpix, crval, cdelt, units, reason};
-
-        return {algorithm, wlType, crpix, crval, cdelt, units, reason, planeOnlyWL: true};
-    } else {
-        return {
-            algorithm: undefined,
-            wlType,
-            failReason: 'CTYPE3, CRVAL3, CDELT3 are required for simple and NAXIS===3',
-            failReason2: reason
-        };
-    }
-}
-
-/**
- * This method will return the algorithm specified in the FITS header.
- * If the algorithm is TAB, the header has to contain the keyword "EXTNAME".
- * The fitsType = header.getStringValue("CTYPE3"), will tell what algorithm it is.
- * The value of "CTYPE3" is WAVE-AAA, the AAA means algorithm.  If the fitsType only has
- * "WAVE', it is linear.
- * @param {String} ctype3
- * @return {{algorithm:string,wlType:string}}
- */
-function getAlgorithmAndType(ctype3) {
-    // let wlType, vradType, algorithm;
-    // It is temporary to include Vrad under wlType
-    // need to do generic spectral header parser
-    let wlType, algorithm;
-    if (!ctype3.trim()) return {algorithm: undefined, wlType: undefined};
-    ctype3 = ctype3.toUpperCase();
-    const sArray = ctype3.split('-');
-
-    if (ctype3.startsWith(WAVE) || ctype3.startsWith(AWAV)) {
-        if (ctype3.startsWith(WAVE)) wlType = WAVE;
-        else if (ctype3.startsWith(AWAV)) wlType = AWAV;
-
-        if (sArray.length === 1) algorithm = LINEAR;
-        else if (sArray[1].trim() === LOG) algorithm = LOG;
-        else algorithm = sArray[1];
-    } else if (ctype3.startsWith('LAMBDA')) {
-        wlType = WAVE;
+    if (sArray.length === 1 ) {
         algorithm = LINEAR;
-    } else if (ctype3.startsWith('VRAD')) {
-        wlType = VRAD;
-        algorithm = PLANE;
+    } else {
+        algorithm = sArray[1].trim();
     }
-    return {algorithm, wlType};
+
+    // verify that coordinate type is valid
+    const validCoordTypes = Object.keys(spectralCoordTypes);
+    if (!validCoordTypes.includes(coordType)) {
+        // handle non-conforming coordinates: check if coordinate type matches one of the aliases
+        const matchingType = validCoordTypes.find((c) => spectralCoordTypes[c].aliases?.includes(coordType));
+        return {algorithm, coordType: matchingType};
+    }
+    // the standard does not limit the algorithm to the known algorithms
+    return {algorithm, coordType};
 }
 
