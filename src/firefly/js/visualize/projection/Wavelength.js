@@ -633,7 +633,7 @@ function isSorted(intArray) {
  *
  * @param indexVec
  * @param psi_m
- * @returns {[number, number]} zero-based k and k+1 such that Ψk ≤ ψm ≤ Ψk+1 or Ψk ≥ ψm ≥ Ψk+1; [0, 1] or [k_max-1, k_max] if such index does not exist.
+ * @returns {Array.<number>} zero-based k and k+1 such that Ψk ≤ ψm ≤ Ψk+1 or Ψk ≥ ψm ≥ Ψk+1; [0, 1] or [k_max-1, k_max] if such index does not exist.
  */
 export function searchIndexRange(indexVec, psi_m) {
 
