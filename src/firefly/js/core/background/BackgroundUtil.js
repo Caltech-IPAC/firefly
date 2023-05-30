@@ -124,7 +124,7 @@ export function isActive(jobInfo) {
 }
 
 export function getErrMsg(jobInfo) {
-    return jobInfo?.error;
+    return jobInfo?.errorSummary?.message;
 }
 
 export const SCRIPT_ATTRIB = new Enum(['URLsOnly', 'Unzip', 'Ditto', 'Curl', 'Wget', 'RemoveZip']);
