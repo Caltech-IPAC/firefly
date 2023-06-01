@@ -29,7 +29,7 @@ export const BY_SCROLL = 'byScroll';
 const BasicTableViewInternal = React.memo((props) => {
 
     const {width, height} = props.size;
-    const {columns, data, hlRowIdx, renderers, bgColor, selectInfoCls, callbacks, rowHeight,
+    const {columns, data, hlRowIdx, renderers, bgColor, selectInfoCls, callbacks, rowHeight, rowHeightGetter, showHeader=true,
             error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler, cellRenderers} = props;
 
     const uiStates = getTableUiById(tbl_ui_id) || {};
@@ -63,7 +63,7 @@ const BasicTableViewInternal = React.memo((props) => {
     const onFilter       = useCallback( doFilter.bind({callbacks, filterInfo}), [callbacks, filterInfo]);
     const onFilterSelected = useCallback( doFilterSelected.bind({callbacks, selectInfoCls}), [callbacks, selectInfoCls]);
 
-    const headerHeight = 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22);
+    const headerHeight = showHeader ? 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22) : 0;
     let totalColWidths = 0;
     if (!isEmpty(columns) && !isEmpty(columnWidths)) {
         totalColWidths = columns.reduce((pv, c, idx) => {
@@ -75,19 +75,28 @@ const BasicTableViewInternal = React.memo((props) => {
     const adjScrollTop = correctScrollTopIfNeeded(totalColWidths, scrollTop, width, height-headerHeight, rowHeight, hlRowIdx, triggeredBy);
     const adjScrollLeft = correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredBy);
 
+    const isSingleColumnTable = (columns) => columns.filter(
+        (col) => get(col, ['visibility'], 'show') === 'show').length === 1;
+
     useEffect( () => {
         const changes = {};
-        if (!isEmpty(columns) && !columnWidths) changes.columnWidths = columnWidthsInPixel(columns, data);
+        if (!isEmpty(columns)){
+            if (isSingleColumnTable(columns) && (!columnWidths || columnWidths[0]!==width-15)) {
+                // set 1st (only visible) column's width to table's width minus scrollbar's width (15px)
+                changes.columnWidths = [width-15, ...Array(columns.length - 1).fill(0)];
+            }
+            else if(!columnWidths) changes.columnWidths = columnWidthsInPixel(columns, data);
+        }
         if (adjScrollTop !== scrollTop)     changes.scrollTop = adjScrollTop;
         if (adjScrollLeft !== scrollLeft)   changes.scrollLeft = adjScrollLeft;
 
         if (!isEmpty(changes)) {
             dispatchTableUiUpdate({tbl_ui_id, ...changes});
         }
-    }, [columns, columnWidths, adjScrollLeft, adjScrollTop]);
+    }, [columns, columnWidths, width, adjScrollLeft, adjScrollTop]);
 
     const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers, bgColor,
-        columnWidths, filterInfo, sortInfo, showUnits, showTypes, showFilters,
+        columnWidths, filterInfo, sortInfo, showHeader, showUnits, showTypes, showFilters,
         onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, startIdx, cellRenderers, tbl_id};
 
     const rowClassNameGetter = highlightedRowHandler || defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx);
@@ -105,6 +114,8 @@ const BasicTableViewInternal = React.memo((props) => {
         } else {
             return (
                 <Table rowHeight={rowHeight}
+                       rowHeightGetter={rowHeightGetter && data?.length && columnWidths?.length
+                           ? (rowIdx)=>rowHeightGetter(data[rowIdx], columnWidths) : undefined}
                        headerHeight={headerHeight}
                        rowsCount={data.length}
                        isColumnResizing={false}
@@ -154,8 +165,10 @@ BasicTableViewInternal.propTypes = {
     showUnits: PropTypes.bool,
     showTypes: PropTypes.bool,
     showFilters: PropTypes.bool,
+    showHeader: PropTypes.bool,
     textView: PropTypes.bool,
     rowHeight: PropTypes.number,
+    rowHeightGetter: PropTypes.func,  // params: rowData and columnWidths, returns height
     showMask: PropTypes.bool,
     currentPage: PropTypes.number,
     startIdx: PropTypes.number,
@@ -367,10 +380,11 @@ function makeColumns (props) {
 
 
 function makeColumnTag(props, col, idx) {
-    const {data, columnWidths, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, tbl_id, renderers, bgColor='white', startIdx, cellRenderers} = props;
+    const {data, columnWidths, showHeader, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter,
+        tbl_id, renderers, bgColor='white', startIdx, cellRenderers} = props;
 
     if (col.visibility && col.visibility !== 'show') return false;
-    const HeadRenderer = get(renderers, [col.name, 'headRenderer'], HeaderCell);
+    const HeadRenderer = get(renderers, [col.name, 'headRenderer'], showHeader ? HeaderCell : ({})=>null);
     const CellRenderer = get(renderers, [col.name, 'cellRenderer'], cellRenderers?.[idx] || makeDefaultRenderer(col,tbl_id, startIdx));
     const fixed = col.fixed || false;
     const style = col.fixed && {backgroundColor: bgColor};

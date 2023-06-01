@@ -62,10 +62,10 @@ export function TablePanel(props) {
         }
     }, [tbl_id, tableModel]);
 
-    const {selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, help_id,
+    const {selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, rowHeightGetter, help_id,
         showToolbar, showTitle, showInfoButton, showMetaInfo, showOptions,
         showOptionButton, showPaging, showSave, showFilterButton,showSearchButton,
-        totalRows, showLoading, columns, showUnits, allowUnits, showTypes, showFilters, textView, status,
+        totalRows, showLoading, columns, showHeader, showUnits, allowUnits, showTypes, showFilters, textView, status,
         error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask, showToggleTextView,
         filterInfo, filterCount, sortInfo, data, backgroundable, highlightedRowHandler, cellRenderers} = {...options, ...uiState};
     let {leftButtons, rightButtons, showAddColumn} = {...options, ...uiState};
@@ -166,9 +166,10 @@ export function TablePanel(props) {
                     >
                         <BasicTableView
                             callbacks={connector}
-                            { ...{columns, data, hlRowIdx, rowHeight, selectable, showUnits, allowUnits, showTypes, showFilters,
-                                selectInfoCls, filterInfo, sortInfo, textView, showMask, currentPage,
-                                renderers, tbl_ui_id, highlightedRowHandler, startIdx, cellRenderers} }
+                            { ...{columns, data, hlRowIdx, rowHeight, rowHeightGetter, selectable, showUnits,
+                                allowUnits, showTypes, showFilters, selectInfoCls, filterInfo, sortInfo, textView,
+                                showMask, currentPage, showHeader, renderers, tbl_ui_id, highlightedRowHandler,
+                                startIdx, cellRenderers} }
                         />
                         {showOptionButton && !showToolbar &&
                         <img className='TablePanel__options--small'
@@ -176,7 +177,6 @@ export function TablePanel(props) {
                              title={TT_OPTIONS}
                              onClick={showOptionsDialog}/>
                         }
-
                     </div>
                 </div>
             </div>
@@ -244,6 +244,7 @@ TablePanel.propTypes = {
     showAddColumn: PropTypes.bool,
     showInfoButton: PropTypes.bool,
     showSearchButton: PropTypes.bool,
+    showHeader: PropTypes.bool,
     leftButtons: PropTypes.arrayOf(PropTypes.func),   // an array of functions that returns a button-like component laid out on the left side of this table header.
     rightButtons: PropTypes.arrayOf(PropTypes.func),  // an array of functions that returns a button-like component laid out on the right side of this table header.
     renderers: PropTypes.objectOf(
@@ -251,7 +252,8 @@ TablePanel.propTypes = {
             cellRenderer: PropTypes.func,
             headRenderer: PropTypes.func
         })
-    )
+    ),
+    rowHeightGetter: PropTypes.func
 };
 
 TablePanel.defaultProps = {
@@ -268,6 +270,7 @@ TablePanel.defaultProps = {
     showTypes: true,
     selectable: true,
     showSearchButton: true,
+    showHeader: true,
     expandedMode: false,
     expandable: true,
     showToggleTextView: true,
