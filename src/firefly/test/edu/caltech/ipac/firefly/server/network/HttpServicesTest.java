@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.server.network;
 
+import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.visualize.plot.CircleTest;
 import org.apache.commons.httpclient.methods.PutMethod;
@@ -20,7 +21,7 @@ import java.util.HashMap;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.*;
 
-public class HttpServicesTest {
+public class HttpServicesTest extends ConfigTest {
 
 	private static String TEST_HOST_URL = "https://httpbin.org/";
 	private static String GET_URL = TEST_HOST_URL + "get";
@@ -37,6 +38,8 @@ public class HttpServicesTest {
 				.setCookie("cookie1", "cookie1_val").setCookie("cookie2", "cookie2_val")
 				.setParam("param1", TEST_HOST_URL+"param1_val").setParam("param2", TEST_HOST_URL+"param2_val")
 				.setHeader("Header1", "header1_val").setHeader("Header2", "header2_val");
+
+		setupServerContext(null);
 	}
 
 	@After
@@ -133,6 +136,38 @@ public class HttpServicesTest {
 			assertEquals("redirect to www.acme.org", method.getResponseHeader("location").getValue(), "http://www.acme.org");
 			return HttpServices.Status.ok();
 		}));
+	}
+
+	@Test
+	public void testGetWithAuth(){
+		ByteArrayOutputStream results = new ByteArrayOutputStream();
+		HttpServices.Status status = HttpServices.getWithAuth(input.setRequestUrl(GET_URL), HttpServices.defaultHandler(results));
+		validateResults(status, results);
+	}
+
+
+	@Test
+	public void testGetWithAuthRedirected(){
+		HttpServiceInput nInput = input.setRequestUrl(REDIRECT_URL)
+				.setParam("url", "http://www.acme.org")
+				.setParam("status_code", "301");
+
+		HttpServices.Status status = HttpServices.getWithAuth(nInput, 3, method -> HttpServices.Status.ok());
+		assertEquals(200, status.getStatusCode());	// 200 OK
+	}
+
+	@Test
+	@Ignore	// This is tested using mockbin.  It should not run normally.
+	public void testFetchMaxFollow(){
+		HttpServiceInput nInput = input.setRequestUrl("https://mockbin.org/bin/c8bc6283-9129-4aef-8768-1488a85cae09");
+//				"https://mockbin.org/bin/8066cc72-aff6-4443-8812-f4983bcd43c8"	// setup to redirect to another bin
+
+		HttpServices.Status status = HttpServices.getWithAuth(nInput, 1, method -> {
+			fail("Should not get here");
+			return HttpServices.Status.ok();
+		});
+		assertEquals(421, status.getStatusCode());	// 421 ERR_TOO_MANY_REDIRECTS
+
 	}
 
 
