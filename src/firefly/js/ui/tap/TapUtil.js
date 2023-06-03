@@ -287,13 +287,20 @@ export const getAsEntryForTableName= (tableName) => tableName?.[0] ?? 'x';
 function mergeAdditionalServices(tapServices, additional) {
     if (!hasElements(additional)) return tapServices;
 
-    const modifiedOriginal= tapServices.map( (t) => {
-        const match= additional.find( (a) => a.label===t.label);
-        return match ? {...t,...match} : t;
-    });
-    const trulyAdditional= additional.filter( (a) => !tapServices.find( (t) => t.label===a.label) );
+    const mergeAdditional= additional.map( (a) => {
+        if (a.hide) return false;
+        const originalEntry= tapServices.find( (t) => a.label===t.label);
+        return originalEntry ? {...originalEntry, ...a} : a;
+    }).filter( (s) => s);
 
-    return [...trulyAdditional,...modifiedOriginal];
+    const unmodifiedOriginal= tapServices
+        .map( (t) => {
+            const match= additional.find( (a) => a.label===t.label);
+            return !match && t;
+        })
+        .filter( (s) => s);
+
+    return [...mergeAdditional,...unmodifiedOriginal];
 }
 
 export function getTapServices(webApiUserAddedService) {

@@ -1,6 +1,7 @@
 import React, {useContext, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import {ColsShape, ColumnFld, getColValidator} from '../../charts/ui/ColumnOrExpression.jsx';
+import {getColumnIdx} from '../../tables/TableUtil.js';
 import {FieldGroupCtx, ForceFieldGroupValid} from '../FieldGroup.jsx';
 import {useFieldGroupRerender, useFieldGroupWatch} from '../SimpleComponent.jsx';
 import {checkExposureTime} from '../TimeUIUtil.js';
@@ -76,6 +77,18 @@ const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 
 const fldAry=[TimeTo,TimeFrom,TemporalColumns];
 
+export function findTimeColumn(columnsTable) {
+    const ucdIdx= getColumnIdx(columnsTable,'ucd',true);
+    const nIdx= getColumnIdx(columnsTable,'column_name',true);
+    const unitIdx= getColumnIdx(columnsTable,'unit',true);
+    if (ucdIdx===-1 || nIdx===-1) return;
+    const timeRows= columnsTable.tableData.data.filter( (row) => row[ucdIdx]?.includes('time.epoch') && row[unitIdx].startsWith('d'));
+    if (!timeRows.length) return;
+    const mainRows= timeRows.filter( (row) => row[ucdIdx]?.includes('meta.main') && row[unitIdx].startsWith('d'));
+    return mainRows.length ? mainRows[0][nIdx] : timeRows[0][nIdx];
+}
+
+
 /**
  *
  * @param props
@@ -86,7 +99,7 @@ const fldAry=[TimeTo,TimeFrom,TemporalColumns];
 export function TemporalSearch({cols, columnsModel}) {
     const [constraintResult, setConstraintResult] = useState({});
 
-    const {setFld,getVal,makeFldObj}= useContext(FieldGroupCtx);
+    const {setFld,setVal,getVal,makeFldObj}= useContext(FieldGroupCtx);
     const {setConstraintFragment}= useContext(ConstraintContext);
     useFieldGroupRerender([...fldAry, ...collapsibleCheckHeaderKeys]); // force rerender on any change
     const timeCol= getVal(TemporalColumns);
@@ -97,10 +110,7 @@ export function TemporalSearch({cols, columnsModel}) {
         ([tcVal],isInit) => {
             if (!tcVal) return;
             const timeColumns = tcVal.split(',').map( (c) => c.trim()) ?? [];
-            if (timeColumns.length === 1) {
-                if (!isInit) checkHeaderCtl.setPanelActive(true);
-            }
-            else {
+            if (timeColumns.length > 1) {
                 setFld(TemporalColumns, {value:tcVal, valid:false, message: 'you may only choose one column'});
             }
         });
@@ -117,7 +127,10 @@ export function TemporalSearch({cols, columnsModel}) {
 
 
     useEffect(() => {
-        setFld(TemporalColumns, {validator: getColValidator(cols, true, false), valid: true});
+        const timeCol= findTimeColumn(columnsModel) ?? '';
+        setVal(TemporalColumns, timeCol, {validator: getColValidator(cols, true, false), valid: true});
+        checkHeaderCtl.setPanelOpen(Boolean(timeCol));
+        // checkHeaderCtl.setPanelActive(Boolean(timeCol));
     }, [columnsModel]);
 
 
