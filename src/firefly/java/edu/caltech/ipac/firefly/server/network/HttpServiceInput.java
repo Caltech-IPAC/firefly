@@ -153,23 +153,30 @@ public class HttpServiceInput implements Cloneable, Serializable {
 //  convenience functions
 //====================================================================
 
-    /**
-     * returns an HttpServiceInput that contains the required credential to access backend services.
-     * This credential information is based on the implementer of SsoAdapter.
-     * @return
-     */
+    @Deprecated     // does not make sense because credential should only be passed to a known backend service(url)
     public static HttpServiceInput createWithCredential() {
         return createWithCredential(null);
     }
 
     /**
-     * return an HttpServiceInput with the requestUrl that may contains credential needed to access backend services.
-     * The given requestUrl is used to determine whether or not to include the credential in the call.
-     * @param requestUrl
+     * returns an HttpServiceInput that contains the required credential to access the given backend service.
+     * This credential information is based on the implementer of SsoAdapter.
+     * @param requestUrl  URL to access
      * @return
      */
     public static HttpServiceInput createWithCredential(String requestUrl) {
-        HttpServiceInput input = new HttpServiceInput(requestUrl);
+        return applyCredential(new HttpServiceInput(requestUrl));
+    }
+
+    /**
+     * Include the necessary credentials based on the given input.
+     * @param input  HTTP request input
+     * @return
+     */
+    public static HttpServiceInput applyCredential(HttpServiceInput input) {
+        // Credential is normally based on the requestUrl.  It does not make sense to pass in a null input.
+        // A null input will most likely results in no credential added.
+        input = input == null ? new HttpServiceInput() : input;
         SsoAdapter ssoAdapter = ServerContext.getRequestOwner().getSsoAdapter();
         if (ssoAdapter != null) {
             ssoAdapter.setAuthCredential(input);

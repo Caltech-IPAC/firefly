@@ -31,6 +31,8 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
+import static edu.caltech.ipac.firefly.server.network.HttpServices.defaultHandler;
+import static edu.caltech.ipac.firefly.server.network.HttpServices.getWithAuth;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase;
@@ -55,7 +57,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
      * override this method to be able to create a HttpServiceInput object
      * @param request request info needed to create HttpServiceInput object
      * @return HttpServiceInput object or null
-     * @throws DataAccessException
+     * @throws DataAccessException when encountering an error
      */
      HttpServiceInput createInput(TableServerRequest request) throws DataAccessException {
         return null;
@@ -147,76 +149,74 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         applyIfNotEmpty(getJob(), v -> v.progressDesc("UWS job submitted..."));
     }
 
-    /**
-     * Create the HttpServiceInput used to retrieve a single result from this query.
-     * UWS relies on /{jobs}/{job-id}/results to list all of the results.  TAP defines
-     * /results/result when there's only one result returned from the query.
-     * @param jobUrl the UWS job url
-     * @return  HttpServiceInput used to query the result
-     */
-    HttpServiceInput createSingleResultInput(String jobUrl) {
-        // using followRedirect because TAP specifically say this endpoint may be redirected.
-        return HttpServiceInput.createWithCredential(jobUrl + "/results/result");
-    }
-
     public String getJobUrl() { return jobUrl; }
 
     public DataGroup getResult(TableServerRequest request) throws DataAccessException {
-        HttpServiceInput input = createSingleResultInput(jobUrl).setFollowRedirect(false);            // no redirects
-        try {
-            //download file first: failing to parse gaia results with topcat SAX parser from url
-            String filename = getFilename(jobUrl);
-            File outFile = File.createTempFile(filename, ".vot", QueryUtil.getTempDir(request));
 
-            HttpServices.Status status= HttpServices.getData(input, (method -> {
-                    if(HttpServices.isOk(method)) {
-                        try {
-                            return HttpServices.defaultHandler(outFile).handleResponse(method);
-                        } catch (FileNotFoundException ignore) {/*can't happen, file already exist*/ }
-                        return new HttpServices.Status(0,""); // should never get here
-                    } else if (HttpServices.isRedirected(method)) {
-                        String location = HttpServices.getResHeader(method, "Location", null);
-                        if (location==null) return new HttpServices.Status(422,"redirect without a location header");
-                        HttpServiceInput redirectInput = HttpServiceInput.createWithCredential(location).setFollowRedirect(true); // follow redirects this time
-                        return HttpServices.getData(redirectInput, outFile);
-                    } else {
-                        return new HttpServices.Status(method.getStatusCode(),method.getStatusText());
-                    }
-            }));
-
-            if (status.isError()) {
-                throw new DataAccessException(String.format("Fail to fetch result at: %s \n\t with exception: %s",
-                        input.getRequestUrl(), status.getErrMsg()));
-            }
-            DataGroup[] results = VoTableReader.voToDataGroups(outFile.getAbsolutePath());
-            return results.length > 0 ? results[0] : null;
-        } catch (Exception e) {
-            throw new DataAccessException(String.format("Fail to fetch result at: %s \n\t with exception: %s",
-                    input.getRequestUrl(), e.getMessage()));
+        JobInfo jobInfo = getUwsJobInfo(jobUrl);
+        if (jobInfo == null || jobInfo.getResults().size() < 1) {
+            throw createDax("UWS job completed without results", jobUrl, null);
+        } else {
+            // UWS job may return more than one results.
+            // /{jobUrl}/results will list all the results
+            // we will return the first result only for now.  will handle multi results later.
+            return getTableResult(jobInfo.getResults().get(0), QueryUtil.getTempDir(request));
         }
     }
 
-    String getFilename(String urlStr) {
+    static String getFilename(String urlStr) {
         return urlStr.replace("(http:|https:)", "").replace("/", "");
     }
 
 //====================================================================
 //  UWS utils
 //====================================================================
+    private static DataAccessException createDax(String url, String title, String errMsg) {
+        String msg = String.format("%s from the URL: [%s]", title, url);
+        if (errMsg != null) msg += "\n\t with exception: " + errMsg;
+        return new DataAccessException(msg);
+    }
+
+
+    public static DataGroup getTableResult(String url, File workDir) throws DataAccessException {
+        try {
+            // download file first: failing to parse gaia results with topcat SAX parser from url
+            String filename = getFilename(url);
+            File outFile = File.createTempFile(filename, ".vot", workDir);
+
+            // Must followRedirect because TAP specifically say this endpoint may be redirected.
+            // Using 'getWithAuth' because it will handle credential when redirected
+            HttpServices.Status status = getWithAuth(url, method -> {
+                try {
+                    return HttpServices.defaultHandler(outFile).handleResponse(method);
+                } catch (FileNotFoundException ex) {
+                    return new HttpServices.Status(500, String.format("Write error [%s]", outFile.getPath())); // should never happen; file already created
+                }
+            });
+            if (status.isError()) {
+                throw createDax("Fail to fetch result", url, status.getErrMsg());
+            }
+            DataGroup[] results = VoTableReader.voToDataGroups(outFile.getAbsolutePath());
+            return results.length > 0 ? results[0] : null;
+
+        } catch (Exception e) {
+            throw createDax("Fail to fetch result", url, e.getMessage());
+        }
+    }
+
     public static JobInfo getUwsJobInfo(String jobUrl) throws DataAccessException {
         if (isEmpty(jobUrl)) return null;
 
         Ref<JobInfo> jInfo = new Ref<>();
-        HttpServices.Status status = HttpServices.getData(new HttpServiceInput(jobUrl), method -> {
+        HttpServices.Status status = getWithAuth(jobUrl, method -> {
             try {
                 jInfo.set(parse(method.getResponseBodyAsStream()));
+                return HttpServices.Status.ok();
             } catch (Exception e) {
-                return new HttpServices.Status(400, String.format("Fail to fetch UWS job info at: %s \n\t with exception: %s", jobUrl, e.getMessage()));
+                return new HttpServices.Status(400, e.getMessage());
             }
-            return HttpServices.Status.ok();
         });
-
-        if (status.isError()) throw new DataAccessException(status.getErrMsg());
+        if (status.isError()) throw createDax("Fail to fetch UWS job info", jobUrl, status.getErrMsg());
 
         return jInfo.get();
     }
@@ -227,10 +227,8 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
 
     public static boolean cancel(String jobUrl) {
         if (isEmpty(jobUrl)) return false;
-        boolean cancelled = !HttpServices.getData(
-                HttpServiceInput.createWithCredential(jobUrl + "/phase").setParam("PHASE", Phase.ABORTED.name()),
-                new ByteArrayOutputStream()
-        ).isError();
+        HttpServiceInput input = new HttpServiceInput(jobUrl + "/phase").setParam("PHASE", Phase.ABORTED.name());
+        boolean cancelled = !HttpServices.getWithAuth(input, m -> HttpServices.Status.ok()).isError();
         if (cancelled) {
             Logger.getLogger().debug("UWS job cancelled: " + jobUrl);
         }
@@ -240,28 +238,27 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
     public static Phase getPhase(String jobUrl) throws DataAccessException {
 
         ByteArrayOutputStream phase = new ByteArrayOutputStream();
-        HttpServices.Status status = HttpServices.getData(HttpServiceInput.createWithCredential(jobUrl + "/phase"), phase);
+        HttpServices.Status status = HttpServices.getWithAuth(new HttpServiceInput(jobUrl + "/phase"), defaultHandler(phase));
         if (status.isError()) {
-            throw new DataAccessException("Error getting phase from "+ jobUrl +" "+status.getErrMsg());
+            throw createDax("Error getting phase", jobUrl, status.getErrMsg());
         }
         try {
             return Phase.valueOf(phase.toString().trim());
         } catch (Exception e) {
-            logger.error("Unknown phase \""+phase.toString()+"\" from service "+ jobUrl);
+            logger.error("Unknown phase \"" + phase + "\" from service "+ jobUrl);
             return Phase.UNKNOWN;
         }
     }
 
     public static String getError(String jobUrl)  {
         String errorUrl = jobUrl + "/error";
-        HttpServiceInput input = HttpServiceInput.createWithCredential(errorUrl);
-        HttpServices.Status status = HttpServices.getData(input, (method -> {
+        HttpServices.Status status = HttpServices.getWithAuth(errorUrl, method -> {
             try {
                 return new HttpServices.Status(200, parseError(method, errorUrl));
             } catch (Exception e) {
                 return new HttpServices.Status(500, "Unexpected exception: " + e.getMessage());
             }
-        }));
+        });
         return status.getErrMsg();
     }
 
@@ -391,3 +388,5 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
     }
 
 }
+
+

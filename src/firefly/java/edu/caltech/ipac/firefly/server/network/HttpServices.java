@@ -109,6 +109,49 @@ public class HttpServices {
         }
     }
 
+    public static HttpServices.Status getWithAuth(String url, HttpServices.Handler handler) {
+        return getWithAuth(new HttpServiceInput(url), 3, handler);
+    }
+
+    public static HttpServices.Status getWithAuth(HttpServiceInput input, HttpServices.Handler handler) {
+        return getWithAuth(input, 3, handler);
+    }
+
+    /**
+     * Similar to #getData(), but this function will handle credentials if necessary
+     * and ensure that redirects are re-evaluated accordingly
+     * @param input   request input
+     * @param maxFollow  the maximum number of redirect to follow.  3 if using one of the overloaded functions.
+     * @param handler   a handler to call upon successful fetch
+     * @return the status of this fetch
+     */
+    public static HttpServices.Status getWithAuth(HttpServiceInput input, int maxFollow, HttpServices.Handler handler) {
+        HttpServiceInput.applyCredential(input)
+                .setFollowRedirect(false);
+        return HttpServices.getData(input, (method -> {
+            try {
+                if (HttpServices.isOk(method)) {
+                    return handler.handleResponse(method);
+                }
+                if (HttpServices.isRedirected(method)) {
+                    String location = HttpServices.getResHeader(method, "Location", null);
+                    if (location != null) {
+                        if (maxFollow > 0) {
+                            return getWithAuth(new HttpServiceInput(location), maxFollow-1, handler);
+                        } else {
+                            return new HttpServices.Status(421, "Request redirected without a location header");
+                        }
+                    } else {
+                        return new HttpServices.Status(421, "ERR_TOO_MANY_REDIRECTS");
+                    }
+                }
+                return HttpServices.Status.getStatus(method);
+            } catch (Exception e) {
+                return new HttpServices.Status(500, "Error retrieving content from " + input.getRequestUrl() +": " + e.getMessage());
+            }
+        }));
+    }
+
 //====================================================================
 //  POST convenience functions
 //====================================================================
