@@ -7,8 +7,10 @@
   - [Notes on next version](next-release-details.md)
 
 ## Version 2023.1
+- 2023.1.4 - (June 7, 2023)
+  - docker tag: `latest`, `2023.1`, `2023.1.4`
 - 2023.1.3 - (May 16, 2023)
-  - docker tag: `latest`, `2023.1`, `2023.1.3`
+  - docker tag: `2023.1.3`
 - 2023.1.2 - (May 10, 2023)
   - docker tag: `2023.1.2`
 - 2023.1.1 - (May 1, 2023)
@@ -34,7 +36,10 @@
 
 
 ##### _Patches 2023.1_
-- 2023.1.2
+- 2023.1.4
+  - Fixed: Not catching spatial input errors [Firefly-1252](https://github.com/Caltech-IPAC/firefly/pull/1392)  
+  - Fixed: Not giving correct error in failed TAP search [Firefly-1253](https://github.com/Caltech-IPAC/firefly/pull/1389)  
+- 2023.1.3
   - Latest chrome release breaking GPU processing [Firefly-1247](https://github.com/Caltech-IPAC/firefly/pull/1384) 
   - Additional small bug fixes [Firefly-1248](https://github.com/Caltech-IPAC/firefly/pull/1386) 
 - 2023.1.2
