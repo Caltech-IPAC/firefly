@@ -160,9 +160,12 @@ export function makeCollapsibleCheckHeader(base) {
 
     retObj.CollapsibleCheckHeader= ({title,helpID,message,initialStateOpen, initialStateChecked,children}) => {
         const [getPanelActive, setPanelActive] = useFieldGroupValue(panelCheckKey);// eslint-disable-line react-hooks/rules-of-hooks
+        const [getPanelOpenStatus, setPanelOpenStatus] = useFieldGroupValue(panelKey);// eslint-disable-line react-hooks/rules-of-hooks
         const isActive= getPanelActive() === panelValue;
         retObj.isPanelActive= () => getPanelActive() === panelValue;
         retObj.setPanelActive= (active) => setPanelActive(active ? panelValue : '');
+        retObj.isPanelOpen= () => getPanelOpenStatus() === 'open';
+        retObj.setPanelOpen= (open) => setPanelOpenStatus(open?'open':'close');
         return (
             <InternalCollapsibleCheckHeader {...{title, helpID, checkKey:panelCheckKey, fieldKey:panelKey,
                                             message: isActive ? message:'', initialStateChecked, panelValue,

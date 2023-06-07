@@ -3,9 +3,11 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.core.background.JobInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.TableUtil;
@@ -78,5 +80,10 @@ public class AsyncTapQuery extends UwsJobProcessor {
 
         }
         return inputs;
+    }
+
+    @Override
+    public DataGroup getResult(TableServerRequest request) throws DataAccessException {
+        return getTableResult(getJobUrl() + "/results/result", QueryUtil.getTempDir(request));
     }
 }
