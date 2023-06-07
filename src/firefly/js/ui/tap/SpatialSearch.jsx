@@ -120,20 +120,23 @@ export function SpatialSearch({cols, serviceUrl, serviceLabel, columnsModel, tab
             const columns = searchParams.uploadInfo.columns;
             const centerCols = findTableCenterColumns({tableData:{columns}}) ?? {};
             const {lonCol='', latCol=''}= centerCols;
-            setVal(UploadCenterLonColumns, lonCol, {validator: getColValidator(searchParams.uploadInfo.columns, true, false), valid: true});
-            setVal(UploadCenterLatColumns, latCol, {validator: getColValidator(searchParams.uploadInfo.columns, true, false), valid: true});
+            const errMsg= 'Upload tables require identifying spatial columns containing equatorial coordinates.  Please provide column names.';
+            setVal(UploadCenterLonColumns, lonCol, {validator: getColValidator(searchParams.uploadInfo.columns, true, false,errMsg), valid: true});
+            setVal(UploadCenterLatColumns, latCol, {validator: getColValidator(searchParams.uploadInfo.columns, true, false,errMsg), valid: true});
             setUploadInfo(searchParams.uploadInfo);
             checkHeaderCtl.setPanelActive(true);
         }
     }, [searchParams.radiusInArcSec, searchParams.wp, searchParams.corners, searchParams.uploadInfo]);
 
-
     useEffect(() => {
         const {lon,lat} = formCenterColumns(columnsModel);
-        setVal(CenterLonColumns, lon, {validator: getColValidator(cols, true, false), valid: true});
-        setVal(CenterLatColumns, lat, {validator: getColValidator(cols, true, false), valid: true});
+        const errMsg= 'Spatial searches require identifying table columns containing equatorial coordinates.  Please provide column names.';
+        setVal(CenterLonColumns, lon, {validator: getColValidator(cols, true, false, errMsg), valid: true});
+        setVal(CenterLatColumns, lat, {validator: getColValidator(cols, true, false, errMsg), valid: true});
         const noDefaults= !lon || !lat;
         setVal(posOpenKey, (noDefaults) ? 'open' : 'closed');
+        if (noDefaults) checkHeaderCtl.setPanelActive(false);
+        checkHeaderCtl.setPanelOpen(!noDefaults);
         setPosOpenMsg(noDefaults?'':TAB_COLUMNS_MSG);
     }, [columnsModel, obsCoreEnabled]);
 
@@ -717,6 +720,9 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
         const cenLat= cenLatField?.value;
         errList.checkForError(cenLonField);
         errList.checkForError(cenLatField);
+        if (!cenLon && !cenLat) errList.addError('Lon and Lat columns are not set');
+        else if (!cenLon) errList.addError('Lon column is not set');
+        else if (!cenLat) errList.addError('Lat column is not set');
         const ucdCoord = getUCDCoord(columnsModel, cenLon);
         const worldSys = posCol[ucdCoord.key].coord;
         const adqlCoordSys = posCol[ucdCoord.key].adqlCoord;

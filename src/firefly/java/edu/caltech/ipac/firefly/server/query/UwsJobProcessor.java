@@ -171,7 +171,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
 //====================================================================
 //  UWS utils
 //====================================================================
-    private static DataAccessException createDax(String url, String title, String errMsg) {
+    static DataAccessException createDax(String url, String title, String errMsg) {
         String msg = String.format("%s from the URL: [%s]", title, url);
         if (errMsg != null) msg += "\n\t with exception: " + errMsg;
         return new DataAccessException(msg);
