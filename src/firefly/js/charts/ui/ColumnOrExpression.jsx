@@ -46,14 +46,14 @@ function parseSuggestboxContent(text) {
     return {token, priorContent};
 }
 
-export function getColValidator(cols, required=true, canBeExpression=true) {
+const DEFAULT_MSG= 'Can not be empty. Please provide value or expression';
+
+export function getColValidator(cols, required=true, canBeExpression=true, message=DEFAULT_MSG) {
     const colNames = cols.map((colVal) => {return colVal.name;});
     return (val) => {
         let retval = {valid: true, message: ''};
         if (!val) {
-            if (required) {
-                return {valid: false, message: 'Can not be empty. Please provide value or expression'};
-            }
+            if (required) return {valid: false, message};
         } else if (colNames.indexOf(val) < 0) {
             if (canBeExpression) {
                 const expr = new Expression(val, colNames);

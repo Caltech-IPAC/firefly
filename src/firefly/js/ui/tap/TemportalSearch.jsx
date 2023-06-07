@@ -128,9 +128,9 @@ export function TemporalSearch({cols, columnsModel}) {
 
     useEffect(() => {
         const timeCol= findTimeColumn(columnsModel) ?? '';
-        setVal(TemporalColumns, timeCol, {validator: getColValidator(cols, true, false), valid: true});
+        const errMsg= 'Temporal searches require identifying a table column containing a time in MJD.  Please provide a column name.';
+        setVal(TemporalColumns, timeCol, {validator: getColValidator(cols, true, false, errMsg), valid: true});
         checkHeaderCtl.setPanelOpen(Boolean(timeCol));
-        // checkHeaderCtl.setPanelActive(Boolean(timeCol));
     }, [columnsModel]);
 
 

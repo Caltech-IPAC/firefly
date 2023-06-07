@@ -120,8 +120,9 @@ export function SpatialSearch({cols, serviceUrl, serviceLabel, columnsModel, tab
             const columns = searchParams.uploadInfo.columns;
             const centerCols = findTableCenterColumns({tableData:{columns}}) ?? {};
             const {lonCol='', latCol=''}= centerCols;
-            setVal(UploadCenterLonColumns, lonCol, {validator: getColValidator(searchParams.uploadInfo.columns, true, false), valid: true});
-            setVal(UploadCenterLatColumns, latCol, {validator: getColValidator(searchParams.uploadInfo.columns, true, false), valid: true});
+            const errMsg= 'Upload tables require identifying spatial columns containing equatorial coordinates.  Please provide column names.';
+            setVal(UploadCenterLonColumns, lonCol, {validator: getColValidator(searchParams.uploadInfo.columns, true, false,errMsg), valid: true});
+            setVal(UploadCenterLatColumns, latCol, {validator: getColValidator(searchParams.uploadInfo.columns, true, false,errMsg), valid: true});
             setUploadInfo(searchParams.uploadInfo);
             checkHeaderCtl.setPanelActive(true);
         }
@@ -129,8 +130,9 @@ export function SpatialSearch({cols, serviceUrl, serviceLabel, columnsModel, tab
 
     useEffect(() => {
         const {lon,lat} = formCenterColumns(columnsModel);
-        setVal(CenterLonColumns, lon, {validator: getColValidator(cols, true, false), valid: true});
-        setVal(CenterLatColumns, lat, {validator: getColValidator(cols, true, false), valid: true});
+        const errMsg= 'Spatial searches require identifying table columns containing equatorial coordinates.  Please provide column names.';
+        setVal(CenterLonColumns, lon, {validator: getColValidator(cols, true, false, errMsg), valid: true});
+        setVal(CenterLatColumns, lat, {validator: getColValidator(cols, true, false, errMsg), valid: true});
         const noDefaults= !lon || !lat;
         setVal(posOpenKey, (noDefaults) ? 'open' : 'closed');
         if (noDefaults) checkHeaderCtl.setPanelActive(false);
