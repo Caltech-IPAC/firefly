@@ -92,7 +92,7 @@ function isSelectable(tbl_id, chartId, type) {
     const {tablesources} = getChartData(chartId);
     const strCol = ['str', 's', 'char', 'c'];
     const tableModel = getTblById(tbl_id);
-    const noSelectionTraceIdx = tablesources.findIndex((tablesource) =>  {
+    const noSelectionTraceIdx = tablesources?.findIndex((tablesource) =>  {
           const {x, y} = get(tablesource, 'mappings') || {};
           const dataExp = [x, y];
 
