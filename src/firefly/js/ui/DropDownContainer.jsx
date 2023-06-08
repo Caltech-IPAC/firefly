@@ -23,6 +23,7 @@ import {MultiSearchPanel} from 'firefly/ui/MultiSearchPanel.jsx';
 import {TapSearchPanel} from 'firefly/ui/tap/TapSearchRootPanel.jsx';
 import {VersionInfo} from 'firefly/ui/VersionInfo.jsx';
 import {DLGeneratedDropDown} from './dynamic/DLGeneratedDropDown.js';
+import {isDefined} from 'firefly/util/WebUtil.js';
 
 const flexGrowWithMax = {width: '100%', maxWidth: 1400};
 
@@ -100,7 +101,7 @@ export class DropDownContainer extends Component {
     storeUpdate() {
         if (this.iAmMounted) {
             const {visible, view} = getDropDownInfo();
-            if (visible !== this.state.visible || view !== this.state.selected) {
+            if (isDefined(visible) && (visible !== this.state.visible || view !== this.state.selected)) {
                 this.setState({visible, selected: view});
             }
         }

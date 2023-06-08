@@ -14,6 +14,7 @@ import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {FireflySlate} from './templates/fireflyslate/FireflySlate.jsx';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
+import {hashRouteEntry, HASH_ROUTE} from './templates/hashRoute/hashRouteEntry.jsx';
 import {initApi} from './api/ApiBuild.js';
 import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
 import {dispatchChangeReadoutPrefs} from './visualize/MouseReadoutCntlr.js';
@@ -57,7 +58,8 @@ export const Templates = {
     FireflyViewer,
     FireflySlate,
     LightCurveViewer : LcViewer,
-    HydraViewer
+    HydraViewer,
+    [HASH_ROUTE]: HASH_ROUTE      // root component is passed in via getRouter
 };
 
 /**
@@ -378,7 +380,13 @@ function renderRoot(root, viewer, props, webApiCommands) {
 
     const rootToUse = root ?? createRoot(e);
     const webApi= isUsingWebApi(webApiCommands);
-    const doAppRender= () => rootToUse.render( React.createElement(viewer, {...props, normalInit: !webApi }) );
+    const doAppRender= () => {
+        if (props.template === HASH_ROUTE) {
+            hashRouteEntry(rootToUse, props);
+        } else {
+            rootToUse.render(React.createElement(viewer, {...props, normalInit: !webApi}));
+        }
+    };
     webApi ? handleWebApi(webApiCommands, e, doAppRender) : doAppRender();
 }
 
