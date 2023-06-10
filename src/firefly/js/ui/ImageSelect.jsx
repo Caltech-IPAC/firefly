@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 
 import PropTypes from 'prop-types';
 import {uniqBy, get, countBy, remove, sortBy, isNil} from 'lodash';
@@ -11,7 +11,7 @@ import {uniqBy, get, countBy, remove, sortBy, isNil} from 'lodash';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {CollapsiblePanel} from '../ui/panel/CollapsiblePanel.jsx';
-import FieldGroupUtils, {getFieldVal, setFieldValue} from '../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {getFieldVal, getGroupFields, setFieldValue} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchMultiValueChange} from '../fieldGroup/FieldGroupCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
@@ -20,6 +20,7 @@ import {FD_KEYS, FG_KEYS} from 'firefly/visualize/ui/UIConst';
 
 import './ImageSelect.css';
 import infoIcon from 'html/images/info-icon.png';
+import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 
 
 const IMG_PREFIX = 'IMAGES_';
@@ -293,6 +294,7 @@ function FilterPanelView({imageMasterData}) {
  */
 function FilterSelect ({type, dataList, maxShown=6}) {
     const [showExpanded, setShowExpanded] = useState(false);
+    const {groupKey} = useContext(FieldGroupCtx);
 
     const fieldKey= `Filter_${type}`;
     const options = toFilterOptions(dataList);
@@ -300,13 +302,16 @@ function FilterSelect ({type, dataList, maxShown=6}) {
     const dispOptions = showExpanded ? options : options.slice(0, maxShown);
     const hasLess = dispOptions.length > maxShown;
 
+    // get value from the filter field if it has been set before filter component is mounted, otherwise set '' for all options
+    const initialVal = getFieldVal(groupKey, fieldKey, '');
+
     return (
         <div className='FilterPanel__item--std'>
             <CheckboxGroupInputField
                 key={fieldKey}
                 fieldKey={fieldKey}
                 initialState={{ options: dispOptions,
-                                value: '',   // workaround for _all_ for now
+                                value: initialVal,
                                 tooltip: 'Please select some boxes',
                                 label : '' }}
                 options={dispOptions}
@@ -366,6 +371,15 @@ function DataProductList({filteredImageData, groupKey, multiSelect}) {
 
                 // also change image source of rest of colored images to archive
                 ['red', 'green', 'blue'].forEach((c)=> setFieldValue(FG_KEYS[c], FD_KEYS.source, 'archive'));
+
+                // also set filters on rest of colored images, if present on this one
+                const filterFieldKeys = Object.keys(getGroupFields(FG_KEYS[color])).filter((fld)=>fld.startsWith('Filter'));
+                filterFieldKeys.forEach((filterFieldKey)=>{
+                    const filterVal = getFieldVal(FG_KEYS[color], filterFieldKey, '');
+                    if(filterVal){
+                        ['red', 'green', 'blue'].forEach((c)=> setFieldValue(FG_KEYS[c], filterFieldKey, filterVal));
+                    }
+                });
             }
         }
     };
