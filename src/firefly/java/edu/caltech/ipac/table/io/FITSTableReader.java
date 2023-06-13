@@ -9,36 +9,19 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
-import nom.tam.fits.BasicHDU;
-import nom.tam.fits.Fits;
-import nom.tam.fits.FitsException;
-import nom.tam.fits.FitsFactory;
-import nom.tam.fits.Header;
-import nom.tam.fits.HeaderCard;
-import nom.tam.fits.ImageData;
-import nom.tam.fits.ImageHDU;
-import nom.tam.fits.TableHDU;
-import nom.tam.fits.UndefinedHDU;
+import nom.tam.fits.*;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 import nom.tam.util.ArrayFuncs;
-import uk.ac.starlink.fits.FitsStarTable;
-import uk.ac.starlink.table.ColumnInfo;
-import uk.ac.starlink.table.DefaultValueInfo;
-import uk.ac.starlink.table.DescribedValue;
-import uk.ac.starlink.table.StarTable;
+import nom.tam.util.Cursor;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
 * Convert an FITS file or FITS binary table(s) to list of DataGroup.
@@ -49,66 +32,30 @@ public final class FITSTableReader
     private static final Pattern TDISP = Pattern.compile("(A|I|B|O|Z|F|E|EN|ES|G|D)(\\d+)?(?:\\.(\\d+))?.*");
     private static final Pattern EXPONENTIAL = Pattern.compile("E|EN|ES|D");                                    // Table 20 from https://fits.gsfc.nasa.gov/standard30/fits_standard30aa.pdf
 
-
     public static boolean debug = true;
 
     /**
      * Strategies to handle FITS data with column-repeat-count greater than 1(TFORMn = rT):
      *  where n = column index, T = data type, r = repeat count
-     *
+
      * DEFAULT: Set DataType to 'ary'.  Store the full array in DataGroup as an object.
      * When DataGroup is written out into IPAC format, it should only describe the data
      * as type = 'char' and value as type[length].  This is the default strategy if not given.
-     *
+
      * TOP_MOST: Ignore the repeat count portion of the TFORMn Keyword
      * returning only the first datum of the field, even if repeat count is more than 1.
      * This should produce exactly one DataGroup per table.
-     *
-     *
-     *
+
      * ( experiemental.. not sure how it would be use )
      * FULLY_FLATTEN: Generates one DataGroup row for each value of an HDU field.
      * Because each field may have different repeat count (dimension), insert blank
      * when no data is available. This should produce exactly one DataGroup per table.
      * No attribute data added to DataGroup with "FULLY_FLATTEN". Should pass headerCols = null.
-     *
+
      * EXPAND_BEST_FIT: Expands each HDU row into one DataGroup. Fields with lesser count (dimension) will be filled with blanks.
      * EXPAND_REPEAT: Expands each HDU row into one DataGroup. Fields with lesser dimension will be filled with previous values.
      */
     public static final String DEFAULT = "DEFAULT";
-    public static final String TOP_MOST = "TOP_MOST";
-    public static final String FULLY_FLATTEN = "FULLY_FLATTEN";
-    public static final String EXPAND_BEST_FIT = "EXPAND_BEST_FIT";
-    public static final String EXPAND_REPEAT = "EXPAND_REPEAT";
-
-    private static final int maxNumAttributeValues = 80;
-
-    public static void main(String[] args)
-    {
-        String fits_filename = "/Users/ejoliet/devspace/branch/dev/firefly/test-array.fits";//args[0];
-
-        Fits fits= null;
-        try {
-            fits = new Fits(fits_filename);
-            BasicHDU<?>[] hdus = FitsReadUtil.readHDUs(fits);
-            StarTable table = getStarTable(hdus[1], fits_filename, 1);
-            DataGroup data = FITSTableReader.convertFitsToDataGroup(fits_filename, null, FITSTableReader.DEFAULT, 1);
-
-            int columnCount = table.getColumnCount();
-            for (int a= 0; a<columnCount;a++) {
-                ColumnInfo columnInfo = table.getColumnInfo(a);
-                int[] shape = columnInfo.getShape();
-                System.out.println(columnInfo.getName() + " shape length " + shape.length);
-            }
-        } catch (FitsException | IOException | NullPointerException e) {
-            e.printStackTrace();
-        }
-        finally {
-            FitsReadUtil.closeFits(fits);
-        }
-        System.exit(0);
-    }
-
 
     public static DataGroup convertFitsToDataGroup(String fits_filename, Map<String,String> metaInfo,
                                                    String strategy, int table_idx) throws FitsException, IOException {
@@ -118,9 +65,9 @@ public final class FITSTableReader
     /**
      * Convert a table from a FITS file to DataGroup based on table index
      * @param fits_filename the file name
-     * @param dataCols: The names of the columns which will be copied to the data section of the DataGroups.
+     * @param dataCols The names of the columns which will be copied to the data section of the DataGroups.
      *                If dataCols = null, get all the columns into the data group.
-     * @param headerCols: The names of the columns which will be copied to the header section of the DataGroups.
+     * @param headerCols The names of the columns which will be copied to the header section of the DataGroups.
      *                If headerCols = null, get none of the columns into the header of the data group.
      * @param strategy The strategy used to deal with the repeat count  of the data in the given dataCols columns.
      * @param table_idx table index, i.e. HDU number in FITS
@@ -139,7 +86,7 @@ public final class FITSTableReader
             // disable long string for HeaderCard creation while collecting table with table_idx from StarTableFactory to work around
             // the exception error sent from nom.tam.fits.
             FitsFactory.useThreadLocalSettings(true);
-            DataGroup dg;
+            DataGroup result;
             fits = new Fits(fits_filename);
             BasicHDU<?>[] hdus = FitsReadUtil.readHDUs(fits);
 
@@ -149,24 +96,21 @@ public final class FITSTableReader
             BasicHDU<?> hdu= hdus[table_idx];
 
             if (table_idx==0) { //FITS tables are not at 0, if at zero try to read it as an image first
-                dg= getFitsImageAsTable(hdu,metaInfo);
-                if (dg==null && hdus.length>1) {
+                result = getFitsImageAsTable(hdu,metaInfo);
+                if (result==null && hdus.length>1) {
                     FitsFactory.setLongStringsEnabled(false);
-                    StarTable table = getStarTable(hdus[1], fits_filename, table_idx); // this is really a hack, maybe it should not be here.
-                    dg= convertStarTableToDataGroup(table, dataCols, headerCols, strategy);
+                    result = readFitsTable(hdus[1], fits_filename, dataCols, headerCols, table_idx);
                 }
             }
             else { // if >0 then try to read it as a FITS table first.
                 FitsFactory.setLongStringsEnabled(false);
-                StarTable table = getStarTable(hdu, fits_filename, table_idx);
+                result = readFitsTable(hdu, fits_filename, dataCols, headerCols, table_idx);
                 FitsFactory.setLongStringsEnabled(true);
-                dg=  (table!=null) ?
-                        convertStarTableToDataGroup(table, dataCols, headerCols, strategy) :
-                        getFitsImageAsTable(hdu,metaInfo);
+                if (result == null) result = getFitsImageAsTable(hdu,metaInfo);
             }
             String dataTypeHint= metaInfo !=null ? metaInfo.getOrDefault(MetaConst.DATA_TYPE_HINT,"").toLowerCase() : "";
-            SpectrumMetaInspector.searchForSpectrum(dg,hdus[table_idx], dataTypeHint.equals("spectrum"));
-            return dg;
+            if (result != null) SpectrumMetaInspector.searchForSpectrum(result,hdus[table_idx], dataTypeHint.equals("spectrum"));
+            return result;
         } catch (FitsException|IOException e) {
             logTableReadError(fits_filename,table_idx,e.getMessage());
             throw e;
@@ -188,18 +132,6 @@ public final class FITSTableReader
         }
         return hasNAxis1Data && otherDimsAre1;
     }
-
-
-    private static double minValue(ImagePt pt1,ImagePt pt2) {
-        return usingXAxis(pt1,pt2) ? Math.min(pt1.getX(),pt2.getX()) : Math.min(pt1.getY(),pt2.getY());
-    }
-
-    private static boolean usingXAxis(ImagePt pt1,ImagePt pt2) {
-        double deltaX = Math.abs(pt2.getX() - pt1.getX());
-        double deltaY = Math.abs(pt2.getY() - pt1.getY());
-        return (deltaX > deltaY);
-    }
-
 
     private static DataGroup getFitsImageAsTable(BasicHDU<?> hdu,
                                                  Map<String,String> metaInfo) throws FitsException, IOException {
@@ -250,14 +182,14 @@ public final class FITSTableReader
                 dataGroup.trimToSize();
                 return dataGroup;
             } else if (naxis == 2 && naxis2 > 0) {
-                double[][] data = null;
+                double[][] data;
                 if (naxis2 > 30) return null; // right now we only support 30 columns, this could be a parameter
                 if ((hdu instanceof ImageHDU) || (hdu instanceof CompressedImageHDU)) {
                     ImageHDU imageHDU = (hdu instanceof CompressedImageHDU) ?
                             ((CompressedImageHDU) hdu).asImageHDU() : (ImageHDU) hdu;
                     ImageData imageDataObj = imageHDU.getData();
                     data = (double[][]) ArrayFuncs.convertArray(imageDataObj.getData(), Double.TYPE, true);
-                } else if (hdu instanceof UndefinedHDU) {
+                } else { //hdu instanceof UndefinedHDU is always true here
                     data = (double[][]) ArrayFuncs.convertArray(hdu.getData().getData(), Double.TYPE, true);
                 }
                 if (data == null) return null;
@@ -295,197 +227,279 @@ public final class FITSTableReader
                 ", HDU#: " + tableIdx + ", reason: "+reason);
     }
 
-    /**
-     * Get a StarTable from a FITS file by giving table index, i.e. HDU number in FITS
-     * @param hdu hdu to use for reading
-     * @param fitsFilename fits filename string
-     * @param tableIdx the hdu index to read
-     * @return one star table or none
-     * @throws IOException when the file can't be read
-     */
-    private static StarTable getStarTable(BasicHDU<?> hdu, String fitsFilename, int tableIdx) throws FitsException, IOException {
-
-        if (!(hdu instanceof TableHDU)) {
-            logTableReadError(fitsFilename,tableIdx,"HDU is not a table hdu");
-            return null;
+    //This function is loosely based on the packagedType function from the FitsStarTable class (uk.ac.starlink.fits package)
+    private static Class<?> getClassType(Object base, int icol, boolean[] isScaled) {
+        if (base == null) {
+            if (isScaled[icol]) return Double.class;
+            return Object.class;
+        } else {
+            Class<?> cls = base.getClass().getComponentType();
+            if (cls != null && Array.getLength(base) == 1) {
+                if (isScaled[icol]) {
+                    return Double.class;
+                }
+                return cls;
+            } else if (cls != null && cls.isArray()) {
+                return ArrayFuncs.flatten(base).getClass();
+            }
+            return base.getClass();
         }
-        Header h= hdu.getHeader();
-
-        String zValue= (h.containsKey("ZIMAGE") && h.getStringValue("ZIMAGE")!=null) ? h.getStringValue("ZIMAGE").toUpperCase() : "";
-        if (zValue.equals("T") || zValue.equals("TRUE")) {
-            logTableReadError(fitsFilename,tableIdx,"HDU is an compressed image stored at a table");
-            return null;
-        }
-
-        FitsStarTable starTable= new FitsStarTable((TableHDU<?>)hdu);
-
-        Iterator<HeaderCard> i= h.iterator();
-        for(HeaderCard card= i.next();i.hasNext(); card= i.next()) {
-            starTable.setParameter( new DescribedValue(
-                    new DefaultValueInfo(card.getKey(), String.class), card.getValue()) );
-        }
-        return starTable;
     }
 
     /**
-     * Convert a StarTable into DataGroup(s).  Depending on the strategy, this function may return
-     * more then one DataGroup.
-     * @param table input StarTable from one HDU
-     * @param inclCols: The names of the columns to include in the DataGroups.
-     *                If inclCols = null, includes all the columns into the DataGroup.
-     * @param inclHeaders: The names of the headers to include in the DataGroups.
-     *                If inclHeaders = null, includes all headers into the DataGroup.
-     * @param strategy The strategy used to deal with column(s) with repeat count (dimension) > 1.
-     * @return List<DataGroup> A list of DataGroups
+     *
+     * @param hdu hdu to use for reading
+     * @param fitsFilename fits fileName string
+     * @param inclCols cols to include when creating DataType entries
+     * @param inclHeaders headers to include when creating DataGroup TableMeta
+     * @param tableIdx the hdu index to read
+     * @return DataGroup converted from the hdu
+     * @throws IOException thrown if error reading table entry
+     * @throws FitsException call to convertHDUToDataType may throw FitsException
      */
-    private static DataGroup convertStarTableToDataGroup(StarTable table,
-                                                        String[] inclCols,
-                                                        String[] inclHeaders,
-                                                        String strategy)
-            throws FitsException, IllegalArgumentException, IOException {
+    private static DataGroup readFitsTable(BasicHDU<?> hdu,
+                                          String fitsFilename,
+                                          String[] inclCols,
+                                          String[] inclHeaders,
+                                           int tableIdx) throws IOException, FitsException {
 
-        if (table==null) return null;
-        if (strategy == null) {
-            strategy = DEFAULT;
+        if (!(hdu instanceof TableHDU<?> hduTable)) {
+            logTableReadError(fitsFilename,tableIdx,"HDU is not a table hdu");
+            return null;
         }
 
+        AbstractTableData data = (AbstractTableData) hdu.getData();
+
+        int colCount = data.getNCols();
+        Class<?>[] bases = new Class[colCount];
+        String[] colNames = new String[colCount];
+
+        int nrow = hduTable.getNRows();
+        int ncol = hduTable.getNCols();
+
+        double[] scales = new double[ncol];
+        double[] zeros = new double[ncol];
+        boolean[] isScaled = new boolean[ncol];
+        long[] blanks = new long[ncol];
+        boolean[] hasBlank = new boolean[ncol];
+
+        Arrays.fill(scales, 1.0);
+
+        try {
+            for (int icol = 0; icol < ncol; ++icol) {
+                colNames[icol] = hduTable.getColumnName(icol);
+
+                String tscal = hduTable.getColumnMeta(icol, "TSCAL");
+                String tzero = hduTable.getColumnMeta(icol, "TZERO");
+                double zeroval;
+                if (tscal != null) {
+                    zeroval = Double.parseDouble(tscal);
+                    scales[icol] = zeroval;
+                }
+                if (tzero != null) {
+                    zeroval = Double.parseDouble(tzero);
+                    zeros[icol] = zeroval;
+                }
+                if (scales[icol] != 1.0 || zeros[icol] != 0.0) {
+                    isScaled[icol] = true;
+                }
+
+                String blankKey = "TNULL" + (icol + 1);
+                if (hduTable.getHeader().containsKey(blankKey)) {
+                    long nullval = hduTable.getHeader().getLongValue(blankKey); //hduTable.getBlankValue();
+                    blanks[icol] = nullval;
+                    hasBlank[icol] = true;
+                }
+
+                Object entry = null;
+                try {
+                    for (int irow = 0; entry == null && irow < nrow; ++irow) {
+                        entry = hduTable.getElement(irow, icol);
+                    }
+                } catch (Exception e) {
+                    throw new IOException("Error reading table entry");
+                }
+
+                bases[icol] = getClassType(entry, icol, isScaled);
+            }
+        }
+        catch (NumberFormatException e) {
+            logger.error("Number format exception reading column meta: " + e.getMessage());
+        }
         //creating DataType list ... column info
         ArrayList<DataType> dataTypes = new ArrayList<>();
-        LinkedHashMap<ColumnInfo, Integer> colIdxMap = new LinkedHashMap<>();
         List<String> colList = inclCols == null ? null : Arrays.asList(inclCols);
 
-        for (int colIdx = 0; colIdx < table.getColumnCount(); colIdx++) {
-            ColumnInfo colInfo = table.getColumnInfo(colIdx);
-            if ( colList == null || colList.contains(colInfo.getName() ) ) {
-                DataType dt = convertToDataType(table, colIdx, strategy);
+        for (int colIdx = 0; colIdx < colCount; colIdx++) {
+            if ((colList == null) || colList.contains(colNames[colIdx])) {
+                DataType dt = convertHDUToDataType(colNames, bases, hduTable, colIdx);
                 dataTypes.add(dt);
-                colIdxMap.put(colInfo, colIdx);
             }
         }
 
+        DataGroup dataGroup = new DataGroup(fitsFilename, dataTypes);
         // creating DataGroup rows.
-        DataGroup dataGroup = new DataGroup(table.getName(), dataTypes);
-        dataGroup.setInitCapacity((int)table.getRowCount());
-        for (long row = 0; row < table.getRowCount(); row++){
-            addRowToDataGroup(table, dataGroup, colIdxMap, row, strategy);
+        dataGroup.setInitCapacity(nrow);
+        for (int row = 0; row < nrow; row++){
+            addRowToDG(dataGroup, row, hduTable, hasBlank, blanks, isScaled, scales, zeros);
         }
 
         // setting DataGroup meta info
         for(int colIdx = 0; colIdx < dataTypes.size(); colIdx++) {
             DataType dt = dataTypes.get(colIdx);
-            String format = getParam(table, "TDISP" + (colIdx + 1));
+            String format = hduTable.getColumnMeta(colIdx, "TDISP");
             convertFormat(format, dt);
         }
 
-        List<String> hdList = inclHeaders == null ? null : Arrays.asList(inclHeaders);
-        List<?> params = table.getParameters();
-        if (params != null) {
-            for (Object p : params) {
-                if (p instanceof DescribedValue) {
-                    DescribedValue dv = (DescribedValue) p;
-                    String n = dv.getInfo().getName();
-                    String v = dv.getValueAsString(Integer.MAX_VALUE);
-                    if (hdList == null || hdList.contains(n)) {
-                        dataGroup.getTableMeta().addKeyword(n, v);
-                    }
+        HashMap<String, String> headerParams = new HashMap<>();
+        Cursor<String, HeaderCard> iter = hduTable.getHeader().iterator(); //to iterate over Header Cards
+        while (iter.hasNext()) {
+            HeaderCard hCard = iter.next();
+            String key = hCard.getKey();
+            String value = hCard.getValue();
+            if (key.equalsIgnoreCase("END")) continue; //this just signifies end of cards, ignore
+            if (headerParams.containsKey(key)) {
+                if (value != null) {
+                    value = headerParams.get(key) + value;
                 }
+            }
+            headerParams.put(key, value);
+        }
+
+        List<String> hdList = inclHeaders == null ? null : Arrays.asList(inclHeaders);
+        for (Map.Entry<String, String> entry : headerParams.entrySet()) {
+            String n = entry.getKey();
+            String v = entry.getValue();
+            if (hdList == null || hdList.contains(n)) {
+                dataGroup.getTableMeta().addKeyword(n, v); //should keywords be in order as they appear in the Table Header?
             }
         }
         dataGroup.trimToSize();
         return dataGroup;
     }
 
-    private static void addRowToDataGroup(StarTable table, DataGroup dataGroup, LinkedHashMap<ColumnInfo, Integer> colIdxMap, long rowIdx, String strategy) {
-        DataObject aRow = new DataObject(dataGroup);
-        ColumnInfo[] colAry = colIdxMap.keySet().toArray(new ColumnInfo[0]);
-        try {
-            for (int dtIdx = 0; dtIdx < dataGroup.getDataDefinitions().length; dtIdx++) {
-                DataType dt = dataGroup.getDataDefinitions()[dtIdx];
-                ColumnInfo colInfo = colAry[dtIdx];
-                int colIdx = colIdxMap.get(colInfo);
-                Object data =  table.getCell(rowIdx, colIdx);
-                aRow.setDataElement(dt, data);
-            }
-            dataGroup.add(aRow);
-        } catch (IOException e) {
-            logger.error("Unable to read StarTable row:" + rowIdx + "   msg:" + e.getMessage());
+    record EvalVal(long blank, boolean scaled, boolean hasBlank, double scale, double zero) {
+        public Number evalValue(Number val) {
+            if (hasBlank && val.doubleValue() == blank) return null;
+            if (!scaled) return val;
+            return val.doubleValue() * scale + zero;
         }
     }
 
-    /**
-     * Convert the column info, provided by StarTable, to dataType.
-     * The originalType is the original data type stored in the FITS table. StarTable stores it in the column info.
-     * The classType is the data type StarTable converts from the originalType (say Bits -> Boolean).
-     * Based on classType and originalType, we set java_class (dataType.setDataType(java_class)):
-     *  (1)Boolean/boolean -> Integer if originalType is Bits; Boolean/boolean -> String if originalType is logical
-     *  (2)Short/short -> Integer
-     *  (3)char -> String
-     *  (4)No change for other types
-     * Set unit.
-     *
-     *
-     * @param table the star tabl3
-     * @param colIdx index
-     * @param strategy strategy string
-     * @return dataType
-     */
-    private static DataType convertToDataType(StarTable table, int colIdx, String strategy)
-        throws FitsException{
+    //This function is loosely based on the packageValue function from the FitsStarTable class in the uk.ac.starlink.fits package
+    private static Object getValAsObject(Object elem, int icol, boolean[] hasBlank, long[] blanks, boolean[] isScaled,
+                                         double[] scales, double[] zeros) throws FitsException {
+            if (elem == null) {
+                return null;
+            }
+            else if (!elem.getClass().isArray()) {
+                return elem instanceof String && isEmpty((String)elem) ? null : elem;
+            }
+            else if (Array.getLength(elem) == 1) {
+                String cls = elem.getClass().getComponentType().toString();
+                EvalVal evaluator = new EvalVal(blanks[icol], isScaled[icol], hasBlank[icol], scales[icol], zeros[icol]);
+                return switch (cls) {
+                    case "byte" -> evaluator.evalValue(((byte[])(elem))[0]);
+                    case "short" -> evaluator.evalValue(((short[])(elem))[0]);
+                    case "int" -> evaluator.evalValue(((int[])(elem))[0]);
+                    case "long" -> evaluator.evalValue(((long[])(elem))[0]);
+                    case "float" -> evaluator.evalValue(((float[])(elem))[0]);
+                    case "double" -> evaluator.evalValue(((double[])(elem))[0]);
+                    case "boolean" -> Boolean.valueOf(((boolean[])(elem))[0]);
+                    case "class java.lang.String" -> isEmpty(((String[])(elem))[0]) ? null : ((String[])(elem))[0];
+                    default -> throw new FitsException( "Unrecognized class type in FITS table file entry: " + cls);
+                };
+            }
+            else {
+                return ArrayFuncs.flatten(elem);
+            }
+    }
 
-        ColumnInfo colInfo = table.getColumnInfo(colIdx);
-        String colName = colInfo.getName()!=null ? colInfo.getName() : "column-"+colIdx;
-        String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
-        String unit = colInfo.getUnitString();
-        String desc = colInfo.getDescription();
-        desc = desc == null ? getParam(table, "TDOC" + (colIdx+1)) : desc; // this is for LSST.. not sure it applies to others.
-
-        DataType dataType = new DataType(colName, null);
-        Class java_class = null;
-
-        if ((classType.contains("boolean")) || (classType.contains("Boolean"))) {
-            java_class = Boolean.class;
-        } else if ((classType.contains("byte")) || (classType.contains("Byte"))) {
-            java_class = Integer.class;
-        } else if ((classType.contains("short")) || (classType.contains("Short"))) {
-            java_class = Integer.class;
-        } else if ((classType.contains("int")) || (classType.contains("Integer"))) {
-            java_class = Integer.class;
-        } else if ((classType.contains("long")) || (classType.contains("Long"))) {
-            java_class = Long.class;
-        } else if ((classType.contains("float")) || (classType.contains("Float"))) {
-            java_class = Float.class;
-        } else if ((classType.contains("double")) || (classType.contains("Double"))) {
-            java_class = Double.class;
-        } else if ((classType.contains("char")) || (classType.contains("String") || classType.contains("Character"))) {
-            java_class = String.class;
-        } else {
-            throw new FitsException(
-                    "Unrecognized format character in FITS table file: " + classType);
+    private static void addRowToDG(DataGroup dataGroup, int rowIdx, TableHDU<?> hduTable, boolean[] hasBlank, long[] blanks, boolean[] isScaled,
+                                   double[] scales, double[] zeros) {
+        DataObject aRow = new DataObject(dataGroup);
+        try {
+            for (int dtIdx = 0; dtIdx < dataGroup.getDataDefinitions().length; dtIdx++) {
+                DataType dt = dataGroup.getDataDefinitions()[dtIdx];
+                Object val = hduTable.getElement(rowIdx, dtIdx); //example of what the object may look like: [68620340003524] or 0: 68620340003524
+                //so cast the val object to an array of its type by calling the getValAsObject function
+                Object unpackedVal = getValAsObject(val, dtIdx, hasBlank, blanks, isScaled, scales, zeros); //unpacked val: 68620340003524
+                aRow.setDataElement(dt, unpackedVal);
+            }
+            dataGroup.add(aRow);
+        } catch (Exception e) {
+            logger.error("Unable to read table row:" + rowIdx + "   msg:" + e.getMessage());
         }
+    }
 
-        if (colInfo.isArray()) {
-            // FitsStarTable from starlink has an issue, TDIM values are not trimed before parsing into integer, hence Shape always int[]{-1}
-            // Using here our own getter to overcome this problem (TOPCAT is showing the same problem in the UI)
-            int[] shape = getShape(table, colIdx);
+    public static Class<?> formatClass(Class<?> c) throws FitsException {
+        String cname = c.getName();
+        //check if dimension is 0 then cname is of type "boolean" or "byte", etc.
+        //but if dimension is > 0, then cname may be of type "[[[B" or "[S", etc.
+        if (cname.contains("boolean") || (cname.contains("[") && cname.contains("Z"))) {
+            return Boolean.class;
+        }
+        else if (cname.contains("byte") || cname.contains("short") || cname.contains("int")  ||
+                (cname.contains("[") && (cname.contains("B") || cname.contains("S") || cname.contains("I")))) {
+            return Integer.class;
+        }
+        else if (cname.contains("long") || (cname.contains("[") && cname.contains("J"))) {
+            return Long.class;
+        }
+        else if (cname.contains("float") || (cname.contains("[") && cname.contains("F"))) {
+            return Float.class;
+        }
+        else if (cname.contains("double") || (cname.contains("[") && cname.contains("D"))) {
+            return Double.class;
+        }
+        else if (cname.contains("char") || cname.contains("String") ||
+                (cname.contains("[") && cname.contains("C"))) {
+            return String.class;
+        }
+        else {
+            throw new FitsException(
+                    "Unrecognized format character in FITS table file: " + cname);
+        }
+    }
+
+    private static DataType convertHDUToDataType(String[] colNames, Class<?>[] bases, TableHDU<?> hduTable, int colIdx)
+            throws FitsException{
+
+        String colName = colNames[colIdx] !=null ? colNames[colIdx] : "column-"+colIdx;
+        DataType dataType = new DataType(colName, null);
+
+        if (bases[colIdx].isArray()) {
+            int[] shape = getShape(hduTable, colIdx); //parse TDIM value
             String arraySize = Arrays.stream(shape)
                     .mapToObj(d -> d > 0 ? d+"" : "*")
                     .collect(Collectors.joining("x"));
-            dataType.setArraySize(arraySize);
+            dataType.setArraySize(arraySize); //TDIM
+        }
+        dataType.setDataType(formatClass(bases[colIdx]));
+        String tunit = hduTable.getColumnMeta(colIdx, "TUNIT");
+        if (tunit != null) {
+            dataType.setUnits(tunit);
         }
 
-        dataType.setDataType(java_class);
-        dataType.setUnits(unit);
+        String tcomm = hduTable.getColumnMeta(colIdx, "TCOMM");
+        String desc = tcomm == null ? hduTable.getColumnMeta(colIdx, "TDOC") : tcomm; // this is for LSST.. not sure it applies to others.
         dataType.setDesc(desc);
-        dataType.setUCD(colInfo.getUCD());
-        dataType.setUType(colInfo.getUtype());
+
+        String tucd = hduTable.getColumnMeta(colIdx, "TUCD");
+        if (tucd != null) {
+            dataType.setUCD(tucd);
+        }
+
+        String tutype = hduTable.getColumnMeta(colIdx, "TUTYP");
+        if (tutype != null) {
+            dataType.setUType(tutype);
+        }
 
         return dataType;
     }
 
-    private static int[] getShape(StarTable table, int colIdx) {
-
-        DescribedValue td = table.getParameterByName("TDIM" + (colIdx+1));
-        String tdim = td == null ? null : td.getValue().toString();
+    private static int[] getShape(TableHDU<?> hduTable, int colIdx) {
+        String tdim = hduTable.getColumnMeta(colIdx, "TDIM");
         if (tdim != null) {
             tdim = tdim.trim();
             if (tdim.charAt(0) == '(' && tdim.charAt(tdim.length() - 1) == ')') {
@@ -498,19 +512,14 @@ public final class FITSTableReader
                         for (int i = 0; i < sdims.length; ++i) {
                             dims[i] = Integer.parseInt(sdims[i].trim());
                         }
-
                         return dims;
-                    } catch (NumberFormatException ignore) {
+                    } catch (NumberFormatException e) {
+                        logger.error("Number format exception parsing dimension: " + e.getMessage());
                     }
                 }
             }
         }
         return new int[]{-1};
-    }
-
-    private static String getParam(StarTable table, String key) {
-        DescribedValue p = table.getParameterByName(key);
-        return p == null ? null : p.getValueAsString(Integer.MAX_VALUE);
     }
 
     /**
@@ -520,7 +529,7 @@ public final class FITSTableReader
      * @param dt     the column this format belongs to
      */
     private static void convertFormat(String format, DataType dt) {
-        if (!StringUtils.isEmpty(format)) {
+        if (!isEmpty(format)) {
             String[] parts = StringUtils.groupMatch(TDISP, format);     // 0:conversion code, 1: width, 2:precision
             if (parts == null) return;
 
@@ -541,125 +550,4 @@ public final class FITSTableReader
             }
         }
     }
-
-    /**
-     * Fill a dataGroup with a row of data from a table.
-     * Each dataObj contains data from all the columns at a repeat.
-     * Convert the data type of each element from the star types to IPAC types if needed.
-     * If strategy = EXPAND_BESET_FIT or EXPAND_REPEAT, fill in null or the last data value when no data is available in the column.
-     *
-     * @return dataGroup
-     */
-    private static DataGroup fillDataGroup(StarTable table,
-                                           List<DataType> dataTypeList,
-                                           int maxRepeat,
-                                           long row,
-                                           String[] dataCols,
-                                           String strategy,
-                                           DataGroup dataGroup) throws IOException{
-
-        if (strategy.equals(TOP_MOST)){
-            maxRepeat = 1;
-        }
-
-        for (int rpt = 0; rpt < maxRepeat; rpt ++) {
-            DataObject dataObj = new DataObject(dataGroup);
-            int dataCol = 0;
-            for (int col = 0; col < table.getColumnCount(); col++) {
-                String colName = table.getColumnInfo(col).getName();
-                if ((dataCols == null) || (Arrays.asList(dataCols).contains(colName))) {
-                    dataCol ++;
-                    ColumnInfo colInfo = table.getColumnInfo(col);
-                    String classType = DefaultValueInfo.formatClass(colInfo.getContentClass());
-                    String originalType = (String)((DescribedValue)colInfo.getAuxData().get(0)).getValue();
-                    Object cell = table.getCell(row, col);
-
-                    Object dataElement = null;
-                    if (table.getColumnInfo(col).isArray()) {
-                        if (rpt < Array.getLength(cell)) {
-                            dataElement = convertStarToIpacType(Array.get(cell, rpt), classType, originalType);
-                        }
-                        else {
-                            if (strategy.equals(EXPAND_REPEAT)) {
-                                dataElement = convertStarToIpacType(Array.get(cell, Array.getLength(cell) - 1), classType, originalType);
-                            }
-                            else if ((strategy.equals(EXPAND_BEST_FIT)) || (strategy.equals(FULLY_FLATTEN)) ) {
-                                dataElement = null;
-                            }
-                        }
-                    }
-                    else {
-                        if (rpt == 0) {
-                            dataElement = convertStarToIpacType(cell, classType, originalType);
-                        }
-                        else {
-                            if (strategy.equals(EXPAND_REPEAT)) {
-                                dataElement = convertStarToIpacType(cell, classType, originalType);
-                            }
-                            else if ((strategy.equals(EXPAND_BEST_FIT)) || (strategy.equals(FULLY_FLATTEN)) ) {
-                                dataElement = null;
-                            }
-                        }
-                    }
-                    dataObj.setDataElement(dataTypeList.get(dataCol -1), dataElement);
-                }
-            }
-            dataGroup.add(dataObj);
-        }
-        return dataGroup;
-    }
-
-    /**
-     * Convert the data from star type to IPAC type:
-     * Since Starlink converts bits to boolean (1 to true and 0 to false), this method converts boolean(bits) to int (true to 1 and false to 0).
-     * Convert boolean (logic) to String "true" or "false".
-     * Convert byte/short to int as IPAC table doesn't support byte and short.
-     *
-     * @return objNew
-     */
-    private static Object convertStarToIpacType(Object obj,
-                                                String classType,
-                                                String originalType) {
-
-        Object objNew = obj;
-
-        if (classType.contains("boolean")){
-            if (originalType.contains("L")){
-                objNew = String.valueOf(obj);
-            }
-            else if (originalType.contains("X")){
-                objNew = (Boolean)obj? 1:0;
-            }
-        }
-        else if (classType.contains("byte") || classType.contains("short") ){
-            objNew = obj; // Q: Need to cast to Integer?
-        }
-
-        return objNew;
-    }
-
-    /**
-     * Concatenate the element(s) in the obj and the divider "," to a String attributeValue.
-     * Convert the data type of each element from the star types to IPAC types if needed.
-     * @return attributeValue String
-     */
-    private static String getAttributeValue(Object obj,
-                                            boolean isArray,
-                                            String classType,
-                                            String originalType) {
-        String attributeValue;
-        if (isArray){
-            int attributeNum = Math.min(Array.getLength(obj), maxNumAttributeValues);
-            Object [] data = new Object[attributeNum];
-            for (int rpt = 0; rpt < attributeNum; rpt ++){
-                data[rpt] = convertStarToIpacType(Array.get(obj,rpt), classType, originalType);
-            }
-            attributeValue = StringUtils.toString(data, ",");
-        }
-        else {
-            attributeValue = String.valueOf(convertStarToIpacType(obj, classType, originalType));
-        }
-        return attributeValue;
-    }
-
 }
