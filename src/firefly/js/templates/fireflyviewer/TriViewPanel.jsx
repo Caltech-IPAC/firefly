@@ -114,7 +114,7 @@ function RightSide({expanded, closeable, showXyPlots, showMeta, showFits, dataPr
             {showXyPlots && makeActiveChartTab({activeLabel, chartExpandedMode, closeable, asTab:true}) }
             {showPinnedTab && makePinnedChartTab({pinnedLabel, chartExpandedMode, closeable, asTab:true}) }
             {cov && makeCoverageTab()}
-            {meta && makeMultiProductViewerTab(dataProductTableId)}
+            {meta && makeMultiProductViewerTab({dataProductTableId})}
             {fits && makeFitsPinnedTab()}
         </Tabs>
     );
