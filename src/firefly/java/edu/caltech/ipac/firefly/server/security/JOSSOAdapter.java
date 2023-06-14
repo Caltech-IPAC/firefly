@@ -13,7 +13,6 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Base64;
 import edu.caltech.ipac.util.StringUtils;
-import org.apache.http.HttpResponse;
 import org.josso.gateway.ws._1_2.protocol.AssertIdentityWithSimpleAuthenticationRequestType;
 import org.josso.gateway.ws._1_2.protocol.AssertIdentityWithSimpleAuthenticationResponseType;
 import org.josso.gateway.ws._1_2.protocol.AssertionNotValidErrorType;
@@ -45,8 +44,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.rpc.ServiceException;
 import java.rmi.RemoteException;
-import java.util.HashMap;
-import java.util.Map;
 
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 

@@ -1,12 +1,12 @@
 package edu.caltech.ipac.firefly.ws;
 
+import com.google.common.net.MediaType;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.WspaceMeta;
 import edu.caltech.ipac.firefly.server.WorkspaceManager;
 import edu.caltech.ipac.firefly.server.ws.*;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import org.apache.commons.io.FileUtils;
-import org.apache.http.entity.ContentType;
 import org.junit.*;
 
 import java.io.File;
@@ -223,7 +223,7 @@ public class WsTest extends ConfigTest {
         if (!resourceList.contains(ufilePath)) {
             resourceList.add(ufilePath);
         }
-        man.putFile(relFolder, true,testFile, ContentType.DEFAULT_BINARY.getMimeType());
+        man.putFile(relFolder, true,testFile, MediaType.OCTET_STREAM.type());
         return ufilePath;
     }
 

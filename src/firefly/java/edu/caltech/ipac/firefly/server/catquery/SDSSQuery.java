@@ -164,7 +164,7 @@ public class SDSSQuery extends IpacTablePartProcessor {
             // check for errors in returned file
             evaluateCVS(csv);
 
-            DataGroup dg = DsvTableIO.parse(csv, CSVFormat.DEFAULT.withCommentStart('#'));
+            DataGroup dg = DsvTableIO.parse(csv, CSVFormat.DEFAULT.withCommentMarker('#'));
             if (dg == null) {
                     _log.briefInfo("no data found for search");
                     return null;

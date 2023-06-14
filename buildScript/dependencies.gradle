@@ -1,0 +1,113 @@
+apply plugin:'maven-publish'
+
+version '1.0'       // default for now.
+
+
+def libPath = "$fireflyPath/jars"
+//project.ext.properties.each{ k, v -> println "${k}:${v}\n" }
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://maven.repository.redhat.com/ga/"
+    }
+    flatDir {
+        name 'firefly_repo'
+        dirs  "$libPath/build",
+              "$libPath/starlink"
+    }
+}
+
+configurations {
+    webappLib {
+        description = 'web app runtime dependencies.'
+    }
+    tests
+}
+
+
+dependencies {
+
+    // local jars (not in maven central)
+    implementation ':firefly_data'
+
+    // ============== from maven central ===============
+
+    // apache commons
+    implementation 'commons-fileupload:commons-fileupload:1.2.2', 'commons-io:commons-io:2.4', 'commons-lang:commons-lang:2.2', 'org.apache.commons:commons-csv:1.0'
+
+    // axis  Web Services SOAP
+    implementation 'axis:axis:1.4'
+
+    // log4j
+    implementation 'org.apache.logging.log4j:log4j-core:2.20.0'
+
+    // nom tam fits
+    implementation 'gov.nasa.gsfc.heasarc:nom-tam-fits:1.15.2'
+
+    // openidconnect
+    implementation ('net.minidev:json-smart:2.3')
+    implementation ('com.nimbusds:nimbus-jose-jwt:4.37.1') { transitive = false }
+
+    implementation ('com.googlecode.json-simple:json-simple:1.1.1') { transitive = false }
+
+    // jedis
+    implementation ('redis.clients:jedis:3.1.0') { exclude group: 'org.slf4j' }
+
+    // ehcache.  exclude core because it contains duplicated older CacheManager
+    implementation ('net.sf.ehcache:ehcache:2.7.4')
+    implementation ('net.sf.ehcache:ehcache-web:2.0.4') {exclude group: 'net.sf.ehcache', module: 'ehcache-core'}
+
+    // java mail api
+    implementation 'javax.mail:javax.mail-api:1.6.2', 'javax.activation:activation:1.1.1'
+
+    // josso
+    implementation ('org.josso:josso-ws:1.8.5') { transitive = false }
+
+    // xstream
+    implementation ('com.thoughtworks.xstream:xstream:1.4.20')
+
+    // webdav includes httpclient 3.1
+    implementation 'org.apache.jackrabbit:jackrabbit-webdav:2.8.10'
+
+    // embedded db drivers
+    implementation 'org.hsqldb:hsqldb:2.4.0', 'com.h2database:h2:1.4.200', 'org.xerial:sqlite-jdbc:3.20.0'
+
+    // reflections used by SearchProcessorImpl annotation
+    implementation 'org.reflections:reflections:0.9.11'
+
+    // servlet API
+    implementation 'javax.servlet:javax.servlet-api:3.1.0'
+
+    // spring jdbc
+    implementation 'org.springframework:spring-jdbc:2.5.5'
+
+    // starlink
+    implementation ':starlink-registry-1.2+2016.05.03'
+    implementation ('uk.ac.starlink:stil:4.0.5') { exclude group: 'gov.nasa.gsfc.heasarc' }
+
+    // validation
+    implementation 'javax.validation:validation-api:1.1.0.Final'
+
+    // websocket
+    implementation 'javax.websocket:javax.websocket-api:1.1'
+
+    // junit for java test
+    implementation 'junit:junit:4.12'
+}
+
+
+
+task copyDependencies(dependsOn: jar) {
+    doLast {
+        def homePath = System.properties['user.home']
+        def publishDir = project.group.replaceAll("\\.", "/") + "/${project.name}/${project.version}"
+
+        copy {
+            from(configurations.runtimeClasspath)
+            into "${homePath}/.m2/repository/" + publishDir
+        }
+    }
+}
+
+publishToMavenLocal.dependsOn(copyDependencies)

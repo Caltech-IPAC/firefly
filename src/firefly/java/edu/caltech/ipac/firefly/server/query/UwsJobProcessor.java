@@ -186,13 +186,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
 
             // Must followRedirect because TAP specifically say this endpoint may be redirected.
             // Using 'getWithAuth' because it will handle credential when redirected
-            HttpServices.Status status = getWithAuth(url, method -> {
-                try {
-                    return HttpServices.defaultHandler(outFile).handleResponse(method);
-                } catch (FileNotFoundException ex) {
-                    return new HttpServices.Status(500, String.format("Write error [%s]", outFile.getPath())); // should never happen; file already created
-                }
-            });
+            HttpServices.Status status = getWithAuth(url, HttpServices.defaultHandler(outFile));
             if (status.isError()) {
                 throw createDax("Fail to fetch result", url, status.getErrMsg());
             }
