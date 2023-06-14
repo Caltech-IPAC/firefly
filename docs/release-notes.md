@@ -7,13 +7,15 @@
   - [Notes on next version](next-release-details.md)
 
 ## Version 2023.1
+- 2023.1.4 - (June 7, 2023)
+  - docker tag: `latest`, `2023.1`, `2023.1.4`
 - 2023.1.3 - (May 16, 2023)
-  - docker tag: `latest`, `2023.1`, `2023.1.3`
+  - docker tag: `2023.1.3`
 - 2023.1.2 - (May 10, 2023)
   - docker tag: `2023.1.2`
 - 2023.1.1 - (May 1, 2023)
   - docker tag: `2023.1.1`
-- 2023.1.0 - (May 5, 2023)
+- 2023.1.0 - (May 1, 2023)
   - docker tag: `2023.1.0`
 
 ### _Notes_
@@ -29,12 +31,15 @@
 - UWS support: [Firefly-1128](https://github.com/Caltech-IPAC/firefly/pull/1308), [Firefly-1129](https://github.com/Caltech-IPAC/firefly/pull/1319)
 - Faster image loading: [Firefly-1190](https://github.com/Caltech-IPAC/firefly/pull/1338)
 - Table of loaded image available in pinned image section: [Firefly-1081](https://github.com/Caltech-IPAC/firefly/pull/1344)
-- Obscore table packaging: [Firefly-1193](https://github.com/Caltech-IPAC/firefly/pull/1351)
-- Embedded spacial search UI in Hips: [Firefly-1177](https://github.com/Caltech-IPAC/firefly/pull/1328) 
+- ObsCore table packaging: [Firefly-1193](https://github.com/Caltech-IPAC/firefly/pull/1351)
+- Embedded spatial search UI in Hips: [Firefly-1177](https://github.com/Caltech-IPAC/firefly/pull/1328) 
 
 
 ##### _Patches 2023.1_
-- 2023.1.2
+- 2023.1.4
+  - Fixed: Not catching spatial input errors [Firefly-1252](https://github.com/Caltech-IPAC/firefly/pull/1392)  
+  - Fixed: Not giving correct error in failed TAP search [Firefly-1253](https://github.com/Caltech-IPAC/firefly/pull/1389)  
+- 2023.1.3
   - Latest chrome release breaking GPU processing [Firefly-1247](https://github.com/Caltech-IPAC/firefly/pull/1384) 
   - Additional small bug fixes [Firefly-1248](https://github.com/Caltech-IPAC/firefly/pull/1386) 
 - 2023.1.2
@@ -50,5 +55,5 @@
 
 
 # Older Releases 2019 - 2022
-See [Older release notes 2022](older-release-notes-2022.md)
-See [Older release notes 2019-2021](older-release-notes-2019-2021.md)
+- See [Older release notes 2022](older-release-notes-2022.md)
+- See [Older release notes 2019-2021](older-release-notes-2019-2021.md)
