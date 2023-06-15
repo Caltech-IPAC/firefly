@@ -7,8 +7,10 @@
   - [Notes on next version](next-release-details.md)
 
 ## Version 2023.1
+- 2023.1.5 - (June 15, 2023)
+  - docker tag: `latest`, `2023.1`, `2023.1.5`
 - 2023.1.4 - (June 7, 2023)
-  - docker tag: `latest`, `2023.1`, `2023.1.4`
+  - docker tag: `2023.1.4`
 - 2023.1.3 - (May 16, 2023)
   - docker tag: `2023.1.3`
 - 2023.1.2 - (May 10, 2023)
@@ -36,6 +38,10 @@
 
 
 ##### _Patches 2023.1_
+- 2023.1.5
+  - Fixed: heatmap failed due to uncaught exception [FIREFLY-1255](https://github.com/Caltech-IPAC/firefly/pull/1395)
+  - Fixed: grid buttons missing from MultiProductViewer on the right hand side [commit](https://github.com/Caltech-IPAC/firefly/commit/afbfbe9962131e755642c50c773128a1a9e59f65)
+  - Upgraded XStream to latest version due to Java's modularization enforcement [IRSA-5327](https://github.com/Caltech-IPAC/firefly/pull/1394)
 - 2023.1.4
   - Fixed: Not catching spatial input errors [Firefly-1252](https://github.com/Caltech-IPAC/firefly/pull/1392)  
   - Fixed: Not giving correct error in failed TAP search [Firefly-1253](https://github.com/Caltech-IPAC/firefly/pull/1389)  
