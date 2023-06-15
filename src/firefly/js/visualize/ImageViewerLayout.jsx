@@ -3,7 +3,6 @@
  */
 
 import React, {memo, PureComponent} from 'react';
-import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import {xor,isNil, isEmpty,get, isString, isFunction, throttle, isNumber, isArray} from 'lodash';
 import {flux} from '../core/ReduxFlux.js';
@@ -38,13 +37,13 @@ const draggingOrReleasing = (ms) => ms===DRAG || ms===DRAG_COMPONENT || ms===UP 
 const isWheel= (mouseState) => mouseState===MouseState.WHEEL_DOWN || mouseState===MouseState.WHEEL_UP;
 
 const zoomThrottle= throttle( (params) => {
-    ReactDOM.unstable_batchedUpdates(() => dispatchZoom(params) );
+    dispatchZoom(params);
 }, 2, {trailing:false});
 
 
 const zoomFromWheelOrTrackpad= (usingMouseWheel, params) => {
     usingMouseWheel ?
-        ReactDOM.unstable_batchedUpdates(() => dispatchZoom(params) ) :
+        dispatchZoom(params):
         zoomThrottle(params);
 };
 

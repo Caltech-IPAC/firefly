@@ -1,5 +1,5 @@
 import {isEmpty, uniqueId} from 'lodash';
-import {useCallback, useContext, useEffect, useState} from 'react';
+import {useCallback, useContext, useEffect, useState, useTransition} from 'react';
 import shallowequal from 'shallowequal';
 import {flux} from '../core/ReduxFlux.js';
 import FieldGroupUtils, {
@@ -21,12 +21,14 @@ import {FieldGroupCtx} from './FieldGroup.jsx';
  * This allows a stateGetter to optionally act as a comparator.  If the stateGetter does not care about the changes
  * then it can return the oldState and there will be no state update.
  * @param {Array} deps array of dependencies used by stateGetter
+ * @param {boolean} markAsTransition if try then set the state with startTransition
  * @returns {Object}  new state's value
  */
-export function useStoreConnector(stateGetter, deps=[]) {
+export function useStoreConnector(stateGetter, deps=[], markAsTransition=false) {
     const {comparator=shallowequal} = this || {};
 
     const [val, setter] = useState(stateGetter());
+    const [isPending,startTransition]= useTransition();
 
     let isMounted = true;
     useEffect(() => {
@@ -37,7 +39,14 @@ export function useStoreConnector(stateGetter, deps=[]) {
                 if (nState===cState) return;             // comparator might be overridden, use === first for efficiency
                 if ( !comparator(cState, nState) ) {
                     cState = nState;
-                    setter(cState);
+                    if (markAsTransition) {
+                        startTransition(() =>{
+                           setter(cState);
+                        });
+                    }
+                    else {
+                        setter(cState);
+                    }
                 }
             }
         });

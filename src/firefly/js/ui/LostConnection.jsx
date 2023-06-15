@@ -3,8 +3,8 @@
  */
 
 import React from 'react';
-import ReactDOM from 'react-dom';
 import {get} from 'lodash';
+import {createRoot} from 'react-dom/client';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import {APP_UPDATE} from '../core/AppDataCntlr';
 
@@ -44,13 +44,19 @@ export function initLostConnectionWarning() {
 
 }
 
+
+
+const reactRoots= new Map();
+
 export function showLostConnection() {
     const divElements = document.querySelectorAll('[id^="fireflyLostConnWarn"]');
     if (divElements) {
         divElements.forEach( (div) => {
-            ReactDOM.unmountComponentAtNode(div);        // in case one is already mounted.
+            reactRoots.get(div)?.unmount();
             const decor = div.getAttribute('data-decor') || 'medium';
-            ReactDOM.render(<LostConnection {...{decor}}/>, div);
+            const root= reactRoots.get(div) ?? createRoot(div);
+            reactRoots.set(div,root);
+            root.render(<LostConnection {...{decor}}/>);
         });
     }
 }
@@ -59,7 +65,7 @@ export function hideLostConnection() {
     const divElements = document.querySelectorAll('[id^="fireflyLostConnWarn"]');
     if (divElements) {
         divElements.forEach( (div) => {
-            ReactDOM.unmountComponentAtNode(div);
+            reactRoots.get(div)?.unmount();
         });
     }
 }

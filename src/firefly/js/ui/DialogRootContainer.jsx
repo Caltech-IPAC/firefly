@@ -3,7 +3,7 @@
  */
 import React, {memo, useEffect, useState, PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import ReactDOM from 'react-dom';
+import {createRoot} from 'react-dom/client';
 import {get, set} from 'lodash';
 import {dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr';
 import {flux} from '../core/ReduxFlux';
@@ -20,8 +20,14 @@ let dialogs= [];
 let tmpPopups= [];
 let tmpCount=0;
 let divElement;
+let divElementRoot;
 
-const init= () => divElement= createDiv({id: DIALOG_DIV});
+const reactRoots= new Map();
+
+function init() {
+    divElement= createDiv({id: DIALOG_DIV});
+    divElementRoot= createRoot(divElement);
+}
 
 /**
  * locDir is a 2-digit number to indicate the location and direction of the drop-down.
@@ -31,6 +37,7 @@ const init= () => divElement= createDiv({id: DIALOG_DIV});
  * example:  drop-down at bottom-right, spanning left.   34
  *
  * @param p parameters object
+ * @param p.id
  * @param p.content     the content to display
  * @param p.style       overrideable style
  * @param p.atElRef     the element reference used to apply locDir to.
@@ -40,9 +47,12 @@ const init= () => divElement= createDiv({id: DIALOG_DIV});
 export function showDropDown({id='',content, style={}, atElRef, locDir, wrapperStyle}) {
     const planeId= getddDiv(id);
     const ddDiv = document.getElementById(planeId) || createDiv({id: planeId, wrapperStyle});
+    const root= createRoot(ddDiv);
+    reactRoots.set(divElement,root);
+
     const rootZindex= atElRef && computeZIndex(atElRef);
     if (rootZindex) ddDiv.style.zIndex= rootZindex;
-    ReactDOM.render( <DropDown {...{id, content, style, atElRef, locDir}}/>, ddDiv);
+    root.render( <DropDown {...{id, content, style, atElRef, locDir}}/>);
     return ddDiv;
 }
 
@@ -53,7 +63,7 @@ export function isDropDownShowing(id) {
 export function hideDropDown(id='') {
     const ddDiv = document.getElementById(getddDiv(id));
     if (ddDiv) {
-        ReactDOM.unmountComponentAtNode(ddDiv);
+        reactRoots.get(ddDiv)?.unmount();
         ddDiv.parentNode.removeChild(ddDiv);
     }
 }
@@ -259,7 +269,7 @@ DialogRootComponent.propTypes = {
  * @param requestOnTop
  */
 function reRender(dialogs,tmpPopups,requestOnTop) {
-    ReactDOM.render(<DialogRootComponent dialogs={dialogs} tmpPopups={tmpPopups} requestOnTop={requestOnTop}/>, divElement);
+    divElementRoot.render(<DialogRootComponent dialogs={dialogs} tmpPopups={tmpPopups} requestOnTop={requestOnTop}/>);
 }
 
 /**

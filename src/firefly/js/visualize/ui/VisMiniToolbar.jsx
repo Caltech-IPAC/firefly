@@ -130,7 +130,7 @@ function getStoreState(oldState) {
 }
 
 export const VisMiniToolbar = memo( ({style, manageExpand=true, expandGrid=false, viewerId, tips={}}) => {
-    const {visRoot,dlCount, recentTargetAry, modalEndInfo} = useStoreConnector(getStoreState);
+    const {visRoot,dlCount, recentTargetAry, modalEndInfo} = useStoreConnector(getStoreState,[],true);
 
     return (
         <VisMiniTBWrapper {...{visRoot, dlCount, style, recentTargetAry, viewerId,
