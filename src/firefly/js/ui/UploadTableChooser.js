@@ -63,7 +63,7 @@ function getFitsColumnInfo(data) {
 }
 
 
-function uploadSubmit(request, setUploadInfo)  {
+function uploadSubmit(request,setUploadInfo,defaultColsEnabled)  {
     if (!request) return false;
     const {additionalParams = {}, fileUpload: serverFile} = request;
     const {detailsModel, report, summaryModel} = additionalParams;
@@ -81,14 +81,14 @@ function uploadSubmit(request, setUploadInfo)  {
     const columns= report.fileFormat===Format.FITS ?
         getFitsColumnInfo(data) :
         data.map(([name,type,u,d]) => ({name, type, units: u?u:'', description: d?d:'', use:true}));
-    const columnsSelected = getSelectedColumns(columns);
+    const columnsSelected = getSelectedColumns(columns,defaultColsEnabled);
     const uploadInfo = {serverFile, fileName, columns:columnsSelected, totalRows, fileSize, tableSource: UPLOAD_TBL_SOURCE};
     setUploadInfo(uploadInfo);
     dispatchHideDialog(dialogId);
     return false;
 }
 
-function existingTableSubmit(request,setUploadInfo) {
+function existingTableSubmit(request,setUploadInfo,defaultColsEnabled) {
     if (!request) return false;
     const tbl = getTblById('existing-table-list-ui');
     const idx = tbl.highlightedRow;
@@ -97,7 +97,7 @@ function existingTableSubmit(request,setUploadInfo) {
     const tableRequest = activeTbl.request;
     const columnData = activeTbl.columns;
     const columns = columnData.map((col) => col.visibility === 'hide' || col.visibility === 'hidden'? ({...col, use:false}) :  ({...col, use:true})); //filter out hidden cols
-    const columnsSelected = getSelectedColumns(columns);
+    const columnsSelected = getSelectedColumns(columns,defaultColsEnabled);
 
     const params ={
         [ServerParams.COMMAND]: ServerParams.TABLE_SAVE,
@@ -127,9 +127,37 @@ function existingTableSubmit(request,setUploadInfo) {
     return false;
 }
 
-function getSelectedColumns(columns) {
-    const {lonCol='', latCol=''} = findTableCenterColumns({tableData:{columns}}) ?? {}; //centerCols
-    const columnsSelected = columns.map((col) => col.name === lonCol || col.name === latCol? ({...col, use:true}) :  ({...col, use:false})); //select position cols only
+/*
+    if showUploadTableChooser is called with a defaultColsEnabled object, use the colTypes and colCount to set the selected columns
+    for this uploaded table
+ */
+function defaultColumnsSelector(columns,colTypes,colCount) {
+    let cols = [];
+    if  (columns == null) return null;
+    let count = 0;
+    for (let i=0; i< columns?.length; i++) {
+        if (count < colCount && colTypes.includes(columns[i].type)) {
+            cols.push(columns[i]);
+            count ++;
+        }
+    }
+    cols = cols.map((col) => col.name.replace(/^"(.*)"$/, '$1'));
+    const defautltCols = columns?.map((col) => (
+        {...col, use:cols.includes((col.name))}));
+
+    return defautltCols;
+}
+
+function getSelectedColumns(columns,defaultColsEnabled) {
+    let columnsSelected;
+    if (defaultColsEnabled != null) { //default cols enabled
+        const colTypes = defaultColsEnabled.colTypes;//['int', 'long', 'string'];
+        columnsSelected = defaultColumnsSelector(columns,colTypes,defaultColsEnabled.colCount);
+    }
+    else {
+        const {lonCol='', latCol=''} = findTableCenterColumns({tableData:{columns}}) ?? {}; //centerCols
+        columnsSelected = columns.map((col) => col.name === lonCol || col.name === latCol? ({...col, use:true}) :  ({...col, use:false})); //select position cols only
+    }
     return columnsSelected;
 }
 
@@ -187,18 +215,18 @@ const LoadedTables= (props) => {
         </div>);
 };
 
-
-export function showUploadTableChooser(setUploadInfo) {
+//showUploadTableChooser may be called with defaultColsEnabledObj, which will replace the regular default selection of lon and lat cols (usually ra,dec)
+export function showUploadTableChooser(setUploadInfo,groupKey= 'table-chooser',defaultColsEnabledObj=null) {
     DialogRootContainer.defineDialog(dialogId,
         <PopupPanel title={'Upload'} layoutPosition={LayoutType.TOP_EDGE_CENTER}>
-            <TapUploadPanel {...{setUploadInfo}}/>
+            <TapUploadPanel {...{setUploadInfo,groupKey,defaultColsEnabledObj}}/>
         </PopupPanel>
     );
     dispatchShowDialog(dialogId);
 }
 
-const TapUploadPanel= ({setUploadInfo,groupKey= 'table-chooser'}) => {
-   return (
+const TapUploadPanel= ({setUploadInfo,groupKey= 'table-chooser',defaultColsEnabledObj}) => {
+    return (
     <FieldGroup groupKey={groupKey}>
         <div style={{ resize: 'both', overflow: 'hidden', zIndex: 1, paddingTop:8, minWidth: 600, minHeight: 500, display: 'flex' }}>
             <FieldGroupTabs initialState={{value: 'upload'}} fieldKey='upload-type-tabs' groupKey={groupKey}
@@ -208,14 +236,14 @@ const TapUploadPanel= ({setUploadInfo,groupKey= 'table-chooser'}) => {
                         style:{height: '100%'},
                         acceptOneItem:true, acceptList:[TABLES], keepState:true, groupKey:groupKey+'-fileUpload',
                         onCancel:() => dispatchHideDialog(dialogId),
-                        onSubmit:(request) => uploadSubmit(request,setUploadInfo),
+                        onSubmit:(request) => uploadSubmit(request,setUploadInfo,defaultColsEnabledObj),
                     }}/>
                 </Tab>
                 <Tab name='Loaded Tables' id='tableLoad' style={{fontSize:'larger'}}>
                         <LoadedTables {...{
                             style:{height: '100%', width:'100%'}, keepState: true, groupKey:groupKey+'-tableLoad',
                             onCancel:() => dispatchHideDialog(dialogId),
-                            onSubmit:(request) => existingTableSubmit(request, setUploadInfo)
+                            onSubmit:(request) => existingTableSubmit(request,setUploadInfo,defaultColsEnabledObj)
                         }}/>
                 </Tab>
             </FieldGroupTabs>

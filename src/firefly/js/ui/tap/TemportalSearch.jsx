@@ -64,6 +64,7 @@ function makeTemporalConstraints(columnsModel, fldObj) {
     }
 
     if (!timeFromField.value && !timeToField.value) errList.addError('Time is Required');
+    if (!temporalColumnsField.value) errList.addError('Temporal Columns required');
     errList.checkForError(timeFromField);
     errList.checkForError(timeToField);
     errList.checkForError(temporalColumnsField);
@@ -125,12 +126,21 @@ export function TemporalSearch({cols, columnsModel}) {
         return () => setConstraintFragment(panelPrefix, '');
     }, [constraintResult]);
 
+    useEffect(() => {
+        if (timeCol && timeCol != '') checkHeaderCtl.setPanelActive(true);
+    }, [timeCol]);
+
 
     useEffect(() => {
-        const timeCol= findTimeColumn(columnsModel) ?? '';
+        const findTimeCol= findTimeColumn(columnsModel) ?? '';
         const errMsg= 'Temporal searches require identifying a table column containing a time in MJD.  Please provide a column name.';
-        setVal(TemporalColumns, timeCol, {validator: getColValidator(cols, true, false, errMsg), valid: true});
-        checkHeaderCtl.setPanelOpen(Boolean(timeCol));
+        let existingTimeCol = timeCol; //get current val of TemporalColumns
+        let timeColExists = false;
+        //check if user has a previously selected Temporal Column, and if it exists in the currently selected table's cols
+        if (existingTimeCol) timeColExists = cols.some((c) => c.name === existingTimeCol);
+        if (!timeColExists) existingTimeCol = findTimeCol;
+        setVal(TemporalColumns, existingTimeCol, {validator: getColValidator(cols, true, false, errMsg), valid: true});
+        if (Boolean(timeCol)) checkHeaderCtl.setPanelOpen(true);
     }, [columnsModel]);
 
 
