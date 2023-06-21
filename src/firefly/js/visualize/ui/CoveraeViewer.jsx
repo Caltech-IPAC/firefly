@@ -38,7 +38,7 @@ const anyTblHasCoverage= (covState) =>
 function makeNovCovMsg(covState, baseNoCovMsg, tbl_id) {
     const titleStr= getTblById(tbl_id)?.request?.META_INFO?.title;
     return (anyTblHasCoverage(covState) && titleStr) ?
-        `${baseNoCovMsg} for ${titleStr}, other tables have coverage` : baseNoCovMsg;
+        `${baseNoCovMsg} for ${titleStr}; other tables have coverage` : baseNoCovMsg;
 }
 
 

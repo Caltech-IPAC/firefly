@@ -11,11 +11,14 @@ import CompleteButton from '../CompleteButton.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {FormPanel} from '../FormPanel.jsx';
 import {showInfoPopup} from '../PopupUtil.jsx';
-import {AREA, CHECKBOX, CIRCLE, CONE_AREA_KEY, ENUM, FLOAT, INT, POLYGON, POSITION, UNKNOWN} from './DynamicDef.js';
+import {
+    AREA, CHECKBOX, CIRCLE, CONE_AREA_KEY, ENUM, FLOAT, INT, POINT, POLYGON, POSITION, UNKNOWN
+} from './DynamicDef.js';
 import {
     getSpacialSearchType, hasValidSpacialSearch, makeAllFields, makeUnitsStr
 } from './DynComponents.jsx';
 import './DynamicUI.css';
+import {findFieldDefType} from './ServiceDefTools.js';
 
 
 const defaultOnError= () => showInfoPopup('One or more fields are not valid', 'Invalid Data');
@@ -69,7 +72,8 @@ function cleanupPolygonString(inStr='') {
 
 export function convertRequest(request, fieldDefAry, standardIDType) {
     const retReq= fieldDefAry.reduce( (out, {key,type, targetDetails:{raKey,decKey, targetKey,polygonKey, sizeKey}={} }) => {
-        const coneOrArea= request[CONE_AREA_KEY] ?? (targetKey ? CONE_CHOICE_KEY : POLY_CHOICE_KEY);
+        const supportsPoly= findFieldDefType(fieldDefAry, POLYGON);
+        const coneOrArea= request[CONE_AREA_KEY] ?? (targetKey ? CONE_CHOICE_KEY : supportsPoly ? POLY_CHOICE_KEY : CONE_CHOICE_KEY);
         if (coneOrArea) {
             if (type===POLYGON && coneOrArea !== POLY_CHOICE_KEY) return out;
             if (type===CIRCLE && coneOrArea !== CONE_CHOICE_KEY) return out;
@@ -102,11 +106,17 @@ export function convertRequest(request, fieldDefAry, standardIDType) {
                     out[key]= request[targetKey];
                 }
                 return out;
+            case POINT:
+                if (targetKey) {
+                    const wp= convert(parseWorldPt(request[targetKey]), CoordinateSys.EQ_J2000);
+                    if (wp) out[key]= makePointString(wp.x, wp.y,standardIDType);
+                }
+                return out;
             case CIRCLE:
-                const radius= request[sizeKey];
-                const wp= convert(parseWorldPt(request[targetKey]), CoordinateSys.EQ_J2000);
-                if (radius && wp) {
-                    out[key]= `${standardIDType===standardIDs.sia?'CIRCLE ':''}${wp.x} ${wp.y} ${radius}`;
+                if (targetKey) {
+                    const radius= request[sizeKey];
+                    const wp= convert(parseWorldPt(request[targetKey]), CoordinateSys.EQ_J2000);
+                    if (radius && wp) out[key]= makeCircleString(wp.x,wp.y,radius,standardIDType);
                 }
                 return out;
             default: return out;
@@ -119,6 +129,63 @@ export function convertRequest(request, fieldDefAry, standardIDType) {
         },{});
     return {...retReq,...hiddenFields};
 }
+
+
+
+function makeCircleString(ra,dec,radius,standardID) {
+     return `${standardID?.toLowerCase()?.startsWith(standardIDs.sia)?'CIRCLE ':''}${ra} ${dec} ${radius}`;
+}
+function makePointString(ra,dec,standardID) {
+    const sep= standardID?.toLowerCase().startsWith(standardIDs.ssa) ? ',' : ' ';
+    return `${ra}${sep}${dec}`;
+}
+
+export function isCircleSearch(primaryFdAry) {
+    return findFieldDefType(primaryFdAry,CIRCLE);
+}
+
+export function isPolySearch(primaryFdAry) {
+    return findFieldDefType(primaryFdAry,POLYGON);
+}
+
+export function isPointAreaSearch(primaryFdAry) {
+    return findFieldDefType(primaryFdAry,POINT) && findFieldDefType(primaryFdAry,POINT) ;
+}
+
+function getUnknownsConst(fdAry) {
+    const unknownValues = fdAry
+        .filter( (fd) => fd.type===UNKNOWN && fd.initValue)
+        .map( (fd) => [fd.key,fd.initValue]);
+    return Object.fromEntries(unknownValues);
+}
+
+export function convertCircleToPointArea(request, primaryFdAry, secondaryFdAry, primStandardID, secondStandardID) {
+    const cKey= findFieldDefType(primaryFdAry,CIRCLE)?.key;
+    if (!cKey) return;
+    const cStr= request[cKey];
+    if (!cStr) return;
+    const stringToSplit= primStandardID!==standardIDs.sia ? cStr : 'circle ' + cStr;
+    const [,ra,dec,radius]= stringToSplit.split(' ');
+    if (!ra || !dec || !radius) return;
+    const pKey= findFieldDefType(secondaryFdAry,POINT)?.key;
+    const aKey= findFieldDefType(secondaryFdAry,AREA)?.key;
+    if (!pKey || !aKey) return;
+    return {[pKey]: makePointString(ra,dec,secondStandardID), [aKey]:radius, ...getUnknownsConst(secondaryFdAry)};
+}
+
+export function convertPointAreaToCircle(request, primaryFdAry, secondaryFdAry, primStandardID, secondStandardID) {
+    const pKey= findFieldDefType(primaryFdAry,POINT)?.key;
+    const aKey= findFieldDefType(primaryFdAry,AREA)?.key;
+    if (!pKey || !aKey || !request[aKey]) return;
+    const pStr= request[pKey];
+    if (!pStr) return;
+    const [ra,dec]= pStr.split(primStandardID?.toLowerCase().startsWith(standardIDs.ssa)?',':' ');
+    if (!ra || !dec) return;
+    const cKey= findFieldDefType(secondaryFdAry,CIRCLE)?.key;
+    return {[cKey]: makeCircleString(ra,dec,request[aKey],secondStandardID), ...getUnknownsConst(secondaryFdAry)};
+}
+
+
 
 export function findTargetFromRequest(request, fieldDefAry) {
     let wp;

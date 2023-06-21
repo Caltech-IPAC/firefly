@@ -7,7 +7,7 @@ import {RangeValues} from '../visualize/RangeValues.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {getCellValue, doFetchTable, hasRowAccess, getColumn, getColumns, getMetaEntry} from '../tables/TableUtil.js';
 import {
-    getObsCoreAccessURL, getObsCoreProdType, getObsTitle,
+    getObsCoreAccessURL, getObsCoreProdType, getObsTitle, getProdTypeGuess,
     getServiceDescriptors, isDataLinkServiceDesc, isFormatPng
 } from '../util/VOAnalyzer.js';
 import { getObsCoreProdTypeCol, isFormatDataLink, isFormatVoTable,
@@ -166,7 +166,7 @@ function getObsCoreRowMetaInfo(table,row) {
     if (!table || row<0) return {};
     const titleStr= createObsCoreTitle(table,row);
     const dataSource= getObsCoreAccessURL(table,row);
-    const prodType= getObsCoreProdType(table,row)?.toLocaleLowerCase() ?? '';
+    const prodType= getProdTypeGuess(table,row);
     const isVoTable= isFormatVoTable(table, row);
     const isDataLink= isFormatDataLink(table,row);
     const iName= getCellValue(table,row,'instrument_name') || '';

@@ -15,12 +15,12 @@ function convertValue(value,options) {
     else return value;
 }
 
-export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip, labelWidth,
+export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip, labelWidth, labelStyle,
                                              options, alignment, value , wrapperStyle}) {
     const style = Object.assign({whiteSpace:'nowrap'}, wrapperStyle);
     return (
         <div style={style} title={tooltip}>
-            {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} />}
+            {label && <InputFieldLabel {...{label, tooltip, labelWidth, labelStyle}} />}
             {options.map( (option) => {
                 return (
                     <div key={option.value}
@@ -47,6 +47,7 @@ CheckboxGroupInputFieldView.propTypes= {
     value:  PropTypes.string.isRequired,
     label:  PropTypes.string,
     tooltip:  PropTypes.string,
+    labelStyle: PropTypes.string,
     labelWidth: PropTypes.number,
     wrapperStyle: PropTypes.object
 };
@@ -97,6 +98,8 @@ CheckboxGroupInputField.propTypes= {
         label:  PropTypes.string,
     }),
     forceReinit:  PropTypes.bool,
-    fieldKey:   PropTypes.string
+    fieldKey:   PropTypes.string,
+    labelStyle: PropTypes.string,
+    labelWidth: PropTypes.number,
 };
 

@@ -8,13 +8,10 @@ import {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
 import {getJsonProperty} from '../../rpc/CoreServices.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
-import {dispatchTableFetch, dispatchTableHighlight, dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {
-    getCellValue, getColumnIdx, getMetaEntry, getTblById, getTblRowAsObj, onTableLoaded,
-} from '../../tables/TableUtil.js';
+import {dispatchTableFetch, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
+import { getCellValue, getColumnIdx, getTblById, getTblRowAsObj, onTableLoaded, } from '../../tables/TableUtil.js';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
-import {Logger} from '../../util/Logger.js';
-import {cisxAdhocServiceUtype, getServiceDescriptors, standardIDs} from '../../util/VOAnalyzer.js';
+import {cisxAdhocServiceUtype, standardIDs} from '../../util/VOAnalyzer.js';
 import {toBoolean} from '../../util/WebUtil.js';
 import CoordSys from '../../visualize/CoordSys.js';
 import {ensureHiPSInit } from '../../visualize/HiPSListUtil.js';
@@ -25,30 +22,24 @@ import {pointEquals} from '../../visualize/Point.js';
 import {CONE_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
 import {isHiPS} from '../../visualize/WebPlot.js';
 import {UserZoomTypes} from '../../visualize/ZoomUtil.js';
+import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
+import {analyzeQueries, handleSearch, hasSpatialTypes, isSpatialTypeSupported} from './DLGenAnalyzeSearch.js';
 import {getSpacialSearchType, hasValidSpacialSearch} from './DynComponents.jsx';
 import {confirmDLMenuItem} from './FetchDatalinkTable.js';
-import {
-    getStandardIdType, ingestInitArgs,
-    makeFieldDefs, makeSearchAreaInfo, makeServiceDescriptorSearchRequest
-} from './ServiceDefTools.js';
-import {convertRequest, DynLayoutPanelTypes, findTargetFromRequest} from './DynamicUISearchPanel.jsx';
-import {CIRCLE, POSITION, RANGE} from './DynamicDef.js';
+import { getStandardIdType, ingestInitArgs, makeFieldDefs, makeSearchAreaInfo} from './ServiceDefTools.js';
+import { convertRequest, DynLayoutPanelTypes, findTargetFromRequest} from './DynamicUISearchPanel.jsx';
+import {CIRCLE, CONE_AREA_KEY, POSITION, RANGE} from './DynamicDef.js';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {FormPanel} from '../FormPanel.jsx';
 import {FieldGroupTabs, Tab} from '../panel/TabPanel.jsx';
 import {showInfoPopup} from '../PopupUtil.jsx';
-import {useStoreConnector} from '../SimpleComponent.jsx';
+import {useFieldGroupValue, useStoreConnector} from '../SimpleComponent.jsx';
 
 import './DLGeneratedDropDown.css';
 import SHOW_RIGHT from 'images/show-right-3.png';
 import HIDE_LEFT from 'images/hide-left-3.png';
 
 export const DL_UI_LIST= 'DL_UI_LIST';
-const ACCESS_URL= 'access_url';
-const SD= 'service_def';
-const SEMANTICS= 'semantics';
-const ID= 'id';
-const DESC= 'description';
 const HIPS_PLOT_ID= 'dlGeneratedHipsPlotId';
 
 let regLoaded= false;
@@ -60,6 +51,7 @@ const findUrl = async () => {
     const servicesRootUrl= await getJsonProperty('inventory.serverURLAry');
     return servicesRootUrl;
 };
+
 
 
 //todo these next 5 functions could be refactored when this is generalize, we might pass an object with them
@@ -146,9 +138,11 @@ function isURLInRegistry(url, registryTblId) {
     return findUrlInReg(url, registryTblId)>-1;
 }
 
-async function doLoadRegistry(url, registryTblId) {
+async function doLoadRegistry(url, registryTblId, user) {
     try {
-        dispatchTableFetch(makeRegistryRequest(url,registryTblId));
+        const urlToUse= user? url+'?user='+user : url;
+        dispatchTableFetch(makeRegistryRequest(urlToUse,registryTblId));
+        console.log(`Registry URL: ${urlToUse}`);
         const result= await onTableLoaded(registryTblId);
         const {tableModel}= result ?? {};
         if (tableModel.error) {
@@ -164,11 +158,11 @@ async function doLoadRegistry(url, registryTblId) {
     }
 }
 
-async function loadRegistry(registryTblId) {
+async function loadRegistry(registryTblId, user) {
     if (regLoaded) return;
     regLoading= true;
     const url= await findUrl();
-    await doLoadRegistry(url[0], registryTblId);
+    await doLoadRegistry(url[0], registryTblId, user);
     regLoading=false;
 }
 
@@ -196,7 +190,7 @@ export function DLGeneratedDropDown({initArgs={}}) {// eslint-disable-line no-un
     useEffect(() => {// load registry and merge any already fetched tables
         const load= async () =>  {
             if (regLoaded || regLoading) return;
-            await loadRegistry(registryTblId);
+            await loadRegistry(registryTblId, urlApi?.user);
             await ensureHiPSInit();
             setIsRegLoaded(true);
         };
@@ -243,7 +237,7 @@ export function DLGeneratedDropDown({initArgs={}}) {// eslint-disable-line no-un
     return <DLGeneratedDropDownTables {...{registryTblId,isRegLoaded, loadedTblIds, setLoadedTblIds, url, searchAttributes, initArgs}}/>;
 }
 
-export function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTblIds, setLoadedTblIds, url, searchAttributes, initArgs}) {
+function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTblIds, setLoadedTblIds, url, searchAttributes, initArgs}) {
 
     const [sideBarShowing, setSideBarShowing]= useState(true);
     const currentTblId= loadedTblIds?.[url];
@@ -256,6 +250,7 @@ export function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTbl
                 },
             };
             if (!url) return;
+            console.log(`Dataset url: ${url}`);
             const req= makeFileRequest('Data link UI', url, undefined, loadOptions);
             const {tbl_id}= req.META_INFO;
             dispatchTableFetch(req);
@@ -321,10 +316,26 @@ function SearchTitle({desc, isAllSky, sideBarShowing, setSideBarShowing}) {
 }
 
 
-function ServDescPanel({fds, style, desc, setSideBarShowing, sideBarShowing, docRows, clickFuncRef, submitSearch, isAllSky})  {
+/**
+ *
+ * @param {Object} props
+ * @param props.fds
+ * @param props.style
+ * @param props.desc
+ * @param props.setSideBarShowing
+ * @param props.sideBarShowing
+ * @param props.docRows
+ * @param props.clickFuncRef
+ * @param props.submitSearch
+ * @param props.isAllSky
+ * @param {QueryAnalysis} props.qAna
+ * @return {JSX.Element}
+ * @constructor
+ */
+function ServDescPanel({fds, style, desc, setSideBarShowing, sideBarShowing, docRows, clickFuncRef, submitSearch, isAllSky, qAna})  {
 
     const docRowsComponents= (
-        <div key='help' style={{fontSize:'larger', padding:'0 10px 3px 0', alignSelf:'flex-end'}}>
+        <div key='help' style={{fontSize:'larger', padding:'0 10px 3px 8px', alignSelf:'flex-end'}}>
             {
                 docRows.map( (row, idx) => (
                     <a href={row.accessUrl} key={idx + ''} target={'documentation'} >
@@ -334,23 +345,8 @@ function ServDescPanel({fds, style, desc, setSideBarShowing, sideBarShowing, doc
             }
         </div>);
 
-    const Wrapper= ({children}) => (
-        <FormPanel submitText = 'Search' groupKey = 'DL_UI'
-                   onSubmit = {submitSearch}
-                   params={{hideOnInvalid: false}}
-                   inputStyle={{border:'none', padding:0, marginBottom:5}}
-                   getDoOnClickFunc={(clickFunc) => clickFuncRef.clickFunc= clickFunc}
-                   onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
-                   extraWidgets={[docRowsComponents]}
-                   help_id  = {'search-collections-general'}>
-            <div style={{
-                display:'flex',
-                flexDirection:'column',
-                alignItems:'center',
-            }}>
-                {children}
-            </div>
-        </FormPanel>
+    const SearchPanelWrapper= ({children}) => (
+        <RootSearchPanel {...{additionalChildren:children, submitSearch, clickFuncRef, docRowsComponents, qAna}}/>
     );
 
 
@@ -359,8 +355,66 @@ function ServDescPanel({fds, style, desc, setSideBarShowing, sideBarShowing, doc
 
             <SearchTitle {...{desc,isAllSky,sideBarShowing,setSideBarShowing}}/>
             <DynLayoutPanelTypes.Inset fieldDefAry={fds} plotId={HIPS_PLOT_ID} style={{height:'100%', marginTop:4}}
-                                       WrapperComponent={Wrapper} toolbarHelpId={'dlGenerated.VisualSelection'} />
+                                       WrapperComponent={SearchPanelWrapper} toolbarHelpId={'dlGenerated.VisualSelection'} />
         </div>
+    );
+}
+
+
+function RootSearchPanel({additionalChildren, submitSearch, clickFuncRef, docRowsComponents, qAna}) {
+
+    const coneAreaChoice=  useFieldGroupValue(CONE_AREA_KEY)?.[0]() ?? CONE_CHOICE_KEY;
+    let cNames, disableNames;
+    if (qAna?.concurrentSearchDef?.length && coneAreaChoice) {
+        cNames= qAna?.concurrentSearchDef
+            .filter( (c) => hasSpatialTypes(c.serviceDef) && isSpatialTypeSupported(c.serviceDef,coneAreaChoice))
+            .map( (c) => c.desc);
+        disableNames= qAna?.concurrentSearchDef
+            .filter( (c) => hasSpatialTypes(c.serviceDef) && !isSpatialTypeSupported(c.serviceDef,coneAreaChoice))
+            .map( (c) => c.desc);
+    }
+
+    const disDesc= coneAreaChoice===CONE_AREA_KEY ? 'w/ cone' : 'w/ polygon';
+
+    const options= (cNames || disableNames) ? (
+        <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
+            {Boolean(cNames?.length) &&
+                <CheckboxGroupInputField
+                    wrapperStyle={{marginTop:5}} fieldKey='searchOptions'
+                    alignment='horizontal' labelWidth={115} labelStyle={{fontSize: 'larger'}}
+                    label={`Include Search${cNames.length>1?'es':''} of: `}
+                    options={cNames.map( (c) => ({label:c,value:c}))}
+                    initialState={{ value: cNames.join(' '), tooltip: 'Additional Searches', label : '' }}
+                />}
+            {Boolean(disableNames?.length)  && (
+                <div style={{display:'flex', flexDirection:'row'}}>
+                    <div style={{fontSize:'larger', width:250}}>
+                        <span style={{fontStyle:'italic'}}>Warning </span>
+                        <span>{`- search${disableNames.length>1?'es':''} disabled ${disDesc}:`}</span>
+                    </div>
+                    {disableNames.map( (d) => (<div>{d}</div>))}
+                </div> )
+            }
+        </div>
+
+    ) : undefined;
+
+    return (
+        <FormPanel submitText = 'Search' groupKey = 'DL_UI'
+                   onSubmit = {submitSearch}
+                   params={{hideOnInvalid: false}}
+                   inputStyle={{border:'none', padding:0, marginBottom:5}}
+                   getDoOnClickFunc={(clickFunc) => clickFuncRef.clickFunc= clickFunc}
+                   onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
+                   extraWidgets={[docRowsComponents]}
+                   help_id  = {'search-collections-general'}>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', }}>
+                <>
+                    {additionalChildren}
+                    {options}
+                </>
+            </div>
+        </FormPanel>
     );
 }
 
@@ -373,7 +427,7 @@ const TabView= ({tabsKey, setSideBarShowing, sideBarShowing, searchObjFds,qAna, 
                 return (
                     <Tab name={`${qAna.primarySearchDef[idx].desc}`} id={ID} key={idx+''}>
                         <ServDescPanel{...{fds, setSideBarShowing, sideBarShowing, style:{width:'100%'}, desc, docRows,
-                            isAllSky, clickFuncRef, submitSearch}}/>
+                            isAllSky, clickFuncRef, submitSearch, qAna}}/>
                     </Tab>
                 );
             })
@@ -393,16 +447,9 @@ function SideBarTable({registryTblId, setSideBarShowing, width}) {
             </div>
             <div style={{minWidth:width, flexGrow:1, backgroundColor:'inherit', padding: '4px 4px 0 2px'}}>
                 <TablePanel {...{
-                    key:registryTblId,
-                    tbl_id:registryTblId,
-                    showToolbar: false,
-                    selectable:false,
-                    showFilters:true,
-                    showOptions: false,
-                    showUnits: false,
-                    showTypes: false,
-                    textView: false,
-                    showOptionButton: false
+                    key:registryTblId, tbl_id:registryTblId,
+                    showToolbar: false, selectable:false, showFilters:true, showOptions: false, showUnits: false,
+                    showTypes: false, textView: false, showOptionButton: false
                 }}/>
             </div>
             <div style={{fontSize:'larger', display:'flex', justifyContent:'space-around', padding: '12px 0 5px 0'} }>
@@ -427,12 +474,12 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
     const tabsKey= 'Tabs='+currentTblId;
 
     useEffect(() => {
-        if (initArgs?.urlApi?.execute) {
+        if (initArgs?.urlApi?.execute && clickFuncRef.clickFunc) {
             setTimeout(() => {
                 doSearchOnce(clickFuncRef.clickFunc);
             },10);
         }
-    }, []);
+    }, [clickFuncRef.clickFunc]);
 
 
     const fdAry= qAna?.primarySearchDef.map( (fd) => {
@@ -522,13 +569,14 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
         }
         
         const convertedR= convertRequest(r,fds,getStandardIdType(standardID));
+        const selectedConcurrent= r.searchOptions ?? '';
 
         const numKeys= [...new Set(fds.map( ({key}) => key))].length;
         if (Object.keys(convertedR).length<numKeys) {
             showInfoPopup('Please enter all of the fields', 'Error');
             return false;
         }
-        handleSearch(convertedR,qAna,idx, docRows?.[0]?.accessUrl);
+        handleSearch(convertedR,qAna,fdAry, idx, docRows?.[0]?.accessUrl, selectedConcurrent);
         return true;
     };
 
@@ -549,7 +597,7 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
                 <FieldGroup groupKey='DL_UI' keepState={true} style={{width:'100%'}}>
                     {(isRegLoaded && qAna) ? searchObjFds.length===1 ?
                             <ServDescPanel{...{initArgs, setSideBarShowing, sideBarShowing, fds:searchObjFds[0].fds,
-                                clickFuncRef, submitSearch, isAllSky,
+                                clickFuncRef, submitSearch, isAllSky, qAna,
                                 style:{width:'100%',height:'100%'}, desc:searchObjFds[0].desc, docRows}} /> :
                             <TabView{...{initArgs, tabsKey, setSideBarShowing, sideBarShowing, searchObjFds, qAna,
                                 docRows, isAllSky, clickFuncRef, submitSearch}}/>
@@ -571,101 +619,7 @@ function SideBarAnimation({sideBar,sideBarShowing,width}) {
     );
 }
 
-
-function handleSearch(request, qAna, idx, helpUrl) {
-    const primeSd= qAna.primarySearchDef[idx].serviceDef;
-    const primeSdId= primeSd.ID ?? primeSd.id;
-    const {coverage,bandDesc}= qAna.primarySearchDef[idx];
-
-
-    const {cisxUI}= qAna.primarySearchDef[0].serviceDef;
-    const preferredHips= cisxUI.find( (e) => e.name==='HiPS')?.value;
-
-
-    const concurrentSDAry= qAna.concurrentSearchDef.filter( (searchDef) => {
-        const id= searchDef.serviceDef.ID ?? searchDef.serviceDef.id ?? '';
-        return id.startsWith(primeSdId);
-    });
-
-    const extraMeta= {coverage,bandDesc,helpUrl};
-    if (preferredHips) extraMeta[MetaConst.COVERAGE_HIPS]=preferredHips;
-
-    const tableRequestAry= makeAllSearchRequest(request, primeSd,concurrentSDAry, extraMeta);
-
-    tableRequestAry.forEach( (dataTableReq) => {
-        Logger('DLGeneratedDropDown').debug(dataTableReq);
-        if (dataTableReq) {
-            dispatchTableSearch(dataTableReq, {showFilters: true, showInfoButton: true }); //todo are the options the default?
-        }
-    });
-}
-
-
-function makeAllSearchRequest(request, primeSd, concurrentSDAry, extraPrimaryMeta) {
-    const primeRequest= makeServiceDescriptorSearchRequest(request,primeSd,extraPrimaryMeta);
-    const concurrentRequestAry= concurrentSDAry
-        .map( (sd) => makeServiceDescriptorSearchRequest(request,sd))
-        .filter( (url) => url);
-
-    return [primeRequest, ...concurrentRequestAry];
-}
-
-
-
-
-function analyzeQueries(tbl_id) {
-    const table= getTblById(tbl_id);
-    const sdAry= getServiceDescriptors(table,false);
-    if (!sdAry || !table) return;
-    const {data=[]}= table.tableData ?? {};
-
-    const semIdx= getColumnIdx(table,SEMANTICS,true);
-    const sdIdx= getColumnIdx(table,SD,true);
-    const idIdx= getColumnIdx(table,ID,true);
-    const accessUrlIdx= getColumnIdx(table,ACCESS_URL,true);
-    const descIdx= getColumnIdx(table,DESC,true);
-
-    const bandDesc= getMetaEntry(table,'bandDesc');
-    const coverage= getMetaEntry(table,'coverage');
-
-
-    const makeSearchDef= (row) => {
-        const serviceDef= sdAry.find( (sd) => {
-            const id= sd.ID ?? sd.id ?? '';
-            return id===row[sdIdx];
-        });
-        return {serviceDef, accessUrl: row[accessUrlIdx], id:row[idIdx], desc:row[descIdx], semantic: row[semIdx], bandDesc, coverage};
-    };
-
-    const primarySearchDef= data
-        .filter( (row) => {
-            if (table.tableData.data.length===1) return true;
-            if (!row[sdIdx]) return false;
-            const semantic= (row[semIdx] ?? '').toLowerCase();
-            const sd= row[sdIdx];
-            if (sd && !semantic.endsWith('cisx#concurrent-query')) return true;
-            // if (semantic.endsWith('this') || semantic.endsWith('cisx#primary-query') || sd) return true;
-        })
-        .map(makeSearchDef);
-
-
-    const concurrentSearchDef= data
-        .filter( (row) => {
-            if (!row[sdIdx]) return false;
-            const semantic= (row[semIdx] ?? '').toLowerCase();
-            if (semantic.endsWith('cisx#concurrent-query')) return true;
-        })
-        .map(makeSearchDef);
-
-    const urlRows= data
-        .filter((row) => Boolean(row[accessUrlIdx] && !row[semIdx]?.includes('CISX')))
-        .map(makeSearchDef);
-
-    return {primarySearchDef, concurrentSearchDef, urlRows};
-}
-
-
-export function ExpandButton({text, icon, tip='$text',style={}, onClick}) {
+function ExpandButton({text, icon, tip='$text',style={}, onClick}) {
     const s= Object.assign({cursor:'pointer', verticalAlign:'bottom'},style);
     return (
         <div style={s} title={tip} onClick={onClick}>
@@ -676,6 +630,4 @@ export function ExpandButton({text, icon, tip='$text',style={}, onClick}) {
         </div>
     );
 }
-
-
 

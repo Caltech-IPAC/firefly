@@ -28,6 +28,7 @@ export const cisxAdhocServiceUtype= 'cisx:adhoc:service';
 export const standardIDs = {
     tap: 'ivo://ivoa.net/std/tap',
     sia: 'ivo://ivoa.net/std/sia',
+    ssa: 'ivo://ivoa.net/std/ssa',
     soda: 'ivo://ivoa.net/std/soda',
 };
 
@@ -1297,6 +1298,18 @@ export const getObsCoreAccessURL= (tableOrId, rowIdx) => getObsCoreCellValue(tab
  * @return {string}
  */
 export const getObsCoreProdType= (tableOrId, rowIdx) => getObsCoreCellValue(tableOrId,rowIdx, 'dataproduct_type');
+
+
+export function getProdTypeGuess(tableOrId, rowIdx) {
+    const table= getTableModel(tableOrId);
+    if (getObsCoreProdType(table,rowIdx)) {
+        return getObsCoreProdType(table,rowIdx)?.toLocaleLowerCase() ?? getCellValue(table,rowIdx,'dataset_type') ?? '';
+    }
+    else if (getColumn(table,'dataset_type')) {
+        return getCellValue(table,rowIdx,'dataset_type') ?? '';
+    }
+    return '';
+}
 
 /**
  * Return the dataproduct_type column
