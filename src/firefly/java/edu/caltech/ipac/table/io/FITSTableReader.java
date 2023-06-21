@@ -340,8 +340,9 @@ public final class FITSTableReader
         DataGroup dataGroup = new DataGroup(fitsFilename, dataTypes);
         // creating DataGroup rows.
         dataGroup.setInitCapacity(nrow);
+        DataType[] dataDefinitions= dataGroup.getDataDefinitions();
         for (int row = 0; row < nrow; row++){
-            addRowToDG(dataGroup, row, hduTable, hasBlank, blanks, isScaled, scales, zeros);
+            addRowToDG(dataGroup, dataDefinitions, row, hduTable, hasBlank, blanks, isScaled, scales, zeros);
         }
 
         // setting DataGroup meta info
@@ -415,16 +416,15 @@ public final class FITSTableReader
             }
     }
 
-    private static void addRowToDG(DataGroup dataGroup, int rowIdx, TableHDU<?> hduTable, boolean[] hasBlank, long[] blanks, boolean[] isScaled,
+    private static void addRowToDG(DataGroup dataGroup, DataType[] dataDefinitions, int rowIdx, TableHDU<?> hduTable, boolean[] hasBlank, long[] blanks, boolean[] isScaled,
                                    double[] scales, double[] zeros) {
         DataObject aRow = new DataObject(dataGroup);
         try {
+            Object[] rowData= hduTable.getRow(rowIdx);
             for (int dtIdx = 0; dtIdx < dataGroup.getDataDefinitions().length; dtIdx++) {
-                DataType dt = dataGroup.getDataDefinitions()[dtIdx];
-                Object val = hduTable.getElement(rowIdx, dtIdx); //example of what the object may look like: [68620340003524] or 0: 68620340003524
                 //so cast the val object to an array of its type by calling the getValAsObject function
-                Object unpackedVal = getValAsObject(val, dtIdx, hasBlank, blanks, isScaled, scales, zeros); //unpacked val: 68620340003524
-                aRow.setDataElement(dt, unpackedVal);
+                Object unpackedVal = getValAsObject(rowData[dtIdx], dtIdx, hasBlank, blanks, isScaled, scales, zeros);
+                aRow.setDataElement(dataDefinitions[dtIdx], unpackedVal);
             }
             dataGroup.add(aRow);
         } catch (Exception e) {
