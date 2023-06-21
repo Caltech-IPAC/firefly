@@ -27,8 +27,8 @@
    - push the tags: `git push origin --tags`   
 
 ### Build docker images and deploy it to IRSA Kubernetes
-   - Best to use Jenkins: https://irsawebdev5.ipac.caltech.edu:8443/view/IRSA%20k8s/job/ikc_firefly/build
-   - Build the docker with the following docker tags: `rc-yyyy.m`, `yyyy.m`,`yyyy.m.r`, `latest` 
+   - Best to use Jenkins: https://irsajenkins.ipac.caltech.edu/job/firefly/build
+   - Build the docker with the following docker tags: `rc-yyyy.m,yyyy.m,yyyy.m.r,latest` (comma-separated without spaces)
    - _example:_ from the example above the release would be built with: `rc-2021.2`, `2021.2`,`2021.2.1`, `latest`
    - `BUILD_ENV`: Select 'ops'
    - `ACTION`: Select 'both'  
@@ -39,7 +39,7 @@
        - the `latest` tag is always the latest formal release. (note- development release use `nightly`)
        
 ### Test the Build
-    - Try in in the firefly dev build you just made
+Try in the firefly dev build you just made
    
 ### Merge RC and Start a new development cycle
    - merge rc into dev, use `--no-ff` to create a new commit
