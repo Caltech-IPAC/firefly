@@ -5,7 +5,7 @@
 
 import 'isomorphic-fetch';
 import React from 'react';
-import ReactDOM from 'react-dom';
+import {createRoot} from 'react-dom/client';
 import {set, defer, once} from 'lodash';
 import 'styles/global.css';
 
@@ -232,7 +232,9 @@ function fireflyInit(props, appSpecificOptions={}, webApiCommands) {
     installOptions(appSpecificOptions);
 
     // initialize UI or API depending on entry mode.
-    documentReady().then(() => viewer ? renderRoot(viewer, props,webApiCommands) : initApi(props));
+    documentReady().then(() => {
+        viewer ? renderRoot(undefined, viewer, props,webApiCommands) : initApi(props);
+    });
     initDone = true;
 }
 
@@ -255,15 +257,16 @@ export function startAsAppFromApi(divId, overrideProps={template: 'FireflySlate'
     props.disableDefaultDropDown && dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
     props.readoutDefaultPref && dispatchChangeReadoutPrefs(props.readoutDefaultPref);
     props.wcsMatchType && dispatchWcsMatch({matchType:props.wcsMatchType, lockMatch:true});
+    const e= document.getElementById(divId);
 
-    const controlObj= {
-        unrender: () => {
-                const e= document.getElementById(divId);
-                if (!e) return;
-                ReactDOM.unmountComponentAtNode(e);
-        },
-        render: () => renderRoot(viewer, props)
+    const makeControlObj= () => {
+        const root = e && createRoot(e);
+        return {
+            render : () => root && renderRoot(root, viewer, props),
+            unrender: () => root?.unmount(),
+        };
     };
+    const controlObj= makeControlObj();
     controlObj.render();
     return controlObj;
 }
@@ -365,7 +368,7 @@ function bootstrap(props, clientAppSpecificOptions, webApiCommands) {
     });
 }
 
-function renderRoot(viewer, props, webApiCommands) {
+function renderRoot(root, viewer, props, webApiCommands) {
     const e= document.getElementById(props.div);
     if (!e) {
         showInfoPopup('HTML page is not setup correctly, Firefly cannot start.');
@@ -373,9 +376,9 @@ function renderRoot(viewer, props, webApiCommands) {
         return;
     }
 
-
+    const rootToUse = root ?? createRoot(e);
     const webApi= isUsingWebApi(webApiCommands);
-    const doAppRender= () => ReactDOM.render(React.createElement(viewer, {...props, normalInit: !webApi }), e);
+    const doAppRender= () => rootToUse.render( React.createElement(viewer, {...props, normalInit: !webApi }) );
     webApi ? handleWebApi(webApiCommands, e, doAppRender) : doAppRender();
 }
 
@@ -395,7 +398,7 @@ function handleWebApi(webApiCommands, e, doAppRender) {
             });
             break;
         case WebApiStat.SHOW_HELP:
-            ReactDOM.render(
+            createRoot(e).render(
                 React.createElement(
                     WebApiHelpInfoPage,
                     {helpType, contextMessage, cmd, params, webApiCommands, badParams, missingParams}), e);

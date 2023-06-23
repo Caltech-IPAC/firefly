@@ -5,7 +5,6 @@
 
 
 import React, {useEffect, useState} from 'react';
-import ReactDOM from 'react-dom';
 import sizeMe from 'react-sizeme';
 import {downloadChart, PlotlyWrapper} from '../../charts/ui/PlotlyWrapper.jsx';
 import {PopupPanel} from 'firefly/ui/PopupPanel.jsx';
@@ -335,10 +334,8 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
                 const {direction}= xLineData(ipt1,ipt2);
                 const newImPtAry= getLinePointAry(ipt1,ipt2);
                 if (!newImPtAry?.length) {
-                    ReactDOM.unstable_batchedUpdates( () => {
-                        setImPtAry(undefined);
-                        setChartParams({});
-                    } );
+                    setImPtAry(undefined);
+                    setChartParams({});
                     return;
                 }
                 const cc= CysConverter.make(plot);
@@ -351,10 +348,8 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
                     newImPtAry.map( (pt) => computeScreenDistance(pt0.x,pt0.y,pt.x,pt.y));
                 const chartData=
                     genSliceChartData(plot, ipt1,ipt2,xOffAry, dataAry, chartX, chartY, pointSize, combineOp, chartTitle, direction<0);
-                ReactDOM.unstable_batchedUpdates( () => {
-                        setChartParams(chartData);
-                        setImPtAry(newImPtAry);
-                } );
+                setChartParams(chartData);
+                setImPtAry(newImPtAry);
             }
             if (!pv) cancelLineExtraction();
         };

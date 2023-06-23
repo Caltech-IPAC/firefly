@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {memo, useState, useEffect, useRef} from 'react';
+import React, {memo, useState, useEffect, useRef, useDeferredValue} from 'react';
 import PropTypes from 'prop-types';
 import {omit} from 'lodash';
 import shallowequal from 'shallowequal';
@@ -67,8 +67,14 @@ export const ImageViewer= memo( ({showWhenExpanded=false, plotId, inlineTitle, a
     const {plotView,vr,drawLayersAry,taskCount} = useStoreConnector( (oldState) => getStoreState(plotId,oldState) );
     const {current:timeoutRef} = useRef({timeId:undefined});
 
+    const deferredDrawLayersAry= useDeferredValue(drawLayersAry);
+    const deferredTaskCount= useDeferredValue(taskCount);
+    const deferredMousePlotId= useDeferredValue(mousePlotId);
+    // const deferredDrawLayersAry= drawLayersAry;
+    // const deferredTaskCount= taskCount;
+    // const deferredMousePlotId= mousePlotId;
+
     useEffect(() => {
-        let alive= true;
         const removeListener= addImageMouseListener((mState) => {
             setMousePlotId(mState.plotId);
             timeoutRef.timeId && clearTimeout(timeoutRef.timeId);
@@ -77,11 +83,10 @@ export const ImageViewer= memo( ({showWhenExpanded=false, plotId, inlineTitle, a
             timeoutRef.timeId= setTimeout(
                     () => {
                         timeoutRef.timeId= undefined;
-                        if (alive && lastMouseCtx().plotId===plotId) setMousePlotId(undefined);
+                        if (lastMouseCtx().plotId===plotId) setMousePlotId(undefined);
                     }, TEN_SECONDS); // 10 seconds
         });
         return () => {
-            alive= false;
             timeoutRef.timeId && clearTimeout(timeoutRef.timeId);
             removeListener();
         };
@@ -91,15 +96,16 @@ export const ImageViewer= memo( ({showWhenExpanded=false, plotId, inlineTitle, a
     if (!showWhenExpanded  && vr.expandedMode!==ExpandType.COLLAPSE) return false;
     if (!plotView) return false;
 
+
     return (
-        <ImageViewerView plotView={plotView}
-                         drawLayersAry={drawLayersAry}
-                         visRoot={vr}
-                         mousePlotId={mousePlotId}
-                         inlineTitle={inlineTitle}
-                         aboveTitle={aboveTitle}
-                         workingIcon= {taskCount>0}
-                         extensionList={getPlotUIExtensionList(plotId)} />
+        <ImageViewerView {...{plotView,
+                         visRoot:vr,
+                         inlineTitle,
+                         aboveTitle,
+                         drawLayersAry: deferredDrawLayersAry,
+                         mousePlotId: deferredMousePlotId,
+                         workingIcon: deferredTaskCount>0,
+                         extensionList: getPlotUIExtensionList(plotId)}} />
     );
 });
 

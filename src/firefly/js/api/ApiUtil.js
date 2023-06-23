@@ -4,7 +4,7 @@
 
 
 import React from 'react';
-import ReactDOM from 'react-dom';
+import {createRoot} from 'react-dom/client';
 import {isArray, isElement, isString} from 'lodash';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
 import {Logger} from '../util/Logger.js';
@@ -42,6 +42,12 @@ export {startAsAppFromApi, getVersion} from '../Firefly.js';
 export function debug(...msg) {
     logger.info(msg);
 }
+
+
+
+
+const reactRoots= new Map();
+
 /**
  *
  * @param {string|Object} div a div element or a string id of the div element
@@ -55,6 +61,10 @@ export function debug(...msg) {
 export function renderDOM(div, Component, props) {
     const divElement= isString(div) ? document.getElementById(div) : div;
 
+    const root= reactRoots.get(divElement) ?? createRoot(divElement);
+    reactRoots.set(divElement,root);
+
+
     if (!isElement(divElement)) debug(`the div element ${isString(div)?div:''} is not defined in the html` );
     if (!Component) debug('Component must be defined');
     divElement.classList.add('rootStyle');
@@ -62,8 +72,7 @@ export function renderDOM(div, Component, props) {
     const renderStuff= (
             <Component {...props} />
     );
-
-    ReactDOM.render(renderStuff,divElement);
+    root.render(renderStuff);
 }
 
 /**
@@ -79,7 +88,8 @@ export function renderDOM(div, Component, props) {
 
 export function unrenderDOM(div) {
     const divElement= isString(div) ? document.getElementById(div) : div;
-    ReactDOM.unmountComponentAtNode(divElement);
+    const root= reactRoots.get(divElement);
+    root?.unmount();
 }
 
 
