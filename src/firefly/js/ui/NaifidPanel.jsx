@@ -12,13 +12,16 @@ import {TargetFeedback} from './TargetFeedback';
 
 
 const LABEL_DEFAULT = 'Moving Target Name:';
-const searchHistory = []; // defining as global to persist it throughout the lifetime of app
+const DEFAULT_FORMAT = 'default';
+const searchHistory = {[DEFAULT_FORMAT]: []}; // defining as global to persist it throughout the lifetime of app
 
 
 function NaifidPanelView({showHelp, valid, message, examples, feedback, value, labelWidth, feedbackStyle, popStyle,
-                             label= LABEL_DEFAULT, fireValueChange, updateNaifNameValue, naifIdFormat}){
+                             label= LABEL_DEFAULT, fireValueChange, updateNaifNameValue,
+                             naifIdFormat=DEFAULT_FORMAT}){
     const getSuggestions = (val= '') => {
         if (!val) return [];
+        if (naifIdFormat && !searchHistory[naifIdFormat]) searchHistory[naifIdFormat] = [];
 
         const rval = resolveNaifidObj(val, naifIdFormat);
         if (!rval.p) return [];
@@ -29,15 +32,15 @@ function NaifidPanelView({showHelp, valid, message, examples, feedback, value, l
         };
 
         //if value has been searched previously, no need to call the api again.
-        if (searchHistory.length > 0){
-            const cachedSuggList = Object.values(searchHistory).find((v) => (v.searchVal === val));
+        if (searchHistory[naifIdFormat].length > 0){
+            const cachedSuggList = Object.values(searchHistory[naifIdFormat]).find((v) => (v.searchVal === val));
             if (cachedSuggList?.searchRes) return getResSuggestionsList(cachedSuggList.searchRes);
         }
 
         return rval.p.then((response)=>{
             if (response.valid) {
                 const suggestionsList = Object.entries(response.data).map(([k,v]) => ({naifId: v, naifName: k}));
-                searchHistory.push({searchVal: val, searchRes: suggestionsList});
+                searchHistory[naifIdFormat].push({searchVal: val, searchRes: suggestionsList});
                 return getResSuggestionsList(suggestionsList);
 
             } else {
