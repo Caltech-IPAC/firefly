@@ -4,9 +4,9 @@ import {RouterProvider} from 'react-router-dom';
 import ReactDOM from 'react-dom';
 import {dispatchNotifyRemoteAppReady, dispatchSetMenu} from 'firefly/core/AppDataCntlr.js';
 
-export const HASH_ROUTE = 'hashRoute';
+export const ROUTER = 'router';
 
-export function hashRouteEntry(props) {
+export function routerEntry(props) {
     const {div, getRouter} = props;
     const divEl= document.getElementById(div);
 

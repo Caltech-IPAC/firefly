@@ -1,11 +1,6 @@
-import {warningDivId} from 'firefly/ui/LostConnection.jsx';
-import {DropDownContainer} from 'firefly/ui/DropDownContainer.jsx';
 import React, {useEffect} from 'react';
-import {pickBy} from 'lodash';
-import {Banner} from 'firefly/ui/Banner.jsx';
-import {Menu} from 'firefly/ui/Menu.jsx';
+
 import {dispatchSetLayoutInfo, dispatchSetLayoutMode, getLayouInfo, LO_MODE, LO_VIEW} from 'firefly/core/LayoutCntlr.js';
-import {getMenu} from 'firefly/core/AppDataCntlr.js';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga.js';
 import {dispatchOnAppReady} from 'firefly/core/AppDataCntlr.js';
@@ -15,20 +10,28 @@ import {getExpandedChartProps} from 'firefly/charts/ChartsCntlr.js';
 import {ChartsContainer} from 'firefly/charts/ui/ChartsContainer.jsx';
 import {DEFAULT_PLOT2D_VIEWER_ID} from 'firefly/visualize/MultiViewCntlr.js';
 import {ImageExpandedMode} from 'firefly/visualize/iv/ImageExpandedMode.jsx';
+import {VersionInfo} from 'firefly/ui/VersionInfo.jsx';
 
-
-export function FireflyLayout(props) {
-    const {appTitle, appIcon, altAppIcon, footer, dropdownPanels=[], style, bannerLeftStyle, bannerMiddleStyle, defDropDown, children} = props;
-    const layoutInfo = useStoreConnector(getLayouInfo);
-    const menu = useStoreConnector(getMenu);
-    const {dropDown, mode} = layoutInfo;
-    const {visible=!!defDropDown, view=defDropDown, initArgs} = dropDown || {};
-    const {expanded=LO_VIEW.none} = mode || {};
+/**
+ * Main panel of the FireflyLayout.  It handles the 3 possible views: drop-down, standard, expanded.
+ * It also add a footer to the drop-down if footerComponent is set.
+ * @param p     props
+ * @param p.style   panel root style
+ * @param p.dropDownComponent   drop-down component to show when drop-down is visible
+ * @param p.footerComponent     footer component to show
+ * @param p.showDropDown        set drop-down state
+ * @param p.children            main content to show when drop-down is hidden
+ * @return {JSX.Element}
+ */
+export function MainPanel({style, dropDownComponent, footerComponent, showDropDown, children}) {
+    const {dropDown, mode} = useStoreConnector(getLayouInfo);
+    const expanded = mode?.expanded || LO_VIEW.none;
+    showDropDown ??= dropDown?.visible;
 
     useEffect(()=> {
         dispatchOnAppReady(() => {
             dispatchAddActionWatcher({actions:[TABLE_SEARCH],
-                callback: (action, cancelSelf) => {
+                callback: () => {
                     dispatchSetLayoutInfo({dropDown:{visible: false}});
                 }
             });
@@ -36,32 +39,36 @@ export function FireflyLayout(props) {
     },[]);
 
 
-    const mainContent = expanded === LO_VIEW.none ? children : showExpandedView({expanded});
+    const contentView  = () => expanded === LO_VIEW.none ? children : <ExpandedView expanded={expanded}/>;
+    const dropDownView = () => {
+        return (
+            <>
+                <div style={{display:'flex', flexGrow: 1}}>
+                    {dropDownComponent}
+                </div>
+                {footerComponent &&
+                    <div id='footer' className='DD-ToolBar__footer'>
+                        {footerComponent}
+                        <div className='DD-ToolBar__version'>
+                            <VersionInfo/>
+                        </div>
+                    </div>
+                }
+            </>
+        );
+    };
 
     return (
-        <div id='App' className='rootStyle' style={style}>
-            <header>
-                <BannerSection {...{menu, appTitle, appIcon, altAppIcon, bannerLeftStyle, bannerMiddleStyle}}/>
-                <div id={warningDivId} data-decor='full' className='warning-div center'/>
-                <DropDownContainer
-                    key='dropdown'
-                    footer={footer}
-                    visible={!!visible}
-                    selected={view}
-                    initArgs={initArgs}
-                    {...{dropdownPanels} } />
-            </header>
-            <main style={{position: 'relative', padding: 0}}>
-                {mainContent}
-                <div id='for-popup' style={{zIndex:1}}/>
-            </main>
+        <div className='MainPanel-root' style={style}>
+            <div className='MainPanel-content' style={{flexGrow: 1}}>
+                {showDropDown ? dropDownView() : contentView()}
+            </div>
         </div>
     );
-
 }
 
 
-function showExpandedView ({expanded}) {
+export function ExpandedView ({expanded}) {
 
     let view;
     if (expanded === LO_VIEW.tables) {
@@ -91,16 +98,6 @@ function showExpandedView ({expanded}) {
         <div style={{display: 'flex', flexGrow: 1, overflow: 'hidden'}}>
             {view}
         </div>
-    );
-}
-
-function BannerSection(props) {
-    const {menu, ...rest} = pickBy(props);
-    return (
-        <Banner key='banner'
-                menu={<Menu menu={menu} /> }
-                {...rest}
-        />
     );
 }
 

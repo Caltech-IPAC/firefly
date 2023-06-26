@@ -1,7 +1,8 @@
+import React from 'react';
 
 import {getBackgroundInfo, isActive} from './BackgroundUtil.js';
 import {BG_MONITOR_SHOW} from './BackgroundCntlr.js';
-import {makeMenuItem} from '../../ui/Menu.jsx';
+import {MenuItem} from '../../ui/Menu.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
 
@@ -17,8 +18,12 @@ export function BgMonitorButton () {
     const {jobs={}} = useStoreConnector(() => getBackgroundInfo());
 
     const monitoredJobs = Object.values(jobs).filter( (info) => info?.jobInfo?.monitored );
-    const working = monitoredJobs.some( (info) => isActive(info) );
+    const isWorking = monitoredJobs.some( (info) => isActive(info) );
 
-    return makeMenuItem(showBgMonAction, false, working, monitoredJobs.length);
+    return (<MenuItem {...{
+        menuItem:showBgMonAction,
+        isWorking,
+        badgeCount: monitoredJobs.length
+    }}/>);
 }
 

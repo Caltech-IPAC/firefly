@@ -14,7 +14,7 @@ import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {FireflySlate} from './templates/fireflyslate/FireflySlate.jsx';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
-import {hashRouteEntry, HASH_ROUTE} from './templates/hashRoute/hashRouteEntry.jsx';
+import {routerEntry, ROUTER} from './templates/router/RouterEntry.jsx';
 import {initApi} from './api/ApiBuild.js';
 import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
 import {dispatchChangeReadoutPrefs} from './visualize/MouseReadoutCntlr.js';
@@ -59,7 +59,7 @@ export const Templates = {
     FireflySlate,
     LightCurveViewer : LcViewer,
     HydraViewer,
-    [HASH_ROUTE]: HASH_ROUTE      // root component is passed in via getRouter
+    [ROUTER]: ROUTER      // root component is passed in via getRouter
 };
 
 /**
