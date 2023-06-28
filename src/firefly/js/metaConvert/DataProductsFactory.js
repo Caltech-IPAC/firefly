@@ -8,7 +8,7 @@ import {makeWiseViewCreate, makeWisePlotRequest} from './WiseRequestList.js';
 import {makeShaPlotRequest, makeShaViewCreate} from './ShaRequestList';
 import {make2MassPlotRequest} from './TwoMassRequestList.js';
 import {makeAtlasPlotRequest} from './AtlasRequestList.js';
-import {makeZtfPlotRequest} from './ZtfRequestList.js';
+import {makeZtfPlotRequest, makeZtfViewCreate} from './ZtfRequestList.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
 import {Band} from '../visualize/Band';
@@ -219,10 +219,7 @@ function initConverterTemplates() {
         {
             converterId: 'ztf',
             tableMatches: (table) => matchById(table, 'ztf'),
-            create: simpleCreate,
-            hasRelatedBands: false,
-            canGrid: true,
-            maxPlots: 12,
+            create: makeZtfViewCreate,
             getSingleDataProduct: getSingleDataProductWrapper(makeZtfPlotRequest),
             getGridDataProduct: getGridDataProductWrapper(makeZtfPlotRequest),
             getRelatedDataProduct: getRelatedDataProductWrapper(makeZtfPlotRequest),

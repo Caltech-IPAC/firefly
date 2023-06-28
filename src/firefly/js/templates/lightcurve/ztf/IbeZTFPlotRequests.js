@@ -55,6 +55,10 @@ export function makeWebPlotRequestViaZtfIbe(tableModel, hlrow, size, cutoutSize,
             title += ztftable + '-' + field + '-' + filtercode;
             sr.setParam('ProductLevel', 'ref');
             sr.setParam('table', 'ref');
+        } else if (ztftable === 'deep') {
+            title += ztftable + '-' + field + '-' + filtercode;
+            sr.setParam('ProductLevel', 'deep');
+            sr.setParam('table', 'deep');
         } else if (ztftable === 'sci') {
             title += ztftable + '-' + filefracday + '-' + filtercode;
             sr.setParam('ProductLevel', 'sci');

@@ -52,7 +52,7 @@ public class ZtfRefimsFileRetrieve extends URLFileInfoProcessor {
         String host = sr.getSafeParam("host") != null ? sr.getSafeParam("host") : ZtfFileRetrieve.IBE_HOST;
         String schemaGroup = sr.getSafeParam("schemaGroup")!= null ? sr.getSafeParam("schemaGroup"):"ztf";
         String schema = sr.getSafeParam("schema");
-        String table = sr.getSafeParam("ProductLevel")!= null ? sr.getSafeParam("ProductLevel"):"ref";
+        String table = sr.getSafeParam("SearchType");
 
         return QueryUtil.makeUrlBase(host) + "/data/" + schemaGroup + "/" + schema + "/" + table + "/";
     }
