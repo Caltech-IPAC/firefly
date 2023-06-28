@@ -1,10 +1,7 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 
-import {dispatchSetLayoutInfo, dispatchSetLayoutMode, getLayouInfo, LO_MODE, LO_VIEW} from 'firefly/core/LayoutCntlr.js';
+import {dispatchSetLayoutMode, getLayouInfo, LO_MODE, LO_VIEW} from 'firefly/core/LayoutCntlr.js';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
-import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga.js';
-import {dispatchOnAppReady} from 'firefly/core/AppDataCntlr.js';
-import {TABLE_SEARCH} from 'firefly/tables/TablesCntlr.js';
 import {TablesContainer} from 'firefly/tables/ui/TablesContainer.jsx';
 import {getExpandedChartProps} from 'firefly/charts/ChartsCntlr.js';
 import {ChartsContainer} from 'firefly/charts/ui/ChartsContainer.jsx';
@@ -24,20 +21,9 @@ import {VersionInfo} from 'firefly/ui/VersionInfo.jsx';
  * @return {JSX.Element}
  */
 export function MainPanel({style, dropDownComponent, footerComponent, showDropDown, children}) {
-    const {dropDown, mode} = useStoreConnector(getLayouInfo);
+    const {mode} = useStoreConnector(getLayouInfo);
     const expanded = mode?.expanded || LO_VIEW.none;
-    showDropDown ??= dropDown?.visible;
-
-    useEffect(()=> {
-        dispatchOnAppReady(() => {
-            dispatchAddActionWatcher({actions:[TABLE_SEARCH],
-                callback: () => {
-                    dispatchSetLayoutInfo({dropDown:{visible: false}});
-                }
-            });
-        });
-    },[]);
-
+    showDropDown ??= !!dropDownComponent;
 
     const contentView  = () => expanded === LO_VIEW.none ? children : <ExpandedView expanded={expanded}/>;
     const dropDownView = () => {

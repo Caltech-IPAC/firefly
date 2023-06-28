@@ -381,8 +381,8 @@ function renderRoot(root, viewer, props, webApiCommands) {
     const rootToUse = root ?? createRoot(e);
     const webApi= isUsingWebApi(webApiCommands);
     const doAppRender= () => {
-        if (props.template === HASH_ROUTE) {
-            hashRouteEntry(rootToUse, props);
+        if (props.template === ROUTER) {
+            routerEntry(rootToUse, props);
         } else {
             rootToUse.render(React.createElement(viewer, {...props, normalInit: !webApi}));
         }
@@ -397,7 +397,7 @@ function handleWebApi(webApiCommands, e, doAppRender) {
     switch (status) {
         case WebApiStat.EXECUTE_API_CMD:
             let apiCompleted= false;
-            window.history.pushState('home', 'Home', new URL(window.location).pathname); // ?? is this necessary?
+            // window.history.pushState('home', 'Home', new URL(window.location).pathname); // ?? is this necessary?
             doAppRender();
             dispatchOnAppReady(() =>  {
                 if (apiCompleted) return;
