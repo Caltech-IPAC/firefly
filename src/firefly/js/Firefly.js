@@ -39,6 +39,7 @@ import {loadAllJobs} from './core/background/BackgroundUtil.js';
 import {
     makeDefImageSearchActions, makeDefTableSearchActions, makeDefTapSearchActions, makeExternalSearchActions
 } from './ui/DefaultSearchActions.js';
+import {PROP_SHEET} from 'firefly/tables/TableUtil';
 
 let initDone = false;
 const logger = Logger('Firefly-init');
@@ -99,7 +100,7 @@ export const Templates = {
  *                                  the catalog panel will show the polygon option as default when possible
  * @prop {Array.<string> } imageMasterSources -  default - ['ALL'], source to build image master data from
  * @prop {Array.<string> } imageMasterSourcesOrder - for the image dialog sort order of the projects, anything not listed is put on bottom
- *
+ * @prop {PROP_SHEET} table.propertySheet - specifies how to show propertySheet; set undefined to hide it
  */
 
 /** @type {AppProps} */
@@ -160,6 +161,7 @@ const defFireflyOptions = {
     },
     table : {
         pageSize: 100,
+        propertySheet: PROP_SHEET.INTEGRATED // by default, show property sheet integrated (as tab)
     },
     image : {
         defaultColorTable: 1,
@@ -229,7 +231,12 @@ function fireflyInit(props, appSpecificOptions={}, webApiCommands) {
 
     props = mergeObjectOnly(defAppProps, props);
     const viewer = Templates[props.template];
-    if (viewer) props.renderTreeId= undefined; // in non API usages, renderTreeId is not used, this line is just for clarity
+
+    if (viewer) props.renderTreeId = undefined; // in non API usages, renderTreeId is not used, this line is just for clarity
+    else if (!appSpecificOptions?.table?.propertySheet) {
+        // in API usages, propertySheet should show as popup if not specified otherwise
+        set(appSpecificOptions, 'table.propertySheet', PROP_SHEET.POPUP);
+    }
 
     installOptions(appSpecificOptions);
 

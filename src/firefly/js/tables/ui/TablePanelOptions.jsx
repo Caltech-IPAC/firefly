@@ -134,7 +134,7 @@ function OptionsFilterStats({tbl_id}) {
 }
 
 function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChange}) {
-    const {pageSize, showPaging=true, showUnits, allowUnits=true, showTypes, showFilters} = uiState || {};
+    const {pageSize, showPaging=true, showUnits, allowUnits=true, showTypes, allowTypes=true, showFilters} = uiState || {};
 
     const onPageSize = (pageSize) => {
         if (pageSize.valid) {
@@ -149,15 +149,17 @@ function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChang
             <div style={{display: 'inline-flex', alignItems: 'center'}}>
                 <div style={{marginLeft: 5, fontWeight: 'bold'}}>Show:</div>
                 {allowUnits &&
-                <div style={optStyle}>
-                    <input type='checkbox'  checked={showUnits} onChange={(e) => onChange({showUnits: e.target.checked})}/>
-                    Units
-                </div>
+                    <div style={optStyle}>
+                        <input type='checkbox'  checked={showUnits} onChange={(e) => onChange({showUnits: e.target.checked})}/>
+                        Units
+                    </div>
                 }
-                <div style={optStyle}>
-                    <input type='checkbox' checked={showTypes} onChange={(e) => onChange({showTypes: e.target.checked})}/>
-                    Data Type
-                </div>
+                {allowTypes &&
+                    <div style={optStyle}>
+                        <input type='checkbox' checked={showTypes} onChange={(e) => onChange({showTypes: e.target.checked})}/>
+                        Data Type
+                    </div>
+                }
                 <div style={optStyle}>
                     <input type='checkbox' checked={showFilters} onChange={(e) => onChange({showFilters: e.target.checked})} />
                     Filters
