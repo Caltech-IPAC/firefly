@@ -45,6 +45,7 @@ import {computeCentralPtRadiusAverage} from '../VisUtil.js';
 import {BLANK_HIPS_URL, isBlankHiPSURL, isHiPS} from '../WebPlot';
 import {WebPlotRequest} from '../WebPlotRequest.js';
 import {getSearchTarget} from './CatalogWatcher';
+import {memorizeLastCall} from 'firefly/util/WebUtil';
 
 /**
  * @typedef {Object} CoverageType
@@ -334,8 +335,8 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
                     if (allRowsTable?.tableData?.data?.length > 0) {
                         preparedTables[tbl_id] = allRowsTable;
                         const isRegion = isTableWithRegion(allRowsTable);
-
-                        tblCatIdMap[tbl_id] = (isRegion) ? [centerId(tbl_id), regionId(tbl_id)] : [tbl_id, searchTargetId(tbl_id)];
+                        const regionAry = getRegionAryFromTable(table);
+                        tblCatIdMap[tbl_id] = (isRegion && regionAry.length > 0) ? [centerId(tbl_id), regionId(tbl_id)] : [tbl_id, searchTargetId(tbl_id)];
                         updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, preparedTables,
                             isTableUsingRadians(table), tblCatIdMap, preferredHipsSourceURL, preferredHipsSource360URL);
                     }
@@ -509,7 +510,7 @@ function computeSize(options, preparedTables, usesRadians) {
                     ptAry= getBoxAryFromTable(options,t, usesRadians);
                     break;
                 case CoverageType.REGION:
-                    ptAry = getRegionAryFromTable(options, t);
+                    ptAry = getRegionAryFromTable(t);
                     break;
 
             }
@@ -722,12 +723,19 @@ function lookupOption(options, key, tbl_id) {
 function getCoverageType(options,table) {
 
     if (isOrbitalPathTable(table)) return CoverageType.ORBITAL_PATH;
+    const x = hasCorners(options, table);
 
     if (options.coverageType===CoverageType.GUESS ||
         options.coverageType===CoverageType.REGION ||
         options.coverageType===CoverageType.BOX ||
         options.coverageType===CoverageType.ALL) {
-         return  isTableWithRegion(table) ? CoverageType.REGION :
+        const regionAry = getRegionAryFromTable(table);
+        if (isTableWithRegion(table) && regionAry.length === 0) {
+            //helpful note for developer/user in the console
+            console.log(`Note: We could not parse s_region correctly, possibly because we do not support this format yet, 
+            hence it is not displayed in the coverage map.`);
+        }
+        return  (isTableWithRegion(table) && regionAry.length>0) ? CoverageType.REGION :
                                     (hasCorners(options,table) ? CoverageType.BOX : CoverageType.X);
     }
     return options.coverageType;
@@ -762,17 +770,16 @@ function getBoxAryFromTable(options,table, usesRadians){
         .filter( (row) => row.every( (v) => v));
 }
 
-
-function getRegionAryFromTable(options, table) {
+const getRegionAryFromTable = memorizeLastCall( (table) => {
     const rCol = findTableRegionColumn(table);
-
+    if (!rCol) return [];
     return (table?.tableData?.data ?? [])
         .map((row) => {
              const cornerInfo = parseObsCoreRegion(row[rCol.regionIdx], rCol.unit, true);
 
             return cornerInfo.valid ? cornerInfo.corners : [];
         }).filter((r) => !isEmpty(r));
-}
+});
 
 function getCovColumnsForQuery(options, table) {
     const cAry= [...getCornersColumns(table), findTableCenterColumns(table), findTableRegionColumn(table)];
@@ -800,6 +807,7 @@ function cleanUpOptions(options) {
  * @param tbl_id
  * @param prevPreferredHipsSourceURL
  * @param optionHipsSourceURL
+ * @param optionHipsSource360URL
  * @param preparedTable
  * @return {*}
  */

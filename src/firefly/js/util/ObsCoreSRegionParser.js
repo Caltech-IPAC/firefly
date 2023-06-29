@@ -11,7 +11,7 @@ import {convertAngle} from '../visualize/VisUtil.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import VisUtil from '../visualize/VisUtil.js';
 
-const regionShape = new Enum(['circle', 'box', 'polygon', 'position']);
+const regionShape = new Enum(['circle', 'box', 'polygon', 'position', 'point']);
 const CoordSys = new Enum(['ECLIPTIC', 'FK4', 'FK5', 'J2000', 'GALACTIC', 'ICRS', 'UNKNOWNFRAME']);
 const RefPos = new Enum(['BARYCENTER', 'GEOCENTER', 'HELIOCENTER', 'LSR', 'TOPOCENTER', 'RELOCATABLE', 'UNKNOWNREFPOS']);
 const Flavor = new Enum(['CARTESIAN2', 'CARTESIAN3', 'SPHERICAL2']);
@@ -130,7 +130,8 @@ export function parseObsCoreRegion(sRegionVal, unit='deg', isCorners=false) {
     let  pairCoord;
 
     switch(sAry[0].toLowerCase()) {
-        case regionShape.position.key:
+        case regionShape.position.key :
+        case regionShape.point.key :
             if (sAry.length === coord2 + 1) {
                 pairCoord = getPairCoord(sAry, [coord1, coord2]);
 
