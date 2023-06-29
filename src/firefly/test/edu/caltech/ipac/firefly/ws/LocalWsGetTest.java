@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.ws;
 
+import com.google.common.net.MediaType;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.server.LocalFSWorkspace;
 import edu.caltech.ipac.firefly.server.WorkspaceManager;
@@ -7,7 +8,6 @@ import edu.caltech.ipac.firefly.server.ws.WsCredentials;
 import edu.caltech.ipac.firefly.server.ws.WsException;
 import edu.caltech.ipac.firefly.server.ws.WsResponse;
 import org.apache.commons.io.FileUtils;
-import org.apache.http.entity.ContentType;
 import org.apache.jackrabbit.webdav.DavMethods;
 import org.apache.jackrabbit.webdav.client.methods.DavMethodBase;
 import org.junit.After;
@@ -68,8 +68,7 @@ public class LocalWsGetTest extends ConfigTest {
 
 
         WsResponse wsResponse = wsm.putFile(testUri,true,
-                testFile,
-                ContentType.DEFAULT_BINARY.getMimeType());
+                testFile, MediaType.OCTET_STREAM.type());
 
         Assert.assertTrue("Upload went wrong, status code <200 " + wsResponse.getStatusCode(), Integer.parseInt(wsResponse.getStatusCode()) >= 200);
         Assert.assertTrue("Uploaded file name is wrong " + wsResponse.getResponse(), wsResponse.getResponse().endsWith(testFile.getName()));

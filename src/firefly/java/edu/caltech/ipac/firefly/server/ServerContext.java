@@ -847,28 +847,36 @@ public class ServerContext {
         public static final String WEBAPP_CONFIG_LOC = "/WEB-INF/config";
 
         public void contextInitialized(ServletContextEvent servletContextEvent) {
-            System.out.println("contextInitialized...");
-            ServletContext cntx = servletContextEvent.getServletContext();
-            ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(WEBAPP_CONFIG_LOC));
-            VersionUtil.initVersion(cntx);  // can be called multiple times, only inits on the first call
-            SCHEDULE_TASK_EXEC.scheduleAtFixedRate(
-                                () -> DbAdapter.getAdapter().cleanup(false),
-                                DbAdapter.CLEANUP_INTVL,
-                                DbAdapter.CLEANUP_INTVL,
-                                TimeUnit.MILLISECONDS);
+            try {
+                System.out.println("contextInitialized...");
+                ServletContext cntx = servletContextEvent.getServletContext();
+                ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(WEBAPP_CONFIG_LOC));
+                VersionUtil.initVersion(cntx);  // can be called multiple times, only inits on the first call
+                SCHEDULE_TASK_EXEC.scheduleAtFixedRate(
+                        () -> DbAdapter.getAdapter().cleanup(false),
+                        DbAdapter.CLEANUP_INTVL,
+                        DbAdapter.CLEANUP_INTVL,
+                        TimeUnit.MILLISECONDS);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
         }
 
         public void contextDestroyed(ServletContextEvent servletContextEvent) {
-            System.out.println("contextDestroyed...");
-            DbAdapter.getAdapter().cleanup(true);
-            ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
             try {
-                SHORT_TASK_EXEC.shutdownNow();
-                SHORT_TASK_EXEC.awaitTermination(5, TimeUnit.SECONDS);
-                SCHEDULE_TASK_EXEC.shutdownNow();
-                SCHEDULE_TASK_EXEC.awaitTermination(5, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+                System.out.println("contextDestroyed...");
+                DbAdapter.getAdapter().cleanup(true);
+                ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
+                try {
+                    SHORT_TASK_EXEC.shutdownNow();
+                    SHORT_TASK_EXEC.awaitTermination(5, TimeUnit.SECONDS);
+                    SCHEDULE_TASK_EXEC.shutdownNow();
+                    SCHEDULE_TASK_EXEC.awaitTermination(5, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            } catch (Throwable e) {
+                e.printStackTrace();
             }
         }
     }

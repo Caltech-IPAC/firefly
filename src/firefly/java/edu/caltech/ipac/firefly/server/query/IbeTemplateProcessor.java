@@ -8,8 +8,8 @@ import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.io.IpacTableReader;
-import org.apache.tools.ant.filters.StringInputStream;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
@@ -31,7 +31,7 @@ public class IbeTemplateProcessor extends SharedDbProcessor {
             String url = treq.getParam("url");
             ByteArrayOutputStream results = new ByteArrayOutputStream();
             HttpServices.getData(HttpServiceInput.createWithCredential(url), results);
-            return IpacTableReader.read(new StringInputStream(results.toString()));
+            return IpacTableReader.read(new ByteArrayInputStream(results.toByteArray()));
         } catch (IOException e) {
             throw new DataAccessException(e.getMessage(), e);
         }

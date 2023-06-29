@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.core;
 
-import com.google.gwt.i18n.client.NumberFormat;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.Request;
 import edu.caltech.ipac.util.StringUtils;
@@ -50,7 +49,7 @@ public class SearchDescResolver {
 
     public static String toDegString(String s) {
         float sv = StringUtils.getFloat(s);
-        return NumberFormat.getFormat("0.0000").format(sv) + " deg";
+        return String.format("%.3f deg", sv);
     }
 
 }

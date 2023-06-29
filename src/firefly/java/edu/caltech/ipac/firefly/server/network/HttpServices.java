@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.network;
 
+import com.google.common.net.HttpHeaders;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload;
@@ -22,7 +23,6 @@ import org.apache.commons.httpclient.methods.multipart.Part;
 import org.apache.commons.httpclient.methods.multipart.StringPart;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.cookie.CookiePolicy;
-import org.apache.http.HttpHeaders;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

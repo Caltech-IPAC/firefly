@@ -1,7 +1,7 @@
 task preselect(dependsOn: war)
 
 jar {
-    archiveBaseName = "${project['app-name']}"
+    archiveFileName = "${project['app-name']}.jar"
     include "edu/caltech/ipac/${project.projectDir.name}/**/*"
     from sourceSets.main.allJava
     enabled = true
@@ -20,13 +20,6 @@ sourceSets {
         exclude "**/*.gradle"
     }
     test.java.srcDir  "test/"
-}
-
-configurations {
-    webappLib {
-        description = 'web app runtime dependencies.'
-    }
-    tests
 }
 
 artifacts {
@@ -53,7 +46,7 @@ clean {
     doFirst {
 
         delete "${project.distDir}/${webapp.baseWarName}.war"
-        delete "${jar.destinationDirectory}/${jar.archiveBaseName}.jar"
+        delete "${jar.destinationDirectory}/${jar.archiveFileName}"
         delete "${project.buildDir}"
     }
 }

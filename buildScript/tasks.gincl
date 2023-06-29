@@ -172,11 +172,11 @@ task prepareWebapp (dependsOn: [loadConfig, createVersionTag, jar]) {
 
         // temporary solution to extract fits_io.jar into WEB-INF/classes directory
         // this fix the multiple nom.tam.fits issue
-        copy {
-            from zipTree(file("$fireflyPath/jars/fits-io/fits_io.jar"))
-            into "${warDir}/WEB-INF/classes"
-        }
-
+//        copy {
+//            from zipTree(file("$fireflyPath/jars/fits-io/fits_io.jar"))
+//            into "${warDir}/WEB-INF/classes"
+//        }
+//
         copy {
             from ('config') {exclude "web.xml"}
             from ("${project.buildDir}/version.tag")
@@ -690,7 +690,7 @@ task onlinehelp () {
 /**--------------------------------------  misc ----------------------------------**/
 
 task testJar(type: Jar, dependsOn: testClasses) {
-    archiveBaseName = "test-${project.archivesBaseName}"
+    archiveFileName = "test-${project.archivesBaseName}.jar"
     from sourceSets.test.output
     destinationDirectory = file ("$rootDir/jars/build")
 
