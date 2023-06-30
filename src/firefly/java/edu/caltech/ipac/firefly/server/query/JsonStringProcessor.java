@@ -58,6 +58,7 @@ abstract public class JsonStringProcessor implements SearchProcessor<String> {
         if (!doCache()) {
             String results = fetchData(request);
             doLogging(request, results);
+            return results;
         }
 
         // when caching is supported, use lock/wait to avoid multiple duplicated requests
