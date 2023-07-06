@@ -8,7 +8,7 @@ import {Column, Table} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, set, isEmpty, isUndefined, omitBy, pick} from 'lodash';
 
-import {calcColumnWidths, getCellValue, getProprietaryInfo, getTableState, getTableUiById, getTblById, hasRowAccess, isClientTable, tableTextView, TBL_STATE, uniqueTblUiId} from '../TableUtil.js';
+import {calcColumnWidths, getCellValue, getColumns, getProprietaryInfo, getTableState, getTableUiById, getTblById, hasRowAccess, isClientTable, tableTextView, TBL_STATE, uniqueTblUiId} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
@@ -75,8 +75,7 @@ const BasicTableViewInternal = React.memo((props) => {
     const adjScrollTop = correctScrollTopIfNeeded(totalColWidths, scrollTop, width, height-headerHeight, rowHeight, hlRowIdx, triggeredBy);
     const adjScrollLeft = correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredBy);
 
-    const isSingleColumnTable = (columns) => columns.filter(
-        (col) => get(col, ['visibility'], 'show') === 'show').length === 1;
+    const isSingleColumnTable = (columns) => getColumns({tableData: {columns}}).length === 1;
 
     useEffect( () => {
         const changes = {};
