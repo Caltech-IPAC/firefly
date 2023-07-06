@@ -53,8 +53,7 @@ export function AdqlUI({serviceUrl, servicesShowing, setServicesShowing, setSele
             {capabilities ?
                 <div className='expandable'>
                     <div style={{flexGrow: 1}}>
-                        <AdvancedADQL adqlKey='adqlQuery' defAdqlKey='defAdqlKey' tblNameKey='tableName'
-                                      serviceUrl={serviceUrl} capabilities={capabilities}/>
+                        <AdvancedADQL {...{adqlKey:'adqlQuery', defAdqlKey:'defAdqlKey', serviceUrl, capabilities}}/>
                     </div>
                 </div>
                 : <div className='loading-mask'/>

@@ -48,7 +48,8 @@ const SERVICE_TIP= 'Select a TAP service, or type to enter the URL of any other 
 let webApiUserAddedService;
 const initServiceUsingAPIOnce= makeSearchOnce(false); // call one time during first construction
 const searchFromAPIOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
-const activateInitArgsAdqlOnce= once((tapBrowserState,initArgs) => initArgs?.urlApi?.adql && setTimeout(() => populateAndEditAdql(tapBrowserState,initArgs.urlApi?.adql), 5));
+const activateInitArgsAdqlOnce= once((tapBrowserState,initArgs,setSelectBy) => initArgs?.urlApi?.adql &&
+    setTimeout(() => populateAndEditAdql(tapBrowserState,setSelectBy, initArgs.urlApi?.adql), 5));
 let lastServicesShowing= false;
 
 /** if an extra service is found from the api that is not in the list then set webApiUserAddedService */
@@ -106,11 +107,14 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
     initApiAddedServiceOnce(initArgs);  // only look for the extra service the first time
     const tapOps= getTapServiceOptions();
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
-    const [selectBy, setSelectBy]= useState(initArgs?.urlApi?.selectBy || 'basic');
+    const [selectBy, setSelectBy]= useState(() => {
+        if (initArgs?.urlApi?.adql) return 'adql';
+        return initArgs?.urlApi?.selectBy || 'basic';
+    });
     const [servicesShowing, setServicesShowingInternal]= useState(lastServicesShowing);
     const [obsCoreTableModel, setObsCoreTableModel] = useState();
     const [serviceUrl, setServiceUrl]= useState(() => getInitServiceUrl(tapState,initArgs,tapOps));
-    activateInitArgsAdqlOnce(tapState,initArgs);
+    activateInitArgsAdqlOnce(tapState,initArgs,setSelectBy);
 
     const setServicesShowing= (showing) => {
         setServicesShowingInternal((showing));
@@ -138,7 +142,6 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
 
     useEffect(() => {
         return FieldGroupUtils.bindToStore( TAP_PANEL_GROUP_KEY, (fields) => {
-            setSelectBy(getFieldVal(TAP_PANEL_GROUP_KEY,'selectBy',selectBy));
             const ts= getTapBrowserState();
             setObsCoreTableModel(ts.obsCoreTableModel);
 
@@ -286,7 +289,7 @@ function makeExtraWidgets(initArgs, selectBy, setSelectBy, tapBrowserState) {
         ];
     if (selectBy==='basic') {
         extraWidgets.push( (<ExtraButton key='editADQL' text='Populate and edit ADQL'
-                                         onClick={() => populateAndEditAdql(tapBrowserState)}
+                                         onClick={() => populateAndEditAdql(tapBrowserState, setSelectBy)}
                                          style={{marginLeft: 10}} />));
     }
     else {
@@ -298,15 +301,15 @@ function makeExtraWidgets(initArgs, selectBy, setSelectBy, tapBrowserState) {
     return extraWidgets;
 }
 
-function populateAndEditAdql(tapBrowserState,inAdql) {
+function populateAndEditAdql(tapBrowserState,setSelectBy,inAdql) {
     const adql = inAdql ?? getAdqlQuery(tapBrowserState);
     if (!adql) return;
     const {TAP_UPLOAD,uploadFile}=  isTapUpload(tapBrowserState) ? getUploadConstraint(tapBrowserState) : {};
+    setSelectBy('adql');
     dispatchMultiValueChange(TAP_PANEL_GROUP_KEY,   //set adql and switch tab to ADQL
         [
             {fieldKey: 'defAdqlKey', value: adql},
             {fieldKey: 'adqlQuery', value: adql},
-            {fieldKey: 'selectBy', value: 'adql'},
             {fieldKey: 'TAP_UPLOAD', value: TAP_UPLOAD},
             {fieldKey: 'uploadFile', value: uploadFile},
         ]

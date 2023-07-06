@@ -264,7 +264,7 @@ AdvancedADQL.propTypes= {
     tblNameKey:     PropTypes.string,
     defAdqlKey:     PropTypes.string,      // used for reset
     serviceUrl:     PropTypes.string,
-    capabilities:   PropTypes.string,
+    capabilities:   PropTypes.object,
     style:          PropTypes.object
 };
 
