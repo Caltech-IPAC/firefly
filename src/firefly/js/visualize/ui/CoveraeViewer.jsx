@@ -28,7 +28,8 @@ const startWatcher= once((viewerId) => {
     },1);
 });
 
-const isCoverageFail= (covState,tbl_id) => covState.find( (e) => e.tbl_id===tbl_id)?.status===COVERAGE_FAIL;
+const isCoverageFail= (covState,tbl_id) => covState.find((e) => e.tbl_id === tbl_id)?.status === COVERAGE_FAIL;
+
 
 const getActiveOrFirstTblId= () => getActiveTableId() || getTblIdsByGroup()[0];
 
@@ -78,13 +79,13 @@ export function CoverageViewer({viewerId=DEFAULT_COVERAGE_VIEWER_ID,insideFlex=t
     else {
         let msg;
         if (tblHasCoverage || isFetching) {
-            msg= isCoverageFail(covState,tbl_id) ? makeNovCovMsg(noCovMessage,tbl_id) : workingMessage;
+            msg= isCoverageFail(covState,tbl_id) ? makeNovCovMsg(covState,noCovMessage,tbl_id) : workingMessage;
         }
         else if (forceShow) {
-            msg= anyTblHasCoverage(covState) ? workingMessage : makeNovCovMsg(covState, noCovMessage,tbl_id);
+            msg= anyTblHasCoverage(covState) ? workingMessage : makeNovCovMsg(covState,noCovMessage,tbl_id);
         }
         else {
-            msg= makeNovCovMsg(covState, noCovMessage,tbl_id);
+            msg= makeNovCovMsg(covState,noCovMessage,tbl_id);
         }
         return (
             <div className='ComponentBackground' style={{...{paddingTop:35, width:'100%',textAlign:'center',fontSize:'14pt'},...noCovStyle}}>
