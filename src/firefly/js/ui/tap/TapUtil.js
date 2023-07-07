@@ -1,5 +1,5 @@
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
-import {isArray, isUndefined} from 'lodash';
+import {isArray, isUndefined, memoize} from 'lodash';
 import {getCapabilities} from '../../rpc/SearchServicesJson.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
@@ -254,6 +254,35 @@ async function doLoadTapColumns(serviceUrl, schemaName, tableName) {
         return {error};
     }
 }
+
+
+export const loadTapKeys = memoize(async (serviceUrl) => {
+
+    const QUERY = `
+        SELECT tap_schema.keys.key_id,
+               tap_schema.keys.from_table,
+               tap_schema.keys.target_table,
+               tap_schema.keys.description,  
+               tap_schema.key_columns.from_column,
+               tap_schema.key_columns.target_column
+        FROM tap_schema.keys INNER JOIN tap_schema.key_columns ON tap_schema.keys.key_id = tap_schema.key_columns.key_id
+        `.replace(/\s+/g, ' ').trim();
+
+    const url = serviceUrl + qFragment + 'QUERY=' + encodeURIComponent(QUERY);
+    const request = makeFileRequest('loadTapKeys', url, undefined, {pageSize: MAX_ROW});
+
+    try {
+        const tableModel= await doFetchTable(request);
+        if (tableModel.error) throw new Error(tableModel.error);
+        return tableModel;
+    } catch (reason) {
+        const error = `Failed to resolve TAP_SCHEMA keys info:: ${reason?.message ?? reason}`;
+        logger.error(error);
+        return {error};
+    }
+});
+
+
 
 /**
  * Get a value of the column attribute using TAP_SCHEMA.columns table

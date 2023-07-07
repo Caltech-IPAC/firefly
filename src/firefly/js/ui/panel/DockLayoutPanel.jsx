@@ -40,11 +40,13 @@ export function createContentWrapper(content) {
  * decorate the content with DockLayoutPanel's look and feel.
  * @param p  component props
  * @param p.style  additional style to container
+ * @param p.className  additional className to container
  * @param p.children  content of this panel
  */
-export function SplitContent({style, children}) {
+export function SplitContent({style, className='', children}) {
+    className = 'content ' +  className;
     return ( <div className='wrapper'>
-                <div style={style} className='content'>{children}</div>
+                <div style={style} className={className}>{children}</div>
              </div>
             );
 }
