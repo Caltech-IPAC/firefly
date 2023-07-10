@@ -2,15 +2,17 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {useCallback} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
+
 import {COMMAND, getMenu} from '../core/AppDataCntlr.js';
 import {flux} from '../core/ReduxFlux.js';
 import {dispatchShowDropDown} from '../core/LayoutCntlr.js';
 import {BgMonitorButton} from '../core/background/BgMonitorButton.jsx';
 import {makeBadge} from './ToolbarButton.jsx';
-// import {deepDiff} from '../util/WebUtil.js';
+import {RouteMenuItem, ROUTER} from '../templates/router/RouterEntry.jsx';
+
 import './Menu.css';
 
 import LOADING from 'html/images/gxt/loading.gif';
@@ -19,8 +21,10 @@ function handleAction (menuItem) {
 
     // set whether search menu should be shown
     if (menuItem.type === COMMAND) {
-        flux.process({type: menuItem.action,
-                      payload: (menuItem.payload ? menuItem.payload : {})});
+        flux.process({
+            type: menuItem.action,
+            payload: (menuItem.payload ? menuItem.payload : {})
+        });
     } else {
         dispatchShowDropDown( {view: menuItem.action});
     }
@@ -28,19 +32,25 @@ function handleAction (menuItem) {
 
 /**
  * Create the html for a menu item
- * @param menuItem
- * @param isSelected
- * @param isWorking
- * @param badgeCount
- * @returns {XML}
+ * @param p
+ * @param p.menuItem
+ * @param p.isSelected
+ * @param p.clickHandler     onClick handler.  Defaults to #handleAction
+ * @param p.isWorking
+ * @param p.badgeCount
+ * @param p.idx
+ * @returns {JSX.Element}
  */
-export function  makeMenuItem(menuItem, isSelected, isWorking=false, badgeCount=0) {
-    var clsname = 'menu__item' + (isSelected ? ' menu__item-selected' : '');
+export function MenuItem({menuItem, isSelected, clickHandler, isWorking=false, badgeCount=0}) {
+    const clsname = 'menu__item' + (isSelected ? ' menu__item-selected' : '');
+    const onClick = useCallback(() => {
+        clickHandler ??= handleAction;
+        clickHandler(menuItem);
+    }, []);
     return (
         <div className={clsname}
-             key={menuItem.action}
              title={menuItem.desc}
-             onClick={handleAction.bind(this, menuItem)}>
+             onClick={onClick}>
 
             {isWorking && <img style={{height: 13, marginRight: 3}} src={LOADING}/>}
             {menuItem.label}
@@ -54,7 +64,13 @@ export function Menu({menu={}}) {
     const {menuItems=[], showBgMonitor=true} = menu;
     if (!menuItems.length) return <div/>;
 
-    const items = menuItems.map( (item) => makeMenuItem(item, item.action === menu.selected));
+    const items = menuItems.map((item, idx) => {
+        if (item.type === ROUTER) {
+            return <RouteMenuItem key={idx} menuItem={item}/>;
+        } else {
+            return <MenuItem key={idx} menuItem={item} isSelected={item.action === menu.selected}/>;
+        }
+    });
 
     return (
         <div className='menu__main'>

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PureComponent} from 'react';
+import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 import {get, isEmpty, pick} from 'lodash';
@@ -23,6 +23,8 @@ import {MultiSearchPanel} from 'firefly/ui/MultiSearchPanel.jsx';
 import {TapSearchPanel} from 'firefly/ui/tap/TapSearchRootPanel.jsx';
 import {VersionInfo} from 'firefly/ui/VersionInfo.jsx';
 import {DLGeneratedDropDown} from './dynamic/DLGeneratedDropDown.js';
+import {isDefined} from 'firefly/util/WebUtil.js';
+import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 
 const flexGrowWithMax = {width: '100%', maxWidth: 1400};
 
@@ -100,7 +102,7 @@ export class DropDownContainer extends Component {
     storeUpdate() {
         if (this.iAmMounted) {
             const {visible, view} = getDropDownInfo();
-            if (visible !== this.state.visible || view !== this.state.selected) {
+            if (isDefined(visible) && (visible !== this.state.visible || view !== this.state.selected)) {
                 this.setState({visible, selected: view});
             }
         }
@@ -149,43 +151,20 @@ DropDownContainer.defaultProps = {
     visible: false
 };
 
-export class Alerts extends PureComponent {
+export function Alerts({style}) {
 
-    constructor(props) {
-        super(props);
-        this.state = Object.assign({}, props);
-    }
+    const {msg} = useStoreConnector(getAlerts);
 
-    componentDidMount() {
-        this.removeListener= flux.addListener(() => this.storeUpdate());
-        this.iAmMounted = true;
-    }
-
-    componentWillUnmount() {
-        this.iAmMounted = false;
-        this.removeListener && this.removeListener();
-    }
-
-    storeUpdate() {
-        if (this.iAmMounted) {
-            this.setState(getAlerts());
-        }
-    }
-
-    render() {
-        const {msg, style} = this.state;
-        if (msg) {
-            /* eslint-disable react/no-danger */
-            return (
-                <div className='alerts__msg' style={style}>
-                    <div dangerouslySetInnerHTML={{__html: msg}} />
-                </div>
-            );
-        } else return <div/>;
-    }
+    if (msg) {
+        /* eslint-disable react/no-danger */
+        return (
+            <div className='alerts__msg' style={style}>
+                <div dangerouslySetInnerHTML={{__html: msg}} />
+            </div>
+        );
+    } else return null;
 }
 
 Alerts.propTypes = {
-    msg: PropTypes.string,
     style: PropTypes.object
 };

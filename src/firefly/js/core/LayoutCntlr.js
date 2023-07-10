@@ -244,7 +244,7 @@ export function getStandardMode() {
 }
 
 export function getDropDownInfo() {
-    return get(flux.getState(), 'layout.dropDown', {visible: false});
+    return get(flux.getState(), 'layout.dropDown', {});
 }
 
 export function getGridCell(cellId, renderTreeId='DEFAULT') {
