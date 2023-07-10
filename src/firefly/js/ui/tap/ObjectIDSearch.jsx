@@ -1,7 +1,7 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 import {ConstraintContext} from 'firefly/ui/tap/Constraints';
-import {useFieldGroupRerender, useFieldGroupValue} from 'firefly/ui/SimpleComponent';
+import {useFieldGroupRerender, useFieldGroupValue, useFieldGroupWatch} from 'firefly/ui/SimpleComponent';
 import {
     getPanelPrefix, makeCollapsibleCheckHeader, makeFieldErrorList, makePanelStatusUpdater
 } from 'firefly/ui/tap/TableSearchHelpers';
@@ -16,9 +16,9 @@ import {FieldGroupCollapsible} from 'firefly/ui/panel/CollapsiblePanel';
 
 const UploadObjectIDColumn = 'uploadObjectIDColumn';
 const ObjectIDColumn = 'objectIDColumn';
-const panelTitle = 'ObjectID Search';
+const panelTitle = 'Object ID Search';
 const panelValue = 'ObjectIDMatch';
-const TAB_COLUMNS_MSG = 'This will be matched against ObjectID selected from the uploaded table above';
+const TAB_COLUMNS_MSG = 'This will be matched against Object ID selected from the uploaded table above';
 const panelPrefix = getPanelPrefix(panelValue);
 
 const checkHeaderCtl= makeCollapsibleCheckHeader(getPanelPrefix(panelValue));
@@ -26,7 +26,7 @@ const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 
 const fldListAry= [UploadObjectIDColumn, ObjectIDColumn];
 
-export function ObjectIDSearch({cols, initArgs={}, capabilities, tableName}) {
+export function ObjectIDSearch({cols, initArgs={}, capabilities, tableName,columnsModel}) {
     const [getUploadInfo, setUploadInfo]=  useFieldGroupValue('uploadInfoObjectID');
     const {setConstraintFragment}= useContext(ConstraintContext);
     const {canUpload=false}= capabilities ?? {};
@@ -41,12 +41,30 @@ export function ObjectIDSearch({cols, initArgs={}, capabilities, tableName}) {
 
     const updatePanelStatus= makePanelStatusUpdater(checkHeaderCtl.isPanelActive(), 'ObjectID');
 
+    useFieldGroupWatch([UploadObjectIDColumn, ObjectIDColumn],
+        ([uploadCol,selectedTableCol],isInit) => {
+            if (isInit) return;
+            if (uploadCol||selectedTableCol) checkHeaderCtl.setPanelActive(true);
+        }
+    );
+
+    useEffect(() => {
+        if (uploadInfo?.columns) checkHeaderCtl.setPanelActive(true);
+    }, [uploadInfo]);
+
+    useEffect(() => {
+        const errMsg= 'Spatial searches require identifying table columns containing equatorial coordinates.  Please provide column names.';
+        const objectIDcol = getVal(ObjectIDColumn);
+        let objectColExists = false;
+        if (objectIDcol) objectColExists = cols.some((c) => c.name === objectIDcol);
+
+        setVal(ObjectIDColumn, objectColExists ? objectIDcol : '', {validator: getColValidator(cols, true, false, errMsg), valid: true});
+    }, [columnsModel]);
+
     useEffect(() => {
         const constraints= makeObjectIDConstraints(makeFldObj(fldListAry), uploadInfo, tableName, canUpload);
         updatePanelStatus(constraints, constraintResult, setConstraintResult);
     });
-
-    //setVal may be used in a useEffect (?) if we want to set default ObjectID cols
 
     useEffect(() => {
         setConstraintFragment(panelPrefix, constraintResult);
@@ -59,10 +77,10 @@ export function ObjectIDSearch({cols, initArgs={}, capabilities, tableName}) {
         <CollapsibleCheckHeader title={panelTitle} helpID={tapHelpId(panelPrefix)}
                                 message={constraintResult?.simpleError??''} initialStateOpen={false}>
             <div style={{marginTop: 5}}>
-                <UploadTableSelectorObjectID {...{uploadInfo, setUploadInfo}}/>
+                <UploadTableSelectorObjectID {...{uploadInfo,setUploadInfo}}/>
                 <ObjectIDCol {...{
                     objectCol: getVal(ObjectIDColumn), cols,
-                    headerTitle: 'ObjectID (from table):', openKey: posOpenKey,
+                    headerTitle: 'Object ID (from table):', openKey: posOpenKey,
                     headerPostTitle: '(from the selected table on the right)',
                     openPreMessage:openMsg,
                     headerStyle:{paddingLeft:1},
@@ -80,15 +98,7 @@ ObjectIDSearch.propTypes = {
     tableName: PropTypes.string
 };
 
-function defaultColsEnabledObj() {
-    return {
-        colTypes: ['int','long','string'],
-        colCount: 3
-    };
-}
-
 function UploadTableSelectorObjectID({uploadInfo, setUploadInfo}) {
-    const {groupKey,setVal}= useContext(FieldGroupCtx); //keeping this for now as setVal may be used if we want to set default ObjectID cols
     const [getObjectCol,setObjectCol]= useFieldGroupValue(UploadObjectIDColumn);
     const {fileName,columns,totalRows,fileSize}= uploadInfo ?? {};
     const columnsUsed= columns?.filter( ({use}) => use)?.length ?? 0;
@@ -106,7 +116,7 @@ function UploadTableSelectorObjectID({uploadInfo, setUploadInfo}) {
     }, [getObjectCol]);
 
     const preSetUploadInfo= (ui) => {
-        setObjectCol('');
+        setObjectCol('', {validator: getColValidator(ui.columns, true, false), valid: true});
         setUploadInfo(ui);
     };
 
@@ -129,7 +139,7 @@ function UploadTableSelectorObjectID({uploadInfo, setUploadInfo}) {
                 <div style={{whiteSpace:'nowrap'}}>Upload Table:</div>
                 <div style={{display:'flex', alignItems:'center'}}>
                     <ExtraButton text={fileName ? 'Change...' : 'Add...'}
-                                 onClick={() => showUploadTableChooser(preSetUploadInfo,'objectIDMatch',defaultColsEnabledObj())} style={{marginLeft: 42}} />
+                                 onClick={() => showUploadTableChooser(preSetUploadInfo,'objectIDMatch',{colTypes: ['int','long','string'],colCount: 3})} style={{marginLeft: 42}} />
                     {haveFile &&
                         <div style={{width:200, overflow:'hidden', whiteSpace:'nowrap', fontSize:'larger',
                             textOverflow:'ellipsis', lineHeight:'2em', paddingLeft:15}}>
@@ -160,7 +170,7 @@ function UploadTableSelectorObjectID({uploadInfo, setUploadInfo}) {
             }
             {haveFile &&
             <ObjectIDCol {...{objectCol: getObjectCol(), cols:columns,
-                headerTitle:'Uploaded ObjectID:', openKey,
+                headerTitle:'Uploaded Object ID:', openKey,
                 headerPostTitle:'(from the uploaded table)',
                 headerStyle:{paddingLeft:1},
                 style:{margin:'0 0 10px 195px'},
@@ -191,15 +201,15 @@ function ObjectIDCol({objectCol, style={},cols, objectKey, openKey, labelStyle,
                     {headerTitle}
                 </div>
                 <FieldGroupCollapsible header={posHeader} headerStyle={{paddingLeft:0}} contentStyle={{marginLeft:4}}
-                                       initialState={{value:'closed'}} fieldKey={openKey}>
+                                       initialState={{value:'open'}} fieldKey={openKey}>
                     {openPreMessage && <div style={{padding:'0 0 10px 0'}}>
                         {openPreMessage}
                     </div>}
                     <ColumnFld fieldKey={objectKey} cols={cols}
-                               name='ObjectID Column'  // label that appears in column chooser
+                               name='Object ID Column'  // label that appears in column chooser
                                inputStyle={{overflow:'auto', height:12, width: 100}}
-                               tooltip={'ObjectID Column'}
-                               label='ObjectID:'
+                               tooltip={'Object ID Column'}
+                               label='Object ID:'
                                labelWidth={62}
                                validator={getColValidator(cols, true, false)} />
                 </FieldGroupCollapsible>
@@ -220,9 +230,9 @@ function makeObjectIDConstraints(fldObj, uploadInfo, tableName, canUpload) {
     const tabAs= 'ut';
     errList.checkForError(uploadObjectIDCol);
     errList.checkForError(objectIDCol);
-    if (!uploadedObjectID && !objectID) errList.addError('The Uploaded Table and Selected Table ObjectIDs are not set.');
-    else if (!uploadedObjectID) errList.addError('Uploaded Table ObjectID is not set');
-    else if (!objectID) errList.addError('Selected Table (on the right) ObjectID is not set');
+    if (!uploadedObjectID && !objectID) errList.addError('The Uploaded Table and Selected Table Object IDs are not set.');
+    else if (!uploadedObjectID) errList.addError('Uploaded Table Object ID is not set');
+    else if (!objectID) errList.addError('Selected Table (on the right) Object ID is not set');
     const validUpload= Boolean(serverFile && canUpload);
     const preFix= validUpload ? `${getAsEntryForTableName(tableName)}` : '';
     adqlConstraint = `(${tabAs}.${uploadedObjectID} = ${preFix}.${objectID})`;

@@ -435,7 +435,7 @@ function getAdqlQuery(tapBrowserState, showErrors= true) {
         const entries = [...constraintFragments.values()];
         const matchingEntries = entries.filter((c) => Boolean(c.uploadFile && c.TAP_UPLOAD && c.adqlConstraint));
         if (matchingEntries.length > 1) {
-            if (showErrors) showInfoPopup('More than one upload is not supported at this moment.', 'Error');
+            if (showErrors) showInfoPopup('We currently do not support searches with more than one uploaded table.', 'Error');
             return;
         }
     }

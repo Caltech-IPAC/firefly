@@ -109,12 +109,16 @@ export function TemporalSearch({cols, columnsModel}) {
 
     useFieldGroupWatch([TemporalColumns],
         ([tcVal],isInit) => {
+            if (!isInit && !checkHeaderCtl.isPanelActive() && tcVal) {
+                checkHeaderCtl.setPanelActive(true);
+            }
+            if (!checkHeaderCtl.isPanelActive()) return;
             if (!tcVal) return;
             const timeColumns = tcVal.split(',').map( (c) => c.trim()) ?? [];
             if (timeColumns.length > 1) {
                 setFld(TemporalColumns, {value:tcVal, valid:false, message: 'you may only choose one column'});
             }
-        });
+        }, [checkHeaderCtl.isPanelActive()]);
 
     useEffect(() => {
         const constraints= makeTemporalConstraints(columnsModel, makeFldObj([TimeFrom,TimeTo,TemporalColumns]));
@@ -126,10 +130,6 @@ export function TemporalSearch({cols, columnsModel}) {
         return () => setConstraintFragment(panelPrefix, '');
     }, [constraintResult]);
 
-    useEffect(() => {
-        if (timeCol && timeCol != '') checkHeaderCtl.setPanelActive(true);
-    }, [timeCol]);
-
 
     useEffect(() => {
         const findTimeCol= findTimeColumn(columnsModel) ?? '';
@@ -140,7 +140,7 @@ export function TemporalSearch({cols, columnsModel}) {
         if (existingTimeCol) timeColExists = cols.some((c) => c.name === existingTimeCol);
         if (!timeColExists) existingTimeCol = findTimeCol;
         setVal(TemporalColumns, existingTimeCol, {validator: getColValidator(cols, true, false, errMsg), valid: true});
-        if (Boolean(timeCol)) checkHeaderCtl.setPanelOpen(true);
+        if (Boolean(findTimeCol)) checkHeaderCtl.setPanelOpen(true);
     }, [columnsModel]);
 
 

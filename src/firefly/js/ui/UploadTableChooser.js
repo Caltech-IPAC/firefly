@@ -62,7 +62,13 @@ function getFitsColumnInfo(data) {
         });
 }
 
-
+/**
+ * handle submit for an uploaded table
+ * @param request
+ * @param setUploadInfo
+ * @param {DefaultColsEnabled} defaultColsEnabled
+ * @returns {boolean}
+ */
 function uploadSubmit(request,setUploadInfo,defaultColsEnabled)  {
     if (!request) return false;
     const {additionalParams = {}, fileUpload: serverFile} = request;
@@ -81,13 +87,20 @@ function uploadSubmit(request,setUploadInfo,defaultColsEnabled)  {
     const columns= report.fileFormat===Format.FITS ?
         getFitsColumnInfo(data) :
         data.map(([name,type,u,d]) => ({name, type, units: u?u:'', description: d?d:'', use:true}));
-    const columnsSelected = getSelectedColumns(columns,defaultColsEnabled);
+    const columnsSelected = applyDefColumnSelection(columns,defaultColsEnabled);
     const uploadInfo = {serverFile, fileName, columns:columnsSelected, totalRows, fileSize, tableSource: UPLOAD_TBL_SOURCE};
     setUploadInfo(uploadInfo);
     dispatchHideDialog(dialogId);
     return false;
 }
 
+/**
+ * handle submit for an existing table
+ * @param request
+ * @param setUploadInfo
+ * @param {DefaultColsEnabled} defaultColsEnabled
+ * @returns {boolean}
+ */
 function existingTableSubmit(request,setUploadInfo,defaultColsEnabled) {
     if (!request) return false;
     const tbl = getTblById('existing-table-list-ui');
@@ -97,7 +110,7 @@ function existingTableSubmit(request,setUploadInfo,defaultColsEnabled) {
     const tableRequest = activeTbl.request;
     const columnData = activeTbl.columns;
     const columns = columnData.map((col) => col.visibility === 'hide' || col.visibility === 'hidden'? ({...col, use:false}) :  ({...col, use:true})); //filter out hidden cols
-    const columnsSelected = getSelectedColumns(columns,defaultColsEnabled);
+    const columnsSelected = applyDefColumnSelection(columns,defaultColsEnabled);
 
     const params ={
         [ServerParams.COMMAND]: ServerParams.TABLE_SAVE,
@@ -127,32 +140,40 @@ function existingTableSubmit(request,setUploadInfo,defaultColsEnabled) {
     return false;
 }
 
-/*
-    if showUploadTableChooser is called with a defaultColsEnabled object, use the colTypes and colCount to set the selected columns
-    for this uploaded table
+/**
+ * Return the default cols to be selected for the uploaded table based on colTypes and colCount
+ *
+ * @param columns
+ * @param colTypes comes from {@link DefaultColsEnabled}
+ * @param colCount comes from {@link DefaultColsEnabled}
+ * @returns defaultCols
  */
 function defaultColumnsSelector(columns,colTypes,colCount) {
-    let cols = [];
-    if  (columns == null) return null;
-    let count = 0;
-    for (let i=0; i< columns?.length; i++) {
-        if (count < colCount && colTypes.includes(columns[i].type)) {
-            cols.push(columns[i]);
-            count ++;
-        }
-    }
-    cols = cols.map((col) => col.name.replace(/^"(.*)"$/, '$1'));
+    if (!columns?.length) return;
+
+    let cols = columns
+        ?.filter((column) => colTypes.includes(column.type))
+        .slice(0, colCount);
+
+    cols = cols?.map((col) => col.name.replace(/^"(.*)"$/, '$1'));
     const defautltCols = columns?.map((col) => (
         {...col, use:cols.includes((col.name))}));
 
     return defautltCols;
 }
 
-function getSelectedColumns(columns,defaultColsEnabled) {
+/**
+ * Set use to true or false for column entries to help set default selected columns for uploaded table
+ *
+ * @param columns
+ * @param {DefaultColsEnabled} defaultColsEnabled
+ * @returns columnsSelected
+ */
+function applyDefColumnSelection(columns,defaultColsEnabled) {
     let columnsSelected;
-    if (defaultColsEnabled != null) { //default cols enabled
-        const colTypes = defaultColsEnabled.colTypes;//['int', 'long', 'string'];
-        columnsSelected = defaultColumnsSelector(columns,colTypes,defaultColsEnabled.colCount);
+    if (defaultColsEnabled) { //default cols enabled
+        const {colTypes,colCount} = defaultColsEnabled;
+        columnsSelected = defaultColumnsSelector(columns,colTypes,colCount);
     }
     else {
         const {lonCol='', latCol=''} = findTableCenterColumns({tableData:{columns}}) ?? {}; //centerCols
@@ -215,8 +236,22 @@ const LoadedTables= (props) => {
         </div>);
 };
 
-//showUploadTableChooser may be called with defaultColsEnabledObj, which will replace the regular default selection of lon and lat cols (usually ra,dec)
-export function showUploadTableChooser(setUploadInfo,groupKey= 'table-chooser',defaultColsEnabledObj=null) {
+/**
+ * @typedef {object} DefaultColsEnabled
+ *
+ * @prop {Array.<String>} colTypes
+ * @prop {int} colCount
+ */
+
+
+/**
+ * Display the upload table chooser popup panel
+ *
+ * @param setUploadInfo
+ * @param groupKey
+ * @param {DefaultColsEnabled} defaultColsEnabledObj if this is non-empty, it will be used to replace the default selection of the uploaded table cols
+ */
+export function showUploadTableChooser(setUploadInfo,groupKey= 'table-chooser',defaultColsEnabledObj=undefined) {
     DialogRootContainer.defineDialog(dialogId,
         <PopupPanel title={'Upload'} layoutPosition={LayoutType.TOP_EDGE_CENTER}>
             <TapUploadPanel {...{setUploadInfo,groupKey,defaultColsEnabledObj}}/>

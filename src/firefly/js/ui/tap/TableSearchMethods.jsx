@@ -5,7 +5,7 @@ import {FieldGroup} from '../FieldGroup.jsx';
 import {ObsCoreSearch} from './ObsCore.jsx';
 import {ExposureDurationSearch} from './ObsCoreExposureDuration.jsx';
 import {SpatialSearch} from './SpatialSearch.jsx';
-import {TemporalSearch} from './TemportalSearch.jsx';
+import {TemporalSearch} from './TemporalSearch.jsx';
 import {ObsCoreWavelengthSearch} from './WavelengthPanel.jsx';
 import {ObjectIDSearch} from 'firefly/ui/tap/ObjectIDSearch';
 
@@ -34,14 +34,14 @@ function HelperComponents({initArgs, cols, columnsModel, serviceUrl, serviceLabe
                 <SpatialSearch {...{cols, serviceUrl, serviceLabel, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
                 <ExposureDurationSearch {...{initArgs}} />
                 <ObsCoreWavelengthSearch {...{initArgs, serviceLabel}} />
-                <ObjectIDSearch {...{cols, initArgs, capabilities, tableName}}/>
+                <ObjectIDSearch {...{cols, initArgs, capabilities, tableName, columnsModel}}/>
             </>
         ) :
         (
             <>
                 <SpatialSearch {...{cols, serviceUrl, serviceLabel, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
                 <TemporalSearch {...{cols, columnsModel}} />
-                <ObjectIDSearch {...{cols, initArgs, capabilities, tableName}}/>
+                <ObjectIDSearch {...{cols, initArgs, capabilities, tableName, columnsModel}}/>
             </>
         );
 }

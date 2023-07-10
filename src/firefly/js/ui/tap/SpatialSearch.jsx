@@ -93,10 +93,6 @@ export function SpatialSearch({cols, serviceUrl, serviceLabel, columnsModel, tab
     const updatePanelStatus= makePanelStatusUpdater(checkHeaderCtl.isPanelActive(), Spatial);
 
     useEffect(() => {
-        /*if (canUpload) {
-            if (uploadInfo) setVal(SPATIAL_TYPE,MULTI);
-            return;
-        }*/
         if (!canUpload) setVal(SPATIAL_TYPE,SINGLE);
     }, [serviceUrl,canUpload]);
 
