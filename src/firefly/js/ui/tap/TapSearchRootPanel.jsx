@@ -108,6 +108,8 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
     const tapOps= getTapServiceOptions();
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
     const [selectBy, setSelectBy]= useState(() => {
+        const val= getFieldVal(TAP_PANEL_GROUP_KEY,'selectBy');
+        if (val) return val;
         if (initArgs?.urlApi?.adql) return 'adql';
         return initArgs?.urlApi?.selectBy || 'basic';
     });
