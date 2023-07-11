@@ -5,8 +5,9 @@ import {FieldGroup} from '../FieldGroup.jsx';
 import {ObsCoreSearch} from './ObsCore.jsx';
 import {ExposureDurationSearch} from './ObsCoreExposureDuration.jsx';
 import {SpatialSearch} from './SpatialSearch.jsx';
-import {TemporalSearch} from './TemportalSearch.jsx';
+import {TemporalSearch} from './TemporalSearch.jsx';
 import {ObsCoreWavelengthSearch} from './WavelengthPanel.jsx';
+import {ObjectIDSearch} from 'firefly/ui/tap/ObjectIDSearch';
 
 const TAP_SEARCH_METHODS_GROUP= 'TAP_SEARCH_METHODS_GROUP';
 
@@ -28,18 +29,20 @@ export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serv
 function HelperComponents({initArgs, cols, columnsModel, serviceUrl, serviceLabel, obsCoreEnabled, tableName, capabilities}) {
     return obsCoreEnabled ?
         (
-            <React.Fragment>
+            <>
                 <ObsCoreSearch {...{cols, serviceLabel, initArgs}} />
                 <SpatialSearch {...{cols, serviceUrl, serviceLabel, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
                 <ExposureDurationSearch {...{initArgs}} />
                 <ObsCoreWavelengthSearch {...{initArgs, serviceLabel}} />
-            </React.Fragment>
+                <ObjectIDSearch {...{cols, initArgs, capabilities, tableName, columnsModel}}/>
+            </>
         ) :
         (
-            <React.Fragment>
+            <>
                 <SpatialSearch {...{cols, serviceUrl, serviceLabel, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
-                <TemporalSearch {...{cols, columnsModel,}} />
-            </React.Fragment>
+                <TemporalSearch {...{cols, columnsModel}} />
+                <ObjectIDSearch {...{cols, initArgs, capabilities, tableName, columnsModel}}/>
+            </>
         );
 }
 

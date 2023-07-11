@@ -64,6 +64,7 @@ function makeTemporalConstraints(columnsModel, fldObj) {
     }
 
     if (!timeFromField.value && !timeToField.value) errList.addError('Time is Required');
+    if (!temporalColumnsField.value) errList.addError('Temporal Columns required');
     errList.checkForError(timeFromField);
     errList.checkForError(timeToField);
     errList.checkForError(temporalColumnsField);
@@ -108,12 +109,16 @@ export function TemporalSearch({cols, columnsModel}) {
 
     useFieldGroupWatch([TemporalColumns],
         ([tcVal],isInit) => {
+            if (!isInit && !checkHeaderCtl.isPanelActive() && tcVal) {
+                checkHeaderCtl.setPanelActive(true);
+            }
+            if (!checkHeaderCtl.isPanelActive()) return;
             if (!tcVal) return;
             const timeColumns = tcVal.split(',').map( (c) => c.trim()) ?? [];
             if (timeColumns.length > 1) {
                 setFld(TemporalColumns, {value:tcVal, valid:false, message: 'you may only choose one column'});
             }
-        });
+        }, [checkHeaderCtl.isPanelActive()]);
 
     useEffect(() => {
         const constraints= makeTemporalConstraints(columnsModel, makeFldObj([TimeFrom,TimeTo,TemporalColumns]));
@@ -127,10 +132,15 @@ export function TemporalSearch({cols, columnsModel}) {
 
 
     useEffect(() => {
-        const timeCol= findTimeColumn(columnsModel) ?? '';
+        const findTimeCol= findTimeColumn(columnsModel) ?? '';
         const errMsg= 'Temporal searches require identifying a table column containing a time in MJD.  Please provide a column name.';
-        setVal(TemporalColumns, timeCol, {validator: getColValidator(cols, true, false, errMsg), valid: true});
-        checkHeaderCtl.setPanelOpen(Boolean(timeCol));
+        let existingTimeCol = timeCol; //get current val of TemporalColumns
+        let timeColExists = false;
+        //check if user has a previously selected Temporal Column, and if it exists in the currently selected table's cols
+        if (existingTimeCol) timeColExists = cols.some((c) => c.name === existingTimeCol);
+        if (!timeColExists) existingTimeCol = findTimeCol;
+        setVal(TemporalColumns, existingTimeCol, {validator: getColValidator(cols, true, false, errMsg), valid: true});
+        if (Boolean(findTimeCol)) checkHeaderCtl.setPanelOpen(true);
     }, [columnsModel]);
 
 

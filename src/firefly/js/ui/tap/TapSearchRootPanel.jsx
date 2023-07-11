@@ -108,6 +108,8 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
     const tapOps= getTapServiceOptions();
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
     const [selectBy, setSelectBy]= useState(() => {
+        const val= getFieldVal(TAP_PANEL_GROUP_KEY,'selectBy');
+        if (val) return val;
         if (initArgs?.urlApi?.adql) return 'adql';
         return initArgs?.urlApi?.selectBy || 'basic';
     });
@@ -427,6 +429,17 @@ function getAdqlQuery(tapBrowserState, showErrors= true) {
     const tableName = maybeQuote(tapBrowserState?.tableName, true);
     if (!tableName) return;
     const isUpload= isTapUpload(tapBrowserState);
+
+    if (isUpload) { //check for more than one upload file (in Spatial and in ObjectID col) - should this be a utility function in constraints.js?
+        const { constraintFragments } = tapBrowserState;
+        const entries = [...constraintFragments.values()];
+        const matchingEntries = entries.filter((c) => Boolean(c.uploadFile && c.TAP_UPLOAD && c.adqlConstraint));
+        if (matchingEntries.length > 1) {
+            if (showErrors) showInfoPopup('We currently do not support searches with more than one uploaded table.', 'Error');
+            return;
+        }
+    }
+
     const helperFragment = getHelperConstraints(tapBrowserState);
     const tableCol = tableColumnsConstraints(tapBrowserState.columnsModel,
         isUpload?getAsEntryForTableName(tableName):undefined);
