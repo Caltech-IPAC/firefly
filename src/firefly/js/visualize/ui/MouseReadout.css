@@ -53,7 +53,7 @@
     align-items: center;
     grid-column-gap: 3px;
     grid-row-gap: 5px;
-    grid-template-columns :  30px 65px 12px 160px 60px 90px 40px 90px min-content minmax(2px,max-content);
+    grid-template-columns :  30px 65px 12px minmax(160px,210px) auto minmax(90px,150px) auto minmax(90px,155px) min-content minmax(2px,max-content);
     grid-template-rows :  auto;
     grid-template-areas:
             "popout pixReadoutLabel clipboardIcon pixReadoutValue fluxLabel fluxValue wlLabel wlValue lock lockLabel"

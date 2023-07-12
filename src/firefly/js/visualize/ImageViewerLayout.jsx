@@ -426,12 +426,14 @@ function makeTileDrawers(pv) {
     const rootDrawer= (
         <ImageRender opacity={1} plot={plot} plotView={pv} key={'TileDrawer:'+pv.plotId} idx={0}/>
     );
-    const drawers= pv.overlayPlotViews.filter( (opv) => opv.visible && opv.plot).map( (opv,idx) => {
-        return (
-            <ImageRender opacity={opv.opacity} plot={opv.plot} plotView={pv}
-                         idx={idx+1} key={'TileDrawer-overlay:'+opv.imageOverlayId} />
-        );
-    });
+    const drawers= pv.overlayPlotViews
+        .filter( (opv) => opv.visible && opv.plot && plot.dataWidth===opv.plot?.dataWidth && plot.dataHeight===opv.plot?.dataHeight)
+        .map( (opv,idx) => {
+            return (
+                <ImageRender opacity={opv.opacity} plot={opv.plot} plotView={pv}
+                             idx={idx+1} key={'TileDrawer-overlay:'+opv.imageOverlayId} />
+            );
+        });
     if (pv.visible) drawers.unshift(rootDrawer);
     return drawers;
 }

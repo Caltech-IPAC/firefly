@@ -5,8 +5,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {padStart, groupBy, get} from 'lodash';
-import {isDrawLayerVisible, getAllDrawLayersForPlot,
-    getLayerTitle, getDrawLayersByDisplayGroup}  from '../PlotViewUtil.js';
+import {
+    isDrawLayerVisible, getAllDrawLayersForPlot,
+    getLayerTitle, getDrawLayersByDisplayGroup, primePlot
+} from '../PlotViewUtil.js';
 import {operateOnOverlayPlotViewsThatMatch, enableRelatedDataLayer,
                findUnactivatedRelatedData, setMaskVisible } from '../RelatedDataUtil.js';
 import {DrawLayerItemView} from './DrawLayerItemView.jsx';
@@ -101,12 +103,7 @@ function showAllLayers(layers, pv, visible) {
     pv.overlayPlotViews.forEach( (opv) => {
         setMaskVisibleInGroup(opv,visible);
     });
-
-
-    let overlayLayers = layers.filter( (l)=>
-       l.drawLayerTypeId!==ImageRoot.TYPE_ID
-    );
-
+    const overlayLayers = layers.filter( (l)=> l.drawLayerTypeId!==ImageRoot.TYPE_ID );
     return overlayLayers.forEach( (dl) => {
         changeVisible(dl, visible,pv.plotId );
     });
@@ -175,6 +172,7 @@ function makeDrawLayerItemAry(layers,pv, maxTitleChars, factory) {
 
 function makeImageLayerItemAry(pv, maxTitleChars, hasLast, mouseOverMaskValue) {
     if (!pv.overlayPlotViews) return [];
+    const {dataWidth=0,dataHeight=0}= primePlot(pv)??{};
     const last= pv.overlayPlotViews.length-1;
     const retAry= pv.overlayPlotViews.map( (opv,idx) =>
         <DrawLayerItemView key={'MaskControl-'+idx}
@@ -187,7 +185,7 @@ function makeImageLayerItemAry(pv, maxTitleChars, hasLast, mouseOverMaskValue) {
                            packWithNext= {idx!==last}
                            color={opv.colorAttributes.color}
                            autoFormatTitle={true}
-                           title= {makeOverlayTitle(opv, (mouseOverMaskValue & opv.maskValue)) }
+                           title= {makeOverlayTitle(opv, (mouseOverMaskValue & opv.maskValue), dataWidth, dataHeight) }
                            visible={opv.visible}
                            modifyColor={() => modifyMaskColor(opv)}
                            deleteLayer={() => deleteMaskLayer(opv)}
@@ -198,7 +196,8 @@ function makeImageLayerItemAry(pv, maxTitleChars, hasLast, mouseOverMaskValue) {
 }
 
 
-function makeOverlayTitle(opv,mouseOn) {
+function makeOverlayTitle(opv,mouseOn, dataWidth, dataHeight) {
+    const match= !opv.plot || (opv.plot?.dataWidth===dataWidth && opv.plot?.dataHeight===dataHeight);
     let {title, maskNumber}= opv;
     const { colorAttributes:{color}, plot, visible, uiCanAugmentTitle}= opv;
     maskNumber= Number(maskNumber);
@@ -216,11 +215,10 @@ function makeOverlayTitle(opv,mouseOn) {
     if (!plot && visible) {
         title= `${title} - loading`;
     }
-
-    mouseOn= Boolean(mouseOn);
+    if (!match) title= `Disabled non-matching: ${title}`;
 
     return (
-        <div style={{color : mouseOn ? color : 'inherit'}}>{title}
+        <div style={{color : match && mouseOn ? color : 'inherit'}}>{title}
             {mouseOn && <span style={{fontStyle: 'italic'}}> over</span>}
         </div>
     );
