@@ -145,7 +145,7 @@ export function BasicUI(props) {
                 if (!requestSchemaName || !schemas.includes(requestSchemaName)) {
                     requestSchemaName = schemas[0];
                 }
-                const schemaDescriptions = getColumnValues(tableModel, 'description');
+                const schemaDescriptions = getColumnValues(tableModel, 'schema_desc');
                 const schemaOptions = schemas.map((e, i) => {
                     const label = schemaDescriptions[i] ? schemaDescriptions[i] : `[${e}]`;
                     return {label, value: e};
@@ -180,7 +180,7 @@ export function BasicUI(props) {
                 if (!requestTableName || !tables.includes(requestTableName)) {
                     requestTableName = tables[0];
                 }
-                const tableDescriptions = getColumnValues(tableModel, 'description');
+                const tableDescriptions = getColumnValues(tableModel, 'table_desc');
                 const tableOptions = tables.map((e, i) => {
                     const label = tableDescriptions[i] ? tableDescriptions[i] : `[${e}]`;
                     return {label, value: e};

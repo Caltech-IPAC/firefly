@@ -1,11 +1,12 @@
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
-import {isArray, isUndefined, memoize} from 'lodash';
+import {isArray, memoize, omit, uniqBy, sortBy} from 'lodash';
 import {getCapabilities} from '../../rpc/SearchServicesJson.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
-import {doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.js';
+import {alterFalsyVal, doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.js';
 import {Logger} from '../../util/Logger.js';
 import {getProp, hashCode} from '../../util/WebUtil.js';
+import {sprintf} from 'firefly/externalSource/sprintf.js';
 
 const logger = Logger('TapUtil');
 const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
@@ -75,28 +76,21 @@ export async function loadTapSchemas(serviceUrl) {
 }
 
 async function doLoadTapSchemas(serviceUrl) {
-
-    const url = serviceUrl + qFragment + 'QUERY=SELECT+*+FROM+TAP_SCHEMA.schemas';
-    const request = makeFileRequest('schemas', url, null, {pageSize: MAX_ROW});
-
     try {
-        const tableModel= await doFetchTable(request);
-        if (tableModel.error) {
+        const tableModel= await loadSchemaDef(serviceUrl);
+        if (tableModel.error || !tableModel.tableData) {
             tableModel.error = `Failed to get schemas for ${serviceUrl}: ${tableModel.error}`;
             logger.error(tableModel.error);
-        } else if (tableModel.tableData) {
-            // check if schema_index column is present
-            // if it is, sort tabledata by schema_index
-            if (getColumnIdx(tableModel, 'schema_index') >= 0) {
-                sortTableData(tableModel.tableData.data, tableModel.tableData.columns, sortInfoString('schema_index'));
-            }
-            if (getColumnIdx(tableModel, 'schema_name') < 0) {
-                tableModel.error = 'Invalid schemas table';
-            }
-        } else {
-            tableModel.error = 'No schemas available';
+            return tableModel;
         }
-        return tableModel;
+        const schemaNameIdx = getColumnIdx(tableModel, 'schema_name');
+        const rTable = omit(tableModel, 'tableData.data');
+        rTable.tableData.data = uniqBy(tableModel.tableData.data, (row) => row[schemaNameIdx]);
+        rTable.totalRows = rTable.tableData?.data?.length || 0;
+
+        if (rTable.totalRows === 0) return {error:'No schemas available'};
+
+        return rTable;
     } catch(reason) {
         const error = `Failed to get schemas for ${serviceUrl}: ${reason?.message ?? reason}`;
         logger.error(error);
@@ -112,39 +106,43 @@ export async function loadObsCoreSchemaTables(serviceUrl) {
 }
 
 async function doLoadObsCoreSchemaTables(serviceUrl) {
-
-    const url = serviceUrl + qFragment + 'QUERY=SELECT+s.schema_name,+t.table_name+FROM+TAP_SCHEMA.schemas+s+JOIN+TAP_SCHEMA.tables+t+on+(s.schema_name=t.schema_name)+WHERE+s.schema_name=\'ivoa\'+AND+t.table_name+IN+(\'ivoa.obscore\',\'ivoa.ObsCore\')';
-    const request = makeFileRequest('schemas', url, null, {pageSize: MAX_ROW});
-
     try {
-        const tableModel= await doFetchTable(request);
-        if (tableModel.error) {
+        const tableModel= await loadSchemaDef(serviceUrl);
+        if (tableModel.error || !tableModel.tableData) {
             tableModel.error = `Failed to get ObsCore tables for ${serviceUrl}: ${tableModel.error}`;
             logger.error(tableModel.error);
-        } else if (tableModel?.tableData?.data) {
-            if (getColumnIdx(tableModel, 'schema_name') < 0) {
-                tableModel.error = 'Invalid ObsCore discovery result';
-            }
-            // check if ivoa.ObsCore table is present
-            // if it is, use that as the primary table.
-            /* For ordering results, ideally we could also order by schema_index, if the column exists,
-               but we would need to do a `s.*` in the select list, which not all ADQL implementations like,
-               since the column appears optional.
-               */
-            const colIdx = getColumnIdx(tableModel, 'table_name');
-            tableModel.tableData.data.sort((r1, r2) => {
-                let [s1, s2] = [r1[colIdx], r2[colIdx]];
-                s1 = s1 === '' ? '\u0002' : s1 === null ? '\u0001' : isUndefined(s1) ? '\u0000' : s1;
-                s2 = s2 === '' ? '\u0002' : s2 === null ? '\u0001' : isUndefined(s2) ? '\u0000' : s2;
-                if(s1.toLowerCase() === 'ivoa.obscore') {
-                    return -1;
-                }
-                return (s1 > s2 ? 1 : -1);
-            });
-        } else {
-            logger.debug(`no obsCore tables found for ${serviceUrl}`);
+            return tableModel;
         }
-        return tableModel;
+        const schemaNameIdx = getColumnIdx(tableModel, 'schema_name');
+        const tableNameIdx = getColumnIdx(tableModel, 'table_name');
+
+        const origCols = tableModel.tableData.columns;
+        const rTable = omit(tableModel, ['tableData.columns', 'tableData.data']);
+        rTable.tableData.columns = [origCols[schemaNameIdx], origCols[tableNameIdx]];  // to keep it like it was before, keep only schema_name table_name
+        rTable.tableData.data = tableModel.tableData.data
+            .filter((row) => row[schemaNameIdx] === 'ivoa')
+            .filter((row) => ['ivoa.obscore','ivoa.ObsCore'].includes(row[tableNameIdx]))
+            .map((row) => [row[schemaNameIdx], row[tableNameIdx]]);
+        rTable.totalRows = rTable.tableData?.data?.length || 0;
+
+        if (rTable.totalRows === 0) logger.debug(`no obsCore tables found for ${serviceUrl}`);
+        if (schemaNameIdx < 0)                  return {error:'Invalid ObsCore discovery result'};
+
+        // check if ivoa.ObsCore table is present
+        // if it is, use that as the primary table.
+        /* For ordering results, ideally we could also order by schema_index, if the column exists,
+           but we would need to do a `s.*` in the select list, which not all ADQL implementations like,
+           since the column appears optional.
+           */
+        rTable.tableData.data.sort((r1, r2) => {
+            const [s1, s2] = [alterFalsyVal(r1[1]), alterFalsyVal(r2[1])];
+            if(s1.toLowerCase() === 'ivoa.obscore') {
+                return -1;
+            }
+            return (s1 > s2 ? 1 : -1);
+        });
+
+        return rTable;
     } catch (reason) {
         const error = `Failed to get ObsCore-like tables for ${serviceUrl}: ${reason?.message ?? reason}`;
         logger.error(error);
@@ -165,29 +163,28 @@ export async function loadTapTables(serviceUrl, schemaName) {
 
 async function doLoadTapTables(serviceUrl, schemaName) {
 
-    const url = serviceUrl + qFragment + 'QUERY=SELECT+*+FROM+TAP_SCHEMA.tables+WHERE+schema_name+like+\'' + schemaName + '\'';
-    const request = makeFileRequest('tables', url, null, {pageSize: MAX_ROW});
-
     try {
-        const tableModel= await doFetchTable(request);
-        if (tableModel.error) {
+        const tableModel= await loadSchemaDef(serviceUrl);
+        if (tableModel.error || !tableModel.tableData) {
             tableModel.error = `Failed to get tables for ${serviceUrl} schema ${schemaName}: ${tableModel.error}`;
             logger.error(tableModel.error);
-        } else if (tableModel.tableData) {
-            // check if table_index column is present
-            // if it is, sort tabledata by table_index
-            if (getColumnIdx(tableModel, 'table_index') >= 0) {
-                sortTableData(tableModel.tableData.data, tableModel.tableData.columns, sortInfoString('table_index'));
-            }
-            if (getColumnIdx(tableModel, 'table_name') < 0) {
-                tableModel.error = `Invalid tables returned for ${serviceUrl} schema ${schemaName}`;
-                logger.error(tableModel.error);
-            }
-        } else {
-            tableModel.error = `No tables available for ${serviceUrl} schema ${schemaName}`;
-            logger.error(tableModel.error);
+            return tableModel;
         }
-        return tableModel;
+        const schemaNameIdx = getColumnIdx(tableModel, 'schema_name');
+        const tableNameIdx = getColumnIdx(tableModel, 'table_name');
+
+        const rTable = omit(tableModel, 'tableData.data');
+        rTable.tableData.data = tableModel.tableData.data.filter((row) => row[schemaNameIdx] === schemaName);
+        rTable.totalRows = rTable.tableData?.data?.length || 0;
+
+        if (tableNameIdx < 0)  return {error: `Invalid tables returned for ${serviceUrl} schema ${schemaName}`};
+        if (rTable.totalRows === 0) {
+            const error =`No tables available for ${serviceUrl} schema ${schemaName}`;
+            logger.error(error);
+            return {error};
+        }
+
+        return rTable;
     } catch(reason) {
         const error = `Failed to get tables for ${serviceUrl} schema ${schemaName}: ${reason?.message ?? reason}`;
         logger.error(error);
@@ -255,6 +252,110 @@ async function doLoadTapColumns(serviceUrl, schemaName, tableName) {
     }
 }
 
+function makeTapRequest(serviceUrl, QUERY, title) {
+    const url = serviceUrl + qFragment + 'QUERY=' + encodeURIComponent(QUERY);
+    return makeFileRequest(title, url, undefined, {pageSize: MAX_ROW});
+
+}
+
+async function loadSchemaDefJoin(serviceUrl) {
+    const QUERY = ` SELECT *
+                    FROM tap_schema.schemas
+                    INNER JOIN tap_schema.tables ON  tap_schema.tables.schema_name = tap_schema.schemas.schema_name
+                `.replace(/\s+/g, ' ').trim();
+
+    const tableModel= await doFetchTable(makeTapRequest(serviceUrl, QUERY, 'loadSchemaDefJoin'));
+
+    // manually fix duplicate 'description' column because cannot select individual column to rename
+    const schemaDesc = tableModel.tableData.columns.find((col) => col.name.toLowerCase().startsWith('description'));
+    if (schemaDesc) schemaDesc.name = 'schema_desc';
+    const tableDesc = tableModel.tableData.columns.findLast((col) => col.name.toLowerCase().startsWith('description'));
+    if (tableDesc) tableDesc.name = 'table_desc';
+
+
+    return tableModel;
+}
+
+async function loadSchemaDefNoJoin(serviceUrl) {
+
+    const schemasQuery = 'SELECT * FROM tap_schema.schemas';
+    const tablesQuery  = 'SELECT * FROM tap_schema.tables';
+
+    const schemas = await doFetchTable(makeTapRequest(serviceUrl, schemasQuery, 'loadSchemaDefNoJoin-schemas'));
+    const tables  = await doFetchTable(makeTapRequest(serviceUrl, tablesQuery, 'loadSchemaDefNoJoin-tables'));
+
+    const schemaIdx = getColumnIdx(schemas, 'schema_index');
+    const schemaNameIdx = getColumnIdx(schemas, 'schema_name');
+    const schemaDescIdx = getColumnIdx(schemas, 'description');
+    const tableSchemaIdx = getColumnIdx(tables, 'schema_name');
+
+    // merge schema data into tables
+    // add schema_name and desc
+    tables.tableData.columns.unshift({...schemas.tableData.columns[schemaDescIdx],  name:'schema_desc'});
+    if (schemaIdx >=0) tables.tableData.columns.unshift({name:'schema_index', type:'int'});
+
+    tables.tableData.data.forEach((row) => {
+        const schema_desc = schemas.tableData.data.find((srow) => srow[schemaNameIdx] === row[tableSchemaIdx])
+                                                  ?.[schemaDescIdx];
+        row.unshift(schema_desc || '');
+
+        if (schemaIdx >= 0) {
+            const schema_index = schemas.tableData.data.find((srow) => srow[schemaNameIdx] === row[schemaIdx])
+                ?.map((srow) => srow[schemaDescIdx]);
+            row.unshift(schema_index);
+        }
+    });
+    const tblDesc = tables.tableData.columns.find((col) => col.name === 'description');
+    if (tblDesc) tblDesc.name = 'table_desc';
+
+    return tables;
+}
+
+function supportJoin(serviceUrl) {
+    // Vizier doesn't support schema.*, table.*.  returning a table of blank rows.
+    // heasarc doesn't support schema.*, table.* nor *. need to handle separately.
+    // most services does not have schema_index and/or table_index.
+    // to make it work for most services, had to use 'select *'.
+    return !serviceUrl.toLowerCase().includes('heasarc.gsfc.nasa.gov');
+}
+
+export const loadSchemaDef = memoize(async (serviceUrl) => {
+
+    try {
+        const tableModel= supportJoin(serviceUrl)
+                ? await loadSchemaDefJoin(serviceUrl)
+                : await loadSchemaDefNoJoin(serviceUrl);
+
+        if (tableModel.error) throw new Error(tableModel.error);
+
+        const schemaNameIdx = getColumnIdx(tableModel, 'schema_name');
+        const tableNameIdx = getColumnIdx(tableModel, 'table_name');
+        const schemaIndex = getColumnIdx(tableModel, 'schema_index');
+        const tableIndex = getColumnIdx(tableModel, 'table_index');
+
+        if (schemaNameIdx < 0) return {error:'Invalid schemas table'};
+
+        // natural order places uppercase on top.  this forces lowercase to be on top
+        const forceLcOnTop = (s) => (s && /^[a-z]/.test(s) ? ' '+s : s)?.toLowerCase() || '';
+
+        // manually sort [schema_index]|schema_name|[table_index]|table_name.
+        const makeSortKey = (row) => {
+            const sIndex = schemaIndex >= 0 ? row[schemaIndex] : '9999';
+            const sName  = forceLcOnTop(row[schemaNameIdx]);
+            const tIndex = tableIndex >= 0 ? row[tableIndex] : '9999';
+            const tName = forceLcOnTop(row[tableNameIdx]);
+            return sprintf('%4s|%s|%4s|%s', sIndex, sName, tIndex, tName);
+        };
+
+        tableModel.tableData.data = sortBy(tableModel.tableData.data,(row) => makeSortKey(row));
+
+        return tableModel;
+    } catch (reason) {
+        const error = `Failed to resolve TAP_SCHEMA: ${reason?.message ?? reason}`;
+        logger.error(error);
+        return {error};
+    }
+});
 
 export const loadTapKeys = memoize(async (serviceUrl) => {
 
@@ -276,12 +377,23 @@ export const loadTapKeys = memoize(async (serviceUrl) => {
         if (tableModel.error) throw new Error(tableModel.error);
         return tableModel;
     } catch (reason) {
-        const error = `Failed to resolve TAP_SCHEMA keys info:: ${reason?.message ?? reason}`;
+        const error = `Failed to resolve TAP_SCHEMA keys info: ${reason?.message ?? reason}`;
         logger.error(error);
         return {error};
     }
 });
 
+// Function to search for a node in the tree
+export function searchNodeBy(nodes, accept) {
+    for (const idx in nodes) {
+        if (accept(nodes[idx])) return nodes[idx];
+        if (nodes[idx].children) {
+            const found = searchNodeBy(nodes[idx].children, accept);
+            if (found) return found;
+        }
+    }
+    return null;
+}
 
 
 /**

@@ -9,7 +9,7 @@ import SplitPane from 'react-split-pane';
 import Tree from 'rc-tree';
 import 'rc-tree/assets/index.css';
 import {cloneDeep, defer, isArray, isObject, groupBy, uniqBy} from 'lodash';
-import {getSizeAsString} from '../../util/WebUtil.js';
+import {getSizeAsString, updateSet} from '../../util/WebUtil.js';
 import {FieldGroupCtx} from '../FieldGroup.jsx';
 import {ExtraButton} from '../FormPanel.jsx';
 
@@ -19,7 +19,7 @@ import {useFieldGroupValue} from '../SimpleComponent.jsx';
 import {showUploadTableChooser} from '../UploadTableChooser.js';
 import {
     loadTapSchemas, loadTapTables, loadTapColumns, getTapServices, maybeQuote, TAP_UPLOAD_SCHEMA,
-    ADQL_UPLOAD_TABLE_NAME, defaultADQLExamples, makeUploadSchema, loadTapKeys
+    ADQL_UPLOAD_TABLE_NAME, defaultADQLExamples, makeUploadSchema, loadTapKeys, searchNodeBy
 } from './TapUtil';
 import {getColumnIdx} from '../../tables/TableUtil.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
@@ -32,6 +32,10 @@ import '../../externalSource/prismLive/prism-live.js';
 
 import '../../externalSource/prismLive/prism.css';
 import '../../externalSource/prismLive/prism-live.css';
+
+import INFO_ICO from 'html/images/icons-2014/24x24_Info.png';
+import JOIN_ICO from 'html/images/join_16x16.png';
+const joinIcon = () => <img src={JOIN_ICO} style={{marginRight:2}}/> ;
 
 const code = {className: 'language-sql'};
 let cFetchKey = Date.now();
@@ -91,13 +95,19 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
         cFetchKey = Date.now();
         const key = cFetchKey;
         // reload TAP schema when serviceUrl changes
-        loadTapSchemas(serviceUrl).then((tm) => {
+        loadTapSchemas(serviceUrl).then(async (tm) => {
             if (key === cFetchKey) {
                 const tableData = tm?.tableData?.data ?? [];
                 const cidx = getColumnIdx(tm, 'schema_name');
-                const baseTD = tableData.map( (row) => ({key: `schema--${key}--${row[cidx]}`, title: row[cidx]}) );
-                const treeData= (canUpload && uploadSchema) ?
-                    [{key: `schema--${key}--${TAP_UPLOAD_SCHEMA}`, title: TAP_UPLOAD_SCHEMA}, ...baseTD] : baseTD;
+                const treeData = await Promise.all( tableData.map(async (row) => {
+                    const children = await expandTables(serviceUrl, row[cidx]);
+                    return {key: `schema--${key}--${row[cidx]}`, title: row[cidx], children};
+                }));
+                if (canUpload && uploadSchema) {
+                    const upload = {key: `schema--${key}--${TAP_UPLOAD_SCHEMA}`, title: TAP_UPLOAD_SCHEMA};
+                    upload.children = await expandTables(serviceUrl, TAP_UPLOAD_SCHEMA, uploadSchema);
+                    treeData.unshift(upload);
+                }
                 setTreeData(treeData);
             }
         });
@@ -124,7 +134,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
         const taVal = getUnselectedValue(textArea);
         if (type === 'table') {
             if (taVal) {
-                insertAtCursor(textArea, tname, adqlKey, groupKey, prismLiveRef.current);
+                insertAtCursor(textArea, ' ' + tname, adqlKey, groupKey, prismLiveRef.current);
             } else {
                 let insertTname= tname;
                 if (upload) {
@@ -137,9 +147,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
             }
         } else if (type === 'column') {
             const val = ffcn.current.checked ? `${maybeQuote(tname,true)}.${maybeQuote(cname)}` : maybeQuote(cname);
-            insertAtCursor(textArea, val, adqlKey, groupKey, prismLiveRef.current);
-        } else if (type === 'JoinTable') {
-            insertAtCursor(textArea, cname, adqlKey, groupKey, prismLiveRef.current);
+            insertAtCursor(textArea, ' ' + val, adqlKey, groupKey, prismLiveRef.current);
         } else if (type === 'keys') {
             // these values were set when key nodes were created during #expandColumns
             // {key, title, keyId, fromTable, targetTable, isLeaf: true};
@@ -148,7 +156,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
             const keys = keysInfo?.tableData?.data?.filter((row) => row[0] === keyId);
 
             targetTable  = maybeQuote(targetTable, true);
-            let val = `INNER JOIN ${targetTable} ON `;
+            let val = ` INNER JOIN ${targetTable} ON `;
             keys.forEach((row, idx) => {
                 const fromColumn   = maybeQuote(fixCname(row[4], row[1]));
                 const targetColumn = maybeQuote(fixCname(row[5], row[2]));
@@ -161,15 +169,12 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
     const onLoadData = (treeNode) => {
         return new Promise((resolve) => {
             const {key:eventKey, schema, title, isLoaded} = treeNode;
-            if (isLoaded) {
-                resolve();
-            } else if (schema) {
+            if (schema && !isLoaded) {
                 // it has schema info.. must be a table node.
                 expandColumns(serviceUrl, title, schema, uploadSchema, treeData, eventKey, setTreeData)
                     .then(() => resolve());
             } else {
-                expandTables(serviceUrl, title, uploadSchema, treeData, eventKey, setTreeData)
-                    .then(() => resolve());
+                resolve();
             }
         });
     };
@@ -191,7 +196,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
         if (!e.target?.value) setTreeData(treeData);
 
         const filterNodes = (result, node) => {
-            if (node?.title?.toLowerCase().includes(e.target?.value?.toLowerCase())) {
+            if (node?.title?.toLowerCase?.().includes(e.target?.value?.toLowerCase())) {
                 result.push(node);
                 return result;
             }
@@ -328,26 +333,21 @@ function fixCname(cname, tblname) {
     return cname?.startsWith(tblname) ? cname : tblname + '.' + cname;
 }
 
-function expandTables(serviceUrl, title, uploadSchema, treeData, eventKey, setTreeData) {
+function expandTables(serviceUrl, title, uploadSchema) {
     const key = cFetchKey;
-
     const makeTabKey= (key,tname) => `table--${key}--${tname}`;
 
-    if (eventKey.endsWith(TAP_UPLOAD_SCHEMA)) {
-
+    if (uploadSchema) {
         const tList= Object.entries(uploadSchema)
             .map(([file,info]) => ({key: makeTabKey(key,info.table)+'----upload', title:`${info.table} (${file})`, schema:TAP_UPLOAD_SCHEMA}));
-        addChildNodes(treeData, eventKey, tList);
-        setTreeData(cloneDeep(treeData));
-        return Promise.resolve();
+        return Promise.resolve(tList);
     }
     return loadTapTables(serviceUrl, title).then( (tm) => {
         if (cFetchKey === key) {
             const tableData = tm?.tableData?.data ?? [];
             const cidx = getColumnIdx(tm, 'table_name');
             const tables = tableData.map( (row) => ({key: makeTabKey(key,row[cidx])+'--upload', title: row[cidx], schema: title}) );
-            addChildNodes(treeData, eventKey, tables);
-            setTreeData(cloneDeep(treeData));
+            return tables;
         }
     });
 }
@@ -382,7 +382,7 @@ function expandColumns(serviceUrl, title, schema, uploadSchema, treeData, eventK
                 return {key: colkey, title, isLeaf: true};
             });
 
-            await addAvailKeyNodes({serviceUrl, title, cols});
+            await addAvailKeyNodes({serviceUrl, title, cols, treeData, setTreeData});
 
             addChildNodes(treeData, eventKey, cols);
             setTreeData(cloneDeep(treeData));
@@ -391,7 +391,7 @@ function expandColumns(serviceUrl, title, schema, uploadSchema, treeData, eventK
 }
 
 // add Available Keys node if they exists
-async function addAvailKeyNodes({serviceUrl, title, cols}) {
+async function addAvailKeyNodes({serviceUrl, title, cols, treeData, setTreeData}) {
     const keysInfo = await loadTapKeys(serviceUrl);
     const availKeys = keysInfo?.tableData?.data?.filter((row) => row[1] === title || row[2] === title);
     if (!availKeys?.length) return;
@@ -400,7 +400,7 @@ async function addAvailKeyNodes({serviceUrl, title, cols}) {
     cols.unshift(joins);
 
     const byTable = groupBy(availKeys, (row) => title === row[1] ? row[2] : row[1]);        // group by table
-    Object.entries(byTable).forEach(([relTbl, keysByTbl]) => {
+    Object.entries(byTable).forEach(([, keysByTbl]) => {
         keysByTbl = uniqBy(keysByTbl, (row) => row[0]);         // collapsed by keyId so each join entry show up only once
         const keys = keysByTbl.map((row) => {
             const reversed = title !== row[1];      // true if mapping is reversed
@@ -409,11 +409,24 @@ async function addAvailKeyNodes({serviceUrl, title, cols}) {
             const keyId = row[0];
             const desc = row[3] ? ` (${row[3]}) ` : '';
             const key = `keys--${cFetchKey}--${title}--${row[0]}`;
-            return {key, title: `${row[0]}${desc}`, keyId, fromTable, targetTable, isLeaf: true};
+            return {key, title:<JoinNode {...{targetTable, keyId, desc, treeData, setTreeData}}/>, keyId, fromTable, targetTable, icon: joinIcon, isLeaf: true};
         });
         // keys.unshift({key: `JumpToTable--${cFetchKey}--${title}--${relTbl}`, title: '(jump to table)', isLeaf: true}); // not implemented yet.
-        joins.children.push({key: `JoinTable--${cFetchKey}--${title}--${relTbl}`, title: relTbl, children: keys, isLoaded: true});
+        if (keys?.length > 0) joins.children.push(...keys);
     });
+}
+
+function JoinNode({targetTable, keyId, desc, treeData, setTreeData}) {
+
+    const jumpTo = useCallback(() => {
+        const nodeKey = searchNodeBy(treeData, (n) => n.title === targetTable);
+        if (nodeKey) {
+            const nTree = updateSet(treeData, 'expandedKeys', treeData.expandedKeys.push(nodeKey));
+            setTreeData(nTree);
+        }
+    });
+    // <img src={INFO_ICO} onClick={jumpTo} style={{height:16, verticalAlign:'middle'}}/>  // can't get it to work.
+    return <div>{targetTable} [{keyId}]{desc}</div>;
 }
 
 function addChildNodes(data, key, children) {
