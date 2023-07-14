@@ -7,10 +7,8 @@ import {object, bool} from 'prop-types';
 import {getNonFluxDisplayElements, getFluxInfo} from './MouseReadoutUIUtil.js';
 import {DataReadoutItem, MouseReadoutLock} from './MouseReadout.jsx';
 import {STANDARD_READOUT} from '../MouseReadoutCntlr.js';
-import './MouseReadout.css';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 import {showMouseReadoutPopout} from 'firefly/visualize/ui/MouseReadPopoutAll.jsx';
-
 import './MouseReadout.css';
 import POPOUT_ICON from 'images//pop-out.png';
 

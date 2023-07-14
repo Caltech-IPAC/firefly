@@ -38,7 +38,7 @@ export function analyzePart(part, request, table, row, fileFormat, dataTypeHint,
                    analyzeChartTableResult(false, table, row, part, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex);
     if (!tableResult) {
         tableResult= availableTypes.includes(DPtypes.TABLE) &&
-            analyzeChartTableResult(true, part, table, row, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex);
+            analyzeChartTableResult(true, table, row, part, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex);
     }
     return {imageResult, tableResult};
 }
@@ -230,7 +230,7 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
     const {xCol,yCol,cNames,cUnits,connectPoints,useChartChooser}= getTableChartColInfo(title, part, partFormat);
 
     //define title for table and chart
-    let titleInfo={titleStr:title, showChartTitle:true};
+    const titleInfo={titleStr:title, showChartTitle:true};
     if (!title){
         titleInfo.titleStr=`table_${part.index}`;
         titleInfo.showChartTitle=false;
@@ -238,7 +238,7 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
 
     if (tableOnly) {
         return dpdtTable(ddTitleStr,
-            createChartTableActivate(false, fileOnServer,titleInfo,activateParams, tbl_index, dataTypeHint, cNames, cUnits),
+            createChartTableActivate({source:fileOnServer,titleInfo,activateParams, tbl_index, dataTypeHint, cNames, cUnits}),
             createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits, dataTypeHint),
             undefined, {extractionText: 'Pin Table', paIdx:tbl_index,requestDefault});
     }
@@ -262,7 +262,7 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
             const chartInfo= {xAxis:xCol, yAxis:yCol, chartParamsAry, useChartChooser};
             if (chartTableDefOption===AUTO) chartTableDefOption= imageAsTableColCnt===2 ? SHOW_CHART : SHOW_TABLE;
             return dpdtChartTable(ddTitleStr,
-                createChartTableActivate(true, fileOnServer,titleInfo,activateParams,chartInfo,tbl_index,dataTypeHint, cNames,cUnits,connectPoints),
+                createChartTableActivate({chartAndTable:true, source:fileOnServer,titleInfo,activateParams,chartInfo,tbl_index,dataTypeHint, cNames,cUnits,connectPoints}),
                 createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits, dataTypeHint),
                 undefined, {extractionText: 'Pin Table', paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
@@ -304,15 +304,15 @@ export const getIntHeader= (header, part, def) => {
 };
 
 function getHeadersThatMatch(header, part) {
-    return part.details.tableData.data
+    return part.details?.tableData?.data
         .filter( (row) => row[1].includes(header))
-        .map( (row) => row[2]);
+        .map( (row) => row[2]) ?? [];
 }
 
 function getHeadersThatStartsWith(header, part) {
-    return part.details.tableData.data
+    return part.details?.tableData?.data
         .filter( (row) => row[1].startsWith(header))
-        .map( (row) => row[2]);
+        .map( (row) => row[2]) ?? [];
 }
 
 function getHeader(header, part) {
@@ -352,7 +352,7 @@ function getColumnNames(part, fileFormat) {
             if (ttNamesAry.length) {
                 const ttFormAry= getHeadersThatStartsWith('TFORM',part);
                 return ttFormAry.length===ttNamesAry.length ?    // return if we can tell - then all numeric columns else all columns
-                    ttNamesAry.filter( (n,idx) => fitNumericDataTypes.includes(ttFormAry[idx])) : ttNamesAry;
+                    ttNamesAry.filter( (n,idx) => fitNumericDataTypes.includes(ttFormAry[idx][ttFormAry[idx].length-1])) : ttNamesAry;
             }
             const naxis2= getIntHeader('NAXIS2',part,0);
             if (naxis2<=30) {

@@ -54,7 +54,7 @@ MouseReadoutLock.propTypes = {
 };
 
 const baseVS={whiteSpace:'nowrap', overflow:'hidden', textOverflow: 'ellipsis'};
-const baseLS={whiteSpace:'nowrap', overflow:'hidden', textOverflow: 'ellipsis'};
+const baseLS={whiteSpace:'nowrap', textOverflow: 'ellipsis'};
 
 
 export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueStyle={}, showCopy=false,
