@@ -607,7 +607,7 @@ function getColumns(dataType,covType,allRowsTable) {
             findTableRegionColumn(allRowsTable) :
             (covType === CoverageType.BOX ?
                 getCornersColumns(allRowsTable) :
-                findTableCenterColumns(allRowsTable))
+                findTableCenterColumns(allRowsTable, true))
     );
 }
 
@@ -754,12 +754,16 @@ function hasCorners(options, table) {
 }
 
 function getPtAryFromTable(options,table, usesRadians){
-    const cDef= findTableCenterColumns(table);
+    const cDef= findTableCenterColumns(table, true);
     if (isEmpty(cDef)) return [];
     const {lonIdx,latIdx,csys}= cDef;
     return (table?.tableData?.data ?? [])
-        .map( (row) => makeWorldPt(row[lonIdx], row[latIdx], csys, true, usesRadians))
-        .filter( (v) => v);
+        .map( (row) =>
+            lonIdx!==latIdx ?
+                makeWorldPt(row[lonIdx], row[latIdx], csys, true, usesRadians) :
+                makeWorldPt(row[lonIdx][0], row[latIdx][1], csys, true, usesRadians)
+            
+        ).filter( (v) => v);
 }
 
 function getBoxAryFromTable(options,table, usesRadians){
@@ -782,11 +786,13 @@ const getRegionAryFromTable = memorizeLastCall( (table) => {
 });
 
 function getCovColumnsForQuery(options, table) {
-    const cAry= [...getCornersColumns(table), findTableCenterColumns(table), findTableRegionColumn(table)];
+    const cAry= [...getCornersColumns(table), findTableCenterColumns(table,true), findTableRegionColumn(table)];
     // column names should be in quotes
     // there should be no duplicates
     const base = cAry.filter((c)=>!isEmpty(c))
-            .map( (c)=> (c.type === 'region') ? `"${c.regionCol}"` : `"${c.lonCol}","${c.latCol}"`)
+            .map( (c)=> (c.type === 'region') ?
+                `"${c.regionCol}"` : c.lonCol!==c.latCol ?
+                    `"${c.lonCol}","${c.latCol}"` : `"${c.lonCol}"`)
             .filter((v,i,a) => a.indexOf(v) === i)
             .join();
     return base+',"ROW_IDX"';

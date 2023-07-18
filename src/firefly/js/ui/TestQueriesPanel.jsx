@@ -14,7 +14,6 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {get} from 'lodash';
 import {
     makeAreaDef, makeCheckboxDef, makeCircleDef, makeEnumDef, makeFloatDef, makeIntDef, makePolygonDef, makeTargetDef,
     makeUnknownDef
@@ -23,11 +22,10 @@ import {
     convertRequest, DynamicFieldGroupPanel, DynamicForm, DynCompleteButton,
     DynLayoutPanelTypes
 } from './dynamic/DynamicUISearchPanel.jsx';
+import {EmbeddedPositionSearchPanel} from './dynamic/EmbeddedPositionSearchPanel.jsx';
 
 import {FormPanel} from './FormPanel.jsx';
 import {FieldGroup} from '../ui/FieldGroup.jsx';
-import {ValidationField} from '../ui/ValidationField.jsx';
-import {IbeSpacialType} from './IbeSpacialType.jsx';
 import {TargetPanel} from '../ui/TargetPanel.jsx';
 import {ServerParams} from '../data/ServerParams.js';
 import {showInfoPopup} from './PopupUtil.jsx';
@@ -37,13 +35,11 @@ import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import FieldGroupUtils  from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
 import {FieldGroupTabs, Tab} from './panel/TabPanel.jsx';
-import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {makeWorldPt, parseWorldPt} from '../visualize/Point.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {getDS9Region} from '../rpc/PlotServicesJson.js';
 import {RegionFactory} from '../visualize/region/RegionFactory.js';
-import {NaifidPanel} from './NaifidPanel';
 
 import {showUploadDialog} from 'firefly/ui/FileUploadDropdown';
 import {DATA_LINK_TABLES, IMAGES, MOC_TABLES, REGIONS, SPECTRUM_TABLES, TABLES, UWS} from 'firefly/ui/FileUploadUtil';
@@ -135,34 +131,19 @@ export class TestQueriesPanel extends PureComponent {
         const {fields}=this.state || {};
 
         return (
-            <div style={{padding: 10}}>
+            <div style={{padding: 10, height: '100%',width:'100%'}}>
                 <FormPanel
-                    width='640px' height='500px'
                     groupKey='TEST_CAT_PANEL'
                     onSubmit={(request) => onSearchSubmit(request)}
                     onCancel={hideSearchPanel}>
-                    <FieldGroup groupKey='TEST_CAT_PANEL' keepState={true}>
-                        <div style={{padding:'5px 0 5px 0'}}>
-                            <TargetPanel/>
-                        </div>
-                        <FieldGroupTabs initialState={{ value:'wiseImage' }} fieldKey='Tabs'>
-                            <Tab name='Wise Search' id='wiseImage'>
-                                <div>{renderWiseSearch(fields)}</div>
-                            </Tab>
+                    <FieldGroup groupKey='TEST_CAT_PANEL' keepState={true}
+                                style={{height:'100%', display:'flex', flexDirection:'column'}}>
+                        <FieldGroupTabs initialState={{ value:'2massImage' }} fieldKey='Tabs' style={{flexGrow:1}} >
                             <Tab name='2Mass Search' id='2massImage'>
                                 <div>{render2MassSearch(fields)}</div>
                             </Tab>
-                            <Tab name='Atlas Search' id='atlasImage'>
-                                <div>{renderAtlasSearch(fields)}</div>
-                            </Tab>
-                            <Tab name='Periodogram' id='periodogram'>
-                                 <div>{renderPeriodogram(fields)}</div>
-                            </Tab>
-                            <Tab name='NAIF-ID' id='naifid'>
-                                <div>{renderNaifid(fields)}</div>
-                            </Tab>
-                            <Tab name='Dynamic 1' id='dynamic1'>
-                                {makeDynamic1()}
+                            <Tab name='Inset Example' id='inset1'>
+                                {makeInsetSearchExample()}
                             </Tab>
                             <Tab name='Dynamic 2' id='dynamic2'>
                                 {makeDynamic2()}
@@ -201,30 +182,47 @@ function hideSearchPanel() {
 }
 
 
-function renderNaifid(fields){
-    return(
-        <div style={{height:100, margin:5}}>
-           <NaifidPanel fieldKey='mTargetName' labelWidth={110}
-                        initialState={{value: '', size: 4, label: 'Moving Target Name:'}}
-                        popStyle={{width: 300, padding:2}}
-           />
+const WrapperPanel= ({children}) => {
+    return (
+        <FormPanel submitText = 'Search' groupKey = 'InsetUI'
+                   onSubmit = {(request) => {
+                       showInfoPopup(`done: ${JSON.stringify(request)}`, 'information');
+                       return false;
+                   }}
+                   onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
+                   params={{hideOnInvalid: false}}
+                   inputStyle={{border:'none', padding:0, marginBottom:5}}
+                   help_id  = {'muy-help-id'}>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', }}>
+                <>
+                        {children}
+                        <div>here i am</div>
+                </>
+            </div>
+        </FormPanel>
+    );
+};
 
+function makeInsetSearchExample() {
+    return (
+        <div style={{width:'100%', height:'100%', display:'flex', flexDirection:'column'}}>
+            <FieldGroup groupKey='InsetUI' keepState={true}
+                        style={ { width:'100%', height:'100%', display: 'flex', flexDirection: 'column', alignItems: 'center' } }>
+                <EmbeddedPositionSearchPanel {...{
+                    toolbarHelpId: 'exampleHelp',
+                    WrapperComponent: WrapperPanel,
+                    hipsFOVInDeg:30, hipsUrl:'ivo://CDS/P/DSS2/color',
+                    minValue: 5/3600, maxValue: 1.5, searchAreaInDeg:.5
+
+                }}/>
+            </FieldGroup>
         </div>
     );
 }
 
-
-function makeDynamic1() {
-
-    return <div>This one is creating a infinate loop for some reason</div>;
-    // return (
-    //     <DynLayoutPanelTypes.Simple fieldDefAry={dynamic1Params} style={{margin:3, width:'100%'}} popupHiPS={true}/>
-    // );
-}
-
 function makeDynamic2() {
     return (
-        <div>
+        <div style={{width:'100%', height:'100%', display:'flex', flexDirection:'column'}}>
             <DynamicFieldGroupPanel
                 groupKey={'simpledyngroup'}
                 DynLayoutPanel={DynLayoutPanelTypes.Simple}
@@ -240,12 +238,12 @@ function makeDynamic2() {
 
 function makeDynamic3() {
     return (
-        <div>
+        <div style={{width:'100%', height:'100%', display:'flex', flexDirection:'column'}}>
             <DynamicFieldGroupPanel
                 groupKey={'simpledyngroup3'}
                 DynLayoutPanel={DynLayoutPanelTypes.Inset}
                 fieldDefAry={dynamic3Params}
-                style={{margin:3, width:'100%'}}/>
+                style={{margin:3, width:'100%', display:'flex', flexGrow:1}}/>
             <DynCompleteButton groupKey={'simpledyngroup3'}
                                style={{margin: 3}}
                                fieldDefAry={dynamic3Params}
@@ -310,222 +308,46 @@ function makeDynamicForm() {
 }
 
 
-function renderPeriodogram(fields) {
-
-    /**
-     *
-     * @param opt
-     */
-    function lightCurveSubmit(opt) {
-        console.log('periodogram...');
-        let tReq;
-        const ds = get(fields, 'period.value', 1);
-        //var tReq = makeTblRequest('PhaseFoldedProcessor', 'Phase folded', { period: '1', 'table_name':'folded_table','original_table':});
-        if (opt === 0) {
-            tReq = makeTblRequest('LightCurveProcessor', 'Periodogram', {
-                'original_table':'http://web.ipac.caltech.edu/staff/ejoliet/demo/OneTarget-27-AllWISE-MEP-m82-2targets-10arsecs.tbl',
-                'x':'mjd',
-                'y':'w1mpro_ep',
-                'table_name': 'periodogram'
-                // The following are optional
-                //'pmin':0,
-                //'pmax':200,
-                //'step_method':'fixedf',
-                //'step_size': 10,
-                //'alg': 'ls', //There are three algorithms: ls (Lomb-Scargle), bls (Box-fitting Least Squares), and plav (Plavchan 2008). The default algorithm is Lomb-Scargle.
-                //'peaks' : 50
-                //'result_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml'
-            },
-                {inclCols : '"Power","Period"'});
-        } else if (opt === 1) {
-            tReq = makeTblRequest('PhaseFoldedProcessor', 'Phase folded', {
-                'period_days': ds,
-                'table_name': 'folded_table',
-                'x':'mjd',
-                'y':'w1mpro_ep',
-                'original_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/OneTarget-27-AllWISE-MEP-m82-2targets-10arsecs.tbl'
-            });
-        } else if (opt === 2){
-            tReq = makeTblRequest('LightCurveProcessor', 'Peaks', {
-                'original_table':'http://web.ipac.caltech.edu/staff/ejoliet/demo/OneTarget-27-AllWISE-MEP-m82-2targets-10arsecs.tbl',
-                'x':'mjd',
-                'y':'w1mpro_ep',
-                'table_name': 'peak_table',
-                //'pmin':0,
-                //'pmax':200,
-                //'step_method':'fixedf',
-                //'step_size': 10,
-                //'alg': 'ls', //There are three algorithms: ls (Lomb-Scargle), bls (Box-fitting Least Squares), and plav (Plavchan 2008). The default algorithm is Lomb-Scargle.
-                'peaks' : 57
-                //'result_table': 'http://web.ipac.caltech.edu/staff/ejoliet/demo/vo-nexsci-result-sample.xml'
-            }, {inclCols : '"Peak", "Period", "Power"'});
-        }
-
-        console.log(ds);
-        console.log('tReq ' +tReq);
-        dispatchTableSearch(tReq);
-    }
-
-    return (
-        <div style={{padding:5}}>
-
-            <button type='button' className='button std hl' onClick={() => lightCurveSubmit(0)}>
-                <b>Compute Periodogram</b>
-            </button>
-            <br/>
-            <button type='button' className='button std hl' onClick={() => lightCurveSubmit(2)}>
-                <b> Get peaks table</b>
-            </button>
-            <br/>
-            <ValidationField fieldKey='period'
-                             initialState={{
-                                          fieldKey: 'period',
-                                          value: '1.0',
-                                          tooltip: 'period',
-                                          label : 'period:',
-                                          labelWidth : 100
-                                      }}/>
-            <button type='button' className='button std hl' onClick={() => lightCurveSubmit(1)}>
-                <b>Phase folded (period value not used yet)</b>
-            </button>
-        </div>
-    );
-}
-
-
-
-const wiseBandMap = {
-    'allwise-multiband': ['1', '2', '3', '4'],
-    'allsky_4band-1b': ['1', '2', '3', '4'],
-    'allsky_4band-3a': ['1', '2', '3', '4'],
-    'cryo_3band-1b': ['1', '2', '3'],
-    'cryo_3band-1b-3a': ['1', '2', '3'],
-    'postcryo-1b': ['1', '2']
-};
-
-
-function renderWiseSearch(fields) {
-    const ds = get(fields, 'wiseDataSet.value', 'allwise-multiband');
-    const options = wiseBandMap[ds].map((w) => ({label: 'W' + w, value: w}));
-    return (
-        <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
-            <IbeSpacialType groupKey='TEST_CAT_PANEL'/>
-            <div style={{padding:5, display:'flex', flexDirection:'row', flexWrap:'no-wrap', alignItems:'center' }}>
-                <div style={{display:'inline-block', paddingTop:10}}>
-                    <RadioGroupInputField
-                        fieldKey='wiseDataSet'
-                        inline={true}
-                        alignment='vertical'
-                        initialState={{
-                        tooltip: 'Choose Wise Data set',
-                        value: 'allwise-multiband'
-                    }}
-                        options={[
-                        {label: 'AllWISE (multi-band) Atlas', value: 'allwise-multiband'},
-                        {label: 'AllSky (4 band) Single Exposure', value: 'allsky_4band-1b'},
-                        {label: 'AllSky (4 band) Atlas', value: 'allsky_4band-3a'},
-                        {label: '3-Band Cryo Single Exposure', value: 'cryo_3band-1b'},
-                        {label: '3-Band Cryo Atlas', value: 'cryo_3band-1b-3a'},
-                        {label: 'Post-Cryo (2 band) Single Exposure', value: 'postcryo-1b'},
-                    ]}
-                    />
-                </div>
-                <div style={{display:'inline-block', paddingLeft:50}}>
-                    <CheckboxGroupInputField
-                        fieldKey='wiseBands'
-                        initialState={{
-                                    value: '1,2,3,4',   // workaround for _all_ for now
-                                    tooltip: 'Please select some boxes',
-                                    label : 'Bands:' }}
-                        options={options}
-                        alignment='horizontal'
-                        labelWidth={35}
-                    />
-
-                </div>
-            </div>
-        </div>
-
-    );
-}
-
-function renderAtlasSearch(fields) {
-
-// See value of band and instruments here as SEIP example:
-// https://irsadev.ipac.caltech.edu/IBE?table=spitzer.seip_science&POS=56.86909,24.10531
-    return (
-        <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
-            <CheckboxGroupInputField
-                fieldKey='ds1'
-                alignment='vertical'
-                initialState={{
-                    tooltip: 'Spacial Type',
-                    value: 'spitzer.seip_science'
-                }}
-                options={[
-                    {label: 'MSX', value: 'msx.msx_images'},
-                    {label: 'SEIP', value: 'spitzer.seip_science'}
-                ]}
-            />
-            <CheckboxGroupInputField
-                fieldKey='band'
-                alignment='horizontal'
-                initialState={{
-                    tooltip: 'Return Band',
-                    value: 'IRAC1'
-                }}
-                options={[
-                    {label : 'IRAC 2.4', value: 'IRAC1'},
-                    {label : 'IRAC 3.6', value: 'IRAC2'},
-                    {label : 'IRAC 5.8', value: 'IRAC3'},
-                    {label : 'IRAC 8', value: 'IRAC4'},
-                    {label : 'MIPS 24', value: 'MIPS24'},
-                    {label : 'E', value: 'E'},
-                    {label : 'A', value: 'A'},
-                    {label : 'C', value: 'C'},
-                    {label : 'D', value: 'D'}
-                ]}
-            />
-        </div>
-    );
-
-}
-
 
 function render2MassSearch(fields) {
 
 
     return (
-        <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
-            <RadioGroupInputField
-                fieldKey='ds'
-                alignment='vertical'
-                initialState={{
+        <div>
+            <div style={{padding:'5px 0 5px 0'}}>
+                <TargetPanel/>
+            </div>
+            <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
+                <RadioGroupInputField
+                    fieldKey='ds'
+                    alignment='vertical'
+                    initialState={{
                         tooltip: 'Spacial Type',
                         value: 'Cone'
                     }}
-                options={[
-                      {label: '2MASS All Sky', value: 'asky'},
-                      {label: '2MASS Full Survey', value: 'askyw'},
-                      {label: '2MASS 6X Catalog Images', value: 'sx'},
-                      {label: '2MASS Full 6X Images', value: 'sxw'},
-                      {label: '2MASS Calibration Images', value: 'cal'}
+                    options={[
+                        {label: '2MASS All Sky', value: 'asky'},
+                        {label: '2MASS Full Survey', value: 'askyw'},
+                        {label: '2MASS 6X Catalog Images', value: 'sx'},
+                        {label: '2MASS Full 6X Images', value: 'sxw'},
+                        {label: '2MASS Calibration Images', value: 'cal'}
                     ]}
-            />
-            <RadioGroupInputField
-                fieldKey='band'
-                alignment='horizontal'
-                initialState={{
+                />
+                <RadioGroupInputField
+                    fieldKey='band'
+                    alignment='horizontal'
+                    initialState={{
                         tooltip: 'Return Band',
                         value: 'A'
                     }}
-                options={[
-                       {label : 'All 2MASS Bands', value: 'A'},
-                       {label : '2MASS J-Band', value: 'J'},
-                       {label : '2MASS H-Band', value: 'H'},
-                       {label : '2MASS Ks-Band', value: 'K'}
+                    options={[
+                        {label : 'All 2MASS Bands', value: 'A'},
+                        {label : '2MASS J-Band', value: 'J'},
+                        {label : '2MASS H-Band', value: 'H'},
+                        {label : '2MASS Ks-Band', value: 'K'}
                     ]}
-            />
+                />
+            </div>
         </div>
     );
 
