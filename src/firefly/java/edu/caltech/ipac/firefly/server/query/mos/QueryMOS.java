@@ -8,7 +8,7 @@ import edu.caltech.ipac.firefly.data.MOSRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
+import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -22,6 +22,8 @@ import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang.time.DateUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,54 +31,87 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import static edu.caltech.ipac.table.TableMeta.LABEL_TAG;
-import static edu.caltech.ipac.table.TableMeta.makeAttribKey;
+import static edu.caltech.ipac.table.TableMeta.*;
 
 
 @SearchProcessorImpl(id = "MOSQuery")
-public class QueryMOS extends IpacTablePartProcessor {
-
-    String MOST_HOST_URL = AppProperties.getProperty("most.host", "default_most_host_url");
+public class QueryMOS extends EmbeddedDbProcessor {
 
     private static final Logger.LoggerImpl _log = Logger.getLogger();
-    private static final String RESULT_TABLE_NAME = "imgframes_matched_final_table.tbl";
-    private static final String ORBITAL_PATH_TABLE_NAME = "orbital_path.tbl";
-    private static final String HEADER_ONLY_PARAM = "header_only";
+    protected static final String RESULT_TABLE_NAME = "imgframes_matched_final_table.tbl";
+    protected static final String ORBITAL_PATH_TABLE_NAME = "orbital_path.tbl";
+    String MOST_HOST_URL = AppProperties.getProperty("most.host", "default_most_host_url");
 
-
+    /**
+     * MOS search returns both tables.  But, we had to call it twice
+     * from the client; one for orbital path, the other for MOS results.
+     * Therefore, we remove TABLE_NAME param to force duplicate requests locking
+     */
     @Override
-    public boolean doCache() {
-        return false;
+    public String getUniqueID(ServerRequest request) {
+        ServerRequest pReq = request.cloneRequest();
+        pReq.removeParam(MOSRequest.TABLE_NAME);
+        String uid = super.getUniqueID(pReq);
+        return uid;
+    }
+
+    /**
+     * Override to create new dbFile for Orbital results
+     * By creating new dbFile, it will force a fetchDataGroup.
+     */
+    @Override
+    public File getDbFile(TableServerRequest treq) {
+        File dbFile = super.getDbFile(treq);
+        if (getTblName(treq).equals(ORBITAL_PATH_TABLE_NAME)) {
+            return new File(dbFile.getParentFile(), "orb-" + dbFile.getName());
+        } else {
+            return dbFile;
+        }
     }
 
     @Override
     public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
         try {
             MOSRequest req = QueryUtil.assureType(MOSRequest.class, request);
-            String tblType = req.getParam(MOSRequest.TABLE_NAME);
-            boolean headerOnly = isHeaderOnlyRequest(req);
+            String tblName = getTblName(request);
+            DataGroup dg = doSearch(req, tblName, false);
+            if (dg != null) addMeta(dg, request);
 
-            String tblName = (tblType != null && tblType.equalsIgnoreCase(MOSRequest.ORBITAL_PATH_TABLE))
-                    ? ORBITAL_PATH_TABLE_NAME : RESULT_TABLE_NAME;
-
-            DataGroup dg = doSearch(req, tblName, headerOnly);
-            return headerOnly ? getOrbitalElements(dg) : dg;
+            return dg;
 
         } catch (Exception e) {
             throw new DataAccessException("MOS Query Failed.", e);
         }
     }
 
-    @Override
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-        return loadDataFileImpl(request);
+    protected String getTblName(ServerRequest req) {
+        String tblType = req.getParam(MOSRequest.TABLE_NAME);
+        return (tblType != null && tblType.equalsIgnoreCase(MOSRequest.ORBITAL_PATH_TABLE))
+                ? ORBITAL_PATH_TABLE_NAME : RESULT_TABLE_NAME;
+    }
+
+    private void addMeta(DataGroup dg, TableServerRequest request) {
+        // adding meta to the table  ==>
+        TableMeta meta = dg.getTableMeta();
+        if (getTblName(request).equalsIgnoreCase(RESULT_TABLE_NAME)) {
+            meta.setCenterCoordColumns(new TableMeta.LonLatColumns("ra_obj", "dec_obj"));
+        } else {
+            meta.setCenterCoordColumns(new TableMeta.LonLatColumns("RA_obs", "Dec_obs"));
+        }
+
+        TableMeta.LonLatColumns c1= new TableMeta.LonLatColumns("ra1", "dec1", CoordinateSys.EQ_J2000);
+        TableMeta.LonLatColumns c2= new TableMeta.LonLatColumns("ra2", "dec2", CoordinateSys.EQ_J2000);
+        TableMeta.LonLatColumns c3= new TableMeta.LonLatColumns("ra3", "dec3", CoordinateSys.EQ_J2000);
+        TableMeta.LonLatColumns c4= new TableMeta.LonLatColumns("ra4", "dec4", CoordinateSys.EQ_J2000);
+        meta.setCorners(c1, c2, c3, c4);
+
+        meta.setAttribute("DataType", "MOS");
     }
 
     private DataGroup doSearch(final MOSRequest req, String tblName, boolean headerOnly) throws IOException, DataAccessException, EndUserException {
@@ -93,29 +128,14 @@ public class QueryMOS extends IpacTablePartProcessor {
             _log.info("querying MOS:" + url);
 
             final Ref<File> catOverlayFile = new Ref<File>(null);
-            Thread catSearchTread = null;
-            // pre-generate gator upload file for catalog overlay
-            if (req.getBooleanParam(MOSRequest.CAT_OVERLAY)) {
-                catOverlayFile.set(File.createTempFile("mosCatOverlayFile-", ".tbl", QueryUtil.getTempDir(req)));
-                Runnable r = new Runnable() {
-                    public void run() {
-                        try {
-                            URLDownload.getDataToFile(createURL(req, true), catOverlayFile.get());
-                        } catch (Exception e) {
-                            _log.error(e);
-                        }
-                    }
-                };
-                catSearchTread = new Thread(r);
-                catSearchTread.start();
-            }
-            // workaround for MOS service bug when launching 2 simultaneously.
-            Thread.sleep(1000);
-            File votable = makeFileName(req);
-            URLDownload.getDataToFile(url, votable);
 
-            if (catSearchTread != null) {
-                catSearchTread.join();
+            TableServerRequest pReq = (TableServerRequest) req.cloneRequest();
+            pReq.removeParam(MOSRequest.TABLE_NAME);
+            String uid = DigestUtils.md5Hex(getUniqueID(pReq));
+
+            File votable = new File(QueryUtil.getTempDir(req), uid+".xml");
+            if (!votable.canRead()) {
+            URLDownload.getDataToFile(url, votable);
             }
 
             DataGroup[] groups = VoTableReader.voToDataGroups(votable.getAbsolutePath(), headerOnly);
@@ -134,22 +154,17 @@ public class QueryMOS extends IpacTablePartProcessor {
 
         } catch (MalformedURLException e) {
             _log.error(e, "Bad URL");
-            throw makeException(e, "MOS Query Failed - bad url.");
+            throw new DataAccessException("MOS Query Failed - bad url.", e);
 
         } catch (IOException e) {
             _log.error(e, e.toString());
-            throw makeException(e, "MOS Query Failed - network error.");
+            throw new DataAccessException("MOS Query Failed - network error.", e);
 
         } catch (Exception e) {
-            throw makeException(e, "MOS Query Failed.");
+            throw new DataAccessException("MOS Query Failed.", e);
         }
 
         return null;
-    }
-
-    private String parseMessageFromServer(String response) {
-        // no html, so just return
-        return response.replaceAll("<br ?/?>", "");
     }
 
     private URL createURL(MOSRequest req, boolean forGator) throws EndUserException, IOException {
@@ -172,6 +187,14 @@ public class QueryMOS extends IpacTablePartProcessor {
         return new URL(url);
     }
 
+    private static String getObsDate(String obsDateParam) {
+        try {
+            DateUtils.parseDate(obsDateParam, new String[]{"yyyy-MM-dd", "yyyy-MM-dd hh:mm:ss", "yyyy-MM-dd'T'hh:mm:ssX"});     // check for valid dates
+            return obsDateParam.replaceAll("[^0-9:-]", " ").trim();   // convert to format expected by MOST
+        } catch (ParseException e) {
+            return null;
+        }
+    }
 
     protected String getParams(MOSRequest req) throws EndUserException, IOException {
         StringBuffer sb = new StringBuffer(100);
@@ -234,19 +257,15 @@ public class QueryMOS extends IpacTablePartProcessor {
             }
         }
 
-        String obsBegin = req.getParam(MOSRequest.OBS_BEGIN);
+        String obsBegin = getObsDate(req.getParam(MOSRequest.OBS_BEGIN));
         if (!StringUtils.isEmpty(obsBegin)) {
-            optionalParam(sb, MOSRequest.OBS_BEGIN, URLEncoder.encode((obsBegin.trim()), "ISO-8859-1"));
+            optionalParam(sb, MOSRequest.OBS_BEGIN, URLEncoder.encode(obsBegin, "ISO-8859-1"));
         }
 
-        String obsEnd = req.getParam(MOSRequest.OBS_END);
+        String obsEnd = getObsDate(req.getParam(MOSRequest.OBS_END));
         if (!StringUtils.isEmpty(obsEnd)) {
-            optionalParam(sb, MOSRequest.OBS_END, URLEncoder.encode((obsEnd.trim()), "ISO-8859-1"));
+            optionalParam(sb, MOSRequest.OBS_END, URLEncoder.encode(obsEnd, "ISO-8859-1"));
         }
-
-        // no longer part of hydra interface
-        //optionalParam(sb, MOSRequest.EPHEM_STEP, req.getParam(MOSRequest.EPHEM_STEP));
-        //optionalParam(sb, MOSRequest.SEARCH_REGION_SIZE, req.getParam(MOSRequest.SEARCH_REGION_SIZE));
 
         return sb.toString();
     }
@@ -255,98 +274,6 @@ public class QueryMOS extends IpacTablePartProcessor {
         // TG is it even used? return req.getServiceSchema();
         return req.getParam(MOSRequest.CATALOG);
     }
-
-    private String convertDate(String msecStr) {
-        long msec = Long.parseLong(msecStr);
-        Date resultdate = new Date(msec);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy M d HH:mm:ss.SSS");
-
-        return sdf.format(resultdate);
-    }
-
-    private static File makeFileName(MOSRequest req) throws IOException {
-        return File.createTempFile("mos-result", ".xml", QueryUtil.getTempDir(req));
-    }
-
-    protected static void requiredParam(StringBuffer sb, String name, double value) throws EndUserException {
-        if (!Double.isNaN(value)) {
-            requiredParam(sb, name, value + "");
-
-        } else {
-            throw new EndUserException("MOS search failed, Catalog is unavailable",
-                    "Search Processor did not find the required parameter: " + name);
-        }
-    }
-
-    protected static void requiredParam(StringBuffer sb, String name, String value) throws EndUserException {
-        if (!StringUtils.isEmpty(value)) {
-            sb.append(param(name, value));
-
-        } else {
-            throw new EndUserException("MOS search failed, Catalog is unavailable",
-                    "Search Processor did not find the required parameter: " + name);
-        }
-    }
-
-    protected static void optionalParam(StringBuffer sb, String name) {
-        sb.append(param(name));
-    }
-
-    protected static void optionalParam(StringBuffer sb, String name, String value) {
-        if (!StringUtils.isEmpty(value)) {
-            sb.append(param(name, value));
-        }
-    }
-
-    protected static void optionalParam(StringBuffer sb, String name, boolean value) {
-        sb.append(param(name, value));
-    }
-
-
-    protected static String param(String name) {
-        return "&" + name;
-    }
-
-    protected static String param(String name, String value) {
-        return "&" + name + "=" + value;
-    }
-
-    protected static String param(String name, int value) {
-        return "&" + name + "=" + value;
-    }
-
-    protected static String param(String name, double value) {
-        return "&" + name + "=" + value;
-    }
-
-    protected static String param(String name, boolean value) {
-        return "&" + name + "=" + (value ? "1" : "0");
-    }
-
-    protected static boolean isHeaderOnlyRequest(TableServerRequest req) {
-        return req.getBooleanParam(HEADER_ONLY_PARAM);
-    }
-
-
-    @Override
-    public void prepareTableMeta(TableMeta meta, List<DataType> columns, ServerRequest request) {
-        super.prepareTableMeta(meta, columns, request);
-        String tblType = request.getParam(MOSRequest.TABLE_NAME);
-        if (tblType == null || tblType.equalsIgnoreCase(MOSRequest.RESULT_TABLE)) {
-            meta.setCenterCoordColumns(new TableMeta.LonLatColumns("ra_obj", "dec_obj"));
-        } else {
-            meta.setCenterCoordColumns(new TableMeta.LonLatColumns("RA_obs", "Dec_obs"));
-        }
-
-        TableMeta.LonLatColumns c1= new TableMeta.LonLatColumns("ra1", "dec1", CoordinateSys.EQ_J2000);
-        TableMeta.LonLatColumns c2= new TableMeta.LonLatColumns("ra2", "dec2", CoordinateSys.EQ_J2000);
-        TableMeta.LonLatColumns c3= new TableMeta.LonLatColumns("ra3", "dec3", CoordinateSys.EQ_J2000);
-        TableMeta.LonLatColumns c4= new TableMeta.LonLatColumns("ra4", "dec4", CoordinateSys.EQ_J2000);
-        meta.setCorners(c1, c2, c3, c4);
-
-        meta.setAttribute("DataType", "MOS");
-    }
-
 
     protected DataGroup getOrbitalElements(DataGroup inData) {
         final List<String> namesLst = Arrays.asList("object_name", "element_epoch", "eccentricity", "inclination",
@@ -404,6 +331,25 @@ public class QueryMOS extends IpacTablePartProcessor {
         return key;
     }
 
+    protected static void requiredParam(StringBuffer sb, String name, String value) throws EndUserException {
+        if (!StringUtils.isEmpty(value)) {
+            sb.append(param(name, value));
+
+        } else {
+            throw new EndUserException("MOS search failed, Catalog is unavailable",
+                    "Search Processor did not find the required parameter: " + name);
+        }
+    }
+
+    protected static void optionalParam(StringBuffer sb, String name, String value) {
+        if (!StringUtils.isEmpty(value)) {
+            sb.append(param(name, value));
+        }
+    }
+
+    protected static String param(String name, String value) {
+        return "&" + name + "=" + value;
+    }
 
 }
 

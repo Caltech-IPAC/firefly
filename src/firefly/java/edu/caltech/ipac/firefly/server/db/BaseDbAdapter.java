@@ -343,12 +343,9 @@ abstract public class BaseDbAdapter implements DbAdapter {
             }
 
             // compact idled databases
-            List<EmbeddedDbInstance> toCompact = dbInstances.values().stream()
+            dbInstances.values().stream()
                     .filter((db) -> db.mayCompact())
-                    .collect(Collectors.toList());
-            if (toCompact.size() > 0) {
-                toCompact.forEach((db) -> compact(db));
-            }
+                    .forEach((db) -> compact(db));
 
             updateDbStats();
 

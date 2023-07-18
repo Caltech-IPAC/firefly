@@ -157,7 +157,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             boolean dbFileCreated = false;
             File dbFile = getDbFile(treq);
             jobExecIf(v -> v.progress(10, "fetching data..."));
-            if (!dbFile.exists()) {
+            if (!dbFile.exists() || !EmbeddedDbUtil.hasTable(treq, dbFile, MAIN_DB_TBL)) {
                 StopWatch.getInstance().start("createDbFile: " + treq.getRequestId());
                 dbFile = createDbFromRequest(treq);
                 dbFileCreated = true;
@@ -325,6 +325,10 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         return File.createTempFile(request.getRequestId(), fileExt, QueryUtil.getTempDir(request));
     }
 
+    /**
+     * In this implementation, this flag is not used.  It will only fetch new data when local data(database) does not exist.
+     * The frequency and amount of caching depend on #getUniqueID and cleanup schedule.
+     */
     public boolean doCache() {return false;}
     public void onComplete(ServerRequest request, DataGroupPart results) throws DataAccessException {}
     public boolean doLogging() {return true;}
