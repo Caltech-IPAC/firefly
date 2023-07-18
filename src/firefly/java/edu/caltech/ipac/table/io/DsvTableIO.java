@@ -22,6 +22,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import static edu.caltech.ipac.table.IpacTableUtil.isKnownType;
+
 /**
  * This is a utility class used to read/write Delimiter-separated values(DSV)
  * file into/from a DataGroup object.
@@ -131,7 +133,7 @@ public class DsvTableIO {
                 for (int i = 0; i < headers.length; i++) {
                     DataType type = headers[i];
                     val = StringUtils.isEmpty(line.get(i)) ? null : line.get(i).trim();
-                    if (!type.isKnownType()) {
+                    if (!isKnownType(type.getDataType())) {
                         IpacTableUtil.guessDataType(type,val);
                     }
                     row.setDataElement(type, type.convertStringToData(val));

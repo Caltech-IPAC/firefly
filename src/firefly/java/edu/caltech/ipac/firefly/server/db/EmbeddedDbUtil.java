@@ -780,7 +780,9 @@ public class EmbeddedDbUtil {
             case LONGVARCHAR:
                 return String.class;
             case TINYINT:
+                return Byte.class;
             case SMALLINT:
+                return Short.class;
             case INTEGER:
                 return Integer.class;
             case BIGINT:

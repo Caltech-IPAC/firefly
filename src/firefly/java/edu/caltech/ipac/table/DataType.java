@@ -23,49 +23,50 @@ import static edu.caltech.ipac.util.StringUtils.*;
 import static org.apache.commons.lang.StringUtils.stripEnd;
 
 /**
- * TODO: need to fix DataType so that it supports these types mapping.
- * VOTable	        FITS    IPACTable   Firefly     Bytes   Meaning
- * --------	        ----	---------   -------     -----   -------
- * boolean	        L	    [char]      boolean     1       Logical
- * bit	            X	    [int]       [byte]      *       Bit
- * unsignedByte     B	    [int]       [byte]      1       Byte (0 to 255)
- * short	        I	    [int]       short       2       Short Integer
- * int	            J	    int         int         4       Integer
- * long	            K	    long        long        8       Long integer
- * char	            A	    char        char        1       ASCII Character
- * unicodeChar	    [B]     [int]       [int]       2       Unicode Character
- * float	        E	    float       float       4       Floating point
- * double	        D	    double      double      8       Double
- * floatComplex	    C	    [char]      [char]      8       Float Complex (ordered pair of float [real, imag])
- * doubleComplex    M	    [char]      [char]      16      Double Complex (ordered pair of double [real, imag])
- * char             [A]     date        date        8       Date
+ * Table below taken from https://www.ivoa.net/documents/VOTable/20191021/REC-VOTable-1.4-20191021.html#ToC11
+ * Added IPACTable and Firefly to show how these data types are mapped
+ * VOTable         FITS  Bytes   Meaning              IPACTable   Firefly   NOTES
+ * --------        ----  -----   -------              ---------   -------   -----------
+ * boolean         L     1       Logical              char        boolean
+ * bit             X     *       Bit                  int         byte
+ * unsignedByte    B     1       Byte (0 to 255)      int         byte
+ * short           I     2       Short Integer        int         short
+ * int             J     4       Integer              int         int
+ * long            K     8       Long integer         long        long
+ * char            A     1       ASCII Character      char        char
+ * unicodeChar           2       Unicode Character    char        char
+ * float           E     4       Floating point       float       float
+ * double          D     8       Double               double      double
+ * floatComplex    C     8       Float Complex        char        float[]   ordered pair of float [real, imag]   (not implemented, yet)
+ * doubleComplex   M     16      Double Complex       char        double[]  ordered pair of double [real, imag]  (not implemented, yet)
+ * char            A     8       Date                 date        date      Date is not a type for VOTable FITS.
  */
+
+
 public class DataType implements Serializable, Cloneable {
 
     public enum Visibility {show, hide, hidden};
 
-    private static final String DOUBLE = "double";
-    private static final String REAL = "real";
-    public static final String LOCATION = "location";
-
-    private static final String FLOAT = "float";
+    private static final String BOOLEAN = "boolean";
+    private static final String BIT = "bit";
+    private static final String BYTE = "unsignedByte";
+    private static final String SHORT = "short";
     private static final String INTEGER = "int";
     private static final String LONG = "long";
-    public static final String CHAR = "char";
-    private static final String BOOLEAN = "boolean";
-    private static final String BOOL = "bool";
-    private static final String S_DOUBLE = "d";
-    private static final String S_REAL = "r";
+    private static final String CHAR = "char";
+    private static final String UNI_CHAR = "unicodeChar";
+    private static final String FLOAT = "float";
+    private static final String DOUBLE = "double";
+    private static final String COMPLEX_FLOAT = "floatComplex";
+    private static final String COMPLEX_DOUBLE = "doubleComplex";
 
-    private static final String S_FLOAT = "f";
-    private static final String S_INTEGER = "i";
-    private static final String S_LONG = "l";
-    private static final String S_CHAR = "c";
-    private static final String S_BOOL = "b";
+    public static final String REAL = "real";      // IPAC table
+    public static final String DATE = "date";      // IPAC table
+    public static final String LOCATION = "location";
     public static final String LONG_STRING = "long_string";
 
-    private static final List<String> FLOATING_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT, S_DOUBLE, S_REAL, S_FLOAT);
-    private static final List<String> INT_TYPES = Arrays.asList(INTEGER, LONG, S_INTEGER, S_LONG);
+    private static final List<String> FLOATING_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT);
+    private static final List<String> INT_TYPES = Arrays.asList(INTEGER, LONG);
     public static final List<String> NUMERIC_TYPES = Stream.concat(FLOATING_TYPES.stream(), INT_TYPES.stream()).collect(Collectors.toList());
     private static final Pattern precisiontPattern = Pattern.compile("^(HMS|DMS|[EFG])?(\\d*)$", Pattern.CASE_INSENSITIVE);
 
@@ -165,7 +166,7 @@ public class DataType implements Serializable, Cloneable {
     public void setDataType(Class type) {
         this.type = type;
         if (type != null && typeDesc == null) {
-            typeDesc = resolveTypeDesc();
+            typeDesc = typeToDesc(type);
         }
     }
 
@@ -337,9 +338,9 @@ public class DataType implements Serializable, Cloneable {
      * Firefly has 3 metas that affect the formatting of the column's data.  They are
      * listed below in order of highest to lowest precedence.
      *
-     * fmtDisp		: A Java format string.  It can be used to format any type.  i.e.  "cost $%.2f"
-     * format		: Same as fmtDisp
-     * precision	: This only applies to floating point numbers.
+     * fmtDisp      : A Java format string.  It can be used to format any type.  i.e.  "cost $%.2f"
+     * format       : Same as fmtDisp
+     * precision    : This only applies to floating point numbers.
      *                A string Tn where T is either F, E, G, HMS, or DMS
      *                If T is not present, it defaults to F.
      *                When T is F, E, HMS, or DMS, n is the number of significant figures after the decimal point.
@@ -491,19 +492,6 @@ public class DataType implements Serializable, Cloneable {
         }
     }
 
-    public boolean isKnownType() {
-        return (type ==Boolean.class ||
-                type ==String.class  ||
-                type ==Double.class  ||
-                type ==Float.class   ||
-                type ==Integer.class ||
-                type ==Short.class ||
-                type ==Byte.class ||
-                type ==Long.class ||
-                type ==HREF.class
-        );
-    }
-
     /**
      * Convert a string into an object
      * @param s string representation of an object
@@ -599,53 +587,49 @@ public class DataType implements Serializable, Cloneable {
         return null;
     }
 
-    private String resolveTypeDesc() {
-
-        int w = getWidth();
-        boolean useShortType = w > 0 && w < 6;
-        if (type == null) type = String.class;
-
-        String typeDesc = useShortType ? S_CHAR : CHAR;
-        if (type.equals(Double.class))
-            typeDesc = useShortType ? S_DOUBLE : DOUBLE;
-        else if (type.equals(Float.class))
-            typeDesc = useShortType ? S_FLOAT : FLOAT;
-        else if (type.equals(Integer.class) || type.equals(Short.class) || type.equals(Byte.class))
-            typeDesc = useShortType ? S_INTEGER : INTEGER;
-        else if (type.equals(Long.class))
-            typeDesc = useShortType ? S_LONG : LONG;
-        else if (type.equals(Boolean.class))
-            typeDesc = useShortType ? S_BOOL : BOOLEAN;
-
-        return typeDesc;
-    }
-
     public String getDerivedFrom() {
         if (getDesc() == null) return null;
         String[] derived = groupMatch(String.format("^\\(%s=(.*)\\).*", DERIVED_FROM), getDesc(), Pattern.DOTALL);  // allow new-line in description.
         return derived == null ? null : derived[0];
     }
 
-    public static Class descToType(String type) {
-        switch (type) {
+    public static String typeToDesc(Class type) {
+
+        if (type == Double.class)   return DOUBLE;
+        if (type == Float.class)    return FLOAT;
+        if (type == Long.class)     return LONG;
+        if (type == Integer.class)  return INTEGER;
+        if (type == Short.class)    return SHORT;
+        if (type == Boolean.class)  return BOOLEAN;
+        if (type == Byte.class)     return BYTE;
+        if (type == Date.class)     return DATE;
+
+        return CHAR;
+    }
+
+    public static Class descToType(String desc) {
+        switch (desc) {
             case DOUBLE:
-            case S_DOUBLE:
+            case COMPLEX_DOUBLE:
             case REAL:
-            case S_REAL:
                 return Double.class;
             case FLOAT:
-            case S_FLOAT:
+            case COMPLEX_FLOAT:
                 return Float.class;
             case LONG:
-            case S_LONG:
                 return Long.class;
             case INTEGER:
-            case S_INTEGER:
                 return Integer.class;
-            case BOOL:
+            case SHORT:
+                return Short.class;
             case BOOLEAN:
-            case S_BOOL:
                 return Boolean.class;
+            case BIT:
+            case BYTE:
+                return Byte.class;
+            case DATE:
+                return Date.class;
+            case UNI_CHAR:
             case LOCATION:
                 return String.class;
             default:

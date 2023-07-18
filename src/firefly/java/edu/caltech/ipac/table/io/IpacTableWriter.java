@@ -8,14 +8,14 @@ import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.*;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
-import static edu.caltech.ipac.table.IpacTableUtil.createMetaFromColumns;
+import static edu.caltech.ipac.table.DataType.typeToDesc;
+import static edu.caltech.ipac.table.IpacTableUtil.*;
 import static edu.caltech.ipac.table.TableMeta.*;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -94,7 +94,7 @@ public class IpacTableWriter {
                 IpacTableUtil.writeAttributes(out, atts, false);
 
                 dt.setDataType(String.class);
-                dt.setTypeDesc(DataType.CHAR);
+                dt.setTypeDesc("char");
             });
 
         // make sure derived columns are marked
@@ -112,9 +112,19 @@ public class IpacTableWriter {
                 String prec = col.getPrecision().toUpperCase();
                 if (prec.startsWith("HMS") || prec.startsWith("DMS")) {
                     col.setDataType(String.class);
-                    col.setTypeDesc(DataType.CHAR);
+                    col.setTypeDesc("char");
                 }
             });
+
+        // fix unsupported types
+        modHeaders.stream()
+                .filter(dt -> !isKnownType(dt.getDataType()))
+                .forEach( dt -> {
+                    List<DataGroup.Attribute> atts = Arrays.asList(TableMeta.makeAttribute(TYPE_TAG, dt.getKeyName(), dt.getTypeDesc()));
+                    IpacTableUtil.writeAttributes(out, atts, false);
+                    dt.setDataType(mapToIpac(dt.getDataType()));
+                    dt.setTypeDesc(typeToDesc(dt.getDataType()));
+                });
 
         // print column headers
         IpacTableUtil.writeHeader(out, modHeaders);
