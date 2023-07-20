@@ -202,11 +202,10 @@ const getKey= (threeOp, band) =>
  */
 function updateDataProducts(action, firstTime, tbl_id, activateParams, abortLastPromise=undefined) {
 
-    abortLastPromise && abortLastPromise();
-
     const layoutChange= action?.type===MultiViewCntlr.CHANGE_VIEWER_LAYOUT ||
         action?.type===MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA;
 
+    abortLastPromise && !layoutChange && abortLastPromise();
 
     const {imageViewerId,dpId}= activateParams;
     let continuePromise= true;
