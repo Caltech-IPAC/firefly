@@ -47,8 +47,8 @@ export const dropDownMap = {
     WorkspaceDropDownCmd: {view: <WorkspaceDropdown />},
     DLGeneratedDropDownCmd: {view: <DLGeneratedDropDown/>, layout: {width: '100%'}},
     // --- testing
-    TestSearch: {view: <TestSearchPanel />},
-    TestSearches: {view: <TestQueriesPanel />}
+    TestSearch: {view: <TestSearchPanel />, layout: {width: '100%'}},
+    TestSearches: {view: <TestQueriesPanel />, layout: {width: '100%'}}
 
 };
 

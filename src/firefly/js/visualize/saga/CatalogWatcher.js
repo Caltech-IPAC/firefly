@@ -140,7 +140,7 @@ function handleCatalogUpdate(tbl_id) {
 
 
     const catalogPtType= getCatalogPtType(sourceTable);
-    const columns= catalogPtType===PointType.WORLD ? findTableCenterColumns(sourceTable) : findImageCenterColumns(sourceTable);
+    const columns= catalogPtType===PointType.WORLD ? findTableCenterColumns(sourceTable,true) : findImageCenterColumns(sourceTable);
 
     // recenterImage(sourceTable);
     const c1= catalogPtType===PointType.WORLD ? columns.lonCol : columns.xCol;

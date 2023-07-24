@@ -131,6 +131,8 @@ const OBSTAPCOLUMNS = [
     ['instrument_name',   'meta.id;instr',              'Provenance.ObsConfig.Instrument.name']
 ];
 
+const SSA_COV_UTYPE='char.spatialaxis.coverage.location.value';
+
 const SERVICE_DESC_CNAMES = [ 'id', 'access_url', 'service_def', 'error_message', 'semantics',
     'description', 'content_type', 'content_length'];
 
@@ -601,9 +603,10 @@ class TableRecognizer {
 
     /**
      * search center columns pair by guessing the column name
+     * @param {boolean} acceptArrayCol - if true then allow of a single column with an array entry for RA and Dec
      * @returns {null|CoordColsDescription}
      */
-    guessCenterColumnsByName() {
+    guessCenterColumnsByName(acceptArrayCol ) {
         this.centerColumnsInfo = undefined;
 
         const columns= getColumns(this.tableModel);
@@ -639,7 +642,15 @@ class TableRecognizer {
             return (lonCol && latCol) ? this.setCenterColumnsInfo([lonCol, latCol]) : undefined;
         };
 
-        return (guess('ra','dec') || guess('lon', 'lat') || guess('ra','dec',true) || guess('lon', 'lat',true));
+        const centerColumnInfo= (guess('ra','dec') || guess('lon', 'lat') || guess('ra','dec',true) || guess('lon', 'lat',true));
+        if (centerColumnInfo) return centerColumnInfo;
+
+        const c= getColumn(this.tableModel, 'coord_obs');
+        if (acceptArrayCol && c?.utype?.toLowerCase().includes(SSA_COV_UTYPE) && c?.arraySize &&
+            (c?.type==='double' || c?.type==='float')) {
+            return this.setCenterColumnsInfo([c,c]);
+        }
+        return undefined;
     }
 
     /**
@@ -656,14 +667,15 @@ class TableRecognizer {
     /**
      * return center position or catalog coordinate columns and the associate*d coordinate system
      * by checking table meta, UCD values, Utype, ObsCore column name and guessing.
+     * @param {boolean} acceptArrayCol - if true then allow of a single column with an array entry for RA and Dec
      * @returns {null|CoordColsDescription}
      */
-    getCenterColumns() {
+    getCenterColumns(acceptArrayCol= false) {
 
         if (this.isCenterColumnMetaDefined()) return this.getCenterColumnsOnMeta();
         
         return  this.getVODefinedCenterColumns() ||
-                (isEmpty(this.centerColumnCandidatePairs) && this.guessCenterColumnsByName());
+                (isEmpty(this.centerColumnCandidatePairs) && this.guessCenterColumnsByName(acceptArrayCol));
     }
 
     getRegionColumnOnUCD(cols) {
@@ -743,11 +755,12 @@ class TableRecognizer {
  * find the center column base on the table model of catalog or image metadata
  * Investigate table meta data a return a CoordColsDescription for two columns that represent and object in the row
  * @param {TableModel|undefined} table
+ * @param {boolean} acceptArrayCol - if true then allow of a single column with an array entry for RA and Dec
  * @return {CoordColsDescription|null|undefined}
  */
-export function findTableCenterColumns(table) {
+export function findTableCenterColumns(table,acceptArrayCol=false) {
     const tblRecog = get(table, ['tableData', 'columns']) && TableRecognizer.newInstance(table);
-    return tblRecog && tblRecog.getCenterColumns();
+    return tblRecog && tblRecog.getCenterColumns(acceptArrayCol);
 }
 
 export function findImageCenterColumns(table) {
@@ -1031,7 +1044,7 @@ export function hasCoverageData(tableOrId) {
     if (!getBooleanMetaEntry(table,MetaConst.COVERAGE_SHOWING,true)) return false;
     if (!table) return false;
     if (!table.totalRows) return false;
-    return !isEmpty(findTableRegionColumn(table)) || !isEmpty(findTableCenterColumns(table)) || !isEmpty(getCornersColumns(table));
+    return !isEmpty(findTableRegionColumn(table)) || !isEmpty(findTableCenterColumns(table,true)) || !isEmpty(getCornersColumns(table));
 }
 
 

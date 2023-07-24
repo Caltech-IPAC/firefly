@@ -339,9 +339,14 @@ function computePointDrawLayer(drawLayer, tableData, columns) {
     if (lonIdx<0 || latIdx<0) return null;
     const dataArray= tableData?.data ?? [];
 
-    const makeDrawPoint= (d) => useImagePts ?
-                                   makeImagePt(d[lonIdx],d[latIdx]) :
-                                   makeWorldPt(d[lonIdx],d[latIdx],columns.csys,true, angleInRadian);
+
+    const makeDrawPoint= (d) => {
+        const lonVal= lonIdx!==latIdx ? d[lonIdx] : d[lonIdx][0];
+        const latVal= lonIdx!==latIdx ? d[latIdx] : d[latIdx][1];
+        return useImagePts ?
+            makeImagePt(lonVal,latVal) :
+            makeWorldPt(lonVal,latVal,columns.csys,true, angleInRadian);
+    };
     let drawData= [];
 
 
@@ -478,11 +483,19 @@ function computePointHighlightLayer(drawLayer, columns) {
 
 
     const useImagePts= catalogType===CatalogType.POINT_IMAGE_PT;
-    const raStr= getCellValue(tbl,drawLayer.highlightedRow, useImagePts ? columns.xCol :columns.lonCol);
-    const decStr= getCellValue(tbl,drawLayer.highlightedRow, useImagePts ? columns.yCol :columns.latCol);
-    if (!raStr || !decStr) return null;
+    let ra, dec;
+    if (!useImagePts && columns.latCol===columns.latCol) {
+        const valueAry= getCellValue(tbl,drawLayer.highlightedRow, columns.lonCol);
+        ra= valueAry[0];
+        dec= valueAry[1];
+    }
+    else {
+        ra= getCellValue(tbl,drawLayer.highlightedRow, useImagePts ? columns.xCol :columns.lonCol);
+        dec= getCellValue(tbl,drawLayer.highlightedRow, useImagePts ? columns.yCol :columns.latCol);
+    }
+    if (!ra || !dec) return null;
 
-    const pt= useImagePts ? makeImagePt(raStr,decStr) : makeWorldPt( raStr, decStr, columns.csys, true, angleInRadian);
+    const pt= useImagePts ? makeImagePt(ra,dec) : makeWorldPt( ra, dec, columns.csys, true, angleInRadian);
     const s = drawLayer.drawingDef.size || 5;
     const s2 = DrawUtil.getSymbolSizeBasedOn(DrawSymbol.X, Object.assign({}, drawLayer.drawingDef, {size: s}));
     const obj= PointDataObj.make(pt, s, drawLayer.drawingDef.symbol);

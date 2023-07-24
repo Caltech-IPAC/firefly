@@ -271,6 +271,7 @@ function convertPolygonToSelection(plot,polygonAry) {
     const maxY= Math.max(...yAry);
     const pt0= cc.getWorldCoords(makeDevicePt(minX,maxY));
     const pt1= cc.getWorldCoords(makeDevicePt(maxX,minY));
+    if (!pt0 || !pt1) return {};
     const sel= {pt0,pt1};
     const imBoundSel= getImageBoundsSelection(sel,CsysConverter.make(plot), SelectedShape.rect.key,
         getPlotViewById(visRoot(),plot.plotId)?.rotation ?? 0);

@@ -22,10 +22,11 @@ import {ValidationField} from '../ValidationField.jsx';
 import {
     AREA, CHECKBOX, CIRCLE, CONE_AREA_KEY, ENUM, FLOAT, INT, POINT, POLYGON, POSITION, UNKNOWN
 } from './DynamicDef.js';
+import {EmbeddedPositionSearchPanel} from './EmbeddedPositionSearchPanel.jsx';
 import {findFieldDefType} from './ServiceDefTools.js';
 
 const DEF_LABEL_WIDTH = 100;
-const DEF_AREA_EXAMPLE = 'Example: 20.7 21.5, 20.5 20.5, 21.5 20.5, 21.5 21.5';
+export const DEF_AREA_EXAMPLE = 'Example: 20.7 21.5, 20.5 20.5, 21.5 20.5, 21.5 21.5';
 const BULLET = String.fromCharCode(0x2013) + '  ';
 
 export const makeUnitsStr = (units) => !units ? '' : ` (${getFormattedWaveLengthUnits(units)})`;
@@ -58,11 +59,11 @@ export function getSpacialSearchType(request, fieldDefAry) {
 
 
 /**
- *
  * @param params
  * @param params.fieldDefAry
  * @param params.noLabels
  * @param params.popupHiPS
+ * @param params.toolbarHelpId
  * @param params.plotId
  * @param params.insetSpacial
  * @returns {{}}
@@ -99,7 +100,7 @@ export function makeAllFields({fieldDefAry, noLabels=false, popupHiPS, toolbarHe
     panels.useArea = Boolean(panels.areaFields.length);
     panels.useSpacial = Boolean(dynSpacialPanel);
     return panels;
-};
+}
 
 const countFieldDefType= (fieldDefAry, type) => fieldDefAry.filter( (entry) => entry.type===type).length;
 
@@ -171,7 +172,8 @@ function CircleAndPolyFieldPopup({fieldDefAry, typeForCircle= CIRCLE, plotId='de
     );
 }
 
-function PositionAndPolyFieldEmbed({fieldDefAry, plotId, toolbarHelpId, insetSpacial,
+
+export function PositionAndPolyFieldEmbed({fieldDefAry, plotId, toolbarHelpId, insetSpacial,
                                        otherComponents, WrapperComponent}) {
 
     const polyType = findFieldDefType(fieldDefAry, POLYGON);
@@ -179,14 +181,10 @@ function PositionAndPolyFieldEmbed({fieldDefAry, plotId, toolbarHelpId, insetSpa
     const areaType = findFieldDefType(fieldDefAry, AREA);
     const circleType= findFieldDefType(fieldDefAry, CIRCLE);
     const {targetDetails, nullAllowed = false} = posType ?? circleType ?? {};
-    const [getConeAreaOp, setConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY);
-
-
 
     const {
         hipsUrl, centerPt, hipsFOVInDeg = 240, coordinateSys: csysStr = 'EQ_J2000', mocList, sRegion,
         targetPanelExampleRow1, targetPanelExampleRow2} = targetDetails ?? polyType?.targetDetails ?? {};
-    const coordinateSys = CoordinateSys.parse(csysStr) ?? CoordinateSys.EQ_J2000;
 
     let { minValue = 1 / 3600, maxValue = 1 } = areaType ?? circleType ?? {} ;// eslint-disable-line prefer-const
     if (!minValue) minValue= 1/3600;
@@ -200,79 +198,37 @@ function PositionAndPolyFieldEmbed({fieldDefAry, plotId, toolbarHelpId, insetSpa
     if (targetKey && !sizeKey) return false;
     if (!targetKey && sizeKey) return false;
 
-    const doToggle= polyType && (posType||circleType);
+    const usePosition= Boolean(posType||circleType);
+    const usePolygon= Boolean(polyType);
     const initToggle= polyType?.initValue  ? POLY_CHOICE_KEY : CONE_CHOICE_KEY;
     const initCenterPt= initToggle===POLY_CHOICE_KEY  ? polyType?.targetDetails?.centerPt : centerPt;
 
-
-    const doGetConeAreaOp= () => {
-        if (doToggle) return getConeAreaOp() ?? initToggle;
-        if (polyType) return POLY_CHOICE_KEY;
-        return CONE_CHOICE_KEY;
-    };
-
-    const insetStyle= insetSpacial ? {
-        borderRadius: '5px 5px 2px 2px',
-        background: 'white',
-        border: '3px solid rgba(0,0,0,.3)',
-        alignSelf: 'auto',
-        position:'absolute',
-        padding: '0 4px 0 4px',
-        bottom: 30,
-        left: 7
-    } : {};
-
-    const internals= (
-        <>
-            {!insetSpacial && <div style={{paddingTop:10}}/>}
-            {doToggle && <RadioGroupInputField {...{
-                inline: true, fieldKey: CONE_AREA_KEY, wrapperStyle: {paddingBottom: 5, paddingTop: 5},
-                tooltip: 'Chose type of search', initialState: {value: initToggle}, options: CONE_AREA_OPTIONS
-            }} />}
-            {doGetConeAreaOp() === CONE_CHOICE_KEY &&
-                <div style={{paddingTop:5}}>
-                    <TargetPanel {...{
-                        fieldKey:targetKey, labelWidth:60, nullAllowed,
-                        inputStyle:{width: 225},
-                        targetPanelExampleRow1, targetPanelExampleRow2
-                    }}/>
-                    <SizeInputFields {...{
-                        style:{paddingBottom:10},
-                        fieldKey: sizeKey, showFeedback: true, labelWidth: 100, nullAllowed: false,
-                        labelStyle:{textAlign:'right', paddingRight:4},
-                        label: 'Search Radius:',
-                        initialState: {unit: 'arcsec', value: searchAreaInDeg + '', min:minValue, max:maxValue}
-                    }} />
-                </div>
-            }
-            {doGetConeAreaOp() === POLY_CHOICE_KEY &&
-                <PolygonField {...{
-                    style: {paddingTop:5},
-                    hideHiPSPopupPanelOnDismount: false, fieldKey: polygonKey, ...polyType,
-                    desc: 'Coordinates',
-                    targetKey, sizeKey, manageHiPS:false,
-                }} />}
-            {otherComponents && otherComponents}
-        </>
-    );
-
-    const wrappedInternals= WrapperComponent ? <WrapperComponent>{internals}</WrapperComponent> : internals;
-
     return (
-        <div key='targetGroup'
-             style={{display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch', height:'100%',
-                 paddingBottom:insetSpacial?0:20, position: 'relative'}}>
-            <HiPSTargetView {...{
-                hipsUrl, centerPt:initCenterPt, hipsFOVInDeg, mocList, coordinateSys, sRegion, plotId,
-                minSize: minValue, maxSize: maxValue, toolbarHelpId,
-                whichOverlay: doGetConeAreaOp(), setWhichOverlay: doToggle ? setConeAreaOp : undefined,
-                targetKey, sizeKey, polygonKey, style: {minHeight: 300, alignSelf: 'stretch', flexGrow:1}
+        <EmbeddedPositionSearchPanel {...{
+            toolbarHelpId,
+            WrapperComponent,
+            hipsUrl, hipsFOVInDeg,
+            initCenterPt,
+            mocList, sRegion,
+            coordinateSys: csysStr,
+            targetKey,
+            polygonKey,
+            sizeKey,
+            initSelectToggle: initToggle,
+            usePosition,
+            usePolygon,
+            plotId,
+            minValue, maxValue, searchAreaInDeg,
+            targetPanelExampleRow1, targetPanelExampleRow2,
+            polygonExampleRow1:polyType?.targetDetails?.targetPanelExampleRow1,
+            polygonExampleRow2:polyType?.targetDetails?.targetPanelExampleRow2,
+            nullAllowed,
+            insetSpacial,
+            otherComponents,
             }}/>
-            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch', ...insetStyle}}>
-                {wrappedInternals}
-            </div>
-        </div>
+
     );
+
 }
 
 function makeAllAreaFields(fieldDefAry) {
@@ -367,7 +323,7 @@ function CircleField({ fieldKey, desc, tooltip = '', initValue, minValue, maxVal
 }
 
 
-function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', style={},
+export function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', style={},
                           labelWidth = DEF_LABEL_WIDTH, tooltip = 'Enter polygon coordinates search',
                           targetDetails: {targetPanelExampleRow1 = DEF_AREA_EXAMPLE, targetPanelExampleRow2, sRegion}, ...restOfProps }) {
 
