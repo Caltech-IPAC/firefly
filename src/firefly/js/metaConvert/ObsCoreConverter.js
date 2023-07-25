@@ -4,6 +4,7 @@ import {sprintf} from '../externalSource/sprintf.js';
 import {tokenSub} from '../util/WebUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {RangeValues} from '../visualize/RangeValues.js';
+import {getSearchTarget} from '../visualize/saga/CatalogWatcher.js';
 import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
 import {getCellValue, doFetchTable, hasRowAccess, getColumn, getColumns, getMetaEntry} from '../tables/TableUtil.js';
 import {
@@ -122,7 +123,7 @@ export async function getObsCoreSingleDataProduct(table, row, activateParams, se
     if (isDataLink && !isVoTable) dpdtMessage(`${prodType} is not supported`);
 
     if (!hasRowAccess(table, row)) return dpdtMessage('You do not have access to these data.');
-    const positionWP= makeWorldPtUsingCenterColumns(table,row);
+    const positionWP= getSearchTarget(table.request,table) ?? makeWorldPtUsingCenterColumns(table,row);
 
     if (isDataLink) {
         try {
