@@ -22,6 +22,9 @@ import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 import {usePinnedChartInfo, PinnedChartPanel, PINNED_VIEWER_ID, BadgeLabel} from 'firefly/charts/ui/PinnedChartContainer.jsx';
 import {allowPinnedCharts} from '../../charts/ChartUtil.js';
+import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
+import {getAppOptions} from 'firefly/core/AppDataCntlr';
+import {PROP_SHEET} from 'firefly/tables/TableUtil';
 
 const stateKeys= ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'images'];
 const LEFT= 'LEFT';
@@ -93,6 +96,7 @@ function RightSide({expanded, closeable, showXyPlots, showMeta, showFits, dataPr
     const cov= imagesWithCharts || coverageRight;
     const meta= imagesWithCharts && showMeta;
     const fits= imagesWithCharts && showFits;
+    const showPropertySheet = getAppOptions()?.table?.propertySheet === PROP_SHEET.INTEGRATED;
     const {expandedViewerId}= getExpandedChartProps();
     const viewerId = DEFAULT_PLOT2D_VIEWER_ID;
 
@@ -104,7 +108,7 @@ function RightSide({expanded, closeable, showXyPlots, showMeta, showFits, dataPr
         } else {
             return makeActiveChartTab({viewerId, activeLabel, chartExpandedMode, closeable});
         }
-    };
+    }
 
     const style= {height: '100%'};
     const defaultSelected= coverageRight ? 'coverage' : showXyPlots ? 'activeCharts' : 'fits';
@@ -116,6 +120,7 @@ function RightSide({expanded, closeable, showXyPlots, showMeta, showFits, dataPr
             {cov && makeCoverageTab()}
             {meta && makeMultiProductViewerTab({dataProductTableId})}
             {fits && makeFitsPinnedTab()}
+            {showPropertySheet && makePropertySheetTab()}
         </Tabs>
     );
 }
@@ -201,3 +206,10 @@ function searchDesc({showViewsSwitch, showImages, isTriView, showCoverage, leftB
     );
 }
 
+function makePropertySheetTab() {
+    return (
+        <Tab key='rowDetails' name='Details' removable={false} id='rowDetails'>
+            <PropertySheetAsTable detailsTblId='rowDetailsTbl'/>
+        </Tab>
+    );
+}

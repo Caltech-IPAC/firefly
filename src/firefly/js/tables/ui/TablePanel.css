@@ -317,6 +317,11 @@
     background-image: url("~images/icons-2014/24x24_FilterOff_Circle.png");
 }
 
+.PanelToolbar__button.propSheet {
+    background-image: url("~images/icons-2014/36x36-data-info.png");
+    background-size: cover;
+}
+
 .TablePanelInfoWrapper {
     min-width: 430px;
     min-height: 200px;

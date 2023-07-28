@@ -5,12 +5,22 @@
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, truncate, get, set} from 'lodash';
-import {getSearchActions} from '../../core/AppDataCntlr.js';
+import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
 import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/ActionsDropDownButton.jsx';
 
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableUiUpdate} from '../TablesCntlr.js';
-import {uniqueTblId, getTableUiById, getTableUiByTblId, makeBgKey, getResultSetRequest, isClientTable, getTableState, TBL_STATE} from '../TableUtil.js';
+import {
+    uniqueTblId,
+    getTableUiById,
+    getTableUiByTblId,
+    makeBgKey,
+    getResultSetRequest,
+    isClientTable,
+    getTableState,
+    TBL_STATE,
+    PROP_SHEET
+} from '../TableUtil.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableInfo, MetaInfo} from './TableInfo.jsx';
@@ -29,6 +39,7 @@ import {AddColumnBtn} from './AddOrUpdateColumn.jsx';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
+import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
 
 const logger = Logger('Tables').tag('TablePanel');
 
@@ -40,6 +51,7 @@ const TT_TABLE_VIEW = 'Table View';
 const TT_CLEAR_FILTER = 'Remove all filters';
 const TT_SHOW_FILTER = 'Filters can be used to remove unwanted rows from the search results';
 const TT_EXPAND = 'Expand this panel to take up a larger area';
+const TT_PROPERTY_SHEET = 'Show details for the selected row';
 
 
 export function TablePanel(props) {
@@ -71,6 +83,7 @@ export function TablePanel(props) {
     let {leftButtons, rightButtons, showAddColumn} = {...options, ...uiState};
 
     showAddColumn = isClientTable(tbl_id) ? false : showAddColumn;
+    const showPropertySheet = getAppOptions()?.table?.propertySheet === PROP_SHEET.POPUP;
 
     const connector = makeConnector(tbl_id, tbl_ui_id);
 
@@ -146,6 +159,11 @@ export function TablePanel(props) {
                                  title={TT_INFO}
                                  onClick={showInfoDialog}
                                  className='PanelToolbar__button info'/> }
+                            {showPropertySheet &&
+                                <div style={{marginLeft: '4px'}}
+                                     title={TT_PROPERTY_SHEET}
+                                     onClick={showTablePropSheetDialog}
+                                     className='PanelToolbar__button propSheet'/> }
                             {showOptionButton &&
                             <div style={{marginLeft: '4px'}}
                                  title={TT_OPTIONS}
@@ -210,6 +228,15 @@ function showTableInfoDialog(tbl_id)  {
         </div>
     );
     showOptionsPopup({content, title: 'Table Info', modal: true, show: true});
+}
+
+function showTablePropSheetDialog() {
+    const content = (
+        <div className='TablePanelOptionsWrapper'>
+            <PropertySheetAsTable detailsTblId='rowDetailsTbl'/>
+        </div>
+    );
+    showOptionsPopup({content, title: 'Row Details', modal: false, show: true});
 }
 
 const stopPropagation= (ev) => ev.stopPropagation();

@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {chunk, cloneDeep, get, has, isArray, isEmpty, isNil, isObject, isPlainObject, isString, isUndefined, omitBy, padEnd, set, uniqueId} from 'lodash';
+import {chunk, cloneDeep, get, has, isArray, isEmpty, isNil, isObject, isPlainObject, isString, isUndefined, omitBy,
+    padEnd, set, uniqueId, omit, uniq} from 'lodash';
 import Enum from 'enum';
 
 import {getWsConnId} from '../core/AppDataCntlr.js';
@@ -46,7 +47,7 @@ const USE_STRING = [...TEXT, ...DATE];
 // export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT', 'INT', 'FLOAT']);
 export const COL_TYPE = new Enum({ANY:[],TEXT, INT, FLOAT, BOOL, DATE, NUMBER, USE_STRING});
 export const TBL_STATE = new Enum(['ERROR', 'LOADING', 'NO_DATA', 'NO_MATCH', 'OK']);
-
+export const PROP_SHEET = new Enum(['INTEGRATED', 'POPUP']);
 
 /**
  * @param {TableColumn} col
@@ -1059,22 +1060,31 @@ export function tableDetailsView(tbl_id, highlightedRow, details_tbl_id) {
         return {tbl_id: nTblId, error: 'No Data Found'};
     }
 
+    const allColKeys = Object.keys(Object.assign({}, ...dataCols));
+
     const columns = [
-        {name: 'Name', type: 'char', desc: 'Column name'},
-        {name: 'Value', type: 'char'},
-        {name: 'Type', type: 'char'},
-        {name: 'Units', type: 'char'},
-        {name: 'Description', type: 'char'}
-    ];
+        { key: 'name', name: 'Name', type: 'char', desc: 'Column name', dataGetter: (c) => c.label || c.name },
+        { key: 'value', name: 'Value', type: 'char', dataGetter: (c) => getCellValue(tableModel, highlightedRow, c.name) },
+        { key: 'units', name: 'Units', type: 'char', dataGetter: (c) => c.units || '' },
+        { key: 'desc', name: 'Description', type: 'char', dataGetter: (c) => c.desc || '' },
+        { key: 'type', name: 'Type', type: 'char', dataGetter: (c) => getTypeLabel(c) },
+        { key: 'UCD', name: 'UCD', type: 'char', dataGetter: (c) => c.UCD || '' },
+        { key: 'utype', name: 'UType', type: 'char', dataGetter: (c) => c.utype || '' },
+    ].filter((col, index) =>
+        index < 2 || allColKeys.includes(col.key) // filter columns if not present in given data columns, except name and value
+    );
 
-    const data = dataCols.map((c) => {
-        const name  = c.label || c.name;
-        const value = getCellValue(tableModel, highlightedRow, c.name) || '';
-        const type  = getTypeLabel(c);
-        const units = c.units || '';
-        const desc  = c.desc || '';
+    const data = dataCols.map((c) =>
+        columns.map((col) => (col.dataGetter ? col.dataGetter(c) : ''))
+    );
 
-        return [name, value, type, units, desc];
+    // add enum values for filtering of the following columns
+    ['type', 'units', 'UCD'].forEach((colKey) => {
+        if (allColKeys.includes(colKey)) {
+            const colIdx = columns.findIndex((col) => col.key === colKey);
+            const colValues = data.map((rowData) => rowData[colIdx]);
+            columns[colIdx].enumVals = uniq(colValues.filter((d) => d)).join(',');
+        }
     });
 
     const prevDetails = getTblById(nTblId) || {};
@@ -1083,7 +1093,7 @@ export function tableDetailsView(tbl_id, highlightedRow, details_tbl_id) {
         tbl_id: nTblId,
         request,
         title: 'Additional Information',
-        tableData: {columns, data},
+        tableData: {columns: columns.map((col) => omit(col, ['key', 'dataGetter'])), data},
         totalRows: data.length,
         highlightedRow: prevDetails.highlightedRow
     };
