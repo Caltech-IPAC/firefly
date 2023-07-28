@@ -38,7 +38,7 @@ const closeButtonStyle = {'textAlign': 'center', display: 'inline-block', height
 //const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginRight: 20};
 
 
-export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonText,currentVal,multiSelect=false) {
+export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonText,currentVal,multiSelect=false,colTblId) {
 
    if (getTblById(TBL_ID)) {
        hideColSelectPopup();
@@ -81,7 +81,7 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
         columns[idx] = {name: 'Description', prefWidth: widths[idx], visibility: 'show'};
     }
 
-    const tableModel = {totalRows: data.length, tbl_id:TBL_ID, tableData: {columns,  data }, highlightedRow: hlRowNum};
+    const tableModel = {totalRows: data.length, tbl_id:colTblId ?? TBL_ID, tableData: {columns,  data}, highlightedRow: hlRowNum};
 
     if (multiSelect) { //select all columns where use:true
         const selectInfoCls = SelectInfo.newInstance({rowCount: tableModel.totalRows});
