@@ -713,9 +713,7 @@ export function sortTableData(tableData, columns, sortInfoStr) {
     var comparator;
     if (!col.type || ['char', 'c'].includes(col.type) ) {
         comparator = (r1, r2) => {
-            let [s1, s2] = [r1[colIdx], r2[colIdx]];
-            s1 = s1 === '' ? '\u0002' : s1 === null ? '\u0001' : isUndefined(s1) ? '\u0000' : s1;
-            s2 = s2 === '' ? '\u0002' : s2 === null ? '\u0001' : isUndefined(s2) ? '\u0000' : s2;
+            const [s1, s2] = [alterFalsyVal(r1[colIdx]), alterFalsyVal(r2[colIdx])];
             return multiplier * (s1 > s2 ? 1 : -1);
         };
     } else {
@@ -728,6 +726,10 @@ export function sortTableData(tableData, columns, sortInfoStr) {
     }
     tableData.sort(comparator);
     return tableData;
+}
+
+export function alterFalsyVal(s) {
+    return s === '' ? '\u0002' : s === null ? '\u0001' : isUndefined(s) ? '\u0000' : s;
 }
 
 /**

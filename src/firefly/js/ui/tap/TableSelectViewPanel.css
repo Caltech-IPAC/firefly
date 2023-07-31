@@ -64,3 +64,18 @@
     flex-shrink: 0;
 }
 
+.TapSchema {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #cbcbcb;
+}
+
+.TapSchema__toolbar {
+    display: inline-flex;
+    justify-content: space-between;
+    height: 35px;
+    width: 100%;
+    border-bottom: 1px solid #c9c9c9;
+    background-color: #e2e2e2;
+    padding: 2px;
+}
