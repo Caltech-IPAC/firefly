@@ -39,7 +39,7 @@ import {loadAllJobs} from './core/background/BackgroundUtil.js';
 import {
     makeDefImageSearchActions, makeDefTableSearchActions, makeDefTapSearchActions, makeExternalSearchActions
 } from './ui/DefaultSearchActions.js';
-import {PROP_SHEET} from 'firefly/tables/TableUtil';
+import {PROP_SHEET} from 'firefly/tables/ui/PropertySheet';
 
 let initDone = false;
 const logger = Logger('Firefly-init');

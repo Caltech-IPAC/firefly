@@ -18,8 +18,7 @@ import {
     getResultSetRequest,
     isClientTable,
     getTableState,
-    TBL_STATE,
-    PROP_SHEET
+    TBL_STATE
 } from '../TableUtil.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
@@ -39,7 +38,7 @@ import {AddColumnBtn} from './AddOrUpdateColumn.jsx';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
-import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
+import {PropertySheetAsTable, PROP_SHEET} from 'firefly/tables/ui/PropertySheet';
 
 const logger = Logger('Tables').tag('TablePanel');
 

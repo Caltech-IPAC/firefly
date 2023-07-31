@@ -47,7 +47,6 @@ const USE_STRING = [...TEXT, ...DATE];
 // export const COL_TYPE = new Enum(['ALL', 'NUMBER', 'TEXT', 'INT', 'FLOAT']);
 export const COL_TYPE = new Enum({ANY:[],TEXT, INT, FLOAT, BOOL, DATE, NUMBER, USE_STRING});
 export const TBL_STATE = new Enum(['ERROR', 'LOADING', 'NO_DATA', 'NO_MATCH', 'OK']);
-export const PROP_SHEET = new Enum(['INTEGRATED', 'POPUP']);
 
 /**
  * @param {TableColumn} col

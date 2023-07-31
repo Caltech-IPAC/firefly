@@ -3,6 +3,9 @@ import {TablePanel} from 'firefly/tables/ui/TablePanel';
 import React, {useEffect} from 'react';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent';
 import {dispatchTableAddLocal, dispatchTableUiUpdate} from 'firefly/tables/TablesCntlr';
+import Enum from 'enum';
+
+export const PROP_SHEET = new Enum(['INTEGRATED', 'POPUP']);
 
 /**
  * A wrapper/watcher component for property sheet i.e., vertical display of all the data from a single table row, with additional metadata.
