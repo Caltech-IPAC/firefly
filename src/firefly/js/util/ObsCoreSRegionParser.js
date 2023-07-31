@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import { isEmpty} from 'lodash';
+import {isEmpty, isNil} from 'lodash';
 import Enum from 'enum';
 import {CoordinateSys} from '../visualize/CoordSys.js';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
@@ -32,8 +32,12 @@ const errorMessage = {[ErrorRegion.notSupportCoordSys.key]: 'coordinate system i
 
 
 function getPairCoord(sAry, pairIdx) {
+    //if pairIdx included indices that should have returned, for instance, [149,0], then we would only get [149]
+    //The filter() function in JavaScript removes elements that are "falsy" values, and 0 is considered falsy.
+    //That's why 0 was being ignored when we did filter((n) => n)....making the change below in filter fixes this issue
     return pairIdx.map((coord) => (isNaN(sAry[coord]) ? null : Number(sAry[coord])))
-                  .filter((n) => n);
+        .filter((n) => !isNil(n));
+
 }
 
 const makeWpt = (pCoord, coordSys, unit) => {
