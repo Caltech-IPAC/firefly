@@ -211,7 +211,6 @@ export function updateUIFromPlot({plotId, setWhichOverlay, whichOverlay, setTarg
             if (!utWPt || (isValidPoint(utWPt) && !pointEquals(wp, utWPt))) {
                 setTargetWp(wp.toString());
                 if (plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG]) {
-                    convertToSelection(plot,wp,plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG], [],CONE_CHOICE_KEY);
                     canUpdateModalEndInfo ? updateModalEndInfo(plot.plotId) : closeToolbarModalLayers();
                 }
             }
@@ -228,7 +227,6 @@ export function updateUIFromPlot({plotId, setWhichOverlay, whichOverlay, setTarg
             if (polyWpAry?.length) {
                 if (isWpArysEquals(polyWpAry, userEnterPolygon())) return;
                 setPolygon(convertWpAryToStr(polyWpAry, plot));
-                convertToSelection(plot,undefined,undefined,polyWpAry,POLY_CHOICE_KEY);
                 canUpdateModalEndInfo ? updateModalEndInfo(plot.plotId) : closeToolbarModalLayers();
             }
         }
