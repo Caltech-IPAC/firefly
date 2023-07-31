@@ -442,7 +442,7 @@ public class IpacTableUtil {
                     int endoffset = Math.min(pci.endIdx, endOfLine);
                     String val = line.substring(pci.startIdx, endoffset).trim();
 
-                    if (!dt.isKnownType()) {
+                    if (!isKnownType(dt.getDataType())) {
                         IpacTableUtil.guessDataType(dt, val);
                     }
                     applyGuessLogic(dt, val, pci);
@@ -490,6 +490,23 @@ public class IpacTableUtil {
 
     public static IpacTableDef getMetaInfo(BufferedReader reader) throws IOException {
         return doGetMetaInfo(reader, null);
+    }
+
+    public static boolean isKnownType(Class type) {
+        return (type == String.class  ||
+                type == Double.class  ||
+                type == Float.class   ||
+                type == Integer.class ||
+                type == Long.class
+        );
+    }
+
+    public static Class mapToIpac(Class type) {
+        if (type == Short.class)    return Integer.class;
+        if (type == Boolean.class)  return String.class;
+        if (type == Byte.class)     return Integer.class;
+
+        return type;
     }
 
     private static IpacTableDef doGetMetaInfo(BufferedReader reader, File src) throws IOException {
