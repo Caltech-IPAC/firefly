@@ -70,7 +70,7 @@ export function RowDetailsTable({detailsTblId, tblOptions={}, tbl_id, highlighte
         dispatchTableAddLocal(detailsTable, {
             tbl_group: detailsTblId,
             tbl_ui_id: detailsTblId,
-            selectable: true,
+            selectable: false,
             showToolbar: false,
             removable: false,
             showFilters: true,
