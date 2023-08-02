@@ -132,7 +132,8 @@ ColumnOrExpression.propTypes = {
 };
 
 export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidth, tooltip='Table column',
-                           name, nullAllowed, canBeExpression=false, inputStyle, readonly, helper, required, validator}) {
+                           name, nullAllowed, canBeExpression=false, inputStyle, readonly, helper, required, validator,
+                              colTblId=null,onSearchClicked=null}) {
     const value = initValue || getFieldVal(groupKey, fieldKey);
     const colValidator = getColValidator(cols, !nullAllowed, canBeExpression);
     const {valid=true, message=''} = value ? colValidator(value) : {};
@@ -151,7 +152,12 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidt
         helper = (
             <div style={{display: 'inline-block', cursor: 'pointer', paddingLeft: 2, verticalAlign: 'top'}}
                        title={`Select ${name} column`}
-                       onClick={() => showColSelectPopup(cols, onColSelected, `Choose ${name}`, 'OK', val)}>
+                         onClick={() => {
+                             if (!onSearchClicked || onSearchClicked()) {
+                                 showColSelectPopup(cols, onColSelected, `Choose ${name}`, 'OK', val, false, colTblId);
+                             }
+                         }
+                       }>
                 <ToolbarButton icon={MAGNIFYING_GLASS}/>
             </div>);
     }
@@ -197,6 +203,8 @@ ColumnFld.propTypes = {
     inputStyle: PropTypes.object,
     readonly: PropTypes.bool,
     required: PropTypes.bool,
-    helper: PropTypes.element
+    helper: PropTypes.element,
+    colTblId: PropTypes.string,
+    onSearchClicked: PropTypes.func
 };
 

@@ -34,14 +34,14 @@ function HelperComponents({initArgs, cols, columnsModel, serviceUrl, serviceLabe
                 <SpatialSearch {...{cols, serviceUrl, serviceLabel, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
                 <ExposureDurationSearch {...{initArgs}} />
                 <ObsCoreWavelengthSearch {...{initArgs, serviceLabel}} />
-                <ObjectIDSearch {...{cols, initArgs, capabilities, tableName, columnsModel}}/>
+                <ObjectIDSearch {...{cols, capabilities, tableName, columnsModel}}/>
             </>
         ) :
         (
             <>
                 <SpatialSearch {...{cols, serviceUrl, serviceLabel, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
                 <TemporalSearch {...{cols, columnsModel}} />
-                <ObjectIDSearch {...{cols, initArgs, capabilities, tableName, columnsModel}}/>
+                <ObjectIDSearch {...{cols, capabilities, tableName, columnsModel}}/>
             </>
         );
 }
