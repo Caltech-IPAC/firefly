@@ -6,6 +6,37 @@
   - use docker tag: `nightly`
   - [Notes on next version](next-release-details.md)
 
+## Version 2023.2
+- 2023.2.0 - (estimated: Aug 15, 2023)
+  - docker tag: `2023.2.0`
+   
+### _Notes_
+#### This release includes some significant TAP features and a new property sheet support
+
+#### New Features
+- TAP: Improved support for joins : [Firefly-1157](https://github.com/Caltech-IPAC/firefly/pull/1406)
+- TAP: Improved upload object ID search: [Firefly-1150](https://github.com/Caltech-IPAC/firefly/pull/1401)
+- Property Sheet (detail table) support for any table [Firefly-1256](https://github.com/Caltech-IPAC/firefly/pull/1404) 
+- Support Multi-dimensional WAVE-TAB algorithm [Firefly-1169](https://github.com/Caltech-IPAC/firefly/pull/1383)
+- Target Panel: Always show EQ J2000 coordinates [Firefly-1234](https://github.com/Caltech-IPAC/firefly/pull/1385)  
+- Obscore data results shows search target [Firefly-1291](https://github.com/Caltech-IPAC/firefly/pull/1411)  
+
+#### Other changes
+- read FITS tables directly with `nom.tam.fits` (removed star table) [Firefly-1232](https://github.com/Caltech-IPAC/firefly/pull/1390) 
+- improved DCE: [Firefly-1286](https://github.com/Caltech-IPAC/firefly/pull/1408),  [Firefly-1250](https://github.com/Caltech-IPAC/firefly/pull/1391)
+- Firefly now uses React 18 [Firefly-1127](https://github.com/Caltech-IPAC/firefly/pull/1396) 
+- Firefly now uses Mavin central [Firefly-1258](https://github.com/Caltech-IPAC/firefly/pull/1397) 
+
+#### Notable Bug Fixes 
+- Fixed: error in processing s_region values containing zeros  [Firefly-1281](https://github.com/Caltech-IPAC/firefly/pull/1413) 
+- Fixed: TAP UI crashes when selecting TAP_SCHEMA table [Firefly-1292](https://github.com/Caltech-IPAC/firefly/pull/1412) 
+
+
+##### _Pull Requests in this release_
+- [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2023.2+label%3abug)
+- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2023.2+)
+
+
 ## Version 2023.1
 - 2023.1.5 - (June 15, 2023)
   - docker tag: `latest`, `2023.1`, `2023.1.5`
