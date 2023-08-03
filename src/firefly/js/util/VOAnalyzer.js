@@ -1012,6 +1012,7 @@ export function isCatalog(tableOrId) {
     if (isTableWithRegion(table)) return false;
     const {tableMeta, tableData}= table;
     if (!get(tableData, 'columns') || !tableMeta) return false;
+    if (getBooleanMetaEntry(table,MetaConst.COVERAGE_SHOWING,false)) return false;
 
     if (isOrbitalPathTable(table)) return false;
 
