@@ -26,6 +26,7 @@ import {getWsChannel, getWsConnId, getConnectionCount, makeViewerChannel,
 import {dispatchAddCell, dispatchEnableSpecialViewer, LO_VIEW} from '../core/LayoutCntlr.js';
 import {DEFAULT_FITS_VIEWER_ID, DEFAULT_PLOT2D_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
+import {WEB_API_CMD} from './WebApi.js';
 
 const logger = Logger('ApiViewer');
 
@@ -100,7 +101,8 @@ export function getViewer(channel, file=defaultViewerFile, scriptUrl) {
             ...buildImagePart(channel,file,dispatch),
             ...buildTablePart(channel,file,dispatch),
             ...buildChartPart(channel,file,dispatch),
-            ...buildUtilPart(channel,file)
+            ...buildUrlApiLaunchPart(channel,file, dispatch),
+            ...buildUtilPart(channel,file),
         };
 
 
@@ -206,13 +208,23 @@ function buildSlateControl(channel,file,dispatcher) {
     return {addCell, showCoverage, showImageMetaDataViewer};
 }
 
+function buildUrlApiLaunchPart(channel,file, dispatch) {
+    const urlApiLaunch= (paramStr='') => {
+        const viewOp= makeViewerOp(channel,file);
+        viewOp('launching url api', () => {
+            dispatch({type:WEB_API_CMD, payload:{paramStr}});
+        });
+    };
+    return {urlApiLaunch};
+}
+
 
 function buildImagePart(channel,file,dispatch) {
     const viewOp= makeViewerOp(channel,file);
     let defP= {};
 
     /**
-     * @summary set the default params the will be add to image plot request
+     * @summary set the default params that will be added to image plot request
      * @param params
      * @memberof firefly.ApiViewer
      * @public

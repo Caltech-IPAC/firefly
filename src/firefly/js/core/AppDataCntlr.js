@@ -7,7 +7,7 @@ import {flux} from './ReduxFlux';
 import {dispatchAddActionWatcher} from './MasterSaga';
 import {appDataReducer, menuReducer, alertsReducer} from './AppDataReducers.js';
 import Point, {isValidPoint} from '../visualize/Point.js';
-import {getModuleName, getProp, getRootURL} from '../util/WebUtil.js';
+import {getModuleName, getProp, getRootURL, isFullURL} from '../util/WebUtil.js';
 import {dispatchRemoteAction} from './JsonUtils.js';
 import {getWsConn} from './messaging/WebSocketClient';
 
@@ -173,13 +173,14 @@ export function dispatchOnAppReady(callback) {
 
 
 /**
- * Give a channel string return a version the will be the channel for a viewer
+ * Given a channel string return a version of the will be the channel for a viewer
  * @param {String} channel
  * @return {string}
  */
 export function makeViewerChannel(channel, file) {
-    file = file ? '-' + file.replaceAll('.', '_') : '';
-    return channel + CHANNEL_VIEWER_EXTENSION + file;
+    const endFile= isFullURL(file) ? new URL(file).pathname : file;
+    const cleanFile = endFile ? '-' + endFile.replaceAll('.', '_') : '';
+    return channel + CHANNEL_VIEWER_EXTENSION + cleanFile;
 }
 
 export function isAppReady() {

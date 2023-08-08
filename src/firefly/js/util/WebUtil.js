@@ -110,13 +110,14 @@ export function modifyURLToFull(url, rootPath) {
     const lastSlash = docUrl.lastIndexOf('/');
     if (!url && !rootPath) return (lastSlash === docUrl.indexOf('//') + 1) ? docUrl : docUrl.substring(0, lastSlash + 1);
     if (!url) return rootPath;
-    if (isFull(url)) return url;
+    if (isFullURL(url)) return url;
     if (rootPath) return rootPath.endsWith('/') ? rootPath + url : rootPath + '/' + url;
     if (lastSlash === docUrl.indexOf('//') + 1) return docUrl + '/' + url;
     return docUrl.substring(0, lastSlash + 1) + url;
 }
 
-function isFull(url) {
+export function isFullURL(url) {
+    if (!url) return false;
     const hPref = ['http', 'https', '/', 'file'];
     url = url.toLowerCase();
     return hPref.some((s) => url.startsWith(s));
@@ -319,7 +320,7 @@ export function encodeParams(params) {
 /**
  * Returns a string where all characters that are not valid for a complete URL have been escaped.
  * Also, it will do URL rewriting for session tracking if necessary.
- * Fires SESSION_MISMATCH if the seesion ID on the client is different from the one on the server.
+ * Fires SESSION_MISMATCH if the session ID on the client is different from the one on the server.
  *
  * @param url    this could be a full or partial url.  Delimiter characters will be preserved.
  * @param params parameters to be appended to the url.  These parameters may contain
@@ -591,8 +592,11 @@ export function mergeObjectOnly(target, sources) {
 /**
  *
  * Return a function that will only do a search once.
- * The function that takes 2 parameters, validateSearch:Function|boolean, doSearch:Function|undefined
- * When validateSearch search returns true then doSearch is called and search is considered done.
+ * The function that takes 2 parameters:
+ *       validateSearch:Function|boolean,
+ *       doSearch:Function|undefined
+ *       [id]: string, optional
+ * When validateSearch search returns true then doSearch is called and search is considered done for that id
  * To mark the search as done without actually doing it then just pass true as first parameter
  * makeSearchOnce is similar to lodash once but includes a validate as a way to make it done.
  * Note that the execution of the doSearch function is deferred.
@@ -600,13 +604,13 @@ export function mergeObjectOnly(target, sources) {
  * @return {Function} a function with the signature f(validateSearch,doSearch)
  */
 export function makeSearchOnce(defer=true) {
-    let executionComplete= false;
-    return (validateSearch, doSearch) => {
-        if (executionComplete) return;
+    const completedIds=[];
+    return (validateSearch, doSearch, id='default-id-param') => {
+        if (completedIds.includes(id)) return;
         const valid= (isBoolean(validateSearch) && validateSearch) || (isFunction(validateSearch) && validateSearch());
         if (!valid) return;
         if (doSearch) defer ? setTimeout(doSearch,5) : doSearch();
-        executionComplete=true;
+        completedIds.push(id);
     };
 }
 

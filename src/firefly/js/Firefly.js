@@ -26,7 +26,7 @@ import {getJsonProperty, notifyServerAppInit} from './rpc/CoreServices.js';
 import {getPropsWith, mergeObjectOnly, getProp, toBoolean, documentReady,uuid} from './util/WebUtil.js';
 import {dispatchChangeTableAutoScroll, dispatchWcsMatch, visRoot} from './visualize/ImagePlotCntlr.js';
 import {Logger} from './util/Logger.js';
-import {evaluateWebApi, isUsingWebApi, WebApiStat} from './api/WebApi.js';
+import {evaluateWebApi, initWebApi, isUsingWebApi, WebApiStat} from './api/WebApi.js';
 import {WebApiHelpInfoPage} from './ui/WebApiHelpInfoPage.jsx';
 import {dispatchOnAppReady} from './core/AppDataCntlr.js';
 import {getBootstrapRegistry} from './core/BootstrapRegistry.js';
@@ -386,6 +386,7 @@ function renderRoot(root, viewer, props, webApiCommands) {
     }
 
     const rootToUse = root ?? createRoot(e);
+    initWebApi(webApiCommands);
     const webApi= isUsingWebApi(webApiCommands);
     const doAppRender= () => {
         if (props.template === ROUTER) {

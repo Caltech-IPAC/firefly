@@ -99,7 +99,7 @@ CheckboxGroupInputField.propTypes= {
     }),
     forceReinit:  PropTypes.bool,
     fieldKey:   PropTypes.string,
-    labelStyle: PropTypes.string,
+    labelStyle: PropTypes.object,
     labelWidth: PropTypes.number,
 };
 
