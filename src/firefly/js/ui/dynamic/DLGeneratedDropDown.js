@@ -88,7 +88,7 @@ const uiConfig= {
     hideTip: 'Hide data collections chooser',
     chooserTitle: 'Choose Data Collection',
     chooserDetails: 'Click on data collection to search; filter or sort table to find a data collection.',
-    sideBarWidth:460,
+    sideBarWidth:470,
     sideTransition: 'all .5s ease-in-out'
 };
 
@@ -99,15 +99,19 @@ function makeRegistryRequest(url, registryTblId) {
             pageSize: MAX_ROW,
             sortInfo: sortInfoString(['facility_name','obs_collection']),
             tbl_id: registryTblId,
+            inclCols: '"facility_name","collection_label","instrument_name","coverage","band","dataproduct_type","info_url"',
             META_INFO: {
                 'col.facility_name.PrefWidth':6,
-                'col.collection_label.PrefWidth':12,
+                'col.collection_label.PrefWidth':9,
                 'col.instrument_name.PrefWidth':9,
                 'col.coverage.PrefWidth':8,
-                'col.band.PrefWidth':13,
+                'col.band.PrefWidth':12,
                 'col.dataproduct_type.PrefWidth':5,
+                'col.info_url.PrefWidth':1,
 
-                'col.obs_collection.PrefWidth':15,
+                // eslint-disable-next-line quotes
+                'col.info_url.cellRenderer': 'ATag::href=${info_url},target="dce-doc"'+ `,label=<img src='images/info-16x16.png'/>`,
+
 
                 'col.facility_name.label':'Facility',
                 'col.instrument_name.label':'Inst.',
@@ -115,12 +119,13 @@ function makeRegistryRequest(url, registryTblId) {
                 'col.dataproduct_type.label':'Data',
                 'col.collection_label.label':'Collection',
                 'col.band.label':'Bands',
+                'col.info_url.label':'i',
 
+                // the hidden is not necssary anymore because of inclCols, but I am keeping it here for documentation
                 'col.obs_collection.visibility':'hidden',
                 'col.description.visibility':'hidden',
                 'col.desc_details.visibility':'hidden',
                 'col.access_url.visibility':'hide',
-                'col.info_url.visibility':'hidden',
                 'col.access_format.visibility':'hidden',
 
                 [MetaConst.IMAGE_SOURCE_ID] : 'FALSE'
