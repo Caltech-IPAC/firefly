@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {set} from 'lodash';
 import {dispatchUpdateAppData} from '../core/AppDataCntlr.js';
@@ -12,11 +12,21 @@ import {useStoreConnector} from './SimpleComponent.jsx';
 import {StatefulTabs, Tab} from './panel/TabPanel.jsx';
 import {makeSearchOnce} from '../util/WebUtil';
 
+const changeSearchOptionOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
+
 export function SearchPanel({style={}, initArgs={}}) {
     const searchPanelState = useStoreConnector(getSearchInfo);
 
     const {activeSearch, groups, allSearchItems={}, flow='vertical', title} = searchPanelState;
     const searchItem = allSearchItems[activeSearch];
+
+    useEffect(() => {
+        const {searchoption, callId}=initArgs?.urlApi ?? {};
+        changeSearchOptionOnce(
+            Boolean(searchoption),
+            () => dispatchUpdateAppData({searches: {activeSearch: searchoption}}),
+            callId);
+    });
 
     const isSingleSearch = Object.keys(allSearchItems).length === 1;
     if (isSingleSearch) {
@@ -78,17 +88,26 @@ function searchesAsTabs(allSearchItems, initArgs) {
 
 const searchOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
 
+function executeOK(clickFunc,initArgs,searchItem) {
+    searchOnce(
+        () => {
+            if (!initArgs?.urlApi?.execute) return false;
+                            // if search option is not passed or if passed, it must match the rendered searchItem
+            return !initArgs?.urlApi.searchoption || searchItem.name === initArgs?.urlApi.searchoption;
+        },
+        () => clickFunc(),
+        initArgs?.urlApi?.callId
+    );
+}
+
 
 function SearchForm({searchItem, style, initArgs}) {
     const {name, form} = searchItem;
     const {render:Render, ...rest} = form;
 
-    const saveClick= (clickFunc) => initArgs?.urlApi?.execute && searchOnce(true, clickFunc);
-
-
     return (
         <FormPanel groupKey={name} style={style}
-                   getDoOnClickFunc={saveClick}
+                   getDoOnClickFunc={(clickFunc) => executeOK(clickFunc,initArgs,searchItem) }
                    {...rest}>
             <Render {...{searchItem, initArgs}} />
         </FormPanel>

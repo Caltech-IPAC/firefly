@@ -166,6 +166,9 @@ const API_TOOLS_VIEW= `${PLOTS_PREFIX}.apiToolsView`;
 /** Action Type: enable/disable wcs matching*/
 export const IMAGE_PLOT_KEY= 'allPlots';
 
+export const MOUSE_CLICK_REASON= 'mouseClickReason';
+export const OTHER_REASON= 'otherReason';
+
 /**
  * @returns {VisRoot}
  *
@@ -905,11 +908,12 @@ export function dispatchZoomLocking(plotId,zoomLockingEnabled, zoomLockingType) 
 /**
  * Set the plotId of the active plot view
  * @param {string} plotId
+ * @param {string} reason
  */
 
-export function dispatchChangeActivePlotView(plotId) {
+export function dispatchChangeActivePlotView(plotId,reason=OTHER_REASON) {
     if (!isActivePlotView(visRoot(),plotId)) {
-        flux.process({ type: CHANGE_ACTIVE_PLOT_VIEW, payload: {plotId} });
+        flux.process({ type: CHANGE_ACTIVE_PLOT_VIEW, payload: {plotId,reason} });
     }
 }
 
