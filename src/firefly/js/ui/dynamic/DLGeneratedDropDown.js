@@ -99,7 +99,10 @@ function makeRegistryRequest(url, registryTblId) {
             pageSize: MAX_ROW,
             sortInfo: sortInfoString(['facility_name','obs_collection']),
             tbl_id: registryTblId,
-            inclCols: '"facility_name","collection_label","instrument_name","coverage","band","dataproduct_type","info_url"',
+            inclCols:
+                '"facility_name","collection_label","instrument_name",' +
+                '"coverage","band","dataproduct_type","info_url",'+
+                '"obs_collection","access_url","access_format"',
             META_INFO: {
                 'col.facility_name.PrefWidth':6,
                 'col.collection_label.PrefWidth':9,
@@ -121,7 +124,7 @@ function makeRegistryRequest(url, registryTblId) {
                 'col.band.label':'Bands',
                 'col.info_url.label':'i',
 
-                // the hidden is not necssary anymore because of inclCols, but I am keeping it here for documentation
+                // not all the hidden columns are necessary returned anymore because of inclCols, keeping it here for documentation
                 'col.obs_collection.visibility':'hidden',
                 'col.description.visibility':'hidden',
                 'col.desc_details.visibility':'hidden',
