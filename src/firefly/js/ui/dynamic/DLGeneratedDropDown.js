@@ -104,6 +104,7 @@ function makeRegistryRequest(url, registryTblId) {
                 '"coverage","band","dataproduct_type","info_url",'+
                 '"obs_collection","access_url","access_format"',
             META_INFO: {
+                // ---- columns widths
                 'col.facility_name.PrefWidth':6,
                 'col.collection_label.PrefWidth':9,
                 'col.instrument_name.PrefWidth':9,
@@ -112,10 +113,12 @@ function makeRegistryRequest(url, registryTblId) {
                 'col.dataproduct_type.PrefWidth':5,
                 'col.info_url.PrefWidth':1,
 
+                // ---- column render
                 // eslint-disable-next-line quotes
                 'col.info_url.cellRenderer': 'ATag::href=${info_url},target="dce-doc"'+ `,label=<img src='images/info-16x16.png'/>`,
 
 
+                // ---- column title
                 'col.facility_name.label':'Facility',
                 'col.instrument_name.label':'Inst.',
                 'col.coverage.label':'Type',
@@ -124,6 +127,12 @@ function makeRegistryRequest(url, registryTblId) {
                 'col.band.label':'Bands',
                 'col.info_url.label':'i',
 
+                // ---- column tooltip
+                'col.info_url.desc':'Information and help page for this collection',
+                'col.instrument_name.desc':'Instrument name',
+                'col.dataproduct_type.desc':'Data product type- images, spectrum, etc',
+
+                // ---- column visible or hidden
                 // not all the hidden columns are necessary returned anymore because of inclCols, keeping it here for documentation
                 'col.obs_collection.visibility':'hidden',
                 'col.description.visibility':'hidden',
