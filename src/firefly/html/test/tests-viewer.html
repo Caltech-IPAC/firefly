@@ -519,7 +519,7 @@
     </script>
 </template>
 
-<template title="External viewer to load image with title" class="tpl sm">
+<template title="TriView: External viewer to load image with title" class="tpl sm">
     <div id="expected" >
         <div>Click to load table
             <ul class='expected-list'>
@@ -545,6 +545,35 @@
                 url: 'https://irsa.ipac.caltech.edu/ibe//data/akari/akari_images/images/N60/l000.85_b+65.00_ecl_6deg_N60_fixstripe.fits'
 
             });
+        }
+    </script>
+</template>
+
+<template title="TriView: URL API External viewer to load image with title" class="tpl sm">
+    <div id="expected" >
+        <div>Click to load table
+            <ul class='expected-list'>
+                <li>load one image to Tri-view</li>
+            </ul>
+        </div>
+        <div style='padding-top: 10px;'><img style="width: 230px;" src="./images/triview-loaded-image.png"></div>
+    </div>
+    <div id="actual" style="width: 600px; display: flex; flex-direction: column">
+        <ul style='margin: 0 0 0 5px;'>
+            <li><a href="javascript:loadImageIntoTriViewUsingAPI()">Load 1 image to Tri-View</a></li>
+        </ul>
+
+    </div>
+    <script>
+        resizeIframeToHeight('280px');
+
+        function onFireflyLoaded(firefly) {
+            firefly.setViewerConfig(firefly.ViewerType.TriView, 'firefly.html');
+        }
+
+        function loadImageIntoTriViewUsingAPI() {
+            firefly.getViewer().urlApiLaunch(
+                   'api=image&url=https://irsa.ipac.caltech.edu/ibe//data/akari/akari_images/images/N60/l000.85_b%2b65.00_ecl_6deg_N60_fixstripe.fits' )
         }
     </script>
 </template>

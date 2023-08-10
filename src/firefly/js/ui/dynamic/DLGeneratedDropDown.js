@@ -4,6 +4,7 @@ import {makeWorldPt, visRoot} from '../../api/ApiUtilImage.jsx';
 import {dispatchActiveTarget} from '../../core/AppDataCntlr.js';
 import {getComponentState} from '../../core/ComponentCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
+import {dispatchMountFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
 import {getJsonProperty} from '../../rpc/CoreServices.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
@@ -12,7 +13,7 @@ import {dispatchTableFetch, dispatchTableHighlight} from '../../tables/TablesCnt
 import { getCellValue, getColumnIdx, getTblById, getTblRowAsObj, onTableLoaded, } from '../../tables/TableUtil.js';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {cisxAdhocServiceUtype, standardIDs} from '../../util/VOAnalyzer.js';
-import {toBoolean} from '../../util/WebUtil.js';
+import {makeSearchOnce, toBoolean} from '../../util/WebUtil.js';
 import CoordSys from '../../visualize/CoordSys.js';
 import {ensureHiPSInit } from '../../visualize/HiPSListUtil.js';
 import {getHiPSZoomLevelForFOV} from '../../visualize/HiPSUtil.js';
@@ -41,6 +42,7 @@ import HIDE_LEFT from 'images/hide-left-3.png';
 
 export const DL_UI_LIST= 'DL_UI_LIST';
 const HIPS_PLOT_ID= 'dlGeneratedHipsPlotId';
+const GROUP_KEY= 'DL_UI';
 
 let regLoaded= false;
 let regLoading= false;
@@ -86,7 +88,7 @@ const uiConfig= {
     hideTip: 'Hide data collections chooser',
     chooserTitle: 'Choose Data Collection',
     chooserDetails: 'Click on data collection to search; filter or sort table to find a data collection.',
-    sideBarWidth:460,
+    sideBarWidth:470,
     sideTransition: 'all .5s ease-in-out'
 };
 
@@ -97,15 +99,19 @@ function makeRegistryRequest(url, registryTblId) {
             pageSize: MAX_ROW,
             sortInfo: sortInfoString(['facility_name','obs_collection']),
             tbl_id: registryTblId,
+            inclCols: '"facility_name","collection_label","instrument_name","coverage","band","dataproduct_type","info_url"',
             META_INFO: {
                 'col.facility_name.PrefWidth':6,
-                'col.collection_label.PrefWidth':12,
+                'col.collection_label.PrefWidth':9,
                 'col.instrument_name.PrefWidth':9,
                 'col.coverage.PrefWidth':8,
-                'col.band.PrefWidth':13,
+                'col.band.PrefWidth':12,
                 'col.dataproduct_type.PrefWidth':5,
+                'col.info_url.PrefWidth':1,
 
-                'col.obs_collection.PrefWidth':15,
+                // eslint-disable-next-line quotes
+                'col.info_url.cellRenderer': 'ATag::href=${info_url},target="dce-doc"'+ `,label=<img src='images/info-16x16.png'/>`,
+
 
                 'col.facility_name.label':'Facility',
                 'col.instrument_name.label':'Inst.',
@@ -113,12 +119,13 @@ function makeRegistryRequest(url, registryTblId) {
                 'col.dataproduct_type.label':'Data',
                 'col.collection_label.label':'Collection',
                 'col.band.label':'Bands',
+                'col.info_url.label':'i',
 
+                // the hidden is not necssary anymore because of inclCols, but I am keeping it here for documentation
                 'col.obs_collection.visibility':'hidden',
                 'col.description.visibility':'hidden',
                 'col.desc_details.visibility':'hidden',
                 'col.access_url.visibility':'hide',
-                'col.info_url.visibility':'hidden',
                 'col.access_format.visibility':'hidden',
 
                 [MetaConst.IMAGE_SOURCE_ID] : 'FALSE'
@@ -400,7 +407,7 @@ function RootSearchPanel({additionalChildren, submitSearch, clickFuncRef, docRow
     ) : undefined;
 
     return (
-        <FormPanel submitText = 'Search' groupKey = 'DL_UI'
+        <FormPanel submitText = 'Search' groupKey = {GROUP_KEY}
                    onSubmit = {submitSearch}
                    params={{hideOnInvalid: false}}
                    inputStyle={{border:'none', padding:0, marginBottom:5}}
@@ -462,24 +469,28 @@ function SideBarTable({registryTblId, setSideBarShowing, width}) {
 }
 
 
-const initTargetOnce= once((wp) => wp && dispatchActiveTarget(wp));
-const doSearchOnce= once((clickFunc) => clickFunc() );
+const executeInitOnce= makeSearchOnce(false);
+const executeInitTargetOnce= makeSearchOnce(false);
 
 
 function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url, sideBarShowing, isRegLoaded, setSideBarShowing}) {
 
 
+    const [,setCallId]= useState('none');
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
     const qAna= analyzeQueries(currentTblId);
-    const tabsKey= 'Tabs='+currentTblId;
+    const tabsKey= 'Tabs-'+currentTblId;
+    const matchUrl= initArgs?.urlApi?.url?.[0]===url;
 
     useEffect(() => {
-        if (initArgs?.urlApi?.execute && clickFuncRef.clickFunc) {
-            setTimeout(() => {
-                doSearchOnce(clickFuncRef.clickFunc);
-            },10);
+        if (initArgs?.urlApi?.execute && clickFuncRef.clickFunc && matchUrl) {
+            executeInitOnce(true, () => {
+                setCallId(initArgs.urlApi.callId ?? 'none'); //forces one more render after unmount
+                dispatchMountFieldGroup(GROUP_KEY, false, false); // unmount to force to forget default so it will reinit
+                setTimeout(() => clickFuncRef?.clickFunc?.(),10);
+            }, initArgs.urlApi.callId);
         }
-    }, [clickFuncRef.clickFunc]);
+    }, [clickFuncRef.clickFunc, initArgs?.urlApi?.callId, matchUrl]);
 
 
     const fdAry= qAna?.primarySearchDef.map( (fd) => {
@@ -497,7 +508,9 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
             const originalWp= fdEntryAry.find((fd) => fd.type===POSITION)?.initValue ?? fdEntryAry.find((fd) => fd.type===CIRCLE)?.targetDetails?.centerPt;
             const initFdEntryAry= ingestInitArgs(fdEntryAry,initArgs.urlApi);
             const initWp= initFdEntryAry.find((fd) => fd.type===POSITION)?.initValue ?? initFdEntryAry.find((fd) => fd.type===CIRCLE)?.targetDetails?.centerPt;
-            if (!pointEquals(originalWp,initWp)) initTargetOnce(initWp);
+            if (!pointEquals(originalWp,initWp)) {
+                executeInitTargetOnce(true, () => initWp && dispatchActiveTarget(initWp), initArgs?.urlApi?.callId);
+            }
             return initFdEntryAry;
         }
         else {
@@ -528,7 +541,7 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
         const plot= primePlot(visRoot(),HIPS_PLOT_ID);
         if (!plot || !isHiPS(plot)) return;
         if (!qAna?.primarySearchDef?.[0]?.serviceDef?.cisxUI) return;
-        const request= getFieldGroupResults('DL_UI'); // todo: this might not be right, there might be an array of field groups
+        const request= getFieldGroupResults(GROUP_KEY); // todo: this might not be right, there might be an array of field groups
         const {fds}= findFieldDefInfo(request);
         const tgt= findTargetFromRequest(request,fds);
         if (tgt) return;
@@ -594,7 +607,7 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
         <div style={{display: 'flex', flexDirection:'column', width:'100%', justifyContent:'center', padding: '12px 0px 0 6px'}}>
             <div className='SearchPanel' style={{width:'100%', height:'100%'}}>
                 <SideBarAnimation {...{sideBar,sideBarShowing,width:uiConfig.sideBarWidth}}/>
-                <FieldGroup groupKey='DL_UI' keepState={true} style={{width:'100%'}}>
+                <FieldGroup groupKey={GROUP_KEY} keepState={true} style={{width:'100%'}}>
                     {(isRegLoaded && qAna) ? searchObjFds.length===1 ?
                             <ServDescPanel{...{initArgs, setSideBarShowing, sideBarShowing, fds:searchObjFds[0].fds,
                                 clickFuncRef, submitSearch, isAllSky, qAna,

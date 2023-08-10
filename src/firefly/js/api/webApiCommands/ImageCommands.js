@@ -1,5 +1,5 @@
 import WebPlotRequest, {findInvalidWPRKeys, WPConst} from '../../visualize/WebPlotRequest';
-import {isEmpty,isArray} from 'lodash';
+import {isEmpty,isArray,omit} from 'lodash';
 import {dispatchPlotHiPS, dispatchPlotImage} from '../../visualize/ImagePlotCntlr';
 import {RequestType} from '../../visualize/RequestType';
 import {DEFAULT_FITS_VIEWER_ID} from '../../visualize/MultiViewCntlr';
@@ -134,7 +134,7 @@ function showImage(cmd,inParams) {
         params[WPConst.SIZE_IN_DEG]= params[ReservedParams.SR.name];
         Reflect.deleteProperty(params, ReservedParams.SR.name);
     }
-    const r= WebPlotRequest.makeFromObj(params);
+    const r= WebPlotRequest.makeFromObj(omit(params,['callId']));
     if (!params[WPConst.PLOT_GROUP_ID]) r.setPlotGroupId('webApiGroup');
     const plotId= `${imageRootStr}-${nextId++}`;
     dispatchPlotImage({plotId, wpRequest:r});

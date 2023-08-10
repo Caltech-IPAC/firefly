@@ -1,9 +1,14 @@
 import {isEmpty, isArray, isObject} from 'lodash';
+import React from 'react';
 import {WSCH} from '../core/History';
+import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
+import {Logger} from '../util/Logger.js';
 import {makeWorldPt, parseWorldPt} from '../visualize/Point';
 
 
 const API_STR= 'api';
+
+export const WEB_API_CMD= 'WebApi.Launch';
 
 export const WebApiStat= {
     API_NOT_USED: 'API_NOT_USED',
@@ -106,9 +111,45 @@ export const ReservedParams= {
 /**
  * Returns true if the URL is attempting to use the firefly web api and that the commands array is non-empty
  * @param {Array.<WebApiCommand>} commandsAry - checks to see if array is non-empty
+ * @param {String} url - override url
  * @return {boolean}
  */
-export const isUsingWebApi= (commandsAry) => !isEmpty(commandsAry) && validAPIURL(document.location);
+export const isUsingWebApi= (commandsAry, url) => !isEmpty(commandsAry) && validAPIURL(url ?? document.location);
+
+export function initWebApi(webApiCommands) {
+    dispatchAddActionWatcher({
+        id: 'webApiWatcher',
+        actions: [WEB_API_CMD],
+        callback: receiveRemoteWebApiRequest,
+        params: {webApiCommands,callId:0}
+    });
+}
+
+function receiveRemoteWebApiRequest(action, cancelSelf, {webApiCommands,callId}) {
+    const {payload,type}= action ?? {};
+    if (type!==WEB_API_CMD) return;
+    if (!payload.paramStr) return;
+    const workingUrl= new URL(document.location);
+    const url= workingUrl.origin+workingUrl.pathname + '?'+ payload.paramStr;
+    const webApi= isUsingWebApi(webApiCommands, url);
+    if (!webApi) return;
+    const {status, helpType, contextMessage, cmd, execute,
+        params, badParams, missingParams}= evaluateWebApi(webApiCommands, url);
+    const logger = Logger('remote web api');
+    switch (status) {
+        case WebApiStat.EXECUTE_API_CMD:
+            execute?.(cmd,{...params, callId: `callid-${callId}` });
+            callId++;
+            break;
+        case WebApiStat.SHOW_HELP:
+            logger.warn('show help');
+           break;
+        default:
+            logger.error(`Unexpect status, can't handle web api: ${status}`);
+            break;
+    }
+    return {webApiCommands,callId};
+}
 
 
 
@@ -118,11 +159,12 @@ const {NONE, OVERVIEW_HELP, COMMAND_NOT_FOUND, NO_COMMAND, INVALID_PARAMS, COMMA
 /**
  *
  * @param {Array.<WebApiCommand>} commandsAry
+ * @param {String} [overrideUrl] - is passed use this instead of location
  * @return {UrlApiStatus}
  */
-export function evaluateWebApi(commandsAry) {
+export function evaluateWebApi(commandsAry, overrideUrl) {
 
-    const url= document.location;
+    const url= overrideUrl ?? document.location;
 
     if (isEmpty(commandsAry) || !validAPIURL(url) ) return {status:WebApiStat.API_NOT_USED};
 
@@ -267,6 +309,8 @@ function getDegreeVal(inVal) {
     }
 }
 
+const getV= (v) => isArray(v) ? v[0] : v;
+
 function convertReservedParams(inParams, parameters) {
 
     const outParams= {...inParams};
@@ -278,12 +322,12 @@ function convertReservedParams(inParams, parameters) {
         const decKey= findInsensitiveStr(pKeys,'dec');
         let wp;
         if (inParams[worldPtKey]) {
-            wp= parseWorldPt(inParams[worldPtKey]);
+            wp= parseWorldPt(getV(inParams[worldPtKey]));
             Reflect.deleteProperty(outParams, worldPtKey);
             if (!wp) badParams.push(worldPtKey);
         }
         if (inParams[raKey] || inParams[decKey]) {
-            if (!wp) wp= makeWorldPt(Number(inParams[raKey]), Number(inParams[decKey]));
+            if (!wp) wp= makeWorldPt(Number(getV(inParams[raKey])), Number(getV(inParams[decKey])));
             Reflect.deleteProperty(outParams, raKey);
             Reflect.deleteProperty(outParams, decKey);
             if (!wp) {
@@ -296,7 +340,7 @@ function convertReservedParams(inParams, parameters) {
     if (parameters[ReservedParams.SR.name]) {
         const srKey= findInsensitiveStr(pKeys,'sr');
         if (inParams[srKey]) {
-            const srVal= inParams[srKey].toLowerCase();
+            const srVal= getV(inParams[srKey]);
             const degVal= getDegreeVal(srVal);
             if (!isNaN(degVal)) {
                 Reflect.deleteProperty(outParams, srKey);

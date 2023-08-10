@@ -92,8 +92,8 @@ export default {
  *                                after if is unmounted
  *                                if mounted parameter is false, then keepState defaults to the field groups value set
  *                                when mounted. If specified then it will override the previous setting.
- * @param {Function} reducerFunc
- * @param {string} wrapperGroupKey
+ * @param {Function} [reducerFunc]
+ * @param {string} [wrapperGroupKey]
  */
 export function dispatchMountFieldGroup(groupKey, mounted, keepState, reducerFunc= undefined, wrapperGroupKey) {
     flux.process({type: MOUNT_FIELD_GROUP, payload: {groupKey, mounted, reducerFunc, keepState, wrapperGroupKey} });

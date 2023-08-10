@@ -734,7 +734,9 @@ export function getDevPixScaleDeg(plot) {
         const tmpPlot= changeProjectionCenter(plot, pt00);
         const cc= CysConverter.make(tmpPlot);
         const devP= cc.getDeviceCoords( pt00);
+        if (!devP) return 0;
         const pt2= cc.getWorldCoords( makeDevicePt(devP.x-1, devP.y), plot.imageCoordSys);
+        if (!pt2) return 0;
         return Math.abs(0-pt2.x);
     }
     return 0;
