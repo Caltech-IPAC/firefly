@@ -484,7 +484,7 @@ function computePointHighlightLayer(drawLayer, columns) {
 
     const useImagePts= catalogType===CatalogType.POINT_IMAGE_PT;
     let ra, dec;
-    if (!useImagePts && columns.latCol===columns.latCol) {
+    if (!useImagePts && columns.lonCol===columns.latCol) {
         const valueAry= getCellValue(tbl,drawLayer.highlightedRow, columns.lonCol);
         ra= valueAry[0];
         dec= valueAry[1];

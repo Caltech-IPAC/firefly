@@ -80,7 +80,7 @@ export function createSingleImageActivate(request, imageViewerId, tbl_id, highli
         // const covViewer= ;
         const makeActive= !isDefaultCoverageActive(visRoot(),getMultiViewRoot());
         replotImageDataProducts(request.getPlotId(), makeActive, imageViewerId, tbl_id, [request]);
-    }
+    };
 }
 
 let extractedPlotId= 1;
@@ -174,7 +174,7 @@ export function resetImageFullGridActivePlot(tbl_id, plotIdAry) {
     });
 }
 
-export function changeActivePlotView(plotId,tbl_id) {
+export function changeTableHighlightToMatchPlotView(plotId, tbl_id) {
     const plot= primePlot(visRoot(), plotId);
     if (!plot) return;
     const row= Number(get(plot.attributes, PlotAttribute.DATALINK_TABLE_ROW, -1));
@@ -189,7 +189,7 @@ export function changeActivePlotView(plotId,tbl_id) {
 /**
  *
  * @param {string} activePlotId the new active plot id after the replot
- * @param {string} if true, make the plotId active
+ * @param {string} makeActive if true, make the plotId active
  * @param {string} imageViewerId the id of the viewer
  * @param {string} tbl_id table id of the table with the data products
  * @param {Array.<WebPlotRequest>} reqAry an array of request to execute

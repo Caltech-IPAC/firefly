@@ -9,7 +9,7 @@ import shallowequal from 'shallowequal';
 import {isEmpty,omit,isFunction} from 'lodash';
 import {getSearchActions} from '../../core/AppDataCntlr.js';
 import {getPlotGroupById}  from '../PlotGroup.js';
-import {ExpandType, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
+import {ExpandType, dispatchChangeActivePlotView, MOUSE_CLICK_REASON} from '../ImagePlotCntlr.js';
 import {VisCtxToolbarView, canConvertHipsAndFits} from '../ui/VisCtxToolbarView';
 import {VisInlineToolbarView} from '../ui/VisInlineToolbarView.jsx';
 import {primePlot, isActivePlotView, getAllDrawLayersForPlot, getPlotViewById} from '../PlotViewUtil.js';
@@ -91,7 +91,7 @@ function showClearFilter(pv,dlAry) {
 function showUnselect(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
         .filter( (dl) => {
-            return (dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalog) ||
+            return (dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalogType===CatalogType.POINT) ||
                    (dl.drawLayerTypeId===LSSTFootprint.TYPE_ID);
         })
         .some( (dl) => {
@@ -295,7 +295,7 @@ const ImageViewerDecorate= memo((props) => {
         innerStyle.width= 'calc(100% - 10px)';
     }
 
-    const makeActive= () => pv?.plotId && dispatchChangeActivePlotView(pv.plotId);
+    const makeActive= () => pv?.plotId && dispatchChangeActivePlotView(pv.plotId,MOUSE_CLICK_REASON);
     const showZoom= mousePlotId===pv?.plotId;
     const showDel= showDelAnyway || mousePlotId===pv?.plotId || !plot || pv.nonRecoverableFail;
 

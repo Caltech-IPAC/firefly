@@ -5,14 +5,18 @@
 import {isNil, get, isEmpty, once, isNaN} from 'lodash';
 import Enum from 'enum';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
-import {SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer,
-        dispatchDestroyDrawLayer, dispatchModifyCustomField} from '../DrawLayerCntlr.js';
+import {
+    SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer,
+    dispatchDestroyDrawLayer, dispatchModifyCustomField, dispatchChangeDrawingDef
+} from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById, doFetchTable, isTableUsingRadians} from '../../tables/TableUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {
-    getDrawLayerById, getPlotViewAry, getPlotViewById, isDrawLayerAttached, isDrawLayerVisible, primePlot
+    getDrawLayerById, getDrawLayersByType, getPlotViewAry, getPlotViewById, isDrawLayerAttached,
+    isDrawLayerVisible,
+    primePlot
 } from '../PlotViewUtil.js';
 import {dlRoot} from '../DrawLayerCntlr.js';
 import Catalog, {CatalogType} from '../../drawingLayers/Catalog.js';
@@ -29,6 +33,7 @@ import SearchTarget from '../../drawingLayers/SearchTarget.js';
 import {darker} from '../../util/Color.js';
 import {getMetaEntry} from '../../tables/TableUtil';
 import {MetaConst} from '../../data/MetaConst';
+import {coverageStandardCatalogId} from './CoverageWatcher.js';
 
 
 /** @type {TableWatcherDef} */
@@ -89,6 +94,7 @@ export function watchCatalogs(tbl_id, action, cancelSelf, params) {
     if (!tableManaged && action.type!==TABLE_LOADED) {
         handleCatalogUpdate(tbl_id);
     }
+    const catalogId= catalogWatcherStandardCatalogId(tbl_id);
 
     switch (action.type) {
         case TABLE_LOADED:
@@ -96,16 +102,16 @@ export function watchCatalogs(tbl_id, action, cancelSelf, params) {
             break;
 
         case TABLE_SELECT:
-            dispatchModifyCustomField(tbl_id, {selectInfo:payload.selectInfo});
+            dispatchModifyCustomField(catalogId, {selectInfo:payload.selectInfo});
             break;
 
         case TABLE_HIGHLIGHT:
         case TABLE_UPDATE:
-            dispatchModifyCustomField(tbl_id, {highlightedRow:payload.highlightedRow});
+            dispatchModifyCustomField(catalogId, {highlightedRow:payload.highlightedRow});
             break;
 
         case TABLE_REMOVE:
-            dispatchDestroyDrawLayer(tbl_id);
+            dispatchDestroyDrawLayer(catalogId);
             dispatchDestroyDrawLayer(searchTargetId(tbl_id));
             cancelSelf();
             break;
@@ -123,7 +129,7 @@ export function watchCatalogs(tbl_id, action, cancelSelf, params) {
 }
 
 
-const searchTargetId= (tbl_id) => 'search-target-'+tbl_id;
+const searchTargetId= (tbl_id) => 'catalog_search-target-'+tbl_id;
 
 /**
  * @param table
@@ -179,17 +185,20 @@ function handleCatalogUpdate(tbl_id) {
     );
 }
 
+export const catalogWatcherStandardCatalogId= (tbl_id) => tbl_id+'--'+'catalog-watcher';
+
 function updateDrawingLayer(tbl_id, tableModel, tableRequest,
                             highlightedRow, selectInfo, columns, dataTooBigForSelection, catalogPtType) {
 
     const plotIdAry= visRoot().plotViewAry.map( (pv) => pv.plotId);
     const {title, tableData, tableMeta}= tableModel;
+    const catalogId= catalogWatcherStandardCatalogId(tbl_id);
 
-    const dl= getDrawLayerById(dlRoot(),tbl_id);
+    const dl= getDrawLayerById(dlRoot(),catalogId);
     const {showCatalogSearchTarget}= getAppOptions();
     const searchTarget= showCatalogSearchTarget ? getSearchTarget(tableRequest,tableModel) : undefined;
     if (dl) { // update drawing layer
-        dispatchModifyCustomField(tbl_id, {title, tableData, tableMeta, tableRequest,
+        dispatchModifyCustomField(catalogId, {title, tableData, tableMeta, tableRequest,
                                            highlightedRow, selectInfo, columns,
                                            dataTooBigForSelection});
     }
@@ -197,23 +206,29 @@ function updateDrawingLayer(tbl_id, tableModel, tableRequest,
         if (catalogPtType===PointType.WORLD) {
             const angleInRadian= isTableUsingRadians(tableModel, [columns.lonCol,columns.latCol]);
             const catDL= dispatchCreateDrawLayer(Catalog.TYPE_ID,
-                {catalogId:tbl_id, title, tableData, tableMeta, tableRequest, highlightedRow,
+                {catalogId, tblId:tbl_id, title, tableData, tableMeta, tableRequest, highlightedRow,
                     selectInfo, columns, dataTooBigForSelection, catalogType:CatalogType.POINT,
-                    layersPanelLayoutId: tbl_id, angleInRadian});
-            dispatchAttachLayerToPlot(tbl_id, plotIdAry);
+                    layersPanelLayoutId: catalogId, angleInRadian});
+            // dispatchAttachLayerToPlot(catalogId, plotIdAry);
+            attachToPlot(catalogId,plotIdAry);
+
+            getDrawLayersByType(dlRoot(),Catalog.TYPE_ID) // fine any other draw layers with this table and set the color
+                ?.filter( (dl) => dl.tblId===tbl_id && dl.drawLayerId===coverageStandardCatalogId(tbl_id))
+                ?.forEach( (dl) => dispatchChangeDrawingDef(dl.drawLayerId, {...dl.drawingDef,color:catDL.drawingDef.color}));
             if (searchTarget) {
                 const newDL = dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
                     {
                         drawLayerId: searchTargetId(tbl_id),
                         color: darker(catDL.drawingDef.color),
                         searchTargetPoint: searchTarget,
-                        layersPanelLayoutId: tbl_id,
+                        layersPanelLayoutId: catalogId,
                         titlePrefix: 'Catalog ',
                         canUserDelete: true,
                     });
-                dispatchAttachLayerToPlot(newDL.drawLayerId, plotIdAry, false);
+                // dispatchAttachLayerToPlot(newDL.drawLayerId, plotIdAry, false);
+                attachToPlot(newDL.drawLayerId,plotIdAry);
             }
-            const dl= getDrawLayerById(dlRoot(),tbl_id);
+            const dl= getDrawLayerById(dlRoot(),catalogId);
             if (dl.supportSubgroups  &&  dl.tableMeta[SUBGROUP]) {
                 plotIdAry.map( (plotId) =>  getPlotViewById(visRoot(), plotId))
                     .filter( (pv) => dl.tableMeta[SUBGROUP]!==get(pv, 'drawingSubGroupId'))
@@ -225,12 +240,21 @@ function updateDrawingLayer(tbl_id, tableModel, tableRequest,
             const pv=  findPlotViewUsingFitsPathMeta(getTblById(tbl_id));
             if (!pv) return;
             dispatchCreateDrawLayer(Catalog.TYPE_ID,
-                {catalogId:tbl_id, title, tableData, tableMeta, tableRequest, highlightedRow,
+                {catalogId, title, tableData, tableMeta, tableRequest, highlightedRow,
                     selectInfo, columns, dataTooBigForSelection, catalogType:CatalogType.POINT_IMAGE_PT,
                     layersPanelLayoutId: tbl_id });
-            dispatchAttachLayerToPlot(tbl_id, [pv.plotId]);
+            // dispatchAttachLayerToPlot(catalogId, [pv.plotId]);
+            attachToPlot(catalogId, [pv.plotId]);
         }
     }
+}
+
+function attachToPlot(drawLayerId, plotIdAry=[]) {
+    const attachAry= plotIdAry.filter( (pId) => {
+        const pv= getPlotViewById(visRoot(),pId);
+        return (pv && !pv?.plotViewCtx?.useForCoverage);
+    });
+    dispatchAttachLayerToPlot(drawLayerId, attachAry, false);
 }
 
 function shouldDlBeVisible(dl,pv) {
@@ -244,7 +268,8 @@ function shouldDlBeVisible(dl,pv) {
 
 function attachToCatalog(tbl_id, payload) {
     const {pvNewPlotInfoAry=[], wpRequest, wpRequestAry, redReq, blueReq, greenReq} = payload;
-    const dl= getDrawLayerById(dlRoot(), tbl_id);
+    const catId= catalogWatcherStandardCatalogId(tbl_id);
+    const dl= getDrawLayerById(dlRoot(), catId);
     const table= getTblById(tbl_id);
     if (!dl || !table) return;
     if (getCatalogPtType(table)===PointType.IMAGE) return;
@@ -253,6 +278,7 @@ function attachToCatalog(tbl_id, payload) {
         if (!r) r= (redReq || blueReq || greenReq);
         if (!r || r.getAttributes[PlotAttribute.DATALINK_TABLE_ID]===tbl_id) return; //Don't overlay catalogs on image data products
         const pv= getPlotViewById(visRoot(), info.plotId);
+        if (pv?.plotViewCtx?.useForCoverage) return;
         dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId,false, shouldDlBeVisible(dl,pv));
         const pvSubGroup= pv?.drawingSubGroupId;
         const tableSubGroup= dl.tableMeta[SUBGROUP];
@@ -269,6 +295,7 @@ export function getSearchTarget(r, tableModel, searchTargetStr, overlayPositionS
     if (overlayPositionStr) return parseWorldPt(overlayPositionStr);
     const pos= getMetaEntry(tableModel,MetaConst.OVERLAY_POSITION);
     if (pos) return parseWorldPt(pos);
+    if (!r) return;
     if (r.UserTargetWorldPt) return parseWorldPt(r.UserTargetWorldPt);
     if (r.QUERY) return extractCircleFromADQL(r.QUERY);
     if (r.source?.toLowerCase()?.includes('circle')) return extractCircleFromUrl(r.source);

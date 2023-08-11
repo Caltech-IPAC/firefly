@@ -31,20 +31,22 @@ import {
 import {getNextColor} from '../draw/DrawingDef.js';
 import {DrawSymbol} from '../draw/DrawSymbol.js';
 import {
-    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchModifyCustomField, getDlAry
+    dispatchAttachLayerToPlot, dispatchChangeDrawingDef, dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
+    dispatchModifyCustomField, dlRoot,
+    getDlAry
 } from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {
     dispatchDeletePlotView, dispatchPlotHiPS, dispatchPlotImageOrHiPS, visRoot
 } from '../ImagePlotCntlr.js';
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {PlotAttribute} from '../PlotAttribute.js';
-import {DEFAULT_COVERAGE_PLOT_ID, isDrawLayerVisible} from '../PlotViewUtil';
+import {DEFAULT_COVERAGE_PLOT_ID, getDrawLayersByType, isDrawLayerVisible} from '../PlotViewUtil';
 import {getDrawLayerById, primePlot} from '../PlotViewUtil.js';
 import {makeWorldPt, pointEquals} from '../Point.js';
 import {computeCentralPtRadiusAverage} from '../VisUtil.js';
 import {BLANK_HIPS_URL, isBlankHiPSURL, isHiPS} from '../WebPlot';
 import {WebPlotRequest} from '../WebPlotRequest.js';
-import {getSearchTarget} from './CatalogWatcher';
+import {catalogWatcherStandardCatalogId, getSearchTarget} from './CatalogWatcher';
 import {memorizeLastCall} from 'firefly/util/WebUtil';
 
 /**
@@ -153,9 +155,10 @@ export const getCoverageWatcherDef = () => ({
 });
 
 const getOptions= (inputOptions) => ({...defOptions, ...cleanUpOptions(inputOptions)});
-const centerId = (tbl_id) => (tbl_id+'_center');
-const regionId = (tbl_id) => (tbl_id+'_region');
-const searchTargetId = (tbl_id) => (tbl_id+'_searchTarget');
+const centerId = (tbl_id) => (tbl_id+'_coverage_center');
+const regionId = (tbl_id) => (tbl_id+'_coverage_region');
+export const coverageStandardCatalogId = (tbl_id) => (tbl_id+'_coverage_normal');
+const searchTargetId = (tbl_id) => (tbl_id+'coverage_searchTarget');
 
 /**
  * Action watcher callback: watch the tables and update coverage display
@@ -336,7 +339,7 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
                         preparedTables[tbl_id] = allRowsTable;
                         const isRegion = isTableWithRegion(allRowsTable);
                         const regionAry = getRegionAryFromTable(table);
-                        tblCatIdMap[tbl_id] = (isRegion && regionAry.length > 0) ? [centerId(tbl_id), regionId(tbl_id)] : [tbl_id, searchTargetId(tbl_id)];
+                        tblCatIdMap[tbl_id] = (isRegion && regionAry.length > 0) ? [centerId(tbl_id), regionId(tbl_id)] : [coverageStandardCatalogId(tbl_id), searchTargetId(tbl_id)];
                         updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, preparedTables,
                             isTableUsingRadians(table), tblCatIdMap, preferredHipsSourceURL, preferredHipsSource360URL);
                     }
@@ -552,7 +555,7 @@ function makeOverlayCoverageDrawing() {
                 }
             }
 
-            if (isCatalog(table) && options.ignoreCatalogs) return; // let the catalog watcher just handle the drawing overlays
+            // if (isCatalog(table) && options.ignoreCatalogs) return; // let the catalog watcher just handle the drawing overlays
 
             if (tblCatIdMap[tbl_id]) {
                 const searchTargetDL= table && getDrawLayerById(getDlAry(), searchTargetId(table.tbl_id));
@@ -646,37 +649,51 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, visi
     const createDrawLayer = (cId, dataType, visible, titleAddition='') => {
         const columns= getColumns(dataType,covType,allRowsTable);
         const dl = getDlAry().find((dl) => dl.drawLayerTypeId === Catalog.TYPE_ID && dl.catalogId === cId);
+        const title= `Coverage: ${table?.title || tbl_id}${titleAddition}`;
+        const tableRequest= table?.request;
+        const highlightedRow= table.highlightedRow;
+        const selectInfo= table.selectInfo;
+        const dataTooBigForSelection= table.totalRows > 10000;
 
-        if (dl || isEmpty(columns)) return;
+        if (isEmpty(columns)) return;
+        if (dl) {
+            dispatchModifyCustomField(cId, {title, tableData, tableMeta, tableRequest,
+                highlightedRow, selectInfo, columns, dataTooBigForSelection});
+            return;
+        }
 
+        const catColor= getDrawLayersByType(dlRoot(),Catalog.TYPE_ID)
+            ?.filter( (dl) => dl.tblId===tbl_id && dl.drawLayerId===catalogWatcherStandardCatalogId(tbl_id))[0]?.drawingDef.color; // most times this returns undefined
+
+        const color=  catColor ?? drawOp[cId].color;
         dispatchCreateDrawLayer(Catalog.TYPE_ID, {
             catalogId: cId,
             layersPanelLayoutId,
             tblId: tbl_id,
-            title: `Coverage: ${table.title || tbl_id}${titleAddition}`,
-            color:  drawOp[cId].color,
+            title,
+            color,
             tableData,
             tableMeta,
-            tableRequest: table.request,
-            highlightedRow: table.highlightedRow,
+            tableRequest,
+            highlightedRow,
             catalogType: getCatalogType(dataType),
             columns,
             symbol: drawOp.symbol || lookupOption(options, 'symbol', cId),
             size: drawOp.size || lookupOption(options, 'symbolSize', cId),
-            selectInfo: table.selectInfo,
+            selectInfo,
             angleInRadian: isUsingRadians(dataType,table,columns),
-            dataTooBigForSelection: table.totalRows > 10000,
+            dataTooBigForSelection,
             tableSelection: (dataType === CoverageType.REGION) ? (drawOp[cId].selectOption || TableSelectOptions.all.key) : null,
         });
         dispatchAttachLayerToPlot(cId, plotId, false, visible);
     };
 
     if (covType === CoverageType.BOX) {
-        createDrawLayer(tbl_id, covType, visibleMap[tbl_id] ?? true);
+        createDrawLayer(coverageStandardCatalogId(tbl_id), covType, visibleMap[tbl_id] ?? true);
     } else if (covType === CoverageType.X) {
-        createDrawLayer(tbl_id, covType, visibleMap[tbl_id] ?? true);
+        createDrawLayer(coverageStandardCatalogId(tbl_id), covType, visibleMap[tbl_id] ?? true);
     } else if (covType === CoverageType.ORBITAL_PATH) {
-        createDrawLayer(tbl_id, covType, visibleMap[tbl_id] ?? true);
+        createDrawLayer(coverageStandardCatalogId(tbl_id), covType, visibleMap[tbl_id] ?? true);
     } else if (covType === CoverageType.REGION) {
         const layerType = [CoverageType.X, CoverageType.REGION];
         const layerId = [centerId(tbl_id), regionId(tbl_id)];
@@ -691,7 +708,7 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, visi
         if (!newDL) {
             newDL = dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
                 {
-                    color: darker(drawOp[covType === CoverageType.REGION? centerId(tbl_id) : tbl_id].color),
+                    color: darker(drawOp[covType === CoverageType.REGION? centerId(tbl_id) : coverageStandardCatalogId(tbl_id)].color),
                     drawLayerId: searchTargetId(tbl_id),
                     plotId,
                     searchTargetPoint: searchTarget,

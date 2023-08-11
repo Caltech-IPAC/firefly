@@ -599,6 +599,7 @@ export function mergeObjectOnly(target, sources) {
  * When validateSearch search returns true then doSearch is called and search is considered done for that id
  * To mark the search as done without actually doing it then just pass true as first parameter
  * makeSearchOnce is similar to lodash once but includes a validate as a way to make it done.
+ * It also includes an id so that it runs once per id
  * Note that the execution of the doSearch function is deferred.
  * @param {boolean } defer - if true run the search deferred
  * @return {Function} a function with the signature f(validateSearch,doSearch)

@@ -20,9 +20,11 @@ import {isImageViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
 import {contains, intersects} from './VisUtil.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 
-import { visRoot, ActionScope, dispatchPlotProgressUpdate, dispatchZoom, dispatchRecenter, dispatchProcessScroll,
+import {
+    visRoot, ActionScope, dispatchPlotProgressUpdate, dispatchZoom, dispatchRecenter, dispatchProcessScroll,
     dispatchChangeCenterOfProjection, dispatchChangeActivePlotView,
-    dispatchUpdateViewSize, dispatchRequestLocalData } from './ImagePlotCntlr.js';
+    dispatchUpdateViewSize, dispatchRequestLocalData, MOUSE_CLICK_REASON
+} from './ImagePlotCntlr.js';
 import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseSync.js';
 import {isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
 import {plotMove} from './PlotMove';
@@ -262,7 +264,7 @@ export class ImageViewerLayout extends PureComponent {
 
          switch (mouseState) {
              case DOWN :
-                 dispatchChangeActivePlotView(plotId);
+                 dispatchChangeActivePlotView(plotId,MOUSE_CLICK_REASON);
                  const {scrollX, scrollY}= plotView;
                  this.plotDrag= plotMove(screenX,screenY,makeScreenPt(scrollX,scrollY), mouseDownScreenPt, plotView);
                  break;

@@ -5,7 +5,9 @@
 import {get, isArray, isEmpty} from 'lodash';
 import {Band} from '../Band.js';
 import {TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
-import ImagePlotCntlr, {visRoot, dispatchDeletePlotView, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, {
+    visRoot, dispatchDeletePlotView, dispatchChangeActivePlotView, MOUSE_CLICK_REASON
+} from '../ImagePlotCntlr.js';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../../tables/TableUtil.js';
 import {isDefaultCoverageActive, primePlot} from '../PlotViewUtil.js';
@@ -18,7 +20,7 @@ import {findGridTableRows} from '../../metaConvert/converterUtils.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {isDataProductsTable} from '../../util/VOAnalyzer.js';
-import {zoomPlotPerViewSize, resetImageFullGridActivePlot, changeActivePlotView} from '../../metaConvert/ImageDataProductsUtil.js';
+import {zoomPlotPerViewSize, resetImageFullGridActivePlot, changeTableHighlightToMatchPlotView} from '../../metaConvert/ImageDataProductsUtil.js';
 import {
     dataProductRoot,
     dispatchUpdateDataProducts,
@@ -161,7 +163,14 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
             break;
 
         case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
-            if (!paused) changeActivePlotView(action.payload.plotId,tbl_id, true);
+            if (!paused && action.payload.reason===MOUSE_CLICK_REASON) {
+                // const layout= getLayoutType(getMultiViewRoot(), imageViewerId, tbl_id);
+                // if (layout===GRID) {
+                //     if () {
+                        changeTableHighlightToMatchPlotView(action.payload.plotId,tbl_id);
+                    // }
+                // }
+            }
             break;
 
         case ImagePlotCntlr.ANY_REPLOT:
