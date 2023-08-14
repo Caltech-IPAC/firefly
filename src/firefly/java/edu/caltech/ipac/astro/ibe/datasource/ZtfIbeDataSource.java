@@ -30,51 +30,6 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
         INTENSITY, MASK, UNCERTAINTY, COVERAGE
     }
 
-    public enum DataProduct {
-        SCI("products","sci"),
-        REF("products","ref"),
-        DIFF("products","sci");
-
-        private String dataset;
-        private String table;
-
-
-        DataProduct(String dataset, String imageTable) {
-            this.dataset = dataset;
-            this.table = imageTable;
-        }
-
-        public String getDataset() { return dataset;}
-        public String getTable() { return table;}
-    }
-
-    public ZtfIbeDataSource() {}
-
-    public ZtfIbeDataSource(DataProduct ds) {
-        this(null, ds);
-    }
-
-    public ZtfIbeDataSource(String ibeHost, DataProduct ds) {
-        setupDS(ibeHost, ds.getDataset(), ds.getTable());
-    }
-
-    /**
-     * use the dsInfo to define this datasource.  all values in DataProduct must be populated.
-     * @param dsInfo data set information
-     */
-    @Override
-    public void initialize(Map<String, String> dsInfo) {
-
-        String host = dsInfo.get(HOST);
-        String schema = dsInfo.get(SCHEMA);
-        String table = dsInfo.get(TABLE);
-        setupDS(host, schema, table);
-    }
-
-//====================================================================
-//  ZTF implementation of IBE services
-//====================================================================
-
     @Override
     public IbeDataParam makeDataParam(Map<String, String> pathInfo) {
         IbeDataParam dataParam = new IbeDataParam();
@@ -115,7 +70,7 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
             String baseDir = YYYY + "/" + MMDD + "/" + dddddd + "/";
             String baseFile = "ztf_" + filefracday + "_" + formatfield + "_" + filtercode + "_c" + formatccdid + "_o_" + "q" + qid + ZtfRequest.SCIIMAGE;
             dataParam.setFilePath(baseDir + baseFile);
-        } else if (dataproduct.equalsIgnoreCase("ref")) {
+        } else if (dataproduct.equalsIgnoreCase("ref") || dataproduct.equalsIgnoreCase("deep") ) {
             String fff = formatfield.substring(0,3);
             String refbaseDir = fff + "/" + "field" + formatfield + "/" + filtercode +"/" + "ccd" +formatccdid +"/" + "q" + qid +"/";
             String refbaseFile = "ztf_" + formatfield + "_" + filtercode +"_c" + formatccdid + "_q" + qid + ZtfRequest.REFIMAGE;
@@ -155,6 +110,52 @@ public class ZtfIbeDataSource extends BaseIbeDataSource {
         }
 
         return dataParam;
+    }
+
+    public ZtfIbeDataSource() {}
+
+    public ZtfIbeDataSource(DataProduct ds) {
+        this(null, ds);
+    }
+
+    public ZtfIbeDataSource(String ibeHost, DataProduct ds) {
+        setupDS(ibeHost, ds.getDataset(), ds.getTable());
+    }
+
+    /**
+     * use the dsInfo to define this datasource.  all values in DataProduct must be populated.
+     * @param dsInfo data set information
+     */
+    @Override
+    public void initialize(Map<String, String> dsInfo) {
+
+        String host = dsInfo.get(HOST);
+        String schema = dsInfo.get(SCHEMA);
+        String table = dsInfo.get(TABLE);
+        setupDS(host, schema, table);
+    }
+
+//====================================================================
+//  ZTF implementation of IBE services
+//====================================================================
+
+    public enum DataProduct {
+        SCI("products","sci"),
+        REF("products","ref"),
+        DEEP( "products", "deep"),
+        DIFF("products","sci");
+
+        private String dataset;
+        private String table;
+
+
+        DataProduct(String dataset, String imageTable) {
+            this.dataset = dataset;
+            this.table = imageTable;
+        }
+
+        public String getDataset() { return dataset;}
+        public String getTable() { return table;}
     }
 
     @Override
