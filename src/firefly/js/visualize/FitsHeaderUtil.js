@@ -245,3 +245,47 @@ export function getNumberHeader(plotOrHeader, headerKey, defVal= NaN) {
     return isNaN(n) ? defVal : n;
 }
 
+/**
+ * convert the tables types to 'boolean', 'int', 'long', 'float', 'double', 'string'
+ * @param fdt
+ * @return {string}
+ */
+export function convertFitsTableDataType(fdt) {
+    const aStr= fdt.match(/^[1-9]*/)?.[0];
+    const typeChar= fdt[aStr?.length??0];
+    switch (typeChar) {
+        case 'L': return 'boolean';
+        case 'X': return 'int';
+        case 'B': return 'int';
+        case 'I': return 'int';
+        case 'J': return 'int';
+        case 'K': return 'long';
+        case 'A': return 'string';
+        case 'E': return 'float';
+        case 'D': return 'double';
+        case 'C': return 'string';
+        case 'M':
+        case 'P': return 'string';
+        case 'Q': return 'string';
+        default: return;
+    }
+}
+
+
+export function isFitsTableDataTypeArray(fdt) {
+    const aStr= fdt.match(/^[1-9]*/)?.[0];
+    return (aStr && aStr!=='1');
+}
+
+export function isFitsTableDataTypeSimpleNumeric(fdt) {
+    if (isFitsTableDataTypeArray(fdt)) return false;
+    return isFitsTableDataTypeNumeric(fdt);
+}
+export function isFitsTableDataTypeNumeric(fdt) {
+    const v= convertFitsTableDataType(fdt);
+    return v==='int' || v==='long' || v==='double' || v==='float';
+}
+
+
+
+

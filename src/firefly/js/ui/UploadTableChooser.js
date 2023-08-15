@@ -2,6 +2,7 @@ import React from 'react';
 
 import {dispatchHideDialog, dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {FileAnalysisType, Format} from '../data/FileAnalysis.js';
+import {convertFitsTableDataType, isFitsTableDataTypeArray} from '../visualize/FitsHeaderUtil.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
 import {FileUploadDropdown} from './FileUploadDropdown.jsx';
@@ -21,41 +22,16 @@ const dialogId = 'Upload-spatial-table';
 const UPLOAD_TBL_SOURCE= 'UPLOAD_TBL_SOURCE';
 const EXISTING_TBL_SOURCE= 'EXISTING_TBL_SOURCE';
 
-function isArray(fdt) {
-    const aStr= fdt.match(/^[1-9]*/)?.[0];
-    return (aStr && aStr!=='1');
-}
-
-function convertsFitsDataType(fdt) {
-    const aStr= fdt.match(/^[1-9]*/)?.[0];
-    const typeChar= fdt[aStr?.length??0];
-    switch (typeChar) {
-        case 'L': return 'boolean';
-        case 'X': return 'int';
-        case 'B': return 'int';
-        case 'I': return 'int';
-        case 'J': return 'int';
-        case 'K': return 'long';
-        case 'A': return 'string';
-        case 'E': return 'float';
-        case 'D': return 'double';
-        case 'C': return 'string';
-        case 'M':
-        case 'P': return 'string';
-        case 'Q': return 'string';
-        default: return;
-    }
-}
 
 function getFitsColumnInfo(data) {
     return data
         .filter( (row) => row[1].startsWith('TTYPE'))
         .map(([,,name],idx) => {
             const fdt= data.find( (c) => c[1]===`TFORM${idx+1}`)?.[2];
-            const type= convertsFitsDataType(fdt) ?? 'string';
+            const type= convertFitsTableDataType(fdt) ?? 'string';
             return ({
                     name, use:true, description:'',
-                    type:  type + (isArray(fdt)?'[*]':''),
+                    type:  type + (isFitsTableDataTypeArray(fdt)?'[*]':''),
                     unit: data.find( (c) => c[1]===`TUNIT${idx+1}`)?.[2] ?? '',
                 }
             );

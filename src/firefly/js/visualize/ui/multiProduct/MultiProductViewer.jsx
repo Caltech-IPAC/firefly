@@ -7,55 +7,65 @@ import React, {memo, useContext, useEffect, useState} from 'react';
 import {
     dataProductRoot, dispatchInitDataProducts, dispatchSetSearchParams, dispatchUpdateActiveKey, getActivateParams,
     getActiveFileMenuKey, getActiveFileMenuKeyByKey, getDataProducts, getSearchParams, getServiceParamsAry,
-    isInitDataProducts
 } from '../../../metaConvert/DataProductsCntlr.js';
 import {DPtypes, SHOW_CHART, SHOW_IMAGE, SHOW_TABLE} from '../../../metaConvert/DataProductsType.js';
 import {ServiceDescriptorPanel} from '../../../ui/dynamic/ServiceDescriptorPanel.jsx';
 import {RenderTreeIdCtx} from '../../../ui/RenderTreeIdCtx.jsx';
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {
-    dispatchAddViewer, dispatchViewerUnmounted, GRID, IMAGE, NewPlotMode, PLOT2D, SINGLE
+    dispatchAddViewer, dispatchViewerUnmounted, getLayoutDetails, getMultiViewRoot, GRID, IMAGE, NewPlotMode,
+    PLOT2D, SINGLE
 } from '../../MultiViewCntlr.js';
 import {createMakeDropdownFunc} from './DPDropdown.jsx';
 import {AdvancedMessage, ProductMessage} from './MPMessages.jsx';
 import {MultiProductChoice} from './MultiProductChoice.jsx';
 
+const getInitList= () => dataProductRoot().map( ({dpId}) => dpId);
 
-export function MultiProductViewer ({viewerId= 'DataProductsType', ...props}) {
-    const [init, setInit]= useState(isInitDataProducts(dataProductRoot(), viewerId));
-    useEffect(() => {
-        if (init) return;
-        dispatchInitDataProducts(viewerId);
-        setInit(true);
-    },[viewerId,init]);
+
+export function MultiProductViewer ({viewerId= 'DataProductsType', metaDataTableId, ...props}) {
+    const [initList, setInitList]= useState(getInitList());
     const dpId= viewerId;
     const activateParams=  getActivateParams(dataProductRoot(),dpId);
-    return init && <MultiProductViewerImpl {...{dpId, activateParams, ...props}} />;
+    useEffect(() => {
+        if (initList.includes(viewerId)) return;
+        dispatchInitDataProducts(viewerId);
+        setInitList(getInitList());
+    },[viewerId,initList]);
+
+    const layoutDetails= useStoreConnector(() => {
+        const activateParams=  getActivateParams(dataProductRoot(),dpId);
+        return {
+            image:getLayoutDetails(getMultiViewRoot(), activateParams.imageViewerId, metaDataTableId),
+            chart:getLayoutDetails(getMultiViewRoot(), activateParams.chartViewerId, metaDataTableId)
+        };
+    } );
+
+    return initList.includes(viewerId) && <MultiProductViewerImpl {...{dpId, activateParams, metaDataTableId, layoutDetails, ...props}} />;
 }
 
 MultiProductViewer.propTypes= {
     viewerId : string,
     metaDataTableId : string,
-    enableExtraction: bool
+    enableExtraction: bool,
 };
 
-
-
-const MultiProductViewerImpl= memo(({ dpId, activateParams, metaDataTableId, noProductMessage, enableExtraction=false}) => {
+const MultiProductViewerImpl= memo(({ dpId, activateParams, metaDataTableId, noProductMessage='No Data Available',
+                                        factoryKey, enableExtraction=false}) => {
     const {renderTreeId} = useContext(RenderTreeIdCtx);
     const [currentCTIChoice, setCurrentCTIChoice] = useState(undefined);
     const [lookupKey, setLookKey] = useState(undefined);
     const dataProductsState = useStoreConnector((old) => {
             const newDp= getDataProducts(dataProductRoot(),dpId)||{};
             return (!old || (newDp!==old && newDp.displayType && newDp.displayType!==DPtypes.DOWNLOAD)) ? newDp : old;
-        });
+        }, [dpId, metaDataTableId, factoryKey]);
     const serviceParamsAry = useStoreConnector(() => getServiceParamsAry(dataProductRoot(),dpId));
 
     const {imageViewerId,chartViewerId}= activateParams;
 
-    const {displayType='unsupported', menu,fileMenu, isWorkingState, menuKey,
+    const {displayType=DPtypes.UNSUPPORTED, menu,fileMenu, isWorkingState, menuKey,
         activeMenuLookupKey,singleDownload= false, chartTableDefOption=SHOW_CHART,
-        imageActivate, extractionText, allowsInput=false, serDefParams= undefined}= dataProductsState;
+        imageActivate, allowsInput=false, serDef= undefined}= dataProductsState;
     let {activate}= dataProductsState;
     const extraction= enableExtraction && dataProductsState.extraction;
 
@@ -95,7 +105,7 @@ const MultiProductViewerImpl= memo(({ dpId, activateParams, metaDataTableId, noP
             });
     }, [activate,searchParams,allowsInput]);
 
-    const doResetButton= displayType!==DPtypes.ANALYZE && !isWorkingState && Boolean(searchParams || serDefParams?.some( (sdp) => !sdp.ref));
+    const doResetButton= displayType!==DPtypes.ANALYZE && !isWorkingState && Boolean(searchParams || serDef?.serDefParams?.some( (sdp) => !sdp.ref));
 
     const getInput= displayType===DPtypes.ANALYZE && allowsInput && !searchParams;
     const showMenu= !singleDownload || (singleDownload && (displayType===DPtypes.DOWNLOAD_MENU_ITEM || displayType===DPtypes.MESSAGE));
@@ -108,22 +118,21 @@ const MultiProductViewerImpl= memo(({ dpId, activateParams, metaDataTableId, noP
     return (
         <ViewerRender {...{dpId, dataProductsState, noProductMessage, metaDataTableId,makeDropDown,
                               setCurrentCTIChoice, ctiChoice, ctLookupKey, activateParams,
-                              getInput, doResetButton, }} />
+                              getInput, doResetButton, factoryKey}} />
     );
-
 });
 
 
 function ViewerRender({dpId, dataProductsState, noProductMessage, metaDataTableId, makeDropDown, activateParams,
-                          setCurrentCTIChoice, ctiChoice, ctLookupKey, getInput, doResetButton}) {
-    const {displayType='unsupported', menu, singleDownload, isWorkingState, message, activeMenuLookupKey,
-        menuKey, imageActivate, url, serDefParams, serviceDefRef, sRegion, name:title, standardID }= dataProductsState;
+                          setCurrentCTIChoice, ctiChoice, ctLookupKey, getInput, doResetButton, factoryKey}) {
+    const {displayType=DPtypes.UNSUPPORTED, menu, singleDownload, isWorkingState, message, activeMenuLookupKey,
+        menuKey, imageActivate, url, serDef, serviceDefRef, sRegion, name:title, standardID }= dataProductsState;
     const {imageViewerId,chartViewerId,tableGroupViewerId}=  activateParams;
     switch (displayType) {
         case DPtypes.ANALYZE :
             if (!getInput) return (<ProductMessage {...{menu, singleDownload, makeDropDown, isWorkingState, message}}/>);
             return (<ServiceDescriptorPanel {...{
-                serDefParams, serviceDefRef, title, makeDropDown, sRegion, standardID,
+                serDef, serviceDefRef, title, makeDropDown, sRegion, standardID,
                 setSearchParams: (params) => dispatchSetSearchParams({dpId,activeMenuLookupKey,menuKey,params}),
             }} />);
         case DPtypes.MESSAGE :
@@ -132,16 +141,17 @@ function ViewerRender({dpId, dataProductsState, noProductMessage, metaDataTableI
         case DPtypes.DOWNLOAD_MENU_ITEM :
             return (<ProductMessage {...{menu, singleDownload, makeDropDown, message}} />);
         case DPtypes.IMAGE :
-            return (<MultiProductChoice {...{dpId,makeDropDown,metaDataTableId, imageViewerId,whatToShow:SHOW_IMAGE}}/>);
+            return (<MultiProductChoice {...{dpId,makeDropDown,metaDataTableId, imageViewerId,whatToShow:SHOW_IMAGE, factoryKey}}/>);
         case DPtypes.TABLE :
-            return (<MultiProductChoice {...{dpId,makeDropDown,tableGroupViewerId,whatToShow:SHOW_TABLE}}/>);
+            return (<MultiProductChoice {...{dpId,makeDropDown,tableGroupViewerId,whatToShow:SHOW_TABLE, factoryKey}}/>);
         case DPtypes.CHART :
-            return (<MultiProductChoice {...{dpId,makeDropDown,chartViewerId,whatToShow:SHOW_CHART}}/>);
+            return (<MultiProductChoice {...{dpId,makeDropDown,chartViewerId,whatToShow:SHOW_CHART, factoryKey}}/>);
         case DPtypes.CHOICE_CTI :
             return (
                 <MultiProductChoice { ...{
                     makeDropDown,chartViewerId, imageViewerId:imageActivate?imageViewerId:'',
                     metaDataTableId, tableGroupViewerId,whatToShow:ctiChoice, ctLookupKey,mayToggle:true,
+                    factoryKey,
                     onChange: (ev) => {
                         setCurrentCTIChoice(ev.target.value);
                         dispatchUpdateActiveKey({dpId, activeFileMenuKeyChanges:{[ctLookupKey]:ev.target.value}});

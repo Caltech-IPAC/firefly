@@ -3,13 +3,13 @@
  */
 
 
-import {RangeValues,STRETCH_LINEAR,SIGMA} from '../visualize/RangeValues.js';
-import {getCellValue, getMetaEntry} from '../tables/TableUtil.js';
-import {makeWorldPt, parseWorldPt} from '../visualize/Point.js';
-import {CoordinateSys} from '../visualize/CoordSys.js';
-import {WebPlotRequest} from '../visualize/WebPlotRequest.js';
-import {addCommonReqParams} from '../templates/lightcurve/LcConverterFactory.js';
-import {GRID_FULL, SINGLE} from '../visualize/MultiViewCntlr';
+import {RangeValues,STRETCH_LINEAR,SIGMA} from '../../visualize/RangeValues.js';
+import {getCellValue, getMetaEntry} from '../../tables/TableUtil.js';
+import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
+import {CoordinateSys} from '../../visualize/CoordSys.js';
+import {WebPlotRequest} from '../../visualize/WebPlotRequest.js';
+import {addCommonReqParams} from '../../templates/lightcurve/LcConverterFactory.js';
+import {GRID_FULL, SINGLE} from '../../visualize/MultiViewCntlr.js';
 
 const colToUse= ['reqkey', 'heritgefilename', 'fname'];
 const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});

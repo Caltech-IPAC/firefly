@@ -31,7 +31,6 @@ export {ExpandType, visRoot} from '../visualize/ImagePlotCntlr.js';
 export {CysConverter} from '../visualize/CsysConverter.js';
 export {CCUtil} from '../visualize/CsysConverter.js';
 export {startCoverageWatcher} from '../visualize/saga/CoverageWatcher.js';
-export {startDataProductsWatcher} from '../visualize/saga/DataProductsWatcher.js';
 export {getSelectedRegion} from '../drawingLayers/RegionPlot.js';
 
 export {extensionAdd, extensionRemove} from '../core/ExternalAccessUtils.js';

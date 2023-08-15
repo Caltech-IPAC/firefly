@@ -42,7 +42,7 @@ function watchViewDim(action, cancelSelf, {plotId, resolve, reject, failureAsRej
     const {type} = action;
     const vr = visRoot();
     const pv = getPlotViewById(vr, plotId);
-    const {width=0, height=0} = pv.viewDim;
+    const {width=0, height=0} = pv?.viewDim ?? {};
     if (failActions.includes(type)) {
         failureAsReject ? reject(Error(action)) : resolve();
         cancelSelf();

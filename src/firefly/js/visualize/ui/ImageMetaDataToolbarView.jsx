@@ -2,9 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-
+import {isEmpty, isEqual, omit} from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
+import {getTblInfo} from '../../tables/TableUtil.js';
+import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {
     dispatchChangeViewerLayout, getViewer, getMultiViewRoot,
     GRID_FULL, GRID_RELATED, SINGLE, GRID, getLayoutDetails
@@ -12,8 +14,8 @@ import {
 import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
 import {ImagePager} from './ImagePager.jsx';
 import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
-
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
+
 import ONE from 'html/images/icons-2014/Images-One.png';
 import GRID_GROUP from 'html/images/icons-2014/Images-plus-related.png';
 import FULL_GRID from 'html/images/icons-2014/Images-Tiled-full.png';
@@ -34,28 +36,26 @@ const toolsStyle= {
 };
 
 
-export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType,
+export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType, factoryKey,
                                           activeTable, makeDataProductsConverter, makeDropDown}) {
 
-    const converter= makeDataProductsConverter(activeTable) || {};
-    if (!converter) {
-        return <div/>;
-    }
-    const dataId= converter.converterId;
-    const viewer= getViewer(getMultiViewRoot(), viewerId);
+    const converter= makeDataProductsConverter(activeTable,factoryKey) || {};
+    if (!converter) return <div/>;
+
+    const {canGrid, hasRelatedBands, converterId, maxPlots, threeColor}= converter;
+
     const layoutDetail= getLayoutDetails(getMultiViewRoot(), viewerId, activeTable?.tbl_id);
 
     // single mode stuff
 
-    const showThreeColorButton= converter.threeColor && layoutDetail!==GRID_FULL && !(viewerPlotIds[0].includes(GRID_FULL.toLowerCase()));
-    const showPager= activeTable && converter.canGrid && layoutType===GRID && layoutDetail===GRID_FULL;
-    const showMultiImageOps= converter.canGrid || converter.hasRelatedBands;
+    const showThreeColorButton= threeColor && layoutDetail!==GRID_FULL && !(viewerPlotIds[0].includes(GRID_FULL.toLowerCase()));
+    const showPager= activeTable && canGrid && layoutType===GRID && layoutDetail===GRID_FULL;
+    const showMultiImageOps= canGrid || hasRelatedBands;
 
 
     let metaControls= true;
-    if (!makeDropDown && !showMultiImageOps && !converter.canGrid &&
-        !converter.hasRelatedBands && !showThreeColorButton && !(layoutType===SINGLE && viewerPlotIds.length>1) &&
-        !showPager) {
+    if (!makeDropDown && !showMultiImageOps && !canGrid && !hasRelatedBands && !showThreeColorButton &&
+        !(layoutType===SINGLE && viewerPlotIds.length>1) && !showPager) {
         metaControls= false;
     }
 
@@ -70,12 +70,12 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
                                horizontal={true}
                                onClick={() => dispatchChangeViewerLayout(viewerId,SINGLE, undefined, activeTable?.tbl_id)}/>}
 
-                {converter.canGrid && <ToolbarButton icon={FULL_GRID} tip={'Tile all images in the search result table'}
+                {canGrid && <ToolbarButton icon={FULL_GRID} tip={'Tile all images in the search result table'}
                                enabled={true} visible={true} horizontal={true}
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                                onClick={() => dispatchChangeViewerLayout(viewerId,GRID,GRID_FULL,activeTable?.tbl_id)}/>}
 
-                {converter.hasRelatedBands  &&
+                {hasRelatedBands  &&
                             <ToolbarButton icon={GRID_GROUP} tip={'Tile all data products associated with the highlighted table row'}
                                enabled={true} visible={true} horizontal={true}
                                imageStyle={{width:24,height:24, flex: '0 0 auto'}}
@@ -86,10 +86,10 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
                              <ToolbarButton icon={THREE_COLOR} tip={'Create three color image'}
                                          enabled={true} visible={true} horizontal={true}
                                          imageStyle={{width:24,height:24, flex: '0 0 auto'}}
-                                         onClick={() => showThreeColorOps(viewer,dataId)}/>
+                                         onClick={() => showThreeColorOps(viewerId,converter,activeTable,converterId)}/>
                 }
             </div> }
-            {showPager && <ImagePager pageSize={converter.maxPlots} tbl_id={activeTable.tbl_id} style={{marginLeft:10}}/>}
+            {showPager && <ImagePager pageSize={maxPlots} tbl_id={activeTable.tbl_id} style={{marginLeft:10}}/>}
             <VisMiniToolbar viewerId={viewerId}/>
         </div>
     );
@@ -103,13 +103,31 @@ ImageMetaDataToolbarView.propTypes= {
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
     activeTable: PropTypes.object,
     makeDataProductsConverter: PropTypes.func,
-    makeDropDown: PropTypes.func
+    makeDropDown: PropTypes.func,
+    factoryKey: PropTypes.string
 };
 
-function showThreeColorOps(viewer,dataId) {
-    if (!viewer) return;
-    const newCustom= Object.assign({}, viewer.customData[dataId], {threeColorVisible:true});
-    showColorBandChooserPopup(viewer.viewerId,newCustom,dataId);
+
+async function showThreeColorOps(viewerId,converter, table, converterId) {
+    const viewer= getViewer(getMultiViewRoot(), viewerId);
+    if (!viewer && !converter) return;
+
+    const tableState= getTblInfo(table);
+    const {highlightedRow}= tableState;
+
+    const workingBandData= omit(viewer.customData[converterId],'threeColorVisible');
+    const originalBandData= await converter.describeThreeColor?.(table,highlightedRow,converter.options);
+
+    // if something has changed the go back to original data from describeThreeColor
+    // todo: we probably need to improve this test- by titles? by title and Length? only by title that are used?
+    const bandData= isEqual(Object.keys(workingBandData),Object.keys(originalBandData)) ?
+        workingBandData : originalBandData;
+
+    if (isEmpty(bandData)) {
+        showInfoPopup('Three color is not supported');
+        return;
+    }
+    showColorBandChooserPopup(viewer.viewerId,bandData,converterId);
 }
 
 

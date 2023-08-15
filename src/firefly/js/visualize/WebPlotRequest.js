@@ -926,11 +926,13 @@ export class WebPlotRequest extends ServerRequest {
     static isWPR(o) {return isObject(o) && o.getRequestClass?.()===WEB_PLOT_REQUEST_CLASS;}
 
     /**
+     * @param {Object} [overrideParams] params to replace in the copy
      * @return {WebPlotRequest}
      */
-    makeCopy() {
+    makeCopy(overrideParams=undefined) {
         const retval = new WebPlotRequest();
         retval.copyFrom(this);
+        if (overrideParams) retval.setParams(cleanupObj(overrideParams));
         return retval;
     }
 }
