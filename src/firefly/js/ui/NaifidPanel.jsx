@@ -39,7 +39,7 @@ function NaifidPanelView({showHelp, valid, message, examples, feedback, value, l
 
         return rval.p.then((response)=>{
             if (response.valid) {
-                const suggestionsList = Object.entries(response.data).map(([k,v]) => ({naifId: v, naifName: k}));
+                const suggestionsList = response.data.map(({naifID, name}) => ({naifId: naifID, naifName: name}));
                 searchHistory[naifIdFormat].push({searchVal: val, searchRes: suggestionsList});
                 return getResSuggestionsList(suggestionsList);
 
