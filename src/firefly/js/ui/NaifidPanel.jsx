@@ -23,20 +23,20 @@ function NaifidPanelView({showHelp, valid, message, examples, feedback, value, l
         if (!val) return [];
         if (naifIdFormat && !searchHistory[naifIdFormat]) searchHistory[naifIdFormat] = [];
 
-        const rval = resolveNaifidObj(val, naifIdFormat);
-        if (!rval.p) return [];
-
         const getResSuggestionsList = (suggestionsList) => {
             const resSuggestionsList = Object.values(suggestionsList).map((v) => ({name: v.naifName, naifid: v.naifId}));
             return sortBy(resSuggestionsList, 'naifid').reverse();
         };
 
-        //if value has been searched previously, no need to call the api again.
+        //if value has been searched previously, no need to request from server
         if (searchHistory[naifIdFormat].length > 0){
             const cachedSuggList = Object.values(searchHistory[naifIdFormat]).find((v) => (v.searchVal === val));
             if (cachedSuggList?.searchRes) return getResSuggestionsList(cachedSuggList.searchRes);
         }
 
+        //else request naif IDs from the server
+        const rval = resolveNaifidObj(val, naifIdFormat);
+        if (!rval.p) return [];
         return rval.p.then((response)=>{
             if (response.valid) {
                 const suggestionsList = response.data.map(({naifID, name}) => ({naifId: naifID, naifName: name}));
