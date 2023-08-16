@@ -21,8 +21,6 @@ import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 import static edu.caltech.ipac.firefly.server.servlets.AnyFileUpload.ANALYZER_ID;
 
@@ -77,7 +75,7 @@ public class ResolveServerCommands {
                 HorizonsEphPairs.HorizonsResults[] horizons_results = TargetNetwork.getEphInfo(sp.getRequired(ServerParams.OBJ_NAME));
                 String naifIdFormat = sp.getOptional(ServerParams.NAIFID_FORMAT, "");
 
-                Map<String, Integer> values = new HashMap<>();
+                JSONArray dataAry= new JSONArray();
                 for (HorizonsEphPairs.HorizonsResults element : horizons_results) {
                     String naifID = element.getNaifID();
 
@@ -93,12 +91,13 @@ public class ResolveServerCommands {
                         }
                     }
 
-                    values.put(element.getName(), Integer.parseInt(naifID));
+                    JSONObject dataObj = new JSONObject();
+                    dataObj.put("name", element.getName());
+                    dataObj.put("naifID", Integer.parseInt(naifID));
+                    dataAry.add(dataObj);
                 }
 
-                JSONObject naifids = new JSONObject(values);
-
-                result.put("data", naifids);
+                result.put("data", dataAry);
                 result.put("success", true);
                 wrapperAry.add(result);
 
