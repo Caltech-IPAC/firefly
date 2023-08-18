@@ -20,7 +20,7 @@ export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, style={
                                    minKey= 'exposureMin', maxKey= 'exposureMax',
                                    minLabel='Start Time', maxLabel='End Time',
                                    fromTip="'from' time", toTip="'to' time",
-                                   fixedTimeMode, examples, feedbackStyle, labelStyle={}}) {
+                                   fixedTimeMode, minExamples, maxExamples, feedbackStyle, labelStyle={}}) {
     const {setFld,getFld,getVal} = useContext(FieldGroupCtx);
     const [getExposureTimeMode] = useFieldGroupValue('exposureTimeMode'); //user-controlled through RadioGroupInputField
     const timeMode = fixedTimeMode || getExposureTimeMode(); // if no fixed time mode passed, time mode is as chosen by user
@@ -76,7 +76,7 @@ export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, style={
                         makeDatePickerPopup('select "from" time', getVal(minKey), timeMode,
                             (value) => setNewTimeValue(minKey,value) )}
                     value={initArgs?.urlApi?.exposureMin || getVal(minKey)}
-                    isTimeModeFixed={Boolean(fixedTimeMode)} examples={examples}/>
+                    isTimeModeFixed={Boolean(fixedTimeMode)} examples={minExamples}/>
             </div>
             <div style={{display: 'flex'}}>
                 <div title={toTip} style={{...timeLabelStyle, ...labelStyle}}>{maxLabel}</div>
@@ -88,7 +88,7 @@ export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, style={
                         makeDatePickerPopup('select "to" time', getVal(maxKey), timeMode,
                             (value) => setNewTimeValue(maxKey,value) )}
                     value={initArgs?.urlApi?.exposureMax || getVal(maxKey)}
-                    isTimeModeFixed={Boolean(fixedTimeMode)} examples={examples}/>
+                    isTimeModeFixed={Boolean(fixedTimeMode)} examples={maxExamples}/>
             </div>
         </div>
     );
@@ -106,7 +106,8 @@ TimeRangePanel.propTypes = {
     fromTip: PropTypes.string,
     toTip: PropTypes.string,
     fixedTimeMode : PropTypes.oneOf([ISO, MJD]),
-    examples: PropTypes.object,
+    minExamples: PropTypes.object,
+    maxExamples: PropTypes.object,
     feedbackStyle: PropTypes.object,
     labelStyle: PropTypes.object
 };
