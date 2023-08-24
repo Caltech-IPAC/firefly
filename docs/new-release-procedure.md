@@ -15,21 +15,21 @@
    - `gradle :firefly:test`
    
 ### Commit and Tag
-   - Commit your changes - _example message:_ "Release 2021.1.0: document updates"
+   - Commit your changes - _example message:_ "Release 2023.3.0: document updates"
    - Tag the `rc-yyyy.m` branch with the release  `release-yyyy.m.r`
    - _Example:_ 
-      - the second release from branch `rc-2021.2` with the git tagged with `release-2021.2.1`
-      - `git tag release-2021.2.1`
+      - the second release from branch `rc-2023.3` with the git tagged with `release-2023.2.1`
+      - `git tag release-2023.2.1`
    
 ### Push
    - Push to Github
-   - push the rc: _example:_ `git push origin rc-2021.1`
+   - push the rc: _example:_ `git push origin rc-2023.1`
    - push the tags: `git push origin --tags`   
 
 ### Build docker images and deploy it to IRSA Kubernetes
    - Best to use Jenkins: https://irsajenkins.ipac.caltech.edu/job/firefly/build
    - Build the docker with the following docker tags: `rc-yyyy.m,yyyy.m,yyyy.m.r,latest` (comma-separated without spaces)
-   - _example:_ from the example above the release would be built with: `rc-2021.2`, `2021.2`,`2021.2.1`, `latest`
+   - _example:_ from the example above the release would be built with: `rc-2023.3`, `2023.3`,`2023.3.1`, `latest`
    - `BUILD_ENV`: Select 'ops'
    - `ACTION`: Select 'both'  
    - `DEPLOY_ENV`: Select 'ops' to have this release deploy to `fireflyops.ipac.caltech.edu`
@@ -47,15 +47,15 @@ Try in the firefly dev build you just made
      - `git merge --no-ff <rc-branch>` 
    - Add the new dev cycle tag, but only if you just did the `.0` release
       - _Important:_ Only do this step if this on `.0` releases.
-         - For example- if you just did the `2021.2.0` do this step. If you just did the `2021.2.1` skip this step.
+         - For example- if you just did the `2023.2.0` do this step. If you just did the `2023.2.1` skip this step.
      - Tag the dev branch with the new cycle with the form - `cycle-yyyy.x`
-     - For example- If you just did the 2022.1.0 release, and we are beginning work on the 2022.2 cycle: 
+     - For example- If you just did the 2023.1.0 release, and we are beginning work on the 2023.2 cycle: 
        - on the dev branch
-       - `git tag cycle-2022.2`
+       - `git tag cycle-2023.2`
 
 ### Update Docs
    - add any improvements to this file
-   - commit and push dev, _example message_ - "Post 2021.1 release: dev clean up"
+   - commit and push dev, _example message_ - "Post 2023.2 release: dev clean up"
    - `git push origin dev`
 
 ### Update Docker Hub instructions
