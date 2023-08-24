@@ -7,7 +7,7 @@
   - [Notes on next version](next-release-details.md)
 
 ## Version 2023.2
-- 2023.2.0 - (estimated: Aug 15, 2023)
+- 2023.2.0 - (Aug 25, 2023)
   - docker tag: `2023.2.0`
    
 ### _Notes_
@@ -22,7 +22,7 @@
 - Obscore data results shows search target [Firefly-1291](https://github.com/Caltech-IPAC/firefly/pull/1411)  
 
 #### Other changes
-- read FITS tables directly with `nom.tam.fits` (removed star table) [Firefly-1232](https://github.com/Caltech-IPAC/firefly/pull/1390) 
+- Read FITS tables directly with `nom.tam.fits` (removed star table) [Firefly-1232](https://github.com/Caltech-IPAC/firefly/pull/1390) 
 - improved DCE: [Firefly-1286](https://github.com/Caltech-IPAC/firefly/pull/1408),  [Firefly-1250](https://github.com/Caltech-IPAC/firefly/pull/1391)
 - Firefly now uses React 18 [Firefly-1127](https://github.com/Caltech-IPAC/firefly/pull/1396) 
 - Firefly now uses Mavin central [Firefly-1258](https://github.com/Caltech-IPAC/firefly/pull/1397) 

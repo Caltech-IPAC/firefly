@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, has, isArray, isEmpty, isObject, isString, intersection, unset} from 'lodash';
+import {get, has, isArray, isEmpty, isObject, isString, intersection} from 'lodash';
 import Enum from 'enum';
 import {
     getColumn,
@@ -19,6 +19,7 @@ import {getCornersColumns} from '../tables/TableInfoUtil.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {CoordinateSys} from '../visualize/CoordSys.js';
 import {makeAnyPt, makeWorldPt} from '../visualize/Point';
+import {isDefined} from './WebUtil.js';
 
 
 export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
@@ -1306,12 +1307,17 @@ export const getObsTitle= (tableOrId, rowIdx) => {
  */
 export const getObsCoreAccessURL= (tableOrId, rowIdx) => getObsCoreCellValue(tableOrId,rowIdx, 'access_url');
 /**
- * return dataproduct_type cell data
+ * return dataproduct_type cell data.
+ * and
  * @param {TableModel|String} tableOrId - a table model or a table id
  * @param rowIdx
+ * @param alwaysLowerCaseString - if data is defined then always return data as a lowercase string
  * @return {string}
  */
-export const getObsCoreProdType= (tableOrId, rowIdx) => getObsCoreCellValue(tableOrId,rowIdx, 'dataproduct_type');
+export function getObsCoreProdType(tableOrId, rowIdx, alwaysLowerCaseString=true)  {
+    const v= getObsCoreCellValue(tableOrId,rowIdx, 'dataproduct_type');
+    return (isDefined(v) && alwaysLowerCaseString) ? (v+'').toLowerCase() : v;
+}
 
 
 export function getProdTypeGuess(tableOrId, rowIdx) {
