@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isNumber, isArray} from 'lodash';
+import {isNumber, isArray, set} from 'lodash';
 import {logger} from '../../util/Logger.js';
 import ImagePlotCntlr, { IMAGE_PLOT_KEY, dispatchWcsMatch, ActionScope, visRoot} from '../ImagePlotCntlr.js';
 import {
@@ -25,6 +25,7 @@ import {loadStretchData, queueChangeLocalRawDataColor} from '../rawData/RawDataO
 import {dispatchAddTaskCount, dispatchRemoveTaskCount} from '../../core/AppDataCntlr.js';
 import {Band} from '../Band.js';
 import {makeCubeCtxAry, populateFromHeader} from 'firefly/visualize/task/CreateTaskUtil.js';
+import {parseAnyPt} from 'firefly/visualize/Point';
 
 
 //=======================================================================
@@ -64,7 +65,11 @@ const dispatchAndMaybeMatch= (rawAction) => (dispatcher,getState) => {
     };
 
 
-export const recenterActionCreator= (rawAction) => dispatchAndMaybeMatch(rawAction);
+export const recenterActionCreator = (rawAction) => {
+    // `recenter` reducer expects centerPt to be a Point object, so parse centrePt because it may be a serialised string
+    return dispatchAndMaybeMatch(set(rawAction,'payload.centerPt', parseAnyPt(rawAction.payload.centerPt)));
+};
+
 export const processScrollActionCreator= (rawAction) => dispatchAndMaybeMatch(rawAction);
 export const rotateActionCreator= (rawAction) => dispatchAndMaybeMatch(rawAction);
 
