@@ -63,7 +63,7 @@ public interface Job extends Callable<String> {
         });
     }
 
-    default void addResult(String result) {
+    default void addResult(JobInfo.Result result) {
         setIf(getJobInfo(), v -> v.addResult(result));
     }
 

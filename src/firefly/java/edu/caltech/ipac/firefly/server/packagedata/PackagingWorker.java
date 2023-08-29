@@ -4,6 +4,7 @@
 
 package edu.caltech.ipac.firefly.server.packagedata;
 
+import com.google.common.net.MediaType;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -160,7 +161,7 @@ public final class PackagingWorker implements Job.Worker {
             int zippedFiles = curFileInfoIdx - startFileInfoIdx;
             ZipHandler.addReadmeZipEntry(zout,zipMessage(zippedFiles, zippedBytes, failed, denied));
             zout.setComment(String.format("Files %s-%s", startFileInfoIdx, curFileInfoIdx));
-            getJob().addResult(makeDownloadUrl(zipFile, suggestedName));
+            getJob().addResult(new JobInfo.Result(makeDownloadUrl(zipFile, suggestedName), null, MediaType.ZIP.toString(), zipFile.length()+""));
             failed.clear();
             denied.clear();
             zippedBytes = 0;

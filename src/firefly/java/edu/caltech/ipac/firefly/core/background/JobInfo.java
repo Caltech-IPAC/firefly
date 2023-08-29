@@ -39,7 +39,7 @@ public class JobInfo implements Serializable {
     private int executionDuration = LIFE_SPAN;
     private Instant destruction;
     private Map<String, String> params = new HashMap<>();
-    private List<String> results = new ArrayList<>();
+    private List<Result> results = new ArrayList<>();
     private Error error;
 
     // these are additional info that's not in uws:job defined props
@@ -105,11 +105,11 @@ public class JobInfo implements Serializable {
         this.error = error;
     }
 
-    public List<String> getResults() {
+    public List<Result> getResults() {
         return results;
     }
 
-    public void setResults(List<String> results) {
+    public void setResults(List<Result> results) {
         this.results = new ArrayList<>(results);
     }
 
@@ -176,7 +176,7 @@ public class JobInfo implements Serializable {
     public String getProgressDesc() { return progressDesc; }
     public void setProgressDesc(String progressDesc) { this.progressDesc = progressDesc;}
 
-    public void addResult(String result) { results.add(result);}
+    public void addResult(Result result) { results.add(result);}
 
     /**
      * @return how long this job may run in seconds.  zero implies unlimited execution duration.
@@ -204,6 +204,7 @@ public class JobInfo implements Serializable {
 //====================================================================
 
     public static record Error ( int code, String msg){}
+    public static record Result(String href, String hrefType, String mimeType, String size){};
 
 }
 /*

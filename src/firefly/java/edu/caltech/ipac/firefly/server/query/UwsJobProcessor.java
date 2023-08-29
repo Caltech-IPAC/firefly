@@ -12,6 +12,8 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.firefly.core.background.JobInfo;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.FileUtil;
 import org.apache.commons.httpclient.HttpMethod;
@@ -25,17 +27,16 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static edu.caltech.ipac.firefly.server.network.HttpServices.defaultHandler;
 import static edu.caltech.ipac.firefly.server.network.HttpServices.getWithAuth;
-import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
-import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase;
+import static edu.caltech.ipac.util.StringUtils.*;
 
 /**
  * Date: Sept 19, 2018
@@ -154,13 +155,16 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
     public DataGroup getResult(TableServerRequest request) throws DataAccessException {
 
         JobInfo jobInfo = getUwsJobInfo(jobUrl);
+
         if (jobInfo == null || jobInfo.getResults().size() < 1) {
             throw createDax("UWS job completed without results", jobUrl, null);
         } else {
-            // UWS job may return more than one results.
-            // /{jobUrl}/results will list all the results
-            // we will return the first result only for now.  will handle multi results later.
-            return getTableResult(jobInfo.getResults().get(0), QueryUtil.getTempDir(request));
+            List<JobInfo.Result> results = jobInfo.getResults();
+            if (results.size() == 1) {
+                return getTableResult(results.get(0).href(), QueryUtil.getTempDir(request));
+            } else {
+                return convertResultsToObsCoreTable(results);
+            }
         }
     }
 
@@ -175,6 +179,39 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         String msg = String.format("%s from the URL: [%s]", title, url);
         if (errMsg != null) msg += "\n\t with exception: " + errMsg;
         return new DataAccessException(msg);
+    }
+
+
+    public DataGroup convertResultsToObsCoreTable(List<JobInfo.Result> results) {
+        DataGroup table = new DataGroup("UWS results", new DataType[]{
+                new DataType("dataproduct_type", String.class),
+                new DataType("access_url", String.class),
+                new DataType("access_format", String.class),
+                new DataType("access_estsize", Integer.class)
+        });
+
+        results.forEach(result -> {
+            DataObject row = new DataObject(table);
+            String prodtype = guessProductType(result);
+            row.setData(new Object[]{prodtype, result.href(), result.mimeType(), getInt(result.size(), 0)});
+            table.add(row);
+        });
+        table.trimToSize();
+        return table;
+    }
+
+    private String guessProductType(JobInfo.Result result) {
+        String ext = FileUtil.getExtension(result.href());
+        String mimeType = isEmpty(result.mimeType()) ? "" : result.mimeType().toLowerCase();
+        if (mimeType.matches("text/plain|.*/csv|.*/xml|.*/x-votable.*") ||
+            ext.matches("tbl|xml|vot|csv|tsv|ipac")) {
+            return "table";
+        } else if (mimeType.matches(".*image.*|.*/fits.*") ||
+                   ext.matches("fits")) {
+            return "image";
+        }
+
+        return "unknown";
     }
 
 
@@ -315,7 +352,14 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                     NodeList rlist = results.getElementsByTagName(prefix + "result");
                     for (int i = 0; i < rlist.getLength(); i++) {
                         Node r = rlist.item(i);
-                        jobInfo.getResults().add(getAttr(r,"xlink:href"));
+                        jobInfo.getResults().add(
+                                new JobInfo.Result(
+                                    getAttr(r,"xlink:href"),
+                                    getAttr(r,"xlink:type"),        // added for completeness. No idea how it's used.
+                                    getAttr(r, "mime-type"),
+                                    getAttr(r, "size")
+                                )
+                        );
                     }
                 });
 
