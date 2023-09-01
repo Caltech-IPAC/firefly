@@ -97,7 +97,7 @@ function FinalMsg({phase, summary, error}) {
 }
 
 export function UwsJobInfo({jobInfo, style, isOpen=false}) {
-
+    const hrefs = jobInfo?.results?.map((r) => r.href);
     return (
         <div className='JobInfo__main' style={style}>
             <div className='JobInfo__items uws' style={{overflowY: 'auto'}}>
@@ -108,7 +108,7 @@ export function UwsJobInfo({jobInfo, style, isOpen=false}) {
                 }</>
 
                 <OptionalBlock label='parameters' value={jobInfo.parameters} isOpen={isOpen}/>
-                <OptionalBlock label='results' value={jobInfo.results} asLink={true} isOpen={isOpen}/>
+                <OptionalBlock label='results' value={hrefs} asLink={true} isOpen={isOpen}/>
                 <OptionalBlock label='errorSummary' value={jobInfo.errorSummary} isOpen={isOpen}/>
 
             </div>

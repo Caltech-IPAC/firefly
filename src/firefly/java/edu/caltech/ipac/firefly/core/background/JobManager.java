@@ -19,7 +19,6 @@ import org.json.simple.JSONObject;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +30,6 @@ import static edu.caltech.ipac.firefly.data.ServerParams.EMAIL;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static edu.caltech.ipac.firefly.core.background.Job.Type.PACKAGE;
-import static edu.caltech.ipac.firefly.core.background.Job.Type.SEARCH;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.*;
 
 
@@ -196,9 +194,9 @@ public class JobManager {
         rval.put("parameters", info.getParams());
 
         if (info.getPhase() == COMPLETED && info.getResults().size() == 0) {
-            rval.put("results", Arrays.asList(asyncUrl + info.getJobId() + "/results/result"));
+            rval.put("results", Arrays.asList(toResult(asyncUrl + info.getJobId() + "/results/result", null, null)));
         } else if (info.getResults().size() > 0) {
-            rval.put("results", info.getResults());
+            rval.put("results", toResults(info.getResults()));
         }
         applyIfNotEmpty(info.getError(),   v -> {
             JSONObject errSum = new JSONObject();
@@ -219,6 +217,19 @@ public class JobManager {
         applyIfNotEmpty(info.getSummary(),   v -> addtlInfo.put("summary", v));
 
         return rval;
+    }
+
+    public static List<JSONObject> toResults(List<JobInfo.Result> results) {
+        return results.stream().map(r -> toResult(r.href(), r.mimeType(), r.size()))
+                .collect(Collectors.toList());
+    }
+
+    private static JSONObject toResult(String href, String mimeType, String size) {
+        JSONObject ro = new JSONObject();
+        applyIfNotEmpty(href,   v -> ro.put("href", v));
+        applyIfNotEmpty(mimeType,   v -> ro.put("mimeType", v));
+        applyIfNotEmpty(size,   v -> ro.put("size", v));
+        return ro;
     }
 
     /**

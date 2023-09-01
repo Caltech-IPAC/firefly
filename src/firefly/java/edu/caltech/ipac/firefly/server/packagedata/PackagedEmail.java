@@ -121,7 +121,8 @@ public class PackagedEmail {
             }
 
             // print out result url
-            sw.append(String.join("\n\n", jobInfo.getResults()));
+            sw.append("\n\n");
+            jobInfo.getResults().forEach(result -> sw.append("\n").append(result.href()));
 
 
             if (jobInfo.getResults().size() > 1) {
@@ -149,9 +150,9 @@ public class PackagedEmail {
 
         String scriptUrl = null;
         List<URL> urlList= new ArrayList<>(jobInfo.getResults().size());
-        for(String part : jobInfo.getResults()) {
+        for(JobInfo.Result part : jobInfo.getResults()) {
             try {
-                urlList.add(new URL(part));
+                urlList.add(new URL(part.href()));
             } catch (MalformedURLException e) {
                 logger.warn("Bad url for download script: " + part + "Background ID: " + jobInfo.getJobId());
             }
