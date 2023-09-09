@@ -2,33 +2,32 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, isArray, isEmpty} from 'lodash';
-import {Band} from '../Band.js';
-import {TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
+import {isArray} from 'lodash';
+import ComponentCntlr from '../core/ComponentCntlr.js';
+import {Band} from '../visualize/Band.js';
+import {TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACTIVE} from '../tables/TablesCntlr.js';
 import ImagePlotCntlr, {
-    visRoot, dispatchDeletePlotView, dispatchChangeActivePlotView, MOUSE_CLICK_REASON
-} from '../ImagePlotCntlr.js';
-import {REINIT_APP} from '../../core/AppDataCntlr.js';
-import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../../tables/TableUtil.js';
-import {isDefaultCoverageActive, primePlot} from '../PlotViewUtil.js';
+    visRoot, dispatchDeletePlotView, MOUSE_CLICK_REASON
+} from '../visualize/ImagePlotCntlr.js';
+import {REINIT_APP} from '../core/AppDataCntlr.js';
+import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../tables/TableUtil.js';
+import {isDefaultCoverageActive} from '../visualize/PlotViewUtil.js';
 import MultiViewCntlr, {
     getViewerItemIds, dispatchChangeViewerLayout,
-    getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE, getLayoutType, getLayoutDetails
-} from '../MultiViewCntlr.js';
-import {makeDataProductsConverter, initImage3ColorDisplayManagement} from '../../metaConvert/DataProductsFactory.js';
-import {findGridTableRows} from '../../metaConvert/converterUtils.js';
-import {PlotAttribute} from '../PlotAttribute.js';
-import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
-import {isDataProductsTable} from '../../util/VOAnalyzer.js';
-import {zoomPlotPerViewSize, resetImageFullGridActivePlot, changeTableHighlightToMatchPlotView} from '../../metaConvert/ImageDataProductsUtil.js';
+    getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE, getLayoutType, getLayoutDetails, dispatchUpdateCustom
+} from '../visualize/MultiViewCntlr.js';
 import {
-    dataProductRoot,
-    dispatchUpdateDataProducts,
-    getActivateParams,
-    getDataProducts
-} from '../../metaConvert/DataProductsCntlr';
-import {dpdtMessage} from '../../metaConvert/DataProductsType';
-import {UserZoomTypes} from 'firefly/visualize/ZoomUtil.js';
+    makeDataProductsConverter, initImage3ColorDisplayManagement, getFactoryTemplateOptions
+} from './DataProductsFactory.js';
+import {findGridTableRows} from './TableDataProductUtils.js';
+import {dispatchAddTableTypeWatcherDef} from '../core/MasterSaga.js';
+import {isDataProductsTable} from '../util/VOAnalyzer.js';
+import {zoomPlotPerViewSize, resetImageFullGridActivePlot, changeTableHighlightToMatchPlotView} from './ImageDataProductsUtil.js';
+import {
+    DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, dataProductRoot, dispatchUpdateDataProducts, getActivateParams
+} from './DataProductsCntlr.js';
+import {dpdtMessage, dpdtSimpleMsg, DPtypes} from './DataProductsType.js';
+import {UserZoomTypes} from '../visualize/ZoomUtil.js';
 
 const MAX_GRID_SIZE= 50;
 
@@ -44,14 +43,16 @@ const getDataProductsWatcherDef = () => ({
               MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED,
               MultiViewCntlr.VIEWER_UNMOUNTED,
               MultiViewCntlr.CHANGE_VIEWER_LAYOUT, MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA,
+              ComponentCntlr.COMPONENT_STATE_CHANGE,
               ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW,
               ImagePlotCntlr.UPDATE_VIEW_SIZE, ImagePlotCntlr.ANY_REPLOT]
 });
 
-export function startDataProductsWatcher({dataTypeViewerId= 'DataProductsType', paused=true}) {
-    dispatchAddTableTypeWatcherDef( { ...getDataProductsWatcherDef(), options:{dataTypeViewerId, paused} });
+export function startDataProductsWatcher({dataTypeViewerId= 'DataProductsType', factoryKey, paused=true}) {
+    dispatchAddTableTypeWatcherDef( { ...getDataProductsWatcherDef(), id: dataTypeViewerId, options:{dataTypeViewerId, factoryKey, paused} });
 }
 
+let ignoreCustomDataChange= false;
 
 
 /**
@@ -67,7 +68,7 @@ export function startDataProductsWatcher({dataTypeViewerId= 'DataProductsType', 
  * @param params.paused
  */
 function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
-    const {options:{dataTypeViewerId= 'DataProductsType'}} = params;
+    const {options:{dataTypeViewerId= 'DataProductsType', factoryKey}} = params;
     let firstTime= params.firstTime ?? true;
     const dpId= params.options.dpId || dataTypeViewerId;
     let {paused= true, zoomOnNextViewSizeChange=false} = params;
@@ -79,14 +80,11 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
     const dpView= getViewer(mvRoot, dataTypeViewerId);
 
     if (!action) {
-        if (paused) {
-            paused= !Boolean(imView || dpView);
-        }
+        if (paused) paused= !Boolean(imView || dpView);
         if (!paused && getActiveTableId()===tbl_id) {
-            updateDataProducts(null, firstTime, tbl_id, activateParams);
+            updateDataProducts(factoryKey, null, firstTime, tbl_id, activateParams);
             firstTime= false;
         }
-        initImage3ColorDisplayManagement(imageViewerId);
         return {paused, firstTime};
     }
 
@@ -125,7 +123,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
         case TABLE_UPDATE:
         case TBL_RESULTS_ACTIVE:
             if (!paused) {
-                abortPromise= updateDataProducts(action, firstTime, tbl_id, activateParams, abortLastPromise);
+                abortPromise= updateDataProducts(factoryKey, action, firstTime, tbl_id, activateParams, abortLastPromise);
                 firstTime= false;
             }
             zoomOnNextViewSizeChange= false;
@@ -133,8 +131,8 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
 
         case MultiViewCntlr.CHANGE_VIEWER_LAYOUT:
         case MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA:
-            if (!paused) {
-                abortPromise= updateDataProducts(action, firstTime, tbl_id, activateParams, abortLastPromise);
+            if (!paused && !ignoreCustomDataChange) {
+                abortPromise= updateDataProducts(factoryKey, action, firstTime, tbl_id, activateParams, abortLastPromise);
                 firstTime= false;
             }
             zoomOnNextViewSizeChange= true;
@@ -143,7 +141,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
 
         case MultiViewCntlr.ADD_VIEWER:
             if (payload.mounted) {
-                abortPromise= updateDataProducts(action, firstTime, tbl_id, activateParams, abortLastPromise);
+                abortPromise= updateDataProducts(factoryKey, action, firstTime, tbl_id, activateParams, abortLastPromise);
                 firstTime= false;
                 paused= false;
                 zoomOnNextViewSizeChange= false;
@@ -152,7 +150,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
 
         case MultiViewCntlr.VIEWER_MOUNTED:
             paused= false;
-            abortPromise= updateDataProducts(action, firstTime, tbl_id, activateParams, abortLastPromise);
+            abortPromise= updateDataProducts(factoryKey, action, firstTime, tbl_id, activateParams, abortLastPromise);
             firstTime= false;
             zoomOnNextViewSizeChange= false;
             break;
@@ -162,14 +160,17 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
             zoomOnNextViewSizeChange= false;
             break;
 
+        case ComponentCntlr.COMPONENT_STATE_CHANGE:
+            const {dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY}= getFactoryTemplateOptions(factoryKey) ??{};
+            if (action.payload.componentId===dataProductsComponentKey) {
+                abortPromise= updateDataProducts(factoryKey, action, firstTime, tbl_id, activateParams, abortLastPromise);
+            }
+
+            break;
+
         case ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW:
             if (!paused && action.payload.reason===MOUSE_CLICK_REASON) {
-                // const layout= getLayoutType(getMultiViewRoot(), imageViewerId, tbl_id);
-                // if (layout===GRID) {
-                //     if () {
-                        changeTableHighlightToMatchPlotView(action.payload.plotId,tbl_id);
-                    // }
-                // }
+                changeTableHighlightToMatchPlotView(action.payload.plotId,tbl_id);
             }
             break;
 
@@ -202,6 +203,7 @@ const getKey= (threeOp, band) =>
 
 /**
  *
+ * @param {String} factoryKey
  * @param {Action} action
  * @param {boolean} firstTime
  * @param {string} tbl_id
@@ -209,7 +211,7 @@ const getKey= (threeOp, band) =>
  * @param {function} abortLastPromise
  * @return {function} a function to abort any unfinished promises
  */
-function updateDataProducts(action, firstTime, tbl_id, activateParams, abortLastPromise=undefined) {
+function updateDataProducts(factoryKey, action, firstTime, tbl_id, activateParams, abortLastPromise=undefined) {
 
     const layoutChange= action?.type===MultiViewCntlr.CHANGE_VIEWER_LAYOUT ||
         action?.type===MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA;
@@ -221,7 +223,6 @@ function updateDataProducts(action, firstTime, tbl_id, activateParams, abortLast
     const abortPromiseFunc= () => continuePromise= false;
     const isPromiseAborted= ()=> !continuePromise;
     let viewer = getViewer(getMultiViewRoot(), imageViewerId);
-    const foundGridFail= getDataProducts(dataProductRoot(),dpId).gridNotSupported;
 
     if (!viewer) return;
 
@@ -232,10 +233,9 @@ function updateDataProducts(action, firstTime, tbl_id, activateParams, abortLast
         return;
     }
 
-    const converter = makeDataProductsConverter(table);
+    const converter = makeDataProductsConverter(table, factoryKey);
     if (!converter) return;
-    const {converterId, initialLayout=SINGLE, canGrid= false, threeColor, hasRelatedBands}=  converter;
-    let threeColorOps;
+    const {converterId, initialLayout=SINGLE, canGrid= false, threeColor, options={}}=  converter;
 
     if (firstTime) {
         if (canGrid && initialLayout!==SINGLE) {
@@ -247,16 +247,9 @@ function updateDataProducts(action, firstTime, tbl_id, activateParams, abortLast
         viewer = getViewer(getMultiViewRoot(), imageViewerId);
     }
 
-    if (threeColor) {
-        const showThreeColor= get(viewer.customData, [converterId,'threeColorVisible'], false);
-        if (showThreeColor) {
-            threeColorOps= [
-                getKey(viewer.customData[converterId], Band.RED),
-                getKey(viewer.customData[converterId], Band.GREEN),
-                getKey(viewer.customData[converterId], Band.BLUE)
-            ];
-        }
-    }
+    const threeData= viewer.customData?.[converterId];
+    const threeColorOps= (threeColor && threeData?.threeColorVisible) ?
+        [getKey(threeData, Band.RED), getKey(threeData, Band.GREEN), getKey(threeData, Band.BLUE)] : undefined;
 
     const tableState= getTblInfo(table);
     const {highlightedRow}= tableState;
@@ -265,35 +258,16 @@ function updateDataProducts(action, firstTime, tbl_id, activateParams, abortLast
     const layout= getLayoutType(getMultiViewRoot(), imageViewerId, tbl_id);
     const layoutDetail= getLayoutDetails(getMultiViewRoot(), imageViewerId, tbl_id);
 
-
-    if (layoutChange && layout===SINGLE && !isEmpty(viewer.itemIdAry) && !foundGridFail) {
-        if (viewer.itemIdAry[0].includes(GRID_FULL.toLowerCase())) {   // from full grid images
-            const activePid = visRoot().activePlotId;
-
-            viewer.itemIdAry.find((id) => {
-                const plot = primePlot(visRoot(), id);
-                if (plot && id !== activePid &&
-                    get(plot.attributes, PlotAttribute.DATALINK_TABLE_ROW, -1) === highlightedRow) {
-                    dispatchChangeActivePlotView(id);
-                    return true;
-                }
-                return false;
-            });
-        }
-        return;
-    }
-
-
     let resultPromise;
     if (layout===SINGLE) {
-        resultPromise= converter.getSingleDataProduct(table,highlightedRow,activateParams);
+        resultPromise= converter.getSingleDataProduct(table,highlightedRow,activateParams, options);
     }
     else if (layout===GRID && layoutDetail===GRID_FULL) { // keep this image only
         const plotRows= findGridTableRows(table,Math.min(converter.maxPlots,MAX_GRID_SIZE),`${converterId}-gridfull`);
-        resultPromise= converter.getGridDataProduct(table,plotRows,activateParams);
+        resultPromise= converter.getGridDataProduct(table,plotRows,activateParams, options);
     }
     else if (layout===GRID) {// keep this image only
-        resultPromise= converter.getRelatedDataProduct(table,highlightedRow,threeColorOps,viewer.highlightPlotId,activateParams);
+        resultPromise= converter.getRelatedDataProduct(table,highlightedRow,threeColorOps,viewer.highlightPlotId,activateParams, options);
     }
     resultPromise && handleProductResult(resultPromise, dpId, tbl_id, isPromiseAborted, viewer, layout);
     return abortPromiseFunc;
@@ -306,13 +280,13 @@ function handleProductResult(p, dpId, tbl_id, isPromiseAborted, imageViewer, lay
             dispatchUpdateDataProducts(dpId,displayTypeParams);
         }
         else {
-            dispatchUpdateDataProducts(dpId,dpdtMessage('Error- Search for Data product failed'));
+            dispatchUpdateDataProducts(dpId,dpdtSimpleMsg('Error- Search for Data product failed'));
             return;
         }
         if (displayTypeParams.gridNotSupported && layout===GRID) {
             dispatchChangeViewerLayout(imageViewer.viewerId, SINGLE, undefined, tbl_id);
         }
-        if (displayTypeParams.displayType==='promise' && displayTypeParams.promise) {
+        if (displayTypeParams.displayType===DPtypes.PROMISE && displayTypeParams.promise) {
             handleProductResult(displayTypeParams.promise,dpId, tbl_id, isPromiseAborted, imageViewer, layout);
         }
     });

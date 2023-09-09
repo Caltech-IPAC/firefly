@@ -14,6 +14,7 @@ export const UPDATE_ACTIVE_KEY= `${PREFIX}.UpdateActiveKey`;
 export const ACTIVATE_MENU_ITEM= `${PREFIX}.ActivateMenuItem`;
 export const ACTIVATE_FILE_MENU_ITEM= `${PREFIX}.ActivateFileMenuItem`;
 export const SET_SEARCH_PARAMS= `${PREFIX}.SetSearchParams`;
+export const DEFAULT_DATA_PRODUCTS_COMPONENT_KEY= `${PREFIX}.defaultComponentDataKey`;
 
 export function dataProductRoot() { return flux.getState()[DATA_PRODUCTS_KEY]; }
 
@@ -138,6 +139,7 @@ export function dispatchUpdateDataProducts(dpId, dataProducts) {
 /**
  * Update the activeMenuKeys and/or the one or more of the activeFileMenuKey's
  * @param {Object} p
+ * @param  p.dpId - data products id
  * @param {Object} [p.activeMenuKeyChanges] - change the activeMenuItemKey
  *     this is a map of a cacheKey and the related activeFileMenuKey
  * @param {Object} [p.activeFileMenuKeyChanges] - changes to the activeFileMenuKey's,
@@ -192,6 +194,7 @@ export const getActiveFileMenuKeyByKey= (dpId,key) => createOrFind(dataProductRo
 export const getActiveMenuKey= (dpId,activeMenuLookupKey) =>
     createOrFind(dataProductRoot(),dpId).activeMenuKeys[activeMenuLookupKey];
 
+export const getCurrentActiveKeyID= (dpId) => createOrFind(dataProductRoot(),dpId).currentActiveKeyID ?? '';
 
 export function getSearchParams(serviceParamsAry,activeMenuLookupKey,menuKey)  {
     return serviceParamsAry?.find( (obj) => obj.activeMenuLookupKey===activeMenuLookupKey && obj.menuKey===menuKey)?.params;
@@ -300,7 +303,10 @@ function updateDataProducts(state,action) {
 function updateActiveKey(state,action) {
     const {dpId, activeMenuKeyChanges, activeFileMenuKeyChanges}= action.payload;
     const dpData= createOrFindAndCopy(state,dpId);
-    if (isObject(activeMenuKeyChanges)) dpData.activeMenuKeys= {...dpData.activeMenuKeys,...activeMenuKeyChanges};
+    if (isObject(activeMenuKeyChanges)) {
+        dpData.activeMenuKeys= {...dpData.activeMenuKeys,...activeMenuKeyChanges};
+        dpData.currentActiveKeyID= Object.keys(activeMenuKeyChanges)?.[0];
+    }
     if (isObject(activeFileMenuKeyChanges)) dpData.activeFileMenuKeys= {...dpData.activeFileMenuKeys,...activeFileMenuKeyChanges};
     return insertOrReplace(state,dpData);
 }

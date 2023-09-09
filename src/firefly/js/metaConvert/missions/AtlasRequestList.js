@@ -4,11 +4,11 @@
 
 
 import {get} from 'lodash';
-import {makeServerRequestBuilder} from './converterUtils.js';
-import {RangeValues,STRETCH_LINEAR,PERCENTAGE} from '../visualize/RangeValues.js';
-import {getCellValue} from '../tables/TableUtil.js';
-import {parseWorldPt} from '../visualize/Point.js';
-import {convertAngle} from '../visualize/VisUtil.js';
+import {makeServerRequestBuilder} from '../ImageDataProductsUtil.js';
+import {RangeValues,STRETCH_LINEAR,PERCENTAGE} from '../../visualize/RangeValues.js';
+import {getCellValue} from '../../tables/TableUtil.js';
+import {parseWorldPt} from '../../visualize/Point.js';
+import {convertAngle} from '../../visualize/VisUtil.js';
 
 const colToUse= [ 'facility_name', 'band_name', 'instrument_name', 'fname', 'wavelength',
     'file_type', 'in_ra', 'in_dec', 'dataproduct_type'];

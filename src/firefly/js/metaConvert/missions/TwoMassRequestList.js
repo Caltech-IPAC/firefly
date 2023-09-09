@@ -4,9 +4,9 @@
 
 
 import {get} from 'lodash';
-import {makeServerRequestBuilder} from './converterUtils.js';
-import {RangeValues,STRETCH_LINEAR,PERCENTAGE} from '../visualize/RangeValues.js';
-import {getCellValue} from '../tables/TableUtil.js';
+import {makeServerRequestBuilder} from '../ImageDataProductsUtil.js';
+import {RangeValues,STRETCH_LINEAR,PERCENTAGE} from '../../visualize/RangeValues.js';
+import {getCellValue} from '../../tables/TableUtil.js';
 
 const colToUse= [ 'filter', 'scanno', 'fname', 'ordate', 'hemisphere', 'in_ra', 'in_dec', 'image_set' ];
 const rangeValues= RangeValues.makeRV({which:PERCENTAGE, lowerValue:1, upperValue:99, algorithm:STRETCH_LINEAR});

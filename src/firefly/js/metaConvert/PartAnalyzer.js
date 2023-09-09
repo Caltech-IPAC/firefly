@@ -1,15 +1,15 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isArray} from 'lodash';
+import {isArray,isEmpty} from 'lodash';
 import {getProdTypeGuess} from '../util/VOAnalyzer.js';
+import {isFitsTableDataTypeNumeric} from '../visualize/FitsHeaderUtil.js';
 import {dpdtChartTable, dpdtImage, dpdtTable, DPtypes, SHOW_CHART, SHOW_TABLE, AUTO} from './DataProductsType';
-import {DataProductTypes, FileAnalysisType, Format, UIEntry, UIRender} from '../data/FileAnalysis';
+import {FileAnalysisType, Format, UIEntry, UIRender} from '../data/FileAnalysis';
 import {RequestType} from '../visualize/RequestType.js';
 import {TitleOptions} from '../visualize/WebPlotRequest';
-import {createChartTableActivate, createChartSingleRowArrayActivate, createTableExtraction} from './converterUtils';
+import {createChartTableActivate, createChartSingleRowArrayActivate, createTableExtraction} from './TableDataProductUtils.js';
 import {createSingleImageActivate, createSingleImageExtraction} from './ImageDataProductsUtil';
-import {isEmpty} from 'lodash';
 
 /**
  *
@@ -26,47 +26,20 @@ import {isEmpty} from 'lodash';
 export function analyzePart(part, request, table, row, fileFormat, dataTypeHint, serverCacheFileKey, activateParams) {
 
     const {type,desc, fileLocationIndex}= part;
-    const availableTypes= findAvailableTypesForAnalysisPart(part, fileFormat);
-    if (isEmpty(availableTypes)) return {imageResult:false, tableResult:false};
+    const aTypes= findAvailableTypesForAnalysisPart(part, fileFormat);
+    if (isEmpty(aTypes)) return {imageResult:false, tableResult:false};
 
     const fileOnServer= (part.convertedFileName) ? part.convertedFileName : serverCacheFileKey;
 
-    const imageResult= availableTypes.includes(DPtypes.IMAGE) && type===FileAnalysisType.Image &&
-            analyzeImageResult(part, request, table, row, fileFormat, part.convertedFileName,desc,activateParams,fileLocationIndex);
+    const imageResult= aTypes.includes(DPtypes.IMAGE) && type===FileAnalysisType.Image &&
+        analyzeImageResult(part, request, table, row, fileFormat, part.convertedFileName,desc,activateParams,fileLocationIndex);
 
-    let tableResult= availableTypes.includes(DPtypes.CHART) &&
-                   analyzeChartTableResult(false, table, row, part, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex);
-    if (!tableResult) {
-        tableResult= availableTypes.includes(DPtypes.TABLE) &&
-            analyzeChartTableResult(true, table, row, part, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex);
-    }
+    const tableResult= aTypes.includes(DPtypes.TABLE) &&
+        analyzeChartTableResult(false, table, row, part, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex);
+
     return {imageResult, tableResult};
 }
 
-/**
- * Determine which entry should be the default
- * @param menu
- * @param parts
- * @param fileFormat
- * @param dataTypeHint
- * @return {Array}
- */
-export function chooseDefaultEntry(menu,parts,fileFormat, dataTypeHint) {
-    if (!menu || !menu.length) return undefined;
-    let defIndex= menu.findIndex( (m) => m.requestDefault);
-    if (defIndex > -1) return defIndex;
-    const dth= dataTypeHint?.toLowerCase();
-
-    switch (dth) {
-        case DataProductTypes.timeseries:
-            defIndex= menu.find( (m) => m.displayType===DPtypes.CHART);
-            break;
-        case DataProductTypes.spectrum:
-            defIndex= menu.find( (m) => m.displayType===DPtypes.CHART);
-            break;
-    }
-    return defIndex > -1 ? defIndex : 0;
-}
 
 
 /**
@@ -79,13 +52,13 @@ function findAvailableTypesForAnalysisPart(part, fileFormat) {
     const {type}= part;
     const naxis= getIntHeader('NAXIS',part,0);
     if (type===FileAnalysisType.HeaderOnly || type===FileAnalysisType.Unknown) return [];
-    if (type!==FileAnalysisType.Image &&  fileFormat!=='FITS' &&  is1DImage(part) || type===FileAnalysisType.Table ) return [DPtypes.CHART,DPtypes.TABLE];
+    if (type!==FileAnalysisType.Image &&  fileFormat!=='FITS' &&  is1DImage(part) || type===FileAnalysisType.Table ) return [DPtypes.TABLE];
     if (type===FileAnalysisType.Image && naxis===1) {
         part.chartTableDefOption=SHOW_CHART;
-        return [DPtypes.CHART,DPtypes.TABLE];
+        return [DPtypes.TABLE];
     }
 
-    return (imageCouldBeTable(part)) ? [DPtypes.IMAGE,DPtypes.TABLE,DPtypes.CHART] : [DPtypes.IMAGE];
+    return (imageCouldBeTable(part)) ? [DPtypes.IMAGE,DPtypes.TABLE] : [DPtypes.IMAGE];
 }
 
 
@@ -187,7 +160,7 @@ function findMatchingColumn(tabColNames, testList) {
 function getTableDropTitleStr(title,part,fileFormat,tableOnly) {
     if (!title) title='';
     if (part.interpretedData) return title;
-    if (fileFormat==='FITS') {
+    if (fileFormat===Format.FITS) {
         const tOrCStr= tableOnly ? 'table' : 'table or chart';
         if (isImageAsTable(part,fileFormat)) {
             const twoD= getImageAsTableColCount(part,fileFormat)>2;
@@ -257,7 +230,7 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
                 undefined, {extractionText: 'Pin Table', paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
         else {
-            if (getProdTypeGuess(table,row).toLowerCase().startsWith('spec')) chartTableDefOption= SHOW_CHART;
+            if (getPartProdGuess(part,table,row).toLowerCase().startsWith('spec')) chartTableDefOption= SHOW_CHART;
             const imageAsTableColCnt= isImageAsTable(part,partFormat) ? getImageAsTableColCount(part,partFormat) : 0;
             const chartInfo= {xAxis:xCol, yAxis:yCol, chartParamsAry, useChartChooser};
             if (chartTableDefOption===AUTO) chartTableDefOption= imageAsTableColCnt===2 ? SHOW_CHART : SHOW_TABLE;
@@ -268,6 +241,14 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
         }
     }
 }
+
+function getPartProdGuess(part,table,row) {
+    const utype= part?.details?.tableMeta?.utype ?? part?.details?.tableMeta?.UTYPE;
+    if (utype) return utype;
+    return getProdTypeGuess(table,row);
+}
+
+
 
 function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,title='', activateParams, hduIdx) {
     const {interpretedData=false,uiEntry,uiRender, defaultPart=false}= part;
@@ -288,11 +269,10 @@ function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,
     const ddTitleStr= (interpretedData || uiEntry===UIEntry.UseSpecified || fileOnServer) ?
                            `${title} (image)` :  `HDU #${hduIdx||0} (image) ${title}`;
 
-    return dpdtImage(ddTitleStr,
-        createSingleImageActivate(newReq,imageViewerId,table.tbl_id,row),
-        createSingleImageExtraction(newReq),
-        'image-'+0,
-        {extractionText: 'Pin Image', request:newReq, override, interpretedData, requestDefault:Boolean(defaultPart)});
+    return dpdtImage({name:ddTitleStr,
+        activate: createSingleImageActivate(newReq,imageViewerId,table.tbl_id,row),
+        extraction: createSingleImageExtraction(newReq),
+        request:newReq, override, interpretedData, requestDefault:Boolean(defaultPart)});
 }
 
 
@@ -324,7 +304,6 @@ function getHeader(header, part) {
 
 
 const tabNumericDataTypes= ['double', 'real', 'float', 'int', 'long', 'd', 'r', 'f', 'i', 'l'];
-const fitNumericDataTypes= ['I', 'J', 'K', 'E', 'D', 'C', 'M'];
 
 /**
  * Get the column name
@@ -351,8 +330,9 @@ function getColumnNames(part, fileFormat) {
             const ttNamesAry= getHeadersThatStartsWith('TTYPE',part);
             if (ttNamesAry.length) {
                 const ttFormAry= getHeadersThatStartsWith('TFORM',part);
+
                 return ttFormAry.length===ttNamesAry.length ?    // return if we can tell - then all numeric columns else all columns
-                    ttNamesAry.filter( (n,idx) => fitNumericDataTypes.includes(ttFormAry[idx][ttFormAry[idx].length-1])) : ttNamesAry;
+                    ttNamesAry.filter( (n,idx) => isFitsTableDataTypeNumeric(ttFormAry[idx][ttFormAry[idx].length-1])) : ttNamesAry;
             }
             const naxis2= getIntHeader('NAXIS2',part,0);
             if (naxis2<=30) {

@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import PropTypes from 'prop-types';
+import {bool, object, string} from 'prop-types';
 import {getActiveTableId, getTblById} from '../../tables/TableUtil.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {isDataProductsTable} from '../../util/VOAnalyzer.js';
@@ -41,9 +41,10 @@ function getMetaDataTbl() {
 /**
  * A wrapper component for MultiImageViewer where expended mode is supported.
  */
-export function MultiProductViewerContainer({ tbl_id= undefined, imageExpandedMode=false,
+export function MultiProductViewerContainer({ viewerId, tbl_id= undefined, imageExpandedMode=false,
                                               closeable=true, insideFlex=false,
                                                 enableExtraction= false,
+                                                dataProductsFactoryOptions,
                                                 noProductMessage= 'No Data Products Available'}) {
 
 
@@ -55,17 +56,18 @@ export function MultiProductViewerContainer({ tbl_id= undefined, imageExpandedMo
                         closeFunc={closeable ? closeExpanded : null}/> );
     } else {
         return (
-            <MetaDataMultiProductViewer {...{dataProductTableId:dpTbl,
-                noProductMessage, enableExtraction}}/> );
+            <MetaDataMultiProductViewer {...{dataProductTableId:dpTbl, dataProductsFactoryOptions,
+                noProductMessage, enableExtraction, viewerId}}/> );
     }
 }
 
-
 MultiProductViewerContainer.propTypes = {
-    enableExtraction: PropTypes.bool,
-    noProductMessage: PropTypes.string,
-    imageExpandedMode : PropTypes.bool,
-    closeable: PropTypes.bool,
-    insideFlex: PropTypes.bool,
-    tbl_id: PropTypes.string, // optional - almost next used. Automaticly found
+    enableExtraction: bool,
+    viewerId: string,
+    noProductMessage: string,
+    imageExpandedMode : bool,
+    closeable: bool,
+    insideFlex: bool,
+    dataProductsFactoryOptions: object,
+    tbl_id: string, // optional - almost next used. Automaticly found
 };

@@ -31,10 +31,8 @@ export const standardIDs = {
     sia: 'ivo://ivoa.net/std/sia',
     ssa: 'ivo://ivoa.net/std/ssa',
     soda: 'ivo://ivoa.net/std/soda',
+    datalink: 'ivo://ivoa.net/std/DataLink',
 };
-
-// known service IDs from service descriptor's standardId field (so far just one)
-export const DATALINK_SERVICE= 'ivo://ivoa.net/std/DataLink';
 
 export const UCDList = ['arith','arith.diff','arith.factor','arith.grad','arith.rate','arith.ratio','arith.squared','arith.sum','arith.variation','arith.zp','em','em.IR','em.IR.J','em.IR.H',
     'em.IR.K','em.IR.3-4um','em.IR.4-8um','em.IR.8-15um','em.IR.15-30um','em.IR.30-60um','em.IR.60-100um','em.IR.NIR','em.IR.MIR','em.IR.FIR','em.UV','em.UV.10-50nm','em.UV.50-100nm',
@@ -1165,6 +1163,7 @@ export function hasObsCoreLikeDataProducts(tableOrId) {
  * @prop {string} standardID
  * @prop {string} value
  * @prop {boolean} allowsInput - use may change the parameter
+ * @prop dataLinkTableRowIdx - if defined then this is the row to use from the datalink table
  * @prop {boolean} inputRequired - user must enter something
  * @prop {Array.<ServiceDescriptorInputParam>} [cisxUI] - names should be one of: HiPS, FOV, hips_initial_ra, hips_initial_dec, moc, examples, hipsCtype1, hipsCtype2
  * @prop {Array.<ServiceDescriptorInputParam>} [cisxTokenSub]
@@ -1176,7 +1175,7 @@ export function hasObsCoreLikeDataProducts(tableOrId) {
  * @param {ServiceDescriptorDef} sd
  * @return {boolean}
  */
-export const isDataLinkServiceDesc= (sd) => false && sd?.standardID?.includes(DATALINK_SERVICE); //todo - remove the false after irsa fixes it's service
+export const isDataLinkServiceDesc= (sd) => sd?.standardID?.includes(standardIDs.datalink);
 
 /**
  * return true if there are service descriptor blocks in this table, false otherwise
@@ -1221,6 +1220,7 @@ export function getServiceDescriptors(tableOrId, removeAsync=true) {
         {
             ID,
             utype,
+            sdSourceTable:table,
             title: desc ?? getSDDescription(table,ID) ??'Service Descriptor '+idx,
             accessURL: params.find( ({name}) => name==='accessURL')?.value,
             standardID: params.find( ({name}) => name==='standardID')?.value,
@@ -1306,6 +1306,7 @@ export const getObsTitle= (tableOrId, rowIdx) => {
  * @return {string}
  */
 export const getObsCoreAccessURL= (tableOrId, rowIdx) => getObsCoreCellValue(tableOrId,rowIdx, 'access_url');
+
 /**
  * return dataproduct_type cell data.
  * and
@@ -1323,7 +1324,7 @@ export function getObsCoreProdType(tableOrId, rowIdx, alwaysLowerCaseString=true
 export function getProdTypeGuess(tableOrId, rowIdx) {
     const table= getTableModel(tableOrId);
     if (getObsCoreProdType(table,rowIdx)) {
-        return getObsCoreProdType(table,rowIdx)?.toLocaleLowerCase() ?? getCellValue(table,rowIdx,'dataset_type') ?? '';
+        return getObsCoreProdType(table,rowIdx) ?? getCellValue(table,rowIdx,'dataset_type') ?? '';
     }
     else if (getColumn(table,'dataset_type')) {
         return getCellValue(table,rowIdx,'dataset_type') ?? '';
@@ -1363,24 +1364,6 @@ export function isFormatPng(tableOrId, rowIdx) {
     return accessFormat.includes('jpeg') || accessFormat.includes('jpg') || accessFormat.includes('png');
 }
 
-
-/**
- * @param {TableModel} dataLinkTable - a TableModel that is a datalink call result
- * @return {Array.<{url, contentType, size, semantics, serviceDefRef}>} array of object with important data link info
- */
-export function getDataLinkData(dataLinkTable) {
-    return (dataLinkTable?.tableData?.data ?? [])
-        .map( (row,idx) =>
-            ({
-                url: getCellValue(dataLinkTable,idx,'access_url' ),
-                contentType: getCellValue(dataLinkTable,idx,'content_type' ) ||'',
-                size: Number(getCellValue(dataLinkTable,idx,'content_length' )),
-                semantics: getCellValue(dataLinkTable,idx,'semantics' ),
-                serviceDefRef: getCellValue(dataLinkTable,idx,'service_def' ),
-            }))
-        .filter( ({url, serviceDefRef}) =>
-            serviceDefRef || url?.startsWith('http') || url?.startsWith('ftp') );
-}
 
 const DEFAULT_TNAME_OPTIONS = [
     'name',         // generic

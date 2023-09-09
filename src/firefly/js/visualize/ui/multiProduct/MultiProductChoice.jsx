@@ -19,7 +19,7 @@ const tbInternalStyle= {display:'flex', flexDirection: 'row', alignItems:'center
 
 export function MultiProductChoice({
                                        makeDropDown, chartViewerId, imageViewerId, metaDataTableId,
-                                       tableGroupViewerId, whatToShow, onChange, mayToggle = false
+                                       tableGroupViewerId, whatToShow, onChange, mayToggle = false, factoryKey
                                    }) {
     const chartTableOptions = [{label: 'Table', value: SHOW_TABLE}, {label: 'Chart', value: SHOW_CHART}];
     const options = !imageViewerId ? chartTableOptions : [...chartTableOptions, imageOp];
@@ -61,17 +61,13 @@ export function MultiProductChoice({
             return (
                 <div style={choiceTBStyle}>
                     {mayToggle && toolbar}
-                    {makeMultiImageViewer(imageViewerId, metaDataTableId, !mayToggle ? makeDropDown : undefined, ImageMetaDataToolbar)}
+                    <MultiImageViewer {...{
+                        viewerId:imageViewerId, insideFlex:true,
+                        canReceiveNewPlots: NewPlotMode.none.key, tableId:metaDataTableId, controlViewerMounting:false,
+                        makeDropDown: !mayToggle ? makeDropDown : undefined,
+                        Toolbar:ImageMetaDataToolbar, factoryKey}} />
                 </div>
             );
     }
     return false;
 }
-
-const makeMultiImageViewer= (imageViewerId,metaDataTableId,makeDropDown, ImageMetaDataToolbar) => {
-    return (
-        <MultiImageViewer {...{
-            viewerId:imageViewerId, insideFlex:true,
-            canReceiveNewPlots: NewPlotMode.none.key, tableId:metaDataTableId, controlViewerMounting:false,
-            makeDropDown, Toolbar:ImageMetaDataToolbar}} />);
-};

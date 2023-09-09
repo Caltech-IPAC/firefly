@@ -22,9 +22,8 @@ export class ImageMetaDataToolbar extends Component {
     shouldComponentUpdate(np,ns) {
         const {props,state}= this;
         const om= ['visRoot'];
-        var update= !shallowequal(omit(props,om), omit(np,om)) || !shallowequal(ns,state);
+        const update= !shallowequal(omit(props,om), omit(np,om)) || !shallowequal(ns,state);
         if (update) return true;
-
         return ((np.layoutType===SINGLE && props.visRoot.activePlotId!==np.visRoot.activePlotId));
     }
 
@@ -50,14 +49,12 @@ export class ImageMetaDataToolbar extends Component {
 
     render() {
         const {activeTable}= this.state;
-        
-        const {visRoot, viewerId, viewerPlotIds, layoutType, dlAry, makeDropDown}= this.props;
+        const {visRoot, viewerId, viewerPlotIds, layoutType, dlAry, makeDropDown, factoryKey}= this.props;
         return (
             <ImageMetaDataToolbarView activePlotId={visRoot.activePlotId} viewerId={viewerId}
                                       viewerPlotIds={viewerPlotIds} layoutType={layoutType} dlAry={dlAry}
                                       activeTable={activeTable} makeDataProductsConverter={makeDataProductsConverter}
-                                      makeDropDown={makeDropDown}
-                                        /> 
+                                      makeDropDown={makeDropDown} factoryKey={factoryKey} />
         );
     }
 }
@@ -69,5 +66,6 @@ ImageMetaDataToolbar.propTypes= {
     layoutType : PropTypes.string.isRequired,
     viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
     tableId: PropTypes.string,
+    factoryKey: PropTypes.string,
     makeDropDown: PropTypes.func
 };

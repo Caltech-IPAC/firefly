@@ -2,41 +2,33 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {get, isEmpty, isArray} from 'lodash';
-import {RangeValues, SIGMA, STRETCH_LINEAR} from '../visualize/RangeValues.js';
-import {makeWiseViewCreate, makeWisePlotRequest} from './WiseRequestList.js';
-import {makeShaPlotRequest, makeShaViewCreate} from './ShaRequestList';
-import {make2MassPlotRequest} from './TwoMassRequestList.js';
-import {makeAtlasPlotRequest} from './AtlasRequestList.js';
-import {makeZtfPlotRequest, makeZtfViewCreate} from './ZtfRequestList.js';
-import {WebPlotRequest, TitleOptions} from '../visualize/WebPlotRequest.js';
-import {ZoomType} from '../visualize/ZoomType.js';
-import {Band} from '../visualize/Band';
-import {getCellValue} from '../tables/TableUtil.js';
-import {makeWorldPt, parseWorldPt} from '../visualize/Point.js';
+import {isArray, once} from 'lodash';
 import {MetaConst} from '../data/MetaConst.js';
-import {CoordinateSys} from '../visualize/CoordSys.js';
+import {getMetaEntry} from '../tables/TableUtil';
 import {hasObsCoreLikeDataProducts, hasServiceDescriptors} from '../util/VOAnalyzer.js';
-import {
-    makeObsCoreConverter,
-    getObsCoreGridDataProduct,
-    getObsCoreDataProduct
-} from './ObsCoreConverter.js';
-import {
-    createGridImagesActivate,
-    createRelatedDataGridActivate,
-    createSingleImageActivate, createSingleImageExtraction
-} from './ImageDataProductsUtil';
-import {makeAnalysisGetGridDataProduct, makeAnalysisGetSingleDataProduct} from './MultiProductFileAnalyzer';
+import {Band} from '../visualize/Band';
+import {SINGLE} from '../visualize/MultiViewCntlr';
+import {makeAnalysisGetGridDataProduct, makeAnalysisGetSingleDataProduct} from './AnalysisUtils.js';
+import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY} from './DataProductsCntlr.js';
 import {dpdtImage} from './DataProductsType';
-import {dispatchUpdateCustom, GRID, GRID_FULL, GRID_RELATED} from '../visualize/MultiViewCntlr';
-import {getDataSourceColumn} from '../util/VOAnalyzer';
-import {getColumn, getMetaEntry} from '../tables/TableUtil';
-import {getAppOptions} from '../core/AppDataCntlr';
-import {getServiceDescSingleDataProduct} from './ServDescConverter.js';
+import {
+    createGridImagesActivate, createRelatedDataGridActivate, createSingleImageActivate, createSingleImageExtraction
+} from './ImageDataProductsUtil.js';
+import {findADataSourceColumn, makeRequestForUnknown, makeRequestSimpleMoving} from './DefaultConverter.js';
+import {makeAtlasPlotRequest} from './missions/AtlasRequestList.js';
+import {makeShaPlotRequest, makeShaViewCreate} from './missions/ShaRequestList.js';
+import {make2MassPlotRequest} from './missions/TwoMassRequestList.js';
+import {makeWisePlotRequest, makeWiseViewCreate} from './missions/WiseRequestList.js';
+import {makeZtfPlotRequest, makeZtfViewCreate} from './missions/ZtfRequestList.js';
+import {
+    getObsCoreDataProduct, getObsCoreGridDataProduct, getObsCoreRelatedDataProduct, makeObsCoreConverter
+} from './vo/ObsCoreConverter.js';
+import {
+    getServiceDescGridDataProduct, getServiceDescRelatedDataProduct, getServiceDescSingleDataProduct,
+    makeServDescriptorConverter
+} from './vo/ServDescConverter.js';
 
-const FILE= 'FILE';
-const DEFAULT_CONVERTER_ID= 'DEFAULT_CONVERTER';
+export const DEFAULT_CONVERTER_ID= 'DEFAULT_CONVERTER';
 
 
 function matchById(table,id)  {
@@ -74,13 +66,13 @@ const simpleCreate= (table, converterTemplate) => converterTemplate;
  * @return {function | promise}
  */
 function getSingleDataProductWrapper(makeReq) {
-    return (table, row, activateParams) => {
+    return async (table, row, activateParams) => {
         const {imageViewerId}= activateParams;
         const retVal= makeReq(table, row, true);
-        const r= get(retVal,'single');
+        const r= retVal?.single;
         const activate= createSingleImageActivate(r,imageViewerId,table.tbl_id,row);
         const extraction= createSingleImageExtraction(r);
-        return Promise.resolve( dpdtImage('Image', activate, extraction, undefined, {extractionText:'Pin Image'}));
+        return  dpdtImage({name:'Image', activate, extraction});
     };
 }
 
@@ -93,16 +85,16 @@ function getSingleDataProductWrapper(makeReq) {
  * @return {function | promise}
  */
 function getGridDataProductWrapper(makeReq) {
-    return (table, plotRows, activateParams) => {
+    return async (table, plotRows, activateParams) => {
         const {imageViewerId}= activateParams;
 
         const reqAry= plotRows
-            .map( (pR) => get(makeReq(table,pR.row,true),'single'))
+            .map( (pR) => makeReq(table,pR.row,true)?.single)
             .filter( (r) => r);
 
         const activate= createGridImagesActivate(reqAry,imageViewerId,table.tbl_id,plotRows);
         const extraction= createSingleImageExtraction(reqAry);
-        return Promise.resolve( dpdtImage('Image Grid', activate, extraction, undefined, {extractionText:'Pin Image'}));
+        return  dpdtImage({name:'Image Grid', activate, extraction});
     };
 }
 
@@ -113,17 +105,13 @@ function getGridDataProductWrapper(makeReq) {
  * @return {Function}
  */
 function getRelatedDataProductWrapper(makeReq) {
-    return (table, row, threeColorOps, highlightPlotId, activateParams) => {
+    return async (table, row, threeColorOps, highlightPlotId, activateParams) => {
         const {imageViewerId}= activateParams;
         const retVal= makeReq(table, row, false,true,threeColorOps);
-        if (retVal) {
-            const activate= createRelatedDataGridActivate(retVal,imageViewerId,table.tbl_id, highlightPlotId ?? retVal.highlightPlotId);
-            const extraction= retVal.standard ? createSingleImageExtraction(retVal.standard) : undefined;
-            return Promise.resolve( dpdtImage('Images', activate, extraction,undefined, {extractionText:'Pin Image'} ));
-        }
-        else {
-            return Promise.resolve( {});
-        }
+        if (!retVal) return {};
+        const activate= createRelatedDataGridActivate(retVal,imageViewerId,table.tbl_id, highlightPlotId ?? retVal.highlightPlotId);
+        const extraction= retVal.standard ? createSingleImageExtraction(retVal.standard) : undefined;
+        return  dpdtImage({name:'Images', activate, extraction} );
     };
 }
 
@@ -144,7 +132,7 @@ function getRelatedDataProductWrapper(makeReq) {
  * @prop {boolean} threeColor supports three color images
  * @prop {boolean} hasRelatedBands supports groups of related images
  * @prop {boolean} canGrid support grids of images
- * @prop {number} maxPlot total number of images that can be created at a time, i.e. page size
+ * @prop {number} maxPlots total number of images that can be created at a time, i.e. page size
  * @prop {string} initialLayout - one of SINGLE, GRID, GRID_RELATED, GRID_FULL
  *
  * @prop {function(table:TableModel,row:String,activateParams:ActivateParams):function} getSingleDataProduct
@@ -152,29 +140,31 @@ function getRelatedDataProductWrapper(makeReq) {
  *  required
  *
  * @prop {function(table:TableModel,plotRows:Array<{plotId:String,row:number,highlight:boolean}>,activateParams:ActivateParams):function} getGridDataProduct
- * pass(table, array of plotrows, and activateParams) return activate function.
+ * pass(table, array of plot rows, and activateParams) return activate function.
  * Only required if canGrid is true
  *
- * @prop {function(table:TableModel,plotRows:Array<Object>,threeColorOps:Object, highlightPlotId:string,activateParams:ActivateParams):function}
- * getRelatedDataProduct, pass (table, row, threeColorOps, highlightPlotId, activateParams) , return activate function.
+ * @prop {function(table:TableModel,plotRows:Array<Object>,threeColorOps:Object, highlightPlotId:string,activateParams:ActivateParams):function} getRelatedDataProduct
+ * pass (table, row, threeColorOps, highlightPlotId, activateParams) , return activate function.
  * Only required if hasRelatedBands is true
 
- * @prop {Object} threeColorBands definition of the three color plot request
+ @prop {Function} describeThreeColor
  *
  */
 
 
-
-
+/**
+ * @return {Array.<DataProductsConvertType>}
+ */
 function initConverterTemplates() {
     /**
      * @type {Array.<DataProductsConvertType>}
      */
-    const originalConverterTemplates = [
+    return [
         {
             converterId: 'wise',
             tableMatches: (table) => matchById(table, 'wise'),
             create: makeWiseViewCreate,
+            describeThreeColor: undefined,
             getSingleDataProduct: getSingleDataProductWrapper(makeWisePlotRequest),
             getGridDataProduct: getGridDataProductWrapper(makeWisePlotRequest),
             getRelatedDataProduct: getRelatedDataProductWrapper(makeWisePlotRequest),
@@ -183,8 +173,8 @@ function initConverterTemplates() {
             converterId: 'sha',
             tableMatches: (table) => matchById(table, 'sha'),
             create: makeShaViewCreate,
-            getSingleDataProduct: (table, row, activateParams) =>
-                makeAnalysisGetSingleDataProduct(makeShaPlotRequest)(table, row, activateParams, 'spectrum'),
+            getSingleDataProduct: (table, row, activateParams, options) =>
+                makeAnalysisGetSingleDataProduct(makeShaPlotRequest)(table, row, activateParams, options, 'spectrum'),
             getRelatedDataProduct: () => Promise.reject('related data products not supported'),
             getGridDataProduct: getGridDataProductWrapper(makeShaPlotRequest),
         },
@@ -210,11 +200,11 @@ function initConverterTemplates() {
             getSingleDataProduct: getSingleDataProductWrapper(make2MassPlotRequest),
             getGridDataProduct: getGridDataProductWrapper(make2MassPlotRequest),
             getRelatedDataProduct: getRelatedDataProductWrapper(make2MassPlotRequest),
-            threeColorBands: {
+            describeThreeColor: async () => ({
                 J: {color: Band.RED, title: 'J'},
                 H: {color: Band.GREEN, title: 'H'},
                 K: {color: Band.BLUE, title: 'K'}
-            }
+            })
         },
         {
             converterId: 'ztf',
@@ -234,19 +224,19 @@ function initConverterTemplates() {
             maxPlots: 8,
             getSingleDataProduct: getObsCoreDataProduct,
             getGridDataProduct: getObsCoreGridDataProduct,
-            getRelatedDataProduct: () => Promise.reject('related data products not supported')
+            getRelatedDataProduct: getObsCoreRelatedDataProduct,
         },
         {
             converterId: 'ServiceDescriptors',
             tableMatches: hasServiceDescriptors,
-            create: simpleCreate,
+            create: makeServDescriptorConverter,
             threeColor: false,
             hasRelatedBands: false,
             canGrid: false,
             maxPlots: 1,
             getSingleDataProduct: getServiceDescSingleDataProduct,
-            getGridDataProduct: null,
-            getRelatedDataProduct: () => Promise.reject('related data products not supported')
+            getGridDataProduct: getServiceDescGridDataProduct,
+            getRelatedDataProduct: getServiceDescRelatedDataProduct,
         },
         {
             converterId: 'SimpleMoving',
@@ -273,187 +263,85 @@ function initConverterTemplates() {
             getRelatedDataProduct: () => Promise.reject('related data products not supported')
         }
     ];
-
-
-    const {factoryOverride} = getAppOptions()?.dataProducts ?? {};
-    let converterTemplates = originalConverterTemplates;
-    if (isArray(factoryOverride)) {
-        converterTemplates = originalConverterTemplates.map((t) => {
-            const overTemp = factoryOverride.find((tTmp) => tTmp.converterId === t.converterId);
-            return overTemp ? {...t, ...overTemp} : t;
-        });
-    }
-    return converterTemplates;
 }
 
 
+export const getDefaultFactoryOptions= once(() => ({
+    dataProductsComponentKey: DEFAULT_DATA_PRODUCTS_COMPONENT_KEY,
+    allowImageRelatedGrid: false,
+    allowServiceDefGrid: false,
+    singleViewImageOnly:false,
+    singleViewTableOnly:false,
+    dataLinkInitialLayout: 'single', //determine how a datalink obscore table trys to show the data layout, must be 'single', 'gridRelated', 'gridFull';
+    activateServiceDef: false,
+    threeColor: undefined,
+    maxPlots: undefined,
+    canGrid: undefined, // some specific factories might have parameters that override this parameter (e.g. allowServiceDefGrid)
+    initialLayout: undefined, //todo - an datalink use this?
+    paramNameKeys: [],
+    ucdKeys: [],
+    utypeKeys: [],
+}));
 
 
-
-export const {getConverterTemplates, addTemplate, addTemplateToEnd, removeTemplate, removeAllButDefaultConverter}= (() => {
-    let converterTemplates;
-
-    const getConverterTemplates= () => {
-        if (!converterTemplates) converterTemplates= initConverterTemplates();
-        return converterTemplates;
-    };
-    const addTemplate= (template) => {
-        getConverterTemplates();
-        converterTemplates.unshift(template);
-    };
-    const addTemplateToEnd= (template) => {
-        getConverterTemplates();
-        converterTemplates.push(template);
-    };
-    const removeTemplate= (id) => {
-        const originTemp= getConverterTemplates();
-        converterTemplates= originTemp.filter( ({converterId}) => converterId!==id);
-    };
-    const removeAllButDefaultConverter= () => {
-        const originTemp= getConverterTemplates();
-        converterTemplates= originTemp.filter( ({converterId}) => converterId===DEFAULT_CONVERTER_ID);
-    };
-
-    return {getConverterTemplates,addTemplate,addTemplateToEnd,removeTemplate,removeAllButDefaultConverter};
-})();
-
-
-
-export function initImage3ColorDisplayManagement(viewerId) {
-     const customEntry= getConverterTemplates().reduce( (newObj, template) => {
-        const c= template?.create(undefined,template) ?? template;
-        if (!c.threeColor) return newObj;
-        newObj[c.converterId]= {...c.threeColorBands, threeColorVisible:false};
-        return newObj;
-    }, {});
-    dispatchUpdateCustom(viewerId, customEntry);
-}
-
-
+const ALL_TEMPLATES= {};
+const FACTORY_OPTIONS= {};
 
 /**
- *
+ * Return the list of all templates (DataProductsConvertType). This template list is unique by factory key. A converter is created from a template
+ * entry. Each template has a 'create' funtion. Each template list can have its own set of options
+ * @param factoryKey
+ * @return {*}
+ */
+function getConverterTemplates(factoryKey='DEFAULT_FACTORY')  {
+    if (!ALL_TEMPLATES[factoryKey]) ALL_TEMPLATES[factoryKey]= initConverterTemplates();
+    return ALL_TEMPLATES[factoryKey];
+}
+
+/**
+ * Each list of factory templates can have a unique set of options. This options will come from a MultiProductViewer when
+ * it starts the DataProductsWatcher.
+ * @param options
+ * @param factoryKey
+ */
+export function setFactoryTemplateOptions(factoryKey='DEFAULT_FACTORY', options)  {
+    FACTORY_OPTIONS[factoryKey]= options;
+}
+
+export function getFactoryTemplateOptions(factoryKey='DEFAULT_FACTORY') {
+    return FACTORY_OPTIONS[factoryKey] ?? getDefaultFactoryOptions();
+}
+
+export function removeAllButSingleConverter(keepId,factoryKey)  {
+    const originTemp= getConverterTemplates(factoryKey);
+    ALL_TEMPLATES[factoryKey]= originTemp.filter( ({converterId}) => converterId===keepId);
+}
+
+/**
+ * get a DataProductsConvertType for a table. The converter is determined by the type of table. Each converter has
+ * a table matches funtion. If a match occurs then the create function is called with that table and the results
+ * are returned.
  * @param {TableModel} table
+ * @param {string} factoryKey - which factory to use
  * @return {DataProductsConvertType}
  */
-export function defaultMakeDataProductsConverter(table) {
-    const t= getConverterTemplates().find( (template) => template.tableMatches(table) );
-    return t && t.create(table,t);
-}
-/**
- *
- * @param table
- * @param {TableModel} table
- * @return {DataProductsConvertType}
- */
-let overrideMakeDataProductsConverter;
-
-/**
- * get a convert factory for a table
- * @param {TableModel} table
- * @return {DataProductsConvertType}
- */
-export const makeDataProductsConverter= (table) =>
-    (overrideMakeDataProductsConverter && overrideMakeDataProductsConverter(table)) || defaultMakeDataProductsConverter(table);
-
-export const setOverrideDataProductsConverterFactory = (f) => overrideMakeDataProductsConverter= f;
-
-/**
- *  Support data the we don't know about
- * @param table
- * @param row
- * @param includeSingle
- * @param includeStandard
- * @return {{}}
- */
-function makeRequestForUnknown(table, row, includeSingle, includeStandard) {
-
-    const {tableMeta:meta}= table;
-
-    const dataSource= findADataSourceColumn(table);
-    if (!dataSource) return {};
-
-
-    let positionWP= null;
-
-    let sAry= meta[MetaConst.POSITION_COORD_COLS] && meta[MetaConst.POSITION_COORD_COLS].split(';');
-    if (!sAry) sAry= meta[MetaConst.CENTER_COLUMN] && meta[MetaConst.CENTER_COLUMN].split(';');
-
-    if (!isEmpty(sAry)) {
-        const lon= Number(getCellValue(table,row,sAry[0]));
-        const lat= Number(getCellValue(table,row,sAry[1]));
-        const csys= CoordinateSys.parse(sAry[2]);
-        positionWP= makeWorldPt(lon,lat,csys);
-    }
-    else if (meta[MetaConst.POSITION_COORD]) {
-        positionWP= parseWorldPt(meta[MetaConst.POSITION_COORD]);
-    }
-
-
-    const retval= {};
-    if (includeSingle) {
-        retval.single= makeRequest(table,dataSource.name,positionWP, row);
-    }
-    
-    if (includeStandard) {
-        retval.standard= [makeRequest(table,dataSource.name,positionWP, row)];
-        retval.highlightPlotId= retval.standard[0].getPlotId();
-    }
-    
-    return retval;
-
+export function makeDataProductsConverter(table, factoryKey= undefined) {
+    const t= getConverterTemplates(factoryKey).find( (template) => template.tableMatches(table) );
+    if (!t) return;
+    const options= getFactoryTemplateOptions(factoryKey);
+    // most options are specific to a factory but these below are common to all
+    const pT= {
+        ...t,
+        canGrid: options.canGrid ?? t.canGrid ?? false,
+        maxPlots: options.maxPlots ?? t.maxPlots ?? 1,
+        initialLayout: options.initialLayout ?? t.initialLayout ?? SINGLE,
+        threeColor: options.threeColor ?? t.threeColor ?? false,
+    };
+    const retObj= t.create(table,pT, options);
+    return {options, ...retObj};
+        
 }
 
-
-function makeRequestSimpleMoving(table, row, includeSingle, includeStandard) {
-
-    const {tableMeta:meta, tableData}= table;
-
-
-    const dataSource= findADataSourceColumn(table);
-
-    if (!dataSource) return {};
-
-
-    const sAry= meta[MetaConst.POSITION_COORD_COLS].split(';');
-    if (!sAry || sAry.length!== 3) return [];
-
-    let positionWP= null;
-    if (!isEmpty(sAry)) {
-        const lon= Number(getCellValue(table,row,sAry[0]));
-        const lat= Number(getCellValue(table,row,sAry[1]));
-        const csys= CoordinateSys.parse(sAry[2]);
-        positionWP= makeWorldPt(lon,lat,csys);
-    }
-
-    const retval= {};
-    if (includeSingle) {
-        retval.single= makeMovingRequest(table,row,dataSource.name,positionWP,'simple-moving-single-'+(row %24));
-    }
-
-    if (includeStandard) {
-        retval.standard= [makeMovingRequest(table,row,dataSource.name,positionWP,'simple-moving-single')];
-        retval.highlightPlotId= retval.standard[0].getPlotId();
-    }
-
-    return retval;
-
-}
-
-
-const defDataSourceGuesses= [ 'FILE', 'FITS', 'DATA', 'SOURCE', 'URL' ];
-
-function findADataSourceColumn(table) {
-    if (!table || table.isFetching) return false;
-    const columns= get(table,'tableData.columns');
-    if (!columns) return false;
-    const dsCol= getDataSourceColumn(table);
-    if (dsCol) return getColumn(table,dsCol);
-    if (dsCol===false) return false;
-    // if dsCol is undefined then start guessing
-    const guesses= defDataSourceGuesses.map( (g) => g.toUpperCase());
-    return columns.find( (c) => guesses.includes(c.name.toUpperCase()));
-}
 
 function findTableMetaEntry(table,ids) {
     const testIdAry= isArray(ids) ? ids : [ids];
@@ -461,55 +349,3 @@ function findTableMetaEntry(table,ids) {
     if (!id) return;
     return getMetaEntry(table,id);
 }
-
-
-
-/**
- *
- * @param table
- * @param row
- * @param dataSource
- * @param positionWP
- * @param plotId
- * @return {*}
- */
-function makeMovingRequest(table, row, dataSource, positionWP, plotId) {
-    const url= getCellValue(table,row,dataSource);
-    const r = WebPlotRequest.makeURLPlotRequest(url, 'Fits Image');
-    r.setTitleOptions(TitleOptions.FILE_NAME);
-    r.setZoomType(ZoomType.TO_WIDTH_HEIGHT);
-    r.setPlotId(plotId);
-    r.setInitialRangeValues(RangeValues.make2To10SigmaLinear());
-    r.setOverlayPosition(positionWP);
-    return r;
-
-}
-
-
-/**
- *
- * @param table
- * @param dataSource
- * @param positionWP
- * @param row
- * @return {*}
- */
-function makeRequest(table, dataSource, positionWP, row) {
-    if (!table || !dataSource) return null;
-
-    let r;
-    const source= getCellValue(table, row, dataSource);
-    if (dataSource.toLocaleUpperCase() === FILE) {
-        r = WebPlotRequest.makeFilePlotRequest(source, 'DataProduct');
-    }
-    else {
-        r = WebPlotRequest.makeURLPlotRequest(source, 'DataProduct');
-    }
-    r.setZoomType(ZoomType.FULL_SCREEN);
-    r.setTitleOptions(TitleOptions.FILE_NAME);
-    r.setPlotId(source);
-    if (positionWP) r.setOverlayPosition(positionWP);
-
-    return r;
-}
-

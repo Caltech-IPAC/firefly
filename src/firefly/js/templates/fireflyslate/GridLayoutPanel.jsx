@@ -9,13 +9,13 @@ import {clone} from '../../util/WebUtil.js';
 import sizeMe from 'react-sizeme';
 import GridLayout from 'react-grid-layout';
 import {MultiImageViewer} from '../../visualize/ui/MultiImageViewer.jsx';
+import {MetaDataMultiProductViewer} from '../../visualize/ui/multiProduct/MetaDataMultiProductViewer.jsx';
 import {MultiViewStandardToolbar} from '../../visualize/ui/MultiViewStandardToolbar.jsx';
 import {MultiChartViewer} from '../../charts/ui/MultiChartViewer.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {LO_VIEW, getGridDim, dispatchUpdateGridView} from '../../core/LayoutCntlr.js';
 import {NewPlotMode} from '../../visualize/MultiViewCntlr.js';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
-import {MultiProductViewer} from '../../visualize/ui/multiProduct/MultiProductViewer.jsx';
 import {getActiveTableId} from '../../tables/TableUtil.js';
 
 import './react-grid-layout_styles.css';
@@ -163,9 +163,9 @@ function makeComponent(g) {
         case LO_VIEW.tableImageMeta:
             return (
                 <div key={g.cellId} style={{flex: 'auto', display: 'flex'}} >
-                    <MultiProductViewer key={g.cellId}
+                    <MetaDataMultiProductViewer key={g.cellId}
                                         viewerId={g.cellId}
-                                        metaDataTableId={getActiveTableId()}
+                                        dataProductTableId={getActiveTableId()}
                                         enableExtraction={true}/>
                 </div>
             );

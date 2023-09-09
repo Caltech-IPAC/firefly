@@ -50,7 +50,7 @@ function ColorBandChooserPanel ({viewerId, bandData, dataId}) {
     const options= Object.keys(threeOp).map( (k) => ({value:k, label:threeOp[k].title}));
     options.push({value:'NONE', label:'Disable'});
 
-    const {threeColorVisible}=  getViewer(getMultiViewRoot(), viewerId)?.customData[dataId];
+    const {threeColorVisible=false}=  getViewer(getMultiViewRoot(), viewerId)?.customData?.[dataId] ?? {};
 
     const initRedVal= getKey(threeOp,Band.RED) ?? 'NONE';
     const initGreenVal= getKey(threeOp,Band.GREEN) ?? 'NONE';
@@ -147,6 +147,6 @@ function loadThreeColor(request, bandData, viewerId, dataId) {
         else entry[request[b]].color= [entry[request[b]].color,b];
     });
 
-    dispatchUpdateCustom(viewerId,{...v.customData, [dataId]:{...v.customData[dataId], ...entry}});
+    dispatchUpdateCustom(viewerId,{...v.customData, [dataId]:{...v.customData[dataId], ...entry, threeColorVisible:true}});
     dispatchHideDialog(POPUP_ID);
 }

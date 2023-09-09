@@ -32,7 +32,7 @@ const GROUP_KEY= 'ActivateMenu';
 const titleStyle= {textAlign:'center', padding:'0 0 0 50px', fontSize:'larger', fontWeight:'bold'};
 
 
-export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDefParams, setSearchParams,
+export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDef, setSearchParams,
                                                title, makeDropDown, sRegion, standardID,
                                                plotId= 'defaultHiPSTargetSearch'}) => {
 
@@ -46,7 +46,7 @@ export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDefParams,
         console.log(wp);
     }
 
-    const fieldDefAry= makeFieldDefs(serDefParams, sRegion, undefined, true,
+    const fieldDefAry= makeFieldDefs(serDef?.serDefParams, sRegion, undefined, true,
         getAppOptions()?.coverage?.hipsSourceURL, fovSize);
 
     const submitSearch= (r) => {

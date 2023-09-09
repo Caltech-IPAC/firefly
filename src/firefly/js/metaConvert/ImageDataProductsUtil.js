@@ -1,29 +1,27 @@
-
-import {union, get, isEmpty, difference, isArray} from 'lodash';
-import {
-    dispatchReplaceViewerItems, getViewerItemIds, getMultiViewRoot,
-    getLayoutType, GRID, DEFAULT_FITS_VIEWER_ID, IMAGE, getViewer
-} from '../visualize/MultiViewCntlr.js';
-import ImagePlotCntlr, {
-    dispatchPlotImage, dispatchDeletePlotView, visRoot, dispatchZoom,
-    dispatchPlotGroup, dispatchChangeActivePlotView } from '../visualize/ImagePlotCntlr.js';
-import {getPlotGroupById} from '../visualize/PlotGroup.js';
-import {AnnotationOps, isImageDataRequestedEqual, WebPlotRequest} from '../visualize/WebPlotRequest.js';
-import {
-    DEFAULT_COVERAGE_VIEWER_ID,
-    getActivePlotView,
-    getPlotViewAry, getPlotViewById, isDefaultCoverageActive, isImageExpanded, primePlot
-} from '../visualize/PlotViewUtil.js';
-import {allBandAry} from '../visualize/Band.js';
-import {getActiveTableId, getTblById} from '../tables/TableUtil.js';
-import {PlotAttribute} from '../visualize/PlotAttribute.js';
-import {dispatchTableHighlight} from '../tables/TablesCntlr.js';
+import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga.js';
 import {DPtypes} from 'firefly/metaConvert/DataProductsType.js';
 import {showPinMessage} from 'firefly/ui/PopupUtil.jsx';
-import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga.js';
 import {logger} from 'firefly/util/Logger.js';
-
-
+import {difference, get, isArray, isEmpty, union} from 'lodash';
+import {ServerRequest} from '../data/ServerRequest.js';
+import {dispatchTableHighlight} from '../tables/TablesCntlr.js';
+import {getActiveTableId, getCellValue, getTblById} from '../tables/TableUtil.js';
+import {allBandAry} from '../visualize/Band.js';
+import ImagePlotCntlr, {
+    dispatchChangeActivePlotView, dispatchDeletePlotView, dispatchPlotGroup, dispatchPlotImage, dispatchZoom, visRoot
+} from '../visualize/ImagePlotCntlr.js';
+import {
+    DEFAULT_FITS_VIEWER_ID, dispatchReplaceViewerItems, getLayoutType, getMultiViewRoot, getViewerItemIds, GRID, IMAGE
+} from '../visualize/MultiViewCntlr.js';
+import {PlotAttribute} from '../visualize/PlotAttribute.js';
+import {getPlotGroupById} from '../visualize/PlotGroup.js';
+import {
+    getActivePlotView, getPlotViewAry, getPlotViewById, isDefaultCoverageActive, isImageExpanded, primePlot
+} from '../visualize/PlotViewUtil.js';
+import {
+    AnnotationOps, getDefaultImageColorTable, isImageDataRequestedEqual, WebPlotRequest
+} from '../visualize/WebPlotRequest.js';
+import {ZoomType} from '../visualize/ZoomType.js';
 
 
 export function createRelatedDataGridActivate(reqRet, imageViewerId, tbl_id, highlightPlotId) {
@@ -32,7 +30,11 @@ export function createRelatedDataGridActivate(reqRet, imageViewerId, tbl_id, hig
     return () => replotImageDataProducts(highlightPlotId, true, imageViewerId, tbl_id, reqRet.standard, reqRet.threeColor);
 }
 
-
+export function createRelatedGridImagesActivate(inReqAry, threeColorReqAry, imageViewerId, tbl_id) {
+    const reqAry= inReqAry.filter( (r) => r);
+    if (tbl_id) reqAry.forEach( (r) => r.setAttributes({ [PlotAttribute.DATALINK_TABLE_ID]: tbl_id }));
+    return () => replotImageDataProducts(reqAry[0]?.getPlotId(), true, imageViewerId, tbl_id, reqAry, threeColorReqAry);
+}
 
 /**
  *
@@ -60,6 +62,7 @@ export function createGridImagesActivate(inReqAry, imageViewerId, tbl_id, plotRo
     const highlightPlotId= pR && pR.plotId;
     return () => replotImageDataProducts(highlightPlotId, true, imageViewerId, tbl_id, reqAry);
 }
+
 
 /**
  *
@@ -95,6 +98,11 @@ function copyRequest(inR) {
     return r;
 }
 
+/**
+ * pass a request or array of request and return an extraction function
+ * @param {WebPlotRequest|Array.<WebPlotRequest>} request
+ * @return {Function}
+ */
 export function createSingleImageExtraction(request) {
     if (!request) return undefined;
     const wpRequest= isArray(request) ? request.map( (r) => copyRequest(r)) : copyRequest(request);
@@ -189,7 +197,7 @@ export function changeTableHighlightToMatchPlotView(plotId, tbl_id) {
 /**
  *
  * @param {string} activePlotId the new active plot id after the replot
- * @param {string} makeActive if true, make the plotId active
+ * @param {boolean} makeActive if true, make the plotId active
  * @param {string} imageViewerId the id of the viewer
  * @param {string} tbl_id table id of the table with the data products
  * @param {Array.<WebPlotRequest>} reqAry an array of request to execute
@@ -280,12 +288,6 @@ function replotImageDataProducts(activePlotId, makeActive, imageViewerId, tbl_id
         if (nextDisplayType===DPtypes.IMAGE && layoutType===GRID && tbl_id===nextMetaDataTableId) {
             return;
         }
-        // if (nextDisplayType===DPtypes.IMAGE && tbl_id===nextMetaDataTableId) {
-            // todo: need a check here: see if we are just collapsing from expanded mode - then just return
-            //       maybe check the table and row, if it is the same as the plot then don't
-            //plot.attributes[PlotAttribute.DATALINK_TABLE_ROW];
-            //plot.attributes[PlotAttribute.DATALINK_TABLE_ID];
-        // }
         const table= getTblById(getActiveTableId());
         getPlotViewAry(visRoot())
             .filter( (pv) => pv.plotGroupId===groupId)
@@ -325,4 +327,67 @@ function make3ColorPlottingList(req3cAry) {
     if (!plotState) return req3cAry;
     const match= allBandAry.every( (b) => isImageDataRequestedEqual(plotState.getWebPlotRequest(b),req3cAry[b.value]));
     return match ? [] : req3cAry;
+}
+
+const getSetInSrByRow = (table, sr, rowNum) => (col) => {
+    sr.setSafeParam(col.name, getCellValue(table, rowNum, col.name));
+};
+
+/**
+ *
+ * @param table table data
+ * @param {Array.<string>} colToUse columns from table
+ * @param {Array.<string>} headerParams meta data parameters
+ * @param {RangeValues} rv rangeValues
+ * @param {number} colorTableId color table id
+ * @return {function} see below, function takes plotId, reqKey,title, rowNum, extranParams and returns a WebPlotRequest
+ *
+ */
+export function makeServerRequestBuilder(table, colToUse, headerParams, rv = null, colorTableId = getDefaultImageColorTable()) {
+    /**
+     * @param plotId - the plot id for the request
+     * @param reqKey - search processor request key
+     * @param title - title of plot
+     * @param rowNum - get the row number of data in the table
+     * @param extraParams can be an object with single key or an array of objects with single key
+     * @return {WebPlotRequest}
+     */
+    return (plotId, reqKey, title, rowNum, extraParams) => {
+        const sr = new ServerRequest(reqKey);
+        if (typeof extraParams === 'object') {
+            if (!Array.isArray(extraParams)) extraParams = [extraParams];
+            extraParams.forEach((p) => sr.setParam(p));
+        }
+        const {columns} = table.tableData;
+        const {tableMeta: meta} = table;
+        const setInSr = getSetInSrByRow(table, sr, rowNum);
+
+        if (!Array.isArray(colToUse) && typeof colToUse === 'string') colToUse = [colToUse];
+        if (!Array.isArray(headerParams) && typeof headerParams === 'string') headerParams = [headerParams];
+
+
+        if (isEmpty(colToUse) || colToUse[0].toUpperCase() === 'ALL') {
+            columns.forEach(setInSr);
+        } else {
+            columns.filter((c) => colToUse.includes(c.name)).forEach(setInSr);
+        }
+
+        if (!isEmpty(headerParams)) {
+            if (headerParams[0].toUpperCase() === 'ALL') {
+                Object.keys(meta).forEach((metaKey) => sr.setSafeParam(metaKey, meta[metaKey]));
+
+            } else {
+                Object.keys(meta).filter((m) => headerParams.includes(m))
+                    .forEach((metaKey) => sr.setSafeParam(metaKey, meta[metaKey]));
+            }
+        }
+        const wpReq = WebPlotRequest.makeProcessorRequest(sr, title);
+        // wpReq.setZoomType(ZoomType.FULL_SCREEN);
+        wpReq.setInitialColorTable(colorTableId);
+        wpReq.setTitle(title);
+        wpReq.setPlotId(plotId);
+        wpReq.setZoomType(ZoomType.TO_WIDTH);
+        if (rv) wpReq.setInitialRangeValues(rv);
+        return wpReq;
+    };
 }
