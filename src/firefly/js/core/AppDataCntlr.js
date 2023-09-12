@@ -32,6 +32,8 @@ export const SET_USER_INFO = `${APP_DATA_PATH}.setUserInfo`;
 export const HELP_LOAD = `${APP_DATA_PATH}.helpLoad`;
 export const LOAD_SEARCHES = `${APP_DATA_PATH}.loadSearches`;
 export const NOTIFY_REMOTE_APP_READY = `${APP_DATA_PATH}.notifyRemoteAppReady`;
+export const FORM_SUBMIT = `${APP_DATA_PATH}.formSubmit`;
+export const FORM_CANCEL = `${APP_DATA_PATH}.formCancel`;
 
 /** fired when there's a connection is added/removed from this channel.  useful for tracking connections in channel, etc   */
 export const WS_CONN_UPDATED = `${APP_DATA_PATH}.wsConnUpdated`;
@@ -168,6 +170,23 @@ export function dispatchOnAppReady(callback) {
     }
 }
 
+/**
+ * Dispatch FORM_SUBMIT with the given payload.  This is only a notification action.  It does not do anything with the payload.
+ * Payload can be a number of things.  See FormPanel for details.  But, this function can also be called outside of FormPanel
+ * where a FORM_SUBMIT is intended.
+ * @param {object} payload   data submitted.
+ */
+export function dispatchFormSubmit(payload) {
+    flux.process({ type : FORM_SUBMIT, payload});
+}
+
+/**
+ * Dispatch FORM_CANCEL with the given payload.  This is only a notification action.
+ * @param {object} payload   data for identification.
+ */
+export function dispatchFormCancel(payload) {
+    flux.process({ type : FORM_CANCEL, payload});
+}
 
 /*---------------------------- EXPORTED FUNCTIONS -----------------------------*/
 

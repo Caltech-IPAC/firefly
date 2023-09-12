@@ -98,7 +98,7 @@ export class FireflyViewer extends PureComponent {
         const {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown, showUserInfo, initLoadCompleted, initLoadingMessage,
             dropdownPanels, views, footer, style, showViewsSwitch, leftButtons,
             centerButtons, rightButtons, bannerLeftStyle, bannerMiddleStyle, coverageSide} = this.state;
-        const {visible, view, initArgs} = dropDown || {};
+        const {visible, view} = dropDown || {};
 
         if (!isReady) {
             return (<div style={{top: 0}} className='loading-mask'/>);
@@ -113,7 +113,6 @@ export class FireflyViewer extends PureComponent {
                             footer={footer}
                             visible={!!visible}
                             selected={view}
-                            initArgs={initArgs}
                             {...{dropdownPanels} } />
                     </header>
                     <main>

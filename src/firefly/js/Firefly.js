@@ -14,7 +14,7 @@ import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {FireflySlate} from './templates/fireflyslate/FireflySlate.jsx';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
-import {routerEntry, ROUTER} from './templates/router/RouterEntry.jsx';
+import {routeEntry, ROUTER} from './templates/router/RouteHelper.jsx';
 import {initApi} from './api/ApiBuild.js';
 import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
 import {dispatchChangeReadoutPrefs} from './visualize/MouseReadoutCntlr.js';
@@ -390,7 +390,7 @@ function renderRoot(root, viewer, props, webApiCommands) {
     const webApi= isUsingWebApi(webApiCommands);
     const doAppRender= () => {
         if (props.template === ROUTER) {
-            routerEntry(rootToUse, props);
+            routeEntry(rootToUse, props);
         } else {
             rootToUse.render(React.createElement(viewer, {...props, normalInit: !webApi}));
         }

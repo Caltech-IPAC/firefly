@@ -4,14 +4,12 @@
 
 import React, {useCallback} from 'react';
 import PropTypes from 'prop-types';
-import {get} from 'lodash';
 
 import {COMMAND, getMenu} from '../core/AppDataCntlr.js';
 import {flux} from '../core/ReduxFlux.js';
 import {dispatchShowDropDown} from '../core/LayoutCntlr.js';
 import {BgMonitorButton} from '../core/background/BgMonitorButton.jsx';
 import {makeBadge} from './ToolbarButton.jsx';
-import {RouteMenuItem, ROUTER} from '../templates/router/RouterEntry.jsx';
 
 import './Menu.css';
 
@@ -23,7 +21,7 @@ function handleAction (menuItem) {
     if (menuItem.type === COMMAND) {
         flux.process({
             type: menuItem.action,
-            payload: (menuItem.payload ? menuItem.payload : {})
+            payload: (menuItem.payload ?? {})
         });
     } else {
         dispatchShowDropDown( {view: menuItem.action});
@@ -64,13 +62,7 @@ export function Menu({menu={}}) {
     const {menuItems=[], showBgMonitor=true} = menu;
     if (!menuItems.length) return <div/>;
 
-    const items = menuItems.map((item, idx) => {
-        if (item.type === ROUTER) {
-            return <RouteMenuItem key={idx} menuItem={item}/>;
-        } else {
-            return <MenuItem key={idx} menuItem={item} isSelected={item.action === menu.selected}/>;
-        }
-    });
+    const items = menuItems.map((item, idx) => <MenuItem key={idx} menuItem={item} isSelected={item.action === menu.selected}/>);
 
     return (
         <div className='menu__main'>
@@ -87,15 +79,20 @@ Menu.propTypes = {
 };
 
 /**
+ * returns an array menuItems
+ * @returns {*}
+ */
+export function getMenuItems() {
+    return getMenu()?.menuItems;
+}
+
+/**
  * returns an array of drop down actions from menu items
  * @returns {*}
  */
 export function getDropDownNames() {
-    const menuItems = get(getMenu(), 'menuItems');
+    const menuItems = getMenuItems();
     if (!Array.isArray(menuItems)) return [];
-    return menuItems.filter((el) => el.type !== COMMAND).reduce(
-            (rval, mi) => {
-                rval.push(mi.action);
-                return rval;
-            }, []);
+    return menuItems.filter((mi) => mi.type !== COMMAND)
+                    .map((mi) => mi.action);
 }

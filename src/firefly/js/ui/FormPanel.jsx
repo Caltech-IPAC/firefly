@@ -2,14 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
+import React, {useCallback} from 'react';
 import PropTypes from 'prop-types';
 import CompleteButton from './CompleteButton.jsx';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {HelpIcon} from './HelpIcon.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
-import {isNil, get} from 'lodash';
+import {get, isNil} from 'lodash';
+import {dispatchFormCancel, dispatchFormSubmit} from 'firefly/core/AppDataCntlr.js';
 
 function handleFailure() {
 
@@ -38,11 +39,8 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
             submitResult = onSubmit(request);
         }
 
-        // submitResult is not defined, or it is true, or it is false and hideOnInValid is true
-        if (params?.disabledDropdownHide) return;
-        if (isNil(submitResult) || submitResult || (!submitResult&&get(params, 'hideOnInvalid', true))) {
-            dispatchHideDropDown();
-        }
+        // By default, onSubmit returns true.  So, return false only when onSubmit explicitly returns false
+        return isNil(submitResult) || submitResult;
     };
 }
 
@@ -66,6 +64,24 @@ export const FormPanel = function (props) {
                                   width: '100%', alignItems: 'flex-end', padding:'2px 0px 3px'}, submitBarStyle);
     buttonStyle = Object.assign({flexGrow: 0, display: 'inline-flex', width: '100%', justifyContent: 'space-between'}, buttonStyle);
 
+    const doSubmit = ((p) => {
+        const handler = onSuccess ?? createSuccessHandler(action, params, title, onSubmit);
+        const valid = handler(p);
+        if (valid) {
+            dispatchFormSubmit(p);
+        }
+        // handle dropdown
+        if (params?.disabledDropdownHide) return;
+        if (valid || (params?.hideOnInvalid ?? true)) {
+            dispatchHideDropDown();
+        }
+    });
+
+    const doCancel = useCallback(() => {
+        dispatchFormCancel();
+        onCancel?.();
+    }, []);
+
     return (
         <div style={style}>
             <div style={inputStyle}>
@@ -79,11 +95,11 @@ export const FormPanel = function (props) {
                                         groupKey={groupKey}
                                         getDoOnClickFunc={getDoOnClickFunc}
                                         groupsToUse={groupsToUse}
-                                        onSuccess={onSuccess||createSuccessHandler(action, params, title, onSubmit)}
+                                        onSuccess={doSubmit}
                                         onFail={onError || handleFailure}
                                         text = {submitText} changeMasking={changeMasking}
                         />
-                        <button style={{display: 'inline-block'}} type='button' className='button std' onClick={onCancel}>{cancelText}</button>
+                        <button style={{display: 'inline-block'}} type='button' className='button std' onClick={doCancel}>{cancelText}</button>
                     </div>
                     {extraWidgets}
                 </div>
