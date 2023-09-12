@@ -1,4 +1,4 @@
-import React, {memo} from 'react';
+import React, {memo, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {get, has, isFunction, isNil, isString} from 'lodash';
 
@@ -8,9 +8,8 @@ import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import LOADING from 'html/images/gxt/loading.gif';
 import {upload} from '../rpc/CoreServices.js';
 
-
 function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  message, onChange, value, labelWidth,
-                         innerStyle, isFromURL, onUrlAnalysis, fileNameStyle}) {
+                         innerStyle, isFromURL, onUrlAnalysis, canDragDrop,fileNameStyle}) {
     var style = !isFromURL ? Object.assign({color: 'transparent', border: 'none', background: 'none'}, innerStyle) : (innerStyle || {});
     var fileName = (!isFromURL && value) ?  value.split(/(\\|\/)/g).pop() : 'No file chosen';
 
@@ -18,30 +17,41 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
         const labelW = isNil(labelWidth) ? 0 : labelWidth;
 
         return (
-            <InputFieldView
-                valid={valid}
-                visible={true}
-                message={message}
-                onChange={onChange}
-                type={isFromURL ? 'text' : 'file'}
-                label={label}
-                value={value}
-                tooltip={isFromURL ? 'enter a URL to upload from' : 'click to choose a file'}
-                labelWidth={labelW}
-                inline={true}
-                style={style}
-                wrapperStyle={wrapperStyle}
-            />
+            <>
+                <InputFieldView
+                    valid={valid}
+                    visible={true}
+                    message={message}
+                    onChange={onChange}
+                    type={isFromURL ? 'text' : 'file'}
+                    label={label}
+                    value={value}
+                    tooltip={isFromURL ? 'enter a URL to upload from' : 'click to choose a file'}
+                    labelWidth={labelW}
+                    inline={true}
+                    style={style}
+                    wrapperStyle={wrapperStyle}
+                />
+                {canDragDrop && !isFromURL && <div style={{display:'inline', fontSize: 13, fontStyle: 'italic'}} >
+                   {'or Drag & Drop a file here'}
+                </div>}
+            </>
         );
     };
 
     const actionPart = () => {
         if (isFromURL) {
             return (
+                <>
                 <div style={{display:'inline-block', whiteSpace:'nowrap'}}>
                     <button type='button' className='button std hl'
-                            onClick={() =>  onUrlAnalysis(value)}>{'Upload'}</button>
+                            onClick={() =>  onUrlAnalysis(value)}>{'Upload'}
+                    </button>
                 </div>
+                {canDragDrop && <div style={{display:'block', fontSize: 11, fontStyle: 'italic'}} >
+                    <br/>{'or Drag & Drop a file here'}
+                </div>}
+                </>
             );
         } else {
             let fPos = {marginLeft: -150, width: '30em'};
@@ -76,7 +86,8 @@ FileUploadView.propTypes = {
     wrapperStyle: PropTypes.object,
     isFromURL: PropTypes.bool.isRequired,
     onUrlAnalysis: PropTypes.func,
-    fileNameStyle: PropTypes.object
+    fileNameStyle: PropTypes.object,
+    canDragDrop: PropTypes.bool
 };
 
 FileUploadView.defaultProps = {
@@ -89,7 +100,14 @@ FileUploadView.defaultProps = {
 export const FileUpload= memo( (props) => {
     const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
     let modViewProps;
-    if (viewProps.isFromURL) {
+
+    useEffect(() => {
+        if (viewProps.dropEvent) {
+            handleChange(viewProps.dropEvent, fireValueChange, viewProps.fileType, viewProps.fileAnalysis);
+        }
+    },[viewProps.dropEvent]);
+
+    if (viewProps.isFromURL && !viewProps.dropEvent) {
         modViewProps= {
             ...viewProps,
             onChange: (ev) => onUrlChange(ev, viewProps, fireValueChange),
@@ -116,7 +134,9 @@ FileUpload.propTypes = {
     wrapperStyle: PropTypes.object,
     fileNameStyle: PropTypes.object,
     fileAnalysis: PropTypes.func,
-
+    canDragDrop: PropTypes.bool,
+    setDropEvent: PropTypes.func,
+    dropEvent: PropTypes.object,
     initialState: PropTypes.shape({
         tooltip: PropTypes.string,
         label:  PropTypes.string,
@@ -149,9 +169,12 @@ function doUrlAnalysis(value, fireValueChange, type, fileAnalysis) {
 
 
 function handleChange(ev, fireValueChange, type, fileAnalysis) {
-    var file = get(ev, 'target.files.0');
-    var displayValue = get(ev, 'target.value');
-
+    let file = get(ev, 'target.files.0');
+    let displayValue = get(ev, 'target.value'); //file.name;
+    if (ev.type === 'drop') { //drag drop files - instead of picking file from 'Choose File'
+        file = Array.from(ev.dataTransfer.files)[0];
+        displayValue = file.name;
+    }
     fireValueChange({
         displayValue,
         value: !fileAnalysis ? makeDoUpload(file, type) : makeDoUpload(file, type, false, fileAnalysis)()

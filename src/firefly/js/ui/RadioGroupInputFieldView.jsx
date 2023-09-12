@@ -4,7 +4,7 @@ import InputFieldLabel from './InputFieldLabel.jsx';
 import './ButtonGroup.css';
 
 
-function makeRadioGroup(options,alignment ,value,onChange,tooltip, labelStyle) {
+function makeRadioGroup(options,alignment,value,onChange,tooltip,labelStyle) {
 
     return options.map((option) => (
         <span key={option.value}>
