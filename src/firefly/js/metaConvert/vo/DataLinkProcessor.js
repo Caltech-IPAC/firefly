@@ -358,7 +358,7 @@ function analyzeSemantic(semantics='',contentType='') {
 
 /**
  * @param {TableModel} dataLinkTable - a TableModel that is a datalink call result
- * @return {Array.<{url, contentType, size, semantics, isThis, isGrid, isCutout, isImage, serviceDefRef, serDef, }>} array of object with important data link info
+ * @return {Array.<{url, contentType, size, semantics, isThis, isGrid, isCutout, isImage, serviceDefRef, serDef}>} array of object with important data link info
  */
 export function getDataLinkData(dataLinkTable) {
     return (dataLinkTable?.tableData?.data ?? [])
