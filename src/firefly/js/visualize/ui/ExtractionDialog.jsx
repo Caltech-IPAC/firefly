@@ -768,7 +768,10 @@ function genZAxisChartData(imPt, pv, dataAry,x,y, pointSize, combineOp, title) {
     const hasWL= hasWLInfo(plot);
     const xAry= hasWL ? getAllWaveLengthsForCube(pv,imPt) : dataAry.map( (d,i) => i+1);
     const highlightX= hasWL ? getPtWavelength(primePlot(pv), imPt,x)  : x+1;
-    const highlightXLabel= `${sprintf('%5.4f',highlightX)} (plane: ${x+1})`;
+    const highlightXLabel=
+        isNaN(highlightX) ?
+            `${highlightX+''} (plane: ${x+1})` :
+            `${sprintf('%5.4f',highlightX)} (plane: ${x+1})`;
 
     const format= (v) => isNaN(v) ? '' : sprintf('%5.4f',v);
     const xLabel= (i) => `${format(getPtWavelength(primePlot(pv), imPt,x))} (plane: ${i+1})`;

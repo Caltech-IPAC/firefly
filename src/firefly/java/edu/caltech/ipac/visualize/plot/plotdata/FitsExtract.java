@@ -211,9 +211,7 @@ public class FitsExtract {
     public static List<ExtractionResults> extractFromRelatedHDUs(File fitsFile, int refHduNum,
                                                                  boolean allMatchingHDUs, Extractor extractor)
             throws FitsException, IOException {
-        Fits fits = null;
-        try {
-            fits = new Fits(fitsFile);
+        try (Fits fits = new Fits(fitsFile)) {
             BasicHDU<?>[] hdus = FitsReadUtil.readHDUs(fits);
             BasicHDU<?> hdu = hdus[refHduNum];
             validateImageAtHDU(hdus, refHduNum);
@@ -237,20 +235,13 @@ public class FitsExtract {
                 retList.add(new ExtractionResults(refHduNum, FitsReadUtil.getExtNameOrType(refHeader), list,true, refHeader));
             }
             return retList;
-        } finally {
-            FitsReadUtil.closeFits(fits);
         }
     }
 
     public static List<Number> extractFromHDU(File fitsFile, int hduNum, Extractor extractor)
             throws FitsException, IOException {
-        Fits fits= null;
-        try {
-            fits = new Fits(fitsFile);
+        try (Fits fits= new Fits(fitsFile)) {
             return extractor.extractAry(FitsReadUtil.readHDUs(fits), hduNum);
-        }
-        finally {
-            FitsReadUtil.closeFits(fits);
         }
     }
 

@@ -41,12 +41,10 @@ public class FitsHDUUtil {
 
     public static FitsAnalysisReport analyze(File infile, FileAnalysisReport.ReportType type) throws Exception {
         FileAnalysisReport report = new FileAnalysisReport(type, TableUtil.Format.FITS.name(), infile.length(), infile.getPath());
-        Header headerAry[];
+        Header[] headerAry;
 
-        Fits fits = null;
-        try {
-            fits = new Fits(infile);
-            BasicHDU[] parts = FitsReadUtil.readHDUs(fits);
+        try (Fits fits= new Fits(infile)) {
+            BasicHDU<?>[] parts = FitsReadUtil.readHDUs(fits);
             headerAry= new Header[parts.length];
             for(int i = 0; i < parts.length; i++) {
                 FileAnalysisReport.Type ptype;
@@ -108,9 +106,6 @@ public class FitsHDUUtil {
                     part.setDetails(getDetails(i, header));
                 }
             }
-        }
-        finally {
-            FitsReadUtil.closeFits(fits);
         }
         return new FitsAnalysisReport(report,headerAry);
     }
