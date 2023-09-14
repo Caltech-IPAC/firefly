@@ -7,6 +7,8 @@
   - [Notes on next version](next-release-details.md)
 
 ## Version 2023.2
+- 2023.2.1 - (Sept 14, 2023)
+  - docker tag: `latest`, `2023.2`, `2023.2.1`
 - 2023.2.0 - (Aug 25, 2023)
   - docker tag: `2023.2.0`
    
@@ -36,6 +38,10 @@
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2023.2+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2023.2+)
 
+##### _Patches 2023.2_
+ - 2023.2.1
+    - Fixed: HiPS tile pixels should not be smoothed at highest resolution: [Firefly-1311](https://github.com/Caltech-IPAC/firefly/pull/1429)
+    - Small bug fixes related to SHA Release [PR](https://github.com/Caltech-IPAC/firefly/pull/1425), [PR](https://github.com/Caltech-IPAC/firefly/pull/1425)
 
 ## Version 2023.1
 - 2023.1.5 - (June 15, 2023)

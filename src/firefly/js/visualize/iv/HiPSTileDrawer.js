@@ -50,7 +50,7 @@ export function createHiPSDrawer(targetCanvas, GPU) {
         const {viewDim}= plotView;
         let transitionNorder;
 
-        const {norder, useAllSky}= getHiPSNorderlevel(plot, true);
+        const {norder, useAllSky, isMaxOrder}= getHiPSNorderlevel(plot, true);
         const {fov,centerWp}= getPointMaxSide(plot,viewDim);
         if (!centerWp) return;
         const tilesToLoad= findCellOnScreen(plot,viewDim,norder, fov, centerWp);
@@ -79,12 +79,12 @@ export function createHiPSDrawer(targetCanvas, GPU) {
 
         if (drawTiming!==DrawTiming.IMMEDIATE) {
             drawTransitionalImage(fov,centerWp,targetCanvas,plot, plotView,norder, transitionNorder, hipsColorOps,
-                opacity, tilesToLoad);
+                opacity, tilesToLoad, true, isMaxOrder);
         }
 
         const offscreenCanvas = makeOffScreenCanvas(plotView,plot,drawTiming!==DrawTiming.IMMEDIATE);
         abortLastDraw= drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hipsColorOps,
-            tilesToLoad, useAllSky, opacity, drawTiming);
+            tilesToLoad, useAllSky, opacity, drawTiming, true, isMaxOrder);
         lastDrawNorder= norder;
         lastFov= fov;
     };
@@ -116,9 +116,9 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
         const tilesToLoad3= findCellOnScreen(plot,viewDim,3, fov, centerWp);
         const offscreenCanvas = makeOffScreenCanvas(plotView,plot,false);
         drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, 2, hipsColorOps, tilesToLoad2, true,
-            opacity, DrawTiming.IMMEDIATE, false);
+            opacity, DrawTiming.IMMEDIATE, false, false);
         drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, 3, hipsColorOps, tilesToLoad3, false,
-            opacity, DrawTiming.IMMEDIATE);
+            opacity, DrawTiming.IMMEDIATE, true, false);
     }
     else {
         let lookMore= true;
@@ -129,7 +129,7 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
             const hasSomeTiles= tilesToLoad.some( (tile)=> findTileCachedImage(createImageUrl(plot,tile),colorTableId,bias,contrast));
             if (hasSomeTiles || testNorder===3) { // if there are tiles or we need to do the allsky
                 drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, testNorder, hipsColorOps, tilesToLoad, testNorder===3,
-                    opacity, DrawTiming.IMMEDIATE, false);
+                    opacity, DrawTiming.IMMEDIATE, false, false);
                 lookMore= false;
             }
         }
@@ -157,9 +157,10 @@ const fovEqual= (fov1,fov2) => Math.trunc(fov1*10000) === Math.trunc(fov2*10000)
  * @param opacity
  * @param drawTiming
  * @param screenRenderEnabled
+ * @param {boolean} [isMaxOrder] true if this norder is the max order
  */
 function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hipsColorOps, tilesToLoad, useAllSky, opacity,
-                     drawTiming= DrawTiming.ASYNC, screenRenderEnabled= true) {
+                     drawTiming= DrawTiming.ASYNC, screenRenderEnabled= true, isMaxOrder=false) {
     if (!targetCanvas) return noOp;
     const {viewDim}= plotView;
     const boundingBox= computeBounding(primePlot(plotView),viewDim.width,viewDim.height);// should use main plot not overlay plot
@@ -167,7 +168,8 @@ function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hips
     const offsetY= boundingBox.y>0 ? boundingBox.y : 0;
 
     const screenRenderParams= {plotView, plot, targetCanvas, offscreenCanvas, opacity, offsetX, offsetY};
-    const drawer= makeHipsRenderer(screenRenderParams, tilesToLoad.length, !plot.asOverlay, screenRenderEnabled, hipsColorOps);
+    const drawer= makeHipsRenderer(screenRenderParams, tilesToLoad.length, !plot.asOverlay,
+        screenRenderEnabled, hipsColorOps, isMaxOrder);
 
     if (plot.blank) {
         drawer.renderToScreen();
