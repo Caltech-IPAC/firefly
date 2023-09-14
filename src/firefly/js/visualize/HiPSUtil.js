@@ -133,16 +133,16 @@ export function getHiPSNorderlevel(plot, limitToImageDepth= false) {
     if (screenPixArcsecSize> 100) return  {useAllSky:true, norder:3};
 
     let norder= getNOrderForPixArcSecSize(screenPixArcsecSize);
+    let maxOrder= Number(plot.hipsProperties?.hips_order);
 
     if (limitToImageDepth) {
-        let maxOrder= Number(plot.hipsProperties?.hips_order);
         if (!maxOrder) {
             const hipsPixelScale= Number(plot.hipsProperties?.hips_pixel_scale);
             maxOrder= hipsPixelScale ? getNOrderForPixArcSecSize(hipsPixelScale*3600) : 3;
         }
         norder= Math.min(norder, maxOrder);
     }
-    return {norder, useAllSky:false};
+    return {norder, useAllSky:false, isMaxOrder:norder===maxOrder};
 
 }
 

@@ -3,16 +3,17 @@
  */
 
 
-import {RangeValues,STRETCH_LINEAR,SIGMA} from '../../visualize/RangeValues.js';
-import {getCellValue, getMetaEntry} from '../../tables/TableUtil.js';
-import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
-import {CoordinateSys} from '../../visualize/CoordSys.js';
-import {WebPlotRequest} from '../../visualize/WebPlotRequest.js';
-import {addCommonReqParams} from '../../templates/lightcurve/LcConverterFactory.js';
-import {GRID_FULL, SINGLE} from '../../visualize/MultiViewCntlr.js';
+import {RangeValues,STRETCH_LINEAR,SIGMA} from '../visualize/RangeValues.js';
+import {getCellValue} from '../tables/TableUtil.js';
+import {makeWorldPt} from '../visualize/Point.js';
+import {CoordinateSys} from '../visualize/CoordSys.js';
+import {WebPlotRequest} from '../visualize/WebPlotRequest.js';
+import {addCommonReqParams} from '../templates/lightcurve/LcConverterFactory.js';
+import {GRID_FULL, SINGLE} from '../visualize/MultiViewCntlr';
+import {getRootURL} from '../util/WebUtil.js';
 
-const colToUse= ['reqkey', 'heritgefilename', 'fname'];
-const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
+// const colToUse= ['reqkey', 'heritgefilename', 'fname'];
+// const rangeValues= RangeValues.makeRV({which:SIGMA, lowerValue:-2, upperValue:10, algorithm:STRETCH_LINEAR});
 
 /**
  * make a list of plot request for wise. This function works with ConverterFactory.
@@ -42,10 +43,10 @@ export function makeShaPlotRequest(table, row, includeSingle,includeStandard) {
             : getCellValue(table, row, 'heritagefilename');
 
     /*
-     const url = https://irsa.ipac.caltech.edu/data/SPITZER/SHA/archive/proc/MIPS003600/r5572864/ch2/bcd/SPITZER_M2_5572864_0007_0061_9_bcd.fits
+     example url = https://irsa.ipac.caltech.edu/data/SPITZER/SHA/archive/proc/MIPS003600/r5572864/ch2/bcd/SPITZER_M2_5572864_0007_0061_9_bcd.fits
      */
     const serverinfo = 'https://irsa.ipac.caltech.edu/data/SPITZER/';
-    const mosimgserver = 'https://sha.ipac.caltech.edu/applications/Spitzer/SHA/servlet/ProductDownload?DATASET=level1';
+    const shaservlet = '/applications/Spitzer/SHA/servlet/ProductDownload?DATASET=level1';
     let filepath = '';
     let url = '';
     let wp;
@@ -56,7 +57,8 @@ export function makeShaPlotRequest(table, row, includeSingle,includeStandard) {
     } else if (dataType === 'SEIP') {
         url = `${serverinfo}` + 'Enhanced/SEIP/' + `${dataFile}`;
     } else if (dataType === 'PRECOVERY') {
-        url = `${mosimgserver}` + '&ID=' + `${bcdId}`;
+        url += `${shaservlet}` + '&ID=' + `${bcdId}`;
+        url = new URL(url, getRootURL());
     } else {
         filepath = dataFile.replaceAll('/sha', 'SHA');
         url = `${serverinfo}/${filepath}`;
