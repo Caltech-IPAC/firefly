@@ -21,9 +21,11 @@ const colorId = (plot) => plot?.colorTableId ?? -1;
  * @param isBaseImage
  * @param screenRenderEnabled
  * @param hipsColorOps
+ * @param {boolean} isMaxOrder - true if the order drawing is max order
  * @return {{drawTile(*=, *=): undefined, drawTileImmediate(*=, *, *=): void, abort(): void}}
  */
-export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, screenRenderEnabled, hipsColorOps) {
+export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, screenRenderEnabled,
+                                 hipsColorOps, isMaxOrder) {
 
     let renderedCnt=0;
     let abortRender= false;
@@ -31,6 +33,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
     let renderComplete=  false;
     const {offscreenCanvas, plotView}= screenRenderParams;
     const offscreenCtx = offscreenCanvas.getContext('2d');
+    offscreenCtx.imageSmoothingEnabled = !isMaxOrder;
     const allImageCancelFuncs= [];
     let plotTaskId;
 
