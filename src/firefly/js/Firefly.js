@@ -269,10 +269,13 @@ export function startAsAppFromApi(divId, overrideProps={template: 'FireflySlate'
     const e= document.getElementById(divId);
 
     const makeControlObj= () => {
-        const root = e && createRoot(e);
+        let root = e && createRoot(e);
         return {
             render : () => root && renderRoot(root, viewer, props),
-            unrender: () => root?.unmount(),
+            unrender: () => {
+                root?.unmount();
+                root = e && createRoot(e);
+            },
         };
     };
     const controlObj= makeControlObj();
