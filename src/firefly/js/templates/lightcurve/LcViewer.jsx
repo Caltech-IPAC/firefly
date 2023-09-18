@@ -64,7 +64,7 @@ export const LcViewer = memo((props) => {
     const {isReady, menu={}, appTitle, altAppIcon, dropDown,
         dropdownPanels=[], footer, style, displayMode, missionEntries, fileLocation, error} = storeState;
     const {appIcon, additionalTitleStyle= {}, bannerLeftStyle, bannerMiddleStyle} = props;
-    const additionalTitleStylePlus= {marginRight: 20, alignSelf: 'flex-start',...additionalTitleStyle}
+    const additionalTitleStylePlus= {marginRight: 20, alignSelf: 'flex-start',...additionalTitleStyle};
     const bannerMiddleStylePlus= {flexDirection: 'row', ...bannerMiddleStyle};
 
     if (!isReady) return (<div style={{top: 0}} className='loading-mask'/>);
@@ -98,7 +98,7 @@ export const LcViewer = memo((props) => {
             <div style={subStyle}>{subTitleStr}</div>
         </div>);
 
-    const {visible, view, initArgs} = dropDown || {};
+    const {visible, view} = dropDown || {};
     return (
         <div id='App' className='rootStyle' style={style}>
             <header>
@@ -107,7 +107,7 @@ export const LcViewer = memo((props) => {
                     bannerMiddleStyle:bannerMiddleStylePlus, showTitleOnBanner:true}}/>
                 <div id={warningDivId} data-decor='full' className='warning-div center'/>
                 <DropDownContainer key='dropdown' footer={footer} visible={!!visible}
-                                   selected={view} initArgs={initArgs}
+                                   selected={view}
                                    dropdownPanels={[...dropdownPanels, <UploadPanel {...{fileLocation}}/>]} />
             </header>
             <main>

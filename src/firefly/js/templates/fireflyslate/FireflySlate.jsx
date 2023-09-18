@@ -67,7 +67,7 @@ export const FireflySlate= memo(( {initLoadingMessage, appTitle= 'Firefly', appI
     const state= useStoreConnector( (prevState) => getNextState(prevState,renderTreeId));
     const {isReady, mode={}, gridView= [], gridColumns=1, menu={}, dropDown={}, layoutInfo, initLoadCompleted, dropdownPanels} = state;
     const {expanded} = mode;
-    const {visible, view, initArgs} = dropDown;
+    const {visible, view} = dropDown;
 
     useEffect(() => {
         startTTFeatureWatchers();
@@ -85,7 +85,7 @@ export const FireflySlate= memo(( {initLoadingMessage, appTitle= 'Firefly', appI
                     <BannerSection {...{menu, appTitle, appIcon, altAppIcon, bannerLeftStyle, bannerMiddleStyle}}/>
                     <div id={warningDivId} data-decor='full' className='warning-div center'/>
                     <DropDownContainer key='dropdown' footer={footer} visible={!!visible}
-                        selected={view} initArgs={initArgs} {...{dropdownPanels} } />
+                        selected={view} {...{dropdownPanels} } />
                 </header>
                 <main style={{height:'100%'}}>
                     {mainView({expanded, gridView, gridColumns, initLoadingMessage, initLoadCompleted})}

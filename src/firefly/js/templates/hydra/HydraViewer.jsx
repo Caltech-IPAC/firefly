@@ -76,7 +76,7 @@ export class HydraViewer extends PureComponent {
         const {appTitle, appIcon, altAppIcon, footer, dropdownPanels=[], style, bannerLeftStyle, bannerMiddleStyle} = this.props;
         const {menu, layoutInfo={}} = this.state;
         const {dropDown} = layoutInfo;
-        const {visible, view, initArgs} = dropDown || {};
+        const {visible, view} = dropDown || {};
 
         return (
             <div id='App' className='rootStyle' style={style}>
@@ -88,7 +88,6 @@ export class HydraViewer extends PureComponent {
                         footer={footer}
                         visible={!!visible}
                         selected={view}
-                        initArgs={initArgs}
                         {...{dropdownPanels} } />
                 </header>
                 <main style={{position: 'relative', padding: 0}}>
