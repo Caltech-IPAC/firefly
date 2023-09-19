@@ -51,6 +51,7 @@ export function createHiPSDrawer(targetCanvas, GPU) {
         let transitionNorder;
 
         const {norder, useAllSky, isMaxOrder}= getHiPSNorderlevel(plot, true);
+        const {norder:desiredNorder}= getHiPSNorderlevel(plot);
         const {fov,centerWp}= getPointMaxSide(plot,viewDim);
         if (!centerWp) return;
         const tilesToLoad= findCellOnScreen(plot,viewDim,norder, fov, centerWp);
@@ -83,8 +84,9 @@ export function createHiPSDrawer(targetCanvas, GPU) {
         }
 
         const offscreenCanvas = makeOffScreenCanvas(plotView,plot,drawTiming!==DrawTiming.IMMEDIATE);
-        abortLastDraw= drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hipsColorOps,
-            tilesToLoad, useAllSky, opacity, drawTiming, true, isMaxOrder);
+        abortLastDraw= drawDisplay({targetCanvas, offscreenCanvas, plot, plotView, norder, hipsColorOps,
+            tilesToLoad, useAllSky, opacity, drawTiming, isMaxOrder, desiredNorder}
+        );
         lastDrawNorder= norder;
         lastFov= fov;
     };
@@ -115,10 +117,11 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
         const tilesToLoad2= findCellOnScreen(plot,viewDim,2, fov, centerWp);
         const tilesToLoad3= findCellOnScreen(plot,viewDim,3, fov, centerWp);
         const offscreenCanvas = makeOffScreenCanvas(plotView,plot,false);
-        drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, 2, hipsColorOps, tilesToLoad2, true,
-            opacity, DrawTiming.IMMEDIATE, false, false);
-        drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, 3, hipsColorOps, tilesToLoad3, false,
-            opacity, DrawTiming.IMMEDIATE, true, false);
+        drawDisplay({targetCanvas, offscreenCanvas, plot, plotView,
+            norder:2, hipsColorOps, tilesToLoad:tilesToLoad2, useAllSky:true, opacity,
+            drawTiming:DrawTiming.IMMEDIATE, screenRenderEnabled:false});
+        drawDisplay({targetCanvas, offscreenCanvas, plot, plotView, norder:3, hipsColorOps, tilesToLoad:tilesToLoad3,
+            opacity, drawTiming:DrawTiming.IMMEDIATE});
     }
     else {
         let lookMore= true;
@@ -128,14 +131,15 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
             tilesToLoad= findCellOnScreen(plot,viewDim,testNorder, fov, centerWp);
             const hasSomeTiles= tilesToLoad.some( (tile)=> findTileCachedImage(createImageUrl(plot,tile),colorTableId,bias,contrast));
             if (hasSomeTiles || testNorder===3) { // if there are tiles or we need to do the allsky
-                drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, testNorder, hipsColorOps, tilesToLoad, testNorder===3,
-                    opacity, DrawTiming.IMMEDIATE, false, false);
+                drawDisplay({targetCanvas, offscreenCanvas, plot, plotView, norder:testNorder, hipsColorOps,
+                    tilesToLoad, useAllSky:testNorder===3,
+                    opacity, drawTiming:DrawTiming.IMMEDIATE, screenRenderEnabled:false});
                 lookMore= false;
             }
         }
         // draw what ever part of the nornder tiles that are in cache on top
-        drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hipsColorOps, finalTileToLoad, false,
-            opacity, DrawTiming.IMMEDIATE);
+        drawDisplay({targetCanvas, offscreenCanvas, plot, plotView, norder, hipsColorOps, tilesToLoad:finalTileToLoad,
+            opacity, drawTiming:DrawTiming.IMMEDIATE});
     }
 }
 
@@ -146,21 +150,25 @@ const fovEqual= (fov1,fov2) => Math.trunc(fov1*10000) === Math.trunc(fov2*10000)
 
 /**
  *
- * @param targetCanvas
- * @param offscreenCanvas
- * @param plot - note this could the the main plot or an overlay plot
- * @param plotView
- * @param norder
- * @param hipsColorOps
- * @param tilesToLoad
- * @param useAllSky
- * @param opacity
- * @param drawTiming
- * @param screenRenderEnabled
- * @param {boolean} [isMaxOrder] true if this norder is the max order
+ * @param p
+ * @param p.targetCanvas
+ * @param p.offscreenCanvas
+ * @param p.plot - note this could the the main plot or an overlay plot
+ * @param p.plotView
+ * @param p.norder
+ * @param p.hipsColorOps
+ * @param p.tilesToLoad
+ * @param p.useAllSky
+ * @param p.opacity
+ * @param p.drawTiming
+ * @param p.screenRenderEnabled
+ * @param {boolean} [p.isMaxOrder] true if this norder is the max order
  */
-function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hipsColorOps, tilesToLoad, useAllSky, opacity,
-                     drawTiming= DrawTiming.ASYNC, screenRenderEnabled= true, isMaxOrder=false) {
+function drawDisplay({targetCanvas, offscreenCanvas, plot,
+                         plotView, norder, hipsColorOps,
+                         tilesToLoad, useAllSky=false, opacity,
+                         drawTiming= DrawTiming.ASYNC, screenRenderEnabled= true,
+                         isMaxOrder=false, desiredNorder=0} ) {
     if (!targetCanvas) return noOp;
     const {viewDim}= plotView;
     const boundingBox= computeBounding(primePlot(plotView),viewDim.width,viewDim.height);// should use main plot not overlay plot
@@ -169,7 +177,7 @@ function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hips
 
     const screenRenderParams= {plotView, plot, targetCanvas, offscreenCanvas, opacity, offsetX, offsetY};
     const drawer= makeHipsRenderer(screenRenderParams, tilesToLoad.length, !plot.asOverlay,
-        screenRenderEnabled, hipsColorOps, isMaxOrder);
+        screenRenderEnabled, hipsColorOps, isMaxOrder, norder, desiredNorder);
 
     if (plot.blank) {
         drawer.renderToScreen();
@@ -177,7 +185,7 @@ function drawDisplay(targetCanvas, offscreenCanvas, plot, plotView, norder, hips
     }
     
     useAllSky ?
-        drawDisplayUsingAllSky(drawer, plot, norder, hipsColorOps, tilesToLoad) :
+        drawDisplayUsingAllSky(drawer, plot, hipsColorOps, tilesToLoad) :
         drawDisplayUsingTiles(drawer,plot,tilesToLoad,drawTiming);
     return drawer.abort; // this abort function will any async promise calls stop before they draw
 }
@@ -204,20 +212,20 @@ function findCachedAllSkyToFitColor(allSkyURL,ctId,bias,contrast, hipsColorOps) 
     return findAllSkyCachedImage(allSkyURL,ctId,bias,contrast);
 }
 
-async function drawDisplayUsingAllSky(drawer, plot, norder, hipsColorOps, tilesToLoad) {
+async function drawDisplayUsingAllSky(drawer, plot, hipsColorOps, tilesToLoad) {
     const allSkyURL= makeHiPSAllSkyUrlFromPlot(plot);
     const ctId= colorId(plot);
     const {bias,contrast}= plot.rawData.bandData[0];
     const cachedAllSkyData= findCachedAllSkyToFitColor(allSkyURL,ctId,bias,contrast, hipsColorOps);
     if (cachedAllSkyData) {
-        drawer.drawAllSky(norder, cachedAllSkyData, tilesToLoad);
+        drawer.drawAllSky(cachedAllSkyData, tilesToLoad);
         return;
     }
     try {
         const allSkyImage= await loadImage(allSkyURL);
         addAllSkyCachedImage(allSkyURL, allSkyImage);
         const processedAllSkyData= findCachedAllSkyToFitColor(allSkyURL,ctId,bias,contrast,hipsColorOps);
-        drawer.drawAllSky(norder, processedAllSkyData, tilesToLoad);
+        drawer.drawAllSky(processedAllSkyData, tilesToLoad);
     } catch (e) {// should not happen - there is no all sky image, so we are using the full tiles.
         drawer.drawAllTilesAsync(tilesToLoad,plot);
     }

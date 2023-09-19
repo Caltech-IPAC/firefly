@@ -22,10 +22,12 @@ const colorId = (plot) => plot?.colorTableId ?? -1;
  * @param screenRenderEnabled
  * @param hipsColorOps
  * @param {boolean} isMaxOrder - true if the order drawing is max order
- * @return {{drawTile(*=, *=): undefined, drawTileImmediate(*=, *, *=): void, abort(): void}}
+ * @param {number} norder
+ * @param {number} desiredNorder
+ * @return {Object}
  */
 export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, screenRenderEnabled,
-                                 hipsColorOps, isMaxOrder) {
+                                 hipsColorOps, isMaxOrder, norder, desiredNorder) {
 
     let renderedCnt=0;
     let abortRender= false;
@@ -114,7 +116,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
             if (abortRender) return;
 
             const tileSize= tile.tileSize || image.width;
-            drawOneHiPSTile(offscreenCtx, image, tile.devPtCorners, tileSize, {x:tile.dx,y:tile.dy}, tile.nside);
+            drawOneHiPSTile(offscreenCtx, image, tile.devPtCorners, tileSize, {x:tile.dx,y:tile.dy}, isMaxOrder, norder, desiredNorder);
 
 
             if (doRenderNow()) renderToScreen();
@@ -124,7 +126,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
             renderedCnt++;
             if (abortRender) return;
             if (tile.devPtCorners.filter( (t) => t).length ===4) {
-                drawOneHiPSTile(offscreenCtx, emptyTileCanvas, tile.devPtCorners, 512, {x:tile.dx,y:tile.dy}, tile.nside);
+                drawOneHiPSTile(offscreenCtx, emptyTileCanvas, tile.devPtCorners, 512, {x:tile.dx,y:tile.dy}, isMaxOrder, norder, desiredNorder);
             }
             else {
                 console.log('********************* found one');
@@ -149,12 +151,12 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
             if (tile.coordsWrap && cachedAllSkyData) {
                 tile.subCells?.forEach( (cell) => {
                     const subImage= cachedAllSkyData.order3Array[cell.tileNumber];
-                    drawOneHiPSTile(offscreenCtx, subImage, cell.devPtCorners, subImage.width, {x:0,y:0}, cell.nside);
+                    drawOneHiPSTile(offscreenCtx, subImage, cell.devPtCorners, subImage.width, {x:0,y:0}, isMaxOrder, norder, desiredNorder);
                 });
             }
             else {
                 const tileSize= tile.tileSize || image.width;
-                drawOneHiPSTile(offscreenCtx, image, tile.devPtCorners, tileSize, {x:tile.dx,y:tile.dy}, tile.nside);
+                drawOneHiPSTile(offscreenCtx, image, tile.devPtCorners, tileSize, {x:tile.dx,y:tile.dy}, isMaxOrder, norder, desiredNorder);
             }
         }
         renderedCnt++;
@@ -227,11 +229,10 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
 
         /**
          *
-         * @param {number} norder
          * @param {HiPSAllSkyCacheInfo} cachedAllSky
          * @param {Array.<HiPSDeviceTileData>} tilesToLoad
          */
-        drawAllSky(norder, cachedAllSky, tilesToLoad) {
+        drawAllSky(cachedAllSky, tilesToLoad) {
             if (abortRender) return;
             const allSkyAry= norder===3 ? cachedAllSky.order3Array : cachedAllSky.order2Array;
             for(let i=0; i<tilesToLoad.length; i++) { // do a classic for loop to increase the fps by 3 or 4
