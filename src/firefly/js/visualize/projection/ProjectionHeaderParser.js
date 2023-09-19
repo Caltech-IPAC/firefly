@@ -197,10 +197,10 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
 	}
 
 
-	p.cd1_1= getHeaderListD(parse, ['CD1_1','CD001001'], 0, altWcs);
+    p.cd1_1= getHeaderListD(parse, ['CD1_1','CD001001'], p.cdelt1??0, altWcs);
     p.cd1_2= getHeaderListD(parse, ['CD1_2','CD001002'], 0, altWcs);
     p.cd2_1= getHeaderListD(parse, ['CD2_1','CD002001'], 0, altWcs);
-    p.cd2_2= getHeaderListD(parse, ['CD2_2','CD002002'], 0, altWcs);
+    p.cd2_2= getHeaderListD(parse, ['CD2_2','CD002002'], p.cdelt2??0, altWcs);
 
     p.pc1_1 = parse.getDoubleValue('PC1_1'+altWcs, undefined);
     p.pc1_2 = parse.getDoubleValue('PC1_2'+altWcs, undefined);
