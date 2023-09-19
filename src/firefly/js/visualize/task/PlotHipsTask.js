@@ -21,7 +21,7 @@ import {makeWorldPt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {WebPlot, isHiPS, isImage, isBlankHiPSURL} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
-import {getRootURL, loadImage} from '../../util/WebUtil.js';
+import {getRootURL} from '../../util/WebUtil.js';
 import {
     findCurrentCenterPoint,
     getCenterOfProjection,
@@ -37,12 +37,10 @@ import {
     getHiPSZoomLevelForFOV,
     getPointMaxSide,
     getPropertyItem,
-    makeHiPSAllSkyUrl,
-    makeHiPSAllSkyUrlFromPlot, makeHiPSPropertiesUrl,
+    makeHiPSPropertiesUrl,
     makeHipsUrl,
     resolveHiPSConstant
 } from '../HiPSUtil.js';
-import {addAllSkyCachedImage, findAllSkyCachedImage} from '../iv/HiPSTileCache.js';
 import {ZoomType} from '../ZoomType.js';
 import {CCUtil} from '../CsysConverter.js';
 import {
@@ -202,30 +200,6 @@ function getOtherLockedHiPS(vr, pv) {
     return ary;
 }
 
-
-async function addAllSky(plot) {
-    const allSkyURL= makeHiPSAllSkyUrlFromPlot(plot);
-    const cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
-    if (cachedAllSkyImage) return plot;
-    dispatchPlotProgressUpdate(plot.plotId, 'Retrieving HiPS Data', false, null);
-    const allSkyImage= await loadImage(makeHiPSAllSkyUrlFromPlot(plot));
-    addAllSkyCachedImage(allSkyURL, allSkyImage);
-    return plot;
-}
-
-async function addAllSkyUsingProperties(hipsProperties, hipsUrlRoot, plotId, proxyHips) {
-    const exts= hipsProperties?.hips_tile_format ?? 'jpg';
-    const allSkyURL= makeHiPSAllSkyUrl(hipsUrlRoot, exts, 0);
-    const cachedAllSkyImage= findAllSkyCachedImage(allSkyURL);
-    if (cachedAllSkyImage) return hipsProperties;
-    dispatchPlotProgressUpdate(plotId, 'Retrieving HiPS Data', false, null);
-    const allSkyImage= await loadImage(makeHiPSAllSkyUrl(hipsUrlRoot, exts, 0, proxyHips));
-    addAllSkyCachedImage(allSkyURL, allSkyImage);
-    return hipsProperties;
-}
-
-
-
 export const makeAbortHiPSAction= (rawAction) => () =>  clearActiveRequest(rawAction.payload.plotId);
 export const makePlotHiPSAction= (rawAction) => (dispatcher) => makeHiPSPlot(rawAction,dispatcher);
 export const makeChangeHiPSAction= (rawAction) => (dispatcher, getState) => doHiPSChange(rawAction,dispatcher,getState);
@@ -271,11 +245,11 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         }
         const str= await result.text();
         const hipsProperties= parseProperties(str);
-        let plot= WebPlot.makeWebPlotDataHIPS(plotId, resolvedHipsRootUrl, wpRequest, hipsProperties, attributes, PROXY);
+        const plot= WebPlot.makeWebPlotDataHIPS(plotId, resolvedHipsRootUrl, wpRequest, hipsProperties, attributes, PROXY);
         plot.hipsFromHipsList= await isUrlInHipsList(resolvedHipsRootUrl);
 
-        if (!blank && wpRequest.getOverlayIds()?.includes(HiPSMOC.TYPE_ID)) {
-            await createHiPSMocLayer({
+        if (!blank && wpRequest.getOverlayIds()?.includes(HiPSMOC.TYPE_ID)) { //start moc retrieval but don't wait
+            void createHiPSMocLayer({
                 ivoid: getPropertyItem(hipsProperties, 'ivoid'),
                 title: getPropertyItem(hipsProperties, 'obs_title'),
                 hipsUrl: resolvedHipsRootUrl,
@@ -287,8 +261,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
             // console.log('hips plot expired or aborted');
             return;
         }
-        plot= await addAllSky(plot);
-        const GPU= await getGpuJs(getRootURL()); // make sure the GPU code is loaded up front
+        await getGpuJs(getRootURL()); // make sure the GPU code is loaded up front
         createHiPSGridLayer();
         dispatchAddActionWatcher({
             actions:[ImagePlotCntlr.PLOT_HIPS, ImagePlotCntlr.UPDATE_VIEW_SIZE],
@@ -402,13 +375,11 @@ async function doHiPSChange(rawAction, dispatcher, getState) {
         }
         const s = await result.text();
         const hipsProperties = parseProperties(s);
-        await addAllSkyUsingProperties(hipsProperties, resolvedHipsRootUrl, plotId, true);
         dispatcher(
             {
                 type: ImagePlotCntlr.CHANGE_HIPS,
                 payload: {...payload, hipsUrlRoot:resolvedHipsRootUrl, hipsProperties, coordSys: coordSys? coordSys : plot.imageCoordSys, blank},
             });
-        // if (coordSys) dispatcher( { type: ImagePlotCntlr.CHANGE_HIPS, payload: {coordSys}, });
         initCorrectCoordinateSys(getPlotViewById(visRoot(), plotId));
         locateOtherIfMatched(visRoot(),plotId);
         dispatcher({type: ImagePlotCntlr.ANY_REPLOT, payload});

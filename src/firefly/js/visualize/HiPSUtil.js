@@ -12,8 +12,8 @@
  */
 
 
-import {isNumber, isUndefined} from 'lodash';
-import {encodeServerUrl, getRootURL} from '../util/WebUtil.js';
+import {isUndefined} from 'lodash';
+import {encodeServerUrl, getRootURL, loadImage} from '../util/WebUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeDevicePt, makeWorldPt} from './Point.js';
 import {
@@ -36,9 +36,15 @@ export const MAX_SUPPORTED_HIPS_LEVEL= ORDER_MAX-1;
 
 
 let workingHealpixIdx;
+
+/**
+ * get a Healpix index for this nside
+ * optimization: don't recreate if it created the same one the last call
+ * @param {Number} nside
+ * @return {HealpixIndex} the HealpixIndex object based on nside
+ */
 function getHealpixIndex(nside) {
-    if (!isNumber(nside)) return undefined;
-    if (!workingHealpixIdx || workingHealpixIdx.nside!==nside) workingHealpixIdx= new HealpixIndex(nside);
+    if (workingHealpixIdx?.nside!==nside) workingHealpixIdx= new HealpixIndex(nside);
     return workingHealpixIdx;
 }
 
@@ -121,7 +127,7 @@ export function getTilePixelAngSize(nOrder) {
  * @param {WebPlot} plot
  * @param {boolean} [limitToImageDepth] When true, do not return a number that is greater than what this HiPS map
  * can display.  Use hipsProperties.hips_order to determine.
- * @return {{useAllSky:boolean, norder:number}} norder is the result, useAllSky true when the norder is 2 or 3 but
+ * @return {{useAllSky:boolean, norder:number, desiredNorder:number, isMaxOrder:boolean}} norder is the result, useAllSky true when the norder is 2 or 3 but
  * is zoom out so much that the full norder 3 tiles are not necessary, if all sky map is available the is should be used
  * for drawing.
  */
@@ -133,6 +139,7 @@ export function getHiPSNorderlevel(plot, limitToImageDepth= false) {
     if (screenPixArcsecSize> 100) return  {useAllSky:true, norder:3};
 
     let norder= getNOrderForPixArcSecSize(screenPixArcsecSize);
+    const desiredNorder= norder;
     let maxOrder= Number(plot.hipsProperties?.hips_order);
 
     if (limitToImageDepth) {
@@ -142,7 +149,7 @@ export function getHiPSNorderlevel(plot, limitToImageDepth= false) {
         }
         norder= Math.min(norder, maxOrder);
     }
-    return {norder, useAllSky:false, isMaxOrder:norder===maxOrder};
+    return {norder, desiredNorder, useAllSky:false, isMaxOrder:norder===maxOrder};
 
 }
 
@@ -210,22 +217,17 @@ export function makeHiPSAllSkyUrlFromPlot(plot) {
  * Build the HiPS url
  * @param {String} url
  * @param {boolean} proxy - make a URL the uses proxying
- * @param {boolean} alwaysUseCached- true if this url references a hips tile
+ * @param {boolean} alwaysUseCached - true if this url references a hips tile
  * @return {String} the modified url
  */
 export function makeHipsUrl(url, proxy, alwaysUseCached=false) {
-    if (proxy) {
-        const params= {
-            downloadSessionId: getFireflySessionId(),
-            hipsUrl : url,
-            alwaysUseCached,
-        };
-        return encodeServerUrl(getRootURL() + 'servlet/Download', params);
-    }
-    else {
-        return url;
-    }
-
+    if (!proxy) return url;
+    const params= {
+        downloadSessionId: getFireflySessionId(),
+        hipsUrl : url,
+        alwaysUseCached,
+    };
+    return encodeServerUrl(getRootURL() + 'servlet/Download', params);
 }
 
 
@@ -429,9 +431,22 @@ function healpixPixelTo512TileXY(pixel) {
 }
 
 
+function getFOVToUse(norder,desiredNorder,fov) {
+    const diff= desiredNorder-norder;
+    if (fov>.5) return fov;
+    if (diff<=0) return fov;
+    if (diff===1) return fov*1.2;
+    if (diff<=4) return fov*1.8;
+    if (fov<.03) {
+        return diff>10 ? fov*1000 : fov*100;
+    }
+    return fov;
+}
+
 /**
  *
  * @param norder
+ * @param desiredNorder - when render very deep desired norder give an indication how deep the zoom is beyond the tile level
  * @param {WorldPt} centerWp - center of visible area, coordinate system of this point should be same as the projection
  * @param {number} fov - Math.max(width, height) of the field of view in degrees (i think)
  * @param {CoordinateSys} dataCoordSys
@@ -439,7 +454,7 @@ function healpixPixelTo512TileXY(pixel) {
  * @return {Array.<{ipix:number, wpCorners:Array.<WorldPt>}>} an array of objects the contain the healpix
  *            pixel number and a worldPt array of corners
  */
-export function getVisibleHiPSCells (norder, centerWp, fov, dataCoordSys, isAitoff= false) {
+export function getVisibleHiPSCells (norder, desiredNorder, centerWp, fov, dataCoordSys, isAitoff= false) {
     const healpixCache= getHealpixCornerTool();
     const dataCenterWp= convert(centerWp, dataCoordSys);
 
@@ -451,7 +466,8 @@ export function getVisibleHiPSCells (norder, centerWp, fov, dataCoordSys, isAito
     }
     else { // get only the healpix number for the fov and create the cell list
         const nside = 2**norder;
-        const pixList = getHealpixIndex(nside).queryDisc(makeSpatialVector(dataCenterWp), getSearchRadiusInRadians(fov), true, true);
+        const radiusRad= getSearchRadiusInRadians(getFOVToUse(norder,desiredNorder,fov)); // if zoomed in deep beyond the tile norder, we might need to use are larger FOV
+        const pixList = getHealpixIndex(nside).queryDisc(makeSpatialVector(dataCenterWp), radiusRad, true, true);
         return pixList.map( (ipix) => healpixCache.makeCornersForPix(ipix, nside, dataCoordSys));
     }
 }
@@ -608,6 +624,43 @@ export function isTileInside(norder1, npix1, norder2, npix2) {
 export function replaceHiPSProjection(plot, coordinateSys, wp = makeWorldPt(0, 0)) {
     const newWp = convert(wp, coordinateSys);
     const projection = makeHiPSProjection(coordinateSys, newWp.x, newWp.y, isHiPSAitoff(plot));
-    //note- the dataCoordSys stays the same
+    //note: the dataCoordSys stays the same
     return {...plot, imageCoordSys: projection.coordSys, projection, allWCSMap: {'': projection}};
 }
+
+
+const loadBegin= new Map();
+const waitingResolvers= new Map();
+const waitingRejectors= new Map();
+
+function clearLoadImageCacheEntry(url) {
+    loadBegin.delete(url);
+    waitingResolvers.delete(url);
+    waitingRejectors.delete(url);
+}
+
+export async function loadImageMultiCall(url) {
+
+    if (!waitingResolvers.has(url)) waitingResolvers.set(url,[]);
+    if (!waitingRejectors.has(url)) waitingRejectors.set(url,[]);
+
+    if (!loadBegin.get(url)) {
+        loadBegin.set(url,true);
+        loadImage(url).then( (im) => {
+            im ?
+                waitingResolvers.get(url)?.forEach((r) => r(im)) :
+                waitingRejectors.get(url)?.forEach( (r) => r(new Error('could not load image')));
+            clearLoadImageCacheEntry(url);
+        }).catch( (err) => {
+            waitingRejectors.get(url)?.forEach( (r) => r(err));
+            clearLoadImageCacheEntry(url);
+        });
+    }
+
+    return new Promise( function(resolve, reject) {
+        waitingResolvers.get(url).push(resolve);
+        waitingRejectors.get(url).push(reject);
+    });
+}
+
+
