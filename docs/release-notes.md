@@ -42,7 +42,7 @@
 ### _Patches 2023.2_
  - 2023.2.2
    - Fixed: HiPS rendering clean up [Firefly-1312](https://github.com/Caltech-IPAC/firefly/pull/1431)
-   - Fixed: projections: if not specified `CD1_1` and `CD2_2` default to `CDELT1/2` [FIREFLY-1315](https://github.com/Caltech-IPAC/firefly/pull/1431)
+   - Fixed: projections: if not specified `CD1_1` and `CD2_2` default to `CDELT1/2` [Firefly-1315](https://github.com/Caltech-IPAC/firefly/pull/1431)
    - Fixed: React 18 issue with API. We need to recreate the root for unrender/render [commit](https://github.com/Caltech-IPAC/firefly/commit/5e5b88c7c734fb76db54587d05bcdeda1c53eb6d)
  - 2023.2.1
    - Fixed: HiPS tile pixels should not be smoothed at highest resolution [Firefly-1311](https://github.com/Caltech-IPAC/firefly/pull/1429)
