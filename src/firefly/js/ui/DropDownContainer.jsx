@@ -83,7 +83,7 @@ export function DropDownContainer ({style={}, visible:defVisible, selected:defSe
         setInit(true);
     }, []);
 
-    if (!view) view = React.Children.only(children);
+    if (!view && React.Children.count(children) === 1) view = React.Children.toArray(children)[0];
     if (!visible) return <div/>;
 
     if (layout) Object.assign(style, layout);
