@@ -18,22 +18,22 @@
 #### This release includes some significant TAP features and a new property sheet support
 
 #### New Features
-- TAP: Improved support for joins : [Firefly-1157](https://github.com/Caltech-IPAC/firefly/pull/1406)
+- TAP: Improved support for joins: [Firefly-1157](https://github.com/Caltech-IPAC/firefly/pull/1406)
 - TAP: Improved upload object ID search: [Firefly-1150](https://github.com/Caltech-IPAC/firefly/pull/1401)
-- Property Sheet (detail table) support for any table [Firefly-1256](https://github.com/Caltech-IPAC/firefly/pull/1404) 
-- Support Multi-dimensional WAVE-TAB algorithm [Firefly-1169](https://github.com/Caltech-IPAC/firefly/pull/1383)
-- Target Panel: Always show EQ J2000 coordinates [Firefly-1234](https://github.com/Caltech-IPAC/firefly/pull/1385)  
-- Obscore data results shows search target [Firefly-1291](https://github.com/Caltech-IPAC/firefly/pull/1411)  
+- Property Sheet (detail table) support for any table: [Firefly-1256](https://github.com/Caltech-IPAC/firefly/pull/1404) 
+- Support Multi-dimensional WAVE-TAB algorithm: [Firefly-1169](https://github.com/Caltech-IPAC/firefly/pull/1383)
+- Target Panel: Always show EQ J2000 coordinates: [Firefly-1234](https://github.com/Caltech-IPAC/firefly/pull/1385)  
+- Obscore data results shows search target: [Firefly-1291](https://github.com/Caltech-IPAC/firefly/pull/1411)  
 
 #### Other changes
-- Read FITS tables directly with `nom.tam.fits` (removed star table) [Firefly-1232](https://github.com/Caltech-IPAC/firefly/pull/1390) 
+- Read FITS tables directly with `nom.tam.fits` (removed star table): [Firefly-1232](https://github.com/Caltech-IPAC/firefly/pull/1390) 
 - improved DCE: [Firefly-1286](https://github.com/Caltech-IPAC/firefly/pull/1408),  [Firefly-1250](https://github.com/Caltech-IPAC/firefly/pull/1391)
-- Firefly now uses React 18 [Firefly-1127](https://github.com/Caltech-IPAC/firefly/pull/1396) 
-- Firefly now uses Mavin central [Firefly-1258](https://github.com/Caltech-IPAC/firefly/pull/1397) 
+- Firefly now uses React 18: [Firefly-1127](https://github.com/Caltech-IPAC/firefly/pull/1396) 
+- Firefly now uses Mavin central: [Firefly-1258](https://github.com/Caltech-IPAC/firefly/pull/1397) 
 
 #### Notable Bug Fixes 
-- Fixed: error in processing s_region values containing zeros  [Firefly-1281](https://github.com/Caltech-IPAC/firefly/pull/1413) 
-- Fixed: TAP UI crashes when selecting TAP_SCHEMA table [Firefly-1292](https://github.com/Caltech-IPAC/firefly/pull/1412) 
+- Fixed: error in processing s_region values containing zeros: [Firefly-1281](https://github.com/Caltech-IPAC/firefly/pull/1413) 
+- Fixed: TAP UI crashes when selecting TAP_SCHEMA table: [Firefly-1292](https://github.com/Caltech-IPAC/firefly/pull/1412) 
         
 ### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2023.2+label%3abug)
@@ -41,11 +41,11 @@
 
 ### _Patches 2023.2_
  - 2023.2.2
-   - Fixed: HiPS rendering clean up [FIREFLY-1312](https://github.com/Caltech-IPAC/firefly/pull/1431)
+   - Fixed: HiPS rendering clean up [Firefly-1312](https://github.com/Caltech-IPAC/firefly/pull/1431)
    - Fixed: projections: if not specified `CD1_1` and `CD2_2` default to `CDELT1/2` [FIREFLY-1315](https://github.com/Caltech-IPAC/firefly/pull/1431)
    - Fixed: React 18 issue with API. We need to recreate the root for unrender/render [commit](https://github.com/Caltech-IPAC/firefly/commit/5e5b88c7c734fb76db54587d05bcdeda1c53eb6d)
  - 2023.2.1
-   - Fixed: HiPS tile pixels should not be smoothed at highest resolution: [Firefly-1311](https://github.com/Caltech-IPAC/firefly/pull/1429)
+   - Fixed: HiPS tile pixels should not be smoothed at highest resolution [Firefly-1311](https://github.com/Caltech-IPAC/firefly/pull/1429)
    - Small bug fixes related to SHA Release [PR](https://github.com/Caltech-IPAC/firefly/pull/1425), [PR](https://github.com/Caltech-IPAC/firefly/pull/1425)
 
 ## Version 2023.1
