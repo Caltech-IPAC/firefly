@@ -27,9 +27,10 @@ const makeSource4Triangle= (centerPt, min, max) => {
 function getCorrection(tileSize, norder,desiredNorder,isMaxOrder) {
     if (isMaxOrder) {
         const amountOver= desiredNorder-norder;
-        if (amountOver>3) return .0005;
-        else if (amountOver===2) return .0024;
-        else if (amountOver===2) return .004;
+        if (amountOver>8) return 0;
+        else if (amountOver>5) return .0001;
+        else if (amountOver>3) return .0005;
+        else if (amountOver>=2) return .0024;
         else if (amountOver===1) return .005;
         else return .01;
     }

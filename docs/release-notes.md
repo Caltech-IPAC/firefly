@@ -7,8 +7,10 @@
   - [Notes on next version](next-release-details.md)
 
 ## Version 2023.2
+- 2023.2.3 - (Sept 21, 2023)
+  - docker tag: `latest`, `2023.2`, `2023.2.3`
 - 2023.2.2 - (Sept 19, 2023)
-  - docker tag: `latest`, `2023.2`, `2023.2.2`
+  - docker tag: `2023.2.2`
 - 2023.2.1 - (Sept 14, 2023)
   - docker tag: `2023.2.1`
 - 2023.2.0 - (Aug 25, 2023)
@@ -40,6 +42,11 @@
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2023.2+)
 
 ### _Patches 2023.2_
+ - 2023.2.3
+   - Fixed: More Hips render issues [Firefly-1313](https://github.com/Caltech-IPAC/firefly/pull/1432)
+      - missing tiles on deep zoom
+      - more deep zoom rendering cleanup
+      - optimized retrieving all sky image  
  - 2023.2.2
    - Fixed: HiPS rendering clean up [Firefly-1312](https://github.com/Caltech-IPAC/firefly/pull/1431)
    - Fixed: projections: if not specified `CD1_1` and `CD2_2` default to `CDELT1/2` [Firefly-1315](https://github.com/Caltech-IPAC/firefly/pull/1431)

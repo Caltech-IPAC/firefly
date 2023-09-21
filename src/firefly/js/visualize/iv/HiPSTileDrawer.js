@@ -5,7 +5,7 @@
 import Enum from 'enum';
 import {createImageUrl,initOffScreenCanvas, computeBounding} from './TileDrawHelper.jsx';
 import {primePlot} from '../PlotViewUtil.js';
-import { getPointMaxSide, getHiPSNorderlevel, makeHiPSAllSkyUrlFromPlot} from '../HiPSUtil.js';
+import {getPointMaxSide, getHiPSNorderlevel, makeHiPSAllSkyUrlFromPlot, loadImageMultiCall} from '../HiPSUtil.js';
 import {loadImage} from '../../util/WebUtil.js';
 import {findAllSkyCachedImage, findTileCachedImage, addAllSkyCachedImage} from './HiPSTileCache.js';
 import {makeHipsRenderer} from './HiPSRenderer.js';
@@ -50,11 +50,10 @@ export function createHiPSDrawer(targetCanvas, GPU) {
         const {viewDim}= plotView;
         let transitionNorder;
 
-        const {norder, useAllSky, isMaxOrder}= getHiPSNorderlevel(plot, true);
-        const {norder:desiredNorder}= getHiPSNorderlevel(plot);
+        const {norder, useAllSky, isMaxOrder, desiredNorder}= getHiPSNorderlevel(plot, true);
         const {fov,centerWp}= getPointMaxSide(plot,viewDim);
         if (!centerWp) return;
-        const tilesToLoad= findCellOnScreen(plot,viewDim,norder, fov, centerWp);
+        const tilesToLoad= findCellOnScreen(plot,viewDim,norder, fov, centerWp, desiredNorder);
         let drawTiming;
         const {bias,contrast}= plot.rawData.bandData[0];
         const colorTableId= colorId(plot);
@@ -118,9 +117,10 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
         const tilesToLoad3= findCellOnScreen(plot,viewDim,3, fov, centerWp);
         const offscreenCanvas = makeOffScreenCanvas(plotView,plot,false);
         drawDisplay({targetCanvas, offscreenCanvas, plot, plotView,
-            norder:2, hipsColorOps, tilesToLoad:tilesToLoad2, useAllSky:true, opacity,
-            drawTiming:DrawTiming.IMMEDIATE, screenRenderEnabled:false});
+            norder:2, hipsColorOps, tilesToLoad:tilesToLoad2, useAllSky:true, drawAllSkyOnlyIfCached: true,
+            opacity, drawTiming:DrawTiming.IMMEDIATE, screenRenderEnabled:false});
         drawDisplay({targetCanvas, offscreenCanvas, plot, plotView, norder:3, hipsColorOps, tilesToLoad:tilesToLoad3,
+            drawAllSkyOnlyIfCached: true,
             opacity, drawTiming:DrawTiming.IMMEDIATE});
     }
     else {
@@ -133,6 +133,7 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
             if (hasSomeTiles || testNorder===3) { // if there are tiles or we need to do the allsky
                 drawDisplay({targetCanvas, offscreenCanvas, plot, plotView, norder:testNorder, hipsColorOps,
                     tilesToLoad, useAllSky:testNorder===3,
+                    drawAllSkyOnlyIfCached: true,
                     opacity, drawTiming:DrawTiming.IMMEDIATE, screenRenderEnabled:false});
                 lookMore= false;
             }
@@ -153,12 +154,14 @@ const fovEqual= (fov1,fov2) => Math.trunc(fov1*10000) === Math.trunc(fov2*10000)
  * @param p
  * @param p.targetCanvas
  * @param p.offscreenCanvas
- * @param p.plot - note this could the the main plot or an overlay plot
+ * @param p.plot - note this could the main plot or an overlay plot
  * @param p.plotView
  * @param p.norder
  * @param p.hipsColorOps
  * @param p.tilesToLoad
  * @param p.useAllSky
+ * @param p.drawAllSkyOnlyIfCached
+ * @param p.drawAllSkyOnlyIfCached
  * @param p.opacity
  * @param p.drawTiming
  * @param p.screenRenderEnabled
@@ -167,6 +170,7 @@ const fovEqual= (fov1,fov2) => Math.trunc(fov1*10000) === Math.trunc(fov2*10000)
 function drawDisplay({targetCanvas, offscreenCanvas, plot,
                          plotView, norder, hipsColorOps,
                          tilesToLoad, useAllSky=false, opacity,
+                         drawAllSkyOnlyIfCached= false,
                          drawTiming= DrawTiming.ASYNC, screenRenderEnabled= true,
                          isMaxOrder=false, desiredNorder=0} ) {
     if (!targetCanvas) return noOp;
@@ -185,7 +189,7 @@ function drawDisplay({targetCanvas, offscreenCanvas, plot,
     }
     
     useAllSky ?
-        drawDisplayUsingAllSky(drawer, plot, hipsColorOps, tilesToLoad) :
+        drawDisplayUsingAllSky(drawer, plot, hipsColorOps, tilesToLoad, drawAllSkyOnlyIfCached) :
         drawDisplayUsingTiles(drawer,plot,tilesToLoad,drawTiming);
     return drawer.abort; // this abort function will any async promise calls stop before they draw
 }
@@ -212,19 +216,27 @@ function findCachedAllSkyToFitColor(allSkyURL,ctId,bias,contrast, hipsColorOps) 
     return findAllSkyCachedImage(allSkyURL,ctId,bias,contrast);
 }
 
-async function drawDisplayUsingAllSky(drawer, plot, hipsColorOps, tilesToLoad) {
+async function drawDisplayUsingAllSky(drawer, plot, hipsColorOps, tilesToLoad, drawOnlyIfCached=false) {
     const allSkyURL= makeHiPSAllSkyUrlFromPlot(plot);
     const ctId= colorId(plot);
     const {bias,contrast}= plot.rawData.bandData[0];
-    const cachedAllSkyData= findCachedAllSkyToFitColor(allSkyURL,ctId,bias,contrast, hipsColorOps);
+    const findAllSkyCached= () => findCachedAllSkyToFitColor(allSkyURL,ctId,bias,contrast, hipsColorOps);
+
+
+    const cachedAllSkyData= findAllSkyCached();
     if (cachedAllSkyData) {
         drawer.drawAllSky(cachedAllSkyData, tilesToLoad);
         return;
     }
+    if (drawOnlyIfCached) {
+        const allSkyImage= await loadImageMultiCall(allSkyURL);
+        if (!findAllSkyCached()) addAllSkyCachedImage(allSkyURL, allSkyImage);
+        return;
+    }
     try {
-        const allSkyImage= await loadImage(allSkyURL);
-        addAllSkyCachedImage(allSkyURL, allSkyImage);
-        const processedAllSkyData= findCachedAllSkyToFitColor(allSkyURL,ctId,bias,contrast,hipsColorOps);
+        const allSkyImage= await loadImageMultiCall(allSkyURL);
+        if (!findAllSkyCached()) addAllSkyCachedImage(allSkyURL, allSkyImage);
+        const processedAllSkyData= findAllSkyCached();
         drawer.drawAllSky(processedAllSkyData, tilesToLoad);
     } catch (e) {// should not happen - there is no all sky image, so we are using the full tiles.
         drawer.drawAllTilesAsync(tilesToLoad,plot);

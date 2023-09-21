@@ -126,18 +126,20 @@ function computeDrawDataForId(plotId, gridType, gridLockLevel, projectionTypeCha
 
     const cc= CysConverter.make(plot);
 
-    let norder;
+    let norder, desiredNorder;
     if (gridType==='lock') {
         norder= Math.min(Number(gridLockLevel), getMaxDisplayableHiPSGridLevel(plot));
+        desiredNorder= norder;
     }
     else {
         const limitByMax= gridType==='match';
-        const {norder:retNorder}= getHiPSNorderlevel(plot, limitByMax);
-        norder= retNorder;
+        const result= getHiPSNorderlevel(plot, limitByMax);
+        norder= result.norder;
+        desiredNorder= result.desiredNorder;
     }
 
     const {fov, centerWp}= getPointMaxSide(plot, plot.viewDim);
-    const cells= getVisibleHiPSCells(norder,centerWp,fov, plot.dataCoordSys, aitoff);
+    const cells= getVisibleHiPSCells(norder,desiredNorder, centerWp,fov, plot.dataCoordSys, aitoff);
 
     const nonWrapCells= fov>=130 && aitoff ? cells.filter( (c) => !tileCoordsWrap(cc, c.wpCorners)) : cells;
 
