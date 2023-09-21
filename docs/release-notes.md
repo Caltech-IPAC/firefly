@@ -34,20 +34,19 @@
 #### Notable Bug Fixes 
 - Fixed: error in processing s_region values containing zeros  [Firefly-1281](https://github.com/Caltech-IPAC/firefly/pull/1413) 
 - Fixed: TAP UI crashes when selecting TAP_SCHEMA table [Firefly-1292](https://github.com/Caltech-IPAC/firefly/pull/1412) 
-
-                             
-##### _Pull Requests in this release_
+        
+### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2023.2+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2023.2+)
 
-##### _Patches 2023.2_
+### _Patches 2023.2_
  - 2023.2.2
    - Fixed: HiPS rendering clean up [FIREFLY-1312](https://github.com/Caltech-IPAC/firefly/pull/1431)
    - Fixed: projections: if not specified `CD1_1` and `CD2_2` default to `CDELT1/2` [FIREFLY-1315](https://github.com/Caltech-IPAC/firefly/pull/1431)
    - Fixed: React 18 issue with API. We need to recreate the root for unrender/render [commit](https://github.com/Caltech-IPAC/firefly/commit/5e5b88c7c734fb76db54587d05bcdeda1c53eb6d)
  - 2023.2.1
-  - Fixed: HiPS tile pixels should not be smoothed at highest resolution: [Firefly-1311](https://github.com/Caltech-IPAC/firefly/pull/1429)
-  - Small bug fixes related to SHA Release [PR](https://github.com/Caltech-IPAC/firefly/pull/1425), [PR](https://github.com/Caltech-IPAC/firefly/pull/1425)
+   - Fixed: HiPS tile pixels should not be smoothed at highest resolution: [Firefly-1311](https://github.com/Caltech-IPAC/firefly/pull/1429)
+   - Small bug fixes related to SHA Release [PR](https://github.com/Caltech-IPAC/firefly/pull/1425), [PR](https://github.com/Caltech-IPAC/firefly/pull/1425)
 
 ## Version 2023.1
 - 2023.1.5 - (June 15, 2023)
@@ -79,8 +78,11 @@
 - ObsCore table packaging: [Firefly-1193](https://github.com/Caltech-IPAC/firefly/pull/1351)
 - Embedded spatial search UI in Hips: [Firefly-1177](https://github.com/Caltech-IPAC/firefly/pull/1328) 
 
+### _Pull Requests in this release_
+- [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2023.1+label%3abug)
+- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2023.1+)
 
-##### _Patches 2023.1_
+### _Patches 2023.1_
 - 2023.1.5
   - Fixed: heatmap failed due to uncaught exception [FIREFLY-1255](https://github.com/Caltech-IPAC/firefly/pull/1395)
   - Fixed: grid buttons missing from MultiProductViewer on the right hand side [commit](https://github.com/Caltech-IPAC/firefly/commit/afbfbe9962131e755642c50c773128a1a9e59f65)
@@ -96,12 +98,6 @@
   - fixed: `obs_title` not showing up, wavelength wrong [Firefly-1246](https://github.com/Caltech-IPAC/firefly/pull/1381)
 - 2023.1.1
   - fixed: polygon searches force spaces after comma [Firefly-1234](https://github.com/Caltech-IPAC/firefly/pull/1376)
-
-##### _Pull Requests in this release_
-- [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2023.1+label%3abug)
-- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2023.1+)
-
-
 
 # Older Releases 2019 - 2022
 - See [Older release notes 2022](older-release-notes-2022.md)
