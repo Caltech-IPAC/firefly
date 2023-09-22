@@ -211,6 +211,7 @@ function getObsCoreRowMetaInfo(table,row) {
 function createObsCoreTitle(table,row) {
  // 1. try a template
     const template= getAppOptions().tapObsCore?.productTitleTemplate;
+    if (!(template??'').trim()) return '';
     const templateColNames= template && getColNameFromTemplate(template);
     const columns= getColumns(table);
     if (templateColNames?.length && columns?.length) {
