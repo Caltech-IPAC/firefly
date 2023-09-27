@@ -18,7 +18,7 @@ class ImageStretchUtil {
      * the primary data array values to the true values. The value field shall contain a floating point number representing the physical value corresponding to an array value of zero. The default value for this keyword is 0.0.
      * The transformation equation is as follows:
      * physical_values = BZERO + BSCALE × array_value	(5.3)
-     *
+     * <p>
      * This method return the physical data value for the given raw value with scaling coefficient applied 
      *
      * @param raw_dn raw data value
@@ -35,31 +35,30 @@ class ImageStretchUtil {
     }
 
     static double getShigh(RangeValues rangeValues, float[] float1d, Histogram hist, double bzero, double bscale,
-                              int naxis1, int naxis2, int bitpix, double blank_value) {
+                              int naxis1, int naxis2, double blank_value) {
         return switch (rangeValues.getUpperWhich()) {
             case RangeValues.ABSOLUTE -> (rangeValues.getUpperValue() - bzero) / bscale;
             case RangeValues.PERCENTAGE -> hist.get_pct(rangeValues.getUpperValue(), true);
             case RangeValues.SIGMA -> hist.get_sigma(rangeValues.getUpperValue(), true);
-            case RangeValues.ZSCALE -> getZscaleValue(float1d, naxis1, naxis2, bitpix, blank_value, rangeValues).getZ2();
+            case RangeValues.ZSCALE -> getZscaleValue(float1d, naxis1, naxis2, blank_value, rangeValues).z2();
             default -> 0;
         };
     }
 
-    static Zscale.ZscaleRetval getZscaleValue(float[] float1d, int naxis1, int naxis2, int bitpix, double blank_value, RangeValues rangeValues) {
+    static Zscale.ZscaleRetval getZscaleValue(float[] float1d, int naxis1, int naxis2, double blank_value, RangeValues rangeValues) {
         double contrast = rangeValues.getZscaleContrast();
         int optSize = rangeValues.getZscaleSamples();
         int lenStdline = rangeValues.getZscaleSamplesPerLine();
-
-        return Zscale.cdl_zscale(float1d, naxis1, naxis2, bitpix, contrast / 100.0, optSize, lenStdline, blank_value );
+        return Zscale.cdl_zscale(float1d, naxis1, naxis2, contrast / 100.0, optSize, lenStdline, blank_value );
     }
 
     static double getSlow(RangeValues rangeValues, float[] float1d, Histogram hist, double bzero, double bscale,
-                          int naxis1, int naxis2, int bitpix, double blank_value) {
+                          int naxis1, int naxis2, double blank_value) {
         return switch (rangeValues.getLowerWhich()) {
             case RangeValues.ABSOLUTE ->  (rangeValues.getLowerValue() - bzero) / bscale;
             case RangeValues.PERCENTAGE -> hist.get_pct(rangeValues.getLowerValue(), false);
             case RangeValues.SIGMA -> hist.get_sigma(rangeValues.getLowerValue(), false);
-            case RangeValues.ZSCALE -> getZscaleValue(float1d, naxis1, naxis2, bitpix, blank_value, rangeValues).getZ1();
+            case RangeValues.ZSCALE -> getZscaleValue(float1d, naxis1, naxis2, blank_value, rangeValues).z1();
             default -> 0;
         };
     }

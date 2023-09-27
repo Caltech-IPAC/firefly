@@ -4,7 +4,6 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.astro.net.TargetNetwork;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
@@ -12,7 +11,6 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.RequestType;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
@@ -45,7 +43,7 @@ public class PlotServUtils {
     public static final String PROCESSING_MSG =  "Processing Images";
     public static final String PROCESSING_COMPLETED_MSG =  "Processing Images Completed";
 
-    public static void updatePlotCreateProgress(ProgressStat pStat) {
+    public static void updateProgress(ProgressStat pStat) {
         Cache cache= UserCache.getInstance();
         CacheKey key= new StringKey(pStat.getId());
         ProgressStat lastPstat= (ProgressStat) cache.get(key);
@@ -71,19 +69,15 @@ public class PlotServUtils {
         }
     }
 
-    public static void updatePlotCreateProgress(String key, String plotId, ProgressStat.PType type, String progressMsg) {
-        if (key!=null) {
-            updatePlotCreateProgress(new ProgressStat(key,plotId, type,progressMsg));
-        }
-
+    public static void updateProgress(String key, String plotId, ProgressStat.PType type, String progressMsg) {
+        if (key==null) return;
+        updateProgress(new ProgressStat(key,plotId, type,progressMsg));
     }
 
-    public static void updatePlotCreateProgress(WebPlotRequest r, ProgressStat.PType type, String progressMsg) {
-        if (r!=null) {
-            String key= r.getProgressKey();
-            String plotId= r.getPlotId();
-            if (key!=null) updatePlotCreateProgress(new ProgressStat(key,plotId, type,progressMsg));
-        }
+    public static void updateProgress(WebPlotRequest r, ProgressStat.PType type, String progressMsg) {
+        if (r==null) return;
+        String key= r.getProgressKey();
+        if (key!=null) updateProgress(new ProgressStat(key,r.getPlotId(), type,progressMsg));
     }
 
 
@@ -141,12 +135,12 @@ public class PlotServUtils {
     }
 
     private static String getDateValueFromServiceFits(String headerKey, Header header) {
-        long currentYear = Math.round(Math.floor(System.currentTimeMillis()/1000/3600/24/365.25) +1970);
+        long currentYear = Math.round(Math.floor((double) System.currentTimeMillis() /1000/3600/24/365.25) +1970);
         long year;
         String dateValue= header.getStringValue(headerKey);
         if(dateValue !=null){
             switch (headerKey) {
-                case "ORDATE":
+                case "ORDATE" -> {
                     if (dateValue.length() > 5) {
                         dateValue = dateValue.subSequence(0, 2) + "-" + dateValue.subSequence(2, 4) + "-" +
                                 dateValue.subSequence(4, 6);
@@ -157,8 +151,8 @@ public class PlotServUtils {
                             dateValue = "20" + dateValue;
                         }
                     }
-                    break;
-                case "DATE-OBS":
+                }
+                case "DATE-OBS" -> {
                     dateValue = dateValue.split("T")[0];
                     if (dateValue.contains("/")) {
                         String newDate = "";
@@ -176,13 +170,9 @@ public class PlotServUtils {
                             dateValue = "20" + newDate;
                         }
                     }
-                    break;
-                case "MIDOBS":
-                    dateValue = dateValue.split("T")[0];
-                    break;
-                case "DATEIRIS":
-                    dateValue = "1983";
-                    break;
+                }
+                case "MIDOBS" -> dateValue = dateValue.split("T")[0];
+                case "DATEIRIS" -> dateValue = "1983";
             }
             return dateValue;
         }else{
@@ -193,15 +183,6 @@ public class PlotServUtils {
 
     static void statsLog(String function, Object... sAry) {
         _statsLog.stats(function, sAry);
-    }
-
-    public static File findWorkingFitsName(File f) {
-        String ext= FileUtil.getExtension(f);
-        File retval= f;
-        if (ext!=null && ext.equalsIgnoreCase(FileUtil.GZ)) {
-            retval= new File(ServerContext.getVisSessionDir(), FileUtil.getBase(f.getName()));
-        }
-        return retval;
     }
 
     public static Circle getRequestArea(WebPlotRequest request) {
@@ -353,7 +334,7 @@ public class PlotServUtils {
         return retval;
     }
 
-    public record ProgressMessage(String message, boolean done) { }
+    private record ProgressMessage(String message, boolean done) { }
 
     private static boolean isHexColor(String text) {
         boolean retval= false;

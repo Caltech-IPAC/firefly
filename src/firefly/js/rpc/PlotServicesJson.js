@@ -76,7 +76,8 @@ export function callCrop(stateAry, corner1ImagePt, corner2ImagePt, cropMultiAll)
 }
 
 export function callGetFileFlux(stateAry, pt) {
-    const params =  makeParamsWithStateAry(stateAry,true, [ {name: [ServerParams.PT], value: pt.toString()} ]);
+    const params =  makeParamsWithStateAry(stateAry,true,
+        [ {name: [ServerParams.PT], value: pt.toString()}]);
     return doJsonRequest(ServerParams.FILE_FLUX_JSON, params,true);
 }
 

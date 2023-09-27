@@ -8,17 +8,15 @@ import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.visualize.plot.output.PlotOutput;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
-import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
-import edu.caltech.ipac.visualize.plot.projection.Projection;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Test;
 import org.junit.Before;
+import org.junit.Test;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.Color;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
@@ -60,7 +58,7 @@ public class ImagePlotTest extends ConfigTest{
         frGroup = new ActiveFitsReadGroup();
         frGroup.setFitsRead(Band.NO_BAND, fitsRead);
         LOG.info("Create an ImagePlot object using the input data");
-        imagePlot = new ImagePlot(frGroup, 1F, false, Band.NO_BAND, 0, FitsRead.getDefaultFutureStretch());
+        imagePlot = new ImagePlot(frGroup, 0);
 
         LOG.info("Load expected results from files");
         expectedImage = ImageIO.read(new File(FileLoader.getDataPath(ImageDataTest.class)+expectedImageFile));
@@ -119,7 +117,7 @@ public class ImagePlotTest extends ConfigTest{
 
         ImageMask[] lsstMasks=  {lsstmaskRed,lsstmaskGreen, lsstmaskBlue };
 
-        ImagePlot imagePlot = new ImagePlot(frGroup, 1F, lsstMasks, FitsRead.getDefaultFutureStretch());
+        ImagePlot imagePlot = new ImagePlot(frGroup, lsstMasks);
 
         //validate the size of the image
         Assert.assertEquals(height, imagePlot.getScreenHeight());
@@ -136,67 +134,12 @@ public class ImagePlotTest extends ConfigTest{
         }
     }
 
-    /**
-     * The ImagePlot created by FITS f3.fits is not a color image.  Thus, the isThreeColor should be false.
-     */
-    @Test
-    public void testisThreeColor(){
-        Assert.assertTrue(!imagePlot.isThreeColor());
-    }
 
     @Test
     public void testisUseForMask(){
         Assert.assertTrue(!imagePlot.isUseForMask());
     }
 
-    /**
-     * Load a color image, and then test if it set three color correctly.
-     * @throws FitsException
-     * @throws ClassNotFoundException
-     * @throws IOException
-     * @throws GeomException
-     */
-    @Test
-    public void testSetThreeColorBand() throws FitsException, ClassNotFoundException, IOException, GeomException {
-        Fits inFits = new Fits( FileLoader.getDataPath(ImagePlotTest.class)+colorBandFitsFileName);
-        FitsRead fitsRead = FitsReadFactory.createFitsReadArray(inFits)[0];
-        ActiveFitsReadGroup frGroup = new ActiveFitsReadGroup();
-        frGroup.setFitsRead(Band.RED, fitsRead);
-        ImagePlot imagePlot = new ImagePlot(frGroup, 1F, true, Band.RED, 0, FitsRead.getDefaultFutureStretch());
-        imagePlot.setThreeColorBand(fitsRead, Band.RED, frGroup);
-        Assert.assertTrue(imagePlot.isThreeColor());
-
-    }
-
-    /**
-     * This is to set the band to Band.RED.  Then remove the Band.RED.  The test is to confirm it does remove the band.
-     * @throws FitsException
-     * @throws ClassNotFoundException
-     * @throws IOException
-     * @throws GeomException
-     */
-    @Test
-    public void testRemoveBand() throws FitsException, ClassNotFoundException, IOException, GeomException {
-        Fits inFits = new Fits(FileLoader.getDataPath(ImagePlotTest.class) + colorBandFitsFileName);
-        FitsRead fitsRead = FitsReadFactory.createFitsReadArray(inFits)[0];
-        ActiveFitsReadGroup frGroup = new ActiveFitsReadGroup();
-        frGroup.setFitsRead(Band.RED, fitsRead);
-        ImagePlot imagePlot = new ImagePlot(frGroup, 1F, true, Band.RED, 0, FitsRead.getDefaultFutureStretch());
-
-
-        //after removing the band, the band in the frGroup will be null
-        imagePlot.removeThreeColorBand(Band.RED, frGroup);
-        Assert.assertNull(frGroup.getFitsRead(Band.RED));
-    }
-
-    /**
-     * The projection in FITS file "f3.fits" is GNOMONIC.  This test is to test against the known result.
-     */
-    @Test
-    public void testProjection(){
-        String projectionName  = imagePlot.getProjection().getProjectionName();
-        Assert.assertEquals("GNOMONIC", projectionName);
-    }
 
 
 
@@ -224,7 +167,7 @@ public class ImagePlotTest extends ConfigTest{
     public void testGetImageDataWidth(){
         double imageFactor = fitsRead.getImageScaleFactor();
 
-        double cWidth  = imagePlot.getImageDataWidth();
+        double cWidth  = fitsRead.getImageDataWidth();
         Assert.assertEquals(width*imageFactor, cWidth, delta);
     }
 
@@ -237,43 +180,8 @@ public class ImagePlotTest extends ConfigTest{
 
         double imageFactor = fitsRead.getImageScaleFactor();
 
-        double cHeight  = imagePlot.getImageDataHeight();
+        double cHeight  = fitsRead.getImageDataHeight();
         Assert.assertEquals(height*imageFactor, cHeight, delta);
-    }
-
-
-    /**
-     * 1. Calculate PlotWidth using a different method
-     * 2. Save the PlotWidth from 1 as an expected value
-     * 3. Compare the PlotWidth from ImagePlot with the expected value
-     * @throws FitsException
-     * @throws IOException
-     */
-    @Test
-    public void testGetWorldPlotWidth() throws FitsException, IOException {
-        ImageHeader   imageHeader =  new ImageHeader(fitsRead.getHeader());
-        Projection projection = imageHeader.createProjection(CoordinateSys.EQ_J2000);
-
-        double ww = projection.getPixelWidthDegree() *width;
-        Assert.assertEquals(imagePlot.getWorldPlotWidth(), ww, delta);
-    }
-
-    /**
-     * 1. Calculate PlotHeight using a different method
-     * 2. Save the PlotHeight from 1 as an expected value
-     * 3. Compare the PlotHeight from ImagePlot with the expected value
-     * @throws FitsException
-     * @throws IOException
-     */
-
-    @Test
-    public void testGetWorldPlotHeight() throws FitsException, IOException {
-        ImageHeader   imageHeader =  new ImageHeader(fitsRead.getHeader());
-        Projection projection = imageHeader.createProjection(CoordinateSys.EQ_J2000);
-
-        double hh  = projection.getPixelWidthDegree() * height;
-        Assert.assertEquals(imagePlot.getWorldPlotHeight(), hh, delta);
-
     }
 
 
@@ -290,7 +198,7 @@ public class ImagePlotTest extends ConfigTest{
      */
     @Test
     public void testGetImageCoords() throws FitsException, IOException, ProjectionException, NoninvertibleTransformException {
-        imagePlot = new ImagePlot(frGroup, 1F, false, Band.NO_BAND, 0, FitsRead.getDefaultFutureStretch());
+        imagePlot = new ImagePlot(frGroup, 0);
         WorldPt wpt = new WorldPt(326.7281667, 64.5584444);
         LOG.info("Used a known point as a test reference");
         ImageWorkSpacePt  iwspt = imagePlot.getImageCoords (wpt);
@@ -301,18 +209,8 @@ public class ImagePlotTest extends ConfigTest{
           double xpass= (iwspt.getX()- ((double)getOffsetX()))/imageScaleFactor;
           double ypass= (iwspt.getY()- ((double)getOffsetY()))/imageScaleFactor;
         */
-        ImagePt impt  = imagePlot.getImageCoords(iwspt);
-        Assert.assertEquals(impt.getX(), iwspt.getX(), delta);
-        Assert.assertEquals(impt.getY(), iwspt.getY(), delta);
-
         //using the lower corner as a reference point
         Point2D p2d = new Point2D.Double(0, 0);
-        ImagePt imagePt = imagePlot.getImageCoords(p2d);
-        Assert.assertEquals(0.0, imagePt.getX(), delta);
-        Assert.assertEquals(504, imagePt.getY(), delta);
-
-
-
     }
 
 
@@ -380,7 +278,7 @@ public class ImagePlotTest extends ConfigTest{
         frGroup.setFitsRead(Band.NO_BAND, fitsRead);
 
 
-        ImagePlot imagePlot = new ImagePlot(frGroup, 1F, false, Band.NO_BAND, 0, FitsRead.getDefaultFutureStretch());
+        ImagePlot imagePlot = new ImagePlot(frGroup, 0);
 
         PlotOutput po = new PlotOutput(imagePlot, frGroup);
         po.writeTilesFullScreen( new File(FileLoader.getDataPath(ImagePlotTest.class)), "f3", PlotOutput.PNG, true, true);
@@ -395,7 +293,7 @@ public class ImagePlotTest extends ConfigTest{
 
         ImageMask[] lsstMasks=  {lsstmaskRed,lsstmaskGreen, lsstmaskBlue };
 
-        imagePlot = new ImagePlot(frGroup, 1F, lsstMasks, FitsRead.getDefaultFutureStretch());
+        imagePlot = new ImagePlot(frGroup, lsstMasks);
         po = new PlotOutput(imagePlot, frGroup);
         po.writeTilesFullScreen( new File(FileLoader.getDataPath(ImagePlotTest.class)), "f3WithMask", PlotOutput.PNG, true, true);
 

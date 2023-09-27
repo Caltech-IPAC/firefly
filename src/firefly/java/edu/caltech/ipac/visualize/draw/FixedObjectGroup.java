@@ -5,7 +5,7 @@ package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.Plot;
+import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.PlotContainer;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
@@ -174,7 +174,7 @@ public class FixedObjectGroup implements Serializable, Iterable<FixedObject> {
     }
 
 
-    public void drawOnPlot(Plot p, Graphics2D g2) {
+    public void drawOnPlot(ImagePlot p, Graphics2D g2) {
        int idx= findPlot(p);
        PlotInfo pInfo= getPlots().get(idx);
        if (pInfo._show) {
@@ -186,7 +186,7 @@ public class FixedObjectGroup implements Serializable, Iterable<FixedObject> {
     }
 
     public void addPlotView(PlotContainer container) {
-       for(Plot p: container) addPlot(p);
+       for(ImagePlot p: container) addPlot(p);
     }
 
     public FixedObject get(int i) { return _objects.get(i); }
@@ -216,7 +216,7 @@ public class FixedObjectGroup implements Serializable, Iterable<FixedObject> {
 //------------------ Private / Protected Methods -----------------------
 //======================================================================
 
-    private void addPlot(Plot p) {
+    private void addPlot(ImagePlot p) {
         getPlots().add(new PlotInfo(p) ); // needs to add to empty slot
         computeImageTransform(p);
     }
@@ -235,7 +235,7 @@ public class FixedObjectGroup implements Serializable, Iterable<FixedObject> {
        }
     }
 
-    private int findPlot(Plot p) {
+    private int findPlot(ImagePlot p) {
        int retval= -1;
        Iterator<PlotInfo> i= getPlots().iterator();
        boolean found= false;
@@ -263,7 +263,7 @@ public class FixedObjectGroup implements Serializable, Iterable<FixedObject> {
           }
     }
 
-    protected void computeImageTransform(Plot p) {
+    protected void computeImageTransform(ImagePlot p) {
           int idx= findPlot(p);
           for (FixedObject  fixedObj: _objects) {
               fixedObj.getDrawer().computeTransform(idx, p);
@@ -315,8 +315,8 @@ public class FixedObjectGroup implements Serializable, Iterable<FixedObject> {
      */
     private static class PlotInfo {
         public boolean _show= true;
-        public Plot _p;
-        PlotInfo( Plot p) {
+        public ImagePlot _p;
+        PlotInfo( ImagePlot p) {
            _p= p;
         }
     }

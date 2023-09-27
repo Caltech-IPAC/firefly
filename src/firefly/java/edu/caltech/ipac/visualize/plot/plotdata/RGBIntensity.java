@@ -61,7 +61,7 @@ public class RGBIntensity {
      * @return a string describing black points, derived from range values
      */
     private static String getCacheKey(RangeValues[] rangeValuesAry) {
-        StringBuilder key = new StringBuilder("");
+        StringBuilder key = new StringBuilder();
         if (rangeValuesAry==null) { return key.toString(); }
         for (RangeValues rv : rangeValuesAry)  {
             key.append(rv.getScalingK()).append(",").append(rv.getLowerWhich()).append(",").append(rv.getLowerValue()).append(";");
@@ -76,8 +76,8 @@ public class RGBIntensity {
         }
 
         float[][] float1dAry= new float[3][];
-        ImageHeader imageHeaderAry[]= new ImageHeader[3];
-        double blankPxValAry[] = new double[3];
+        ImageHeader[] imageHeaderAry= new ImageHeader[3];
+        double[] blankPxValAry = new double[3];
         Histogram[] histAry= new Histogram[3];
         for(int i=0; i<3; i++) {
             float1dAry[i]= fitsReadAry[i].getRawFloatAry();
@@ -105,7 +105,7 @@ public class RGBIntensity {
             blankPxValAry[i]= imageHeaderAry[i].blank_value;
             ImageHeader iH= imageHeaderAry[i];
             slowAry[i] = getSlow(rangeValuesAry[i], float1dAry[i], histAry[i], iH.bzero, iH.bscale, iH.naxis1,
-                                               iH.naxis2, iH.bitpix, iH.blank_value);
+                                               iH.naxis2, iH.blank_value);
             slowAry[i] = getScaled(slowAry[i], iH, rangeValuesAry[i]);
         }
         float [] intensity = new float[float1dAry[0].length];
@@ -135,10 +135,9 @@ public class RGBIntensity {
             // use the last image header, because after reprojection, bzero and bscale are removed in green and blue
             // zscale parameters are shared between range values, no matter range values which to use
             ImageHeader ih= imageHeaderAry[2];
-            Zscale.ZscaleRetval zscale_retval = getZscaleValue(intensity, ih.naxis1, ih.naxis2,
-                    ih.bitpix, ih.blank_value,rangeValuesAry[0]);
-            _intensityLow = zscale_retval.getZ1();
-            _intensityHigh = zscale_retval.getZ2();
+            Zscale.ZscaleRetval zscale_retval = getZscaleValue(intensity, ih.naxis1, ih.naxis2, ih.blank_value,rangeValuesAry[0]);
+            _intensityLow = zscale_retval.z1();
+            _intensityHigh = zscale_retval.z2();
         } else {
             _intensityLow = Double.NaN;
             _intensityHigh = Double.NaN;

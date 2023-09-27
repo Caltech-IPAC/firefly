@@ -7,7 +7,6 @@
  */
 package edu.caltech.ipac.firefly.server.visualize.fc;
 
-import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -17,8 +16,10 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.draw.StaticDrawInfo;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.dd.RegionPoint;
+import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
@@ -44,10 +45,12 @@ public class PngRetrieve {
 
         try {
             importPlotState(request, plotStateStr);
-            ImagePlotBuilder.SimpleResults plotR= ImagePlotBuilder.create(request);
+            var plotR= ImagePlotBuilder.create(request);
             List<StaticDrawInfo> drawInfoList = parseDrawInfoListStr(request, drawInfoListStr, artifactList);
-            if (request.getPlotDescAppend()!=null) request.setTitle( plotR.plot().getPlotDesc());
-            return ServerContext.convertToFile(PlotPngCreator.createImagePng(plotR.plot(),plotR.getFrGroup() ,drawInfoList));
+            ImagePlot p= new ImagePlot(plotR.fitsReadGroup(),false);
+            p.setPlotDesc(plotR.dataDesc());
+            if (request.getPlotDescAppend()!=null) request.setTitle(plotR.dataDesc());
+            return ServerContext.convertToFile(PlotPngCreator.createImagePng(p,plotR.fitsReadGroup() ,drawInfoList));
         } catch (Exception e) {
             _log.error(e,"Could not create png file");
 

@@ -103,7 +103,7 @@ public class StaticDrawInfo implements Serializable, Iterable<WorldPt> {
         String wpAry= StringUtils.combineAry(SPLIT_TOKEN_ARY, ary);
         String regStrAry= StringUtils.combineAry(SPLIT_TOKEN_ARY, regAry);
         return   StringUtils.combine(SPLIT_TOKEN, drawType.toString(), symbol.toString(),
-                                     color, gridType, label, textOffset==null ? null : textOffset.serialize(),
+                                     color, gridType, label, textOffset==null ? null : textOffset.toString(),
                                      shapeType.toString(), regStrAry,
                                      wpAry);
     }

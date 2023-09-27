@@ -11,10 +11,10 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.visualize.DirectStretchUtils.CompressType;
 import edu.caltech.ipac.firefly.server.visualize.DirectStretchUtils.StretchDataInfo;
+import edu.caltech.ipac.firefly.server.visualize.WebPlotFactory.WebPlotFactoryRet;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.BandState;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
-import edu.caltech.ipac.firefly.visualize.FileAndHeaderInfo;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotHeaderInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
@@ -30,8 +30,6 @@ import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.dd.Region;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.draw.AreaStatisticsUtil;
-import edu.caltech.ipac.visualize.draw.Metric;
-import edu.caltech.ipac.visualize.draw.Metrics;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CropFile;
 import edu.caltech.ipac.visualize.plot.Histogram;
@@ -42,11 +40,10 @@ import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.Fits;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -81,11 +78,9 @@ public class VisServerOps {
     public static WebPlotResult create3ColorPlot(WebPlotRequest redR, WebPlotRequest greenR, WebPlotRequest blueR) {
         try {
             counters.incrementVis("New 3 Color Plots");
-            WebPlotFactory.WebPlotFactoryRet wpRet = WebPlotFactory.createNew(redR, greenR, blueR);
+            WebPlotFactoryRet wpRet = WebPlotFactory.createNew(redR, greenR, blueR);
             WebPlotRequest req= wpRet.wpInit()[0].plotState().getPrimaryRequest();
-            WebPlotResult retval = makeNewPlotResult(wpRet.wpInit(),wpRet.wpHeader(), req.getProgressKey());
-//            CtxControl.deletePlotCtx(CtxControl.getPlotCtx(null));
-            return retval;
+            return makeNewPlotResult(wpRet.wpInit(),wpRet.wpHeader(), req.getProgressKey());
         } catch (Exception e) {
             return createError("on createPlot", null, new WebPlotRequest[]{redR, greenR, blueR}, e);
         }
@@ -99,7 +94,7 @@ public class VisServerOps {
     public static List<WebPlotResult> createPlotGroup(List<WebPlotRequest> rList, String progressKey) {
 
         List<String> keyList= rList.stream().map(WebPlotRequest::getProgressKey).filter(Objects::nonNull).toList();
-        PlotServUtils.updatePlotCreateProgress(new ProgressStat(keyList, progressKey));
+        PlotServUtils.updateProgress(new ProgressStat(keyList, progressKey));
 
         ExecutorService executor = Executors.newFixedThreadPool(rList.size());
         boolean allCompleted = false;
@@ -127,46 +122,45 @@ public class VisServerOps {
     public static WebPlotResult createPlot(WebPlotRequest request) {
         try {
             counters.incrementVis("New Plots");
-            WebPlotFactory.WebPlotFactoryRet wpRet= WebPlotFactory.createNew(request);
-//            CtxControl.deletePlotCtx(CtxControl.getPlotCtx(null));
+            WebPlotFactoryRet wpRet= WebPlotFactory.createNew(request);
             return makeNewPlotResult(wpRet.wpInit(), wpRet.wpHeader(), request.getProgressKey());
         } catch (Exception e) {
             return createError("on createPlot", null, new WebPlotRequest[]{request}, e);
         }
     }
 
-    interface Extractor { List<Number> getData(File fitsFile) throws Exception; }
+    private interface Extractor { List<Number> getData(File fitsFile) throws Exception; }
 
-    public static List<Number> getDataAry(String desc, PlotState state, Extractor extractor) {
+    private static List<Number> getDataAry(String desc, PlotState state, Extractor extractor) {
         try {
             CtxControl.confirmFiles(state);
             PlotServUtils.statsLog(desc);
             File fitsFile= ServerContext.convertToFile(state.getWorkingFitsFileStr(NO_BAND));
             return extractor.getData(fitsFile);
         } catch (Exception e) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
 
     }
     public static List<Number> getZAxisAry(PlotState state, ImagePt pt, int hduNum,
                                            int ptSize, FitsExtract.CombineType ct) {
-        return getDataAry("z-axis drilldown", state, (f) ->
-                FitsExtract.getZAxisAryFromCube(pt, f, hduNum, ptSize, ct));
+        return getDataAry("z-axis drilldown", state,
+                (f) -> FitsExtract.getZAxisAryFromCube(pt, f, hduNum, ptSize, ct));
     }
 
     public static List<Number> getLineDataAry(PlotState state, ImagePt pt, ImagePt pt2, int plane, int hduNum,
                                               int drillSize, FitsExtract.CombineType ct) {
-        return getDataAry("point data", state, (f) ->
-                     FitsExtract.getLineDataAryFromFile(pt, pt2, plane, f, hduNum, hduNum, drillSize, ct));
+        return getDataAry("point data", state,
+                (f) -> FitsExtract.getLineDataAryFromFile(pt, pt2, plane, f, hduNum, hduNum, drillSize, ct));
     }
 
     public static List<Number> getPointDataAry(PlotState state, ImagePt[] ptAry, int plane, int hduNum,
                                                int drillSize, FitsExtract.CombineType ct) {
-        return getDataAry("line data", state, (f) ->
-                FitsExtract.getPointDataAryFromFile(ptAry, plane, f, hduNum, hduNum, drillSize, ct));
+        return getDataAry("line data", state,
+                (f) -> FitsExtract.getPointDataAryFromFile(ptAry, plane, f, hduNum, hduNum, drillSize, ct));
     }
 
-    public static List<String> getFlux(PlotState[] stateAry, ImagePt ipt) {
+    public static List<PixelValue.Result> getFlux(PlotState[] stateAry, ImagePt ipt) {
         PlotState primState= stateAry[0];
 
         // 1. handle primary plot
@@ -175,14 +169,14 @@ public class VisServerOps {
         try {
             CtxControl.confirmFiles(stateAry[0]);
         } catch (FailedRequestException e) {
-            return faHList.stream().map( f -> Float.NaN+"").toList();
+            return faHList.stream().map( f -> PixelValue.Result.makeUnavailable()).toList();
         }
 
         var baseList= getFileFlux(faHList, ipt);
         if (stateAry.length==1) return baseList;
 
         // 2. if there are overlays - handle them
-        List<String> fluxList= new ArrayList<>(baseList);
+        List<PixelValue.Result> fluxList= new ArrayList<>(baseList);
         for(int i=1; (i<stateAry.length);i++) {
             var faHOverlayList= Collections.singletonList(stateAry[i].getFileAndHeaderInfo(Band.NO_BAND));
             fluxList.add(getFileFlux(faHOverlayList, ipt).get(0));
@@ -190,9 +184,9 @@ public class VisServerOps {
         return fluxList;
     }
 
-    private static List<String> getFileFlux(List<FileAndHeaderInfo> fileAndHeader, ImagePt ipt) {
+    private static List<PixelValue.Result> getFileFlux(List<BandState.FileAndHeaderInfo> fileAndHeader, ImagePt ipt) {
         return fileAndHeader.stream()
-                .map (fap -> PixelValue.pixelVal(ServerContext.convertToFile(fap.fileName()), ipt, fap.header()) + "")
+                .map (fap -> PixelValue.getPixelValue(ServerContext.convertToFile(fap.fileName()), ipt, fap.header()))
                 .toList();
     }
 
@@ -286,11 +280,8 @@ public class VisServerOps {
                 FitsRead[] fr= FitsCacher.loadFits(cropFits, cropFile).getFitReadAry();
 
 
-                if (saveCropFits) {
-                    BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(cropFile), 4096);
-                    FitsReadUtil.writeFitsFile(stream, fr, cropFits);
-                    FileUtil.silentClose(stream);
-                }
+                if (saveCropFits) FitsReadUtil.writeFitsFile(cropFile,fr,cropFits);
+
 
 
                 String fReq = ServerContext.replaceWithPrefix(cropFile);
@@ -303,7 +294,7 @@ public class VisServerOps {
             }
 
 
-            WebPlotFactory.WebPlotFactoryRet wpRet = (state.isThreeColor() && cropRequest.length == 3) ?
+            WebPlotFactoryRet wpRet = (state.isThreeColor() && cropRequest.length == 3) ?
                     WebPlotFactory.createNew(cropRequest[0], cropRequest[1], cropRequest[2]) :
                     WebPlotFactory.createNew(cropRequest[0]);
 
@@ -338,7 +329,7 @@ public class VisServerOps {
     public static WebPlotResult getAreaStatistics(PlotState state, ImagePt pt1, ImagePt pt2, ImagePt pt3, ImagePt pt4, String areaShape, double rotateAngle) {
         try {
             counters.incrementVis("Area Stat");
-            HashMap<Band, HashMap<Metrics, Metric>> metricsMap = new HashMap<>();
+            HashMap<Band, HashMap<AreaStatisticsUtil.Metrics, AreaStatisticsUtil.Metric>> metricsMap = new HashMap<>();
             ActiveFitsReadGroup frGroup= CtxControl.prepare(state);
             for (Band b: state.getBands()) {
                 metricsMap.put(b,
@@ -359,11 +350,8 @@ public class VisServerOps {
                     WebPlotResult.DATA_HISTOGRAM, hist.getHistogramArray(),
                     WebPlotResult.DATA_BIN_MEAN_ARRAY, hist.getMeanBinDataAry(fr.getBscale(),fr.getBzero()),
                     WebPlotResult.DATA_BIN_COLOR_IDX, fr.getHistColors(hist, state.getRangeValues(band)) );
-        } catch (Exception e) {
-            return createError("on getColorHistogram", state, e);
         } catch (Throwable e) {
-            e.printStackTrace();
-            return null;
+            return createError("on getColorHistogram", state, e);
         }
     }
 
@@ -430,30 +418,28 @@ public class VisServerOps {
     }
 
     public static WebPlotResult getFootprintRegion(String fpInfo) {
+        List<String> rAsStrList= new ArrayList<>();
+        List<String> msgList= new ArrayList<>();
+        String fileName= VisContext.getFootprint(fpInfo);
 
-        List<String> rAsStrList =  new ArrayList<>();
-        List<String> msgList =  new ArrayList<>();
-        String fileName;
-
-        if ((fileName = VisContext.getFootprint(fpInfo)) != null) {
+        if (fileName != null) {
             int idx = fpInfo.indexOf('_');
             String tag = idx >= 0 ? fpInfo.substring(idx + 1) : fpInfo;
-            InputStream in;
-            try {
-                in = VisServerOps.class.getClassLoader().getResourceAsStream(fileName);
-            } catch (NullPointerException e) {
-                return createError("Could not find footprint filename: "+fileName, e);
-            }
-            try ( BufferedReader br = new BufferedReader( new InputStreamReader(in)) ) {
-                String tmpLine;
-                while ((tmpLine = br.readLine()) != null) {
-                    tmpLine = tmpLine.trim();
-                    if (!tmpLine.startsWith("#") && ((tmpLine.contains("tag={" + tag)) || (!tmpLine.contains("tag"))))
-                        rAsStrList.add(tmpLine);
+            try (InputStream in = VisServerOps.class.getClassLoader().getResourceAsStream(fileName)) {
+                if (in==null) throw new IOException("InputStream is null");
+                try ( BufferedReader br = new BufferedReader( new InputStreamReader(in)) ) {
+                    String tmpLine;
+                    while ((tmpLine = br.readLine()) != null) {
+                        tmpLine = tmpLine.trim();
+                        if (!tmpLine.startsWith("#") && ((tmpLine.contains("tag={" + tag)) || (!tmpLine.contains("tag"))))
+                            rAsStrList.add(tmpLine);
+                    }
+                    if (rAsStrList.size() == 0) msgList.add("no region is defined in the footprint file");
+                } catch (Exception e) {
+                    return createError("on getFootprintRegion", e);
                 }
-                if (rAsStrList.size() == 0) msgList.add("no region is defined in the footprint file");
-            } catch (Exception e) {
-                return createError("on getFootprintRegion", e);
+            } catch (NullPointerException | IOException e) {
+                return createError("Could not find footprint filename: "+fileName, e);
             }
         } else {
             msgList.add("no footprint description file is found");
@@ -466,11 +452,11 @@ public class VisServerOps {
 
     private static WebPlotResult createError(String logMsg, Exception e) { return createError(logMsg, null, null, e); }
 
-    private static WebPlotResult createError(String logMsg, PlotState state, Exception e) {
+    private static WebPlotResult createError(String logMsg, PlotState state, Throwable e) {
         return createError(logMsg, state, null, e);
     }
 
-    private static WebPlotResult createError(String logMsg, PlotState state, WebPlotRequest[] reqAry, Exception e) {
+    private static WebPlotResult createError(String logMsg, PlotState state, WebPlotRequest[] reqAry, Throwable e) {
         WebPlotResult retval;
         boolean userAbort = false;
         String progressKey = "";

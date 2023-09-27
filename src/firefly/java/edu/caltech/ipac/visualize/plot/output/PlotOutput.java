@@ -13,7 +13,6 @@ import edu.caltech.ipac.visualize.draw.VectorObject;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.ImageDataGroup;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
-import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.PlotContainer;
 
 import javax.imageio.ImageIO;
@@ -21,7 +20,9 @@ import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
-import java.awt.*;
+import java.awt.AlphaComposite;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -47,8 +48,8 @@ public class PlotOutput {
     private List<VectorObject> _vectorList= null;
     private List<ScalableObjectPosition> _scaleList= null;
 
-    public PlotOutput(Plot plot, ActiveFitsReadGroup frGroup) {
-        _plot= (ImagePlot)plot;
+    public PlotOutput(ImagePlot plot, ActiveFitsReadGroup frGroup) {
+        _plot= plot;
         _frGroup= frGroup;
     }
 
@@ -59,36 +60,6 @@ public class PlotOutput {
     public void setGridLayer(GridLayer gridLayer) { _gridLayer= gridLayer; }
     public void setVectorList(List<VectorObject> vectorList) { _vectorList= vectorList; }
     public void setScaleList(List<ScalableObjectPosition> scaleList) { _scaleList= scaleList; }
-
-//    public void save(OutputStream out, int outType) throws IOException {
-//
-//        Assert.tst(outType == JPEG ||
-//                   outType == BMP  ||
-//                   outType == PNG  ||
-//                   outType == GIF);
-//
-//        BufferedImage   image;
-//        if (outType==JPEG) {
-//            image= new BufferedImage(_plot.getScreenWidth(),
-//                                     _plot.getScreenHeight(),
-//                                     BufferedImage.TYPE_BYTE_INDEXED);
-//        }
-//        else {
-//            image= createImage(_plot.getScreenWidth(),
-//                                    _plot.getScreenHeight(),
-//                                    Quality.HIGH);
-//        }
-//        Graphics2D g2= image.createGraphics();
-//        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-//        g2.setClip(0,0, _plot.getScreenWidth(), _plot.getScreenHeight() );
-//        _plot.getPlotGroup().beginPainting(g2);
-//
-//        PlotContainer container= new PlotContainerImpl();
-//        ((PlotContainerImpl)container).getPlotList().add(_plot);
-//        container.firePlotPaint(_plot, _frGroup, g2);
-//        saveImage(image,outType,out);
-//    }
-
 
     private int findTileSize() { return findTileSize(_plot.getZoomFactor()); }
 
@@ -161,23 +132,6 @@ public class PlotOutput {
         }
     }
 
-
-
-    public List<TileFileInfo> writeTiles(File dir,
-                                         String baseName,
-                                         int outType,
-                                         boolean requiresTransparaency,
-                                         int createOnly ) throws IOException {
-
-
-        // this is because of a bug in ImagePlot.paintTile, the tile size needs to
-        // divid evenly into the zoom level
-        int tileSize= findTileSize();
-
-        return writeTiles(dir,baseName,outType,requiresTransparaency, tileSize,createOnly);
-    }
-
-
     public List<TileFileInfo> writeTiles(File dir,
                                          String baseName,
                                          int outType,
@@ -239,14 +193,6 @@ public class PlotOutput {
     private static File getTileFile(File dir, String baseName, int x, int y, String ext) {
         return new File(dir,baseName+"_"+x+"_"+y+"."+ext);
     }
-
-    public void writeThumbnail(File f, int outType ) throws IOException {
-        int screenWidth= _plot.getScreenWidth();
-        int screenHeight= _plot.getScreenHeight();
-        BufferedImage image= createImage(screenWidth,screenHeight, Quality.MEDIUM);
-        writeTile(f,outType,false, 0,0,screenWidth,screenHeight,image);
-    }
-
 
     private BufferedImage createImage(int width, int height, Quality quality) {
         return switch (quality) {
@@ -329,30 +275,18 @@ public class PlotOutput {
             ImageIO.write(image, "bmp", out);
         }
         else if (outType == PNG) {
-//            ImageIO.write(image, "png", out);
-
             var writers = ImageIO.getImageWritersByFormatName("png");
             ImageWriter writer = (ImageWriter)writers.next();
             ImageOutputStream ios = ImageIO.createImageOutputStream(out);
             writer.setOutput(ios);
             ImageWriteParam param= writer.getDefaultWriteParam();
-//            param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT) ;
-//            param.setCompressionQuality(1.0F);
             param.setSourceSubsampling(1,1,0,0);
-//            param.setDestinationType(new ImageTypeSpecifier(
-//                    new DirectColorModel(24, 0x0000ff00, 0x0000ff00, 0x000000ff ),
-//                    new SinglePixelPackedSampleModel(DataBuffer.TYPE_INT,image.getWidth(), image.getHeight(),)
             param.setDestinationType(new ImageTypeSpecifier(image));
-
             writer.write(image);
-
-
             FileUtil.silentClose(ios);
-
         }
         else if (outType == JPEG) {
             try {
-                //ImageIO.write(image, "jpg", out);
                 var writers = ImageIO.getImageWritersByFormatName("jpg");
                 ImageWriter writer = writers.next();
                 ImageOutputStream ios = ImageIO.createImageOutputStream(out);
@@ -363,8 +297,6 @@ public class PlotOutput {
                 param.setSourceSubsampling(1,1,0,0);
                 writer.write(image);
                 FileUtil.silentClose(ios);
-                //JPEGImageEncoder jpeg= JPEGCodec.createJPEGEncoder(out);
-                //jpeg.encode(image);
             } catch (Exception e) {
                 System.out.println("PlotJpeg: " + e);
             }

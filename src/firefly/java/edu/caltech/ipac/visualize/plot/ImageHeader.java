@@ -6,6 +6,7 @@ package edu.caltech.ipac.visualize.plot;
 import edu.caltech.ipac.astro.conv.CoordConv;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.SUTDebug;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import edu.caltech.ipac.visualize.plot.projection.Projection;
 import edu.caltech.ipac.visualize.plot.projection.ProjectionParams;
 import nom.tam.fits.Header;
@@ -100,7 +101,7 @@ public class ImageHeader implements Serializable
 	double dec_deg,ra_hours;
 	String ctype1_trim = null;
 
-	long header_size = header.getOriginalSize();
+	long header_size = FitsReadUtil.getHeaderSize(header);
 
 	data_offset = HDU_offset + header_size;
 	plane_number = _plane_number;
@@ -846,22 +847,6 @@ public class ImageHeader implements Serializable
         return params;
 
     }
-
-//    public ClientFitsHeader makeMiniHeader() {
-//        ClientFitsHeader miniHeader= new ClientFitsHeader(plane_number,bitpix,
-//                                                        naxis,naxis1,naxis2,naxis3,
-//                                                        cdelt2,bscale,bzero,
-//                                                        blank_value,data_offset);
-//        if (origin.startsWith(PALOMAR_ID))
-//        {
-//            miniHeader.setHeader(ORIGIN,origin);
-//            miniHeader.setHeader(EXPTIME,exptime);
-//            miniHeader.setHeader(IMAGEZPT,imagezpt);
-//            miniHeader.setHeader(AIRMASS,airmass);
-//            miniHeader.setHeader(EXTINCT,extinct);
-//        }
-//        return miniHeader;
-//    }
 
     public String toString()
     {

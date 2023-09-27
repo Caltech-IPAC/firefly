@@ -174,7 +174,7 @@ public class AnyFileUpload extends BaseHttpServlet {
     }
 
     private static void updateFeedback(String statusKey, long totalRead) {
-        PlotServUtils.updatePlotCreateProgress(statusKey, null,
+        PlotServUtils.updateProgress(statusKey, null,
                 ProgressStat.PType.DOWNLOADING,
                 "Uploading " + FileUtil.getSizeAsString(totalRead));
     }

@@ -74,6 +74,7 @@ export const ServerParams = {
         RANGE_VALUES: 'rangeValues',
         MASK_DATA: 'maskData',
         MASK_BITS: 'maskBits',
+        RADIX: 'radix',
 
         EXT_TYPE: 'extType',
         EXTRACTION_FLOAT_SIZE: 'extractionFloatSize',

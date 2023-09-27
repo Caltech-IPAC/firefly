@@ -3,18 +3,21 @@
  */
 package edu.caltech.ipac.visualize.draw;
 
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.PlotContainer;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.Pt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import javax.swing.*;
-import java.awt.*;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -24,7 +27,7 @@ import java.util.Map;
 public class VectorObject implements ShapeObject {
 
     private FixedObjectGroup _pts;
-    private Map<Plot,PlotInfo>  _plotMap    = new HashMap<Plot,PlotInfo>(20);
+    private Map<ImagePlot,PlotInfo>  _plotMap    = new HashMap<>(20);
     private LineShape        _line;
     private StringShape      _stringShape= new StringShape(2,StringShape.SE);
     private boolean          _show   = true;
@@ -48,7 +51,7 @@ public class VectorObject implements ShapeObject {
     public StringShape getStringShape() { return _stringShape; }
 
 
-    public void drawOnPlot(Plot p, Graphics2D g2) {
+    public void drawOnPlot(ImagePlot p, Graphics2D g2) {
         if (_show) {
             PlotInfo pInfo= _plotMap.get(p);
             Assert.tst(pInfo);            
@@ -92,8 +95,8 @@ public class VectorObject implements ShapeObject {
         LineShape.Entry ptsAry[]= new LineShape.Entry[repairLength];
         int scale;
         int labelIdx;
-        for(Map.Entry<Plot,PlotInfo> entry: _plotMap.entrySet()) {
-            pInfo= (PlotInfo)entry.getValue();
+        for(var entry: _plotMap.entrySet()) {
+            pInfo= entry.getValue();
             labelIdx= computeCurrentLabelIdx(pInfo);
             trans= pInfo._plot.getTransform();
             for(j=0; (j<repairLength); j++) {
@@ -165,7 +168,7 @@ public class VectorObject implements ShapeObject {
 
 
     public void addPlotView(PlotContainer container) {
-        for(Plot p : container) addPlot(p);
+        for(ImagePlot p : container) addPlot(p);
     }
 
     public WorldPt getWorldPt(int i) {
@@ -189,8 +192,8 @@ public class VectorObject implements ShapeObject {
     private void setPoint(int idx, Pt pt) {
         int length= _pts.size();
         boolean useWorld= false;
-        if (pt instanceof WorldPt) {
-            pt= Plot.convert( (WorldPt)pt, _csys);
+        if (pt instanceof WorldPt wpt) {
+            pt= VisUtil.convert( wpt, _csys);
             useWorld= true;
         }
         FixedObject fo;
@@ -226,17 +229,10 @@ public class VectorObject implements ShapeObject {
         return retval;
     }
 
-    private void addPlot(Plot p) {
+    private void addPlot(ImagePlot p) {
         PlotInfo pInfo= new PlotInfo(p);
         pInfo.computeTransform();
         _plotMap.put(p, pInfo);
-    }
-
-    private void removePlot(Plot p) {
-        PlotInfo pInfo= _plotMap.get(p);
-        if (pInfo != null) {
-            _plotMap.remove(p);
-        }
     }
 
     private void determineLabelDirection(PlotInfo pInfo, int labelIdx) {
@@ -288,7 +284,7 @@ public class VectorObject implements ShapeObject {
     private void updatePoints(int i, Pt pt) {
         _pts.get(i).setPoint(pt);
         PlotInfo pInfo;
-        for(Map.Entry<Plot,PlotInfo> entry : _plotMap.entrySet()) {
+        for(var entry : _plotMap.entrySet()) {
             pInfo= entry.getValue();
             pInfo.updatePt(i,pt);
         }
@@ -307,9 +303,9 @@ public class VectorObject implements ShapeObject {
 
     private class PlotInfo {
         LineShape.Entry           _entry[];
-        Plot                      _plot;
+        ImagePlot _plot;
         ImagePt              _lastStrPt= null;
-        PlotInfo( Plot p) {
+        PlotInfo( ImagePlot p) {
             _plot= p;
         }
 

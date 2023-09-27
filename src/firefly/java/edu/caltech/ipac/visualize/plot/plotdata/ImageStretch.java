@@ -33,8 +33,8 @@ public class ImageStretch {
                                          int lastPixel,
                                          int startLine,
                                          int lastLine ) {
-        double slow = getSlow(rangeValues, float1d, hist, iH.bzero, iH.bscale, iH.naxis1, iH.naxis2, iH.bitpix, iH.blank_value);
-        double shigh = getShigh(rangeValues, float1d, hist, iH.bzero, iH.bscale, iH.naxis1, iH.naxis2, iH.bitpix, iH.blank_value);
+        double slow = getSlow(rangeValues, float1d, hist, iH.bzero, iH.bscale, iH.naxis1, iH.naxis2, iH.blank_value);
+        double shigh = getShigh(rangeValues, float1d, hist, iH.bzero, iH.bscale, iH.naxis1, iH.naxis2, iH.blank_value);
         stretchPixelsByBand(startPixel, lastPixel, startLine, lastLine, iH.naxis1, hist,
                 (byte)255, float1d, pixelData, rangeValues,slow,shigh);
     }
@@ -62,8 +62,8 @@ public class ImageStretch {
             for(int i=0; (i<float1dAry.length); i++) {
                 if (float1dAry[i]!=null) {
                     ImageHeader iH= imageHeaderAry[i];
-                    double slow = getSlow(rangeValuesAry[i], float1dAry[i], histAry[i], iH.bzero, iH.bscale, iH.naxis1, iH.naxis2, iH.bitpix, iH.blank_value);
-                    double shigh = getShigh(rangeValuesAry[i], float1dAry[i], histAry[i], iH.bzero, iH.bscale, iH.naxis1, iH.naxis2, iH.bitpix, iH.blank_value);
+                    double slow = getSlow(rangeValuesAry[i], float1dAry[i], histAry[i], iH.bzero, iH.bscale, iH.naxis1, iH.naxis2, iH.blank_value);
+                    double shigh = getShigh(rangeValuesAry[i], float1dAry[i], histAry[i], iH.bzero, iH.bscale, iH.naxis1, iH.naxis2, iH.blank_value);
                     stretchPixelsByBand(startPixel, lastPixel, startLine, lastLine,iH.naxis1, histAry[i],
                             (byte)0, float1dAry[i], pixelDataAry[i], rangeValuesAry[i],slow,shigh);
                 }
@@ -102,7 +102,7 @@ public class ImageStretch {
         for(int i=0; i<3; i++) {
             ImageHeader iH= imageHeaderAry[i];
             blankPxValAry[i]= iH.blank_value;
-            slowAry[i] = getSlow(rangeValuesAry[i], float1dAry[i], histAry[i], iH.bzero, iH.bscale, iH.naxis1, iH.naxis2, iH.bitpix, iH.blank_value);
+            slowAry[i] = getSlow(rangeValuesAry[i], float1dAry[i], histAry[i], iH.bzero, iH.bscale, iH.naxis1, iH.naxis2, iH.blank_value);
             slowAry[i] = getScaled(slowAry[i], imageHeaderAry[i], rangeValuesAry[i]);
         }
 
@@ -518,8 +518,8 @@ public class ImageStretch {
             hist_bin_values[i] = (float) hist.getDNfromBin(i);
         }
 
-        double slow = getSlow(rangeValues, float1d, hist, bzero, bscale, naxis1, naxis2, bitpix, blank_value);
-        double shigh = getShigh(rangeValues, float1d, hist, bzero, bscale, naxis1, naxis2, bitpix, blank_value);
+        double slow = getSlow(rangeValues, float1d, hist, bzero, bscale, naxis1, naxis2, blank_value);
+        double shigh = getShigh(rangeValues, float1d, hist, bzero, bscale, naxis1, naxis2, blank_value);
 
         int start_pixel = 0;
         int last_pixel = 4095;

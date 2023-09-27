@@ -16,9 +16,9 @@ import java.util.List;
 /**
  * @author Trey Roby
  */
-public class PlotContainer implements Iterable<Plot> {
-    private final List<Plot> plots       = new ArrayList<>();
-    public List<Plot> getPlotList() { return plots; }
-    public Iterator<Plot> iterator() { return plots.iterator(); }
+public class PlotContainer implements Iterable<ImagePlot> {
+    private final List<ImagePlot> plots       = new ArrayList<>();
+    public List<ImagePlot> getPlotList() { return plots; }
+    public Iterator<ImagePlot> iterator() { return plots.iterator(); }
 }
 

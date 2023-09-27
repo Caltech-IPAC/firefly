@@ -5,14 +5,15 @@ package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.Band;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.PlotContainer;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -49,7 +50,7 @@ public class ScalableObject {
     private static final boolean SPITZER_STYLE_ROTATION=
                             AppProperties.getBooleanProperty("ScalableObject.spitzerStyleRotation.Selected", true);
     private ShapeInfo _worldFocalPlane[];
-    private Map<Plot,CachePtInfo>  _plotMap= new HashMap<Plot,CachePtInfo>(20);
+    private Map<ImagePlot,CachePtInfo>  _plotMap= new HashMap<>(20);
 
     /**
      * Constructor
@@ -74,7 +75,7 @@ public class ScalableObject {
      *                          CachePtInfo
      */
 
-    public DrawOnPlotReturn drawOnPlot(Plot         plot,
+    public DrawOnPlotReturn drawOnPlot(ImagePlot         plot,
                                        ActiveFitsReadGroup frGroup,
                                        Graphics2D g2,
                                        WorldPt      wpt,
@@ -106,7 +107,7 @@ public class ScalableObject {
         return retval;
     }
 
-    private DrawOnPlotReturn drawPoint(Plot         plot,
+    private DrawOnPlotReturn drawPoint(ImagePlot         plot,
                                        ActiveFitsReadGroup frGroup,
                                        Graphics2D   g2,
                                        WorldPt      wpt,
@@ -199,7 +200,7 @@ public class ScalableObject {
     }
 
 
-    private DrawOnPlotReturn drawScan(Plot         plot,
+    private DrawOnPlotReturn drawScan(ImagePlot         plot,
                                       ActiveFitsReadGroup frGroup,
                                       Graphics2D   g2,
                                       WorldPt      wpt,
@@ -290,10 +291,10 @@ public class ScalableObject {
 
 
    public void addPlotView(PlotContainer container) {
-       Plot p;
+       ImagePlot p;
        Iterator  j= container.iterator();
        while(j.hasNext()) {
-          p= (Plot)j.next();
+          p= (ImagePlot)j.next();
           addPlot(p);
        }
    }
@@ -338,16 +339,16 @@ public class ScalableObject {
 
 
 
-    void addPlot(Plot p) {
+    void addPlot(ImagePlot p) {
         _plotMap.put(p, new CachePtInfo());
     }
 
-    void removePlot(Plot p) {
+    void removePlot(ImagePlot p) {
         _plotMap.remove(p);
     }
 
 
-   protected Shape getScanShape(Plot    plot,
+   protected Shape getScanShape(ImagePlot    plot,
                                 Shape   inShape,
                                 ImagePt pt,
                                 ImagePt pt2,
@@ -364,7 +365,7 @@ public class ScalableObject {
    }
 
    protected void transfromShape(GeneralPath shape,
-                                 Plot plot,
+                                 ImagePlot plot,
                                  ImagePt pt,
                                  float screenRotation,
                                  WorldPt offset) throws ProjectionException {
@@ -385,7 +386,7 @@ public class ScalableObject {
     * @param inShape the shape in world coordinates
     * @param pt the point that all shapes are relative to
     */
-   protected GeneralPath getImageShape(Plot p, Shape inShape, ImagePt pt) {
+   protected GeneralPath getImageShape(ImagePlot p, Shape inShape, ImagePt pt) {
        float info[]= new float[6];
        int    pType;
        double x0=0, x1=0, x2=0;
@@ -443,7 +444,7 @@ public class ScalableObject {
                                Assert.tst(false);
                                break;
               } // end switch
-          } catch (ProjectionException e) {
+          } catch (Exception e) {
               Logger.warn(e.toString());
           }
        } // end loop;
@@ -785,7 +786,7 @@ public class ScalableObject {
     /**
      * Get the rotation for the screen based on the rotation passed.
      */
-    private float computeScreenRotation(Plot plot,  ActiveFitsReadGroup frGroup, RotationInfo rotation) {
+    private float computeScreenRotation(ImagePlot plot,  ActiveFitsReadGroup frGroup, RotationInfo rotation) {
         float screenRotation;
 
         WorldPt j2000p1;
@@ -801,7 +802,7 @@ public class ScalableObject {
 
         if (SPITZER_STYLE_ROTATION) {
             if (!wpt.getCoordSys().equals(CoordinateSys.EQ_J2000))
-                j2000p1= Plot.convert(wpt, CoordinateSys.EQ_J2000);
+                j2000p1= VisUtil.convert(wpt, CoordinateSys.EQ_J2000);
             else
                 j2000p1= wpt;
             //j2000p2= new WorldPt(wpt.getLon(), wpt.getLat() + 1.0);

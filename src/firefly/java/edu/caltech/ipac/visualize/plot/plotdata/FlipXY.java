@@ -96,11 +96,11 @@ public class FlipXY {
         }
 
         //convert to the type to the same type as in the hdu
-        Object data =  ArrayFuncs.convertArray(fdata, FitsReadUtil.getDataType(hdu.getBitPix()), true);
+        Object data =  ArrayFuncs.convertArray(fdata, FitsReadUtil.getDataType(hdu), true);
         ImageData newImageData =  new ImageData(data);
         //clone the inFitsRead header and then modify it
         Header outFitsHeader = getOutFitsHeader();
-        ImageHDU outHDU = new ImageHDU(outFitsHeader, newImageData);
+        ImageHDU outHDU = FitsReadUtil.makeImageHDU(outFitsHeader, newImageData);
         Fits newFits = new Fits();
         newFits.addHDU(outHDU);
 

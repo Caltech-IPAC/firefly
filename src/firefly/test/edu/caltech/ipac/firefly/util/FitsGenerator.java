@@ -1,5 +1,6 @@
 package edu.caltech.ipac.firefly.util;
 
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.*;
 
 import java.io.IOException;
@@ -114,7 +115,7 @@ public class FitsGenerator {
         header.setNaxis(1, naxis1);
         header.setNaxis(2, naxis2);
         ImageData imageData = getImaegData(naxis1,naxis2);
-        BasicHDU newHDU = new ImageHDU(header,imageData);
+        BasicHDU<?> newHDU = FitsReadUtil.makeImageHDU(header,imageData);
         outFits.addHDU(newHDU);
 
         return outFits;
@@ -209,7 +210,7 @@ public class FitsGenerator {
             header.setNaxis(2, f4d[0][0].length);
         }
         ImageData imageData =new ImageData(data);
-        BasicHDU<?> newHDU = new ImageHDU(header,imageData);// d);
+        BasicHDU<?> newHDU = FitsReadUtil.makeImageHDU(header,imageData);// d);
         outFits.addHDU(newHDU);
 
         return outFits;

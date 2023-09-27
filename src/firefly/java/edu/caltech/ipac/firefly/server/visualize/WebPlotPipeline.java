@@ -81,7 +81,7 @@ public class WebPlotPipeline {
             if (getCropPt1(req) instanceof WorldPt && getCropPt2(req) instanceof WorldPt) {
                 ActiveFitsReadGroup frGroup= new ActiveFitsReadGroup();
                 frGroup.setFitsRead(Band.NO_BAND,fr);
-                ImagePlot tmpIM = new ImagePlot(frGroup, 1F, false, Band.NO_BAND, 0, FitsRead.getDefaultFutureStretch());
+                ImagePlot tmpIM = new ImagePlot(frGroup, 0);
                 try {
                     pt1 = tmpIM.getImageCoords((WorldPt) getCropPt1(req));
                     pt2 = tmpIM.getImageCoords((WorldPt) getCropPt2(req));

@@ -7,10 +7,10 @@
  */
 package edu.caltech.ipac.visualize.plot.plotdata;
 
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
-import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.ProjectionPt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -463,7 +463,7 @@ public class Geom {
             world_pt = in_proj.getWorldCoords(center_x - 1, center_y - 1);
 
             if (!out_coordinate_sys.equals(in_coordinate_sys)) {
-                world_pt = Plot.convert(world_pt, out_coordinate_sys);
+                world_pt = VisUtil.convert(world_pt, out_coordinate_sys);
             }
             lon = world_pt.getX();
             lat = world_pt.getY();
@@ -498,7 +498,7 @@ public class Geom {
             world_pt = in_proj.getWorldCoords(in_x - in_crpix1 - 1,
                     in_y - in_crpix2 - 1);
             if (!out_coordinate_sys.equals(in_coordinate_sys)) {
-                world_pt = Plot.convert(world_pt, out_coordinate_sys);
+                world_pt = VisUtil.convert(world_pt, out_coordinate_sys);
             }
             lon = world_pt.getX();
             lat = world_pt.getY();
@@ -729,7 +729,7 @@ public class Geom {
                 nom.tam.fits.ImageData(data);
         //myHDU.setData(id);
 
-        ImageHDU myHDU = new ImageHDU(in_fits_header, id);
+        ImageHDU myHDU = FitsReadUtil.makeImageHDU(in_fits_header, id);
 
         Fits newFits = new Fits();
         newFits.addHDU(myHDU);
@@ -809,7 +809,7 @@ public class Geom {
                     //    "RBH out_coordinate_sys = " + out_coordinate_sys +
                     //    "  in_coordinate_sys = " + in_coordinate_sys);
                     if (!out_coordinate_sys.equals(in_coordinate_sys)) {
-                        world_pt = Plot.convert(world_pt, in_coordinate_sys);
+                        world_pt = VisUtil.convert(world_pt, in_coordinate_sys);
                     }
                     lon = world_pt.getX();
                     lat = world_pt.getY();

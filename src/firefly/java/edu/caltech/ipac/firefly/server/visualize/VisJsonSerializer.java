@@ -9,8 +9,8 @@ import edu.caltech.ipac.firefly.data.BandInfo;
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.BandState;
-import edu.caltech.ipac.firefly.visualize.ClientFitsHeader;
 import edu.caltech.ipac.firefly.visualize.CreatorResults;
+import edu.caltech.ipac.firefly.visualize.DirectFitsAccessData;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotHeaderInitializer;
@@ -19,8 +19,8 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.visualize.draw.Metric;
-import edu.caltech.ipac.visualize.draw.Metrics;
+import edu.caltech.ipac.visualize.draw.AreaStatisticsUtil;
+import edu.caltech.ipac.visualize.plot.PixelValue;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import nom.tam.fits.Header;
 import nom.tam.fits.HeaderCard;
@@ -57,6 +57,40 @@ public class VisJsonSerializer {
         putStr(map,"requestKey", requestKey);
         return map.toString();
     }
+
+
+    private static JSONObject createJsonPixelResultObj(PixelValue.Result r) {
+        JSONObject jsonPixelResult= new JSONObject();
+        putStrNotNull(jsonPixelResult,"status",r.status());
+        putStrNotNull(jsonPixelResult,"type",r.type());
+        putStrNotNull(jsonPixelResult,"valueBase10",r.valueBase10());
+        putStrNotNull(jsonPixelResult,"valueBase16",r.valueBase16());
+        return jsonPixelResult;
+    }
+
+
+    public static String createPixelResultJson(List<PixelValue.Result> resList, Band[] bands, int stateCnt) {
+        JSONObject data= new JSONObject();
+        int resultCnt=0;
+        for (;resultCnt<resList.size() && resultCnt<bands.length; resultCnt++){
+            putJsonObj(data,bands[resultCnt].toString(),createJsonPixelResultObj(resList.get(resultCnt)));
+        }
+
+        if (stateCnt>1) {
+            for(int i=1; (i<stateCnt);i++) {
+                putJsonObj(data,"overlay-"+(i-1), createJsonPixelResultObj(resList.get(resultCnt++)));
+            }
+        }
+
+        JSONObject map = new JSONObject();
+        putBool(map, "success", true);
+        putJsonObj(map, "data", data);
+        JSONArray wrapperAry= new JSONArray();
+        addJsonObj(wrapperAry,map);
+        return wrapperAry.toJSONString();
+    }
+
+
 
     public static PlotState deserializePlotStateFromString(String s) {
         if (s==null) return null;
@@ -155,24 +189,24 @@ public class VisJsonSerializer {
     }
 
     private static JSONObject bandInfoDeepSerialize(BandInfo bi) {
-        Map<Band, HashMap<Metrics, Metric>> metMap= bi.metricsMap();
+        var metMap= bi.metricsMap();
         JSONObject jo= new JSONObject();
-        for(Map.Entry<Band,HashMap<Metrics, Metric>> entry : metMap.entrySet()) {
+        for(var entry : metMap.entrySet()) {
             putJsonObj(jo, entry.getKey().toString(), convertMetrics(entry.getValue()));
         }
         return jo;
     }
 
 
-    private static JSONObject convertMetrics(Map<Metrics, Metric> metricMap) {
+    private static JSONObject convertMetrics(Map<AreaStatisticsUtil.Metrics, AreaStatisticsUtil.Metric> metricMap) {
         JSONObject jo= new JSONObject();
-        for(Map.Entry<Metrics, Metric> entry : metricMap.entrySet()) {
+        for(var entry : metricMap.entrySet()) {
             putJsonObj(jo, entry.getKey().toString(), convertOneMetric(entry.getValue()));
         }
         return jo;
     }
 
-    private static JSONObject convertOneMetric(Metric metric) {
+    private static JSONObject convertOneMetric(AreaStatisticsUtil.Metric metric) {
         JSONObject jo= new JSONObject();
         putStr(jo, "desc", metric.desc());
         putDouble(jo, "value", metric.value());
@@ -401,14 +435,14 @@ public class VisJsonSerializer {
             b.setOriginalFitsFileStr( original!=null ? original : working);
 
             b.setUploadedFileName(getStr(map,"uploadFileNameStr",true));
-            b.setImageIdx(getInt(map, "imageIdx"));
-            b.setOriginalImageIdx(getInt(map,"originalImageIdx"));
+            b.setImageIdx(getInt(map, "imageIdx",0));
+            b.setOriginalImageIdx(getInt(map,"originalImageIdx",0));
             b.setWebPlotRequest(WebPlotRequest.parse(getStr(map, "plotRequestSerialize")));
             b.setRangeValues(RangeValues.parse(getStr(map,"rangeValuesSerialize")));
-            b.setDirectFileAccessData(deserializeClientFitsHeader((JSONObject)map.get("directFileAccessData")));
+            b.setDirectFileAccessData(deserializeDirectFileAccess((JSONObject)map.get("directFileAccessData")));
             b.setMultiImageFile(getBoolean(map,"multiImageFile"));
-            b.setCubeCnt(getInt(map,"cubeCnt"));
-            b.setCubePlaneNumber(getInt(map, "cubePlaneNumber"));
+            b.setCubeCnt(getInt(map,"cubeCnt",0));
+            b.setCubePlaneNumber(getInt(map, "cubePlaneNumber",0));
             b.setTileCompress(getBoolean(map,"tileCompress"));
             return b;
         } catch (ClassCastException|IllegalArgumentException  e) {
@@ -416,11 +450,11 @@ public class VisJsonSerializer {
         }
     }
 
-    static ClientFitsHeader deserializeClientFitsHeader(JSONObject map) {
+    static DirectFitsAccessData deserializeDirectFileAccess(JSONObject map) {
         if (map==null) return null;
         Map<String,String> tMap= new HashMap<>(30);
         for(Object key : map.keySet()) tMap.put((String)key, map.get(key)+"");
-        return new ClientFitsHeader(tMap);
+        return new DirectFitsAccessData(tMap);
     }
 
     private static String getStr(JSONObject j, String key) throws IllegalArgumentException, ClassCastException {

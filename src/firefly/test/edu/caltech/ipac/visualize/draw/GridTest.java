@@ -6,7 +6,6 @@ import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.ImagePlot;
-import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
@@ -34,7 +33,7 @@ public class GridTest {
 		FitsRead[] frAry = FitsReadFactory.createFitsReadArray(fits);
 		ActiveFitsReadGroup fg = new ActiveFitsReadGroup();
 		fg.setFitsRead(Band.RED, frAry[0]);
-		plot = new ImagePlot(fg, 0, false, Band.RED, 0, new RangeValues());
+		plot = new ImagePlot(fg, 0);
 		// plot.preProcessImageTiles(fg);
 //		((Grid) grid).setPlot(plot);
 

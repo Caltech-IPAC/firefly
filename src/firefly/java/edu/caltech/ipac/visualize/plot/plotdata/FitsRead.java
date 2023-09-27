@@ -18,17 +18,14 @@ import nom.tam.fits.Header;
 import nom.tam.fits.ImageHDU;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.SPOT_EXT;
 import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.SPOT_OFF;
 import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.dataArrayFromFitsFile;
+import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.getHeaderSize;
 
 
 /**
@@ -36,71 +33,48 @@ import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.dataArrayFro
  *
  */
 public class FitsRead implements Serializable, HasSizeOf {
-    private static final ArrayList<Integer> SUPPORTED_BIT_PIXS = new ArrayList<>(Arrays.asList(8, 16, 32, -32, -64));
     private static RangeValues DEFAULT_RANGE_VALUE = new RangeValues();
     private final int planeNumber;
     private final boolean cube;
     private final int hduNumber;
     private final Header zeroHeader;
-    private BasicHDU<?> hdu;
+    private ImageHDU hdu;
     private float[] float1d;
-    private Header header;
+    private final Header header;
     private Histogram hist;
     private final File file;
     private final boolean deferredRead;
-
-//    private final long HDUOffset;
     private final CoordinateSys coordinateSys;
-
     private final int maptype;
     private final double cdelt1;
     private final String bunit;
     private long estimatedBaseSize=0;
-
     private final boolean tileCompress;
 
 
     /**
      * Cachable class made for holding FITS data.
-     *
-     *
      * @param imageHdu this hdu to build this FitsRead around
      * @throws FitsException if we can process the data
      */
     FitsRead(BasicHDU<?> imageHdu, Header zeroHeader, File file, boolean clearHdu, boolean cube, int planeNumber) throws FitsException {
 
         this.file= file;
-        tileCompress= (imageHdu instanceof CompressedImageHDU);
-
-        if (imageHdu instanceof ImageHDU) {
-            hdu = imageHdu;
-        }
-        else if (imageHdu instanceof CompressedImageHDU) {
-            hdu = ((CompressedImageHDU) imageHdu).asImageHDU();
-        }
-        else {
-            throw new FitsException("imageHdu much be a ImageHDU or a CompressedImageHDU");
-        }
+        this.tileCompress= (imageHdu instanceof CompressedImageHDU);
+        this.hdu= makeImageHDU(imageHdu);
         this.header = hdu.getHeader();
-
-        int bitpix = getBitPix();
-        if (!SUPPORTED_BIT_PIXS.contains(bitpix)) Logger.warn("Unimplemented bitpix = " + bitpix);
-
         this.zeroHeader= zeroHeader;
-
-        this.deferredRead = cube && this.file!=null;
+        this.deferredRead = cube && file!=null;
+        this.planeNumber = cube ? planeNumber : 0;
+        this.cube = cube;
+        this.hduNumber = header.getIntValue(SPOT_EXT, 0);
+        this.bunit= hdu.getBUnit()!=null ? hdu.getBUnit() : "DN";
 
         if (deferredRead && tileCompress) {
             throw new IllegalArgumentException("FitsRead cannot do deferred readying with compressed images ");
         }
 
-        this.planeNumber = cube ? planeNumber : 0;
-        this.cube = cube;
-        this.hduNumber = header.getIntValue(SPOT_EXT, 0);
-        long HDUOffset= header.getLongValue(SPOT_OFF, 0);
-        this.bunit= hdu.getBUnit()!=null ? hdu.getBUnit() : "DN";
-
-        ImageHeader imageHeader = new ImageHeader(header, HDUOffset, planeNumber);
+        ImageHeader imageHeader = new ImageHeader(header, header.getLongValue(SPOT_OFF, 0), planeNumber);
         this.maptype= imageHeader.maptype;
         this.cdelt1= imageHeader.cdelt1;
         this.coordinateSys= imageHeader.determineCoordSys();
@@ -112,6 +86,14 @@ public class FitsRead implements Serializable, HasSizeOf {
 
     }
 
+    public static ImageHDU makeImageHDU(BasicHDU<?> hdu) throws FitsException {
+        if (hdu instanceof ImageHDU) return (ImageHDU)hdu;
+        else if (hdu instanceof CompressedImageHDU) return ((CompressedImageHDU) hdu).asImageHDU();
+        throw new FitsException("imageHdu much be a ImageHDU or a CompressedImageHDU");
+    }
+
+    public int getImageDataWidth() { return getNaxis1(); }
+    public int getImageDataHeight() { return getNaxis2(); }
 
     public boolean isTileCompress() { return tileCompress; }
     public int getNaxis() { return FitsReadUtil.getNaxis(header); }
@@ -156,7 +138,7 @@ public class FitsRead implements Serializable, HasSizeOf {
     public static void setDefaultFutureStretch(RangeValues defaultRangeValues) {
         DEFAULT_RANGE_VALUE = defaultRangeValues;
     }
-    
+
 
     /**
      * Add the mask layer to the existing image
@@ -297,7 +279,7 @@ public class FitsRead implements Serializable, HasSizeOf {
      * the primary data array values to the true values. The value field shall contain a floating point number representing the physical value corresponding to an array value of zero. The default value for this keyword is 0.0.
      * The transformation equation is as follows:
      * physical_values = BZERO + BSCALE × array_value	(5.3)
-     *
+     * <p>
      * This method return the physical data value at the pixels as an one dimensional array
      */
     public float[] getDataFloat() {
@@ -312,19 +294,12 @@ public class FitsRead implements Serializable, HasSizeOf {
         return fData;
     }
 
-    public void freeResources() {
-        float1d = null;
-        header = null;
-        hist= null;
-        hdu= null;
-    }
-
     public long getSizeOf() {
         if (estimatedBaseSize==0) {
             estimatedBaseSize= 68;
             if (file!=null) estimatedBaseSize+= file.getAbsolutePath().length();
-            if (header!=null && (!cube || planeNumber == 0)) estimatedBaseSize+= header.getOriginalSize();
-            if (zeroHeader!=null && getHduNumber()==0) estimatedBaseSize+= zeroHeader.getOriginalSize();
+            if (header!=null && (!cube || planeNumber == 0)) estimatedBaseSize+= getHeaderSize(header);
+            if (zeroHeader!=null && getHduNumber()==0) estimatedBaseSize+= getHeaderSize(zeroHeader);
         }
         long retSize= estimatedBaseSize;
         if (hist!=null) retSize+= hist.getSizeOf();
@@ -333,8 +308,8 @@ public class FitsRead implements Serializable, HasSizeOf {
         return retSize;
     }
 
-    public void writeSimpleFitsFile(OutputStream stream) throws FitsException, IOException{
-        createNewFits().write(new DataOutputStream(stream));
+    public void writeSimpleFitsFile(File f) throws FitsException, IOException{
+        createNewFits().write(f);
     }
 
     public void clearHDU() { this.hdu= null; }

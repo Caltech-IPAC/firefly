@@ -4,13 +4,16 @@
 
 import {fill, isString} from 'lodash';
 import {sprintf} from '../../externalSource/sprintf';
+import {
+    STATUS_NAN, STATUS_UNAVAILABLE, STATUS_UNDEFINED, STATUS_VALUE, TYPE_BASE16, TYPE_BASE_OTHER, TYPE_DECIMAL_INT,
+    TYPE_EMPTY, TYPE_FLOAT
+} from '../MouseReadoutCntlr.js';
 import VisUtil from '../VisUtil.js';
 import CoordUtil from '../CoordUtil.js';
 import CoordinateSys from '../CoordSys.js';
 import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
 import {getFormattedWaveLengthUnits} from '../PlotViewUtil';
 import {showInfoPopup} from '../../ui/PopupUtil';
-import {findCoordSys} from '../CoordSys';
 
 
 const myFormat= (v,precision) => !isNaN(v) ? sprintf(`%.${precision}f`,v) : '';
@@ -135,12 +138,46 @@ export function getReadoutElement(readoutItems, readoutKey) {
     return {value:''};
 }
 
+
+function getFluxValueByType(readoutType,radix,valueBase10,valueBase16,unit,label,precision) {
+    const is16= radix===16;
+    switch (readoutType) {
+        case TYPE_FLOAT:
+            if (is16) return {value:valueBase16, label, unit};
+            const v= Number(valueBase10);
+            if (isNaN(v)) return {value: 'NaN', label};
+            const min = Number('0.'+'0'.repeat(precision-1)+'1');
+            const fluxValue = (Math.abs(v) < 1000  &&Math.abs(v)>min ) ?
+                `${myFormat(v, precision)}` : v.toExponential(6).replace('e+', 'E');
+            return {value: fluxValue, label, unit};
+        case TYPE_DECIMAL_INT:
+            return (is16) ? {value:valueBase16, label, unit}:  {value:valueBase10, label, unit};
+        case TYPE_EMPTY:
+        default:
+            return {value:'', label, unit: unit ?? ''};
+    }
+}
+
+function makeFluxEntry({valueBase10, valueBase16, readoutType,status,unit='',title:label,precision=6},radix=10) {
+    const is16= radix===16;
+    switch (status) {
+        case STATUS_UNAVAILABLE: return {value: 'unavailable', label, unit:''};
+        case STATUS_NAN: return is16 ? {value: `${valueBase16} (NaN)`, label, unit:''}  : {value: 'NaN', label, unit:''};
+        case STATUS_UNDEFINED: return is16 ? {value: `${valueBase16} (undefined)`, label, unit:''} : {value: 'undefined', label, unit:''};
+        case STATUS_VALUE:
+            return getFluxValueByType(readoutType,radix,valueBase10,valueBase16,unit, label, precision);
+        default:
+            return {value: 'unavailable', label, unit:''};
+    }
+}
+
 /**
  * This method passes the standard readout and then get the flux information
  * @param sndReadout
+ * @param {number} radix
  * @returns {{fluxLabels: Array, fluxValues: Array}}
  */
-export function getFluxInfo(sndReadout){
+export function getFluxInfo(sndReadout, radix=10){
 
     const fluxObj = [];
     const {REDFlux, GREENFlux, BLUEFlux, nobandFlux}= sndReadout.readoutItems;
@@ -153,26 +190,9 @@ export function getFluxInfo(sndReadout){
         fluxObj.push(nobandFlux);
     }
 
-    const fluxArray= fluxObj.map( ({value,unit,title,precision}) => {
-        let fluxValue= value;
-        if (!isNaN(value )) {
-            if (precision) {
-                const min = Number('0.'+'0'.repeat(precision-1)+'1');
-                fluxValue = (Math.abs(value) < 1000  &&Math.abs(value)>min ) ?
-                    `${myFormat(value, precision)}` :
-                    value.toExponential(6).replace('e+', 'E');
-            }
-            else {
-                fluxValue= `${Math.trunc(value)}`;
-            }
-            if (unit && !isNaN(value)) fluxValue+= ` ${unit}`;
-        }
-
-        return {value: fluxValue, label: title};
-    });
-
+    const fluxArray= fluxObj.map((obj) => makeFluxEntry(obj,radix));
     fluxArray.length= 3;
-    fill(fluxArray,{value: '', label: ''}, fluxObj.length);
+    fill(fluxArray,{value: '', label: '', unit:''}, fluxObj.length);
     return fluxArray;
 
 }

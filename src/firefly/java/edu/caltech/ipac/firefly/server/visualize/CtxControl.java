@@ -29,15 +29,15 @@ public class CtxControl {
 
     public static void confirmFiles(PlotState state) throws FailedRequestException {
         if (state==null) throw new FailedRequestException("state cannot but null");
-        if (!state.isThreeColor()) {
-            if (!PlotStateUtil.getWorkingFitsFile(state).exists()) revalidatePlot(state,true);
-        }
-        else {
-            boolean filesMissing= Arrays.stream(state.getBands())
-                    .map( b -> !PlotStateUtil.getWorkingFitsFile(state,b).exists())
-                    .reduce(false, (prev,fileMissing) -> (prev||fileMissing) );
-            if (filesMissing) revalidatePlot(state,true);
-        }
+        if (isFitsFilesMissing(state)) revalidatePlot(state,true); //most of the time the files are there so nothing happens
+    }
+
+    private static boolean isFitsFilesMissing(PlotState state) {
+        return state.isThreeColor() ?
+                Arrays.stream(state.getBands())
+                        .map( b -> !PlotStateUtil.getWorkingFitsFile(state,b).exists())
+                        .reduce(false, (prev,fileMissing) -> (prev||fileMissing) ) :
+                !PlotStateUtil.getWorkingFitsFile(state).exists();
     }
 
     public static ActiveFitsReadGroup prepare(PlotState state) throws FailedRequestException {

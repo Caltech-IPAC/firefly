@@ -47,13 +47,18 @@ package edu.caltech.ipac.visualize.draw;
 import edu.caltech.ipac.astro.CoordException;
 import edu.caltech.ipac.astro.CoordUtil;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
+import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
@@ -122,7 +127,7 @@ public class Grid
 	 * otherwise displays raw decimal value. 
 	**/
      private boolean               _sexigesimal = false;
-     private Plot                  _plot;
+     private ImagePlot _plot;
      private PropertyChangeSupport _propChange= new PropertyChangeSupport(this);
 
      /** the coordinate system that user wants the Grid to be drawn 
@@ -153,7 +158,7 @@ public class Grid
 	 * Draws the Grid within the current plot
 	 *
 	**/
-   public void paint(Graphics2D g2, Plot plot) {
+   public void paint(Graphics2D g2, ImagePlot plot) {
        int width = plot.getPlotGroup().getGroupImageWidth();
        int height = plot.getPlotGroup().getGroupImageHeight();
        int iWidth = plot.getScreenWidth();

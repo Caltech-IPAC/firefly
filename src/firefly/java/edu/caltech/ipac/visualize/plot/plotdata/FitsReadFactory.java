@@ -222,10 +222,10 @@ public class FitsReadFactory {
             throws FitsException, IOException, GeomException {
 
         Geom geom = new Geom();
-        Header refHeader = FitsReadUtil.getRefHeader(geom, fitsRead, positionAngle, coordinateSys);
+        Header refHeader = getRefHeader(geom, fitsRead, positionAngle, coordinateSys);
 
         //create a ImageHDU with the null data
-        ImageHDU refHDU = new ImageHDU(refHeader, null);
+        ImageHDU refHDU = FitsReadUtil.makeImageHDU(refHeader, null);
         Fits refFits = new Fits();
         refFits.addHDU(refHDU);
 
@@ -233,5 +233,79 @@ public class FitsReadFactory {
         FitsRead[] fitsReadArray = createFitsReadArray(refFits);
         fitsRead = fitsReadArray[0];
         return fitsRead;
+    }
+
+    /**
+     * a new reference header is created
+     */
+    public static Header getRefHeader(Geom geom, FitsRead fitsRead, double positionAngle,
+                                      CoordinateSys coordinateSys)
+            throws FitsException, IOException, GeomException {
+
+        ImageHeader imageHeader = geom.open_in(fitsRead);  // throws GeomException
+        /* new try - create a Fits with CDELTs and CROTA2, discarding */
+        /* CD matrix, PLATE projection stuff, and SIP corrections */
+        Header refHeader = new Header();
+        refHeader.setSimple(true);
+        refHeader.setNaxes(2);
+        /* values for cropped.fits */
+        refHeader.setBitpix(16);  // ignored - geom sets it to -32
+        refHeader.setNaxis(1, imageHeader.naxis1);
+        refHeader.setNaxis(2, imageHeader.naxis2);
+        geom.n_override_naxis1 = true;  // make geom recalculate NAXISn
+    /*
+        pixel at center of object
+	    18398  DN at RA = 60.208423  Dec = -89.889959
+	    pixel one up
+	    18398  DN at RA = 59.995226  Dec = -89.889724
+	    (a distance of 0.028349 arcmin or 0.00047248 degrees)
+	*/
+
+        //get the world point worldPt based on the imageHeader and aCoordinatesSys
+        WorldPt worldPt = FitsReadUtil.getWorldPt(imageHeader, coordinateSys);
+
+        refHeader.addValue("CRVAL1", worldPt.getX(), "");
+        refHeader.addValue("CRVAL2", worldPt.getY(), "");
+
+        updateRefHeader(imageHeader, refHeader, positionAngle, coordinateSys);
+
+        return refHeader;
+    }
+
+    /**
+     * The input refHeader will be modified and new keys/values are added
+     */
+    private static void updateRefHeader(ImageHeader imageHeader, Header refHeader,
+                                        double aPositionAngle, CoordinateSys aCoordinateSys)
+            throws FitsException {
+
+
+        refHeader.addValue("CDELT1", -Math.abs(imageHeader.cdelt1), "");
+        refHeader.addValue("CDELT2", Math.abs(imageHeader.cdelt2), "");
+        refHeader.addValue("CRPIX1", imageHeader.naxis1 / 2, "");
+        refHeader.addValue("CRPIX2", imageHeader.naxis2 / 2, "");
+        refHeader.addValue("CROTA2", aPositionAngle, "");
+        if (aCoordinateSys.equals(CoordinateSys.EQ_J2000)) {
+            refHeader.addValue("CTYPE1", "RA---TAN", "");
+            refHeader.addValue("CTYPE2", "DEC--TAN", "");
+            refHeader.addValue("EQUINOX", 2000.0, "");
+        } else if (aCoordinateSys.equals(CoordinateSys.EQ_B1950)) {
+            refHeader.addValue("CTYPE1", "RA---TAN", "");
+            refHeader.addValue("CTYPE2", "DEC--TAN", "");
+            refHeader.addValue("EQUINOX", 1950.0, "");
+        } else if (aCoordinateSys.equals(CoordinateSys.ECL_J2000)) {
+            refHeader.addValue("CTYPE1", "ELON-TAN", "");
+            refHeader.addValue("CTYPE2", "ELAT-TAN", "");
+            refHeader.addValue("EQUINOX", 2000.0, "");
+        } else if (aCoordinateSys.equals(CoordinateSys.ECL_B1950)) {
+            refHeader.addValue("CTYPE1", "ELON-TAN", "");
+            refHeader.addValue("CTYPE2", "ELAT-TAN", "");
+            refHeader.addValue("EQUINOX", 1950.0, "");
+        } else if (aCoordinateSys.equals(CoordinateSys.GALACTIC)) {
+            refHeader.addValue("CTYPE1", "GLON-TAN", "");
+            refHeader.addValue("CTYPE2", "GLAT-TAN", "");
+        } else {
+            throw new FitsException("Could not rotate image.\n -  unrecognized coordinate system");
+        }
     }
 }

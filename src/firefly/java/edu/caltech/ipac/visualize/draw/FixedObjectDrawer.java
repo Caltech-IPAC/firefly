@@ -4,9 +4,9 @@
 package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.util.Assert;
+import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.ImageWorkSpacePt;
-import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.ProjectionException;
 
 import java.awt.Color;
@@ -58,7 +58,7 @@ public class FixedObjectDrawer {
     }
 
 
-    public void computeTransform(int idx, Plot p) {
+    public void computeTransform(int idx, ImagePlot p) {
         ImagePt pt = null;
         try {
             if (_fixedObj.isWorldCoordSys()) {

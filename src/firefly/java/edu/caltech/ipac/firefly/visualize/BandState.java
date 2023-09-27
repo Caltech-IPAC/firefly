@@ -25,7 +25,7 @@ public class BandState implements Serializable {
 
     private String plotRequestSerialize = null; // Serialized WebPlotRequest
     private String rangeValuesSerialize = null; // Serialized RangeValues
-    private ClientFitsHeader directFileAccessData;
+    private DirectFitsAccessData directFileAccessData;
     private boolean multiImageFile = false;
     private boolean tileCompress = false;
     private int     cubeCnt = 0;
@@ -98,12 +98,12 @@ public class BandState implements Serializable {
     }
 
     /**
-     * this method will make a copy of ClientFitsHeader. Any changes to the ClientFitsHeader object
+     * this method will make a copy of DirectFitsAccessData. Any changes to the DirectFitsAccessData object
      * after the set will not be
      * reflected here.
      * @param header client fits header object
      */
-    public void setDirectFileAccessData(ClientFitsHeader header) { directFileAccessData = header; }
+    public void setDirectFileAccessData(DirectFitsAccessData header) { directFileAccessData = header; }
 
     public FileAndHeaderInfo getFileAndHeaderInfo() {
         return new FileAndHeaderInfo(workingFitsFileStr, directFileAccessData);
@@ -166,4 +166,5 @@ public class BandState implements Serializable {
                 originalImageIdx ==bs.originalImageIdx);
     }
 
+    public record FileAndHeaderInfo(String fileName, DirectFitsAccessData header) { }
 }

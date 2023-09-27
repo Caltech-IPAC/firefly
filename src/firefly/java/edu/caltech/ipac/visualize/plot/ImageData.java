@@ -105,15 +105,6 @@ public class ImageData implements Serializable {
         return bufferedImage;
     }
 
-
-    public void freeResources() {
-        cm = null;
-        bufferedImage = null;
-        internalRaster= null;
-        imageOutOfDate = true;
-        rgbIntensity = null;
-    }
-
     public int getX() { return x;}
     public int getY() { return y;}
 
