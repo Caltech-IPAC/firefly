@@ -132,7 +132,7 @@ public class ServerContext {
 
             // init fits read global settting
             FitsFactory.setAllowTerminalJunk(true);
-            FitsFactory.setUseHierarch(true);
+            FitsFactory.setUseHierarch(true); // this is now the default as of 1.16
             FitsFactory.setLongStringsEnabled(true);
         }
     }

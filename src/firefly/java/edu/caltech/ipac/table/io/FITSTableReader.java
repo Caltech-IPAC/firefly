@@ -81,13 +81,12 @@ public final class FITSTableReader
                                                          int table_idx) throws FitsException, IOException {
 
 
-        Fits fits= null;
-        try {
+        FitsFactory.useThreadLocalSettings(true);
+        try (Fits fits = new Fits(fits_filename)) {
             // disable long string for HeaderCard creation while collecting table with table_idx from StarTableFactory to work around
             // the exception error sent from nom.tam.fits.
-            FitsFactory.useThreadLocalSettings(true);
             DataGroup result;
-            fits = new Fits(fits_filename);
+            ;
             BasicHDU<?>[] hdus = FitsReadUtil.readHDUs(fits);
 
             if (table_idx >= hdus.length) {
@@ -116,7 +115,6 @@ public final class FITSTableReader
             throw e;
         } finally {
             FitsFactory.useThreadLocalSettings(false);
-            FitsReadUtil.closeFits(fits);
         }
     }
 

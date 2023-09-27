@@ -43,7 +43,7 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-core:2.20.0'
 
     // nom tam fits
-    implementation 'gov.nasa.gsfc.heasarc:nom-tam-fits:1.15.2'
+    implementation 'gov.nasa.gsfc.heasarc:nom-tam-fits:1.18.1'
 
     // openidconnect
     implementation ('net.minidev:json-smart:2.3')
@@ -84,7 +84,7 @@ dependencies {
 
     // starlink
     implementation ':starlink-registry-1.2+2016.05.03'
-    implementation ('uk.ac.starlink:stil:4.0.5') { exclude group: 'gov.nasa.gsfc.heasarc' }
+    implementation ('uk.ac.starlink:stil:4.1.4')
 
     // validation
     implementation 'javax.validation:validation-api:1.1.0.Final'

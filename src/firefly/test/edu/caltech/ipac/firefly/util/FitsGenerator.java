@@ -209,7 +209,7 @@ public class FitsGenerator {
             header.setNaxis(2, f4d[0][0].length);
         }
         ImageData imageData =new ImageData(data);
-        BasicHDU newHDU = new ImageHDU(header,imageData);// d);
+        BasicHDU<?> newHDU = new ImageHDU(header,imageData);// d);
         outFits.addHDU(newHDU);
 
         return outFits;

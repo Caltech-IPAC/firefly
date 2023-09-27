@@ -23,11 +23,8 @@ import nom.tam.fits.HeaderCard;
 import nom.tam.fits.HeaderCardException;
 import nom.tam.fits.ImageHDU;
 import nom.tam.util.ArrayFuncs;
-import nom.tam.util.BufferedDataOutputStream;
-import nom.tam.util.Cursor;
+import nom.tam.util.FitsOutputStream;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 
@@ -42,7 +39,6 @@ public class Geom {
 
     private ImageHeader ref_header;
     private ImageHeader in_header = null;
-    private ImageHeader out_header = null;
     private Header in_fits_header = null;
     private Header ref_fits_header = null;
 
@@ -128,38 +124,31 @@ public class Geom {
 
 
     /* buffers & such */
-    private float blank_val = Float.NaN;
+    private final float blank_val = Float.NaN;
     //int stat;
     private int n2;
     private Projection in_proj;
     private Projection out_proj;
     private CoordinateSys in_coordinate_sys;
     private CoordinateSys out_coordinate_sys;
-    private float in_data[];
-    private double x_val[];
-    private double y_val[];
-    private double x_next[];
-    private double y_next[];
-    private double x_dd[];
-    private double y_dd[];
-    private float out_data[];
+    private float[] in_data;
+    private double[] x_val;
+    private double[] y_val;
+    private double[] x_next;
+    private double[] y_next;
+    private double[] x_dd;
+    private double[] y_dd;
+    private float[] out_data;
     float glop5;
 
 
     public ImageHeader open_in(FitsRead inFitsRead) throws
             FitsException, IOException, GeomException {
         //int stat;
-        int i;
-        ImageHeader temp_hdr = null;
+        ImageHeader temp_hdr;
 
         try {
             in_fits_header = FitsReadUtil.cloneHeaderFrom(inFitsRead.getHeader());
-            if (in_fits_header == null) {
-                if (SUTDebug.isDebug()) {
-                    System.out.println("HDU null! (input image)");
-                }
-                throw new FitsException("HDU null! (input image)");
-            }
 
             in_header = new ImageHeader(FitsReadUtil.cloneHeaderFrom(inFitsRead.getHeader()));
 
@@ -241,24 +230,12 @@ public class Geom {
     /* should really clone in_header, but this may suffice */
         temp_hdr = new ImageHeader(in_fits_header);
         temp_hdr.cdelt2 = in_header.cdelt2;
-        temp_hdr.crpix2 = in_header.crpix2;
 
         temp_hdr.crpix1 = 0;
         temp_hdr.crpix2 = 0;
         in_coordinate_sys = CoordinateSys.makeCoordinateSys(
                 temp_hdr.getJsys(), temp_hdr.file_equinox);
         in_proj = temp_hdr.createProjection(in_coordinate_sys);
-
-       
-   /*
-   stat = map_set(in_map_block,in_ctype1,in_ctype2,in_cdelt1,in_cdelt2,
-           in_crval1,in_crval2,      0.0,      0.0,in_crota1,in_crota2);
-   if (stat != 0){
-      System.out.println("Illegal geometric data in input file (stat=" + stat
-	  + ")");
-      System.exit(0);
-   }
-   */
 
         return (in_header);
 
@@ -268,10 +245,8 @@ public class Geom {
     private void open_ref(Fits refFits) throws FitsException {
         try {
 
-            BasicHDU HDU = refFits.getHDU(0);
+            BasicHDU<?> HDU = refFits.getHDU(0);
             ref_fits_header = HDU.getHeader();
-            //BufferedDataInputStream ibs = refFits.getStream();
-            //ref_fits_header = Header.readHeader(ibs);
             if (ref_fits_header == null) {
                 if (SUTDebug.isDebug()) {
                     System.out.println("HDU null! (ref image)");
@@ -293,10 +268,10 @@ public class Geom {
 
         try {
 
-            if (ref_header.getProjectionName() == "UNRECOGNIZED")
+            if ("UNRECOGNIZED".equals(ref_header.getProjectionName()))
                 throw new FitsException("Projection is not recognized");
 
-            if (ref_header.getProjectionName() == "UNSPECIFIED")
+            if ("UNSPECIFIED".equals(ref_header.getProjectionName()))
                 throw new FitsException("Image contains no projection info");
 
         } catch (FitsException e) {
@@ -392,12 +367,10 @@ public class Geom {
         if (n_override_cdelt1) {
             out_cdelt1 = override_cdelt1;
             out_x_pixel_size = -override_cdelt1 / out_plt_scale * 1000 * 3600;
-            ;
         }
         if (n_override_cdelt2) {
             out_cdelt2 = override_cdelt2;
             out_y_pixel_size = override_cdelt2 / out_plt_scale * 1000 * 3600;
-            ;
         }
         if (n_override_CDmatrix) {
             out_cd1_1 = override_CD1_1;
@@ -513,10 +486,10 @@ public class Geom {
 
 /* Take an x,y on input image, reproject to an x,y on output image */
 /*  and do min-max on values in struct mm */
-    private int minmax_xy(double in_x, double in_y,
-                          mmxy mm) throws FitsException {
+    private void minmax_xy(double in_x, double in_y,
+                          mmXY mm) throws FitsException {
         double lon, lat;
-        double x = 0.0, y = 0.0;
+        double x, y;
         //int stat;
         ProjectionPt image_pt;
         WorldPt world_pt;
@@ -543,7 +516,6 @@ public class Geom {
         if (y > mm.max_y) mm.max_y = y;
         if (x < mm.min_x) mm.min_x = x;
         if (y < mm.min_y) mm.min_y = y;
-        return (0);
     }
 
     /****************************************************************/
@@ -552,7 +524,7 @@ public class Geom {
      * This method is to find the new lower/upper data range to make the 9 points used in finding the new ranges
      *
      */
-    private mmxy getImageBorder() {
+    private mmXY getImageBorder() {
 
         int naxis1 = in_naxis1;
         int naxis2 = in_naxis2;
@@ -560,7 +532,7 @@ public class Geom {
         float[][] inData = (float[][]) ArrayFuncs.curl(in_data, dims);
 
 
-        mmxy border = new mmxy();
+        mmXY border = new mmXY();
         boolean findXLower = false;
         int xLower = 1;
         while (!findXLower && xLower < naxis1) {
@@ -623,7 +595,7 @@ public class Geom {
      * DM-7336: fixed the bugs after rotating many times
      */
     private void override_naxis_and_crpix() throws FitsException {
-        mmxy mm = new mmxy();
+        mmXY mm = new mmXY();
         int lo_x, hi_x, lo_y, hi_y;
 
         //take 9 spots on input image - find max x, max y, min x, and min y
@@ -633,7 +605,7 @@ public class Geom {
         mm.max_x = -32767;
         mm.max_y = -32767;
         //find the valid image border to make up the 9 points
-        mmxy border = getImageBorder();
+        mmXY border = getImageBorder();
 
 
         minmax_xy(border.min_x, border.min_y, mm);
@@ -732,9 +704,8 @@ public class Geom {
 
     private Fits write_pixels() throws FitsException {
         int ndim;
-        int dims[];
+        int[] dims;
         Object data;
-        Fits newFits = null;
 
     /* open output file */
         //PrimaryHDU myHDU = new PrimaryHDU(in_fits_header);
@@ -760,7 +731,7 @@ public class Geom {
 
         ImageHDU myHDU = new ImageHDU(in_fits_header, id);
 
-        newFits = new Fits();
+        Fits newFits = new Fits();
         newFits.addHDU(myHDU);
         return (newFits);
 
@@ -808,8 +779,7 @@ public class Geom {
     } /* end compute_geom_line */
 
 
-    private void compute_a_line(int local_n2,
-                                double local_x_dd[], double local_y_dd[]) {
+    private void compute_a_line(int local_n2, double[] local_x_dd, double[] local_y_dd) {
         int next_n1;
         int n1;
         int stat;
@@ -1092,9 +1062,7 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
      * @param refFits Fits object for reference image containing the desirec projection
      * @return Fits object with the reprojected image
      */
-    Fits do_geom(Fits refFits)
-    //private Fits do_geom(Fits refFits) 
-            throws FitsException, IOException, GeomException {
+    Fits do_geom(Fits refFits) throws FitsException, GeomException {
 
         if (in_header == null)
             throw (new FitsException(
@@ -1116,9 +1084,7 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
      * @param refFitsRead FitsRead object for reference image containing the desirec projection
      * @return Fits object with the reprojected image
      */
-    Fits do_geom(FitsRead refFitsRead)
-            throws FitsException, IOException, GeomException {
-
+    Fits do_geom(FitsRead refFitsRead) throws FitsException, GeomException {
         ref_fits_header = FitsReadUtil.cloneHeaderFrom(refFitsRead.getHeader());
         ref_header = new ImageHeader(ref_fits_header);
         open_ref();
@@ -1154,10 +1120,10 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
 
 	/* position the header pointer past NAXISn */
             String key = null;
-            Cursor iter = in_fits_header.iterator();
+            var iter = in_fits_header.iterator();
             HeaderCard card;
             while (iter.hasNext()) {
-                card = (HeaderCard) iter.next();
+                card = iter.next();
                 key = card.getKey();
                 if (key.startsWith("SIMPLE"))
                     continue;
@@ -1167,7 +1133,7 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
                     continue;
                 break;
             }
-            in_fits_header.findKey(key);  // move fitsjava internal pointer
+            in_fits_header.findCard(key);  // move fitsjava internal pointer
 	/* done positioning header pointer */
 
 
@@ -1384,15 +1350,7 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
                 in_fits_header.addValue("CDELT2", out_cdelt2, null);
                 in_fits_header.addValue("CROTA1", out_crota1, null);
                 in_fits_header.addValue("CROTA2", out_crota2, null);
-                if (in_map_distortion) {
-                    if (out_map_distortion) {
-		    /* output header will inherit input coefficients */
-                    } else {
-		    /* no distortion in output image */
-		    /* CTYPE1 will not end in -SIP, so the */
-		    /* coefficients will be ignored */
-                    }
-                } else {
+                if (!in_map_distortion) {
                     if (out_map_distortion) {
 		    /* need to copy over the distortion coefficients */
 		    /* START COPYING DISTORTION COEFFICIENTS */
@@ -1437,8 +1395,6 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
                         }
 
 		    /* DONE COPYING DISTORTION COEFFICIENTS */
-                    } else {
-		    /* neither image has distortion correction */
                     }
                 }
             }
@@ -1478,9 +1434,6 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
                     in_fits_header.deleteKey("CDELT2");
                     in_fits_header.deleteKey("CROTA1");
                     in_fits_header.deleteKey("CROTA2");
-                } else {
-		/* no change */
-		/* neither image uses the cd matrix */
                 }
             }
 
@@ -1490,7 +1443,7 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
             }
             throw new FitsException("got HeaderCardException: " + hce.getMessage());
         }
-        out_header = new ImageHeader(in_fits_header);
+        ImageHeader out_header = new ImageHeader(in_fits_header);
             //System.out.println("RAA out_header.crpix1 = " + out_header.crpix1);
             //System.out.println("RAA out_header.toString()= " + out_header.toString());
 
@@ -1520,7 +1473,7 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
 
         }
 
-        in_fits_header.resetOriginalSize();  // RBH added 3-25-2010
+        in_fits_header.ensureCardSpace(1);
 
         out_header = new ImageHeader(in_fits_header);
         out_coordinate_sys = CoordinateSys.makeCoordinateSys(
@@ -1582,37 +1535,30 @@ printf("sum = %g   weight = %f   out_data[n1] = %g\n",
 
 	/* DEBUG */
         if (SUTDebug.isDebug()) {
-            try {
-                FileOutputStream fo = new java.io.FileOutputStream("/tmp/glop.fits");
-                BufferedDataOutputStream o = new BufferedDataOutputStream(fo);
-
+            try (var o= new FitsOutputStream(new java.io.FileOutputStream("/tmp/glop.fits"))){
                 if (false)  // for debug only
                 {
                     try {
-                        BasicHDU HDU = newFits.getHDU(0);
-                        Header local_header = HDU.getHeader();
-                        //local_header.dumpHeader(System.out);
+                        var HDU = newFits.getHDU(0);
+                        HDU.getHeader().dumpHeader(System.out);
                     } catch (IOException ioe) {
                         System.out.println("RBH got exception: " + ioe);
                     }
                 }
 
                 newFits.write(o);
-            } catch (FileNotFoundException e) {
-                System.out.println("Geom: got FileNotFoundException: " + e.getMessage());
-                e.printStackTrace();
-            } catch (FitsException e) {
-                System.out.println("Geom: got FitsException: " + e.getMessage());
+            } catch (FitsException | IOException e) {
+                System.out.println("Geom: got Exception: " + e.getMessage());
                 e.printStackTrace();
             }
         }
 	/* END DEBUG */
 
-        return (newFits);
+        return newFits;
     }
 
 
-    private class mmxy {
+    private static class mmXY {
         public double min_x;
         public double max_x;
         public double min_y;

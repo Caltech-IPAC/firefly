@@ -3,23 +3,29 @@
  */
 package edu.caltech.ipac.admin_tools;
 
-import java.lang.reflect.*;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.File;
-import java.io.FileReader;
+import nom.tam.fits.BasicHDU;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.fits.Header;
+import nom.tam.fits.HeaderCard;
+import nom.tam.fits.ImageData;
+import nom.tam.fits.ImageHDU;
+import nom.tam.util.BufferedDataOutputStream;
+import nom.tam.util.Cursor;
+
 import java.io.BufferedReader;
-import java.io.FileWriter;
 import java.io.BufferedWriter;
-import java.io.IOException;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.util.StringTokenizer;
-import java.util.ArrayList;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
-
-import nom.tam.fits.*;
-import nom.tam.util.*;
+import java.util.ArrayList;
+import java.util.StringTokenizer;
 
 public class CreateFiles
 {
@@ -317,14 +323,12 @@ static public void main(String args[])
 	    BufferedDataOutputStream o = new BufferedDataOutputStream(fo);
 	    new_fits.write(o);
 	}
-	catch (FitsException e)
+	catch (FitsException | IOException e)
 	{
-	    e.printStackTrace();
-	} catch (FileNotFoundException e) {
 	    e.printStackTrace();
 	}
 
-    }
+	}
 
 
     static Header clone_header(Header header)

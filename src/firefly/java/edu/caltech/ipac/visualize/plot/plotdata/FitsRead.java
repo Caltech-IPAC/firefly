@@ -15,7 +15,6 @@ import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
-import nom.tam.fits.HeaderCard;
 import nom.tam.fits.ImageHDU;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 
@@ -125,6 +124,8 @@ public class FitsRead implements Serializable, HasSizeOf {
     public double getCdelt1() { return this.cdelt1; }
     public double getBlankValue() {return FitsReadUtil.getBlankValue(header); }
     public int getBitPix() {return FitsReadUtil.getBitPix(header); }
+    public String getExtType(String defVal) { return FitsReadUtil.getExtType(header,defVal); }
+    public String getExtType() { return getExtType(""); }
 
     public boolean isDeferredRead() { return deferredRead; }
 
@@ -134,17 +135,11 @@ public class FitsRead implements Serializable, HasSizeOf {
     public CoordinateSys getImageCoordinateSystem() { return this.coordinateSys; }
     public int getProjectionType() { return this.maptype; }
 
-    public String getExtType() {
-        HeaderCard hc= header.findCard("EXTTYPE");
-        return (hc!=null) ? hc.getValue() : "";
-    }
 
     public float[] getRawFloatAry() {
         if (float1d!=null) return float1d;
         if (!deferredRead) throw new IllegalArgumentException("FitsRead not setup for deferred reading");
-        Fits fits= null;
-        try {
-            fits = new Fits(this.file);
+        try (Fits fits = new Fits(this.file)) {
             BasicHDU<?> hdu= FitsReadUtil.readHDUs(fits)[this.hduNumber];
             if (!(hdu instanceof ImageHDU)) return null;
             float1d= (float [])dataArrayFromFitsFile((ImageHDU)hdu, 0,0,getNaxis1(),getNaxis2(), planeNumber,Float.TYPE);
@@ -153,9 +148,6 @@ public class FitsRead implements Serializable, HasSizeOf {
         catch (FitsException|IOException|ArrayIndexOutOfBoundsException e) {
             Logger.getLogger("FitsRead").error(e,"Could not ready cube FITS plane");
             return null;
-        }
-        finally {
-            FitsReadUtil.closeFits(fits);
         }
     }
 

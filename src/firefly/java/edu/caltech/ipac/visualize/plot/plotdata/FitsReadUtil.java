@@ -18,7 +18,6 @@ import nom.tam.fits.HeaderCard;
 import nom.tam.fits.HeaderCardException;
 import nom.tam.fits.ImageData;
 import nom.tam.fits.ImageHDU;
-import nom.tam.fits.PaddingException;
 import nom.tam.fits.UndefinedData;
 import nom.tam.fits.UndefinedHDU;
 import nom.tam.image.StandardImageTiler;
@@ -117,16 +116,9 @@ public class FitsReadUtil {
      * @param pixels The 2-dim float array of new pixels
      * @return The new ImageHDU
      */
-    public static ImageHDU makeHDU(ImageHDU hdu, float[][] pixels)
-            throws FitsException {
-        Header header = hdu.getHeader();
-
-        Header newHeader = cloneHeaderFrom(header);
-        ImageData new_image_data = new ImageData(pixels);
-        return new ImageHDU(newHeader, new_image_data);
-
+    public static ImageHDU makeHDU(ImageHDU hdu, float[][] pixels) throws FitsException {
+        return new ImageHDU(cloneHeaderFrom(hdu.getHeader()), new ImageData(pixels));
     }
-
 
     public static boolean hasCompressedImageHDUS(BasicHDU<?>[] HDUs)  {
         for (BasicHDU<?> hdu : HDUs) {
@@ -136,11 +128,8 @@ public class FitsReadUtil {
     }
 
     public static Header getTopFitsHeader(File f) {
-        try {
-            Fits fits= new Fits(f);
-            Header header=  fits.getHDU(0).getHeader();
-            closeFits(fits);
-            return header;
+        try (Fits fits= new Fits(f)) {
+            return fits.getHDU(0).getHeader();
         } catch (FitsException|IOException  e) {
             return null;
         }
@@ -484,14 +473,14 @@ public class FitsReadUtil {
         output_fits.write(new DataOutputStream(stream));
     }
 
-    public static BasicHDU<?>[] readHDUs(Fits fits) throws FitsException {
-        try {
-            return fits.read();
-        } catch (PaddingException pe) {
-            fits.addHDU(pe.getTruncatedHDU());
-            return fits.read();
-        }
-    }
+    /**
+     * Read the fits objs and return an array of HDUs.
+     * As of the last fits update this function is not really necessary since we no longer
+     * have to deal with the PaddingException issue. However, since it is used in about
+     * 8 difference places we should keep it around.
+     * @param fits the fits object to read
+     */
+    public static BasicHDU<?>[] readHDUs(Fits fits) throws FitsException { return fits.read(); }
 
     public static int getBitPix(Header h) {return h.getIntValue("BITPIX"); }
     public static int getNaxis(Header h) { return h.getIntValue("NAXIS", 0); }
@@ -505,10 +494,11 @@ public class FitsReadUtil {
         // blank value is only applicable to integer values (BITPIX > 0)
         return getBitPix(h) > 0 ? h.getDoubleValue("BLANK", Double.NaN) : Double.NaN;
     }
+
     public static String getExtName(Header h) { return h.getStringValue("EXTNAME"); }
-    public static String getExtType(Header h) { return h.getStringValue("EXTTYPE"); }
+    public static String getExtType(Header h, String defVal) { return h.getStringValue("EXTTYPE",defVal); }
     public static String getUtype(Header h) { return h.getStringValue("UTYPE"); }
-    public static String getExtNameOrType(Header h) { return getExtName(h)!=null ? getExtName(h) : getExtType(h);}
+    public static String getExtNameOrType(Header h) { return getExtName(h)!=null ? getExtName(h) : getExtType(h,null);}
 
 
 
@@ -538,7 +528,7 @@ public class FitsReadUtil {
 
     public static void closeFits(Fits fits) {
         try {
-            if (fits != null && fits.getStream() != null) fits.getStream().close();
+            if (fits!=null) fits.close();
         } catch (IOException ignore) {
         }
     }
