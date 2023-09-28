@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static edu.caltech.ipac.table.DataType.*;
 import static edu.caltech.ipac.table.JsonTableUtil.toLinkInfos;
 import static edu.caltech.ipac.table.TableMeta.*;
 import static edu.caltech.ipac.util.StringUtils.*;
@@ -297,11 +298,38 @@ public class IpacTableUtil {
         if (line != null && line.startsWith("|")) {
             String[] types = parseHeadings(line.trim());
             for (int i = 0; i < types.length; i++) {
-                String typeDesc = types[i].trim().toLowerCase();
+                String typeDesc = ipacToFireflyType(types[i].trim().toLowerCase());
                 cols.get(i).setTypeDesc(typeDesc);
                 cols.get(i).setDataType(DataType.descToType(typeDesc));
             }
         }
+    }
+
+    /**
+     * Convert IPAC Table specific type string into one Firefly can understand.
+     * @param typeDesc  IPAC Table data type string
+     * @return Firefly data type string representation
+     */
+    private static String ipacToFireflyType(String typeDesc) {
+
+        switch (typeDesc) {
+            case "bool":
+            case "b":
+                return BOOLEAN;
+            case "d":
+            case "r":
+            case "real":
+                return DOUBLE;
+            case "f":
+                return FLOAT;
+            case "i":
+                return INTEGER;
+            case "l":
+                return LONG;
+            case "c":
+                return CHAR;
+        }
+        return typeDesc;
     }
 
     public static  void setDataUnit(List<DataType> cols, String line) {

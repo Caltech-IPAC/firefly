@@ -47,18 +47,18 @@ public class DataType implements Serializable, Cloneable {
 
     public enum Visibility {show, hide, hidden};
 
-    private static final String BOOLEAN = "boolean";
-    private static final String BIT = "bit";
-    private static final String BYTE = "unsignedByte";
-    private static final String SHORT = "short";
-    private static final String INTEGER = "int";
-    private static final String LONG = "long";
-    private static final String CHAR = "char";
-    private static final String UNI_CHAR = "unicodeChar";
-    private static final String FLOAT = "float";
-    private static final String DOUBLE = "double";
-    private static final String COMPLEX_FLOAT = "floatComplex";
-    private static final String COMPLEX_DOUBLE = "doubleComplex";
+    public static final String BOOLEAN = "boolean";
+    public static final String BIT = "bit";
+    public static final String BYTE = "unsignedByte";
+    public static final String SHORT = "short";
+    public static final String INTEGER = "int";
+    public static final String LONG = "long";
+    public static final String CHAR = "char";
+    public static final String UNI_CHAR = "unicodeChar";
+    public static final String FLOAT = "float";
+    public static final String DOUBLE = "double";
+    public static final String COMPLEX_FLOAT = "floatComplex";
+    public static final String COMPLEX_DOUBLE = "doubleComplex";
 
     public static final String REAL = "real";      // IPAC table
     public static final String DATE = "date";      // IPAC table
