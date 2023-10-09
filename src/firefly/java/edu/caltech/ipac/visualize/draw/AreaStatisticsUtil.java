@@ -23,7 +23,6 @@ import java.util.HashMap;
  * Moved from spot-common AreaStatisticsDialog
  */
 public class AreaStatisticsUtil {
-    public enum WhichDir {LON, LAT }
     private static final double DtoR = Math.PI/180.0; // degrees to radians conversion factor
 
 
@@ -291,4 +290,9 @@ public class AreaStatisticsUtil {
         return metrics;
     }
 
+    public record Metric(String desc, ImageWorkSpacePt imageWorkSpacePt, double value, String units) {
+        public static final double NULL_DOUBLE = Double.NaN;
+    }
+
+    public enum Metrics {MAX, MIN, CENTROID, FW_CENTROID, MEAN, STDEV, INTEGRATED_FLUX, NUM_PIXELS, PIXEL_AREA}
 }

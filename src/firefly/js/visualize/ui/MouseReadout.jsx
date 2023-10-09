@@ -58,7 +58,7 @@ const baseLS={whiteSpace:'nowrap', textOverflow: 'ellipsis'};
 
 
 export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueStyle={}, showCopy=false,
-                                        label='', value='', copyValue='', prefChangeFunc=undefined}) => {
+                                        label='', value='', unit='', copyValue='', prefChangeFunc=undefined, monoFont=false}) => {
     const lS= lArea ? {gridArea:lArea,...baseLS,...labelStyle} : {...baseLS,...labelStyle};
     const vS= vArea ? {gridArea:vArea,...baseVS, ...valueStyle} : {...baseVS,...valueStyle};
     const cS= cArea ? {gridArea:cArea, overflow:'hidden', height:13} : undefined;
@@ -71,11 +71,16 @@ export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueSt
             <CopyToClipboard style={cS} title={copyTitle} value={copyValue||value} /> : <div style={cS}/>;
     }
 
+    const mStyle= monoFont ? {fontFamily:'monospace', fontSize:'larger'} : {};
 
     return (
         <Fragment>
             <div className={labelClass} title={value+''} style={lS} onClick={prefChangeFunc}>{label}</div>
-            <div style={vS} title={value+''}> {value} </div>
+            <div style={{...vS, ...mStyle}} title={value+''}> {value} </div>
+            <div style={vS} title={value+''}>
+                <span style={mStyle}> {value}</span>
+                <span> {unit}</span>
+            </div>
             {clipComponent}
         </Fragment>
     );
@@ -92,6 +97,7 @@ DataReadoutItem.propTypes = {
     value:          oneOfType([number,string]),
     copyValue:      string,   // for copy to clipboard, if specified, us this value other use value
     prefChangeFunc: func,
+    monoFont:       bool,
 };
 
 

@@ -5,14 +5,13 @@ package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
-import edu.caltech.ipac.visualize.plot.Plot;
+import edu.caltech.ipac.visualize.plot.ImagePlot;
 import edu.caltech.ipac.visualize.plot.PlotContainer;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 
@@ -28,7 +27,7 @@ public class ScalableObjectPosition {
 
    private ScalableObject _viewObject; 
    private boolean        _showing= true;
-   private Map<Plot,PlotInfo>  _plotMap= new HashMap<Plot,PlotInfo>(20);
+   private Map<ImagePlot,PlotInfo>  _plotMap= new HashMap<>(20);
 
    /**
     * Constructor
@@ -38,20 +37,6 @@ public class ScalableObjectPosition {
       _viewObject= viewObject;
    }
 
-
-   /**
-    * Get the current ScalableObject  
-    * @return ScalableObject  the ScalableObject
-    */
-   public ScalableObject getScalableObject() {
-      return _viewObject;
-   }
-
-    public WorldPt getPosition(Plot p) {
-        PlotInfo pInfo= _plotMap.get(p);
-        Assert.tst(pInfo);
-        return pInfo._pt;
-    }
 
    /**
     * Set the position of a scalable object all plots.
@@ -71,7 +56,7 @@ public class ScalableObjectPosition {
     * @param p set the rotation on this plot
     * @param rotation the rotation angle
     */
-   public void setRotation(Plot p, ScalableObject.RotationInfo rotation) {
+   public void setRotation(ImagePlot p, ScalableObject.RotationInfo rotation) {
       PlotInfo pInfo= _plotMap.get(p);
       Assert.tst(pInfo);
       pInfo._rotation= rotation;
@@ -87,16 +72,6 @@ public class ScalableObjectPosition {
       }
    }
 
-   /**
-    * Set the offset of a scalable object on a plot.
-    * @param p set the rotation on this plot
-    * @param  offset
-    */
-   public void setOffset(Plot p, WorldPt offset) {
-      PlotInfo pInfo= _plotMap.get(p);
-      Assert.tst(pInfo);
-      pInfo._offset= offset;
-   }
 
    /**
     * Set the offset on all the plots.
@@ -112,7 +87,7 @@ public class ScalableObjectPosition {
     * @param p the plot to draw on
     * @param g2
     */
-   public void drawOnPlot(Plot p, ActiveFitsReadGroup frGroup, Graphics2D g2) {
+   public void drawOnPlot(ImagePlot p, ActiveFitsReadGroup frGroup, Graphics2D g2) {
       PlotInfo pInfo= _plotMap.get(p);
       ScalableObject.DrawOnPlotReturn soReturn;
       Assert.tst(pInfo);
@@ -124,25 +99,6 @@ public class ScalableObjectPosition {
       }
    }
 
-
-   /**
-    * repair (redraw) the plot
-    */
-   public void repair(Plot p) {
-      PlotInfo pInfo= _plotMap.get(p);
-      Assert.tst(pInfo);
-   }
-
-   /**
-    * enable/disable this ScalableObject for a given plot
-    * @param p the plot enable/disable on
-    * @param enabled true to enable, false to disable
-    */
-   public void setEnabledForPlot(Plot p, boolean enabled) { 
-      PlotInfo pInfo= _plotMap.get(p);
-      Assert.tst(pInfo);
-      pInfo._showing= enabled;
-   }
 
 
    /**
@@ -156,11 +112,8 @@ public class ScalableObjectPosition {
    public boolean isEnable() { return _showing;}
 
    public void addPlotView(PlotContainer container) {
-       Plot p;
-       Iterator  j= container.iterator();
-       while(j.hasNext()) {
-          p= (Plot)j.next();
-          addPlot(p);
+       for (ImagePlot imagePlot : container) {
+           addPlot(imagePlot);
        }
    }
 
@@ -172,7 +125,7 @@ public class ScalableObjectPosition {
     * add a plot to draw on
     * @param p the plot to add
     */
-   private void addPlot(Plot p) {
+   private void addPlot(ImagePlot p) {
         _plotMap.put(p, new PlotInfo());
    }
 

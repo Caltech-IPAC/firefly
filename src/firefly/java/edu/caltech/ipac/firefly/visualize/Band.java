@@ -8,32 +8,22 @@ public enum Band {
     GREEN("Green", 1),
     BLUE("Blue", 2),
     NO_BAND("NO_BAND", 0);
-    private String _desc;
-    private int _idx;
+    private final String desc;
+    private final int idx;
 
     Band(String desc, int idx) {
-        _desc = desc;
-        _idx = idx;
+        this.desc = desc;
+        this.idx = idx;
     }
 
-    public String toString() {
-        return _desc;
-    }
-
-    public int getIdx() {
-        return _idx;
-    }
-
+    public String toString() { return desc; }
+    public int getIdx() { return idx; }
 
     public static Band parse(String s) {
-        Band retval;
         try {
-            retval= Enum.valueOf(Band.class,s.toUpperCase());
-        } catch (Exception e) {
-            retval= null;
+            return Enum.valueOf(Band.class,s.toUpperCase());
+        } catch (Exception ignore) {
+            return null;
         }
-
-        return retval;
     }
-
 }

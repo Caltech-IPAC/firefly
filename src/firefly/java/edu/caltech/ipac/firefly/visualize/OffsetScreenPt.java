@@ -10,28 +10,19 @@ import edu.caltech.ipac.visualize.plot.Pt;
 public final class OffsetScreenPt extends Pt {
 
     public OffsetScreenPt(int x, int y) { super(x,y); }
-    private OffsetScreenPt(Pt p) { this((int)p.getX(),(int)p.getY()); }
-
-    public int getIX() { return (int)getX(); }
-    public int getIY() { return (int)getY(); }
 
     public boolean equals(Object o) {
-        boolean retval= false;
         if (o==this) {
-            retval= true;
+            return true;
         }
-        else if (o instanceof OffsetScreenPt) {
-            OffsetScreenPt p= (OffsetScreenPt)o;
-            if (getIX()== p.getIX() && getIY()== p.getIY()) {
-                retval= true;
-            } // end if
+        else if (o instanceof OffsetScreenPt p) {
+            return (int) getX() == (int) p.getX() && (int) getY() == (int) p.getY();
         }
-        return retval;
+        return false;
     }
 
     public static OffsetScreenPt parse(String serString) {
         Pt p= Pt.parse(serString);
-        return p==null ? null : new OffsetScreenPt(p);
+        return p==null ? null : new OffsetScreenPt((int)p.getX(),(int)p.getY());
     }
-
 }

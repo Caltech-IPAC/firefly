@@ -12,9 +12,23 @@ export const READOUT_KEY= 'readout';
 export const STANDARD_READOUT= 'standardImageReadout';
 export const HIPS_STANDARD_READOUT= 'standardHiPSReadout';
 export const NUM_VAL= 'value';
+export const FILE_VAL= 'fileValue';
 export const POINT_VAL= 'point';
 export const HEALPIX_VAL= 'healpix';
 export const DESC_VAL= 'desc';
+
+
+export const STATUS_UNAVAILABLE= 'UNAVAILABLE';
+export const STATUS_NAN= 'NaN';
+export const STATUS_UNDEFINED= 'UNDEFINED';
+export const STATUS_VALUE= 'VALUE';
+export const TYPE_EMPTY= 'EMPTY';
+export const TYPE_DECIMAL_INT = 'DECIMAL_INT';
+export const TYPE_FLOAT= 'FLOAT';
+export const TYPE_BASE16= 'BASE16';
+export const TYPE_BASE_OTHER= 'BASE_OTHER';
+
+
 
 export function readoutRoot() { return flux.getState()[READOUT_KEY]; }
 
@@ -51,9 +65,12 @@ export const isAutoReadIsLocked= (root) => root.isLocked;
  * @param value
  * @param unit
  * @param precision
- * @return {{title: *, value: *, unit: *, precision: *}}
+ * @return {{title: string, value: *, unit: string, precision: number, radix: number}}
  */
 export const makeValueReadoutItem= (title,value,unit, precision) => ({type:NUM_VAL, title,value,unit,precision});
+
+export const makeFileValueReadoutItem= (title,valueBase10, valueBase16,radix, status,type, unit,precision) =>
+    ({type:FILE_VAL, title,valueBase10, valueBase16,status,radix, readoutType:type,unit,precision});
 
 /**
  * 
@@ -100,6 +117,8 @@ const initState= () =>
             hipsMouseReadout2:'galactic',
             healpixPixel:'healpixPixel',
             healpixNorder:'healpixNorder',
+            intFluxValueRadix: '10',
+            floatFluxValueRadix: '10',
             wl:'wl',
         }
     });

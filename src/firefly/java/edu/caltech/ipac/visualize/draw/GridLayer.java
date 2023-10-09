@@ -5,13 +5,11 @@ package edu.caltech.ipac.visualize.draw;
 
 import edu.caltech.ipac.util.Assert;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.Plot;
+import edu.caltech.ipac.visualize.plot.ImagePlot;
 
 import java.awt.Graphics2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * using the Grid class to draw grid on the Plot
@@ -27,7 +25,6 @@ public class GridLayer  {
       */
    private CoordinateSys         _csys;
    private Grid                  _grid;
-   private Map<Plot,PlotInfo>    _plotMap   = new HashMap<Plot,PlotInfo>(20);
    private boolean               _showing   = true;
    private PropertyChangeSupport _propChange= new PropertyChangeSupport(this);
 
@@ -80,7 +77,7 @@ public class GridLayer  {
       return _grid;
    }
 
-    public void drawOnPlot(Plot p, Graphics2D g2){
+    public void drawOnPlot(ImagePlot p, Graphics2D g2){
        if (_showing) _grid.paint(g2, p);
     }
 
@@ -105,25 +102,6 @@ public class GridLayer  {
        _propChange.removePropertyChangeListener (p);
     }
 
-
-    //=====================================================================
-    //----------- Private / Protected Methods -----------------------------
-    //=====================================================================
-
-    /**
-     remember the relationship of plot and ppl so the ppl can be
-     removed when the control panel for Grid is removed.
-    */
-    private void addPlot(Plot p) {
-        _plotMap.put(p, new PlotInfo());
-    }
-
-    private void removePlot(Plot p) {
-        PlotInfo pInfo= _plotMap.get(p);
-        if (pInfo != null) {
-	   _plotMap.remove(p);
-        }
-    }
 
 
 //===================================================================

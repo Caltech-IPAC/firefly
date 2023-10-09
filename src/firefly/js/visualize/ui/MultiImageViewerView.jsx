@@ -6,12 +6,14 @@
 import React, {forwardRef} from 'react';
 import PropTypes from 'prop-types';
 import {omit} from 'lodash';
+import {getBixPix} from '../FitsHeaderUtil.js';
 import {SINGLE, GRID} from '../MultiViewCntlr.js';
+import {getPlotViewById, primePlot} from '../PlotViewUtil.js';
 import {MultiItemViewerView} from './MultiItemViewerView.jsx';
 import {ImageViewer} from './../iv/ImageViewer.jsx';
 import {useMouseStoreConnector} from 'firefly/visualize/ui/MouseStoreConnector.jsx';
-import {lastMouseImageReadout} from 'firefly/visualize/VisMouseSync.js';
-import {readoutRoot} from 'firefly/visualize/MouseReadoutCntlr.js';
+import {lastMouseCtx, lastMouseImageReadout} from 'firefly/visualize/VisMouseSync.js';
+import {isLockByClick, readoutRoot} from 'firefly/visualize/MouseReadoutCntlr.js';
 import {MouseReadoutBottomLine} from 'firefly/visualize/ui/MouseReadoutBottomLine.jsx';
 import {isDialogVisible} from 'firefly/core/ComponentCntlr.js';
 import {MOUSE_READOUT_DIALOG_ID} from 'firefly/visualize/ui/MouseReadPopoutAll.jsx';
@@ -56,6 +58,10 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
     else {
         style=  {...style, width:'100%', height:'100%'};
     }
+    
+    const {readoutPref}= readoutRoot();
+    const pvToUse= isLockByClick(readoutRoot()) ? primePlot(visRoot) : getPlotViewById(visRoot,lastMouseCtx().plotId);
+    const radix= Number(getBixPix(primePlot(pvToUse))>0 ? readoutPref.intFluxValueRadix : readoutPref.floatFluxValueRadix);
 
     if (layoutType===SINGLE || viewerPlotIds?.length===1) {
         return (
@@ -65,6 +71,7 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
                                         slightlyTransparent={mouseReadoutEmbedded}
                                         readoutShowing={doReadoutAndShowing}
                                         showOnInactive={!mouseReadoutEmbedded}
+                                        radix={radix}
                                         style={mouseReadoutEmbedded? {position:'absolute', left:0, right:1, bottom:3, margin:'0 3px 0 3px'}:{}} />
             </div>
         );
@@ -77,6 +84,7 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
                                         style={mouseReadoutEmbedded?{position:'absolute', left:4, bottom:4, right:4}:{}}
                                         readoutShowing={doReadoutAndShowing}
                                         showOnInactive={!mouseReadoutEmbedded}
+                                        radix={radix}
                                         slightlyTransparent={mouseReadoutEmbedded}
                 />
             </div>

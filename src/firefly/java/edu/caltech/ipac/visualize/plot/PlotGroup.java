@@ -19,7 +19,7 @@ import java.util.List;
  * There is a base plot that the overlays are projected onto.  A PlotGroup is a
  * plot and all its overlays.
  */
-public class PlotGroup implements Iterable<Plot> {
+public class PlotGroup implements Iterable<ImagePlot> {
 
     private int _imageWidth;     // image width of the mosaic of images
     private int _imageHeight;    // image height of the mosaic of images 
@@ -33,23 +33,16 @@ public class PlotGroup implements Iterable<Plot> {
     private int _minY;     // image min y
     private int _maxY;     // image max y
 
-    private final Plot        _basePlot;
-    private final List<Plot>  _plotList  = new ArrayList<>(3);
+    private final ImagePlot        _basePlot;
+    private final List<ImagePlot>  _plotList  = new ArrayList<>(3);
     private AffineTransform _trans;
     private AffineTransform _inverseTrans;
  
 
-    public PlotGroup(Plot basePlot) {
+    public PlotGroup(ImagePlot basePlot) {
        _basePlot= basePlot;
-       addPlot(basePlot);
+       addPlot(_basePlot);
     }
-
-    /**
-     * Return the base plot for the plot group.  The base plot is the plot that
-     * defines the projection all other plot are reprojected to.
-     * @return a Plot
-     */
-    public Plot getBasePlot() { return _basePlot; }
 
     public int getScreenWidth()     { return _screenWidth; }
     public int getScreenHeight()     { return _screenHeight; }
@@ -65,7 +58,7 @@ public class PlotGroup implements Iterable<Plot> {
      * return a iterator of the list of plots
      * @return a iterator of type plot for all the plots in this plot group
      */
-    public Iterator<Plot> iterator() { return _plotList.iterator(); }
+    public Iterator<ImagePlot> iterator() { return _plotList.iterator(); }
 
 
     /** 
@@ -116,13 +109,9 @@ public class PlotGroup implements Iterable<Plot> {
   // ================= Package methods ==========================
   // ------------------------------------------------------------
 
-    void addPlot(Plot p) {
+    void addPlot(ImagePlot p) {
        _plotList.add(p);
     }
-
-    void removePlot(Plot p) { _plotList.remove(p); }
-
-
 
     /**
      * Get the transform this plot uses
@@ -152,20 +141,11 @@ public class PlotGroup implements Iterable<Plot> {
        }
    }
 
-
-
-
    void addToPlotted() {
       computeMinMax();
       if (_trans==null) setZoomTo(_basePlot.getInitialZoomLevel());
       else              setZoomTo((float)_trans.getScaleX());
    }
-
-   void removeFromPlotted() {
-       computeMinMax();
-       setZoomTo((float) _trans.getScaleX());
-   }
-
 
   // ------------------------------------------------------------
   // ================= Private / Protected methods ==============
@@ -181,7 +161,7 @@ public class PlotGroup implements Iterable<Plot> {
        _maxX= 0;
        _minY= 0;
        _maxY= 0;
-        for(Plot p : _plotList) {
+        for(ImagePlot p : _plotList) {
              minX= 0;
              maxX= p.getImageDataWidth();
              minY= 0;

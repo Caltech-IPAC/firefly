@@ -111,6 +111,7 @@ public class ServerParams {
     public static final String HIPS_TABLE_TYPE= "hipsTableType";
     public static final String CUBE = "cube";
     public static final String CATALOG = "catalog";
+    public static final String RADIX = "radix";
 
     public static final String GEOSHAPE = "shape";
     public static final String ROTATION = "rotation";

@@ -16,6 +16,7 @@ import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.firefly.visualize.WebPlotResult;
 import edu.caltech.ipac.visualize.plot.ImagePt;
+import edu.caltech.ipac.visualize.plot.PixelValue;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsExtract;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -38,28 +39,8 @@ public class VisServerCommands {
     public static class FileFluxCmdJson extends ServCommand {
         public String doCommand(SrvParam sp) throws IllegalArgumentException {
             PlotState[] stateAry= sp.getStateAry();
-            PlotState state= stateAry[0];
-            List<String> res= VisServerOps.getFlux(stateAry,sp.getRequiredImagePt("pt"));
-
-            JSONObject obj= new JSONObject();
-            obj.put("success", true);
-
-            JSONObject data= new JSONObject();
-            Band[] bands = state.getBands();
-            int resultCnt=0;
-            for (;resultCnt<res.size() && resultCnt<bands.length; resultCnt++){
-                data.put(bands[resultCnt].toString(), res.get(resultCnt));
-            }
-
-            if (stateAry.length>1) {
-                for(int i=1; (i<stateAry.length);i++) {
-                    data.put("overlay-"+(i-1), res.get(resultCnt++));
-                }
-            }
-            JSONArray wrapperAry= new JSONArray();
-            obj.put("data", data);
-            wrapperAry.add(obj);
-            return wrapperAry.toJSONString();
+            List<PixelValue.Result> res= VisServerOps.getFlux(stateAry,sp.getRequiredImagePt("pt"));
+            return VisJsonSerializer.createPixelResultJson(res,stateAry[0].getBands(),stateAry.length);
         }
 
     }

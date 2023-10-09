@@ -16,6 +16,8 @@ import {get} from 'lodash';
 import {getFluxInfo, getNonFluxDisplayElements} from 'firefly/visualize/ui/MouseReadoutUIUtil.js';
 import {DataReadoutItem, MouseReadoutLock} from 'firefly/visualize/ui/MouseReadout.jsx';
 import {isImage} from 'firefly/visualize/WebPlot.js';
+import {getBixPix} from '../FitsHeaderUtil.js';
+import {showMouseReadoutFluxRadixDialog} from './MouseReadoutOptionPopups.jsx';
 
 export const MOUSE_READOUT_DIALOG_ID= 'MouseReadoutPopoutAll';
 
@@ -46,19 +48,23 @@ function MousePopup({closeCallback,visible, requestOnTop, dialogId, zIndex, requ
 function PopoutMouseReadoutContents({vr,currMouseState, readout, readoutData}) {
     const showHealpixPixel= getAppOptions()?.hips?.readoutShowsPixel ?? false;
     const pv= getActivePlotView(vr);
+
     const mousePv= getPlotViewById(vr,currMouseState.plotId);
     const pvForThumbnail= currMouseState.mouseState===MouseState.EXIT ? pv : mousePv;
     const image= isImage(primePlot(pvForThumbnail));
     const lockByClick= isLockByClick(readoutRoot());
+    const pvToUse= lockByClick ? pv : mousePv;
+    const {readoutPref}= readoutRoot();
+    const radix= Number(getBixPix(primePlot(pvToUse))>0 ? readoutPref.intFluxValueRadix : readoutPref.floatFluxValueRadix);
 
     return (
         <div>
             {image &&
             <div style={{padding: '5px 5px 2px 5px', display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
                 <ThumbnailView plotView={pvForThumbnail} loadedSize={140}/>
-                <MagnifiedView plotView={lockByClick ? pv : mousePv} size={140} mouseState={currMouseState} lockByClick={lockByClick} />
+                <MagnifiedView plotView={pvToUse} size={140} mouseState={currMouseState} lockByClick={lockByClick} />
             </div>}
-            <Readout readout={readout} readoutData={readoutData} showHealpixPixel={showHealpixPixel}/>
+            <Readout readout={readout} readoutData={readoutData} showHealpixPixel={showHealpixPixel} radix={radix}/>
         </div>
 
     );
@@ -70,7 +76,7 @@ const rS = { width: 244, position: 'relative', padding: 5};
 const ls= {color:'rgb(90,90,90)'};
 
 
-function Readout({readout, readoutData, showHealpixPixel=false}){
+function Readout({readout, readoutData, showHealpixPixel=false, radix}){
     const {threeColor, readoutType}= readoutData;
     const isHiPS= readoutType===HIPS_STANDARD_READOUT;
     const image= readoutType===STANDARD_READOUT;
@@ -78,7 +84,7 @@ function Readout({readout, readoutData, showHealpixPixel=false}){
     if (!get(readoutData,'readoutItems')) return <div style={rS}/>;
     const displayEle= getNonFluxDisplayElements(readoutData.readoutItems,  readout.readoutPref, isHiPS);
     const {pixelSize, showPixelPrefChange, healpixPixelReadout, healpixNorderReadout}= displayEle;
-    const fluxArray = getFluxInfo(readoutData);
+    const fluxArray = getFluxInfo(readoutData, radix);
     const hipsPixel= showHealpixPixel && isHiPS;
     const showCopy= readout.lockByClick;
     const gridClasses= `mouseReadoutPopupInlineFullGrid${threeColor?' mouseReadoutPopupInlineFullGrid-3c':''}` ;
@@ -105,17 +111,29 @@ function Readout({readout, readoutData, showHealpixPixel=false}){
                                            label={healpixNorderReadout.label} value={healpixNorderReadout.value}/> }
             {!isHiPS && <DataReadoutItem lArea='redLabel' vArea='redValue'
                                          labelStyle={ls}
-                                         label={fluxArray[0].label} value={fluxArray[0].value}/>}
+                                         monoFont={radix===16}
+                                         prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}
+                                         label={fluxArray[0].label||'Value:'}
+                                         unit={fluxArray[0].unit??''}
+                                         value={fluxArray[0].value}/>}
             {!threeColor && waveLength && image &&
                 <DataReadoutItem lArea='greenLabel' vArea='greenValue' label={waveLength.label} value={waveLength.value}
                                                      labelStyle={ls}
                                                      prefChangeFunc={showWavelengthFailed} /> }
             {threeColor && <DataReadoutItem lArea='greenLabel' vArea='greenValue'
                                             labelStyle={ls}
-                                            label={fluxArray[1].label} value={fluxArray[1].value}/> }
+                                            monoFont={radix===16}
+                                            prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}
+                                            label={fluxArray[1].label}
+                                            unit={fluxArray[1].unit??''}
+                                            value={fluxArray[1].value}/> }
             {threeColor && <DataReadoutItem lArea='blueLabel' vArea='blueValue'
                                             labelStyle={ls}
-                                            label={fluxArray[2].label} value={fluxArray[2].value}/> }
+                                            monoFont={radix===16}
+                                            prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}
+                                            label={fluxArray[2].label}
+                                            unit={fluxArray[2].unit??''}
+                                            value={fluxArray[2].value}/> }
             <MouseReadoutLock gArea='lock' lockByClick={readout.lockByClick} />
         </div>
     );

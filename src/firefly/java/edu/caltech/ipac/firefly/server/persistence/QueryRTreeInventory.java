@@ -9,20 +9,19 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
-import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.table.TableMeta;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.MathUtil;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.File;
@@ -71,7 +70,7 @@ public class QueryRTreeInventory extends IpacTablePartProcessor {
         WorldPt wpt = req.getWorldPtParam(ServerParams.USER_TARGET_WORLD_PT);
         if (wpt == null)
             throw new DataAccessException("could not find the parameter: " + ServerParams.USER_TARGET_WORLD_PT);
-        wpt = Plot.convert(wpt, CoordinateSys.EQ_J2000);
+        wpt = VisUtil.convert(wpt, CoordinateSys.EQ_J2000);
 
         String dataset = req.getParam(DATASET_KEY);
         if (StringUtils.isEmpty(dataset)) {

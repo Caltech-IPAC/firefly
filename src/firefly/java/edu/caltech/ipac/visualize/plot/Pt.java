@@ -11,38 +11,31 @@ import java.io.Serializable;
  */
 
 public class Pt implements Serializable {
-   private double _x;
-   private double _y;
-
-
-   public Pt() {this(0,0);}
-
+   private final double x;
+   private final double y;
 
    public Pt(double x, double y) {
-      _x= x;
-      _y= y;
+      this.x = x;
+      this.y = y;
    }
 
-   public double getX() { return _x; }
-   public double getY() { return _y; }
+   public double getX() { return x; }
+   public double getY() { return y; }
 
    public boolean equals(Object o) {
       boolean retval= false;
       if (o instanceof Pt) {
          Pt p= (Pt)o;
          if (getClass() == p.getClass() &&
-             _x         == p._x         &&
-             _y         == p._y) {
+             x == p.x &&
+             y == p.y) {
                  retval= true;
          } // end if
       }
       return retval;
    }
 
-    public String toString() {
-        return getX()+";"+getY();
-    }
-
+    public String toString() { return getX()+";"+getY(); }
 
     public static Pt parse(String serString) {
         if (serString==null) return null;
@@ -50,7 +43,7 @@ public class Pt implements Serializable {
         double y;
         Pt pt;
         try {
-            String sAry[]= serString.split(";");
+            String[] sAry= serString.split(";");
             if (sAry.length!=2) return null;
 
             x = parseDouble(sAry[0]);
@@ -63,16 +56,8 @@ public class Pt implements Serializable {
         return pt;
     }
 
-    public String serialize() { return toString(); }
-
     @Override
-    public int hashCode() {
-        return toString().hashCode();
-    }
-
-    //these methods should not be used except in special circumstances
-    protected void setX(double x) { _x= x; }
-    protected void setY(double y) { _y= y; }
+    public int hashCode() { return toString().hashCode(); }
 
     public static double parseDouble(String s) throws NumberFormatException {
         return s.equals("NaN") ? Double.NaN : Double.parseDouble(s);

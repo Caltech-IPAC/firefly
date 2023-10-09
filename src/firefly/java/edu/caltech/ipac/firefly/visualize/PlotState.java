@@ -166,7 +166,7 @@ public class PlotState {
 
     public RangeValues getRangeValues() { return get(firstBand()).getRangeValues(); }
 
-    public FileAndHeaderInfo getFileAndHeaderInfo(Band band) {
+    public BandState.FileAndHeaderInfo getFileAndHeaderInfo(Band band) {
         return get(band).getFileAndHeaderInfo();
     }
 

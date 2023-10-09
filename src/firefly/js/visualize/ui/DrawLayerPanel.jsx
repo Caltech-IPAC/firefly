@@ -42,7 +42,7 @@ function makeState() {
         dlAry,
         activePv,
         hasLayers: (layersLength + imageOverlayLength)>0,
-        mouseOverMaskValue: lastMouseImageReadout()?.readoutItems?.imageOverlay?.value ?? 0,
+        mouseOverMaskValue: Number(lastMouseImageReadout()?.readoutItems?.imageOverlay?.valueBase10 || 0),
     };
 }
 

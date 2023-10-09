@@ -276,13 +276,8 @@ public class CropAndCenter  {
         }
 
         //convert the float data array to the bitpix type in the header
-        Object data =ArrayFuncs.convertArray(floatDataArray, FitsReadUtil.getDataType(header.getIntValue("BITPIX")), true);
-        ImageData imageData= new ImageData(data);
-
-        return new ImageHDU(newHeader,  imageData );
-
-
-
+        Object data =ArrayFuncs.convertArray(floatDataArray, FitsReadUtil.getDataType(hdu), true);
+        return FitsReadUtil.makeImageHDU(newHeader,  new ImageData(data));
     }
 
     static Header clone_header(Header header) throws HeaderCardException

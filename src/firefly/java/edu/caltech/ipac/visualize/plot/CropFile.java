@@ -354,10 +354,10 @@ public class CropFile {
             neImageData = new ImageData(ArrayFuncs.convertArray(float3d, FitsReadUtil.getDataType(newHeader.getIntValue("BITPIX")), true) );
         }
 
-        ImageHDU newImageHDU = new ImageHDU(newHeader, neImageData);
+        ImageHDU newImageHDU = FitsReadUtil.makeImageHDU(newHeader, neImageData);
         Fits outFits = new Fits();
         outFits.addHDU(newImageHDU);
-        return (outFits);
+        return outFits;
     }
 
 

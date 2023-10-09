@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.visualize.ImagePlotBuilder.MultiImageAction;
 import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.BandState;
 import edu.caltech.ipac.firefly.visualize.PlotState;
@@ -14,8 +15,6 @@ import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotHeaderInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotInitializer;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.util.Assert;
-import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
@@ -27,11 +26,14 @@ import nom.tam.fits.Header;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static edu.caltech.ipac.firefly.server.visualize.ImagePlotBuilder.reqToMultiAction;
+import static edu.caltech.ipac.firefly.server.visualize.ProgressStat.PType;
 import static edu.caltech.ipac.firefly.visualize.Band.BLUE;
 import static edu.caltech.ipac.firefly.visualize.Band.GREEN;
 import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
@@ -53,29 +55,20 @@ public class WebPlotFactory {
                                               WebPlotRequest bRequest) throws FailedRequestException {
 
         LinkedHashMap<Band, WebPlotRequest> rMap = new LinkedHashMap<>(); // use linkedHashMap to keep order
-
         if (rRequest != null) rMap.put(RED, rRequest);
         if (gRequest != null) rMap.put(GREEN, gRequest);
         if (bRequest != null) rMap.put(BLUE, bRequest);
-        return create(rMap, ImagePlotBuilder.MultiImageAction.USE_FIRST, null, true);
+        return create(rMap, MultiImageAction.USE_FIRST, null, true);
     }
 
     public static WebPlotFactoryRet createNew(WebPlotRequest request) throws FailedRequestException {
-        var multiAction= ImagePlotBuilder.MultiImageAction.USE_ALL;
-        if (request.containsParam(WebPlotRequest.MULTI_IMAGE_IDX)) {
-            multiAction= ImagePlotBuilder.MultiImageAction.USE_IDX;
-        } else if (request.containsParam(WebPlotRequest.MULTI_IMAGE_EXTS)) {
-            multiAction = ImagePlotBuilder.MultiImageAction.USE_EXTS;
-        }
-        return create(Collections.singletonMap(NO_BAND, request), multiAction, null, false);
+        return create(Collections.singletonMap(NO_BAND, request), reqToMultiAction(request), null, false);
     }
-
-    public static WebPlotFactoryRet recreate(PlotState state) throws FailedRequestException {
-        Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<>(5);
+    public static void recreate(PlotState state) throws FailedRequestException {
+        Map<Band, WebPlotRequest> requestMap = new LinkedHashMap<>();
         for (Band band : state.getBands()) requestMap.put(band, state.getWebPlotRequest(band));
-        WebPlotFactoryRet retval = create(requestMap, null, state, state.isThreeColor());
-        Assert.argTst(retval.wpInit.length == 1, "in this case you should never have more than one result");
-        return retval;
+        MultiImageAction a= state.isThreeColor() ? MultiImageAction.USE_FIRST : MultiImageAction.USE_IDX;
+        create(requestMap, a, state, state.isThreeColor());
     }
 
 //======================================================================
@@ -83,36 +76,34 @@ public class WebPlotFactory {
 //======================================================================
 
     private static WebPlotFactoryRet create(Map<Band, WebPlotRequest> requestMap,
-                                            ImagePlotBuilder.MultiImageAction multiAction,
+                                            MultiImageAction multiAction,
                                             PlotState state,
                                             boolean threeColor) throws FailedRequestException {
 
 
-        WebPlotRequest saveRequest = requestMap.values().iterator().next();
         if (requestMap.size() == 0) throw new FailedRequestException("Could not create plot", "All WebPlotRequest are null");
+        WebPlotRequest saveRequest = requestMap.values().iterator().next();
+        boolean useHeader= !threeColor;
 
         try {
             long start = System.currentTimeMillis();
-            ImagePlotBuilder.Results allPlots= ImagePlotBuilder.build(requestMap, multiAction, state, threeColor);
+            ImagePlotBuilder.Results results= ImagePlotBuilder.build(requestMap, multiAction, state, threeColor);
 
             // ------------ Iterate through results, Prepare the return objects, including PlotState if it is null
-            ImagePlotCreator.PlotInfo[] pInfo= allPlots.plotInfoAry();
-            WebPlotInitializer[] wpInit = new WebPlotInitializer[pInfo.length];
-            saveRequest= pInfo[0].state().getWebPlotRequest();
-            PlotState lastState= null;
-            for (int i = 0; (i < pInfo.length); i++) {
-                ImagePlotCreator.PlotInfo pi = pInfo[i];
-                sendMsg(i,pInfo);
-                writeModifiedFileIfNecessary(pi);
-                wpInit[i] = makePlotResults(pi, !threeColor, !fileEqual(pi.state(),lastState) );
-                lastState= pi.state();
-            }
-            WebPlotHeaderInitializer wpHeader= !threeColor ? makeWpHeaderInit(pInfo[0]) : null;
+            ImagePlotCreator.PlotInfo[] pInfo= results.plotInfoAry();
+
+            if (threeColor) writeAnyModifiedFiles(pInfo);
+            WebPlotHeaderInitializer wpHeader= useHeader ? makeWpHeaderInit(pInfo[0]) : null;
+            WebPlotInitializer[] wpInit= Arrays.stream(pInfo)
+                    .map( pi -> makeWebPlotInitializer(pi,useHeader))
+                    .toList()
+                    .toArray(new WebPlotInitializer[0]);
+            cleanupAnyCachedHDUs(pInfo);
             long elapse = System.currentTimeMillis() - start;
-            logSuccess(pInfo[0].state(), elapse, allPlots.findElapse(), allPlots.readElapse());
+            logSuccess(pInfo[0].state(), elapse, results.findElapse(), results.readElapse());
             return new WebPlotFactoryRet(wpInit,wpHeader);
         } catch (Exception e) {
-            updateProgressIsFailure(saveRequest);
+            PlotServUtils.updateProgress(saveRequest, PType.FAIL, "Failed");
             throw makeException(e);
         }
     }
@@ -124,16 +115,30 @@ public class WebPlotFactory {
     }
 
     /**
-     * If the file was geom with a flip, rotate, etc then write it out. Almost never happens in this situration
+     * If the file was geom for a 3 color plot
      */
-    private static void writeModifiedFileIfNecessary(ImagePlotCreator.PlotInfo pi) {
-        for (Map.Entry<Band, ModFileWriter> entry : pi.fileWriterMap().entrySet()) {
-            ModFileWriter mfw = entry.getValue();
-            if (mfw != null) {
-                if (mfw.getCreatesOnlyOneImage()) pi.state().setImageIdx(0, entry.getKey());
-                mfw.writeFile(pi.state());
+    private static void writeAnyModifiedFiles(ImagePlotCreator.PlotInfo[] pInfo) {
+        for(var pi : pInfo) {
+            PlotState state= pi.state();
+            for (Map.Entry<Band, ModFileWriter> entry : pi.fileWriterMap().entrySet()) {
+                ModFileWriter mfw = entry.getValue();
+                if (mfw != null) {
+                    pi.state().setImageIdx(0, entry.getKey());
+                    mfw.writeFile(state);
+                }
             }
         }
+    }
+
+    private static void cleanupAnyCachedHDUs(ImagePlotCreator.PlotInfo[] pInfo) {
+        var cleanList= new ArrayList<File>();
+        for(ImagePlotCreator.PlotInfo pi : pInfo) {
+            PlotState state= pi.state();
+            for(Band b : state.getBands()) {
+                if (state.getWorkingFitsFileStr(b)!=null) cleanList.add(PlotStateUtil.getWorkingFitsFile(state,b));
+            }
+        }
+        cleanList.stream().distinct().forEach(FitsCacher::clearCachedHDU);
     }
 
     private static WebPlotHeaderInitializer makeWpHeaderInit(ImagePlotCreator.PlotInfo pInfo) {
@@ -155,40 +160,11 @@ public class WebPlotFactory {
                 false, s.getPrimaryRequest(),zeroHeaderAry, attributes);
     }
 
-    private static boolean fileEqual(PlotState s1, PlotState s2) {
-        if (s1==null || s2==null) return false;
-        boolean equal= s1.getBands().length==s2.getBands().length;
-        if (!equal) return false;
-        for(Band b : s1.getBands()) {
-            if (!ComparisonUtil.equals(s1.getWorkingFitsFileStr(b), s2.getWorkingFitsFileStr(b))) return false;
-        }
-        return true;
 
-    }
+    private static WebPlotInitializer makeWebPlotInitializer(ImagePlotCreator.PlotInfo pInfo,
+                                                             boolean clearRedundantHeaderData) {
 
-    private static void updateProgressIsFailure(WebPlotRequest wpr) {
-        if (wpr!=null) PlotServUtils.updatePlotCreateProgress(wpr, ProgressStat.PType.FAIL, "Failed");
-    }
-
-
-    private static WebPlotInitializer makePlotResults(ImagePlotCreator.PlotInfo pInfo,
-                                                      boolean clearHeaderData,
-                                                      boolean clearCachedHDU) {
         PlotState state = pInfo.state();
-
-        if (clearCachedHDU) {
-            for(Band b : state.getBands()) { //clearing out hdu cuts fits memory usage in half
-                File f= PlotStateUtil.getWorkingFitsFile(state,b);
-                if (f!=null) FitsCacher.clearCachedHDU(f);
-            }
-        }
-//        CtxControl.initPlotCtx(state);
-        return makeWebPlotInitializer(state, pInfo, clearHeaderData);
-    }
-
-    private static WebPlotInitializer makeWebPlotInitializer(PlotState state,
-                                                             ImagePlotCreator.PlotInfo pInfo,
-                                                             boolean clearHeaderData) {
         // need a WebFits Data each band: normal is 1, 3 color is three
         WebFitsData[] wfDataAry = new WebFitsData[3];
 
@@ -202,10 +178,13 @@ public class WebPlotFactory {
             headerAry[i]= frAry[i]!=null ? frAry[i].getHeader() : null;
             zeroHeaderAry[i]= frAry[i]!=null ? frAry[i].getZeroHeader() : null;
         }
-        int dataWidth= pInfo.imageDataWidth();
-        int dataHeight= pInfo.imageDataHeight();
-        CoordinateSys imageCoordSys= pInfo.imageCoordSys();
 
+        FitsRead fr= pInfo.fitsReadGroup().getRefFitsRead();
+
+
+        int dataWidth= fr.getImageDataWidth();
+        int dataHeight= fr.getImageDataHeight();
+        CoordinateSys imageCoordSys= fr.getImageCoordinateSystem();
 
 
         var desc= PlotServUtils.makePlotDesc(state,pInfo.fitsReadGroup(),pInfo.dataDesc(),state.isMultiImageFile());
@@ -227,7 +206,7 @@ public class WebPlotFactory {
             }
         }
 
-        if (clearHeaderData) {
+        if (clearRedundantHeaderData) {
             state= state.makeCopy();
             BandState[] bsAry= state.getBandStateAry();
             for(int i=0; i<3; i++) {
@@ -243,7 +222,6 @@ public class WebPlotFactory {
             zeroHeaderAry= null;
         }
 
-
         return new WebPlotInitializer(state,
                                       imageCoordSys,
                                       headerAry,
@@ -251,7 +229,7 @@ public class WebPlotFactory {
                                       dataWidth, dataHeight,
                                       wfDataAry,
                                       desc,
-                                      clearHeaderData ? null : pInfo.dataDesc(),
+                                      clearRedundantHeaderData ? null : pInfo.dataDesc(),
                                       rdList);
     }
 
@@ -287,28 +265,6 @@ public class WebPlotFactory {
         Counters.getInstance().incrementKB(Counters.Category.Visualization, "Total Read", totSize/ StringUtils.K);
     }
 
-    private static void sendMsg(int i, ImagePlotCreator.PlotInfo[] pInfo) {
-        boolean notify= pInfo.length<5 || i % ((pInfo.length/10)+1)==0 || i==pInfo.length-1;
-        if (!notify) return;
-        ImagePlotCreator.PlotInfo pi = pInfo[i];
-        if (pInfo.length>3) {
-            if (i==pInfo.length-1) {
-                PlotServUtils.updatePlotCreateProgress(pi.state().getWebPlotRequest(),
-                        ProgressStat.PType.CREATING,
-                        PlotServUtils.PROCESSING_COMPLETED_MSG);
-            }
-            else {
-                PlotServUtils.updatePlotCreateProgress(pi.state().getWebPlotRequest(), ProgressStat.PType.CREATING,
-                        PlotServUtils.PROCESSING_MSG+": "+ (i+1)+" of "+pInfo.length);
-            }
-        }
-        else {
-            PlotServUtils.updatePlotCreateProgress(pi.state().getWebPlotRequest(),ProgressStat.PType.CREATING,
-                    PlotServUtils.PROCESSING_MSG);
-        }
-    }
-
     public record WebPlotFactoryRet(WebPlotInitializer[] wpInit, WebPlotHeaderInitializer wpHeader) { }
-
 }
 

@@ -249,7 +249,7 @@ public class DirectStretchUtils {
 
     private static int dRoundUp(int v, int factor) { return v % factor == 0 ? v/factor : v/factor +1; }
 
-    static private byte[] makeDecimated(byte[] in, int factor, int width, int height) {
+    private static byte[] makeDecimated(byte[] in, int factor, int width, int height) {
         int outW= dRoundUp(width,factor);
         int outH= dRoundUp(height,factor);
         int outLen= (outW * outH);
@@ -264,23 +264,7 @@ public class DirectStretchUtils {
         return out;
     }
 
-    static byte averageCellsORIGINAL(byte[] in,int width,int rowIdx, int colIdx, int factor) {
-        int sum= 0;
-        int cnt= 0;
-        int inIdx;
-        for(int j=colIdx; (j<colIdx+factor); j++)  {
-            for(int i=rowIdx; (i<rowIdx+factor); i++)  {
-                inIdx= j * width + i;
-                if (inIdx<in.length) {
-                    sum+= Byte.toUnsignedInt(in[inIdx]);
-                    cnt++;
-                }
-            }
-        }
-        return (byte) (sum/cnt);
-    }
-
-    static byte averageCells(byte[] in,int width,int rowIdx, int colIdx, int factor) {
+    private static byte averageCells(byte[] in,int width,int rowIdx, int colIdx, int factor) {
         int sum= 0;
         int cnt= 0;
         int inIdx;

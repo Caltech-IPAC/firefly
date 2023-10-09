@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import {isNil} from 'lodash';
+import {isNil, isObject} from 'lodash';
 
 import {flux} from '../ReduxFlux';
 import {updateSet} from '../../util/WebUtil.js';
@@ -198,7 +198,9 @@ function bgPackage(action) {
                         showInfoPopup(msg, 'Multipart download');
 
                     } else {
-                        download(jobInfo?.results?.[0]);
+                        const result= jobInfo?.results?.[0];
+                        const url= isObject(result) ? result?.href : result;
+                        download(url);
                     }
                 }
             } else {

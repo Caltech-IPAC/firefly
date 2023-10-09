@@ -10,8 +10,8 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.util.MathUtil;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 /**
@@ -46,7 +46,7 @@ public class QueryByConeSearchURL extends QueryVOTABLE {
         if (wpt == null) {
             throw new DataAccessException("could not find the paramater: " + ServerParams.USER_TARGET_WORLD_PT);
         }
-        wpt = Plot.convert(wpt, CoordinateSys.EQ_J2000);
+        wpt = VisUtil.convert(wpt, CoordinateSys.EQ_J2000);
 
         double radVal = req.getDoubleParam(RADIUS_KEY);
         double radDeg = MathUtil.convert(MathUtil.Units.parse(req.getParam(CatalogRequest.RAD_UNITS), MathUtil.Units.DEGREE), MathUtil.Units.DEGREE, radVal);

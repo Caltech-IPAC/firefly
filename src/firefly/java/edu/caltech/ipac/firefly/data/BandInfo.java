@@ -4,8 +4,7 @@
 package edu.caltech.ipac.firefly.data;
 
 import edu.caltech.ipac.firefly.visualize.Band;
-import edu.caltech.ipac.visualize.draw.Metric;
-import edu.caltech.ipac.visualize.draw.Metrics;
+import edu.caltech.ipac.visualize.draw.AreaStatisticsUtil;
 
 import java.util.HashMap;
 
@@ -13,4 +12,4 @@ import java.util.HashMap;
  * User: balandra
  * Date: Apr 9, 2010
  */
-public record BandInfo (HashMap<Band, HashMap<Metrics, Metric>> metricsMap){}
+public record BandInfo (HashMap<Band, HashMap<AreaStatisticsUtil.Metrics, AreaStatisticsUtil.Metric>> metricsMap){}

@@ -4,9 +4,9 @@
 package edu.caltech.ipac.visualize.net;
 
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.download.BaseNetParams;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.util.Locale;
@@ -24,7 +24,7 @@ public abstract class ImageServiceParams extends BaseNetParams implements Lockin
         this.type= type;
     }
     public void setWorldPt(WorldPt wp) {
-        this.wp = wp!=null ? Plot.convert(wp, CoordinateSys.EQ_J2000) : null;
+        this.wp = wp!=null ? VisUtil.convert(wp, CoordinateSys.EQ_J2000) : null;
     }
     public WorldPt getWorldPt() { return wp; }
 

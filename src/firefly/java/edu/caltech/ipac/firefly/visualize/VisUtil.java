@@ -71,6 +71,7 @@ public class VisUtil {
      * @return WorldPt the world point in the new coordinate system
      */
     public static WorldPt convert(WorldPt wpt, CoordinateSys to) {
+        if (wpt==null) return null;
         WorldPt retval;
         CoordinateSys from = wpt.getCoordSys();
         if (from.equals(to) || to == null) {

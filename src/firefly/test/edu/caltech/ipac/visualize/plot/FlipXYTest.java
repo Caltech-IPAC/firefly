@@ -7,12 +7,14 @@ import edu.caltech.ipac.firefly.util.FitsValidation;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import edu.caltech.ipac.visualize.plot.plotdata.FlipXY;
-import nom.tam.fits.*;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Test;
 import org.junit.Before;
-import java.io.FileOutputStream;
+import org.junit.Test;
+
+import java.io.File;
 import java.io.IOException;
 
 
@@ -299,9 +301,7 @@ public class FlipXYTest extends FitsValidation {
         FitsRead flipedXY= flipY .doFlip();
 
         String outFitsName ="f3FlipedXY.fits";
-        FileOutputStream fo = new java.io.FileOutputStream(FileLoader.getDataPath(FlipXYTest.class)+outFitsName);
-        flipedXY.writeSimpleFitsFile(fo);
-        fo.close();
+        flipedXY.writeSimpleFitsFile(new File(FileLoader.getDataPath(FlipXYTest.class)+outFitsName));
 
 
     }

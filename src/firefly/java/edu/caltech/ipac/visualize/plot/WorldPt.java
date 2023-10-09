@@ -8,18 +8,15 @@ package edu.caltech.ipac.visualize.plot;
  * that the point is in.
  */
 public class WorldPt extends Pt {
-   private CoordinateSys _coordSys;
+   private final CoordinateSys _coordSys;
     
-   public WorldPt() { this(0,0); }
    public WorldPt(double lon, double lat) {
        this(lon,lat,CoordinateSys.EQ_J2000);
    }
-   public WorldPt(WorldPt wp) { this(wp.getLon(),wp.getLat(),wp.getCoordSys()); }
    public WorldPt(double lon, double lat, CoordinateSys coordSys) {
        super(lon,lat);
        _coordSys= coordSys;
    }
-
 
     public double getLon() { return getX(); }
     public double getLat() { return getY(); }
@@ -30,8 +27,7 @@ public class WorldPt extends Pt {
         boolean retval= super.equals(o);
         if (retval) {
             retval= false;
-            if (o instanceof WorldPt) {
-                WorldPt p= (WorldPt)o;
+            if (o instanceof WorldPt p) {
                 retval= p._coordSys.equals(_coordSys);
             }
         }
@@ -42,10 +38,6 @@ public class WorldPt extends Pt {
         return getX()+";"+getY()+";"+_coordSys.toString();
     }
 
-    @Override
-    public String serialize() {
-        return toString();
-    }
 
     protected static WorldPt stringAryToWorldPt(String wpParts[]) {
         WorldPt retval= null;

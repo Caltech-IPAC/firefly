@@ -17,13 +17,11 @@ package edu.caltech.ipac.visualize.plot;
  * a ImagePt but will have different offsets.
  */
 public final class ImageWorkSpacePt extends Pt{
-   public ImageWorkSpacePt() { super(0,0); }
-   public ImageWorkSpacePt(double x, double y) { super(x,y); }
-   private ImageWorkSpacePt(Pt p) { this(p.getX(),p.getY()); }
+    public ImageWorkSpacePt(double x, double y) { super(x,y); }
 
     public static ImageWorkSpacePt parse(String serString) {
         Pt p= Pt.parse(serString);
-        return p==null ? null : new ImageWorkSpacePt(p);
+        return p==null ? null : new ImageWorkSpacePt(p.getX(),p.getY());
     }
 }
 

@@ -68,10 +68,10 @@ public class ZscaleTest {
         int len_stdline = 120;
 
 
-        Zscale.ZscaleRetval zscaleRetval = Zscale.cdl_zscale(float1d, nx, ny, bitpix, contrast, opt_size, len_stdline, blank_value);
+        Zscale.ZscaleRetval zscaleRetval = Zscale.cdl_zscale(float1d, nx, ny, contrast, opt_size, len_stdline, blank_value);
 
-        double z1 = zscaleRetval.getZ1();
-        double z2 = zscaleRetval.getZ2();
+        double z1 = zscaleRetval.z1();
+        double z2 = zscaleRetval.z2();
 
         //Check the result:
         Assert.assertEquals("Should found z1 = " + z1, z1, 418.74435, 1E-5);

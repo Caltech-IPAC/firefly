@@ -9,11 +9,14 @@
 
 import React, {useState,useEffect} from 'react';
 import PropTypes from 'prop-types';
+import CompleteButton from '../../ui/CompleteButton.jsx';
+import HelpIcon from '../../ui/HelpIcon.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import FieldGroupUtils, {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
+import {useFieldGroupValue} from '../../ui/SimpleComponent.jsx';
 import { dispatchChangeReadoutPrefs} from '../../visualize/MouseReadoutCntlr.js';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
@@ -71,13 +74,23 @@ export function showMouseReadoutOptionDialog(fieldKey,radioValue) {
 	dispatchShowDialog(fieldKey);
 }
 
+export function showMouseReadoutFluxRadixDialog(readoutPrefs) {
+	const popup = (
+		<PopupPanel title={'Choose Pixel readout radix'}  >
+			<FluxRadixDialog readoutPrefs={readoutPrefs} dialogId='fluxRadixDialog'/>
+		</PopupPanel>
+	);
+	DialogRootContainer.defineDialog('fluxRadixDialog', popup);
+	dispatchShowDialog('fluxRadixDialog');
+}
+
 
 /**
  * this method dispatcher the action to the store.
  * @param fieldGroup
  * @param fieldKey
  */
-function doDispatch(fieldGroup,  fieldKey){
+function doDispatch(fieldGroup,  fieldKey, dialogKey, hide= true){
 	window.setTimeout(() => { // since the mouse click happens before the store can update, we must defer the actions
 		const results= getFieldGroupResults(fieldGroup,true);
 		const prefValue= results[fieldKey];
@@ -95,14 +108,10 @@ function doDispatch(fieldGroup,  fieldKey){
         else {
             dispatchChangeReadoutPrefs({[fieldKey]:prefValue});
         }
-
-		dispatchHideDialog(fieldKey);
+		if (hide) dispatchHideDialog(dialogKey??fieldKey);
 	},0);
 }
 
-/**
- *  create a popup dialog
- */
 function MouseReadoutOptionDialog({groupKey,fieldKey,radioValue, isHiPS}) {
 		const [,setFields]= useState(FieldGroupUtils.getGroupFields(groupKey));
 
@@ -130,6 +139,59 @@ MouseReadoutOptionDialog.propTypes= {
 	radioValue:   PropTypes.string.isRequired,
     isHiPS: PropTypes.bool.isRequired
 };
+
+
+function FluxRadixDialog({readoutPrefs, dialogId}) {
+
+	const groupKey= 'radixPrefs';
+	const [getIntFluxValueRadix, setIntFluxValueRadix]= useFieldGroupValue('intFluxValueRadix',groupKey);
+	const [getFloatFluxValueRadix, setFloatFluxValueRadix]= useFieldGroupValue('floatFluxValueRadix',groupKey);
+
+	useEffect(() => {
+		setIntFluxValueRadix(readoutPrefs.intFluxValueRadix);
+		setFloatFluxValueRadix(readoutPrefs.floatFluxValueRadix);
+	},[]);
+
+	return (
+		<FieldGroup groupKey={groupKey} style={{...dialogStyle, flexDirection:'column'}} keepState={false}>
+			<div style={ {display:'flex', alignItems:'center'}}
+				 onClick={ () => doDispatch(groupKey, 'intFluxValueRadix', 'fluxRadixDialog', false) } >
+				<div style={{width:'15em'}} title='Select Value Optoins'>Integer data readout radix</div>
+				<RadioGroupInputField
+					wrapperStyle={rightColumn}
+					options={
+						[ {label: 'Decimal', value: '10'}, {label: 'Hexadecimal', value: '16'}, ]
+					}
+					alignment={'vertical'} fieldKey='intFluxValueRadix'
+					initialState={{ tooltip: 'Please select an option', value:getIntFluxValueRadix()}} />
+			</div>
+			<div style={{display:'flex', alignItems:'center', paddingTop:15}}
+				 onClick={ () => doDispatch(groupKey, 'floatFluxValueRadix', 'fluxRadixDialog', false) } >
+				<div style={{width:'15em'}} title='Select Value Optoins'>Floating Point data readout radix</div>
+				<RadioGroupInputField
+					wrapperStyle={rightColumn}
+					options={
+						[ {label: 'Decimal', value: '10'}, {label: 'Hexadecimal', value: '16'}, ]
+					}
+					alignment={'vertical'} fieldKey='floatFluxValueRadix'
+					initialState={{ tooltip: 'Please select an option', value:getFloatFluxValueRadix()}} />
+			</div>
+			<div style={{padding:'25px 10px 10px 5px'}}>
+				Choosing hexadecimal display will suppress all application of rescaling corrections (i.e. BZERO and BSCALE).
+				<br/><br/>
+				Hexadecimal will show the raw number in the file.
+			</div>
+			<div style={{width:'100%', borderTop:'1px solid rgba(0,0,0,.1)', paddingTop: 5}}/>
+			<div style={{display:'flex', width:'100%', justifyContent:'space-between'}}>
+				<CompleteButton style={{alignSelf:'flex-start'}} dialogId={dialogId} text='Close'/>
+				<HelpIcon helpId={'visualization.radixOptions'} style={{alignSelf:'flex-end'}}/>
+			</div>
+		</FieldGroup>
+		);
+}
+
+
+
 
 const CoordinateOptionDialogForm= ({ groupKey,fieldKey,radioValue, optionList}) => (
 		<FieldGroup groupKey={groupKey} keepState={false}>

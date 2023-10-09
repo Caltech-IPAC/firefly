@@ -3,13 +3,13 @@
  */
 package edu.caltech.ipac.admin_tools;
 
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
 import nom.tam.fits.FitsException;
 import nom.tam.fits.Header;
 import nom.tam.fits.HeaderCard;
 import nom.tam.fits.ImageData;
-import nom.tam.fits.ImageHDU;
 import nom.tam.util.BufferedDataOutputStream;
 import nom.tam.util.Cursor;
 
@@ -249,10 +249,6 @@ static public void main(String args[])
 	    }
 	    out.close();
 	}
-	catch (FileNotFoundException fe)
-	{
-	    System.err.println("ABORT: " + fe.getMessage());
-	}
 	catch (IOException ioe)
 	{
 	    System.err.println("ABORT: " + ioe.getMessage());
@@ -312,7 +308,7 @@ static public void main(String args[])
 		}
 	    }
 	    new_image_data = new ImageData(new_data32);
-	    BasicHDU new_HDU = new ImageHDU(new_header, new_image_data);
+	    BasicHDU<?> new_HDU = FitsReadUtil.makeImageHDU(new_header, new_image_data);
 	    Fits new_fits = new Fits();
 	    new_fits.addHDU(new_HDU);
 

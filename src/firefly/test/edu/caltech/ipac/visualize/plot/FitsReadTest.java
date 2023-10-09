@@ -13,7 +13,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.FileOutputStream;
+import java.io.File;
 import java.io.IOException;
 
 
@@ -175,9 +175,7 @@ public class FitsReadTest extends FitsValidation {
         String outFitsName=dataPath+"/f3_out.fits";
         Fits  inFits = FileLoader.loadFits(FitsReadTest.class, fileName);
         FitsRead fitsRead0 = FitsReadFactory.createFitsReadArray(inFits)[0];
-        FileOutputStream fo = new java.io.FileOutputStream(outFitsName);
-        fitsRead0.writeSimpleFitsFile(fo);
-        fo.close();
+        fitsRead0.writeSimpleFitsFile(new File(outFitsName));
 
         ImagePt imagePt = new ImagePt(325.5482500, 66.0750000);
         double flux = fitsRead0.getFlux(imagePt);
@@ -187,15 +185,11 @@ public class FitsReadTest extends FitsValidation {
         String rotationFitsName=dataPath+"/f3_rotationFromNorth_out.fits";
         FitsRead frRotaionAnglefromNorth = FitsReadFactory.createFitsReadRotated(fitsRead0,angle, true);
 
-        fo = new java.io.FileOutputStream(rotationFitsName);
-        frRotaionAnglefromNorth.writeSimpleFitsFile(fo);
-        fo.close();
+        frRotaionAnglefromNorth.writeSimpleFitsFile(new File(rotationFitsName));
 
         String rotation1FitsName=dataPath+"/f3_rotationNotFromNorth_out.fits";
         FitsRead frRotaionAngleNotfromNorth = FitsReadFactory.createFitsReadRotated(fitsRead0,angle, false);
-        fo = new java.io.FileOutputStream(rotation1FitsName);
-        frRotaionAngleNotfromNorth.writeSimpleFitsFile(fo);
-        fo.close();
+        frRotaionAngleNotfromNorth.writeSimpleFitsFile(new File(rotation1FitsName));
 
 
     }

@@ -3,9 +3,9 @@
  */
 package edu.caltech.ipac.astro.ibe;
 
+import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
-import edu.caltech.ipac.visualize.plot.Plot;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 
 import java.io.UnsupportedEncodingException;
@@ -13,7 +13,8 @@ import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
-import static edu.caltech.ipac.util.StringUtils.*;
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * Date: 4/18/14
@@ -62,7 +63,7 @@ public class BaseIbeDataSource implements IbeDataSource {
             if (userTargetWorldPt != null) {
                 WorldPt pt = WorldPt.parse(userTargetWorldPt);
                 if (pt != null) {
-                    pt = Plot.convert(pt, CoordinateSys.EQ_J2000);
+                    pt = VisUtil.convert(pt, CoordinateSys.EQ_J2000);
                     queryParam.setPos(pt.getLon() + "," + pt.getLat());
                 }
             } else {

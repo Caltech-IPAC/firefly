@@ -5,8 +5,11 @@
 import {race,call} from 'redux-saga/effects';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {clone} from '../../util/WebUtil.js';
-import {readoutRoot, makeValueReadoutItem, makePointReadoutItem,
-        makeDescriptionItem, isLockByClick, STANDARD_READOUT, HIPS_STANDARD_READOUT} from '../MouseReadoutCntlr.js';
+import {
+    readoutRoot, makeValueReadoutItem, makePointReadoutItem,
+    makeDescriptionItem, isLockByClick, STANDARD_READOUT, HIPS_STANDARD_READOUT, makeFileValueReadoutItem, STATUS_VALUE,
+    TYPE_EMPTY
+} from '../MouseReadoutCntlr.js';
 import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import {Band} from '../Band.js';
 import {MouseState} from '../VisMouseSync.js';
@@ -227,27 +230,18 @@ const readoutTypes= [
 //-------------------------------------
 
 function makeImagePlotImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor) {
-    return makeReadoutWithFlux(makeReadout(plot,worldPt,screenPt,imagePt), plot, null, threeColor);
+    return makeReadoutWithFlux(makeReadout(plot,worldPt,screenPt,imagePt), plot, null, 10, threeColor);
 }
 
 function makeImagePlotAsyncReadout(plotView, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder) {
 
     const plot= primePlot(plotView);
     const readoutItems= makeImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);
+    const {readoutPref}= readoutRoot();
+    const radix= Number(getBixPix(plot)>0 ? readoutPref.intFluxValueRadix : readoutPref.floatFluxValueRadix);
     return doFluxCall(plotView,imagePt).then( (fluxResult) => {
-        return makeReadoutWithFlux(readoutItems,primePlot(plotView), fluxResult, threeColor);
+        return makeReadoutWithFlux(readoutItems,primePlot(plotView), fluxResult, radix, threeColor);
     });
-}
-
-
-
-function isFluxInt(plot,band) {
-    const h= plot.headerAry[band.value];
-    if (!h) return false;
-    const bp= getBixPix(h);
-    const bscale= getBScale(h);
-    if (isNaN(bscale)) return false;
-    return (bp>0) && Number.isInteger(bscale);
 }
 
 /**
@@ -255,28 +249,29 @@ function isFluxInt(plot,band) {
  * @param readout
  * @param {WebPlot|undefined} plot
  * @param fluxResult
+ * @param radix
  * @param threeColor
  * @return {*}
  */
-function makeReadoutWithFlux(readout, plot, fluxResult,threeColor) {
+function makeReadoutWithFlux(readout, plot, fluxResult, radix, threeColor) {
     readout= clone(readout);
-    const fluxData= fluxResult ? getFlux(fluxResult,plot) : null;
+    const fluxData= fluxResult ? getFlux(fluxResult,plot) : undefined;
     const labels= getFluxLabels(plot);
     if (threeColor) {
-        const bands = plot.plotState.getBands();
-        bands.forEach( (b,idx) => {
-            const isInt= isFluxInt(plot,b);
-            readout[b.key+'Flux']= makeValueReadoutItem(labels[idx], fluxData?.[idx]?.value,fluxData?.[idx]?.unit, isInt?0:6 );
+        plot.plotState.getBands().forEach( (b,idx) => {
+            const {valueBase10, valueBase16,type,status,unit}= fluxData?.[idx] ?? {status:STATUS_VALUE, type:TYPE_EMPTY};
+            readout[b.key+'Flux']= makeFileValueReadoutItem(labels[idx], valueBase10, valueBase16,radix, status,type,unit, 6);
         });
     }
     else {
-        const isInt= isFluxInt(plot,Band.NO_BAND);
-        readout.nobandFlux= makeValueReadoutItem(labels[0], fluxData?.[0]?.value,fluxData?.[0]?.unit, isInt?0:6);
+        const {valueBase10, valueBase16,type,status,unit}= fluxData?.[0] ?? {status:STATUS_VALUE, type:TYPE_EMPTY};
+        readout.nobandFlux= makeFileValueReadoutItem(labels[0], valueBase10, valueBase16,radix, status,type, unit, 6);
     }
     if (fluxData) {
         const oIdx= fluxData.findIndex( (d) => d.imageOverlay);
         if (oIdx>-1) {
-            readout.imageOverlay= makeValueReadoutItem('mask', fluxData[oIdx].value, fluxData[oIdx].unit, 0);
+            const {valueBase10, valueBase16,type,status,unit}= fluxData?.[oIdx] ?? {};
+            readout.imageOverlay= makeFileValueReadoutItem('mask', valueBase10, valueBase16, radix, status, type, unit, 0);
         }
     }
     return readout;
@@ -287,13 +282,15 @@ function doFluxCall(plotView,iPt) {
     const plot= primePlot(plotView);
     if (CysConverter.make(plot).pointInPlot(iPt)) {
         const plotStateAry= getPlotStateAry(plotView);
-        return callGetFileFlux(plotStateAry, iPt)
+        const passAry=[plotStateAry[0]];
+        if (plotStateAry[1]) passAry.push(plotStateAry[1]);
+        return callGetFileFlux(passAry, iPt)
             .then((result) => {
                 return result;
             })
             .catch((e) => {
                 console.log(`flux error: ${plotView.plotId}`, e);
-                return ['', '', ''];
+                return [{}, {}, {}];
             });
     }
     else {
@@ -301,13 +298,10 @@ function doFluxCall(plotView,iPt) {
     }
 }
 
-
 function getFlux(result, plot) {
     const fluxArray = [];
     if (result.NO_BAND) {
-        const fluxUnitStr = getFluxUnits(plot,Band.NO_BAND);
-        const fValue = parseFloat(result.NO_BAND);
-        fluxArray[0]= {value: fValue, unit: fluxUnitStr};
+        fluxArray[0]= {...result.NO_BAND, unit: getFluxUnits(plot,Band.NO_BAND)};
     }
     else {
         const bands = plot.plotState.getBands();
@@ -324,14 +318,13 @@ function getFlux(result, plot) {
                     bandName = 'Blue';
                     break;
             }
-            const unitStr = getFluxUnits(plot,bands[i]);
-            const fnum = parseFloat(result[bandName] ?? result[bands[i].key]);
-            fluxArray[i]= {bandName, value:fnum, unit:unitStr};
+            const r= result[bandName] ?? result[bands[i].key] ?? {}; //todo which one is it
+            fluxArray[i]= {...r, unit:getFluxUnits(plot,bands[i])};
         }
     }
     Object.keys(result)
         .filter((k) => k.startsWith('overlay'))
-        .forEach( (k) => {fluxArray.push({ imageOverlay : true, value : parseFloat(result[k]), unit : 'mask' });});
+        .forEach( (k) => {fluxArray.push({ imageOverlay : true, ...result[k], unit : 'mask' });});
     return fluxArray;
 }
 

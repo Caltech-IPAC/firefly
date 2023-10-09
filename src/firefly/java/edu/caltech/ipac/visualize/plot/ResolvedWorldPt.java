@@ -12,12 +12,9 @@ import edu.caltech.ipac.util.StringUtils;
  */
 public final class ResolvedWorldPt extends WorldPt {
 
-    private String _objName;
-    private Resolver _resolver;
+    private final String _objName;
+    private final Resolver _resolver;
 
-   public ResolvedWorldPt() { this(0,0, null, Resolver.NONE); }
-
-    public ResolvedWorldPt(WorldPt wp) { this(wp.getLon(),wp.getLat(), wp.getCoordSys(), null, Resolver.NONE); }
     public ResolvedWorldPt(WorldPt wp, String objName, Resolver resolver) {
         this(wp.getLon(),wp.getLat(), wp.getCoordSys(), objName, resolver);
     }
@@ -35,12 +32,6 @@ public final class ResolvedWorldPt extends WorldPt {
        _resolver= resolver;
    }
 
-    public static ResolvedWorldPt makePt(WorldPt wp, String objName, Resolver resolver) {
-        return wp==null ? null : new ResolvedWorldPt(wp,objName,resolver);
-    }
-
-    public static ResolvedWorldPt makePt(WorldPt wp) { return wp==null ? null : new ResolvedWorldPt(wp); }
-
     public Resolver getResolver() { return _resolver;}
     public String getObjName() { return _objName;}
 
@@ -48,8 +39,7 @@ public final class ResolvedWorldPt extends WorldPt {
         boolean retval= super.equals(o);
         if (retval) {
             retval= false;
-            if (o instanceof ResolvedWorldPt) {
-                ResolvedWorldPt p= (ResolvedWorldPt)o;
+            if (o instanceof ResolvedWorldPt p) {
                 retval= p._resolver.equals(_resolver) && ComparisonUtil.equals(p._objName, _objName);
             }
         }
@@ -73,7 +63,7 @@ public final class ResolvedWorldPt extends WorldPt {
         if (sAry.length==3 || sAry.length==2) {
             WorldPt wp= WorldPt.parse(serString);
             if (wp!=null) {
-                return new ResolvedWorldPt(wp);
+                return new ResolvedWorldPt(wp.getLon(),wp.getLat(), wp.getCoordSys(), null, Resolver.NONE);
             }
         }
         else  if (sAry.length==5 || sAry.length==4)  {
