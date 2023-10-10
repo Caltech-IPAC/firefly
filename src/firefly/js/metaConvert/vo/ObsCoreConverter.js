@@ -2,11 +2,10 @@ import {isEmpty} from 'lodash';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {getCellValue, getColumns, hasRowAccess} from '../../tables/TableUtil.js';
 import {
-    getObsCoreAccessURL, getObsCoreProdTypeCol, getObsTitle, getProdTypeGuess, getServiceDescriptors,
-    isDataLinkServiceDesc, isFormatDataLink, isFormatPng, isFormatVoTable, makeWorldPtUsingCenterColumns
-} from '../../util/VOAnalyzer.js';
+    getObsCoreAccessURL, getObsCoreProdTypeCol, getObsTitle, getProdTypeGuess, isFormatDataLink, isFormatPng,
+    isFormatVoTable, makeWorldPtUsingCenterColumns } from '../../voAnalyzer/TableAnalysis.js';
+import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {tokenSub} from '../../util/WebUtil.js';
-import {Band} from '../../visualize/Band.js';
 import {getSearchTarget} from '../../visualize/saga/CatalogWatcher.js';
 import {uploadAndAnalyze} from '../AnalysisUtils.js';
 import {dispatchUpdateActiveKey} from '../DataProductsCntlr.js';
@@ -94,7 +93,7 @@ export function getObsCoreGridDataProduct(table, plotRows, activateParams, optio
  * @param highlightPlotId
  * @param activateParams
  * @param options
- * @return {Promise<never>}
+ * @return {Promise<DataProductsDisplayType>}
  */
 export async function getObsCoreRelatedDataProduct(table, row, threeColorOps, highlightPlotId, activateParams, options) {
 

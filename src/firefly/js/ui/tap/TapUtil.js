@@ -1,12 +1,12 @@
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
-import {isArray, memoize, omit, uniqBy, sortBy} from 'lodash';
+import {sprintf} from 'firefly/externalSource/sprintf.js';
+import {isArray, memoize, omit, sortBy, uniqBy} from 'lodash';
 import {getCapabilities} from '../../rpc/SearchServicesJson.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
-import {alterFalsyVal, doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.js';
+import {alterFalsyVal, doFetchTable, getColumnIdx, getColumnValues, sortTableData} from '../../tables/TableUtil.js';
 import {Logger} from '../../util/Logger.js';
 import {getProp, hashCode} from '../../util/WebUtil.js';
-import {sprintf} from 'firefly/externalSource/sprintf.js';
 
 const logger = Logger('TapUtil');
 const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
@@ -468,6 +468,13 @@ export function maybeQuote(name, isTable=false) {
 }
 
 
+/**
+ * group key for fieldgroup comp
+ */
+
+
+
+
 export const defaultADQLExamples=[
     {
         description: 'From the IRSA TAP service, a 1 degree cone search of the 2MASS point source catalog around M101 would be:',
@@ -558,6 +565,3 @@ export const TAP_SERVICES_FALLBACK = [
             'POLYGON(\'ICRS\', 9.4999, -1.18268, 9.4361, -1.18269, 9.4361, -1.11891, 9.4999, -1.1189))=1'
     }
 ];
-/**
- * group key for fieldgroup comp
- */

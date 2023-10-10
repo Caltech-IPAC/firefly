@@ -31,7 +31,7 @@ import {getFireflySessionId} from '../Firefly';
 import {makeHiPSProjection} from './WebPlot';
 
 
-export const MAX_SUPPORTED_HIPS_LEVEL= ORDER_MAX-1;
+export const MAX_SUPPORTED_HIPS_LEVEL= ORDER_MAX-2;
 
 
 
@@ -80,8 +80,7 @@ export function changeProjectionCenterAndType(plot, wp, fullSky) {
 export function getMaxDisplayableHiPSGridLevel(plot) {
     let {norder}= getHiPSNorderlevel(plot);
     norder = norder>3 ? norder+3 : norder+2;
-    if (norder>MAX_SUPPORTED_HIPS_LEVEL) norder= MAX_SUPPORTED_HIPS_LEVEL;
-    return norder;
+    return (norder>MAX_SUPPORTED_HIPS_LEVEL) ? MAX_SUPPORTED_HIPS_LEVEL : norder;
 }
 
 
@@ -135,10 +134,11 @@ export function getHiPSNorderlevel(plot, limitToImageDepth= false) {
     if (!plot) return {norder:-1, useAllSky:false};
 
     const screenPixArcsecSize= getScreenPixScaleArcSec(plot);
-    if (screenPixArcsecSize> 130) return  {useAllSky:true, norder:2};
-    if (screenPixArcsecSize> 100) return  {useAllSky:true, norder:3};
+    if (screenPixArcsecSize> 130) return  {useAllSky:true, norder:2, desiredNorder:2};
+    if (screenPixArcsecSize> 100) return  {useAllSky:true, norder:3, desiredNorder:3};
 
     let norder= getNOrderForPixArcSecSize(screenPixArcsecSize);
+    if (norder>MAX_SUPPORTED_HIPS_LEVEL) norder= MAX_SUPPORTED_HIPS_LEVEL;
     const desiredNorder= norder;
     let maxOrder= Number(plot.hipsProperties?.hips_order);
 
@@ -293,18 +293,15 @@ export function getHiPSZoomLevelForFOV(pv, fov) {
 function makeAllCorners(nOrder, coordSys) {
     const nside= 2**nOrder;
     const pixCnt = HealpixIndex.nside2Npix(nside);
-    const pixList= new Array(pixCnt).fill(0).map( (v,ipix) => ipix);
+    const pixList= Array.from({length:pixCnt}, (v,ipix) => ipix);
     const hpxIdx = getHealpixIndex(nside);
-    const spVec = new SpatialVector();
     return pixList.map( (ipix) => {
         const corners = hpxIdx.corners_nest(ipix, 1);
-        const wpCorners= corners.map( (c) => {
-            spVec.setXYZ(c.x, c.y, c.z);
-            return makeWorldPt(spVec.ra(), spVec.dec(), coordSys);
-        });
+        const wpCorners= corners.map( (c) => specVectToWP(c,coordSys) );
         return { ipix, wpCorners };
     });
 }
+
 
 
 /**
@@ -343,11 +340,7 @@ function makeHealpixCornerCacheTool() {
             if (cacheEntry) return cacheEntry;
 
             const corners = getHealpixIndex(nside).corners_nest(ipix, 1);
-            const spVec = new SpatialVector();
-            const wpCorners= corners.map( (c) => {
-                spVec.setXYZ(c.x, c.y, c.z);
-                return makeWorldPt(spVec.ra(), spVec.dec(), coordSys);
-            });
+            const wpCorners= corners.map( (c) => specVectToWP(c, coordSys) );
             return { ipix, wpCorners };
         },
 
@@ -385,8 +378,6 @@ export function getHealpixCornerTool() {
  * @return {{norder:number, pixel:number}} the pixel if we can go that deep, undefined otherwise
  */
 export function getHealpixPixel(plot, wp) {
-    //todo
-
     const {norder}= getHiPSNorderlevel(plot, true);
     if (norder>MAX_SUPPORTED_HIPS_LEVEL-9) return undefined;
     const polar = radecToPolar(wp.x,wp.y);
@@ -430,19 +421,6 @@ function healpixPixelTo512TileXY(pixel) {
     return {x,y};
 }
 
-
-function getFOVToUse(norder,desiredNorder,fov) {
-    const diff= desiredNorder-norder;
-    if (fov>.5) return fov;
-    if (diff<=0) return fov;
-    if (diff===1) return fov*1.2;
-    if (diff<=4) return fov*1.8;
-    if (fov<.03) {
-        return diff>10 ? fov*1000 : fov*100;
-    }
-    return fov;
-}
-
 /**
  *
  * @param norder
@@ -455,21 +433,40 @@ function getFOVToUse(norder,desiredNorder,fov) {
  *            pixel number and a worldPt array of corners
  */
 export function getVisibleHiPSCells (norder, desiredNorder, centerWp, fov, dataCoordSys, isAitoff= false) {
-    const healpixCache= getHealpixCornerTool();
-    const dataCenterWp= convert(centerWp, dataCoordSys);
-
-    if (isAitoff && fov > 130 && norder<=3) {
-        return healpixCache.getFullCellList(norder,dataCoordSys);
+    if (isAitoff && fov > 130 && norder<=3) { // return all cells
+        return getHealpixCornerTool().getFullCellList(norder,dataCoordSys);
     }
     else if (fov>80 && norder<=3) { // get all the cells and filter them
-        return filterAllSky(dataCenterWp, healpixCache.getFullCellList(norder,dataCoordSys));
+        const dataCenterWp= convert(centerWp, dataCoordSys);
+        return filterAllSky(dataCenterWp, getHealpixCornerTool().getFullCellList(norder,dataCoordSys));
     }
     else { // get only the healpix number for the fov and create the cell list
-        const nside = 2**norder;
-        const radiusRad= getSearchRadiusInRadians(getFOVToUse(norder,desiredNorder,fov)); // if zoomed in deep beyond the tile norder, we might need to use are larger FOV
-        const pixList = getHealpixIndex(nside).queryDisc(makeSpatialVector(dataCenterWp), radiusRad, true, true);
-        return pixList.map( (ipix) => healpixCache.makeCornersForPix(ipix, nside, dataCoordSys));
+        return getPixCellList(norder,desiredNorder, centerWp,fov,dataCoordSys);
     }
+}
+
+/**
+ * get only the healpix number for the fov and create the cell list
+ * @param norder
+ * @param desiredNorder - when render very deep desired norder give an indication how deep the zoom is beyond the tile level
+ * @param {WorldPt} centerWp - center of visible area, coordinate system of this point should be same as the projection
+ * @param {number} fov - Math.max(width, height) of the field of view in degrees (i think)
+ * @param {CoordinateSys} dataCoordSys
+ * @return {Array.<{ipix:number, wpCorners:Array.<WorldPt>}>} an array of objects the contain the healpix
+ *            pixel number and a worldPt array of corners
+ */
+function getPixCellList(norder,desiredNorder, centerWp, fov, dataCoordSys) {
+    const healpixCache=getHealpixCornerTool();
+    const dataCenterWp= convert(centerWp, dataCoordSys);
+    const norderToUse= norder>=desiredNorder ? norder : desiredNorder;
+    const radiusRad= getSearchRadiusInRadians(fov); // if zoomed in deep beyond the tile norder, we might need to use are larger FOV
+    const nsideToUse = 2**norderToUse;
+    const pixList = getHealpixIndex(nsideToUse).queryDisc(wpToSpecVect(dataCenterWp), radiusRad, true, true);
+    const pixShift= 4**(desiredNorder-norder);
+    const list= norder>=desiredNorder ? pixList : [...new Set(pixList.map((pix) => Math.trunc(pix/pixShift)))];
+    const nside= 2**norder;
+    return list.map( (ipix) => healpixCache.makeCornersForPix(ipix, nside, dataCoordSys));
+
 }
 
 export function getCornersForCell(norder, ipix, dataCoordSys) {
@@ -507,7 +504,7 @@ export function getAllVisibleHiPSCells (norder, centerWp, fov, dataCoordSys, isA
         });
     } else { // get only the healpix number for the fov and create the cell list
         const nside = 2**norder;
-        const pixList = getHealpixIndex(nside).queryDisc(makeSpatialVector(dataCenterWp), getSearchRadiusInRadians(fov), true, true);
+        const pixList = getHealpixIndex(nside).queryDisc(wpToSpecVect(dataCenterWp), getSearchRadiusInRadians(fov), true, true);
         return pixList.map( (ipix) => healpixCache.makeCornersForPix(ipix, nside, dataCoordSys));
     }
 }
@@ -517,10 +514,15 @@ export function getAllVisibleHiPSCells (norder, centerWp, fov, dataCoordSys, isA
  * @param {WorldPt} wp
  * @return {SpatialVector}
  */
-export function makeSpatialVector(wp) {
+export function wpToSpecVect(wp) {
     const spatialVector = new SpatialVector();
     spatialVector.set(wp.getLon(),wp.getLat());
     return spatialVector;
+}
+
+function specVectToWP(spVec,coordSys) {
+    return makeWorldPt(spVec.ra(), spVec.dec(), coordSys);
+
 }
 
 

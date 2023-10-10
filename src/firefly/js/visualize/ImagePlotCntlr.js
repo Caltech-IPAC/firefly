@@ -43,6 +43,8 @@ import {UserZoomTypes} from './ZoomUtil.js';
  * @prop SINGLE
  * @type {Enum}
  */
+
+/** @type ExpandType*/
 export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
 
 /**
@@ -54,6 +56,8 @@ export const ExpandType= new Enum(['COLLAPSE', 'GRID', 'SINGLE']);
  * @prop PixelCenter
  * @type {Enum}
  */
+
+/** @type WcsMatchType */
 export const WcsMatchType= new Enum(['Standard', 'Target', 'Pixel', 'PixelCenter']);
 
 
@@ -68,6 +72,8 @@ export const WcsMatchType= new Enum(['Standard', 'Target', 'Pixel', 'PixelCenter
  * @public
  * @global
  */
+
+/** @type ActionScope */
 export const ActionScope= new Enum(['GROUP','SINGLE', 'LIST']);
 
 export const PLOTS_PREFIX= 'ImagePlotCntlr';

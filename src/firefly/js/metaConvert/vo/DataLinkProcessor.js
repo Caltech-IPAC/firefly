@@ -1,7 +1,7 @@
-import {getCellValue} from '../../tables/TableUtil.js';
+import {getObsCoreProdType, getObsCoreSRegion, makeWorldPtUsingCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {
-    getObsCoreProdType, getObsCoreSRegion, getServiceDescriptors, makeWorldPtUsingCenterColumns
-} from '../../util/VOAnalyzer.js';
+    getDataLinkData, isDownloadType, isGzipType, isSimpleImageType, isTarType
+} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {GIG} from '../../util/WebUtil.js';
 import {getSearchTarget} from '../../visualize/saga/CatalogWatcher.js';
 import {makeAnalysisActivateFunc} from '../AnalysisUtils.js';
@@ -19,22 +19,6 @@ export const USE_ALL= 'useAllAlgorithm';
 export const RELATED_IMAGE_GRID= 'relatedImageGridAlgorithm';
 export const IMAGE= 'imageAlgorithm';
 export const SPECTRUM= 'spectrumAlgorithm';
-
-
-function isGridImageData(dataLinkData) {
-    const semCnt= dataLinkData
-        .map( (dl) => analyzeSemantic(dl.semantics, dl.contentType))
-        .filter( (sa) => sa.isImage && sa.isGrid);
-    return semCnt.length>1;
-}
-
-const isThisSem= (semantics) => semantics==='#this';
-const isTarType= (ct) => Boolean((ct?.includes('tar')));
-const isGzipType= (ct) => Boolean((ct?.includes('gz')));
-const isSimpleImageType= (ct) => (ct.includes('jpeg') || ct.includes('png') || ct.includes('jpg') || ct.includes('gig'));
-const isDownloadType= (ct) => isTarType(ct) || isGzipType(ct) || ct.includes('octet-stream');
-const isAnalysisType= (ct) => (ct==='' || analysisTypes.some( (a) => ct.includes(a)));
-const isTooBig= (size) => size>GIG;
 
 
 /**
@@ -56,8 +40,7 @@ export function processDatalinkTable({sourceTable, row, datalinkTable, activateP
                                      additionalServiceDescMenuList, dlTableUrl, doFileAnalysis=true,
                                          options, parsingAlgorithm = USE_ALL}) {
     const dataLinkData= getDataLinkData(datalinkTable);
-    const isImageGrid= isGridImageData(dataLinkData);
-    // const activateServiceDef= getBooleanMetaEntry(sourceTable, MetaConst.ACTIVATE_SERVICE_DEF, false);
+    const isImageGrid= dataLinkData.filter( (dl) => dl.dlAnalysis.isImage && dl.dlAnalysis.isGrid).length>1;
     const menu=  dataLinkData.length &&
         createDataLinkMenuRet({dlTableUrl,dataLinkData,sourceTable, sourceRow:row, activateParams, baseTitle,
             additionalServiceDescMenuList, doFileAnalysis, parsingAlgorithm, options});
@@ -154,22 +137,35 @@ function makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTabl
     });
 }
 
+/**
+ *
+ * @param {Object} p
+ * @param {String} p.dlTableUrl
+ * @param {DatalinkData} p.dlData
+ * @param {number} p.idx
+ * @param {TableModel} p.sourceTable
+ * @param p.sourceRow
+ * @param p.doFileAnalysis
+ * @param p.name
+ * @param {ActivateParams} p.activateParams
+ * @return {DataProductsDisplayType|{displayType: string, menuKey: string, name: *, singleDownload: boolean, url: *, fileType: *}}
+ */
 function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRow,
                                       doFileAnalysis, name, activateParams}) {
 
-    const {semantics,size,url, isThis, }= dlData;
+    const {semantics,size,url, dlAnalysis:{isThis, isDownloadOnly, isTar, isGzip,isSimpleImage} }= dlData;
     const {positionWP,sRegion,prodType, activeMenuLookupKey,menuKey, contentType}=
         getDLMenuEntryData({dlTableUrl, dlData,idx,sourceTable,sourceRow});
 
-    if (isDownloadType(contentType)) {
+    if (isDownloadOnly) {
         let fileType;
-        if (isTarType(contentType)) fileType= 'tar';
-        if (isGzipType(contentType)) fileType= 'gzip';
+        if (isTar) fileType= 'tar';
+        if (isGzip) fileType= 'gzip';
         return isThis ?
             dpdtDownloadMenuItem('Download file: '+name,url,menuKey,fileType,{semantics, size, activeMenuLookupKey}) :
             dpdtDownload('Download file: '+name,url,menuKey,fileType,{semantics, size, activeMenuLookupKey});
     }
-    else if (isSimpleImageType(contentType)) {
+    else if (isSimpleImage) {
         return dpdtPNG('Show PNG image: '+name,url,menuKey,{semantics, size, activeMenuLookupKey});
     }
     else if (isTooBig(size)) {
@@ -189,6 +185,21 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
     }
 }
 
+/**
+ *
+ * @param {Object} p
+ * @param {String} p.dlTableUrl
+ * @param {DatalinkData} p.dlData
+ * @param {number} p.idx
+ * @param {string} p.baseTitle
+ * @param {TableModel} p.sourceTable
+ * @param {number} p.sourceRow
+ * @param p.options
+ * @param {string} p.name
+ * @param {boolean} p.doFileAnalysis
+ * @param p.activateParams
+ * @return {Object}
+ */
 function makeMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow, options,
                         name, doFileAnalysis, activateParams}) {
 
@@ -202,16 +213,22 @@ function makeMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRo
     }
 }
 
+/**
+ *
+ * @param parsingAlgorithm
+ * @param {Array.<DatalinkData>} dataLinkData
+ * @return {Array.<DatalinkData>}
+ */
 export function filterDLList(parsingAlgorithm, dataLinkData) {
     if (parsingAlgorithm===USE_ALL) return dataLinkData;
     if (parsingAlgorithm===IMAGE) {
-        return dataLinkData.filter( (dlData) => dlData.isImage);
+        return dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.isImage);
     }
     if (parsingAlgorithm===RELATED_IMAGE_GRID) {
-        return dataLinkData.filter( (dlData) => dlData.isThis && dlData.isGrid && dlData.isImage);
+        return dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.isThis && dlAnalysis.isGrid && dlAnalysis.isImage);
     }
     if (parsingAlgorithm===SPECTRUM) {
-        return dataLinkData.filter( (dlData) => dlData.isSpectrum);
+        return dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.isSpectrum);
     }
     return dataLinkData;
 }
@@ -241,7 +258,7 @@ function sortMenu(menu) {
  *
  * @param obj
  * @param obj.dlTableUrl
- * @param obj.dataLinkData
+ * @param {Array.<DatalinkData>} obj.dataLinkData
  * @param {TableModel} obj.sourceTable
  * @param {number} obj.sourceRow
  * @param {ActivateParams} obj.activateParams
@@ -261,7 +278,7 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
 
     const menu= filterDLList(parsingAlgorithm,dataLinkData)
         .map( (dlData,idx) => {
-            const {semantics,url, isAux, isThis}= dlData;
+            const {semantics,url, dlAnalysis:{isAux,isThis}}= dlData;
             const name= makeName(semantics, url, auxTot, auxCnt, primeCnt, baseTitle);
             const menuEntry= makeMenuEntry({dlTableUrl,dlData,idx, baseTitle, sourceTable,
                 sourceRow, options, name, doFileAnalysis, activateParams});
@@ -341,51 +358,10 @@ export function createGuessDataType(name, menuKey, url,ct,semantics, activatePar
     }
 }
 
-function analyzeSemantic(semantics='',contentType='') {
-    const isImage= contentType?.toLowerCase()==='image/fits';
-    const semLower=semantics.toLowerCase();
-    const isThis= semLower.includes('#this') ?? false;
-    const isAux= semLower==='#auxiliary';
-    const isGrid= semLower.includes('-grid');
-    const isCutout= semLower.includes('-cutout');
-    const isSpectrum= semLower.includes('spectrum');
-    const rBand= semLower.includes('-red');
-    const gBand= semLower.includes('-green');
-    const bBand= semLower.includes('-blue');
-    return {isThis, isImage, isGrid, isAux, isSpectrum, isCutout, rBand, gBand, bBand};
-}
 
 
-/**
- * @param {TableModel} dataLinkTable - a TableModel that is a datalink call result
- * @return {Array.<{url, contentType, size, semantics, isThis, isGrid, isCutout, isImage, serviceDefRef, serDef}>} array of object with important data link info
- */
-export function getDataLinkData(dataLinkTable) {
-    return (dataLinkTable?.tableData?.data ?? [])
-        .map( (row,idx) => {
+const isThisSem= (semantics) => semantics==='#this';
+const isAnalysisType= (ct) => (ct==='' || analysisTypes.some( (a) => ct.includes(a)));
+const isTooBig= (size) => size>GIG;
 
-            const serviceDefRef= getCellValue(dataLinkTable,idx,'service_def' );
-            const servDescriptorsAry= getServiceDescriptors(dataLinkTable);
-            let serDef;
-            if (serviceDefRef && servDescriptorsAry) {
-                const serDefFound= servDescriptorsAry.find( ({ID}) => ID===serviceDefRef);
-                if (serDefFound) serDef = {...serDefFound, dataLinkTableRowIdx: idx};
-            }
 
-            const semantics= getCellValue(dataLinkTable,idx,'semantics' );
-            const contentType= getCellValue(dataLinkTable,idx,'content_type' ) ||'';
-            return {
-                contentType,
-                semantics,
-                ...analyzeSemantic(semantics,contentType),
-                url: getCellValue(dataLinkTable,idx,'access_url' ),
-                description: getCellValue(dataLinkTable,idx,'description' ),
-                size: Number(getCellValue(dataLinkTable,idx,'content_length' )),
-                serviceDefRef,
-                serDef,
-                rowIdx: idx,
-            };
-        })
-        .filter( ({url, serviceDefRef}) =>
-            serviceDefRef || url?.startsWith('http') || url?.startsWith('ftp') );
-}

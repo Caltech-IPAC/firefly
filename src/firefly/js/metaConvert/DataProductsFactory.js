@@ -5,7 +5,8 @@
 import {isArray, once} from 'lodash';
 import {MetaConst} from '../data/MetaConst.js';
 import {getMetaEntry} from '../tables/TableUtil';
-import {hasObsCoreLikeDataProducts, hasServiceDescriptors} from '../util/VOAnalyzer.js';
+import {hasObsCoreLikeDataProducts} from '../voAnalyzer/TableAnalysis.js';
+import {hasServiceDescriptors} from '../voAnalyzer/VoDataLinkServDef.js';
 import {Band} from '../visualize/Band';
 import {SINGLE} from '../visualize/MultiViewCntlr';
 import {makeAnalysisGetGridDataProduct, makeAnalysisGetSingleDataProduct} from './AnalysisUtils.js';

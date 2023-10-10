@@ -2,13 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {get, omit} from 'lodash';
+import {isObsCoreLike} from '../../voAnalyzer/TableAnalysis.js';
 
 import {updateSet} from '../../util/WebUtil.js';
 import * as TblUtil from '../TableUtil.js';
 import * as Cntlr from '../TablesCntlr.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {getColByUCD, getColByUtype, getTblById, getColumn} from '../TableUtil.js';
-import {isObsCoreLike} from '../../util/VOAnalyzer.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import {Logger} from '../../util/Logger.js';
 

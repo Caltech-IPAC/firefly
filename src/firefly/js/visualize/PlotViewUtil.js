@@ -930,7 +930,6 @@ export function getWaveLengthUnits(plot) {
 }
 
 
-const MICRON_SYMBOL= String.fromCharCode(0x03BC)+'m';
 
 /**
  *
@@ -939,6 +938,7 @@ const MICRON_SYMBOL= String.fromCharCode(0x03BC)+'m';
  * @return {string}
  */
 export function getFormattedWaveLengthUnits(plotOrStr, anyPartOfStr=false) {
+    const MICRON_SYMBOL= String.fromCharCode(0x03BC)+'m';
     const uStr= isString(plotOrStr) ? plotOrStr : getWaveLengthUnits(plotOrStr);
     if (anyPartOfStr) {
         return uStr.replace(new RegExp('microns|micron|um|micrometers','gi'),MICRON_SYMBOL);

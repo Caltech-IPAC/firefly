@@ -13,7 +13,7 @@ import {dispatchTableFetch, dispatchTableHighlight} from '../../tables/TablesCnt
 import { getCellValue, getColumnIdx, getTblById, getTblRowAsObj, onTableLoaded, } from '../../tables/TableUtil.js';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {Logger} from '../../util/Logger.js';
-import {cisxAdhocServiceUtype, standardIDs} from '../../util/VOAnalyzer.js';
+import {cisxAdhocServiceUtype, standardIDs} from '../../voAnalyzer/VoConst.js';
 import {makeSearchOnce, toBoolean} from '../../util/WebUtil.js';
 import CoordSys from '../../visualize/CoordSys.js';
 import {ensureHiPSInit } from '../../visualize/HiPSListUtil.js';

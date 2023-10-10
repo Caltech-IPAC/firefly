@@ -4,6 +4,7 @@
 
 import {isArray} from 'lodash';
 import ComponentCntlr from '../core/ComponentCntlr.js';
+import {isDataProductsTable} from '../voAnalyzer/TableAnalysis.js';
 import {Band} from '../visualize/Band.js';
 import {TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACTIVE} from '../tables/TablesCntlr.js';
 import ImagePlotCntlr, {
@@ -21,7 +22,6 @@ import {
 } from './DataProductsFactory.js';
 import {findGridTableRows} from './TableDataProductUtils.js';
 import {dispatchAddTableTypeWatcherDef} from '../core/MasterSaga.js';
-import {isDataProductsTable} from '../util/VOAnalyzer.js';
 import {zoomPlotPerViewSize, resetImageFullGridActivePlot, changeTableHighlightToMatchPlotView} from './ImageDataProductsUtil.js';
 import {
     DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, dataProductRoot, dispatchUpdateDataProducts, getActivateParams

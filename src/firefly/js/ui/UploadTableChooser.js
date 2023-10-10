@@ -2,6 +2,7 @@ import React from 'react';
 
 import {dispatchHideDialog, dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {FileAnalysisType, Format} from '../data/FileAnalysis.js';
+import {findTableCenterColumns} from '../voAnalyzer/TableAnalysis.js';
 import {convertFitsTableDataType, isFitsTableDataTypeArray} from '../visualize/FitsHeaderUtil.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {FieldGroup} from './FieldGroup.jsx';
@@ -16,7 +17,6 @@ import {FormPanel} from 'firefly/ui/FormPanel';
 import {ServerParams} from 'firefly/data/ServerParams';
 import {doJsonRequest} from 'firefly/core/JsonUtils';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr';
-import {findTableCenterColumns} from 'firefly/util/VOAnalyzer';
 
 const dialogId = 'Upload-spatial-table';
 const UPLOAD_TBL_SOURCE= 'UPLOAD_TBL_SOURCE';

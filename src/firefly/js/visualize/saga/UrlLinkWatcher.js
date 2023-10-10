@@ -4,7 +4,7 @@
 
 import {once} from 'lodash';
 import {TABLE_LOADED} from '../../tables/TablesCntlr.js';
-import {findTableAccessURLColumn} from '../../util/VOAnalyzer.js';
+import {findTableAccessURLColumn} from '../../voAnalyzer/TableAnalysis.js';
 import {getTblById} from '../../tables/TableUtil.js';
 import {dispatchTableUpdate} from '../../tables/TablesCntlr.js';
 import {clone} from '../../util/WebUtil.js';

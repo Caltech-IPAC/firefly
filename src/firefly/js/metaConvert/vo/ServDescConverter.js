@@ -1,13 +1,13 @@
 import {isEmpty} from 'lodash';
 import {getCellValue, hasRowAccess} from '../../tables/TableUtil.js';
-import {getServiceDescriptors, isDataLinkServiceDesc, makeWorldPtUsingCenterColumns} from '../../util/VOAnalyzer.js';
+import {makeWorldPtUsingCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
+import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {getSearchTarget} from '../../visualize/saga/CatalogWatcher.js';
 import {getActiveMenuKey} from '../DataProductsCntlr.js';
 import {dpdtFromMenu, dpdtSimpleMsg} from '../DataProductsType.js';
 import {
     createGridResult, datalinkDescribeThreeColor, getDatalinkRelatedGridProduct, getDatalinkSingleDataProduct
 } from './DatalinkProducts.js';
-import {describeObsThreeColor} from './ObsCoreConverter.js';
 import {createServDescMenuRet} from './ServDescProducts.js';
 
 
@@ -59,7 +59,6 @@ function describeServDefThreeColor(table, row, options) {
  * @param row
  * @param {ActivateParams} activateParams
  * @param {Object} options
- * @param {boolean} doAnalysis
  * @return {Promise.<DataProductsDisplayType>}
  */
 export async function getServiceDescSingleDataProduct(table, row, activateParams, options) {

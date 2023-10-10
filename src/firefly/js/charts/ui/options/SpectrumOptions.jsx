@@ -1,9 +1,9 @@
 import React from 'react';
 import {get, range} from 'lodash';
+import {getSpectrumDM} from '../../../voAnalyzer/SpectrumDM.js';
 
 import {getChartData} from '../../ChartsCntlr.js';
 import {getTblById} from '../../../tables/TableUtil.js';
-import {getSpectrumDM} from '../../../util/VOAnalyzer.js';
 import {canUnitConv, getUnitInfo, getUnitConvExpr} from '../../dataTypes/SpectrumUnitConversion.js';
 
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';

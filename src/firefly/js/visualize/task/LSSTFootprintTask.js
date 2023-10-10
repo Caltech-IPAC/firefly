@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {get,  isArray, isUndefined, isEmpty} from 'lodash';
+import {findTableCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {Style} from '../draw/DrawingDef.js';
 import {primePlot, getDrawLayerById} from '../PlotViewUtil.js';
 import {dispatchCreateDrawLayer, getDlAry, dispatchAttachLayerToPlot, dispatchModifyCustomField,
@@ -18,7 +19,6 @@ import {dispatchTableSearch, dispatchTableRemove, dispatchTableUpdate, TABLE_LOA
 import {getTblById, doFetchTable, getColumnIdx, getColumn} from '../../tables/TableUtil.js';
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint';
 import {convertAngle, isAngleUnit} from '../VisUtil.js';
-import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
 import {logger} from '../../util/Logger.js';
 
 

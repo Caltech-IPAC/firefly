@@ -6,6 +6,7 @@ import React, {useEffect, useState} from 'react';
 import {cloneDeep, get, pick, set} from 'lodash';
 
 import {getMultiViewRoot, getViewerItemIds} from '../../visualize/MultiViewCntlr.js';
+import {getSpectrumDM} from '../../voAnalyzer/SpectrumDM.js';
 import {dispatchChartAdd, getChartData} from '../ChartsCntlr.js';
 import {getNewTraceDefaults, getTblIdFromChart, isSpectralOrder, uniqueChartId} from '../ChartUtil.js';
 import {TextButton} from '../../ui/TextButton.jsx';
@@ -21,7 +22,6 @@ import {CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
 import {dispatchTableAddLocal} from '../../tables/TablesCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {showInfoPopup, showPopup} from '../../ui/PopupUtil.jsx';
-import {getSpectrumDM} from '../../util/VOAnalyzer.js';
 import {applyUnitConversion} from './options/SpectrumOptions.jsx';
 import {canUnitConv} from '../dataTypes/SpectrumUnitConversion.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';

@@ -7,6 +7,7 @@ import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {makeBadge} from '../../ui/ToolbarButton.jsx';
+import {hasCoverageData, isCatalog, isDataProductsTable, isOrbitalPathTable} from '../../voAnalyzer/TableAnalysis.js';
 
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
 import {Tab, Tabs} from '../../ui/panel/TabPanel.jsx';
@@ -21,10 +22,8 @@ import {LO_MODE, LO_VIEW, dispatchSetLayoutMode, dispatchUpdateLayoutInfo, getLa
 import ImagePlotCntlr, {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TBL_RESULTS_ACTIVE, TBL_RESULTS_ADDED} from '../../tables/TablesCntlr.js';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
-import {hasCoverageData, isCatalog, isDataProductsTable} from '../../util/VOAnalyzer.js';
 import {MetaDataMultiProductViewer} from './multiProduct/MetaDataMultiProductViewer.jsx';
 import {CoverageViewer} from './CoveraeViewer';
-import {isOrbitalPathTable} from '../../util/VOAnalyzer';
 import {getPlotViewAry} from 'firefly/visualize/PlotViewUtil.js';
 
 

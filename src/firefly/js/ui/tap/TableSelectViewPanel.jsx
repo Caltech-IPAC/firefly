@@ -1,7 +1,7 @@
 import React, {Fragment, useContext, useEffect, useRef, useState} from 'react';
 import SplitPane from 'react-split-pane';
 import {getColumnValues} from '../../tables/TableUtil.js';
-import {matchesObsCoreHeuristic} from '../../util/VOAnalyzer';
+import {isColumnsMatchingToObsTap} from '../../voAnalyzer/ColumnsModelInfo.js';
 import {FieldGroupCtx} from '../FieldGroup.jsx';
 import {HelpIcon} from '../HelpIcon';
 import {SplitContent} from '../panel/DockLayoutPanel';
@@ -25,6 +25,22 @@ import './TableSelectViewPanel.css';
 const SCHEMA_TIP= 'Select a table collection (TAP ‘schema’); type to search the schema names and descriptions.';
 const TABLE_TIP= 'Select a table; type to search the table names and descriptions.';
 const SCH_TAB_TITLE_TIP= 'Select a table collection (TAP ‘schema’), then select a table';
+
+/**
+ * Based on scheman name, table name, and column names - determine if this
+ * is ObsCore-like enough for different ObsCore/ObsTAP widgets.
+ * @param schemaName
+ * @param tableName
+ * @param columnsModel
+ * @returns {boolean}
+ */
+function matchesObsCoreHeuristic(schemaName, tableName, columnsModel) {
+    if (tableName?.toLowerCase() === 'ivoa.obscore') return true;
+    if (schemaName?.toLowerCase() === 'ivoa' && tableName?.toLowerCase() === 'obscore') return true;
+    return isColumnsMatchingToObsTap(columnsModel);
+}
+
+
 
 export const SectionTitle= ({title,helpId,tip}) => (
     <div className='TapSearch__section--title' title={tip}>{title}<HelpIcon helpId={tapHelpId(helpId)}/></div>);

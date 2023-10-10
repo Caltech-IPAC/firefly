@@ -1,0 +1,154 @@
+/**
+ * @global
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} SpectrumDM - spectrum data model information:  https://ivoa.net/documents/SpectrumDM/20111120/REC-SpectrumDM-1.1-20111120.pdf
+ * @prop {DataAxis}  spectralAxis
+ * @prop {DataAxis}  fluxAxis
+ * @prop {DataAxis}  timeAxis
+ */
+
+
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} ServiceDescriptorInputParam
+ *
+ * @prop UCD
+ * @prop [arraySize] - might be a number if size of an array, or '*', or number if as length of string
+ * @prop {string} name - param name
+ * @prop {string} type - one of - 'char', 'double', 'float', 'int'
+ * @prop [ref]
+ * @prop {boolean} optionalParam
+ * @prop [colName]
+ * @prop {string} value
+ * @prop {string} [type[
+ * @prop {String} [minValue] - might be a single value or an array of numbers, look at arraySize and type
+ * @prop {String} [maxValue] - might be a single value or an array of numbers, look at arraySize and type
+ * @prop {String} [options] - a set of options in one string, separated by commas 'op1,op2,op3'
+ */
+
+
+/**
+ * @typedef DlAnalysisData
+ * @prop {boolean} isThis
+ * @prop {boolean} isImage
+ * @prop {boolean} isGrid
+ * @prop {boolean} isAux
+ * @prop {boolean} isSpectrum
+ * @prop {boolean} isCutout
+ * @prop {boolean} rBand
+ * @prop {boolean} gBand
+ * @prop {boolean} bBand
+ * @prop {boolean} cisxPrimaryQuery
+ * @prop {boolean} cisxConcurrentQuery
+ * @prop {boolean} isTar
+ * @prop {boolean} isGzip
+ * @prop {boolean} isSimpleImage
+ * @prop {boolean} isDownloadOnly
+ */
+
+
+/**
+ * @typedef DatalinkData
+ * @prop {String} description
+ * @prop {String} url
+ * @prop {String} contentType
+ * @prop {String} contentQualifier
+ * @prop {String} semantics
+ * @prop {String} localSemantics
+ * @prop {number} size
+ * @prop {number} rowIdx
+ * @prop {String} serviceDefRef
+ * @prop {ServiceDescriptorDef} serDef
+ * @prop {DlAnalysisData} dlAnalysis
+ */
+
+
+
+
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} CoordColsDescription
+ *
+ * @summary And object that describes a pairs of columns in a table that makes up a coordinate
+ *
+ * @prop {string} type -   content type of the columns, 'center'
+ * @prop {string} lonCol - name of the longitudinal column
+ * @prop {string} latCol - name of the latitudinal column
+ * @prop {number} lonIdx - column index for the longitudinal column
+ * @prop {number} latIdx - column index for the latitudinal column
+ * @prop {CoordinateSys} csys - the coordinate system to use
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} ColsDescription
+ *
+ * @summary An object that describe a single column in a table
+ *
+ * @prop {string} colName - name of the column
+ * @prop {number} colIdx - column index for the column
+ * @prop {string} unit - unit for the column
+ */
+
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} RegionColDescription
+ *
+ * @summary An object that describes the column which is ObsCore defined 's_region'
+ *
+ * @prop {string} type -   content type of the column, 'region'
+ * @prop {string} regionCol - name of the column
+ * @prop {number} regionIdx - column index for the column
+ * @prop {string} unit - unit of the measurement of the region
+ */
+
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} ServiceDescriptorDef
+ *
+ * @summary The service descriptor info extracted from the table metadata
+ *
+ * @prop {string} title
+ * @prop {string} accessURL
+ * @prop {string} standardID
+ * @prop {string} ID
+ * @prop {TableModel} sdSourceTable - the table where this service descriptor cambe from
+ * @prop {string} utype
+ * @prop {boolean} allowsInput - use may change the parameter
+ * @prop dataLinkTableRowIdx - if defined then this is the row to use from the datalink table
+ * @prop {boolean} inputRequired - user must enter something
+ * @prop {Array.<ServiceDescriptorInputParam>} [cisxUI] - names should be one of: HiPS, FOV, hips_initial_ra, hips_initial_dec, moc, examples, hipsCtype1, hipsCtype2
+ * @prop {Array.<ServiceDescriptorInputParam>} [cisxTokenSub]
+ * @prop {Array.<ServiceDescriptorInputParam>} serDefParams
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Object} DataAxis - spectrum data axis, can be one of FluxAxis, TimeAxis, or SpectralAxis
+ * @prop {string}  value                 column name containing the axis values
+ * @prop {string}  [unit]
+ * @prop {string}  [ucd]
+ * @prop {string}  [statError]
+ * @prop {string}  [statErrLow]
+ * @prop {string}  [statErrHigh]
+ * @prop {string}  [lowerLimit]
+ * @prop {string}  [upperLimit]
+ * @prop {string}  [binLow]
+ * @prop {string}  [binHigh]
+ * @prop {string}  [order]
+ * @prop {string}  [relOrder]
+ */

@@ -1,7 +1,8 @@
 // import initTest from '../InitTest.js';
 
 import {reject} from 'lodash';
-import {findTableCenterColumns, isCatalog, hasCoverageData, isDataProductsTable, applyLinkSub} from '../VOAnalyzer';
+import {findTableCenterColumns, hasCoverageData, isCatalog, isDataProductsTable} from '../../voAnalyzer/TableAnalysis.js';
+import {applyLinkSub} from '../../voAnalyzer/VoCoreUtils.js';
 import {SelectInfo} from '../../tables/SelectInfo';
 
 

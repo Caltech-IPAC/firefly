@@ -5,15 +5,12 @@ import {updateStretchDataAfterZoom} from '../rawData/RawDataOps.js';
 import {UserZoomTypes, getArcSecPerPix, getEstimatedFullZoomFactor,
     getNextZoomLevel, getZoomLevelForScale, FullType} from '../ZoomUtil.js';
 import {isImage, isHiPS} from '../WebPlot.js';
-import ImagePlotCntlr, {
-    ActionScope, IMAGE_PLOT_KEY, WcsMatchType,
-    dispatchUpdateViewSize, dispatchRecenter, dispatchChangeCenterOfProjection, visRoot
-} from '../ImagePlotCntlr.js';
+import ImagePlotCntlr, { ActionScope, IMAGE_PLOT_KEY, WcsMatchType,
+    dispatchUpdateViewSize, dispatchRecenter, dispatchChangeCenterOfProjection } from '../ImagePlotCntlr.js';
 import { getPlotViewById, primePlot, operateOnOthersInPositionGroup, applyToOnePvOrAll} from '../PlotViewUtil.js';
 import {isImageViewerSingleLayout, getMultiViewRoot} from '../MultiViewCntlr.js';
 import {doHiPSImageConversionIfNecessary} from './PlotHipsTask.js';
 import {matchImageToHips, matchHiPStoPlotView} from './WcsMatchTask';
-import PlotState from '../PlotState.js';
 import {findHipsCenProjToPlaceWptOnDevPtByInteration,} from '../reducer/PlotView.js';
 import {CCUtil} from '../CsysConverter.js';
 import {logger} from '../../util/Logger.js';

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isArray,isEmpty} from 'lodash';
-import {getProdTypeGuess} from '../util/VOAnalyzer.js';
+import {getProdTypeGuess} from '../voAnalyzer/TableAnalysis.js';
 import {isFitsTableDataTypeNumeric} from '../visualize/FitsHeaderUtil.js';
 import {dpdtChartTable, dpdtImage, dpdtTable, DPtypes, SHOW_CHART, SHOW_TABLE, AUTO} from './DataProductsType';
 import {FileAnalysisType, Format, UIEntry, UIRender} from '../data/FileAnalysis';

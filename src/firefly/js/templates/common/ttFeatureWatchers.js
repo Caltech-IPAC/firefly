@@ -6,7 +6,7 @@ import {dispatchTableUiUpdate} from '../../tables/TablesCntlr.js';
 import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {getTapObsCoreOptions} from '../../ui/tap/TableSearchHelpers.jsx';
-import {isObsCoreLike} from '../../util/VOAnalyzer.js';
+import {isObsCoreLike} from '../../voAnalyzer/TableAnalysis.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {getActiveRowCenterDef } from '../../visualize/saga/ActiveRowCenterWatcher.js';

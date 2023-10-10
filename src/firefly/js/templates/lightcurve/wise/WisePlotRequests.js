@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {getCellValue} from '../../../tables/TableUtil.js';
+import {findTableCenterColumns} from '../../../voAnalyzer/TableAnalysis.js';
 import {WebPlotRequest} from '../../../visualize/WebPlotRequest.js';
 import {makeWorldPt} from '../../../visualize/Point.js';
 import {CoordinateSys} from '../../../visualize/CoordSys.js';
@@ -11,7 +12,6 @@ import {ERROR_MSG_KEY} from '../generic/errorMsg.js';
 
 import {addCommonReqParams} from '../LcConverterFactory.js';
 import {convertAngle} from '../../../visualize/VisUtil.js';
-import {findTableCenterColumns} from '../../../util/VOAnalyzer.js';
 
 export function makeWisePlotRequest(table, rowIdx, cutoutSize) {
     const ra = getCellValue(table, rowIdx, 'ra');

@@ -56,6 +56,7 @@ const HIPS_ZOOM_MAX= hipsLevels[hipsLevels.length-1];
  * @public
  * @global
  */
+/** @type UserZoomTypes */
 export const UserZoomTypes= new Enum(['UP','DOWN', 'FIT', 'FILL', 'ONE', 'LEVEL', 'WCS_MATCH_PREV'], { ignoreCase: true });
 
 /**

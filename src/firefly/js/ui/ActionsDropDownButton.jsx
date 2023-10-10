@@ -1,7 +1,7 @@
 import {isArray} from 'lodash';
 import React, {Fragment, useRef} from 'react';
 import {getTblById} from '../tables/TableUtil.js';
-import {getWorldPtFromTableRow} from '../util/VOAnalyzer.js';
+import {getWorldPtFromTableRow} from '../voAnalyzer/TableAnalysis.js';
 import {getDefMenuItemKeys} from '../visualize/MenuItemKeys.js';
 import {SingleColumnMenu} from './DropDownMenu.jsx';
 import {DropDownToolbarButton} from './DropDownToolbarButton.jsx';

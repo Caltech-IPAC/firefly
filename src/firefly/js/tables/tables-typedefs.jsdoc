@@ -97,7 +97,10 @@
 /**
  * PARAM may have everything TableColumn has plus 'value'
  * @typedef {object} PARAM
- * @prop {string} value  value of this PARAM
+ * @prop {string} value - value of this PARAM
+ * @prop {string} name - name of this PARAM
+ * @prop {string} [type] - data type of the param
+ * @prop {string} [arraySize]
  *
  * @global
  * @public

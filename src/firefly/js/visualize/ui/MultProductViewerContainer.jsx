@@ -6,7 +6,7 @@ import React from 'react';
 import {bool, object, string} from 'prop-types';
 import {getActiveTableId, getTblById} from '../../tables/TableUtil.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {isDataProductsTable} from '../../util/VOAnalyzer.js';
+import {isDataProductsTable} from '../../voAnalyzer/TableAnalysis.js';
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {MetaDataMultiProductViewer} from './multiProduct/MetaDataMultiProductViewer.jsx';

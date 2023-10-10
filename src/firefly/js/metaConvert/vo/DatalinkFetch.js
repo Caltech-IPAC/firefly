@@ -1,7 +1,5 @@
 import {makeFileRequest} from '../../tables/TableRequestUtil.js';
 import {doFetchTable} from '../../tables/TableUtil.js';
-import {logger} from '../../util/Logger.js';
-import {getRootURL, loadScript} from '../../util/WebUtil.js';
 
 let dlTableCache = new Map();
 const maxEntries = 30;
