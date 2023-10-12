@@ -225,6 +225,7 @@ export function DLGeneratedDropDown({initArgs={}}) {// eslint-disable-line no-un
         }
         const newUrl= isArray(inUrl) ? inUrl[0] : inUrl;
         if (!newUrl) return;
+        setUseCurrentIdx(false);
         if (isRegLoaded) {
             const rowIdx = findUrlInReg(newUrl, registryTblId);
             if (rowIdx > -1) {
@@ -252,6 +253,10 @@ export function DLGeneratedDropDown({initArgs={}}) {// eslint-disable-line no-un
             setSearchAttributes(getCollectionAttributes(registryTblId,currentIdx));
         }
     }, [currentIdx, isRegLoaded, useCurrentIdx]);
+
+    if (urlApi?.url) {
+        console.log(`DLGeneratedDropDown started via api: registry loaded: ${regLoaded}, ${url}`, urlApi);
+    }
 
     return <DLGeneratedDropDownTables {...{registryTblId,isRegLoaded, loadedTblIds, setLoadedTblIds, url, searchAttributes, initArgs}}/>;
 }
@@ -497,6 +502,7 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
     useEffect(() => {
         if (initArgs?.urlApi?.execute && clickFuncRef.clickFunc && matchUrl) {
             executeInitOnce(true, () => {
+                console.log(`execute (${initArgs.urlApi.callId}) url: ${initArgs?.urlApi.url}`, initArgs?.urlApi);
                 setCallId(initArgs.urlApi.callId ?? 'none'); //forces one more render after unmount
                 dispatchMountFieldGroup(GROUP_KEY, false, false); // unmount to force to forget default so it will reinit
                 setTimeout(() => clickFuncRef?.clickFunc?.(),10);
@@ -549,7 +555,7 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
 
 
     useEffect(() => { // on table change: recenter hips if no target entered, change hips if new one is specified
-        if (!currentTblId) return;
+        if (!currentTblId || !isRegLoaded) return;
         const plot= primePlot(visRoot(),HIPS_PLOT_ID);
         if (!plot || !isHiPS(plot)) return;
         if (!qAna?.primarySearchDef?.[0]?.serviceDef?.cisxUI) return;
