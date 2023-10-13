@@ -22,6 +22,7 @@ import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.firefly.server.SrvParam;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.core.background.JobInfo;
@@ -29,6 +30,7 @@ import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.core.background.ServCmdJob;
 import org.json.simple.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
@@ -41,7 +43,7 @@ import static edu.caltech.ipac.util.StringUtils.isEmpty;
  * @author Trey Roby
  */
 public class SearchServerCommands {
-
+    public static final String FORMAT= "FORMAT";    // response format.. use content-type
 
     public static class TableSearch extends ServCmdJob {
         public Job.Type getType() {
@@ -61,12 +63,20 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             TableServerRequest tsr = params.getTableServerRequest();
+            String format = params.getOptional(FORMAT, "json");
+
             SearchProcessor processor = SearchManager.getProcessor(tsr.getRequestId());
             if (processor instanceof Job.Worker) setWorker((Job.Worker)processor);
 
-            DataGroupPart dgp = new SearchManager().getDataGroup(tsr, processor);
-            JSONObject json = JsonTableUtil.toJsonTableModel(dgp, tsr);
-            return json.toJSONString();
+            if (format.toLowerCase().contains("votable")) {
+                ByteArrayOutputStream rval = new ByteArrayOutputStream();
+                processor.writeData(rval, tsr, TableUtil.Format.VO_TABLE_TABLEDATA, TableUtil.Mode.displayed);
+                return rval.toString();
+            } else {
+                DataGroupPart dgp = new SearchManager().getDataGroup(tsr, processor);
+                JSONObject json = JsonTableUtil.toJsonTableModel(dgp, tsr);
+                return json.toJSONString();
+            }
         }
     }
     public static class AddOrUpdateColumn extends ServCommand {

@@ -42,7 +42,11 @@ public class TableUtil {
             "j2000", "galactic", "image", "physical", "global", "boxcircle"};
 
     public static DataGroup readAnyFormat(File inf) throws IOException {
-        return readAnyFormat(inf, 0, null);
+        return readAnyFormat(inf, 0);
+    }
+
+    public static DataGroup readAnyFormat(File inf, int tableIndex) throws IOException {
+        return readAnyFormat(inf, tableIndex, null);
     }
 
     public static DataGroup readAnyFormat(File inf, int tableIndex, Map<String, String> metaInfo) throws IOException {
