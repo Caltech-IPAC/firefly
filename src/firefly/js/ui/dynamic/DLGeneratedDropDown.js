@@ -1,5 +1,5 @@
-import {isArray, isEmpty, once} from 'lodash';
-import React, {useEffect, useRef, useState} from 'react';
+import {isArray, isEmpty} from 'lodash';
+import React, {useEffect, useState} from 'react';
 import {makeWorldPt, visRoot} from '../../api/ApiUtilImage.jsx';
 import {dispatchActiveTarget} from '../../core/AppDataCntlr.js';
 import {getComponentState} from '../../core/ComponentCntlr.js';
@@ -12,6 +12,7 @@ import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchTableFetch, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
 import { getCellValue, getColumnIdx, getTblById, getTblRowAsObj, onTableLoaded, } from '../../tables/TableUtil.js';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
+import {Logger} from '../../util/Logger.js';
 import {cisxAdhocServiceUtype, standardIDs} from '../../util/VOAnalyzer.js';
 import {makeSearchOnce, toBoolean} from '../../util/WebUtil.js';
 import CoordSys from '../../visualize/CoordSys.js';
@@ -151,6 +152,7 @@ function makeRegistryRequest(url, registryTblId) {
 //========================
 //========================
 
+const logger = Logger('DLGeneratedDropDown');
 
 
 function isURLInRegistry(url, registryTblId) {
@@ -161,7 +163,7 @@ async function doLoadRegistry(url, registryTblId, user) {
     try {
         const urlToUse= user? url+'?user='+user : url;
         dispatchTableFetch(makeRegistryRequest(urlToUse,registryTblId));
-        console.log(`Registry URL: ${urlToUse}`);
+        logger.warn(`Registry URL: ${urlToUse}`);
         const result= await onTableLoaded(registryTblId);
         const {tableModel}= result ?? {};
         if (tableModel.error) {
@@ -255,9 +257,8 @@ export function DLGeneratedDropDown({initArgs={}}) {// eslint-disable-line no-un
     }, [currentIdx, isRegLoaded, useCurrentIdx]);
 
     if (urlApi?.url) {
-        console.log(`DLGeneratedDropDown started via api: registry loaded: ${regLoaded}, ${url}`, urlApi);
+        logger.warn(`started via api: registry loaded: ${regLoaded}, ${url}`, urlApi);
     }
-
     return <DLGeneratedDropDownTables {...{registryTblId,isRegLoaded, loadedTblIds, setLoadedTblIds, url, searchAttributes, initArgs}}/>;
 }
 
@@ -274,7 +275,7 @@ function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTblIds, se
                 },
             };
             if (!url) return;
-            console.log(`Dataset url: ${url}`);
+            logger.warn(`Dataset url: ${url}`);
             const req= makeFileRequest('Data link UI', url, undefined, loadOptions);
             const {tbl_id}= req.META_INFO;
             dispatchTableFetch(req);
@@ -349,14 +350,14 @@ function SearchTitle({desc, isAllSky, sideBarShowing, setSideBarShowing}) {
  * @param props.setSideBarShowing
  * @param props.sideBarShowing
  * @param props.docRows
- * @param props.clickFuncRef
+ * @param props.setClickFunc
  * @param props.submitSearch
  * @param props.isAllSky
  * @param {QueryAnalysis} props.qAna
  * @return {JSX.Element}
  * @constructor
  */
-function ServDescPanel({fds, style, desc, setSideBarShowing, sideBarShowing, docRows, clickFuncRef, submitSearch, isAllSky, qAna})  {
+function ServDescPanel({fds, style, desc, setSideBarShowing, sideBarShowing, docRows, setClickFunc, submitSearch, isAllSky, qAna})  {
 
     const docRowsComponents= (
         <div key='help' style={{fontSize:'larger', padding:'0 10px 3px 8px', alignSelf:'flex-end'}}>
@@ -370,7 +371,7 @@ function ServDescPanel({fds, style, desc, setSideBarShowing, sideBarShowing, doc
         </div>);
 
     const SearchPanelWrapper= ({children}) => (
-        <RootSearchPanel {...{additionalChildren:children, submitSearch, clickFuncRef, docRowsComponents, qAna}}/>
+        <RootSearchPanel {...{additionalChildren:children, submitSearch, setClickFunc, docRowsComponents, qAna}}/>
     );
 
 
@@ -385,7 +386,7 @@ function ServDescPanel({fds, style, desc, setSideBarShowing, sideBarShowing, doc
 }
 
 
-function RootSearchPanel({additionalChildren, submitSearch, clickFuncRef, docRowsComponents, qAna}) {
+function RootSearchPanel({additionalChildren, submitSearch, setClickFunc, docRowsComponents, qAna}) {
 
     const coneAreaChoice=  useFieldGroupValue(CONE_AREA_KEY)?.[0]() ?? CONE_CHOICE_KEY;
     let cNames, disableNames;
@@ -428,7 +429,7 @@ function RootSearchPanel({additionalChildren, submitSearch, clickFuncRef, docRow
                    onSubmit = {submitSearch}
                    params={{hideOnInvalid: false}}
                    inputStyle={{border:'none', padding:0, marginBottom:5}}
-                   getDoOnClickFunc={(clickFunc) => clickFuncRef.clickFunc= clickFunc}
+                   getDoOnClickFunc={(f) => setClickFunc({onClick:f})}
                    onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
                    extraWidgets={[docRowsComponents]}
                    help_id  = {'search-collections-general'}>
@@ -443,7 +444,7 @@ function RootSearchPanel({additionalChildren, submitSearch, clickFuncRef, docRow
 }
 
 
-const TabView= ({tabsKey, setSideBarShowing, sideBarShowing, searchObjFds,qAna, docRows, isAllSky, clickFuncRef, submitSearch}) => (
+const TabView= ({tabsKey, setSideBarShowing, sideBarShowing, searchObjFds,qAna, docRows, isAllSky, setClickFunc, submitSearch}) => (
     <FieldGroupTabs style ={{height:'100%', width:'100%'}} initialState={{ value:searchObjFds[0].ID}} fieldKey={tabsKey}>
         {
             searchObjFds.map((sFds) => {
@@ -451,7 +452,7 @@ const TabView= ({tabsKey, setSideBarShowing, sideBarShowing, searchObjFds,qAna, 
                 return (
                     <Tab name={`${qAna.primarySearchDef[idx].desc}`} id={ID} key={idx+''}>
                         <ServDescPanel{...{fds, setSideBarShowing, sideBarShowing, style:{width:'100%'}, desc, docRows,
-                            isAllSky, clickFuncRef, submitSearch, qAna}}/>
+                            isAllSky, setClickFunc, submitSearch, qAna}}/>
                     </Tab>
                 );
             })
@@ -494,21 +495,32 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
 
 
     const [,setCallId]= useState('none');
-    const {current:clickFuncRef} = useRef({clickFunc:undefined});
+    const [{onClick},setClickFuncImpl]= useState({});
     const qAna= analyzeQueries(currentTblId);
     const tabsKey= 'Tabs-'+currentTblId;
     const matchUrl= initArgs?.urlApi?.url?.[0]===url;
 
+    const setClickFunc= (obj) => {
+        if (obj?.onClick && !onClick) setClickFuncImpl(obj);
+    };
+
+    if (initArgs.urlApi?.url) {
+        logger.warn(`DLGeneratedTableSearch: (via api): regLoaded:${regLoaded}, regHasUrl:${regHasUrl}, matchUrl:${matchUrl}, clickFunc:${Boolean(onClick)}, ${url}`,
+            initArgs.urlApi);
+    }
+
+
     useEffect(() => {
-        if (initArgs?.urlApi?.execute && clickFuncRef.clickFunc && matchUrl) {
+        initArgs.urlApi?.url && logger.warn(`in effect: regLoaded:${regLoaded}, matchUrl:${matchUrl}, clickFunc:${Boolean(onClick)}`);
+        if (initArgs?.urlApi?.execute && onClick && matchUrl) {
             executeInitOnce(true, () => {
-                console.log(`execute (${initArgs.urlApi.callId}) url: ${initArgs?.urlApi.url}`, initArgs?.urlApi);
+                logger.warn(`execute (${initArgs.urlApi.callId}) url: ${initArgs?.urlApi.url}`, initArgs?.urlApi);
                 setCallId(initArgs.urlApi.callId ?? 'none'); //forces one more render after unmount
                 dispatchMountFieldGroup(GROUP_KEY, false, false); // unmount to force to forget default so it will reinit
-                setTimeout(() => clickFuncRef?.clickFunc?.(),10);
+                setTimeout(() => onClick(),10);
             }, initArgs.urlApi.callId);
         }
-    }, [clickFuncRef.clickFunc, initArgs?.urlApi?.callId, matchUrl]);
+    }, [onClick, initArgs?.urlApi?.callId, matchUrl]);
 
 
     const fdAry= qAna?.primarySearchDef.map( (fd) => {
@@ -555,7 +567,7 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
 
 
     useEffect(() => { // on table change: recenter hips if no target entered, change hips if new one is specified
-        if (!currentTblId || !isRegLoaded) return;
+        if (!currentTblId) return;
         const plot= primePlot(visRoot(),HIPS_PLOT_ID);
         if (!plot || !isHiPS(plot)) return;
         if (!qAna?.primarySearchDef?.[0]?.serviceDef?.cisxUI) return;
@@ -628,10 +640,10 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
                 <FieldGroup groupKey={GROUP_KEY} keepState={true} style={{width:'100%'}}>
                     {(isRegLoaded && qAna) ? searchObjFds.length===1 ?
                             <ServDescPanel{...{initArgs, setSideBarShowing, sideBarShowing, fds:searchObjFds[0].fds,
-                                clickFuncRef, submitSearch, isAllSky, qAna,
+                                setClickFunc, submitSearch, isAllSky, qAna,
                                 style:{width:'100%',height:'100%'}, desc:searchObjFds[0].desc, docRows}} /> :
                             <TabView{...{initArgs, tabsKey, setSideBarShowing, sideBarShowing, searchObjFds, qAna,
-                                docRows, isAllSky, clickFuncRef, submitSearch}}/>
+                                docRows, isAllSky, setClickFunc, submitSearch}}/>
                         :
                         notLoaded
                     }
