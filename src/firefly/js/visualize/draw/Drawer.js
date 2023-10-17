@@ -7,8 +7,9 @@ import {get, isFunction, isEmpty, isArray} from 'lodash';
 import Point, {makeScreenPt,makeImagePt,pointEquals} from '../Point.js';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId, getTaskCount} from '../../core/AppDataCntlr.js';
 import BrowserInfo, {Browser} from '../../util/BrowserInfo.js';
+import {Style} from './DrawingDef.js';
 import DrawUtil from './DrawUtil.js';
-import Color from '../../util/Color.js';
+import Color, {getRGBA, toRGBAString} from '../../util/Color.js';
 import CsysConverter, {CCUtil} from '../CsysConverter.js';
 import {POINT_DATA_OBJ} from './PointDataObj.js';
 import {DrawingType} from './DrawObj.js';
@@ -585,11 +586,36 @@ function shouldDrawObj(csysConv, obj) {
 function drawChunkOptimized(drawList, params) {
     if (!drawList.length) return;
     const ctx=params.canvas.getContext('2d');
+
+    let drawDefForFinalDraw= params.drawingDef;
+
+    if (drawList[0].style===Style.DESTINATION_OUTLINE) {
+
+        const newDL= drawList.map( (d) => ({...d,style:Style.STANDARD}));
+        DrawUtil.beginPath(ctx,params.drawingDef.color,3);
+        for(const obj of newDL) {
+            drawObj(ctx, params.drawingDef, params.csysConv, obj,params.vpPtM, true);
+        }
+        DrawUtil.stroke(ctx);
+
+        ctx.globalCompositeOperation='destination-out';
+        DrawUtil.beginPath(ctx,params.drawingDef.color,1);
+        for(const obj of newDL) {
+            drawObj(ctx, params.drawingDef, params.csysConv, obj,params.vpPtM, true);
+        }
+        ctx.stroke();
+
+        const rgba= getRGBA(params.drawingDef.color);
+        if (rgba[3]<1) rgba[3]=1;
+        drawDefForFinalDraw= {...params.drawingDef, color: toRGBAString(rgba)};
+    }
+
     DrawUtil.beginPath(ctx,params.drawingDef.color,params.drawingDef.lineWidth);
     for(const obj of drawList) {
-        drawObj(ctx, params.drawingDef, params.csysConv, obj,params.vpPtM, true);
+        drawObj(ctx, drawDefForFinalDraw, params.csysConv, obj,params.vpPtM, true);
     }
     DrawUtil.stroke(ctx);
+    ctx.globalCompositeOperation='source-over';
 }
 
 function drawChunkNormal(drawList, params) {

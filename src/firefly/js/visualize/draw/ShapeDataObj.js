@@ -1122,7 +1122,7 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
                 centerPt = makeDevicePt(x+w/2, y+h/2);
             }
 
-            if (style === Style.FILL) {
+            if ((style === Style.FILL || style === Style.DESTINATION_OUTLINE)) {
                 DrawUtil.fillRec(ctx, color, x, y, w, h, renderOptions, color);
             } else {
                 if (!onlyAddToPath || style === Style.HANDLED) {
@@ -1155,7 +1155,7 @@ function drawRectangle(drawObj, ctx, plot, drawParams, onlyAddToPath) {
 
         inView = true;
 
-        if (style === Style.FILL) {
+        if ((style === Style.FILL || style === Style.DESTINATION_OUTLINE)) {
             DrawUtil.fillRec(ctx, color, x, y, w, h, renderOptions, color);
         } else {
             if (!onlyAddToPath || style === Style.HANDLED) {
@@ -1400,7 +1400,7 @@ function getEdgePtOnGreatCircleFromCenterTo(pt, plot) {
 function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
     const {style, color, lineWidth=1} = drawParams;
 
-    if (style !== Style.FILL && !isEmpty(drawObj.drawObjAry)) {
+    if ((style !== Style.FILL && style!==Style.DESTINATION_OUTLINE) && !isEmpty(drawObj.drawObjAry)) {
         drawCompositeObject(drawObj, ctx,  plot, drawParams, onlyAddToPath);
         return;
     }
@@ -1415,7 +1415,7 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
             }
          }
 
-        if (style !== Style.FILL) return devPt;
+        if (style !== Style.FILL || style !== Style.DESTINATION_OUTLINE) return devPt;
 
         const {x,y}= devPt;
         const {width,height}= plot.viewDim;
@@ -1427,41 +1427,6 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
         return retPt;
 
     };
-    // const isPolygonInDisplay = (pts, style, plot) => {
-    //     let wrapping= false;
-    //     const devPts = pts.map((onePt,idx) => {
-    //         const dPt= plot.getDeviceCoords(onePt);
-    //         if (idx===0 || !dPt) return dPt;
-    //         if (plot.coordsWrap(onePt, pts[idx-1])) {
-    //             wrapping= true;
-    //             return undefined;
-    //         }
-    //         return dPt;
-    //     });
-    //
-    //     const {width, height} = plot.viewDim;
-    //
-    //     // detect if none of the points are visible
-    //     const anyVisible = devPts.find((onePt) => {
-    //         return (onePt && (onePt.x >= 0) && (onePt.x < width) && (onePt.y >= 0) && (onePt.y < height));
-    //     });
-    //
-    //     if (!anyVisible) {
-    //         return {devPts, inDisplay: 0};
-    //     }
-    //
-    //     let inDisplay = 0;
-    //     const newPts = devPts.map((onePt, idx) => {
-    //         const newPt = adjustPointOnDisplay(pts[idx], onePt);
-    //         if (newPt) {
-    //             inDisplay++;
-    //         }
-    //         return newPt;
-    //     });
-    //
-    //
-    //     return {devPts:newPts, inDisplay, wrapping};
-    // };
 
     const isPolygonInDisplay = (pts, style, plot) => {
         let wrapping= false;
@@ -1512,7 +1477,7 @@ function drawPolygon(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
 
         if (inDisplay <= 0 || wrapping) return;   // not visible
 
-        if ((style === Style.FILL)) {
+        if ((style === Style.FILL || style === Style.DESTINATION_OUTLINE)) {
             if (inDisplay < devPts.length) {
                 console.log('less visible');     // test if this may happen
             }

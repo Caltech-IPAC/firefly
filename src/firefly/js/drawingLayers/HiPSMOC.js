@@ -15,7 +15,7 @@ import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import {getMetaEntry, getTblById} from '../tables/TableUtil.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {MAX_ROW} from '../tables/TableRequestUtil.js';
-import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId } from '../core/AppDataCntlr.js';
+import {dispatchAddTaskCount, dispatchRemoveTaskCount, getAppOptions, makeTaskId} from '../core/AppDataCntlr.js';
 import {doFetchTable} from '../tables/TableUtil';
 import {logger} from '../util/Logger.js';
 import {dispatchModifyCustomField, getDlAry} from '../visualize/DrawLayerCntlr';
@@ -111,8 +111,9 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
  */
 function creator(initPayload) {
 
+    const defStyle= Style.get(getAppOptions().hips.mocDefaultStyle) ??Style.DESTINATION_OUTLINE;
     const drawingDef= makeDrawingDef(colorList[idCnt%colorN],
-                                     {style: Style.STANDARD,
+                                     {style: defStyle,
                                       textLoc: TextLocation.CENTER,
                                       canUseOptimization: true});
     idCnt++;
@@ -138,8 +139,7 @@ function creator(initPayload) {
 
     const preloadedTbl= tablePreloaded && getTblById(tbl_id);
     drawingDef.color = preloadedTbl?.tableMeta?.[MetaConst.DEFAULT_COLOR] ?? defColors[mocGroupDefColorId] ?? color;
-    const style = preloadedTbl?.tableMeta?.[MetaConst.MOC_DEFAULT_STYLE] ?? 'outline';
-    drawingDef.style = style === 'outline' ? Style.STANDARD : Style.FILL;
+    drawingDef.style = Style.get(preloadedTbl?.tableMeta?.[MetaConst.MOC_DEFAULT_STYLE] ?? defStyle);
 
 
 
@@ -256,7 +256,7 @@ function getLayerChanges(drawLayer, action) {
 
             if (fillStyle && targetPlotId) {
                 const {mocStyle={}} = drawLayer;
-                const style = fillStyle.includes('outline') ? Style.STANDARD : Style.FILL;
+                const style = Style.get(fillStyle);
 
                 set(mocStyle, [targetPlotId], style);
                 return Object.assign({}, {mocStyle});
@@ -361,7 +361,7 @@ function updateMocData(dl, plotId) {
 
         newMocObj.mocGroup = MocGroup.copy(mocObj.mocGroup, plot);
         newMocObj.mocGroup.collectVisibleTilesFromMoc(plot, updateStatus.storedSidePoints);
-        newMocObj.style = dl?.mocStyle?.[plotId] ?? dl.drawingDef?.style ?? Style.STANDARD;
+        newMocObj.style = dl?.mocStyle?.[plotId] ?? dl.drawingDef?.style ?? Style.DESTINATION_OUTLINE;
         updateStatus.newMocObj = newMocObj;
     } else if (updateStatus.newMocObj.mocGroup.isInCollection()) {
          const {mocGroup} = updateStatus.newMocObj;
@@ -427,6 +427,7 @@ function updateDrawLayer(drawObjAry, drawLayer, plotId) {
 
     const newDrawLayer = {...drawLayer, drawData: dd};
     dispatchUpdateDrawLayer(newDrawLayer);
+    return newDrawLayer;
 }
 
 
@@ -466,10 +467,11 @@ function asyncComputeDrawData(drawLayer, action) {
         const {fillStyle, targetPlotId} = action.payload.changes;
         if (!fillStyle || !targetPlotId) return;
 
-        updateDrawLayer(changeMocDrawingStyle(drawLayer,
-                                mocStyle?.[targetPlotId] ?? drawLayer.drawingDef?.style ?? Style.STANDARD,
+        const newDl= updateDrawLayer(changeMocDrawingStyle(drawLayer,
+                mocStyle?.[targetPlotId] ?? drawLayer.drawingDef?.style ?? Style.STANDARD,
                                     targetPlotId),
             drawLayer, targetPlotId);
+        mocRedraw(newDl,action);
     } else if (action.type === ImagePlotCntlr.ANY_REPLOT) {
         mocRedraw(drawLayer,action);
     } else if (action.type === DrawLayerCntlr.CHANGE_DRAWING_DEF) {

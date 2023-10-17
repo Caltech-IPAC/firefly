@@ -1,6 +1,7 @@
+import {getAppOptions} from '../../api/ApiUtil.js';
 import DrawObj from './DrawObj';
 import {makeWorldPt} from '../Point.js';
-import {isEmpty, has, set, get, isUndefined} from 'lodash';
+import {isEmpty, has, set, isUndefined} from 'lodash';
 import {makeRegionPolygon} from '../region/Region.js';
 import {drawRegions} from '../region/RegionDrawer.js';
 import {getMocOrderIndex, getMocSidePointsNuniq, getCornerForPix, getMocNuniq,
@@ -19,6 +20,8 @@ const DEFAULT_STYLE= Style.STANDARD;
 const DEF_WIDTH = 1;
 const MAX_MAPORDER = 25;
 const PTILE_OPACITY_RATIO = 0.5;
+// const OUTLINE_OPACITY_RATIO = 0.8;
+const OUTLINE_OPACITY_RATIO = 1;
 
 /**
  * Draw one or more polygons defined in Multi-Order Coverage Map, MOC.
@@ -41,9 +44,7 @@ function make(cellNums, drawingDef, mocCsys) {
 
     const mocGroup = MocGroup.make(cellNums, undefined, mocCsys);
     mocGroup.makeGroups();
-    Object.assign(obj, {regionOptions: {message: 'polygon2'}, mocGroup, style, color});
-
-    return obj;
+    return {...obj, regionOptions: {message: 'polygon2'}, mocGroup, style, color};
 }
 
 
@@ -64,42 +65,33 @@ const draw=  {
 	},
 
 	getCenterPt(drawObj) {
-		var {drawObjAry}= drawObj;
-		var xSum = 0;
-		var ySum = 0;
-		var xTot = 0;
-		var yTot = 0;
+		const {drawObjAry}= drawObj;
+        if (!drawObjAry) return makeWorldPt(xSum, ySum);
+		let xSum = 0;
+		let ySum = 0;
+		let xTot = 0;
+		let yTot = 0;
 
-		if (drawObjAry) {
-			drawObjAry.forEach( (obj) => {
-				if (obj && obj.pts) {
-					obj.pts.forEach((wp) => {
-						xSum += wp.x;
-						ySum += wp.y;
-						xTot++;
-						yTot++;
-					});
-				}
-			});
-			return makeWorldPt(xSum / xTot, ySum / yTot);
-		} else {
-			return makeWorldPt(xSum, ySum);
-		}
+        drawObjAry.forEach( (obj) => {
+            obj?.pts?.forEach((wp) => {
+                xSum += wp.x;
+                ySum += wp.y;
+                xTot++;
+                yTot++;
+            });
+        });
+        return makeWorldPt(xSum / xTot, ySum / yTot);
 	},
 
 	getScreenDist(drawObj,plot, pt) {
 		let minDist = Number.MAX_VALUE;
-
 		const {drawObjAry} = drawObj || {};
-
-		if (drawObjAry) {
-			drawObjAry.forEach( (dObj) => {
-				const d = VisUtil.distanceToPolygon(dObj.pts, plot, pt);
-				if (d < minDist) {
-					minDist = d;
-				}
-			});
-		}
+        drawObjAry?.forEach( (dObj) => {
+            const d = VisUtil.distanceToPolygon(dObj.pts, plot, pt);
+            if (d < minDist) {
+                minDist = d;
+            }
+        });
 		return minDist;
 	},
 
@@ -112,13 +104,8 @@ const draw=  {
 		return toRegion(drawObj.drawObjAry, plot, makeDrawParams(drawObj,def),drawObj.renderOptions);
 	},
 
-	translateTo(drawObj,plot, apt) {
-        return;   //todo
-	},
-
-	rotateAround(drawObj, plot, angle, worldPt) {
-        return; // todo
-	}
+	translateTo(drawObj,plot, apt) { }, //todo - maybe unnecessary
+	rotateAround(drawObj, plot, angle, worldPt) { }//todo - maybe unnecessary
 };
 
 export default {make,draw, MOC_OBJ, PTILE_OPACITY_RATIO};
@@ -143,17 +130,7 @@ function makeDrawParams(drawObj,def) {
     const rotationAngle = drawObj.rotationAngle||undefined;
     const color = drawObj.color || def.color || 'green';
 
-    return {
-        color,
-        lineWidth,
-        textLoc,
-        style,
-        fontName,
-        fontSize,
-        fontWeight,
-        fontStyle,
-        rotationAngle
-    };
+    return { color, lineWidth, textLoc, style, fontName, fontSize, fontWeight, fontStyle, rotationAngle };
 }
 
 
@@ -228,12 +205,6 @@ export class MocGroup {
         return this.groupInLevels;
     }
 
-    // total number of tiles represented by MoCGroup object
-    countMocTiles() {
-        return this.cells.length;
-    }
-
-
     // get all tiles at some order including the created tile containing children or not
     getTilesAtOrder(order) {
         return this.includeOrder(order) ? this.groupInLevels[order] : null;
@@ -244,10 +215,11 @@ export class MocGroup {
     }
 
     getMaxDisplayOrder() {
+        const MAX_DEPTH = getAppOptions()?.hips?.mocMaxDepth ?? 5;
         const {norder} = getHiPSNorderlevel(this.plot);
 
         this.hipsOrder = norder;
-        this.displayOrder = Math.max(this.minOrder, this.hipsOrder) + 3;
+        this.displayOrder = Math.max(this.minOrder, this.hipsOrder) + MAX_DEPTH;
     }
 
     getVisibleTileMap() {          // init the visibleMap by finding visible tiles with the order less than displayOrder
@@ -353,7 +325,7 @@ export class MocGroup {
         tiles = isUndefined(tiles) ? this.getTilesAtOrder(fromOrder) : tiles;
         if (!tiles || tiles.length === 0) return;
 
-        const vSet = get(this.visibleMap, [fromOrder], {});
+        const vSet = this.visibleMap?.[fromOrder] ?? {};
 
         tiles.find((oneTile) => {
             const {npix, nuniq} = oneTile;
@@ -376,8 +348,8 @@ export class MocGroup {
         const pVisibleSet = this.visibleMap[toOrder];
         if (Object.keys(pVisibleSet).length === 0) return;             // no visible tiles at parent order
 
-        const includedNpixs = get(this.incNpixs, [toOrder], []);
-        const notIncludedNpixs = get(this.notIncNpixs, [toOrder], []);
+        const includedNpixs = this.incNpixs?.[toOrder] ?? [];
+        const notIncludedNpixs = this.notIncNpixs?.[toOrder] ?? [];
         const pNum = (fromOrder - toOrder);   // divide by 4 ** (from-to)
 
 
@@ -453,21 +425,6 @@ export class MocGroup {
         }
         return false;
     }
-    // for print and stats purpose
-    // visibleCount() {
-    //     const tileCount = Object.keys(this.vTiles).reduce((prev, order) => {
-    //         set(prev, [order], (this.noTilesAtOrder(order) ? 0 : this.vTiles[order].length));
-    //
-    //         return prev;
-    //     }, {});
-    //
-    //     const vCount = Object.keys(this.visibleMap).reduce((prev, order) => {
-    //         set(prev, [order], (has(this.visibleMap, [order])&&this.visibleMap[order] ? this.visibleNpixAt(order).length : 0));
-    //         return prev;
-    //     }, {});
-    //
-    //     return {tileCount, vCount};
-    // }
 
     getHighestOrderFromMap(byOrder) {
         return Object.keys(this.visibleMap).reduce((prev, order) => {
@@ -557,9 +514,7 @@ export class MocGroup {
 
 
 function drawMoc(mocObj, ctx, cc, drawParams, vpPtM,onlyAddToPath) {
-    const {drawObjAry} = mocObj;
-
-    drawObjAry && drawObjAry.forEach((dObj) => {
+    mocObj?.drawObjAry?.forEach((dObj) => {
         DrawOp.draw(dObj, ctx, cc, drawParams, vpPtM, onlyAddToPath);
     });
 }
@@ -573,9 +528,7 @@ function createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder, moc
     const polyRegion = makeRegionPolygon(polyPts, regionOptions);
     const drawObj = drawRegions([polyRegion])[0];
     const mocInfo = {norder, displayOrder, hipsOrder, npix, nuniq, isParentTile};
-    Object.assign(drawObj, {color: undefined, mocInfo});
-
-    return drawObj;
+    return {...drawObj, color: undefined, mocInfo};
 }
 
 // create all drawObjs
@@ -596,10 +549,10 @@ export function createDrawObjsInMoc(mocObj, plot, mocCsys, startIdx, endIdx, sto
                                               regionOptions, mocGroup.isAllSky, isParentTile);
 
         if (drawObj) {
-            //  drawObj.text = ''+ nuniq;
             drawObj.style = style;
             if (isParentTile) {       // this fill color is specifically for the round-up tile
-                drawObj.fillColor = rateOpacity(color, PTILE_OPACITY_RATIO);
+                const opacity= drawObj.style===Style.FILL ? PTILE_OPACITY_RATIO : OUTLINE_OPACITY_RATIO;
+                drawObj.fillColor = rateOpacity(color, opacity);
             }
             prev.push(drawObj);
         }
@@ -645,6 +598,4 @@ const outputTime = (msg, t0) => {
     console.log(msg + ' took ' + (t1-t0) + ' msec');
 };
 
-const lowerNpix = (npix, level) => {
-    return Math.trunc(npix/NSIDE4[level]);
-};
+const lowerNpix = (npix, level) => Math.trunc(npix/NSIDE4[level]);

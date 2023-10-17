@@ -156,7 +156,9 @@ const defFireflyOptions = {
         useForImageSearch: true,
         hipsSources: 'all',
         defHipsSources: {source: 'irsa', label: 'Featured'},
-        mergedListPriority: 'irsa'
+        mergedListPriority: 'irsa',
+        mocMaxDepth : 5,
+        mocDefaultStyle : 'DESTINATION_OUTLINE',
     },
     table : {
         pageSize: 100,

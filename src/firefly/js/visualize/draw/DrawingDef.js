@@ -23,9 +23,9 @@ export const COLOR_DRAW_1 = '#ff0000'; // red
 export const COLOR_DRAW_2 = '#5500ff'; // purple
 
 /**
- *  a very long enum, look at code in DrawingDef.js
  * @typedef {Object} TextLocation
- * @type {Enum}
+ *  a very long enum, look at code in DrawingDef.js
+ *
  * @prop DEFAULT
  * @prop LINE_TOP
  * @prop LINE_BOTTOM
@@ -51,6 +51,8 @@ export const COLOR_DRAW_2 = '#5500ff'; // purple
  * @prop REGION_SW
  * @prop CENTER
  */
+
+/** @type TextLocation */
 export const TextLocation = new Enum([
     'DEFAULT', 'LINE_TOP', 'LINE_BOTTOM', 'LINE_MID_POINT', 'LINE_MID_POINT_OR_BOTTOM', 'LINE_MID_POINT_OR_TOP',
     'LINE_TOP_STACK', 'CIRCLE_NE', 'CIRCLE_NW', 'CIRCLE_SE', 'CIRCLE_SW', 'RECT_NE', 'RECT_NW', 'RECT_SE',
@@ -67,8 +69,10 @@ export const TextLocation = new Enum([
  * @prop ENDHANDLED
  * @prop LIGHT
  * @prop FILL
+ * @prop DESTINATION_OUTLINE
  */
-export const Style= new Enum(['STANDARD','HANDLED', 'STARTHANDLED', 'ENDHANDLED', 'LIGHT', 'FILL']);
+/** @type Style */
+export const Style= new Enum(['STANDARD','HANDLED', 'STARTHANDLED', 'ENDHANDLED', 'LIGHT', 'FILL', 'DESTINATION_OUTLINE']);
 
 export const DEFAULT_FONT_SIZE = '9pt';
 
