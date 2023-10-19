@@ -9,6 +9,9 @@
  * @prop {DataAxis}  spectralAxis
  * @prop {DataAxis}  fluxAxis
  * @prop {DataAxis}  timeAxis
+ * @prop {Object} spectralFrame
+ * @prop {Object} derivedRedshift
+ * @prop {Object} target
  */
 
 

@@ -11,6 +11,7 @@ const axisData = {
     statErrLow: 'Accuracy.StatErrLow',
     statErrHigh: 'Accuracy.StatErrHigh',
 };
+
 const spectralAxisDef = {
     prefix: ['spec:Spectrum.Data.SpectralAxis', 'spec:Data.SpectralAxis', 'ipac:Spectrum.Data.SpectralAxis', 'ipac:Data.SpectralAxis'],
     /** @type {DataAxis} */
@@ -22,6 +23,7 @@ const spectralAxisDef = {
         relOrder: 'RelOrder'
     }
 };
+
 const fluxAxisDef = {
     prefix: ['spec:Spectrum.Data.FluxAxis', 'spec:Data.FluxAxis', 'ipac:Spectrum.Data.FluxAxis', 'ipac:Data.FluxAxis'],
     /** @type {DataAxis} */
@@ -31,6 +33,7 @@ const fluxAxisDef = {
         lowerLimit: 'Accuracy.LowerLimit',
     }
 };
+
 const timeAxisDef = {
     prefix: ['spec:Spectrum.Data.TimeAxis', 'spec:Data.TimeAxis'],
     /** @type {DataAxis} */
@@ -40,6 +43,37 @@ const timeAxisDef = {
         binHigh: 'Accuracy.BinHigh',
     }
 };
+
+const spectralFrameDef = {
+    prefix: ['spec:Spectrum.CoordSys.SpectralFrame', 'spec:CoordSys.SpectralFrame'],
+    data: {
+        refPos: 'RefPos',
+        redshift: 'Redshift',
+    }
+};
+
+const derivedRedshiftDef = {
+    prefix: ['spec:Spectrum.Derived.Redshift', 'spec:Derived.Redshift'],
+    data: {
+        value: 'Value',
+        statError: 'StatError',
+        confidence: 'Confidence',
+    }
+};
+
+const targetDef = {
+    prefix: ['spec:Spectrum.Target', 'spec:Target'],
+    data: {
+        name: 'Name',
+        redshift: 'Redshift',
+    }
+};
+
+export const REF_POS = {
+    TOPOCENTER: 'TOPOCENTER',
+    CUSTOM: 'CUSTOM'
+};
+
 
 /**
  *
@@ -81,12 +115,24 @@ export function getSpectrumDM(tableModel) {
         return axis;
     };
 
+    const findMetaData = (dataDef) => {
+        const data = {};
+        Object.entries(dataDef.data).forEach(([key, utype]) => {
+            data[key] = findParamByUtype(tableModel, dataDef.prefix, utype)?.value;
+            if (utype===spectralFrameDef.data.refPos && !data[key]) data[key] = REF_POS.TOPOCENTER; //default refPos is TOPOCENTER
+        });
+        return isEmpty(data) ? undefined : data;
+    };
+
     const spectralAxis = findAxisData(spectralAxisDef);
     const fluxAxis = findAxisData(fluxAxisDef);
     const timeAxis = findAxisData(timeAxisDef);
+    const spectralFrame = findMetaData(spectralFrameDef);
+    const derivedRedshift = findMetaData(derivedRedshiftDef);
+    const target = findMetaData(targetDef);
 
     if (spectralAxis && (fluxAxis || timeAxis)) {
-        return {spectralAxis, fluxAxis, timeAxis, isSED};
+        return {spectralAxis, fluxAxis, timeAxis, isSED, spectralFrame, derivedRedshift, target};
     }
 }
 
@@ -101,8 +147,8 @@ function findColByUtype(tableModel, prefixes, suffix) {
 }
 
 function findParamByUtype(tableModel, prefixes, suffix) {
-
-    const params = allParams(tableModel?.groups) || [];
+    let params = allParams(tableModel?.groups) ?? [];
+    params = params.concat(tableModel?.params); //to ensure groups' params are searched before table/top-level params
     for (const p of prefixes) {
         const utype = p + (suffix ? '.' + suffix : '');
         const param = params.find((c) => c?.utype?.toLowerCase() === utype.toLowerCase());

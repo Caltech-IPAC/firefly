@@ -1,10 +1,10 @@
 import React from 'react';
-import {get, range} from 'lodash';
-import {getSpectrumDM} from '../../../voAnalyzer/SpectrumDM.js';
+import {get, range, isEqual} from 'lodash';
+import {getSpectrumDM, REF_POS} from '../../../voAnalyzer/SpectrumDM.js';
 
 import {getChartData} from '../../ChartsCntlr.js';
 import {getTblById} from '../../../tables/TableUtil.js';
-import {canUnitConv, getUnitInfo, getUnitConvExpr} from '../../dataTypes/SpectrumUnitConversion.js';
+import {canUnitConv, getUnitInfo, getUnitConvExpr, getXLabel} from '../../dataTypes/SpectrumUnitConversion.js';
 
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
@@ -16,6 +16,11 @@ import {updateSet, toBoolean} from '../../../util/WebUtil.js';
 import {isSpectralOrder, getChartProps} from '../../ChartUtil.js';
 import {basicOptions, LayoutOptions} from './BasicOptions.jsx';
 import {getSpectrumProps} from '../../dataTypes/FireflySpectrum.js';
+import {getFieldVal, revalidateFields} from 'firefly/fieldGroup/FieldGroupUtils';
+import {isFloat} from 'firefly/util/Validate';
+import {ValidationField} from 'firefly/ui/ValidationField';
+import {sprintf} from 'firefly/externalSource/sprintf';
+import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField';
 
 
 export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
@@ -30,7 +35,7 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
     const wideLabel = xMax || xMin || yMax || yMin;
     const fieldProps = {labelWidth: (wideLabel ? 155 : 116), size: 20};
 
-    const {Xunit, Yunit} = spectrumInputs({activeTrace, tbl_id, chartId, groupKey, fieldProps});
+    const {Xunit, Yunit, SpectralFrame} = spectrumInputs({activeTrace, tbl_id, chartId, groupKey, fieldProps});
     const {UseSpectrum, X, Xmax, Xmin, Y, Ymax, Ymin, Yerrors, Xerrors, Mode} = scatterInputs({activeTrace, tbl_id, chartId, groupKey, fieldProps});
     const {XaxisTitle, YaxisTitle} = basicOptions({activeTrace, tbl_id, chartId, groupKey, fieldProps});
 
@@ -43,11 +48,12 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
             {!isSpectralOrder(chartId) && <UseSpectrum/>}
 
             <div className='FieldGroup__vertical'>
-                <X label='Spectral axis column(X):' readonly={true}/>
+                <X label='Spectral axis column(X):' readonly={true} inputStyle={{'width': '360px'}}/>
                 {xErrArray && <Xerrors labelWidth={wideLabel ? 85 : 46} readonly={true}/>}
                 {xMax && <Xmax readonly={true}/>}
                 {xMin && <Xmin readonly={true}/>}
                 <Xunit/>
+                <SpectralFrame/>
                 <br/>
                 <Y label='Flux axis column(Y):' readonly={true}/>
                 {yErrArray && <Yerrors labelWidth={wideLabel ? 85 : 46} readonly={true}/>}
@@ -95,22 +101,92 @@ export function spectrumReducer({chartId, activeTrace, tbl_id}) {
                     inFields = updateSet(inFields, [`__${v}reset`, 'value'], 'true');
                 }
             });
+
+            if (Object.values(SFOptionFieldKeys(activeTrace)).includes(fieldKey)) {
+                inFields = applyRedshiftCorrection({fireflyData, inFields, spectralAxis, activeTrace, isInput: true});
+                inFields = updateSet(inFields, ['__xreset', 'value'], 'true');
+            }
         }
         return inFields;
 
     };
 }
 
-export const applyUnitConversion = ({fireflyData, data, inFields, axisType, newUnit, traceNum, axis, isInput=false}) => {
 
+const getRedshiftCorrectedExpr = ({cname, spectralFrame, sfOption, redshift=undefined}) => {
+    const {refPos, redshift: customRedshift} = spectralFrame;
+    const multiplyBy = refPos.toUpperCase() === REF_POS.CUSTOM ? ` * (1 + ${customRedshift ?? '0'})` : '';
+    const divideBy = sfOption === 'rest' && redshift ? ` / (1 + ${redshift})` : '';
+    const expr = customRedshift!==redshift ? `"%s"${multiplyBy}${divideBy}` : '"%s"';
+    return sprintf(expr, cname);
+};
+
+const getCombinedExpr = (cname, redshiftCorrParams, unitConvParams) => {
+    const redshiftCorrExp = getRedshiftCorrectedExpr({...redshiftCorrParams, cname});
+    const unitConvExp = getUnitConvExpr({...unitConvParams, cname});
+
+    const unitConvFactor = unitConvExp.split(`"${cname}"`)?.[1];
+    return unitConvFactor ? `(${redshiftCorrExp})${unitConvFactor}` : redshiftCorrExp;
+};
+
+
+const getRedshiftInfo = (inFields, path, fireflyData, activeTrace) => {
+    // reduce the 3 spectral frame fields to obtain the info needed for redshift correction expression and for axis label
+    const [sfOption, redshiftOption, userSpecifiedRedshift] = Object.values(SFOptionFieldKeys(activeTrace))
+        .map((fieldKey) => get(inFields, path(fieldKey)));
+
+    let sfLabel = 'Observed Frame';
+    let redshift, redshiftLabel='';
+
+    if(sfOption==='rest') {
+        sfLabel = 'Rest Frame';
+        redshift = redshiftOption;
+        redshiftLabel = getRedshiftOptions(fireflyData[activeTrace]).find((opt)=> opt.value===redshift)
+            ?.label.replace(/ with confidence.*$/, ''); //don't need to show confidence in axis label
+
+        if(redshiftOption==='userSpecified') {
+            redshift = userSpecifiedRedshift;
+            redshiftLabel = `Redshift = ${userSpecifiedRedshift}`;
+        }
+    }
+    else if(sfOption!=='observed') sfLabel = `${sfOption} Spectral Frame`;
+
+    return {sfOption, sfLabel, redshift, redshiftLabel};
+};
+
+const applyRedshiftCorrection = ({fireflyData, inFields, spectralAxis, activeTrace, isInput=false}) => {
     const path = (p) => isInput ? [p, 'value'] : [p];
+    const {sfOption, sfLabel, redshift, redshiftLabel} = getRedshiftInfo(inFields, path, fireflyData, activeTrace);
+    const {spectralFrame} = fireflyData[activeTrace];
 
+    // take unit conversion into account too
+    const xUnit = get(inFields, path(`fireflyData.${activeTrace}.xUnit`));
+    const colOrExpr = getCombinedExpr(spectralAxis.value,
+        {spectralFrame, sfOption, redshift},
+        {from: spectralAxis.unit, to: xUnit});
+    const xLabel = getXLabel(spectralAxis.value, xUnit, sfLabel, redshiftLabel);
+
+    inFields = updateSet(inFields, path(`_tables.data.${activeTrace}.x`), colOrExpr);
+    inFields = updateSet(inFields, path('layout.xaxis.title.text'), xLabel);
+    return revalidateFields(inFields); //revalidate otherwise validation state of x would be stale
+};
+
+
+export const applyUnitConversion = ({fireflyData, data, inFields, axisType, newUnit, traceNum, axis, isInput=false}) => {
+    const path = (p) => isInput ? [p, 'value'] : [p];
     const layoutAxis = axisType === 'x' ? 'xaxis' : 'yaxis';
 
-    const label = getUnitInfo(newUnit, axis.value).label;
+    let label = getUnitInfo(newUnit, axis.value).label;
+    let colOrExpr = getUnitConvExpr({cname: axis.value, from: axis.unit, to: newUnit});
+    if (axisType==='x') {
+        // take redshift correction into account too
+        const {sfOption, sfLabel, redshift, redshiftLabel} = getRedshiftInfo(inFields, path, fireflyData, traceNum);
+        colOrExpr = getCombinedExpr(axis.value,
+            {spectralFrame: fireflyData[traceNum].spectralFrame, sfOption, redshift},
+            {from: axis.unit, to: newUnit});
+        label = getXLabel(axis.value, newUnit, sfLabel, redshiftLabel);
+    }
     inFields = updateSet(inFields, path(`layout.${layoutAxis}.title.text`), label);
-
-    const colOrExpr = getUnitConvExpr({cname: axis.value, from: axis.unit, to: newUnit});
     inFields = updateSet(inFields, path(`_tables.data.${traceNum}.${axisType}`), colOrExpr);
 
     const errCname = get(data, errorFieldKey(traceNum, axisType).replace('_tables.data.', ''));
@@ -142,20 +218,32 @@ export const applyUnitConversion = ({fireflyData, data, inFields, axisType, newU
 
 
 export function submitChangesSpectrum({chartId, activeTrace, fields, tbl_id, renderTreeId}) {
-
-    // when unit changes, apply it to the other traces as well
     const {data, fireflyData} = getChartData(chartId);
     const {spectralAxis={}, fluxAxis={}} = getSpectrumDM(getTblById(tbl_id)) || {};
 
+    // get units and spectral frame options from the fields of active trace
     const xUnit = fields[`fireflyData.${activeTrace}.xUnit`];
     const yUnit = fields[`fireflyData.${activeTrace}.yUnit`]; // undefined if no field for yUnit
+    const sfOptionFields = Object.fromEntries(Object.entries(SFOptionFieldKeys(activeTrace))
+        .map(([subKey, fieldKey])=>[subKey, fields[fieldKey]]));
+
+    // when units or spectral frame options change, apply it to the other/inactive traces as well
     range(data.length).forEach((idx) => {
         if (idx !== activeTrace) {
+            // get units and spectral frame options from the chart data of inactive trace
             const xUnitTrace = fireflyData?.[idx]?.xUnit;
             const yUnitTrace = fireflyData?.[idx]?.yUnit;
-            // resetting unit resets the field,
-            if (canUnitConv({from: xUnitTrace, to: xUnit})) {
+            const sfOptionTrace = Object.fromEntries(Object.keys(SFOptionFieldKeys(idx))
+                .map((key)=>[key, fireflyData?.[idx]?.spectralFrameOption?.[key]]));
+
+            // set the fields of inactive trace same as that of active trace, if they don't match
+            if (!isEqual(sfOptionTrace, sfOptionFields) || (xUnitTrace!==xUnit && canUnitConv({from: xUnitTrace, to: xUnit}))) {
                 fields = updateSet(fields, [`fireflyData.${idx}.xUnit`], xUnit);
+                Object.entries(SFOptionFieldKeys(idx)).forEach(([subKey, fieldKey])=>{
+                    fields = updateSet(fields, [fieldKey], sfOptionFields[subKey]);
+                });
+
+                // applying unit conversion on X axis, will also apply redshift correction so no need to call it separately
                 fields = applyUnitConversion({fireflyData, data, inFields:fields, axisType:'x', newUnit:xUnit, traceNum:idx, axis:spectralAxis});
             }
             if (canUnitConv({from: yUnitTrace, to: yUnit})) {
@@ -185,7 +273,7 @@ export function submitChangesSpectrum({chartId, activeTrace, fields, tbl_id, ren
         });
     }
 
-    // Object.assign(changes, fields);
+    // propagate all of the above field changes to change the state (i.e. chart data in store)
     submitChangesScatter({chartId, activeTrace, fields, tbl_id, renderTreeId});
 }
 
@@ -203,7 +291,6 @@ function Units({activeTrace, value, axis, ...rest}) {
 
 }
 
-
 export function spectrumInputs ({chartId, groupKey, fieldProps={}}) {
 
     const {activeTrace=0, fireflyData={}} = getChartData(chartId);
@@ -211,6 +298,90 @@ export function spectrumInputs ({chartId, groupKey, fieldProps={}}) {
     return {
         Xunit: (props={}) => <Units {...{activeTrace, axis: 'x', value: get(fireflyData, `${activeTrace}.xUnit`), ...fieldProps, ...props}}/>,
         Yunit: (props={}) => <Units {...{activeTrace, axis: 'y', value: get(fireflyData, `${activeTrace}.yUnit`), ...fieldProps, ...props}}/>,
+        SpectralFrame: (props={}) => {
+            const allProps = {label: 'Spectral Frame:', ...props};
+            const sfRefPos = fireflyData[activeTrace].spectralFrame.refPos.toUpperCase();
+            return Object.values(REF_POS).includes(sfRefPos) //only show options when TOPOCENTER or CUSTOM
+                ? <SpectralFrameOptions groupKey={groupKey} activeTrace={activeTrace} refPos={sfRefPos} fireflyData={fireflyData} {...{...fieldProps, ...allProps}}/>
+                : <ValidationField fieldKey={SFOptionFieldKeys(activeTrace).value} initialState={{value: sfRefPos}} readonly={true} {...{...fieldProps, ...allProps}}/>;
+        },
     };
 }
 
+const SFOptionFieldKeys = (activeTrace) => {
+    const baseKey = `fireflyData.${activeTrace}.spectralFrameOption`;
+    return Object.fromEntries(['value', 'redshift', 'userSpecified'].map((subKey)=>[subKey, `${baseKey}.${subKey}`]));
+};
+
+function getRedshiftOptions({target, derivedRedshift, spectralFrame}){ //TODO: memoize it?
+    const refPos = spectralFrame.refPos.toUpperCase();
+    let options = [];
+
+    if (target?.redshift) {
+        const targetNameStr = target?.name ? ` for Target ${target.name}` : '';
+        options.push({
+            label: `Target Redshift = ${target.redshift}${targetNameStr}`,
+            value: target.redshift.toString() //TODO: format with precision=8?
+        });
+    }
+
+    if (derivedRedshift?.value) {
+        const statErrorStr = derivedRedshift?.statError ? ` ± ${derivedRedshift.statError}` : '';
+        const confidenceStr = derivedRedshift?.confidence ? ` with confidence = ${derivedRedshift.confidence}` : '';
+        options.push({
+            label: `Derived Redshift = ${derivedRedshift.value}${statErrorStr}${confidenceStr}`,
+            value: derivedRedshift.value.toString()
+        });
+    }
+
+    options.push({
+        label: 'Enter Redshift: ',
+        value: 'userSpecified'
+    });
+
+    if (refPos === REF_POS.CUSTOM) {
+        const customRedshiftOption = spectralFrame?.redshift
+            ? {label: `Custom Redshift = ${spectralFrame.redshift}`, value: spectralFrame.redshift}
+            : {label: 'Unknown Custom Redshift', value: '0'}; //TODO: corner case: need a way to deal with math if not '0'
+        options = [customRedshiftOption, ...options];
+    }
+
+    return options;
+}
+
+function SpectralFrameOptions ({groupKey, activeTrace, refPos, fireflyData, ...props}) {
+    const {spectralFrameOption} = fireflyData[activeTrace];
+    const spectralFrameOptions = [{label: 'Observed Frame', value: 'observed'}, {label: 'Rest Frame', value: 'rest'}];
+    const redshiftOptions = getRedshiftOptions(fireflyData[activeTrace]);
+    const defaultSFOption = refPos===REF_POS.TOPOCENTER ? 'observed' : 'rest';
+
+    const isRestFrameOption = useStoreConnector(()=>
+        getFieldVal(groupKey, SFOptionFieldKeys(activeTrace).value)==='rest');
+
+    const isUserSpecifiedOption = useStoreConnector(()=>
+        getFieldVal(groupKey, SFOptionFieldKeys(activeTrace).redshift)==='userSpecified');
+
+    return (
+        <div>
+            <ListBoxInputField fieldKey={SFOptionFieldKeys(activeTrace).value}
+                               options={spectralFrameOptions}
+                               initialState={{value: spectralFrameOption?.value ?? defaultSFOption}}
+                               {...props}/>
+            <div style={{position: 'relative',
+                marginLeft: (props?.labelWidth ?? 116) + 8,
+                marginTop: 4,
+                display: isRestFrameOption ? 'block' : 'none' //to keep the contained fields mounted because they are needed in spectrumReducer
+                }}>
+                    <RadioGroupInputField fieldKey={SFOptionFieldKeys(activeTrace).redshift} options={redshiftOptions}
+                                          initialState={{value: spectralFrameOption?.redshift}} //will select 1st option if undefined
+                                          alignment={'vertical'}/>
+                    <ValidationField fieldKey={SFOptionFieldKeys(activeTrace).userSpecified}
+                                     wrapperStyle={{position: 'absolute', bottom: 0, left: 100}} //to align it with the last radio group option
+                                     style={{width: 80, height: 12}}
+                                     initialState={{value: spectralFrameOption?.userSpecified ?? '0'}}
+                                     validator={(val) => isFloat('Redshift', val)}
+                                     readonly={!isUserSpecifiedOption}/>
+            </div>
+        </div>
+    );
+}

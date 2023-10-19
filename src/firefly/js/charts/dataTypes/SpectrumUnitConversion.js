@@ -176,3 +176,16 @@ const UnitXref = {
     }
 
 };
+
+/**
+ * returns X axis label using the required information like unit, spectral frame options, redshift, etc.
+ * @param {string} cname         the name of the column being evaluated
+ * @param {string} unit          the unit to get the info for
+ * @param {string} sfLabel       the label of spectral frame selected
+ * @param {string} redshiftLabel the label of redshift if rest frame, optional
+ * @returns {string}
+ */
+export const getXLabel = (cname, unit, sfLabel, redshiftLabel='') => {
+    const unitLabel = getUnitInfo(unit, cname).label;
+    return `${sfLabel} ${unitLabel}${redshiftLabel ? `<br>(${redshiftLabel})` : ''}`;
+};
