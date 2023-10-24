@@ -4,7 +4,8 @@
 
 import React from 'react';
 import {CoordinateSys, parseWorldPt} from '../../api/ApiUtilImage.jsx';
-import {standardIDs} from '../../util/VOAnalyzer.js';
+import {standardIDs} from '../../voAnalyzer/VoConst.js';
+
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
 import {convert} from '../../visualize/VisUtil.js';
 import CompleteButton from '../CompleteButton.jsx';

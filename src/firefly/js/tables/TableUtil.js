@@ -882,7 +882,7 @@ export function getTblInfo(tableModel, aPageSize) {
 
 /**
  * Return the row data as an object keyed by the column name
- * @param {TableModel} tableModel
+ * @param {TableModel|undefined} tableModel
  * @param {Number} [rowIdx] = the index of the row to return, default to highlighted row
  * @return {Object<String,String>} the values of the row keyed by the column name
  * @public

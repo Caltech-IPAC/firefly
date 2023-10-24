@@ -1,8 +1,9 @@
+import {isEmpty} from 'lodash';
 import {MetaConst} from '../../data/MetaConst.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {getColumnIdx, getMetaEntry, getTblById} from '../../tables/TableUtil.js';
+import {getMetaEntry} from '../../tables/TableUtil.js';
 import {Logger} from '../../util/Logger.js';
-import {getServiceDescriptors} from '../../util/VOAnalyzer.js';
+import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
 import {CIRCLE, POINT, POLYGON} from './DynamicDef.js';
 import {
@@ -19,57 +20,24 @@ import {findFieldDefType, makeFieldDefs, makeServiceDescriptorSearchRequest} fro
  * @return {QueryAnalysis} - the description of all the searches to do for this table
  */
 export function analyzeQueries(tbl_id) {
-    const table= getTblById(tbl_id);
-    const sdAry= getServiceDescriptors(table,false);
-    if (!sdAry || !table) return;
-    const {data=[]}= table.tableData ?? {};
 
-    const ACCESS_URL= 'access_url';
-    const SD= 'service_def';
-    const SEMANTICS= 'semantics';
-    const ID= 'id';
-    const DESC= 'description';
+    const dlData= getDataLinkData(tbl_id);
+    if (isEmpty(dlData)) return;
+    const bandDesc= getMetaEntry(tbl_id,'bandDesc');
+    const coverage= getMetaEntry(tbl_id,'coverage');
 
-    const semIdx= getColumnIdx(table,SEMANTICS,true);
-    const sdIdx= getColumnIdx(table,SD,true);
-    const idIdx= getColumnIdx(table,ID,true);
-    const accessUrlIdx= getColumnIdx(table,ACCESS_URL,true);
-    const descIdx= getColumnIdx(table,DESC,true);
-
-    const bandDesc= getMetaEntry(table,'bandDesc');
-    const coverage= getMetaEntry(table,'coverage');
-
-
-    const makeSearchDef= (row) => {
-        const serviceDef= sdAry.find( (sd) => {
-            const id= sd.ID ?? sd.id ?? '';
-            return id===row[sdIdx];
-        });
-        return {serviceDef, accessUrl: row[accessUrlIdx], id:row[idIdx], desc:row[descIdx], semantic: row[semIdx], bandDesc, coverage};
+    const makeSearchDef= ({serDef,url,id,description, semantics}) => {
+        return {serviceDef:serDef, accessUrl: url, id, desc:description, semantic: semantics, bandDesc, coverage};
     };
 
-    const primarySearchDef= data
-        .filter( (row) => {
-            if (table.tableData.data.length===1) return true;
-            if (!row[sdIdx]) return false;
-            const semantic= (row[semIdx] ?? '').toLowerCase();
-            const sd= row[sdIdx];
-            if (sd && !semantic.endsWith('cisx#concurrent-query')) return true;
-            // if (semantic.endsWith('this') || semantic.endsWith('cisx#primary-query') || sd) return true;
-        })
+    const primarySearchDef= dlData
+        .filter( (dl) => dlData.length===1 || (dl.serDef && dl.dlAnalysis.cisxPrimaryQuery))
         .map(makeSearchDef);
 
+    const concurrentSearchDef= dlData.filter( (dl) => (dl.dlAnalysis.cisxConcurrentQuery)).map(makeSearchDef);
 
-    const concurrentSearchDef= data
-        .filter( (row) => {
-            if (!row[sdIdx]) return false;
-            const semantic= (row[semIdx] ?? '').toLowerCase();
-            if (semantic.endsWith('cisx#concurrent-query')) return true;
-        })
-        .map(makeSearchDef);
-
-    const urlRows= data
-        .filter((row) => Boolean(row[accessUrlIdx] && !row[semIdx]?.includes('CISX')))
+    const urlRows= dlData
+        .filter((dl) => Boolean(dl.url && !dl.semantics?.includes('CISX')))
         .map(makeSearchDef);
 
     return {primarySearchDef, concurrentSearchDef, urlRows};

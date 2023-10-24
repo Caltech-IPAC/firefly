@@ -4,6 +4,7 @@
 import React, {useEffect,useContext} from 'react';
 import {get,once} from 'lodash';
 import PropTypes from 'prop-types';
+import {hasCoverageData} from '../../voAnalyzer/TableAnalysis.js';
 import {MultiImageViewer} from './MultiImageViewer';
 import {
     dispatchAddViewer, dispatchViewerUnmounted, getMultiViewRoot, getViewer, IMAGE, NewPlotMode, SINGLE,
@@ -15,7 +16,6 @@ import {visRoot} from '../ImagePlotCntlr';
 import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {getActiveTableId, getBooleanMetaEntry, getTblById, getTblIdsByGroup} from '../../tables/TableUtil.js';
-import {hasCoverageData} from '../../util/VOAnalyzer.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import {getComponentState} from '../../core/ComponentCntlr.js';

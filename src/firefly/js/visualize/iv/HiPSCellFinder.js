@@ -29,6 +29,7 @@ import {CysConverter} from 'firefly/api/ApiUtilImage.jsx';
  * @param {number} norder
  * @param {number} fov
  * @param {WorldPt} centerWp
+ * @param {number} desiredNorder
  * @return {Array.<HiPSDeviceTileData>}
  */
 export function findCellOnScreen(plot, viewDim, norder, fov,centerWp, desiredNorder) {

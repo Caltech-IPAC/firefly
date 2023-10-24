@@ -4,10 +4,10 @@
 
 import {isString, isObject, once} from 'lodash';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
+import {findTableCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {visRoot, dispatchRecenter} from '../ImagePlotCntlr.js';
 import {getTblById, getCellValue} from '../../tables/TableUtil.js';
 import {makeAnyPt} from '../Point.js';
-import {findTableCenterColumns} from '../../util/VOAnalyzer.js';
 import { getActivePlotView, hasWCSProjection, primePlot, } from '../PlotViewUtil';
 import {CysConverter} from '../CsysConverter';
 import {dispatchPlotImage, dispatchUseTableAutoScroll} from '../ImagePlotCntlr';

@@ -5,12 +5,12 @@ import {sprintf} from '../externalSource/sprintf.js';
 import {getTableUiByTblId, makeFileRequest} from '../api/ApiUtilTable.jsx';
 import {makeVOCatalogRequest} from '../tables/TableRequestUtil.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
+import {findTableCenterColumns} from '../voAnalyzer/TableAnalysis.js';
 import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 import {setMultiSearchPanelTab} from './MultiSearchPanel.jsx';
 import {Format} from 'firefly/data/FileAnalysis';
 import {doJsonRequest} from 'firefly/core/JsonUtils';
 import {showInfoPopup} from 'firefly/ui/PopupUtil';
-import {findTableCenterColumns} from 'firefly/util/VOAnalyzer';
 
 //note - these two redundant function are here because of circular dependencies.
 // this file is imported very early and webpack is creating errors

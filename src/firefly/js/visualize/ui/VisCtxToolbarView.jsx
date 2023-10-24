@@ -478,28 +478,6 @@ function getHipsCubeDesc(plot) {
 }
 
 
-const typeConvert= {
-    hdu: {
-        getLen: getHDUCount,
-        getContextIdx: (pv,idx) => convertImageIdxToHDU(pv,idx).hduIdx,
-        getPlotIdx: (pv,idx) => convertHDUIdxToImageIdx(pv,idx, 'follow'),
-    },
-    cube: {
-        getLen: getCubePlaneCnt,
-        getContextIdx: (pv,idx) => convertImageIdxToHDU(pv,idx).cubeIdx,
-        getPlotIdx: (pv,idx) => convertHDUIdxToImageIdx(pv, getHDUIndex(pv, primePlot(pv)), idx)
-    },
-    images: {
-        getLen: (pv) => pv.plots.length,
-        getContextIdx: (pv,idx) => idx,
-        getPlotIdx: (pv,idx) => idx
-    },
-    hipsCube: {
-        getLen: (pv) => primePlot(pv).cubeDepth,
-        getContextIdx: (pv,idx) => idx,
-        getPlotIdx: (pv,idx) => idx
-    }
-};
 
 function getEmLength(len) {
    const size= Math.trunc(Math.log10(len)) + 1;
@@ -508,6 +486,30 @@ function getEmLength(len) {
 
 
 function FrameNavigator({pv, currPlotIdx, minForInput, displayType, tooltip}) {
+
+    const typeConvert= {
+        hdu: {
+            getLen: getHDUCount,
+            getContextIdx: (pv,idx) => convertImageIdxToHDU(pv,idx).hduIdx,
+            getPlotIdx: (pv,idx) => convertHDUIdxToImageIdx(pv,idx, 'follow'),
+        },
+        cube: {
+            getLen: getCubePlaneCnt,
+            getContextIdx: (pv,idx) => convertImageIdxToHDU(pv,idx).cubeIdx,
+            getPlotIdx: (pv,idx) => convertHDUIdxToImageIdx(pv, getHDUIndex(pv, primePlot(pv)), idx)
+        },
+        images: {
+            getLen: (pv) => pv.plots.length,
+            getContextIdx: (pv,idx) => idx,
+            getPlotIdx: (pv,idx) => idx
+        },
+        hipsCube: {
+            getLen: (pv) => primePlot(pv).cubeDepth,
+            getContextIdx: (pv,idx) => idx,
+            getPlotIdx: (pv,idx) => idx
+        }
+    };
+
 
     const plot= primePlot(pv);
     const {plotId}= pv;

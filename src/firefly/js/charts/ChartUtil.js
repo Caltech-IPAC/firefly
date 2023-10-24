@@ -18,6 +18,8 @@ import {
     stripColumnNameQuotes, watchTableChanges
 } from '../tables/TableUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_SORT} from '../tables/TablesCntlr.js';
+import {getSpectrumDM} from '../voAnalyzer/SpectrumDM.js';
+import {findTableCenterColumns} from '../voAnalyzer/TableAnalysis.js';
 import {dispatchLoadTblStats, getColValStats} from './TableStatsCntlr.js';
 import {
     dispatchChartHighlighted,
@@ -37,7 +39,6 @@ import {getTraceTSEntries as spectrumTSGetter, spectrumPlot, spectrumType} from 
 import Color from '../util/Color.js';
 import {MetaConst} from '../data/MetaConst';
 import {ALL_COLORSCALE_NAMES, colorscaleNameToVal} from './Colorscale.js';
-import {findTableCenterColumns, getSpectrumDM} from '../util/VOAnalyzer.js';
 import {getColValidator} from './ui/ColumnOrExpression.jsx';
 
 export const DEFAULT_ALPHA = 0.5;

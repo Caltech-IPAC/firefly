@@ -125,6 +125,8 @@ export function initWebApi(webApiCommands) {
     });
 }
 
+let firstRemoteApiCall= true;
+
 function receiveRemoteWebApiRequest(action, cancelSelf, {webApiCommands,callId}) {
     const {payload,type}= action ?? {};
     if (type!==WEB_API_CMD) return;
@@ -133,12 +135,14 @@ function receiveRemoteWebApiRequest(action, cancelSelf, {webApiCommands,callId})
     const url= workingUrl.origin+workingUrl.pathname + '?'+ payload.paramStr;
     const webApi= isUsingWebApi(webApiCommands, url);
     if (!webApi) return;
-    const {status, helpType, contextMessage, cmd, execute,
-        params, badParams, missingParams}= evaluateWebApi(webApiCommands, url);
+    const {status, cmd, execute, params}= evaluateWebApi(webApiCommands, url);
     const logger = Logger('remote web api');
     switch (status) {
         case WebApiStat.EXECUTE_API_CMD:
-            execute?.(cmd,{...params, callId: `callid-${callId}` });
+            const callParams= {...params, callId: `callid-${callId}` };
+            // setTimeout(() => execute?.(cmd,callParams), firstRemoteApiCall ? 2000 : 10);
+            execute?.(cmd,callParams);
+            firstRemoteApiCall= false;
             callId++;
             break;
         case WebApiStat.SHOW_HELP:

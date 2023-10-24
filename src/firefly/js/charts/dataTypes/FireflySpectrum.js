@@ -4,13 +4,13 @@
 import {isEmpty, pickBy, cloneDeep, set} from 'lodash';
 
 import {getTblById, getColumn, doFetchTable, getColumnIdx} from '../../tables/TableUtil.js';
+import {getSpectrumDM} from '../../voAnalyzer/SpectrumDM.js';
 import {dispatchChartUpdate, dispatchError} from '../ChartsCntlr.js';
 import {getDataChangesForMappings, updateHighlighted, updateSelected, getMinScatterGLRows, isSpectralOrder} from '../ChartUtil.js';
 import {addOtherChanges, createChartTblRequest, getTraceTSEntries as genericTSGetter} from './FireflyGenericData.js';
 
 import {quoteNonAlphanumeric} from '../../util/expr/Variable.js';
 import {getUnitInfo} from './SpectrumUnitConversion.js';
-import {getSpectrumDM} from '../../util/VOAnalyzer.js';
 
 export const spectrumType = 'spectrum';
 

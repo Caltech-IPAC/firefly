@@ -2,7 +2,7 @@ import {isString} from 'lodash';
 import {ReservedParams} from '../../api/WebApi.js';
 import {sprintf} from '../../externalSource/sprintf.js';
 import {makeFileRequest, makeTblRequest, setNoCache} from '../../tables/TableRequestUtil.js';
-import {cisxAdhocServiceUtype, standardIDs} from '../../util/VOAnalyzer.js';
+import {cisxAdhocServiceUtype, standardIDs} from '../../voAnalyzer/VoConst.js';
 import {splitByWhiteSpace, tokenSub} from '../../util/WebUtil.js';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';

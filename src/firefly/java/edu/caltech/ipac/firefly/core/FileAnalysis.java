@@ -51,7 +51,7 @@ public class FileAnalysis {
         String contentType= fileInfo.getContentType();
         String ct= contentType!=null ? contentType.toLowerCase() : null;
 
-        if (ct!=null && (ct.contains("png") || ct.contains("jpg") || ct.contains("jpeg") || ct.contains("bmp"))) {
+        if (ct!=null && (ct.contains("png") || ct.contains("jpg") || ct.contains("jpeg") || ct.contains("bmp") || ct.contains("gif"))) {
             return analyzePNG(infile, mtype);
         }
 

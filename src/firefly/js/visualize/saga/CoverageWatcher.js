@@ -24,10 +24,10 @@ import {
 import {darker} from '../../util/Color';
 import {logger} from '../../util/Logger.js';
 import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
-import {isOrbitalPathTable} from '../../util/VOAnalyzer';
 import {
-    findTableCenterColumns, findTableRegionColumn, hasCoverageData, isCatalog, isTableWithRegion
-} from '../../util/VOAnalyzer.js';
+    findTableCenterColumns,
+    findTableRegionColumn, hasCoverageData, isCatalog, isOrbitalPathTable, isTableWithRegion
+} from '../../voAnalyzer/TableAnalysis.js';
 import {getNextColor} from '../draw/DrawingDef.js';
 import {DrawSymbol} from '../draw/DrawSymbol.js';
 import {

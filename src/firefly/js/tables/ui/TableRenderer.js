@@ -25,7 +25,7 @@ import {FieldGroup} from '../../ui/FieldGroup';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {useStoreConnector} from './../../ui/SimpleComponent.jsx';
-import {applyLinkSub, applyTokenSub} from '../../util/VOAnalyzer.js';
+import {applyLinkSub, applyTokenSub} from '../../voAnalyzer/VoCoreUtils.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {dispatchTableUiUpdate, dispatchTableUpdate} from '../TablesCntlr.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';

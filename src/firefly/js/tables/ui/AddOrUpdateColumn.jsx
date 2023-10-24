@@ -5,6 +5,7 @@
 import React, {useCallback, useState} from 'react';
 import PropTypes from 'prop-types';
 import {delay} from 'lodash';
+import {UCDList} from '../../voAnalyzer/VoConst.js';
 
 import {SqlTableFilter, code} from './FilterEditor.jsx';
 import {addOrUpdateColumn, deleteColumn} from '../../rpc/SearchServicesJson.js';
@@ -24,7 +25,6 @@ import {textValidator} from '../../util/Validate.js';
 import {formatColExpr} from '../../charts/ChartUtil.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
-import {UCDList} from '../../util/VOAnalyzer.js';
 
 import MAGNIFYING_GLASS from 'images/icons-2014/magnifyingGlass.png';
 import INSERT_COLUMN from 'html/images/insert-col-right-24-24.png';

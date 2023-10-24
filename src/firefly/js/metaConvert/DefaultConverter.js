@@ -1,7 +1,7 @@
 import {isEmpty} from 'lodash';
 import {MetaConst} from '../data/MetaConst.js';
 import {getCellValue, getColumn} from '../tables/TableUtil.js';
-import {getDataSourceColumn} from '../util/VOAnalyzer.js';
+import {getDataSourceColumn} from '../voAnalyzer/TableAnalysis.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import {makeWorldPt, parseWorldPt} from '../visualize/Point.js';
 import RangeValues from '../visualize/RangeValues.js';

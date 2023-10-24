@@ -5,6 +5,7 @@
 import {isNil, get, isEmpty, once, isNaN} from 'lodash';
 import Enum from 'enum';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
+import {findImageCenterColumns, findTableCenterColumns, isCatalog} from '../../voAnalyzer/TableAnalysis.js';
 import {
     SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer,
     dispatchDestroyDrawLayer, dispatchModifyCustomField, dispatchChangeDrawingDef
@@ -24,7 +25,6 @@ import {logger} from '../../util/Logger.js';
 import {getMaxScatterRows} from '../../charts/ChartUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 import {parseWorldPt} from '../Point.js';
-import {findImageCenterColumns, findTableCenterColumns, isCatalog} from '../../util/VOAnalyzer.js';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import {makeWorldPt} from '../Point';
 import {CoordinateSys} from '../CoordSys.js';

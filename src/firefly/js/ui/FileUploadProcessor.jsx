@@ -16,7 +16,8 @@ import WebPlotRequest from 'firefly/visualize/WebPlotRequest';
 import RangeValues from 'firefly/visualize/RangeValues';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from 'firefly/visualize/MultiViewCntlr';
 import {PlotAttribute} from 'firefly/visualize/PlotAttribute';
-import {isAnalysisTableDatalink} from '../util/VOAnalyzer.js';
+
+import {isAnalysisTableDatalink} from '../voAnalyzer/VoDataLinkServDef.js';
 import {fetchDatalinkUITable} from './dynamic/FetchDatalinkTable.js';
 import {dispatchHideDialog} from 'firefly/core/ComponentCntlr';
 import React from 'react';

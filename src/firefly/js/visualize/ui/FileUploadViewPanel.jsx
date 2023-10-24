@@ -12,7 +12,8 @@ import {getField} from '../../fieldGroup/FieldGroupUtils';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getCellValue, getTblById} from '../../tables/TableUtil.js';
 import {dispatchTableAddLocal, dispatchTableRemove} from '../../tables/TablesCntlr.js';
-import {isAnalysisTableDatalink} from '../../util/VOAnalyzer.js';
+
+import {isAnalysisTableDatalink} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {getSizeAsString} from '../../util/WebUtil.js';
 
 import {SelectInfo} from '../../tables/SelectInfo.js';

@@ -1,4 +1,5 @@
-import {makeWorldPtUsingCenterColumns} from '../../util/VOAnalyzer.js';
+import {makeWorldPtUsingCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
+import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {Band} from '../../visualize/Band.js';
 import {getSearchTarget} from '../../visualize/saga/CatalogWatcher.js';
 import {WPConst} from '../../visualize/WebPlotRequest.js';
@@ -9,16 +10,28 @@ import {
 import {fetchDatalinkTable} from './DatalinkFetch.js';
 import {
     filterDLList,
-    getDataLinkData, IMAGE, processDatalinkTable, RELATED_IMAGE_GRID, SPECTRUM, USE_ALL
+    IMAGE, processDatalinkTable, RELATED_IMAGE_GRID, SPECTRUM, USE_ALL
 } from './DataLinkProcessor.js';
 
 
+/**
+ *
+ * @param {Object} obj
+ * @param obj.dlTableUrl
+ * @param obj.activateParams
+ * @param obj.table
+ * @param obj.row
+ * @param obj.threeColorOps
+ * @param obj.titleStr
+ * @param obj.options
+ * @return {Promise<DataProductsDisplayType>}
+ */
 export async function getDatalinkRelatedGridProduct({dlTableUrl, activateParams, table, row, threeColorOps, titleStr, options}) {
     try {
         const positionWP = getSearchTarget(table.request, table) ?? makeWorldPtUsingCenterColumns(table, row);
         const datalinkTable = await fetchDatalinkTable(dlTableUrl);
 
-        const gridData = getDataLinkData(datalinkTable).filter((d) => d.isThis && d.isGrid && d.isImage);
+        const gridData = getDataLinkData(datalinkTable).filter(({dlAnalysis}) => dlAnalysis.isThis && dlAnalysis.isGrid && dlAnalysis.isImage);
         if (!gridData.length) return dpdtSimpleMsg('no support for related grid in datalink file');
 
 
@@ -58,16 +71,27 @@ function make3ColorRequestAry(requestAry,threeColorOps,tbl_id) {
     ];
 }
 
-export async function getDatalinkSingleDataProduct({
-                                                       dlTableUrl,
+/**
+ *
+ * @param {Object} obj
+ * @param obj.dlTableUrl
+ * @param obj.options
+ * @param obj.sourceTable
+ * @param obj.row
+ * @param obj.activateParams
+ * @param obj.titleStr
+ * @param obj.doFileAnalysis
+ * @param obj.additionalServiceDescMenuList
+ * @return {Promise<DataProductsDisplayType>}
+ */
+export async function getDatalinkSingleDataProduct({ dlTableUrl,
                                                        options,
                                                        sourceTable,
                                                        row,
                                                        activateParams,
                                                        titleStr = 'datalink table',
                                                        doFileAnalysis = true,
-                                                       additionalServiceDescMenuList
-                                                   }) {
+                                                       additionalServiceDescMenuList }) {
     try {
         const datalinkTable = await fetchDatalinkTable(dlTableUrl);
         let parsingAlgorithm = USE_ALL;
@@ -130,11 +154,15 @@ export async function datalinkDescribeThreeColor(dlTableUrl, table,row, options)
     return bandData;
 }
 
+/**
+ * @param {TableModel} datalinkTable
+ * @return {{r: number, b: number, g: number}}
+ */
 function get3CBandIdxes(datalinkTable) {
     const gridData= filterDLList(RELATED_IMAGE_GRID,getDataLinkData(datalinkTable));
-    const rBandIdx= gridData.findIndex( (d) => d.rBand);
-    const gBandIdx= gridData.findIndex( (d) => d.gBand);
-    const bBandIdx= gridData.findIndex( (d) => d.bBand);
+    const rBandIdx= gridData.findIndex( (d) => d.dlAnalysis.rBand);
+    const gBandIdx= gridData.findIndex( (d) => d.dlAnalysis.gBand);
+    const bBandIdx= gridData.findIndex( (d) => d.dlAnalysis.bBand);
 
     const bandAry= [];
     bandAry.length= gridData.length;

@@ -29,6 +29,7 @@ import {STANDARD_READOUT} from './MouseReadoutCntlr';
  * @prop DOUBLE_CLICK,
  * @type {Enum}
  */
+/** @type MouseState */
 export const MouseState= new Enum(['NONE', 'ENTER', 'EXIT', 'DOWN', 'UP',
     'DRAG_COMPONENT', 'DRAG', 'MOVE', 'CLICK', 'WHEEL_UP', 'WHEEL_DOWN',
     'DOUBLE_CLICK']);
