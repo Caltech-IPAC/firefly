@@ -11,6 +11,7 @@ import {FormPanel} from './FormPanel.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {StatefulTabs, Tab} from './panel/TabPanel.jsx';
 import {makeSearchOnce} from '../util/WebUtil';
+import {useNavigate, useInRouterContext} from 'react-router-dom';
 
 const changeSearchOptionOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
 
@@ -31,7 +32,7 @@ export function SearchPanel({style={}, initArgs={}}) {
     const isSingleSearch = Object.keys(allSearchItems).length === 1;
     if (isSingleSearch) {
         return (
-            <div>
+            <div className='SearchPanel-box'>
                 {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
                 <SearchForm style={{height: 'auto'}} searchItem={searchItem} initArgs={initArgs}/>
             </div>
@@ -41,7 +42,7 @@ export function SearchPanel({style={}, initArgs={}}) {
     if (flow === 'vertical') {
         const sideBar = <SideBar {...{activeSearch, groups}}/> ;
         return (
-            <div>
+            <div className='SearchPanel-box'>
                 {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
                 <div className='SearchPanel' style={style}>
                     {sideBar}
@@ -56,7 +57,7 @@ export function SearchPanel({style={}, initArgs={}}) {
     } else {
         const onTabSelect = (index,id,name) => dispatchUpdateAppData(set({}, ['searches', 'activeSearch'], name));
         return (
-            <div>
+            <div className='SearchPanel-box'>
                 {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
                 <StatefulTabs componentKey={`SearchPanel_${title}`} onTabSelect={onTabSelect} resizable={true} useFlex={true} borderless={true} contentStyle={{backgroundColor: 'transparent'}}>
                     {searchesAsTabs(allSearchItems, initArgs)}
@@ -138,10 +139,21 @@ function SearchGroup({group, activeSearch}) {
     );
 }
 
+function RouterSearchItem({onClick, ttips, clsname, label, search}) {
+    const navigate = useNavigate();
+    const handleClick = () => {
+        onClick();
+        navigate(search.path);
+    };
+    return <div className='SearchPanel__searchItem' onClick={handleClick} title={ttips}><span className={clsname}>{label}</span></div>;
+}
+
 function SearchItem({search, activeSearch}) {
+    const isUsingRouter = useInRouterContext();
     const ttips = search.desc || search.title || search.name;
     const label = search.title || search.name;
     const clsname = search.name ===  activeSearch ? 'selected' : 'normal';
     const onClick = () => dispatchUpdateAppData(set({}, ['searches', 'activeSearch'], search.name));
-    return <div className='SearchPanel__searchItem' onClick={onClick} title={ttips}><span className={clsname}>{label}</span></div>;
+    if (isUsingRouter) return <RouterSearchItem {...{onClick, ttips, clsname, label, search}}/>;
+    else return <div className='SearchPanel__searchItem' onClick={onClick} title={ttips}><span className={clsname}>{label}</span></div>;
 }
