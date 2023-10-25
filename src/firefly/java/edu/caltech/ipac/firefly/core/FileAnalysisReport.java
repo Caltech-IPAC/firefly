@@ -194,6 +194,7 @@ public class FileAnalysisReport {
         private List<String> tableColumnUnits= null; //only use for a fits image that is read as a table
         private boolean defaultPart= false;
         private boolean interpretedData= false;
+        private String searchProcessorId="";
         private DataGroup details;
         private ChartTableDefOption chartTableDefOption= ChartTableDefOption.auto;
         private int totalTableRows=-1;
@@ -266,6 +267,9 @@ public class FileAnalysisReport {
 
         public String getUrl() { return url; }
         public void setUrl(String url) { this.url = url; }
+
+        public void setSearchProcessorId(String searchProcessorId) {this.searchProcessorId=searchProcessorId;}
+        public String getSearchProcessorId() {return searchProcessorId;}
 
         public ChartTableDefOption getChartTableDefOption() { return chartTableDefOption; }
         public void setChartTableDefOption(ChartTableDefOption chartTableDefOption) {

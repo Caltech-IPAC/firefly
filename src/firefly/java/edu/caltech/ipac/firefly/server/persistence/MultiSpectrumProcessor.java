@@ -24,7 +24,6 @@ import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.GroupInfo;
 import edu.caltech.ipac.table.JsonTableUtil;
-import edu.caltech.ipac.table.ResourceInfo;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
 
@@ -162,7 +161,7 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
         for (int i = 0; i < specs.spectrums().size(); i++) {
             GroupInfo spec = specs.spectrums().get(i);
             String desc = isEmpty(spec.getName()) ? spec.getID() : spec.getName();
-            links.add(new String[]{selRow+"", createSpectrumUrl(treq, selRow, i), "", "", desc, "#this", "application/x-votable+xml", "", "#grid"});
+            links.add(new String[]{selRow+"", createSpectrumUrl(treq, selRow, i), "", "", desc, "#this", "application/x-votable+xml", "", "#grid-spectrum"});
         }
 
         return new DataGroupPart(links, 0, links.size());
