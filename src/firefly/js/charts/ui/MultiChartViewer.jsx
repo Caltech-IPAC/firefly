@@ -87,7 +87,7 @@ export class MultiChartViewer extends PureComponent {
     }
 
     render() {
-        const {viewerId, expandedMode, closeable, noChartToolbar, label} = this.props;
+        const {viewerId, expandedMode, closeable, noChartToolbar, label, autoRowOriented=true} = this.props;
         const {viewer}= this.state;
         const layoutType= getLayoutType(getMultiViewRoot(),viewerId);
         if (!viewer || isEmpty(viewer.itemIdAry)) {

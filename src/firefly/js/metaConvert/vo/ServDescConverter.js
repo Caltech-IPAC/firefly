@@ -18,7 +18,7 @@ const DEF_MAX_PLOTS= 8;
  *
  * @param {TableModel} table
  * @param {DataProductsConvertType} converterTemplate
- * @param {Object} options
+ * @param {DataProductsFactoryOptions} options
  * @return {DataProductsConvertType}
  */
 export function makeServDescriptorConverter(table,converterTemplate,options={}) {
@@ -58,7 +58,7 @@ function describeServDefThreeColor(table, row, options) {
  * @param table
  * @param row
  * @param {ActivateParams} activateParams
- * @param {Object} options
+ * @param {DataProductsFactoryOptions} options
  * @return {Promise.<DataProductsDisplayType>}
  */
 export async function getServiceDescSingleDataProduct(table, row, activateParams, options) {

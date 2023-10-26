@@ -1,16 +1,20 @@
 import {getObsCoreProdType, getObsCoreSRegion, makeWorldPtUsingCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {
-    getDataLinkData, isDownloadType, isGzipType, isSimpleImageType, isTarType
+    getDataLinkData, isDownloadType, isGzipType, isSimpleImageType, isTarType, isVoTable
 } from '../../voAnalyzer/VoDataLinkServDef.js';
 import {GIG} from '../../util/WebUtil.js';
 import {getSearchTarget} from '../../visualize/saga/CatalogWatcher.js';
 import {makeAnalysisActivateFunc} from '../AnalysisUtils.js';
 import {dispatchUpdateActiveKey, getActiveMenuKey, getCurrentActiveKeyID} from '../DataProductsCntlr.js';
 import {
-    dpdtAnalyze, dpdtDownload, dpdtDownloadMenuItem, dpdtFromMenu, dpdtImage, dpdtMessage, dpdtPNG, dpdtTable, DPtypes
+    dpdtAnalyze, dpdtChartTable, dpdtDownload, dpdtDownloadMenuItem, dpdtFromMenu, dpdtImage, dpdtMessage, dpdtPNG,
+    dpdtTable, DPtypes
 } from '../DataProductsType.js';
 import {createSingleImageActivate, createSingleImageExtraction} from '../ImageDataProductsUtil.js';
-import {createTableActivate, createTableExtraction} from '../TableDataProductUtils.js';
+import {
+    createChartTableActivate, createTableActivate, createTableExtraction, makeMultiTableActivate,
+    makeMultiTableExtraction
+} from '../TableDataProductUtils.js';
 import {makeServiceDefDataProduct} from './ServDescProducts.js';
 import {makeObsCoreRequest} from './VORequest.js';
 
@@ -32,7 +36,7 @@ export const SPECTRUM= 'spectrumAlgorithm';
  * @param {string} params.dlTableUrl datalink url - url of the datalink Table
  * @param {boolean} [params.doFileAnalysis]
  * @param {String} [params.parsingAlgorithm] - which type of DL data
- * @param {String} [params.options] - which type of DL data
+ * @param {DataProductsFactoryOptions} [params.options] - which type of DL data
  * @param {string} [params.baseTitle]
  * @return {DataProductsDisplayType}
  */
@@ -41,11 +45,14 @@ export function processDatalinkTable({sourceTable, row, datalinkTable, activateP
                                          options, parsingAlgorithm = USE_ALL}) {
     const dataLinkData= getDataLinkData(datalinkTable);
     const isImageGrid= dataLinkData.filter( (dl) => dl.dlAnalysis.isImage && dl.dlAnalysis.isGrid).length>1;
+    const isMultiTableSpectrum= dataLinkData.filter( (dl) => dl.dlAnalysis.isThis && dl.dlAnalysis.isGrid && dl.dlAnalysis.isSpectrum).length>1;
+    if (parsingAlgorithm===USE_ALL && isMultiTableSpectrum) parsingAlgorithm= SPECTRUM; // todo this is probably temporary for testing
+
     const menu=  dataLinkData.length &&
         createDataLinkMenuRet({dlTableUrl,dataLinkData,sourceTable, sourceRow:row, activateParams, baseTitle,
             additionalServiceDescMenuList, doFileAnalysis, parsingAlgorithm, options});
 
-    const canShow= menu.length>0 && menu.some( (m) => m.displayType!==DPtypes.DOWNLOAD && m.size<GIG);
+    const canShow= menu.length>0 && menu.some( (m) => m.displayType!==DPtypes.DOWNLOAD && (!m.size || m.size<GIG));
     const activeMenuLookupKey= dlTableUrl;
 
 
@@ -145,15 +152,16 @@ function makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTabl
  * @param {number} p.idx
  * @param {TableModel} p.sourceTable
  * @param p.sourceRow
+ * @param {DataProductsFactoryOptions} p.options
  * @param p.doFileAnalysis
  * @param p.name
  * @param {ActivateParams} p.activateParams
  * @return {DataProductsDisplayType|{displayType: string, menuKey: string, name: *, singleDownload: boolean, url: *, fileType: *}}
  */
-function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRow,
+function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRow, options,
                                       doFileAnalysis, name, activateParams}) {
 
-    const {semantics,size,url, dlAnalysis:{isThis, isDownloadOnly, isTar, isGzip,isSimpleImage} }= dlData;
+    const {semantics,size,url, dlAnalysis:{isThis, isDownloadOnly, isTar, isGzip,isSimpleImage}, description }= dlData;
     const {positionWP,sRegion,prodType, activeMenuLookupKey,menuKey, contentType}=
         getDLMenuEntryData({dlTableUrl, dlData,idx,sourceTable,sourceRow});
 
@@ -171,10 +179,26 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
     else if (isTooBig(size)) {
         return dpdtDownload('Download: '+name + '(too large to show)',url,menuKey,'fits',{semantics, size, activeMenuLookupKey});
     }
+    else if (dlData.dlAnalysis.isSpectrum && isVoTable(contentType)) {
+        const tbl_id=  (options.tableIdBase??'direct-result-tbl') + `-${idx}`;
+        const chartId= (options.chartIdBase??'direct-result-chart') +`-${idx}`;
+        const activate= createChartTableActivate({
+            chartAndTable:true,
+            source: url,
+            titleInfo:{titleStr:description, showChartTitle:true},
+            activateParams,
+            tbl_id,
+            chartInfo:{useChartChooser:true},
+            chartId,
+        });
+        const extract= createTableExtraction(url,description,0);
+        return dpdtChartTable('Show: ' + description, activate, extract, menuKey, {extractionText: 'Pin Table', paIdx:0, tbl_id,chartId});
+    }
     else if (isAnalysisType(contentType)) {
         if (doFileAnalysis) {
             const request= makeObsCoreRequest(url,positionWP,name,sourceTable,sourceRow);
-            const activate= makeAnalysisActivateFunc(sourceTable,sourceRow, request, positionWP,activateParams,menuKey, prodType);
+            const activate= makeAnalysisActivateFunc({table:sourceTable,row:sourceRow, request,
+                activateParams,menuKey, dataTypeHint:prodType, options});
             return dpdtAnalyze({name:'Show: '+name,
                 activate,url,menuKey, semantics, size, activeMenuLookupKey,request, sRegion,
                 prodTypeHint:dlData.contentType || prodType});
@@ -194,7 +218,7 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
  * @param {string} p.baseTitle
  * @param {TableModel} p.sourceTable
  * @param {number} p.sourceRow
- * @param p.options
+ * @param {DataProductsFactoryOptions} p.options
  * @param {string} p.name
  * @param {boolean} p.doFileAnalysis
  * @param p.activateParams
@@ -208,7 +232,7 @@ function makeMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRo
                                 name, doFileAnalysis, activateParams});
     }
     else if (dlData.url) {
-        return makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow,
+        return makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow,options,
             name, doFileAnalysis, activateParams});
     }
 }
@@ -264,7 +288,7 @@ function sortMenu(menu) {
  * @param {ActivateParams} obj.activateParams
  * @param {Array.<DataProductsDisplayType>} [obj.additionalServiceDescMenuList]
  * @param obj.doFileAnalysis
- * @param obj.options
+ * @param {DataProductsFactoryOptions} obj.options
  * @param obj.parsingAlgorithm
  * @param obj.baseTitle
  * @return {Array.<DataProductsDisplayType>}
@@ -287,6 +311,18 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
             return menuEntry;
         })
         .filter((menuEntry) => menuEntry);
+
+    if (parsingAlgorithm===SPECTRUM && menu.length>1) {
+
+        const singleItemMenu= menu.filter( (m) => m.displayType===DPtypes.CHOICE_CTI && m.tbl_id);
+        const activateObj= Object.fromEntries(singleItemMenu.map( ({tbl_id,activate,chartId}) => [tbl_id,{activate,chartId}]));
+        const extractionObj= Object.fromEntries(singleItemMenu.map( (m) => [m.tbl_id,m.extraction]));
+        const activate= makeMultiTableActivate(activateObj, activateParams);
+        const extraction= makeMultiTableExtraction(extractionObj, activateParams);
+
+        return [dpdtChartTable( 'Show: Spectrum', activate, extraction, 'multi-table',
+            {extractionText: 'Pin Table', paIdx:0})];
+    }
 
     if (parsingAlgorithm===USE_ALL) {
         menu.push(...additionalServiceDescMenuList,...addDataLinkEntries(dlTableUrl,activateParams));

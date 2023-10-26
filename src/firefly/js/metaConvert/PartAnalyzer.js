@@ -21,9 +21,10 @@ import {createSingleImageActivate, createSingleImageExtraction} from './ImageDat
  * @param {String} dataTypeHint  stuff like 'spectrum', 'image', 'cube', etc
  * @param serverCacheFileKey
  * @param {ActivateParams} activateParams
+ * @param {DataProductsFactoryOptions} options
  * @return {{tableResult: DataProductsDisplayType|undefined, imageResult: DataProductsDisplayType|undefined}}
  */
-export function analyzePart(part, request, table, row, fileFormat, dataTypeHint, serverCacheFileKey, activateParams) {
+export function analyzePart(part, request, table, row, fileFormat, dataTypeHint, serverCacheFileKey, activateParams, options) {
 
     const {type,desc, fileLocationIndex}= part;
     const aTypes= findAvailableTypesForAnalysisPart(part, fileFormat);
@@ -35,7 +36,7 @@ export function analyzePart(part, request, table, row, fileFormat, dataTypeHint,
         analyzeImageResult(part, request, table, row, fileFormat, part.convertedFileName,desc,activateParams,fileLocationIndex);
 
     const tableResult= aTypes.includes(DPtypes.TABLE) &&
-        analyzeChartTableResult(false, table, row, part, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex);
+        analyzeChartTableResult(false, table, row, part, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex, options);
 
     return {imageResult, tableResult};
 }
@@ -106,7 +107,7 @@ const SPACITAL_C_COL2= ['dec','lat','c_dec','dec1'];
  * @param title
  * @param part
  * @param fileFormat
- * @return {{xCol:string,yCol:string,cNames:Array.<String>,cUnits:Array.<String>}|{}}
+ * @return {ChartInfo}
  */
 function getTableChartColInfo(title, part, fileFormat) {
     if (isImageAsTable(part,fileFormat)) {
@@ -189,9 +190,10 @@ function getTableDropTitleStr(title,part,fileFormat,tableOnly) {
  * @param {String} dataTypeHint  stuff like 'spectrum', 'image', 'cube', etc
  * @param {ActivateParams} activateParams
  * @param {number} tbl_index
+ * @param {DataProductsFactoryOptions} options
  * @return {DataProductsDisplayType|undefined}
  */
-function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOnServer, title, dataTypeHint='', activateParams, tbl_index=0) {
+function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOnServer, title, dataTypeHint='', activateParams, tbl_index=0, options) {
     const {uiEntry,uiRender,chartParamsAry, interpretedData=false, defaultPart:requestDefault= false}= part;
     const partFormat= part.convertedFileFormat||fileFormat;
     if (uiEntry===UIEntry.UseSpecified) {
@@ -211,7 +213,8 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
 
     if (tableOnly) {
         return dpdtTable(ddTitleStr,
-            createChartTableActivate({source:fileOnServer,titleInfo,activateParams, tbl_index, dataTypeHint, cNames, cUnits}),
+            createChartTableActivate({source:fileOnServer,titleInfo,activateParams, tbl_index, dataTypeHint, cNames, cUnits,
+                                     tbl_id:options.tableIdBase }),
             createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits, dataTypeHint),
             undefined, {extractionText: 'Pin Table', paIdx:tbl_index,requestDefault});
     }
@@ -235,7 +238,9 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
             const chartInfo= {xAxis:xCol, yAxis:yCol, chartParamsAry, useChartChooser};
             if (chartTableDefOption===AUTO) chartTableDefOption= imageAsTableColCnt===2 ? SHOW_CHART : SHOW_TABLE;
             return dpdtChartTable(ddTitleStr,
-                createChartTableActivate({chartAndTable:true, source:fileOnServer,titleInfo,activateParams,chartInfo,tbl_index,dataTypeHint, cNames,cUnits,connectPoints}),
+                createChartTableActivate({chartAndTable:true, source:fileOnServer,titleInfo,activateParams,chartInfo,
+                    tbl_index,dataTypeHint, colNames:cNames,colUnits:cUnits,connectPoints,
+                    tbl_id:options.tableIdBase, chartId:options.chartIdBase }),
                 createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits, dataTypeHint),
                 undefined, {extractionText: 'Pin Table', paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }

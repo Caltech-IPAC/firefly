@@ -28,15 +28,15 @@ export function makeAnalysisGetSingleDataProduct(makeReq) {
     return async (table, row, activateParams, options, dataTypeHint = '') => {
         const reqObj = makeReq(table, row, true);
         const request = reqObj?.single ?? reqObj;
-        return uploadAndAnalyze({request, table, row, activateParams, dataTypeHint});
+        return uploadAndAnalyze({request, table, row, activateParams, dataTypeHint, options});
     };
 }
 
 
-export async function uploadAndAnalyze({request, table, row, activateParams, dataTypeHint = ''}) {
+export async function uploadAndAnalyze({request, table, row, activateParams, dataTypeHint = '', options}) {
     if (!hasRowAccess(table, row)) dpdtSimpleMsg('You do not have access to this data.');
     if (isNonAnalysisType(request)) return fileExtensionSingleProductAnalysis(request);
-    const analysisPromise = doUploadAndAnalysis({table, row, request, activateParams, dataTypeHint});
+    const analysisPromise = doUploadAndAnalysis({table, row, request, activateParams, dataTypeHint, options});
     return dpdtWorkingPromise(LOADING_MSG, analysisPromise, request);
 }
 
@@ -107,24 +107,26 @@ export function makeAnalysisGetGridDataProduct(makeReq) {
 /**
  * return an activate function that will upload and analyze the file then dispatch the new DataProductsDisplayType
  * as the active data product. This will be picked up by the MultiProductViewer
- * @param table
- * @param row
- * @param request
- * @param positionWP
- * @param activateParams
- * @param menuKey
- * @param dataTypeHint
- * @param {ServiceDescriptorDef} [serDef]
- * @param [originalTitle]
+ * @param {Object} obj
+ * @param obj.table
+ * @param obj.row
+ * @param obj.request
+ * @param obj.activateParams
+ * @param obj.menuKey
+ * @param obj.dataTypeHint
+ * @param {ServiceDescriptorDef} [obj.serDef]
+ * @param [obj.originalTitle]
+ * @param {DataProductsFactoryOptions} [obj.options]
  * @return {function}
  */
-export function makeAnalysisActivateFunc(table, row, request, positionWP, activateParams, menuKey, dataTypeHint, serDef, originalTitle) {
+export function makeAnalysisActivateFunc({table, row, request, activateParams, menuKey,
+                                             dataTypeHint, serDef, originalTitle, options}) {
     const analysisActivateFunc = async (menu, userInputParams) => {
         const {dpId}= activateParams;
         dispatchUpdateDataProducts(dpId, dpdtWorkingMessage(LOADING_MSG,menuKey));
         // do the uploading and analyzing
-        const dPDisplayType= await doUploadAndAnalysis({ table, row, request, activateParams, dataTypeHint, menu,
-            serDef, userInputParams, analysisActivateFunc, originalTitle });
+        const dPDisplayType= await doUploadAndAnalysis({ table, row, request, activateParams, dataTypeHint, options, menu,
+            serDef, userInputParams, analysisActivateFunc, originalTitle});
         // activate the result of the analysis
        dispatchResult(dPDisplayType, menu,menuKey,dpId, serDef, analysisActivateFunc);
     };

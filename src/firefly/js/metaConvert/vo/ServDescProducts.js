@@ -21,7 +21,7 @@ import {makeObsCoreRequest} from './VORequest.js';
  * @param p.idx
  * @param p.positionWP
  * @param p.activateParams
- * @param p.options
+ * @param {DataProductsFactoryOptions} p.options
  * @param p.titleStr
  * @param p.activeMenuLookupKey
  * @param p.menuKey
@@ -42,14 +42,15 @@ export function makeServiceDefDataProduct({
     if (activateServiceDef && noInputRequired) {
         const url= makeUrlFromParams(accessURL, serDef, idx, getComponentInputs(serDef,options));
         const request = makeObsCoreRequest(url, positionWP, titleStr, sourceTable, sourceRow);
-        const activate = makeAnalysisActivateFunc(sourceTable, sourceRow, request, positionWP, activateParams, menuKey, prodTypeHint);
+        const activate = makeAnalysisActivateFunc({table:sourceTable, row:sourceRow, request, activateParams,
+            menuKey, dataTypeHint:prodTypeHint, options});
         return dpdtAnalyze({
             name:'Show: ' + (titleStr || name), activate, url:request.getURL(), menuKey,
             activeMenuLookupKey, request, sRegion, prodTypeHint, semantics, size, serviceDefRef});
     } else {
         const request = makeObsCoreRequest(accessURL, positionWP, titleStr, sourceTable, sourceRow);
-        const activate = makeAnalysisActivateFunc(sourceTable, sourceRow, request, positionWP, activateParams, menuKey,
-            prodTypeHint ?? 'unknown', serDef, name);
+        const activate = makeAnalysisActivateFunc({table:sourceTable, row:sourceRow, request, activateParams, menuKey,
+            dataTypeHint:prodTypeHint ?? 'unknown', serDef, originalTitle:name,options});
         const entryName = `Show: ${titleStr || servDescTitle || `Service #${idx}: ${name}`} ${allowsInput ? ' (Input Required)' : ''}`;
         return dpdtAnalyze({
             name:entryName, activate, url:request.getURL(), serDef, menuKey,
@@ -60,6 +61,12 @@ export function makeServiceDefDataProduct({
     }
 }
 
+/**
+ * return a list of inputs from the user that will go into the service descriptor URL
+ * @param serDef
+ * @param {DataProductsFactoryOptions} options
+ * @return {{[p: string]: *}|{}}
+ */
 function getComponentInputs(serDef, options) {
     const key= options.dataProductsComponentKey ?? DEFAULT_DATA_PRODUCTS_COMPONENT_KEY;
     const valueObj= getComponentState(key,{});
@@ -94,7 +101,7 @@ function getComponentInputs(serDef, options) {
  * @param {number} p.row
  * @param {ActivateParams} p.activateParams
  * @param {String} p.activeMenuLookupKey
- * @param {boolean} p.options
+ * @param {DataProductsFactoryOptions} p.options
  * @return {Array.<DataProductsDisplayType>}
  */
 export function createServDescMenuRet({ descriptors, positionWP, table, row,
@@ -132,5 +139,3 @@ function logServiceDescriptor(baseUrl, sendParams, newUrl) {
     // Object.entries(sendParams).forEach(([k,v]) => console.log(`param: ${k}, value: ${v}`));
     console.log(`service descriptor new URL: ${newUrl}`);
 }
-
-

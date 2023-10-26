@@ -5,15 +5,19 @@
 import {getDefaultChartProps} from 'firefly/charts/ChartUtil.js';
 import {showPinMessage} from 'firefly/ui/PopupUtil.jsx';
 import {isString} from 'lodash';
+import {awrap} from 'regenerator-runtime';
 import {CHART_UI_EXPANDED, dispatchChartAdd, dispatchChartRemove} from '../charts/ChartsCntlr';
 import {LO_MODE, LO_VIEW, SET_LAYOUT_MODE} from '../core/LayoutCntlr.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga';
 import {ChartType} from '../data/FileAnalysis';
 import {MetaConst} from '../data/MetaConst';
 import {makeFileRequest} from '../tables/TableRequestUtil';
-import {dispatchTableRemove, dispatchTableSearch, TBL_UI_EXPANDED} from '../tables/TablesCntlr';
-import {getTblById, onTableLoaded} from '../tables/TableUtil';
+import {
+    dispatchActiveTableChanged, dispatchTableRemove, dispatchTableSearch, TBL_RESULTS_ACTIVE, TBL_UI_EXPANDED
+} from '../tables/TablesCntlr';
+import {getActiveTableId, getTblById, onTableLoaded} from '../tables/TableUtil';
 import {getCellValue, getTblInfo} from '../tables/TableUtil.js';
+import MultiViewCntlr, {dispatchUpdateCustom, getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
 
 
 export function createTableActivate(source, titleStr, activateParams, dataTypeHint= '', tbl_index=0) {
@@ -95,9 +99,10 @@ function loadTableAndCharts(dataTableReq, tbl_id, tableGroupViewerId, dispatchCh
     onTableLoaded(tbl_id).then( () => {
         if (dispatchCharts) {
             dispatchCharts.forEach( (c) => {
-                const {useChartChooser,xAxis,yAxis,...dParams} = c;
-                if (useChartChooser) {
+                if (c.useChartChooser) {
+                    const {xAxis,yAxis,title,...dParams} = c;
                     const chartProps= getDefaultChartProps(tbl_id,xAxis,yAxis);
+                    if (chartProps?.layout && title) chartProps.layout.title= title;
                     dispatchChartAdd({...dParams,...chartProps});
                 }
                 else {
@@ -267,7 +272,9 @@ function makeChartObj(chartInfo,  activateParams, titleInfo, connectPoints, char
             .map((dataLayout) => ({viewerId, groupId: viewerId, chartId: `${chartId}--${chartNum++}`, ...dataLayout}));
     }
     else if (useChartChooser) {
-        return [{ viewerId, groupId: viewerId, chartId,xAxis, yAxis, useChartChooser: true }];
+        const obj= [{ viewerId, groupId: viewerId, chartId,xAxis, yAxis, useChartChooser: true }];
+        if (chartTitle) obj[0].title= {text: titleInfo.titleStr};
+        return obj;
     }
     else {
         return [ {
@@ -373,3 +380,72 @@ export function findGridTableRows(table,maxRows, plotIdRoot) {
 }
 
 
+let lastTblId;
+
+/**
+ * passing an object with tbl_id as key and activate function as value. Make a new activate function
+ * @param {Object} activateObj
+ * @param {ActivateParams} activateParams
+ * @return {function(): function(): void}
+ */
+export function makeMultiTableActivate(activateObj,activateParams) {
+    return () => {
+        const deActivateAry= Object.values(activateObj).map( ({activate}) => activate());
+        const tblIdList= Object.keys(activateObj);
+        const chartList= Object.values(activateObj).map( ({chartId}) => chartId);
+
+        Promise.all(tblIdList.map( async (tbl_id) => await onTableLoaded(tbl_id)))
+            .then( () => {
+                if (lastTblId) dispatchActiveTableChanged(lastTblId,activateParams.tableGroupViewerId);
+            });
+
+        const id= tblIdList.join('-');
+
+        const watcher= (action) => {
+            let idx;
+            switch (action.type) {
+                case MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA:
+                    const chartId= action.payload.customData.activeItemId;
+                    if (!chartList.includes(chartId)) return;
+                    idx= chartList.indexOf(chartId);
+                    const newTblId= tblIdList[idx];
+                    if (newTblId && getActiveTableId(activateParams.tableGroupViewerId) !== newTblId) {
+                        dispatchActiveTableChanged(newTblId,activateParams.tableGroupViewerId);
+                    }
+                    break;
+                case TBL_RESULTS_ACTIVE:
+                    if (action.payload.tbl_group!==activateParams.tableGroupViewerId) return;
+                    const tbl_id= action.payload.tbl_id;
+                    idx= tblIdList.indexOf(tbl_id);
+                    const newChartId= chartList[idx];
+                    if (getViewer(getMultiViewRoot(),activateParams.chartViewerId)?.customData.activeItemId!==newChartId) {
+                        dispatchUpdateCustom(activateParams.chartViewerId, {activeItemId: chartList[idx]});
+                    }
+                    break;
+            }
+        };
+
+        dispatchAddActionWatcher({id, actions:[MultiViewCntlr.UPDATE_VIEWER_CUSTOM_DATA,TBL_RESULTS_ACTIVE], callback:watcher});
+        return () => {
+            const tbl_id= getActiveTableId(activateParams.tableGroupViewerId);
+            if (tbl_id) {
+                const table= getTblById(tbl_id);
+                lastTblId= table.tbl_id;
+            }
+            dispatchCancelActionWatcher(id);
+            deActivateAry.forEach((d) => d?.());
+        };
+    };
+}
+
+/**
+ * passing an object with tbl_id as key and extraction function as value. Make a new extraction function
+ * @param {Object} extractionObj
+ * @param {ActivateParams} activateParams
+ * @return {function(): function(): void}
+ */
+export function makeMultiTableExtraction(extractionObj,activateParams) {
+    return () => {
+        extractionObj[getActiveTableId(activateParams.tableGroupViewerId)]?.();
+    };
+}

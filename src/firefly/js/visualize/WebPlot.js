@@ -80,6 +80,7 @@ const HIPS_DATA_HEIGHT= 10000000000;
  * @prop {Projection} projection - projection routines for this projections
  * @prop {Object} wlData - data object to wave length conversions, if defined then this conversion is available
  * @prop {Object} vradData - data object to vrad conversions, if defined then this conversion is available
+ * @prop {{width:number, height:number}} viewDim  size of viewable area  (div size: offsetWidth & offsetHeight)
  * @prop {Object} spectralData - data object to spectral wcs conversions, if defined then this conversion is available
  * @prop {Object} affTrans - the affine transform
  * @prop {Array.<RawData>} rawData

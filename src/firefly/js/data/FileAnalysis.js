@@ -104,6 +104,9 @@ export const makeFileAnalysisPart= (index,fileLocationIndex=0) => (
  * @prop {string} xAxis
  * @prop {string} yAxis
  * @prop {Array.<FileAnalysisChartParams>} chartParamsAry
+ * @prop {boolean} useChartChooser
+ * @props {Array.<string>} [cUnits]
+ * @props {Array.<string>} [cNames]
  *
  */
 
