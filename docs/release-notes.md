@@ -22,7 +22,7 @@
 #### This release includes some significant TAP features and a new property sheet support
 
 #### New Features
-- TAP: Improved support for joins: [Firefly-1157](https://github.com/Caltech-IPAC/firefly/pull/1406)
+- TAP: Improved support for joins: [Firefly-1257](https://github.com/Caltech-IPAC/firefly/pull/1406)
 - TAP: Improved upload object ID search: [Firefly-1150](https://github.com/Caltech-IPAC/firefly/pull/1401)
 - Property Sheet (detail table) support for any table: [Firefly-1256](https://github.com/Caltech-IPAC/firefly/pull/1404) 
 - Support Multi-dimensional WAVE-TAB algorithm: [Firefly-1169](https://github.com/Caltech-IPAC/firefly/pull/1383)
