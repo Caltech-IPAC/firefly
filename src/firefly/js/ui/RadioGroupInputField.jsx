@@ -1,8 +1,9 @@
 import React, {memo} from 'react';
-import {bool, array, string, number, object, any, shape} from 'prop-types';
+import {bool, array, string, number, object, shape, func} from 'prop-types';
 import {isEmpty, isUndefined, get}  from 'lodash';
 import {RadioGroupInputFieldView} from './RadioGroupInputFieldView.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
+import {FILE_ID, URL_ID} from 'firefly/visualize/ui/FileUploadViewPanel';
 
 
 const assureValue= (props) => {
@@ -31,11 +32,11 @@ function checkForUndefined(v,props) {
 
 export const RadioGroupInputField= memo( (props) => {
     const {viewProps, fireValueChange}=  useFieldGroupConnector({...props, confirmValue:checkForUndefined});
-    const value= assureValue(viewProps);
+    const value = assureValue(viewProps);
     if (isUndefined(value)) return <div/>;
     const newProps= {...viewProps,  value};
-    return <RadioGroupInputFieldView {...newProps}
-                                     onChange={(ev) => handleOnChange(ev,viewProps, fireValueChange)}/> ;
+    return (<RadioGroupInputFieldView {...newProps}
+                                     onChange={(ev) => handleOnChange(ev,viewProps, fireValueChange)}/>) ;
 });
 
 

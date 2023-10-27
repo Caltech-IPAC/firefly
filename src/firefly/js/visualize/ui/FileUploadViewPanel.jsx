@@ -42,9 +42,8 @@ import {
 } from 'firefly/ui/FileUploadUtil';
 import {UwsJobInfo} from 'firefly/core/background/JobInfo';
 import {uwsJobInfo} from 'firefly/rpc/SearchServicesJson';
-
-const  FILE_ID = 'fileUpload';
-const  URL_ID = 'urlUpload';
+export const  FILE_ID = 'fileUpload';
+export const  URL_ID = 'urlUpload';
 const  WS_ID = 'wsUpload';
 
 const TABLE_MSG = 'Custom catalog in IPAC, CSV, TSV, VOTABLE, or FITS table format';
@@ -77,7 +76,10 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem}) 
     const {groupKey, keepState}= useContext(FieldGroupCtx);
 
     const isWsUpdating          = useStoreConnector(() => isAccessWorkspace());
-    const [getLoadingOp]= useFieldGroupValue(uploadOptions);
+    const [getLoadingOp, setLoadingOp]= useFieldGroupValue(uploadOptions);
+
+    //dropEvent is used for files being dragged and drooped for uploads
+    const [dropEvent, setDropEvent] = useState(() => null);
 
     const summaryTblId = groupKey;
     const detailsTblId = groupKey + '-Details';
@@ -163,6 +165,7 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem}) 
     return (
         <div style={{position: 'relative', height: '100%', display: 'flex', alignItems: 'stretch',
             flexDirection: 'column' }}>
+            <FileDropZone {...{dropEvent, setDropEvent, setLoadingOp}} style={{height:'100%', width: '100%'}}>
                 <div className='FileUpload'>
                     <div className='FileUpload__input'>
                         <RadioGroupInputField
@@ -172,7 +175,7 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem}) 
                             options={uploadMethod}
                             wrapperStyle={{fontWeight: 'bold', fontSize: 12}}/>
                         <div style={{paddingTop: '10px', display:'flex', flexDirection:'row', justifyContent:'space-between'}}>
-                            <UploadOptions {...{uploadSrc:getLoadingOp(), isLoading, isWsUpdating,  uploadKey}}/>
+                            <UploadOptions {...{uploadSrc: dropEvent ? FILE_ID : getLoadingOp(), isLoading, isWsUpdating,  uploadKey, dropEvent, setDropEvent}}/>
                             {report && <CompleteButton text='Clear File' groupKey={NONE}
                                                        onSuccess={() =>{
                                                            clearReport();
@@ -187,7 +190,47 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem}) 
                     <TableDisplayOption {...{isMoc, isDatalink, summaryTblId, currentReport:report, currentSummaryModel:summaryModel,
                         acceptList, acceptOneItem}}/>
                 </div>
+            </FileDropZone>
                 {(isLoading) && <LoadingMessage message={loadingMsg}/>}
+        </div>
+    );
+}
+
+export function FileDropZone({dropEvent, setDropEvent, setLoadingOp, style, children}) {
+    const [isDragging, setIsDragging] = useState(false);
+
+    useEffect(() => {
+        if (dropEvent) {
+             setLoadingOp('fileUpload');
+        }
+    }, [dropEvent]);
+
+    // Prevent the default behavior for drag events to allow dropping files
+    const handleDragEnter = (e) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = () => {
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setDropEvent(e);
+        setIsDragging(false);
+    };
+
+    return (
+        <div
+            className={`file-drop-zone ${isDragging ? 'dragging' : ''}`}
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            style={style}
+        >
+            {children}
         </div>
     );
 }
@@ -493,11 +536,12 @@ function ImageDisplayOption({summaryTblId, currentReport, currentSummaryModel, a
     }
 }
 
-function UploadOptions({uploadSrc, isLoading, isWsUpdating, uploadKey}) {
+function UploadOptions({uploadSrc, isLoading, isWsUpdating, uploadKey, dropEvent, setDropEvent}) {
 
     const [getUploadMetaInfo, setUploadMetaInfo]= useFieldGroupMetaState({isLoading:undefined, statusKey: undefined });
     const onLoading = (loading, statusKey) => {
         setUploadMetaInfo({...getUploadMetaInfo(), isLoading:loading, statusKey: loading?statusKey:''});
+        setDropEvent(null);
     };
 
     if (uploadSrc === FILE_ID) {
@@ -509,6 +553,8 @@ function UploadOptions({uploadSrc, isLoading, isWsUpdating, uploadKey}) {
                 fieldKey={FILE_ID}
                 fileAnalysis={onLoading}
                 tooltip='Select a file with FITS, VOTABLE, CSV, TSV, or IPAC format'
+                dropEvent={dropEvent}
+                canDragDrop={true}
             />
         );
     } else if (uploadSrc === URL_ID) {
@@ -521,6 +567,8 @@ function UploadOptions({uploadSrc, isLoading, isWsUpdating, uploadKey}) {
                 isFromURL={true}
                 label='Enter URL of a file:'
                 tooltip='Select a URL with file in FITS, VOTABLE, CSV, TSV, or IPAC format'
+                dropEvent={dropEvent}
+                canDragDrop={true}
             />
         );
     } else if (uploadSrc === WS_ID) {
@@ -801,7 +849,14 @@ const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT
     }
 
     else {
-        return (<AcceptedList list={acceptList}/>);
+        return (
+            <>
+            <AcceptedList list={acceptList}/>
+                <div style={{color: 'gray', marginTop:'10%', fontSize: 'x-large', textAlign: 'center', fontStyle: 'italic'}}>
+                    {'Drag & Drop your files here'}
+                </div>
+            </>
+        );
     }
 };
 

@@ -453,6 +453,21 @@ div.rootStyle img {
     overflow: hidden;
 }
 
+.file-drop-zone {
+    border: none;
+    transition: border 0.3s ease-in-out;
+    position: relative;
+    top: 0;
+    left: 0;
+    z-index: 10; /* Adjust z-index to ensure it's above other FileUploadViewPanel content */
+}
+
+.file-drop-zone.dragging {
+    border: 2px dashed #007bff; /* Change border color when dragging over */
+    background-color: #f0f0f0; /* Add a background color when dragging over */
+    opacity: 65%;
+}
+
 .alerts__msg {
     color: #1A2739;
     text-align: center;
