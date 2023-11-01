@@ -1,9 +1,8 @@
 import React, {memo} from 'react';
-import {bool, array, string, number, object, shape, func} from 'prop-types';
+import {bool, array, string, number, object, shape} from 'prop-types';
 import {isEmpty, isUndefined, get}  from 'lodash';
 import {RadioGroupInputFieldView} from './RadioGroupInputFieldView.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
-import {FILE_ID, URL_ID} from 'firefly/visualize/ui/FileUploadViewPanel';
 
 
 const assureValue= (props) => {
