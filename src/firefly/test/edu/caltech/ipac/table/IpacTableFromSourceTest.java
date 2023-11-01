@@ -13,11 +13,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
-import static edu.caltech.ipac.table.JsonTableUtil.getPathValue;
 
 public class IpacTableFromSourceTest extends ConfigTest {
 
@@ -110,7 +108,7 @@ public class IpacTableFromSourceTest extends ConfigTest {
         Assert.assertEquals(1, groups.get(0).getParamInfos().size());
         Assert.assertEquals("cooframe", groups.get(0).getParamInfos().get(0).getKeyName());
         Assert.assertEquals("pos.frame", groups.get(0).getParamInfos().get(0).getUCD());
-        Assert.assertEquals("UTC-ICRS-TOPO", groups.get(0).getParamInfos().get(0).getValue());
+        Assert.assertEquals("UTC-ICRS-TOPO", groups.get(0).getParamInfos().get(0).getStringValue());
         Assert.assertEquals("char", groups.get(0).getParamInfos().get(0).getTypeDesc());
         Assert.assertEquals("stc:AstroCoords.coord_system_id", groups.get(0).getParamInfos().get(0).getUType());
     }

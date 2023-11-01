@@ -214,7 +214,7 @@ public class VoTableWriter {
         }
 
         private String xmlPARAM(ParamInfo pInfo) {
-            String paramAtts = xmlColumnAtt(pInfo) + elementAtt("value", pInfo.getValue());
+            String paramAtts = xmlColumnAtt(pInfo) + elementAtt("value", pInfo.getStringValue());
             String descriptionTag = tagElement(tagDesc, pInfo.getDesc());
             String linkTag = xmlLINKs(pInfo.getLinkInfos());
             String childElements = (isEmpty(descriptionTag) ? "" : descriptionTag + "\n") +

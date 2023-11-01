@@ -24,6 +24,7 @@ import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.GroupInfo;
 import edu.caltech.ipac.table.JsonTableUtil;
+import edu.caltech.ipac.table.ParamInfo;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
 
@@ -130,7 +131,8 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
         String sql = String.format("SELECT %s FROM %s WHERE ROW_IDX = %d", cnames, MAIN_DB_TBL, selRow);
 
         DataGroup table = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(treq), dbFile, sql, MAIN_DB_TBL);
-        table = transformArrayToRows(table);
+
+        table = transformArrayToRows(table, getAllParamRef(selSpec));
         if (table == null) {
             return null;
         }
@@ -139,6 +141,16 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
         table.addAttribute(TableMeta.UTYPE, "spec:Spectrum");
         selSpec.setUtype("spec:Spectrum.Data");
         table.setGroupInfos(Arrays.asList(selSpec));
+
+        // therefore, convert all paramRefs to columnRefs
+        table.getGroupInfos().forEach(gInfo -> {
+            gInfo.getParamRefs().forEach(pRef -> {
+                gInfo.getColumnRefs().add(pRef);
+            });
+            gInfo.setParamRefs(null);
+        });
+
+
 
         return new DataGroupPart(table, 0, table.size());
     }
@@ -228,6 +240,14 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
         return rval;
     }
 
+    private List<GroupInfo.RefInfo> getAllParamRef(GroupInfo root) {
+        List<GroupInfo.RefInfo> rval = root.getParamRefs();
+        for (int i = 0; i < root.getGroupInfos().size(); i++) {
+            rval.addAll(getAllParamRef(root.getGroupInfos().get(i)));
+        }
+        return rval;
+    }
+
     private String toCname(String ref, DataGroup table) {
         return ref;  // assume ID and name are the same for now.  if there's time, resolve cname if ID is not the same as column name.
     }
@@ -236,15 +256,19 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
      * Assuming it's a table of 1 row where each cell is an array of the same length.
      * Expand the arrays into rows, returning a table of n rows where n is the size of the array.
      * @param table
+     * @param params
      * @return
      */
-    private DataGroup transformArrayToRows(DataGroup table) {
+    private DataGroup transformArrayToRows(DataGroup table, List<GroupInfo.RefInfo> params) {
         List<DataType> cols = Arrays.stream(table.getDataDefinitions())
                             .map(c -> {
                                 DataType nc = c.newCopyOf();
                                 nc.setArraySize(null);
                                 return nc;
                             }).collect(Collectors.toList());
+
+        params.forEach(p -> cols.add(table.getParam(p.getRef())));  // add any parameter as column
+
         DataGroup ntable = new DataGroup("spectrum", cols);
         applyIfNotEmpty(table.getTitle(), ntable::setTitle);
 
@@ -256,17 +280,39 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
             Logger.getLogger().error("MultiSpectrumProcessor:transformArrayToRows: table cell is not an array");
             return null;
         }
-        int nrows = Array.getLength(cary[0]);
+        int nrows = Array.getLength(cary[cary.length-1]);       // assuming the added data has the right values.  need to find a better way to handle this.
         for (int i = 0; i < nrows; i++) {
             Object[] rowData = new Object[cols.size()];
-            for (int c = 0; c < cols.size(); c++) {
-                rowData[c] = Array.get(cary[c], i);
+            int csize = (cols.size() - params.size());
+            for (int c = 0; c < csize; c++) {
+                rowData[c] = getAryVal(cary, c, i);;
+            }
+            for (int c = 0; c < params.size(); c++) {
+                ParamInfo pinfo = table.getParam(toCname(params.get(c).getRef(), table));
+                rowData[csize+c] = pinfo == null ? null : getAryVal(pinfo.getValue(), i);
             }
             ntable.add(rowData);
         }
         return ntable;
     }
+    private Object getAryVal(Object[] aryOfAry, int oIdx, int idx) {
+        try {
+            return getAryVal(aryOfAry[oIdx], idx);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
-
+    private Object getAryVal(Object ary, int idx) {
+        Object v = ary;
+        if (ary != null && ary.getClass().isArray()) {
+            try {
+                v = Array.get(ary, idx);
+            } catch (Exception e) {
+                return null;
+            } // assign null for now.  TBD: decide what we should do.
+        }
+        return v;
+    }
 
 }

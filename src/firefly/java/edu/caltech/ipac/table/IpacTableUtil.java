@@ -79,7 +79,7 @@ public class IpacTableUtil {
             ensureKey(attribs, col.getKeyName(), col.getArraySize(), ARY_SIZE_TAG);
             ensureKey(attribs, col.getKeyName(), col.getCellRenderer(), CELL_RENDERER);
             if (col instanceof ParamInfo) {
-                ensureKey(attribs, col.getKeyName(), ((ParamInfo)col).getValue(), VALUE_TAG);
+                ensureKey(attribs, col.getKeyName(), ((ParamInfo)col).getStringValue(), VALUE_TAG);
             }
 
             List<LinkInfo> links = col.getLinkInfos();

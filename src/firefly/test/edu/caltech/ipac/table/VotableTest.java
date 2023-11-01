@@ -122,7 +122,7 @@ public class VotableTest extends ConfigTest {
         Assert.assertEquals(1, groups.get(0).getParamInfos().size());
         Assert.assertEquals("cooframe", groups.get(0).getParamInfos().get(0).getKeyName());
         Assert.assertEquals("pos.frame", groups.get(0).getParamInfos().get(0).getUCD());
-        Assert.assertEquals("UTC-ICRS-TOPO", groups.get(0).getParamInfos().get(0).getValue());
+        Assert.assertEquals("UTC-ICRS-TOPO", groups.get(0).getParamInfos().get(0).getStringValue());
         Assert.assertEquals("char", groups.get(0).getParamInfos().get(0).getTypeDesc());
         Assert.assertEquals("stc:AstroCoords.coord_system_id", groups.get(0).getParamInfos().get(0).getUType());
     }
@@ -158,7 +158,7 @@ public class VotableTest extends ConfigTest {
         Assert.assertEquals("float", param.get("type"));
         Assert.assertEquals("phys.size;instr.tel", param.get("UCD"));
         Assert.assertEquals("m", param.get("units"));
-        Assert.assertEquals("3.6", param.get("value"));
+        Assert.assertEquals(3.6f, param.get("value"));
 
         // table links
         JSONObject link1 = (JSONObject) getPathValue(tm, "links", "0");

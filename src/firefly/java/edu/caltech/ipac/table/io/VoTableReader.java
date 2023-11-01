@@ -416,7 +416,7 @@ public class VoTableReader {
 
     private static ParamInfo paramElToParamInfo(VOElement el) {
         ParamInfo dt = (ParamInfo) fieldElToDataType(new ParamInfo(), el,0, null);
-        applyIfNotEmpty(el.getAttribute("value"), dt::setValue);
+        applyIfNotEmpty(dt.convertStringToData(el.getAttribute("value")), dt::setValue);
         return dt;
     }
 
