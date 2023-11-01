@@ -48,7 +48,6 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
     public static final String PROC_ID = "IpacTableFromSource";
     private static final String TBL_TYPE = "tblType";
     private static final String TYPE_CATALOG = "catalog";
-    private static final String URL_CHECK_FOR_NEWER = WebPlotRequest.URL_CHECK_FOR_NEWER;
 
 
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
@@ -57,7 +56,6 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         String altSource = req.getParam(ServerParams.ALT_SOURCE);
         String processor = req.getParam("processor");
         String jsonSearchRequest = req.getParam(SEARCH_REQUEST);
-        boolean checkForUpdates = req.getBooleanParam(URL_CHECK_FOR_NEWER, true);
 
         // by processor ID
         if (!StringUtils.isEmpty(processor)) {
@@ -77,9 +75,9 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
             inf = getFromWorkspace(source, altSource);
         } else {
             // by source/altSource
-            inf = getSourceFile(source, req, checkForUpdates);
+            inf = QueryUtil.resolveFileFromSource(source, req);
             if (inf == null) {
-                inf = getSourceFile(altSource, req, checkForUpdates);
+                inf = QueryUtil.resolveFileFromSource(altSource, req);
             }
         }
 
@@ -103,60 +101,6 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
     @Override
     public boolean doCache() {
         return false;
-    }
-
-    /**
-     * resolve the file given a 'source' string.  it could be a local path, or a url.
-     * if it's a url, download it into the application's workarea
-     * @param source source file
-     * @param request table request
-     * @param checkForUpdates
-     * @return file
-     */
-    private File getSourceFile(String source, TableServerRequest request, boolean checkForUpdates) throws DataAccessException {
-        if (source == null) return null;
-        try {
-            URL url = makeUrl(source);
-            if (url == null) {
-                // file path based source
-                File f = ServerContext.convertToFile(source);
-                if (f == null) return null;
-                if (!f.canRead()) throw new SecurityException("Access is not permitted.");
-
-                return f;
-            } else {
-                StringKey key = new StringKey(getUniqueID(request), url);
-                File res  = (File) getCache().get(key);
-
-                String ext = FileUtil.getExtension(url.getPath().replaceFirst("^.*/", ""));
-                ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
-                File nFile = createFile(request, ext);
-
-                //HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
-                HttpServiceInput inputs = HttpServiceInput.createWithCredential(url.toString());
-                if (res == null) {
-                    // URLDownload throws FailedRequestException for statuses from 300 inclusive to 400 exclusive,
-                    // need to check for other failures
-                    FileInfo finfo = URLDownload.getDataToFile(url, nFile, inputs.getCookies(), inputs.getHeaders());
-                    checkForFailures(finfo);
-                    res = nFile;
-                    getCache().put(key, res);
-                } else if (checkForUpdates) {
-                    FileUtil.writeStringToFile(nFile, "workaround");
-                    nFile.setLastModified(res.lastModified());
-                    URLDownload.Options ops= URLDownload.Options.modifiedOp(false);
-                    FileInfo finfo = URLDownload.getDataToFile(url, nFile, inputs.getCookies(), inputs.getHeaders(), ops);
-                    if (finfo.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
-                        checkForFailures(finfo);
-                        res = nFile;
-                        getCache().put(key, res);
-                    }
-                }
-                return res;
-            }
-        } catch (Exception ex) {
-            throw new DataAccessException(ex.getMessage());
-        }
     }
 
     @Override
@@ -212,23 +156,8 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         return ServerContext.convertToFile(file.getPath());
     }
 
-    private URL makeUrl(String source) {
-        try {
-            return new URL(source);
-        } catch (MalformedURLException e) {
-            return null;
-        }
-    }
-
     private boolean isWorkspace(ServerRequest r) {
         return ServerParams.IS_WS.equals(r.getParam(ServerParams.SOURCE_FROM));
-    }
-
-    private void checkForFailures(FileInfo finfo) throws FailedRequestException {
-        if (finfo.getResponseCode() < 200 || finfo.getResponseCode() > 300) {
-            throw new FailedRequestException("Request failed with status "+finfo.getResponseCode()+" "+
-                    finfo.getResponseCodeMsg());
-        }
     }
 }
 

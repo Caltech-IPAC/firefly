@@ -79,13 +79,13 @@ public class GroupInfo implements Serializable, Cloneable{
     public List<RefInfo> getColumnRefs() { return columnRefs; }
     public void setColumnRefs(List<RefInfo> refs) {
         columnRefs.clear();
-        columnRefs.addAll(refs);
+        if (refs != null) columnRefs.addAll(refs);
     }
 
     public List<RefInfo> getParamRefs() { return paramRefs; }
     public void setParamRefs(List<RefInfo> refs) {
         paramRefs.clear();
-        paramRefs.addAll(refs);
+        if (refs != null) paramRefs.addAll(refs);
     }
 
     // convert FieldRef into DataType

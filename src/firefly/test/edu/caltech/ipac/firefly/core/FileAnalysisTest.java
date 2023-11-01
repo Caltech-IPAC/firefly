@@ -214,8 +214,8 @@ public class FileAnalysisTest extends ConfigTest {
         report= FileAnalysis.analyze(multiVoTable, reportType);
         details = report.getParts().get(0).getDetails();        // first of 826 parts
         // test params
-        assertEquals("J2000.0", details.getParam("Equinox").getValue());
-        assertEquals("Equatorial", details.getParam("CoordSystem").getValue());
+        assertEquals("J2000.0", details.getParam("Equinox").getStringValue());
+        assertEquals("Equatorial", details.getParam("CoordSystem").getStringValue());
         // test column info
         assertEquals(17, details.size());       // number of columns
         assertEquals("Object Name", details.getData("name", 1));       // Object Name column info

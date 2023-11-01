@@ -109,7 +109,7 @@ public class FileLoader {
         try {
             File inFile = new File(getDataPath(cls)+"/"+fitsFileName);
 
-            return TableUtil.readAnyFormat(inFile, tblIdx, null);
+            return TableUtil.readAnyFormat(inFile, tblIdx);
         }
         catch (Exception e){
             e.printStackTrace();
@@ -125,7 +125,7 @@ public class FileLoader {
         try {
             File inFile = new File(filePath);
 
-            return TableUtil.readAnyFormat(inFile, tblIdx,null);
+            return TableUtil.readAnyFormat(inFile, tblIdx);
         }
         catch (Exception e){
             e.printStackTrace();
@@ -149,7 +149,7 @@ public class FileLoader {
         try {
             File inFile = new File(filePath+"/"+fitsFileName);
 
-            return TableUtil.readAnyFormat(inFile, tblIdx,null);
+            return TableUtil.readAnyFormat(inFile, tblIdx);
         }
         catch (Exception e){
             e.printStackTrace();

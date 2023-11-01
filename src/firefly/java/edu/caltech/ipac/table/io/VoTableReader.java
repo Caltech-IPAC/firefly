@@ -6,6 +6,7 @@ package edu.caltech.ipac.table.io;
 import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
+import edu.caltech.ipac.firefly.server.persistence.MultiSpectrumProcessor;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -45,6 +46,8 @@ public class VoTableReader {
     private static final String UCD = "ucd";
     private static final String UTYPE = "utype";
     private static final String NAME = "name";
+
+    private static final String MULTI_SPEC_UTYPE_LOWER= "ipac:multispectrum";
 
 
     private static final Pattern HMS_UCD_PATTERN =
@@ -413,7 +416,7 @@ public class VoTableReader {
 
     private static ParamInfo paramElToParamInfo(VOElement el) {
         ParamInfo dt = (ParamInfo) fieldElToDataType(new ParamInfo(), el,0, null);
-        applyIfNotEmpty(el.getAttribute("value"), dt::setValue);
+        applyIfNotEmpty(dt.convertStringToData(el.getAttribute("value")), dt::setValue);
         return dt;
     }
 
@@ -521,6 +524,10 @@ public class VoTableReader {
         List<FileAnalysisReport.Part> parts = new ArrayList<>();
         tables.forEach(table -> {
             FileAnalysisReport.Part part = new FileAnalysisReport.Part(FileAnalysisReport.Type.Table);
+            String utype= table.getAttribute(UTYPE).toLowerCase();
+            if (MULTI_SPEC_UTYPE_LOWER.toLowerCase().equals(utype)) {
+               part.setSearchProcessorId(MultiSpectrumProcessor.PROC_ID);
+            }
             part.setIndex(parts.size());
             part.setFileLocationIndex(parts.size());
             DataGroup dg = getTableHeader(table);

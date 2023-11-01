@@ -334,7 +334,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     }
     public void setGroupInfos(List<GroupInfo> groupInfos) {
         groups.clear();
-        groups.addAll(groupInfos);
+        if (groupInfos != null) groups.addAll(groupInfos);
     }
 
     /**
@@ -370,7 +370,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
     public List<ResourceInfo> getResourceInfos() { return resources; }
     public void setResourceInfos(List<ResourceInfo> resourceInfos) {
         this.resources.clear();
-        this.resources.addAll(resourceInfos);
+        if (resourceInfos != null) this.resources.addAll(resourceInfos);
     }
 
     /**

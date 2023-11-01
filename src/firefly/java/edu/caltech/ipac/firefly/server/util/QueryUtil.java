@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -18,6 +19,7 @@ import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
@@ -31,8 +33,13 @@ import edu.caltech.ipac.table.query.DataGroupQueryStatement;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.DataObjectUtil;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.cache.CacheManager;
+import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.decimate.DecimateKey;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.util.URIUtil;
@@ -43,6 +50,9 @@ import org.json.simple.parser.ParseException;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -52,6 +62,7 @@ import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.FF_SESSION_ID;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_ID;
+import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.URL_CHECK_FOR_NEWER;
 
 /**
  * Date: Jul 14, 2008
@@ -109,6 +120,77 @@ public class QueryUtil {
         }
         return sessId.substring(0, 3);
     }
+
+
+    /**
+     * resolve the file given a 'source' string.  it could be a local path, or a url.
+     * if it's a url, download it into the application's workarea
+     * @param source source file
+     * @param request table request
+     * @return file
+     */
+    public static File resolveFileFromSource(String source,TableServerRequest request) throws DataAccessException {
+        if (source == null) return null;
+        try {
+            URL url = makeUrl(source);
+            if (url == null) {
+                // file path based source
+                File f = ServerContext.convertToFile(source);
+                if (f == null) return null;
+                if (!f.canRead()) throw new SecurityException("Access is not permitted.");
+
+                return f;
+            } else {
+                boolean checkForUpdates = request.getBooleanParam(URL_CHECK_FOR_NEWER, true);
+
+                //HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
+                HttpServiceInput inputs = HttpServiceInput.createWithCredential(url.toString());
+
+                StringKey key = new StringKey(inputs.getUniqueKey());
+                File res  = (File) CacheManager.getCache().get(key);
+
+                String ext = FileUtil.getExtension(url.getPath().replaceFirst("^.*/", ""));
+                ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
+                File nFile = File.createTempFile(request.getRequestId(), ext, QueryUtil.getTempDir(request));
+
+                if (res == null) {
+                    FileInfo finfo = URLDownload.getDataToFile(url, nFile, inputs.getCookies(), inputs.getHeaders());
+                    checkForFailures(finfo);
+                    res = nFile;
+                    CacheManager.getCache().put(key, res);
+                } else if (checkForUpdates) {
+                    FileUtil.writeStringToFile(nFile, "workaround");
+                    nFile.setLastModified(res.lastModified());
+                    URLDownload.Options ops= URLDownload.Options.modifiedOp(false);
+                    FileInfo finfo = URLDownload.getDataToFile(url, nFile, inputs.getCookies(), inputs.getHeaders(), ops);
+                    if (finfo.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
+                        checkForFailures(finfo);
+                        res = nFile;
+                        CacheManager.getCache().put(key, res);
+                    }
+                }
+                return res;
+            }
+        } catch (Exception ex) {
+            throw new DataAccessException(ex.getMessage());
+        }
+    }
+
+    private static URL makeUrl(String source) {
+        try {
+            return new URL(source);
+        } catch (MalformedURLException e) {
+            return null;
+        }
+    }
+
+    private static void checkForFailures(FileInfo finfo) throws FailedRequestException {
+        if (finfo.getResponseCode() < 200 || finfo.getResponseCode() > 300) {
+            throw new FailedRequestException("Request failed with status "+finfo.getResponseCode()+" "+
+                    finfo.getResponseCodeMsg());
+        }
+    }
+
 
     public static DownloadRequest convertToDownloadRequest(String dlReqStr, String searchReqStr, String selInfoStr) {
         DownloadRequest retval = new DownloadRequest(convertToServerRequest(searchReqStr), null, null);

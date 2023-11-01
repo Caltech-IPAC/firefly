@@ -90,8 +90,9 @@
                             radius: 300
                         });
                 } else if (source === "byUrl") {
-                    request = firefly.util.table.makeFileRequest(null, a.url.value, null,
-                        {META_INFO: {CENTER_COLUMN: 'crval1;crval2;EQJ2000'}});
+                    const procId = a.procId.value || 'IpacTableFromSource';
+                        request = firefly.util.table.makeTblRequest(procId, null, {source: a.url.value},
+                            {META_INFO: {CENTER_COLUMN: 'crval1;crval2;EQJ2000'}});
                 } else {
                     request = firefly.util.table.makeIrsaWorkspaceRequest(a.fromWS.value);
                 }
@@ -167,6 +168,12 @@
                 <label> Options:</label>
                 <textarea name="options" rows="5" cols="70" placeholder='{"pageSize": 100}'></textarea>
             </div>
+
+            <div class="input-field">
+                <label> Use ProcID</label>
+                <input name="procId" placeholder='to override IpacTableFromSource'></input>
+            </div>
+
 
         </form>
         <div class="input-field" style="flex-direction: row">

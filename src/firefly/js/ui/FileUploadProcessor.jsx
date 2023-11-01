@@ -349,6 +349,7 @@ function sendTableRequest(tableIndices, fileCacheKey, treatAsSpectrum, currentRe
         if (treatAsSpectrum) META_INFO[MetaConst.DATA_TYPE_HINT]= 'spectrum';
         const options=  {META_INFO};
         const tblReq = makeFileRequest(title, fileCacheKey, null, options);
+        if (currentReport.parts[idx]?.searchProcessorId) tblReq.id= currentReport.parts[idx].searchProcessorId;
         tblReq.tbl_index = index;
         loadToUI ? dispatchTableSearch(tblReq) : dispatchTableFetch(tblReq);
 

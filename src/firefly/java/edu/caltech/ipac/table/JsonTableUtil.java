@@ -371,8 +371,8 @@ public class JsonTableUtil {
                 c.put("links", toJsonLinkInfos(dt.getLinkInfos()));
 
             if (dt instanceof ParamInfo &&
-                 !StringUtils.isEmpty(((ParamInfo) dt).getValue())) {
-                c.put("value", ((ParamInfo) dt).getValue());
+                    ((ParamInfo) dt).getValue() != null) {
+                c.put("value", mapToJsonAware( ((ParamInfo) dt).getValue(), false ));
 
             }
 
@@ -480,8 +480,7 @@ public class JsonTableUtil {
         List<JSONObject> params = toJsonColumns(paramInfos.toArray(new ParamInfo[0]));
 
         for (int i = 0; i < paramInfos.size(); i++) {
-            String val = paramInfos.get(i).getValue();
-            if (val != null)  params.get(i).put("value", paramInfos.get(i).getValue());
+            if (paramInfos.get(i).getValue() != null)   params.get(i).put("value", mapToJsonAware(paramInfos.get(i).getValue(), false));
         }
         return params;
     }
@@ -510,7 +509,7 @@ public class JsonTableUtil {
                 applyIfNotEmpty(param.get("utype"), v -> paramInfo.setUType(v.toString()));
                 applyIfNotEmpty(param.get("arraysize"), v -> paramInfo.setArraySize(v.toString()));
                 applyIfNotEmpty(param.get("ref"), v -> paramInfo.setRef(v.toString()));
-                applyIfNotEmpty(param.get("value"), v -> paramInfo.setValue(v.toString()));
+                applyIfNotEmpty(param.get("value"), v -> paramInfo.setValue(v));
 
                 applyIfNotEmpty(param.get("datatype"), v -> {
                     paramInfo.setTypeDesc(v.toString());

@@ -7,22 +7,32 @@ import java.io.Serializable;
 
 public class ParamInfo extends DataType implements Serializable, Cloneable {
 
-    private String value;
+    private Object value;
 
     public ParamInfo() {
         this(null, null, null);
     }
 
-    public ParamInfo(String keyName, Class type, String value) {
+    public ParamInfo(String keyName, Class type, Object value) {
         super(keyName, type);
         this.value = value;
     }
 
-    public String getValue() {
+    /**
+     * @return the String representation of the parameter in VOTable format
+     */
+    public String getStringValue() {
+        return value == null ? null : format(value, false, false);
+    }
+
+    /**
+     * @return the String representation of the parameter
+     */
+    public Object getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(Object value) {
         this.value = value;
     }
 }
