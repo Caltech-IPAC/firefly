@@ -33,7 +33,7 @@ import {CysConverter} from 'firefly/api/ApiUtilImage.jsx';
  * @return {Array.<HiPSDeviceTileData>}
  */
 export function findCellOnScreen(plot, viewDim, norder, fov,centerWp, desiredNorder) {
-    const cells= getVisibleHiPSCells(norder,desiredNorder??norder,centerWp, fov, plot.dataCoordSys, isHiPSAitoff(plot));
+    const cells= getVisibleHiPSCells(norder,desiredNorder??norder,centerWp, fov, plot.viewDim, plot.dataCoordSys, isHiPSAitoff(plot));
     const cc= CysConverter.make(plot);
 
     const retCells= [];

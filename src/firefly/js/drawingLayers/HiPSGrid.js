@@ -139,7 +139,7 @@ function computeDrawDataForId(plotId, gridType, gridLockLevel, projectionTypeCha
     }
 
     const {fov, centerWp}= getPointMaxSide(plot, plot.viewDim);
-    const cells= getVisibleHiPSCells(norder,desiredNorder, centerWp,fov, plot.dataCoordSys, aitoff);
+    const cells= getVisibleHiPSCells(norder,desiredNorder, centerWp,fov, plot.viewDim, plot.dataCoordSys, aitoff);
 
     const nonWrapCells= fov>=130 && aitoff ? cells.filter( (c) => !tileCoordsWrap(cc, c.wpCorners)) : cells;
 

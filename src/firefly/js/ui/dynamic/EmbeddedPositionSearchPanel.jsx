@@ -1,5 +1,5 @@
 import React from 'react';
-import {oneOfType,oneOf,element,bool,string,number,arrayOf,object,func} from 'prop-types';
+import {oneOfType, oneOf, element, bool, string, number, arrayOf, object, func, shape} from 'prop-types';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import {CONE_AREA_OPTIONS, CONE_CHOICE_KEY, POLY_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
 import {HiPSTargetView} from '../../visualize/ui/TargetHiPSPanel.jsx';
@@ -22,7 +22,7 @@ import './EmbeddedPositionSearchPanel.css';
  * @param {String} [props.hipsUrl] - url for the hips url
  * @param [props.hipsFOVInDeg] - field of view of the initial HiPS display
  * @param {WorldPt} [props.initCenterPt] - center point of the initial HiPS display - string - 1.1;2.2;EQ_J2000
- * @param {Array.<Object>} [props.mocList] - a list of MOCS to display, an array of MOC URLs
+ * @param {Array.<{mocUrl:String, title:String}>} [props.mocList] - a list of MOCS to display, an array of MOC URLs
  * @param {String} [props.sRegion] - an sRegion to display
  * @param {String} [props.coordinateSys] - coordinate system of HiPS - must be 'EQ_J2000' or 'GALACTIC'
  * @param {String} [props.targetKey] - field group key for the target field
@@ -147,7 +147,7 @@ EmbeddedPositionSearchPanel.propTypes= {
     hipsUrl: string,
     hipsFOVInDeg: number,
     initCenterPt: object,
-    mocList: arrayOf(object),
+    mocList: arrayOf(shape( { mocUrl: string, title: string} )),
     sRegion: string,
     coordinateSys: oneOf(['EQ_J2000','GALACTIC']),
     targetKey: string,

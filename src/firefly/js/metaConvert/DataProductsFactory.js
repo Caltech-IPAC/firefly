@@ -267,10 +267,38 @@ function initConverterTemplates() {
 }
 
 
+/**
+ * @typedef {Object} DataProductsFactoryOptions
+ *
+ * @prop {boolean} [allowImageRelatedGrid]
+ * @prop {boolean} [allowServiceDefGrid] - // todo: this is redundant, should remove
+ * @prop {boolean} [singleViewImageOnly] - if true, the view will only show the primary image product
+ * @prop {boolean} [singleViewTableOnly] - if true, the view will only show the primary table product
+ * @prop {String} [dataLinkInitialLayout] - determine how a datalink obscore table trys to show the data layout, must be 'single', 'gridRelated', 'gridFull';
+ * @prop {boolean} [activateServiceDef] - if possible then call the service def without giving option for user input
+ * @prop {boolean} [threeColor] - if true, then for images in related grid, show the threeColor option
+ * @prop {number} [maxPlots] - maximum number of plots in grid mode, this will override the factory default
+ * @prop {boolean} [canGrid] - some specific factories might have parameters that override this parameter (e.g. allowServiceDefGrid)
+ * @prop [initialLayout]
+ * @prop {string} [tableIdBase] - any tbl_id will use this string for its base
+ * @prop {string} [chartIdBase] - any chartId will use this string for its base
+ *
+ * @prop {string} [dataProductsComponentKey] - this is the key use when calling getComponentState() to get a key,value object.
+ *                The values in this object will override one or more parameters to a service descriptor.
+ *                The following are used with this prop by service descriptors to build the url to include input from the UI.
+ *                see- ServDescProducts.js getComponentInputs()
+ * @prop {Array.<string>} [paramNameKeys] - name of the parameters to put in the url from the getComponentState() return object
+ * @prop {Array.<string>} [ucdKeys] - same as above but can be specified by UCD
+ * @prop {Array.<string>} [utypeKeys] - same as above but can be specified by utype
+ */
+
+/**
+ * @return {DataProductsFactoryOptions}
+ */
 export const getDefaultFactoryOptions= once(() => ({
     dataProductsComponentKey: DEFAULT_DATA_PRODUCTS_COMPONENT_KEY,
     allowImageRelatedGrid: false,
-    allowServiceDefGrid: false,
+    allowServiceDefGrid: false, // todo: this is redundant, should remove
     singleViewImageOnly:false,
     singleViewTableOnly:false,
     dataLinkInitialLayout: 'single', //determine how a datalink obscore table trys to show the data layout, must be 'single', 'gridRelated', 'gridFull';
@@ -279,6 +307,8 @@ export const getDefaultFactoryOptions= once(() => ({
     maxPlots: undefined,
     canGrid: undefined, // some specific factories might have parameters that override this parameter (e.g. allowServiceDefGrid)
     initialLayout: undefined, //todo - an datalink use this?
+    tableIdBase: undefined,
+    chartIdBase: undefined,
     paramNameKeys: [],
     ucdKeys: [],
     utypeKeys: [],
@@ -302,8 +332,8 @@ function getConverterTemplates(factoryKey='DEFAULT_FACTORY')  {
 /**
  * Each list of factory templates can have a unique set of options. This options will come from a MultiProductViewer when
  * it starts the DataProductsWatcher.
- * @param options
  * @param factoryKey
+ * @param options
  */
 export function setFactoryTemplateOptions(factoryKey='DEFAULT_FACTORY', options)  {
     FACTORY_OPTIONS[factoryKey]= options;

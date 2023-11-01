@@ -35,6 +35,7 @@ const parseAnalysis= (serverCacheFileKey, analysisResult) =>
  * @param {WebPlotRequest} obj.request - used for image or just downloading files
  * @param {ActivateParams} obj.activateParams
  * @param {String} [obj.dataTypeHint]  stuff like 'spectrum', 'image', 'cube', etc
+ * @param {DataProductsFactoryOptions} obj.options
  * @param {Array.<Object>} [obj.menu]
  * @param {ServiceDescriptorDef} [obj.serDef]
  * @param {Object} [obj.userInputParams]
@@ -42,7 +43,7 @@ const parseAnalysis= (serverCacheFileKey, analysisResult) =>
  * @param {string} [obj.originalTitle]
  * @return {Promise.<DataProductsDisplayType>}
  */
-export async function doUploadAndAnalysis({ table, row, request, activateParams={}, dataTypeHint='',
+export async function doUploadAndAnalysis({ table, row, request, activateParams={}, dataTypeHint='', options,
                                  menu, serDef, userInputParams, analysisActivateFunc, originalTitle}) {
 
     const {dpId}= activateParams;
@@ -54,7 +55,7 @@ export async function doUploadAndAnalysis({ table, row, request, activateParams=
                                                   fileAnalysis.fileName&&'Download File', request.getURL());
         }
         return processAnalysisResult({ table, row, request, activateParams, serverCacheFileKey,
-            fileAnalysis, dataTypeHint, analysisActivateFunc, serDef, originalTitle});
+            fileAnalysis, dataTypeHint, analysisActivateFunc, serDef, originalTitle, options});
     };
 
 
@@ -189,11 +190,12 @@ function makeAllImageEntry(request, path, parts, imageViewerId,  tbl_id, row, im
  * @param {Function} obj.analysisActivateFunc
  * @param {ServiceDescriptorDef} obj.serDef
  * @param {String} obj.originalTitle
+ * @param {DataProductsFactoryOptions} obj.options
  * @return {DataProductsDisplayType}
  */
 function processAnalysisResult({table, row, request, activateParams,
                                    serverCacheFileKey, fileAnalysis, dataTypeHint,
-                                  analysisActivateFunc, serDef, originalTitle}) {
+                                  analysisActivateFunc, serDef, originalTitle, options}) {
 
     const {parts,fileName,fileFormat}= fileAnalysis;
     if (!parts) return makeErrorResult('',fileName,serverCacheFileKey);
@@ -207,14 +209,14 @@ function processAnalysisResult({table, row, request, activateParams,
     return deeperInspection({
         table, row, request, activateParams,
         serverCacheFileKey, fileAnalysis, dataTypeHint,
-        analysisActivateFunc, serDef, originalTitle, url,
+        analysisActivateFunc, serDef, originalTitle, url, options
     });
 }
 
 
 function deeperInspection({ table, row, request, activateParams,
                               serverCacheFileKey, fileAnalysis, dataTypeHint,
-                              analysisActivateFunc, serDef, originalTitle, url}) {
+                              analysisActivateFunc, serDef, originalTitle, url, options}) {
 
     const {parts,fileFormat, disableAllImageOption= false}= fileAnalysis;
     const {imageViewerId, dpId}= activateParams;
@@ -222,7 +224,7 @@ function deeperInspection({ table, row, request, activateParams,
     const activeItemLookupKey= hashCode(rStr);
     const fileMenu= {fileAnalysis, menu:[],activeItemLookupKey, activeItemLookupKeyOrigin:rStr};
 
-    const partAnalysis= parts.map( (p) => analyzePart(p,request, table, row, fileFormat, dataTypeHint, serverCacheFileKey,activateParams));
+    const partAnalysis= parts.map( (p) => analyzePart(p,request, table, row, fileFormat, dataTypeHint, serverCacheFileKey,activateParams, options));
     const imageParts= partAnalysis.filter( (pa) => pa.imageResult);
     let makeAllImageOption= !disableAllImageOption;
     if (makeAllImageOption) makeAllImageOption= imageParts.length>1 || (imageParts.length===1 && parts.length===1);

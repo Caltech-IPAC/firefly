@@ -4,7 +4,8 @@
 import {isArray, isNil} from 'lodash';
 import {
     adhocServiceUtype, cisxAdhocServiceUtype,
-    ACCESS_URL, CONTENT_LENGTH, CONTENT_TYPE, DESCRIPTION, SEMANTICS, standardIDs } from './VoConst.js';
+    ACCESS_URL, CONTENT_LENGTH, CONTENT_TYPE, DESCRIPTION, SEMANTICS, standardIDs, VO_TABLE_CONTENT_TYPE
+} from './VoConst.js';
 import {columnIDToName, getColumnIdx, getTblRowAsObj} from '../tables/TableUtil.js';
 import {getTableModel} from './VoCoreUtils.js';
 
@@ -23,7 +24,7 @@ export function analyzeDatalinkRow({semantics = '', localSemantics = '', content
     const locSemL = localSemantics.toLowerCase();
     const isThis = semL.includes('#this');
     const isAux = semL === '#auxiliary';
-    const isGrid = semL.includes('-grid') || (isThis && locSemL.includes('-grid'));
+    const isGrid = semL.includes('-grid') || (isThis && locSemL.includes('-grid') || (isThis && locSemL.includes('#grid')));
     const isCutout = semL.includes('#cutout') || semL.includes('-cutout') || locSemL.includes('-cutout');
     const isSpectrum = locSemL.includes('spectrum');
     const rBand = semL.includes('-red') || locSemL.includes('-red');
@@ -45,6 +46,7 @@ export function analyzeDatalinkRow({semantics = '', localSemantics = '', content
 export const isTarType= (ct='') => ct.includes('tar');
 export const isGzipType= (ct='') => ct.includes('gz');
 export const isSimpleImageType= (ct='') => ct.includes('jpeg') || ct.includes('png') || ct.includes('jpg') || ct.includes('gif');
+export const isVoTable= (ct='') => ct===VO_TABLE_CONTENT_TYPE;
 export const isDownloadType= (ct='') => isTarType(ct) || isGzipType(ct) || ct.includes('octet-stream');
 
 /**

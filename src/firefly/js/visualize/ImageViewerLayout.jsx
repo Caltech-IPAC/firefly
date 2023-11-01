@@ -573,8 +573,10 @@ const DrawingLayers= memo( ({plotView:pv, drawLayersIdAry:dlIdAry}) =>{
 
 },
 (p,np) => {
-    return np.plot===p.plot && isEmpty(xor(np.drawLayersIdAry,p.drawLayersIdAry)) &&
-        np.plotView.scrollX===p.plotView.scrollX && np.plotView.scrollY===p.plotView.scrollY;
+    return primePlot(p.plotView)===primePlot(np.plotView) &&
+        isEmpty(xor(np.drawLayersIdAry,p.drawLayersIdAry)) &&
+        np.plotView.scrollX===p.plotView.scrollX &&
+        np.plotView.scrollY===p.plotView.scrollY;
 });
 
 DrawingLayers.propTypes= {

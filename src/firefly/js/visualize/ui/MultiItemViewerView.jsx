@@ -31,7 +31,7 @@ export const MultiItemViewerView=forwardRef( (props, ref) =>  {
     const {layoutType, activeItemId,
         viewerItemIds, forceRowSize, forceColSize, gridDefFunc,
         style, insideFlex=false, defaultDecoration=true, sparseGridTitleLocation= 'top',
-        makeToolbar, makeItemViewer, makeItemViewerFull}= props;
+        makeToolbar, makeItemViewer, makeItemViewerFull, autoRowOriented=true}= props;
     let wrapperStyle;
     if (insideFlex) {
         wrapperStyle= Object.assign({}, flexContainerStyle, {flex:'1 1 auto'});
@@ -61,7 +61,7 @@ export const MultiItemViewerView=forwardRef( (props, ref) =>  {
         container= makePackedGrid(viewerItemIds,rows,forceColSize,true,makeItemViewer);
     }
     else {                   // GRID automatic
-        const dim= findAutoGridDim(viewerItemIds.length);
+        const dim= findAutoGridDim(viewerItemIds.length, autoRowOriented);
         container= makePackedGrid(viewerItemIds,dim.rows,dim.cols,true,makeItemViewer);
     }
 
@@ -157,7 +157,7 @@ const renderItemViewerFull = (makeItemViewerFull, itemId) => (
         </div>
     );
 
-function findAutoGridDim(size) {
+function findAutoGridDim(size, rowOriented=true) {
     let rows=0 ,cols=0;
     if (size) {
         rows = 1;
@@ -168,17 +168,17 @@ function findAutoGridDim(size) {
             if (size/4 > rows) rows++;
             cols = 4;
         } else if (size === 5 || size === 6) {
-            rows = 2;
-            cols = 3;
+            rows = rowOriented ? 2 : 3;
+            cols = rowOriented ? 3 : 2;
         } else if (size === 4) {
             rows = 2;
             cols = 2;
         } else if (size === 3) {
-            rows = 1;
-            cols = 3;
+            rows = rowOriented ? 1 : 3;
+            cols = rowOriented ? 3 : 1;
         } else if (size === 2) {
-            rows = 1;
-            cols = 2;
+            rows = rowOriented ? 1 : 2;
+            cols = rowOriented ? 2 : 1;
         }
     }
     return {rows,cols};

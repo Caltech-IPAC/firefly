@@ -47,6 +47,7 @@ export function MultiProductChoice({
                 <div style={chartChoiceTBStyle}>
                     {toolbar}
                     <MultiChartViewer viewerId={chartViewerId} closeable={false}
+                                      autoRowOriented={false}
                                       canReceiveNewItems={NewPlotMode.none.key}/>
                 </div>
             );

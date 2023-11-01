@@ -432,7 +432,7 @@ function healpixPixelTo512TileXY(pixel) {
  * @return {Array.<{ipix:number, wpCorners:Array.<WorldPt>}>} an array of objects the contain the healpix
  *            pixel number and a worldPt array of corners
  */
-export function getVisibleHiPSCells (norder, desiredNorder, centerWp, fov, dataCoordSys, isAitoff= false) {
+export function getVisibleHiPSCells (norder, desiredNorder, centerWp, fov, viewDim, dataCoordSys, isAitoff= false) {
     if (isAitoff && fov > 130 && norder<=3) { // return all cells
         return getHealpixCornerTool().getFullCellList(norder,dataCoordSys);
     }
@@ -441,7 +441,7 @@ export function getVisibleHiPSCells (norder, desiredNorder, centerWp, fov, dataC
         return filterAllSky(dataCenterWp, getHealpixCornerTool().getFullCellList(norder,dataCoordSys));
     }
     else { // get only the healpix number for the fov and create the cell list
-        return getPixCellList(norder,desiredNorder, centerWp,fov,dataCoordSys);
+        return getPixCellList(norder,desiredNorder, centerWp,fov,viewDim, dataCoordSys);
     }
 }
 
@@ -451,15 +451,19 @@ export function getVisibleHiPSCells (norder, desiredNorder, centerWp, fov, dataC
  * @param desiredNorder - when render very deep desired norder give an indication how deep the zoom is beyond the tile level
  * @param {WorldPt} centerWp - center of visible area, coordinate system of this point should be same as the projection
  * @param {number} fov - Math.max(width, height) of the field of view in degrees (i think)
+ * @prop {{width:number, height:number}} viewDim
  * @param {CoordinateSys} dataCoordSys
  * @return {Array.<{ipix:number, wpCorners:Array.<WorldPt>}>} an array of objects the contain the healpix
  *            pixel number and a worldPt array of corners
  */
-function getPixCellList(norder,desiredNorder, centerWp, fov, dataCoordSys) {
+function getPixCellList(norder,desiredNorder, centerWp, fov, viewDim, dataCoordSys) {
+    const {width,height}= viewDim;
+    const diag= (width**2 + height**2)**.5; // Pythagorean theorem
+    const diagRatio= diag/width;
     const healpixCache=getHealpixCornerTool();
     const dataCenterWp= convert(centerWp, dataCoordSys);
     const norderToUse= norder>=desiredNorder ? norder : desiredNorder;
-    const radiusRad= getSearchRadiusInRadians(fov); // if zoomed in deep beyond the tile norder, we might need to use are larger FOV
+    const radiusRad= getSearchRadiusInRadians(fov*diagRatio); // use a radius for the diagonal of the view
     const nsideToUse = 2**norderToUse;
     const pixList = getHealpixIndex(nsideToUse).queryDisc(wpToSpecVect(dataCenterWp), radiusRad, true, true);
     const pixShift= 4**(desiredNorder-norder);

@@ -29,6 +29,8 @@ export const standardIDs = {
     datalink: 'ivo://ivoa.net/std/DataLink',
 };
 
+export const VO_TABLE_CONTENT_TYPE= 'application/x-votable+xml';
+
 
 export const UCDSyntax = new Enum(['primary', 'secondary', 'any'], {ignoreCase: true});
 

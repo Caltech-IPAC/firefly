@@ -26,7 +26,7 @@ const DEF_MAX_PLOTS= 8;
  *
  * @param {TableModel} table
  * @param {DataProductsConvertType} converterTemplate
- * @param {Object} options
+ * @param {DataProductsFactoryOptions} options
  * @return {DataProductsConvertType}
  */
 export function makeObsCoreConverter(table,converterTemplate,options={}) {
@@ -76,7 +76,7 @@ function describeObsThreeColor(table, row, options) {
  * @param table
  * @param plotRows
  * @param activateParams
- * @param options
+ * @param {DataProductsFactoryOptions} options
  * @return {Promise.<DataProductsDisplayType>}
  */
 export function getObsCoreGridDataProduct(table, plotRows, activateParams, options) {
@@ -92,7 +92,7 @@ export function getObsCoreGridDataProduct(table, plotRows, activateParams, optio
  * @param threeColorOps
  * @param highlightPlotId
  * @param activateParams
- * @param options
+ * @param {DataProductsFactoryOptions} options
  * @return {Promise<DataProductsDisplayType>}
  */
 export async function getObsCoreRelatedDataProduct(table, row, threeColorOps, highlightPlotId, activateParams, options) {
@@ -150,7 +150,7 @@ function doErrorChecks(table, row, prodType, dataSource, isDataLink, isVoTable) 
  * @param {ActivateParams} activateParams
  * @param {Array.<DataProductsDisplayType>} serviceDescMenuList
  * @param {boolean} doFileAnalysis - if true the build a menu if possible
- * @param {Object} options
+ * @param {DataProductsFactoryOptions} options
  * @return {Promise.<DataProductsDisplayType>}
  */
 async function getObsCoreSingleDataProduct(table, row, activateParams, serviceDescMenuList, doFileAnalysis= true, options) {
