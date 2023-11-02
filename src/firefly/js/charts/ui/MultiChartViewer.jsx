@@ -124,7 +124,7 @@ export class MultiChartViewer extends PureComponent {
                  onClick={(ev)=>onChartSelect(ev,chartId)}
                  onTouchStart={stopPropagation}
                  onMouseDown={stopPropagation}>
-                <ChartPanel key={chartId} showToolbar={false} chartId={chartId} deletable={deletable}/>
+                <ChartPanel key={chartId} showToolbar={false} chartId={chartId} deletable={deletable} glass={glass}/>
             </div>
         );
 
@@ -132,7 +132,7 @@ export class MultiChartViewer extends PureComponent {
             <div onClick={stopPropagation}
                  onTouchStart={stopPropagation}
                  onMouseDown={stopPropagation}>
-                <ChartPanel key={chartId} showToolbar={false} chartId={chartId} deletable={deletable}/>
+                <ChartPanel key={chartId} showToolbar={false} chartId={chartId} deletable={deletable} glass={glass}/>
             </div>
         );
 
@@ -148,10 +148,19 @@ export class MultiChartViewer extends PureComponent {
         //console.log('Active chart ID: '+activeItemId);
 
         const ToolBar = expandedMode ? MultiChartToolbarExpanded : MultiChartToolbarStandard;
+        const showChartToolbar = !Boolean(noChartToolbar);
 
         return (
             <div className='ChartPanel__wrapper' style={{width: '100%', height: '100%', boxSizing: 'border-box'}}>
-                <ToolBar chartId={activeItemId} expandable={!expandedMode} {...{expandedMode, closeable, viewerId, layoutType, activeItemId}}/>
+                {showChartToolbar &&
+                    <ToolBar chartId={activeItemId} expandable={!expandedMode} {...{
+                        expandedMode,
+                        closeable,
+                        viewerId,
+                        layoutType,
+                        activeItemId
+                    }}/>
+                }
                 <MultiItemViewerView {...this.props} {...newProps}/>
             </div>
         );
