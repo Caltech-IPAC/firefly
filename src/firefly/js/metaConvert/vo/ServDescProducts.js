@@ -65,7 +65,7 @@ export function makeServiceDefDataProduct({
  * return a list of inputs from the user that will go into the service descriptor URL
  * @param serDef
  * @param {DataProductsFactoryOptions} options
- * @return {{[p: string]: *}|{}}
+ * @return {Object.<string, *>}
  */
 function getComponentInputs(serDef, options) {
     const key= options.dataProductsComponentKey ?? DEFAULT_DATA_PRODUCTS_COMPONENT_KEY;
