@@ -16,7 +16,7 @@ import {CombineChart} from './CombineChart.jsx';
 
 function ChartPanelView(props) {
 
-    const {chartId, tbl_group, chartData, expandable, expandedMode, Toolbar, showToolbar} = props;
+    const {chartId, tbl_group, chartData, expandable, expandedMode, Toolbar, showToolbar, glass} = props;
 
     useEffect(() => {
         dispatchChartMounted(chartId);
@@ -34,12 +34,12 @@ function ChartPanelView(props) {
         return (
             <div className='ChartPanel__container'>
                 <ChartToolbar {...{chartId, tbl_group, expandable, expandedMode, Toolbar}}/>
-                <ChartArea glass={true} {...props}/>
+                <ChartArea glass={glass} {...props}/>
             </div>
         );
     } else {
         // chart only
-        return <ChartArea glass={false} {...props}/>;
+        return <ChartArea glass={glass} {...props}/>;
     }
 }
 
