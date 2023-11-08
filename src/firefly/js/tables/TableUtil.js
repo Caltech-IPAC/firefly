@@ -1442,6 +1442,14 @@ export function splitCols(cnames='') {
     return cnames.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
 }
 
+/**
+ * @param {string} values
+ * @return {string[]} array of values split from a comma separated string, ignoring commas inside single-quotes
+ */
+export function splitVals(values='') {
+    return values.split(/,(?=(?:[^']*'[^']*')*[^']*$)/);
+}
+
 /*-------------------------------------private------------------------------------------------*/
 
 /**

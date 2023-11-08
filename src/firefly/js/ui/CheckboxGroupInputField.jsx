@@ -2,11 +2,12 @@ import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {InputFieldLabel} from './InputFieldLabel.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
+import {splitVals} from 'firefly/tables/TableUtil.js';
 
 
-const isChecked= (val,fieldValue) => (fieldValue.split(',').indexOf(val) > -1);
+const isChecked= (val,fieldValue) => (splitVals(fieldValue).indexOf(val) > -1);
 
-const getCurrentValueArr= (v) => v ? v.split(',') : [];
+const getCurrentValueArr= (v) => v ? splitVals(v) : [];
 
 
 function convertValue(value,options) {
