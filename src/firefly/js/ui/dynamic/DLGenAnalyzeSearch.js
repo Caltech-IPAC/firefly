@@ -62,10 +62,11 @@ export function makeAllSearchRequest(request, primeSd, concurrentSDAry, primaryF
  * @param {QueryAnalysis} qAna
  * @param primaryFdAry
  * @param idx
- * @param {String} helpUrl
+ * @param {object} extraMeta            // additional table meta to include with the TableSearch
  * @param {String} selectedConcurrent - space separated name of searches to execute
+ * @param docRows   URLs to documentation
  */
-export function handleSearch(request, qAna, primaryFdAry, idx, helpUrl, selectedConcurrent) {
+export function handleSearch(request, qAna, primaryFdAry, idx, extraMeta={}, selectedConcurrent) {
     const primeSd= qAna.primarySearchDef[idx].serviceDef;
     const {coverage,bandDesc}= qAna.primarySearchDef[idx];
     const {cisxUI}= qAna.primarySearchDef[0].serviceDef;
@@ -77,7 +78,7 @@ export function handleSearch(request, qAna, primaryFdAry, idx, helpUrl, selected
         return Boolean(id && selected);
     });
 
-    const extraMeta= {coverage,bandDesc,helpUrl};
+    extraMeta= {coverage,bandDesc, ...extraMeta};
     if (preferredHips) extraMeta[MetaConst.COVERAGE_HIPS]=preferredHips;
 
     const tableRequestAry= makeAllSearchRequest(request, primeSd,concurrentSDAry, primaryFdAry, extraMeta);
@@ -85,7 +86,7 @@ export function handleSearch(request, qAna, primaryFdAry, idx, helpUrl, selected
     tableRequestAry.forEach( (dataTableReq) => {
         Logger('DLGeneratedDropDown').debug(dataTableReq);
         if (dataTableReq) {
-            dispatchTableSearch(dataTableReq, {showFilters: true, showInfoButton: true }); //todo are the options the default?
+            dispatchTableSearch(dataTableReq);
         }
     });
 }
