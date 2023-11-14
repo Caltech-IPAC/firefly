@@ -140,20 +140,45 @@ public class DataGroupReadTest {
                   A PrepareStatement of 10000 rows take less memory than having the 3rd copy.
                 - After the changes, it requires 1.4gb to load this table instead of the 1.7gb.
          */
-        ConfigTest.setupServerContext(null);
-        Logger.setLogLevel(Level.TRACE);
 
-        TableServerRequest tsr = new TableServerRequest("IpacTableFromSource");
-        tsr.setParam(ServerParams.SOURCE, "file://" + largeIpacTable.getPath());
-        tsr.setPageSize(100);
-        DataGroupPart dgp = (DataGroupPart) SearchManager.getProcessor(tsr.getRequestId()).getData(tsr);
-        System.out.println("total rows: " + dgp.getRowCount());
-        DbAdapter.getAdapter().cleanup(true);
+        /*
+        FIREFLY-1297: Support null values
+        before:
+            perfTestEmbeddedDB:  Memory Usage peak=1114.47MB  final:  4.75MB  elapsed:12.35secs
+        after:
+            perfTestEmbeddedDB:  Memory Usage peak=1144.28MB  final:  4.75MB  elapsed:12.74secs
+         */
+        logMemUsage(() -> {
+            ConfigTest.setupServerContext(null);
+            Logger.setLogLevel(Level.TRACE);
+
+            TableServerRequest tsr = new TableServerRequest("IpacTableFromSource");
+            tsr.setParam(ServerParams.SOURCE, "file://" + largeIpacTable.getPath());
+            tsr.setPageSize(100);
+            DataGroupPart dgp = null;
+            try {
+                dgp = (DataGroupPart) SearchManager.getProcessor(tsr.getRequestId()).getData(tsr);
+            } catch (DataAccessException ignored) {}
+            System.out.println("total rows: " + dgp.getRowCount());
+            DbAdapter.getAdapter().cleanup(true);
+            return "perfTestEmbeddedDB";
+        });
+
     }
 
     @Category({TestCategory.Perf.class})
     @Test
     public void perfTestMidSize() throws IOException {
+        /*
+        FIREFLY-1297: Support null values
+        before:
+            11:31:20.200 [main] INFO  test - READ(49,933):  Memory Usage peak=100.78MB  final:  8.47MB  elapsed:0.41secs
+            11:31:22.545 [main] INFO  test - WRITE(49,933):  Memory Usage peak= 44.11MB  final:  0.03MB  elapsed:2.30secs
+        after:
+            12:17:42.396 [main] INFO  test - READ(49,933):  Memory Usage peak=101.28MB  final:  9.15MB  elapsed:0.38secs
+            12:17:44.556 [main] INFO  test - WRITE(49,933):  Memory Usage peak=104.11MB  final:  0.03MB  elapsed:2.12secs
+         */
+
         Logger.setLogLevel(Level.DEBUG);
         tableIoTest(midIpacTable);
     }
@@ -161,6 +186,15 @@ public class DataGroupReadTest {
     @Category({TestCategory.Perf.class})
     @Test
     public void perfTestLargeSize() throws IOException {
+        /*
+        FIREFLY-1297: Support null values
+        before:
+            11:32:24.864 [main] INFO  test - READ(950,002):  Memory Usage peak=699.83MB  final:512.94MB  elapsed:4.61secs
+            11:33:05.518 [main] INFO  test - WRITE(950,002):  Memory Usage peak=184.14MB  final:  0.03MB  elapsed:40.53secs
+        after:
+            12:20:33.105 [main] INFO  test - READ(950,002):  Memory Usage peak=919.18MB  final:563.41MB  elapsed:4.79secs
+            12:21:13.399 [main] INFO  test - WRITE(950,002):  Memory Usage peak=520.13MB  final:  0.03MB  elapsed:40.13secs
+         */
         Logger.setLogLevel(Level.DEBUG);
         tableIoTest(largeIpacTable);
     }
