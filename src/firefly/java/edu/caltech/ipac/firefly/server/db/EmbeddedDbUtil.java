@@ -712,9 +712,10 @@ public class EmbeddedDbUtil {
                     DataType col = findColByName(inclCols, cname);
                     if (col != null && vals.size() <= MAX_COL_ENUM_COUNT) {
                         String enumVals = vals.stream()
-                                .map(m -> m.get(cname) == null ? NULL_TOKEN : m.get(cname).toString())   // convert to list of value as string
-                                .collect(Collectors.joining(","));                              // combine the values into a comma separated values string.
-                        if (col != null)  col.setEnumVals(enumVals);
+                                .map(m -> m.get(cname) == null ? NULL_TOKEN : m.get(cname).toString())  // convert to list of value as string
+                                .map(cn -> cn.contains(",") ? "'" + cn + "'" : cn)                      // if there's comma in the column name, enclose it with single quotes
+                                .collect(Collectors.joining(","));                             // combine the values into a comma separated values string.
+                        col.setEnumVals(enumVals);
                         // update dd table
                         JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
                                 .update("UPDATE data_dd SET enumVals = ? WHERE cname = ?", enumVals, cname);

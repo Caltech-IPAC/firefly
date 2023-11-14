@@ -9,7 +9,7 @@ import {set, get, isEqual, pick, omit, isEmpty, isString, toNumber} from 'lodash
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
 import {
     isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue, getTypeLabel,
-    getColumnIdx, getRowValues, getCellValue, getTableUiByTblId, splitCols, isOfType
+    getColumnIdx, getRowValues, getCellValue, getTableUiByTblId, splitCols, isOfType, splitVals
 } from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
@@ -163,14 +163,15 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
     const {name, enumVals} = col || {};
     const groupKey = 'TableRenderer_enum';
     const fieldKey = tbl_id + '-' + name;
-    const options = enumVals.split(',')
-                        .map( (s) => {
-                            const value = s === '' ? '%EMPTY' : s;                  // because CheckboxGroupInputField does not support '' as an option, use '%EMPTY' as substitute
-                            let label = value;
-                            if (value === NULL_TOKEN)       label = isOfType(col.type, COL_TYPE.BOOL) ? 'false' : '<NULL>';  // handle null value
-                            else if (value === '%EMPTY')    label = '<EMPTY_STR>';                                           // handle empty string
-                            return {label, value};
-                        } );
+    const options = splitVals(enumVals)                             // split by comma(,) ignoring those in single-quotes
+        .map( (s) => {
+            const value = s === '' ? '%EMPTY' : s;                  // because CheckboxGroupInputField does not support '' as an option, use '%EMPTY' as substitute
+            let label = value;
+            if (value === NULL_TOKEN)       label = isOfType(col.type, COL_TYPE.BOOL) ? 'false' : '<NULL>';  // handle null value
+            else if (value === '%EMPTY')    label = '<EMPTY_STR>';                                           // handle empty string
+            label = label.replace(/^'(.*)'$/, '$1');     // remove enclosed quotes if any
+            return {label, value};
+        } );
     let value;
     const filterBy = (filterInfoCls.getFilter(name) || '').match(/IN \((.+)\)/i);
     if (filterBy) {
@@ -188,9 +189,9 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
     const onApply = () => {
         let value = getFieldVal(groupKey, fieldKey);
         if (value) {
-            value = value.split(',').map((s) => s === '%EMPTY' ? '' : s).join();           // convert %EMPTY back into ''
+            value = splitVals(value).map((s) => s === '%EMPTY' ? '' : s).join();           // convert %EMPTY back into ''
             if (isColumnType(col, COL_TYPE.TEXT)) {
-                value = value.split(',').map((s) => `'${s.trim()}'`).join(',');
+                value = splitVals(value).map((s) => s.startsWith("'") ? s :`'${s.trim()}'`).join(',');
             }
             value = `IN (${value})`;
         }
