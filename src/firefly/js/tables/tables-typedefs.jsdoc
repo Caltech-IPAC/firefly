@@ -284,6 +284,7 @@
  * @prop {boolean} [showAddColumn=true]  when true, allow add column to table
  * @prop {boolean} [showInfoButton=true] when true, shows additional information about table, if available
  * @prop {boolean} [showOptionButton=true]
+ * @prop {boolean} [showPropertySheetButton]  uses firefly.options.table.propertySheet if not given.
  * @prop {boolean} [showUnits]
  * @prop {boolean} [allowUnits=true] enable/disable the use of units in a table.
  * @prop {function[]}  [leftButtons]   an array of functions that returns a button-like component laid out on the left side of this table header.

@@ -4,7 +4,7 @@
 
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {isEmpty, truncate, get, set} from 'lodash';
+import {defer, truncate, get, set} from 'lodash';
 import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
 import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/ActionsDropDownButton.jsx';
 
@@ -13,12 +13,11 @@ import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTa
 import {
     uniqueTblId,
     getTableUiById,
-    getTableUiByTblId,
     makeBgKey,
     getResultSetRequest,
     isClientTable,
     getTableState,
-    TBL_STATE
+    TBL_STATE, getTblById
 } from '../TableUtil.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
@@ -38,7 +37,7 @@ import {AddColumnBtn} from './AddOrUpdateColumn.jsx';
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
-import {PropertySheetAsTable, PROP_SHEET} from 'firefly/tables/ui/PropertySheet';
+import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
 
 const logger = Logger('Tables').tag('TablePanel');
 
@@ -77,12 +76,12 @@ export function TablePanel(props) {
         showToolbar, showTitle, showInfoButton, showMetaInfo, showOptions,
         showOptionButton, showPaging, showSave, showFilterButton,showSearchButton,
         totalRows, showLoading, columns, showHeader, showUnits, allowUnits, showTypes, showFilters, textView, status,
-        error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask, showToggleTextView,
+        error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask, showToggleTextView, showPropertySheetButton,
         filterInfo, filterCount, sortInfo, data, backgroundable, highlightedRowHandler, cellRenderers} = {...options, ...uiState};
     let {leftButtons, rightButtons, showAddColumn} = {...options, ...uiState};
 
     showAddColumn = isClientTable(tbl_id) ? false : showAddColumn;
-    const showPropertySheet = getAppOptions()?.table?.propertySheet === PROP_SHEET.POPUP;
+    const showPropertySheet = showPropertySheetButton ?? getAppOptions()?.table?.propertySheet ?? true;
 
     const connector = makeConnector(tbl_id, tbl_ui_id);
 
@@ -161,7 +160,7 @@ export function TablePanel(props) {
                             {showPropertySheet &&
                                 <div style={{marginLeft: '4px'}}
                                      title={TT_PROPERTY_SHEET}
-                                     onClick={showTablePropSheetDialog}
+                                     onClick={() => showTablePropSheetDialog(tbl_id)}
                                      className='PanelToolbar__button propSheet'/> }
                             {showOptionButton &&
                             <div style={{marginLeft: '4px'}}
@@ -229,13 +228,15 @@ function showTableInfoDialog(tbl_id)  {
     showOptionsPopup({content, title: 'Table Info', modal: true, show: true});
 }
 
-function showTablePropSheetDialog() {
+function showTablePropSheetDialog(tbl_id) {
+    const {title=''} = getTblById(tbl_id) || {};
+    showOptionsPopup({show: false});   // hide the dialog if one is currently opened
     const content = (
         <div className='TablePanelOptionsWrapper'>
-            <PropertySheetAsTable detailsTblId='rowDetailsTbl'/>
+            <PropertySheetAsTable tbl_id={tbl_id}/>
         </div>
     );
-    showOptionsPopup({content, title: 'Row Details', modal: false, show: true});
+    defer(() => showOptionsPopup({content, title: 'Row Details: ' + title, modal: false, show: true}));
 }
 
 const stopPropagation= (ev) => ev.stopPropagation();
@@ -270,6 +271,7 @@ TablePanel.propTypes = {
     showAddColumn: PropTypes.bool,
     showInfoButton: PropTypes.bool,
     showSearchButton: PropTypes.bool,
+    showPropertySheetButton: PropTypes.bool,
     showHeader: PropTypes.bool,
     leftButtons: PropTypes.arrayOf(PropTypes.func),   // an array of functions that returns a button-like component laid out on the left side of this table header.
     rightButtons: PropTypes.arrayOf(PropTypes.func),  // an array of functions that returns a button-like component laid out on the right side of this table header.
