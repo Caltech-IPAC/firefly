@@ -572,7 +572,7 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
         if (!plot || !isHiPS(plot)) return;
         if (!qAna?.primarySearchDef?.[0]?.serviceDef?.cisxUI) return;
         const request= getFieldGroupResults(GROUP_KEY); // todo: this might not be right, there might be an array of field groups
-        const {fds}= findFieldDefInfo(request);
+        const {fds}= findFieldDefInfo(request) ?? {};
         const tgt= findTargetFromRequest(request,fds);
         if (tgt) return;
 
@@ -595,7 +595,7 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
         }
     }, [currentTblId]);
 
-    const {cisxUI}= qAna?.primarySearchDef?.[0].serviceDef ?? [];
+    const {cisxUI}= qAna?.primarySearchDef?.[0]?.serviceDef ?? {};
     const isAllSky= toBoolean(cisxUI?.find( (e) => e.name==='data_covers_allsky')?.value);
 
 

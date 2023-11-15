@@ -282,6 +282,8 @@ function initConverterTemplates() {
  * @prop [initialLayout]
  * @prop {string} [tableIdBase] - any tbl_id will use this string for its base
  * @prop {string} [chartIdBase] - any chartId will use this string for its base
+ * @prop {string} [tableIdList] - an array of table object that will be used instead of generating a table id. form: {description,tbl_id}
+ * @prop {string} [chartIdList] - an array of table ids that will be used instead of generating a chart id: {description,chartId}
  *
  * @prop {string} [dataProductsComponentKey] - this is the key use when calling getComponentState() to get a key,value object.
  *                The values in this object will override one or more parameters to a service descriptor.
@@ -309,6 +311,8 @@ export const getDefaultFactoryOptions= once(() => ({
     initialLayout: undefined, //todo - an datalink use this?
     tableIdBase: undefined,
     chartIdBase: undefined,
+    tableIdList: [], // list of ids
+    chartIdList: [],// list of ids
     paramNameKeys: [],
     ucdKeys: [],
     utypeKeys: [],

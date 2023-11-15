@@ -1,6 +1,5 @@
 import React, {memo} from 'react';
 import {has} from 'lodash';
-import {clone} from '../util/WebUtil.js';
 import {useFieldGroupConnector, fgConnectPropsTypes} from './FieldGroupConnector.jsx';
 import {InputFieldView} from './InputFieldView.jsx';
 

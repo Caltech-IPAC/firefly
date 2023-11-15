@@ -211,10 +211,12 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
         titleInfo.showChartTitle=false;
     }
 
+    const tbl_id=  options?.tableIdList?.find( (e) => e.description===title)?.tbl_id ?? options.tableIdBase;
+    const chartId=  options?.chartIdList?.find( (e) => e.description===title)?.chartId ?? options.chartIdBase;
     if (tableOnly) {
         return dpdtTable(ddTitleStr,
             createChartTableActivate({source:fileOnServer,titleInfo,activateParams, tbl_index, dataTypeHint, cNames, cUnits,
-                                     tbl_id:options.tableIdBase }),
+                                     tbl_id}),
             createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits, dataTypeHint),
             undefined, {extractionText: 'Pin Table', paIdx:tbl_index,requestDefault});
     }
@@ -240,7 +242,7 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
             return dpdtChartTable(ddTitleStr,
                 createChartTableActivate({chartAndTable:true, source:fileOnServer,titleInfo,activateParams,chartInfo,
                     tbl_index,dataTypeHint, colNames:cNames,colUnits:cUnits,connectPoints,
-                    tbl_id:options.tableIdBase, chartId:options.chartIdBase }),
+                    tbl_id, chartId }),
                 createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits, dataTypeHint),
                 undefined, {extractionText: 'Pin Table', paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
