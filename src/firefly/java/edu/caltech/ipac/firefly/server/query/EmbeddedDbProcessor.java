@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableWriter;
+import edu.caltech.ipac.table.io.RegionTableWriter;
 import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.table.io.VoTableWriter;
 import edu.caltech.ipac.firefly.data.FileInfo;
@@ -289,6 +290,9 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                     break;
                 case TSV:
                     DsvTableIO.write(new OutputStreamWriter(out), page.getData(), CSVFormat.TDF);
+                    break;
+                case REGION:
+                    RegionTableWriter.write(new OutputStreamWriter(out), page.getData(), request.getParam("center_cols"));
                     break;
                 case VO_TABLE_TABLEDATA:
                 case VO_TABLE_BINARY:

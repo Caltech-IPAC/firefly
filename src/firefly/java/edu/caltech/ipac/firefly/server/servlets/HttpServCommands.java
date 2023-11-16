@@ -46,6 +46,11 @@ public class HttpServCommands {
             TableUtil.Format tblFormat = sp.getTableFormat();
             String fileNameExt = tblFormat.getFileNameExt();
 
+            if (fileNameExt.equalsIgnoreCase(".reg")) {
+                String cols = sp.getOptional("center_cols");
+                request.setParam("center_cols", sp.getOptional("center_cols"));
+            }
+
             if (isEmpty(fileName)) {
                 fileName = request.getRequestId();
             }
