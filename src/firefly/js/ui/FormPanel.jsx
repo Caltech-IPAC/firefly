@@ -9,7 +9,7 @@ import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {HelpIcon} from './HelpIcon.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
-import {get, isNil} from 'lodash';
+import {isNil} from 'lodash';
 import {dispatchFormCancel, dispatchFormSubmit} from 'firefly/core/AppDataCntlr.js';
 
 function handleFailure() {
@@ -46,8 +46,7 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
 
 export const FormPanel = function (props) {
     const { children, onSuccess, onSubmit, onCancel=dispatchHideDropDown, onError, groupKey, groupsToUse,
-        action, params, title, getDoOnClickFunc,
-        submitText='Search',cancelText='Cancel', help_id, changeMasking,
+        action, params, title, getDoOnClickFunc, submitText='Search',cancelText='Cancel', help_id, changeMasking,
         includeUnmounted=false, extraWidgets=[], extraWidgetsRight=[]} = props;
     let { style, inputStyle, submitBarStyle, buttonStyle} = props;
 
