@@ -23,6 +23,7 @@ import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
 import {
     clearModalEndInfo, closeToolbarModalLayers, getModalEndInfo, setModalEndInfo
 } from './ToolbarToolModalEnd.js';
+import {dispatchActiveTarget} from "firefly/core/AppDataCntlr";
 
 
 export const SEARCH_REFINEMENT_DIALOG_ID = 'SEARCH_REFINEMENT_DIALOG';
@@ -199,6 +200,7 @@ export function updateUIFromPlot({plotId, setWhichOverlay, whichOverlay, setTarg
             const drawRadius = radius <= maxSize ? (radius >= minSize ? radius : minSize) : maxSize;
             if (pointEquals(userEnterWorldPt(), cenWpt) && drawRadius === userEnterSearchRadius()) return;
             setTargetWp(cenWpt.toString());
+            dispatchActiveTarget(cenWpt);
             setHiPSRadius(drawRadius + '');
             updatePlotOverlayFromUserInput(plotId, CONE_CHOICE_KEY, cenWpt, drawRadius, undefined);
             setTimeout(() => {
@@ -210,6 +212,7 @@ export function updateUIFromPlot({plotId, setWhichOverlay, whichOverlay, setTarg
             const utWPt = userEnterWorldPt();
             if (!utWPt || (isValidPoint(utWPt) && !pointEquals(wp, utWPt))) {
                 setTargetWp(wp.toString());
+                dispatchActiveTarget(wp);
                 if (plot.attributes[PlotAttribute.USER_SEARCH_RADIUS_DEG]) {
                     canUpdateModalEndInfo ? updateModalEndInfo(plot.plotId) : closeToolbarModalLayers();
                 }

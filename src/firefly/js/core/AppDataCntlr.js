@@ -262,7 +262,7 @@ export function getConnectionCount(channel) {
 
 /**
  * @param wp center WorldPt
- * @param corners array of 4 WorldPts that represent the corners of a image
+ * @param [corners] array of 4 WorldPts that represent the corners of a image
  */
 export const dispatchActiveTarget= function(wp,corners=undefined) {
     const payload={};
