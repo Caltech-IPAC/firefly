@@ -4,7 +4,6 @@
 
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {truncate, get, set} from 'lodash';
 import {defer, truncate, get, set} from 'lodash';
 import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
 import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/ActionsDropDownButton.jsx';
@@ -318,7 +317,7 @@ function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
     if (doclinkUrl) {
         const doclinkLabel = getMetaEntry(tbl_id, META.doclink.label, 'Data Help');
         const doclinkDesc = getMetaEntry(tbl_id, META.doclink.desc) || doclinkLabel;
-        const doclink = <a href={doclinkUrl} key={doclinkUrl} target='doclink' title={doclinkDesc}><button className='button std'>{doclinkLabel}</button></a>;
+        const doclink = <a href={doclinkUrl} key={doclinkUrl} target='doclink' title={doclinkDesc}><button className='button std hl'>{doclinkLabel}</button></a>;
         if (leftButtons) {
             leftButtons.push(doclink);
         } else {
