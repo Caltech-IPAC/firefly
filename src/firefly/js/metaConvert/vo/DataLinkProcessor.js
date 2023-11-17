@@ -180,8 +180,8 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
         return dpdtDownload('Download: '+name + '(too large to show)',url,menuKey,'fits',{semantics, size, activeMenuLookupKey});
     }
     else if (dlData.dlAnalysis.isSpectrum && isVoTable(contentType)) {
-        const tbl_id=  (options.tableIdBase??'direct-result-tbl') + `-${idx}`;
-        const chartId= (options.chartIdBase??'direct-result-chart') +`-${idx}`;
+        const tbl_id= getTableId(dlData.description,options,idx);
+        const chartId= getChartId(dlData.description,options,idx);
         const activate= createChartTableActivate({
             chartAndTable:true,
             source: url,
@@ -208,6 +208,16 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
         }
     }
 }
+
+
+const getTableId= (description, options, idx) =>
+   options?.tableIdList?.find( (e) => e.description===description)?.tbl_id ??
+       (options.tableIdBase??'direct-result-tbl') + `-${idx}`;
+
+const getChartId=  (description, options, idx) =>
+    options?.chartIdList?.find( (e) => e.description===description)?.chartId ??
+    (options.chartIdBase??'direct-result-chart') +`-${idx}`;
+
 
 /**
  *

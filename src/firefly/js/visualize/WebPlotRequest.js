@@ -1010,6 +1010,8 @@ function makeDataOnlyRequestString(r) {
     r.setInitialRangeValues();
     r.setInitialColorTable(getDefaultImageColorTable());
     r.setAnnotationOps(AnnotationOps.INLINE);
+    r.setRotateNorth(false);
+    r.setRotate(0);
     return r.toString();
 }
 

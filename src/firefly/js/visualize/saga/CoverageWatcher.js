@@ -378,8 +378,7 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, 
 
 
 
-    const {fovSize:retFovSize, avgOfCenters}= computeSize(options, preparedTables, usesRadians);
-    const fovSize= retFovSize*1.1;
+    const {fovSize, avgOfCenters}= computeSize(options, preparedTables, usesRadians);
 
     if (!avgOfCenters || fovSize<=0) {
         updateTableComponentStateStatus(tbl_id,COVERAGE_FAIL);
@@ -519,7 +518,9 @@ function computeSize(options, preparedTables, usesRadians) {
             }
             return flattenDeep(ptAry);
     } );
-    return computeCentralPtRadiusAverage(testAry, options.fovDegMinSize);
+    const {centralPoint, fovSize, avgOfCenters}= computeCentralPtRadiusAverage(testAry, options.fovDegMinSize);
+    const newFovSize= fovSize<=options.fovDegMinSize ? fovSize*1.1 : fovSize*2.2;
+    return {centralPoint, fovSize:newFovSize, avgOfCenters};
 }
 
 function makeOverlayCoverageDrawing() {

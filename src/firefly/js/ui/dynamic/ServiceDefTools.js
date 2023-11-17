@@ -1,4 +1,4 @@
-import {isString} from 'lodash';
+import {isArray, isNumber, isString} from 'lodash';
 import {ReservedParams} from '../../api/WebApi.js';
 import {sprintf} from '../../externalSource/sprintf.js';
 import {makeFileRequest, makeTblRequest, setNoCache} from '../../tables/TableRequestUtil.js';
@@ -77,6 +77,14 @@ const getCircleInfo = ({minValue = '', maxValue = '', value = ''}) => {
     const matchStr = [value, minValue, maxValue].find((s) => getCircleValues(s).length === 3 || getCircleValues(s).length === 1);
     if (!matchStr) return {};
     const valueAry = getCircleValues(matchStr);
+    if (isNumber(value) || (isArray(value) && value.length===1)) {
+        const v= isArray(value) ? Number(value[0]) : Number(value);
+        const minAry = getCircleValues(minValue);
+        const maxAry = getCircleValues(maxValue);
+        const minNum = minAry.length === 1 ? minAry[0] : .000277778;
+        const maxNum = maxAry.length === 1 ? maxAry[0] : undefined;
+        return {radius: v, minValue: minNum, maxValue: maxNum};
+    }
     if (valueAry.length === 1) {
         const minAry = getCircleValues(minValue);
         const maxAry = getCircleValues(maxValue);

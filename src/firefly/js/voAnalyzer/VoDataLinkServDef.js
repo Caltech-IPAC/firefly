@@ -108,6 +108,7 @@ export function getServiceDescriptors(tableOrId, removeAsync = true) {
                     const optionalParam = !p.ref && !p.value && !p.options;
                     return {
                         ...p,
+                        value: isArray(p?.value) && p?.value.length===1 ? p.value[0] : p.value,
                         colName: columnIDToName(table, p.ref),
                         optionalParam,
                         allowsInput: !p.ref,
