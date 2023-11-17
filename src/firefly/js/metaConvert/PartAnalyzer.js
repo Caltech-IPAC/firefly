@@ -235,13 +235,17 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
                 undefined, {extractionText: 'Pin Table', paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
         else {
-            if (getPartProdGuess(part,table,row).toLowerCase().startsWith('spec')) chartTableDefOption= SHOW_CHART;
+            let dataTypeHintOverride= dataTypeHint;
+            if (getPartProdGuess(part,table,row).toLowerCase().startsWith('spec')) {
+                chartTableDefOption= SHOW_CHART;
+                dataTypeHintOverride= 'spectrum';
+            }
             const imageAsTableColCnt= isImageAsTable(part,partFormat) ? getImageAsTableColCount(part,partFormat) : 0;
             const chartInfo= {xAxis:xCol, yAxis:yCol, chartParamsAry, useChartChooser};
             if (chartTableDefOption===AUTO) chartTableDefOption= imageAsTableColCnt===2 ? SHOW_CHART : SHOW_TABLE;
             return dpdtChartTable(ddTitleStr,
                 createChartTableActivate({chartAndTable:true, source:fileOnServer,titleInfo,activateParams,chartInfo,
-                    tbl_index,dataTypeHint, colNames:cNames,colUnits:cUnits,connectPoints,
+                    tbl_index,dataTypeHint:dataTypeHintOverride, colNames:cNames,colUnits:cUnits,connectPoints,
                     tbl_id, chartId }),
                 createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits, dataTypeHint),
                 undefined, {extractionText: 'Pin Table', paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
