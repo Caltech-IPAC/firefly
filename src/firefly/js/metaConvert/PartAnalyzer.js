@@ -211,8 +211,8 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
         titleInfo.showChartTitle=false;
     }
 
-    const tbl_id=  options?.tableIdList?.find( (e) => e.description===title)?.tbl_id ?? options.tableIdBase;
-    const chartId=  options?.chartIdList?.find( (e) => e.description===title)?.chartId ?? options.chartIdBase;
+    const tbl_id=  options?.tableIdList?.find( (e) => e.description===title)?.tbl_id ?? options?.tableIdBase;
+    const chartId=  options?.chartIdList?.find( (e) => e.description===title)?.chartId ?? options?.chartIdBase;
     if (tableOnly) {
         return dpdtTable(ddTitleStr,
             createChartTableActivate({source:fileOnServer,titleInfo,activateParams, tbl_index, dataTypeHint, cNames, cUnits,
