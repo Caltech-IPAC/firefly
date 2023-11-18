@@ -17,6 +17,7 @@ import {
 } from '../TableDataProductUtils.js';
 import {makeServiceDefDataProduct} from './ServDescProducts.js';
 import {makeObsCoreRequest} from './VORequest.js';
+import {isSpectrum} from "firefly/charts/ChartUtil";
 
 
 export const USE_ALL= 'useAllAlgorithm';
@@ -196,9 +197,10 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
     }
     else if (isAnalysisType(contentType)) {
         if (doFileAnalysis) {
+            const dataTypeHint= dlData.dlAnalysis.isSpectrum ? 'spectrum' : prodType;
             const request= makeObsCoreRequest(url,positionWP,name,sourceTable,sourceRow);
             const activate= makeAnalysisActivateFunc({table:sourceTable,row:sourceRow, request,
-                activateParams,menuKey, dataTypeHint:prodType, options});
+                activateParams,menuKey, dataTypeHint, options});
             return dpdtAnalyze({name:'Show: '+name,
                 activate,url,menuKey, semantics, size, activeMenuLookupKey,request, sRegion,
                 prodTypeHint:dlData.contentType || prodType});

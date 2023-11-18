@@ -242,7 +242,12 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
             }
             const imageAsTableColCnt= isImageAsTable(part,partFormat) ? getImageAsTableColCount(part,partFormat) : 0;
             const chartInfo= {xAxis:xCol, yAxis:yCol, chartParamsAry, useChartChooser};
-            if (chartTableDefOption===AUTO) chartTableDefOption= imageAsTableColCnt===2 ? SHOW_CHART : SHOW_TABLE;
+            if (dataTypeHintOverride==='spectrum') {
+                chartTableDefOption= SHOW_CHART;
+            }
+            else if (chartTableDefOption===AUTO) {
+                chartTableDefOption= imageAsTableColCnt===2 ? SHOW_CHART : SHOW_TABLE;
+            }
             return dpdtChartTable(ddTitleStr,
                 createChartTableActivate({chartAndTable:true, source:fileOnServer,titleInfo,activateParams,chartInfo,
                     tbl_index,dataTypeHint:dataTypeHintOverride, colNames:cNames,colUnits:cUnits,connectPoints,

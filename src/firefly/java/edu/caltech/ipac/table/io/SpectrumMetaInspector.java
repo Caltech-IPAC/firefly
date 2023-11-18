@@ -25,7 +25,7 @@ class SpectrumMetaInspector {
     private static final String[] specColNames;
     private static final String[] waveLoColName= new String[] {"wave_lo"};
     private static final String[] waveHiColName= new String[] {"wave_hi"};
-    private static final String[] fluxColNames= new String[] {"flux", "fluxdensity", "flux_density", "flux", "flx", "fl", "fls", "flu", "data", "value"};
+    private static final String[] fluxColNames= new String[] {"flux", "fluxdensity", "flux_density", "flux", "flx", "fl", "fls", "flu", "data", "value", "signal"};
     private static final String[] errColNames= new String[] {"err", "error", "errors", "flerr", "flerrs"};
     private static final String[] errHiColNames= new String[] {"err_hi", "error_hi", "err_high", "error_high","flerr_high", "flerrs_hi"};
     private static final String[] errLowColNames= new String[] {"err_lo", "error_lo", "err_low", "error_low","flerr_low", "flerrs_lo"};
@@ -209,7 +209,7 @@ class SpectrumMetaInspector {
     }
 
     private static String find(List<String> l, String name) {
-        return l.stream().filter(s -> s.equals(name)).findAny().orElse(null);
+        return l.stream().filter(s -> s.equalsIgnoreCase(name)).findAny().orElse(null);
     }
 
     private static boolean includes(List<String> l, String v) {
