@@ -7,16 +7,13 @@
   - [Notes on next version](next-release-details.md)
 
 ## Version 2023.2
-- 2023.2.4 - (Sept 28, 2023)
-  - docker tag: `latest`, `2023.2`, `2023.2.4`
-- 2023.2.3 - (Sept 21, 2023)
-  - docker tag: `2023.2.3`
-- 2023.2.2 - (Sept 19, 2023)
-  - docker tag: `2023.2.2`
-- 2023.2.1 - (Sept 14, 2023)
-  - docker tag: `2023.2.1`
-- 2023.2.0 - (Aug 25, 2023)
-  - docker tag: `2023.2.0`
+- 2023.2.6 - (Nov 20, 2023),  _docker tag_: `latest`, `2023.2`, `2023.2.6`
+- 2023.2.5 - (unreleased version)
+- 2023.2.4 - (Sept 28, 2023),  _docker tag_: `2023.2.4`
+- 2023.2.3 - (Sept 21, 2023), _docker tag_: `2023.2.3`
+- 2023.2.2 - (Sept 19, 2023), _docker tag_: `2023.2.2`
+- 2023.2.1 - (Sept 14, 2023), _docker tag_: `2023.2.1`
+- 2023.2.0 - (Aug 25, 2023), _docker tag_: `2023.2.0`
    
 ### _Notes_
 #### This release includes some significant TAP features and a new property sheet support
@@ -44,6 +41,11 @@
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2023.2+)
 
 ### _Patches 2023.2_
+- 2023.2.6
+    - Fixed: API: Property sheet bug in - [Firefly-1347](https://github.com/Caltech-IPAC/firefly/pull/1448) 
+    - Fixed: API: noChartToolbar parameter ignored- [Firefly-1340](https://github.com/Caltech-IPAC/firefly/pull/1444) 
+- 2023.2.5
+    - unreleased version, fixes a race condition - [Firefly-1338](https://github.com/Caltech-IPAC/firefly/pull/1437)
  - 2023.2.4
    - Fixed: Firefly support for IPAC Table's short-form data type, e.g. 'i', 'f', 'b', etc. [commit](https://github.com/Caltech-IPAC/firefly/commit/475a4aff57374bfa70b01308e63402971f1fc291)
  - 2023.2.3
