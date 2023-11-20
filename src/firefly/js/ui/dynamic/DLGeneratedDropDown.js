@@ -101,8 +101,8 @@ function makeRegistryRequest(url, registryTblId) {
             sortInfo: sortInfoString(['facility_name','obs_collection']),
             tbl_id: registryTblId,
             inclCols:
-                '"facility_name","collection_label","instrument_name",' +
-                '"coverage","band","dataproduct_type","info_url",'+
+                '"facility_name","info_url","collection_label","instrument_name",' +
+                '"coverage","band","dataproduct_type",'+
                 '"obs_collection","access_url","access_format"',
             META_INFO: {
                 // ---- columns widths
