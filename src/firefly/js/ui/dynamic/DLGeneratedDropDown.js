@@ -275,7 +275,7 @@ function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTblIds, se
                 },
             };
             if (!url) return;
-            console.log(`Dataset url: ${url}`);
+            logger.warn(`Dataset url: ${url}`);
             const req= makeFileRequest('Data link UI', url, undefined, loadOptions);
             const {tbl_id}= req.META_INFO;
             dispatchTableFetch(req);

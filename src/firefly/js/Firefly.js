@@ -39,7 +39,6 @@ import {loadAllJobs} from './core/background/BackgroundUtil.js';
 import {
     makeDefImageSearchActions, makeDefTableSearchActions, makeDefTapSearchActions, makeExternalSearchActions
 } from './ui/DefaultSearchActions.js';
-import {PROP_SHEET} from 'firefly/tables/ui/PropertySheet';
 
 let initDone = false;
 const logger = Logger('Firefly-init');
@@ -76,7 +75,7 @@ export const Templates = {
  * @prop {boolean} [showUserInfo=false] - show user information.  This is used when authentication is available
  * @prop {boolean} [showViewsSwitch] - show/hide the swith views buttons
  * @prop {Array.<function>} [rightButtons]    - function(s) returning a button to be displayed on the top-right of the result page.
- * 
+ *
  *
  * @prop {Object} menu         custom menu bar
  * @prop {string} menu.label   button's label
@@ -161,7 +160,7 @@ const defFireflyOptions = {
     },
     table : {
         pageSize: 100,
-        propertySheet: PROP_SHEET.INTEGRATED // by default, show property sheet integrated (as tab)
+        propertySheet: false     // by default, hide property sheet popup button; most applications have a dedicated property sheet component.
     },
     image : {
         defaultColorTable: 1,
@@ -232,10 +231,13 @@ function fireflyInit(props, appSpecificOptions={}, webApiCommands) {
     props = mergeObjectOnly(defAppProps, props);
     const viewer = Templates[props.template];
 
-    if (viewer) props.renderTreeId = undefined; // in non API usages, renderTreeId is not used, this line is just for clarity
-    else if (!appSpecificOptions?.table?.propertySheet) {
-        // in API usages, propertySheet should show as popup if not specified otherwise
-        set(appSpecificOptions, 'table.propertySheet', PROP_SHEET.POPUP);
+    if (viewer) {
+        // in non API usages, renderTreeId is not used, this line is just for clarity
+        props.renderTreeId = undefined;
+    }
+    else {
+        // in API mode, show propertySheet button unless it's set.
+        set(appSpecificOptions, 'table.propertySheet', appSpecificOptions?.table?.propertySheet ?? true);
     }
 
     installOptions(appSpecificOptions);
