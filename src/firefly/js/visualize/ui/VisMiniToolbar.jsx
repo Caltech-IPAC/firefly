@@ -46,7 +46,6 @@ import {
     isImageCube,
     isThreeColor, primePlot, pvEqualExScroll
 } from '../PlotViewUtil.js';
-import {MouseState} from '../VisMouseSync.js';
 import {ImageCenterDropDown, TARGET_LIST_PREF} from './ImageCenterDropDown.jsx';
 import {
     clearModalEndInfo, closeToolbarModalLayers, createModalEndUI,
@@ -230,7 +229,7 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
             }
 
 
-            {apiToolsView && <ToolbarButton icon={NEW_IMAGE} tip='Select a new image'
+            {apiToolsView && !pv.plotViewCtx.useForCoverage && <ToolbarButton icon={NEW_IMAGE} tip='Select a new image'
                                             horizontal={true} visible={mi.imageSelect} onClick={showImagePopup}/>}
 
             <DropDownToolbarButton icon={TOOL_DROP} tip='Tools drop down' enabled={enabled} horizontal={true}
