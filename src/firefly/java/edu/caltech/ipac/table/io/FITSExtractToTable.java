@@ -145,7 +145,9 @@ public class FITSExtractToTable {
     }
 
     public static DataGroup getPointsAsTable(ImagePt[] ptAry, WorldPt[] wptAry, String filename, int refHduNum, int plane,
-                                             boolean allMatchingHDUs, int drillSize, FitsExtract.CombineType ct) throws IOException, FitsException {
+                                             boolean allMatchingHDUs, int drillSize, FitsExtract.CombineType ct,
+                                             double[] wlAry, String wlUnit)
+            throws IOException, FitsException {
         File f= ServerContext.convertToFile(filename);
         List<FitsExtract.ExtractionResults> results= FitsExtract.getAllPointsFromRelatedHDUs(
                 ptAry, f, refHduNum, plane, allMatchingHDUs, drillSize, ct );
@@ -157,6 +159,9 @@ public class FITSExtractToTable {
         if (hasWpt) {
             dataTypes.add(new DataType("ra",Double.class, "ra", "deg", null, null));
             dataTypes.add(new DataType("dec",Double.class, "dec","deg", null, null ));
+        }
+        if (wlAry!=null) {
+            dataTypes.add(new DataType("wavelength", Double.class, "wavelength", wlUnit, null, null));
         }
         String defYCol= "";
         for(FitsExtract.ExtractionResults result : results) {
@@ -177,6 +182,9 @@ public class FITSExtractToTable {
             if (hasWpt) {
                 aRow.setDataElement("ra",rnd(wptAry[i].getX(),7));
                 aRow.setDataElement("dec",rnd(wptAry[i].getY(),7));
+            }
+            if (wlAry!=null) {
+                aRow.setDataElement("wavelength",rnd(wlAry[i],6));
             }
             for(FitsExtract.ExtractionResults result : results) {
                 aRow.setDataElement(makeKeyforHDUTab(result),result.aryData().get(i));
@@ -199,7 +207,8 @@ public class FITSExtractToTable {
 
 
     public static DataGroup getLineSelectAsTable(ImagePt[] ptAry, WorldPt[] wptAry, String filename, int refHduNum, int plane,
-                                                 boolean allMatchingHDUs, int drillSize, FitsExtract.CombineType ct)
+                                                 boolean allMatchingHDUs, int drillSize, FitsExtract.CombineType ct,
+                                                 double[] wlAry, String wlUnit )
             throws IOException, FitsException {
         File f= ServerContext.convertToFile(filename);
         List<FitsExtract.ExtractionResults> results= FitsExtract.getAllPointsFromRelatedHDUs(
@@ -215,6 +224,9 @@ public class FITSExtractToTable {
         dataTypes.add(new DataType("pixOffset",Double.class, "pixOffset", "pixel",null, null ));
         dataTypes.add(new DataType("x", Integer.class, "x", "pixel", null, null));
         dataTypes.add(new DataType("y", Integer.class, "y", "pixel", null, null));
+        if (wlAry!=null) {
+            dataTypes.add(new DataType("wavelength", Double.class, "wavelength", wlUnit, null, null));
+        }
         String defYCol= "";
         for(FitsExtract.ExtractionResults result : results) {
             String desc= result.extName()!=null ? result.extName() : "HDU# "+result.hduNum();
@@ -240,6 +252,9 @@ public class FITSExtractToTable {
                 aRow.setDataElement("offset",rnd(VisUtil.computeDistance(wptAry[0],wptAry[i])*3600,3));
                 aRow.setDataElement("ra",rnd(wptAry[i].getX(),7));
                 aRow.setDataElement("dec",rnd(wptAry[i].getY(),7));
+            }
+            if (wlAry!=null) {
+                aRow.setDataElement("wavelength",rnd(wlAry[i],6));
             }
             for(FitsExtract.ExtractionResults result : results) {
                 aRow.setDataElement(makeKeyforHDUTab(result),result.aryData().get(i));

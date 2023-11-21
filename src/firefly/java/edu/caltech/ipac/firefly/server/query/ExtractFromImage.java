@@ -50,15 +50,15 @@ public class ExtractFromImage extends EmbeddedDbProcessor {
         int refHduNum = req.getIntParam(REF_HDU_NUM, -1);
         int plane = req.getIntParam(ServerParams.PLANE, -1);
         FitsExtract.CombineType ct= Enum.valueOf(FitsExtract.CombineType.class,req.getParam(ServerParams.COMBINE_OP,"AVG"));
+        double[] wlAry= SrvParam.getDoubleAryFromJson(req.getParam(ServerParams.WL_ARY));
+        String wlUnit= req.getParam(ServerParams.WL_UNIT);
         boolean allMatchingHDUs = req.getBooleanParam(ALL_MATCHING_HDUS, true);
         try {
             if (extType == null || extType.equals("z-axis")) {
                 ImagePt pt = ImagePt.parse(req.getParam(ServerParams.PT));
                 WorldPt wpt = WorldPt.parse(req.getParam(ServerParams.WPT));
                 checkZAxisParams(pt, filename, refHduNum);
-                String wlUnit= req.getParam(ServerParams.WL_UNIT);
                 Map<Integer,String> fluxUnit= makeMapOfUnitsFromParam(req);
-                double[] wlAry= SrvParam.getDoubleAryFromJson(req.getParam(ServerParams.WL_ARY));
                 return FITSExtractToTable.getCubeZaxisAsTable(pt, wpt, filename, refHduNum, allMatchingHDUs,
                         extractionSize, ct, wlAry,wlUnit,fluxUnit);
             }
@@ -67,13 +67,13 @@ public class ExtractFromImage extends EmbeddedDbProcessor {
                 WorldPt[] wptAry= SrvParam.getWorldPtAryFromJson(req.getParam(ServerParams.WPT_ARY));
                 checkPointParams(ptAry, plane, filename, refHduNum);
                 return FITSExtractToTable.getLineSelectAsTable(ptAry, wptAry, filename, refHduNum, plane, allMatchingHDUs,
-                        extractionSize, ct);
+                        extractionSize, ct, wlAry, wlUnit);
             } else if (extType.equals("points")) {
                 ImagePt[] ptAry= SrvParam.getImagePtAryFromJson(req.getParam(ServerParams.PTARY));
                 WorldPt[] wptAry= SrvParam.getWorldPtAryFromJson(req.getParam(ServerParams.WPT_ARY));
                 checkPointParams(ptAry, plane, filename, refHduNum);
                 return FITSExtractToTable.getPointsAsTable(ptAry, wptAry, filename, refHduNum, plane,
-                        allMatchingHDUs, extractionSize, ct);
+                        allMatchingHDUs, extractionSize, ct, wlAry, wlUnit);
             }
         } catch (IOException | FitsException e) {
             throw new IllegalArgumentException("Could not make a table from extracted data");

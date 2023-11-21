@@ -18,7 +18,8 @@ import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {
     convertHDUIdxToImageIdx, getActivePlotView, getAllWaveLengthsForCube, getCubePlaneFromWavelength,
     getDrawLayerByType, getHDU, getHDUIndex, getHduPlotStartIndexes, getImageCubeIdx,
-    getPlotViewAry, getPlotViewById, getPtWavelength, getWaveLengthUnits, hasWCSProjection, hasWLInfo,
+    getPlotViewAry, getPlotViewById, getPtWavelength, getWaveLengthUnits, hasPixelLevelWLInfo, hasWCSProjection,
+    hasWLInfo,
     isDrawLayerAttached,
     isImageCube, isMultiHDUFits, primePlot
 } from 'firefly/visualize/PlotViewUtil.js';
@@ -27,7 +28,7 @@ import {CCUtil, CysConverter} from 'firefly/visualize/CsysConverter.js';
 import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField.jsx';
 import {callGetCubeDrillDownAry, callGetPointExtractionAry } from 'firefly/rpc/PlotServicesJson.js';
 import {getExtName, hasFloatingData} from 'firefly/visualize/FitsHeaderUtil.js';
-import {dispatchTableFetch, dispatchTableSearch, TABLE_UPDATE} from 'firefly/tables/TablesCntlr.js';
+import {dispatchTableFetch, dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
 import {makeTblRequest} from 'firefly/tables/TableRequestUtil.js';
 import ExtractLineTool from 'firefly/drawingLayers/ExtractLineTool.js';
 import ExtractPointsTool from 'firefly/drawingLayers/ExtractPointsTool.js';
@@ -613,6 +614,10 @@ function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractio
     const imPtAry= getLinePointAry(pt,pt2);
     const cc= CysConverter.make(plot);
 
+    const wlAry= hasPixelLevelWLInfo(plot) ?
+       imPtAry.map( (pt) => getPtWavelength(plot,pt,0))
+        : undefined;
+
     const wptStrAry= hasWCSProjection(plot) ?
         imPtAry.map( (pt) => cc.getWorldCoords(pt)).map( (wpt) => wpt.toString()) : undefined;
     const dataTableReq= makeTblRequest('ExtractFromImage', makePlaneTitle('Extract Line',pv,plot,titleCnt), {
@@ -620,6 +625,8 @@ function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractio
             extractionType: 'line',
             ptAry: JSON.stringify(imPtAry.map((pt) => pt.toString())),
             wptAry: JSON.stringify(wptStrAry),
+            wlAry,
+            wlUnit: getWaveLengthUnits(plot),
             filename,
             refHDUNum,
             plane,
@@ -652,6 +659,9 @@ function keepPointsExtraction(ptAry,pv, plot, filename,refHDUNum,plane,extractio
     }
     const tbl_id= getNextTblId();
     const cc= CysConverter.make(plot);
+    const wlAry= hasPixelLevelWLInfo(plot) ?
+        ptAry.map( (pt) => getPtWavelength(plot,pt,0))
+        : undefined;
     const wptStrAry=
         hasWCSProjection(plot) ?
             ptAry.map( (pt) => cc.getWorldCoords(pt)).map( (pt) => pt.toString()) :
@@ -662,6 +672,8 @@ function keepPointsExtraction(ptAry,pv, plot, filename,refHDUNum,plane,extractio
             extractionType: 'points',
             ptAry: JSON.stringify(ptAry.map((pt) => pt.toString())),
             wptAry: JSON.stringify(wptStrAry),
+            wlAry,
+            wlUnit: getWaveLengthUnits(plot),
             filename,
             refHDUNum,
             plane,
