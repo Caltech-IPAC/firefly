@@ -553,7 +553,7 @@ function createOneComparator(filterStr, tableModel) {
 
         if (op !== 'like' && colType.match(/^[dfil]/)) {      // int, float, double, long .. or their short form.
             compareTo = compareTo ? Number(compareTo) : compareTo;
-        } else if (colType.includes('char')) {
+        } else if (colType.includes('char') && !isNil(compareTo)) {
             compareTo = `${compareTo}`.toLowerCase();
         }
 
