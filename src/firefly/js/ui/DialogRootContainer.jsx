@@ -43,8 +43,9 @@ function init() {
  * @param p.atElRef     the element reference used to apply locDir to.
  * @param p.locDir      location and direction of the drop-down.  see desc for more info
  * @param p.wrapperStyle style to apply to dropdown wrapper div, ex. zIndex
+ * @param p.boxEl       the container's element.  Used to deactivate the dropdown.
  */
-export function showDropDown({id='',content, style={}, atElRef, locDir, wrapperStyle}) {
+export function showDropDown({id='',content, style={}, atElRef, locDir, wrapperStyle, boxEl}) {
     const planeId= getddDiv(id);
     const ddDiv = document.getElementById(planeId) || createDiv({id: planeId, wrapperStyle});
     const root= createRoot(ddDiv);
@@ -52,7 +53,7 @@ export function showDropDown({id='',content, style={}, atElRef, locDir, wrapperS
 
     const rootZindex= atElRef && computeZIndex(atElRef);
     if (rootZindex) ddDiv.style.zIndex= rootZindex;
-    root.render( <DropDown {...{id, content, style, atElRef, locDir}}/>);
+    root.render( <DropDown {...{id, content, style, atElRef, locDir, boxEl}}/>);
     return ddDiv;
 }
 
@@ -70,80 +71,60 @@ export function hideDropDown(id='') {
 
 const getddDiv= (id) => id ? id+ '-dropdownPlane' : DROPDOWN_DIV_ROOT;
 
-const getPos = (props) => {
-    const {atElRef:el} = props;
-    if (!get(el, 'isConnected', true)) hideDropDown(props.id);                                                  // referenced element is no longer visible.. hide drop-down.
+function DropDown ({id, content, style={}, locDir, atElRef, boxEl}) {
+
+    const hide = () => hideDropDown(id);
+
+    // Effect to to hide DropDown when clicked elsewhere
+    useEffect(() => {
+        const box = boxEl || document;
+        box.addEventListener('click', hide);
+        return () => box.removeEventListener('click', hide);;
+    }, []);
+
+    if (!get(atElRef, 'isConnected', true)) hide();                                            // referenced element is no longer visible.. hide drop-down.
     const {x:o_x, y:o_y, width:o_width, height:o_height} = document.documentElement.getBoundingClientRect();    // outer box
-    const {x=0, y=0, width=0, height=0} = el ? el.getBoundingClientRect() : {};                                 // inner box
-    return {x, y, width, height,  o_x, o_y, o_width, o_height};
-};
+    const {x=0, y=0, width=0, height=0} = atElRef ? atElRef.getBoundingClientRect() : {};                       // inner box
 
 
-class DropDown extends PureComponent {
+    const [loc, dir] = [Math.floor(locDir/10), locDir%10];
+    const top    = (y-o_y) + (loc === 3 || loc === 4 ? height : 0);
+    const bottom = ((o_height-o_y) - y) - (loc === 3 || loc === 4 ? height : 0);
+    const left   = (x-o_x) + (loc === 2 || loc === 3 ? width : 0);
+    const right  = ((o_width-o_x) - x) - (loc === 2 || loc === 3 ? width : 0);
 
-    constructor(props) {
-        super(props);
-        this.state = getPos(props);
-        this.hideDropDown = this.hideDropDown.bind(this);
+    let pos;
+    switch (dir) {
+        case 1:
+            pos = {bottom, right}; break;
+        case 2:
+            pos = {bottom, left}; break;
+        case 3:
+            pos = {top, left}; break;
+        case 4:
+            pos = {top, right}; break;
     }
 
-    hideDropDown() {
-        hideDropDown(this.props.id);
-    }
+    const myStyle = Object.assign({ backgroundColor: '#FBFBFB',
+            ...pos,
+            padding: 3,
+            boxShadow: '#c1c1c1 1px 1px 5px 0px',
+            borderRadius: '0 3px',
+            border: '1px solid #c1c1c1',
+            position: 'absolute'},
+        style);
+    const stopEvent = (e) => {
+        e.stopPropagation();
+        e.nativeEvent && e.nativeEvent.stopImmediatePropagation();
+    };
 
-    static getDerivedStateFromProps(props) {
-        return getPos(props);
-    }
-
-    componentDidMount() {
-        document.addEventListener('click', this.hideDropDown);
-    }
-
-    componentWillUnmount() {
-        document.removeEventListener('click', this.hideDropDown);
-    }
-    render() {
-        const {content, style={}, locDir} = this.props;
-        const {x, y, width, height,  o_x, o_y, o_width, o_height} = this.state;    // outter box
-        const [loc, dir] = [Math.floor(locDir/10), locDir%10];
-
-        const top    = (y-o_y) + (loc === 3 || loc === 4 ? height : 0);
-        const bottom = ((o_height-o_y) - y) - (loc === 3 || loc === 4 ? height : 0);
-        const left   = (x-o_x) + (loc === 2 || loc === 3 ? width : 0);
-        const right  = ((o_width-o_x) - x) - (loc === 2 || loc === 3 ? width : 0);
-
-        let pos;
-        switch (dir) {
-            case 1:
-                pos = {bottom, right}; break;
-            case 2:
-                pos = {bottom, left}; break;
-            case 3:
-                pos = {top, left}; break;
-            case 4:
-                pos = {top, right}; break;
-        }
-
-        const myStyle = Object.assign({ backgroundColor: '#FBFBFB',
-                                        ...pos,
-                                        padding: 3,
-                                        boxShadow: '#c1c1c1 1px 1px 5px 0px',
-                                        borderRadius: '0 3px',
-                                        border: '1px solid #c1c1c1',
-                                        position: 'absolute'},
-                                    style);
-        const stopEvent = (e) => {
-            e.stopPropagation();
-            e.nativeEvent && e.nativeEvent.stopImmediatePropagation();
-        };
-
-        return (
-            <div className='rootStyle' style={myStyle} onClick={stopEvent}>
-                {content}
-            </div>
-        );
-    }
+    return (
+        <div className='rootStyle' style={myStyle} onClick={stopEvent}>
+            {content}
+        </div>
+    );
 }
+
 
 function requestOnTop(key) {
     const topKey= dialogs.sort( (d1,d2) => d2.zIndex-d1.zIndex)[0].dialogId;

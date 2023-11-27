@@ -149,7 +149,7 @@ public class HttpServicesTest extends ConfigTest {
 	@Test
 	public void testGetWithAuthRedirected(){
 		HttpServiceInput nInput = input.setRequestUrl(REDIRECT_URL)
-				.setParam("url", "http://www.acme.org")
+				.setParam("url", "https://irsa.ipac.caltech.edu/docs/help_desk.html")
 				.setParam("status_code", "301");
 
 		HttpServices.Status status = HttpServices.getWithAuth(nInput, 3, method -> HttpServices.Status.ok());
