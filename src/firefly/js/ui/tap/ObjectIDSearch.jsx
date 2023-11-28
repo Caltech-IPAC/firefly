@@ -180,9 +180,8 @@ function UploadTableSelectorObjectID({uploadInfo, setUploadInfo}) {
     return (
         <div style={{margin: '10px 0 0 0'}}>
             <div style={{display:'flex', alignItems:'center'}}>
-                <div style={{whiteSpace:'nowrap'}}>Upload Table:</div>
                 <div style={{display:'flex', alignItems:'center'}}>
-                    <ExtraButton text={fileName ? 'Change...' : 'Add...'}
+                    <ExtraButton text={fileName ? 'Change Upload Table...' : 'Add Upload Table...'}
                                  onClick={() => showUploadTableChooser(preSetUploadInfo,'objectIDMatch',{colTypes: ['int','long','string'],colCount: 3})} style={{marginLeft: 42}} />
                     {haveFile &&
                         <div style={{width:200, overflow:'hidden', whiteSpace:'nowrap', fontSize:'larger',
@@ -260,10 +259,9 @@ function ObjectIDCol({objectCol, style={},cols, objectKey, openKey, labelStyle,
                     </div>}
                     <ColumnFld fieldKey={objectKey} cols={cols}
                                name='Object ID Column'  // label that appears in column chooser
-                               inputStyle={{overflow:'auto', height:12, width: 100}}
-                               tooltip={'Object ID Column'}
-                               label='Object ID:'
-                               labelWidth={62}
+                               tooltip='Object ID Column'
+                               label='Object ID'
+                               placeholder='choose object id column'
                                validator={getColValidator(cols, true, false)}
                                colTblId={colTblId}
                                onSearchClicked= {() => {

@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {bool, array, string, number, object, shape} from 'prop-types';
+import PropTypes, {bool, array, string, number, object, shape, oneOfType, element} from 'prop-types';
 import {isEmpty, isUndefined, get}  from 'lodash';
 import {RadioGroupInputFieldView} from './RadioGroupInputFieldView.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
@@ -40,18 +40,13 @@ export const RadioGroupInputField= memo( (props) => {
 
 
 RadioGroupInputField.propTypes= {
-    inline : bool,
     options: array,
     defaultValue: string,
-    alignment:  string,
-    labelWidth : number,
-    labelStyle: object,
+    orientation: PropTypes.oneOf(['vertical', 'horizontal']),
+    tooltip : oneOfType([string,element]),
     isGrouped: bool,
-    forceReinit:  bool,
-    fieldKey:   string,
     initialState: shape({
         value: string,
-        tooltip: string,
         label:  string,
     }),
 };

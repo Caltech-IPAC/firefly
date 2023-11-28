@@ -88,7 +88,7 @@ const defValues= {
     },
     radioGrpFld: {
         fieldKey: 'radioGrpFld',
-        alignment: 'horizontal',
+        orientation: 'horizontal',
         tooltip: 'Please select an option',
         label: 'Radio Group:',
         options: [
@@ -146,7 +146,7 @@ function masterDependentReducer(inFields, action) {
         return {
             master: {
                 fieldKey: 'master',
-                alignment: 'horizontal',
+                orientation: 'horizontal',
                 tooltip: 'Please select an option',
                 label: 'Master:',
                 labelWidth: 40,
@@ -425,7 +425,7 @@ function FieldGroupTestView ({fields={}}) {
                                 {label: 'Grapes', value: 'G'}
                             ]}
                             fieldKey='checkBoxGrpFld'
-                            alignment='vertical'
+                            orientation='vertical'
                         />
                     </Tab>
                     <Tab name='X 2' id='x2'>

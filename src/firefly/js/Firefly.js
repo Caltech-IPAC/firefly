@@ -4,6 +4,7 @@
  */
 
 import 'isomorphic-fetch';
+import '@fontsource/inter';
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {set, defer, once} from 'lodash';
@@ -17,6 +18,7 @@ import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
 import {routeEntry, ROUTER} from './templates/router/RouteHelper.jsx';
 import {initApi} from './api/ApiBuild.js';
 import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
+import {FireflyRoot} from './ui/FireflyRoot.jsx';
 import {dispatchChangeReadoutPrefs} from './visualize/MouseReadoutCntlr.js';
 import {showInfoPopup} from './ui/PopupUtil';
 import {bootstrapRedux, flux} from './core/ReduxFlux.js';
@@ -402,7 +404,11 @@ function renderRoot(root, viewer, props, webApiCommands) {
         if (props.template === ROUTER) {
             routeEntry(rootToUse, props);
         } else {
-            rootToUse.render(React.createElement(viewer, {...props, normalInit: !webApi}));
+            rootToUse.render(
+                <FireflyRoot>
+                    { React.createElement(viewer, {...props, normalInit: !webApi})}
+                </FireflyRoot>
+            );
         }
     };
     webApi ? handleWebApi(webApiCommands, e, doAppRender) : doAppRender();

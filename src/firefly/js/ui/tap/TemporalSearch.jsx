@@ -133,7 +133,7 @@ export function TemporalSearch({cols, columnsModel}) {
 
     useEffect(() => {
         const findTimeCol= findTimeColumn(columnsModel) ?? '';
-        const errMsg= 'Temporal searches require identifying a table column containing a time in MJD.  Please provide a column name.';
+        const errMsg= 'Temporal searches require identifying a table column containing a time in MJD.  Please provide a column name.'
         let existingTimeCol = timeCol; //get current val of TemporalColumns
         let timeColExists = false;
         //check if user has a previously selected Temporal Column, and if it exists in the currently selected table's cols

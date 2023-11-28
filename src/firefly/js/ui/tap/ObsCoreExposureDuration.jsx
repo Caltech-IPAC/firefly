@@ -1,6 +1,7 @@
+import {FormControl, FormLabel, Stack, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
-import {maximumPositiveFloatValidator, minimumPositiveFloatValidator} from '../../util/Validate.js';
+import Validate, {maximumPositiveFloatValidator, minimumPositiveFloatValidator} from '../../util/Validate.js';
 import {FieldGroupCtx, ForceFieldGroupValid} from '../FieldGroup.jsx';
 import {ListBoxInputField} from '../ListBoxInputField.jsx';
 import {useFieldGroupRerender, useFieldGroupValue, useFieldGroupWatch} from '../SimpleComponent.jsx';
@@ -143,12 +144,11 @@ export function ExposureDurationSearch({initArgs}) {
                                 message={constraintResult?.simpleError??''} initialStateOpen={false}>
             <div style={{marginTop: 5}}>
                 <ForceFieldGroupValid forceValid={!checkHeaderCtl.isPanelActive()}>
-                    <div style={{display: 'block', marginTop: '5px'}}>
+                    <Stack direction='column' spacing={1}>
                         <ListBoxInputField
-                            {...{fieldKey:'exposureRangeType', options: exposureRangeOptions, alignment:'horizontal',
-                                label:'Time of Observation:', labelWidth,
+                            {...{fieldKey:'exposureRangeType', options: exposureRangeOptions,
+                                label:'Time of Observation', labelWidth,
                                 initialState:{value: initArgs?.urlApi?.exposureRangeType || 'since'} }} />
-                        <div>
                             {isRange ?
                                 <TimeRangePanel {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive(),
                                     fromTip:"'Exposure start from' time (t_min)",
@@ -156,9 +156,8 @@ export function ExposureDurationSearch({initArgs}) {
                                     style:{marginLeft: LeftInSearch, marginTop: 12, marginBottom: 12}}}/> :
                                 <ExposureSince {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()}} /> }
                             <ExposureLength {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()}}/>
-                        </div>
                         <DebugObsCore {...{constraintResult}}/>
-                    </div>
+                    </Stack>
                 </ForceFieldGroupValid>
             </div>
         </CollapsibleCheckHeader>
@@ -175,28 +174,25 @@ function ExposureSince({initArgs, turnOnPanel}) {
     useFieldGroupWatch(['exposureSinceValue'], ([expSince],isInit) => expSince && !isInit && turnOnPanel());
 
     return (
-        <div style={{display: 'flex', marginTop: 10}}>
-            <ValidationField
-                fieldKey='exposureSinceValue' // FIXME: Introduce SinceValue or similar
-                size={SmallFloatNumericWidth}
-                inputStyle={{overflow: 'auto', height: 16}}
-                validator={() => ({valid: true, message: '' })}
-                wrapperStyle={{
-                    marginLeft: labelWidth,
-                    paddingLeft: 4 /* Extra padding because there's no label */,
-                    paddingBottom: 5
-                }}
-                initialState={{value: initArgs?.urlApi?.exposureSinceValue || ''}}/>
-            <ListBoxInputField
-                fieldKey={'exposureSinceOptions'} // FIXME: Introduce SinceOptions
-                options={[
-                    {label: 'Minutes', value: 'minutes'},
-                    {label: 'Hours', value: 'hours'},
-                    {label: 'Days', value: 'days'},
-                    {label: 'Years', value: 'years'}
-                ]}
-                initialState={{value: initArgs?.urlApi?.exposureSinceOptions || 'hours'}}/>
-        </div>
+        <Stack direction='row'>
+            <ValidationField {...{
+                placeholder:'Enter time',
+                fieldKey:'exposureSinceValue', // FIXME: Introduce SinceValue or similar
+                validator: (val) => Validate.isFloat('Exposure since',val),
+                initialState: {value: initArgs?.urlApi?.exposureSinceValue || ''},
+                sx:{'.MuiInput-root':{ 'paddingInlineEnd': 0, }},
+                endDecorator:
+                    (<ListBoxInputField
+                        fieldKey={'exposureSinceOptions'} // FIXME: Introduce SinceOptions
+                        options={[
+                            {label: 'Minutes', value: 'minutes'},
+                            {label: 'Hours', value: 'hours'},
+                            {label: 'Days', value: 'days'},
+                            {label: 'Years', value: 'years'}
+                        ]}
+                        initialState={{value: initArgs?.urlApi?.exposureSinceOptions || 'hours'}}/>),
+            }} />
+        </Stack>
     );
 }
 
@@ -225,26 +221,32 @@ function ExposureLength({initArgs, panelActive, turnOnPanel}) {
 
 
     return (
-        <div style={{display: 'flex', marginTop: 5}}>
-            <ValidationField fieldKey='exposureLengthMin'
-                size={SmallFloatNumericWidth}
-                inputStyle={inputStyle}
-                label='Exposure Duration:'
-                tooltip='Cumulative shutter-open exposure duration in seconds'
-                labelWidth={labelWidth}
-                validator={minimumPositiveFloatValidator('Minimum Exposure Length')}
-                placeholder='-Inf'
-                initialState={{value: initArgs?.urlApi?.exposureLengthMin}}/>
-            <div style={{display: 'flex', marginTop: 5, marginRight: '16px', paddingRight: '3px'}}>to</div>
-            <ValidationField fieldKey='exposureLengthMax'
-                size={SmallFloatNumericWidth}
-                inputStyle={inputStyle}
-                tooltip='Cumulative shutter-open exposure must be less than this amount'
-                validator={maximumPositiveFloatValidator('Maximum Exposure Length')}
-                placeholder='+Inf'
-                initialState={{value: initArgs?.urlApi?.exposureLengthMax}}/>
-            <div style={{display: 'flex', marginTop: 5}}>seconds</div>
-        </div>
+        <FormControl {...{orientation:'vertical', size:'sm'}}>
+            <FormLabel>Exposure Duration</FormLabel>
+            <Stack direction='row' spacing={1} alignItems='center'>
+                <ValidationField {...{
+                    fieldKey: 'exposureLengthMin',
+                    size: SmallFloatNumericWidth,
+                    tooltip: 'Cumulative shutter-open exposure duration in seconds',
+                    sx:{'.MuiInput-root':{'width': 100}},
+                    validator: minimumPositiveFloatValidator('Minimum Exposure Length'),
+                    placeholder:'-Inf',
+                    initialState: {value: initArgs?.urlApi?.exposureLengthMin},
+                }} />
+                <Typography level='body-md'>to</Typography>
+                <ValidationField {...{
+                    fieldKey: 'exposureLengthMax',
+                    size: SmallFloatNumericWidth,
+                    sx:{'.MuiInput-root':{'width': 100}},
+                    inputStyle,
+                    tooltip:'Cumulative shutter-open exposure must be less than this amount',
+                    validator:maximumPositiveFloatValidator('Maximum Exposure Length'),
+                    placeholder:'+Inf',
+                    initialState: {value: initArgs?.urlApi?.exposureLengthMax}
+                }}/>
+                <Typography level='body-md'>seconds</Typography>
+            </Stack>
+        </FormControl>
 
     );
 }
