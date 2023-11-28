@@ -320,7 +320,7 @@ function render2MassSearch(fields) {
             <div style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
                 <RadioGroupInputField
                     fieldKey='ds'
-                    alignment='vertical'
+                    orientation='vertical'
                     initialState={{
                         tooltip: 'Spacial Type',
                         value: 'Cone'
@@ -335,7 +335,7 @@ function render2MassSearch(fields) {
                 />
                 <RadioGroupInputField
                     fieldKey='band'
-                    alignment='horizontal'
+                    orientation='horizontal'
                     initialState={{
                         tooltip: 'Return Band',
                         value: 'A'

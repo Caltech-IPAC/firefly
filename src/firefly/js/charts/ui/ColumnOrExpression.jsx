@@ -134,7 +134,7 @@ ColumnOrExpression.propTypes = {
 
 export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidth, tooltip='Table column',
                            name, nullAllowed, canBeExpression=false, inputStyle, readonly, helper, required, validator,
-                              colTblId=null,onSearchClicked=null}) {
+                              placeholder, colTblId=null,onSearchClicked=null}) {
     const value = initValue || getFieldVal(groupKey, fieldKey);
     const colValidator = getColValidator(cols, !nullAllowed, canBeExpression);
     const {valid=true, message=''} = value ? colValidator(value) : {};
@@ -182,10 +182,11 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidt
                 groupKey={groupKey}
                 {...labelProps}
                 inputStyle={inputStyle}
+                placeholder={placeholder}
                 readonly={readonly}
+                endDecorator= {!readonly && helper ? helper : undefined}
                 required={required}
             />
-            {!readonly && helper}
         </div>
     );
 }
@@ -206,6 +207,7 @@ ColumnFld.propTypes = {
     required: PropTypes.bool,
     helper: PropTypes.element,
     colTblId: PropTypes.string,
-    onSearchClicked: PropTypes.func
+    onSearchClicked: PropTypes.func,
+    placeholder: PropTypes.string,
 };
 

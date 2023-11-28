@@ -1,3 +1,4 @@
+import {Stack, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
@@ -67,7 +68,7 @@ function makeWavelengthConstraints(wavelengthSelection, rangeType, filterDefinit
             errList.addError('at least one filter must be checked');
         }
     } else if (wavelengthSelection === 'numerical') {
-        const exponent= getExponent(wlUnits.value);
+        const exponent= getExponent(wlUnits?.value);
         if (rangeType === 'contains') {
             errList.checkForError(wlContains);
             if (wlContains?.valid) {
@@ -142,6 +143,17 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
             !isInit && valAry.some((v)=>v) && checkHeaderCtl.setPanelActive(true);
         });
 
+    const units= (<ListBoxInputField fieldKey='obsCoreWavelengthUnits'
+                       options={ [
+                           {label: 'microns', value: 'um'},
+                           {label: 'nanometers', value: 'nm'},
+                           {label: 'angstroms', value: 'angstrom'},
+                       ]}
+                       initialState={{ value: initArgs?.urlApi?.obsCoreWavelengthUnits || 'nm' }}
+                       multiple={false} />);
+
+
+
     return (
         <CollapsibleCheckHeader title={panelTitle} helpID={tapHelpId(panelPrefix)}
                                 message={constraintResult?.simpleError??''} initialStateOpen={false}>
@@ -150,7 +162,7 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
                     {hasFilters && <RadioGroupInputField
                         fieldKey={'obsCoreWavelengthSelectionType'}
                         options={[{label: 'By Filter Bands', value: 'filter'}, {label: 'By Wavelength', value: 'numerical'}]}
-                        alignment={'horizontal'}
+                        orientation='horizontal'
                         wrapperStyle={{marginTop: '10px'}}
                         label={'Query Type:'}
                         labelWidth={LableSaptail}
@@ -177,7 +189,7 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
                     }
                     {useNumerical &&
                         <div style={{marginTop: '10px'}}>
-                            <div style={{display: 'flex'}}>
+                           <div style={{display: 'flex'}}>
                                 <ListBoxInputField fieldKey='obsCoreWavelengthRangeType'
                                                    options={ [
                                                        {label: 'contains', value: 'contains'},
@@ -185,44 +197,43 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
                                                    ]}
                                                    initialState={{ value: initArgs?.urlApi?.obsCoreWavelengthRangeType || 'contains' }}
                                                    label='Select observations whose wavelength coverage'
+                                                   orientation='vertical'
                                                    labelWidth={236}
                                                    multiple={false} />
                             </div>
-                            <div style={{display: 'inline-flex', marginTop: '10px', marginLeft: LeftInSearch}}>
+                            <div style={{display: 'inline-flex', marginTop: '10px'}}>
                                 {rangeType === 'contains' &&
                                     <div style={{display: 'flex'}}>
                                         <ValidationField fieldKey='obsCoreWavelengthContains'
                                                          size={SmallFloatNumericWidth}
                                                          inputStyle={{overflow: 'auto', height: 16}}
+                                                         placeholder='enter wavelength'
+                                                         sx={{'.MuiInput-root':{ 'paddingInlineEnd': 0, }}}
                                                          validator={floatValidator(0, 100e15, 'Wavelength')}
+                                                         endDecorator={units}
                                                          initialState={{value: initArgs?.urlApi?.obsCoreWavelengthContains || ''}} />
                                     </div>
                                 }
                                 {rangeType === 'overlaps' &&
-                                    <div style={{display: 'flex'}}>
-                                        <ValidationField fieldKey='obsCoreWavelengthMinRange'
-                                                         size={SmallFloatNumericWidth}
-                                                         inputStyle={{overflow: 'auto', height: 16}}
-                                                         validator={minimumPositiveFloatValidator('Min Wavelength')}
-                                                         placeholder={'-Inf'}
-                                                         initialState={{value: initArgs?.urlApi?.obsCoreWavelengthMinRange}} />
-                                        <div style={{display: 'flex', marginTop: 5, marginRight: '16px', paddingRight: '3px'}}>to</div>
-                                        <ValidationField fieldKey='obsCoreWavelengthMaxRange'
-                                                         size={SmallFloatNumericWidth}
-                                                         inputStyle={{overflow: 'auto', height: 16}}
-                                                         validator={maximumPositiveFloatValidator('Max Wavelength')}
-                                                         placeholder={'+Inf'}
-                                                         initialState={{value: initArgs?.urlApi?.obsCoreWavelengthMaxRange}} />
-                                    </div>
+                                    <Stack direction='row' spacing={1} alignItems='center'>
+                                        <ValidationField {...{
+                                            fieldKey:'obsCoreWavelengthMinRange',
+                                            sx:{'.MuiInput-root':{'width': 100}},
+                                            validator: minimumPositiveFloatValidator('Min Wavelength'),
+                                            placeholder:'-Inf',
+                                            initialState: {value: initArgs?.urlApi?.obsCoreWavelengthMinRange},
+                                        }}/>
+                                        <Typography level='body-md'>to</Typography>
+                                        <ValidationField {...{
+                                            fieldKey: 'obsCoreWavelengthMaxRange',
+                                            sx:{'.MuiInput-root':{'width': 100}},
+                                            validator: maximumPositiveFloatValidator('Max Wavelength'),
+                                            placeholder: '+Inf',
+                                            initialState:{value: initArgs?.urlApi?.obsCoreWavelengthMaxRange}
+                                        }}/>
+                                        {units}
+                                    </Stack>
                                 }
-                                <ListBoxInputField fieldKey='obsCoreWavelengthUnits'
-                                                   options={ [
-                                                       {label: 'microns', value: 'um'},
-                                                       {label: 'nanometers', value: 'nm'},
-                                                       {label: 'angstroms', value: 'angstrom'},
-                                                   ]}
-                                                   initialState={{ value: initArgs?.urlApi?.obsCoreWavelengthUnits || 'nm' }}
-                                                   multiple={false} />
                             </div>
                         </div>
                     }

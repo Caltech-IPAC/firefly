@@ -53,7 +53,7 @@ export const HiPSImageSelect= ({style={}, groupKey}) => {
         );
     } else {
         return (
-            <div className='ImageSearch__section hips-table' style={style}>
+            <div className='ImageSearch__section hips-table' style={{...style}}>
                 <div className='ImageSearch__section--title' style={{display: 'inline-flex', width: '100%', boxSizing: 'border-box'}}>
                     <div style={{width: 175}}>4. Select Data Set</div>
                     <SourceSelect/>

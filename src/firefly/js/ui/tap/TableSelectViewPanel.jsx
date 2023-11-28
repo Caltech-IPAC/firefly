@@ -1,3 +1,4 @@
+import {Stack, Typography} from '@mui/joy';
 import React, {Fragment, useContext, useEffect, useRef, useState} from 'react';
 import SplitPane from 'react-split-pane';
 import {getColumnValues} from '../../tables/TableUtil.js';
@@ -315,10 +316,10 @@ export function BasicUI(props) {
 
             <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
                 <div style={{ display: 'inline-flex', width: 'calc(100% - 3px)', justifyContent: 'space-between', margin:'5px 0 -8px 0'}}>
-                    <div className='TapSearch__section--title'>
-                        <div style={{width:170, marginLeft:0}}> Enter Constraints </div>
+                    <Stack spacing={1} alignItems='center' direction={'row'}>
+                        <Typography {...{level:'title-md', color:'primary'}}>Enter Constraints</Typography>
                         <HelpIcon helpId={tapHelpId('constraints')}/>
-                    </div>
+                    </Stack>
                     <TableColumnsConstraintsToolbar key={tableName} tableName={tableName} columnsModel={columnsModel} />
                 </div>
                 <div className='expandable'>
@@ -333,7 +334,9 @@ export function BasicUI(props) {
                         <SplitContent>
                             { columnsModel ?
                                 <div style={{height:'100%', display:'flex', flexDirection:'column'}}>
-                                    <div style={{paddingBottom:4, fontWeight:'bold', margin:'1px 0 -2px 0'}}>Output Column Selection and Constraints</div>
+                                    <Typography title='Number of columns to be selected' color='neutral'  level='body-xs'>
+                                        Output Column Selection and Constraints
+                                    </Typography>
                                     <TableColumnsConstraints
                                         key={tableName}
                                         fieldKey={'tableconstraints'}

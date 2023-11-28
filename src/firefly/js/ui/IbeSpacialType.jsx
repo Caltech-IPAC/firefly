@@ -131,7 +131,7 @@ function renderMostCenter(visible) {
         <RadioGroupInputField fieldKey='mcenter'
                               wrapperStyle={{visibility:visible?'visible':'hidden'}}
                               inline={true}
-                              alignment='horizontal'
+                              orientation='horizontal'
                               initialState={{
                                         tooltip: mcenTip,
                                         value: 'mcen',

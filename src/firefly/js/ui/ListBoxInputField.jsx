@@ -1,6 +1,7 @@
 import React, {memo} from 'react';
-import PropTypes from 'prop-types';
-import {get, isEmpty}  from 'lodash';
+import PropTypes, {object} from 'prop-types';
+import {Select, Option, Tooltip, FormControl, FormLabel, Stack} from '@mui/joy';
+import {get, isArray, isEmpty} from 'lodash';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 
 import InputFieldLabel from './InputFieldLabel.jsx';
@@ -18,35 +19,31 @@ function getCurrentValueArr(value) {
 const convertValue= (value,options) => (!value) ? get(options, [0, 'value']) : value;
 
 
-export function ListBoxInputFieldView({inline, value, onChange, fieldKey, options, labelStyle,
-                                       multiple, labelWidth, tooltip, label, wrapperStyle, selectStyle, readonly=false}) {
+export function ListBoxInputFieldView({value:fieldValue, onChange, fieldKey, options,
+                                          orientation='horizontal', sx,
+                                       multiple, placeholder, tooltip, label,
+                                          readonly=false}) {
 
-    var vAry= getCurrentValueArr(value);
-    const style = Object.assign({whiteSpace:'nowrap', display: inline?'inline-block':'block'}, wrapperStyle);
+    const vAry= getCurrentValueArr(fieldValue);
     return (
-        <div style={style}>
-            {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} labelStyle={labelStyle} />}
-            <select name={fieldKey}
-                    title={tooltip}
-                    style={selectStyle}
-                    multiple={multiple}
-                    onChange={onChange}
-                    disabled={readonly}
-                    value={multiple ? vAry : value}>
-                {options?.map(( (option) => {
-                    const optLabel = option.label || option.value;
-                    return (
-                        <option value={option.value}
-                                key={option.value||0}
-                                style={{paddingLeft: 5, paddingRight: 3}}
-                                title={option.tooltip}
-                                disabled={option.disabled ? 'disabled' : false}>
-                            {optLabel}
-                        </option>
-                    );
-                }))}
-            </select>
-        </div>
+        <Stack {...{className:'ff-Input ListBoxInputFieldView', sx}}>
+            <FormControl {...{orientation}}>
+                {label && <FormLabel>{label}</FormLabel>}
+                <Tooltip {...{title:tooltip, placement:'top'}}>
+                    <Select {...{name: fieldKey, multiple, onChange, placeholder,
+                        disabled: readonly, value: multiple ? vAry : fieldValue}}>
+                        {options?.map((({value,label,disabled=false},idx) => {
+                            return (
+                                <Option {...{value, key:`k${idx}`, disabled:disabled ? 'disabled' : false}}>
+                                    {label || value}
+                                </Option>
+                            );
+                        }))}
+                    </Select>
+                </Tooltip>
+
+            </FormControl>
+        </Stack>
     );
 }
 
@@ -65,26 +62,30 @@ ListBoxInputFieldView.propTypes= {
     selectStyle: PropTypes.object,
     wrapperStyle: PropTypes.object,
     labelStyle: PropTypes.object,
-    readonly: PropTypes.bool
+    placeholder : PropTypes.string,
+    readonly: PropTypes.bool,
+    sx: PropTypes.object,
 };
 
-function handleOnChange(ev, params, fireValueChange) {
-    var options = ev.target.options;
-    var val = [];
-    for (var i = 0; i<options.length; i++) {
-        if (options[i].selected) {
-            val.push(options[i].value);
+function handleOnChange(ev, newValue, params, fireValueChange) {
+    const options = ev.target.options;
+    let value;
+    if (isArray(options)) {
+        const valAry = [];
+        for (var i = 0; i<options.length; i++) {
+            if (options[i].selected) {
+                valAry.push(options[i].value);
+            }
         }
+        value= valAry.toString();
+    }
+    else {
+        value= isArray(newValue) ? newValue.toString() : newValue;
     }
 
-    var {valid,message}=params.validator(val.toString());
-
+    const {valid,message}=params.validator(value);
     // the value of this input field is a string
-    fireValueChange({
-        value : val.toString(),
-        message,
-        valid
-    });
+    fireValueChange({ value, message, valid });
     if (params.onChange) params.onChange(ev);
 }
 
@@ -103,7 +104,7 @@ export const ListBoxInputField= memo( (props) => {
     const newProps= {
         ...viewProps,
         value: !viewProps.multiple ? convertValue(viewProps.value, viewProps.options) : viewProps.value,
-        onChange: (ev) => handleOnChange(ev,viewProps, fireValueChange)
+        onChange: (ev,newValue) => handleOnChange(ev,newValue,viewProps, fireValueChange)
     };
     return (<ListBoxInputFieldView {...newProps} />);
 });
@@ -113,6 +114,7 @@ export const ListBoxInputField= memo( (props) => {
 ListBoxInputField.propTypes= {
     fieldKey : PropTypes.string,
     groupKey : PropTypes.string,
+    placeholder : PropTypes.string,
     forceReinit:  PropTypes.bool,
     initialState: PropTypes.shape({
         value: PropTypes.string,
@@ -123,6 +125,8 @@ ListBoxInputField.propTypes= {
     options : PropTypes.array,
     multiple : PropTypes.bool,
     labelWidth : PropTypes.number,
-    readonly: PropTypes.bool
+    orientation: PropTypes.oneOf(['vertical', 'horizontal']),
+    readonly: PropTypes.bool,
+    sx: PropTypes.object,
 };
 

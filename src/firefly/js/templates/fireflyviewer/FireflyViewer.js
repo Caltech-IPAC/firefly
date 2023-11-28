@@ -3,6 +3,7 @@
  */
 
 
+import {CssBaseline, CssVarsProvider} from '@mui/joy';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {pickBy} from 'lodash';
@@ -13,6 +14,7 @@ import {
     dispatchOnAppReady, dispatchNotifyRemoteAppReady, getAppOptions,
 } from '../../core/AppDataCntlr.js';
 import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
+import {getTheme} from '../../ui/ThemeSetup.js';
 import {getActiveRowCenterDef} from '../../visualize/saga/ActiveRowCenterWatcher.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
@@ -105,20 +107,20 @@ export class FireflyViewer extends PureComponent {
         } else {
             return (
                 <div id='App' className='rootStyle' style={style}>
-                    <header>
-                        <BannerSection {...{menu, showUserInfo, appTitle, appIcon, altAppIcon, bannerLeftStyle, bannerMiddleStyle}}/>
-                        <div id={warningDivId} data-decor='full' className='warning-div center'/>
-                        <DropDownContainer
-                            key='dropdown'
-                            footer={footer}
-                            visible={!!visible}
-                            selected={view}
-                            {...{dropdownPanels} } />
-                    </header>
-                    <main>
-                        <DynamicResults {...{views, showViewsSwitch, leftButtons, centerButtons, coverageSide,
-                                             rightButtons, initLoadingMessage, initLoadCompleted}}/>
-                    </main>
+                        <header>
+                            <BannerSection {...{menu, showUserInfo, appTitle, appIcon, altAppIcon, bannerLeftStyle, bannerMiddleStyle}}/>
+                            <div id={warningDivId} data-decor='full' className='warning-div center'/>
+                            <DropDownContainer
+                                key='dropdown'
+                                footer={footer}
+                                visible={!!visible}
+                                selected={view}
+                                {...{dropdownPanels} } />
+                        </header>
+                        <main>
+                            <DynamicResults {...{views, showViewsSwitch, leftButtons, centerButtons, coverageSide,
+                                rightButtons, initLoadingMessage, initLoadCompleted}}/>
+                        </main>
                 </div>
             );
         }

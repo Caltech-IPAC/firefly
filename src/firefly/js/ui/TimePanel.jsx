@@ -22,21 +22,9 @@ function TimePanelView({showHelp, feedback, feedbackStyle, examples, label, labe
                            inputStyle, wrapperStyle, inputWidth, timeMode=ISO, isTimeModeFixed}) {
     const ImagePadding = 3;
 
-    const iconStyle = {
-        position: 'absolute',
-        top: 1,
-        right: 1,
-        padding: ImagePadding,
-        cursor: 'pointer'
-    };
 
     const iconField = iconMap?.[icon] ?
-        (<div style={iconStyle}>
-            <img
-              title={iconMap[icon].title}
-              src={iconMap[icon].icon}
-              onClick={() => onClickIcon?.()}/>
-         </div>) : null;
+        ( <img title={iconMap[icon].title} src={iconMap[icon].icon} onClick={() => onClickIcon?.()}/> ) : undefined;
 
     const spaceForImage = 16+ImagePadding*2;
     const newInputStyle = {...inputStyle,
@@ -44,10 +32,10 @@ function TimePanelView({showHelp, feedback, feedbackStyle, examples, label, labe
         paddingRight: iconField ? spaceForImage : 2
     };
     const placeHolder = timeMode === ISO ? 'YYYY-MM-DD HH:mm:ss' : 'float number .... ';
-    const newWrapperStyle = {...wrapperStyle, params: iconField ? {width: '100%'} : {}};
     const inputFields = {
         valid, visible: true, message, onChange,
-        value, tooltip, wrapperStyle: newWrapperStyle, style: newInputStyle,
+        value, tooltip, style: newInputStyle,
+        endDecorator: iconField,
         placeHolder
     };
 
@@ -56,7 +44,6 @@ function TimePanelView({showHelp, feedback, feedbackStyle, examples, label, labe
     const outsideWidth = inputWidth + 6;
     const timePart = iconField ? (<div style={{position: 'relative', width: outsideWidth}}>
                                         {timeField}
-                                        {iconField}
                                   </div>)
                                 : timeField;
 

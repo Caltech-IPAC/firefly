@@ -4,6 +4,7 @@ import {RouterProvider, useNavigate, redirect, useLocation} from 'react-router-d
 import {dispatchNotifyRemoteAppReady, dispatchOnAppReady, dispatchSetMenu, FORM_CANCEL, FORM_SUBMIT} from '../../core/AppDataCntlr.js';
 import {dispatchSetLayoutInfo, getDropDownInfo} from '../../core/LayoutCntlr.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
+import {FireflyRoot} from '../../ui/FireflyRoot.jsx';
 import {getMenuItems} from '../../ui/Menu.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
@@ -26,7 +27,9 @@ export function routeEntry(root, props) {
     dispatchNotifyRemoteAppReady();
 
     const view = (
-        <RouterProvider router={getRouter(props)} />
+        <FireflyRoot>
+            <RouterProvider router={getRouter(props)} />
+        </FireflyRoot>
     );
 
     root.render(view);

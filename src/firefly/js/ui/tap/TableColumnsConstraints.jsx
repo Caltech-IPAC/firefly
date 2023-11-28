@@ -1,3 +1,4 @@
+import {Button, Stack, Typography} from '@mui/joy';
 import React, {useState, useEffect} from 'react';
 import {cloneDeep, get, isEmpty,} from 'lodash';
 
@@ -43,31 +44,33 @@ export function TableColumnsConstraintsToolbar({columnsModel}) {
 
     const resetButton = () => {
         return (
-            <button style={{padding: '0 5px 0 5px', margin: '0 2px 0 5px'}}
+            <Button variant='soft' color='neutral' size='sm'
                     title='Reset Column Selections & Constraints to the default columns and no constraints'
                     onClick={ () => {
                         const tblModel = reorganizeTableModel(columnsModel, COLS_TO_DISPLAY_FIRST, true);
                         dispatchTableAddLocal(tblModel, {}, false);
                     }}>Reset Column Selections & Constraints
-            </button>
+            </Button>
         );
     };
 
 
     return (
-        <div style={{display:'inline-flex', padding:'0 0 2px', height: 20, alignSelf: 'center'}}>
+        <Stack direction='row' alignItems='center' spacing={1}>
             {!error && filterCount > 0 &&
-            <button style={{padding: '0 5px 0 5px', margin: '0 2px 0 5px'}}
+            <Button variant='soft' color='neutral' size='sm'
                     title='Remove column table filters to make all columns visible'
                     onClick={() => dispatchTableFilter({tbl_id: tableModel.tbl_id, filters: ''})}>
-                Remove <span style={{color: 'blue'}}>{filterCount} filter{filterCount>1?'s':''}</span>
-            </button>}
+                Remove
+                <Typography color='warning' sx={{pl:.25}}>{filterCount} filter{filterCount>1?'s':''}</Typography>
+            </Button>}
             {selectedCount > 0 &&
-            <span style={{color: 'blue', alignSelf: 'center', padding: '0 5px 0 5px'}} title='Number of columns to be selected'>
-                {selectedCount} of {totalColumns} columns selected
-            </span>}
+                <Typography title='Number of columns to be selected' color='warning'  level='body-xs'>
+                    {selectedCount} of {totalColumns} columns selected
+                </Typography>
+            }
             {!error && resetButton()}
-        </div>
+        </Stack>
     );
 }
 

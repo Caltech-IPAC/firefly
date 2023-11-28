@@ -282,14 +282,14 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
 
 function makeExtraWidgets(initArgs, selectBy, setSelectBy, tapBrowserState) {
     const extraWidgets = [
-        (<ValidationField fieldKey='maxrec' key='maxrec' groupKey={TAP_PANEL_GROUP_KEY}
-                         tooltip='Maximum number of rows to return (via MAXREC)' label= 'Row Limit:' labelWidth={0}
+        (<ValidationField orientation='horizontal' fieldKey='maxrec' key='maxrec' groupKey={TAP_PANEL_GROUP_KEY}
+                         tooltip='Maximum number of rows to return (via MAXREC)' label= 'Row Limit:'
                          initialState= {{
                              value: Number(initArgs?.urlApi?.MAXREC) || Number(getAppOptions().tap?.defaultMaxrec ?? 50000),
                              validator: intValidator(0, getMaxrecHardLimit(), 'Maximum number of rows'),
                          }}
-                         wrapperStyle={{marginLeft: 30, height: '100%', alignSelf: 'center'}}
-                         style={{height: 17, width: 70}} />)
+                         wrapperStyle={{marginLeft: 30}}
+                         />)
         ];
     if (selectBy==='basic') {
         extraWidgets.push( (<ExtraButton key='editADQL' text='Populate and edit ADQL'
