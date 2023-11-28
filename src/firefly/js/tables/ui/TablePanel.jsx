@@ -52,6 +52,8 @@ const TT_EXPAND = 'Expand this panel to take up a larger area';
 const TT_PROPERTY_SHEET = 'Show details for the selected row';
 
 
+export const TBL_CLZ_NAME = 'TablePanel__table';
+
 export function TablePanel(props) {
     let {tbl_id, tbl_ui_id, tableModel, ...options} = props;
     tbl_id = tbl_id || tableModel?.tbl_id || uniqueTblId();
@@ -175,7 +177,7 @@ export function TablePanel(props) {
                         </div>
                     </div>
                     }
-                    <div className='TablePanel__table' style={{top: tableTopPos}}
+                    <div className={TBL_CLZ_NAME} style={{top: tableTopPos}}
                          onClick={stopPropagation}
                          onTouchStart={stopPropagation}
                          onMouseDown={stopPropagation}

@@ -30,6 +30,7 @@ import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {dispatchTableUiUpdate, dispatchTableUpdate} from '../TablesCntlr.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
+import {TBL_CLZ_NAME} from './TablePanel.jsx';
 
 import infoIcon from 'html/images/info-icon.png';
 import {dd2sex} from '../../visualize/CoordUtil.js';
@@ -327,6 +328,14 @@ export function makeDefaultRenderer(col={}) {
     return renderer;
 }
 
+function findTableFor(element) {
+    let cEl = element;
+    while (cEl && !cEl.classList.contains(TBL_CLZ_NAME)) {
+        cEl = cEl.parentNode;
+    }
+    return cEl;
+}
+
 export function ContentEllipsis({children, text, style={}, actions=[]}) {
 
     const [hasActions, setHasActions] = useState(false);
@@ -337,7 +346,8 @@ export function ContentEllipsis({children, text, style={}, actions=[]}) {
 
     const onActionsClicked = (ev) => {
         ev.stopPropagation();
-        showDropDown({id: dropDownID, content: dropDown, atElRef: actionsEl.current, locDir: 33, style: {marginLeft: -10},
+        const boxEl = findTableFor(actionsEl.current);
+        showDropDown({id: dropDownID, content: dropDown, boxEl, atElRef: actionsEl.current, locDir: 33, style: {marginLeft: -10},
             wrapperStyle: {zIndex: 110}}); // 110 is the z-index of a dropdown
     };
 
