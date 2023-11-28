@@ -60,9 +60,9 @@ export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, style={
     return (
         <div style={{display: 'block', ...style}}>
             {!fixedTimeMode && <RadioGroupInputField
-                fieldKey='exposureTimeMode' options={timeOptions} alignment={'horizontal'}
+                fieldKey='exposureTimeMode' options={timeOptions} orientation='horizontal'
                 wrapperStyle={{marginTop: 5, marginLeft: 0, marginBottom: 12}}
-                label='Use' tooltip={timeOptionsTip}
+                tooltip={timeOptionsTip}
                 labelWidth={labelWidth}
                 initialState={{value: initArgs?.urlApi?.exposureTimeMode || ISO}}
             />}

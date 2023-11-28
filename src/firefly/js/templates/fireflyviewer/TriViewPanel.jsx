@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Stack} from '@mui/joy';
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {pick} from 'lodash';
@@ -178,26 +179,28 @@ function searchDesc({showViewsSwitch, showImages, isTriView, showCoverage, leftB
                 {rightButtons?.map( (el) => el()) }
                 <div style={{width: 20}}/>
                 {showViewsSwitch &&
-                    <div style={ {display: 'inline-block', float: 'right'} }>
+                    <Stack direction='row' spacing={2}>
                         {showCoverage && currLayoutMode!==tblXyKey &&
                             <RadioGroupInputFieldView {...{
-                                wrapperStyle:{display:'inline-flex', alignItems:'center'},
-                                options:covSideOptions, value:coverageSide, labelWidth:60,
-                                labelStyle:{fontSize:'larger'}, label:'Coverage: ',
+                                sx:{display:'inline-flex', alignItems:'center'},
+                                options:covSideOptions, value:coverageSide,
+                                label:'Coverage: ',
                                 buttonGroup:true, inline:true,
+                                orientation:'horizontal',
                                 onChange:(ev) => dispatchUpdateLayoutInfo({coverageSide:ev.target.value}),
                             }} /> }
                         {isTriView &&
                             <RadioGroupInputFieldView
                                 {...{
-                                    wrapperStyle:{paddingLeft: 30, width:320, display:'inline-flex', alignItems:'center'},
-                                    options, value:currLayoutMode, labelWidth:43,
-                                    labelStyle:{fontSize:'larger'}, label:'Layout: ',
+                                    sx:{pl: 1, width:420, display:'inline-flex', alignItems:'center'},
+                                    options, value:currLayoutMode,
+                                    label:'Layout: ',
+                                    orientation:'horizontal',
                                     buttonGroup:true, inline:true,
                                     onChange:(ev) => dispatchSetLayoutMode(LO_MODE.standard, ev.target.value),
                                 }} />
                         }
-                    </div>
+                    </Stack>
                 }
             </div>
         </div>

@@ -180,7 +180,6 @@ class FootprintToolUI extends PureComponent {
                                     value={angleDeg}
                                     message={'invalid angle value'}
                                     label={'Angle:'}
-                                    labelWidth={30}
                                     style={{width: 50}}
                                     tooltip={'Enter the angle in degree you want the footprint rotated'}
 

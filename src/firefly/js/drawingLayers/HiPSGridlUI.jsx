@@ -65,7 +65,7 @@ function showLevelOp(drawLayer, pv) {
 
             inline={true}
             value={value}
-            onChange={(ev) => changeLockLevelPref(drawLayer,pv,ev.target.value)}
+            onChange={(ev, newValue) => changeLockLevelPref(drawLayer,pv,newValue)}
             labelWidth={10}
             label={' '}
             tooltip={ 'Choose HiPS grid level'}

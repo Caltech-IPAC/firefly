@@ -146,13 +146,13 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
             <InputField
                 validator={validator}
                 fieldKey={name}
+                sx={{'.MuiInput-root':{'minHeight':'3px', 'borderRadius':4}}}
+                joyProps={{ JoyInput : {autoFocus} }}
                 tooltip={FILTER_CONDITION_TTIPS}
                 value={filterInfoCls.getFilter(name)}
                 onChange={onFilter}
                 actOn={blurEnter}
                 showWarning={false}
-                inputRef={inputRef}
-                autoFocus={autoFocus}
                 style={filterStyle}
                 wrapperStyle={filterStyle}/>
             {enumVals && <div ref={enumArrowEl} className='arrow-down clickable' onClick={onEnumClicked} style={{borderWidth: 6, borderRadius: 2}}/>}
@@ -528,6 +528,7 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
                     <InputField
                         key={rowIndex + '-' +colIdx}
                         validator={(v) => validator(v, data, rowIndex, colIdx)}
+                        sx={{'.MuiInput-root':{'minHeight':'3px', 'borderRadius':4}}}
                         tooltip={tooltips}
                         size={size}
                         style={style}
@@ -565,6 +566,7 @@ export const inputColumnRenderer = ({tbl_id, cname, tooltips, style={}, isReadOn
                 <div style={{...style}}>
                     <InputField
                         key={rowIndex + '-' +colIdx}
+                        sx={{'.MuiInput-root':{'minHeight':'3px', 'borderRadius':4}}}
                         validator={ validator && ((v) => validator(v, data, rowIndex, colIdx))}
                         tooltip={tooltips}
                         style={{width: '100%', boxSizing: 'border-box', ...style}}

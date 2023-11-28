@@ -27,8 +27,6 @@ function FileUploadView({fileType, isLoading, label, valid, wrapperStyle,  messa
                     label={label}
                     value={value}
                     tooltip={isFromURL ? 'enter a URL to upload from' : 'click to choose a file'}
-                    labelWidth={labelW}
-                    inline={true}
                     style={style}
                     wrapperStyle={wrapperStyle}
                 />

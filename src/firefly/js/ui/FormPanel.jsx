@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Button, Stack} from '@mui/joy';
 import React, {useCallback} from 'react';
 import PropTypes from 'prop-types';
 import CompleteButton from './CompleteButton.jsx';
@@ -87,8 +88,8 @@ export const FormPanel = function (props) {
                 {children}
             </div>
             <div style={submitBarStyle}>
-                <div style={buttonStyle}>
-                    <div style={{display: 'inline-flex'}}>
+                <Stack spacing={2} direction='row'>
+                    <Stack spacing={1} direction='row'>
                         <CompleteButton style={{display: 'inline-block', marginRight: 10}}
                                         includeUnmounted={includeUnmounted}
                                         groupKey={groupKey}
@@ -96,12 +97,14 @@ export const FormPanel = function (props) {
                                         groupsToUse={groupsToUse}
                                         onSuccess={doSubmit}
                                         onFail={onError || handleFailure}
-                                        text = {submitText} changeMasking={changeMasking}
-                        />
-                        <button style={{display: 'inline-block'}} type='button' className='button std' onClick={doCancel}>{cancelText}</button>
-                    </div>
-                    {extraWidgets}
-                </div>
+                                        text = {submitText} changeMasking={changeMasking} />
+                        <ExtraButton onClick={doCancel} text={cancelText}/>
+                    </Stack>
+                    {Boolean(extraWidgets?.length) &&
+                        <Stack spacing={1} direction='row' alignItems='center'>
+                            {extraWidgets}
+                        </Stack>}
+                </Stack>
                 <>
                     {extraWidgetsRight}
                     {help_id && <HelpIcon helpId={help_id} />}
@@ -141,11 +144,7 @@ FormPanel.propTypes = {
 export function ExtraButton(props) {
     const {text, onClick, style={}} = props;
     return (
-        <button style={style}
-                type='button' className='button std'
-                onClick={onClick}>
-            {text}
-        </button>
+        <Button {...{size:'sm', variant: 'soft', color: 'neutral', onClick}}>{text}</Button>
     );
 }
 
