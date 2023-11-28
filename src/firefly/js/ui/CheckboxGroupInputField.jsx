@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
-import PropTypes from 'prop-types';
-import {InputFieldLabel} from './InputFieldLabel.jsx';
+import PropTypes, {object} from 'prop-types';
+import {Checkbox, FormControl, FormLabel, Stack, Tooltip} from '@mui/joy';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {splitVals} from 'firefly/tables/TableUtil.js';
 
@@ -16,27 +16,26 @@ function convertValue(value,options) {
     else return value;
 }
 
-export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip, labelWidth, labelStyle,
-                                             options, alignment, value , wrapperStyle}) {
-    const style = Object.assign({whiteSpace:'nowrap'}, wrapperStyle);
+export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip:toggleBoxTip,
+                                             options, alignment:orientation, value:fieldValue, sx}) {
+
     return (
-        <div style={style} title={tooltip}>
-            {label && <InputFieldLabel {...{label, tooltip, labelWidth, labelStyle}} />}
-            {options.map( (option) => {
-                return (
-                    <div key={option.value}
-                         style={alignment==='vertical' ? {display:'block'}:{display:'inline-flex', alignItems: 'center'}}>
-                        <input type='checkbox'
-                               name={fieldKey}
-                               value={option.value}
-                               checked={isChecked(option.value,value)}
-                               onChange={onChange}
-                               title={option.title}
-                        /><span style={{paddingLeft: 3, paddingRight: 8}} title={option.title}>{option.label}</span>
-                    </div>
-                );
-            })}
-        </div>
+        <Tooltip title={toggleBoxTip} sx={sx}>
+            <Stack orientation={orientation==='horizontal'?'row':'column'}>
+                {label && (
+                    <FormControl>
+                        <FormLabel>{label}</FormLabel>
+                    </FormControl>
+                ) }
+                <Stack spacing={orientation==='vertical'?1:2} direction={orientation==='vertical' ? 'column' : 'row'}>
+                    {options.map( ({value,label,tooltip}) => {
+                        const cb= (<Checkbox
+                            {...{ name:fieldKey, key:value, value, checked:isChecked(value,fieldValue), onChange, label, }} />);
+                        return tooltip ? <Tooltip {...{title:toggleBoxTip, key:value}}> {cb} </Tooltip> : cb;
+                    })}
+                </Stack>
+            </Stack>
+        </Tooltip>
     );
 }
 
@@ -48,9 +47,7 @@ CheckboxGroupInputFieldView.propTypes= {
     value:  PropTypes.string.isRequired,
     label:  PropTypes.string,
     tooltip:  PropTypes.string,
-    labelStyle: PropTypes.string,
-    labelWidth: PropTypes.number,
-    wrapperStyle: PropTypes.object
+    sx: object,
 };
 
 
@@ -100,7 +97,6 @@ CheckboxGroupInputField.propTypes= {
     }),
     forceReinit:  PropTypes.bool,
     fieldKey:   PropTypes.string,
-    labelStyle: PropTypes.object,
-    labelWidth: PropTypes.number,
+    sx: object,
 };
 

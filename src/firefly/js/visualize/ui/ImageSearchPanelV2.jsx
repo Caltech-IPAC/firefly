@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Sheet, Stack, Typography} from '@mui/joy';
 import {get, includes, isNil, isString} from 'lodash';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
@@ -195,9 +196,6 @@ function getGroupsToValidate(imageType) {
     else return Object.values(FG_KEYS);
 }
 
-/**
- *
- */
 function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiSelect=true, noScroll, initArgs}) {
 
     const [, setImageMasterData] = useState(() => imageMasterData);
@@ -242,7 +240,7 @@ function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiS
     } else if (imageMasterData) {
         return (
             <div className='flex-full' style={{position: 'relative'}}>
-                <div className='ImageSearch__title'>{title}</div>
+                <Typography {...{color:'neutral', level:'h3'}}>{title}</Typography>
                 <div className='flex-full' style={pStyle} id={scrollDivId}>
                     <ImageType/>
                     {isThreeColorImgType &&
@@ -317,15 +315,22 @@ function ImageType({}) {
         options.push({label: 'View HiPS Images', value: 'hipsImage'});
     }
     return (
-        <FieldGroup className='ImageSearch__section' groupKey={FG_KEYS.main} keepState={true}>
-            <div className='ImageSearch__section--title'>1. Choose Image Type</div>
-            <RadioGroupInputField
-                initialState= {{ value: 'singleChannel',
-                             tooltip: 'Please select the image type'}}
-                options={ options }
-                fieldKey={ FD_KEYS.type }
-            />
-        </FieldGroup>
+        <Sheet {...{variant:'outlined', sx:{mx:0,py:1}}}>
+            <FieldGroup groupKey={FG_KEYS.main} keepState={true}>
+                <Stack {...{direction:'row', justifyContent:'flex-start', alignItems:'center', spacing:2}}>
+                    <Typography {...{sx:{px:1, width:200}, color:'primary', level:'title-md'}}>1. Choose Image Type</Typography>
+                    <RadioGroupInputField
+                        initialState= {{ value: 'singleChannel',
+                            tooltip: 'Please select the image type'}}
+                        options={ options }
+                        orientation='horizontal'
+                        fieldKey={ FD_KEYS.type }
+                    />
+
+                </Stack>
+            </FieldGroup>
+        </Sheet>
+
     );
 }
 
@@ -353,20 +358,23 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
     isThreeColorImgType && (options.push({label: 'None', value: 'none'}));
 
     return (
-        <div className='flex-full'>
-            <div className='ImageSearch__section'>
-                <div className='ImageSearch__section--title'>2. Select Image Source</div>
-                <RadioGroupInputField
-                    initialState = {{ defaultValue, options, tooltip: 'Please select the image source'}}
-                    defaultValue ={defaultValue}
-                    options = {options}
-                    fieldKey = { FD_KEYS.source }/>
-            </div>
+        <Stack sx={{flexGrow:1}}>
+            <Sheet {...{variant:'outlined', sx:{mx:0,py:1}}}>
+                <Stack {...{direction:'row', justifyContent:'flex-start', alignItems:'center', spacing:2}}>
+                    <Typography {...{sx:{px:1, width:200}, color:'primary', level:'title-md'}}>2. Select Image Source</Typography>
+                    <RadioGroupInputField
+                        initialState = {{ defaultValue, options, tooltip: 'Please select the image source'}}
+                        defaultValue ={defaultValue}
+                        options = {options}
+                        orientation='horizontal'
+                        fieldKey = { FD_KEYS.source }/>
+                </Stack>
+            </Sheet>
             {imageSource === 'url'  && (isHipsImgType ? <SelectArchive {...{groupKey, imageMasterData, multiSelect, isHipsImgType, noScroll, initArgs}}/> : <SelectUrl />)}
             {imageSource === 'archive'  && <SelectArchive {...{groupKey, imageMasterData, multiSelect, isHipsImgType, noScroll,initArgs}}/>}
             {imageSource === 'upload' && <SelectUpload />}
             {imageSource === ServerParams.IS_WS && <SelectWorkspace />}
-        </div>
+        </Stack>
     );
 }
 
@@ -389,32 +397,34 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
 
     return (
         <div className='flex-full'>
-            <div className='ImageSearch__section'>
-                <div className='ImageSearch__section--title'>3. Select Target</div>
-                <FieldGroup groupKey={FG_KEYS.targetSelect} keepState={true}>
-                    <div className='flex-full'>
-                        <TargetPanel labelWidth={isHips ? 150 : 100} feedbackStyle={targetStyle}
-                                     label={isHips ? 'Coordinates or Object Name (optional):' : 'Coordinates or Object Name:'}
-                                     nullAllowed={true}/>
-                        <SizeInputFields fieldKey={sizeKey} showFeedback={true}
-                                         feedbackStyle={{marginLeft: 185}}
-                                         initialState={{
-                                             unit: initUnit,
-                                             labelWidth: 0,
-                                             nullAllowed: true,
-                                             value: initRadius? initRadius*2 : sizeVal,
-                                             min: minSize,
-                                             max: maxSize
-                                         }}
-                                         label={sizeLabel}
-                                         key={`sizeInput_${groupKey}`}/>
-                    </div>
-                </FieldGroup>
-            </div>
+            <Sheet {...{variant:'outlined', sx:{mx:0,py:1, flexGrow:0}}}>
+                <Stack direction={'row'} >
+                    <Typography {...{sx:{px:1, width:200}, color:'primary', level:'title-md'}}>3. Select Target</Typography>
+                    <FieldGroup groupKey={FG_KEYS.targetSelect} keepState={true}>
+                        <Stack spacing={2} direction='column'>
+                            <TargetPanel labelWidth={isHips ? 150 : 100} feedbackStyle={targetStyle}
+                                         label={isHips ? 'Coordinates or Object Name (optional):' : 'Coordinates or Object Name:'}
+                                         nullAllowed={true}/>
+                            <SizeInputFields fieldKey={sizeKey} showFeedback={true}
+                                             feedbackStyle={{marginLeft: 185}}
+                                             initialState={{
+                                                 unit: initUnit,
+                                                 labelWidth: 0,
+                                                 nullAllowed: true,
+                                                 value: initRadius? initRadius*2 : sizeVal,
+                                                 min: minSize,
+                                                 max: maxSize
+                                             }}
+                                             label={sizeLabel}
+                                             key={`sizeInput_${groupKey}`}/>
+                        </Stack>
+                    </FieldGroup>
+                </Stack>
+            </Sheet>
             {isHips ?
                 <HiPSImageSelect groupKey={groupKey} /> :
                 <div className='ImageSearch__section' style={{ display: 'flex', flexDirection: 'column', padding: 'unset', flexGrow: 1}}>
-                    <div className='ImageSearch__section--title'>4. Select Data Set</div>
+                    <Typography {...{sx:{px:1}, color:'primary', level:'title-md'}}>4. Select Data Set</Typography>
                     <ImageSelect style={{flexGrow: 1, width: '100%'}} key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect, scrollDivId: !noScroll && scrollDivId}} />
                 </div>
             }

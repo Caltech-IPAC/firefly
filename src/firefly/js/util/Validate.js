@@ -159,7 +159,7 @@ export const isFloat = function(description, valStr) {
     if (valStr) {
         if (!validator.isFloat(valStr+'')) {
             retval.valid = false;
-            retval.message = description + ': must be a float';
+            retval.message = description + ': must be a number';
         }
     }
     return retval;

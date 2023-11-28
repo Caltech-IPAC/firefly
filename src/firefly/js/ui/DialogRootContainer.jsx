@@ -1,12 +1,14 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {Sheet} from '@mui/joy';
 import React, {memo, useEffect, useState, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {createRoot} from 'react-dom/client';
 import {get, set} from 'lodash';
 import {dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr';
 import {flux} from '../core/ReduxFlux';
+import {FireflyRoot} from './FireflyRoot.jsx';
 
 
 const DIALOG_DIV= 'dialogRootDiv';
@@ -53,7 +55,11 @@ export function showDropDown({id='',content, style={}, atElRef, locDir, wrapperS
 
     const rootZindex= atElRef && computeZIndex(atElRef);
     if (rootZindex) ddDiv.style.zIndex= rootZindex;
-    root.render( <DropDown {...{id, content, style, atElRef, locDir, boxEl}}/>);
+    root.render(
+        <FireflyRoot>
+            <DropDown {...{id, content, style, atElRef, locDir, boxEl}}/>
+        </FireflyRoot>
+    );
     return ddDiv;
 }
 
@@ -225,7 +231,7 @@ const DialogRootComponent= memo(({dialogs,tmpPopups,requestOnTop}) =>{
         ));
     const tmpPopupAry = tmpPopups.map( (p) => React.cloneElement(p.component,{key:p.dialogId}));
     return (
-        <div>
+        <Sheet>
             {otherDialogAry}
             <div style={{position:'relative', zIndex:DEFAULT_ZINDEX}} className='rootStyle'>
                 {dialogAry}
@@ -233,7 +239,7 @@ const DialogRootComponent= memo(({dialogs,tmpPopups,requestOnTop}) =>{
                     {tmpPopupAry}
                 </div>
             </div>
-        </div>
+        </Sheet>
     );
 });
 
@@ -250,7 +256,11 @@ DialogRootComponent.propTypes = {
  * @param requestOnTop
  */
 function reRender(dialogs,tmpPopups,requestOnTop) {
-    divElementRoot.render(<DialogRootComponent dialogs={dialogs} tmpPopups={tmpPopups} requestOnTop={requestOnTop}/>);
+    divElementRoot.render(
+        <FireflyRoot>
+            <DialogRootComponent dialogs={dialogs} tmpPopups={tmpPopups} requestOnTop={requestOnTop}/>
+        </FireflyRoot>
+    );
 }
 
 /**

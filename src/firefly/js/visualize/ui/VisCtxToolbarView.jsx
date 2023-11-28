@@ -193,7 +193,7 @@ const HiPSCoordSelect= memo(({plotId, imageCoordSys}) =>{
         <div>
             <ListBoxInputFieldView
                 inline={true} value={selectedIdx}
-                onChange={(ev) => dispatchChangeHiPS( {plotId,  coordSys: hipsCoordOptions[Number(ev.target.value)].c})}
+                onChange={(ev,newValue) => dispatchChangeHiPS( {plotId,  coordSys: hipsCoordOptions[Number(newValue)].c})}
                 labelWidth={0} label={' '} tooltip={ 'Change HiPS survey coordinate system'}
                 options={hipsCoordOptions} multiple={false}
             />

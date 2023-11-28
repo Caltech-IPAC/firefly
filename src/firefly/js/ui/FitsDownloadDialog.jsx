@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {ButtonGroup, Stack} from '@mui/joy';
 import React, {memo, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, capitalize} from 'lodash';
@@ -38,8 +39,12 @@ const mTOP = 10;
 const dialogPopupId = 'fitsDownloadDialog';
 const fitsDownGroup = 'FITS_DOWNLOAD_FORM';
 const labelWidth = 100;
-const hipsFileTypeOps= [ {label: 'PNG File', value: 'png' }, {label: 'Region File', value: 'reg'} ];
-const imageFileTypeOps=  [{label: 'FITS Image', value: 'fits'}, ...hipsFileTypeOps];
+const hipsFileTypeOps= [
+    {label: 'PNG File', value: 'png', tooltip: 'Download as PNG image' },
+    {label: 'Region File', value: 'reg', tooltip: 'Download all overlays as a region File'} ];
+const imageFileTypeOps=  [
+    {label: 'FITS Image', value: 'fits', tooltip: 'Download the source FITS file' },
+    ...hipsFileTypeOps];
 
 const popupPanelResizableStyle = {
     width: dialogWidth,
@@ -102,6 +107,7 @@ const MakeFileOptions = ({plot,colors,hasOperation,threeC}) => {
             <div style={{display: 'flex', marginTop: mTOP}}>
                 <div>
                     <RadioGroupInputField options={isImage(plot) ? imageFileTypeOps : hipsFileTypeOps} fieldKey='fileType'
+                                          orientation='horizontal'
                       label='Type of files:' labelWidth={100} tooltip='Please select a file type' />
                 </div>
             </div>
@@ -162,11 +168,11 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
                 </DownloadOptionsDialog>
             </div>
             <div style={{display:'flex', width:'calc(100% - 20px)', margin: '20px 10px 10px 10px', justifyContent:'space-between'}}>
-                <div style={{display:'flex', width:'30%', justifyContent:'space-around'}}>
+                <Stack spacing={1} direction='row'>
                     <CompleteButton text='Save' onSuccess={ (request) => resultsSuccess(request, pv, popupId )}
                                     onFail={resultsFail} />
-                    <CompleteButton text='Cancel' groupKey='' onSuccess={() => closePopup(popupId)} />
-                </div>
+                    <CompleteButton text='Cancel' groupKey='' primary={false} onSuccess={() => closePopup(popupId)} />
+                </Stack>
                 <HelpIcon helpId={'visualization.saveimage'}/>
             </div>
         </FieldGroup>

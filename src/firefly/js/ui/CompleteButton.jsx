@@ -4,6 +4,7 @@
 
 import {delay, isFunction, isUndefined} from 'lodash';
 import React, {useContext, useEffect} from 'react';
+import {Button} from '@mui/joy';
 import PropTypes from 'prop-types';
 import {validateFieldGroup, getFieldGroupResults} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
@@ -76,6 +77,7 @@ function onClick(onSuccess,onFail,registeredComponents, closeOnValid,groupKey,
 
 export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
                           closeOnValid=true, dialogId,includeUnmounted= false,
+                          primary=true,
                           groupsToUse= () => groupKey,
                           style={}, innerStyle= {}, changeMasking, fireOnEnter= false,
                                     getDoOnClickFunc}) {
@@ -107,7 +109,7 @@ export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
 
     return (
         <div style={style}>
-            <button type='button' style={innerStyle} className='button std hl'  onClick={onComplete}>{text}</button>
+            <Button {...{size:'sm', variant: primary?'solid':'soft', color: primary?'primary':'neutral', onClick: onComplete}}>{text}</Button>
         </div>
     );
 }

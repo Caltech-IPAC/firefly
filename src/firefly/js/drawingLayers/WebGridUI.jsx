@@ -4,10 +4,9 @@
  * 4/15/16
  */
 import React from 'react';
-import PropTypes from 'prop-types';
+import {object} from 'prop-types';
 import {dispatchModifyCustomField} from '../visualize/DrawLayerCntlr.js';
 import {dispatchAddPreference,getPreference} from '../core/AppDataCntlr.js';
-import {get} from 'lodash';
 import {ListBoxInputFieldView} from '../ui/ListBoxInputField.jsx';
 import {COORDINATE_PREFERENCE} from './WebGrid.js';
 
@@ -27,51 +26,39 @@ const coordinateOptionArray = [
 
 /**
  * This method create the UI component displayed at the layer property popup dialog in the toolbar.
- * @param drawLayer - DrawLayer object
- * @param pv - plotView object
- * @returns {XML} - UI component
- * @constructor
+ * @param props
+ * @param props.drawLayer - DrawLayer object
+ * @param props.pv - plotView object
  */
 function WebGridUI({drawLayer,pv}) {
 
-   var pref= getPreference(COORDINATE_PREFERENCE);
+   const pref= getPreference(COORDINATE_PREFERENCE);
    return  (
-        <div>
            <ListBoxInputFieldView
-               onChange={(request) => onCoordinateChange( pv.plotId,drawLayer, request) }
-               options={ coordinateOptionArray}
-               multiple={false}
+               onChange={(ev,newValue) => onCoordinateChange( pv.plotId,drawLayer,newValue) }
+               options={coordinateOptionArray}
                value= {pref}
-               labelWidth={2}
-               label={''}
                tooltip={'select a coordinate'}
            />
-        </div>
     );
-
 }
 
-
-
 WebGridUI.propTypes= {
-    drawLayer     : PropTypes.object.isRequired,
-    pv            : PropTypes.object.isRequired
+    drawLayer: object.isRequired,
+    pv       : object.isRequired
 };
 
 /**
  * This method is dispatching the changes made in the customer field to the DrawLayerCtr and the reducer.
  * @param plotId
  * @param drawLayer
- * @param ev
+ * @param csysName
  */
-function onCoordinateChange(plotId, drawLayer, ev) {
-    var csysName = get(ev, 'target.value');
+function onCoordinateChange(plotId, drawLayer, csysName ) {
     dispatchAddPreference(COORDINATE_PREFERENCE,csysName);
     //add or update the coordinate reference to the drawLayer
-    var customChanges ={[COORDINATE_PREFERENCE]:csysName};
+    const customChanges ={[COORDINATE_PREFERENCE]:csysName};
     dispatchModifyCustomField( drawLayer.displayGroupId,customChanges, plotId);
-
-
 }
 
 
