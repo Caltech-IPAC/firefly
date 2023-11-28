@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Button, Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 
 import PropTypes from 'prop-types';
@@ -191,28 +192,30 @@ function ToolBar({className, filteredImageData, groupKey, onChange}) {
     const allSelect = useStoreConnector(calcSelect);
 
     return (
-        <div className={className}>
+        // <div className={className}>
+        <Stack {...{spacing:0, direction:'column', sx:{padding:'3px 6px'}}}>
             <div style={{display: 'inline-flex', flexGrow: 1}}>
                 <div style={{width: 155}}>
-                    <div className='ImageSelect__title'>Filter By:</div>
-                    <div className='ImageSelect__info'>{pretty(allFilter, 25)}</div>
+                    <Typography {...{level:'body-xs', color:'neutral'}}>Filter By:</Typography>
+                    <Typography {...{level:'body-xs', color:'warning'}}>{pretty(allFilter, 25)}</Typography>
                 </div>
                 <div>
-                    <div className='ImageSelect__title'>Selection:</div>
-                    <div className='ImageSelect__info'>{pretty(allSelect, 100)}</div>
+                    <Typography {...{level:'body-xs', color:'neutral'}}>Selection:</Typography>
+                    <Typography {...{level:'body-xs', color:'warning'}}>{pretty(allSelect, 100)}</Typography>
                 </div>
             </div>
             <div className='ImageSelect__action'>
                 <div>
-                    &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields([FILTER_PREFIX])}>Clear Filters</a>
+                    <Button variant={'soft'} color='neutral' size='sm' sx={{mr: 7}} onClick={() => clearFields([FILTER_PREFIX])}>Clear Filters</Button>
                 </div>
                 <div>
-                    &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => clearFields([IMG_PREFIX, PROJ_PREFIX])}>Clear Selections</a>
-                    &bull;<a style={{marginRight: 7}} className='ff-href' onClick={() => setDSListMode(true)}>Expand All</a>
-                    &bull;<a className='ff-href' onClick={() => setDSListMode(false)}>Collapse All</a>
+                    <Button variant={'soft'} color='neutral' size='sm'  onClick={() => clearFields([IMG_PREFIX, PROJ_PREFIX])}>Clear Selections</Button>
+                    <Button variant={'soft'} color='neutral' size='sm'  onClick={() => setDSListMode(true)}>Expand All</Button>
+                    <Button variant={'soft'} color='neutral' size='sm'  onClick={() => setDSListMode(false)}>Collapse All</Button>
                 </div>
             </div>
-        </div>
+        </Stack>
+        // </div>
     );
 }
 
@@ -451,7 +454,7 @@ function Header({project, hrefInfo='', multiSelect}) {
 
     if (multiSelect) {
         return (
-            <div className='DataProductList__item--header' >
+            <Stack spacing={1} direction='row'>
                 <div onClick={(e) => e.stopPropagation()}>
                     <CheckboxGroupInputField
                         key={fieldKey}
@@ -466,10 +469,8 @@ function Header({project, hrefInfo='', multiSelect}) {
                         wrapperStyle={{whiteSpace: 'normal' /*cursor:'pointer'*/}}
                     />
                 </div>
-                <div style={{marginLeft: -5}}>
-                    <InfoIcon/>
-                </div>
-            </div>
+                <InfoIcon/>
+            </Stack>
         );
     } else {
         return (
@@ -531,7 +532,7 @@ function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSele
                             label : '' }}
                     options={options}
                     defaultValue=''
-                    alignment='horizontal'
+                    orientation='horizontal'
                     labelWidth={35}
                     wrapperStyle={{whiteSpace: 'normal'}}
                 />
@@ -544,7 +545,7 @@ const toImageOptions= (a) => a.map ( (d) => ({label: d.title, value: d.imageId})
 
 function pretty(str, max) {
     const words = str.split(',');
-    let pretty = '';
+    let pretty = ' ';
     for(var i=0; i< words.length; i++) {
         if (pretty.length + words[i].length > max) {
             pretty += ` (${words.length-i} more)`;

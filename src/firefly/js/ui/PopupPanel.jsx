@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {Sheet} from '@mui/joy';
 import React, {memo, useState, useEffect, useRef} from 'react';
 import Enum from 'enum';
 import PropTypes from 'prop-types';
@@ -106,7 +107,7 @@ PopupPanel.propTypes= {
 function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart,dialogMoveEnd,
                             onMouseEnter,onMouseLeave,dialogMove,children,title,askParentToClose, style}) {
     return (
-        <div style={{zIndex, position:'relative'}}>
+        <Sheet style={{zIndex, position:'relative'}}>
             {modal && <div className='popup-panel-glass'/>}
             <div ref={(c) => ctxRef.popupRef=c} style={{left, top, position: 'absolute', visibility}}
                  className={'popup-panel-shadow enable-select'}
@@ -129,9 +130,9 @@ function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart
                         <img className='popup-panel-header' src= {DEL_ICO}
                              style= {{position:'absolute', right:0, top:0}} onClick={askParentToClose} />
                     </div>
-                    <div style={{display:'flex', ...style}}> {children} </div>
+                    <Sheet style={{display:'flex', ...style}}> {children} </Sheet>
                 </div>
             </div>
-        </div>
+        </Sheet>
     );
 }

@@ -1,3 +1,4 @@
+import {Stack} from '@mui/joy';
 import Enum from 'enum';
 import React, {useContext, useEffect, useState} from 'react';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
@@ -178,12 +179,11 @@ export function ObsCoreSearch({cols, serviceLabel, initArgs={}}) {
             <div style={{
                 display: 'flex', flexDirection: 'column', flexWrap: 'no-wrap', width: SpatialWidth, marginTop: 5 }}>
                 <ForceFieldGroupValid forceValid={!checkHeaderCtl.isPanelActive()}>
-                    <div style={{display: 'flex', flexDirection: 'column', marginTop: '5px'}}>
+                    <Stack {...{direction:'column', sx:{'.ff-Input':{width: 300}}, spacing:1}}>
                         <CheckboxGroupInputField fieldKey='obsCoreCalibrationLevel'
                                                  options={calibrationOptions}
                                                  tooltip={obsCoreCalibrationLevelOptions.tooltip || 'Select ObsCore Calibration Level (calibration_level)'}
-                                                 label={'Calibration Level:'}
-                                                 labelWidth={labelWidth}
+                                                 label='Calibration Level'
                                                  multiple={true}
                                                  initialState={{value: urlApi.obsCoreCalibrationLevel || ''}}
                         />
@@ -192,25 +192,23 @@ export function ObsCoreSearch({cols, serviceLabel, initArgs={}}) {
                                 <i>{obsCoreCalibrationLevelOptions.helptext}</i>
                             </div>
                         }
-                    </div>
-                    <div style={{display: 'flex', flexDirection: 'column'}}>
                         <ListBoxInputField fieldKey='obsCoreTypeSelection'
                                            tooltip='Select ObsCore Data Product Type'
-                                           label={'Data Product Type:'}
+                                           label={'Data Product Type'}
+                                           orientation='vertical'
+                                           placeholder={'<None Selected>'}
                                            labelWidth={labelWidth}
                                            initialState={{value: urlApi.obsCoreTypeSelection || 'image'}}
                                            options={typeOptions()}
                                            wrapperStyle={{marginRight: 15, padding: '8px 0 5px 0', display: 'flex'}}
                                            multiple={true}
                         />
-                    </div>
-                    <div style={{marginTop: 5}}>
                         <ValidationField fieldKey='obsCoreInstrumentName'
                                          inputWidth={Width_Column}
                                          inputStyle={{overflow: 'auto', height: 16}}
                                          tooltip={obsCoreInstrumentNameOptions.tooltip || 'Select ObsCore Instrument Name'}
                                          placeholder={obsCoreInstrumentNameOptions.placeholder}
-                                         label={'Instrument Name:'}
+                                         label='Instrument Name'
                                          labelWidth={labelWidth}
                                          initialState={{ value: urlApi.obsCoreInstrumentName || '' }}
                         />
@@ -219,14 +217,12 @@ export function ObsCoreSearch({cols, serviceLabel, initArgs={}}) {
                                 <i>{obsCoreInstrumentNameOptions.helptext}</i>
                             </div>
                         }
-                    </div>
-                    <div style={{marginTop: 5}}>
                         <ValidationField fieldKey='obsCoreCollection'
                                          inputWidth={Width_Column}
                                          inputStyle={{overflow: 'auto', height: 16}}
                                          tooltip={obsCoreCollectionOptions.tooltip || 'Select ObsCore Collection Name'}
                                          placeholder={obsCoreCollectionOptions.placeholder}
-                                         label={'Collection:'}
+                                         label='Collection'
                                          labelWidth={labelWidth}
                                          initialState={{ value: urlApi.obsCoreCollection || ''
                                          }}
@@ -236,7 +232,7 @@ export function ObsCoreSearch({cols, serviceLabel, initArgs={}}) {
                                 <i>{obsCoreCollectionOptions.helptext}</i>
                             </div>
                         }
-                    </div>
+                    </Stack>
                     {hasSubType && <div style={{marginTop: 5}}>
                         <ValidationField fieldKey='obsCoreSubType'
                                          inputWidth={Width_Column}

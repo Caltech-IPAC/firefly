@@ -237,12 +237,11 @@ export function ShapePicker({drawingDef, displayGroupId, plotId, update, getColo
                                               tooltip='available symbol shapes'
                                               options={options}
                                               value={drawingDef.symbol.key}
-                                              alignment='vertical'/>
+                                              orientation='vertical'/>
                 </div>
                 <div style={{marginLeft: mLeft, marginTop: mLeft, height: 26, display: 'flex', alignItems: 'center'}}>
                     <InputFieldView  label={'Symbol Size (px):'}
                                      labelStyle={{color: textColor}}
-                                     labelWidth={labelW+30}
                                      valid={validSize}
                                      onChange={updateSize}
                                      onKeyDown={onArrowDown}
