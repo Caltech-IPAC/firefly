@@ -99,7 +99,7 @@ export const Templates = {
  *                                  the catalog panel will show the polygon option as default when possible
  * @prop {Array.<string> } imageMasterSources -  default - ['ALL'], source to build image master data from
  * @prop {Array.<string> } imageMasterSourcesOrder - for the image dialog sort order of the projects, anything not listed is put on bottom
- * @prop {PROP_SHEET} table.propertySheet - specifies how to show propertySheet; set undefined to hide it
+ * @prop {PROP_SHEET} table.propertySheet - specifies how to show propertySheet
  */
 
 /** @type {AppProps} */
@@ -160,7 +160,10 @@ const defFireflyOptions = {
     },
     table : {
         pageSize: 100,
-        propertySheet: false     // by default, hide property sheet popup button; most applications have a dedicated property sheet component.
+        showPropertySheetButton: false,  // by default, hide it because most applications have a dedicated property sheet component
+        propertySheet: {
+            selectableRows: true   // will only take effect if property sheet is displayed as table
+        }
     },
     image : {
         defaultColorTable: 1,
@@ -236,8 +239,8 @@ function fireflyInit(props, appSpecificOptions={}, webApiCommands) {
         props.renderTreeId = undefined;
     }
     else {
-        // in API mode, show propertySheet button unless it's set.
-        set(appSpecificOptions, 'table.propertySheet', appSpecificOptions?.table?.propertySheet ?? true);
+        // in API mode, show propertySheet popup button unless it's set.
+        set(appSpecificOptions, 'table.showPropertySheetButton', appSpecificOptions?.table?.showPropertySheetButton ?? true);
     }
 
     installOptions(appSpecificOptions);

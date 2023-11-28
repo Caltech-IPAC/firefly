@@ -3,6 +3,7 @@ import {TablePanel} from 'firefly/tables/ui/TablePanel';
 import React, {useEffect} from 'react';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent';
 import {dispatchTableAddLocal, dispatchTableUiUpdate} from 'firefly/tables/TablesCntlr';
+import {getAppOptions} from 'firefly/core/AppDataCntlr';
 
 /**
  * A wrapper/watcher component for property sheet i.e., vertical display of all the data from a single table row, with additional metadata.
@@ -73,18 +74,19 @@ export function RowDetailsTable({tblOptions={}, tbl_id, highlightedRow}) {
         dispatchTableAddLocal(detailsTable, {
             tbl_group: detailsTblId,
             tbl_ui_id: detailsTblId,
-            selectable: false,
-            showToolbar: false,
+            selectable: getAppOptions()?.table?.propertySheet?.selectableRows ?? true,
+            showToolbar: true,
+            showInfoButton: false,
             removable: false,
             showFilters: true,
-            showTypes: false,
+            showTypes: true,
             showUnits: false,
             ...tblOptions
         });
     }, [tbl_id, highlightedRow]);
 
     useEffect(()=>{
-        dispatchTableUiUpdate({tbl_ui_id: detailsTblId, allowUnits: false, allowTypes: false});
+        dispatchTableUiUpdate({tbl_ui_id: detailsTblId, allowUnits: false, allowTypes: true});
     }, [detailsTblId]);
 
     return (<TablePanel tbl_id={detailsTblId} tbl_ui_id={detailsTblId} showTitle={false}/>);
