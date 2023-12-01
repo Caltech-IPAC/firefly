@@ -17,7 +17,7 @@ import {
     getResultSetRequest,
     isClientTable,
     getTableState,
-    TBL_STATE, getTblById
+    TBL_STATE, getMetaEntry, getTblById
 } from '../TableUtil.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
@@ -38,6 +38,7 @@ import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
 import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
+import {META} from '../TableRequestUtil.js';
 
 const logger = Logger('Tables').tag('TablePanel');
 
@@ -309,14 +310,25 @@ TablePanel.defaultProps = {
 
 
 function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
-    const style = {display: 'flex', flexDirection: 'row'};
-    if (leftButtons) {
-            Object.assign(style, {flexDirection: showTitle ? 'row' : 'column', justifyContent: 'center'});
+    const style = {display: 'inline-flex', alignItems: 'center'};
+    const lbStyle = showTitle ? {...style, paddingLeft:10, alignSelf:'center'} : style;
+
+    const doclinkUrl = getMetaEntry(tbl_id, META.doclink.url);
+    if (doclinkUrl) {
+        const doclinkLabel = getMetaEntry(tbl_id, META.doclink.label, 'Data Help');
+        const doclinkDesc = getMetaEntry(tbl_id, META.doclink.desc) || doclinkLabel;
+        const doclink = <a href={doclinkUrl} key={doclinkUrl} target='doclink' title={doclinkDesc}><button className='button std hl'>{doclinkLabel}</button></a>;
+        if (leftButtons) {
+            leftButtons.push(doclink);
+        } else {
+            leftButtons = [doclink];
+        }
     }
+
     return (
         <div style={style}>
             { showTitle && <Title {...{title, removable, tbl_id}}/>}
-            {leftButtons && <div style={showTitle ? {paddingLeft:10, alignSelf:'center'} : {}}>{leftButtons}</div>}
+            {leftButtons && <div style={lbStyle}>{leftButtons}</div>}
         </div>
     );
 }

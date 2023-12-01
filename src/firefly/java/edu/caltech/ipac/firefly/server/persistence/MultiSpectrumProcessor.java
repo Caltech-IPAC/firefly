@@ -191,12 +191,20 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
 
         DataGroupPart dgp = EmbeddedDbUtil.execRequestQuery(treq, dbFile, MAIN_DB_TBL);
         DataGroup table = dgp.getData();
-        table.addDataDefinition(new DataType("dataproduct_type", String.class));
-        table.addDataDefinition(new DataType("access_format", String.class));
-        table.addDataDefinition(new DataType("access_url", String.class));
 
-        table.setGroupInfos(null);      // remove all groups;  service descriptor
-        table.setResourceInfos(null);   // remove all resources; spectralDM
+        Arrays.asList("dataproduct_type", "access_format", "access_url")
+                .forEach(cname -> {
+                    DataType col = new DataType(cname, String.class);
+                    col.setVisibility(DataType.Visibility.hidden);
+                    table.addDataDefinition(col);
+                });
+
+        table.setGroupInfos(table.getGroupInfos().stream()
+                .filter(gi -> !"ipac:Spectrum.ArrayData".equalsIgnoreCase(String.valueOf(gi.getUtype())))
+                .collect(Collectors.toList()));     // remove all Spectrum.ArrayData groups;
+        table.setResourceInfos(table.getResourceInfos().stream()
+                .filter(ri -> !"ipac:MultiSpectrum".equalsIgnoreCase(String.valueOf(ri.getUtype())))
+                .collect(Collectors.toList()));     // remove all ipac:MultiSpectrum resources;
 
         for (int i = 0; i < table.size(); i++) {
             table.setData("dataproduct_type", i, "spectrum");

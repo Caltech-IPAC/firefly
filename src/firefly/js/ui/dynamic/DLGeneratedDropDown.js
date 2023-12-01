@@ -8,7 +8,7 @@ import {dispatchMountFieldGroup} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
 import {getJsonProperty} from '../../rpc/CoreServices.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
-import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
+import {makeFileRequest, MAX_ROW, META} from '../../tables/TableRequestUtil.js';
 import {dispatchTableFetch, dispatchTableHighlight} from '../../tables/TablesCntlr.js';
 import { getCellValue, getColumnIdx, getTblById, getTblRowAsObj, onTableLoaded, } from '../../tables/TableUtil.js';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
@@ -359,19 +359,8 @@ function SearchTitle({desc, isAllSky, sideBarShowing, setSideBarShowing}) {
  */
 function ServDescPanel({fds, style, desc, setSideBarShowing, sideBarShowing, docRows, setClickFunc, submitSearch, isAllSky, qAna})  {
 
-    const docRowsComponents= (
-        <div key='help' style={{fontSize:'larger', padding:'0 10px 3px 8px', alignSelf:'flex-end'}}>
-            {
-                docRows.map( (row, idx) => (
-                    <a href={row.accessUrl} key={idx + ''} target={'documentation'} >
-                        <span style={{fontStyle:'italic'}}>Documentation: </span>
-                        <span> {`${row.desc}`}</span>
-                    </a> ))
-            }
-        </div>);
-
     const SearchPanelWrapper= ({children}) => (
-        <RootSearchPanel {...{additionalChildren:children, submitSearch, setClickFunc, docRowsComponents, qAna}}/>
+        <RootSearchPanel {...{additionalChildren:children, submitSearch, setClickFunc, docRowsComponents:<DocRows key='root' docRows={docRows}/>, qAna}}/>
     );
 
 
@@ -384,6 +373,22 @@ function ServDescPanel({fds, style, desc, setSideBarShowing, sideBarShowing, doc
         </div>
     );
 }
+
+
+export const DocRows= ({docRows=[], showLabel=true}) => {
+    return (
+        <div key='help' style={{fontSize: 'larger', padding: '0 10px 3px 8px', alignSelf: 'flex-end'}}>
+            {
+                docRows.map((row, idx) => (
+                    <a href={row.accessUrl} key={idx + ''} target={'documentation'}>
+                        {showLabel && <span style={{fontStyle: 'italic'}}>Documentation: </span>}
+                        <span> {`${row.desc}`}</span>
+                    </a>)
+                )
+            }
+        </div>
+    );
+};
 
 
 function RootSearchPanel({additionalChildren, submitSearch, setClickFunc, docRowsComponents, qAna}) {
@@ -619,7 +624,8 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
             showInfoPopup('Please enter all of the fields', 'Error');
             return false;
         }
-        handleSearch(convertedR,qAna,fdAry, idx, docRows?.[0]?.accessUrl, selectedConcurrent);
+        const extraMeta = docRows?.[0] ? {[META.doclink.url]: docRows[0].accessUrl, [META.doclink.desc]: docRows[0].desc} : {};
+        handleSearch(convertedR,qAna,fdAry, idx, extraMeta, selectedConcurrent);
         return true;
     };
 

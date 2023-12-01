@@ -71,6 +71,12 @@ public class TableMeta implements Serializable {
     public static final String NAME = "name";
     public static final String DERIVED_FROM = "DERIVED_FROM";
 
+    public static final String DOCLINK = "doclink.url";
+    public static final String DOCLINK_DESC = "doclink.desc";
+    public static final String DOCLINK_LABEL = "doclink.label";
+
+
+
     private Map<String, DataGroup.Attribute> attributes = new HashMap<>();                      // including keywords and meta added during processing
     private List<DataGroup.Attribute> keywords = new ArrayList<>();                             // meta from the original source
 
@@ -128,9 +134,19 @@ public class TableMeta implements Serializable {
         }
     }
 
+    public String getAttribute(String key, boolean ignoreCase) {
+        DataGroup.Attribute val = null;
+        if (ignoreCase) {
+            String kk = attributes.keySet().stream().filter(k -> k.equalsIgnoreCase(key)).findFirst().orElse(null);
+            if (kk != null) val = attributes.get(kk);
+        } else {
+            val = attributes.get(key);
+        }
+        return val == null ? null : val.getValue();
+    }
+
     public String getAttribute(String key) {
-        DataGroup.Attribute v = attributes.get(key);
-        return v == null ? null : v.getValue();
+        return getAttribute(key, false);
     }
 
     /**

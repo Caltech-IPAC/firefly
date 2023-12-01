@@ -60,8 +60,9 @@ function setupObsCorePackaging(tbl_id) {
     }
     if (!enabled) return;
 
-    const {tbl_ui_id}= getTableUiByTblId(tbl_id) ?? {} ;
-    dispatchTableUiUpdate({ tbl_ui_id, leftButtons: [() => <PrepareDownload/>] });
+    const {tbl_ui_id, leftButtons=[]}= getTableUiByTblId(tbl_id) ?? {} ;
+    leftButtons.unshift(() => <PrepareDownload/>);
+    dispatchTableUiUpdate({ tbl_ui_id, leftButtons});
 }
 
 function updateSearchRequest( tbl_id='', dlParams='', sRequest=null) {
