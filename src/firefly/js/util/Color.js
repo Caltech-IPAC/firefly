@@ -400,7 +400,7 @@ function getComplementaryColor(color) {
     return `rgba(${rgb[R]}, ${rgb[G]}, ${rgb[B]}, ${rgba[3]})`;
 }
 
-function toRGBAString(rgba) {
+export function toRGBAString(rgba) {
     const len = (!rgba || !isArray(rgba)) ? 0 : rgba.length;
     const val = len === 0 ? 255 : rgba[len-1];
 
