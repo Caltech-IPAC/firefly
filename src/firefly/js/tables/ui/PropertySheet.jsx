@@ -76,6 +76,7 @@ export function RowDetailsTable({tblOptions={}, tbl_id, highlightedRow}) {
             tbl_ui_id: detailsTblId,
             selectable: getAppOptions()?.table?.propertySheet?.selectableRows ?? true,
             showToolbar: true,
+            showPropertySheetButton: false, // property sheet table shouldn't show property sheet button
             showInfoButton: false,
             removable: false,
             showFilters: true,
