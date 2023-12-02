@@ -358,6 +358,7 @@ public class TableUtil {
         allFormats.put("pdf", Format.PDF);
         allFormats.put("png", Format.PNG);
         allFormats.put("uws", Format.UWS);
+        allFormats.put("reg", Format.REGION);
     }
 
     public static Map<String, Format> getAllFormats() { return allFormats; }

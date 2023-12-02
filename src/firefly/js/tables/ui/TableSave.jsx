@@ -28,6 +28,7 @@ import {download, makeDefaultDownloadFileName} from '../../util/fetch';
 import {getCmdSrvSyncURL} from '../../util/WebUtil';
 import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField.jsx';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
+import {findTableCenterColumns} from 'firefly/voAnalyzer/TableAnalysis';
 
 const fKeyDef = {
     fileName: {fKey: 'fileName', label: 'File name:'},
@@ -53,6 +54,7 @@ const tableFormatsExt = {
     ipac: 'tbl',
     csv: 'csv',
     tsv: 'tsv',
+    reg: 'reg',
     'votable-tabledata': 'vot',
     'votable-binary2-inline': 'vot',
     'votable-fits-inline': 'vot',
@@ -120,12 +122,17 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
     const mode = useStoreConnector(() => getFieldVal(tblDownloadGroupKey, 'mode', 'displayed'));
     const asDisplayedMsg = 'The table will be saved in its current state, including its sorting order and derived columns, but excluding rows not accepted by any filters applied, as well as any hidden columns.';
     const asOriginalMsg  = 'The table will be saved in the form originally retrieved into this tool, without filtering, sorting, or any additional columns.';
+    const table = getTblById(tbl_id);
+    //should we send table.title along with center columns to write into the region file?
+    const cenCols = findTableCenterColumns(table, true);
 
     const fileFormatOptions = () => {
-        const fileOptions = tableFormats.enums.reduce((options, eItem) => {
+        let fileOptions = tableFormats.enums.reduce((options, eItem) => {
             options.push({label: eItem.value, value: eItem.key});
             return options;
         }, []);
+
+        if (cenCols) fileOptions.push({label: 'Region (.reg)', value: 'reg'});
 
         return (
             <div style={{display: 'flex', marginTop: mTop}}>
@@ -163,7 +170,7 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
                     <div style={{marginRight: 10}}>
                         <CompleteButton
                             groupKey={tblDownloadGroupKey}
-                            onSuccess={resultSuccess(tbl_id, tbl_ui_id, onComplete)}
+                            onSuccess={resultSuccess(tbl_id, tbl_ui_id, onComplete, cenCols)}
                             onFail={resultFail()}
                             text={'Save'}/>
                     </div>
@@ -251,7 +258,7 @@ function resultFail() {
     };
 }
 
-function resultSuccess(tbl_id, tbl_ui_id, onComplete) {
+function resultSuccess(tbl_id, tbl_ui_id, onComplete, cenCols) {
     return (request) => {
         const {fileName, fileLocation, wsSelect, fileFormat, mode} = request || {};
         const isWorkspace = () => (fileLocation && fileLocation === WORKSPACE);
@@ -266,6 +273,9 @@ function resultSuccess(tbl_id, tbl_ui_id, onComplete) {
                                       [WS_SERVER_PARAM.currentrelpath.key]: getWorkspacePath(wsSelect, fName),
                                       [WS_SERVER_PARAM.newpath.key] : fName,
                                       [WS_SERVER_PARAM.should_overwrite.key]: true};
+            if (fileFormat === 'reg') {
+                if (cenCols) Object.assign(params, {'center_cols' : cenCols.lonCol + ',' + cenCols.latCol});
+            }
             return Object.assign(params, {file_format : fileFormat, mode});
         };
 
