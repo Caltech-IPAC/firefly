@@ -49,6 +49,7 @@ export function onFilter(tbl_id, filterInfo) {
 export function onFilterSelected(tbl_id, selected) {
     if (isEmpty(selected)) return;
     const {request} = getTblInfoById(tbl_id);
+    request.tbl_id ??= tbl_id;  //request must have tbl_id; same as in applyFilterChanges()
     TblCntlr.dispatchTableFilterSelrow(request, selected);
 }
 

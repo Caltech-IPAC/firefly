@@ -1065,7 +1065,7 @@ export function tableDetailsView(tbl_id, highlightedRow, details_tbl_id) {
 
     const columns = [
         { key: 'name', name: 'Name', type: 'char', desc: 'Column name', dataGetter: (c) => c.label || c.name },
-        { key: 'value', name: 'Value', type: 'char', dataGetter: (c) => getCellValue(tableModel, highlightedRow, c.name) },
+        { key: 'value', name: 'Value', type: 'char', dataGetter: (c) => formatValue(c, getCellValue(tableModel, highlightedRow, c.name)) },
         { key: 'units', name: 'Units', type: 'char', dataGetter: (c) => c.units || '' },
         { key: 'desc', name: 'Description', type: 'char', dataGetter: (c) => c.desc || '' },
         { key: 'type', name: 'Type', type: 'char', dataGetter: (c) => getTypeLabel(c) },

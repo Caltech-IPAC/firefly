@@ -84,7 +84,7 @@ export function TablePanel(props) {
     let {leftButtons, rightButtons, showAddColumn} = {...options, ...uiState};
 
     showAddColumn = isClientTable(tbl_id) ? false : showAddColumn;
-    const showPropertySheet = showPropertySheetButton ?? getAppOptions()?.table?.propertySheet ?? true;
+    const showPropertySheet = showPropertySheetButton ?? getAppOptions()?.table?.showPropertySheetButton ?? true;
 
     const connector = makeConnector(tbl_id, tbl_ui_id);
 
