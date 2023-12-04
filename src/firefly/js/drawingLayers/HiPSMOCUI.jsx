@@ -18,7 +18,7 @@ const options= [ {label: 'Outline', value: Style.DESTINATION_OUTLINE.key},
 export const getUIComponent = (drawLayer,pv) => <HiPSMOCUI drawLayer={drawLayer} pv={pv}/>;
 
 function HiPSMOCUI({drawLayer,pv}) {
-    const style = drawLayer?.mocStyle[pv.plotId] ?? drawLayer.drawingDef?.style ?? Style.DESTINATION_OUTLINE;
+    const style = drawLayer?.mocStyle?.[pv.plotId] ?? drawLayer.drawingDef?.style ?? Style.DESTINATION_OUTLINE;
 
     return (
             <div style={{display: 'inline-flex', padding: '2px 3px 2px 3px',
