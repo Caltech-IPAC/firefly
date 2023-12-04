@@ -6,6 +6,38 @@
   - use docker tag: `nightly`
   - [Notes on next version](next-release-details.md)
 
+
+
+## Version 2023.3
+- 2023.3.0 - (Dec xx, 2023),  _docker tag_: `latest`, `2023.3`, `2023.3.0` (not yet built)
+
+#### This release includes many feature improvements across firefly
+
+#### New Features
+- VO: Support datalink 1.1 : [Firefly-1257](https://github.com/Caltech-IPAC/firefly/pull/1439)
+- VO: Full multi-product support for UWS : [Firefly-1282](https://github.com/Caltech-IPAC/firefly/pull/1423)
+- VO: Support Multi spectrum table: [Firefly-1314](https://github.com/Caltech-IPAC/firefly/pull/1438)
+- Multi Product Viewer: Handle multiple spectra at once via datalink table: [Firefly-1324](https://github.com/Caltech-IPAC/firefly/pull/1442)
+- Multi Product Viewer: : Handle related image via datalink table [Firefly-1298](https://github.com/Caltech-IPAC/firefly/pull/1420)
+- Spectral Viewer: Support spectral redshift correction: [Firefly-1307](https://github.com/Caltech-IPAC/firefly/pull/1443)
+- Table: support null values for all table data types: [Firefly-1279](https://github.com/Caltech-IPAC/firefly/pull/1447)
+- Image Viewer: Improve readout handling for longs and other issues: [Firefly-1317](https://github.com/Caltech-IPAC/firefly/pull/1435)
+- Image Viewer: Line extraction will extract wavelength if applicable [Firefly-871](https://github.com/Caltech-IPAC/firefly/pull/1451)
+- HiPS Viewer: MOC overlays now default to new outline mode [Firefly-1350](https://github.com/Caltech-IPAC/firefly/pull/1456)
+- Drag and drop for file uploads: [Firefly-1310](https://github.com/Caltech-IPAC/firefly/pull/1426)
+- Improved property sheet features [Firefly-1352](https://github.com/Caltech-IPAC/firefly/pull/1455)
+- Update nom.tam.fits(1.18.2) and Starlink (4.1.4): [Firefly-1362](https://github.com/Caltech-IPAC/firefly/pull/1428)
+
+#### Notable Bug Fixes 
+- Fixed: Coverage FOV not computed correctly  [Firefly-1336](https://github.com/Caltech-IPAC/firefly/pull/1449)
+- Fixed: Table: enum values with commas now display correctly [Firefly-1336](https://github.com/Caltech-IPAC/firefly/pull/1445)
+- Fixed: ADQL text-entry field swallowing "`(Command)-`" [Firefly-1072](https://github.com/Caltech-IPAC/firefly/pull/1436)
+
+##### _Pull Requests in this release_
+- [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2022.3+label%3abug)
+- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2022.3+)
+
+
 ## Version 2023.2
 - 2023.2.6 - (Nov 20, 2023),  _docker tag_: `latest`, `2023.2`, `2023.2.6`
 - 2023.2.5 - (unreleased version)
