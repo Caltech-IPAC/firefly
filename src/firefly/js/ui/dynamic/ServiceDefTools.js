@@ -1,6 +1,7 @@
 import {isArray, isNumber, isString} from 'lodash';
 import {ReservedParams} from '../../api/WebApi.js';
 import {sprintf} from '../../externalSource/sprintf.js';
+import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeFileRequest, makeTblRequest, setNoCache} from '../../tables/TableRequestUtil.js';
 import {cisxAdhocServiceUtype, standardIDs} from '../../voAnalyzer/VoConst.js';
 import {splitByWhiteSpace, tokenSub} from '../../util/WebUtil.js';
@@ -308,20 +309,34 @@ export function makeSearchAreaInfo(cisxUI) {
 let tblCnt=1;
 
 export function makeServiceDescriptorSearchRequest(request, serviceDescriptor, extraMeta={}) {
-    const {standardID = '', accessURL, utype, serDefParams, title} = serviceDescriptor;
+    const {standardID = '', accessURL, utype, serDefParams, title, cisxUI=[]} = serviceDescriptor;
+    const hiddenColumns= cisxUI.find( (e) => e.name==='hidden_columns')?.value;
+    const tblSortOrder= cisxUI.find( (e) => e.name==='table_sort_order')?.value;
     const MAXREC = 50000;
     const tblTitle= `${title} - ${tblCnt++}`;
+
+    const hideObj= hiddenColumns ?
+        Object.fromEntries(hiddenColumns.split(',').map((c) => [ `col.${c}.visibility`, 'hide'] )) : {};
+
+    const sAry= tblSortOrder?.split(',');
+    let sortObj= {};
+    if (sAry?.length>1) {
+        const dir= sAry.shift();
+        sortObj= {sortInfo: sortInfoString(sAry, dir?.toUpperCase()==='ASC')};
+    }
+
+    const options= {...sortObj, META_INFO: { ...hideObj, ...extraMeta }};
 
     if (isSIAStandardID(standardID)) {
         // we know this is a table so make a table request
         const url = accessURL + '?' + new URLSearchParams(request).toString();
-        return makeFileRequest(tblTitle, url, undefined, {META_INFO: extraMeta});   //todo- figure out title
+        return makeFileRequest(tblTitle, url, undefined, options);   //todo- figure out title
     }
     else if (isSSAStandardID(standardID)) {
             const url = accessURL + '?' + new URLSearchParams(request).toString();
-            return makeFileRequest(tblTitle, url, undefined, {META_INFO:extraMeta});   //todo- figure out title
+            return makeFileRequest(tblTitle, url, undefined, options);   //todo- figure out title
     }
-    else if (isCisxTapStandardID(standardID, utype, undefined, {META_INFO:extraMeta})) {
+    else if (isCisxTapStandardID(standardID, utype)) {
         // we know this is a table so make a table request either sync or async
         const doAsync = standardID.toLowerCase().includes('async');
         const query = serDefParams.find(({name}) => name === 'QUERY')?.value;
@@ -332,20 +347,20 @@ export function makeServiceDescriptorSearchRequest(request, serviceDescriptor, e
 
         if (!query) return;
         if (doAsync) {
-            const asyncReq = makeTblRequest('AsyncTapQuery', tblTitle, {serviceUrl, QUERY: finalQuery, MAXREC, META_INFO:extraMeta});
+            const asyncReq = makeTblRequest('AsyncTapQuery', tblTitle, {serviceUrl, QUERY: finalQuery, MAXREC}, options);
             setNoCache(asyncReq);
             return asyncReq;
         } else {
             const serParam = new URLSearchParams({QUERY: finalQuery, REQUEST: 'doQuery', LANG: 'ADQL', MAXREC});
             const completeUrl = serviceUrl + '/sync?' + serParam.toString();
-            return makeFileRequest(title, completeUrl,undefined, {META_INFO:extraMeta});   //todo- figure out title
+            return makeFileRequest(title, completeUrl,undefined, options);   //todo- figure out title
         }
 
     }
     else {
         //todo: we should to call file analysis first
         const url = accessURL + '?' + new URLSearchParams(request).toString();
-        return makeFileRequest(tblTitle, url);   //todo- figure out title
+        return makeFileRequest(tblTitle, url, undefined,options);   //todo- figure out title
     }
 }
 
