@@ -2,10 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Fragment, useState, useEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {throttle, isArray, isNumber} from 'lodash';
-import { ToolbarButton, DropDownVerticalSeparator, } from '../../ui/ToolbarButton.jsx';
+import { ToolbarButton } from '../../ui/ToolbarButton.jsx';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {dispatchColorChange} from '../ImagePlotCntlr.js';
 import {
@@ -20,7 +20,7 @@ import {RangeSliderView} from '../../ui/RangeSliderView.jsx';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchHideDialog, dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from 'firefly/ui/DropDownToolbarButton.jsx';
-
+import {Typography, Box, Stack, Divider} from '@mui/joy';
 
 import ColorTable0 from 'html/images/cbar/ct-0-gray.png';
 import ColorTable1 from 'html/images/cbar/ct-1-reversegray.png';
@@ -107,12 +107,19 @@ const makeMask= () => (
         </div>
     </div> );
 
-const ctMarks = { 0:'0', 3:'3', 6:'6', 9:'9', 12:'12', 15:'15', 18:'18', 21:'21'};
-const biasMarks = {8:'.2', 12: '.3', 16:'.4', 20:'.5', 24:'.6', 28:'.7', 32:'.8' };
-const contrastMarks = { 0: '0', 5:'5', 10:'1', 15:'1.5',  20:'2'};
+const ctMarks = [
+    { label: '0', value: 0 }, { label: '3', value: 3 }, { label: '6', value: 6 }, { label: '9', value: 9 },
+    { label: '12', value: 12 }, { label: '15', value: 15 }, { label: '18', value: 18 }, { label: '21', value: 21 }
+];
+const biasMarks = [
+    { label: '.2', value: 8 }, { label: '.3', value: 12 }, { label: '.4', value: 16 }, { label: '.5', value: 20 },
+    { label: '.6', value: 24 }, { label: '.7', value: 28 }, { label: '.8', value: 32 }
+];
+const contrastMarks = [
+    { label: '0', value: 0 }, { label: '5', value: 5 }, { label: '1', value: 10 }, { label: '1.5', value: 15 },
+    { label: '2', value: 20 }
+];
 const maskWrapper= { position:'absolute', left:0, top:0, width:'100%', height:'100%' };
-
-// const markToBias= (v) =>
 
 
 const dispatchColorChangeThrottled= throttle((param) => {
@@ -213,41 +220,40 @@ const AdvancedColorPanel= ({allowPopout}) => {
                             imageStyle={{height:8}}
                             onClick={() => changeBiasContrastColor(ct.id, bias,contrast)}/>) );
 
-
     const makeAdvancedStandardFeatures= () => (
-        <div style={{width: 230, height: 180, position:'relative'}}>
-            <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
-                <div style={{padding: '5px 0 0 0'}}>Color Bar</div>
+        <Box width={230} height={180}>
+            <Stack alignItems='center' spacing={0}>
+                <Typography level='body-xs' sx={{pt:0.625, pb:0.25}}>Color Bar</Typography>
                 <RangeSliderView {...{
-                    style:{paddingTop: 7, width: 200},
+                    sx:{pb:0.5, mt:-1.5, width: 200},
                     min:image?0:-1,max:21, step:1,vertical:false, marks:ctMarks,
                     defaultValue:colorTableId, slideValue:colorTableId,
                     handleChange:(v) => changeBiasContrastColor(v, bias,contrast)}} />
 
-            </div>
-            {colorTableId!==-1 ? <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
-                <div style={{padding: '30px 0 0 0'}}>Bias</div>
+            </Stack>
+            {colorTableId!==-1 ? <Stack alignItems='center' spacing={0}>
+                <Typography level='body-xs' sx={{pt:0.625, pb:0.25}}>Bias</Typography>
                 <RangeSliderView {...{
-                    style:{paddingTop: 7, width: 200},
+                    sx:{pb:0.5, mt:-1.5, width: 200},
                     min:8,max:32, step:1,vertical:false, marks:biasMarks,
                     defaultValue:biasInt, slideValue:biasInt,
                     handleChange:(v) => changeBiasContrastColor(colorTableId, v/40,contrast)}} />
 
-            </div> : <div/>}
-            {colorTableId!==-1 ? <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
-                <div style={{padding: '30px 0 0 0'}}>Contrast</div>
+            </Stack> : <div/>}
+            {colorTableId!==-1 ? <Stack alignItems='center'>
+                <Typography level='body-xs' sx={{pt:0.625, pb:0.25}}>Contrast</Typography>
                 <RangeSliderView {...{
-                    style:{paddingTop: 7, width: 200},
+                    sx:{pb:0.5, mt:-1.5, width: 200},
                     min:0,max:20, step:1,vertical:false, marks:contrastMarks,
                     defaultValue:contrastInt, slideValue:contrastInt,
                     handleChange:(v) => changeBiasContrastColor(colorTableId, bias,v/10)}} />
-            </div> : <div/>}
+            </Stack> : <div/>}
             {!allLoaded && makeMask() }
-        </div>
+        </Box>
     );
 
     const makeAdvanced3CFeatures= () => (
-        <div style={{position:'relative'}}>
+        <Box style={{position:'relative'}}>
             {plotState.isBandUsed(Band.RED) && <ToolbarButton text= {'Use Red Band'} tip={'Use Red Band'}
                            enabled={true} horizontal={false} key={'red'}
                            hasCheckBox={true} checkBoxOn={useRed}
@@ -260,37 +266,40 @@ const AdvancedColorPanel= ({allowPopout}) => {
                            enabled={true} horizontal={false} key={'blue'}
                            hasCheckBox={true} checkBoxOn={useBlue}
                            onClick={() => changeBiasContrastColor(colorTableId,bias,contrast,useRed,useGreen,!useBlue)}/>}
-            <DropDownVerticalSeparator useLine={true}/>
-            <div style={{width: 230, height: 126 * plotState.getBands().length}}>
+
+            <Divider sx={{p: 0}}/>
+            <Box width={230} height={126 * plotState.getBands().length} pb={1}>
                         {
                             plotState.getBands().map( (b, idx) => (
-                                <Fragment key={b.key}>
-                                    <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
-                                        <div style={{margin: `${idx?'40':'5'}px 0 0 0`, paddingTop:idx?5:0, textAlign:'center', alignSelf:'stretch', borderTop:`1px solid rgba(0,0,0,${idx?'.1':'0'}`}}>
-                                            <span style={{color:b.key}}>{b.key}</span> Bias
-                                        </div>
+                                <Box key={b.key}>
+                                    <Stack alignItems='center' spacing={0}>
+                                        {idx > 0 && <Divider sx={{pt:0, mt:'10px'}}/>}
+                                            <Typography level='body-xs' sx={{pt:0.625, pb:0.25}}>
+                                                <Typography level='body-xs' sx={{color:b.key}}>{b.key}</Typography> Bias
+                                            </Typography>
                                         <RangeSliderView {...{
-                                            style:{paddingTop: 7, width: 200},
+                                            sx:{pt:0, mt:-1.5, width: 200},
                                             min:8,max:32, step:1,vertical:false, marks:biasMarks,
                                             defaultValue:biasInt[b.value], slideValue:biasInt[b.value],
                                             handleChange:(v) => changeBiasContrastColor(colorTableId, v/40,contrast[b.value],useRed,useGreen,useBlue,b)}} />
-                                    </div>
-                                    <div style={{display:'flex', flexDirection: 'column', alignItems: 'center'}}>
-                                        <div style={{padding: '30px 0 0 0'}}><span style={{color:b.key}}>{b.key}</span> Contrast</div>
+                                    </Stack>
+                                    <Stack alignItems='center' spacing={0}>
+                                        <Typography level='body-xs' sx={{pt:1, pb:0.25}}>
+                                            <Typography level='body-xs' sx={{color:b.key}}>{b.key}</Typography> Contrast
+                                        </Typography>
                                         <RangeSliderView {...{
-                                            style:{paddingTop: 7, width: 200},
+                                            sx:{pt:0, mt:-1.5, width: 200},
                                             min:0,max:20, step:1,vertical:false, marks:contrastMarks,
                                             defaultValue:contrastInt[b.value], slideValue:contrastInt[b.value],
                                                         handleChange:(v) => changeBiasContrastColor(colorTableId, bias[b.value],v/10, useRed,useGreen,useBlue,b)}} />
-                                    </div>
-                                </Fragment>
+                                    </Stack>
+                                </Box>
                             ))
                         }
-            </div>
+            </Box>
             {!allLoaded && makeMask() }
-        </div>
+        </Box>
     );
-
 
 
     return (
@@ -302,7 +311,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
                 </div>
             }
             {!threeColor && makeItems()}
-            {!threeColor && <DropDownVerticalSeparator useLine={true}/>}
+            {!threeColor && <Divider sx={{p: 0.1, mt: 0.2}}/>}
             {!threeColor && makeAdvancedStandardFeatures()}
             {threeColor && makeAdvanced3CFeatures()}
         </SingleColumnMenu>
