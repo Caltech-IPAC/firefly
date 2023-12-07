@@ -25,7 +25,6 @@
     "point-in-polygon": "~1.1",
     "shallowequal": "~1.1",
     "validator": "~13.9",
-    "rc-slider": "~10.2",
     "rc-tree": "~5.7",
     "redux": "~3.7",
     "redux-logger": "~3.0",

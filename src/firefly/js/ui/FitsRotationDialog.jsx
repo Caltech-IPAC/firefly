@@ -21,6 +21,7 @@ import ROTATE_NORTH_OFF from 'html/images/icons-2014/RotateToNorth.png';
 import ROTATE_NORTH_ON from 'html/images/icons-2014/RotateToNorth-ON.png';
 import {hasWCSProjection} from '../visualize/PlotViewUtil';
 import {isImage} from '../visualize/WebPlot';
+import {Box, Stack, Typography} from '@mui/joy';
 
 const DIALOG_ID= 'fitsRotationDialog';
 
@@ -43,7 +44,10 @@ function getCurrentRotation(pv) {
     return Math.round(angle);
 }
 
-const marks = { 0: '0', 45:'45', 90:'90', 135: '135', 180:'180', 225: '225', 270:'270', 315:'315', 359:'359' };
+const marks = [ { label: '0', value: 0 }, { label: '45', value: 45 }, { label: '90', value: 90 },
+    { label: '135', value: 135 }, { label: '180', value: 180 }, { label: '225', value: 225 }, { label: '270', value: 270 },
+    { label: '315', value: 315 }, { label: '359', value: 359 }
+];
 
 function FitsRotationImmediatePanel() {
     const pv = useStoreConnector(() => getActivePlotView(visRoot()));
@@ -81,22 +85,21 @@ function FitsRotationImmediatePanel() {
     };
 
     if (!pv) return (<div style={{whiteSpace:'nowrap', padding:'10px 35px'}}>No Image Loaded</div>);
-
+    
     return (
-        <div className={'disable-select'}>
-            <div style={{padding: '25px 20px 10px 20px'}}>
-                <div style={{display:'flex', flexDirection: 'column', alignItems:'center',
-                                      justifyContent:'space-between', padding: '0 3px'}}>
-                    <div style={{display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+        <Box className={'disable-select'}>
+            <Box pt={0} pr={2.5} pb={1.25} pl={2.5}>
+                <Stack justifyContent='space-between' alignItems='center' p={'0px 3px'} spacing={1}>
+                    <Stack direction='row' justifyContent='space-evenly' alignItems='center' spacing={1}>
                         <StateInputField defaultValue={currRotation+''} valueChange={(v) => changeRotation(v.value)}
-                                         labelWidth={35} label={'Angle: '}
+                                         label={'Angle: '}
                                          tooltip={'Enter the angle between 0 and 359 degrees'}
                                          message={'Angle must be a number between 0 and 359'}
                                          showWarning={true}
                                          validator={validator} onKeyDown={handleKeyDown} />
 
                         <SimpleLayerOnOffButton plotView={pv}
-                                                style={{border: '1px solid rgba(0,0,0,.2)'}}
+                                                style={{border: '1px solid rgba(0,0,0,.2)', marginTop:'15px'}}
                                                 isIconOn={pv&&plot ? pv.plotViewCtx.rotateNorthLock : false }
                                                 tip='Rotate this image so that North is up'
                                                 enabled={hasWcs}
@@ -104,24 +107,24 @@ function FitsRotationImmediatePanel() {
                                                 iconOn={ROTATE_NORTH_ON}
                                                 iconOff={ROTATE_NORTH_OFF}
                                                 onClick={(pv,rNorth)=> doRotateNorth(rNorth)} />
-                    </div>
+                    </Stack>
 
                     <RangeSliderView {...{
-                        style:{paddingTop: 15, width: 225},
+                        sx:{pt: 2, width: 225},
                         min:0,max:359, step:1,vertical:false, marks,
                         defaultValue:currRotation, slideValue:currRotation,
                         handleChange:(v) => changeRotation(v)}} />
-                </div>
-                <div style={{paddingTop:40, textAlign:'center'}}>
+                </Stack>
+                <Typography level='body-xs' pt={3} pb={2} sx={{textAlign: 'center'}}>
                     {hasWcs?'Angle in degrees East of North' : 'Angle in degrees counter clockwise'}
-                </div>
-            </div>
+                </Typography>
+            </Box>
             <div style={{textAlign:'center', display:'flex', justifyContent:'space-between', padding: '0 16px'}}>
                 <CompleteButton text='Close' dialogId={DIALOG_ID} />
                 <div style={{ textAlign:'center', marginBottom: 20}}>
                     <HelpIcon helpId={'visualization.rotate'} />
                 </div>
             </div>
-        </div>
+        </Box>
     );
 }
