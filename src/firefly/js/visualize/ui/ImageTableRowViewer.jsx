@@ -3,9 +3,13 @@
  */
 
 
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {string, number, func, bool} from 'prop-types';
 import {isNil, xor} from 'lodash';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
+
 import {useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {getTblById} from '../../tables/TableUtil.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
@@ -26,6 +30,7 @@ import {getActivePlotView, getPlotViewAry, getPlotViewById} from '../PlotViewUti
 import {isImageDataRequestedEqual} from '../WebPlotRequest.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import Validate from '../../util/Validate.js';
+import {dispatchTableHighlight} from 'firefly/tables/TablesCntlr';
 
 
 const MAX_IMAGE_CNT= 7;
@@ -50,6 +55,46 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
         layoutImages(viewerId, Number(cutoutSize), Number(imageCnt), table, makeRequestFromRow);
     }, [imageCnt, table, cutoutSize]);
 
+    useEffect(()=>{
+        if (!activePlotId?.startsWith(plotIdRoot(viewerId))) return;
+        const activePlotRowNum = getPlotIdRowNum(viewerId, activePlotId);
+        if(table?.highlightedRow !== activePlotRowNum) dispatchTableHighlight(tbl_id, activePlotRowNum);
+    }, [activePlotId]);
+
+    const sliderRef = useRef(null);
+
+    const makeImageSlider = (viewerItemIds, makeItemViewer) => {
+        const onSlideChange = (current, next) => {
+            console.log(current, next, viewerItemIds);
+            // dispatchChangeActivePlotView(viewerItemIds[next]);
+            // sliderRef.current.slickGoTo(current);
+        };
+
+        const width= '100%';
+        const height= '200px'; //TODO: find a way to set it dynamically
+        const settings = {
+            dots: false,
+            infinite: false,
+            speed: 500,
+            slidesToShow: Number(imageCnt),
+            slidesToScroll: 1,
+            beforeChange: onSlideChange
+        };
+
+        //TODO: fire actions (change active plot id and highlighted row) on arrow click
+        return (
+            <Slider ref={sliderRef} {...settings} style={{width: 'calc(100% - 50px)', margin: 'auto'}}>
+                {viewerItemIds.map((itemId)=>(
+                    <div key={itemId}>
+                        <div style={{display: 'inline-block', width, height}}>
+                            {makeItemViewer(itemId)}
+                        </div>
+                    </div>)
+                )}
+            </Slider>
+        );
+    };
+
 
     if (imageExpandedMode) {
         return (
@@ -64,7 +109,7 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
         <MultiImageViewer
             {...{viewerId, Toolbar, insideFlex, defaultImageCnt, maxImageCnt, tableId:tbl_id,
                 makeRequestFromRow,defaultCutoutSizeAS,
-                wcsMatchType, activePlotId,
+                wcsMatchType, activePlotId, makeCustomLayout: makeImageSlider,
                 forceRowSize:1, canReceiveNewPlots: NewPlotMode.create_replace.key}}
         />
     );
@@ -212,7 +257,7 @@ function layoutImages(viewerId, cutoutSize, imageCnt, table, makeRequestFromRow)
         }
     });
 
-    if (xor(viewer.itemIdAry,newPlotIdAry).length>0) {
+    if (xor(viewer.itemIdAry,newPlotIdAry).length>0) { //check if any of the two arrays has a unique element
         dispatchReplaceViewerItems(viewerId, newPlotIdAry, IMAGE );
     }
 
@@ -237,15 +282,20 @@ function layoutImages(viewerId, cutoutSize, imageCnt, table, makeRequestFromRow)
 }
 
 function makePlotIds(viewerId, highlightedRow, totalRows, totalPlots)  {
+    totalPlots+=1; // need to load more plots than shown for image slider to work
     const beforeCnt= totalPlots%2===0 ? totalPlots/2-1 : (totalPlots-1)/2;
     const afterCnt= totalPlots%2===0 ? totalPlots/2    : (totalPlots-1)/2;
-    let endRow= Math.min(totalRows-1, highlightedRow+afterCnt);
-    let startRow= Math.max(0,highlightedRow-beforeCnt);
-    if (startRow===0) endRow= Math.min(totalRows-1, totalPlots-1);
-    if (endRow===totalRows-1) startRow= Math.max(0, totalRows-totalPlots);
+    const firstRowIdx= 0, lastRowIdx= totalRows-1;
+
+    let rangeEndRowIdx= Math.min(lastRowIdx, highlightedRow+afterCnt);
+    let rangeStartRowIdx= Math.max(firstRowIdx, highlightedRow-beforeCnt);
+
+    // handle the edge case: totalRows < totalPlots
+    if (rangeStartRowIdx===firstRowIdx) rangeEndRowIdx= Math.min(lastRowIdx, totalPlots-1);
+    if (rangeEndRowIdx===lastRowIdx) rangeStartRowIdx= Math.max(firstRowIdx, totalRows-totalPlots);
 
     const plotIds= [];
-    for(let i= startRow; i<=endRow; i++) plotIds.push(makePlotId(viewerId,i));
+    for(let i= rangeStartRowIdx; i<=rangeEndRowIdx; i++) plotIds.push(makePlotId(viewerId,i));
     return plotIds;
 }
 
@@ -253,4 +303,4 @@ const plotIdRoot= (viewerId) => 'image--'+viewerId;
 
 const makePlotId= (viewerId, rowIdx) => plotIdRoot(viewerId)+'-'+rowIdx;
 
-const getPlotIdRowNum= (viewerId, plotId) => Number(plotId.substring(plotIdRoot(viewerId).length));
+const getPlotIdRowNum= (viewerId, plotId) => Number(plotId.substring(plotIdRoot(viewerId).length+1));
