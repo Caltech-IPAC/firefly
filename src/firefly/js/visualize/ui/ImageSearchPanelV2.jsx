@@ -318,7 +318,7 @@ function ImageType({}) {
         <Sheet {...{variant:'outlined', sx:{mx:0,py:1}}}>
             <FieldGroup groupKey={FG_KEYS.main} keepState={true}>
                 <Stack {...{direction:'row', justifyContent:'flex-start', alignItems:'center', spacing:2}}>
-                    <Typography {...{sx:{px:1, width:200}, color:'primary', level:'title-md'}}>1. Choose Image Type</Typography>
+                    <Typography {...{px:1, width:200, color:'primary', level:'title-md'}}>1. Choose Image Type</Typography>
                     <RadioGroupInputField
                         initialState= {{ value: 'singleChannel',
                             tooltip: 'Please select the image type'}}
@@ -358,10 +358,10 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
     isThreeColorImgType && (options.push({label: 'None', value: 'none'}));
 
     return (
-        <Stack sx={{flexGrow:1}}>
+        <Stack flexGrow={1}>
             <Sheet {...{variant:'outlined', sx:{mx:0,py:1}}}>
                 <Stack {...{direction:'row', justifyContent:'flex-start', alignItems:'center', spacing:2}}>
-                    <Typography {...{sx:{px:1, width:200}, color:'primary', level:'title-md'}}>2. Select Image Source</Typography>
+                    <Typography {...{px:1, width:200, color:'primary', level:'title-md'}}>2. Select Image Source</Typography>
                     <RadioGroupInputField
                         initialState = {{ defaultValue, options, tooltip: 'Please select the image source'}}
                         defaultValue ={defaultValue}
@@ -399,7 +399,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
         <div className='flex-full'>
             <Sheet {...{variant:'outlined', sx:{mx:0,py:1, flexGrow:0}}}>
                 <Stack direction={'row'} >
-                    <Typography {...{sx:{px:1, width:200}, color:'primary', level:'title-md'}}>3. Select Target</Typography>
+                    <Typography {...{px:1, width:200, color:'primary', level:'title-md'}}>3. Select Target</Typography>
                     <FieldGroup groupKey={FG_KEYS.targetSelect} keepState={true}>
                         <Stack spacing={2} direction='column'>
                             <TargetPanel labelWidth={isHips ? 150 : 100} feedbackStyle={targetStyle}
@@ -424,7 +424,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
             {isHips ?
                 <HiPSImageSelect groupKey={groupKey} /> :
                 <div className='ImageSearch__section' style={{ display: 'flex', flexDirection: 'column', padding: 'unset', flexGrow: 1}}>
-                    <Typography {...{sx:{px:1}, color:'primary', level:'title-md'}}>4. Select Data Set</Typography>
+                    <Typography {...{px:1, color:'primary', level:'title-md'}}>4. Select Data Set</Typography>
                     <ImageSelect style={{flexGrow: 1, width: '100%'}} key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect, scrollDivId: !noScroll && scrollDivId}} />
                 </div>
             }

@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Stack, Typography} from '@mui/joy';
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {MouseState} from '../VisMouseSync.js';
@@ -57,19 +58,15 @@ MagnifiedView.propTypes= {
 };
 
 const showTooHighZoomMessage= () => (
-    <div style={
-        {
-            width:'100%',
-            height:'100%',
-            display:'flex',
-            flexDirection:'column',
-            lineHeight:'12pt',
+    <Stack {...{direction:'column' ,
             alignItems: 'center',
             justifyContent: 'center',
-        } } >
-        <div>Zoom Factor Too High</div>
-        <div>Magnifier Off</div>
-    </div> );
+            mt:1,
+        }} >
+        <Typography level='body-sm'>Zoom Factor</Typography>
+        <Typography level='body-sm'>Too High</Typography>
+        <Typography level='body-sm'>Magnifier Off</Typography>
+    </Stack> );
 
 
 function showMag(spt,pv, plot,size) {

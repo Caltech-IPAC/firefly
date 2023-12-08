@@ -184,7 +184,7 @@ export function SpatialSearch({cols, serviceUrl, serviceLabel, columnsModel, tab
         <CollapsibleCheckHeader title={panelTitle} helpID={tapHelpId(panelPrefix)}
                                 message={constraintResult?.simpleError ?? ''}
                                 initialStateOpen={true} initialStateChecked={true}>
-            <Stack sx={{mt: .25}} spacing={1}>
+            <Stack mt='.25' spacing={1}>
                 <ForceFieldGroupValid forceValid={!checkHeaderCtl.isPanelActive()}>
 
                     {!canUpload && (searchParams?.uploadInfo || uploadInfo) &&

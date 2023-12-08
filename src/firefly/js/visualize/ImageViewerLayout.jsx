@@ -449,14 +449,14 @@ function MessageArea({pv,plotShowing,onScreen, sizeViewable, loadingRawData}) {
         }
         else if (!onScreen) {
             return (
-                <ImageViewerStatus message={'Center Plot'} working={false} top={30}
+                <ImageViewerStatus message={'Center Plot'} working={false} top={45}
                                    useMessageAlpha={false} buttonText='Recenter'
                                    buttonCB={() => dispatchRecenter({plotId:pv.plotId, centerOnImage:true}) } />
             );
         }
         else if (!sizeViewable) {
             return (
-                <ImageViewerStatus message={'Minimum zoom'} working={false} top={30}
+                <ImageViewerStatus message={'Minimum zoom'} working={false} top={45}
                                    useMessageAlpha={false} buttonText='Zoom To Fit'
                                    buttonCB={() => dispatchZoom({plotId:pv.plotId, userZoomType:UserZoomTypes.FIT}) }/>
             );

@@ -22,12 +22,14 @@ import DEL_ICO from 'html/images/blue_delete_10x10.png';
  * @prop NONE
  * @prop USER_POSITION
  */
+
+/** @type LayoutType */
 export const LayoutType= new Enum(['CENTER', 'TOP_EDGE_CENTER', 'TOP_CENTER', 'TOP_LEFT', 'TOP_RIGHT', 'NONE', 'USER_POSITION', 'TOP_RIGHT_OF_BUTTON']);
 
 export const PopupPanel= memo((props) => {
     const {title='', visible=true, layoutPosition=LayoutType.TOP_CENTER, closePromise, closeCallback, modal=false,
         requestToClose, mouseInDialog, requestOnTop, dialogId, zIndex=0, children, style,
-        initLeft, initTop, onMove, element}= props;
+        initLeft, initTop, onMove, element, sx}= props;
     const [{left,top}, setPos]= useState({left:0,top:0});
     const [layout, setLayout]= useState(LayoutType.NONE);
     const {current:ctxRef} = useRef({ mouseCtx: undefined, popupRef : undefined, titleBarRef: undefined});
@@ -79,7 +81,7 @@ export const PopupPanel= memo((props) => {
 
     if (!visible) return false;
     return (
-        <PopupHeaderTop {...{modal,zIndex,left,top,ctxRef,dialogMoveStart,dialogMoveEnd, onMouseEnter,onMouseLeave, style,
+        <PopupHeaderTop {...{modal,zIndex,left,top,ctxRef,dialogMoveStart,dialogMoveEnd, onMouseEnter,onMouseLeave, style, sx,
             dialogMove,children,title,askParentToClose, visibility:layout===LayoutType.NONE ? 'hidden' : 'visible'}}>
             {children}
         </PopupHeaderTop>
@@ -101,13 +103,14 @@ PopupPanel.propTypes= {
     style : PropTypes.object,
     initLeft: PropTypes.number,
     initTop: PropTypes.number,
-    onMove: PropTypes.func
+    onMove: PropTypes.func,
+    sx: PropTypes.object
 };
 
 function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart,dialogMoveEnd,
-                            onMouseEnter,onMouseLeave,dialogMove,children,title,askParentToClose, style}) {
+                            onMouseEnter,onMouseLeave,dialogMove,children,title,askParentToClose, style, sx}) {
     return (
-        <Sheet style={{zIndex, position:'relative'}}>
+        <Sheet style={{zIndex, position:'relative'}} sx={sx}>
             {modal && <div className='popup-panel-glass'/>}
             <div ref={(c) => ctxRef.popupRef=c} style={{left, top, position: 'absolute', visibility}}
                  className={'popup-panel-shadow enable-select'}
