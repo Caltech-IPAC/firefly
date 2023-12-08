@@ -1,9 +1,11 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {Box, Card, Typography} from '@mui/joy';
 import React, {useEffect, memo, useState} from 'react';
 import PropTypes from 'prop-types';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
+import BrowserInfo from '../../util/BrowserInfo.js';
 
 const statusText= {
     position:'absolute',
@@ -11,19 +13,23 @@ const statusText= {
     top:0,
     width:'100%',
     minHeight : '15%',
-    fontSize:'12pt',
-    color:'black', 
+    color:'black',
     display:'flex',
     alignItems:'center',
     justifyContent:'flex-start',
     flexDirection:'row',
-    backgroundColor: 'rgba(200,200,200,1)'
 };
+export const ctxBG= (theme, opacity=80) =>
+    BrowserInfo.supportsCssColorMix() ?
+        `color-mix(in srgb, ${theme.vars.palette.warning.softBg} ${opacity}%, transparent)` :
+        theme.vars.palette.neutral.softBg;
+
+
+
 
 const statusContainer= { position:'absolute', top: 0, left:0, width:'100%', height:'100%' };
-const statusTextCell= { paddingTop:10, paddingBottom:10, textAlign:'center', flex:'1 1 auto' };
+const statusTextCell= { py: 1, textAlign:'center', flex:'1 1 auto' };
 const maskWrapper= { position:'absolute', left:0, top:0, width:'100%', height:'100%' };
-const statusTextAlpha= {...statusText,  backgroundColor: 'rgba(200,200,200,.8)'};
 const statusTextCellWithClear= {...statusTextCell,  flex: '10 10 auto'};
 
 export const ImageViewerStatus= memo(
@@ -50,19 +56,19 @@ export const ImageViewerStatus= memo(
         return () => void (alive= false);
     }, [messageWaitTimeMS, maskWaitTimeMS] );
 
-    const workingStatusText= useMessageAlpha ? statusTextAlpha : statusText;
     const workingStatusTextCell= buttonCB ? statusTextCellWithClear : statusTextCell;
 
     return (
-        <div style={{...statusContainer, top}}>
+        <Box sx={{...statusContainer, top}}>
             {working && showing.maskShowing && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
             { showing.messageShowing &&
-            <div className='enable-select' style={workingStatusText} >
-                <div style={workingStatusTextCell}>{message}</div>
-                { buttonCB && <CompleteButton text={buttonText} style={{flex: '2 2 auto'}} onSuccess={buttonCB}/> }
-            </div>
+                <Card {...{color:'warning', variant:'soft',
+                    sx: (theme) => !useMessageAlpha ? statusText : { ...statusText, backgroundColor: ctxBG(theme,65)} }}>
+                    <Typography level='body-lg' sx={workingStatusTextCell}>{message}</Typography>
+                    { buttonCB && <CompleteButton text={buttonText} style={{flex: '2 2 auto'}} onSuccess={buttonCB}/> }
+                </Card>
             }
-        </div>
+        </Box>
     );
 });
 

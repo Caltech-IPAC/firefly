@@ -1,3 +1,4 @@
+import {Typography} from '@mui/joy';
 import React from 'react';
 import {isArray} from 'lodash';
 import {dispatchActivateMenuItem, dispatchSetSearchParams, doDownload} from '../../../metaConvert/DataProductsCntlr.js';
@@ -53,7 +54,7 @@ export function ComplexMessage({ menu, makeDropDown, message, resetMenuKey, dpId
                 {makeDropDown && makeDropDown?.()}
             </div>
             <div style={{display: 'flex', flexDirection: 'column', alignSelf: 'center', paddingTop: 40}}>
-                <div style={{alignSelf: 'center', fontSize: '14pt', paddingBottom: 10}}>{message}</div>
+                <Typography {...{level:'body-sm', mb:1, alignSelf:'center'}}>{message}</Typography>
                 {detailMsgAry.map((m) => (
                     <div style={{alignSelf: 'center', fontSize: '12pt', paddingTop: 5}} key={m}>{m}</div>))}
                 {badUrl &&

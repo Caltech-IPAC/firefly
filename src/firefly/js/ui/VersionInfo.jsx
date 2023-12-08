@@ -107,4 +107,4 @@ const Acknowledgement= () => (
 
 
 
-export const showFullVersionInfoDialog = (title = '') => showInfoPopup( <VersionInfoFull/>, `${title} Version Information`, true, {maxWidth:620});
+export const showFullVersionInfoDialog = (title = '') => showInfoPopup( <VersionInfoFull/>, `${title} Version Information`, {maxWidth:620});

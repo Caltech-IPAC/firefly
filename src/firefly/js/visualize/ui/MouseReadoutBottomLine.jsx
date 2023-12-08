@@ -2,8 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box} from '@mui/joy';
 import React, {useEffect, useRef, useState} from 'react';
 import {object, bool, number} from 'prop-types';
+import BrowserInfo from '../../util/BrowserInfo.js';
 import {showMouseReadoutFluxRadixDialog} from './MouseReadoutOptionPopups.jsx';
 import {getNonFluxDisplayElements, getFluxInfo} from './MouseReadoutUIUtil.js';
 import {DataReadoutItem, MouseReadoutLock} from './MouseReadout.jsx';
@@ -39,44 +41,41 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
 
     const fluxArray = getFluxInfo(readoutData, radix);
     const gridClasses= getGridClass(fullSize, image,threeColor,waveLength);
-    const ls= {color:'rgb(90,90,90)'};
 
-    const rootStyle= {
-        height: 20,
-        background: slightlyTransparent? 'rgba(227,227,227,.9)': 'rgb(227,227,227)',
-        color:'black',
+
+    const sx= (theme) => ({
+        height: '1.2em',
+        borderRadius: '5px',
         overflow:'hidden',
-        border: '1px solid rgba(0,0,0,.1)',
-        ...style
-    };
+        border: '2px solid rgba(0,0,0,.1)',
+        ...style,
+        backgroundColor: slightlyTransparent && BrowserInfo.supportsCssColorMix() ?
+            `color-mix(in srgb, ${theme.vars.palette.neutral.softBg} 90%, transparent)` :
+            theme.vars.palette.neutral.softBg,
+    });
     if (!readoutShowing) {
-        if (showOnInactive) return <div style={rootStyle}/>;
+        if (showOnInactive) return <Box sx={sx}/>;
         return <div/>;
     }
 
     return (
-        <div className={gridClasses} style={rootStyle} ref={ (c) => divref.element=c} >
+        <Box {...{className:gridClasses, sx, ref: (c) => divref.element=c}}>
             <DataReadoutItem lArea='pixReadoutLabel' vArea='pixReadoutValue' cArea='clipboardIcon'
                              label={readout1.label} value={readout1.value} copyValue={readout1.copyValue} showCopy={showCopy}
-                             labelStyle={ls}
-                             valueStyle={{fontWeight:'bold'}}
                              prefChangeFunc={showReadout1PrefChange}/>
 
             {fullSize && !threeColor && image && <DataReadoutItem lArea='fluxLabel' vArea='fluxValue'
                                                                   label={fluxArray[0].label||'Value:'}
                                                                   value={fluxArray[0].value}
                                                                   unit={fluxArray[0].unit}
-                                                      labelStyle={ls} valueStyle={{fontWeight:'bold'}}
                                                                   monoFont={radix===16}
                                                                   prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}
             />}
             {fullSize && threeColor && image && <DataReadoutItem lArea='fluxLabel' vArea='fluxValue' label={get3CLabel(fluxArray)} value={get3CValue(fluxArray)}
                                                                  prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}
                                                                  monoFont={radix===16}
-                                                                 labelStyle={ls} valueStyle={{fontWeight:'bold'}}
             />}
             {fullSize && waveLength && image && <DataReadoutItem lArea='wlLabel' vArea='wlValue' label={waveLength.label} value={waveLength.value}
-                                                     labelStyle={ls} valueStyle={{fontWeight:'bold'}}
                                                      prefChangeFunc={showWavelengthFailed} /> }
             {<MouseReadoutLock gArea='lock' gAreaLabel='lockLabel'  lockByClick={readout.lockByClick} />}
             <ToolbarButton icon={POPOUT_ICON}
@@ -87,7 +86,7 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
                            onClick={() => {
                                showMouseReadoutPopout();
                            }}/>
-        </div>
+        </Box>
     );
 }
 

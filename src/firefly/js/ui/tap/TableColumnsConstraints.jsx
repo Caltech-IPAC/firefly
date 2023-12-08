@@ -61,7 +61,7 @@ export function TableColumnsConstraintsToolbar({columnsModel}) {
                     title='Remove column table filters to make all columns visible'
                     onClick={() => dispatchTableFilter({tbl_id: tableModel.tbl_id, filters: ''})}>
                 Remove
-                <Typography color='warning' sx={{pl:.25}}>{filterCount} filter{filterCount>1?'s':''}</Typography>
+                <Typography color='warning' pl={.25}>{filterCount} filter{filterCount>1?'s':''}</Typography>
             </Button>}
             {selectedCount > 0 &&
                 <Typography title='Number of columns to be selected' color='warning'  level='body-xs'>

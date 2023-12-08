@@ -18,7 +18,7 @@ import {formatWorldPt} from '../visualize/ui/WorldPtFormat.jsx';
 
 import BINOCULARS from 'images/b4.png';
 
-export function ActionsDropDownButton({searchActions, pv, tbl_id}) {
+export function ActionsDropDownButton({searchActions, pv, tbl_id, style}) {
     const mi= pv?.plotViewCtx.menuItemKeys ?? getDefMenuItemKeys();
     const buttonRef = useRef();
     const spacial= Boolean(pv);
@@ -28,7 +28,7 @@ export function ActionsDropDownButton({searchActions, pv, tbl_id}) {
     const dropDown = <SearchDropDown {...{searchActions, buttonRef, spacial, tbl_id, key:'searchDropDown'}}/>;
 
     return (
-        <div ref={buttonRef}>
+        <div ref={buttonRef} style={style}>
             <DropDownToolbarButton icon={BINOCULARS}
                                    tip='Search this area'
                                    useDropDownIndicator={true}

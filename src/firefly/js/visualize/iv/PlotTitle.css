@@ -3,69 +3,6 @@
  */
 
 
-.plot-title-inline-title-container {
-    position : relative;
-    /*left : 0;*/
-    /*top : 0;*/
-    align-self: flex-start;
-    padding : 0 5px 0 2px;
-    background : rgba(227, 227, 227, .8);
-    white-space : nowrap;
-    font-size : 9pt;
-    border-radius : 0 0 5px 0;
-    line-height: normal;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-}
-
-
-.plot-title-header-title-container {
-    padding : 1px 0 0 2px;
-    color : black;
-    white-space : nowrap;
-    font-size : 9pt;
-}
-
-.plot-title-expanded-title-container {
-    padding : 1px 0 0 2px;
-    color : black;
-    white-space : nowrap;
-    font-size : 10pt;
-    font-weight : bold;
-}
-
-
-.plot-title-title {
-    display: inline-block;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    max-width:35ch;
-}
-
-.plot-title-zoom {
-    display: inline-block;
-    font-weight: bold;
-    overflow: hidden;
-    padding-left: 6px;
-    color: #49a344;
-}
-
-
-.plot-title-rotation {
-    display: inline-block;
-    overflow: hidden;
-    padding-left: 6px;
-    color: #49a344;
-}
-
-.plot-title-flipped {
-    display: inline-block;
-    overflow: hidden;
-    padding-left: 1px;
-    color: #49a344;
-}
-
 .plot-title-working {
     width:14px;
     height:14px;

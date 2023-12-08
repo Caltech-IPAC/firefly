@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {Typography} from '@mui/joy';
 import {isArray, isString} from 'lodash';
 import React, {useEffect} from 'react';
 import {CoordinateSys} from '../../api/ApiUtilImage.jsx';
@@ -353,7 +354,11 @@ export function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', s
             }}
             />
             <ul style={{marginTop: 7}}>
-                {help.filter((h) => h).map((h) => <li key={h} style={{paddingBottom: 2, listStyleType: `'${BULLET}'`}}>{h}</li>)}
+                {help.filter((h) => h).map((h) => (
+                    <Typography key={h} level='body-xs'>
+                        <li key={h} style={{listStyleType: `'${BULLET}'`}}>{h}</li>
+                    </Typography>
+                ))}
             </ul>
         </div>
     );

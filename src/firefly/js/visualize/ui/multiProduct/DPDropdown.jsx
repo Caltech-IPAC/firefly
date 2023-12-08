@@ -1,3 +1,4 @@
+import {Button, Stack} from '@mui/joy';
 import React from 'react';
 import {array, object, string} from 'prop-types';
 import {
@@ -37,7 +38,7 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
                       analysisActivateFunc, showRedoSearchButton, activeMenuLookupKey,
                       extraction, extractionText}) {
     return (
-        <div style={{display: 'inline-flex', alignItems: 'center', height: 30}}>
+        <Stack {...{direction:'row', alignItems:'center', height: 30}}>
             {!hasMenu ?
                 <div style={{width: 50, height: 1}}/> :
                 <DropDownToolbarButton
@@ -53,8 +54,10 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
                     dropDown={<FileMenuDropDown {...{fileMenu, dpId}} />}/>
             }
             {extraction &&
-                <TextButton style={{lineHeight: '18px', height: 18}} title={extractionText || 'Pin'}
-                            onClick={() => extraction()}>{extractionText || 'Pin'}</TextButton>}
+                <Button onClick={() => extraction()} title={extractionText || 'Pin'}
+                        sx={{whiteSpace:'nowrap', minHeight:10, py:.25}}>
+                    {extractionText || 'Pin'}
+                </Button>}
             {showRedoSearchButton && analysisActivateFunc &&
                 <ToolbarButton
                     text='Redo Search' tip='Redo Search' horizontal={true}
@@ -66,7 +69,7 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
                         });
                     }}/>
             }
-        </div>
+        </Stack>
     );
 
 }

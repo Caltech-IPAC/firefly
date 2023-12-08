@@ -132,7 +132,7 @@ const showErrorPopup = (message, title, helpRef) => {
     );
 
     const content = (<div> {message} {InfoIcon()} </div>);
-    showInfoPopup(content, title, true);
+    showInfoPopup(content, title);
 };
 
 function composeRegionMessage(dl, selectOption) {
