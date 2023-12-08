@@ -47,7 +47,7 @@ const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
     const view = expanded === LO_VIEW.tables ? tables
         : expanded === LO_VIEW.xyPlots ? xyPlot : imagePlot;
     return (
-        <Sheet style={wrapperStyle}>
+        <Sheet style={wrapperStyle} className='ff-ResultsPanel-ExpandedView'>
             {view}
         </Sheet>
     );
@@ -60,7 +60,7 @@ const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, table
     const config = generateLayout(standard, components.length);
 
     return (
-        <Sheet style={wrapperStyle}>
+        <Sheet style={wrapperStyle} className='ff-ResultsPanel-StandardView'>
             {visToolbar}
             {searchDesc}
             {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}

@@ -41,7 +41,6 @@ export function ListBoxInputFieldView({value:fieldValue, onChange, fieldKey, opt
                         }))}
                     </Select>
                 </Tooltip>
-
             </FormControl>
         </Stack>
     );

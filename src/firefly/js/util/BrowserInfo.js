@@ -17,6 +17,9 @@ import {getGlobalObj} from 'firefly/util/WebUtil.js';
  * @prop UNKNOWN
  * @type {Enum}
  */
+
+
+/** @type Browser */
 export const Browser = new Enum ([
     'FIREFOX', 'SEAMONKEY', 'SAFARI', 'WEBKIT_GENERIC', 'IE', 'OPERA', 'CHROME', 'UNKNOWN'
 ]);
@@ -41,6 +44,8 @@ export const Browser = new Enum ([
  * @prop UNKNOWN
  * @type {Enum}
  */
+
+/** @type Platform */
 export const Platform = new Enum([
     'MAC', 'WINDOWS', 'LINUX', 'SOLARIS', 'SUNOS', 'HPUX', 'AIX', 'IPHONE', 'IPAD', 'ANDROID', 'FREE_BSD',
     'SYMBIAN_OS', 'J2ME', 'BLACKBERRY', 'UNKNOWN'
@@ -62,6 +67,7 @@ const BrowserInfo= {
     getBrowserString: () => BrowserInfo.browser.key,
     isTouchInput: () => ([Platform.IPAD,Platform.IPHONE,Platform.ANDROID].includes(BrowserInfo.platform)),
     getBrowserDesc: () => BrowserInfo.browserDesc,
+    supportsCssColorMix,
     getVersionString: () =>
         BrowserInfo.minorVersion!==UNKNOWN_VER ? `${BrowserInfo.majorVersion}.${BrowserInfo.minorVersion}` : BrowserInfo.majorVersion+'',
     minorVersion: undefined,
@@ -184,4 +190,13 @@ function evaluatePlatform(ua) {
     else if  (ua.includes('j2me')) return Platform.J2ME;
     else if  (ua.includes('blackberry')) return Platform.BLACKBERRY;
     else return Platform.UNKNOWN;
+}
+
+
+function supportsCssColorMix() {
+    if (isBrowser(Browser.CHROME) && isVersionAtLeast(111)) return true;
+    if (isBrowser(Browser.SAFARI) && isVersionAtLeast(16,2)) return true;
+    if (isBrowser(Browser.FIREFOX) && isVersionAtLeast(121)) return true;
+    if (isBrowser(Browser.IE) && isVersionAtLeast(111)) return true;
+    return false;
 }

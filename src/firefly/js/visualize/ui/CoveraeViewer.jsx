@@ -67,7 +67,7 @@ export function CoverageViewer({viewerId=DEFAULT_COVERAGE_VIEWER_ID,insideFlex=t
 
     if (hasPlots && (tblHasCoverage || forceShow)) {
         return (
-            <div style={{display:'flex', flexDirection:'column', width:'100%', background:'rgb(200, 200, 200)'}}>
+            <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
                 <MultiImageViewer viewerId={viewerId}
                                   insideFlex={insideFlex}
                                   canReceiveNewPlots={NewPlotMode.replace_only.key}
