@@ -61,7 +61,7 @@ function getStoreState(plotId, oldState) {
 
 const TEN_SECONDS= 10000;
 
-export const ImageViewer= memo( ({showWhenExpanded=false, plotId, inlineTitle, aboveTitle}) => {
+export const ImageViewer= memo( ({showWhenExpanded=false, plotId}) => {
 
     const [mousePlotId, setMousePlotId] = useState(lastMouseCtx().plotId);
     const {plotView,vr,drawLayersAry,taskCount} = useStoreConnector( (oldState) => getStoreState(plotId,oldState) );
@@ -100,8 +100,6 @@ export const ImageViewer= memo( ({showWhenExpanded=false, plotId, inlineTitle, a
     return (
         <ImageViewerView {...{plotView,
                          visRoot:vr,
-                         inlineTitle,
-                         aboveTitle,
                          drawLayersAry: deferredDrawLayersAry,
                          mousePlotId: deferredMousePlotId,
                          workingIcon: deferredTaskCount>0,
@@ -113,6 +111,4 @@ ImageViewer.displayName= 'ImageViewer';
 ImageViewer.propTypes= {
     plotId : PropTypes.string.isRequired,
     showWhenExpanded : PropTypes.bool,
-    inlineTitle: PropTypes.bool,
-    aboveTitle: PropTypes.bool,
 };

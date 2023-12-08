@@ -3,7 +3,7 @@
  */
 
 
-import {CssBaseline, CssVarsProvider} from '@mui/joy';
+import {CssBaseline, CssVarsProvider, Sheet} from '@mui/joy';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {pickBy} from 'lodash';
@@ -106,7 +106,7 @@ export class FireflyViewer extends PureComponent {
             return (<div style={{top: 0}} className='loading-mask'/>);
         } else {
             return (
-                <div id='App' className='rootStyle' style={style}>
+                <Sheet id='App' style={style}>
                         <header>
                             <BannerSection {...{menu, showUserInfo, appTitle, appIcon, altAppIcon, bannerLeftStyle, bannerMiddleStyle}}/>
                             <div id={warningDivId} data-decor='full' className='warning-div center'/>
@@ -121,7 +121,7 @@ export class FireflyViewer extends PureComponent {
                             <DynamicResults {...{views, showViewsSwitch, leftButtons, centerButtons, coverageSide,
                                 rightButtons, initLoadingMessage, initLoadCompleted}}/>
                         </main>
-                </div>
+                </Sheet>
             );
         }
     }

@@ -2,11 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Checkbox, Divider, IconButton, Sheet, Stack, Typography} from '@mui/joy';
 import React, {memo,Fragment} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, isString} from 'lodash';
 import shallowequal from 'shallowequal';
 import {sprintf} from '../../externalSource/sprintf';
+import BrowserInfo from '../../util/BrowserInfo.js';
 import {
     convertHDUIdxToImageIdx, convertImageIdxToHDU, getActivePlotView, getCubePlaneCnt, getFormattedWaveLengthUnits,
     getHDU, getHDUCount, getHDUIndex, getPlotViewById, getPtWavelength, hasPlaneOnlyWLInfo, isImageCube, isMultiHDUFits,
@@ -15,13 +17,12 @@ import {
 import {getExtName, getExtType} from '../FitsHeaderUtil.js';
 import {makeWorldPt} from '../Point.js';
 import {isHiPS, isHiPSAitoff, isImage} from '../WebPlot.js';
-import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
+import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {
-    dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchChangeHipsImageConversion, dispatchChangePrimePlot,
-    visRoot
-} from '../ImagePlotCntlr.js';
+    dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchChangeHipsImageConversion,
+    dispatchChangePrimePlot, visRoot } from '../ImagePlotCntlr.js';
 import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.js';
 import {ListBoxInputFieldView} from '../../ui/ListBoxInputField';
 import {showHiPSSurveysPopup} from '../../ui/HiPSImageSelect.jsx';
@@ -119,15 +120,16 @@ function HipsFitsConvertButton({pv}) {
 
     const {autoConvertOnZoom:auto}= pv.plotViewCtx.hipsImageConversion;
     return (
-        <div style={{display: 'flex', alignItems: 'center', padding: '1px 2px 1px 2px', margin: '0 5px 0 5px',
-            border: '1px solid rgba(60,60,60,.2)', borderRadius: '5px'}}>
-            <RadioGroupInputFieldView options={defHFOptions}  value={value} buttonGroup={true}
-                                      onChange={(ev) => doHiPSFitsConvert(pv,ev.target.value)} />
-            <div style={{paddingLeft: 3, display:'flex', alignItems:'center'}} title={buttonGroupTip}>
-                <input type='checkbox' checked={auto} onChange={() => changeAutoConvert(pv, !auto)} />
-                Auto
-            </div>
-        </div>
+        <Stack direction='row' alignItems='center' pl='.5'>
+            <RadioGroupInputFieldView {...{
+                options: defHFOptions, value, buttonGroup:true,
+                sx: {button:{height:'1.5em'}},
+                onChange: (ev) => doHiPSFitsConvert(pv,ev.target.value)
+            }}/>
+            <Checkbox label='Auto' checked={auto} onChange={() => changeAutoConvert(pv, !auto)}
+                      title={buttonGroupTip}
+                      sx={{pl:.5}} />
+        </Stack>
     );
 }
 
@@ -142,13 +144,11 @@ function HipsProjConvertButton({pv}) {
     const value= isHiPSAitoff(plot) ? 'aitoff' : 'sin';
     const buttonGroupTip= 'Change HiPS projection between spherical (180 deg) and Aitoff (360 deg)';
     return (
-        <div style={{display: 'flex', alignItems: 'center', padding: '1px 2px 1px 2px', margin: '0 5px 0 5px',
-            border: '1px solid rgba(60,60,60,.2)', borderRadius: '5px'}}>
-            <RadioGroupInputFieldView options={projOptions}  value={value} buttonGroup={true} title={buttonGroupTip}
-                                      onChange={(ev) =>
-                                          dispatchChangeCenterOfProjection({plotId:pv.plotId, fullSky:ev.target.value==='aitoff'})}
-            />
-        </div>
+        <RadioGroupInputFieldView {...{
+            options: projOptions, value, buttonGroup:true, title:buttonGroupTip,
+            sx: {pl:.5, button:{height:'1.5em'}},
+            onChange: (ev) => dispatchChangeCenterOfProjection({plotId:pv.plotId, fullSky:ev.target.value==='aitoff'})
+        }}/>
     );
 }
 
@@ -173,7 +173,7 @@ function makeHiPSImageTable(pv) {
         <div style={{display:'flex'}}>
                 <DropDownToolbarButton
                     text={'HiPS / MOC'} tip='Change displayed HiPS or add a MOC'
-                    horizontal={true} style={{margin: '0 5px 0 4px'}}
+                    horizontal={true}
                     useDropDownIndicator={true} dropDown={dropDown} />
         </div>
     );
@@ -191,12 +191,12 @@ const HiPSCoordSelect= memo(({plotId, imageCoordSys}) =>{
     const selectedIdx= Math.max(hipsCoordOptions.findIndex( (s) => s.c===imageCoordSys), 0);
     return (
         <div>
-            <ListBoxInputFieldView
-                inline={true} value={selectedIdx}
-                onChange={(ev,newValue) => dispatchChangeHiPS( {plotId,  coordSys: hipsCoordOptions[Number(newValue)].c})}
-                labelWidth={0} label={' '} tooltip={ 'Change HiPS survey coordinate system'}
-                options={hipsCoordOptions} multiple={false}
-            />
+            <ListBoxInputFieldView {...{
+                sx: {'.MuiSelect-root': {'minHeight': '1.6em'}},
+                inline: true, value: selectedIdx, options:hipsCoordOptions,
+                onChange: (ev,newValue) => dispatchChangeHiPS( {plotId,  coordSys: hipsCoordOptions[Number(newValue)].c}),
+                tooltip:'Change HiPS survey coordinate system',
+            }}/>
         </div>
     );
 });
@@ -226,19 +226,6 @@ export const VisCtxToolbarView= memo((props) => {
         searchActions= undefined,
         showMultiImageController=false }= props;
 
-    const rS= {
-        width: '100%',
-        display:'flex',
-        height: 28,
-        position: 'relative',
-        verticalAlign: 'top',
-        whiteSpace: 'nowrap',
-        flexDirection:'row',
-        flexWrap:'nowrap',
-        background:'rgba(227, 227, 227, .8)',
-        overflow: 'hidden',
-        alignItems: 'center',
-    };
 
     const extraLine= showMultiImageController && width<350;
     const plot= primePlot(pv);
@@ -302,7 +289,7 @@ export const VisCtxToolbarView= memo((props) => {
                            visible={mi.imageStatistics}
                            horizontal={true} onClick={() => stats(pv)}/>}
 
-            {isSpacialActionsDropVisible(searchActions,pv) && <ActionsDropDownButton {...{searchActions,pv}}/> }
+            {isSpacialActionsDropVisible(searchActions,pv) && <ActionsDropDownButton {...{searchActions,pv, style:{marginTop:3}}}/> }
             {makeExtensionButtons(extensionAry,pv)}
         </Fragment>
         );
@@ -312,7 +299,9 @@ export const VisCtxToolbarView= memo((props) => {
         <Fragment>
             {canConvertHF && <HipsFitsConvertButton pv={pv}/>}
             {hips && !canConvertHF && <HipsProjConvertButton pv={pv}/>}
+            {hips && <Divider orientation='vertical' sx={{mx:.5}}/> }
             {hips && <HiPSCoordSelect plotId={plot?.plotId} imageCoordSys={plot?.imageCoordSys}/>}
+            {hips && <Divider orientation='vertical' sx={{mx:.5}}/> }
             {hips && makeHiPSImageTable(pv)}
             {isHiPSAitoff(plot) &&
                 <ToolbarButton text='Center Galactic' tip='Align Aitoff HiPS to Galactic 0,0'
@@ -326,27 +315,40 @@ export const VisCtxToolbarView= memo((props) => {
         </Fragment>
     );
 
+   const makeTbSX= (theme) => ({
+       backgroundColor: ctxToolbarBG(theme,94),
+       width: '100%',
+       height: '2em',
+       position: 'relative',
+       whiteSpace: 'nowrap',
+       overflow: 'hidden',
+       verticalAlign: 'top',
+       flexWrap: 'nowrap',
+       alignItems: 'center',
+   } );
+
+
     if (extraLine && showMultiImageController && showOptions) {
         return (
-            <div style={{display:'flex', flexDirection:'column'}}>
-                <div style={rS}>
+            <Stack direction='column'>
+                <Stack {...{direction:'row', sx: makeTbSX }}>
                     <MultiImageControllerView plotView={pv} />
-                </div>
-                <div style={rS}>
+                </Stack>
+                <Stack {...{direction:'row', sx: makeTbSX }}>
                     {makeButtons()}
                     {makeHipsControls()}
-                </div>
-            </div>
+                </Stack>
+            </Stack>
         );
     }
     else {
         return (
-            <div style={rS}>
+            <Stack {...{direction:'row', sx: makeTbSX }}>
                 {showMultiImageController && <MultiImageControllerView plotView={pv} />}
-                {showMultiImageController && showOptions && <ToolbarHorizontalSeparator/>}
+                {showMultiImageController && showOptions && <Divider orientation='vertical' sx={{mx:.5}}  />}
                 {makeButtons()}
                 {makeHipsControls()}
-            </div>
+            </Stack>
         );
     }
 },
@@ -370,21 +372,10 @@ VisCtxToolbarView.propTypes= {
 };
 
 
-const leftImageStyle= {
-    cursor:'pointer',
-    paddingLeft: 3
-};
-
-const mulImStyle= {
-    display:'inline-flex',
-    height: 28,
-    position: 'relative',
-    verticalAlign: 'top',
-    whiteSpace: 'nowrap',
-    flexDirection:'row',
-    flexWrap:'nowrap',
-    alignItems: 'center',
-};
+export const ctxToolbarBG= (theme, opacity=90) =>
+    BrowserInfo.supportsCssColorMix() ?
+        `color-mix(in srgb, ${theme.vars.palette.neutral.softBg} ${opacity}%, transparent)` :
+        theme.vars.palette.neutral.softBg;
 
 
 export function MultiImageControllerView({plotView:pv}) {
@@ -434,24 +425,21 @@ export function MultiImageControllerView({plotView:pv}) {
     if (cIdx<0) cIdx= 0;
 
     return (
-        <div style={mulImStyle} title={tooltip}>
-            {startStr && <div style={{
-                width: '13em', overflow: 'hidden',
-                textOverflow: 'ellipsis', padding: '0 0 0 5px', textAlign: 'end'} }>
+        <Stack {...{direction:'row', flexWrap:'nowrap', alignItems:'center',  height:28, position:'relative', title:tooltip }}>
+            {startStr && <Typography {...{level:'body-sm', width: '13em', overflow: 'hidden',
+                textOverflow: 'ellipsis', pl:1, textAlign: 'end'} }>
                 <span style={{fontStyle: 'italic', fontWeight: 'bold'}}> {startStr} </span>
                 <span> {hduDesc} </span>
-            </div>}
+            </Typography>}
 
             {multiHdu && <FrameNavigator {...{pv, currPlotIdx:cIdx, minForInput:4, displayType:'hdu',tooltip}} />}
-            {cube && multiHdu && <ToolbarHorizontalSeparator style={{height: 20}}/>}
+            {cube && multiHdu && <Divider orientation='vertical' sx={{mx:.5}}  />}
             {cube &&
-            <div style={{
-                fontStyle: 'italic', fontWeight: 'bold',
-                overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 0 0 5px'}
-            }> {'Plane: '} </div> }
-            {wlStr && <div style={{paddingLeft: 6}}>{wlStr}</div>}
+                <Typography {...{level:'body-sm', fontWeight:'bold', fontStyle: 'italic',
+                    overflow: 'hidden', textOverflow: 'ellipsis', pl: 1}}>Plane: </Typography>}
+            {wlStr && <Typography {...{level:'body-sm', pl:.5}}>{wlStr}</Typography>}
             {cube && <FrameNavigator {...{pv, currPlotIdx:cIdx, minForInput:6, displayType:image?'cube':'hipsCube',tooltip}} /> }
-        </div>
+        </Stack>
     );
 }
 
@@ -540,21 +528,27 @@ function FrameNavigator({pv, currPlotIdx, minForInput, displayType, tooltip}) {
     const showNavControl= minForInput<=len;
     const currStr= `${currIdx+1}`;
 
-    return (
-        <div title= {tooltip}
-             style={{ display:'inline-flex', flexDirection:'row', flexWrap:'nowrap', alignItems: 'center', }}>
-            <img title= {tooltip} style={leftImageStyle} src={PAGE_LEFT}
-                                      onClick={() => changeFrameIdx({value:prevIdx+1}) }/>
-            <img title= {tooltip} style={{verticalAlign:'bottom', cursor:'pointer', paddingRight:4}} src={PAGE_RIGHT}
-                                       onClick={() => changeFrameIdx({value:nextIdx+1})} />
 
-            {showNavControl ? <StateInputField defaultValue={currStr} valueChange={changeFrameIdx} labelWidth={0} label={''}
-                                tooltip={`Enter frame number to jump to, right arrow goes forward, left arrow goes back\n${tooltip}`}
-                                showWarning={false} style={{width:getEmLength(len), textAlign:'right'}}
-                                validator={validator} onKeyDown={handleKeyDown} />
-                                : currStr}
-            {` / ${len}`}
-        </div>
+    return (
+        <Stack direction='row' alignItems='center' flexWrap='nowrap' title={tooltip} >
+            <IconButton aria-label={tooltip} onClick={() => changeFrameIdx({value:prevIdx+1}) }>
+                <img src={PAGE_LEFT}/>
+            </IconButton>
+            <IconButton aria-label={tooltip} onClick={() => changeFrameIdx({value:nextIdx+1}) }>
+                <img src={PAGE_RIGHT}/>
+            </IconButton>
+            {showNavControl ?
+                <StateInputField defaultValue={currStr} valueChange={changeFrameIdx}
+                                 sx={{'.MuiInput-root':{'minHeight':'3px', 'borderRadius':4, width:'5em'}}}
+                                 tooltip={`Enter frame number to jump to, right arrow goes forward, left arrow goes back\n${tooltip}`}
+                                 style={{width:getEmLength(len), textAlign:'right'}}
+                                 type='number'
+                                 validator={validator} onKeyDown={handleKeyDown} />
+                :
+                <Typography level='body-sm'>{currStr}</Typography>
+            }
+            <Typography level='body-sm'> {` / ${len}`} </Typography>
+        </Stack>
     );
 }
 

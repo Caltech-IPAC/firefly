@@ -428,7 +428,7 @@ function ViewAsText({text, ...rest}) {
 
     const label = 'View with formatting';
     return (
-        <PopupPanel title={'View as plain text'} style={{flexDirection: 'column'}} {...rest}>
+        <PopupPanel title={'View as plain text'} sx={{flexDirection: 'column'}} {...rest}>
             <div style={{display: 'flex', alignItems: 'center'}}>
                 <input id='doFormat' type='checkbox' title={label} onChange={onChange} checked={doFmt}/>
                 <label htmlFor='doFormat' style={{verticalAlign: ''}}>{label}</label>

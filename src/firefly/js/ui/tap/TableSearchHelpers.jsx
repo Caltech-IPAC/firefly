@@ -182,11 +182,8 @@ export function makeCollapsibleCheckHeader(base) {
 export function NavButtons({setServicesShowing, servicesShowing, currentPanel, setNextPanel}) {
 
     return (
-        <Stack {...{direction:'column', justifyContent:'center', spacing:.5, alignItems:'flex-end',
-            sx:{
-                mr:.2,
-                'button': {width:'100px'}
-            }
+        <Stack {...{direction:'column', justifyContent:'center', spacing:.5, alignItems:'flex-end', mr:.2,
+            sx:{ 'button': {width:'100px'} }
         }}>
             <ShowServicesButton {...{setServicesShowing,servicesShowing}}/>
             <GotoPanelButton {...{setNextPanel,currentPanel}}/>
