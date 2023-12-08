@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Badge} from '@mui/joy';
 import React, {useCallback} from 'react';
 import PropTypes from 'prop-types';
 
@@ -45,17 +46,14 @@ export function MenuItem({menuItem, isSelected, clickHandler, isWorking=false, b
         clickHandler ??= handleAction;
         clickHandler(menuItem);
     }, []);
-    return (
-        <div className={clsname}
-             title={menuItem.desc}
-             onClick={onClick}>
-
+    const item= (
+        <div className={clsname} title={menuItem.desc} onClick={onClick}>
             {isWorking && <img style={{height: 13, marginRight: 3}} src={LOADING}/>}
             {menuItem.label}
-            {!!badgeCount && <div className='menu__item--badge'>{makeBadge(badgeCount)}</div> }
-
         </div>
     );
+    return !badgeCount ? item : <Badge {...{badgeContent:badgeCount}}> {item} </Badge>;
+
 }
 
 export function Menu({menu={}}) {

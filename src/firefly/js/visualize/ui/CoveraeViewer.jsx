@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {Stack, Typography} from '@mui/joy';
 import React, {useEffect,useContext} from 'react';
 import {get,once} from 'lodash';
 import PropTypes from 'prop-types';
@@ -43,8 +44,8 @@ function makeNovCovMsg(covState, baseNoCovMsg, tbl_id) {
 }
 
 
-export function CoverageViewer({viewerId=DEFAULT_COVERAGE_VIEWER_ID,insideFlex=true, noCovMessage='No coverage available',
-                                workingMessage='Working...', noCovStyle={}}) {
+export function CoverageViewer({viewerId=DEFAULT_COVERAGE_VIEWER_ID,noCovMessage='No coverage available',
+                                workingMessage='Working...'}) {
 
     startWatcher(viewerId);
     const pv        = useStoreConnector(() => getActivePlotView(visRoot()));
@@ -67,13 +68,13 @@ export function CoverageViewer({viewerId=DEFAULT_COVERAGE_VIEWER_ID,insideFlex=t
 
     if (hasPlots && (tblHasCoverage || forceShow)) {
         return (
-            <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
+            <Stack {...{direction:'column', width:'100%'}}>
                 <MultiImageViewer viewerId={viewerId}
-                                  insideFlex={insideFlex}
+                                  insideFlex={true}
                                   canReceiveNewPlots={NewPlotMode.replace_only.key}
                                   controlViewerMounting={false}
                                   Toolbar={MultiViewStandardToolbar}/>
-            </div>
+            </Stack>
         );
     }
     else {
@@ -88,8 +89,9 @@ export function CoverageViewer({viewerId=DEFAULT_COVERAGE_VIEWER_ID,insideFlex=t
             msg= makeNovCovMsg(covState,noCovMessage,tbl_id);
         }
         return (
-            <div className='ComponentBackground' style={{...{paddingTop:35, width:'100%',textAlign:'center',fontSize:'14pt'},...noCovStyle}}>
-                {msg}</div>
+            <Typography level='body-lg' sx={{...{pt:4.5, width:'100%',textAlign:'center',fontSize:'14pt'},}}>
+                {msg}
+            </Typography>
         );
     }
 }

@@ -42,14 +42,14 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
             {!hasMenu ?
                 <div style={{width: 50, height: 1}}/> :
                 <DropDownToolbarButton
-                    text='More' tip='Other data to display' horizontal={true} useDropDownIndicator={true}
+                    text='More' tip='Other data to display' useDropDownIndicator={true}
                     style={{paddingRight: 20}}
                     dropDown={<OtherOptionsDropDown {...{menu, dpId, activeMenuLookupKey}} />}
                 />}
 
             {hasFileMenu &&
                 <DropDownToolbarButton
-                    text='File Contents' tip='Other data in file' horizontal={true} useDropDownIndicator={true}
+                    text='File Contents' tip='Other data in file' useDropDownIndicator={true}
                     style={{paddingRight: 20}}
                     dropDown={<FileMenuDropDown {...{fileMenu, dpId}} />}/>
             }
@@ -60,7 +60,7 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
                 </Button>}
             {showRedoSearchButton && analysisActivateFunc &&
                 <ToolbarButton
-                    text='Redo Search' tip='Redo Search' horizontal={true}
+                    text='Redo Search' tip='Redo Search'
                     onClick={() => {
                         dispatchSetSearchParams({dpId, activeMenuLookupKey, menuKey, params: undefined});
                         dispatchUpdateDataProducts(dpId, {

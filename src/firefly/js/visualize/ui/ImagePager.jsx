@@ -1,4 +1,5 @@
 
+import {Box} from '@mui/joy';
 import React from 'react';
 import {dispatchTableHighlight} from '../../tables/TablesCntlr.js';
 import {PagingBar} from '../../ui/PagingBar.jsx';
@@ -16,8 +17,8 @@ export function ImagePager({pageSize, tbl_id, style={}}) {
     };
 
     return (
-        <div role='PanelToolbar' style={style}>
+        <Box role='PanelToolbar' style={style}>
             <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:{onGotoPage}}} />
-        </div>
+        </Box>
     );
 }

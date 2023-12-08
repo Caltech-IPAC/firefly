@@ -5,7 +5,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {Button, Checkbox, Divider, IconButton, Stack, Tooltip} from '@mui/joy';
+import {Button, Checkbox, Divider, IconButton, Sheet, Stack, Tooltip} from '@mui/joy';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {ExpandType, dispatchChangeExpandedMode, dispatchExpandedAutoPlay, visRoot } from '../ImagePlotCntlr.js';
 import {primePlot, getActivePlotView} from '../PlotViewUtil.js';
@@ -30,7 +30,7 @@ function createOptions(expandedMode, singleAutoPlay, plotIdAry) {
             {(expandedMode===ExpandType.SINGLE && plotIdAry.length>1) ?
                 <>
                     <Divider orientation='vertical' sx={{mx:1}}/>
-                    <Checkbox {...{label:'Auto Play', checked:singleAutoPlay,
+                    <Checkbox {...{label:'Auto Play', size:'sm', checked:singleAutoPlay,
                         onChange:() => dispatchExpandedAutoPlay(!singleAutoPlay)
                     }} />
                     <Divider orientation='vertical' sx={{mx:1}}/>
@@ -42,7 +42,6 @@ function createOptions(expandedMode, singleAutoPlay, plotIdAry) {
 }
 
 const closeButtonStyle= {
-    display: 'inline-block',
     padding: '1px 12px 0 1px'
 };
 
@@ -60,26 +59,28 @@ export function ExpandedTools({closeFunc}) {
     const getPlotTitle = (plotId) => primePlot(visRoot(),plotId)?.title ?? '';
 
     return (
-        <Stack { ...{direction:'row', alignItems:'center', borderBottom: '1px solid rgba(0,0,0,.2)' }}>
-            {closeFunc && <CloseButton style={closeButtonStyle} onClick={closeFunc}/>}
-            {!single &&
-                <Stack {...{direction:'column', justifyContent:'space-between', minHeight:25, className:'disable-select'}}>
-                    <div style={{alignSelf:'flex-end', whiteSpace:'nowrap', display:'flex'}}>
-                        <WhichView/>
-                        {createOptions(expandedMode,singleAutoPlay, plotIdAry)}
-                        <PagingControl
-                            viewerItemIds={getExpandedViewerItemIds(getMultiViewRoot())}
-                            activeItemId={activePlotId}
-                            isPagingMode={expandedMode===ExpandType.SINGLE}
-                            getItemTitle={getPlotTitle}
-                            onActiveItemChange={dispatchChangeActivePlotView}
-                        />
-                    </div>
-                </Stack>}
-            <div style={{'flex': '1 1 auto'}}>
-                <VisMiniToolbar/>
-            </div>
-        </Stack>
+        <Sheet variant='soft'>
+            <Stack { ...{direction:'row', alignItems:'center', borderBottom: '1px solid rgba(0,0,0,.2)' }}>
+                {closeFunc && <CloseButton style={closeButtonStyle} onClick={closeFunc}/>}
+                {!single &&
+                    <Stack {...{direction:'column', justifyContent:'space-between', minHeight:25, className:'disable-select'}}>
+                        <div style={{alignSelf:'flex-end', whiteSpace:'nowrap', display:'flex'}}>
+                            <WhichView/>
+                            {createOptions(expandedMode,singleAutoPlay, plotIdAry)}
+                            <PagingControl
+                                viewerItemIds={getExpandedViewerItemIds(getMultiViewRoot())}
+                                activeItemId={activePlotId}
+                                isPagingMode={expandedMode===ExpandType.SINGLE}
+                                getItemTitle={getPlotTitle}
+                                onActiveItemChange={dispatchChangeActivePlotView}
+                            />
+                        </div>
+                    </Stack>}
+                <div style={{'flex': '1 1 auto'}}>
+                    <VisMiniToolbar/>
+                </div>
+            </Stack>
+        </Sheet>
     );
 }
 
@@ -98,19 +99,15 @@ function WhichView() {
             {showViewButtons &&
                    <ToolbarButton icon={ONE} tip={'Show single image at full size'}
                                   imageStyle={{width:24,height:24}}
-                                  enabled={true} visible={true}
-                                  horizontal={true}
                                   onClick={() => dispatchChangeExpandedMode(ExpandType.SINGLE)}/>}
             {showViewButtons &&
                    <ToolbarButton icon={GRID} tip={'Show all as tiles'}
-                                  enabled={true} visible={true} horizontal={true}
                                   imageStyle={{width:24,height:24}}
                                   onClick={() => dispatchChangeExpandedMode(ExpandType.GRID)}/>
             }
             {showViewButtons &&
                    <ToolbarButton icon={LIST} tip={'Choose which plots to show'}
                                   imageStyle={{width:24,height:24}}
-                                  enabled={true} visible={true} horizontal={true}
                                   onClick={() =>showExpandedOptionsPopup() }/>
             }
         </Stack>
@@ -134,7 +131,7 @@ export function PagingControl({viewerItemIds,activeItemId,isPagingMode,getItemTi
         const tip= active ? pTitle('Active Plot: ', getItemTitle(plotId)) : pTitle('Display: ', getItemTitle(plotId));
         return (
                 <Tooltip title={tip} key={idx} >
-                    <IconButton onClick={() => !active && onActiveItemChange(plotId)}
+                    <IconButton sz='sm' onClick={() => !active && onActiveItemChange(plotId)}
                                 sx={{minHeight:5, minWidth:5, p:'2px'}}>
                         <img src={active ? ACTIVE_DOT : INACTIVE_DOT}/>
                     </IconButton>
@@ -149,22 +146,22 @@ export function PagingControl({viewerItemIds,activeItemId,isPagingMode,getItemTi
         <Stack {...{direction:'column', alignItems:'center', sx:{button:{minHeight:10}} }}>
             <Stack {...{direction:'row', alignItems:'center'}}>
                 <Tooltip title={leftTip}>
-                    <Button {...{variant:'plain', color:'neutral',
+                    <Button {...{size:'sm',
                         onClick:() => onActiveItemChange(viewerItemIds[prevIdx]),
                         startDecorator:(<img src={PAGE_LEFT}/>)}}>
-                        <span style={{maxWidth:'8em', textOverflow:'ellipsis', overflow:'hidden'}}>
-                            {getItemTitle(viewerItemIds[prevIdx])}
-                        </span>
+                    <span style={{maxWidth:'8em', textOverflow:'ellipsis', overflow:'hidden'}}>
+                        {getItemTitle(viewerItemIds[prevIdx])}
+                    </span>
                     </Button>
                 </Tooltip>
                 <div style={{flex: '1 1 auto'}}/>
                 <Tooltip title={rightTip}>
-                    <Button {...{variant:'plain', color:'neutral',
+                    <Button {...{size:'sm',
                         onClick:() => onActiveItemChange(viewerItemIds[nextIdx]),
                         endDecorator:(<img src={PAGE_RIGHT}/>)}}>
-                        <span style={{maxWidth:'5em', textOverflow:'ellipsis', overflow:'hidden'}}>
-                            {getItemTitle(viewerItemIds[nextIdx])}
-                        </span>
+                    <span style={{maxWidth:'5em', textOverflow:'ellipsis', overflow:'hidden'}}>
+                        {getItemTitle(viewerItemIds[nextIdx])}
+                    </span>
                     </Button>
                 </Tooltip>
             </Stack>

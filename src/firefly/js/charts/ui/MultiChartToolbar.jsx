@@ -113,11 +113,8 @@ const MultiChartStd = ({viewerId, layoutType, activeItemId}) => {
         <div style={{display:'inline-flex', alignItems: 'center'}}>
             <ToolbarButton icon={ONE} tip={'Show single chart'}
                            imageStyle={{width:24,height:24, flex: '0 0 auto'}}
-                           enabled={true} visible={true}
-                           horizontal={true}
                            onClick={() => dispatchChangeViewerLayout(viewerId,'single')}/>
             <ToolbarButton icon={GRID} tip={'Show all charts as tiles'}
-                           enabled={true} visible={true} horizontal={true}
                            imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
                            onClick={() => dispatchChangeViewerLayout(viewerId,'grid')}/>
             {layoutType==='single' && viewerItemIds.length>2 &&
@@ -156,11 +153,8 @@ const MultiChartExt = ({viewerId, layoutType, activeItemId}) => {
                 <div style={{display: 'inline-block', verticalAlign:'top'}}>
                     <ToolbarButton icon={ONE} tip={'Show single chart'}
                                    imageStyle={{width:24,height:24, flex: '0 0 auto'}}
-                                   enabled={true} visible={true}
-                                   horizontal={true}
                                    onClick={() => dispatchChangeViewerLayout(viewerId,'single')}/>
                     <ToolbarButton icon={GRID} tip={'Show all charts as tiles'}
-                                   enabled={true} visible={true} horizontal={true}
                                    imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
                                    onClick={() => dispatchChangeViewerLayout(viewerId,'grid')}/>
                 </div>

@@ -28,7 +28,7 @@ export const LayoutType= new Enum(['CENTER', 'TOP_EDGE_CENTER', 'TOP_CENTER', 'T
 
 export const PopupPanel= memo((props) => {
     const {title='', visible=true, layoutPosition=LayoutType.TOP_CENTER, closePromise, closeCallback, modal=false,
-        requestToClose, mouseInDialog, requestOnTop, dialogId, zIndex=0, children, style,sx,
+        requestToClose, mouseInDialog, requestOnTop, dialogId, zIndex=0, children, sx,
         initLeft, initTop, onMove, element}= props;
     const [{left,top}, setPos]= useState({left:0,top:0});
     const [layout, setLayout]= useState(LayoutType.NONE);
@@ -80,7 +80,7 @@ export const PopupPanel= memo((props) => {
 
     if (!visible) return false;
     return (
-        <PopupHeaderTop {...{modal,zIndex,left,top,ctxRef,dialogMoveStart,dialogMoveEnd, onMouseEnter,onMouseLeave, style, sx,
+        <PopupHeaderTop {...{modal,zIndex,left,top,ctxRef,dialogMoveStart,dialogMoveEnd, onMouseEnter,onMouseLeave, sx,
             dialogMove,children,title,askParentToClose, visibility:layout===LayoutType.NONE ? 'hidden' : 'visible'}}>
             {children}
         </PopupHeaderTop>
@@ -99,7 +99,6 @@ PopupPanel.propTypes= {
     mouseInDialog : func,
     modal : bool,
     visible : bool,
-    style : object,
     sx: object,
     initLeft: number,
     initTop: number,
@@ -128,24 +127,25 @@ function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart
                         '.ff-dialog-title-bar' : { cursor:'grab' },
                         '.ff-dialog-title-bar:active' : { cursor:'grabbing' }
                     }) }}>
-                <Stack direction='row' justifyContent='space-between' className='ff-dialog-title-bar'
-                       sx={{position:'relative', height:'1.8em', width:'100%', mb:1}}
+                <Stack direction='row' justifyContent='space-between' alignItems='center'
+                       className='ff-dialog-title-bar'
+                       sx={{position:'relative', height:'1.8em', mb:.5, ml:.5}}
                        ref={(c) => ctxRef.titleBarRef=c}
                        onTouchStart={dialogMoveStart} onTouchMove={dialogMove}
                        onTouchEnd={dialogMoveEnd} onMouseDownCapture={dialogMoveStart}>
-                    <DialogTitle  sx= {{ ml:.5, mt:.5}} >
+                    <DialogTitle  sx= {{ maxWidth:'35rem', display:'block', textOverflow:'ellipsis',
+                        whiteSpace:'nowrap', overflow:'hidden'}} >
                         {title}
                     </DialogTitle>
                     <Tooltip placement="left" title='Close'>
-                        <IconButton onClick={askParentToClose} title='Close'
-                                    sx={{minHeight:12, minWidth:12, p:.5}}>
+                        <IconButton onClick={askParentToClose} title='Close' >
                             <img src={DELETE}/>
                         </IconButton>
                     </Tooltip>
                 </Stack>
-                <DialogContent sx={{ml:.5}}>
+                <Box className='ff-dialog-content' sx={{ml:.5}}>
                     {children}
-                </DialogContent>
+                </Box>
             </Card>
         </Box>
     );

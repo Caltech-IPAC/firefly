@@ -293,7 +293,7 @@ function HiPSPanelPopupButton({groupKey:gk, polygonKey, whichOverlay=CONE_CHOICE
 
     return (
         <ToolbarButton {...{
-            icon:CLICK, tip, bgDark:true, horizontal:true, imageStyle:{height:18, width:18},
+            icon:CLICK, tip, imageStyle:{height:18, width:18},
             onClick:(element) => showDialog(element)
         }}/>
     );

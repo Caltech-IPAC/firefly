@@ -92,7 +92,7 @@ const toolsStyle= {
 };
 
 const tStyle= { display:'inline-block', whiteSpace: 'nowrap', minWidth: '3em', paddingLeft : 5, marginTop: -1 };
-const closeButtonStyle= { display: 'inline-block', padding: '1px 12px 0 1px' };
+const closeButtonStyle= { padding: '1px 12px 0 1px' };
 
 function Toolbar({viewerId, tableId:tbl_id, closeFunc=null, maxImageCnt, defaultImageCnt, makeRequestFromRow,
                      wcsMatchType, activePlotId,

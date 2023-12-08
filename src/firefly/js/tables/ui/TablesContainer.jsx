@@ -66,7 +66,7 @@ function ExpandedView(props) {
     return (
         <div style={{ display: 'flex', height: '100%', flexGrow: 1, flexDirection: 'column', overflow: 'hidden'}}>
             <div style={{marginBottom: 3}}>
-                {closeable && <CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
+                {closeable && <CloseButton style={{paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
             </div>
             {!isEmpty(tables) &&
                 <div style={{position: 'relative', flexGrow: 1}}>
