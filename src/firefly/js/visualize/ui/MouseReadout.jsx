@@ -21,7 +21,7 @@ export const MouseReadoutLock= memo(({gArea, gAreaLabel, style={}, lockByClick})
     const label= 'Lock by click';
     return (
         <React.Fragment>
-            <Stack direction='row' style={s} title='Click on an image to lock the display at that point.'>
+            <Stack direction='row' style={s} alignSelf='center' title='Click on an image to lock the display at that point.'>
                 <Checkbox size='sm' label={gAreaLabel?'':label} checked={lockByClick}
                           onChange={() => {
                               dispatchChangePointSelection('mouseReadout', !lockByClick);
@@ -99,16 +99,6 @@ DataReadoutItem.propTypes = {
     monoFont:       bool,
 };
 
-
-
-const defButtonStyle= {
-    borderRadius:2,
-    backgroundColor:'rgba(255,255,255,.9',
-    border:'solid transparent',
-    borderWidth: '0 0 1px 0'
-};
-
-
 export function CopyToClipboard({value, title, style, size=12, buttonStyle={}}) {
     const uncheckedIco = size > 12 ? CLIPBOARD_LARGE : CLIPBOARD;
     const checkedIco = size > 12 ? CHECKED_LARGE : CHECKED;
@@ -126,8 +116,9 @@ export function CopyToClipboard({value, title, style, size=12, buttonStyle={}}) 
 
     return (
         <div style={style}>
-            <ToolbarButton icon={clipIcon} tip={title} bgDark={true} style={{...defButtonStyle, ...buttonStyle}} imageStyle={{height:size, width:size}}
-                           horizontal={true} onClick={() => doCopy(value)} />
+            <ToolbarButton icon={clipIcon} tip={title} imageStyle={{height:size, width:size}}
+                           sx={{...buttonStyle,'.ff-toolbar-iconbutton' : {padding:'0'}}}
+                           onClick={() => doCopy(value)} />
         </div>
     );
 

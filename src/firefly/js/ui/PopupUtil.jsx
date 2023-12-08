@@ -29,7 +29,10 @@ export const POPUP_DIALOG_ID = 'ModalDialog';
  * @param {boolean} [show=true] show or hide this dialog
  */
 export function showModal(content, show=true) {
-    if (!show) dispatchHideDialog(MODAL_DIALOG_ID);
+    if (!show) {
+        dispatchHideDialog(MODAL_DIALOG_ID);
+        return;
+    }
     DialogRootContainer.defineDialog(MODAL_DIALOG_ID, <ModalDialog>{content}</ModalDialog>);
     dispatchShowDialog(MODAL_DIALOG_ID);
 }
@@ -40,13 +43,13 @@ export function showTmpModal(content, displayTime=3000) {
 }
 
 export function showPinMessage(text) {
-    showTmpModal( ( <Typography level='h3' sx={{padding: 1}}>{text}</Typography> ), 500 );
+    showTmpModal( ( <Typography color='primary' level='h2' sx={{p: 1}}>{text}</Typography> ), 500 );
 }
 
 /**
  * Creates and shows the modal dialog.
  * @param {object} p
- * @param {string | object}  p.content can be a string or a react component
+ * @param {string | object}  p.content can be a string or a React component
  * @param {string} [p.title] popup title
  * @param {boolean} [p.modal=false] when true, glass panel will be under the popup
  * @param {boolean} [p.show=true] show or hide this dialog
@@ -99,7 +102,7 @@ export function hideInfoPopup() {
 
 function makeContent(content) {
     return (
-        <Stack {...{py:1, spacing:2}}>
+        <Stack {...{px:2, py:1, spacing:2}}>
             <Stack {...{className:'FF-Popup-Content', minWidth:350, maxWidth: 500, overflow: 'hidden'}}>
                 {isString(content) ? ( <Typography level='body-md'>{content}</Typography> ) : content}
             </Stack>

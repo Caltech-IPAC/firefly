@@ -1,3 +1,4 @@
+import {Stack} from '@mui/joy';
 import React, {useState} from 'react';
 import {get} from 'lodash';
 import {primePlot} from '../PlotViewUtil.js';
@@ -129,18 +130,18 @@ export function ImageCenterDropDown({visRoot:vr, visible, mi}) {
                 <TargetPanel groupKey={'target-move-group'} labelWidth={80}
                              label={'Center On:'} defaultToActiveTarget={false}
                              showResolveSourceOp={false} showExample={false}/>
-                <div style={{display:'flex', flexDirection:'column'}}>
+                <Stack {...{direction:'column'}}>
                     <CompleteButton text= 'Go' innerStyle={{width:'100%'}} onSuccess={moveToTarget} fireOnEnter={true} />
-                    <CompleteButton style={{ marginTop:4}} innerStyle={{width:'100%'}}
+                    <CompleteButton style={{ marginTop:4, whiteSpace:'nowrap' }} innerStyle={{width:'100%'}}
                                     text= 'Go & Mark' onSuccess={createMarkerAndMoveToTarget} />
-                </div>
+                </Stack>
             </FieldGroup>
             {recentAry.length>0 && <DropDownVerticalSeparator useLine={true}/>}
             <DropDownSubMenu text={'Recent Positions'} visible={recentAry.length>0}>
                 {() =>
                     getRecentTargets().map( (t) => <ToolbarButton text={formatWorldPt(t)} tip={formatWorldPtToString(t)}
                                                                   style={{width:'100%'}}
-                                                                  enabled={Boolean(plot)} horizontal={false} key={t.toString()}
+                                                                  enabled={Boolean(plot)} key={t.toString()}
                                                                   onClick={() => dispatchRecenter({plotId:pv.plotId, centerPt:t})} />)
                 }
             </DropDownSubMenu>
@@ -151,7 +152,7 @@ export function ImageCenterDropDown({visRoot:vr, visible, mi}) {
     return (
         <DropDownToolbarButton icon={CENTER_DROP}
                                tip='Image center drop down. Center images.'
-                               enabled={Boolean(plot)} horizontal={true} visible={visible}
+                               enabled={Boolean(plot)} visible={visible}
                                useDropDownIndicator={true}
                                imageStyle={{width:24, height:24}}
                                dropDown={dropDown}/>

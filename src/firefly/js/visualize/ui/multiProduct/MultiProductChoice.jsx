@@ -1,3 +1,4 @@
+import {Box, Stack} from '@mui/joy';
 import React, {useEffect, useState} from 'react';
 import {MultiChartViewer} from '../../../charts/ui/MultiChartViewer.jsx';
 import {SHOW_CHART, SHOW_IMAGE, SHOW_TABLE} from '../../../metaConvert/DataProductsType.js';
@@ -11,9 +12,6 @@ import {MultiImageViewer} from '../MultiImageViewer.jsx';
 
 const imageOp= {label: 'Image', value: SHOW_IMAGE};
 
-const choiceTBStyle= {display:'flex', flexDirection: 'column', background: '#c8c8c8', width:'100%', height:'100%'};
-const chartChoiceTBStyle= { width:'100%', height:'calc(100% - 30px)', background: '#c8c8c8'};
-const tbInternalStyle= {display:'flex', flexDirection: 'row', alignItems:'center', height:30};
 
 
 
@@ -35,39 +33,39 @@ export function MultiProductChoice({
         });
     }, [table]);
     const toolbar = (
-        <div style={tbInternalStyle}>
-            {makeDropDown && <div style={{height: 30}}> {makeDropDown()} </div>}
+        <Stack {...{direction:'row', alignItems:'center', height:30}}>
+            {makeDropDown && <Box sx={{height: 30}}> {makeDropDown()} </Box>}
             {mayToggle && <RadioGroupInputFieldView wrapperStyle={{paddingLeft: 20}}
                                                     {...{options, value: whatToShow, buttonGroup: true, onChange}} />}
-        </div>);
+        </Stack>);
 
     switch (whatToShow) {
         case SHOW_CHART:
             return (
-                <div style={chartChoiceTBStyle}>
+                <Stack {...{ width:'100%', height:'calc(100% - 30px)', direction:'column'}}>
                     {toolbar}
                     <MultiChartViewer viewerId={chartViewerId} closeable={false}
                                       autoRowOriented={false}
                                       canReceiveNewItems={NewPlotMode.none.key}/>
-                </div>
+                </Stack>
             );
         case SHOW_TABLE:
             return (
-                <div style={choiceTBStyle}>
+                <Stack {...{direction: 'column', width:'100%', height:'100%'}}>
                     {toolbar}
                     <TablesContainer tbl_group={tableGroupViewerId} closeable={false} expandedMode={false}/>
-                </div>
+                </Stack>
             );
         case SHOW_IMAGE:
             return (
-                <div style={choiceTBStyle}>
+                <Stack {...{direction: 'column', width:'100%', height:'100%'}}>
                     {mayToggle && toolbar}
                     <MultiImageViewer {...{
                         viewerId:imageViewerId, insideFlex:true,
                         canReceiveNewPlots: NewPlotMode.none.key, tableId:metaDataTableId, controlViewerMounting:false,
                         makeDropDown: !mayToggle ? makeDropDown : undefined,
                         Toolbar:ImageMetaDataToolbar, factoryKey}} />
-                </div>
+                </Stack>
             );
     }
     return false;

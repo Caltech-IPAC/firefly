@@ -2,18 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Badge, Button, CircularProgress, Divider, IconButton, Stack} from '@mui/joy';
 import React, {useCallback} from 'react';
 import PropTypes from 'prop-types';
 
 import {COMMAND, getMenu} from '../core/AppDataCntlr.js';
 import {flux} from '../core/ReduxFlux.js';
-import {dispatchShowDropDown} from '../core/LayoutCntlr.js';
+import {dispatchShowDropDown, getLayouInfo} from '../core/LayoutCntlr.js';
 import {BgMonitorButton} from '../core/background/BgMonitorButton.jsx';
-import {makeBadge} from './ToolbarButton.jsx';
-
-import './Menu.css';
-
-import LOADING from 'html/images/gxt/loading.gif';
+import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
 
 function handleAction (menuItem) {
 
@@ -36,43 +33,94 @@ function handleAction (menuItem) {
  * @param p.clickHandler     onClick handler.  Defaults to #handleAction
  * @param p.isWorking
  * @param p.badgeCount
- * @param p.idx
+ * @param p.size
  * @returns {JSX.Element}
  */
-export function MenuItem({menuItem, isSelected, clickHandler, isWorking=false, badgeCount=0}) {
-    const clsname = 'menu__item' + (isSelected ? ' menu__item-selected' : '');
+export function MenuItem({menuItem, isSelected, size='lg', clickHandler, isWorking=false, badgeCount=0, sx}) {
     const onClick = () => {
         clickHandler ??= handleAction;
         clickHandler(menuItem);
     };
-    return (
-        <div className={clsname}
-             title={menuItem.desc}
-             onClick={onClick}>
 
-            {isWorking && <img style={{height: 13, marginRight: 3}} src={LOADING}/>}
+    // const variant= menuItem.type==='COMMAND' ? 'plain' : isSelected?'solid' : 'soft';
+    const variant= menuItem.type==='COMMAND' ? 'plain' : 'soft';
+    const color= menuItem.type==='COMMAND' ? 'neutral' : 'primary';
+
+    const startDecorator= isWorking ? <CircularProgress {...{sx:{'--CircularProgress-size':'12px'}, size:'sm' }}/> : undefined;
+
+    const item=(
+        <Button {...{
+            className: 'ff-MenuItem',
+            sx: (theme) => {
+                return ({
+                    borderBottomRightRadius: menuItem.type !== 'COMMAND' ? 0 : undefined,
+                    borderBottomLeftRadius: menuItem.type !== 'COMMAND' ? 0 : undefined,
+                    background: isSelected ? theme.vars.palette.background.surface : undefined,
+                    color: isSelected ? theme.vars.palette.text.primary : undefined,
+                    ':hover': {
+                        color: isSelected ? theme.vars.palette.primary.solidBg : undefined,
+                        background: isSelected ? theme.vars.palette.background.surface : undefined,
+                    },
+                    ...sx
+                });
+            },
+            size, color, variant, onClick, startDecorator}}>
             {menuItem.label}
-            {!!badgeCount && <div className='menu__item--badge'>{makeBadge(badgeCount)}</div> }
-
-        </div>
+        </Button>
     );
+
+    return !badgeCount ? item : <Badge {...{badgeContent:badgeCount}}> {item} </Badge>;
+
 }
 
 export function Menu({menu={}}) {
-    const {menuItems=[], showBgMonitor=true} = menu;
+    const {menuItems, showBgMonitor=true} = menu;
     if (!menuItems.length) return <div/>;
 
-    const items = menuItems.map((item, idx) => <MenuItem key={idx} menuItem={item} isSelected={item.action === menu.selected}/>);
+    let selected= menu.selected;
+
+    const selectedItem= menuItems.find(({action}) => (action===selected));
+    const {dropDown={}}= getLayouInfo() ?? {};
+    if (!selectedItem && dropDown.visible) {
+        selected= menuItems.find(({action}) => (action===dropDown.view))?.action ?? menuItems[0].action;
+    }
+
+    const items = menuItems
+        .filter(({action,type}) => (action!=='app_data.helpLoad' && type!=='COMMAND'))
+        .map((item, idx) => <MenuItem key={idx} menuItem={item} isSelected={item.action === selected}/>);
+
+
+    const helpItem= menuItems.find(({action,type}) => (action==='app_data.helpLoad' && type==='COMMAND'));
+
+    const hasRight= Boolean(showBgMonitor || helpItem);
 
     return (
-        <div className='menu__main'>
-            <div className='menu__item--holder'> {items} </div>
-            <div className='menu__item--holder'>
-                {showBgMonitor && <BgMonitorButton/>}
-            </div>
-        </div>
+        <Stack direction='row' justifyContent={'space-between'}>
+            <Stack direction='row'> {items} </Stack>
+            <Stack direction='row'>
+                {hasRight && <Divider orientation='vertical' sx={{mx:1}} />}
+                {showBgMonitor && <BgMonitorButton /> }
+                {helpItem && <AppHelpButton {...{ menuItem:helpItem, }}/>}
+            </Stack>
+        </Stack>
     );
 }
+
+export function AppHelpButton({menuItem,sx}) {
+
+    const onClick = useCallback(() => {
+        handleAction(menuItem);
+    }, []);
+
+    return (
+        <IconButton {...{sx, variant:'plain', color:'neutral', onClick}}>
+            <QuestionMarkIcon/>
+        </IconButton>
+    );
+}
+
+
+
 
 Menu.propTypes = {
     menu   : PropTypes.object.isRequired

@@ -1,3 +1,4 @@
+import {Box, Tooltip, Typography} from '@mui/joy';
 import React from 'react';
 import {get} from 'lodash';
 import {dispatchWcsMatch, WcsMatchType} from '../ImagePlotCntlr.js';
@@ -23,12 +24,13 @@ function changeMatchType(vr, matchType, lockMatch) {
             const msgTitle = 'The following image(s) do not have WCS:';
             const msgDesc = warningTitles.join(', ');
             const renderContent = (
-                <div>
-                    {msgTitle} <br></br> <br></br>
-                    <div style={{padding: '5', whiteSpace: 'normal', letterSpacing: '1', lineHeight: '1.5'}}>
+                <Box>
+                    <Typography level='title-md'>{msgTitle} </Typography>
+                    <br/> <br/>
+                    <Typography style={{padding: '5', whiteSpace: 'normal', letterSpacing: '1', lineHeight: '1.5'}}>
                         {msgDesc}
-                    </div>
-                </div>);
+                    </Typography>
+                </Box>);
             showInfoPopup(renderContent, 'Warning');
         }
     }
@@ -61,13 +63,12 @@ export function MatchLockDropDown({visRoot:vr, enabled, visible, inDropDown=fals
     const hasWcs= p && hasWCSProjection(p);
     const hasTarget= Boolean(p && get(p, ['attributes',PlotAttribute.FIXED_TARGET]));
     const buttonIndentStyle = {marginLeft: 15};
-    const titleDiv= {fontSize:'10pt', fontWeight: 'bold', padding: '0 0 3px 0'};
 
     const dropDown= (
         <SingleColumnMenu>
-            <div style={titleDiv} title='Align all images to the selected image, but leave unlocked'>
-                Align-only Options
-            </div>
+            <Tooltip title={'Align all images to the selected image, but leave unlocked'}>
+                <Typography> Align-only Options </Typography>
+            </Tooltip>
             <ToolbarButton text='by WCS' tip='Align by WCS (no locking)'
                            enabled={hasWcs && wcsCnt>1}
                            horizontal={false} key={'by wcs'}
@@ -97,9 +98,9 @@ export function MatchLockDropDown({visRoot:vr, enabled, visible, inDropDown=fals
                            onClick={() => changeMatchType(vr, WcsMatchType.PixelCenter, false)}/>
 
             <DropDownVerticalSeparator useLine={true}/>
-            <div style={titleDiv} title='Align all images to the selected image, and lock this mode'>
-                Align and Lock Options
-            </div>
+            <Tooltip title={'Align all images to the selected image, and lock this mode'}>
+                <Typography>Align and Lock Options</Typography>
+            </Tooltip>
 
             <ToolbarButton text='Unlock' tip='Unlock the alignment of all images' hasCheckBox={true} checkBoxOn={!wcsMatchType}
                                      enabled={true} horizontal={false} key={'unlock'}

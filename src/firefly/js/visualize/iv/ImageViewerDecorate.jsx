@@ -220,15 +220,15 @@ function ZoomGroup({visRoot, pv, show}) {
         <Stack direction='row' alignItems='flex-start' sx={sxFunc}>
             {manageExpand && <ToolbarButton icon={OUTLINE_EXPAND}
                                             tip='Expand this panel to take up a larger area'
-                                            horizontal={true} onClick={() =>expand(pv?.plotId, false)}/>}
+                                            onClick={() =>expand(pv?.plotId, false)}/>}
 
             <Stack direction='row' alignItems='flex-start'>
-                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.UP} horizontal={true}/>
-                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.DOWN} horizontal={true}/>
+                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.UP} />
+                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.DOWN} />
             </Stack>
             <Stack direction='row' alignItems='flex-start'>
-                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.FIT} horizontal={true}/>
-                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.FILL} horizontal={true}/>
+                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.FIT} />
+                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.FILL} />
             </Stack>
         </Stack>
     );

@@ -37,7 +37,6 @@ const tStyle= {
 };
 
 const closeButtonStyle= {
-    display: 'inline-block',
     padding: '1px 12px 0 1px'
 };
 

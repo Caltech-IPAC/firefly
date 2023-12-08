@@ -44,7 +44,7 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
 
 
     const sx= (theme) => ({
-        height: '1.2em',
+        height: '1.3em',
         borderRadius: '5px',
         overflow:'hidden',
         border: '2px solid rgba(0,0,0,.1)',
@@ -79,10 +79,9 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
                                                      prefChangeFunc={showWavelengthFailed} /> }
             {<MouseReadoutLock gArea='lock' gAreaLabel='lockLabel'  lockByClick={readout.lockByClick} />}
             <ToolbarButton icon={POPOUT_ICON}
-                           style={{gridArea:'popout'}}
+                           sx={{gridArea:'popout','.ff-toolbar-iconbutton' : {padding:'1px'}}}
                            imageStyle={{width:16,flexGrow:0}}
                            tip='Show expanded readout, thumbnail and magnifier'
-                           horizontal={true}
                            onClick={() => {
                                showMouseReadoutPopout();
                            }}/>

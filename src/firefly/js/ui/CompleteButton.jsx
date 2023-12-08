@@ -4,7 +4,7 @@
 
 import {delay, isFunction, isUndefined} from 'lodash';
 import React, {useContext, useEffect} from 'react';
-import {Button} from '@mui/joy';
+import {Box, Button} from '@mui/joy';
 import PropTypes from 'prop-types';
 import {validateFieldGroup, getFieldGroupResults} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
@@ -76,10 +76,9 @@ function onClick(onSuccess,onFail,registeredComponents, closeOnValid,groupKey,
 
 
 export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
-                          closeOnValid=true, dialogId,includeUnmounted= false,
-                          primary=true,
+                          closeOnValid=true, dialogId,includeUnmounted= false, primary=true,
                           groupsToUse= () => groupKey,
-                          style={}, innerStyle= {}, changeMasking, fireOnEnter= false,
+                          style={}, sx, changeMasking, fireOnEnter= false,
                                     getDoOnClickFunc}) {
     const {registeredComponents,groupKey:ctxGroupKey}= useContext(FieldGroupCtx);
     if (!groupKey && ctxGroupKey) groupKey= ctxGroupKey;
@@ -108,9 +107,12 @@ export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
 
 
     return (
-        <div style={style}>
-            <Button {...{size:'md', variant: primary?'solid':'soft', color: primary?'primary':'neutral', onClick: onComplete}}>{text}</Button>
-        </div>
+        <Box sx={sx} style={style}>
+            <Button {...{className: 'ff-CompleteButton', size:'md',
+                variant: primary?'solid':undefined,
+                color: primary?'primary':undefined,
+                onClick: onComplete}}>{text}</Button>
+        </Box>
     );
 }
 
@@ -124,6 +126,7 @@ CompleteButton.propTypes= {
     closeOnValid: PropTypes.bool,
     dialogId: PropTypes.string,
     style: PropTypes.object,
+    sx: PropTypes.object,
     innerStyle: PropTypes.object,
     includeUnmounted : PropTypes.bool,
     changeMasking: PropTypes.func,

@@ -3,6 +3,7 @@
  */
 
 import './ChartPanel.css';
+import {Badge} from '@mui/joy';
 
 import React, {useContext, useEffect} from 'react';
 import PropTypes from 'prop-types';
@@ -35,7 +36,6 @@ import {SplitPanel} from '../../ui/panel/DockLayoutPanel';
 import {hideInfoPopup, showInfoPopup, showPinMessage} from '../../ui/PopupUtil.jsx';
 import {TextButton} from '../../ui/TextButton.jsx';
 import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga';
-import {makeBadge} from '../../ui/ToolbarButton.jsx';
 
 export const PINNED_CHART_PREFIX = 'pinned-';
 export const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
@@ -166,10 +166,12 @@ export function BadgeLabel({labelStr}) {
     const badgeCnt= useStoreConnector(() => getViewerItemIds(getMultiViewRoot(),PINNED_VIEWER_ID)?.length??0);
     return badgeCnt===0 ?  labelStr:
         (
-            <div>
-                <div className='text-ellipsis' style={{marginRight: 17}}>{labelStr}</div>
-                {makeBadge(badgeCnt, {borderWidth: 1, margin:'2px 5px', paddingRight:2})}
-            </div>
+            <Badge {...{size:'sm', color:'warning', badgeContent:badgeCnt,
+                sx:{'.MuiBadge-badge': {top:9, right:6}} }}>
+                <div>
+                    <div className='text-ellipsis' style={{marginRight: 17}}>{labelStr}</div>
+                </div>
+            </Badge>
         );
 }
 

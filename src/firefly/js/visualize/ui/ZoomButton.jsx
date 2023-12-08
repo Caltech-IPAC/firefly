@@ -7,7 +7,7 @@ import PropTypes from 'prop-types';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {dispatchZoom} from '../ImagePlotCntlr.js';
 import {getZoomMax, getNextZoomLevel, UserZoomTypes, getZoomDesc} from '../ZoomUtil.js';
-import {getFoV, primePlot} from '../PlotViewUtil.js';
+import {primePlot} from '../PlotViewUtil.js';
 import {showZoomOptionsPopup} from '../../ui/ZoomOptionsPopup.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {isImage} from '../WebPlot.js';
@@ -79,17 +79,16 @@ export function isZoomMax(pv) {
     return (nextZ>zMax );
 }
 
-export const ZoomButton= ({plotView:pv,zoomType,visible=true, horizontal=true, size=28}) => (
+export const ZoomButton= ({plotView:pv,zoomType,visible=true, size=28}) => (
         <ToolbarButton icon={zoomType.icon} tip={zoomType.tip} imageStyle={{flexGrow:0, width:size, height:size}}
                        enabled={Boolean(primePlot(pv))} visible={visible}
-                       horizontal={horizontal} onClick={() => zoom(pv,zoomType)}/>
+                       onClick={() => zoom(pv,zoomType)}/>
     );
 
 
 ZoomButton.propTypes= {
     plotView : PropTypes.object,
     visible : PropTypes.bool,
-    horizontal: PropTypes.bool,
     size: PropTypes.number,
     zoomType : PropTypes.oneOf([ZoomType.UP,ZoomType.DOWN,ZoomType.ONE,ZoomType.FIT,ZoomType.FILL])
 };
