@@ -5,7 +5,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {IconButton, Stack} from '@mui/joy';
+import {IconButton, Sheet, Stack} from '@mui/joy';
 import {dispatchChangeViewerLayout} from '../MultiViewCntlr.js';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
@@ -38,37 +38,36 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
     if (!showImageToolbar) return <div/>;
 
     return (
-        <Stack {...{direction:'row', flexWrap:'nowrap', alignItems: 'center', justifyContent: 'space-between',
-             width:'100%', height: 30, style:toolbarStyle}}>
-            <Stack {...{direction:'row', alignItems: 'center', flexWrap:'nowrap'}}>
-                {moreThanOne && <ToolbarButton icon={ONE} tip={'Show single image at full size'}
-                               imageStyle={{width:24,height:24, flex: '0 0 auto'}}
-                               horizontal={true}
-                               onClick={() => dispatchChangeViewerLayout(viewerId,'single')}/>}
-                {moreThanOne && <ToolbarButton icon={GRID} tip={'Show all as tiles'}
-                               horizontal={true}
-                               imageStyle={{width:24,height:24, flex: '0 0 auto'}}
-                               onClick={() => dispatchChangeViewerLayout(viewerId,'grid')}/>}
-                {useImageList && moreThanOne &&
-                    <ToolbarButton icon={LIST} tip={'Choose which plots to show'}
-                                   imageStyle={{width:24,height:24}}
-                                   horizontal={true}
-                                   onClick={() =>showExpandedOptionsPopup('Pinned Images', viewerId) }/>
-                }
-                {layoutType==='single' && moreThanOne &&
-                    <>
-                        <IconButton {...{ onClick:() => dispatchChangeActivePlotView(viewerPlotIds[prevIdx])}}>
-                            <img src={PAGE_LEFT}/>
-                        </IconButton>
-                        <IconButton {...{ onClick:() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])}}>
-                            <img src={PAGE_RIGHT}/>
-                        </IconButton>
-                    </>
-                }
-                {makeDropDown?.()}
+        <Sheet variant='soft'>
+            <Stack {...{direction:'row', flexWrap:'nowrap', alignItems: 'center', justifyContent: 'space-between',
+                width:'100%', height: 32, style:toolbarStyle}}>
+                <Stack {...{direction:'row', alignItems: 'center', flexWrap:'nowrap'}}>
+                    {moreThanOne && <ToolbarButton icon={ONE} tip={'Show single image at full size'}
+                                                   imageStyle={{width:24,height:24, flex: '0 0 auto'}}
+                                                   onClick={() => dispatchChangeViewerLayout(viewerId,'single')}/>}
+                    {moreThanOne && <ToolbarButton icon={GRID} tip={'Show all as tiles'}
+                                                   imageStyle={{width:24,height:24, flex: '0 0 auto'}}
+                                                   onClick={() => dispatchChangeViewerLayout(viewerId,'grid')}/>}
+                    {useImageList && moreThanOne &&
+                        <ToolbarButton icon={LIST} tip={'Choose which plots to show'}
+                                       imageStyle={{width:24,height:24}}
+                                       onClick={() =>showExpandedOptionsPopup('Pinned Images', viewerId) }/>
+                    }
+                    {layoutType==='single' && moreThanOne &&
+                        <>
+                            <IconButton {...{ onClick:() => dispatchChangeActivePlotView(viewerPlotIds[prevIdx])}}>
+                                <img src={PAGE_LEFT}/>
+                            </IconButton>
+                            <IconButton {...{ onClick:() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])}}>
+                                <img src={PAGE_RIGHT}/>
+                            </IconButton>
+                        </>
+                    }
+                    {makeDropDown?.()}
+                </Stack>
+                <VisMiniToolbar viewerId={viewerId}/>
             </Stack>
-            <VisMiniToolbar viewerId={viewerId}/>
-        </Stack>
+        </Sheet>
     );
 }
 

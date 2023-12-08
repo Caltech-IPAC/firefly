@@ -2,11 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Badge} from '@mui/joy';
 import React from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {makeBadge} from '../../ui/ToolbarButton.jsx';
 import {hasCoverageData, isCatalog, isDataProductsTable, isOrbitalPathTable} from '../../voAnalyzer/TableAnalysis.js';
 
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
@@ -91,10 +91,12 @@ function BadgeLabel({labelStr}) {
     const badgeCnt= useStoreConnector(() => getViewerItemIds(getMultiViewRoot(),DEFAULT_FITS_VIEWER_ID)?.length??0);
     return badgeCnt===0 ?  labelStr:
         (
-            <div style={{display:'flex', justifyContent:'center', alignItems:'center'}}>
-                <div>{labelStr}</div>
-                {makeBadge(badgeCnt, {position:'relative', borderWidth: 1, paddingRight:2})}
-            </div>
+
+            <Badge {...{badgeContent:badgeCnt}}>
+                <div style={{display:'flex', justifyContent:'center', alignItems:'center'}}>
+                    <div>{labelStr}</div>
+                </div>
+            </Badge>
         );
 }
 

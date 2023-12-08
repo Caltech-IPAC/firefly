@@ -2,14 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Divider, IconButton} from '@mui/joy';
+import {Badge, Button, Checkbox, Divider, IconButton, Stack, Tooltip} from '@mui/joy';
 import React, {memo, useRef, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
-import './ToolbarButton.css';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 import DROP_DOWN_ICON from 'html/images/dd-narrow.png';
-import CHECK_BOX from 'html/images/black_check-on_10x10.gif';
 import BrowserInfo, {Platform} from 'firefly/util/BrowserInfo.js';
 
 
@@ -18,29 +16,9 @@ export function makeBadge(cnt, style={}) {
     return <div style={style} className={cName}>{Math.trunc(cnt)}</div>;
 }
 
-const checkBoxBaseStyle= {width: 10, height: 10, paddingRight: 4, alignSelf: 'center'};
-
-const makeCheckBox= (checkBoxOn, imageStyle= {}) => checkBoxOn ?
-            <img style={{...checkBoxBaseStyle, ...imageStyle}} src={CHECK_BOX}/> : <span style={{width:14}}/>;
-
-const makeDropDownIndicator= () => (<img src={DROP_DOWN_ICON} style={{width:11, height:6, alignSelf: 'center'}}/>);
-
-const todoStyle= {
-    position : 'absolute',
-    left  : 1,
-    top  : 7,
-    fontSize : '10px',
-    color : 'white',
-    background : 'rgba(245,0,255,.8)',
-    borderRadius : '5px',
-    whiteSpace : 'nowrap'
-};
-const makeToDoTag= () => <div style={todoStyle}>${'ToDo'}</div>;
-
-
-const NO_SHORT= {hasShortcut:false};
 
 function getShortCutInfo(shortcutKey) {
+    const NO_SHORT= {hasShortcut:false};
     if (!shortcutKey) return NO_SHORT;
     shortcutKey= shortcutKey.trim();
     const requiresCtrl= shortcutKey.toLowerCase().startsWith('ctrl-');
@@ -51,50 +29,29 @@ function getShortCutInfo(shortcutKey) {
     return {ctrl:requiresCtrl, meta:requiresMeta, key:testKey, hasShortcut:true};
 }
 
-function makeTextLabel(text,shortcutKey, allowInput='') {
-    if (!text) return '';
-    const {meta,key,hasShortcut}= getShortCutInfo(shortcutKey);
-    if (!hasShortcut) return text;
-    if (hasShortcut && meta && BrowserInfo.isPlatform(Platform.MAC)) {
-        shortcutKey= String.fromCharCode(0x2318) + '-'+key;
-    }
-    return (
-        <span className={allowInput}>
-            {text}
-            <span style={{fontSize : 'smaller'}}>
-                {` (${shortcutKey})`}
-            </span>
-        </span>
-    );
-}
-
 /**
  *
  * @param icon icon to display
  * @param text text to display, if icon specified, icon task precidents
  * @param tip tooltip
- * @param badgeCount if greater then 0 a badge is shown on the button
+ * @param badgeCount if greater than 0 a badge is shown on the button
  * @param enabled if false, show faded view
  * @param dropDownCB callback for the dropdown, will pass the div element
  * @param onClick function to call on click
- * @param horizontal lay out horizontal, if false lay out vertical
- * @param bgDark layout on a dark background, if false lay out on a light background
  * @param visible if false then don't show button
  * @param active
  * @param imageStyle
- * @param tipOnCB
- * @param tipOffCB
  * @param lastTextItem
  * @param style - a style to apply
- * @param todo show a todo message
  * @return {object}
  */
 export const ToolbarButton = memo((props) => {
     const {
-        icon,text='',tip='',badgeCount=0,enabled=true, horizontal=true, bgDark= false, visible=true, active= false,
-        imageStyle={}, lastTextItem=false, todo= false, style={}, shortcutKey='', useBorder=false,
+        icon,text='',tip='',badgeCount=0,enabled=true, visible=true,
+        imageStyle={}, shortcutKey='', color='neutral',
+        disableHiding, active, sx,
         useDropDownIndicator= false, hasCheckBox=false, checkBoxOn=false,
-        tipOnCB, tipOffCB, dropDownCB, onClick, disableHiding= false} = props;
+        dropDownCB, onClick} = props;
 
     const {current:divElementRef}= useRef({divElement:undefined});
 
@@ -116,101 +73,53 @@ export const ToolbarButton = memo((props) => {
         return () => window.document.removeEventListener('keydown', listener);
     });
     if (!visible) return false;
+    const allowInput= disableHiding?'allow-input':'normal-button-hide';
 
-
-    const mouseOver= () => tipOnCB?.(tip);
-    const mouseOut= () => tipOffCB?.();
     const setupRef  = (c) => divElementRef.divElement= c;
 
-    const baseStyle= { position: 'relative', display: (horizontal) ? 'inline-flex' : 'flex'};
-    let textCName= 'menuItemText';
+    const image= icon ? <img src={icon} style={imageStyle} className={allowInput} /> : undefined;
+    const dropDownIndicator= useDropDownIndicator ? <img src={DROP_DOWN_ICON}/> : undefined;
 
-    const cName= `ff-MenuItem ${bgDark ? 'ff-MenuItem-dark' : 'ff-MenuItem-light'}`+
-        ` ${enabled ? '' : 'ff-MenuItem-disabled'} ${active ? 'ff-MenuItem-active':''}`;
-    const allowInput= disableHiding?' allow-input':' normal-button-hide';
+    const b=  (
+        <Tooltip title={tip} sx={sx}>
+            <Stack direction='row' alignItems='center' ref={setupRef}>
+                {hasCheckBox && <Checkbox {...{variant:'plain', checked:checkBoxOn, onClick:handleClick}}/> }
+                {(icon && !text) ?
+                    (<IconButton {...{
+                        sx: (theme) => (
+                             {minHeight:'unset', minWidth:'unset', p:.5, backgroundColor:'transparent',
+                             ...makeBorder(active,theme)
+                             }),
+                        className:'ff-toolbar-iconbutton ' + allowInput,
+                        variant:'soft', color:'neutral' ,
+                        'aria-label':tip, onClick:handleClick, disabled:!enabled}}>
+                        {image}
+                    </IconButton>) :
+                    <Button {...{color, variant:'plain',
+                        'aria-label':tip, disabled:!enabled, onClick:handleClick,
+                        className:'ff-toolbar-button ' + allowInput,
+                        startDecorator: image,
+                        endDecorator: dropDownIndicator,
+                        sx:(theme) => ({whiteSpace:'nowrap', py:.4, minHeight: 'unset', ...makeBorder(active,theme)}),
+                    }}>
+                        {makeTextLabel(text,shortcutKey)}
+                    </Button>
+                }
+            </Stack>
+        </Tooltip>
+    );
 
-    if (horizontal && !icon) { //used for horizontal text only, this is usually a dropdown menu
-        const horizontalStyle= {
-            verticalAlign: 'bottom',
-            fontSize: '10pt',
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            borderRadius: 5
-        };
-        textCName= 'ff-menuItemHText';
-        const htextBorder= {border: useBorder ? '1px solid rgba(0,0,0,.2)' : 'none' };
-        return (
-            <div style={{display:'flex', height:'100%', flex:'0 0 auto' ,...style}} className={allowInput}>
-                <div style={{ display:'inline-block', margin:'0 4px 0 4px'}} />
-                <div title={tip} style={horizontalStyle} className={cName}
-                     ref={setupRef} onClick={handleClick} onMouseOver={mouseOver} onMouseOut={mouseOut}>
-                    <div className={textCName} style={htextBorder}>{makeTextLabel(text,shortcutKey,allowInput)}</div>
-                    {useDropDownIndicator && makeDropDownIndicator()}
-                    {badgeCount>0 && makeBadge(badgeCount)}
-                    {todo && makeToDoTag()}
-                </div>
-                {lastTextItem &&
-                     <div style={{ display: 'inline-block', margin: '0 4px 0 4px', height: 'calc(100% - 7px)'}} />}
-            </div>
-        );
-    }
-    else {
-        if (icon&&text) {  // button in vertical style with both icon and text, least common case
-            return (
-                <div title={tip} style={{display: 'flex', alignItems: 'center'}} className={cName + allowInput}
-                     ref={setupRef} onClick={handleClick} onMouseOver={mouseOver} onMouseOut={mouseOut}>
-                    <div style= {{display:'flex', flexGrow:1, alignItems:'center'}} className={textCName}>
-                        <img style={imageStyle} src={icon} alt={tip} className={textCName+ allowInput}/>
-                        <span style={{paddingLeft:5, flexGrow:1}}>{makeTextLabel(text,shortcutKey,allowInput)}</span>
-                    </div>
-                    {badgeCount>0 && makeBadge(badgeCount)}
-                    {todo && makeToDoTag()}
-                </div>
-            );
-        }
-        else { // this is the most common case - vertical text buttons or horizontal icons
-
-            // an experiment to understand the effect of using IconButton
-            // if (icon && !hasCheckBox) {
-            //     return (
-            //                     ref={setupRef} >
-            //             <img src={icon} style={imageStyle}/>
-            //         </IconButton>
-            //     );
-            // }
-
-            return (
-                <div title={tip} style={{...baseStyle, flex: '0 0 auto', ...style}} className={cName+ ' '+allowInput}
-                     ref={setupRef} onClick={handleClick} onMouseOver={mouseOver} onMouseOut={mouseOut}>
-                    <div style={{flexGrow:1, display:'flex'}} className={textCName}>
-                        {hasCheckBox && makeCheckBox(checkBoxOn,imageStyle)}
-                        {icon ?
-                            <img style={{flexGrow:1, ...imageStyle}} src={icon} alt={tip} className={allowInput}/> :
-                            <div style={{flexGrow:1}} className={textCName}>{makeTextLabel(text,shortcutKey,allowInput)}</div>}
-                    </div>
-                    {badgeCount>0 && makeBadge(badgeCount)}
-                    {todo && makeToDoTag()}
-                </div>
-            );
-        }
-    }
+    return !badgeCount ? b : <Badge {...{badgeContent:badgeCount}}> {b} </Badge>;
 } );
 
 ToolbarButton.propTypes= {
     icon : PropTypes.string,
     text : PropTypes.node,
     tip : PropTypes.string,
-    shortcutKey : PropTypes.string,
     shortcutHelp : PropTypes.bool,
-    useBorder : PropTypes.bool,
     badgeCount : PropTypes.number,
     enabled : PropTypes.bool,
-    bgDark: PropTypes.bool,
-    todo: PropTypes.bool,
-    horizontal : PropTypes.bool,
     visible : PropTypes.bool,
-    active : PropTypes.bool,
     imageStyle : PropTypes.object,
     lastTextItem : PropTypes.bool,
     useDropDownIndicator: PropTypes.bool,
@@ -218,11 +127,38 @@ ToolbarButton.propTypes= {
     hasCheckBox: PropTypes.bool,
     checkBoxOn: PropTypes.bool,
     onClick : PropTypes.func,
-    tipOnCB : PropTypes.func,
-    tipOffCB : PropTypes.func,
     dropDownCB : PropTypes.func,
-    disableHiding: PropTypes.bool
+    disableHiding: PropTypes.bool,
+    shortcutKey: PropTypes.string,
+    color: PropTypes.string,
 };
+
+
+function makeBorder(active, theme) {
+    const color= active ? theme.vars.palette.warning.softActiveBg : 'transparent';
+    // const color= active ? theme.vars.palette.primary.softActiveColor: 'transparent';
+    return {
+        borderTop: `1px solid ${color}`,
+        borderLeft: `1px solid ${color}`,
+        borderRight: `1px solid ${color}`,
+    };
+}
+
+function makeTextLabel(text,shortcutKey) {
+    const {meta,key,hasShortcut}= getShortCutInfo(shortcutKey);
+    if (!hasShortcut) return text;
+    if (hasShortcut && meta && BrowserInfo.isPlatform(Platform.MAC)) {
+        shortcutKey= String.fromCharCode(0x2318) + '-'+key;
+    }
+    return (
+        <span>
+            {text}
+            <span style={{fontSize : 'smaller'}}>
+                {` (${shortcutKey})`}
+            </span>
+        </span>
+    );
+}
 
 
 export function ToolbarHorizontalSeparator({ style={}}) {

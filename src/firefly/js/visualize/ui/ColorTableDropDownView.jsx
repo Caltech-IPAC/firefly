@@ -20,7 +20,7 @@ import {RangeSliderView} from '../../ui/RangeSliderView.jsx';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchHideDialog, dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from 'firefly/ui/DropDownToolbarButton.jsx';
-import {Typography, Box, Stack, Divider} from '@mui/joy';
+import {Typography, Box, Stack, Divider, IconButton} from '@mui/joy';
 
 import ColorTable0 from 'html/images/cbar/ct-0-gray.png';
 import ColorTable1 from 'html/images/cbar/ct-1-reversegray.png';
@@ -217,7 +217,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
                             text={ct.icon ? undefined : 'Default Color Map' }
                             enabled={true} horizontal={false} key={ct.id}
                             hasCheckBox={true} checkBoxOn={colorTableId===ct.id}
-                            imageStyle={{height:8}}
+                            imageStyle={{height:8,width:200}}
                             onClick={() => changeBiasContrastColor(ct.id, bias,contrast)}/>) );
 
     const makeAdvancedStandardFeatures= () => (
@@ -305,10 +305,11 @@ const AdvancedColorPanel= ({allowPopout}) => {
     return (
         <SingleColumnMenu>
             {allowPopout &&
-                <div style={{flex:'0 0 auto', display:'flex', flexDirection:'column', alignItems:'flex-end', height:12}}>
-                    <img className='ff-MenuItem-light' onClick={convertToPopoutColorPanel}
-                         style={{width:12, height:12, border: '1px solid rgba(0,0,0,.1)', borderRadius: '3px', zIndex:1 }} src={Arrow}/>
-                </div>
+                <Stack sx={{flex:'0 0 auto', alignItems:'flex-end'}}>
+                    <IconButton onClick={convertToPopoutColorPanel} sx={{minWidth:'unset', minHeight:'unset', p:'1px'}}>
+                        <img src={Arrow}/>
+                    </IconButton>
+                </Stack>
             }
             {!threeColor && makeItems()}
             {!threeColor && <Divider sx={{p: 0.1, mt: 0.2}}/>}

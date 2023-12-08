@@ -34,7 +34,7 @@ export const VisInlineToolbarView = memo( (props) => {
         return (
             <Box style={topStyle}>
                 <Stack {...{direction:'row', alignItems:'center',
-                        position: 'relative', sx:{verticalAlign: 'top'}, zIndex : 1 }}>
+                        position: 'relative', verticalAlign: 'top', zIndex : 1 }}>
                     {showDelete &&
                         <IconButton onClick={deleteClick}
                                     sx={{alignSelf:'flex-start', minHeight:12, minWidth:12, p:.5}}
