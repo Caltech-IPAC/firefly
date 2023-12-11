@@ -101,7 +101,7 @@ export function getServiceLabel(serviceUrl) {
 
 
 export function TapSearchPanel({initArgs= {}, titleOn=true}) {
-    const [getTapBrowserState]= useFieldGroupMetaState(defTapBrowserState,TAP_PANEL_GROUP_KEY);
+    const [getTapBrowserState,setTapBrowserState]= useFieldGroupMetaState(defTapBrowserState,TAP_PANEL_GROUP_KEY);
     const tapState= getTapBrowserState();
     if (!initArgs?.urlApi?.execute) searchFromAPIOnce(true); // if not execute then mark as done, i.e. disable any auto searching
     initApiAddedServiceOnce(initArgs);  // only look for the extra service the first time
@@ -133,8 +133,10 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
                 {fieldKey: 'adqlQuery', placeholder: '', value: ''}
             ]
         );
-        setServiceUrl(selectedOption.value);
+        const serviceUrl= selectedOption?.value;
+        setServiceUrl(serviceUrl);
         setObsCoreTableModel(undefined);
+        setTapBrowserState({...getTapBrowserState(), serviceUrl});
     };
 
     useEffect(() => {
