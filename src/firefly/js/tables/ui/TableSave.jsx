@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import {Button} from '@mui/joy';
 import {get, set} from 'lodash';
 import Enum from 'enum';
 import {replaceExt, updateSet} from '../../util/WebUtil.js';
@@ -175,9 +176,7 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
                             text={'Save'}/>
                     </div>
                     <div>
-                        <button type='button' className='button std hl'
-                                onClick={() => onComplete?.()}>Cancel
-                        </button>
+                        <Button onClick={() => onComplete?.()}>Cancel</Button>
                     </div>
                 </div>
                 <div style={{ textAlign:'right', marginRight: 10}}>

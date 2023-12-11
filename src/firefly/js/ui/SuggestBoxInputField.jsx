@@ -1,5 +1,5 @@
 import React, {memo, PureComponent} from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, {object, shape} from 'prop-types';
 import ReactDOM from 'react-dom';
 import {get, isArray, isUndefined, debounce} from 'lodash';
 import {dispatchHideDialog, dispatchShowDialog, isDialogVisible} from '../core/ComponentCntlr.js';
@@ -260,7 +260,7 @@ export class SuggestBoxInputFieldView extends PureComponent {
     render() {
 
         const {displayValue, valid, message, highlightedIdx, isOpen, inputWidth, suggestions, mouseTrigger } = this.state;
-        const {label, tooltip, inline, renderSuggestion, wrapperStyle, placeholder, sx,
+        const {label, tooltip, inline, renderSuggestion, wrapperStyle, placeholder, slotProps={},
             popStyle, popupIndex, readonly=false, required=false} = this.props;
 
         const leftOffset = 0;
@@ -298,7 +298,7 @@ export class SuggestBoxInputFieldView extends PureComponent {
                     message, label, tooltip, readonly, required,
                     onBlur: () => isOpen && this.changeValue(undefined),
                     endDecorator: this.props.endDecorator,
-                    joyProps: { JoyTooltip: {placement: 'right'} }
+                    slotProps: { tooltip: {placement: 'right'}, ...slotProps }
                 }} />
             </div>
         );
@@ -325,7 +325,14 @@ SuggestBoxInputFieldView.propTypes = {
     message: PropTypes.string,
     readonly: PropTypes.bool,
     validator: PropTypes.func,
-    required: PropTypes.bool
+    required: PropTypes.bool,
+    slotProps: shape({
+        input: object,
+        control: object,
+        label: object,
+        tooltip: object
+    })
+
 };
 
 

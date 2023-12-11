@@ -44,7 +44,7 @@ export function TableColumnsConstraintsToolbar({columnsModel}) {
 
     const resetButton = () => {
         return (
-            <Button variant='soft' color='neutral' size='sm'
+            <Button variant='soft' color='neutral'
                     title='Reset Column Selections & Constraints to the default columns and no constraints'
                     onClick={ () => {
                         const tblModel = reorganizeTableModel(columnsModel, COLS_TO_DISPLAY_FIRST, true);
@@ -58,7 +58,7 @@ export function TableColumnsConstraintsToolbar({columnsModel}) {
     return (
         <Stack direction='row' alignItems='center' spacing={1}>
             {!error && filterCount > 0 &&
-            <Button variant='soft' color='neutral' size='sm'
+            <Button variant='soft' color='neutral'
                     title='Remove column table filters to make all columns visible'
                     onClick={() => dispatchTableFilter({tbl_id: tableModel.tbl_id, filters: ''})}>
                 Remove

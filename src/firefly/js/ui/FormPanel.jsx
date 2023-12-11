@@ -144,7 +144,7 @@ FormPanel.propTypes = {
 export function ExtraButton(props) {
     const {text, onClick, style={}} = props;
     return (
-        <Button {...{size:'sm', variant: 'soft', color: 'neutral', onClick}}>{text}</Button>
+        <Button {...{variant: 'soft', color: 'neutral', onClick}}>{text}</Button>
     );
 }
 

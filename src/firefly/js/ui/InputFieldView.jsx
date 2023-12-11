@@ -4,11 +4,10 @@ import {pickBy} from 'lodash';
 import {bool, string, number, object, func, oneOfType, shape, element} from 'prop-types';
 
 
-
 export function InputFieldView(props) {
-    const {visible,disabled, label,tooltip,value,inputRef,
+    const {visible,disabled, label,tooltip,value,inputRef, slotProps,
         valid,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, showWarning,
-        message, type, placeholder, joyProps, sx, startDecorator, endDecorator,
+        message, type, placeholder, sx, startDecorator, endDecorator,
         readonly, required, orientation='vertical'}= props;
     if (!visible) return null;
     let {form='__ignore'}= props;
@@ -30,9 +29,9 @@ export function InputFieldView(props) {
 
     return (
         <Stack {...{className:'ff-Input InputFieldView', sx}}>
-            <Tooltip {...{title, enterDelay:showErrorTip?700:undefined, ...joyProps?.JoyTooltip}}>
-                <FormControl {...{orientation, error:!valid, ...joyProps?.JoyFormControl}}>
-                    {label && <FormLabel {...joyProps?.JoyFormLabel}>{label}</FormLabel>}
+            <Tooltip {...{title, enterDelay:showErrorTip?700:undefined, ...slotProps?.tooltip}}>
+                <FormControl {...{orientation, error:!valid, ...slotProps?.control}}>
+                    {label && <FormLabel {...slotProps?.label}>{label}</FormLabel>}
                     <Input {...{
                         value: currValue,
                         disabled:readonly,
@@ -40,7 +39,7 @@ export function InputFieldView(props) {
                         startDecorator, endDecorator,
                         type,
                         form,
-                        ...joyProps?.JoyInput,
+                        ...slotProps?.input,
                         placeholder,
                         required,
                         onChange:(ev) => onChange ? onChange(ev) : null,
@@ -55,8 +54,6 @@ export function InputFieldView(props) {
         </Stack>
     );
 }
-
-const joyPropsShape= shape({ sx: object, style: object});
 
 InputFieldView.propTypes= {
     valid   : bool,
@@ -81,11 +78,11 @@ InputFieldView.propTypes= {
     startDecorator: element,
     endDecorator: element,
     sx: object,
-    joyProps : shape({
-        JoyInput: joyPropsShape,
-        JoyFormControl: joyPropsShape,
-        JoyFormLabel: joyPropsShape,
-        JoyTooltip: joyPropsShape,
+    slotProps: shape({
+        input: object,
+        control: object,
+        label: object,
+        tooltip: object
     })
 };
 

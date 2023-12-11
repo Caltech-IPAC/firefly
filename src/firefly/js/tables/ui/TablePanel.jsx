@@ -3,6 +3,7 @@
  */
 
 import React, {useEffect} from 'react';
+import {Box, Link, Stack, Typography, Sheet} from '@mui/joy';
 import PropTypes from 'prop-types';
 import {defer, truncate, get, set} from 'lodash';
 import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
@@ -53,15 +54,13 @@ const TT_EXPAND = 'Expand this panel to take up a larger area';
 const TT_PROPERTY_SHEET = 'Show details for the selected row';
 
 
-export const TBL_CLZ_NAME = 'TablePanel__table';
-
 export function TablePanel(props) {
-    let {tbl_id, tbl_ui_id, tableModel, ...options} = props;
+    let {tbl_id, tbl_ui_id, tableModel, sx, ...options} = props;
     tbl_id = tbl_id || tableModel?.tbl_id || uniqueTblId();
     tbl_ui_id = tbl_ui_id || `${tbl_id}-ui`;
 
     const uiState = useStoreConnector(() => getTableUiById(tbl_ui_id) || {columns:[]}, [tbl_ui_id]);
-    const searchActions= getSearchActions();
+    const tblState = {...options, ...uiState};
 
     useEffect( () => {
         dispatchTableUiUpdate({tbl_ui_id, tbl_id, options});
@@ -75,114 +74,34 @@ export function TablePanel(props) {
         }
     }, [tbl_id, tableModel]);
 
-    const {selectable, expandable, expandedMode, border, renderers, title, removable, rowHeight, rowHeightGetter, help_id,
-        showToolbar, showTitle, showInfoButton, showMetaInfo, showOptions,
-        showOptionButton, showPaging, showSave, showFilterButton,showSearchButton,
-        totalRows, showLoading, columns, showHeader, showUnits, allowUnits, showTypes, showFilters, textView, status,
-        error, startIdx, hlRowIdx, currentPage, pageSize, selectInfo, showMask, showToggleTextView, showPropertySheetButton,
-        filterInfo, filterCount, sortInfo, data, backgroundable, highlightedRowHandler, cellRenderers} = {...options, ...uiState};
-    let {leftButtons, rightButtons, showAddColumn} = {...options, ...uiState};
-
-    showAddColumn = isClientTable(tbl_id) ? false : showAddColumn;
-    const showPropertySheet = showPropertySheetButton ?? getAppOptions()?.table?.showPropertySheetButton ?? true;
+    const {selectable, border, renderers, title, removable, rowHeight, rowHeightGetter,
+        showToolbar, showTitle, showMetaInfo,
+        columns, showHeader, showUnits, allowUnits, showTypes, showFilters, textView,
+        error, startIdx, hlRowIdx, currentPage, selectInfo, showMask,
+        filterInfo, sortInfo, data, backgroundable, highlightedRowHandler, cellRenderers} = tblState;
 
     const connector = makeConnector(tbl_id, tbl_ui_id);
 
-    const toggleFilter = () => connector.onOptionUpdate({showFilters: !showFilters});
-    const toggleTextView = () => connector.onToggleTextView(!textView);
-    const clearFilter = () => connector.applyFilterChanges({filterInfo: '', sqlFilter: ''});
-    const toggleOptions = () => connector.onToggleOptions(!showOptions);
-    const onOptionUpdate = (value) => connector.onOptionUpdate(value);
-    const onOptionReset = () => connector.onOptionReset();
-
-    const expandTable = () => {
-        dispatchTblExpanded(tbl_ui_id, tbl_id);
-        dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.tables);
-    };
 
 
     const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
-    const viewIcoStyle = 'PanelToolbar__button ' + (textView ? 'tableView' : 'textView');
     const tableTopPos = showToolbar  ? 29 : 0;
-    const TT_VIEW = textView ? TT_TABLE_VIEW : TT_TEXT_VIEW;
-
-    // converts the additional left/right buttons into elements
-    leftButtons =   leftButtons && leftButtons
-        .map((f) => f(uiState))
-        .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
-    rightButtons = rightButtons && rightButtons
-        .map((f) => f(uiState))
-        .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
-
-    const showOptionsDialog = () => showTableOptionDialog(onOptionUpdate, onOptionReset, clearFilter, tbl_ui_id, tbl_id);
-    const showInfoDialog = () => showTableInfoDialog(tbl_id);
-
     const tstate = getTableState(tbl_id);
     logger.debug(`render.. state:[${tstate}] -- ${tbl_id}  ${tbl_ui_id}`);
 
     if ([TBL_STATE.ERROR,TBL_STATE.LOADING].includes(tstate))  return <NotReady {...{showTitle, tbl_id, title, removable, backgroundable, error}}/>;
 
     return (
-        <div style={{ position: 'relative', width: '100%', height: '100%'}}>
-            <div className='TablePanel'>
+        <Box sx={sx} position='relative' width={1} height={1}>
+            <Stack height={1}>
                 {showMetaInfo && <MetaInfo tbl_id={tbl_id} /> }
-                <div className={'TablePanel__wrapper' + (border ? '--border' : '')}>
-                    {showToolbar &&
-                    <div className='PanelToolbar TablePanel__toolbar'>
-                        <LeftToolBar {...{tbl_id, title, removable, showTitle, leftButtons}}/>
-                        {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:connector}} /> }
-                        <div className='PanelToolbar__group'>
-                            {rightButtons}
-                            {showSearchButton &&  isTableActionsDropVisible(searchActions,tbl_id ) &&
-                                <ActionsDropDownButton {...{searchActions, tbl_id}}/>
-                            }
-                            {showFilterButton && filterCount > 0 &&
-                            <div onClick={clearFilter}
-                                 title={TT_CLEAR_FILTER}
-                                 className='PanelToolbar__button clearFilters'/>}
-                            {showFilterButton &&
-                            <ToolbarButton icon={FILTER}
-                                           tip={TT_SHOW_FILTER}
-                                           visible={true}
-                                           badgeCount={filterCount}
-                                           onClick={toggleFilter}/>
-                            }
-                            {showToggleTextView && <div onClick={toggleTextView}
-                                 title={TT_VIEW}
-                                 className={viewIcoStyle}/>}
-                            {showSave &&
-                            <div onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}
-                                 title={TT_SAVE}
-                                 className='PanelToolbar__button save'/> }
-                            {showAddColumn && <AddColumnBtn tbl_id={tbl_id} tbl_ui_id={tbl_ui_id}/> }
-                            {showInfoButton &&
-                            <div style={{marginLeft: '4px'}}
-                                 title={TT_INFO}
-                                 onClick={showInfoDialog}
-                                 className='PanelToolbar__button info'/> }
-                            {showPropertySheet &&
-                                <div style={{marginLeft: '4px'}}
-                                     title={TT_PROPERTY_SHEET}
-                                     onClick={() => showTablePropSheetDialog(tbl_id)}
-                                     className='PanelToolbar__button propSheet'/> }
-                            {showOptionButton &&
-                            <div style={{marginLeft: '4px'}}
-                                 title={TT_OPTIONS}
-                                 onClick={showOptionsDialog}
-                                 className='PanelToolbar__button options'/> }
-                            { expandable && !expandedMode &&
-                            <div className='PanelToolbar__button' onClick={expandTable} title={TT_EXPAND}>
-                                <img src={OUTLINE_EXPAND}/>
-                            </div>}
-                            { help_id && <div style={{marginTop:-10}}> <HelpIcon helpId={help_id} /> </div>}
-                        </div>
-                    </div>
-                    }
-                    <div className={TBL_CLZ_NAME} style={{top: tableTopPos}}
-                         onClick={stopPropagation}
-                         onTouchStart={stopPropagation}
-                         onMouseDown={stopPropagation}
-                    >
+                <Stack flexGrow={1}
+                       onClick={stopPropagation}
+                       onTouchStart={stopPropagation}
+                       onMouseDown={stopPropagation}
+                >
+                    <ToolBar {...{tbl_id, tbl_ui_id, connector, tblState}}/>
+                    <Box flexGrow={1}>
                         <BasicTableView
                             callbacks={connector}
                             { ...{columns, data, hlRowIdx, rowHeight, rowHeightGetter, selectable, showUnits,
@@ -190,16 +109,10 @@ export function TablePanel(props) {
                                 showMask, currentPage, showHeader, renderers, tbl_ui_id, highlightedRowHandler,
                                 startIdx, cellRenderers} }
                         />
-                        {showOptionButton && !showToolbar &&
-                        <img className='TablePanel__options--small'
-                             src={OPTIONS}
-                             title={TT_OPTIONS}
-                             onClick={showOptionsDialog}/>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
+                    </Box>
+                </Stack>
+            </Stack>
+        </Box>
     );
 }
 
@@ -308,6 +221,111 @@ TablePanel.defaultProps = {
     border: true,
 };
 
+function ToolBar({tbl_id, tbl_ui_id, connector, tblState}) {
+
+    const uiState = useStoreConnector(() => getTableUiById(tbl_ui_id) || {columns:[]}, [tbl_ui_id]);
+    const searchActions= getSearchActions();
+
+    const {expandable, expandedMode, title, removable, help_id,
+        showTitle, showInfoButton, showOptions, showToolbar,
+        showOptionButton, showPaging, showSave, showFilterButton,showSearchButton,
+        totalRows, showLoading, showFilters, textView,
+        currentPage, pageSize, showToggleTextView, showPropertySheetButton,
+        filterCount, } = tblState;
+    const showPropertySheet = showPropertySheetButton ?? getAppOptions()?.table?.showPropertySheetButton ?? true;
+
+    const toggleFilter = () => connector.onOptionUpdate({showFilters: !showFilters});
+    const toggleTextView = () => connector.onToggleTextView(!textView);
+    const clearFilter = () => connector.applyFilterChanges({filterInfo: '', sqlFilter: ''});
+    const toggleOptions = () => connector.onToggleOptions(!showOptions);
+    const onOptionUpdate = (value) => connector.onOptionUpdate(value);
+    const onOptionReset = () => connector.onOptionReset();
+
+    const expandTable = () => {
+        dispatchTblExpanded(tbl_ui_id, tbl_id);
+        dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.tables);
+    };
+
+    const viewIcoStyle = 'PanelToolbar__button ' + (textView ? 'tableView' : 'textView');
+    const TT_VIEW = textView ? TT_TABLE_VIEW : TT_TEXT_VIEW;
+
+    let {leftButtons, rightButtons, showAddColumn} = tblState;
+    showAddColumn = isClientTable(tbl_id) ? false : showAddColumn;
+    // converts the additional left/right buttons into elements
+    leftButtons =   leftButtons && leftButtons
+        .map((f) => f(uiState))
+        .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
+    rightButtons = rightButtons && rightButtons
+        .map((f) => f(uiState))
+        .map( (c, idx) => get(c, 'props.key') ? c : React.cloneElement(c, {key: idx})); // insert key prop if missing
+
+    const showOptionsDialog = () => showTableOptionDialog(onOptionUpdate, onOptionReset, clearFilter, tbl_ui_id, tbl_id);
+    const showInfoDialog = () => showTableInfoDialog(tbl_id);
+
+    if (showOptionButton && !showToolbar) {
+        return (
+            <img className='TablePanel__options--small'
+                 src={OPTIONS}
+                 title={TT_OPTIONS}
+                 onClick={showOptionsDialog}/>
+        );
+    }
+
+    if (!showToolbar) return null;
+
+    return (
+        <Sheet component={Stack} variant='soft' className='FF-Table-Toolbar' direction='row' justifyContent='space-between' width={1}>
+            <LeftToolBar {...{tbl_id, title, removable, showTitle, leftButtons}}/>
+            {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:connector}} /> }
+            <Stack direction='row' alignItems='center'>
+                {rightButtons}
+                {showSearchButton &&  isTableActionsDropVisible(searchActions,tbl_id ) &&
+                <ActionsDropDownButton {...{searchActions, tbl_id}}/>
+                }
+                {showFilterButton && filterCount > 0 &&
+                <div onClick={clearFilter}
+                     title={TT_CLEAR_FILTER}
+                     className='PanelToolbar__button clearFilters'/>}
+                {showFilterButton &&
+                <ToolbarButton icon={FILTER}
+                               tip={TT_SHOW_FILTER}
+                               visible={true}
+                               badgeCount={filterCount}
+                               onClick={toggleFilter}/>
+                }
+                {showToggleTextView && <div onClick={toggleTextView}
+                                            title={TT_VIEW}
+                                            className={viewIcoStyle}/>}
+                {showSave &&
+                <div onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}
+                     title={TT_SAVE}
+                     className='PanelToolbar__button save'/> }
+                {showAddColumn && <AddColumnBtn tbl_id={tbl_id} tbl_ui_id={tbl_ui_id}/> }
+                {showInfoButton &&
+                <div style={{marginLeft: '4px'}}
+                     title={TT_INFO}
+                     onClick={showInfoDialog}
+                     className='PanelToolbar__button info'/> }
+                {showPropertySheet &&
+                <div style={{marginLeft: '4px'}}
+                     title={TT_PROPERTY_SHEET}
+                     onClick={() => showTablePropSheetDialog(tbl_id)}
+                     className='PanelToolbar__button propSheet'/> }
+                {showOptionButton &&
+                <div style={{marginLeft: '4px'}}
+                     title={TT_OPTIONS}
+                     onClick={showOptionsDialog}
+                     className='PanelToolbar__button options'/> }
+                { expandable && !expandedMode &&
+                <div className='PanelToolbar__button' onClick={expandTable} title={TT_EXPAND}>
+                    <img src={OUTLINE_EXPAND}/>
+                </div>}
+                { help_id && <div style={{marginTop:-10}}> <HelpIcon helpId={help_id} /> </div>}
+            </Stack>
+        </Sheet>
+    );
+}
+
 
 function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
     const style = {display: 'inline-flex', alignItems: 'center'};
@@ -335,15 +353,14 @@ function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
 
 function Title({title, removable, tbl_id}) {
     return (
-        <div className='TablePanel__title'>
-            <div style={{display: 'inline-block', marginLeft: 5, marginTop: 2}}
-                 title={title}>{truncate(title)}</div>
+        <Sheet component={Stack} direction='row' alignSelf='start' sx={{ml:1/4}}>
+            <Typography level='body-sm' noWrap title={title}>{truncate(title)}</Typography>
             {removable &&
-            <div style={{right: -5}} className='btn-close'
+            <Link className='btn-close'
                  title='Remove Tab'
                  onClick={() => dispatchTableRemove(tbl_id)}/>
             }
-        </div>
+        </Sheet>
     );
 }
 
