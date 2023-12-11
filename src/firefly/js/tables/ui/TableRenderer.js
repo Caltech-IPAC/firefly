@@ -2,9 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component, PureComponent, useRef, useCallback, useState, useEffect} from 'react';
+import React, {useRef, useCallback, useState, useEffect} from 'react';
 import {Cell} from 'fixed-data-table-2';
-import {set, get, isEqual, pick, omit, isEmpty, isString, toNumber} from 'lodash';
+import {set, get, omit, isEmpty, isString, toNumber} from 'lodash';
+import {Typography, Checkbox, Stack, Box, Link, Sheet} from '@mui/joy';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
 import {
@@ -66,40 +67,51 @@ const imageStubMap = {
 /*---------------------------- COLUMN HEADER RENDERERS ----------------------------*/
 
 function SortSymbol({sortDir}) {
+    if (sortDir === UNSORTED) return null;
     return (
-        <div style={{marginLeft: 2}}>
-            <img style={{verticalAlign: 'middle'}} src={sortDir === SORT_ASC ? ASC_ICO : DESC_ICO}/>
-        </div>
+        <img src={sortDir === SORT_ASC ? ASC_ICO : DESC_ICO} width='9px' height='5px'/>
     );
 };
 
-export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, style, tbl_id}) => {
+export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, style={}, sx={}, tbl_id}) => {
     const {label, name, desc, sortByCols, sortable} = col || {};
     const cdesc = desc || label || name;
     const sortDir = SortInfo.parse(sortInfo).getDirection(name);
     const sortCol = sortByCols ? splitCols(sortByCols) : [name];
     const typeVal = getTypeLabel(col);
     const unitsVal = col.units ? `(${col.units})`: '';
-    let  className = toBoolean(sortable, true) ? 'clickable' : undefined;
-    className = col.DERIVED_FROM ? className + ' derived' : '';
+    const  className = toBoolean(sortable, true) ? 'clickable' : undefined;
+    const derived = col.DERIVED_FROM ? 'warning' : undefined;
 
     const onClick = toBoolean(sortable, true) ? () => onSort(sortCol) : () => showInfoPopup('This column is not sortable');
+
+    sx = {height: 1, pb: '1px', ...derived, ...style, ...sx};
     return (
-        <div style={style} title={cdesc} className='TablePanel__header'>
-            <div style={{height: '100%', width: '100%'}} className={className} onClick={onClick}>
-                <div style={{display: 'inline-flex', width: '100%', justifyContent: 'center'}}>
-                    <div style={{textOverflow: 'ellipsis', overflow: 'hidden'}}>
-                        {label || name}
-                    </div>
-                    { sortDir !== UNSORTED && <SortSymbol sortDir={sortDir}/> }
-                </div>
-                {showUnits && <div style={{height: 11, fontWeight: 'normal'}}>{unitsVal}</div>}
-                {showTypes && <div style={{height: 11, fontWeight: 'normal', fontStyle: 'italic'}}>{typeVal}</div>}
+        <Sheet color={col.DERIVED_FROM ? 'warning' : undefined} sx={sx} title={cdesc}>
+            <div className={className} onClick={onClick}>
+                <Stack direction='row' justifyContent='center' alignItems='center'>
+                    <Stack textOverflow='ellipsis' overflow='hidden'>
+                        <TextValue val={label || name} bold sx={{lineHeight:1.3}}/>
+                    </Stack>
+                    <SortSymbol sortDir={sortDir}/>
+                </Stack>
+                { showUnits && <TextValue val={unitsVal}/> }
+                {showTypes && <TextValue val={typeVal} sx={{fontStyle: 'italic'}}/> }
             </div>
             {showFilters && <Filter {...{cname:name, onFilter, filterInfo, tbl_id}}/>}
-        </div>
+        </Sheet>
     );
 });
+
+export function TextValue({val, bold=false, sx, ...rest}) {
+    const level = bold ? 'title-md' : 'body-md';
+    const height = val ? undefined : '1em';
+    return (
+        <Typography component='div' sx={{lineHeight:1, height, textAlign:'center', ...sx}} {...{level, ...rest}}>
+            {val || ''}
+        </Typography>
+    );
+}
 
 const blurEnter = ['blur','enter'];
 
@@ -141,13 +153,15 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
             wrapperStyle: {zIndex: 110}}); // 110 is the z-index of a dropdown
     };
 
+    const endDecorator = enumVals && <div ref={enumArrowEl} className='arrow-down clickable' onClick={onEnumClicked}/>;
+
     return (
-        <div style={{height:29, display: 'inline-flex', alignItems: 'center', width: '100%'}}>
+        <Stack direction='row' alignItems='center'>
             <InputField
                 validator={validator}
                 fieldKey={name}
-                sx={{'.MuiInput-root':{'minHeight':'3px', 'borderRadius':4}}}
-                joyProps={{ JoyInput : {autoFocus} }}
+                sx={{width: 1, '--Input-radius': ''}}
+                slotProps={{ input: {autoFocus, size:'sm', endDecorator }}}
                 tooltip={FILTER_CONDITION_TTIPS}
                 value={filterInfoCls.getFilter(name)}
                 onChange={onFilter}
@@ -155,8 +169,7 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
                 showWarning={false}
                 style={filterStyle}
                 wrapperStyle={filterStyle}/>
-            {enumVals && <div ref={enumArrowEl} className='arrow-down clickable' onClick={onEnumClicked} style={{borderWidth: 6, borderRadius: 2}}/>}
-        </div>
+        </Stack>
     );
 }
 
@@ -201,75 +214,49 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
     };
 
     return (
-        <FieldGroup groupKey='TableRenderer_enum' style={{minWidth: 100}}>
-            <div style={{display: 'inline-flex', marginBottom: 5, width: '100%', justifyContent: 'space-between'}}>
-                <div className='ff-href' style={{marginLeft: 3, fontSize: 13}} onClick={onApply} title='Apply selected filter'>filter</div>
-                <div className='ff-href' style={{marginLeft: 3, fontSize: 13}} onClick={onClear} title='Clear selection'>clear</div>
-                <div className='btn-close' onClick={hideEnumSelect} style={{margin: -2, fontSize: 12}}/>
-            </div>
-            <CheckboxGroupInputField {...{fieldKey, alignment: 'vertical', options, initialState:{value}}}/>
-        </FieldGroup>
+        <Box minWidth={100} p={1}>
+            <FieldGroup groupKey='TableRenderer_enum'>
+                <Stack direction='row' justifyContent='space-between'>
+                    <Link onClick={onApply} title='Apply selected filter'>filter</Link>
+                    <Link onClick={onClear} title='Clear selection'>clear</Link>
+                    <Link className='btn-close' onClick={hideEnumSelect} style={{margin: -2, fontSize: 12}}/>
+                </Stack>
+                <CheckboxGroupInputField slotProps={{ input: {size: 'sm'} }} {...{fieldKey, alignment: 'vertical', options, initialState:{value}}}/>
+            </FieldGroup>
+        </Box>
     );
 }
 
-export class SelectableHeader extends PureComponent {
-    constructor(props) {
-        super(props);
-    }
-
-    // componentDidUpdate(prevProps, prevState) {
-    //     deepDiff({props: prevProps, state: prevState},
-    //         {props: this.props, state: this.state},
-    //         this.constructor.name);
-    // }
-    //
-    render() {
-        const {checked, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, style} = this.props;
-        return (
-            <div style={{padding: 0, ...style}} className='TablePanel__header'>
-                <input type='checkbox'
-                       tabIndex={-1}
-                       checked={checked}
-                       onChange={(e) => onSelectAll(e.target.checked)}/>
-                {showUnits && <div/>}
-                {showTypes && <div/>}
-                {showFilters && <img className='clickable'
-                                     style={{marginBottom: 3}}
-                                     src={FILTER_SELECTED_ICO}
-                                     onClick={onFilterSelected}
-                                     title='Filter on selected rows'/>}
-            </div>
-        );
-    }
+export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, style, sx}) {
+    sx = {height: 1, justifyContent: 'space-around', ...style, ...sx};
+    return (
+        <Stack alignItems='center' sx={sx}>
+            <Checkbox size='sm' sx={{mt:'2px'}}
+                tabIndex={-1}
+                checked={checked}
+                onChange={(e) => onSelectAll(e.target.checked)}/>
+            {showUnits && <Box height='1em'/>}
+            {showTypes && <Box height='1em'/>}
+            {showFilters && <img className='clickable'
+                                 style={{marginBottom: 3}}
+                                 src={FILTER_SELECTED_ICO}
+                                 onClick={onFilterSelected}
+                                 title='Filter on selected rows'/>}
+        </Stack>
+    );
 }
 
-export class SelectableCell extends Component {
-    constructor(props) {
-        super(props);
-    }
 
-    shouldComponentUpdate(nProps) {
-        const toCompare = ['rowIndex', 'selectInfoCls'];
-        return !isEqual(pick(nProps, toCompare), pick(this.props, toCompare));
-    }
-
-    // componentDidUpdate(prevProps, prevState) {
-    //     deepDiff({props: prevProps, state: prevState},
-    //         {props: this.props, state: this.state},
-    //         this.constructor.displayName);
-    // }
-    //
-    render() {
-        const {rowIndex, selectInfoCls, onRowSelect, style} = this.props;
-        return (
-            <div style={style} className='TablePanel__checkbox'>
-                <input type='checkbox'
-                       tabIndex={-1}
-                       checked={selectInfoCls.isSelected(rowIndex)}
-                       onChange={(e) => onRowSelect(e.target.checked, rowIndex)}/>
-            </div>
-        );
-    }
+export function SelectableCell ({rowIndex, selectInfoCls, onRowSelect, style={}, sx={}}) {
+    return (
+        <Stack alignItems='center' justifyContent='center' height={1}>
+            <Checkbox size='sm' mt='1x' mb='1px'
+                      sx={{...style, ...sx}}
+                      tabIndex={-1}
+                      checked={selectInfoCls.isSelected(rowIndex)}
+                      onChange={(e) => onRowSelect(e.target.checked, rowIndex)}/>
+        </Stack>
+    );
 }
 
 /*---------------------------- CELL RENDERERS ----------------------------*/

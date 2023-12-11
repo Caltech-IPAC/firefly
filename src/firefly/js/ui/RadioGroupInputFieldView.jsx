@@ -6,14 +6,14 @@ import React from 'react';
 import {array, string, func, bool, object, oneOf, shape, oneOfType, element} from 'prop-types';
 
 
-function makeRadioGroup(options,orientation='horizontal',radioValue,onChange,radioTooltip,joyProps={}) {
+function makeRadioGroup(options,orientation='horizontal',radioValue,onChange,radioTooltip,slotProps={}) {
 
     return (
-        <RadioGroup {...{orientation, ...joyProps.JoyRadioGroup}}>
+        <RadioGroup {...{orientation, ...slotProps.group}}>
             {
                 options.map( ({label,value, disabled=false,tooltip }) => {
                     const radio= (<Radio
-                        {...{ key:value, checked:value===radioValue, onChange, value, label, disabled, ...joyProps.JoyRadio }} />);
+                        {...{ key:value, checked:value===radioValue, onChange, value, label, disabled, ...slotProps.radio }} />);
                     if (tooltip) {
                         return (
                             <Tooltip {...{key:value, title:tooltip ?? radioTooltip, placement:'top'}}>
@@ -32,17 +32,17 @@ function makeRadioGroup(options,orientation='horizontal',radioValue,onChange,rad
 
 
 
-function createButtons(options, joyProps={}) {
+function createButtons(options, slotProps={}) {
     return options.map(({value, disabled, tooltip, icon, label, startDecorator, endDecorator}, idx) => {
         let b;
         if (icon) {
-            b = (<IconButton {...{key: idx + '', value, disabled: disabled || false, ...joyProps.JoyIconButton}}>
+            b = (<IconButton {...{key: idx + '', value, disabled: disabled || false, ...slotProps.icon}}>
                 {icon}
             </IconButton>);
         } else {
             b = (<Button {...{key: idx + '', value, disabled: disabled || false,
                 startDecorator, endDecorator,
-                sx: {'--Button-minHeight' : 25}, ...joyProps.JoyButton}} >
+                sx: {'--Button-minHeight' : 25}, ...slotProps.button}} >
                 {label}
             </Button>);
         }
@@ -54,13 +54,13 @@ function fireOnChange(groupValue,newValue,onChange) {
     if (newValue && newValue!==groupValue) onChange({target: {value: newValue}});
 }
 
-function makeButtonGroup(options,groupValue,onChange,joyProps={}) {
+function makeButtonGroup(options,groupValue,onChange,slotProps={}) {
     return (
-        <ToggleButtonGroup {...{sz:'sm', value: groupValue,
+        <ToggleButtonGroup {...{value: groupValue,
             sx: {maxHeight: 25},
-            ...joyProps.JoyToggleButtonGroup,
+            ...slotProps.buttonGroup,
             onChange: (ev, newValue) => fireOnChange(groupValue,newValue,onChange) }}>
-            { createButtons(options,joyProps) }
+            { createButtons(options,slotProps) }
         </ToggleButtonGroup>
     );
 }
@@ -68,25 +68,23 @@ function makeButtonGroup(options,groupValue,onChange,joyProps={}) {
 export function RadioGroupInputFieldView({options,orientation='vertical',value,
                                              onChange,label,tooltip,
                                              buttonGroup= false,
-                                             sx, joyProps={}}) {
+                                             sx, slotProps={}}) {
 
     return (
-        <Box sx={sx}>
-            <Tooltip {...{key:value, title:tooltip, ...joyProps.JoyTooltip}}>
+        <Box className='ff-Input' sx={sx}>
+            <Tooltip {...{key:value, title:tooltip, ...slotProps.tooltip}}>
                 <FormControl orientation={orientation} style={{whiteSpace:'nowrap'}}>
-                    {label && <FormLabel {...{...joyProps.JoyFormLabel}}>{label}</FormLabel>}
+                    {label && <FormLabel {...{...slotProps.label}}>{label}</FormLabel>}
                     <Stack direction='row'>
                         {buttonGroup ?
-                            makeButtonGroup(options,value,onChange,joyProps) :
-                            makeRadioGroup(options,orientation,value,onChange,tooltip,joyProps)}
+                            makeButtonGroup(options,value,onChange,slotProps) :
+                            makeRadioGroup(options,orientation,value,onChange,tooltip,slotProps)}
                     </Stack>
                 </FormControl>
             </Tooltip>
         </Box>
     );
 }
-
-const joyPropsShape= shape({ sx: object, style: object});
 
 RadioGroupInputFieldView.propTypes= {
     options: array.isRequired,
@@ -98,12 +96,12 @@ RadioGroupInputFieldView.propTypes= {
     inline : bool,
     sx: object,
     buttonGroup : bool,
-    joyProps : shape({
-        JoyRadioGroup: joyPropsShape,
-        JoyRadio: joyPropsShape,
-        JoyButton: joyPropsShape,
-        JoyIconButton : joyPropsShape,
-        JoyToggleButtonGroup: joyPropsShape,
-        JoyTooltip: joyPropsShape
+    slotProps: shape({
+        group: object,
+        radio: object,
+        button: object,
+        icon : object,
+        buttonGroup: object,
+        tooltip: object
     })
 };

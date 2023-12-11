@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import {Typography, Stack} from '@mui/joy';
 
 import {InputField} from './InputField.jsx';
 import {intValidator} from '../util/Validate.js';
@@ -23,19 +24,17 @@ export function PagingBar(props) {
 
     const pagestr = (totalRows === 0) ? '' :
                     `(${(startIdx+1).toLocaleString()} - ${endIdx.toLocaleString()} of ${totalRows?.toLocaleString()??''})`;
-    const showingLabel = (  <div style={{fontSize: 'smaller', marginLeft: 3, display: 'inline-flex', alignItems: 'center', width: `${3 * nchar + 7}ch`}} >
-                                {pagestr}
-                            </div>
-                        );
+    const showingLabel = (  <Typography level='body-sm' noWrap>{pagestr}</Typography> );
     if (showAll) {
         return showingLabel;
     } else {
         return (
-            <div className='PanelToolbar__group'>
+            <Typography display='flex' alignItems='center' direction='row' level='body-sm' noWrap>
                 <div onClick={() => callbacks.onGotoPage(1)} className='PagingBar__button first' title='First Page'/>
                 <div onClick={() => callbacks.onGotoPage(currentPage - 1)} className='PagingBar__button previous' title='Previous Page'/>
-                <div style={{display: 'inline-flex', alignItems: 'center'}}>
+                <Stack direction='row' alignItems='center' spacing={1/2}>
                     <InputField
+                        slotProps={{ input: { size: 'sm', sx: {width:'3em'} } }}
                         style={{textAlign: 'right', width: `${nchar+1}ch`}}
                         validator = {intValidator(1, totalPages, 'Page Number')}
                         tooltip = 'Jump to this page'
@@ -43,13 +42,13 @@ export function PagingBar(props) {
                         onChange = {onPageChange}
                         actOn={['blur','enter']}
                         showWarning={false}
-                    /> <div style={{fontSize: 'smaller', marginLeft: 3, width: `${nchar + 3}ch`}}> of {totalPages}</div>
-                </div>
+                    /> <div> of {totalPages}</div>
+                </Stack>
                 <div onClick={() => callbacks.onGotoPage(currentPage + 1)} className='PagingBar__button next'  title='Next Page'/>
                 <div onClick={() => callbacks.onGotoPage(totalPages)} className='PagingBar__button last'  title='Last Page'/>
                 {showingLabel}
                 {showLoading ? <img style={{width:14,height:14,marginTop: '3px'}} src={LOADING}/> : false}
-            </div>
+            </Typography>
         );
     }
 }

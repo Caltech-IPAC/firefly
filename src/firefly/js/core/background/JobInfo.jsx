@@ -10,6 +10,7 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {CollapsiblePanel} from 'firefly/ui/panel/CollapsiblePanel.jsx';
 import {uwsJobInfo} from 'firefly/rpc/SearchServicesJson.js';
 import {TextButton} from 'firefly/ui/TextButton.jsx';
+import {Button} from '@mui/joy';
 
 
 export function showJobInfo(jobId) {
@@ -83,7 +84,7 @@ function DataOrigin({dataOrigin, type, jobId}) {
     return (
         <div style={{display: 'inline-flex'}}>
             <KeywordBlock style={{width: 425}} label={label} value={dataOrigin} asLink={true}/>
-            <TextButton text='Show' style={{marginLeft: 3}} onClick={() => showUwsJob({jobId})}/>
+            <Button ml={1/2} onClick={() => showUwsJob({jobId})}>Show</Button>
         </div>
     );
 }

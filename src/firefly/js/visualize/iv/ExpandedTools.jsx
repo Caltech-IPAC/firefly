@@ -134,7 +134,7 @@ export function PagingControl({viewerItemIds,activeItemId,isPagingMode,getItemTi
         const tip= active ? pTitle('Active Plot: ', getItemTitle(plotId)) : pTitle('Display: ', getItemTitle(plotId));
         return (
                 <Tooltip title={tip} key={idx} >
-                    <IconButton sz='sm' onClick={() => !active && onActiveItemChange(plotId)}
+                    <IconButton onClick={() => !active && onActiveItemChange(plotId)}
                                 sx={{minHeight:5, minWidth:5, p:'2px'}}>
                         <img src={active ? ACTIVE_DOT : INACTIVE_DOT}/>
                     </IconButton>
@@ -149,7 +149,7 @@ export function PagingControl({viewerItemIds,activeItemId,isPagingMode,getItemTi
         <Stack {...{direction:'column', alignItems:'center', sx:{button:{minHeight:10}} }}>
             <Stack {...{direction:'row', alignItems:'center'}}>
                 <Tooltip title={leftTip}>
-                    <Button {...{size:'sm', variant:'plain', color:'neutral',
+                    <Button {...{variant:'plain', color:'neutral',
                         onClick:() => onActiveItemChange(viewerItemIds[prevIdx]),
                         startDecorator:(<img src={PAGE_LEFT}/>)}}>
                         <span style={{maxWidth:'8em', textOverflow:'ellipsis', overflow:'hidden'}}>
@@ -159,7 +159,7 @@ export function PagingControl({viewerItemIds,activeItemId,isPagingMode,getItemTi
                 </Tooltip>
                 <div style={{flex: '1 1 auto'}}/>
                 <Tooltip title={rightTip}>
-                    <Button {...{size:'sm', variant:'plain', color:'neutral',
+                    <Button {...{variant:'plain', color:'neutral',
                         onClick:() => onActiveItemChange(viewerItemIds[nextIdx]),
                         endDecorator:(<img src={PAGE_RIGHT}/>)}}>
                         <span style={{maxWidth:'5em', textOverflow:'ellipsis', overflow:'hidden'}}>

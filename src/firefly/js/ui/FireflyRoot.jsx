@@ -1,5 +1,5 @@
 import React from 'react';
-import {CssBaseline, ScopedCssBaseline, CssVarsProvider, useColorScheme} from '@mui/joy';
+import {CssBaseline, ScopedCssBaseline, CssVarsProvider, useColorScheme, GlobalStyles} from '@mui/joy';
 import {getTheme} from './ThemeSetup.js';
 
 
@@ -13,6 +13,10 @@ export function FireflyRoot({children}) {
     return (
         <CssVarsProvider theme={newTheme}>
             {useBaseline && <CssBaseline/>}
+            <GlobalStyles styles={{
+                    // CSS object styles
+                    html: {fontSize:'87.5%'}
+                }}/>
             <App>{children}</App>
         </CssVarsProvider>
     );

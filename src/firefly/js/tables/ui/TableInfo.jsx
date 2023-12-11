@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import {Typography, Box, Link, Stack} from '@mui/joy';
 
 import {isEmpty} from 'lodash';
 import {getTblById, hasAuxData} from '../TableUtil.js';
@@ -23,7 +24,7 @@ export function TableInfo(props) {
    const jobId = getJobIdFromTblId(tbl_id);
 
     return (
-        <div style={{padding: '10px 5px 5px', height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column'}}>
+        <Stack p={1} height={1} boxSizing='border-box'>
             <StatefulTabs componentKey='TablePanelOptions' defaultSelected={0} borderless={true} useFlex={true} style={{flex: '1 1 0'}}>
                 {jobId &&
                 <Tab name='Job Info'>
@@ -39,7 +40,7 @@ export function TableInfo(props) {
             <div>
                 <HelpIcon helpId={'tables.info'} style={{float: 'right', marginRight: 10}}/>
             </div>
-        </div>
+        </Stack>
     );
 }
 
@@ -50,14 +51,14 @@ TableInfo.propTypes = {
 
 function MetaContent({tbl_id}) {
     if (hasAuxData(tbl_id)) {
-        return <MetaInfo tbl_id={tbl_id} isOpen={true} style={{ width: '100%', border: 'none', margin: 'unset', padding: 'unset'}} />;
+        return <MetaInfo tbl_id={tbl_id} isOpen={true} sx={{ w: 1, border: 'none', m: 'unset', p: 'unset'}} />;
     } else {
         return <div style={{margin: 20, fontWeight: 'bold'}}>No metadata available</div>;
     }
 }
 
 
-export function MetaInfo({tbl_id, style, isOpen=false}) {
+export function MetaInfo({tbl_id, sx, isOpen=false}) {
     const contentStyle={display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingBottom: 1};
     const collapsiblePanelStyle={width: '100%'};
 
@@ -67,7 +68,7 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
     const {keywords, links, params, resources, groups} = getTblById(tbl_id);
 
     return (
-        <div className='TablePanel__meta' style={style}>
+        <Stack sx={sx}>
             { !isEmpty(keywords) &&
             <CollapsiblePanel componentKey={tbl_id + '-meta'} header='Table Meta' style={collapsiblePanelStyle} {...{isOpen, contentStyle}}>
                 {keywords.concat()                                             // make a copy so the original array does not mutate
@@ -140,7 +141,7 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
                 }
             </CollapsiblePanel>
             }
-        </div>
+        </Stack>
     );
 }
 
@@ -152,17 +153,17 @@ export function KeywordBlock({style={}, label, value, title, asLink}) {
     );
 }
 
-export function Keyword({style={}, label, value, title, asLink}) {
+export function Keyword({label, value, title, asLink}) {
     label = label && label + ':';
     if (label || value) {
         value = String(value);
         return (
-            <React.Fragment>
-                {label && <div title={title} className='keyword-label'>{label}</div>}
+            <>
+                {label && <Typography level='title-sm' title={title} mr={1/2}>{label}</Typography>}
                 { asLink ? <LinkTag title={value} href={value} /> :
-                    <ContentEllipsis text={value} style={{padding: 1, margin: 'unset'}}><div title={value} style={{whiteSpace: 'nowrap',...style}} className='keyword-value'>{value}</div></ContentEllipsis>
+                    <ContentEllipsis text={value} style={{padding: 1, margin: 'unset'}}><Typography level='body-xs' title={value} noWrap mr={1/2}>{value}</Typography></ContentEllipsis>
                 }
-            </React.Fragment>
+            </>
         );
     }
     return null;
@@ -173,11 +174,12 @@ export function LinkTag({href, title}) {
     title = title || href;
     if (href) {
         return (
-            <div style={{display: 'inline-flex', alignItems: 'center', overflow: 'hidden'}}>
-                <CopyToClipboard value={href} size={16} buttonStyle={{backgroundColor: 'unset'}}/>
-                <a className='ff-href' style={{padding: '0 3px', verticalAlign: 'middle', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.5}}
-                   href={href} title={title} target='Links'>{title}</a>
-            </div>
+            <Box overflow='hidden'>
+                <Link level='body-xs' sx={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}
+                    href={href} title={title} target='Links'
+                    startDecorator={<CopyToClipboard value={href} size={16} buttonStyle={{backgroundColor: 'unset'}}/>}
+                >{title}</Link>
+            </Box>
         );
     } else return null;
 }
