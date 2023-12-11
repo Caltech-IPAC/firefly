@@ -1,5 +1,6 @@
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
+import {Button, Stack} from '@mui/joy';
 import shallowequal from 'shallowequal';
 
 import {dispatchJobAdd, dispatchJobCancel} from './BackgroundCntlr.js';
@@ -51,11 +52,11 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, style={}})
 
     const msg = jobInfo?.errorSummary?.message || jobInfo?.jobInfo?.progressDesc || 'Working...';
 
-    const Options = () => ( inProgress &&
-        <div className='BgMaskPanel__actions'>
-            <div className='button large' onClick={sendToBg}>Send to background</div>
-            <div className='button large' onClick={abort}>Cancel</div>
-        </div>
+    const Options = () => ( (inProgress || true) &&
+        <Stack direction='row' spacing={1}>
+            <Button variant='solid' color='primary' onClick={sendToBg}>Send to background</Button>
+            <Button onClick={abort}>Cancel</Button>
+        </Stack>
     );
 
     const errorInJob= ['ERROR', 'ABORTED'].includes(jobInfo?.phase);

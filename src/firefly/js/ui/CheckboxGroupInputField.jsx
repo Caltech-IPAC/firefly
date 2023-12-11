@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import PropTypes, {object} from 'prop-types';
+import PropTypes, {object, shape} from 'prop-types';
 import {Checkbox, FormControl, FormLabel, Stack, Tooltip} from '@mui/joy';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {splitVals} from 'firefly/tables/TableUtil.js';
@@ -16,20 +16,20 @@ function convertValue(value,options) {
     else return value;
 }
 
-export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip:toggleBoxTip,
+export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip:toggleBoxTip, slotProps,
                                              options, alignment:orientation, value:fieldValue, sx}) {
 
     return (
-        <Tooltip title={toggleBoxTip} sx={sx}>
+        <Tooltip title={toggleBoxTip} sx={sx} {...slotProps?.tooltip}>
             <Stack orientation={orientation==='horizontal'?'row':'column'}>
                 {label && (
                     <FormControl>
-                        <FormLabel>{label}</FormLabel>
+                        <FormLabel {...slotProps?.label}>{label}</FormLabel>
                     </FormControl>
                 ) }
                 <Stack spacing={orientation==='vertical'?1:2} direction={orientation==='vertical' ? 'column' : 'row'}>
                     {options.map( ({value,label,tooltip}) => {
-                        const cb= (<Checkbox
+                        const cb= (<Checkbox {...slotProps?.input}
                             {...{ name:fieldKey, key:value, value, checked:isChecked(value,fieldValue), onChange, label, }} />);
                         return tooltip ? <Tooltip {...{title:toggleBoxTip, key:value}}> {cb} </Tooltip> : cb;
                     })}
@@ -48,6 +48,11 @@ CheckboxGroupInputFieldView.propTypes= {
     label:  PropTypes.string,
     tooltip:  PropTypes.string,
     sx: object,
+    slotProps: shape({
+        input: object,
+        label: object,
+        tooltip: object
+    })
 };
 
 
@@ -98,5 +103,6 @@ CheckboxGroupInputField.propTypes= {
     forceReinit:  PropTypes.bool,
     fieldKey:   PropTypes.string,
     sx: object,
+
 };
 

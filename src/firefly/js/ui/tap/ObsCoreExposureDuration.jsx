@@ -221,7 +221,7 @@ function ExposureLength({initArgs, panelActive, turnOnPanel}) {
 
 
     return (
-        <FormControl {...{orientation:'vertical', size:'sm'}}>
+        <FormControl {...{orientation:'vertical'}}>
             <FormLabel>Exposure Duration</FormLabel>
             <Stack direction='row' spacing={1} alignItems='center'>
                 <ValidationField {...{

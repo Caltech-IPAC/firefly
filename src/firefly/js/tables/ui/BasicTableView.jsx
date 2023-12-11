@@ -3,10 +3,12 @@
  */
 
 import React, {useCallback, useEffect} from 'react';
+import {Box, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import {Column, Table} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, set, isEmpty, isUndefined, omitBy, pick} from 'lodash';
+
 
 import {calcColumnWidths, getCellValue, getColumns, getProprietaryInfo, getTableState, getTableUiById, getTblById, hasRowAccess, isClientTable, tableTextView, TBL_STATE, uniqueTblUiId} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
@@ -17,6 +19,7 @@ import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableUiUpdate, TBL_UI_UPDATE} from '../TablesCntlr.js';
 import {Logger} from '../../util/Logger.js';
 
+import 'fixed-data-table-2/dist/fixed-data-table.css';
 import './TablePanel.css';
 
 const logger = Logger('Tables').tag('BasicTable');
@@ -63,7 +66,7 @@ const BasicTableViewInternal = React.memo((props) => {
     const onFilter       = useCallback( doFilter.bind({callbacks, filterInfo}), [callbacks, filterInfo]);
     const onFilterSelected = useCallback( doFilterSelected.bind({callbacks, selectInfoCls}), [callbacks, selectInfoCls]);
 
-    const headerHeight = showHeader ? 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22) : 0;
+    const headerHeight = showHeader ? 22 + (showUnits && 14) + (showTypes && 14) + (showFilters && 23) : 0;
     let totalColWidths = 0;
     if (!isEmpty(columns) && !isEmpty(columnWidths)) {
         totalColWidths = columns.reduce((pv, c, idx) => {
@@ -144,10 +147,10 @@ const BasicTableViewInternal = React.memo((props) => {
     };
 
     return (
-        <div tabIndex='-1' onKeyDown={onKeyDown} className='TablePanel__frame'>
+        <Box sx={{lineHeight:1, height:1}} tabIndex='-1' onKeyDown={onKeyDown}>
             {content()}
             <Status/>
-        </div>
+        </Box>
     );
 });
 
@@ -196,7 +199,7 @@ BasicTableViewInternal.defaultProps = {
     selectable: false,
     showTypes: false,
     showMask: false,
-    rowHeight: 20,
+    rowHeight: 27,
     currentPage: -1
 };
 
@@ -209,19 +212,6 @@ export const BasicTableViewWithConnector = React.memo((props) => {
 });
 
 /*---------------------------------------------------------------------------*/
-
-// function getTableState(props, uiStates) {
-//     const {columns, error, data, size, showMask} = props;
-//     const {tbl_id, columnWidths} = uiStates;
-//
-//     if (error) return 'ERROR';
-//     if (showMask || isEmpty(columns) || size.width === 0 || isEmpty(columnWidths)) {
-//         return 'LOADING';
-//     }
-//     if (hasNoData(tbl_id)) return 'NO_DATA_FOUND';
-//     if (isEmpty(data)) return 'META_ONLY';
-//     return 'OK';
-// }
 
 function doScrollEnd(scrollLeft, scrollTop) {
     const {tbl_ui_id} = this;
@@ -295,14 +285,14 @@ function doRowSelect(checked, rowIndex) {
 }
 
 
-const TextView = ({columns, data, showUnits, width, height}) => {
+const TextView = ({columns, data, width, height}) => {
     const text = tableTextView(columns, data);
     return (
-        <div style={{height, width,overflow: 'hidden'}}>
-            <div style={{height: '100%',overflow: 'auto'}}>
+        <Box sx={{height, width,overflow: 'hidden'}}>
+            <Typography level='body-sm' sx={{height: 1,overflow: 'auto'}}>
                 <pre>{text}</pre>
-            </div>
-        </div>
+            </Typography>
+        </Box>
     );
 };
 
@@ -362,8 +352,8 @@ function defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx) {
         if (hasProprietaryInfo && !hasRowAccess(tableModel, absRowIndex)) {
             return hlRowIdx === rowIndex ? 'TablePanel__no-access--highlighted' : 'TablePanel__no-access';
         }
-        if (hlRowIdx === rowIndex) return 'tablePanel__Row_highlighted';
-        if (isRelated(rowIndex)) return 'tablePanel__Row_related';
+        if (hlRowIdx === rowIndex) return 'highlighted';
+        if (isRelated(rowIndex)) return 'related';
     };
 }
 
