@@ -125,7 +125,7 @@ const SizeInputFieldView= (props) => {
 
     return (
         <Stack sx={sx}>
-            <FormControl orientation='vertical' size='sm'>
+            <FormControl orientation='vertical'>
                 {label && <FormLabel>{label}</FormLabel>}
                 <Stack spacing={1} direction='row'>
                     <InputFieldView {...{

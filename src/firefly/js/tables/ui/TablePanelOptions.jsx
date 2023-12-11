@@ -4,6 +4,7 @@
 
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
+import {Button, Checkbox, Stack, ToggleButtonGroup, Typography} from '@mui/joy';
 import {cloneDeep, get, isEmpty} from 'lodash';
 
 import {setSqlFilter, SqlTableFilter} from './FilterEditor.jsx';
@@ -79,7 +80,7 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
     const onSqlFilterChanged = ({op, sql}) =>  onChange({sqlFilter: sql ? `${op}::${sql}` : ''});
 
     return (
-        <div className='TablePanelOptions'>
+        <Stack height={1} p={1} pt={0} boxSizing='border-box'>
             <Options {...{uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChange}} />
             <OptionsFilterStats tbl_id={ctm_tbl_id}/>
             <StatefulTabs componentKey='TablePanelOptions' defaultSelected={0} borderless={true} useFlex={true} style={{flex: '1 1 0'}}>
@@ -95,19 +96,13 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
                 }
             </StatefulTabs>
             {showTblPrefMsg && <TablePrefMsg/>}
-            <div style={{margin: '5px 15px 0 0'}}>
-                <button type='button' className='button std' style={{marginRight: 5}}
-                        onClick={onReset}>Reset column selection
-                </button>
-                <button type='button' className='button std' style={{marginRight: 5}}
-                        onClick={onRemoveFilters}>Remove all filters
-                </button>
-                <button type='button' className='button std'
-                        onClick={onClose}>Close
-                </button>
+            <Stack direction='row' mt={1} sx={{'button':{mr:1}}} alignItems='center'>
+                <Button variant='solid' color='primary' onClick={onClose}>Close</Button>
+                <Button onClick={onReset}>Reset column selection</Button>
+                <Button onClick={onRemoveFilters}>Remove all filters</Button>
                 <HelpIcon helpId={'tables.options'} style={{float: 'right', marginTop: 4}}/>
-            </div>
-        </div>
+            </Stack>
+        </Stack>
     );
 });
 
@@ -141,45 +136,46 @@ function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChang
             onChange && onChange({pageSize: pageSize.value});
         }
     };
-
-    const optStyle = {display: 'inline-flex', alignItems: 'center', marginLeft: 5};
-
+    const [value, setValue] = React.useState([
+                                    showUnits && 'showUnits',
+                                    showTypes && 'showTypes',
+                                    showFilters && 'showFilters'
+                                ].filter((v) => v));
     return (
-        <div style={{display: 'inline-flex', justifyContent: 'space-between', marginBottom: 10}}>
-            <div style={{display: 'inline-flex', alignItems: 'center'}}>
-                <div style={{marginLeft: 5, fontWeight: 'bold'}}>Show:</div>
-                {allowUnits &&
-                    <div style={optStyle}>
-                        <input type='checkbox'  checked={showUnits} onChange={(e) => onChange({showUnits: e.target.checked})}/>
-                        Units
-                    </div>
-                }
-                {allowTypes &&
-                    <div style={optStyle}>
-                        <input type='checkbox' checked={showTypes} onChange={(e) => onChange({showTypes: e.target.checked})}/>
-                        Data Type
-                    </div>
-                }
-                <div style={optStyle}>
-                    <input type='checkbox' checked={showFilters} onChange={(e) => onChange({showFilters: e.target.checked})} />
-                    Filters
-                </div>
-            </div>
-            <div>
-                {showPaging && pageSize!==MAX_ROW &&
-                <InputField
-                    validator={intValidator(1,10000)}
-                    tooltip='Set page size'
-                    label='Page Size:'
-                    labelStyle={{...optStyle, fontWeight: 'bold', width: 60}}
-                    size={5}
-                    value={pageSize+''}
-                    onChange={onPageSize}
-                    actOn={['blur','enter']}
-                />
-                }
-            </div>
-        </div>
+        <Stack direction='row' alignItems='center' justifyContent='space-between' mb={1}>
+            <Stack direction='row' spacing={1} alignItems='center'>
+                <Typography level='title-md'>Show/Hide:</Typography>
+                <ToggleButtonGroup
+                    variant='outlined'
+                    value={value}
+                    onChange={(ev, val) => {
+                        setValue(val);
+                        const bname = ev.target?.value;
+                        onChange({[bname]: val.includes(bname)});
+                    }}
+                >
+                    {allowUnits &&
+                    <Button value='showUnits' size='sm'>Units</Button>
+                    }
+                    {allowUnits &&
+                    <Button value='showTypes' size='sm'>Data Type</Button>
+                    }
+                    <Button value='showFilters' size='sm'>Filters</Button>
+                </ToggleButtonGroup>
+            </Stack>
+            {showPaging && pageSize !== MAX_ROW &&
+            <InputField
+                orientation='horizontal'
+                slotProps={{input: {size: 'sm', sx: {width: '5em'}}}}
+                validator={intValidator(1, 10000)}
+                tooltip='Set page size'
+                label='Page Size:'
+                value={pageSize + ''}
+                onChange={onPageSize}
+                actOn={['blur', 'enter']}
+            />
+            }
+        </Stack>
     );
 }
 
@@ -244,8 +240,8 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
     // filters state are kept in tablemodel
     // the rest of the state are kept in the source table ui data
     const renderers =  {
-                name: {cellRenderer: makeNameRenderer(tbl_id, tbl_ui_id, cmt_tbl_ui_id)},
-                filter:     {cellRenderer: makeFilterRenderer(tbl_id, ctm_tbl_id, onChange)},
+                name:   {cellRenderer: makeNameRenderer(tbl_id, tbl_ui_id, cmt_tbl_ui_id)},
+                filter: {cellRenderer: makeFilterRenderer(tbl_id, ctm_tbl_id, onChange)},
                 // format:  {cellRenderer: makePrecisionRenderer(tbl_ui_id, ctm_tbl_id, onChange)},
                 // null_string:   {cellRenderer: makeNullStringRenderer(tbl_ui_id, ctm_tbl_id, onChange)}
     };
@@ -272,9 +268,9 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
 function TablePrefMsg() {
 
     return (
-        <div className='TablePanelOptions__pref'>
+        <Typography level='body-sm' fontStyle='italic'>
             Column selection will apply to future searches of this table.
-        </div>
+        </Typography>
     );
 }
 

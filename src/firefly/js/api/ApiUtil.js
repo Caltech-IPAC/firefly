@@ -6,6 +6,8 @@
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {isArray, isElement, isString} from 'lodash';
+
+import {FireflyRoot} from '../ui/FireflyRoot.jsx';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
 import {Logger} from '../util/Logger.js';
 import {uniqueID} from '../util/WebUtil';
@@ -67,10 +69,12 @@ export function renderDOM(div, Component, props) {
 
     if (!isElement(divElement)) debug(`the div element ${isString(div)?div:''} is not defined in the html` );
     if (!Component) debug('Component must be defined');
-    divElement.classList.add('rootStyle');
+    // divElement.classList.add('rootStyle');       // this is probably not necessary
 
     const renderStuff= (
+        <FireflyRoot>
             <Component {...props} />
+        </FireflyRoot>
     );
     root.render(renderStuff);
 }

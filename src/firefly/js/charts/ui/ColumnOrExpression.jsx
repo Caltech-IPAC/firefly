@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import React, {useContext} from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, {object, shape} from 'prop-types';
 import {get} from 'lodash';
 import {Expression} from '../../util/expr/Expression.js';
 import {quoteNonAlphanumeric} from '../../util/expr/Variable.js';
@@ -132,7 +132,7 @@ ColumnOrExpression.propTypes = {
     inputStyle: PropTypes.object
 };
 
-export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidth, tooltip='Table column',
+export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidth, tooltip='Table column', slotProps,
                            name, nullAllowed, canBeExpression=false, inputStyle, readonly, helper, required, validator,
                               placeholder, colTblId=null,onSearchClicked=null}) {
     const value = initValue || getFieldVal(groupKey, fieldKey);
@@ -186,6 +186,7 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidt
                 readonly={readonly}
                 endDecorator= {!readonly && helper ? helper : undefined}
                 required={required}
+                slotProps={slotProps}
             />
         </div>
     );
@@ -209,5 +210,12 @@ ColumnFld.propTypes = {
     colTblId: PropTypes.string,
     onSearchClicked: PropTypes.func,
     placeholder: PropTypes.string,
+    slotProps: shape({
+        input: object,
+        control: object,
+        label: object,
+        tooltip: object
+    })
+
 };
 

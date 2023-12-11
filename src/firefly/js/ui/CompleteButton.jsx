@@ -109,7 +109,7 @@ export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
 
     return (
         <div style={style}>
-            <Button {...{size:'sm', variant: primary?'solid':'soft', color: primary?'primary':'neutral', onClick: onComplete}}>{text}</Button>
+            <Button {...{variant: primary?'solid':'soft', color: primary?'primary':'neutral', onClick: onComplete}}>{text}</Button>
         </div>
     );
 }
