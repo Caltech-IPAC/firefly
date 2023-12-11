@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Divider, IconButton} from '@mui/joy';
 import React, {memo, useRef, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
@@ -169,6 +170,16 @@ export const ToolbarButton = memo((props) => {
             );
         }
         else { // this is the most common case - vertical text buttons or horizontal icons
+
+            // an experiment to understand the effect of using IconButton
+            // if (icon && !hasCheckBox) {
+            //     return (
+            //                     ref={setupRef} >
+            //             <img src={icon} style={imageStyle}/>
+            //         </IconButton>
+            //     );
+            // }
+
             return (
                 <div title={tip} style={{...baseStyle, flex: '0 0 auto', ...style}} className={cName+ ' '+allowInput}
                      ref={setupRef} onClick={handleClick} onMouseOver={mouseOver} onMouseOut={mouseOut}>
@@ -214,9 +225,8 @@ ToolbarButton.propTypes= {
 };
 
 
-export function ToolbarHorizontalSeparator({top=0, style={}}) {
-    const s= {top, ...style};
-    return <div style={s} className='ff-horizontal-separator'/>;
+export function ToolbarHorizontalSeparator({ style={}}) {
+    return <Divider orientation='vertical' style={style} sx={{mx:1}}/>;
 }
 ToolbarHorizontalSeparator.propTypes= { style:PropTypes.object, top : PropTypes.number };
 

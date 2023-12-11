@@ -3,6 +3,13 @@ import {extendTheme} from '@mui/joy';
 export function getTheme() {
     return extendTheme({
         components: {
+            JoyButton: {
+                defaultProps: {
+                    size:'sm' ,
+                    variant:'soft' ,
+                    color:'neutral'
+                }
+            },
             JoyInput: {
                 defaultProps: { size:'sm' }
             },
@@ -37,6 +44,12 @@ export function getTheme() {
             JoyCheckbox: {
                 defaultProps: {
                     size:'sm',
+                },
+            },
+            JoyToggleButtonGroup: {
+                defaultProps: {
+                    color:'primary',
+                    variant:'soft',
                 },
             },
             JoyTooltip: {

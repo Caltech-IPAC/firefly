@@ -31,7 +31,7 @@
     align-items: center;
     grid-column-gap: 3px;
     grid-row-gap: 5px;
-    grid-template-columns :  minmax(20px,24px) minmax(50px,65px) 12px minmax(155px,160px) minmax(30px,60px) minmax(42px,auto) min-content minmax(30px,max-content);
+    grid-template-columns :  minmax(20px,24px) minmax(50px,65px) 12px minmax(11em,12em) minmax(30px,60px) minmax(42px,auto) min-content minmax(30px,max-content);
     grid-template-rows :  auto;
     grid-template-areas:
             "popout pixReadoutLabel clipboardIcon pixReadoutValue fluxLabel fluxValue lock lockLabel"
@@ -53,7 +53,7 @@
     align-items: center;
     grid-column-gap: 3px;
     grid-row-gap: 5px;
-    grid-template-columns :  30px 65px 12px minmax(160px,210px) auto minmax(90px,150px) auto minmax(90px,155px) min-content minmax(2px,max-content);
+    grid-template-columns :  30px 65px 12px minmax(11em,12em) auto minmax(90px,150px) auto minmax(90px,155px) min-content minmax(2px,max-content);
     grid-template-rows :  auto;
     grid-template-areas:
             "popout pixReadoutLabel clipboardIcon pixReadoutValue fluxLabel fluxValue wlLabel wlValue lock lockLabel"
@@ -98,6 +98,7 @@
     grid-row-gap: 5px;
     grid-template-columns:  65px 14px 200px;
     grid-template-rows : 2em 1.4em 1.4em 1.4em 1.4em;
+    align-items: center;
     grid-template-areas:
             ". . lock"
             "pixSizeLabel . pixSizeValue"
@@ -133,7 +134,6 @@
 
 .mouseReadoutLabel {
     cursor: default;
-    color: DarkGray;
     justify-self: end;
 }
 

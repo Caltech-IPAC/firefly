@@ -72,7 +72,7 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
                                         readoutShowing={doReadoutAndShowing}
                                         showOnInactive={!mouseReadoutEmbedded}
                                         radix={radix}
-                                        style={mouseReadoutEmbedded? {position:'absolute', left:0, right:1, bottom:3, margin:'0 3px 0 3px'}:{}} />
+                                        style={mouseReadoutEmbedded? {position:'absolute', left:3, right:3, bottom:2}:{}} />
             </div>
         );
     }

@@ -1,4 +1,5 @@
 import {
+    Box,
     Button, FormControl, FormLabel, IconButton, Radio, RadioGroup, Sheet, Stack, ToggleButtonGroup, Tooltip
 } from '@mui/joy';
 import React from 'react';
@@ -70,7 +71,7 @@ export function RadioGroupInputFieldView({options,orientation='vertical',value,
                                              sx, joyProps={}}) {
 
     return (
-        <Sheet sx={sx}>
+        <Box sx={sx}>
             <Tooltip {...{key:value, title:tooltip, ...joyProps.JoyTooltip}}>
                 <FormControl orientation={orientation} style={{whiteSpace:'nowrap'}}>
                     {label && <FormLabel {...{...joyProps.JoyFormLabel}}>{label}</FormLabel>}
@@ -81,7 +82,7 @@ export function RadioGroupInputFieldView({options,orientation='vertical',value,
                     </Stack>
                 </FormControl>
             </Tooltip>
-        </Sheet>
+        </Box>
     );
 }
 

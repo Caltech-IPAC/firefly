@@ -2,6 +2,7 @@
  L. Zhang Initial version 3/16/16
  DM-4494:FITS Visualizer porting: Show FITS Header
  */
+import {Stack, Typography} from '@mui/joy';
 import React from 'react';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {LayoutType, PopupPanel} from '../../ui/PopupPanel.jsx';
@@ -36,14 +37,6 @@ const popupPanelResizableStyle = {
 
 //const rgba='rgba(238, 238, 238, 0.25)';
 const bgColor= '#e3e3e3';
-
-//define the first label column in the textStyle div
-const labelColumn1 = { paddingTop:5, width:80, textAlign: 'right', color: 'Black', fontWeight: 'bold', display: 'inline-block'};
-//define the second label column in the textStyle div
-const labelColumn2 = { paddingTop:5, width:70, textAlign: 'right',display: 'inline-block', color: 'Black', fontWeight: 'bold'};
-//define the text data style
-const textStyle={ paddingTop:5,paddingLeft:3, width:60, color: 'Black', fontWeight: 'normal', display: 'inline-block'};
-const textLongStyle={ paddingTop:5,paddingLeft:3, width:110, color: 'Black', fontWeight: 'normal', display: 'inline-block'};
 
 //define the display style for the file size and pixel information and the table in the same div
 const tableAndTitleInfoStyle = {width: '100%', height: 'calc(100% - 40px)', display: 'flex', resize:'none'};
@@ -249,26 +242,22 @@ const renderCloseAndHelpButtons = (popupId) => (
 function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo, isOnTab) {
 
     const tableModel = fitsHeaderInfo[band];
-    const pt = getPixScaleArcSec(plot);
-    const pixelSize = pt.toFixed(2) + '"';
+    const pixelSize = getPixScaleArcSec(plot).toFixed(2) + '"';
 
     const  fileSizeStr = getSizeAsString(tableModel?.tableMeta?.fileSize) ?? '';
 
-    const titleStyleNoTab = {width: '100%', height: 30,display: 'inline-block', background:bgColor};
-    const titleStyleOnTab = {width: '100%', height: 30,display: 'inline-block'};
-    const titleStyle = isOnTab? titleStyleOnTab:titleStyleNoTab;
     let dimStr= `${plot.dataWidth} x ${plot.dataHeight}`;
     if (isImageCube(plot)) dimStr+= ` x ${getCubePlaneCnt(plot)}`;
 
    return (
-        <div style={titleStyle}>
-            <div style={ labelColumn1 }>Pixel Size:</div>
-            <div style= {textStyle} >{pixelSize}</div>
-            <div style={ labelColumn2}> File Size:</div>
-            <div style= {textStyle} >{fileSizeStr}</div>
-            <div style={ labelColumn2}> Dimensions:</div>
-            <div style= {textLongStyle} >{dimStr}</div>
-        </div>
+        <Stack direction='row' spacing={1} pt={1}>
+            <Typography {...{level:'body-sm', pl:1, textAlign: 'right'}}>Pixel Size:</Typography>
+            <Typography {...{level:'body-sm', color:'warning'}}>{pixelSize}</Typography>
+            <Typography {...{level:'body-sm', pl:2, textAlign: 'right'}}>File Size:</Typography>
+            <Typography {...{level:'body-sm', color: 'warning'}}>{fileSizeStr}</Typography>
+            <Typography {...{level:'body-sm', pl:2, textAlign: 'right'}}>Dimensions:</Typography>
+            <Typography {...{level:'body-sm', color:'warning'}}>{dimStr}</Typography>
+        </Stack>
     );
 }
 

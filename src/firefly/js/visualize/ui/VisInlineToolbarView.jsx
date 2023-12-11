@@ -2,27 +2,16 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box, IconButton, Stack} from '@mui/joy';
 import React, {memo} from 'react';
 import {makeMouseStatePayload, fireMouseCtxChange, MouseState} from '../VisMouseSync.js';
 import PropTypes from 'prop-types';
-import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import { dispatchDeletePlotView} from '../ImagePlotCntlr.js';
+import {dispatchDeletePlotView} from '../ImagePlotCntlr.js';
 import {pvEqualExScroll} from '../PlotViewUtil.js';
 import shallowequal from 'shallowequal';
 import DELETE from 'images/blue_delete_10x10.png';
 
 
-const rS= {
-    width: '100% - 2px',
-    position: 'relative',
-    verticalAlign: 'top',
-    whiteSpace: 'nowrap',
-    display:'inline-flex',
-    flexDirection:'row',
-    flexWrap:'nowrap',
-    alignItems: 'center',
-    zIndex : 1
-};
 
 export const VisInlineToolbarView = memo( (props) => {
         const {pv, showDelete,show, topOffset=0}= props;
@@ -37,17 +26,23 @@ export const VisInlineToolbarView = memo( (props) => {
             visibility: show ? 'visible' : 'hidden',
             opacity: show ? 1 : 0,
             transition: show ? 'opacity .15s linear' : 'visibility 0s .15s, opacity .15s linear',
-            top: topOffset
+            top: topOffset,
+            position : 'absolute',
+            right : 0,
         };
 
         return (
-            <div style={topStyle} className='iv-decorate-inline-toolbar-container'>
-                <div style={rS}>
-                    <ToolbarButton icon={DELETE} tip='Delete Image'
-                                   style={{alignSelf:'flex-start'}}
-                                   horizontal={true} visible={showDelete} onClick={deleteClick}/>
-                </div>
-            </div>
+            <Box style={topStyle}>
+                <Stack {...{direction:'row', alignItems:'center',
+                        position: 'relative', verticalAlign: 'top', zIndex : 1 }}>
+                    {showDelete &&
+                        <IconButton onClick={deleteClick}
+                                    sx={{alignSelf:'flex-start', minHeight:12, minWidth:12, p:.5}}
+                                    title='Delete Image'>
+                            <img src={DELETE}/>
+                        </IconButton>}
+                </Stack>
+            </Box>
         );
     },
     (p,nP) => shallowequal({...p, pv:undefined}, {...nP,pv:undefined}) && pvEqualExScroll(p.pv, nP.pv)

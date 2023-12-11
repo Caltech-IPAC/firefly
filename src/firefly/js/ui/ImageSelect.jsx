@@ -193,7 +193,7 @@ function ToolBar({className, filteredImageData, groupKey, onChange}) {
 
     return (
         // <div className={className}>
-        <Stack {...{spacing:0, direction:'column', sx:{padding:'3px 6px'}}}>
+        <Stack {...{spacing:0, direction:'column', padding:'3px 6px'}}>
             <div style={{display: 'inline-flex', flexGrow: 1}}>
                 <div style={{width: 155}}>
                     <Typography {...{level:'body-xs', color:'neutral'}}>Filter By:</Typography>

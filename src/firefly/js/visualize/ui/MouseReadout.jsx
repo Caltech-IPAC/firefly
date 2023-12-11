@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Checkbox, Stack, Typography} from '@mui/joy';
 import React, {Fragment,memo, useState} from 'react';
 import {number,string,oneOfType,object,func,bool} from 'prop-types';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
@@ -17,31 +18,29 @@ import './MouseReadout.css';
 
 export const MouseReadoutLock= memo(({gArea, gAreaLabel, style={}, lockByClick}) => {
     const s= gArea ? {gridArea:gArea,...style} : style;
+    const label= 'Lock by click';
     return (
         <React.Fragment>
-            <div style={s} title='Click on an image to lock the display at that point.'>
-                <input type='checkbox' name='aLock' value='lock' checked={lockByClick}
-                       onChange={() => {
-                           dispatchChangePointSelection('mouseReadout', !lockByClick);
-                           dispatchChangeLockByClick(!lockByClick);
-
-                       }}
-                />
-                {!gAreaLabel && <span style={{position:'relative', top:-2}}>Lock by click</span>}
-            </div>
+            <Stack direction='row' style={s} title='Click on an image to lock the display at that point.'>
+                <Checkbox label={gAreaLabel?'':label} checked={lockByClick}
+                          onChange={() => {
+                              dispatchChangePointSelection('mouseReadout', !lockByClick);
+                              dispatchChangeLockByClick(!lockByClick);
+                          }} />
+            </Stack>
             {gAreaLabel &&
-            <span style={
-                {
+            <Typography level='body-xs'
+                sx={ {
                     gridArea: gAreaLabel,
                     position:'relative',
                     whiteSpace:'nowrap',
                     textOverflow: 'ellipsis',
                     overflow:'hidden',
-                    paddingRight:3,
+                    pr:.5,
                     minWidth: 20
                 } }>
-                Lock by click
-            </span>}
+                {label}
+            </Typography>}
         </React.Fragment>
 );
 });
@@ -61,7 +60,7 @@ export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueSt
                                         label='', value='', unit='', copyValue='', prefChangeFunc=undefined, monoFont=false}) => {
     const lS= lArea ? {gridArea:lArea,...baseLS,...labelStyle} : {...baseLS,...labelStyle};
     const vS= vArea ? {gridArea:vArea,...baseVS, ...valueStyle} : {...baseVS,...valueStyle};
-    const cS= cArea ? {gridArea:cArea, overflow:'hidden', height:13} : undefined;
+    const cS= cArea ? {gridArea:cArea, overflow:'hidden'} : undefined;
     const labelClass= prefChangeFunc ? 'mouseReadoutLabel mouseReadoutClickLabel' : 'mouseReadoutLabel';
     const copyTitle= `Copy to clipboard: ${copyValue||value}`;
 
@@ -71,16 +70,16 @@ export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueSt
             <CopyToClipboard style={cS} title={copyTitle} value={copyValue||value} /> : <div style={cS}/>;
     }
 
-    const mStyle= monoFont ? {fontFamily:'monospace', fontSize:'larger'} : {};
+    const mStyle= monoFont ? {fontFamily:'monospace'} : {};
 
     return (
         <Fragment>
-            <div className={labelClass} title={value+''} style={lS} onClick={prefChangeFunc}>{label}</div>
-            <div style={{...vS, ...mStyle}} title={value+''}> {value} </div>
-            <div style={vS} title={value+''}>
+            <Typography level='body-xs' className={labelClass} title={value+''} style={lS} onClick={prefChangeFunc}>{label}</Typography>
+            <Typography level='body-xs' color='warning' style={{...vS, ...mStyle}} title={value+''}> {value} </Typography>
+            <Typography level='body-xs' color='warning' style={vS} title={value+''}>
                 <span style={mStyle}> {value}</span>
                 <span> {unit}</span>
-            </div>
+            </Typography>
             {clipComponent}
         </Fragment>
     );

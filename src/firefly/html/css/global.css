@@ -23,12 +23,12 @@
 */
 
 .rootStyle {
-    background-color: #e3e3e3;
+    /*background-color: #e3e3e3;*/
     padding: 0 1px 0 1px;
     border:0 none;
-    font-family: tahoma,arial,helvetica,sans-serif;
+    /*font-family: tahoma,arial,helvetica,sans-serif;*/
     font-size: 11px;
-    line-height: 1;
+    /*line-height: 1;*/
     text-align: initial;
 }
 

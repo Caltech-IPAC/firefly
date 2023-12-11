@@ -6,7 +6,7 @@
 import React, {forwardRef} from 'react';
 import PropTypes from 'prop-types';
 import {SINGLE, GRID} from '../MultiViewCntlr.js';
-import {get} from  'lodash';
+
 const flexContainerStyle= {
     display:'flex',
     flexDirection:'column',
@@ -16,13 +16,7 @@ const flexContainerStyle= {
 };
 
 const defDecStyle= {
-    background: 'rgb(200,200,200)',
-    border: '1px solid rgb(200,200,200)',
     boxSizing: 'border-box'
-};
-
-const flexToolbarStyle= {
-    flex: '0 0 auto'
 };
 
 
@@ -70,7 +64,7 @@ export const MultiItemViewerView=forwardRef( (props, ref) =>  {
     return (
         <div style={s} ref={ref}>
             {makeToolbar &&
-                <div key='toolbar' style={flexToolbarStyle}>
+                <div key='toolbar' style={{flex: '0 0 auto'}}>
                     {makeToolbar()}
                 </div>}
             <div key='container' style={{position:'relative', width:'100%', height:'100%', flex:'1 1 auto',
@@ -80,8 +74,6 @@ export const MultiItemViewerView=forwardRef( (props, ref) =>  {
         </div>
     );
 });
-
-//{Toolbar ? <div style={flexContainerStyle}><Toolbar/> </div> : ''}
 
 MultiItemViewerView.propTypes= {
     viewerId : PropTypes.string.isRequired,
@@ -292,7 +284,7 @@ function computeTitleYOffset(sparseGridTitleLocation, itemPosTitle,rowIdx) {
     return titleOffset;
 }
 function computeDataYOffset(sparseGridTitleLocation, itemPosTitle,rowIdx) {
-    let titleOffset= sparseGridTitleLocation==='left' && get(itemPosTitle, '0.hasData') ? 0 : 30;
+    let titleOffset= sparseGridTitleLocation==='left' && itemPosTitle?.[0]?.hasData ? 0 : 30;
     for(let i= 0; (i<rowIdx); i++) {
         if (sparseGridTitleLocation==='top') {
             titleOffset+= itemPosTitle[i].hasData ? itemPosTitle[i].dataSize+titleHeight : titleHeight;
