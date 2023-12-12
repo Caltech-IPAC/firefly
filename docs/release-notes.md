@@ -7,9 +7,8 @@
   - [Notes on next version](next-release-details.md)
 
 
-
 ## Version 2023.3
-- 2023.3.0 - (Dec xx, 2023),  _docker tag_: `latest`, `2023.3`, `2023.3.0` (not yet built)
+- 2023.3.0 - (Dec 12, 2023),  _docker tag_: `latest`, `2023.3`, `2023.3.0`
 
 #### This release includes many feature improvements across firefly
 
@@ -26,7 +25,7 @@
 - HiPS Viewer: MOC overlays now default to new outline mode [Firefly-1350](https://github.com/Caltech-IPAC/firefly/pull/1456)
 - Drag and drop for file uploads: [Firefly-1310](https://github.com/Caltech-IPAC/firefly/pull/1426)
 - Improved property sheet features [Firefly-1352](https://github.com/Caltech-IPAC/firefly/pull/1455)
-- Update nom.tam.fits(1.18.2) and Starlink (4.1.4): [Firefly-1362](https://github.com/Caltech-IPAC/firefly/pull/1428)
+- Performance: Update nom.tam.fits(1.18.2) and Starlink (4.1.4): [Firefly-1362](https://github.com/Caltech-IPAC/firefly/pull/1428)
 
 #### Notable Bug Fixes 
 - Fixed: Coverage FOV not computed correctly  [Firefly-1336](https://github.com/Caltech-IPAC/firefly/pull/1449)

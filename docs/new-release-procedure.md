@@ -18,8 +18,8 @@
    - Commit your changes - _example message:_ "Release 2023.3.0: document updates"
    - Tag the `rc-yyyy.m` branch with the release  `release-yyyy.m.r`
    - _Example:_ 
-      - the second release from branch `rc-2023.3` with the git tagged with `release-2023.2.1`
-      - `git tag release-2023.2.1`
+      - the second release from branch `rc-2023.3` with the git tagged with `release-2023.3.1`
+      - `git tag release-2023.3.1`
    
 ### Push
    - Push to Github
