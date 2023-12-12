@@ -9,6 +9,7 @@ import {ADQL_LINE_LENGTH} from './TapUtil.js';
 
 const COLS_TO_DISPLAY_FIRST = ['column_name','unit','ucd','description','datatype','arraysize','utype','xtype','principal'];
 
+const SELECT_ALL_COLUMNS_WHEN_NO_PRINCIPAL=false; //todo- determine what to if not of the principal columns are set
 
 export function TableColumnsConstraints({columnsModel}) {
 
@@ -125,8 +126,7 @@ function tableEffect(columnsModel, setTableModel, tbl_id, setFilterCount, setSel
  * @returns {boolean}
  */
 function isPrincipalSet(tableModel) {
-    // 3 or more principle columns (coordinates and value) might be useful
-    return getColumnValues(tableModel, 'principal').filter((v)=>v>0).length >= 3;
+    return getColumnValues(tableModel, 'principal').filter((v)=>v>0).length >= 1;
 }
 
 /**
@@ -171,18 +171,16 @@ function reorganizeTableModel(tableModel, columnNames, reset) {
         e.splice(constraintsColIdx, 0, '');
     });
 
-    // set selections
-    const selectInfoCls = SelectInfo.newInstance({rowCount: data.length});
-    if (selectInfoCls.getSelectedCount() === 0) {
-        let defaultSelected = [];
-        // default selected are the principal rows
-        if (isPrincipalSet(tableModel)) {
-            defaultSelected = getColumnValues(tableModel, 'principal').reduce((sels, v, i) => {
+    // default selected are either all or the principal rows
+    const usingPrincipal= isPrincipalSet(tableModel);
+    const selectInfoCls = SelectInfo.newInstance({selectAll:!usingPrincipal, rowCount: data.length});
+    if (usingPrincipal) {
+        getColumnValues(tableModel, 'principal')
+            .reduce((sels, v, i) => {
                 if (parseInt(v) === 1) sels.push(i);
                 return sels;
-            }, []);
-        }
-        defaultSelected.forEach((idx)=>selectInfoCls.setRowSelect(idx, true));
+            }, [])
+            .forEach((idx)=>selectInfoCls.setRowSelect(idx, true));
     }
 
     columns.forEach((c) => {
@@ -192,10 +190,9 @@ function reorganizeTableModel(tableModel, columnNames, reset) {
             c.prefWidth= 11;
         }
     });
+    const selectInfo= (usingPrincipal||SELECT_ALL_COLUMNS_WHEN_NO_PRINCIPAL) ? selectInfoCls.data : undefined;
 
-    modifiedTableModel = {tbl_id, totalRows: data.length, tableData: {columns, data},
-        selectInfo: selectInfoCls.data, request: {tbl_id}};
-
+    modifiedTableModel = {tbl_id, totalRows: data.length, tableData: {columns, data}, selectInfo, request: {tbl_id}};
     return modifiedTableModel;
 }
 
