@@ -12,7 +12,6 @@ import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js'
 import DialogRootContainer from './DialogRootContainer.jsx';
 
 export const INFO_POPUP= 'InfoPopup';
-import './PopupPanel.css';
 
 // ------------------------------------------------------------
 // ------------------------------------------------------------
@@ -26,22 +25,13 @@ export const POPUP_DIALOG_ID = 'ModalDialog';
 
 /**
  * Creates and shows the modal dialog.
- * @param {string | object}  content can be a string or a react component
+ * @param {string | object}  content can be a string or a React component
  * @param {boolean} [show=true] show or hide this dialog
  */
 export function showModal(content, show=true) {
-    if (show) {
-        const dialogContent= (
-            <ModalDialog>
-                    {content}
-            </ModalDialog>
-        );
-        DialogRootContainer.defineDialog(MODAL_DIALOG_ID, dialogContent);
-
-        dispatchShowDialog(MODAL_DIALOG_ID);
-    } else {
-        dispatchHideDialog(MODAL_DIALOG_ID);
-    }
+    if (!show) dispatchHideDialog(MODAL_DIALOG_ID);
+    DialogRootContainer.defineDialog(MODAL_DIALOG_ID, <ModalDialog>{content}</ModalDialog>);
+    dispatchShowDialog(MODAL_DIALOG_ID);
 }
 
 export function showTmpModal(content, displayTime=3000) {
@@ -62,11 +52,7 @@ export function showPinMessage(text) {
  * @param {boolean} [p.show=true] show or hide this dialog
  */
 export function showOptionsPopup({content, title='Options', modal = false, show=true}) {
-  if (show) {
-      showPopup({ID: POPUP_DIALOG_ID, content, title, modal});
-  } else {
-    dispatchHideDialog(POPUP_DIALOG_ID);
-  }
+    show? showPopup({ID: POPUP_DIALOG_ID, content, title, modal}) : dispatchHideDialog(POPUP_DIALOG_ID);
 }
 
 /**
@@ -79,7 +65,6 @@ export function showOptionsPopup({content, title='Options', modal = false, show=
  * @return {function} return function to hide the popup
  */
 export function showPopup({ID, content, title='Options', modal = false}) {
-
     const dialogContent= (
         <PopupPanel title={title} modal={modal}>
             {content}
@@ -87,7 +72,6 @@ export function showPopup({ID, content, title='Options', modal = false}) {
     );
     DialogRootContainer.defineDialog(ID, dialogContent);
     dispatchShowDialog(ID);
-
     return () => dispatchHideDialog(ID);
 }
 
@@ -115,7 +99,7 @@ export function hideInfoPopup() {
 
 function makeContent(content) {
     return (
-        <Stack {...{px:2, py:1, spacing:2}}>
+        <Stack {...{py:1, spacing:2}}>
             <Stack {...{className:'FF-Popup-Content', minWidth:350, maxWidth: 500, overflow: 'hidden'}}>
                 {isString(content) ? ( <Typography level='body-md'>{content}</Typography> ) : content}
             </Stack>
