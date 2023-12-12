@@ -326,6 +326,8 @@
 .TablePanelInfoWrapper {
     min-width: 430px;
     min-height: 200px;
+    height: 300px;
+    width: 550px;
     overflow: auto;
     position: relative;
     resize: both;
