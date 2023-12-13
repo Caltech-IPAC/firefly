@@ -1,0 +1,21 @@
+.ImageTableRowViewer {
+    width: calc(100% - 50px); /* each slider arrow is 25px wide */
+    height: 100%;
+    margin: auto;
+}
+
+.ImageTableRowViewer .slick-list, .ImageTableRowViewer .slick-track {
+    height: 100%;
+}
+
+.ImageTableRowViewer .slick-slide {
+    position: relative;
+}
+
+.ImageTableRowViewer__item {
+    display: inline-block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+}

@@ -43,12 +43,12 @@ export const MultiItemViewerView=forwardRef( (props, ref) =>  {
     if (!viewerItemIds.length && !gridDefFunc) {
         container= false;
     }
+    else if (makeCustomLayout) {  // CUSTOM layout defined by a function
+        container = makeCustomLayout(viewerItemIds, makeItemViewer);
+    }
     else if (layoutType==='single' || viewerItemIds.length===1) {  // SINGLE VIEW
         const id= viewerItemIds.includes(activeItemId) ? activeItemId : viewerItemIds[0];
         container= renderItemViewerFull(makeItemViewerFull,id);
-    }
-    else if (makeCustomLayout) {  // CUSTOM layout defined by a function
-        container = makeCustomLayout(viewerItemIds, makeItemViewer);
     }
     else if (gridDefFunc) {  // GRID computed by a function
         const gridDef= gridDefFunc(viewerItemIds);
