@@ -190,7 +190,9 @@ function reorganizeTableModel(tableModel, columnNames, reset) {
             c.prefWidth= 11;
         }
     });
-    const selectInfo= (usingPrincipal||SELECT_ALL_COLUMNS_WHEN_NO_PRINCIPAL) ? selectInfoCls.data : undefined;
+    const selectInfo= (usingPrincipal||SELECT_ALL_COLUMNS_WHEN_NO_PRINCIPAL) ?
+        selectInfoCls.data :
+        SelectInfo.newInstance({rowCount: data.length}).data;
 
     modifiedTableModel = {tbl_id, totalRows: data.length, tableData: {columns, data}, selectInfo, request: {tbl_id}};
     return modifiedTableModel;
