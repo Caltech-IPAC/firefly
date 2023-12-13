@@ -15,7 +15,7 @@
 #### This release includes many feature improvements across Firefly
 
 #### New Features
-- VO: Support datalink 1.1: [Firefly-1325](https://github.com/Caltech-IPAC/firefly/pull/1439)
+- VO: Support DataLink 1.1: [Firefly-1325](https://github.com/Caltech-IPAC/firefly/pull/1439)
 - VO: Full multi-product support for UWS: [Firefly-1282](https://github.com/Caltech-IPAC/firefly/pull/1423)
 - VO: Support Multi spectrum table: [Firefly-1314](https://github.com/Caltech-IPAC/firefly/pull/1438)
 - Multi Product Viewer: Handle multiple spectra at once via datalink table: [Firefly-1324](https://github.com/Caltech-IPAC/firefly/pull/1442)
