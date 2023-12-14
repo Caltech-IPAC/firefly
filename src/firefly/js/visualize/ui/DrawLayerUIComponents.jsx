@@ -1,35 +1,19 @@
 
+import {Button, Stack} from '@mui/joy';
 import React from 'react';
 import DrawUtil from '../draw/DrawUtil';
 import {SimpleCanvas} from '../draw/SimpleCanvas';
 import {DrawSymbol} from '../draw/DrawSymbol.js';
 
 const symbolSize= 10;
-const mLeft = 5;
-
-const bSty= { display:'inline-block', whiteSpace: 'nowrap' };
-
-const bStyWid = { ...bSty, width: 'calc(33%)' };
 
 
-
-
-
-export function makeColorChange(color, modifyColor, style= {}) {
-    const feedBackStyle= {
-        width:symbolSize,
-        height:symbolSize,
-        backgroundColor: color,
-        display:'inline-block',
-        marginLeft: mLeft
-    };
+export function makeColorChange(color, modifyColor, sx= {}) {
+    const feedBackStyle= { width:symbolSize, height:symbolSize, backgroundColor: color};
     return (
-        <div style={{...bSty, ...style}}>
-            <div style={feedBackStyle} onClick={() => modifyColor()}  />
-            <a className='ff-href'
-               onClick={() => modifyColor()}
-               style={Object.assign({},bSty, {paddingLeft:5})}>Color</a>
-        </div>
+            <Button onClick={() => modifyColor()} sx={{px:.5}} startDecorator={<div style={feedBackStyle} />}>
+                Color
+            </Button>
     );
 
 }
@@ -38,31 +22,23 @@ export function makeShape(drawingDef, modifyShape) {
 
     const [w, h] = [symbolSize, symbolSize];
     const size = DrawUtil.getSymbolSize(w, h, drawingDef.symbol);
-    const df = Object.assign({}, drawingDef, {size});
+    const df = {...drawingDef, size};
     const {width, height} = DrawUtil.getDrawingSize(size, drawingDef.symbol);
 
-    const feedBackStyle= {
-        width,
-        height,
-        display:'inline-block',
-        marginLeft:mLeft
-    };
+    const startDecorator=
+        (<Stack direction='row' alignItems='center' onClick={() => modifyShape()}>
+            <SimpleCanvas width={width} height={height} drawIt={ (c) => drawOnCanvas(c, df, width, height)}/>
+        </Stack>);
 
     return (
-        <div style={bStyWid} >
-            <div style={feedBackStyle} onClick={() => modifyShape()}>
-                <SimpleCanvas width={width} height={height} drawIt={ (c) => drawOnCanvas(c, df, width, height)}/>
-            </div>
-            <a className='ff-href'
-               onClick={() => modifyShape()}
-               style={Object.assign({}, bSty, {paddingLeft:5})}>Symbol</a>
-        </div>
+        <Button onClick={() => modifyShape()} startDecorator={startDecorator} sx={{px:.5}}>
+            Symbol
+        </Button>
     );
 }
 
 export function drawOnCanvas(c,drawingDef, w, h) {
     if (!c) return;
-
     const [x, y] = drawingDef.symbol === DrawSymbol.ARROW ? [w/2+drawingDef.size/2, h/2+drawingDef.size/2] : [w/2, h/2];
     const ct = c.getContext('2d');
     ct.clearRect(0, 0, w, h);

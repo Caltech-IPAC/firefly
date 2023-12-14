@@ -1,14 +1,14 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Sheet} from '@mui/joy';
+import {Box, Card, DialogContent, DialogTitle, IconButton, Stack, Tooltip} from '@mui/joy';
 import React, {memo, useState, useEffect, useRef} from 'react';
 import Enum from 'enum';
-import PropTypes from 'prop-types';
+import {object,element,func,number,string,bool,oneOfType} from 'prop-types';
 import {debounce} from 'lodash';
 import {getDefaultPopupPosition, humanStart, humanMove, humanStop} from './PopupPanelHelper.js';
-import './PopupPanel.css';
-import DEL_ICO from 'html/images/blue_delete_10x10.png';
+
+import DELETE from 'images/blue_delete_10x10.png';
 
 /**
  * @typedef {Object} LayoutType
@@ -29,7 +29,7 @@ export const LayoutType= new Enum(['CENTER', 'TOP_EDGE_CENTER', 'TOP_CENTER', 'T
 export const PopupPanel= memo((props) => {
     const {title='', visible=true, layoutPosition=LayoutType.TOP_CENTER, closePromise, closeCallback, modal=false,
         requestToClose, mouseInDialog, requestOnTop, dialogId, zIndex=0, children, style,
-        initLeft, initTop, onMove, element, sx}= props;
+        initLeft, initTop, onMove, element}= props;
     const [{left,top}, setPos]= useState({left:0,top:0});
     const [layout, setLayout]= useState(LayoutType.NONE);
     const {current:ctxRef} = useRef({ mouseCtx: undefined, popupRef : undefined, titleBarRef: undefined});
@@ -41,7 +41,6 @@ export const PopupPanel= memo((props) => {
         else {
             setPos(getDefaultPopupPosition(ctxRef.popupRef,layoutPosition, element, initTop, initLeft));
         }
-
         setLayout(layoutPosition);
     };
 
@@ -81,7 +80,7 @@ export const PopupPanel= memo((props) => {
 
     if (!visible) return false;
     return (
-        <PopupHeaderTop {...{modal,zIndex,left,top,ctxRef,dialogMoveStart,dialogMoveEnd, onMouseEnter,onMouseLeave, style, sx,
+        <PopupHeaderTop {...{modal,zIndex,left,top,ctxRef,dialogMoveStart,dialogMoveEnd, onMouseEnter,onMouseLeave, style,
             dialogMove,children,title,askParentToClose, visibility:layout===LayoutType.NONE ? 'hidden' : 'visible'}}>
             {children}
         </PopupHeaderTop>
@@ -89,53 +88,64 @@ export const PopupPanel= memo((props) => {
 });
 
 PopupPanel.propTypes= {
-    layoutPosition : PropTypes.object,
-    title : PropTypes.oneOfType([PropTypes.string,PropTypes.element]),
-    closePromise : PropTypes.object,
-    requestToClose : PropTypes.func,
-    requestOnTop : PropTypes.func,
-    closeCallback : PropTypes.func,
-    dialogId : PropTypes.string,
-    zIndex : PropTypes.number,
-    mouseInDialog : PropTypes.func,
-    modal : PropTypes.bool,
-    visible : PropTypes.bool,
-    style : PropTypes.object,
-    initLeft: PropTypes.number,
-    initTop: PropTypes.number,
-    onMove: PropTypes.func,
-    sx: PropTypes.object
+    layoutPosition : object,
+    title : oneOfType([string,element]),
+    closePromise : object,
+    requestToClose : func,
+    requestOnTop : func,
+    closeCallback : func,
+    dialogId : string,
+    zIndex : number,
+    mouseInDialog : func,
+    modal : bool,
+    visible : bool,
+    style : object,
+    initLeft: number,
+    initTop: number,
+    onMove: func,
+    element,
 };
 
 function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart,dialogMoveEnd,
-                            onMouseEnter,onMouseLeave,dialogMove,children,title,askParentToClose, style, sx}) {
+                            onMouseEnter,onMouseLeave,dialogMove,children,title,askParentToClose}) {
     return (
-        <Sheet style={{zIndex, position:'relative'}} sx={sx}>
-            {modal && <div className='popup-panel-glass'/>}
-            <div ref={(c) => ctxRef.popupRef=c} style={{left, top, position: 'absolute', visibility}}
-                 className={'popup-panel-shadow enable-select'}
-                 onTouchStart={dialogMoveStart} onTouchMove={dialogMove}
-                 onTouchEnd={dialogMoveEnd} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} >
-                <div className={'standard-border'}>
-                    <div style={{position:'relative', height:'16px', width:'100%', cursor:'default'}}
-                         className={'title-bar title-color popup-panel-title-background'}
-                         onTouchStart={dialogMoveStart} onTouchMove={dialogMove}
-                         onTouchEnd={dialogMoveEnd} onMouseDownCapture={dialogMoveStart}>
-                        <div ref={(c) => ctxRef.titleBarRef=c}
-                             style= {{position:'absolute', left: 0, top: 0, bottom: 0, width:'100%', padding: '3px 0 3px 10px'}}
-                             onMouseDownCapture={dialogMoveStart} onTouchStart={dialogMoveStart}
-                             onTouchMove={dialogMove} onTouchEnd={dialogMoveEnd}
-                             className={'title-label'} >
-                            <div className={'text-ellipsis'} style={{width:'80%', height: '100%'}}>
-                                {title}
-                            </div>
-                        </div>
-                        <img className='popup-panel-header' src= {DEL_ICO}
-                             style= {{position:'absolute', right:0, top:0}} onClick={askParentToClose} />
-                    </div>
-                    <Sheet style={{display:'flex', ...style}}> {children} </Sheet>
-                </div>
-            </div>
-        </Sheet>
+        <Box style={{zIndex, position:'relative'}}>
+            {modal &&
+                <Box sx={{ position: 'fixed', backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                         top: 0, left: 0, bottom: 0, right: 0, }}/>}
+            <Card {...{className:'ff-PopupPanel', color:'neutral', variant:'plain', ref:(c) => ctxRef.popupRef=c,
+                onTouchStart:dialogMoveStart, onTouchMove:dialogMove,
+                onTouchEnd:dialogMoveEnd, onMouseEnter, onMouseLeave,
+                sx:(theme) => (
+                    {
+                        left,
+                        top,
+                        position: 'absolute',
+                        p:.5,
+                        visibility,
+                        boxShadow: `1px 1px 5px ${theme.vars.palette.primary.softActiveColor}`,
+                        '.ff-dialog-title-bar' : { cursor:'grab' },
+                        '.ff-dialog-title-bar:active' : { cursor:'grabbing' }
+                    }) }}>
+                <Stack direction='row' justifyContent='space-between' className='ff-dialog-title-bar'
+                       sx={{position:'relative', height:'1.8em', width:'100%', mb:1}}
+                       ref={(c) => ctxRef.titleBarRef=c}
+                       onTouchStart={dialogMoveStart} onTouchMove={dialogMove}
+                       onTouchEnd={dialogMoveEnd} onMouseDownCapture={dialogMoveStart}>
+                    <DialogTitle  sx= {{ ml:.5, mt:.5}} >
+                        {title}
+                    </DialogTitle>
+                    <Tooltip placement="left" title='Close'>
+                        <IconButton onClick={askParentToClose} title='Close'
+                                    sx={{minHeight:12, minWidth:12, p:.5}}>
+                            <img src={DELETE}/>
+                        </IconButton>
+                    </Tooltip>
+                </Stack>
+                <DialogContent sx={{ml:.5}}>
+                    {children}
+                </DialogContent>
+            </Card>
+        </Box>
     );
 }

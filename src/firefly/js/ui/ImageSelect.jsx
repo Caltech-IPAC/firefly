@@ -206,12 +206,12 @@ function ToolBar({className, filteredImageData, groupKey, onChange}) {
             </div>
             <div className='ImageSelect__action'>
                 <div>
-                    <Button variant={'soft'} color='neutral' size='sm' sx={{mr: 7}} onClick={() => clearFields([FILTER_PREFIX])}>Clear Filters</Button>
+                    <Button sx={{mr: 7}} onClick={() => clearFields([FILTER_PREFIX])}>Clear Filters</Button>
                 </div>
                 <div>
-                    <Button variant={'soft'} color='neutral' size='sm'  onClick={() => clearFields([IMG_PREFIX, PROJ_PREFIX])}>Clear Selections</Button>
-                    <Button variant={'soft'} color='neutral' size='sm'  onClick={() => setDSListMode(true)}>Expand All</Button>
-                    <Button variant={'soft'} color='neutral' size='sm'  onClick={() => setDSListMode(false)}>Collapse All</Button>
+                    <Button onClick={() => clearFields([IMG_PREFIX, PROJ_PREFIX])}>Clear Selections</Button>
+                    <Button onClick={() => setDSListMode(true)}>Expand All</Button>
+                    <Button onClick={() => setDSListMode(false)}>Collapse All</Button>
                 </div>
             </div>
         </Stack>
