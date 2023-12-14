@@ -2,9 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box, Button, Stack, Tooltip, Typography} from '@mui/joy';
 import React from 'react';
 import PropTypes from 'prop-types';
-import {padStart, groupBy, get} from 'lodash';
+import {padStart, groupBy} from 'lodash';
 import {
     isDrawLayerVisible, getAllDrawLayersForPlot,
     getLayerTitle, getDrawLayersByDisplayGroup, primePlot
@@ -28,16 +29,6 @@ import {toRGB} from 'firefly/util/Color.js';
 
 
 
-const dlPanelViewStyle= {
-    width:'calc(100% - 12px)',
-    height:'100%',
-    padding: 6,
-    position: 'relative',
-    overflow:'hidden'
-};
-
-
-
 export function DrawLayerPanelView({dlAry, plotView, mouseOverMaskValue, drawLayerFactory}) {
 
     const layers= getAllDrawLayersForPlot(dlAry,plotView.plotId);
@@ -49,13 +40,13 @@ export function DrawLayerPanelView({dlAry, plotView, mouseOverMaskValue, drawLay
     },20);
 
     return (
-        <div style={dlPanelViewStyle}>
-            <div style={{overflow:'auto', maxHeight:500}}>
+        <Stack direction='column' p={1}>
+            <Box sx={{overflow:'auto', maxHeight:500}}>
                 {makeImageLayerItemAry(plotView,maxTitleChars,layers.length===0, mouseOverMaskValue)}
                 {makeDrawLayerItemAry(layers,plotView,maxTitleChars, drawLayerFactory)}
-            </div>
+            </Box>
             {makePermInfo(plotView,layers)}
-        </div>
+        </Stack>
     );
 }
 
@@ -76,25 +67,18 @@ function getUIComponent(dl,pv, factory, maxTitleChars) {
 
 function makePermInfo(pv,layers) {
     return (
-        <div style={{display:'flex', justifyContent: 'space-between', minWidth: 260, borderTop:'1px solid rgba(0, 0, 0, 0.298039)', paddingTop: 5, margin: '4px 0 0 0'}}>
-            <div style={{marginLeft:5}}>
+        <Stack {...{direction:'row', justifyContent: 'space-between', minWidth: 260, alignItems:'center', mt:1}}>
+            <Stack {...{direction:'row', spacing:1, ml:.4}}>
                 {makeAddRelatedDataAry(pv)}
-                <div style={{paddingTop:5}}>
-                    <button style={{display : 'inline-block'}} type='button'
-                            className='button'
-                            onClick={() => showAllLayers(layers,pv,true)}>
-                        {'Show All'}
-                    </button>
-                    <button style={{display : 'inline-block'}} type='button'
-                            className='button'
-                            onClick={() => showAllLayers(layers,pv,false)}>
-                        {'Hide All'}
-                    </button>
-
-                </div>
-            </div>
+                <Tooltip  title='Show all drawing layers'>
+                    <Button onClick={() => showAllLayers(layers,pv,true)}> Show All </Button>
+                </Tooltip>
+                <Tooltip  title='Hide all drawing layers'>
+                    <Button onClick={() => showAllLayers(layers,pv,false)}> Hide All </Button>
+                </Tooltip>
+            </Stack>
             <HelpIcon helpId={'visualization.layerPanel'} style={{alignSelf:'center'}}/>
-        </div>
+        </Stack>
     );
 }
 
@@ -117,16 +101,12 @@ function makeAddRelatedDataAry(pv) {
 
     return relatedData.map( (d,idx) => {
         return (
-            <div key={`button- ${idx}`}>
-                <div style={{display : 'inline-block', width: 150, marginRight:10, fontStyle: 'italic', textAlign:'right'}}>
+            <Stack {...{spacing:1, direction:'row', pr: 2, alignItems:'center', key:idx+''}}>
+                <Typography {...{level:'body-xs', color:'warning', mr:.5}}>
                     {`${d.desc} Layer found :`}
-                </div>
-                <button style={{display : 'inline-block'}} type='button'
-                        className='button'
-                        onClick={() => enableRelatedDataLayer(visRoot(), pv, d)}>
-                    {'Enable'}
-                </button>
-            </div>
+                </Typography>
+                <Button color='warning' onClick={() => enableRelatedDataLayer(visRoot(), pv, d)}> Enable</Button>
+            </Stack>
         );
     });
 }
@@ -147,34 +127,35 @@ function makeDrawLayerItemAry(layers,pv, maxTitleChars, factory) {
     const sortedGroupedObj= groupBy([...sortedLayer], 'layersPanelLayoutId' );
     const sortedGroupedLayer= Object.values(sortedGroupedObj).flat(1);
 
-    return sortedGroupedLayer.map( (l,idx) =>
-        <DrawLayerItemView key={l.drawLayerId}
-                           maxTitleChars={maxTitleChars}
-                           helpLine={l.helpLine}
-                           lastItem={idx===last}
-                           canUserDelete={l.canUserDelete}
-                           canUserHide={l.canUserHide}
-                           canUserChangeColor={l.canUserChangeColor}
-                           isPointData={l.isPointData}
-                           drawingDef={l.drawingDef}
-                           color={l.drawingDef.color}
-                           packWithNext= {idx!==last && l.layersPanelLayoutId && l.layersPanelLayoutId===get(sortedGroupedLayer[idx+1],'layersPanelLayoutId')}
-                           autoFormatTitle={l.autoFormatTitle}
-                           title= {getLayerTitle(pv.plotId,l)}
-                           visible={isDrawLayerVisible(l,pv.plotId)}
-                           modifyColor={() => modifyColor(l,pv.plotId)}
-                           modifyShape={() => modifyShape(l,pv.plotId)}
-                           deleteLayer={() => deleteLayer(l,pv.plotId)}
-                           changeVisible={() => flipVisible(l,pv.plotId)}
-                           UIComponent={getUIComponent(l,pv,factory, maxTitleChars)}
-    />);
+    return sortedGroupedLayer.map( (l,idx) => (
+        <DrawLayerItemView {...{
+            key:l.drawLayerId,
+            maxTitleChars,
+            helpLine: l.helpLine,
+            lastItem: idx===last,
+            canUserDelete: l.canUserDelete,
+            canUserHide: l.canUserHide,
+            canUserChangeColor:l.canUserChangeColor,
+            isPointData: l.isPointData,
+            drawingDef: l.drawingDef,
+            color: l.drawingDef.color,
+            packWithNext: idx!==last && l.layersPanelLayoutId && l.layersPanelLayoutId===sortedGroupedLayer?.[idx+1]?.layersPanelLayoutId,
+            autoFormatTitle: l.autoFormatTitle,
+            title: getLayerTitle(pv.plotId,l),
+            visible: isDrawLayerVisible(l,pv.plotId),
+            modifyColor: () => modifyColor(l,pv.plotId),
+            modifyShape: () => modifyShape(l,pv.plotId),
+            deleteLayer: () => deleteLayer(l,pv.plotId),
+            changeVisible: () => flipVisible(l,pv.plotId),
+            UIComponent: getUIComponent(l,pv,factory, maxTitleChars) }}
+        />));
 }
 
 function makeImageLayerItemAry(pv, maxTitleChars, hasLast, mouseOverMaskValue) {
     if (!pv.overlayPlotViews) return [];
     const {dataWidth=0,dataHeight=0}= primePlot(pv)??{};
     const last= pv.overlayPlotViews.length-1;
-    const retAry= pv.overlayPlotViews.map( (opv,idx) =>
+    const retAry= pv.overlayPlotViews.map( (opv,idx) => (
         <DrawLayerItemView key={'MaskControl-'+idx}
                            maxTitleChars={maxTitleChars}
                            helpLine={''}
@@ -191,7 +172,7 @@ function makeImageLayerItemAry(pv, maxTitleChars, hasLast, mouseOverMaskValue) {
                            deleteLayer={() => deleteMaskLayer(opv)}
                            changeVisible={() => setMaskVisibleInGroup(opv, !opv.visible)}
                            UIComponent={null}
-    />);
+    />));
     return retAry;
 }
 
@@ -277,7 +258,7 @@ function deleteMaskLayer(opv) {
 
 /**
  *
- * @param {DrawingLayer} dl
+ * @param {DrawLayer} dl
  * @param {string} plotId
  */
 function flipVisible(dl, plotId) {
@@ -287,7 +268,7 @@ function flipVisible(dl, plotId) {
 
 /**
  *
- * @param {DrawingLayer} dl
+ * @param {DrawLayer} dl
  * @param {boolean} visible
  * @param {string} plotId
  */

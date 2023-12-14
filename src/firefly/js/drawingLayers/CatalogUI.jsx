@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {IconButton, Stack, Tooltip} from '@mui/joy';
 import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import Enum from 'enum';
@@ -16,7 +17,6 @@ import {GroupingScope} from '../visualize/DrawLayerCntlr.js';
 import {isDialogVisible, dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {formatLonLatToString, formatWorldPt} from '../visualize/ui/WorldPtFormat';
 import {copyToClipboard} from '../util/WebUtil';
-import {ToolbarButton} from '../ui/ToolbarButton';
 import {makeColorChange, makeShape} from '../visualize/ui/DrawLayerUIComponents';
 import {showColorPickerDialog} from '../ui/ColorPicker';
 import {showPointShapeSizePickerDialog} from '../ui/PointShapeSizePicker';
@@ -216,8 +216,8 @@ function SearchTargetUI({drawLayer:dl, PlotView:pv}) {
                 />
             </div>
             <div style={{paddingRight: 68}}>
-                {makeColorChange(drawingDef.color, modifyColor, {paddingRight: 14})}
                 {makeShape(drawingDef, modifyShape)}
+                {makeColorChange(drawingDef.color, modifyColor, {paddingRight: 14})}
             </div>
         </div>
     );
@@ -231,7 +231,7 @@ CatalogUI.propTypes= {
 };
 
 
-export function FixedPtControl({pv, wp, style={}}) {
+export function FixedPtControl({pv, wp, sx={}}) {
     const llStr= wp.type===Point.W_PT ?
         formatLonLatToString(convert(wp, CoordinateSys.EQ_J2000)) : `${Math.round(wp.x)},${Math.round(wp.y)}`;
     const [clipIcon, setClipIcon] = useState(CLIPBOARD);
@@ -242,25 +242,26 @@ export function FixedPtControl({pv, wp, style={}}) {
             setClipIcon(CHECKED);
             setTimeout( () => setClipIcon(CLIPBOARD),750);
         }, 10);
-
     };
 
     return (
-        <div style={style}>
-            <ToolbarButton icon={clipIcon} tip={`Copy to the clipboard: ${llStr}`}
-                           horizontal={true} onClick={() => doCopy(llStr)} />
-
-            <ToolbarButton icon={CENTER} tip={'Center on this position'}
-                           horizontal={true}
-                           onClick={() => pv && dispatchRecenter({plotId:pv.plotId, centerPt:wp}) } />
-
-        </div>
+        <Stack direction='row' sx={sx}>
+            <Tooltip title={`Copy to the clipboard: ${llStr}`}>
+                <IconButton  onClick={() => doCopy(llStr)}>
+                    <img src={clipIcon}/>
+                </IconButton>
+            </Tooltip>
+            <Tooltip title='Center on this position'>
+                <IconButton  onClick={() => pv && dispatchRecenter({plotId:pv.plotId, centerPt:wp}) } >
+                    <img src={CENTER}/>
+                </IconButton>
+            </Tooltip>
+        </Stack>
     );
-
 }
 
 FixedPtControl.propTypes= {
     pv : PropTypes.object,
     wp : PropTypes.object.isRequired,
-    style : PropTypes.object
+    sx : PropTypes.object
 };

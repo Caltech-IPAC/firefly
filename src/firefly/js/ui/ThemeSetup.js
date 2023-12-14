@@ -13,6 +13,13 @@ export function getTheme() {
             JoyInput: {
                 defaultProps: { size:'sm' }
             },
+            JoyIconButton: {
+                defaultProps: {
+                    size:'sm' ,
+                    variant:'plain',
+                    color:'neutral',
+                }
+            },
             JoyFormControl: {
                 defaultProps: { size:'sm' }
             },

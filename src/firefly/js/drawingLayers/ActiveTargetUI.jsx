@@ -12,13 +12,8 @@ import {PlotAttribute} from '../visualize/PlotAttribute.js';
 export const getUIComponent = (drawLayer,pv) => <ActiveTargetUI drawLayer={drawLayer} pv={pv}/>;
 
 function ActiveTargetUI({pv}) {
-
     const plot= primePlot(pv);
-    return (
-        <div>
-            <FixedPtControl wp={plot.attributes[PlotAttribute.FIXED_TARGET]} pv={pv}/>
-        </div>
-    );
+    return <FixedPtControl wp={plot.attributes[PlotAttribute.FIXED_TARGET]} pv={pv}/> ;
 }
 
 ActiveTargetUI.propTypes= {
