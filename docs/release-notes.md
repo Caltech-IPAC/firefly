@@ -8,34 +8,41 @@
 
 
 ## Version 2023.3
-- 2023.3.0 - (Dec 12, 2023),  _docker tag_: `latest`, `2023.3`, `2023.3.0`
+- 2023.3.1 - (Dec 13, 2023),  _docker tag_: `latest`, `2023.3`, `2023.3.1`
+- 2023.3.0 - (Dec 12, 2023),  _docker tag_: `2023.3.0`
 
-#### This release includes many feature improvements across firefly
+### _Notes_
+#### This release includes many feature improvements across Firefly
 
 #### New Features
-- VO: Support datalink 1.1 : [Firefly-1257](https://github.com/Caltech-IPAC/firefly/pull/1439)
-- VO: Full multi-product support for UWS : [Firefly-1282](https://github.com/Caltech-IPAC/firefly/pull/1423)
+- VO: Support DataLink 1.1: [Firefly-1325](https://github.com/Caltech-IPAC/firefly/pull/1439)
+- VO: Full multi-product support for UWS: [Firefly-1282](https://github.com/Caltech-IPAC/firefly/pull/1423)
 - VO: Support Multi spectrum table: [Firefly-1314](https://github.com/Caltech-IPAC/firefly/pull/1438)
 - Multi Product Viewer: Handle multiple spectra at once via datalink table: [Firefly-1324](https://github.com/Caltech-IPAC/firefly/pull/1442)
-- Multi Product Viewer: : Handle related image via datalink table [Firefly-1298](https://github.com/Caltech-IPAC/firefly/pull/1420)
-- Spectral Viewer: Support spectral redshift correction: [Firefly-1307](https://github.com/Caltech-IPAC/firefly/pull/1443)
-- Table: support null values for all table data types: [Firefly-1279](https://github.com/Caltech-IPAC/firefly/pull/1447)
-- Image Viewer: Improve readout handling for longs and other issues: [Firefly-1317](https://github.com/Caltech-IPAC/firefly/pull/1435)
-- Image Viewer: Line extraction will extract wavelength if applicable [Firefly-871](https://github.com/Caltech-IPAC/firefly/pull/1451)
-- HiPS Viewer: MOC overlays now default to new outline mode [Firefly-1350](https://github.com/Caltech-IPAC/firefly/pull/1456)
+- Multi Product Viewer: Handle related image via datalink table [Firefly-1298](https://github.com/Caltech-IPAC/firefly/pull/1420)
+- Spectral Viewer: Support spectral redshift correction: [Firefly-1304](https://github.com/Caltech-IPAC/firefly/pull/1443)
+- Table: Allow saving coordinates from a table as "regions": [Firefly-1235](https://github.com/Caltech-IPAC/firefly/pull/1452)
+- Table: Support null values for all table data types: [Firefly-1297](https://github.com/Caltech-IPAC/firefly/pull/1447)
+- Image Viewer: Improve readout handling for long-valued pixels and other issues: [Firefly-1317](https://github.com/Caltech-IPAC/firefly/pull/1435)
+- Image Viewer: Line extraction will extract wavelength if applicable: [Firefly-871](https://github.com/Caltech-IPAC/firefly/pull/1451)
+- HiPS Viewer: MOC overlays now default to new outline mode: [Firefly-1350](https://github.com/Caltech-IPAC/firefly/pull/1456)
 - Drag and drop for file uploads: [Firefly-1310](https://github.com/Caltech-IPAC/firefly/pull/1426)
-- Improved property sheet features [Firefly-1352](https://github.com/Caltech-IPAC/firefly/pull/1455)
-- Performance: Update nom.tam.fits(1.18.2) and Starlink (4.1.4): [Firefly-1362](https://github.com/Caltech-IPAC/firefly/pull/1428)
+- Improved property sheet features: [Firefly-1352, Firefly-1307](https://github.com/Caltech-IPAC/firefly/pull/1455)
+- Image Row Viewer: Component for SPHEREx UI [Firefly-1346](https://github.com/Caltech-IPAC/firefly/pull/1449)
+- Performance: Update nom.tam.fits(1.18.2) and Starlink (4.1.4): [Firefly-1262](https://github.com/Caltech-IPAC/firefly/pull/1428)
 
 #### Notable Bug Fixes 
-- Fixed: Coverage FOV not computed correctly  [Firefly-1336](https://github.com/Caltech-IPAC/firefly/pull/1449)
-- Fixed: Table: enum values with commas now display correctly [Firefly-1336](https://github.com/Caltech-IPAC/firefly/pull/1445)
-- Fixed: ADQL text-entry field swallowing "`(Command)-`" [Firefly-1072](https://github.com/Caltech-IPAC/firefly/pull/1436)
+- Fixed: DCE: Coverage FOV not computed correctly: [Firefly-1336, fixed with Firefly-1346 implementation](https://github.com/Caltech-IPAC/firefly/pull/1449)
+- Fixed: Table: enum values with commas now display correctly in filter menu: [Firefly-1333](https://github.com/Caltech-IPAC/firefly/pull/1445)
+- Fixed: ADQL text-entry field swallowing "(Command)-(backquote)" on macOS: [Firefly-1072](https://github.com/Caltech-IPAC/firefly/pull/1436)
 
-##### _Pull Requests in this release_
+### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2022.3+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2022.3+)
 
+### _Patches 2023.3_
+- 2023.3.1
+    - Fixed: TAP visual query builder ("`select_info` is undefined")
 
 ## Version 2023.2
 - 2023.2.6 - (Nov 20, 2023),  _docker tag_: `latest`, `2023.2`, `2023.2.6`
@@ -59,7 +66,7 @@
 
 #### Other changes
 - Read FITS tables directly with `nom.tam.fits` (removed star table): [Firefly-1232](https://github.com/Caltech-IPAC/firefly/pull/1390) 
-- improved DCE: [Firefly-1286](https://github.com/Caltech-IPAC/firefly/pull/1408),  [Firefly-1250](https://github.com/Caltech-IPAC/firefly/pull/1391)
+- Improved DCE: [Firefly-1286](https://github.com/Caltech-IPAC/firefly/pull/1408), [Firefly-1250](https://github.com/Caltech-IPAC/firefly/pull/1391)
 - Firefly now uses React 18: [Firefly-1127](https://github.com/Caltech-IPAC/firefly/pull/1396) 
 - Firefly now uses Mavin central: [Firefly-1258](https://github.com/Caltech-IPAC/firefly/pull/1397) 
 
