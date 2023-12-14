@@ -57,12 +57,10 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
                 }
                 {layoutType==='single' && moreThanOne &&
                     <>
-                        <IconButton {...{size:'sm', variant:'plain', color:'neutral',
-                            onClick:() => dispatchChangeActivePlotView(viewerPlotIds[prevIdx])}}>
+                        <IconButton {...{ onClick:() => dispatchChangeActivePlotView(viewerPlotIds[prevIdx])}}>
                             <img src={PAGE_LEFT}/>
                         </IconButton>
-                        <IconButton {...{size:'sm', variant:'plain', color:'neutral',
-                            onClick:() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])}}>
+                        <IconButton {...{ onClick:() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])}}>
                             <img src={PAGE_RIGHT}/>
                         </IconButton>
                     </>

@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Box, Card, DialogContent, DialogTitle, IconButton, Stack} from '@mui/joy';
+import {Box, Card, DialogContent, DialogTitle, IconButton, Stack, Tooltip} from '@mui/joy';
 import React, {memo, useState, useEffect, useRef} from 'react';
 import Enum from 'enum';
 import {object,element,func,number,string,bool,oneOfType} from 'prop-types';
@@ -113,7 +113,7 @@ function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart
             {modal &&
                 <Box sx={{ position: 'fixed', backgroundColor: 'rgba(0, 0, 0, 0.2)',
                          top: 0, left: 0, bottom: 0, right: 0, }}/>}
-            <Card {...{className:'ff-PopupPanel', color:'neutral', variant:'soft', ref:(c) => ctxRef.popupRef=c,
+            <Card {...{className:'ff-PopupPanel', color:'neutral', variant:'plain', ref:(c) => ctxRef.popupRef=c,
                 onTouchStart:dialogMoveStart, onTouchMove:dialogMove,
                 onTouchEnd:dialogMoveEnd, onMouseEnter, onMouseLeave,
                 sx:(theme) => (
@@ -123,7 +123,7 @@ function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart
                         position: 'absolute',
                         p:.5,
                         visibility,
-                        boxShadow: `1px 1px 3px ${theme.vars.palette.primary.softActiveColor}`,
+                        boxShadow: `1px 1px 5px ${theme.vars.palette.primary.softActiveColor}`,
                         '.ff-dialog-title-bar' : { cursor:'grab' },
                         '.ff-dialog-title-bar:active' : { cursor:'grabbing' }
                     }) }}>
@@ -135,10 +135,12 @@ function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart
                     <DialogTitle  sx= {{ ml:.5, mt:.5}} >
                         {title}
                     </DialogTitle>
-                    <IconButton onClick={askParentToClose} title='Delete Image'
-                                sx={{minHeight:12, minWidth:12, p:.5}}>
-                        <img src={DELETE}/>
-                    </IconButton>
+                    <Tooltip placement="left" title='Close'>
+                        <IconButton onClick={askParentToClose} title='Close'
+                                    sx={{minHeight:12, minWidth:12, p:.5}}>
+                            <img src={DELETE}/>
+                        </IconButton>
+                    </Tooltip>
                 </Stack>
                 <DialogContent sx={{ml:.5}}>
                     {children}
