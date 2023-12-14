@@ -4,7 +4,7 @@
 
 
 import React, {useEffect, useRef} from 'react';
-import {string, number, func, bool} from 'prop-types';
+import {string, number, func, bool, object} from 'prop-types';
 import {isNil, xor} from 'lodash';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
@@ -39,101 +39,40 @@ const IMAGE_CNT_KEY= 'imageCount';
 const CUTOUT_SIZE= 'cutoutSize';
 
 
-export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutoutSizeAS, tbl_id,
+export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutoutSizeAS, tbl_id, defaultWcsMatchType,
                                        defaultImageCnt= 5, imageExpandedMode, insideFlex=true,
                                         closeExpanded, maxImageCnt= MAX_IMAGE_CNT}) {
-
-
     const table= useStoreConnector(() => getTblById(tbl_id));
     const imageCnt= useFieldGroupValue(IMAGE_CNT_KEY,viewerId)[0]() ?? defaultImageCnt;
     const cutoutSize= useFieldGroupValue(CUTOUT_SIZE,viewerId)[0]() ?? defaultCutoutSizeAS;
     const {wcsMatchType, activePlotId}= useStoreConnector(() =>
         ({wcsMatchType: visRoot().wcsMatchType, activePlotId:visRoot().activePlotId}) );
 
+    useEffect(()=>{
+        if (!activePlotId?.startsWith(plotIdRoot(viewerId))) return;
+        //on active plot change, change highlighted row if not same
+        const activePlotRowNum = getPlotIdRowNum(viewerId, activePlotId);
+        if(table?.highlightedRow !== activePlotRowNum) dispatchTableHighlight(tbl_id, activePlotRowNum);
+    }, [activePlotId]);
 
     useEffect(() => {
         if (!table || table.isFetching || !makeRequestFromRow) return;
         layoutImages(viewerId, Number(cutoutSize), Number(imageCnt), table, makeRequestFromRow);
-
-        //Change slide when table data, highlighted row, or image count was changed through UI
-        if (!slideChangeByArrows.current) { //don't change slide again when the highlighted row change was triggered by a slide change
-            const [visiblePlotsStartIdx,] = getVisiblePlotsRange(table.highlightedRow, table.totalRows, Number(imageCnt));
-            sliderRef.current?.slickGoTo(visiblePlotsStartIdx); //slider idx is always the 1st slide shown
-        }
-        else slideChangeByArrows.current = false;
+        adjustImageSlider(sliderRef, slideChangeByArrows, table, imageCnt);
     }, [imageCnt, table, cutoutSize]);
-
-    useEffect(()=>{
-        if (!activePlotId?.startsWith(plotIdRoot(viewerId))) return;
-
-        const activePlotRowNum = getPlotIdRowNum(viewerId, activePlotId);
-        if(table?.highlightedRow !== activePlotRowNum) {
-            //on active plot change, change highlighted row if not same
-            dispatchTableHighlight(tbl_id, activePlotRowNum);
-        }
-    }, [activePlotId]);
 
     const sliderRef = useRef(null);
     const slideChangeByArrows = useRef(false);
-
-    const makeImageSlider = (viewerItemIds, makeItemViewer) => {
-        const onSlideChange = (current, next) => {
-            //console.log(current, next, viewerItemIds); //turn on for debugging slide changes
-        };
-
-        const SliderArrow = ({ className, onClick, isNext }) => (
-            <div
-                className={className} //to keep default arrow style
-                onClick={(e)=>{
-                    // change highlighted row if slide changed through UI by clicking arrows
-                    const rowToHighlight = isNext ? table.highlightedRow + 1 : table.highlightedRow - 1;
-                    dispatchTableHighlight(tbl_id, rowToHighlight);
-                    slideChangeByArrows.current = true; // to prevent the row highlight change triggering the slide change again
-
-                    const [visiblePlotsStartIdx, visiblePlotsEndIdx] = getVisiblePlotsRange(rowToHighlight, table.totalRows, Number(imageCnt));
-                    if((isNext && visiblePlotsStartIdx === 0) // next arrow clicked when the left edge of slides is reached
-                        || (!isNext && visiblePlotsEndIdx === table.totalRows-1) // prev arrow clicked when the right edge of slides is reached
-                    ) {
-                        e.preventDefault(); // prevent sliding, to ensure active plot moves to the center of visible plots
-                    }
-                    else onClick?.(e); // allow sliding
-                }}
-            />
-        );
-
-        const settings = {
-            dots: false,
-            infinite: false,
-            draggable: false,
-            slidesToShow: Number(imageCnt),
-            slidesToScroll: 1,
-            nextArrow: (<SliderArrow isNext={true}/>),
-            prevArrow: (<SliderArrow isNext={false}/>),
-            beforeChange: onSlideChange
-        };
-
-        return (
-            <Slider ref={sliderRef} className='ImageTableRowViewer' {...settings}>
-                {Array.from({length: table?.totalRows || viewerItemIds.length}).map((_, i)=>(
-                    <div key={'slide-'+i}>
-                        {viewerItemIds.includes(makePlotId(viewerId,i))
-                            ? <div className='ImageTableRowViewer__item'>
-                                {makeItemViewer(makePlotId(viewerId,i))}
-                              </div>
-                            : <span/> //empty placeholder-slide
-                        }
-                    </div>
-                ))}
-            </Slider>
-        );
-    };
-
+    const makeCustomLayout = (viewerItemIds, makeItemViewer) => (
+        <ImageSlider {...{sliderRef, slideChangeByArrows, viewerId, table, tbl_id, imageCnt,
+            viewerItemIds, makeItemViewer}}/>
+    );
 
     if (imageExpandedMode) {
         return (
             <MultiImageViewer
                 {...{viewerId, Toolbar, insideFlex, closeFunc:closeExpanded, defaultImageCnt, maxImageCnt, tableId:tbl_id,
-                    makeRequestFromRow,defaultCutoutSizeAS,
+                    makeRequestFromRow,defaultCutoutSizeAS, defaultWcsMatchType,
                     wcsMatchType, activePlotId,
                     showWhenExpanded:true, defaultDecoration:false}}/>
         );
@@ -141,8 +80,8 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
     return (
         <MultiImageViewer
             {...{viewerId, Toolbar, insideFlex, defaultImageCnt, maxImageCnt, tableId:tbl_id,
-                makeRequestFromRow,defaultCutoutSizeAS,
-                wcsMatchType, activePlotId, makeCustomLayout: makeImageSlider,
+                makeRequestFromRow,defaultCutoutSizeAS, defaultWcsMatchType,
+                wcsMatchType, activePlotId, makeCustomLayout,
                 forceRowSize:1, canReceiveNewPlots: NewPlotMode.create_replace.key}}
         />
     );
@@ -152,6 +91,7 @@ ImageTableRowViewer.propTypes= {
     viewerId: string.isRequired,
     tbl_id: string.isRequired,
     defaultCutoutSizeAS: number,
+    defaultWcsMatchType: object,
     defaultImageCnt: number,
     maxImageCnt: number,
     imageExpandedMode: bool,
@@ -159,6 +99,65 @@ ImageTableRowViewer.propTypes= {
     makeRequestFromRow: func.isRequired,
     closeExpanded: func,
 };
+
+
+function ImageSlider({viewerId, table, tbl_id, imageCnt, viewerItemIds, makeItemViewer, sliderRef, slideChangeByArrows}) {
+    const SliderArrow = ({ className, onClick, isNext }) => (
+        <div
+            className={className} //to keep default arrow style
+            onClick={(e)=>{
+                // change highlighted row if slide changed through UI by clicking arrows
+                const rowToHighlight = isNext ? table.highlightedRow + 1 : table.highlightedRow - 1;
+                dispatchTableHighlight(tbl_id, rowToHighlight);
+                slideChangeByArrows.current = true; // to prevent the row highlight change triggering the slide change again
+
+                const [visiblePlotsStartIdx, visiblePlotsEndIdx] = getVisiblePlotsRange(rowToHighlight, table.totalRows, Number(imageCnt));
+                if((isNext && visiblePlotsStartIdx === 0) // next arrow clicked when the left edge of slides is reached
+                    || (!isNext && visiblePlotsEndIdx === table.totalRows-1) // prev arrow clicked when the right edge of slides is reached
+                ) {
+                    e.preventDefault(); // prevent sliding, to ensure active plot moves to the center of visible plots
+                }
+                else onClick?.(e); // allow sliding
+            }}
+        />
+    );
+
+    const settings = {
+        dots: false,
+        infinite: false,
+        draggable: false,
+        slidesToShow: Number(imageCnt),
+        slidesToScroll: 1,
+        nextArrow: (<SliderArrow isNext={true}/>),
+        prevArrow: (<SliderArrow isNext={false}/>),
+        //beforeChange: (current, next) => console.log(current, next, viewerItemIds) //turn on for debugging slide changes
+    };
+
+    return (
+        <Slider ref={sliderRef} className='ImageTableRowViewer' {...settings}>
+            {Array.from({length: table?.totalRows || viewerItemIds.length}).map((_, i)=>(
+                <div key={'slide-'+i}>
+                    {viewerItemIds.includes(makePlotId(viewerId,i))
+                        ? <div className='ImageTableRowViewer__item'>
+                            {makeItemViewer(makePlotId(viewerId,i))}
+                        </div>
+                        : <span/> //empty placeholder-slide
+                    }
+                </div>
+            ))}
+        </Slider>
+    );
+}
+
+
+const adjustImageSlider = (sliderRef, slideChangeByArrows, table, imageCnt) => {
+    if (!slideChangeByArrows.current) { //don't change slide again when the highlighted row change was triggered by a slide change
+        const [visiblePlotsStartIdx,] = getVisiblePlotsRange(table.highlightedRow, table.totalRows, Number(imageCnt));
+        sliderRef.current?.slickGoTo(visiblePlotsStartIdx); //slider idx is always the 1st slide shown
+    }
+    else slideChangeByArrows.current = false;
+};
+
 
 const toolsStyle= {
     display:'flex',
@@ -173,20 +172,29 @@ const tStyle= { display:'inline-block', whiteSpace: 'nowrap', minWidth: '3em', p
 const closeButtonStyle= { display: 'inline-block', padding: '1px 12px 0 1px' };
 
 function Toolbar({viewerId, tableId:tbl_id, closeFunc=null, maxImageCnt, defaultImageCnt, makeRequestFromRow,
-                     wcsMatchType, activePlotId,
-                     defaultCutoutSizeAS=500, minCutoutSize=50, maxCutoutSize=1000}) {
+                     defaultWcsMatchType=WcsMatchType.Standard, wcsMatchType, activePlotId,
+                     defaultCutoutSizeAS, minCutoutSize=50, maxCutoutSize=1000}) {
 
+    useEffect(()=>{
+        if(wcsMatchType!==defaultWcsMatchType && defaultWcsMatchType === WcsMatchType.Target) {
+            wcsMatchTarget(true, activePlotId); //otherwise Target Match checkbox won't be checked initially
+        }
+    }, []);
 
-    const wcsMatch= (
+    const wcsMatch = (defaultWcsMatchType===WcsMatchType.Standard || defaultWcsMatchType===WcsMatchType.Target) && (
         <div style={{alignSelf:'center', padding: '0 10px 0 25px', display:'flex', alignItems:'center'}}>
             <div style={{display:'inline-block'}}>
                 <input style={{margin: 0}}
                        type='checkbox'
-                       checked={wcsMatchType===WcsMatchType.Standard}
-                       onChange={(ev) => doWcsMatch(ev.target.checked, activePlotId) }
+                       checked={wcsMatchType===defaultWcsMatchType}
+                       onChange={(ev) => defaultWcsMatchType===WcsMatchType.Standard
+                           ? doWcsMatch(ev.target.checked, activePlotId)
+                           : wcsMatchTarget(ev.target.checked, activePlotId)}
                 />
             </div>
-            <div style={tStyle}>WCS Match</div>
+            <div style={tStyle}>
+                {defaultWcsMatchType===WcsMatchType.Standard ? 'WCS Match' : 'Target Match'}
+            </div>
         </div>
     );
 
@@ -243,6 +251,9 @@ Toolbar.propTypes= {
     defaultImageCnt: number,
     maxImageCnt: number,
     makeRequestFromRow: func.isRequired,
+    activePlotId: string,
+    wcsMatchType: object,
+    defaultWcsMatchType: object,
     defaultCutoutSizeAS: number,
     minCutoutSize: number,
     maxCutoutSize: number,
