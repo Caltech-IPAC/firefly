@@ -3,6 +3,7 @@
  */
 
 
+import {Stack, Typography} from '@mui/joy';
 import {isEmpty} from 'lodash';
 import React from 'react';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
@@ -113,7 +114,7 @@ function getTitle(pv, plot, dl) {
         const emGuess= preStr.length+2 + pt.objName?pt.objName.length: 18;
         const titleEmLen= Math.min(emGuess ,24);
         minWidth= (titleEmLen+8)+'em';
-        ptDiv= (<div> {formatWorldPt(pt,3,false)} </div>);
+        ptDiv= (<Typography level={pt.objName ? 'body-sm' : 'body-xs'}> {formatWorldPt(pt,3,false)} </Typography>);
     }
     else {
         preStr=  dl.titlePrefix+' ' || 'Image Point: ';
@@ -125,23 +126,23 @@ function getTitle(pv, plot, dl) {
         //{`(${Math.round(pt.x)}, ${Math.round(pt.y)})${convertedWp&&' '+formatWorldPt(convertedWp,3,false)}`}
         // {`(${Math.round(pt.x)}, ${Math.round(pt.y)})`}
         ptDiv= (
-            <div>
+            <Typography level='body-xs'>
                 {`(${Math.round(pt.x)}, ${Math.round(pt.y)})`}
                 {convertedWp&&
                     <div style={{paddingTop:3}}>
                         {formatWorldPt(convertedWp,3,false)}
                     </div>
                 }
-            </div>);
+            </Typography>);
     }
     return (
-        <div style={{display: 'flex', justifyContent: 'space-between', alignItems:'center', width: 100, minWidth}}>
-            <div style={{display: 'flex', alignItems: 'center'}}>
-                <span style={{paddingRight: 5}} >{preStr}</span>
+        <Stack {...{direction:'row', justifyContent: 'space-between', alignItems:'center', width: 100, minWidth}}>
+            <Stack {...{direction: 'row', alignItems: 'center'}}>
+                <Typography {...{level:'body-xs', pr: .5}} >{preStr}</Typography>
                 {ptDiv}
                 <FixedPtControl pv={pv} wp={pt} />
-            </div>
-        </div>
+            </Stack>
+        </Stack>
     );
 }
 
