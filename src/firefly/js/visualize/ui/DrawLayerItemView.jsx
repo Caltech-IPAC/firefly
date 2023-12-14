@@ -3,28 +3,18 @@
  */
 
 import React from 'react';
+import {Box, Button, Checkbox, Divider, Stack, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import {isFunction} from 'lodash';
 import {getMinMaxWidth, makeColorChange, makeShape} from './DrawLayerUIComponents';
 
-
-const bSty= {
-    display:'inline-block',
-    whiteSpace: 'nowrap'
-};
-const bStyWid = {
-    ...bSty, width: 'calc(33%)'
-};
-
-const symbolSize= 10;
-const mLeft = 5;
 
 export function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
                             color, canUserChangeColor, canUserDelete, title, helpLine,
                             isPointData, drawingDef, autoFormatTitle, canUserHide=true,
                             packWithNext=false,
                             visible, changeVisible, modifyColor, modifyShape, UIComponent}) {
-    var style= {
+    const style= {
         width:'100%',
         height:'100%',
         position: 'relative',
@@ -32,44 +22,28 @@ export function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
         whiteSpace : 'nowrap'
     };
 
-    if (lastItem) {
-        style.marginBottom= 10;
-    }
-    else if (packWithNext) {
-        style.marginBottom= 0;
-        style.paddingBottom= 0;
-    }
-    else {
-        style.borderBottomStyle= 'solid';
-        style.borderBottomWidth= 1;
-        style.borderBottomColor= 'rgba(0, 0, 0, 0.298039)';
-        style.marginBottom= 13;
-        style.paddingBottom= 5;
-    }
-
+    const useDivide= lastItem || !packWithNext;
     return (
-        <div style={style} className='draw-layer-item'>
-            <div style={{lineHeight:'1em', position: 'relative', display:'inline-flex',
-                         flexDirection:'row', flexWrap:'nowrap',
-                         justifyContent: 'space-between',
-                         alignItems: 'center',
-                         width:'100%'
-                         }} >
-                <div style={{display: 'flex', alignItems: 'center'}}>
-                    <input type='checkbox' style={{visibility: canUserHide?'inherit':'hidden'}} checked={visible} onChange={() => changeVisible()} />
+        <Box style={style}>
+           <Stack {...{lineHeight:'1em', position: 'relative', direction:'row', flexWrap:'nowrap',
+                         justifyContent: 'space-between', alignItems: 'center', width:'100%' }} >
+                <Stack {...{direction: 'row', alignItems: 'center'}}>
+                    <Checkbox {...{checked:visible, sx:{visibility: canUserHide?'inherit':'hidden', pr:.5},
+                        onChange:() => changeVisible() }} />
                     {getTitleTag(title,maxTitleChars, autoFormatTitle)}
-                </div>
-                <div style={{padding:'0 4px 0 5px', width: 180, display: 'flex', justifyContent: 'flex-end'}}>
-                    {makeColorChangeUIElement(color, canUserChangeColor,modifyColor)}
+                </Stack>
+                <Stack {...{direction:'row', spacing:1, py:.5, width: 180, justifyContent: 'flex-end'}}>
                     {makePointDataShape(isPointData,drawingDef, modifyShape)}
+                    {makeColorChangeUIElement(color, canUserChangeColor,modifyColor)}
                     {makeDelete(canUserDelete,deleteLayer)}
-                </div>
-            </div>
+                </Stack>
+            </Stack>
             <div style={{paddingTop:5, marginLeft:'2em'}}>
                 {UIComponent || ''}
             </div>
             {makeHelpLine(helpLine)}
-        </div>
+            {useDivide && <Divider orientation='horizontal' sx={{mb:1.5, mt:1}} />}
+        </Box>
     );
 }
 
@@ -80,7 +54,6 @@ DrawLayerItemView.propTypes= {
     visible        : PropTypes.bool.isRequired,
     canUserChangeColor : PropTypes.any.isRequired,
     color          : PropTypes.string.isRequired,
-    // title          : PropTypes.oneOf([PropTypes.node.isRequired, PropTypes.func.isRequired]),
     title          : PropTypes.any.isRequired,
     helpLine       : PropTypes.string.isRequired,
     canUserDelete  : PropTypes.bool.isRequired,
@@ -93,6 +66,7 @@ DrawLayerItemView.propTypes= {
     modifyShape    : PropTypes.func,
     UIComponent    : PropTypes.object,
     autoFormatTitle: PropTypes.bool,
+    packWithNext: PropTypes.bool,
 };
 
 
@@ -102,15 +76,13 @@ function getTitleTag(title, maxTitleChars, autoFormatTitle) {
     }
     const {minW,maxW}= getMinMaxWidth(maxTitleChars);
 
-    const tStyle= {
-        minWidth: minW + 'em',
-        maxWidth: maxW + 'em',
-        lineHeight: '1.1em'
-    };
-
     return (
-        <div style={tStyle} className='text-ellipsis' title={title}>{title}</div>
-        );
+        <Typography {...{
+            level:'body-xs', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden',
+            minWidth: minW + 'em', maxWidth: maxW + 'em'}}>
+            {title}
+        </Typography>
+    );
 }
 
 
@@ -125,7 +97,10 @@ function makePointDataShape(isPointData, drawingDef, modifyShape) {
 function makeHelpLine(helpLine) {
     if (helpLine) {
         return (
-            <div style={{paddingTop:10,paddingBottom:5,maxWidth:'30em',marginLeft:'2em', whiteSpace: 'normal'}}>{helpLine}</div>
+            <Typography {...{level:'body-xs',
+                pt:1,paddingBottom:.5,maxWidth:'30em',ml:2, whiteSpace: 'normal'}}>
+                {helpLine}
+            </Typography>
         );
     }
     else {
@@ -134,17 +109,10 @@ function makeHelpLine(helpLine) {
 }
 
 function makeDelete(canUserDelete,deleteLayer) {
-    const deleteStyle= {
-        display:'inline-block',
-        whiteSpace: 'nowrap',
-        marginLeft: mLeft*2+symbolSize,
-        visibility: canUserDelete ? 'inherit' : 'hidden'
-    };
     return (
-        <div style={bStyWid}>
-            <a className='ff-href'
-               onClick={() => deleteLayer()} style={deleteStyle}>Delete</a>
-        </div>
+        <Button onClick={() => deleteLayer()} sx={{visibility: canUserDelete ? 'inherit' : 'hidden', px:.5}}>
+            Delete
+        </Button>
     );
 
 }
