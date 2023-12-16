@@ -28,7 +28,7 @@ export const LayoutType= new Enum(['CENTER', 'TOP_EDGE_CENTER', 'TOP_CENTER', 'T
 
 export const PopupPanel= memo((props) => {
     const {title='', visible=true, layoutPosition=LayoutType.TOP_CENTER, closePromise, closeCallback, modal=false,
-        requestToClose, mouseInDialog, requestOnTop, dialogId, zIndex=0, children, style,
+        requestToClose, mouseInDialog, requestOnTop, dialogId, zIndex=0, children, style,sx,
         initLeft, initTop, onMove, element}= props;
     const [{left,top}, setPos]= useState({left:0,top:0});
     const [layout, setLayout]= useState(LayoutType.NONE);
@@ -80,7 +80,7 @@ export const PopupPanel= memo((props) => {
 
     if (!visible) return false;
     return (
-        <PopupHeaderTop {...{modal,zIndex,left,top,ctxRef,dialogMoveStart,dialogMoveEnd, onMouseEnter,onMouseLeave, style,
+        <PopupHeaderTop {...{modal,zIndex,left,top,ctxRef,dialogMoveStart,dialogMoveEnd, onMouseEnter,onMouseLeave, style, sx,
             dialogMove,children,title,askParentToClose, visibility:layout===LayoutType.NONE ? 'hidden' : 'visible'}}>
             {children}
         </PopupHeaderTop>
@@ -100,16 +100,17 @@ PopupPanel.propTypes= {
     modal : bool,
     visible : bool,
     style : object,
+    sx: object,
     initLeft: number,
     initTop: number,
     onMove: func,
     element,
 };
 
-function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart,dialogMoveEnd,
+function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart,dialogMoveEnd,sx,
                             onMouseEnter,onMouseLeave,dialogMove,children,title,askParentToClose}) {
     return (
-        <Box style={{zIndex, position:'relative'}}>
+        <Box sx={{...sx, zIndex, position:'relative'}}>
             {modal &&
                 <Box sx={{ position: 'fixed', backgroundColor: 'rgba(0, 0, 0, 0.2)',
                          top: 0, left: 0, bottom: 0, right: 0, }}/>}
