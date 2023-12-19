@@ -7,7 +7,8 @@ export function getTheme() {
             JoyButton: {
                 defaultProps: {
                     variant:'soft' ,
-                    color:'neutral'
+                    color:'neutral',
+                    size: 'md'
                 }
             },
             JoyInput: {
@@ -24,11 +25,11 @@ export function getTheme() {
                 }
             },
             JoyFormLabel: {
-                // defaultProps: {
-                //     sx : {
-                //         '--FormLabel-lineHeight' : 1.1
-                //     }
-                // }
+                defaultProps: {
+                    sx : {
+                        '--FormLabel-lineHeight' : 1.1
+                    }
+                }
             },
             JoyRadioGroup: {
                 defaultProps: {
@@ -53,6 +54,11 @@ export function getTheme() {
 
                 }
 
+            },
+            JoyTypography: {
+                defaultProps: {
+                    level:'body-md',
+                }
             },
             JoyLink: {
                 defaultProps: {

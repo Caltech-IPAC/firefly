@@ -36,8 +36,8 @@ export function getVersionInfoStr(includeBuiltOnDate, includeBuildType) {
 export const VersionInfo = () => <div onClick={() => showFullVersionInfoDialog()}>{getVersionInfoStr(true, true)}</div>;
 const Entry = ({desc, value}) =>
     (<>
-        <Typography level='body-sm' sx={{lineHeight:1.5, fontWeight:'bold',gridColumnStart:1, justifySelf:'end', whiteSpace: 'nowrap'}}>{desc}</Typography>
-        <Typography level='body-sm' justifyContent='flex-start' sx={{lineHeight:1.5,gridColumnStart:2, whiteSpace: 'nowrap'}}>{value}</Typography>
+        <Typography sx={{lineHeight:1.5, fontWeight:'bold',gridColumnStart:1, justifySelf:'end', whiteSpace: 'nowrap'}}>{desc}</Typography>
+        <Typography justifyContent='flex-start' sx={{lineHeight:1.5,gridColumnStart:2, whiteSpace: 'nowrap'}}>{value}</Typography>
     </>);
 
 function VersionInfoFull() {
@@ -98,7 +98,7 @@ function VersionInfoFull() {
 
 const Acknowledgement= () => (
 
-    <Typography level='body-xs' width={'90%'} sx={{p:0.2, lineHeight:1.3}}>
+    <Typography level='body-sm' width={'90%'} sx={{p:0.2, lineHeight:1.3}}>
             Firefly development by&nbsp;
         <Link href='https://ipac.caltech.edu' target='ipac-window'>IPAC</Link>
             &nbsp;at&nbsp;

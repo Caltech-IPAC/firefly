@@ -13,7 +13,7 @@ function makeRadioGroup(options,orientation='horizontal',radioValue,onChange,rad
             {
                 options.map( ({label,value, disabled=false,tooltip }) => {
                     const radio= (<Radio
-                        {...{ key:value, checked:value===radioValue, onChange, value, label, disabled, ...slotProps.radio }} />);
+                        {...{ key:value, size:'sm', checked:value===radioValue, onChange, value, label, disabled, ...slotProps.radio }} />);
                     if (tooltip) {
                         return (
                             <Tooltip {...{key:value, title:tooltip ?? radioTooltip, placement:'top'}}>

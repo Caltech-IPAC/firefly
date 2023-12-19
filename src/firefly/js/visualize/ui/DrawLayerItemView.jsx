@@ -78,7 +78,7 @@ function getTitleTag(title, maxTitleChars, autoFormatTitle) {
 
     return (
         <Typography {...{
-            level:'body-xs', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden',
+            whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden',
             minWidth: minW + 'em', maxWidth: maxW + 'em'}}>
             {title}
         </Typography>
@@ -97,7 +97,7 @@ function makePointDataShape(isPointData, drawingDef, modifyShape) {
 function makeHelpLine(helpLine) {
     if (helpLine) {
         return (
-            <Typography {...{level:'body-xs',
+            <Typography {...{level:'body-sm',
                 pt:1,paddingBottom:.5,maxWidth:'30em',ml:2, whiteSpace: 'normal'}}>
                 {helpLine}
             </Typography>

@@ -95,7 +95,7 @@ function getTitle(pv, plot, drawLayer) {
                 textOverflow: 'ellipsis',
                 title:plot.title,
             } } >
-                 <Typography {...{level:'body-xs'}}>{`${isHiPS(plot) ? hipsStr : 'Image (FITS)'}${showSize?',':''}`}</Typography>
+                 <Typography>{`${isHiPS(plot) ? hipsStr : 'Image (FITS)'}${showSize?',':''}`}</Typography>
                  {showSize &&
                  <Typography {...{level:'body-xs'}}>
                    {`Search Size: ${sprintf('%.4f',r.getSizeInDeg())}${String.fromCharCode(176)}`}
