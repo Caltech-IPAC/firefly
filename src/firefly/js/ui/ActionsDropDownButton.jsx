@@ -32,7 +32,7 @@ export function ActionsDropDownButton({searchActions, pv, tbl_id, style}) {
             <DropDownToolbarButton icon={BINOCULARS}
                                    tip='Search this area'
                                    useDropDownIndicator={true}
-                                   enabled={true} horizontal={true} visible={true} dropDown={dropDown}/>
+                                   dropDown={dropDown}/>
         </div>
     );
 }

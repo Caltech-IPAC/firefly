@@ -1,3 +1,4 @@
+import {Box} from '@mui/joy';
 import {LayoutType, PopupPanel} from 'firefly/ui/PopupPanel.jsx';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
@@ -72,7 +73,7 @@ function PopoutMouseReadoutContents({vr,currMouseState, readout, readoutData}) {
 
 
 
-const rS = { width: 295, position: 'relative', padding: 5};
+const rS = { width: 295, position: 'relative', p: .5};
 
 
 function Readout({readout, readoutData, showHealpixPixel=false, radix}){
@@ -80,7 +81,7 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
     const isHiPS= readoutType===HIPS_STANDARD_READOUT;
     const image= readoutType===STANDARD_READOUT;
 
-    if (!get(readoutData,'readoutItems')) return <div style={rS}/>;
+    if (!get(readoutData,'readoutItems')) return <Box style={rS}/>;
     const displayEle= getNonFluxDisplayElements(readoutData.readoutItems,  readout.readoutPref, isHiPS);
     const {pixelSize, showPixelPrefChange, healpixPixelReadout, healpixNorderReadout}= displayEle;
     const fluxArray = getFluxInfo(readoutData, radix);
@@ -90,7 +91,7 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
     const {readout1, readout2, showReadout1PrefChange, showReadout2PrefChange, showWavelengthFailed, waveLength}= displayEle;
 
     return (
-        <div className={gridClasses} style={rS}>
+        <Box className={gridClasses} sx={rS}>
             <DataReadoutItem lArea='pixReadoutTopLabel' vArea='pixReadoutTopValue' cArea='clipboardIconTop'
                              label={readout1.label} value={readout1.value}
                              copyValue={readout1.copyValue} showCopy={showCopy}
@@ -127,7 +128,7 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
                                             unit={fluxArray[2].unit??''}
                                             value={fluxArray[2].value}/> }
             <MouseReadoutLock gArea='lock' lockByClick={readout.lockByClick} />
-        </div>
+        </Box>
     );
 }
 

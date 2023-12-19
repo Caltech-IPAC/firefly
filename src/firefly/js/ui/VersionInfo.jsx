@@ -118,4 +118,7 @@ const Acknowledgement= () => (
 
 
 
-export const showFullVersionInfoDialog = (title = '') => showInfoPopup( <VersionInfoFull/>, `${title} Version Information`, {'.FF-Popup-Content': {width:'40em',maxWidth:'100%'}});
+export const showFullVersionInfoDialog = (title = '') =>
+    showInfoPopup( <VersionInfoFull/>,
+        `${title} Version Information`,
+        {'.FF-Popup-Content': {width:'40em',maxWidth:'100%'}});

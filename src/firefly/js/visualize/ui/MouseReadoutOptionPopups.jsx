@@ -87,8 +87,10 @@ export function showMouseReadoutFluxRadixDialog(readoutPrefs) {
 
 /**
  * this method dispatcher the action to the store.
- * @param fieldGroup
- * @param fieldKey
+ * @param {String} fieldGroup
+ * @param {String} fieldKey
+ * @param {String} dialogKey
+ * @param {boolean} [hide]
  */
 function doDispatch(fieldGroup,  fieldKey, dialogKey, hide= true){
 	window.setTimeout(() => { // since the mouse click happens before the store can update, we must defer the actions

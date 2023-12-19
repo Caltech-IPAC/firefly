@@ -7,7 +7,9 @@ export function getTheme() {
             JoyButton: {
                 defaultProps: {
                     variant:'soft' ,
+                    // variant:'outlined' ,
                     color:'neutral',
+                    // color:'warning',
                     size: 'md'
                 }
             },
@@ -38,11 +40,10 @@ export function getTheme() {
                     }
                 },
             },
-            JoyCheckbox: {
-            },
             JoyToggleButtonGroup: {
                 defaultProps: {
                     variant:'soft',
+                    color: 'neutral'
                 },
             },
             JoyTooltip: {
@@ -65,7 +66,20 @@ export function getTheme() {
                     underline: 'always',
                     color: 'primary'
                 }
+            },
+            JoyBadge: {
+                defaultProps: {
+                    size:'sm',
+                    color:'primary',
+                    sx:{'.MuiBadge-badge': {top:9, right:6}}
+                }
             }
         }
     });
 }
+
+
+/*
+ *  UI Notes
+ *      - toolbar background: <Sheet variant='soft'>
+ */

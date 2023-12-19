@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {Component} from 'react';
-import PropTypes from 'prop-types';
+import {Typography} from '@mui/joy';
+import React from 'react';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
@@ -42,9 +42,9 @@ export function MaskAddPanel({vr}) {
                         label: 'Upload File:'}}
             />
 
-            <div style={{padding: '8px 8px 8px 30px', width:315}}>
+            <Typography sx={{pt:1, pr:1, pb:1, pl:4, width:315}}>
                 If file is left blank then use an extension of the active plot file.
-            </div>
+            </Typography>
 
             <ValidationField fieldKey='maskIdx'
                              initialState= {{

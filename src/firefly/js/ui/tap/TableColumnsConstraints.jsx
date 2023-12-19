@@ -44,7 +44,7 @@ export function TableColumnsConstraintsToolbar({columnsModel}) {
 
     const resetButton = () => {
         return (
-            <Button variant='soft' color='neutral'
+            <Button
                     title='Reset Column Selections & Constraints to the default columns and no constraints'
                     onClick={ () => {
                         const tblModel = reorganizeTableModel(columnsModel, COLS_TO_DISPLAY_FIRST, true);

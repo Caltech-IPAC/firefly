@@ -198,7 +198,7 @@ const ActionsDrop= ({searchActions, polyStr, size, cenWpt, whichOverlay, op}) =>
     const searchText=  (allDefault) ? 'Search ' + post : 'Actions for ' + post;
     return (
         <DropDownToolbarButton text={searchText} tip='Search this area' disableHiding={true} dropDownKey={DD_KEY}
-                               useDropDownIndicator={true} enabled={true} horizontal={true} visible={true}
+                               useDropDownIndicator={true}
                                style={{
                                    alignSelf: 'flex-start',
                                    height: 22,

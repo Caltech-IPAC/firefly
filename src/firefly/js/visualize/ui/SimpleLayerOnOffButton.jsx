@@ -17,7 +17,7 @@ import {clearModalEndInfo, setModalEndInfo} from './ToolbarToolModalEnd.js';
 export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,visible=true,
                                            modalEndInfo, endText, modalLayer= false,
                                             plotTypeMustMatch= false, style={}, enabled= true, imageStyle,
-                                            todo= false, isIconOn, onClick, dropDown, allPlots= true }) {
+                                            isIconOn, onClick, dropDown, allPlots= true }) {
     const enableButton= Boolean(primePlot(pv)) && enabled;
     let isOn= isIconOn;
     if (typeId && pv) {
@@ -30,7 +30,6 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,vi
             <DropDownToolbarButton  icon={iconOff}
                                     tip={tip}
                                     enabled={enableButton}
-                                    horizontal={true}
                                     visible={visible}
                                     imageStyle={imageStyle}
                                     dropDown={dropDown} />
@@ -40,13 +39,11 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,vi
             <ToolbarButton icon={isOn ? iconOn : iconOff}
                            tip={tip}
                            enabled={enableButton}
-                           horizontal={true}
                            visible={visible}
-                           todo={todo}
                            style={style}
                            imageStyle={imageStyle}
                            onClick={() => onClick ? onClick(pv,!isOn) :
-                               onOff(pv,typeId,allPlots,plotTypeMustMatch,todo,modalEndInfo, endText,modalLayer)}/>
+                               onOff(pv,typeId,allPlots,plotTypeMustMatch,modalEndInfo, endText,modalLayer)}/>
         );
     }
 }
@@ -57,7 +54,6 @@ SimpleLayerOnOffButton.propTypes= {
     tip : PropTypes.string,
     iconOn : PropTypes.string,
     visible : PropTypes.bool,
-    todo: PropTypes.bool,
     iconOff : PropTypes.string,
     onClick : PropTypes.func,
     isIconOn : PropTypes.bool,
@@ -72,18 +68,10 @@ SimpleLayerOnOffButton.propTypes= {
     imageStyle : PropTypes.object,
 };
 
-SimpleLayerOnOffButton.defaultProps= {
-    todo : false
-};
 
-
-
-export function onOff(pv,typeId,allPlots, plotTypeMustMatch, todo, modalEndInfo, endText, modalLayer= false) {
+export function onOff(pv,typeId,allPlots, plotTypeMustMatch, modalEndInfo, endText, modalLayer= false) {
     if (!pv || !typeId) return;
 
-    if (todo) {
-        console.log(`todo: ${typeId}`);
-    }
     const dl= getDrawLayerByType(getDlAry(), typeId);
     if (!dl) {
         dispatchCreateDrawLayer(typeId);
@@ -95,7 +83,7 @@ export function onOff(pv,typeId,allPlots, plotTypeMustMatch, todo, modalEndInfo,
             modalEndInfo?.closeLayer?.();
             setModalEndInfo?.({
                 closeLayer: () => {
-                    onOff(pv,typeId,allPlots,plotTypeMustMatch,todo, modalEndInfo, endText, modalLayer);
+                    onOff(pv,typeId,allPlots,plotTypeMustMatch,modalEndInfo, endText, modalLayer);
                 },
                 closeText: endText,
                 offOnNewPlot: true,
