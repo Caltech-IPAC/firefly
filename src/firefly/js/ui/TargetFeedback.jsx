@@ -28,7 +28,7 @@ export function TargetFeedback ({showHelp, feedback, style={}, targetPanelExampl
     if (!showHelp) {
         return (
             <FormHelperText sx={{textAlign:'center'}}>
-                <Typography level='body-sm'>
+                <Typography>
                     <span dangerouslySetInnerHTML={{ __html : feedback }}/>
                 </Typography>
             </FormHelperText>
@@ -36,10 +36,10 @@ export function TargetFeedback ({showHelp, feedback, style={}, targetPanelExampl
     }
     return (
             <FormHelperText sx={{textAlign:'center'}}>
-                <Typography level='body-xs'>
+                <Typography level='body-sm'>
                     <i>Examples: </i>
                 </Typography>
-                <Typography level='body-xs'>
+                <Typography level='body-sm'>
                     {examples ?? defaultExamples(targetPanelExampleRow1, targetPanelExampleRow2)}
                 </Typography>
             </FormHelperText>

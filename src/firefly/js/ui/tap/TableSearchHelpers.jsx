@@ -117,9 +117,9 @@ function Header({title, helpID='', checkID, message, enabled=false, panelValue=u
                                          options={[{label:'', value: panelValue || title}]}
                                          orientation='horizontal' wrapperStyle={{whiteSpace: 'norma'}} />
             </div>
-            <Typography {...{level:'body-sm', color:'primary'}}>{title}</Typography>
+            <Typography {...{color:'primary'}}>{title}</Typography>
             <HelpIcon helpId={helpID}/>
-            <Typography {...{level:'body-xs', color:'warning'}}>{message}</Typography>
+            <Typography {...{level:'body-sm', color:'warning'}}>{message}</Typography>
         </Stack>
     );
 }

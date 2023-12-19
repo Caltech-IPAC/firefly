@@ -126,7 +126,7 @@ function getTitle(pv, plot, dl) {
         //{`(${Math.round(pt.x)}, ${Math.round(pt.y)})${convertedWp&&' '+formatWorldPt(convertedWp,3,false)}`}
         // {`(${Math.round(pt.x)}, ${Math.round(pt.y)})`}
         ptDiv= (
-            <Typography level='body-xs'>
+            <Typography level='body-sm'>
                 {`(${Math.round(pt.x)}, ${Math.round(pt.y)})`}
                 {convertedWp&&
                     <div style={{paddingTop:3}}>
@@ -138,7 +138,7 @@ function getTitle(pv, plot, dl) {
     return (
         <Stack {...{direction:'row', justifyContent: 'space-between', alignItems:'center', width: 100, minWidth}}>
             <Stack {...{direction: 'row', alignItems: 'center'}}>
-                <Typography {...{level:'body-xs', pr: .5}} >{preStr}</Typography>
+                <Typography {...{pr: .5}} >{preStr}</Typography>
                 {ptDiv}
                 <FixedPtControl pv={pv} wp={pt} />
             </Stack>

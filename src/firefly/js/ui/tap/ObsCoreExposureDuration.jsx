@@ -151,6 +151,7 @@ export function ExposureDurationSearch({initArgs}) {
                                 initialState:{value: initArgs?.urlApi?.exposureRangeType || 'since'} }} />
                             {isRange ?
                                 <TimeRangePanel {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive(),
+                                    labelStyle:{width:'5rem'},
                                     fromTip:"'Exposure start from' time (t_min)",
                                     toTip:"'Exposure end to' time (t_min)",
                                     style:{marginLeft: LeftInSearch, marginTop: 12, marginBottom: 12}}}/> :

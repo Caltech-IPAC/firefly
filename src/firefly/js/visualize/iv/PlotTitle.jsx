@@ -83,12 +83,12 @@ export const PlotTitle= memo(({plotView:pv, brief, working}) => {
         return (
             <Tooltip title={tooltip} placement='right-end'>
                 <Stack direction='row' alignItems='center' sx={plotTitleInlineTitleContainer}>
-                    <Typography {...{level:'body-xs', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '35ch'}}>{plot.title}</Typography>
-                    <Typography {...{level:'body-xs', color:'warning', pl:.75, overflow: 'hidden'}}>
+                    <Typography {...{level:'body-sm', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '35ch'}}>{plot.title}</Typography>
+                    <Typography {...{level:'body-sm', color:'warning', pl:.75, overflow: 'hidden'}}>
                         <div dangerouslySetInnerHTML={{__html:zlStr}}/>
                     </Typography>
-                    {Boolean(!brief && rotString) && <Typography level='body-xs' color='warning'>{`, ${rotString}`}</Typography> }
-                    {Boolean(!brief && flipString) && <Typography level='body-xs' color='warning'>{flipString}</Typography>}
+                    {Boolean(!brief && rotString) && <Typography level='body-sm' color='warning'>{`, ${rotString}`}</Typography> }
+                    {Boolean(!brief && flipString) && <Typography level='body-sm' color='warning'>{flipString}</Typography>}
                     {working && <img className={'plot-title-working'} src={LOADING}/>}
                 </Stack>
             </Tooltip>
@@ -101,8 +101,8 @@ export const PlotTitle= memo(({plotView:pv, brief, working}) => {
 
 const tipEntry= (label,value) => (
     <Stack direction='row' spacing={1}>
-        <Typography level='body-sm'>{label}</Typography>
-        <Typography level='body-sm' color='warning'>{value}</Typography>
+        <Typography >{label}</Typography>
+        <Typography color='warning'>{value}</Typography>
     </Stack>
 );
 

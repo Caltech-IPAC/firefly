@@ -157,7 +157,7 @@ function FluxRadixDialog({readoutPrefs, dialogId}) {
 			<Stack direction='column' spacing={2}>
 				<Stack {...{direction:'row', alignItems:'center',
 					onClick: () => doDispatch(groupKey, 'intFluxValueRadix', 'fluxRadixDialog', false) }} >
-					<Typography {...{level:'body-md', whiteSpace:'nowrap',width:'17em',pr:1, textAlign:'right'}}>
+					<Typography {...{whiteSpace:'nowrap',width:'17em',pr:1, textAlign:'right'}}>
 						Integer data readout radix:
 					</Typography>
 					<RadioGroupInputField
@@ -170,7 +170,7 @@ function FluxRadixDialog({readoutPrefs, dialogId}) {
 				</Stack>
 				<Stack {...{direction:'row', alignItems:'center',
 					onClick: () => doDispatch(groupKey, 'floatFluxValueRadix', 'fluxRadixDialog', false) }} >
-					<Typography {...{level:'body-md', whiteSpace:'nowrap',width:'17em',pr:1, textAlign:'right'}}>
+					<Typography {...{whiteSpace:'nowrap',width:'17em',pr:1, textAlign:'right'}}>
 						Floating Point data readout radix:
 					</Typography>
 					<RadioGroupInputField
@@ -221,7 +221,7 @@ CoordinateOptionDialogForm.propTypes= {
 const PixelSizeOptionDialogForm= ( {groupKey,fieldKey, radioValue} ) => (
 	<FieldGroup groupKey={groupKey} keepState={false}>
 		<Stack {...{direction:'row', spacing:1, alignItems:'center', m:2, onClick:() => doDispatch(groupKey, fieldKey)}}>
-			<Typography {...{level:'body-md', whiteSpace:'nowrap'}}>Pixel Options:</Typography>
+			<Typography {...{whiteSpace:'nowrap'}}>Pixel Options:</Typography>
 			<RadioGroupInputField
 				initialState={{ tooltip: 'Please select an option', value:radioValue }}
 				wrapperStyle={rightColumn} options={ pixelOptions } alignment={'vertical'} fieldKey={fieldKey} />
