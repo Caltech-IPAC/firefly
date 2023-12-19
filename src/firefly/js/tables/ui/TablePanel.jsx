@@ -54,6 +54,8 @@ const TT_EXPAND = 'Expand this panel to take up a larger area';
 const TT_PROPERTY_SHEET = 'Show details for the selected row';
 
 
+export const TBL_CLZ_NAME = 'FF-Table';
+
 export function TablePanel(props) {
     let {tbl_id, tbl_ui_id, tableModel, sx, ...options} = props;
     tbl_id = tbl_id || tableModel?.tbl_id || uniqueTblId();
@@ -95,7 +97,7 @@ export function TablePanel(props) {
         <Box sx={sx} position='relative' width={1} height={1}>
             <Stack height={1}>
                 {showMetaInfo && <MetaInfo tbl_id={tbl_id} /> }
-                <Stack flexGrow={1}
+                <Stack className={TBL_CLZ_NAME} flexGrow={1}
                        onClick={stopPropagation}
                        onTouchStart={stopPropagation}
                        onMouseDown={stopPropagation}
