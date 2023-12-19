@@ -1,3 +1,4 @@
+import {Typography} from '@mui/joy';
 import React, {useContext, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {makeDatePickerPopup} from '../DateTimePickerField.jsx';
@@ -67,7 +68,7 @@ export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, style={
                 initialState={{value: initArgs?.urlApi?.exposureTimeMode || ISO}}
             />}
             <div style={{display: 'flex', marginBottom: 12}}>
-                <div title={fromTip} style={{...timeLabelStyle, ...labelStyle}}>{minLabel}</div>
+                <Typography title={fromTip} style={{whiteSpace:'nowrap', ...timeLabelStyle, ...labelStyle}}>{minLabel}</Typography>
                 <TimePanel
                     fieldKey={minKey} timeMode={timeMode} icon={icon}
                     tooltip={fromTip} feedbackStyle={feedbackStyle}
@@ -79,7 +80,7 @@ export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, style={
                     isTimeModeFixed={Boolean(fixedTimeMode)} examples={minExamples}/>
             </div>
             <div style={{display: 'flex'}}>
-                <div title={toTip} style={{...timeLabelStyle, ...labelStyle}}>{maxLabel}</div>
+                <Typography title={toTip} style={{whiteSpace:'nowrap', ...timeLabelStyle, ...labelStyle}}>{maxLabel}</Typography>
                 <TimePanel
                     fieldKey={maxKey} timeMode={timeMode} icon={icon}
                     tooltip={toTip} feedbackStyle={feedbackStyle}

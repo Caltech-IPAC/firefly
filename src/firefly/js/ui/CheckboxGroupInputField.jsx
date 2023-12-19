@@ -30,7 +30,7 @@ export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip:
                 <Stack spacing={orientation==='vertical'?1:2} direction={orientation==='vertical' ? 'column' : 'row'}>
                     {options.map( ({value,label,tooltip}) => {
                         const cb= (<Checkbox {...slotProps?.input}
-                            {...{ name:fieldKey, key:value, value, checked:isChecked(value,fieldValue), onChange, label, }} />);
+                            {...{ size:'sm', name:fieldKey, key:value, value, checked:isChecked(value,fieldValue), onChange, label, }} />);
                         return tooltip ? <Tooltip {...{title:toggleBoxTip, key:value}}> {cb} </Tooltip> : cb;
                     })}
                 </Stack>

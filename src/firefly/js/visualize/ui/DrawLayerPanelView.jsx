@@ -102,7 +102,7 @@ function makeAddRelatedDataAry(pv) {
     return relatedData.map( (d,idx) => {
         return (
             <Stack {...{spacing:1, direction:'row', pr: 2, alignItems:'center', key:idx+''}}>
-                <Typography {...{level:'body-xs', color:'warning', mr:.5}}>
+                <Typography {...{color:'warning', mr:.5}}>
                     {`${d.desc} Layer found :`}
                 </Typography>
                 <Button color='warning' onClick={() => enableRelatedDataLayer(visRoot(), pv, d)}> Enable</Button>

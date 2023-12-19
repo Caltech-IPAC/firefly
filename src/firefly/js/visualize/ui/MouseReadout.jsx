@@ -22,14 +22,14 @@ export const MouseReadoutLock= memo(({gArea, gAreaLabel, style={}, lockByClick})
     return (
         <React.Fragment>
             <Stack direction='row' style={s} title='Click on an image to lock the display at that point.'>
-                <Checkbox label={gAreaLabel?'':label} checked={lockByClick}
+                <Checkbox size='sm' label={gAreaLabel?'':label} checked={lockByClick}
                           onChange={() => {
                               dispatchChangePointSelection('mouseReadout', !lockByClick);
                               dispatchChangeLockByClick(!lockByClick);
                           }} />
             </Stack>
             {gAreaLabel &&
-            <Typography level='body-xs'
+            <Typography level='body-sm'
                 sx={ {
                     gridArea: gAreaLabel,
                     position:'relative',
@@ -74,9 +74,9 @@ export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueSt
 
     return (
         <Fragment>
-            <Typography level='body-xs' className={labelClass} title={value+''} style={lS} onClick={prefChangeFunc}>{label}</Typography>
-            <Typography level='body-xs' color='warning' style={{...vS, ...mStyle}} title={value+''}> {value} </Typography>
-            <Typography level='body-xs' color='warning' style={vS} title={value+''}>
+            <Typography level='body-sm' className={labelClass} title={value+''} style={lS} onClick={prefChangeFunc}>{label}</Typography>
+            <Typography level='body-sm' color='warning' style={{...vS, ...mStyle}} title={value+''}> {value} </Typography>
+            <Typography level='body-sm' color='warning' style={vS} title={value+''}>
                 <span style={mStyle}> {value}</span>
                 <span> {unit}</span>
             </Typography>

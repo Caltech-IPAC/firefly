@@ -163,6 +163,7 @@ export function TemporalSearch({cols, columnsModel}) {
             minKey:TimeFrom, maxKey:TimeTo, columnsForTip:[getVal(TemporalColumns)],
             fromTip:`'from' time ${timeColStr}`,
             toTip:`'to' time ${timeColStr}`,
+            labelStyle:{width:'5rem'},
             style:{marginLeft: LeftInSearch, marginTop: 16, marginBottom: 16}}}/>
     );
 

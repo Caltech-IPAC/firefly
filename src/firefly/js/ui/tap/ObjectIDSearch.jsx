@@ -1,3 +1,4 @@
+import {Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 import {ConstraintContext} from 'firefly/ui/tap/Constraints';
@@ -95,7 +96,7 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
         <CollapsibleCheckHeader title={panelTitle} helpID={tapHelpId(panelPrefix)}
                                 message={constraintResult?.simpleError??''} initialStateOpen={false}>
             <div style={{marginTop: 5}}>
-                <div style={{fontStyle: 'italic'}}>Performs an exact match on the ID(s) provided, not a spatial search in the neighborhood of the designated objects.</div>
+                <Typography level='body-sm' style={{fontStyle: 'italic'}}>Performs an exact match on the ID(s) provided, not a spatial search in the neighborhood of the designated objects.</Typography>
                 <UploadTableSelectorObjectID {...{uploadInfo,setUploadInfo}}/>
                 <ObjectIDCol {...{
                     objectCol: getVal(ObjectIDColumn), cols,
