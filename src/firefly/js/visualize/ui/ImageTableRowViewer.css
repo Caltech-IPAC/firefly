@@ -19,3 +19,7 @@
     height: 100%;
     top: 0;
 }
+
+.ImageTableRowViewer .slick-disabled:before {
+    cursor: auto;
+}

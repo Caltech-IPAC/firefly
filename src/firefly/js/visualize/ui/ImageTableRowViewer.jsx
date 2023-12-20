@@ -3,9 +3,9 @@
  */
 
 
-import React, {useEffect, useRef} from 'react';
-import {string, number, func, bool, object} from 'prop-types';
-import {isNil, xor} from 'lodash';
+import React, {useEffect, useRef, useState} from 'react';
+import {string, number, func, bool, object, oneOfType} from 'prop-types';
+import {difference, isNil, xor} from 'lodash';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
@@ -48,24 +48,71 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
     const {wcsMatchType, activePlotId}= useStoreConnector(() =>
         ({wcsMatchType: visRoot().wcsMatchType, activePlotId:visRoot().activePlotId}) );
 
+    //flags to ensure that effects are fired only when active plot or highlighted row was changed through UI interaction
+    //and not when they were changed through the synchronisation code
+    const activePlotChangedByUI = useRef(true);
+    const hRowChangedByUI = useRef(true);
+
+    //keep track of slide index
+    const [currentSlideIdx, setCurrentSlideIdx] = useState(0);
+    const onSlideChange = (current, next) => setCurrentSlideIdx(next);
+
     useEffect(()=>{
         if (!activePlotId?.startsWith(plotIdRoot(viewerId))) return;
-        //on active plot change, change highlighted row if not same
-        const activePlotRowNum = getPlotIdRowNum(viewerId, activePlotId);
-        if(table?.highlightedRow !== activePlotRowNum) dispatchTableHighlight(tbl_id, activePlotRowNum);
+
+        if (activePlotChangedByUI.current) {
+            const activePlotRowNum = getPlotIdRowNum(viewerId, activePlotId);
+            changeHighlightedRow(table, activePlotRowNum, hRowChangedByUI); //synchronise highlighted row as per active plot
+        }
+        else activePlotChangedByUI.current = true;
     }, [activePlotId]);
 
     useEffect(() => {
         if (!table || table.isFetching || !makeRequestFromRow) return;
-        layoutImages(viewerId, Number(cutoutSize), Number(imageCnt), table, makeRequestFromRow);
-        adjustImageSlider(sliderRef, slideChangeByArrows, table, imageCnt);
+
+        if (hRowChangedByUI.current) {
+            const midSlideIdx = table?.highlightedRow;
+            layoutImages(viewerId, Number(cutoutSize), Number(imageCnt), table, makeRequestFromRow, midSlideIdx);
+            changeActivePlot(viewerId, table, midSlideIdx, activePlotChangedByUI); //synchronise active plot as per highlighted row
+            adjustImageSlider(sliderRef, table, Number(imageCnt), midSlideIdx);
+        }
+        else hRowChangedByUI.current = true;
     }, [imageCnt, table, cutoutSize]);
 
+    //handles whether to slide or not when slider arrow is clicked,
+    //while dispatching the required actions in different conditions
+    const slideOnArrowClick = (isNext) => {
+        const [beforeCnt, afterCnt] = getBeforeAfterMidCounts(Number(imageCnt));
+        const midSlideIdx = currentSlideIdx + beforeCnt;
+        const lastSlideIdx = midSlideIdx + afterCnt;
+
+        const rowToHighlight = isNext ? table.highlightedRow + 1 : table.highlightedRow - 1;
+        const midSlideIdxAfterSliding = isNext ? midSlideIdx + 1 : midSlideIdx - 1;
+
+        if((isNext && lastSlideIdx>=table.totalRows-1) || (!isNext && currentSlideIdx<=0) //at the edge
+            || (isNext && table.highlightedRow < midSlideIdx) || (!isNext && table.highlightedRow > midSlideIdx)) {
+            // move highlighted row/plot but keep slider as it is, until it comes to the middle of slider
+            changeHighlightedRow(table, rowToHighlight, hRowChangedByUI);
+            changeActivePlot(viewerId, table, rowToHighlight, activePlotChangedByUI);
+            return false;
+        }
+        else if((isNext && table.highlightedRow > midSlideIdx) || (!isNext && table.highlightedRow < midSlideIdx)) {
+            // keep highlighted row/plot as it is but move slider, until it comes to the middle of slider
+            layoutImages(viewerId, Number(cutoutSize), Number(imageCnt), table, makeRequestFromRow, midSlideIdxAfterSliding);
+            return true;
+        }
+        else { //table.highlightedRow === midSlideIdx; move highlighted row/plot as well as slider
+            changeHighlightedRow(table, rowToHighlight, hRowChangedByUI);
+            layoutImages(viewerId, Number(cutoutSize), Number(imageCnt), table, makeRequestFromRow, rowToHighlight);
+            changeActivePlot(viewerId, table, rowToHighlight, activePlotChangedByUI);
+            return true;
+        }
+    };
+
     const sliderRef = useRef(null);
-    const slideChangeByArrows = useRef(false);
     const makeCustomLayout = (viewerItemIds, makeItemViewer) => (
-        <ImageSlider {...{sliderRef, slideChangeByArrows, viewerId, table, tbl_id, imageCnt,
-            viewerItemIds, makeItemViewer}}/>
+        <ImageSlider {...{sliderRef, viewerId, table, imageCnt: Number(imageCnt),
+            viewerItemIds, makeItemViewer, slideOnArrowClick, onSlideChange}}/>
     );
 
     if (imageExpandedMode) {
@@ -101,24 +148,19 @@ ImageTableRowViewer.propTypes= {
 };
 
 
-function ImageSlider({viewerId, table, tbl_id, imageCnt, viewerItemIds, makeItemViewer, sliderRef, slideChangeByArrows}) {
+function ImageSlider({viewerId, table, imageCnt, viewerItemIds, makeItemViewer, sliderRef, slideOnArrowClick, onSlideChange}) {
+    const isArrowDisabled = table?.highlightedRow===0 || table?.highlightedRow===table?.totalRows-1;
+
     const SliderArrow = ({ className, onClick, isNext }) => (
         <div
-            className={className} //to keep default arrow style
-            onClick={(e)=>{
-                // change highlighted row if slide changed through UI by clicking arrows
-                const rowToHighlight = isNext ? table.highlightedRow + 1 : table.highlightedRow - 1;
-                dispatchTableHighlight(tbl_id, rowToHighlight);
-                slideChangeByArrows.current = true; // to prevent the row highlight change triggering the slide change again
-
-                const [visiblePlotsStartIdx, visiblePlotsEndIdx] = getVisiblePlotsRange(rowToHighlight, table.totalRows, Number(imageCnt));
-                if((isNext && visiblePlotsStartIdx === 0) // next arrow clicked when the left edge of slides is reached
-                    || (!isNext && visiblePlotsEndIdx === table.totalRows-1) // prev arrow clicked when the right edge of slides is reached
-                ) {
-                    e.preventDefault(); // prevent sliding, to ensure active plot moves to the center of visible plots
-                }
-                else onClick?.(e); // allow sliding
-            }}
+            className={isArrowDisabled
+                ? className //keep default arrow style
+                : className.replace('slick-disabled', '') //remove disabled class if exists
+            }
+            onClick={(e) => slideOnArrowClick(isNext)
+                ? onClick?.(e)  // allow sliding
+                : e.preventDefault()  // prevent sliding
+            }
         />
     );
 
@@ -126,11 +168,14 @@ function ImageSlider({viewerId, table, tbl_id, imageCnt, viewerItemIds, makeItem
         dots: false,
         infinite: false,
         draggable: false,
-        slidesToShow: Number(imageCnt),
+        slidesToShow: imageCnt,
         slidesToScroll: 1,
         nextArrow: (<SliderArrow isNext={true}/>),
         prevArrow: (<SliderArrow isNext={false}/>),
-        //beforeChange: (current, next) => console.log(current, next, viewerItemIds) //turn on for debugging slide changes
+        beforeChange: (current, next) => {
+            //console.log(current, next, viewerItemIds); //turn on for debugging slide changes
+            onSlideChange(current, next);
+        }
     };
 
     return (
@@ -150,15 +195,6 @@ function ImageSlider({viewerId, table, tbl_id, imageCnt, viewerItemIds, makeItem
 }
 
 
-const adjustImageSlider = (sliderRef, slideChangeByArrows, table, imageCnt) => {
-    if (!slideChangeByArrows.current) { //don't change slide again when the highlighted row change was triggered by a slide change
-        const [visiblePlotsStartIdx,] = getVisiblePlotsRange(table.highlightedRow, table.totalRows, Number(imageCnt));
-        sliderRef.current?.slickGoTo(visiblePlotsStartIdx); //slider idx is always the 1st slide shown
-    }
-    else slideChangeByArrows.current = false;
-};
-
-
 const toolsStyle= {
     display:'flex',
     flexDirection:'row',
@@ -176,8 +212,9 @@ function Toolbar({viewerId, tableId:tbl_id, closeFunc=null, maxImageCnt, default
                      defaultCutoutSizeAS, minCutoutSize=50, maxCutoutSize=1000}) {
 
     useEffect(()=>{
-        if(wcsMatchType!==defaultWcsMatchType && defaultWcsMatchType === WcsMatchType.Target) {
-            wcsMatchTarget(true, activePlotId); //otherwise Target Match checkbox won't be checked initially
+        if(wcsMatchType!==defaultWcsMatchType) {
+            //to make sure wcsMatch checkbox is checked on initial render
+            dispatchWcsMatch({matchType: defaultWcsMatchType, plotId: activePlotId});
         }
     }, []);
 
@@ -252,7 +289,7 @@ Toolbar.propTypes= {
     maxImageCnt: number,
     makeRequestFromRow: func.isRequired,
     activePlotId: string,
-    wcsMatchType: object,
+    wcsMatchType: oneOfType([bool, object]),
     defaultWcsMatchType: object,
     defaultCutoutSizeAS: number,
     minCutoutSize: number,
@@ -273,18 +310,36 @@ const doWcsMatch= (doWcsStandard, plotId) =>
 // }
 //
 
+const adjustImageSlider = (sliderRef, table, imageCnt, midSlideIdx) => {
+    const [visiblePlotsStartIdx,] = getVisiblePlotsRange(midSlideIdx, table.totalRows, imageCnt);
+    sliderRef.current?.slickGoTo(visiblePlotsStartIdx); //slider idx is always the 1st slide shown
+};
 
-function layoutImages(viewerId, cutoutSize, imageCnt, table, makeRequestFromRow) {
+const changeHighlightedRow = (table, rowToHighlight, hRowChangedByUI) => {
+    if (table?.highlightedRow !== rowToHighlight) {
+        dispatchTableHighlight(table.tbl_id, rowToHighlight);
+        // to prevent setting it false when dispatch was aborted due to out of bound
+        if (rowToHighlight >= 0 && rowToHighlight < table?.totalRows) hRowChangedByUI.current = false;
+    }
+};
 
-    if (!table || isNil(table.highlightedRow) || (table?.totalRows??0) < 1) return;
+const changeActivePlot = (viewerId, table, plotIdxToActivate, activePlotChangedByUI) => {
+    const newActivePlotId = makePlotId(viewerId, plotIdxToActivate);
+    if (getActivePlotView(visRoot())?.plotId !== newActivePlotId) {
+        dispatchChangeActivePlotView(newActivePlotId);
+        if (plotIdxToActivate >= 0 && plotIdxToActivate < table?.totalRows) activePlotChangedByUI.current = false;
+    }
+};
+
+function layoutImages(viewerId, cutoutSize, imageCnt, table, makeRequestFromRow, midSlideIdx) {
+    if (!table || isNil(midSlideIdx) || (table?.totalRows??0) < 1) return;
     const viewer= getViewer(getMultiViewRoot(),viewerId);
     if (!viewer) return;
 
-    const hasPlotsWhenBeginning = getPlotViewAry(visRoot())?.length > 0;
-    const newPlotIdAry = makePlotIds(viewerId, table.highlightedRow, table.totalRows, imageCnt);
-
     const vr = visRoot();
-    newPlotIdAry.forEach((plotId) => {
+    const newPlotIdAry = makePlotIds(viewerId, midSlideIdx, table.totalRows, imageCnt);
+    const exclusiveNewPlotIds = difference(newPlotIdAry, viewer.itemIdAry);
+    exclusiveNewPlotIds.forEach((plotId) => {
         const rowNum = getPlotIdRowNum(viewerId,plotId);
         const wpRequest= makeRequestFromRow(table.tbl_id, rowNum, cutoutSize); //todo - needs documentation
         if (!wpRequest) return;
@@ -305,19 +360,10 @@ function layoutImages(viewerId, cutoutSize, imageCnt, table, makeRequestFromRow)
         dispatchReplaceViewerItems(viewerId, newPlotIdAry, IMAGE );
     }
 
-    const newActivePlotId = makePlotId(viewerId,table.highlightedRow);
-    if (getActivePlotView(visRoot())?.plotId !== newActivePlotId) {
-        dispatchChangeActivePlotView(newActivePlotId);
-    }
-
-    if (!visRoot().wcsMatchType && hasPlotsWhenBeginning) { //todo: test to see if this is necessary
-        dispatchWcsMatch({matchType: WcsMatchType.Standard, plotId: newActivePlotId});
-    }
-
     const {mpwWcsPrimId} = visRoot();
     const root= plotIdRoot(viewerId);
 
-    const keepPlotIdAry = makePlotIds(viewerId, table.highlightedRow, table.totalRows, MAX_IMAGE_CNT);
+    const keepPlotIdAry = makePlotIds(viewerId, midSlideIdx, table.totalRows, MAX_IMAGE_CNT);
     getPlotViewAry(visRoot())
         .filter(({plotId}) => plotId.startsWith(root))
         .filter(({plotId}) => plotId !== mpwWcsPrimId)
@@ -325,23 +371,26 @@ function layoutImages(viewerId, cutoutSize, imageCnt, table, makeRequestFromRow)
         .forEach(({plotId}) => dispatchDeletePlotView({plotId, holdWcsMatch: true}));
 }
 
-function getVisiblePlotsRange(highlightedRow, totalRows, totalPlots) {
-    const beforeCnt= totalPlots%2===0 ? totalPlots/2-1 : (totalPlots-1)/2;
-    const afterCnt= totalPlots%2===0 ? totalPlots/2    : (totalPlots-1)/2;
-    const firstRowIdx= 0, lastRowIdx= totalRows-1;
+const getBeforeAfterMidCounts = (totalPlots) => totalPlots%2===0
+    ? [totalPlots/2-1, totalPlots/2] : [(totalPlots-1)/2, (totalPlots-1)/2];
 
-    let rangeEndRowIdx= Math.min(lastRowIdx, highlightedRow+afterCnt);
-    let rangeStartRowIdx= Math.max(firstRowIdx, highlightedRow-beforeCnt);
 
-    // handle the edge case: totalRows < totalPlots
-    if (rangeStartRowIdx===firstRowIdx) rangeEndRowIdx= Math.min(lastRowIdx, totalPlots-1);
-    if (rangeEndRowIdx===lastRowIdx) rangeStartRowIdx= Math.max(firstRowIdx, totalRows-totalPlots);
+function getVisiblePlotsRange(midSlideIdx, totalRows, totalPlots) {
+    const [beforeCnt, afterCnt] = getBeforeAfterMidCounts(totalPlots);
+    const firstRowIdx = 0, lastRowIdx = totalRows-1;
+
+    let rangeEndRowIdx = Math.min(lastRowIdx, midSlideIdx+afterCnt);
+    let rangeStartRowIdx = Math.max(firstRowIdx, midSlideIdx-beforeCnt);
+
+    // handle the edge case
+    if (rangeStartRowIdx===firstRowIdx) rangeEndRowIdx = Math.min(lastRowIdx, totalPlots-1);
+    if (rangeEndRowIdx===lastRowIdx) rangeStartRowIdx = Math.max(firstRowIdx, totalRows-totalPlots);
 
     return [rangeStartRowIdx, rangeEndRowIdx];
 }
 
-function makePlotIds(viewerId, highlightedRow, totalRows, totalPlots)  {
-    const [rangeStartRowIdx, rangeEndRowIdx] = getVisiblePlotsRange(highlightedRow, totalRows, totalPlots);
+function makePlotIds(viewerId, midSlideIdx, totalRows, totalPlots)  {
+    const [rangeStartRowIdx, rangeEndRowIdx] = getVisiblePlotsRange(midSlideIdx, totalRows, totalPlots);
 
     const plotIds= [];
     for(let i= rangeStartRowIdx; i<=rangeEndRowIdx; i++) plotIds.push(makePlotId(viewerId,i));
