@@ -44,7 +44,7 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
 
 
     const sx= (theme) => ({
-        height: '1.3em',
+        height: '1.3rem',
         borderRadius: '5px',
         overflow:'hidden',
         border: '2px solid rgba(0,0,0,.1)',

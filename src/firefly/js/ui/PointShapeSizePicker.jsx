@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box, Stack, Typography} from '@mui/joy';
 import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
-import {get} from 'lodash';
 import {dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {PopupPanel} from './PopupPanel.jsx';
 import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
@@ -37,9 +37,7 @@ function defaultUpdate(id, newDrawingDef, plotId, titleMatching) {
     dispatchChangeDrawingDef(id, newDrawingDef, plotId, titleMatching);
 }
 
-function defaultGetColor(drawLayer) {
-    return get(drawLayer, ['drawingDef', 'color']);
-}
+const defaultGetColor= (drawLayer) => drawLayer?.drawingDef?.color;
 
 
 /**
@@ -59,7 +57,7 @@ export function showPointShapeSizePickerDialog(dl, plotId, drawingDef= undefined
 
     popupId = popupIdBase; //keep one dialog
     const popup= isPointData ? (
-        <PopupPanel title={'Symbol Picker - ' + dl.drawLayerId } >
+        <PopupPanel title={'Symbol Picker'} >
             <ShapePicker
                 drawingDef={drawingDef || dl.drawingDef}
                 displayGroupId={dl.displayGroupId}
@@ -98,7 +96,7 @@ export function ShapePicker({drawingDef, displayGroupId, plotId, update, getColo
     const [validSize, setValidSize] = useState(() => (width >= MINSIZE) && (width <= MAXSIZE));
 
     const updateSymbol = (ev) => {
-        const value = get(ev, 'target.value');
+        const value = ev?.target?.value;
         const symbol = value&&DrawSymbol[value];
 
         const symbolSize = DrawUtil.getSymbolSizeBasedOn(symbol, drawingDef);
@@ -113,8 +111,8 @@ export function ShapePicker({drawingDef, displayGroupId, plotId, update, getColo
     };
 
     const updateSize = (ev) => {
-        const size = get(ev, 'target.value');
-        let validSize = true;
+        const size = ev?.target?.value;
+        let validSize;
         let isize;
 
         if (isNaN(parseFloat(size))) {
@@ -180,7 +178,6 @@ export function ShapePicker({drawingDef, displayGroupId, plotId, update, getColo
     };
 
     const drawSymbol = (df, validSize, size) => {
-        
         const maxSize = 30;
         let canvasSize = validSize && (Math.floor(parseFloat(size)) + 2);
         const bkColor = getBackgroundColor(df.color);
@@ -189,85 +186,50 @@ export function ShapePicker({drawingDef, displayGroupId, plotId, update, getColo
             const symbolSize = DrawUtil.getSymbolSize(maxSize, maxSize, drawingDef.symbol);
             df = {...drawingDef, size: symbolSize};
         }
-
-        if (validSize) {
-
-            if (size > maxSize) {
-
-                return (
-                    <div style={{display:'flex', alignItems:'center', width: canvasSize, height: canvasSize}}>
-                        <SimpleCanvas width={canvasSize} height={canvasSize} backgroundColor={bkColor}
-                                      drawIt={(c)=>drawOnCanvas(c, df, canvasSize, canvasSize)}/>
-                        {/*<text style={{fontSize:`${10.5+parseInt(size/10)}px`}}>+</text>*/}
-                    </div>);
-            } else {
-                return (
-
-                    <div style={{display:'flex', width: canvasSize, height: canvasSize}}>
-
-                        <SimpleCanvas width={canvasSize} height={canvasSize} backgroundColor={bkColor}
-                                      drawIt={(c)=>drawOnCanvas(c, df, canvasSize, canvasSize)}/>
-                    </div>);
-            }
-        }
+        if (!validSize) return;
+        return (
+            <SimpleCanvas width={canvasSize} height={canvasSize} backgroundColor={bkColor}
+                          drawIt={(c)=>drawOnCanvas(c, df, canvasSize, canvasSize)}/>
+        );
     };
 
     const PointOptions = [ DrawSymbol.CIRCLE, DrawSymbol.SQUARE, DrawSymbol.DIAMOND,
         DrawSymbol.CROSS, DrawSymbol.X, DrawSymbol.ARROW, DrawSymbol.POINT_MARKER,
         DrawSymbol.BOXCIRCLE, DrawSymbol.DOT];
     const df = validSize&&drawingDef;
-    const labelW = 70;
-    const mLeft = 10;
     const bkColor = getBackgroundColor(drawingDef.color);
-    const textColor = '#000000';
     const options = PointOptions.map((p) => {
-                        return {value: p.key, label: drawShapeWithLabel(p, drawingDef, bkColor, textColor)};
+                        return {value: p.key, label: drawShapeWithLabel(p, drawingDef, bkColor)};
                     });
     return (
-        <div style={{width: 320}}>
-            <div style={{margin: mLeft,
-                         border: '1px solid rgba(0, 0, 0, 0.298039)',
-                         borderRadius: 5,
-                         padding: '10px 5px'
-                         }}>
-                <div style={{display: 'flex', marginLeft: mLeft}} >
-                    <div style={{width: labelW, color: textColor}} title={'pick a symbol'}>Symbols:</div>
-                    <RadioGroupInputFieldView
-                                              onChange={updateSymbol}
-                                              tooltip='available symbol shapes'
-                                              options={options}
-                                              value={drawingDef.symbol.key}
-                                              orientation='vertical'/>
-                </div>
-                <div style={{marginLeft: mLeft, marginTop: mLeft, height: 26, display: 'flex', alignItems: 'center'}}>
-                    <InputFieldView  label={'Symbol Size (px):'}
-                                     labelStyle={{color: textColor}}
-                                     valid={validSize}
-                                     onChange={updateSize}
-                                     onKeyDown={onArrowDown}
-                                     onKeyUp={onArrowUp}
-                                     value={size}
-                                     tooltip={'enter the symbol size or use the arrow up (or down) key in the field to increase (or decrease) the size number '}
-                                     type={'text'}
-                                     placeholder={`size 3 < ${MAXSIZE}`}
-                                     size={16}
-                                     message={`invalid data entry, size is within 3 & ${MAXSIZE}`}/>
-                    {validSize && drawSymbol(df, validSize, size)}
-                </div>
-                <div style={{marginLeft: mLeft, marginTop: mLeft, color: textColor}}>
-                    <i>Try up/down arrow keys  </i>
-                </div>
-                <div style={{display:'flex'}}>
-                    <HelpIcon
-                        helpId={'visualization.imageoptions'}/>
-                </div>
-            </div>
-            <div style={{marginBottom: 10, marginLeft: mLeft}} >
-                <CompleteButton  dialogId={popupId}
-                                 onSuccess={updateShape}
-                                 text={'OK'}/>
-            </div>
-        </div>
+        <Box sx={{width: 320}}>
+            <Stack spacing={2}>
+                <RadioGroupInputFieldView
+                    sx={{alignSelf:'center'}}
+                    onChange={updateSymbol}
+                    tooltip='available symbol shapes'
+                    options={options}
+                    value={drawingDef.symbol.key}
+                    orientation='vertical'/>
+                <InputFieldView  label={'Symbol Size (px):'}
+                                 valid={validSize}
+                                 type='number'
+                                 onChange={updateSize}
+                                 onKeyDown={onArrowDown}
+                                 onKeyUp={onArrowUp}
+                                 endDecorator={validSize ? drawSymbol(df, validSize, size) : undefined}
+                                 value={size}
+                                 tooltip={'enter the symbol size or use the arrow up (or down) key in the field to increase (or decrease) the size number '}
+                                 placeholder={`size 3 < ${MAXSIZE}`}
+                                 size={16}
+                                 message={`invalid data entry, size is within 3 & ${MAXSIZE}`}/>
+                <Typography sx={{alignSelf:'center'}} >Try up/down arrow keys </Typography>
+            </Stack>
+           <Stack {...{direction:'row', m:1, justifyContent:'space-between'}}>
+                <CompleteButton  dialogId={popupId} onSuccess={updateShape} text='Close'/>
+                <HelpIcon helpId={'visualization.imageoptions'}/>
+            </Stack>
+        </Box>
     );
 }
 
@@ -279,29 +241,19 @@ ShapePicker.propTypes= {
     getColor: PropTypes.func.isRequired
 };
 
-function drawShapeWithLabel(pointObj, drawingDef, bkColor, textColor) {
-    let   size = 16;
-    let   symbolSize = DrawUtil.getSymbolSize(size, size, pointObj);
-    const addSpace = 6;
-
-    if (pointObj.key === 'DOT') {
-        symbolSize /= 2;
-    }
-
+function drawShapeWithLabel(pointObj, drawingDef, bkColor) {
+    const size = 16;
+    const canvasSize=size+2;
+    let symbolSize = DrawUtil.getSymbolSize(size, size, pointObj);
+    if (pointObj.key === 'DOT') symbolSize /= 2;
     const df = {...drawingDef, symbol: pointObj, size: symbolSize};
 
-    size += 2;
-
     return (
-            <div style={{display: 'inline-block', height: size+addSpace}}>
-                <div style={{display: 'flex', position: 'relative', top: addSpace/2, alignItems: 'center'}}>
-                    <div style={{height: size, width: size}}>
-                        <SimpleCanvas width={size} height={size} backgroundColor={bkColor}
-                                      drawIt={(c)=> drawOnCanvas(c, df, size, size)}/>
-                    </div>
-                    <div style={{height:size, marginLeft: 10, lineHeight: size+'px', textAlign: 'center', color: textColor}}>{pointObj.key}</div>
-                </div>
-            </div>
+        <Stack {...{direction: 'row', spacing:1, alignItems:'center'}}>
+            <SimpleCanvas width={canvasSize} height={canvasSize} backgroundColor={bkColor}
+                          drawIt={(c)=> drawOnCanvas(c, df, canvasSize, canvasSize)}/>
+            <Typography>{pointObj.key}</Typography>
+        </Stack>
     );
 }
 

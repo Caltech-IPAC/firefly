@@ -16,6 +16,7 @@ import {clearModalEndInfo, setModalEndInfo} from './ToolbarToolModalEnd.js';
 
 export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,visible=true,
                                            modalEndInfo, endText, modalLayer= false,
+                                            text, color, variant,
                                             plotTypeMustMatch= false, style={}, enabled= true, imageStyle,
                                             isIconOn, onClick, dropDown, allPlots= true }) {
     const enableButton= Boolean(primePlot(pv)) && enabled;
@@ -27,23 +28,17 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,vi
 
     if (dropDown && !isOn) {
         return (
-            <DropDownToolbarButton  icon={iconOff}
-                                    tip={tip}
-                                    enabled={enableButton}
-                                    visible={visible}
-                                    imageStyle={imageStyle}
-                                    dropDown={dropDown} />
+            <DropDownToolbarButton  {...{icon:iconOff, tip, text, color, variant, enabled:enableButton,
+                                    visible, imageStyle, dropDown }}/>
         );
     } else {
         return (
-            <ToolbarButton icon={isOn ? iconOn : iconOff}
-                           tip={tip}
-                           enabled={enableButton}
-                           visible={visible}
-                           style={style}
-                           imageStyle={imageStyle}
-                           onClick={() => onClick ? onClick(pv,!isOn) :
-                               onOff(pv,typeId,allPlots,plotTypeMustMatch,modalEndInfo, endText,modalLayer)}/>
+            <ToolbarButton {...{
+                icon:isOn ? iconOn : iconOff,
+                tip, text, enabled:enableButton, visible, style, imageStyle,
+                onClick:() => onClick ? onClick(pv,!isOn) :
+                    onOff(pv,typeId,allPlots,plotTypeMustMatch,modalEndInfo, endText,modalLayer)
+            }}/>
         );
     }
 }
@@ -52,6 +47,9 @@ SimpleLayerOnOffButton.propTypes= {
     plotView : PropTypes.object,
     typeId :  PropTypes.string,
     tip : PropTypes.string,
+    text : PropTypes.string,
+    color : PropTypes.string,
+    variant : PropTypes.string,
     iconOn : PropTypes.string,
     visible : PropTypes.bool,
     iconOff : PropTypes.string,

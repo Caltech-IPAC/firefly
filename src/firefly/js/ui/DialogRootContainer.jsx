@@ -213,6 +213,7 @@ function createDiv({id, appendTo=document.body, wrapperStyle={}}) {
     el.style.position = 'absolute';
     el.style.left= '0';
     el.style.top= '0';
+    el.style.zIndex= DEFAULT_ZINDEX;
     Object.entries(wrapperStyle).forEach(([k,v]) => set(el.style, [k], v));
     return el;
 }

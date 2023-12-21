@@ -3,11 +3,12 @@
  */
 
 import React from 'react';
-import {Box, Button, Checkbox, Divider, Stack, Typography} from '@mui/joy';
+import {Box, Checkbox, Divider, IconButton, Stack, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import {isFunction} from 'lodash';
 import {getMinMaxWidth, makeColorChange, makeShape} from './DrawLayerUIComponents';
 
+import DELETE from 'images/blue_delete_10x10.png';
 
 export function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
                             color, canUserChangeColor, canUserDelete, title, helpLine,
@@ -110,9 +111,10 @@ function makeHelpLine(helpLine) {
 
 function makeDelete(canUserDelete,deleteLayer) {
     return (
-        <Button onClick={() => deleteLayer()} sx={{visibility: canUserDelete ? 'inherit' : 'hidden', px:.5}}>
-            Delete
-        </Button>
+        <IconButton onClick={() => deleteLayer()} title='Close Layer'
+            sx={{visibility: canUserDelete ? 'inherit' : 'hidden', px:.5}}>
+            <img src={DELETE}/>
+        </IconButton>
     );
 
 }

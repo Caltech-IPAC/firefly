@@ -53,7 +53,7 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
         <Sheet variant='soft'>
             <Stack direction='row' alignItems='center' style={{ flexWrap:'nowrap', justifyContent:'space-between', height: 32}}>
                 {makeDropDown && makeDropDown()}
-                {makeDropDown && <Divider orientation='vertical' sx={{mx:1}}/> }
+                {(metaControls&&(showMultiImageOps||canGrid||hasRelatedBands||showThreeColorButton))&& <Divider orientation='vertical' sx={{mx:1}}/> }
                 {metaControls && <Stack direction='row' alignItems='center' whiteSpace='nowrap'>
                     {showMultiImageOps && <ToolbarButton icon={ONE} tip={'Show single image at full size'}
                                                          imageStyle={{width:24,height:24, flex: '0 0 auto'}}
@@ -76,7 +76,7 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
                     }
                 </Stack> }
                 {showPager && <ImagePager pageSize={maxPlots} tbl_id={activeTable.tbl_id} style={{marginLeft:10}}/>}
-                <Divider orientation='vertical' sx={{mx:1}}/>
+                {showPager && <Divider orientation='vertical' sx={{mx:1}}/>}
                 <VisMiniToolbar viewerId={viewerId}/>
             </Stack>
         </Sheet>

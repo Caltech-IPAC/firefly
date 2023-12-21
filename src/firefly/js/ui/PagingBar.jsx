@@ -29,7 +29,7 @@ export function PagingBar(props) {
         return showingLabel;
     } else {
         return (
-            <Typography display='flex' alignItems='center' direction='row' level='body-sm' noWrap>
+            <Typography display='flex' alignItems='center' direction='row' level='body-sm' noWrap component='div'>
                 <div onClick={() => callbacks.onGotoPage(1)} className='PagingBar__button first' title='First Page'/>
                 <div onClick={() => callbacks.onGotoPage(currentPage - 1)} className='PagingBar__button previous' title='Previous Page'/>
                 <Stack direction='row' alignItems='center' spacing={1/2}>
