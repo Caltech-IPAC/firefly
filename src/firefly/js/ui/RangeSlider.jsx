@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, {element,object,bool,objectOf,func,arrayOf,shape,number,string} from 'prop-types';
 import {isNaN} from 'lodash';
 import {RangeSliderView, checkMarksObject} from './RangeSliderView.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
@@ -28,26 +28,31 @@ export const RangeSlider= memo( (props) => {
 
 
 RangeSlider.propTypes={
-    fieldKey: PropTypes.string,
-    groupKey: PropTypes.string,
-    associatedKey: PropTypes.string,
-    label:       PropTypes.string,             // slider label
+    fieldKey: string,
+    groupKey: string,
+    associatedKey: string,
+    label:       string,             // slider label
     slideValue:  PropTypes.oneOfType([PropTypes.string,PropTypes.number]).isRequired, // slider value
-    onValueChange: PropTypes.func,                  // callback on slider change
-    min:         PropTypes.number,                  // minimum end of slider
-    max:         PropTypes.number,                  // maximum end of slider
-    className:   PropTypes.string,                  // class name attached to slider component
-    marks:       PropTypes.objectOf(checkMarksObject),   // marks shown on slider
-    step:        PropTypes.number,                       // slider step size
-    vertical:    PropTypes.bool,                         // slider is in vertical
-    defaultValue: PropTypes.number,                      // default value of slider
-    handle:      PropTypes.element,                      // custom made slider handle
-    style: PropTypes.object,                             // style for entire component
-    sliderStyle: PropTypes.object,                       // style for slider component
-    labelWidth: PropTypes.number,                        // label width
-    tooltip:  PropTypes.string,                          // tooltip on label
-    minStop:  PropTypes.number,                          // minimum value the slider can be changed to
-    maxStop:  PropTypes.number,                          // maximum value the slider can be changed to
-    errMsg: PropTypes.string                            // message for invalid value
+    onValueChange: func,                  // callback on slider change
+    min:         number,                  // minimum end of slider
+    max:         number,                  // maximum end of slider
+    className:   string,                  // class name attached to slider component
+     marks:       arrayOf(objectOf(
+         shape({
+             label: string,
+             value: number,
+         })
+     )),   // marks shown on slider
+    step:        number,                       // slider step size
+    vertical:    bool,                         // slider is in vertical
+    defaultValue: number,                      // default value of slider
+    handle:      element,                      // custom made slider handle
+    style: object,                             // style for entire component
+    sliderStyle: object,                       // style for slider component
+    labelWidth: number,                        // label width
+    tooltip:  string,                          // tooltip on label
+    minStop:  number,                          // minimum value the slider can be changed to
+    maxStop:  number,                          // maximum value the slider can be changed to
+    errMsg: string                            // message for invalid value
 };
 

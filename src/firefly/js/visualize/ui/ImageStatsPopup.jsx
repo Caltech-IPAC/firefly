@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Stack, Typography} from '@mui/joy';
 import React, {useState} from 'react';
 import PropTypes from 'prop-types';
 import CompleteButton from '../../ui/CompleteButton.jsx';
@@ -28,9 +29,6 @@ const typeId = StatsPoint.TYPE_ID;
 const noBand = 'NO_BAND';
 
 // style of the top divs
-const rS = {
-    padding: 10
-};
 
 const tableW = 450;
 
@@ -77,11 +75,11 @@ export function showImageAreaStatsPopup(popTitle, statsResult, plotId) {
 
 function ImageStats ( {statsResult, plotId} ) {
     return (
-        <div>
+        <Stack spacing={2} m={1}>
             <ImageAreaStatsSummary statsSummary={statsResult.statsSummary}/>
             <ImageAreaStatsTable statsTbl={statsResult.statsTable} plotId={plotId}/>
             <ImageAreaStatsClose plotId={plotId}/>
-        </div>
+        </Stack>
     );
 }
 
@@ -120,12 +118,12 @@ function ImageStatsTab({statsResult, plotId})
     });
 
     return (
-        <div style={rS}>
+        <Stack pt={1}>
             <Tabs useFlex={true}>
                 {allTabs}
             </Tabs>
             <ImageAreaStatsClose plotId={plotId}/>
-        </div>
+        </Stack>
     );
 }
 
@@ -158,14 +156,14 @@ function ImageAreaStatsSummary({statsSummary})
 {
     const summaryRows = statsSummary.map((summaryLine, index) => (
             <tr key={index}>
-                <td> {summaryLine[0] + ':'} </td>
-                <td> {summaryLine[1]}</td>
+                <td><Typography level='body-sm'>{summaryLine[0] + ':'}</Typography> </td>
+                <td><Typography level='body-sm' color={'warning'}>{summaryLine[1]}</Typography></td>
             </tr>
         ));
 
 
     return (
-        <div style={rS}>
+        <div>
             <table>
                 <tbody>
                 {summaryRows}
@@ -190,28 +188,23 @@ ImageAreaStatsSummary.propTypes={
 function ImageAreaStatsTable ({statsTbl, plotId})
 {
     // table style
-    var tS = {
-        width: tableW,
-        border: '1px solid black'
-    };
+    const tS = { width: tableW, border: '1px solid rgba(0,0,0,.2)' };
 
-    var tableRows = statsTbl.map((statsRow, index) =>
+    const tableRows = statsTbl.map((statsRow, index) =>
             <ImageAreaStatsTableRow key={index} statsRow={statsRow} plotId={plotId} isTitle={!index}/>
         );
 
     return (
-        <div style={rS}>
-            <table style={tS}>
-                <colgroup>
-                    <col style={{width: '30%'}}/>
-                    <col style={{width: '40%'}}/>
-                    <col style={{width: '30%'}}/>
-                </colgroup>
-                <tbody>
-                {tableRows}
-                </tbody>
-            </table>
-        </div>
+        <table style={tS}>
+            <colgroup>
+                <col style={{width: '30%'}}/>
+                <col style={{width: '40%'}}/>
+                <col style={{width: '30%'}}/>
+            </colgroup>
+            <tbody>
+            {tableRows}
+            </tbody>
+        </table>
     );
 }
 
@@ -225,7 +218,7 @@ ImageAreaStatsTable.propTypes = {
 
 const rowStates = {
     hover: {
-        backgroundColor: '#d3fad1',
+        backgroundColor: 'var(--joy-palette-neutral-softBg)',
         cursor: 'text'
     },
 
@@ -235,15 +228,12 @@ const rowStates = {
     },
 
     title: {
-        backgroundColor: '#888888',
+        backgroundColor: 'var(--joy-palette-neutral-softBg)',
         textAlign: 'center'
     }
 };
 
 
-/**
- * component of stats table row
- */
 const ImageAreaStatsTableRow= ({isTitle,statsRow, plotId}) => {
     const [hover,setHover]= useState(() => false);
 
@@ -278,14 +268,14 @@ const ImageAreaStatsTableRow= ({isTitle,statsRow, plotId}) => {
 
     const tableCells = statsRow.cells.map( (cell, index) => {
         const newline = '\n';
-        const dS = {  border: '1px solid black', padding: 5  };
+        const dS = {  border: '1px solid rgba(0,0,0,.1)', padding: 5  };
 
         // cell contains newline (ex. RA:..\n DEC:...)
         if (cell.includes(newline)) {
-            const br = cell.split(newline).map((line, id) => <span key={id}>{line}<br/></span>);
-            return ( <td key={index} style={dS}> { br } </td> );
+            const br = cell.split(newline).map((line, id) => <span key={id}><Typography level='body-xs'>{line}<br/></Typography></span>);
+            return ( <td key={index} style={dS}><Typography level='body-xs'>{br}</Typography></td> );
         } else {
-            return ( <td key={index} style={dS}> {cell} </td> );
+            return ( <td key={index} style={dS}><Typography level='body-xs'>{cell} </Typography></td> );
         }
     });
 
@@ -312,28 +302,10 @@ ImageAreaStatsTableRow.propTypes={
  */
 
 const ImageAreaStatsClose= ({closeButton='Close', plotId} ) => (
-        <div style={rS}>
-            <table style={{textAlign: 'right', width: tableW}}>
-                <colgroup>
-                    <col style={{width: '92%'}}/>
-                    <col style={{width: '8%'}}/>
-                </colgroup>
-                <tbody>
-                    <tr>
-                        <td>
-                            <CompleteButton
-                            text={closeButton}
-                            dialogId={popupId}
-                            onSuccess={() => destroyDrawLayer(plotId)}
-                            />
-                        </td>
-                        <td>
-                            <HelpIcon helpId={helpId}/>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+    <Stack {...{direction:'row', justifyContent:'space-between', alignItems:'center', m:1}}>
+        <CompleteButton text={closeButton} dialogId={popupId} onSuccess={() => destroyDrawLayer(plotId)} />
+        <HelpIcon helpId={helpId}/>
+    </Stack>
     );
 
 ImageAreaStatsClose.propTypes={

@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {Box} from '@mui/joy';
 import {isUndefined} from 'lodash';
 import React, {memo, useContext, useEffect, useLayoutEffect, useState} from 'react';
 import PropTypes, {bool} from 'prop-types';
@@ -28,7 +29,8 @@ function makeCtx(groupKey,register,unregister, wrapperRegisteredComponents, regi
     };
 }
 
-export const FieldGroup = memo( ({keepMounted, reducerFunc=undefined, groupKey, keepState=false, children, style, className}) => {
+export const FieldGroup = memo( ({keepMounted, reducerFunc=undefined, groupKey, keepState=false, children,
+                                     sx, style, className}) => {
     const [, setFields]= useState(() => getFieldGroupState(groupKey));
     const [registeredComponents, setRegisteredComponents]= useState({});
     const {
@@ -84,9 +86,9 @@ export const FieldGroup = memo( ({keepMounted, reducerFunc=undefined, groupKey, 
 
     return (
         <FieldGroupCtx.Provider value={ctx}>
-            <div className={className} style={style} groupkey={groupKey}>
+            <Box className={className} sx={sx} style={style} groupkey={groupKey}>
                 {children}
-            </div>
+            </Box>
         </FieldGroupCtx.Provider>
     );
 });
@@ -97,6 +99,7 @@ FieldGroup.propTypes= {
     reducerFunc: PropTypes.func,
     keepState : PropTypes.bool,
     style : PropTypes.object,
+    sx : PropTypes.object,
     keepMounted: PropTypes.bool,
     className: PropTypes.string
 };

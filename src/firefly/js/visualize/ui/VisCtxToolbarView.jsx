@@ -310,7 +310,7 @@ export const VisCtxToolbarView= memo((props) => {
    const makeTbSX= (theme) => ({
        backgroundColor: ctxToolbarBG(theme,94),
        width: '100%',
-       height: '2em',
+       height: '2.2rem',
        position: 'relative',
        whiteSpace: 'nowrap',
        overflow: 'hidden',

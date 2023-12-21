@@ -196,6 +196,7 @@ DropDownToolbarButton.propTypes= {
     icon : PropTypes.string,
     text : PropTypes.string,
     tip : PropTypes.string,
+    color : PropTypes.string,
     direction : PropTypes.string,
     badgeCount : PropTypes.number,
     enabled : PropTypes.bool,

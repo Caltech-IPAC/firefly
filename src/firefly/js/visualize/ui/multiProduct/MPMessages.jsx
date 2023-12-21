@@ -1,4 +1,4 @@
-import {Typography} from '@mui/joy';
+import {Box, Stack, Typography} from '@mui/joy';
 import React from 'react';
 import {isArray} from 'lodash';
 import {dispatchActivateMenuItem, dispatchSetSearchParams, doDownload} from '../../../metaConvert/DataProductsCntlr.js';
@@ -29,44 +29,43 @@ export function ProductMessage({menu, singleDownload, makeDropDown, isWorkingSta
     if (singleDownload && !url) actionUrl = isArray(menu) && menu.length && menu[0].url;
 
     return (
-        <div style={{display: 'flex', flexDirection: 'column', background: '#c8c8c8', width: '100%', height: '100%'}}>
-            <div style={{height: menu ? 30 : 0}}>
+        <Stack {...{width: '100%', height: '100%'}}>
+            <Box style={{height: menu ? 30 : 0}}>
                 {makeDropDown && makeDropDown?.()}
-            </div>
-            <div style={{display: 'flex', flexDirection: 'row', alignSelf: 'center', paddingTop: 40}}>
+            </Box>
+            <Stack {...{direction: 'row', alignSelf: 'center', pt: 5}}>
                 {isWorkingState ?
-                    <div style={{width: 20, height: 20, marginRight: 10}} className='loading-animation'/> : ''}
-                <div style={{alignSelf: 'center', fontSize: '14pt'}}>{message}</div>
-            </div>
+                    <Box sx={{width: 20, height: 20, mr: 1}} className='loading-animation'/> : ''}
+                <Typography level='title-lg' sx={{alignSelf: 'center', textAlign:'center'}}>{message}</Typography>
+            </Stack>
             {
-                singleDownload && <CompleteButton style={{alignSelf: 'center', paddingTop: 25}} text={dMsg}
+                singleDownload && <CompleteButton sx={{alignSelf: 'center', pt: 3}} text={dMsg}
                                                   onSuccess={() => doDownload(actionUrl)}/>
             }
-        </div>
+        </Stack>
     );
 }
 
 export function ComplexMessage({ menu, makeDropDown, message, resetMenuKey, dpId, activeMenuLookupKey, doResetButton,
                                    detailMsgAry = [], badUrl }) {
     return (
-        <div style={{display: 'flex', flexDirection: 'column', background: '#c8c8c8', width: '100%', height: '100%'}}>
-            <div style={{height: menu ? 30 : 0}}>
+        <Stack {...{width: '100%', height: '100%'}}>
+            <Box style={{height: menu ? 30 : 0}}>
                 {makeDropDown && makeDropDown?.()}
-            </div>
-            <div style={{display: 'flex', flexDirection: 'column', alignSelf: 'center', paddingTop: 40}}>
+            </Box>
+            <Stack {...{alignSelf: 'center', pt: 5}}>
                 <Typography {...{level:'body-sm', mb:1, alignSelf:'center'}}>{message}</Typography>
-                {detailMsgAry.map((m) => (
-                    <div style={{alignSelf: 'center', fontSize: '12pt', paddingTop: 5}} key={m}>{m}</div>))}
+                {detailMsgAry.map((m) => (<Typography sx={{alignSelf: 'center', pt:.5}} key={m}>{m}</Typography>))}
                 {badUrl &&
-                    <div style={{alignSelf: 'left', fontSize: '12pt', paddingTop: 5, maxWidth: 200}}>
+                    <Typography style={{alignSelf: 'left', fontSize: '12pt', paddingTop: 5, maxWidth: 200}} component='div'>
                         <span style={{whiteSpace: 'nowrap', paddingRight: 5}}>Failed URL:</span>
                         <a href={badUrl} target={'badURLTarget'}>
-                            <span style={{fontSize: '10pt'}}> {badUrl} </span>
+                            <Typography level='body-xs'>{badUrl}</Typography>
                         </a>
-                    </div>
+                    </Typography>
                 }
-            </div>
-            {doResetButton && <CompleteButton style={{alignSelf: 'center', paddingTop: 25}} text={'Reset'}
+            </Stack>
+            {doResetButton && <CompleteButton style={{alignSelf: 'center', paddingTop: 25}} text='Reset'
                                               onSuccess={() => {
                                                   dispatchSetSearchParams({
                                                       dpId,
@@ -76,6 +75,6 @@ export function ComplexMessage({ menu, makeDropDown, message, resetMenuKey, dpId
                                                   });
                                                   dispatchActivateMenuItem(dpId, resetMenuKey);
                                               }}/>}
-        </div>
+        </Stack>
     );
 }

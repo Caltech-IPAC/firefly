@@ -84,7 +84,7 @@ export const PlotTitle= memo(({plotView:pv, brief, working}) => {
             <Tooltip title={tooltip} placement='right-end'>
                 <Stack direction='row' alignItems='center' sx={plotTitleInlineTitleContainer}>
                     <Typography {...{level:'body-sm', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '35ch'}}>{plot.title}</Typography>
-                    <Typography {...{level:'body-sm', color:'warning', pl:.75, overflow: 'hidden'}}>
+                    <Typography {...{level:'body-sm', color:'warning', pl:.75, overflow: 'hidden', component:'div'}}>
                         <div dangerouslySetInnerHTML={{__html:zlStr}}/>
                     </Typography>
                     {Boolean(!brief && rotString) && <Typography level='body-sm' color='warning'>{`, ${rotString}`}</Typography> }

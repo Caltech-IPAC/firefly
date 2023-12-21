@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Badge, Button, Checkbox, Divider, IconButton, Stack, Tooltip} from '@mui/joy';
+import {Badge, Button, Checkbox, Divider, IconButton, Stack, Tooltip, useColorScheme} from '@mui/joy';
 import React, {memo, useRef, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
@@ -48,13 +48,13 @@ function getShortCutInfo(shortcutKey) {
 export const ToolbarButton = memo((props) => {
     const {
         icon,text='',tip='',badgeCount=0,enabled=true, visible=true,
-        imageStyle={}, shortcutKey='', color='neutral',
+        imageStyle={}, shortcutKey='', color='neutral', variant='plain',
         disableHiding, active, sx,
         useDropDownIndicator= false, hasCheckBox=false, checkBoxOn=false,
         dropDownCB, onClick} = props;
 
     const {current:divElementRef}= useRef({divElement:undefined});
-
+    const doInvert= useColorScheme()?.mode==='dark';
 
     const handleClick= () => {
         onClick?.(divElementRef.divElement);
@@ -80,27 +80,29 @@ export const ToolbarButton = memo((props) => {
     const image= icon ? <img src={icon} style={imageStyle} className={allowInput} /> : undefined;
     const dropDownIndicator= useDropDownIndicator ? <img src={DROP_DOWN_ICON}/> : undefined;
 
+
     const b=  (
         <Tooltip title={tip} sx={sx}>
-            <Stack direction='row' alignItems='center' ref={setupRef}>
+            <Stack {...{direction:'row', alignItems:'center', ref:setupRef,
+                   sx:doInvert ? {'img':{filter : 'invert(1)'}} : {} }}>
                 {hasCheckBox && <Checkbox {...{variant:'plain', checked:checkBoxOn, onClick:handleClick}}/> }
                 {(icon && !text) ?
                     (<IconButton {...{
                         sx: (theme) => (
                              {minHeight:'unset', minWidth:'unset', p:.5, backgroundColor:'transparent',
-                             ...makeBorder(active,theme)
+                             ...makeBorder(active,theme,color)
                              }),
                         className:'ff-toolbar-iconbutton ' + allowInput,
                         variant:'soft', color:'neutral' ,
                         'aria-label':tip, onClick:handleClick, disabled:!enabled}}>
                         {image}
                     </IconButton>) :
-                    <Button {...{color, variant:'plain',
+                    <Button {...{color, variant,
                         'aria-label':tip, disabled:!enabled, onClick:handleClick,
                         className:'ff-toolbar-button ' + allowInput,
                         startDecorator: image,
                         endDecorator: dropDownIndicator,
-                        sx:(theme) => ({whiteSpace:'nowrap', py:.4, minHeight: 'unset', ...makeBorder(active,theme)}),
+                        sx:(theme) => ({whiteSpace:'nowrap', py:.4, minHeight: 'unset', ...makeBorder(active,theme,color)}),
                     }}>
                         {makeTextLabel(text,shortcutKey)}
                     </Button>
@@ -134,13 +136,14 @@ ToolbarButton.propTypes= {
 };
 
 
-function makeBorder(active, theme) {
-    const color= active ? theme.vars.palette.warning.softActiveBg : 'transparent';
+function makeBorder(active, theme,color) {
+    // const color= active ? theme.vars.palette.warning.softActiveBg : 'transparent';
+    const borderC= active ? theme.vars.palette[color]?.softActiveBg : 'transparent';
     // const color= active ? theme.vars.palette.primary.softActiveColor: 'transparent';
     return {
-        borderTop: `1px solid ${color}`,
-        borderLeft: `1px solid ${color}`,
-        borderRight: `1px solid ${color}`,
+        borderTop: `1px solid ${borderC}`,
+        borderLeft: `1px solid ${borderC}`,
+        borderRight: `1px solid ${borderC}`,
     };
 }
 

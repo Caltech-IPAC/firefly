@@ -1,10 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {has, isNumber, isString, isObject, isNaN} from 'lodash';
-import {Slider,Box,Stack,Typography} from '@mui/joy';
+import {Slider, Box, Stack, Typography, Tooltip} from '@mui/joy';
 
-export function RangeSliderView({min=0, max=100, minStop, maxStop, className, marks, step=1, vertical=false,
-                                    defaultValue=0, slideValue, handle, style={}, sx={}, sliderStyle={},
+export function RangeSliderView({min=0, max=100, minStop, maxStop, marks, step=1, vertical=false,
+                                    defaultValue=0, slideValue, sx={},
                                     label='', labelWidth, tooltip, decimalDig=3, handleChange}){
     const toRangeBound = (val) => {
         if (minStop && val < minStop ) {
@@ -16,14 +16,15 @@ export function RangeSliderView({min=0, max=100, minStop, maxStop, className, ma
         return val;
     };
 
-    const onSliderChange = (event, val) => {
+    const onSliderChange = (ev) => {
+        const val= ev?.target.value;
         const numDecimalDigits = (decimalDig < 0) ? 0 : (decimalDig > 20) ? 20 : decimalDig;
         handleChange?.(toRangeBound(val).toFixed(numDecimalDigits));
     };
 
     return (
-        <Box {...{sx}} >
-            <Stack direction='row' p={0} spacing={0} {...{style: sliderStyle}}>
+        <Tooltip title={tooltip}>
+            <Stack direction='column' p={0} spacing={0} sx={sx}>
                 <Typography level='body-xs' width={labelWidth} mb='0'>{label}</Typography>
                 <Slider
                     size={'sm'}
@@ -37,7 +38,7 @@ export function RangeSliderView({min=0, max=100, minStop, maxStop, className, ma
                     value={toRangeBound(parseFloat(slideValue))}
                     onChange={onSliderChange} />
             </Stack>
-        </Box>
+        </Tooltip>
     );
 }
 
@@ -56,7 +57,6 @@ RangeSliderView.propTypes = {
     handle: PropTypes.element,
     style: PropTypes.object,
     sx: PropTypes.object,
-    sliderStyle: PropTypes.object,
     label: PropTypes.string,
     labelWidth: PropTypes.number,
     tooltip:  PropTypes.string,

@@ -166,7 +166,7 @@ export function BadgeLabel({labelStr}) {
     const badgeCnt= useStoreConnector(() => getViewerItemIds(getMultiViewRoot(),PINNED_VIEWER_ID)?.length??0);
     return badgeCnt===0 ?  labelStr:
         (
-            <Badge {...{size:'sm', color:'warning', badgeContent:badgeCnt,
+            <Badge {...{badgeContent:badgeCnt,
                 sx:{'.MuiBadge-badge': {top:9, right:6}} }}>
                 <div>
                     <div className='text-ellipsis' style={{marginRight: 17}}>{labelStr}</div>
