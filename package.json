@@ -43,7 +43,9 @@
     "prismjs": "~1.29",
     "blissfuljs": "~1.0",
     "json-bigint": "https://github.com/Caltech-IPAC/json-bigint",
-    "md5": "~2.3.0"
+    "md5": "~2.3.0",
+    "react-slick": "^0.29.0",
+    "slick-carousel": "^1.8.1"
   },
   "devDependencies": {
     "@babel/core": "~7.16",

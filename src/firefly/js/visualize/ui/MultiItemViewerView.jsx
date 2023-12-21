@@ -29,7 +29,7 @@ const flexToolbarStyle= {
 export const MultiItemViewerView=forwardRef( (props, ref) =>  {
 
     const {layoutType, activeItemId,
-        viewerItemIds, forceRowSize, forceColSize, gridDefFunc,
+        viewerItemIds, forceRowSize, forceColSize, makeCustomLayout, gridDefFunc,
         style, insideFlex=false, defaultDecoration=true, sparseGridTitleLocation= 'top',
         makeToolbar, makeItemViewer, makeItemViewerFull, autoRowOriented=true}= props;
     let wrapperStyle;
@@ -42,6 +42,9 @@ export const MultiItemViewerView=forwardRef( (props, ref) =>  {
     let container;
     if (!viewerItemIds.length && !gridDefFunc) {
         container= false;
+    }
+    else if (makeCustomLayout) {  // CUSTOM layout defined by a function
+        container = makeCustomLayout(viewerItemIds, makeItemViewer);
     }
     else if (layoutType==='single' || viewerItemIds.length===1) {  // SINGLE VIEW
         const id= viewerItemIds.includes(activeItemId) ? activeItemId : viewerItemIds[0];
@@ -90,6 +93,7 @@ MultiItemViewerView.propTypes= {
     layoutType : PropTypes.oneOf([GRID,SINGLE]),
     forceRowSize : PropTypes.number,   //optional - force a certain number of rows
     forceColSize : PropTypes.number,  //optional - force a certain number of columns
+    makeCustomLayout : PropTypes.func,  //optional - a function to present the items in a custom layout
     gridDefFunc : PropTypes.func,  // optional - a function to return the grid definition
     gridComponent : PropTypes.object,  // a react element to define the grid - not implemented, just an idea
     insideFlex :  PropTypes.bool,
