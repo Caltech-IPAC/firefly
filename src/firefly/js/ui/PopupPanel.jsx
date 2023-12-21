@@ -133,7 +133,8 @@ function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart
                        ref={(c) => ctxRef.titleBarRef=c}
                        onTouchStart={dialogMoveStart} onTouchMove={dialogMove}
                        onTouchEnd={dialogMoveEnd} onMouseDownCapture={dialogMoveStart}>
-                    <DialogTitle  sx= {{ maxWidth:'35rem', display:'block', textOverflow:'ellipsis',
+                    <DialogTitle  sx= {{ display:'block', textOverflow:'ellipsis',
+                        width:10, flex:'1 1 auto',
                         whiteSpace:'nowrap', overflow:'hidden'}} >
                         {title}
                     </DialogTitle>

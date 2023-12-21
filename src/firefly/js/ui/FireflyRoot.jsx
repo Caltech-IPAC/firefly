@@ -24,7 +24,7 @@ export function FireflyRoot({children}) {
 
 function App({children}) { // provide a way to experiment with light and dark theme
     const { mode, setMode } = useColorScheme();
-    // setMode('dark');
+   // setMode('dark');
     setMode('light');
     return ( children );
 }

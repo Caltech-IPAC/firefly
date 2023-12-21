@@ -126,12 +126,14 @@ export function detachSelectAreaRelatedLayers(pv, allPlots = true, selectId = Se
 
 const image24x24={width:24, height:24};
 
-export const SelectAreaButton= ({pv:plotView,tip,visible=true,modalEndInfo,imageStyle= image24x24, style}) => (
-    <SimpleLayerOnOffButton {...{plotView, typeId:SelectArea.TYPE_ID, style,
+export const SelectAreaButton= ({pv:plotView,tip,visible=true,modalEndInfo,imageStyle= image24x24, style, text, color, variant}) => (
+    <SimpleLayerOnOffButton {...{plotView, typeId:SelectArea.TYPE_ID, style, text, color, variant,
         tip, iconOn:getSelectedAreaIcon(), iconOff:getSelectedAreaIcon(false),
         visible, imageStyle, modalEndInfo, modalLayer:true,
         dropDown: <SelectAreaDropDownView {...{plotView, modalEndInfo}} />}} />
 );
+
+
 
 export function SelectAreaDropDownView({plotView:pv, allPlots, modalEndInfo}) {
     const enabled = !!pv;

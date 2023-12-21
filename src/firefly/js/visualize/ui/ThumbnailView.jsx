@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box} from '@mui/joy';
 import React, {memo, useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 import {isPlotNorth,getCenterPtOfPlot} from '../VisUtil.js';
@@ -57,12 +58,12 @@ export const ThumbnailView = memo(({plotView:pv, defSize=70, loadedSize= 70}) =>
     const onImageLoad= (e) => e && (e.onload= () => setDim( {imWidth: e.width, imHeight:e.height }));
 
     return (
-        <div style={s}>
+        <Box style={s}>
             {makeImageTag(pv, onImageLoad, size)}
             <DrawerComponent width={width} height={height} getDrawLayer={() => dataRef.current.drawData}
                              setSimpleUpdateNotify={setSimpleUpdateNotify} />
             <EventLayer width={width} height={height} transform={affTrans} eventCallback={eventCallBack} />
-        </div>
+        </Box>
     );
 });
 
