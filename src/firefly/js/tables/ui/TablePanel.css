@@ -335,6 +335,12 @@ Overriding default fixed-table css
     font-weight: unset;
 }
 
+.fixedDataTableLayout_main {
+    border-bottom: none;
+    border-left: none;
+    border-right: none;
+}
+
 .fixedDataTableRowLayout_main.highlighted div {
     background-color: #ffe8bf !important; /* #d3fad1 */
 }

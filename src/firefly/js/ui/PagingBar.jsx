@@ -24,12 +24,12 @@ export function PagingBar(props) {
 
     const pagestr = (totalRows === 0) ? '' :
                     `(${(startIdx+1).toLocaleString()} - ${endIdx.toLocaleString()} of ${totalRows?.toLocaleString()??''})`;
-    const showingLabel = (  <Typography level='body-sm' noWrap>{pagestr}</Typography> );
+    const showingLabel = (  <Typography level='body-sm' noWrap lineHeight={2}>{pagestr}</Typography> );
     if (showAll) {
         return showingLabel;
     } else {
         return (
-            <Typography display='flex' alignItems='center' direction='row' level='body-sm' noWrap component='div'>
+            <Typography component='div' display='flex' alignItems='center' direction='row' level='body-sm' noWrap>
                 <div onClick={() => callbacks.onGotoPage(1)} className='PagingBar__button first' title='First Page'/>
                 <div onClick={() => callbacks.onGotoPage(currentPage - 1)} className='PagingBar__button previous' title='Previous Page'/>
                 <Stack direction='row' alignItems='center' spacing={1/2}>
