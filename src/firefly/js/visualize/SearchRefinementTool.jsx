@@ -1,3 +1,4 @@
+import {Box, Stack, Typography} from '@mui/joy';
 import React, {useEffect} from 'react';
 import {DEFAULT_VERB, getSearchTypeDesc, getValidSize, searchMatches} from '../core/ClickToAction.js';
 import { dispatchHideDialog, dispatchShowDialog, } from '../core/ComponentCntlr.js';
@@ -135,37 +136,33 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
 
     return (
         <ConnectionCtx.Provider value={{controlConnected:true, setControlConnected: () => undefined}}>
-            <FieldGroup groupKey={GROUP_KEY} style={{display:'flex', flexDirection:'column', padding: '10px 5px 5px 5px'}}>
-                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 480}}>
-                    <div style={{fontSize:'9pt', paddingRight: 10}}>
-                        {<HelpLines {...{whichOverlay, usingToggle}}/>}
-                    </div>
+            <FieldGroup groupKey={GROUP_KEY} style={{display:'flex', flexDirection:'column'}}>
+                <Stack {...{alignItems: 'center', minWidth: 480}}>
+                    <HelpLines {...{whichOverlay, usingToggle}}/>
                     {usingToggle &&
-                        <div style={{display:'flex', justifyContent:'space-around', alignItems:'center'}}>
+                        <Stack {...{mb:1, direction:'column', justifyContent:'space-around', alignItems:'center'}}>
                             <RadioGroupInputField {...{
                                 inline: true, fieldKey: CONE_AREA_KEY, wrapperStyle: {padding: '10px 0 10px 0'},
                                 tooltip: 'Chose type of search',
+                                orientation:'horizontal',
                                 initialState: {value: cone ? CONE_CHOICE_KEY : POLY_CHOICE_KEY},
                                 options: CONE_AREA_OPTIONS
                             }} />
-                        </div>
+                        </Stack>
                     }
                     {whichOverlay === CONE_CHOICE_KEY &&
-                        <div style={{display:'flex', flexDirection:'column'}}>
+                        <Stack>
                             <TargetPanel labelWidth={40} label='Center'
                                          feedbackStyle={{height:35}}
                                          defaultToActiveTarget={false}
                                          labelStyle={{paddingRight:0, textAlign:'right'}}
                                          inputStyle={{width:250}}/>
                             {hasRadius && <SizeInputFields {...{
-                                fieldKey:SIZE_KEY, showFeedback:true, labelWidth:40, nullAllowed:false,
-                                label: 'Size',
-                                feedbackStyle:{textAlign:'center', marginLeft:0},
-                                labelStyle:{textAlign:'right', paddingRight:0},
-                                inputStyle:{width:250},
+                                fieldKey:SIZE_KEY, showFeedback:true, nullAllowed:false,
+                                label: 'Size', sx:{mt:2},
                                 initialState:{ unit: 'arcsec', value: searchAreaInDeg+'', min, max }
                             }} />}
-                        </div> }
+                        </Stack> }
                     {whichOverlay === POLY_CHOICE_KEY &&
                         <InputAreaFieldConnected {...{
                             fieldKey:POLYGON_KEY, label:'Search Polygon',
@@ -175,18 +172,15 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
                             style:{overflow:'auto', height:55, maxHeight:200, minWidth: 100, width:280, maxWidth:360,},
                             initialState:{value:convertWpAryToStr(polygonValue,primePlot(pv))},
                         }} /> }
-                </div>
-                <div style={{display:'flex', justifyContent:'space-between', margin: '20px 0 3px 10px', alignItems:'center'}}>
+                </Stack>
+                <Stack {...{direction:'row', justifyContent:'space-between', mt:3, mb:1, ml:2, alignItems:'center'}}>
                     <ActionsDrop {...{searchActions, whichOverlay, polyStr:getPoly()??polyStr,
                         size:getSize()??searchAreaInDeg, cenWpt, op:getConeAreaOp()}}/>
-                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                            <div style={{fontStyle:'italic'}}>Select Again:</div>
-                            <SelectAreaButton {...{pv,modalEndInfo,tip:'Reselect an area for search'}}/>
-                        </div>
+                    <Stack {...{direction:'row', justifyContent:'space-between', alignItems:'center'}}>
+                        <SelectAreaButton {...{pv,modalEndInfo,tip:'Reselect an area for search',text:'Select Again', variant:'soft'}}/>
                         <HelpIcon helpId={'SearchRefinementTool'} style={{marginLeft:15}}/>
-                    </div>
-                </div>
+                    </Stack>
+                </Stack>
             </FieldGroup>
         </ConnectionCtx.Provider>
     );
@@ -198,6 +192,7 @@ const ActionsDrop= ({searchActions, polyStr, size, cenWpt, whichOverlay, op}) =>
     const searchText=  (allDefault) ? 'Search ' + post : 'Actions for ' + post;
     return (
         <DropDownToolbarButton text={searchText} tip='Search this area' disableHiding={true} dropDownKey={DD_KEY}
+                               color='primary' variant='solid'
                                useDropDownIndicator={true}
                                style={{
                                    alignSelf: 'flex-start',
@@ -255,19 +250,17 @@ function HelpLines({usingToggle, whichOverlay}) {
         'Or switch cone searches';
 
     return (
-        <div style={{margin:'0 0 5px 5px', fontSize:'smaller'}}>
-            <div>
-                <div style={{fontStyle:'italic', marginBottom:5}}>
-                    Try the following:
-                </div>
-                <div style={{marginLeft: 10}}>
-                    <li>Click on the image to choose a new search center</li>
-                    <li>{entryMsg}</li>
-                    <li>{reSelectMsg}</li>
-                    {usingToggle && <li>{otherSearchMsg}</li>}
-                    <li>Then initiate the search of your choice from the menu below.</li>
-                </div>
-            </div>
-        </div>);
+        <Box {...{mb:2}}>
+            <Typography level='title-sm' sx={{mb:.5}}>
+                Try the following:
+            </Typography>
+            <Typography level='body-sm' {...{ml: 1}}>
+                <li>Click on the image to choose a new search center</li>
+                <li>{entryMsg}</li>
+                <li>{reSelectMsg}</li>
+                {usingToggle && <li>{otherSearchMsg}</li>}
+                <li>Then initiate the search of your choice from the menu below.</li>
+            </Typography>
+        </Box>);
 }
 

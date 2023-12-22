@@ -171,7 +171,6 @@ SizeInputFieldView.propTypes = {
     inputStyle: PropTypes.object,
     style: PropTypes.object,  // replaces wrapper style
     connectedMarker: bool,
-    feedbackStyle: PropTypes.object
 };
 
 SizeInputFieldView.defaultProps = {

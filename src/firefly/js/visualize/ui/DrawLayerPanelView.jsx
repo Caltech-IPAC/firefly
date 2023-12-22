@@ -213,7 +213,7 @@ function modifyColor(dl,plotId) {
             const rgbStr= `rgba(${r},${g},${b},${a})`;
             dl = getDrawLayersByDisplayGroup(getDlAry(), dl.displayGroupId);
             dispatchChangeDrawingDef(dl.displayGroupId, Object.assign({},dl.drawingDef,{color:rgbStr}),plotId, dl.titleMatching);
-        }, dl.drawLayerId);
+        }, '');
 }
 
 const hexC= (v) =>  padStart(v.toString(16),2,'0');

@@ -232,54 +232,54 @@ function getFieldInit() {
             value: '0',
             validator: Validate.floatRange.bind(null, 0, 100, 1, 'Lower range'),
             tooltip: 'Lower range of the Stretch',
-            label: 'Lower range:'
+            label: 'Lower range'
         },
         upperRange: {
             fieldKey: 'upperRange',
             value: '99',
             validator: Validate.floatRange.bind(null, 0, 100, 1, 'Upper range'),
             tooltip: 'Upper range of the Stretch',
-            label: 'Upper range:'
+            label: 'Upper range'
         },
         zscaleContrast: {
             fieldKey: 'zscaleContrast',
             value: '25',
             validator: Validate.intRange.bind(null, 1, 100, 'Contrast (%)'),
             tooltip: 'Zscale algorithm contrast parameter',
-            label: 'Contrast (%):'
+            label: 'Contrast (%)'
         },
         zscaleSamples: {
             fieldKey: 'zscaleSamples',
             value: '600',
             validator: Validate.intRange.bind(null, 1, 1000, 'Number of Samples'),
             tooltip: 'Number of Samples',
-            label: 'Number of Samples:'
+            label: 'Number of Samples'
         },
         zscaleSamplesPerLine: {
             fieldKey: 'zscaleSamplesPerLine',
             value: '120',
             validator: Validate.intRange.bind(null, 1, 500, 'Samples per line'),
             tooltip: 'Number of Samples per line',
-            label: 'Samples per line:'
+            label: 'Samples per line'
         },
 
         asinhQ: {
             fieldKey: 'asinhQ',
             validator: Validate.floatRange.bind(null, 0, Number.MAX_VALUE, 4, 'Q'),
             tooltip: 'The asinh softening parameter. Small Q values result in a linear stretch. Large values make a log stretch.',
-            label: 'Q:'
+            label: 'Q'
         },
         gamma: {
             fieldKey: 'gamma',
             value: '2.0',
             validator: Validate.floatRange.bind(null, 0, 100, 4, 'Gamma'),
             tooltip: 'The Gamma value of the Power Law Gamma Stretch',
-            label: 'Gamma:'
+            label: 'Gamma'
         },
 
         algorithm: {
             tooltip: 'Choose Stretch algorithm',
-            label: 'Stretch Type: ',
+            label: 'Stretch Type:',
             value: STRETCH_LINEAR
         },
         lowerWhich: {

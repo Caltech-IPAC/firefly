@@ -8,7 +8,8 @@ export function getTheme() {
                 defaultProps: {
                     variant:'soft' ,
                     // variant:'outlined' ,
-                    color:'neutral',
+                    // color:'neutral',
+                    color:'primary',
                     // color:'warning',
                     size: 'md'
                 }
