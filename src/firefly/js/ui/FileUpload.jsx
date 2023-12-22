@@ -185,8 +185,8 @@ function makeDoUpload(file, type, isFromURL, fileAnalysis) {
     return () => {
         return doUpload(file, fileAnalysis, {}).then(({status, message, cacheKey, fileFormat, analysisResult}) => {
             let valid = status === '200';
-            if (valid) {        // json file is not supported currently
-                if (!isNil(fileFormat)) {
+            if (valid) {        // json file is not supported currently (among many others)
+                if (!isNil(fileFormat)) { // TODO: doUpload is not returning fileFormat field (analysisResult JSON string has this field though), has to be refactored
                     if (fileFormat.toLowerCase() === 'json') {
                         valid = false;
                         message = 'json file is not supported';

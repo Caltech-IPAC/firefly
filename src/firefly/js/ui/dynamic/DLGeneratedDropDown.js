@@ -445,7 +445,7 @@ function RootSearchPanel({additionalChildren, submitSearch, setClickFunc, docRow
 
 
 const TabView= ({tabsKey, setSideBarShowing, sideBarShowing, searchObjFds,qAna, docRows, isAllSky, setClickFunc, submitSearch}) => (
-    <FieldGroupTabs style ={{height:'100%', width:'100%'}} initialState={{ value:searchObjFds[0].ID}} fieldKey={tabsKey}>
+    <FieldGroupTabs style ={{height:'100%', width:'100%'}} initialState={{ value:searchObjFds[0]?.ID}} fieldKey={tabsKey}>
         {
             searchObjFds.map((sFds) => {
                 const {fds, idx, ID, desc}= sFds;

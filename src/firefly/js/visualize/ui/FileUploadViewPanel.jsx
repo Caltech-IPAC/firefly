@@ -30,6 +30,7 @@ import {useFieldGroupMetaState, useFieldGroupValue, useStoreConnector} from '../
 import './FileUploadViewPanel.css';
 import {getIntHeader} from '../../metaConvert/PartAnalyzer';
 import {FileAnalysisType} from '../../data/FileAnalysis';
+import {Format} from '../../data/FileAnalysis';
 import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {CompleteButton,NONE} from 'firefly/ui/CompleteButton.jsx';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
@@ -112,14 +113,14 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem}) 
     useEffect(() => {
         dispatchTableAddLocal(summaryModel, undefined, false);
         return (() => {
-            if (!keepState) dispatchTableRemove(summaryTblId);
+            dispatchTableRemove(summaryTblId);
         });
     }, [summaryModel]);
 
     useEffect(() => {
         dispatchTableAddLocal(detailsModel, undefined, false);
         return (() => {
-            if (!keepState) dispatchTableRemove(detailsTblId);
+            dispatchTableRemove(detailsTblId);
         });
     }, [detailsModel]);
 
@@ -299,9 +300,7 @@ function getFirstExtWithData(parts, acceptList, summaryModel) {
 
 function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, message, oldState, acceptList, acceptOneItem) {
     // because this value is stored in different fields, so we have to check on what options were selected to determine the active value
-    const UNKNOWN_FORMAT = 'UNKNOWN';
-
-   let currentReport, currentSummaryModel;
+    let currentReport, currentSummaryModel;
 
     const prevAnalysisResult = oldState?.analysisResult;
     currentReport = oldState?.report;
@@ -315,10 +314,10 @@ function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, me
 
     if (message) {
         return {message, report:undefined, summaryModel:undefined, detailsModel:undefined};
-    } else  if (analysisResult) {
-        if (analysisResult && analysisResult !== prevAnalysisResult) {
+    } else if (analysisResult) {
+        if (analysisResult !== prevAnalysisResult) {
             currentReport = JSON.parse(analysisResult);
-            if (currentReport.fileFormat===UNKNOWN_FORMAT) {
+            if (currentReport.fileFormat === Format.UNKNOWN) {
                 return {message:'Unrecognized file type', report:undefined, summaryModel:undefined, detailsModel:undefined};
             }
 
@@ -334,8 +333,11 @@ function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, me
             }
 
         }
+    } else {
+        return oldState;
     }
-    let detailsModel = getDetailsModel(modelToUseForDetails,currentReport,detailsTblId,UNKNOWN_FORMAT);
+
+    let detailsModel = getDetailsModel(modelToUseForDetails, currentReport, detailsTblId, Format.UNKNOWN);
     if (modelToUseForDetails) {
         const {highlightedRow=0} = modelToUseForDetails;
         currentSummaryModel.highlightedRow = highlightedRow;
@@ -347,15 +349,14 @@ function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, me
 
     const newState= {message, analysisResult, report:currentReport, summaryModel:currentSummaryModel, detailsModel,
                     prevAnalysisResult: oldState?.analysisResult};
-    if (statesEqual(oldState,newState)) {
+    if (statesEqual(oldState, newState)) {
         return oldState;
-    }
-    else {
+    } else {
         // even if we have a new state, test to see if we have to replace the summaryModel.
         return oldState &&
-        summaryModelEqual(newState.summaryModel,oldState.summaryModel) &&
-        oldState.analysisResult!==oldState.analysisResult ?
-            {...newState,summaryModel:oldState.summaryModel} : newState;
+        summaryModelEqual(newState.summaryModel, oldState.summaryModel) &&
+        newState.analysisResult !== oldState.analysisResult ?
+            {...newState, summaryModel:oldState.summaryModel} : newState;
     }
 }
 
