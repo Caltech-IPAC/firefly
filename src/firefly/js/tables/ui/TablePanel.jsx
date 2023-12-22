@@ -3,8 +3,8 @@
  */
 
 import React, {useEffect} from 'react';
-import {Box, Link, Stack, Typography, Sheet} from '@mui/joy';
-import PropTypes from 'prop-types';
+import {Box, Stack, Typography, Sheet, Chip} from '@mui/joy';
+import PropTypes, {object, shape} from 'prop-types';
 import {defer, truncate, get, set} from 'lodash';
 import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
 import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/ActionsDropDownButton.jsx';
@@ -56,8 +56,7 @@ const TT_PROPERTY_SHEET = 'Show details for the selected row';
 
 export const TBL_CLZ_NAME = 'FF-Table';
 
-export function TablePanel(props) {
-    let {tbl_id, tbl_ui_id, tableModel, sx, ...options} = props;
+export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', sx, slotProps, ...options}) {
     tbl_id = tbl_id || tableModel?.tbl_id || uniqueTblId();
     tbl_ui_id = tbl_ui_id || `${tbl_id}-ui`;
 
@@ -94,16 +93,16 @@ export function TablePanel(props) {
     if ([TBL_STATE.ERROR,TBL_STATE.LOADING].includes(tstate))  return <NotReady {...{showTitle, tbl_id, title, removable, backgroundable, error}}/>;
 
     return (
-        <Box sx={sx} position='relative' width={1} height={1}>
+        <Sheet {...{variant, sx:{boxSizing: 'border-box', position:'relative', width:1, height:1, ...sx}, ...slotProps?.tablePanel}}>
             <Stack height={1}>
-                {showMetaInfo && <MetaInfo tbl_id={tbl_id} /> }
+                {showMetaInfo && <MetaInfo tbl_id={tbl_id} {...slotProps?.meta}/> }
                 <Stack className={TBL_CLZ_NAME} flexGrow={1}
                        onClick={stopPropagation}
                        onTouchStart={stopPropagation}
                        onMouseDown={stopPropagation}
                 >
-                    <ToolBar {...{tbl_id, tbl_ui_id, connector, tblState}}/>
-                    <Box flexGrow={1}>
+                    <ToolBar {...{tbl_id, tbl_ui_id, connector, tblState, slotProps}}/>
+                    <Box flexGrow={1} {...slotProps?.table}>
                         <BasicTableView
                             callbacks={connector}
                             { ...{columns, data, hlRowIdx, rowHeight, rowHeightGetter, selectable, showUnits,
@@ -114,7 +113,7 @@ export function TablePanel(props) {
                     </Box>
                 </Stack>
             </Stack>
-        </Box>
+        </Sheet>
     );
 }
 
@@ -199,7 +198,15 @@ TablePanel.propTypes = {
             headRenderer: PropTypes.func
         })
     ),
-    rowHeightGetter: PropTypes.func
+    rowHeightGetter: PropTypes.func,
+    sx: PropTypes.object,
+    slotProps: shape({
+        tablePanel: object,
+        meta: object,
+        toolbar: object,
+        table: object
+    })
+
 };
 
 TablePanel.defaultProps = {
@@ -223,7 +230,7 @@ TablePanel.defaultProps = {
     border: true,
 };
 
-function ToolBar({tbl_id, tbl_ui_id, connector, tblState}) {
+function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
 
     const uiState = useStoreConnector(() => getTableUiById(tbl_ui_id) || {columns:[]}, [tbl_ui_id]);
     const searchActions= getSearchActions();
@@ -276,7 +283,7 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState}) {
     if (!showToolbar) return null;
 
     return (
-        <Sheet component={Stack} variant='soft' className='FF-Table-Toolbar' direction='row' justifyContent='space-between' width={1}>
+        <Sheet component={Stack} variant='soft' className='FF-Table-Toolbar' direction='row' justifyContent='space-between' width={1} {...slotProps?.toolbar}>
             <LeftToolBar {...{tbl_id, title, removable, showTitle, leftButtons}}/>
             {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:connector}} /> }
             <Stack direction='row' alignItems='center'>
@@ -355,14 +362,15 @@ function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
 
 function Title({title, removable, tbl_id}) {
     return (
-        <Sheet component={Stack} direction='row' alignSelf='start' sx={{ml:1/4}}>
+        <Stack direction='row' alignSelf='start' sx={{ml:1/4}}>
             <Typography level='body-sm' noWrap title={title}>{truncate(title)}</Typography>
             {removable &&
-            <Link className='btn-close'
+            <Chip variant='soft'
                  title='Remove Tab'
-                 onClick={() => dispatchTableRemove(tbl_id)}/>
+                  onClick={() => dispatchTableRemove(tbl_id)}
+            >x</Chip>
             }
-        </Sheet>
+        </Stack>
     );
 }
 
