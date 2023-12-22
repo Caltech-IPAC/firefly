@@ -32,6 +32,7 @@ import {
 import {SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 import {PREF_KEY} from 'firefly/tables/TablePref.js';
+import {Box} from '@mui/joy';
 
 
 
@@ -168,7 +169,7 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
     };
 
     return (
-        <div style={{width: '100%'}}>
+        <Box width={1} height={1}>
             <ConstraintContext.Provider value={ctx}>
                 <FormPanel  inputStyle = {{display: 'flex', flexDirection: 'column', backgroundColor: 'transparent', padding: 'none', border: 'none'}}
                             groupKey={TAP_PANEL_GROUP_KEY}
@@ -186,7 +187,7 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
                         initArgs, selectBy, setSelectBy, serviceUrl, onTapServiceOptionSelect, titleOn, tapOps, obsCoreEnabled}} />
                 </FormPanel>
             </ConstraintContext.Provider>
-        </div>
+        </Box>
     );
 
 }

@@ -68,7 +68,7 @@ export function CoverageViewer({viewerId=DEFAULT_COVERAGE_VIEWER_ID,noCovMessage
 
     if (hasPlots && (tblHasCoverage || forceShow)) {
         return (
-            <Stack {...{direction:'column', width:'100%'}}>
+            <Stack height={1} width={1}>
                 <MultiImageViewer viewerId={viewerId}
                                   insideFlex={true}
                                   canReceiveNewPlots={NewPlotMode.replace_only.key}
