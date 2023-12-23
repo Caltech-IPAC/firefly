@@ -1,10 +1,6 @@
 /*right list of table with catalog names to be selected*/
 .catalogtable {
-    /*height: 200px;*/
-    /*width: 375px;*/
     overflow: auto;
-    border: 1px solid rgba(0,0,0,.1);
-    margin-left: 5px;
 }
 
 .marked-text {
@@ -33,14 +29,4 @@
 
 .cell {
     padding: 5px 0 5px 0;
-}
-
-.table-title {
-    margin-left: 30px;
-    padding: 5px 0 5px 1px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    /* max width after '...' appear should be same as the .catalotable:*/
-    max-width: 350px;
-    white-space: nowrap;
 }

@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box} from '@mui/joy';
 import React from 'react';
 import {parseWorldPt} from 'firefly/visualize/Point.js';
 import {ServerParams} from 'firefly/data/ServerParams.js';
@@ -20,13 +21,13 @@ import {showInfoPopup} from 'firefly/ui/PopupUtil.jsx';
 
 
 const FormTemplate= ({children, onSuccess,groupKey, help_id}) => (
-        <div style={{width:'100%'}} >
+        <Box style={{width:'100%'}} >
             <FormPanel width='auto' height='auto' groupKey={groupKey} onSubmit={onSuccess}
                        params={{hideOnInvalid: false}} buttonStyle={{justifyContent: 'left'}}
                        submitBarStyle={{padding: '2px 3px 3px'}} help_id = {help_id} >
                 <FieldGroup groupKey={groupKey} keepState={true}> {children} </FieldGroup>
             </FormPanel>
-        </div>
+        </Box>
     );
 
 

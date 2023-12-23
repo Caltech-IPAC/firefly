@@ -1,3 +1,4 @@
+import {Box} from '@mui/joy';
 import React, {useState} from 'react';
 import {getColumnIdx} from '../../tables/TableUtil.js';
 import {ConnectionCtx} from '../ConnectionCtx.js';
@@ -11,14 +12,14 @@ import {ObjectIDSearch} from 'firefly/ui/tap/ObjectIDSearch';
 
 const TAP_SEARCH_METHODS_GROUP= 'TAP_SEARCH_METHODS_GROUP';
 
-export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serviceUrl,
+export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serviceUrl, sx,
                                        serviceLabel, tableName, capabilities}) => {
 
     const [controlConnected, setControlConnected] = useState(false);
 
     return (
         <ConnectionCtx.Provider value={{controlConnected, setControlConnected}}>
-            <FieldGroup style={{height: '100%', overflow: 'auto'}} groupKey={TAP_SEARCH_METHODS_GROUP} keepState={true}>
+            <FieldGroup sx={{...sx, height: '100%', overflow: 'auto'}} groupKey={TAP_SEARCH_METHODS_GROUP} keepState={true}>
                 <HelperComponents {...{initArgs,cols:getAvailableColumns(columnsModel), tableName,
                     columnsModel,serviceUrl,serviceLabel,obsCoreEnabled,capabilities}}/>
             </FieldGroup>
@@ -26,21 +27,29 @@ export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serv
     );
 };
 
+const CompDivide= () => <Box sx={{my:1}}/>;
+
 function HelperComponents({initArgs, cols, columnsModel, serviceUrl, serviceLabel, obsCoreEnabled, tableName, capabilities}) {
     return obsCoreEnabled ?
         (
             <>
-                <ObsCoreSearch {...{cols, serviceLabel, initArgs}} />
+                <ObsCoreSearch {...{sx:{mt:1}, cols, serviceLabel, initArgs}} />
+                <CompDivide/>
                 <SpatialSearch {...{cols, serviceUrl, serviceLabel, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
+                <CompDivide/>
                 <ExposureDurationSearch {...{initArgs}} />
+                <CompDivide/>
                 <ObsCoreWavelengthSearch {...{initArgs, serviceLabel}} />
+                <CompDivide/>
                 <ObjectIDSearch {...{cols, capabilities, tableName, columnsModel}}/>
             </>
         ) :
         (
             <>
-                <SpatialSearch {...{cols, serviceUrl, serviceLabel, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
+                <SpatialSearch {...{sx:{mt:1}, cols, serviceUrl, serviceLabel, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
+                <CompDivide/>
                 <TemporalSearch {...{cols, columnsModel}} />
+                <CompDivide/>
                 <ObjectIDSearch {...{cols, capabilities, tableName, columnsModel}}/>
             </>
         );

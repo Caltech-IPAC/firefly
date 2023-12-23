@@ -50,7 +50,7 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
 
 
     return (
-        <Sheet variant='soft'>
+        <Sheet>
             <Stack direction='row' alignItems='center' style={{ flexWrap:'nowrap', justifyContent:'space-between', height: 32}}>
                 {makeDropDown && makeDropDown()}
                 {(metaControls&&(showMultiImageOps||canGrid||hasRelatedBands||showThreeColorButton))&& <Divider orientation='vertical' sx={{mx:1}}/> }

@@ -2,13 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-
-import {Stack, Tooltip, Typography} from '@mui/joy';
+import {CircularProgress, Stack, Tooltip, Typography} from '@mui/joy';
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {sprintf} from '../../externalSource/sprintf';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {FULL, HALF, QUARTER} from '../rawData/RawDataCommon.js';
+import {HALF, QUARTER} from '../rawData/RawDataCommon.js';
 import {getDataCompress} from '../rawData/RawDataOps.js';
 import {ctxToolbarBG} from '../ui/VisCtxToolbarView.jsx';
 import {getZoomDesc} from '../ZoomUtil.js';
@@ -16,47 +15,15 @@ import {primePlot} from '../PlotViewUtil.js';
 import {isImage} from '../WebPlot.js';
 import {hasWCSProjection, pvEqualExScroll} from '../PlotViewUtil';
 
-import './PlotTitle.css';
-import LOADING from 'html/images/gxt/loading.gif';
-
-
 export const PlotTitle= memo(({plotView:pv, brief, working}) => {
         const dataCompress= useStoreConnector(() => getDataCompress(primePlot(pv).plotImageId));
         const plot= primePlot(pv);
         const world= hasWCSProjection(plot);
         const zlRet= getZoomDesc(pv);
+        const flipString= pv.flipY ? ', Flip Y' : '';
+        const rotString= getRotateStr(pv);
 
-        let colons= ':';
-        let spaces= '';
-        switch (dataCompress) {
-            case QUARTER:
-                spaces= '&nbsp;&nbsp;';
-                colons= ':::';
-                break;
-            case HALF:
-                spaces= '&nbsp;';
-                colons= '::';
-                break;
-            case FULL:
-                spaces= '';
-                colons= ':';
-                break;
-        }
-        const zlStr= world ? `${spaces}FOV:${zlRet.fovFormatted}` : zlRet.zoomLevelFormatted;
-
-        let rotString;
-        let flipString;
-        if (pv.rotation) {
-            if (pv.plotViewCtx.rotateNorthLock) {
-                rotString= 'North';
-            } else {
-                const angleStr= sprintf('%d',Math.trunc(360-pv.rotation));
-                rotString= angleStr + String.fromCharCode(176);
-            }
-        }
-        if (pv.flipY) {
-            flipString= ', Flip Y';
-        }
+        const zlStr= world ? `${getSpaces(dataCompress)}FOV:${zlRet.fovFormatted}` : zlRet.zoomLevelFormatted;
 
         const tooltip= (
             <Stack direction='column'>
@@ -89,7 +56,7 @@ export const PlotTitle= memo(({plotView:pv, brief, working}) => {
                     </Typography>
                     {Boolean(!brief && rotString) && <Typography level='body-sm' color='warning'>{`, ${rotString}`}</Typography> }
                     {Boolean(!brief && flipString) && <Typography level='body-sm' color='warning'>{flipString}</Typography>}
-                    {working && <img className={'plot-title-working'} src={LOADING}/>}
+                    {working && <WorkingIndicator/> }
                 </Stack>
             </Tooltip>
         );
@@ -98,6 +65,36 @@ export const PlotTitle= memo(({plotView:pv, brief, working}) => {
         pvEqualExScroll(p.plotView, np.plotView),
 );
 
+const WorkingIndicator= () => (
+    <CircularProgress
+        color='success'
+        sx={{
+            ml:1,
+            '--CircularProgress-percent': '50',
+            '--CircularProgress-size': '16px',
+            '--CircularProgress-progressThickness': '2px',
+            '--CircularProgress-circulation': '1.2s linear 0s infinite normal none running',
+        }}
+        style= {{
+            '--CircularProgress-percent': '51', // for some reason joyUI put this in style and this is the only way to override
+        }}
+    />);
+
+function getSpaces(dataCompress) {
+    if (dataCompress===QUARTER) return '&nbsp;&nbsp;';
+    if (dataCompress===HALF) return '&nbsp;';
+    return '';
+}
+
+function getRotateStr(pv) {
+    if (!pv?.rotation) return '';
+    if (pv.plotViewCtx.rotateNorthLock) {
+        return 'North';
+    } else {
+        const angleStr= sprintf('%d',Math.trunc(360-pv.rotation));
+        return angleStr + String.fromCharCode(176);
+    }
+}
 
 const tipEntry= (label,value) => (
     <Stack direction='row' spacing={1}>

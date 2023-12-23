@@ -1,14 +1,13 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Box, Card, DialogContent, DialogTitle, IconButton, Stack, Tooltip} from '@mui/joy';
+import {Box, Card, ChipDelete, DialogContent, DialogTitle, IconButton, Stack, Tooltip} from '@mui/joy';
 import React, {memo, useState, useEffect, useRef} from 'react';
 import Enum from 'enum';
 import {object,element,func,number,string,bool,oneOfType} from 'prop-types';
 import {debounce} from 'lodash';
 import {getDefaultPopupPosition, humanStart, humanMove, humanStop} from './PopupPanelHelper.js';
 
-import DELETE from 'images/blue_delete_10x10.png';
 
 /**
  * @typedef {Object} LayoutType
@@ -139,9 +138,7 @@ function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart
                         {title}
                     </DialogTitle>
                     <Tooltip placement="left" title='Close'>
-                        <IconButton onClick={askParentToClose} title='Close' >
-                            <img src={DELETE}/>
-                        </IconButton>
+                        <ChipDelete onClick={askParentToClose}/>
                     </Tooltip>
                 </Stack>
                 <Box className='ff-dialog-content' sx={{ml:.5}}>

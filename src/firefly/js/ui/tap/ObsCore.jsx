@@ -129,7 +129,7 @@ const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 const fldListAry= ['obsCoreCalibrationLevel', 'obsCoreTypeSelection', 'obsCoreSubType', 'obsCoreInstrumentName', 'obsCoreCollection'];
 
 
-export function ObsCoreSearch({cols, serviceLabel, initArgs={}}) {
+export function ObsCoreSearch({sx, cols, serviceLabel, initArgs={}}) {
     const {urlApi={}}= initArgs;
     const {setConstraintFragment}= useContext(ConstraintContext);
     const tapObsCoreOps= getTapObsCoreOptions(serviceLabel);
@@ -174,7 +174,7 @@ export function ObsCoreSearch({cols, serviceLabel, initArgs={}}) {
 
     return (
         <CollapsibleCheckHeader title={panelTitle} helpID={tapHelpId(panelPrefix)}
-                                message={constraintResult?.simpleError??''}
+                                message={constraintResult?.simpleError??''} sx={sx}
                                 initialStateOpen={true} initialStateChecked={true}>
             <div style={{
                 display: 'flex', flexDirection: 'column', flexWrap: 'no-wrap', width: SpatialWidth, marginTop: 5 }}>
