@@ -1,14 +1,15 @@
-import {Stack, Typography} from '@mui/joy';
+import {Button, Divider, Sheet, Stack, Tooltip, Typography} from '@mui/joy';
+import {truncate} from 'lodash';
 import React, {Fragment, useContext, useEffect, useRef, useState} from 'react';
 import SplitPane from 'react-split-pane';
 import {getColumnValues} from '../../tables/TableUtil.js';
 import {isColumnsMatchingToObsTap} from '../../voAnalyzer/ColumnsModelInfo.js';
 import {FieldGroupCtx} from '../FieldGroup.jsx';
 import {HelpIcon} from '../HelpIcon';
+import {ListBoxInputFieldView} from '../ListBoxInputField.jsx';
 import {SplitContent} from '../panel/DockLayoutPanel';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 import {AdvancedADQL} from './AdvancedADQL.jsx';
-import {NameSelect} from './Select.jsx';
 
 import {TableColumnsConstraints, TableColumnsConstraintsToolbar} from './TableColumnsConstraints.jsx';
 import {
@@ -42,10 +43,6 @@ function matchesObsCoreHeuristic(schemaName, tableName, columnsModel) {
 }
 
 
-
-export const SectionTitle= ({title,helpId,tip}) => (
-    <div className='TapSearch__section--title' title={tip}>{title}<HelpIcon helpId={tapHelpId(helpId)}/></div>);
-
 export function AdqlUI({serviceUrl, servicesShowing, setServicesShowing, setSelectBy}) {
     const [,setCapabilitiesChange] = useState(); // this is just to force a rerender
     const capabilities= getLoadedCapability(serviceUrl);
@@ -54,15 +51,16 @@ export function AdqlUI({serviceUrl, servicesShowing, setServicesShowing, setSele
     }, [serviceUrl]);
 
     return (
-        <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
+        <Sheet className='TapSearch__section' variant='outline' sx={{display:'flex', flexDirection: 'column', flexGrow: 1}}>
             <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', width: '100%', justifyContent:'space-between'}}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center'}}>
-                        <div className='TapSearch__section--title'>
-                            <div style={{width:170}}>Advanced ADQL</div>
-                            <HelpIcon helpId={tapHelpId('adql')}/> </div>
-                        <div style={{color: 'brown', fontSize: 'larger'}}>ADQL edits below will not be reflected in <b>Single Table</b> view</div>
-                    </div>
+                    <Stack {...{ direction: 'row', alignItems: 'center'}}>
+                        <Stack {...{direction:'row', alignItems:'center', mr:4, width:'16rem', justifyContent:'space-between'}}>
+                            <Typography {...{level:'h4', color:'primary'}}>Advanced ADQL</Typography>
+                            <HelpIcon helpId={tapHelpId('adql')}/>
+                        </Stack>
+                        <Typography color='warning' level='body-lg'>ADQL edits below will not be reflected in <b>Single Table</b> view</Typography>
+                    </Stack>
                     <NavButtons {...{setServicesShowing, servicesShowing, setNextPanel:(key) => setSelectBy(key), currentPanel:ADQL}}/>
                 </div>
             </div>
@@ -75,7 +73,7 @@ export function AdqlUI({serviceUrl, servicesShowing, setServicesShowing, setSele
                 </div>
                 : <div className='loading-mask'/>
             }
-        </div>
+        </Sheet>
     );
 }
 
@@ -269,42 +267,64 @@ export function BasicUI(props) {
 
     // need to set initialState on list fields so that the initial value that is not the first index
     // is set correctly after unmount and mount
+    const sOps= schemaOptions??[];
+    const tOps= tableOptions??[];
     return (
         <Fragment>
-            <div className='TapSearch__section' style={{justifyContent:'space-between'}} >
+            <Sheet sx={{display:'flex', flexDirection: 'row', justifyContent:'space-between'}}>
                 <div style={{display:'flex', flexDirection:'row', justifyContent:'space-between', width: '100%'}}>
                     <div style={{display:'flex', alignItems:'center', width:'100%'}}>
-                        <div style={{display:'flex',flexDirection:'column'}}>
-                            <SectionTitle
-                                helpId='selectTable' tip={SCH_TAB_TITLE_TIP}
-                                title={
-                                    <div style={{display:'flex', flexDirection:'column', marginLeft: 0, justifyContent:'center', height:55, width:170, overflow:'hidden'}}>
-                                        <div style={{ textOverflow: 'ellipsis', whiteSpace: 'normal', overflow: 'hidden' }} >
-                                            {`${serviceLabel} Tables`}</div>
-                                    </div>
-                                }/>
+                        <Stack>
+                            <Stack {...{direction:'row', justifyContent:'space-between', width:'16rem', alignItems:'center', mr:1}}>
+                                <Tooltip title={SCH_TAB_TITLE_TIP}>
+                                    <Typography {...{level:'h4', color:'primary', component:'div' }}>
+                                        <Stack {...{justifyContent:'center', height:55, overflow:'hidden'}}>
+                                            <div style={{ textOverflow: 'ellipsis', whiteSpace: 'normal', overflow: 'hidden' }} >
+                                                {`${serviceLabel} Tables`}
+                                            </div>
+                                        </Stack>
+                                    </Typography>
+                                </Tooltip>
+                                <HelpIcon helpId={tapHelpId('selectTable')}/>
+                            </Stack>
                             {hasObsCoreTable && <TableTypeButton {...{
-                                style: {marginTop: -15},
+                                sx: {mr: 1},
                                 lockToObsCore:obsCoreEnabled, setLockToObsCore}}/>}
-                        </div>
+                        </Stack>
                         <div style={{display: 'inline-flex', width: '100%', marginRight: 3, maxWidth: 1000}}>
                             <div style={{flexGrow: 1}} title={SCHEMA_TIP}>
-                                <NameSelect typeDesc={schemaLabel ?? 'Table Collection (Schema)'}
-                                            typeDescPlural={schemaLabel ?? 'Table Collections (Schemas)'}
-                                            options={schemaOptions} value={schemaName} internalHeight={'45px'}
-                                            onSelect={(selectedTapSchema) => {
-                                                setSchemaName(selectedTapSchema);
-                                            }} />
+                                <ListBoxInputFieldView {...{
+                                    sx:{'.MuiSelect-root':{width:'34rem', minHeight:'5rem'}},
+                                    options:sOps, value:schemaName, placeholder:'Loading...',
+                                    startDecorator:!sOps.length ? <Button loading={true}/> : undefined,
+                                    onChange:(ev, selectedTapSchema) => setSchemaName(selectedTapSchema),
+                                    renderValue:
+                                        ({value}) =>
+                                            (<OpRender {...{
+                                                ops: sOps, value,
+                                                label: schemaLabel ?? 'Table Collection (Schema)' }}/>),
+                                    decorator:
+                                        (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
+                                            ops: sOps, value,}}/>),
+                                }} />
                             </div>
                             <div style={{width: 10}}/>
                             <div style={{flexGrow: 1}} title={TABLE_TIP}>
-                                <NameSelect typeDesc='Table' typeDescPlural='Tables' options={tableOptions}
-                                            value={tableName}
-                                            onSelect={(selectedTapTable) => {
-                                                setTableName(selectedTapTable);
-                                                setVal('tableName',selectedTapTable);
-                                            }}
-                                />
+                                <ListBoxInputFieldView {...{
+                                    sx:{'.MuiSelect-root':{width:'34rem', minHeight:'5rem'}},
+                                    options:tOps, value:tableName, placeholder:'Loading...',
+                                    startDecorator:!tOps.length ? <Button loading={true}/> : undefined,
+                                    onChange:(ev, selectedTapTable) => {
+                                        setTableName(selectedTapTable);
+                                        setVal('tableName',selectedTapTable);
+                                    },
+                                    renderValue:
+                                        ({value}) =>
+                                            (<OpRender {...{ ops: tOps, value, label: 'Tables' }}/>),
+                                    decorator:
+                                        (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
+                                            ops: tOps, value}}/>),
+                                }} />
                             </div>
                         </div>
                     </div>
@@ -312,12 +332,14 @@ export function BasicUI(props) {
                         <NavButtons {...{setServicesShowing, servicesShowing, setNextPanel:(key) => setSelectBy(key), currentPanel:SINGLE}}/>
                     </div>
                 </div>
-            </div>
+            </Sheet>
+
+            <Divider orientation='horizontal' sx={{my:1}}/>
 
             <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
                 <div style={{ display: 'inline-flex', width: 'calc(100% - 3px)', justifyContent: 'space-between', margin:'5px 0 -8px 0'}}>
                     <Stack spacing={1} alignItems='center' direction={'row'}>
-                        <Typography {...{level:'title-md', color:'primary'}}>Enter Constraints</Typography>
+                        <Typography {...{level:'h4', color:'primary'}}>Enter Constraints</Typography>
                         <HelpIcon helpId={tapHelpId('constraints')}/>
                     </Stack>
                     <TableColumnsConstraintsToolbar key={tableName} tableName={tableName} columnsModel={columnsModel} />
@@ -327,6 +349,7 @@ export function BasicUI(props) {
                         <SplitContent>
                             {(capabilities && columnsModel) ?
                                 <TableSearchMethods {...{initArgs, serviceUrl, serviceLabel, columnsModel, obsCoreEnabled, capabilities,
+                                    sx:{mt:1},
                                     tableName:getTapBrowserState().tableName}}/>
                                 : <div className='loading-mask'/>
                             }
@@ -351,4 +374,44 @@ export function BasicUI(props) {
             </div>
         </Fragment>
     );
+
+
+
+    function OpRender({ops, value, label='', sx}) {
+        const op = ops.find((t) => t.value === value);
+        if (!op) return 'none';
+        return (
+            <Stack {...{alignItems:'flex-start', sx}}>
+                <Stack {...{direction:'row', spacing:1}}>
+                    {label&&
+                        <Typography level='title-lg'>
+                            {`${label}: `}
+                        </Typography>
+                    }
+                    <Typography level='body-lg' >
+                        {op.value}
+                    </Typography>
+                </Stack>
+                <Typography level='body-sm' component='div' sx={{whiteSpace:'normal', textAlign:'left'}}>
+                    {/*{op.label}*/}
+                    <div dangerouslySetInnerHTML={{__html: `${cleanUp(op.label)}`}}/>
+                </Typography>
+            </Stack>
+        );
+    }
+}
+
+const achoreRE= /<a.*(\/>|<\/a>)/;
+
+function cleanUp(s) {
+    if (!s.includes('<a ')) return truncate(s, {length: 140});
+    const aStr= s.match(achoreRE)?.[0];
+    if (!aStr) return truncate(s, {length: 140});
+    const tmp= document.createElement('div');
+    tmp.innerHTML= aStr;
+    tmp.children[0].target= 'tapOpen';
+    tmp.children[0].title= tmp.children[0].innerHTML;
+    tmp.children[0].innerHTML= truncate(tmp.children[0].innerHTML, {length: 80});
+    return s.replace(achoreRE, tmp.innerHTML);
+
 }

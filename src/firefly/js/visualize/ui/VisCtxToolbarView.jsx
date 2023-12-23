@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Checkbox, Divider, IconButton, Sheet, Stack, Typography} from '@mui/joy';
+import {Checkbox, Divider, IconButton, Stack, Typography} from '@mui/joy';
 import React, {memo,Fragment} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, isString} from 'lodash';

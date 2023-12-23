@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box, Stack} from '@mui/joy';
 /**
  * This Object contains the specifications of the DS9 region
  */
@@ -27,7 +28,7 @@ const relocatableKey = 'relocatableRegion';
 
 
 export function showRegionFileUploadPanel(divElement, popTitle='Load DS9 Region File') {
-    var popup = (<PopupPanel title={popTitle}>
+    const popup = (<PopupPanel title={popTitle}>
                     <RegionUpload />
                 </PopupPanel>);
 
@@ -125,37 +126,37 @@ const RegionUpload= () => {
     const [upload, setUpload]= useState(() => true);
     const [message, setMessage]= useState(() => '');
     return (
-        <div style={{padding: 10, width: 380}}>
+        <Box sx={{p: 1, width: 380}}>
             <FieldGroup groupKey={rgUploadGroupKey}>
-                <FileUpload
-                    wrapperStyle={{margin: '5px 0', width: 180}} innerStyle={{width: 90}}
-                    fieldKey={rgUploadFieldKey}
-                    tooltip='Select a region file to upload' label='Upload File:'
-                    fileNameStyle={{marginLeft: 0, width: 200, height: 16, fontSize: 12, verticalAlign: 'middle'}}
-                />
-                <CheckboxGroupInputField
-                    fieldKey={relocatableKey}
-                    options={[{label: 'treat as relocatable', value: relocatable.origin.key}]}
-                    alignment={'horizontal'}
-                    wrapperStyle={{textAligh: 'left'}}
-                    tooltip='treat the regions movable'
-                    initialState={{ value: '' }}
-                />
+                <Stack spacing={2}>
+                    <FileUpload
+                        wrapperStyle={{margin: '5px 0', width: 180}} innerStyle={{width: 90}}
+                        fieldKey={rgUploadFieldKey}
+                        tooltip='Select a region file to upload' label='Upload File'
+                        fileNameStyle={{marginLeft: 0, width: 200, height: 16, fontSize: 12, verticalAlign: 'middle'}}
+                    />
+                    <CheckboxGroupInputField
+                        fieldKey={relocatableKey}
+                        options={[{label: 'treat as relocatable', value: relocatable.origin.key}]}
+                        tooltip='treat the regions movable'
+                        initialState={{ value: '' }}
+                    />
 
-                <div style={{color: 'red', height: 15}}>
-                    {!upload && ( (message && `*${message}`) || '*region error')}
-                </div>
+                    <div style={{color: 'red', height: 15}}>
+                        {!upload && ( (message && `*${message}`) || '*region error')}
+                    </div>
 
-                <div style={{marginTop: 40}}>
                     <CompleteButton
+                        sx={{mt:5}}
                         dialogId={popupId}
                         groupKey={rgUploadGroupKey}
                         onSuccess={(request) => uploadAndProcessRegion(request, setUpload, setMessage)}
                         closeOnValid={false}
-                        text={'Draw'}/>
-                </div>
+                        text='Draw'/>
+
+                </Stack>
             </FieldGroup>
-        </div>
+        </Box>
     );
 };
 

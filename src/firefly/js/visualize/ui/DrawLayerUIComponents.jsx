@@ -1,5 +1,5 @@
 
-import {Button, Stack} from '@mui/joy';
+import {Button, Chip, Stack} from '@mui/joy';
 import React from 'react';
 import DrawUtil from '../draw/DrawUtil';
 import {SimpleCanvas} from '../draw/SimpleCanvas';
@@ -11,9 +11,9 @@ const symbolSize= 10;
 export function makeColorChange(color, modifyColor, sx= {}) {
     const feedBackStyle= { width:symbolSize, height:symbolSize, backgroundColor: color};
     return (
-            <Button onClick={() => modifyColor()} sx={{px:.5}} startDecorator={<div style={feedBackStyle} />}>
+            <Chip onClick={() => modifyColor()} sx={{px:.5}} startDecorator={<div style={feedBackStyle} />}>
                 Color
-            </Button>
+            </Chip>
     );
 
 }
@@ -31,9 +31,9 @@ export function makeShape(drawingDef, modifyShape) {
         </Stack>);
 
     return (
-        <Button onClick={() => modifyShape()} startDecorator={startDecorator} sx={{px:.5}}>
+        <Chip onClick={() => modifyShape()} startDecorator={startDecorator} sx={{px:.5}}>
             Symbol
-        </Button>
+        </Chip>
     );
 }
 

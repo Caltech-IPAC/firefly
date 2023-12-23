@@ -2,9 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Button, Stack, Typography} from '@mui/joy';
 import React, {PureComponent, memo} from 'react';
 import PropTypes from 'prop-types';
-import {isEmpty, get, merge, isNil, isArray, cloneDeep, has}from 'lodash';
+import {isEmpty, merge, isNil, isArray, cloneDeep, has} from 'lodash';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {fetchTable} from '../../rpc/SearchServicesJson.js';
@@ -103,9 +104,9 @@ export class CatalogConstraintsPanel extends PureComponent {
             const ddShort = makeFormType(showFormType, dd_short);
 
             return (
-                <button style={{padding: '0 5px 0 5px', margin: showFormType ? '0 10px 0 10px' : '0'}}
-                        onClick={ () => this.resetTable(catname,  ddShort, createDDRequest, groupKey, fieldKey)}>Reset
-                </button>
+                <Button onClick={ () => this.resetTable(catname,  ddShort, createDDRequest, groupKey, fieldKey)}>
+                    Reset
+                </Button>
             );
         };
 
@@ -133,22 +134,18 @@ export class CatalogConstraintsPanel extends PureComponent {
         }
 
         return (
-            <div style={{padding:'0 0 5px', height:'100%', display:'flex', flexDirection:'column', alignItems:'stretch'}}>
-                <div
-                    style={{display:'flex', flexDirection:'column',
-                            height:'100%',
-                            margin:'0px 10px 5px 5px', padding:'0px 5px',
-                            border:'1px solid #a3aeb9'}}>
-                    <div style={{display:'flex', flexDirection:'row', padding:'5px 5px 0'}}>
+            <Stack {...{py:.5, height:1, alignItems:'stretch'}}>
+                <Stack {...{ height:1, ml:1, mr:.5, mb:.5, py:.5, spacing:1}}>
+                    <Stack {...{direction:'row', pt:.5, spacing:1}}>
                         {!error && showFormType && formTypeList()}
                         {!error && resetButton()}
-                    </div>
-                    <div style={{flex: '1 1 auto', display:'flex', flexDirection:'column' }}>
+                    </Stack>
+                    <Stack {...{flex: '1 1 auto'}}>
                         <TablePanelConnected {...{tableModel, fieldKey}} />
                         {!error && renderSqlArea()}
-                    </div>
-                </div>
-            </div>
+                    </Stack>
+                </Stack>
+            </Stack>
         );
     }
 
@@ -183,7 +180,7 @@ export class CatalogConstraintsPanel extends PureComponent {
 
         fetchTable(request).then((tableModel) => {
 
-            const urlDef = get(FieldGroupUtils.getGroupFields(groupKey), ['cattable', 'coldef'], 'null');
+            const urlDef = FieldGroupUtils.getGroupFields(groupKey)?.cattable?.coldef ?? 'null';
 
             const tableModelFetched = tableModel;
             tableModelFetched.tbl_id = tblid;
@@ -222,7 +219,7 @@ function updateColumnWidth(anyTableModel, colName, colWidth) {
 
         if (idx >= 0) {
             if (colWidth < 0) {
-                colWidth = get(anyTableModel, 'tableData.data', []).reduce((prev, d) => {
+                colWidth = (anyTableModel?.tableData?.data ?? []).reduce((prev, d) => {
                     if (d[idx].length > prev)  {
                         prev = d[idx].length;
                     }
@@ -245,7 +242,7 @@ function updateColumnWidth(anyTableModel, colName, colWidth) {
  * @param {string} fieldKey field key
  */
 function setRowsChecked(anyTableModel, gkey, fieldKey) {
-    const {selcols = '', errorConstraints} = get(FieldGroupUtils.getGroupFields(gkey), `${fieldKey}.value`, {});
+    const {selcols = '', errorConstraints} = FieldGroupUtils.getGroupFields(gkey)?.[fieldKey]?.value ?? {};
     const filterAry = selcols ? selcols.split(',') : [];
     const selectInfoCls = SelectInfo.newInstance({rowCount: anyTableModel.totalRows});
     let idxColSel = getColumnIdx(anyTableModel, 'sel');
@@ -316,11 +313,11 @@ function addColumnDef(tableModelFetched, urlDef) {
  */
 function addConstraintColumn(tableModelFetched, gkey, fieldKey) {
     const idxSqlCol = sqlConstraintsCol.idx; // after 'name' column
-    const filterStatus = get(FieldGroupUtils.getGroupFields(gkey), [fieldKey, 'value', 'filters'], {});
+    const filterStatus = FieldGroupUtils.getGroupFields(gkey)?.[fieldKey]?.value?.filters ?? {};
 
     tableModelFetched.tableData.columns.splice(idxSqlCol, 0, {...sqlConstraintsCol});
     tableModelFetched.tableData.data.map((e) => {
-        e.splice(idxSqlCol, 0, get(filterStatus, e[0], ''));
+        e.splice(idxSqlCol, 0, filterStatus?.[e[0]] ?? '');
     });
 }
 
@@ -379,8 +376,8 @@ class ConstraintPanel extends PureComponent {
         this.props.onTableChanged();
     }
 
-    componentDidUpdate(prevProps, prevState) {
-        if (get(prevProps, ['tableModel','tbl_id']) !== get(this.props, ['tableModel','tbl_id'])) {
+    componentDidUpdate(prevProps) {
+        if (prevProps?.tableModel?.tbl_id !== this.props?.tableModel?.tbl_id) {
             // make sure field value is consistent with the table
             this.props.onTableChanged();
         }
@@ -390,12 +387,12 @@ class ConstraintPanel extends PureComponent {
         const {tableModel, onTableChanged} = this.props;
         const tbl_ui_id = tableModel.tbl_id + '-ui';
         const tbl = getTblById(tableModel.tbl_id);
-        const {columns, data} = get(tbl, 'tableData', {});
+        const {columns, data} = tbl?.tableData ?? {};
         const selectInfoCls = has(tbl, 'selectInfo') && SelectInfo.newInstance(tbl.selectInfo, 0);
         const totalCol = columns ? (columns.length-1) : 0;
 
         return (
-            <div style={{display:'flex', flex: '1 1 auto', padding: '5px 5px'}}>
+            <div style={{display:'flex', flex: '1 1 auto'}}>
                 <div style={{ display:'flex', flex: '1 1 auto', position: 'relative', width: '100%', height: '100%'}}>
                     <div className='TablePanel' style={{minHeight:180, flex: '1 1 auto'}}>
                         <div className={'TablePanel__wrapper--border'}>
@@ -504,7 +501,7 @@ function handleOnTableChanged(params, fireValueChange) {
     // collect the column name of all selected column
     let allSelected = true;
 
-    let selCols = tbl_data.reduce((prev, d, idx) => {
+    const selCols = tbl_data.reduce((prev, d, idx) => {
             if ((sel_info.selectAll && (!sel_info.exceptions.has(idx))) ||
                 (!sel_info.selectAll && (sel_info.exceptions.has(idx)))) {
                 prev += d[0] + ',';
@@ -523,7 +520,7 @@ function handleOnTableChanged(params, fireValueChange) {
 
 
     // the value of this input field is a string
-    const val = get(params, 'value', '');
+    const val = params?.value ?? '';
     // ++++++++++++++++++++++++++++
     // ++++++ WARNING!!!!!+++++++++
     // ++++++++++++++++++++++++++++
@@ -573,8 +570,8 @@ const inputFieldValidator = (filterString) => {
 function renderSqlArea() {
     //m31, cone search 10', w3snr>7 and (w2mpro-w3mpro)>1.5 on wise source catalog = 361
     return (
-        <div style={{padding: '5px 0 0 5px', display:'flex', flexDirection:'column'}}>
-            <div style={{paddingBottom:'3px'}}>Additional constraints (SQL)</div>
+        <Stack {...{pt:1,}}>
+            <Typography sx={{pb:.5}}>Additional constraints (SQL)</Typography>
             <InputAreaFieldConnected fieldKey='txtareasql'
                                      wrapperStyle={{display:'flex'}}
                                      style={{
@@ -589,15 +586,15 @@ function renderSqlArea() {
                                                 // labelWidth: 70
                                             }}
             />
-            <div style={{lineHeight: '10pt', paddingTop:'3px'}}>
+            <Typography level='body-sm' component='div' sx={{pt:.5}}>
                 <em>Ex: w3snr&gt;7 and (w2mpro-w3mpro)&gt;1.5 and ra&gt;102.3 and ra&lt;112.3 and dec&lt;-5.5 and
                     dec&gt;
                     -15.5</em><br />
                 (source_id_mf = '1861p075_ac51-002577')
                 <br />
-                <code style={{align: 'center', color: 'red'}}>The format for date type is yyyy-mm-dd</code>
-            </div>
-        </div>
+            </Typography>
+            <Typography color='warning'>The format for date type is yyyy-mm-dd</Typography>
+        </Stack>
     );
 }
 

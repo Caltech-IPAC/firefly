@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Stack, Typography} from '@mui/joy';
 import React, {PureComponent, useContext} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
@@ -89,12 +90,11 @@ export class CatalogSearchMethodType extends PureComponent {
         return (
             <FieldGroup groupKey={groupKey} keepState={true}
                 style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
-                {renderTargetPanel(groupKey, searchType)}
-                <div
-                    style={{display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center' }}>
+                <Stack spacing={2}>
+                    {renderTargetPanel(groupKey, searchType)}
                     {spatialSelection(withPos, polyIsDef, searchOption)}
                     <SizeArea {...{groupKey, searchType, imageCornerCalc: fields?.imageCornerCalc?.value ?? 'image'}}/>
-                </div>
+                </Stack>
             </FieldGroup>
         );
 
@@ -142,14 +142,10 @@ const spatialSelection = (withPos, polyIsDef, searchOption) => {
         />
     );
     const spatialWithoutPos = (
-        <div style={{display: 'flex',  padding: '13px 0px 9px', marginRight: 15, width: 180}}>
-            <div style={{paddingRight: 4, width: 80}}>
-                Search Method:
-            </div>
-            <div style={{paddingLeft: 4}}>
-                All Sky
-            </div>
-        </div>
+        <Stack {...{py: 1, mr: 2, width: 180, spacing:2, alignItems:'center'}}>
+            <Typography >Search Method</Typography>
+            <Typography level='body-lg'>All Sky</Typography>
+        </Stack>
     );
 
     return withPos ?  spatialWithPos : spatialWithoutPos;
@@ -246,10 +242,10 @@ export function calcCornerString(pv, method) {
  * @param {string} p.label by default is 'Radius'
  * @returns {Object} SizeInputFields component
  */
-function radiusInField({label = 'Radius:'}) {
+function radiusInField({label = 'Radius'}= {}) {
     return (
         <SizeInputFields fieldKey='conesize' showFeedback={true}
-                         style={{padding:5, margin: '5px 0 5px 0'}}
+                         sx={{p:.5, my:.5}}
                          initialState={{
                                                unit: 'arcsec',
                                                labelWidth : 100,
@@ -287,15 +283,10 @@ function SizeArea({groupKey, searchType, imageCornerCalc}) {
     useFieldGroupWatch(['imageCornerCalc'], () => onChangeToPolygonMethod());
 
     if (searchType === SpatialMethod.Cone.value) {
-        return (
-            <div style={{border: '1px solid #a3aeb9'}}>
-                {radiusInField({})}
-            </div>
-        );
+        return radiusInField() ;
     } else if (searchType === SpatialMethod.Elliptical.value) {
         return (
-            <div
-                style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center', border:'solid #a3aeb9 1px' }}>
+            <Stack {...{p:.5, flexWrap:'no-wrap', spacing:1 }}>
                 {radiusInField({label: 'Semi-major Axis:', tooltip: 'Enter the semi-major axis of the search'})}
                 <ValidationField fieldKey='posangle'
                                  forceReinit={true}
@@ -304,8 +295,7 @@ function SizeArea({groupKey, searchType, imageCornerCalc}) {
                                           value: '0',
                                           validator: Validate.floatRange.bind(null, 0, 360, 0,'Position Angle'),
                                           tooltip: 'Enter the Position angle (in deg) of the search, e.g - 52 degrees',
-                                          label : 'Position Angle:',
-                                          labelWidth : 100
+                                          label : 'Position Angle',
                                       }}/>
                 <ValidationField fieldKey='axialratio'
                                  forceReinit={true}
@@ -314,25 +304,20 @@ function SizeArea({groupKey, searchType, imageCornerCalc}) {
                                           value: '.26',
                                           validator: Validate.floatRange.bind(null, 0, 1, 0,'Axial Ratio'),
                                           tooltip: 'Enter the Axial ratio of the search e.g - 0.26',
-                                          label : 'Axial Ratio:',
-                                          labelWidth : 100
+                                          label : 'Axial Ratio',
                                       }}/>
-            </div>
+            </Stack>
         );
     } else if (searchType === SpatialMethod.Box.value) {
 
         return (
-            <div style={{border: '1px solid #a3aeb9'}}>
-                {radiusInField({ label: 'Side:' })}
-            </div>
-
+            radiusInField({ label: 'Side:' })
         );
     } else if (searchType === SpatialMethod.get('Multi-object').value) {
         const isWs = getWorkspaceConfig();
         return (
 
-            <div
-                style={{padding:5, display:'flex', flexDirection:'column', flexWrap:'no-wrap', alignItems:'center', border:'solid #a3aeb9 1px' }}>
+            <Stack {...{p:1, flexWrap:'no-wrap', alignItems:'center', }}>
                 <UploadOptionsDialog
                     fromGroupKey={groupKey}
                     preloadWsFile={true}
@@ -344,16 +329,15 @@ function SizeArea({groupKey, searchType, imageCornerCalc}) {
                         workspace: 'Select a file from workspace to upload'}}
                 />
                 {radiusInField({})}
-            </div>
+            </Stack>
         );
     } else if (searchType === SpatialMethod.Polygon.value) {
         return renderPolygonDataArea({imageCornerCalc});
     } else {
         return (
-
-            <div style={{border: '1px solid #a3aeb9', padding:'30px 30px', whiteSpace: 'pre-line'}}>
+            <Typography level='body-lg' sx={{p:4}}>
                 Search the catalog with no spatial constraints
-            </div>
+            </Typography>
         );
     }
 }
@@ -387,17 +371,14 @@ export function renderPolygonDataArea({imageCornerCalc, labelWidth, labelStyle, 
     }
     const wp= parseWorldPt(centerWP);
     return (
-        <div style={{}}>
+        <Stack {...{spacing:1}}>
             <div style={{paddingTop: 10, paddingLeft: 5}}>
                 {pv && <RadioGroupInputField
                     inline={false}
-                    labelWidth={60}
-                    alignment='horizontal'
-                    initialState= {{
-                        tooltip: 'Choose corners of polygon',
-                        label : 'Search area: ',
-                        value: 'image'
-                    }}
+                    orientation='horizontal'
+                    tooltip='Choose corners of polygon'
+                    label='Search area'
+                    initialState= {{value: 'image' }}
                     options={cornerTypeOps}
                     fieldKey='imageCornerCalc'
                 />
@@ -420,7 +401,7 @@ export function renderPolygonDataArea({imageCornerCalc, labelWidth, labelStyle, 
                 <li>- Vertices must be separated by a comma (,)</li>
                 <li>- Example: 20.7 21.5, 20.5 20.5, 21.5 20.5, 21.5 21.5</li>
             </ul>
-        </div>
+        </Stack>
     );
 }
 

@@ -7,10 +7,7 @@ export function getTheme() {
             JoyButton: {
                 defaultProps: {
                     variant:'soft' ,
-                    // variant:'outlined' ,
-                    // color:'neutral',
                     color:'primary',
-                    // color:'warning',
                     size: 'md'
                 }
             },
@@ -74,6 +71,11 @@ export function getTheme() {
                     color:'primary',
                     sx:{'.MuiBadge-badge': {top:9, right:6}}
                 }
+            },
+            JoyChip: {
+                defaultProps: {
+                    size:'sm',
+                }
             }
         }
     });
@@ -82,5 +84,12 @@ export function getTheme() {
 
 /*
  *  UI Notes
- *      - toolbar background: <Sheet variant='soft'>
+ * - toolbar background: <Sheet variant='soft'> or <Sheet>
+        <Sheet className='TapSearch__section' variant='outline' sx={{flexDirection: 'column', flexGrow: 1}}>
+ *
+ * - primary button:  <Button size:'md', variant: 'solid' color: 'primary'/>
+ * - secondary button:  <Button/> (see above for default)
+ * - significant action button: (eg file upload): <Button color='success' variant='solid'/>k
+ * - other buttons: <Chip/> (see above for defaults)
+
  */

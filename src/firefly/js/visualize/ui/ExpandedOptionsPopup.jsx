@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box, Button, Stack} from '@mui/joy';
 import React, {useState, useEffect} from 'react';
 import {isEmpty, uniq, isEqual} from 'lodash';
 import {useStoreConnector} from '../../ui/SimpleComponent';
@@ -225,61 +226,51 @@ function ImageViewOptionsPanel({viewerId}) {
 
 
     return (
-        <div style={{
-            resize: 'both', overflow: 'hidden', display: 'flex', flexDirection: 'column',
-            width: 625, height: 450, minWidth: 250, minHeight: 200
-        }}>
-
-            <div style={{position: 'relative', width: '100%', height: 'calc(100% - 30px)'}}>
-                <div className='TablePanel'>
-                    <div className={'TablePanel__wrapper--border'}>
-                        <div className='TablePanel__table' style={{top: 0}}>
-                            <TablePanel
-                                tbl_ui_id={tbl_ui_id}
-                                tableModel={model}
-                                showToolbar={true}
-                                showFilters={true}
-                                selectable={true}
-                                showOptionButton={true}
-                                border={false}
-                                showTitle={false}
-                                showPaging={false}
-                                showSave={false}
-                                showTypes={false}
-                                showToggleTextView={false}
-                                expandable={false}
-                                showUnits={true}
-                                rowHeight={23}
-                            />
+        // <Stack sx={{resize: 'both',width: 625, height: 450, minWidth: 250, minHeight: 200}}>
+            <Stack {...{ spacing: 2, sx:{p:1, overflow: 'hidden', resize:'both', width: 625, height: 450, minWidth: 250, minHeight: 200} }}>
+                <div style={{position: 'relative', width: '100%', height: 'calc(100% - 30px)'}}>
+                    <div className='TablePanel'>
+                        <div className={'TablePanel__wrapper--border'}>
+                            <div className='TablePanel__table' style={{top: 0}}>
+                                <TablePanel
+                                    tbl_ui_id={tbl_ui_id}
+                                    tableModel={model}
+                                    showToolbar={true}
+                                    showFilters={true}
+                                    selectable={true}
+                                    showOptionButton={true}
+                                    border={false}
+                                    showTitle={false}
+                                    showPaging={false}
+                                    showSave={false}
+                                    showTypes={false}
+                                    showToggleTextView={false}
+                                    expandable={false}
+                                    showUnits={true}
+                                    rowHeight={23}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
 
-            <div style={{display: 'flex'}}>
-                <CompleteButton
-                    style={{padding: 5, marginRight: '50%'}} text={'Done'}
-                    onSuccess={() => dialogComplete(model.tbl_id)}
-                    dialogId='ExpandedOptionsPopup'/>
+                <Stack {...{direction: 'row', justifyContent:'space-between'}}>
+                    <CompleteButton
+                        text={'Done'}
+                        onSuccess={() => dialogComplete(model.tbl_id)}
+                        dialogId='ExpandedOptionsPopup'/>
 
+                    <Stack {...{direction: 'row', spacing:1, sx:{'.MuiButton-root':{whiteSpace:'nowrap'}} }}>
+                        <Button onClick={() => removeSelected()} >Remove Selected </Button>
+                        <Button onClick={() => deleteFailed()}>Delete Failed </Button>
+                        <HelpIcon helpId={'visualization.loaded-images'} style={{padding: '8px 9px 0 0'}}/>
+                    </Stack>
 
-                <div style={{display: 'flex', padding: 5}}>
-                    <button type='button' className='button std hl'
-                            onClick={() => removeSelected()}>Remove Selected
-                    </button>
-                </div>
+                </Stack>
+            </Stack>
 
-
-                <div style={{display: 'flex', padding: 5}}>
-                    <button type='button' className='button std hl'
-                            onClick={() => deleteFailed()}>Delete Failed
-                    </button>
-                </div>
-
-                <HelpIcon helpId={'visualization.loaded-images'} style={{padding: '8px 9px 0 0'}}/>
-            </div>
-        </div>
+        // </Stack>
     );
 }
 
