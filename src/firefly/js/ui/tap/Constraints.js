@@ -29,8 +29,6 @@ export const getUploadServerFile= (tapBrowserState) => getTapUploadSchemaEntry(t
 
 export const getUploadTableName= (tapBrowserState) => getTapUploadSchemaEntry(tapBrowserState).table;
 
-
-
 /**
  *
  * @param {TapBrowserState} tapBrowserState

@@ -1,12 +1,11 @@
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
-import {ColsShape, ColumnFld, getColValidator} from '../../charts/ui/ColumnOrExpression.jsx';
+import {ColsShape, getColValidator} from '../../charts/ui/ColumnOrExpression.jsx';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import {findCenterColumnsByColumnsModel} from '../../voAnalyzer/ColumnsModelInfo.js';
 import {findTableCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {posCol, UCDCoord} from '../../voAnalyzer/VoConst.js';
-import {getSizeAsString} from '../../util/WebUtil.js';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {PlotAttribute} from '../../visualize/PlotAttribute.js';
@@ -16,9 +15,7 @@ import {VisualTargetPanel} from '../../visualize/ui/TargetHiPSPanel.jsx';
 import {convert} from '../../visualize/VisUtil.js';
 import {calcCornerString, renderPolygonDataArea} from '../CatalogSearchMethodType.jsx';
 import {FieldGroupCtx, ForceFieldGroupValid} from '../FieldGroup.jsx';
-import {ExtraButton} from '../FormPanel.jsx';
 import {ListBoxInputField} from '../ListBoxInputField.jsx';
-import {FieldGroupCollapsible} from '../panel/CollapsiblePanel.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
 import {useFieldGroupRerender, useFieldGroupValue, useFieldGroupWatch} from '../SimpleComponent.jsx';
 import {SizeInputFields} from '../SizeInputField.jsx';
@@ -31,8 +28,8 @@ import {showUploadTableChooser} from '../UploadTableChooser.js';
 import {
     getAsEntryForTableName, getColumnAttribute, getTapServices, makeUploadSchema, maybeQuote, tapHelpId
 } from './TapUtil.js';
-import {showColSelectPopup} from 'firefly/charts/ui/ColSelectView';
 import InputFieldLabel from 'firefly/ui/InputFieldLabel';
+import {CenterColumns, UploadTableSelector} from 'firefly/ui/UploadTableSelector';
 
 const CenterLonColumns = 'centerLonColumns';
 const CenterLatColumns = 'centerLatColumns';
@@ -218,7 +215,7 @@ export function SpatialSearch({cols, serviceUrl, serviceLabel, columnsModel, tab
 }
 
 SpatialSearch.propTypes = {
-    cols: ColsShape,
+    cols: ColsShape ?? {},
     initArgs: PropTypes.object,
     capabilities: PropTypes.object,
     obsCoreEnabled: PropTypes.bool,
@@ -235,156 +232,6 @@ const warningMsg = (msg) => {
         </div>
     );
 };
-
-function UploadTableSelector({uploadInfo, setUploadInfo}) {
-
-    const {groupKey,setVal}= useContext(FieldGroupCtx);
-    const [getLon,setLon]= useFieldGroupValue(UploadCenterLonColumns);
-    const [getLat,setLat]= useFieldGroupValue(UploadCenterLatColumns);
-
-    const {fileName,columns,totalRows,fileSize}= uploadInfo ?? {};
-    const columnsUsed= columns?.filter( ({use}) => use)?.length ?? 0;
-    const openKey= 'upload-pos-columns';
-
-    useEffect(() => {
-        //if user changes position column(s), make the new columns entries selectable in the columns/search
-        const columns = uploadInfo?.columns;
-        if (getLon()) {
-            const cObj= columns.find((col) => col.name === getLon());
-            if (cObj) cObj.use = true;
-        }
-        if (getLat()) {
-            const cObj= columns.find((col) => col.name === getLat());
-            if (cObj) cObj.use = true;
-        }
-        uploadInfo = {...uploadInfo, columns};
-        setUploadInfo(uploadInfo);
-    }, [getLon, getLat]);
-
-    useEffect(() => {
-        if (!columns) return;
-        const centerCols = findTableCenterColumns({tableData:{columns}}) ?? {};
-        const {lonCol='', latCol=''}= centerCols;
-        if (!getLon()) setLon(lonCol);
-        if (!getLat()) setLat(latCol);
-        setVal(openKey, (!lonCol || !latCol) ? 'open' : 'closed');
-    },[columns]);
-
-    const preSetUploadInfo= (ui) => {
-        setLon('', {validator: getColValidator(ui.columns, true, false), valid: true});
-        setLat('', {validator: getColValidator(ui.columns, true, false), valid: true});
-        setUploadInfo(ui);
-    };
-
-    const haveTable= Boolean(fileName && columns);
-
-    const onColsSelected = (selectedColNames) => {
-        //get rid of extra quotes within each selectedColNames - because non-alphanumeric entries may have
-        //been quoted by calling quoteNonAlphanumeric
-        // , e.g.: ['"Object Name"', 'RA', 'Notes']
-        selectedColNames = selectedColNames.map((col) => col.replace(/^"(.*)"$/, '$1'));
-        const columns = uploadInfo.columns.map((col) => (
-                {...col, use:selectedColNames.includes((col.name))}));
-        uploadInfo = {...uploadInfo, columns};
-        setUploadInfo(uploadInfo);
-    };
-
-    return (
-        <div style={{margin: '10px 0 0 0'}}>
-            <div style={{display:'flex', alignItems:'center'}}>
-                <div style={{whiteSpace:'nowrap'}}>Upload Table:</div>
-                <div style={{display:'flex', alignItems:'center'}}>
-                    <ExtraButton text={fileName ? 'Change...' : 'Add...'}
-                                 onClick={() => showUploadTableChooser(preSetUploadInfo)} style={{marginLeft: 42}} />
-                    {haveTable &&
-                        <div style={{width:200, overflow:'hidden', whiteSpace:'nowrap', fontSize:'larger',
-                            textOverflow:'ellipsis', lineHeight:'2em', paddingLeft:15}}>
-                            {`${fileName}`}
-                        </div>
-                    }
-                </div>
-            </div>
-            {haveTable &&
-                <div style={{display:'flex', flexDirection:'row', marginLeft: 195, justifyContent:'flex-start'}}>
-                    <div style={{whiteSpace:'nowrap'}}>
-                        <span>Rows: </span>
-                        <span>{totalRows},</span>
-                    </div>
-                    <div style={{paddingLeft: 8, whiteSpace:'nowrap'}}>
-                        <a className='ff-href'onClick={() => showColSelectPopup(columns, onColsSelected, 'Choose Columns', 'OK',
-                            null,true)}>
-                            <span>Columns: </span>
-                            <span>{columns.length} (using {columnsUsed})</span>
-                        </a>
-                        {fileSize &&<span>,</span>}
-                    </div>
-                    {fileSize && <div style={{paddingLeft: 8, whiteSpace:'nowrap'}}>
-                        <span>Size: </span>
-                        <span>{getSizeAsString(fileSize)}</span>
-                    </div>}
-                </div>
-            }
-            {haveTable &&
-                <CenterColumns {...{lonCol: getLon(), latCol: getLat(), cols:columns,
-                    headerTitle:'Position Columns:', openKey,
-                    headerPostTitle:'(from the uploaded table)',
-                    headerStyle:{paddingLeft:1},
-                    style:{margin:'0 0 10px 195px'},
-                    labelStyle:{paddingRight:10},
-                    lonKey:UploadCenterLonColumns, latKey:UploadCenterLatColumns}} />
-            }
-        </div>
-    );
-}
-
-function CenterColumns({lonCol,latCol, style={},cols, lonKey, latKey, openKey, labelStyle,
-                           headerTitle, headerPostTitle = '', openPreMessage='', headerStyle}) {
-
-
-    const posHeader= (
-        <div style={{marginLeft:-8}}>
-            <span style={{fontWeight:'bold', ...headerStyle}}>
-                {(lonCol || latCol) ? `${lonCol || 'unset'}, ${latCol || 'unset'}` : 'unset'}
-            </span>
-            <span style={{paddingLeft:12, whiteSpace:'nowrap'}}>
-                {headerPostTitle}
-            </span>
-        </div>
-    );
-
-    return (
-        <div style={{margin: '5px 0 0 0',...style}}>
-            <div style={{display:'flex'}}>
-                <div style={{width:140, marginTop:10, whiteSpace:'nowrap', ...labelStyle}}>
-                    {headerTitle}
-                </div>
-                <FieldGroupCollapsible header={posHeader} headerStyle={{paddingLeft:0}} contentStyle={{marginLeft:4}}
-                                       initialState={{value:'closed'}} fieldKey={openKey}>
-                    {openPreMessage && <div style={{padding:'0 0 10px 0'}}>
-                        {openPreMessage}
-                    </div>}
-                    <ColumnFld fieldKey={lonKey} cols={cols}
-                               name='longitude column'  // label that appears in column chooser
-                               inputStyle={{overflow:'auto', height:12, width: 100}}
-                               tooltip={'Center longitude column for spatial search'}
-                               label='Lon Column:'
-                               labelWidth={62}
-                               validator={getColValidator(cols, true, false)} />
-                    <div style={{marginTop: 5}}>
-                        <ColumnFld fieldKey={latKey} cols={cols}
-                                   name='latitude column' // label that appears in column chooser
-                                   inputStyle={{overflow:'auto', height:12, width: 100}}
-                                   tooltip={'Center latitude column for spatial search'}
-                                   label='Lat Column:'
-                                   labelWidth={62}
-                                   validator={getColValidator(cols, true, false)} />
-                    </div>
-                </FieldGroupCollapsible>
-
-            </div>
-        </div>
-    );
-}
 
 const OBSCORE_UPLOAD_LAYOUT= 0;
 const OBSCORE_SINGLE_LAYOUT= 1;

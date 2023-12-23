@@ -1,7 +1,8 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {oneOfType, oneOf, element, bool, string, number, arrayOf, object, func, shape} from 'prop-types';
 import CoordinateSys from '../../visualize/CoordSys.js';
-import {CONE_AREA_OPTIONS, CONE_CHOICE_KEY, POLY_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
+import {CONE_AREA_OPTIONS, CONE_AREA_OPTIONS_UPLOAD, CONE_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY
+} from '../../visualize/ui/CommonUIKeys.js';
 import {HiPSTargetView} from '../../visualize/ui/TargetHiPSPanel.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
@@ -11,6 +12,8 @@ import {CONE_AREA_KEY} from './DynamicDef.js';
 import {DEF_AREA_EXAMPLE, PolygonField} from './DynComponents.jsx';
 
 import './EmbeddedPositionSearchPanel.css';
+import {UploadTableSelector} from 'firefly/ui/UploadTableSelector';
+import {showUploadTableChooser} from 'firefly/ui/UploadTableChooser';
 
 
 /**
@@ -42,6 +45,9 @@ import './EmbeddedPositionSearchPanel.css';
  * @param {JSX.Element} [props.otherComponents] - More component that can be added under target/polygon components
  * @param {Boolean} [props.usePosition] - true to use the target
  * @param {Boolean} [props.usePolygon] - true to use the polygon
+ * @param {Boolean} [props.useUpload] - true to allow uploads
+ * @param {Object} [props.searchItem] - used for URL API (similar to SearchPanel)
+ * @param {Object} [props.initArgs] - used for URL API (similar to SearchPanel)
  * @return {JSX.Element|boolean}
  * @constructor
  */
@@ -70,13 +76,27 @@ export function EmbeddedPositionSearchPanel({
                                                 insetSpacial=true,
                                                 otherComponents= undefined,
                                                 usePosition= true,
+                                                useUpload = false,
                                                 usePolygon= true,
+                                                searchItem,
+                                                initArgs
                                             }
 ) {
 
     const [getConeAreaOp, setConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY);
+    const [getUploadInfo, setUploadInfo]= useFieldGroupValue('uploadInfo');
+    const uploadInfo= getUploadInfo() || undefined;
+
+    //conditionally show UploadTableChooser only when uploadInfo is empty - TAP like behavior
+    useEffect(() => {
+        if (doGetConeAreaOp() === UPLOAD_CHOICE_KEY) {
+            if (!uploadInfo.columns) showUploadTableChooser(setUploadInfo);
+            else setUploadInfo(uploadInfo);
+        }
+    }, [uploadInfo]);
+
     const coordinateSys = CoordinateSys.parse(csysStr) ?? CoordinateSys.EQ_J2000;
-    if (!usePolygon && !usePosition) return false;
+    if (!usePolygon && !usePosition && !useUpload) return false;
     const doToggle= usePosition && usePolygon;
     const initToggle= initSelectToggle;
 
@@ -84,14 +104,16 @@ export function EmbeddedPositionSearchPanel({
     const doGetConeAreaOp= () => {
         if (doToggle) return getConeAreaOp() ?? initToggle;
         if (usePolygon) return POLY_CHOICE_KEY;
+        if (useUpload) return UPLOAD_CHOICE_KEY;
         return CONE_CHOICE_KEY;
     };
+
     const internals= (
         <>
             {!insetSpacial && <div style={{paddingTop:10}}/>}
             {doToggle && <RadioGroupInputField {...{
                 inline: true, fieldKey: CONE_AREA_KEY, wrapperStyle: {paddingBottom: 5, paddingTop: 5},
-                tooltip: 'Chose type of search', initialState: {value: initToggle}, options: CONE_AREA_OPTIONS
+                tooltip: 'Chose type of search', initialState: {value: initToggle}, options: useUpload ? CONE_AREA_OPTIONS_UPLOAD : CONE_AREA_OPTIONS
             }} />}
             {doGetConeAreaOp() === CONE_CHOICE_KEY &&
                 <div style={{paddingTop:5}}>
@@ -118,10 +140,17 @@ export function EmbeddedPositionSearchPanel({
                     manageHiPS:false,
                 }} />}
             {otherComponents && otherComponents}
+
+            {doGetConeAreaOp() === UPLOAD_CHOICE_KEY &&
+                <UploadTableSelector {...{uploadInfo, setUploadInfo, uploadTable:true}}/>
+            }
         </>
     );
 
-    const wrappedInternals= WrapperComponent ? <WrapperComponent>{internals}</WrapperComponent> : internals;
+    const additionalProps= {searchItem, initArgs};
+    const wrappedInternals = WrapperComponent
+        ? <WrapperComponent {...additionalProps}>{internals}</WrapperComponent>
+        : internals;
 
     return (
         <div key='targetGroup'
@@ -167,4 +196,7 @@ EmbeddedPositionSearchPanel.propTypes= {
     otherComponents: oneOfType([func,element]),
     usePosition: bool,
     usePolygon: bool,
+    useUpload: bool,
+    searchItem: object,
+    initArgs: object
 };

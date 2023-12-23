@@ -89,7 +89,7 @@ function searchesAsTabs(allSearchItems, initArgs) {
 
 const searchOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
 
-function executeOK(clickFunc,initArgs,searchItem) {
+export function executeOK(clickFunc,initArgs,searchItem) {
     searchOnce(
         () => {
             if (!initArgs?.urlApi?.execute) return false;
@@ -104,15 +104,20 @@ function executeOK(clickFunc,initArgs,searchItem) {
 
 function SearchForm({searchItem, style, initArgs}) {
     const {name, form} = searchItem;
-    const {render:Render, ...rest} = form;
+    const {render:Render, useFormPanel:useFormPanel=true,...rest} = form;
 
     return (
-        <FormPanel groupKey={name} style={style}
-                   getDoOnClickFunc={(clickFunc) => executeOK(clickFunc,initArgs,searchItem) }
-                   {...rest}>
+        useFormPanel ? (
+            <FormPanel groupKey={name} style={style}
+                       getDoOnClickFunc={(clickFunc) => executeOK(clickFunc,initArgs,searchItem)}
+                       {...rest}>
+                <Render {...{searchItem, initArgs}} />
+            </FormPanel>
+        ) : (
             <Render {...{searchItem, initArgs}} />
-        </FormPanel>
+        )
     );
+
 }
 
 function SideBar({activeSearch, groups=[]}) {

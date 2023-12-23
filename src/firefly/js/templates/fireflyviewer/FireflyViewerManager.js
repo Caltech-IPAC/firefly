@@ -7,12 +7,13 @@ import {filter} from 'lodash';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 import {LO_VIEW, SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo, dispatchUpdateLayoutInfo, dropDownManager} from '../../core/LayoutCntlr.js';
-import {smartMerge} from '../../tables/TableUtil.js';
+import {getTblById, smartMerge} from '../../tables/TableUtil.js';
 import {TBL_RESULTS_ADDED, TABLE_LOADED, TABLE_REMOVE, TBL_RESULTS_ACTIVE, TBL_RESULTS_REMOVE} from '../../tables/TablesCntlr.js';
 import {CHART_ADD, CHART_REMOVE} from '../../charts/ChartsCntlr.js';
 
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../../visualize/MultiViewCntlr.js';
+import {MetaConst} from 'firefly/data/MetaConst';
 
 /**
  * this manager manages what main components get display on the screen.
@@ -78,10 +79,16 @@ function onAnyAction(layoutInfo, action, views) {
     const closeable = count > 1;
 
     switch (action.type) {
-        case TABLE_REMOVE:
         case TBL_RESULTS_ADDED:
-        case TBL_RESULTS_REMOVE:
         case TABLE_LOADED:
+        case TBL_RESULTS_ACTIVE:
+            const tbl = getTblById(action.payload.tbl_id);
+            if (tbl?.request?.META_INFO?.[MetaConst.UPLOAD_TABLE]) {
+                return layoutInfo;
+            }
+            //intentional fallthrough
+        case TABLE_REMOVE:
+        case TBL_RESULTS_REMOVE:
         case REPLACE_VIEWER_ITEMS:
         case ImagePlotCntlr.PLOT_IMAGE_START :
         case ImagePlotCntlr.DELETE_PLOT_VIEW:
