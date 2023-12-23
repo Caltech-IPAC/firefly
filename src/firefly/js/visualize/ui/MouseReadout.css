@@ -1,15 +1,4 @@
 
-.mouseReadoutDisplaySpace {
-    width: 698px;
-    min-width: 660px;
-    height: 34px;
-    min-height: 34px;
-    position: absolute;
-    vertical-align: top;
-    white-space: nowrap;
-    overflow: hidden;
-}
-
 .mouseReadoutImageGrid {
     display: grid;
     grid-column-gap: 3px;
@@ -48,36 +37,6 @@
             "popout pixReadoutLabel clipboardIcon pixReadoutValue lock lockLabel"
 }
 
-.miniMouseReadoutWLImageGrid {
-    display: grid;
-    align-items: start;
-    grid-column-gap: 3px;
-    grid-row-gap: 5px;
-    grid-template-columns :  30px 65px 12px minmax(12rem,13rem) auto minmax(90px,150px) auto minmax(90px,155px) min-content minmax(2px,max-content);
-    grid-template-rows :  auto;
-    grid-template-areas:
-            "popout pixReadoutLabel clipboardIcon pixReadoutValue fluxLabel fluxValue wlLabel wlValue lock lockLabel"
-}
-
-
-
-
-
-
-.mouseReadoutPopupMinimalGrid {
-    display: grid;
-    grid-column-gap: 3px;
-    grid-row-gap: 5px;
-    grid-template-columns :  30px 70px 0 170px 130px;
-    grid-template-rows : 1.4em 1.4em;
-    grid-template-areas:
-            "lockDialog pixReadoutTopLabel clipboardIconTop pixReadoutTopValue ."
-            "lockDialog pixReadoutBottomLabel clipboardIconBottom pixReadoutBottomValue lock";
-}
-
-.mouseReadoutPopupMinimalGrid-withclip {
-    grid-template-columns :  30px 70px 12px 170px 130px;
-}
 
 .mouseReadoutPopupFullGrid {
     display: grid;
@@ -114,22 +73,6 @@
 
 .mouseReadoutPopupFullGrid-withclip {
     grid-template-columns:  30px 80px 80px 88px 12px 170px;
-}
-
-
-.mouseReadoutHiPSGrid {
-    display: grid;
-    grid-column-gap: 3px;
-    grid-row-gap: 5px;
-    grid-template-columns :  60px 90px 80px 105px 74px 0 160px 130px;
-    grid-template-rows :  auto;
-    grid-template-areas:
-            "nOrderLabel nOrderValue pixSizeLabel pixSizeValue pixReadoutTopLabel clipboardIconTop pixReadoutTopValue plotTitle"
-            "healpixPixelLabel healpixPixelValue empty empty pixReadoutBottomLabel clipboardIconBottom pixReadoutBottomValue lock";
-}
-
-.mouseReadoutHiPSGrid-withclip {
-    grid-template-columns :  60px 90px 80px 105px 74px 12px 160px 130px;
 }
 
 .mouseReadoutLabel {

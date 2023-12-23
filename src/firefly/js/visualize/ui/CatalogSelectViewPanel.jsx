@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Stack} from '@mui/joy';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {FormPanel} from '../../ui/FormPanel.jsx';
@@ -552,7 +553,7 @@ class CatalogDDList extends PureComponent {
         const tbl_id = `${catname0}-${shortdd}-dd-table-constraint`;
 
         const {cols} = master;
-        const catPanelStyle = {height: 300};
+        const catPanelStyle = {height: 350};
 
         const polygonDefWhenPlot= get(getAppOptions(), 'catalogSpatialOp')==='polygonWhenPlotExist';
 
@@ -566,42 +567,33 @@ class CatalogDDList extends PureComponent {
 
         return (
             <div style={{display:'flex', flexDirection: 'column', height:'100%'}}>
-                <div className='catalogpanel'>
-                    <div className='ddselectors' style={catPanelStyle}>
+                <Stack {...{direction:'row'}}>
+                    <Stack className='ddselectors' spacing={1} style={catPanelStyle}>
                         <ListBoxInputField fieldKey='project'
-                                           wrapperStyle={{padding:5}}
-                                           initialState={{
-                                          tooltip: 'Select Project',
-                                          value: selProject0
-                                      }}
+                                           tooltip= 'Select Project'
+                                           initialState={{ value: selProject0 }}
                                            options={optProjects}
-                                           multiple={false}
-                                           labelWidth={75}
+                                           slotProps={{label:{sx:{width:'7rem'}}}}
                                            label='Select Project:'
                         />
                         <ListBoxInputField fieldKey='catalog'
-                                           wrapperStyle={{padding:5}}
-                                           initialState={{
-                                          tooltip: 'Select Catalog',
-                                          value: selCat0
-                                      }}
+                                           tooltip='Select Catalog'
+                                           initialState={{ value: selCat0 }}
                                            options={optList}
-                                           multiple={false}
-                                           labelWidth={75}
+                                           slotProps={{label:{sx:{width:'7rem'}}}}
                                            label='Select Catalog:'
-                                           selectStyle={{width:'300px'}}
                         />
                         <CatalogTableListField fieldKey='cattable'
                                                data={catTable}
                                                cols={cols}
                         />
-                    </div>
+                    </Stack>
                     <div className='spatialsearch' style={catPanelStyle}>
                         <CatalogSearchMethodType groupKey={gkeySpacial} polygonDefWhenPlot={polygonDefWhenPlot}
                                                  coneMax={coneMax} boxMax={boxMax} withPos={withPos}
                         />
                     </div>
-                </div>
+                </Stack>
                 {/*
                  <div style={{display:'flex', flexDirection:'row', padding:'20px', border:'1px solid #a3aeb9'}}>
                  */}

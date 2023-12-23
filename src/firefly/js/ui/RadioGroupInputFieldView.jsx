@@ -9,14 +9,14 @@ import {array, string, func, bool, object, oneOf, shape, oneOfType, element} fro
 function makeRadioGroup(options,orientation='horizontal',radioValue,onChange,radioTooltip,slotProps={}) {
 
     return (
-        <RadioGroup {...{orientation, ...slotProps.group}}>
+        <RadioGroup {...{className:'ff-RadioGroup-container', orientation, ...slotProps.group}}>
             {
                 options.map( ({label,value, disabled=false,tooltip }) => {
                     const radio= (<Radio
-                        {...{ key:value, size:'sm', checked:value===radioValue, onChange, value, label, disabled, ...slotProps.radio }} />);
+                        {...{ className:tooltip?undefined:'ff-RadioGroup-item', key:value, size:'sm', checked:value===radioValue, onChange, value, label, disabled, ...slotProps.radio }} />);
                     if (tooltip) {
                         return (
-                            <Tooltip {...{key:value, title:tooltip ?? radioTooltip, placement:'top'}}>
+                            <Tooltip {...{className:'ff-RadioGroup-item', key:value, title:tooltip ?? radioTooltip, placement:'top'}}>
                                 {radio}
                             </Tooltip>
                         );

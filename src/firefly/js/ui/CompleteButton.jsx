@@ -108,7 +108,7 @@ export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
 
     return (
         <Box sx={sx} style={style}>
-            <Button {...{className: 'ff-CompleteButton', size:'md',
+           <Button {...{className: 'ff-CompleteButton', size:'md',
                 variant: primary?'solid':undefined,
                 color: primary?'primary':undefined,
                 onClick: onComplete}}>{text}</Button>

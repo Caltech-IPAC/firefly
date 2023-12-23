@@ -3,12 +3,11 @@
  */
 
 import React from 'react';
-import {Box, Checkbox, Divider, IconButton, Stack, Typography} from '@mui/joy';
+import {Box, Checkbox, ChipDelete, Divider, Stack, Switch, Tooltip, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import {isFunction} from 'lodash';
 import {getMinMaxWidth, makeColorChange, makeShape} from './DrawLayerUIComponents';
 
-import DELETE from 'images/blue_delete_10x10.png';
 
 export function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
                             color, canUserChangeColor, canUserDelete, title, helpLine,
@@ -29,11 +28,11 @@ export function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
            <Stack {...{lineHeight:'1em', position: 'relative', direction:'row', flexWrap:'nowrap',
                          justifyContent: 'space-between', alignItems: 'center', width:'100%' }} >
                 <Stack {...{direction: 'row', alignItems: 'center'}}>
-                    <Checkbox {...{checked:visible, sx:{visibility: canUserHide?'inherit':'hidden', pr:.5},
+                   <Switch {...{checked:visible, sx:{visibility: canUserHide?'inherit':'hidden', pr:.5},
                         onChange:() => changeVisible() }} />
                     {getTitleTag(title,maxTitleChars, autoFormatTitle)}
                 </Stack>
-                <Stack {...{direction:'row', spacing:1, py:.5, width: 180, justifyContent: 'flex-end'}}>
+                <Stack {...{direction:'row', spacing:1/4, py:.5, width: 180, justifyContent: 'flex-end'}}>
                     {makePointDataShape(isPointData,drawingDef, modifyShape)}
                     {makeColorChangeUIElement(color, canUserChangeColor,modifyColor)}
                     {makeDelete(canUserDelete,deleteLayer)}
@@ -111,10 +110,13 @@ function makeHelpLine(helpLine) {
 
 function makeDelete(canUserDelete,deleteLayer) {
     return (
-        <IconButton onClick={() => deleteLayer()} title='Close Layer'
-            sx={{visibility: canUserDelete ? 'inherit' : 'hidden', px:.5}}>
-            <img src={DELETE}/>
-        </IconButton>
+        <Tooltip title='Close Layer'
+            placement='right-start'>
+            <ChipDelete {...{
+                onClick: () => deleteLayer(),
+                sx:{'--Chip-deleteSize': '1.9em'}
+            }}/>
+        </Tooltip>
     );
 
 }

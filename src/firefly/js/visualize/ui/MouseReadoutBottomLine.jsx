@@ -2,24 +2,22 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box} from '@mui/joy';
-import React, {useEffect, useRef, useState} from 'react';
+import {Box, Checkbox, Stack, Tooltip, Typography} from '@mui/joy';
+import React, {memo, useEffect, useRef, useState} from 'react';
 import {object, bool, number} from 'prop-types';
 import BrowserInfo from '../../util/BrowserInfo.js';
+import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 import {showMouseReadoutFluxRadixDialog} from './MouseReadoutOptionPopups.jsx';
 import {getNonFluxDisplayElements, getFluxInfo} from './MouseReadoutUIUtil.js';
-import {DataReadoutItem, MouseReadoutLock} from './MouseReadout.jsx';
-import {STANDARD_READOUT} from '../MouseReadoutCntlr.js';
+import {CopyToClipboard} from './MouseReadout.jsx';
+import {dispatchChangeLockByClick, STANDARD_READOUT} from '../MouseReadoutCntlr.js';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 import {showMouseReadoutPopout} from 'firefly/visualize/ui/MouseReadPopoutAll.jsx';
-import './MouseReadout.css';
-import POPOUT_ICON from 'images//pop-out.png';
-
+import POPOUT_ICON from 'images/pop-out.png';
 
 export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, style, slightlyTransparent=false, showOnInactive= false, radix}){
 
     const {current:divref}= useRef({element:undefined});
-
     const [width,setWidth]= useState(() => 200);
 
     useEffect( () => {
@@ -28,22 +26,21 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
             setWidth(w);
         }
     });
-    const fullSize= width>500;
 
     const {readoutType}= readoutData;
-    const image= readoutType===STANDARD_READOUT;
     if (!readoutData.readoutItems) return (<div style={{height: showOnInactive?20:0, width:showOnInactive?1:0}}/>);
-    const {threeColor= false}= readoutData;
 
     const displayEle= getNonFluxDisplayElements(readoutData.readoutItems,  readout.readoutPref, false);
     const {readout1, showReadout1PrefChange, showWavelengthFailed, waveLength}= displayEle;
-    const showCopy= readout.lockByClick;
+    const {lockByClick=false}= readout??{};
+    const showCopy= lockByClick;
 
     const fluxArray = getFluxInfo(readoutData, radix);
-    const gridClasses= getGridClass(fullSize, image,threeColor,waveLength);
 
 
     const sx= (theme) => ({
+        justifyContent: 'space-between',
+        alignItems:'center',
         height: '1.3rem',
         borderRadius: '5px',
         overflow:'hidden',
@@ -58,34 +55,56 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
         return <div/>;
     }
 
-    return (
-        <Box {...{className:gridClasses, sx, ref: (c) => divref.element=c}}>
-            <DataReadoutItem lArea='pixReadoutLabel' vArea='pixReadoutValue' cArea='clipboardIcon'
-                             label={readout1.label} value={readout1.value} copyValue={readout1.copyValue} showCopy={showCopy}
-                             prefChangeFunc={showReadout1PrefChange}/>
+    const fullSize= width>500;
+    const {threeColor= false}= readoutData;
+    const monoFont= radix===16;
 
-            {fullSize && !threeColor && image && <DataReadoutItem lArea='fluxLabel' vArea='fluxValue'
-                                                                  label={fluxArray[0].label||'Value:'}
-                                                                  value={fluxArray[0].value}
-                                                                  unit={fluxArray[0].unit}
-                                                                  monoFont={radix===16}
-                                                                  prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}
-            />}
-            {fullSize && threeColor && image && <DataReadoutItem lArea='fluxLabel' vArea='fluxValue' label={get3CLabel(fluxArray)} value={get3CValue(fluxArray)}
-                                                                 prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}
-                                                                 monoFont={radix===16}
-            />}
-            {fullSize && waveLength && image && <DataReadoutItem lArea='wlLabel' vArea='wlValue' label={waveLength.label} value={waveLength.value}
-                                                     prefChangeFunc={showWavelengthFailed} /> }
-            {<MouseReadoutLock gArea='lock' gAreaLabel='lockLabel'  lockByClick={readout.lockByClick} />}
-            <ToolbarButton icon={POPOUT_ICON}
-                           sx={{gridArea:'popout','.ff-toolbar-iconbutton' : {padding:'1px'}}}
-                           imageStyle={{width:16,flexGrow:0}}
-                           tip='Show expanded readout, thumbnail and magnifier'
-                           onClick={() => {
-                               showMouseReadoutPopout();
-                           }}/>
-        </Box>
+    const checkboxText= width>600 ? 'Lock by click':'';
+    const doWL= fullSize && waveLength && readoutType===STANDARD_READOUT;
+    const doFlux= fullSize && readoutType===STANDARD_READOUT;
+
+    const label3C= threeColor && doFlux ? get3CLabel(fluxArray) : '';
+    const value3C= threeColor && doFlux ? get3CValue(fluxArray) : '';
+    const labelStand= !threeColor && doFlux ? fluxArray[0].label||'Value:' : '';
+    const valueStand= !threeColor && doFlux ? fluxArray[0].value : '';
+
+    const fluxLabel= threeColor ? label3C : labelStand;
+    const fluxValue= threeColor ? value3C : valueStand;
+    const fluxWidth= threeColor ? '9rem' : '7rem';
+
+    return (
+        <Stack {...{direction:'row', sx, ref: (c) => divref.element=c}}>
+            <Stack {...{direction:'row', alignItems:'center', sx:{'.ff-readout-value':{pl:.5}} }}>
+
+                <ToolbarButton icon={POPOUT_ICON} imageStyle={{width:16}}
+                               tip='Show expanded readout, thumbnail and magnifier'
+                               onClick={() => showMouseReadoutPopout()}/>
+
+                <LabelItem {...{showCopy, label:readout1.label, value:readout1.value, copyValue:readout1.copyValue,
+                    sx:{pl:1}, prefChangeFunc:showReadout1PrefChange}}/>
+                <DataItem {...{value:readout1.value, sx:{minWidth:'13rem', pl:.5} }}/>
+
+                {doFlux && <LabelItem {...{label:fluxLabel, value:fluxValue, sx:{pl:1},
+                           prefChangeFunc:() => showMouseReadoutFluxRadixDialog(readout.readoutPref)}}/> }
+                {doFlux && <DataItem {...{value:fluxValue, unit: threeColor? '' :fluxArray[0].unit,
+                    sx:{minWidth:fluxWidth, pl:.5}, monoFont}}/> }
+
+
+                {doWL && <LabelItem {...{label:waveLength.label, value:waveLength.value, sx:{pl:1}}}/> }
+                {doWL && <DataItem {...{value:waveLength.value}}/> }
+
+            </Stack>
+
+            <Tooltip placement='top-end' enterDelay={!checkboxText?750:undefined}
+                title='Lock by click - mouse readout will only update by clicking on the image'>
+                <Checkbox size='sm' label={checkboxText} checked={lockByClick}
+                          sx={{pr:.5,whiteSpace:'nowrap'}}
+                          onChange={() => {
+                              dispatchChangePointSelection('mouseReadout', !lockByClick);
+                              dispatchChangeLockByClick(!lockByClick);
+                          }} />
+            </Tooltip>
+        </Stack>
     );
 }
 
@@ -96,16 +115,39 @@ MouseReadoutBottomLine.propTypes = {
     flux: number,
     slightlyTransparent: bool,
     showOnInactive: bool,
-    readoutShowing: bool
+    readoutShowing: bool,
+    radix:number,
 };
 
 
-function getGridClass(fullSize, image, threeColor, waveLength) {
-    if (waveLength) return 'miniMouseReadoutWLImageGrid';
-    if (fullSize && image) return 'miniMouseReadoutSingleImageGrid';
-    return 'miniMouseReadoutNoFluxGrid';
+const LabelItem= memo(({showCopy=false, label='', value='', copyValue='', prefChangeFunc=undefined, sx}) => {
+    const copyTitle= `Copy to clipboard: ${copyValue||value}`;
 
-}
+    const textStyle= prefChangeFunc ?
+        { cursor: 'pointer', textDecoration: 'underline', fontStyle: 'italic', whiteSpace:'nowrap'} :
+        {whiteSpace:'nowrap'};
+
+    const clipComponent= (value&&showCopy) ? <CopyToClipboard title={copyTitle} value={copyValue||value} /> : undefined;
+    return (
+        <Stack {...{direction:'row', alignItems:'center', className:'ff-readout-label', sx}}>
+            <Typography level='body-sm' title={value+''} sx={textStyle} onClick={prefChangeFunc}>{label}</Typography>
+            {clipComponent}
+        </Stack>
+    );
+});
+
+const DataItem= memo(({ value='', unit='', monoFont=false, sx}) => {
+    const mStyle= monoFont ? {fontFamily:'monospace', whiteSpace:'nowrap'} : {whiteSpace:'nowrap'};
+    const vStr=value+'';
+    return (
+        <Stack {...{direction:'row', className:'ff-readout-value', alignItems:'center', sx }}>
+            <Typography level='body-sm' color='warning'  title={vStr} sx={mStyle}>{value}</Typography>
+            {unit && <Typography level='body-sm' color='warning' title={vStr} sx={{pl:.25}}>{unit}</Typography>}
+        </Stack>
+    );
+});
+
+
 
 function get3CValue(fluxArray) {
     return fluxArray.reduce( (prev,f) => {

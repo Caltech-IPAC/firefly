@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import PropTypes, {object, shape} from 'prop-types';
-import {Checkbox, FormControl, FormLabel, Stack, Tooltip} from '@mui/joy';
+import {Checkbox, FormControl, FormLabel, Stack, Switch, Tooltip} from '@mui/joy';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {splitVals} from 'firefly/tables/TableUtil.js';
 
@@ -16,7 +16,7 @@ function convertValue(value,options) {
     else return value;
 }
 
-export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip:toggleBoxTip, slotProps,
+export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip:toggleBoxTip, slotProps, type,
                                              options, alignment:orientation, value:fieldValue, sx}) {
 
     return (
@@ -27,10 +27,16 @@ export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip:
                         <FormLabel {...slotProps?.label}>{label}</FormLabel>
                     </FormControl>
                 ) }
-                <Stack spacing={orientation==='vertical'?1:2} direction={orientation==='vertical' ? 'column' : 'row'}>
+                <Stack className='ff-Checkbox-container' spacing={orientation==='vertical'?1:2} direction={orientation==='vertical' ? 'column' : 'row'}>
                     {options.map( ({value,label,tooltip}) => {
-                        const cb= (<Checkbox {...slotProps?.input}
-                            {...{ size:'sm', name:fieldKey, key:value, value, checked:isChecked(value,fieldValue), onChange, label, }} />);
+                        const cb= type==='switch' ?
+                            (<Switch {...slotProps?.input}
+                                       {...{ size:'sm', name:fieldKey, key:value, value,
+                                           endDecorator: label,
+                                           checked:isChecked(value,fieldValue), onChange, label, }} />)
+                            :
+                            (<Checkbox {...slotProps?.input}
+                            {...{ className:'ff-Checkbox-item', size:'sm', name:fieldKey, key:value, value, checked:isChecked(value,fieldValue), onChange, label, }} />);
                         return tooltip ? <Tooltip {...{title:toggleBoxTip, key:value}}> {cb} </Tooltip> : cb;
                     })}
                 </Stack>

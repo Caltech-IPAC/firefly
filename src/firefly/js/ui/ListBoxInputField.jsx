@@ -1,10 +1,8 @@
 import React, {memo} from 'react';
-import PropTypes, {object} from 'prop-types';
+import {number, object, shape, oneOf, array, any, string, func, bool, element} from 'prop-types';
 import {Select, Option, Tooltip, FormControl, FormLabel, Stack} from '@mui/joy';
-import {get, isArray, isEmpty} from 'lodash';
+import {isArray, isEmpty, isFunction} from 'lodash';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
-
-import InputFieldLabel from './InputFieldLabel.jsx';
 
 
 function getCurrentValueArr(value) {
@@ -16,11 +14,12 @@ function getCurrentValueArr(value) {
     }
 }
 
-const convertValue= (value,options) => (!value) ? get(options, [0, 'value']) : value;
+const convertValue= (value,options) => (!value) ? options?.[0]?.value : value;
 
 
 export function ListBoxInputFieldView({value:fieldValue, onChange, fieldKey, options,
-                                          orientation='horizontal', sx,
+                                          orientation='horizontal', sx, slotProps={},
+                                          renderValue, decorator, startDecorator,
                                        multiple, placeholder, tooltip, label,
                                           readonly=false}) {
 
@@ -28,14 +27,15 @@ export function ListBoxInputFieldView({value:fieldValue, onChange, fieldKey, opt
     return (
         <Stack {...{className:'ff-Input ListBoxInputFieldView', sx}}>
             <FormControl {...{orientation}}>
-                {label && <FormLabel>{label}</FormLabel>}
-                <Tooltip {...{title:tooltip, placement:'top'}}>
-                    <Select {...{name: fieldKey, multiple, onChange, placeholder,
-                        disabled: readonly, value: multiple ? vAry : fieldValue}}>
+                {label && <FormLabel {...slotProps?.label}>{label}</FormLabel>}
+                <Tooltip {...{title:tooltip, placement:'top', ...slotProps?.tooltip}}>
+                    <Select {...{name: fieldKey, multiple, onChange, placeholder, renderValue, startDecorator,
+                        disabled: readonly, value: multiple ? vAry : fieldValue,
+                        ...slotProps?.input}}>
                         {options?.map((({value,label,disabled=false},idx) => {
                             return (
                                 <Option {...{value, key:`k${idx}`, disabled:disabled ? 'disabled' : false}}>
-                                    {label || value}
+                                    {isFunction(decorator) ? decorator(label,value) : (label || value)}
                                 </Option>
                             );
                         }))}
@@ -49,21 +49,30 @@ export function ListBoxInputFieldView({value:fieldValue, onChange, fieldKey, opt
 
 
 ListBoxInputFieldView.propTypes= {
-    options : PropTypes.array,
-    value:  PropTypes.any,
-    fieldKey : PropTypes.string,
-    onChange:  PropTypes.func,
-    inline : PropTypes.bool,
-    multiple : PropTypes.bool,
-    label:  PropTypes.string,
-    tooltip:  PropTypes.string,
-    labelWidth : PropTypes.number,
-    selectStyle: PropTypes.object,
-    wrapperStyle: PropTypes.object,
-    labelStyle: PropTypes.object,
-    placeholder : PropTypes.string,
-    readonly: PropTypes.bool,
-    sx: PropTypes.object,
+    options : array,
+    value:  any,
+    fieldKey : string,
+    onChange:  func,
+    inline : bool,
+    multiple : bool,
+    label:  string,
+    tooltip:  string,
+    labelWidth : number,
+    selectStyle: object,
+    wrapperStyle: object,
+    labelStyle: object,
+    placeholder : string,
+    readonly: bool,
+    sx: object,
+    orientation: string,
+    renderValue: func,
+    decorator: func,
+    startDecorator: element,
+    slotProps: shape({
+        input: object,
+        control: object,
+        label: object,
+    }),
 };
 
 function handleOnChange(ev, newValue, params, fireValueChange) {
@@ -111,21 +120,29 @@ export const ListBoxInputField= memo( (props) => {
 
 
 ListBoxInputField.propTypes= {
-    fieldKey : PropTypes.string,
-    groupKey : PropTypes.string,
-    placeholder : PropTypes.string,
-    forceReinit:  PropTypes.bool,
-    initialState: PropTypes.shape({
-        value: PropTypes.string,
-        tooltip: PropTypes.string,
-        label:  PropTypes.string,
+    fieldKey : string,
+    groupKey : string,
+    placeholder : string,
+    forceReinit:  bool,
+    initialState: shape({
+        value: string,
+        tooltip: string,
+        label:  string,
     }),
-    inline : PropTypes.bool,
-    options : PropTypes.array,
-    multiple : PropTypes.bool,
-    labelWidth : PropTypes.number,
-    orientation: PropTypes.oneOf(['vertical', 'horizontal']),
-    readonly: PropTypes.bool,
-    sx: PropTypes.object,
+    slotProps: shape({
+        input: object,
+        control: object,
+        label: object,
+    }),
+    renderValue: func,
+    decorator: func,
+    startDecorator: element,
+    inline : bool,
+    options : array,
+    multiple : bool,
+    labelWidth : number,
+    orientation: oneOf(['vertical', 'horizontal']),
+    readonly: bool,
+    sx: object,
 };
 

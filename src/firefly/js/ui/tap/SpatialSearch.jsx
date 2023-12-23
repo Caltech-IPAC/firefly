@@ -33,7 +33,6 @@ import {
     getAsEntryForTableName, getColumnAttribute, getTapServices, makeUploadSchema, maybeQuote, tapHelpId
 } from './TapUtil.js';
 import {showColSelectPopup} from 'firefly/charts/ui/ColSelectView';
-import InputFieldLabel from 'firefly/ui/InputFieldLabel';
 
 const CenterLonColumns = 'centerLonColumns';
 const CenterLatColumns = 'centerLatColumns';
@@ -72,7 +71,7 @@ const fldListAry= [ServerParams.USER_TARGET_WORLD_PT,SpatialRegOp,SPATIAL_TYPE,
             SpatialMethod,RadiusSize, PolygonCorners,CenterLonColumns,CenterLatColumns,
     UploadCenterLonColumns, UploadCenterLatColumns, cornerCalcType];
 
-export function SpatialSearch({cols, serviceUrl, serviceLabel, columnsModel, tableName, initArgs={}, obsCoreEnabled:requestObsCore, capabilities}) {
+export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel, tableName, initArgs={}, obsCoreEnabled:requestObsCore, capabilities}) {
     const {searchParams={}}= initArgs ?? {};
     const obsCoreEnabled= requestObsCore && canSupportAtLeastOneObsCoreOption(capabilities);
     const panelTitle = !obsCoreEnabled ? Spatial : 'Location';
@@ -181,7 +180,7 @@ export function SpatialSearch({cols, serviceUrl, serviceLabel, columnsModel, tab
     }, [constraintResult]);
 
     return (
-        <CollapsibleCheckHeader title={panelTitle} helpID={tapHelpId(panelPrefix)}
+        <CollapsibleCheckHeader sx={sx} title={panelTitle} helpID={tapHelpId(panelPrefix)}
                                 message={constraintResult?.simpleError ?? ''}
                                 initialStateOpen={true} initialStateChecked={true}>
             <Stack mt='.25' spacing={1}>

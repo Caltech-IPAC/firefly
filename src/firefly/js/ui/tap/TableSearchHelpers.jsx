@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import React, {useEffect, useRef} from 'react';
 import {getAppOptions} from '../../api/ApiUtil.js';
 import {CheckboxGroupInputField, CheckboxGroupInputFieldView} from '../CheckboxGroupInputField.jsx';
-import {FieldGroupCollapsible} from '../panel/CollapsiblePanel.jsx';
+import {FieldGroupAccordionPanel} from '../panel/AccordionPanel.jsx';
 import {RadioGroupInputFieldView} from '../RadioGroupInputFieldView.jsx';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
 
@@ -115,10 +115,10 @@ function Header({title, helpID='', checkID, message, enabled=false, panelValue=u
                 <CheckboxGroupInputField key={checkID} fieldKey={checkID}
                                          initialState={{ value: enabled ? panelValue || title:'', label: '' }}
                                          options={[{label:'', value: panelValue || title}]}
-                                         orientation='horizontal' wrapperStyle={{whiteSpace: 'norma'}} />
+                                         orientation='horizontal'  />
             </div>
             <Typography {...{color:'primary'}}>{title}</Typography>
-            <HelpIcon helpId={helpID}/>
+            <HelpIcon helpId={helpID} style={{display:'flex'}}/>
             <Typography {...{level:'body-sm', color:'warning'}}>{message}</Typography>
         </Stack>
     );
@@ -133,15 +133,16 @@ Header.propTypes = {
     enabled: PropTypes.bool
 };
 
-function InternalCollapsibleCheckHeader({title, helpID, children, fieldKey, checkKey, message, initialState, initialStateChecked, panelValue}) {
+function InternalCollapsibleCheckHeader({sx, title, helpID, children, fieldKey, checkKey, message, initialState, initialStateChecked, panelValue}) {
 
     return (
-        <FieldGroupCollapsible header={<Header title={title} helpID={helpID}
+        <FieldGroupAccordionPanel header={<Header title={title} helpID={helpID}
                                                enabled={initialStateChecked}
                                                checkID={checkKey} message={message} panelValue={panelValue}/>}
-                               initialState={initialState} fieldKey={fieldKey} headerStyle={HeaderFont}>
+                                  sx={{'.MuiAccordionDetails-content': { ml: 3, }, ...sx}}
+                                          initialState={initialState} fieldKey={fieldKey} headerStyle={HeaderFont}>
             {children}
-        </FieldGroupCollapsible>
+        </FieldGroupAccordionPanel>
 
     );
 }
@@ -159,18 +160,18 @@ export function makeCollapsibleCheckHeader(base) {
             collapsibleCheckHeaderKeys:  [panelKey,panelCheckKey],
         };
 
-    retObj.CollapsibleCheckHeader= ({title,helpID,message,initialStateOpen, initialStateChecked,children}) => {
+    retObj.CollapsibleCheckHeader= ({sx, title,helpID,message,initialStateOpen, initialStateChecked,children}) => {
         const [getPanelActive, setPanelActive] = useFieldGroupValue(panelCheckKey);// eslint-disable-line react-hooks/rules-of-hooks
         const [getPanelOpenStatus, setPanelOpenStatus] = useFieldGroupValue(panelKey);// eslint-disable-line react-hooks/rules-of-hooks
         const isActive= getPanelActive() === panelValue;
         retObj.isPanelActive= () => getPanelActive() === panelValue;
         retObj.setPanelActive= (active) => setPanelActive(active ? panelValue : '');
-        retObj.isPanelOpen= () => getPanelOpenStatus() === 'open';
-        retObj.setPanelOpen= (open) => setPanelOpenStatus(open?'open':'close');
+        retObj.isPanelOpen= () => getPanelOpenStatus();
+        retObj.setPanelOpen= (open) => setPanelOpenStatus(open);
         return (
-            <InternalCollapsibleCheckHeader {...{title, helpID, checkKey:panelCheckKey, fieldKey:panelKey,
+            <InternalCollapsibleCheckHeader {...{sx, title, helpID, checkKey:panelCheckKey, fieldKey:panelKey,
                                             message: isActive ? message:'', initialStateChecked, panelValue,
-                                            initialState:{value: initialStateOpen ? 'open' : 'close'}}} >
+                                            initialState:{value: initialStateOpen}}} >
                 {children}
             </InternalCollapsibleCheckHeader>
         );
@@ -233,12 +234,14 @@ function GotoPanelButton({currentPanel, setNextPanel}) {
     );
 }
 
-export function TableTypeButton({lockToObsCore, setLockToObsCore}) {
+export function TableTypeButton({sx, lockToObsCore, setLockToObsCore}) {
     const options= [ {label:'Use Image Search (ObsTAP)', value:OBSCORE}];
-    const tooltip= lockToObsCore ? 'Selected anb image Search' : 'Selected search for catalog or other tables';
+    const tooltip= lockToObsCore ? 'Selected and image Search' : 'Selected search for catalog or other tables';
 
     return (
         <CheckboxGroupInputFieldView  {...{
+            sx,
+            type:'switch',
             options,
             tooltip,value:lockToObsCore?OBSCORE:'', labelWidth:1,
             onChange: () => setLockToObsCore(!lockToObsCore)

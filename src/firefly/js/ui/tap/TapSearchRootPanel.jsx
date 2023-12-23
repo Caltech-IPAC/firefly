@@ -1,7 +1,9 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {once, set} from 'lodash';
+import {Box, Button, Stack, Switch, Typography} from '@mui/joy';
+import {once} from 'lodash';
+import {shape,object,bool} from 'prop-types';
 import React, {useEffect, useRef, useState} from 'react';
 import FieldGroupUtils, {getFieldVal, setFieldValue} from 'firefly/fieldGroup/FieldGroupUtils.js';
 import {makeSearchOnce} from 'firefly/util/WebUtil.js';
@@ -11,30 +13,26 @@ import {ExtraButton, FormPanel} from 'firefly/ui/FormPanel.jsx';
 import {ValidationField} from 'firefly/ui/ValidationField.jsx';
 import {intValidator} from 'firefly/util/Validate.js';
 import {FieldGroup} from 'firefly/ui/FieldGroup.jsx';
-import CreatableSelect from 'react-select/creatable';
 import {makeTblRequest, setNoCache} from 'firefly/tables/TableRequestUtil.js';
 import {dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
 import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil.jsx';
 import {dispatchHideDialog} from 'firefly/core/ComponentCntlr.js';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr.js';
+import {InputField} from '../InputField.jsx';
+import {ListBoxInputFieldView} from '../ListBoxInputField.jsx';
 import {
     ConstraintContext, getTapUploadSchemaEntry, getUploadServerFile, getUploadTableName,
-    getHelperConstraints, getUploadConstraint,
-    isTapUpload
+    getHelperConstraints, getUploadConstraint, isTapUpload
 } from './Constraints.js';
 
 import {makeColsLines, tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints.jsx';
-import {commonSelectStyles, selectTheme} from 'firefly/ui/tap/Select.jsx';
 import {
     getMaxrecHardLimit, tapHelpId, getTapServices,
     loadObsCoreSchemaTables, maybeQuote, defTapBrowserState, TAP_UPLOAD_SCHEMA, getAsEntryForTableName,
 } from 'firefly/ui/tap/TapUtil.js';
-import {SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
+import {AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 import {PREF_KEY} from 'firefly/tables/TablePref.js';
-import {Box} from '@mui/joy';
-
-
 
 export const TAP_PANEL_GROUP_KEY = 'TAP_PANEL_GROUP_KEY';
 const SERVICE_TIP= 'Select a TAP service, or type to enter the URL of any other TAP service';
@@ -192,25 +190,13 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
 
 }
 
-
-const extStyles= {display: 'inline-block', fontWeight: 'bold'};
-
-const tableSelectStyleEnhancedTemplate= {
-    ...commonSelectStyles,
-    singleValue: (provided, {data: {labelOnly=''}}) => ({
-        ...provided,
-        ':before': {
-            ...extStyles, content: `"${labelOnly}"`, marginRight: 8, height: 12, width: `${labelOnly.length*.65}em`,
-        },
-    }),
-    option: (provided, {data: {labelOnly=''}}) => ({
-        ...provided, ':before': {...extStyles, content: `"${labelOnly}"`, marginRight: 8, width: 100},
+TapSearchPanel.propTypes= {
+    titleOn: bool,
+    initArgs: shape({
+        searchParams: object,
+        urlApi: object,
     }),
 };
-
-const makePlaceHolderBeforeStyle= (l) =>
-    ({ ...extStyles, content: `"Using ${l}"`, height: 10, width: `${(l.length+7)*.6}em`});
-
 
 
 function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setServicesShowing, onTapServiceOptionSelect, tapOps, titleOn=true, selectBy, setSelectBy}) {
@@ -232,7 +218,7 @@ function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setSer
     return (
         <FieldGroup groupKey={TAP_PANEL_GROUP_KEY} keepState={true} style={{flexGrow: 1, display: 'flex'}}>
             <div className='TapSearch'>
-                {titleOn && <div className='TapSearch__title'>TAP Searches</div>}
+                {titleOn &&<Typography {...{level:'h3', sx:{m:1} }}> TAP Searches </Typography>}
                 <Services {...{serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect}}/>
                 { selectBy === 'adql' ?
                     <AdqlUI {...{serviceUrl, servicesShowing, setServicesShowing, setSelectBy}}/> :
@@ -245,15 +231,8 @@ function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setSer
 }
 
 function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect} ) {
-    const label= (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.labelOnly)) || '';
-    const placeholder = serviceUrl ? `${serviceUrl} - Replace...` : 'Select TAP...';
     const [extraStyle,setExtraStyle] = useState({overflow:'hidden'});
-
-    const tableSelectStyleEnhanced= {
-        ...tableSelectStyleEnhancedTemplate,
-        placeholder: (provided) => ({ ...provided, ':before': makePlaceHolderBeforeStyle(label) })
-    };
-    const title= <div style={{width:170}}>{'Select TAP Service'}</div>;
+    const [enterUrl,setEnterUrl]=  useState(false);
 
     useEffect(() => {
         if (servicesShowing) {
@@ -270,16 +249,66 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
             style={{height: servicesShowing?62:0, justifyContent:'space-between', alignItems:'center',...extraStyle}}
             title={SERVICE_TIP}>
             <div style={{display:'flex', alignItems:'center', width:'100%'}}>
-                <SectionTitle helpId='tapService' tip={SERVICE_TIP} title={title}/>
-                <div style={{flexGrow: 1, marginRight: 3, maxWidth: 1000,  zIndex: 9999}}>
-                    <CreatableSelect
-                        options={tapOps} isClearable={true} onChange={onTapServiceOptionSelect}
-                        placeholder={placeholder} theme={selectTheme} styles={ tableSelectStyleEnhanced}/>
-                </div>
+                <Typography {...{level:'h4', color:'primary', sx:{width:'16rem', mr:1} }}>
+                    Select TAP Service
+                </Typography>
+                <Stack {...{direction:'row', spacing:2}}>
+                    {enterUrl ? (
+                            <InputField orientation='horizontal'
+                                        placeholder='Enter TAP Url'
+                                        value={serviceUrl}
+                                        actOn={['enter']}
+                                        tooltip='enter TAP URL'
+                                        slotProps={{input:{sx:{width:'60rem'}}}}
+                                        onChange={(val) => onTapServiceOptionSelect(val)}
+                            />
+                    ) : (
+                        <ListBoxInputFieldView {...{
+                            sx:{'.MuiSelect-root':{width:'60rem'}},
+                            options:tapOps, value:serviceUrl,
+                            placeholder:'Choose TAP Service...',
+                            startDecorator:!tapOps.length ? <Button loading={true}/> : undefined,
+                            onChange:(ev, value) => {
+                                onTapServiceOptionSelect({value});
+                            },
+                            renderValue:
+                                ({value}) =>
+                                    (<ServiceOpRender {...{ ops: tapOps, value}}/>),
+                            decorator:
+                                (label,value) => (<ServiceOpRender {...{ ops: tapOps, value}}/>),
+                        }} /> )}
+
+                    <Switch {...{ size:'sm', endDecorator: enterUrl? 'enter URL' : 'Use TAP List', checked:enterUrl,
+                        onChange: (ev) => {
+                            setEnterUrl(ev.target.checked);
+                        },
+                        }} />
+
+                </Stack>
             </div>
         </div>
     );
 }
+
+
+function ServiceOpRender({ops, value, sx}) {
+    const op = ops.find((t) => t.value === value);
+    if (!op) return 'none';
+    return (
+        <Stack {...{alignItems:'flex-start', sx}}>
+            <Stack {...{direction:'row', spacing:1, alignItems:'center'}}>
+                <Typography level='title-lg'>
+                    {`${op.labelOnly}: `}
+                </Typography>
+                <Typography level='body-lg' >
+                    {op.value}
+                </Typography>
+            </Stack>
+        </Stack>
+    );
+}
+
+
 
 function makeExtraWidgets(initArgs, selectBy, setSelectBy, tapBrowserState) {
     const extraWidgets = [

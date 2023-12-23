@@ -1,4 +1,4 @@
-import {Button, Stack, Typography} from '@mui/joy';
+import {Button, Chip, Stack, Typography} from '@mui/joy';
 import React, {useState, useEffect} from 'react';
 import {cloneDeep, get, isEmpty,} from 'lodash';
 
@@ -44,13 +44,13 @@ export function TableColumnsConstraintsToolbar({columnsModel}) {
 
     const resetButton = () => {
         return (
-            <Button
+            <Chip
                     title='Reset Column Selections & Constraints to the default columns and no constraints'
                     onClick={ () => {
                         const tblModel = reorganizeTableModel(columnsModel, COLS_TO_DISPLAY_FIRST, true);
                         dispatchTableAddLocal(tblModel, {}, false);
                     }}>Reset Column Selections & Constraints
-            </Button>
+            </Chip>
         );
     };
 

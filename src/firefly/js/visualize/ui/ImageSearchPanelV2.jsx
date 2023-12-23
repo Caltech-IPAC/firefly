@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Sheet, Stack, Typography} from '@mui/joy';
+import {Box, Sheet, Stack, Typography} from '@mui/joy';
 import {get, includes, isNil, isString} from 'lodash';
-import PropTypes from 'prop-types';
+import PropTypes, {bool, object, shape, string} from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {dispatchHideDialog, dispatchShowDialog} from '../../core/ComponentCntlr.js';
@@ -46,9 +46,6 @@ import {getPlotViewById} from '../PlotViewUtil.js';
 import VisUtil from '../VisUtil';
 import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {FG_KEYS, FD_KEYS} from './UIConst';
-
-import './ImageSearchPanelV2.css';
-
 
 var imageMasterData;        // latest imageMasterData retrieved from server
 const scrollDivId = 'ImageSearchScroll';
@@ -146,14 +143,13 @@ export function ImageSearchDropDown({gridSupport, resizable=false, initArgs}) {
 
 function GridSupport() {
     return (
-        <FieldGroup className='ImageSearch__section' groupKey={FG_KEYS.main} keepState={true}>
-            <div className='ImageSearch__section--title' style={{width: 138}}>Add to new grid cell</div>
-            <CheckboxGroupInputField
-                fieldKey='createNewCell'
-                options={[{label: '', value: 'newCell'}]}
-                labelWidth = {0}
-            />
-        </FieldGroup>
+        <Sheet {...{variant:'outlined', sx:{py:1}}}>
+            <FieldGroup groupKey={FG_KEYS.main} keepState={true} sx={{m:1}} >
+                <CheckboxGroupInputField fieldKey='createNewCell'
+                    options={[{label: 'Add to new grid cell', value: 'newCell'}]}
+                />
+            </FieldGroup>
+        </Sheet>
     );
 }
 
@@ -211,7 +207,7 @@ function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiS
             });
     }, []);
 
-    const {wp,type, radius}= initArgs?.searchParams ?? {};
+    const {wp,type}= initArgs?.searchParams ?? {};
     const [, setTarget]= useFieldGroupValue(DEF_TARGET_PANEL_KEY,FG_KEYS.targetSelect);
     const [, setType]= useFieldGroupValue(FD_KEYS.type,FG_KEYS.main);
     useEffect(() => {
@@ -228,7 +224,7 @@ function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiS
     multiSelect = !isThreeColorImgType && multiSelect;
 
     const pStyle = noScroll ? {} : {overflow: 'auto', height: 1};
-
+    
     if (showError) {
         return (
             <div style={{width:500}}>
@@ -240,7 +236,7 @@ function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiS
     } else if (imageMasterData) {
         return (
             <div className='flex-full' style={{position: 'relative'}}>
-                <Typography {...{color:'neutral', level:'h3'}}>{title}</Typography>
+                <Typography {...{color:'neutral', level:'h4'}}>{title}</Typography>
                 <div className='flex-full' style={pStyle} id={scrollDivId}>
                     <ImageType/>
                     {isThreeColorImgType &&
@@ -252,14 +248,23 @@ function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiS
             </div>
         );
     } else {
-        return <div className='ImageSearch__mask'> <div className='loading-mask'/> </div>;
+        return (
+            <Box sx={{position: 'absolute', left: 0, top: 0, width: 1, height: 1}}>
+                <div className='loading-mask'/>
+            </Box>
+        );
     }
 }
 
 ImageSearchPanelV2.propTypes = {
-    title:       PropTypes.string,
-    archiveName: PropTypes.string,
-    multiSelect: PropTypes.bool
+    title:       string,
+    archiveName: string,
+    multiSelect: bool,
+    noScroll: bool,
+    initArgs: shape({
+        searchParams: object,
+        urlApi: object,
+    }),
 };
 
 function SingleChannel({groupKey, imageMasterData, multiSelect, archiveName, noScroll}) {
@@ -304,7 +309,9 @@ function HiPSImage({groupKey, archiveName, imageMasterData, initArgs}) {
 }
 HiPSImage.propTypes = {
     groupKey: PropTypes.string,
-    archiveName: PropTypes.string
+    archiveName: PropTypes.string,
+    initArgs: PropTypes.object,
+    imageMasterData: PropTypes.object,
 };
 
 function ImageType({}) {
@@ -359,7 +366,7 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
 
     return (
         <Stack flexGrow={1}>
-            <Sheet {...{variant:'outlined', sx:{mx:0,py:1}}}>
+            <Sheet {...{variant:'outlined', sx:{position:'static', mx:0,py:1,mt:1/2}}}>
                 <Stack {...{direction:'row', justifyContent:'flex-start', alignItems:'center', spacing:2}}>
                     <Typography {...{px:1, width:200, color:'primary', level:'title-md'}}>2. Select Image Source</Typography>
                     <RadioGroupInputField
@@ -396,8 +403,8 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
     const initUnit = isHips ? 'deg' : 'arcsec';
 
     return (
-        <div className='flex-full'>
-            <Sheet {...{variant:'outlined', sx:{mx:0,py:1, flexGrow:0}}}>
+        <Sheet className='flex-full' sx={{position:'static',mt:1/2}}>
+            <Sheet {...{position:'static', variant:'outlined', sx:{py:1, flexGrow:0}}}>
                 <Stack direction={'row'} >
                     <Typography {...{px:1, width:200, color:'primary', level:'title-md'}}>3. Select Target</Typography>
                     <FieldGroup groupKey={FG_KEYS.targetSelect} keepState={true}>
@@ -423,32 +430,33 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
             </Sheet>
             {isHips ?
                 <HiPSImageSelect groupKey={groupKey} /> :
-                <div className='ImageSearch__section' style={{ display: 'flex', flexDirection: 'column', padding: 'unset', flexGrow: 1}}>
-                    <Typography {...{px:1, color:'primary', level:'title-md'}}>4. Select Data Set</Typography>
-                    <ImageSelect style={{flexGrow: 1, width: '100%'}} key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect, scrollDivId: !noScroll && scrollDivId}} />
-                </div>
+                <Sheet {...{variant:'outlined', sx:{position:'static', mt:1/2,py:1}}}>
+                    <Stack>
+                        <Typography {...{px:1, color:'primary', level:'title-md'}}>4. Select Data Set</Typography>
+                        <ImageSelect key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect, scrollDivId: !noScroll && scrollDivId}} />
+                    </Stack>
+                </Sheet>
             }
-        </div>
+        </Sheet>
     );
 }
 
 
 function SelectUpload() {
     return (
-        <div className='ImageSearch__section' style={{alignItems: 'center'}}>
-            <div className='ImageSearch__section--title'>3. Select Image</div>
-            <FileUpload
-                fieldKey='fileUpload'
-                initialState= {{tooltip: 'Select a image to upload' }}
-            />
-        </div>
+        <Sheet variant='outlined' sx={{mt: 1/2, py:1, width:'100%', display:'flex', flexDirection:'column', flex:'1 1 auto'}}>
+            <Stack direction='row' spacing={2}>
+                <Typography {...{px:1, width:200, color:'primary', level:'title-md'}}>3. Select Image</Typography>
+                <FileUpload fieldKey='fileUpload' initialState= {{tooltip: 'Select a image to upload' }} />
+            </Stack>
+        </Sheet>
     );
 }
 
 function SelectWorkspace() {
     return (
         <div className='ImageSearch__section' style={{alignItems: 'center'}}>
-            <div className='ImageSearch__section--title'>3. Select Image</div>
+            <Typography {...{px:1, color:'primary', level:'title-md'}}>3. Select Image</Typography>
             <WorkspaceUpload
                 preloadWsFile={false}
                 fieldKey='wsFilepath'
@@ -460,14 +468,12 @@ function SelectWorkspace() {
 
 function SelectUrl() {
     return (
-        <div className='ImageSearch__section' style={{height: 35, alignItems: 'center'}}>
-            <div className='ImageSearch__section--title'>3. Enter URL</div>
-            <ValidationField
-                labelWidth={150}
-                style={{width: 475}}
-                fieldKey='txURL'
-            />
-        </div>
+        <Sheet variant='outlined' sx={{mt:1/2, py:1, width:'100%', display:'flex', flexDirection:'column', flex:'1 1 auto'}}>
+            <Stack direction='row' spacing={2}>
+                <Typography {...{px:1, color:'primary', level:'title-md'}}>3. Enter URL</Typography>
+                <ValidationField labelWidth={150} sx={{width: .8}} fieldKey='txURL' />
+            </Stack>
+        </Sheet>
     );
 }
 
