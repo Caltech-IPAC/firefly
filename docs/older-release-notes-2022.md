@@ -63,7 +63,7 @@
 
 #### UI Enhancements
 - Charts support multiple charts from different tables [Firefly-994](https://github.com/Caltech-IPAC/firefly/pull/1229)
-- Aitoff HiPS [Firefly-978](https://github.com/Caltech-IPAC/firefly/pull/1207)
+- Aitoff HiPS [Firefly-968](https://github.com/Caltech-IPAC/firefly/pull/1207)
 - Improved dynamic field generation in service descriptors [Firefly-997](https://github.com/Caltech-IPAC/firefly/pull/1226)
 - Support HiPs based target selection [Firefly-980](https://github.com/Caltech-IPAC/firefly/pull/1227)
 - Filters are on for all search tables [Firefly-971](https://github.com/Caltech-IPAC/firefly/pull/1213)
