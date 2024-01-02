@@ -3,18 +3,19 @@
 
 
 ## Version 2022.3
-- 2022.3.2 (March 2023)
+- 2022.3.2 - (March 2023)
   - docker tag: `2022.3`, `2022.3.2`
-- 2022.3.1 (Jan 2023)
+- 2022.3.1 - (Jan 2023)
   - docker tag: `2022.3`, `2022.3.1`
 - 2022.3.0 - (Dec 2022)
   - docker tag: `2022.3.0`
 
 ### _Notes_
-#### This release some significant new features and code clean up
+
+#### This release has some significant new features and code clean up
 
 #### New Features
-- Spectral Charts support combining spectra [Firefly-1041](https://github.com/Caltech-IPAC/firefly/pull/1274)
+- Spectral Charts support combining spectra: [Firefly-1041](https://github.com/Caltech-IPAC/firefly/pull/1274)
 - Click to Search: [Firefly-1086](https://github.com/Caltech-IPAC/firefly/pull/1275)
 - Derived columns in tables: [Firefly-1042](https://github.com/Caltech-IPAC/firefly/pull/1283)
 
@@ -27,17 +28,17 @@
 - TAP panel stability and features: [Firefly-1115](https://github.com/Caltech-IPAC/firefly/pull/1286)
 
 #### Infrastructure Enhancements
-- Plot.ly updated to 2.18.0 [Firefly-1079](https://github.com/Caltech-IPAC/firefly/pull/1272)
-- Improved status page with version [Firefly-1116](https://github.com/Caltech-IPAC/firefly/pull/1295)
+- Plot.ly updated to 2.18.0: [Firefly-1079](https://github.com/Caltech-IPAC/firefly/pull/1272)
+- Improved status page with version: [Firefly-1116](https://github.com/Caltech-IPAC/firefly/pull/1295)
 
-##### _Patches 2022.3_
+### _Patches 2022.3_
 - 2022.3.1
   - fixed an undefined exception when SearchActions are empty
 - 2022.3.2
   - Updates for neowise year 9 release [PR](https://github.com/Caltech-IPAC/firefly/pull/1329)
   - fixed: in certain cases multi-product view navigation not working when non-dataproduct tables are showing [Firefly-1182](https://github.com/Caltech-IPAC/firefly/pull/1329)
 
-##### _Pull Requests in this release_
+### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2022.3+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2022.3+)
 
@@ -63,9 +64,9 @@
 
 #### UI Enhancements
 - Charts support multiple charts from different tables [Firefly-994](https://github.com/Caltech-IPAC/firefly/pull/1229)
-- Aitoff HiPS [Firefly-978](https://github.com/Caltech-IPAC/firefly/pull/1207)
+- Aitoff HiPS [Firefly-968](https://github.com/Caltech-IPAC/firefly/pull/1207)
 - Improved dynamic field generation in service descriptors [Firefly-997](https://github.com/Caltech-IPAC/firefly/pull/1226)
-- Support HiPs based target selection [Firefly-980](https://github.com/Caltech-IPAC/firefly/pull/1227)
+- Support HiPS-based target selection [Firefly-980](https://github.com/Caltech-IPAC/firefly/pull/1227)
 - Filters are on for all search tables [Firefly-971](https://github.com/Caltech-IPAC/firefly/pull/1213)
 - Improved large table loading performance [Firefly-978](https://github.com/Caltech-IPAC/firefly/pull/1206)
 
@@ -82,7 +83,7 @@
 - Multiple table related bugs
 
 
-##### _Patches 2022.2_
+### _Patches 2022.2_
 - 2022.2.1
   - Added IPAC Logo to version dialog ([Firefly-1037](https://github.com/Caltech-IPAC/firefly/pull/1225))
   - Stretch dropdown shows checkbox if stretch selected ([Firefly-1029](https://github.com/Caltech-IPAC/firefly/pull/1225))
@@ -116,7 +117,7 @@
 
 
 
-##### _Pull Requests in this release_
+### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2022.2+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2022.2+)
 
@@ -153,11 +154,11 @@
 - _Build_: Improved docker environment [Firefly-924](https://github.com/Caltech-IPAC/firefly/pull/1166)
 
 
-##### _Pull Requests in this release_
+### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2022.1+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2022.1+)
 
-##### _Patches 2022.1_
+### _Patches 2022.1_
 - 2022.1.1
   - Fixed: Not packaging proprietary data correctly ([IRSA-4570,IRSA-4571](https://github.com/Caltech-IPAC/firefly/pull/1209))
      
