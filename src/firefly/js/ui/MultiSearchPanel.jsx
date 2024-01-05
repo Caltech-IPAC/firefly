@@ -11,6 +11,7 @@ import {CatalogSelectViewPanel} from 'firefly/visualize/ui/CatalogSelectViewPane
 import {FileUploadDropdown} from 'firefly/ui/FileUploadDropdown.jsx';
 import {getAppOptions} from 'firefly/api/ApiUtil.js';
 import {dispatchComponentStateChange} from 'firefly/core/ComponentCntlr.js';
+import {Sheet, Stack, Typography} from '@mui/joy';
 
 const multiSearchComponents= [
     {
@@ -85,19 +86,17 @@ export function setMultiSearchPanelTab(setId) {
 export function MultiSearchPanel({initArgs={}}) {
 
     return (
-        <div style={{padding: '15px 5px 0 5px', flex:'1 1 0', position:'relative'}}>
-            <div style={{fontSize:'large', fontWeight: 'bold', position:'absolute', left: 5, top: 6, alignSelf: 'center' }}>
+        <Stack flexGrow={1}>
+            <Typography color='neutral' level='h3'>
                 Table Search
-            </div>
-            <StatefulTabs componentKey='MultiCatalogTabs' defaultSelected={getDefTabIdx(initArgs)}
-                          borderless={true} useFlex={true} style={{flex: '1 1 0', height: '100%'}}
-                          label={<div style={{paddingLeft: 150}}/>}>
+            </Typography>
+            <StatefulTabs componentKey='MultiCatalogTabs' defaultSelected={getDefTabIdx(initArgs)}>
                 {getComponentAry().map( ({id, title,tip,Component}) => (
-                    <Tab name={tip} id={id} key={id} label={makeTabLabel(title)}>
+                    <Tab name={tip} id={id} key={id} label={title}>
                         <Component initArgs={initArgs}/>
                     </Tab>
                 )) }
             </StatefulTabs>
-        </div>
+        </Stack>
     );
 }

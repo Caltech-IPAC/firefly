@@ -5,7 +5,7 @@
 import React, {useRef, useCallback, useState, useEffect} from 'react';
 import {Cell} from 'fixed-data-table-2';
 import {set, get, omit, isEmpty, isString, toNumber} from 'lodash';
-import {Typography, Checkbox, Stack, Box, Link, Sheet} from '@mui/joy';
+import {Typography, Checkbox, Stack, Box, Link, Sheet, Button} from '@mui/joy';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
 import {
@@ -323,7 +323,7 @@ function findTableFor(element) {
     return cEl;
 }
 
-export function ContentEllipsis({children, text, style={}, actions=[]}) {
+export function ContentEllipsis({children, text, sx, actions=[]}) {
 
     const [hasActions, setHasActions] = useState(false);
     const actionsEl = useRef(null);
@@ -349,12 +349,13 @@ export function ContentEllipsis({children, text, style={}, actions=[]}) {
         hideDropDown(dropDownID);
     };
 
+    const buttonProps = {variant:'plain', size:'sm', fullWidth:true, color:'neutral', sx:{whiteSpace:'nowrap'}};
     const dropDown =  (
-        <div className='Actions__dropdown'>
-            <div className='Actions__item' onClick={copyCB}>Copy to clipboard</div>
-            <div className='Actions__item' onClick={viewAsText}>View as plain text</div>
-            {actions?.map((text, action) => <div className='Actions__item' onClick={action}>{text}</div>)}
-        </div>
+        <Stack p={1/4} spacing={1/4}>
+            <Button {...buttonProps} onClick={copyCB}>Copy to clipboard</Button>
+            <Button {...buttonProps} onClick={viewAsText}>View as plain text</Button>
+            {actions?.map((text, action) => <Button {...buttonProps} onClick={action}>{text}</Button>)}
+        </Stack>
     );
 
     const checkOverflow = (ev) => {
@@ -364,10 +365,20 @@ export function ContentEllipsis({children, text, style={}, actions=[]}) {
     };
 
     return (
-        <div onMouseEnter={checkOverflow} onMouseLeave={() => setHasActions(false)} style={{display: 'flex', position: 'relative', overflow: 'hidden', ...style}}>
+        <Stack direction='row'  overflow='hidden' alignItems='center' sx={sx}
+               onMouseEnter={checkOverflow} onMouseLeave={() => setHasActions(false)}
+        >
             {React.Children.only(children)}
-            {hasActions && <div ref={actionsEl} className='Actions__anchor clickable' style={style} onClick={onActionsClicked} title='Display full cell contents'>&#x25cf;&#x25cf;&#x25cf;</div>}
-        </div>
+            {hasActions &&
+                <Link ref={actionsEl}
+                      variant='soft'
+                      level='body-xs'
+                      underline='none'
+                      sx={{position: 'absolute', right:1}}
+                      onClick={onActionsClicked} title='Display full cell contents'
+                >&#x25cf;&#x25cf;&#x25cf;</Link>
+            }
+        </Stack>
     );
 }
 

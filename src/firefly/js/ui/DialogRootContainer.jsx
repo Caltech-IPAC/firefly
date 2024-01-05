@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Sheet} from '@mui/joy';
+import {Sheet, Stack} from '@mui/joy';
 import React, {memo, useEffect, useState, PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {createRoot} from 'react-dom/client';
@@ -54,7 +54,7 @@ export function showDropDown({id='',content, style={}, atElRef, locDir, wrapperS
     reactRoots.set(divElement,root);
 
     const rootZindex= atElRef && computeZIndex(atElRef);
-    if (rootZindex) ddDiv.style.zIndex= rootZindex;
+    if (rootZindex) ddDiv.style.zIndex ??= rootZindex;
     root.render(
         <FireflyRoot>
             <DropDown {...{id, content, style, atElRef, locDir, boxEl}}/>
@@ -113,10 +113,7 @@ function DropDown ({id, content, style={}, locDir, atElRef, boxEl}) {
 
     const myStyle = Object.assign({ backgroundColor: '#FBFBFB',
             ...pos,
-            padding: 3,
             boxShadow: '#c1c1c1 1px 1px 5px 0px',
-            borderRadius: '0 3px',
-            border: '1px solid #c1c1c1',
             position: 'absolute'},
         style);
     const stopEvent = (e) => {
@@ -125,9 +122,9 @@ function DropDown ({id, content, style={}, locDir, atElRef, boxEl}) {
     };
 
     return (
-        <div className='rootStyle' style={myStyle} onClick={stopEvent}>
+        <Stack style={myStyle} onClick={stopEvent}>
             {content}
-        </div>
+        </Stack>
     );
 }
 

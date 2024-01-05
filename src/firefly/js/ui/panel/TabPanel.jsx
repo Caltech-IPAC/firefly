@@ -3,7 +3,13 @@
  */
 
 import React, {memo, useEffect, useState, useCallback, useRef} from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, {object, shape} from 'prop-types';
+import {
+    Tab as JoyTab,
+    Tabs as JoyTabs,
+    TabPanel as JoyTabPanel,
+    TabList, ListItemDecorator, Box, Chip, Stack, Sheet} from '@mui/joy';
+import {tabClasses} from '@mui/joy/Tab';
 import sizeMe from 'react-sizeme';
 import {omit, isString, uniqueId} from 'lodash';
 
@@ -16,208 +22,107 @@ import {getCellValue, getTblById, watchTableChanges} from '../../tables/TableUti
 import {TABLE_FILTER, TABLE_HIGHLIGHT, TABLE_SORT} from '../../tables/TablesCntlr.js';
 
 import './TabPanel.css';
-import {dispatchChartUpdate} from '../../charts/ChartsCntlr.js';
 
 
-export function uniqueTabId() {
-    return `TapPanel-${uniqueId()}`;
-}
+/*---------------------------------------------------------------------------------------------
+There are several type of Tab panels, each with slightly different behavior and use case.
+
+TabPanel:   TabPanel is a basic functional component designed to work exclusively with props.
+            This allow users of this component the flexibility to handle their own states if needed.
+
+Tabs:       A TabPanel with internal state.  State will be lost after unmount.
+
+StatefulTabs:  TabPanel with state backed by ComponentCntlr.
+               Selected state is stored as <componentKey>.selectedIdx.
+
+FieldGroupTabs:  TabPanel with state backed by FieldGroup
+                 The selected index is saved as the value of the field named by fieldKey
+----------------------------------------------------------------------------------------------*/
+
 
 /**
- * There are 4 implementations of TabPanel:  Tabs, TabsView, StatefulTabs, and FieldGroupTabs
- * See each component description below for more details.
+ * @param {object} p
+ * @param p.value           value of ID of the selected tab
+ * @param p.onTabSelect     callback function on tab select change
+ * @param p.tabId           unique ID to identify this tab panel
+ * @param p.showOpenTabs    true to render a dropdown that display all tabs with the ability to switch between them
+ * @param p.actions         additional actions rendered as a button at the right end of the tab panel
+ * @param p.slotProps       properties to insert into predefined slots of this tab panel
+ * @param p.sx              see JoyUI sx
+ * @param p.children        a set of Tab
+ * @param p.rest            the remaining props intended as pass-along props to Joy Tabs component
+ * @return {node}
+ * @constructor
  */
-const TabsHeaderInternal = React.memo((props) => {
-    const {tabId, children, resizable, headerStyle={}, size, label, onSelect, showOpenTabs, actions} = props;
+export function TabPanel ({value, onTabSelect, tabId=uniqueTabId(), showOpenTabs, actions, slotProps, sx, children, ...rest}) {
 
-    const childrenAry = React.Children.toArray(children);
-    const {width:widthPx} = size;
-    const numTabs = children.length;
-    let maxTitleWidth = undefined;
-    let sizedChildren = children;
-    if (widthPx && resizable) {
-        // 2*5px - border, for each tab: 2x1px - border, 2x6px - padding, 6px - left margin
-        const availableWidth = widthPx - 25 - 20 * numTabs;
-        maxTitleWidth = Math.min(200, Math.trunc(availableWidth / numTabs));
-        if (maxTitleWidth < 0) { maxTitleWidth = 1; }
-        sizedChildren = childrenAry.map((child) => {
-            return React.cloneElement(child, {maxTitleWidth});
-        });
-    }
-    const style = {display: 'flex', flexShrink: 0, height: 20, ...headerStyle};
-    const layoutLabel= isString(label) ? <div style={{padding: '0 10px 0 5px'}}>{label}</div> : label;
+    const {useFlex, resizable, borderless,
+        style={}, headerStyle, contentStyle={}, label, size, ...joyTabsProps} = rest;     // these are deprecated.  the rest(joyTabsProps) are pass-along props to Tabs.
 
     const arrowEl = useRef(null);
-    const showTabs = (ev) => handleOpenTabs({ev, doOpen: !isDropDownShowing(tabId), tabId, onSelect, arrowEl, childrenAry});
 
-    const titles = getTabTitles(childrenAry).join();
     useEffect( ()=> {
         if (isDropDownShowing(tabId)) handleOpenTabs({tabId, doOpen: false});
-    }, [tabId, titles]);
+    }, [tabId]);
+
+    // get the content(JoyTabPanel)
+    const childrenAry = React.Children.toArray(children);
+    const tabContents = childrenAry.map((c, idx) => getContentFromTab(c.props, idx, slotProps));
+
+    const showTabs = (ev) => handleOpenTabs({ev, doOpen: !isDropDownShowing(tabId), tabId, onSelect: onTabSelect, arrowEl, childrenAry});
+    const onChange = useCallback((ev, val) => onTabSelect?.(val), []);
+    const tabListVar = slotProps?.tabList?.variant || 'soft';
 
     return (
-        <div style={style}>
-            {label && layoutLabel}
-            <div className='TabPanel__Header' style={{marginRight: 5}}>
-                {(widthPx||!resizable) ? <ul className='TabPanel__Tabs'>
-                    {sizedChildren}
-                </ul> : <div/>}
-                <div style={{display:'inline-flex'}}>
+        <JoyTabs key={tabId}
+                 size='sm'
+                 sx={{height: 1, boxSizing: 'border-box', ...sx}}
+                 aria-label='tabs'
+                 value={value}
+                 onChange={onChange}
+                 variant='outlined'
+                 {...joyTabsProps}
+        >
+            <Sheet component={Stack} direction='row' variant={tabListVar}
+                   sx={{boxShadow: 'inset 0 -1px var(--joy-palette-divider)', position: 'unset', justifyContent: 'space-between'}}
+            >
+                <ResizeTabHeader children={children}/>
+                <Stack direction='row' flexShrink={0}>
                     {actions && actions()}
                     {showOpenTabs && (
-                        <div style={{width: 20, height: 20, marginLeft: 3}}>
-                            <div className='round-btn' onClick={showTabs} ref={arrowEl} title='Search open tabs'>
-                                <div className='arrow-down' style={{borderWidth: '7px 7px 0 7px'}}/>
-                            </div>
-                        </div>
+                        <Chip onClick={showTabs} ref={arrowEl} size='sm' title='Search open tabs' sx={{m:'2px'}}>
+                            <div className='arrow-down'/>
+                        </Chip>
                     )}
-                </div>
-            </div>
-        </div>
+                </Stack>
+            </Sheet>
+            {tabContents}
+        </JoyTabs>
     );
-});
+}
 
-TabsHeaderInternal.propTypes= {
-    resizable: PropTypes.bool,
-    headerStyle: PropTypes.object,
-    label: PropTypes.node,
-    size: PropTypes.object.isRequired,
-    tabId: PropTypes.string,
-    onSelect: PropTypes.func,
-    actions: PropTypes.elementType,
-    showOpenTabs: PropTypes.bool
-};
-
-
-/**
- * Wrapper supporting resize
- */
-const TabsHeader= sizeMe({refreshRate: 16})(TabsHeaderInternal);
-
-
-/*----------------------------- exported components ----------------------------------*/
-
-export const Tab = React.memo( (props) => {
-    const {name, label, selected, onSelect, removable, onTabRemove, id, maxTitleWidth, style={}} = props;
-
-    let tabClassName = 'TabPanel__Tab' ;
-    if (selected) {
-        tabClassName += ' TabPanel__Tab--selected';
-    }
-    const tabTitle = label || name;
-    // removable width: 14px
-    const textStyle = maxTitleWidth ? {float: 'left', width: maxTitleWidth-(removable?14:0)} : {};
-
-    return (
-        <li className={tabClassName} onClick={() => !selected && onSelect(id,name)}>
-            <div style={{height: '100%', ...style}}>
-                <div style={{...textStyle, height: '100%'}} className='text-ellipsis' title={name}>
-                    {tabTitle}
-                </div>
-                {removable &&
-                <div style={{right: -4, top: -2}} className='btn-close'
-                     title='Remove Tab'
-                     onClick={(e) => {
-                         onTabRemove && onTabRemove(name);
-                         e.stopPropagation && e.stopPropagation();
-                     }}/>
-                }
-            </div>
-        </li>);
-});
-
-
-Tab.propTypes= {
-    name: PropTypes.string.isRequired, //public
-    label: PropTypes.node,      // used for tab label.  if not given, name will be used as text.
-    id: PropTypes.string,
-    selected:  PropTypes.bool.isRequired, // private - true is the tab is currently selected
-    onSelect: PropTypes.func, // private - called whenever the tab is clicked
-    removable: PropTypes.bool,
-    onTabRemove: PropTypes.func,
-    maxTitleWidth: PropTypes.number,
-    style: PropTypes.object,
-};
-
-Tab.defaultProps= { selected: false };
-
-
-/*----------------------------------------------------------------------------------------------*/
-/**
- * A strictly presentational(dumb) component.  No state is used.
- * The selected Tab is determine by defaultSelected which can be an index or the 'id' of its Tabs.
- */
-export const TabsView = React.memo((props) => {
-
-    const {children, onTabSelect, defaultSelected, useFlex, resizable, borderless, tabId=uniqueTabId(),
-        style={}, headerStyle, contentStyle={}, label, showOpenTabs, actions} = props;
-
-    const onSelect = useCallback( (index,id,name) => {
-        onTabSelect && onTabSelect(index,id,name);
-    }, []);
-
-    const childrenAry = React.Children.toArray(children);         // this returns only valid children excluding undefined and false values.
-    const selectedIdx = Number.isInteger(defaultSelected) ? defaultSelected : childrenAry.findIndex((c) => c?.props?.id === defaultSelected);    // convert defaultSelected to idx if it's an ID
-
-    const headers = childrenAry.map((child, index) => {
-        return React.cloneElement(child, {
-            selected: (index === selectedIdx),
-            onSelect: onSelect.bind(this, index),
-            key: 'tab-' + (index)
-        });
-    });
-
-    let  content = childrenAry.filter( (c, idx) => idx === selectedIdx).map((c) => React.Children.only(c.props.children));
-    if (content) {
-        content = useFlex ? content : <div style={{display: 'block', position: 'absolute', top:0, bottom:0, left:0, right:0}}>{content}</div>;
-        content = borderless ? content : <div className='TabPanel__Content--inside'>{content}</div>;
-    }
-
-    const contentClsName = borderless ? 'TabPanel__Content borderless' : 'TabPanel__Content';
-    const mainClsName = showOpenTabs ? 'TabPanel__main boxed' : 'TabPanel__main';
-
-    return (
-        <div className={mainClsName} style={style}>
-            <TabsHeader {...{resizable, headerStyle, label, tabId, onSelect, showOpenTabs, actions}}>{headers}</TabsHeader>
-            <div style={contentStyle} className={contentClsName}>
-                {(content) ? content : ''}
-            </div>
-        </div>
-
-    );
-});
-
-
-TabsView.propTypes = {
-    defaultSelected:  PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+TabPanel.propTypes = {
+    tabId: PropTypes.string,            // a unique identifier used as an ID for this component
+    value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     onTabSelect: PropTypes.func,
-    useFlex: PropTypes.bool,
-    resizable: PropTypes.bool,
-    style: PropTypes.object,
-    headerStyle: PropTypes.object,
-    contentStyle: PropTypes.object,
-    borderless: PropTypes.bool,
-    label: PropTypes.node,
+    showOpenTabs: PropTypes.bool,
     actions: PropTypes.elementType,
-    tabId: PropTypes.string
+    sx: PropTypes.object,
+    slotProps: shape({
+        tabList: object,
+        tab: object,            // will inject into each one
+        tabPanel: object        // will inject into each one
+    })
 };
 
-TabsView.defaultProps= {
-    defaultSelected: 0,
-    useFlex: false,
-    resizable: false,
-    borderless: false
-};
 
-
-/*----------------------------------------------------------------------------------------------*/
 /**
- * TabPanel with internal state
- * State will be lost after unload.
+ * Tab panel with internal state
+ * State will be lost after unmount.
  */
-export const Tabs = React.memo( (props) => {
-    const {defaultSelected=0, onTabSelect} = props;
+export const Tabs = React.memo( ({defaultSelected, onTabSelect, ...rest}) => {
 
+    defaultSelected = convertToTabValue(rest.children, defaultSelected);
     const [selectedIdx, setSelectedIdx] = useState(defaultSelected);
 
     let localSelectIdx= selectedIdx; // keep a closure variable because useCallback if memorized not recreated on every render
@@ -230,21 +135,22 @@ export const Tabs = React.memo( (props) => {
         }
     });
 
-    return (<TabsView {...props} defaultSelected={selectedIdx} onTabSelect={onSelect} />);
+    return (<TabPanel {...rest} value={selectedIdx} onTabSelect={onSelect} />);
 });
 
-Tabs.propTypes = TabsView.propTypes;
-Tabs.defaultProps = TabsView.defaultProps;
+Tabs.propTypes = {
+    defaultSelected:  PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    ...omit(TabPanel.propTypes, 'value'),
+};
 
 
-/*----------------------------------------------------------------------------------------------*/
 /**
- * TabPanel with ComponentCntlr supported state
+ * Tab panel with ComponentCntlr supported state
  * Selected state is stored as <componentKey>.selectedIdx
  */
-export const StatefulTabs = React.memo( (props) => {
-    const {children=[], defaultSelected=0, onTabSelect, componentKey} = props;
+export const StatefulTabs = React.memo( ({defaultSelected, onTabSelect, componentKey, ...rest}) => {
 
+    defaultSelected = convertToTabValue(rest.children, defaultSelected);
     let selectedIdx = useStoreConnector( () => getComponentState(componentKey)?.selectedIdx ?? defaultSelected);
 
     const onSelect = useCallback( (index,id,name) => {
@@ -253,40 +159,21 @@ export const StatefulTabs = React.memo( (props) => {
     }, []);
 
     useEffect( ()=> {
-        if (selectedIdx >= children.length) {
+        if (selectedIdx >= rest.children.length) {
             // selectedIdx is greater than the number of tabs.. update store's state
-            selectedIdx = children.length-1;
+            selectedIdx = rest.children.length-1;
             dispatchComponentStateChange(componentKey, {selectedIdx});
         }
     });
 
-    return (<TabsView {...props} onTabSelect={onSelect} defaultSelected={selectedIdx} />);
+    return (<TabPanel {...rest} onTabSelect={onSelect} value={selectedIdx} />);
 
 });
 
 StatefulTabs.propTypes = {
     componentKey: PropTypes.string,
-    ...TabsView.propTypes
+    ...Tabs.propTypes
 };
-StatefulTabs.defaultProps = TabsView.defaultProps;
-
-
-export function switchTab(componentKey, selectedIdx) {
-    dispatchComponentStateChange(componentKey, {selectedIdx});
-}
-
-
-/*----------------------------------------------------------------------------------------------*/
-
-function onChange(idx,id, name, viewProps, fireValueChange) {
-    let value= id||name;
-    if (!value) value= idx;
-
-    fireValueChange({ value});
-    if (viewProps.onTabSelect) {
-        viewProps.onTabSelect(idx, id, name);
-    }
-}
 
 /**
  * TabPanel with FieldGroup supported state
@@ -294,12 +181,23 @@ function onChange(idx,id, name, viewProps, fireValueChange) {
  */
 export const FieldGroupTabs = memo( (props) => {
     const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    viewProps.value = convertToTabValue(props.children, viewProps.value);
+
+    const onChange = useCallback((idx, id, name) => {
+        let value= id||name;
+        if (!value) value= idx;
+
+        fireValueChange({ value});
+        if (viewProps.onTabSelect) {
+            viewProps.onTabSelect(idx, id, name);
+        }
+    }, [viewProps, fireValueChange]);
+
     const newProps= {
         ...viewProps,
         defaultSelected : viewProps.value,
-        useFlex: true,
-        onTabSelect: (idx,id,name) => onChange(idx,id,name,viewProps, fireValueChange)
-        };
+        onTabSelect: onChange
+    };
     return (<Tabs {...newProps} />);
 });
 
@@ -311,8 +209,146 @@ FieldGroupTabs.propTypes = {
     }),
     ...omit(Tabs.propTypes, 'defaultSelected')     //  defaultSelected is not used.. use value for defaultSelected.
 };
-FieldGroupTabs.defaultProps = omit(Tabs.defaultProps, 'defaultSelected');
 
+/*---------------------------------------------------------------------------------------------
+ Exported function and components
+----------------------------------------------------------------------------------------------*/
+
+/**
+ * For backward compatibility, this is a composite of JoyUI's Tab and TabPanel
+ * 'label' is converted to Tab, and 'children' are wrapped inside a Joy TabPanel
+ * It is designed to be used with TabPanel.
+ */
+export const Tab = React.memo( ({label, name, value, startDecorator, removable, onTabRemove}) => {
+    // maxTitleWidth:  deprecated.  default to 400
+    return;
+});
+
+Tab.propTypes = {
+    label:  PropTypes.oneOfType([PropTypes.string, PropTypes.node]),
+    name: PropTypes.string,
+    value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    startDecorator: PropTypes.node,
+    removable: PropTypes.bool,
+    onTabRemove: PropTypes.func,
+};
+
+
+export function switchTab(componentKey, selectedIdx) {
+    dispatchComponentStateChange(componentKey, {selectedIdx});
+}
+
+
+/*---------------------------------------------------------------------------------------------
+ Internal use only
+----------------------------------------------------------------------------------------------*/
+
+const ResizeTabHeader = sizeMe({refreshRate: 16})(TabHeader);
+
+function TabHeader({children, slotProps}) {
+    const toolbarEl = useRef(null);
+    const [maxTitleWidth, setMaxTitleWidth] = useState(400);
+
+
+    const childrenAry = React.Children.toArray(children);
+    // get the headers(Tab)
+    const tabHeaders = childrenAry.map((c, idx) => getHeaderFromTab(c.props, idx, maxTitleWidth));
+
+    const tabListVar = slotProps?.tabList?.variant || 'soft';
+    const activeBg = tabListVar === 'plain' ? 'neutral.softBg' : 'background.surface';
+
+    useEffect(() => {
+        const tbEl = toolbarEl.current;
+        if (tbEl) {
+            const width = tbEl.getBoundingClientRect().width;
+            setMaxTitleWidth( (width/tabHeaders.length) -4 );   // -4 account for margin and padding
+        }
+    }, [toolbarEl?.current?.getBoundingClientRect()?.width]);
+
+    return (
+        <TabList
+            ref={toolbarEl}
+            sx={{
+                flexGrow: 1,
+                overflow: 'auto',
+                scrollSnapType: 'x mandatory',              // make tab snap to the nearest tab
+                '&::-webkit-scrollbar': { display: 'none' },
+                [`& .${tabClasses.root}`]: {
+                    '&[aria-selected="true"]': {            // apply this to the selected tab
+                        bgcolor: activeBg,                  // set tab background to active color
+                        borderColor: 'divider',
+                        '&::before': {                      // this is the strip under the tab to cover the border
+                            content: '""',
+                            display: 'block',
+                            position: 'absolute',
+                            height: 2,
+                            bottom: -2,
+                            left: 0,
+                            right: 0,
+                            bgcolor: activeBg,              // set this to the active color so that it look like it's part of the active tab
+                        },
+                    },
+                },
+            }}
+            {...{variant:tabListVar, ...slotProps?.tabList}}
+        >
+            {tabHeaders}
+        </TabList>
+    );
+}
+
+function getHeaderFromTab({name, value, label, startDecorator, removable, onTabRemove, ...rest}, idx, maxTitleWidth) {
+    const {selected, onSelect, style, id, ...joyTabProps} = rest;     // deprecated; filtered out.
+
+    // to support deprecated props
+    label ??= name;
+    value ??= id ?? idx;
+
+
+    if (isString(label)) {
+        label = <Box title={label} sx={{whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{label}</Box>;
+    }
+
+    return (
+        <JoyTab key={idx} component='div' {...{value, indicatorPlacement:'top', ...joyTabProps}}
+                sx={{
+                    flex: 'none', scrollSnapAlign: 'start',
+                    maxWidth: maxTitleWidth,
+                    minWidth: 100
+                }}
+        >
+            {startDecorator && (
+                <ListItemDecorator>
+                    {startDecorator}
+                </ListItemDecorator>
+            )}
+            {label}
+            {removable &&
+                <Chip variant='soft'
+                      onClick={(e) => {
+                          onTabRemove && onTabRemove(name);
+                          e.stopPropagation && e.stopPropagation();
+                }}>x</Chip>
+            }
+        </JoyTab>
+    );
+}
+
+function getContentFromTab({value, id, children}, idx, slotProps) {
+    value ??= id ?? idx;
+    const props = slotProps?.tabPanel;
+
+    return (
+        <JoyTabPanel key={idx} value={value} sx={{p:1, ...props?.sx}} {...props} >
+            <Stack height={1} width={1}>
+                {children}
+            </Stack>
+        </JoyTabPanel>
+    );
+}
+
+
+/*----------------------------------------------------------------------------------------------*/
 
 function handleOpenTabs({ev, doOpen, tabId, onSelect, childrenAry, arrowEl}) {
     ev?.stopPropagation?.();
@@ -333,10 +369,10 @@ function handleOpenTabs({ev, doOpen, tabId, onSelect, childrenAry, arrowEl}) {
 
         const width = 381;
         const content =  (
-            <div style={{width, height: 200, position: 'relative'}}>
-                <TablePanel tbl_ui_id={tabId+'-ui'} tableModel={tableModel} border={false} showTypes={false}
+            <Stack width={width} height={200} position='relative'>
+                <TablePanel tbl_ui_id={tabId+'-ui'} tableModel={tableModel} showTypes={false}
                             showToolbar={false} showFilters={true} selectable={false} showOptionButton={false}/>
-            </div>);
+            </Stack>);
         showDropDown({id: tabId, content, atElRef: arrowEl.current, locDir: 43,
                     style: {marginLeft: -width+10, marginTop: -4}, wrapperStyle: {zIndex: 110}}); // 110 is the z-index of a dropdown
     } else {
@@ -351,3 +387,19 @@ function getTabTitles(childrenAry) {
     });
 
 }
+
+/**
+ * Old API uses only tab index.  So, this is needed to return the value of the tab defined by `id`.
+ * @param children  the tabs to search
+ * @param value     index of the Tab or the value of that Tab
+ * @return {string|number} the value of the Tab.
+ */
+function convertToTabValue(children, value=0) {
+    return React.Children.toArray(children)[value]?.props.id ?? value;
+}
+
+function uniqueTabId() {
+    return `TapPanel-${uniqueId()}`;
+}
+
+

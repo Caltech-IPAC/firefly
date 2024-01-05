@@ -58,7 +58,7 @@ function MetaContent({tbl_id}) {
 }
 
 
-export function MetaInfo({tbl_id, sx, isOpen=false}) {
+export function MetaInfo({tbl_id, isOpen=false, ...props}) {
     const contentStyle={display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingBottom: 1};
     const collapsiblePanelStyle={width: '100%'};
 
@@ -68,7 +68,7 @@ export function MetaInfo({tbl_id, sx, isOpen=false}) {
     const {keywords, links, params, resources, groups} = getTblById(tbl_id);
 
     return (
-        <Stack sx={sx}>
+        <Stack {...props}>
             { !isEmpty(keywords) &&
             <CollapsiblePanel componentKey={tbl_id + '-meta'} header='Table Meta' style={collapsiblePanelStyle} {...{isOpen, contentStyle}}>
                 {keywords.concat()                                             // make a copy so the original array does not mutate
@@ -161,7 +161,7 @@ export function Keyword({label, value, title, asLink}) {
             <>
                 {label && <Typography level='title-sm' title={title} mr={1/2}>{label}</Typography>}
                 { asLink ? <LinkTag title={value} href={value} /> :
-                    <ContentEllipsis text={value} style={{padding: 1, margin: 'unset'}}><Typography level='body-xs' title={value} noWrap mr={1/2}>{value}</Typography></ContentEllipsis>
+                    <ContentEllipsis text={value} sx={{p: '1px', margin: 'unset'}}><Typography level='body-xs' title={value} noWrap mr={1/2}>{value}</Typography></ContentEllipsis>
                 }
             </>
         );
