@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Button, Stack, Typography} from '@mui/joy';
+import {Chip, Divider, Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 
 import PropTypes from 'prop-types';
@@ -18,10 +18,10 @@ import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {updateSet} from '../util/WebUtil.js';
 import {useFieldGroupValue, useFieldGroupWatch, useStoreConnector} from './SimpleComponent';
 import {FD_KEYS, FG_KEYS} from 'firefly/visualize/ui/UIConst';
+import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 
 import './ImageSelect.css';
 import infoIcon from 'html/images/info-icon.png';
-import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 
 
 const IMG_PREFIX = 'IMAGES_';
@@ -43,7 +43,7 @@ const PROJ_PREFIX = 'PROJ_ALL_';
  *      - the state of these boxes are persistent and is not affected by filtering
  */
 
-export function ImageSelect({style, imageMasterData, groupKey, multiSelect=true, addChangeListener, scrollDivId}) {
+export function ImageSelect({imageMasterData, groupKey, multiSelect=true, addChangeListener, scrollDivId}) {
 
     const [toolbarClz='ImageSelect__toolbar', setToolbarClz] = useState();
 
@@ -51,7 +51,7 @@ export function ImageSelect({style, imageMasterData, groupKey, multiSelect=true,
         addChangeListener && addChangeListener('ImageSelect', fieldsReducer(imageMasterData, groupKey));
         if (scrollDivId) {
             document.getElementById(scrollDivId).onscroll = (e) => {
-                setToolbarClz('ImageSelect__toolbar' + (e.target.scrollTop > 230 ?  ' ImageSelect__toolbar--popup' : ''));
+                setToolbarClz('ImageSelect__toolbar' + (e.target.scrollTop > 285 ?  ' ImageSelect__toolbar--popup' : ''));
             };
         }
     }, [addChangeListener, imageMasterData, groupKey, scrollDivId]);
@@ -65,17 +65,14 @@ export function ImageSelect({style, imageMasterData, groupKey, multiSelect=true,
     const pStyle = scrollDivId ? {flexGrow: 1, display: 'flex'} : {flexGrow: 1, display: 'flex', height: 1};
 
     return (
-        <div style={style} className='ImageSelect'>
+        <Stack>
             <ToolBar className={toolbarClz} {...{filteredImageData, groupKey, onChange: () => setLastMod(new Date().getTime())}}/>
             <div style={pStyle}>
-                <div className='ImageSelect__panels' style={{marginRight: 3, flexGrow: 0}}>
-                    <FilterPanel {...{imageMasterData, groupKey}}/>
-                </div>
-                <div className='ImageSelect__panels' style={{flexGrow: 1}}>
-                    <DataProductList {...{filteredImageData, groupKey, multiSelect}}/>
-                </div>
+                <FilterPanel {...{imageMasterData, groupKey}}/>
+                <Divider orientation='vertical' sx={{m:1}}/>
+                <DataProductList {...{filteredImageData, groupKey, multiSelect}}/>
             </div>
-        </div>
+        </Stack>
     );
 }
 
@@ -192,30 +189,28 @@ function ToolBar({className, filteredImageData, groupKey, onChange}) {
     const allSelect = useStoreConnector(calcSelect);
 
     return (
-        // <div className={className}>
-        <Stack {...{spacing:0, direction:'column', padding:'3px 6px'}}>
-            <div style={{display: 'inline-flex', flexGrow: 1}}>
-                <div style={{width: 155}}>
-                    <Typography {...{level:'body-xs', color:'neutral'}}>Filter By:</Typography>
-                    <Typography {...{level:'body-xs', color:'warning'}}>{pretty(allFilter, 25)}</Typography>
+        <div className={className}>
+            <Stack {...{spacing:0, direction:'column', padding:'3px 6px'}}>
+                <div style={{display: 'inline-flex', flexGrow: 1}}>
+                    <div style={{width: '15rem'}}>
+                        <Typography {...{level:'body-xs', color:'neutral'}}>Filter By:</Typography>
+                        <Typography {...{level:'body-xs', color:'warning'}}><Pretty {...{str:allFilter, max:25}}/></Typography>
+                    </div>
+                    <div>
+                        <Typography {...{level:'body-xs', color:'neutral'}}>Selection:</Typography>
+                        <Typography {...{level:'body-xs', color:'warning'}}><Pretty {...{str:allSelect, max:100}}/></Typography>
+                    </div>
                 </div>
-                <div>
-                    <Typography {...{level:'body-xs', color:'neutral'}}>Selection:</Typography>
-                    <Typography {...{level:'body-xs', color:'warning'}}>{pretty(allSelect, 100)}</Typography>
-                </div>
-            </div>
-            <div className='ImageSelect__action'>
-                <div>
-                    <Button sx={{mr: 7}} onClick={() => clearFields([FILTER_PREFIX])}>Clear Filters</Button>
-                </div>
-                <div>
-                    <Button onClick={() => clearFields([IMG_PREFIX, PROJ_PREFIX])}>Clear Selections</Button>
-                    <Button onClick={() => setDSListMode(true)}>Expand All</Button>
-                    <Button onClick={() => setDSListMode(false)}>Collapse All</Button>
-                </div>
-            </div>
-        </Stack>
-        // </div>
+                <Stack {...{direction:'row', pb:1/2, justifyContent:'space-between'}}>
+                    <Chip sx={{mr: 7}} onClick={() => clearFields([FILTER_PREFIX])}>Clear Filters</Chip>
+                    <Stack direction='row' spacing={1/4}>
+                        <Chip onClick={() => clearFields([IMG_PREFIX, PROJ_PREFIX])}>Clear Selections</Chip>
+                        <Chip onClick={() => setDSListMode(true)}>Expand All</Chip>
+                        <Chip onClick={() => setDSListMode(false)}>Collapse All</Chip>
+                    </Stack>
+                </Stack>
+            </Stack>
+        </div>
     );
 }
 
@@ -411,9 +406,9 @@ function DataProductList({filteredImageData, groupKey, multiSelect}) {
     }
 
     return (
-        <div className='DataProductList'>
+        <Stack width={.8}>
             <div className='DataProductList__view'>{content}</div>
-        </div>
+        </Stack>
     );
 }
 
@@ -428,7 +423,7 @@ function DataProduct({groupKey, project, filteredImageData, multiSelect, default
 
     return (
         <div className='DataProductList__item'>
-            <CollapsiblePanel componentKey={project} header={<Header {...{project, hrefInfo:helpUrl, multiSelect}}/>} isOpen={isOpen}>
+            <CollapsiblePanel componentKey={project} style={{width:'100%'}} header={<Header {...{project, hrefInfo:helpUrl, multiSelect}}/>} isOpen={isOpen}>
                 <div className='DataProductList__item--details'>
                     {
                         subProjects.map((sp) =>
@@ -493,43 +488,51 @@ function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSele
     const fieldKey= IMG_PREFIX + get(projectData, [0, 'project']) + (subProject ? '||' + subProject : '');
     const options = toImageOptions(projectData.filter( (p) => p.subProject === subProject));
     const label = subProject && (
-                    <div style={{display: 'inline-flex'}}>
+                    <Stack {...{direction: 'row', alignItems:'center'}}>
                         <div style={{width: labelMaxWidth+1+'ch'}} title={subProject}
                              className='DataProductList__item--bandLabel'>{subProject}</div>
                         <span>:</span>
-                    </div>);
+                    </Stack>);
     if (multiSelect) {
         return (
-            <div className='DataProductList__item--band'>
+            <Stack direction='row' alignItems='center'>
                 {label}
                 <CheckboxGroupInputField
+                    sx={{
+                        '.ff-Checkbox-container':{flexWrap:'wrap'},
+                        '.ff-Checkbox-item:first-of-type':{ml:2}
+                    }}
                     key={fieldKey}
                     fieldKey={fieldKey}
                     initialState={{
                         options,        // Note: values in initialState are saved into fieldgroup.  options are used in the reducer above to determine what 'all' means.
                         value: '',
-                        tooltip: 'Please select some boxes',
-                        label : '' }}
+                         }}
+                    tooltip='Please select some boxes'
                     options={options}
-                    alignment='horizontal'
+                    orientation='horizontal'
                     labelWidth={35}
                     wrapperStyle={{whiteSpace: 'normal'}}
                 />
-            </div>
+            </Stack>
         );
     } else {
         return (             
             <div className='DataProductList__item--band'>
                 {label}
                 <RadioGroupInputField
+                    sx={{
+                        '.ff-RadioGroup-container':{flexWrap:'wrap'},
+                        '.ff-RadioGroup-item:first-of-type':{ml:1.5}
+                    }}
                     key={`${groupKey}_${fieldKey}`}
                     fieldKey={`${IMG_PREFIX}${groupKey}`}
                     isGrouped={true}
                     initialState={{
                             options,        // Note: values in initialState are saved into fieldgroup.  options are used in the reducer above to determine what 'all' means.
                             value: defaultImage,
-                            tooltip: 'Please select some boxes',
-                            label : '' }}
+                            }}
+                    tooltip= 'Please select some boxes'
                     options={options}
                     defaultValue=''
                     orientation='horizontal'
@@ -543,7 +546,8 @@ function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSele
 
 const toImageOptions= (a) => a.map ( (d) => ({label: d.title, value: d.imageId}));
 
-function pretty(str, max) {
+function Pretty({str, max}) {
+    if (!str) return <br/>;
     const words = str.split(',');
     let pretty = ' ';
     for(var i=0; i< words.length; i++) {

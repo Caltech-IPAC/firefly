@@ -59,7 +59,7 @@ export class CatalogTableView extends Component {
         });
 
         return (
-            <div style={{overflow:'auto'}}>
+            <div style={{overflow:'auto', border:'1px solid rgba(0,0,0,.1'}}>
                 <div className='catalogtable'>
                     <table style={{width:'100%'}}>
                         <tbody>

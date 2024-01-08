@@ -1,3 +1,4 @@
+import {Sheet, Stack, Typography} from '@mui/joy';
 import React from 'react';
 import {once} from 'lodash';
 import {
@@ -11,7 +12,6 @@ import {CatalogSelectViewPanel} from 'firefly/visualize/ui/CatalogSelectViewPane
 import {FileUploadDropdown} from 'firefly/ui/FileUploadDropdown.jsx';
 import {getAppOptions} from 'firefly/api/ApiUtil.js';
 import {dispatchComponentStateChange} from 'firefly/core/ComponentCntlr.js';
-import {Sheet, Stack, Typography} from '@mui/joy';
 
 const multiSearchComponents= [
     {
@@ -87,7 +87,7 @@ export function MultiSearchPanel({initArgs={}}) {
 
     return (
         <Stack flexGrow={1}>
-            <Typography color='neutral' level='h3'>
+            <Typography color='neutral' level='h4'>
                 Table Search
             </Typography>
             <StatefulTabs componentKey='MultiCatalogTabs' defaultSelected={getDefTabIdx(initArgs)}>

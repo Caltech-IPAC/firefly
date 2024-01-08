@@ -59,7 +59,7 @@ export function ExpandedTools({closeFunc}) {
     const getPlotTitle = (plotId) => primePlot(visRoot(),plotId)?.title ?? '';
 
     return (
-        <Sheet variant='soft'>
+        <Sheet>
             <Stack { ...{direction:'row', alignItems:'center', borderBottom: '1px solid rgba(0,0,0,.2)' }}>
                 {closeFunc && <CloseButton style={closeButtonStyle} onClick={closeFunc}/>}
                 {!single &&

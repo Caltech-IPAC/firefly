@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Button} from '@mui/joy';
 import React, {PureComponent} from 'react';
 import {flux} from '../../core/ReduxFlux.js';
 import {WorkspaceViewField}  from '../../ui/WorkspaceViewer.jsx';
@@ -32,15 +33,12 @@ function displayWorkspacePopup() {
                 </FieldGroup>
                 <div style={{display: 'flex', margin: '30px 10px 10px 10px', justifyContent:'space-between'}} >
                     <div style={aroundButton}>
-                        <button type='button' className='button std hl'
-                                onClick={() => {dispatchHideDialog(popupId);}}>Cancel
-                        </button>
+                        <CompleteButton onSuccess={onSuccess(popupId)} />
                     </div>
                     <div style={aroundButton}>
-                        <CompleteButton
-                            groupKey={workspacePopup}
-                            onSuccess={onSuccess(popupId)}
-                            text={'ok'} />
+                        <Button onClick={() => dispatchHideDialog(popupId)}>
+                            Cancel
+                        </Button>
                     </div>
                 </div>
             </PopupPanel>
@@ -135,26 +133,17 @@ export class WorkspaceViewPanel extends PureComponent {
         return (
             <div style={{display: 'flex', flexDirection:'column',
                             width: 500}}>
-                <button style={buttonMargin}
-                        type='button'
-                        className='button std hl'
-                        onClick={initWorkspace}>
+                <Button style={buttonMargin} onClick={initWorkspace}>
                     Init Workspace
-                </button>
+                </Button>
 
                 <div style={{display: 'flex'}}>
-                    <button style={buttonMargin}
-                            type = 'button'
-                            className='button std hl'
-                            onClick={this.onClickStatus(WS_list)}>
+                    <Button style={buttonMargin} onClick={this.onClickStatus(WS_list)}>
                         Show Workspace below
-                    </button>
-                    <button style={buttonMargin}
-                            type='button'
-                            className='button std hl'
-                            onClick={displayWorkspacePopup}>
+                    </Button>
+                    <Button style={buttonMargin} onClick={displayWorkspacePopup}>
                         Show Workspace Popup
-                    </button>
+                    </Button>
                 </div>
                 <div>
                     {(this.state.clickStatus === WS_list) && displayList(wsList)}

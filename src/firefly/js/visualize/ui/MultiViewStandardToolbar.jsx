@@ -38,7 +38,7 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
     if (!showImageToolbar) return <div/>;
 
     return (
-        <Sheet variant='soft'>
+        <Sheet>
             <Stack {...{direction:'row', flexWrap:'nowrap', alignItems: 'center', justifyContent: 'space-between',
                 width:'100%', height: 32, style:toolbarStyle}}>
                 <Stack {...{direction:'row', alignItems: 'center', flexWrap:'nowrap'}}>
