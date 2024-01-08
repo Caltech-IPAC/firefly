@@ -4,6 +4,7 @@
 
 import React, {useCallback, useEffect} from 'react';
 import {Box, Typography} from '@mui/joy';
+import { useColorScheme } from '@mui/joy/styles';
 import PropTypes from 'prop-types';
 import {Column, Table} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
@@ -30,6 +31,8 @@ export const BY_SCROLL = 'byScroll';
 
 
 const BasicTableViewInternal = React.memo((props) => {
+
+    const { mode } = useColorScheme();
 
     const {width, height} = props.size;
     const {columns, data, hlRowIdx, renderers, bgColor, selectInfoCls, callbacks, rowHeight, rowHeightGetter, showHeader=true,
@@ -146,8 +149,17 @@ const BasicTableViewInternal = React.memo((props) => {
         else return null;
     };
 
+    const hlColor = mode === 'dark' ? 'background.surface' : undefined;
+
     return (
-        <Box sx={{lineHeight:1, height:1}} tabIndex='-1' onKeyDown={onKeyDown}>
+        <Box tabIndex='-1' onKeyDown={onKeyDown}
+              sx={{lineHeight:1, flexGrow:1, minHeight:0, minWidth:0,
+                  '& .fixedDataTableRowLayout_main.highlighted div': {
+                      backgroundColor: 'warning.200',
+                      color: hlColor
+                  }
+              }}
+        >
             {content()}
             <Status/>
         </Box>
@@ -370,17 +382,16 @@ function makeColumns (props) {
 
 function makeColumnTag(props, col, idx) {
     const {data, columnWidths, showHeader, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter,
-        tbl_id, renderers, bgColor='white', startIdx, cellRenderers} = props;
+        tbl_id, renderers, startIdx, cellRenderers} = props;
 
     if (col.visibility && col.visibility !== 'show') return false;
     const HeadRenderer = get(renderers, [col.name, 'headRenderer'], showHeader ? HeaderCell : ({})=>null);
     const CellRenderer = get(renderers, [col.name, 'cellRenderer'], cellRenderers?.[idx] || makeDefaultRenderer(col,tbl_id, startIdx));
     const fixed = col.fixed || false;
-    const style = col.fixed && {backgroundColor: bgColor};
     const {resizable=true} = col;
 
     const cell = ({height, width, columnKey, rowIndex}) =>
-                    <CellWrapper {...{height, width, columnKey, rowIndex, style, data, col, colIdx:idx, tbl_id, startIdx, CellRenderer}} />;
+                    <CellWrapper {...{height, width, columnKey, rowIndex, data, col, colIdx:idx, tbl_id, startIdx, CellRenderer}} />;
     return (
         <Column
             key={col.name}
@@ -407,7 +418,7 @@ function makeSelColTag({selectable, onSelectAll, showUnits, showTypes, showFilte
             key='selectable-checkbox'
             columnKey='selectable-checkbox'
             header={<SelectableHeader {...{checked, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected}} />}
-            cell={<SelectableCell style={{backgroundColor: bgColor}} selectInfoCls={selectInfoCls} onRowSelect={onRowSelect} />}
+            cell={<SelectableCell selectInfoCls={selectInfoCls} onRowSelect={onRowSelect} />}
             fixed={true}
             width={25}
             allowCellsRecycling={true}

@@ -64,7 +64,7 @@ export function PropertySheet({tbl_group='main', tbl_id, children, fetcher}){
  * @param props.highlightedRow [passed implicitly if child of PropertySheet] index of highlighted row in the active table
  * @returns {JSX.Element}
  */
-export function RowDetailsTable({tblOptions={}, tbl_id, highlightedRow}) {
+export function RowDetailsTable({tblOptions={}, tbl_id, highlightedRow, ...tblProps}) {
 
     const detailsTblId = `${tbl_id}-RowDetailsTable`;
 
@@ -90,7 +90,7 @@ export function RowDetailsTable({tblOptions={}, tbl_id, highlightedRow}) {
         dispatchTableUiUpdate({tbl_ui_id: detailsTblId, allowUnits: false, allowTypes: true});
     }, [detailsTblId]);
 
-    return (<TablePanel tbl_id={detailsTblId} tbl_ui_id={detailsTblId} showTitle={false}/>);
+    return (<TablePanel tbl_id={detailsTblId} tbl_ui_id={detailsTblId} showTitle={false} {...tblProps}/>);
 }
 
 
@@ -103,10 +103,10 @@ export function RowDetailsTable({tblOptions={}, tbl_id, highlightedRow}) {
  * @param props.tbl_id
  * @param props.tblOptions
  */
-export function PropertySheetAsTable({tbl_group, tbl_id, tblOptions}) {
+export function PropertySheetAsTable({tbl_group, tbl_id, tblOptions, ...tblProps}) {
     return (
         <PropertySheet {...{tbl_group, tbl_id}}>
-            <RowDetailsTable {...{tblOptions}}/>
+            <RowDetailsTable {...{tblOptions, ...tblProps}}/>
         </PropertySheet>
     );
 }
