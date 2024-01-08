@@ -322,18 +322,6 @@ div.rootStyle img {
 }
 
 
-.keyword-label  {
-    font-weight: bold;
-    margin-right: 3px;
-    white-space: nowrap;
-}
-
-.keyword-value  {
-    color: maroon;
-    margin-right: 10px;
-    font-weight: normal;
-}
-
 
 
 /*-------------------< loading mask ---------------------*/

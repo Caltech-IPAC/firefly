@@ -185,7 +185,7 @@ export const UploadPanel = ({initArgs}) =>{
         executeOnce( () => validateAutoSearch(initArgs), () => callAutoSearch(initArgs));
     },[initArgs]);
 
-    const wrapperStyle = {color: 'inherit', margin: '5px 0'};
+    const wrapperStyle = {color: 'inherit', mx:1/2};
     const instruction = 'Plot time series data, view associated images, find period, and phase fold.';
     const options = missionOptions.map((id) => ({label: getMissionName(id) || capitalize(id), value: id}) );
 
@@ -214,7 +214,7 @@ export const UploadPanel = ({initArgs}) =>{
                     <HelpText helpId={'loadingTSV'} linkText={'(See requirements)'}/>
                 </div>
                 { fileLocation === 'isLocal' ?
-                        <FileUpload wrapperStyle={wrapperStyle} fieldKey='rawTblSource'
+                        <FileUpload sx={wrapperStyle} fieldKey='rawTblSource'
                             initialState={{ tooltip: 'Select a Time Series Table file to upload',
                                 label: ''}}
                         />

@@ -88,7 +88,7 @@ export class UploadOptionsDialog extends PureComponent {
             return (where === 'isLocal') ?
                 (
                     <FileUpload
-                        wrapperStyle={{margin: (this.workspace ? '2px 10px 8px 10px' : '15px 10px 21px 10px')}}
+                        sx={{margin: (this.workspace ? '2px 10px 8px 10px' : '15px 10px 21px 10px')}}
                         fieldKey={this.fileUpload}
                         fileNameStyle={{marginLeft: 14}}
                         initialState={

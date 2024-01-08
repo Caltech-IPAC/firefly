@@ -60,7 +60,7 @@ export const TestSearchPanel = (props) => {
                     />
 
                     <FileUpload
-                        wrapperStyle = {{margin: '5px 0'}}
+                        sx = {{my:1/2}}
                         fieldKey = 'fileUpload'
                         initialState= {{
                                 tooltip: 'Select a file to upload',
