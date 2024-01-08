@@ -67,6 +67,12 @@ export function getTheme() {
                     arrow: true,
                 }
 
+            },
+            JoyLink: {
+                defaultProps: {
+                    underline: 'always',
+                    color: 'primary'
+                }
             }
         }
     });

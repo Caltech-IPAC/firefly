@@ -16,7 +16,6 @@ The non-react dependencies do not change much.
 
 ##### UI: 3 party react base packages
 - fixed-data-table-2
-- rc-slider
 - rc-tree
 - react-color
 - react-datetime
