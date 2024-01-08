@@ -22,7 +22,7 @@ export function TableColumnsConstraints({columnsModel}) {
     if (isEmpty(tableModel)) {
         return <div/>;
     } else {
-        return <ColumnConstraintsPanel style={{height: '100%'}} {...{tableModel}} />;
+        return <ColumnConstraintsPanel {...{tableModel}} />;
     }
 }
 

@@ -40,6 +40,7 @@ import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutlin
 import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
 import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
 import {META} from '../TableRequestUtil.js';
+import {useColorScheme} from '@mui/joy/styles';
 
 const logger = Logger('Tables').tag('TablePanel');
 
@@ -75,7 +76,7 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
         }
     }, [tbl_id, tableModel]);
 
-    const {selectable, border, renderers, title, removable, rowHeight, rowHeightGetter,
+    const {selectable, renderers, title, removable, rowHeight, rowHeightGetter,
         showToolbar, showTitle, showMetaInfo,
         columns, showHeader, showUnits, allowUnits, showTypes, showFilters, textView,
         error, startIdx, hlRowIdx, currentPage, selectInfo, showMask,
@@ -86,23 +87,33 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
 
 
     const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
-    const tableTopPos = showToolbar  ? 29 : 0;
     const tstate = getTableState(tbl_id);
     logger.debug(`render.. state:[${tstate}] -- ${tbl_id}  ${tbl_ui_id}`);
+    const borderTop = showToolbar ? '1px solid #d3d3d3' : undefined;
 
     if ([TBL_STATE.ERROR,TBL_STATE.LOADING].includes(tstate))  return <NotReady {...{showTitle, tbl_id, title, removable, backgroundable, error}}/>;
 
     return (
-        <Sheet {...{variant, sx:{boxSizing: 'border-box', position:'relative', width:1, height:1, ...sx}, ...slotProps?.tablePanel}}>
-            <Stack height={1}>
+        <Sheet {...{variant, ...slotProps?.tablePanel}}
+               sx ={{
+                   position:'relative',
+                   overflow: 'hidden',
+                   boxSizing: 'border-box',
+                   width:1, height:1,
+                   ...sx
+               }}
+        >
+            <Stack height={1} width={1}>
                 {showMetaInfo && <MetaInfo tbl_id={tbl_id} {...slotProps?.meta}/> }
-                <Stack className={TBL_CLZ_NAME} flexGrow={1}
+                <Stack className={TBL_CLZ_NAME} flexGrow={1} overflow='hidden'
                        onClick={stopPropagation}
                        onTouchStart={stopPropagation}
                        onMouseDown={stopPropagation}
                 >
                     <ToolBar {...{tbl_id, tbl_ui_id, connector, tblState, slotProps}}/>
-                    <Box flexGrow={1} {...slotProps?.table}>
+                    <Stack lineHeight={1} boxSizing='border-box' borderTop={borderTop} flexGrow={1} overflow='hidden'
+                            sx={{'& .fixedDataTableLayout_main': {border:'none'}}}
+                           {...slotProps?.table}>
                         <BasicTableView
                             callbacks={connector}
                             { ...{columns, data, hlRowIdx, rowHeight, rowHeightGetter, selectable, showUnits,
@@ -110,7 +121,7 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
                                 showMask, currentPage, showHeader, renderers, tbl_ui_id, highlightedRowHandler,
                                 startIdx, cellRenderers} }
                         />
-                    </Box>
+                    </Stack>
                 </Stack>
             </Stack>
         </Sheet>
@@ -201,7 +212,7 @@ TablePanel.propTypes = {
     rowHeightGetter: PropTypes.func,
     sx: PropTypes.object,
     slotProps: shape({
-        tablePanel: object,
+        tablePanel: object,     // because there are already too many props, this is used specifically to pass custom props to top level component
         meta: object,
         toolbar: object,
         table: object
@@ -231,6 +242,8 @@ TablePanel.defaultProps = {
 };
 
 function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
+
+    const { mode } = useColorScheme();
 
     const uiState = useStoreConnector(() => getTableUiById(tbl_ui_id) || {columns:[]}, [tbl_ui_id]);
     const searchActions= getSearchActions();
@@ -282,8 +295,13 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
 
     if (!showToolbar) return null;
 
+    const sx = mode === 'dark' ?                                            // temporary solution for dark-mode; need real icons
+                ({'& .PagingBar__button, .PanelToolbar__button': {
+                    backgroundColor: 'text.primary'
+                }}) : undefined;
+
     return (
-        <Sheet component={Stack} variant='soft' className='FF-Table-Toolbar' direction='row' justifyContent='space-between' width={1} {...slotProps?.toolbar}>
+        <Sheet component={Stack} sx={sx} variant='soft' className='FF-Table-Toolbar' direction='row' justifyContent='space-between' width={1} {...slotProps?.toolbar}>
             <LeftToolBar {...{tbl_id, title, removable, showTitle, leftButtons}}/>
             {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:connector}} /> }
             <Stack direction='row' alignItems='center'>

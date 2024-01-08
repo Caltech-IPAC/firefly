@@ -113,8 +113,7 @@ function RightSide({expanded, closeable, showXyPlots, showMeta, showFits, dataPr
     const defaultSelected= coverageRight ? 'coverage' : showXyPlots ? 'activeCharts' : 'fits';
     const key= `${showXyPlots&&'xyplot'}-${cov&&'cov'}-${meta&&'meta'}-${fits&&'fits'}`;
     return(
-        <Tabs {...{key, style, onTabSelect, defaultSelected, useFlex:true, resizable:true,
-            slotProps:{tabPanel:{sx:{p:0}} } }}>
+        <Tabs {...{key, style, onTabSelect, defaultSelected, slotProps:{panel:{sx:{p:0}}}} }>
             {showXyPlots && makeActiveChartTab({activeLabel, chartExpandedMode, closeable, asTab:true}) }
             {showPinnedTab && makePinnedChartTab({pinnedLabel, chartExpandedMode, closeable, asTab:true}) }
             {cov && makeCoverageTab()}
@@ -211,7 +210,9 @@ function searchDesc({showViewsSwitch, showImages, isTriView, showCoverage, leftB
 function makePropertySheetTab() {
     return (
         <Tab key='rowDetails' name='Details' removable={false} id='rowDetails'>
-            <PropertySheetAsTable/>
+            <PropertySheetAsTable
+                slotProps={{ toolbar:{variant:'plain'}, tablePanel:{variant: 'plain'} }}
+            />
         </Tab>
     );
 }

@@ -21,8 +21,6 @@ import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getCellValue, getTblById, watchTableChanges} from '../../tables/TableUtil.js';
 import {TABLE_FILTER, TABLE_HIGHLIGHT, TABLE_SORT} from '../../tables/TablesCntlr.js';
 
-import './TabPanel.css';
-
 
 /*---------------------------------------------------------------------------------------------
 There are several type of Tab panels, each with slightly different behavior and use case.
@@ -111,7 +109,7 @@ TabPanel.propTypes = {
     slotProps: shape({
         tabList: object,
         tab: object,            // will inject into each one
-        tabPanel: object        // will inject into each one
+        panel: object        // will inject into each one
     })
 };
 
@@ -336,7 +334,7 @@ function getHeaderFromTab({name, value, label, startDecorator, removable, onTabR
 
 function getContentFromTab({value, id, children}, idx, slotProps) {
     value ??= id ?? idx;
-    const props = slotProps?.tabPanel;
+    const props = slotProps?.panel;
 
     return (
         <JoyTabPanel key={idx} value={value} sx={{p:1, ...props?.sx}} {...props} >

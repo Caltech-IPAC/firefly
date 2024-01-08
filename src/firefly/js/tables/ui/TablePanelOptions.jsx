@@ -315,7 +315,6 @@ function createColumnTableModel(tbl_id, tbl_ui_id, ctm_tbl_id) {
 
 
 /* -------------------------------------- custom table cell renderers ------------------------------------------------------------*/
-const cellStyle = {backgroundColor: 'white'};
 
 function getActiveInput(data, rowIdx, tbl_ui_id) {
     const selColName = get(data, [rowIdx, cnameIdx]);
@@ -384,7 +383,7 @@ function makePrecisionRenderer(tbl_ui_id, ctm_tbl_id, onChange) {
         return {valid, value, message: tooltips};
     };
 
-    return inputColumnRenderer({tbl_id:ctm_tbl_id, cname: 'precision', validator, isReadOnly, onChange:onPrecision, style: cellStyle, tooltips});
+    return inputColumnRenderer({tbl_id:ctm_tbl_id, cname: 'precision', validator, isReadOnly, onChange:onPrecision, tooltips});
 }
 
 
@@ -413,7 +412,7 @@ function makeFilterRenderer(tbl_id, ctm_tbl_id, onChange) {
         return FilterInfo.conditionValidator(cond, tbl_id, cname);
     };
 
-    return inputColumnRenderer({tbl_id:ctm_tbl_id, cname: 'filter', validator, onChange:onFilter, style:cellStyle, tooltips:FILTER_CONDITION_TTIPS});
+    return inputColumnRenderer({tbl_id:ctm_tbl_id, cname: 'filter', validator, onChange:onFilter,tooltips:FILTER_CONDITION_TTIPS});
 }
 
 function makeNullStringRenderer(tbl_ui_id, ctm_tbl_id, onChange) {
@@ -425,6 +424,6 @@ function makeNullStringRenderer(tbl_ui_id, ctm_tbl_id, onChange) {
         onChange && onChange({columns: nColumns});
     };
 
-    return  inputColumnRenderer({tbl_id:ctm_tbl_id, cname: 'null_string', onChange:onNullString, style: cellStyle, tooltips});
+    return  inputColumnRenderer({tbl_id:ctm_tbl_id, cname: 'null_string', onChange:onNullString, tooltips});
 }
 

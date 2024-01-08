@@ -97,7 +97,7 @@ function StandardView(props) {
         const uid = hashCode(keys.join());
         return (
             <TabPanel key={uid} sx={style} value={activeIdx}
-                      slotProps={{ tabPanel:{sx:{p:0}} }}
+                      slotProps={{ panel:{sx:{p:0}} }}
                       onTabSelect={onTabSelect} resizable={true} showOpenTabs={true} tabId={'TableContainers-' + (tbl_group||'main')}>
                 {tablesAsTab(tables, tableOptions, expandedMode)}
             </TabPanel>
