@@ -156,7 +156,7 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
     const endDecorator = enumVals && <div ref={enumArrowEl} className='arrow-down clickable' onClick={onEnumClicked}/>;
 
     return (
-        <Stack direction='row' alignItems='center'>
+        <Stack direction='row' alignItems='center' p='0 2px'>
             <InputField
                 validator={validator}
                 fieldKey={name}
@@ -230,7 +230,7 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
 export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, style, sx}) {
     sx = {height: 1, justifyContent: 'space-around', ...style, ...sx};
     return (
-        <Stack alignItems='center' sx={sx}>
+        <Stack alignItems='center' bgcolor='background.surface' sx={sx}>
             <Checkbox size='sm' sx={{mt:'2px'}}
                 tabIndex={-1}
                 checked={checked}
@@ -247,11 +247,10 @@ export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, s
 }
 
 
-export function SelectableCell ({rowIndex, selectInfoCls, onRowSelect, style={}, sx={}}) {
+export function SelectableCell ({rowIndex, selectInfoCls, onRowSelect, sx={}}) {
     return (
-        <Stack alignItems='center' justifyContent='center' height={1}>
+        <Stack alignItems='center' justifyContent='center' height={1} bgcolor='background.surface' sx={sx}>
             <Checkbox size='sm' mt='1x' mb='1px'
-                      sx={{...style, ...sx}}
                       tabIndex={-1}
                       checked={selectInfoCls.isSelected(rowIndex)}
                       onChange={(e) => onRowSelect(e.target.checked, rowIndex)}/>
@@ -391,12 +390,12 @@ export const CellWrapper =  React.memo( (props) => {
 
     const cellInfo = getCellInfo({columnKey, col, rowIndex, data, tbl_id, startIdx});
     const {textAlign, text} = cellInfo;
-    const lineHeight = height - 6 + 'px';  // 6 is the top/bottom padding.
+    const lineHeight = '2em';
 
     const content = (
-        <div style={{textAlign, lineHeight, ...style}} className='public_fixedDataTableCell_cellContent'>
+        <Stack textAlign={textAlign} lineHeight={lineHeight} p='2px' bgcolor='background.surface'>
             <CellRenderer {...omit(props, 'Content')} cellInfo={cellInfo}/>
-        </div>
+        </Stack>
     );
     return CellRenderer?.allowActions ? <ContentEllipsis text={text}>{content}</ContentEllipsis> : content;
 
@@ -553,7 +552,7 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
  * @param p.onChange
  * @returns {Function}
  */
-export const inputColumnRenderer = ({tbl_id, cname, tooltips, style={}, isReadOnly, validator, onChange}) => {
+export const inputColumnRenderer = ({tbl_id, cname, tooltips, style={}, isReadOnly, validator, onChange, ...props}) => {
 
     return ({rowIndex, data, colIdx}) => {
         const val = get(data, [rowIndex, colIdx]);
@@ -561,7 +560,7 @@ export const inputColumnRenderer = ({tbl_id, cname, tooltips, style={}, isReadOn
             return <div style={{width: '100%', height: '100%', ...style}}>{val}</div>;
         } else {
             return (
-                <div style={{...style}}>
+                <Box {...props}>
                     <InputField
                         key={rowIndex + '-' +colIdx}
                         sx={{'.MuiInput-root':{'minHeight':'3px', 'borderRadius':4}}}
@@ -572,7 +571,7 @@ export const inputColumnRenderer = ({tbl_id, cname, tooltips, style={}, isReadOn
                         onChange={makeChangeHandler(rowIndex, data, colIdx, tbl_id, cname, validator, onChange)}
                         actOn={['blur','enter']}
                     />
-                </div>
+                </Box>
             );
         }
     };
@@ -585,13 +584,13 @@ export const inputColumnRenderer = ({tbl_id, cname, tooltips, style={}, isReadOn
  * @param p.tbl_id
  * @param p.cname       the column name of this renderer
  * @param p.tooltips
- * @param p.style
+ * @param p.sx
  * @param p.isReadOnly  a function returning true if this row is read only
  * @param p.validator   a validator function used to validate the input
  * @param p.onChange
  * @returns {Function}
  */
-export const checkboxColumnRenderer = ({tbl_id, cname, tooltips, style={}, isReadOnly, validator, onChange}) => {
+export const checkboxColumnRenderer = ({tbl_id, cname, tooltips, sx={}, isReadOnly, validator, onChange}) => {
 
     return ({rowIndex, data, colIdx}) => {
         const val = get(data, [rowIndex, colIdx]);
@@ -599,13 +598,13 @@ export const checkboxColumnRenderer = ({tbl_id, cname, tooltips, style={}, isRea
         const changeHandler = makeChangeHandler(rowIndex, data, colIdx, tbl_id, cname, validator, onChange);
 
         return (
-            <div className='TablePanel__checkbox' style={style}>
+            <Stack height={1} alignItems='center' justifyContent='center' style={sx}>
                 <input type = 'checkbox'
                        disabled = {disabled}
                        title = {tooltips}
                        onChange = {(e) => changeHandler({valid: true, value: e.target.checked})}
                        checked = {val}/>
-            </div>
+            </Stack>
         );
     };
 };

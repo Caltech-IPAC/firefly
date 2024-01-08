@@ -25,7 +25,7 @@ export function InputFieldView(props) {
                 <Typography level='body-md' color={'danger'}> {message} </Typography>
                 <Typography level='body-md' color={'neutral'}> {tooltip} </Typography>
             </Stack>
-        ) : tooltip;
+        ) : <div style={{whiteSpace:'pre'}}>{tooltip}</div>;
 
     return (
         <Stack {...{className:'ff-Input InputFieldView', sx}}>
