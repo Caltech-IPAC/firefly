@@ -137,7 +137,7 @@ export class DropDownToolbarButton extends PureComponent {
                 (focusIsDropwdownInput && tgt.tagName==='INPUT') ||
                 (tgt.tagName==='DIV' && tgt.className?.includes('allow-scroll')) ||
                 (tgt.className?.includes('allow-input')) ||
-                (tgt.tagName==='DIV' && tgt.className?.includes('rc-slider'));
+                (tgt.tagName==='SPAN' && tgt.className?.includes('MuiSlider'));
 
             if (!clickOnButton && !onDropDownInput && dropDownOwnerId===this.ownerId) {
                 dispatchHideDialog(this.props.dropDownKey || DROP_DOWN_KEY);
