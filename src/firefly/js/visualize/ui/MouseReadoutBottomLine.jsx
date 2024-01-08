@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Checkbox, Stack, Tooltip, Typography} from '@mui/joy';
+import {Box, Checkbox, Chip, Stack, Switch, Tooltip, Typography} from '@mui/joy';
 import React, {memo, useEffect, useRef, useState} from 'react';
 import {object, bool, number} from 'prop-types';
 import BrowserInfo from '../../util/BrowserInfo.js';
@@ -59,7 +59,7 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
     const {threeColor= false}= readoutData;
     const monoFont= radix===16;
 
-    const checkboxText= width>600 ? 'Lock by click':'';
+    const checkboxText= width>600 ? lockByClick ? 'Click Lock: on': 'Click Lock: off' : '';
     const doWL= fullSize && waveLength && readoutType===STANDARD_READOUT;
     const doFlux= fullSize && readoutType===STANDARD_READOUT;
 
@@ -97,7 +97,7 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
 
             <Tooltip placement='top-end' enterDelay={!checkboxText?750:undefined}
                 title='Lock by click - mouse readout will only update by clicking on the image'>
-                <Checkbox size='sm' label={checkboxText} checked={lockByClick}
+                <Switch size='sm' endDecorator={checkboxText} checked={lockByClick}
                           sx={{pr:.5,whiteSpace:'nowrap'}}
                           onChange={() => {
                               dispatchChangePointSelection('mouseReadout', !lockByClick);
@@ -130,7 +130,9 @@ const LabelItem= memo(({showCopy=false, label='', value='', copyValue='', prefCh
     const clipComponent= (value&&showCopy) ? <CopyToClipboard title={copyTitle} value={copyValue||value} /> : undefined;
     return (
         <Stack {...{direction:'row', alignItems:'center', className:'ff-readout-label', sx}}>
-            <Typography level='body-sm' title={value+''} sx={textStyle} onClick={prefChangeFunc}>{label}</Typography>
+            {prefChangeFunc ?
+                <Chip variant='soft' color='primary' title={value+''} sx={{borderRadius:5}} onClick={prefChangeFunc}>{label}</Chip> :
+                <Typography level='body-sm' title={value+''} sx={textStyle}>{label}</Typography>}
             {clipComponent}
         </Stack>
     );

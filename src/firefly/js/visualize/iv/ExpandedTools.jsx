@@ -146,7 +146,7 @@ export function PagingControl({viewerItemIds,activeItemId,isPagingMode,getItemTi
         <Stack {...{direction:'column', alignItems:'center', sx:{button:{minHeight:10}} }}>
             <Stack {...{direction:'row', alignItems:'center'}}>
                 <Tooltip title={leftTip}>
-                    <Button {...{size:'sm',
+                    <Button {...{size:'sm', variant:'plain',
                         onClick:() => onActiveItemChange(viewerItemIds[prevIdx]),
                         startDecorator:(<img src={PAGE_LEFT}/>)}}>
                     <span style={{maxWidth:'8em', textOverflow:'ellipsis', overflow:'hidden'}}>
@@ -156,7 +156,7 @@ export function PagingControl({viewerItemIds,activeItemId,isPagingMode,getItemTi
                 </Tooltip>
                 <div style={{flex: '1 1 auto'}}/>
                 <Tooltip title={rightTip}>
-                    <Button {...{size:'sm',
+                    <Button {...{size:'sm',variant:'plain',
                         onClick:() => onActiveItemChange(viewerItemIds[nextIdx]),
                         endDecorator:(<img src={PAGE_RIGHT}/>)}}>
                     <span style={{maxWidth:'5em', textOverflow:'ellipsis', overflow:'hidden'}}>

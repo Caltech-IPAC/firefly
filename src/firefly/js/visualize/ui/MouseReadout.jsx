@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Checkbox, Stack, Typography} from '@mui/joy';
+import {Checkbox, Chip, Stack, Switch, Typography} from '@mui/joy';
 import React, {Fragment,memo, useState} from 'react';
 import {number,string,oneOfType,object,func,bool} from 'prop-types';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
@@ -18,11 +18,11 @@ import './MouseReadout.css';
 
 export const MouseReadoutLock= memo(({gArea, gAreaLabel, style={}, lockByClick}) => {
     const s= gArea ? {gridArea:gArea,...style} : style;
-    const label= 'Lock by click';
+    const label= lockByClick ? 'Click Lock: on' : 'Click Lock: off' ;
     return (
         <React.Fragment>
             <Stack direction='row' style={s} alignSelf='center' title='Click on an image to lock the display at that point.'>
-                <Checkbox size='sm' label={gAreaLabel?'':label} checked={lockByClick}
+                <Switch size='sm' endDecorator={gAreaLabel?'':label} checked={lockByClick}
                           onChange={() => {
                               dispatchChangePointSelection('mouseReadout', !lockByClick);
                               dispatchChangeLockByClick(!lockByClick);
@@ -60,7 +60,7 @@ export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueSt
                                         label='', value='', unit='', copyValue='', prefChangeFunc=undefined, monoFont=false}) => {
     const lS= lArea ? {gridArea:lArea,...baseLS,...labelStyle} : {...baseLS,...labelStyle};
     const vS= vArea ? {gridArea:vArea,...baseVS, ...valueStyle} : {...baseVS,...valueStyle};
-    const cS= cArea ? {gridArea:cArea, overflow:'hidden'} : undefined;
+    const cS= cArea ? {gridArea:cArea, overflow:'hidden', justifySelf:'center'} : undefined;
     const labelClass= prefChangeFunc ? 'mouseReadoutLabel mouseReadoutClickLabel' : 'mouseReadoutLabel';
     const copyTitle= `Copy to clipboard: ${copyValue||value}`;
 
@@ -74,7 +74,11 @@ export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueSt
 
     return (
         <Fragment>
-            <Typography level='body-sm' className={labelClass} title={value+''} style={lS} onClick={prefChangeFunc}>{label}</Typography>
+            {
+                prefChangeFunc ?
+                    <Chip variant='soft' color='neutral' title={value+''} sx={{borderRadius:5}} style={lS} onClick={prefChangeFunc}>{label}</Chip> :
+                    <Typography level='body-sm' className={labelClass} title={value+''} style={lS} onClick={prefChangeFunc}>{label}</Typography>
+            }
             <Typography level='body-sm' color='warning' style={{...vS, ...mStyle}} title={value+''}> {value} </Typography>
             <Typography level='body-sm' color='warning' style={vS} title={value+''}>
                 <span style={mStyle}> {value}</span>

@@ -22,9 +22,9 @@ function placeDropDown(e,x,y, beforeVisible) {
 }
 
 
-export function SingleColumnMenu({children}) {
+export function SingleColumnMenu({children, sx, kind='drop'}) {
     return (
-        <DropDownMenu>
+        <DropDownMenu sx={sx} kind={kind}>
             <Stack direction='column' sx={{'.ff-toolbar-button':{width:1, justifyContent:'flex-start'}}}>
                 {children}
             </Stack>
@@ -33,17 +33,19 @@ export function SingleColumnMenu({children}) {
 }
 
 
-export function DropDownMenu({children}) {
+export function DropDownMenu({children, sx, kind='drop'}) {
     return (
         <Card {...{
             color:'neutral', variant:'outline',
-            sx:(theme) => (
-                {
+            sx:(theme) => {
+                const bRadius= kind==='drop' ? {borderTopLeftRadius: '2px', borderTopRightRadius: '2px'} : {};
+                return {
                     p:.5,
-                    borderTopLeftRadius: '2px',
-                    borderTopRightRadius: '2px',
+                    ...bRadius,
                     boxShadow: `1px 1px 3px ${theme.vars.palette.primary.softActiveColor}`,
-                })
+                    ...sx,
+                };
+            }
         }}>
             {children}
         </Card>
@@ -123,7 +125,8 @@ export function DropDownSubMenu({text, tip, visible=true, children}) {
     return (
         <Tooltip title={tip} sx={{position:'relative'}}>
             <Box onMouseEnter={show} onMouseLeave={hide}>
-                <Button {...{variant:'plain', 'aria-label':tip, ref:(c) => setButtonElement(c),
+                <Button {...{variant:'plain', color:'neutral', 'aria-label':tip,
+                    ref:(c) => setButtonElement(c),
                     endDecorator: (<div style={{marginLeft:5}} className='arrow-right'/>),
                     sx:{whiteSpace:'nowrap', py:.4, minHeight: 'unset'},
                 }}>
@@ -134,7 +137,7 @@ export function DropDownSubMenu({text, tip, visible=true, children}) {
                         <Box {...{ref: (c) => setCascadeElement(c),
                              position: 'absolute', zIndex: 1, visibility:'hidden', top:0}}
                             onMouseEnter={show}>
-                            <SingleColumnMenu>
+                            <SingleColumnMenu kind='cascade'>
                                 {isFunction(children) ? children() : children}
                             </SingleColumnMenu>
                         </Box>

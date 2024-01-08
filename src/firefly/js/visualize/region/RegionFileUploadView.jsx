@@ -126,14 +126,13 @@ const RegionUpload= () => {
     const [upload, setUpload]= useState(() => true);
     const [message, setMessage]= useState(() => '');
     return (
-        <Box sx={{p: 1, width: 380}}>
+        <Box sx={{p: 1, width: 380, resize:'horizontal', overflow:'hidden'}}>
             <FieldGroup groupKey={rgUploadGroupKey}>
                 <Stack spacing={2}>
                     <FileUpload
-                        wrapperStyle={{margin: '5px 0', width: 180}} innerStyle={{width: 90}}
+                        sx={{my:1/2, '.ff-FileUpload-upload':{width:1, maxWidth:1}}}
                         fieldKey={rgUploadFieldKey}
                         tooltip='Select a region file to upload' label='Upload File'
-                        fileNameStyle={{marginLeft: 0, width: 200, height: 16, fontSize: 12, verticalAlign: 'middle'}}
                     />
                     <CheckboxGroupInputField
                         fieldKey={relocatableKey}

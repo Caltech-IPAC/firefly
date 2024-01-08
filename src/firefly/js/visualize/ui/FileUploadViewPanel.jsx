@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box, Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 import shallowequal from 'shallowequal';
 import SplitPane from 'react-split-pane';
@@ -27,7 +28,6 @@ import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 
 import {useFieldGroupMetaState, useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
-import './FileUploadViewPanel.css';
 import {getIntHeader} from '../../metaConvert/PartAnalyzer';
 import {FileAnalysisType} from '../../data/FileAnalysis';
 import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
@@ -163,36 +163,38 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem}) 
     const isDatalink=  isAnalysisTableDatalink(report);
 
     return (
-        <div style={{position: 'relative', height: '100%', display: 'flex', alignItems: 'stretch',
-            flexDirection: 'column' }}>
-            <FileDropZone {...{dropEvent, setDropEvent, setLoadingOp}} style={{height:'100%', width: '100%'}}>
-                <div className='FileUpload'>
-                    <div className='FileUpload__input'>
+        <Stack {...{flexGrow:1, position: 'relative', height:1, alignItems: 'stretch'}}>
+            <FileDropZone {...{dropEvent, setDropEvent, setLoadingOp}} style={{display:'flex', flexGrow:1, height:'100%', width: '100%'}}>
+                <Stack sx={{height:1, px:1,flexGrow:1}}>
+                    <Box className='ff-FileUploadViewPanel-file' sx={{mt:1, ml:25}}>
                         <RadioGroupInputField
                             initialState={{value: uploadMethod[0].value}}
+                            slotProps={{radio:{size:'md'}}}
                             fieldKey={uploadOptions}
-                            alignment={'horizontal'}
+                            orientation='horizontal'
                             options={uploadMethod}
                             wrapperStyle={{fontWeight: 'bold', fontSize: 12}}/>
-                        <div style={{paddingTop: '10px', display:'flex', flexDirection:'row', justifyContent:'space-between'}}>
+                        <Stack {...{pt: 1, direction:'row', justifyContent:'space-between'}}>
                             <UploadOptions {...{uploadSrc: dropEvent ? FILE_ID : getLoadingOp(), isLoading, isWsUpdating,  uploadKey, dropEvent, setDropEvent}}/>
                             {report && <CompleteButton text='Clear File' groupKey={NONE}
+                                                       sx={{whiteSpace:'nowrap', ml:1}}
+                                                       primary={false}
                                                        onSuccess={() =>{
                                                            clearReport();
                                                            keyCnt++;
                                                            setUploadKey(FILE_UPLOAD_KEY+keyCnt);
                                                        }}/> }
-                        </div>
-                    </div>
+                        </Stack>
+                    </Box>
                     <FileAnalysis {...{report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList,
                         isDatalink, acceptOneItem, summaryTblId}}/>
                     <ImageDisplayOption {...{summaryTblId, currentReport:report, currentSummaryModel:summaryModel, acceptList}}/>
                     <TableDisplayOption {...{isMoc, isDatalink, summaryTblId, currentReport:report, currentSummaryModel:summaryModel,
                         acceptList, acceptOneItem}}/>
-                </div>
+                </Stack>
             </FileDropZone>
-                {(isLoading) && <LoadingMessage message={loadingMsg}/>}
-        </div>
+            {(isLoading) && <LoadingMessage message={loadingMsg}/>}
+        </Stack>
     );
 }
 
@@ -338,7 +340,7 @@ function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, me
     let detailsModel = getDetailsModel(modelToUseForDetails,currentReport,detailsTblId,UNKNOWN_FORMAT);
     if (modelToUseForDetails) {
         const {highlightedRow=0} = modelToUseForDetails;
-        currentSummaryModel.highlightedRow = highlightedRow;
+        if (currentSummaryModel) currentSummaryModel.highlightedRow = highlightedRow;
     }
 
     if (shallowequal(detailsModel, currentDetailsModel)) {
@@ -401,7 +403,7 @@ function makeSummaryModel(report, summaryTblId, acceptList) {
     const columns = [
         {name: 'Index', type: 'int', desc: 'Extension Index'},
         {name: 'Type', type: 'char', desc: 'Data Type'},
-        {name: 'Description', type: 'char', desc: 'Extension Description'},
+        {name: 'Description', type: 'char', desc: 'Extension Description', width: 60},
         {name: 'AllowedType', type: 'boolean', desc: 'Type in AcceptList', visibility: 'hidden'}
     ];
     const {parts=[]} = report;
@@ -474,14 +476,9 @@ function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, cur
     else if (isMoc && acceptTableOrSpectrum(acceptList)) {
         const options= [{label:'Load as MOC Overlay', value:'moc'}, {label:'Load as Table', value:'table'}];
         return (
-            <div style={{padding: '5px 0 5px 0'}}>
-                <RadioGroupInputField options={options}
-                                      labelWidth={100}
-                                      alignment={'horizontal'}
-                                      defaultValue = {'moc'}
-                                      fieldKey = 'mocOp' />
+            <RadioGroupInputField options={options} sx={{pt:1/2}} labelWidth={100} orientation='horizontal'
+                                  defaultValue='moc' fieldKey='mocOp' />
 
-            </div>
         );
     }
     else if (isDatalink && acceptList.includes(DATA_LINK_TABLES)) {
@@ -500,15 +497,14 @@ function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, cur
 
     return (
         <div style={{marginTop: 3}}>
-            <div style={{padding:'5px 0 9px 0'}}>
                 {acceptList.includes(SPECTRUM_TABLES) && <CheckboxGroupInputField
+                    sx={{mx:1}}
                     options={[{value: 'spectrum',
                         title:'If possible - interpret table columns names to fit into a spectrum data model',
                         label:'Attempt to interpret tables as spectra'}]}
                     fieldKey='tablesAsSpectrum'
                     labelWidth={90}
                 />}
-            </div>
         </div>
     );
 }
@@ -522,13 +518,13 @@ function ImageDisplayOption({summaryTblId, currentReport, currentSummaryModel, a
         {value: 'mulWindow', label: 'One extension image per window'}];
     if (acceptList.includes(IMAGES)) {
         return (
-            <div style={{marginTop: 3}}>
-                <RadioGroupInputField
-                    tooltip='display image extensions in one window or multiple windows'
-                    fieldKey='imageDisplay'
-                    options={imgOptions}
-                />
-            </div>
+            <RadioGroupInputField
+                sx={{mt:1/2}}
+                orientation='horizontal'
+                tooltip='display image extensions in one window or multiple windows'
+                fieldKey='imageDisplay'
+                options={imgOptions}
+            />
         );
     }
     else { //could still be a FITS file, but acceptList only accepts Tables & not Images
@@ -548,8 +544,6 @@ function UploadOptions({uploadSrc, isLoading, isWsUpdating, uploadKey, dropEvent
         return (
             <FileUpload
                 key={uploadKey}
-                innerStyle={{width: '7em'}}
-                fileNameStyle={{marginLeft: 5, fontSize: 12}}
                 fieldKey={FILE_ID}
                 fileAnalysis={onLoading}
                 tooltip='Select a file with FITS, VOTABLE, CSV, TSV, or IPAC format'
@@ -561,11 +555,10 @@ function UploadOptions({uploadSrc, isLoading, isWsUpdating, uploadKey, dropEvent
         return (
             <FileUpload
                 key={uploadKey}
-                innerStyle={{width: 300}}
                 fieldKey={URL_ID}
                 fileAnalysis={onLoading}
                 isFromURL={true}
-                label='Enter URL of a file:'
+                label='Enter URL of a file'
                 tooltip='Select a URL with file in FITS, VOTABLE, CSV, TSV, or IPAC format'
                 dropEvent={dropEvent}
                 canDragDrop={true}
@@ -592,15 +585,25 @@ function AnalysisInfo({report,supported=true,UNKNOWN_FORMAT}) {
         report.fileFormat === UNKNOWN_FORMAT ? '' : 'Parts:';
     const partCnt= report?.parts?.length ?? 1;
     return (
-        <div className='FileUpload__headers'>
-            <div className='keyword-label'>Format:</div>  <div className='keyword-value'>{report.fileFormat}</div>
-            <div className='keyword-label'>Size:</div>  <div className='keyword-value'>{getSizeAsString(report.fileSize)}</div>
-            <div className='keyword-label'>Name:</div>  <div className='keyword-value'>{report.fileName}</div>
-            {partCnt>1 && <div className='keyword-label'>{partDesc}</div>}
-            {partCnt>1 &&<div className='keyword-value'>{partCnt}</div> }
+        <Stack {...{direction:'row', spacing:2}}>
+            <Stack spacing={1/2} direction='row'>
+                <Typography>Format:</Typography>
+                <Typography color='warning'>{report.fileFormat}</Typography>
+            </Stack>
+            <Stack spacing={1/2} direction='row'>
+                <Typography>Size:</Typography>
+                <Typography color='warning'>{getSizeAsString(report.fileSize)}</Typography>
+            </Stack>
+            <Stack spacing={1/2} direction='row'>
+                <Typography color='warning'>{report.fileName}</Typography>
+            </Stack>
+            <Stack spacing={1/2} direction='row'>
+                {partCnt>1 && <Typography>{partDesc}</Typography>}
+                {partCnt>1 && <Typography color='warning'>{partCnt}</Typography> }
+            </Stack>
             {!supported && <div style={{color:'red', fontSize:'larger'}}>
                 {getFirstPartType() ? `File type of ${getFirstPartType()} is not supported` : 'Could not recognize the file type'}</div>}
-        </div>
+        </Stack>
     );
 }
 
@@ -611,7 +614,7 @@ function AnalysisTable({summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMA
 
     // Details table needs to render first to create a stub to collect data when Summary table is loaded.
     return (
-        <div className='FileUpload__summary'>
+        <Stack {...{direction:'row', flexGrow:1, position:'relative', minHeight:'22rem'}}>
             {(summaryModel.tableData.data.length>1) ?
                 <MultiDataSet summaryModel={summaryModel} detailsModel={detailsModel} isMoc={isMoc}
                               acceptOneItem={acceptOneItem}/> :
@@ -620,7 +623,7 @@ function AnalysisTable({summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMA
                                currentSummaryModel={summaryModel} acceptList={acceptList}
                 />
             }
-        </div>
+        </Stack>
     );
 }
 
@@ -631,49 +634,56 @@ function SingleDataSet({type, desc, detailsModel, report, UNKNOWN_FORMAT, curren
     const jobUrl = report.parts[0].url;
 
     return (
-        <div style={{display:'flex', flex:'1 1 auto', justifyContent: showDetails || isUWSJobFile?'start':'center'}}>
-            <div style={{padding:'30px 20px 0 0', marginLeft: isUWSJobFile?'30px':'0'}}>
-                <div style={{whiteSpace:'nowrap', fontSize:'larger', fontWeight:'bold', paddingBottom:40}}>
-                    {type}{desc ? ` - ${desc}` : ''}
-                </div>
+        <Stack {...{direction:'row', flex:'1 1 auto', justifyContent: showDetails || isUWSJobFile?'start':'center'}}>
+            <Box sx={{pt:4, pr:2, ml: isUWSJobFile?4:0}}>
+                <Typography level='title-lg' sx={{whiteSpace:'nowrap', pb:5}}>
+                    {type}{desc ? `: ${desc}` : ''}
+                </Typography>
                 <AnalysisInfo {...{report, supported, UNKNOWN_FORMAT}} />
                 {isUWSJobFile && <UWSInfo {...{jobUrl}}/>}
-                <div style={{paddingTop:15}}>No other detail about this file</div>
-            </div>
+                <Typography sx={{pt:2}}>No other detail about this file</Typography>
+            </Box>
             {  showDetails && <Details detailsModel={detailsModel}/>}
-        </div>
+        </Stack>
     );
 }
 
 function MultiDataSet({summaryModel, detailsModel, isMoc, acceptOneItem}) {
     return (
-        <div style={{display: 'flex', flexDirection: 'column', width: '100%'}}>
+        <Stack {...{width: 1}}>
             {
                 isMoc &&
-                <div style={{height: 20, fontWeight: 'bold', alignSelf: 'center', fontSize: 'larger', }}>
+                <Typography level='title=lg' sx={{height: '3rem', alignSelf: 'center'}}>
                     This table is a MOC and can be overlaid on a HiPS Survey
-                </div>
+                </Typography>
             }
-            <div style={{height:'100%', position:'relative'}}>
-                <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={350}>
+            <Box sx={{height:1, position:'relative'}}>
+                <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={550}>
                     {acceptOneItem && <TablePanel {...{showTypes:false, title:'File Summary', tableModel:summaryModel,
-                        ...tblOptions, selectable:false}} />}
-                    {!acceptOneItem && <TablePanel {...{showTypes:false, title:'File Summary', tableModel:summaryModel,
+                        ...tblOptions, selectable:false, }} />}
+                    {!acceptOneItem && <TablePanel {...{sx:{mr:1}, showTypes:false, title:'File Summary', tableModel:summaryModel,
                         ...tblOptions}} />}
                     <Details detailsModel={detailsModel}/>
                 </SplitPane>
-            </div>
-        </div>
+            </Box>
+        </Stack>
     );
 }
 
 
 function Details({detailsModel}) {
-    if (!detailsModel) return <div className='FileUpload__noDetails'>Details not available</div>;
+    if (!detailsModel) {
+        return (
+            <Typography level='body-lg' sx={{w:1, textAlign:'center',mt:2}}>
+                Details not available
+            </Typography>
+        );
+    }
 
     return (
         <TablePanel showTypes={false}  title='File Details'
                     tableModel={detailsModel}
+                    sx={{ml:1}}
                     {...tblOptions} showMetaInfo={true} selectable={false}/>
     );
 
@@ -683,9 +693,9 @@ function Details({detailsModel}) {
 function getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList, acceptOneItem) {
     if (report?.fileFormat === UNKNOWN_FORMAT) {
         return (
-            <div style={{flexGrow: 1, marginTop: 40, textAlign:'center', fontSize: 'larger', color: 'red'}}>
+            <Typography color='danger' level='body-lg' sx={{flexGrow: 1, mt: 4, textAlign:'center'}}>
                 Error: Unrecognized Format
-            </div>
+            </Typography>
         );
     }
     return <AnalysisTable {...{summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMAT, acceptList, acceptOneItem}} />;
@@ -706,27 +716,33 @@ const AcceptedList = (props) => {
     const {list} = props;
     const allowedTypes = buildAllowedTypes(list);
     const liStyle= {listStyleType:'circle'};
-    return (<div style={{color:'gray', margin:'20px 0 0 200px', fontSize:'larger', lineHeight:'1.3em'}}>
-        You can load any of the following types of files:
-        <ul>
-            {allowedTypes.map((fileType, index) => {
-                return <li key={index} style={liStyle}>{fileType}</li>;
-            })}
-        </ul>
-    </div>);
+    return (
+        <Box className='ff-FileUploadViewPanel-acceptList' sx={{ml:25, mt:2}}>
+            <Typography component='div'>
+                You can load any of the following types of files:
+                <ul>
+                    {allowedTypes.map((fileType, index) => {
+                        return <li key={index} style={liStyle}>{fileType}</li>;
+                    })}
+                </ul>
+            </Typography>
+        </Box>);
 };
 
 const NotAccepted = (props) => {
     const  {types} = props;
     const liStyle= {listStyleType:'circle'};
-    return (<div style={{color:'gray', margin:'20px 0 0 200px', fontSize:'larger', lineHeight:'1.3em'}}>
-        {'Warning: You cannot upload the following file type(s) from here:'}
-         <ul>
-            {types.map((fileType, index) => {
-                return <li key={index} style={liStyle}>{fileType}</li>;
-            })}
-        </ul>
-    </div>);
+    return (
+        <Box className='ff-FileUploadViewPanel-acceptList' sx={{ml:25, mt:2}}>
+            <Typography component='div'>
+                Warning: You cannot upload the following file type(s) from here:
+                <ul>
+                    {types.map((fileType, index) => {
+                        return <li key={index} style={liStyle}>{fileType}</li>;
+                    })}
+                </ul>
+            </Typography>
+        </Box>);
 };
 
 const determineAccepted = (acceptList, uniqueTypes, isMoc, isDL) => {
@@ -775,9 +791,9 @@ const determineAccepted = (acceptList, uniqueTypes, isMoc, isDL) => {
 const warningMessage = (acceptList, uniqueTypes) => {
     //if this is a file with both table and image entries, but either table or image is not in acceptList, there will be some pinked out entries (tables or images)
     if (uniqueTypes.includes('Table') && uniqueTypes.includes('Image') && (!acceptImages((acceptList)) || !acceptTableOrSpectrum(acceptList))) {
-        return (<div style={{color: 'gray', margin: '20px 0 0 0', fontSize: 'larger', lineHeight: '1.3em'}}>
-            {'Note: Any selected entries with highlighted pink lines will not be loaded.'}
-        </div>);
+        return (<Typography level='title-md' color='warning' sx={{m: '20px 0 0 0'}}>
+            Note: Any selected entries with highlighted pink lines will not be loaded.
+        </Typography>);
     }
     else {
         return null;
@@ -791,24 +807,24 @@ function UWSInfo ({jobUrl}) {
         uwsJobInfo(jobUrl).then((info) => {
             setJobInfo(info);
         })
-            .catch((err) => {
+            .catch(() => {
                 setErrMsg('Error: Please upload UWS files via the \'Upload from URL\' option');
             });
     },[jobUrl]);
 
     if (!jobUrl) { //user uploaded a UWS file from 'Upload file' option (instead of 'Upload from URL')
         return (
-            <div className='FileUpload__uws'>
-                {errMsg && <div style={{color: 'gray', margin: '20px 0 0 0', fontSize: 'larger', lineHeight: '1.3em'}}>
-                    {errMsg}
-                </div>}
-            </div>);
+            <Stack>
+                {errMsg && <Typography level='body-lg' color='danger' sx={{mt:2}}> {errMsg} </Typography>}
+            </Stack>
+        );
     }
 
     return (
-        <div className='FileUpload__uws'>
+        <Stack {...{
+            width: 1, minHeight: 100, minWidth: 250, maxWidth: 1000, resize: 'both', overflow: 'hidden'}}>
             <UwsJobInfo jobInfo={jobInfo} isOpen={true}/>
-        </div>
+        </Stack>
     );
 }
 
@@ -835,11 +851,11 @@ const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT
 
         if  (accepted) { //no errors/warnings: show the AnalysisInfo
             return (
-                <div className='FileUpload__report'>
+                <Stack flexGrow={1} spacing={2} mt={1}>
                     {summaryModel.tableData.data.length>1 && <AnalysisInfo {...{report}} />}
                     {warningMessage(acceptList, uniqueTypes)}
                     {getTableArea(report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList, acceptOneItem)}
-                </div>
+                </Stack>
             );
         }
         else {
@@ -852,14 +868,11 @@ const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT
         return (
             <>
             <AcceptedList list={acceptList}/>
-                <div style={{color: 'gray', marginTop:'10%', fontSize: 'x-large', textAlign: 'center', fontStyle: 'italic'}}>
-                    {'Drag & Drop your files here'}
-                </div>
+                <Typography level='h2' component='div' color='warning' sx={{minHeight:'22rem', flex:'1 1 auto', mt:'10%', textAlign: 'center'}}>
+                    Drag & Drop your files here
+                </Typography>
             </>
         );
     }
 };
-
-
-
 

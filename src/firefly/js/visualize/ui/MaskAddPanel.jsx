@@ -35,7 +35,7 @@ export function MaskAddPanel({vr}) {
     return (
         <FieldGroup style={{padding: '10px 5px 3px 5px'}} groupKey={'maskChoose'} keepState={true} >
             <FileUpload
-                wrapperStyle={{margin: '5px 0'}}
+                sx={{my: 1/2}}
                 fieldKey='maskFile'
                 initialState={{
                         tooltip: 'Select a file upload',
