@@ -11,16 +11,6 @@
     align-items: center;
 }
 
-.TablePanel__meta {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 0;
-    border: 1px solid #c8c8c8;
-    background-color: #e6e6e6;
-    margin-bottom: 2px;
-    padding-bottom: 2px;
-}
-
 .TablePanel__error {
     margin-top: 10px;
     display: flex;
@@ -72,64 +62,6 @@
     flex-direction: column;
 }
 
-.TablePanelOptions__button {
-    width: 50px;
-    height: 20px;
-    border: solid 1px #bdbdbd;
-    font-weight: bold;
-    color: black;
-    border-radius: 4px;
-    background: none;
-}
-.TablePanelOptions__button:active {
-    background-color: #ffffff;
-}
-
-.TablePanelOptions__button:hover {
-    background-color: #f3f3f3;
-    cursor: pointer;
-}
-
-.TablePanelOptions__filters--box {
-}
-
-.TablePanelOptions__filters {
-    border: 1px solid #c7c7c7;
-    padding: 6px;
-    background-color: #eaeaea;
-    border-radius: 3px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-style: italic;
-    color: maroon;
-}
-
-.TablePanelOptions__pref {
-    display: inline-flex;
-    font-style: italic;
-    color: gray;
-    margin-top: 3px;
-}
-
-.TablePanel__mask {
-    box-sizing: content-box;
-    background-color: rgba(255,255,255,.8);
-    display: flex;
-    position: relative;
-    height: 100%;
-    align-items: center;
-    justify-content: center;
-}
-
-.TablePanel__mask--button {
-    z-index: 1;
-    margin-top: 80px;
-    border: 1px solid rgba(0, 0, 0, 0.4);
-    box-sizing: content-box;
-    background-color: rgba(255,255,255,.8);
-}
-
 .TablePanel__no-access div {
     background-color: #ffe8e8 !important;
 }
@@ -139,38 +71,6 @@
 }
 
 /** table's related styling */
-
-.Actions__anchor {
-    padding: 3px;
-    border: 1px solid #dadada;
-    background-color: #e8e8e8;
-    font-size: 9px;
-    color: #93aec5;
-    border-radius: 2px;
-    margin: 1px 1px 2px;
-    position: absolute;
-    right: 1px;
-}
-
-.Actions__dropdown {
-    display: flex;
-    flex-direction: column;
-    white-space: nowrap;
-    margin: 5px 0;
-}
-
-.Actions__item {
-    padding: 4px 8px;
-    margin: 3px 0;
-}
-
-.Actions__item:hover {
-    cursor: pointer;
-    background-color: #efefef;
-    margin: 2px 0;
-    border-top: 1px solid #e6e6e6;;
-    border-bottom: 1px solid #e6e6e6;;
-}
 
 .Actions__popup {
     min-width: 75px;
@@ -189,73 +89,6 @@
     background-color: white;
     padding: 5px 0;
 }
-
-.PagingBar__button {
-    height: 16px;
-    width: 16px;
-    margin: 1px 2px 0 0;
-}
-
-.PagingBar__button:hover {
-    background-color: rgba(0,0,0,.15);
-    cursor: pointer;
-}
-
-.PagingBar__button.first {
-    background-image: url("~images/icons-2014/16x16_BackwardToEnd.png");
-}
-
-.PagingBar__button.last {
-    background-image: url("~images/icons-2014/16x16_ForwardToEnd.png");
-}
-
-.PagingBar__button.next {
-    background-image: url("~images/icons-2014/16x16_Forward.png");
-}
-
-.PagingBar__button.previous {
-    background-image: url("~images/icons-2014/16x16_Backward.png");
-}
-
-.PanelToolbar__button.info {
-    background-image: url("~images/icons-2014/24x24_Info.png");
-}
-
-.PanelToolbar__button.options {
-    background-image: url("~images/icons-2014/24x24_GearsNEW.png");
-}
-
-.PanelToolbar__button.textView {
-    background-image: url("~images/icons-2014/24x24_TextView.png");
-}
-
-.PanelToolbar__button.tableView {
-    background-image: url("~images/icons-2014/24x24_TableView.png");
-}
-
-.PanelToolbar__button.save {
-    background-image: url("~images/icons-2014/24x24_Save.png");
-}
-
-.PanelToolbar__button.clearFilters {
-    background-image: url("~images/icons-2014/24x24_FilterOff_Circle.png");
-}
-
-.PanelToolbar__button.propSheet {
-    background-image: url("~images/icons-2014/36x36-data-info.png");
-    background-size: cover;
-}
-
-.TablePanelInfoWrapper {
-    min-width: 430px;
-    min-height: 200px;
-    height: 300px;
-    width: 550px;
-    overflow: auto;
-    position: relative;
-    resize: both;
-}
-
 
 .CellRenderer__numrange {
     line-height: normal;
@@ -312,11 +145,6 @@ Overriding default fixed-table css
     background-color: unset;
     font-weight: unset;
 }
-
-/*.fixedDataTableRowLayout_main.highlighted div {*/
-/*    background-color: #ffe8bf !important; !* #d3fad1 *!*/
-/*}*/
-
 
 .fixedDataTableRowLayout_main.related div {
     background-color: #faf4e5;

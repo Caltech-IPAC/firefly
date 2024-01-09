@@ -2,13 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Badge, Button, Checkbox, Divider, IconButton, Stack, Tooltip, useColorScheme} from '@mui/joy';
+import {Badge, Button, Checkbox, Divider, IconButton, Stack, Tooltip} from '@mui/joy';
 import React, {memo, useRef, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 import DROP_DOWN_ICON from 'html/images/dd-narrow.png';
 import BrowserInfo, {Platform} from 'firefly/util/BrowserInfo.js';
+import { useColorMode } from './FireflyRoot.jsx';
 
 
 export function makeBadge(cnt, style={}) {
@@ -54,7 +55,7 @@ export const ToolbarButton = memo((props) => {
         dropDownCB, onClick} = props;
 
     const {current:divElementRef}= useRef({divElement:undefined});
-    const doInvert= useColorScheme()?.mode==='dark';
+    const doInvert= useColorMode()?.activeMode==='dark';
 
     const handleClick= () => {
         onClick?.(divElementRef.divElement);
