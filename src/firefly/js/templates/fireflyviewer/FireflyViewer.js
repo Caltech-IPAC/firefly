@@ -14,7 +14,7 @@ import {
     dispatchOnAppReady, dispatchNotifyRemoteAppReady, getAppOptions,
 } from '../../core/AppDataCntlr.js';
 import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
-import {getTheme} from '../../ui/ThemeSetup.js';
+import {defaultTheme} from '../../ui/ThemeSetup.js';
 import {getActiveRowCenterDef} from '../../visualize/saga/ActiveRowCenterWatcher.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';

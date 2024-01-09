@@ -4,7 +4,6 @@
 
 import React, {useCallback, useEffect} from 'react';
 import {Box, Typography} from '@mui/joy';
-import { useColorScheme } from '@mui/joy/styles';
 import PropTypes from 'prop-types';
 import {Column, Table} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
@@ -19,6 +18,7 @@ import {CellWrapper, HeaderCell, makeDefaultRenderer, SelectableCell, Selectable
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableUiUpdate, TBL_UI_UPDATE} from '../TablesCntlr.js';
 import {Logger} from '../../util/Logger.js';
+import { useColorMode } from '../../ui/FireflyRoot.jsx';
 
 import 'fixed-data-table-2/dist/fixed-data-table.css';
 import './TablePanel.css';
@@ -32,7 +32,7 @@ export const BY_SCROLL = 'byScroll';
 
 const BasicTableViewInternal = React.memo((props) => {
 
-    const { mode } = useColorScheme();
+    const { activeMode } = useColorMode();
 
     const {width, height} = props.size;
     const {columns, data, hlRowIdx, renderers, bgColor, selectInfoCls, callbacks, rowHeight, rowHeightGetter, showHeader=true,
@@ -149,7 +149,7 @@ const BasicTableViewInternal = React.memo((props) => {
         else return null;
     };
 
-    const hlColor = mode === 'dark' ? 'background.surface' : undefined;
+    const hlColor = activeMode === 'dark' ? 'background.surface' : undefined;
 
     return (
         <Box tabIndex='-1' onKeyDown={onKeyDown}

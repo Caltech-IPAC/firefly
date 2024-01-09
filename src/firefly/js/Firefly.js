@@ -4,7 +4,6 @@
  */
 
 import 'isomorphic-fetch';
-import '@fontsource/inter';
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {set, defer, once} from 'lodash';
@@ -131,6 +130,10 @@ const defFireflyOptions = {
         {id: 'vocat'},
         {id: 'nedcat'}
     ],
+    theme: {
+        customized: undefined,          // a function that returns a customized theme
+        colorMode: undefined,           // can be 'dark' or 'light'.  When not specified(default), it will use device's settings.
+    },
     MenuItemKeys: {},
     imageTabs: undefined,
     irsaCatalogFilter: undefined,

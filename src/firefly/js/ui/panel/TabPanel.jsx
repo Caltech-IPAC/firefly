@@ -69,8 +69,12 @@ export function TabPanel ({value, onTabSelect, tabId=uniqueTabId(), showOpenTabs
 
     const showTabs = (ev) => handleOpenTabs({ev, doOpen: !isDropDownShowing(tabId), tabId, onSelect: onTabSelect, arrowEl, childrenAry});
     const onChange = useCallback((ev, val) => onTabSelect?.(val), []);
-    const tabListVar = slotProps?.tabList?.variant || 'soft';
 
+    // because we support additional actions to the right of the TabList, we need to implement some of TabList feature here.
+    const tlVar = slotProps?.tabList?.variant || 'soft';
+    const sticky = slotProps?.tabList?.sticky;
+    const tlSticky = sticky === 'top' ? {position: 'sticky', top:0} :
+                     sticky === 'bottom' ? {position: 'sticky', bottom:0} : {};
     return (
         <JoyTabs key={tabId}
                  size='sm'
@@ -81,10 +85,15 @@ export function TabPanel ({value, onTabSelect, tabId=uniqueTabId(), showOpenTabs
                  variant='outlined'
                  {...joyTabsProps}
         >
-            <Sheet component={Stack} direction='row' variant={tabListVar}
-                   sx={{boxShadow: 'inset 0 -1px var(--joy-palette-divider)', position: 'unset', justifyContent: 'space-between'}}
+            <Sheet component={Stack} direction='row' variant={tlVar}
+                   sx={{
+                       boxShadow: 'inset 0 -1px var(--joy-palette-divider)',
+                       position: 'unset',
+                       justifyContent: 'space-between',
+                       ...tlSticky
+                   }}
             >
-                <ResizeTabHeader children={children}/>
+                <ResizeTabHeader slotProps={slotProps} children={children}/>
                 <Stack direction='row' flexShrink={0}>
                     {actions && actions()}
                     {showOpenTabs && (
