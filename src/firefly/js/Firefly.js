@@ -131,10 +131,6 @@ const defFireflyOptions = {
         {id: 'vocat'},
         {id: 'nedcat'}
     ],
-    theme: {
-        customized: undefined,          // a function that returns a customized theme
-        colorMode: undefined,           // dark/light mode.  Default to device's mode.
-    },
     MenuItemKeys: {},
     imageTabs: undefined,
     irsaCatalogFilter: undefined,
