@@ -30,9 +30,7 @@
     text-decoration:none;
     text-shadow:1px 1px 0 #ADB9C5;
     white-space: nowrap;
-    padding: 5px;
-    align-items: center;
-    height: 26px;
+    padding:6px 5px;
     min-width: 75px;
 }
 
