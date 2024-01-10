@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box} from '@mui/joy';
 import React, {useState} from 'react';
 import {FormPanel} from './FormPanel.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
@@ -31,15 +32,15 @@ const tableOnlyDefaultAcceptList = [
     TABLES
 ];
 
-export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, onSubmit=resultSuccess, keepState=true,
+export const FileUploadDropdown= ({sx, onCancel=dispatchHideDropDown, onSubmit=resultSuccess, keepState=true,
                                       groupKey=panelKey, acceptList= getAppOptions()?.uploadPanelLimit==='tablesOnly'?
         tableOnlyDefaultAcceptList: defaultAcceptList, acceptOneItem=false}) =>{
     const [submitText,setSubmitText]= useState('Load');
     const [doMask, changeMasking]= useState(() => false);
     const helpId = getAppOptions()?.uploadPanelHelpId ?? 'basics.searching';
     return (
-        <div style={{width: '100%', ...style}}>
-            <FieldGroup groupKey={groupKey} keepState={keepState} style={{height:'100%', width: '100%',
+        <Box sx={{width: 1, ...sx}}>
+            <FieldGroup groupKey={groupKey} keepState={keepState} sx={{height:1, width:1,
                 display: 'flex', alignItems: 'stretch', flexDirection: 'column'}}>
                 <FormPanel
                     groupKey={groupKey} onSubmit={onSubmit}
@@ -54,7 +55,7 @@ export const FileUploadDropdown= ({style={}, onCancel=dispatchHideDropDown, onSu
                 </FormPanel>
             </FieldGroup>
             {doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
-        </div>
+        </Box>
     );
 };
 
@@ -68,9 +69,9 @@ export function showUploadDialog(acceptList, keepState, groupKey, acceptOneItem)
                         () => {
                         }
                     }>
-            <div style={{resize:'both', overflow: 'hidden', zIndex:1, minWidth:600, minHeight:700}} >
+            <Box sx={{resize:'both', overflow: 'hidden', zIndex:1, minWidth:600, minHeight:700}} >
                 <FileUploadDropdown
-                    style={{height: '100%'}}
+                    sx={{height: 1}}
                     onCancel={() => dispatchHideDialog(DIALOG_ID)}
                     onSubmit={
                         (request) => {
@@ -82,7 +83,7 @@ export function showUploadDialog(acceptList, keepState, groupKey, acceptOneItem)
                     acceptList={acceptList}
                     acceptOneItem={acceptOneItem}
                 />
-            </div>
+            </Box>
         </PopupPanel>
     );
     dispatchShowDialog(DIALOG_ID);

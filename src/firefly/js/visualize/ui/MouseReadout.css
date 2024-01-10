@@ -55,7 +55,7 @@
     display: grid;
     grid-column-gap: 4px;
     grid-row-gap: 5px;
-    grid-template-columns:  65px 14px 200px;
+    grid-template-columns:  6em 14px 200px;
     grid-template-rows : 2em 1.4em 1.4em 1.4em 1.4em;
     align-items: center;
     grid-template-areas:

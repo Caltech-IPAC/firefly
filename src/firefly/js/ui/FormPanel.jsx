@@ -80,7 +80,7 @@ export const FormPanel = function (props) {
     }, []);
 
     return (
-        <Sheet style={style}>
+        <Sheet className='ff-FormPanel' style={style}>
             <div style={inputStyle}>
                 {children}
             </div>
