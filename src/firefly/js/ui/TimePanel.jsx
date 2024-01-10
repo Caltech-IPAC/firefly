@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Stack} from '@mui/joy';
 import CALENDAR from 'html/images/datetime_picker_16x16.png';
 import PropTypes from 'prop-types';
 import React, {memo} from 'react';
@@ -17,11 +18,10 @@ const iconMap = {'calendar': {icon: CALENDAR, title: 'Show the calendar for sele
 
 
 
-function TimePanelView({showHelp, feedback, feedbackStyle, examples, label, labelStyle, labelPosition,
+function TimePanelView({showHelp, feedback, feedbackStyle, examples, label,
                            valid, message, onChange, value, icon, onClickIcon, tooltip = 'select time',
-                           inputStyle, wrapperStyle, inputWidth, timeMode=ISO, isTimeModeFixed}) {
+                           inputStyle, inputWidth, timeMode=ISO, isTimeModeFixed}) {
     const ImagePadding = 3;
-
 
     const iconField = iconMap?.[icon] ?
         ( <img title={iconMap[icon].title} src={iconMap[icon].icon} onClick={() => onClickIcon?.()}/> ) : undefined;
@@ -39,7 +39,7 @@ function TimePanelView({showHelp, feedback, feedbackStyle, examples, label, labe
         placeHolder
     };
 
-    const timeField =  (<InputFieldView {...inputFields} />);
+    const timeField =  (<InputFieldView {...{...inputFields, label}} />);
 
     const outsideWidth = inputWidth + 6;
     const timePart = iconField ? (<div style={{position: 'relative', width: outsideWidth}}>
@@ -48,22 +48,13 @@ function TimePanelView({showHelp, feedback, feedbackStyle, examples, label, labe
                                 : timeField;
 
     const newFeedbackStyle = {width: inputWidth, ...feedbackStyle};
-    const lStyle = {...labelStyle, whiteSpace:'nowrap'};
-    const labelDiv = (<div style={lStyle}>{label}</div>);
     const timeDiv = (
-        <div>
+        <Stack>
             {timePart}
             <TimeFeedback {...{showHelp, feedback, style: newFeedbackStyle, examples, timeMode, isTimeModeFixed}}/>
-        </div>
+        </Stack>
     );
-    const flexDirection = (labelPosition === 'top') ? 'column' : 'row';
-
-    return (
-        <div style={{display: 'flex', flexDirection}}>
-            {labelDiv}
-            {timeDiv}
-        </div>
-    );
+    return timeDiv;
 }
 
 TimePanelView.propTypes = {
@@ -113,7 +104,7 @@ const defaultMJDExample = (<div style={{display: 'inline-block'}}>
 function TimeFeedback({showHelp, feedback, style={}, examples, timeMode=ISO, isTimeModeFixed}) {
 
     examples = timeMode===ISO ? (examples?.[ISO] ?? defaulISOtExample) : (examples?.[MJD] ?? defaultMJDExample);
-    style = {paddingTop: 5, height: isTimeModeFixed ? 'auto' : 36, // so that layout doesn't jump on toggling radio button
+    style = {paddingTop: 5, height: isTimeModeFixed ? 'auto' : '4rem', // so that layout doesn't jump on toggling radio button
         display:'flex', contentJustify: 'center', ...style};
 
     if (showHelp) {

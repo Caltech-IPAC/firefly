@@ -3,13 +3,11 @@
 
 
 .webApiParamsGrid {
-    margin-left: 20px;
     display: grid;
     grid-column-gap: 3px;
     grid-template-columns :  12em 10px 65em;
     grid-template-rows :  auto;
     grid-row-gap: 1px;
-    /*grid-template-areas: "name description";*/
 }
 
 .webApiExamplesGrid {
@@ -19,34 +17,10 @@
     grid-template-columns :  10em 10px 80em;
     grid-template-rows :  auto;
     grid-row-gap: 10px;
-    /*grid-template-areas: "name description";*/
-}
-
-
-
-.webApiParamName {
-    justify-self: end;
-    font-family: monospace;
-}
-
-.webApiBadParam {
-    color : red;
-}
-
-
-
-.webApiDesc {
-    /*grid-area: description;*/
-    font-size: smaller;
-}
-
-.webApiDash {
-    justify-self: center;
 }
 
 .webApiExName {
     justify-self: start;
-    font-size: smaller;
     display: list-item;
     list-style-type: circle;
     margin-left: 1em;

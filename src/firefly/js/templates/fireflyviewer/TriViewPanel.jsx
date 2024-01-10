@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Stack} from '@mui/joy';
+import {Box, Stack} from '@mui/joy';
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {pick} from 'lodash';
@@ -113,7 +113,7 @@ function RightSide({expanded, closeable, showXyPlots, showMeta, showFits, dataPr
     const defaultSelected= coverageRight ? 'coverage' : showXyPlots ? 'activeCharts' : 'fits';
     const key= `${showXyPlots&&'xyplot'}-${cov&&'cov'}-${meta&&'meta'}-${fits&&'fits'}`;
     return(
-        <Tabs {...{key, style, onTabSelect, defaultSelected, slotProps:{panel:{sx:{p:0}}}} }>
+        <Tabs {...{key, style, onTabSelect, defaultSelected, slotProps:{panel:{sx:{p:0}}}} } >
             {showXyPlots && makeActiveChartTab({activeLabel, chartExpandedMode, closeable, asTab:true}) }
             {showPinnedTab && makePinnedChartTab({pinnedLabel, chartExpandedMode, closeable, asTab:true}) }
             {cov && makeCoverageTab()}
@@ -168,16 +168,16 @@ function searchDesc({showViewsSwitch, showImages, isTriView, showCoverage, leftB
     ];
 
     return (
-        <div style={{display: 'inline-flex', justifyContent: 'space-between', marginBottom:coverageSide===RIGHT ? -1 : -1}}>
-            <div>
+        <Stack {...{direction: 'row', justifyContent: 'space-between', marginBottom:'-1px'}}>
+            <Stack direction='row'>
                 {leftButtons?.map( (el) => el()) }
-            </div>
-            <div>
+            </Stack>
+            <Stack direction='row'>
                 {centerButtons?.map( (el) => el()) }
-            </div>
-            <div style={{display: 'inline-flex'}}>
+            </Stack>
+            <Stack direction='row'>
                 {rightButtons?.map( (el) => el()) }
-                <div style={{width: 20}}/>
+                <Box sx={{width: 1, px:1}}/>
                 {showViewsSwitch &&
                     <Stack direction='row' spacing={2}>
                         {showCoverage && currLayoutMode!==tblXyKey &&
@@ -202,8 +202,8 @@ function searchDesc({showViewsSwitch, showImages, isTriView, showCoverage, leftB
                         }
                     </Stack>
                 }
-            </div>
-        </div>
+            </Stack>
+        </Stack>
     );
 }
 

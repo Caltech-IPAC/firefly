@@ -130,7 +130,7 @@ const RegionUpload= () => {
             <FieldGroup groupKey={rgUploadGroupKey}>
                 <Stack spacing={2}>
                     <FileUpload
-                        sx={{my:1/2, '.ff-FileUpload-upload':{width:1, maxWidth:1}}}
+                        sx={{my:1/2, '& .ff-FileUpload-upload':{width:1, maxWidth:1}}}
                         fieldKey={rgUploadFieldKey}
                         tooltip='Select a region file to upload' label='Upload File'
                     />

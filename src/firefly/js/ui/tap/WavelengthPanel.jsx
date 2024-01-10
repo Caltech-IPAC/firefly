@@ -208,7 +208,7 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
                                                          size={SmallFloatNumericWidth}
                                                          inputStyle={{overflow: 'auto', height: 16}}
                                                          placeholder='enter wavelength'
-                                                         sx={{'.MuiInput-root':{ 'paddingInlineEnd': 0, }}}
+                                                         sx={{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }}}
                                                          validator={floatValidator(0, 100e15, 'Wavelength')}
                                                          endDecorator={units}
                                                          initialState={{value: initArgs?.urlApi?.obsCoreWavelengthContains || ''}} />
@@ -218,7 +218,7 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
                                     <Stack direction='row' spacing={1} alignItems='center'>
                                         <ValidationField {...{
                                             fieldKey:'obsCoreWavelengthMinRange',
-                                            sx:{'.MuiInput-root':{'width': 100}},
+                                            sx:{'& .MuiInput-root':{'width': 100}},
                                             validator: minimumPositiveFloatValidator('Min Wavelength'),
                                             placeholder:'-Inf',
                                             initialState: {value: initArgs?.urlApi?.obsCoreWavelengthMinRange},
@@ -226,7 +226,7 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
                                         <Typography level='body-md'>to</Typography>
                                         <ValidationField {...{
                                             fieldKey: 'obsCoreWavelengthMaxRange',
-                                            sx:{'.MuiInput-root':{'width': 100}},
+                                            sx:{'& .MuiInput-root':{'width': 100}},
                                             validator: maximumPositiveFloatValidator('Max Wavelength'),
                                             placeholder: '+Inf',
                                             initialState:{value: initArgs?.urlApi?.obsCoreWavelengthMaxRange}

@@ -74,7 +74,7 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
 
     return (
         <Stack {...{direction:'row', sx, ref: (c) => divref.element=c}}>
-            <Stack {...{direction:'row', alignItems:'center', sx:{'.ff-readout-value':{pl:.5}} }}>
+            <Stack {...{direction:'row', alignItems:'center', sx:{'& .ff-readout-value':{pl:.5}} }}>
 
                 <ToolbarButton icon={POPOUT_ICON} imageStyle={{width:16}}
                                tip='Show expanded readout, thumbnail and magnifier'

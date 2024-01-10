@@ -15,11 +15,11 @@ import {getActivePlotView, getPlotViewById, primePlot} from '../visualize/PlotVi
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {formatWorldPt} from '../visualize/ui/WorldPtFormat.jsx';
-import {FixedPtControl} from './CatalogUI.jsx';
 import {flux} from 'firefly/core/ReduxFlux.js';
 import Point from 'firefly/visualize/Point.js';
 import CsysConverter from 'firefly/visualize/CsysConverter.js';
 import DrawLayerCntlr from 'firefly/visualize/DrawLayerCntlr.js';
+import {FixedPtControl} from './FixedPtControl.jsx';
 
 const ID= 'SEARCH_TARGET';
 const TYPE_ID= 'SEARCH_TARGET_TYPE';

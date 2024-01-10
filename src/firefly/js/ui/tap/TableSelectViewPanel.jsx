@@ -294,7 +294,7 @@ export function BasicUI(props) {
                         <div style={{display: 'inline-flex', width: '100%', marginRight: 3, maxWidth: 1000}}>
                             <div style={{flexGrow: 1}} title={SCHEMA_TIP}>
                                 <ListBoxInputFieldView {...{
-                                    sx:{'.MuiSelect-root':{width:'34rem', minHeight:'5rem'}},
+                                    sx:{'& .MuiSelect-root':{width:'34rem', minHeight:'5rem'}},
                                     options:sOps, value:schemaName, placeholder:'Loading...',
                                     startDecorator:!sOps.length ? <Button loading={true}/> : undefined,
                                     onChange:(ev, selectedTapSchema) => setSchemaName(selectedTapSchema),
@@ -311,7 +311,7 @@ export function BasicUI(props) {
                             <div style={{width: 10}}/>
                             <div style={{flexGrow: 1}} title={TABLE_TIP}>
                                 <ListBoxInputFieldView {...{
-                                    sx:{'.MuiSelect-root':{width:'34rem', minHeight:'5rem'}},
+                                    sx:{'& .MuiSelect-root':{width:'34rem', minHeight:'5rem'}},
                                     options:tOps, value:tableName, placeholder:'Loading...',
                                     startDecorator:!tOps.length ? <Button loading={true}/> : undefined,
                                     onChange:(ev, selectedTapTable) => {

@@ -1,3 +1,4 @@
+import {Stack} from '@mui/joy';
 import React from 'react';
 
 import {warningDivId} from 'firefly/ui/LostConnection.jsx';
@@ -24,14 +25,14 @@ export function FireflyLayout({appTitle, appIcon, altAppIcon, style={}, bannerLe
     const menu = useStoreConnector(getMenu);
 
     return (
-        <div id='App' className='rootStyle' style={{display: 'flex', flexDirection: 'column', ...style}}>
+        <Stack id='App' style={style}>
             <div>
                 <BannerSection {...{menu, appTitle, appIcon, altAppIcon, bannerLeftStyle, bannerMiddleStyle}}/>
                 <div id={warningDivId} data-decor='full' className='warning-div center'/>
                 <Alerts />
             </div>
             {children}
-        </div>
+        </Stack>
     );
 }
 

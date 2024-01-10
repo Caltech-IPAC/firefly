@@ -123,8 +123,8 @@ function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart
                         p:.5,
                         visibility,
                         boxShadow: `1px 1px 5px ${theme.vars.palette.primary.softActiveColor}`,
-                        '.ff-dialog-title-bar' : { cursor:'grab' },
-                        '.ff-dialog-title-bar:active' : { cursor:'grabbing' }
+                        '& .ff-dialog-title-bar' : { cursor:'grab' },
+                        '& .ff-dialog-title-bar:active' : { cursor:'grabbing' }
                     }) }}>
                 <Stack direction='row' justifyContent='space-between' alignItems='center'
                        className='ff-dialog-title-bar'

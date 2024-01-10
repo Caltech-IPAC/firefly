@@ -167,7 +167,7 @@ export function BadgeLabel({labelStr}) {
     return badgeCnt===0 ?  labelStr:
         (
             <Badge {...{badgeContent:badgeCnt,
-                sx:{'.MuiBadge-badge': {top:9, right:6}} }}>
+                sx:{'& .MuiBadge-badge': {top:9, right:6}} }}>
                 <div>
                     <div className='text-ellipsis' style={{marginRight: 17}}>{labelStr}</div>
                 </div>

@@ -173,7 +173,7 @@ export const StatefulTabs = React.memo( ({defaultSelected, onTabSelect, componen
         }
     });
 
-    return (<TabPanel {...rest} onTabSelect={onSelect} value={selectedIdx} />);
+    return (<TabPanel {...rest} onTabSelect={onSelect} value={convertToTabValue(rest.children, selectedIdx)} />);
 
 });
 

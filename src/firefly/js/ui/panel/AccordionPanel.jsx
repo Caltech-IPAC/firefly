@@ -3,7 +3,7 @@
  */
 
 import './CollapsiblePanel.css';
-import {Accordion, AccordionDetails, AccordionGroup, AccordionSummary, Stack} from '@mui/joy';
+import {Accordion, AccordionDetails, AccordionGroup, AccordionSummary} from '@mui/joy';
 import React, {memo} from 'react';
 import PropTypes, {string, func, node, object, bool} from 'prop-types';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
@@ -28,7 +28,7 @@ export function AccordionPanelView({header, expanded=false, sx, onChange, childr
     return (
         <AccordionGroup sx={sx}>
             <Accordion {...{expanded, onChange:(ev,expanded) => onChange(expanded)}}>
-                <AccordionSummary variant='soft'>
+                <AccordionSummary variant='soft' component='div'>
                     {header}
                 </AccordionSummary>
                 <AccordionDetails>

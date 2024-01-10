@@ -264,7 +264,7 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
                             />
                     ) : (
                         <ListBoxInputFieldView {...{
-                            sx:{'.MuiSelect-root':{width:'60rem'}},
+                            sx:{'& .MuiSelect-root':{width:'60rem'}},
                             options:tapOps, value:serviceUrl,
                             placeholder:'Choose TAP Service...',
                             startDecorator:!tapOps.length ? <Button loading={true}/> : undefined,

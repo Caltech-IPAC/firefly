@@ -461,7 +461,7 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
 
     return (
         <Stack {...{p:.5, alignItems:'stretch', overflow: 'hidden', zIndex:1, direction:'column',
-            sx:{'.ff-CompleteButton': {whiteSpace:'nowrap'}, resize:'both'} }}>
+            sx:{'& .ff-CompleteButton': {whiteSpace:'nowrap'}, resize:'both'} }}>
             <Stack {...{ spacing:1, alignItems:'center', alignSelf:'center', direction:'row', height: 30, maxHeight:30, mb:.5}}>
                 <Tooltip title={pointSizeTip}>
                     <Typography >Aperture (Values will be combined)</Typography>

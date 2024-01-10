@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import {Button, Stack, Tooltip} from '@mui/joy';
+import {Button, Chip, Stack, Tooltip} from '@mui/joy';
 import PropTypes from 'prop-types';
 import {InputField} from '../ui/InputField.jsx';
 import {ListBoxInputFieldView} from '../ui/ListBoxInputField.jsx';
@@ -66,9 +66,9 @@ export function MarkerToolUI({pv,drawLayer}) {
                     {value: TextLocation.REGION_SW.key, label:'SW'},
                 ]}/>
             <Tooltip title='Add an additional marker'>
-                <Button onClick={()=>addNewDrawLayer(pv, markerType)}>
+                <Chip onClick={()=>addNewDrawLayer(pv, markerType)}>
                     {`Add ${markerType}`}
-                </Button>
+                </Chip>
             </Tooltip>
         </Stack>
     );
