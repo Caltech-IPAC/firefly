@@ -1,4 +1,4 @@
-import {Typography} from '@mui/joy';
+import {Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {makeDatePickerPopup} from '../DateTimePickerField.jsx';
@@ -59,7 +59,7 @@ export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, style={
     };
 
     return (
-        <div style={{display: 'block', ...style}}>
+        <Stack spacing={1} style={{...style}}>
             {!fixedTimeMode && <RadioGroupInputField
                 fieldKey='exposureTimeMode' options={timeOptions} orientation='horizontal'
                 wrapperStyle={{marginTop: 5, marginLeft: 0, marginBottom: 12}}
@@ -67,10 +67,10 @@ export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, style={
                 labelWidth={labelWidth}
                 initialState={{value: initArgs?.urlApi?.exposureTimeMode || ISO}}
             />}
-            <div style={{display: 'flex', marginBottom: 12}}>
-                <Typography title={fromTip} style={{whiteSpace:'nowrap', ...timeLabelStyle, ...labelStyle}}>{minLabel}</Typography>
+            <Stack {...{direction: 'row', spacing:2, mb: 1}}>
                 <TimePanel
                     fieldKey={minKey} timeMode={timeMode} icon={icon}
+                    label={minLabel}
                     tooltip={fromTip} feedbackStyle={feedbackStyle}
                     inputWidth={timePanelInputWidth} inputStyle={{overflow: 'auto', height: 16}}
                     onClickIcon={
@@ -78,11 +78,9 @@ export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, style={
                             (value) => setNewTimeValue(minKey,value) )}
                     value={initArgs?.urlApi?.exposureMin || getVal(minKey)}
                     isTimeModeFixed={Boolean(fixedTimeMode)} examples={minExamples}/>
-            </div>
-            <div style={{display: 'flex'}}>
-                <Typography title={toTip} style={{whiteSpace:'nowrap', ...timeLabelStyle, ...labelStyle}}>{maxLabel}</Typography>
                 <TimePanel
                     fieldKey={maxKey} timeMode={timeMode} icon={icon}
+                    label={maxLabel}
                     tooltip={toTip} feedbackStyle={feedbackStyle}
                     inputWidth={timePanelInputWidth} labelStyle={{overflow: 'auto', height: 16}}
                     onClickIcon={
@@ -90,8 +88,8 @@ export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, style={
                             (value) => setNewTimeValue(maxKey,value) )}
                     value={initArgs?.urlApi?.exposureMax || getVal(maxKey)}
                     isTimeModeFixed={Boolean(fixedTimeMode)} examples={maxExamples}/>
-            </div>
-        </div>
+            </Stack>
+        </Stack>
     );
 }
 

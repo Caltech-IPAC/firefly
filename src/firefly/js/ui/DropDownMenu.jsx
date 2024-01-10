@@ -25,7 +25,7 @@ function placeDropDown(e,x,y, beforeVisible) {
 export function SingleColumnMenu({children, sx, kind='drop'}) {
     return (
         <DropDownMenu sx={sx} kind={kind}>
-            <Stack direction='column' sx={{'.ff-toolbar-button':{width:1, justifyContent:'flex-start'}}}>
+            <Stack direction='column' sx={{'& .ff-toolbar-button':{width:1, justifyContent:'flex-start'}}}>
                 {children}
             </Stack>
         </DropDownMenu>

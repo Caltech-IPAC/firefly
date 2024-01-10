@@ -179,7 +179,7 @@ export function ObsCoreSearch({sx, cols, serviceLabel, initArgs={}}) {
             <div style={{
                 display: 'flex', flexDirection: 'column', flexWrap: 'no-wrap', width: SpatialWidth, marginTop: 5 }}>
                 <ForceFieldGroupValid forceValid={!checkHeaderCtl.isPanelActive()}>
-                    <Stack {...{direction:'column', sx:{'.ff-Input':{width: 300}}, spacing:1}}>
+                    <Stack {...{direction:'column', sx:{'& .ff-Input':{width: 300}}, spacing:1}}>
                         <CheckboxGroupInputField fieldKey='obsCoreCalibrationLevel'
                                                  options={calibrationOptions}
                                                  tooltip={obsCoreCalibrationLevelOptions.tooltip || 'Select ObsCore Calibration Level (calibration_level)'}

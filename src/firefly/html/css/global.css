@@ -570,13 +570,3 @@ div.rootStyle img {
     margin-left: 3px;
     content: '*';
 }
-
-.MainPanel-root {
-    display: flex;
-    height: 100%;
-}
-
-.MainPanel-content {
-    display: flex;
-    flex-direction: column;
-}

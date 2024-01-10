@@ -139,7 +139,7 @@ function InternalCollapsibleCheckHeader({sx, title, helpID, children, fieldKey, 
         <FieldGroupAccordionPanel header={<Header title={title} helpID={helpID}
                                                enabled={initialStateChecked}
                                                checkID={checkKey} message={message} panelValue={panelValue}/>}
-                                  sx={{'.MuiAccordionDetails-content': { ml: 3, }, ...sx}}
+                                  sx={{'& .MuiAccordionDetails-content': { ml: 3, }, ...sx}}
                                           initialState={initialState} fieldKey={fieldKey} headerStyle={HeaderFont}>
             {children}
         </FieldGroupAccordionPanel>

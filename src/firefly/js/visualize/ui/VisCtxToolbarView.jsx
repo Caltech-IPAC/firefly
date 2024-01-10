@@ -190,7 +190,7 @@ const HiPSCoordSelect= memo(({plotId, imageCoordSys}) =>{
     return (
         <div>
             <ListBoxInputFieldView {...{
-                sx: {'.MuiSelect-root': {'minHeight': '1.6em'}},
+                sx: {'& .MuiSelect-root': {'minHeight': '1.6em'}},
                 inline: true, value: selectedIdx, options:hipsCoordOptions,
                 onChange: (ev,newValue) => dispatchChangeHiPS( {plotId,  coordSys: hipsCoordOptions[Number(newValue)].c}),
                 tooltip:'Change HiPS survey coordinate system',
@@ -531,7 +531,7 @@ function FrameNavigator({pv, currPlotIdx, minForInput, displayType, tooltip}) {
             </IconButton>
             {showNavControl ?
                 <StateInputField defaultValue={currStr} valueChange={changeFrameIdx}
-                                 sx={{'.MuiInput-root':{'minHeight':'3px', 'borderRadius':4, width:'5em'}}}
+                                 sx={{'& .MuiInput-root':{'minHeight':'3px', 'borderRadius':4, width:'5em'}}}
                                  tooltip={`Enter frame number to jump to, right arrow goes forward, left arrow goes back\n${tooltip}`}
                                  style={{width:getEmLength(len), textAlign:'right'}}
                                  type='number'

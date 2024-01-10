@@ -248,11 +248,11 @@ function getUpperAndLowerFields() {
     return (
         <Stack spacing={1}>
             <ValidationField endDecorator={getTypeMinField()}
-                             sx={{'.MuiInput-root':{ 'paddingInlineEnd': 0, }}}
+                             sx={{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }}}
                              fieldKey='lowerRange'
             />
             <ValidationField  endDecorator={getTypeMaxField()}
-                              sx={{'.MuiInput-root':{ 'paddingInlineEnd': 0, }}}
+                              sx={{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }}}
                               fieldKey='upperRange'
             />
         </Stack>

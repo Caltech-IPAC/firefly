@@ -57,8 +57,8 @@ export const ToolbarButton = memo((props) => {
     const {current:divElementRef}= useRef({divElement:undefined});
     const doInvert= useColorMode()?.activeMode==='dark';
 
-    const handleClick= () => {
-        onClick?.(divElementRef.divElement);
+    const handleClick= (ev) => {
+        onClick?.(divElementRef.divElement,ev);
         dropDownCB ? dropDownCB(divElementRef.divElement) : dispatchHideDialog(DROP_DOWN_KEY);
     };
 

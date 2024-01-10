@@ -261,7 +261,7 @@ function ImageViewOptionsPanel({viewerId}) {
                         onSuccess={() => dialogComplete(model.tbl_id)}
                         dialogId='ExpandedOptionsPopup'/>
 
-                    <Stack {...{direction: 'row', spacing:1, sx:{'.MuiButton-root':{whiteSpace:'nowrap'}} }}>
+                    <Stack {...{direction: 'row', spacing:1, sx:{'& .MuiButton-root':{whiteSpace:'nowrap'}} }}>
                         <Button onClick={() => removeSelected()} >Remove Selected </Button>
                         <Button onClick={() => deleteFailed()}>Delete Failed </Button>
                         <HelpIcon helpId={'visualization.loaded-images'} style={{padding: '8px 9px 0 0'}}/>

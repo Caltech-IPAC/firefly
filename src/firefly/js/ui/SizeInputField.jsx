@@ -146,7 +146,7 @@ const SizeInputFieldView= (props) => {
                                     {label: 'arcseconds', value: 'arcsec'}
                                 ]}/>
                         ),
-                        sx:{'.MuiInput-root':{ 'paddingInlineEnd': 0, }},
+                        sx:{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }},
                         tooltip:'enter size within the valid range'
                     }} />
                 </Stack>

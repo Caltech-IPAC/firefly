@@ -1,3 +1,4 @@
+import {Stack} from '@mui/joy';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import './ModalDialog.css';
@@ -6,12 +7,12 @@ export class ModalDialog extends PureComponent {
     constructor(props) {
         super(props);
         this.state = {
-            width: getDocWidth(),
-            height: getDocHeight()
+            width: window.innerWidth,
+            height: window.innerHeight,
         };
         this.browserResizeCallback = () => {
             if (!this.isUnmounted) {
-                this.setState({width: getDocWidth(), height: getDocHeight()});
+                this.setState({width: window.innerWidth, height: window.innerHeight});
             }
         };
     }
@@ -30,13 +31,15 @@ export class ModalDialog extends PureComponent {
         // make sure the modal fits into the viewport
         const wrapperStyle = {maxWidth: width, maxHeight: height, overflow: 'auto'};
         return (
-            <div className='ModalWindow' style={{zIndex: this.props.zIndex}}>
-                <div className='ModalDialog'>
+            <Stack sx={{direction:'row', alignItems:'center', justifyContent:'center', zIndex: this.props.zIndex,
+                       position: 'fixed', top: 0, left: 0, bottom: 0, right: 0, backgroundColor: 'rgba(0, 0, 0, 0.2)'
+                   }}>
+                <Stack {...{alignItems:'center', justifyContent:'space-between'}}>
                     <div className='ModalDialog__content' style={wrapperStyle}>
                         {this.props.children}
                     </div>
-                </div>
-            </div>
+                </Stack>
+            </Stack>
         );
     }
 }
@@ -44,11 +47,3 @@ export class ModalDialog extends PureComponent {
 ModalDialog.propTypes= {
     zIndex : PropTypes.number
 };
-
-function getDocHeight() {
-    return window.innerHeight;
-}
-
-function getDocWidth() {
-    return window.innerWidth;
-}

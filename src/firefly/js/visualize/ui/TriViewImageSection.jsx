@@ -54,7 +54,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
     if (showCoverage || showFits || showMeta) {
         return (
             <Tabs key={key} style={{height: '100%', ...style}} onTabSelect={onTabSelect}
-                  slotProps={{ tabPanel:{sx:{p:0}} }}
+                  slotProps={{ panel:{sx:{p:0}} }}
                   defaultSelected={getDefSelected(showCoverage,showFits,showMeta)}
                   useFlex={true} resizable={true}>
                 { showCoverage && coverageSide==='LEFT' && makeCoverageTab() }
@@ -93,7 +93,7 @@ function BadgeLabel({labelStr}) {
     return badgeCnt===0 ?  labelStr:
         (
 
-            <Badge {...{badgeContent:badgeCnt, sx:{'.MuiBadge-badge': {top:9, right:-2}}  }}>
+            <Badge {...{badgeContent:badgeCnt, sx:{'& .MuiBadge-badge': {top:9, right:-2}}  }}>
                 <div style={{display:'flex', justifyContent:'center', alignItems:'center'}}>
                     <div>{labelStr}</div>
                 </div>

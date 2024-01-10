@@ -121,7 +121,7 @@ export function CopyToClipboard({value, title, style, size=12, buttonStyle={}}) 
     return (
         <div style={style}>
             <ToolbarButton icon={clipIcon} tip={title} imageStyle={{height:size, width:size}}
-                           sx={{...buttonStyle,'.ff-toolbar-iconbutton' : {padding:'0'}}}
+                           sx={{...buttonStyle,'& .ff-toolbar-iconbutton' : {padding:'0'}}}
                            onClick={() => doCopy(value)} />
         </div>
     );

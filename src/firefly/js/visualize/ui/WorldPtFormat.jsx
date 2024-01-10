@@ -13,14 +13,14 @@ export function formatWorldPt(wp, pad=3, useBold=true) {
     const fontWeight= useBold?'bold':'normal';
     if (!wp.objName) {
         return (
-            <Typography level='body-sm' sx={fontWeight}> {`${valToStr(wp.x)}, ${valToStr(wp.y)} ${coordToString(wp.cSys)}`} </Typography>
+            <Typography level='body-sm' sx={{fontWeight}}> {`${valToStr(wp.x)}, ${valToStr(wp.y)} ${coordToString(wp.cSys)}`} </Typography>
         );
     }
     if (wp.resolver) {
         return (
             <Fragment>
                 <Typography level='body-sm' sx={{fontWeight, paddingRight:pad+'px'}}>{wp.objName}</Typography>
-                <Typography size='body-xs'> {`${wp.resolver.toString().toUpperCase()}`} </Typography>
+                <Typography level='body-xs'> {`${wp.resolver.toString().toUpperCase()}`} </Typography>
             </Fragment>
         );
     }

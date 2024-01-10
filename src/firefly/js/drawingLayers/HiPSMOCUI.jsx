@@ -4,14 +4,15 @@
  */
 
 import React from 'react';
-import PropTypes from 'prop-types';
+import {object} from 'prop-types';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
 import {dispatchModifyCustomField} from '../visualize/DrawLayerCntlr.js';
 import {Style} from '../visualize/draw/DrawingDef.js';
 
-const options= [ {label: 'Outline', value: Style.DESTINATION_OUTLINE.key},
-                 {label: 'Fill', value: Style.FILL.key},
-                 {label: 'MOC Tile Outline', value: Style.STANDARD.key},
+const options= [
+    {label: 'Outline', value: Style.DESTINATION_OUTLINE.key},
+    {label: 'Fill', value: Style.FILL.key},
+    {label: 'MOC Tile Outline', value: Style.STANDARD.key},
 ];
 
 
@@ -21,12 +22,9 @@ function HiPSMOCUI({drawLayer,pv}) {
     const style = drawLayer?.mocStyle?.[pv.plotId] ?? drawLayer.drawingDef?.style ?? Style.DESTINATION_OUTLINE;
 
     return (
-            <div style={{display: 'inline-flex', padding: '2px 3px 2px 3px',
-                         border: '1px solid rgba(60,60,60,.2', borderRadius: '5px'}}>
-                <RadioGroupInputFieldView options={options}  value={style.key}
-                                          buttonGroup={true}
-                                          onChange={(ev) => changeMocPref(drawLayer,pv,ev.target.value, style.key)} />
-            </div>
+        <RadioGroupInputFieldView options={options}  value={style.key}
+                                  buttonGroup={true}
+                                  onChange={(ev) => changeMocPref(drawLayer,pv,ev.target.value, style.key)} />
     );
 }
 
@@ -37,7 +35,7 @@ function changeMocPref(drawLayer,pv,value, prevValue) {
 }
 
 HiPSMOCUI.propTypes= {
-    drawLayer     : PropTypes.object.isRequired,
-    pv            : PropTypes.object.isRequired
+    drawLayer     : object.isRequired,
+    pv            : object.isRequired
 };
 
