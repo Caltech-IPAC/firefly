@@ -15,17 +15,16 @@ import {CopyToClipboard} from '../../visualize/ui/MouseReadout.jsx';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 
 
-export function TableInfo(props) {
+export function TableInfo({tbl_id, tabsProps, ...props}) {
 
-    const {tbl_id} = props;
     if (!tbl_id) {
         return <div>No additional Information</div>;
     }
    const jobId = getJobIdFromTblId(tbl_id);
 
     return (
-        <Stack p={1} height={1} boxSizing='border-box'>
-            <StatefulTabs componentKey='TablePanelOptions' defaultSelected={0} borderless={true} useFlex={true} style={{flex: '1 1 0'}}>
+        <Stack p={1} height={1} spacing={1} {...props}>
+            <StatefulTabs componentKey='TablePanelOptions' {...tabsProps}>
                 {jobId &&
                 <Tab name='Job Info'>
                     <JobInfo jobId={jobId}/>
@@ -45,7 +44,8 @@ export function TableInfo(props) {
 }
 
 TableInfo.propTypes = {
-    tbl_id: PropTypes.string
+    tbl_id: PropTypes.string,
+    tabsProps: PropTypes.object         // this get passed into TabPanel
 };
 
 

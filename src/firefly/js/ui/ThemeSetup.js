@@ -1,8 +1,14 @@
-import {extendTheme} from '@mui/joy';
+/**
+ * Returns the overrides portion of JoyUI's theme.
+ * This will be used to extend(extendTheme) JoyUI's default theme.
+ *
+ * To customize Firefly's theme, start with the defaultTheme.  Then, update or add as needed.
+ * Next, assign the customized theme to the application options.  e.g. firefly.theme.customized = () => ({<custom-theme>})
 
-
-export function getTheme() {
-    return extendTheme({
+ * @return {object}
+ */
+export function defaultTheme() {
+    return ({
         components: {
             JoyButton: {
                 defaultProps: {

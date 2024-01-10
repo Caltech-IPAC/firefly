@@ -393,7 +393,7 @@ export const CellWrapper =  React.memo( (props) => {
     const lineHeight = '2em';
 
     const content = (
-        <Stack textAlign={textAlign} lineHeight={lineHeight} p='2px' bgcolor='background.surface'>
+        <Stack textAlign={textAlign} lineHeight={lineHeight} px={1/4} bgcolor='background.surface'>
             <CellRenderer {...omit(props, 'Content')} cellInfo={cellInfo}/>
         </Stack>
     );
@@ -521,7 +521,7 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
             return null;
         } else {
             return (
-                <div style={{padding: '0 2px 0 2px', marginTop:'-2px'}}>
+                <Box px={1/4}>
                     <InputField
                         key={rowIndex + '-' +colIdx}
                         validator={(v) => validator(v, data, rowIndex, colIdx)}
@@ -534,7 +534,7 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
                         actOn={['blur','enter']}
                         showWarning={false}
                     />
-                </div>
+                </Box>
             );
         }
     };

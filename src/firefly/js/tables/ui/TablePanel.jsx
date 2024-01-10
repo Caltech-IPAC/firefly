@@ -37,10 +37,16 @@ import {AddColumnBtn} from './AddOrUpdateColumn.jsx';
 
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
 import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
+import CLEAR_FILTER from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
+import TEXT_VIEW from 'html/images/icons-2014/24x24_TextView.png';
+import TABLE_VIEW from 'html/images/icons-2014/24x24_TableView.png';
+import SAVE from 'html/images/icons-2014/24x24_Save.png';
+import PROP_SHEET from 'html/images/icons-2014/36x36-data-info.png';
+import INFO from 'html/images/icons-2014/24x24_Info.png';
 import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
+
 import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
 import {META} from '../TableRequestUtil.js';
-import {useColorScheme} from '@mui/joy/styles';
 
 const logger = Logger('Tables').tag('TablePanel');
 
@@ -149,9 +155,16 @@ function showTableOptionDialog(onChange, onOptionReset, clearFilter, tbl_ui_id, 
 
 function showTableInfoDialog(tbl_id)  {
     const content = (
-        <div className='TablePanelInfoWrapper' style={{width: 500}}>
-            <TableInfo tbl_id={tbl_id}/>
-        </div>
+        <Box width={500} height={300} minWidth={450} minHeight={200}
+             sx={{resize:'both', overflow:'auto', position:'relative'}}>
+            <TableInfo tbl_id={tbl_id}
+                       p={0} height='unset'
+                       tabsProps={{
+                           variant:'plain',
+                           slotProps: {tabList: {sticky: 'top'}}
+                       }}
+            />
+        </Box>
     );
     showOptionsPopup({content, title: 'Table Info', modal: true, show: true});
 }
@@ -243,8 +256,6 @@ TablePanel.defaultProps = {
 
 function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
 
-    const { mode } = useColorScheme();
-
     const uiState = useStoreConnector(() => getTableUiById(tbl_ui_id) || {columns:[]}, [tbl_ui_id]);
     const searchActions= getSearchActions();
 
@@ -267,9 +278,6 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
         dispatchTblExpanded(tbl_ui_id, tbl_id);
         dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.tables);
     };
-
-    const viewIcoStyle = 'PanelToolbar__button ' + (textView ? 'tableView' : 'textView');
-    const TT_VIEW = textView ? TT_TABLE_VIEW : TT_TEXT_VIEW;
 
     let {leftButtons, rightButtons, showAddColumn} = tblState;
     showAddColumn = isClientTable(tbl_id) ? false : showAddColumn;
@@ -295,13 +303,8 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
 
     if (!showToolbar) return null;
 
-    const sx = mode === 'dark' ?                                            // temporary solution for dark-mode; need real icons
-                ({'& .PagingBar__button, .PanelToolbar__button': {
-                    backgroundColor: 'text.primary'
-                }}) : undefined;
-
     return (
-        <Sheet component={Stack} sx={sx} variant='soft' className='FF-Table-Toolbar' direction='row' justifyContent='space-between' width={1} {...slotProps?.toolbar}>
+        <Sheet component={Stack} variant='soft' className='FF-Table-Toolbar' direction='row' justifyContent='space-between' width={1} {...slotProps?.toolbar}>
             <LeftToolBar {...{tbl_id, title, removable, showTitle, leftButtons}}/>
             {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:connector}} /> }
             <Stack direction='row' alignItems='center'>
@@ -310,43 +313,41 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
                 <ActionsDropDownButton {...{searchActions, tbl_id}}/>
                 }
                 {showFilterButton && filterCount > 0 &&
-                <div onClick={clearFilter}
-                     title={TT_CLEAR_FILTER}
-                     className='PanelToolbar__button clearFilters'/>}
+                <ToolbarButton icon={CLEAR_FILTER} tip={TT_CLEAR_FILTER}
+                               onClick={clearFilter}/>
+                }
                 {showFilterButton &&
                 <ToolbarButton icon={FILTER}
                                tip={TT_SHOW_FILTER}
-                               visible={true}
                                badgeCount={filterCount}
                                onClick={toggleFilter}/>
                 }
-                {showToggleTextView && <div onClick={toggleTextView}
-                                            title={TT_VIEW}
-                                            className={viewIcoStyle}/>}
+                {showToggleTextView &&
+                <ToolbarButton icon={textView ? TABLE_VIEW : TEXT_VIEW}
+                               tip={textView ? TT_TABLE_VIEW : TT_TEXT_VIEW}
+                               onClick={toggleTextView}/>
+                }
                 {showSave &&
-                <div onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}
-                     title={TT_SAVE}
-                     className='PanelToolbar__button save'/> }
+                <ToolbarButton icon={SAVE} tip={TT_SAVE}
+                               onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}/>
+                }
                 {showAddColumn && <AddColumnBtn tbl_id={tbl_id} tbl_ui_id={tbl_ui_id}/> }
                 {showInfoButton &&
-                <div style={{marginLeft: '4px'}}
-                     title={TT_INFO}
-                     onClick={showInfoDialog}
-                     className='PanelToolbar__button info'/> }
+                <ToolbarButton icon={INFO} tip={TT_INFO}
+                               onClick={showInfoDialog}/>
+                }
                 {showPropertySheet &&
-                <div style={{marginLeft: '4px'}}
-                     title={TT_PROPERTY_SHEET}
-                     onClick={() => showTablePropSheetDialog(tbl_id)}
-                     className='PanelToolbar__button propSheet'/> }
+                <ToolbarButton icon={PROP_SHEET} tip={TT_PROPERTY_SHEET}
+                               onClick={() => showTablePropSheetDialog(tbl_id)}/>
+                }
                 {showOptionButton &&
-                <div style={{marginLeft: '4px'}}
-                     title={TT_OPTIONS}
-                     onClick={showOptionsDialog}
-                     className='PanelToolbar__button options'/> }
+                <ToolbarButton icon={OPTIONS} tip={TT_OPTIONS}
+                               onClick={showOptionsDialog}/>
+                }
                 { expandable && !expandedMode &&
-                <div className='PanelToolbar__button' onClick={expandTable} title={TT_EXPAND}>
-                    <img src={OUTLINE_EXPAND}/>
-                </div>}
+                <ToolbarButton icon={OUTLINE_EXPAND} tip={TT_EXPAND}
+                               onClick={expandTable}/>
+                }
                 { help_id && <div style={{marginTop:-10}}> <HelpIcon helpId={help_id} /> </div>}
             </Stack>
         </Sheet>
