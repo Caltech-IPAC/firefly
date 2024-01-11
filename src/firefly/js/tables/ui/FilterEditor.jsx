@@ -30,8 +30,6 @@ import {CopyToClipboard} from '../../visualize/ui/MouseReadout';
 
 import RIGHT_ARROW from 'html/images/right-arrow-in-16x16.png';
 
-const wrapperStyle = {display: 'block', flexGrow: 0};
-const style = {display: 'block', width: '100%', resize: 'none', boxSizing: 'border-box'};
 
 export class FilterEditor extends PureComponent {
     constructor(props) {
@@ -68,12 +66,10 @@ export class FilterEditor extends PureComponent {
                     label='Filters:'
                     validator={FilterInfo.validator.bind(null,columns)}
                     tooltip={FILTER_TTIPS}
-                    inline={false}
-                    rows={3}
+                    minRows={3}
+                    maxRows={3}
                     onChange={callbacks.onAllFilter}
                     actOn={['blur', 'enter']}
-                    wrapperStyle={wrapperStyle}
-                    style={style}
                     showWarning={false}
                 />
             </div>
@@ -257,8 +253,6 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange, style={}, samples, 
     inputLabel = inputLabel || (colFilters ? 'Additional Constraints (SQL):' : 'Constraints (SQL):');
     const iconGen = () => <img width="14" height="14" src={RIGHT_ARROW}/> ;
 
-    const errStyle = error ? {borderColor: 'red'} : {};
-
     usages = usages || <Usages/>;
     samples = samples || <Samples/>;
     placeholder = placeholder || 'e.g., "ra" > 180 AND "ra" < 185';
@@ -297,7 +291,8 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange, style={}, samples, 
                     </Stack>
                     <InputAreaFieldConnected
                         ref={sqlEl}
-                        style={{width: 'calc(100% - 9px)', resize: 'none', backgroundColor: 'white', ...errStyle}} rows={7}
+                        minRows={7}
+                        maxRows={7}
                         validator={FilterInfo.validator.bind(null,columns)}
                         groupKey={groupKey}
                         fieldKey={sqlKey}
