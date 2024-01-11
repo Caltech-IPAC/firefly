@@ -573,18 +573,7 @@ function renderSqlArea() {
         <Stack {...{pt:1,}}>
             <Typography sx={{pb:.5}}>Additional constraints (SQL)</Typography>
             <InputAreaFieldConnected fieldKey='txtareasql'
-                                     wrapperStyle={{display:'flex'}}
-                                     style={{
-                                                overflow: 'auto',
-                                                alignItems: 'center',
-                                                height: '20px',
-                                                maxHeight: '100px',
-                                                width: '100%',
-                                            }}
-                                     initialState={{
-                                                tooltip: 'Enter SQL additional constraints here',
-                                                // labelWidth: 70
-                                            }}
+                                     tooltip='Enter SQL additional constraints here'
             />
             <Typography level='body-sm' component='div' sx={{pt:.5}}>
                 <em>Ex: w3snr&gt;7 and (w2mpro-w3mpro)&gt;1.5 and ra&gt;102.3 and ra&lt;112.3 and dec&lt;-5.5 and

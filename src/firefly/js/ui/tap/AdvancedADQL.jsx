@@ -121,7 +121,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
 
     useEffect(() => {
         // We need to get prism-live to adopt to the textarea
-        const textArea = ReactDOM.findDOMNode(adqlEl.current)?.firstChild;
+        const textArea = ReactDOM.findDOMNode(adqlEl.current)?.querySelector('textarea');
         // adopt textArea
         prismLiveRef.current = new Prism.Live(textArea);
     }, []);
@@ -236,7 +236,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                         </div>
                     </div>
                     <div  style={{overflow: 'auto', flexGrow: 1}}>
-                        <Tree treeData={displayedTreeData} defaultExpandAll showLine selectedKeys={[]} loadData={onLoadData} onSelect={onSelect} />
+                        <Tree treeData={displayedTreeData} defaultExpandAll={true} showLine={true} selectedKeys={[]} loadData={onLoadData} onSelect={onSelect} />
                     </div>
                 </SplitContent>
                 <SplitContent style={{overflow: 'auto'}}>
@@ -250,11 +250,14 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                         </div>
                         <InputAreaFieldConnected
                             ref={adqlEl}
-                            style={{backgroundColor: 'transparent'}}
                             fieldKey={adqlKey}
                             tooltip='ADQL to submit to the selected TAP service'
-                            additionalClasses='prism-live language-sql'
+                            slotProps={{
+                                input: {sx: {bgcolor: '#f5f2f0'}}, //the color defined on prism.css L59
+                                textArea: {className: 'prism-live language-sql'}
+                            }}
                             idName='adqlEditor'
+                            maxRows={null} //to prevent default value getting assigned, we need no max limit on rows
                         />
                         <div style={{color: '#4c4c4c'}}>
                             <div style={{marginLeft: 5, lineHeight:'2em'}}>

@@ -165,12 +165,11 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
                         </Stack> }
                     {whichOverlay === POLY_CHOICE_KEY &&
                         <InputAreaFieldConnected {...{
-                            fieldKey:POLYGON_KEY, label:'Search Polygon',
-                            labelStyle:{textAlign:'right', paddingRight:4},
-                            labelWidth:100, tooltip:'Search area of the polygon',
-                            wrapperStyle:{display:'flex', alignItems:'center'},
-                            style:{overflow:'auto', height:55, maxHeight:200, minWidth: 100, width:280, maxWidth:360,},
+                            fieldKey:POLYGON_KEY,
+                            label:'Search Polygon',
+                            tooltip:'Search area of the polygon',
                             initialState:{value:convertWpAryToStr(polygonValue,primePlot(pv))},
+                            sx: {width: 0.75}
                         }} /> }
                 </Stack>
                 <Stack {...{direction:'row', justifyContent:'space-between', mt:3, mb:1, ml:2, alignItems:'center'}}>

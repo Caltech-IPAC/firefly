@@ -88,9 +88,8 @@ export class CatalogSearchMethodType extends PureComponent {
                                    : SpatialMethod['All Sky'].value;
 
         return (
-            <FieldGroup groupKey={groupKey} keepState={true}
-                style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
-                <Stack spacing={2}>
+            <FieldGroup groupKey={groupKey} keepState={true}>
+                <Stack spacing={2} sx={{pl: 3}}>
                     {renderTargetPanel(groupKey, searchType)}
                     {spatialSelection(withPos, polyIsDef, searchOption)}
                     <SizeArea {...{groupKey, searchType, imageCornerCalc: fields?.imageCornerCalc?.value ?? 'image'}}/>
@@ -342,11 +341,9 @@ function SizeArea({groupKey, searchType, imageCornerCalc}) {
     }
 }
 
-export function renderPolygonDataArea({imageCornerCalc, labelWidth, labelStyle, wrapperStyle,
+export function renderPolygonDataArea({imageCornerCalc,
                                           hipsUrl= getAppOptions().coverage?.hipsSourceURL  ??  'ivo://CDS/P/2MASS/color',
                                           centerWP, fovDeg=240 }) {
-    wrapperStyle = {padding: 5, display: 'flex', ...wrapperStyle};
-
     let cornerTypeOps=
         [
             {label: 'Image', value: 'image'},
@@ -372,8 +369,7 @@ export function renderPolygonDataArea({imageCornerCalc, labelWidth, labelStyle, 
     const wp= parseWorldPt(centerWP);
     return (
         <Stack {...{spacing:1}}>
-            <div style={{paddingTop: 10, paddingLeft: 5}}>
-                {pv && <RadioGroupInputField
+            {pv && <RadioGroupInputField
                     inline={false}
                     orientation='horizontal'
                     tooltip='Choose corners of polygon'
@@ -382,25 +378,21 @@ export function renderPolygonDataArea({imageCornerCalc, labelWidth, labelStyle, 
                     options={cornerTypeOps}
                     fieldKey='imageCornerCalc'
                 />
-                }
-            </div>
+            }
             <VisualPolygonPanel {...{
                 fieldKey:'polygoncoords',
-                style:{overflow:'auto',height:'65px', maxHeight:'200px', width:'220px', maxWidth:'300px'},
                 hipsDisplayKey:fovDeg,
                 hipsUrl,
                 hipsFOVInDeg:fovDeg,
                 centerPt:wp,
                 label:'Coordinates:',
-                labelStyle,
-                labelWidth,
                 tooltip:'Enter polygon coordinates search', }} />
-            <ul>
+            <Typography level='body-sm' component='ul' sx={{pl:1}}>
                 <li>- Each vertex is defined by a J2000 RA and Dec position pair</li>
                 <li>- A max of 15 and min of 3 vertices is allowed</li>
                 <li>- Vertices must be separated by a comma (,)</li>
                 <li>- Example: 20.7 21.5, 20.5 20.5, 21.5 20.5, 21.5 21.5</li>
-            </ul>
+            </Typography>
         </Stack>
     );
 }
