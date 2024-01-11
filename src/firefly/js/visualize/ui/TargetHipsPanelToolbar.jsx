@@ -1,7 +1,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {Stack, Typography} from '@mui/joy';
+import {Sheet, Stack, Typography} from '@mui/joy';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
@@ -50,15 +50,17 @@ export function TargetHipsPanelToolbar({visRoot, toolbarStyle={},
     if (!showImageToolbar) return <div/>;
 
     return (
-        <Stack {...{direction:'column', alignItems:'flex-end', justifyContent: 'space-between',
-            flexWrap:'nowrap', width:'100%', height: 55, style:toolbarStyle}}>
-            <Stack direction='row' justifyContent='flex-start'>
-                <VisMiniToolbar style={{width:'unset'}} viewerId={viewerId}
-                                tips={{selectArea:'Select an area to search'}}/>
-                <HelpIcon style={{alignSelf:'cenTer', paddingLeft:5}} helpId={toolbarHelpId} />
+        <Sheet>
+            <Stack {...{direction:'column', alignItems:'flex-end', justifyContent: 'space-between',
+                flexWrap:'nowrap', width:'100%', height: 55, style:toolbarStyle}}>
+                <Stack direction='row' justifyContent='flex-start'>
+                    <VisMiniToolbar style={{width:'unset'}} viewerId={viewerId}
+                                    tips={{selectArea:'Select an area to search'}}/>
+                    <HelpIcon style={{alignSelf:'cenTer', paddingLeft:5}} helpId={toolbarHelpId} />
+                </Stack>
+                <HelpLines whichOverlay={whichOverlay}/>
             </Stack>
-            <HelpLines whichOverlay={whichOverlay}/>
-        </Stack>
+        </Sheet>
     );
 }
 

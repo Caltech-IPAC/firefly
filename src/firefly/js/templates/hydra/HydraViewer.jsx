@@ -3,6 +3,7 @@
  */
 
 
+import {Stack} from '@mui/joy';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {pickBy} from 'lodash';
@@ -27,8 +28,6 @@ import {dispatchSetLayoutMode, LO_MODE} from '../../core/LayoutCntlr';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 
-
-export {META_VIEWER_ID as IMAGE_DATA_VIEWER_ID } from '../../visualize/MultiViewCntlr';
 
 /**
  * This is a viewer.
@@ -79,7 +78,7 @@ export class HydraViewer extends PureComponent {
         const {visible, view} = dropDown || {};
 
         return (
-            <div id='App' className='rootStyle' style={style}>
+            <div id='App' style={style}>
                 <header>
                     <BannerSection {...{menu, appTitle, appIcon, altAppIcon, bannerLeftStyle, bannerMiddleStyle}}/>
                     <div id={warningDivId} data-decor='full' className='warning-div center'/>
@@ -91,9 +90,9 @@ export class HydraViewer extends PureComponent {
                         {...{dropdownPanels} } />
                 </header>
                 <main style={{position: 'relative', padding: 0}}>
-                    <div style={{display: 'flex', position: 'relative', flexGrow: 1}}>
+                    <Stack {...{direction: 'row', position: 'relative', flexGrow: 1}}>
                         <ResultSection layoutInfo={layoutInfo}/>
-                    </div>
+                    </Stack>
                 </main>
             </div>
         );

@@ -1,3 +1,4 @@
+import {Stack} from '@mui/joy';
 import React from 'react';
 
 import {dispatchSetLayoutMode, getLayouInfo, LO_MODE, LO_VIEW} from 'firefly/core/LayoutCntlr.js';
@@ -29,9 +30,9 @@ export function MainPanel({style, dropDownComponent, footerComponent, showDropDo
     const dropDownView = () => {
         return (
             <>
-                <div style={{display:'flex', flexGrow: 1}}>
+                <Stack {...{direction:'row', flexGrow: 1}}>
                     {dropDownComponent}
-                </div>
+                </Stack>
                 {footerComponent &&
                     <div id='footer' className='DD-ToolBar__footer'>
                         {footerComponent}
@@ -45,11 +46,11 @@ export function MainPanel({style, dropDownComponent, footerComponent, showDropDo
     };
 
     return (
-        <div className='MainPanel-root' style={style}>
-            <div className='MainPanel-content' style={{flexGrow: 1}}>
+        <Stack direction='row' height={1} style={style}>
+            <Stack {...{flexGrow: 1}}>
                 {showDropDown ? dropDownView() : contentView()}
-            </div>
-        </div>
+            </Stack>
+        </Stack>
     );
 }
 
@@ -75,15 +76,13 @@ export function ExpandedView ({expanded}) {
         );
     } else {
         view = (
-            <ImageExpandedMode
-                key='results-plots-expanded'
-                closeFunc={closeExpanded}/>
+            <ImageExpandedMode key='results-plots-expanded' closeFunc={closeExpanded}/>
         );
     }
     return (
-        <div style={{display: 'flex', flexGrow: 1, overflow: 'hidden'}}>
+        <Stack {...{direction: 'row', flexGrow: 1, overflow: 'hidden'}}>
             {view}
-        </div>
+        </Stack>
     );
 }
 

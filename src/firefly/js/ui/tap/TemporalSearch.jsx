@@ -1,3 +1,4 @@
+import {Box} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import {ColsShape, ColumnFld, getColValidator} from '../../charts/ui/ColumnOrExpression.jsx';
@@ -133,7 +134,7 @@ export function TemporalSearch({cols, columnsModel}) {
 
     useEffect(() => {
         const findTimeCol= findTimeColumn(columnsModel) ?? '';
-        const errMsg= 'Temporal searches require identifying a table column containing a time in MJD.  Please provide a column name.'
+        const errMsg= 'Temporal searches require identifying a table column containing a time in MJD.  Please provide a column name.';
         let existingTimeCol = timeCol; //get current val of TemporalColumns
         let timeColExists = false;
         //check if user has a previously selected Temporal Column, and if it exists in the currently selected table's cols
@@ -145,7 +146,6 @@ export function TemporalSearch({cols, columnsModel}) {
 
 
     const temporalColumns = (
-            <div style={{marginLeft: LeftInSearch}}>
                 <ColumnFld fieldKey={TemporalColumns} cols={cols}
                            name='temporal column' // label that appears in column chooser
                            inputStyle={{overflow:'auto', height:12, width: Width_Column}}
@@ -153,7 +153,6 @@ export function TemporalSearch({cols, columnsModel}) {
                            labelWidth={LabelWidth}
                            validator={getColValidator(cols, true, false)}
                 />
-            </div>
         );
 
     const timeColStr= timeCol ? `(${timeCol})` : '';
@@ -164,18 +163,18 @@ export function TemporalSearch({cols, columnsModel}) {
             fromTip:`'from' time ${timeColStr}`,
             toTip:`'to' time ${timeColStr}`,
             labelStyle:{width:'5rem'},
-            style:{marginLeft: LeftInSearch, marginTop: 16, marginBottom: 16}}}/>
+            style:{marginTop: 16, marginBottom: 16}}}/>
     );
 
     return (
         <CollapsibleCheckHeader title={title} helpID={tapHelpId(panelPrefix)}
                                 message={constraintResult?.simpleError??''} initialStateOpen={false}>
-            <div style={{marginTop: 5}}>
+            <Box sx={{mt:1/2}}>
                 <ForceFieldGroupValid forceValid={!checkHeaderCtl.isPanelActive()}>
                     {temporalColumns}
                     {timeRange}
                 </ForceFieldGroupValid>
-            </div>
+            </Box>
             <DebugObsCore {...{constraintResult}}/>
         </CollapsibleCheckHeader>
     );

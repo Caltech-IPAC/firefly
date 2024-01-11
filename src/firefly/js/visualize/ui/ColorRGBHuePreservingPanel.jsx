@@ -41,17 +41,17 @@ export const ColorRGBHuePreservingPanel= ({rgbFields,groupKey}) => {
                                         fieldKey='rangeParameters'>
                     <Stack spacing={1}>
                         <ValidationField wrapperStyle={textPadding} inline={true}
-                                         sx={{'.MuiInput-root':{ 'paddingInlineEnd': 0, }}}
+                                         sx={{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }}}
                                          endDecorator={getTypeMinField('lowerWhichRed')}
                                          fieldKey='lowerRangeRed'
                         />
                         <ValidationField wrapperStyle={textPadding} inline={true}
-                                         sx={{'.MuiInput-root':{ 'paddingInlineEnd': 0, }}}
+                                         sx={{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }}}
                                          endDecorator={getTypeMinField('lowerWhichGreen')}
                                          fieldKey='lowerRangeGreen'
                         />
                         <ValidationField wrapperStyle={textPadding} inline={true}
-                                         sx={{'.MuiInput-root':{ 'paddingInlineEnd': 0, }}}
+                                         sx={{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }}}
                                          endDecorator={getTypeMinField('lowerWhichBlue')}
                                          fieldKey='lowerRangeBlue'
                         />

@@ -499,8 +499,9 @@ function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSele
                 {label}
                 <CheckboxGroupInputField
                     sx={{
-                        '.ff-Checkbox-container':{flexWrap:'wrap'},
-                        '.ff-Checkbox-item:first-of-type':{ml:2}
+                        '& .ff-Checkbox-container':{flexWrap:'wrap'},
+                        '& .ff-Checkbox-item:first-of-type':{ml:2},
+                        '& .ff-Checkbox-item':{mt:1/4}
                     }}
                     key={fieldKey}
                     fieldKey={fieldKey}
@@ -522,8 +523,9 @@ function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSele
                 {label}
                 <RadioGroupInputField
                     sx={{
-                        '.ff-RadioGroup-container':{flexWrap:'wrap'},
-                        '.ff-RadioGroup-item:first-of-type':{ml:1.5}
+                        '& .ff-RadioGroup-container':{flexWrap:'wrap'},
+                        '& .ff-RadioGroup-item:first-of-type':{ml:1.5},
+                        '& .ff-Checkbox-item':{mt:1/4}
                     }}
                     key={`${groupKey}_${fieldKey}`}
                     fieldKey={`${IMG_PREFIX}${groupKey}`}

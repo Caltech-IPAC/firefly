@@ -218,7 +218,7 @@ function SearchDropDown({searchActions, cenWpt, size, polyStr, whichOverlay}) {
                     const text= getSearchTypeDesc(sa,cenWpt,Number(size),polyStrLen);
                     return (
                         <ToolbarButton text={text} tip={`${sa.tip} for\n${text}`}
-                                       enabled={true} horizontal={false} key={sa.cmd}
+                                       enabled={true} horizontal={false} key={sa.cmd+sa.tip}
                                        visible={sa.supported()}
                                        onClick={() => {
                                            markOutline(sa,
@@ -254,7 +254,7 @@ function HelpLines({usingToggle, whichOverlay}) {
             <Typography level='title-sm' sx={{mb:.5}}>
                 Try the following:
             </Typography>
-            <Typography level='body-sm' {...{ml: 1}}>
+            <Typography level='body-sm' {...{sx:{ml: 1}}}>
                 <li>Click on the image to choose a new search center</li>
                 <li>{entryMsg}</li>
                 <li>{reSelectMsg}</li>

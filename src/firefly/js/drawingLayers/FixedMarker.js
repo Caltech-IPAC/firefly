@@ -14,7 +14,8 @@ import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {formatWorldPt, formatWorldPtToString} from '../visualize/ui/WorldPtFormat';
 import {getActivePlotView} from '../visualize/PlotViewUtil';
 import {visRoot} from '../visualize/ImagePlotCntlr';
-import {FixedPtControl} from './CatalogUI';
+
+import {FixedPtControl} from './FixedPtControl.jsx';
 
 const ID= 'FIXED_MARKER';
 const TYPE_ID= 'FIXED_MARKER_TYPE';

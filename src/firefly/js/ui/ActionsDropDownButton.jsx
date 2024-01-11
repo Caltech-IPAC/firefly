@@ -114,7 +114,7 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
                     {useSep && <DropDownVerticalSeparator key={sa.cmd + '---separator'} useLine={true} style={{marginLeft:30}}/>}
                     <ToolbarButton text={text} tip={`${sa.tip} for\n${text}`}
                                    style={{paddingLeft:30}}
-                                   enabled={true} horizontal={false} key={sa.cmd}
+                                   enabled={true} horizontal={false} key={sa.cmd+text}
                                    visible={isSupported(sa, cenWpt, radius, cornerStr, table)}
                                    onClick={() => doExecute(sa, cenWpt, radius, cornerStr, table)}/>
                 </React.Fragment>
@@ -122,20 +122,20 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
         });
 
         return (
-            <>
-                <div style={{whiteSpace: 'nowrap', fontSize: '10pt', padding: '5px 1px 5px 0'}}>
+            <Fragment key='type-of-group'>
+                <div key='cone-stuff' style={{whiteSpace: 'nowrap', fontSize: '10pt', padding: '5px 1px 5px 0'}}>
                     {asCone ?
-                        <>
+                        <Fragment key='cone-on-center'>
                             <span style={{fontStyle: 'italic'}}> {'Cone and Point Actions based on center: '} </span>
                             <span> {formatWorldPt(cenWpt, 3)} </span>
-                        </> :
-                        <>
+                        </Fragment> :
+                        <Fragment key='polygon-on-center'>
                             <span style={{fontStyle: 'italic'}}> {'Polygon Actions '} </span>
-                        </>
+                        </Fragment>
                     }
                 </div>
                 {buttons}
-            </>
+            </Fragment>
         );
 
 
@@ -155,7 +155,7 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
                 return (
                     <ToolbarButton text={text} tip={`${sa.tip} for\n${text}`}
                                    style={{paddingLeft:30}}
-                                   enabled={true} horizontal={false} key={sa.cmd}
+                                   enabled={true} horizontal={false} key={sa.cmd+sa.tip}
                                    visible={isSupported(sa, cenWpt, radius, cornerStr, table)}
                                    onClick={() => doExecute(sa, cenWpt, radius, cornerStr, table)}/>
                 );

@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {Box, Stack} from '@mui/joy';
 import React, {useEffect} from 'react';
 import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';
 import DialogRootContainer from './DialogRootContainer.jsx';
@@ -12,7 +13,7 @@ import {ToolbarButton} from './ToolbarButton.jsx';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 
 export function showZoomOptionsPopup() {
-    const popup = ( <PopupPanel title={'Choose Field of View'}> <ZoomOptionsPopup/> </PopupPanel> );
+    const popup = ( <PopupPanel title='Choose Field of View'> <ZoomOptionsPopup/> </PopupPanel> );
     DialogRootContainer.defineDialog('zoomOptionsDialog', popup);
     dispatchShowDialog('zoomOptionsDialog');
 }
@@ -24,12 +25,14 @@ const ZoomOptionsPopup = () => {
 };
 
 const ZoomOptionsPopupForm= ({pv}) => (
-    <div style={{ minWidth:150, minHeight: 300} }>
-        <div style={{display: 'inline-block', padding: '10px 10px 20px 25px'}}> {makeZoomItems(pv)} </div>
-    </div>
+    <Stack {...{ minWidth:150, minHeight: 300, direction:'row', spacing:2} }>
+        <Box minWidth='8rem'> {makeZoomItems(pv, imageLevels.slice(0,imageLevels.length/2))} </Box>
+        <Box minWidth='8rem'> {makeZoomItems(pv, imageLevels.slice(imageLevels.length/2, imageLevels.length))} </Box>
+    </Stack>
 );
 
-const makeZoomItems= (pv) => imageLevels
+const makeZoomItems= (pv,levels) =>
+    levels
     .map((zl) => ({label: makeFoVString(getFoV(pv,zl)), level: zl}))
     .map( ({label,level},opId) =>
         (level===primePlot(pv).zoomFactor) ?

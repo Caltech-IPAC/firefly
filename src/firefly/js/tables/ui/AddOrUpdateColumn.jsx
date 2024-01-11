@@ -117,7 +117,7 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
                     }}/>
                 <RadioGroupInputField fieldKey='mode'
                     orientation='horizontal'
-                    sx={{'.MuiRadio-label':{width:115}}}
+                    sx={{'& .MuiRadio-label':{width:115}}}
                     initialState={{label: 'Mode:', value:mode}}
                     options={[
                         {value:'Custom', label:'Enter expression'},

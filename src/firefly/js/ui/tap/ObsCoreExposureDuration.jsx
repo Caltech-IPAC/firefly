@@ -181,7 +181,7 @@ function ExposureSince({initArgs, turnOnPanel}) {
                 fieldKey:'exposureSinceValue', // FIXME: Introduce SinceValue or similar
                 validator: (val) => Validate.isFloat('Exposure since',val),
                 initialState: {value: initArgs?.urlApi?.exposureSinceValue || ''},
-                sx:{'.MuiInput-root':{ 'paddingInlineEnd': 0, }},
+                sx:{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }},
                 endDecorator:
                     (<ListBoxInputField
                         fieldKey={'exposureSinceOptions'} // FIXME: Introduce SinceOptions
@@ -229,7 +229,7 @@ function ExposureLength({initArgs, panelActive, turnOnPanel}) {
                     fieldKey: 'exposureLengthMin',
                     size: SmallFloatNumericWidth,
                     tooltip: 'Cumulative shutter-open exposure duration in seconds',
-                    sx:{'.MuiInput-root':{'width': 100}},
+                    sx:{'& .MuiInput-root':{'width': 100}},
                     validator: minimumPositiveFloatValidator('Minimum Exposure Length'),
                     placeholder:'-Inf',
                     initialState: {value: initArgs?.urlApi?.exposureLengthMin},
@@ -238,7 +238,7 @@ function ExposureLength({initArgs, panelActive, turnOnPanel}) {
                 <ValidationField {...{
                     fieldKey: 'exposureLengthMax',
                     size: SmallFloatNumericWidth,
-                    sx:{'.MuiInput-root':{'width': 100}},
+                    sx:{'& .MuiInput-root':{'width': 100}},
                     inputStyle,
                     tooltip:'Cumulative shutter-open exposure must be less than this amount',
                     validator:maximumPositiveFloatValidator('Maximum Exposure Length'),

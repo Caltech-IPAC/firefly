@@ -109,7 +109,7 @@ function makeEndDecorator(showResolveSourceOp, onChange, resolver, button) {
 }
 
 function makeSx(useResolver, useButton, sx) {
-    if (useResolver && !useButton) return {'.MuiInput-root':{ 'paddingInlineEnd': 0, ...sx }};
+    if (useResolver && !useButton) return {'& .MuiInput-root':{ 'paddingInlineEnd': 0, ...sx }};
     return sx;
 }
 
