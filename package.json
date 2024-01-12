@@ -12,6 +12,8 @@
     "@emotion/react": "^11.11",
     "@emotion/styled": "^11.11",
     "@mui/joy": "^5.0.0-beta.15",
+    "@mui/icons-material": "^5.15",
+    "@mui/material": "^5.15",
     "@fontsource/inter": "^5.0",
     "core-js": "~3.31",
     "regenerator-runtime": "~0.13",

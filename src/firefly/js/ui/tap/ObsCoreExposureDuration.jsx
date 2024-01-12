@@ -1,4 +1,4 @@
-import {FormControl, FormLabel, Stack, Typography} from '@mui/joy';
+import {Divider, FormControl, FormLabel, Stack, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 import Validate, {maximumPositiveFloatValidator, minimumPositiveFloatValidator} from '../../util/Validate.js';
@@ -183,15 +183,24 @@ function ExposureSince({initArgs, turnOnPanel}) {
                 initialState: {value: initArgs?.urlApi?.exposureSinceValue || ''},
                 sx:{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }},
                 endDecorator:
-                    (<ListBoxInputField
-                        fieldKey={'exposureSinceOptions'} // FIXME: Introduce SinceOptions
-                        options={[
-                            {label: 'Minutes', value: 'minutes'},
-                            {label: 'Hours', value: 'hours'},
-                            {label: 'Days', value: 'days'},
-                            {label: 'Years', value: 'years'}
-                        ]}
-                        initialState={{value: initArgs?.urlApi?.exposureSinceOptions || 'hours'}}/>),
+                    (
+                        <Stack direction='row' alignItems='center'>
+                            <Divider orientation='vertical' />
+                            <ListBoxInputField
+                                fieldKey={'exposureSinceOptions'} // FIXME: Introduce SinceOptions
+                                options={[
+                                    {label: 'Minutes', value: 'minutes'},
+                                    {label: 'Hours', value: 'hours'},
+                                    {label: 'Days', value: 'days'},
+                                    {label: 'Years', value: 'years'}
+                                ]}
+                                slotProps={{ input: {
+                                        variant:'plain',
+                                        sx:{minHeight:'unset'}
+                                    } }}
+                                initialState={{value: initArgs?.urlApi?.exposureSinceOptions || 'hours'}}/>
+
+                        </Stack>),
             }} />
         </Stack>
     );

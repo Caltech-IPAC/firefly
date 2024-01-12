@@ -10,6 +10,7 @@ import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
 import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/ActionsDropDownButton.jsx';
 
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {ExpandButton, InfoButton, SaveButton} from '../../visualize/ui/Buttons.jsx';
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableUiUpdate} from '../TablesCntlr.js';
 import {
     uniqueTblId,
@@ -40,7 +41,7 @@ import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutlin
 import CLEAR_FILTER from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
 import TEXT_VIEW from 'html/images/icons-2014/24x24_TextView.png';
 import TABLE_VIEW from 'html/images/icons-2014/24x24_TableView.png';
-import SAVE from 'html/images/icons-2014/24x24_Save.png';
+// import SAVE from 'html/images/icons-2014/24x24_Save.png';
 import PROP_SHEET from 'html/images/icons-2014/36x36-data-info.png';
 import INFO from 'html/images/icons-2014/24x24_Info.png';
 import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
@@ -328,13 +329,11 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
                                onClick={toggleTextView}/>
                 }
                 {showSave &&
-                <ToolbarButton icon={SAVE} tip={TT_SAVE}
-                               onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}/>
+                <SaveButton tip={TT_SAVE} onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}/>
                 }
                 {showAddColumn && <AddColumnBtn tbl_id={tbl_id} tbl_ui_id={tbl_ui_id}/> }
                 {showInfoButton &&
-                <ToolbarButton icon={INFO} tip={TT_INFO}
-                               onClick={showInfoDialog}/>
+                <InfoButton tip={TT_INFO} onClick={showInfoDialog}/>
                 }
                 {showPropertySheet &&
                 <ToolbarButton icon={PROP_SHEET} tip={TT_PROPERTY_SHEET}
@@ -345,8 +344,7 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
                                onClick={showOptionsDialog}/>
                 }
                 { expandable && !expandedMode &&
-                <ToolbarButton icon={OUTLINE_EXPAND} tip={TT_EXPAND}
-                               onClick={expandTable}/>
+                <ExpandButton tip={TT_EXPAND} onClick={expandTable}/>
                 }
                 { help_id && <div style={{marginTop:-10}}> <HelpIcon helpId={help_id} /> </div>}
             </Stack>

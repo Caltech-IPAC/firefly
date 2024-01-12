@@ -20,8 +20,8 @@ import {dispatchAddPreference, getPreference} from '../../core/AppDataCntlr';
 import {DropDownSubMenu} from '../../ui/DropDownMenu';
 import FixedMarker from '../../drawingLayers/FixedMarker';
 import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer, getDlAry} from '../DrawLayerCntlr';
+import {CenterDropdown} from './Buttons.jsx';
 import {formatWorldPt, formatWorldPtToString, formatWorldPtToStringSimple} from './WorldPtFormat';
-import {SimpleLayerOnOffButton} from './SimpleLayerOnOffButton';
 
 
 const MAX_TARGET_LEN= 10;
@@ -150,11 +150,8 @@ export function ImageCenterDropDown({visRoot:vr, visible, mi}) {
     );
 
     return (
-        <DropDownToolbarButton icon={CENTER_DROP}
-                               tip='Image center drop down. Center images.'
+        <CenterDropdown tip='Image center drop down. Center images.'
                                enabled={Boolean(plot)} visible={visible}
-                               useDropDownIndicator={true}
-                               imageStyle={{width:24, height:24}}
                                dropDown={dropDown}/>
 
     );

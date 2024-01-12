@@ -11,6 +11,7 @@ import {isEmpty,omit,isFunction} from 'lodash';
 import {getSearchActions} from '../../core/AppDataCntlr.js';
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView, MOUSE_CLICK_REASON} from '../ImagePlotCntlr.js';
+import {ExpandButton} from '../ui/Buttons.jsx';
 import {VisCtxToolbarView, canConvertHipsAndFits, ctxToolbarBG} from '../ui/VisCtxToolbarView';
 import {VisInlineToolbarView} from '../ui/VisInlineToolbarView.jsx';
 import {primePlot, isActivePlotView, getAllDrawLayersForPlot, getPlotViewById} from '../PlotViewUtil.js';
@@ -218,8 +219,7 @@ function ZoomGroup({visRoot, pv, show}) {
 
     return (
         <Stack direction='row' alignItems='flex-start' sx={sxFunc}>
-            {manageExpand && <ToolbarButton icon={OUTLINE_EXPAND}
-                                            tip='Expand this panel to take up a larger area'
+            {manageExpand && <ExpandButton tip='Expand this panel to take up a larger area'
                                             onClick={() =>expand(pv?.plotId, false)}/>}
 
             <Stack direction='row' alignItems='flex-start'>

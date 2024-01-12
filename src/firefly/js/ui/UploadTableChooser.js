@@ -44,6 +44,7 @@ function getFitsColumnInfo(data) {
  * @param request
  * @param setUploadInfo
  * @param {DefaultColsEnabled} defaultColsEnabled
+
  * @returns {boolean}
  */
 function uploadSubmit(request,setUploadInfo,defaultColsEnabled)  {

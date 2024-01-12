@@ -2,9 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Badge, Button, Checkbox, Divider, IconButton, Stack, Tooltip} from '@mui/joy';
+import {Badge, Box, Button, Checkbox, Divider, IconButton, Stack, Tooltip} from '@mui/joy';
+import {isString} from 'lodash';
 import React, {memo, useRef, useEffect} from 'react';
-import PropTypes from 'prop-types';
+import {bool, element, func, node, number, object, oneOfType, shape, string} from 'prop-types';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 import DROP_DOWN_ICON from 'html/images/dd-narrow.png';
@@ -49,13 +50,16 @@ function getShortCutInfo(shortcutKey) {
 export const ToolbarButton = memo((props) => {
     const {
         icon,text='',tip='',badgeCount=0,enabled=true, visible=true,
-        imageStyle={}, shortcutKey='', color='neutral', variant='plain',
+        imageStyle={}, iconButtonSize, shortcutKey='', color='neutral', variant='plain',
         disableHiding, active, sx,
         useDropDownIndicator= false, hasCheckBox=false, checkBoxOn=false,
+        component, slotProps={},
+        dropPosition={},
         dropDownCB, onClick} = props;
 
     const {current:divElementRef}= useRef({divElement:undefined});
-    const doInvert= useColorMode()?.activeMode==='dark';
+    const invertStyle= {filter : 'invert(1)'};
+    const doInvert= useColorMode()?.activeMode==='dark' ? invertStyle : {};
 
     const handleClick= (ev) => {
         onClick?.(divElementRef.divElement,ev);
@@ -78,22 +82,34 @@ export const ToolbarButton = memo((props) => {
 
     const setupRef  = (c) => divElementRef.divElement= c;
 
-    const image= icon ? <img src={icon} style={imageStyle} className={allowInput} /> : undefined;
-    const dropDownIndicator= useDropDownIndicator ? <img src={DROP_DOWN_ICON}/> : undefined;
+    let image= undefined;
+    if (isString(icon)) {
+        image= <img src={icon} style={{...imageStyle,...doInvert}} className={allowInput} />;
+    }
+    else {
+        image= icon;
+    }
+    const iSize= iconButtonSize ? {'--IconButton-size': iconButtonSize} : {};
+
+    // const image= icon ? <img src={icon} style={imageStyle} className={allowInput} /> : undefined;
+    const useIconButton= icon && !text;
+    const dropDownIndicator= useDropDownIndicator ? <img src={DROP_DOWN_ICON} style={doInvert}/> : undefined;
 
 
     const b=  (
         <Tooltip title={tip} sx={sx}>
-            <Stack {...{direction:'row', alignItems:'center', ref:setupRef,
-                   sx:doInvert ? {'img':{filter : 'invert(1)'}} : {} }}>
+            <Stack {...{direction:'row', alignItems:'center', ref:setupRef, position:'relative' }}>
                 {hasCheckBox && <Checkbox {...{variant:'plain', checked:checkBoxOn, onClick:handleClick}}/> }
-                {(icon && !text) ?
+                {useIconButton ?
                     (<IconButton {...{
                         sx: (theme) => (
-                             {minHeight:'unset', minWidth:'unset', p:.5, backgroundColor:'transparent',
-                             ...makeBorder(active,theme,color)
+                             {minHeight:'unset', minWidth:'unset', p:1/4, backgroundColor:'transparent',
+                                 ...makeBorder(active,theme,color),
+                                 ...iSize,
                              }),
+
                         className:'ff-toolbar-iconbutton ' + allowInput,
+                        component,
                         variant:'soft', color:'neutral' ,
                         'aria-label':tip, onClick:handleClick, disabled:!enabled}}>
                         {image}
@@ -102,12 +118,26 @@ export const ToolbarButton = memo((props) => {
                         'aria-label':tip, disabled:!enabled, onClick:handleClick,
                         className:'ff-toolbar-button ' + allowInput,
                         startDecorator: image,
+                        component,
                         endDecorator: dropDownIndicator,
-                        sx:(theme) => ({whiteSpace:'nowrap', py:.4, minHeight: 'unset', ...makeBorder(active,theme,color)}),
+                        sx:(theme) => ({whiteSpace:'nowrap', py:.4, minHeight: 'unset',
+                            ...makeBorder(active,theme,color),
+                        }),
                     }}>
                         {makeTextLabel(text,shortcutKey)}
                     </Button>
                 }
+                {useIconButton && useDropDownIndicator &&
+                    <Box {...{
+                        className:'ff-toolbar-dropdown',
+                        sx:{
+                            minHeight:'unset', minWidth:'unset',backgroundColor:'transparent',
+                            padding:0, position:'absolute', bottom:'0px', left:'3px', ...dropPosition},
+                        onClick:handleClick
+                    }}>
+                        {dropDownIndicator}
+                    </Box>
+                    }
             </Stack>
         </Tooltip>
     );
@@ -116,24 +146,24 @@ export const ToolbarButton = memo((props) => {
 } );
 
 ToolbarButton.propTypes= {
-    icon : PropTypes.string,
-    text : PropTypes.node,
-    tip : PropTypes.string,
-    shortcutHelp : PropTypes.bool,
-    badgeCount : PropTypes.number,
-    enabled : PropTypes.bool,
-    visible : PropTypes.bool,
-    imageStyle : PropTypes.object,
-    lastTextItem : PropTypes.bool,
-    useDropDownIndicator: PropTypes.bool,
-    style : PropTypes.object,
-    hasCheckBox: PropTypes.bool,
-    checkBoxOn: PropTypes.bool,
-    onClick : PropTypes.func,
-    dropDownCB : PropTypes.func,
-    disableHiding: PropTypes.bool,
-    shortcutKey: PropTypes.string,
-    color: PropTypes.string,
+    icon : oneOfType([element,string]),
+    text : node,
+    tip : string,
+    shortcutHelp : bool,
+    badgeCount : number,
+    enabled : bool,
+    visible : bool,
+    imageStyle : object,
+    lastTextItem : bool,
+    useDropDownIndicator: bool,
+    style : object,
+    hasCheckBox: bool,
+    checkBoxOn: bool,
+    onClick : func,
+    dropDownCB : func,
+    disableHiding: bool,
+    shortcutKey: string,
+    color: string,
 };
 
 
@@ -168,12 +198,12 @@ function makeTextLabel(text,shortcutKey) {
 export function ToolbarHorizontalSeparator({ style={}}) {
     return <Divider orientation='vertical' style={style} sx={{mx:1}}/>;
 }
-ToolbarHorizontalSeparator.propTypes= { style:PropTypes.object, top : PropTypes.number };
+ToolbarHorizontalSeparator.propTypes= { style:object, top : number };
 
 export function DropDownVerticalSeparator({useLine=false, style={}}) {
     return <div style={style} className={useLine? 'ff-vertical-line-separator' : 'ff-vertical-separator'}/>;
 }
 DropDownVerticalSeparator.propTypes= {
-    useLine: PropTypes.bool,
-    style: PropTypes.object
+    useLine: bool,
+    style: object
 };

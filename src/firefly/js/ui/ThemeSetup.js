@@ -67,7 +67,7 @@ export function defaultTheme() {
             },
             JoyLink: {
                 defaultProps: {
-                    underline: 'always',
+                    underline: 'hover',
                     color: 'primary'
                 }
             },

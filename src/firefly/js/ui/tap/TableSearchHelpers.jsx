@@ -10,8 +10,10 @@ import {FieldGroupAccordionPanel} from '../panel/AccordionPanel.jsx';
 import {RadioGroupInputFieldView} from '../RadioGroupInputFieldView.jsx';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
 
-import HIDE_ICON from 'images/show-up-3.png';
-import SHOW_ICON from 'images/hide-down-3.png';
+// import HIDE_ICON from 'images/show-up-3.png';
+// import SHOW_ICON from 'images/hide-down-3.png';
+import KeyboardDoubleArrowUp from '@mui/icons-material/KeyboardDoubleArrowUp';
+import KeyboardDoubleArrowDown from '@mui/icons-material/KeyboardDoubleArrowDown';
 
 export const HeaderFont = {fontSize: 12, fontWeight: 'bold', alignItems: 'center'};
 
@@ -118,7 +120,7 @@ function Header({title, helpID='', checkID, message, enabled=false, panelValue=u
                                          orientation='horizontal'  />
             </div>
             <Typography {...{color:'primary'}}>{title}</Typography>
-            <HelpIcon helpId={helpID} style={{display:'flex'}}/>
+            <HelpIcon helpId={helpID} component='div' />
             <Typography {...{level:'body-sm', color:'warning'}}>{message}</Typography>
         </Stack>
     );
@@ -207,10 +209,8 @@ const SHOW='SHOW';
 function ShowServicesButton({setServicesShowing, servicesShowing }) {
     const currState= servicesShowing ? SHOW : HIDE;
     const options= [
-        {label:'Show', startDecorator: <img src={SHOW_ICON} alt={'show'} height={10}/>,
-            value:SHOW, tooltip:'Show other TAP services'},
-        {label:'Hide', startDecorator: <img src={HIDE_ICON} alt={'hide'} height={10}/>,
-            value:HIDE, tooltip:'Hide other TAP services'}
+        {label:'Show', startDecorator: <KeyboardDoubleArrowUp/>, value:SHOW, tooltip:'Show other TAP services'},
+        {label:'Hide', startDecorator: <KeyboardDoubleArrowDown/>, value:HIDE, tooltip:'Hide other TAP services'}
     ];
 
     return (

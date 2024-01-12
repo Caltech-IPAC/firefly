@@ -3,7 +3,7 @@
  */
 
 import './CollapsiblePanel.css';
-import {Accordion, AccordionDetails, AccordionGroup, AccordionSummary} from '@mui/joy';
+import {Accordion, AccordionDetails, AccordionGroup, AccordionSummary, Button} from '@mui/joy';
 import React, {memo} from 'react';
 import PropTypes, {string, func, node, object, bool} from 'prop-types';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
@@ -23,6 +23,7 @@ export function AccordionPanel(props){
     return <AccordionPanelView{...newProps} />;
 }
 
+const MyDiv= (props) => <span {...{...props}}>{props.children}</span>;
 
 export function AccordionPanelView({header, expanded=false, sx, onChange, children }) {
     return (

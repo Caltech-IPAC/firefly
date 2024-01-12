@@ -2,18 +2,21 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box, Chip, Divider, Stack, Switch, Tooltip, Typography} from '@mui/joy';
 import React, {useState, useRef, useEffect, Fragment, useContext, useCallback} from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import SplitPane from 'react-split-pane';
 import Tree from 'rc-tree';
 import 'rc-tree/assets/index.css';
-import {cloneDeep, defer, isArray, isObject, groupBy, uniqBy} from 'lodash';
+import {cloneDeep, defer, isArray, isObject, groupBy, uniqBy, isUndefined} from 'lodash';
 import {getSizeAsString, updateSet} from '../../util/WebUtil.js';
+import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 import {FieldGroupCtx} from '../FieldGroup.jsx';
 import {ExtraButton} from '../FormPanel.jsx';
 
 import {InputAreaFieldConnected} from '../InputAreaField.jsx';
+import {InputFieldView} from '../InputFieldView.jsx';
 import {SplitContent} from '../panel/DockLayoutPanel';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
 import {showUploadTableChooser} from '../UploadTableChooser.js';
@@ -23,6 +26,7 @@ import {
 } from './TapUtil';
 import {getColumnIdx} from '../../tables/TableUtil.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import West from '@mui/icons-material/West';
 
 import Prism from 'prismjs';
 // bliss is needed for prism-live
@@ -37,7 +41,8 @@ import INFO_ICO from 'html/images/icons-2014/24x24_Info.png';
 import JOIN_ICO from 'html/images/join_16x16.png';
 const joinIcon = () => <img src={JOIN_ICO} style={{marginRight:2}}/> ;
 
-const code = {className: 'language-sql'};
+const FULLY_QUALIFIED= 'fullyQualified';
+const FILTER_STRING= 'filterString';
 let cFetchKey = Date.now();
 const SB_TIP= 'Clicking on a table or column name below will insert it into the ADQL Query field to the right';
 
@@ -48,12 +53,12 @@ function getExamples(serviceUrl) {
         defaultADQLExamples.map( (e,idx) => (isObject(configEx?.[idx])) ? configEx[idx] : e) : defaultADQLExamples;
 
     return ex.map( ({description, statement},idx) =>
-        (<Fragment key={description}>
-            <div style={{paddingTop:idx===0?0:7, paddingBottom:3}}>{description}</div>
-            <code className='language-sql' style={{  display: 'block', whiteSpace: 'pre-wrap', marginLeft:5, paddingLeft:3 }}>
+        (<Stack {...{key:description}}>
+            <Typography level='body-sm'>{description}</Typography>
+            <code className='language-sql' style={{borderRadius:5, display: 'block', whiteSpace: 'pre-wrap', paddingLeft:3 }}>
                 {statement}
             </code>
-        </Fragment>)
+        </Stack>)
     );
 }
 
@@ -63,13 +68,15 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
     const [displayedTreeData, setDisplayedTreeData] = useState((treeData));
     const {canUpload=false}= capabilities ?? {};
     const adqlEl = useRef(null);                                                // using a useRef hook
-    const ffcn = useRef(null);                                                  // using a useRef hook
     const prismLiveRef = useRef(null);
     const {groupKey, setVal, getVal} = useContext(FieldGroupCtx);
     const [getUploadSchema, setUploadSchema]= useFieldGroupValue(TAP_UPLOAD_SCHEMA);
+    const [getFullQualified, setFullQualified]= useFieldGroupValue(FULLY_QUALIFIED);
+    const [getFilterStr, setFilterStr]= useFieldGroupValue(FILTER_STRING);
     const [getUploadFile, setUploadFile]= useFieldGroupValue('uploadFile');
     const uploadSchema= getUploadSchema();
-    const filterString = useRef(null);
+    const fullyQualified= getFullQualified() ?? true;
+    const filterStr= getFilterStr() ?? '';
 
     const setUploadInfo = (uploadInfo) => {
         if (uploadInfo) {
@@ -83,8 +90,9 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
         }
     };
 
+
     useEffect(() => {
-        onFilter({target: {value: filterString.current.value}});   // when treeData changes, apply filter to the new tree as well
+        onFilter({target: {value: getFilterStr()??''}});   // when treeData changes, apply filter to the new tree as well
     }, [treeData]);
 
     useEffect(() => {
@@ -146,7 +154,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                 window.setTimeout( () => prismLiveRef.current.syncStyles?.(), 10);
             }
         } else if (type === 'column') {
-            const val = ffcn.current.checked ? `${maybeQuote(tname,true)}.${maybeQuote(cname)}` : maybeQuote(cname);
+            const val = fullyQualified ? `${maybeQuote(tname,true)}.${maybeQuote(cname)}` : maybeQuote(cname);
             insertAtCursor(textArea, ' ' + val, adqlKey, groupKey, prismLiveRef.current);
         } else if (type === 'keys') {
             // these values were set when key nodes were created during #expandColumns
@@ -193,6 +201,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
     };
 
     const onFilter = useCallback((e) => {
+        setFilterStr(e.target?.value);
         if (!e.target?.value) setTreeData(treeData);
 
         const filterNodes = (result, node) => {
@@ -218,83 +227,122 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
 
     return (
             <SplitPane split='vertical' defaultSize={275} style={{position: 'relative', ...style}}>
-                <SplitContent className={'TapSchema'}>
-                    <div className='TapSchema__toolbar'>
-                        <div>
-                            <div style={{fontWeight: 'bold', paddingBottom:5}} title={SB_TIP}>Schema Browser</div>
-                            <div style={{textAlign:'center', paddingBottom:2, }} title={SB_TIP}>Schema->Table->Column</div>
-                        </div>
-                        <div style={{marginRight: 5, display: 'flex', flexDirection: 'column'}}>
-                            <label style={{fontWeight: 'bold', marginBottom: 2}}>Filter:</label>
-                            <input
-                                className='ff-inputfield-view-valid'
-                                ref={filterString}
-                                onChange={onFilter}
-                                title='Enter partial string to filter the visible nodes on the Schema Browser.  Leave blank to display all.'
-                                size={15}
-                            />
-                        </div>
-                    </div>
+                <SplitContent style={{display:'flex', flexDirection:'column'}}>
+                    <Tooltip title={SB_TIP}>
+                        <Stack>
+                            <Stack>
+                                <div>
+                                    <Typography level='title-lg' sx={{whiteSpace:'nowrap'}}>Schema Browser</Typography>
+                                </div>
+                                <InputFieldView
+                                    value={filterStr}
+                                    sx={{width:.9}}
+                                    placeholder='Enter Filter'
+                                    onChange={onFilter} size={15}
+                                    title='Enter partial string to filter the visible nodes on the Schema Browser.  Leave blank to display all.'
+                                />
+                            </Stack>
+                            <Typography level='body-xs'>Schema->Table->Column</Typography>
+                        </Stack>
+                    </Tooltip>
+                    <Divider orientation='horizontal'/>
                     <div  style={{overflow: 'auto', flexGrow: 1}}>
                         <Tree treeData={displayedTreeData} defaultExpandAll={true} showLine={true} selectedKeys={[]} loadData={onLoadData} onSelect={onSelect} />
                     </div>
                 </SplitContent>
                 <SplitContent style={{overflow: 'auto'}}>
-                    <div className='flex-full'>
-                        <div style={{display: 'inline-flex', marginRight: 25, justifyContent: 'flex-start', alignItems: 'center'}}>
-                            <h3>ADQL Query:</h3>
-                            <div style={{display: 'inline-flux', marginLeft:50}}>
-                                <button className='button std' title='Reset to the initial query' style={{height: 24, marginRight: 5}} onClick={onReset}>Reset</button>
-                                <button className='button std' title='Clear the query' style={{height: 24}} onClick={onClear}>Clear</button>
-                            </div>
-                        </div>
-                        <InputAreaFieldConnected
-                            ref={adqlEl}
-                            fieldKey={adqlKey}
-                            tooltip='ADQL to submit to the selected TAP service'
-                            slotProps={{
-                                input: {sx: {bgcolor: '#f5f2f0'}}, //the color defined on prism.css L59
-                                textArea: {className: 'prism-live language-sql'}
-                            }}
-                            idName='adqlEditor'
-                            maxRows={null} //to prevent default value getting assigned, we need no max limit on rows
-                        />
-                        <div style={{color: '#4c4c4c'}}>
-                            <div style={{marginLeft: 5, lineHeight:'2em'}}>
-                                <div>Type ADQL text; you can use the Schema Browser on the left to insert table and column names.</div>
-                                <label style={{display: 'flex', alignItems: 'center', marginLeft: 20}}> <input type='checkbox' ref={ffcn} defaultChecked={true} />Insert fully-qualified column names (recommended for table joins)</label>
-                            </div>
-                            {canUpload && <div style={{margin: '15px 0 0 5px'}}>
-                                <div style={{display:'flex', alignItems:'center'}}>
-                                    <div style={{whiteSpace:'nowrap'}}>Upload Table:</div>
-                                    <div style={{display:'flex', alignItems:'center'}}>
-                                        <ExtraButton text={serverFile ? 'Change...' : 'Add...'}
-                                                     onClick={() => showUploadTableChooser(setUploadInfo)} style={{marginLeft: 10}} />
-                                        {serverFile && <ExtraButton text='Clear' onClick={() => setUploadInfo(undefined)} />}
-                                        {haveTable &&
-                                            <div style={{width:200, overflow:'hidden', whiteSpace:'nowrap',fontSize:'larger',
-                                                textOverflow:'ellipsis', lineHeight:'2em', paddingLeft:20}}>
-                                                {`${fileName}`}
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            </div>}
-                            {haveTable &&
-                                <div style={{display:'flex', flexDirection:'row', margin: '0 0 15px 217px', justifyContent:'flex-start'}}>
-                                    <div style={{whiteSpace:'nowrap'}}>
-                                        <span>Rows: </span>
-                                        <span>{totalRows},</span>
-                                    </div>
-                                    <div style={{paddingLeft: 8, whiteSpace:'nowrap'}}>
-                                        <span>Size: </span>
-                                        <span>{getSizeAsString(fileSize)}</span>
-                                    </div>
-                                </div>
-                            }
-                            <h3>Popular Functions</h3>
-                            <div style={{marginLeft: 5}}>
-                                <pre><code {...code}>{(`\
+                    <Stack {...{flexGrow:1, ml:1, spacing:1}}>
+                        <Stack {...{spacing:4}}>
+                            <Stack {...{spacing:1}}>
+                                <Stack {...{direction: 'row', spacing:10, mr: 3, justifyContent: 'flex-start', alignItems: 'center'}}>
+                                    <Typography level='h4'>ADQL Query</Typography>
+                                    <Stack {...{direction: 'row'}}>
+                                        <Chip size='md' title='Reset to the initial query' style={{height: 24, marginRight: 5}} onClick={onReset}>Reset</Chip>
+                                        <Chip size='md' title='Clear the query' style={{height: 24}} onClick={onClear}>Clear</Chip>
+                                    </Stack>
+                                </Stack>
+                                <Tooltip placement='bottom'
+                                         title={
+                                             <Stack>
+                                                 <Typography>ADQL to submit to the selected TAP service </Typography>
+                                                 <Typography>Type ADQL text</Typography>
+                                                 <Typography sx={{pl:2}}>or</Typography>
+                                                 <Stack direction='row' spacing={1} alignItems='center'>
+                                                     <West/>
+                                                     <Typography color='warning'>
+                                                         Use the Schema Browser to insert table and column names.
+                                                     </Typography>
+                                                 </Stack>
+                                             </Stack>
+                                         }>
+                                    <Stack>
+                                        <InputAreaFieldConnected
+                                            ref={adqlEl}
+                                            fieldKey={adqlKey}
+                                            tooltip='ADQL to submit to the selected TAP service'
+                                            slotProps={{
+                                                input: {sx: {bgcolor: '#f5f2f0'}}, //the color defined on prism.css L59
+                                                textArea: {className: 'prism-live language-sql'}
+                                            }}
+                                            idName='adqlEditor'
+                                            maxRows={null} //to prevent default value getting assigned, we need no max limit on rows
+                                        />
+                                        <Typography level='body-sm' sx={{mt:-2}}>Type ADQL text; you can use the Schema Browser on the left to insert table and column names.</Typography>
+                                    </Stack>
+                                </Tooltip>
+                                <Stack spacing={1}>
+                                        <Tooltip placement='right'
+                                                 title={
+                                                     <Stack>
+                                                         <Typography>
+                                                             When selecting a column from the Schema browser use the full qualified name
+                                                         </Typography>
+                                                         <Typography color='warning'>
+                                                             Fully-qualified column names are recommended for table joins
+                                                         </Typography>
+                                                     </Stack>
+                                                 }>
+                                            <Switch {...{ size:'md', sx:{alignSelf:'flex-start'},
+                                                endDecorator: fullyQualified? 'Fully qualified column name' : 'Column name only', checked:fullyQualified,
+                                                onChange: (ev) => {
+                                                    setFullQualified(!getFullQualified());
+                                                },
+                                            }} />
+                                        </Tooltip>
+                                    {canUpload &&
+                                        <Stack sx={{mt:2}}>
+                                            <Stack {...{direction:'row', alignItems:'center', spacing:1}}>
+                                                <Stack {...{direction:'row', alignItems:'center', spacing:1}}>
+                                                    <ExtraButton text={serverFile ? 'Change Upload Table...' : 'Add Upload Table...'}
+                                                                 onClick={() => showUploadTableChooser(setUploadInfo)} style={{marginLeft: 10}} />
+                                                    {haveTable &&
+                                                        <Typography level='title-lg'
+                                                                    sx={{w:200, overflow:'hidden', whiteSpace:'nowrap',
+                                                                        textOverflow:'ellipsis'}}>
+                                                            {fileName}
+                                                        </Typography>
+                                                    }
+                                                    {serverFile && <Chip onClick={() => setUploadInfo(undefined)}>Clear</Chip>}
+                                                </Stack>
+                                            </Stack>
+                                            {haveTable &&
+                                                <Stack {...{direction:'row'}}>
+                                                    <Typography sx={{whiteSpace:'nowrap'}}>
+                                                        {`Rows: ${totalRows},`}
+                                                    </Typography>
+                                                    <Typography sx={{pl: 1, whiteSpace:'nowrap'}}>
+                                                        {`Size: ${getSizeAsString(fileSize)}`}
+                                                    </Typography>
+                                                </Stack>}
+                                        </Stack>}
+
+                            </Stack>
+                        </Stack>
+                            <Stack>
+                                <Typography level='body-lg'>Popular Functions</Typography>
+                                <Box sx={{ml: 2}}>
+                                    <code className='language-sql' style={{borderRadius:5, display: 'block', whiteSpace: 'pre-wrap'}}>
+                                        {(`\
                                     TOP n  -- Limit the results to n number of records
                                     ORDER BY [ASC/DESC] -- Used for sorting
                                     POINT('<coordinate system>', RIGHT_ASCENSION, DECLINATION)
@@ -304,18 +352,22 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                                     DISTANCE(POINT1, POINT2)
                                     CONTAINS(REGION1, REGION2)
                                     INTERSECTS(REGION1, REGION2)`).replace(/    +/g, '')
-                                    }</code></pre>
-                            </div>
+                                        }
+                                    </code>
+                                </Box>
+                            </Stack>
 
-                            <h3>Sample Queries</h3>
-                            <div style={{marginLeft: 5, lineHeight: '1.4em'}}>
-                                { getExamples(serviceUrl) }
-                            </div>
-                            <div style={{margin:'7px 0 0 2px'}}>
-                                These examples may not be directly usable in any TAP service you have selected.
-                            </div>
-                        </div>
-                    </div>
+                            <Stack>
+                                <Typography level='body-lg'>Sample Queries</Typography>
+                                <Stack {...{ml: 2, spacing:2}}>
+                                    { getExamples(serviceUrl) }
+                                    <Typography level='body-sm'>
+                                        These examples may not be directly usable in any TAP service you have selected.
+                                    </Typography>
+                                </Stack>
+                            </Stack>
+                        </Stack>
+                    </Stack>
                 </SplitContent>
             </SplitPane>
     );
