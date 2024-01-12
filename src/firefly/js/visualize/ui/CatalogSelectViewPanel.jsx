@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Stack} from '@mui/joy';
+import {Box, Stack} from '@mui/joy';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {FormPanel} from '../../ui/FormPanel.jsx';
@@ -27,7 +27,6 @@ import {masterTableFilter} from './IrsaMasterTableFilters.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 import './CatalogTableListField.css';
-import './CatalogSelectViewPanel.css';
 import {PREF_KEY} from 'firefly/tables/TablePref.js';
 
 /**
@@ -553,7 +552,7 @@ class CatalogDDList extends PureComponent {
         const tbl_id = `${catname0}-${shortdd}-dd-table-constraint`;
 
         const {cols} = master;
-        const catPanelStyle = {height: 350};
+        const catPanelStyle = {maxHeight: 350};
 
         const polygonDefWhenPlot= get(getAppOptions(), 'catalogSpatialOp')==='polygonWhenPlotExist';
 
@@ -566,9 +565,9 @@ class CatalogDDList extends PureComponent {
         const withPos = (get(catTable, [currentIdx, 'cat', POS_COL]) || 'y').includes('y');
 
         return (
-            <div style={{display:'flex', flexDirection: 'column', height:'100%'}}>
-                <Stack {...{direction:'row'}}>
-                    <Stack className='ddselectors' spacing={1} style={catPanelStyle}>
+            <Stack spacing={3}>
+                <Stack direction='row' spacing={4}>
+                    <Stack spacing={1} sx={catPanelStyle}>
                         <ListBoxInputField fieldKey='project'
                                            tooltip= 'Select Project'
                                            initialState={{ value: selProject0 }}
@@ -588,17 +587,13 @@ class CatalogDDList extends PureComponent {
                                                cols={cols}
                         />
                     </Stack>
-                    <div className='spatialsearch' style={catPanelStyle}>
+                    <Box sx={{...catPanelStyle, minWidth: 450}}>
                         <CatalogSearchMethodType groupKey={gkeySpacial} polygonDefWhenPlot={polygonDefWhenPlot}
                                                  coneMax={coneMax} boxMax={boxMax} withPos={withPos}
                         />
-                    </div>
+                    </Box>
                 </Stack>
-                {/*
-                 <div style={{display:'flex', flexDirection:'row', padding:'20px', border:'1px solid #a3aeb9'}}>
-                 */}
-                <div className='ddtable' >
-                    <CatalogConstraintsPanel fieldKey={'tableconstraints'}
+                <CatalogConstraintsPanel fieldKey={'tableconstraints'}
                                              constraintskey={constraintskey}
                                              catname={catname0}
                                              dd_short={ddform}
@@ -607,10 +602,8 @@ class CatalogDDList extends PureComponent {
                                              createDDRequest={()=>{
                                                 return {id: 'GatorDD', catalog: catname0, short: shortdd};
                                              }}
-                    />
-                </div>
-                {/*</div>*/}
-            </div>
+                />
+            </Stack>
         );
     }
 }
