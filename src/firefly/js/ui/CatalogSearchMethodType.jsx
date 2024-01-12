@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Stack, Typography} from '@mui/joy';
+import {Box, Stack, Typography} from '@mui/joy';
 import React, {PureComponent, useContext} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
@@ -31,8 +31,6 @@ import {primePlot, getActivePlotView, getFoV} from '../visualize/PlotViewUtil.js
 import {makeImagePt, makeWorldPt, makeScreenPt, makeDevicePt, parseWorldPt} from '../visualize/Point.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {getValueInScreenPixel} from '../visualize/draw/ShapeDataObj.js';
-
-import './CatalogSearchMethodType.css';
 import {hasWCSProjection} from '../visualize/PlotViewUtil';
 
 /*
@@ -89,7 +87,7 @@ export class CatalogSearchMethodType extends PureComponent {
 
         return (
             <FieldGroup groupKey={groupKey} keepState={true}>
-                <Stack spacing={2} sx={{pl: 3}}>
+                <Stack spacing={2}>
                     {renderTargetPanel(groupKey, searchType)}
                     {spatialSelection(withPos, polyIsDef, searchOption)}
                     <SizeArea {...{groupKey, searchType, imageCornerCalc: fields?.imageCornerCalc?.value ?? 'image'}}/>
@@ -244,7 +242,6 @@ export function calcCornerString(pv, method) {
 function radiusInField({label = 'Radius'}= {}) {
     return (
         <SizeInputFields fieldKey='conesize' showFeedback={true}
-                         sx={{p:.5, my:.5}}
                          initialState={{
                                                unit: 'arcsec',
                                                labelWidth : 100,
@@ -285,10 +282,11 @@ function SizeArea({groupKey, searchType, imageCornerCalc}) {
         return radiusInField() ;
     } else if (searchType === SpatialMethod.Elliptical.value) {
         return (
-            <Stack {...{p:.5, flexWrap:'no-wrap', spacing:1 }}>
+            <Stack spacing={1}>
                 {radiusInField({label: 'Semi-major Axis:', tooltip: 'Enter the semi-major axis of the search'})}
                 <ValidationField fieldKey='posangle'
                                  forceReinit={true}
+                                 sx={{width: 0.5}}
                                  initialState={{
                                           fieldKey: 'posangle',
                                           value: '0',
@@ -298,6 +296,7 @@ function SizeArea({groupKey, searchType, imageCornerCalc}) {
                                       }}/>
                 <ValidationField fieldKey='axialratio'
                                  forceReinit={true}
+                                 sx={{width: 0.5}}
                                  initialState={{
                                           fieldKey: 'axialratio',
                                           value: '.26',
@@ -316,7 +315,7 @@ function SizeArea({groupKey, searchType, imageCornerCalc}) {
         const isWs = getWorkspaceConfig();
         return (
 
-            <Stack {...{p:1, flexWrap:'no-wrap', alignItems:'center', }}>
+            <Stack spacing={1}>
                 <UploadOptionsDialog
                     fromGroupKey={groupKey}
                     preloadWsFile={true}
@@ -387,7 +386,7 @@ export function renderPolygonDataArea({imageCornerCalc,
                 centerPt:wp,
                 label:'Coordinates:',
                 tooltip:'Enter polygon coordinates search', }} />
-            <Typography level='body-sm' component='ul' sx={{pl:1}}>
+            <Typography level='body-sm' component='ul' sx={{pl:1, li: {listStyleType: 'none'}}}>
                 <li>- Each vertex is defined by a J2000 RA and Dec position pair</li>
                 <li>- A max of 15 and min of 3 vertices is allowed</li>
                 <li>- Vertices must be separated by a comma (,)</li>
@@ -402,12 +401,10 @@ function renderTargetPanel(groupKey, searchType) {
                      searchType === SpatialMethod.Box.value ||
                      searchType === SpatialMethod.Elliptical.value);
     return (
-        <div className='intarget'>
+        <Box height={80}>
             {visible && <TargetPanel labelWidth={60} groupKey={groupKey}/>}
-        </div>
+        </Box>
     );
-
-
 }
 
 CatalogSearchMethodType.propTypes = {
