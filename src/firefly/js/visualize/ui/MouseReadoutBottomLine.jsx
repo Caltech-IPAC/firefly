@@ -13,7 +13,8 @@ import {CopyToClipboard} from './MouseReadout.jsx';
 import {dispatchChangeLockByClick, STANDARD_READOUT} from '../MouseReadoutCntlr.js';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 import {showMouseReadoutPopout} from 'firefly/visualize/ui/MouseReadPopoutAll.jsx';
-import POPOUT_ICON from 'images/pop-out.png';
+// import POPOUT_ICON from 'images/pop-out.png';
+import LaunchOutlinedIcon from '@mui/icons-material/LaunchOutlined';
 
 export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, style, slightlyTransparent=false, showOnInactive= false, radix}){
 
@@ -76,7 +77,7 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
         <Stack {...{direction:'row', sx, ref: (c) => divref.element=c}}>
             <Stack {...{direction:'row', alignItems:'center', sx:{'& .ff-readout-value':{pl:.5}} }}>
 
-                <ToolbarButton icon={POPOUT_ICON} imageStyle={{width:16}}
+                <ToolbarButton icon={<LaunchOutlinedIcon/>}
                                tip='Show expanded readout, thumbnail and magnifier'
                                onClick={() => showMouseReadoutPopout()}/>
 

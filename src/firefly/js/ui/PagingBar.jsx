@@ -8,9 +8,13 @@ import LOADING from 'html/images/gxt/loading.gif';
 import {MAX_ROW} from '../tables/TableRequestUtil.js';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 
-import FIRST from 'html/images/icons-2014/16x16_BackwardToEnd.png';
-import LAST from 'html/images/icons-2014/16x16_ForwardToEnd.png';
-import NEXT from 'html/images/icons-2014/16x16_Forward.png';
+// import FIRST from 'html/images/icons-2014/16x16_BackwardToEnd.png';
+import FirstPage from '@mui/icons-material/FirstPage';
+// import LAST from 'html/images/icons-2014/16x16_ForwardToEnd.png';
+import LastPage from '@mui/icons-material/LastPage';
+// import NEXT from 'html/images/icons-2014/16x16_Forward.png';
+import NavigateNext from '@mui/icons-material/NavigateNext';
+import NavigateBefore from '@mui/icons-material/NavigateBefore';
 import PREVIOUS from 'html/images/icons-2014/16x16_Backward.png';
 
 
@@ -37,8 +41,8 @@ export function PagingBar(props) {
     } else {
         return (
             <Typography component='div' display='flex' alignItems='center' direction='row' level='body-sm' noWrap>
-                <ToolbarButton icon={FIRST} tip='First Page' onClick={() => callbacks.onGotoPage(1)}/>
-                <ToolbarButton icon={PREVIOUS} tip='Previous Page' onClick={() => callbacks.onGotoPage(currentPage - 1)}/>
+                <ToolbarButton icon={<FirstPage/>} tip='First Page' onClick={() => callbacks.onGotoPage(1)}/>
+                <ToolbarButton icon={<NavigateBefore/>} tip='Previous Page' onClick={() => callbacks.onGotoPage(currentPage - 1)}/>
                 <Stack direction='row' alignItems='center' spacing={1/2}>
                     <InputField
                         slotProps={{ input: { size: 'sm', sx: {width:'3em'} } }}
@@ -51,8 +55,8 @@ export function PagingBar(props) {
                         showWarning={false}
                     /> <div> of {totalPages}</div>
                 </Stack>
-                <ToolbarButton icon={NEXT} tip='Next Page' onClick={() => callbacks.onGotoPage(currentPage + 1)}/>
-                <ToolbarButton icon={LAST} tip='Last Page' onClick={() => callbacks.onGotoPage(totalPages)}/>
+                <ToolbarButton icon={<NavigateNext/>} tip='Next Page' onClick={() => callbacks.onGotoPage(currentPage + 1)}/>
+                <ToolbarButton icon={<LastPage/>} tip='Last Page' onClick={() => callbacks.onGotoPage(totalPages)}/>
                 {showingLabel}
                 {showLoading ? <img style={{width:14,height:14,marginTop: '3px'}} src={LOADING}/> : false}
             </Typography>

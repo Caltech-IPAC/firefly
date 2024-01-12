@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box, Stack} from '@mui/joy';
 import {dispatchHideDialog, dispatchShowDialog, isDialogVisible} from 'firefly/core/ComponentCntlr.js';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {LayoutType, PopupPanel} from 'firefly/ui/PopupPanel.jsx';
@@ -85,11 +86,11 @@ export function VisualPolygonPanel({label, initValue, tooltip, fieldKey, sx,
 export function VisualTargetPanel({fieldKey, labelWidth= 100, label, labelStyle, feedbackStyle,
                                       targetPanelExampleRow1, targetPanelExampleRow2, ...restOfProps}) {
     const popupButton= (
-        <div style={{paddingRight: 2}}>
+        <Box sx={{pr: 1/4}}>
             <HiPSPanelPopupButton {...{targetKey:fieldKey, whichOverlay:CONE_CHOICE_KEY, ...restOfProps}} />
-        </div>
+        </Box>
     );
-    return ( <TargetPanel {...{fieldKey, button:popupButton, labelStyle, labelWidth, label, feedbackStyle,
+    return ( <TargetPanel {...{fieldKey, button:popupButton, labelWidth, label, feedbackStyle,
         targetPanelExampleRow1, targetPanelExampleRow2}}/> );
 }
 
@@ -102,7 +103,7 @@ VisualTargetPanel.propTypes= {
 
 
 
-export const HiPSTargetView = ({style, hipsDisplayKey='none',
+export const HiPSTargetView = ({sx, hipsDisplayKey='none',
                                    hipsUrl=DEFAULT_HIPS, hipsFOVInDeg= DEFAULT_FOV, centerPt=makeWorldPt(0,0, CoordinateSys.GALACTIC),
                                    targetKey=DEF_TARGET_PANEL_KEY, sizeKey='none---Size', polygonKey='non---Polygon',
                                    whichOverlay= CONE_CHOICE_KEY, toolbarHelpId,
@@ -166,14 +167,14 @@ export const HiPSTargetView = ({style, hipsDisplayKey='none',
     }, [sRegion]);
 
     return (
-        <div style={{minHeight:200, ...style, display:'flex', flexDirection:'column'}}>
+        <Stack {...{minHeight:200, ...sx,}}>
             <MultiImageViewer viewerId= {viewerId} insideFlex={true}
                               canReceiveNewPlots={NewPlotMode.none.key}
                               showWhenExpanded={true}
                               whichOverlay={whichOverlay}
                               toolbarHelpId={toolbarHelpId}
                               Toolbar={TargetHipsPanelToolbar}/>
-        </div>
+        </Stack>
     );
 };
 
@@ -186,17 +187,17 @@ HiPSTargetView.propTypes= {
 
 export const TargetHiPSPanel = ({searchAreaInDeg, style,
                                     minValue:min= 1/3600, maxValue:max= 100, ...restOfProps}) => (
-    <div style={{display:'flex', width: 700, height:700, flexDirection:'column', ...style}}>
+    <Stack {...{width: 700, height:700, ...style}}>
         <HiPSTargetView {...{...restOfProps, targetKey:DEF_TARGET_PANEL_KEY, sizeKey:'HiPSPanelRadius',
-                             minSize:min, maxSize:max, style:{minHeight:400} }}/>
-        <div style={{display:'flex', flexDirection:'column', marginLeft:100}}>
-            <TargetPanel style={{paddingTop: 10}} labelWidth={100}/>
+                             minSize:min, maxSize:max, sx:{minHeight:400} }}/>
+        <Stack {...{ml:12.5}}>
+            <TargetPanel sx={{pt: 1, width:'34rem'}}/>
             <SizeInputFields fieldKey='HiPSPanelRadius' showFeedback={true} labelWidth= {100}  nullAllowed={false}
-                             label='Search Area:'
+                             label='Search Area'
                              labelStyle={{textAlign:'right', paddingRight:4}}
                              initialState={{ unit: 'arcsec', value: searchAreaInDeg+'', min, max }} />
-        </div>
-    </div>
+        </Stack>
+    </Stack>
 );
 
 TargetHiPSPanel.propTypes= {
@@ -204,26 +205,25 @@ TargetHiPSPanel.propTypes= {
     ...sharedPropTypes,
 };
 
-export const TargetHiPSRadiusPopupPanel = ({searchAreaInDeg, style,
+export const TargetHiPSRadiusPopupPanel = ({searchAreaInDeg, sx,
                                                targetKey=DEF_TARGET_PANEL_KEY, sizeKey= 'HiPSPanelRadius', polygonKey,
                                               minValue:min= 1/3600, maxValue:max= 100, targetLabelStyle,
-                                               sizeLabel= 'Search Area:', sizeFeedbackStyle, ...restOfProps}) => {
+                                               sizeLabel= 'Search Area:', ...restOfProps}) => {
     const [controlConnected, setControlConnected] = useState(false);
     return (
         <ConnectionCtx.Provider value={{controlConnected, setControlConnected}}>
-            <div style={{display:'flex', width: 700, paddingBottom: 20, flexDirection:'column', ...style}}>
-                <div style={{display:'flex', flexDirection:'column'}}>
-                    <VisualTargetPanel {...{style:{paddingTop: 10}, fieldKey:targetKey, sizeKey, polygonKey, labelWidth:100,
+            <Stack {...{width: 700, pb: 3, ...sx}}>
+                <Stack >
+                    <VisualTargetPanel {...{style:{paddingTop: 10}, fieldKey:targetKey, sizeKey, polygonKey,
                         labelStyle:targetLabelStyle, minSize:min, maxSize:max, ...restOfProps}} />
                     <SizeInputFields {...{
-                        fieldKey:sizeKey, showFeedback:true, labelWidth:100, nullAllowed:false,
+                        fieldKey:sizeKey, showFeedback:true, nullAllowed:false,
                         label: sizeLabel,
-                        feedbackStyle:sizeFeedbackStyle,
                         labelStyle:{textAlign:'right', paddingRight:4},
                         initialState:{ unit: 'arcsec', value: searchAreaInDeg+'', min, max }
                     }} />
-                </div>
-            </div>
+                </Stack>
+            </Stack>
         </ConnectionCtx.Provider>
     );
 };
@@ -313,16 +313,11 @@ function showHiPSPanelPopup({popupClosing, element, plotId= defPopupPlotId,
     const hipsPanel= (
         <PopupPanel title={'Choose Target'} layoutPosition={LayoutType.TOP_RIGHT_OF_BUTTON} element={element}
                     closeCallback={() => doClose()} >
-            <div style={{
-                padding: 3, display:'flex', flexDirection:'column', width: 500, height:400,
-                background: 'rgb(200,200,200',
+            <Stack style={{
+                p:1/2, width: 500, height:400,
                 alignItems:'center', resize:'both', overflow: 'hidden', zIndex:1}}>
-                <HiPSTargetView {...{
-                    plotId,
-                    whichOverlay,
-                    ...restOfProps,
-                    style:{height:'100%', width:'100%', paddingBottom:4} }} />
-            </div>
+                <HiPSTargetView {...{ plotId, whichOverlay, ...restOfProps, sx:{height:1, width:1, pb:1/5} }} />
+            </Stack>
         </PopupPanel>
     );
 

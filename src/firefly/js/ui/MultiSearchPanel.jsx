@@ -87,7 +87,7 @@ export function MultiSearchPanel({initArgs={}}) {
 
     return (
         <Stack flexGrow={1}>
-            <Typography color='neutral' level='h4'>
+            <Typography level='h4'>
                 Table Search
             </Typography>
             <StatefulTabs componentKey='MultiCatalogTabs' defaultSelected={getDefTabIdx(initArgs)}>

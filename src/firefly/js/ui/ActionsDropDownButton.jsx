@@ -1,6 +1,7 @@
 import {isArray} from 'lodash';
 import React, {Fragment, useRef} from 'react';
 import {getTblById} from '../tables/TableUtil.js';
+import {SearchDetailButton} from '../visualize/ui/Buttons.jsx';
 import {getWorldPtFromTableRow} from '../voAnalyzer/TableAnalysis.js';
 import {getDefMenuItemKeys} from '../visualize/MenuItemKeys.js';
 import {SingleColumnMenu} from './DropDownMenu.jsx';
@@ -16,8 +17,6 @@ import {showSearchRefinementTool} from '../visualize/SearchRefinementTool.jsx';
 import {convertWpAryToStr, getDetailsFromSelection, markOutline} from '../visualize/ui/VisualSearchUtils.js';
 import {formatWorldPt} from '../visualize/ui/WorldPtFormat.jsx';
 
-import BINOCULARS from 'images/b4.png';
-
 export function ActionsDropDownButton({searchActions, pv, tbl_id, style}) {
     const mi= pv?.plotViewCtx.menuItemKeys ?? getDefMenuItemKeys();
     const buttonRef = useRef();
@@ -29,10 +28,7 @@ export function ActionsDropDownButton({searchActions, pv, tbl_id, style}) {
 
     return (
         <div ref={buttonRef} style={style}>
-            <DropDownToolbarButton icon={BINOCULARS}
-                                   tip='Search this area'
-                                   useDropDownIndicator={true}
-                                   dropDown={dropDown}/>
+            <SearchDetailButton tip='Search this area' dropDown={dropDown}/>
         </div>
     );
 }

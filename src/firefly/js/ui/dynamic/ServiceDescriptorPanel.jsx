@@ -57,9 +57,9 @@ export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDef, setSe
 
 
     const Wrapper= ({children}) => (
-        <Stack direction='column' alignItems='center' b={.25}>
+        <Stack direction='column' alignItems='flex-start' p={.25}>
             {children}
-            <Stack {...{direction:'row', justifyContent:'space-between', alignItems:'center',
+            <Stack {...{direction:'row', justifyContent:'space-between', alignItems:'flex-start',
                           pt:.5, pr:.5, width:'100%', alignSelf:'flex-start' }}>
                 <CompleteButton onSuccess={(r) => submitSearch(r)}
                                 onFail={() => showInfoPopup('Some field are not valid')}
@@ -74,9 +74,9 @@ export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDef, setSe
 
 
     return (
-        <Stack direction='row' key={serviceDefRef} width='100%'>
-            <Stack direction='column' p={.25} width='100%'>
-                <Stack direction='row' justifyContent='flex-start' alignItems='center'>
+        <Stack {...{direction:'row', key:serviceDefRef, width:1, height:1}}>
+            <Stack {...{direction:'column', p:.25, width:1}}>
+                <Stack {...{direction:'row', alignItems:'center'}}>
                     {makeDropDown?.()}
                     <Typography level= {title?.length>30 ? 'body-xs' : 'body-sm'}>{title}</Typography>
                 </Stack>

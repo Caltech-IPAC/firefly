@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Stack, Typography} from '@mui/joy';
+import {Box, Chip, Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 import shallowequal from 'shallowequal';
 import SplitPane from 'react-split-pane';
@@ -176,14 +176,17 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem}) 
                             wrapperStyle={{fontWeight: 'bold', fontSize: 12}}/>
                         <Stack {...{pt: 1, direction:'row', justifyContent:'space-between'}}>
                             <UploadOptions {...{uploadSrc: dropEvent ? FILE_ID : getLoadingOp(), isLoading, isWsUpdating,  uploadKey, dropEvent, setDropEvent}}/>
-                            {report && <CompleteButton text='Clear File' groupKey={NONE}
-                                                       sx={{whiteSpace:'nowrap', ml:1}}
-                                                       primary={false}
-                                                       onSuccess={() =>{
-                                                           clearReport();
-                                                           keyCnt++;
-                                                           setUploadKey(FILE_UPLOAD_KEY+keyCnt);
-                                                       }}/> }
+                            <Stack>
+                                {report && <Chip sx={{whiteSpace:'nowrap', ml:1}}
+                                                 onClick={() =>{
+                                                     clearReport();
+                                                     keyCnt++;
+                                                     setUploadKey(FILE_UPLOAD_KEY+keyCnt);
+                                                 }}>
+                                    Clear File
+                                </Chip>
+                                }
+                            </Stack>
                         </Stack>
                     </Box>
                     <FileAnalysis {...{report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList,
