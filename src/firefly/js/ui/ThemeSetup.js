@@ -89,18 +89,6 @@ export function defaultTheme() {
 
 
 /*
- *  UI Notes
- * - toolbar background: <Sheet variant='soft'> or <Sheet>
-        <Sheet className='TapSearch__section' variant='outline' sx={{flexDirection: 'column', flexGrow: 1}}>
+ *  UI Notes: refer to /docs/ui-notes.md and add stuff there
  *
- * Buttons
- *    - primary button:  <Button size:'md', variant: 'solid' color: 'primary'/>
- *    - secondary button:  <Button/> (see above for default)
- *    - significant action button: (eg file upload): <Button color='success' variant='solid'/>k
- *    - other buttons: <Chip/> (see above for defaults)
- *
- * Text
- *    - information: <Typography/>
- *    - labels:  <Typography/>
- *    - feedback:  <Typography color='warning'/>
  */

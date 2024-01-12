@@ -3,6 +3,21 @@ import React from 'react';
 import {bool, string, number, object, func, oneOfType, shape, element} from 'prop-types';
 
 
+export function inputFieldTooltipProps(valid, message, showWarning, tooltip) {
+    const showErrorTip= !valid && showWarning && message;
+    const title= showErrorTip ?
+        (
+            <Stack direction='column'>
+                <Typography level='body-md' color={'danger'}> {message} </Typography>
+                <Typography level='body-md' color={'neutral'}> {tooltip} </Typography>
+            </Stack>
+        ) : <div style={{whiteSpace:'pre'}}>{tooltip}</div>;
+    const enterDelay = showErrorTip ? 700 : undefined;
+    return {title, enterDelay};
+}
+
+export const inputFieldValue = (type, value) => (type==='file') ? '' : (value??'');
+
 export function InputFieldView(props) {
     const {visible,disabled, label,tooltip,value,inputRef, slotProps,
         valid,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, showWarning,
@@ -15,20 +30,12 @@ export function InputFieldView(props) {
     // if form is not given, it will default to __ignore so that it does not interfere with embedded forms.
     form = form || undefined;
 
-    const currValue= (type==='file') ? '' : (value??'');
-    const showErrorTip= !valid && showWarning && message;
-
-    const title= showErrorTip ?
-        (
-            <Stack direction='column'>
-                <Typography level='body-md' color={'danger'}> {message} </Typography>
-                <Typography level='body-md' color={'neutral'}> {tooltip} </Typography>
-            </Stack>
-        ) : <div style={{whiteSpace:'pre'}}>{tooltip}</div>;
+    const currValue = inputFieldValue(type, value);
+    const tooltipProps = inputFieldTooltipProps(valid, message, showWarning, tooltip);
 
     return (
         <Stack {...{className:'ff-Input InputFieldView', sx}}>
-            <Tooltip {...{title, enterDelay:showErrorTip?700:undefined, ...slotProps?.tooltip}}>
+            <Tooltip {...{...tooltipProps, ...slotProps?.tooltip}}>
                 <FormControl {...{orientation, error:!valid, ...slotProps?.control}}>
                     {label && <FormLabel {...slotProps?.label}>{label}</FormLabel>}
                     <Input {...{

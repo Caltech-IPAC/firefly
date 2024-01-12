@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Button, Stack, Typography} from '@mui/joy';
+import {Box, Button, Stack, Typography} from '@mui/joy';
 import React, {PureComponent, memo} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, merge, isNil, isArray, cloneDeep, has} from 'lodash';
@@ -130,20 +130,18 @@ export class CatalogConstraintsPanel extends PureComponent {
 
         if (isEmpty(tableModel) || !tableModel.tbl_id.startsWith(catname)) {
             //return <div style={{top: 0}} className='loading-mask'></div>;
-            return <div/>;
+            return <Box sx={{minHeight: 360}}/>; //to prevent the outer layout from shrinking while the table loads
         }
 
         return (
-            <Stack {...{py:.5, height:1, alignItems:'stretch'}}>
-                <Stack {...{ height:1, ml:1, mr:.5, mb:.5, py:.5, spacing:1}}>
-                    <Stack {...{direction:'row', pt:.5, spacing:1}}>
-                        {!error && showFormType && formTypeList()}
-                        {!error && resetButton()}
-                    </Stack>
-                    <Stack {...{flex: '1 1 auto'}}>
-                        <TablePanelConnected {...{tableModel, fieldKey}} />
-                        {!error && renderSqlArea()}
-                    </Stack>
+            <Stack spacing={1}>
+                <Stack direction='row' spacing={2}>
+                    {!error && showFormType && formTypeList()}
+                    {!error && resetButton()}
+                </Stack>
+                <Stack spacing={1}>
+                    <TablePanelConnected {...{tableModel, fieldKey}} />
+                    {!error && renderSqlArea()}
                 </Stack>
             </Stack>
         );
@@ -570,30 +568,21 @@ const inputFieldValidator = (filterString) => {
 function renderSqlArea() {
     //m31, cone search 10', w3snr>7 and (w2mpro-w3mpro)>1.5 on wise source catalog = 361
     return (
-        <Stack {...{pt:1,}}>
-            <Typography sx={{pb:.5}}>Additional constraints (SQL)</Typography>
+        <Stack spacing={.5}>
+            <Typography>Additional constraints (SQL)</Typography>
             <InputAreaFieldConnected fieldKey='txtareasql'
-                                     wrapperStyle={{display:'flex'}}
-                                     style={{
-                                                overflow: 'auto',
-                                                alignItems: 'center',
-                                                height: '20px',
-                                                maxHeight: '100px',
-                                                width: '100%',
-                                            }}
-                                     initialState={{
-                                                tooltip: 'Enter SQL additional constraints here',
-                                                // labelWidth: 70
-                                            }}
+                                     tooltip='Enter SQL additional constraints here'
             />
-            <Typography level='body-sm' component='div' sx={{pt:.5}}>
-                <em>Ex: w3snr&gt;7 and (w2mpro-w3mpro)&gt;1.5 and ra&gt;102.3 and ra&lt;112.3 and dec&lt;-5.5 and
-                    dec&gt;
-                    -15.5</em><br />
-                (source_id_mf = '1861p075_ac51-002577')
-                <br />
-            </Typography>
-            <Typography color='warning'>The format for date type is yyyy-mm-dd</Typography>
+            <Stack>
+                <Typography level='body-sm' component='div'>
+                    <em>Ex: w3snr&gt;7 and (w2mpro-w3mpro)&gt;1.5 and ra&gt;102.3 and ra&lt;112.3 and dec&lt;-5.5 and
+                        dec&gt;
+                        -15.5</em><br />
+                    (source_id_mf = '1861p075_ac51-002577')
+                    <br />
+                </Typography>
+                <Typography color='warning' level='body-sm'>The format for date type is yyyy-mm-dd</Typography>
+            </Stack>
         </Stack>
     );
 }
