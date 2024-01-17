@@ -48,9 +48,10 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
 export const FormPanel = function (props) {
     const { children, onSuccess, onSubmit, onCancel=dispatchHideDropDown, onError, groupKey, groupsToUse,
         action, params, title, getDoOnClickFunc, submitText='Search',cancelText='Cancel', help_id, changeMasking,
-        includeUnmounted=false, extraWidgets=[], extraWidgetsRight=[]} = props;
+        includeUnmounted=false, extraWidgets=[], extraWidgetsRight=[], sx} = props;
     let { style, inputStyle, submitBarStyle} = props;
 
+    // TODO: replace these with sx and slotProps and remove style attributes not needed
     inputStyle = Object.assign({
         padding: 5,
         marginBottom: 5,
@@ -80,7 +81,7 @@ export const FormPanel = function (props) {
     }, []);
 
     return (
-        <Sheet className='ff-FormPanel' style={style}>
+        <Sheet className='ff-FormPanel' style={style} sx={sx}>
             <div style={inputStyle}>
                 {children}
             </div>
@@ -119,6 +120,7 @@ FormPanel.propTypes = {
     submitText: PropTypes.string,
     cancelText:PropTypes.string,
     title: PropTypes.string,
+    sx: PropTypes.object,
     style: PropTypes.object,
     inputStyle: PropTypes.object,
     submitBarStyle: PropTypes.object,

@@ -26,7 +26,7 @@ export function ListBoxInputFieldView({value:fieldValue='', onChange, fieldKey, 
     const vAry= getCurrentValueArr(fieldValue);
     return (
         <Stack {...{className:'ff-Input ListBoxInputFieldView', sx}}>
-            <FormControl {...{orientation}}>
+            <FormControl {...{orientation, ...slotProps?.control}}>
                 {label && <FormLabel {...slotProps?.label}>{label}</FormLabel>}
                 <Tooltip {...{title:tooltip, placement:'top', ...slotProps?.tooltip}}>
                     <Select {...{name: fieldKey, multiple, onChange, placeholder, renderValue, startDecorator,
@@ -76,7 +76,7 @@ ListBoxInputFieldView.propTypes= {
 };
 
 function handleOnChange(ev, newValue, params, fireValueChange) {
-    const options = ev.target.options;
+    const options = ev?.target?.options;
     let value;
     if (isArray(options)) {
         const valAry = [];

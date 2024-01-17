@@ -104,7 +104,8 @@ function getValueOnSuggestion(cols, canBeExpression=true) {
     };
 }
 
-export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,name,tooltip,nullAllowed,readonly,initValue,inputStyle}) {
+export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,name,tooltip,
+                                       nullAllowed,readonly,initValue,inputStyle, slotProps, sx}) {
     if (!colValStats) return <div/>;
     return (
         <ColumnFld
@@ -113,7 +114,7 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
             initValue={initValue || get(params, fldPath)}
             canBeExpression={true}
             tooltip={`Column or expression for ${tooltip ? tooltip : name}.${EXPRESSION_TTIPS}`}
-            {...{groupKey, label, labelWidth, name, nullAllowed, readonly, inputStyle}} />
+            {...{groupKey, label, labelWidth, name, nullAllowed, readonly, inputStyle, slotProps, sx}} />
     );
 }
 
@@ -129,10 +130,12 @@ ColumnOrExpression.propTypes = {
     nullAllowed: PropTypes.bool,
     readonly: PropTypes.bool,
     initValue: PropTypes.string,
-    inputStyle: PropTypes.object
+    inputStyle: PropTypes.object,
+    slotProps: PropTypes.object,
+    sx: PropTypes.object,
 };
 
-export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidth, tooltip='Table column', slotProps,
+export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidth, tooltip='Table column', slotProps, sx,
                            name, nullAllowed, canBeExpression=false, inputStyle, readonly, helper, required, validator,
                               placeholder, colTblId=null,onSearchClicked=null}) {
     const value = initValue || getFieldVal(groupKey, fieldKey);
@@ -164,31 +167,30 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidt
     }
 
     return (
-        <div style={{whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center'}}>
-            <SuggestBoxInputField
-                inline={true}
-                initialState= {{
-                    value,
-                    valid,
-                    message,
-                    validator: validator || colValidator,
-                    tooltip,
-                    nullAllowed
-                }}
-                getSuggestions={getSuggestions(cols, canBeExpression)}
-                renderSuggestion={getRenderSuggestion(cols)}
-                valueOnSuggestion={getValueOnSuggestion(cols,canBeExpression)}
-                fieldKey={fieldKey}
-                groupKey={groupKey}
-                {...labelProps}
-                inputStyle={inputStyle}
-                placeholder={placeholder}
-                readonly={readonly}
-                endDecorator= {!readonly && helper ? helper : undefined}
-                required={required}
-                slotProps={slotProps}
-            />
-        </div>
+        <SuggestBoxInputField
+            inline={true}
+            initialState= {{
+                value,
+                valid,
+                message,
+                validator: validator || colValidator,
+                tooltip,
+                nullAllowed
+            }}
+            getSuggestions={getSuggestions(cols, canBeExpression)}
+            renderSuggestion={getRenderSuggestion(cols)}
+            valueOnSuggestion={getValueOnSuggestion(cols,canBeExpression)}
+            fieldKey={fieldKey}
+            groupKey={groupKey}
+            {...labelProps}
+            inputStyle={inputStyle}
+            placeholder={placeholder}
+            readonly={readonly}
+            endDecorator= {!readonly && helper ? helper : undefined}
+            required={required}
+            slotProps={slotProps}
+            sx={sx}
+        />
     );
 }
 
@@ -215,7 +217,7 @@ ColumnFld.propTypes = {
         control: object,
         label: object,
         tooltip: object
-    })
-
+    }),
+    sx: object
 };
 
