@@ -1,5 +1,5 @@
-import {dispatchSetMenu, getMenu} from '../../core/AppDataCntlr.js';
-import {dispatchShowDropDown} from '../../core/LayoutCntlr.js';
+import {getMenu} from '../../core/AppDataCntlr.js';
+import {dispatchShowDropDown, dispatchUpdateMenu} from '../../core/LayoutCntlr.js';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import {makeFileRequest} from '../../tables/TableRequestUtil.js';
@@ -22,7 +22,7 @@ export function confirmDLMenuItem() {
         const newMenuItems= [...menuItems];
         const dlDrop= {label:'Search Collections', action:'DLGeneratedDropDownCmd'};
         newMenuItems.splice(1,0,dlDrop);
-        dispatchSetMenu({selected,showBgMonitor,menuItems:newMenuItems});
+        dispatchUpdateMenu({selected,showBgMonitor,menuItems:newMenuItems});
     }
 }
 

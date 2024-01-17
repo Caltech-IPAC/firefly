@@ -41,10 +41,10 @@ function handleAction (menuItem) {
  */
 export function MenuItem({menuItem, isSelected, clickHandler, isWorking=false, badgeCount=0}) {
     const clsname = 'menu__item' + (isSelected ? ' menu__item-selected' : '');
-    const onClick = useCallback(() => {
+    const onClick = () => {
         clickHandler ??= handleAction;
         clickHandler(menuItem);
-    }, []);
+    };
     return (
         <div className={clsname}
              title={menuItem.desc}

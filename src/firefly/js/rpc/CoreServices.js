@@ -72,9 +72,10 @@ function buildUploadParam(item) {
 /**
  * parse an upload result
  * @param {String} text - the result text from the upload call
- * @return {{cacheKey: String, analysisResult: Object, message: String, status: String}}
+ * @return {{cacheKey: String, analysisResult: String, message: String, status: String}}
  */
 export function parseUploadResults(text) {
+    // TODO: refactor analysisResult to be an Object?
                      // text is in format ${status}::${message}::${message}::${cacheKey}::${analysisResult}
     const [status, message, cacheKey, anaResultPart, ...rest] = text.split('::');
                      // there are '::' in the analysisResults.. put it back
