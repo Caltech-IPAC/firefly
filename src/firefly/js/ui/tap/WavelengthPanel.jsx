@@ -1,4 +1,4 @@
-import {Stack, Typography} from '@mui/joy';
+import {Divider, Stack, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
@@ -143,14 +143,23 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
             !isInit && valAry.some((v)=>v) && checkHeaderCtl.setPanelActive(true);
         });
 
-    const units= (<ListBoxInputField fieldKey='obsCoreWavelengthUnits'
-                       options={ [
-                           {label: 'microns', value: 'um'},
-                           {label: 'nanometers', value: 'nm'},
-                           {label: 'angstroms', value: 'angstrom'},
-                       ]}
-                       initialState={{ value: initArgs?.urlApi?.obsCoreWavelengthUnits || 'nm' }}
-                       multiple={false} />);
+    const units= (
+        <Stack direction='row' alignItems='center'>
+            <Divider orientation='vertical' />
+            <ListBoxInputField fieldKey='obsCoreWavelengthUnits'
+                               options={ [
+                                   {label: 'microns', value: 'um'},
+                                   {label: 'nanometers', value: 'nm'},
+                                   {label: 'angstroms', value: 'angstrom'},
+                               ]}
+                               slotProps={{ input: {
+                                       variant:'plain',
+                                       sx:{minHeight:'unset'}
+                                   } }}
+                               initialState={{ value: initArgs?.urlApi?.obsCoreWavelengthUnits || 'nm' }}
+                               multiple={false} />
+        </Stack>
+    );
 
 
 

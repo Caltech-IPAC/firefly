@@ -1,4 +1,4 @@
-import {FormControl, FormHelperText, FormLabel, Stack} from '@mui/joy';
+import {Divider, FormControl, FormHelperText, FormLabel, Stack} from '@mui/joy';
 import React, {useEffect, memo, useState, useContext} from 'react';
 import PropTypes, {bool, object} from 'prop-types';
 import {convertAngle} from '../visualize/VisUtil.js';
@@ -137,14 +137,25 @@ const SizeInputFieldView= (props) => {
                         message:errmsg,
                         connectedMarker: connectedMarker || connectContext.controlConnected,
                         endDecorator:(
-                            <ListBoxInputFieldView
-                                onChange={onUnitChange}
-                                value={unit} multiple={false} label='' tooltip='unit of the size'
-                                options={[
-                                    {label: 'degrees', value: 'deg'},
-                                    {label: 'arcminutes', value: 'arcmin'},
-                                    {label: 'arcseconds', value: 'arcsec'}
-                                ]}/>
+                            <Stack direction='row' alignItems='center'>
+                                <Divider orientation='vertical'/>
+                                <ListBoxInputFieldView
+                                    onChange={onUnitChange}
+                                    value={unit} multiple={false} label='' tooltip='unit of the size'
+                                    options={[
+                                        {label: 'degrees', value: 'deg'},
+                                        {label: 'arcminutes', value: 'arcmin'},
+                                        {label: 'arcseconds', value: 'arcsec'}
+                                    ]}
+                                    slotProps={{
+                                        input: {
+                                            variant:'plain',
+                                            sx:{minHeight:'unset'}
+                                            // sx:{'&:hover': { bgcolor: 'transparent' } }
+                                        }
+                                    }}
+                                />
+                            </Stack>
                         ),
                         sx:{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }},
                         tooltip:'enter size within the valid range'

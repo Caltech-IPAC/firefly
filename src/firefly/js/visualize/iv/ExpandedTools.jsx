@@ -19,10 +19,12 @@ import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 import ONE from 'html/images/icons-2014/Images-One.png';
 import GRID from 'html/images/icons-2014/Images-Tiled.png';
 import LIST from 'html/images/icons-2014/ListOptions.png';
-import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
-import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
+// import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
+// import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import ACTIVE_DOT from 'html/images/green-dot-10x10.png';
 import INACTIVE_DOT from 'html/images/blue-dot-10x10.png';
+import NavigateNext from '@mui/icons-material/NavigateNext';
+import NavigateBefore from '@mui/icons-material/NavigateBefore';
 
 function createOptions(expandedMode, singleAutoPlay, plotIdAry) {
     return (
@@ -148,7 +150,7 @@ export function PagingControl({viewerItemIds,activeItemId,isPagingMode,getItemTi
                 <Tooltip title={leftTip}>
                     <Button {...{size:'sm', variant:'plain',
                         onClick:() => onActiveItemChange(viewerItemIds[prevIdx]),
-                        startDecorator:(<img src={PAGE_LEFT}/>)}}>
+                        startDecorator:(<NavigateBefore/>)}}>
                     <span style={{maxWidth:'8em', textOverflow:'ellipsis', overflow:'hidden'}}>
                         {getItemTitle(viewerItemIds[prevIdx])}
                     </span>
@@ -158,7 +160,7 @@ export function PagingControl({viewerItemIds,activeItemId,isPagingMode,getItemTi
                 <Tooltip title={rightTip}>
                     <Button {...{size:'sm',variant:'plain',
                         onClick:() => onActiveItemChange(viewerItemIds[nextIdx]),
-                        endDecorator:(<img src={PAGE_RIGHT}/>)}}>
+                        endDecorator:(<NavigateNext/>) }}>
                     <span style={{maxWidth:'5em', textOverflow:'ellipsis', overflow:'hidden'}}>
                         {getItemTitle(viewerItemIds[nextIdx])}
                     </span>

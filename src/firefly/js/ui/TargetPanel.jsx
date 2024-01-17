@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Stack} from '@mui/joy';
+import {Box, Divider, Stack} from '@mui/joy';
 import React, {memo, useContext, useEffect} from 'react';
 import PropTypes, {bool} from 'prop-types';
 import {ConnectionCtx} from './ConnectionCtx.js';
@@ -91,18 +91,24 @@ function makeEndDecorator(showResolveSourceOp, onChange, resolver, button) {
                     {label: 'Try NED then Simbad', value: nedThenSimbad},
                     {label: 'Try Simbad then NED', value: simbadThenNed}
                 ]}
+                slotProps={{
+                    input: {
+                        variant:'plain',
+                        sx:{minHeight:'unset'}
+                        // sx:{'&:hover': { bgcolor: 'transparent' } }
+                    }
+                }}
                 onChange={(ev,newValue) => onChange(newValue, RESOLVER)}
                 value={resolver} multiple={false}
                 tooltip='Select which name resolver' label='' labelWidth={3} wrapperStyle={{}} />) : undefined;
 
-
-    if  (resolverOp && !button) return resolverOp;
-    if  (!resolverOp && button) return button;
-    if  (resolverOp && button) {
+    if  (resolverOp || button) {
         return (
-            <Stack direction='row' alignItems='center' spacing={1}>
+            <Stack direction='row' alignItems='center'>
+                {Boolean(resolverOp) && <Divider orientation='vertical'/>}
                 {resolverOp}
-                {button}
+                {Boolean(button) && <Divider orientation='vertical' />}
+                {Boolean(button) && <Box sx={{ml:1/2}}>{button}</Box>}
             </Stack>);
     }
     return undefined;

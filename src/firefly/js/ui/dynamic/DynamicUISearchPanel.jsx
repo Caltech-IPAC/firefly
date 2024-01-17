@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box, Stack} from '@mui/joy';
 import React from 'react';
 import {CoordinateSys, parseWorldPt} from '../../api/ApiUtilImage.jsx';
 import {standardIDs} from '../../voAnalyzer/VoConst.js';
@@ -50,7 +51,7 @@ export function DynamicForm({DynLayoutPanel, groupKey,fieldDefAry, onSubmit, onE
     };
 
     return (
-        <div style={style}>
+        <Box style={style}>
             <FormPanel  {...{
                 inputStyle: {display: 'flex', flexDirection: 'column', backgroundColor: 'transparent', padding: 'none', border: 'none'},
                 submitBarStyle:{padding: '2px 3px 3px'},
@@ -60,7 +61,7 @@ export function DynamicForm({DynLayoutPanel, groupKey,fieldDefAry, onSubmit, onE
             }} >
                 <DynamicFieldGroupPanel {...{DynLayoutPanel, groupKey,fieldDefAry}}/>
             </FormPanel>
-        </div>
+        </Box>
     );
 }
 
@@ -223,20 +224,22 @@ function SimpleDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='d
     return (
         <div style={style}>
             {useSpacial &&
-                <div style={{display:'flex', flexDirection:'column', alignItems:'center', height:'100%'}}> {<DynSpacialPanel/>} </div>}
+                <Stack {...{alignItems:'center', height:'100%'}}>
+                    <DynSpacialPanel/>
+                </Stack>}
             {Boolean(polyPanel) &&
-                <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}> {polyPanel} </div>}
+                <Stack {...{alignItems:'center'}}> {polyPanel} </Stack>}
             <div style={{paddingLeft:5, display:'flex', flexDirection:'column'}}>
                 {useArea &&
-                    <div key='a' style={{paddingTop:5, display:'flex', flexDirection:'column'}}>
+                    <Stack key='a' {...{pt:1/2}}>
                         {areaFields}
-                    </div>}
+                    </Stack>}
                 <div style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
                     {Boolean(iFieldLayout) && <div>{iFieldLayout}</div>}
                     {Boolean(checkBoxFields) &&
-                        <div style={{padding: '5px 0 0 45px', display:'flex', flexDirection:'column', alignSelf:'center'}}>
+                        <Stack {...{pt:1/2, pl:8, alignSelf:'center'}}>
                             {checkBoxFields}
-                        </div> }
+                        </Stack> }
                 </div>
             </div>
         </div>
@@ -251,20 +254,20 @@ function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='d
     let iFieldLayout;
     if (fieldsInputAry.length || opsInputAry.length) {
         iFieldLayout= (
-            <>
-                <div key='top' style={{paddingTop:5}}/>
-                <div style={{display:'flex', flexDirection:'column', alignItems:'flex-start', alignSelf:'flex-start'}}>
+            <Stack>
+                <Box key='top' sx={{pt:1/2}}/>
+                <Stack {...{alignItems:'flex-start', alignSelf:'flex-start'}}>
                     {fieldsInputAry}
-                </div>
+                </Stack>
                 {Boolean(fieldsInputAry.length) && <div key='pad' style={{paddingTop:5}}/>}
                 {opsInputAry}
-            </>);
+            </Stack>);
     }
 
 
 
     const nonSpacial= (
-        <>
+        <Stack className='non-spatial'>
             {Boolean(polyPanel) &&
                 <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}> {polyPanel} </div>}
             <div style={{paddingLeft:5, display:'flex', flexDirection:'column', alignSelf:'flex-start'}}>
@@ -281,7 +284,7 @@ function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='d
                 </div>
             </div>
             {childComponents && childComponents}
-        </>
+        </Stack>
     );
 
     if (!useSpacial) {
@@ -293,9 +296,9 @@ function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='d
 
     return (
         <div style={style}>
-            <div style={{display:'flex', flexDirection:'column', alignItems:'center', height:'100%'}}>
+            <Stack {...{alignItems:'center', height:'100%'}}>
                 <DynSpacialPanel otherComponents={nonSpacial} WrapperComponent={WrapperComponent}/>
-            </div>
+            </Stack>
         </div>
     );
 }
@@ -322,18 +325,18 @@ const labelAry= fieldDefAry
             </div>);
     }
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch', ...style}}>
+        <Stack {...{alignItems: 'center', alignSelf: 'stretch', ...style}}>
             {useSpacial &&
-                <div style={{display:'flex', flexDirection:'column', alignItems:'center', alignSelf:'stretch'}}>
+                <Stack {...{alignItems:'center', alignSelf:'stretch'}}>
                     {<DynSpacialPanel/>}
                     {useArea && <> {areaFields} </>}
-                </div>
+                </Stack>
             }
             {Boolean(checkBoxFields) && <div key='b' style={{paddingTop:5, display:'flex', flexDirection:'column'}}>
                 {checkBoxFields}
             </div> }
             {Boolean(gridFieldLayout) && gridFieldLayout}
-        </div>
+        </Stack>
     );
 }
 

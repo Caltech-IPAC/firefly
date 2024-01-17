@@ -4,7 +4,7 @@
 
 
 import React, {PureComponent} from 'react';
-import PropTypes from 'prop-types';
+import {object, bool, element, func, number, oneOfType, string} from 'prop-types';
 import uniqueId from 'lodash/uniqueId';
 import delay from 'lodash/delay';
 import {flux} from '../core/ReduxFlux.js';
@@ -193,20 +193,20 @@ export class DropDownToolbarButton extends PureComponent {
 }
 
 DropDownToolbarButton.propTypes= {
-    icon : PropTypes.string,
-    text : PropTypes.string,
-    tip : PropTypes.string,
-    color : PropTypes.string,
-    direction : PropTypes.string,
-    badgeCount : PropTypes.number,
-    enabled : PropTypes.bool,
-    todo: PropTypes.bool,
-    onClick : PropTypes.func,
-    visible : PropTypes.bool,
-    menuMaxWidth: PropTypes.number,
-    dropDown : PropTypes.object.isRequired,
-    dropDownKey: PropTypes.string,
-    useDropDownIndicator: PropTypes.bool
+    icon : oneOfType([element,string]),
+    text : string,
+    tip : string,
+    color : string,
+    direction: string,
+    badgeCount : number,
+    enabled : bool,
+    todo: bool,
+    onClick : func,
+    visible : bool,
+    menuMaxWidth: number,
+    dropDown : object.isRequired,
+    dropDownKey: string,
+    useDropDownIndicator: bool
 };
 
 

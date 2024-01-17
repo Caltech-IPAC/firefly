@@ -47,6 +47,7 @@ import {
     isImageCube,
     isThreeColor, primePlot, pvEqualExScroll
 } from '../PlotViewUtil.js';
+import {ColorDropDownButton, DrawLayersButton, ExpandButton, InfoButton, RotateButton, SaveButton} from './Buttons.jsx';
 import {ImageCenterDropDown, TARGET_LIST_PREF} from './ImageCenterDropDown.jsx';
 import {
     clearModalEndInfo, closeToolbarModalLayers, createModalEndUI,
@@ -54,12 +55,8 @@ import {
 } from './ToolbarToolModalEnd.js';
 
 import DRILL_DOWN from 'images/drill-down.png';
-import GRID_EXPAND from 'images/icons-2014/24x24_ExpandArrows-grid-3.png';
-import OUTLINE_EXPAND from 'images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
-import COLOR from 'images/icons-2014/28x28_ColorPalette.png';
 import COMPASS_OFF from 'images/icons-2014/28x28_Compass.png';
 import COMPASS_ON from 'images/icons-2014/28x28_CompassON.png';
-import FITS_HEADER from 'images/icons-2014/28x28_FITS_Information.png';
 import NEW_IMAGE from 'images/icons-2014/28x28_FITS_NewImage.png';
 import STRETCH from 'images/icons-2014/28x28_Log.png';
 import DS9_REGION from 'images/icons-2014/DS9.png';
@@ -71,12 +68,8 @@ import DIST_OFF from 'images/icons-2014/Measurement.png';
 import FLIP_Y_ON from 'images/icons-2014/Mirror-ON.png';
 import FLIP_Y from 'images/icons-2014/Mirror.png';
 import RESTORE from 'images/icons-2014/RevertToDefault.png';
-import ROTATE from 'images/icons-2014/Rotate.png';
 import ROTATE_NORTH_ON from 'images/icons-2014/RotateToNorth-ON.png';
 import ROTATE_NORTH_OFF from 'images/icons-2014/RotateToNorth.png';
-
-import SAVE from 'images/icons-2014/Save.png';
-import LAYER_ICON from 'images/icons-2014/TurnOnLayers.png';
 import LINE_EXTRACTION from 'images/line-extract.png';
 import MASK from 'images/mask_28x28.png';
 import LOCKED from 'images/OverlayLocked.png';
@@ -276,11 +269,11 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
                                        visible={mi.matchLockDropDown} />
             }
 
-            {manageExpand && <ToolbarButton icon={expandGrid? GRID_EXPAND : OUTLINE_EXPAND}
-                           tip='Expand this panel to take up a larger area'
-                           visible={!isExpanded && pv?.plotViewCtx.canBeExpanded}
-                                            onClick={() =>expand(pv?.plotId, expandGrid)}/>
-            }
+            {manageExpand && <ExpandButton expandGrid={expandGrid}
+                                           tip='Expand this panel to take up a larger area'
+                                           visible={!isExpanded && pv?.plotViewCtx.canBeExpanded}
+                                           onClick={() =>expand(pv?.plotId, expandGrid)}/>
+             }
         </div>
     );
 });
@@ -348,10 +341,8 @@ export function LayerButton({pv}) {
     const layerCnt=  primePlot(pv) ? (getAllDrawLayersForPlot(getDlAry(),pv.plotId).length + pv.overlayPlotViews.length) : 0;
     const enabled= Boolean(layerCnt || findUnactivatedRelatedData(pv).length);
     return (
-        <ToolbarButton icon={LAYER_ICON}
-                       tip='Manipulate overlay display: Control color, visibility, and advanced options'
-                       enabled={enabled} badgeCount={layerCnt}
-                       imageStyle={image24x24} onClick={showDrawingLayerPopup}/>
+        <DrawLayersButton tip='Manipulate overlay display: Control color, visibility, and advanced options'
+                       enabled={enabled} badgeCount={layerCnt} onClick={showDrawingLayerPopup}/>
     );
 }
 
@@ -365,11 +356,11 @@ const colorTip= 'Color Drop down. Change the color table';
 
 const ColorButton= ({colorDrops,enabled,pv}) => (
     colorDrops ?
-            <DropDownToolbarButton icon={COLOR} tip={colorTip} enabled={enabled} visible={!primePlot(pv)?.blank}
-                                   imageStyle={image24x24} dropDown={<ColorTableDropDownView plotView={pv}/>}/>
+            <ColorDropDownButton tip={colorTip} enabled={enabled} visible={!primePlot(pv)?.blank}
+                                   dropDown={<ColorTableDropDownView plotView={pv}/>}/>
             :
-            <ToolbarButton icon={COLOR} tip={colorTip} enabled={enabled} visible={!primePlot(pv)?.blank}
-                           imageStyle={image24x24} onClick={() =>showColorDialog()}/>
+            <ColorButton  tip={colorTip} enabled={enabled} visible={!primePlot(pv)?.blank}
+                           onClick={() =>showColorDialog()}/>
 );
 
 const ZoomDrop= ({pv,mi, image}) => (
@@ -423,14 +414,13 @@ function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, modalEndInfo,
 const SaveRestoreRow= ({style,image,hips,mi,pv,enabled}) => (
     <div style={{display:'flex', alignItems:'center', ...style}}>
         <Typography level='body-md' width='10em'>Save / Restore / Info: </Typography>
-        <ToolbarButton icon={SAVE} tip='Save the FITS file, PNG file, or save the overlays as a region'
-                       enabled={enabled} visible={mi.fitsDownload}
+        <SaveButton tip='Save the FITS file, PNG file, or save the overlays as a region'
+                       visible={mi.fitsDownload}
                        onClick={showFitsDownloadDialog.bind(null, 'Load Region')}/>
         <ToolbarButton icon={RESTORE} tip='Restore to the defaults' enabled={enabled}
                        visible={mi.restore}
                        onClick={() => dispatchRestoreDefaults({plotId:pv.plotId})}/>
-        <ToolbarButton icon={FITS_HEADER}
-                       tip={image ? 'Show FITS header' : (hips ? 'Show HiPS properties' : '')}
+        <InfoButton tip={image ? 'Show FITS header' : (hips ? 'Show HiPS properties' : '')}
                        enabled={enabled} visible={mi.directFileAccessData}
                        onClick={(element) => showPlotInfoPopup(pv, element )} />
     </div>
@@ -439,7 +429,7 @@ const SaveRestoreRow= ({style,image,hips,mi,pv,enabled}) => (
 const RotateFlipRow= ({style,image,mi,showRotateLocked,pv,enabled}) => (
     <div style={{display:'flex', alignItems:'center', ...style}}>
         <Typography level='body-md' width='10em'>{image?'Rotate / Flip:' : 'Rotate J2000 North'}</Typography>
-        <ToolbarButton icon={ROTATE} tip='Rotate the image to any angle' enabled={enabled}
+        <RotateButton tip='Rotate the image to any angle' enabled={enabled}
                        visible={mi.rotate && image} onClick={showFitsRotationDialog}/>
 
         <SimpleLayerOnOffButton plotView={pv} isIconOn={showRotateLocked}

@@ -17,7 +17,7 @@ function getCurrentValueArr(value) {
 const convertValue= (value,options) => (!value) ? options?.[0]?.value : value;
 
 
-export function ListBoxInputFieldView({value:fieldValue, onChange, fieldKey, options,
+export function ListBoxInputFieldView({value:fieldValue='', onChange, fieldKey, options,
                                           orientation='horizontal', sx, slotProps={},
                                           renderValue, decorator, startDecorator,
                                        multiple, placeholder, tooltip, label,

@@ -6,6 +6,7 @@ import React, {memo, useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 import {xor,isNil, isEmpty,isString, isFunction, throttle, isNumber, isArray} from 'lodash';
 import {flux} from '../core/ReduxFlux.js';
+import {useColorMode} from '../ui/FireflyRoot.jsx';
 import {ImageRender} from './iv/ImageRender.jsx';
 import {EventLayer} from './iv/EventLayer.jsx';
 import {ImageViewerStatus} from './iv/ImageViewerStatus.jsx';
@@ -237,13 +238,14 @@ ImageViewerLayout.propTypes= {
 };
 
 const ImageViewerContents= memo(({drawLayersAry=[],plotView,eventCallback,cursor,plotShowing}) => {
+    const colorMode= useColorMode()?.activeMode;
     if (!plotShowing) return;
     const {plotId,viewDim:{width,height}={}}= plotView??{};
     const rootStyle= {left:0, top:0, bottom:0, right:0, position:'absolute', marginRight: 'auto', marginLeft: 0 };
     return (
         <div className='plot-view-scroll-view-window' style={rootStyle}>
             <div className='plot-view-master-panel' style={{width,height, left:0,right:0,position:'absolute', cursor}}>
-                {makeTileDrawers(plotView)}
+                {makeTileDrawers(plotView, colorMode)}
                 <DrawingLayers
                     key={'DrawingLayers:'+plotId}
                     plotView={plotView} drawLayersIdAry={drawLayersAry?.map( (dl) => dl.drawLayerId)} />
@@ -396,18 +398,18 @@ function isImageSizeViewable(plotView) {
  * @param {PlotView} pv
  * @return {Array}
  */
-function makeTileDrawers(pv) {
+function makeTileDrawers(pv, colorMode) {
 
 
     const plot= primePlot(pv);
     const rootDrawer= (
-        <ImageRender opacity={1} plot={plot} plotView={pv} key={'TileDrawer:'+pv.plotId} idx={0}/>
+        <ImageRender opacity={1} plot={plot} plotView={pv} key={'TileDrawer:'+pv.plotId} idx={0} colorMode={colorMode}/>
     );
     const drawers= pv.overlayPlotViews
         .filter( (opv) => opv.visible && opv.plot && plot.dataWidth===opv.plot?.dataWidth && plot.dataHeight===opv.plot?.dataHeight)
         .map( (opv,idx) => {
             return (
-                <ImageRender opacity={opv.opacity} plot={opv.plot} plotView={pv}
+                <ImageRender opacity={opv.opacity} plot={opv.plot} plotView={pv} colorMode={colorMode}
                              idx={idx+1} key={'TileDrawer-overlay:'+opv.imageOverlayId} />
             );
         });

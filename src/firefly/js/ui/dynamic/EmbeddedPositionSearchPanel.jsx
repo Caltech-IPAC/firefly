@@ -1,3 +1,4 @@
+import {Sheet, Stack} from '@mui/joy';
 import React from 'react';
 import {oneOfType, oneOf, element, bool, string, number, arrayOf, object, func, shape} from 'prop-types';
 import CoordinateSys from '../../visualize/CoordSys.js';
@@ -9,9 +10,6 @@ import {SizeInputFields} from '../SizeInputField.jsx';
 import {DEF_TARGET_PANEL_KEY, TargetPanel} from '../TargetPanel.jsx';
 import {CONE_AREA_KEY} from './DynamicDef.js';
 import {DEF_AREA_EXAMPLE, PolygonField} from './DynComponents.jsx';
-
-import './EmbeddedPositionSearchPanel.css';
-
 
 /**
  * Create search panel with HiPS Viewer with an embedded target/area selection
@@ -87,38 +85,41 @@ export function EmbeddedPositionSearchPanel({
         return CONE_CHOICE_KEY;
     };
     const internals= (
-        <>
-            {!insetSpacial && <div style={{paddingTop:10}}/>}
-            {doToggle && <RadioGroupInputField {...{
-                inline: true, fieldKey: CONE_AREA_KEY, wrapperStyle: {paddingBottom: 5, paddingTop: 5},
-                tooltip: 'Chose type of search', initialState: {value: initToggle}, options: CONE_AREA_OPTIONS
-            }} />}
-            {doGetConeAreaOp() === CONE_CHOICE_KEY &&
-                <div style={{paddingTop:5}}>
-                    <TargetPanel {...{
-                        fieldKey:targetKey, labelWidth:60, nullAllowed,
-                        inputStyle:{width: 225},
-                        targetPanelExampleRow1, targetPanelExampleRow2
-                    }}/>
-                    <SizeInputFields {...{
-                        style:{paddingBottom:10},
-                        fieldKey: sizeKey, showFeedback: true, labelWidth: 100, nullAllowed: false,
-                        labelStyle:{textAlign:'right', paddingRight:4},
-                        label: 'Search Radius:',
-                        initialState: {unit: 'arcsec', value: searchAreaInDeg + '', min:minValue, max:maxValue}
-                    }} />
-                </div>
-            }
-            {doGetConeAreaOp() === POLY_CHOICE_KEY &&
-                <PolygonField {...{
-                    style: {paddingTop:5},
-                    hideHiPSPopupPanelOnDismount: false, fieldKey: polygonKey,
-                    targetDetails: {targetPanelExampleRow1: polygonExampleRow1, targetPanelExampleRow2:polygonExampleRow2},
-                    desc: 'Coordinates',
-                    manageHiPS:false,
+        <Stack>
+            <Stack>
+                {!insetSpacial && <div style={{paddingTop:10}}/>}
+                {doToggle && <RadioGroupInputField {...{
+                    sx:{alignSelf: 'center'},
+                    fieldKey: CONE_AREA_KEY, orientation: 'horizontal',
+                    tooltip: 'Chose type of search', initialState: {value: initToggle}, options: CONE_AREA_OPTIONS
                 }} />}
+                {doGetConeAreaOp() === CONE_CHOICE_KEY &&
+                    <Stack {...{pt:1/2, spacing:1}}>
+                        <TargetPanel {...{
+                            sx:{width:'34rem'},
+                            fieldKey:targetKey, nullAllowed,
+                            targetPanelExampleRow1, targetPanelExampleRow2
+                        }}/>
+                        <SizeInputFields {...{
+                            style:{paddingBottom:10},
+                            fieldKey: sizeKey, showFeedback: true, labelWidth: 100, nullAllowed: false,
+                            labelStyle:{textAlign:'right', paddingRight:4},
+                            label: 'Search Radius',
+                            initialState: {unit: 'arcsec', value: searchAreaInDeg + '', min:minValue, max:maxValue}
+                        }} />
+                    </Stack>
+                }
+                {doGetConeAreaOp() === POLY_CHOICE_KEY &&
+                    <PolygonField {...{
+                        style: {paddingTop:5},
+                        hideHiPSPopupPanelOnDismount: false, fieldKey: polygonKey,
+                        targetDetails: {targetPanelExampleRow1: polygonExampleRow1, targetPanelExampleRow2:polygonExampleRow2},
+                        desc: 'Coordinates',
+                        manageHiPS:false,
+                    }} />}
+            </Stack>
             {otherComponents && otherComponents}
-        </>
+        </Stack>
     );
 
     const wrappedInternals= WrapperComponent ? <WrapperComponent>{internals}</WrapperComponent> : internals;
@@ -131,12 +132,24 @@ export function EmbeddedPositionSearchPanel({
                 hipsUrl, centerPt:initCenterPt, hipsFOVInDeg, mocList, coordinateSys, sRegion, plotId,
                 minSize: minValue, maxSize: maxValue, toolbarHelpId,
                 whichOverlay: doGetConeAreaOp(), setWhichOverlay: doToggle ? setConeAreaOp : undefined,
-                targetKey, sizeKey, polygonKey, style: {minHeight: 300, alignSelf: 'stretch', flexGrow:1}
+                targetKey, sizeKey, polygonKey, sx: {minHeight: 300, alignSelf: 'stretch', flexGrow:1}
             }}/>
-            <div className={`FFepsp-content ${insetSpacial ? 'inset' : ''}`}
-                style={{display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch'}}>
+            <Sheet {...{className:`FFepsp-content ${insetSpacial ? 'inset' : ''}`,
+                sx: (theme) => (
+                    {
+                        alignItems: 'center',
+                        alignSelf: 'stretch',
+                        borderRadius: '5px 5px 2px 2px',
+                        border: `3px solid ${theme.vars.palette['neutral']?.softActiveBg}`,
+                        position: 'absolute',
+                        p: 1/4,
+                        bottom: '1.5rem',
+                        left: 3,
+                    })
+
+            }}>
                 {wrappedInternals}
-            </div>
+            </Sheet>
         </div>
     );
 }
