@@ -137,7 +137,7 @@ function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart
                         whiteSpace:'nowrap', overflow:'hidden'}} >
                         {title}
                     </DialogTitle>
-                    <Tooltip placement="left" title='Close'>
+                    <Tooltip placement='left' title='Close'>
                         <ChipDelete onClick={askParentToClose}/>
                     </Tooltip>
                 </Stack>
