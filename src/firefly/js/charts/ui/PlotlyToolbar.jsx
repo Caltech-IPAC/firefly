@@ -14,7 +14,8 @@ import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {showChartsDialog} from './ChartSelectPanel.jsx';
 import {FilterEditorWrapper} from './FilterEditorWrapper.jsx';
 import {isScatter2d} from '../ChartUtil.js';
-import {dispatchChangeViewerLayout, findViewerWithItemId, getLayoutType, getMultiViewRoot, PLOT2D} from '../../visualize/MultiViewCntlr.js';
+import {findViewerWithItemId, getLayoutType, getMultiViewRoot, PLOT2D} from '../../visualize/MultiViewCntlr.js';
+import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField';
 
 
 export function PlotlyToolbar({chartId, expandable}) {
@@ -309,18 +310,19 @@ function ExpandBtn({style={}, chartId} ){
     );
 }
 
-export function ActiveTraceSelect({style={}, chartId, activeTrace}) {
+export function ActiveTraceSelect({sx={}, chartId, activeTrace}) {
     const {data} = getChartData(chartId) || [];
-    const selected = get(data, [activeTrace, 'name']) || `trace ${activeTrace}`;
     if (!data || data.length < 2) return null;
 
-    return (
-        <div style={{width:100, height:20, ...style}} className='styled-select semi-square'>
-            <select value={selected} onChange={(e) => dispatchSetActiveTrace({chartId, activeTrace: get(e, 'target.selectedIndex',0)})}>
-                {data.map( (trace, idx) => <option key={`trace-${idx}`}>{get(trace, 'name', `trace ${idx}`)}</option>)}
-            </select>
-        </div>
-    );
+    return (<ListBoxInputFieldView value={activeTrace}
+                                   options={data.map((trace, idx) => {
+                                       const option = get(trace, 'name', `trace ${idx}`);
+                                       return {label: option, value: idx};
+                                   })}
+                                   onChange={(e, newValue) => dispatchSetActiveTrace({chartId, activeTrace: newValue})}
+                                   sx={sx}
+                                   slotProps={{input: {size: 'sm'}}}
+    />);
 }
 
 function FilterSelection({style={}, chartId}) {

@@ -21,6 +21,7 @@ import {isFloat} from 'firefly/util/Validate';
 import {ValidationField} from 'firefly/ui/ValidationField';
 import {sprintf} from 'firefly/externalSource/sprintf';
 import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField';
+import {Box, Stack} from '@mui/joy';
 
 
 export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
@@ -32,46 +33,46 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
     const {tbl_id} = getChartProps(chartId, ptbl_id, activeTrace);
     const {xErrArray, yErrArray, xMax, xMin, yMax, yMin} = getSpectrumProps(tbl_id);
 
-    const wideLabel = xMax || xMin || yMax || yMin;
-    const fieldProps = {labelWidth: (wideLabel ? 155 : 116), size: 20};
-
-    const {Xunit, Yunit, SpectralFrame} = spectrumInputs({activeTrace, tbl_id, chartId, groupKey, fieldProps});
-    const {UseSpectrum, X, Xmax, Xmin, Y, Ymax, Ymin, Yerrors, Xerrors, Mode} = scatterInputs({activeTrace, tbl_id, chartId, groupKey, fieldProps});
-    const {XaxisTitle, YaxisTitle} = basicOptions({activeTrace, tbl_id, chartId, groupKey, fieldProps});
+    const {Xunit, Yunit, SpectralFrame} = spectrumInputs({activeTrace, tbl_id, chartId, groupKey});
+    const {UseSpectrum, X, Xmax, Xmin, Y, Ymax, Ymin, Yerrors, Xerrors, Mode} = scatterInputs({activeTrace, tbl_id, chartId, groupKey});
+    const {XaxisTitle, YaxisTitle} = basicOptions({activeTrace, tbl_id, chartId, groupKey});
 
     const reducerFunc = spectrumReducer({chartId, activeTrace, tbl_id});
     reducerFunc.ver = chartId+activeTrace+tbl_id;
 
+    const labelWidth = '11rem';
+
     return(
         <FieldGroup groupKey={groupKey} validatorFunc={null} keepState={false} reducerFunc={reducerFunc}>
-
-            {!isSpectralOrder(chartId) && <UseSpectrum/>}
-
-            <div className='FieldGroup__vertical'>
-                <X label='Spectral axis column(X):' readonly={true} inputStyle={{'width': '360px'}}/>
-                {xErrArray && <Xerrors labelWidth={wideLabel ? 85 : 46} readonly={true}/>}
-                {xMax && <Xmax readonly={true}/>}
-                {xMin && <Xmin readonly={true}/>}
-                <Xunit/>
-                <SpectralFrame/>
-                <br/>
-                <Y label='Flux axis column(Y):' readonly={true}/>
-                {yErrArray && <Yerrors labelWidth={wideLabel ? 85 : 46} readonly={true}/>}
-                {yMax && <Ymax readonly={true} label = 'Flux axis upper limit column:'/>}
-                {yMin && <Ymin readonly={true} label = 'Flux axis lower limit column:'/>}
-                <Yunit/>
-                <br/>
-                <Mode/>
-            </div>
-
-            <div style={{margin: '5px 0 0 -22px'}}>
-                <ScatterCommonOptions{...{activeTrace, tbl_id, chartId, groupKey, fieldProps: {labelWidth: 60, size: 20}}}/>
+            <Stack spacing={3}>
+                <Stack spacing={2} sx={{
+                    '.MuiFormLabel-root': {width: labelWidth},
+                    // '.MuiFormControl-root > *:not(.MuiFormLabel-root)': {width: `calc(100% - ${labelWidth})`} //TODO: whether to make inputs equally wide?
+                }}>
+                    {!isSpectralOrder(chartId) && <UseSpectrum/>}
+                    <Stack spacing={1}>
+                        <X label='Spectral axis column(X):' readonly={true} sx={{'.MuiInput-root': {width: '25rem'}}}/>
+                        {xErrArray && <Xerrors readonly={true}/>}
+                        {xMax && <Xmax readonly={true}/>}
+                        {xMin && <Xmin readonly={true}/>}
+                        <Xunit/>
+                        <SpectralFrame labelWidth={labelWidth}/>
+                    </Stack>
+                    <Stack spacing={1}>
+                        <Y label='Flux axis column(Y):' readonly={true}/>
+                        {yErrArray && <Yerrors readonly={true}/>}
+                        {yMax && <Ymax readonly={true} label = 'Flux axis upper limit column:'/>}
+                        {yMin && <Ymin readonly={true} label = 'Flux axis lower limit column:'/>}
+                        <Yunit/>
+                    </Stack>
+                    <Mode/>
+                </Stack>
+                <ScatterCommonOptions{...{activeTrace, tbl_id, chartId, groupKey}}/>
                 <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey}}
-                               XaxisTitle={() => <XaxisTitle readonly={true} labelWidth={60}/>}
-                               YaxisTitle={() => <YaxisTitle readonly={true} labelWidth={60}/>}
+                               XaxisTitle={() => <XaxisTitle readonly={true}/>}
+                               YaxisTitle={() => <YaxisTitle readonly={true}/>}
                 />
-            </div>
-
+            </Stack>
         </FieldGroup>
     );
 }
@@ -291,19 +292,19 @@ function Units({activeTrace, value, axis, ...rest}) {
 
 }
 
-export function spectrumInputs ({chartId, groupKey, fieldProps={}}) {
+export function spectrumInputs ({chartId, groupKey}) {
 
     const {activeTrace=0, fireflyData={}} = getChartData(chartId);
 
     return {
-        Xunit: (props={}) => <Units {...{activeTrace, axis: 'x', value: get(fireflyData, `${activeTrace}.xUnit`), ...fieldProps, ...props}}/>,
-        Yunit: (props={}) => <Units {...{activeTrace, axis: 'y', value: get(fireflyData, `${activeTrace}.yUnit`), ...fieldProps, ...props}}/>,
+        Xunit: (props={}) => <Units {...{activeTrace, axis: 'x', value: get(fireflyData, `${activeTrace}.xUnit`), ...props}}/>,
+        Yunit: (props={}) => <Units {...{activeTrace, axis: 'y', value: get(fireflyData, `${activeTrace}.yUnit`), ...props}}/>,
         SpectralFrame: (props={}) => {
             const allProps = {label: 'Spectral Frame:', ...props};
             const sfRefPos = fireflyData[activeTrace].spectralFrame.refPos.toUpperCase();
             return Object.values(REF_POS).includes(sfRefPos) //only show options when TOPOCENTER or CUSTOM
-                ? <SpectralFrameOptions groupKey={groupKey} activeTrace={activeTrace} refPos={sfRefPos} fireflyData={fireflyData} {...{...fieldProps, ...allProps}}/>
-                : <ValidationField fieldKey={SFOptionFieldKeys(activeTrace).value} initialState={{value: sfRefPos}} readonly={true} {...{...fieldProps, ...allProps}}/>;
+                ? <SpectralFrameOptions groupKey={groupKey} activeTrace={activeTrace} refPos={sfRefPos} fireflyData={fireflyData} {...allProps}/>
+                : <ValidationField fieldKey={SFOptionFieldKeys(activeTrace).value} initialState={{value: sfRefPos}} readonly={true} {...allProps}/>;
         },
     };
 }
@@ -349,7 +350,7 @@ function getRedshiftOptions({target, derivedRedshift, spectralFrame}){ //TODO: m
     return options;
 }
 
-function SpectralFrameOptions ({groupKey, activeTrace, refPos, fireflyData, ...props}) {
+function SpectralFrameOptions ({groupKey, activeTrace, refPos, fireflyData, labelWidth, ...props}) {
     const {spectralFrameOption} = fireflyData[activeTrace];
     const spectralFrameOptions = [{label: 'Observed Frame', value: 'observed'}, {label: 'Rest Frame', value: 'rest'}];
     const redshiftOptions = getRedshiftOptions(fireflyData[activeTrace]);
@@ -362,26 +363,28 @@ function SpectralFrameOptions ({groupKey, activeTrace, refPos, fireflyData, ...p
         getFieldVal(groupKey, SFOptionFieldKeys(activeTrace).redshift)==='userSpecified');
 
     return (
-        <div>
+        <Stack spacing={0.5}>
             <ListBoxInputField fieldKey={SFOptionFieldKeys(activeTrace).value}
                                options={spectralFrameOptions}
                                initialState={{value: spectralFrameOption?.value ?? defaultSFOption}}
                                {...props}/>
-            <div style={{position: 'relative',
-                marginLeft: (props?.labelWidth ?? 116) + 8,
-                marginTop: 4,
+            <Box sx={{
+                position: 'relative',
                 display: isRestFrameOption ? 'block' : 'none' //to keep the contained fields mounted because they are needed in spectrumReducer
                 }}>
-                    <RadioGroupInputField fieldKey={SFOptionFieldKeys(activeTrace).redshift} options={redshiftOptions}
+                    <RadioGroupInputField fieldKey={SFOptionFieldKeys(activeTrace).redshift}
+                                          options={redshiftOptions}
                                           initialState={{value: spectralFrameOption?.redshift}} //will select 1st option if undefined
-                                          alignment={'vertical'}/>
+                                          orientation={'vertical'}
+                                          sx={{ml: `calc(${labelWidth} + 1rem)`}} //add 1rem to offset right margin of labels
+                    />
                     <ValidationField fieldKey={SFOptionFieldKeys(activeTrace).userSpecified}
-                                     wrapperStyle={{position: 'absolute', bottom: 0, left: 100}} //to align it with the last radio group option
-                                     style={{width: 80, height: 12}}
+                                     sx={{position: 'absolute', bottom: 0, left: `calc(${labelWidth} + 9rem)`, width: '9rem', zIndex: 1}} //to align it with the last radio group option
                                      initialState={{value: spectralFrameOption?.userSpecified ?? '0'}}
                                      validator={(val) => isFloat('Redshift', val)}
-                                     readonly={!isUserSpecifiedOption}/>
-            </div>
-        </div>
+                                     readonly={!isUserSpecifiedOption}
+                                     tooltip='Rest Frame Redshift'/>
+            </Box>
+        </Stack>
     );
 }
