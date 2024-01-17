@@ -8,11 +8,11 @@ import {isEmpty, isNil} from 'lodash';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {InputField} from '../../ui/InputField.jsx';
-import {ProgressBar} from '../../ui/ProgressBar.jsx';
 import Validate from '../../util/Validate.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../ComponentCntlr.js';
-import {getBackgroundInfo, isActive, isAborted, isDone, isSuccess, canCreateScript, getJobInfo} from './BackgroundUtil.js';
+import {getBackgroundInfo, isActive, isAborted, isDone, isSuccess, getJobInfo, canCreateScript
+} from './BackgroundUtil.js';
 import {dispatchBgJobInfo, dispatchJobRemove, dispatchBgSetEmailInfo, dispatchJobCancel} from './BackgroundCntlr.js';
 import {showScriptDownloadDialog} from '../../ui/ScriptDownloadDialog.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
@@ -22,6 +22,7 @@ import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {updateSet} from '../../util/WebUtil.js';
 import {getRequestFromJob} from '../../tables/TableRequestUtil.js';
 import {showJobInfo} from './JobInfo.jsx';
+import {Checkbox, Stack, ChipDelete, Typography, Box, Link, Tooltip, LinearProgress} from '@mui/joy';
 
 import LOADING from 'html/images/gxt/loading.gif';
 import CANCEL from 'html/images/stop.gif';
@@ -29,6 +30,7 @@ import DOWNLOAED from 'html/images/blue_check-on_10x10.gif';
 import FAILED from 'html/images/exclamation16x16.gif';
 import INFO from 'html/images/info-icon.png';
 import './BackgroundMonitor.css';
+import CompleteButton from 'firefly/ui/CompleteButton';
 
 
 export function showBackgroundMonitor(show=true) {
@@ -55,13 +57,15 @@ export function showBackgroundMonitor(show=true) {
                         <PackageJob key={job.jobId} jobInfo={job} /> :
                         <SearchJob key={job.jobId} jobInfo={job} />
                     );
+
     return (
-        <div className='BGMon'>
-            <div className='BGMon__content'>
+        <Stack justifyContent='space-between' spacing={1} alignItems='left' minHeight={200}
+                    minWidth={330} maxWidth={590} sx={{resize: 'both', overflow: 'auto'}}>
+            <Box {...{flexGrow: 1, overflow: 'auto'}}>
                 {!isEmpty(items) && items}
-            </div>
+            </Box>
             <BgFooter {...{help_id, email, enableEmail}}/>
-        </div>
+        </Stack>
     );
 }
 
@@ -84,46 +88,48 @@ function BgFooter ({help_id='basics.bgmon', email, enableEmail}) {
         dispatchBgSetEmailInfo({email: m_email, enableEmail: checked});
 
     };
+
     return (
-        <div className='BGMon__footer' key='bgMonFooter'>
-            <button className='button std hl' onClick={onHide}
-                    title='Hide Background Monitor'>Hide</button>
-            <div>
-                <div style={{width: 250}}><input type='checkbox' checked={enableEmail} value='' onChange={toggleEnableEmail}/>Enable email notification</div>
+        <Stack direction='row' alignItems='flex-start' justifyContent='space-between'>
+            <Tooltip title='Hide Background Monitor'>
+                <CompleteButton color='primary' onSuccess={onHide} text={'Hide'} />
+            </Tooltip>
+            <Stack>
+                <Checkbox p={1} size='sm' checked={enableEmail} onChange={toggleEnableEmail} label={'Enable email notification'}/>
                 {enableEmail &&
-                    <InputField
-                        validator={Validate.validateEmail.bind(null, 'an email field')}
-                        tooltip='Enter an email to be notified when a process completes.'
-                        label='Email:'
-                        labelStyle={{display: 'inline-block', marginLeft: 18, width: 32, fontWeight: 'bold'}}
-                        value={email}
-                        placeholder='Enter an email to get notification'
-                        style={{width: 170}}
-                        onChange={onEmailChanged}
-                        actOn={['blur','enter']}
-                    />
+                    <Stack direction='row' alignItems='center' width={200}>
+                        <Typography component='label' level='title-md' sx={{mr: 1}}>
+                            Email:
+                        </Typography>
+                        <InputField
+                            validator={Validate.validateEmail.bind(null, 'an email field')}
+                            tooltip='Enter an email to be notified when a process completes.'
+                            slotProps={{label:{sx:{ml:0}}}}
+                            value={email}
+                            placeholder='Enter an email to get notification'
+                            sx={{width:170}}
+                            onChange={onEmailChanged}
+                            actOn={['blur','enter']}
+                        />
+                    </Stack>
                 }
-            </div>
-            <div>
-                <HelpIcon helpId={help_id} />
-            </div>
-        </div>
-    );
+            </Stack>
+            <HelpIcon helpId={help_id}/>
+        </Stack>
+        );
 }
 
 function SearchJob({jobInfo}) {
     const {email} = jobInfo;
     return (
-        <div className='BGMon__package'>
-            <div className='BGMon__package--box'>
-                <JobHeader jobInfo={jobInfo}/>
-                { email &&
-                    <div className='BGMon__package--status'>
-                        <div>Notification email sent</div>
-                    </div>
-                }
-            </div>
-        </div>
+        <Box {...{m:0.5, p:0.5}}>
+            <JobHeader jobInfo={jobInfo}/>
+            {email && (
+                <Stack {...{direction:'row', justifyContent:'space-between', alignItems:'center', width: '100%', p:0.5}}>
+                    <Typography level='body-sm'>Notification email sent</Typography>
+                </Stack>
+            )}
+        </Box>
     );
 }
 
@@ -136,20 +142,22 @@ function PackageJob({jobInfo}) {
     const items = results?.map( (url, idx) => <PackageItem key={'multi-' + idx} jobId={jobInfo.jobId} index={idx} />);
 
     return (
-        <div className='BGMon__package'>
-            <div className='BGMon__package--box'>
-                <JobHeader jobInfo={jobInfo}/>
-                {items?.length > 1 &&
-                    <div className='BGMon__multiItems'> {items} </div>
-                }
-                { (email || script) &&
-                    <div className='BGMon__package--status'>
-                        { email ? <div>Notification email sent</div> : <div/>}
-                        { script  && <div className='BGMon__packageItem--url' onClick={() => showScriptDownloadDialog({jobId, label, DATA_SOURCE})}>Get Download Script</div> }
-                    </div>
-                }
-            </div>
-        </div>
+        <Stack {...{m: 0.5, p: 0.5, justifyContent:'flex-end'}} >
+            <JobHeader jobInfo={jobInfo}/>
+            {items?.length > 1 &&
+                <Stack {...{ml:2.5}}> {items} </Stack>
+            }
+            {(email || script) &&
+                <Stack {...{direction:'row', justifyContent:'space-between', alignItems:'center', width:'100%', p:0.5}}>
+                    {email ? <Typography level='body-sm'>Notification email sent</Typography> : null}
+                    {script && (
+                        <Link component={'button'} onClick={() => showScriptDownloadDialog({ jobId, label, DATA_SOURCE })}>
+                            Get Download Script
+                        </Link>
+                    )}
+                </Stack>
+            }
+        </Stack>
     );
 }
 
@@ -166,25 +174,32 @@ function JobHeader({jobInfo}) {
     const showInfo = () => {
         showJobInfo(jobId);
     };
-
     return (
-        <div className='BGMon__header'>
-            <div title={label} style={{display: 'inline-flex', overflow: 'hidden', alignItems: 'center'}}>
-                <div className='BGMon__header--title'>{label}</div>
-                <img src={INFO} onClick={showInfo} className='JobInfo__items--link'/>
-            </div>
-            <div style={{display: 'inline-flex', alignItems: 'center', paddingLeft: 5, flexShrink: 0}}>
+        <Stack {...{alignItems:'center', flexDirection:'row', width: '100%' }}>
+            <Stack {...{direction:'row', alignItems:'center', overflow: 'hidden', title:{label}, justifyContent:'flex-start'}}>
+                <Typography level='title-md' alignItems='center' sx={{ml: 0.375, whiteSpace: 'nowrap', overflow: 'hidden',
+                    textOverflow: 'ellipsis'}}>{label}
+                </Typography>
+                <Box display={'flex'} height={20} sx={{'&:hover img': {cursor: 'pointer'}, ml:1}}>
+                    <img src={INFO} onClick={showInfo}/>
+                </Box>
+            </Stack>
+            <Stack direction='row' spacing={2} alignItems='flex-end' sx={{pl: 1, flexShrink: 0, flexGrow: 1}} justifyContent={'flex-end'}>
                 <JobProgress jobInfo={jobInfo}/>
-                <div className='BGMon__header--action'>
-                    {isActive(jobInfo) && <img className='BGMon__action' src={CANCEL} onClick={doCancel} title='Abort this job.'/>}
-                    {isDone(jobInfo) &&
-                    <div className='btn-close'
-                         title='Remove Background Job'
-                         onClick={removeBgStatus}/>
+                <Box>
+                    {isActive(jobInfo) &&
+                        <Box display={'flex'} height={14} width={14} sx={{'&:hover img': {cursor: 'pointer'}, ml:3}}>
+                            <img src={CANCEL} onClick={doCancel} title='Abort this job.'/>
+                        </Box>
                     }
-                </div>
-            </div>
-        </div>
+                    {isDone(jobInfo) &&
+                        <Tooltip placement='left' title='Remove Background Job'>
+                            <ChipDelete {...{ onClick: () => removeBgStatus(), sx:{'--Chip-deleteSize': '1.5rem'} }}/>
+                        </Tooltip>
+                    }
+                </Box>
+            </Stack>
+        </Stack>
     );
 }
 
@@ -193,12 +208,13 @@ function JobProgress({jobInfo}) {
     const {progressDesc, progress, type} = jobInfo.jobInfo || {};
     if (isActive(jobInfo)) {
         return (
-            <div className='BGMon__packageItem'>
-                <ProgressBar value= {progress} text= {progressDesc}/>
-            </div>
+            <Box {...{alignItems:'center', width:150, flex:2}}>
+                <Typography sx={{mr: 1}}>{progressDesc}</Typography>
+                <LinearProgress determinate={true} value={progress} />
+            </Box>
         );
     } else if (isAborted(jobInfo)) {
-        return <div>{jobInfo?.error || 'Job aborted'}</div>;
+        return <Typography>{jobInfo?.error || 'Job aborted'}</Typography>;
     } else if (isSuccess(jobInfo)) {
         if (type === 'PACKAGE') {
             return jobInfo?.results?.length === 1 ? <PackageItem {...{SINGLE:true, jobId, index:0}} /> : <div/> ;
@@ -207,13 +223,14 @@ function JobProgress({jobInfo}) {
                 const request = getRequestFromJob(jobInfo.jobId);
                 request && dispatchTableSearch(request);
             };
-            return (<div className='BGMon__packageItem--url' onClick={showTable}>Show results</div> );
+            return (<Link onClick={() => showTable()}>
+                Show results
+                </Link>);
         }
     } else {
-        return <div className='BGMon__header--error'>Job Failed</div>;
+        return <Typography  color={'danger'}>Job Failed</Typography>;
     }
 }
-
 
 function PackageItem({SINGLE, jobId, index}) {
     const jobInfo = useStoreConnector(() => getJobInfo(jobId));
@@ -237,22 +254,26 @@ function PackageItem({SINGLE, jobId, index}) {
     };
     const dlmsg = SINGLE ? 'Download Now' : `Download Part #${index+1}`;
 
+
     const action = dlreq?.WS_DEST_PATH
-                   ? <div className='BGMon__packageItem--info'> Downloaded to Workspace </div>
-                   : <div className='BGMon__packageItem--url' onClick={doDownload}>{dlmsg}</div>;
+        ? (<Link>
+            Downloaded to Workspace
+        </Link>)
+        : (<Link onClick={() => doDownload()}>
+            {dlmsg}
+        </Link>);
     const showState = !SINGLE || (SINGLE && dlState);
+
     return (
-        <div className='BGMon__packageItem'>
+        <Stack {...{direction:'row', width:200, height:20, spacing:1, justifyContent:'flex-end', display: 'inline-flex', my:1/4, mx:1/2}}>
             {action}
-            {showState &&
-                <div style={{display: 'inline-flex', alignItems: 'center'}}>
-                    <div style={{width: 15}}>
-                        {dlState === 'DONE' && <img src={DOWNLOAED}/>}
-                        {dlState === 'WORKING' && <img src={LOADING}/>}
-                        {dlState === 'FAIL' && <img src={FAILED} title='Download may have failed or timed out'/>}
-                    </div>
-                </div>
-            }
-        </div>
+            {showState && (
+                <Stack direction='row' width={15} height={15} justifyContent={'flex-end'}>
+                    {dlState === 'DONE' && <img src={DOWNLOAED} alt='Done'/>}
+                    {dlState === 'WORKING' && <img src={LOADING} alt='Loading'/>}
+                    {dlState === 'FAIL' && <img src={FAILED} alt='Failed' title='Download may have failed or timed out'/>}
+                </Stack>
+            )}
+        </Stack>
     );
 }

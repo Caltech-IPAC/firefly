@@ -12,15 +12,8 @@ import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/Actions
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {ExpandButton, InfoButton, SaveButton} from '../../visualize/ui/Buttons.jsx';
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableUiUpdate} from '../TablesCntlr.js';
-import {
-    uniqueTblId,
-    getTableUiById,
-    makeBgKey,
-    getResultSetRequest,
-    isClientTable,
-    getTableState,
-    TBL_STATE, getMetaEntry, getTblById
-} from '../TableUtil.js';
+import {uniqueTblId, getTableUiById, makeBgKey, getResultSetRequest, isClientTable, getTableState,
+    TBL_STATE, getMetaEntry, getTblById} from '../TableUtil.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableInfo, MetaInfo} from './TableInfo.jsx';
@@ -37,13 +30,11 @@ import {Logger} from '../../util/Logger.js';
 import {AddColumnBtn} from './AddOrUpdateColumn.jsx';
 
 import FILTER from 'html/images/icons-2014/24x24_Filter.png';
-import OUTLINE_EXPAND from 'html/images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 import CLEAR_FILTER from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
 import TEXT_VIEW from 'html/images/icons-2014/24x24_TextView.png';
 import TABLE_VIEW from 'html/images/icons-2014/24x24_TableView.png';
 // import SAVE from 'html/images/icons-2014/24x24_Save.png';
 import PROP_SHEET from 'html/images/icons-2014/36x36-data-info.png';
-import INFO from 'html/images/icons-2014/24x24_Info.png';
 import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
 
 import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
@@ -361,7 +352,10 @@ function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
     if (doclinkUrl) {
         const doclinkLabel = getMetaEntry(tbl_id, META.doclink.label, 'Data Help');
         const doclinkDesc = getMetaEntry(tbl_id, META.doclink.desc) || doclinkLabel;
-        const doclink = <a href={doclinkUrl} key={doclinkUrl} target='doclink' title={doclinkDesc}><button className='button std hl'>{doclinkLabel}</button></a>;
+
+        const doclink = (<a href={doclinkUrl} target='doclink' title={doclinkDesc} key={doclinkUrl} style={{ textDecoration: 'none'}}>
+            <ToolbarButton variant='soft' color='primary' text={doclinkLabel}/>
+        </a>);
         if (leftButtons) {
             leftButtons.push(doclink);
         } else {
@@ -370,10 +364,10 @@ function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
     }
 
     return (
-        <div style={style}>
+        <Stack direction='row' style={style}>
             { showTitle && <Title {...{title, removable, tbl_id}}/>}
-            {leftButtons && <div style={lbStyle}>{leftButtons}</div>}
-        </div>
+            {leftButtons && <Stack direction='row' spacing={1} style={lbStyle}>{leftButtons}</Stack>}
+        </Stack>
     );
 }
 
