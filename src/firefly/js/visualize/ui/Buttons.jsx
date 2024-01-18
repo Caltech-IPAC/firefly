@@ -59,7 +59,7 @@ export const ColorDropDownButton= (props) => (
         dropPosition:{left:1,bottom:-2},
         iconButtonSize:'40px', ...props,  }}/>);
 
-export const ColorButton= (props) => (<ToolbarButton {...{ icon: <ColorLens/>, iconButtonSize:'40px', ...props,  }}/>);
+export const ColorButtonIcon= (props) => (<ToolbarButton {...{ icon: <ColorLens/>, iconButtonSize:'40px', ...props,  }}/>);
 
 export const RotateButton= (props) => (
     <ToolbarButton {...{ icon: <RotateRight/>, iconButtonSize:'44px', ...props,  }}/>);
