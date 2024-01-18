@@ -13,7 +13,7 @@ import '@fontsource/inter/600.css'; // Semi-Bold
 import '@fontsource/inter/700.css'; // Bold
 import '@fontsource/inter/800.css'; // Bolder
 
-export function FireflyRoot({children}) {
+export function FireflyRoot({sx, children}) {
 
     const customTheme = getAppOptions().theme?.customized?.();
     const theme = extendTheme(customTheme || defaultTheme());
@@ -23,7 +23,7 @@ export function FireflyRoot({children}) {
             <GlobalStyles styles={{
                 html: {fontSize:'87.5%'}
             }}/>
-            <ScopedCssBaseline>
+            <ScopedCssBaseline sx={sx}>
                 <App>{children}</App>
             </ScopedCssBaseline>
         </CssVarsProvider>

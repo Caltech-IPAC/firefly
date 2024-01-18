@@ -47,7 +47,9 @@ import {
     isImageCube,
     isThreeColor, primePlot, pvEqualExScroll
 } from '../PlotViewUtil.js';
-import {ColorDropDownButton, DrawLayersButton, ExpandButton, InfoButton, RotateButton, SaveButton} from './Buttons.jsx';
+import {
+    ColorButtonIcon, ColorDropDownButton, DrawLayersButton, ExpandButton, InfoButton, RotateButton, SaveButton
+} from './Buttons.jsx';
 import {ImageCenterDropDown, TARGET_LIST_PREF} from './ImageCenterDropDown.jsx';
 import {
     clearModalEndInfo, closeToolbarModalLayers, createModalEndUI,
@@ -359,7 +361,7 @@ const ColorButton= ({colorDrops,enabled,pv}) => (
             <ColorDropDownButton tip={colorTip} enabled={enabled} visible={!primePlot(pv)?.blank}
                                    dropDown={<ColorTableDropDownView plotView={pv}/>}/>
             :
-            <ColorButton  tip={colorTip} enabled={enabled} visible={!primePlot(pv)?.blank}
+            <ColorButtonIcon  tip={colorTip} enabled={enabled} visible={!primePlot(pv)?.blank}
                            onClick={() =>showColorDialog()}/>
 );
 
