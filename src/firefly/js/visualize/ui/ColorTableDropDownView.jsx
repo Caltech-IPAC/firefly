@@ -5,11 +5,13 @@
 import React, {useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {throttle, isArray, isNumber} from 'lodash';
-import { ToolbarButton } from '../../ui/ToolbarButton.jsx';
+import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
-import {dispatchColorChange} from '../ImagePlotCntlr.js';
+import {dispatchColorChange, dispatchOverlayColorLocking} from '../ImagePlotCntlr.js';
 import {
-    primePlot, getPlotViewIdListInOverlayGroup, isThreeColor, getActivePlotView, isAllStretchDataLoaded, } from '../PlotViewUtil.js';
+    primePlot, getPlotViewIdListInOverlayGroup, isThreeColor, getActivePlotView, isAllStretchDataLoaded, findPlotGroup,
+    hasOverlayColorLock,
+} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {isImage} from '../WebPlot.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
@@ -21,6 +23,11 @@ import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchHideDialog, dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from 'firefly/ui/DropDownToolbarButton.jsx';
 import {Typography, Box, Stack, Divider, IconButton} from '@mui/joy';
+// import LockOpenTwoToneIcon from '@mui/icons-material/LockOpenTwoTone';
+// import LockTwoToneIcon from '@mui/icons-material/LockTwoTone';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
+import ArrowOutwardOutlinedIcon from '@mui/icons-material/ArrowOutwardOutlined';
 
 import ColorTable0 from 'html/images/cbar/ct-0-gray.png';
 import ColorTable1 from 'html/images/cbar/ct-1-reversegray.png';
@@ -45,6 +52,7 @@ import ColorTable19 from 'html/images/cbar/ct-19-standard-ds9.png';
 import ColorTable20 from 'html/images/cbar/ct-20-staircase-ds9.png';
 import ColorTable21 from 'html/images/cbar/ct-21-color-ds9.png';
 import Arrow from 'html/images/popout-arrow_12x12.png';
+import {SimpleLayerOnOffButton} from './SimpleLayerOnOffButton.jsx';
 
 //=================================
 
@@ -151,6 +159,8 @@ const AdvancedColorPanel= ({allowPopout}) => {
     const plot = useStoreConnector( () => {
         return primePlot(visRoot());
     });
+    const pv= getActivePlotView(visRoot());
+    const plotGroupAry= visRoot().plotGroupAry;
     const allLoaded = useStoreConnector(() => isAllStretchDataLoaded(visRoot()));
     const [bias,setBias]= useState( () => getBias(plot));
     const [contrast,setContrast]= useState( () => getContrast(plot));
@@ -302,15 +312,27 @@ const AdvancedColorPanel= ({allowPopout}) => {
     );
 
 
+    const sx=  allowPopout ? {} : {boxShadow: 'none'};
     return (
-        <SingleColumnMenu>
+        <SingleColumnMenu {...{sx}}>
+
             {allowPopout &&
                 <Stack sx={{flex:'0 0 auto', alignItems:'flex-end'}}>
                     <IconButton onClick={convertToPopoutColorPanel} sx={{minWidth:'unset', minHeight:'unset', p:'1px'}}>
-                        <img src={Arrow}/>
+                        <ArrowOutwardOutlinedIcon />
                     </IconButton>
                 </Stack>
             }
+            <ToolbarButton plotView={pv}
+                           sx={allowPopout? {mt:-2.5, width:.85} : {}}
+                           hasCheckBox={true}
+                           checkBoxOn={isOverlayColorLocked(pv,plotGroupAry)}
+                           CheckboxOnIcon={<LockIcon/>}
+                           CheckboxOffIcon={<LockOpenOutlinedIcon/>}
+                           text='Lock color & overlays'
+                           tip='Lock all images for color changes and overlays.'
+                           onClick={() => toggleOverlayColorLock(pv,plotGroupAry)} />
+            <ToolbarHorizontalSeparator/>
             {!threeColor && makeItems()}
             {!threeColor && <Divider sx={{p: 0.1, mt: 0.2}}/>}
             {!threeColor && makeAdvancedStandardFeatures()}
@@ -318,6 +340,17 @@ const AdvancedColorPanel= ({allowPopout}) => {
         </SingleColumnMenu>
     );
 };
+
+function isOverlayColorLocked(pv,plotGroupAry){
+    if (!pv) return false;
+    const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
+    return hasOverlayColorLock(pv,plotGroup);
+}
+
+function toggleOverlayColorLock(pv,plotGroupAry){
+    const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
+    dispatchOverlayColorLocking(pv.plotId,!hasOverlayColorLock(pv,plotGroup));
+}
 
 export const ColorTableDropDownView= () => {
     dispatchHideDialog(POPOUT_ID);

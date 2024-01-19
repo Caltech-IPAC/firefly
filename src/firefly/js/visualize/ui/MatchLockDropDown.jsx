@@ -140,30 +140,30 @@ export function MatchLockDropDown({visRoot:vr, enabled, visible, inDropDown=fals
         </SingleColumnMenu>
     );
 
-    // return (
-    //     <LockImages locked={Boolean(wcsMatchType)}
-    //                            tip='Image alignment drop down. Determine how to align images'
-    //                            enabled={enabled} horizontal={true}
-    //                            visible={visible}
-    //                            disableHiding={inDropDown}
-    //                            dropDownKey={inDropDown? 'matchLock' : undefined}
-    //                            useDropDownIndicator={true}
-    //                            imageStyle={imageStyle}
-    //                            dropDown={dropDown}/>
-    //
-    // );
-
     return (
-        <DropDownToolbarButton icon={wcsMatchType?MATCH_LOCKED:MATCH_UNLOCKED }
+        <LockImages locked={Boolean(wcsMatchType)}
                                tip='Image alignment drop down. Determine how to align images'
                                enabled={enabled} horizontal={true}
                                visible={visible}
                                disableHiding={inDropDown}
                                dropDownKey={inDropDown? 'matchLock' : undefined}
-                               // useDropDownIndicator={true}
+                               useDropDownIndicator={true}
                                imageStyle={imageStyle}
                                dropDown={dropDown}/>
 
     );
+
+    // return (
+    //     <DropDownToolbarButton icon={wcsMatchType?MATCH_LOCKED:MATCH_UNLOCKED }
+    //                            tip='Image alignment drop down. Determine how to align images'
+    //                            enabled={enabled} horizontal={true}
+    //                            visible={visible}
+    //                            disableHiding={inDropDown}
+    //                            dropDownKey={inDropDown? 'matchLock' : undefined}
+    //                            // useDropDownIndicator={true}
+    //                            imageStyle={imageStyle}
+    //                            dropDown={dropDown}/>
+    //
+    // );
 
 }

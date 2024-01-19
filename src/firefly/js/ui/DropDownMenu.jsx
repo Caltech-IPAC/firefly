@@ -22,9 +22,9 @@ function placeDropDown(e,x,y, beforeVisible) {
 }
 
 
-export function SingleColumnMenu({children, sx, kind='drop'}) {
+export function SingleColumnMenu({children, sx, color, variant, kind='drop'}) {
     return (
-        <DropDownMenu sx={sx} kind={kind}>
+        <DropDownMenu {...{sx, kind, color, variant}}>
             <Stack direction='column' sx={{'& .ff-toolbar-button':{width:1, justifyContent:'flex-start'}}}>
                 {children}
             </Stack>
@@ -33,10 +33,10 @@ export function SingleColumnMenu({children, sx, kind='drop'}) {
 }
 
 
-export function DropDownMenu({children, sx, kind='drop'}) {
+export function DropDownMenu({children, sx, color='neutral', variant='outline', kind='drop'}) {
     return (
         <Card {...{
-            color:'neutral', variant:'outline',
+            color, variant:'outline',
             sx:(theme) => {
                 const bRadius= kind==='drop' ? {borderTopLeftRadius: '2px', borderTopRightRadius: '2px'} : {};
                 return {

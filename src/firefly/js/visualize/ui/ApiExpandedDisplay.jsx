@@ -2,24 +2,20 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Stack} from '@mui/joy';
 import React, {memo} from 'react';
-import PropTypes from 'prop-types';
+import {func,string} from 'prop-types';
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
 
-export const ApiExpandedDisplay= memo( ({closeFunc=undefined, viewerId}) => {
-
-    return (
-        <div style={{width:'100%', height:'100%', display:'flex', flexWrap:'nowrap',
-            alignItems:'stretch', flexDirection:'column'}}>
-            <div style={{flex: '1 1 auto', display:'flex'}}>
+export const ApiExpandedDisplay= memo( ({closeFunc, viewerId}) => (
+        <Stack {...{width:1, height:1, flexWrap:'nowrap', alignItems:'stretch'}}>
+            <Stack {...{flex: '1 1 auto', direction:'row'}}>
                 <ImageExpandedMode   {...{key:'results-plots-expanded', closeFunc, viewerId}}/>
-            </div>
-        </div>
-    );
-});
+            </Stack>
+        </Stack>
+    ));
 
 ApiExpandedDisplay.propTypes= {
-    forceExpandedMode : PropTypes.bool,
-    closeFunc: PropTypes.func,
-    viewerId: PropTypes.string,
+    closeFunc: func,
+    viewerId: string,
 };

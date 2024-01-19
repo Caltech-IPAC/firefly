@@ -239,7 +239,7 @@ function handleNewTable(layoutInfo, action) {
         showMeta = true;
         dataProductTableId = tbl_id;
     }
-    return smartMerge(layoutInfo, {showTables: true, showImages, images: {showFits, showMeta, showCoverage, selectedTab, dataProductTableId}});
+    return smartMerge(layoutInfo, {showImages, images: {showFits, showMeta, showCoverage, selectedTab, dataProductTableId}});
 }
 
 function onActiveTable (layoutInfo, action) {

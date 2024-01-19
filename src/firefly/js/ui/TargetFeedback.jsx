@@ -25,9 +25,10 @@ const defaultExamples= (targetPanelExampleRow1, targetPanelExampleRow2) => {
 };
 
 export function TargetFeedback ({showHelp, feedback, style={}, targetPanelExampleRow1, targetPanelExampleRow2, examples}) {
+    const minHeight= '3rem';
     if (!showHelp) {
         return (
-            <FormHelperText sx={{textAlign:'center'}}>
+            <FormHelperText sx={{textAlign:'center', minHeight}}>
                 <Typography component='div'>
                     <span dangerouslySetInnerHTML={{ __html : feedback }}/>
                 </Typography>
@@ -35,7 +36,7 @@ export function TargetFeedback ({showHelp, feedback, style={}, targetPanelExampl
         );
     }
     return (
-            <FormHelperText sx={{textAlign:'center'}}>
+            <FormHelperText sx={{textAlign:'center', minHeight}}>
                 <Typography level='body-sm'>
                     <i>Examples: </i>
                 </Typography>
