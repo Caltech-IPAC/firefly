@@ -11,7 +11,7 @@ import {
     TabList, ListItemDecorator, Box, Chip, Stack, Sheet} from '@mui/joy';
 import {tabClasses} from '@mui/joy/Tab';
 import sizeMe from 'react-sizeme';
-import {omit, isString, uniqueId} from 'lodash';
+import {omit, isString, uniqueId, pick} from 'lodash';
 
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import {useFieldGroupConnector} from '../FieldGroupConnector.jsx';
@@ -73,8 +73,8 @@ export function TabPanel ({value, onTabSelect, tabId=uniqueTabId(), showOpenTabs
     // because we support additional actions to the right of the TabList, we need to implement some of TabList feature here.
     const tlVar = slotProps?.tabList?.variant || 'soft';
     const sticky = slotProps?.tabList?.sticky;
-    const tlSticky = sticky === 'top' ? {position: 'sticky', top:0} :
-                     sticky === 'bottom' ? {position: 'sticky', bottom:0} : {};
+    const tlSticky = sticky === 'top' ? {position: 'sticky', top:0, zIndex:1} :
+                     sticky === 'bottom' ? {position: 'sticky', bottom:0, zIndex:1} : {};
     return (
         <JoyTabs key={tabId}
                  size='sm'
@@ -173,7 +173,8 @@ export const StatefulTabs = React.memo( ({defaultSelected, onTabSelect, componen
         }
     });
 
-    return (<TabPanel {...rest} onTabSelect={onSelect} value={convertToTabValue(rest.children, selectedIdx)} />);
+    const selectedTab = convertToTabValue(rest.children, selectedIdx);
+    return (<TabPanel {...rest} onTabSelect={onSelect} value={selectedTab} />);
 
 });
 
@@ -186,7 +187,7 @@ StatefulTabs.propTypes = {
  * TabPanel with FieldGroup supported state
  * The selected index is saved as the value of the field named by fieldKey
  */
-export const FieldGroupTabs = memo( (props) => {
+export const FieldGroupTabs = memo( ({children, ...props}) => {
     const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
     viewProps.value = convertToTabValue(props.children, viewProps.value);
 
@@ -201,11 +202,15 @@ export const FieldGroupTabs = memo( (props) => {
     }, [viewProps, fireValueChange]);
 
     const newProps= {
-        ...viewProps,
+        ...pick(viewProps, Object.keys(TabPanel.propTypes)),  // useFieldGroupConnector is not removing all of its props, causing bad props going into the Tabs
+        children,
         defaultSelected : viewProps.value,
         onTabSelect: onChange
     };
-    return (<Tabs {...newProps} />);
+
+
+
+    return (<Tabs {...newProps}/>);
 });
 
 FieldGroupTabs.propTypes = {
@@ -343,10 +348,10 @@ function getHeaderFromTab({name, value, label, startDecorator, removable, onTabR
 
 function getContentFromTab({value, id, children}, idx, slotProps) {
     value ??= id ?? idx;
-    const props = slotProps?.panel;
+    const {sx, ...props} = slotProps?.panel || {};
 
     return (
-        <JoyTabPanel key={idx} value={value} sx={{p:1, ...props?.sx}} {...props} >
+        <JoyTabPanel key={idx} value={value} sx={{p:1, overflow:'hidden', ...sx}} {...props}>
             <Stack height={1} width={1}>
                 {children}
             </Stack>

@@ -3,18 +3,21 @@
  */
 
 import React from 'react';
+import {LinearProgress, Sheet, Stack, Typography} from '@mui/joy';
 
 export function AppInitLoadingMessage({message= 'Loading...'}) {
     return (
-        <div style={{position: 'relative', width:'100%', height:'100%'}}>
-            <div style={{flex: '1 1 auto', display:'flex', flexDirection: 'column', justifyContent:'center', alignItems:'center',
-                position:'absolute', left:0, top:300, width:'100%'}}>
-                <div style={{fontSize: '40pt'}}>
-                    {message}
-                </div>
-                <div style={{width:100, height:100, borderColor: 'transparent #89A6B8 #89A6B8', marginTop: 100}} className='loading-animation' />
-            </div>
-        </div>
+        <Stack position='relative' width={1} height={1}>
+            <Stack m='auto' spacing={1} width={300} height={200}>
+                <Sheet variant='soft'
+                       sx={{flexGrow:1, display:'flex', justifyContent:'center', alignItems:'center'}}>
+                    <Typography color='warning' level='h4'>
+                        {message}
+                    </Typography>
+                </Sheet>
+                <LinearProgress sx={{flexGrow:0}}/>
+            </Stack>
+        </Stack>
     );
 }
 

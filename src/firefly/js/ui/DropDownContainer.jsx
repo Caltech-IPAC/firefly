@@ -4,7 +4,7 @@
 
 import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
-import {isEmpty} from 'lodash';
+import {Alert, Stack} from '@mui/joy';
 
 import {getDropDownInfo} from '../core/LayoutCntlr.js';
 import {SearchPanel} from '../ui/SearchPanel.jsx';
@@ -17,11 +17,9 @@ import {WorkspaceDropdown} from '../ui/WorkspaceDropdown.jsx';
 import {getAlerts} from '../core/AppDataCntlr.js';
 import {MultiSearchPanel} from 'firefly/ui/MultiSearchPanel.jsx';
 import {TapSearchPanel} from 'firefly/ui/tap/TapSearchRootPanel.jsx';
-import {VersionInfo} from 'firefly/ui/VersionInfo.jsx';
 import {DLGeneratedDropDown} from './dynamic/DLGeneratedDropDown.js';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 
-import './DropDownContainer.css';
 
 export const flexGrowWithMax = {width: '100%', maxWidth: 1400};
 
@@ -59,7 +57,7 @@ export const dropDownMap = {
  * Items in this container must have a 'name' property.  It will be used to
  * compare to the selected card.
  */
-export function DropDownContainer ({style={}, visible:defVisible, selected:defSelected, dropdownPanels, footer, alerts, watchInitArgs= true, children}) {
+export function DropDownContainer ({style={}, visible:defVisible, selected:defSelected, dropdownPanels, watchInitArgs= true, children}) {
 
     const visible   = useStoreConnector(() => getDropDownInfo()?.visible ?? defVisible);
     const selected  = useStoreConnector(() => getDropDownInfo()?.view ?? defSelected);       // the selected view name
@@ -81,32 +79,17 @@ export function DropDownContainer ({style={}, visible:defVisible, selected:defSe
             } );
         }
         setInit(true);
-    }, []);
+    }, [dropdownPanels]);
 
     if (!view && React.Children.count(children) === 1) view = React.Children.toArray(children)[0];
     if (!visible) return <div/>;
 
     if (layout) Object.assign(style, layout);
-    const contentWrapStyle = isEmpty(style) ? {} : {display: 'flex', width: '100%', justifyContent: 'center'};
-    const contentStyle = {flexGrow: 1, ...style};
 
     return (
-        <div>
-            <div className='DD-ToolBar'>
-                {alerts || <Alerts />}
-                <div style={{flexGrow: 1, ...contentWrapStyle}}>
-                    <div style={contentStyle} className='DD-ToolBar__content'>
-                        {view && React.cloneElement(view, { initArgs } ) }
-                    </div>
-                </div>
-                <div id='footer' className='DD-ToolBar__footer'>
-                    {footer}
-                    <div className='DD-ToolBar__version'>
-                        <VersionInfo/>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <Stack flexGrow={1}>
+            {view && React.cloneElement(view, { initArgs } ) }
+        </Stack>
     );
 }
 
@@ -114,7 +97,6 @@ DropDownContainer.propTypes = {
     visible: PropTypes.bool,
     selected: PropTypes.string,
     dropdownPanels: PropTypes.arrayOf(PropTypes.element),
-    footer: PropTypes.node,
     alerts: PropTypes.node,
     watchInitArgs: PropTypes.bool
 };
@@ -122,20 +104,22 @@ DropDownContainer.defaultProps = {
     visible: false
 };
 
-export function Alerts({style}) {
+export function Alerts() {
 
     const {msg} = useStoreConnector(getAlerts);
-
     if (msg) {
         /* eslint-disable react/no-danger */
         return (
-            <div className='alerts__msg' style={style}>
+            <Alert variant='outlined' color='warning'
+                   sx={{
+                       p:1/2,
+                       justifyContent:'center',
+                       borderRadius:0,
+                       backgroundColor:'#FFF7C2'            // retro look
+                   }}
+            >
                 <div dangerouslySetInnerHTML={{__html: msg}} />
-            </div>
+            </Alert>
         );
     } else return null;
 }
-
-Alerts.propTypes = {
-    style: PropTypes.object
-};
