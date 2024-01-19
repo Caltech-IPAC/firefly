@@ -103,7 +103,7 @@ function getContexInfo(renderTreeId, presetViewerId) {
 /* search panel used in drop-down                                                          */
 /*-----------------------------------------------------------------------------------------*/
 
-function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiSelect, submitText,
+function ImageSearchPanel({sx, resizable=true, onSubmit, gridSupport = false, multiSelect, submitText,
                               onCancel=dispatchHideDropDown, noScroll, initArgs}) {
     const archiveName =  get(getAppOptions(), 'ImageSearch.archiveName');
     const resize = {resize: 'both', overflow: 'hidden', paddingBottom: 5};
@@ -113,7 +113,7 @@ function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiS
     const imageType = useStoreConnector(() => getFieldVal(FG_KEYS.main, FD_KEYS.type));
 
     return (
-        <div style={style}>
+        <Stack sx={{...style, ...sx}}>
             <FormPanel  inputStyle = {{display: 'flex', flexDirection: 'column', backgroundColor: 'transparent', padding: 'none', border: 'none'}}
                         submitBarStyle = {{flexShrink: 0, padding: '0 4px 3px'}}
                         groupKey = {Object.values(FG_KEYS)} includeUnmounted={true}
@@ -127,7 +127,7 @@ function ImageSearchPanel({resizable=true, onSubmit, gridSupport = false, multiS
                 <ImageSearchPanelV2 {...{multiSelect, archiveName, noScroll, initArgs}}/>
                 {gridSupport && <GridSupport/>}
             </FormPanel>
-        </div>
+        </Stack>
     );
 }
 
@@ -138,7 +138,11 @@ export function ImageSearchDropDown({gridSupport, resizable=false, initArgs}) {
     const {viewerId:presetViewerId}= initArgs?.searchParams ?? {viewerId:undefined};
     const {plotId, viewerId, multiSelect} = getContexInfo(renderTreeId, presetViewerId);
     const onSubmit = (request) => onSearchSubmit({request, plotId, viewerId, gridSupport, renderTreeId});
-    return <ImageSearchPanel {...{resizable, gridSupport, onSubmit, multiSelect, onCancel:dispatchHideDropDown, initArgs}}/>;
+    return (
+        <Stack flexGrow={1}>
+            <ImageSearchPanel {...{sx:{flexGrow:1}, resizable, gridSupport, onSubmit, multiSelect, onCancel:dispatchHideDropDown, initArgs}}/>
+        </Stack>
+    );
 }
 
 function GridSupport() {
@@ -365,7 +369,7 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
     isThreeColorImgType && (options.push({label: 'None', value: 'none'}));
 
     return (
-        <Stack flexGrow={1}>
+        <Stack flexGrow={1} >
             <Sheet {...{variant:'outlined', sx:{position:'static', mx:0,py:1,mt:1/2}}}>
                 <Stack {...{direction:'row', justifyContent:'flex-start', alignItems:'center', spacing:2}}>
                     <Typography {...{px:1, width:200, color:'primary', level:'title-md'}}>2. Select Image Source</Typography>
@@ -430,9 +434,9 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
             </Sheet>
             {isHips ?
                 <HiPSImageSelect groupKey={groupKey} /> :
-                <Sheet {...{variant:'outlined', sx:{position:'static', mt:1/2,py:1}}}>
-                    <Stack>
-                        <Typography {...{px:1, color:'primary', level:'title-md'}}>4. Select Data Set</Typography>
+                <Sheet {...{variant:'outlined', sx:{position:'static', mt:1/2,py:1 }}}>
+                    <Stack px={1}>
+                        <Typography {...{color:'primary', level:'title-md'}}>4. Select Data Set</Typography>
                         <ImageSelect key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect, scrollDivId: !noScroll && scrollDivId}} />
                     </Stack>
                 </Sheet>

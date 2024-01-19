@@ -632,18 +632,18 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
         <Sheet sx={{width:1,height:1}}>
             <Stack {...{width:1, height:1, justifyContent:'center', p:1/4}}>
                 <Stack {...{direction:'row', minWidth:800, minHeight:400, width:1, height:1, spacing:1/2}}>
-                    <SideBarAnimation {...{sideBar,sideBarShowing,width:uiConfig.sideBarWidth}}/>
-                    <FieldGroup groupKey={GROUP_KEY} keepState={true} style={{width:'100%'}}>
-                        {(isRegLoaded && qAna) ? searchObjFds.length===1 ?
-                                <ServDescPanel{...{initArgs, setSideBarShowing, sideBarShowing, fds:searchObjFds[0].fds,
-                                    setClickFunc, submitSearch, isAllSky, qAna,
+                <SideBarAnimation {...{sideBar,sideBarShowing,width:uiConfig.sideBarWidth}}/>
+                <FieldGroup groupKey={GROUP_KEY} keepState={true} style={{width:'100%'}}>
+                    {(isRegLoaded && qAna) ? searchObjFds.length===1 ?
+                            <ServDescPanel{...{initArgs, setSideBarShowing, sideBarShowing, fds:searchObjFds[0].fds,
+                                setClickFunc, submitSearch, isAllSky, qAna,
                                     sx:{width:1,height:1}, desc:searchObjFds[0].desc, docRows}} /> :
-                                <TabView{...{initArgs, tabsKey, setSideBarShowing, sideBarShowing, searchObjFds, qAna,
-                                    docRows, isAllSky, setClickFunc, submitSearch}}/>
-                            :
-                            notLoaded
-                        }
-                    </FieldGroup>
+                            <TabView{...{initArgs, tabsKey, setSideBarShowing, sideBarShowing, searchObjFds, qAna,
+                                docRows, isAllSky, setClickFunc, submitSearch}}/>
+                        :
+                        notLoaded
+                    }
+                </FieldGroup>
                 </Stack>
             </Stack>
         </Sheet>
