@@ -39,7 +39,7 @@ export const FileUploadDropdown= ({sx, onCancel=dispatchHideDropDown, onSubmit=r
     const [doMask, changeMasking]= useState(() => false);
     const helpId = getAppOptions()?.uploadPanelHelpId ?? 'basics.searching';
     return (
-        <Box sx={{width: 1, ...sx}}>
+        <Box sx={{width: 1, height:1, ...sx}}>
             <FieldGroup groupKey={groupKey} keepState={keepState} sx={{height:1, width:1,
                 display: 'flex', alignItems: 'stretch', flexDirection: 'column'}}>
                 <FormPanel

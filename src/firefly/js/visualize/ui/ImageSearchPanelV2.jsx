@@ -437,7 +437,8 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
                 <Sheet {...{variant:'outlined', sx:{position:'static', mt:1/2,py:1 }}}>
                     <Stack px={1}>
                         <Typography {...{color:'primary', level:'title-md'}}>4. Select Data Set</Typography>
-                        <ImageSelect key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect, scrollDivId: !noScroll && scrollDivId}} />
+                        <ImageSelect key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect,
+                            scrollDivId: noScroll ? undefined: scrollDivId }}/>
                     </Stack>
                 </Sheet>
             }

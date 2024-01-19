@@ -204,7 +204,8 @@ function ZoomGroup({visRoot, pv, show}) {
 
     const {showImageToolbar=true}= pv?.plotViewCtx.menuItemKeys ?? {};
     const manageExpand= !showImageToolbar && visRoot.expandedMode===ExpandType.COLLAPSE;
-    if (!primePlot(pv)) return <div/>;
+    const p= primePlot(pv);
+    if (!p) return <div/>;
 
     const sxFunc= (theme) => ({
         visibility: show ? 'visible' : 'hidden',
@@ -229,6 +230,7 @@ function ZoomGroup({visRoot, pv, show}) {
             <Stack direction='row' alignItems='flex-start'>
                 <ZoomButton size={20} plotView={pv} zoomType={ZoomType.FIT} />
                 <ZoomButton size={20} plotView={pv} zoomType={ZoomType.FILL} />
+                {isImage(p) && <ZoomButton size={20} plotView={pv} zoomType={ZoomType.ONE} />}
             </Stack>
         </Stack>
     );

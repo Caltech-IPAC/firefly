@@ -1,4 +1,4 @@
-import {FormLabel, Stack} from '@mui/joy';
+import {Box, Chip, FormLabel, Stack, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 import {ColsShape, ColumnFld, getColValidator} from '../../charts/ui/ColumnOrExpression.jsx';
@@ -295,92 +295,74 @@ function UploadTableSelector({uploadInfo, setUploadInfo}) {
                     <ExtraButton text={fileName ? 'Change Upload Table...' : 'Add Upload Table...'}
                                  onClick={() => showUploadTableChooser(preSetUploadInfo)} style={{marginLeft: 42}} />
                     {haveTable &&
-                        <div style={{width:200, overflow:'hidden', whiteSpace:'nowrap', fontSize:'larger',
-                            textOverflow:'ellipsis', lineHeight:'2em', paddingLeft:15}}>
+                        <Typography level='title-lg' sx={{width:200, overflow:'hidden', whiteSpace:'nowrap',
+                            textOverflow:'ellipsis', pl:1.5}}>
                             {`${fileName}`}
-                        </div>
+                        </Typography>
                     }
                 </div>
             </div>
             {haveTable &&
-                <div style={{display:'flex', flexDirection:'row', marginLeft: 195, justifyContent:'flex-start'}}>
-                    <div style={{whiteSpace:'nowrap'}}>
-                        <span>Rows: </span>
-                        <span>{totalRows},</span>
-                    </div>
-                    <div style={{paddingLeft: 8, whiteSpace:'nowrap'}}>
-                        <a className='ff-href'onClick={() => showColSelectPopup(columns, onColsSelected, 'Choose Columns', 'OK',
-                            null,true)}>
-                            <span>Columns: </span>
-                            <span>{columns.length} (using {columnsUsed})</span>
-                        </a>
-                        {fileSize &&<span>,</span>}
-                    </div>
-                    {fileSize && <div style={{paddingLeft: 8, whiteSpace:'nowrap'}}>
-                        <span>Size: </span>
-                        <span>{getSizeAsString(fileSize)}</span>
-                    </div>}
-                </div>
+                <Stack {...{direction:'row', ml: 22, justifyContent:'flex-start'}}>
+                    <Typography wx={{whiteSpace:'nowrap'}}>
+                        {`Rows: ${totalRows}`}
+                    </Typography>
+                    {fileSize && <Typography style={{paddingLeft: 8, whiteSpace:'nowrap'}}>
+                        {`Size: ${getSizeAsString(fileSize)}`}
+                    </Typography>}
+                    <Chip onClick={() => showColSelectPopup(columns, onColsSelected, 'Choose Columns', 'OK',
+                        null,true)}>
+                        {`${columns.length} columns (using ${columnsUsed})`}
+                    </Chip>
+                </Stack>
             }
             {haveTable &&
                 <CenterColumns {...{lonCol: getLon(), latCol: getLat(), cols:columns,
+                    sx:{ml:22},
                     headerTitle:'Position Columns:', openKey,
                     headerPostTitle:'(from the uploaded table)',
-                    headerStyle:{paddingLeft:1},
-                    style:{margin:'0 0 10px 195px'},
-                    labelStyle:{paddingRight:10},
                     lonKey:UploadCenterLonColumns, latKey:UploadCenterLatColumns}} />
             }
         </div>
     );
 }
 
-function CenterColumns({lonCol,latCol, style={},cols, lonKey, latKey, openKey, labelStyle,
-                           headerTitle, headerPostTitle = '', openPreMessage='', headerStyle}) {
+function CenterColumns({lonCol,latCol, sx={},cols, lonKey, latKey, openKey,
+                           headerTitle, headerPostTitle = '', openPreMessage=''}) {
 
 
     const posHeader= (
-        <div style={{marginLeft:-8}}>
-            <span style={{fontWeight:'bold', ...headerStyle}}>
-                {(lonCol || latCol) ? `${lonCol || 'unset'}, ${latCol || 'unset'}` : 'unset'}
-            </span>
-            <span style={{paddingLeft:12, whiteSpace:'nowrap'}}>
-                {headerPostTitle}
-            </span>
-        </div>
+        <Box sx={{ml:-1}}>
+            <Typography component='div'>
+                <Stack {...{direction:'row', alignItems:'baseline', spacing:1}}>
+                    <span>{headerTitle}</span>
+                    <Typography color='warning'>{(lonCol || latCol) ? `${lonCol || 'unset'}, ${latCol || 'unset'}` : 'unset'}</Typography>
+                    <Typography level='body-sm'>{`${headerPostTitle}`}</Typography>
+                </Stack>
+            </Typography>
+        </Box>
     );
 
     return (
-        <div style={{margin: '5px 0 0 0',...style}}>
-            <div style={{display:'flex'}}>
-                <div style={{width:140, marginTop:10, whiteSpace:'nowrap', ...labelStyle}}>
-                    {headerTitle}
-                </div>
-                <FieldGroupCollapsible header={posHeader} headerStyle={{paddingLeft:0}} contentStyle={{marginLeft:4}}
+        <Stack sx={{mt: 1/2, ...sx}}>
+                <FieldGroupCollapsible header={posHeader}
                                        initialState={{value:'closed'}} fieldKey={openKey}>
-                    {openPreMessage && <div style={{padding:'0 0 10px 0'}}>
-                        {openPreMessage}
-                    </div>}
-                    <ColumnFld fieldKey={lonKey} cols={cols}
-                               name='longitude column'  // label that appears in column chooser
-                               inputStyle={{overflow:'auto', height:12, width: 100}}
-                               tooltip={'Center longitude column for spatial search'}
-                               label='Lon Column'
-                               labelWidth={62}
-                               validator={getColValidator(cols, true, false)} />
-                    <div style={{marginTop: 5}}>
+                    {openPreMessage && <Typography sx={{pb:1}}> {openPreMessage} </Typography>}
+                    <Stack {...{direction:'row', spacing:1, sx:{'& .ff-Input': {width:'11rem'}} }}>
+                        <ColumnFld fieldKey={lonKey} cols={cols}
+                                   name='longitude column'  // label that appears in column chooser
+                                   tooltip='Center longitude column for spatial search'
+                                   label='Lon Column'
+                                   validator={getColValidator(cols, true, false)} />
                         <ColumnFld fieldKey={latKey} cols={cols}
                                    name='latitude column' // label that appears in column chooser
-                                   inputStyle={{overflow:'auto', height:12, width: 100}}
-                                   tooltip={'Center latitude column for spatial search'}
+                                   tooltip='Center latitude column for spatial search'
                                    label='Lat Column'
-                                   labelWidth={62}
                                    validator={getColValidator(cols, true, false)} />
-                    </div>
-                </FieldGroupCollapsible>
+                    </Stack>
+            </FieldGroupCollapsible>
 
-            </div>
-        </div>
+        </Stack>
     );
 }
 

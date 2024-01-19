@@ -115,8 +115,10 @@ function makeEndDecorator(showResolveSourceOp, onChange, resolver, button) {
 }
 
 function makeSx(useResolver, useButton, sx) {
-    if (useResolver && !useButton) return {'& .MuiInput-root':{ 'paddingInlineEnd': 0, ...sx }};
-    return sx;
+    const minWidth='32rem';
+    return (useResolver && !useButton) ?
+        { minWidth, '& .MuiInput-root':{ 'paddingInlineEnd': 0}, ...sx} :
+        {minWidth,...sx};
 }
 
 function didUnmount(fieldKey,groupKey, props) {

@@ -23,33 +23,21 @@ import {TABLE_SORT, TABLE_REPLACE, dispatchTableSort} from '../../tables/TablesC
 import {getHDU, isThreeColor} from '../PlotViewUtil';
 import { getAllValuesOfHeader, } from '../FitsHeaderUtil.js';
 
-const popupPanelResizableStyle = {
-    width: 550,
-    minWidth: 448,
-    height: 400,
-    minHeight: 300,
-    resize: 'both',
-    overflow: 'hidden',
-    position: 'relative',
-    display: 'flex',
-    flexDirection: 'column'
-};
+const popupPanelResizableSx = {
+    width: 550, minWidth: 448, height: 400, minHeight: 300, resize: 'both', overflow: 'hidden', position: 'relative'};
 
-//const rgba='rgba(238, 238, 238, 0.25)';
-const bgColor= '#e3e3e3';
 
 //define the display style for the file size and pixel information and the table in the same div
-const tableAndTitleInfoStyle = {width: '100%', height: 'calc(100% - 40px)', display: 'flex', resize:'none'};
 
 //define the table style only in the table div
 const tableStyle = {boxSizing: 'border-box', paddingLeft:5,paddingRight:5, width: '100%', overflow: 'hidden', flexGrow: 1, resize:'none'};
 
 const tableOnTabStyle = {boxSizing: 'border-box',paddingLeft:5,paddingRight:5, width: '100%', height: 'calc(100% - 30px)', overflow: 'hidden', flexGrow: 1, display: 'flex', resize:'none'};//
-//define the size of the text on the tableInfo style in the title div
+//define the size of the text on the} tableInfo style in the title div
 
 
 //3-color styles
-const tabStyle =  {width: '100%',height:'100%', display: 'inline-block', background:bgColor};
+const tabStyle =  {width: '100%',height:'100%'};
 
 const FITSHEADERCONTENT = 'fitsHeader';
 let currentSortInfo = '';
@@ -174,11 +162,11 @@ const onBandSelected = (fitsHeaderInfo) => {
 function renderSingleBandFitsHeader(plot, fitsHeaderInfo, popupId){
     const band = plot.plotState.getBands()[0];
     return (
-        <div style={ popupPanelResizableStyle}>
+        <Stack sx={ popupPanelResizableSx}>
             { renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo)}
             { renderTable( band,fitsHeaderInfo, false)}
             { renderCloseAndHelpButtons(popupId)}
-        </div>
+        </Stack>
     );
 }
 
@@ -186,34 +174,18 @@ function renderSingleBandFitsHeader(plot, fitsHeaderInfo, popupId){
 function renderColorBandsFitsHeaders(plot, fitsHeaderInfo, popupId) {
 
     const bands = plot.plotState.getBands();
-    let colorBandTabs;
-    switch (bands.length){
-        case 2:
-        colorBandTabs = (
-                <Tabs defaultSelected={0} useFlex={true} style={{flexGrow:1}} onTabSelect={onBandSelected(fitsHeaderInfo)}>
-                    {renderSingleTab(plot, bands[0],fitsHeaderInfo )}
-                    {renderSingleTab(plot, bands[1],fitsHeaderInfo )}
-            </Tabs>
-         );
-            break;
-        case 3:
-            colorBandTabs = (
-                <Tabs defaultSelected={0} useFlex={true} style={{flexGrow:1}} onTabSelect={onBandSelected(fitsHeaderInfo)}>
-                    {renderSingleTab(plot, bands[0],fitsHeaderInfo )}
-                    {renderSingleTab(plot, bands[1],fitsHeaderInfo )}
-                    {renderSingleTab(plot, bands[2],fitsHeaderInfo )}
-                </Tabs>
-            );
-            break;
-    }
-
     return (
-        <div style={ popupPanelResizableStyle} >
-          <div style = {tableAndTitleInfoStyle}>
-              {colorBandTabs}
-        </div>
+        <Stack sx={ popupPanelResizableSx} >
+          <Stack {...{width:1, height:1, direction: 'row', resize:'none'}}>
+              <Tabs {...{sx:{width:1}, slotProps:{panel:{sx:{p:0}}}, defaultSelected:0, useFlex:true,
+                    onTabSelect:onBandSelected(fitsHeaderInfo) }}>
+                  {renderSingleTab(plot, bands[0],fitsHeaderInfo )}
+                  {renderSingleTab(plot, bands[1],fitsHeaderInfo )}
+                  {bands.length===3 && renderSingleTab(plot, bands[2],fitsHeaderInfo )}
+              </Tabs>
+          </Stack>
             { renderCloseAndHelpButtons(popupId)}
-        </div>
+        </Stack>
     );
 }
 
@@ -233,10 +205,10 @@ function renderSingleTab(plot, band, fitsHeaderInfo) {
 }
 
 const renderCloseAndHelpButtons = (popupId) => (
-    <div style={{display:'flex', justifyContent:'space-between', margin:'8px 7px 8px 5px', alignItems:'center'}}>
+    <Stack {...{direction:'row', justifyContent:'space-between', my:1/2, mr:1, ml:1/2, alignItems:'center'}}>
         <CompleteButton text='Close' onClick={()=>dispatchHideDialog( popupId)} dialogId={popupId} />
         <HelpIcon helpId={'tables'}/>
-    </div> );
+    </Stack> );
 
 
 function renderFileSizeAndPixelSize(plot, band, fitsHeaderInfo, isOnTab) {

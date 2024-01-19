@@ -2,8 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import FlipOutlinedIcon from '@mui/icons-material/FlipOutlined.js';
 import React from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, {element, oneOfType, string} from 'prop-types';
 import {getDrawLayerByType, isDrawLayerAttached, primePlot } from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
@@ -14,9 +15,9 @@ import {dispatchCreateDrawLayer,
 import {clearModalEndInfo, setModalEndInfo} from './ToolbarToolModalEnd.js';
 
 
-export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,visible=true,
+export function SimpleLayerOnOffButton({plotView:pv,sx, tip,typeId,iconOn,iconOff,SvgIconComponent,visible=true,
                                            modalEndInfo, endText, modalLayer= false,
-                                            text, color, variant,
+                                            text, color, variant, iconButtonSize,
                                             plotTypeMustMatch= false, style={}, enabled= true, imageStyle,
                                             isIconOn, onClick, dropDown, allPlots= true }) {
     const enableButton= Boolean(primePlot(pv)) && enabled;
@@ -25,16 +26,29 @@ export function SimpleLayerOnOffButton({plotView:pv,tip,typeId,iconOn,iconOff,vi
         const distLayer= getDrawLayerByType(getDlAry(),typeId);
         isOn=  distLayer && isDrawLayerAttached(distLayer,pv.plotId);
     }
+    let icon;
+    let sxToUse= sx;
+    if (SvgIconComponent) {
+        sxToUse= (theme) => ({
+            background: isOn ? theme.vars.palette.primary?.softDisabledColor : undefined,
+            ...sx
+        });
+        icon= SvgIconComponent;
+    }
+    else {
+        icon= isOn ? iconOn : iconOff;
+    }
 
     if (dropDown && !isOn) {
         return (
-            <DropDownToolbarButton  {...{icon:iconOff, tip, text, color, variant, enabled:enableButton,
+            <DropDownToolbarButton  {...{icon, tip, text, color, variant, enabled:enableButton,
                                     visible, imageStyle, dropDown }}/>
         );
     } else {
         return (
             <ToolbarButton {...{
-                icon:isOn ? iconOn : iconOff,
+                icon, iconButtonSize,
+                color, variant, sx:sxToUse,
                 tip, text, enabled:enableButton, visible, style, imageStyle,
                 onClick:() => onClick ? onClick(pv,!isOn) :
                     onOff(pv,typeId,allPlots,plotTypeMustMatch,modalEndInfo, endText,modalLayer)
@@ -50,9 +64,9 @@ SimpleLayerOnOffButton.propTypes= {
     text : PropTypes.string,
     color : PropTypes.string,
     variant : PropTypes.string,
-    iconOn : PropTypes.string,
     visible : PropTypes.bool,
-    iconOff : PropTypes.string,
+    iconOn : oneOfType([element,string]),
+    iconOff : oneOfType([element,string]),
     onClick : PropTypes.func,
     isIconOn : PropTypes.bool,
     allPlots: PropTypes.bool,
@@ -64,6 +78,8 @@ SimpleLayerOnOffButton.propTypes= {
     modalEndInfo: PropTypes.object,
     endText: PropTypes.string,
     imageStyle : PropTypes.object,
+    iconButtonSize : PropTypes.string,
+    sx : PropTypes.object,
 };
 
 
