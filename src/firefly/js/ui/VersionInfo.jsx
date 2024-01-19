@@ -33,7 +33,17 @@ export function getVersionInfoStr(includeBuiltOnDate, includeBuildType) {
     return includeBuiltOnDate ? version + `, Built On: ${BuildDate}` : version;
 }
 
-export const VersionInfo = () => <div onClick={() => showFullVersionInfoDialog()}>{getVersionInfoStr(true, true)}</div>;
+export const VersionInfo = () => {
+    return (
+        <Typography level='body-xs'
+                    sx={{color:'neutral.400', p:1}}
+                    onClick={() => showFullVersionInfoDialog()}
+        >
+            {getVersionInfoStr(true, true)}
+        </Typography>
+    );
+};
+
 const Entry = ({desc, value}) =>
     (<>
         <Typography sx={{lineHeight:1.5, fontWeight:'bold',gridColumnStart:1, justifySelf:'end', whiteSpace: 'nowrap'}}>{desc}</Typography>

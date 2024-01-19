@@ -10,46 +10,48 @@ import {DEFAULT_PLOT2D_VIEWER_ID} from 'firefly/visualize/MultiViewCntlr.js';
 import {ImageExpandedMode} from 'firefly/visualize/iv/ImageExpandedMode.jsx';
 import {VersionInfo} from 'firefly/ui/VersionInfo.jsx';
 
+import FOOTER_BG from 'images/ipac_bar.jpg';
+
 /**
  * Main panel of the FireflyLayout.  It handles the 3 possible views: drop-down, standard, expanded.
  * It also add a footer to the drop-down if footerComponent is set.
  * @param p     props
- * @param p.style   panel root style
  * @param p.dropDownComponent   drop-down component to show when drop-down is visible
- * @param p.footerComponent     footer component to show
+ * @param p.footer     footer component to show
  * @param p.showDropDown        set drop-down state
+ * @param p.useDefaultExpandedView  use default ExpandedView
  * @param p.children            main content to show when drop-down is hidden
  * @return {JSX.Element}
  */
-export function MainPanel({style, dropDownComponent, footerComponent, showDropDown, children}) {
+export function MainPanel({dropDownComponent, footer, showDropDown, useDefaultExpandedView=false, children}) {
     const {mode} = useStoreConnector(getLayouInfo);
     const expanded = mode?.expanded || LO_VIEW.none;
     showDropDown ??= !!dropDownComponent;
 
-    const contentView  = () => expanded === LO_VIEW.none ? children : <ExpandedView expanded={expanded}/>;
+    const contentView  = () => useDefaultExpandedView && expanded !== LO_VIEW.none ? <ExpandedView expanded={expanded}/> : children;
     const dropDownView = () => {
         return (
-            <>
-                <Stack {...{direction:'row', flexGrow: 1}}>
+            <Stack id='drop-down' flexGrow={1} spacing={1} overflow='hidden'>
+                <Stack flexGrow={1} px={1} overflow='auto'>
                     {dropDownComponent}
                 </Stack>
-                {footerComponent &&
-                    <div id='footer' className='DD-ToolBar__footer'>
-                        {footerComponent}
-                        <div className='DD-ToolBar__version'>
-                            <VersionInfo/>
-                        </div>
-                    </div>
-                }
-            </>
+
+                <Stack direction='row'
+                       justifyContent='space-between'
+                       alignItems='center'
+                       sx={{background:`url(${FOOTER_BG}) repeat center center transparent`}}
+                >
+                    <div/>
+                    {footer}
+                    <VersionInfo/>
+                </Stack>
+            </Stack>
         );
     };
 
     return (
-        <Stack direction='row' height={1} style={style}>
-            <Stack {...{flexGrow: 1}}>
+        <Stack flexGrow={1} overflow='auto'>
                 {showDropDown ? dropDownView() : contentView()}
-            </Stack>
         </Stack>
     );
 }

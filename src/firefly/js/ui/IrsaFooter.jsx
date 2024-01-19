@@ -3,67 +3,75 @@
  */
 
 import React from 'react';
-import './DropDownContainer.css';
+import {Stack, Link} from '@mui/joy';
 
 import IPAC_ICO from 'html/images/footer/icon_ipac-white-78x60.png';
 import JPL_ICO from 'html/images/footer/icon_jpl-white-91x60.png';
 import NASA_ICO from 'html/images/footer/icon_nasa-white-59x60.png';
 import CALTECH_ICO from 'html/images/footer/icon_caltech-new.png';
-const iconHeight=30;
 
 export function IrsaFooterSmall() {
+    const iconHeight=30;
     return (
-        <div style={{display:'flex', justifyContent:'space-around', alignItems:'center'}}>
-            <div className='DD-ToolBar__footer--links' style={{display:'flex', justifyContent:'space-around',
-                alignItems:'center', width:450, marginRight:90}}>
-                    <a href='https://irsasupport.ipac.caltech.edu/' target='helpdesk'>Contact</a>
-                    <a href='https://irsa.ipac.caltech.edu/privacy.html' target='privacy'>Privacy Policy</a>
-                    <a href='https://irsa.ipac.caltech.edu/ack.html' target='ack'>Acknowledge IRSA</a>
-            </div>
-            <div className='DD-ToolBar__footer--icons'>
-                <a href='http://www.ipac.caltech.edu/'
+        <Stack direction='row' alignItems='center' spacing={2} py={1}>
+            <Stack direction='row' spacing={2}>
+                    <Link sx={{color:'white'}} underline='hover' href='https://irsasupport.ipac.caltech.edu/' target='helpdesk'>Contact</Link>
+                    <Link sx={{color:'white'}} underline='hover' href='https://irsa.ipac.caltech.edu/privacy.html' target='privacy'>Privacy Policy</Link>
+                    <Link sx={{color:'white'}} underline='hover' href='https://irsa.ipac.caltech.edu/ack.html' target='ack'>Acknowledge IRSA</Link>
+            </Stack>
+            <Stack direction='row' spacing={1}>
+                <Link href='http://www.ipac.caltech.edu/'
                    alt='Infrared Processing and Analysis Center' target='ipac'
                    title='Infrared Processing and Analysis Center'>
-                    <img alt='Icon_ipac' src={IPAC_ICO} height={iconHeight}/></a>
-                <a href='http://www.caltech.edu/'
+                    <img alt='Icon_ipac' src={IPAC_ICO} height={iconHeight}/>
+                </Link>
+                <Link href='http://www.caltech.edu/'
                    alt='California Institute of Technology'
                    target='caltech' title='California Institute of Technology'>
-                    <img alt='Icon_caltech' src={CALTECH_ICO} height={iconHeight}/></a>
-                <a href='http://www.jpl.nasa.gov/' alt='Jet Propulsion Laboratory'
+                    <img alt='Icon_caltech' src={CALTECH_ICO} height={iconHeight}/>
+                </Link>
+                <Link href='http://www.jpl.nasa.gov/' alt='Jet Propulsion Laboratory'
                    target='jpl' title='Jet Propulsion Laboratory'>
-                    <img alt='Icon_jpl' src={JPL_ICO} height={iconHeight}/></a>
-                <a href='http://www.nasa.gov/'
+                    <img alt='Icon_jpl' src={JPL_ICO} height={iconHeight}/></Link>
+                <Link href='http://www.nasa.gov/'
                    alt='National Aeronautics and Space Administration' target='nasa'
                    title='National Aeronautics and Space Administration'>
-                    <img alt='Icon_nasa' src={NASA_ICO} height={iconHeight}/></a>
-            </div>
-        </div>
+                    <img alt='Icon_nasa' src={NASA_ICO} height={iconHeight}/>
+                </Link>
+            </Stack>
+        </Stack>
     );
 };
 
 export function IrsaFooter() {
     return (
-        <div>
-            <div className='DD-ToolBar__footer--links'>
-                <ul>
-                    <li><a href='https://irsasupport.ipac.caltech.edu/' target='helpdesk'>Contact</a></li>
-                    <li><a href='https://irsa.ipac.caltech.edu/privacy.html' target='privacy'>Privacy Policy</a></li>
-                    <li><a href='https://irsa.ipac.caltech.edu/ack.html' target='ack'>Acknowledge IRSA</a></li>
-                </ul>
-            </div>
-            <div className='DD-ToolBar__footer--icons'>
-                <a href='http://www.ipac.caltech.edu/'
+        <Stack direction='row' alignItems='center' spacing={2} py={1}>
+            <Stack>
+                <Link sx={{color:'white'}} underline='hover' href='https://irsasupport.ipac.caltech.edu/' target='helpdesk'>Contact</Link>
+                <Link sx={{color:'white'}} underline='hover' href='https://irsa.ipac.caltech.edu/privacy.html' target='privacy'>Privacy Policy</Link>
+                <Link sx={{color:'white'}} underline='hover' href='https://irsa.ipac.caltech.edu/ack.html' target='ack'>Acknowledge IRSA</Link>
+            </Stack>
+            <Stack direction='row' spacing={1}>
+                <Link href='http://www.ipac.caltech.edu/'
                    alt='Infrared Processing and Analysis Center' target='ipac'
-                   title='Infrared Processing and Analysis Center'><img alt='Icon_ipac' src={IPAC_ICO}/></a>
-                <a href='http://www.caltech.edu/'
+                   title='Infrared Processing and Analysis Center'>
+                    <img alt='Icon_ipac' src={IPAC_ICO}/>
+                </Link>
+                <Link href='http://www.caltech.edu/'
                    alt='California Institute of Technology'
-                   target='caltech' title='California Institute of Technology'><img alt='Icon_caltech' src={CALTECH_ICO}/></a>
-                <a href='http://www.jpl.nasa.gov/' alt='Jet Propulsion Laboratory'
-                   target='jpl' title='Jet Propulsion Laboratory'><img alt='Icon_jpl' src={JPL_ICO}/></a>
-                <a href='http://www.nasa.gov/'
+                   target='caltech' title='California Institute of Technology'>
+                    <img alt='Icon_caltech' src={CALTECH_ICO}/>
+                </Link>
+                <Link href='http://www.jpl.nasa.gov/' alt='Jet Propulsion Laboratory'
+                   target='jpl' title='Jet Propulsion Laboratory'>
+                    <img alt='Icon_jpl' src={JPL_ICO}/>
+                </Link>
+                <Link href='http://www.nasa.gov/'
                    alt='National Aeronautics and Space Administration' target='nasa'
-                   title='National Aeronautics and Space Administration'><img alt='Icon_nasa' src={NASA_ICO}/></a>
-            </div>
-        </div>
+                   title='National Aeronautics and Space Administration'>
+                    <img alt='Icon_nasa' src={NASA_ICO}/>
+                </Link>
+            </Stack>
+        </Stack>
     );
 };

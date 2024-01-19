@@ -23,7 +23,7 @@ export function FireflyRoot({sx, children}) {
             <GlobalStyles styles={{
                 html: {fontSize:'87.5%'}
             }}/>
-            <ScopedCssBaseline sx={sx}>
+            <ScopedCssBaseline sx={{flexGrow:1, height:1, position:'relative', ...sx}}>
                 <App>{children}</App>
             </ScopedCssBaseline>
         </CssVarsProvider>

@@ -118,7 +118,7 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
                        onMouseDown={stopPropagation}
                 >
                     <ToolBar {...{tbl_id, tbl_ui_id, connector, tblState, slotProps}}/>
-                    <Stack lineHeight={1} boxSizing='border-box' borderTop={borderTop} flexGrow={1} overflow='hidden'
+                    <Stack lineHeight={1} borderTop={borderTop} flexGrow={1} overflow='hidden'
                             sx={{'& .fixedDataTableLayout_main': {border:'none'}}}
                            {...slotProps?.table}>
                         <BasicTableView
