@@ -352,11 +352,11 @@ function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, me
     if (statesEqual(oldState, newState)) {
         return oldState;
     } else {
+        //Todo: investigate the return statement below and simplify it
         // even if we have a new state, test to see if we have to replace the summaryModel.
         return oldState &&
         summaryModelEqual(newState.summaryModel, oldState.summaryModel) &&
-        newState.analysisResult !== oldState.analysisResult ?
-            {...newState, summaryModel:oldState.summaryModel} : newState;
+        newState;
     }
 }
 
