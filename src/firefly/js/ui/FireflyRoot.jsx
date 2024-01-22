@@ -37,7 +37,7 @@ function App({children}) { // provide a way to experiment with light and dark th
 
     const { activeMode, setMode } = useColorMode();
 
-    const colorMode = getAppOptions().theme?.colorMode?.();
+    const colorMode = getAppOptions().theme?.colorMode;
     // if colorMode is set; must use this mode
     // To add mode switching; make sure colorMode is not set.
     // Then, add a component(Button) to trigger 'setMode'.
