@@ -193,8 +193,8 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR7, new Integer[]{12254, 23446}); // 12254r is the first scan for yr7, 23446r is the last scan
             put(NEOWISER_YR8, new Integer[]{23447, 34601}); // 23447r is the first scan for yr8, 34601r is the last scan
             put(NEOWISER_YR9, new Integer[]{34601, 45803}); // 34601s is the first scan for yr9, 45803r is the last scan
-            put(NEOWISER_YR10, new Integer[]{45804,57041}); // 45804r is the first scan for yr10
-            put(NEOWISER_YR11, new Integer[]{57042, 99999}); // 45804r is the first scan for yr10
+            put(NEOWISER_YR10, new Integer[]{45804,57041}); // 45804r is the first scan for yr10, 57041r is the last scan
+            put(NEOWISER_YR11, new Integer[]{57042, 99999}); // 57042r is the first scan for yr11
 
         }
     };
