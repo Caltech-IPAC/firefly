@@ -31,7 +31,6 @@ import {useFieldGroupMetaState, useFieldGroupValue, useStoreConnector} from '../
 import {getIntHeader} from '../../metaConvert/PartAnalyzer';
 import {FileAnalysisType} from '../../data/FileAnalysis';
 import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
-import {CompleteButton,NONE} from 'firefly/ui/CompleteButton.jsx';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField.jsx';
 import {getFileFormat, getFirstPartType, getSelectedRows, isRegion, isUWS} from 'firefly/ui/FileUploadProcessor';

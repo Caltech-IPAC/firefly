@@ -541,7 +541,7 @@ function buildDeprecated(llApi) {
 
 function makePlotSimple(llApi, plotId) {
     return (request) => {
-        llApi.util.renderDOM(plotId, llApi.ui.ImageViewer, {plotId});
+        llApi.util.renderDOM(plotId, llApi.ui.ImageViewer, {plotId, toolbarVariant:'soft', });
         llApi.action.dispatchPlotImage({plotId, wpRequest:Object.assign({}, globalImageViewDefParams,request)});
     };
 }
@@ -589,7 +589,8 @@ function showImageOrHiPSInMultiViewer(llApi, targetDiv, hipsRequest, imageReques
                              imageRequest, allSkyRequest, plotAllSkyFirst, fovDegFallOver});
 
     renderDOM(targetDiv, MultiImageViewer,
-        {viewerId:targetDiv, canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar });
+        {viewerId:targetDiv, canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar,
+            toolbarVariant:'soft' });
 
 }
 
@@ -642,11 +643,13 @@ function showImageInMultiViewer(llApi, targetDiv, request, isHiPS, hipsImageConv
 
     if (imageRenderType===STANDARD) {
         renderDOM(targetDiv, ApiToolbarImageDisplay,
-            {viewerId,  canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar });
+            {viewerId, canReceiveNewPlots:NewPlotMode.create_replace.key,
+                Toolbar:MultiViewStandardToolbar });
     }
     else {
         renderDOM(targetDiv, ApiFullImageDisplay,
-            {viewerId, renderTreeId:viewerId, canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar });
+            {viewerId, renderTreeId:viewerId,
+                canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar });
     }
 
 }
@@ -666,7 +669,8 @@ function initCoverage(llApi, targetDiv,options= {}) {
 
 
     renderDOM(targetDiv, ApiToolbarImageDisplay,
-        {viewerId:targetDiv, canReceiveNewPlots, canDelete:false, Toolbar:MultiViewStandardToolbar });
+        {viewerId:targetDiv, canReceiveNewPlots, canDelete:false,
+            Toolbar:MultiViewStandardToolbar });
     options= Object.assign({},options, {viewerId:targetDiv});
     startCoverageWatcher(options);
 }

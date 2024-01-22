@@ -9,7 +9,7 @@ import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from 'firefly/core/LayoutCntlr.
 import DistanceTool from 'firefly/drawingLayers/DistanceTool.js';
 import NorthUpCompass from 'firefly/drawingLayers/NorthUpCompass.js';
 import WebGrid from 'firefly/drawingLayers/WebGrid.js';
-import {DropDownMenu, SingleColumnMenu} from 'firefly/ui/DropDownMenu.jsx';
+import {DropDownMenu} from 'firefly/ui/DropDownMenu.jsx';
 import {DropDownToolbarButton} from 'firefly/ui/DropDownToolbarButton.jsx';
 import {showFitsDownloadDialog} from 'firefly/ui/FitsDownloadDialog.jsx';
 import {showFitsRotationDialog} from 'firefly/ui/FitsRotationDialog.jsx';
@@ -31,7 +31,6 @@ import {showPlotInfoPopup} from 'firefly/visualize/ui/PlotInfoPopup.js';
 import {SelectAreaButton} from 'firefly/visualize/ui/SelectAreaDropDownView.jsx';
 import {SimpleLayerOnOffButton} from 'firefly/visualize/ui/SimpleLayerOnOffButton.jsx';
 import {StretchDropDownView} from 'firefly/visualize/ui/StretchDropDownView.jsx';
-import {ZoomButton, ZoomType} from 'firefly/visualize/ui/ZoomButton.jsx';
 import {isHiPS} from 'firefly/visualize/WebPlot.js';
 import {getPreference} from '../../core/AppDataCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
@@ -44,11 +43,11 @@ import {
 import {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {
     findPlotGroup, getActivePlotView, getAllDrawLayersForPlot, getPlotViewById, hasOverlayColorLock, hasWCSProjection,
-    isImageCube,
-    isThreeColor, primePlot, pvEqualExScroll
+    isImageCube, isThreeColor, primePlot, pvEqualExScroll
 } from '../PlotViewUtil.js';
 import {
-    ColorButtonIcon, ColorDropDownButton, DrawLayersButton, ExpandButton, InfoButton, RotateButton, SaveButton
+    ColorButtonIcon, ColorDropDownButton, DistanceButton, DrawLayersButton, ExpandButton, ExtractLine, ExtractPoints,
+    FlipYButton, InfoButton, RestoreButton, RotateButton, SaveButton, ToolsDropDown
 } from './Buttons.jsx';
 import {ImageCenterDropDown, TARGET_LIST_PREF} from './ImageCenterDropDown.jsx';
 import {
@@ -65,20 +64,11 @@ import DS9_REGION from 'images/icons-2014/DS9.png';
 import GRID_ON from 'images/icons-2014/GreenGrid-ON.png';
 import GRID_OFF from 'images/icons-2014/GreenGrid.png';
 import MARKER from 'images/icons-2014/MarkerCirclesIcon_28x28.png';
-import DIST_ON from 'images/icons-2014/Measurement-ON.png';
-import DIST_OFF from 'images/icons-2014/Measurement.png';
-import FLIP_Y_ON from 'images/icons-2014/Mirror-ON.png';
-import FLIP_Y from 'images/icons-2014/Mirror.png';
-import RESTORE from 'images/icons-2014/RevertToDefault.png';
 import ROTATE_NORTH_ON from 'images/icons-2014/RotateToNorth-ON.png';
 import ROTATE_NORTH_OFF from 'images/icons-2014/RotateToNorth.png';
-import LINE_EXTRACTION from 'images/line-extract.png';
 import MASK from 'images/mask_28x28.png';
-import LOCKED from 'images/OverlayLocked.png';
-import UNLOCKED from 'images/OverlayUnlocked.png';
-import POINT_EXTRACTION from 'images/points.png';
-import TOOL_DROP from 'images/tools-again-try2.png';
-import ZOOM_DROP from 'images/Zoom-drop.png';
+// import LOCKED from 'images/OverlayLocked.png';
+// import UNLOCKED from 'images/OverlayUnlocked.png';
 import PropTypes from 'prop-types';
 
 const omList= ['plotViewAry'];
@@ -225,21 +215,21 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
             }
 
 
-            {apiToolsView && !pv.plotViewCtx.useForCoverage && <ToolbarButton icon={NEW_IMAGE} tip='Select a new image'
+            {apiToolsView && !pv?.plotViewCtx.useForCoverage && <ToolbarButton icon={NEW_IMAGE} tip='Select a new image'
                                             visible={mi.imageSelect} onClick={showImagePopup}/>}
 
-            <DropDownToolbarButton icon={TOOL_DROP} tip='Tools drop down' enabled={enabled}
-                                   imageStyle={image24x24}
+            <ToolsDropDown tip='Tools drop down'
                                    dropDown={<ToolsDrop pv={pv} mi={mi} image={image} hips={hips} visRoot={visRoot}
                                                         modalEndInfo={modalEndInfo}
                                                         plot={plot} unavailableCnt={unavailableCnt}
                                                         plotGroupAry={plotGroupAry}
                                                         showRotateLocked={showRotateLocked}/>} />
 
-            {mi.zoomDropDownMenu && <DropDownToolbarButton icon={ZOOM_DROP} tip='Zoom drop down'
-                                                          enabled={enabled}
-                                                          imageStyle={image24x24}
-                                                          dropDown={<ZoomDrop pv={pv} mi={mi} image={image}/>} />}
+            {/*save this: We may end up putting zoom back*/}
+            {/*{mi.zoomDropDownMenu && <DropDownToolbarButton icon={ZOOM_DROP} tip='Zoom drop down'*/}
+            {/*                                              enabled={enabled}*/}
+            {/*                                              imageStyle={image24x24}*/}
+            {/*                                              dropDown={<ZoomDrop pv={pv} mi={mi} image={image}/>} />}*/}
 
             <ToolbarHorizontalSeparator/>
             <ColorButton colorDrops={colorDrops} enabled={enabled} pv={pv} />
@@ -258,13 +248,13 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
 
             {unavailableCnt<2 && farLeftButtonEnabled && <ToolbarHorizontalSeparator/>}
 
-            {unavailableCnt<2 && <SimpleLayerOnOffButton plotView={pv}
-                                    isIconOn={pv&&plot? isOverlayColorLocked(pv,plotGroupAry) : false }
-                                    tip='Lock all images for color changes and overlays.'
-                                    iconOn={LOCKED} iconOff={UNLOCKED}
-                                    visible={mi.overlayColorLock} imageStyle={image24x24}
-                                    onClick={() => toggleOverlayColorLock(pv,plotGroupAry)} />
-            }
+            {/*{unavailableCnt<2 && <SimpleLayerOnOffButton plotView={pv}*/}
+            {/*                        isIconOn={pv&&plot? isOverlayColorLocked(pv,plotGroupAry) : false }*/}
+            {/*                        tip='Lock all images for color changes and overlays.'*/}
+            {/*                        iconOn={LOCKED} iconOff={UNLOCKED}*/}
+            {/*                        visible={mi.overlayColorLock} imageStyle={image24x24}*/}
+            {/*                        onClick={() => toggleOverlayColorLock(pv,plotGroupAry)} />*/}
+            {/*}*/}
 
             {unavailableCnt<1 &&
                     <MatchLockDropDown visRoot={visRoot} enabled={enabled} imageStyle={image24x24}
@@ -365,15 +355,16 @@ const ColorButton= ({colorDrops,enabled,pv}) => (
                            onClick={() =>showColorDialog()}/>
 );
 
-const ZoomDrop= ({pv,mi, image}) => (
-    <SingleColumnMenu style={{minWidth:1}}>
-        <ZoomButton plotView={pv} zoomType={ZoomType.UP} visible={mi.zoomUp} />
-        <ZoomButton plotView={pv} zoomType={ZoomType.DOWN} visible={mi.zoomDown} />
-        <ZoomButton plotView={pv} zoomType={ZoomType.ONE} visible={mi.zoomOriginal && image} />
-        <ZoomButton plotView={pv} zoomType={ZoomType.FIT} visible={mi.zoomFit} />
-        <ZoomButton plotView={pv} zoomType={ZoomType.FILL} visible={mi.zoomFill} />
-    </SingleColumnMenu>
-);
+// save: if we put zoom back
+// const ZoomDrop= ({pv,mi, image}) => (
+//     <SingleColumnMenu style={{minWidth:1}}>
+//         <ZoomButton plotView={pv} zoomType={ZoomType.UP} visible={mi.zoomUp} />
+//         <ZoomButton plotView={pv} zoomType={ZoomType.DOWN} visible={mi.zoomDown} />
+//         <ZoomButton plotView={pv} zoomType={ZoomType.ONE} visible={mi.zoomOriginal && image} />
+//         <ZoomButton plotView={pv} zoomType={ZoomType.FIT} visible={mi.zoomFit} />
+//         <ZoomButton plotView={pv} zoomType={ZoomType.FILL} visible={mi.zoomFill} />
+//     </SingleColumnMenu>
+// );
 
 
 function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, modalEndInfo,
@@ -399,12 +390,12 @@ function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, modalEndInfo,
                 }
                 {(makeMatchLock || makeColorLock) && <div style={{display:'flex', alignItems:'center', paddingTop:10}}>
                     <div style={{width:130, fontSize:'larger'}}>More: </div>
-                    {makeColorLock && <SimpleLayerOnOffButton plotView={pv}
-                                                              isIconOn={pv&&plot? isOverlayColorLocked(pv,plotGroupAry) : false }
-                                                              tip='Lock all images for color changes and overlays.'
-                                                              iconOn={LOCKED} iconOff={UNLOCKED}
-                                                              visible={mi.overlayColorLock}
-                                                              onClick={() => toggleOverlayColorLock(pv,plotGroupAry)} />}
+                    {/*{makeColorLock && <SimpleLayerOnOffButton plotView={pv}*/}
+                    {/*                                          isIconOn={pv&&plot? isOverlayColorLocked(pv,plotGroupAry) : false }*/}
+                    {/*                                          tip='Lock all images for color changes and overlays.'*/}
+                    {/*                                          iconOn={LOCKED} iconOff={UNLOCKED}*/}
+                    {/*                                          visible={mi.overlayColorLock}*/}
+                    {/*                                          onClick={() => toggleOverlayColorLock(pv,plotGroupAry)} />}*/}
                     {makeMatchLock && <MatchLockDropDown visRoot={visRoot} enabled={enabled} inDropDown={true}
                                                          visible={mi.matchLockDropDown} />}
                 </div> }
@@ -419,7 +410,7 @@ const SaveRestoreRow= ({style,image,hips,mi,pv,enabled}) => (
         <SaveButton tip='Save the FITS file, PNG file, or save the overlays as a region'
                        visible={mi.fitsDownload}
                        onClick={showFitsDownloadDialog.bind(null, 'Load Region')}/>
-        <ToolbarButton icon={RESTORE} tip='Restore to the defaults' enabled={enabled}
+        <RestoreButton tip='Restore to the defaults'
                        visible={mi.restore}
                        onClick={() => dispatchRestoreDefaults({plotId:pv.plotId})}/>
         <InfoButton tip={image ? 'Show FITS header' : (hips ? 'Show HiPS properties' : '')}
@@ -440,9 +431,8 @@ const RotateFlipRow= ({style,image,mi,showRotateLocked,pv,enabled}) => (
                                 iconOn={ROTATE_NORTH_ON} iconOff={ROTATE_NORTH_OFF}
                                 visible={mi.rotateNorth} onClick={doRotateNorth} />
 
-        <SimpleLayerOnOffButton plotView={pv} isIconOn={pv ? pv.flipY : false }
+        <FlipYButton plotView={pv} isIconOn={pv ? pv.flipY : false }
                                 tip='Flip the image on the Y Axis (i.e. Invert X)'
-                                iconOn={FLIP_Y_ON} iconOff={FLIP_Y}
                                 visible={mi.flipImageY && image} onClick={() => dispatchFlip({plotId:pv.plotId})} />
     </div>
 );
@@ -475,10 +465,10 @@ const ExtractRow= ({style,pv,enabled,modalEndInfo,mi}) => {
             <ToolbarButton icon={DRILL_DOWN} tip='Extract Z-axis from cube' enabled={standIm&&isImageCube(primePlot(pv))&&enabled}
                            onClick={(element) => startExtraction(element,Z_AXIS,modalEndInfo)}
                            visible={mi.extractZAxis}/>
-            <ToolbarButton icon={LINE_EXTRACTION} tip='Extract line from image' enabled={standIm&&enabled}
+            <ExtractLine tip='Extract line from image' enabled={standIm&&enabled}
                            onClick={(element) => startExtraction(element,LINE,modalEndInfo)}
                            visible={mi.extractLine}/>
-            <ToolbarButton icon={POINT_EXTRACTION} tip='Extract points from image' enabled={standIm&&enabled}
+            <ExtractPoints tip='Extract points from image' enabled={standIm&&enabled}
                            onClick={(element) => startExtraction(element,POINTS,modalEndInfo)}
                            visible={mi.extractPoint}/>
         </div>
@@ -495,12 +485,10 @@ const LayersRow= ({style,image, pv,mi,enabled, modalEndInfo}) => (
         <SimpleLayerOnOffButton plotView={pv} typeId={WebGrid.TYPE_ID} tip='Add grid layer to the image'
                                 iconOn={GRID_ON} iconOff={GRID_OFF}
                                 plotTypeMustMatch={true} visible={mi.grid} />
-        <SimpleLayerOnOffButton plotView={pv} typeId={DistanceTool.TYPE_ID}
+        <DistanceButton plotView={pv} typeId={DistanceTool.TYPE_ID}
                                 tip='Select, then click and drag to measure a distance on the image'
                                 endText={'End Distance'}
-                                modalEndInfo={modalEndInfo}
-                                modalLayer={true}
-                                iconOn={DIST_ON} iconOff={DIST_OFF} visible={mi.distanceTool} />
+                                modalEndInfo={modalEndInfo} modalLayer={true} visible={mi.distanceTool} />
         <ToolbarButton icon={DS9_REGION} tip='Load a DS9 Region File' enabled={enabled}
                        visible={mi.ds9Region} onClick={showRegionFileUploadPanel}/>
 

@@ -200,14 +200,14 @@ function makeDoUpload(file, type, isFromURL, fileAnalysis) {
 function doUpload(fileOrUrl, fileAnalysis, params={}) {
 
     const faFunction= isFunction(fileAnalysis) && fileAnalysis;
-    faFunction?.(true, isString(fileOrUrl) ? fileOrUrl : fileOrUrl?.name ? fileOrUrl.name : undefined);
+    faFunction && faFunction(true, isString(fileOrUrl) ? fileOrUrl : fileOrUrl?.name ? fileOrUrl.name : undefined);
     if (fileAnalysis) fileAnalysis=true;
     return upload(fileOrUrl, Boolean(fileAnalysis), params)
         .then( (results) => {
-            faFunction?.(false);
+            faFunction && faFunction?.(false);
             return results;
         })
         .catch(() => {
-            faFunction?.(false);
+            faFunction && faFunction?.(false);
         });
 }

@@ -21,7 +21,7 @@ import LIST from 'html/images/icons-2014/ListOptions.png';
 
 
 
-export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
+export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, toolbarVariant,
                                           layoutType= 'grid', makeDropDown, useImageList= false,
                                              toolbarStyle={}}) {
     
@@ -38,7 +38,7 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds,
     if (!showImageToolbar) return <div/>;
 
     return (
-        <Sheet>
+        <Sheet variant={toolbarVariant}>
             <Stack {...{direction:'row', flexWrap:'nowrap', alignItems: 'center', justifyContent: 'space-between',
                 width:'100%', height: 32, style:toolbarStyle}}>
                 <Stack {...{direction:'row', alignItems: 'center', flexWrap:'nowrap'}}>
@@ -82,4 +82,5 @@ MultiViewStandardToolbar.propTypes= {
     makeDropDown: PropTypes.bool,
     useImageList: PropTypes.bool,
     toolbarStyle: PropTypes.object,
+    toolbarVariant: PropTypes.string,
 };

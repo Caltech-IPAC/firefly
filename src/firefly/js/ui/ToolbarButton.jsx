@@ -5,7 +5,7 @@
 import {Badge, Box, Button, Checkbox, Divider, IconButton, Stack, Tooltip} from '@mui/joy';
 import {isString} from 'lodash';
 import React, {memo, useRef, useEffect} from 'react';
-import {bool, element, func, node, number, object, oneOfType, shape, string} from 'prop-types';
+import PropTypes, {bool, element, func, node, number, object, oneOfType, shape, string} from 'prop-types';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 import DROP_DOWN_ICON from 'html/images/dd-narrow.png';
@@ -51,7 +51,7 @@ export const ToolbarButton = memo((props) => {
     const {
         icon,text='',tip='',badgeCount=0,enabled=true, visible=true,
         imageStyle={}, iconButtonSize, shortcutKey='', color='neutral', variant='plain',
-        disableHiding, active, sx,
+        disableHiding, active, sx, CheckboxOnIcon, CheckboxOffIcon,
         useDropDownIndicator= false, hasCheckBox=false, checkBoxOn=false,
         component, slotProps={},
         dropPosition={},
@@ -99,11 +99,18 @@ export const ToolbarButton = memo((props) => {
     const b=  (
         <Tooltip title={tip} sx={sx}>
             <Stack {...{direction:'row', alignItems:'center', ref:setupRef, position:'relative' }}>
-                {hasCheckBox && <Checkbox {...{variant:'plain', checked:checkBoxOn, onClick:handleClick}}/> }
+                {/*{hasCheckBox && <Checkbox {...{variant:'plain', checked:checkBoxOn, onClick:handleClick}}/> }*/}
+                <TbCheckBox {...{hasCheckBox, CheckboxOnIcon, CheckboxOffIcon, checkBoxOn, onClick:handleClick}}/>
                 {useIconButton ?
                     (<IconButton {...{
                         sx: (theme) => (
                              {minHeight:'unset', minWidth:'unset', p:1/4, backgroundColor:'transparent',
+                                 '& svg' : {
+                                     color: enabled?
+                                         theme.vars.palette.neutral?.plainColor :
+                                         theme.vars.palette.neutral?.softDisabledColor,
+                                 },
+                                 opacity: enabled ? '1' : '0.3',
                                  ...makeBorder(active,theme,color),
                                  ...iSize,
                              }),
@@ -121,6 +128,7 @@ export const ToolbarButton = memo((props) => {
                         component,
                         endDecorator: dropDownIndicator,
                         sx:(theme) => ({whiteSpace:'nowrap', py:.4, minHeight: 'unset',
+                            color: enabled? undefined : theme.vars.palette.neutral?.softDisabledColor,
                             ...makeBorder(active,theme,color),
                         }),
                     }}>
@@ -164,8 +172,19 @@ ToolbarButton.propTypes= {
     disableHiding: bool,
     shortcutKey: string,
     color: string,
+    iconButtonSize : string,
 };
 
+function TbCheckBox({hasCheckBox, CheckboxOnIcon, CheckboxOffIcon, checkBoxOn, onClick}) {
+    if (!hasCheckBox) return undefined;
+    if (CheckboxOnIcon && CheckboxOffIcon) {
+        return (
+            <Box onClick={onClick}>
+                {checkBoxOn ? CheckboxOnIcon : CheckboxOffIcon}
+            </Box>);
+    }
+    return <Checkbox {...{variant:'plain', checked:checkBoxOn, onClick}}/>;
+}
 
 function makeBorder(active, theme,color) {
     // const color= active ? theme.vars.palette.warning.softActiveBg : 'transparent';
