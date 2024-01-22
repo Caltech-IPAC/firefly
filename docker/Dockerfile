@@ -24,13 +24,15 @@ FROM deps AS builder
 ARG build_dir
 ARG target
 ARG env
+ARG checkoutFirefly
 
 WORKDIR /opt/work
 COPY . .
 
 WORKDIR /opt/work/${build_dir}
 ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false"
-RUN gradle -Penv=${env} -p ../firefly :firefly:jar && gradle -Penv=${env} ${target}
+RUN if [ -z "$checkoutFirefly" ] ; then echo skip checkout ; else gradle firefly:checkoutFirefly ; fi
+RUN gradle -Penv=${env} -p ../firefly firefly:jar && gradle -Penv=${env} ${target}
 
 
 
