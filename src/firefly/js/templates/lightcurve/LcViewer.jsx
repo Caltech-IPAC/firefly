@@ -4,18 +4,18 @@
 
 import React, {memo, useEffect} from 'react';
 import PropTypes from 'prop-types';
+import {Stack} from '@mui/joy';
 import {isEmpty, capitalize} from 'lodash';
 import shallowequal from 'shallowequal';
 import {flux} from '../../core/ReduxFlux.js';
-import {getMenu, isAppReady, dispatchSetMenu,
-    dispatchOnAppReady, dispatchNotifyRemoteAppReady} from '../../core/AppDataCntlr.js';
+
+import {dispatchSetMenu, dispatchOnAppReady, dispatchNotifyRemoteAppReady} from '../../core/AppDataCntlr.js';
 import {dispatchHideDropDown, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
 import {lcManager, LC} from './LcManager.js';
 import {LcResult} from './LcResult.jsx';
 import {LcPeriodPlotly} from './LcPeriodPlotly.jsx';
 import {Menu} from '../../ui/Menu.jsx';
 import {Banner} from '../../ui/Banner.jsx';
-import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {FormPanel} from './../../ui/FormPanel.jsx';
@@ -33,41 +33,31 @@ import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {warningDivId} from '../../ui/LostConnection';
 import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
 import {makeSearchOnce} from '../../util/WebUtil.js';
 import {upload} from '../../rpc/CoreServices.js';
+import App from 'firefly/ui/App.jsx';
 
 
 const vFileKey = LC.FG_FILE_FINDER;
 const DEFAULT_TITLE = 'Time Series Tool';
-const topStyle = {fontSize:'18pt', display:'flex', flexDirection:'column', alignItems:'flex-end'};
-const subStyle = {fontSize: '11pt', fontWeight: 100};
 
 /**
  * light curve viewer
  */
-export const LcViewer = memo((props) => {
+export const LcViewer = memo(({menu, dropdownPanels=[], appTitle, ...appProps}) => {
 
     useEffect(() => {
         startTTFeatureWatchers();
         dispatchAddSaga(lcManager);
         getWorkspaceConfig() && initWorkspace();
-        dispatchOnAppReady((state) => onReady({state, menu:props.menu}));
+        dispatchOnAppReady((state) => onReady({state, menu}));
     }, []);
 
-    const storeState= useStoreConnector(() => {
-        const fileLocation = getFieldVal(vFileKey, 'uploadContainer', 'isLocal');
-        return {fileLocation, menu:getMenu(), isReady:isAppReady(), ...getLayouInfo()};
-    });
-
-    const {isReady, menu={}, appTitle, altAppIcon, dropDown,
-        dropdownPanels=[], footer, style, displayMode, missionEntries, fileLocation, error} = storeState;
-    const {appIcon, additionalTitleStyle= {}, bannerLeftStyle, bannerMiddleStyle} = props;
-    const additionalTitleStylePlus= {marginRight: 20, alignSelf: 'flex-start',...additionalTitleStyle};
-    const bannerMiddleStylePlus= {flexDirection: 'row', ...bannerMiddleStyle};
-
-    if (!isReady) return (<div style={{top: 0}} className='loading-mask'/>);
+    const fileLocation= useStoreConnector(() => getFieldVal(vFileKey, 'uploadContainer', 'isLocal'));
+    const error = useStoreConnector(() => getLayouInfo()?.error);
+    const displayMode = useStoreConnector(() => getLayouInfo()?.displayMode);
+    const missionEntries = useStoreConnector(() => getLayouInfo()?.missionEntries);
 
     const periodProps = {
         displayMode,
@@ -75,45 +65,21 @@ export const LcViewer = memo((props) => {
         fluxColName: missionEntries?.[LC.META_FLUX_CNAME]
     };
 
-    const MainView = () => {
-        if (error) {
-            return (
-                <div style={{display: 'flex', width: '100%', marginTop: 20, justifyContent: 'center', alignItems: 'baseline'}}>
-                    <div style={{display: 'inline-flex', border: '1px solid #a3aeb9', padding:20, fontSize:'150%'}}>
-                        <div>{error}</div>
-                        <div style={{marginLeft: 10}}>
-                            <HelpIcon helpId={'loadingTSV'}/>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-        return displayMode?.startsWith('period') ? <LcPeriodPlotly {...periodProps}/> : <LcResult/>;
-    };
-
-    const subTitleStr= displayMode ? (displayMode.startsWith('period')) ? '(Period Finder)' : '(Viewer)' : '';
+    const subTitleStr= displayMode?.startsWith('period') ? '(Period Finder)' : '(Viewer)';
     const title = (
-        <div style={topStyle}>
-            <div>{appTitle || DEFAULT_TITLE}</div>
-            <div style={subStyle}>{subTitleStr}</div>
-        </div>);
+        <Stack marginRight={1}>
+            <div style={{fontSize:18}}>{appTitle || DEFAULT_TITLE}</div>
+            <div style={{fontSize: '11pt', fontWeight: 100, textAlign:'end', marginTop:-9}}>{subTitleStr}</div>
+        </Stack>
+    );
 
-    const {visible, view} = dropDown || {};
+
     return (
-        <div id='App' className='rootStyle' style={style}>
-            <header>
-                <BannerSection {...{menu, appTitle : title, appIcon, altAppIcon,
-                    additionalTitleStyle:additionalTitleStylePlus, bannerLeftStyle,
-                    bannerMiddleStyle:bannerMiddleStylePlus, showTitleOnBanner:true}}/>
-                <div id={warningDivId} data-decor='full' className='warning-div center'/>
-                <DropDownContainer key='dropdown' footer={footer} visible={!!visible}
-                                   selected={view}
-                                   dropdownPanels={[...dropdownPanels, <UploadPanel {...{fileLocation}}/>]} />
-            </header>
-            <main>
-                <MainView/>
-            </main>
-        </div>
+        <App dropdownPanels={[...dropdownPanels, <UploadPanel {...{fileLocation}}/>]}
+             showTitleOnBanner={true} appTitle={title}  {...appProps}
+        >
+            <MainView {...{error, displayMode, periodProps}}/>
+        </App>
     );
 });
 
@@ -133,6 +99,24 @@ LcViewer.propTypes = {
     dropdownPanels: PropTypes.arrayOf(PropTypes.element),
     style: PropTypes.object
 };
+
+
+const MainView = ({error, displayMode, periodProps}) => {
+    if (error) {
+        return (
+            <div style={{display: 'flex', width: '100%', marginTop: 20, justifyContent: 'center', alignItems: 'baseline'}}>
+                <div style={{display: 'inline-flex', border: '1px solid #a3aeb9', padding:20, fontSize:'150%'}}>
+                    <div>{error}</div>
+                    <div style={{marginLeft: 10}}>
+                        <HelpIcon helpId={'loadingTSV'}/>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    return displayMode?.startsWith('period') ? <LcPeriodPlotly {...periodProps}/> : <LcResult/>;
+};
+
 
 
 function onReady({menu}) {
