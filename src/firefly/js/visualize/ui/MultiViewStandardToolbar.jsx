@@ -8,16 +8,13 @@ import PropTypes from 'prop-types';
 import {IconButton, Sheet, Stack} from '@mui/joy';
 import {dispatchChangeViewerLayout} from '../MultiViewCntlr.js';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
-import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
+import {GridTileButton, ListViewButton, OneTileButton} from './Buttons.jsx';
 import {showExpandedOptionsPopup} from './ExpandedOptionsPopup.jsx';
 import {VisMiniToolbar} from './VisMiniToolbar.jsx';
 import {getActivePlotView} from '../PlotViewUtil.js';
 
-import ONE from 'html/images/icons-2014/Images-One.png';
-import GRID from 'html/images/icons-2014/Images-Tiled.png';
 import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
 import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
-import LIST from 'html/images/icons-2014/ListOptions.png';
 
 
 
@@ -42,15 +39,12 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, tool
             <Stack {...{direction:'row', flexWrap:'nowrap', alignItems: 'center', justifyContent: 'space-between',
                 width:'100%', height: 32, style:toolbarStyle}}>
                 <Stack {...{direction:'row', alignItems: 'center', flexWrap:'nowrap'}}>
-                    {moreThanOne && <ToolbarButton icon={ONE} tip={'Show single image at full size'}
-                                                   imageStyle={{width:24,height:24, flex: '0 0 auto'}}
+                    {moreThanOne && <OneTileButton tip='Show single image at full size'
                                                    onClick={() => dispatchChangeViewerLayout(viewerId,'single')}/>}
-                    {moreThanOne && <ToolbarButton icon={GRID} tip={'Show all as tiles'}
-                                                   imageStyle={{width:24,height:24, flex: '0 0 auto'}}
+                    {moreThanOne && <GridTileButton tip='Show all as tiles'
                                                    onClick={() => dispatchChangeViewerLayout(viewerId,'grid')}/>}
                     {useImageList && moreThanOne &&
-                        <ToolbarButton icon={LIST} tip={'Choose which plots to show'}
-                                       imageStyle={{width:24,height:24}}
+                        <ListViewButton tip='Choose which plots to show'
                                        onClick={() =>showExpandedOptionsPopup('Pinned Images', viewerId) }/>
                     }
                     {layoutType==='single' && moreThanOne &&

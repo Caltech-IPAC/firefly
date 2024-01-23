@@ -9,18 +9,13 @@ import {Button, Checkbox, Divider, IconButton, Sheet, Stack, Tooltip} from '@mui
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {ExpandType, dispatchChangeExpandedMode, dispatchExpandedAutoPlay, visRoot } from '../ImagePlotCntlr.js';
 import {primePlot, getActivePlotView} from '../PlotViewUtil.js';
-import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {CloseButton} from '../../ui/CloseButton.jsx';
+import {GridTileButton, ListViewButton, OneTileButton} from '../ui/Buttons.jsx';
 import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {getMultiViewRoot, getExpandedViewerItemIds} from '../MultiViewCntlr.js';
 import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
-import ONE from 'html/images/icons-2014/Images-One.png';
-import GRID from 'html/images/icons-2014/Images-Tiled.png';
-import LIST from 'html/images/icons-2014/ListOptions.png';
-// import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
-// import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import ACTIVE_DOT from 'html/images/green-dot-10x10.png';
 import INACTIVE_DOT from 'html/images/blue-dot-10x10.png';
 import NavigateNext from '@mui/icons-material/NavigateNext';
@@ -99,17 +94,14 @@ function WhichView() {
     return (
         <Stack direction='row' alignItems='center'>
             {showViewButtons &&
-                   <ToolbarButton icon={ONE} tip={'Show single image at full size'}
-                                  imageStyle={{width:24,height:24}}
+                   <OneTileButton tip='Show single image at full size'
                                   onClick={() => dispatchChangeExpandedMode(ExpandType.SINGLE)}/>}
             {showViewButtons &&
-                   <ToolbarButton icon={GRID} tip={'Show all as tiles'}
-                                  imageStyle={{width:24,height:24}}
+                   <GridTileButton tip='Show all as tiles'
                                   onClick={() => dispatchChangeExpandedMode(ExpandType.GRID)}/>
             }
             {showViewButtons &&
-                   <ToolbarButton icon={LIST} tip={'Choose which plots to show'}
-                                  imageStyle={{width:24,height:24}}
+                   <ListViewButton tip={'Choose which plots to show'}
                                   onClick={() =>showExpandedOptionsPopup() }/>
             }
         </Stack>

@@ -15,26 +15,23 @@ const labelWidth = 80;
 export class WiseSettingBox extends PureComponent {
     constructor(props) {
         super(props);
-
-
     }
 
     render() {
-        var {generalEntries, missionEntries} = this.props;
+        const {generalEntries, missionEntries} = this.props;
         const tblModel = getTblById(LC.RAW_TABLE);
-        const wrapperStyle = {margin: '3px 0'};
 
-        var missionBands = (<RadioGroupInputField key='band'
-                                                  fieldKey={LC.META_FLUX_BAND} wrapperStyle={wrapperStyle}
-                                                  alignment='horizontal'
+        const missionBands = (<RadioGroupInputField key='band'
+                                                  fieldKey={LC.META_FLUX_BAND}
+                                                  orientation='horizontal'
                                                   options={[
-                    {label: 'W1', value: 'w1'},
-                    {label: 'W2', value: 'w2'},
-                    {label: 'W3', value: 'w3'},
-                    {label: 'W4', value: 'w4'}
-                ]}/>);
+                                                      {label: 'W1', value: 'w1'},
+                                                      {label: 'W2', value: 'w2'},
+                                                      {label: 'W3', value: 'w3'},
+                                                      {label: 'W4', value: 'w4'}
+                                                  ]}/>);
 
-         return renderMissionView({generalEntries,missionEntries,missionBands,tblModel,wrapperStyle,labelWidth, callback:wiseOptionsReducer });
+         return renderMissionView({generalEntries,missionEntries,missionBands,tblModel,labelWidth, callback:wiseOptionsReducer });
 
 
     }

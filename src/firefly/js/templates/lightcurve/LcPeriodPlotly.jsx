@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import {Box, Button, Card, Chip, Divider, FormLabel, Stack, Typography} from '@mui/joy';
+import React, {PureComponent, useContext} from 'react';
 import PropTypes from 'prop-types';
 
 import {get, set,  pick,  debounce} from 'lodash';
@@ -11,7 +12,8 @@ import {flux} from '../../core/ReduxFlux.js';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {RangeSlider}  from '../../ui/RangeSlider.jsx';
-import {FieldGroup} from '../../ui/FieldGroup.jsx';
+import {FieldGroup, FieldGroupCtx} from '../../ui/FieldGroup.jsx';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {showInfoPopup, INFO_POPUP} from '../../ui/PopupUtil.jsx';
 import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
@@ -19,10 +21,10 @@ import Validate from '../../util/Validate.js';
 import {dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import FieldGroupCntlr, {dispatchValueChange, dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
-import {getActiveTableId, getColumnIdx} from '../../tables/TableUtil.js';
+import {getActiveTableId, getColumnIdx, getTblById} from '../../tables/TableUtil.js';
 import {LC, updateLayoutDisplay, getValidValueFrom, getFullRawTable} from './LcManager.js';
 import {doPFCalculate, getPhase} from './LcPhaseTable.js';
-import {LcPeriodogram, cancelPeriodogram, popupId} from './LcPeriodogram.jsx';
+import {LcPeriodogram, cancelPeriodogram, popupId, startPeriodogramPopup} from './LcPeriodogram.jsx';
 import {ReadOnlyText, getTypeData} from './LcUtil.jsx';
 import {LO_VIEW, getLayouInfo,dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 import {isDialogVisible, dispatchHideDialog} from '../../core/ComponentCntlr.js';
@@ -37,6 +39,9 @@ const labelWidth = 100;
 
 // export const highlightBorder = '1px solid #a3aeb9';
 
+const PERIOD_FINDER_HELP= 'Vary period and time offset while visualizing phase folded plot. ' +
+    'Optionally calculate periodogram. ' +
+    'When satisfied, click Accept to return to Time Series Viewer with phase folded table.';
 
 export var isBetween = (a, b, c) => (c >= a && c <= b);
 
@@ -83,9 +88,9 @@ const defValues= {
         {validator: null}),
     [fKeyDef.tzmax.fkey]: Object.assign(getTypeData(fKeyDef.tzmax.fkey, '', 'maximum for zero time'),
         {validator: null}),
-    [fKeyDef.min.fkey]: Object.assign(getTypeData(fKeyDef.min.fkey, '', 'minimum period', '', 0),
+    [fKeyDef.min.fkey]: Object.assign(getTypeData(fKeyDef.min.fkey, '', 'minimum period in days', 0),
         {validator: null}),
-    [fKeyDef.max.fkey]: Object.assign(getTypeData(fKeyDef.max.fkey, '', 'maximum period', '', 0),
+    [fKeyDef.max.fkey]: Object.assign(getTypeData(fKeyDef.max.fkey, '', 'minimum period in days', 0),
         {validator: null}),
     [fKeyDef.period.fkey]: Object.assign(getTypeData(fKeyDef.period.fkey, '', '', `${fKeyDef.period.label}:`, labelWidth-10),
         {validator: null})
@@ -222,9 +227,10 @@ const PeriodStandardView = (props) => {
                 <SplitPane split='horizontal' primary='second' maxSize={-100} minSize={100} defaultSize={400}>
                     <SplitContent>
                         <div className='phaseFolded'>
-                            <div className='phaseFolded__options'>
+                            <Box {...{
+                                mr: 1/4, px: 1, width: 1, maxWidth: 540, overflow: 'auto' }}>
                                 <LcPFOptionsBox/>
-                            </div>
+                            </Box>
                             <PhaseFoldingChart/>
                         </div>
                     </SplitContent>
@@ -515,7 +521,7 @@ class LcPFOptionsBox extends PureComponent {
         this.unbinder= FieldGroupUtils.bindToStore(pfinderkey, (fields) => {
             if (this && this.iAmMounted && fields !== this.state.fields) {
 
-                var {periodList, period, lastPeriod} = this.state;
+                let {periodList, period, lastPeriod} = this.state;
                 const newPeriod = getValidValueFrom(fields, 'period');
                 const bRevert = (lastFrom(periodList) === 'revert');
                 let periodToList = '';
@@ -552,58 +558,35 @@ class LcPFOptionsBox extends PureComponent {
 
 
     render() {
-        const optionProps = pick(this.state, ['fields', 'lastPeriod', 'periodList']);
-
-        return (
-                <LcPFOptions {...optionProps} />
-        );
+        return <LcPFOptions {...{fields:this.state.fields}} /> ;
     }
 }
+
+
 
 
 /**
  * @summary light curve phase folding FieldGroup rendering
  */
 
-function LcPFOptions({fields, lastPeriod, periodList=[]}) {
-
+function LcPFOptions({fields}) {
+    const {getVal} = useContext(FieldGroupCtx);
+    const peridogramTbl= useStoreConnector(() => getTblById(LC.PERIODOGRAM_TABLE));
     if (!fields) return <span />;   // when there is no field defined in the beginning
 
-    const maxPeriod = getValidValueFrom(fields, 'periodMax');
-    const minPeriod = getValidValueFrom(fields, 'periodMin');
+    const maxPeriod = getVal('periodMax');
+    const minPeriod = getVal('periodMin');
 
-    // const revertPeriodTxt = `Undo: ${lastPeriod ? lastPeriod : ''}`;
     const minPerN = minPeriod ? parseFloat(minPeriod) : periodRange.min;
     const maxPerN = maxPeriod ? parseFloat(maxPeriod) : periodRange.max;
-    const period = get(fields, [fKeyDef.period.fkey, 'value']) || `${periodRange.min}`;
+    const period = getVal(fKeyDef.period.fkey) || `${periodRange.min}`;
 
-    // marks on the slider, marks on two ends: min and SliderMax
     const getSliderMarks = (periodMin, periodMax, sliderMin, sliderMax, noMarks) => {
-        const sliderSize = sliderMax - sliderMin;
         const intMark = (periodMax - periodMin)/(noMarks - 1);
-
-        const markStyle = (per, val) => ({style: {left: `${per}%`, marginLeft: -16, width: 40}, label: `${val}`});
-
-        // make an array like [0, 1, 2, ...] and produce marks between two ends of Slider min and max
-        return [...new Array(noMarks).keys()].reduce((prev, m) => {
+        return [...new Array(noMarks).keys()].map((m) => {
             const val = parseFloat((intMark * m + periodMin).toFixed(DEC_PHASE));
-            const per = 100*(val - sliderMin)/sliderSize;
-
-            prev = Object.assign(prev, {[val]: markStyle(per, val)});
-            return prev;
+            return {value:val, label:val+''};
         }, {});
-    };
-
-    const revertPeriod = () => {
-        if ((periodList.length >= 1) && (periodList[periodList.length-1] === lastPeriod)) {
-            periodList[periodList.length-1] = 'revert';      // a flag to block adding new item to the list in store{
-
-            dispatchValueChange({
-                fieldKey: fKeyDef.period.fkey,
-                groupKey: pfinderkey,
-                value: lastPeriod
-            });
-        }
     };
 
     const NOMark = 5;
@@ -611,80 +594,80 @@ function LcPFOptions({fields, lastPeriod, periodList=[]}) {
     const marks = getSliderMarks(minPerN, maxPerN, sliderMin, sliderMax, NOMark);
     const offset = 16;
     const highlightW = PanelResizableStyle.width-panelSpace - offset;
-    const pSize = panelSpace/2 - 5;
-    const styleItem = {display: 'list-item', marginLeft: '10px', paddingBottom:'20px'};
-    const innerItem = {display: 'inline-flex', maxWidth: '100%', alignItems: 'center'};
-    return (<div style={{width: PanelResizableStyle.width - offset}}>
-                <div style={{display:'flex', flexDirection:'row-reverse', justifyContent:'space-between'}}>
-                    <HelpIcon helpId={'findpTSV.settings'}/>
-                </div>
-            {'Vary period and time offset while visualizing phase folded plot. ' +
-            'Optionally calculate periodogram. ' +
-            'When satisfied, click Accept to return to Time Series Viewer with phase folded table.'}
-                <br/>
-            <br/>
-            <br/>
-            {ReadOnlyText({
-                label: get(defValues, [fKeyDef.time.fkey, 'label']),
-                               labelWidth: get(defValues, [fKeyDef.time.fkey, 'labelWidth']),
-                content: get(fields, [fKeyDef.time.fkey, 'value'])
-            })}
-                <br/>
-            {ReadOnlyText({
-                label: get(defValues, [fKeyDef.flux.fkey, 'label']),
-                               labelWidth: get(defValues, [fKeyDef.flux.fkey, 'labelWidth']),
-                content: get(fields, [fKeyDef.flux.fkey, 'value'])
-            })}
-                <br/>
-            <h3>{'Set Period'}</h3>
-            <div style={styleItem}>
-                <div style={innerItem}>
-                    <ValidationField fieldKey={fKeyDef.period.fkey} label='Enter manually:'/>
-                </div>
-            </div>
-            <div style={styleItem}>
-                <div>{'Slide to select:'}</div>
-                <div style={innerItem}>
-                    <ValidationField fieldKey={fKeyDef.min.fkey} style={{width: pSize}}/>
-                    <RangeSlider fieldKey={fKeyDef.period.fkey}
-                                 min={sliderMin}
-                                 max={sliderMax}
-                                 minStop={minPerN}
-                                 maxStop={maxPerN}
-                                 marks={marks}
-                                 step={stepSize}
-                                 tooptip={'slide to set period value'}
-                                 slideValue={period}
-                                 defaultValue={minPerN}
-                                 style={{marginBottom: 20, marginLeft: 9, marginRight: 25, width: highlightW}}
-                                 decimalDig={DEC_PHASE}
-                    />
-                    <ValidationField fieldKey={fKeyDef.max.fkey} style={{width: pSize}}/>
-                </div>
-                        </div>
-            <div style={styleItem}>
-                <div style={innerItem}>
-                    {'Calculate periodogram (below) and click to select period.'}
-                    </div>
-                    </div>
-            <div style={{display:'flex', alignItems:'center'}}>
-                <h3>{'Set Time Offset:'}</h3><ValidationField style={{marginLeft:'20px'}} fieldKey={fKeyDef.tz.fkey} label=''/>
-            </div>
-            <br/>
-            <div style={{display: 'flex', alignItems:'center'}}>
-                <CompleteButton
-                    groupKey={[pfinderkey]}
-                    onSuccess={setPFTableSuccess()}
-                    onFail={setPFTableFail()}
-                    text={'Accept'}
-                    includeUnmounted={true}
-                />
-                <div style={{margin: 5}}>
-                    <button type='button' className='button std hl' onClick={()=>cancelStandard()}>Cancel</button>
-                </div>
-                <HelpIcon helpId={'findpTSV.acceptp'}/>
-                </div>
-            </div>
+    const hasPeriodgramData= Boolean(peridogramTbl?.isFetching===false && peridogramTbl?.tableData?.data?.length);
+    return (
+        <Stack>
+            <Card>
+                <Stack {...{spacing:3}}>
+                    <Stack {...{spacing:1}}>
+                        <Stack direction='row' spacing={2} alignItems='flexStart'>
+                            <Typography level='body-sm'> {PERIOD_FINDER_HELP} </Typography>
+                            <HelpIcon helpId={'findpTSV.settings'}/>
+                        </Stack>
+                        <Stack {...{direction:'row', spacing:3}}>
+                            <Stack {...{direction:'row', spacing:1}}>
+                                <Typography >{defValues?.[fKeyDef.time.fkey]?.label}</Typography>
+                                <Typography color='warning'> {getVal(fKeyDef.time.fkey)} </Typography>
+                            </Stack>
+                            <Stack {...{direction:'row', spacing:1}}>
+                                <Typography >{defValues?.[fKeyDef.flux.fkey]?.label}</Typography>
+                                <Typography color='warning'> {getVal(fKeyDef.flux.fkey)} </Typography>
+                            </Stack>
+                        </Stack>
+                        <Stack>
+                            <Stack {...{direction:'row',spacing:1,alignItems:'center'}}>
+                                <Typography level='body-lg'>Set Period</Typography>
+                                <Typography level='body-sm'>(three ways)</Typography>
+                            </Stack>
+                            <Box component='ul' pl={2.5} marginBlockStart={0}>
+                                <li>
+                                    <ValidationField fieldKey={fKeyDef.period.fkey} label='Enter manually' sx={{width:'12rem'}}/>
+                                </li>
+                                <li style={{marginTop:4}}>
+                                    <FormLabel>Slide to select</FormLabel>
+                                    <Stack {...{direction:'row', alignItems:'center', spacing:2, sx:{'& .ff-Input':{width:'6rem'}} }}>
+                                        <ValidationField fieldKey={fKeyDef.min.fkey}
+                                                         initState={{
+                                                             tooltip:'minimum period in days'
+                                                         }} />
+                                        <RangeSlider fieldKey={fKeyDef.period.fkey}
+                                                     min={sliderMin} max={sliderMax}
+                                                     minStop={minPerN} maxStop={maxPerN}
+                                                     marks={marks} step={stepSize}
+                                                     tooptip='slide to set period value'
+                                                     slideValue={period}
+                                                     defaultValue={minPerN}
+                                                     sx={{width: highlightW}}
+                                                     decimalDig={DEC_PHASE} />
+                                        <ValidationField fieldKey={fKeyDef.max.fkey} />
+                                    </Stack>
+                                </li>
+                                <Typography component='li' display='list-item' sx={{mt:1/2}}>
+                                    <Chip onClick={startPeriodogramPopup(LC.FG_PERIODOGRAM_FINDER)}
+                                          color='success' variant={hasPeriodgramData?'soft':'solid'}>
+                                        {hasPeriodgramData ? 'Recalculate Periodogram' : 'Calculate Periodogram'}
+                                    </Chip>
+                                </Typography>
+                            </Box>
+                        </Stack>
+
+                        <Divider orientation='horizontal'/>
+
+                        <ValidationField fieldKey={fKeyDef.tz.fkey} label='Time Offset' sx={{width:'12rem'}}/>
+                    </Stack>
+                    <Stack {...{direction: 'row', justifyContent:'space-between'}}>
+                        <Stack {...{direction: 'row', spacing:2}}>
+                            <CompleteButton groupKey={[pfinderkey]} onSuccess={setPFTableSuccess()} onFail={setPFTableFail()}
+                                            text='Accept' includeUnmounted={true} />
+                            <Button onClick={()=>cancelStandard()}>Cancel</Button>
+                        </Stack>
+                        <HelpIcon helpId={'findpTSV.acceptp'}/>
+                    </Stack>
+                </Stack>
+            </Card>
+            {hasPeriodgramData &&
+                <Typography color='warning' component='div' level='body-lg'>Click on plot or table to choose period.</Typography>}
+        </Stack>
     );
 }
 
@@ -719,8 +702,6 @@ const LcPFReducer= (initState) => {
                 set(defV, [fKeyDef.tz.fkey, 'value'], `${tzero}`);
                 set(defV, [fKeyDef.tzmax.fkey, 'value'], `${tzeroMax}`);
 
-                set(defV, [fKeyDef.period.fkey, 'tooltip'], `Period for phase folding, within [${min} (i.e. 1 sec), ${max}(suggestion)]`);
-                set(defV, [fKeyDef.tz.fkey, 'tooltip'], `time zero, within [${tzero}, ${tzeroMax}`);
 
                 set(defV, [fKeyDef.min.fkey, 'validator'], periodMinValidator('minimum period'));
                 set(defV, [fKeyDef.max.fkey, 'validator'], periodMaxValidator('maximum period'));
@@ -806,10 +787,20 @@ const LcPFReducer= (initState) => {
                                 inFields = updateSet(inFields, [fKeyDef.period.fkey, 'message'], retval.message);
                             }
                         }
+
+
                         break;
                     default:
                         break;
-                } 
+                }
+                const min= inFields[fKeyDef.min.fkey].value;
+                const max= inFields[fKeyDef.max.fkey].value;
+                const tzero= inFields[fKeyDef.tz.fkey].value;
+                const tzeroMax= inFields[fKeyDef.tzmax.fkey].value;
+                inFields[fKeyDef.period.fkey].tooltip= `Period for phase folding, within ${min} (i.e. 1 sec), ${max}(suggestion)]`;
+                inFields[fKeyDef.min.fkey].tooltip= 'minimum period in days';
+                inFields[fKeyDef.max.fkey].tooltip= 'maximum period in days';
+                inFields[fKeyDef.tz.fkey].tooltip= `time zero, within [${tzero}, ${tzeroMax}]`;
             }
             return Object.assign({}, inFields);
         };
@@ -919,17 +910,17 @@ function timezeroValidator(description) {
  */
 function setPFTableSuccess() {
     return (request) => {
-        const reqData = get(request, pfinderkey);
-        const timeName = get(reqData, fKeyDef.time.fkey);
-        const period = get(reqData, fKeyDef.period.fkey);
-        const flux = get(reqData, fKeyDef.flux.fkey);
-        const tzero = get(reqData, fKeyDef.tz.fkey);
+        const reqData = request[pfinderkey];
+        const timeName = reqData?.[fKeyDef.time.fkey];
+        const period = reqData?.[fKeyDef.period.fkey];
+        const flux = reqData?.[fKeyDef.flux.fkey];
+        const tzero = reqData?.[fKeyDef.tz.fkey];
 
         doPFCalculate(flux, timeName, period, tzero);
 
-        const min = get(reqData, fKeyDef.min.fkey,defPeriod.min );
-        const max = get(reqData, fKeyDef.max.fkey, defPeriod.max);
-        const tzeroMax = get(reqData, fKeyDef.tzmax.fkey.fkey, defPeriod.tzeroMax);
+        const min = reqData?.[fKeyDef.min.fkey] ?? defPeriod.min;
+        const max = reqData?.[fKeyDef.max.fkey] ?? defPeriod.max;
+        const tzeroMax = reqData?.[fKeyDef.tzmax.fkey.fkey] ?? defPeriod.tzeroMax;
 
         const layoutInfo = getLayouInfo();
         dispatchUpdateLayoutInfo(Object.assign({}, layoutInfo, {

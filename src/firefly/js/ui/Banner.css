@@ -1,22 +1,14 @@
 
-.banner__main {
-    display: inline-flex;
-    width: 100%;
-    height: 40px;
-    position: relative;
-    background: url("~images/ipac_bar.jpg");
-}
-
 .banner__left {
     flex-grow: 0;
 }
 
-.banner__middle {
-    flex-grow: 1;
-    padding-top: 2px;
-    display: flex;
-    align-items: center;
-}
+/*.banner__middle {*/
+/*    flex-grow: 1;*/
+/*    padding-top: 2px;*/
+/*    display: flex;*/
+/*    align-items: center;*/
+/*}*/
 
 .banner__right {
     flex-grow: 0;
@@ -24,15 +16,15 @@
     align-items: center;
 }
 
-.banner__middle--title {
-    letter-spacing: 1px;
-    color: white;
-    font-size: 25pt;
-    font-family: sans-serif;
-    z-index: 1;
-    text-shadow: 1px 1px 3px rgba(195,235,234, 0.79);
-    white-space: nowrap;
-}
+/*.banner__middle--title {*/
+/*    !*letter-spacing: 1px;*!*/
+/*    !*color: white;*!*/
+/*    !*font-size: 25pt;*!*/
+/*    !*font-family: sans-serif;*!*/
+/*    !*z-index: 1;*!*/
+/*    text-shadow: 1px 1px 3px rgba(195,235,234, 0.79);*/
+/*    white-space: nowrap;*/
+/*}*/
 
 .banner__middle--readout {
     display: inline-flex;
@@ -45,6 +37,8 @@
     flex-grow: 0;
     width: 100%;
     padding-right: 10px;
+    padding-left: 10px;
+    margin-top: 4px;
     box-sizing: border-box;
 }
 

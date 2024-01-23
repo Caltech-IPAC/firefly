@@ -1,5 +1,5 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, {func, bool, element, object, arrayOf, number, objectOf, shape, string, oneOfType} from 'prop-types';
 import {has, isNumber, isString, isObject, isNaN} from 'lodash';
 import {Slider, Box, Stack, Typography, Tooltip} from '@mui/joy';
 
@@ -44,24 +44,29 @@ export function RangeSliderView({min=0, max=100, minStop, maxStop, marks, step=1
 
 
 RangeSliderView.propTypes = {
-    min:   PropTypes.number,
-    max:   PropTypes.number,
-    minStop:  PropTypes.number,
-    maxStop:  PropTypes.number,
-    className: PropTypes.string,
-    marks: PropTypes.array,
-    step: PropTypes.number,
-    vertical: PropTypes.bool,
-    defaultValue: PropTypes.number,
-    slideValue: PropTypes.oneOfType([PropTypes.string,PropTypes.number]).isRequired,
-    handle: PropTypes.element,
-    style: PropTypes.object,
-    sx: PropTypes.object,
-    label: PropTypes.string,
-    labelWidth: PropTypes.number,
-    tooltip:  PropTypes.string,
-    decimalDig: PropTypes.number,
-    handleChange: PropTypes.func           // callback on slider change
+    min:   number,
+    max:   number,
+    minStop:  number,
+    maxStop:  number,
+    className: string,
+    marks:       arrayOf(objectOf(
+        shape({
+            label: string,
+            value: number,
+        })
+    )),   // marks shown on slider
+    step: number,
+    vertical: bool,
+    defaultValue: number,
+    slideValue: oneOfType([string,number]).isRequired,
+    handle: element,
+    style: object,
+    sx: object,
+    label: string,
+    labelWidth: number,
+    tooltip:  string,
+    decimalDig: number,
+    handleChange: func           // callback on slider change
 };
 
 export function checkMarksObject(props, propName, componentName) {

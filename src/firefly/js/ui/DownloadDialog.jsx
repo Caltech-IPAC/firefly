@@ -76,10 +76,9 @@ const emailKey = 'Email';          // should match server DownloadRequest.EMAIL
  * @param props
  * @returns {*}
  */
-export function DownloadButton(props) {
+export function DownloadButton({tbl_id:inTblId , tbl_grp, children, checkSelectedRow, makeButton}) {
 
-    const {tbl_grp, children, checkSelectedRow} = props;
-    const tblIdGetter = () => props.tbl_id || getActiveTableId(tbl_grp);
+    const tblIdGetter = () => inTblId || getActiveTableId(tbl_grp);
     const selectInfoGetter = () => get(getTblById(tblIdGetter()), 'selectInfo');
 
     const tbl_id = useStoreConnector(tblIdGetter);
@@ -102,8 +101,13 @@ export function DownloadButton(props) {
         }
     }, [selectInfo]);
 
+    const isRowSelected = selectInfoCls.getSelectedCount()>0;
+
+    const defButton=
+        <ToolbarButton variant='soft' color='primary' onClick={() =>onClick()} text='Prepare Download'/>;
+
     return (
-        <ToolbarButton variant='soft' color='primary' onClick={onClick} text='Prepare Download'/>
+        makeButton?.(onClick,tbl_id,isRowSelected) ?? defButton
     );
 }
 

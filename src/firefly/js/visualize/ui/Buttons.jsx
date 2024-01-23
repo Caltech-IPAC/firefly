@@ -26,11 +26,26 @@ import ThreeSixtyRoundedIcon from '@mui/icons-material/ThreeSixtyRounded';
 import ContentCopySharpIcon from '@mui/icons-material/ContentCopySharp';
 import LinkIcon from '@mui/icons-material/Link';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
+import SquareRoundedIcon from '@mui/icons-material/SquareRounded';
+import GridViewIcon from '@mui/icons-material/GridView';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import GridViewRoundedIcon from '@mui/icons-material/GridViewRounded';
+import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBulletedRounded';
+import CenterFocusStrongTwoToneIcon from '@mui/icons-material/CenterFocusStrongTwoTone';
 
+import AddTwoToneIcon from '@mui/icons-material/AddTwoTone';
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
 import LockOutlinedIcon from '@mui/icons-material/Lock';
 import PanoramaHorizontalOutlinedIcon from '@mui/icons-material/PanoramaHorizontalTwoTone';
+import ViewCompactIcon from '@mui/icons-material/ViewCompact';
+import CropRoundedIcon from '@mui/icons-material/CropRounded';
+import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
+import RemoveDoneRoundedIcon from '@mui/icons-material/RemoveDoneRounded';
+import FunctionsOutlinedIcon from '@mui/icons-material/FunctionsOutlined';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
+// import FilterAltTwoToneIcon from '@mui/icons-material/FilterAltTwoTone';
+// import FilterAltOffTwoToneIcon from '@mui/icons-material/FilterAltOffTwoTone';
 import FilterIco from '@mui/icons-material/FilterAltOutlined';
 import ClearFilterIco from '@mui/icons-material/FilterAltOffOutlined';
 import TextViewIco from '@mui/icons-material/TextFieldsOutlined';
@@ -100,13 +115,15 @@ export const LockImages= ({locked, ...props}) =>{
 };
 
 
-
-
-export const SaveButton= (props) => (
-    <ToolbarButton {...{ icon: <SaveOutlinedIcon/>, iconButtonSize:'42px', ...props,  }}/>);
-
-export const InfoButton= (props) => (
-    <ToolbarButton {...{ icon: <InfoOutlinedIcon/>, iconButtonSize:'42px', ...props,  }}/>);
+export const FilterAddButton= (props) => {
+    const icon= (
+        <Box sx={{width:24,height:24}}>
+            <FilterIco sx={{position:'absolute', top:0, left:-1}}/>
+            <AddTwoToneIcon sx={{position:'absolute', left:8, bottom:-3, transform: 'scale(.6,.6)'}}/>
+        </Box>
+    );
+    return <TB {...{ icon, ...props}}/>;
+};
 
 export const CenterDropdown= (props) => (
     <DropDownToolbarButton {...{ icon: <CenterFocusWeakOutlinedIcon/>, useDropDownIndicator: true,
@@ -118,16 +135,9 @@ export const ColorDropDownButton= (props) => (
         dropPosition:{left:1,bottom:-2},
         iconButtonSize:'40px', ...props,  }}/>);
 
-export const ColorButtonIcon= (props) => (<ToolbarButton {...{ icon: <ColorLens/>, iconButtonSize:'40px', ...props,  }}/>);
-
-export const RotateButton= (props) => (
-    <ToolbarButton {...{ icon: <ThreeSixtyRoundedIcon/>, iconButtonSize:'42px', ...props,  }}/>);
-
 export const DrawLayersButton= (props) => (
     <ToolbarButton {...{ icon: <Layers viewBox={'2 0 22 20'}/>, iconButtonSize:'40px', ...props,  }}/>);
 
-export const RestoreButton= (props) => (
-    <ToolbarButton {...{ icon: <ReplayRoundedIcon/>, iconButtonSize:'42px', ...props,  }}/>);
 
 export const FlipYButton= ({isIconOn, ...props}) => {
     return (<SimpleLayerOnOffButton {...{SvgIconComponent:<FlipOutlinedIcon/>, isIconOn, iconButtonSize:'42px',
@@ -141,13 +151,11 @@ export const DistanceButton= ({isIconOn, ...props}) => {
         ...props}}/>);
 };
 
-export const ExtractPoints= (props) => (
-    <ToolbarButton {...{ icon: <GrainIcon/>, iconButtonSize:'42px', ...props,  }}/>);
+export const ExtractPoints= (props) => (<TB {...{ icon: <GrainIcon/>, ...props,  }}/>);
 
 export const ExtractLine= (props) => (
-    <ToolbarButton {...{ icon: <HorizontalRuleRoundedIcon className='extractLine'/>, iconButtonSize:'42px',
-        sx:{'& .extractLine': {transform: 'rotate(142deg)'}},
-        ...props,  }}/>);
+    <TB {...{ icon: <HorizontalRuleRoundedIcon className='extractLine'/>,
+        sx:{'& .extractLine': {transform: 'rotate(142deg)'}}, ...props,  }}/>);
 
 export const SearchDetailButton= (props) => (
     <DropDownToolbarButton {...{ icon: <BiotechOutlinedIcon/>, iconButtonSize:'44px', useDropDownIndicator: true,
@@ -210,3 +218,23 @@ export const CombineChartButton = (props) => (
 );
 // <-- Table and Chart buttons
 
+export const RestoreButton= (props) => ( <TB {...{ icon: <ReplayRoundedIcon/>, ...props}}/>);
+export const RotateButton= (props) => ( <TB {...{ icon: <ThreeSixtyRoundedIcon/>, ...props,  }}/>);
+export const SaveButton= (props) => ( <TB {...{ icon: <SaveOutlinedIcon/>, ...props}}/>);
+export const InfoButton= (props) => (<TB {...{ icon: <InfoOutlinedIcon/>, ...props}}/>);
+export const ColorButtonIcon= (props) => (<TB {...{ icon: <ColorLens/>, ...props}}/>);
+export const OneTileButton= (props) => ( <TB {...{ icon: <SquareRoundedIcon/>, ...props}}/>);
+export const GridTileButton= (props) => (<TB {...{ icon: <GridViewRoundedIcon/>, ...props}}/>);
+export const GridTileCompactButton= (props) => ( <TB {...{ icon: <ViewCompactIcon/>, ...props}}/>);
+export const ListViewButton= (props) => ( <TB {...{ icon: <FormatListBulletedRoundedIcon/>, ...props}}/>);
+export const CheckedButton= (props) => ( <TB {...{ icon: <DoneAllRoundedIcon/>, ...props,}}/>);
+export const CheckedClearButton= (props) => ( <TB {...{ icon: <RemoveDoneRoundedIcon/>, ...props}}/>);
+export const CenterOnSelection= (props) => ( <TB {...{ icon: <CenterFocusStrongTwoToneIcon/>, ...props}}/>);
+export const CropButton= (props) => ( <TB {...{ icon: <CropRoundedIcon/>, ...props}}/>);
+export const StatsButton= (props) => ( <TB {...{ icon: <FunctionsOutlinedIcon/>, ...props}}/>);
+
+export const FiltersOffButton= (props) => ( <TB {...{ icon: <ClearFilterIco/>, ...props}}/>);
+
+// export const SettingsButton= (props) => ( <TB {...{ icon: <SettingsOutlinedIcon/>, ...props}}/>);
+
+const TB= ({icon, ...props}) => (<ToolbarButton {...{ icon, iconButtonSize:'42px', ...props}}/>);

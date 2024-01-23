@@ -1,3 +1,4 @@
+import {Stack, Typography} from '@mui/joy';
 import React from 'react';
 import PropTypes from 'prop-types';
 import {get,isEmpty} from 'lodash';
@@ -15,9 +16,8 @@ export class BasicSettingBox extends SettingBox {
         super(props);
     }
     render() {
-        var {generalEntries, missionEntries} = this.props;
-        var {tblColumns, numColumns, charColumns} = this.state;
-
+        const {generalEntries, missionEntries} = this.props;
+        const {tblColumns, numColumns, charColumns} = this.state;
 
         if (isEmpty(tblColumns) || isEmpty(generalEntries) || isEmpty(missionEntries)) return false;
 
@@ -33,22 +33,17 @@ export class BasicSettingBox extends SettingBox {
             <FieldGroup groupKey={groupKey}
                         reducerFunc={basicOptionsReducer(missionEntries, generalEntries, typeColumns)} keepState={true}>
 
-                <div >
-                    <div style={{ with:{labelWidth}, fontWeight:'bold', display:'inline-block', margin: '3px 0 6px 0'}} > Column Selection</div>
-                    <label style = {{width: '170px', paddingLeft: '10px', display:'inline-block'}} title={title}>{uploadedFileName}</label>
-
-                </div>
-                <div style={{display: 'flex', flexDirection: 'column'}}>
-                    {getMissionName(missionName) !== '' &&
-                    <ReadOnlyText label='Mission:' content={getMissionName(missionName)}
-                                  labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>}
-                    <div style={{display: 'flex'}}>
-                        <div>
+                <Stack {...{direction:'row', spacing:1}}>
+                    <Typography level='body-lg'> Column Selection</Typography>
+                    <Typography title={title}>{uploadedFileName}</Typography>
+                </Stack>
+                <Stack>
+                    {Boolean(getMissionName(missionName)) &&
+                        <Typography>{`Mission: ${getMissionName(missionName)}`}</Typography>}
+                    <Stack>
                             {missionInputs}
-
-                        </div>
-                    </div>
-                </div>
+                    </Stack>
+                </Stack>
                 <ReadOnlyText label='Period:' content={period}
                               labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>
 

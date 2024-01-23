@@ -19,13 +19,11 @@ export class ZTFSettingBox extends PureComponent {
     render() {
         var {generalEntries, missionEntries} = this.props;
         const tblModel = getTblById(LC.RAW_TABLE);
-        const wrapperStyle = {margin: '3px 0'};
-
         var missionFilters = ( <div style={{ width:{labelWidth}, display:'inline-block', margin: '3px 0 6px 0'}} >
             <br /> </div>);
 
         const imageStyle = { padding: '0 6px 0 6px', marginLeft: '54px'};
-        return renderMissionView({generalEntries,missionEntries,missionFilters,tblModel,wrapperStyle, imageEntriesStyle:imageStyle, labelWidth , callback:ztfOptionsReducer});
+        return renderMissionView({generalEntries,missionEntries,missionFilters,tblModel,imageEntriesStyle:imageStyle, labelWidth , callback:ztfOptionsReducer});
 
 
     }

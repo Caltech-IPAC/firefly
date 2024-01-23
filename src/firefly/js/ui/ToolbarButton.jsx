@@ -53,9 +53,7 @@ export const ToolbarButton = memo((props) => {
         imageStyle={}, iconButtonSize, shortcutKey='', color='neutral', variant='plain',
         disableHiding, active, sx, CheckboxOnIcon, CheckboxOffIcon,
         useDropDownIndicator= false, hasCheckBox=false, checkBoxOn=false,
-        component, slotProps={},
-        dropPosition={},
-        dropDownCB, onClick} = props;
+        component, slotProps={}, dropPosition={}, dropDownCB, onClick} = props;
 
     const {current:divElementRef}= useRef({divElement:undefined});
     const invertStyle= {filter : 'invert(1)'};
@@ -99,7 +97,6 @@ export const ToolbarButton = memo((props) => {
     const b=  (
         <Tooltip title={tip} sx={sx} {...slotProps?.tooltip}>
             <Stack {...{direction:'row', alignItems:'center', ref:setupRef, position:'relative' }} {...slotProps?.root}>
-                {/*{hasCheckBox && <Checkbox {...{variant:'plain', checked:checkBoxOn, onClick:handleClick}}/> }*/}
                 <TbCheckBox {...{hasCheckBox, CheckboxOnIcon, CheckboxOffIcon, checkBoxOn, onClick:handleClick}}/>
                 {useIconButton ?
                     (<IconButton {...{
@@ -137,16 +134,7 @@ export const ToolbarButton = memo((props) => {
                     </Button>
                 }
                 {useIconButton && useDropDownIndicator &&
-                    <Box {...{
-                        className:'ff-toolbar-dropdown',
-                        sx:{
-                            minHeight:'unset', minWidth:'unset',backgroundColor:'transparent',
-                            padding:0, position:'absolute', bottom:'0px', left:'3px', ...dropPosition},
-                        onClick:handleClick
-                    }}>
-                        {dropDownIndicator}
-                    </Box>
-                    }
+                    <DropDownIndicator {...{dropPosition,onClick:handleClick,doInvert }}/>}
             </Stack>
         </Tooltip>
     );
@@ -165,9 +153,10 @@ ToolbarButton.propTypes= {
     imageStyle : object,
     lastTextItem : bool,
     useDropDownIndicator: bool,
-    style : object,
     hasCheckBox: bool,
     checkBoxOn: bool,
+    CheckboxOnIcon:  element,
+    CheckboxOffIcon: element,
     onClick : func,
     dropDownCB : func,
     disableHiding: bool,
@@ -178,8 +167,23 @@ ToolbarButton.propTypes= {
         root: object,     // because there are already too many props, this is used specifically to pass custom props to top level component
         tooltip: object,
         button: object,
-    })
+    }),
+    active: bool,
+    sx: object,
+    component: object,
+    dropPosition: object,
+    variant: string,
 };
+
+const DropDownIndicator= ({dropPosition,onClick,doInvert}) => (
+    <Box {...{ className:'ff-toolbar-dropdown', onClick,
+        sx:{
+            minHeight:'unset', minWidth:'unset',backgroundColor:'transparent',
+            padding:0, position:'absolute', bottom:'0px', left:'3px', ...dropPosition
+        }}}>
+        <img src={DROP_DOWN_ICON} style={doInvert}/>
+    </Box>
+);
 
 function TbCheckBox({hasCheckBox, CheckboxOnIcon, CheckboxOffIcon, checkBoxOn, onClick}) {
     if (!hasCheckBox) return undefined;
