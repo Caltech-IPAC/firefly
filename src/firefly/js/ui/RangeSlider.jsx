@@ -16,7 +16,7 @@ function handleOnChange(value, params, fireValueChange){
     const {min, max, minStop=min, maxStop=max} = params;    //displayValue in string, min, max, step: number
     const val = parseFloat(value);
 
-    if (!isNaN(val) && val >= minStop && val <= maxStop) params?.onValueChange(val);
+    if (!isNaN(val) && val >= minStop && val <= maxStop) params?.onValueChange?.(val);
 }
 
 
@@ -37,12 +37,12 @@ RangeSlider.propTypes={
     min:         number,                  // minimum end of slider
     max:         number,                  // maximum end of slider
     className:   string,                  // class name attached to slider component
-     marks:       arrayOf(objectOf(
-         shape({
-             label: string,
-             value: number,
-         })
-     )),   // marks shown on slider
+    marks:       arrayOf(objectOf(
+        shape({
+            label: string,
+            value: number,
+        })
+    )),   // marks shown on slider
     step:        number,                       // slider step size
     vertical:    bool,                         // slider is in vertical
     defaultValue: number,                      // default value of slider

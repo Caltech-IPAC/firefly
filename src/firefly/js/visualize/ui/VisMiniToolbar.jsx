@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Stack, Typography} from '@mui/joy';
+import {Box, Stack, Typography} from '@mui/joy';
 import React, {memo, useEffect, useRef, useState} from 'react';
 import {omit} from 'lodash';
 import shallowequal from 'shallowequal';
@@ -114,11 +114,11 @@ function getStoreState(oldState) {
     return (needsUpdate) ? newState : oldState;
 }
 
-export const VisMiniToolbar = memo( ({style, manageExpand=true, expandGrid=false, viewerId, tips={}}) => {
+export const VisMiniToolbar = memo( ({sx, manageExpand=true, expandGrid=false, viewerId, tips={}}) => {
     const {visRoot,dlCount, recentTargetAry, modalEndInfo} = useStoreConnector(getStoreState,[],true);
 
     return (
-        <VisMiniTBWrapper {...{visRoot, dlCount, style, recentTargetAry, viewerId,
+        <VisMiniTBWrapper {...{visRoot, dlCount, sx, recentTargetAry, viewerId,
                           manageExpand, expandGrid, modalEndInfo, tips}} />
     );
 });
@@ -142,10 +142,10 @@ const rS= {
 };
 
 const VisMiniTBWrapper= wrapResizer(
-    ({visRoot, dlCount, style= {}, size:{width}, manageExpand, expandGrid, viewerId, modalEndInfo, tips={}}) => (
-        <div style={{...rS, ...style}} className='disable-select' >
+    ({visRoot, dlCount, sx= {}, size:{width}, manageExpand, expandGrid, viewerId, modalEndInfo, tips={}}) => (
+        <Box sx={{...rS, ...sx}} className='disable-select' >
             <VisMiniToolbarView {...{visRoot, dlCount, availableWidth:width, manageExpand, expandGrid,modalEndInfo, viewerId, tips}} />
-        </div>
+        </Box>
     ));
 
 

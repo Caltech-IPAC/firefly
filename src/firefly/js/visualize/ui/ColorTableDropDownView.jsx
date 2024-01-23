@@ -327,8 +327,8 @@ const AdvancedColorPanel= ({allowPopout}) => {
                            sx={allowPopout? {mt:-2.5, width:.85} : {}}
                            hasCheckBox={true}
                            checkBoxOn={isOverlayColorLocked(pv,plotGroupAry)}
-                           CheckboxOnIcon={<LockIcon/>}
-                           CheckboxOffIcon={<LockOpenOutlinedIcon/>}
+                           CheckboxOnIcon={<LockIcon sx={{pt: 1/4}}/>}
+                           CheckboxOffIcon={<LockOpenOutlinedIcon sx={{pt: 1/4}}/>}
                            text='Lock color & overlays'
                            tip='Lock all images for color changes and overlays.'
                            onClick={() => toggleOverlayColorLock(pv,plotGroupAry)} />

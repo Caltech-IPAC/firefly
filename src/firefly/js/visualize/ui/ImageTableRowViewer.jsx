@@ -261,7 +261,7 @@ function Toolbar({viewerId, tableId:tbl_id, closeFunc=null, maxImageCnt, default
                                  label= 'Cutout Size (arcsec):' />}
                 <SortDirFeedback table={getTblById(tbl_id)}/>
                 {wcsMatch}
-                <VisMiniToolbar style={{width:350}}/>
+                <VisMiniToolbar sx={{width:350}}/>
             </div>
         </FieldGroup>
     );

@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Sheet, Typography} from '@mui/joy';
 import React, {memo, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {Stack} from '@mui/joy';
@@ -15,7 +16,7 @@ import {lcManager, LC} from './LcManager.js';
 import {LcResult} from './LcResult.jsx';
 import {LcPeriodPlotly} from './LcPeriodPlotly.jsx';
 import {Menu} from '../../ui/Menu.jsx';
-import {Banner} from '../../ui/Banner.jsx';
+import {Banner, makeBannerTitle} from '../../ui/Banner.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {FormPanel} from './../../ui/FormPanel.jsx';
@@ -66,18 +67,11 @@ export const LcViewer = memo(({menu, dropdownPanels=[], appTitle, ...appProps}) 
     };
 
     const subTitleStr= displayMode?.startsWith('period') ? '(Period Finder)' : '(Viewer)';
-    const title = (
-        <Stack marginRight={1}>
-            <div style={{fontSize:18}}>{appTitle || DEFAULT_TITLE}</div>
-            <div style={{fontSize: '11pt', fontWeight: 100, textAlign:'end', marginTop:-9}}>{subTitleStr}</div>
-        </Stack>
-    );
-
+    const title = makeBannerTitle(appTitle || DEFAULT_TITLE, subTitleStr);
 
     return (
         <App dropdownPanels={[...dropdownPanels, <UploadPanel {...{fileLocation}}/>]}
-             showTitleOnBanner={true} appTitle={title}  {...appProps}
-        >
+             showTitleOnBanner={true} appTitle={title}  {...appProps} >
             <MainView {...{error, displayMode, periodProps}}/>
         </App>
     );
@@ -132,11 +126,6 @@ function onReady({menu}) {
 }
 
 
-const BannerSection= ({menu,...rest}) => (
-        <Banner key='banner' menu={<Menu menu={menu} /> }
-            {...rest}
-        />
-    );
 
 const labelW = 150;
 
@@ -173,32 +162,25 @@ export const UploadPanel = ({initArgs}) =>{
     const instruction = 'Plot time series data, view associated images, find period, and phase fold.';
     const options = missionOptions.map((id) => ({label: getMissionName(id) || capitalize(id), value: id}) );
 
-    const showUploadLocation = () => {
-        const options = [
-            {'id': 0, label: 'Local File', 'value': 'isLocal'},
-            {'id': 1, label: 'Workspace', 'value': 'isWs'}
-        ];
-        return (
-            <div>
-                <RadioGroupInputField
-                    fieldKey={'uploadContainer'}
-                    initialState={{value: options[0].value, label: 'Choose Upload from:',
-                        labelWidth: (labelW-4)}}
-                    alignment={'horizontal'}
-                    options={options}
-                />
-            </div>
-        );
-    };
+    const uploadLocationChoice = (
+                <RadioGroupInputField {...{
+                    fieldKey:'uploadContainer',
+                    orientation:'horizontal',
+                    initialState:{value: 'isLocal'},
+                    options: [
+                                {id: 0, label: 'Upload Local File', value: 'isLocal'},
+                                {id: 1, label: 'Use Workspace', value: 'isWs'}
+                            ]
+                }} /> );
 
     const showFileUploadButton = () => (
-            <div style={{padding:5, display:'flex', alignItems:'center', minWidth: 450, height: 50}}>
-                <div style={{display:'flex', flexDirection:'column', width: labelW}}>
-                    <div> {'Upload time series table:'} </div>
+            <Stack {...{minWidth: 450}}>
+                <Stack {...{direction:'row', spacing:2}}>
+                    <Typography>Upload time series table</Typography>
                     <HelpText helpId={'loadingTSV'} linkText={'(See requirements)'}/>
-                </div>
+                </Stack>
                 { fileLocation === 'isLocal' ?
-                        <FileUpload sx={wrapperStyle} fieldKey='rawTblSource'
+                        <FileUpload fieldKey='rawTblSource'
                             initialState={{ tooltip: 'Select a Time Series Table file to upload',
                                 label: ''}}
                         />
@@ -207,38 +189,35 @@ export const UploadPanel = ({initArgs}) =>{
                             initialState={{ tooltip: 'Select a Time Series Table file from workspace to upload'}}
                         />
                 }
-            </div>
+            </Stack>
         );
 
     return (
-        <div style={{padding: 10, marginBottom:15}}>
-            <div style={{margin: '0px 5px 5px'}}>{instruction}</div>
-            <FormPanel
-                groupKey={vFileKey} onSubmit={(request) => onSearchSubmit(request)} onCancel={dispatchHideDropDown}
-                submitText={'Upload'} help_id={'loadingTSV'}>
-                <FieldGroup groupKey={vFileKey} keepState={true}>
-                    <div style={{padding:5 }}>
-                        <div style={{padding:5 }}>
-                            {showUploadLocation()}
-                        </div>
-                        {showFileUploadButton()}
-                        <div style={{padding:5,display:'flex', alignItems:'center' }}>
-                            <div style={{display:'flex', flexDirection:'column', width: labelW}}>
-                                <div>{'Choose mission'}</div>
-                                <div>{'to view associated images:'}</div>
-                            </div>
-                            <ListBoxInputField fieldKey='mission' wrapperStyle={wrapperStyle} options={options}
-                                               initialState={{
-                                                   value: 'wise',
-                                                   tooltip: 'Choose mission to view associated images',
-                                                   label : '',
-                                                   labelWidth : 0
-                                               }} />
-                        </div>
-                    </div>
-                </FieldGroup>
+            <FormPanel groupKey={vFileKey}
+                       onSubmit={(request) => onSearchSubmit(request)} onCancel={dispatchHideDropDown}
+                       submitText={'Upload'} help_id={'loadingTSV'}>
+                <Stack {...{width:1, alignItems:'center'}}>
+                    <Stack {...{ml:0, mt:4, spacing:3}}>
+                        <Typography level='body-lg'>{instruction}</Typography>
+                        <FieldGroup groupKey={vFileKey} keepState={true}>
+                            <Stack {...{spacing:2}}>
+                                {uploadLocationChoice}
+                                {showFileUploadButton()}
+                                <Stack>
+                                    <Typography> Choose mission to view associated images </Typography>
+                                    <ListBoxInputField fieldKey='mission' wrapperStyle={wrapperStyle} options={options}
+                                                       initialState={{
+                                                           value: 'wise',
+                                                           tooltip: 'Choose mission to view associated images',
+                                                           label : '',
+                                                           labelWidth : 0
+                                                       }} />
+                                </Stack>
+                            </Stack>
+                        </FieldGroup>
+                    </Stack>
+                </Stack>
             </FormPanel>
-        </div>
     );
 };
 

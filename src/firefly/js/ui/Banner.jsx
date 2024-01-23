@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box, Sheet, Stack, Typography} from '@mui/joy';
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {useStoreConnector} from './SimpleComponent.jsx';
@@ -12,29 +13,38 @@ import './Banner.css';
 
 const getVersionTipStr= (appTitle) => `${appTitle?appTitle+' ':''}Version:\n${getVersionInfoStr(true,true)}`;
 
+// todo - evaluate if we want soft/primary as our banner color
+const variant='soft';
+// const variant='solid';
+// const variant='outlined';
+const color='primary';
+
 export const Banner = memo( ({menu, readout, appIcon, visPreview, appTitle, additionalTitleStyle = {},
                                  showUserInfo=false, enableVersionDialog= false, showTitleOnBanner=false,
                              bannerMiddleStyle={}, bannerLeftStyle={}}) => {
     return (
-        <div className='banner__main'>
-            <div className='banner__left' style={{ cursor: enableVersionDialog ? 'pointer' : 'inherit', ...bannerLeftStyle}}>
-                {appIcon ?
-                    <img src={appIcon}
-                         onClick={() => enableVersionDialog && showFullVersionInfoDialog(appTitle) }
-                         title={enableVersionDialog ? getVersionTipStr(appTitle) : ''}/> :
-                    <div style={{width: 75}}/>}
-            </div>
-            <div className='banner__middle' style={bannerMiddleStyle}>
-
-                {showTitleOnBanner && <div className='banner__middle--title' style={{marginLeft:'10px', ...additionalTitleStyle}}>{appTitle}</div>}
-                <div className='banner__middle--menu'>
-                    {menu}
+        <Sheet {...{
+            className:'banner__main', variant, color, sx:{width:1, position:'relative' } }}>
+            <Stack {...{direction:'row', height:40, alignItems:'flex-end' }}>
+                <Box sx={{ alignSelf:'center', flexGrow:0, cursor: enableVersionDialog ? 'pointer' : 'inherit'}}
+                     style={bannerLeftStyle}>
+                    {appIcon ?
+                        <img src={appIcon}
+                             onClick={() => enableVersionDialog && showFullVersionInfoDialog(appTitle) }
+                             title={enableVersionDialog ? getVersionTipStr(appTitle) : ''}/> :
+                        <Box {...{width: 75}}/>}
+                </Box>
+                <Stack {...{flexGrow:1, direction:'row',alignItems:'flex-end',  style:bannerMiddleStyle   }}>
+                    {showTitleOnBanner && makeBannerTitle(appTitle)}
+                    <Stack {...{ flexGrow: 0, width: 1, px:1.5 }}>
+                        {menu}
+                    </Stack>
+                </Stack>
+                <div className='banner__right'>
+                    {showUserInfo && <UserInfo/>}
                 </div>
-            </div>
-            <div className='banner__right'>
-                {showUserInfo && <UserInfo/>}
-            </div>
-        </div>
+            </Stack>
+        </Sheet>
     );
 });
 
@@ -52,6 +62,19 @@ Banner.propTypes= {
     enableVersionDialog: PropTypes.bool,
 };
 
+ export function makeBannerTitle(title,subTitle) {
+     if (title && subTitle) {
+         return (
+             <Stack pr={1}>
+                 <Typography {...{level:'h3', sx:{lineHeight:1, whiteSpace:'nowrap'} }}>{title}</Typography>
+                 <Typography {...{level:'title-sm', sx:{lineHeight:1, textAlign:'end'} }} >
+                     {subTitle}
+                 </Typography>
+             </Stack>
+         );
+     }
+     return <Typography {...{color, variant, level:'h4' }}>{title}</Typography>;
+}
 
 const UserInfo= memo(() => {
     const userInfo = useStoreConnector(() => getUserInfo() ?? {});

@@ -31,6 +31,9 @@ import Validate from '../../util/Validate.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {convertToHiPS, convertToImage, doHiPSImageConversionIfNecessary} from '../task/PlotHipsTask.js';
 import {
+    CenterOnSelection, CheckedButton, CheckedClearButton, CropButton, FilterAddButton, FiltersOffButton, StatsButton
+} from './Buttons.jsx';
+import {
     clearFilterDrawingLayer, crop, filterDrawingLayer, recenterToSelection, selectDrawingLayer, stats,
     unselectDrawingLayer, zoomIntoSelection
 } from './CtxToolbarFunctions';
@@ -238,32 +241,24 @@ export const VisCtxToolbarView= memo((props) => {
         <Fragment>
 
             {showSelectionTools && image &&
-            <ToolbarButton icon={CROP} tip='Crop the image to the selected area'
-                           imageStyle={image24x24} visible={mi.crop} onClick={() => crop(pv)}/>}
+            <CropButton tip='Crop the image to the selected area' visible={mi.crop} onClick={() => crop(pv)}/>}
 
 
             {showCatSelect &&
-            <ToolbarButton icon={SELECTED} tip='Mark data in area as selected'
-                           imageStyle={image24x24} visible={mi.selectTableRows}
+            <CheckedButton tip='Mark data in area as selected' visible={mi.selectTableRows}
                            onClick={() => selectDrawingLayer(pv)}/>}
 
             {showCatUnSelect &&
-            <ToolbarButton icon={UNSELECTED} tip='Mark all data unselected'
-                           imageStyle={image24x24}
-                           visible={mi.unselectTableRows}
+            <CheckedClearButton tip='Mark all data unselected' visible={mi.unselectTableRows}
                            onClick={() => unselectDrawingLayer(pv)}/>}
 
             {showFilter &&
-            <ToolbarButton icon={FILTER} tip='Filter in the selected area'
-                           imageStyle={image24x24}
-                           visible={mi.filterTableRows}
-                           onClick={() => filterDrawingLayer(pv)}/>}
+            <FilterAddButton tip='Filter in the selected area' visible={mi.filterTableRows}
+                             onClick={() => filterDrawingLayer(pv)}/>}
 
             {showClearFilter &&
-            <ToolbarButton icon={CLEAR_FILTER} tip='Clear all the Filters'
-                           imageStyle={image24x24}
-                           visible={mi.clearTableFilters}
-                           onClick={() => clearFilterDrawingLayer(pv)}/>}
+            <FiltersOffButton tip='Clear all the Filters' visible={mi.clearTableFilters}
+                              onClick={() => clearFilterDrawingLayer(pv)}/>}
 
             {showSelectionTools &&
             <ToolbarButton icon={SELECTED_ZOOM} tip='Zoom to fit selected area'
@@ -271,15 +266,11 @@ export const VisCtxToolbarView= memo((props) => {
                            onClick={() => zoomIntoSelection(pv)}/>}
 
             { showSelectionTools &&
-            <ToolbarButton icon={SELECTED_RECENTER} tip='Recenter image to selected area'
-                           imageStyle={image24x24}
-                           visible={mi.recenterToSelection}
-                           onClick={() => recenterToSelection(pv)}/>}
+            <CenterOnSelection tip='Recenter image to selected area'
+                           visible={mi.recenterToSelection} onClick={() => recenterToSelection(pv)}/>}
 
             {showSelectionTools && image &&
-            <ToolbarButton icon={STATISTICS} tip='Show statistics for the selected area'
-                           imageStyle={image24x24}
-                           visible={mi.imageStatistics}
+            <StatsButton tip='Show statistics for the selected area' visible={mi.imageStatistics}
                            onClick={() => stats(pv)}/>}
 
             {isSpacialActionsDropVisible(searchActions,pv) && <ActionsDropDownButton {...{searchActions,pv, style:{marginTop:3}}}/> }

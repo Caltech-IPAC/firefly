@@ -240,7 +240,7 @@ export function getConverter(converterId = UNKNOWN_MISSION) {
 
 export function getMissionName(converterId) {
     const converterData = converterId && converters[converterId];
-    return get(converterData, 'missionName', converterId);
+    return converterData?.missionName ?? converterId;
 }
 
 export function getYColMappings(tbl_id, yCol) {

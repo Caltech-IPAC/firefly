@@ -17,7 +17,9 @@ import {FilterEditorWrapper} from './FilterEditorWrapper.jsx';
 import {isScatter2d} from '../ChartUtil.js';
 import {findViewerWithItemId, getLayoutType, getMultiViewRoot, PLOT2D} from '../../visualize/MultiViewCntlr.js';
 import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField';
-import {ClearFilterButton, ExpandButton, FilterButton, ResetButton, SaveButton, SettingsButton} from '../../visualize/ui/Buttons.jsx';
+import {
+    CheckedClearButton, ClearFilterButton, ExpandButton, FilterButton, ResetButton, SaveButton, SettingsButton
+} from '../../visualize/ui/Buttons.jsx';
 
 import ZoomIco from 'html/images/icons-2014/24x24_ZoomIn.png';
 import PanIco from 'html/images/icons-2014/pan.png';
@@ -361,9 +363,8 @@ function SelectSelection({chartId}) {
 
 function ClearSelected({chartId}) {
     return (
-        <IconButton onClick={() => dispatchChartSelect({chartId, selIndexes:[], chartTrigger: true})}
-             title='Unselect all selected points'
-        ><img src={ClearSelectIco}/></IconButton>
+        <CheckedClearButton onClick={() => dispatchChartSelect({chartId, selIndexes:[], chartTrigger: true})}
+             title='Unselect all selected points'/>
     );
 }
 

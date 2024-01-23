@@ -25,7 +25,7 @@ export class PTFSettingBox extends PureComponent {
             <br /> </div>);
 
         const imageStyle = { padding: '0 6px 0 6px', marginLeft: '54px'};
-        return renderMissionView({generalEntries,missionEntries,missionFilters,tblModel,wrapperStyle, imageEntriesStyle:imageStyle, labelWidth , callback:ptfOptionsReducer});
+        return renderMissionView({generalEntries,missionEntries,missionFilters,tblModel, imageEntriesStyle:imageStyle, labelWidth , callback:ptfOptionsReducer});
 
 
     }

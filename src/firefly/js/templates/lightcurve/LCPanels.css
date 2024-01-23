@@ -40,20 +40,8 @@
     height: 100%;
 }
 
-.phaseFolded__options {
-    background-color: #dcdcdc;
-    border-radius: 7px;
-    border: 1px solid #cccccc;
-    margin-right: 2px;
-    padding: 10px;
-    width: 100%;
-    max-width: 540px;
-    overflow: auto;
-}
 
 .settingBox {
-    background-color: #dcdcdc;
-    border: 1px solid #cccccc;
     margin-bottom: 3px;
     padding: 5px 10px 10px 5px;
 }

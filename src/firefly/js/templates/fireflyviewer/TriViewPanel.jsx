@@ -25,7 +25,7 @@ import {usePinnedChartInfo, PinnedChartPanel, PINNED_VIEWER_ID, BadgeLabel} from
 import {allowPinnedCharts} from '../../charts/ChartUtil.js';
 import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
 
-const stateKeys= ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'images'];
+const stateKeys= ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'images', 'coverageSide'];
 const LEFT= 'LEFT';
 const RIGHT= 'RIGHT';
 const triViewKey= 'images | tables | xyplots';

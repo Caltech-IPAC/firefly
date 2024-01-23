@@ -1,3 +1,4 @@
+import {Stack, Typography} from '@mui/joy';
 import React from 'react';
 import PropTypes from 'prop-types';
 import {get, has, set, isEmpty} from 'lodash';
@@ -100,14 +101,14 @@ export function getSuggestedList (val, columnNames, defaultVal) {
 }
 
 export function getInitialDefaultValues(labelWidth, missionName) {
-    var commonDefault = {
+    const commonDefault = {
         [LC.META_TIME_CNAME]: Object.assign(getTypeData(LC.META_TIME_CNAME, '',
             'Time column name',
-            'Time Column:', labelWidth),
+            'Time Column', labelWidth),
             {validator: null}),
         [LC.META_FLUX_CNAME]: Object.assign(getTypeData(LC.META_FLUX_CNAME, '',
             'Value column name',
-            'Value Column:', labelWidth),
+            'Value Column', labelWidth),
             {validator: null}),
         [LC.META_TIME_NAMES]: Object.assign(getTypeData(LC.META_TIME_NAMES, '',
             'Value column suggestion'),
@@ -117,10 +118,10 @@ export function getInitialDefaultValues(labelWidth, missionName) {
             {validator: null}),
         ['cutoutSize']: Object.assign(getTypeData('cutoutSize', '',
             'image cutout size',
-            'Cutout Size (arcmin):', 100)),
+            'Cutout Size (arcmin)', 100)),
         [LC.META_URL_CNAME]: Object.assign(getTypeData(LC.META_URL_CNAME, '',
             'Image url column name',
-            'Source Column:', labelWidth))
+            'Source Column', labelWidth))
 
     };
 
@@ -129,16 +130,16 @@ export function getInitialDefaultValues(labelWidth, missionName) {
             var genericDefault = {
                 [LC.META_ERR_CNAME]: Object.assign(getTypeData(LC.META_ERR_CNAME, '',
                     'flux error column name',
-                    'Error Column:', labelWidth)),
+                    'Error Column', labelWidth)),
                 [LC.META_COORD_XNAME]: Object.assign(getTypeData(LC.META_COORD_XNAME, '',
                     'Coordinate X column name',
-                    'X Column:', labelWidth)),
+                    'X Column', labelWidth)),
                 [LC.META_COORD_YNAME]: Object.assign(getTypeData(LC.META_COORD_YNAME, '',
                     'Coordinate Y column name',
-                    'Y Column:', labelWidth)),
+                    'Y Column', labelWidth)),
                 [LC.META_COORD_SYS]: Object.assign(getTypeData(LC.META_COORD_SYS, '',
                     'Coordinate system',
-                    'Coord System:', labelWidth))
+                    'Coord System', labelWidth))
             };
 
             return Object.assign ({},commonDefault, genericDefault );
@@ -163,18 +164,20 @@ export function getInitialDefaultValues(labelWidth, missionName) {
 /**
  *
  * @param  {array} numColumns - the array of numerical column names
- * @param  {object} wrapperStyle
  * @returns {Array}
  */
-export function getMissionInput (numColumns, wrapperStyle){
-    const missionKeys = [LC.META_TIME_CNAME, LC.META_FLUX_CNAME];
-
+export function getMissionInput (numColumns){
     const topZ = 3;
-    return  missionKeys.map((key) =>
-        <SuggestBoxInputField key={key} fieldKey={key} wrapperStyle={wrapperStyle} popupIndex={topZ}
-                              getSuggestions={(val) => getSuggestedList(val,numColumns)}/>
-    );
+    return (
+        <Stack {...{direction:'row', spacing:1/2, sx:{'& .ff-Input': {width:'8rem'}} }}>
+            {
+                [LC.META_TIME_CNAME, LC.META_FLUX_CNAME].map((key) =>
+                    <SuggestBoxInputField key={key} fieldKey={key} popupIndex={topZ}
+                                          getSuggestions={(val) => getSuggestedList(val,numColumns)}  />)
+            }
+        </Stack>
 
+    );
 }
 
 /**
@@ -182,21 +185,18 @@ export function getMissionInput (numColumns, wrapperStyle){
  * @param {object} generalEntries
  * @param {object}  missionEntries
  * @param {array} tblColumns
- * @param wrapperStyle
  * @returns {*}
  */
-export function getMissionEntries(generalEntries, missionEntries,tblColumns,wrapperStyle){
+export function getMissionEntries(generalEntries, missionEntries,tblColumns){
 
     if (isEmpty(generalEntries) || isEmpty(missionEntries)) return false;
 
-    const numColumns = getColsByType(tblColumns, COL_TYPE.NUMBER).map( (c) => c.name);
-
-    var allCommonEntries = Object.keys(generalEntries).map((key) =>
-        <ValidationField key={key} fieldKey={key} wrapperStyle={wrapperStyle}
-                         style={{width: 80}}/>
+    const allCommonEntries = Object.keys(generalEntries).map((key) =>
+        <ValidationField key={key} fieldKey={key} sx={{width: '10rem'}}/>
     );
-    var missionInputs = getMissionInput(numColumns, wrapperStyle);
-    return {allCommonEntries, missionInputs};
+
+    const numColumns = getColsByType(tblColumns, COL_TYPE.NUMBER).map( (c) => c.name);
+    return {allCommonEntries, missionInputs:getMissionInput(numColumns)};
 }
 /**
  * @desc This method returns the mission's information, such as missName, period, title, and uploaded file name.
@@ -206,10 +206,10 @@ export function getMissionEntries(generalEntries, missionEntries,tblColumns,wrap
  */
 export function getMissionInfo(missionEntries, tblModel){
     const converterId = get(missionEntries, LC.META_MISSION);
-    var missionName = getMissionName(converterId) || 'Mission';
+    const missionName = getMissionName(converterId) || 'Mission';
 
     const layoutInfo = getLayouInfo();
-    var period =  get(layoutInfo, ['periodRange','period'], '');
+    const period =  get(layoutInfo, ['periodRange','period'], '');
     const title = get(tblModel, 'request.uploadFileName','');
     //if the name is too long, truncates it and displays it as a tip
     const uploadedFileName =( title && title.length>20)?title.substring(0, 20)+'...':title;
@@ -218,41 +218,42 @@ export function getMissionInfo(missionEntries, tblModel){
 }
 
 
-export function renderMissionView({generalEntries,missionEntries,missionBands,tblModel, wrapperStyle, imageEntriesStyle, labelWidth,callback}){
+export function renderMissionView({generalEntries,missionEntries,missionBands,tblModel, imageEntriesStyle, labelWidth,callback}){
 
     //const wrapperStyle = {margin: '3px 0'};
     const tblColumns = get(tblModel, ['tableData', 'columns'], []);
     const groupKey = getViewerGroupKey(missionEntries);
-    const {allCommonEntries, missionInputs} = getMissionEntries(generalEntries, missionEntries,tblColumns ,wrapperStyle);
-    const imageStyle = imageEntriesStyle || { padding: '0 6px 0 6px', border: '1px solid #a3aeb9', marginLeft: '54px'};
+    const {allCommonEntries, missionInputs} = getMissionEntries(generalEntries, missionEntries,tblColumns );
 
     const {missionName, period, title, uploadedFileName} = getMissionInfo(missionEntries, tblModel);
     return (
         <FieldGroup groupKey={groupKey}
                     reducerFunc={callback(missionEntries, generalEntries)} keepState={true}>
 
-            <div >
-                <div style={{ width:{labelWidth}, fontWeight:'bold', display:'inline-block', margin: '3px 0 6px 0'}} > Column Selection</div>
-                <label style = {{width: '170px', paddingLeft: '10px', display:'inline-block'}} title={title}>{uploadedFileName}</label>
-                <div style = {{fontWeight:'bold',paddingLeft:'13px', display:'inline-block'}}>Images</div>
-            </div>
+            <Stack {...{spacing:1}}>
+                <Stack {...{direction: 'row', spacing: 4}}>
+                    <Stack {...{spacing: 1}}>
+                        <Stack {...{direction:'row', spacing:1, alignItems:'center'}}>
+                            <Typography level='h4' sx={{whiteSpace:'nowrap'}}>Column Selection</Typography>
+                            <Typography title={title} sx={{whiteSpace:'nowrap'}}>{uploadedFileName}</Typography>
+                        </Stack>
+                        {Boolean(getMissionName(missionName)) &&
+                            <Typography>{`Mission: ${getMissionName(missionName)}`}</Typography>}
+                        {missionInputs}
+                    </Stack>
+                    <Stack {...{spacing: 1}}>
+                        <Typography level='h4'>Images</Typography>
+                        {missionBands}
+                        {allCommonEntries}
+                    </Stack>
+                </Stack>
+                {Boolean(period) &&
+                    <Stack {...{direction:'row', spacing:1}}>
+                        <Typography >Period:</Typography>
+                        <Typography color='warning'> {`${period}`} </Typography>
+                    </Stack>}
 
-            <div style={{ display: 'flex', alignItems: 'flex-end'}}>
-                <div >
-                    <ReadOnlyText label='Mission:' content={missionName}
-                                  labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>
-                    {missionInputs}
-                </div>
-                <div style={imageStyle}>
-                    {missionBands}
-                    {allCommonEntries}
-                </div>
-            </div>
-            <div >
-                <ReadOnlyText label='Period:' content={period}
-                              labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>
-
-            </div>
+            </Stack>
         </FieldGroup>
     );
 }
