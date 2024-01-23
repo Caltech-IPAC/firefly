@@ -35,7 +35,7 @@ export function FireflyLayout({footer, useDefaultExpandedView, dropDownComponent
     const isReady = useStoreConnector(isAppReady);
 
     const bannerProps = pick(props, [
-        'menu', 'appTitle', 'appIcon', 'altAppIcon', 'bannerLeftStyle','bannerMiddleStyle', 'enableVersionDialog'
+        'menu', 'appTitle', 'appIcon', 'altAppIcon', 'bannerLeftStyle','bannerMiddleStyle', 'enableVersionDialog', 'showTitleOnBanner'
     ]);
 
     if (!isReady) {         // loading indicator.
