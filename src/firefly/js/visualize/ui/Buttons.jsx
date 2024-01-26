@@ -1,6 +1,9 @@
-import BiotechOutlinedIcon from '@mui/icons-material/BiotechOutlined.js';
-import {Box} from '@mui/joy';
 import React from 'react';
+import {Box, ToggleButtonGroup} from '@mui/joy';
+
+// TODO: we should use icon from one type(filled, outlined, rounded, two-tone, sharp).  It will yield better consistency.
+
+import BiotechOutlinedIcon from '@mui/icons-material/BiotechOutlined.js';
 import OpenInFull from '@mui/icons-material/OpenInFull';
 import GRID_EXPAND from 'images/icons-2014/24x24_ExpandArrows-grid-3.png';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
@@ -27,6 +30,19 @@ import LinkOffIcon from '@mui/icons-material/LinkOff';
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
 import LockOutlinedIcon from '@mui/icons-material/Lock';
 import PanoramaHorizontalOutlinedIcon from '@mui/icons-material/PanoramaHorizontalTwoTone';
+
+import FilterIco from '@mui/icons-material/FilterAltOutlined';
+import ClearFilterIco from '@mui/icons-material/FilterAltOffOutlined';
+import TextViewIco from '@mui/icons-material/TextFieldsOutlined';
+import TableViewIco from '@mui/icons-material/TableChartOutlined';
+import AddColumnIco from '@mui/icons-material/PostAddOutlined';
+import SettingsIco from '@mui/icons-material/SettingsOutlined';
+import PropertySheetIco from '@mui/icons-material/ReadMoreOutlined';
+import ResetIco from '@mui/icons-material/RestartAltOutlined';
+import PanIco from '@mui/icons-material/OpenWithOutlined';
+import PinChartIco from '@mui/icons-material/PushPin.js';
+import ShowTableIco from '@mui/icons-material/CallReceived.js';
+import CombineChartIco from '@mui/icons-material/SyncAlt.js';
 
 
 // --- save the following as other options for certain icons
@@ -143,4 +159,54 @@ export const ToolsDropDown= (props) => (
         sx:{'& .tools': {transform: 'rotate(9deg) scale(-1.1,1.1)'}},
         dropPosition:{left:6,bottom:-2},
         iconButtonSize:'40px', ...props,  }}/>);
+
+// Table and Chart buttons -->
+export const FilterButton = (props) => (
+    <ToolbarButton {...{icon: <FilterIco/>, title: 'Show/edit filters', iconButtonSize:'38px', ...props}}/>
+);
+
+export const ClearFilterButton = (props) => (
+    <ToolbarButton {...{icon: <ClearFilterIco/>, title: 'Remove all filters', iconButtonSize:'38px', ...props}}/>
+);
+
+export const TextViewButton = (props) => (
+    <ToolbarButton {...{icon: <TextViewIco/>, title: 'Text View', iconButtonSize:'38px', ...props}}/>
+);
+
+export const TableViewButton = (props) => (
+    <ToolbarButton {...{icon: <TableViewIco/>, title: 'Table View', iconButtonSize:'38px', ...props}}/>
+);
+
+export const AddColumnButton = (props) => (
+    <ToolbarButton {...{icon: <AddColumnIco/>, title: 'Add a column', iconButtonSize:'38px', ...props}}/>
+);
+
+export const SettingsButton = (props) => (
+    <ToolbarButton {...{icon: <SettingsIco/>, title: 'Settings', iconButtonSize:'38px', ...props}}/>
+);
+
+export const PropertySheetButton = (props) => (
+    <ToolbarButton {...{icon: <PropertySheetIco/>, iconButtonSize:'38px', ...props}}/>
+);
+
+export const ResetButton = (props) => (
+    <ToolbarButton {...{icon: <ResetIco/>, iconButtonSize:'38px', ...props}}/>
+);
+
+export const PanButton = (props) => (
+    <ToolbarButton {...{icon: <PanIco/>, iconButtonSize:'38px', ...props}}/>
+);
+
+export const PinChartButton = (props) => (
+    <ToolbarButton {...{icon: <PinChartIco/>, iconButtonSize:'38px', ...props}}/>
+);
+
+export const ShowTableButton = (props) => (
+    <ToolbarButton {...{icon: <ShowTableIco/>, iconButtonSize:'38px', ...props}}/>
+);
+
+export const CombineChartButton = (props) => (
+    <ToolbarButton {...{icon: <CombineChartIco/>, iconButtonSize:'38px', title:'Add charts to current chart', ...props}}/>
+);
+// <-- Table and Chart buttons
 

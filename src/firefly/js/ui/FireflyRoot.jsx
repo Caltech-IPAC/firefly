@@ -13,6 +13,9 @@ import '@fontsource/inter/600.css'; // Semi-Bold
 import '@fontsource/inter/700.css'; // Bold
 import '@fontsource/inter/800.css'; // Bolder
 
+let localTheme;
+export function getTheme() {return localTheme; };
+
 export function FireflyRoot({sx, children}) {
 
     const customTheme = getAppOptions().theme?.customized?.();
@@ -23,7 +26,11 @@ export function FireflyRoot({sx, children}) {
             <GlobalStyles styles={{
                 html: {fontSize:'87.5%'}
             }}/>
-            <ScopedCssBaseline sx={{flexGrow:1, height:1, position:'relative', ...sx}}>
+            <ScopedCssBaseline sx={(theme) => ({
+                flexGrow:1 | (localTheme = theme),
+                height:1,
+                position:'relative', ...sx
+            })}>
                 <App>{children}</App>
             </ScopedCssBaseline>
         </CssVarsProvider>
@@ -63,6 +70,8 @@ function App({children}) { // provide a way to experiment with light and dark th
 export function useColorMode() {
     const { mode, systemMode, ...rest } = useColorScheme();
     const activeMode = mode === 'system' ? systemMode : mode;
-    return {activeMode, mode, systemMode, ...rest};
+    return {activeMode, isDarkMode:activeMode==='dark', mode, systemMode, ...rest};
 
 }
+
+

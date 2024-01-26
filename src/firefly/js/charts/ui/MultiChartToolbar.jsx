@@ -5,9 +5,10 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import {Sheet, Stack, Typography} from '@mui/joy';
+
 import {getChartData} from '../ChartsCntlr.js';
 import {dispatchChangeViewerLayout, dispatchUpdateCustom, getViewerItemIds, getViewer, getLayoutType, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
-
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import ONE from 'html/images/icons-2014/Images-One.png';
 import GRID from 'html/images/icons-2014/Images-Tiled.png';
@@ -25,10 +26,10 @@ export function MultiChartToolbarStandard({viewerId, chartId, tbl_group, expanda
     activeItemId=getViewer(getMultiViewRoot(), viewerId).customData.activeItemId}) {
 
     return (
-        <div style={tbstyle}>
+        <Stack direction='row' justifyContent='space-between'>
             <MultiChartStd {...{viewerId, layoutType, activeItemId}}/>
             <ChartToolbar {...{chartId, tbl_group, viewerId, expandable, expandedMode}}/>
-        </div>
+        </Stack>
     );
 }
 
@@ -43,36 +44,17 @@ MultiChartToolbarStandard.propTypes= {
 };
 
 
-const tbstyle= {
-    display: 'inline-flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 2
-};
-
-
-const viewerTitleStyle= {
-    display: 'inline-block',
-    paddingLeft: 5,
-    paddingRight: 10,
-    lineHeight: '2em',
-    fontSize: '10pt',
-    fontWeight: 'bold',
-    alignSelf : 'center'
-};
-
 export function MultiChartToolbarExpanded({viewerId, chartId, tbl_group, expandable, expandedMode, closeable, layoutType, activeItemId}) {
 
     layoutType = layoutType || getLayoutType(getMultiViewRoot(), viewerId);
     activeItemId = activeItemId || getViewer(getMultiViewRoot(), viewerId)?.customData?.activeItemId;
 
     return (
-        <div style={tbstyle}>
+        <Stack direction='row' justifyContent='space-between'>
             {closeable && <CloseButton onClick={() => closeExpandedChart(viewerId)}/>}
             <MultiChartExt {...{viewerId, layoutType, activeItemId}}/>
             <ChartToolbar {...{chartId, tbl_group, expandable, expandedMode, viewerId}}/>
-        </div>
+        </Stack>
     );
 
 }
@@ -98,35 +80,24 @@ const MultiChartStd = ({viewerId, layoutType, activeItemId}) => {
         return <div/>;
     }
 
-    const leftImageStyle= {
-        verticalAlign:'bottom',
-        cursor:'pointer',
-        flex: '0 0 auto',
-        paddingLeft: 10
-    };
-
-
     const nextIdx= cIdx===viewerItemIds.length-1 ? 0 : cIdx+1;
     const prevIdx= cIdx ? cIdx-1 : viewerItemIds.length-1;
 
     return (
-        <div style={{display:'inline-flex', alignItems: 'center'}}>
+        <Stack direction='row'>
             <ToolbarButton icon={ONE} tip={'Show single chart'}
-                           imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                            onClick={() => dispatchChangeViewerLayout(viewerId,'single')}/>
             <ToolbarButton icon={GRID} tip={'Show all charts as tiles'}
-                           imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
                            onClick={() => dispatchChangeViewerLayout(viewerId,'grid')}/>
             {layoutType==='single' && viewerItemIds.length>2 &&
-            <img style={leftImageStyle} src={PAGE_LEFT}
+            <img src={PAGE_LEFT}
                  onClick={() => dispatchUpdateCustom(viewerId, {activeItemId: viewerItemIds[prevIdx]})} />
             }
             {layoutType==='single' && viewerItemIds.length>1 &&
-            <img style={{verticalAlign:'bottom', cursor:'pointer', float: 'right', paddingLeft:5, flex: '0 0 auto'}}
-                 src={PAGE_RIGHT}
+            <img src={PAGE_RIGHT}
                  onClick={() => dispatchUpdateCustom(viewerId, {activeItemId: viewerItemIds[nextIdx]})} />
             }
-        </div>
+        </Stack>
     );
 };
 
@@ -138,27 +109,28 @@ const MultiChartExt = ({viewerId, layoutType, activeItemId}) => {
         return null;
     }
 
-    const viewerTitle = (
-        <div style={viewerTitleStyle}>
-            {layoutType==='single' ? getChartTitle(activeItemId, viewerItemIds) : 'Tiled View'}
-        </div>
-    );
-
     return (
-        <div style={{display: 'inline-flex', flexGrow: 1, justifyContent: 'space-evenly'}} className='disable-select'>
-            <div style={{alignSelf:'flex-start', whiteSpace:'nowrap'}}>
-                {viewerTitle}
-            </div>
-            <div style={{alignSelf:'flex-end', whiteSpace:'nowrap', height: 24, paddingBottom:3}}>
-                <div style={{display: 'inline-block', verticalAlign:'top'}}>
+        <Sheet component={Stack} direction='row'
+               sx={{
+                   flexGrow: 1,
+                   px: 1,
+                   alignItems: 'center',
+                   justifyContent:'space-evenly',
+               }}
+        >
+            <Typography level='h4' whiteSpace='nowrap'>
+                {layoutType==='single' ? getChartTitle(activeItemId, viewerItemIds) : 'Tiled View'}
+            </Typography>
+            <Stack direction='row' sx={{whiteSpace:'nowrap'}}>
+                <Stack direction='row'>
                     <ToolbarButton icon={ONE} tip={'Show single chart'}
                                    imageStyle={{width:24,height:24, flex: '0 0 auto'}}
                                    onClick={() => dispatchChangeViewerLayout(viewerId,'single')}/>
                     <ToolbarButton icon={GRID} tip={'Show all charts as tiles'}
                                    imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
                                    onClick={() => dispatchChangeViewerLayout(viewerId,'grid')}/>
-                </div>
-                <div style={{display: 'inline-block', verticalAlign:'middle'}}>
+                </Stack>
+                <Stack>
                     <PagingControl
                         viewerItemIds={viewerItemIds}
                         activeItemId={activeItemId}
@@ -166,9 +138,9 @@ const MultiChartExt = ({viewerId, layoutType, activeItemId}) => {
                         getItemTitle={(itemId) => getChartTitle(itemId, viewerItemIds)}
                         onActiveItemChange={(itemId) => dispatchUpdateCustom(viewerId, {activeItemId: itemId})}
                     />
-                </div>
-            </div>
-        </div>
+                </Stack>
+            </Stack>
+        </Sheet>
     );
 };
 
