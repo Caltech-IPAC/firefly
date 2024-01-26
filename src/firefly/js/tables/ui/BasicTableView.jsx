@@ -9,7 +9,6 @@ import {Column, Table} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, set, isEmpty, isUndefined, omitBy, pick} from 'lodash';
 
-
 import {calcColumnWidths, getCellValue, getColumns, getProprietaryInfo, getTableState, getTableUiById, getTblById, hasRowAccess, isClientTable, tableTextView, TBL_STATE, uniqueTblUiId} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
@@ -18,7 +17,6 @@ import {CellWrapper, HeaderCell, makeDefaultRenderer, SelectableCell, Selectable
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableUiUpdate, TBL_UI_UPDATE} from '../TablesCntlr.js';
 import {Logger} from '../../util/Logger.js';
-import { useColorMode } from '../../ui/FireflyRoot.jsx';
 
 import 'fixed-data-table-2/dist/fixed-data-table.css';
 import './TablePanel.css';
@@ -31,8 +29,6 @@ export const BY_SCROLL = 'byScroll';
 
 
 const BasicTableViewInternal = React.memo((props) => {
-
-    const { activeMode } = useColorMode();
 
     const {width, height} = props.size;
     const {columns, data, hlRowIdx, renderers, bgColor, selectInfoCls, callbacks, rowHeight, rowHeightGetter, showHeader=true,
@@ -149,14 +145,11 @@ const BasicTableViewInternal = React.memo((props) => {
         else return null;
     };
 
-    const hlColor = activeMode === 'dark' ? 'background.surface' : undefined;
-
     return (
         <Box tabIndex='-1' onKeyDown={onKeyDown}
               sx={{lineHeight:1, flexGrow:1, minHeight:0, minWidth:0,
                   '& .fixedDataTableRowLayout_main.highlighted div': {
-                      backgroundColor: 'warning.200',
-                      color: hlColor
+                      backgroundColor: 'warning.softBg',
                   }
               }}
         >

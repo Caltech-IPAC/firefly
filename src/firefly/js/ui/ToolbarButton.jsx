@@ -97,8 +97,8 @@ export const ToolbarButton = memo((props) => {
 
 
     const b=  (
-        <Tooltip title={tip} sx={sx}>
-            <Stack {...{direction:'row', alignItems:'center', ref:setupRef, position:'relative' }}>
+        <Tooltip title={tip} sx={sx} {...slotProps?.tooltip}>
+            <Stack {...{direction:'row', alignItems:'center', ref:setupRef, position:'relative' }} {...slotProps?.root}>
                 {/*{hasCheckBox && <Checkbox {...{variant:'plain', checked:checkBoxOn, onClick:handleClick}}/> }*/}
                 <TbCheckBox {...{hasCheckBox, CheckboxOnIcon, CheckboxOffIcon, checkBoxOn, onClick:handleClick}}/>
                 {useIconButton ?
@@ -131,6 +131,7 @@ export const ToolbarButton = memo((props) => {
                             color: enabled? undefined : theme.vars.palette.neutral?.softDisabledColor,
                             ...makeBorder(active,theme,color),
                         }),
+                        ...slotProps?.button
                     }}>
                         {makeTextLabel(text,shortcutKey)}
                     </Button>
@@ -173,6 +174,11 @@ ToolbarButton.propTypes= {
     shortcutKey: string,
     color: string,
     iconButtonSize : string,
+    slotProps: shape({
+        root: object,     // because there are already too many props, this is used specifically to pass custom props to top level component
+        tooltip: object,
+        button: object,
+    })
 };
 
 function TbCheckBox({hasCheckBox, CheckboxOnIcon, CheckboxOffIcon, checkBoxOn, onClick}) {

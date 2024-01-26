@@ -36,6 +36,8 @@ import {TBL_CLZ_NAME} from './TablePanel.jsx';
 import infoIcon from 'html/images/info-icon.png';
 import {dd2sex} from '../../visualize/CoordUtil.js';
 
+export const DDzIndex = 110;   // 110 is the z-index of a dropdown
+
 const html_regex = /<.+>|&.+;/;           // A rough detection of html elements or entities
 const filterStyle = {width: '100%', boxSizing: 'border-box'};
 
@@ -150,7 +152,7 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
     const content =  <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />;
     const onEnumClicked = () => {
         showDropDown({id: tblDropDownId(tbl_id), content, atElRef: enumArrowEl.current, locDir: 33, style: {marginLeft: -10},
-            wrapperStyle: {zIndex: 110}}); // 110 is the z-index of a dropdown
+            wrapperStyle: {zIndex: DDzIndex}});
     };
 
     const endDecorator = enumVals && <div ref={enumArrowEl} className='arrow-down clickable' onClick={onEnumClicked}/>;
@@ -334,7 +336,7 @@ export function ContentEllipsis({children, text, sx, actions=[]}) {
         ev.stopPropagation();
         const boxEl = findTableFor(actionsEl.current);
         showDropDown({id: dropDownID, content: dropDown, boxEl, atElRef: actionsEl.current, locDir: 33, style: {marginLeft: -10},
-            wrapperStyle: {zIndex: 110}}); // 110 is the z-index of a dropdown
+            wrapperStyle: {zIndex: DDzIndex}});
     };
 
     const copyCB = () => {

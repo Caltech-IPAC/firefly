@@ -9,7 +9,6 @@ import {getMultiViewRoot, getViewerItemIds} from '../../visualize/MultiViewCntlr
 import {getSpectrumDM} from '../../voAnalyzer/SpectrumDM.js';
 import {dispatchChartAdd, getChartData} from '../ChartsCntlr.js';
 import {getNewTraceDefaults, getTblIdFromChart, isSpectralOrder, uniqueChartId} from '../ChartUtil.js';
-import {TextButton} from '../../ui/TextButton.jsx';
 import {PINNED_VIEWER_ID, PINNED_GROUP, PINNED_CHART_PREFIX} from './PinnedChartContainer.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -26,6 +25,7 @@ import {applyUnitConversion} from './options/SpectrumOptions.jsx';
 import {canUnitConv} from '../dataTypes/SpectrumUnitConversion.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {dispatchHideDialog} from '../../core/ComponentCntlr.js';
+import {CombineChartButton} from 'firefly/visualize/ui/Buttons.jsx';
 
 const POPUP_ID = 'CombineChart-popup';
 
@@ -57,7 +57,7 @@ export const CombineChart = ({viewerId}) => {
             mounted: true
         });
     };
-    return showCombine ? <TextButton onClick={doCombine} title='Add charts to current chart'>Combine Chart</TextButton> : null;
+    return showCombine ? <CombineChartButton onClick={doCombine}/> : null;
 };
 
 function getChartTitle(cdata, defTitle) {
