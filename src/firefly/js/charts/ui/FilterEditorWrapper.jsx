@@ -10,14 +10,15 @@ import {FilterEditor} from '../../tables/ui/FilterEditor.jsx';
 import {dispatchTableFilter} from '../../tables/TablesCntlr.js';
 import {getTblById} from '../../tables/TableUtil.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {Stack} from '@mui/joy';
 
 export const FilterEditorWrapper = React.memo(({tbl_id}) => {
     const [sortInfo, setSortInfo] = useState('');
     useStoreConnector(() => get(getTblById(tbl_id), 'request.filters'));
     const tableModel = getTblById(tbl_id);
     return (
-         <div className='TablePanelOptionsWrapper'>
-             <div className='TablePanelOptions'>
+        <Stack height={450} width={650} overflow='hidden' position='relative' sx={{resize:'both', minWidth:550, minHeight:200}}>
+          <Stack position='absolute' sx={{inset:'5px'}}>
                  <FilterEditor
                      tbl_id={tbl_id}
                      columns={get(tableModel, 'tableData.columns', [])}
@@ -34,8 +35,8 @@ export const FilterEditorWrapper = React.memo(({tbl_id}) => {
                              setSortInfo(obj.sortInfo);
                          }
                      } }/>
-             </div>
-         </div>
+             </Stack>
+        </Stack>
      );
 });
 

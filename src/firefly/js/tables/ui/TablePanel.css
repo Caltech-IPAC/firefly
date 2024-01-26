@@ -52,16 +52,6 @@
     resize: both;
 }
 
-.TablePanelOptions {
-    position: absolute;
-    top: 5px;
-    bottom: 5px;
-    left: 5px;
-    right: 5px;
-    display: flex;
-    flex-direction: column;
-}
-
 .TablePanel__no-access div {
     background-color: #ffe8e8 !important;
 }

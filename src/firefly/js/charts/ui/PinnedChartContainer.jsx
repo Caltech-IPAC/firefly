@@ -2,8 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import './ChartPanel.css';
-import {Badge} from '@mui/joy';
+import {Badge, Stack, Typography, Sheet} from '@mui/joy';
 
 import React, {useContext, useEffect} from 'react';
 import PropTypes from 'prop-types';
@@ -36,6 +35,7 @@ import {SplitPanel} from '../../ui/panel/DockLayoutPanel';
 import {hideInfoPopup, showInfoPopup, showPinMessage} from '../../ui/PopupUtil.jsx';
 import {TextButton} from '../../ui/TextButton.jsx';
 import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga';
+import {PinChartButton, ShowTableButton} from 'firefly/visualize/ui/Buttons.jsx';
 
 export const PINNED_CHART_PREFIX = 'pinned-';
 export const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
@@ -51,39 +51,37 @@ export const PinnedChartContainer = (props) => {
 
     const TabToolbar = () => {
         return (
-            <div className='ChartPanel__section--title tabs'>
+            <Stack direction='row' justifyContent='space-between'>
                 <ToggleLayout/>
                 <Help/>
-            </div>
+            </Stack>
         );
     };
 
     if (tabs?.sideBySide) {
         return (
-            <div className='ChartPanel__container'>
-                <div style={{flexGrow: 1, position: 'relative'}}>
+            <Stack id='chart-pinned-sideBySide' overflow='hidden' flexGrow={1}>
+                <Stack flexGrow={1} position='relative'>
                     <SplitPanel split='vertical' defaultSize={400} style={{display: 'inline-flex'}} pKey='chart-sideBySide'>
-                        <div className='ChartPanel__section' style={{marginRight: 5}}>
-                            <div className='ChartPanel__section--title'>
-                                <div className='label'>{activeLabel}</div>
-                            </div>
+                        <Stack>
+                            <Typography level='title-md'>
+                                {activeLabel}
+                            </Typography>
                             <ActiveChartsPanel {...props}/>
-                        </div>
-                        <div className='ChartPanel__section' style={{marginLeft: 5}}>
-                            <div className='ChartPanel__section--title'>
-                                <div className='label'>{pinnedLabel}</div>
-                                {/*<TabToolbar/>*/}
-                            </div>
+                        </Stack>
+                        <Stack>
+                            <Typography level='title-md'>
+                                {pinnedLabel}
+                            </Typography>
                             <PinnedChartPanel {...props}/>
-                        </div>
+                        </Stack>
                     </SplitPanel>
-                </div>
-            </div>
+                </Stack>
+            </Stack>
         );
     } else {
         return (
-            <div className='ChartPanel__container'>
-                {/*<TabToolbar/>*/}
+            <Stack id='chart-pinned-tabs' overflow='hidden' height={1}>
                 <StatefulTabs componentKey={PINNED_VIEWER_ID} defaultSelected={0} useFlex={true} style={{flex: '1 1 0', marginTop: 1}}>
                     <Tab name={activeLabel}>
                         <ActiveChartsPanel {...props}/>
@@ -94,7 +92,7 @@ export const PinnedChartContainer = (props) => {
                         </Tab>
                     }
                 </StatefulTabs>
-            </div>
+            </Stack>
         );
     }
 };
@@ -137,7 +135,7 @@ export const PinChart = ({viewerId, tbl_group}) => {
         }
         pinChart({chartId});
     };
-    return <TextButton onClick={doPinChart} title='Pin the active chart'>Pin Chart</TextButton>;
+    return <PinChartButton onClick={doPinChart} title='Pin the active chart'/>;
 };
 
 export function pinChart({chartId, autoLayout=false }) {
@@ -229,9 +227,10 @@ export const ShowTable = ({viewerId, tbl_group}) => {
     if (viewerId !== PINNED_VIEWER_ID) return null;
 
     const showTable = () => dispatchActiveTableChanged(activeChartTblId, tbl_group);
-    const disabled = activeChartTblId === activeTblId;
+    const enabled = activeChartTblId !== activeTblId;
 
-    return activeChartTblId ? <TextButton disabled={disabled} onClick={showTable} title='Show the table associated with this chart'>Show Table</TextButton> : null;
+    return activeChartTblId ? <ShowTableButton enabled={enabled} onClick={showTable} title='Show the table associated with this chart'/> : null;
+
 };
 
 export const ToggleLayout = () => {
@@ -314,20 +313,22 @@ export const PinnedChartPanel = (props) => {
     };
 
     const makeItemViewer = (chartId) => (
-        <div className={chartId === activeItemId ? 'ChartPanel ChartPanel--active' : 'ChartPanel'}
-             onClick={(ev)=>onChartSelect(ev,chartId)}
-             onTouchStart={stopPropagation}
-             onMouseDown={stopPropagation}>
+        <Sheet id='chart-item' sx={{height:1, width:1}}
+               variant='outlined'
+               color={ chartId === activeItemId ? 'warning' : 'neutral'}
+               onClick={(ev)=>onChartSelect(ev,chartId)}
+               onTouchStart={stopPropagation}
+               onMouseDown={stopPropagation}>
             <ChartPanel key={chartId} showToolbar={false} chartId={chartId} deletable={deletable} thumbnail={layoutType === 'grid'}/>
-        </div>
+        </Sheet>
     );
 
     const makeItemViewerFull = (chartId) => (
-        <div onClick={stopPropagation}
-             onTouchStart={stopPropagation}
-             onMouseDown={stopPropagation}>
+        <Stack id='chart-itemFull' onClick={stopPropagation}
+               onTouchStart={stopPropagation}
+               onMouseDown={stopPropagation}>
             <ChartPanel key={chartId} showToolbar={false} chartId={chartId} deletable={deletable}/>
-        </div>
+        </Stack>
     );
 
     const viewerItemIds = viewer.itemIdAry;
@@ -337,12 +338,12 @@ export const PinnedChartPanel = (props) => {
     if (!activeItemId) return null;
 
     return (
-        <div className='ChartPanel__container'>
-            <div className='ChartPanel__wrapper'>
+        <Stack id='chart-pinnedChart' width={1} height={1}>
+            <Stack flexGrow={1} position='relative'>
                 <ToolBar chartId={activeItemId} expandable={!expandedMode} {...{expandedMode, closeable, viewerId, tbl_group, layoutType, activeItemId}}/>
-                <MultiItemViewerView {...props} {...{layoutType, makeItemViewer, makeItemViewerFull, activeItemId, viewerItemIds}}/>
-            </div>
-        </div>
+                <MultiItemViewerView {...props} {...{viewerId, layoutType, makeItemViewer, makeItemViewerFull, activeItemId, viewerItemIds}}/>
+            </Stack>
+        </Stack>
     );
 };
 
@@ -359,11 +360,9 @@ function stopPropagation(ev) {
 
 function BlankClosePanel() {
     return (
-        <div className='ChartPanel__container'>
-            <div style={{position: 'relative', flexGrow: 1}}>
-                <CloseButton style={{paddingLeft: 10, position: 'absolute', top: 0, left: 0}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>
-            </div>
-        </div>
+        <Stack height={1}>
+            <CloseButton style={{paddingLeft: 10, position: 'absolute', top: 0, left: 0}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>
+        </Stack>
     );
 }
 

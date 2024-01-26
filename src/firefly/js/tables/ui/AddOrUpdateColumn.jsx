@@ -34,6 +34,7 @@ import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {setSelectInfo} from 'firefly/tables/TableRequestUtil.js';
 import {dispatchHideDialog} from 'firefly/core/ComponentCntlr.js';
 import {FilterInfo} from 'firefly/tables/FilterInfo.js';
+import {AddColumnButton} from 'firefly/visualize/ui/Buttons.jsx';
 
 
 let hideExpPopup;
@@ -176,8 +177,7 @@ function reloadTable(request, editColName, newColName) {
 }
 
 export const AddColumnBtn = ({tbl_ui_id, tbl_id}) => (
-    <ToolbarButton icon={INSERT_COLUMN} tip='Add a column'
-                   onClick={() => showAddOrUpdateColumn({tbl_ui_id, tbl_id})}/>
+    <AddColumnButton onClick={() => showAddOrUpdateColumn({tbl_ui_id, tbl_id})}/>
 );
 
 export function showAddOrUpdateColumn({tbl_ui_id, tbl_id, editColName, onChange}) {

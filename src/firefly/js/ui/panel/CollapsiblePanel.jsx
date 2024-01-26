@@ -4,7 +4,7 @@
 
 import './CollapsiblePanel.css';
 import React, {memo} from 'react';
-import PropTypes, {bool, func, object, oneOfType, shape, string} from 'prop-types';
+import PropTypes, {bool, element, func, object, oneOfType, shape, string} from 'prop-types';
 import {isFunction, pick} from 'lodash';
 import {Tooltip, Accordion, AccordionGroup} from '@mui/joy';
 import AccordionDetails, {accordionDetailsClasses} from '@mui/joy/AccordionDetails';
@@ -142,7 +142,7 @@ export function CollapsibleItemView({isOpen, header, title, onToggle, slotProps,
 CollapsibleItemView.propTypes = {
     componentKey: string,
     isOpen: bool,
-    header: oneOfType([string, func]),
+    header: oneOfType([string, func, element]),
     title: string,
     slotProps: shape({  // consult JoyUI doc for details.
         header: object,     // passed to AccordionSummary

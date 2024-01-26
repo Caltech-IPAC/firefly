@@ -10,7 +10,7 @@ import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
 import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/ActionsDropDownButton.jsx';
 
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {ExpandButton, InfoButton, SaveButton} from '../../visualize/ui/Buttons.jsx';
+import {ExpandButton, InfoButton, SaveButton, FilterButton, ClearFilterButton, TextViewButton, TableViewButton, SettingsButton, PropertySheetButton} from '../../visualize/ui/Buttons.jsx';
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableUiUpdate} from '../TablesCntlr.js';
 import {uniqueTblId, getTableUiById, makeBgKey, getResultSetRequest, isClientTable, getTableState,
     TBL_STATE, getMetaEntry, getTblById} from '../TableUtil.js';
@@ -20,7 +20,6 @@ import {TableInfo, MetaInfo} from './TableInfo.jsx';
 import {makeConnector} from '../TableConnector.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {PagingBar} from '../../ui/PagingBar.jsx';
-import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {LO_MODE, LO_VIEW, dispatchSetLayoutMode} from '../../core/LayoutCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {showTableDownloadDialog} from './TableSave.jsx';
@@ -29,24 +28,15 @@ import {BgMaskPanel} from '../../core/background/BgMaskPanel.jsx';
 import {Logger} from '../../util/Logger.js';
 import {AddColumnBtn} from './AddOrUpdateColumn.jsx';
 
-import FILTER from 'html/images/icons-2014/24x24_Filter.png';
-import CLEAR_FILTER from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
-import TEXT_VIEW from 'html/images/icons-2014/24x24_TextView.png';
-import TABLE_VIEW from 'html/images/icons-2014/24x24_TableView.png';
-// import SAVE from 'html/images/icons-2014/24x24_Save.png';
-import PROP_SHEET from 'html/images/icons-2014/36x36-data-info.png';
-import OPTIONS from 'html/images/icons-2014/24x24_GearsNEW.png';
-
 import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
 import {META} from '../TableRequestUtil.js';
+import {DDzIndex} from 'firefly/tables/ui/TableRenderer.js';
 
 const logger = Logger('Tables').tag('TablePanel');
 
 const TT_INFO = 'Show additional table info';
 const TT_OPTIONS = 'Edit Table Options';
 const TT_SAVE = 'Save the content as an IPAC, CSV, or TSV table';
-const TT_TEXT_VIEW = 'Text View';
-const TT_TABLE_VIEW = 'Table View';
 const TT_CLEAR_FILTER = 'Remove all filters';
 const TT_SHOW_FILTER = 'Filters can be used to remove unwanted rows from the search results';
 const TT_EXPAND = 'Expand this panel to take up a larger area';
@@ -129,7 +119,7 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
 function showTableOptionDialog(onChange, onOptionReset, clearFilter, tbl_ui_id, tbl_id) {
 
     const content = (
-         <div className='TablePanelOptionsWrapper'>
+         <Stack height={450} width={650} overflow='hidden' sx={{resize:'both', minWidth:550, minHeight:200}}>
                <TablePanelOptions
                   onChange={onChange}
                   onOptionReset={onOptionReset}
@@ -137,7 +127,7 @@ function showTableOptionDialog(onChange, onOptionReset, clearFilter, tbl_ui_id, 
                   tbl_ui_id={tbl_ui_id}
                   tbl_id={tbl_id}
                />
-         </div>
+         </Stack>
     );
 
     showOptionsPopup({content, title: 'Table Options', modal: true, show: true});
@@ -165,9 +155,9 @@ function showTablePropSheetDialog(tbl_id) {
     const {title=''} = getTblById(tbl_id) || {};
     showOptionsPopup({show: false});   // hide the dialog if one is currently opened
     const content = (
-        <div className='TablePanelOptionsWrapper'>
-            <PropertySheetAsTable tbl_id={tbl_id}/>
-        </div>
+        <Stack height={450} width={650} overflow='hidden' sx={{resize:'both', minWidth:550, minHeight:200}}>
+          <PropertySheetAsTable tbl_id={tbl_id}/>
+        </Stack>
     );
     defer(() => showOptionsPopup({content, title: 'Row Details: ' + title, modal: false, show: true}));
 }
@@ -286,10 +276,10 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
 
     if (showOptionButton && !showToolbar) {
         return (
-            <img className='TablePanel__options--small'
-                 src={OPTIONS}
-                 title={TT_OPTIONS}
-                 onClick={showOptionsDialog}/>
+            <SettingsButton tip={TT_OPTIONS}
+                            onClick={showOptionsDialog}
+                            sx={{position:'absolute', top:-4, right:-4, zIndex: DDzIndex}}  //
+            />
         );
     }
 
@@ -305,19 +295,17 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
                 <ActionsDropDownButton {...{searchActions, tbl_id}}/>
                 }
                 {showFilterButton && filterCount > 0 &&
-                <ToolbarButton icon={CLEAR_FILTER} tip={TT_CLEAR_FILTER}
-                               onClick={clearFilter}/>
+                <ClearFilterButton tip={TT_CLEAR_FILTER}
+                                   onClick={clearFilter}/>
                 }
                 {showFilterButton &&
-                <ToolbarButton icon={FILTER}
-                               tip={TT_SHOW_FILTER}
+                <FilterButton  tip={TT_SHOW_FILTER}
                                badgeCount={filterCount}
                                onClick={toggleFilter}/>
                 }
                 {showToggleTextView &&
-                <ToolbarButton icon={textView ? TABLE_VIEW : TEXT_VIEW}
-                               tip={textView ? TT_TABLE_VIEW : TT_TEXT_VIEW}
-                               onClick={toggleTextView}/>
+                    textView ? <TableViewButton onClick={toggleTextView}/>
+                             : <TextViewButton onClick={toggleTextView}/>
                 }
                 {showSave &&
                 <SaveButton tip={TT_SAVE} onClick={showTableDownloadDialog({tbl_id, tbl_ui_id})}/>
@@ -327,11 +315,11 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
                 <InfoButton tip={TT_INFO} onClick={showInfoDialog}/>
                 }
                 {showPropertySheet &&
-                <ToolbarButton icon={PROP_SHEET} tip={TT_PROPERTY_SHEET}
+                <PropertySheetButton tip={TT_PROPERTY_SHEET}
                                onClick={() => showTablePropSheetDialog(tbl_id)}/>
                 }
                 {showOptionButton &&
-                <ToolbarButton icon={OPTIONS} tip={TT_OPTIONS}
+                <SettingsButton tip={TT_OPTIONS}
                                onClick={showOptionsDialog}/>
                 }
                 { expandable && !expandedMode &&
