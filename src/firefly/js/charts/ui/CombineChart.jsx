@@ -133,7 +133,7 @@ const CombineChartDialog = ({onComplete}) => {
     };
     const closePopup = () => dispatchHideDialog(POPUP_ID);
 
-    const {Title} = basicOptions({groupKey, fieldProps:{labelWidth: 50, size: 40}});
+    const {Title} = basicOptions({groupKey});
     const showAllHint = 'Show all charts even ones that may not combine well';
 
     return (
@@ -170,7 +170,7 @@ const SelChartOpt = ({chartId, groupKey, ctitle, traces, idx}) => {
     const key = `cOpt-${idx}`;
 
     const TraceOpt = ({traceNum, title}) => {
-        const {Name} = basicOptions({activeTrace: traceNum, groupKey, fieldProps:{labelWidth: 32, size: 40}});
+        const {Name} = basicOptions({activeTrace: traceNum, groupKey});
         if (!title || title.toLowerCase().startsWith('trace '))  title = `trace ${traceNum}`;
 
         return (

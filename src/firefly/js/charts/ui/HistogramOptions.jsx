@@ -1,12 +1,11 @@
-import React, {Component} from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 
 import {get, isEmpty} from 'lodash';
 import ColValuesStatistics from './../ColValuesStatistics.js';
 import {FieldGroup,} from '../../ui/FieldGroup.jsx';
-import FieldGroupUtils,{revalidateFields} from '../../fieldGroup/FieldGroupUtils.js';
+import {getFieldVal, revalidateFields} from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange, dispatchMultiValueChange, VALUE_CHANGE} from '../../fieldGroup/FieldGroupCntlr.js';
-import {InputGroup} from '../../ui/InputGroup.jsx';
 import Validate from '../../util/Validate.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
@@ -15,6 +14,8 @@ import {FieldGroupCollapsible} from '../../ui/panel/CollapsiblePanel.jsx';
 import {ColumnOrExpression, getColValidator} from './ColumnOrExpression.jsx';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {updateSet} from '../../util/WebUtil.js';
+import {Stack} from '@mui/joy';
+import {useStoreConnector} from 'firefly/ui/SimpleComponent';
 
 export const histogramParamsShape = PropTypes.shape({
          algorithm : PropTypes.oneOf(['fixedSizeBins','bayesianBlocks']),
@@ -163,151 +164,58 @@ function columnNameReducer(colValStats, basicFieldsReducer) {
     };
 }
 
-export class HistogramOptions extends Component {
-
-    constructor(props) {
-        super(props);
-        this.state = {
-            fields : FieldGroupUtils.getGroupFields(this.props.groupKey),
-            fixedAlgorithm: get(getAppOptions(), 'charts.ui.HistogramOptions.fixedAlgorithm') || props.fixedAlgorithm
-        };
-    }
-
-
-    shouldComponentUpdate(np, ns) {
-
-        return this.props.activeTrace !== np.activeTrace || this.props.groupKey !== np.groupKey ||
-            this.props.colValStats !== np.colValStats || this.props.histogramParams !== np.histogramParams ||
-            FieldGroupUtils.getFldValue(this.state.fields, 'algorithm') !== FieldGroupUtils.getFldValue(ns.fields, 'algorithm') ||
-            FieldGroupUtils.getFldValue(this.state.fields, 'fixedBinSizeSelection') !== FieldGroupUtils.getFldValue(ns.fields, 'fixedBinSizeSelection');
-
-
-
-    }
-
-    UNSAFE_componentWillReceiveProps(np) {
-        if (this.props.histogramParams !== np.histogramParams) {
-            setOptions(np.groupKey, np.histogramParams);
-        }
-    }
-
-    componentWillUnmount() {
-        this.iAmMounted= false;
-        if (this.unbinder) this.unbinder();
-    }
-
-    componentDidMount() {
-        this.unbinder = FieldGroupUtils.bindToStore(this.props.groupKey,
-            (fields) => {
-                if (this.iAmMounted && fields !== this.state.fields) {
-                    this.setState({fields});
-                }
-            });
-        // make sure column validator matches current columns
-        const {colValStats, groupKey, histogramParams} = this.props;
+export function HistogramOptions({activeTrace, groupKey, histogramParams, colValStats, basicFields, basicFieldsReducer,
+                                      fixedAlgorithm: pFixedAlgorithm, orientation='horizontal'}) {
+    useEffect(()=>{
         if (colValStats) {
             const colValidator = getColValidator(colValStats);
             let payload = {groupKey, fieldKey: 'columnOrExpr', validator: colValidator};
             const value = get(histogramParams, 'columnOrExpr');
             if (value) {
                 const {valid, message} = colValidator(value);
-                payload = Object.assign(payload, {value, valid, message});
+                payload = {...payload, value, valid, message};
             }
             dispatchValueChange(payload);
-            if (histogramParams) {
-                setOptions(groupKey, histogramParams);
-            }
         }
 
-
-        this.iAmMounted= true;
-    }
-
-
-    renderAlgorithmParameters() {
-        const {groupKey, histogramParams} = this.props;
-        const {fields} = this.state;
-
-        const algorithm =  FieldGroupUtils.getFldValue(fields, 'algorithm', 'fixedSizeBins');
-
-        if (algorithm === 'bayesianBlocks') {
-            // if label is in initialState, it does not show when first time displayed
-            return (
-                <ValidationField
-                    style={{width: 30}}
-                    initialState= {{
-                        value: get(histogramParams, 'falsePositiveRate','0.05'),
-                        validator: Validate.floatRange.bind(null, 0.01, 0.5, 2,'falsePositiveRate'),
-                        tooltip: 'Acceptable false positive rate'
-                    }}
-                    fieldKey='falsePositiveRate'
-                    groupKey={groupKey}
-                    labelWidth={100}
-                    label='False Positive Rate:'
-                />
-            );
-        } else { // fixedSizeBins
-
-
-         const disabled = FieldGroupUtils.getFldValue(this.state.fields, 'fixedBinSizeSelection') ?
-             FieldGroupUtils.getFldValue(this.state.fields, 'fixedBinSizeSelection')!=='numBins':false;
-
-         return (
-               <div key='fixedsize'>
-                   {renderFixedBinSizeOptions(groupKey, histogramParams, disabled) }
-
-                   <ValidationField
-                       style={{width: 156}}
-                       initialState= {{
-                                  value: get(histogramParams, 'minCutoff', ''),
-                                  validator:Validate.isFloat.bind(null,  'minCutoff'),
-                                  tooltip: 'Minimal value',
-                                  label : 'Min:'
-
-                             }}
-                       fieldKey='minCutoff'
-                       groupKey={groupKey}
-                       labelWidth={30}
-                   />
-                   <ValidationField
-                       style={{width: 156}}
-                       initialState= {{
-                                  value: get(histogramParams, 'maxCutoff', ''),
-                                  validator:Validate.isFloat.bind(null,  'maxCutoff'),
-                                  tooltip: 'Max value',
-                                  label : 'Max:'
-
-                             }}
-                       fieldKey='maxCutoff'
-                       groupKey={groupKey}
-                       labelWidth={30}
-                   />
-                 </div>
-
-            );
+        if (histogramParams) {
+            setOptions(groupKey, histogramParams);
         }
-    }
+    }, [activeTrace, groupKey, histogramParams, colValStats]);
 
-    render() {
-        const { colValStats, groupKey, histogramParams, basicFieldsReducer, basicFields} = this.props;
-        const {fixedAlgorithm=false} = this.state;
-        const xProps = {colValStats,params:histogramParams,groupKey,fldPath:'columnOrExpr',label:'Column or expression:',labelWidth:120,name: 'X',tooltip:'X Axis',nullAllowed:false};
+    const fixedAlgorithm = get(getAppOptions(), 'charts.ui.HistogramOptions.fixedAlgorithm', pFixedAlgorithm);
+    const algorithmParam = get(histogramParams, 'algorithm', 'fixedSizeBins');
+    const m_algorithmOptions = fixedAlgorithm
+        ? algorithmOptions.filter((el) => el.value === algorithmParam)
+        : algorithmOptions;
 
-        const algorithm = get(histogramParams, 'algorithm', 'fixedSizeBins');
-        const m_algorithmOptions = fixedAlgorithm ? algorithmOptions.filter((el) => el.value === algorithm) : algorithmOptions;
-        // set minimum height to fit full height suggest box,
-        // to avoid width change due to scroll bar appearing when full height suggest box is rendered
-        return (
-            <div>
-                <FieldGroup groupKey={groupKey} keepState={false}
-                            reducerFunc={columnNameReducer(colValStats,basicFieldsReducer)}>
+    const labelWidth = '6rem';
 
-                    <ColumnOrExpression {...xProps}/>
-
-                    {!basicFields && <FieldGroupCollapsible  header='Options'
-                                            initialState= {{ value:'closed' }}
-                                            fieldKey='plotoptions'>
-                        <InputGroup labelWidth={20}>
+    return (
+        <FieldGroup groupKey={groupKey} keepState={false}
+                    reducerFunc={columnNameReducer(colValStats,basicFieldsReducer)}>
+            <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
+                <ColumnOrExpression {...{colValStats,params:histogramParams,groupKey,fldPath:'columnOrExpr',label:'Column or expression:',
+                    name: 'X',tooltip:'X Axis',nullAllowed:false, slotProps: {control: {orientation}}}}/>
+                <Stack spacing={1}>
+                    <RadioGroupInputField
+                        initialState= {{
+                            value: algorithmParam,
+                            tooltip: 'Please select an algorithm',
+                            label: 'Algorithm:'
+                        }}
+                        options={m_algorithmOptions}
+                        orientation={orientation}
+                        fieldKey='algorithm'
+                        groupKey={groupKey}/>
+                    <HistogramAlgorithmParameters {...{groupKey, histogramParams, orientation, labelWidth}}/>
+                </Stack>
+                {basicFields}
+                {!basicFields &&
+                    <FieldGroupCollapsible header='Options'
+                                           initialState= {{ value:'closed' }}
+                                           fieldKey='plotoptions'>
+                        <Stack spacing={2}>
                             <CheckboxGroupInputField
                                 initialState= {{
                                     value: get(histogramParams, 'x', '_none_'),
@@ -334,36 +242,77 @@ export class HistogramOptions extends Component {
                                 ]}
                                 fieldKey='y'
                             />
-                        </InputGroup>
-                    </FieldGroupCollapsible>}
-                    <br/>
-                    <InputGroup labelWidth={60}>
-                        <RadioGroupInputField
-                            initialState= {{
-                                value: algorithm,
-                                tooltip: 'Please select an algorithm',
-                                label: 'Algorithm:'
-                            }}
-                            options={m_algorithmOptions}
-                            alignment='horizontal'
-                            fieldKey='algorithm'
-                            groupKey={groupKey}/>
-                    </InputGroup>
-                    <br/>
-                    {this.renderAlgorithmParameters()}
-                    <br/>
-                    {basicFields && <br/>}
-                    {basicFields}
-                </FieldGroup>
-            </div>
-        );
-    }
+                        </Stack>
+                    </FieldGroupCollapsible>
+                }
+            </Stack>
+        </FieldGroup>
+    );
 }
 
+
+const HistogramAlgorithmParameters = ({groupKey, histogramParams, orientation, labelWidth}) => {
+    const algorithm = useStoreConnector(()=>getFieldVal(groupKey, 'algorithm', 'fixedSizeBins'));
+    const fixedBinSizeSelection = useStoreConnector(()=>getFieldVal(groupKey, 'fixedBinSizeSelection'));
+
+    const sx = {pl: `calc(${labelWidth} + 2.25rem)`, '.MuiInput-root': {width: '7rem'}};
+    console.log({histogramParams, algorithm, fixedBinSizeSelection});
+
+    if (algorithm === 'bayesianBlocks') {
+        return (
+            <ValidationField
+                initialState= {{
+                    value: get(histogramParams, 'falsePositiveRate','0.05'),
+                    validator: Validate.floatRange.bind(null, 0.01, 0.5, 2,'falsePositiveRate'),
+                    tooltip: 'Acceptable false positive rate'
+                }}
+                fieldKey='falsePositiveRate'
+                groupKey={groupKey}
+                label='False Positive Rate:'
+                orientation={orientation}
+                sx={{...sx, '.MuiFormLabel-root': {width: 'auto'}}}
+            />
+        );
+    } else { // fixedSizeBins
+        const numBinsIsDisabled = fixedBinSizeSelection ? fixedBinSizeSelection !=='numBins': false;
+
+        return (
+            <Stack spacing={.5} sx={{...sx, '.MuiFormLabel-root': {width: '8.1rem'}}}>
+                {renderFixedBinSizeOptions({groupKey, histogramParams, numBinsIsDisabled}) }
+                <ValidationField
+                    initialState= {{
+                        value: get(histogramParams, 'minCutoff', ''),
+                        validator:Validate.isFloat.bind(null,  'minCutoff'),
+                        tooltip: 'Minimal value',
+                        label : 'Min:'
+
+                    }}
+                    fieldKey='minCutoff'
+                    groupKey={groupKey}
+                    orientation={orientation}
+                />
+                <ValidationField
+                    initialState= {{
+                        value: get(histogramParams, 'maxCutoff', ''),
+                        validator:Validate.isFloat.bind(null,  'maxCutoff'),
+                        tooltip: 'Max value',
+                        label : 'Max:'
+
+                    }}
+                    fieldKey='maxCutoff'
+                    groupKey={groupKey}
+                    orientation={orientation}
+                />
+            </Stack>
+        );
+    }
+};
+
+
 //Make the fixed bin layout
-function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
+function renderFixedBinSizeOptions({groupKey, histogramParams, numBinsIsDisabled}){
     return (
-      <div style={{display: 'flex', flexDirection: 'row', padding: '5px 0 15px'}} >
+      <Stack spacing={'0.75rem'} direction='row'>
          <RadioGroupInputField
             initialState= {{
                                 value: get(histogramParams, 'fixedBinSizeSelection', 'numBins'),
@@ -371,40 +320,36 @@ function renderFixedBinSizeOptions(groupKey, histogramParams, disabled){
                                 //label: 'BinSize:'
                             }}
             options={binSizeOptions}
-            alignment='vertical'
+            orientation='vertical'
             fieldKey='fixedBinSizeSelection'
-            groupKey={groupKey}/>
-        <div>
+            groupKey={groupKey}
+            sx={{'.MuiRadioGroup-root': {'--RadioGroup-gap': '1rem'}}}
+         />
+        <Stack spacing={.5}>
              <ValidationField
-                 style={{width: 80}}
                  initialState= {{
                                   value: get(histogramParams, 'numBins', '50'),
                                   validator:Validate.intRange.bind('number of bins ', 1, 500, 'numBins', false),
                                   tooltip: 'Number of bins'
 
                              }}
-                 disabled = {disabled}
+                 readonly = {numBinsIsDisabled}
                  fieldKey='numBins'
                  groupKey={groupKey}
-                 labelWidth={80}
              />
              <ValidationField
-                 style={{width: 80}}
                  initialState= {{
                                   value: get(histogramParams, 'binWidth', ''),
                                   validator:Validate.isFloat.bind('bin width',  'binWidth'),
                                   tooltip: 'Bin width'
 
                              }}
-                 disabled = {!disabled}
+                 readonly = {!numBinsIsDisabled}
                  fieldKey='binWidth'
                  groupKey={groupKey}
-                 labelWidth={80}
             />
-        </div>
-      </div>
-
-
+        </Stack>
+      </Stack>
    );
 }
 
@@ -415,5 +360,6 @@ HistogramOptions.propTypes = {
     histogramParams: histogramParamsShape,
     fixedAlgorithm: PropTypes.bool,
     basicFieldsReducer: PropTypes.func,
-    basicFields: PropTypes.element
+    basicFields: PropTypes.element,
+    orientation: PropTypes.string
 };

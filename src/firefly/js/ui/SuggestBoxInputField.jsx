@@ -260,7 +260,7 @@ export class SuggestBoxInputFieldView extends PureComponent {
     render() {
 
         const {displayValue, valid, message, highlightedIdx, isOpen, inputWidth, suggestions, mouseTrigger } = this.state;
-        const {label, tooltip, inline, renderSuggestion, wrapperStyle, placeholder, slotProps={},
+        const {label, tooltip, inline, renderSuggestion, wrapperStyle, placeholder, slotProps={}, sx,
             popStyle, popupIndex, readonly=false, required=false} = this.props;
 
         const leftOffset = 0;
@@ -298,7 +298,8 @@ export class SuggestBoxInputFieldView extends PureComponent {
                     message, label, tooltip, readonly, required,
                     onBlur: () => isOpen && this.changeValue(undefined),
                     endDecorator: this.props.endDecorator,
-                    slotProps: { tooltip: {placement: 'right'}, ...slotProps }
+                    slotProps: { tooltip: {placement: 'right'}, ...slotProps },
+                    sx
                 }} />
             </div>
         );
@@ -331,8 +332,7 @@ SuggestBoxInputFieldView.propTypes = {
         control: object,
         label: object,
         tooltip: object
-    })
-
+    }),
 };
 
 

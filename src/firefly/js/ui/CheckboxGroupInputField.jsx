@@ -21,12 +21,9 @@ export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip:
 
     return (
         <Tooltip title={toggleBoxTip} sx={sx} {...slotProps?.tooltip}>
-            <Stack orientation={orientation==='horizontal'?'row':'column'}>
-                {label && (
-                    <FormControl>
-                        <FormLabel {...slotProps?.label}>{label}</FormLabel>
-                    </FormControl>
-                ) }
+            <FormControl orientation={orientation}  {...slotProps?.control}>
+                {label && <FormLabel {...slotProps?.label}>{label}</FormLabel>}
+                {/*following should be nested in a <FormGroup/> once joy-ui exposes it: https://mui.com/material-ui/react-checkbox/#formgroup*/}
                 <Stack className='ff-Checkbox-container' spacing={orientation==='vertical'?1:2} direction={orientation==='vertical' ? 'column' : 'row'}>
                     {options.map( ({value,label,tooltip}) => {
                         const cb= type==='switch' ?
@@ -37,10 +34,18 @@ export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip:
                             :
                             (<Checkbox {...slotProps?.input}
                             {...{ className:'ff-Checkbox-item', size:'sm', name:fieldKey, key:value, value, checked:isChecked(value,fieldValue), onChange, label, }} />);
-                        return tooltip ? <Tooltip {...{title:toggleBoxTip, key:value}}> {cb} </Tooltip> : cb;
+                        return (
+                            <FormControl key={value}>{
+                                //until https://github.com/mui/material-ui/issues/37764 & related issues are fixed,
+                                //we need to wrap `cb` in a FormControl as a workaround: https://stackoverflow.com/a/66738444/8252556
+                                tooltip
+                                    ? <Tooltip {...{title: toggleBoxTip, key: value}}> {cb} </Tooltip>
+                                    : cb
+                            }</FormControl>
+                        );
                     })}
                 </Stack>
-            </Stack>
+            </FormControl>
         </Tooltip>
     );
 }
@@ -55,10 +60,12 @@ CheckboxGroupInputFieldView.propTypes= {
     tooltip:  PropTypes.string,
     sx: object,
     slotProps: shape({
+        control: object,
         input: object,
         label: object,
         tooltip: object
-    })
+    }),
+    type: PropTypes.oneOf(['switch', 'checkbox']) //undefined defaults to 'checkbox'
 };
 
 
