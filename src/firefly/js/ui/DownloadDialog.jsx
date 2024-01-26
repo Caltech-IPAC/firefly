@@ -25,6 +25,8 @@ import {WsSaveOptions} from './WorkspaceSelectPane.jsx';
 import {NotBlank} from '../util/Validate.js';
 import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
+import {Stack, Typography, Box} from '@mui/joy';
+import {ToolbarButton} from 'firefly/ui/ToolbarButton';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
 const OptionsContext = React.createContext();
@@ -100,13 +102,8 @@ export function DownloadButton(props) {
         }
     }, [selectInfo]);
 
-    const style = selectInfoCls.getSelectedCount() ? 'button std attn' : 'button std hl';
     return (
-        <button style={{display: 'inline-block'}}
-                type = 'button'
-                className = {style}
-                onClick = {onClick}
-        >Prepare Download</button>
+        <ToolbarButton variant='soft' color='primary' onClick={onClick} text='Prepare Download'/>
     );
 }
 
@@ -120,22 +117,6 @@ DownloadButton.propTypes = {
 
 DownloadButton.defaultProps = {
     checkSelectedRow:true
-};
-const noticeCss = {
-    backgroundColor: 'beige',
-    color: 'brown',
-    border: '1px solid #cacaae',
-    padding: 3,
-    borderRadius: 2,
-    marginBottom: 10,
-    whiteSpace: 'nowrap',
-    textAlign: 'center'
-};
-
-const preTitleCss = {
-    padding: 3,
-    marginBottom: 10,
-    whiteSpace: 'wrap',
 };
 
 let dlTitleIdx = 0;
@@ -216,11 +197,10 @@ export function DownloadOptionPanel ({groupKey, cutoutSize, help_id, children, s
             value: get(dlParams, 'BaseFileName')
         }
     };
-
     const dlTitle = get(dlParams, 'TitlePrefix', 'Download') + '-' + dlTitleIdx;
     const preTitleMessage = dlParams?.PreTitleMessage ?? '';
     return (
-        <div style = {Object.assign({margin: '4px', position: 'relative', minWidth:400, height:'auto'}, style)}>
+        <Stack sx ={{m:1/2, position: 'relative', minWidth:400, height:'auto', ...style}}>
             <FormPanel
                 submitText = 'Prepare Download'
                 cancelText = {cancelText}
@@ -229,10 +209,17 @@ export function DownloadOptionPanel ({groupKey, cutoutSize, help_id, children, s
                 onCancel = {() => dispatchHideDialog(DOWNLOAD_DIALOG_ID)}
                 help_id  = {help_id}>
                 <FieldGroup groupKey={groupKey} keepState={true}>
-                    {showWarnings && <div style={noticeCss}>This table contains proprietary data. Only data to which you have access will be downloaded.</div>}
-                    {preTitleMessage && <div style={preTitleCss}>{preTitleMessage}</div>}
-                    <div className='FieldGroup__vertical--more'>
-                        {showTitle && <TitleField {...{labelWidth, value:dlTitle }}/>}
+                    {showWarnings && (
+                        <Typography color={'warning'} level='title-md' mb={2}>
+                            This table contains proprietary data. Only data to which you have access will be downloaded.
+                        </Typography>
+                    )}
+                    {preTitleMessage && (<Typography sx={{p:3,mb: 10,whiteSpace: 'wrap'}}>
+                            {preTitleMessage}
+                        </Typography>
+                    )}
+                    <Stack spacing={1}>
+                        {showTitle && <TitleField {...{labelWidth, value:dlTitle}}/>}
 
                         {children}
 
@@ -240,11 +227,11 @@ export function DownloadOptionPanel ({groupKey, cutoutSize, help_id, children, s
                         {showZipStructure   && <ZipStructure {...{labelWidth}} />}
                         {showFileLocation   && <WsSaveOptions {...{groupKey, labelWidth, saveAsProps}}/>}
                         {showEmailNotify    && <EmailNotification {...{groupKey}}/>}
-                    </div>
+                    </Stack>
                 </FieldGroup>
             </FormPanel>
             {maskPanel}
-        </div>
+        </Stack>
     );
 }
 
@@ -330,12 +317,12 @@ export function EmailNotification({style, groupKey}) {
     const enableEmail = useStoreConnector(() => getFieldVal(groupKey, emailNotif));
 
     return (
-        <div style={style}>
-            <div style={{width: 250, marginTop: 15}}>
+        <Box sx={{...style}} spacing={1}>
+            <Stack width={250} mt={2}>
                 <CheckboxGroupInputField fieldKey={emailNotif}
                                      initialState= {{value: ''}}
                                      options={[{label:'Enable email notification', value: 'true'}]}/>
-            </div>
+            </Stack>
             {enableEmail &&
                 <ValidationField
                     fieldKey={emailKey}
@@ -349,7 +336,7 @@ export function EmailNotification({style, groupKey}) {
                     actOn={['blur', 'enter']}
                 />
             }
-        </div>
+        </Box>
     );
 }
 

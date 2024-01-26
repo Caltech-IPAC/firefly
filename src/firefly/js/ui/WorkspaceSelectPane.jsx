@@ -15,6 +15,7 @@ import {WorkspaceSave} from './WorkspaceViewer.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {dispatchWorkspaceUpdate, getWorkspaceErrorMsg} from '../visualize/WorkspaceCntlr.js';
 import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
+import {Stack, Typography, Box} from '@mui/joy';
 
 export const LOCALFILE = 'isLocal';
 export const WORKSPACE = 'isWs';
@@ -52,7 +53,7 @@ export function WsSaveOptions (props) {
     const useWs = getWorkspaceConfig();
 
     return (
-        <div style={style}>
+        <Stack style={style} spacing={1}>
             <ValidationField fieldKey='BaseFileName' forceReinit={true} {...saveAsProps}/>
             { useWs &&
                 <RadioGroupInputField
@@ -65,7 +66,7 @@ export function WsSaveOptions (props) {
                 />
             }
             { useWs && (loc === WORKSPACE) && <ShowWorkspace {...{wsSelect}}/> }
-        </div>
+        </Stack>
     );
 
 }
@@ -83,14 +84,13 @@ function ShowWorkspace({wsSelect}) {
 
     const wsList     = useStoreConnector(getWorkspaceList);
     const isUpdating = useStoreConnector(isAccessWorkspace);
-
-    const content = isUpdating ? <div className='loading-mask' style={{margin:-3}}/>
-                    : isEmpty(wsList) ? <div style={{color:'maroon', fontStyle:'italic', padding:10}}> {'Workspace access error: ' + getWorkspaceErrorMsg()} </div>
+    const content = isUpdating ? <Stack className='loading-mask' style={{margin:-1/2}}/>
+                    : isEmpty(wsList) ? <Typography color={'warning'} level='title-md' p={1}> {'Workspace access error: ' + getWorkspaceErrorMsg()} </Typography>
                     : <WorkspaceSave fieldKey='wsSelect' files={wsList} value={wsSelect} />;
 
     return (
-        <div style={{ border:'1px solid #eaeaea', padding:3, marginTop:5, position:'relative', overflow: 'auto', minHeight:60, maxHeight:400, minWidth:550}}>
+        <Box {...{padding:1/2, marginTop:2, position:'relative', overflow: 'auto', minHeight:60, maxHeight:400, minWidth:550}}>
             {content}
-        </div>
+        </Box>
     );
 }
