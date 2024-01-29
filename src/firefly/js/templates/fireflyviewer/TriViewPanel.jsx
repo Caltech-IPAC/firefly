@@ -34,9 +34,9 @@ const imgXyKey= 'images | xyplots';
 const tblXyKey= 'tables | xyplots';
 
 export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButtons, rightButtons,
-                                      coverageSide=LEFT, initLoadingMessage, initLoadCompleted} ) => {
+                                      initLoadingMessage, initLoadCompleted} ) => {
     const state= useStoreConnector(() => pick(getLayouInfo(), stateKeys));
-    const {title, mode, showTables, showImages, showXyPlots, images={}} = state;
+    const {title, mode, showTables:showTablesInState, showImages, showXyPlots, images={}, coverageSide=LEFT} = state;
     const {expanded, standard, closeable} = mode ?? {};
     const content = {};
     const {showMeta, showFits, dataProductTableId, showCoverage} = images;
@@ -46,7 +46,7 @@ export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButt
     const imagesWithCharts= currLayoutMode===tblXyKey;
 
     if (initLoadingMessage && !initLoadCompleted) return (<AppInitLoadingMessage message={initLoadingMessage}/>);
-    if (!showImages && !showXyPlots && !showTables) return <div/>;
+    if (!showImages && !showXyPlots && !showTablesInState) return <div/>;
 
     if (!imagesWithCharts && (showImages || coverageLeft)) {
         content.imagePlot = (<TriViewImageSection key='res-tri-img'
@@ -60,7 +60,8 @@ export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButt
             dataProductTableId, coverageRight, imagesWithCharts}}/>);
         if (expanded===LO_VIEW.xyPlots) content.xyPlot= content.rightSide;
     }
-    if (showTables) {
+    const showTables= showTablesInState && currLayoutMode?.includes('tables');
+    if (showTables && currLayoutMode?.includes('tables')) {
         content.tables = (<TablesContainer key='res-tables'
                                            mode='both'
                                            closeable={closeable}

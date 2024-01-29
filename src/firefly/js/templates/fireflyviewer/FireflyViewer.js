@@ -43,7 +43,7 @@ import App from 'firefly/ui/App.jsx';
  *
  */
 export function FireflyViewer ({menu, options, initLoadCompleted, initLoadingMessage, views, showViewsSwitch, leftButtons,
-                                   centerButtons, rightButtons, coverageSide, normalInit=true, ...appProps}){
+                                   centerButtons, rightButtons, normalInit=true, ...appProps}){
 
     useEffect(() => {
         getImageMasterData();
@@ -72,7 +72,7 @@ export function FireflyViewer ({menu, options, initLoadCompleted, initLoadingMes
 
     return (
         <App {...{enableVersionDialog:true, views, ...appProps}}>
-            <DynamicResults {...{views, showViewsSwitch, leftButtons, centerButtons, coverageSide,
+            <DynamicResults {...{views, showViewsSwitch, leftButtons, centerButtons,
                 rightButtons, initLoadingMessage, initLoadCompleted}}/>
         </App>
     );

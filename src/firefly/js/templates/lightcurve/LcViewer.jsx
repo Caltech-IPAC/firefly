@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Sheet, Typography} from '@mui/joy';
+import {Typography} from '@mui/joy';
 import React, {memo, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {Stack} from '@mui/joy';
@@ -15,8 +15,7 @@ import {dispatchHideDropDown, getLayouInfo, SHOW_DROPDOWN} from '../../core/Layo
 import {lcManager, LC} from './LcManager.js';
 import {LcResult} from './LcResult.jsx';
 import {LcPeriodPlotly} from './LcPeriodPlotly.jsx';
-import {Menu} from '../../ui/Menu.jsx';
-import {Banner, makeBannerTitle} from '../../ui/Banner.jsx';
+import {makeBannerTitle} from '../../ui/Banner.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {FormPanel} from './../../ui/FormPanel.jsx';
@@ -26,7 +25,7 @@ import {FileUpload} from '../../ui/FileUpload.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {HelpIcon} from './../../ui/HelpIcon.jsx';
-import {getAllConverterIds, getConverter, getMissionName, DL_DATA_TAG} from './LcConverterFactory.js';
+import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {HelpText} from './../../ui/HelpText.jsx';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';

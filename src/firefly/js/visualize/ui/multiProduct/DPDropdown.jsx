@@ -8,7 +8,6 @@ import {
 import {DPtypes} from '../../../metaConvert/DataProductsType.js';
 import {SingleColumnMenu} from '../../../ui/DropDownMenu.jsx';
 import {DropDownToolbarButton} from '../../../ui/DropDownToolbarButton.jsx';
-import {TextButton} from '../../../ui/TextButton.jsx';
 import {ToolbarButton} from '../../../ui/ToolbarButton.jsx';
 
 /**

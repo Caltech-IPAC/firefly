@@ -51,7 +51,7 @@ function one(config, items){
     const item = config.center || config.north || config.east || config.west || config.south;
 
     return (
-        <Stack height={1}>
+        <Stack height={1} direction='row'>
             <SplitContent>
                 {items[item.index]}
             </SplitContent>

@@ -9,7 +9,6 @@ import {dispatchShowDialog} from '../ComponentCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {CollapsiblePanel} from 'firefly/ui/panel/CollapsiblePanel.jsx';
 import {uwsJobInfo} from 'firefly/rpc/SearchServicesJson.js';
-import {TextButton} from 'firefly/ui/TextButton.jsx';
 import {Button} from '@mui/joy';
 
 
