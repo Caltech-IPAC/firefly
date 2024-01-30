@@ -19,10 +19,10 @@ export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serv
 
     return (
         <ConnectionCtx.Provider value={{controlConnected, setControlConnected}}>
-            <FieldGroup sx={{...sx, height: '100%', overflow: 'auto'}} groupKey={TAP_SEARCH_METHODS_GROUP} keepState={true}>
+            <Box sx={{...sx, height: '100%', overflow: 'auto'}} >
                 <HelperComponents {...{initArgs,cols:getAvailableColumns(columnsModel), tableName,
                     columnsModel,serviceUrl,serviceLabel,obsCoreEnabled,capabilities}}/>
-            </FieldGroup>
+            </Box>
         </ConnectionCtx.Provider>
     );
 };

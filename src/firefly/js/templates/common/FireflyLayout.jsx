@@ -10,6 +10,7 @@ import {Menu} from 'firefly/ui/Menu.jsx';
 import {getMenu, isAppReady} from 'firefly/core/AppDataCntlr.js';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {MainPanel} from 'firefly/templates/common/MainPanel.jsx';
+import {AppConfigDrawer} from '../../ui/AppConfigDrawer.jsx';
 
 /**
  * Default Firefly application layout.
@@ -29,7 +30,7 @@ import {MainPanel} from 'firefly/templates/common/MainPanel.jsx';
  * @param props.sx
  * @param props.children
  */
-export function FireflyLayout({footer, useDefaultExpandedView, dropDownComponent, sx, children, ...props}) {
+export function FireflyLayout({footer, useDefaultExpandedView, drawerComponent, dropDownComponent, sx, children, ...props}) {
 
     const menu = useStoreConnector(getMenu);
     const isReady = useStoreConnector(isAppReady);
@@ -54,6 +55,7 @@ export function FireflyLayout({footer, useDefaultExpandedView, dropDownComponent
                 <BannerSection {...bannerProps} menu={menu}/>
                 <div id={warningDivId} data-decor='full' className='warning-div center'/>
                 <Alerts />
+                {drawerComponent}
             </Stack>
             <MainPanel {...{footer, useDefaultExpandedView, dropDownComponent}}>
                 {children}
@@ -66,6 +68,7 @@ export function FireflyLayout({footer, useDefaultExpandedView, dropDownComponent
 FireflyLayout.propTypes = {
     useDefaultExpandedView: bool,
     footer: element,
+    drawerComponent: element,
     dropDownComponent: element,
     sx: object
 };
@@ -75,7 +78,6 @@ FireflyLayout.propTypes = {
 /**
  * Handles banner and login
  * @param p             props
- * @param p.menu        menu info
  * @param p.appTitle    application title
  * @param p.appIcon     application icon
  * @param p.altAppIcon  alternative icon
@@ -87,7 +89,7 @@ FireflyLayout.propTypes = {
 function BannerSection({menu, ...rest}) {
     return (
         <Banner key='banner'
-                menu={<Menu menu={menu} /> }
+                menu={<Menu/> }
                 {...rest}
         />
     );

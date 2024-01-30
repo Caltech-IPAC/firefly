@@ -42,7 +42,7 @@ import {
     findViewerWithItemId, getAViewFromMultiView, getMultiViewRoot, getViewer, IMAGE, NewPlotMode
 } from '../MultiViewCntlr.js';
 import {PlotAttribute} from '../PlotAttribute';
-import {getPlotViewById} from '../PlotViewUtil.js';
+import {DEFAULT_COVERAGE_PLOT_ID, DEFAULT_COVERAGE_VIEWER_ID, getPlotViewById} from '../PlotViewUtil.js';
 import VisUtil from '../VisUtil';
 import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {FG_KEYS, FD_KEYS} from './UIConst';
@@ -95,7 +95,11 @@ function getContexInfo(renderTreeId, presetViewerId) {
         // don't replace if add is allowed
         plotId = undefined;
     }
-    const multiSelect = !plotId;  // when replace, set to single select mode
+
+    plotId= plotId!==DEFAULT_COVERAGE_PLOT_ID ? plotId : undefined;
+    viewerId= viewerId!==DEFAULT_COVERAGE_VIEWER_ID ? viewerId : undefined;
+
+    const multiSelect = !plotId;
     return {plotId, viewerId, multiSelect};
 }
 
@@ -104,7 +108,7 @@ function getContexInfo(renderTreeId, presetViewerId) {
 /*-----------------------------------------------------------------------------------------*/
 
 function ImageSearchPanel({sx, resizable=true, onSubmit, gridSupport = false, multiSelect, submitText,
-                              onCancel=dispatchHideDropDown, noScroll, initArgs}) {
+                              onCancel, noScroll, initArgs}) {
     const archiveName =  get(getAppOptions(), 'ImageSearch.archiveName');
     const resize = {resize: 'both', overflow: 'hidden', paddingBottom: 5};
     const dim = {height: 600, width: 725, minHeight: 600, minWidth: 725};
@@ -123,6 +127,7 @@ function ImageSearchPanel({sx, resizable=true, onSubmit, gridSupport = false, mu
                         onSubmit = {onSubmit}
                         onError = {searchFailed}
                         onCancel = {onCancel}
+                        cancelText={onCancel?'Cancel':''}
                         help_id = {'basics.searching'}>
                 <ImageSearchPanelV2 {...{multiSelect, archiveName, noScroll, initArgs}}/>
                 {gridSupport && <GridSupport/>}
@@ -140,7 +145,7 @@ export function ImageSearchDropDown({gridSupport, resizable=false, initArgs}) {
     const onSubmit = (request) => onSearchSubmit({request, plotId, viewerId, gridSupport, renderTreeId});
     return (
         <Stack flexGrow={1}>
-            <ImageSearchPanel {...{sx:{flexGrow:1}, resizable, gridSupport, onSubmit, multiSelect, onCancel:dispatchHideDropDown, initArgs}}/>
+            <ImageSearchPanel {...{sx:{flexGrow:1}, resizable, gridSupport, onSubmit, multiSelect, initArgs}}/>
         </Stack>
     );
 }

@@ -12,11 +12,13 @@ import {
     dispatchOnAppReady, dispatchNotifyRemoteAppReady, getAppOptions,
 } from '../../core/AppDataCntlr.js';
 import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
+import {AppConfigDrawer} from '../../ui/AppConfigDrawer.jsx';
 import {getActiveRowCenterDef} from '../../visualize/saga/ActiveRowCenterWatcher.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {layoutManager} from './FireflyViewerManager.js';
+import {LayoutChoice, LayoutChoiceAccordion} from './LayoutChoice.jsx';
 import {TriViewPanel} from './TriViewPanel.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {startImagesLayoutWatcher} from '../../visualize/ui/TriViewImageSection.jsx';
@@ -43,7 +45,7 @@ import App from 'firefly/ui/App.jsx';
  *
  */
 export function FireflyViewer ({menu, options, initLoadCompleted, initLoadingMessage, views, showViewsSwitch, leftButtons,
-                                   centerButtons, rightButtons, normalInit=true, ...appProps}){
+                                   centerButtons, rightButtons, normalInit=true, landingPage, ...appProps}){
 
     useEffect(() => {
         getImageMasterData();
@@ -69,10 +71,17 @@ export function FireflyViewer ({menu, options, initLoadCompleted, initLoadingMes
         });
 
     }, []);
+    const drawerComponent= (
+        <AppConfigDrawer  appIcon={appProps.appIcon} appTitle={appProps.appTitle}>
+            <LayoutChoiceAccordion/>
+        </AppConfigDrawer>
+    );
+
+
 
     return (
-        <App {...{enableVersionDialog:true, views, ...appProps}}>
-            <DynamicResults {...{views, showViewsSwitch, leftButtons, centerButtons,
+        <App {...{enableVersionDialog:true, views, drawerComponent, ...appProps}}>
+            <DynamicResults {...{views, showViewsSwitch, landingPage, leftButtons, centerButtons,
                 rightButtons, initLoadingMessage, initLoadCompleted}}/>
         </App>
     );
@@ -116,7 +125,10 @@ function onReady({menu, views, options={}, initLoadingMessage, initLoadCompleted
     const {hasImages, hasTables, hasXyPlots} = getLayouInfo();
     if (normalInit && (!(hasImages || hasTables || hasXyPlots))) {
         let goto = getActionFromUrl();
-        if (!goto) goto= (!initLoadingMessage || initLoadCompleted) && {type: SHOW_DROPDOWN};
+        if (!goto) {
+            const landingItem= menu.find( (item) => item.landing);
+            goto= landingItem && {type:SHOW_DROPDOWN, payload:{view:landingItem.action}};
+        }
         if (goto) flux.process(goto);
     }
     dispatchNotifyRemoteAppReady();

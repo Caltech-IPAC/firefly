@@ -44,14 +44,6 @@ function getChartActions({chartId, tbl_id}) {
                 // can add trace
                 chartActions.push(CHART_TRACE_ADDNEW);
             }
-
-            // TODO: adding charts to non-default viewer does not work from charts options dialog
-            // to be able to add charts to any viewer, we need to pass viewerId to addNewTrace
-            // and eventually to dispatchChartAdd in BasicOptions.jsx
-            if (!viewerId || viewerId === DEFAULT_PLOT2D_VIEWER_ID) {
-                // can add chart
-                chartActions.push(CHART_ADDNEW);
-            }
         }
     } else {
         if (tbl_id) {
@@ -109,8 +101,9 @@ function getGroupKey(chartId, chartAction) {
 
 export function ChartSelectPanel({tbl_id, chartId, chartAction, inputStyle={}, hideDialog, sx={}}) {
     const {renderTreeId} = useContext(RenderTreeIdCtx);
+    const showActionOptions= chartAction!==CHART_ADDNEW;
 
-    const chartActions = getChartActions({chartId, tbl_id});
+    const chartActions =  showActionOptions ?  getChartActions({chartId, tbl_id}) : [CHART_ADDNEW];
     const [chartActionState, setChartActionState] = useState(
         (chartActions.includes(chartAction)) ? chartAction : chartActions[0]);
 
@@ -130,8 +123,9 @@ export function ChartSelectPanel({tbl_id, chartId, chartAction, inputStyle={}, h
             help_id = 'plots.changing'
             sx={{m: 1, mt: 0, ...sx}}>
             <Stack spacing={2}>
-                <ChartAction {...{chartId, chartActions, chartAction: chartActionState, chartActionChanged}}/>
-                <Divider/>
+                {showActionOptions  &&
+                    <ChartAction {...{chartId, chartActions, chartAction: chartActionState, chartActionChanged}}/>}
+                {showActionOptions && <Divider/>}
                 <Box py={1} overflow={'auto'} maxHeight={'60vh'} minWidth={'30rem'}>
                     <ChartActionOptions {...{chartAction: chartActionState, tbl_id, chartId, groupKey, hideDialog}}/>
                 </Box>
@@ -289,17 +283,17 @@ SyncedOptionsUI.propTypes = {
  * Creates and shows the modal dialog with chart options.
  * @param {string} chartId
  */
-export function showChartsDialog(chartId) {
+export function showChartsDialog(chartId,chartAction, tbl_id) {
     const {data, fireflyData, activeTrace} = getChartData(chartId);
-    const tbl_id = get(data, `${activeTrace}.tbl_id`) || get(fireflyData, `${activeTrace}.tbl_id`);
+    const workingTblId = tbl_id ?? (get(data, `${activeTrace}.tbl_id`) || get(fireflyData, `${activeTrace}.tbl_id`));
 
     const popupId ='chartOptionsDialog';
     const dialogContent= (
-        <PopupPanel title='Plot Parameters' modal={true}>
+        <PopupPanel title={chartAction===CHART_ADDNEW?'Add New Chart' : 'Plot Parameters'} modal={true}>
             <ChartSelectPanel {...{
-                tbl_id,
+                tbl_id:workingTblId,
                 chartId,
-                chartAction: CHART_TRACE_MODIFY,
+                chartAction,
                 inputStyle: {padding: 'none', marginBottom: 8}, //TODO: this should be sx in FormPanel
                 hideDialog: ()=>dispatchHideDialog(popupId)}}/>
         </PopupPanel>

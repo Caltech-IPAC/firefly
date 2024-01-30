@@ -32,7 +32,8 @@ const tableOnlyDefaultAcceptList = [
     TABLES
 ];
 
-export const FileUploadDropdown= ({sx, onCancel=dispatchHideDropDown, onSubmit=resultSuccess, keepState=true,
+export const FileUploadDropdown= ({sx, onCancel, onSubmit=resultSuccess, keepState=true,
+                                      initArgs,
                                       groupKey=panelKey, acceptList= getAppOptions()?.uploadPanelLimit==='tablesOnly'?
         tableOnlyDefaultAcceptList: defaultAcceptList, acceptOneItem=false}) =>{
     const [submitText,setSubmitText]= useState('Load');
@@ -46,12 +47,14 @@ export const FileUploadDropdown= ({sx, onCancel=dispatchHideDropDown, onSubmit=r
                     groupKey={groupKey} onSubmit={onSubmit}
                     onError={resultFail}
                     onCancel={onCancel}
+                    cancelText={onCancel?'Cancel':''}
                     submitText={submitText}
                     params={{hideOnInvalid: false}}
                     changeMasking={changeMasking}
                     inputStyle={{height:'100%'}}
                     submitBarStyle={{padding: '2px 3px 3px'}} help_id={helpId}>
-                    <FileUploadViewPanel {...{setSubmitText, acceptList, acceptOneItem}}/>
+                    <FileUploadViewPanel {...{setSubmitText, acceptList, acceptOneItem,
+                        externalDropEvent:initArgs?.searchParams?.dropEvent}}/>
                 </FormPanel>
             </FieldGroup>
             {doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }

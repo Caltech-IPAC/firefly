@@ -5,20 +5,24 @@ import {get, isEmpty} from 'lodash';
 
 import {dispatchChartUpdate, dispatchChartFilterSelection, dispatchChartSelect, getChartData, dispatchSetActiveTrace, dispatchChartExpanded, resetChart} from '../ChartsCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {getTblById, clearFilters, getColumnIdx, getColumnType} from '../../tables/TableUtil.js';
+import {getTblById, clearFilters, getColumnIdx, getColumnType, getActiveTableId} from '../../tables/TableUtil.js';
 import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from '../../core/LayoutCntlr.js';
+import {getActiveViewerItemId} from './MultiChartViewer.jsx';
 import {downloadChart} from './PlotlyWrapper.jsx';
 import {getColValidator} from './ColumnOrExpression.jsx';
 import {getColValStats} from '../TableStatsCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
-import {showChartsDialog} from './ChartSelectPanel.jsx';
+import {CHART_ADDNEW, CHART_TRACE_MODIFY, showChartsDialog} from './ChartSelectPanel.jsx';
 import {FilterEditorWrapper} from './FilterEditorWrapper.jsx';
 import {isScatter2d} from '../ChartUtil.js';
-import {findViewerWithItemId, getLayoutType, getMultiViewRoot, PLOT2D} from '../../visualize/MultiViewCntlr.js';
+import {
+    DEFAULT_PLOT2D_VIEWER_ID, findViewerWithItemId, getLayoutType, getMultiViewRoot, PLOT2D
+} from '../../visualize/MultiViewCntlr.js';
 import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField';
 import {
-    CheckedClearButton, ClearFilterButton, ExpandButton, FilterButton, ResetButton, SaveButton, SettingsButton
+    AddItem, CheckedClearButton, ClearFilterButton, ExpandButton, FilterButton, RestoreButton, SaveButton,
+    SettingsButton,
 } from '../../visualize/ui/Buttons.jsx';
 
 import ZoomIco from 'html/images/icons-2014/24x24_ZoomIn.png';
@@ -276,7 +280,7 @@ function ResetZoomBtn({style={}, chartId}) {
 
 function RestoreBtn({chartId}) {
     return (
-        <ResetButton onClick={() => { resetChart(chartId);}}
+        <RestoreButton onClick={() => { resetChart(chartId);}}
                      tip='Restore to the defaults'/>
     );
 }
@@ -296,8 +300,16 @@ function FiltersBtn({chartId}) {
 
 function OptionsBtn({chartId}) {
     return (
-        <SettingsButton onClick={() => showChartsDialog(chartId)}
+        <SettingsButton onClick={() => showChartsDialog(chartId,CHART_TRACE_MODIFY)}
              tip='Chart options and tools'/>
+    );
+}
+export function AddBtn() {
+    const tbl_id = getActiveTableId();
+    const chartId= getActiveViewerItemId(DEFAULT_PLOT2D_VIEWER_ID);
+    return (
+        <AddItem onClick={() => showChartsDialog(chartId,CHART_ADDNEW,tbl_id)}
+                        tip='Add a chart'/>
     );
 }
 

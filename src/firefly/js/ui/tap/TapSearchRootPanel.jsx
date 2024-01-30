@@ -3,8 +3,8 @@
  */
 import {Box, Button, Stack, Switch, Typography} from '@mui/joy';
 import {once} from 'lodash';
-import {shape,object,bool} from 'prop-types';
-import React, {useEffect, useRef, useState} from 'react';
+import {shape, object, bool, string} from 'prop-types';
+import React, {useContext, useEffect, useRef, useState} from 'react';
 import FieldGroupUtils, {getFieldVal, setFieldValue} from 'firefly/fieldGroup/FieldGroupUtils.js';
 import {makeSearchOnce} from 'firefly/util/WebUtil.js';
 import {dispatchMultiValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
@@ -12,7 +12,7 @@ import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 import {ExtraButton, FormPanel} from 'firefly/ui/FormPanel.jsx';
 import {ValidationField} from 'firefly/ui/ValidationField.jsx';
 import {intValidator} from 'firefly/util/Validate.js';
-import {FieldGroup} from 'firefly/ui/FieldGroup.jsx';
+import {FieldGroup, FieldGroupCtx} from 'firefly/ui/FieldGroup.jsx';
 import {makeTblRequest, setNoCache} from 'firefly/tables/TableRequestUtil.js';
 import {dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
 import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil.jsx';
@@ -35,7 +35,7 @@ import {AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 import {PREF_KEY} from 'firefly/tables/TablePref.js';
 
-export const TAP_PANEL_GROUP_KEY = 'TAP_PANEL_GROUP_KEY';
+export const DEFAULT_TAP_PANEL_GROUP_KEY = 'TAP_PANEL_GROUP_KEY';
 const SERVICE_TIP= 'Select a TAP service, or type to enter the URL of any other TAP service';
 
 //-------------
@@ -48,15 +48,21 @@ const SERVICE_TIP= 'Select a TAP service, or type to enter the URL of any other 
 let webApiUserAddedService;
 const initServiceUsingAPIOnce= makeSearchOnce(false); // call one time during first construction
 const searchFromAPIOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
-const activateInitArgsAdqlOnce= once((tapBrowserState,initArgs,setSelectBy) => initArgs?.urlApi?.adql &&
-    setTimeout(() => populateAndEditAdql(tapBrowserState,setSelectBy, initArgs.urlApi?.adql), 5));
-let lastServicesShowing= false;
+
+const activateInitArgsAdqlOnce= once((tapPanelGroupKey,tapBrowserState,initArgs,setSelectBy) => {
+    const {adql}= initArgs?.urlApi ?? {};
+    if (adql) {
+        setTimeout(() => populateAndEditAdql(tapPanelGroupKey,tapBrowserState,setSelectBy, adql), 5);
+    }
+});
+
 
 /** if an extra service is found from the api that is not in the list then set webApiUserAddedService */
 const initApiAddedServiceOnce= once((initArgs) => {
-    if (initArgs?.urlApi?.service) {
-        const listedEntry= getTapServiceOptions().find( (e) => e.value===initArgs.urlApi?.service);
-        if (!listedEntry) webApiUserAddedService = {label: initArgs.urlApi?.service, value: initArgs.urlApi?.service};
+    const {service}= initArgs?.urlApi ?? {};
+    if (service) {
+        const listedEntry= getTapServiceOptions().find( (e) => e.value===service);
+        if (!listedEntry) webApiUserAddedService = {label: initArgs.urlApi?.service, value: service};
     }
 });
 
@@ -85,7 +91,12 @@ function validateAutoSearch(fields, initArgs, tapBrowserState) {
 //----------
 //----------
 
-function getInitServiceUrl(tapBrowserState,initArgs,tapOps) {
+function getInitServiceUrl(tapBrowserState,initArgs,tapOps, lockedServiceUrl,lockedServiceName) {
+    if (lockedServiceUrl) return lockedServiceUrl;
+    if (lockedServiceName) {
+        const url= tapOps.find( ({labelOnly}) => labelOnly===lockedServiceName)?.value;
+        if (url) return url;
+    }
     let {serviceUrl=tapOps[0].value} = tapBrowserState;
     initServiceUsingAPIOnce(true, () => {
         if (initArgs?.urlApi?.service) serviceUrl= initArgs.urlApi.service;
@@ -104,39 +115,48 @@ export function getServiceHiPS(serviceUrl) {
 }
 
 
-export function TapSearchPanel({initArgs= {}, titleOn=true}) {
-    const [getTapBrowserState,setTapBrowserState]= useFieldGroupMetaState(defTapBrowserState,TAP_PANEL_GROUP_KEY);
+export function TapSearchPanel({initArgs= {}, titleOn=false,
+                                   lockService=false, lockedServiceUrl, lockedServiceName, lockObsCore=false,
+                                   groupKey=DEFAULT_TAP_PANEL_GROUP_KEY }) {
+
+    return (
+        <FieldGroup groupKey={groupKey} keepState={true} key={groupKey} sx={{width: 1, height: 1}}>
+            <TapSearchPanelImpl {...{initArgs, titleOn, lockService, lockedServiceUrl, lockedServiceName, lockObsCore}}/>
+        </FieldGroup>
+    );
+}
+
+function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lockedServiceUrl, lockedServiceName, lockObsCore}) {
+    const {setVal,getVal,setFld,groupKey}= useContext(FieldGroupCtx);
+    const [getTapBrowserState,setTapBrowserState]= useFieldGroupMetaState(defTapBrowserState);
     const tapState= getTapBrowserState();
     if (!initArgs?.urlApi?.execute) searchFromAPIOnce(true); // if not execute then mark as done, i.e. disable any auto searching
     initApiAddedServiceOnce(initArgs);  // only look for the extra service the first time
     const tapOps= getTapServiceOptions();
     const {current:clickFuncRef} = useRef({clickFunc:undefined});
     const [selectBy, setSelectBy]= useState(() => {
-        const val= getFieldVal(TAP_PANEL_GROUP_KEY,'selectBy');
+        const val= getVal('selectBy');
         if (val) return val;
         if (initArgs?.urlApi?.adql) return 'adql';
         return initArgs?.urlApi?.selectBy || 'basic';
     });
-    const [servicesShowing, setServicesShowingInternal]= useState(lastServicesShowing);
+    const [servicesShowing, setServicesShowingInternal]= useState(tapState.lastServicesShowing);
     const [obsCoreTableModel, setObsCoreTableModel] = useState();
-    const [serviceUrl, setServiceUrl]= useState(() => getInitServiceUrl(tapState,initArgs,tapOps));
-    activateInitArgsAdqlOnce(tapState,initArgs,setSelectBy);
+    const [serviceUrl, setServiceUrl]= useState(() => getInitServiceUrl(tapState,initArgs,tapOps,lockedServiceUrl,lockedServiceName));
+    activateInitArgsAdqlOnce(groupKey, tapState,initArgs,setSelectBy);
+
 
     const setServicesShowing= (showing) => {
-        setServicesShowingInternal((showing));
-        lastServicesShowing= showing;
+        setServicesShowingInternal(showing);
+        setTapBrowserState({...getTapBrowserState(), lastServicesShowing:showing});
     };
 
     const obsCoreEnabled = obsCoreTableModel?.tableData?.data?.length > 0;
 
     const onTapServiceOptionSelect= (selectedOption) => {
         if (!selectedOption) return;
-        dispatchMultiValueChange(TAP_PANEL_GROUP_KEY,
-            [
-                {fieldKey: 'defAdqlKey', value: ''},
-                {fieldKey: 'adqlQuery', placeholder: '', value: ''}
-            ]
-        );
+        setVal('defAdqlKey', '');
+        setFld('adqlQuery', {placeholder: '', value: ''});
         const serviceUrl= selectedOption?.value;
         setServiceUrl(serviceUrl);
         setObsCoreTableModel(undefined);
@@ -149,7 +169,7 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
     }, [initArgs?.searchParams?.serviceUrl]);
 
     useEffect(() => {
-        return FieldGroupUtils.bindToStore( TAP_PANEL_GROUP_KEY, (fields) => {
+        return FieldGroupUtils.bindToStore( groupKey, (fields) => {
             const ts= getTapBrowserState();
             setObsCoreTableModel(ts.obsCoreTableModel);
 
@@ -160,7 +180,7 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
     }, []);
 
     useEffect(() => {
-        setFieldValue(TAP_PANEL_GROUP_KEY, 'selectBy', selectBy);
+        setVal('selectBy', selectBy);
     }, [selectBy]);
 
     const ctx= {
@@ -175,18 +195,17 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
         <Box width={1} height={1}>
             <ConstraintContext.Provider value={ctx}>
                 <FormPanel  inputStyle = {{display: 'flex', flexDirection: 'column', backgroundColor: 'transparent', padding: 'none', border: 'none'}}
-                            groupKey={TAP_PANEL_GROUP_KEY}
+                            cancelText=''
                             getDoOnClickFunc={(clickFunc) => clickFuncRef.clickFunc= clickFunc}
                             params={{hideOnInvalid: false}}
                             onSubmit={(request) => onTapSearchSubmit(request, serviceUrl,tapState)}
-                            extraWidgets={makeExtraWidgets(initArgs,selectBy,setSelectBy, tapState)}
-                            // extraWidgetsRight={makeExtraWidgetsRight(servicesShowing, setServicesShowing)}
-                            buttonStyle={{justifyContent: 'left'}}
+                            extraWidgets={makeExtraWidgets(groupKey, initArgs,selectBy,setSelectBy, tapState)}
                             submitBarStyle={{padding: '2px 3px 3px'}}
+                            requireAllValid={false}
                             includeUnmounted={true}
                             help_id = {tapHelpId('form')} >
                     <TapSearchPanelComponents {...{
-                        servicesShowing, setServicesShowing,
+                        servicesShowing, setServicesShowing, lockService, lockObsCore,
                         initArgs, selectBy, setSelectBy, serviceUrl, onTapServiceOptionSelect, titleOn, tapOps, obsCoreEnabled}} />
                 </FormPanel>
             </ConstraintContext.Provider>
@@ -197,6 +216,11 @@ export function TapSearchPanel({initArgs= {}, titleOn=true}) {
 
 TapSearchPanel.propTypes= {
     titleOn: bool,
+    groupKey: string,
+    lockedServiceUrl: string,
+    lockedServiceName: string,
+    lockService: bool,
+    lockObsCore: bool,
     initArgs: shape({
         searchParams: object,
         urlApi: object,
@@ -204,7 +228,8 @@ TapSearchPanel.propTypes= {
 };
 
 
-function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setServicesShowing, onTapServiceOptionSelect, tapOps, titleOn=true, selectBy, setSelectBy}) {
+function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setServicesShowing, onTapServiceOptionSelect,
+                                      lockService, lockObsCore, tapOps, titleOn=true, selectBy, setSelectBy}) {
 
     const label= getServiceLabel(serviceUrl);
     const [obsCoreTableModel, setObsCoreTableModel] = useState();
@@ -221,17 +246,18 @@ function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setSer
     }, [serviceUrl]);
 
     return (
-        <FieldGroup groupKey={TAP_PANEL_GROUP_KEY} keepState={true} style={{flexGrow: 1, display: 'flex'}}>
+        <Stack {...{direction:'row', flexGrow: 1}}>
             <div className='TapSearch'>
                 {titleOn &&<Typography {...{level:'h3', sx:{m:1} }}> TAP Searches </Typography>}
-                <Services {...{serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect}}/>
+                <Services {...{serviceUrl, servicesShowing: (servicesShowing && !lockService),
+                        tapOps, onTapServiceOptionSelect}}/>
                 { selectBy === 'adql' ?
-                    <AdqlUI {...{serviceUrl, servicesShowing, setServicesShowing, setSelectBy}}/> :
-                    <BasicUI  {...{serviceUrl, serviceLabel: label, selectBy, initArgs, obsCoreTableModel,
+                    <AdqlUI {...{serviceUrl, servicesShowing, setServicesShowing, lockService, setSelectBy}}/> :
+                    <BasicUI  {...{serviceUrl, serviceLabel: label, selectBy, initArgs, lockService, lockObsCore, obsCoreTableModel,
                         servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy}}/>
                 }
             </div>
-        </FieldGroup>
+        </Stack>
     );
 }
 
@@ -315,9 +341,9 @@ function ServiceOpRender({ops, value, sx}) {
 
 
 
-function makeExtraWidgets(initArgs, selectBy, setSelectBy, tapBrowserState) {
+function makeExtraWidgets(groupKey, initArgs, selectBy, setSelectBy, tapBrowserState) {
     const extraWidgets = [
-        (<ValidationField orientation='horizontal' fieldKey='maxrec' key='maxrec' groupKey={TAP_PANEL_GROUP_KEY}
+        (<ValidationField orientation='horizontal' fieldKey='maxrec' key='maxrec' groupKey={groupKey}
                          tooltip='Maximum number of rows to return (via MAXREC)' label= 'Row Limit:'
                          initialState= {{
                              value: Number(initArgs?.urlApi?.MAXREC) || Number(getAppOptions().tap?.defaultMaxrec ?? 50000),
@@ -328,24 +354,22 @@ function makeExtraWidgets(initArgs, selectBy, setSelectBy, tapBrowserState) {
         ];
     if (selectBy==='basic') {
         extraWidgets.push( (<ExtraButton key='editADQL' text='Populate and edit ADQL'
-                                         onClick={() => populateAndEditAdql(tapBrowserState, setSelectBy)}
-                                         style={{marginLeft: 10}} />));
+                                         onClick={() => populateAndEditAdql(groupKey, tapBrowserState, setSelectBy)} />));
     }
     else {
         extraWidgets.push( (<ExtraButton key='singleTable' text='Single Table (UI assisted)'
-                                         onClick={() => setSelectBy('basic')}
-                                         style={{marginLeft: 10}} />));
+                                         onClick={() => setSelectBy('basic')} />));
 
     }
     return extraWidgets;
 }
 
-function populateAndEditAdql(tapBrowserState,setSelectBy,inAdql) {
+function populateAndEditAdql(groupKey,tapBrowserState,setSelectBy,inAdql) {
     const adql = inAdql ?? getAdqlQuery(tapBrowserState);
     if (!adql) return;
     const {TAP_UPLOAD,uploadFile}=  isTapUpload(tapBrowserState) ? getUploadConstraint(tapBrowserState) : {};
     setSelectBy('adql');
-    dispatchMultiValueChange(TAP_PANEL_GROUP_KEY,   //set adql and switch tab to ADQL
+    dispatchMultiValueChange(groupKey,   //set adql and switch tab to ADQL
         [
             {fieldKey: 'defAdqlKey', value: adql},
             {fieldKey: 'adqlQuery', value: adql},
@@ -370,10 +394,10 @@ function getTableNameFromADQL(adql) {
 }
 
 function getTitle(adql, serviceUrl) {
-    const tname = getTableNameFromADQL(adql);
+    const tName = getTableNameFromADQL(adql);
     const host= serviceUrl?.match(/.*:\/\/(.*)\/.*/i)?.[1]; // table name or service url
-    if (tname && host) return `${tname} - ${host}`;
-    return tname || host;
+    if (tName && host) return `${tName} - ${host}`;
+    return tName || host;
 }
 
 const disableRowLimitMsg = (
@@ -519,7 +543,7 @@ function getAdqlQuery(tapBrowserState, showErrors= true) {
     if (constraints) constraints = `WHERE ${constraints}`;
 
     // if we use TOP  when maxrec is set `${maxrec ? `TOP ${maxrec} `:''}`,
-    // overflow indicator will not be included with the results
+    // overflow indicator will not be included with the results,
     // and we will not know if the results were truncated
     return `SELECT ${selcols} \nFROM ${fromTables} \n${constraints}`;
 }

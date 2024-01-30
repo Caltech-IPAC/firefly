@@ -38,7 +38,7 @@ export class WorkspaceDropdown extends PureComponent {
         return (
             <div style={{padding: 10}}>
                 <FormPanel
-                    onCancel={hideSearchPanel}
+                    cancelText=''
                     submitText={'close'}
                     changeMasking={this.changeMasking}>
                     <WorkspaceViewPanel />

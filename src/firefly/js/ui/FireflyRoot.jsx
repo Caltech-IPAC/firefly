@@ -1,5 +1,6 @@
 import React, {useEffect} from 'react';
 import {ScopedCssBaseline, extendTheme, CssVarsProvider, useColorScheme, GlobalStyles} from '@mui/joy';
+import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
 
 import {defaultTheme} from './ThemeSetup.js';
 import {getAppOptions} from '../core/AppDataCntlr.js';
@@ -16,27 +17,29 @@ import '@fontsource/inter/800.css'; // Bolder
 let localTheme;
 export function getTheme() {return localTheme; };
 
-export function FireflyRoot({sx, children}) {
+export function FireflyRoot({sx, children, ctxProperties={}}) {
 
     const customTheme = getAppOptions().theme?.customized?.();
     const theme = extendTheme(customTheme || defaultTheme());
 
     return (
-        <CssVarsProvider defaultMode='system' theme={theme}>
-            <GlobalStyles styles={{
-                html: {fontSize:'87.5%'}
-            }}/>
-            <ScopedCssBaseline sx={(theme) => ({
-                flexGrow:1 | (localTheme = theme),
-                height:1,
-                position:'relative',
-                fontSmooth: 'unset',
-                WebkitFontSmoothing: 'unset',
-                ...sx
-            })}>
-                <App>{children}</App>
-            </ScopedCssBaseline>
-        </CssVarsProvider>
+        <AppPropertiesCtx.Provider value={ctxProperties}>
+            <CssVarsProvider defaultMode='system' theme={theme}>
+                <GlobalStyles styles={{
+                    html: {fontSize:'87.5%'}
+                }}/>
+                <ScopedCssBaseline sx={(theme) => ({
+                    flexGrow:1 | (localTheme = theme),
+                    height:1,
+                    position:'relative',
+                    fontSmooth: 'unset',
+                    WebkitFontSmoothing: 'unset',
+                    ...sx
+                })}>
+                    <App>{children}</App>
+                </ScopedCssBaseline>
+            </CssVarsProvider>
+        </AppPropertiesCtx.Provider>
     );
 }
 

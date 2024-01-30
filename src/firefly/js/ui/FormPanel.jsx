@@ -48,6 +48,7 @@ function createSuccessHandler(action, params={}, title, onSubmit) {
 export const FormPanel = function (props) {
     const { children, onSuccess, onSubmit, onCancel=dispatchHideDropDown, onError, groupKey, groupsToUse,
         action, params, title, getDoOnClickFunc, submitText='Search',cancelText='Cancel', help_id, changeMasking,
+        requireAllValid,
         includeUnmounted=false, extraWidgets=[], extraWidgetsRight=[], sx} = props;
     let { style, inputStyle, submitBarStyle} = props;
 
@@ -91,12 +92,13 @@ export const FormPanel = function (props) {
                         <CompleteButton style={{display: 'inline-block', marginRight: 10}}
                                         includeUnmounted={includeUnmounted}
                                         groupKey={groupKey}
+                                        requireAllValid={requireAllValid}
                                         getDoOnClickFunc={getDoOnClickFunc}
                                         groupsToUse={groupsToUse}
                                         onSuccess={doSubmit}
                                         onFail={onError || handleFailure}
                                         text = {submitText} changeMasking={changeMasking} />
-                        <ExtraButton onClick={doCancel} text={cancelText}/>
+                        {cancelText && <ExtraButton onClick={doCancel} text={cancelText}/>}
                     </Stack>
                     {Boolean(extraWidgets?.length) &&
                         <Stack spacing={1} direction='row' alignItems='center'>
@@ -139,8 +141,7 @@ FormPanel.propTypes = {
     getDoOnClickFunc: PropTypes.func
 };
 
-export function ExtraButton(props) {
-    const {text, onClick} = props;
+export function ExtraButton({text, onClick}) {
     return (
         <Button {...{size:'md', onClick}}>{text}</Button>
     );

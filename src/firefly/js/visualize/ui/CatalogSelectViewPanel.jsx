@@ -81,7 +81,9 @@ export class CatalogSelectViewPanel extends PureComponent {
                     params={{hideOnInvalid: false}}
                     buttonStyle={{justifyContent: 'left'}} submitBarStyle={{padding: '2px 3px 3px'}}
                     help_id={'catalogs.irsacatalogs'}
-                    onCancel={hideSearchPanel}>
+                    cancelText=''
+                    // onCancel={hideSearchPanel}
+                    >
                     <CatalogSelectView fields={fields}/>
                 </FormPanel>
             </div>

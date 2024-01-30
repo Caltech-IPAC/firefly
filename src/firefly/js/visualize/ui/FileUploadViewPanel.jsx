@@ -164,7 +164,7 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
 
     return (
         <Stack {...{flexGrow:1, position: 'relative', height:1, alignItems: 'stretch'}}>
-            <FileDropZone {...{dropEvent, setDropEvent, setLoadingOp}} style={{display:'flex', flexGrow:1, height:'100%', width: '100%'}}>
+            <FileDropZone {...{dropEvent, setDropEvent, setLoadingOp}}>
                 <Stack sx={{height:1, px:1,flexGrow:1}}>
                     <Box className='ff-FileUploadViewPanel-file' sx={{mt:1, ml:25}}>
                         <RadioGroupInputField
@@ -201,7 +201,7 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
     );
 }
 
-export function FileDropZone({dropEvent, setDropEvent, setLoadingOp, style, children}) {
+export function FileDropZone({dropEvent, setDropEvent, setLoadingOp, sx, children}) {
     const [isDragging, setIsDragging] = useState(false);
 
     useEffect(() => {
@@ -227,16 +227,16 @@ export function FileDropZone({dropEvent, setDropEvent, setLoadingOp, style, chil
     };
 
     return (
-        <div
+        <Stack
+            direction='row'
             className={`file-drop-zone ${isDragging ? 'dragging' : ''}`}
             onDragEnter={handleDragEnter}
             onDragOver={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            style={style}
-        >
+            sx={{flexGrow:1, height:1, width: 1,...sx}}>
             {children}
-        </div>
+        </Stack>
     );
 }
 
@@ -867,7 +867,7 @@ const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT
         return (
             <>
             <AcceptedList list={acceptList}/>
-                <Typography level='h2' component='div' color='warning' sx={{minHeight:'22rem', flex:'1 1 auto', mt:'10%', textAlign: 'center'}}>
+                <Typography level='h2' component='div' color='warning' sx={{minHeight:'5rem', flex:'1 1 auto', mt:'4rem', textAlign: 'center'}}>
                     Drag & Drop your files here
                 </Typography>
             </>

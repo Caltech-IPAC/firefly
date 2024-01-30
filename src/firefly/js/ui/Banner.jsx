@@ -2,9 +2,12 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Sheet, Stack, Typography} from '@mui/joy';
-import React, {memo} from 'react';
+import MenuRoundedIcon from '@mui/icons-material/MenuRounded.js';
+import {Box, Chip, Divider, IconButton, Sheet, Stack, Typography} from '@mui/joy';
+import React, {memo, useContext} from 'react';
 import PropTypes from 'prop-types';
+import {dispatchShowDialog, SIDE_BAR_ID} from '../core/ComponentCntlr.js';
+import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {getUserInfo} from '../core/AppDataCntlr.js';
 import {logout} from '../rpc/CoreServices.js';
@@ -19,13 +22,15 @@ const variant='soft';
 // const variant='outlined';
 const color='primary';
 
-export const Banner = memo( ({menu, readout, appIcon, visPreview, appTitle, additionalTitleStyle = {},
-                                 showUserInfo=false, enableVersionDialog= false, showTitleOnBanner=false,
-                             bannerMiddleStyle={}, bannerLeftStyle={}}) => {
+export const Banner = memo( ({menu, enableVersionDialog= false, appTitle:titleProp, showTitleOnBanner=false}) => {
+    const ctx = useContext(AppPropertiesCtx);
+    const {showUserInfo, appIcon, bannerMiddleStyle, bannerLeftStyle} = ctx;
+    const appTitle=  titleProp || ctx.appTitle;
     return (
         <Sheet {...{
             className:'banner__main', variant, color, sx:{width:1, position:'relative' } }}>
-            <Stack {...{direction:'row', height:40, alignItems:'flex-end' }}>
+            <Stack {...{direction:'row', height:40, alignItems:'flex-end', pl:1}}>
+                <AppConfigButton/>
                 <Box sx={{ alignSelf:'center', flexGrow:0, cursor: enableVersionDialog ? 'pointer' : 'inherit'}}
                      style={bannerLeftStyle}>
                     {appIcon ?
@@ -36,7 +41,7 @@ export const Banner = memo( ({menu, readout, appIcon, visPreview, appTitle, addi
                 </Box>
                 <Stack {...{flexGrow:1, direction:'row',alignItems:'flex-end',  style:bannerMiddleStyle   }}>
                     {showTitleOnBanner && makeBannerTitle(appTitle)}
-                    <Stack {...{ flexGrow: 0, width: 1, px:1.5 }}>
+                    <Stack {...{ flexGrow: 0, width: 1, pr:1}}>
                         {menu}
                     </Stack>
                 </Stack>
@@ -61,6 +66,16 @@ Banner.propTypes= {
     showUserInfo: PropTypes.bool,
     enableVersionDialog: PropTypes.bool,
 };
+
+function AppConfigButton({sx}) {
+    return (
+        <Stack sx={{alignSelf:'center', ...sx}} >
+            <IconButton variant='outlined'  onClick={() => dispatchShowDialog(SIDE_BAR_ID)}>
+                <MenuRoundedIcon/>
+            </IconButton>
+        </Stack>
+    );
+}
 
  export function makeBannerTitle(title,subTitle) {
      if (title && subTitle) {
@@ -93,10 +108,13 @@ const UserInfo= memo(() => {
     const displayName = (fn || ln) ? `${fn} ${ln}` : loginName;
 
     return (
-        <div className='banner__user-info'>
-            <span className='banner__user-info--name' title={displayName}>{displayName}</span>
-            {!isGuest && <div className='banner__user-info--links' onClick={onLogout}>Logout</div>}
-            {isGuest && <div className='banner__user-info--links' onClick={onLogin}>Login</div>}
-        </div>
+        <Stack pr={2} pb={1/4} direction='row'>
+            <Divider orientation='vertical' sx={{mx:1}}/>
+            <Stack spacing={1/4}>
+                <Typography level='body-xs' title={displayName}>{displayName}</Typography>
+                {!isGuest && <Chip onClick={onLogout}>Logout</Chip>}
+                {isGuest && <Chip onClick={onLogin}>Login</Chip>}
+            </Stack>
+        </Stack>
     );
 });

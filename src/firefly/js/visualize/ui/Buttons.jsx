@@ -1,16 +1,14 @@
 import React from 'react';
-import {Box, ToggleButtonGroup} from '@mui/joy';
+import {Box} from '@mui/joy';
 
 // TODO: we should use icon from one type(filled, outlined, rounded, two-tone, sharp).  It will yield better consistency.
 
-import BiotechOutlinedIcon from '@mui/icons-material/BiotechOutlined.js';
+import BiotechOutlinedIcon from '@mui/icons-material/BiotechOutlined';
 import OpenInFull from '@mui/icons-material/OpenInFull';
 import GRID_EXPAND from 'images/icons-2014/24x24_ExpandArrows-grid-3.png';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
 import {SimpleLayerOnOffButton} from './SimpleLayerOnOffButton.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import LockOpenTwoToneIcon from '@mui/icons-material/LockOpenTwoTone';
-import LockTwoToneIcon from '@mui/icons-material/LockTwoTone';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import CenterFocusWeakOutlinedIcon from '@mui/icons-material/CenterFocusWeakOutlined';
@@ -21,7 +19,6 @@ import FlipOutlinedIcon from '@mui/icons-material/FlipOutlined';
 import StraightenOutlinedIcon from '@mui/icons-material/StraightenOutlined';
 import GrainIcon from '@mui/icons-material/Grain';
 import HorizontalRuleRoundedIcon from '@mui/icons-material/HorizontalRuleRounded';
-import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import ThreeSixtyRoundedIcon from '@mui/icons-material/ThreeSixtyRounded';
 import LinkIcon from '@mui/icons-material/Link';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
@@ -51,8 +48,12 @@ import ShowTableIco from '@mui/icons-material/CallReceived';
 import CombineChartIco from '@mui/icons-material/SyncAlt';
 import UnfoldMoreOutlinedIcon from '@mui/icons-material/UnfoldMoreOutlined';
 import UnfoldLessOutlinedIcon from '@mui/icons-material/UnfoldLessOutlined';
+import AddCircleOutlineOutlinedIcon from '@mui/icons-material/AddCircleOutlineOutlined';
 
 
+// import LockOpenTwoToneIcon from '@mui/icons-material/LockOpenTwoTone';
+// import LockTwoToneIcon from '@mui/icons-material/LockTwoTone';
+// import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 // import ContentCopySharpIcon from '@mui/icons-material/ContentCopySharp';
 // import GridViewIcon from '@mui/icons-material/GridView';
 // import ViewListIcon from '@mui/icons-material/ViewList';
@@ -199,16 +200,13 @@ export const PropertySheetButton = (props) => (
     <ToolbarButton {...{icon: <PropertySheetIco/>, iconButtonSize:'38px', ...props}}/>
 );
 
-export const ResetButton = (props) => (
-    <ToolbarButton {...{icon: <ResetIco/>, iconButtonSize:'38px', ...props}}/>
-);
 
 export const PanButton = (props) => (
     <ToolbarButton {...{icon: <PanIco/>, iconButtonSize:'38px', ...props}}/>
 );
 
-export const PinChartButton = (props) => (
-    <ToolbarButton {...{icon: <PinChartIco/>, iconButtonSize:'38px', ...props}}/>
+export const AddItem = (props) => (
+    <ToolbarButton {...{icon: <AddCircleOutlineOutlinedIcon/>, iconButtonSize:'38px', ...props}}/>
 );
 
 export const PinButton = (props) => (
@@ -224,7 +222,7 @@ export const CombineChartButton = (props) => (
 );
 // <-- Table and Chart buttons
 
-export const RestoreButton= (props) => ( <TB {...{ icon: <ReplayRoundedIcon/>, ...props}}/>);
+export const RestoreButton= (props) => ( <TB {...{ icon: <ResetIco/>, ...props}}/>);
 export const RotateButton= (props) => ( <TB {...{ icon: <ThreeSixtyRoundedIcon/>, ...props,  }}/>);
 export const SaveButton= (props) => ( <TB {...{ icon: <SaveOutlinedIcon/>, ...props}}/>);
 export const InfoButton= (props) => (<TB {...{ icon: <InfoOutlinedIcon/>, ...props}}/>);

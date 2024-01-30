@@ -601,7 +601,7 @@ export function mergeObjectOnly(target, sources) {
  * makeSearchOnce is similar to lodash once but includes a validate as a way to make it done.
  * It also includes an id so that it runs once per id
  * Note that the execution of the doSearch function is deferred.
- * @param {boolean } defer - if true run the search deferred
+ * @param {boolean } [defer] - if true run the search deferred
  * @return {Function} a function with the signature f(validateSearch,doSearch)
  */
 export function makeSearchOnce(defer=true) {

@@ -12,7 +12,7 @@ import {Box, Button, Card, Divider, Stack} from '@mui/joy';
  *  Fixed the bug in DownloadDialog.jsx
  *
  */
-import React, {PureComponent} from 'react';
+import React, {PureComponent, useContext} from 'react';
 import PropTypes from 'prop-types';
 import {pick, get, isEmpty, cloneDeep} from 'lodash';
 import SplitPane from 'react-split-pane';
@@ -20,6 +20,7 @@ import {flux} from '../../core/ReduxFlux.js';
 import {LO_VIEW, getLayouInfo, dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
+import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
 import {LcImageViewerContainer} from './LcImageViewerContainer.jsx';
 import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import {LC, getViewerGroupKey, updateLayoutDisplay} from './LcManager.js';
@@ -162,6 +163,12 @@ const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
 const buttonW = 650;
 
 const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables, settingBox}) => {
+
+    const {landingPage}= useContext(AppPropertiesCtx);
+
+    if (!tables) {
+        return landingPage ?? <Box mt={10} ml={10}>Landing page here</Box>;
+    }
 
     const converterId = settingBox?.props?.missionEntries?.[LC.META_MISSION];
     const convertData = getConverter(converterId);
