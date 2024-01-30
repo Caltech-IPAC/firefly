@@ -3,27 +3,30 @@
  */
 
 import {Box, Stack} from '@mui/joy';
-import React, {memo} from 'react';
-import PropTypes from 'prop-types';
-import {pick} from 'lodash';
 import {
-    LO_VIEW, LO_MODE, getLayouInfo, dispatchSetLayoutMode, dispatchUpdateLayoutInfo
+    BadgeLabel, PINNED_VIEWER_ID, PinnedChartPanel, usePinnedChartInfo
+} from 'firefly/charts/ui/PinnedChartContainer.jsx';
+import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
+import {pick} from 'lodash';
+import PropTypes from 'prop-types';
+import React, {memo} from 'react';
+import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
+import {allowPinnedCharts} from '../../charts/ChartUtil.js';
+import {ActiveChartsPanel} from '../../charts/ui/ChartsContainer.jsx';
+import {
+    dispatchSetLayoutMode, dispatchUpdateLayoutInfo, getLayouInfo, LO_MODE, LO_VIEW
 } from '../../core/LayoutCntlr.js';
+import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
+import {AppInitLoadingMessage} from '../../ui/AppInitLoadingMessage.jsx';
 import {Tab, Tabs} from '../../ui/panel/TabPanel.jsx';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {ResultsPanel} from './ResultsPanel.jsx';
-import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
-import {ActiveChartsPanel} from '../../charts/ui/ChartsContainer.jsx';
+import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 import {
     makeCoverageTab, makeFitsPinnedTab, makeMultiProductViewerTab, TriViewImageSection
 } from '../../visualize/ui/TriViewImageSection.jsx';
-import {AppInitLoadingMessage} from '../../ui/AppInitLoadingMessage.jsx';
-import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
-import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
-import {usePinnedChartInfo, PinnedChartPanel, PINNED_VIEWER_ID, BadgeLabel} from 'firefly/charts/ui/PinnedChartContainer.jsx';
-import {allowPinnedCharts} from '../../charts/ChartUtil.js';
-import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
+import {ResultsPanel} from './ResultsPanel.jsx';
+import {TriViewDefaultLandingPage} from './TriViewDefaultLandingPage.jsx';
 
 const stateKeys= ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'images', 'coverageSide'];
 const LEFT= 'LEFT';
@@ -33,8 +36,9 @@ const tblImgKey= 'tables | images';
 const imgXyKey= 'images | xyplots';
 const tblXyKey= 'tables | xyplots';
 
+
 export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButtons, rightButtons,
-                                      initLoadingMessage, initLoadCompleted} ) => {
+                                      initLoadingMessage, initLoadCompleted, LandingPage= LandingPageNotSpecified} ) => {
     const state= useStoreConnector(() => pick(getLayouInfo(), stateKeys));
     const {title, mode, showTables, showImages, showXyPlots, images={}, coverageSide=LEFT} = state;
     const {expanded, standard, closeable} = mode ?? {};
@@ -46,7 +50,7 @@ export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButt
     const imagesWithCharts= currLayoutMode===tblXyKey;
 
     if (initLoadingMessage && !initLoadCompleted) return (<AppInitLoadingMessage message={initLoadingMessage}/>);
-    if (!showImages && !showXyPlots && !showTables) return <div/>;
+    if (!showImages && !showXyPlots && !showTables) return <LandingPage/>;
 
     if (!imagesWithCharts && (showImages || coverageLeft)) {
         content.imagePlot = (<TriViewImageSection key='res-tri-img'
@@ -78,6 +82,8 @@ export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButt
     );
 });
 
+
+
 TriViewPanel.propTypes = {
     showViewsSwitch: PropTypes.bool,
     leftButtons: PropTypes.arrayOf( PropTypes.func ),
@@ -85,6 +91,7 @@ TriViewPanel.propTypes = {
     rightButtons: PropTypes.arrayOf( PropTypes.func ),
     initLoadingMessage:  PropTypes.string,
     coverageSide:  PropTypes.string,
+    LandingPage: PropTypes.elementType,
     initLoadCompleted:  PropTypes.bool,
 };
 
@@ -154,6 +161,7 @@ function getCovSideOptions(currLayoutMode, showImages) {
     }
 }
 
+const LandingPageNotSpecified= () => ( <div>No Landing Page Specified</div> );
 
 function searchDesc({showViewsSwitch, showImages, isTriViewPossible, showCoverage, leftButtons, centerButtons, rightButtons, coverageSide, currLayoutMode}) {
 

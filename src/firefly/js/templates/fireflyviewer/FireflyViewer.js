@@ -43,7 +43,7 @@ import App from 'firefly/ui/App.jsx';
  *
  */
 export function FireflyViewer ({menu, options, initLoadCompleted, initLoadingMessage, views, showViewsSwitch, leftButtons,
-                                   centerButtons, rightButtons, normalInit=true, ...appProps}){
+                                   centerButtons, rightButtons, normalInit=true, LandingPage, ...appProps}){
 
     useEffect(() => {
         getImageMasterData();
@@ -72,7 +72,7 @@ export function FireflyViewer ({menu, options, initLoadCompleted, initLoadingMes
 
     return (
         <App {...{enableVersionDialog:true, views, ...appProps}}>
-            <DynamicResults {...{views, showViewsSwitch, leftButtons, centerButtons,
+            <DynamicResults {...{views, showViewsSwitch, LandingPage, leftButtons, centerButtons,
                 rightButtons, initLoadingMessage, initLoadCompleted}}/>
         </App>
     );
@@ -116,7 +116,7 @@ function onReady({menu, views, options={}, initLoadingMessage, initLoadCompleted
     const {hasImages, hasTables, hasXyPlots} = getLayouInfo();
     if (normalInit && (!(hasImages || hasTables || hasXyPlots))) {
         let goto = getActionFromUrl();
-        if (!goto) goto= (!initLoadingMessage || initLoadCompleted) && {type: SHOW_DROPDOWN};
+        // if (!goto) goto= (!initLoadingMessage || initLoadCompleted) && {type: SHOW_DROPDOWN};
         if (goto) flux.process(goto);
     }
     dispatchNotifyRemoteAppReady();

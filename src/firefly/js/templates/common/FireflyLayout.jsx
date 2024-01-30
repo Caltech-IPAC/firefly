@@ -75,7 +75,6 @@ FireflyLayout.propTypes = {
 /**
  * Handles banner and login
  * @param p             props
- * @param p.menu        menu info
  * @param p.appTitle    application title
  * @param p.appIcon     application icon
  * @param p.altAppIcon  alternative icon
@@ -87,7 +86,7 @@ FireflyLayout.propTypes = {
 function BannerSection({menu, ...rest}) {
     return (
         <Banner key='banner'
-                menu={<Menu menu={menu} /> }
+                menu={<Menu/> }
                 {...rest}
         />
     );

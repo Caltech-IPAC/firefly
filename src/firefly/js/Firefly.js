@@ -12,6 +12,7 @@ import 'styles/global.css';
 import {APP_LOAD, dispatchAppOptions, dispatchUpdateAppData} from './core/AppDataCntlr.js';
 import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {FireflySlate} from './templates/fireflyslate/FireflySlate.jsx';
+import {TriViewDefaultLandingPage} from './templates/fireflyviewer/TriViewDefaultLandingPage.jsx';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
 import {routeEntry, ROUTER} from './templates/router/RouteHelper.jsx';
@@ -84,6 +85,8 @@ export const Templates = {
  * @prop {string} menu.type    use 'COMMAND' for actions that's not drop-down related.
  */
 
+const IRSA_CAT= 'IRSA searches';
+const ARCHIVE= 'Archive Searches';
 
 /**
  * @global
@@ -111,14 +114,19 @@ const defAppProps = {
     showUserInfo: false,
     showViewsSwitch: true,
     rightButtons: undefined,
+    LandingPage: TriViewDefaultLandingPage,
 
     menu: [
-        {label:'Images', action:'ImageSelectDropDownCmd'},
-        {label:'TAP/Table Searches', action: 'MultiTableSearchCmd'},
+        {label:'TAP', action: 'TAPSearch', primary: true, category: ARCHIVE},
+        {label:'Images', action:'ImageSelectDropDownCmd', primary: true, category:IRSA_CAT},
+        // {label:'TAP/Table Searches', action: 'MultiTableSearchCmd', primary: true},
         // {label:'Tap Searches', action: 'TAPSearch'},
         // {label:'Classic Searches', action: 'MultiTableSearchCmd'},
-        {label:'Charts', action:'ChartSelectDropDownCmd'},
-        {label:'Upload', action: 'FileUploadDropDownCmd'},
+        // {label:'Charts', action:'ChartSelectDropDownCmd', primary: true},
+        {label:'IRSA Catalogs', action: 'IrsaCatalog', primary: true, category:IRSA_CAT},
+        {label:'VO SCS Search', action: 'ClassicVOCatalogPanelCmd', primary: false, category: ARCHIVE},
+        {label:'NED', action: 'ClassicNedSearchCmd', primary: false, category:'NED Search'},
+        {label:'Upload', action: 'FileUploadDropDownCmd', primary: true},
     ],
 };
 
@@ -212,13 +220,14 @@ const defFireflyOptions = {
  * add options to store and setup any options that need specific initialization
  * @param {Object} appSpecificOptions
  */
-function installOptions(appSpecificOptions) {
+function installOptions(appSpecificOptions,appTitle) {
     const options=  mergeObjectOnly(defFireflyOptions, appSpecificOptions); // app specific will override default
     // setup options
     dispatchAppOptions(options);
     options.disableDefaultDropDown && dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
     options.readoutDefaultPref && dispatchChangeReadoutPrefs(options.readoutDefaultPref);
     options.wcsMatchType && dispatchWcsMatch({matchType:options.wcsMatchType, lockMatch:true});
+    options.appTitle= appTitle;
     setDefaultImageColorTable(options.image?.defaultColorTable ?? 1);
 
     if (options.imageScrollsToHighlightedTableRow!==visRoot().autoScrollToHighlightedTableRow) {
@@ -250,7 +259,7 @@ function fireflyInit(props, appSpecificOptions={}, webApiCommands) {
         set(appSpecificOptions, 'table.showPropertySheetButton', appSpecificOptions?.table?.showPropertySheetButton ?? true);
     }
 
-    installOptions(appSpecificOptions);
+    installOptions(appSpecificOptions,props.appTitle);
 
     // initialize UI or API depending on entry mode.
     documentReady().then(() => {

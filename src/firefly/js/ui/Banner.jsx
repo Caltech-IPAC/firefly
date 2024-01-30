@@ -5,6 +5,7 @@
 import {Box, Sheet, Stack, Typography} from '@mui/joy';
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
+import {AppConfigOptions} from './AppConfigOptions.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {getUserInfo} from '../core/AppDataCntlr.js';
 import {logout} from '../rpc/CoreServices.js';
@@ -25,7 +26,8 @@ export const Banner = memo( ({menu, readout, appIcon, visPreview, appTitle, addi
     return (
         <Sheet {...{
             className:'banner__main', variant, color, sx:{width:1, position:'relative' } }}>
-            <Stack {...{direction:'row', height:40, alignItems:'flex-end' }}>
+            <Stack {...{direction:'row', height:40, alignItems:'flex-end', pl:1}}>
+                <AppConfigOptions appIcon={appIcon} appTitle={appTitle} />
                 <Box sx={{ alignSelf:'center', flexGrow:0, cursor: enableVersionDialog ? 'pointer' : 'inherit'}}
                      style={bannerLeftStyle}>
                     {appIcon ?

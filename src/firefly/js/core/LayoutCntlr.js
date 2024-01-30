@@ -327,9 +327,9 @@ export function dropDownHandler(layoutInfo, action) {
         case TBL_RESULTS_REMOVE:
         case ImagePlotCntlr.DELETE_PLOT_VIEW:
             if (!get(layoutInfo, 'dropDown.visible', false)) {
-                if (count===0) {
-                    return smartMerge(layoutInfo, {dropDown: {visible: true}});
-                }
+                // if (count===0) {
+                //     return smartMerge(layoutInfo, {dropDown: {visible: true}});
+                // }
             }
             break;
     }

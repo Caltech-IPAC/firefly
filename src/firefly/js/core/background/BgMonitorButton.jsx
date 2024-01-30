@@ -2,7 +2,7 @@ import React from 'react';
 
 import {getBackgroundInfo, isActive} from './BackgroundUtil.js';
 import {BG_MONITOR_SHOW} from './BackgroundCntlr.js';
-import {MenuItem} from '../../ui/Menu.jsx';
+import {MenuItemButton} from '../../ui/Menu.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
 
@@ -20,7 +20,7 @@ export function BgMonitorButton ({sx}) {
     const monitoredJobs = Object.values(jobs).filter( (info) => info?.jobInfo?.monitored );
     const isWorking = monitoredJobs.some( (info) => isActive(info) );
 
-    return (<MenuItem {...{
+    return (<MenuItemButton {...{
         sx,
         size:'sm',
         menuItem:showBgMonAction,
