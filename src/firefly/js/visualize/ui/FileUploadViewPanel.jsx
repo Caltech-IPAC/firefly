@@ -72,7 +72,7 @@ const uploadOptions = 'uploadOptions';
 const FILE_UPLOAD_KEY= 'file-upload-key-';
 let keyCnt=0;
 
-export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem}) {
+export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, externalDropEvent}) {
 
     const {groupKey, keepState}= useContext(FieldGroupCtx);
 
@@ -80,7 +80,7 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem}) 
     const [getLoadingOp, setLoadingOp]= useFieldGroupValue(uploadOptions);
 
     //dropEvent is used for files being dragged and drooped for uploads
-    const [dropEvent, setDropEvent] = useState(() => null);
+    const [dropEvent, setDropEvent] = useState(() => externalDropEvent);
 
     const summaryTblId = groupKey;
     const detailsTblId = groupKey + '-Details';
@@ -113,14 +113,14 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem}) 
     useEffect(() => {
         dispatchTableAddLocal(summaryModel, undefined, false);
         return (() => {
-            dispatchTableRemove(summaryTblId);
+            if (!keepState) dispatchTableRemove(summaryTblId);
         });
     }, [summaryModel]);
 
     useEffect(() => {
         dispatchTableAddLocal(detailsModel, undefined, false);
         return (() => {
-            dispatchTableRemove(detailsTblId);
+            if (!keepState) dispatchTableRemove(detailsTblId);
         });
     }, [detailsModel]);
 
@@ -333,14 +333,12 @@ function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, me
             }
 
         }
-    } else {
-        return oldState;
     }
 
     let detailsModel = getDetailsModel(modelToUseForDetails, currentReport, detailsTblId, Format.UNKNOWN);
     if (modelToUseForDetails) {
         const {highlightedRow=0} = modelToUseForDetails;
-        currentSummaryModel.highlightedRow = highlightedRow;
+        if (currentSummaryModel) currentSummaryModel.highlightedRow = highlightedRow;
     }
 
     if (shallowequal(detailsModel, currentDetailsModel)) {
@@ -351,13 +349,11 @@ function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, me
                     prevAnalysisResult: oldState?.analysisResult};
     if (statesEqual(oldState, newState)) {
         return oldState;
-    } else {
-        //Todo: investigate the return statement below and simplify it
-        // even if we have a new state, test to see if we have to replace the summaryModel.
-        return oldState &&
-        summaryModelEqual(newState.summaryModel, oldState.summaryModel) &&
-        newState;
+    } else if ( summaryModelEqual(newState.summaryModel, oldState.summaryModel) &&
+        oldState.analysisResult===newState.analysisResult) {
+        return oldState;
     }
+    return newState;
 }
 
 function statesEqual(s1,s2) {
