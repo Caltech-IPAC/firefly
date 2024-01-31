@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import {Button} from '@mui/joy';
+import {Button,Stack, Typography} from '@mui/joy';
 import {get, set} from 'lodash';
 import Enum from 'enum';
 import {replaceExt, updateSet} from '../../util/WebUtil.js';
@@ -136,54 +136,48 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
         if (cenCols) fileOptions.push({label: 'Region (.reg)', value: 'reg'});
 
         return (
-            <div style={{display: 'flex', marginTop: mTop}}>
-                <div>
-                    <ListBoxInputField
-                        options={ fileOptions}
-                        fieldKey = {fKeyDef.fileFormat.fKey}
-                        multiple={false}
-                    />
-                </div>
-            </div>
+            <ListBoxInputField
+                options={ fileOptions}
+                fieldKey = {fKeyDef.fileFormat.fKey}
+                multiple={false}
+            />
         );
     };
     return (
-        <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
-            <FieldGroup style={{ boxSizing: 'border-box', paddingLeft:5, paddingRight:5, flexGrow: 1}}
-                        groupKey={tblDownloadGroupKey}
-                        reducerFunc={TableDLReducer(tbl_id)}>
+        <FieldGroup groupKey={tblDownloadGroupKey} reducerFunc={TableDLReducer(tbl_id)}>
+            <Stack spacing={2} justifyContent={'center'}
+                               sx={{
+                                     width: 400,
+                                     mx: '0,auto',
+                                     px: 2,
+                                     display: 'flex',
+                                     flexDirection: 'column'
+                                   }}>
                 <DownloadOptionsDialog fromGroupKey={tblDownloadGroupKey} style={{width: 'unset', height: 'unset'}}
                                        children={fileFormatOptions()}
                                        workspace={isWs}
                                        dialogWidth='100%'
                                        dialogHeight='300px'
                 />
-                <RadioGroupInputField fieldKey='mode' initialState={{value: 'displayed'}} wrapperStyle={{marginTop:10}}
+                <RadioGroupInputField fieldKey='mode' initialState={{value: 'displayed'}}
                                       options={[{value:'displayed', label:'Save table as displayed'}, {value:'original', label:'Save table as originally retrieved'}]}/>
-                <div style={{margin: '5px 22px', color: 'gray'}}>
+                <Typography level='body-sm' sx={{textAlign: 'left'}}>
                     {mode === 'original' ? asOriginalMsg : asDisplayedMsg}
-                </div>
+                </Typography>
+                <Stack spacing={1} mb={3} direction='row' alignItems='center'>
+                    <CompleteButton
+                        groupKey={tblDownloadGroupKey}
+                        onSuccess={resultSuccess(tbl_id, tbl_ui_id, onComplete, cenCols)}
+                        onFail={resultFail()}
+                        text={'Save'}/>
+                    <Button onClick={() => onComplete?.()}>Cancel</Button>
 
-            </FieldGroup>
-            <div style={{display: 'flex', justifyContent: 'space-between',
-                marginTop: 30, marginBottom: 10, marginLeft: 5, marginRight: 5}}>
-                <div style={{display: 'flex', width: '60%', alignItems: 'flex-end'}}>
-                    <div style={{marginRight: 10}}>
-                        <CompleteButton
-                            groupKey={tblDownloadGroupKey}
-                            onSuccess={resultSuccess(tbl_id, tbl_ui_id, onComplete, cenCols)}
-                            onFail={resultFail()}
-                            text={'Save'}/>
-                    </div>
-                    <div>
-                        <Button onClick={() => onComplete?.()}>Cancel</Button>
-                    </div>
-                </div>
-                <div style={{ textAlign:'right', marginRight: 10}}>
                     <HelpIcon helpId={'tables.save'}/>
-                </div>
-            </div>
-        </div>
+
+                </Stack>
+
+            </Stack>
+        </FieldGroup>
     );
 }
 

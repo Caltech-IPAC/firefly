@@ -79,41 +79,39 @@ function closePopup(popupId) {
 }
 
 const getColors= (plot) => isThreeColor(plot) ? plot.plotState.getBands().map( (b) => capitalize(b.key)) : ['NO_BAND'];
-
 const renderOperationOption= () => (
-        <div style={{display: 'flex', marginTop: mTOP}}>
-            <div>
-                <RadioGroupInputField
+        <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
+            <RadioGroupInputField
                     options={[ { label:'Original', value:'fileTypeOrig'}, { label:'Cropped', value:'fileTypeCrop'} ]}
-                    fieldKey='operationOption' tooltip='Please select an option'/>
-            </div>
-        </div> );
+                    fieldKey='operationOption'
+                    tooltip='Please select an option'/>
+        </Stack> );
 
 const RenderThreeBand = ({colors}) => {
     const [ft] = useFieldGroupValue ('fileType', fitsDownGroup);
     if (ft()==='png' || ft()==='reg') return false;
     return (
-        <div style={{display: 'flex', marginTop: mTOP}}>
-            <div>
-                <RadioGroupInputField options={colors.map( (c) => ({label: c, value: c}))} fieldKey='threeBandColor'
-                    label='Color Band:' labelWidth={100} tooltip='Please select a color option'/>
-            </div>
-        </div> );
+        <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
+            <RadioGroupInputField
+                options={colors.map( (c) => ({label: c, value: c}))}
+                fieldKey='threeBandColor'
+                orientation='horizontal'
+                label='Color Band:'
+                tooltip='Please select a color option'/>
+        </Stack> );
 };
-
 const MakeFileOptions = ({plot,colors,hasOperation,threeC}) => {
      return (
-        <div>
-            <div style={{display: 'flex', marginTop: mTOP}}>
-                <div>
-                    <RadioGroupInputField options={isImage(plot) ? imageFileTypeOps : hipsFileTypeOps} fieldKey='fileType'
-                                          orientation='horizontal'
-                      label='Type of files:' labelWidth={100} tooltip='Please select a file type' />
-                </div>
-            </div>
+        <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
+            <RadioGroupInputField
+                options={isImage(plot) ? imageFileTypeOps : hipsFileTypeOps}
+                fieldKey='fileType'
+                orientation='horizontal'
+                label='Type of files:'
+                tooltip='Please select a file type' />
             {hasOperation && renderOperationOption()}
             {threeC && <RenderThreeBand {...{colors}}/>}
-        </div>);
+        </Stack>);
 };
 
 const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
@@ -158,23 +156,28 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
     }, [getFileType, getFileName, getLocation, getBand]);
 
     return (
-        <FieldGroup style={{height: 'calc(100% - 10px)', width: '100%'}} groupKey={groupKey}>
-            <div style={{boxSizing: 'border-box', paddingLeft:5, paddingRight:5, width: '100%', height: 'calc(100% - 70px)'}}>
+        <FieldGroup groupKey={groupKey}>
+            <Stack spacing={2} justifyContent={'center'}
+                   sx={{
+                         width: 400,
+                         mx: '0,auto',
+                         px: 2,
+                         display: 'flex',
+                         flexDirection: 'column'
+                       }}>
                 <DownloadOptionsDialog {...{
                     fromGroupKey:groupKey, fileName: makeFileName(plot,band,'fits'), workspace:isWs,
                     labelWidth, dialogWidth:'100%', dialogHeight:`calc(100% - ${childH}pt)`,
                 }}>
                     <MakeFileOptions {...{plot, colors, hasOperation, threeC}}/>
                 </DownloadOptionsDialog>
-            </div>
-            <div style={{display:'flex', width:'calc(100% - 20px)', margin: '20px 10px 10px 10px', justifyContent:'space-between'}}>
-                <Stack spacing={1} direction='row'>
+                <Stack spacing={1} mb={3} direction='row' alignItems='center'>
                     <CompleteButton text='Save' onSuccess={ (request) => resultsSuccess(request, pv, popupId )}
                                     onFail={resultsFail} />
                     <CompleteButton text='Cancel' groupKey='' primary={false} onSuccess={() => closePopup(popupId)} />
+                    <HelpIcon helpId={'visualization.saveimage'}/>
                 </Stack>
-                <HelpIcon helpId={'visualization.saveimage'}/>
-            </div>
+            </Stack>
         </FieldGroup>
     );
 });

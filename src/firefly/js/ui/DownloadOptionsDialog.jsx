@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {Stack} from '@mui/joy';
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
@@ -42,6 +43,7 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
         }
     }, [where]);
 
+   //Todo: for workspace related components, they will be included in another ticket Firefly-1400
     const ShowWorkspace = () => {
 
         const loading  = (
@@ -79,39 +81,42 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
     };
 
     const showLocation = (
-            <div style={{marginTop: 10}}>
+        <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
                 <RadioGroupInputField
                     options={[{label: 'Local File', value: LOCALFILE},
                               {label: 'Workspace', value: WORKSPACE }] }
                     fieldKey={'fileLocation'}
+                    orientation='horizontal'
                     label='File location:'
-                    labelWidth={100}
                     tooltip='select the location where the file is downloaded to'
                 />
-            </div>
+        </Stack>
     );
 
     return (
-        <div style={{height: '100%', width: '100%', ...style}}>
+        <Stack spacing={2} justifyContent={'center'}
+               sx={{
+                 width: 400,
+                 mx: '0,auto',
+                 display: 'flex',
+                 flexDirection: 'column',
+               }}>
             <div>
                 {children}
             </div>
             <ValidationField
-                wrapperStyle={{marginTop: 10}}
-                size={50}
                 fieldKey={'fileName'}
                 initialState= {{
                     value: fileName
                 }}
                 label='File name:'
-                labelWidth={100}
                 tooltip='Please enter a filename, a default name will be used if it is blank'
             />
 
             {workspace && showLocation}
 
             {where === WORKSPACE && <ShowWorkspace/>}
-        </div>
+        </Stack>
     );
 }
 
