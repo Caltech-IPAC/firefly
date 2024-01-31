@@ -55,7 +55,7 @@ export function AdqlUI({serviceUrl, servicesShowing, setServicesShowing, setSele
             <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', width: '100%', justifyContent:'space-between'}}>
                     <Stack {...{ direction: 'row', alignItems: 'center'}}>
-                        <Stack {...{direction:'row', alignItems:'center', mr:4, width:'16rem', justifyContent:'space-between'}}>
+                        <Stack {...{direction:'row', alignItems:'center', mr:4, width:'14rem', justifyContent:'space-between'}}>
                             <Typography {...{level:'h4', color:'primary'}}>Advanced ADQL</Typography>
                             <HelpIcon helpId={tapHelpId('adql')}/>
                         </Stack>
@@ -275,7 +275,7 @@ export function BasicUI(props) {
                 <div style={{display:'flex', flexDirection:'row', justifyContent:'space-between', width: '100%'}}>
                     <div style={{display:'flex', alignItems:'center', width:'100%'}}>
                         <Stack>
-                            <Stack {...{direction:'row', justifyContent:'space-between', width:'16rem', alignItems:'center', mr:1}}>
+                            <Stack {...{direction:'row', justifyContent:'space-between', width:'14rem', alignItems:'center', mr:1}}>
                                 <Tooltip title={SCH_TAB_TITLE_TIP}>
                                     <Typography {...{level:'h4', color:'primary', component:'div' }}>
                                         <Stack {...{justifyContent:'center', height:55, overflow:'hidden'}}>
@@ -291,42 +291,39 @@ export function BasicUI(props) {
                                 sx: {mr: 1},
                                 lockToObsCore:obsCoreEnabled, setLockToObsCore}}/>}
                         </Stack>
-                        <div style={{display: 'inline-flex', width: '100%', marginRight: 3, maxWidth: 1000}}>
-                            <div style={{flexGrow: 1}} title={SCHEMA_TIP}>
-                                <ListBoxInputFieldView {...{
-                                    sx:{'& .MuiSelect-root':{width:'34rem', minHeight:'5rem'}},
-                                    options:sOps, value:schemaName, placeholder:'Loading...',
-                                    startDecorator:!sOps.length ? <Button loading={true}/> : undefined,
-                                    onChange:(ev, selectedTapSchema) => setSchemaName(selectedTapSchema),
-                                    renderValue:
-                                        ({value}) =>
-                                            (<OpRender {...{
-                                                ops: sOps, value,
-                                                label: schemaLabel ?? 'Table Collection (Schema)' }}/>),
-                                    decorator:
-                                        (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
-                                            ops: sOps, value,}}/>),
-                                }} />
-                            </div>
-                            <div style={{width: 10}}/>
-                            <div style={{flexGrow: 1}} title={TABLE_TIP}>
-                                <ListBoxInputFieldView {...{
-                                    sx:{'& .MuiSelect-root':{width:'34rem', minHeight:'5rem'}},
-                                    options:tOps, value:tableName, placeholder:'Loading...',
-                                    startDecorator:!tOps.length ? <Button loading={true}/> : undefined,
-                                    onChange:(ev, selectedTapTable) => {
-                                        setTableName(selectedTapTable);
-                                        setVal('tableName',selectedTapTable);
-                                    },
-                                    renderValue:
-                                        ({value}) =>
-                                            (<OpRender {...{ ops: tOps, value, label: 'Tables' }}/>),
-                                    decorator:
-                                        (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
-                                            ops: tOps, value}}/>),
-                                }} />
-                            </div>
-                        </div>
+                        <Stack {...{direction: 'row', width:1, spacing:1, mr: 1/2, maxWidth: 1000}}>
+                            <ListBoxInputFieldView {...{
+                                sx:{'& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', maxWidth:'34rem', minHeight:'5rem'}},
+                                title:SCHEMA_TIP,
+                                options:sOps, value:schemaName, placeholder:'Loading...',
+                                startDecorator:!sOps.length ? <Button loading={true}/> : undefined,
+                                onChange:(ev, selectedTapSchema) => setSchemaName(selectedTapSchema),
+                                renderValue:
+                                    ({value}) =>
+                                        (<OpRender {...{
+                                            ops: sOps, value,
+                                            label: schemaLabel ?? 'Table Collection (Schema)' }}/>),
+                                decorator:
+                                    (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
+                                        ops: sOps, value,}}/>),
+                            }} />
+                            <ListBoxInputFieldView {...{
+                                sx:{'& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', maxWidth:'34rem', minHeight:'5rem'}},
+                                title:TABLE_TIP,
+                                options:tOps, value:tableName, placeholder:'Loading...',
+                                startDecorator:!tOps.length ? <Button loading={true}/> : undefined,
+                                onChange:(ev, selectedTapTable) => {
+                                    setTableName(selectedTapTable);
+                                    setVal('tableName',selectedTapTable);
+                                },
+                                renderValue:
+                                    ({value}) =>
+                                        (<OpRender {...{ ops: tOps, value, label: 'Tables' }}/>),
+                                decorator:
+                                    (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
+                                        ops: tOps, value}}/>),
+                            }} />
+                        </Stack>
                     </div>
                     <div style={{display:'flex', flexDirection:'column', justifyContent: servicesShowing  ? 'center' :'space-between', alignItems:'flex-end', height:'100%'}}>
                         <NavButtons {...{setServicesShowing, servicesShowing, setNextPanel:(key) => setSelectBy(key), currentPanel:SINGLE}}/>

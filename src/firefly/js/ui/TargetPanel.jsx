@@ -52,7 +52,7 @@ const TargetPanelView = (props) =>{
 
 
     return (
-        <Stack spacing={1} direction='column'>
+        <Stack direction='column'>
             {positionInput}
             {(showExample || !showHelp) && <TargetFeedback {...{showHelp, feedback, style:feedbackStyle,
                 targetPanelExampleRow1, targetPanelExampleRow2, examples}}/> }

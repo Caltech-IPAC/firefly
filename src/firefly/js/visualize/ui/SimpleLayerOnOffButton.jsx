@@ -28,12 +28,14 @@ export function SimpleLayerOnOffButton({plotView:pv,sx, tip,typeId,iconOn,iconOf
     }
     let icon;
     let sxToUse= sx;
-    if (SvgIconComponent) {
+    if (SvgIconComponent || !iconOn) {
         sxToUse= (theme) => ({
-            background: isOn ? theme.vars.palette.primary?.softDisabledColor : undefined,
+            'button' :{
+                background: isOn ? theme.vars.palette.primary?.softDisabledColor : undefined,
+            },
             ...sx
         });
-        icon= SvgIconComponent;
+        icon= SvgIconComponent ?? iconOff;
     }
     else {
         icon= isOn ? iconOn : iconOff;

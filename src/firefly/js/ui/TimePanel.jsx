@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Stack} from '@mui/joy';
+import {Stack, Typography} from '@mui/joy';
 import CALENDAR from 'html/images/datetime_picker_16x16.png';
 import PropTypes from 'prop-types';
 import React, {memo} from 'react';
@@ -101,28 +101,26 @@ const defaultMJDExample = (<div style={{display: 'inline-block'}}>
                            </div>);
 
 
-function TimeFeedback({showHelp, feedback, style={}, examples, timeMode=ISO, isTimeModeFixed}) {
+function TimeFeedback({showHelp, feedback, examples, timeMode=ISO, isTimeModeFixed}) {
 
     examples = timeMode===ISO ? (examples?.[ISO] ?? defaulISOtExample) : (examples?.[MJD] ?? defaultMJDExample);
-    style = {paddingTop: 5, height: isTimeModeFixed ? 'auto' : '4rem', // so that layout doesn't jump on toggling radio button
-        display:'flex', contentJustify: 'center', ...style};
+    // style = {paddingTop: 5, height: isTimeModeFixed ? 'auto' : '4rem', // so that layout doesn't jump on toggling radio button
+    //     display:'flex', contentJustify: 'center', ...style};
 
     if (showHelp) {
          return (
-            <div style={style}>
-                <i>e.g.:</i>
-                <div style={{marginLeft: 3}}>
-                   {examples}
-                </div>
-            </div>
+            <Stack {...{spacing:1, direction:'row', pt:1/2, height: isTimeModeFixed ? 'auto' : '4rem'}}>
+                <Typography component='div' level={'title-md'}>e.g.</Typography>
+                <Typography component='div'> {examples} </Typography>
+            </Stack>
          );
     } else {
          return (
-            <div style={style}>
+             <Stack {...{direction:'row', pt:1/4, height: isTimeModeFixed ? 'auto' : '4rem'}}>
                 <span dangerouslySetInnerHTML={{
                     __html: feedback
                 }}/>
-            </div>
+            </Stack>
          );
     }
 }
