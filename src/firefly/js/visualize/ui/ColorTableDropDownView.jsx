@@ -5,6 +5,7 @@
 import React, {useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {throttle, isArray, isNumber} from 'lodash';
+import HelpIcon from '../../ui/HelpIcon.jsx';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {dispatchColorChange, dispatchOverlayColorLocking} from '../ImagePlotCntlr.js';
@@ -353,7 +354,7 @@ function toggleOverlayColorLock(pv,plotGroupAry){
 }
 
 export const ColorTableDropDownView= () => {
-    dispatchHideDialog(POPOUT_ID);
+    setTimeout(() => dispatchHideDialog(POPOUT_ID), 5)
     return ( <AdvancedColorPanel allowPopout={true}/> );
 };
 
@@ -380,5 +381,11 @@ export function showColorDialog() {
 function PopoutColorPanel() {
     const pv = useStoreConnector( () => getActivePlotView(visRoot()));
     if (!primePlot(pv)) return <div/>;
-    return <AdvancedColorPanel allowPopout={false}/>;
+    return (
+        <Stack>
+            <AdvancedColorPanel allowPopout={false}/>
+            <HelpIcon helpId='visualization.advanceColorPanel' sx={{alignSelf:'flex-end'}}/>
+        </Stack>
+    );
+
 }

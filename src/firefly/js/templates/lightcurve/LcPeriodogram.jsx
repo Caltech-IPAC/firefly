@@ -72,27 +72,27 @@ const labelWidth = 150;
 const defValues = {
     [pKeyDef.min.fkey]: Object.assign(getTypeData(pKeyDef.min.fkey,
         '', 'minimum period (> 0)',
-        `${pKeyDef.min.label}:`, labelWidth),
+        pKeyDef.min.label, labelWidth),
         {validator: null}),
     [pKeyDef.max.fkey]: Object.assign(getTypeData(pKeyDef.max.fkey,
         '', 'maximum period (> 0)',
-        `${pKeyDef.max.label}:`, labelWidth),
+        pKeyDef.max.label, labelWidth),
         {validator: null}),
     [pKeyDef.algor.fkey]: Object.assign(getTypeData(pKeyDef.algor.fkey,
         algorOptions[0].value,
         'periodogram algorithm',
-        `${pKeyDef.algor.label}:`, labelWidth)),
+        pKeyDef.algor.label, labelWidth)),
     [pKeyDef.stepmethod.fkey]: Object.assign(getTypeData(pKeyDef.stepmethod.fkey,
         stepOptions[0].value,
         'periodogram step method',
-        `${pKeyDef.stepmethod.label}:`, labelWidth)),
+        pKeyDef.stepmethod.label, labelWidth)),
     [pKeyDef.stepsize.fkey]: Object.assign(getTypeData(pKeyDef.stepsize.fkey, '',
         'period fixed step size (> 0.00000001)',
-        `${pKeyDef.stepsize.label}:`, labelWidth),
+        pKeyDef.stepsize.label, labelWidth),
         {validator: null}),
     [pKeyDef.peaks.fkey]: Object.assign(getTypeData(pKeyDef.peaks.fkey, '50',
         'number of peaks to return (default is 50)',
-        `${pKeyDef.peaks.label}:`, labelWidth),
+        pKeyDef.peaks.label, labelWidth),
         {validator: Validate.intRange.bind(null, 1, 500, 'peaks number')})
 };
 
@@ -229,9 +229,9 @@ class PeriodogramOptionsBox extends PureComponent {
 
         return (
                 <FieldGroup groupKey={groupKey} reducerFunc={LcPeriodogramReducer()} keepState={true} >
-                    <Stack spacing={1}>
-                        <ListBoxInputField options={algorOptions} multiple={false} fieldKey={pKeyDef.algor.fkey} />
-                        <ListBoxInputField options={stepOptions} multiple={false} fieldKey={pKeyDef.stepmethod.fkey} />
+                    <Stack {...{spacing:1, width:'20rem' }}>
+                        <ListBoxInputField options={algorOptions} multiple={false} orientation='vertical' fieldKey={pKeyDef.algor.fkey} />
+                        <ListBoxInputField options={stepOptions} multiple={false} orientation='vertical' fieldKey={pKeyDef.stepmethod.fkey} />
                         <ValidationField fieldKey={pKeyDef.stepsize.fkey} />
                         <ValidationField fieldKey={pKeyDef.min.fkey} />
                         <ValidationField fieldKey={pKeyDef.max.fkey} />

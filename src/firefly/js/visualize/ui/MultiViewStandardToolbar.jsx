@@ -41,10 +41,10 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, tool
                 <Stack {...{direction:'row', alignItems: 'center', flexWrap:'nowrap'}}>
                     {moreThanOne && <OneTileButton tip='Show single image at full size'
                                                    onClick={() => dispatchChangeViewerLayout(viewerId,'single')}/>}
-                    {moreThanOne && <GridTileButton tip='Show all as tiles'
+                    {moreThanOne && <GridTileButton tip='Show all images as tiles'
                                                    onClick={() => dispatchChangeViewerLayout(viewerId,'grid')}/>}
                     {useImageList && moreThanOne &&
-                        <ListViewButton tip='Choose which plots to show'
+                        <ListViewButton tip='Choose which images to show'
                                        onClick={() =>showExpandedOptionsPopup('Pinned Images', viewerId) }/>
                     }
                     {layoutType==='single' && moreThanOne &&

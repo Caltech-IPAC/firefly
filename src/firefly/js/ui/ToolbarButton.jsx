@@ -95,8 +95,8 @@ export const ToolbarButton = memo((props) => {
 
 
     const b=  (
-        <Tooltip title={tip} sx={sx} {...slotProps?.tooltip}>
-            <Stack {...{direction:'row', alignItems:'center', ref:setupRef, position:'relative' }} {...slotProps?.root}>
+        <Tooltip title={tip} {...slotProps?.tooltip}>
+            <Stack {...{direction:'row', sx, alignItems:'center', ref:setupRef, position:'relative' }} {...slotProps?.root}>
                 <TbCheckBox {...{hasCheckBox, CheckboxOnIcon, CheckboxOffIcon, checkBoxOn, onClick:handleClick}}/>
                 {useIconButton ?
                     (<IconButton {...{
@@ -120,12 +120,14 @@ export const ToolbarButton = memo((props) => {
                     </IconButton>) :
                     <Button {...{color, variant,
                         'aria-label':tip, disabled:!enabled, onClick:handleClick,
+                        size:'md',
                         className:'ff-toolbar-button ' + allowInput,
                         startDecorator: image,
                         component,
                         endDecorator: dropDownIndicator,
-                        sx:(theme) => ({whiteSpace:'nowrap', py:.4, minHeight: 'unset',
+                        sx:(theme) => ({whiteSpace:'nowrap', py:1/4, minHeight: 'unset',
                             color: enabled? undefined : theme.vars.palette.neutral?.softDisabledColor,
+                            ...makeFontSettings(theme),
                             ...makeBorder(active,theme,color),
                         }),
                         ...slotProps?.button
@@ -169,8 +171,8 @@ ToolbarButton.propTypes= {
         button: object,
     }),
     active: bool,
-    sx: object,
-    component: object,
+    sx: oneOfType([object,func]),
+    component: string,
     dropPosition: object,
     variant: string,
 };
@@ -207,6 +209,13 @@ function makeBorder(active, theme,color) {
     };
 }
 
+function makeFontSettings(theme) {
+    return {
+        fontSize:theme.fontSize.md,
+        fontWeight:theme.fontWeight.md,
+    };
+}
+
 function makeTextLabel(text,shortcutKey) {
     const {meta,key,hasShortcut}= getShortCutInfo(shortcutKey);
     if (!hasShortcut) return text;
@@ -229,8 +238,10 @@ export function ToolbarHorizontalSeparator({ style={}}) {
 }
 ToolbarHorizontalSeparator.propTypes= { style:object, top : number };
 
-export function DropDownVerticalSeparator({useLine=false, style={}}) {
-    return <div style={style} className={useLine? 'ff-vertical-line-separator' : 'ff-vertical-separator'}/>;
+export function DropDownVerticalSeparator({useLine=false, sx={}}) {
+    return useLine?
+        <Divider orientation='horizontal' sx={{my:1, ...sx}}/> :
+        <Box sx={sx} />;
 }
 DropDownVerticalSeparator.propTypes= {
     useLine: bool,

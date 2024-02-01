@@ -23,29 +23,20 @@ import GrainIcon from '@mui/icons-material/Grain';
 import HorizontalRuleRoundedIcon from '@mui/icons-material/HorizontalRuleRounded';
 import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import ThreeSixtyRoundedIcon from '@mui/icons-material/ThreeSixtyRounded';
-import ContentCopySharpIcon from '@mui/icons-material/ContentCopySharp';
 import LinkIcon from '@mui/icons-material/Link';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
 import SquareRoundedIcon from '@mui/icons-material/SquareRounded';
-import GridViewIcon from '@mui/icons-material/GridView';
-import ViewListIcon from '@mui/icons-material/ViewList';
 import GridViewRoundedIcon from '@mui/icons-material/GridViewRounded';
 import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBulletedRounded';
 import CenterFocusStrongTwoToneIcon from '@mui/icons-material/CenterFocusStrongTwoTone';
 
 import AddTwoToneIcon from '@mui/icons-material/AddTwoTone';
-import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
-import LockOutlinedIcon from '@mui/icons-material/Lock';
-import PanoramaHorizontalOutlinedIcon from '@mui/icons-material/PanoramaHorizontalTwoTone';
 import ViewCompactIcon from '@mui/icons-material/ViewCompact';
 import CropRoundedIcon from '@mui/icons-material/CropRounded';
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import RemoveDoneRoundedIcon from '@mui/icons-material/RemoveDoneRounded';
 import FunctionsOutlinedIcon from '@mui/icons-material/FunctionsOutlined';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 
-// import FilterAltTwoToneIcon from '@mui/icons-material/FilterAltTwoTone';
-// import FilterAltOffTwoToneIcon from '@mui/icons-material/FilterAltOffTwoTone';
 import FilterIco from '@mui/icons-material/FilterAltOutlined';
 import ClearFilterIco from '@mui/icons-material/FilterAltOffOutlined';
 import TextViewIco from '@mui/icons-material/TextFieldsOutlined';
@@ -55,11 +46,20 @@ import SettingsIco from '@mui/icons-material/SettingsOutlined';
 import PropertySheetIco from '@mui/icons-material/ReadMoreOutlined';
 import ResetIco from '@mui/icons-material/RestartAltOutlined';
 import PanIco from '@mui/icons-material/OpenWithOutlined';
-import PinChartIco from '@mui/icons-material/PushPin.js';
-import ShowTableIco from '@mui/icons-material/CallReceived.js';
-import CombineChartIco from '@mui/icons-material/SyncAlt.js';
+import PinChartIco from '@mui/icons-material/PushPin';
+import ShowTableIco from '@mui/icons-material/CallReceived';
+import CombineChartIco from '@mui/icons-material/SyncAlt';
 
 
+// import ContentCopySharpIcon from '@mui/icons-material/ContentCopySharp';
+// import GridViewIcon from '@mui/icons-material/GridView';
+// import ViewListIcon from '@mui/icons-material/ViewList';
+// import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
+// import LockOutlinedIcon from '@mui/icons-material/Lock';
+// import PanoramaHorizontalOutlinedIcon from '@mui/icons-material/PanoramaHorizontalTwoTone';
+// import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+// import FilterAltTwoToneIcon from '@mui/icons-material/FilterAltTwoTone';
+// import FilterAltOffTwoToneIcon from '@mui/icons-material/FilterAltOffTwoTone';
 // --- save the following as other options for certain icons
 // import RotateRight from '@mui/icons-material/RotateRight';
 // import SettingsBackupRestoreRoundedIcon from '@mui/icons-material/SettingsBackupRestoreRounded';

@@ -63,9 +63,9 @@ const rightColumn = {paddingLeft:18};
 const dialogStyle = { minWidth : 300, minHeight: 100 , padding:10};
 
 
-export function showMouseReadoutOptionDialog(fieldKey,radioValue) {
+export function showMouseReadoutOptionDialog(fieldKey,radioValue, title='Choose Option') {
 	const popup = (
-		<PopupPanel title={'Choose Option'}  >
+		<PopupPanel title={title}  >
 			<MouseReadoutOptionDialog groupKey={groupKeys[fieldKey]} fieldKey={fieldKey}
 									  radioValue={radioValue} isHiPS={isHiPS(primePlot(visRoot()))}/>
 		</PopupPanel>
@@ -76,7 +76,7 @@ export function showMouseReadoutOptionDialog(fieldKey,radioValue) {
 
 export function showMouseReadoutFluxRadixDialog(readoutPrefs) {
 	const popup = (
-		<PopupPanel title={'Choose Pixel readout radix'}  >
+		<PopupPanel title={'Choose pixel readout radix'}  >
 			<FluxRadixDialog readoutPrefs={readoutPrefs} dialogId='fluxRadixDialog'/>
 		</PopupPanel>
 	);

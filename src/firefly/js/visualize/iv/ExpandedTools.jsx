@@ -97,11 +97,11 @@ function WhichView() {
                    <OneTileButton tip='Show single image at full size'
                                   onClick={() => dispatchChangeExpandedMode(ExpandType.SINGLE)}/>}
             {showViewButtons &&
-                   <GridTileButton tip='Show all as tiles'
+                   <GridTileButton tip='Show all images as tiles'
                                   onClick={() => dispatchChangeExpandedMode(ExpandType.GRID)}/>
             }
             {showViewButtons &&
-                   <ListViewButton tip={'Choose which plots to show'}
+                   <ListViewButton tip={'Choose which images to show'}
                                   onClick={() =>showExpandedOptionsPopup() }/>
             }
         </Stack>

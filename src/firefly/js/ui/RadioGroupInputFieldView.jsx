@@ -14,9 +14,9 @@ function makeRadioGroup(options,orientation='horizontal',radioValue,onChange,rad
                 options.map( ({label,value, disabled=false,tooltip }) => {
                     const radio= (<Radio
                         {...{ className:tooltip?undefined:'ff-RadioGroup-item', key:value, size:'sm', checked:value===radioValue, onChange, value, label, disabled, ...slotProps.radio }} />);
-                    if (tooltip) {
+                    if (tooltip||radioTooltip) {
                         return (
-                            <Tooltip {...{className:'ff-RadioGroup-item', key:value, title:tooltip ?? radioTooltip, placement:'top'}}>
+                            <Tooltip {...{className:'ff-RadioGroup-item', key:value, title:tooltip || radioTooltip, placement:tooltip?'top':undefined}}>
                                 {radio}
                             </Tooltip>
                         );
@@ -72,7 +72,6 @@ export function RadioGroupInputFieldView({options,orientation='vertical',value,
 
     return (
         <Box className='ff-Input' sx={sx}>
-            <Tooltip {...{key:value, title:tooltip, ...slotProps.tooltip}}>
                 <FormControl orientation={orientation} style={{whiteSpace:'nowrap'}}>
                     {label && <FormLabel {...{...slotProps.label}}>{label}</FormLabel>}
                     <Stack direction='row'>
@@ -81,7 +80,6 @@ export function RadioGroupInputFieldView({options,orientation='vertical',value,
                             makeRadioGroup(options,orientation,value,onChange,tooltip,slotProps)}
                     </Stack>
                 </FormControl>
-            </Tooltip>
         </Box>
     );
 }

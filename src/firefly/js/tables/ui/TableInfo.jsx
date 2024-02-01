@@ -36,9 +36,9 @@ export function TableInfo({tbl_id, tabsProps, ...props}) {
                     </div>
                 </Tab>
             </StatefulTabs>
-            <div>
-                <HelpIcon helpId={'tables.info'} style={{float: 'right', marginRight: 10}}/>
-            </div>
+            <Stack alignItems='flex-end'>
+                <HelpIcon helpId='tables.info'/>
+            </Stack>
         </Stack>
     );
 }

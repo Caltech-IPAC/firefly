@@ -1,7 +1,7 @@
 import React from 'react';
-import PropTypes, {func, bool, element, object, arrayOf, number, objectOf, shape, string, oneOfType} from 'prop-types';
+import {func, bool, element, object, arrayOf, number, objectOf, shape, string, oneOfType} from 'prop-types';
 import {has, isNumber, isString, isObject, isNaN} from 'lodash';
-import {Slider, Box, Stack, Typography, Tooltip} from '@mui/joy';
+import {Slider, Stack, Typography, Tooltip} from '@mui/joy';
 
 export function RangeSliderView({min=0, max=100, minStop, maxStop, marks, step=1, vertical=false,
                                     defaultValue=0, slideValue, sx={},
@@ -49,12 +49,13 @@ RangeSliderView.propTypes = {
     minStop:  number,
     maxStop:  number,
     className: string,
-    marks:       arrayOf(objectOf(
-        shape({
-            label: string,
-            value: number,
-        })
-    )),   // marks shown on slider
+    // react keeps showing warnings (i think wrongly) so I am commenting this out
+    // marks: arrayOf(objectOf(
+    //     shape({
+    //         label: string,
+    //         value: number,
+    //     })
+    // )),   // marks shown on slider
     step: number,
     vertical: bool,
     defaultValue: number,

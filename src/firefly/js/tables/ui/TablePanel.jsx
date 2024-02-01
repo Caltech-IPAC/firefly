@@ -10,6 +10,7 @@ import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
 import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/ActionsDropDownButton.jsx';
 
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {ExpandButton, InfoButton, SaveButton, FilterButton, ClearFilterButton, TextViewButton, TableViewButton, SettingsButton, PropertySheetButton} from '../../visualize/ui/Buttons.jsx';
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableUiUpdate} from '../TablesCntlr.js';
 import {uniqueTblId, getTableUiById, makeBgKey, getResultSetRequest, isClientTable, getTableState,

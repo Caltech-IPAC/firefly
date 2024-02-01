@@ -160,12 +160,15 @@ function renderStandardThreeColorView(plot,rFields,gFields,bFields) {
                     </Tab>
                     }
                 </FieldGroupTabs>
-                <CompleteButton
-                    text='Refresh' dialogId='ColorStretchDialog' includeUnmounted={true}
-                    groupKey={['colorDialogTabs',RED_PANEL,GREEN_PANEL,BLUE_PANEL]}
-                    closeOnValid={false} sx={{pt:.25, pb:1, pl:1}}
-                    onSuccess={replot(usedBands)} onFail={invalidMessage}
-                />
+                <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                    <CompleteButton
+                        text='Refresh' dialogId='ColorStretchDialog' includeUnmounted={true}
+                        groupKey={['colorDialogTabs',RED_PANEL,GREEN_PANEL,BLUE_PANEL]}
+                        closeOnValid={false} sx={{pt:.25, pb:1, pl:1}}
+                        onSuccess={replot(usedBands)} onFail={invalidMessage}
+                    />
+                    <HelpIcon helpId='visualization.modifyColorStretch3C'/>
+                </Stack>
             </FieldGroup>
         </Box>
 
@@ -180,11 +183,14 @@ function renderStandardView(plot,fields) {
     return (
         <FieldGroup groupKey={NO_BAND_PANEL} keepState={true}  reducerFunc={colorPanelReducer} >
             <ColorBandPanel groupKey={NO_BAND_PANEL} band={Band.NO_BAND} fields={fields} plot={plot}/>
-            <CompleteButton
-                text='Refresh' dialogId='ColorStretchDialog'
-                closeOnValid={false} sx={{pt:.25, pb:1, pl:1}}
-                onSuccess={replot()} onFail={invalidMessage}
-            />
+            <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                <CompleteButton
+                    text='Refresh' dialogId='ColorStretchDialog'
+                    closeOnValid={false} sx={{pt:.25, pb:1, pl:1}}
+                    onSuccess={replot()} onFail={invalidMessage}
+                />
+                <HelpIcon helpId='visualization.modifyColorStretchSingleBand'/>
+            </Stack>
         </FieldGroup>
        );
 }

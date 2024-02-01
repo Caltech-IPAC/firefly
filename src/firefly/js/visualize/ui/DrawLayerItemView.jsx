@@ -14,17 +14,11 @@ export function DrawLayerItemView({maxTitleChars, lastItem, deleteLayer,
                             isPointData, drawingDef, autoFormatTitle, canUserHide=true,
                             packWithNext=false,
                             visible, changeVisible, modifyColor, modifyShape, UIComponent}) {
-    const style= {
-        width:'100%',
-        height:'100%',
-        position: 'relative',
-        overflow:'hidden',
-        whiteSpace : 'nowrap'
-    };
 
+    const sx= { width:1, height:1, pr:1.5, position: 'relative', overflow:'hidden', whiteSpace : 'nowrap'};
     const useDivide= lastItem || !packWithNext;
     return (
-        <Box style={style}>
+        <Box sx={sx}>
            <Stack {...{lineHeight:'1em', position: 'relative', direction:'row', flexWrap:'nowrap',
                          justifyContent: 'space-between', alignItems: 'center', width:'100%' }} >
                 <Stack {...{direction: 'row', alignItems: 'center'}}>

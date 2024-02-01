@@ -6,9 +6,6 @@ import {isImage} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute';
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {DropDownVerticalSeparator, ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
-
-import CENTER_DROP from 'html/images/center-dropdown.png';
 import {getActivePlotView, getDrawLayersByType} from '../PlotViewUtil';
 import {dispatchChangeTableAutoScroll, dispatchRecenter} from '../ImagePlotCntlr';
 import {getTableGroup} from '../../tables/TableUtil';
@@ -150,7 +147,7 @@ export function ImageCenterDropDown({visRoot:vr, visible, mi}) {
     );
 
     return (
-        <CenterDropdown tip='Image center drop down. Center images.'
+        <CenterDropdown tip='Image center drop down: center images'
                                enabled={Boolean(plot)} visible={visible}
                                dropDown={dropDown}/>
 

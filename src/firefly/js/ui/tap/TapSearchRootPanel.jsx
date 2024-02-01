@@ -249,7 +249,7 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
             style={{height: servicesShowing?62:0, justifyContent:'space-between', alignItems:'center',...extraStyle}}
             title={SERVICE_TIP}>
             <div style={{display:'flex', alignItems:'center', width:'100%'}}>
-                <Typography {...{level:'h4', color:'primary', sx:{width:'16rem', mr:1} }}>
+                <Typography {...{level:'h4', color:'primary', sx:{width:'14rem', mr:1} }}>
                     Select TAP Service
                 </Typography>
                 <Stack {...{direction:'row', spacing:2}}>
@@ -259,12 +259,12 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
                                         value={serviceUrl}
                                         actOn={['enter']}
                                         tooltip='enter TAP URL'
-                                        slotProps={{input:{sx:{width:'60rem'}}}}
+                                        slotProps={{input:{sx:{width:'40rem'}}}}
                                         onChange={(val) => onTapServiceOptionSelect(val)}
                             />
                     ) : (
                         <ListBoxInputFieldView {...{
-                            sx:{'& .MuiSelect-root':{width:'60rem'}},
+                            sx:{'& .MuiSelect-root':{width:'40rem'}},
                             options:tapOps, value:serviceUrl,
                             placeholder:'Choose TAP Service...',
                             startDecorator:!tapOps.length ? <Button loading={true}/> : undefined,
