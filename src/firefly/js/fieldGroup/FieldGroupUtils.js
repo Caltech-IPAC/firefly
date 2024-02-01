@@ -116,9 +116,9 @@ export var validateFieldGroup= function(groupKey, includeUnmounted= false) {
 export function getFieldGroupResults(groupKey,includeUnmounted=false) {
     const fields= getGroupFields(groupKey);
     if (!fields) return null;
-    return Object.keys(fields).
-        filter((fieldKey) => (fields[fieldKey].mounted||includeUnmounted)).
-        reduce((request, key) => {
+    return Object.keys(fields)
+        .filter((fieldKey) => (isUndefined(fields[fieldKey].mounted)||fields[fieldKey].mounted||includeUnmounted))
+        .reduce((request, key) => {
             request[key] = fields[key].value;
             return request;
         }, {});
