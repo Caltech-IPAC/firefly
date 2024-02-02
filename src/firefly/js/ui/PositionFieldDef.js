@@ -100,7 +100,7 @@ export function formatPosForHelp(wp) {
 
         s = `<div style="font-size:10px;">
               ${lonStr},&nbsp;${latStr}&nbsp;&nbsp;${csys}
-              &nbsp;&nbsp;&nbsp;<i>or</i> &nbsp;&nbsp;&nbsp;
+              &nbsp;&nbsp;&nbsp;or&nbsp;&nbsp;&nbsp;
               ${hmsRa},&nbsp;${hmsDec}&nbsp;&nbsp;${csys}
             </div>`;
 

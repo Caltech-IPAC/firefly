@@ -11,7 +11,7 @@ import {dispatchHideDialog, dispatchShowDialog} from '../../core/ComponentCntlr.
 import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {MetaConst} from '../../data/MetaConst';
 import {ServerParams} from '../../data/ServerParams.js';
-import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
+import {getFieldVal, setFieldValue} from '../../fieldGroup/FieldGroupUtils.js';
 import {makeFileRequest} from '../../tables/TableRequestUtil';
 import {dispatchTableSearch} from '../../tables/TablesCntlr';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField.jsx';
@@ -212,14 +212,14 @@ function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiS
     }, []);
 
     const {wp,type}= initArgs?.searchParams ?? {};
-    const [, setTarget]= useFieldGroupValue(DEF_TARGET_PANEL_KEY,FG_KEYS.targetSelect);
-    const [, setType]= useFieldGroupValue(FD_KEYS.type,FG_KEYS.main);
+
     useEffect(() => {
         if (!wp) return;
-        setTarget(wp);
+        setFieldValue(FG_KEYS.targetSelect,DEF_TARGET_PANEL_KEY,wp);
     }, [wp]);
     useEffect(() => {
-        (type) && setType(type);
+        if (!type) return;
+        setFieldValue(FG_KEYS.type,FG_KEYS.main,type);
     }, [type]);
 
     const imageType = useStoreConnector(() => getFieldVal(FG_KEYS.main, FD_KEYS.type));
@@ -413,7 +413,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
                     <Typography {...{px:1, width:200, color:'primary', level:'title-md'}}>3. Select Target</Typography>
                     <FieldGroup groupKey={FG_KEYS.targetSelect} keepState={true}>
                         <Stack spacing={2} direction='column'>
-                            <TargetPanel labelWidth={isHips ? 150 : 100} feedbackStyle={targetStyle}
+                            <TargetPanel labelWidth={isHips ? 150 : 100}
                                          label={isHips ? 'Coordinates or Object Name (optional):' : 'Coordinates or Object Name:'}
                                          nullAllowed={true}/>
                             <SizeInputFields fieldKey={sizeKey} showFeedback={true}
