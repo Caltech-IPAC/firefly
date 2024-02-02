@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box} from '@mui/joy';
 import React, {PureComponent, Component, memo} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, get} from 'lodash';
@@ -59,15 +60,16 @@ export class CatalogTableView extends Component {
         });
 
         return (
-            <div style={{overflow:'auto', border:'1px solid rgba(0,0,0,.1'}}>
-                <div className='catalogtable'>
+            <Box sx={{overflow:'auto', borderColor: 'divider',
+                borderStyle: 'solid', borderWidth: '1px', borderRadius:5}}>
+                <Box sx={{overflow:'auto'}}>
                     <table style={{width:'100%'}}>
                         <tbody>
                         {items}
                         </tbody>
                     </table>
-                </div>
-            </div>
+                </Box>
+            </Box>
         );
     }
 }

@@ -275,7 +275,8 @@ const ImageViewerDecorate= memo((props) => {
         position: 'absolute',
         borderStyle: 'solid',
         borderWidth: expandedToSingle ? '0 0 0 0' : '3px 2px 2px 2px',
-        borderColor: getBorderColor(theme, pv,visRoot)
+        borderRadius: '5px',
+        borderColor: getBorderColor(theme, pv,visRoot),
     });
 
     const makeActive= () => pv?.plotId && dispatchChangeActivePlotView(pv.plotId,MOUSE_CLICK_REASON);

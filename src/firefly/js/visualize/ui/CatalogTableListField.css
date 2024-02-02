@@ -1,7 +1,4 @@
 /*right list of table with catalog names to be selected*/
-.catalogtable {
-    overflow: auto;
-}
 
 .marked-text {
     color: #49a344;

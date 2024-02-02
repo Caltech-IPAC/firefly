@@ -36,7 +36,7 @@ const tblXyKey= 'tables | xyplots';
 export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButtons, rightButtons,
                                       initLoadingMessage, initLoadCompleted} ) => {
     const state= useStoreConnector(() => pick(getLayouInfo(), stateKeys));
-    const {title, mode, showTables:showTablesInState, showImages, showXyPlots, images={}, coverageSide=LEFT} = state;
+    const {title, mode, showTables, showImages, showXyPlots, images={}, coverageSide=LEFT} = state;
     const {expanded, standard, closeable} = mode ?? {};
     const content = {};
     const {showMeta, showFits, dataProductTableId, showCoverage} = images;
@@ -46,7 +46,7 @@ export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButt
     const imagesWithCharts= currLayoutMode===tblXyKey;
 
     if (initLoadingMessage && !initLoadCompleted) return (<AppInitLoadingMessage message={initLoadingMessage}/>);
-    if (!showImages && !showXyPlots && !showTablesInState) return <div/>;
+    if (!showImages && !showXyPlots && !showTables) return <div/>;
 
     if (!imagesWithCharts && (showImages || coverageLeft)) {
         content.imagePlot = (<TriViewImageSection key='res-tri-img'
@@ -60,18 +60,18 @@ export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButt
             dataProductTableId, coverageRight, imagesWithCharts}}/>);
         if (expanded===LO_VIEW.xyPlots) content.xyPlot= content.rightSide;
     }
-    const showTables= showTablesInState && currLayoutMode?.includes('tables');
-    if (showTables && currLayoutMode?.includes('tables')) {
+    const renderTables= showTables && currLayoutMode?.includes('tables');
+    if (renderTables) {
         content.tables = (<TablesContainer key='res-tables'
                                            mode='both'
                                            closeable={closeable}
                                            expandedMode={expanded===LO_VIEW.tables}/>);
     }
 
-    const isTriView = (showImages||coverageLeft) && (showXyPlots||coverageRight) && showTables;
+    const isTriViewPossible = (showImages||coverageLeft) && (showXyPlots||coverageRight) && showTables;
     return (
         <ResultsPanel {...{key:'results', title,
-                      searchDesc:searchDesc({showViewsSwitch, showImages, isTriView, leftButtons, centerButtons,
+                      searchDesc:searchDesc({showViewsSwitch, showImages, isTriViewPossible, leftButtons, centerButtons,
                           rightButtons, showCoverage:images.showCoverage, coverageSide, currLayoutMode}),
                       expanded, standard}}
                       { ...content} />
@@ -155,7 +155,7 @@ function getCovSideOptions(currLayoutMode, showImages) {
 }
 
 
-function searchDesc({showViewsSwitch, showImages, isTriView, showCoverage, leftButtons, centerButtons, rightButtons, coverageSide, currLayoutMode}) {
+function searchDesc({showViewsSwitch, showImages, isTriViewPossible, showCoverage, leftButtons, centerButtons, rightButtons, coverageSide, currLayoutMode}) {
 
     const hasContent = showViewsSwitch || leftButtons || centerButtons || rightButtons;
     if (!hasContent) return  <div/>;
@@ -190,7 +190,7 @@ function searchDesc({showViewsSwitch, showImages, isTriView, showCoverage, leftB
                                 orientation:'horizontal',
                                 onChange:(ev) => dispatchUpdateLayoutInfo({coverageSide:ev.target.value}),
                             }} /> }
-                        {isTriView &&
+                        {isTriViewPossible &&
                             <RadioGroupInputFieldView
                                 {...{
                                     sx:{pl: 1, width:420, display:'inline-flex', alignItems:'center'},

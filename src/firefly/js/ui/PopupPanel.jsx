@@ -137,9 +137,7 @@ function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart
                         whiteSpace:'nowrap', overflow:'hidden'}} >
                         {title}
                     </DialogTitle>
-                    <Tooltip placement='left' title='Close'>
-                        <ChipDelete onClick={askParentToClose}/>
-                    </Tooltip>
+                    <ChipDelete onClick={askParentToClose}/>
                 </Stack>
                 <Box className='ff-dialog-content' sx={{ml:.5}}>
                     {children}

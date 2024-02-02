@@ -31,6 +31,7 @@ export function ColumnConstraintsPanel({tableModel}) {
     return (
         <TablePanel
             key={uniqueId()} tbl_ui_id={tableModel.tbl_id + '-ui'}
+            sx={{borderRadius:5}}
             tableModel={tableModel}
             showToolbar={false} showFilters={true} rowHeight={24}
             renderers={{ constraints: { cellRenderer: newInputCell} }}

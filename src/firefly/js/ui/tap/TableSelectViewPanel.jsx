@@ -353,7 +353,7 @@ export function BasicUI(props) {
                         </SplitContent>
                         <SplitContent>
                             { columnsModel ?
-                                <div style={{height:'100%', display:'flex', flexDirection:'column'}}>
+                                <Stack {...{height:1}}>
                                     <Typography title='Number of columns to be selected' color='neutral'  level='body-xs'>
                                         Output Column Selection and Constraints
                                     </Typography>
@@ -362,7 +362,7 @@ export function BasicUI(props) {
                                         fieldKey={'tableconstraints'}
                                         columnsModel={columnsModel}
                                     />
-                                </div>
+                                </Stack>
                                 : <div className='loading-mask'/>
                             }
                         </SplitContent>

@@ -11,9 +11,10 @@ import {
     TabList, ListItemDecorator, Box, Chip, Stack, Sheet} from '@mui/joy';
 import {tabClasses} from '@mui/joy/Tab';
 import sizeMe from 'react-sizeme';
-import {omit, isString, uniqueId, pick} from 'lodash';
+import {omit, isString, uniqueId, pick, isNumber} from 'lodash';
 
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {isDefined} from '../../util/WebUtil.js';
 import {useFieldGroupConnector} from '../FieldGroupConnector.jsx';
 import {useStoreConnector} from '../SimpleComponent.jsx';
 import {hideDropDown, isDropDownShowing, showDropDown} from '../DialogRootContainer.jsx';
@@ -166,7 +167,13 @@ export const StatefulTabs = React.memo( ({defaultSelected, onTabSelect, componen
     }, []);
 
     useEffect( ()=> {
-        if (selectedIdx >= rest.children.length) {
+        if (!isNumber(selectedIdx)) { // selectedIdx is an id
+            const idAry= getTabIds(rest.children);
+            if (!idAry.includes(selectedIdx)) {
+                dispatchComponentStateChange(componentKey, {selectedIdx:idAry[idAry.length-1]});
+            }
+        }
+        else if (selectedIdx >= rest.children.length) {
             // selectedIdx is greater than the number of tabs.. update store's state
             selectedIdx = rest.children.length-1;
             dispatchComponentStateChange(componentKey, {selectedIdx});
@@ -300,6 +307,21 @@ function TabHeader({children, slotProps}) {
                             bgcolor: activeBg,              // set this to the active color so that it look like it's part of the active tab
                         },
                     },
+                    '&[aria-selected="false"]': {            // add pipes after non-selected tabs
+                        '&::after': {
+                            content: '""',
+                            display: 'block',
+                            position: 'absolute',
+                            height: '1.1rem',
+                            bottom: -2,
+                            left: 0,
+                            right: -2,
+                            zIndex:1,                      //zIndex necessary so the hover does not cover pipe
+                            borderRightColor: 'divider',
+                            borderRightStyle: 'solid',
+                            borderRightWidth: '1px'
+                        },
+                    },
                 },
             }}
             {...{variant:tabListVar, ...slotProps?.tabList}}
@@ -408,6 +430,10 @@ function getTabTitles(childrenAry) {
  */
 function convertToTabValue(children, value=0) {
     return React.Children.toArray(children)[value]?.props.id ?? value;
+}
+
+function getTabIds(children) {
+    return React.Children.toArray(children).map( ({props}) => props?.id).filter( (id) => isDefined(id));
 }
 
 function uniqueTabId() {
