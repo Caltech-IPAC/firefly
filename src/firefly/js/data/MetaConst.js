@@ -222,7 +222,10 @@ export const MetaConst = {
      */
     DATALINK_INITIAL_LAYOUT : 'DatalinkInitialLayout',
 
-
+    /**
+     * If defined and true, dispatchTableSearch will be called but prevent going to results view directly
+     */
+    UPLOAD_TABLE: 'UploadTable',
 
     /** @deprecated use CENTER_COLUMN */
     CATALOG_COORD_COLS : 'CatalogCoordColumns',

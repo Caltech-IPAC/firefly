@@ -17,6 +17,9 @@ import {FormPanel} from 'firefly/ui/FormPanel';
 import {ServerParams} from 'firefly/data/ServerParams';
 import {doJsonRequest} from 'firefly/core/JsonUtils';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr';
+import {dispatchTableSearch} from 'firefly/tables/TablesCntlr';
+import {MetaConst} from 'firefly/data/MetaConst';
+import {makeFileRequest} from 'firefly/api/ApiUtilTable';
 
 const dialogId = 'Upload-spatial-table';
 const UPLOAD_TBL_SOURCE= 'UPLOAD_TBL_SOURCE';
@@ -45,8 +48,10 @@ function getFitsColumnInfo(data) {
  * @param {DefaultColsEnabled} defaultColsEnabled
  * @returns {boolean}
  */
+let tblCount = 0;
 function uploadSubmit(request,setUploadInfo,defaultColsEnabled)  {
     if (!request) return false;
+
     const {additionalParams = {}, fileUpload: serverFile} = request;
     const {detailsModel, report, summaryModel} = additionalParams;
     if (!detailsModel || !report || !summaryModel || !serverFile) return false;
@@ -64,7 +69,20 @@ function uploadSubmit(request,setUploadInfo,defaultColsEnabled)  {
         getFitsColumnInfo(data) :
         data.map(([name,type,u,d]) => ({name, type, units: u?u:'', description: d?d:'', use:true}));
     const columnsSelected = applyDefColumnSelection(columns,defaultColsEnabled);
-    const uploadInfo = {serverFile, fileName, columns:columnsSelected, totalRows, fileSize, tableSource: UPLOAD_TBL_SOURCE};
+    tblCount++;
+    const META_INFO= {
+        [MetaConst.CATALOG_OVERLAY_TYPE]:'TRUE',
+        [MetaConst.UPLOAD_TABLE]:'TRUE'
+    };
+
+    const options=  {
+        META_INFO,
+        tbl_id: 'Upload_Tbl_'+tblCount
+    };
+    const tblReq = makeFileRequest('Upload_Tbl_'+tblCount, serverFile, null, options);
+    //tblReq.tbl_id = 'Upload_Tbl_' + tblReq.tbl_id;
+    const uploadInfo = {serverFile, fileName, columns:columnsSelected, totalRows, fileSize, tableSource: UPLOAD_TBL_SOURCE, tbl_id: tblReq.tbl_id};
+    dispatchTableSearch(tblReq);
     setUploadInfo(uploadInfo);
     dispatchHideDialog(dialogId);
     return false;
@@ -108,8 +126,19 @@ function existingTableSubmit(request,setUploadInfo,defaultColsEnabled) {
             tbl_id: activeTblId,
             columns:columnsSelected,
             totalRows: activeTbl.totalRows,
-            tableSource: EXISTING_TBL_SOURCE,
+            tableSource: EXISTING_TBL_SOURCE
         };
+        const META_INFO= {
+            [MetaConst.CATALOG_OVERLAY_TYPE]:'TRUE',
+            [MetaConst.UPLOAD_TABLE]:'TRUE'
+        };
+        tblCount++;
+        const options=  {
+            META_INFO,
+            tbl_id: 'Upload_Tbl_'+tblCount
+        };
+        const tblReq = makeFileRequest('Upload_Tbl_'+tblCount, uploadInfo.serverFile, null, options);
+        dispatchTableSearch(tblReq);
         setUploadInfo(uploadInfo);
         dispatchHideDialog(dialogId);
     });

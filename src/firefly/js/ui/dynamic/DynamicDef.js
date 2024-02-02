@@ -12,6 +12,7 @@ export const FLOAT = 'float';
 export const UNKNOWN = 'unknown';
 export const AREA = 'area';
 export const POLYGON = 'polygon';
+export const UPLOAD = 'upload';
 export const RANGE = 'range';
 export const CIRCLE = 'circle';
 

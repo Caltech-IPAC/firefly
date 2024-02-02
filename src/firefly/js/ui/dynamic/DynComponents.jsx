@@ -20,7 +20,7 @@ import {SizeInputFields} from '../SizeInputField.jsx';
 import {TargetPanel} from '../TargetPanel.jsx';
 import {ValidationField} from '../ValidationField.jsx';
 import {
-    AREA, CHECKBOX, CIRCLE, CONE_AREA_KEY, ENUM, FLOAT, INT, POINT, POLYGON, POSITION, UNKNOWN
+    AREA, CHECKBOX, CIRCLE, CONE_AREA_KEY, ENUM, FLOAT, INT, POINT, POLYGON, POSITION, UNKNOWN, UPLOAD
 } from './DynamicDef.js';
 import {EmbeddedPositionSearchPanel} from './EmbeddedPositionSearchPanel.jsx';
 import {findFieldDefType} from './ServiceDefTools.js';

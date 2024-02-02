@@ -8,15 +8,19 @@ import {get, isEqual, isEmpty, filter, pick, uniqBy} from 'lodash';
 import Enum from 'enum';
 import {flux} from './ReduxFlux';
 import {clone} from '../util/WebUtil.js';
-import {smartMerge, getActiveTableId} from '../tables/TableUtil.js';
+import {
+    smartMerge, getActiveTableId, getTblById, findGroupByTblId,
+} from '../tables/TableUtil.js';
 import {getDropDownNames} from '../ui/Menu.jsx';
-import ImagePlotCntlr, {IMAGE_PLOT_KEY, visRoot} from '../visualize/ImagePlotCntlr.js';
-import {TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE, TABLE_REMOVE, TABLE_SPACE_PATH} from '../tables/TablesCntlr.js';
+import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
+import { TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE, TABLE_REMOVE, TABLE_SPACE_PATH, TBL_RESULTS_ACTIVE, TABLE_LOADED
+} from '../tables/TablesCntlr.js';
 import {CHART_ADD, CHART_REMOVE, CHART_SPACE_PATH} from '../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../visualize/MultiViewCntlr.js';
 import {REINIT_APP} from './AppDataCntlr.js';
 import {getDefaultChartProps} from '../charts/ChartUtil.js';
 import {getPlotViewAry} from 'firefly/visualize/PlotViewUtil.js';
+import {MetaConst} from 'firefly/data/MetaConst';
 
 export const LAYOUT_PATH = 'layout';
 
@@ -314,12 +318,26 @@ export function dropDownHandler(layoutInfo, action) {
     switch (action.type) {
         case CHART_ADD:
         case TBL_RESULTS_ADDED:
+        case TBL_RESULTS_ACTIVE:
+        case TABLE_LOADED:
+            const tbl_id= action.type === CHART_ADD ? action.payload.groupId : action.payload.tbl_id;
+            if (findGroupByTblId(tbl_id)!=='main' || getTblById(tbl_id)?.request?.META_INFO?.[MetaConst.UPLOAD_TABLE]) {
+                return layoutInfo;
+            }
+            return smartMerge(layoutInfo, {dropDown: {visible: false}});
         case REPLACE_VIEWER_ITEMS :
         case ImagePlotCntlr.PLOT_IMAGE :
             return smartMerge(layoutInfo, {dropDown: {visible: false}});
         case ImagePlotCntlr.PLOT_IMAGE_START :
-            const {useForSearchResults= true}= action.payload.pvOptions;
-            const visible= !useForSearchResults && layoutInfo.dropDown.visible;
+            const VISUALIZED_TABLE_IDS = action.payload.attributes.VISUALIZED_TABLE_IDS;
+            if (VISUALIZED_TABLE_IDS && VISUALIZED_TABLE_IDS.length > 0) {
+                const lastId = VISUALIZED_TABLE_IDS[VISUALIZED_TABLE_IDS.length - 1];
+                // Check if the last entry contains 'Upload_Tbl' - and return layoutInfo as is if it does
+                const containsUploadTbl = lastId.includes('Upload_Tbl');
+                if (containsUploadTbl) return layoutInfo;
+            }
+            const {useForSearchResults= true, useForCoverage}= action.payload.pvOptions;
+            const visible= (!useForCoverage && !useForSearchResults) && layoutInfo.dropDown.visible;
             return smartMerge(layoutInfo, {dropDown: {visible}});
         case CHART_REMOVE:
         case SHOW_DROPDOWN:
