@@ -26,6 +26,7 @@ import {FieldGroup} from '../ui/FieldGroup.jsx';
 // Parts of the lowlevel api
 import * as ApiUtil from './ApiUtil.js';
 import  * as ApiUtilChart from './ApiUtilChart.jsx';
+import moreChartApi from './ApiUtilChart.jsx';
 import  * as ApiUtilImage from './ApiUtilImage.jsx';
 import  * as ApiUtilTable from './ApiUtilTable.jsx';
 
@@ -213,7 +214,7 @@ export function buildLowlevelAPI() {
         WorkspacePickerPopup: fieldGroupWrap(WorkspacePickerPopup)
     };
 
-    const util= Object.assign({}, ApiUtil, {image:ApiUtilImage}, {chart:ApiUtilChart}, {table:ApiUtilTable}, {data:{}} );
+    const util= Object.assign({}, ApiUtil, {image:ApiUtilImage}, {chart:{...ApiUtilChart, ...moreChartApi}}, {table:ApiUtilTable}, {data:{}} );
 
     return { action, ui, util };
 }
