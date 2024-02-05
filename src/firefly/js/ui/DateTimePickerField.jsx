@@ -1,96 +1,91 @@
 import React, {memo, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
+import {Divider, Stack} from '@mui/joy';
+import {DateCalendar, MultiSectionDigitalClock, LocalizationProvider} from '@mui/x-date-pickers';
+import {AdapterMoment} from '@mui/x-date-pickers/AdapterMoment';
+import moment from 'moment';
+
 import {useFieldGroupValue} from 'firefly/ui/SimpleComponent';
-import DateTime from 'react-datetime';
 import {isDialogVisible} from '../core/ComponentCntlr.js';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {POPUP_DIALOG_ID, showOptionsPopup} from './PopupUtil.jsx';
+import {JoyToMUIThemeWrapper} from 'firefly/ui/JoyToMUIThemeWrapper';
+import {formatMoment, getTimeInfo, ISO, validateDateTime} from './TimeUIUtil.js';
 
-import './tap/react-datetime.css';
-import {
-    aMoment, formatMoment, getTimeInfo, ISO, isSameTimes, convertToMoment, validateDateTime
-} from './TimeUIUtil.js';
 
-export function DateTimePicker({showInput,openPicker, value='', onChange, onChangeOpenStatus,wrapperStyle,
-                                   inputStyle, groupKey, timeFieldKey}) {
+export function DateTimePicker({value='', onChange, sx, slotProps,
+                                   groupKey, timeFieldKey}) {
+    const initialMoment = moment.utc(value);
+    const [dateMoment, setDateMoment] = useState(initialMoment.isValid() ? initialMoment : null);
+    const [timeMoment, setTimeMoment] = useState(initialMoment.isValid() ? initialMoment
+        : moment().utc().startOf('day')); //00:00:00
 
-    const [timeMoment, setTimeMoment] = useState(() => aMoment(value).isValid() ? aMoment(value) : value);
-    const [,getTimeStr]= useFieldGroupValue(timeFieldKey);
-    useEffect(() => {
-        //componentDidMount code
-        let unbinder;
-        // update the state in case start time or end time are updated due to the change from the entry
-        if (groupKey && timeFieldKey) {
-           unbinder = FieldGroupUtils.bindToStore(groupKey, () => {
-               const time= getTimeStr();
-               if (!time || isSameTimes(time, timeMoment)) return;
-               setTimeMoment(time);
-            });
+    useEffect(()=>{
+        //combine date and time moment
+        const datetimeMoment = dateMoment?.set({
+            hour: timeMoment.hour(),
+            minute: timeMoment.minute(),
+            second: timeMoment.second()
+        });
+        if (datetimeMoment) onChange?.(datetimeMoment);
+    }, [dateMoment, timeMoment]);
+
+    const setDateTimeMoments = (str) => {
+        const datetimeMoment = moment.utc(str);
+        if (datetimeMoment.isValid()) {
+            setDateMoment(datetimeMoment);
+            setTimeMoment(datetimeMoment);
         }
+    };
 
-        //componentWillUnmount code
-        return () => {
-            if (unbinder) unbinder();
-        };
+    useEffect(()=>{
+        setDateTimeMoments(value);
+    },[value]);
+
+    const [,getTimeStr]= useFieldGroupValue(timeFieldKey, groupKey);
+    useEffect(() => {
+        if (timeFieldKey) setDateTimeMoments(getTimeStr());
     }, [getTimeStr]);
 
-    const onClose= () => {
-        onChangeOpenStatus?.(false);
-    };
-
-    const onSelectedDate = (moment) => {
-
-        const newTime = convertToMoment(moment);
-        if (typeof moment === 'string' && !newTime.isValid()) {
-            moment = '';
-        }
-
-        setTimeMoment(moment);
-        onChange?.(moment);
-    };
-
-    wrapperStyle = {...wrapperStyle, margin: 10, height: 'calc(100% - 20pt)'};
-    inputStyle = {...inputStyle, marginBottom: 3, width: 150};
-
-    const showOneDatePicker = () => {
-        // DateTime needs the value input in type of Moment
-        return (
-                <DateTime onBlur={onClose}
-                          onChange={onSelectedDate}
-                          value={convertToMoment(timeMoment)}
-                          input={showInput}
-                          open={openPicker}
-                          inputProps={{style: inputStyle}}
-                          utc={true}
-                          timeFormat={'HH:mm:ss A'}
-                />
-        );
-    };
-
     return (
-        <div style={wrapperStyle}>
-            {showOneDatePicker()}
-        </div>
+        <JoyToMUIThemeWrapper>
+            <LocalizationProvider dateAdapter={AdapterMoment}>
+                <Stack direction='row' sx={sx}>
+                    <DateCalendar
+                        sx={{width: '20rem', mr: 2, '.MuiYearCalendar-root': {width: 'auto'}}}
+                        timezone='UTC'
+                        value={dateMoment}
+                        onChange={(newValue)=>setDateMoment(newValue)}
+                        {...slotProps?.datePicker}
+                    />
+                    <Divider orientation='vertical'/>
+                    <MultiSectionDigitalClock
+                        sx={{width: 'auto', borderBottom: 0, '.MuiList-root': {maxHeight: 1}}}
+                        views={['hours', 'minutes', 'seconds']}
+                        ampm={false}
+                        timezone='UTC'
+                        value={timeMoment}
+                        onChange={(newValue)=>setTimeMoment(newValue)}
+                        {...slotProps?.timePicker}
+                    />
+                </Stack>
+            </LocalizationProvider>
+        </JoyToMUIThemeWrapper>
     );
 }
 
 DateTimePicker.propTypes= {
-    showInput: PropTypes.bool,
-    openPicker:  PropTypes.bool,
     value: PropTypes.string,
     onChange: PropTypes.func,
-    onChangeOpenStatus: PropTypes.func,
-    wrapperStyle: PropTypes.object,
-    inputStyle: PropTypes.object,
+    sx: PropTypes.object,
+    slotProps: PropTypes.shape({
+        datePicker: PropTypes.object,
+        timePicker: PropTypes.object
+    }),
     groupKey: PropTypes.string,
     timeFieldKey: PropTypes.string,
 };
 
-DateTimePicker.defaultValue = {
-    showInput: true,
-    openPicker: false
-};
 
 function handleOnChange(momentVal, params, fireValueChange) {
     const {nullAllowed=true} = params;
@@ -110,12 +105,12 @@ export const DateTimePickerField= memo( (props) => {
 
 
 DateTimePickerField.propTypes= {
-    showInput: PropTypes.bool,
-    openPicker:  PropTypes.bool,
     onChange: PropTypes.func,
-    onChangeOpenStatus: PropTypes.func,
-    wrapperStyle: PropTypes.object,
-    inputStyle: PropTypes.object,
+    sx: PropTypes.object,
+    slotProps: PropTypes.shape({
+        datePicker: PropTypes.object,
+        timePicker: PropTypes.object
+    }),
     timeFieldKey: PropTypes.string,
     groupKey: PropTypes.string,
     initialState: PropTypes.shape({
@@ -132,10 +127,8 @@ export const makeDatePickerPopup = (title, currentValue, currentTimeMode, setTim
     return () => {
         const show = !isDialogVisible(POPUP_DIALOG_ID);
         const content = (
-            <DateTimePicker showInput={false} openPicker={true}
-                            value={currentTimeInfo[ISO].value}
-                            onChange={doSetTime}
-                            inputStyle={{marginBottom: 3}}/>);
+            <DateTimePicker value={currentTimeInfo[ISO].value}
+                            onChange={doSetTime}/>);
 
         showOptionsPopup({content, title, modal: true, show});
     };

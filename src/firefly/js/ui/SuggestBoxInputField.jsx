@@ -260,12 +260,12 @@ export class SuggestBoxInputFieldView extends PureComponent {
     render() {
 
         const {displayValue, valid, message, highlightedIdx, isOpen, inputWidth, suggestions, mouseTrigger } = this.state;
-        const {label, tooltip, inline, renderSuggestion, wrapperStyle, placeholder, slotProps={}, sx,
+        const {label, tooltip, renderSuggestion, wrapperStyle, placeholder, slotProps={}, sx,
             popStyle, popupIndex, readonly=false, required=false} = this.props;
 
         const leftOffset = 0;
         const minWidth = (inputWidth?inputWidth-4:50);
-        const style = Object.assign({display: inline?'inline-block':'block'}, wrapperStyle);
+        const style = Object.assign({display: 'flex'}, wrapperStyle);
         const pStyle = Object.assign({left: leftOffset, minWidth, zIndex: popupIndex}, popStyle);
 
         if (isOpen) {

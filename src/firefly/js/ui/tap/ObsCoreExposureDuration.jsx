@@ -10,7 +10,7 @@ import {ValidationField} from '../ValidationField.jsx';
 import {ConstraintContext, makeAdqlQueryRangeFragment, siaQueryRange} from './Constraints.js';
 import {TimeRangePanel} from './TimeRangePanel.jsx';
 import {
-    DebugObsCore, getPanelPrefix, LeftInSearch, makeCollapsibleCheckHeader, makeFieldErrorList,
+    DebugObsCore, getPanelPrefix, makeCollapsibleCheckHeader, makeFieldErrorList,
     makePanelStatusUpdater,
     SmallFloatNumericWidth
 } from './TableSearchHelpers.jsx';
@@ -144,19 +144,18 @@ export function ExposureDurationSearch({initArgs}) {
                                 message={constraintResult?.simpleError??''} initialStateOpen={false}>
             <div style={{marginTop: 5}}>
                 <ForceFieldGroupValid forceValid={!checkHeaderCtl.isPanelActive()}>
-                    <Stack direction='column' spacing={1}>
+                    <Stack direction='column' spacing={2}>
                         <ListBoxInputField
                             {...{fieldKey:'exposureRangeType', options: exposureRangeOptions,
                                 label:'Time of Observation', labelWidth,
                                 initialState:{value: initArgs?.urlApi?.exposureRangeType || 'since'} }} />
-                            {isRange ?
-                                <TimeRangePanel {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive(),
-                                    labelStyle:{width:'5rem'},
-                                    fromTip:"'Exposure start from' time (t_min)",
-                                    toTip:"'Exposure end to' time (t_min)",
-                                    style:{marginLeft: LeftInSearch, marginTop: 12, marginBottom: 12}}}/> :
-                                <ExposureSince {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()}} /> }
-                            <ExposureLength {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()}}/>
+                        {isRange ?
+                            <TimeRangePanel {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive(),
+                                fromTip:"'Exposure start from' time (t_min)",
+                                toTip:"'Exposure end to' time (t_min)"}}/> :
+                            <ExposureSince {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()}} />
+                        }
+                        <ExposureLength {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()}}/>
                         <DebugObsCore {...{constraintResult}}/>
                     </Stack>
                 </ForceFieldGroupValid>

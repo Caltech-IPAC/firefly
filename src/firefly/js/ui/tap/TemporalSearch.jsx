@@ -1,4 +1,4 @@
-import {Box} from '@mui/joy';
+import {Box, Stack} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import {ColsShape, ColumnFld, getColValidator} from '../../charts/ui/ColumnOrExpression.jsx';
@@ -9,7 +9,7 @@ import {checkExposureTime} from '../TimeUIUtil.js';
 import {ConstraintContext} from './Constraints.js';
 import {TimeRangePanel} from './TimeRangePanel.jsx';
 import {
-    DebugObsCore, getPanelPrefix, LabelWidth, LeftInSearch, makeFieldErrorList,
+    DebugObsCore, getPanelPrefix, LabelWidth, makeFieldErrorList,
     makePanelStatusUpdater, Width_Column, makeCollapsibleCheckHeader
 } from './TableSearchHelpers.jsx';
 import {getColumnAttribute, maybeQuote, tapHelpId} from './TapUtil.js';
@@ -171,8 +171,10 @@ export function TemporalSearch({cols, columnsModel}) {
                                 message={constraintResult?.simpleError??''} initialStateOpen={false}>
             <Box sx={{mt:1/2}}>
                 <ForceFieldGroupValid forceValid={!checkHeaderCtl.isPanelActive()}>
-                    {temporalColumns}
-                    {timeRange}
+                    <Stack spacing={2}>
+                        {temporalColumns}
+                        {timeRange}
+                    </Stack>
                 </ForceFieldGroupValid>
             </Box>
             <DebugObsCore {...{constraintResult}}/>
