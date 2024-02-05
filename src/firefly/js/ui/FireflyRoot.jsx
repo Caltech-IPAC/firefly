@@ -29,7 +29,10 @@ export function FireflyRoot({sx, children}) {
             <ScopedCssBaseline sx={(theme) => ({
                 flexGrow:1 | (localTheme = theme),
                 height:1,
-                position:'relative', ...sx
+                position:'relative',
+                fontSmooth: 'unset',
+                WebkitFontSmoothing: 'unset',
+                ...sx
             })}>
                 <App>{children}</App>
             </ScopedCssBaseline>

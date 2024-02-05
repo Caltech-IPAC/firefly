@@ -279,6 +279,7 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
         return (
             <SettingsButton tip={TT_OPTIONS}
                             onClick={showOptionsDialog}
+                            iconButtonSize='30px'
                             sx={{position:'absolute', top:-4, right:-4, zIndex: DDzIndex}}  //
             />
         );

@@ -232,7 +232,7 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
 export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, style, sx}) {
     sx = {height: 1, justifyContent: 'space-around', ...style, ...sx};
     return (
-        <Stack alignItems='center' bgcolor='background.surface' sx={sx}>
+        <Stack alignItems='center' sx={sx}>
             <Checkbox size='sm' sx={{mt:'2px'}}
                 tabIndex={-1}
                 checked={checked}
@@ -251,7 +251,7 @@ export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, s
 
 export function SelectableCell ({rowIndex, selectInfoCls, onRowSelect, sx={}}) {
     return (
-        <Stack alignItems='center' justifyContent='center' height={1} bgcolor='background.surface' sx={sx}>
+        <Stack alignItems='center' justifyContent='center' height={1} sx={sx}>
             <Checkbox size='sm' mt='1x' mb='1px'
                       tabIndex={-1}
                       checked={selectInfoCls.isSelected(rowIndex)}
@@ -324,7 +324,7 @@ function findTableFor(element) {
     return cEl;
 }
 
-export function ContentEllipsis({children, text, sx, actions=[]}) {
+export function ContentEllipsis({children, text, textAlign, sx, actions=[]}) {
 
     const [hasActions, setHasActions] = useState(false);
     const actionsEl = useRef(null);
@@ -366,7 +366,7 @@ export function ContentEllipsis({children, text, sx, actions=[]}) {
     };
 
     return (
-        <Stack direction='row'  overflow='hidden' alignItems='center' sx={sx}
+        <Stack direction='row'  overflow='hidden' whiteSpace='nowrap' alignItems='center' justifyContent={textAlign} height={1} width={1} sx={sx}
                onMouseEnter={checkOverflow} onMouseLeave={() => setHasActions(false)}
         >
             {React.Children.only(children)}
@@ -392,14 +392,15 @@ export const CellWrapper =  React.memo( (props) => {
 
     const cellInfo = getCellInfo({columnKey, col, rowIndex, data, tbl_id, startIdx});
     const {textAlign, text} = cellInfo;
-    const lineHeight = '2em';
 
-    const content = (
-        <Stack textAlign={textAlign} lineHeight={lineHeight} px={1/4} bgcolor='background.surface'>
-            <CellRenderer {...omit(props, 'Content')} cellInfo={cellInfo}/>
+    const content = <CellRenderer {...omit(props, 'Content')} cellInfo={cellInfo}/>;
+    const contentWithWrapper = (
+        <Stack alignItems={textAlign} justifyContent='center' whiteSpace='nowrap' height={1} width={1}>
+            {content}
         </Stack>
     );
-    return CellRenderer?.allowActions ? <ContentEllipsis text={text}>{content}</ContentEllipsis> : content;
+
+    return CellRenderer?.allowActions ? <ContentEllipsis {...{textAlign, text}}>{content}</ContentEllipsis> : contentWithWrapper;
 
 }, skipCellRender);
 
@@ -486,7 +487,7 @@ export const createLinkCell = ({hrefColIdx, value}) => {
         if (href && href !== '#') {
             return (
                 <Cell {...{rowIndex, height, width, columnKey}}>
-                    <a target='_blank' href={href}>{val}</a>
+                    <Link target='_blank' href={href}>{val}</Link>
                 </Cell>
             );
         } else {
@@ -762,7 +763,7 @@ export const ATag = React.memo(({cellInfo, label, title, href, target, style={},
         label = html_regex.test(label) ? <div dangerouslySetInnerHTML={{__html: label}}/> : label;
     }
 
-    return <a {...{title, href, target, style}}> {label} </a>;
+    return <Link {...{title, href, target, style}}> {label} </Link>;
 });
 
 export const TextCell = React.memo(({cellInfo, text, ...rest}) => {

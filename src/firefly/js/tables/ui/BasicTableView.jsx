@@ -31,7 +31,7 @@ export const BY_SCROLL = 'byScroll';
 const BasicTableViewInternal = React.memo((props) => {
 
     const {width, height} = props.size;
-    const {columns, data, hlRowIdx, renderers, bgColor, selectInfoCls, callbacks, rowHeight, rowHeightGetter, showHeader=true,
+    const {columns, data, hlRowIdx, renderers, selectInfoCls, callbacks, rowHeight, rowHeightGetter, showHeader=true,
             error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler, cellRenderers} = props;
 
     const uiStates = getTableUiById(tbl_ui_id) || {};
@@ -96,7 +96,7 @@ const BasicTableViewInternal = React.memo((props) => {
         }
     }, [columns, columnWidths, width, adjScrollLeft, adjScrollTop]);
 
-    const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers, bgColor,
+    const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers,
         columnWidths, filterInfo, sortInfo, showHeader, showUnits, showTypes, showFilters,
         onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, startIdx, cellRenderers, tbl_id};
 
@@ -146,13 +146,7 @@ const BasicTableViewInternal = React.memo((props) => {
     };
 
     return (
-        <Box tabIndex='-1' onKeyDown={onKeyDown}
-              sx={{lineHeight:1, flexGrow:1, minHeight:0, minWidth:0,
-                  '& .fixedDataTableRowLayout_main.highlighted div': {
-                      backgroundColor: 'warning.softBg',
-                  }
-              }}
-        >
+        <Box tabIndex='-1' onKeyDown={onKeyDown} sx={{lineHeight:1, flexGrow:1, minHeight:0, minWidth:0}}>
             {content()}
             <Status/>
         </Box>
@@ -179,7 +173,6 @@ BasicTableViewInternal.propTypes = {
     showMask: PropTypes.bool,
     currentPage: PropTypes.number,
     startIdx: PropTypes.number,
-    bgColor: PropTypes.string,
     error:  PropTypes.string,
     size: PropTypes.object.isRequired,
     highlightedRowHandler: PropTypes.func,
@@ -204,7 +197,7 @@ BasicTableViewInternal.defaultProps = {
     selectable: false,
     showTypes: false,
     showMask: false,
-    rowHeight: 27,
+    rowHeight: 20,
     currentPage: -1
 };
 
@@ -355,7 +348,7 @@ function defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx) {
     return (rowIndex) => {
         const absRowIndex = startIdx + rowIndex;
         if (hasProprietaryInfo && !hasRowAccess(tableModel, absRowIndex)) {
-            return hlRowIdx === rowIndex ? 'TablePanel__no-access--highlighted' : 'TablePanel__no-access';
+            return hlRowIdx === rowIndex ? 'no-access-highlighted' : 'no-access';
         }
         if (hlRowIdx === rowIndex) return 'highlighted';
         if (isRelated(rowIndex)) return 'related';
@@ -401,7 +394,7 @@ function makeColumnTag(props, col, idx) {
     );
 }
 
-function makeSelColTag({selectable, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, bgColor='white', selectInfoCls, onRowSelect}) {
+function makeSelColTag({selectable, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, selectInfoCls, onRowSelect}) {
 
     if (!selectable) return false;
 
