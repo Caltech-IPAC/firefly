@@ -21,8 +21,28 @@ import {convertAngle} from './VisUtil.js';
  */
 export const FullType = new Enum(['ONLY_WIDTH', 'WIDTH_HEIGHT', 'ONLY_HEIGHT']);
 
-export const imageLevels= [.0125, .025, .05,.1,.25,.3, .4, .5, .75, .8, .9, 1, 1.25, 1.5,2, 2.5,3, 3.5,
-    4,5, 6, 7,8, 9, 10, 11, 12, 13, 14, 15, 16, 18,20,22,24,28, 32];
+/**
+ * This is the master list of zoom levels for Firefly image displays.
+ * These zoom levels are used when clicking on the +/- icons, and are
+ * also used to construct the zoom-level dialog.  Scroll-wheel zooming
+ * can reach levels between the steps.
+ */
+
+export const imageLevels = [
+    /* For zoomed-out images we use large steps - factors of 2. */
+    0.015625, 0.03125, 0.0625, 0.125, 0.25,
+    /* Otherwise we use four steps per factor of two, */
+    /* i.e., the 4th root of 2 or about 1.189 / 19%,  */
+    /* rounded to three digits after the decimal.     */
+     0.297,  0.354,  0.420,  0.5,
+     0.595,  0.707,  0.841,  1,
+     1.189,  1.414,  1.682,  2,
+     2.378,  2.828,  3.364,  4,
+     4.757,  5.657,  6.727,  8,
+     9.514, 11.314, 13.454, 16,
+    19.027, 22.627, 26.909, 32
+];
+
 export const imageLevelsReversed= [...imageLevels].reverse();
 
 

@@ -5,7 +5,7 @@ import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {dispatchTableUiUpdate} from '../../tables/TablesCntlr.js';
 import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
-import {getTapObsCoreOptions} from '../../ui/tap/TableSearchHelpers.jsx';
+import {getTapObsCoreOptions, getTapObsCoreOptionsGuess} from '../../ui/tap/TableSearchHelpers.jsx';
 import {isObsCoreLike} from '../../voAnalyzer/TableAnalysis.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
@@ -66,11 +66,17 @@ function setupObsCorePackaging(tbl_id) {
 }
 
 function updateSearchRequest( tbl_id='', dlParams='', sRequest=null) {
-    const template= getAppOptions().tapObsCore?.productTitleTemplate;
+    const hostname= new URL(sRequest.source)?.hostname;
+
+    const template= getTapObsCoreOptionsGuess(hostname)?.productTitleTemplate;
+    const useSourceUrlFileName= getTapObsCoreOptionsGuess(hostname)?.packagerUsesSourceUrlFileName;
+
+
     const templateColNames= template && getColNameFromTemplate(template);
     const searchRequest = cloneDeep( sRequest);
     searchRequest.template = template;
     searchRequest.templateColNames = templateColNames?.toString();
+    searchRequest.useSourceUrlFileName= useSourceUrlFileName;
     return searchRequest;
 }
 
@@ -85,7 +91,7 @@ const PrepareDownload = React.memo(() => {
         <div>
             <DownloadButton>
                 <DownloadOptionPanel {...{
-                    updateSearchRequest: updateSearchRequest,
+                    updateSearchRequest,
                     showZipStructure: false, //flattened files, except for datalink (with more than one valid file)
                     dlParams: {
                         FileGroupProcessor:'ObsCorePackager',

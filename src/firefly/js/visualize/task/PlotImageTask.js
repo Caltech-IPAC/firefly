@@ -88,7 +88,8 @@ async function executeGroupSearch(rawAction, dispatcher) {
         const wpResult= await callGetWebPlotGroup(wpRequestAry, requestKey);
         processPlotImageSuccessResponse(dispatcher,rawAction.payload,wpResult);
     } catch (e) {
-        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload: {wpRequestAry, error:e} } );
+        const plotIdAry= wpRequestAry.map( (r) => r.getPlotId()).filter( (id) => id);
+        dispatcher( { type: ImagePlotCntlr.PLOT_IMAGE_FAIL, payload: {plotIdAry, wpRequestAry, error:e} } );
         logger.error('plot group error', e);
     }
 }

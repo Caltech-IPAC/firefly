@@ -1,5 +1,5 @@
 import HelpIcon from 'firefly/ui/HelpIcon';
-import {isEqual} from 'lodash';
+import {isEqual, isObject} from 'lodash';
 import Prism from 'prismjs';
 import PropTypes from 'prop-types';
 import React, {useEffect, useRef} from 'react';
@@ -29,6 +29,17 @@ const DEF_ERR_MSG= 'Constraints Error';
 
 export const getTapObsCoreOptions= (serviceLabel) =>
     getAppOptions().tapObsCore?.[serviceLabel] ?? getAppOptions().tapObsCore ?? {};
+
+
+
+export function getTapObsCoreOptionsGuess(serviceLabelGuess) {
+    const {tapObsCore={}}=  getAppOptions();
+    if (!serviceLabelGuess) return tapObsCore;
+    const guessKey= Object.entries(tapObsCore)
+        .find( ([key,value]) => isObject(value) && serviceLabelGuess.includes(key))?.[0];
+    return getTapObsCoreOptions(guessKey);
+}
+
 
 /**
  * make a FieldErrorList object
