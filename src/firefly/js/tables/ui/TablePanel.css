@@ -118,14 +118,38 @@
 Overriding default fixed-table css
 */
 
+.public_fixedDataTableCell_main, .public_fixedDataTableCell_cellContent{
+    padding: 0 2px;
+}
+
 .fixedDataTableRowLayout_rowWrapper {
     font-size: 12px;
 }
 
-.public_fixedDataTableCell_cellContent {
-    padding: 2px;
+.fixedDataTableCellLayout_main {
+    border-style: solid;
+    border-width: 0 1px 1px 0;
 }
 
+.fixedDataTableRowLayout_main div {
+    background-color: var(--joy-palette-background-surface, #FBFCFE);
+}
+
+.fixedDataTableRowLayout_main.highlighted div {
+    background-color: var(--joy-palette-warning-softHoverBg, #FDF0E1);
+}
+
+.fixedDataTableRowLayout_main.related div {
+    background-color: var(--joy-palette-warning-softBg, #FDF0E1);
+}
+
+.fixedDataTableRowLayout_main.no-access div {
+    background-color: var(--joy-palette-danger-softBg, #FCE4E4);
+}
+
+.fixedDataTableRowLayout_main.no-access-highlighted div {
+    background-color: var(--joy-palette-danger-softHoverBg, #F7C5C5);
+}
 
 .public_fixedDataTableCell_main, .public_fixedDataTableRow_main, .public_fixedDataTable_scrollbarSpacer,
 .public_fixedDataTableRow_highlighted .public_fixedDataTableCell_main,
@@ -136,7 +160,8 @@ Overriding default fixed-table css
     font-weight: unset;
 }
 
-.fixedDataTableRowLayout_main.related div {
-    background-color: #faf4e5;
+.fixedDataTableCellLayout_columnResizerContainer, .public_fixedDataTable_scrollbarSpacer {
+    background-color: unset !important;
 }
+
 
