@@ -138,15 +138,6 @@ export function getTimeInfo(timeMode, value, valid, message) {
     return {[ISO]: isoValInfo, [MJD]: mjdValInfo};
 }
 
-export function formFeedback(utc, mjd)  {
-    if (isTimeUndefined(utc, mjd)) return '';
-    else {
-        const feedbackHtmlStr = utc && !mjd ? `<i>UTC:&nbsp</i>${utc}`
-            : (!utc && mjd ? `<i>MJD:&nbsp</i>${mjd}`
-                : `<i>UTC:&nbsp</i>${utc}<br/> <div style="padding-top: 6px"> <i>MJD:&nbsp</i>${mjd} </div>`)
-        return '<div style="font-size:11px">' + feedbackHtmlStr + '</div>';
-    }
-}
 
 export const isTimeUndefined = (utc, mjd) => !utc && !mjd;
 
@@ -164,7 +155,7 @@ export const changeTimeMode = (newTimeMode, timeField) => {
     if (!newTimeInfo) return;
 
     const showHelp = isTimeUndefined(timeInfo[ISO].value, timeInfo[MJD].value);
-    const feedback = formFeedback(timeInfo[ISO].value, timeInfo[MJD].value);
+    const feedback = {UTC: timeInfo[ISO].value, MJD: timeInfo[MJD].value};
 
     return {
         ...rest, valid: newTimeInfo.valid, value: newTimeInfo.value, message: newTimeInfo.message,
