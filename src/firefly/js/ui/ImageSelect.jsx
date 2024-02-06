@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Chip, Link, Stack, Typography} from '@mui/joy';
+import {Box, Chip, Link, Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 
 import PropTypes from 'prop-types';
@@ -470,7 +470,7 @@ function Header({project, hrefInfo='', multiSelect}) {
     } else {
         return (
             <Stack spacing={1} direction='row' alignItems='center'>
-                <div style={{marginRight:5}}>{project}</div>
+                <Typography sx={{fontWeight:'normal'}} level='body-sm'>{project}</Typography>
                 <InfoIcon/>
             </Stack>
         );
