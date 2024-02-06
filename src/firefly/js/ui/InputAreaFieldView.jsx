@@ -9,6 +9,7 @@ import {inputFieldTooltipProps, inputFieldValue} from 'firefly/ui/InputFieldView
 export const InputAreaFieldView= forwardRef( ({ visible=true,label,tooltip,value,
                                                   button, valid=true,onChange, onBlur,
                                                   showWarning=true, connectedMarker=false,
+                                                 placeholderHighlight,
                                                   message='', type, placeholder, idName='', sx, slotProps,
                                                   orientation='vertical', minRows=2, maxRows=4 }, ref ) => {
     const connectContext= useContext(ConnectionCtx);
@@ -32,6 +33,10 @@ export const InputAreaFieldView= forwardRef( ({ visible=true,label,tooltip,value
                                       value: inputFieldValue(type, value),
                                       onChange: (ev) => onChange?.(ev),
                                       onBlur: (ev) => onBlur?.(ev),
+                                      sx: {
+                                          '--Textarea-placeholderColor': placeholderHighlight ?
+                                              'var(--joy-palette-warning-plainColor)' : 'inherit'
+                                      },
                                       ...slotProps?.textArea
                                   }
                               }}

@@ -85,6 +85,7 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
     return (
         <Sheet {...{variant, ...slotProps?.tablePanel}}
                sx ={{
+                   borderRadius: variant==='outlined' ? '5px' : undefined,
                    position:'relative',
                    overflow: 'hidden',
                    boxSizing: 'border-box',

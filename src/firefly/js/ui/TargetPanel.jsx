@@ -4,7 +4,7 @@
 
 import {Box, Divider, Stack} from '@mui/joy';
 import React, {memo, useContext, useEffect} from 'react';
-import PropTypes, {bool} from 'prop-types';
+import PropTypes, {arrayOf, object, bool, number, string, shape} from 'prop-types';
 import {ConnectionCtx} from './ConnectionCtx.js';
 import {parseTarget} from './TargetPanelWorker.js';
 import {formatPosForTextField, formatTargetForHelp} from './PositionFieldDef.js';
@@ -19,16 +19,17 @@ import {isValidPoint, parseWorldPt} from '../visualize/Point.js';
 
 const TARGET= 'targetSource';
 const RESOLVER= 'resolverSource';
-const LABEL_DEFAULT='Coords or Obj Name:';
+const LABEL_DEFAULT='Coords or Obj Name';
 
 const nedThenSimbad= 'nedthensimbad';
 const simbadThenNed= 'simbadthenned';
 
 const TargetPanelView = (props) =>{
-    const {showHelp, feedback, valid, message, onChange, value, button,
+    const {showHelp, feedback, valid, message, onChange, value, button, slotProps,
         children, resolver, feedbackStyle, showResolveSourceOp= true, showExample= true,
+        label= LABEL_DEFAULT,
         targetPanelExampleRow1, targetPanelExampleRow2,
-        connectedMarker=false,
+        connectedMarker=false, placeholderHighlight=true,
         examples, onUnmountCB, sx}= props;
 
     useEffect(() => () => onUnmountCB(props),[]);
@@ -38,12 +39,20 @@ const TargetPanelView = (props) =>{
 
     const positionField = (
         <InputFieldView {...{valid, visible:true, message,
-            placeholder:'Coords or Obj Name',
+            placeholder:label,
             onChange: (ev) => onChange(ev.target.value, TARGET),
             endDecorator,
             sx : makeSx(showResolveSourceOp, Boolean(button),sx),
             value,
             tooltip:'Enter a target',
+            slotProps: {
+                input: {
+                    sx: {
+                        '--Input-placeholderColor': placeholderHighlight ?
+                            'var(--joy-palette-warning-plainColor)' : 'inherit'
+                    }
+                }
+            },
             connectedMarker:connectedMarker||connectContext.controlConnected,
             }}
         />);
@@ -54,8 +63,8 @@ const TargetPanelView = (props) =>{
     return (
         <Stack direction='column'>
             {positionInput}
-            {(showExample || !showHelp) && <TargetFeedback {...{showHelp, feedback, style:feedbackStyle,
-                targetPanelExampleRow1, targetPanelExampleRow2, examples}}/> }
+            {(showExample || !showHelp) && <TargetFeedback {...{showHelp, feedback,
+                targetPanelExampleRow1, targetPanelExampleRow2, examples, ...slotProps?.feedback}}/> }
         </Stack>
     );
 };
@@ -72,7 +81,6 @@ TargetPanelView.propTypes = {
     message: PropTypes.string.isRequired,
     onChange: PropTypes.func.isRequired,
     value : PropTypes.string.isRequired,
-    labelWidth : PropTypes.number,
     onUnmountCB : PropTypes.func,
     feedbackStyle: PropTypes.object,
     nullAllowed: PropTypes.bool,
@@ -80,7 +88,10 @@ TargetPanelView.propTypes = {
     targetPanelExampleRow1: PropTypes.arrayOf(PropTypes.string),
     targetPanelExampleRow2: PropTypes.arrayOf(PropTypes.string),
     connectedMarker: bool,
-    showExample: PropTypes.bool
+    showExample: PropTypes.bool,
+    slotProps: shape({
+        feedback: object,
+    })
 };
 
 function makeEndDecorator(showResolveSourceOp, onChange, resolver, button) {
@@ -219,19 +230,19 @@ export const TargetPanel = memo( ({fieldKey= DEF_TARGET_PANEL_KEY,initialState= 
 });
 
 TargetPanel.propTypes = {
-    sx: PropTypes.object,
-    fieldKey: PropTypes.string,
-    groupKey: PropTypes.string,
-    examples: PropTypes.object,
-    labelWidth : PropTypes.number,
-    nullAllowed: PropTypes.bool,
-    initialState: PropTypes.object,
-    showResolveSourceOp: PropTypes.bool,
-    targetPanelExampleRow1: PropTypes.arrayOf(PropTypes.string),
-    targetPanelExampleRow2: PropTypes.arrayOf(PropTypes.string),
-    showExample: PropTypes.bool,
+    sx: object,
+    fieldKey: string,
+    groupKey: string,
+    examples: object,
+    nullAllowed: bool,
+    initialState: object,
+    showResolveSourceOp: bool,
+    targetPanelExampleRow1: arrayOf(PropTypes.string),
+    targetPanelExampleRow2: arrayOf(PropTypes.string),
+    showExample: bool,
     connectedMarker: bool,
-    defaultToActiveTarget: PropTypes.bool,
+    placeholderHighlight: bool,
+    defaultToActiveTarget: bool,
 };
 
 
@@ -256,7 +267,7 @@ function computeProps(viewProps, componentProps, fieldKey, groupKey) {
     return {
         ...viewProps,
         visible: true,
-        label: 'Coords or Obj Name:',
+        label: 'Coords or Obj Name',
         tooltip: 'Enter a target',
         value,
         feedback,

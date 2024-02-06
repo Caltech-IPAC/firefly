@@ -334,10 +334,10 @@ export function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', s
         <div key={fieldKey} style={style}>
             <VisualPolygonPanel {...{
                 fieldKey,
-                wrapperStyle: {display: 'flex', alignItems: 'center'},
                 style: {width: 350, maxWidth: 420},
                 initValue,
-                label: desc,
+                placeholder: desc,
+                placeholderHighlight: true,
                 labelStyle: {},
                 tooltip,
                 sRegion,

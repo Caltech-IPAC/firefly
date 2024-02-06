@@ -287,43 +287,45 @@ function TabHeader({children, slotProps}) {
     return (
         <TabList
             ref={toolbarEl}
-            sx={{
-                flexGrow: 1,
-                overflow: 'auto',
-                scrollSnapType: 'x mandatory',              // make tab snap to the nearest tab
-                '&::-webkit-scrollbar': { display: 'none' },
-                [`& .${tabClasses.root}`]: {
-                    '&[aria-selected="true"]': {            // apply this to the selected tab
-                        bgcolor: activeBg,                  // set tab background to active color
-                        borderColor: 'divider',
-                        '&::before': {                      // this is the strip under the tab to cover the border
-                            content: '""',
-                            display: 'block',
-                            position: 'absolute',
-                            height: 2,
-                            bottom: -2,
-                            left: 0,
-                            right: 0,
-                            bgcolor: activeBg,              // set this to the active color so that it look like it's part of the active tab
+            sx={ (theme) => ( {
+                    flexGrow: 1,
+                    overflow: 'auto',
+                    scrollSnapType: 'x mandatory',              // make tab snap to the nearest tab
+                    fontWeight: theme.fontWeight.md,
+                    '&::-webkit-scrollbar': { display: 'none' },
+                    [`& .${tabClasses.root}`]: {
+                        '&[aria-selected="true"]': {            // apply this to the selected tab
+                            bgcolor: activeBg,                  // set tab background to active color
+                            borderColor: 'divider',
+                            '&::before': {                      // this is the strip under the tab to cover the border
+                                content: '""',
+                                display: 'block',
+                                position: 'absolute',
+                                height: 2,
+                                bottom: -2,
+                                left: 0,
+                                right: 0,
+                                bgcolor: activeBg,              // set this to the active color so that it look like it's part of the active tab
+                            },
                         },
-                    },
-                    '&[aria-selected="false"]': {            // add pipes after non-selected tabs
-                        '&::after': {
-                            content: '""',
-                            display: 'block',
-                            position: 'absolute',
-                            height: '1.1rem',
-                            bottom: -2,
-                            left: 0,
-                            right: -2,
-                            zIndex:1,                      //zIndex necessary so the hover does not cover pipe
-                            borderRightColor: 'divider',
-                            borderRightStyle: 'solid',
-                            borderRightWidth: '1px'
+                        '&[aria-selected="false"]': {            // add pipes after non-selected tabs
+                            '&::after': {
+                                content: '""',
+                                display: 'block',
+                                position: 'absolute',
+                                height: '1.1rem',
+                                bottom: -2,
+                                left: 0,
+                                right: -2,
+                                zIndex: 1,                      //zIndex necessary so the hover does not cover pipe
+                                borderRightColor: 'divider',
+                                borderRightStyle: 'solid',
+                                borderRightWidth: '1px'
+                            },
                         },
-                    },
-                },
-            }}
+                    }
+            } )
+            }
             {...{variant:tabListVar, ...slotProps?.tabList}}
         >
             {tabHeaders}

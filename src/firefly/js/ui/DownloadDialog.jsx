@@ -104,7 +104,7 @@ export function DownloadButton({tbl_id:inTblId , tbl_grp, children, checkSelecte
     const isRowSelected = selectInfoCls.getSelectedCount()>0;
 
     const defButton=
-        <ToolbarButton variant='soft' color='primary' onClick={() =>onClick()} text='Prepare Download'/>;
+        <ToolbarButton variant={isRowSelected?'solid':'soft'} color='warning' onClick={() =>onClick()} text='Prepare Download'/>;
 
     return (
         makeButton?.(onClick,tbl_id,isRowSelected) ?? defButton

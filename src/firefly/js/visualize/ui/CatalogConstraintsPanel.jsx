@@ -390,10 +390,10 @@ class ConstraintPanel extends PureComponent {
         const totalCol = columns ? (columns.length-1) : 0;
 
         return (
-            <div style={{display:'flex', flex: '1 1 auto'}}>
-                <div style={{ display:'flex', flex: '1 1 auto', position: 'relative', width: '100%', height: '100%'}}>
-                    <div className='TablePanel' style={{minHeight:180, flex: '1 1 auto'}}>
-                        <div className={'TablePanel__wrapper--border'}>
+            <Stack sx={{direction:'row', flex: '1 1 auto',
+                '& .fixedDataTableLayout_main': {borderRadius:'5px'} }}>
+                <Stack {...{ direction:'row', flex: '1 1 auto', position: 'relative', width: 1, height: 1}}>
+                    <Box sx={{minHeight:180, flex: '1 1 auto'}}>
                             <div className='TablePanel__table' style={{top: 0}}>
                                 <BasicTableViewWithConnector
                                     tbl_ui_id={tbl_ui_id}
@@ -416,10 +416,9 @@ class ConstraintPanel extends PureComponent {
                                     }}
                                 />
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                    </Box>
+                </Stack>
+            </Stack>
         );
     }
 }
@@ -569,17 +568,20 @@ function renderSqlArea() {
     //m31, cone search 10', w3snr>7 and (w2mpro-w3mpro)>1.5 on wise source catalog = 361
     return (
         <Stack spacing={.5}>
-            <Typography>Additional constraints (SQL)</Typography>
             <InputAreaFieldConnected fieldKey='txtareasql'
+                                     placeholder={'Add additional constraints here (SQL)'}
                                      tooltip='Enter SQL additional constraints here'
             />
             <Stack>
                 <Typography level='body-sm' component='div'>
-                    <em>Ex: w3snr&gt;7 and (w2mpro-w3mpro)&gt;1.5 and ra&gt;102.3 and ra&lt;112.3 and dec&lt;-5.5 and
+                    <span>
+                        <Typography component='span' level='title-sm'>Ex: </Typography>
+                        w3snr&gt;7 and (w2mpro-w3mpro)&gt;1.5 and ra&gt;102.3 and ra&lt;112.3 and dec&lt;-5.5 and
                         dec&gt;
-                        -15.5</em><br />
+                        -15.5
+                    </span>
                     (source_id_mf = '1861p075_ac51-002577')
-                    <br />
+                    <br/>
                 </Typography>
                 <Typography color='warning' level='body-sm'>The format for date type is yyyy-mm-dd</Typography>
             </Stack>

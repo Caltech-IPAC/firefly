@@ -644,7 +644,7 @@ function LcPFOptions({fields}) {
                                 </li>
                                 <Typography component='li' display='list-item' sx={{mt:1/2}}>
                                     <Chip onClick={startPeriodogramPopup(LC.FG_PERIODOGRAM_FINDER)}
-                                          color='success' variant={hasPeriodgramData?'soft':'solid'}>
+                                          color='warning' variant={hasPeriodgramData?'soft':'solid'}>
                                         {hasPeriodgramData ? 'Recalculate Periodogram' : 'Calculate Periodogram'}
                                     </Chip>
                                 </Typography>

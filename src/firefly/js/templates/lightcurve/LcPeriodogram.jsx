@@ -155,7 +155,7 @@ function  PeriodogramButton(props) {
         <div style={{height: '100%',
                      display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
             <Button  sx={{maxWidth: '50%'}}
-                     color='success'
+                     color='warning'
                      variant='solid'
                     onClick={startPeriodogramPopup(groupKey)}>Calculate Periodogram</Button>
             <div style={{marginLeft:10}}>

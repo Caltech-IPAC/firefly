@@ -147,7 +147,7 @@ export function ImageSearchDropDown({gridSupport, resizable=false, initArgs}) {
 
 function GridSupport() {
     return (
-        <Sheet {...{variant:'outlined', sx:{py:1}}}>
+        <Sheet {...{variant:'outlined', sx:{py:1,borderRadius: '5px'}}}>
             <FieldGroup groupKey={FG_KEYS.main} keepState={true} sx={{m:1}} >
                 <CheckboxGroupInputField fieldKey='createNewCell'
                     options={[{label: 'Add to new grid cell', value: 'newCell'}]}
@@ -326,7 +326,7 @@ function ImageType({}) {
         options.push({label: 'View HiPS Images', value: 'hipsImage'});
     }
     return (
-        <Sheet {...{variant:'outlined', sx:{mx:0,py:1}}}>
+        <Sheet {...{variant:'outlined', sx:{mx:0,py:1,borderRadius: '5px'}}}>
             <FieldGroup groupKey={FG_KEYS.main} keepState={true}>
                 <Stack {...{direction:'row', justifyContent:'flex-start', alignItems:'center', spacing:2}}>
                     <Typography {...{px:1, width:200, color:'primary', level:'title-md'}}>1. Choose Image Type</Typography>
@@ -370,7 +370,7 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
 
     return (
         <Stack flexGrow={1} >
-            <Sheet {...{variant:'outlined', sx:{position:'static', mx:0,py:1,mt:1/2}}}>
+            <Sheet {...{variant:'outlined', sx:{position:'static', mx:0,py:1,mt:1/2,borderRadius: '5px'}}}>
                 <Stack {...{direction:'row', justifyContent:'flex-start', alignItems:'center', spacing:2}}>
                     <Typography {...{px:1, width:200, color:'primary', level:'title-md'}}>2. Select Image Source</Typography>
                     <RadioGroupInputField
@@ -408,13 +408,14 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
 
     return (
         <Sheet className='flex-full' sx={{position:'static',mt:1/2}}>
-            <Sheet {...{position:'static', variant:'outlined', sx:{py:1, flexGrow:0}}}>
+            <Sheet {...{position:'static', variant:'outlined', sx:{py:1, flexGrow:0,borderRadius: '5px'}}}>
                 <Stack direction={'row'} >
                     <Typography {...{px:1, width:200, color:'primary', level:'title-md'}}>3. Select Target</Typography>
                     <FieldGroup groupKey={FG_KEYS.targetSelect} keepState={true}>
                         <Stack spacing={2} direction='column'>
                             <TargetPanel labelWidth={isHips ? 150 : 100}
-                                         label={isHips ? 'Coordinates or Object Name (optional):' : 'Coordinates or Object Name:'}
+                                         label={isHips ? 'Coords or Obj Name (optional)' : 'Coords or Obj Name'}
+                                         placeholderHighlight={!isHips}
                                          nullAllowed={true}/>
                             <SizeInputFields fieldKey={sizeKey} showFeedback={true}
                                              feedbackStyle={{marginLeft: 185}}
@@ -434,7 +435,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
             </Sheet>
             {isHips ?
                 <HiPSImageSelect groupKey={groupKey} /> :
-                <Sheet {...{variant:'outlined', sx:{position:'static', mt:1/2,py:1 }}}>
+                <Sheet {...{variant:'outlined', sx:{position:'static', mt:1/2,py:1,borderRadius: '5px'}}}>
                     <Stack px={1}>
                         <Typography {...{color:'primary', level:'title-md'}}>4. Select Data Set</Typography>
                         <ImageSelect key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect,
@@ -449,7 +450,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
 
 function SelectUpload() {
     return (
-        <Sheet variant='outlined' sx={{mt: 1/2, py:1, width:'100%', display:'flex', flexDirection:'column', flex:'1 1 auto'}}>
+        <Sheet variant='outlined' sx={{mt: 1/2, py:1, width:'100%', display:'flex', flexDirection:'column', flex:'1 1 auto',borderRadius: '5px'}}>
             <Stack direction='row' spacing={2}>
                 <Typography {...{px:1, width:200, color:'primary', level:'title-md'}}>3. Select Image</Typography>
                 <FileUpload fieldKey='fileUpload' initialState= {{tooltip: 'Select a image to upload' }} />
@@ -473,7 +474,7 @@ function SelectWorkspace() {
 
 function SelectUrl() {
     return (
-        <Sheet variant='outlined' sx={{mt:1/2, py:1, width:'100%', display:'flex', flexDirection:'column', flex:'1 1 auto'}}>
+        <Sheet variant='outlined' sx={{mt:1/2, py:1, width:'100%', display:'flex', flexDirection:'column', flex:'1 1 auto',borderRadius: '5px'}}>
             <Stack direction='row' spacing={2}>
                 <Typography {...{px:1, color:'primary', level:'title-md'}}>3. Enter URL</Typography>
                 <ValidationField labelWidth={150} sx={{width: .8}} fieldKey='txURL' />

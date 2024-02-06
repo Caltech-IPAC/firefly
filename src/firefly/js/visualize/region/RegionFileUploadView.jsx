@@ -9,6 +9,7 @@ import {Box, Stack} from '@mui/joy';
 import React, {useState} from 'react';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
+import HelpIcon from '../../ui/HelpIcon.jsx';
 import {dispatchCreateRegionLayer, dispatchCreateFootprintLayer} from '../DrawLayerCntlr.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -145,13 +146,14 @@ const RegionUpload= () => {
                         {!upload && ( (message && `*${message}`) || '*region error')}
                     </div>
 
-                    <CompleteButton
-                        sx={{mt:5}}
-                        dialogId={popupId}
-                        groupKey={rgUploadGroupKey}
-                        onSuccess={(request) => uploadAndProcessRegion(request, setUpload, setMessage)}
-                        closeOnValid={false}
-                        text='Draw'/>
+                    <Stack {...{direction:'row', alignItems:'center', justifyContent:'space-between'}}>
+                        <CompleteButton
+                            dialogId={popupId}
+                            onSuccess={(request) => uploadAndProcessRegion(request, setUpload, setMessage)}
+                            closeOnValid={false}
+                            text='Draw'/>
+                        <HelpIcon helpId={'visualize.ds9.upload'}/>
+                    </Stack>
 
                 </Stack>
             </FieldGroup>

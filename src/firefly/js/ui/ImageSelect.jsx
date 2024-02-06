@@ -461,7 +461,7 @@ function Header({project, hrefInfo='', multiSelect}) {
                         options={[{label:project, value:'_all_'}]}
                         alignment='horizontal'
                         labelWidth={35}
-                        wrapperStyle={{whiteSpace: 'normal' /*cursor:'pointer'*/}}
+                        sx={{fontWeight: 'normal'}}
                     />
                 </div>
                 <InfoIcon/>

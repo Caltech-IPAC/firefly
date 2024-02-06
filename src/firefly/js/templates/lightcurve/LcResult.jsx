@@ -127,7 +127,7 @@ export function defaultDownloadPanel(mission='', cutoutSize, addtlParams={}) {
         <DownloadButton
             makeButton={(onClick,tbl_id,isRowSelected) => {
                 return (
-                    <Button {...{size: 'md', variant: isRowSelected ? 'solid' : 'soft', color: 'success', onClick}} >
+                    <Button {...{size: 'md', variant: isRowSelected ? 'solid' : 'soft', color: 'warning', onClick}} >
                         Prepare Download
                     </Button>
                 );

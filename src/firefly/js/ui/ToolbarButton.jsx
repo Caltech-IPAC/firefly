@@ -206,6 +206,8 @@ function makeBorder(active, theme,color) {
         borderTop: `1px solid ${borderC}`,
         borderLeft: `1px solid ${borderC}`,
         borderRight: `1px solid ${borderC}`,
+        borderBottomRightRadius: active ?0 : undefined,
+        borderBottomLeftRadius: active ?0 : undefined,
     };
 }
 
