@@ -56,7 +56,7 @@ export const HiPSImageSelect= ({groupKey}) => {
         );
     } else {
         return (
-            <Sheet variant='outlined' sx={{mt:1/2, py:1, width:'100%', display:'flex', flexDirection:'column', flex:'1 1 auto'}}>
+            <Sheet variant='outlined' sx={{mt:1/2, py:1, width:'100%', display:'flex', flexDirection:'column', flex:'1 1 auto', borderRadius:'5px'}}>
                 <Stack {...{flexGrow:1, spacing:1, height:'100%', width:'100%'}}>
                     <Stack {...{direction:'row', spacing:2, alignItems:'center'}}>
                         <Typography {...{px:1, color:'primary', level:'title-md'}}>4. Select Data Set</Typography>

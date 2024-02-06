@@ -27,7 +27,7 @@ export const PlotTitle= memo(({plotView:pv, brief, working}) => {
 
         const tooltip= (
             <Stack direction='column'>
-                <Typography level={plot.title?.length > 30 ? 'body-xs' : 'body-md'}>{plot.title}</Typography>
+                <Typography level={plot.title?.length > 30 ? 'title-xs' : 'title-md'}>{plot.title}</Typography>
                 {world && tipEntry('Horizontal field of view:',zlRet.fovFormatted) }
                 {isImage(plot) && tipEntry('Zoom Level:', zlRet.zoomLevelFormatted)}
                 {Boolean(pv.rotation) && tipEntry('Rotation:', rotString)}
@@ -50,8 +50,8 @@ export const PlotTitle= memo(({plotView:pv, brief, working}) => {
         return (
             <Tooltip title={tooltip} placement='right-end'>
                 <Stack direction='row' alignItems='center' sx={plotTitleInlineTitleContainer}>
-                    <Typography {...{level:'body-sm', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '35ch'}}>{plot.title}</Typography>
-                    <Typography {...{level:'body-sm', color:'warning', pl:.75, overflow: 'hidden', component:'div'}}>
+                    <Typography {...{level:'title-sm', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '35ch'}}>{plot.title}</Typography>
+                    <Typography {...{level:'body-sm', pl:.75, overflow: 'hidden', component:'div'}}>
                         <div dangerouslySetInnerHTML={{__html:zlStr}}/>
                     </Typography>
                     {Boolean(!brief && rotString) && <Typography level='body-sm' color='warning'>{`, ${rotString}`}</Typography> }

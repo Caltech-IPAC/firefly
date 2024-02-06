@@ -103,6 +103,7 @@ function makeHelpLine(helpLine) {
 }
 
 function makeDelete(canUserDelete,deleteLayer) {
+    if (!canUserDelete) return <Box sx={{width:23}}/>
     return (
         <Tooltip title='Close Layer'
             placement='right-start'>

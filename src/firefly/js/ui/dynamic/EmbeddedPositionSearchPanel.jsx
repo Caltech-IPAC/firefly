@@ -94,27 +94,31 @@ export function EmbeddedPositionSearchPanel({
                     tooltip: 'Chose type of search', initialState: {value: initToggle}, options: CONE_AREA_OPTIONS
                 }} />}
                 {doGetConeAreaOp() === CONE_CHOICE_KEY &&
-                    <Stack {...{pt:1/2, spacing:1}}>
+                    <Stack {...{pt:1/2}}>
                         <TargetPanel {...{
                             sx:{width:'34rem'},
                             fieldKey:targetKey, nullAllowed,
-                            targetPanelExampleRow1, targetPanelExampleRow2
+                            targetPanelExampleRow1, targetPanelExampleRow2,
+                            slotProps: {
+                                feedback:{sx: {alignSelf:'center'} },
+                            }
                         }}/>
                         <SizeInputFields {...{
-                            style:{paddingBottom:10},
                             fieldKey: sizeKey, showFeedback: true, labelWidth: 100, nullAllowed: false,
-                            labelStyle:{textAlign:'right', paddingRight:4},
+                            // orientation:'horizontal',
                             label: 'Search Radius',
+                            slotProps: {
+                                feedback:{sx: {alignSelf:'center'} },
+                            },
                             initialState: {unit: 'arcsec', value: searchAreaInDeg + '', min:minValue, max:maxValue}
                         }} />
                     </Stack>
                 }
                 {doGetConeAreaOp() === POLY_CHOICE_KEY &&
                     <PolygonField {...{
-                        style: {paddingTop:5},
                         hideHiPSPopupPanelOnDismount: false, fieldKey: polygonKey,
                         targetDetails: {targetPanelExampleRow1: polygonExampleRow1, targetPanelExampleRow2:polygonExampleRow2},
-                        desc: 'Coordinates',
+                        placeholder: 'Coordinates',
                         manageHiPS:false,
                     }} />}
             </Stack>
@@ -142,7 +146,7 @@ export function EmbeddedPositionSearchPanel({
                         borderRadius: '5px 5px 2px 2px',
                         border: `3px solid ${theme.vars.palette['neutral']?.softActiveBg}`,
                         position: 'absolute',
-                        p: 1/4,
+                        px: 1/2,
                         bottom: '1.5rem',
                         left: 3,
                     })

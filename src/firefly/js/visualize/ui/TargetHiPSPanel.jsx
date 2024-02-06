@@ -71,14 +71,16 @@ const sharedPropTypes= {
     mocList: arrayOf( shape({ mocUrl: string, title: string }) ),
 };
 
-export function VisualPolygonPanel({label, initValue, tooltip, fieldKey, sx,
+export function VisualPolygonPanel({label, initValue, tooltip, fieldKey, sx, placeholder,
+                                       placeholderHighlight,
                                        manageHiPS=true, ...restOfProps}) {
 
     const button= manageHiPS &&
         ( <HiPSPanelPopupButton {...{polygonKey:fieldKey, whichOverlay:POLY_CHOICE_KEY, ...restOfProps}} /> );
     return (
         <InputAreaFieldConnected {...{
-            fieldKey, label, button, tooltip, initialState:{value:initValue}, sx
+            fieldKey, placeholder, label, button, tooltip, initialState:{value:initValue}, sx,
+            placeholderHighlight
         }} />
     );
 }

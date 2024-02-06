@@ -1,6 +1,6 @@
 import {Divider, FormControl, FormHelperText, FormLabel, Stack} from '@mui/joy';
 import React, {useEffect, memo, useState, useContext} from 'react';
-import PropTypes, {bool, object} from 'prop-types';
+import PropTypes, {bool, object, shape} from 'prop-types';
 import {convertAngle} from '../visualize/VisUtil.js';
 import {ConnectionCtx} from './ConnectionCtx.js';
 import {InputFieldView} from './InputFieldView.jsx';
@@ -81,6 +81,7 @@ function getFeedback(unit, min, max, showFeedback) {
 
 const SizeInputFieldView= (props) => {
     const {nullAllowed, min, max, sx, inputStyle={}, connectedMarker= false,
+        orientation='vertical', slotProps,
         label, showFeedback, onChange} = props;
     const [{value, valid, displayValue, unit},setState]= useState(() => updateSizeInfo(props));
     const {feedback, errmsg}= getFeedback(unit,min,max,showFeedback);
@@ -125,44 +126,48 @@ const SizeInputFieldView= (props) => {
 
     return (
         <Stack sx={sx}>
-            <FormControl orientation='vertical'>
-                {label && <FormLabel>{label}</FormLabel>}
-                <Stack spacing={1} direction='row'>
-                    <InputFieldView {...{
-                        valid,
-                        inputStyle,
-                        onChange:onSizeChange,
-                        onBlur:onSizeChange,
-                        value:displayValue,
-                        message:errmsg,
-                        connectedMarker: connectedMarker || connectContext.controlConnected,
-                        endDecorator:(
-                            <Stack direction='row' alignItems='center'>
-                                <Divider orientation='vertical'/>
-                                <ListBoxInputFieldView
-                                    onChange={onUnitChange}
-                                    value={unit} multiple={false} label='' tooltip='unit of the size'
-                                    options={[
-                                        {label: 'degrees', value: 'deg'},
-                                        {label: 'arcminutes', value: 'arcmin'},
-                                        {label: 'arcseconds', value: 'arcsec'}
-                                    ]}
-                                    slotProps={{
-                                        input: {
-                                            variant:'plain',
-                                            sx:{minHeight:'unset'}
-                                            // sx:{'&:hover': { bgcolor: 'transparent' } }
-                                        }
-                                    }}
-                                />
-                            </Stack>
-                        ),
-                        sx:{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }},
-                        tooltip:'enter size within the valid range'
-                    }} />
-                </Stack>
-                <FormHelperText>{feedback}</FormHelperText>
-            </FormControl>
+            <Stack>
+                <FormControl orientation={orientation}>
+                    {label && <FormLabel>{label}</FormLabel>}
+                    <Stack spacing={1} direction='row'>
+                        <InputFieldView {...{
+                            valid,
+                            inputStyle,
+                            onChange:onSizeChange,
+                            onBlur:onSizeChange,
+                            value:displayValue,
+                            message:errmsg,
+                            connectedMarker: connectedMarker || connectContext.controlConnected,
+                            endDecorator:(
+                                <Stack direction='row' alignItems='center'>
+                                    <Divider orientation='vertical'/>
+                                    <ListBoxInputFieldView
+                                        onChange={onUnitChange}
+                                        value={unit} multiple={false} label='' tooltip='unit of the size'
+                                        options={[
+                                            {label: 'degrees', value: 'deg'},
+                                            {label: 'arcminutes', value: 'arcmin'},
+                                            {label: 'arcseconds', value: 'arcsec'}
+                                        ]}
+                                        slotProps={{
+                                            input: {
+                                                variant:'plain',
+                                                sx:{minHeight:'unset'}
+                                                // sx:{'&:hover': { bgcolor: 'transparent' } }
+                                            }
+                                        }}
+                                    />
+                                </Stack>
+                            ),
+                            sx:{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }},
+                            tooltip:'enter size within the valid range'
+                        }} />
+                    </Stack>
+                </FormControl>
+                <FormHelperText {...{...slotProps?.feedback}}>
+                    {feedback}
+                </FormHelperText>
+            </Stack>
         </Stack>
     );
 };
@@ -174,14 +179,17 @@ SizeInputFieldView.propTypes = {
     sx: object,
     displayValue: PropTypes.string,
     label:    PropTypes.string,
+    orientation: PropTypes.string,
     nullAllowed: PropTypes.bool,
     onChange: PropTypes.func,
     value: PropTypes.any,
     valid: PropTypes.bool,
     showFeedback: PropTypes.bool,
     inputStyle: PropTypes.object,
-    style: PropTypes.object,  // replaces wrapper style
     connectedMarker: bool,
+    slotProps: shape({
+        feedback: object,
+    })
 };
 
 SizeInputFieldView.defaultProps = {
@@ -221,6 +229,7 @@ SizeInputFields.propTypes={
     groupKey : PropTypes.string,
     connectedMarker: bool,
     sx: object,
+    orientation: PropTypes.string,
     initialState: PropTypes.shape({
         value: PropTypes.any,
         tooltip:  PropTypes.string,

@@ -49,7 +49,7 @@ const ChooseUploadFile= ({onChange, value, fileName, canDragDrop}) => (
         <Tooltip title={`Click to choose a file${canDragDrop ?' or just drag and drop a file':''}`}>
             <label htmlFor='upload-file'>
                 <Input id='upload-file' type='file' onChange={onChange} sx={{display:'none'}}/>
-                <Button color='success' variant={fileName?'soft':'solid'} aria-label='upload file' component='span'>
+                <Button color='warning' variant={fileName?'soft':'solid'} aria-label='upload file' component='span'>
                     {fileName?'Replace File':'Choose File'}
                 </Button>
             </label>
