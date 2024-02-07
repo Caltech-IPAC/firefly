@@ -37,8 +37,6 @@
 - Fixed: Table: enum values with commas now display correctly in filter menu: [Firefly-1333](https://github.com/Caltech-IPAC/firefly/pull/1445)
 - Fixed: ADQL text-entry field swallowing "(Command)-(backquote)" on macOS: [Firefly-1072](https://github.com/Caltech-IPAC/firefly/pull/1436)
 
-<<<<<<< HEAD
-=======
 ### _Patches 2023.3_
 - 2023.3.2
     - Obscore Packaging: Improved config with option for file names from server. [IRSA-5700](https://github.com/Caltech-IPAC/firefly/pull/1495)
@@ -49,14 +47,10 @@
 - 2023.3.1
     - Fixed: TAP visual query builder ("`select_info` is undefined")
 
->>>>>>> rc-2023.3
 ### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2022.3+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2022.3+)
 
-### _Patches 2023.3_
-- 2023.3.1
-    - Fixed: TAP visual query builder ("`select_info` is undefined")
 
 ## Version 2023.2
 - 2023.2.6 - (Nov 20, 2023),  _docker tag_: `latest`, `2023.2`, `2023.2.6`
