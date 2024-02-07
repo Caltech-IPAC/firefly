@@ -327,12 +327,11 @@ function plotOverlayFail(state,action) {
 }
 
 function plotFail(state,action) {
-    const {description, plotId}= action.payload;
-    const {plotViewAry}= state;
-    const plotView=  getPlotViewById(state,plotId);
-    if (!plotView) return state;
+    const {description, plotId, plotIdAry:inPlotIdAry=[]}= action.payload;
+    const plotIdAry= plotId ? [plotId] : inPlotIdAry;
     const changes= {plottingStatusMsg:description,serverCall:'fail', nonRecoverableFail:true };
-    return {...state,  plotViewAry:clonePvAry(plotViewAry,plotId,changes)};
+    const plotViewAry= state.plotViewAry?.map( (pv) => plotIdAry.includes(pv.plotId) ? {...pv,...changes}  : pv);
+    return {...state,  plotViewAry};
 }
 
 function hipsFail(state,action) {

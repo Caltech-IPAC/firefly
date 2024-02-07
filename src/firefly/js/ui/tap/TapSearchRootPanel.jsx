@@ -17,6 +17,7 @@ import {dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
 import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil.jsx';
 import {dispatchHideDialog} from 'firefly/core/ComponentCntlr.js';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr.js';
+import {MetaConst} from '../../data/MetaConst.js';
 import {
     ConstraintContext, getTapUploadSchemaEntry, getUploadServerFile, getUploadTableName,
     getHelperConstraints, getUploadConstraint,
@@ -32,6 +33,7 @@ import {
 import {SectionTitle, AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 import {PREF_KEY} from 'firefly/tables/TablePref.js';
+import {getTapObsCoreOptions} from './TableSearchHelpers.jsx';
 
 
 
@@ -98,6 +100,10 @@ export function getServiceLabel(serviceUrl) {
     return (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.labelOnly)) || '';
 }
 
+export function getServiceHiPS(serviceUrl) {
+    const tapOps= getTapServices();
+    return (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.hipsUrl)) || '';
+}
 
 
 export function TapSearchPanel({initArgs= {}, titleOn=true}) {
@@ -384,6 +390,7 @@ function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
     const hasMaxrec = !isNaN(parseInt(maxrec));
     const doSubmit = () => {
         const serviceLabel= getServiceLabel(serviceUrl);
+        const hips= getServiceHiPS(serviceUrl);
         const adqlClean = adql.replace(/\s/g, ' ');    // replace all whitespaces with spaces
         const params = {serviceUrl, QUERY: adqlClean};
         if (isUpload) {
@@ -399,6 +406,8 @@ function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
             additionalMeta[PREF_KEY]= `${tapBrowserState.schemaName}-${tapBrowserState.tableName}`;
         }
         additionalMeta.serviceLabel= serviceLabel;
+        if (hips) additionalMeta[MetaConst.COVERAGE_HIPS]= hips;
+
         treq.META_INFO= {...treq.META_INFO, ...additionalMeta };
         dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true});
     };

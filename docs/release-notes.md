@@ -8,7 +8,8 @@
 
 
 ## Version 2023.3
-- 2023.3.1 - (Dec 13, 2023),  _docker tag_: `latest`, `2023.3`, `2023.3.1`
+- 2023.3.2 - (Feb 7, 2023),  _docker tag_: `latest`, `2023.3`, `2023.3.2`
+- 2023.3.1 - (Dec 13, 2023),  _docker tag_: `2023.3.1`
 - 2023.3.0 - (Dec 12, 2023),  _docker tag_: `2023.3.0`
 
 ### _Notes_
@@ -36,6 +37,19 @@
 - Fixed: Table: enum values with commas now display correctly in filter menu: [Firefly-1333](https://github.com/Caltech-IPAC/firefly/pull/1445)
 - Fixed: ADQL text-entry field swallowing "(Command)-(backquote)" on macOS: [Firefly-1072](https://github.com/Caltech-IPAC/firefly/pull/1436)
 
+<<<<<<< HEAD
+=======
+### _Patches 2023.3_
+- 2023.3.2
+    - Obscore Packaging: Improved config with option for file names from server. [IRSA-5700](https://github.com/Caltech-IPAC/firefly/pull/1495)
+    - FITS: more even zooming levels. [Firefly-1289](https://github.com/Caltech-IPAC/firefly/pull/1495)
+    - TAP config: can specify a HiPS for a TAP server. [Firefly-1375](https://github.com/Caltech-IPAC/firefly/pull/1495)
+    - API: added all export functions and constants from Table. [Firefly-1375](https://github.com/Caltech-IPAC/firefly/pull/1489)
+     
+- 2023.3.1
+    - Fixed: TAP visual query builder ("`select_info` is undefined")
+
+>>>>>>> rc-2023.3
 ### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2022.3+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2022.3+)
