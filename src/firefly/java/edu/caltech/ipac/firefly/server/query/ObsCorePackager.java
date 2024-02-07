@@ -1,6 +1,9 @@
 package edu.caltech.ipac.firefly.server.query;
 
-import edu.caltech.ipac.firefly.data.*;
+import edu.caltech.ipac.firefly.data.DownloadRequest;
+import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.data.HttpResultInfo;
+import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
@@ -9,12 +12,17 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.MappedData;
 import edu.caltech.ipac.table.io.VoTableReader;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static edu.caltech.ipac.util.FileUtil.getUniqueFileNameForGroup;
 import static org.apache.commons.lang.StringUtils.substringAfterLast;
@@ -55,27 +63,32 @@ public class ObsCorePackager extends FileGroupsProcessor {
                 String contentType = tmpFileInfo.getAttribute(HttpResultInfo.CONTENT_TYPE);
 
                 String colNames = request.getSearchRequest().getParam("templateColNames");
+                boolean useSourceUrlFileName= request.getSearchRequest().getBooleanParam("useSourceUrlFileName",false);
                 String[] cols = colNames != null ? colNames.split(",") : null;
 
-                String ext_file_name = getFileName(idx,cols,dgDataUrl);
+                String ext_file_name = getFileName(idx,cols,useSourceUrlFileName,dgDataUrl,url);
                 String extension;
 
                 if (access_format != null) {
                     if (access_format.contains("datalink")) {
                         ext_file_name = getUniqueFileNameForGroup(ext_file_name, dataLinkFolders);
-                        List<FileInfo> tmpFileInfos = parseDatalink(url, ext_file_name);
+                        List<FileInfo> tmpFileInfos = parseDatalink(url, ext_file_name, useSourceUrlFileName);
                         fileInfos.addAll(tmpFileInfos);
                     }
                     else { //non datalink entry -  such as fits,jpg etc.
-                        extension = access_format.replaceAll(".*/", "");
-                        ext_file_name += "." + extension;
+                        if (!useSourceUrlFileName || !FileUtil.getExtension(ext_file_name).isEmpty()) {
+                            extension = access_format.replaceAll(".*/", "");
+                            ext_file_name += "." + extension;
+                        }
                         FileInfo fileInfo = new FileInfo(tmpFile.getPath(), ext_file_name, 0);
                         fileInfos.add(fileInfo);
                     }
                 }
                 else { //access_format is null, so try and get it from the url's Content_Type
-                    extension = getExtFromURL(contentType);
-                    ext_file_name += "." + extension;
+                    if (!useSourceUrlFileName || !FileUtil.getExtension(ext_file_name).isEmpty()) {
+                        extension = getExtFromURL(contentType);
+                        ext_file_name += "." + extension;
+                    }
                     FileInfo fileInfo = new FileInfo(tmpFile.getPath(), ext_file_name, 0);
                     fileInfos.add(fileInfo);
                 }
@@ -89,7 +102,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
         return Arrays.asList(new FileGroup(fileInfos, null, 0, "ObsCore Download Files"));
     }
 
-    public static List<FileInfo> parseDatalink(URL url, String prepend_file_name) {
+    public static List<FileInfo> parseDatalink(URL url, String prepend_file_name, boolean useSourceUrlFileName) {
         List<FileInfo> fileInfos = new ArrayList<>();;
         try {
             File tmpFile = File.createTempFile("datlink-", ".xml", ServerContext.getTempWorkDir());
@@ -125,13 +138,26 @@ public class ObsCorePackager extends FileGroupsProcessor {
 
                     if (testSem(sem,"#this") || testSem(sem,"#thumbnail") ||testSem(sem,"#preview") ||
                             testSem(sem,"#preview-plot")) {
-                        String ext_file_name = prepend_file_name;
-                        ext_file_name = testSem(sem, "#this") ? ext_file_name : ext_file_name + "-" + substringAfterLast(sem, "#");
-                        String extension = "unknown";
-                        extension = content_type != null ? getExtFromURL(content_type) : getExtFromURL(accessUrl);
-                        ext_file_name += "." + extension;
-                        //create a folder only if makeDataLinkFolder is true
-                        ext_file_name = makeDataLinkFolder ? prepend_file_name + "/" + ext_file_name : ext_file_name;
+
+                        String ext_file_name= null;
+                        if (useSourceUrlFileName) {
+                            String fileName= new URL(accessUrl).getFile();
+                            String ext= FileUtil.getExtension(fileName);
+                            if (!ext.isEmpty()) ext_file_name= fileName;
+                        }
+                        if (ext_file_name==null){
+                            ext_file_name = prepend_file_name;
+                            ext_file_name = testSem(sem, "#this") ? ext_file_name : ext_file_name + "-" + substringAfterLast(sem, "#");
+                            String extension = "unknown";
+                            extension = content_type != null ? getExtFromURL(content_type) : getExtFromURL(accessUrl);
+                            ext_file_name += "." + extension;
+                            //create a folder only if makeDataLinkFolder is true
+                            ext_file_name = makeDataLinkFolder ? prepend_file_name + "/" + ext_file_name : ext_file_name;
+                        }
+
+
+
+
                         FileInfo fileInfo = new FileInfo(accessUrl, ext_file_name, 0);
                         fileInfos.add(fileInfo);
                     }
@@ -170,12 +196,19 @@ public class ObsCorePackager extends FileGroupsProcessor {
         //remove spaces and replace all non-(alphanumeric,period,underscore,hyphen) chars with underscore
         return val.replaceAll("\\s", "").replaceAll("[^a-zA-Z0-9._-]", "_");
     }
-    public static String getFileName(int idx, String[] colNames, MappedData dgDataUrl) {
+    public static String getFileName(int idx, String[] colNames, boolean useSourceUrlFileName, MappedData dgDataUrl, URL url) {
         String obs_collection = (String) dgDataUrl.get(idx, "obs_collection");
         String instrument_name = (String) dgDataUrl.get(idx, "instrument_name");
         String obs_id = (String) dgDataUrl.get(idx, "obs_id");
         String obs_title = (String) dgDataUrl.get(idx, "obs_title");
         String file_name = "";
+
+        //option 0: if useSourceUrlFileName is true the try to get it from the URL
+        if (useSourceUrlFileName) {
+            String fileName= url.getFile();
+            String ext= FileUtil.getExtension(fileName);
+            if (!ext.isEmpty()) return fileName;
+        }
 
         //option 1: use productTitleTemplate (colNames) if available to construct file name
         if (colNames != null) {
