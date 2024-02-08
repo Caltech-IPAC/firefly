@@ -8,7 +8,8 @@
 
 
 ## Version 2023.3
-- 2023.3.2 - (Feb 7, 2023),  _docker tag_: `latest`, `2023.3`, `2023.3.2`
+- 2023.3.3 - (Feb 8, 2023),  _docker tag_: `latest`, `2023.3`, `2023.3.3`
+- 2023.3.2 - (Feb 7, 2023),  _docker tag_: `2023.3.2`
 - 2023.3.1 - (Dec 13, 2023),  _docker tag_: `2023.3.1`
 - 2023.3.0 - (Dec 12, 2023),  _docker tag_: `2023.3.0`
 
@@ -38,12 +39,13 @@
 - Fixed: ADQL text-entry field swallowing "(Command)-(backquote)" on macOS: [Firefly-1072](https://github.com/Caltech-IPAC/firefly/pull/1436)
 
 ### _Patches 2023.3_
+- 2023.3.3
+    - Bug fix: Obscore Packaging: a double extension was added
 - 2023.3.2
     - Obscore Packaging: Improved config with option for file names from server. [IRSA-5700](https://github.com/Caltech-IPAC/firefly/pull/1495)
     - FITS: more even zooming levels. [Firefly-1289](https://github.com/Caltech-IPAC/firefly/pull/1495)
     - TAP config: can specify a HiPS for a TAP server. [Firefly-1375](https://github.com/Caltech-IPAC/firefly/pull/1495)
     - API: added all export functions and constants from Table. [Firefly-1375](https://github.com/Caltech-IPAC/firefly/pull/1489)
-     
 - 2023.3.1
     - Fixed: TAP visual query builder ("`select_info` is undefined")
 
@@ -74,7 +76,7 @@
 
 #### Other changes
 - Read FITS tables directly with `nom.tam.fits` (removed star table): [Firefly-1232](https://github.com/Caltech-IPAC/firefly/pull/1390) 
-- improved DCE: [Firefly-1286](https://github.com/Caltech-IPAC/firefly/pull/1408),  [Firefly-1250](https://github.com/Caltech-IPAC/firefly/pull/1391)
+- Improved DCE: [Firefly-1286](https://github.com/Caltech-IPAC/firefly/pull/1408), [Firefly-1250](https://github.com/Caltech-IPAC/firefly/pull/1391)
 - Firefly now uses React 18: [Firefly-1127](https://github.com/Caltech-IPAC/firefly/pull/1396) 
 - Firefly now uses Mavin central: [Firefly-1258](https://github.com/Caltech-IPAC/firefly/pull/1397) 
 

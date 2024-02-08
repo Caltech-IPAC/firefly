@@ -76,7 +76,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
                         fileInfos.addAll(tmpFileInfos);
                     }
                     else { //non datalink entry -  such as fits,jpg etc.
-                        if (!useSourceUrlFileName || !FileUtil.getExtension(ext_file_name).isEmpty()) {
+                        if (!useSourceUrlFileName || FileUtil.getExtension(ext_file_name).isEmpty()) {
                             extension = access_format.replaceAll(".*/", "");
                             ext_file_name += "." + extension;
                         }
@@ -85,7 +85,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
                     }
                 }
                 else { //access_format is null, so try and get it from the url's Content_Type
-                    if (!useSourceUrlFileName || !FileUtil.getExtension(ext_file_name).isEmpty()) {
+                    if (!useSourceUrlFileName || FileUtil.getExtension(ext_file_name).isEmpty()) {
                         extension = getExtFromURL(contentType);
                         ext_file_name += "." + extension;
                     }
