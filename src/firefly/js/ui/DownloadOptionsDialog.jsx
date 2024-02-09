@@ -16,7 +16,7 @@ import LOADING from 'html/images/gxt/loading.gif';
 export const LOCALFILE = 'isLocal';
 export const WORKSPACE = 'isWs';
 
-export function getTypeData(key, val='', tip = '', labelV='', labelW) {
+export function getTypeData(key, val='', tip = '', labelV='', labelW='') {
     return {
         fieldKey: key,
         label: labelV,
@@ -27,7 +27,7 @@ export function getTypeData(key, val='', tip = '', labelV='', labelW) {
 }
 
 
-export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWidth, style={}, dialogWidth=500, dialogHeight=300,
+export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWidth, style={}, dialogWidth, dialogHeight,
                                       workspace}) {
 
     const isUpdating = useStoreConnector(isAccessWorkspace);
@@ -96,10 +96,7 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
     return (
         <Stack spacing={2} justifyContent={'center'}
                sx={{
-                 width: 400,
-                 mx: '0,auto',
-                 display: 'flex',
-                 flexDirection: 'column',
+                 width: '80%',
                }}>
             <div>
                 {children}
@@ -109,7 +106,7 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
                 initialState= {{
                     value: fileName
                 }}
-                label='File name:'
+                label='File name'
                 tooltip='Please enter a filename, a default name will be used if it is blank'
             />
 
@@ -124,9 +121,9 @@ DownloadOptionsDialog.propTypes = {
     fromGroupKey: PropTypes.string,
     children: PropTypes.object,
     fileName: PropTypes.string,
-    labelWidth: PropTypes.number,
-    dialogWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    dialogHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    labelWidth: PropTypes.string,
+    dialogWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.string]),
+    dialogHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.string]),
     workspace: PropTypes.oneOfType([PropTypes.bool, PropTypes.string])
 };
 

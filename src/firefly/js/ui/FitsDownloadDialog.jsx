@@ -32,13 +32,13 @@ import {useFieldGroupValue} from './SimpleComponent.jsx';
 import HelpIcon from './HelpIcon.jsx';
 
 const STRING_SPLIT_TOKEN= '--STR--';
-const dialogWidth = 500;
-const dialogHeightWS = 500;
-const dialogHeightLOCAL = 400;
-const mTOP = 10;
+const dialogWidth ='32rem';
+const dialogHeightWS = '32rem';
+const dialogHeightLOCAL = '25rem';
+const mindialogHeightLOCAL ='19rem';
 const dialogPopupId = 'fitsDownloadDialog';
 const fitsDownGroup = 'FITS_DOWNLOAD_FORM';
-const labelWidth = 100;
+const labelWidth = '6rem';
 const hipsFileTypeOps= [
     {label: 'PNG File', value: 'png', tooltip: 'Download as PNG image' },
     {label: 'Region File', value: 'reg', tooltip: 'Download all overlays as a region File'} ];
@@ -60,8 +60,8 @@ export function showFitsDownloadDialog() {
 
     const isWs = getWorkspaceConfig();
     const adHeight = (fileLocation === WORKSPACE) ? dialogHeightWS
-                                                         : (isWs ? dialogHeightLOCAL : dialogHeightLOCAL - 100);
-    const minHeight = (fileLocation === LOCALFILE) && (!isWs) ? dialogHeightLOCAL-100 : dialogHeightLOCAL;
+                                                         : (isWs ? dialogHeightLOCAL : mindialogHeightLOCAL);
+    const minHeight = (fileLocation === LOCALFILE) && (!isWs) ? mindialogHeightLOCAL : dialogHeightLOCAL;
     const  popup = (
         <PopupPanel title={'Save Image'}>
             <div style={{...popupPanelResizableStyle, height: adHeight, minHeight}}>
@@ -107,7 +107,7 @@ const MakeFileOptions = ({plot,colors,hasOperation,threeC}) => {
                 options={isImage(plot) ? imageFileTypeOps : hipsFileTypeOps}
                 fieldKey='fileType'
                 orientation='horizontal'
-                label='Type of files:'
+                label='Type of files'
                 tooltip='Please select a file type' />
             {hasOperation && renderOperationOption()}
             {threeC && <RenderThreeBand {...{colors}}/>}
@@ -124,7 +124,7 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
     const band= threeC ? getBand() : Band.NO_BAND.key;
 
     const totalChildren = (isWs ? 3 : 2) + (hasOperation ? 1 : 0) + (threeC ? 1 : 0);// fileType + save as + (fileLocation)
-    const childH = (totalChildren * (20 + mTOP));
+    const childH = (totalChildren * (2)).toString;
 
     const [getFileType] = useFieldGroupValue ('fileType', groupKey);
     const [getFileName, setFileName] = useFieldGroupValue('fileName', groupKey);
@@ -157,17 +157,11 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
 
     return (
         <FieldGroup groupKey={groupKey}>
-            <Stack spacing={2} justifyContent={'center'}
-                   sx={{
-                         width: 400,
-                         mx: '0,auto',
-                         px: 2,
-                         display: 'flex',
-                         flexDirection: 'column'
-                       }}>
+            <Stack spacing={2}
+                   sx={{px: 2}}>
                 <DownloadOptionsDialog {...{
                     fromGroupKey:groupKey, fileName: makeFileName(plot,band,'fits'), workspace:isWs,
-                    labelWidth, dialogWidth:'100%', dialogHeight:`calc(100% - ${childH}pt)`,
+                    labelWidth, dialogWidth:'100%', dialogHeight:'100%',
                 }}>
                     <MakeFileOptions {...{plot, colors, hasOperation, threeC}}/>
                 </DownloadOptionsDialog>

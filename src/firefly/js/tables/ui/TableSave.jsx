@@ -61,8 +61,9 @@ const tableFormatsExt = {
     'votable-fits-inline': 'vot',
 };
 
-
-const labelWidth = 100;
+const dialogWidth = '32rem';
+const dialogHeight = '22rem';
+const labelWidth = '6rem';
 const defValues = {
     [fKeyDef.fileName.fKey]: Object.assign(getTypeData(fKeyDef.fileName.fKey, '',
         'Please enter a filename, a default name will be used if it is blank', fKeyDef.fileName.label, labelWidth), {validator: null}),
@@ -78,14 +79,11 @@ const defValues = {
 
 const tblDownloadGroupKey = 'TABLE_DOWNLOAD_FORM';
 
-const dialogWidth = 500;
-const dialogHeightWS = 500;
-const dialogHeightLOCAL = 400;
-const mTop = 10;
-
 const popupPanelResizableStyle = {
     width: dialogWidth,
+    height: dialogHeight,
     minWidth: dialogWidth,
+    minHeight: dialogHeight,
     resize: 'both',
     overflow: 'hidden',
     position: 'relative'
@@ -146,18 +144,12 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
     return (
         <FieldGroup groupKey={tblDownloadGroupKey} reducerFunc={TableDLReducer(tbl_id)}>
             <Stack spacing={2} justifyContent={'center'}
-                               sx={{
-                                     width: 400,
-                                     mx: '0,auto',
-                                     px: 2,
-                                     display: 'flex',
-                                     flexDirection: 'column'
-                                   }}>
+                               sx={{px: 2}}>
                 <DownloadOptionsDialog fromGroupKey={tblDownloadGroupKey} style={{width: 'unset', height: 'unset'}}
                                        children={fileFormatOptions()}
                                        workspace={isWs}
                                        dialogWidth='100%'
-                                       dialogHeight='300px'
+                                       dialogHeight='100%'
                 />
                 <RadioGroupInputField fieldKey='mode' initialState={{value: 'displayed'}}
                                       options={[{value:'displayed', label:'Save table as displayed'}, {value:'original', label:'Save table as originally retrieved'}]}/>
@@ -173,7 +165,6 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
                     <Button onClick={() => onComplete?.()}>Cancel</Button>
 
                     <HelpIcon helpId={'tables.save'}/>
-
                 </Stack>
 
             </Stack>
