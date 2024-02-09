@@ -1,4 +1,4 @@
-import {Button, Stack} from '@mui/joy';
+import {Button, Divider, Stack} from '@mui/joy';
 import React from 'react';
 import {array, object, string} from 'prop-types';
 import {
@@ -9,6 +9,7 @@ import {DPtypes} from '../../../metaConvert/DataProductsType.js';
 import {SingleColumnMenu} from '../../../ui/DropDownMenu.jsx';
 import {DropDownToolbarButton} from '../../../ui/DropDownToolbarButton.jsx';
 import {ToolbarButton} from '../../../ui/ToolbarButton.jsx';
+import {PinButton} from '../Buttons.jsx';
 
 /**
  *
@@ -42,31 +43,40 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
                 <div style={{width: 50, height: 1}}/> :
                 <DropDownToolbarButton
                     text='More' tip='Other data to display' useDropDownIndicator={true}
-                    style={{paddingRight: 20}}
+                    sx={{pr: 2}}
                     dropDown={<OtherOptionsDropDown {...{menu, dpId, activeMenuLookupKey}} />}
-                />}
+                />
+                }
 
             {hasFileMenu &&
-                <DropDownToolbarButton
-                    text='File Contents' tip='Other data in file' useDropDownIndicator={true}
-                    style={{paddingRight: 20}}
-                    dropDown={<FileMenuDropDown {...{fileMenu, dpId}} />}/>
+                <Stack direction='row'>
+                    {hasMenu && <Divider orientation='vertical'/>}
+                    <DropDownToolbarButton
+                        text='File Contents' tip='Other data in file' useDropDownIndicator={true}
+                        style={{pr: 2}}
+                        dropDown={<FileMenuDropDown {...{fileMenu, dpId}} />}/>
+                </Stack>
             }
             {extraction &&
-                <Button onClick={() => extraction()} title={extractionText || 'Pin'}
-                        sx={{whiteSpace:'nowrap', minHeight:10, py:.25}}>
-                    {extractionText || 'Pin'}
-                </Button>}
+                <Stack direction='row'>
+                    {hasMenu||hasFileMenu && <Divider orientation='vertical'/>}
+                    <PinButton onClick={() => extraction()} tip={extractionText || 'Pin'}
+                    />
+                </Stack>
+                }
             {showRedoSearchButton && analysisActivateFunc &&
-                <ToolbarButton
-                    text='Redo Search' tip='Redo Search'
-                    onClick={() => {
-                        dispatchSetSearchParams({dpId, activeMenuLookupKey, menuKey, params: undefined});
-                        dispatchUpdateDataProducts(dpId, {
-                            ...dataProductsState, allowsInput: true, name: originalTitle,
-                            displayType: DPtypes.ANALYZE, activate: analysisActivateFunc
-                        });
-                    }}/>
+                <Stack direction='row'>
+                    {hasMenu||hasFileMenu||extraction && <Divider orientation='vertical'/>}
+                    <ToolbarButton
+                        text='Redo Search' tip='Redo Search'
+                        onClick={() => {
+                            dispatchSetSearchParams({dpId, activeMenuLookupKey, menuKey, params: undefined});
+                            dispatchUpdateDataProducts(dpId, {
+                                ...dataProductsState, allowsInput: true, name: originalTitle,
+                                displayType: DPtypes.ANALYZE, activate: analysisActivateFunc
+                            });
+                        }}/>
+                </Stack>
             }
         </Stack>
     );

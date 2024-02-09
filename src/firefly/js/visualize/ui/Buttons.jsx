@@ -209,6 +209,10 @@ export const PinChartButton = (props) => (
     <ToolbarButton {...{icon: <PinChartIco/>, iconButtonSize:'38px', ...props}}/>
 );
 
+export const PinButton = (props) => (
+    <ToolbarButton {...{icon: <PinChartIco/>, iconButtonSize:'38px', ...props}}/>
+);
+
 export const ShowTableButton = (props) => (
     <ToolbarButton {...{icon: <ShowTableIco/>, iconButtonSize:'38px', ...props}}/>
 );

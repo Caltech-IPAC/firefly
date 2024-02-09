@@ -3,7 +3,7 @@
  */
 
 import React, {useEffect} from 'react';
-import {Box, Stack, Typography, Sheet, Chip} from '@mui/joy';
+import {Box, Stack, Typography, Sheet, Chip, Divider} from '@mui/joy';
 import PropTypes, {object, shape} from 'prop-types';
 import {defer, truncate, get, set} from 'lodash';
 import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
@@ -348,9 +348,15 @@ function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
         const doclinkLabel = getMetaEntry(tbl_id, META.doclink.label, 'Data Help');
         const doclinkDesc = getMetaEntry(tbl_id, META.doclink.desc) || doclinkLabel;
 
-        const doclink = (<a href={doclinkUrl} target='doclink' title={doclinkDesc} key={doclinkUrl} style={{ textDecoration: 'none'}}>
-            <ToolbarButton variant='soft' color='primary' text={doclinkLabel}/>
-        </a>);
+        const doclink = (
+            <Stack direction='row'>
+                {leftButtons?.length && <Divider orientation='vertical'/>}
+                <a href={doclinkUrl} target='doclink' title={doclinkDesc} key={doclinkUrl} style={{ textDecoration: 'none'}}>
+                    <ToolbarButton text={doclinkLabel}/>
+                </a>
+                <Divider orientation='vertical'/>
+            </Stack>
+        );
         if (leftButtons) {
             leftButtons.push(doclink);
         } else {
