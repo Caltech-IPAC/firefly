@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {Stack} from '@mui/joy';
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
@@ -15,7 +16,7 @@ import LOADING from 'html/images/gxt/loading.gif';
 export const LOCALFILE = 'isLocal';
 export const WORKSPACE = 'isWs';
 
-export function getTypeData(key, val='', tip = '', labelV='', labelW) {
+export function getTypeData(key, val='', tip = '', labelV='', labelW='') {
     return {
         fieldKey: key,
         label: labelV,
@@ -26,7 +27,7 @@ export function getTypeData(key, val='', tip = '', labelV='', labelW) {
 }
 
 
-export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWidth, style={}, dialogWidth=500, dialogHeight=300,
+export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWidth, style={}, dialogWidth, dialogHeight,
                                       workspace}) {
 
     const isUpdating = useStoreConnector(isAccessWorkspace);
@@ -42,6 +43,7 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
         }
     }, [where]);
 
+   //Todo: for workspace related components, they will be included in another ticket Firefly-1400
     const ShowWorkspace = () => {
 
         const loading  = (
@@ -79,39 +81,39 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
     };
 
     const showLocation = (
-            <div style={{marginTop: 10}}>
+        <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
                 <RadioGroupInputField
                     options={[{label: 'Local File', value: LOCALFILE},
                               {label: 'Workspace', value: WORKSPACE }] }
                     fieldKey={'fileLocation'}
+                    orientation='horizontal'
                     label='File location:'
-                    labelWidth={100}
                     tooltip='select the location where the file is downloaded to'
                 />
-            </div>
+        </Stack>
     );
 
     return (
-        <div style={{height: '100%', width: '100%', ...style}}>
+        <Stack spacing={2} justifyContent={'center'}
+               sx={{
+                 width: '80%',
+               }}>
             <div>
                 {children}
             </div>
             <ValidationField
-                wrapperStyle={{marginTop: 10}}
-                size={50}
                 fieldKey={'fileName'}
                 initialState= {{
                     value: fileName
                 }}
-                label='File name:'
-                labelWidth={100}
+                label='File name'
                 tooltip='Please enter a filename, a default name will be used if it is blank'
             />
 
             {workspace && showLocation}
 
             {where === WORKSPACE && <ShowWorkspace/>}
-        </div>
+        </Stack>
     );
 }
 
@@ -119,9 +121,9 @@ DownloadOptionsDialog.propTypes = {
     fromGroupKey: PropTypes.string,
     children: PropTypes.object,
     fileName: PropTypes.string,
-    labelWidth: PropTypes.number,
-    dialogWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    dialogHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    labelWidth: PropTypes.string,
+    dialogWidth: PropTypes.oneOfType([PropTypes.string, PropTypes.string]),
+    dialogHeight: PropTypes.oneOfType([PropTypes.string, PropTypes.string]),
     workspace: PropTypes.oneOfType([PropTypes.bool, PropTypes.string])
 };
 
