@@ -32,8 +32,8 @@ import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {findTableCenterColumns} from 'firefly/voAnalyzer/TableAnalysis';
 
 const fKeyDef = {
-    fileName: {fKey: 'fileName', label: 'File name:'},
-    fileFormat: {fKey: 'fileFormat', label: 'File format:'},
+    fileName: {fKey: 'fileName', label: 'File name'},
+    fileFormat: {fKey: 'fileFormat', label: 'File format'},
     location: {fKey: 'fileLocation', label: 'File location:'},
     wsSelect: {fKey: 'wsSelect', label: ''},
     overWritable: {fKey: 'fileOverwritable', label: 'File overwritable: '}
@@ -63,7 +63,7 @@ const tableFormatsExt = {
 
 const dialogWidth = '32rem';
 const dialogHeight = '22rem';
-const labelWidth = '6rem';
+const labelWidth = 100;
 const defValues = {
     [fKeyDef.fileName.fKey]: Object.assign(getTypeData(fKeyDef.fileName.fKey, '',
         'Please enter a filename, a default name will be used if it is blank', fKeyDef.fileName.label, labelWidth), {validator: null}),
@@ -138,6 +138,7 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
                 options={ fileOptions}
                 fieldKey = {fKeyDef.fileFormat.fKey}
                 multiple={false}
+                orientation={'vertical'}
             />
         );
     };
@@ -156,17 +157,19 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
                 <Typography level='body-sm' sx={{textAlign: 'left'}}>
                     {mode === 'original' ? asOriginalMsg : asDisplayedMsg}
                 </Typography>
-                <Stack spacing={1} mb={3} direction='row' alignItems='center'>
-                    <CompleteButton
-                        groupKey={tblDownloadGroupKey}
-                        onSuccess={resultSuccess(tbl_id, tbl_ui_id, onComplete, cenCols)}
-                        onFail={resultFail()}
-                        text={'Save'}/>
-                    <Button onClick={() => onComplete?.()}>Cancel</Button>
-
-                    <HelpIcon helpId={'tables.save'}/>
+                <Stack sx={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                    <Stack spacing={1} direction='row' alignItems='center'>
+                        <CompleteButton
+                            groupKey={tblDownloadGroupKey}
+                            onSuccess={resultSuccess(tbl_id, tbl_ui_id, onComplete, cenCols)}
+                            onFail={resultFail()}
+                            text={'Save'}/>
+                        <Button onClick={() => onComplete?.()}>Cancel</Button>
+                    </Stack>
+                    <Stack>
+                        <HelpIcon helpId={'tables.save'}/>
+                    </Stack>
                 </Stack>
-
             </Stack>
         </FieldGroup>
     );

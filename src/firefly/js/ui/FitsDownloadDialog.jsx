@@ -157,19 +157,27 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
 
     return (
         <FieldGroup groupKey={groupKey}>
-            <Stack spacing={2}
-                   sx={{px: 2}}>
-                <DownloadOptionsDialog {...{
-                    fromGroupKey:groupKey, fileName: makeFileName(plot,band,'fits'), workspace:isWs,
-                    labelWidth, dialogWidth:'100%', dialogHeight:'100%',
-                }}>
-                    <MakeFileOptions {...{plot, colors, hasOperation, threeC}}/>
-                </DownloadOptionsDialog>
-                <Stack spacing={1} mb={3} direction='row' alignItems='center'>
-                    <CompleteButton text='Save' onSuccess={ (request) => resultsSuccess(request, pv, popupId )}
-                                    onFail={resultsFail} />
-                    <CompleteButton text='Cancel' groupKey='' primary={false} onSuccess={() => closePopup(popupId)} />
-                    <HelpIcon helpId={'visualization.saveimage'}/>
+            <Stack spacing={2} style={{height: mindialogHeightLOCAL}}
+                   sx={{px: 2, justifyContent: 'space-between'}}>
+                <Stack>
+                    <DownloadOptionsDialog {...{
+                        fromGroupKey:groupKey, fileName: makeFileName(plot,band,'fits'), workspace:isWs,
+                        labelWidth, dialogWidth:'100%', dialogHeight:'100%',
+                    }}>
+                        <MakeFileOptions {...{plot, colors, hasOperation, threeC}}/>
+                    </DownloadOptionsDialog>
+                </Stack>
+                <Stack>
+                    <Stack mb={3} sx={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                        <Stack spacing={1} direction='row' alignItems='center'>
+                            <CompleteButton text='Save' onSuccess={ (request) => resultsSuccess(request, pv, popupId )}
+                                            onFail={resultsFail} />
+                            <CompleteButton text='Cancel' groupKey='' primary={false} onSuccess={() => closePopup(popupId)} />
+                        </Stack>
+                        <Stack>
+                            <HelpIcon helpId={'visualization.saveimage'}/>
+                        </Stack>
+                    </Stack>
                 </Stack>
             </Stack>
         </FieldGroup>
