@@ -10,7 +10,8 @@ import {COMMAND, getMenu} from '../core/AppDataCntlr.js';
 import {flux} from '../core/ReduxFlux.js';
 import {dispatchShowDropDown, getLayouInfo} from '../core/LayoutCntlr.js';
 import {BgMonitorButton} from '../core/background/BgMonitorButton.jsx';
-import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
+// import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
+import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
 
 function handleAction (menuItem) {
 
@@ -98,9 +99,10 @@ export function Menu({menu={}}) {
         <Stack direction='row' justifyContent={'space-between'}>
             <Stack direction='row'> {items} </Stack>
             <Stack direction='row'>
-                {hasRight && <Divider orientation='vertical' sx={{mx:1}} />}
-                {showBgMonitor && <BgMonitorButton /> }
-                {helpItem && <AppHelpButton {...{ menuItem:helpItem, }}/>}
+                {showBgMonitor && <Divider orientation='vertical' sx={{mx:1}} />}
+                {showBgMonitor && <BgMonitorButton/> }
+                {Boolean(helpItem) && <Divider orientation='vertical' sx={{mx:1}} />}
+                {Boolean(helpItem) && <AppHelpButton {...{ menuItem:helpItem, }}/>}
             </Stack>
         </Stack>
     );
@@ -113,8 +115,8 @@ export function AppHelpButton({menuItem,sx}) {
     }, []);
 
     return (
-        <IconButton {...{sx, variant:'plain', color:'neutral', onClick}}>
-            <QuestionMarkIcon/>
+        <IconButton {...{sx, size:'lg', variant:'plain', color:'neutral', onClick}}>
+            <QuizOutlinedIcon/>
         </IconButton>
     );
 }
