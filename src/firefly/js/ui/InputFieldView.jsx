@@ -11,7 +11,7 @@ export function inputFieldTooltipProps(valid, message, showWarning, tooltip) {
                 <Typography level='body-md' color={'danger'}> {message} </Typography>
                 <Typography level='body-md' color={'neutral'}> {tooltip} </Typography>
             </Stack>
-        ) : <div style={{whiteSpace:'pre'}}>{tooltip}</div>;
+        ) : tooltip && <div style={{whiteSpace:'pre'}}>{tooltip}</div>;
     const enterDelay = showErrorTip ? 700 : undefined;
     return {title, enterDelay};
 }
@@ -36,7 +36,7 @@ export function InputFieldView(props) {
     return (
         <Stack {...{className:'ff-Input InputFieldView', sx}}>
             <Tooltip {...{...tooltipProps, ...slotProps?.tooltip}}>
-                <FormControl {...{orientation, error:!valid, ...slotProps?.control}}>
+                <FormControl {...{orientation, required, error:!valid, ...slotProps?.control}}>
                     {label && <FormLabel {...slotProps?.label}>{label}</FormLabel>}
                     <Input {...{
                         value: currValue,
@@ -47,7 +47,7 @@ export function InputFieldView(props) {
                         form,
                         ...slotProps?.input,
                         placeholder,
-                        required,
+                        title:'',       // explicitly remove browser's tooltip.  Required fields was generating default title.
                         onChange:(ev) => onChange ? onChange(ev) : null,
                         onBlur: (ev) => onBlur?.(ev),
                         onKeyPress: (ev) => onKeyPress && onKeyPress(ev,currValue),

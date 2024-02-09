@@ -226,9 +226,9 @@ const ChartToolbarExt = ({chartId, viewerId, tbl_group, noChartToolbar, closeabl
     if (!closeable && noChartToolbar) return null;
 
     return (
-        <div style={{display: 'inline-flex', justifyContent: 'space-between'}}>
+        <Stack direction='row' justifyContent='space-between'>
             {closeable && <CloseButton onClick={() => closeExpandedChart(viewerId)}/>}
             {!noChartToolbar && <ChartToolbar {...{chartId, viewerId, tbl_group, expandable:false, expandedMode:true}}/>}
-        </div>
+        </Stack>
     );
 };

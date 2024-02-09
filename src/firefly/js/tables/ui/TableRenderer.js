@@ -75,41 +75,42 @@ function SortSymbol({sortDir}) {
     );
 };
 
-export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, style={}, sx={}, tbl_id}) => {
+export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter, sx={}, tbl_id}) => {
     const {label, name, desc, sortByCols, sortable} = col || {};
     const cdesc = desc || label || name;
     const sortDir = SortInfo.parse(sortInfo).getDirection(name);
     const sortCol = sortByCols ? splitCols(sortByCols) : [name];
     const typeVal = getTypeLabel(col);
     const unitsVal = col.units ? `(${col.units})`: '';
-    const  className = toBoolean(sortable, true) ? 'clickable' : undefined;
-    const derived = col.DERIVED_FROM ? 'warning' : undefined;
+    const clickable = toBoolean(sortable, true) ? 'clickable' : undefined;
+    const color = col.DERIVED_FROM ? 'warning' : undefined;
 
     const onClick = toBoolean(sortable, true) ? () => onSort(sortCol) : () => showInfoPopup('This column is not sortable');
+    const centerIt = {justifyContent:'center', alignItems:'center'};
 
-    sx = {height: 1, pb: '1px', ...derived, ...style, ...sx};
+    sx = {height: 1, pb: '2px', ...sx};
     return (
-        <Sheet color={col.DERIVED_FROM ? 'warning' : undefined} sx={sx} title={cdesc}>
-            <div className={className} onClick={onClick}>
-                <Stack direction='row' justifyContent='center' alignItems='center'>
-                    <Stack textOverflow='ellipsis' overflow='hidden'>
-                        <TextValue val={label || name} bold sx={{lineHeight:1.3}}/>
+        <Sheet variant='plain' color={color} sx={sx} title={cdesc}>
+            <Stack width={1} height={1} spacing='2px' {...centerIt}>
+                <Stack width={1} height={1} spacing='2px' {...centerIt} className={clickable} onClick={onClick}>
+                    <Stack direction='row' {...centerIt}>
+                        <Stack textOverflow='ellipsis' overflow='hidden'>
+                            <HeaderText val={label || name} level='title-sm'/>
+                        </Stack>
+                        <SortSymbol sortDir={sortDir}/>
                     </Stack>
-                    <SortSymbol sortDir={sortDir}/>
+                    { showUnits && <HeaderText val={unitsVal}/> }
+                    { showTypes && <HeaderText val={typeVal}/> }
                 </Stack>
-                { showUnits && <TextValue val={unitsVal}/> }
-                {showTypes && <TextValue val={typeVal} sx={{fontStyle: 'italic'}}/> }
-            </div>
-            {showFilters && <Filter {...{cname:name, onFilter, filterInfo, tbl_id}}/>}
+                {showFilters && (<Filter {...{cname:name, onFilter, filterInfo, tbl_id}}/>)}
+            </Stack>
         </Sheet>
     );
 });
 
-export function TextValue({val, bold=false, sx, ...rest}) {
-    const level = bold ? 'title-md' : 'body-md';
-    const height = val ? undefined : '1em';
+export function HeaderText({val, level='body-sm', sx, ...rest}) {
     return (
-        <Typography component='div' sx={{lineHeight:1, height, textAlign:'center', ...sx}} {...{level, ...rest}}>
+        <Typography component='div' level={level} {...rest} sx={{lineHeight:1.1, height:'1em', ...sx}}>
             {val || ''}
         </Typography>
     );
@@ -158,20 +159,18 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
     const endDecorator = enumVals && <div ref={enumArrowEl} className='arrow-down clickable' onClick={onEnumClicked}/>;
 
     return (
-        <Stack direction='row' alignItems='center' p='0 2px'>
-            <InputField
-                validator={validator}
-                fieldKey={name}
-                sx={{width: 1, '--Input-radius': ''}}
-                slotProps={{ input: {autoFocus, size:'sm', endDecorator }}}
-                tooltip={FILTER_CONDITION_TTIPS}
-                value={filterInfoCls.getFilter(name)}
-                onChange={onFilter}
-                actOn={blurEnter}
-                showWarning={false}
-                style={filterStyle}
-                wrapperStyle={filterStyle}/>
-        </Stack>
+        <InputField
+            validator={validator}
+            fieldKey={name}
+            sx={{width: 1, '--Input-radius': ''}}
+            slotProps={{ input: {autoFocus, size:'sm', endDecorator }}}
+            tooltip={FILTER_CONDITION_TTIPS}
+            value={filterInfoCls.getFilter(name)}
+            onChange={onFilter}
+            actOn={blurEnter}
+            showWarning={false}
+            style={filterStyle}
+            wrapperStyle={filterStyle}/>
     );
 }
 

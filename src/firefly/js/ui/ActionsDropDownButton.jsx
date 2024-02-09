@@ -17,7 +17,7 @@ import {showSearchRefinementTool} from '../visualize/SearchRefinementTool.jsx';
 import {convertWpAryToStr, getDetailsFromSelection, markOutline} from '../visualize/ui/VisualSearchUtils.js';
 import {formatWorldPt} from '../visualize/ui/WorldPtFormat.jsx';
 
-export function ActionsDropDownButton({searchActions, pv, tbl_id, style}) {
+export function ActionsDropDownButton({searchActions, pv, tbl_id, style, tip='Search this area'}) {
     const mi= pv?.plotViewCtx.menuItemKeys ?? getDefMenuItemKeys();
     const buttonRef = useRef();
     const spacial= Boolean(pv);
@@ -28,7 +28,7 @@ export function ActionsDropDownButton({searchActions, pv, tbl_id, style}) {
 
     return (
         <div ref={buttonRef} style={style}>
-            <SearchDetailButton tip='Search this area' dropDown={dropDown}/>
+            <SearchDetailButton tip={tip} dropDown={dropDown}/>
         </div>
     );
 }

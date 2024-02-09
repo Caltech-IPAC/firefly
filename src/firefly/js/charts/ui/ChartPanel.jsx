@@ -1,6 +1,6 @@
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {Box, Stack} from '@mui/joy';
+import {Box, Divider, Stack} from '@mui/joy';
 import {get, isEmpty, isUndefined} from 'lodash';
 
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
@@ -35,6 +35,7 @@ function ChartPanelView(props) {
         return (
             <Stack id='chart-panel' height={1} overflow='hidden'>
                 <ChartToolbar {...{chartId, tbl_group, expandable, expandedMode, Toolbar}}/>
+                <Divider orientation='horizontal'/>
                 <ChartArea glass={glass} {...props}/>
             </Stack>
         );

@@ -1121,15 +1121,22 @@ export function tableDetailsView(tbl_id, highlightedRow, details_tbl_id) {
  * @memberof firefly.util.table
  * @func calcColumnWidths
  */
-export function calcColumnWidths(columns, dataAry, {maxAryWidth=Number.MAX_SAFE_INTEGER, maxColWidth=Number.MAX_SAFE_INTEGER, useWidth=true}={}) {
+export function calcColumnWidths(columns, dataAry,
+                                 {
+                                     maxAryWidth = Number.MAX_SAFE_INTEGER,
+                                     maxColWidth = Number.MAX_SAFE_INTEGER,
+                                     useWidth = true,
+                                     useCnameMultiplier = false,
+                                 }={}) {
     return columns.map( (cv, idx) => {
 
         let width = useWidth? cv.prefWidth || cv.width : 0;
         if (width) {
             return width;
         }
-        const cname = cv.label || cv.name;
-        width = Math.max(cname.length, get(cv, 'units.length', 0),  getTypeLabel(cv).length, get(cv, 'nullString.length', 0));
+        const cnameLength = (cv.label || cv.name)?.length * (useCnameMultiplier ? 1.25 : 1);
+
+        width = Math.max(cnameLength, get(cv, 'units.length', 0),  getTypeLabel(cv).length, get(cv, 'nullString.length', 0));
         dataAry.forEach((row) => {
             const v = formatValue(columns[idx], row[idx]);
             width = Math.max(width, v.length);

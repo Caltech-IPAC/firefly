@@ -135,7 +135,7 @@ export const PinChart = ({viewerId, tbl_group}) => {
         }
         pinChart({chartId});
     };
-    return <PinChartButton onClick={doPinChart} title='Pin the active chart'/>;
+    return <PinChartButton onClick={doPinChart} tip='Pin this chart'/>;
 };
 
 export function pinChart({chartId, autoLayout=false }) {
@@ -229,7 +229,7 @@ export const ShowTable = ({viewerId, tbl_group}) => {
     const showTable = () => dispatchActiveTableChanged(activeChartTblId, tbl_group);
     const enabled = activeChartTblId !== activeTblId;
 
-    return activeChartTblId ? <ShowTableButton enabled={enabled} onClick={showTable} title='Show the table associated with this chart'/> : null;
+    return activeChartTblId ? <ShowTableButton enabled={enabled} onClick={showTable} tip='Show table corresponding to this chart'/> : null;
 
 };
 

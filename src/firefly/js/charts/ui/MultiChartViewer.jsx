@@ -4,7 +4,7 @@
 
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
-import {Sheet, Stack} from '@mui/joy';
+import {Divider, Sheet, Stack} from '@mui/joy';
 import {isEmpty, isUndefined} from 'lodash';
 import {flux} from '../../core/ReduxFlux.js';
 
@@ -154,13 +154,16 @@ export class MultiChartViewer extends PureComponent {
         return (
             <Stack id='chart-multiviewer' width={1} height={1} position='relative'>
                 {showChartToolbar &&
-                    <ToolBar chartId={activeItemId} expandable={!expandedMode} {...{
-                        expandedMode,
-                        closeable,
-                        viewerId,
-                        layoutType,
-                        activeItemId
-                    }}/>
+                    <>
+                        <ToolBar chartId={activeItemId} expandable={!expandedMode} {...{
+                            expandedMode,
+                            closeable,
+                            viewerId,
+                            layoutType,
+                            activeItemId
+                        }}/>
+                        <Divider orientation='horizontal'/>
+                    </>
                 }
                 <MultiItemViewerView {...this.props} {...newProps}/>
             </Stack>

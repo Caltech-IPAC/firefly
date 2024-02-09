@@ -36,10 +36,9 @@ import {DDzIndex} from 'firefly/tables/ui/TableRenderer.js';
 const logger = Logger('Tables').tag('TablePanel');
 
 const TT_INFO = 'Show additional table info';
-const TT_OPTIONS = 'Edit Table Options';
-const TT_SAVE = 'Save the content as an IPAC, CSV, or TSV table';
+const TT_OPTIONS = 'Table Options';
+const TT_SAVE = 'Save the table';
 const TT_CLEAR_FILTER = 'Remove all filters';
-const TT_SHOW_FILTER = 'Filters can be used to remove unwanted rows from the search results';
 const TT_EXPAND = 'Expand this panel to take up a larger area';
 const TT_PROPERTY_SHEET = 'Show details for the selected row';
 
@@ -281,7 +280,13 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
             <SettingsButton tip={TT_OPTIONS}
                             onClick={showOptionsDialog}
                             iconButtonSize='30px'
-                            sx={{position:'absolute', top:-4, right:-4, zIndex: DDzIndex}}  //
+                            slotProps={{
+                                root: {
+                                    sx: {position:'absolute', top:-4, right:-4, zIndex: DDzIndex},
+                                    component: Sheet,
+                                    variant: 'plain'
+                                }
+                            }}
             />
         );
     }
@@ -295,15 +300,14 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
             <Stack direction='row' alignItems='center'>
                 {rightButtons}
                 {showSearchButton &&  isTableActionsDropVisible(searchActions,tbl_id ) &&
-                <ActionsDropDownButton {...{searchActions, tbl_id}}/>
+                <ActionsDropDownButton {...{searchActions, tbl_id}} tip='Search drop down: search based on table'/>
                 }
                 {showFilterButton && filterCount > 0 &&
                 <ClearFilterButton tip={TT_CLEAR_FILTER}
                                    onClick={clearFilter}/>
                 }
                 {showFilterButton &&
-                <FilterButton  tip={TT_SHOW_FILTER}
-                               badgeCount={filterCount}
+                <FilterButton  badgeCount={filterCount}
                                onClick={toggleFilter}/>
                 }
                 {showToggleTextView &&
