@@ -131,7 +131,7 @@ Overriding default fixed-table css
     border-width: 0 1px 1px 0;
 }
 
-.fixedDataTableRowLayout_main div {
+.fixedDataTableRowLayout_main div, .fixedDataTableCellLayout_main [role=columnheader]{
     background-color: var(--joy-palette-background-surface, #FBFCFE);
 }
 

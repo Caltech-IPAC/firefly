@@ -4,7 +4,9 @@
 
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {Button, Checkbox, Stack, ToggleButtonGroup, Typography} from '@mui/joy';
+import {Button, Stack, ToggleButtonGroup, Typography} from '@mui/joy';
+import {badgeClasses} from '@mui/joy/Badge';
+
 import {cloneDeep, get, isEmpty} from 'lodash';
 
 import {setSqlFilter, SqlTableFilter} from './FilterEditor.jsx';
@@ -30,6 +32,7 @@ import {BY_SCROLL} from './BasicTableView.jsx';
 
 import EDIT from 'html/images/16x16_edit_icon.png';
 import {MAX_ROW} from 'firefly/tables/TableRequestUtil';
+import {ClearFilterButton} from 'firefly/visualize/ui/Buttons.jsx';
 
 
 export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOptionReset, clearFilter}) => {
@@ -80,10 +83,9 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
     const onSqlFilterChanged = ({op, sql}) =>  onChange({sqlFilter: sql ? `${op}::${sql}` : ''});
 
     return (
-        <Stack height={1} p={1} pt={0} boxSizing='border-box'>
+        <Stack height={1} p={1} pt={0} boxSizing='border-box' spacing={1}>
             <Options {...{uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChange}} />
-            <OptionsFilterStats tbl_id={ctm_tbl_id}/>
-            <StatefulTabs componentKey='TablePanelOptions' defaultSelected={0} borderless={true} useFlex={true} style={{flex: '1 1 0'}}>
+            <StatefulTabs componentKey='TablePanelOptions' defaultSelected={0} actions={() => <OptionsFilterStats tbl_id={ctm_tbl_id}/>}>
                 <Tab name='Column Options'>
                     <ColumnOptions {...{tbl_id, tbl_ui_id, ctm_tbl_id, onChange}} />
                 </Tab>
@@ -96,11 +98,13 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
                 }
             </StatefulTabs>
             {showTblPrefMsg && <TablePrefMsg/>}
-            <Stack direction='row' mt={1} sx={{'button':{mr:1}}} alignItems='center'>
-                <Button variant='solid' color='primary' onClick={onClose}>Close</Button>
-                <Button onClick={onReset}>Reset column selection</Button>
-                <Button onClick={onRemoveFilters}>Remove all filters</Button>
-                <HelpIcon helpId={'tables.options'} style={{float: 'right', marginTop: 4}}/>
+            <Stack direction='row' justifyContent='space-between'>
+                <Stack direction='row' alignItems='center' spacing={1}>
+                    <Button variant='solid' color='primary' onClick={onClose}>Close</Button>
+                    <Button onClick={onReset}>Reset column selection</Button>
+                    <Button onClick={onRemoveFilters}>Remove all filters</Button>
+                </Stack>
+                <HelpIcon helpId={'tables.options'}/>
             </Stack>
         </Stack>
     );
@@ -117,14 +121,17 @@ TablePanelOptions.propTypes = {
 function OptionsFilterStats({tbl_id}) {
 
     const filterCnt = useStoreConnector(() => getFilterCount(getTblById(tbl_id)));
-    const filterStr = filterCnt === 0 ? '' : filterCnt === 1 ? '1 filter' : `${filterCnt} filters`;
     const clearFilters = () => dispatchTableFilter({tbl_id, filters: ''});;
 
     if (filterCnt === 0) return null;
     return (
-        <div style={{ position: 'absolute', top: 30, zIndex: 1, right: 5}}>
-            <button onClick={clearFilters}> remove {filterStr}</button>
-        </div>
+        // wrapper stack added because ToolbarButton did not expose root
+        <Stack sx = {{[`& .${badgeClasses.root}`]: {margin: '1px 3px 0 0'}}}>
+            <ClearFilterButton iconButtonSize='34px' onClick={clearFilters}
+                               badgeCount={filterCnt}
+                               tip = 'Remove all Column Options filters'
+            />
+        </Stack>
     );
 }
 
@@ -142,7 +149,7 @@ function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChang
                                     showFilters && 'showFilters'
                                 ].filter((v) => v));
     return (
-        <Stack direction='row' alignItems='center' justifyContent='space-between' mb={1}>
+        <Stack direction='row' alignItems='center' justifyContent='space-between'>
             <Stack direction='row' spacing={1} alignItems='center'>
                 <Typography level='title-md'>Show/Hide:</Typography>
                 <ToggleButtonGroup
@@ -187,7 +194,7 @@ const columns = [
     {name: 'null_string'},
     {name: 'type'},
     {name: 'units'},
-    {name: 'arraySize', width: 7},
+    {name: 'arraySize'},
     {name: 'utype'},
     {name: 'UCD'},
     {name: 'links'},
@@ -268,8 +275,8 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
 function TablePrefMsg() {
 
     return (
-        <Typography level='body-sm' fontStyle='italic'>
-            Column selection will apply to future searches of this table.
+        <Typography level='body-sm' color='warning'>
+            Column selection will apply to future searches of this table in this session.
         </Typography>
     );
 }

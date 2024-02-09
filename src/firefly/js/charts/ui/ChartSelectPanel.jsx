@@ -127,6 +127,7 @@ export function ChartSelectPanel({tbl_id, chartId, chartAction, inputStyle={}, h
             cancelText='Close'
             onCancel={hideDialog}
             inputStyle = {inputStyle}
+            help_id = 'plots.changing'
             sx={{m: 1, mt: 0, ...sx}}>
             <Stack spacing={2}>
                 <ChartAction {...{chartId, chartActions, chartAction: chartActionState, chartActionChanged}}/>

@@ -65,7 +65,7 @@ const BasicTableViewInternal = React.memo((props) => {
     const onFilter       = useCallback( doFilter.bind({callbacks, filterInfo}), [callbacks, filterInfo]);
     const onFilterSelected = useCallback( doFilterSelected.bind({callbacks, selectInfoCls}), [callbacks, selectInfoCls]);
 
-    const headerHeight = showHeader ? 22 + (showUnits && 14) + (showTypes && 14) + (showFilters && 23) : 0;
+    const headerHeight = showHeader ? 18 + (showUnits && 13) + (showTypes && 13) + (showFilters && 26) : 0;
     let totalColWidths = 0;
     if (!isEmpty(columns) && !isEmpty(columnWidths)) {
         totalColWidths = columns.reduce((pv, c, idx) => {
@@ -323,7 +323,7 @@ function correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredB
 }
 
 function columnWidthsInPixel(columns, data) {
-    return calcColumnWidths(columns, data, {maxColWidth: 100, maxAryWidth: 30})      // set max width for array columns
+    return calcColumnWidths(columns, data, {maxColWidth: 100, maxAryWidth: 30, useCnameMultiplier: true})      // set max width for array columns
             .map( (w) =>  (w + 2) * 7);
 }
 

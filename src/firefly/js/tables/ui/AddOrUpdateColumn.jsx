@@ -35,6 +35,7 @@ import {setSelectInfo} from 'firefly/tables/TableRequestUtil.js';
 import {dispatchHideDialog} from 'firefly/core/ComponentCntlr.js';
 import {FilterInfo} from 'firefly/tables/FilterInfo.js';
 import {AddColumnButton} from 'firefly/visualize/ui/Buttons.jsx';
+import {RequiredFieldMsg} from 'firefly/ui/InputField.jsx';
 
 
 let hideExpPopup;
@@ -98,16 +99,17 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
 
     if (isWorking) return <Skeleton className='loading-mask' style={{zIndex:1}}/>;
     return (
-        <Stack p={1} width={500}
+        <Stack p={1} width={500} spacing={1}
             sx={{
                 '.ff-Input':{mb:1},
-                '.MuiInput-endDecorator':{mr:-1},
-                label:{width:75},
+                '.MuiInput-endDecorator > a':{width:12},
+                label:{width:80},
                 input:{width:265}
             }}>
-            <div className='required-msg'/>
+            <RequiredFieldMsg/>
             <FieldGroup groupKey={groupKey}>
                 <ValidationField fieldKey='cname' label='Name:' inputRef={ref}
+                    tooltip='Column name'
                     required={true}
                     orientation='horizontal'
                     initialState={{
@@ -126,11 +128,13 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
                     ]}/>
                 {mode === 'Custom' ? <CustomFields {...{tbl_ui_id, tbl_id, groupKey, editColName}}/> : <PresetFields {...{tbl_id, editColName}}/>}
             </FieldGroup>
-            <Stack direction='row' mt={2} spacing={1} alignItems='center'>
-                <Button color='primary' variant='solid' onClick={doUpdate}>{buttonLabel}</Button>
-                {editColName && DelBtn}
-                <Button onClick={() => hidePopup?.()}> Cancel</Button>
-                <HelpIcon helpId={'tables.addColumn'} style={{float: 'right', marginTop: 4}}/>
+            <Stack direction='row' justifyContent='space-between'>
+                <Stack direction='row' spacing={1} alignItems='center'>
+                    <Button color='primary' variant='solid' onClick={doUpdate}>{buttonLabel}</Button>
+                    {editColName && DelBtn}
+                    <Button onClick={() => hidePopup?.()}> Cancel</Button>
+                </Stack>
+                <HelpIcon helpId={'tables.addColumn'}/>
             </Stack>
         </Stack>
     );
@@ -237,7 +241,10 @@ function CustomFields({tbl_ui_id, tbl_id, groupKey, editColName}) {
     return (
         <>
             <ColumnFld fieldKey={exprKey} name='Expression' cols={cols} label='Expression:' required={true} initValue={col.DERIVED_FROM}
-                       slotProps={{control:{orientation:'horizontal'}}}
+                       slotProps={{
+                           control:{orientation:'horizontal'},
+                           tooltip:{placement: 'bottom'},
+                       }}
                        canBeExpression={true} nullAllowed={false} validator={textValidator({min:1})}
                        helper={<Helper {...{tbl_ui_id, tbl_id, onChange}}/>} tooltip={EXPRESSION_TTIPS}
             />
@@ -271,6 +278,7 @@ function CustomFields({tbl_ui_id, tbl_id, groupKey, editColName}) {
             <SuggestBoxInputField fieldKey='ucd' label='UCD:'
                               slotProps={{
                                   control:{orientation:'horizontal'},
+                                  tooltip: {placement: 'bottom'},
                                   input:{endDecorator: <Info url='https://ivoa.net/documents/UCD1+'/>}
                               }}
                               initialState={{value: col.UCD}}

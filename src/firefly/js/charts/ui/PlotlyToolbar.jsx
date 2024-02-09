@@ -213,7 +213,7 @@ function ZoomBtn({chartId}) {
     return (
         <IconButton value='zoom'
                     onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'zoom', selection: undefined}})}
-                    title='Zoom in the enclosed points'
+                    title='Zoom'
         ><img src={ZoomIco}/></IconButton>
     );
 }
@@ -286,14 +286,14 @@ function ResetZoomBtn({style={}, chartId}) {
 function RestoreBtn({chartId}) {
     return (
         <ResetButton onClick={() => { resetChart(chartId);}}
-                     title='Reset chart to the original'/>
+                     tip='Restore to the defaults'/>
     );
 }
 
 function SaveBtn({chartId}) {
     return (
         <SaveButton onClick={() => { downloadChart(chartId);}}
-             title='Download the chart as a PNG image'/>
+             tip='Save this chart'/>
     );
 }
 
@@ -306,7 +306,7 @@ function FiltersBtn({chartId}) {
 function OptionsBtn({chartId}) {
     return (
         <SettingsButton onClick={() => showChartsDialog(chartId)}
-             title='Chart options and tools'/>
+             tip='Chart options and tools'/>
     );
 }
 
@@ -322,7 +322,7 @@ function ExpandBtn({chartId} ){
 
     return (
         <ExpandButton onClick={expand}
-             title='Expand this panel to take up a larger area'/>
+             tip='Expand this panel to take up a larger area'/>
     );
 }
 

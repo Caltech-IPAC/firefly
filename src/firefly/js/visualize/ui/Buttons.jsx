@@ -170,27 +170,27 @@ export const ToolsDropDown= (props) => (
 
 // Table and Chart buttons -->
 export const FilterButton = (props) => (
-    <ToolbarButton {...{icon: <FilterIco/>, title: 'Show/edit filters', iconButtonSize:'38px', ...props}}/>
+    <ToolbarButton {...{icon: <FilterIco/>, tip: 'Show/edit filters', iconButtonSize:'38px', ...props}}/>
 );
 
 export const ClearFilterButton = (props) => (
-    <ToolbarButton {...{icon: <ClearFilterIco/>, title: 'Remove all filters', iconButtonSize:'38px', ...props}}/>
+    <ToolbarButton {...{icon: <ClearFilterIco/>, tip: 'Remove all filters', iconButtonSize:'38px', ...props}}/>
 );
 
 export const TextViewButton = (props) => (
-    <ToolbarButton {...{icon: <TextViewIco/>, title: 'Text View', iconButtonSize:'38px', ...props}}/>
+    <ToolbarButton {...{icon: <TextViewIco/>, tip: 'Text View', iconButtonSize:'38px', ...props}}/>
 );
 
 export const TableViewButton = (props) => (
-    <ToolbarButton {...{icon: <TableViewIco/>, title: 'Table View', iconButtonSize:'38px', ...props}}/>
+    <ToolbarButton {...{icon: <TableViewIco/>, tip: 'Table View', iconButtonSize:'38px', ...props}}/>
 );
 
 export const AddColumnButton = (props) => (
-    <ToolbarButton {...{icon: <AddColumnIco/>, title: 'Add a column', iconButtonSize:'38px', ...props}}/>
+    <ToolbarButton {...{icon: <AddColumnIco/>, tip: 'Add a column', iconButtonSize:'38px', ...props}}/>
 );
 
 export const SettingsButton = (props) => (
-    <ToolbarButton {...{icon: <SettingsIco/>, title: 'Settings', iconButtonSize:'38px', ...props}}/>
+    <ToolbarButton {...{icon: <SettingsIco/>, tip: 'Chart options and tools', iconButtonSize:'38px', ...props}}/>
 );
 
 export const PropertySheetButton = (props) => (
@@ -214,7 +214,7 @@ export const ShowTableButton = (props) => (
 );
 
 export const CombineChartButton = (props) => (
-    <ToolbarButton {...{icon: <CombineChartIco/>, iconButtonSize:'38px', title:'Add charts to current chart', ...props}}/>
+    <ToolbarButton {...{icon: <CombineChartIco/>, iconButtonSize:'38px', tip:'Combine charts', ...props}}/>
 );
 // <-- Table and Chart buttons
 
