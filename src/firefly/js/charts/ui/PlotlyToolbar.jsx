@@ -1,7 +1,8 @@
-import './ChartPanel.css';
 import React from 'react';
 import PropTypes from 'prop-types';
+import {Divider, IconButton, Stack, ToggleButtonGroup} from '@mui/joy';
 import {get, isEmpty} from 'lodash';
+
 import {dispatchChartUpdate, dispatchChartFilterSelection, dispatchChartSelect, getChartData, dispatchSetActiveTrace, dispatchChartExpanded, resetChart} from '../ChartsCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {getTblById, clearFilters, getColumnIdx, getColumnType} from '../../tables/TableUtil.js';
@@ -14,8 +15,21 @@ import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {showChartsDialog} from './ChartSelectPanel.jsx';
 import {FilterEditorWrapper} from './FilterEditorWrapper.jsx';
 import {isScatter2d} from '../ChartUtil.js';
-import {dispatchChangeViewerLayout, findViewerWithItemId, getLayoutType, getMultiViewRoot, PLOT2D} from '../../visualize/MultiViewCntlr.js';
+import {findViewerWithItemId, getLayoutType, getMultiViewRoot, PLOT2D} from '../../visualize/MultiViewCntlr.js';
+import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField';
+import {
+    CheckedClearButton, ClearFilterButton, ExpandButton, FilterButton, ResetButton, SaveButton, SettingsButton
+} from '../../visualize/ui/Buttons.jsx';
 
+import ZoomIco from 'html/images/icons-2014/24x24_ZoomIn.png';
+import PanIco from 'html/images/icons-2014/pan.png';
+import SelectIco from 'html/images/icons-2014/select.png';
+import TurntableIco from 'html/images/turntable-tmp.png';
+import OrbitalIco from 'html/images/orbital-tmp.png';
+import ClearSelectIco from 'html/images/icons-2014/24x24_CheckmarkOff_Circle.png';
+import ApplySelectIco from 'html/images/icons-2014/24x24_Checkmark.png';
+import ApplyFilterIco from 'html/images/icons-2014/24x24_FilterAdd.png';
+import ResetZoomIco from 'html/images/icons-2014/Zoom1x-24x24-tmp.png';
 
 export function PlotlyToolbar({chartId, expandable}) {
     const {activeTrace} = getChartData(chartId);
@@ -61,20 +75,18 @@ function ScatterToolbar({chartId, expandable}) {
     const help_id = getChartData(chartId)?.help_id;
 
     return (
-        <div className='ChartToolbar'>
-            <ActiveTraceSelect style={{marginRight: 20}} {...{chartId, activeTrace}}/>
+        <Stack direction='row' alignItems='center'>
+            <ActiveTraceSelect {...{chartId, activeTrace}}/>
             <SelectionPart {...{chartId, hasFilter, activeTrace, hasSelection, hasSelected, tbl_id}}/>
             <DragModePart {...{chartId, tbl_id, dragmode, hasSelectionMode}}/>
-            <div className='ChartToolbar__buttons'>
-                <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />
-                <SaveBtn {...{chartId}} />
-                <RestoreBtn {...{chartId}} />
-                {tbl_id && <FiltersBtn {...{chartId}} />}
-                <OptionsBtn {...{chartId}} />
-                {expandable && <ExpandBtn {...{chartId}} />}
-            </div>
-            { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
-        </div>
+            <ResetZoomBtn {...{chartId}} />
+            <SaveBtn {...{chartId}} />
+            <RestoreBtn {...{chartId}} />
+            {tbl_id && <FiltersBtn {...{chartId}} />}
+            <OptionsBtn {...{chartId}} />
+            {expandable && <ExpandBtn {...{chartId}} />}
+            { help_id && <Stack p={1/4}> <HelpIcon helpId={help_id} /> </Stack>}
+        </Stack>
     );
 }
 
@@ -132,25 +144,27 @@ function BasicToolbar({chartId, expandable}) {
 
     const help_id = getChartData(chartId)?.help_id;
 
+    const selectionPart = (
+        <Stack direction='row' spacing={1/2}>
+            {hasFilter && <ClearFilter {...{tbl_id}} /> }
+            {hasSelection && <FilterSelection {...{chartId}} />}
+        </Stack>
+    );
+
     return (
-        <div className='ChartToolbar'>
-            <ActiveTraceSelect style={{marginRight: 20}} {...{chartId, activeTrace}}/>
+        <Stack direction='row' alignItems='center'>
+            <ActiveTraceSelect {...{chartId, activeTrace}}/>
             {showDragPart &&
                 <DragModePart {...{chartId, tbl_id, dragmode, hasSelectionMode: showSelectionPart, is3d}}/>}
-            {showSelectionPart && <div className='ChartToolbar__buttons' style={{margin: '0 5px'}}>
-                {hasFilter && <ClearFilter {...{tbl_id}} />}
-                {hasSelection && <FilterSelection {...{chartId}} />}
-            </div>}
-            <div className='ChartToolbar__buttons'>
-                {showDragPart && <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />}
-                <SaveBtn {...{chartId}} />
-                <RestoreBtn {...{chartId}} />
-                {tbl_id && <FiltersBtn {...{chartId}} />}
-                <OptionsBtn {...{chartId}} />
-                {expandable && <ExpandBtn {...{chartId}} />}
-            </div>
-            { help_id && <div className='ChartToolbar__help'> <HelpIcon helpId={help_id} /> </div>}
-        </div>
+            {showSelectionPart && selectionPart}
+            {showDragPart && <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />}
+            <SaveBtn {...{chartId}} />
+            <RestoreBtn {...{chartId}} />
+            {tbl_id && <FiltersBtn {...{chartId}} />}
+            <OptionsBtn {...{chartId}} />
+            {expandable && <ExpandBtn {...{chartId}} />}
+            { help_id && <Stack p={1/4}> <HelpIcon helpId={help_id} /> </Stack>}
+        </Stack>
     );
 }
 
@@ -165,69 +179,78 @@ function SelectionPart({chartId, hasFilter, hasSelection, hasSelected, tbl_id}) 
             && !get(getChartData(chartId), `data.${activeTrace}.type`, '').includes('heatmap');
     }
     return (
-        <div className='ChartToolbar__buttons' style={{margin: '0 5px'}}>
+        <Stack direction='row' spacing={1/2}>
             {hasFilter    && <ClearFilter {...{tbl_id}} />}
             {hasSelected  && <ClearSelected {...{chartId}} />}
             {hasSelection && <FilterSelection {...{chartId}} />}
             {showSelectSelection && <SelectSelection style={{marginRight:10}} {...{chartId}} />}
-        </div>
+        </Stack>
     );
 }
 
 function DragModePart({chartId, tbl_id, dragmode, hasSelectionMode, is3d}) {
+
     return (
-        <div className='ChartToolbar__buttons' style={{margin: '0 5px'}}>
-            <ZoomBtn {...{chartId, dragmode}} />
-            <PanBtn {...{chartId, dragmode}} />
-            {is3d && <OrbitBtn {...{chartId, dragmode}} />}
-            {is3d && <TurntableBtn {...{chartId, dragmode}} />}
-            {tbl_id && hasSelectionMode && <SelectBtn {...{chartId, dragmode}} />}
-        </div>
+        <Stack direction='row' spacing={1/2}>
+            <Divider orientation='vertical'/>
+            <ToggleButtonGroup value={dragmode} variant='plain' size='sm'
+                               sx={{
+                                   mx:1/2,
+                                   '--ButtonGroup-connected': '0'
+                               }}>
+                <ZoomBtn {...{chartId}} />
+                <PanBtn {...{chartId}} />
+                {is3d && <OrbitBtn {...{chartId}} />}
+                {is3d && <TurntableBtn {...{chartId}} />}
+                {tbl_id && hasSelectionMode && <SelectBtn {...{chartId}} />}
+            </ToggleButtonGroup>
+            <Divider orientation='vertical'/>
+        </Stack>
     );
 }
 
-function ZoomBtn({style={}, chartId, dragmode='zoom'}) {
-    const selected = dragmode === 'zoom' ? 'selected' : '';
+function ZoomBtn({chartId}) {
     return (
-        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'zoom', selection: undefined}})}
-             title='Zoom in the enclosed points'
-             className={`ChartToolbar__zoom ${selected}`}/>
+        <IconButton value='zoom'
+                    onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'zoom', selection: undefined}})}
+                    title='Zoom'
+        ><img src={ZoomIco}/></IconButton>
     );
 }
 
-function PanBtn({style={}, chartId, dragmode}) {
-    const selected = dragmode === 'pan' ? 'selected' : '';
+function PanBtn({chartId}) {
     return (
-        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'pan', selection: undefined}})}
-             title='Pan'
-             className={`ChartToolbar__pan ${selected}`}/>
+        <IconButton value='pan'
+                    onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'pan', selection: undefined}})}
+                    title='Pan'
+        ><img src={PanIco}/></IconButton>
     );
 }
 
-function TurntableBtn({style={}, chartId, dragmode}) {
-    const selected = dragmode === 'turntable' ? 'selected' : '';
+function TurntableBtn({chartId}) {
     return (
-        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'turntable', selection: undefined}})}
-             title='Turntable rotation'
-             className={`ChartToolbar__turntable ${selected}`}/>
+        <IconButton value='turntable'
+                    onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'turntable', selection: undefined}})}
+                    title='Turntable rotation'
+        ><img src={TurntableIco}/></IconButton>
     );
 }
 
-function OrbitBtn({style={}, chartId, dragmode}) {
-    const selected = dragmode === 'orbit' ? 'selected' : '';
+function OrbitBtn({chartId}) {
     return (
-        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'orbit', selection: undefined}})}
-             title='Orbital rotation'
-             className={`ChartToolbar__orbital ${selected}`}/>
+        <IconButton value='orbit'
+                    onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'orbit', selection: undefined}})}
+                    title='Orbital rotation'
+        ><img src={OrbitalIco}/></IconButton>
     );
 }
 
-function SelectBtn({style={}, chartId, dragmode}) {
-    const selected = dragmode === 'select' ? 'selected' : '';
+function SelectBtn({chartId}) {
     return (
-        <div style={style} onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'select', selection: undefined}})}
-             title='Select'
-             className={`ChartToolbar__select ${selected}`}/>
+        <IconButton value='select'
+                    onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'select', selection: undefined}})}
+                    title='Select'
+        ><img src={SelectIco}/></IconButton>
     );
 }
 
@@ -254,46 +277,41 @@ function ResetZoomBtn({style={}, chartId}) {
         }
     };
     return (
-        <div style={style} onClick={doClick}
+        <IconButton onClick={doClick}
              title='Zoom out to original range'
-             className='ChartToolbar__reset-zoom'/>
+        ><img src={ResetZoomIco}/></IconButton>
     );
 }
 
-function RestoreBtn({style={}, chartId}) {
+function RestoreBtn({chartId}) {
     return (
-        <div style={style} onClick={() => { resetChart(chartId);}}
-             title='Reset chart to the original'
-             className='ChartToolbar__restore'/>
+        <ResetButton onClick={() => { resetChart(chartId);}}
+                     tip='Restore to the defaults'/>
     );
 }
 
-function SaveBtn({style={}, chartId}) {
+function SaveBtn({chartId}) {
     return (
-        <div style={style} onClick={() => { downloadChart(chartId);}}
-             title='Download the chart as a PNG image'
-             className='ChartToolbar__save'/>
+        <SaveButton onClick={() => { downloadChart(chartId);}}
+             tip='Save this chart'/>
     );
 }
 
-function FiltersBtn({style={}, chartId}) {
+function FiltersBtn({chartId}) {
     return (
-        <div style={style} onClick={() => showFilterDialog(chartId)}
-             title='Show/edit filters'
-             className='ChartToolbar__tblfilters'/>
+        <FilterButton onClick={() => showFilterDialog(chartId)}/>
     );
 }
 
-function OptionsBtn({style={}, chartId}) {
+function OptionsBtn({chartId}) {
     return (
-        <div style={style} onClick={() => showChartsDialog(chartId)}
-             title='Chart options and tools'
-             className='ChartToolbar__options'/>
+        <SettingsButton onClick={() => showChartsDialog(chartId)}
+             tip='Chart options and tools'/>
     );
 }
 
 
-function ExpandBtn({style={}, chartId} ){
+function ExpandBtn({chartId} ){
     const expand = () => {
         const expandedViewerId= findViewerWithItemId(getMultiViewRoot(), chartId,PLOT2D);
         const layout = getLayoutType(getMultiViewRoot(), expandedViewerId);                // record the current layout before expanding
@@ -303,60 +321,55 @@ function ExpandBtn({style={}, chartId} ){
     };
 
     return (
-        <div style={style} onClick={expand}
-             title='Expand this panel to take up a larger area'
-             className='ChartToolbar__expand'/>
+        <ExpandButton onClick={expand}
+             tip='Expand this panel to take up a larger area'/>
     );
 }
 
-export function ActiveTraceSelect({style={}, chartId, activeTrace}) {
+export function ActiveTraceSelect({sx={}, chartId, activeTrace}) {
     const {data} = getChartData(chartId) || [];
-    const selected = get(data, [activeTrace, 'name']) || `trace ${activeTrace}`;
     if (!data || data.length < 2) return null;
 
-    return (
-        <div style={{width:100, height:20, ...style}} className='styled-select semi-square'>
-            <select value={selected} onChange={(e) => dispatchSetActiveTrace({chartId, activeTrace: get(e, 'target.selectedIndex',0)})}>
-                {data.map( (trace, idx) => <option key={`trace-${idx}`}>{get(trace, 'name', `trace ${idx}`)}</option>)}
-            </select>
-        </div>
-    );
+    return (<ListBoxInputFieldView value={activeTrace}
+                                   options={data.map((trace, idx) => {
+                                       const option = get(trace, 'name', `trace ${idx}`);
+                                       return {label: option, value: idx};
+                                   })}
+                                   onChange={(e, newValue) => dispatchSetActiveTrace({chartId, activeTrace: newValue})}
+                                   sx={sx}
+                                   slotProps={{input: {size: 'sm'}}}
+    />);
 }
 
 function FilterSelection({style={}, chartId}) {
     return (
-        <div style={style} onClick={() => dispatchChartFilterSelection({chartId})}
+        <IconButton onClick={() => dispatchChartFilterSelection({chartId})}
              title='Filter on the selected points'
-             className='ChartToolbar__filter'/>
+        ><img src={ApplyFilterIco}/></IconButton>
     );
 }
 
-function SelectSelection({style={}, chartId}) {
+function SelectSelection({chartId}) {
     const onClick = () => {
             const selIndexes = get(getChartData(chartId), 'selection.points', []);
             dispatchChartSelect({chartId, selIndexes, chartTrigger: true});
         };
     return (
-        <div style={style} onClick={onClick}
+        <IconButton onClick={onClick}
              title='Select the enclosed points'
-             className='ChartToolbar__selected'/>
+        ><img src={ApplySelectIco}/></IconButton>
     );
 }
 
-function ClearSelected({style={}, chartId}) {
+function ClearSelected({chartId}) {
     return (
-        <div style={style} onClick={() => dispatchChartSelect({chartId, selIndexes:[], chartTrigger: true})}
-             title='Unselect all selected points'
-             className='ChartToolbar__clear-selected'/>
+        <CheckedClearButton onClick={() => dispatchChartSelect({chartId, selIndexes:[], chartTrigger: true})}
+             title='Unselect all selected points'/>
     );
 }
 
-function ClearFilter({style={}, tbl_id}) {
-    return (
-        <div style={style} onClick={() => clearFilters(getTblById(tbl_id))}
-             title='Remove all filters'
-             className='ChartToolbar__clear-filters'/>
-    );
+function ClearFilter({tbl_id}) {
+    return <ClearFilterButton onClick={() => clearFilters(getTblById(tbl_id))}/>;
 }
 
 /**

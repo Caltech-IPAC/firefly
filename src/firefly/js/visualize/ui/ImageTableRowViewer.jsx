@@ -205,7 +205,7 @@ const toolsStyle= {
 };
 
 const tStyle= { display:'inline-block', whiteSpace: 'nowrap', minWidth: '3em', paddingLeft : 5, marginTop: -1 };
-const closeButtonStyle= { display: 'inline-block', padding: '1px 12px 0 1px' };
+const closeButtonStyle= { padding: '1px 12px 0 1px' };
 
 function Toolbar({viewerId, tableId:tbl_id, closeFunc=null, maxImageCnt, defaultImageCnt, makeRequestFromRow,
                      defaultWcsMatchType=WcsMatchType.Standard, wcsMatchType, activePlotId,
@@ -261,7 +261,7 @@ function Toolbar({viewerId, tableId:tbl_id, closeFunc=null, maxImageCnt, default
                                  label= 'Cutout Size (arcsec):' />}
                 <SortDirFeedback table={getTblById(tbl_id)}/>
                 {wcsMatch}
-                <VisMiniToolbar style={{width:350}}/>
+                <VisMiniToolbar sx={{width:350}}/>
             </div>
         </FieldGroup>
     );

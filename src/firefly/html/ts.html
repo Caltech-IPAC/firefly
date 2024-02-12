@@ -12,6 +12,7 @@
         window.firefly = {
             app: {
                 template: 'LightCurveViewer',           // set to app mode, instead of api.
+                appTitle: 'Time Series Tool',
                 menu: [
                     {label:'Upload', action:'LCUpload'},
                     {label:'Help', action:'app_data.helpLoad', type:'COMMAND'},
@@ -29,9 +30,9 @@
     <script  type="text/javascript" src="firefly_loader.js"></script>
 </head>
 
-<body style="margin: 0; background-color: rgb(200,200,200)">
+<body style="margin: 0">
 <!-- attached location for firefly app -->
-<div id='app'/>
+<div id='app' style="width:100vw;height: 100vh"/>
 
 
 

@@ -1,44 +1,23 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-
-
+import {Button, Tooltip} from '@mui/joy';
 import React from 'react';
 import PropTypes from 'prop-types';
-import './ToolbarButton.css';
 
+import ArrowBack from '@mui/icons-material/ArrowBackIosNew';
 
-import BUTTON_START from 'html/images/backButton-start.png';
-import BUTTON_MIDDLE from 'html/images/backButton-middle.png';
-import BUTTON_END from 'html/images/backButton-end.png';
-
-const middleStyle= {
-    display: 'inline-block',
-    lineHeight: '30px',
-    fontSize: '12pt',
-    background: `url(${BUTTON_MIDDLE}) top left repeat-x`,
-    color: 'white',
-    verticalAlign:'bottom'
-};
-
-/**
- * @param p
- * @param p.text
- * @param p.tip
- * @param p.style
- * @param p.onClick
- * @return react object
- */
 export function CloseButton({text='Close', tip='Close', style={}, onClick}) {
-    const s= Object.assign({cursor:'pointer', verticalAlign:'baseline', whiteSpace:'nowrap'},style);
     return (
-        <div style={s} title={tip} onClick={onClick}>
-            <img style={{verticalAlign:'bottom'}} src={BUTTON_START} />
-            <div style={middleStyle} title={tip}>{text}</div>
-            <img style={{verticalAlign:'bottom'}} src={BUTTON_END} />
-        </div>
+        <Tooltip title={tip} style={style}>
+            <Button {...{color:'neutral', size:'sm', variant:'solid', onClick, sx:{whiteSpace:'nowrap',pl:0},
+                    startDecorator:<ArrowBack/>}}>
+                {text}
+            </Button>
+        </Tooltip>
     );
 }
+
 
 CloseButton.propTypes= {
     text : PropTypes.string,

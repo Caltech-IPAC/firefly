@@ -1,3 +1,4 @@
+import {Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 import {ConstraintContext} from 'firefly/ui/tap/Constraints';
@@ -95,7 +96,7 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
         <CollapsibleCheckHeader title={panelTitle} helpID={tapHelpId(panelPrefix)}
                                 message={constraintResult?.simpleError??''} initialStateOpen={false}>
             <div style={{marginTop: 5}}>
-                <div style={{fontStyle: 'italic'}}>Performs an exact match on the ID(s) provided, not a spatial search in the neighborhood of the designated objects.</div>
+                <Typography level='body-xs'>Performs an exact match on the ID(s) provided, not a spatial search in the neighborhood of the designated objects.</Typography>
                 <UploadTableSelectorObjectID {...{uploadInfo,setUploadInfo}}/>
                 <ObjectIDCol {...{
                     objectCol: getVal(ObjectIDColumn), cols,
@@ -180,9 +181,8 @@ function UploadTableSelectorObjectID({uploadInfo, setUploadInfo}) {
     return (
         <div style={{margin: '10px 0 0 0'}}>
             <div style={{display:'flex', alignItems:'center'}}>
-                <div style={{whiteSpace:'nowrap'}}>Upload Table:</div>
                 <div style={{display:'flex', alignItems:'center'}}>
-                    <ExtraButton text={fileName ? 'Change...' : 'Add...'}
+                    <ExtraButton text={fileName ? 'Change Upload Table...' : 'Add Upload Table...'}
                                  onClick={() => showUploadTableChooser(preSetUploadInfo,'objectIDMatch',{colTypes: ['int','long','string'],colCount: 3})} style={{marginLeft: 42}} />
                     {haveFile &&
                         <div style={{width:200, overflow:'hidden', whiteSpace:'nowrap', fontSize:'larger',
@@ -218,14 +218,13 @@ function UploadTableSelectorObjectID({uploadInfo, setUploadInfo}) {
                 headerPostTitle:'(from the uploaded table)',
                 headerStyle:{paddingLeft:1},
                 style:{margin:'0 0 10px 195px'},
-                labelStyle:{paddingRight:10},
                 objectKey:UploadObjectIDColumn}} />
             }
         </div>
     );
 }
 
-function ObjectIDCol({objectCol, style={},cols, objectKey, openKey, labelStyle,
+function ObjectIDCol({objectCol, style={},cols, objectKey, openKey,
                            headerTitle, headerPostTitle = '', openPreMessage='', headerStyle,colTblId=null}) {
     const posHeader= (
         <div style={{marginLeft:-8}}>
@@ -249,10 +248,10 @@ function ObjectIDCol({objectCol, style={},cols, objectKey, openKey, labelStyle,
 
     return (
         <div style={{margin: '5px 0 0 0',...style}}>
-            <div style={{display:'flex'}}>
-                <div style={{width:140, marginTop:10, whiteSpace:'nowrap', ...labelStyle}}>
+            <Stack {...{direction:'row', spacing:1}}>
+                <Typography sx={{width:'14rem', pt:1, whiteSpace:'nowrap'}} component='div'>
                     {headerTitle}
-                </div>
+                </Typography>
                 <FieldGroupCollapsible header={posHeader} headerStyle={{paddingLeft:0}} contentStyle={{marginLeft:4}}
                                        initialState={{value:'open'}} fieldKey={openKey}>
                     {openPreMessage && <div style={{padding:'0 0 10px 0'}}>
@@ -260,10 +259,9 @@ function ObjectIDCol({objectCol, style={},cols, objectKey, openKey, labelStyle,
                     </div>}
                     <ColumnFld fieldKey={objectKey} cols={cols}
                                name='Object ID Column'  // label that appears in column chooser
-                               inputStyle={{overflow:'auto', height:12, width: 100}}
-                               tooltip={'Object ID Column'}
-                               label='Object ID:'
-                               labelWidth={62}
+                               tooltip='Object ID Column'
+                               label='Object ID'
+                               placeholder='choose object id column'
                                validator={getColValidator(cols, true, false)}
                                colTblId={colTblId}
                                onSearchClicked= {() => {
@@ -274,7 +272,7 @@ function ObjectIDCol({objectCol, style={},cols, objectKey, openKey, labelStyle,
                     />
                 </FieldGroupCollapsible>
 
-            </div>
+            </Stack>
         </div>
     );
 }

@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box, Stack} from '@mui/joy';
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {pick} from 'lodash';
@@ -24,7 +25,7 @@ import {usePinnedChartInfo, PinnedChartPanel, PINNED_VIEWER_ID, BadgeLabel} from
 import {allowPinnedCharts} from '../../charts/ChartUtil.js';
 import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
 
-const stateKeys= ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'images'];
+const stateKeys= ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'images', 'coverageSide'];
 const LEFT= 'LEFT';
 const RIGHT= 'RIGHT';
 const triViewKey= 'images | tables | xyplots';
@@ -33,9 +34,9 @@ const imgXyKey= 'images | xyplots';
 const tblXyKey= 'tables | xyplots';
 
 export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButtons, rightButtons,
-                                      coverageSide=LEFT, initLoadingMessage, initLoadCompleted} ) => {
+                                      initLoadingMessage, initLoadCompleted} ) => {
     const state= useStoreConnector(() => pick(getLayouInfo(), stateKeys));
-    const {title, mode, showTables, showImages, showXyPlots, images={}} = state;
+    const {title, mode, showTables, showImages, showXyPlots, images={}, coverageSide=LEFT} = state;
     const {expanded, standard, closeable} = mode ?? {};
     const content = {};
     const {showMeta, showFits, dataProductTableId, showCoverage} = images;
@@ -59,17 +60,18 @@ export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButt
             dataProductTableId, coverageRight, imagesWithCharts}}/>);
         if (expanded===LO_VIEW.xyPlots) content.xyPlot= content.rightSide;
     }
-    if (showTables) {
+    const renderTables= showTables && currLayoutMode?.includes('tables');
+    if (renderTables) {
         content.tables = (<TablesContainer key='res-tables'
                                            mode='both'
                                            closeable={closeable}
                                            expandedMode={expanded===LO_VIEW.tables}/>);
     }
 
-    const isTriView = (showImages||coverageLeft) && (showXyPlots||coverageRight) && showTables;
+    const isTriViewPossible = (showImages||coverageLeft) && (showXyPlots||coverageRight) && showTables;
     return (
         <ResultsPanel {...{key:'results', title,
-                      searchDesc:searchDesc({showViewsSwitch, showImages, isTriView, leftButtons, centerButtons,
+                      searchDesc:searchDesc({showViewsSwitch, showImages, isTriViewPossible, leftButtons, centerButtons,
                           rightButtons, showCoverage:images.showCoverage, coverageSide, currLayoutMode}),
                       expanded, standard}}
                       { ...content} />
@@ -112,7 +114,7 @@ function RightSide({expanded, closeable, showXyPlots, showMeta, showFits, dataPr
     const defaultSelected= coverageRight ? 'coverage' : showXyPlots ? 'activeCharts' : 'fits';
     const key= `${showXyPlots&&'xyplot'}-${cov&&'cov'}-${meta&&'meta'}-${fits&&'fits'}`;
     return(
-        <Tabs {...{key, style, onTabSelect, defaultSelected, useFlex:true, resizable:true}}>
+        <Tabs {...{key, style, onTabSelect, defaultSelected, slotProps:{panel:{sx:{p:0}}}} } >
             {showXyPlots && makeActiveChartTab({activeLabel, chartExpandedMode, closeable, asTab:true}) }
             {showPinnedTab && makePinnedChartTab({pinnedLabel, chartExpandedMode, closeable, asTab:true}) }
             {cov && makeCoverageTab()}
@@ -153,7 +155,7 @@ function getCovSideOptions(currLayoutMode, showImages) {
 }
 
 
-function searchDesc({showViewsSwitch, showImages, isTriView, showCoverage, leftButtons, centerButtons, rightButtons, coverageSide, currLayoutMode}) {
+function searchDesc({showViewsSwitch, showImages, isTriViewPossible, showCoverage, leftButtons, centerButtons, rightButtons, coverageSide, currLayoutMode}) {
 
     const hasContent = showViewsSwitch || leftButtons || centerButtons || rightButtons;
     if (!hasContent) return  <div/>;
@@ -167,47 +169,51 @@ function searchDesc({showViewsSwitch, showImages, isTriView, showCoverage, leftB
     ];
 
     return (
-        <div style={{display: 'inline-flex', justifyContent: 'space-between', marginBottom:coverageSide===RIGHT ? -1 : -1}}>
-            <div>
+        <Stack {...{direction: 'row', justifyContent: 'space-between', marginBottom:'-1px'}}>
+            <Stack direction='row'>
                 {leftButtons?.map( (el) => el()) }
-            </div>
-            <div>
+            </Stack>
+            <Stack direction='row'>
                 {centerButtons?.map( (el) => el()) }
-            </div>
-            <div style={{display: 'inline-flex'}}>
+            </Stack>
+            <Stack direction='row'>
                 {rightButtons?.map( (el) => el()) }
-                <div style={{width: 20}}/>
+                <Box sx={{width: 1, px:1}}/>
                 {showViewsSwitch &&
-                    <div style={ {display: 'inline-block', float: 'right'} }>
+                    <Stack direction='row' spacing={2}>
                         {showCoverage && currLayoutMode!==tblXyKey &&
                             <RadioGroupInputFieldView {...{
-                                wrapperStyle:{display:'inline-flex', alignItems:'center'},
-                                options:covSideOptions, value:coverageSide, labelWidth:60,
-                                labelStyle:{fontSize:'larger'}, label:'Coverage: ',
+                                sx:{display:'inline-flex', alignItems:'center'},
+                                options:covSideOptions, value:coverageSide,
+                                label:'Coverage: ',
                                 buttonGroup:true, inline:true,
+                                orientation:'horizontal',
                                 onChange:(ev) => dispatchUpdateLayoutInfo({coverageSide:ev.target.value}),
                             }} /> }
-                        {isTriView &&
+                        {isTriViewPossible &&
                             <RadioGroupInputFieldView
                                 {...{
-                                    wrapperStyle:{paddingLeft: 30, width:320, display:'inline-flex', alignItems:'center'},
-                                    options, value:currLayoutMode, labelWidth:43,
-                                    labelStyle:{fontSize:'larger'}, label:'Layout: ',
+                                    sx:{pl: 1, width:420, display:'inline-flex', alignItems:'center'},
+                                    options, value:currLayoutMode,
+                                    label:'Layout: ',
+                                    orientation:'horizontal',
                                     buttonGroup:true, inline:true,
                                     onChange:(ev) => dispatchSetLayoutMode(LO_MODE.standard, ev.target.value),
                                 }} />
                         }
-                    </div>
+                    </Stack>
                 }
-            </div>
-        </div>
+            </Stack>
+        </Stack>
     );
 }
 
 function makePropertySheetTab() {
     return (
         <Tab key='rowDetails' name='Details' removable={false} id='rowDetails'>
-            <PropertySheetAsTable/>
+            <PropertySheetAsTable
+                slotProps={{ toolbar:{variant:'plain'}, tablePanel:{variant: 'plain'} }}
+            />
         </Tab>
     );
 }

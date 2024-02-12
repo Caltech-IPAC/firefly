@@ -3,6 +3,7 @@
  */
 
 
+import {Stack} from '@mui/joy';
 import {isEmpty} from 'lodash';
 import React from 'react';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
@@ -13,7 +14,8 @@ import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {formatWorldPt, formatWorldPtToString} from '../visualize/ui/WorldPtFormat';
 import {getActivePlotView} from '../visualize/PlotViewUtil';
 import {visRoot} from '../visualize/ImagePlotCntlr';
-import {FixedPtControl} from './CatalogUI';
+
+import {FixedPtControl} from './FixedPtControl.jsx';
 
 const ID= 'FIXED_MARKER';
 const TYPE_ID= 'FIXED_MARKER_TYPE';
@@ -50,10 +52,10 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 
 function getTitle(wp) {
     return (
-        <div style={{display:'inline-flex', alignItems:'center', width: 100}} title={formatWorldPtToString(wp)}>
+        <Stack {...{direction:'row', alignItems:'center', width: 100}} title={formatWorldPtToString(wp)}>
             {formatWorldPt(wp,5,false)}
-            {<FixedPtControl wp={wp} pv={getActivePlotView(visRoot())} style={{paddingLeft:7}}/>}
-        </div>
+            {<FixedPtControl wp={wp} pv={getActivePlotView(visRoot())} sx={{pl:7}}/>}
+        </Stack>
     );
 }
 

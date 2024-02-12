@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Sheet, Stack, Typography} from '@mui/joy';
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 
@@ -40,26 +41,30 @@ const useSourceMOC = 'useSourceMOC';
 let activeHipsTblId;
 let activeGroupKey;
 
-export const HiPSImageSelect= ({style={}, groupKey}) => {
+export const HiPSImageSelect= ({groupKey}) => {
     const imageSource = useStoreConnector(() => getFieldVal(groupKey,'imageSource'));
     activeGroupKey = groupKey;
 
     if (imageSource === 'url') {
         return (
-            <div className='ImageSearch__section' style={style}>
-                <div className='ImageSearch__section--title'>4. Enter URL</div>
-                <ValidationField labelWidth={150} style={{width: 475}} fieldKey='txURL' />
-            </div>
+            <Sheet variant='outlined' sx={{py:1, width:'100%', display:'flex', flexDirection:'column', flex:'1 1 auto'}}>
+                <Stack direction='row' spacing={2}>
+                    <Typography {...{px:1, color:'primary', level:'title-md'}}>4. Enter URL</Typography>
+                    <ValidationField labelWidth={150} sx={{width: .8}} fieldKey='txURL' />
+                </Stack>
+            </Sheet>
         );
     } else {
         return (
-            <div className='ImageSearch__section hips-table' style={style}>
-                <div className='ImageSearch__section--title' style={{display: 'inline-flex', width: '100%', boxSizing: 'border-box'}}>
-                    <div style={{width: 175}}>4. Select Data Set</div>
-                    <SourceSelect/>
-                </div>
-                <HiPSSurveyTable groupKey={groupKey}/>
-            </div>
+            <Sheet variant='outlined' sx={{mt:1/2, py:1, width:'100%', display:'flex', flexDirection:'column', flex:'1 1 auto', borderRadius:'5px'}}>
+                <Stack {...{flexGrow:1, spacing:1, height:'100%', width:'100%'}}>
+                    <Stack {...{direction:'row', spacing:2, alignItems:'center'}}>
+                        <Typography {...{px:1, color:'primary', level:'title-md'}}>4. Select Data Set</Typography>
+                        <SourceSelect/>
+                    </Stack>
+                    <HiPSSurveyTable groupKey={groupKey}/>
+                </Stack>
+            </Sheet>
         );
     }
 };
@@ -119,10 +124,10 @@ export function showHiPSSurveysPopup(pv, moc= false) {
                         <FieldGroupTabs initialState= {{ value:'search' }} fieldKey='mocTabs'
                                             style={{minWidth:715, minHeight:500, width:'100%', height: '100%'}}>
                             <Tab name='Search' id='search'>
-                                <div className='ImageSearch__HipsPopup' style={{padding: '5px 0px 0px 0px'}}>
+                                <Stack {...{py:1, px:1/2, spacing: 1, resize:'both', width:1, height:1, minWidth:715, minHeight:500}}>
                                     <SourceSelect moc={moc}/>
                                     <HiPSSurveyTable groupKey={groupKey} moc={moc}/>
-                                </div>
+                                </Stack>
                             </Tab>
 
                             <Tab name='Use my MOC' id='uploadMoc'>
@@ -133,10 +138,10 @@ export function showHiPSSurveysPopup(pv, moc= false) {
                         </FieldGroupTabs>}
 
                     {!moc &&
-                        <div className='ImageSearch__HipsPopup' style={{minWidth:715, minHeight:500}}>
+                        <Stack {...{spacing: 1, resize:'both', width:1, height:1, minWidth:715, minHeight:500}}>
                             <SourceSelect moc={moc}/>
                             <HiPSSurveyTable groupKey={groupKey} moc={moc}/>
-                        </div>}
+                        </Stack>}
                 </FormPanel>
             </FieldGroup>
         </PopupPanel>
@@ -168,19 +173,6 @@ function SourceSelect({moc=false}) {
                                  options={sourceOptions}/>
     );
 }
-
-function SelectUrl({style}) {
-    return (
-        <div className='ImageSearch__section' style={style} title={'enter url of HiPS image'}>
-            <div className='ImageSearch__section--title'>Enter URL</div>
-            <ValidationField labelWidth={150} style={{width: 475}} fieldKey='txURL' />
-        </div>
-    );
-}
-
-SelectUrl.propTypes = {
-    style: PropTypes.object
-};
 
 /**
  * create webPlotRequest for HiPS image request

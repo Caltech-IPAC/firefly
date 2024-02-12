@@ -1,3 +1,4 @@
+import {Box, Chip, FormLabel, Stack, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 import {ColsShape, getColValidator} from '../../charts/ui/ColumnOrExpression.jsx';
@@ -28,7 +29,6 @@ import {showUploadTableChooser} from '../UploadTableChooser.js';
 import {
     getAsEntryForTableName, getColumnAttribute, getTapServices, makeUploadSchema, maybeQuote, tapHelpId
 } from './TapUtil.js';
-import InputFieldLabel from 'firefly/ui/InputFieldLabel';
 import {CenterColumns, UploadTableSelector} from 'firefly/ui/UploadTableSelector';
 
 const CenterLonColumns = 'centerLonColumns';
@@ -45,12 +45,12 @@ const SpatialRegOp= 'spatialRegionOperation';
 const SINGLE= 'single';
 const MULTI= 'multi';
 
-const SpatialLabelSpatial = LableSaptail + 45 /* padding of target */ - 4 /* padding of label */;
+const SpatialLabelSpatial = '6em';
 const ICRS = 'ICRS';
 
 const TAB_COLUMNS_MSG='These are the recommended columns to use for a spatial search on this table; changing them could cause the query to fail';
 
-const spacialTypeOps = [{label: 'Single Shape', value: SINGLE}, {label: 'Multi-object', value: MULTI}];
+const spacialTypeOps = [{label: 'Single Object', value: SINGLE}, {label: 'Multi-object', value: MULTI, tooltip:'for uploaded table'}];
 
 
 function formCenterColumns(columnsTable) {
@@ -68,7 +68,7 @@ const fldListAry= [ServerParams.USER_TARGET_WORLD_PT,SpatialRegOp,SPATIAL_TYPE,
             SpatialMethod,RadiusSize, PolygonCorners,CenterLonColumns,CenterLatColumns,
     UploadCenterLonColumns, UploadCenterLatColumns, cornerCalcType];
 
-export function SpatialSearch({cols, serviceUrl, serviceLabel, columnsModel, tableName, initArgs={}, obsCoreEnabled:requestObsCore, capabilities}) {
+export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel, tableName, initArgs={}, obsCoreEnabled:requestObsCore, capabilities}) {
     const {searchParams={}}= initArgs ?? {};
     const obsCoreEnabled= requestObsCore && canSupportAtLeastOneObsCoreOption(capabilities);
     const panelTitle = !obsCoreEnabled ? Spatial : 'Location';
@@ -177,27 +177,26 @@ export function SpatialSearch({cols, serviceUrl, serviceLabel, columnsModel, tab
     }, [constraintResult]);
 
     return (
-        <CollapsibleCheckHeader title={panelTitle} helpID={tapHelpId(panelPrefix)}
+        <CollapsibleCheckHeader sx={sx} title={panelTitle} helpID={tapHelpId(panelPrefix)}
                                 message={constraintResult?.simpleError ?? ''}
                                 initialStateOpen={true} initialStateChecked={true}>
-            <div style={{marginTop: 5}}>
+            <Stack mt='.25' spacing={1}>
                 <ForceFieldGroupValid forceValid={!checkHeaderCtl.isPanelActive()}>
 
                     {!canUpload && (searchParams?.uploadInfo || uploadInfo) &&
                         <div>
-                            {<InputFieldLabel label={'Spatial Type:'} tooltip={'tooltip'} labelWidth={SpatialLabelSpatial}/>}
+                            {<FormLabel>Spatial Type</FormLabel>}
                             {warningMsg(`Single Shape selected: ${serviceLabel || 'This service'} does not support upload`)}
                         </div>
 
                     }
                     {canUpload &&
-                        <RadioGroupInputField
-                            fieldKey={SPATIAL_TYPE} options={spacialTypeOps} alignment={'horizontal'}
-                            wrapperStyle={{marginTop: 5}}
-                            label='Spatial type:'
-                            tooltip={'Choose spatial type: either a single area (cone/polygon) or multi-position using an uploaded table'}
-                            labelWidth={SpatialLabelSpatial}
-                            initialState={{value: SINGLE}}
+                        <RadioGroupInputField {...{
+                            fieldKey:SPATIAL_TYPE, options:spacialTypeOps , initialState:{value: SINGLE},
+                            orientation:'horizontal', label:'Spatial Type:',
+                            tooltip:(<span>Choose spatial type: either a single area (cone/polygon)<br/> or multi-position using an uploaded table</span>),
+                            sx:{'label' : {width: SpatialLabelSpatial}},
+                        }}
                         /> }
                     <SpatialSearchLayout {...{obsCoreEnabled, initArgs, uploadInfo, setUploadInfo,
                         hipsUrl, centerWP, fovDeg, capabilities}} />
@@ -208,7 +207,7 @@ export function SpatialSearch({cols, serviceUrl, serviceLabel, columnsModel, tab
                             openPreMessage:posOpenMsg,
                             cols, lonKey:CenterLonColumns, latKey:CenterLatColumns}} />}
                 </ForceFieldGroupValid>
-            </div>
+            </Stack>
             <DebugObsCore {...{constraintResult}}/>
         </CollapsibleCheckHeader>
     );
@@ -271,35 +270,35 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
     switch (layoutMode) {
         case OBSCORE_SINGLE_LAYOUT:
             return (
-                <div {...{style}}>
+                <Stack spacing={1} direction='column'>
                     <RegionOpField {...{initArgs, capabilities}}/>
                     {!containsPoint && <ConeOrAreaField/>}
                     { (isCone || containsPoint) && <TargetPanelForSpacial {...{hipsUrl, centerWP, fovDeg}}/>}
                     {!containsPoint && radiusOrPolygon}
-                </div>
+                </Stack>
             );
         case OBSCORE_UPLOAD_LAYOUT:
             return (
-                <div {...{style}}>
+                <Stack spacing={1} direction='column'>
                     <RegionOpField {...{initArgs, capabilities}}/>
                     <UploadTableSelector {...{uploadInfo, setUploadInfo}}/>
                     {!containsPoint && radiusOrPolygon}
-                </div>
+                </Stack>
             );
         case NORMAL_SINGLE_LAYOUT:
             return (
-                <div {...{style}}>
+                <Stack spacing={1} direction='column'>
                     <ConeOrAreaField/>
                     {isCone && <TargetPanelForSpacial {...{hipsUrl, centerWP, fovDeg}}/>}
                     {radiusOrPolygon}
-                </div>
+                </Stack>
             );
         case NORMAL_UPLOAD_LAYOUT:
             return (
-                <div {...{style}}>
+                <Stack spacing={1} direction='column'>
                     <UploadTableSelector {...{uploadInfo, setUploadInfo}}/>
                     {radiusField}
-                </div>
+                </Stack>
             );
     }
 };
@@ -307,12 +306,13 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
 
 const ConeOrAreaField= () => (
     <div style={{display: 'flex', flexDirection: 'column'}}>
-        <ListBoxInputField
-            fieldKey={SpatialMethod}
-            options={[{label:'Cone', value:'Cone'}, {label: 'Polygon', value: 'Polygon'}]}
-            wrapperStyle={{marginRight: '15px', padding: '8px 0 5px 0'}} multiple={false}
-            tooltip={'Select spatial search method'} label={'Shape Type:'} labelWidth={SpatialLabelSpatial}
-            initialState={{ value: 'Cone' }} />
+        <RadioGroupInputField {...{
+            fieldKey: SpatialMethod, orientation:'horizontal', label:'Shape Type:',
+            tooltip: 'Select spatial search method',
+            options:[{label:'Cone Shape', value:'Cone'}, {label: 'Polygon Shape', value: 'Polygon'}],
+            initialState:{ value: 'Cone' },
+            sx:{'label' : {width: SpatialLabelSpatial}},
+        }} />
     </div>
 );
 
@@ -365,7 +365,7 @@ const RegionOpField= ({initArgs, capabilities}) => {
     return (
         <div style={{marginTop: '5px'}}>
             <ListBoxInputField
-                fieldKey={SpatialRegOp} multiple={false} label={'Query Type:'} labelWidth={LableSaptail+40}
+                fieldKey={SpatialRegOp} multiple={false} label={'Query Type'} labelWidth={LableSaptail+40}
                 options={ops} initialState={{ value: defVal}}
             />
         </div>
@@ -376,23 +376,20 @@ function TargetPanelForSpacial({hasRadius=true,
                                    hipsUrl= getAppOptions().coverage?.hipsSourceURL  ??  'ivo://CDS/P/2MASS/color',
                                    centerWP, fovDeg=240}) {
     return (
-        <div style={{height: 70, display:'flex', justifyContent: 'flex-start', alignItems: 'center', marginTop: '5px'}}>
-            <VisualTargetPanel labelWidth={LableSaptail} feedbackStyle={{height: 40, marginLeft:105, width:460}}
-                               sizeKey={hasRadius? RadiusSize : undefined}
-                               hipsDisplayKey={fovDeg}
-                               hipsUrl={hipsUrl} hipsFOVInDeg={fovDeg} centerPt={parseWorldPt(centerWP)} />
-        </div>
+        <VisualTargetPanel labelWidth={LableSaptail} feedbackStyle={{height: 40, marginLeft:105, width:460}}
+                           sizeKey={hasRadius? RadiusSize : undefined}
+                           hipsDisplayKey={fovDeg}
+                           hipsUrl={hipsUrl} hipsFOVInDeg={fovDeg} centerPt={parseWorldPt(centerWP)} />
     );
 }
 
-function RadiusField({label = 'Radius:', radiusInArcSec=undefined }) {
+function RadiusField({label = 'Radius', radiusInArcSec=undefined }) {
     const marginSides = 5;
     return (
         <SizeInputFields fieldKey={RadiusSize} showFeedback={true}
                          style={{margin: `${marginSides}px 0px ${marginSides}px 0px`}}
                          initialState={{
                              unit: 'arcsec',
-                             labelWidth : SpatialLabelSpatial - 1 /* box border width */,
                              nullAllowed: true,
                              value: `${(radiusInArcSec||10)/3600}`,
                              min: 1 / 3600,

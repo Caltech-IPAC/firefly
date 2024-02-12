@@ -1,3 +1,4 @@
+import {Button, Divider, Stack} from '@mui/joy';
 import React from 'react';
 import {array, object, string} from 'prop-types';
 import {
@@ -7,8 +8,8 @@ import {
 import {DPtypes} from '../../../metaConvert/DataProductsType.js';
 import {SingleColumnMenu} from '../../../ui/DropDownMenu.jsx';
 import {DropDownToolbarButton} from '../../../ui/DropDownToolbarButton.jsx';
-import {TextButton} from '../../../ui/TextButton.jsx';
 import {ToolbarButton} from '../../../ui/ToolbarButton.jsx';
+import {PinButton} from '../Buttons.jsx';
 
 /**
  *
@@ -37,36 +38,47 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
                       analysisActivateFunc, showRedoSearchButton, activeMenuLookupKey,
                       extraction, extractionText}) {
     return (
-        <div style={{display: 'inline-flex', alignItems: 'center', height: 30}}>
+        <Stack {...{direction:'row', alignItems:'center', height: 30}}>
             {!hasMenu ?
                 <div style={{width: 50, height: 1}}/> :
                 <DropDownToolbarButton
-                    text='More' tip='Other data to display' horizontal={true} useDropDownIndicator={true}
-                    style={{paddingRight: 20}}
+                    text='More' tip='Other data to display' useDropDownIndicator={true}
+                    sx={{pr: 2}}
                     dropDown={<OtherOptionsDropDown {...{menu, dpId, activeMenuLookupKey}} />}
-                />}
+                />
+                }
 
             {hasFileMenu &&
-                <DropDownToolbarButton
-                    text='File Contents' tip='Other data in file' horizontal={true} useDropDownIndicator={true}
-                    style={{paddingRight: 20}}
-                    dropDown={<FileMenuDropDown {...{fileMenu, dpId}} />}/>
+                <Stack direction='row'>
+                    {hasMenu && <Divider orientation='vertical'/>}
+                    <DropDownToolbarButton
+                        text='File Contents' tip='Other data in file' useDropDownIndicator={true}
+                        style={{pr: 2}}
+                        dropDown={<FileMenuDropDown {...{fileMenu, dpId}} />}/>
+                </Stack>
             }
             {extraction &&
-                <TextButton style={{lineHeight: '18px', height: 18}} title={extractionText || 'Pin'}
-                            onClick={() => extraction()}>{extractionText || 'Pin'}</TextButton>}
+                <Stack direction='row'>
+                    {hasMenu||hasFileMenu && <Divider orientation='vertical'/>}
+                    <PinButton onClick={() => extraction()} tip={extractionText || 'Pin'}
+                    />
+                </Stack>
+                }
             {showRedoSearchButton && analysisActivateFunc &&
-                <ToolbarButton
-                    text='Redo Search' tip='Redo Search' horizontal={true}
-                    onClick={() => {
-                        dispatchSetSearchParams({dpId, activeMenuLookupKey, menuKey, params: undefined});
-                        dispatchUpdateDataProducts(dpId, {
-                            ...dataProductsState, allowsInput: true, name: originalTitle,
-                            displayType: DPtypes.ANALYZE, activate: analysisActivateFunc
-                        });
-                    }}/>
+                <Stack direction='row'>
+                    {hasMenu||hasFileMenu||extraction && <Divider orientation='vertical'/>}
+                    <ToolbarButton
+                        text='Redo Search' tip='Redo Search'
+                        onClick={() => {
+                            dispatchSetSearchParams({dpId, activeMenuLookupKey, menuKey, params: undefined});
+                            dispatchUpdateDataProducts(dpId, {
+                                ...dataProductsState, allowsInput: true, name: originalTitle,
+                                displayType: DPtypes.ANALYZE, activate: analysisActivateFunc
+                            });
+                        }}/>
+                </Stack>
             }
-        </div>
+        </Stack>
     );
 
 }

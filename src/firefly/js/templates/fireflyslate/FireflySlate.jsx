@@ -29,6 +29,7 @@ import {startLayoutManager} from './FireflySlateManager.js';
 import {GridLayoutPanel} from './GridLayoutPanel.jsx';
 
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
+import App from 'firefly/ui/App.jsx';
 
 
 function getNextState(prevS, renderTreeId) {
@@ -61,13 +62,13 @@ function getNextState(prevS, renderTreeId) {
  * @param props
  *
  */
-export const FireflySlate= memo(( {initLoadingMessage, appTitle= 'Firefly', appIcon=FFTOOLS_ICO, altAppIcon,
-                                      bannerLeftStyle, bannerMiddleStyle,
-                                      footer, style, renderTreeId, menu:menuItems, showBgMonitor=false}) => {
+export const FireflySlate= memo(( {initLoadingMessage, appTitle= 'Firefly', appIcon=FFTOOLS_ICO,
+                                      renderTreeId, menu:menuItems, showBgMonitor=false}) => {
     const state= useStoreConnector( (prevState) => getNextState(prevState,renderTreeId));
-    const {isReady, mode={}, gridView= [], gridColumns=1, menu={}, dropDown={}, layoutInfo, initLoadCompleted, dropdownPanels} = state;
+
+
+    const {mode={}, gridView= [], gridColumns=1, menu={}, layoutInfo, initLoadCompleted, ...appProps} = state;
     const {expanded} = mode;
-    const {visible, view} = dropDown;
 
     useEffect(() => {
         startTTFeatureWatchers();
@@ -76,21 +77,12 @@ export const FireflySlate= memo(( {initLoadingMessage, appTitle= 'Firefly', appI
         return () => void (stopLayoutManager());
     },[]);
 
-    if (!isReady) return (<div style={{top: 0}} className='loading-mask'/>);
     if (showBgMonitor) menu.showBgMonitor= showBgMonitor;
     return (
         <RenderTreeIdCtx.Provider value={{renderTreeId}}>
-            <div id='App' className='rootStyle' style={style}>
-                <header>
-                    <BannerSection {...{menu, appTitle, appIcon, altAppIcon, bannerLeftStyle, bannerMiddleStyle}}/>
-                    <div id={warningDivId} data-decor='full' className='warning-div center'/>
-                    <DropDownContainer key='dropdown' footer={footer} visible={!!visible}
-                        selected={view} {...{dropdownPanels} } />
-                </header>
-                <main style={{height:'100%'}}>
-                    {mainView({expanded, gridView, gridColumns, initLoadingMessage, initLoadCompleted})}
-                </main>
-            </div>
+            <App {...{enableVersionDialog:true, appTitle, appIcon, ...appProps}}>
+                {mainView({expanded, gridView, gridColumns, initLoadingMessage, initLoadCompleted})}
+            </App>
         </RenderTreeIdCtx.Provider>
     );
 });
@@ -164,10 +156,6 @@ const EmptyMessage= () => (
             </div>
         </div> );
 
-const BannerSection= ({menu, appIcon, ...rest}) => (
-    <Banner {...{key:'banner', appIcon, enableVersionDialog:true, ...rest,
-        menu: <Menu menu={menu}/>,
-    }}/> );
 
 function onReady(menuItems, layoutInfo={}) {
     if (menuItems) dispatchSetMenu({menuItems});

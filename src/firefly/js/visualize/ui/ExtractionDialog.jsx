@@ -4,6 +4,7 @@
 
 
 
+import {Box, Card, Divider, Stack, Tooltip, Typography} from '@mui/joy';
 import React, {useEffect, useState} from 'react';
 import sizeMe from 'react-sizeme';
 import {downloadChart, PlotlyWrapper} from '../../charts/ui/PlotlyWrapper.jsx';
@@ -294,8 +295,8 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
             hasFloatingData:hasFloatingData(plot),
             startUpHelp: (
                 <div>
-                    <div> Click on an image to extract a point, continue clicking to extract more points. </div>
-                    {pvCnt>1 && <div style={{marginTop:25}}> Shift-click will change the selected image without extracting points. </div>}
+                    <Typography>Click on an image to extract a point, continue clicking to extract more points. </Typography>
+                    {pvCnt>1 && <Typography {...{mt:3}}>Shift-click will change the selected image without extracting points. </Typography>}
                 </div>
             ),
             afterRedraw: (chart,pl) => afterPointsChartRedraw(pv,chart,pl,chartXAxis, imPtAry),
@@ -362,10 +363,10 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
             allRelatedHDUS, setAllRelatedHDUS, pointSize, setPointSize, combineOp, setCombineOp, canCreateExtractionTable,
             plotlyDivStyle, plotlyData: extractionData&&plotlyData, plotlyLayout, hasFloatingData:hasFloatingData(plot),
             startUpHelp: (
-                <div>
-                    <div> Draw line on image to extract point on line and show chart. </div>
-                    {pvCnt>1 && <div style={{marginTop:25}}> Shift-click will change the selected image without selecting a new line. </div>}
-                </div>
+                <Box>
+                    <Typography> Draw line on image to extract point on line and show chart. </Typography>
+                    {pvCnt>1 && <Typography {...{mt:3}}> Shift-click will change the selected image without selecting a new line. </Typography>}
+                </Box>
             ),
             afterRedraw: (chart,pl) => afterLineChartRedraw(pv,chart,pl,imPtAry,makeImagePt(x1,y1), makeImagePt(x2,y2)),
             callKeepExtraction: (download, doOverlay) =>
@@ -435,9 +436,12 @@ function ZAxisExtractionPanel({canCreateExtractionTable, pv}) {
             allRelatedHDUS, setAllRelatedHDUS, pointSize, setPointSize, combineOp, setCombineOp,
             hasFloatingData:hasFloatingData(plot),
             plotlyDivStyle, plotlyData, plotlyLayout, canCreateExtractionTable,
-            startUpHelp: isImageCube(plot) ?
-                'Click on a pixel to extract data from all planes of the cube' :
-                'Please choose a cube to extract z-axis data',
+            startUpHelp:
+                (<Typography>
+                    {isImageCube(plot) ?
+                    'Click on a pixel to extract data from all planes of the cube' :
+                    'Please choose a cube to extract z-axis data'}
+                </Typography>),
             afterRedraw: (chart,pl) => afterZAxisChartRedraw(makeImagePt(x,y), pv,chart,pl),
             callKeepExtraction: (download, doOverlay) =>
                 keepZAxisExtraction(makeImagePt(x,y), pv, plot, plot?.plotState.getWorkingFitsFileStr(),
@@ -456,38 +460,34 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
                                  bottomUI, combineOp, setCombineOp, hasFloatingData}) {
 
     return (
-        <div style={{
-            padding: 3, display:'flex', flexDirection:'column',
-            alignItems:'center', resize:'both', overflow: 'hidden', zIndex:1}}>
-            <div style={{
-                display:'flex', flexDirection:'row', height: 30, maxHeight:30}}>
-                <div style={{margin: '2px 0 10px 0'}}>
-                    <span title={pointSizeTip}> Aperture (Values will be combined)</span>
-                    <ListBoxInputFieldView
-                        inline={true} value={pointSize} onChange={(ev) => setPointSize(ev.target.value)}
-                        labelWidth={10} label={' '} tooltip={ pointSizeTip} options={sizeOp} multiple={false} />
-                </div>
-                <div style={{margin: '2px 0 10px 0', width:'8em'}}>
-                    {pointSize>1 && <ListBoxInputFieldView
-                        inline={true} value={combineOp} onChange={(ev) => setCombineOp(ev.target.value)}
-                        labelWidth={10} label={' '} tooltip={pointSizeTip}
-                        options={hasFloatingData?combineOps:combineIntOps}
-                        multiple={false} />}
-                </div>
-            </div>
-            <div style={{minWidth:440, minHeight:200, width:'100%', height:'100%', display:'flex',
-                flex: '1 1 auto', boxSizing: 'border-box',
-                border: plotlyData ? '1px solid rgba(0,0,0,.3' : 'none' }}>
+        <Stack {...{p:.5, alignItems:'stretch', overflow: 'hidden', zIndex:1, direction:'column',
+            sx:{'& .ff-CompleteButton': {whiteSpace:'nowrap'}, resize:'both'} }}>
+            <Stack {...{ spacing:1, alignItems:'center', alignSelf:'center', direction:'row', height: 30, maxHeight:30, mb:.5}}>
+                <Tooltip title={pointSizeTip}>
+                    <Typography >Aperture (Values will be combined)</Typography>
+                </Tooltip>
+                <ListBoxInputFieldView
+                    inline={true} value={pointSize} onChange={(ev,newVal) => setPointSize(newVal)}
+                    labelWidth={10} tooltip={ pointSizeTip} options={sizeOp} multiple={false} />
+                {pointSize>1 && <ListBoxInputFieldView
+                    inline={true} value={combineOp} onChange={(ev,newVal) => setCombineOp(newVal)}
+                    labelWidth={10} tooltip={pointSizeTip}
+                    options={hasFloatingData?combineOps:combineIntOps}
+                    multiple={false} />}
+            </Stack>
+            {plotlyData && <Divider sx={{mt:.5}}/>}
+            <Stack {...{minWidth:440, minHeight:200, direction:'row', sx:{flex: '1 1 auto'}}}>
                 {plotlyData ?
                     <ExtractionChartResizeable {...{plotlyDivStyle, plotlyData, plotlyLayout,afterRedraw}} /> :
-                    <div style={{paddingTop:40, textAlign:'center', fontSize:'large', margin:10}}>{startUpHelp}</div>
+                    <Box sx={{pt:6, textAlign:'center', fontSize:'large', m:1}}>{startUpHelp}</Box>
                 }
-            </div>
+            </Stack>
+            {plotlyData && <Divider sx={{mb:.5}}/>}
             {bottomUI && <div>{bottomUI} </div>}
-            <div style={{
-                textAlign:'center', alignSelf: 'stretch', flexDirection:'row',  display:'flex',
-                justifyContent:'space-between', padding: '15px 15px 7px 8px' }}>
-                <div style={{display:'flex', justifyContent:'space-between'}}>
+            <Stack {...{
+                textAlign:'center', alignSelf: 'stretch', direction:'row',
+                justifyContent:'space-between', pt:2, pl:2, pb:1, pr: 1}}>
+                <Stack {...{direction:'row', justifyContent:'space-between'}}>
                     {plotlyData && canCreateExtractionTable && !allowPinnedCharts() &&
                     <CompleteButton style={{paddingLeft: 15}} text='Pin Table' onSuccess={()=> callKeepExtraction(false,true)} />}
                     {plotlyData && canCreateExtractionTable && allowPinnedCharts() &&
@@ -499,13 +499,13 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
                             });
                         }} />}
                     {plotlyData &&
-                    <CompleteButton style={{paddingLeft: 15}} text='Download as Table' onSuccess={()=> callKeepExtraction(true,false)}/>}
+                    <CompleteButton sx={{pl: 2}} primary={false} text='Download as Table' onSuccess={()=> callKeepExtraction(true,false)}/>}
                     {plotlyData &&
-                    <CompleteButton style={{paddingLeft: 15}} text='Download Chart' onSuccess={()=> downloadChart(CHART_ID)}/>}
-                </div>
-                <HelpIcon helpId={'visualization.extraction'}/>
-            </div>
-        </div>
+                    <CompleteButton sx={{pl: 2}} primary={false} text='Download Chart' onSuccess={()=> downloadChart(CHART_ID)}/>}
+                </Stack>
+                <HelpIcon helpId={'visualization.extraction'} style={{paddingLeft:15}}/>
+            </Stack>
+        </Stack>
     );
 }
 

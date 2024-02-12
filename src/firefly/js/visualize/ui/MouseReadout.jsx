@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Checkbox, Chip, Stack, Switch, Typography} from '@mui/joy';
 import React, {Fragment,memo, useState} from 'react';
 import {number,string,oneOfType,object,func,bool} from 'prop-types';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
@@ -17,31 +18,29 @@ import './MouseReadout.css';
 
 export const MouseReadoutLock= memo(({gArea, gAreaLabel, style={}, lockByClick}) => {
     const s= gArea ? {gridArea:gArea,...style} : style;
+    const label= lockByClick ? 'Click Lock: on' : 'Click Lock: off' ;
     return (
         <React.Fragment>
-            <div style={s} title='Click on an image to lock the display at that point.'>
-                <input type='checkbox' name='aLock' value='lock' checked={lockByClick}
-                       onChange={() => {
-                           dispatchChangePointSelection('mouseReadout', !lockByClick);
-                           dispatchChangeLockByClick(!lockByClick);
-
-                       }}
-                />
-                {!gAreaLabel && <span style={{position:'relative', top:-2}}>Lock by click</span>}
-            </div>
+            <Stack direction='row' style={s} alignSelf='center' title='Click on an image to lock the display at that point.'>
+                <Switch size='sm' endDecorator={gAreaLabel?'':label} checked={lockByClick}
+                          onChange={() => {
+                              dispatchChangePointSelection('mouseReadout', !lockByClick);
+                              dispatchChangeLockByClick(!lockByClick);
+                          }} />
+            </Stack>
             {gAreaLabel &&
-            <span style={
-                {
+            <Typography level='body-sm'
+                sx={ {
                     gridArea: gAreaLabel,
                     position:'relative',
                     whiteSpace:'nowrap',
                     textOverflow: 'ellipsis',
                     overflow:'hidden',
-                    paddingRight:3,
+                    pr:.5,
                     minWidth: 20
                 } }>
-                Lock by click
-            </span>}
+                {label}
+            </Typography>}
         </React.Fragment>
 );
 });
@@ -61,7 +60,7 @@ export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueSt
                                         label='', value='', unit='', copyValue='', prefChangeFunc=undefined, monoFont=false}) => {
     const lS= lArea ? {gridArea:lArea,...baseLS,...labelStyle} : {...baseLS,...labelStyle};
     const vS= vArea ? {gridArea:vArea,...baseVS, ...valueStyle} : {...baseVS,...valueStyle};
-    const cS= cArea ? {gridArea:cArea, overflow:'hidden', height:13} : undefined;
+    const cS= cArea ? {gridArea:cArea, overflow:'hidden', justifySelf:'center'} : undefined;
     const labelClass= prefChangeFunc ? 'mouseReadoutLabel mouseReadoutClickLabel' : 'mouseReadoutLabel';
     const copyTitle= `Copy to clipboard: ${copyValue||value}`;
 
@@ -71,16 +70,20 @@ export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueSt
             <CopyToClipboard style={cS} title={copyTitle} value={copyValue||value} /> : <div style={cS}/>;
     }
 
-    const mStyle= monoFont ? {fontFamily:'monospace', fontSize:'larger'} : {};
+    const mStyle= monoFont ? {fontFamily:'monospace'} : {};
 
     return (
         <Fragment>
-            <div className={labelClass} title={value+''} style={lS} onClick={prefChangeFunc}>{label}</div>
-            <div style={{...vS, ...mStyle}} title={value+''}> {value} </div>
-            <div style={vS} title={value+''}>
+            {
+                prefChangeFunc ?
+                    <Chip variant='soft' color='neutral' title={value+''} sx={{borderRadius:5}} style={lS} onClick={prefChangeFunc}>{label}</Chip> :
+                    <Typography level='body-sm' className={labelClass} title={value+''} style={lS} onClick={prefChangeFunc}>{label}</Typography>
+            }
+            <Typography level='body-sm' color='warning' style={{...vS, ...mStyle}} title={value+''}> {value} </Typography>
+            <Typography level='body-sm' color='warning' style={vS} title={value+''}>
                 <span style={mStyle}> {value}</span>
                 <span> {unit}</span>
-            </div>
+            </Typography>
             {clipComponent}
         </Fragment>
     );
@@ -100,16 +103,6 @@ DataReadoutItem.propTypes = {
     monoFont:       bool,
 };
 
-
-
-const defButtonStyle= {
-    borderRadius:2,
-    backgroundColor:'rgba(255,255,255,.9',
-    border:'solid transparent',
-    borderWidth: '0 0 1px 0'
-};
-
-
 export function CopyToClipboard({value, title, style, size=12, buttonStyle={}}) {
     const uncheckedIco = size > 12 ? CLIPBOARD_LARGE : CLIPBOARD;
     const checkedIco = size > 12 ? CHECKED_LARGE : CHECKED;
@@ -127,8 +120,9 @@ export function CopyToClipboard({value, title, style, size=12, buttonStyle={}}) 
 
     return (
         <div style={style}>
-            <ToolbarButton icon={clipIcon} tip={title} bgDark={true} style={{...defButtonStyle, ...buttonStyle}} imageStyle={{height:size, width:size}}
-                           horizontal={true} onClick={() => doCopy(value)} />
+            <ToolbarButton icon={clipIcon} tip={title} imageStyle={{height:size, width:size}}
+                           sx={{...buttonStyle,'& .ff-toolbar-iconbutton' : {padding:'0'}}}
+                           onClick={() => doCopy(value)} />
         </div>
     );
 

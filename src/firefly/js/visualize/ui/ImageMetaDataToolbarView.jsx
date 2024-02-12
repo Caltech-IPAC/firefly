@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Divider, Sheet, Stack} from '@mui/joy';
 import {isEmpty, isEqual, omit} from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -11,29 +12,15 @@ import {
     dispatchChangeViewerLayout, getViewer, getMultiViewRoot,
     GRID_FULL, GRID_RELATED, SINGLE, GRID, getLayoutDetails
 } from '../MultiViewCntlr.js';
+import {GridTileButton, GridTileCompactButton, OneTileButton} from './Buttons.jsx';
 import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
 import {ImagePager} from './ImagePager.jsx';
 import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 
-import ONE from 'html/images/icons-2014/Images-One.png';
-import GRID_GROUP from 'html/images/icons-2014/Images-plus-related.png';
-import FULL_GRID from 'html/images/icons-2014/Images-Tiled-full.png';
 import THREE_COLOR from 'html/images/icons-2014/28x28_FITS_Modify3Image.png';
 
 
-
-
-const toolsStyle= {
-    display:'flex',
-    flexDirection:'row',
-    flexWrap:'nowrap',
-    alignItems: 'center',
-    justifyContent:'space-between',
-    height: 30,
-    marginTop: -2,
-    paddingBottom: 2
-};
 
 
 export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType, factoryKey,
@@ -61,37 +48,33 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
 
 
     return (
-        <div style={toolsStyle}>
-            {makeDropDown && makeDropDown()}
-            {metaControls && <div style={{whiteSpace: 'nowrap'}}>
-                {showMultiImageOps && <ToolbarButton icon={ONE} tip={'Show single image at full size'}
-                               imageStyle={{width:24,height:24, flex: '0 0 auto'}}
-                               enabled={true} visible={true}
-                               horizontal={true}
-                               onClick={() => dispatchChangeViewerLayout(viewerId,SINGLE, undefined, activeTable?.tbl_id)}/>}
+        <Sheet>
+            <Stack direction='row' alignItems='center' style={{ flexWrap:'nowrap', justifyContent:'space-between', height: 32}}>
+                {makeDropDown && makeDropDown()}
+                {(metaControls&&(showMultiImageOps||canGrid||hasRelatedBands||showThreeColorButton))&& <Divider orientation='vertical' sx={{mx:1}}/> }
+                {metaControls && <Stack direction='row' alignItems='center' whiteSpace='nowrap'>
+                    {showMultiImageOps && <OneTileButton tip='Show single image at full size'
+                                                         onClick={() => dispatchChangeViewerLayout(viewerId,SINGLE, undefined, activeTable?.tbl_id)}/>}
 
-                {canGrid && <ToolbarButton icon={FULL_GRID} tip={'Tile all images in the search result table'}
-                               enabled={true} visible={true} horizontal={true}
-                               imageStyle={{width:24,height:24, flex: '0 0 auto'}}
-                               onClick={() => dispatchChangeViewerLayout(viewerId,GRID,GRID_FULL,activeTable?.tbl_id)}/>}
+                    {canGrid && <GridTileButton tip='Tile all images in the search result table'
+                                               onClick={() => dispatchChangeViewerLayout(viewerId,GRID,GRID_FULL,activeTable?.tbl_id)}/>}
 
-                {hasRelatedBands  &&
-                            <ToolbarButton icon={GRID_GROUP} tip={'Tile all data products associated with the highlighted table row'}
-                               enabled={true} visible={true} horizontal={true}
-                               imageStyle={{width:24,height:24, flex: '0 0 auto'}}
-                               style={{marginLeft: 20}}
-                               onClick={() => dispatchChangeViewerLayout(viewerId,GRID,GRID_RELATED,activeTable?.tbl_id)}/>
-                }
-                {showThreeColorButton &&
-                             <ToolbarButton icon={THREE_COLOR} tip={'Create three color image'}
-                                         enabled={true} visible={true} horizontal={true}
-                                         imageStyle={{width:24,height:24, flex: '0 0 auto'}}
-                                         onClick={() => showThreeColorOps(viewerId,converter,activeTable,converterId)}/>
-                }
-            </div> }
-            {showPager && <ImagePager pageSize={maxPlots} tbl_id={activeTable.tbl_id} style={{marginLeft:10}}/>}
-            <VisMiniToolbar viewerId={viewerId}/>
-        </div>
+                    {hasRelatedBands  &&
+                        <GridTileCompactButton tip='Tile all data products associated with the highlighted table row'
+                                       sx={{ml: 2}}
+                                       onClick={() => dispatchChangeViewerLayout(viewerId,GRID,GRID_RELATED,activeTable?.tbl_id)}/>
+                    }
+                    {showThreeColorButton &&
+                        <ToolbarButton icon={THREE_COLOR} tip='Create three color image'
+                                       imageStyle={{width:24,height:24, flex: '0 0 auto'}}
+                                       onClick={() => showThreeColorOps(viewerId,converter,activeTable,converterId)}/>
+                    }
+                </Stack> }
+                {showPager && <ImagePager pageSize={maxPlots} tbl_id={activeTable.tbl_id} style={{marginLeft:10}}/>}
+                {showPager && <Divider orientation='vertical' sx={{mx:1}}/>}
+                <VisMiniToolbar viewerId={viewerId}/>
+            </Stack>
+        </Sheet>
     );
 }
 

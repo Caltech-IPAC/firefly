@@ -3,6 +3,7 @@
  */
 
 import React, {useCallback, useEffect} from 'react';
+import {Box, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import {Column, Table} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
@@ -17,6 +18,7 @@ import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableUiUpdate, TBL_UI_UPDATE} from '../TablesCntlr.js';
 import {Logger} from '../../util/Logger.js';
 
+import 'fixed-data-table-2/dist/fixed-data-table.css';
 import './TablePanel.css';
 
 const logger = Logger('Tables').tag('BasicTable');
@@ -29,7 +31,7 @@ export const BY_SCROLL = 'byScroll';
 const BasicTableViewInternal = React.memo((props) => {
 
     const {width, height} = props.size;
-    const {columns, data, hlRowIdx, renderers, bgColor, selectInfoCls, callbacks, rowHeight, rowHeightGetter, showHeader=true,
+    const {columns, data, hlRowIdx, renderers, selectInfoCls, callbacks, rowHeight, rowHeightGetter, showHeader=true,
             error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler, cellRenderers} = props;
 
     const uiStates = getTableUiById(tbl_ui_id) || {};
@@ -63,7 +65,7 @@ const BasicTableViewInternal = React.memo((props) => {
     const onFilter       = useCallback( doFilter.bind({callbacks, filterInfo}), [callbacks, filterInfo]);
     const onFilterSelected = useCallback( doFilterSelected.bind({callbacks, selectInfoCls}), [callbacks, selectInfoCls]);
 
-    const headerHeight = showHeader ? 22 + (showUnits && 8) + (showTypes && 8) + (showFilters && 22) : 0;
+    const headerHeight = showHeader ? 18 + (showUnits && 13) + (showTypes && 13) + (showFilters && 26) : 0;
     let totalColWidths = 0;
     if (!isEmpty(columns) && !isEmpty(columnWidths)) {
         totalColWidths = columns.reduce((pv, c, idx) => {
@@ -94,7 +96,7 @@ const BasicTableViewInternal = React.memo((props) => {
         }
     }, [columns, columnWidths, width, adjScrollLeft, adjScrollTop]);
 
-    const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers, bgColor,
+    const makeColumnsProps = {columns, data, selectable, selectInfoCls, renderers,
         columnWidths, filterInfo, sortInfo, showHeader, showUnits, showTypes, showFilters,
         onSort, onFilter, onRowSelect, onSelectAll, onFilterSelected, startIdx, cellRenderers, tbl_id};
 
@@ -144,10 +146,10 @@ const BasicTableViewInternal = React.memo((props) => {
     };
 
     return (
-        <div tabIndex='-1' onKeyDown={onKeyDown} className='TablePanel__frame'>
+        <Box tabIndex='-1' onKeyDown={onKeyDown} sx={{lineHeight:1, flexGrow:1, minHeight:0, minWidth:0}}>
             {content()}
             <Status/>
-        </div>
+        </Box>
     );
 });
 
@@ -171,7 +173,6 @@ BasicTableViewInternal.propTypes = {
     showMask: PropTypes.bool,
     currentPage: PropTypes.number,
     startIdx: PropTypes.number,
-    bgColor: PropTypes.string,
     error:  PropTypes.string,
     size: PropTypes.object.isRequired,
     highlightedRowHandler: PropTypes.func,
@@ -209,19 +210,6 @@ export const BasicTableViewWithConnector = React.memo((props) => {
 });
 
 /*---------------------------------------------------------------------------*/
-
-// function getTableState(props, uiStates) {
-//     const {columns, error, data, size, showMask} = props;
-//     const {tbl_id, columnWidths} = uiStates;
-//
-//     if (error) return 'ERROR';
-//     if (showMask || isEmpty(columns) || size.width === 0 || isEmpty(columnWidths)) {
-//         return 'LOADING';
-//     }
-//     if (hasNoData(tbl_id)) return 'NO_DATA_FOUND';
-//     if (isEmpty(data)) return 'META_ONLY';
-//     return 'OK';
-// }
 
 function doScrollEnd(scrollLeft, scrollTop) {
     const {tbl_ui_id} = this;
@@ -295,14 +283,14 @@ function doRowSelect(checked, rowIndex) {
 }
 
 
-const TextView = ({columns, data, showUnits, width, height}) => {
+const TextView = ({columns, data, width, height}) => {
     const text = tableTextView(columns, data);
     return (
-        <div style={{height, width,overflow: 'hidden'}}>
-            <div style={{height: '100%',overflow: 'auto'}}>
+        <Box sx={{height, width,overflow: 'hidden'}}>
+            <Typography level='body-sm' sx={{height: 1,overflow: 'auto'}}>
                 <pre>{text}</pre>
-            </div>
-        </div>
+            </Typography>
+        </Box>
     );
 };
 
@@ -335,7 +323,7 @@ function correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredB
 }
 
 function columnWidthsInPixel(columns, data) {
-    return calcColumnWidths(columns, data, {maxColWidth: 100, maxAryWidth: 30})      // set max width for array columns
+    return calcColumnWidths(columns, data, {maxColWidth: 100, maxAryWidth: 30, useCnameMultiplier: true})      // set max width for array columns
             .map( (w) =>  (w + 2) * 7);
 }
 
@@ -360,10 +348,10 @@ function defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx) {
     return (rowIndex) => {
         const absRowIndex = startIdx + rowIndex;
         if (hasProprietaryInfo && !hasRowAccess(tableModel, absRowIndex)) {
-            return hlRowIdx === rowIndex ? 'TablePanel__no-access--highlighted' : 'TablePanel__no-access';
+            return hlRowIdx === rowIndex ? 'no-access-highlighted' : 'no-access';
         }
-        if (hlRowIdx === rowIndex) return 'tablePanel__Row_highlighted';
-        if (isRelated(rowIndex)) return 'tablePanel__Row_related';
+        if (hlRowIdx === rowIndex) return 'highlighted';
+        if (isRelated(rowIndex)) return 'related';
     };
 }
 
@@ -380,17 +368,16 @@ function makeColumns (props) {
 
 function makeColumnTag(props, col, idx) {
     const {data, columnWidths, showHeader, showUnits, showTypes, showFilters, filterInfo, sortInfo, onSort, onFilter,
-        tbl_id, renderers, bgColor='white', startIdx, cellRenderers} = props;
+        tbl_id, renderers, startIdx, cellRenderers} = props;
 
     if (col.visibility && col.visibility !== 'show') return false;
     const HeadRenderer = get(renderers, [col.name, 'headRenderer'], showHeader ? HeaderCell : ({})=>null);
     const CellRenderer = get(renderers, [col.name, 'cellRenderer'], cellRenderers?.[idx] || makeDefaultRenderer(col,tbl_id, startIdx));
     const fixed = col.fixed || false;
-    const style = col.fixed && {backgroundColor: bgColor};
     const {resizable=true} = col;
 
     const cell = ({height, width, columnKey, rowIndex}) =>
-                    <CellWrapper {...{height, width, columnKey, rowIndex, style, data, col, colIdx:idx, tbl_id, startIdx, CellRenderer}} />;
+                    <CellWrapper {...{height, width, columnKey, rowIndex, data, col, colIdx:idx, tbl_id, startIdx, CellRenderer}} />;
     return (
         <Column
             key={col.name}
@@ -407,7 +394,7 @@ function makeColumnTag(props, col, idx) {
     );
 }
 
-function makeSelColTag({selectable, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, bgColor='white', selectInfoCls, onRowSelect}) {
+function makeSelColTag({selectable, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, selectInfoCls, onRowSelect}) {
 
     if (!selectable) return false;
 
@@ -417,7 +404,7 @@ function makeSelColTag({selectable, onSelectAll, showUnits, showTypes, showFilte
             key='selectable-checkbox'
             columnKey='selectable-checkbox'
             header={<SelectableHeader {...{checked, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected}} />}
-            cell={<SelectableCell style={{backgroundColor: bgColor}} selectInfoCls={selectInfoCls} onRowSelect={onRowSelect} />}
+            cell={<SelectableCell selectInfoCls={selectInfoCls} onRowSelect={onRowSelect} />}
             fixed={true}
             width={25}
             allowCellsRecycling={true}

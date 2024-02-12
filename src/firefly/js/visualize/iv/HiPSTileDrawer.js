@@ -43,7 +43,7 @@ export function createHiPSDrawer(targetCanvas, GPU) {
     const hipsColorOps= getHipsColorOps(GPU);
 
 
-    return (plot, opacity,plotView) => {
+    return (plot, opacity,plotView,colorMode) => {
         if (!isHiPS(plot)) return;
         abortLastDraw?.(); // stop any incomplete drawing
 
@@ -79,10 +79,10 @@ export function createHiPSDrawer(targetCanvas, GPU) {
 
         if (drawTiming!==DrawTiming.IMMEDIATE) {
             drawTransitionalImage(fov,centerWp,targetCanvas,plot, plotView,norder, transitionNorder, hipsColorOps,
-                opacity, tilesToLoad, true, isMaxOrder);
+                opacity, tilesToLoad, true, colorMode);
         }
 
-        const offscreenCanvas = makeOffScreenCanvas(plotView,plot,drawTiming!==DrawTiming.IMMEDIATE);
+        const offscreenCanvas = makeOffScreenCanvas(plotView,plot,drawTiming!==DrawTiming.IMMEDIATE, colorMode);
         abortLastDraw= drawDisplay({targetCanvas, offscreenCanvas, plot, plotView, norder, hipsColorOps,
             tilesToLoad, useAllSky, opacity, drawTiming, isMaxOrder, desiredNorder}
         );
@@ -104,9 +104,10 @@ export function createHiPSDrawer(targetCanvas, GPU) {
  * @param hipsColorOps
  * @param opacity
  * @param finalTileToLoad
+ * @param colorMode
  */
 function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
-                               norder, transitionNorder, hipsColorOps, opacity, finalTileToLoad) {
+                               norder, transitionNorder, hipsColorOps, opacity, finalTileToLoad, colorMode) {
     const {viewDim}= plotView;
     let tilesToLoad;
     const {bias,contrast}= plot.rawData.bandData[0];
@@ -115,7 +116,7 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
           // draw the level 2 all sky and then draw on top what ever part of the full resolution level 3 tiles that are in cache
         const tilesToLoad2= findCellOnScreen(plot,viewDim,2, fov, centerWp);
         const tilesToLoad3= findCellOnScreen(plot,viewDim,3, fov, centerWp);
-        const offscreenCanvas = makeOffScreenCanvas(plotView,plot,false);
+        const offscreenCanvas = makeOffScreenCanvas(plotView,plot,false,colorMode);
         drawDisplay({targetCanvas, offscreenCanvas, plot, plotView,
             norder:2, hipsColorOps, tilesToLoad:tilesToLoad2, useAllSky:true, drawAllSkyOnlyIfCached: true,
             opacity, drawTiming:DrawTiming.IMMEDIATE, screenRenderEnabled:false});
@@ -125,7 +126,7 @@ function drawTransitionalImage(fov, centerWp, targetCanvas, plot, plotView,
     }
     else {
         let lookMore= true;
-        const offscreenCanvas = makeOffScreenCanvas(plotView,plot,false);
+        const offscreenCanvas = makeOffScreenCanvas(plotView,plot,false,colorMode);
         // find some lower resolution norder to draw, as long as there is at least one tile available in cache, us it.
         for( let testNorder= transitionNorder; (testNorder>=3 && lookMore); testNorder--) {
             tilesToLoad= findCellOnScreen(plot,viewDim,testNorder, fov, centerWp);
@@ -259,8 +260,8 @@ function drawDisplayUsingTiles(drawer, plot, tilesToLoad, drawTiming) {
 }
 
 
-function clipForFullScreen(ctx, width, height, centerDevPt, altDevRadius, aitoff) {
-    ctx.fillStyle = 'rgba(227,227,227,1)';
+function clipForFullScreen(ctx, width, height, centerDevPt, altDevRadius, aitoff, colorMode) {
+    ctx.fillStyle = colorMode==='dark' ? 'rgba(50,50,50,1)' : 'rgba(255,255,255,1)';
     ctx.fillRect(0, 0, width, height);
     ctx.save();
     ctx.beginPath();
@@ -277,8 +278,9 @@ function clipForFullScreen(ctx, width, height, centerDevPt, altDevRadius, aitoff
  * @param plotView
  * @param plot
  * @param overlayTransparent
+ * @param {String} colorMode - light or dark
  */
-function makeOffScreenCanvas(plotView, plot, overlayTransparent) {
+function makeOffScreenCanvas(plotView, plot, overlayTransparent, colorMode) {
     const offscreenCanvas = initOffScreenCanvas(plotView.viewDim);
     const ctx = offscreenCanvas.getContext('2d');
 
@@ -290,10 +292,10 @@ function makeOffScreenCanvas(plotView, plot, overlayTransparent) {
     let altDevRadius= plotView.viewDim.width/2 + plotView.scrollX - 4;
     if (aitoff) altDevRadius*= 2.92;
     if (aitoff && fov>=360) {
-        clipForFullScreen(ctx, width,height, centerDevPt, altDevRadius, true);
+        clipForFullScreen(ctx, width,height, centerDevPt, altDevRadius, true, colorMode);
     }
     else if (fov>=180) {
-        clipForFullScreen(ctx, width,height, centerDevPt, altDevRadius, false);
+        clipForFullScreen(ctx, width,height, centerDevPt, altDevRadius, false, colorMode);
     }
 
     if (overlayTransparent) {

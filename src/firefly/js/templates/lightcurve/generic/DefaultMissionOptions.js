@@ -1,3 +1,4 @@
+import {Stack, Typography} from '@mui/joy';
 import React from 'react';
 import PropTypes from 'prop-types';
 import {get, isEmpty} from 'lodash';
@@ -20,8 +21,8 @@ export class DefaultSettingBox extends SettingBox {
     }
 
     render() {
-        var {generalEntries, missionEntries} = this.props;
-        var {tblColumns, numColumns, charColumns} = this.state;
+        const {generalEntries, missionEntries} = this.props;
+        const {tblColumns, numColumns, charColumns} = this.state;
 
         if (isEmpty(tblColumns) || isEmpty(generalEntries) || isEmpty(missionEntries)) return false;
 
@@ -32,25 +33,25 @@ export class DefaultSettingBox extends SettingBox {
         const topZ = 3;
 
         const  missionInputs=getMissionInput (numColumns, wrapperStyle);
-        var missionData = missionUrl.map((key) =>
-            <SuggestBoxInputField key={key} fieldKey={key} wrapperStyle={wrapperStyle} popupIndex={topZ}
-                                  getSuggestions={(val) => getSuggestedList(val, charColumns)} />
+        const missionData = missionUrl.map((key) =>
+            (<SuggestBoxInputField key={key} fieldKey={key} popupIndex={topZ}
+                                  getSuggestions={(val) => getSuggestedList(val, charColumns)} />)
         );
 
-        var missionOthers = missionOtherKeys.map((key) =>
-            <ValidationField key={key} fieldKey={key} wrapperStyle={wrapperStyle}/>
+        const missionOthers = missionOtherKeys.map((key) =>
+            <ValidationField key={key} fieldKey={key}/>
         );
 
-        var missionPosEntries = () => {
-            var sKey = LC.META_COORD_SYS;
+        const missionPosEntries = () => {
+            const sKey = LC.META_COORD_SYS;
 
-            var sysCol = (
-                <SuggestBoxInputField key={sKey} fieldKey={sKey} wrapperStyle={wrapperStyle}
+            const sysCol = (
+                <SuggestBoxInputField key={sKey} fieldKey={sKey}
                                       getSuggestions={() =>get(missionEntries, coordSysOptions, [])} />
             );
-            var xyCols = [LC.META_COORD_XNAME, LC.META_COORD_YNAME].map((key) =>
-                <SuggestBoxInputField key={key} fieldKey={key} wrapperStyle={wrapperStyle} popupIndex={topZ}
-                                      getSuggestions={(val) => getSuggestedList(val,  charColumns)} />
+            const xyCols = [LC.META_COORD_XNAME, LC.META_COORD_YNAME].map((key) =>
+                (<SuggestBoxInputField key={key} fieldKey={key} popupIndex={topZ}
+                                      getSuggestions={(val) => getSuggestedList(val,  charColumns)} />)
             );
 
             return [sysCol, xyCols];
@@ -63,20 +64,20 @@ export class DefaultSettingBox extends SettingBox {
         return (
             <FieldGroup groupKey={groupKey}
                         reducerFunc={defaultOptionsReducer(missionEntries, generalEntries, typeColumns)} keepState={true}>
-                <div style={{display: 'flex', flexDirection: 'column'}} >
-                    <ReadOnlyText label='Mission:' content={getMissionName(converterId)}
-                                  labelWidth={labelWidth} wrapperStyle={{margin: '3px 0 6px 0'}}/>
-                    <div style={{display: 'flex'}}>
-                        <div>
+                <Stack>
+                    {Boolean(getMissionName(converterId)) &&
+                        <Typography>{`Mission: ${getMissionName(converterId)}`}</Typography>}
+                    <Stack {...{direction: 'row', spacing: 2}}>
+                        <Stack spacing={1}>
                             {missionInputs}
                             {missionData}
                             {missionOthers}
-                        </div>
-                        <div>
+                        </Stack>
+                        <Stack spacing={1}>
                             {missionPosEntries()}
-                        </div>
-                    </div>
-                </div>
+                        </Stack>
+                    </Stack>
+                </Stack>
             </FieldGroup>
         );
     }

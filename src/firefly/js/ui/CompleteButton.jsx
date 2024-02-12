@@ -4,7 +4,8 @@
 
 import {delay, isFunction, isUndefined} from 'lodash';
 import React, {useContext, useEffect} from 'react';
-import PropTypes from 'prop-types';
+import {Box, Button} from '@mui/joy';
+import {object, string, func, bool, oneOfType, arrayOf} from 'prop-types';
 import {validateFieldGroup, getFieldGroupResults} from '../fieldGroup/FieldGroupUtils.js';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {FieldGroupCtx} from './FieldGroup';
@@ -75,9 +76,10 @@ function onClick(onSuccess,onFail,registeredComponents, closeOnValid,groupKey,
 
 
 export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
-                          closeOnValid=true, dialogId,includeUnmounted= false,
+                          color=undefined, variant=undefined,
+                          closeOnValid=true, dialogId,includeUnmounted= false, primary=true,
                           groupsToUse= () => groupKey,
-                          style={}, innerStyle= {}, changeMasking, fireOnEnter= false,
+                          style={}, sx, changeMasking, fireOnEnter= false,
                                     getDoOnClickFunc}) {
     const {registeredComponents,groupKey:ctxGroupKey}= useContext(FieldGroupCtx);
     if (!groupKey && ctxGroupKey) groupKey= ctxGroupKey;
@@ -106,27 +108,33 @@ export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
 
 
     return (
-        <div style={style}>
-            <button type='button' style={innerStyle} className='button std hl'  onClick={onComplete}>{text}</button>
-        </div>
+        <Box sx={sx} style={style}>
+           <Button {...{className: 'ff-CompleteButton', size:'md',
+                variant: variant? variant : primary?'solid':undefined,
+                color: color? color : primary?'primary':undefined,
+                onClick: onComplete}}>{text}</Button>
+        </Box>
     );
 }
 
 
 CompleteButton.propTypes= {
-    onFail: PropTypes.func,
-    onSuccess: PropTypes.func,
-    groupsToUse: PropTypes.func,
-    groupKey: PropTypes.any,
-    text: PropTypes.string,
-    closeOnValid: PropTypes.bool,
-    dialogId: PropTypes.string,
-    style: PropTypes.object,
-    innerStyle: PropTypes.object,
-    includeUnmounted : PropTypes.bool,
-    changeMasking: PropTypes.func,
-    fireOnEnter: PropTypes.bool,
-    getDoOnClickFunc: PropTypes.func
+    onFail: func,
+    onSuccess: func,
+    groupsToUse: func,
+    groupKey: oneOfType([ string, arrayOf(string) ]),
+    text: string,
+    closeOnValid: bool,
+    dialogId: string,
+    style: object,
+    sx: object,
+    innerStyle: object,
+    includeUnmounted : bool,
+    changeMasking: func,
+    fireOnEnter: bool,
+    getDoOnClickFunc: func,
+    variant: string,
+    color: string,
 };
 
 export default CompleteButton;

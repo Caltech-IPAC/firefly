@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Stack, Typography} from '@mui/joy';
 import {arrayOf, func, object, string} from 'prop-types';
 import React, {memo} from 'react';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
@@ -28,9 +29,6 @@ import ShapeDataObj from '../../visualize/draw/ShapeDataObj.js';
  */
 
 const GROUP_KEY= 'ActivateMenu';
-
-const titleStyle= {textAlign:'center', padding:'0 0 0 50px', fontSize:'larger', fontWeight:'bold'};
-
 
 export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDef, setSearchParams,
                                                title, makeDropDown, sRegion, standardID,
@@ -59,39 +57,37 @@ export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDef, setSe
 
 
     const Wrapper= ({children}) => (
-        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', paddingBottom:2}}>
+        <Stack direction='column' alignItems='flex-start' p={.25}>
             {children}
-            <div style={{display:'flex', flexDirection:'row', padding: '5px 5px 0 0', width:'100%',
-                alignSelf:'flex-start', justifyContent:'space-between', alignItems:'center'}}>
+            <Stack {...{direction:'row', justifyContent:'space-between', alignItems:'flex-start',
+                          pt:.5, pr:.5, width:'100%', alignSelf:'flex-start' }}>
                 <CompleteButton onSuccess={(r) => submitSearch(r)}
                                 onFail={() => showInfoPopup('Some field are not valid')}
                                 text={'Submit'} groupKey={GROUP_KEY} />
                 {hasAnySpacial(fieldDefAry) &&
-                    <div style={{fontStyle:'italic'}}>
-                        Enter search position or click on background HiPS
-                    </div>}
-            </div>
-        </div>
+                    <Typography level='body-xs'>Enter search position or click on background HiPS</Typography>}
+            </Stack>
+        </Stack>
     );
 
 
 
 
     return (
-        <div key={serviceDefRef} style={{display:'flex', width:'100%'}}>
-            <div style={{padding: '1px 1px 1px 1px', display:'flex', flexDirection:'column', width:'100%'}}>
-                <div className='ComponentBackground' style={{display:'flex', flexDirection:'row', justifyContent:'flex-start', alignItems:'center'}}>
+        <Stack {...{direction:'row', key:serviceDefRef, width:1, height:1}}>
+            <Stack {...{direction:'column', p:.25, width:1}}>
+                <Stack {...{direction:'row', alignItems:'center'}}>
                     {makeDropDown?.()}
-                    <div style= {titleStyle}> {title} </div>
-                </div>
+                    <Typography level= {title?.length>30 ? 'body-xs' : 'body-sm'}>{title}</Typography>
+                </Stack>
 
                 <FieldGroup groupKey={GROUP_KEY} keepState={false} style={{display:'flex', flexGrow:1}}>
                     <DynLayoutPanelTypes.Inset fieldDefAry={fieldDefAry} style={{width: '100%'}}
                                                WrapperComponent={Wrapper}
                                                plotId={plotId}/>
                 </FieldGroup>
-            </div>
-        </div>
+            </Stack>
+        </Stack>
     );
 });
 

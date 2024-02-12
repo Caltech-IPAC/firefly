@@ -3,14 +3,13 @@
  */
 
 
+import {Stack, Switch, Typography} from '@mui/joy';
 import React from 'react';
 import PropTypes from 'prop-types';
-import {get} from 'lodash';
-import {getPlotViewById, getAllDrawLayersForPlot} from '../../visualize/PlotViewUtil.js';
 import {WcsMatchType, visRoot, dispatchWcsMatch} from '../../visualize/ImagePlotCntlr.js';
 import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import {
-    dispatchChangeViewerLayout, getViewer, getMultiViewRoot, GRID, SINGLE, getLayoutType, getLayoutDetails
+    dispatchChangeViewerLayout, getMultiViewRoot, GRID, SINGLE, getLayoutDetails
 } from '../../visualize/MultiViewCntlr.js';
 import {LC, getConverterData} from './LcManager.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
@@ -19,88 +18,39 @@ import {SortInfo, SORT_ASC, SORT_DESC, UNSORTED} from '../../tables/SortInfo.js'
 import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
 
-const toolsStyle= {
-    display:'flex',
-    flexDirection:'row',
-    flexWrap:'nowrap',
-    alignItems: 'center',
-    justifyContent:'space-between',
-    height: 30
-};
-
-const tStyle= {
-    display:'inline-block',
-    whiteSpace: 'nowrap',
-    minWidth: '3em',
-    paddingLeft : 5,
-    marginTop: -1
-};
-
-const closeButtonStyle= {
-    display: 'inline-block',
-    padding: '1px 12px 0 1px'
-};
 
 export function LcImageToolbarView({viewerId, tableId, closeFunc=null}) {
     const converter = getConverterData();
     if (!converter) { return null; }
 
     const count= getLayoutDetails(getMultiViewRoot(), viewerId)?.count ?? converter.defaultImageCount;
-    const vr= visRoot();
-
-    const wcsMatch= (
-        <div style={{alignSelf:'center', padding: '0 10px 0 25px', display:'flex', alignItems:'center'}}>
-            <div style={{display:'inline-block'}}>
-                <input style={{margin: 0}}
-                       type='checkbox'
-                       checked={vr.wcsMatchType===WcsMatchType.Target}
-                       onChange={(ev) => wcsMatchTarget(ev.target.checked, vr.activePlotId) }
-                />
-            </div>
-            <div style={tStyle}>Target Match</div>
-        </div>
-    );
-
-    var getSortInfo = () => {
-        if (!tableId) return '';
-        const sInfo = SortInfo.parse(get(getTblById(tableId), ['request', 'sortInfo'], ''));
-
-        const orderInfo = {[SORT_ASC]: 'ascending',
-                           [SORT_DESC]:'descending'};
-
-        if (sInfo.direction === UNSORTED) return '';
-        return `Sorted by column: ${sInfo.sortColumns.join(',')} `+
-               ` ${orderInfo[sInfo.direction]}`;
-    };
 
     const options= [];
-    for(var i= 1; (i<=LC.MAX_IMAGE_CNT); i+=2) {
+    for(let i= 1; (i<=LC.MAX_IMAGE_CNT); i+=2) {
         options.push({label: String(i), value: String(i)});
     }
 
     return (
         <div>
-            <div style={{...toolsStyle, marginBottom: closeFunc ? 3 : 0}}>
-                {closeFunc &&<CloseButton style={closeButtonStyle} onClick={closeFunc}/>}
-                <div style={{whiteSpace: 'nowrap', paddingLeft: 7, display:'flex', alignItems:'center'}}>
-                    <div>Image Count:</div>
-                    <div style={{display:'inline-block', paddingLeft:7}}>
-                        <RadioGroupInputFieldView options={options} inline={true}  value={String(count)}
-                                                  onChange={(ev) => changeSize(viewerId, ev.target.value)} />
-                    </div>
-                </div>
-                <div> { getSortInfo() } </div>
-                {wcsMatch}
-                <VisMiniToolbar style={{width:350}}/>
-            </div>
+            <Stack {...{
+                direction:'row', flexWrap:'nowrap', alignItems: 'center', justifyContent:'space-between',
+                height: 30, ml:closeFunc ? 1/2 : 0, mb: closeFunc ? 1/2 : 0}}>
+                {closeFunc && <CloseButton onClick={closeFunc}/>}
+                <Stack {...{whiteSpace: 'nowrap', pl: 1, spacing:1, direction:'row', alignItems:'center'}}>
+                    <Typography level='body-sm'>Image Count:</Typography>
+                    <RadioGroupInputFieldView options={options} inline={true}  value={String(count)}
+                                              orientation='horizontal'
+                                              onChange={(ev) => changeSize(viewerId, ev.target.value)} />
+                </Stack>
+                <Typography level='body-sm'>{ getSortInfo(tableId) } </Typography>
+                <Switch size='sm' sx={{alignSelf:'center', pr:1, pl:3}}
+                        checked={visRoot().wcsMatchType===WcsMatchType.Target}
+                        onChange={(ev) => wcsMatchTarget(ev.target.checked, visRoot().activePlotId)}
+                        endDecorator={'Target Match'} />
+                <VisMiniToolbar sx={{width:350}}/>
+            </Stack>
         </div>
     );
-}
-
-
-function changeSize(viewerId, value) {
-    value = Number(value);
-    dispatchChangeViewerLayout(viewerId, value === 1 ? SINGLE : GRID, {count: value});
 }
 
 LcImageToolbarView.propTypes= {
@@ -109,7 +59,19 @@ LcImageToolbarView.propTypes= {
     closeFunc : PropTypes.func
 };
 
+function getSortInfo(tableId) {
+    if (!tableId) return '';
+    const sInfo = SortInfo.parse(getTblById(tableId)?.request?.sortInfo ??'');
+    if (sInfo.direction === UNSORTED) return '';
+    const orderInfo = {[SORT_ASC]: 'ascending', [SORT_DESC]:'descending'};
+    return `Sorted by column: ${sInfo.sortColumns.join(',')} `+ ` ${orderInfo[sInfo.direction]}`;
+};
 
-function wcsMatchTarget(doWcsStandard, plotId) {
-    dispatchWcsMatch({matchType:doWcsStandard?WcsMatchType.Target:false, plotId});
+function changeSize(viewerId, value) {
+    const valNum = Number(value);
+    dispatchChangeViewerLayout(viewerId, valNum === 1 ? SINGLE : GRID, {count: valNum});
 }
+
+
+const wcsMatchTarget= (doWcsStandard, plotId) =>
+    dispatchWcsMatch({matchType:doWcsStandard?WcsMatchType.Target:false, plotId});

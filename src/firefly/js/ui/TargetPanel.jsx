@@ -2,8 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Box, Divider, Stack} from '@mui/joy';
 import React, {memo, useContext, useEffect} from 'react';
-import PropTypes, {bool} from 'prop-types';
+import PropTypes, {arrayOf, object, bool, number, string, shape} from 'prop-types';
 import {ConnectionCtx} from './ConnectionCtx.js';
 import {parseTarget} from './TargetPanelWorker.js';
 import {formatPosForTextField, formatTargetForHelp} from './PositionFieldDef.js';
@@ -18,60 +19,60 @@ import {isValidPoint, parseWorldPt} from '../visualize/Point.js';
 
 const TARGET= 'targetSource';
 const RESOLVER= 'resolverSource';
-const LABEL_DEFAULT='Coords or Obj Name:';
+const LABEL_DEFAULT='Coords or Obj Name';
 
 const nedThenSimbad= 'nedthensimbad';
 const simbadThenNed= 'simbadthenned';
 
 const TargetPanelView = (props) =>{
-    const {showHelp, feedback, valid, message, onChange, value, style={}, button,
-        labelWidth, children, resolver, feedbackStyle, showResolveSourceOp= true, showExample= true,
+    const {showHelp, feedback, valid, message, onChange, value, button, slotProps,
+        children, resolver, feedbackStyle, showResolveSourceOp= true, showExample= true,
+        label= LABEL_DEFAULT,
         targetPanelExampleRow1, targetPanelExampleRow2,
-        connectedMarker=false, labelStyle={paddingRight:'45px'}, inputStyle={},
-        examples, label= LABEL_DEFAULT, onUnmountCB, wpt}= props;
+        connectedMarker=false, placeholderHighlight=true,
+        examples, onUnmountCB, sx}= props;
 
     useEffect(() => () => onUnmountCB(props),[]);
     const connectContext= useContext(ConnectionCtx);
 
+    const endDecorator= makeEndDecorator(showResolveSourceOp,onChange,resolver,button);
+
     const positionField = (
-        <InputFieldView valid={valid} visible= {true} message={message} inputStyle={{width:200, ...inputStyle}}
-                        onChange={(ev) => onChange(ev.target.value, TARGET)}
-                        label={label} value={value} tooltip='Enter a target'
-                        connectedMarker={connectedMarker||connectContext.controlConnected}
-                        labelWidth={labelWidth} labelStyle={labelStyle}
+        <InputFieldView {...{valid, visible:true, message,
+            placeholder:label,
+            onChange: (ev) => onChange(ev.target.value, TARGET),
+            endDecorator,
+            sx : makeSx(showResolveSourceOp, Boolean(button),sx),
+            value,
+            tooltip:'Enter a target',
+            slotProps: {
+                input: {
+                    sx: {
+                        '--Input-placeholderColor': placeholderHighlight ?
+                            'var(--joy-palette-warning-plainColor)' : 'inherit'
+                    }
+                }
+            },
+            connectedMarker:connectedMarker||connectContext.controlConnected,
+            }}
         />);
     const positionInput = children ? (<div style={{display: 'flex'}}>{positionField} {children}</div>) : positionField;
 
 
 
     return (
-        <div style={style}>
-            <div style= {{display: 'flex'}}>
-                {positionInput}
-                {button && button}
-                {showResolveSourceOp &&
-                <ListBoxInputFieldView
-                    options={[
-                        {label: 'Try NED then Simbad', value: nedThenSimbad},
-                        {label: 'Try Simbad then NED', value: simbadThenNed}
-                    ]}
-                    onChange={(ev) => onChange(ev.target.value, RESOLVER)}
-                    value={resolver} multiple={false}
-                    tooltip='Select which name resolver' label='' labelWidth={3} wrapperStyle={{}}
-                />}
-            </div>
-            {(showExample || !showHelp) && <TargetFeedback {...{showHelp, feedback, style:feedbackStyle,
-                targetPanelExampleRow1, targetPanelExampleRow2, examples}}/> }
-        </div>
+        <Stack direction='column'>
+            {positionInput}
+            {(showExample || !showHelp) && <TargetFeedback {...{showHelp, feedback,
+                targetPanelExampleRow1, targetPanelExampleRow2, examples, ...slotProps?.feedback}}/> }
+        </Stack>
     );
 };
 
 
 TargetPanelView.propTypes = {
     label : PropTypes.string,
-    labelStyle: PropTypes.object,
-    inputStyle: PropTypes.object,
-    style: PropTypes.object,
+    sx: PropTypes.object,
     valid   : PropTypes.bool.isRequired,
     showHelp   : PropTypes.bool.isRequired,
     feedback: PropTypes.string.isRequired,
@@ -80,7 +81,6 @@ TargetPanelView.propTypes = {
     message: PropTypes.string.isRequired,
     onChange: PropTypes.func.isRequired,
     value : PropTypes.string.isRequired,
-    labelWidth : PropTypes.number,
     onUnmountCB : PropTypes.func,
     feedbackStyle: PropTypes.object,
     nullAllowed: PropTypes.bool,
@@ -88,9 +88,49 @@ TargetPanelView.propTypes = {
     targetPanelExampleRow1: PropTypes.arrayOf(PropTypes.string),
     targetPanelExampleRow2: PropTypes.arrayOf(PropTypes.string),
     connectedMarker: bool,
-    showExample: PropTypes.bool
+    showExample: PropTypes.bool,
+    slotProps: shape({
+        feedback: object,
+    })
 };
 
+function makeEndDecorator(showResolveSourceOp, onChange, resolver, button) {
+    const resolverOp=
+        showResolveSourceOp?
+            (<ListBoxInputFieldView
+                options={[
+                    {label: 'Try NED then Simbad', value: nedThenSimbad},
+                    {label: 'Try Simbad then NED', value: simbadThenNed}
+                ]}
+                slotProps={{
+                    input: {
+                        variant:'plain',
+                        sx:{minHeight:'unset'}
+                        // sx:{'&:hover': { bgcolor: 'transparent' } }
+                    }
+                }}
+                onChange={(ev,newValue) => onChange(newValue, RESOLVER)}
+                value={resolver} multiple={false}
+                tooltip='Select which name resolver' label='' labelWidth={3} wrapperStyle={{}} />) : undefined;
+
+    if  (resolverOp || button) {
+        return (
+            <Stack direction='row' alignItems='center'>
+                {Boolean(resolverOp) && <Divider orientation='vertical'/>}
+                {resolverOp}
+                {Boolean(button) && <Divider orientation='vertical' />}
+                {Boolean(button) && <Box sx={{ml:1/2}}>{button}</Box>}
+            </Stack>);
+    }
+    return undefined;
+}
+
+function makeSx(useResolver, useButton, sx) {
+    const minWidth='32rem';
+    return (useResolver && !useButton) ?
+        { minWidth, '& .MuiInput-root':{ 'paddingInlineEnd': 0}, ...sx} :
+        {minWidth,...sx};
+}
 
 function didUnmount(fieldKey,groupKey, props) {
     const wp= parseWorldPt(FieldGroupUtils.getFldValue(FieldGroupUtils.getGroupFields(groupKey),fieldKey));
@@ -143,8 +183,7 @@ function handleOnChange(value, source, params, fireValueChange) {
 }
 
 /**
- * make a payload and update the active target
- * Note- this function has as side effect to fires an action to update the active target
+ * Make a payload and update the active target, Note: this function has as side effect to fires an action to update the active target
  * @param displayValue
  * @param parseResults
  * @param resolvePromise
@@ -190,23 +229,20 @@ export const TargetPanel = memo( ({fieldKey= DEF_TARGET_PANEL_KEY,initialState= 
                               onChange={(value,source) => handleOnChange(value,source,newProps, fireValueChange)}/>);
 });
 
-
-
 TargetPanel.propTypes = {
-    style: PropTypes.object,
-    labelStyle: PropTypes.object,
-    fieldKey: PropTypes.string,
-    groupKey: PropTypes.string,
-    examples: PropTypes.object,
-    labelWidth : PropTypes.number,
-    nullAllowed: PropTypes.bool,
-    initialState: PropTypes.object,
-    showResolveSourceOp: PropTypes.bool,
-    targetPanelExampleRow1: PropTypes.arrayOf(PropTypes.string),
-    targetPanelExampleRow2: PropTypes.arrayOf(PropTypes.string),
-    showExample: PropTypes.bool,
+    sx: object,
+    fieldKey: string,
+    groupKey: string,
+    examples: object,
+    nullAllowed: bool,
+    initialState: object,
+    showResolveSourceOp: bool,
+    targetPanelExampleRow1: arrayOf(PropTypes.string),
+    targetPanelExampleRow2: arrayOf(PropTypes.string),
+    showExample: bool,
     connectedMarker: bool,
-    defaultToActiveTarget: PropTypes.bool,
+    placeholderHighlight: bool,
+    defaultToActiveTarget: bool,
 };
 
 
@@ -231,7 +267,7 @@ function computeProps(viewProps, componentProps, fieldKey, groupKey) {
     return {
         ...viewProps,
         visible: true,
-        label: 'Coords or Obj Name:',
+        label: 'Coords or Obj Name',
         tooltip: 'Enter a target',
         value,
         feedback,

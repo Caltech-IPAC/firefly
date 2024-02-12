@@ -1,3 +1,4 @@
+import {Box, Stack, Typography} from '@mui/joy';
 import HelpIcon from 'firefly/ui/HelpIcon';
 import {isEqual, isObject} from 'lodash';
 import Prism from 'prismjs';
@@ -5,12 +6,14 @@ import PropTypes from 'prop-types';
 import React, {useEffect, useRef} from 'react';
 import {getAppOptions} from '../../api/ApiUtil.js';
 import {CheckboxGroupInputField, CheckboxGroupInputFieldView} from '../CheckboxGroupInputField.jsx';
-import {FieldGroupCollapsible} from '../panel/CollapsiblePanel.jsx';
+import {FieldGroupAccordionPanel} from '../panel/AccordionPanel.jsx';
 import {RadioGroupInputFieldView} from '../RadioGroupInputFieldView.jsx';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
 
-import HIDE_ICON from 'images/show-up-3.png';
-import SHOW_ICON from 'images/hide-down-3.png';
+// import HIDE_ICON from 'images/show-up-3.png';
+// import SHOW_ICON from 'images/hide-down-3.png';
+import KeyboardDoubleArrowUp from '@mui/icons-material/KeyboardDoubleArrowUp';
+import KeyboardDoubleArrowDown from '@mui/icons-material/KeyboardDoubleArrowDown';
 
 export const HeaderFont = {fontSize: 12, fontWeight: 'bold', alignItems: 'center'};
 
@@ -120,17 +123,17 @@ function constraintResultDiffer(c1, c2) {
 function Header({title, helpID='', checkID, message, enabled=false, panelValue=undefined}) {
     const tooltip = title + ' search is included in the query if checked';
     return (
-        <div style={{display: 'inline-flex', alignItems: 'center'}} title={title + ' search'}>
+        <Stack spacing={1} alignItems='center' direction='row'>
             <div onClick={(e) => e.stopPropagation()} title={tooltip}>
                 <CheckboxGroupInputField key={checkID} fieldKey={checkID}
-                    initialState={{ value: enabled ? panelValue || title:'', label: '' }}
-                    options={[{label:'', value: panelValue || title}]}
-                    alignment='horizontal' wrapperStyle={{whiteSpace: 'norma'}} />
+                                         initialState={{ value: enabled ? panelValue || title:'', label: '' }}
+                                         options={[{label:'', value: panelValue || title}]}
+                                         orientation='horizontal'  />
             </div>
-            <div style={{...HeaderFont, marginRight: 5}}>{title}</div>
-            <HelpIcon helpId={helpID}/>
-            <div style={{marginLeft: 10, color: 'saddlebrown', fontStyle: 'italic', fontWeight: 'normal'}}>{message}</div>
-        </div>
+            <Typography {...{color:'primary'}}>{title}</Typography>
+            <HelpIcon helpId={helpID} component='div' />
+            <Typography {...{level:'body-sm', color:'warning'}}>{message}</Typography>
+        </Stack>
     );
 }
 
@@ -143,15 +146,18 @@ Header.propTypes = {
     enabled: PropTypes.bool
 };
 
-function InternalCollapsibleCheckHeader({title, helpID, children, fieldKey, checkKey, message, initialState, initialStateChecked, panelValue}) {
+function InternalCollapsibleCheckHeader({sx, title, helpID, children, fieldKey, checkKey, message, initialState, initialStateChecked, panelValue}) {
 
     return (
-        <FieldGroupCollapsible header={<Header title={title} helpID={helpID}
+        <FieldGroupAccordionPanel header={<Header title={title} helpID={helpID}
                                                enabled={initialStateChecked}
                                                checkID={checkKey} message={message} panelValue={panelValue}/>}
-                               initialState={initialState} fieldKey={fieldKey} headerStyle={HeaderFont}>
-            {children}
-        </FieldGroupCollapsible>
+                                  sx={{'& .MuiAccordionDetails-content>.check-header-content': { ml: 3, }, ...sx}}
+                                          initialState={initialState} fieldKey={fieldKey} headerStyle={HeaderFont}>
+            <Box className='check-header-content'>
+                {children}
+            </Box>
+        </FieldGroupAccordionPanel>
 
     );
 }
@@ -169,18 +175,18 @@ export function makeCollapsibleCheckHeader(base) {
             collapsibleCheckHeaderKeys:  [panelKey,panelCheckKey],
         };
 
-    retObj.CollapsibleCheckHeader= ({title,helpID,message,initialStateOpen, initialStateChecked,children}) => {
+    retObj.CollapsibleCheckHeader= ({sx, title,helpID,message,initialStateOpen, initialStateChecked,children}) => {
         const [getPanelActive, setPanelActive] = useFieldGroupValue(panelCheckKey);// eslint-disable-line react-hooks/rules-of-hooks
         const [getPanelOpenStatus, setPanelOpenStatus] = useFieldGroupValue(panelKey);// eslint-disable-line react-hooks/rules-of-hooks
         const isActive= getPanelActive() === panelValue;
         retObj.isPanelActive= () => getPanelActive() === panelValue;
         retObj.setPanelActive= (active) => setPanelActive(active ? panelValue : '');
-        retObj.isPanelOpen= () => getPanelOpenStatus() === 'open';
-        retObj.setPanelOpen= (open) => setPanelOpenStatus(open?'open':'close');
+        retObj.isPanelOpen= () => getPanelOpenStatus();
+        retObj.setPanelOpen= (open) => setPanelOpenStatus(open);
         return (
-            <InternalCollapsibleCheckHeader {...{title, helpID, checkKey:panelCheckKey, fieldKey:panelKey,
+            <InternalCollapsibleCheckHeader {...{sx, title, helpID, checkKey:panelCheckKey, fieldKey:panelKey,
                                             message: isActive ? message:'', initialStateChecked, panelValue,
-                                            initialState:{value: initialStateOpen ? 'open' : 'close'}}} >
+                                            initialState:{value: initialStateOpen}}} >
                 {children}
             </InternalCollapsibleCheckHeader>
         );
@@ -192,10 +198,17 @@ export function makeCollapsibleCheckHeader(base) {
 export function NavButtons({setServicesShowing, servicesShowing, currentPanel, setNextPanel}) {
 
     return (
-        <div style={{display:'flex', flexDirection:'column', margin:'5px 5px 0 60px'}}>
-            <ShowServicesButton {...{setServicesShowing,servicesShowing, labelWidth:0}}/>
-            <GotoPanelButton {...{style:{marginTop:5}, setNextPanel,currentPanel, labelWidth:0}}/>
-        </div>
+        <Stack {...{direction:'column', justifyContent:'center', spacing:.5, alignItems:'flex-end', mr:.2,
+            sx:{ 'button': {width:'100px'} }
+        }}>
+            <ShowServicesButton {...{setServicesShowing,servicesShowing}}/>
+            <GotoPanelButton {...{setNextPanel,currentPanel}}/>
+        </Stack>
+
+        // <div style={{display:'flex', flexDirection:'column', margin:'5px 5px 0 60px'}}>
+        //     <ShowServicesButton {...{setServicesShowing,servicesShowing}/>
+        //     <GotoPanelButton {...{sx:{mt:1/2}, setNextPanel,currentPanel}}/>
+        // </div>
     );
 }
 
@@ -206,57 +219,42 @@ export const ANY= 'any';
 const HIDE='HIDE';
 const SHOW='SHOW';
 
-const ServLabel= ({text,icon}) => (
-    <div style={{display:'flex', flexDirection:'row', justifyContent:'flex-start', alignItems:'center'}}>
-        <img src={icon} alt={text} height={10}/>
-        <div style={{paddingLeft:12}}>{text}</div>
-    </div>
-);
-
-
-function ShowServicesButton({style={}, labelWidth, setServicesShowing, servicesShowing }) {
+function ShowServicesButton({setServicesShowing, servicesShowing }) {
     const currState= servicesShowing ? SHOW : HIDE;
-    const tooltip= servicesShowing ? 'Showing TAP services selection' : 'TAP Services selection is hidden';
-    const showLabel= <ServLabel icon={SHOW_ICON} text='Show'/>;
-    const hideLabel= <ServLabel icon={HIDE_ICON} text='Hide'/>;
-    const options= [ {label:showLabel, value:SHOW}, {label:hideLabel, value:HIDE} ];
+    const options= [
+        {label:'Show', startDecorator: <KeyboardDoubleArrowUp/>, value:SHOW, tooltip:'Show other TAP services'},
+        {label:'Hide', startDecorator: <KeyboardDoubleArrowDown/>, value:HIDE, tooltip:'Hide other TAP services'}
+    ];
 
     return (
             <RadioGroupInputFieldView {...{
-                wrapperStyle:{display:'inline-flex', alignItems:'center', justifyContent:'flex-end'},
-                buttonGroupButtonStyle:{width:80},
-                options, value:currState, labelWidth, tooltip,
-                label:'TAP Services: ',
-                buttonGroup:true, inline:true,
+                options, value:currState, label:'TAP Services: ', orientation:'horizontal', buttonGroup:true,
                 onChange:() => setServicesShowing(!servicesShowing)
             }}/>
     );
 }
 
-function GotoPanelButton({style={}, currentPanel, setNextPanel, labelWidth}) {
+function GotoPanelButton({currentPanel, setNextPanel}) {
     const options= [ {label:'UI assisted', value:SINGLE}, {label:'Edit ADQL', value:ADQL}];
     const tooltip= 'Please select an interface type to use';
 
     return (
             <RadioGroupInputFieldView {...{
-                wrapperStyle:{...style, display:'inline-flex', alignItems:'center', justifyContent:'flex-end'},
-                options, value:currentPanel, labelWidth,
-                buttonGroupButtonStyle:{width:80},
-                label:'View: ',
-                tooltip,
-                buttonGroup:true, inline:true,
+                options, value:currentPanel,
+                label:'View: ', orientation:'horizontal', tooltip, buttonGroup:true, inline:true,
                 onChange: () => setNextPanel(currentPanel===SINGLE ? ADQL : SINGLE)
             }}/>
     );
 }
 
-export function TableTypeButton({style={}, lockToObsCore, setLockToObsCore}) {
+export function TableTypeButton({sx, lockToObsCore, setLockToObsCore}) {
     const options= [ {label:'Use Image Search (ObsTAP)', value:OBSCORE}];
-    const tooltip= lockToObsCore ? 'Selected anb image Search' : 'Selected search for catalog or other tables';
+    const tooltip= lockToObsCore ? 'Selected and image Search' : 'Selected search for catalog or other tables';
 
     return (
         <CheckboxGroupInputFieldView  {...{
-            wrapperStyle:{...style, display:'inline-flex', alignItems:'center', justifyContent:'flex-start'},
+            sx,
+            type:'switch',
             options,
             tooltip,value:lockToObsCore?OBSCORE:'', labelWidth:1,
             onChange: () => setLockToObsCore(!lockToObsCore)

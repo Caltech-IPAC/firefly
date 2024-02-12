@@ -1,98 +1,105 @@
+import {
+    Box,
+    Button, FormControl, FormLabel, IconButton, Radio, RadioGroup, Sheet, Stack, ToggleButtonGroup, Tooltip
+} from '@mui/joy';
 import React from 'react';
-import PropTypes from 'prop-types';
-import InputFieldLabel from './InputFieldLabel.jsx';
-import './ButtonGroup.css';
+import {array, string, func, bool, object, oneOf, shape, oneOfType, element} from 'prop-types';
 
 
-function makeRadioGroup(options,alignment,value,onChange,tooltip,labelStyle) {
-
-    return options.map((option) => (
-        <span key={option.value}>
-            <div style={{display:'inline-flex', flexDirection:'row', alignItems:'center'}} title={option.tooltip || tooltip}>
-                <input type='radio'
-                       title={tooltip}
-                       value={option.value}
-                       checked={value===option.value}
-                       onChange={onChange}
-                       disabled={option.disabled || false}
-                /> <span style={labelStyle ? labelStyle : generateStyles(alignment, option)}>{option.label}</span>
-            </div>
-            {alignment==='vertical' ? <br/> : ''}
-         </span>
-    ));
-}
-
-function generateStyles(alignment, option){
-    const vStyle={paddingLeft: 3, paddingRight: 8};
-    const hStyle={paddingLeft: 0, paddingRight: 12};
-    const style = alignment==='vertical' ? vStyle : hStyle;
-
-    return option.disabled ? Object.assign(style, {opacity: 0.5}) : style;
-}
-
-const startR= '4px 0 0 4px';
-const midR= '0';
-const endR= '0 4px 4px 0';
-
-function makeButtonGroup(options,value,onChange, tooltip,style) {
-
-    return options.map((option,idx) => (
-        <button type='button'   key={'' + idx} title={option.tooltip}
-                style={{borderRadius: idx===0?startR : idx===options.length-1 ? endR : midR, ...style,  }}
-                className={value===option.value ? 'buttonGroupButton On' : 'buttonGroupButton Off'}
-                value={option.value}
-                disabled={option.disabled || false}
-                onClick={(ev) => option.value!==value && onChange(ev)}>
-            {option.icon ?
-                <img src={option.icon} alt={options.label} /> :
-                 option.label
-            }
-        </button>
-    ));
-}
-
-
-
-
-export function RadioGroupInputFieldView({options,alignment,value,
-                                             onChange,label,inline,tooltip,
-                                             buttonGroup= false,
-                                             buttonGroupButtonStyle= undefined,
-                                             labelWidth, wrapperStyle={}, labelStyle=undefined}) {
-
-    const style= Object.assign({whiteSpace:'nowrap',display: inline?'inline-block':'block'},wrapperStyle);
-    let innerStyle;
-    if (buttonGroup) {
-        innerStyle= {display: 'flex'};
-    }
-    else {
-        innerStyle = (alignment==='vertical') ? {display: 'block', marginTop: (label ? 10 : 0)}
-            : {display: 'inline-block'};
-    }
+function makeRadioGroup(options,orientation='horizontal',radioValue,onChange,radioTooltip,slotProps={}) {
 
     return (
-        <div style={style}>
-            {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} labelStyle={labelStyle}/> }
-            <div style={innerStyle} >
-                {buttonGroup ?
-                     makeButtonGroup(options,value,onChange,tooltip,buttonGroupButtonStyle) :
-                     makeRadioGroup(options,alignment,value,onChange,tooltip,labelStyle)}
-            </div>
-        </div>
+        <RadioGroup {...{className:'ff-RadioGroup-container', orientation, ...slotProps.group}}>
+            {
+                options.map( ({label,value, disabled=false,tooltip }) => {
+                    const radio= (<Radio
+                        {...{ className:tooltip?undefined:'ff-RadioGroup-item', key:value, size:'sm', checked:value===radioValue, onChange, value, label, disabled, ...slotProps.radio }} />);
+                    if (tooltip||radioTooltip) {
+                        return (
+                            <Tooltip {...{className:'ff-RadioGroup-item', key:value, title:tooltip || radioTooltip, placement:tooltip?'top':undefined}}>
+                                {radio}
+                            </Tooltip>
+                        );
+                    }
+                    else {
+                        return radio;
+                    }
+                } )
+            }
+        </RadioGroup>
+    );
+}
+
+
+
+function createButtons(options, slotProps={}) {
+    return options.map(({value, disabled, tooltip, icon, label, startDecorator, endDecorator}, idx) => {
+        let b;
+        if (icon) {
+            b = (<IconButton {...{key: idx + '', value, disabled: disabled || false, ...slotProps.icon}}>
+                {icon}
+            </IconButton>);
+        } else {
+            b = (<Button {...{key: idx + '', value, disabled: disabled || false,
+                startDecorator, endDecorator,
+                sx: {'--Button-minHeight' : 25}, ...slotProps.button}} >
+                {label}
+            </Button>);
+        }
+        return tooltip ? <Tooltip key={idx+''} title={tooltip}>{b}</Tooltip> : b;
+    });
+}
+
+function fireOnChange(groupValue,newValue,onChange) {
+    if (newValue && newValue!==groupValue) onChange({target: {value: newValue}});
+}
+
+function makeButtonGroup(options,groupValue,onChange,slotProps={}) {
+    return (
+        <ToggleButtonGroup {...{value: groupValue,
+            sx: {maxHeight: 25},
+            ...slotProps.buttonGroup,
+            onChange: (ev, newValue) => fireOnChange(groupValue,newValue,onChange) }}>
+            { createButtons(options,slotProps) }
+        </ToggleButtonGroup>
+    );
+}
+
+export function RadioGroupInputFieldView({options,orientation='vertical',value,
+                                             onChange,label,tooltip,
+                                             buttonGroup= false,
+                                             sx, slotProps={}}) {
+
+    return (
+        <Box className='ff-Input' sx={sx}>
+                <FormControl orientation={orientation} style={{whiteSpace:'nowrap'}}>
+                    {label && <FormLabel {...{...slotProps.label}}>{label}</FormLabel>}
+                    <Stack direction='row'>
+                        {buttonGroup ?
+                            makeButtonGroup(options,value,onChange,slotProps) :
+                            makeRadioGroup(options,orientation,value,onChange,tooltip,slotProps)}
+                    </Stack>
+                </FormControl>
+        </Box>
     );
 }
 
 RadioGroupInputFieldView.propTypes= {
-    options: PropTypes.array.isRequired,
-    value: PropTypes.string.isRequired,
-    alignment:  PropTypes.string,
-    onChange: PropTypes.func,
-    label : PropTypes.string,
-    tooltip : PropTypes.string,
-    inline : PropTypes.bool,
-    labelWidth : PropTypes.number,
-    wrapperStyle: PropTypes.object,
-    labelStyle: PropTypes.object,
-    buttonGroup : PropTypes.bool,
+    options: array.isRequired,
+    value: string.isRequired,
+    orientation: oneOf(['vertical', 'horizontal']),
+    onChange: func,
+    label : string,
+    tooltip : oneOfType([string,element]),
+    inline : bool,
+    sx: object,
+    buttonGroup : bool,
+    slotProps: shape({
+        group: object,
+        radio: object,
+        button: object,
+        icon : object,
+        buttonGroup: object,
+        tooltip: object
+    })
 };
-

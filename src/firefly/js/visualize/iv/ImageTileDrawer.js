@@ -16,7 +16,7 @@ import {changeLocalRawDataColor, colorTableMatches} from 'firefly/visualize/rawD
  * @return {*}
  */
 export function initImageDrawer(targetCanvas) {
-    return (plot, opacity,plotView) => {
+    return (plot, opacity,plotView, colorMode) => {
         if (!isImage(plot) || !plot.affTrans || !hasLocalStretchByteData(plot)) return;
         const rootPlot= primePlot(plotView); // bounding box should us main plot not overlay plot
         const {x,y,w,h}= computeBounding(rootPlot,plotView.viewDim.width,plotView.viewDim.height);

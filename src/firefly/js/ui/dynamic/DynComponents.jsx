@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {Stack, Typography} from '@mui/joy';
 import {isArray, isString} from 'lodash';
 import React, {useEffect} from 'react';
 import {CoordinateSys} from '../../api/ApiUtilImage.jsx';
@@ -71,7 +72,7 @@ export function getSpacialSearchType(request, fieldDefAry) {
 export function makeAllFields({fieldDefAry, noLabels=false, popupHiPS, toolbarHelpId,
                                   plotId='defaultHiPSTargetSearch', insetSpacial=false} )  {
 
-    // polygon is not created directly, we need to determine who will create creat a polygon field if it exist
+    // polygon is not created directly, we need to determine who will create creat a polygon field
     const workingFieldDefAry= fieldDefAry.filter( ({hide}) => !hide);
     const hasPoly = Boolean(findFieldDefType(workingFieldDefAry,POLYGON));
     const hasPoint = Boolean(findFieldDefType(workingFieldDefAry,POINT));
@@ -150,12 +151,12 @@ function CircleAndPolyFieldPopup({fieldDefAry, typeForCircle= CIRCLE, plotId='de
 
     const taToggle = usingToggle &&
         (<RadioGroupInputField {...{
-            inline: true, fieldKey: CONE_AREA_KEY, wrapperStyle: {paddingBottom: 10},
+            inline: true, fieldKey: CONE_AREA_KEY, sx: {pb: 1},
             tooltip: 'Chose type of search', initialState: {value: CONE_CHOICE_KEY}, options: CONE_AREA_OPTIONS
         }} />);
 
     return (
-        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: cirType ? 650 : 450}}>
+        <Stack {...{alignItems: 'center', minWidth: cirType ? 650 : 450}}>
             {taToggle}
             {getChoice() === CONE_CHOICE_KEY &&
                 <CircleField {...{
@@ -168,7 +169,7 @@ function CircleAndPolyFieldPopup({fieldDefAry, typeForCircle= CIRCLE, plotId='de
                     desc: 'Coordinates',
                     targetKey, sizeKey, polygonKey,
                 }} />}
-        </div>
+        </Stack>
     );
 }
 
@@ -236,18 +237,17 @@ function makeAllAreaFields(fieldDefAry) {
 }
 
 function makeAreaField({ key, desc = 'Search Radius', initValue, tooltip, nullAllowed = false,
-                           minValue = 1 / 3600, maxValue = 1, labelWidth = DEF_LABEL_WIDTH }) {
+                           minValue = 1 / 3600, maxValue = 1}) {
     return (
         <SizeInputFields {...{
-            key, fieldKey: key, showFeedback: true, labelWidth, nullAllowed, label: desc, tooltip: tooltip ?? desc,
-            labelStyle:{textAlign:'right', paddingRight:4},
+            key, fieldKey: key, showFeedback: true, nullAllowed, label: desc, tooltip: tooltip ?? desc,
             initialState: {unit: 'arcsec', value: initValue + '', min: minValue, max: maxValue}
         }}/>
     );
 }
 
 function makeValidationField({ key, type, desc, tooltip = '', initValue, minValue, maxValue, units = '',
-                                        precision = 2, labelWidth = DEF_LABEL_WIDTH }) {
+                                        precision = 2}) {
     const unitsStr = desc ? makeUnitsStr(units): '';
     const label= desc ?  desc + unitsStr : '';
     const validator =
@@ -259,8 +259,7 @@ function makeValidationField({ key, type, desc, tooltip = '', initValue, minValu
     return (
         <ValidationField {...{
             key,
-            fieldKey: key, tooltip: tooltip + unitsStr, label:label+':', labelWidth,
-            labelStyle:{textAlign:'right', paddingRight:4},
+            fieldKey: key, tooltip: tooltip + unitsStr, label,
             initialState: {
                 value: initValue ?? (type !== UNKNOWN ? minValue ?? 0 : ''),
                 validator,
@@ -278,53 +277,47 @@ function makeCheckboxFields(fieldDefAry) {
 
     return (
         <CheckboxGroupInputField {...{
-            key: cbFieldKey, fieldKey: cbFieldKey, label: '', labelWidth: 0,
-            alignment: 'vertical', options,
-            initialState: {value},
-            wrapperStyle: {marginRight: '15px', padding: '3px 0 5px 0'}
+            key: cbFieldKey, fieldKey: cbFieldKey, label: '',
+            alignment: 'vertical', options, initialState: {value}, sx: {mr: 2, py:1/2, }
         }}
         />
     );
 }
 
-function makeListBoxField({ key, desc, tooltip = '', initValue, enumValues, units, labelWidth = DEF_LABEL_WIDTH }) {
+function makeListBoxField({ key, desc, tooltip = '', initValue, enumValues, units}) {
     const unitsStr = desc ? makeUnitsStr(units) : '';
     const label= desc ?  desc + unitsStr : '';
     return (
         <ListBoxInputField {...{
-            key, fieldKey: key, label:label+':', tooltip: tooltip + unitsStr, labelWidth,
+            key, fieldKey: key, label:label+':', tooltip: tooltip + unitsStr,
             initialState: {value: initValue},
             options: enumValues.map((e) => isString(e) ? {label: e, value: e} : e),
-            labelStyle:{textAlign:'right', paddingRight:4},
-            wrapperStyle: {marginRight: '15px', padding: '3px 0 5px 0'},
-            multiple: false
+            sx: {mr: 2, py:1/2, },
         }} />
     );
 }
 
 function CircleField({ fieldKey, desc, tooltip = '', initValue, minValue, maxValue, targetKey, sizeKey, polygonKey,
-                         style={}, labelWidth = DEF_LABEL_WIDTH, label='Coords or Object:', targetDetails, ...restOfProps }) {
+                         sx={}, label='Coords or Object:', targetDetails, ...restOfProps }) {
     return (
-        <div key={fieldKey} style={{display: 'flex', alignSelf:'start', flexDirection:'column', ...style}}>
-            <div title={tooltip} style={{width: labelWidth, alignSelf: 'start', paddingBottom: 10}}>{desc}</div>
+        <Stack {...{key:fieldKey, alignSelf:'start', ...sx}}>
+            <Typography title={tooltip} sx={{alignSelf: 'start', pb: 1}}>{desc}</Typography>
             <TargetHiPSRadiusPopupPanel {...{
-                style: {marginLeft: 0, textAlign:'right'},
-                key: fieldKey, searchAreaInDeg: initValue, labelWidth, label,
+                sx: {textAlign:'right'},
+                key: fieldKey, searchAreaInDeg: initValue, label,
                 minValue, maxValue, ...targetDetails, ...restOfProps,
-                targetLabelStyle:{paddingRight:4},
                 targetKey:targetKey??targetDetails.targetKey,
                 sizeKey:sizeKey??targetDetails.sizeKey,
                 sizeLabel:'Search Radius:',
                 polygonKey:polygonKey??targetDetails.polygonKey,
-                sizeFeedbackStyle:{textAlign:'center', marginLeft:0}
             }} />
-        </div>
+        </Stack>
     );
 }
 
 
 export function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', style={},
-                          labelWidth = DEF_LABEL_WIDTH, tooltip = 'Enter polygon coordinates search',
+                          tooltip = 'Enter polygon coordinates search',
                           targetDetails: {targetPanelExampleRow1 = DEF_AREA_EXAMPLE, targetPanelExampleRow2, sRegion}, ...restOfProps }) {
 
     const helpRow2= isArray(targetPanelExampleRow2) && targetPanelExampleRow2.length ?
@@ -341,19 +334,22 @@ export function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', s
         <div key={fieldKey} style={style}>
             <VisualPolygonPanel {...{
                 fieldKey,
-                wrapperStyle: {display: 'flex', alignItems: 'center'},
                 style: {width: 350, maxWidth: 420},
                 initValue,
-                label: desc,
+                placeholder: desc,
+                placeholderHighlight: true,
                 labelStyle: {},
-                labelWidth,
                 tooltip,
                 sRegion,
                 ...restOfProps
             }}
             />
             <ul style={{marginTop: 7}}>
-                {help.filter((h) => h).map((h) => <li key={h} style={{paddingBottom: 2, listStyleType: `'${BULLET}'`}}>{h}</li>)}
+                {help.filter((h) => h).map((h) => (
+                    <Typography key={h} level='body-xs'>
+                        <li key={h} style={{listStyleType: `'${BULLET}'`}}>{h}</li>
+                    </Typography>
+                ))}
             </ul>
         </div>
     );
@@ -368,7 +364,6 @@ function makeDynSpacialPanel({fieldDefAry, manageAllSpacial= true, popupHiPS= fa
         const polyType= manageAllSpacial && findFieldDefType(fieldDefAry, POLYGON);
         if (!posType && !circleType) return <div/>;
         const {targetDetails, nullAllowed = false, minValue, maxValue} = posType ?? circleType;
-        const {labelWidth = DEF_LABEL_WIDTH} = posType ?? circleType;
 
         const {
             hipsUrl, centerPt, hipsFOVInDeg = 240, coordinateSys: csysStr = 'EQ_J2000', mocList,
@@ -378,7 +373,7 @@ function makeDynSpacialPanel({fieldDefAry, manageAllSpacial= true, popupHiPS= fa
         const sizeKey = areaType?.key ?? circleType?.targetDetails.sizeKey;
 
         if (!hipsUrl && !targetDetails) {
-            return <TargetPanel {...{labelWidth, nullAllowed, targetPanelExampleRow1, targetPanelExampleRow2}}/>;
+            return <TargetPanel {...{nullAllowed, targetPanelExampleRow1, targetPanelExampleRow2}}/>;
         }
 
         if (manageAllSpacial && sizeKey) {
@@ -395,21 +390,20 @@ function makeDynSpacialPanel({fieldDefAry, manageAllSpacial= true, popupHiPS= fa
             }
             else {
                 return (
-                    <div key='targetGroup'
-                         style={{display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch', height:'100%'}}>
+                    <Stack key='targetGroup' {...{alignItems: 'center', alignSelf: 'stretch', height:1}}>
                         <HiPSTargetView {...{
                             hipsUrl, centerPt, hipsFOVInDeg, mocList, coordinateSys,
                             minSize: minValue, maxSize: maxValue,
                             plotId, toolbarHelpId,
-                            targetKey: 'UserTargetWorldPt', sizeKey, style: {flexGrow:1, alignSelf: 'stretch'}
+                            targetKey: 'UserTargetWorldPt', sizeKey, sx: {flexGrow:1, alignSelf: 'stretch'}
                         }}/>
                         <div style={{display: 'flex', flexDirection: 'column'}}>
                             <TargetPanel {...{
-                                style: {paddingTop: 10}, key: 'targetPanel', labelWidth, nullAllowed,
+                                sx: {pt: 1}, key: 'targetPanel', nullAllowed,
                                 targetPanelExampleRow1, targetPanelExampleRow2
                             }}/>
                         </div>
-                    </div> );
+                    </Stack> );
             }
         }
     };

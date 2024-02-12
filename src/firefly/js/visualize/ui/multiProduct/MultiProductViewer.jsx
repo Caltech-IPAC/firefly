@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {Box, Stack} from '@mui/joy';
 import {isFunction} from 'lodash';
 import {bool, string} from 'prop-types';
 import React, {memo, useContext, useEffect, useState} from 'react';
@@ -171,13 +172,12 @@ function ViewerRender({dpId, dataProductsState, noProductMessage, metaDataTableI
 }
 
 const ProductPNG = ( {makeDropDown, url}) => (
-    <div className='ComponentBackground' style={{display:'flex', flexDirection: 'column', background: '#c8c8c8', width:'100%', height:'100%'}}>
-        {makeDropDown &&  <div style={{height:30, width:'100%'}}>
-            {makeDropDown()}
-        </div>}
-        <div style={{overflow:'auto', display:'flex', justifyContent: 'center', alignItem:'center'}}>
+    <Stack {...{direction:'column', width:'100%', height:'100%'}}>
+        {makeDropDown &&
+            <Box style={{height:30, width:'100%'}}> {makeDropDown()} </Box>}
+        <Stack direction='row' alignItems='center' justifyContent='center'>
             <img src={url} alt={url} style={{maxWidth:'100%', flexGrow:0, flexShrink:0, objectFit: 'contain' }}/>
-        </div>
-    </div> );
+        </Stack>
+    </Stack> );
 
 const makeChartTableLookupKey= (activeItemLookupKey, fileMenuKey) => `${activeItemLookupKey}-charTable-${fileMenuKey}`;

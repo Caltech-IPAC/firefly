@@ -1,13 +1,7 @@
+import {FormHelperText, Typography} from '@mui/joy';
 import {isArray} from 'lodash';
 import React from 'react';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
-
-const topDivStyle= {
-    paddingTop: 5,
-    position: 'relative',
-    height : 40,
-    textAlign : 'center'
-};
 
 const defExampleEntries= {
     /* eslint-disable-next-line quotes */
@@ -22,7 +16,7 @@ const defaultExamples= (targetPanelExampleRow1, targetPanelExampleRow2) => {
     const row1Op= tpR1 ?? getAppOptions()?.targetPanelExampleRow1 ?? defExampleEntries.row1;
     const row2Op= tpR2 ?? getAppOptions()?.targetPanelExampleRow2 ?? defExampleEntries.row2;
     return (
-        <div style={{ display : 'inline-block', lineHeight : '1.2em'}}>
+        <div style={{ display : 'inline-block', lineHeight : '1.2em', fontSize:'smaller'}}>
             {row1Op?.map( (s,idx) => <span key={s} style={{paddingLeft: (idx===0) ? 5 : 15}}>{s}</span> )}
             <br/>
             {row2Op?.map( (s,idx) => <span key={s} style={{paddingLeft: (idx===0) ? 5 : 15}}>{s}</span> )}
@@ -30,17 +24,25 @@ const defaultExamples= (targetPanelExampleRow1, targetPanelExampleRow2) => {
         );
 };
 
-export function TargetFeedback ({showHelp, feedback, style={}, targetPanelExampleRow1, targetPanelExampleRow2, examples}) {
-    const topStyle= {...topDivStyle, ...style};
-    if (!showHelp) return (<div style={topStyle}> <span dangerouslySetInnerHTML={{ __html : feedback }}/> </div>);
+export function TargetFeedback ({showHelp, feedback, sx, targetPanelExampleRow1, targetPanelExampleRow2, examples}) {
+    const minHeight= '3rem';
+    if (!showHelp) {
+        return (
+            <FormHelperText sx={{textAlign:'center', minHeight, ...sx}}>
+                <Typography component='div'>
+                    <span dangerouslySetInnerHTML={{ __html : feedback }}/>
+                </Typography>
+            </FormHelperText>
+        );
+    }
     return (
-        <div style={topStyle}>
-            <div>
-                <div style={{display : 'inline-block', verticalAlign: 'top'}}>
+            <FormHelperText sx={{textAlign:'center', minHeight, ...sx}}>
+                <Typography level='body-sm'>
                     <i>Examples: </i>
-                </div>
-                {examples ?? defaultExamples(targetPanelExampleRow1, targetPanelExampleRow2)}
-            </div>
-        </div>
+                </Typography>
+                <Typography level='body-sm' component='div'>
+                    {examples ?? defaultExamples(targetPanelExampleRow1, targetPanelExampleRow2)}
+                </Typography>
+            </FormHelperText>
     );
 }

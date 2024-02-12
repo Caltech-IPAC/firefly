@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import {Button,Stack, Typography} from '@mui/joy';
 import {get, set} from 'lodash';
 import Enum from 'enum';
 import {replaceExt, updateSet} from '../../util/WebUtil.js';
@@ -31,8 +32,8 @@ import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {findTableCenterColumns} from 'firefly/voAnalyzer/TableAnalysis';
 
 const fKeyDef = {
-    fileName: {fKey: 'fileName', label: 'File name:'},
-    fileFormat: {fKey: 'fileFormat', label: 'File format:'},
+    fileName: {fKey: 'fileName', label: 'File name'},
+    fileFormat: {fKey: 'fileFormat', label: 'File format'},
     location: {fKey: 'fileLocation', label: 'File location:'},
     wsSelect: {fKey: 'wsSelect', label: ''},
     overWritable: {fKey: 'fileOverwritable', label: 'File overwritable: '}
@@ -60,7 +61,8 @@ const tableFormatsExt = {
     'votable-fits-inline': 'vot',
 };
 
-
+const dialogWidth = '32rem';
+const dialogHeight = '22rem';
 const labelWidth = 100;
 const defValues = {
     [fKeyDef.fileName.fKey]: Object.assign(getTypeData(fKeyDef.fileName.fKey, '',
@@ -77,14 +79,11 @@ const defValues = {
 
 const tblDownloadGroupKey = 'TABLE_DOWNLOAD_FORM';
 
-const dialogWidth = 500;
-const dialogHeightWS = 500;
-const dialogHeightLOCAL = 400;
-const mTop = 10;
-
 const popupPanelResizableStyle = {
     width: dialogWidth,
+    height: dialogHeight,
     minWidth: dialogWidth,
+    minHeight: dialogHeight,
     resize: 'both',
     overflow: 'hidden',
     position: 'relative'
@@ -135,56 +134,44 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
         if (cenCols) fileOptions.push({label: 'Region (.reg)', value: 'reg'});
 
         return (
-            <div style={{display: 'flex', marginTop: mTop}}>
-                <div>
-                    <ListBoxInputField
-                        options={ fileOptions}
-                        fieldKey = {fKeyDef.fileFormat.fKey}
-                        multiple={false}
-                    />
-                </div>
-            </div>
+            <ListBoxInputField
+                options={ fileOptions}
+                fieldKey = {fKeyDef.fileFormat.fKey}
+                multiple={false}
+                orientation={'vertical'}
+            />
         );
     };
     return (
-        <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
-            <FieldGroup style={{ boxSizing: 'border-box', paddingLeft:5, paddingRight:5, flexGrow: 1}}
-                        groupKey={tblDownloadGroupKey}
-                        reducerFunc={TableDLReducer(tbl_id)}>
+        <FieldGroup groupKey={tblDownloadGroupKey} reducerFunc={TableDLReducer(tbl_id)}>
+            <Stack spacing={2} justifyContent={'center'}
+                               sx={{px: 2}}>
                 <DownloadOptionsDialog fromGroupKey={tblDownloadGroupKey} style={{width: 'unset', height: 'unset'}}
                                        children={fileFormatOptions()}
                                        workspace={isWs}
                                        dialogWidth='100%'
-                                       dialogHeight='300px'
+                                       dialogHeight='100%'
                 />
-                <RadioGroupInputField fieldKey='mode' initialState={{value: 'displayed'}} wrapperStyle={{marginTop:10}}
+                <RadioGroupInputField fieldKey='mode' initialState={{value: 'displayed'}}
                                       options={[{value:'displayed', label:'Save table as displayed'}, {value:'original', label:'Save table as originally retrieved'}]}/>
-                <div style={{margin: '5px 22px', color: 'gray'}}>
+                <Typography level='body-sm' sx={{textAlign: 'left'}}>
                     {mode === 'original' ? asOriginalMsg : asDisplayedMsg}
-                </div>
-
-            </FieldGroup>
-            <div style={{display: 'flex', justifyContent: 'space-between',
-                marginTop: 30, marginBottom: 10, marginLeft: 5, marginRight: 5}}>
-                <div style={{display: 'flex', width: '60%', alignItems: 'flex-end'}}>
-                    <div style={{marginRight: 10}}>
+                </Typography>
+                <Stack sx={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                    <Stack spacing={1} direction='row' alignItems='center'>
                         <CompleteButton
                             groupKey={tblDownloadGroupKey}
                             onSuccess={resultSuccess(tbl_id, tbl_ui_id, onComplete, cenCols)}
                             onFail={resultFail()}
                             text={'Save'}/>
-                    </div>
-                    <div>
-                        <button type='button' className='button std hl'
-                                onClick={() => onComplete?.()}>Cancel
-                        </button>
-                    </div>
-                </div>
-                <div style={{ textAlign:'right', marginRight: 10}}>
-                    <HelpIcon helpId={'tables.save'}/>
-                </div>
-            </div>
-        </div>
+                        <Button onClick={() => onComplete?.()}>Cancel</Button>
+                    </Stack>
+                    <Stack>
+                        <HelpIcon helpId={'tables.save'}/>
+                    </Stack>
+                </Stack>
+            </Stack>
+        </FieldGroup>
     );
 }
 

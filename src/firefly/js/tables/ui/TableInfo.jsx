@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import {Typography, Box, Link, Stack} from '@mui/joy';
 
 import {isEmpty} from 'lodash';
 import {getTblById, hasAuxData} from '../TableUtil.js';
@@ -14,17 +15,16 @@ import {CopyToClipboard} from '../../visualize/ui/MouseReadout.jsx';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 
 
-export function TableInfo(props) {
+export function TableInfo({tbl_id, tabsProps, ...props}) {
 
-    const {tbl_id} = props;
     if (!tbl_id) {
         return <div>No additional Information</div>;
     }
    const jobId = getJobIdFromTblId(tbl_id);
 
     return (
-        <div style={{padding: '10px 5px 5px', height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column'}}>
-            <StatefulTabs componentKey='TablePanelOptions' defaultSelected={0} borderless={true} useFlex={true} style={{flex: '1 1 0'}}>
+        <Stack p={1} height={1} spacing={1} {...props}>
+            <StatefulTabs componentKey='TablePanelOptions' {...tabsProps}>
                 {jobId &&
                 <Tab name='Job Info'>
                     <JobInfo jobId={jobId}/>
@@ -36,30 +36,29 @@ export function TableInfo(props) {
                     </div>
                 </Tab>
             </StatefulTabs>
-            <div>
-                <HelpIcon helpId={'tables.info'} style={{float: 'right', marginRight: 10}}/>
-            </div>
-        </div>
+            <Stack alignItems='flex-end'>
+                <HelpIcon helpId='tables.info'/>
+            </Stack>
+        </Stack>
     );
 }
 
 TableInfo.propTypes = {
-    tbl_id: PropTypes.string
+    tbl_id: PropTypes.string,
+    tabsProps: PropTypes.object         // this get passed into TabPanel
 };
 
 
 function MetaContent({tbl_id}) {
     if (hasAuxData(tbl_id)) {
-        return <MetaInfo tbl_id={tbl_id} isOpen={true} style={{ width: '100%', border: 'none', margin: 'unset', padding: 'unset'}} />;
+        return <MetaInfo tbl_id={tbl_id} isOpen={true} sx={{ w: 1, border: 'none', m: 'unset', p: 'unset'}} />;
     } else {
         return <div style={{margin: 20, fontWeight: 'bold'}}>No metadata available</div>;
     }
 }
 
 
-export function MetaInfo({tbl_id, style, isOpen=false}) {
-    const contentStyle={display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingBottom: 1};
-    const collapsiblePanelStyle={width: '100%'};
+export function MetaInfo({tbl_id, isOpen=false, ...props}) {
 
     if (!hasAuxData(tbl_id)) {
         return null;
@@ -67,9 +66,9 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
     const {keywords, links, params, resources, groups} = getTblById(tbl_id);
 
     return (
-        <div className='TablePanel__meta' style={style}>
+        <Stack {...props}>
             { !isEmpty(keywords) &&
-            <CollapsiblePanel componentKey={tbl_id + '-meta'} header='Table Meta' style={collapsiblePanelStyle} {...{isOpen, contentStyle}}>
+            <CollapsiblePanel componentKey={tbl_id + '-meta'} header='Table Meta' isOpen={isOpen}>
                 {keywords.concat()                                             // make a copy so the original array does not mutate
                     .filter( ({key}) => key)
                     .sort(({key:k1}, {key:k2}) => (k1+'').localeCompare(k2+''))        // sort it by key
@@ -78,7 +77,7 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
             </CollapsiblePanel>
             }
             { !isEmpty(params) &&
-            <CollapsiblePanel componentKey={tbl_id + '-params'} header='Table Params' style={collapsiblePanelStyle} {...{isOpen, contentStyle}}>
+            <CollapsiblePanel componentKey={tbl_id + '-params'} header='Table Params' isOpen={isOpen}>
                 {params.concat()                                                          // same logic as keywords, but sort by name
                     .sort(({name:k1}, {name:k2}) => k1.localeCompare(k2))
                     .map(({name, value, type='N/A'}, idx) => <KeywordBlock key={'params-' + idx} label={`${name}(${type})`} value={value}/>)
@@ -86,7 +85,7 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
             </CollapsiblePanel>
             }
             { !isEmpty(groups) &&
-            <CollapsiblePanel componentKey={tbl_id + '-groups'} header='Groups' style={collapsiblePanelStyle} {...{isOpen, contentStyle}}>
+            <CollapsiblePanel componentKey={tbl_id + '-groups'} header='Groups' isOpen={isOpen}>
                 {groups.map((rs, idx) => {
                     const showValue = () => showInfoPopup(
                         <div style={{whiteSpace: 'pre'}}>
@@ -106,7 +105,7 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
             </CollapsiblePanel>
             }
             { !isEmpty(links) &&
-            <CollapsiblePanel componentKey={tbl_id + '-links'} header='Links' style={collapsiblePanelStyle} {...{isOpen, contentStyle}}>
+            <CollapsiblePanel componentKey={tbl_id + '-links'} header='Links' isOpen={isOpen}>
                 {links.map((l, idx) => {
                     return (
                         <div key={'links-' + idx} style={{display: 'inline-flex', alignItems: 'center'}}>
@@ -121,7 +120,7 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
             </CollapsiblePanel>
             }
             { !isEmpty(resources) &&
-            <CollapsiblePanel componentKey={tbl_id + '-resources'} header='Resources' style={collapsiblePanelStyle} {...{isOpen, contentStyle}}>
+            <CollapsiblePanel componentKey={tbl_id + '-resources'} header='Resources' isOpen={isOpen}>
                 {resources.map((rs, idx) => {
                     const showValue = () => showInfoPopup(
                         <div style={{whiteSpace: 'pre'}}>
@@ -140,7 +139,7 @@ export function MetaInfo({tbl_id, style, isOpen=false}) {
                 }
             </CollapsiblePanel>
             }
-        </div>
+        </Stack>
     );
 }
 
@@ -152,17 +151,17 @@ export function KeywordBlock({style={}, label, value, title, asLink}) {
     );
 }
 
-export function Keyword({style={}, label, value, title, asLink}) {
+export function Keyword({label, value, title, asLink}) {
     label = label && label + ':';
     if (label || value) {
         value = String(value);
         return (
-            <React.Fragment>
-                {label && <div title={title} className='keyword-label'>{label}</div>}
+            <>
+                {label && <Typography level='title-sm' title={title} mr={1/2}>{label}</Typography>}
                 { asLink ? <LinkTag title={value} href={value} /> :
-                    <ContentEllipsis text={value} style={{padding: 1, margin: 'unset'}}><div title={value} style={{whiteSpace: 'nowrap',...style}} className='keyword-value'>{value}</div></ContentEllipsis>
+                    <ContentEllipsis text={value} sx={{p: '1px', margin: 'unset'}}><Typography level='body-xs' title={value} noWrap mr={1/2}>{value}</Typography></ContentEllipsis>
                 }
-            </React.Fragment>
+            </>
         );
     }
     return null;
@@ -173,11 +172,12 @@ export function LinkTag({href, title}) {
     title = title || href;
     if (href) {
         return (
-            <div style={{display: 'inline-flex', alignItems: 'center', overflow: 'hidden'}}>
-                <CopyToClipboard value={href} size={16} buttonStyle={{backgroundColor: 'unset'}}/>
-                <a className='ff-href' style={{padding: '0 3px', verticalAlign: 'middle', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.5}}
-                   href={href} title={title} target='Links'>{title}</a>
-            </div>
+            <Box overflow='hidden'>
+                <Link level='body-xs' sx={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}
+                    href={href} title={title} target='Links'
+                    startDecorator={<CopyToClipboard value={href} size={16} buttonStyle={{backgroundColor: 'unset'}}/>}
+                >{title}</Link>
+            </Box>
         );
     } else return null;
 }

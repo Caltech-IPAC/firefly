@@ -13,7 +13,7 @@ const showBgMonAction = { type:'COMMAND',
 };
 
 
-export function BgMonitorButton () {
+export function BgMonitorButton ({sx}) {
 
     const {jobs={}} = useStoreConnector(() => getBackgroundInfo());
 
@@ -21,6 +21,8 @@ export function BgMonitorButton () {
     const isWorking = monitoredJobs.some( (info) => isActive(info) );
 
     return (<MenuItem {...{
+        sx,
+        size:'sm',
         menuItem:showBgMonAction,
         isWorking,
         badgeCount: monitoredJobs.length

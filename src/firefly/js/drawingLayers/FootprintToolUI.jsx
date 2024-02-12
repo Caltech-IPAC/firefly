@@ -2,21 +2,24 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Chip, Stack, Typography} from '@mui/joy';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import {flux} from '../core/ReduxFlux.js';
+import {ListBoxInputFieldView} from '../ui/ListBoxInputField.jsx';
+import {formatWorldPt} from '../visualize/ui/WorldPtFormat.jsx';
 import {convertAngle} from '../visualize/VisUtil.js';
 import {TextLocation} from '../visualize/draw/DrawingDef.js';
 import {dispatchModifyCustomField, DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import {addFootprintDrawLayer} from '../visualize/ui/MarkerDropDownView.jsx';
 import {ANGLE_UNIT} from '../visualize/draw/MarkerFootprintObj.js';
 import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
-import CoordUtil from '../visualize/CoordUtil.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {InputFieldView} from '../ui/InputFieldView.jsx';
-import {isNil, get} from 'lodash';
+import {isNil} from 'lodash';
 import {sprintf} from '../externalSource/sprintf';
+import {FixedPtControl} from './FixedPtControl.jsx';
 
 export const getFootprintToolUIComponent = (drawLayer,pv) => <FootprintToolUI drawLayer={drawLayer} pv={pv}/>;
 export const defaultFootprintTextLoc = TextLocation.REGION_SE;
@@ -27,11 +30,11 @@ class FootprintToolUI extends PureComponent {
     constructor(props) {
         super(props);
 
-        var fpObj = get(this.props.drawLayer, ['drawData', 'data', this.props.pv.plotId], {});
-        var {angle = 0.0, angleUnit = ANGLE_UNIT.radian, text = '', textLoc = defaultFootprintTextLoc} = fpObj;
-        var angleDeg = `${formatAngle(convertAngle(angleUnit.key, 'deg', angle))}`;
-        var {fpInfo} = this.props.drawLayer;
-        var {currentPt} = get(fpObj, 'actionInfo', {});
+        const fpObj = this.props.drawLayer?.drawData?.data?.[this.props.pv.plotId] ?? {};
+        const {angle = 0.0, angleUnit = ANGLE_UNIT.radian, text = '', textLoc = defaultFootprintTextLoc} = fpObj;
+        const angleDeg = `${formatAngle(convertAngle(angleUnit.key, 'deg', angle))}`;
+        const {fpInfo} = this.props.drawLayer;
+        const {currentPt} = fpObj?.actionInfo ?? {};
         const plot= primePlot(visRoot(),this.props.pv.plotId);
 
         this.csys = CsysConverter.make(plot);
@@ -54,13 +57,13 @@ class FootprintToolUI extends PureComponent {
     }
 
     stateUpdate() {
-        var dl = getDrawLayerById(flux.getState()[DRAWING_LAYER_KEY], this.props.drawLayer.drawLayerId);
+        const dl = getDrawLayerById(flux.getState()[DRAWING_LAYER_KEY], this.props.drawLayer.drawLayerId);
 
         if (dl && this.iAmMounted) {
-            const crtFpObj = get(dl, ['drawData', 'data', this.props.pv.plotId]);
+            const crtFpObj = dl?.drawData?.data?.[this.props.pv.plotId];
 
             if (crtFpObj) {
-                var {currentPt} = get(crtFpObj, 'actionInfo', {});
+                let {currentPt} = crtFpObj?.actionInfo ?? {};
                 if (currentPt) {
                     currentPt = this.csys.getWorldCoords(currentPt);
                     if (currentPt !== this.state.currentPt) {
@@ -68,7 +71,7 @@ class FootprintToolUI extends PureComponent {
                     }
                 }
 
-                if (!get(crtFpObj, 'angleFromUI', false)) {
+                if (!crtFpObj?.angleFromUI) {
                     var {angle = 0.0, angleUnit = ANGLE_UNIT.radian} = crtFpObj;
 
                     angle = convertAngle(angleUnit.key, 'deg', angle);
@@ -87,13 +90,13 @@ class FootprintToolUI extends PureComponent {
     }
 
     changeFootprintText(ev) {
-        var fpText = get(ev, 'target.value');
+        let fpText = ev?.target?.value;
 
         if (isNil(fpText) || !fpText) {
-            var dl = getDrawLayerById(flux.getState()[DRAWING_LAYER_KEY], this.props.drawLayer.drawLayerId);
+            const dl = getDrawLayerById(flux.getState()[DRAWING_LAYER_KEY], this.props.drawLayer.drawLayerId);
 
             fpText = '';
-            this.props.drawLayer.title = get(dl, 'defaultTitle');
+            this.props.drawLayer.title = dl?.defaultTitle;
         } else {
             this.props.drawLayer.title = fpText;
         }
@@ -104,8 +107,7 @@ class FootprintToolUI extends PureComponent {
                      this.props.pv.plotId);
     }
 
-    changeFootprintTextLocation(ev) {
-        var fpTextLoc = get(ev, 'target.value');
+    changeFootprintTextLocation(ev,fpTextLoc ) {
 
         this.setState({fpTextLoc});
         dispatchModifyCustomField( this.props.drawLayer.drawLayerId,
@@ -114,8 +116,8 @@ class FootprintToolUI extends PureComponent {
     }
 
     changeFootprintAngle(ev) {
-        var angleDeg = get(ev, 'target.value');
-        var isValidAngle = true;
+        let angleDeg = ev?.target?.value;
+        let isValidAngle = true;
 
         if  (isNaN(parseFloat(angleDeg))) {
             if (!angleDeg) angleDeg = '';
@@ -129,69 +131,54 @@ class FootprintToolUI extends PureComponent {
     }
 
     render() {
-        const tStyle= {
-            display:'flex',
-            flexDirection:'column',
-            paddingLeft : 10
-        };
-
-        const mStyle = {
-            marginTop: 5
-        };
-
-        var {isValidAngle, angleDeg, fpText, fpTextLoc, fpInfo} = this.state;
-        var textOnLink = get(fpInfo, 'fromFile') ? `Add ${get(fpInfo, 'fromFile')}`
-                         :(get(fpInfo, 'fromRegionAry')
-                                        ? `Add ${this.props.drawLayer.title}`
-                                        : `Add ${get(fpInfo, 'footprint')} ${get(fpInfo, 'instrument')}`);
+        const {isValidAngle, angleDeg, fpText, fpTextLoc, fpInfo} = this.state;
+        const textOnLink = fpInfo?.fromFile ? `Add another ${fpInfo.fromFile}`
+                         :fpInfo?.fromRegionAry
+                                        ? `Add another ${this.props.drawLayer.title}`
+                                        : `Add another ${fpInfo?.footprint} ${fpInfo?.instrument}`;
 
 
         return (
-            <div style={{display:'flex', justifyContent:'flex-start', flexDirection: 'column', padding:'5px 0 9px 0'}}>
-                <div style={{display:'flex', justifyContent: 'flex-start', paddingLeft:10, paddingBottom:8}}>
-                    <div> Center:</div>
-                    <div style={tStyle} className={'enable-select'}>
-                        {convertWorldLonToString(this.state.currentPt, this.csys) + ', ' +
-                        convertWorldLatToString(this.state.currentPt, this.csys)}
-                    </div>
-                </div>
+            <Stack {...{py:1}}>
+                <Stack {...{direction:'row', alignItems:'center', justifyContent: 'flex-start', spacing:1, pl:1, pb:1}}>
+                    <Typography level='body-sm'>Center:</Typography>
+                    {formatWorldPt(this.state.currentPt,3,false)}
+                    <FixedPtControl wp={this.state.currentPt} pv={this.props.pv}/>
+                </Stack>
 
-                <div style={{display:'flex', justifyContent:'flex-start'}}>
-
-                    <div style={tStyle}>
-                        <div title={'Add a lable to this footprint'}> Label:&nbsp;<input style={{width: 86}}
-                                           type='text'
-                                           value={fpText}
-                                           onChange={this.changeFootprintText}/>
-                        </div>
-                        <div style={mStyle} title={'Choose a corner'}> Label Location:&nbsp;
-                            <select value={fpTextLoc} onChange={ this.changeFootprintTextLocation }>
-                                <option value={TextLocation.REGION_NE.key}> NE </option>
-                                <option value={TextLocation.REGION_NW.key}> NW </option>
-                                <option value={TextLocation.REGION_SE.key}> SE </option>
-                                <option value={TextLocation.REGION_SW.key}> SW </option>
-                            </select>
-                        </div>
-                    </div>
-                    <div style={tStyle}>
+                <Stack {...{direction:'row', spacing:1, justifyContent:'flex-start'}}>
+                    <Stack spacing={1}>
+                        <InputFieldView label='Label' tooltip= 'Add a lable to this footprint'
+                                        slotProps={{input:{sx:{width:'15rem'}}}}
+                                        onChange={this.changeFootprintText} value={fpText}/>
+                        <ListBoxInputFieldView
+                            onChange={this.changeFootprintTextLocation}
+                            value={fpTextLoc}
+                            label='Label Location' tooltip='Choose a corner'
+                            options={[
+                                {value: TextLocation.REGION_NE.key, label:'NE'},
+                                {value: TextLocation.REGION_NW.key, label:'NW'},
+                                {value: TextLocation.REGION_SE.key, label:'SE'},
+                                {value: TextLocation.REGION_SW.key, label:'SW'},
+                            ]}/>
+                    </Stack>
+                    <Stack spacing={1}>
                         <InputFieldView
                                     valid={isValidAngle}
+                                    slotProps={{input:{sx:{width:'7rem'}}}}
                                     onChange={this.changeFootprintAngle}
                                     value={angleDeg}
-                                    message={'invalid angle value'}
-                                    label={'Angle:'}
-                                    labelWidth={30}
-                                    style={{width: 50}}
-                                    tooltip={'Enter the angle in degree you want the footprint rotated'}
+                                    message='invalid angle value'
+                                    label='Angle'
+                                    tooltip='Enter the angle in degree you want the footprint rotated'
 
                         />
-                        <div style={mStyle} title={textOnLink}>
-                            <a className='ff-href' style={{textDecoration: 'underline'}}
-                               onClick={()=>addFootprintDrawLayer(this.props.pv, this.state.fpInfo)}>{textOnLink}</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                        <Chip onClick={()=>addFootprintDrawLayer(this.props.pv, this.state.fpInfo)}>
+                            {textOnLink}
+                        </Chip>
+                    </Stack>
+                </Stack>
+            </Stack>
         );
     }
 }
@@ -202,29 +189,7 @@ FootprintToolUI.propTypes= {
     pv            : PropTypes.object.isRequired
 };
 
-function convertWorldLonToString(pt) {
-    var str = '';
-
-    if (!pt) return str;
-    return CoordUtil.convertLonToString(pt.getLon(), pt.getCoordSys());
-}
-
-function convertWorldLatToString(pt) {
-    var str = '';
-
-    if (!pt) return str;
-    return `${CoordUtil.convertLatToString(pt.getLat(), pt.getCoordSys())} Equ J2000`;
-}
-
-function convertWorldToString(pt) {
-    var str = '';
-    if (!pt) return str;
-
-    return `${sprintf(precision,pt.x)}, ${sprintf(precision,pt.y)}`;
-}
-
 function formatAngle(angle) {
-     var anglePre = parseFloat(`${sprintf(precision,angle)}`);
-
+     const anglePre = parseFloat(`${sprintf(precision,angle)}`);
      return `${anglePre}`;
 }

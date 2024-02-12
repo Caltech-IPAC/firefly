@@ -1,12 +1,10 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import {func, bool, element, object, arrayOf, number, objectOf, shape, string, oneOfType} from 'prop-types';
 import {has, isNumber, isString, isObject, isNaN} from 'lodash';
-import Slider from 'rc-slider';
-import './rc-slider.css';
+import {Slider, Stack, Typography, Tooltip} from '@mui/joy';
 
-
-export function RangeSliderView({min=0, max=100, minStop, maxStop, className, marks, step=1, vertical=false,
-                                    defaultValue=0, slideValue, handle, style={}, sliderStyle={},
+export function RangeSliderView({min=0, max=100, minStop, maxStop, marks, step=1, vertical=false,
+                                    defaultValue=0, slideValue, sx={},
                                     label='', labelWidth, tooltip, decimalDig=3, handleChange}){
     const toRangeBound = (val) => {
         if (minStop && val < minStop ) {
@@ -18,55 +16,59 @@ export function RangeSliderView({min=0, max=100, minStop, maxStop, className, ma
         return val;
     };
 
-    const onSliderChange = (v) => {
+    const onSliderChange = (ev) => {
+        const val= ev?.target.value;
         const numDecimalDigits = (decimalDig < 0) ? 0 : (decimalDig > 20) ? 20 : decimalDig;
-
-        handleChange?.(toRangeBound(v).toFixed(numDecimalDigits));
+        handleChange?.(toRangeBound(val).toFixed(numDecimalDigits));
     };
 
     return (
-        <div style={style}>
-            <div style={{display: 'flex', ...sliderStyle}}>
-                <div title={tooltip} style={{width: labelWidth, marginBottom: 5}}>{label}</div>
-                <Slider min={min}
-                        max={max}
-                        className={className}
-                        marks={marks}
-                        step={step}
-                        vertical={vertical}
-                        defaultValue={defaultValue}
-                        value={toRangeBound(parseFloat(slideValue))}
-                        handle={handle}
-                        tipFormatter={null}
-                        included={true}
-                        onChange={onSliderChange} />
-            </div>
-        </div>
+        <Tooltip title={tooltip}>
+            <Stack direction='column' p={0} spacing={0} sx={sx}>
+                <Typography level='body-xs' width={labelWidth} mb='0'>{label}</Typography>
+                <Slider
+                    size={'sm'}
+                    aria-label='steps'
+                    min={min}
+                    max={max}
+                    marks={marks}
+                    step={step}
+                    orientation={vertical ? 'vertical' : 'horizontal'}
+                    defaultValue={defaultValue}
+                    value={toRangeBound(parseFloat(slideValue))}
+                    onChange={onSliderChange} />
+            </Stack>
+        </Tooltip>
     );
 }
 
 
 RangeSliderView.propTypes = {
-    min:   PropTypes.number,
-    max:   PropTypes.number,
-    minStop:  PropTypes.number,
-    maxStop:  PropTypes.number,
-    className: PropTypes.string,
-    marks: PropTypes.objectOf(checkMarksObject),
-    step: PropTypes.number,
-    vertical: PropTypes.bool,
-    defaultValue: PropTypes.number,
-    slideValue: PropTypes.oneOfType([PropTypes.string,PropTypes.number]).isRequired,
-    handle: PropTypes.element,
-    style: PropTypes.object,
-    sliderStyle: PropTypes.object,
-    label: PropTypes.string,
-    labelWidth: PropTypes.number,
-    tooltip:  PropTypes.string,
-    decimalDig: PropTypes.number,
-    handleChange: PropTypes.func           // callback on slider change
+    min:   number,
+    max:   number,
+    minStop:  number,
+    maxStop:  number,
+    className: string,
+    // react keeps showing warnings (i think wrongly) so I am commenting this out
+    // marks: arrayOf(objectOf(
+    //     shape({
+    //         label: string,
+    //         value: number,
+    //     })
+    // )),   // marks shown on slider
+    step: number,
+    vertical: bool,
+    defaultValue: number,
+    slideValue: oneOfType([string,number]).isRequired,
+    handle: element,
+    style: object,
+    sx: object,
+    label: string,
+    labelWidth: number,
+    tooltip:  string,
+    decimalDig: number,
+    handleChange: func           // callback on slider change
 };
-
 
 export function checkMarksObject(props, propName, componentName) {
     if (isNumber(propName) ||

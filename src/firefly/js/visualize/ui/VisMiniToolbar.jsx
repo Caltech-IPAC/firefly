@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {Box, Stack, Typography} from '@mui/joy';
 import React, {memo, useEffect, useRef, useState} from 'react';
 import {omit} from 'lodash';
 import shallowequal from 'shallowequal';
@@ -8,7 +9,7 @@ import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from 'firefly/core/LayoutCntlr.
 import DistanceTool from 'firefly/drawingLayers/DistanceTool.js';
 import NorthUpCompass from 'firefly/drawingLayers/NorthUpCompass.js';
 import WebGrid from 'firefly/drawingLayers/WebGrid.js';
-import {SingleColumnMenu} from 'firefly/ui/DropDownMenu.jsx';
+import {DropDownMenu} from 'firefly/ui/DropDownMenu.jsx';
 import {DropDownToolbarButton} from 'firefly/ui/DropDownToolbarButton.jsx';
 import {showFitsDownloadDialog} from 'firefly/ui/FitsDownloadDialog.jsx';
 import {showFitsRotationDialog} from 'firefly/ui/FitsRotationDialog.jsx';
@@ -30,7 +31,6 @@ import {showPlotInfoPopup} from 'firefly/visualize/ui/PlotInfoPopup.js';
 import {SelectAreaButton} from 'firefly/visualize/ui/SelectAreaDropDownView.jsx';
 import {SimpleLayerOnOffButton} from 'firefly/visualize/ui/SimpleLayerOnOffButton.jsx';
 import {StretchDropDownView} from 'firefly/visualize/ui/StretchDropDownView.jsx';
-import {ZoomButton, ZoomType} from 'firefly/visualize/ui/ZoomButton.jsx';
 import {isHiPS} from 'firefly/visualize/WebPlot.js';
 import {getPreference} from '../../core/AppDataCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
@@ -43,9 +43,12 @@ import {
 import {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {
     findPlotGroup, getActivePlotView, getAllDrawLayersForPlot, getPlotViewById, hasOverlayColorLock, hasWCSProjection,
-    isImageCube,
-    isThreeColor, primePlot, pvEqualExScroll
+    isImageCube, isThreeColor, primePlot, pvEqualExScroll
 } from '../PlotViewUtil.js';
+import {
+    ColorButtonIcon, ColorDropDownButton, DistanceButton, DrawLayersButton, ExpandButton, ExtractLine, ExtractPoints,
+    FlipYButton, InfoButton, RestoreButton, RotateButton, SaveButton, ToolsDropDown
+} from './Buttons.jsx';
 import {ImageCenterDropDown, TARGET_LIST_PREF} from './ImageCenterDropDown.jsx';
 import {
     clearModalEndInfo, closeToolbarModalLayers, createModalEndUI,
@@ -53,36 +56,19 @@ import {
 } from './ToolbarToolModalEnd.js';
 
 import DRILL_DOWN from 'images/drill-down.png';
-import GRID_EXPAND from 'images/icons-2014/24x24_ExpandArrows-grid-3.png';
-import OUTLINE_EXPAND from 'images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
-import COLOR from 'images/icons-2014/28x28_ColorPalette.png';
 import COMPASS_OFF from 'images/icons-2014/28x28_Compass.png';
 import COMPASS_ON from 'images/icons-2014/28x28_CompassON.png';
-import FITS_HEADER from 'images/icons-2014/28x28_FITS_Information.png';
 import NEW_IMAGE from 'images/icons-2014/28x28_FITS_NewImage.png';
 import STRETCH from 'images/icons-2014/28x28_Log.png';
 import DS9_REGION from 'images/icons-2014/DS9.png';
 import GRID_ON from 'images/icons-2014/GreenGrid-ON.png';
 import GRID_OFF from 'images/icons-2014/GreenGrid.png';
 import MARKER from 'images/icons-2014/MarkerCirclesIcon_28x28.png';
-import DIST_ON from 'images/icons-2014/Measurement-ON.png';
-import DIST_OFF from 'images/icons-2014/Measurement.png';
-import FLIP_Y_ON from 'images/icons-2014/Mirror-ON.png';
-import FLIP_Y from 'images/icons-2014/Mirror.png';
-import RESTORE from 'images/icons-2014/RevertToDefault.png';
-import ROTATE from 'images/icons-2014/Rotate.png';
 import ROTATE_NORTH_ON from 'images/icons-2014/RotateToNorth-ON.png';
 import ROTATE_NORTH_OFF from 'images/icons-2014/RotateToNorth.png';
-
-import SAVE from 'images/icons-2014/Save.png';
-import LAYER_ICON from 'images/icons-2014/TurnOnLayers.png';
-import LINE_EXTRACTION from 'images/line-extract.png';
 import MASK from 'images/mask_28x28.png';
-import LOCKED from 'images/OverlayLocked.png';
-import UNLOCKED from 'images/OverlayUnlocked.png';
-import POINT_EXTRACTION from 'images/points.png';
-import TOOL_DROP from 'images/tools-again-try2.png';
-import ZOOM_DROP from 'images/Zoom-drop.png';
+// import LOCKED from 'images/OverlayLocked.png';
+// import UNLOCKED from 'images/OverlayUnlocked.png';
 import PropTypes from 'prop-types';
 
 const omList= ['plotViewAry'];
@@ -128,11 +114,11 @@ function getStoreState(oldState) {
     return (needsUpdate) ? newState : oldState;
 }
 
-export const VisMiniToolbar = memo( ({style, manageExpand=true, expandGrid=false, viewerId, tips={}}) => {
+export const VisMiniToolbar = memo( ({sx, manageExpand=true, expandGrid=false, viewerId, tips={}}) => {
     const {visRoot,dlCount, recentTargetAry, modalEndInfo} = useStoreConnector(getStoreState,[],true);
 
     return (
-        <VisMiniTBWrapper {...{visRoot, dlCount, style, recentTargetAry, viewerId,
+        <VisMiniTBWrapper {...{visRoot, dlCount, sx, recentTargetAry, viewerId,
                           manageExpand, expandGrid, modalEndInfo, tips}} />
     );
 });
@@ -156,10 +142,10 @@ const rS= {
 };
 
 const VisMiniTBWrapper= wrapResizer(
-    ({visRoot, dlCount, style= {}, size:{width}, manageExpand, expandGrid, viewerId, modalEndInfo, tips={}}) => (
-        <div style={{...rS, ...style}} className='disable-select' >
+    ({visRoot, dlCount, sx= {}, size:{width}, manageExpand, expandGrid, viewerId, modalEndInfo, tips={}}) => (
+        <Box sx={{...rS, ...sx}} className='disable-select' >
             <VisMiniToolbarView {...{visRoot, dlCount, availableWidth:width, manageExpand, expandGrid,modalEndInfo, viewerId, tips}} />
-        </div>
+        </Box>
     ));
 
 
@@ -221,65 +207,65 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
             {createModalEndUI(modalEndInfo,plot?.plotId) &&
                 <React.Fragment>
                     <ToolbarButton
-                        style={{color:'#f60a0a'}}
+                        color='warning'
                         text={modalEndInfo.closeText} tip={modalEndInfo.closeText}
-                        horizontal={true} onClick={() => modalEndInfo.closeLayer(modalEndInfo.key)}/>
+                        onClick={() => modalEndInfo.closeLayer(modalEndInfo.key)}/>
                     <ToolbarHorizontalSeparator/>
                 </React.Fragment>
             }
 
 
-            {apiToolsView && !pv.plotViewCtx.useForCoverage && <ToolbarButton icon={NEW_IMAGE} tip='Select a new image'
-                                            horizontal={true} visible={mi.imageSelect} onClick={showImagePopup}/>}
+            {apiToolsView && !pv?.plotViewCtx.useForCoverage && <ToolbarButton icon={NEW_IMAGE} tip='Select a new image'
+                                            visible={mi.imageSelect} onClick={showImagePopup}/>}
 
-            <DropDownToolbarButton icon={TOOL_DROP} tip='Tools drop down' enabled={enabled} horizontal={true}
-                                   imageStyle={image24x24}
+            <ToolsDropDown tip='Tools drop down: save, rotate, extract, and more'
                                    dropDown={<ToolsDrop pv={pv} mi={mi} image={image} hips={hips} visRoot={visRoot}
                                                         modalEndInfo={modalEndInfo}
                                                         plot={plot} unavailableCnt={unavailableCnt}
                                                         plotGroupAry={plotGroupAry}
                                                         showRotateLocked={showRotateLocked}/>} />
 
-            {mi.zoomDropDownMenu && <DropDownToolbarButton icon={ZOOM_DROP} tip='Zoom drop down'
-                                                          enabled={enabled} horizontal={true}
-                                                          imageStyle={image24x24}
-                                                          dropDown={<ZoomDrop pv={pv} mi={mi} image={image}/>} />}
+            {/*save this: We may end up putting zoom back*/}
+            {/*{mi.zoomDropDownMenu && <DropDownToolbarButton icon={ZOOM_DROP} tip='Zoom drop down'*/}
+            {/*                                              enabled={enabled}*/}
+            {/*                                              imageStyle={image24x24}*/}
+            {/*                                              dropDown={<ZoomDrop pv={pv} mi={mi} image={image}/>} />}*/}
 
             <ToolbarHorizontalSeparator/>
             <ColorButton colorDrops={colorDrops} enabled={enabled} pv={pv} />
 
-            <DropDownToolbarButton icon={STRETCH} tip='Stretch drop down. Quickly change the background image stretch'
-                                   enabled={enabled} horizontal={true} visible={mi.stretchQuick && image}
+            <DropDownToolbarButton icon={STRETCH} tip='Stretch drop down: change the background image stretch'
+                                   enabled={enabled} visible={mi.stretchQuick && image}
                                    imageStyle={image24x24} dropDown={<StretchDropDownView plotView={pv}/>} />
 
             <ImageCenterDropDown visRoot={visRoot} visible={mi.recenter} mi={mi} />
 
             <SelectAreaButton {...{pv,visible:mi.selectArea,modalEndInfo,
-                tip:tips?.selectArea ?? 'Select Drop down. Select an area for cropping or statistics'}}/>
+                tip:tips?.selectArea ?? 'Select drop down: select an area for cropping or statistics' }}/>
 
 
             <LayerButton pv={pv} dlCount={dlCount}/>
 
             {unavailableCnt<2 && farLeftButtonEnabled && <ToolbarHorizontalSeparator/>}
 
-            {unavailableCnt<2 && <SimpleLayerOnOffButton plotView={pv}
-                                    isIconOn={pv&&plot? isOverlayColorLocked(pv,plotGroupAry) : false }
-                                    tip='Lock all images for color changes and overlays.'
-                                    iconOn={LOCKED} iconOff={UNLOCKED}
-                                    visible={mi.overlayColorLock} imageStyle={image24x24}
-                                    onClick={() => toggleOverlayColorLock(pv,plotGroupAry)} />
-            }
+            {/*{unavailableCnt<2 && <SimpleLayerOnOffButton plotView={pv}*/}
+            {/*                        isIconOn={pv&&plot? isOverlayColorLocked(pv,plotGroupAry) : false }*/}
+            {/*                        tip='Lock all images for color changes and overlays.'*/}
+            {/*                        iconOn={LOCKED} iconOff={UNLOCKED}*/}
+            {/*                        visible={mi.overlayColorLock} imageStyle={image24x24}*/}
+            {/*                        onClick={() => toggleOverlayColorLock(pv,plotGroupAry)} />*/}
+            {/*}*/}
 
             {unavailableCnt<1 &&
                     <MatchLockDropDown visRoot={visRoot} enabled={enabled} imageStyle={image24x24}
                                        visible={mi.matchLockDropDown} />
             }
 
-            {manageExpand && <ToolbarButton icon={expandGrid? GRID_EXPAND : OUTLINE_EXPAND}
-                           tip='Expand this panel to take up a larger area'
-                           horizontal={true} visible={!isExpanded && pv?.plotViewCtx.canBeExpanded}
-                                            onClick={() =>expand(pv?.plotId, expandGrid)}/>
-            }
+            {manageExpand && <ExpandButton expandGrid={expandGrid}
+                                           tip='Expand this panel to take up a larger area'
+                                           visible={!isExpanded && pv?.plotViewCtx.canBeExpanded}
+                                           onClick={() =>expand(pv?.plotId, expandGrid)}/>
+             }
         </div>
     );
 });
@@ -347,10 +333,8 @@ export function LayerButton({pv}) {
     const layerCnt=  primePlot(pv) ? (getAllDrawLayersForPlot(getDlAry(),pv.plotId).length + pv.overlayPlotViews.length) : 0;
     const enabled= Boolean(layerCnt || findUnactivatedRelatedData(pv).length);
     return (
-        <ToolbarButton icon={LAYER_ICON}
-                       tip='Manipulate overlay display: Control color, visibility, and advanced options'
-                       enabled={enabled} badgeCount={layerCnt} horizontal={true}
-                       imageStyle={image24x24} onClick={showDrawingLayerPopup}/>
+        <DrawLayersButton tip='Manipulate overlay display: control color, visibility, and advanced options'
+                       enabled={enabled} badgeCount={layerCnt} onClick={showDrawingLayerPopup}/>
     );
 }
 
@@ -360,26 +344,27 @@ LayerButton.propTypes= {
 };
 
 
-const colorTip= 'Color Drop down. Change the color table';
+const colorTip= 'Color drop down: change the color table';
 
 const ColorButton= ({colorDrops,enabled,pv}) => (
     colorDrops ?
-            <DropDownToolbarButton icon={COLOR} tip={colorTip} enabled={enabled} visible={!primePlot(pv)?.blank}
-                                   imageStyle={image24x24} dropDown={<ColorTableDropDownView plotView={pv}/>}/>
+            <ColorDropDownButton tip={colorTip} enabled={enabled} visible={!primePlot(pv)?.blank}
+                                   dropDown={<ColorTableDropDownView plotView={pv}/>}/>
             :
-            <ToolbarButton icon={COLOR} tip={colorTip} enabled={enabled} visible={!primePlot(pv)?.blank}
-                           imageStyle={image24x24} onClick={() =>showColorDialog()}/>
+            <ColorButtonIcon  tip={colorTip} enabled={enabled} visible={!primePlot(pv)?.blank}
+                           onClick={() =>showColorDialog()}/>
 );
 
-const ZoomDrop= ({pv,mi, image}) => (
-    <SingleColumnMenu style={{minWidth:1}}>
-        <ZoomButton plotView={pv} zoomType={ZoomType.UP} visible={mi.zoomUp} horizontal={false}/>
-        <ZoomButton plotView={pv} zoomType={ZoomType.DOWN} visible={mi.zoomDown} horizontal={false}/>
-        <ZoomButton plotView={pv} zoomType={ZoomType.ONE} visible={mi.zoomOriginal && image} horizontal={false}/>
-        <ZoomButton plotView={pv} zoomType={ZoomType.FIT} visible={mi.zoomFit} horizontal={false}/>
-        <ZoomButton plotView={pv} zoomType={ZoomType.FILL} visible={mi.zoomFill} horizontal={false}/>
-    </SingleColumnMenu>
-);
+// save: if we put zoom back
+// const ZoomDrop= ({pv,mi, image}) => (
+//     <SingleColumnMenu style={{minWidth:1}}>
+//         <ZoomButton plotView={pv} zoomType={ZoomType.UP} visible={mi.zoomUp} />
+//         <ZoomButton plotView={pv} zoomType={ZoomType.DOWN} visible={mi.zoomDown} />
+//         <ZoomButton plotView={pv} zoomType={ZoomType.ONE} visible={mi.zoomOriginal && image} />
+//         <ZoomButton plotView={pv} zoomType={ZoomType.FIT} visible={mi.zoomFit} />
+//         <ZoomButton plotView={pv} zoomType={ZoomType.FILL} visible={mi.zoomFill} />
+//     </SingleColumnMenu>
+// );
 
 
 function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, modalEndInfo,
@@ -389,67 +374,67 @@ function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, modalEndInfo,
     const makeColorLock= mi.overlayColorLock && unavailableCnt>1;
     const showExtract= Boolean(image) && mi.extract;
     return (
-        <div className='ff-MenuItem-dropDown'>
-            <div style={{display:'inline-block', height:'100%', flex:'0 0 auto', margin:'0px 0 0 300px'}}>
-                <HelpIcon helpId={'visualization.toolbar'}/>
-            </div>
-            <SaveRestoreRow style={{marginTop:-20}} pv={pv} mi={mi} enabled={enabled} image={image} hips={hips}/>
-            <RotateFlipRow style={{paddingTop:10}} pv={pv} mi={mi} enabled={enabled}
-                           showRotateLocked={showRotateLocked} image={image}/>
-            <LayersRow style={{paddingTop:10}} pv={pv} mi={mi} enabled={enabled} image={image}
-                       modalEndInfo={modalEndInfo}
-            />
-            {showExtract && <ExtractRow style={{paddingTop:10}} pv={pv} mi={mi} enabled={enabled} image={image}
-                                        modalEndInfo={modalEndInfo}/>
-            }
-            {(makeMatchLock || makeColorLock) && <div style={{display:'flex', alignItems:'center', paddingTop:10}}>
-                <div style={{width:130, fontSize:'larger'}}>More: </div>
-                {makeColorLock && <SimpleLayerOnOffButton plotView={pv}
-                                                          isIconOn={pv&&plot? isOverlayColorLocked(pv,plotGroupAry) : false }
-                                                          tip='Lock all images for color changes and overlays.'
-                                                          iconOn={LOCKED} iconOff={UNLOCKED}
-                                                          visible={mi.overlayColorLock}
-                                                          onClick={() => toggleOverlayColorLock(pv,plotGroupAry)} />}
-                {makeMatchLock && <MatchLockDropDown visRoot={visRoot} enabled={enabled} inDropDown={true}
-                                                     visible={mi.matchLockDropDown} />}
-            </div> }
-        </div>
+        <DropDownMenu>
+            <Stack>
+                <div style={{alignSelf:'flex-end'}}>
+                    <HelpIcon helpId={'visualization.toolbar'}/>
+                </div>
+                <SaveRestoreRow sx={{mt:-2}} pv={pv} mi={mi} enabled={enabled} image={image} hips={hips}/>
+                <RotateFlipRow  pv={pv} mi={mi} enabled={enabled}
+                               showRotateLocked={showRotateLocked} image={image}/>
+                <LayersRow pv={pv} mi={mi} enabled={enabled} image={image}
+                           modalEndInfo={modalEndInfo}
+                />
+                {showExtract && <ExtractRow pv={pv} mi={mi} enabled={enabled} image={image}
+                                            modalEndInfo={modalEndInfo}/>
+                }
+                {(makeMatchLock || makeColorLock) && <div style={{display:'flex', alignItems:'center', paddingTop:10}}>
+                    <div style={{width:130, fontSize:'larger'}}>More: </div>
+                    {/*{makeColorLock && <SimpleLayerOnOffButton plotView={pv}*/}
+                    {/*                                          isIconOn={pv&&plot? isOverlayColorLocked(pv,plotGroupAry) : false }*/}
+                    {/*                                          tip='Lock all images for color changes and overlays.'*/}
+                    {/*                                          iconOn={LOCKED} iconOff={UNLOCKED}*/}
+                    {/*                                          visible={mi.overlayColorLock}*/}
+                    {/*                                          onClick={() => toggleOverlayColorLock(pv,plotGroupAry)} />}*/}
+                    {makeMatchLock && <MatchLockDropDown visRoot={visRoot} enabled={enabled} inDropDown={true}
+                                                         visible={mi.matchLockDropDown} />}
+                </div> }
+            </Stack>
+        </DropDownMenu>
     );
 }
 
-const SaveRestoreRow= ({style,image,hips,mi,pv,enabled}) => (
-    <div style={{display:'flex', alignItems:'center', ...style}}>
-        <div style={{width:130, fontSize:'larger'}}>Save / Restore / Info: </div>
-        <ToolbarButton icon={SAVE} tip='Save the FITS file, PNG file, or save the overlays as a region'
-                       enabled={enabled} horizontal={true} visible={mi.fitsDownload}
+const SaveRestoreRow= ({sx,image,hips,mi,pv,enabled}) => (
+    <Stack {...{direction:'row', spacing:1/2, alignItems:'center', ...sx}}>
+        <Typography level='body-md' width='10em'>Save / Restore / Info: </Typography>
+        <SaveButton tip='Save the FITS file, PNG file, or save the overlays as a region'
+                       visible={mi.fitsDownload}
                        onClick={showFitsDownloadDialog.bind(null, 'Load Region')}/>
-        <ToolbarButton icon={RESTORE} tip='Restore to the defaults' enabled={enabled}
-                       horizontal={true} visible={mi.restore}
+        <RestoreButton tip='Restore to the defaults'
+                       visible={mi.restore}
                        onClick={() => dispatchRestoreDefaults({plotId:pv.plotId})}/>
-        <ToolbarButton icon={FITS_HEADER}
-                       tip={image ? 'Show FITS header' : (hips ? 'Show HiPS properties' : '')}
-                       enabled={enabled} horizontal={true} visible={mi.directFileAccessData}
+        <InfoButton tip={image ? 'Show FITS header' : (hips ? 'Show HiPS properties' : '')}
+                       enabled={enabled} visible={mi.directFileAccessData}
                        onClick={(element) => showPlotInfoPopup(pv, element )} />
-    </div>
+    </Stack>
 );
 
-const RotateFlipRow= ({style,image,mi,showRotateLocked,pv,enabled}) => (
-    <div style={{display:'flex', alignItems:'center', ...style}}>
-        <div style={{width:130, fontSize:'larger'}}>{image?'Rotate / Flip:' : 'Rotate J2000 North'}</div>
-        <ToolbarButton icon={ROTATE} tip='Rotate the image to any angle' enabled={enabled}
-                       horizontal={true} visible={mi.rotate && image} onClick={showFitsRotationDialog}/>
+const RotateFlipRow= ({image,mi,showRotateLocked,pv,enabled}) => (
+    <Stack {...{direction:'row', spacing:1/2, alignItems:'center'}}>
+        <Typography level='body-md' width='10em'>{image?'Rotate / Flip:' : 'Rotate J2000 North'}</Typography>
+        <RotateButton tip='Rotate the image to any angle' enabled={enabled}
+                       visible={mi.rotate && image} onClick={showFitsRotationDialog}/>
 
         <SimpleLayerOnOffButton plotView={pv} isIconOn={showRotateLocked}
                                 tip={`Rotate this ${image?'image': 'HiPS'} so that EQ J2000 North is up`}
                                 enabled={hasWCSProjection(pv)}
-                                iconOn={ROTATE_NORTH_ON} iconOff={ROTATE_NORTH_OFF}
+                                iconOff={ROTATE_NORTH_OFF}
                                 visible={mi.rotateNorth} onClick={doRotateNorth} />
 
-        <SimpleLayerOnOffButton plotView={pv} isIconOn={pv ? pv.flipY : false }
+        <FlipYButton plotView={pv} isIconOn={pv ? pv.flipY : false }
                                 tip='Flip the image on the Y Axis (i.e. Invert X)'
-                                iconOn={FLIP_Y_ON} iconOff={FLIP_Y}
                                 visible={mi.flipImageY && image} onClick={() => dispatchFlip({plotId:pv.plotId})} />
-    </div>
+    </Stack>
 );
 
 
@@ -472,50 +457,48 @@ function startExtraction(element,type,modalEndInfo) {
 
 }
 
-const ExtractRow= ({style,pv,enabled,modalEndInfo,mi}) => {
+const ExtractRow= ({pv,enabled,modalEndInfo,mi}) => {
     const standIm= !isThreeColor(pv);
     return (
-        <div style={{display:'flex', alignItems:'center', ...style}}>
-            <div style={{width:130, fontSize:'larger'}}>Extract: </div>
+        <Stack {...{direction:'row', spacing:1/2, alignItems:'center'}}>
+            <Typography level='body-md' width='10em'>Extract:</Typography>
             <ToolbarButton icon={DRILL_DOWN} tip='Extract Z-axis from cube' enabled={standIm&&isImageCube(primePlot(pv))&&enabled}
-                           horizontal={true} onClick={(element) => startExtraction(element,Z_AXIS,modalEndInfo)}
+                           onClick={(element) => startExtraction(element,Z_AXIS,modalEndInfo)}
                            visible={mi.extractZAxis}/>
-            <ToolbarButton icon={LINE_EXTRACTION} tip='Extract line from image' enabled={standIm&&enabled}
-                           horizontal={true} onClick={(element) => startExtraction(element,LINE,modalEndInfo)}
+            <ExtractLine tip='Extract line from image' enabled={standIm&&enabled}
+                           onClick={(element) => startExtraction(element,LINE,modalEndInfo)}
                            visible={mi.extractLine}/>
-            <ToolbarButton icon={POINT_EXTRACTION} tip='Extract points from image' enabled={standIm&&enabled}
-                           horizontal={true} onClick={(element) => startExtraction(element,POINTS,modalEndInfo)}
+            <ExtractPoints tip='Extract points from image' enabled={standIm&&enabled}
+                           onClick={(element) => startExtraction(element,POINTS,modalEndInfo)}
                            visible={mi.extractPoint}/>
-        </div>
+        </Stack>
         );
 };
 
 const LayersRow= ({style,image, pv,mi,enabled, modalEndInfo}) => (
 
-    <div style={{display:'flex', alignItems:'center', ...style}}>
-        <div style={{width:130, fontSize:'larger'}}>Layers: </div>
+    <Stack {...{direction:'row', spacing:1/2, alignItems:'center', ...style}}>
+        <Typography level='body-md' width='10em'>Layers:</Typography>
         <SimpleLayerOnOffButton plotView={pv} typeId={NorthUpCompass.TYPE_ID}
                                 tip='Show the directions of Equatorial J2000 North and East'
-                                iconOn={COMPASS_ON} iconOff={COMPASS_OFF} visible={mi.northArrow} />
+                                iconOff={COMPASS_OFF} visible={mi.northArrow} />
         <SimpleLayerOnOffButton plotView={pv} typeId={WebGrid.TYPE_ID} tip='Add grid layer to the image'
-                                iconOn={GRID_ON} iconOff={GRID_OFF}
+                                iconOff={GRID_OFF}
                                 plotTypeMustMatch={true} visible={mi.grid} />
-        <SimpleLayerOnOffButton plotView={pv} typeId={DistanceTool.TYPE_ID}
+        <DistanceButton plotView={pv} typeId={DistanceTool.TYPE_ID}
                                 tip='Select, then click and drag to measure a distance on the image'
                                 endText={'End Distance'}
-                                modalEndInfo={modalEndInfo}
-                                modalLayer={true}
-                                iconOn={DIST_ON} iconOff={DIST_OFF} visible={mi.distanceTool} />
+                                modalEndInfo={modalEndInfo} modalLayer={true} visible={mi.distanceTool} />
         <ToolbarButton icon={DS9_REGION} tip='Load a DS9 Region File' enabled={enabled}
-                       horizontal={true} visible={mi.ds9Region} onClick={showRegionFileUploadPanel}/>
+                       visible={mi.ds9Region} onClick={() => showRegionFileUploadPanel()}/>
 
-        <ToolbarButton icon={MASK} tip='Add mask to image' enabled={enabled} horizontal={true}
+        <ToolbarButton icon={MASK} tip='Add mask to image' enabled={enabled}
                        visible={mi.maskOverlay && image}
                        onClick={showMaskDialog}/>
 
         <DropDownToolbarButton icon={MARKER} tip='Overlay Markers and Instrument Footprints'
-                               enabled={enabled} horizontal={true} visible={mi.markerToolDD}
+                               enabled={enabled} visible={mi.markerToolDD}
                                menuMaxWidth={580} disableHiding={true} dropDownKey={'marker'}
                                dropDown={<MarkerDropDownView plotView={pv}/>} />
-    </div>
+    </Stack>
 );

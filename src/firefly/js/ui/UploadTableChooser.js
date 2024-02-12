@@ -1,3 +1,4 @@
+import {Stack} from '@mui/joy';
 import React from 'react';
 
 import {dispatchHideDialog, dispatchShowDialog} from '../core/ComponentCntlr.js';
@@ -46,12 +47,12 @@ function getFitsColumnInfo(data) {
  * @param request
  * @param setUploadInfo
  * @param {DefaultColsEnabled} defaultColsEnabled
+
  * @returns {boolean}
  */
 let tblCount = 0;
 function uploadSubmit(request,setUploadInfo,defaultColsEnabled)  {
     if (!request) return false;
-
     const {additionalParams = {}, fileUpload: serverFile} = request;
     const {detailsModel, report, summaryModel} = additionalParams;
     if (!detailsModel || !report || !summaryModel || !serverFile) return false;
@@ -268,12 +269,15 @@ export function showUploadTableChooser(setUploadInfo,groupKey= 'table-chooser',d
 const TapUploadPanel= ({setUploadInfo,groupKey= 'table-chooser',defaultColsEnabledObj}) => {
     return (
     <FieldGroup groupKey={groupKey}>
-        <div style={{ resize: 'both', overflow: 'hidden', zIndex: 1, paddingTop:8, minWidth: 600, minHeight: 500, display: 'flex' }}>
+        <Stack style={{ resize: 'both', overflow: 'hidden', zIndex: 1, pt:1, minWidth: 600, minHeight: 500}}>
             <FieldGroupTabs initialState={{value: 'upload'}} fieldKey='upload-type-tabs' groupKey={groupKey}
-                            style={{width: '100%', flex: '1 1 auto'}}>
+                            sx={{width: 1,  flex: '1 1 auto'}}>
                 <Tab name='Upload Tables' id='upload' style={{fontSize:'larger'}}>
                     <FileUploadDropdown {...{
-                        style:{height: '100%'},
+                        sx:{height:1,
+                            '.ff-FileUploadViewPanel-file':{ml:3},
+                            '.ff-FileUploadViewPanel-acceptList':{ml:3},
+                        },
                         acceptOneItem:true, acceptList:[TABLES], keepState:true, groupKey:groupKey+'-fileUpload',
                         onCancel:() => dispatchHideDialog(dialogId),
                         onSubmit:(request) => uploadSubmit(request,setUploadInfo,defaultColsEnabledObj),
@@ -287,5 +291,5 @@ const TapUploadPanel= ({setUploadInfo,groupKey= 'table-chooser',defaultColsEnabl
                         }}/>
                 </Tab>
             </FieldGroupTabs>
-        </div>
+        </Stack>
     </FieldGroup> );};

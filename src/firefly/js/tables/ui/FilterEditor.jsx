@@ -5,6 +5,7 @@
 import React, {PureComponent, useEffect, useRef} from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
+import {Button, Link, Sheet, Stack, Typography} from '@mui/joy';
 import {isEmpty, cloneDeep, get} from 'lodash';
 import SplitPane from 'react-split-pane';
 import Tree, { TreeNode } from 'rc-tree';
@@ -29,8 +30,6 @@ import {CopyToClipboard} from '../../visualize/ui/MouseReadout';
 
 import RIGHT_ARROW from 'html/images/right-arrow-in-16x16.png';
 
-const wrapperStyle = {display: 'block', flexGrow: 0};
-const style = {display: 'block', width: '100%', resize: 'none', boxSizing: 'border-box'};
 
 export class FilterEditor extends PureComponent {
     constructor(props) {
@@ -67,12 +66,10 @@ export class FilterEditor extends PureComponent {
                     label='Filters:'
                     validator={FilterInfo.validator.bind(null,columns)}
                     tooltip={FILTER_TTIPS}
-                    inline={false}
-                    rows={3}
+                    minRows={3}
+                    maxRows={3}
                     onChange={callbacks.onAllFilter}
                     actOn={['blur', 'enter']}
-                    wrapperStyle={wrapperStyle}
-                    style={style}
                     showWarning={false}
                 />
             </div>
@@ -256,8 +253,6 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange, style={}, samples, 
     inputLabel = inputLabel || (colFilters ? 'Additional Constraints (SQL):' : 'Constraints (SQL):');
     const iconGen = () => <img width="14" height="14" src={RIGHT_ARROW}/> ;
 
-    const errStyle = error ? {borderColor: 'red'} : {};
-
     usages = usages || <Usages/>;
     samples = samples || <Samples/>;
     placeholder = placeholder || 'e.g., "ra" > 180 AND "ra" < 185';
@@ -265,7 +260,7 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange, style={}, samples, 
     return (
         <SplitPane split='vertical' defaultSize={200} style={{display: 'inline-flex', ...style}}>
             <SplitContent style={{display: 'flex', flexDirection: 'column'}}>
-                <b>Columns (sorted)</b>
+                <Typography level='title-md'>Columns (sorted)</Typography>
                 <div  style={{overflow: 'auto', flexGrow: 1}}>
                     <Tree defaultExpandAll showLine onSelect={onNodeClick} icon={iconGen} >
                         {treeNodes}
@@ -273,15 +268,15 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange, style={}, samples, 
                 </div>
             </SplitContent>
             <SplitContent style={{overflow: 'auto'}}>
-                <div className='flex-full' style={{height: '100%', overflow: 'hidden'}}>
+                <Stack height={1} spacing={1} overflow='hidden'>
                     <ColumnFilter {...{colFilters, onChange}}/>
-                    <div style={{display: 'inline-flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                        <h3>{inputLabel}</h3>
-                            <div style={{display: 'inline-flex', alignItems: 'center'}}>
-                            <button className='button std' title='Apply the constraints' style={{height: 24}} onClick={onApply}>Apply</button>
+                    <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                        <Typography level='title-md'>{inputLabel}</Typography>
+                        <Stack direction='row' alignItems='center' spacing={1}>
+                            <Button title='Apply the constraints' onClick={onApply}>Apply</Button>
                             {colFilters &&
-                                <div style={{display: 'inline-flex', alignItems: 'center'}}>
-                                    <label style={{margin: '0 5px'}}> with: </label>
+                                <Stack direction='row' alignItems='center' spacing={1}>
+                                    <Typography> with: </Typography>
                                     <RadioGroupInputField
                                         fieldKey={opKey}
                                         groupKey={groupKey}
@@ -290,13 +285,14 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange, style={}, samples, 
                                             {label: 'AND', value: 'AND'},
                                             {label: 'OR', value: 'OR'}
                                         ]}/>
-                                </div>
+                                </Stack>
                             }
-                        </div>
-                    </div>
+                        </Stack>
+                    </Stack>
                     <InputAreaFieldConnected
                         ref={sqlEl}
-                        style={{width: 'calc(100% - 9px)', resize: 'none', backgroundColor: 'white', ...errStyle}} rows={7}
+                        minRows={7}
+                        maxRows={7}
                         validator={FilterInfo.validator.bind(null,columns)}
                         groupKey={groupKey}
                         fieldKey={sqlKey}
@@ -304,11 +300,11 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange, style={}, samples, 
                         placeholder={placeholder}
                     />
                     {error && <li style={{color: 'red', fontStyle: 'italic'}}>{error}</li>}
-                    <div style={{color: '#4c4c4c', overflow: 'auto', flexGrow: 1}}>
+                    <Stack spacing={1} overflow='auto'>
                         {usages}
                         {samples}
-                    </div>
-                </div>
+                    </Stack>
+                </Stack>
             </SplitContent>
         </SplitPane>
     );
@@ -326,50 +322,51 @@ function ColumnFilter({colFilters, onChange}) {
 
     if (colFilters){
         return (
-            <div >
-                <div style={{fontWeight: 'bold', display: 'inline-flex', margin: '5px 0'}}>
-                    <div>Current Constraints: </div>
-                    <div style={{marginLeft: 5}} className='ff-href' onClick={clearFilters}>Clear</div>
-                    <CopyToClipboard style={{marginLeft:7}} value={colFilters}/>
-                </div>
-                <div className='TablePanelOptions__filters' title={colFilters}>{colFilters}</div>
-            </div>
+            <Stack>
+                <Stack direction='row' spacing={1}>
+                    <Typography level='title-md'>Current Constraints: </Typography>
+                    <Link onClick={clearFilters}
+                          endDecorator={<CopyToClipboard value={colFilters}/>}
+                    >Clear</Link>
+                </Stack>
+                <Sheet variant='soft' title={colFilters}>
+                    <Typography color='warning' level='body-sm'><code>{colFilters}</code></Typography>
+                </Sheet>
+            </Stack>
         );
     } else return null;
 }
 
 const Usages = () => {
     return (
-        <>
-            <h4>Usage</h4>
-            <div style={{marginLeft: 5}}>
-                <div>Input should follow the syntax of an SQL WHERE clause.</div>
-                <div>Click on a Column name to insert the name into the SQL Filter input box.</div>
-                <div style={{marginTop: 5}}>Standard SQL-like operators can be used where applicable.
-                    Supported operators are:
-                    <span {...code}>{'  +, -, *, /, =, >, <, >=, <=, !=, LIKE, IN, IS NULL, IS NOT NULL'}</span>
-                </div>
-                <div style={{marginTop: 5}}>
-                    You may use functions as well.  A few of the common functions are listed below.
-                    For a list of all available functions, click <a href='http://hsqldb.org/doc/2.0/guide/builtinfunctions-chapt.html' target='_blank'>here</a>
-                </div>
-                <div style={{marginLeft: 5}}>
-                    <li style={{whiteSpace: 'nowrap'}}>String functions: <span {...code}>CONCAT(s1,s2[,...]]) INSTR(s,pattern[,offset]) LENGTH(s) SUBSTR(s,offset,length)</span></li>
-                    <li style={{whiteSpace: 'nowrap'}}>Numeric functions: <span {...code}>LOG10(x)/LG(x) LN(x)/LOG(x) DEGREES(x) ABS(x) COS(x) SIN(x) TAN(x) POWER(x,y)</span></li>
-                </div>
-            </div>
-        </>
+        <Sheet>
+            <Typography level='title-md'>Usage</Typography>
+            <Typography level='body-sm' sx={{code:{ml:1, whiteSpace:'nowrap'}}}>
+                Input should follow the syntax of an SQL WHERE clause. <br/>
+                Click on a Column name to insert the name into the SQL Filter input box. <br/>
+                Standard SQL-like operators can be used where applicable. <br/>
+                Supported operators are: <br/>
+                <code>{'  +, -, *, /, =, >, <, >=, <=, !=, LIKE, IN, IS NULL, IS NOT NULL'}</code> <br/><br/>
+
+                You may use functions as well.  A few of the common functions are listed below. <br/>
+                For a list of all available functions, click <Link href='http://hsqldb.org/doc/2.0/guide/builtinfunctions-chapt.html' target='_blank'>here</Link> <br/>
+                String functions: <br/>
+                <code>CONCAT(s1,s2[,...]]) INSTR(s,pattern[,offset]) LENGTH(s) SUBSTR(s,offset,length)</code> <br/>
+                Numeric functions: <br/>
+                <code>LOG10(x)/LG(x) LN(x)/LOG(x) DEGREES(x) ABS(x) COS(x) SIN(x) TAN(x) POWER(x,y)</code>
+            </Typography>
+        </Sheet>
     );
 };
 
 const Samples = () => {
     return (
-        <>
-            <h4>Sample Filters</h4>
-            <div style={{marginLeft: 5}}>
-                <li style={{whiteSpace: 'nowrap'}}><div {...code}>{'("ra" > 185 AND "ra" < 185.1) OR ("dec" > 15 AND "dec" < 15.1) AND "band" IN (1,2)'}</div></li>
-                <li style={{whiteSpace: 'nowrap'}}><div {...code}>{'POWER("v",2) / POWER("err",2) > 4 AND "band" = 3'}</div></li>
-            </div>
-        </>
+        <Sheet>
+            <Typography level='title-md'>Sample Filters</Typography>
+            <Typography level='body-sm' sx={{code:{ml:1, whiteSpace:'nowrap'}}}>
+                <code>{'("ra" > 185 AND "ra" < 185.1) OR ("dec" > 15 AND "dec" < 15.1) AND "band" IN (1,2)'}</code> <br/>
+                <code>{'POWER("v",2) / POWER("err",2) > 4 AND "band" = 3'}</code>
+            </Typography>
+        </Sheet>
     );
 };

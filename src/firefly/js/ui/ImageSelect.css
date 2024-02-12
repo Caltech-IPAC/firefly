@@ -1,29 +1,3 @@
-.ImageSelect {
-    display: flex;
-    flex-direction: column;
-    background-color: #f5f5f5;
-}
-
-.ImageSelect__panels {
-    display: flex;
-    box-shadow: 0 1px 3px 0 rgba(0,0,0,0.16), 0 0 0 1px rgba(0,0,0,0.04);
-    transition: box-shadow .3s ease-in-out;
-    background-color: #fff;
-    border-bottom-right-radius: 2px;
-    border-bottom-left-radius: 2px;
-    outline: none;
-}
-
-.ImageSelect__info {
-    color: saddlebrown;
-    font-style: italic;
-    font-size: smaller;
-    padding-top: 1px;
-}
-
-.ImageSelect__title {
-    font-weight: bold;
-}
 
 .ImageSelect__action {
     display: inline-flex;
@@ -32,98 +6,24 @@
 }
 
 .ImageSelect__toolbar {
-    flex-grow: 0;
-    background-color: #f5f5f5;
-    height: 36px;
-    min-height: 36px;
+    /*flex-grow: 0;*/
+    /*background-color: #f5f5f5;*/
+    height: 50px;
+    min-height: 50px;
     padding: 3px 6px;
     display: flex;
     flex-direction: column;
 }
 
 .ImageSelect__toolbar--popup {
+    z-index: 1;
+    background-color: var(--joy-palette-background-surface,white);
     position: absolute;
     width: calc(100% - 6px);
-    top: 30px;
+    top: 25px;
     box-sizing: border-box;
-    border: 1px solid #bbbaba;
-    box-shadow: 0 2px 2px #dedede;
+    border-bottom: 1px solid #bbbaba;
     padding: 1px 6px;
-    height: 38px;
+    height: 4.5rem;
     margin-left: -1px;
-}
-
-.FilterPanel {
-    flex-grow: 0;
-    white-space: nowrap;
-    display: flex;
-    flex-direction: column;
-}
-
-.FilterPanel__view {
-    flex-grow: 1;
-    overflow: auto;
-    margin-right: -2px;
-}
-
-.FilterPanel__item--std {
-}
-
-.FilterPanel__item--exp {
-    box-shadow: 1px 3px 3px 3px rgba(0,0,0,0.16), 0 0 0 3px rgba(0,0,0,0.04);
-    transition: box-shadow .3s ease-in-out;
-    background-color: #fff;
-    border-radius: 2px;
-    outline: none;
-    position: absolute;
-}
-
-
-.DataProductList__view--item {
-    display: inline-flex;
-    margin-bottom: 3px;
-}
-
-.DataProductList {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.DataProductList__view {
-    flex-grow: 1;
-    overflow: auto;
-}
-
-.DataProductList__item {
-}
-
-.DataProductList__item--header {
-    display: inline-flex;
-    align-items: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin: -5px;
-}
-
-.DataProductList__item--details {
-    margin-left: 5px;
-    display: flex;
-    flex-direction: column;
-    border-bottom: solid 1px lightgrey;
-}
-
-.DataProductList__item--band {
-    display: inline-flex;
-    margin-bottom: 3px;
-}
-
-.DataProductList__item--bandLabel {
-    white-space: nowrap;
-    text-align: right;
-    margin: 2px 2px 0 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100px;
 }

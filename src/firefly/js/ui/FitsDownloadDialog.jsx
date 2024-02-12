@@ -1,6 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
+import {ButtonGroup, Stack} from '@mui/joy';
 import React, {memo, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, capitalize} from 'lodash';
@@ -31,15 +32,19 @@ import {useFieldGroupValue} from './SimpleComponent.jsx';
 import HelpIcon from './HelpIcon.jsx';
 
 const STRING_SPLIT_TOKEN= '--STR--';
-const dialogWidth = 500;
-const dialogHeightWS = 500;
-const dialogHeightLOCAL = 400;
-const mTOP = 10;
+const dialogWidth ='32rem';
+const dialogHeightWS = '32rem';
+const dialogHeightLOCAL = '25rem';
+const mindialogHeightLOCAL ='19rem';
 const dialogPopupId = 'fitsDownloadDialog';
 const fitsDownGroup = 'FITS_DOWNLOAD_FORM';
-const labelWidth = 100;
-const hipsFileTypeOps= [ {label: 'PNG File', value: 'png' }, {label: 'Region File', value: 'reg'} ];
-const imageFileTypeOps=  [{label: 'FITS Image', value: 'fits'}, ...hipsFileTypeOps];
+const labelWidth = '6rem';
+const hipsFileTypeOps= [
+    {label: 'PNG File', value: 'png', tooltip: 'Download as PNG image' },
+    {label: 'Region File', value: 'reg', tooltip: 'Download all overlays as a region File'} ];
+const imageFileTypeOps=  [
+    {label: 'FITS Image', value: 'fits', tooltip: 'Download the source FITS file' },
+    ...hipsFileTypeOps];
 
 const popupPanelResizableStyle = {
     width: dialogWidth,
@@ -55,8 +60,8 @@ export function showFitsDownloadDialog() {
 
     const isWs = getWorkspaceConfig();
     const adHeight = (fileLocation === WORKSPACE) ? dialogHeightWS
-                                                         : (isWs ? dialogHeightLOCAL : dialogHeightLOCAL - 100);
-    const minHeight = (fileLocation === LOCALFILE) && (!isWs) ? dialogHeightLOCAL-100 : dialogHeightLOCAL;
+                                                         : (isWs ? dialogHeightLOCAL : mindialogHeightLOCAL);
+    const minHeight = (fileLocation === LOCALFILE) && (!isWs) ? mindialogHeightLOCAL : dialogHeightLOCAL;
     const  popup = (
         <PopupPanel title={'Save Image'}>
             <div style={{...popupPanelResizableStyle, height: adHeight, minHeight}}>
@@ -74,40 +79,39 @@ function closePopup(popupId) {
 }
 
 const getColors= (plot) => isThreeColor(plot) ? plot.plotState.getBands().map( (b) => capitalize(b.key)) : ['NO_BAND'];
-
 const renderOperationOption= () => (
-        <div style={{display: 'flex', marginTop: mTOP}}>
-            <div>
-                <RadioGroupInputField
+        <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
+            <RadioGroupInputField
                     options={[ { label:'Original', value:'fileTypeOrig'}, { label:'Cropped', value:'fileTypeCrop'} ]}
-                    fieldKey='operationOption' tooltip='Please select an option'/>
-            </div>
-        </div> );
+                    fieldKey='operationOption'
+                    tooltip='Please select an option'/>
+        </Stack> );
 
 const RenderThreeBand = ({colors}) => {
     const [ft] = useFieldGroupValue ('fileType', fitsDownGroup);
     if (ft()==='png' || ft()==='reg') return false;
     return (
-        <div style={{display: 'flex', marginTop: mTOP}}>
-            <div>
-                <RadioGroupInputField options={colors.map( (c) => ({label: c, value: c}))} fieldKey='threeBandColor'
-                    label='Color Band:' labelWidth={100} tooltip='Please select a color option'/>
-            </div>
-        </div> );
+        <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
+            <RadioGroupInputField
+                options={colors.map( (c) => ({label: c, value: c}))}
+                fieldKey='threeBandColor'
+                orientation='horizontal'
+                label='Color Band:'
+                tooltip='Please select a color option'/>
+        </Stack> );
 };
-
 const MakeFileOptions = ({plot,colors,hasOperation,threeC}) => {
      return (
-        <div>
-            <div style={{display: 'flex', marginTop: mTOP}}>
-                <div>
-                    <RadioGroupInputField options={isImage(plot) ? imageFileTypeOps : hipsFileTypeOps} fieldKey='fileType'
-                      label='Type of files:' labelWidth={100} tooltip='Please select a file type' />
-                </div>
-            </div>
+        <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
+            <RadioGroupInputField
+                options={isImage(plot) ? imageFileTypeOps : hipsFileTypeOps}
+                fieldKey='fileType'
+                orientation='horizontal'
+                label='Type of files'
+                tooltip='Please select a file type' />
             {hasOperation && renderOperationOption()}
             {threeC && <RenderThreeBand {...{colors}}/>}
-        </div>);
+        </Stack>);
 };
 
 const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
@@ -120,7 +124,7 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
     const band= threeC ? getBand() : Band.NO_BAND.key;
 
     const totalChildren = (isWs ? 3 : 2) + (hasOperation ? 1 : 0) + (threeC ? 1 : 0);// fileType + save as + (fileLocation)
-    const childH = (totalChildren * (20 + mTOP));
+    const childH = (totalChildren * (2)).toString;
 
     const [getFileType] = useFieldGroupValue ('fileType', groupKey);
     const [getFileName, setFileName] = useFieldGroupValue('fileName', groupKey);
@@ -152,23 +156,30 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
     }, [getFileType, getFileName, getLocation, getBand]);
 
     return (
-        <FieldGroup style={{height: 'calc(100% - 10px)', width: '100%'}} groupKey={groupKey}>
-            <div style={{boxSizing: 'border-box', paddingLeft:5, paddingRight:5, width: '100%', height: 'calc(100% - 70px)'}}>
-                <DownloadOptionsDialog {...{
-                    fromGroupKey:groupKey, fileName: makeFileName(plot,band,'fits'), workspace:isWs,
-                    labelWidth, dialogWidth:'100%', dialogHeight:`calc(100% - ${childH}pt)`,
-                }}>
-                    <MakeFileOptions {...{plot, colors, hasOperation, threeC}}/>
-                </DownloadOptionsDialog>
-            </div>
-            <div style={{display:'flex', width:'calc(100% - 20px)', margin: '20px 10px 10px 10px', justifyContent:'space-between'}}>
-                <div style={{display:'flex', width:'30%', justifyContent:'space-around'}}>
-                    <CompleteButton text='Save' onSuccess={ (request) => resultsSuccess(request, pv, popupId )}
-                                    onFail={resultsFail} />
-                    <CompleteButton text='Cancel' groupKey='' onSuccess={() => closePopup(popupId)} />
-                </div>
-                <HelpIcon helpId={'visualization.saveimage'}/>
-            </div>
+        <FieldGroup groupKey={groupKey}>
+            <Stack spacing={2} style={{height: mindialogHeightLOCAL}}
+                   sx={{px: 2, justifyContent: 'space-between'}}>
+                <Stack>
+                    <DownloadOptionsDialog {...{
+                        fromGroupKey:groupKey, fileName: makeFileName(plot,band,'fits'), workspace:isWs,
+                        labelWidth, dialogWidth:'100%', dialogHeight:'100%',
+                    }}>
+                        <MakeFileOptions {...{plot, colors, hasOperation, threeC}}/>
+                    </DownloadOptionsDialog>
+                </Stack>
+                <Stack>
+                    <Stack mb={3} sx={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                        <Stack spacing={1} direction='row' alignItems='center'>
+                            <CompleteButton text='Save' onSuccess={ (request) => resultsSuccess(request, pv, popupId )}
+                                            onFail={resultsFail} />
+                            <CompleteButton text='Cancel' groupKey='' primary={false} onSuccess={() => closePopup(popupId)} />
+                        </Stack>
+                        <Stack>
+                            <HelpIcon helpId={'visualization.saveimage'}/>
+                        </Stack>
+                    </Stack>
+                </Stack>
+            </Stack>
         </FieldGroup>
     );
 });

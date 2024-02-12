@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Stack, Typography} from '@mui/joy';
 import React from 'react';
 import PropTypes from 'prop-types';
 import {omit, isArray} from 'lodash';
@@ -63,42 +64,40 @@ function ColorBandChooserPanel ({viewerId, bandData, dataId}) {
     const dups= hasDuplicateBands(getRed()??initRedVal, getGreen()??initGreenVal, getBlue()??initBlueVal);
 
     return (
-        <FieldGroup groupKey={'WHICH_BANDS'} keepState={false} style={{display:'flex', flexDirection:'column', alignItems:'center' }}>
-            <div style={{padding:'10px 5px 5px 5px'}}>
-                <div style={{display:'flex', flexDirection:'column', justifyContent:'space-between', height:85}}>
-                    <ListBoxInputField labelWidth={40}
-                        initialState= {{ value: initRedVal, tooltip: 'Select Red band', label : 'Red:' }}
-                                        options={options} fieldKey={Band.RED.key} />
+        <FieldGroup groupKey='WHICH_BANDS'
+                    sx={{display:'flex', flexDirection:'column', alignItems:'center', width:'22rem' }}>
+            <Stack {...{spacing:2, alignItems:'center', width:1}}>
+                <ListBoxInputField labelWidth={40}
+                                   initialState= {{ value: initRedVal, tooltip: 'Select Red band', label : 'Red' }}
+                                   orientation='vertical'
+                                   options={options} fieldKey={Band.RED.key} />
 
-                    <ListBoxInputField labelWidth={40}
-                        initialState= {{value: initGreenVal, tooltip: 'Select Green band', label : 'Green:' }}
-                                        options={options} fieldKey={Band.GREEN.key} />
+                <ListBoxInputField labelWidth={40}
+                                   initialState= {{value: initGreenVal, tooltip: 'Select Green band', label : 'Green' }}
+                                   orientation='vertical'
+                                   options={options} fieldKey={Band.GREEN.key} />
 
-                    <ListBoxInputField labelWidth={40}
-                                       initialState= {{value: initBlueVal, tooltip: 'Select Blue band', label : 'Blue:' }}
-                                        options={options} fieldKey={Band.BLUE.key} />
+                <ListBoxInputField labelWidth={40}
+                                   initialState= {{value: initBlueVal, tooltip: 'Select Blue band', label : 'Blue' }}
+                                   orientation='vertical'
+                                   options={options} fieldKey={Band.BLUE.key} />
 
-                    <div style={{color:'red', height: 12,  display:'flex', flexDirection:'column', justifyContent:'flex-end'}}>
-                        {dups && <div>Duplicate Bands</div>}
-                    </div>
-                </div>
-            </div>
-            <div style={{display:'flex', justifyContent:'space-around', margin: '7px 5px 10px 3px' }}>
-                <CompleteButton
-                    style={{padding : '12px 0 5px 5px'}}
-                    text={`${threeColorVisible?'Update':'Show'} Three Color`}
-                    onSuccess={(request) => update3Color(request,bandData, viewerId, dataId)}
-                    closeOnValid={true}
-                    dialogId={POPUP_ID} />
+                {dups && <Typography color='warning'>Duplicate Bands</Typography>}
+                <Stack {...{direction:'row', alignSelf:'stretch', spacing:2,
+                    justifyContent:threeColorVisible ?'space-around':'space-between', p:1 }}>
+                    <CompleteButton
+                        text={`${threeColorVisible?'Update':'Show'} Three Color`}
+                        onSuccess={(request) => update3Color(request,bandData, viewerId, dataId)}
+                        closeOnValid={true}
+                        dialogId={POPUP_ID} />
 
-                {threeColorVisible && <CompleteButton
-                    style={{padding : '12px 0 5px 5px'}} text={'Hide Three Color'}
-                    onSuccess={() => hideThreeColor(viewerId, dataId)}
-                    closeOnValid={true} dialogId={POPUP_ID} />}
-            </div>
-            <div>
-                <HelpIcon helpId={'visualization.imageview3color'} />
-            </div>
+                    {threeColorVisible && <CompleteButton
+                        primary={false} text='Hide Three Color'
+                        onSuccess={() => hideThreeColor(viewerId, dataId)}
+                        closeOnValid={true} dialogId={POPUP_ID} />}
+                    <HelpIcon helpId={'visualization.imageview3color'} />
+                </Stack>
+            </Stack>
 
         </FieldGroup>
     );

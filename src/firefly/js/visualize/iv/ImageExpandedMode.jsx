@@ -28,7 +28,7 @@ export const ImageExpandedMode= memo(({closeFunc,insideFlex=true,viewerId, force
                               viewerId={foundViewerId} visRoot={vr}
                               style={{flex:'1 1 auto'}} closeFunc={closeFunc}
                               defaultDecoration={false} showWhenExpanded={true}
-                              inlineTitle={true} aboveTitle={false} insideFlex={insideFlex}
+                              insideFlex={insideFlex}
         />
     );
 });

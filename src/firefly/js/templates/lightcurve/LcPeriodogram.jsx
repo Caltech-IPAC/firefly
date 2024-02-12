@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Button, Chip, Stack, Typography} from '@mui/joy';
 import React, {PureComponent} from 'react';
 import PropTypes from 'prop-types';
 import { get, set, has} from 'lodash';
@@ -13,7 +14,7 @@ import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import FieldGroupCntlr, {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import Validate from '../../util/Validate.js';
 import {getTblById, getResultSetRequest} from '../../tables/TableUtil.js';
-import {makeTblRequest, setSelectInfo} from '../../tables/TableRequestUtil.js';
+import {makeTblRequest} from '../../tables/TableRequestUtil.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {dispatchTableSearch, dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
@@ -26,12 +27,10 @@ import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {InputGroup} from '../../ui/InputGroup.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {updateSet} from '../../util/WebUtil.js';
 import HelpIcon from '../../ui/HelpIcon.jsx';
-import {MAX_ROW} from '../../tables/TableRequestUtil.js';
 
 
 const algorOptions = [
@@ -70,35 +69,35 @@ const labelWidth = 150;
 // stepsize:  fixed step size
 // peaks: number of peaks in peak table
 
-var defValues = {
+const defValues = {
     [pKeyDef.min.fkey]: Object.assign(getTypeData(pKeyDef.min.fkey,
         '', 'minimum period (> 0)',
-        `${pKeyDef.min.label}:`, labelWidth),
+        pKeyDef.min.label, labelWidth),
         {validator: null}),
     [pKeyDef.max.fkey]: Object.assign(getTypeData(pKeyDef.max.fkey,
         '', 'maximum period (> 0)',
-        `${pKeyDef.max.label}:`, labelWidth),
+        pKeyDef.max.label, labelWidth),
         {validator: null}),
     [pKeyDef.algor.fkey]: Object.assign(getTypeData(pKeyDef.algor.fkey,
         algorOptions[0].value,
         'periodogram algorithm',
-        `${pKeyDef.algor.label}:`, labelWidth)),
+        pKeyDef.algor.label, labelWidth)),
     [pKeyDef.stepmethod.fkey]: Object.assign(getTypeData(pKeyDef.stepmethod.fkey,
         stepOptions[0].value,
         'periodogram step method',
-        `${pKeyDef.stepmethod.label}:`, labelWidth)),
+        pKeyDef.stepmethod.label, labelWidth)),
     [pKeyDef.stepsize.fkey]: Object.assign(getTypeData(pKeyDef.stepsize.fkey, '',
         'period fixed step size (> 0.00000001)',
-        `${pKeyDef.stepsize.label}:`, labelWidth),
+        pKeyDef.stepsize.label, labelWidth),
         {validator: null}),
     [pKeyDef.peaks.fkey]: Object.assign(getTypeData(pKeyDef.peaks.fkey, '50',
         'number of peaks to return (default is 50)',
-        `${pKeyDef.peaks.label}:`, labelWidth),
+        pKeyDef.peaks.label, labelWidth),
         {validator: Validate.intRange.bind(null, 1, 500, 'peaks number')})
 };
 
 // initial values of period parameters
-var defPeriod = {
+const defPeriod = {
     [pKeyDef.time.fkey]: {value: ''},
     [pKeyDef.flux.fkey]: {value: ''},
     [pKeyDef.min.fkey]: {value: ''},
@@ -106,7 +105,7 @@ var defPeriod = {
 };
 
 // initial values of periodogram parameters
-var defPeriodogram = {
+const defPeriodogram = {
     [pKeyDef.algor.fkey]: {value: ''},
     [pKeyDef.stepmethod.fkey]: {value: ''},
     [pKeyDef.stepsize.fkey]: {value: ''},
@@ -116,8 +115,7 @@ var defPeriodogram = {
 /**
  * @summary component of periodogram panel (periodogram button or periodogram table/chart)
  * @param props
- * @returns {XML}
- * @constructor
+ * @returns {Element}
  */
 export function LcPeriodogram(props) {
     const {displayMode, groupKey=pgfinderkey, expanded} = props;
@@ -156,9 +154,10 @@ function  PeriodogramButton(props) {
     return (
         <div style={{height: '100%',
                      display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-            <button type='button' style={{maxWidth: '50%'}}
-                    className='button std'
-                    onClick={startPeriodogramPopup(groupKey)}>Calculate Periodogram</button>
+            <Button  sx={{maxWidth: '50%'}}
+                     color='warning'
+                     variant='solid'
+                    onClick={startPeriodogramPopup(groupKey)}>Calculate Periodogram</Button>
             <div style={{marginLeft:10}}>
                 <HelpIcon helpId={'findpTSV.pgram'}/>
             </div>
@@ -171,16 +170,6 @@ PeriodogramButton.propTypes = {
     groupKey: PropTypes.string.isRequired
 };
 
-function ChangePeriodogram() {
-    return (
-        <div style = {{display:'flex', justifyContent:'space-between', alignItems:'center', marginRight:'10px'}}>
-            <button type='button' className='button std hl'
-                    onClick={startPeriodogramPopup(LC.FG_PERIODOGRAM_FINDER)}>Recalculate Periodogram
-            </button>
-            {'Click on plot or table to choose period.'}
-        </div>
-    );
-}
 
 export const popupId = 'periodogramPopup';
 
@@ -191,28 +180,20 @@ export const popupId = 'periodogramPopup';
  */
 export var startPeriodogramPopup = (groupKey) =>  {
     return () => {
-        const aroundButton = {margin: 5};
-
-        var popup = (
+        const popup = (
             <PopupPanel title={'Periodogram'}>
-                <PeriodogramOptionsBox groupKey={groupKey} />
-                <div style={{display: 'flex', margin: '30px 10px 10px 10px', justifyContent:'space-between'}} >
-                    <div style={aroundButton}>
-                        <button type='button' className='button std hl'
-                                onClick={cancelPeriodogram}>Cancel
-                        </button>
-                    </div>
-                    <div style={aroundButton}>
-                        <CompleteButton
-                                groupKey={groupKey}
+                <Stack {...{p:1, spacing:2 }}>
+                    <PeriodogramOptionsBox groupKey={groupKey} />
+                    <Stack {...{direction:'row', alignItems:'center', justifyContent:'space-between'}} >
+                        <Stack {...{direction:'row', alignItems:'center', spacing:2}} >
+                            <CompleteButton groupKey={groupKey} text='Calculate'
                                 onSuccess={periodogramSuccess(popupId, true)}
-                                onFail={periodogramFail(popupId, true)}
-                                text={'Calculate'} />
-                    </div>
-                    <div style={{marginTop:17}}>
+                                onFail={periodogramFail(popupId, true)} />
+                            <Button onClick={cancelPeriodogram}>Cancel </Button>
+                        </Stack>
                         <HelpIcon helpId={'findpTSV.pgram'}/>
-                    </div>
-                </div>
+                    </Stack>
+                </Stack>
             </PopupPanel>);
 
         DialogRootContainer.defineDialog(popupId, popup);
@@ -247,40 +228,22 @@ class PeriodogramOptionsBox extends PureComponent {
         var {groupKey} = this.props;
 
         return (
-            <div style={{padding:5, margin: 10, border: '1px solid #a3aeb9'}}>
-                <FieldGroup groupKey={groupKey}
-                            reducerFunc={LcPeriodogramReducer()} keepState={true} >
-                    <InputGroup labelWidth={labelWidth}>
-                        <ListBoxInputField options={algorOptions}
-                                           multiple={false}
-                                           fieldKey={pKeyDef.algor.fkey}
-                        />
-                        <br/>
-                        <ListBoxInputField options={stepOptions}
-                                           multiple={false}
-                                           fieldKey={pKeyDef.stepmethod.fkey}
-                        />
-                        <br/>
+                <FieldGroup groupKey={groupKey} reducerFunc={LcPeriodogramReducer()} keepState={true} >
+                    <Stack {...{spacing:1, width:'20rem' }}>
+                        <ListBoxInputField options={algorOptions} multiple={false} orientation='vertical' fieldKey={pKeyDef.algor.fkey} />
+                        <ListBoxInputField options={stepOptions} multiple={false} orientation='vertical' fieldKey={pKeyDef.stepmethod.fkey} />
                         <ValidationField fieldKey={pKeyDef.stepsize.fkey} />
-                        <br/>
                         <ValidationField fieldKey={pKeyDef.min.fkey} />
-                        <br/>
                         <ValidationField fieldKey={pKeyDef.max.fkey} />
-                        <br/>
                         <ValidationField fieldKey={pKeyDef.peaks.fkey} />
-                        <br/>
-
-                        <button type='button' className='button std hl' onClick={() => resetDefaults(groupKey)}>
-                            <b>Reset</b>
-                        </button>
-                        <br/>
-                        <div style={{marginTop: 10}}>
-                            {'Leave the fields blank to use default values.'}
-                        </div>
-                    </InputGroup>
+                        <Stack direction='row' justifyContent='space-around'>
+                            <Chip onClick={() => resetDefaults(groupKey)}> Reset </Chip>
+                        </Stack>
+                        <Typography level='body-sm' sx={{whiteSpace:'nowrap'}}>
+                            Leave the fields blank to use default values.
+                        </Typography>
+                    </Stack>
                 </FieldGroup>
-                <br/>
-            </div>
         );
     }
 }
@@ -438,16 +401,14 @@ function periodMaxValidator(description) {
 function stepsizeValidator(description) {
     return (valStr) => {
         if (!valStr) return {valid: true};
-        var retval = Validate.isFloat(description, valStr);
+        const retval = Validate.isFloat(description, valStr);
 
         if (!retval.valid) return retval;
 
-        var val = parseFloat(valStr);
+        const val = parseFloat(valStr);
         const min = 0.0000001;
-        var bVal = val > min;
-
-        return bVal ? {valid: true} :
-                      {valid: false, message: description + `: must be greater than ${min}`};
+        const bVal = val > min;
+        return bVal ? {valid: true} : {valid: false, message: description + `: must be greater than ${min}`};
     };
 }
 /**
@@ -458,13 +419,13 @@ function stepsizeValidator(description) {
 function peaksValidator(description) {
     return (valStr) => {
         if (!valStr) return {valid: true};
-        var retval = Validate.isInt(description, valStr);
+        const retval = Validate.isInt(description, valStr);
 
         if (!retval.valid) return retval;
 
-        var val = parseInt(valStr);
+        const val = parseInt(valStr);
         const min = 0;
-        var bVal = val > min;
+        const bVal = val > min;
 
         return bVal ? {valid: true} :
         {valid: false, message: description + `: must be greater than ${min}`};
@@ -519,7 +480,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
         const ssize = get(request, [pKeyDef.stepsize.fkey]);
         const peak = get(request, [pKeyDef.peaks.fkey]);
 
-        var tReq2 = makeTblRequest('LightCurveProcessor', LC.PEAK_TABLE.replace('_',' '), {
+        const tReq2 = makeTblRequest('LightCurveProcessor', LC.PEAK_TABLE.replace('_',' '), {
             original_table: srcFile,
             x: get(defPeriod, [pKeyDef.time.fkey, 'value']) || get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]),
             y:  get(defPeriod, [pKeyDef.flux.fkey, 'value']) || get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME]),
@@ -533,7 +494,7 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             sortInfo: sortInfoString('Power', false)                 // sort peak table by column SDE, descending
         }, {tbl_id: LC.PEAK_TABLE, pageSize: parseInt(peak), inclCols : '"Peak", "Period", "Power"'});   // period and power are reserved words in sql.. put them in quotes
 
-        var tReq = makeTblRequest('LightCurveProcessor', LC.PERIODOGRAM_TABLE, {
+        const tReq = makeTblRequest('LightCurveProcessor', LC.PERIODOGRAM_TABLE, {
             original_table: srcFile,
             x: get(defPeriod, [pKeyDef.time.fkey, 'value']) || get(layoutInfo, [LC.MISSION_DATA, LC.META_TIME_CNAME]),
             y: get(defPeriod, [pKeyDef.flux.fkey, 'value']) || get(layoutInfo, [LC.MISSION_DATA, LC.META_FLUX_CNAME]),
@@ -612,19 +573,19 @@ function periodogramSuccess(popupId, hideDropDown = false) {
 
 
 function periodogramFail() {
-    return (request) => {
+    return () => {
         return showInfoPopup('Periodogram parameter setting error');
     };
 }
 /**
  * @summary component for showing periodogram result (table/chart) in standard or expeanded mode
- * @param expanded
+ * @param props
+ * @param props.expanded
  * @returns {*}
  * @constructor
  */
 const  PeriodogramResult = ({expanded}) => {
 
-    var resultLayout;
     const tables =  (<TablesContainer key='res-tables'
                                       mode='both'
                                       tbl_group={LC.PERIODOGRAM_GROUP}
@@ -637,23 +598,18 @@ const  PeriodogramResult = ({expanded}) => {
                                      closeable={true}
                                      expandedMode={expanded===LO_VIEW.xyPlots}/>);
 
-    
-    
-
     if (!expanded || expanded === LO_VIEW.none) {
-
-        resultLayout = (<SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={565}>
-                            <SplitContent>
-                                <div style={{margin: '0 0 5px 6px'}}><ChangePeriodogram/></div>
-                                <div style={{height: 'calc(100% - 28px)'}}>{tables}</div>
-                            </SplitContent>
-                            <SplitContent>{xyPlot}</SplitContent>
-                        </SplitPane>);
+        return (
+            <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={565}>
+                <SplitContent>
+                    <div style={{height: 'calc(100% - 28px)'}}>{tables}</div>
+                </SplitContent>
+                <SplitContent>{xyPlot}</SplitContent>
+            </SplitPane>
+        );
     } else {
-        resultLayout = (<div style={{flexGrow: 1}}>
+        return (<div style={{flexGrow: 1}}>
             {expanded === LO_VIEW.tables ? tables : xyPlot}
         </div>);
     }
-    return resultLayout;
 };
-

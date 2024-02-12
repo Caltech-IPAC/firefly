@@ -1,8 +1,9 @@
-import './ChartPanel.css';
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {wrapResizer} from '../../ui/SizeMeConfig.js';
+import {Box, Divider, Stack} from '@mui/joy';
 import {get, isEmpty, isUndefined} from 'lodash';
+
+import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {PlotlyChartArea} from './PlotlyChartArea.jsx';
 import {PlotlyToolbar} from './PlotlyToolbar.jsx';
 import {dispatchChartMounted, dispatchChartRemove, dispatchChartUnmounted, getChartData, getErrors} from '../ChartsCntlr.js';
@@ -32,10 +33,11 @@ function ChartPanelView(props) {
     if (showToolbar) {
         // chart with toolbar
         return (
-            <div className='ChartPanel__container'>
+            <Stack id='chart-panel' height={1} overflow='hidden'>
                 <ChartToolbar {...{chartId, tbl_group, expandable, expandedMode, Toolbar}}/>
+                <Divider orientation='horizontal'/>
                 <ChartArea glass={glass} {...props}/>
-            </div>
+            </Stack>
         );
     } else {
         // chart only
@@ -68,14 +70,16 @@ const ResizableChartAreaInternal = React.memo((props) => {
     const {errors, Chart, size}= props;
     const {width:widthPx, height:heightPx}= size;
     const knownSize = widthPx && heightPx;
+
+    if (!knownSize) return <div/>;
+
     return (
-        <div id='chart-resizer' className='ChartPanel__chartresizer'>
-            {knownSize ?
-                errors.length > 0 || isUndefined(Chart) ?
-                    <ErrorPanel errors={errors}/> :
-                    <Chart {...Object.assign({}, props, {widthPx, heightPx})}/> :
-                <div/>}
-        </div>
+        <Stack id='chart-resizer' flexGrow={1} position='relative' overflow='hidden' height={1} width={1}>
+            {errors.length || isUndefined(Chart) ?
+                <ErrorPanel errors={errors}/> :
+                <Chart {...Object.assign({}, props, {widthPx, heightPx})}/>
+            }
+        </Stack>
     );
 });
 
@@ -85,12 +89,12 @@ export const ChartToolbar = (props={}) => {
     // logic for PinnedChartContainer toolbar added here
     if (allowPinnedCharts()) {
         return (
-            <div className='ChartToolbar container'>
+            <Stack id='chart-toolbar' direction='row' alignItems='center' spacing={1}>
                 <CombineChart {...{viewerId, tbl_group}} />
                 <ShowTable {...{viewerId, tbl_group}} />
                 <PinChart {...{viewerId, tbl_group}}/>
                 <Toolbar {...{chartId, expandable, expandedMode}}/>
-            </div>
+            </Stack>
         );
     }
     return <Toolbar {...{chartId, expandable, expandedMode}}/>;
@@ -101,17 +105,17 @@ const ChartArea = (props) => {
     const deletable = isUndefined(get(chartData, 'deletable')) ? deletableProp : get(chartData, 'deletable');
     const errors  = getErrors(chartId);
     return (
-        <div className='ChartPanel__chartarea'>
+        <Stack id='chart-area' sx={{inset:0, position:'absolute'}}>
             <ResizableChartArea
                 {...Object.assign({}, props, {errors})} />
-            {glass && <div className='ChartPanel__chartarea ChartPanel__glass'/>}
+            {glass && <Stack flexGrow={1} sx={{backgroundColor:'transparent'}}/>}
             {deletable &&
             <img style={{display: 'inline-block', position: 'absolute', top: 0, right: 0, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
                  title='Delete this chart'
                  src={DELETE}
                  onClick={(ev) => {dispatchChartRemove(chartId); ev.stopPropagation();}}
             />}
-        </div>
+        </Stack>
     );
 };
 
@@ -121,7 +125,7 @@ const ResizableChartArea= wrapResizer(ResizableChartAreaInternal);
 
 function ErrorPanel({errors}) {
     return (
-      <div style={{position: 'relative', width: '100%', height: '100%'}}>
+      <Box id='chart-error' position='relative' width={1} height={1}>
           {errors.map((error, i) => {
               const {message='Error', reason=''} = error;
                     return (
@@ -131,7 +135,7 @@ function ErrorPanel({errors}) {
                         </div>
                     );
               })}
-      </div>
+      </Box>
     );
 }
 

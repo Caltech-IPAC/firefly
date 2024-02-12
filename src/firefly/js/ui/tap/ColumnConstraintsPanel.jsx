@@ -16,7 +16,7 @@ import {crunch} from 'firefly/util/WebUtil.js';
  * @param props.style
  * @returns {Object} constraint table
  */
-export function ColumnConstraintsPanel({tableModel, style}) {
+export function ColumnConstraintsPanel({tableModel}) {
     const onTableChanged = () => {
         const tbl = getTblById(tableModel.tbl_id);
         if (!tbl) return;
@@ -29,22 +29,13 @@ export function ColumnConstraintsPanel({tableModel, style}) {
                 onTableChanged, {width: '100%', boxSizing: 'border-box'});
 
     return (
-        <div style={style}>
-            <div style={{ position: 'relative', width: '100%', height: '100%'}}>
-                <div className='TablePanel'>
-                    <div className={'TablePanel__wrapper--border'}>
-                        <div className='TablePanel__table' style={{top: 0}}>
-                            <TablePanel
-                                key={uniqueId()} tbl_ui_id={tableModel.tbl_id + '-ui'}
-                                tableModel={tableModel}
-                                showToolbar={false} showFilters={true} rowHeight={24}
-                                renderers={{ constraints: { cellRenderer: newInputCell} }}
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <TablePanel
+            key={uniqueId()} tbl_ui_id={tableModel.tbl_id + '-ui'}
+            sx={{borderRadius:5}}
+            tableModel={tableModel}
+            showToolbar={false} showFilters={true} rowHeight={26}
+            renderers={{ constraints: { cellRenderer: newInputCell} }}
+        />
     );
 }
 

@@ -1,3 +1,4 @@
+import {Box} from '@mui/joy';
 import {LayoutType, PopupPanel} from 'firefly/ui/PopupPanel.jsx';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
@@ -72,8 +73,7 @@ function PopoutMouseReadoutContents({vr,currMouseState, readout, readoutData}) {
 
 
 
-const rS = { width: 244, position: 'relative', padding: 5};
-const ls= {color:'rgb(90,90,90)'};
+const rS = { width: 295, position: 'relative', p: .5};
 
 
 function Readout({readout, readoutData, showHealpixPixel=false, radix}){
@@ -81,7 +81,7 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
     const isHiPS= readoutType===HIPS_STANDARD_READOUT;
     const image= readoutType===STANDARD_READOUT;
 
-    if (!get(readoutData,'readoutItems')) return <div style={rS}/>;
+    if (!get(readoutData,'readoutItems')) return <Box style={rS}/>;
     const displayEle= getNonFluxDisplayElements(readoutData.readoutItems,  readout.readoutPref, isHiPS);
     const {pixelSize, showPixelPrefChange, healpixPixelReadout, healpixNorderReadout}= displayEle;
     const fluxArray = getFluxInfo(readoutData, radix);
@@ -91,26 +91,22 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
     const {readout1, readout2, showReadout1PrefChange, showReadout2PrefChange, showWavelengthFailed, waveLength}= displayEle;
 
     return (
-        <div className={gridClasses} style={rS}>
+        <Box className={gridClasses} sx={rS}>
             <DataReadoutItem lArea='pixReadoutTopLabel' vArea='pixReadoutTopValue' cArea='clipboardIconTop'
                              label={readout1.label} value={readout1.value}
                              copyValue={readout1.copyValue} showCopy={showCopy}
-                             labelStyle={ls}
                              prefChangeFunc={showReadout1PrefChange}/>
             <DataReadoutItem lArea='pixReadoutBottomLabel' vArea='pixReadoutBottomValue' cArea='clipboardIconBottom'
                              label={readout2.label} value={readout2.value}
                              copyValue={readout2.copyValue} showCopy={showCopy}
-                             labelStyle={ls}
                              prefChangeFunc={showReadout2PrefChange}/>
             <DataReadoutItem lArea='pixSizeLabel' vArea='pixSizeValue'
-                             labelStyle={ls}
                              label={pixelSize.label} value={pixelSize.value} prefChangeFunc={showPixelPrefChange}/>
-            {hipsPixel && <DataReadoutItem labelStyle={{gridArea:'redLabel',...ls}} valueStyle={{gridArea:'redValue'}}
+            {hipsPixel && <DataReadoutItem labelStyle={{gridArea:'redLabel'}} valueStyle={{gridArea:'redValue'}}
                                            label={healpixPixelReadout.label} value={healpixPixelReadout.value}/> }
-            {hipsPixel && <DataReadoutItem labelStyle={{gridArea:'greenLabel',...ls}} valueStyle={{gridArea:'greenValue'}}
+            {hipsPixel && <DataReadoutItem labelStyle={{gridArea:'greenLabel'}} valueStyle={{gridArea:'greenValue'}}
                                            label={healpixNorderReadout.label} value={healpixNorderReadout.value}/> }
             {!isHiPS && <DataReadoutItem lArea='redLabel' vArea='redValue'
-                                         labelStyle={ls}
                                          monoFont={radix===16}
                                          prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}
                                          label={fluxArray[0].label||'Value:'}
@@ -118,24 +114,21 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
                                          value={fluxArray[0].value}/>}
             {!threeColor && waveLength && image &&
                 <DataReadoutItem lArea='greenLabel' vArea='greenValue' label={waveLength.label} value={waveLength.value}
-                                                     labelStyle={ls}
                                                      prefChangeFunc={showWavelengthFailed} /> }
             {threeColor && <DataReadoutItem lArea='greenLabel' vArea='greenValue'
-                                            labelStyle={ls}
                                             monoFont={radix===16}
                                             prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}
                                             label={fluxArray[1].label}
                                             unit={fluxArray[1].unit??''}
                                             value={fluxArray[1].value}/> }
             {threeColor && <DataReadoutItem lArea='blueLabel' vArea='blueValue'
-                                            labelStyle={ls}
                                             monoFont={radix===16}
                                             prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}
                                             label={fluxArray[2].label}
                                             unit={fluxArray[2].unit??''}
                                             value={fluxArray[2].value}/> }
             <MouseReadoutLock gArea='lock' lockByClick={readout.lockByClick} />
-        </div>
+        </Box>
     );
 }
 

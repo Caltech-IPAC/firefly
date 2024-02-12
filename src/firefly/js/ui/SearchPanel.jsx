@@ -4,7 +4,9 @@
 
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
+import {Sheet, Stack, Tooltip, Typography, Button, ToggleButtonGroup} from '@mui/joy';
 import {set} from 'lodash';
+
 import {dispatchUpdateAppData} from '../core/AppDataCntlr.js';
 import {getSearchInfo} from '../core/AppDataCntlr.js';
 import {FormPanel} from './FormPanel.jsx';
@@ -32,37 +34,37 @@ export function SearchPanel({style={}, initArgs={}}) {
     const isSingleSearch = Object.keys(allSearchItems).length === 1;
     if (isSingleSearch) {
         return (
-            <div className='SearchPanel-box'>
+            <Stack id='search-vertical' flexGrow={1}>
                 {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
                 <SearchForm style={{height: 'auto'}} searchItem={searchItem} initArgs={initArgs}/>
-            </div>
+            </Stack>
         );
     }
 
     if (flow === 'vertical') {
         const sideBar = <SideBar {...{activeSearch, groups}}/> ;
         return (
-            <div className='SearchPanel-box'>
-                {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
-                <div className='SearchPanel' style={style}>
+            <Stack id='search-vertical' flexGrow={1}>
+                {title && <Typography textAlign='center' level='h2'>{title}</Typography>}
+                <Stack direction='row' flexGrow={1} sx={style}>
                     {sideBar}
                     {searchItem &&
-                    <div className='SearchPanel__form'>
+                    <Stack flexGrow={1} p={1}>
                         <SearchForm searchItem={searchItem}  initArgs={initArgs}/>
-                    </div>
+                    </Stack>
                     }
-                </div>
-            </div>
+                </Stack>
+            </Stack>
         );
     } else {
         const onTabSelect = (index,id,name) => dispatchUpdateAppData(set({}, ['searches', 'activeSearch'], name));
         return (
-            <div className='SearchPanel-box'>
+            <Stack id='search-tabs' flexGrow={1}>
                 {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
                 <StatefulTabs componentKey={`SearchPanel_${title}`} onTabSelect={onTabSelect} resizable={true} useFlex={true} borderless={true} contentStyle={{backgroundColor: 'transparent'}}>
                     {searchesAsTabs(allSearchItems, initArgs)}
                 </StatefulTabs>
-            </div>
+            </Stack>
         );
     }
 }
@@ -117,48 +119,67 @@ function SearchForm({searchItem, style, initArgs}) {
             <Render {...{searchItem, initArgs}} />
         )
     );
-
 }
 
 function SideBar({activeSearch, groups=[]}) {
     return (
-        <div className='SearchPanel__sidebar'>
-        {
-            groups.map( (group, idx) => <SearchGroup key={group.title || idx} {...{group, activeSearch}}/>)
-        }
-        </div>
+        <Sheet variant='soft' sx={{minWidth:200}}>
+            <Stack spacing={1}>
+                {
+                    groups.map( (group, idx) => <SearchGroup key={group.title || idx} {...{group, activeSearch}}/>)
+                }
+            </Stack>
+        </Sheet>
     );
 }
 
 function SearchGroup({group, activeSearch}) {
+    return useInRouterContext() ? <SearchGroupRouter {...{group, activeSearch}}/> : <SearchGroupFlux {...{group, activeSearch}}/>;
+}
+
+function SearchGroupFlux({group, activeSearch}) {
+    const onChange = (e,v) => dispatchUpdateAppData(set({}, ['searches', 'activeSearch'], v));
+    return <SearchGroupImpl {...{group, activeSearch, onChange}}/>;
+}
+
+function SearchGroupRouter({group, activeSearch}) {
+    const navigate = useNavigate();
+    const onChange = (e,v) => {
+        dispatchUpdateAppData(set({}, ['searches', 'activeSearch'], v));
+        const search = group[v];
+        navigate(search.path);
+    };
+    return <SearchGroupImpl {...{group, activeSearch, onChange}}/>;
+}
+
+function SearchGroupImpl({group, activeSearch, onChange}) {
     const {title, searchItems} = group;
     return (
-        <div className='SearchPanel__group'>{title}
-            {
-                Object.values(searchItems)
-                    .map( (search) => {
-                        return <SearchItem  key={search.name} {...{search, activeSearch}}/>;
-                    })
-            }
-        </div>
+        <Stack >
+            <Typography level='title-lg'>{title}</Typography>
+            <ToggleButtonGroup value={activeSearch} orientation='vertical' onChange={onChange}
+                               sx={{
+                                   '& button': {justifyContent:'left'},
+                                   '--ButtonGroup-connected': '0'
+                               }}
+            >
+                {
+                    Object.values(searchItems)
+                        .map( (search) => {
+                            return <SearchItem  key={search.name} {...{search, activeSearch}}/>;
+                        })
+                }
+            </ToggleButtonGroup>
+        </Stack>
     );
 }
 
-function RouterSearchItem({onClick, ttips, clsname, label, search}) {
-    const navigate = useNavigate();
-    const handleClick = () => {
-        onClick();
-        navigate(search.path);
-    };
-    return <div className='SearchPanel__searchItem' onClick={handleClick} title={ttips}><span className={clsname}>{label}</span></div>;
-}
-
-function SearchItem({search, activeSearch}) {
-    const isUsingRouter = useInRouterContext();
+function SearchItem({search}) {
     const ttips = search.desc || search.title || search.name;
     const label = search.title || search.name;
-    const clsname = search.name ===  activeSearch ? 'selected' : 'normal';
-    const onClick = () => dispatchUpdateAppData(set({}, ['searches', 'activeSearch'], search.name));
-    if (isUsingRouter) return <RouterSearchItem {...{onClick, ttips, clsname, label, search}}/>;
-    else return <div className='SearchPanel__searchItem' onClick={onClick} title={ttips}><span className={clsname}>{label}</span></div>;
+    return (
+        <Tooltip title={ttips}>
+            <Button value={search.name} variant='plain'>{label}</Button>
+        </Tooltip>
+    );
 }

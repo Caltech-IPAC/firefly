@@ -1,10 +1,11 @@
+import {Typography} from '@mui/joy';
 import {isArray} from 'lodash';
 import React, {Fragment, useRef} from 'react';
 import {getTblById} from '../tables/TableUtil.js';
+import {SearchDetailButton} from '../visualize/ui/Buttons.jsx';
 import {getWorldPtFromTableRow} from '../voAnalyzer/TableAnalysis.js';
 import {getDefMenuItemKeys} from '../visualize/MenuItemKeys.js';
 import {SingleColumnMenu} from './DropDownMenu.jsx';
-import {DropDownToolbarButton} from './DropDownToolbarButton.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {DropDownVerticalSeparator, ToolbarButton} from './ToolbarButton.jsx';
 import {getSearchTypeDesc, getValidSize, SearchTypes} from '../core/ClickToAction.js';
@@ -16,9 +17,7 @@ import {showSearchRefinementTool} from '../visualize/SearchRefinementTool.jsx';
 import {convertWpAryToStr, getDetailsFromSelection, markOutline} from '../visualize/ui/VisualSearchUtils.js';
 import {formatWorldPt} from '../visualize/ui/WorldPtFormat.jsx';
 
-import BINOCULARS from 'images/b4.png';
-
-export function ActionsDropDownButton({searchActions, pv, tbl_id}) {
+export function ActionsDropDownButton({searchActions, pv, tbl_id, style, tip='Search this area'}) {
     const mi= pv?.plotViewCtx.menuItemKeys ?? getDefMenuItemKeys();
     const buttonRef = useRef();
     const spacial= Boolean(pv);
@@ -28,11 +27,8 @@ export function ActionsDropDownButton({searchActions, pv, tbl_id}) {
     const dropDown = <SearchDropDown {...{searchActions, buttonRef, spacial, tbl_id, key:'searchDropDown'}}/>;
 
     return (
-        <div ref={buttonRef}>
-            <DropDownToolbarButton icon={BINOCULARS}
-                                   tip='Search this area'
-                                   useDropDownIndicator={true}
-                                   enabled={true} horizontal={true} visible={true} dropDown={dropDown}/>
+        <div ref={buttonRef} style={style}>
+            <SearchDetailButton tip={tip} dropDown={dropDown}/>
         </div>
     );
 }
@@ -111,10 +107,10 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
             if (!lastGroupId) lastGroupId = sa.groupId;
             return (
                 <React.Fragment key={'frag=' + idx}>
-                    {useSep && <DropDownVerticalSeparator key={sa.cmd + '---separator'} useLine={true} style={{marginLeft:30}}/>}
+                    {/*{useSep && <DropDownVerticalSeparator key={sa.cmd + '---separator'} useLine={true} style={{marginLeft:30}}/>}*/}
                     <ToolbarButton text={text} tip={`${sa.tip} for\n${text}`}
                                    style={{paddingLeft:30}}
-                                   enabled={true} horizontal={false} key={sa.cmd}
+                                   enabled={true} horizontal={false} key={sa.cmd+text}
                                    visible={isSupported(sa, cenWpt, radius, cornerStr, table)}
                                    onClick={() => doExecute(sa, cenWpt, radius, cornerStr, table)}/>
                 </React.Fragment>
@@ -122,20 +118,24 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
         });
 
         return (
-            <>
-                <div style={{whiteSpace: 'nowrap', fontSize: '10pt', padding: '5px 1px 5px 0'}}>
+            <Fragment key='type-of-group'>
+                <div key='cone-stuff' style={{whiteSpace: 'nowrap', fontSize: '10pt', padding: '5px 1px 5px 0'}}>
                     {asCone ?
-                        <>
-                            <span style={{fontStyle: 'italic'}}> {'Cone and Point Actions based on center: '} </span>
-                            <span> {formatWorldPt(cenWpt, 3)} </span>
-                        </> :
-                        <>
-                            <span style={{fontStyle: 'italic'}}> {'Polygon Actions '} </span>
-                        </>
+                        <Fragment key='cone-on-center'>
+                            <Typography color='warning' level='body-sm'>
+                                Cone and Point Actions based on center:
+                                {formatWorldPt(cenWpt, 3)}
+                            </Typography>
+                        </Fragment> :
+                        <Fragment key='polygon-on-center'>
+                            <Typography color='warning' level='body-sm'>
+                                Polygon Actions
+                            </Typography>
+                        </Fragment>
                     }
                 </div>
                 {buttons}
-            </>
+            </Fragment>
         );
 
 
@@ -146,16 +146,14 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
     return (
         <SingleColumnMenu key='searchMenu'>
             {doWholeTable &&
-                <div style={{whiteSpace: 'nowrap', fontSize: '10pt', padding: '5px 1px 5px 0', fontStyle: 'italic'}}>
-                    Whole table actions
-                </div>
+                <Typography color='warning' level='body-sm'> Whole table actions </Typography>
             }
             { doWholeTable && wholeTableSearchActions.map((sa) => {
                 const text = getSearchTypeDesc(sa, cenWpt, radius, corners?.length);
                 return (
                     <ToolbarButton text={text} tip={`${sa.tip} for\n${text}`}
                                    style={{paddingLeft:30}}
-                                   enabled={true} horizontal={false} key={sa.cmd}
+                                   enabled={true} horizontal={false} key={sa.cmd+sa.tip}
                                    visible={isSupported(sa, cenWpt, radius, cornerStr, table)}
                                    onClick={() => doExecute(sa, cenWpt, radius, cornerStr, table)}/>
                 );
@@ -166,7 +164,7 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
                     if (idx===1 && saOrder[0].length>0 && saList.length>0) {
                         return (
                             <React.Fragment key={'frag-part-'+idx}>
-                                <DropDownVerticalSeparator key={'parts'+idx+'---separator'} useLine={false} style={{marginBottom:8}}/>
+                                {/*<DropDownVerticalSeparator key={'parts'+idx+'---separator'} useLine={false} style={{marginBottom:8}}/>*/}
                                 {pList}
                             </React.Fragment>
                         );
@@ -179,7 +177,7 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
             }
             {spacial &&
                 <>
-                    <DropDownVerticalSeparator useLine={false} key='refine---separator' style={{marginBottom:8}}/>
+                    <DropDownVerticalSeparator useLine={true} key='refine---separator' style={{marginBottom:8}}/>
                     <ToolbarButton text='Refine search region' tip='Refine search region'
                                    style={{fontWeight:'bold'}}
                                    enabled={true} horizontal={false} key='refine' visible={true}

@@ -1,10 +1,22 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import {Typography, Stack} from '@mui/joy';
 
 import {InputField} from './InputField.jsx';
 import {intValidator} from '../util/Validate.js';
 import LOADING from 'html/images/gxt/loading.gif';
 import {MAX_ROW} from '../tables/TableRequestUtil.js';
+import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
+
+// import FIRST from 'html/images/icons-2014/16x16_BackwardToEnd.png';
+import FirstPage from '@mui/icons-material/FirstPage';
+// import LAST from 'html/images/icons-2014/16x16_ForwardToEnd.png';
+import LastPage from '@mui/icons-material/LastPage';
+// import NEXT from 'html/images/icons-2014/16x16_Forward.png';
+import NavigateNext from '@mui/icons-material/NavigateNext';
+import NavigateBefore from '@mui/icons-material/NavigateBefore';
+import PREVIOUS from 'html/images/icons-2014/16x16_Backward.png';
+
 
 export function PagingBar(props) {
     const {currentPage, totalRows, pageSize, showLoading, callbacks} = props;
@@ -23,19 +35,17 @@ export function PagingBar(props) {
 
     const pagestr = (totalRows === 0) ? '' :
                     `(${(startIdx+1).toLocaleString()} - ${endIdx.toLocaleString()} of ${totalRows?.toLocaleString()??''})`;
-    const showingLabel = (  <div style={{fontSize: 'smaller', marginLeft: 3, display: 'inline-flex', alignItems: 'center', width: `${3 * nchar + 7}ch`}} >
-                                {pagestr}
-                            </div>
-                        );
+    const showingLabel = (  <Typography level='body-sm' noWrap lineHeight={2}>{pagestr}</Typography> );
     if (showAll) {
         return showingLabel;
     } else {
         return (
-            <div className='PanelToolbar__group'>
-                <div onClick={() => callbacks.onGotoPage(1)} className='PagingBar__button first' title='First Page'/>
-                <div onClick={() => callbacks.onGotoPage(currentPage - 1)} className='PagingBar__button previous' title='Previous Page'/>
-                <div style={{display: 'inline-flex', alignItems: 'center'}}>
+            <Typography component='div' display='flex' alignItems='center' direction='row' level='body-sm' noWrap>
+                <ToolbarButton icon={<FirstPage/>} tip='First Page' onClick={() => callbacks.onGotoPage(1)}/>
+                <ToolbarButton icon={<NavigateBefore/>} tip='Previous Page' onClick={() => callbacks.onGotoPage(currentPage - 1)}/>
+                <Stack direction='row' alignItems='center' spacing={1/2}>
                     <InputField
+                        slotProps={{ input: { size: 'sm', sx: {width:'3em'} } }}
                         style={{textAlign: 'right', width: `${nchar+1}ch`}}
                         validator = {intValidator(1, totalPages, 'Page Number')}
                         tooltip = 'Jump to this page'
@@ -43,13 +53,13 @@ export function PagingBar(props) {
                         onChange = {onPageChange}
                         actOn={['blur','enter']}
                         showWarning={false}
-                    /> <div style={{fontSize: 'smaller', marginLeft: 3, width: `${nchar + 3}ch`}}> of {totalPages}</div>
-                </div>
-                <div onClick={() => callbacks.onGotoPage(currentPage + 1)} className='PagingBar__button next'  title='Next Page'/>
-                <div onClick={() => callbacks.onGotoPage(totalPages)} className='PagingBar__button last'  title='Last Page'/>
+                    /> <div> of {totalPages}</div>
+                </Stack>
+                <ToolbarButton icon={<NavigateNext/>} tip='Next Page' onClick={() => callbacks.onGotoPage(currentPage + 1)}/>
+                <ToolbarButton icon={<LastPage/>} tip='Last Page' onClick={() => callbacks.onGotoPage(totalPages)}/>
                 {showingLabel}
                 {showLoading ? <img style={{width:14,height:14,marginTop: '3px'}} src={LOADING}/> : false}
-            </div>
+            </Typography>
         );
     }
 }

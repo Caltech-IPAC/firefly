@@ -8,7 +8,7 @@ import {isEmpty, get} from 'lodash';
 
 import * as TblUtil from '../TableUtil.js';
 import {TablePanel} from './TablePanel.jsx';
-import {TabsView, Tab} from '../../ui/panel/TabPanel.jsx';
+import {Tab, TabPanel} from '../../ui/panel/TabPanel.jsx';
 import {dispatchTableRemove, dispatchActiveTableChanged} from '../TablesCntlr.js';
 import {hashCode} from '../../util/WebUtil.js';
 
@@ -66,7 +66,7 @@ function ExpandedView(props) {
     return (
         <div style={{ display: 'flex', height: '100%', flexGrow: 1, flexDirection: 'column', overflow: 'hidden'}}>
             <div style={{marginBottom: 3}}>
-                {closeable && <CloseButton style={{display: 'inline-block', paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
+                {closeable && <CloseButton style={{paddingLeft: 10}} onClick={() => dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none)}/>}
             </div>
             {!isEmpty(tables) &&
                 <div style={{position: 'relative', flexGrow: 1}}>
@@ -96,10 +96,11 @@ function StandardView(props) {
     } else {
         const uid = hashCode(keys.join());
         return (
-            <TabsView key={uid} style={{height: '100%', width: '100%', ...style}} defaultSelected={activeIdx}
+            <TabPanel key={uid} sx={style} value={activeIdx}
+                      slotProps={{ panel:{sx:{p:0}} }}
                       onTabSelect={onTabSelect} resizable={true} showOpenTabs={true} tabId={'TableContainers-' + (tbl_group||'main')}>
                 {tablesAsTab(tables, tableOptions, expandedMode)}
-            </TabsView>
+            </TabPanel>
         );
     }
 }
@@ -110,7 +111,7 @@ function SingleTable({table, tableOptions, expandedMode}) {
     options = Object.assign({}, options, tableOptions);
 
     return  (
-        <TablePanel key={tbl_id} border={true} {...{title, removable, tbl_id, tbl_ui_id, ...options, expandedMode}} />
+        <TablePanel key={tbl_id} {...{title, removable, tbl_id, tbl_ui_id, ...options, expandedMode}} />
     );
 }
 
@@ -124,8 +125,10 @@ function tablesAsTab(tables, tableOptions, expandedMode) {
                 dispatchTableRemove(tbl_id);
             };
             return  (
-                <Tab key={tbl_ui_id} name={title} removable={removable} onTabRemove={onTabRemove}>
-                    <TablePanel key={tbl_id} border={false} showTitle={false} {...{tbl_id, tbl_ui_id, ...options, expandedMode}} />
+                <Tab key={tbl_ui_id} label={title} removable={removable} onTabRemove={onTabRemove}>
+                    <TablePanel key={tbl_id}
+                                slotProps={{ toolbar:{variant:'plain'}, tablePanel:{variant: 'plain'} }}
+                                {...{tbl_id, tbl_ui_id, ...options, expandedMode, showTitle: false}} />
                 </Tab>
             );
         } );

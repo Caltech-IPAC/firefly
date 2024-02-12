@@ -3,13 +3,12 @@
  */
 
 
-import React, {PureComponent} from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {pickBy} from 'lodash';
 
 import {flux} from '../../core/ReduxFlux.js';
 import {
-    getMenu, isAppReady, dispatchSetMenu,
+    dispatchSetMenu,
     dispatchOnAppReady, dispatchNotifyRemoteAppReady, getAppOptions,
 } from '../../core/AppDataCntlr.js';
 import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
@@ -18,19 +17,15 @@ import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {layoutManager} from './FireflyViewerManager.js';
-import {Menu} from '../../ui/Menu.jsx';
-import {Banner} from '../../ui/Banner.jsx';
-import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
 import {TriViewPanel} from './TriViewPanel.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {startImagesLayoutWatcher} from '../../visualize/ui/TriViewImageSection.jsx';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {getImageMasterData} from '../../visualize/ui/AllImageSearchConfig.js';
 import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.js';
-import {warningDivId} from '../../ui/LostConnection.jsx';
 
-import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-42x42.png';
 import {getAllStartIds, getObsCoreWatcherDef, startTTFeatureWatchers} from '../common/ttFeatureWatchers';
+import App from 'firefly/ui/App.jsx';
 
 /**
  * This FireflyViewer is a generic application with some configurable behaviors.
@@ -47,13 +42,12 @@ import {getAllStartIds, getObsCoreWatcherDef, startTTFeatureWatchers} from '../c
  * <li><b>views</b>:  The type of result view.  Choices are 'images', 'tables', and 'xyPlots'.  They can be combined with ' | ', i.e.  'images | tables'</li>
  *
  */
-export class FireflyViewer extends PureComponent {
+export function FireflyViewer ({menu, options, initLoadCompleted, initLoadingMessage, views, showViewsSwitch, leftButtons,
+                                   centerButtons, rightButtons, normalInit=true, ...appProps}){
 
-    constructor(props) {
-        super(props);
+    useEffect(() => {
         getImageMasterData();
-        const views = LO_VIEW.get(props.views) || LO_VIEW.none;
-        this.state = this.getNextState();
+        const eviews = LO_VIEW.get(views) || LO_VIEW.none;
         startTTFeatureWatchers(getAllStartIds());
         startTTFeatureWatchers(
             [
@@ -64,65 +58,24 @@ export class FireflyViewer extends PureComponent {
                 getAppOptions().enableObsCoreDownload && getObsCoreWatcherDef().id,
             ]
         );
-        if (views.has(LO_VIEW.images) ) startImagesLayoutWatcher();
-        dispatchAddSaga(layoutManager,{views: props.views});
+        if (eviews.has(LO_VIEW.images) ) startImagesLayoutWatcher();
+        dispatchAddSaga(layoutManager,{views});
         if (getWorkspaceConfig()) { initWorkspace(); }
-    }
+    }, []);
 
-    getNextState() {
-        const menu = getMenu();
-        const layoutInfo = getLayouInfo();
-        const isReady = isAppReady();
-
-        return Object.assign({}, this.props,
-            {menu, isReady, ...layoutInfo});
-    }
-
-    componentDidMount() {
-        dispatchOnAppReady((state) => {
-            onReady({state, menu: this.props.menu, views: this.props.views, normalInit:this.props.normalInit??true,
-                options:this.props.options, initLoadingMessage:this.props.initLoadingMessage, initLoadCompleted:this.state.initLoadCompleted});
+    useEffect(() => {
+        dispatchOnAppReady(() => {
+            onReady({menu, views, options, initLoadingMessage, initLoadCompleted, normalInit});
         });
-        this.removeListener = flux.addListener(() => this.storeUpdate());
-    }
 
-    componentWillUnmount() {
-        this.removeListener && this.removeListener();
-    }
+    }, []);
 
-    storeUpdate() {
-        this.setState(this.getNextState());
-    }
-
-    render() {
-        const {isReady, menu={}, appTitle, appIcon, altAppIcon, dropDown, showUserInfo, initLoadCompleted, initLoadingMessage,
-            dropdownPanels, views, footer, style, showViewsSwitch, leftButtons,
-            centerButtons, rightButtons, bannerLeftStyle, bannerMiddleStyle, coverageSide} = this.state;
-        const {visible, view} = dropDown || {};
-
-        if (!isReady) {
-            return (<div style={{top: 0}} className='loading-mask'/>);
-        } else {
-            return (
-                <div id='App' className='rootStyle' style={style}>
-                    <header>
-                        <BannerSection {...{menu, showUserInfo, appTitle, appIcon, altAppIcon, bannerLeftStyle, bannerMiddleStyle}}/>
-                        <div id={warningDivId} data-decor='full' className='warning-div center'/>
-                        <DropDownContainer
-                            key='dropdown'
-                            footer={footer}
-                            visible={!!visible}
-                            selected={view}
-                            {...{dropdownPanels} } />
-                    </header>
-                    <main>
-                        <DynamicResults {...{views, showViewsSwitch, leftButtons, centerButtons, coverageSide,
-                                             rightButtons, initLoadingMessage, initLoadCompleted}}/>
-                    </main>
-                </div>
-            );
-        }
-    }
+    return (
+        <App {...{enableVersionDialog:true, views, ...appProps}}>
+            <DynamicResults {...{views, showViewsSwitch, leftButtons, centerButtons,
+                rightButtons, initLoadingMessage, initLoadCompleted}}/>
+        </App>
+    );
 }
 
 /**
@@ -168,19 +121,6 @@ function onReady({menu, views, options={}, initLoadingMessage, initLoadCompleted
     }
     dispatchNotifyRemoteAppReady();
 }
-
-function BannerSection(props) {
-    const {menu, appIcon=FFTOOLS_ICO, ...rest} = pickBy(props);
-    return (
-        <Banner key='banner'
-            menu={<Menu menu={menu} /> }
-            appIcon={appIcon}
-            enableVersionDialog={true}
-            {...rest}
-        />
-    );
-}
-
 
 function DynamicResults(props) {
     var {views, ...rest} = props;

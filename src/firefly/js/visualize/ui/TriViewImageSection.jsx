@@ -2,11 +2,11 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Badge} from '@mui/joy';
 import React from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {makeBadge} from '../../ui/ToolbarButton.jsx';
 import {hasCoverageData, isCatalog, isDataProductsTable, isOrbitalPathTable} from '../../voAnalyzer/TableAnalysis.js';
 
 import {ImageExpandedMode} from '../iv/ImageExpandedMode.jsx';
@@ -54,6 +54,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
     if (showCoverage || showFits || showMeta) {
         return (
             <Tabs key={key} style={{height: '100%', ...style}} onTabSelect={onTabSelect}
+                  slotProps={{ panel:{sx:{p:0}} }}
                   defaultSelected={getDefSelected(showCoverage,showFits,showMeta)}
                   useFlex={true} resizable={true}>
                 { showCoverage && coverageSide==='LEFT' && makeCoverageTab() }
@@ -91,10 +92,12 @@ function BadgeLabel({labelStr}) {
     const badgeCnt= useStoreConnector(() => getViewerItemIds(getMultiViewRoot(),DEFAULT_FITS_VIEWER_ID)?.length??0);
     return badgeCnt===0 ?  labelStr:
         (
-            <div style={{display:'flex', justifyContent:'center', alignItems:'center'}}>
-                <div>{labelStr}</div>
-                {makeBadge(badgeCnt, {position:'relative', borderWidth: 1, paddingRight:2})}
-            </div>
+
+            <Badge {...{badgeContent:badgeCnt, sx:{'& .MuiBadge-badge': {top:9, right:-2}}  }}>
+                <div style={{display:'flex', justifyContent:'center', alignItems:'center'}}>
+                    <div>{labelStr}</div>
+                </div>
+            </Badge>
         );
 }
 
@@ -236,7 +239,7 @@ function handleNewTable(layoutInfo, action) {
         showMeta = true;
         dataProductTableId = tbl_id;
     }
-    return smartMerge(layoutInfo, {showTables: true, showImages, images: {showFits, showMeta, showCoverage, selectedTab, dataProductTableId}});
+    return smartMerge(layoutInfo, {showImages, images: {showFits, showMeta, showCoverage, selectedTab, dataProductTableId}});
 }
 
 function onActiveTable (layoutInfo, action) {

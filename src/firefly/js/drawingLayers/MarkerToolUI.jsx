@@ -2,121 +2,76 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
+import React from 'react';
+import {Button, Chip, Stack, Tooltip} from '@mui/joy';
 import PropTypes from 'prop-types';
+import {InputField} from '../ui/InputField.jsx';
+import {ListBoxInputFieldView} from '../ui/ListBoxInputField.jsx';
+import {useStoreConnector} from '../ui/SimpleComponent.jsx';
 import {TextLocation} from '../visualize/draw/DrawingDef.js';
 import {flux} from '../core/ReduxFlux.js';
 import {dispatchModifyCustomField, DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
 import {getDrawLayerById} from '../visualize/PlotViewUtil.js';
 import {addNewDrawLayer} from '../visualize/ui/MarkerDropDownView.jsx';
-import {isNil, get} from 'lodash';
 
-//export const defaultMarkerTextLoc = TextLocation.CIRCLE_SE;
 export const defaultMarkerTextLoc = TextLocation.REGION_SE;
 
-export class MarkerToolUI extends PureComponent {
-    constructor(props) {
-        super(props);
+export function MarkerToolUI({pv,drawLayer}) {
+    const markerType = drawLayer?.markerType ?? 'marker';
 
-        var markerObj = get(this.props.drawLayer, ['drawData', 'data', this.props.pv.plotId], {});
-        var {text = '', textLoc = defaultMarkerTextLoc} = markerObj||{};
-        var markerType = get(this.props.drawLayer, ['markerType'], 'marker');
+    const {markerText, markerTextLoc}=  useStoreConnector(() => {
+        const dl = getDrawLayerById(flux.getState()[DRAWING_LAYER_KEY], drawLayer.drawLayerId);
+        const crtMarkerObj = dl?.drawData?.data?.[pv.plotId];
+        if (!crtMarkerObj ) return {markerText: 'marker',  markerTextLoc: defaultMarkerTextLoc.key, markerType};
+        const {text = '', textLoc = defaultMarkerTextLoc} = crtMarkerObj;
+        return {markerText: text, markerTextLoc:textLoc.key};
+    });
 
-        this.state = {markerText: text,  markerTextLoc: textLoc.key, markerType};
+    const changeMarkerText= (ev) => {
+        let markerText = ev?.value ?? '';
 
-        this.changeMarkerText = this.changeMarkerText.bind(this);
-        this.changeMarkerTextLocation = this.changeMarkerTextLocation.bind(this);
-    }
-
-    componentWillUnmount() {
-        this.iAmMounted= false;
-        if (this.removeListener) this.removeListener();
-    }
-
-    componentDidMount() {
-        this.iAmMounted= true;
-        this.removeListener= flux.addListener(() => this.stateUpdate());
-    }
-
-    stateUpdate() {
-        var dl = getDrawLayerById(flux.getState()[DRAWING_LAYER_KEY], this.props.drawLayer.drawLayerId);
-
-        if (dl && this.iAmMounted) {
-            const crtMarkerObj = get(dl, ['drawData', 'data', this.props.pv.plotId]);
-
-            if (crtMarkerObj) {
-                var {text = '', textLoc = defaultMarkerTextLoc} = crtMarkerObj;
-
-                if (text !== this.state.markerText) {
-                    this.setState({markerText: text});
-                }
-                if (textLoc.key !== this.state.markerTextLoc) {
-                    this.setState({markerTextLoc: textLoc.key});
-                }
-            }
-        }
-    }
-
-    changeMarkerText(ev) {
-        var markerText = get(ev, 'target.value');
-
-        if (isNil(markerText) || !markerText) {
-            var dl = getDrawLayerById(flux.getState()[DRAWING_LAYER_KEY], this.props.drawLayer.drawLayerId);
-
+        if (!markerText) {
+            const dl = getDrawLayerById(flux.getState()[DRAWING_LAYER_KEY], drawLayer.drawLayerId);
             markerText = '';
-            this.props.drawLayer.title = get(dl, 'defaultTitle');
+            drawLayer.title = dl?.defaultTitle;
         } else {
-            this.props.drawLayer.title = markerText;
+            drawLayer.title = markerText;
         }
-        this.setState({markerText});
+        dispatchModifyCustomField( drawLayer.drawLayerId,
+            {markerText, markerTextLoc: TextLocation.get(markerTextLoc), activePlotId: pv.plotId},
+            pv.plotId);
+    };
 
-        dispatchModifyCustomField( this.props.drawLayer.drawLayerId,
-                    {markerText, markerTextLoc: TextLocation.get(this.state.markerTextLoc), activePlotId: this.props.pv.plotId},
-                     this.props.pv.plotId);
-    }
+    const changeMarkerTextLocation= (ev,newValue) => {
+        const markerTextLoc = newValue;
+        dispatchModifyCustomField( drawLayer.drawLayerId,
+            {markerText, markerTextLoc: TextLocation.get(markerTextLoc), activePlotId: pv.plotId},
+            pv.plotId);
+    };
 
-    changeMarkerTextLocation(ev) {
-        var markerTextLoc = get(ev, 'target.value');
-
-        this.setState({markerTextLoc});
-        dispatchModifyCustomField( this.props.drawLayer.drawLayerId,
-                    {markerText: this.state.markerText, markerTextLoc: TextLocation.get(markerTextLoc), activePlotId: this.props.pv.plotId},
-                     this.props.pv.plotId);
-    }
-
-    render() {
-        const tStyle= {
-            display:'inline-block',
-            whiteSpace: 'nowrap',
-            minWidth: '3em',
-            paddingLeft : 5
-        };
-
-        var textOnLink = `Add ${this.state.markerType}`;
-        var tipOnLink = `Add a ${this.state.markerType}`;
-
-        return (
-            <div style={{ padding:'5px 0 9px 0'}}>
-                <div style={tStyle} title={'Add a label to this marker'}> Label:<input style={{width: 60}}
-                                                  type='text'
-                                                  value={this.state.markerText}
-                                                  onChange={this.changeMarkerText}/>
-                </div>
-                <div style={tStyle} title={'Chhose a corner'}> Corners:
-                    <select value={this.state.markerTextLoc} onChange={ this.changeMarkerTextLocation }>
-                        <option value={TextLocation.REGION_NE.key}> NE </option>
-                        <option value={TextLocation.REGION_NW.key}> NW </option>
-                        <option value={TextLocation.REGION_SE.key}> SE </option>
-                        <option value={TextLocation.REGION_SW.key}> SW </option>
-                    </select>
-                </div>
-                <div style={tStyle}  title={tipOnLink}>
-                    <a className='ff-href' style={{textDecoration: 'underline'}}
-                       onClick={()=>addNewDrawLayer(this.props.pv, this.state.markerType)}>{textOnLink}</a>
-                </div>
-            </div>
-        );
-    }
+    return (
+        <Stack direction='row' alignItems='center' spacing={2}>
+            <InputField label='Label:' orientation='horizontal'
+                        value={markerText}
+                        tooltip='Change the label on this marker'
+                        sx={{width:'10em'}} onChange={changeMarkerText} />
+            <ListBoxInputFieldView
+                onChange={changeMarkerTextLocation }
+                value={markerTextLoc}
+                label='Corner:' tooltip='shows the marker on the choosen corner'
+                options={[
+                    {value: TextLocation.REGION_NE.key, label:'NE'},
+                    {value: TextLocation.REGION_NW.key, label:'NW'},
+                    {value: TextLocation.REGION_SE.key, label:'SE'},
+                    {value: TextLocation.REGION_SW.key, label:'SW'},
+                ]}/>
+            <Tooltip title='Add an additional marker'>
+                <Chip onClick={()=>addNewDrawLayer(pv, markerType)}>
+                    {`Add ${markerType}`}
+                </Chip>
+            </Tooltip>
+        </Stack>
+    );
 }
 
 
@@ -124,4 +79,3 @@ MarkerToolUI.propTypes= {
     drawLayer     : PropTypes.object.isRequired,
     pv            : PropTypes.object.isRequired
 };
-

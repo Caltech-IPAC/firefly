@@ -1,3 +1,4 @@
+import {Typography} from '@mui/joy';
 import React, {Fragment} from 'react';
 import {coordToString} from '../../ui/PositionFieldDef.js';
 import CoordUtil from '../CoordUtil';
@@ -12,19 +13,19 @@ export function formatWorldPt(wp, pad=3, useBold=true) {
     const fontWeight= useBold?'bold':'normal';
     if (!wp.objName) {
         return (
-            <span style={{fontWeight}}> {`${valToStr(wp.x)}, ${valToStr(wp.y)} ${coordToString(wp.cSys)}`} </span>
+            <Typography level='body-sm' sx={{fontWeight}}> {`${valToStr(wp.x)}, ${valToStr(wp.y)} ${coordToString(wp.cSys)}`} </Typography>
         );
     }
     if (wp.resolver) {
         return (
             <Fragment>
-                <span style={{fontWeight, paddingRight:pad}}>{wp.objName}</span>
-                <span style={{fontSize: '80%' }}> {`${wp.resolver.toString().toUpperCase()}`} </span>
+                <Typography level='body-sm' sx={{fontWeight, paddingRight:pad+'px'}}>{wp.objName}</Typography>
+                <Typography level='body-xs'> {`${wp.resolver.toString().toUpperCase()}`} </Typography>
             </Fragment>
         );
     }
     else {
-        return ( <span style={{fontWeight}}>{wp.objName}</span> );
+        return ( <Typography size='body-sm' style={{fontWeight}}>{wp.objName}</Typography> );
     }
 }
 

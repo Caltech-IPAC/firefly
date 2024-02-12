@@ -1,5 +1,6 @@
+import {Divider, FormControl, FormHelperText, FormLabel, Stack} from '@mui/joy';
 import React, {useEffect, memo, useState, useContext} from 'react';
-import PropTypes, {bool} from 'prop-types';
+import PropTypes, {bool, object, shape} from 'prop-types';
 import {convertAngle} from '../visualize/VisUtil.js';
 import {ConnectionCtx} from './ConnectionCtx.js';
 import {InputFieldView} from './InputFieldView.jsx';
@@ -8,7 +9,7 @@ import Validate from '../util/Validate.js';
 import {toMaxFixed} from '../util/MathUtil.js';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 
-const invalidSizeMsg = 'size is not set properly or size is out of range';
+const invalidSizeMsg = 'Size is not set properly or size is out of range';
 const DEC_DIGIT = 6;
 const unitSign = { 'arcsec':'"', 'arcmin':'\'', 'deg':' deg' };
 
@@ -79,10 +80,9 @@ function getFeedback(unit, min, max, showFeedback) {
  */
 
 const SizeInputFieldView= (props) => {
-    const {nullAllowed, min, max, style= {}, wrapperStyle={} /*wrapperStyle is deprecated*/,
-        inputStyle={},
-        connectedMarker= false,
-        feedbackStyle={}, labelWidth, label, labelStyle, showFeedback, onChange} = props;
+    const {nullAllowed, min, max, sx, inputStyle={}, connectedMarker= false,
+        orientation='vertical', slotProps,
+        label, showFeedback, onChange} = props;
     const [{value, valid, displayValue, unit},setState]= useState(() => updateSizeInfo(props));
     const {feedback, errmsg}= getFeedback(unit,min,max,showFeedback);
 
@@ -104,8 +104,7 @@ const SizeInputFieldView= (props) => {
         onChange?.(ev, stateUpdate);
     };
 
-    const onUnitChange= (ev) => {
-        const newUnit = ev?.target?.value;
+    const onUnitChange= (ev,newUnit) => {
         if (unit === newUnit) return;
         let newValue= value;
         let newValid= valid;
@@ -126,26 +125,50 @@ const SizeInputFieldView= (props) => {
 
 
     return (
-        <div style={{...wrapperStyle, ...style}}>
-            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'flex-start'}} >
-                <InputFieldView
-                    valid={valid}
-                    inputStyle={inputStyle}
-                    onChange={onSizeChange} onBlur={onSizeChange}
-                    value={displayValue} message={errmsg} label={label} labelWidth={labelWidth} labelStyle={labelStyle}
-                    connectedMarker={connectedMarker||connectContext.controlConnected}
-                    tooltip={'enter size within the valid range'} />
-                <ListBoxInputFieldView
-                    onChange={onUnitChange}
-                    value={unit} multiple={false} labelWidth={2} label={''} tooltip={'unit of the size'}
-                    options={[
-                        {label: 'degrees', value: 'deg'},
-                        {label: 'arcminutes', value: 'arcmin'},
-                        {label: 'arcseconds', value: 'arcsec'}
-                    ]} />
-            </div>
-            <div style={{marginLeft: labelWidth+5, marginTop:5,  ...feedbackStyle}}> {feedback} </div>
-        </div>
+        <Stack sx={sx}>
+            <Stack>
+                <FormControl orientation={orientation}>
+                    {label && <FormLabel>{label}</FormLabel>}
+                    <Stack spacing={1} direction='row'>
+                        <InputFieldView {...{
+                            valid,
+                            inputStyle,
+                            onChange:onSizeChange,
+                            onBlur:onSizeChange,
+                            value:displayValue,
+                            message:errmsg,
+                            connectedMarker: connectedMarker || connectContext.controlConnected,
+                            endDecorator:(
+                                <Stack direction='row' alignItems='center'>
+                                    <Divider orientation='vertical'/>
+                                    <ListBoxInputFieldView
+                                        onChange={onUnitChange}
+                                        value={unit} multiple={false} label='' tooltip='unit of the size'
+                                        options={[
+                                            {label: 'degrees', value: 'deg'},
+                                            {label: 'arcminutes', value: 'arcmin'},
+                                            {label: 'arcseconds', value: 'arcsec'}
+                                        ]}
+                                        slotProps={{
+                                            input: {
+                                                variant:'plain',
+                                                sx:{minHeight:'unset'}
+                                                // sx:{'&:hover': { bgcolor: 'transparent' } }
+                                            }
+                                        }}
+                                    />
+                                </Stack>
+                            ),
+                            sx:{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }},
+                            tooltip:'enter size within the valid range'
+                        }} />
+                    </Stack>
+                </FormControl>
+                <FormHelperText {...{...slotProps?.feedback}}>
+                    {feedback}
+                </FormHelperText>
+            </Stack>
+        </Stack>
     );
 };
 
@@ -153,24 +176,24 @@ SizeInputFieldView.propTypes = {
     unit:  PropTypes.string,
     min:   PropTypes.number.isRequired,
     max:   PropTypes.number.isRequired,
+    sx: object,
     displayValue: PropTypes.string,
-    labelWidth: PropTypes.number,
     label:    PropTypes.string,
+    orientation: PropTypes.string,
     nullAllowed: PropTypes.bool,
     onChange: PropTypes.func,
     value: PropTypes.any,
     valid: PropTypes.bool,
     showFeedback: PropTypes.bool,
-    wrapperStyle: PropTypes.object, // deprecated
     inputStyle: PropTypes.object,
-    style: PropTypes.object,  // replaces wrapper style
     connectedMarker: bool,
-    feedbackStyle: PropTypes.object
+    slotProps: shape({
+        feedback: object,
+    })
 };
 
 SizeInputFieldView.defaultProps = {
     label: 'Size: ',
-    labelWidth: 50,
     unit: 'deg',
     showFeedback: false
 };
@@ -205,13 +228,14 @@ SizeInputFields.propTypes={
     fieldKey : PropTypes.string,
     groupKey : PropTypes.string,
     connectedMarker: bool,
+    sx: object,
+    orientation: PropTypes.string,
     initialState: PropTypes.shape({
         value: PropTypes.any,
         tooltip:  PropTypes.string,
         unit:  PropTypes.string,
         min:   PropTypes.number,
         max:   PropTypes.number,
-        labelWidth:  PropTypes.number,
         nullAllowed: PropTypes.bool,
         displayValue: PropTypes.string,
         label:  PropTypes.string,

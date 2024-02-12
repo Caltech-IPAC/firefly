@@ -4,6 +4,7 @@
 
 import React, {useCallback, useState} from 'react';
 import PropTypes from 'prop-types';
+import {Button, Skeleton, Stack, Link, Sheet, Typography, Box} from '@mui/joy';
 import {delay} from 'lodash';
 import {UCDList} from '../../voAnalyzer/VoConst.js';
 
@@ -33,6 +34,8 @@ import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {setSelectInfo} from 'firefly/tables/TableRequestUtil.js';
 import {dispatchHideDialog} from 'firefly/core/ComponentCntlr.js';
 import {FilterInfo} from 'firefly/tables/FilterInfo.js';
+import {AddColumnButton} from 'firefly/visualize/ui/Buttons.jsx';
+import {RequiredFieldMsg} from 'firefly/ui/InputField.jsx';
 
 
 let hideExpPopup;
@@ -48,8 +51,6 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
     const ref = useCallback((node) => delay(() => node?.focus(), 100), []);
     const cols = getAllColumns(getTblById(tbl_id));
     const colNames = cols.map((c) => c.name);
-
-    const fieldProps = {labelWidth: 75, style: {width: 200}};
 
     const doUpdate = () => {
         const {request, selectInfo} = getTblById(tbl_id);
@@ -96,31 +97,46 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
     const buttonLabel = editColName ? 'Update Column' : 'Add Column';
     const DelBtn = (<button type='button' className='button std'onClick={doDelete}>Delete Column</button>);
 
+    if (isWorking) return <Skeleton className='loading-mask' style={{zIndex:1}}/>;
     return (
-        <div style={{position:'relative'}}>
-            {isWorking && <div className='loading-mask' style={{zIndex:1}}/>}
-            <div className='required-msg'/>
-            <FieldGroup groupKey={groupKey} className='AddColumn__form'>
-                <ValidationField fieldKey='cname' label='Name:' inputRef={ref} required={true} {...fieldProps} initialState={{
-                    value: editColName,
-                    validator:textValidator({min:1, max: 128,
-                        pattern: /^[a-z0-9_]+$/i,
-                        message:'Column name is required and must contain only A to Z, 0 to 9, and underscore (_) characters'})
-                }}/>
-                <RadioGroupInputField fieldKey='mode' initialState={{label: 'Mode:', value:mode}} options={[{value:'Custom', label:'Enter expression'}, {value:'Preset', label:'Use preset function'}]} {...fieldProps}/>
-                {mode === 'Custom' ? <CustomFields {...{tbl_ui_id, tbl_id, groupKey, fieldProps, editColName}}/> : <PresetFields {...{tbl_id, editColName, fieldProps}}/>}
+        <Stack p={1} width={500} spacing={1}
+            sx={{
+                '.ff-Input':{mb:1},
+                '.MuiInput-endDecorator > a':{width:12},
+                label:{width:80},
+                input:{width:265}
+            }}>
+            <RequiredFieldMsg/>
+            <FieldGroup groupKey={groupKey}>
+                <ValidationField fieldKey='cname' label='Name:' inputRef={ref}
+                    tooltip='Column name'
+                    required={true}
+                    orientation='horizontal'
+                    initialState={{
+                        value: editColName,
+                        validator:textValidator({min:1, max: 128,
+                            pattern: /^[a-z0-9_]+$/i,
+                            message:'Column name is required and must contain only A to Z, 0 to 9, and underscore (_) characters'})
+                    }}/>
+                <RadioGroupInputField fieldKey='mode'
+                    orientation='horizontal'
+                    sx={{'& .MuiRadio-label':{width:115}}}
+                    initialState={{label: 'Mode:', value:mode}}
+                    options={[
+                        {value:'Custom', label:'Enter expression'},
+                        {value:'Preset', label:'Use preset function'}
+                    ]}/>
+                {mode === 'Custom' ? <CustomFields {...{tbl_ui_id, tbl_id, groupKey, editColName}}/> : <PresetFields {...{tbl_id, editColName}}/>}
             </FieldGroup>
-            <div className='AddColumn__actions'>
-                <button type='button' className='button std' style={{marginRight: 5}}
-                        onClick={doUpdate}>{buttonLabel}
-                </button>
-                {editColName && DelBtn}
-                <button type='button' className='button std'
-                        onClick={() => hidePopup?.()}> Cancel
-                </button>
-                <HelpIcon helpId={'tables.addColumn'} style={{float: 'right', marginTop: 4}}/>
-            </div>
-        </div>
+            <Stack direction='row' justifyContent='space-between'>
+                <Stack direction='row' spacing={1} alignItems='center'>
+                    <Button color='primary' variant='solid' onClick={doUpdate}>{buttonLabel}</Button>
+                    {editColName && DelBtn}
+                    <Button onClick={() => hidePopup?.()}> Cancel</Button>
+                </Stack>
+                <HelpIcon helpId={'tables.addColumn'}/>
+            </Stack>
+        </Stack>
     );
 
 });
@@ -165,16 +181,14 @@ function reloadTable(request, editColName, newColName) {
 }
 
 export const AddColumnBtn = ({tbl_ui_id, tbl_id}) => (
-    <ToolbarButton icon={INSERT_COLUMN} tip='Add a column'
-                   onClick={() => showAddOrUpdateColumn({tbl_ui_id, tbl_id})}/>
+    <AddColumnButton onClick={() => showAddOrUpdateColumn({tbl_ui_id, tbl_id})}/>
 );
 
 export function showAddOrUpdateColumn({tbl_ui_id, tbl_id, editColName, onChange}) {
-    let popup;
     const hidePopup = () => popup?.();
     const title =  editColName ? 'Edit a derived column' : 'Add a column';
 
-    popup = showPopup({ID:'addOrUpdateColumn', content: <AddOrUpdateColumn {...{tbl_id, tbl_ui_id, hidePopup, editColName, onChange}}/>, title, modal: true});
+    const popup = showPopup({ID:'addOrUpdateColumn', content: <AddOrUpdateColumn {...{tbl_id, tbl_ui_id, hidePopup, editColName, onChange}}/>, title, modal: true});
 }
 
 function getEditColInfo(tbl_id, editColName) {
@@ -186,28 +200,32 @@ function getEditColInfo(tbl_id, editColName) {
     return {col,desc,preset,expression};
 }
 
-function DescField ({desc, fieldProps}) {
-    return <ValidationField fieldKey='desc' label='Description:' initialState={{value:desc}}
-                            tooltip='A one-line description for the column heading tooltip and table options' {...fieldProps}/>;
+function DescField ({desc}) {
+    return (
+        <ValidationField fieldKey='desc' label='Description:'
+                         orientation='horizontal'
+                         initialState={{value:desc}}
+                         tooltip='A one-line description for the column heading tooltip and table options'/>
+    );
 }
 
-function PresetFields ({tbl_id, editColName, fieldProps}) {
+function PresetFields ({tbl_id, editColName}) {
     const {preset, desc} = getEditColInfo(tbl_id, editColName);
 
     return (
         <>
-            <ListBoxInputField fieldKey='preset' label='Select a preset:'
+            <ListBoxInputField fieldKey='preset' label='Select a preset:' orientation='horizontal'
                                options={[
                                    {value:'filtered', label:"Set filtered rows to 'true' and the rest to 'false'"},
                                    {value:'selected', label:"Set selected rows to 'true' and the rest to 'false'"},
                                    {value:'ROW_NUM', label:'Number rows in current sort order'}]}
-                               initialState={{value: preset}} {...fieldProps}/>
-            <DescField {...{desc, fieldProps}}/>
+                               initialState={{value: preset}}/>
+            <DescField {...{desc}}/>
         </>
     );
 }
 
-function CustomFields({tbl_ui_id, tbl_id, groupKey, fieldProps, editColName}) {
+function CustomFields({tbl_ui_id, tbl_id, groupKey, editColName}) {
 
     const dtype = useStoreConnector(() => getFieldVal(groupKey, 'dtype', 'double'));
     const exprKey = 'expression';
@@ -223,40 +241,62 @@ function CustomFields({tbl_ui_id, tbl_id, groupKey, fieldProps, editColName}) {
     return (
         <>
             <ColumnFld fieldKey={exprKey} name='Expression' cols={cols} label='Expression:' required={true} initValue={col.DERIVED_FROM}
-                       canBeExpression={true} nullAllowed={false} inputStyle={{width: 200}} validator={textValidator({min:1})}
-                       helper={<Helper {...{tbl_ui_id, tbl_id, onChange}}/>} tooltip={EXPRESSION_TTIPS} {...fieldProps}
+                       slotProps={{
+                           control:{orientation:'horizontal'},
+                           tooltip:{placement: 'bottom'},
+                       }}
+                       canBeExpression={true} nullAllowed={false} validator={textValidator({min:1})}
+                       helper={<Helper {...{tbl_ui_id, tbl_id, onChange}}/>} tooltip={EXPRESSION_TTIPS}
             />
             <div className='AddColumn__datatype'>
                 <ListBoxInputField fieldKey='dtype' label='Data Type:'
-                                   options={[{value:'double'}, {value:'long'}, {value:'char'}]} initialState={{value: col.type}} {...fieldProps}/>
+                                   options={[{value:'double'}, {value:'long'}, {value:'char'}]}
+                                   initialState={{value: col.type}}
+                />
                 {dtype === 'double' &&
-                <ValidationField fieldKey='precision' label='Precision:' labelWidth={50} style={{width:70}}
+                <ValidationField fieldKey='precision' label='Precision:'
+                                 sx={{
+                                     label:{width:50, ml:2},
+                                     input:{width: 100}
+                                 }}
+                                 orientation='horizontal'
                                  placeholder='e.g. F6'
                                  initialState={{ value: col.precision, validator:textValidator({pattern: /^$|^[FE]?[1-9]$/i,
                                          message:'Precision must be Fn or En. When Fn, n is the number of digits after the decimal.  ' +
                                              'And when En, n is the precision in scientific notation'
                                      })}}
-                />
-                }
+                />}
             </div>
-            <Info url='https://ivoa.net/documents/VOUnits'>
-                <ValidationField fieldKey='units' label='Units:' initialState={{value: col.units}} tooltip='Units of measurement, IVOA VOUnits preferred' {...fieldProps}/>
-            </Info>
-            <Info url='https://ivoa.net/documents/UCD1+'>
-                <SuggestBoxInputField fieldKey='ucd' label='UCD:' initialState={{value: col.UCD}} tooltip='IVOA Unified Content Descriptor, UCD1+ style'
-                                      getSuggestions={getSuggestions} valueOnSuggestion={valueOnSuggestion} inputStyle={{width:200}} {...fieldProps}/>
-            </Info>
-            <DescField {...{desc, fieldProps}}/>
+            <ValidationField fieldKey='units' label='Units:'
+                             slotProps={{
+                                 input:{endDecorator: <Info url='https://ivoa.net/documents/VOUnits'/>}
+                             }}
+                             orientation='horizontal'
+                             initialState={{value: col.units}}
+                             tooltip='Units of measurement, IVOA VOUnits preferred'
+            />
+            <SuggestBoxInputField fieldKey='ucd' label='UCD:'
+                              slotProps={{
+                                  control:{orientation:'horizontal'},
+                                  tooltip: {placement: 'bottom'},
+                                  input:{endDecorator: <Info url='https://ivoa.net/documents/UCD1+'/>}
+                              }}
+                              initialState={{value: col.UCD}}
+                              tooltip='IVOA Unified Content Descriptor, UCD1+ style'
+                              getSuggestions={getSuggestions} valueOnSuggestion={valueOnSuggestion}
+            />
+            <DescField desc={desc}/>
         </>
     );
 }
 
 function Helper({tbl_ui_id, tbl_id, onChange}) {
     const content = (
-        <div style={{height: 425, width: 700, position: 'relative'}}>
+        <Box height={500} width={700} position='relative'>
             <SqlTableFilter inputLabel='Expression' placeholder='e.g. w3mpro - w4mpro'
-                            usages={<Usages/>} samples={<Samples/>} {...{tbl_ui_id, tbl_id, onChange}}/>
-        </div>
+                            usages={<Usages/>} samples={<Samples/>} {...{tbl_ui_id, tbl_id, onChange}}
+            />
+        </Box>
 
     );
     const onClick = () => hideExpPopup = showPopup({ID:'ExpressionCreator', title: 'Expression Creator', content});
@@ -267,39 +307,37 @@ function Helper({tbl_ui_id, tbl_id, onChange}) {
 
 const Usages = () => {
     return (
-        <>
-            <h4>Usage</h4>
-            <div style={{marginLeft: 5}}>
-                <div>Input should follow the syntax of an SQL expression.</div>
-                <div>Click on a Column name to insert the name into the Expression input box.</div>
-                <div style={{marginTop: 5}}>Standard SQL-like operators can be used where applicable.
-                    Supported operators are:
-                    <span {...code}>{'  +, -, *, /, =, >, <, >=, <=, !=, LIKE, IN, IS NULL, IS NOT NULL'}</span>
-                </div>
-                <div style={{marginTop: 5}}>
-                    You may use functions as well.  A few of the common functions are listed below.
-                    For a list of all available functions, click <a href='http://hsqldb.org/doc/2.0/guide/builtinfunctions-chapt.html' target='_blank'>here</a>
-                </div>
-                <div style={{marginLeft: 5}}>
-                    <li style={{whiteSpace: 'nowrap'}}>String functions: <span {...code}>CONCAT(s1,s2[,...]]) SUBSTR(s,offset,length)</span></li>
-                    <li style={{whiteSpace: 'nowrap'}}>Numeric functions: <span {...code}>LOG10(x) LN(x) DEGREES(x) COS(x) POWER(x,y)</span></li>
-                </div>
-            </div>
-        </>
+        <Sheet>
+            <Typography level='title-md'>Usage</Typography>
+            <Typography level='body-sm' sx={{code:{ml:1, whiteSpace:'nowrap'}}}>
+                Input should follow the syntax of an SQL expression. <br/>
+                Click on a Column name to insert the name into the Expression input box. <br/>
+                Standard SQL-like operators can be used where applicable. <br/>
+                Supported operators are: <br/>
+                <code>{'  +, -, *, /, =, >, <, >=, <=, !=, LIKE, IN, IS NULL, IS NOT NULL'}</code> <br/><br/>
+
+                You may use functions as well.  A few of the common functions are listed below. <br/>
+                For a list of all available functions, click <Link href='http://hsqldb.org/doc/2.0/guide/builtinfunctions-chapt.html' target='_blank'>here</Link> <br/>
+                String functions: <br/>
+                <code>CONCAT(s1,s2[,...]]) SUBSTR(s,offset,length)</code> <br/>
+                Numeric functions: <br/>
+                <code>LOG10(x) LN(x) DEGREES(x) COS(x) POWER(x,y)</code>
+            </Typography>
+        </Sheet>
     );
 };
 
 const Samples = () => {
     return (
-        <>
-            <h4>Sample Expressions</h4>
-            <div style={{marginLeft: 5}}>
-                <li style={{whiteSpace: 'nowrap'}}><div {...code}>{'"w3mpro" - "w4mpro"'}</div></li>
-                <li style={{whiteSpace: 'nowrap'}}><div {...code}>{'sqrt(power("w3sigmpro",2) + power("w4sigmpro",2))'}</div></li>
-                <li style={{whiteSpace: 'nowrap'}}><div {...code}>{'("ra"-82.0158188)*cos(radians("dec"))'}</div></li>
-                <li style={{whiteSpace: 'nowrap'}}><div {...code}>{'"phot_g_mean_mag"-(5*log10(1000/"parallax") - 5)'}</div></li>
-            </div>
-        </>
+        <Sheet>
+            <Typography level='title-md'>Sample Expressions</Typography>
+            <Typography level='body-sm' sx={{code:{ml:1, whiteSpace:'nowrap'}}}>
+                <code>{'"w3mpro" - "w4mpro"'}</code> <br/>
+                <code>{'sqrt(power("w3sigmpro",2) + power("w4sigmpro",2))'}</code> <br/>
+                <code>{'("ra"-82.0158188)*cos(radians("dec"))'}</code> <br/>
+                <code>{'"phot_g_mean_mag"-(5*log10(1000/"parallax") - 5)'}</code>
+            </Typography>
+        </Sheet>
     );
 };
 
@@ -331,12 +369,6 @@ function valueOnSuggestion(cval='', suggestion) {
     return suggestion;
 }
 
-function Info({url, target='info', style={}, children}) {
-    return (
-        <div style={{display:'inline-flex', alignItems:'center', ...style}}>
-            {children}
-            <a href={url} target={target} tabIndex='-1'><img src={INFO} style={{height: 16}} /></a>
-        </div>
-    );
-
+function Info({url, target='info'}) {
+    return <Link href={url} target={target} tabIndex={-1} startDecorator={<img src={INFO} style={{height: 16}}/>}/>;
 }

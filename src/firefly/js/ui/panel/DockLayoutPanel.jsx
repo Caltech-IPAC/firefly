@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import SplitPane from 'react-split-pane';
+import {Stack, Box} from '@mui/joy';
 
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import {useStoreConnector} from '../SimpleComponent.jsx';
@@ -18,7 +19,7 @@ export const SplitPanel = ({children, defaultSize, pKey, ...rest}) => {
     pKey = 'SplitPanel-' + pKey;
     const {pos}  = useStoreConnector(() => getComponentState(pKey));
     const onChange = (pos) => dispatchComponentStateChange(pKey, {pos});
-    
+
     return (
         <SplitPane split='horizontal' defaultSize={pos ?? defaultSize} onChange={onChange} {...rest}>
             {children}
@@ -29,25 +30,18 @@ export const SplitPanel = ({children, defaultSize, pKey, ...rest}) => {
 
 /**
  * decorate the content with DockLayoutPanel's look and feel.
- * @param content
- * @returns {XML}
- */
-export function createContentWrapper(content) {
-   return ( <div className='wrapper'> <div className='content'>{content}</div> </div> );
-}
-
-/**
- * decorate the content with DockLayoutPanel's look and feel.
  * @param p  component props
- * @param p.style  additional style to container
+ * @param p.sx
+ * @param p.style  additional style to container; (deprecated use sx instead)
  * @param p.className  additional className to container
  * @param p.children  content of this panel
  */
-export function SplitContent({style, className='', children}) {
-    className = 'content ' +  className;
-    return ( <div className='wrapper'>
-                <div style={style} className={className}>{children}</div>
-             </div>
+export function SplitContent({sx={}, style={}, className='', children}) {
+    return ( <Stack overflow='hidden' position='relative' width={1} m={1/2}>
+                <Box overflow='hidden' position='absolute' sx={{inset:'0', ...style, ...sx}} className={className}>
+                    {children}
+                </Box>
+             </Stack>
             );
 }
 
@@ -57,11 +51,11 @@ function one(config, items){
     const item = config.center || config.north || config.east || config.west || config.south;
 
     return (
-        <div className='Pane vertical' style={{height: '100%'}}>
+        <Stack height={1} direction='row'>
             <SplitContent>
                 {items[item.index]}
             </SplitContent>
-        </div>
+        </Stack>
     );
 }
 
@@ -192,11 +186,11 @@ const DockLayoutPanel = function (props) {
     var {config, children} = props;
 
     return (
-        <div style={{position: 'relative',  flex: 'auto'}}>
-            <div style={{position: 'absolute', top: '0', bottom: 0, left: 0, right: 0}}>
+        <Box position='relative'  flex='auto'>
+            <Box position='absolute' sx={{inset:'0'}}>
                 {layoutDom(config, children)}
-            </div>
-        </div>
+            </Box>
+        </Box>
     );
 };
 

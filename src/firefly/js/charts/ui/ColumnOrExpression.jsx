@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import React, {useContext} from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, {object, shape} from 'prop-types';
 import {get} from 'lodash';
 import {Expression} from '../../util/expr/Expression.js';
 import {quoteNonAlphanumeric} from '../../util/expr/Variable.js';
@@ -104,7 +104,8 @@ function getValueOnSuggestion(cols, canBeExpression=true) {
     };
 }
 
-export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,name,tooltip,nullAllowed,readonly,initValue,inputStyle}) {
+export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,name,tooltip,
+                                       nullAllowed,readonly,initValue,inputStyle, slotProps, sx}) {
     if (!colValStats) return <div/>;
     return (
         <ColumnFld
@@ -113,7 +114,7 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
             initValue={initValue || get(params, fldPath)}
             canBeExpression={true}
             tooltip={`Column or expression for ${tooltip ? tooltip : name}.${EXPRESSION_TTIPS}`}
-            {...{groupKey, label, labelWidth, name, nullAllowed, readonly, inputStyle}} />
+            {...{groupKey, label, labelWidth, name, nullAllowed, readonly, inputStyle, slotProps, sx}} />
     );
 }
 
@@ -129,12 +130,14 @@ ColumnOrExpression.propTypes = {
     nullAllowed: PropTypes.bool,
     readonly: PropTypes.bool,
     initValue: PropTypes.string,
-    inputStyle: PropTypes.object
+    inputStyle: PropTypes.object,
+    slotProps: PropTypes.object,
+    sx: PropTypes.object,
 };
 
-export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidth, tooltip='Table column',
+export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidth, tooltip='Table column', slotProps, sx,
                            name, nullAllowed, canBeExpression=false, inputStyle, readonly, helper, required, validator,
-                              colTblId=null,onSearchClicked=null}) {
+                              placeholder, colTblId=null,onSearchClicked=null}) {
     const value = initValue || getFieldVal(groupKey, fieldKey);
     const colValidator = getColValidator(cols, !nullAllowed, canBeExpression);
     const {valid=true, message=''} = value ? colValidator(value) : {};
@@ -164,29 +167,30 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidt
     }
 
     return (
-        <div style={{whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center'}}>
-            <SuggestBoxInputField
-                inline={true}
-                initialState= {{
-                    value,
-                    valid,
-                    message,
-                    validator: validator || colValidator,
-                    tooltip,
-                    nullAllowed
-                }}
-                getSuggestions={getSuggestions(cols, canBeExpression)}
-                renderSuggestion={getRenderSuggestion(cols)}
-                valueOnSuggestion={getValueOnSuggestion(cols,canBeExpression)}
-                fieldKey={fieldKey}
-                groupKey={groupKey}
-                {...labelProps}
-                inputStyle={inputStyle}
-                readonly={readonly}
-                required={required}
-            />
-            {!readonly && helper}
-        </div>
+        <SuggestBoxInputField
+            inline={true}
+            initialState= {{
+                value,
+                valid,
+                message,
+                validator: validator || colValidator,
+                tooltip,
+                nullAllowed
+            }}
+            getSuggestions={getSuggestions(cols, canBeExpression)}
+            renderSuggestion={getRenderSuggestion(cols)}
+            valueOnSuggestion={getValueOnSuggestion(cols,canBeExpression)}
+            fieldKey={fieldKey}
+            groupKey={groupKey}
+            {...labelProps}
+            inputStyle={inputStyle}
+            placeholder={placeholder}
+            readonly={readonly}
+            endDecorator= {!readonly && helper ? helper : undefined}
+            required={required}
+            slotProps={slotProps}
+            sx={sx}
+        />
     );
 }
 
@@ -206,6 +210,14 @@ ColumnFld.propTypes = {
     required: PropTypes.bool,
     helper: PropTypes.element,
     colTblId: PropTypes.string,
-    onSearchClicked: PropTypes.func
+    onSearchClicked: PropTypes.func,
+    placeholder: PropTypes.string,
+    slotProps: shape({
+        input: object,
+        control: object,
+        label: object,
+        tooltip: object
+    }),
+    sx: object
 };
 

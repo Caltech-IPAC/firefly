@@ -1,9 +1,8 @@
 import React, {memo} from 'react';
-import PropTypes from 'prop-types';
-import {get, isEmpty}  from 'lodash';
+import {number, object, shape, oneOf, array, any, string, func, bool, element} from 'prop-types';
+import {Select, Option, Tooltip, FormControl, FormLabel, Stack} from '@mui/joy';
+import {isArray, isEmpty, isFunction} from 'lodash';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
-
-import InputFieldLabel from './InputFieldLabel.jsx';
 
 
 function getCurrentValueArr(value) {
@@ -15,76 +14,86 @@ function getCurrentValueArr(value) {
     }
 }
 
-const convertValue= (value,options) => (!value) ? get(options, [0, 'value']) : value;
+const convertValue= (value,options) => (!value) ? options?.[0]?.value : value;
 
 
-export function ListBoxInputFieldView({inline, value, onChange, fieldKey, options, labelStyle,
-                                       multiple, labelWidth, tooltip, label, wrapperStyle, selectStyle, readonly=false}) {
+export function ListBoxInputFieldView({value:fieldValue='', onChange, fieldKey, options,
+                                          orientation='horizontal', sx, slotProps={},
+                                          renderValue, decorator, startDecorator,
+                                       multiple, placeholder, tooltip, label,
+                                          readonly=false}) {
 
-    var vAry= getCurrentValueArr(value);
-    const style = Object.assign({whiteSpace:'nowrap', display: inline?'inline-block':'block'}, wrapperStyle);
+    const vAry= getCurrentValueArr(fieldValue);
     return (
-        <div style={style}>
-            {label && <InputFieldLabel label={label} tooltip={tooltip} labelWidth={labelWidth} labelStyle={labelStyle} />}
-            <select name={fieldKey}
-                    title={tooltip}
-                    style={selectStyle}
-                    multiple={multiple}
-                    onChange={onChange}
-                    disabled={readonly}
-                    value={multiple ? vAry : value}>
-                {options?.map(( (option) => {
-                    const optLabel = option.label || option.value;
-                    return (
-                        <option value={option.value}
-                                key={option.value||0}
-                                style={{paddingLeft: 5, paddingRight: 3}}
-                                title={option.tooltip}
-                                disabled={option.disabled ? 'disabled' : false}>
-                            {optLabel}
-                        </option>
-                    );
-                }))}
-            </select>
-        </div>
+        <Stack {...{className:'ff-Input ListBoxInputFieldView', sx}}>
+            <FormControl {...{orientation, ...slotProps?.control}}>
+                {label && <FormLabel {...slotProps?.label}>{label}</FormLabel>}
+                <Tooltip {...{title:tooltip, placement:'top', ...slotProps?.tooltip}}>
+                    <Select {...{name: fieldKey, multiple, onChange, placeholder, renderValue, startDecorator,
+                        disabled: readonly, value: multiple ? vAry : fieldValue,
+                        ...slotProps?.input}}>
+                        {options?.map((({value,label,disabled=false},idx) => {
+                            return (
+                                <Option {...{value, key:`k${idx}`, disabled:disabled ? 'disabled' : false}}>
+                                    {isFunction(decorator) ? decorator(label,value) : (label || value)}
+                                </Option>
+                            );
+                        }))}
+                    </Select>
+                </Tooltip>
+            </FormControl>
+        </Stack>
     );
 }
 
 
 
 ListBoxInputFieldView.propTypes= {
-    options : PropTypes.array,
-    value:  PropTypes.any,
-    fieldKey : PropTypes.string,
-    onChange:  PropTypes.func,
-    inline : PropTypes.bool,
-    multiple : PropTypes.bool,
-    label:  PropTypes.string,
-    tooltip:  PropTypes.string,
-    labelWidth : PropTypes.number,
-    selectStyle: PropTypes.object,
-    wrapperStyle: PropTypes.object,
-    labelStyle: PropTypes.object,
-    readonly: PropTypes.bool
+    options : array,
+    value:  any,
+    fieldKey : string,
+    onChange:  func,
+    inline : bool,
+    multiple : bool,
+    label:  string,
+    tooltip:  string,
+    labelWidth : number,
+    selectStyle: object,
+    wrapperStyle: object,
+    labelStyle: object,
+    placeholder : string,
+    readonly: bool,
+    sx: object,
+    orientation: string,
+    renderValue: func,
+    decorator: func,
+    startDecorator: element,
+    slotProps: shape({
+        input: object,
+        control: object,
+        label: object,
+    }),
 };
 
-function handleOnChange(ev, params, fireValueChange) {
-    var options = ev.target.options;
-    var val = [];
-    for (var i = 0; i<options.length; i++) {
-        if (options[i].selected) {
-            val.push(options[i].value);
+function handleOnChange(ev, newValue, params, fireValueChange) {
+    const options = ev?.target?.options;
+    let value;
+    if (isArray(options)) {
+        const valAry = [];
+        for (var i = 0; i<options.length; i++) {
+            if (options[i].selected) {
+                valAry.push(options[i].value);
+            }
         }
+        value= valAry.toString();
+    }
+    else {
+        value= isArray(newValue) ? newValue.toString() : newValue;
     }
 
-    var {valid,message}=params.validator(val.toString());
-
+    const {valid,message}=params.validator(value);
     // the value of this input field is a string
-    fireValueChange({
-        value : val.toString(),
-        message,
-        valid
-    });
+    fireValueChange({ value, message, valid });
     if (params.onChange) params.onChange(ev);
 }
 
@@ -103,7 +112,7 @@ export const ListBoxInputField= memo( (props) => {
     const newProps= {
         ...viewProps,
         value: !viewProps.multiple ? convertValue(viewProps.value, viewProps.options) : viewProps.value,
-        onChange: (ev) => handleOnChange(ev,viewProps, fireValueChange)
+        onChange: (ev,newValue) => handleOnChange(ev,newValue,viewProps, fireValueChange)
     };
     return (<ListBoxInputFieldView {...newProps} />);
 });
@@ -111,18 +120,29 @@ export const ListBoxInputField= memo( (props) => {
 
 
 ListBoxInputField.propTypes= {
-    fieldKey : PropTypes.string,
-    groupKey : PropTypes.string,
-    forceReinit:  PropTypes.bool,
-    initialState: PropTypes.shape({
-        value: PropTypes.string,
-        tooltip: PropTypes.string,
-        label:  PropTypes.string,
+    fieldKey : string,
+    groupKey : string,
+    placeholder : string,
+    forceReinit:  bool,
+    initialState: shape({
+        value: string,
+        tooltip: string,
+        label:  string,
     }),
-    inline : PropTypes.bool,
-    options : PropTypes.array,
-    multiple : PropTypes.bool,
-    labelWidth : PropTypes.number,
-    readonly: PropTypes.bool
+    slotProps: shape({
+        input: object,
+        control: object,
+        label: object,
+    }),
+    renderValue: func,
+    decorator: func,
+    startDecorator: element,
+    inline : bool,
+    options : array,
+    multiple : bool,
+    labelWidth : number,
+    orientation: oneOf(['vertical', 'horizontal']),
+    readonly: bool,
+    sx: object,
 };
 

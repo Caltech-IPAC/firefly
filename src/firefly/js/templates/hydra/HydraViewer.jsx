@@ -3,101 +3,50 @@
  */
 
 
-import React, {PureComponent} from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {pickBy} from 'lodash';
 
 import {flux} from '../../core/ReduxFlux.js';
-import {dispatchSetMenu, dispatchOnAppReady, getMenu,
-    isAppReady, dispatchNotifyRemoteAppReady, getSearchInfo} from '../../core/AppDataCntlr.js';
+import {dispatchSetMenu, dispatchOnAppReady, dispatchNotifyRemoteAppReady, getSearchInfo} from '../../core/AppDataCntlr.js';
 import {getLayouInfo, SHOW_DROPDOWN, LO_VIEW} from '../../core/LayoutCntlr.js';
 import {hydraManager} from './HydraManager';
-import {Menu} from '../../ui/Menu.jsx';
-import {Banner} from '../../ui/Banner.jsx';
-import {DropDownContainer} from '../../ui/DropDownContainer.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 
 import {ImageExpandedMode} from '../../visualize/iv/ImageExpandedMode.jsx';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
-import {warningDivId} from '../../ui/LostConnection';
 import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
 import {dispatchSetLayoutMode, LO_MODE} from '../../core/LayoutCntlr';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
+import App from 'firefly/ui/App.jsx';
+import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 
-
-export {META_VIEWER_ID as IMAGE_DATA_VIEWER_ID } from '../../visualize/MultiViewCntlr';
 
 /**
  * This is a viewer.
  */
-export class HydraViewer extends PureComponent {
+export function HydraViewer({menu, ...props}) {
 
-    constructor(props) {
-        super(props);
-        this.state = this.getNextState();
 
+    useEffect(() => {
         dispatchAddSaga(hydraManager);
         startTTFeatureWatchers();
-    }
+    }, []);
 
-    getNextState() {
-        const menu = getMenu();
-        const layoutInfo = getLayouInfo();
-        const searchInfo = getSearchInfo();
-        const isReady = isAppReady();
-
-        return Object.assign({}, this.props,
-            {menu, isReady, searchInfo, layoutInfo});
-    }
-
-    componentDidMount() {
-        dispatchOnAppReady((state) => {
-            onReady({state, menu: this.props.menu});
+    useEffect(() => {
+        dispatchOnAppReady(() => {
+            onReady({menu});
             dispatchNotifyRemoteAppReady();
         });
-        this.removeListener = flux.addListener(() => this.storeUpdate());
-    }
+    }, []);
 
-    componentWillUnmount() {
-        this.isUnmounted = true;
-        this.removeListener && this.removeListener();
-    }
-
-    storeUpdate() {
-        if (!this.isUnmounted) {
-            this.setState(this.getNextState());
-        }
-    }
-
-    render() {
-        const {appTitle, appIcon, altAppIcon, footer, dropdownPanels=[], style, bannerLeftStyle, bannerMiddleStyle} = this.props;
-        const {menu, layoutInfo={}} = this.state;
-        const {dropDown} = layoutInfo;
-        const {visible, view} = dropDown || {};
-
-        return (
-            <div id='App' className='rootStyle' style={style}>
-                <header>
-                    <BannerSection {...{menu, appTitle, appIcon, altAppIcon, bannerLeftStyle, bannerMiddleStyle}}/>
-                    <div id={warningDivId} data-decor='full' className='warning-div center'/>
-                    <DropDownContainer
-                        key='dropdown'
-                        footer={footer}
-                        visible={!!visible}
-                        selected={view}
-                        {...{dropdownPanels} } />
-                </header>
-                <main style={{position: 'relative', padding: 0}}>
-                    <div style={{display: 'flex', position: 'relative', flexGrow: 1}}>
-                        <ResultSection layoutInfo={layoutInfo}/>
-                    </div>
-                </main>
-            </div>
-        );
-    }
+    return (
+        <App {...props}>
+            <ResultSection/>
+        </App>
+    );
 }
 
 /**
@@ -134,22 +83,10 @@ function onReady({menu}) {
     dispatchNotifyRemoteAppReady();
 }
 
+function ResultSection() {
 
-function BannerSection(props) {
-    const {menu, ...rest} = pickBy(props);
-    return (
-        <Banner key='banner'
-                menu={<Menu menu={menu} /> }
-            {...rest}
-        />
-    );
-}
+    const layoutInfo = useStoreConnector(getLayouInfo);
 
-BannerSection.propTypes = {
-    props: PropTypes.object
-};
-
-function ResultSection({layoutInfo}) {
     const {currentSearch, images} = layoutInfo;
     const {expanded=LO_VIEW.none} = layoutInfo.mode || {};
 

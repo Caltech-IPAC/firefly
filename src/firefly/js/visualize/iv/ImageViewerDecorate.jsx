@@ -3,6 +3,7 @@
  */
 
 
+import {Box, Stack} from '@mui/joy';
 import React, {memo, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
@@ -10,7 +11,8 @@ import {isEmpty,omit,isFunction} from 'lodash';
 import {getSearchActions} from '../../core/AppDataCntlr.js';
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView, MOUSE_CLICK_REASON} from '../ImagePlotCntlr.js';
-import {VisCtxToolbarView, canConvertHipsAndFits} from '../ui/VisCtxToolbarView';
+import {ExpandButton} from '../ui/Buttons.jsx';
+import {VisCtxToolbarView, canConvertHipsAndFits, ctxToolbarBG} from '../ui/VisCtxToolbarView';
 import {VisInlineToolbarView} from '../ui/VisInlineToolbarView.jsx';
 import {primePlot, isActivePlotView, getAllDrawLayersForPlot, getPlotViewById} from '../PlotViewUtil.js';
 import {ImageViewerLayout}  from '../ImageViewerLayout.jsx';
@@ -18,7 +20,7 @@ import {isImage, isHiPS} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {AnnotationOps} from '../WebPlotRequest.js';
 import {AREA_SELECT,LINE_SELECT,POINT} from '../../core/ExternalAccessUtils.js';
-import {PlotTitle, TitleType} from './PlotTitle.jsx';
+import {PlotTitle} from './PlotTitle.jsx';
 import Catalog, {CatalogType} from '../../drawingLayers/Catalog.js';
 import LSSTFootprint from '../../drawingLayers/ImageLineBasedFootprint';
 import {DataTypes} from '../draw/DrawLayer.js';
@@ -28,7 +30,6 @@ import {ZoomButton, ZoomType} from 'firefly/visualize/ui/ZoomButton.jsx';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 import {expand} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
-import './ImageViewerDecorate.css';
 import OUTLINE_EXPAND from 'images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 
 const EMPTY_ARRAY=[];
@@ -40,14 +41,6 @@ const briefAnno= [
     AnnotationOps.TITLE_BAR_BRIEF_TOOLS,
     AnnotationOps.TITLE_BAR_BRIEF_CHECK_BOX
 ];
-
-const toolsAnno= [
-    AnnotationOps.INLINE,
-    AnnotationOps.TITLE_BAR,
-    AnnotationOps.TITLE_BAR_BRIEF_TOOLS,
-    AnnotationOps.INLINE_BRIEF_TOOLS
-];
-
 
 const isCatalogPtData= (dl) => dl.drawLayerTypeId === Catalog.TYPE_ID && dl.catalogType===CatalogType.POINT;
 
@@ -180,10 +173,10 @@ function contextToolbar(plotView,dlAry,extensionList, width) {
 }
 
 
-function getBorderColor(pv,visRoot) {
+function getBorderColor(theme, pv,visRoot) {
     if (!pv?.plotId) return 'rgba(0,0,0,.4)';
     if (!pv.plotViewCtx.highlightFeedback) return 'rgba(0,0,0,.1)';
-    if (isActivePlotView(visRoot,pv.plotId)) return 'orange';
+    if (isActivePlotView(visRoot,pv.plotId)) return `rgba(${theme.vars.palette.warning.mainChannel} / 1)`;
     const group= getPlotGroupById(visRoot,pv.plotGroupId);
     if (group?.overlayColorLock) return 'rgba(0, 0, 0, .1)';
     else return 'rgba(0,0,0,.2)';
@@ -211,41 +204,42 @@ function ZoomGroup({visRoot, pv, show}) {
 
     const {showImageToolbar=true}= pv?.plotViewCtx.menuItemKeys ?? {};
     const manageExpand= !showImageToolbar && visRoot.expandedMode===ExpandType.COLLAPSE;
+    const p= primePlot(pv);
+    if (!p) return <div/>;
+
+    const sxFunc= (theme) => ({
+        visibility: show ? 'visible' : 'hidden',
+        opacity: show ? 1 : 0,
+        transition: show ? 'opacity .15s linear' : 'visibility 0s .15s, opacity .15s linear',
+        background:ctxToolbarBG(theme, 85),
+        borderRadius:'0 0 5px ',
+        position: 'relative',
+        maxWidth: '100%',
+        alignSelf: 'flex-start',
+    });
 
     return (
-        primePlot(pv) ? <div
-            style={{
-                visibility: show ? 'visible' : 'hidden',
-                opacity: show ? 1 : 0,
-                transition: show ? 'opacity .15s linear' : 'visibility 0s .15s, opacity .15s linear',
-                background:'rgba(227, 227, 227, .8)',
-                display:'inline-flex',
-                borderRadius:'0 0 5px ',
-                position: 'relative',
-                flexDirection: 'row',
-                alignSelf: 'flex-start',
-                }}>
+        <Stack direction='row' alignItems='flex-start' sx={sxFunc}>
+            {manageExpand && <ExpandButton tip='Expand this panel to take up a larger area'
+                                            onClick={() =>expand(pv?.plotId, false)}/>}
 
-            {manageExpand && <ToolbarButton icon={OUTLINE_EXPAND}
-                                            tip='Expand this panel to take up a larger area'
-                                            horizontal={true} onClick={() =>expand(pv?.plotId, false)}/>}
-            
-            <div style={{display:'flex', alignSelf: 'flex-start'}}>
-                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.UP} horizontal={true}/>
-                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.DOWN} horizontal={true}/>
-            </div>
-            <div style={{display:'flex', alignSelf: 'flex-start'}}>
-                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.FIT} horizontal={true}/>
-                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.FILL} horizontal={true}/>
-            </div>
-        </div> : <div/>
+            <Stack direction='row' alignItems='flex-start'>
+                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.UP} />
+                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.DOWN} />
+            </Stack>
+            <Stack direction='row' alignItems='flex-start'>
+                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.FIT} />
+                <ZoomButton size={20} plotView={pv} zoomType={ZoomType.FILL} />
+                {isImage(p) && <ZoomButton size={20} plotView={pv} zoomType={ZoomType.ONE} />}
+            </Stack>
+        </Stack>
     );
     
 }
 
 const ImageViewerDecorate= memo((props) => {
     const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId, workingIcon,
-        size:{width,height}, inlineTitle=true, aboveTitle= false }= props;
+        size:{width,height}}= props;
 
     const [showDelAnyway, setShowSelAnyway]= useState(false);
 
@@ -270,52 +264,39 @@ const ImageViewerDecorate= memo((props) => {
     const iHeight=Math.max(expandedToSingle ? height :height-5,0);
 
     const brief= briefAnno.includes(pv.plotViewCtx.annotationOps);
-    const titleLineHeaderUI= (plot && aboveTitle) ?
-                <PlotTitle brief={brief} titleType={TitleType.HEAD} plotView={pv} /> : undefined;
 
     const outerStyle= { width: '100%', height: '100%', overflow:'hidden', position:'relative'};
 
-    const innerStyle= {
-        width:'calc(100% - 4px)',
+    const innerStyle= (theme) => ({
+        width: 'calc(100% - 4px)',
         bottom: 0,
-        top: titleLineHeaderUI ? 20 : 0,
+        top: 0,
         overflow: 'hidden',
         position: 'absolute',
         borderStyle: 'solid',
         borderWidth: expandedToSingle ? '0 0 0 0' : '3px 2px 2px 2px',
-        borderColor: getBorderColor(pv,visRoot)
-    };
-
-    if (titleLineHeaderUI) {
-        outerStyle.boxShadow= 'inset 0 0 3px #000';
-        outerStyle.padding= '3px';
-        outerStyle.width='calc(100% - 6px)';
-        outerStyle.height='calc(100% - 6px)';
-        innerStyle.bottom= 2;
-        innerStyle.width= 'calc(100% - 10px)';
-    }
+        borderRadius: '5px',
+        borderColor: getBorderColor(theme, pv,visRoot),
+    });
 
     const makeActive= () => pv?.plotId && dispatchChangeActivePlotView(pv.plotId,MOUSE_CLICK_REASON);
     const showZoom= mousePlotId===pv?.plotId;
     const showDel= showDelAnyway || mousePlotId===pv?.plotId || !plot || pv.nonRecoverableFail;
 
     return (
-        <div style={outerStyle} className='disable-select' onTouchStart={makeActive} onClick={makeActive} >
-            {titleLineHeaderUI}
-            <div className='image-viewer-decorate' style={innerStyle}>
-                <div style={{position: 'absolute', width:'100%', top:0, bottom:0, display:'flex', flexDirection:'column'}}>
+        <Box style={outerStyle} className='disable-select' onTouchStart={makeActive} onClick={makeActive} >
+            <Box className='image-viewer-decorate' sx={innerStyle}>
+                <Box style={{position: 'absolute', width:'100%', top:0, bottom:0, display:'flex', flexDirection:'column'}}>
                     <ImageViewerLayout plotView={pv} drawLayersAry={drawLayersAry}
                                        width={iWidth} height={iHeight}
                                        externalWidth={width} externalHeight={height}/>
                     {ctxToolbar}
-                    {(plot && inlineTitle) ?
-                        <PlotTitle brief={brief} titleType={TitleType.INLINE} plotView={pv}
-                                   working={workingIcon} /> : undefined}
+                    {(plot) ? <PlotTitle brief={brief}  plotView={pv} working={workingIcon} /> : undefined}
                     <ZoomGroup visRoot={visRoot} pv={pv} show={showZoom} />
-                </div>
+                </Box>
                 <VisInlineToolbarView pv={pv} showDelete={showDelete} show={showDel}/>
-            </div>
-        </div>
+            </Box>
+        </Box>
         );
 
 }, arePropsEquals);
@@ -329,8 +310,6 @@ ImageViewerDecorate.propTypes= {
     mousePlotId : PropTypes.string,
     size : PropTypes.object.isRequired,
     workingIcon: PropTypes.bool,
-    inlineTitle: PropTypes.bool,
-    aboveTitle: PropTypes.bool
 };
 
 export const ImageViewerView= wrapResizer(ImageViewerDecorate);

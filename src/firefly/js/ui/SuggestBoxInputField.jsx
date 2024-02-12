@@ -1,5 +1,5 @@
 import React, {memo, PureComponent} from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, {object, shape} from 'prop-types';
 import ReactDOM from 'react-dom';
 import {get, isArray, isUndefined, debounce} from 'lodash';
 import {dispatchHideDialog, dispatchShowDialog, isDialogVisible} from '../core/ComponentCntlr.js';
@@ -260,11 +260,12 @@ export class SuggestBoxInputFieldView extends PureComponent {
     render() {
 
         const {displayValue, valid, message, highlightedIdx, isOpen, inputWidth, suggestions, mouseTrigger } = this.state;
-        const {label, labelWidth, tooltip, inline, renderSuggestion, wrapperStyle, popStyle, popupIndex, inputStyle, readonly=false, required=false} = this.props;
+        const {label, tooltip, renderSuggestion, wrapperStyle, placeholder, slotProps={}, sx,
+            popStyle, popupIndex, readonly=false, required=false} = this.props;
 
         const leftOffset = 0;
         const minWidth = (inputWidth?inputWidth-4:50);
-        const style = Object.assign({display: inline?'inline-block':'block'}, wrapperStyle);
+        const style = Object.assign({display: 'flex'}, wrapperStyle);
         const pStyle = Object.assign({left: leftOffset, minWidth, zIndex: popupIndex}, popStyle);
 
         if (isOpen) {
@@ -289,24 +290,17 @@ export class SuggestBoxInputFieldView extends PureComponent {
 
         return (
             <div className={'SuggestBoxInputField'} style={style} onKeyDown={this.handleKeyPress}>
-                <div>
-                    <InputFieldView
-                        valid={Boolean(valid)}
-                        onChange={this.onValueChange}
-                        onBlur={
-                        () => {
-                            isOpen && this.changeValue(undefined);
-                        }}
-                        value={displayValue}
-                        message={message}
-                        label={label}
-                        labelWidth={labelWidth}
-                        tooltip={tooltip}
-                        style={inputStyle}
-                        readonly={readonly}
-                        required={required}
-                    />
-                </div>
+                <InputFieldView {...{
+                    valid: Boolean(valid),
+                    onChange: this.onValueChange,
+                    placeholder,
+                    value: displayValue,
+                    message, label, tooltip, readonly, required,
+                    onBlur: () => isOpen && this.changeValue(undefined),
+                    endDecorator: this.props.endDecorator,
+                    slotProps: { tooltip: {placement: 'right'}, ...slotProps },
+                    sx
+                }} />
             </div>
         );
     }
@@ -318,20 +312,27 @@ SuggestBoxInputFieldView.propTypes = {
     fieldKey : PropTypes.string,
     inline : PropTypes.bool,
     label:  PropTypes.string,
+    sx: PropTypes.object,
+    placeholder:  PropTypes.string,
     tooltip:  PropTypes.string,
-    labelWidth : PropTypes.number,
     popStyle : PropTypes.object, //style for the popup list
     wrapperStyle: PropTypes.object,     //style to merge into the container div
     getSuggestions : PropTypes.func,   //suggestionsArr = getSuggestions(displayValue)
     valueOnSuggestion : PropTypes.func, //newDisplayValue = valueOnSuggestion(prevValue, suggestion),
     renderSuggestion : PropTypes.func,   // ReactElem = renderSuggestion(suggestion)
     popupIndex: PropTypes.number,
-    inputStyle: PropTypes.object,
+    endDecorator : PropTypes.object,
     valid: PropTypes.bool,
     message: PropTypes.string,
     readonly: PropTypes.bool,
     validator: PropTypes.func,
-    required: PropTypes.bool
+    required: PropTypes.bool,
+    slotProps: shape({
+        input: object,
+        control: object,
+        label: object,
+        tooltip: object
+    }),
 };
 
 
@@ -347,13 +348,15 @@ SuggestBoxInputField.propTypes = {
     groupKey : PropTypes.string,
     inline : PropTypes.bool,
     label:  PropTypes.string,
+    placeholder:  PropTypes.string,
+    sx: PropTypes.object,
     tooltip:  PropTypes.string,
-    labelWidth : PropTypes.number,
     popStyle : PropTypes.object, //style for the popup list
     wrapperStyle: PropTypes.object,     //style to merge into the container div
     getSuggestions : PropTypes.func,   //suggestionsArr = getSuggestions(displayValue)
     valueOnSuggestion : PropTypes.func, //newDisplayValue = valueOnSuggestion(prevValue, suggestion),
     renderSuggestion : PropTypes.func,   // ReactElem = renderSuggestion(suggestion)
+    endDecorator : PropTypes.object,
     popupIndex: PropTypes.number,
     required: PropTypes.bool,
     initialState: PropTypes.shape({

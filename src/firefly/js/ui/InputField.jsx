@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 
 import {InputFieldView, propTypes} from './InputFieldView.jsx';
 import {NOT_CELL_DATA} from '../tables/ui/TableRenderer.js';        // this is not right.. should revisit
+import {Stack, Typography} from '@mui/joy';
 
 
 function shouldAct(e, actOn) {
@@ -74,3 +75,12 @@ InputField.defaultProps = {
 };
 
 
+
+export function RequiredFieldMsg({msg='Required fields are marked', ...props}) {
+    return (
+        <Stack direction='row' {...props}>
+            <Typography color='warning'>{msg}</Typography>
+            <Typography color='danger'>*</Typography>
+        </Stack>
+    );
+}

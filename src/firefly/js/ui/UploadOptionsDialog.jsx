@@ -72,7 +72,7 @@ export class UploadOptionsDialog extends PureComponent {
             return (
                 <div style={{margin: '5px 10px 2px 10px'}}>
                     <RadioGroupInputField
-                        alignment={'horizontal'}
+                        orientation='horizontal'
                         fieldKey={this.fileLocation}
                         options={options}
                         initialState={
@@ -88,7 +88,7 @@ export class UploadOptionsDialog extends PureComponent {
             return (where === 'isLocal') ?
                 (
                     <FileUpload
-                        wrapperStyle={{margin: (this.workspace ? '2px 10px 8px 10px' : '15px 10px 21px 10px')}}
+                        sx={{margin: (this.workspace ? '2px 10px 8px 10px' : '15px 10px 21px 10px')}}
                         fieldKey={this.fileUpload}
                         fileNameStyle={{marginLeft: 14}}
                         initialState={

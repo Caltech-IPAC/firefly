@@ -2,34 +2,25 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useState} from 'react';
-import PropTypes from 'prop-types';
 import Enum from 'enum';
-import {isEmpty, startCase} from 'lodash';
-import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
-import {dispatchModifyCustomField, dispatchChangeVisibility} from '../visualize/DrawLayerCntlr.js';
-import {isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
-import {DataTypes} from '../visualize/draw/DrawLayer.js';
-import {showInfoPopup, INFO_POPUP} from '../ui/PopupUtil.jsx';
-import {dispatchRecenter} from '../visualize/ImagePlotCntlr';
-import {GroupingScope} from '../visualize/DrawLayerCntlr.js';
-import {isDialogVisible, dispatchHideDialog} from '../core/ComponentCntlr.js';
-import {formatLonLatToString, formatWorldPt} from '../visualize/ui/WorldPtFormat';
-import {copyToClipboard} from '../util/WebUtil';
-import {ToolbarButton} from '../ui/ToolbarButton';
-import {makeColorChange, makeShape} from '../visualize/ui/DrawLayerUIComponents';
-import {showColorPickerDialog} from '../ui/ColorPicker';
-import {showPointShapeSizePickerDialog} from '../ui/PointShapeSizePicker';
+import {CatalogType} from 'firefly/drawingLayers/Catalog.js';
+import EXCLAMATION from 'html/images/exclamation16x16.gif';
 
 import infoIcon from 'html/images/info-icon.png';
-import EXCLAMATION from 'html/images/exclamation16x16.gif';
-import CLIPBOARD from 'html/images/20x20_clipboard.png';
-import CHECKED from 'html/images/20x20_clipboard-checked.png';
-import CENTER from 'html/images/20x20-center-small.png';
-import {convert} from '../visualize/VisUtil';
-import CoordinateSys from '../visualize/CoordSys';
-import {CatalogType} from 'firefly/drawingLayers/Catalog.js';
-import Point from 'firefly/visualize/Point.js';
+import {isEmpty, startCase} from 'lodash';
+import PropTypes from 'prop-types';
+import React from 'react';
+import {dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
+import {showColorPickerDialog} from '../ui/ColorPicker';
+import {showPointShapeSizePickerDialog} from '../ui/PointShapeSizePicker';
+import {INFO_POPUP, showInfoPopup} from '../ui/PopupUtil.jsx';
+import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
+import {DataTypes} from '../visualize/draw/DrawLayer.js';
+import {dispatchChangeVisibility, dispatchModifyCustomField, GroupingScope} from '../visualize/DrawLayerCntlr.js';
+import {isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
+import {makeColorChange, makeShape} from '../visualize/ui/DrawLayerUIComponents';
+import {formatWorldPt} from '../visualize/ui/WorldPtFormat';
+import {FixedPtControl} from './FixedPtControl.jsx';
 
 export const TableSelectOptions = new Enum(['all', 'selected', 'highlighted']);
 export const getUIComponent = (drawLayer,pv,maxTitleChars) =>
@@ -132,7 +123,7 @@ const showErrorPopup = (message, title, helpRef) => {
     );
 
     const content = (<div> {message} {InfoIcon()} </div>);
-    showInfoPopup(content, title, true);
+    showInfoPopup(content, title);
 };
 
 function composeRegionMessage(dl, selectOption) {
@@ -216,8 +207,8 @@ function SearchTargetUI({drawLayer:dl, PlotView:pv}) {
                 />
             </div>
             <div style={{paddingRight: 68}}>
-                {makeColorChange(drawingDef.color, modifyColor, {paddingRight: 14})}
                 {makeShape(drawingDef, modifyShape)}
+                {makeColorChange(drawingDef.color, modifyColor, {paddingRight: 14})}
             </div>
         </div>
     );
@@ -231,36 +222,3 @@ CatalogUI.propTypes= {
 };
 
 
-export function FixedPtControl({pv, wp, style={}}) {
-    const llStr= wp.type===Point.W_PT ?
-        formatLonLatToString(convert(wp, CoordinateSys.EQ_J2000)) : `${Math.round(wp.x)},${Math.round(wp.y)}`;
-    const [clipIcon, setClipIcon] = useState(CLIPBOARD);
-
-    const doCopy= (str) => {
-        copyToClipboard(str);
-        setTimeout( () => {
-            setClipIcon(CHECKED);
-            setTimeout( () => setClipIcon(CLIPBOARD),750);
-        }, 10);
-
-    };
-
-    return (
-        <div style={style}>
-            <ToolbarButton icon={clipIcon} tip={`Copy to the clipboard: ${llStr}`}
-                           horizontal={true} onClick={() => doCopy(llStr)} />
-
-            <ToolbarButton icon={CENTER} tip={'Center on this position'}
-                           horizontal={true}
-                           onClick={() => pv && dispatchRecenter({plotId:pv.plotId, centerPt:wp}) } />
-
-        </div>
-    );
-
-}
-
-FixedPtControl.propTypes= {
-    pv : PropTypes.object,
-    wp : PropTypes.object.isRequired,
-    style : PropTypes.object
-};

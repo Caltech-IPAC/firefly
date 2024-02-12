@@ -5,6 +5,7 @@ import {get, set, cloneDeep} from 'lodash';
 import shallowequal from 'shallowequal';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
+import {getTheme} from '../../ui/FireflyRoot.jsx';
 
 import {dispatchChartHighlighted, dispatchChartUpdate, dispatchSetActiveTrace, getAnnotations, getChartData, usePlotlyReact} from '../ChartsCntlr.js';
 import {clearChartConn, flattenAnnotations, handleTableSourceConnections, isSpectralOrder, isScatter2d} from '../ChartUtil.js';
@@ -25,6 +26,12 @@ function adjustLayout(layout={}) {
     set(layout, 'yaxis.ticksuffix', hasOppositeY ? '  ' : '');
     set(layout, 'margin.b', hasOppositeX ? MIN_MARGIN_PX: X_TICKLBL_PX);
     set(layout, 'margin.t', hasOppositeX ? X_TICKLBL_PX: MIN_MARGIN_PX + (hasTitle ? TITLE_PX: 0));
+
+    // make background same as app's background color
+    const bgSurface = getTheme()?.palette?.background?.surface?.split(',')[1].slice(0,-1);     // plotly will only take a color string
+    if (!layout?.paper_bgcolor) set(layout, 'paper_bgcolor', bgSurface);
+    if (!layout?.plot_bgcolor)  set(layout, 'plot_bgcolor', bgSurface);
+
     return layout;
 }
 

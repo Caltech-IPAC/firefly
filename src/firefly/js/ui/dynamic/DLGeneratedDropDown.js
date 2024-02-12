@@ -1,3 +1,4 @@
+import {Box, Button, Link, Sheet, Stack, Tooltip, Typography} from '@mui/joy';
 import {isArray, isEmpty} from 'lodash';
 import React, {useEffect, useState} from 'react';
 import {makeWorldPt, visRoot} from '../../api/ApiUtilImage.jsx';
@@ -37,9 +38,8 @@ import {FieldGroupTabs, Tab} from '../panel/TabPanel.jsx';
 import {showInfoPopup} from '../PopupUtil.jsx';
 import {useFieldGroupValue, useStoreConnector} from '../SimpleComponent.jsx';
 
-import './DLGeneratedDropDown.css';
-import SHOW_RIGHT from 'images/show-right-3.png';
-import HIDE_LEFT from 'images/hide-left-3.png';
+import KeyboardDoubleArrowRight from '@mui/icons-material/KeyboardDoubleArrowRight';
+import KeyboardDoubleArrowLeft from '@mui/icons-material/KeyboardDoubleArrowLeft';
 
 export const DL_UI_LIST= 'DL_UI_LIST';
 const HIPS_PLOT_ID= 'dlGeneratedHipsPlotId';
@@ -295,45 +295,41 @@ function DLGeneratedDropDownTables({registryTblId, isRegLoaded, loadedTblIds, se
     const sideBar= <SideBarTable {...{registryTblId, setSideBarShowing,width:uiConfig.sideBarWidth}}/>;
     const regHasUrl= isURLInRegistry(url,registryTblId);
     return (
-        <div className='SearchPanel' style={{width:'100%', height:'100%'}}>
+        <Sheet sx={{display:'flex', flexDirection: 'row', width:1, height:1, minWidth:800, minHeight:400}}>
             <DLGeneratedTableSearch {...{currentTblId, initArgs, sideBar, regHasUrl, url, isRegLoaded,sideBarShowing, setSideBarShowing}}/>
-        </div>
+        </Sheet>
     );
 }
 
 
 function SearchTitle({desc, isAllSky, sideBarShowing, setSideBarShowing}) {
     const titleDiv= (
-        <div>
+        <span>
             { !isAllSky ? desc :
                 <>
                     <span>{desc}</span>
-                    <span className='DLGeneratedDropDown__section--title-allsky' style={{paddingLeft: 20}}>
+                    <Typography color='warning' level='body-lg' sx={{pl: 2}}>
                         (Covers Whole Sky)
-                    </span>
+                    </Typography>
                 </> }
-        </div>
+        </span>
     );
 
     if (sideBarShowing) {
         return (
-            <div style={{display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'center'}}>
-                <div className='DLGeneratedDropDown__section--title'>
-                    {titleDiv}
-                </div>
-            </div>
+            <Stack {...{direction:'row', alignItems:'center', justifyContent:'center'}}>
+                <Typography level='h3'> {titleDiv} </Typography>
+            </Stack>
         );
     }
     else {
         return (
-            <div style={{display:'flex', flexDirection:'row', alignItems:'center', justifyContent:'flex-start'}}>
-                <ExpandButton style={linkStyle} icon={SHOW_RIGHT} text={uiConfig.showOtherDataLabel} onClick={()  => setSideBarShowing(true)}/>
-                <div style={{display:'flex', flexDirection:'row', flexGrow:1, justifyContent:'center'}}>
-                    <div className='DLGeneratedDropDown__section--title' style={{marginLeft:-60}}>
-                        {titleDiv}
-                    </div>
-                </div>
-            </div>
+            <Stack {...{direction:'row', alignItems:'center', justifyContent:'flex-start'}}>
+                <ExpandButton style={linkStyle} icon={<KeyboardDoubleArrowRight/>} text={uiConfig.showOtherDataLabel} onClick={()  => setSideBarShowing(true)}/>
+                <Stack {...{direction:'row', flexGrow:1, justifyContent:'center'}}>
+                    <Typography level='h3'> {titleDiv} </Typography>
+                </Stack>
+            </Stack>
         );
 
     }
@@ -345,7 +341,7 @@ function SearchTitle({desc, isAllSky, sideBarShowing, setSideBarShowing}) {
  *
  * @param {Object} props
  * @param props.fds
- * @param props.style
+ * @param props.sx
  * @param props.desc
  * @param props.setSideBarShowing
  * @param props.sideBarShowing
@@ -357,7 +353,7 @@ function SearchTitle({desc, isAllSky, sideBarShowing, setSideBarShowing}) {
  * @return {JSX.Element}
  * @constructor
  */
-function ServDescPanel({fds, style, desc, setSideBarShowing, sideBarShowing, docRows, setClickFunc, submitSearch, isAllSky, qAna})  {
+function ServDescPanel({fds, sx, desc, setSideBarShowing, sideBarShowing, docRows, setClickFunc, submitSearch, isAllSky, qAna})  {
 
     const SearchPanelWrapper= ({children}) => (
         <RootSearchPanel {...{additionalChildren:children, submitSearch, setClickFunc, docRowsComponents:<DocRows key='root' docRows={docRows}/>, qAna}}/>
@@ -365,30 +361,30 @@ function ServDescPanel({fds, style, desc, setSideBarShowing, sideBarShowing, doc
 
 
     return  (
-        <div style={{display:'flex', flexDirection:'column', justifyContent:'space-between', ...style}}>
+        <Stack {...{justifyContent:'space-between', sx}}>
 
             <SearchTitle {...{desc,isAllSky,sideBarShowing,setSideBarShowing}}/>
             <DynLayoutPanelTypes.Inset fieldDefAry={fds} plotId={HIPS_PLOT_ID} style={{height:'100%', marginTop:4}}
                                        WrapperComponent={SearchPanelWrapper} toolbarHelpId={'dlGenerated.VisualSelection'} />
-        </div>
+        </Stack>
     );
 }
 
-
 export const DocRows= ({docRows=[], showLabel=true}) => {
     return (
-        <div key='help' style={{fontSize: 'larger', padding: '0 10px 3px 8px', alignSelf: 'flex-end'}}>
+        <Box key='help' sx={{px:1, pb:1/2, alignSelf: 'flex-end'}}>
             {
                 docRows.map((row, idx) => (
-                    <a href={row.accessUrl} key={idx + ''} target={'documentation'}>
-                        {showLabel && <span style={{fontStyle: 'italic'}}>Documentation: </span>}
-                        <span> {`${row.desc}`}</span>
-                    </a>)
+                    <Link level='body-sm'
+                          href={row.accessUrl} key={idx + ''} target='documentation'>
+                        {showLabel && `Documentation: ${row.desc}`}
+                    </Link>)
                 )
             }
-        </div>
+        </Box>
     );
 };
+
 
 
 function RootSearchPanel({additionalChildren, submitSearch, setClickFunc, docRowsComponents, qAna}) {
@@ -407,7 +403,7 @@ function RootSearchPanel({additionalChildren, submitSearch, setClickFunc, docRow
     const disDesc= coneAreaChoice===CONE_AREA_KEY ? 'w/ cone' : 'w/ polygon';
 
     const options= (cNames || disableNames) ? (
-        <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}>
+        <Stack {...{alignItems:'flex-start',}}>
             {Boolean(cNames?.length) &&
                 <CheckboxGroupInputField
                     wrapperStyle={{marginTop:5}} fieldKey='searchOptions'
@@ -417,15 +413,14 @@ function RootSearchPanel({additionalChildren, submitSearch, setClickFunc, docRow
                     initialState={{ value: cNames.join(' '), tooltip: 'Additional Searches', label : '' }}
                 />}
             {Boolean(disableNames?.length)  && (
-                <div style={{display:'flex', flexDirection:'row'}}>
-                    <div style={{fontSize:'larger', width:250}}>
-                        <span style={{fontStyle:'italic'}}>Warning </span>
-                        <span>{`- search${disableNames.length>1?'es':''} disabled ${disDesc}:`}</span>
-                    </div>
-                    {disableNames.map( (d) => (<div>{d}</div>))}
-                </div> )
+                <Stack {...{direction:'row'}}>
+                    <Typography color='warning'>
+                        <span>{`Warning - search${disableNames.length>1?'es':''} disabled ${disDesc}:`}</span>
+                    </Typography>
+                    {disableNames.map( (d) => (<Typography level='body-sm'>{d}</Typography>))}
+                </Stack> )
             }
-        </div>
+        </Stack>
 
     ) : undefined;
 
@@ -438,12 +433,10 @@ function RootSearchPanel({additionalChildren, submitSearch, setClickFunc, docRow
                    onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
                    extraWidgets={[docRowsComponents]}
                    help_id  = {'search-collections-general'}>
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', }}>
-                <>
-                    {additionalChildren}
-                    {options}
-                </>
-            </div>
+            <Stack {...{alignItems:'flex-start', }}>
+                {additionalChildren}
+                {options}
+            </Stack>
         </FormPanel>
     );
 }
@@ -456,7 +449,7 @@ const TabView= ({tabsKey, setSideBarShowing, sideBarShowing, searchObjFds,qAna, 
                 const {fds, idx, ID, desc}= sFds;
                 return (
                     <Tab name={`${qAna.primarySearchDef[idx].desc}`} id={ID} key={idx+''}>
-                        <ServDescPanel{...{fds, setSideBarShowing, sideBarShowing, style:{width:'100%'}, desc, docRows,
+                        <ServDescPanel{...{fds, setSideBarShowing, sideBarShowing, sx:{width:1}, desc, docRows,
                             isAllSky, setClickFunc, submitSearch, qAna}}/>
                     </Tab>
                 );
@@ -467,27 +460,23 @@ const TabView= ({tabsKey, setSideBarShowing, sideBarShowing, searchObjFds,qAna, 
 
 function SideBarTable({registryTblId, setSideBarShowing, width}) {
     return (
-        <div style={{display:'flex', flexDirection:'column'}}>
-            <div style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
-                {<ExpandButton style={linkStyle} icon={HIDE_LEFT} text={uiConfig.hideLabel} tip={uiConfig.hideTip}
+        <Stack>
+            <Stack {...{direction:'row', alignItems:'center', spacing:5}}>
+                {<ExpandButton icon={<KeyboardDoubleArrowLeft/>} text={uiConfig.hideLabel} tip={uiConfig.hideTip}
                                onClick={()  => setSideBarShowing(false)}/> }
-                <div className='DLGeneratedDropDown__section--title' style={{marginLeft:110}} >
+                <Typography level='h3'>
                     {uiConfig.chooserTitle}
-                </div>
-            </div>
-            <div style={{minWidth:width, flexGrow:1, backgroundColor:'inherit', padding: '4px 4px 0 2px'}}>
+                </Typography>
+            </Stack>
+            <Box style={{minWidth:width, flexGrow:1, pt:1/2, pr:1/2, pl:1/4}}>
                 <TablePanel {...{
                     key:registryTblId, tbl_id:registryTblId,
                     showToolbar: false, selectable:false, showFilters:true, showOptions: false, showUnits: false,
                     showTypes: false, textView: false, showOptionButton: false
                 }}/>
-            </div>
-            <div style={{fontSize:'larger', display:'flex', justifyContent:'space-around', padding: '12px 0 5px 0'} }>
-                <div>
-                    {uiConfig.chooserDetails}
-                </div>
-            </div>
-        </div>
+            </Box>
+            <Typography level='body-sm'>{uiConfig.chooserDetails}</Typography>
+        </Stack>
     );
 }
 
@@ -631,52 +620,56 @@ function DLGeneratedTableSearch({currentTblId, initArgs, sideBar, regHasUrl, url
 
     const notLoaded= (
         (regHasUrl || !isRegLoaded) ?
-            (<div style={{position:'relative', width:'100%', height:'100%'}}>
+            (<Box sx={{position:'relative', width:1, height:1}}>
                 <div className='loading-mask'/>
-            </div>) :
-            (<div style={{alignSelf:'center', fontSize:'large', paddingLeft:40}}>
+            </Box>) :
+            (<Typography level='title-lg' color='warning' sx={{alignSelf:'center', pl:5}}>
                 {`No collections to load from: ${url}`}
-            </div>)
+            </Typography>)
     );
 
     return (
-        <div style={{display: 'flex', flexDirection:'column', width:'100%', justifyContent:'center', padding: '12px 0px 0 6px'}}>
-            <div className='SearchPanel' style={{width:'100%', height:'100%'}}>
+        <Sheet sx={{width:1,height:1}}>
+            <Stack {...{width:1, height:1, justifyContent:'center', p:1/4}}>
+                <Stack {...{direction:'row', minWidth:800, minHeight:400, width:1, height:1, spacing:1/2}}>
                 <SideBarAnimation {...{sideBar,sideBarShowing,width:uiConfig.sideBarWidth}}/>
                 <FieldGroup groupKey={GROUP_KEY} keepState={true} style={{width:'100%'}}>
                     {(isRegLoaded && qAna) ? searchObjFds.length===1 ?
                             <ServDescPanel{...{initArgs, setSideBarShowing, sideBarShowing, fds:searchObjFds[0].fds,
                                 setClickFunc, submitSearch, isAllSky, qAna,
-                                style:{width:'100%',height:'100%'}, desc:searchObjFds[0].desc, docRows}} /> :
+                                    sx:{width:1,height:1}, desc:searchObjFds[0].desc, docRows}} /> :
                             <TabView{...{initArgs, tabsKey, setSideBarShowing, sideBarShowing, searchObjFds, qAna,
                                 docRows, isAllSky, setClickFunc, submitSearch}}/>
                         :
                         notLoaded
                     }
                 </FieldGroup>
-            </div>
-        </div>
+                </Stack>
+            </Stack>
+        </Sheet>
     );
 }
 
 function SideBarAnimation({sideBar,sideBarShowing,width}) {
     const w= sideBarShowing?width:0;
     return (
-        <div style={{minWidth:w, width:w, overflow:'hidden', display:'flex', transition:uiConfig.sideTransition}} >
+        <Stack {...{direction:'row',
+            sx:{minWidth:w, width:w, overflow:'hidden', transition:uiConfig.sideTransition}}} >
             {sideBar}
-        </div>
+        </Stack>
     );
 }
 
-function ExpandButton({text, icon, tip='$text',style={}, onClick}) {
-    const s= Object.assign({cursor:'pointer', verticalAlign:'bottom'},style);
+
+function ExpandButton({text, icon, tip='$text',onClick}) {
     return (
-        <div style={s} title={tip} onClick={onClick}>
-            <div style={{display:'flex'}}>
-                <img src={icon} height={12}/>
-                <div style={{marginLeft:5}}>{text}</div>
-            </div>
-        </div>
+        <Tooltip title={tip}>
+            <Button {...{variant:'plain', color:'neutral', onClick,
+                startDecorator:icon
+            }}>
+                {text}
+            </Button>
+
+        </Tooltip>
     );
 }
-

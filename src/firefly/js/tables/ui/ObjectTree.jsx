@@ -54,21 +54,3 @@ export function transformToTreeNodes(data, nodeClassName, treeData=[], path=[0])
     return treeData;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

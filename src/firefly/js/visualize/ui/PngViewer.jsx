@@ -1,3 +1,4 @@
+import {Stack, Typography} from '@mui/joy';
 import React,{memo,useState} from 'react';
 import {useStoreConnector} from '../../ui/SimpleComponent';
 import {getActiveTableId, getCellValue, getMetaEntry, getTblById} from '../../tables/TableUtil';
@@ -18,31 +19,24 @@ export const PngViewer = memo(()=> {
 
     if (png_url && png_url !== badUrl) {
         return (
-            <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                background: '#c8c8c8',
-                width: '100%',
-                height: '100%'
-            }}>
-                <div style={{overflow: 'auto', display: 'flex', justifyContent: 'center', alignItem: 'center'}}>
+            <Stack {...{ width: 1, height: 1, }}>
+                <Stack {...{overflow: 'auto', direction: 'row', justifyContent: 'center', alignItems: 'center'}}>
                     <img src={png_url} alt={`Preview not found: ${png_url}`}
                          onError={()=>setBadUrl(png_url)}
                          style={{width:'100%', objectFit:'contain', flexGrow: 0, flexShrink: 0}}
                     />
-                </div>
-            </div>
+                </Stack>
+            </Stack>
         );
-    }else{
+    }
+    else {
         return noPreview();
     }
 });
 
 
-function noPreview() {
-    return (
-        <div className='TablePanel_NoData'>
-            <p>No Preview Available</p>
-        </div>
+const noPreview= () => (
+        <Stack {...{ width: 1, height: 1, alignItems:'center'}}>
+            <Typography level='title-lg' sx={{pt:5, textAlign:'center'}}>No Preview Available</Typography>
+        </Stack>
     );
-}

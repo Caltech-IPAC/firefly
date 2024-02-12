@@ -25,11 +25,7 @@ export const InputAreaFieldConnected = forwardRef( (props, ref) => {
 InputAreaFieldConnected.defaultProps = {
     showWarning: true,
     actOn: ['changes'],
-    labelWidth: 0,
-    inline: false,
     visible: true,
-    rows: 10,
-    cols: 50
 };
 
 InputAreaFieldConnected.propTypes = {

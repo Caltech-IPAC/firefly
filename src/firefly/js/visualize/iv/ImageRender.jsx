@@ -53,7 +53,7 @@ export class ImageRender extends Component {
         this.drawInit= (canvas) => {
             const {plot, opacity,plotView}= this.props;
             this.tileDrawer= initTileDrawer(canvas, plot);
-            this.tileDrawer(plot, opacity,plotView);
+            this.tileDrawer(plot, opacity,plotView, this.props.colorMode);
         };
     }
 
@@ -64,6 +64,7 @@ export class ImageRender extends Component {
         const {width:targetWidth, height:targetHeight}= props.plotView.viewDim;
         const {plotView:nPv}= np;
 
+        if (props.colorMode!==np.colorMode) return true;
         if (pv.scrollX===nPv.scrollX && pv.scrollY===nPv.scrollY &&
             targetWidth===np.plotView.viewDim.width && targetHeight===np.plotView.viewDim.height &&
             pv.overlayPlotViews===nPv.overlayPlotViews &&
@@ -84,7 +85,7 @@ export class ImageRender extends Component {
         const {plot, idx, opacity,plotView:pv}= this.props;
         const {width, height}= pv.viewDim;
         const style = {...containerStyle, width, height};
-        this.tileDrawer?.(plot, opacity,pv);
+        this.tileDrawer?.(plot, opacity,pv,this.props.colorMode);
 
         return (
             <div className='tile-drawer' style={style}>
@@ -103,4 +104,5 @@ ImageRender.propTypes= {
     shouldProcess : PropTypes.func,
     idx : PropTypes.number,
     processor : PropTypes.func,
+    colorMode: PropTypes.string
 };

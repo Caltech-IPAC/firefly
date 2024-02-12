@@ -14,8 +14,8 @@ function onChange(ev, validator, fireValueChange) {
 
 export const ValidationField = memo( (props) => {
         const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
-        return <InputFieldView {...viewProps}
-                               onChange={(ev) => onChange(ev,viewProps.validator, fireValueChange)}/> ;
+        return (<InputFieldView {...viewProps}
+                               onChange={(ev) => onChange(ev,viewProps.validator, fireValueChange)}/>);
 });
 
 ValidationField.propType= {

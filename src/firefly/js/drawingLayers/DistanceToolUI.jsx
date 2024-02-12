@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Checkbox, Stack, Typography} from '@mui/joy';
 import React from 'react';
 import PropTypes from 'prop-types';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
@@ -19,13 +20,6 @@ const worldUnit = [ {label: 'degrees', value: 'deg'},
 const pixelUnit = [{label: 'pixels', value: 'pixel'}];
 
 function DistanceToolUI({drawLayer,pv}) {
-
-    const tStyle= {
-        display:'inline-block',
-        whiteSpace: 'nowrap',
-        minWidth: '3em',
-        paddingLeft : 5
-    };
     const checked= drawLayer.offsetCal;
     const plot = pv.plots[pv.primeIdx];
     const cc = CsysConverter.make(plot);
@@ -36,24 +30,18 @@ function DistanceToolUI({drawLayer,pv}) {
                                              : ((unitStyle === UNIT_NO_PIXEL)? worldUnit : pixelUnit);
 
     return (
-        <div>
-
-            <div style={{padding:'5px 0 9px 0'}}>
-                <input type='checkbox'
-                       checked={checked}
-                       onChange={() => dispatchModifyCustomField( drawLayer.displayGroupId,
-                                                              {offsetCal:!checked}, pv.plotId )}
-                />
-                <div style={tStyle}>Offset Calculation</div>
-            </div>
-            <div>
-                Unit:
-                <div style={{display:'inline-block', paddingLeft:7}}>
-                    <RadioGroupInputFieldView options={options}  value={pref}
-                                              onChange={(ev) => changeReadoutPref(drawLayer,pv,ev.target.value)} />
-                </div>
-            </div>
-        </div>
+        <Stack direction='column' spacing={1}>
+            <Checkbox {...{checked, label:'Offset Calculation',
+                onChange:() => dispatchModifyCustomField( drawLayer.displayGroupId,
+                    {offsetCal:!checked}, pv.plotId )
+            }} />
+            <Stack direction='row' spacing={1} alignItems='center'>
+                <Typography level='body-sm'>Unit:</Typography>
+                <RadioGroupInputFieldView options={options}  value={pref}
+                                          orientation='horizontal'
+                                          onChange={(ev) => changeReadoutPref(drawLayer,pv,ev.target.value)} />
+            </Stack>
+        </Stack>
     );
 }
 

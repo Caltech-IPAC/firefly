@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {get} from 'lodash';
+import {defaultsDeep, get} from 'lodash';
 
 import {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
@@ -10,6 +10,8 @@ import {getColValStats} from '../../TableStatsCntlr.js';
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField.jsx';
 import {toBoolean} from '../../../util/WebUtil.js';
+import {FormControl, FormLabel, Stack} from '@mui/joy';
+import {omit} from 'lodash/object';
 
 
 export const ERR_TYPE_OPTIONS = [
@@ -29,26 +31,39 @@ export function getDefaultErrorType(chartData, activeTrace, axis) {
 }
 
 
-export function Error_X({activeTrace, tbl_id, chartId, groupKey, error, errorMinus, labelWidth, readonly}) {
-    return <Error {...{tbl_id, chartId, groupKey, axis: 'x', activeTrace, error, errorMinus, readonly}}/>;
+export function Error_X(props) {
+    return <Error {...{...props, axis: 'x'}}/>;
 }
-Error_X.propTypes = {
+
+Error_X.propTypes = omit(Error.propTypes, 'axis');
+
+export function Error_Y(props) {
+    return <Error {...{...props, axis: 'y'}}/>;
+}
+
+Error_Y.propTypes = Error_X.propTypes;
+
+Error.propTypes = {
     activeTrace: PropTypes.number,
     tbl_id: PropTypes.string,
     groupKey: PropTypes.string.isRequired,
     chartId: PropTypes.string,
     error: PropTypes.string,
     errorMinus: PropTypes.string,
-    labelWidth: PropTypes.number,
-    readonly: PropTypes.bool
+    readonly: PropTypes.bool,
+    axis: PropTypes.string,
+    slotProps: PropTypes.shape({
+        control: PropTypes.object,
+        label: PropTypes.object,
+        errorToggleInput: PropTypes.object,
+        errorTypeInput: PropTypes.object,
+        errorInput: PropTypes.object,
+        upperErrorInput: PropTypes.object,
+        lowerErrorInput: PropTypes.object
+    })
 };
 
-export function Error_Y({activeTrace, tbl_id, chartId, groupKey, error, errorMinus, labelWidth, readonly}) {
-    return <Error {...{tbl_id, chartId, groupKey, axis: 'y', activeTrace, error, errorMinus, readonly}}/>;
-}
-Error_Y.propTypes = Error_X.propTypes;
-
-function Error({tbl_id:ptbl_id, chartId, groupKey, axis, activeTrace:pActiveTrace, error, errorMinus, readonly}) {
+function Error({tbl_id:ptbl_id, chartId, groupKey, axis, activeTrace:pActiveTrace, error, errorMinus, readonly, slotProps}) {
     const chartProps = getChartProps(chartId, ptbl_id, pActiveTrace);
     const {tbl_id, activeTrace, mappings} = chartProps;
 
@@ -65,41 +80,43 @@ function Error({tbl_id:ptbl_id, chartId, groupKey, axis, activeTrace:pActiveTrac
 
     readonly = readonly || !showError;
 
-    const ErrFld = ({path, ...rest}) => {
-        const props = {groupKey, colValStats, readonly, fldPath:path(activeTrace, axis), labelWidth:5, nullAllowed:true, ...rest};
+    const ErrFld = ({path, slotProps, ...rest}) => {
+        const props = {groupKey, colValStats, readonly, fldPath:path(activeTrace, axis), nullAllowed:true,
+            sx: {'label.MuiFormLabel-root': {width: 'min-content'}},
+            slotProps: defaultsDeep(slotProps, {control: {orientation: 'horizontal'}}),
+            ...rest};
         return  (<ColumnOrExpression {...props}/>);
     };
     const axisU = axis.toUpperCase();
 
 
     return (
-        <div style={{display: 'flex'}}>
-            <CheckboxGroupInputField fieldKey={showKey}
-                                     initialState= {{value: (showError ? 'true' : undefined)}}
-                                     label='Error:'
-                                     labelWidth={25}
-                                     tooltip='Turn error bars on/off'
-                                     options={[{value: 'true'}]}
-                                     wrapperStyle={{display: 'inline-flex', alignItems: 'center'}}/>
-
-
-            <div style={{display: 'flex', alignItems: 'center', paddinngTop: 3, marginLeft: 4}}>
-                <ListBoxInputField
-                    initialState= {{
-                        value: type,
-                        tooltip: 'Select type of the errors',
-                    }}
-                    options={ERR_TYPE_OPTIONS}
-                    fieldKey={errorTypeFieldKey(activeTrace, axis)}
-                    groupKey={groupKey}
-                    readonly={readonly}
-                />
-                <div style={{paddingLeft: 10}}>
-                    {(type==='sym')  && <ErrFld name={`${axisU} Error`}       initValue={error}      path={errorFieldKey} label='' labelWidth={6}/>}
-                    {(type==='asym') && <ErrFld name={`${axisU} Upper Error`} initValue={error}      path={errorFieldKey} label={'\u2191'}/>}
-                    {(type==='asym') && <ErrFld name={`${axisU} Lower Error`} initValue={errorMinus} path={errorMinusFieldKey} label={'\u2193'}/>}
-                </div>
-            </div>
-        </div>
+        <FormControl {...slotProps?.control}>
+            <FormLabel {...slotProps?.label}>Error:</FormLabel>
+            <Stack direction='row' spacing={1} alignItems='center'>
+                <CheckboxGroupInputField fieldKey={showKey}
+                                         initialState= {{value: (showError ? 'true' : undefined)}}
+                                         tooltip='Turn error bars on/off'
+                                         options={[{value: 'true'}]}
+                                         slotProps={slotProps?.errorToggleInput}/>
+                <Stack direction='row' spacing={1} alignItems='center'>
+                    <ListBoxInputField
+                        initialState= {{value: type}}
+                        tooltip='Select type of the errors'
+                        options={ERR_TYPE_OPTIONS}
+                        fieldKey={errorTypeFieldKey(activeTrace, axis)}
+                        groupKey={groupKey}
+                        readonly={readonly}
+                        slotProps={defaultsDeep(slotProps?.errorTypeInput, {input: {size: 'sm'}})}/>
+                    <Stack spacing={.5}>
+                        {(type==='sym')  && <ErrFld name={`${axisU} Error`} initValue={error} path={errorFieldKey} slotProps={slotProps?.errorInput}/>}
+                        {(type==='asym') && <ErrFld name={`${axisU} Upper Error`} initValue={error} path={errorFieldKey} label={'\u2191'}
+                                                    slotProps={slotProps?.upperErrorInput}/>}
+                        {(type==='asym') && <ErrFld name={`${axisU} Lower Error`} initValue={errorMinus} path={errorMinusFieldKey} label={'\u2193'}
+                                                    slotProps={slotProps?.lowerErrorInput}/>}
+                    </Stack>
+                </Stack>
+            </Stack>
+        </FormControl>
     );
 }

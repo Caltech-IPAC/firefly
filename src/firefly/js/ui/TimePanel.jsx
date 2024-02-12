@@ -2,115 +2,66 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import CALENDAR from 'html/images/datetime_picker_16x16.png';
+import {FormHelperText, IconButton, Stack} from '@mui/joy';
+import Event from '@mui/icons-material/Event';
 import PropTypes from 'prop-types';
 import React, {memo} from 'react';
+
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {InputFieldView} from './InputFieldView.jsx';
 import {
-    convertISOToMJD, convertMJDToISO, formatMoment, formFeedback, ISO, isTimeUndefined, MJD, validateDateTime, validateMJD
+    convertISOToMJD, convertMJDToISO, formatMoment, ISO, isTimeUndefined, MJD, validateDateTime, validateMJD
 } from './TimeUIUtil.js';
 
 const invalidDate = 'invalid date/time';
 
-const iconMap = {'calendar': {icon: CALENDAR, title: 'Show the calendar for selecting date/time'}};
 
 
 
-function TimePanelView({showHelp, feedback, feedbackStyle, examples, label, labelStyle, labelPosition,
-                           valid, message, onChange, value, icon, onClickIcon, tooltip = 'select time',
-                           inputStyle, wrapperStyle, inputWidth, timeMode=ISO, isTimeModeFixed}) {
-    const ImagePadding = 3;
+function TimePanelView({showHelp=true, feedback={}, sx, slotProps, examples, label,
+                           valid=true, message='', onChange, value='', makePicker,
+                           tooltip = 'select time', timeMode=ISO, isTimeModeFixed, orientation}) {
 
-    const iconStyle = {
-        position: 'absolute',
-        top: 1,
-        right: 1,
-        padding: ImagePadding,
-        cursor: 'pointer'
-    };
-
-    const iconField = iconMap?.[icon] ?
-        (<div style={iconStyle}>
-            <img
-              title={iconMap[icon].title}
-              src={iconMap[icon].icon}
-              onClick={() => onClickIcon?.()}/>
-         </div>) : null;
-
-    const spaceForImage = 16+ImagePadding*2;
-    const newInputStyle = {...inputStyle,
-        width: iconField ? inputWidth - spaceForImage+2 : inputWidth,
-        paddingRight: iconField ? spaceForImage : 2
-    };
-    const placeHolder = timeMode === ISO ? 'YYYY-MM-DD HH:mm:ss' : 'float number .... ';
-    const newWrapperStyle = {...wrapperStyle, params: iconField ? {width: '100%'} : {}};
-    const inputFields = {
-        valid, visible: true, message, onChange,
-        value, tooltip, wrapperStyle: newWrapperStyle, style: newInputStyle,
-        placeHolder
-    };
-
-    const timeField =  (<InputFieldView {...inputFields} />);
-
-    const outsideWidth = inputWidth + 6;
-    const timePart = iconField ? (<div style={{position: 'relative', width: outsideWidth}}>
-                                        {timeField}
-                                        {iconField}
-                                  </div>)
-                                : timeField;
-
-    const newFeedbackStyle = {width: inputWidth, ...feedbackStyle};
-    const lStyle = {...labelStyle, whiteSpace:'nowrap'};
-    const labelDiv = (<div style={lStyle}>{label}</div>);
-    const timeDiv = (
-        <div>
-            {timePart}
-            <TimeFeedback {...{showHelp, feedback, style: newFeedbackStyle, examples, timeMode, isTimeModeFixed}}/>
-        </div>
-    );
-    const flexDirection = (labelPosition === 'top') ? 'column' : 'row';
+    const endDecorator = makePicker
+        ? (<IconButton onClick={() => makePicker?.()} aria-label='Show date/time picker'>
+            <Event/>
+        </IconButton>)
+        : undefined;
+    const placeholder = timeMode === ISO ? 'YYYY-MM-DD HH:mm:ss' : 'float number ...';
 
     return (
-        <div style={{display: 'flex', flexDirection}}>
-            {labelDiv}
-            {timeDiv}
-        </div>
+        <Stack spacing={.5} sx={sx}>
+            <InputFieldView {...{valid, visible: true, message, onChange, value, tooltip, endDecorator,
+                placeholder, orientation, label, ...slotProps?.input,
+                sx: {'.MuiInput-root': {width: '16rem'}, ...slotProps?.input?.sx}}} />
+            <TimeFeedback {...{showHelp, feedback, examples, timeMode, isTimeModeFixed, ...slotProps?.feedback}}/>
+        </Stack>
     );
 }
 
 TimePanelView.propTypes = {
     showHelp   : PropTypes.bool,
-    feedback: PropTypes.string,
-    feedbackStyle: PropTypes.object,
+    feedback: PropTypes.shape({UTC: PropTypes.string, MJD: PropTypes.string}),
     examples: PropTypes.object,
     message: PropTypes.string.isRequired,
     onChange: PropTypes.func,
     valid   : PropTypes.bool.isRequired,
     value : PropTypes.string.isRequired,
-    labelStyle : PropTypes.object,
     label: PropTypes.string,
     tooltip: PropTypes.string,
-    inputStyle: PropTypes.object,
-    wrapperStyle: PropTypes.object,
+    sx: PropTypes.object,
+    slotProps: PropTypes.shape({
+        input: PropTypes.object,
+        feedback: PropTypes.object
+    }),
     timeMode: PropTypes.string,
-    icon: PropTypes.string,
-    onClickIcon: PropTypes.func,
-    labelPosition: PropTypes.oneOf(['top', 'left']),
-    inputWidth: PropTypes.number,
+    makePicker: PropTypes.func,
+    orientation: PropTypes.oneOf(['horizontal', 'vertical']),
     isTimeModeFixed: PropTypes.bool
 };
 
-TimePanelView.defaultProps = {
-    valid: true,
-    showHelp: true,
-    feedback: '',
-    message: '',
-    value: '',
-    timeMode: ISO
-};
 
-const defaulISOtExample = (<div style={{display: 'inline-block', fontSize: 11}}>
+const defaulISOtExample = (<div style={{display: 'inline-block'}}>
                         {'2019-02-07T08:00:20'}
                         <br/>
                         {'2019-02-07 08:00:20'}
@@ -123,36 +74,32 @@ const defaultMJDExample = (<div style={{display: 'inline-block'}}>
                            </div>);
 
 
-function TimeFeedback({showHelp, feedback, style={}, examples, timeMode=ISO, isTimeModeFixed}) {
-
+function TimeFeedback({showHelp, feedback, sx={}, examples, timeMode=ISO, isTimeModeFixed}) {
     examples = timeMode===ISO ? (examples?.[ISO] ?? defaulISOtExample) : (examples?.[MJD] ?? defaultMJDExample);
-    style = {paddingTop: 5, height: isTimeModeFixed ? 'auto' : 36, // so that layout doesn't jump on toggling radio button
-        display:'flex', contentJustify: 'center', ...style};
-
-    if (showHelp) {
-         return (
-            <div style={style}>
-                <i>e.g.:</i>
-                <div style={{marginLeft: 3}}>
-                   {examples}
-                </div>
-            </div>
-         );
-    } else {
-         return (
-            <div style={style}>
-                <span dangerouslySetInnerHTML={{
-                    __html: feedback
-                }}/>
-            </div>
-         );
-    }
+    return (
+        <FormHelperText sx={{
+            height: isTimeModeFixed ? 'auto' : '4rem', // fixed height so that layout doesn't jump on toggling radio button
+            alignItems: 'flex-start',
+            ...sx
+        }}>
+            {showHelp ?
+                <Stack direction='row' spacing={.5}>
+                    <span>e.g.:</span>
+                    {examples}
+                </Stack> :
+                <Stack spacing={.5}>
+                    {feedback?.UTC && <span>UTC: {feedback.UTC}</span>}
+                    {feedback?.MJD && <span>MJD: {feedback.MJD}</span>}
+                </Stack>
+            }
+        </FormHelperText>
+    );
 }
 
 TimeFeedback.propTypes = {
     showHelp: PropTypes.bool,
-    feedback: PropTypes.string,
-    style: PropTypes.object,
+    feedback: PropTypes.shape({UTC: PropTypes.string, MJD: PropTypes.string}),
+    sx: PropTypes.object,
     examples: PropTypes.object,
     timeMode: PropTypes.string,
     isTimeModeFixed: PropTypes.bool
@@ -183,13 +130,12 @@ function handleOnChange(ev, params, fireValueChange) {
         result.message = invalidDate;
     }
     const showHelp = isTimeUndefined(result.UTC, result.MJD);
-    const feedback = showHelp ? '' : formFeedback(result.UTC, result.MJD);
 
     // time panel show v as display value, feedback shows standard moment utc string
     fireValueChange({valid: validateRet.valid,
                     message: validateRet.message,
                     value: v,
-                    showHelp, feedback,
+                    showHelp, feedback: result,
                     timeMode, isTimeModeFixed});
 }
 
@@ -203,12 +149,13 @@ TimePanel.propTypes = {
     fieldKey : PropTypes.string,
     groupKey : PropTypes.string,
     timeMode: PropTypes.string,
-    icon: PropTypes.string,
-    onClickIcon: PropTypes.func,
-    feedbackStyle: PropTypes.object,
-    labelPosition: PropTypes.oneOf(['top', 'left']),
-    inputStyle: PropTypes.object,
-    inputWidth: PropTypes.number,
+    makePicker: PropTypes.func,
+    orientation: PropTypes.oneOf(['horizontal', 'vertical']),
+    sx: PropTypes.object,
+    slotProps: PropTypes.shape({
+        input: PropTypes.object,
+        feedback: PropTypes.object
+    }),
     isTimeModeFixed: PropTypes.bool
 };
 

@@ -35,6 +35,7 @@ const labelMap = {
     wl: 'Wavelength: ',
 };
 
+const coordOpTitle= 'Choose readout coordinates';
 
 export function getNonFluxDisplayElements(readoutItems, readoutPref, isHiPS= false) {
     const objList= getNonFluxReadoutElements(readoutItems,  readoutPref, isHiPS);
@@ -49,8 +50,8 @@ export function getNonFluxDisplayElements(readoutItems, readoutPref, isHiPS= fal
     if (isHiPS) {
         readout1= {...hipsMouseReadout1, label: labelMap[readoutPref.hipsMouseReadout1]};
         readout2= {...hipsMouseReadout2, label: labelMap[readoutPref.hipsMouseReadout2]};
-        showReadout1PrefChange= () => showMouseReadoutOptionDialog('hipsMouseReadout1', readoutPref.hipsMouseReadout1);
-        showReadout2PrefChange= () => showMouseReadoutOptionDialog('hipsMouseReadout2', readoutPref.hipsMouseReadout2);
+        showReadout1PrefChange= () => showMouseReadoutOptionDialog('hipsMouseReadout1', readoutPref.hipsMouseReadout1, coordOpTitle);
+        showReadout2PrefChange= () => showMouseReadoutOptionDialog('hipsMouseReadout2', readoutPref.hipsMouseReadout2, coordOpTitle);
         healpixPixelReadout= {...healpixPixel, label: labelMap.healpixPixel};
         healpixNorderReadout= {...healpixNorder, label: labelMap.healpixNorder};
     }
@@ -61,15 +62,15 @@ export function getNonFluxDisplayElements(readoutItems, readoutPref, isHiPS= fal
             waveLength= {...wl, label:labelMap.wl};
             showWavelengthFailed= readoutItems.wl.failReason ? () => showInfoPopup(readoutItems.wl.failReason) : undefined;
         }
-        showReadout1PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout1', readoutPref.imageMouseReadout1);
-        showReadout2PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout2', readoutPref.imageMouseReadout2);
+        showReadout1PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout1', readoutPref.imageMouseReadout1, coordOpTitle);
+        showReadout2PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout2', readoutPref.imageMouseReadout2, coordOpTitle);
     }
 
     return {
         readout1, readout2, waveLength, showWavelengthFailed,
         showReadout1PrefChange, showReadout2PrefChange, healpixPixelReadout, healpixNorderReadout,
         pixelSize: {...pixelSize, label: labelMap[readoutPref.pixelSize]},
-        showPixelPrefChange:() => showMouseReadoutOptionDialog('pixelSize', readoutPref.pixelSize)
+        showPixelPrefChange:() => showMouseReadoutOptionDialog('pixelSize', readoutPref.pixelSize, 'Choose pixel size'),
     };
 }
 
