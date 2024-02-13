@@ -3,9 +3,9 @@
  */
 
 import './CollapsiblePanel.css';
-import React, {memo} from 'react';
+import React from 'react';
 import PropTypes, {bool, element, func, object, oneOfType, shape, string} from 'prop-types';
-import {isFunction, pick} from 'lodash';
+import {isFunction, omit} from 'lodash';
 import {Tooltip, Accordion, AccordionGroup} from '@mui/joy';
 import AccordionDetails, {accordionDetailsClasses} from '@mui/joy/AccordionDetails';
 import AccordionSummary, {accordionSummaryClasses} from '@mui/joy/AccordionSummary';
@@ -33,34 +33,48 @@ CollapsiblePanel.propTypes = {
     ...CollapsibleItemView.propTypes
 };
 
-export const FieldGroupCollapsible= memo( ({children, ...props}) => {
-    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
-    const newProps= {
-        ...pick(viewProps, Object.keys(CollapsibleItemView.propTypes)),  // useFieldGroupConnector is not removing all of its props, causing bad props going into the Tabs
-        children,
-        isOpen: Boolean(viewProps.value === 'open'),
-        onToggle: (isOpen) => fireValueChange({ value: isOpen ? 'open' : 'closed' })
-    };
+
+export function FieldGroupCollapsible({slotProps, ...props}) {
     return (
-        <CollapsibleGroup>
-            <CollapsibleItemView {...newProps} />
+        <CollapsibleGroup {...slotProps?.root}>
+            <FieldGroupCollapsibleItem slotProps={slotProps} {...props} />
         </CollapsibleGroup>
     );
-});
+}
 
-FieldGroupCollapsible.propTypes = {
+FieldGroupCollapsible.propTypes = FieldGroupCollapsibleItem.propTypes;
+
+
+export function FieldGroupCollapsibleItem (props) {
+    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    const {value} = viewProps;
+
+    const newProps= {
+        ...omit(props, Object.keys(inputFieldPropTypes)),     // remove InputField props from
+        isOpen: Boolean(value === 'open'),
+        onToggle: (isOpen) => fireValueChange({ value: isOpen ? 'open' : 'closed' }),
+    };
+    return <CollapsibleItemView {...newProps} />;
+};
+
+const inputFieldPropTypes = {
     fieldKey: PropTypes.string.isRequired,
     groupKey: PropTypes.string,
     initialState: PropTypes.shape({
         value: PropTypes.string,  // 'open' or 'closed'
     }),
+};
+
+FieldGroupCollapsibleItem.propTypes = {
+    ...inputFieldPropTypes,
     ...CollapsibleItemView.propTypes
 };
 
-/**
+
+/*
  * A stateful collapsible container, intended to be used with CollapsibleGroup. State is backed by ComponentCntlr.
  */
-export const CollapsibleItem= memo( ({componentKey, isOpen:defOpen, ...props}) => {
+export function CollapsibleItem ({componentKey, isOpen:defOpen, ...props}) {
 
     const isOpen = useStoreConnector(()=>(getComponentState(componentKey)?.isOpen ?? defOpen));
     const onToggle = (newIsOpen)=>{
@@ -70,7 +84,7 @@ export const CollapsibleItem= memo( ({componentKey, isOpen:defOpen, ...props}) =
     return (
         <CollapsibleItemView {...{isOpen, onToggle, ...props}}/>
     );
-});
+};
 
 
 

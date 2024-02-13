@@ -89,7 +89,7 @@ export const ChartToolbar = (props={}) => {
     // logic for PinnedChartContainer toolbar added here
     if (allowPinnedCharts()) {
         return (
-            <Stack id='chart-toolbar' direction='row' alignItems='center' spacing={1}>
+            <Stack id='chart-toolbar' direction='row' alignItems='center'>
                 <CombineChart {...{viewerId, tbl_group}} />
                 <ShowTable {...{viewerId, tbl_group}} />
                 <PinChart {...{viewerId, tbl_group}}/>

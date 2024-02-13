@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import {Button,Stack, Typography} from '@mui/joy';
+import {Button,Stack} from '@mui/joy';
 import {getWorkspaceConfig} from 'firefly/visualize/WorkspaceCntlr.js';
 import {PopupPanel} from 'firefly/ui/PopupPanel.jsx';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
@@ -17,18 +17,6 @@ import {downloadBlob, makeDefaultDownloadFileName} from 'firefly/util/fetch.js';
 
 
 const DIALOG_ID= 'plotDownloadDialog';
-const dialogWidth = '32rem';
-const dialogHeight = '10rem';
-const labelWidth = '8rem';
-const popupPanelResizableStyle = {
-    width: dialogWidth,
-    height: dialogHeight,
-    minWidth: dialogWidth,
-    minHeight: dialogHeight,
-    resize: 'both',
-    overflow: 'hidden',
-    position: 'relative'
-};
 
 export function showPlotLySaveDialog(Plotly, chartDiv) {
     // if (fileLocation === WORKSPACE) dispatchWorkspaceUpdate(); //todo keep if we add workspace support, it probably goes somewhere else
@@ -36,9 +24,15 @@ export function showPlotLySaveDialog(Plotly, chartDiv) {
     const isWs = getWorkspaceConfig(); //todo - keep if we add workspace support
     const  popup = (
         <PopupPanel title={'Save Chart'}>
-            <div style={{...popupPanelResizableStyle}}>
+            <Stack sx={{
+                minWidth: '32rem',
+                minHeight: '10rem',
+                resize: 'both',
+                overflow: 'hidden',
+                position: 'relative'
+            }}>
                 <PlotLySavePanel {...{Plotly, chartDiv, isWs, filename:getDefaultFilename(chartDiv)}}/>
-            </div>
+            </Stack>
         </PopupPanel>
     );
     DialogRootContainer.defineDialog(DIALOG_ID, popup);
@@ -69,31 +63,25 @@ async function saveFile(request, Plotly, chartDiv) {
 
 const PlotLySavePanel= function( {isWs,Plotly, chartDiv, filename}) {
     return (
-        <FieldGroup groupKey={'PlotLySaveField'} >
-            <Stack spacing={2}
-                sx={{px: 2, justifyContent: 'center', width: '95%', height: dialogHeight}}>
-                <Stack sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
-                    <ValidationField
-                        fieldKey={'filename'}
-                        initialState= {{
-                            value: filename,
-                            tooltip: 'Enter filename of chart png',
-                            label: 'Chart Filename',
-                        }} />
-                </Stack>
-                <Stack mb={3} sx={{flexDirection: 'row', justifyContent: 'space-between'}}>
-                    <Stack spacing={1} direction='row' alignItems='center'>
-                        <CompleteButton text='Save' dialogId={DIALOG_ID}
-                            onSuccess={(request) => saveFile(request,Plotly, chartDiv)} />
-                        <CompleteButton text='Cancel' groupKey=''
-                            onSuccess={() => dispatchHideDialog(DIALOG_ID)} />
-                    </Stack>
-                    <Stack>
-                        <HelpIcon helpId={'chart.save'}/>
-                    </Stack>
-                </Stack>
-            </Stack>
+        <Stack p={1} flexGrow={1} justifyContent='space-between'>
+            <FieldGroup groupKey={'PlotLySaveField'} >
+                <ValidationField
+                    fieldKey={'filename'}
+                    initialState= {{
+                        value: filename,
+                        tooltip: 'Enter filename of chart png',
+                        label: 'Chart Filename',
+                    }} />
+            </FieldGroup>
 
-        </FieldGroup>
+            <Stack flexDirection='row' justifyContent='space-between'>
+                <Stack spacing={1} direction='row' alignItems='center'>
+                    <CompleteButton text='Save' dialogId={DIALOG_ID}
+                                    onSuccess={(request) => saveFile(request,Plotly, chartDiv)} />
+                    <Button onClick={() => dispatchHideDialog(DIALOG_ID)}>Cancel</Button>
+                </Stack>
+                <HelpIcon helpId={'chart.save'}/>
+            </Stack>
+        </Stack>
     );
 };

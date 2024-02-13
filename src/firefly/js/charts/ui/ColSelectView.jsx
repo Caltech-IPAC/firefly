@@ -1,10 +1,12 @@
 /*
  */
 import React from 'react';
+import {Stack} from '@mui/joy';
+import {merge} from 'lodash';
+
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import {dispatchTableRemove}  from '../../tables/TablesCntlr';
-import {clone} from '../../util/WebUtil.js';
 
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getTblById, calcColumnWidths, getSelectedData, getColumnValues} from '../../tables/TableUtil.js';
@@ -12,30 +14,10 @@ import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../../cor
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {quoteNonAlphanumeric}  from '../../util/expr/Variable.js';
 import {SelectInfo} from 'firefly/tables/SelectInfo';
-import {merge} from 'lodash';
 
 //import HelpIcon from '../../ui/HelpIcon.jsx';
 const popupId = 'XYColSelect';
 const TBL_ID ='selectCol';
-
-const popupPanelResizableStyle = {
-    width: 300,
-    minWidth: 560,
-    height: 450,
-    minHeight: 300,
-    resize: 'both',
-    overflow: 'hidden',
-    position: 'relative'
-};
-
-
-//define the table style only in the table div
-const tableStyle = {boxSizing: 'border-box', width: '100%', height: 'calc(100% - 40px)', overflow: 'hidden', resize:'none'};
-
-//define the complete button
-const closeButtonStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginTop:10, width: '90%'};
-//define the helpButton
-//const helpIdStyle = {'textAlign': 'center', display: 'inline-block', height:40, marginRight: 20};
 
 
 export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonText,currentVal,multiSelect=false,colTblId) {
@@ -114,27 +96,17 @@ export function hideColSelectPopup() {
 
 function popupForm(tableModel, onColSelected,buttonText,popupId, minWidth,multiSelect) {
     const tblId = tableModel.tbl_id;
-    const style= clone(popupPanelResizableStyle, {minWidth: Math.min(minWidth, 560)});
-    return (
-        <div style={ style}>
-            { renderTable(tableModel,popupId,multiSelect)}
-            { renderCloseAndHelpButtons(tblId,onColSelected,buttonText,popupId,multiSelect)}
-        </div>
-    );
-
-}
-
-/**
- * display the data into a tabular format
- * @param tableModel
- * @param popupId
- * @param multiSelect
- * @return table section
- */
-function renderTable(tableModel,popupId,multiSelect=false) {
     const tbl_ui_id = (tableModel.tbl_id || 'ColSelectView') + '-ui';
     return (
-        <div style={tableStyle}>
+        <Stack spacing={1} sx={{
+            width: '20rem',
+            minWidth: Math.min(minWidth, '40rem'),
+            height: '32rem',
+            minHeight: '20rem',
+            resize: 'both',
+            overflow: 'hidden',
+            position: 'relative'
+        }}>
             <TablePanel
                 key={popupId}
                 tbl_ui_id={tbl_ui_id}
@@ -143,31 +115,19 @@ function renderTable(tableModel,popupId,multiSelect=false) {
                 showFilters={true}
                 selectable={multiSelect}
                 border={false}
+                onRowDoubleClick={() => setXYColumns(tblId,onColSelected)}
             />
-        </div>
-    );
 
-}
-
-function renderCloseAndHelpButtons(tblId,onColSelected,buttonText,popupId,multiSelect) {
-
-    return(
-    <div>
-        <div style={closeButtonStyle}>
             <CompleteButton
                 text={buttonText}
                 onSuccess={()=> multiSelect? setSelectedColumns(tblId,onColSelected) : setXYColumns(tblId,onColSelected)}
                 dialogId={popupId}
             />
-        </div>
-        {/* comment out the help button for now
-            <div style={helpIdStyle}>
-                <HelpIcon helpId={'catalogs.xyplots'}/>
-            </div>
-         */}
-    </div>
-);
+        </Stack>
+    );
+
 }
+
 
 //returns (calls the callback fn with) an array of selected column naes
 function setSelectedColumns(tblId,onColSelected) {
@@ -183,6 +143,7 @@ function setXYColumns(tblId,onColSelected) {
     const hlRow = tableModel.highlightedRow || 0;
     const selectedColName = quoteNonAlphanumeric(tableModel.tableData.data[hlRow][0]);
     onColSelected(selectedColName);
+    hideColSelectPopup();
 }
 
 function getHlRow(currentVal,colNames) {

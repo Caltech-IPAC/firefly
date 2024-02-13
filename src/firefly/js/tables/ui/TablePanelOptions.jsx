@@ -4,7 +4,7 @@
 
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {Button, Stack, ToggleButtonGroup, Typography} from '@mui/joy';
+import {Box, Button, Stack, ToggleButtonGroup, Typography} from '@mui/joy';
 import {badgeClasses} from '@mui/joy/Badge';
 
 import {cloneDeep, get, isEmpty} from 'lodash';
@@ -47,16 +47,16 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
     const label = () => {
         if (!sql) return advFilterName;
         return (
-            <div style={{display: 'inline-flex'}}>
-                <div style={{marginRight: 10}}>{advFilterName}</div>
-                <div title='Advanced filter applied.  Click on tab to view details.'
-                    style={{
+            <Stack direction='row' spacing={1/2}>
+                {advFilterName}
+                <Box title='Advanced filter applied.  Click on tab to view details.'
+                    sx={{
                         position: 'absolute',
                         right: 2,
                         borderLeft: '10px solid transparent',
                         borderTop: '10px solid rgb(71, 138, 163)'
                     }}/>
-            </div>
+            </Stack>
         );
     };
 
@@ -154,6 +154,7 @@ function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChang
                 <Typography level='title-md'>Show/Hide:</Typography>
                 <ToggleButtonGroup
                     variant='outlined'
+                    size='sm'
                     value={value}
                     onChange={(ev, val) => {
                         setValue(val);

@@ -10,12 +10,12 @@ export const InputAreaFieldView= forwardRef( ({ visible=true,label,tooltip,value
                                                   button, valid=true,onChange, onBlur,
                                                   showWarning=true, connectedMarker=false,
                                                  placeholderHighlight,
-                                                  message='', type, placeholder, idName='', sx, slotProps,
-                                                  orientation='vertical', minRows=2, maxRows=4 }, ref ) => {
+                                                  message='', type, placeholder, sx, slotProps,
+                                                  orientation='vertical', minRows=2, maxRows}, ref ) => {
     const connectContext= useContext(ConnectionCtx);
     if (!visible) return null;
 
-    const tooltipProps = inputFieldTooltipProps(valid, message, showWarning, tooltip);
+    const tooltipProps = inputFieldTooltipProps({valid, message, showWarning, tooltip});
     const connectedStyle= connectedMarker||connectContext.controlConnected ? {bgcolor:'yellow'} : {};
 
     return (
@@ -28,7 +28,6 @@ export const InputAreaFieldView= forwardRef( ({ visible=true,label,tooltip,value
                               maxRows={maxRows}
                               slotProps={{
                                   textarea: {
-                                      id: idName,
                                       spellCheck: false,
                                       value: inputFieldValue(type, value),
                                       onChange: (ev) => onChange?.(ev),
@@ -65,7 +64,6 @@ InputAreaFieldView.propTypes= {
     maxRows: PropTypes.number,
     placeholder: PropTypes.string,
     connectedMarker: bool,
-    idName: PropTypes.string,
     orientation: PropTypes.string,
     slotProps: shape({
         control: object,

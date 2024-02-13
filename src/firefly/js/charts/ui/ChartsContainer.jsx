@@ -17,6 +17,7 @@ import {CloseButton} from '../../ui/CloseButton.jsx';
 import {ChartPanel, ChartToolbar} from './ChartPanel.jsx';
 import {MultiChartViewer, getActiveViewerItemId} from './MultiChartViewer.jsx';
 import {PinnedChartContainer} from 'firefly/charts/ui/PinnedChartContainer.jsx';
+import {Stack} from '@mui/joy';
 
 
 
@@ -193,9 +194,9 @@ ActiveChartsPanel.propTypes = ChartsContainer.propTypes;
 function ExpandedView(props) {
     const {closeable, chartId, viewerId} = props;
     return (
-        <div style={{display: 'flex', flexDirection: 'column', height: '100%'}}>
+        <Stack height={1}>
             <ChartToolbarExt {...{chartId, closeable, viewerId}}/>
-            <div style={{position: 'relative', flexGrow: 1}}>
+            <Stack flexGrow={1}>
                 <ChartPanel {...{
                     key: 'expanded-'+chartId,
                     expandedMode: true,
@@ -203,8 +204,8 @@ function ExpandedView(props) {
                     chartId,
                     showToolbar: false
                 }}/>
-            </div>
-        </div>
+            </Stack>
+        </Stack>
     );
 }
 

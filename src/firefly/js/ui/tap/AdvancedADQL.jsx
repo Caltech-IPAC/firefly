@@ -3,15 +3,14 @@
  */
 
 import {Box, Chip, Divider, Stack, Switch, Tooltip, Typography} from '@mui/joy';
-import React, {useState, useRef, useEffect, Fragment, useContext, useCallback} from 'react';
+import React, {useState, useRef, useEffect, useContext, useCallback} from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import SplitPane from 'react-split-pane';
 import Tree from 'rc-tree';
 import 'rc-tree/assets/index.css';
-import {cloneDeep, defer, isArray, isObject, groupBy, uniqBy, isUndefined} from 'lodash';
+import {cloneDeep, defer, isArray, isObject, groupBy, uniqBy} from 'lodash';
 import {getSizeAsString, updateSet} from '../../util/WebUtil.js';
-import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 import {FieldGroupCtx} from '../FieldGroup.jsx';
 import {ExtraButton} from '../FormPanel.jsx';
 
@@ -37,7 +36,6 @@ import '../../externalSource/prismLive/prism-live.js';
 import '../../externalSource/prismLive/prism.css';
 import '../../externalSource/prismLive/prism-live.css';
 
-import INFO_ICO from 'html/images/icons-2014/24x24_Info.png';
 import JOIN_ICO from 'html/images/join_16x16.png';
 const joinIcon = () => <img src={JOIN_ICO} style={{marginRight:2}}/> ;
 
@@ -282,10 +280,8 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                                             tooltip='ADQL to submit to the selected TAP service'
                                             slotProps={{
                                                 input: {sx: {bgcolor: '#f5f2f0'}}, //the color defined on prism.css L59
-                                                textArea: {className: 'prism-live language-sql'}
+                                                textArea: {className: 'prism-live language-sql', id: 'adqlEditor'}
                                             }}
-                                            idName='adqlEditor'
-                                            maxRows={null} //to prevent default value getting assigned, we need no max limit on rows
                                         />
                                         <Typography level='body-sm' sx={{mt:-2}}>Type ADQL text; you can use the Schema Browser on the left to insert table and column names.</Typography>
                                     </Stack>

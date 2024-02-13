@@ -10,7 +10,7 @@ import ArrowBack from '@mui/icons-material/ArrowBackIosNew';
 export function CloseButton({text='Close', tip='Close', style={}, onClick}) {
     return (
         <Tooltip title={tip} style={style}>
-            <Button {...{color:'neutral', size:'sm', variant:'solid', onClick, sx:{whiteSpace:'nowrap',pl:0},
+            <Button {...{color:'neutral', size:'sm', variant:'solid', height:'1rem', onClick, sx:{whiteSpace:'nowrap',pl:0},
                     startDecorator:<ArrowBack/>}}>
                 {text}
             </Button>

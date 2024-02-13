@@ -4,7 +4,7 @@
 
 import React, {useCallback, useEffect} from 'react';
 import {Box, Typography} from '@mui/joy';
-import PropTypes from 'prop-types';
+import PropTypes, {func} from 'prop-types';
 import {Column, Table} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, set, isEmpty, isUndefined, omitBy, pick} from 'lodash';
@@ -32,7 +32,7 @@ const BasicTableViewInternal = React.memo((props) => {
 
     const {width, height} = props.size;
     const {columns, data, hlRowIdx, renderers, selectInfoCls, callbacks, rowHeight, rowHeightGetter, showHeader=true,
-            error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler, cellRenderers} = props;
+            error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler, cellRenderers, onRowDoubleClick} = props;
 
     const uiStates = getTableUiById(tbl_ui_id) || {};
     const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy, showTypes, showFilters, showUnits, filterInfo,
@@ -122,6 +122,7 @@ const BasicTableViewInternal = React.memo((props) => {
                        isColumnResizing={false}
                        onColumnResizeEndCallback={onColumnResize}
                        onRowClick={(e, index) => callbacks.onRowHighlight && callbacks.onRowHighlight(index)}
+                       onRowDoubleClick={onRowDoubleClick}
                        rowClassNameGetter={rowClassNameGetter}
                        onScrollEnd={onScrollEnd}
                        scrollTop={adjScrollTop}
@@ -176,6 +177,7 @@ BasicTableViewInternal.propTypes = {
     error:  PropTypes.string,
     size: PropTypes.object.isRequired,
     highlightedRowHandler: PropTypes.func,
+    onRowDoubleClick: PropTypes.func,
     renderers: PropTypes.objectOf(
         PropTypes.shape({
             cellRenderer: PropTypes.func,

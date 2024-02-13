@@ -26,7 +26,6 @@ import PanIco from 'html/images/icons-2014/pan.png';
 import SelectIco from 'html/images/icons-2014/select.png';
 import TurntableIco from 'html/images/turntable-tmp.png';
 import OrbitalIco from 'html/images/orbital-tmp.png';
-import ClearSelectIco from 'html/images/icons-2014/24x24_CheckmarkOff_Circle.png';
 import ApplySelectIco from 'html/images/icons-2014/24x24_Checkmark.png';
 import ApplyFilterIco from 'html/images/icons-2014/24x24_FilterAdd.png';
 import ResetZoomIco from 'html/images/icons-2014/Zoom1x-24x24-tmp.png';
@@ -78,7 +77,7 @@ function ScatterToolbar({chartId, expandable}) {
         <Stack direction='row' alignItems='center'>
             <ActiveTraceSelect {...{chartId, activeTrace}}/>
             <SelectionPart {...{chartId, hasFilter, activeTrace, hasSelection, hasSelected, tbl_id}}/>
-            <DragModePart {...{chartId, tbl_id, dragmode, hasSelectionMode}}/>
+            <DragModePart {...{chartId, tbl_id, dragmode, hasSelectionMode, sx:{mx:1}}}/>
             <ResetZoomBtn {...{chartId}} />
             <SaveBtn {...{chartId}} />
             <RestoreBtn {...{chartId}} />
@@ -145,10 +144,10 @@ function BasicToolbar({chartId, expandable}) {
     const help_id = getChartData(chartId)?.help_id;
 
     const selectionPart = (
-        <Stack direction='row' spacing={1/2}>
+        <>
             {hasFilter && <ClearFilter {...{tbl_id}} /> }
             {hasSelection && <FilterSelection {...{chartId}} />}
-        </Stack>
+        </>
     );
 
     return (
@@ -157,7 +156,7 @@ function BasicToolbar({chartId, expandable}) {
             {showDragPart &&
                 <DragModePart {...{chartId, tbl_id, dragmode, hasSelectionMode: showSelectionPart, is3d}}/>}
             {showSelectionPart && selectionPart}
-            {showDragPart && <ResetZoomBtn style={{marginLeft: 10}} {...{chartId}} />}
+            {showDragPart && <ResetZoomBtn {...{chartId}} />}
             <SaveBtn {...{chartId}} />
             <RestoreBtn {...{chartId}} />
             {tbl_id && <FiltersBtn {...{chartId}} />}
@@ -179,33 +178,25 @@ function SelectionPart({chartId, hasFilter, hasSelection, hasSelected, tbl_id}) 
             && !get(getChartData(chartId), `data.${activeTrace}.type`, '').includes('heatmap');
     }
     return (
-        <Stack direction='row' spacing={1/2}>
+        <>
             {hasFilter    && <ClearFilter {...{tbl_id}} />}
             {hasSelected  && <ClearSelected {...{chartId}} />}
             {hasSelection && <FilterSelection {...{chartId}} />}
-            {showSelectSelection && <SelectSelection style={{marginRight:10}} {...{chartId}} />}
-        </Stack>
+            {showSelectSelection && <SelectSelection {...{chartId}} />}
+        </>
     );
 }
 
-function DragModePart({chartId, tbl_id, dragmode, hasSelectionMode, is3d}) {
+function DragModePart({chartId, tbl_id, dragmode, hasSelectionMode, is3d, sx}) {
 
     return (
-        <Stack direction='row' spacing={1/2}>
-            <Divider orientation='vertical'/>
-            <ToggleButtonGroup value={dragmode} variant='plain' size='sm'
-                               sx={{
-                                   mx:1/2,
-                                   '--ButtonGroup-connected': '0'
-                               }}>
-                <ZoomBtn {...{chartId}} />
-                <PanBtn {...{chartId}} />
-                {is3d && <OrbitBtn {...{chartId}} />}
-                {is3d && <TurntableBtn {...{chartId}} />}
-                {tbl_id && hasSelectionMode && <SelectBtn {...{chartId}} />}
-            </ToggleButtonGroup>
-            <Divider orientation='vertical'/>
-        </Stack>
+        <ToggleButtonGroup value={dragmode} variant='outlined' size='sm' sx={sx}>
+            <ZoomBtn {...{chartId}} />
+            <PanBtn {...{chartId}} />
+            {is3d && <OrbitBtn {...{chartId}} />}
+            {is3d && <TurntableBtn {...{chartId}} />}
+            {tbl_id && hasSelectionMode && <SelectBtn {...{chartId}} />}
+        </ToggleButtonGroup>
     );
 }
 

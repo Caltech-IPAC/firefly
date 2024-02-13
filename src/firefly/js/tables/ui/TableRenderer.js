@@ -36,7 +36,7 @@ import {TBL_CLZ_NAME} from './TablePanel.jsx';
 import infoIcon from 'html/images/info-icon.png';
 import {dd2sex} from '../../visualize/CoordUtil.js';
 
-export const DDzIndex = 110;   // 110 is the z-index of a dropdown
+export const DDzIndex = 111;   // 110 is the z-index of a dropdown
 
 const html_regex = /<.+>|&.+;/;           // A rough detection of html elements or entities
 const filterStyle = {width: '100%', boxSizing: 'border-box'};
@@ -228,11 +228,10 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
     );
 }
 
-export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, style, sx}) {
-    sx = {height: 1, justifyContent: 'space-around', ...style, ...sx};
+export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, sx}) {
     return (
-        <Stack alignItems='center' sx={sx}>
-            <Checkbox size='sm' sx={{mt:'2px'}}
+        <Stack alignItems='center' height={1} justifyContent='space-between' pt='2px' sx={sx}>
+            <Checkbox size='sm'
                 tabIndex={-1}
                 checked={checked}
                 onChange={(e) => onSelectAll(e.target.checked)}/>

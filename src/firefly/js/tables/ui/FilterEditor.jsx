@@ -5,7 +5,7 @@
 import React, {PureComponent, useEffect, useRef} from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import {Button, Link, Sheet, Stack, Typography} from '@mui/joy';
+import {Box, Button, Link, Sheet, Stack, Typography} from '@mui/joy';
 import {isEmpty, cloneDeep, get} from 'lodash';
 import SplitPane from 'react-split-pane';
 import Tree, { TreeNode } from 'rc-tree';
@@ -50,29 +50,24 @@ export class FilterEditor extends PureComponent {
         const renderers = makeRenderers(callbacks.onFilter, tbl_id);
         
         return (
-            <div style={{height: '100%', display: 'flex', flexDirection: 'column'}}>
-                <div style={{flexGrow: 1, position: 'relative'}}>
-                    <div style={{position: 'absolute', top:0, bottom:5, left:0, right:0, backgroundColor: 'white'}}>
-                        <BasicTableViewWithConnector
-                            columns={cols}
-                            rowHeight={24}
-                            selectable={selectable}
-                            {...{data, selectInfoCls, sortInfo, callbacks, renderers, tbl_ui_id: `${tbl_ui_id}_FilterEditor`}}
-                        />
-                    </div>
-                </div>
+            <Stack spacing={1} flexGrow={1} overflow='hidden'>
+                <BasicTableViewWithConnector
+                    columns={cols}
+                    rowHeight={26}
+                    selectable={selectable}
+                    {...{data, selectInfoCls, sortInfo, callbacks, renderers, tbl_ui_id: `${tbl_ui_id}_FilterEditor`}}
+                />
                 <InputAreaField
                     value={filterInfo}
                     label='Filters:'
                     validator={FilterInfo.validator.bind(null,columns)}
                     tooltip={FILTER_TTIPS}
                     minRows={3}
-                    maxRows={3}
                     onChange={callbacks.onAllFilter}
                     actOn={['blur', 'enter']}
                     showWarning={false}
                 />
-            </div>
+            </Stack>
         );
     }
 }
@@ -244,7 +239,7 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange, style={}, samples, 
     };
 
     const onNodeClick = (skeys, {node}) => {
-        const textArea = get(ReactDOM.findDOMNode(sqlEl.current), 'firstChild');
+        const textArea = document.getElementById('advFilterInput');
         const key = get(node, 'props.eventKey');
         insertAtCursor(textArea, ` "${key}" `, sqlKey, groupKey);
     };
@@ -261,11 +256,11 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange, style={}, samples, 
         <SplitPane split='vertical' defaultSize={200} style={{display: 'inline-flex', ...style}}>
             <SplitContent style={{display: 'flex', flexDirection: 'column'}}>
                 <Typography level='title-md'>Columns (sorted)</Typography>
-                <div  style={{overflow: 'auto', flexGrow: 1}}>
+                <Box  style={{overflow: 'auto', flexGrow: 1}}>
                     <Tree defaultExpandAll showLine onSelect={onNodeClick} icon={iconGen} >
                         {treeNodes}
                     </Tree>
-                </div>
+                </Box>
             </SplitContent>
             <SplitContent style={{overflow: 'auto'}}>
                 <Stack height={1} spacing={1} overflow='hidden'>
@@ -291,13 +286,14 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange, style={}, samples, 
                     </Stack>
                     <InputAreaFieldConnected
                         ref={sqlEl}
-                        minRows={7}
-                        maxRows={7}
                         validator={FilterInfo.validator.bind(null,columns)}
                         groupKey={groupKey}
                         fieldKey={sqlKey}
                         tooltip='Additional filter to apply to the table'
                         placeholder={placeholder}
+                        slotProps={{
+                            textArea: {id: 'advFilterInput'}
+                        }}
                     />
                     {error && <li style={{color: 'red', fontStyle: 'italic'}}>{error}</li>}
                     <Stack spacing={1} overflow='auto'>

@@ -50,7 +50,7 @@ export function MultiChartToolbarExpanded({viewerId, chartId, tbl_group, expanda
     activeItemId = activeItemId || getViewer(getMultiViewRoot(), viewerId)?.customData?.activeItemId;
 
     return (
-        <Stack direction='row' justifyContent='space-between'>
+        <Stack direction='row' justifyContent='space-between' alignItems='center'>
             {closeable && <CloseButton onClick={() => closeExpandedChart(viewerId)}/>}
             <MultiChartExt {...{viewerId, layoutType, activeItemId}}/>
             <ChartToolbar {...{chartId, tbl_group, expandable, expandedMode, viewerId}}/>

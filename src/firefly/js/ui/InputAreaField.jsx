@@ -38,6 +38,5 @@ InputAreaFieldConnected.propTypes = {
         value: PropTypes.string,
     }),
     additionalClasses: PropTypes.string,
-    idName: PropTypes.string,
 };
 
