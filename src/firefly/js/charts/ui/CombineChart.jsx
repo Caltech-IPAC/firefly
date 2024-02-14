@@ -17,7 +17,7 @@ import {getCellValue, getColumnValues, getSelectedDataSync, getTblById} from '..
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getGroupFields} from '../../fieldGroup/FieldGroupUtils.js';
 import {getActiveViewerItemId} from './MultiChartViewer.jsx';
-import {CollapsibleGroup, CollapsibleItem, CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
+import {CollapsibleGroup, CollapsibleItem} from '../../ui/panel/CollapsiblePanel.jsx';
 import {dispatchTableAddLocal} from '../../tables/TablesCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {showInfoPopup, showPopup} from '../../ui/PopupUtil.jsx';
@@ -26,8 +26,12 @@ import {canUnitConv} from '../dataTypes/SpectrumUnitConversion.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {CombineChartButton} from 'firefly/visualize/ui/Buttons.jsx';
-import {Button, Stack, Typography} from '@mui/joy';
+import {Button, FormControl, FormLabel, Stack, Switch, Typography} from '@mui/joy';
 import CompleteButton from 'firefly/ui/CompleteButton.jsx';
+import {getColValStats} from 'firefly/charts/TableStatsCntlr';
+import {quoteNonAlphanumeric} from 'firefly/util/expr/Variable';
+import {ValidationField} from 'firefly/ui/ValidationField';
+import Validate from 'firefly/util/Validate';
 
 const POPUP_ID = 'CombineChart-popup';
 
@@ -111,6 +115,7 @@ function createTableModel(showAll, tbl_id) {
 const CombineChartDialog = ({onComplete}) => {
 
     const [showAll, setShowAll] = useState(false);
+    const [doCascading, setDoCascading] = useState(false);
 
     const tbl_id = 'combinechart-tbl-id';
     const groupKey = 'combinechart-props';
@@ -126,6 +131,8 @@ const CombineChartDialog = ({onComplete}) => {
         const props = Object.fromEntries(
             Object.entries(fields).map(([k,v]) => [k, v.value])
         );
+        props['doCascading'] = doCascading;
+
         if (selChartIds?.length < 1) {
             showInfoPopup('You must select at least one chart to combine with');
         } else {
@@ -154,16 +161,13 @@ const CombineChartDialog = ({onComplete}) => {
                     <span className='CombineChart__hints'>({showAllHint})</span>
                 </div>
                 ----------*/}
-                <Stack spacing={1} overflow='auto' flexGrow={1}>
+                <Stack spacing={2} overflow='auto' flexGrow={1}>
                     <Stack height={125}>
                         <TablePanel {...{tbl_id, showToolbar:false, showUnits:false, showTypes:false}}/>
                     </Stack>
-
                     <Title initialState={{value: 'combined'}}/>
-                    <Typography level='title-sm'>Choose trace names below.</Typography>
-                    <CollapsibleGroup>
-                        <SelChartProps {...{tbl_id, groupKey}}/>
-                    </CollapsibleGroup>
+                    <CascadePlots {...{doCascading, setDoCascading}}/>
+                    <SelChartProps {...{tbl_id, groupKey, showOrder: doCascading}}/>
                 </Stack>
 
                 <Stack direction='row' justifyContent='space-between' alignItems='center'>
@@ -178,9 +182,33 @@ const CombineChartDialog = ({onComplete}) => {
     );
 };
 
+
+const CascadePlots = ({doCascading, setDoCascading}) => {
+    const paddingValidator = (val) => Validate.floatRange(-1,1,0,'Cascade Padding', val, false);
+    return (
+        <Stack spacing={1}>
+            <FormControl orientation={'horizontal'} sx={{'.MuiSwitch-root': {margin: 0}}}>
+                <FormLabel>Apply Cascading: </FormLabel>
+                <Switch checked={doCascading} onChange={(e)=>setDoCascading(e.target.checked)}/>
+            </FormControl>
+            {doCascading &&
+                <Stack spacing={.5} pl={1}>
+                    <Typography>Y-axis: (y - min(y)) / (max(y) - min(y)) + (<b>i</b> * <b>P</b>)</Typography>
+                    <ValidationField fieldKey={'cascadePadding'}
+                                     initialState={{value: 1}}
+                                     label='Padding (P):'
+                                     orientation={'horizontal'}
+                                     validator={paddingValidator}
+                    />
+                </Stack>
+            }
+        </Stack>
+    );
+};
+
 let totalTraces = 0;
 
-const SelChartOpt = ({chartId, groupKey, ctitle, traces, idx}) => {
+const SelChartOpt = ({chartId, groupKey, header, traces, idx}) => {
     const key = `cOpt-${idx}`;
 
     const TraceOpt = ({traceNum, title}) => {
@@ -191,7 +219,7 @@ const SelChartOpt = ({chartId, groupKey, ctitle, traces, idx}) => {
     };
     const isOpen = !isSpectralOrder(chartId);
     return (
-        <CollapsibleItem componentKey={key} header={ctitle} isOpen={isOpen}>
+        <CollapsibleItem componentKey={key} header={header} isOpen={isOpen}>
             <Stack spacing={1}>
                 {traces.map((title, idx) => <TraceOpt {...{key:idx, traceNum: totalTraces++, title}}/>)}
             </Stack>
@@ -199,7 +227,7 @@ const SelChartOpt = ({chartId, groupKey, ctitle, traces, idx}) => {
     );
 };
 
-function SelChartProps ({tbl_id, groupKey}) {
+function SelChartProps ({tbl_id, groupKey, showOrder}) {
 
     useStoreConnector(() => getTblById(tbl_id)?.selectInfo);     // rerender when selectInfo changes
     const selChartId = getSelChartId();
@@ -221,17 +249,24 @@ function SelChartProps ({tbl_id, groupKey}) {
     }
 
     return (
-        <>
-            {
-                charts.map(([chartId, ctitle, traces], idx) => {
-                    if (idx === 0) ctitle = <Typography level='title-sm'>{ctitle}</Typography>;
-
-                    return <SelChartOpt key={idx} {...{chartId, groupKey, ctitle, traces, idx}}/>;
-                })
-            }
-        </>
+        <Stack spacing={1}>
+            <Typography level='title-sm'>Choose trace names below:</Typography>
+            <CollapsibleGroup>
+                {
+                    charts.map(([chartId, ctitle, traces], idx) => {
+                        const header = (
+                            <Stack direction='row' spacing={1} alignItems='baseline'>
+                                <Typography {...(idx===0 && {fontWeight: 'var(--joy-fontWeight-lg)'})}>{ctitle}</Typography>
+                                {showOrder && <Typography level='body-sm'>(i={idx})</Typography>}
+                            </Stack>
+                        );
+                        return <SelChartOpt key={idx} {...{chartId, groupKey, header, traces, idx}}/>;
+                    })
+                }
+            </CollapsibleGroup>
+        </Stack>
     );
-};
+}
 
 function getCombineChartParams() {
     return new Promise((resolve) => {
@@ -253,6 +288,9 @@ function combineChart(chartIds, props={}) {
     const baseTraceCnt = baseChartData?.data?.length ?? 0;
 
     baseChartData?.tablesources?.forEach((ts) => Reflect.deleteProperty(ts, '_cancel'));
+
+    const {doCascading, cascadePadding, ...plottingProps} = props;
+    doCascading && applyCascadingAlgo(baseChartId, baseChartData, 0, cascadePadding);
 
     for (let i = 1; i < chartIds.length; i++) {
         const chartId = chartIds[i];
@@ -302,6 +340,8 @@ function combineChart(chartIds, props={}) {
             });
         }
 
+        doCascading && applyCascadingAlgo(chartId, chartData, i, cascadePadding);
+
         // merge selected chart data into new chart
         data         && baseChartData.data.push(...data);
         fireflyData  && baseChartData.fireflyData.push(...fireflyData);
@@ -312,12 +352,12 @@ function combineChart(chartIds, props={}) {
         if (idx >= baseTraceCnt) {
             // apply defaults settings to newly created traces
             Object.entries(getNewTraceDefaults(null, trace?.type, idx))
-                .forEach(([k,v]) => !props[k] && (props[k] = v));
+                .forEach(([k,v]) => !plottingProps[k] && (plottingProps[k] = v));
         }
     });
 
     // override new baseChartData using lodash.set fashion
-    Object.entries(props).forEach(([key, val]) => {
+    Object.entries(plottingProps).forEach(([key, val]) => {
         set(baseChartData, key, val);
     });
 
@@ -354,6 +394,24 @@ function doUnitConversion({chartId, chartData, axisType, to}) {
         }
     }
     return unit;
+}
+
+function applyCascadingAlgo(chartId, chartData, idx, padding) {
+    const offset = idx * padding;
+
+    // check if yMapping of all the traces is same before applying algorithm
+    const yMappings = chartData?.tablesources?.map((tableSource)=>tableSource?.mappings?.y);
+    if (!yMappings || yMappings.length < 1 || !yMappings.every((y) => y===yMappings[0])) return;
+    const yColName = quoteNonAlphanumeric(yMappings[0]);
+
+    const colValStats = getColValStats(getTblIdFromChart(chartId));
+    const {min=0, max=1} = colValStats.find((col) => col?.name===yMappings[0]);
+
+    // algorithm is applied to all the traces of a chart
+    chartData?.data.forEach((_, traceNum) => {
+        //wrap min, max, offset in parentheses to handle negative values
+        set(chartData, ['data', traceNum, 'y'], `tables::(${yColName}-(${min})) / ((${max})-(${min})) + (${offset})`);
+    });
 }
 
 /**
