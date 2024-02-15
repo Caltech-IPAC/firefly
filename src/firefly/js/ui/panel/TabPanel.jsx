@@ -8,7 +8,8 @@ import {
     Tab as JoyTab,
     Tabs as JoyTabs,
     TabPanel as JoyTabPanel,
-    TabList, ListItemDecorator, Box, Chip, Stack, Sheet} from '@mui/joy';
+    TabList, ListItemDecorator, Box, Chip, Stack, Sheet, ChipDelete, Tooltip
+} from '@mui/joy';
 import {tabClasses} from '@mui/joy/Tab';
 import sizeMe from 'react-sizeme';
 import {omit, isString, uniqueId, pick, isNumber} from 'lodash';
@@ -360,11 +361,14 @@ function getHeaderFromTab({name, value, label, startDecorator, removable, onTabR
             )}
             {label}
             {removable &&
-                <Chip variant='soft'
-                      onClick={(e) => {
-                          onTabRemove && onTabRemove(name);
-                          e.stopPropagation && e.stopPropagation();
-                }}>x</Chip>
+                <Tooltip title='Remove Tab'>
+                    <ChipDelete sx={{'--Chip-deleteSize': '1.2rem'}}
+                                onClick={(e) => {
+                                    onTabRemove && onTabRemove(name);
+                                    e.stopPropagation?.();
+                                }}
+                    />
+                </Tooltip>
             }
         </JoyTab>
     );

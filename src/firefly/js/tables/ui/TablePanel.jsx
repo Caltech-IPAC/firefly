@@ -3,7 +3,7 @@
  */
 
 import React, {useEffect} from 'react';
-import {Box, Stack, Typography, Sheet, Chip, Divider} from '@mui/joy';
+import {Box, Stack, Typography, Sheet, Divider, ChipDelete, Tooltip} from '@mui/joy';
 import PropTypes, {object, shape} from 'prop-types';
 import {defer, truncate, get, set} from 'lodash';
 import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
@@ -68,7 +68,7 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
         showToolbar, showTitle, showMetaInfo,
         columns, showHeader, showUnits, allowUnits, showTypes, showFilters, textView,
         error, startIdx, hlRowIdx, currentPage, selectInfo, showMask,
-        filterInfo, sortInfo, data, backgroundable, highlightedRowHandler, cellRenderers} = tblState;
+        filterInfo, sortInfo, data, backgroundable, highlightedRowHandler, cellRenderers, onRowDoubleClick} = tblState;
 
     const connector = makeConnector(tbl_id, tbl_ui_id);
 
@@ -108,7 +108,7 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
                             { ...{columns, data, hlRowIdx, rowHeight, rowHeightGetter, selectable, showUnits,
                                 allowUnits, showTypes, showFilters, selectInfoCls, filterInfo, sortInfo, textView,
                                 showMask, currentPage, showHeader, renderers, tbl_ui_id, highlightedRowHandler,
-                                startIdx, cellRenderers} }
+                                startIdx, cellRenderers, onRowDoubleClick} }
                         />
                     </Stack>
                 </Stack>
@@ -120,7 +120,7 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
 function showTableOptionDialog(onChange, onOptionReset, clearFilter, tbl_ui_id, tbl_id) {
 
     const content = (
-         <Stack height={450} width={650} overflow='hidden' sx={{resize:'both', minWidth:550, minHeight:200}}>
+         <Stack height={550} width={700} overflow='hidden' sx={{resize:'both', minWidth:550, minHeight:200}}>
                <TablePanelOptions
                   onChange={onChange}
                   onOptionReset={onOptionReset}
@@ -156,7 +156,7 @@ function showTablePropSheetDialog(tbl_id) {
     const {title=''} = getTblById(tbl_id) || {};
     showOptionsPopup({show: false});   // hide the dialog if one is currently opened
     const content = (
-        <Stack height={450} width={650} overflow='hidden' sx={{resize:'both', minWidth:550, minHeight:200}}>
+        <Stack height={450} width={650} overflow='hidden' sx={{resize:'both', minWidth:'40rem', minHeight:'15rem'}}>
           <PropertySheetAsTable tbl_id={tbl_id}/>
         </Stack>
     );
@@ -279,10 +279,12 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
         return (
             <SettingsButton tip={TT_OPTIONS}
                             onClick={showOptionsDialog}
-                            iconButtonSize='30px'
+                            iconButtonSize='25px'
                             slotProps={{
                                 root: {
-                                    sx: {position:'absolute', top:-4, right:-4, zIndex: DDzIndex},
+                                    sx: {position:'absolute', top:-1, right:-2, zIndex: 2,
+                                        '& button': {p:0}
+                                    },
                                     component: Sheet,
                                     variant: 'plain'
                                 }
@@ -377,10 +379,9 @@ function Title({title, removable, tbl_id}) {
         <Stack direction='row' alignSelf='start' sx={{ml:1/4}}>
             <Typography level='body-sm' noWrap title={title}>{truncate(title)}</Typography>
             {removable &&
-            <Chip variant='soft'
-                 title='Remove Tab'
-                  onClick={() => dispatchTableRemove(tbl_id)}
-            >x</Chip>
+                <Tooltip title='Remove table'>
+                    <ChipDelete sx={{'--Chip-deleteSize': '1.2rem'}} onClick={() => dispatchTableRemove(tbl_id)}/>
+                </Tooltip>
             }
         </Stack>
     );

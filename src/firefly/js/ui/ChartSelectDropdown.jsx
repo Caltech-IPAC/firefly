@@ -2,114 +2,78 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent} from 'react';
-import PropTypes from 'prop-types';
-import {flux} from '../core/ReduxFlux.js';
-import * as TblUtil from '../tables/TableUtil.js';
-import * as TableStatsCntlr from '../charts/TableStatsCntlr.js';
-import {singleTraceUI, getNumericCols} from '../charts/ChartUtil.js';
+import React, {useEffect} from 'react';
+import {string} from 'prop-types';
+import {Stack, Typography} from '@mui/joy';
+
+import {getNumericCols} from '../charts/ChartUtil.js';
 import {ChartSelectPanel, CHART_ADDNEW} from './../charts/ui/ChartSelectPanel.jsx';
 import {getActiveViewerItemId} from '../charts/ui/MultiChartViewer.jsx';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 
 import CompleteButton from './CompleteButton.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
+import {useStoreConnector} from './SimpleComponent.jsx';
+import {getActiveTableId, getTblById} from '../tables/TableUtil.js';
+import {dispatchLoadTblStats, getColValStats} from '../charts/TableStatsCntlr.js';
 
 const dropdownName = 'ChartSelectDropDownCmd';
 
 
-function hideSearchPanel() {
-    dispatchHideDropDown();
-}
+export function ChartSelectDropdown({tblGroup}) {
 
-export class ChartSelectDropdown extends PureComponent {
+    const tblId = useStoreConnector(() => getActiveTableId(tblGroup));
 
-    constructor(props) {
-        super(props);
-        this.state = this.getNextState();
-    }
-
-    componentDidMount() {
-
-
-        const tblId = TblUtil.getActiveTableId(this.props.tblGroup);
-        const tblStatsData = tblId && flux.getState()[TableStatsCntlr.TBLSTATS_DATA_KEY][tblId];
-        const table= TblUtil.getTblById(tblId);
+    useEffect(() => {
+        const tblStatsData = getColValStats(tblId);
+        const table= getTblById(tblId);
         if (!tblStatsData && table) {
-            TableStatsCntlr.dispatchLoadTblStats(table['request']);
+            dispatchLoadTblStats(table['request']);
         }
 
+    }, [tblId]);
 
-
-        this.removeListener = flux.addListener(() => this.storeUpdate());
-        this.iAmMounted= true;
-    }
-
-    componentWillUnmount() {
-        this.iAmMounted= false;
-        this.removeListener && this.removeListener();
-    }
-
-    getNextState() {
-        const tblId = TblUtil.getActiveTableId(this.props.tblGroup);
-        const tblStatsData = tblId && flux.getState()[TableStatsCntlr.TBLSTATS_DATA_KEY][tblId];
-        return {tblId, tblStatsData};
-    }
-
-    storeUpdate() {
-        if (this.iAmMounted) {
-            const {tblId, tblStatsData} = this.getNextState();
-            if (tblId !== this.state.tblId || tblStatsData !== this.state.tblStatsData) {
-                this.setState(this.getNextState());
-            }
+    let noChartReason='';
+    if (tblId) {
+        const {tableData, totalRows}= getTblById(tblId);
+        if (!totalRows) {
+            noChartReason = 'empty table';
+        } else if (getNumericCols(tableData.columns).length < 1) {
+            noChartReason = 'the table has no numeric columns';
         }
+    } else {
+        noChartReason = 'no active table';
     }
 
-    render() {
-        const {tblId} = this.state;
-
-        let noChartReason='';
-        if (tblId) {
-            const {tableData, totalRows}= TblUtil.getTblById(tblId);
-            if (!totalRows) {
-                noChartReason = 'empty table';
-            } else if (getNumericCols(tableData.columns).length < 1) {
-                noChartReason = 'the table has no numeric columns';
-            }
-        } else {
-            noChartReason = 'no active table';
-        }
-
-        if (!noChartReason) {
-            return (
-                <ChartSelectPanel {...{
-                    tbl_id: tblId,
-                    chartId: getActiveViewerItemId(DEFAULT_PLOT2D_VIEWER_ID),
-                    chartAction: CHART_ADDNEW,
-                    hideDialog: ()=>dispatchHideDropDown()}}/>
-            );
-        } else {
-            const msg = `Charts are not available: ${noChartReason}.`;
-            return (
-                <div>
-                    <div style={{padding:20, fontSize:'150%'}}>{msg}</div>
-                    <CompleteButton style={{paddingLeft: 20, paddingBottom: 20}}
-                                    onSuccess={hideSearchPanel}
-                                    text = {'OK'}
-                    />
-                </div>
-            );
-        }
+    if (noChartReason) {
+        const msg = `Charts are not available: ${noChartReason}.`;
+        return (
+            <Stack flexGrow={1} spacing={4} alignItems='center' justifyContent='center'>
+                <Typography level='body-lg'>{msg}</Typography>
+                <CompleteButton onSuccess={hideSearchPanel} text = {'OK'}/>
+            </Stack>
+        );
     }
+
+    return (
+        <ChartSelectPanel {...{
+            tbl_id: tblId,
+            chartId: getActiveViewerItemId(DEFAULT_PLOT2D_VIEWER_ID),
+            chartAction: CHART_ADDNEW,
+            hideDialog: ()=>dispatchHideDropDown()}}/>
+    );
 }
 
 ChartSelectDropdown.propTypes = {
-    tblGroup: PropTypes.string, // if not present, default table group is used
-    name: PropTypes.oneOf([dropdownName])
+    tblGroup: string, // if not present, default table group is used
+    name: string
 };
-
 
 ChartSelectDropdown.defaultProps = {
     name: dropdownName
 };
+
+function hideSearchPanel() {
+    dispatchHideDropDown();
+}
 

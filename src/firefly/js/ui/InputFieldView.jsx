@@ -3,15 +3,15 @@ import React from 'react';
 import {bool, string, number, object, func, oneOfType, shape, element} from 'prop-types';
 
 
-export function inputFieldTooltipProps(valid, message, showWarning, tooltip) {
+export function inputFieldTooltipProps({valid, message, showWarning=true, tooltip}) {
     const showErrorTip= !valid && showWarning && message;
     const title= showErrorTip ?
         (
             <Stack direction='column'>
                 <Typography level='body-md' color={'danger'}> {message} </Typography>
-                <Typography level='body-md' color={'neutral'}> {tooltip} </Typography>
+                <Typography level='body-md' color={'neutral'} whiteSpace='pre'> {tooltip} </Typography>
             </Stack>
-        ) : tooltip && <div style={{whiteSpace:'pre'}}>{tooltip}</div>;
+        ) : tooltip && <Typography level='body-md' whiteSpace='pre'>{tooltip}</Typography>;
     const enterDelay = showErrorTip ? 700 : undefined;
     return {title, enterDelay};
 }
@@ -31,7 +31,7 @@ export function InputFieldView(props) {
     form = form || undefined;
 
     const currValue = inputFieldValue(type, value);
-    const tooltipProps = inputFieldTooltipProps(valid, message, showWarning, tooltip);
+    const tooltipProps = inputFieldTooltipProps({valid, message, showWarning, tooltip});
 
     return (
         <Stack {...{className:'ff-Input InputFieldView', sx}}>

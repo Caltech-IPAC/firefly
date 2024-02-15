@@ -17,7 +17,7 @@ import {getCellValue, getColumnValues, getSelectedDataSync, getTblById} from '..
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getGroupFields} from '../../fieldGroup/FieldGroupUtils.js';
 import {getActiveViewerItemId} from './MultiChartViewer.jsx';
-import {CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
+import {CollapsibleGroup, CollapsibleItem, CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
 import {dispatchTableAddLocal} from '../../tables/TablesCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {showInfoPopup, showPopup} from '../../ui/PopupUtil.jsx';
@@ -26,6 +26,8 @@ import {canUnitConv} from '../dataTypes/SpectrumUnitConversion.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {CombineChartButton} from 'firefly/visualize/ui/Buttons.jsx';
+import {Button, Stack, Typography} from '@mui/joy';
+import CompleteButton from 'firefly/ui/CompleteButton.jsx';
 
 const POPUP_ID = 'CombineChart-popup';
 
@@ -137,30 +139,42 @@ const CombineChartDialog = ({onComplete}) => {
     const showAllHint = 'Show all charts even ones that may not combine well';
 
     return (
-        <div className='CombineChart__popup'>
-            {/*--- temporarily removed to only combine charts with similar axes
-            <div style={{display: 'inline-flex', alignItems: 'center'}}>
-                <label htmlFor='showAll'>Show All Charts: </label>
-                <input type='checkbox' id='showAll' title={showAllHint} value={showAll} onClick={(e) => setShowAll(e.target?.checked)}/>
-                <span className='CombineChart__hints'>({showAllHint})</span>
-            </div>
-            ----------*/}
-            <div className='CombineChart__popup--tbl'>
-                <TablePanel {...{tbl_id, showToolbar:false, showUnits:false, showTypes:false}}/>
-            </div>
-            <FieldGroup keepState={false} groupKey={groupKey} style={{overflow: 'hidden', display: 'flex', flexDirection: 'column'}}>
-                <Title initialState={{value: 'combined'}}/>
-                <div style={{marginTop:5}}>Choose trace names below.</div>
-                <div style={{overflow: 'auto', maxHeight: 400}}>
-                    <SelChartProps {...{tbl_id, groupKey}}/>
+        <FieldGroup groupKey={groupKey} sx={{
+            height: 500,
+            width: 700,
+            resize: 'both',
+            overflow: 'hidden',
+            position: 'relative'
+        }}>
+            <Stack spacing={1} height={1}>
+                {/*--- temporarily removed to only combine charts with similar axes
+                <div style={{display: 'inline-flex', alignItems: 'center'}}>
+                    <label htmlFor='showAll'>Show All Charts: </label>
+                    <input type='checkbox' id='showAll' title={showAllHint} value={showAll} onClick={(e) => setShowAll(e.target?.checked)}/>
+                    <span className='CombineChart__hints'>({showAllHint})</span>
                 </div>
-            </FieldGroup>
-            <div className='CombineChart__popup--tbar'>
-                <button type='button' className='button std' style={{marginRight: 5}} onClick={doApply}>Ok</button>
-                <button type='button' className='button std' onClick={closePopup}>Cancel </button>
-                <HelpIcon helpId={'chartarea.combineCharts'} style={{float: 'right', marginTop: 4}}/>
-            </div>
-        </div>
+                ----------*/}
+                <Stack spacing={1} overflow='auto' flexGrow={1}>
+                    <Stack height={125}>
+                        <TablePanel {...{tbl_id, showToolbar:false, showUnits:false, showTypes:false}}/>
+                    </Stack>
+
+                    <Title initialState={{value: 'combined'}}/>
+                    <Typography level='title-sm'>Choose trace names below.</Typography>
+                    <CollapsibleGroup>
+                        <SelChartProps {...{tbl_id, groupKey}}/>
+                    </CollapsibleGroup>
+                </Stack>
+
+                <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                    <Stack direction='row' spacing={1}>
+                        <CompleteButton onSuccess={doApply}>Ok</CompleteButton>
+                        <Button variant='soft' onClick={closePopup}>Cancel</Button>
+                    </Stack>
+                    <HelpIcon helpId={'chartarea.combineCharts'} style={{float: 'right', marginTop: 4}}/>
+                </Stack>
+            </Stack>
+        </FieldGroup>
     );
 };
 
@@ -173,19 +187,16 @@ const SelChartOpt = ({chartId, groupKey, ctitle, traces, idx}) => {
         const {Name} = basicOptions({activeTrace: traceNum, groupKey});
         if (!title || title.toLowerCase().startsWith('trace '))  title = `trace ${traceNum}`;
 
-        return (
-            <div className='FieldGroup__vertical'>
-                <Name initialState={{value: title}}/>
-            </div>
-        ) ;
+        return <Name initialState={{value: title}}/>;
     };
     const isOpen = !isSpectralOrder(chartId);
     return (
-        <CollapsiblePanel componentKey={key} header={ctitle} isOpen={isOpen}>
-            {traces.map((title, idx) => <TraceOpt {...{key:idx, traceNum: totalTraces++, title}}/>)}
-        </CollapsiblePanel>
+        <CollapsibleItem componentKey={key} header={ctitle} isOpen={isOpen}>
+            <Stack spacing={1}>
+                {traces.map((title, idx) => <TraceOpt {...{key:idx, traceNum: totalTraces++, title}}/>)}
+            </Stack>
+        </CollapsibleItem>
     );
-
 };
 
 function SelChartProps ({tbl_id, groupKey}) {
@@ -210,14 +221,15 @@ function SelChartProps ({tbl_id, groupKey}) {
     }
 
     return (
-        <React.Fragment>
+        <>
             {
                 charts.map(([chartId, ctitle, traces], idx) => {
-                    if (idx === 0) ctitle = <b>{ctitle}</b>;
+                    if (idx === 0) ctitle = <Typography level='title-sm'>{ctitle}</Typography>;
+
                     return <SelChartOpt key={idx} {...{chartId, groupKey, ctitle, traces, idx}}/>;
                 })
             }
-        </React.Fragment>
+        </>
     );
 };
 

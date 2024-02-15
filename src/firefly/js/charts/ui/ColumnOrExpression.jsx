@@ -14,11 +14,14 @@ import {showColSelectPopup} from './ColSelectView.jsx';
 import MAGNIFYING_GLASS from 'html/images/icons-2014/magnifyingGlass.png';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {FieldGroupCtx} from '../../ui/FieldGroup.jsx';
+import {AutoCompleteInput} from 'firefly/ui/AutoCompleteInput.jsx';
 
 
 export const EXPRESSION_TTIPS = `
 Supported operators: *, /, +, -.
-Supported functions: abs(x), acos(x), asin(x), atan(x), atan2(x,y), ceil(x), cos(x), degrees(x), exp(x), floor(x), lg(x), ln(x), log10(x), log(x), power(x,y), radians(x), round(x), sin(x), sqrt(x), tan(x).
+Supported functions: abs(x), acos(x), asin(x), atan(x), atan2(x,y), ceil(x), 
+cos(x), degrees(x), exp(x), floor(x), lg(x), ln(x), log10(x), log(x), power(x,y), 
+radians(x), round(x), sin(x), sqrt(x), tan(x).
 Example: sqrt(power(b,4) - 4*a*c) / (2*a), where a, b, c are column names.
 Non-alphanumeric column names should be quoted in expressions.`;
 
@@ -26,25 +29,9 @@ export const ColsShape = PropTypes.arrayOf(PropTypes.shape({
     name: PropTypes.string,
     units: PropTypes.string,
     type: PropTypes.string,
-    desc: PropTypes.string}));
+    desc: PropTypes.string
+}));
 
-/*
- * Split content into prior content and the last alphanumeric token in the text
- * @param {string} text - current content of suggest box
- * @return {Object} with token and priorContent properties
- */
-function parseSuggestboxContent(text) {
-    let token='', priorContent='';
-    if (text && text.length) {
-        // [entireMatch, firstCapture, secondCapture] or null
-        const match =  text.match(/^(.*[^A-Za-z\d_"]|)([A-Za-z\d_"]*)$/);
-        if (match && match.length === 3) {
-            priorContent = match[1];
-            token = match[2];
-        }
-    }
-    return {token, priorContent};
-}
 
 const DEFAULT_MSG= 'Can not be empty. Please provide value or expression';
 
@@ -68,44 +55,13 @@ export function getColValidator(cols, required=true, canBeExpression=true, messa
     };
 }
 
-function getRenderSuggestion(cols) {
-    return (idx)=>{
-        const colVal = cols[idx];
-        return colVal.name + (colVal.units && colVal.units !== 'null' ? ' ('+colVal.units+')' : ' ');
-    };
+function getOptions(cols, canBeExpression=true) {
+    return cols.map( ({name, label})=> ( { value: name, label: label || name} ));
 }
 
-function getSuggestions(cols, canBeExpression=true) {
-    // the suggestions are indexes in the colValStats array - it makes it easier to render then with labels
-    const allSuggestions = cols.map((colVal,idx)=>{return idx;});
-    return (val)=>{
-        if (!val) {  return []; }
-        let token = val;
-        if (canBeExpression) {
-            token = get(parseSuggestboxContent(val), 'token');
-            if (!token || val.endsWith(')')) {
-                return [];
-            }
-        }
-        const matches = allSuggestions.filter( (idx)=>{return cols[idx].name.toLowerCase().startsWith(token.toLowerCase());} );
-        return matches.length ? matches : [];
-    };
-}
-
-function getValueOnSuggestion(cols, canBeExpression=true) {
-    return (prevVal, idx) => {
-        const name = quoteNonAlphanumeric(cols[idx].name);
-        if (canBeExpression) {
-            const {priorContent} = parseSuggestboxContent(prevVal);
-            return priorContent + name;
-        } else {
-            return name;
-        }
-    };
-}
 
 export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,labelWidth=30,name,tooltip,
-                                       nullAllowed,readonly,initValue,inputStyle, slotProps, sx}) {
+                                       nullAllowed,readOnly,initValue, slotProps, sx}) {
     if (!colValStats) return <div/>;
     return (
         <ColumnFld
@@ -114,7 +70,7 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
             initValue={initValue || get(params, fldPath)}
             canBeExpression={true}
             tooltip={`Column or expression for ${tooltip ? tooltip : name}.${EXPRESSION_TTIPS}`}
-            {...{groupKey, label, labelWidth, name, nullAllowed, readonly, inputStyle, slotProps, sx}} />
+            {...{groupKey, label, labelWidth, name, nullAllowed, readOnly, slotProps, sx}} />
     );
 }
 
@@ -128,15 +84,14 @@ ColumnOrExpression.propTypes = {
     name: PropTypes.string.isRequired,
     tooltip: PropTypes.string,
     nullAllowed: PropTypes.bool,
-    readonly: PropTypes.bool,
+    readOnly: PropTypes.bool,
     initValue: PropTypes.string,
-    inputStyle: PropTypes.object,
     slotProps: PropTypes.object,
     sx: PropTypes.object,
 };
 
-export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidth, tooltip='Table column', slotProps, sx,
-                           name, nullAllowed, canBeExpression=false, inputStyle, readonly, helper, required, validator,
+export function ColumnFld({cols, groupKey, fieldKey, initValue, label, tooltip='Table column', slotProps, sx,
+                           name, nullAllowed, canBeExpression=false, readOnly, helper, required, validator,
                               placeholder, colTblId=null,onSearchClicked=null}) {
     const value = initValue || getFieldVal(groupKey, fieldKey);
     const colValidator = getColValidator(cols, !nullAllowed, canBeExpression);
@@ -147,49 +102,41 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, labelWidt
     let val = value;
     const onColSelected = (colName) => {
         val = colName;
-        dispatchValueChange({fieldKey, groupKey, value: colName, valid: true});
+        dispatchValueChange({fieldKey, groupKey, value: val, valid: true});
     };
-
-    const labelProps = (label || labelWidth) ? { label: label || '', labelWidth} : {};
 
     if (!helper) {
         helper = (
-            <div style={{display: 'inline-block', cursor: 'pointer', paddingLeft: 2, verticalAlign: 'top'}}
-                       title={`Select ${name} column`}
-                         onClick={() => {
-                             if (!onSearchClicked || onSearchClicked()) {
-                                 showColSelectPopup(cols, onColSelected, `Choose ${name}`, 'OK', val, false, colTblId);
-                             }
-                         }
-                       }>
-                <ToolbarButton icon={MAGNIFYING_GLASS}/>
-            </div>);
+            <ToolbarButton icon={MAGNIFYING_GLASS}
+                           tip={`Select ${name} column`}
+                           onClick={(e) => {
+                               if (!onSearchClicked || onSearchClicked()) {
+                                   showColSelectPopup(cols, onColSelected, `Choose ${name}`, 'OK', val, false, colTblId);
+                               }
+                           }}
+            />
+        );
     }
-
     return (
-        <SuggestBoxInputField
-            inline={true}
-            initialState= {{
-                value,
-                valid,
-                message,
-                validator: validator || colValidator,
-                tooltip,
-                nullAllowed
-            }}
-            getSuggestions={getSuggestions(cols, canBeExpression)}
-            renderSuggestion={getRenderSuggestion(cols)}
-            valueOnSuggestion={getValueOnSuggestion(cols,canBeExpression)}
-            fieldKey={fieldKey}
-            groupKey={groupKey}
-            {...labelProps}
-            inputStyle={inputStyle}
-            placeholder={placeholder}
-            readonly={readonly}
-            endDecorator= {!readonly && helper ? helper : undefined}
-            required={required}
-            slotProps={slotProps}
-            sx={sx}
+        <AutoCompleteInput fieldKey={fieldKey}
+                           groupKey={groupKey}
+                           size='sm'
+                           title={tooltip}
+                           label={label}
+                           options={getOptions(cols, canBeExpression)}
+                           initialState= {{
+                               value,
+                               valid,
+                               message,
+                               validator: validator || colValidator,
+                               tooltip,
+                               nullAllowed
+                           }}
+                           disableClearable={true}
+                           endDecorator={!readOnly && helper ? helper : undefined}
+                           {...{required,readOnly,placeholder,slotProps,sx}}
+                            slotProps={{tooltip: {enterNextDelay:1500}}}
+
         />
     );
 }
@@ -205,13 +152,13 @@ ColumnFld.propTypes = {
     tooltip: PropTypes.string,
     nullAllowed: PropTypes.bool,
     canBeExpression: PropTypes.bool,
-    inputStyle: PropTypes.object,
-    readonly: PropTypes.bool,
+    readOnly: PropTypes.bool,
     required: PropTypes.bool,
     helper: PropTypes.element,
     colTblId: PropTypes.string,
     onSearchClicked: PropTypes.func,
     placeholder: PropTypes.string,
+    validator: PropTypes.func,
     slotProps: shape({
         input: object,
         control: object,

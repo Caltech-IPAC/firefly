@@ -165,3 +165,7 @@ Overriding default fixed-table css
 }
 
 
+.public_fixedDataTableRow_columnsShadow {
+    background-image: none;
+    background-color: unset;
+}

@@ -252,7 +252,7 @@ function ObjectIDCol({objectCol, style={},cols, objectKey, openKey,
                 <Typography sx={{width:'14rem', pt:1, whiteSpace:'nowrap'}} component='div'>
                     {headerTitle}
                 </Typography>
-                <FieldGroupCollapsible header={posHeader} headerStyle={{paddingLeft:0}} contentStyle={{marginLeft:4}}
+                <FieldGroupCollapsible header={posHeader}
                                        initialState={{value:'open'}} fieldKey={openKey}>
                     {openPreMessage && <div style={{padding:'0 0 10px 0'}}>
                         {openPreMessage}
