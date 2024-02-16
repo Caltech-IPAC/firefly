@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Chip, Link, Stack, Typography} from '@mui/joy';
+import {Box, Chip, ChipDelete, Link, Sheet, Stack, Tooltip, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 
 import PropTypes from 'prop-types';
@@ -22,6 +22,7 @@ import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 
 import './ImageSelect.css';
 import infoIcon from 'html/images/info-icon.png';
+import {CollapseAll, ExpandAll} from 'firefly/visualize/ui/Buttons.jsx';
 
 
 const IMG_PREFIX = 'IMAGES_';
@@ -43,7 +44,7 @@ const PROJ_PREFIX = 'PROJ_ALL_';
  *      - the state of these boxes are persistent and is not affected by filtering
  */
 
-export function ImageSelect({imageMasterData, groupKey, multiSelect=true, addChangeListener, scrollDivId}) {
+export function ImageSelect({imageMasterData, header, groupKey, multiSelect=true, addChangeListener, scrollDivId}) {
 
     const [toolbarClz, setToolbarClz] = useState();
 
@@ -51,7 +52,7 @@ export function ImageSelect({imageMasterData, groupKey, multiSelect=true, addCha
         addChangeListener && addChangeListener('ImageSelect', fieldsReducer(imageMasterData, groupKey));
         if (scrollDivId) {
             document.getElementById(scrollDivId).onscroll = (e) => {
-                setToolbarClz((e.target.scrollTop > 285 ?  ' ImageSelect__toolbar--popup' : ''));
+                setToolbarClz((e.target.scrollTop > 260 ?  ' ImageSelect__toolbar--popup' : ''));
             };
         }
     }, [addChangeListener, imageMasterData, groupKey, scrollDivId]);
@@ -66,7 +67,7 @@ export function ImageSelect({imageMasterData, groupKey, multiSelect=true, addCha
 
     return (
         <Stack spacing={1}>
-            <ToolBar className={toolbarClz} {...{filteredImageData, groupKey, onChange: () => setLastMod(new Date().getTime())}}/>
+            <ToolBar className={toolbarClz} {...{filteredImageData, header, groupKey, onChange: () => setLastMod(new Date().getTime())}}/>
             <Stack spacing={1} direction='row'>
                 <FilterPanel {...{imageMasterData, groupKey}}/>
                 <DataProductList {...{filteredImageData, groupKey, multiSelect}}/>
@@ -157,7 +158,7 @@ function isAllSelected(filteredImageData, inFields, proj) {
 
 }
 
-function ToolBar({className, filteredImageData, groupKey, onChange}) {
+function ToolBar({className, header, filteredImageData, groupKey, onChange}) {
     const projects= uniqBy(filteredImageData, 'project').map( (d) => d.project);
     const setDSListMode = (flg) => {
         projects.forEach((k) => dispatchComponentStateChange(k, {isOpen:flg}));
@@ -186,30 +187,31 @@ function ToolBar({className, filteredImageData, groupKey, onChange}) {
 
     const allFilter = useStoreConnector(calcFilter);
     const allSelect = useStoreConnector(calcSelect);
+    const clrFilter = allFilter && (
+        <Tooltip title='Clear Filters'>
+            <ChipDelete onClick={() => clearFields([FILTER_PREFIX])} sx={{'--Chip-deleteSize': '1.2em'}}/>
+        </Tooltip>
+    );
+    const clrSelect = allSelect && (
+        <Tooltip title='Clear Selections'>
+            <ChipDelete onClick={() => clearFields([IMG_PREFIX, PROJ_PREFIX])} sx={{'--Chip-deleteSize': '1.2em'}}/>
+        </Tooltip>
+    );
 
     return (
-        <div className={className}>
-            <Stack>
-                <Stack direction='row'>
-                    <div style={{width: '15rem'}}>
-                        <Typography {...{level:'body-xs', color:'neutral'}}>Filter By:</Typography>
-                        <Typography {...{level:'body-xs', color:'warning'}}><Pretty {...{str:allFilter, max:25}}/></Typography>
-                    </div>
-                    <div>
-                        <Typography {...{level:'body-xs', color:'neutral'}}>Selection:</Typography>
-                        <Typography {...{level:'body-xs', color:'warning'}}><Pretty {...{str:allSelect, max:100}}/></Typography>
-                    </div>
+        <Stack className={className} direction='row'>
+            {header?.()}
+            <Stack direction='row' justifyContent='space-between' flex={1} alignItems='start' overflow='hidden' spacing={2}>
+                <Stack flexGrow={1} overflow='hidden'>
+                    <StatusLine label='Filter By:' msg={allFilter} endDecorator={clrFilter}/>
+                    <StatusLine label='Selection:' msg={allSelect} endDecorator={clrSelect}/>
                 </Stack>
-                <Stack {...{direction:'row', justifyContent:'space-between'}}>
-                    <Chip sx={{mr: 7}} onClick={() => clearFields([FILTER_PREFIX])}>Clear Filters</Chip>
-                    <Stack direction='row' spacing={1/4}>
-                        <Chip onClick={() => clearFields([IMG_PREFIX, PROJ_PREFIX])}>Clear Selections</Chip>
-                        <Chip onClick={() => setDSListMode(true)}>Expand All</Chip>
-                        <Chip onClick={() => setDSListMode(false)}>Collapse All</Chip>
-                    </Stack>
+                <Stack direction='row' >
+                    <ExpandAll onClick={() => setDSListMode(true)} iconButtonSize='32px' tip='Expand All'/>
+                    <CollapseAll onClick={() => setDSListMode(false)} iconButtonSize='32px' tip='Collapse All'/>
                 </Stack>
             </Stack>
-        </div>
+        </Stack>
     );
 }
 
@@ -553,16 +555,33 @@ function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSele
 
 const toImageOptions= (a) => a.map ( (d) => ({label: d.title, value: d.imageId}));
 
-function Pretty({str, max}) {
-    if (!str) return <br/>;
-    const words = str.split(',');
+function StatusLine ({label, msg, max=100000, endDecorator}) {
+    msg = msg || 'none';
+    const words = msg.split(',');
     let pretty = ' ';
     for(var i=0; i< words.length; i++) {
         if (pretty.length + words[i].length > max) {
             pretty += ` (${words.length-i} more)`;
             break;
         }
-        pretty += words[i] + (i === words.length-1 ? '' : ',');
+        pretty += words[i] + (i === words.length-1 ? '' : ', ');
     }
-    return pretty;
+    return (
+        <Stack direction='row' overflow='hidden' spacing={1}>
+            <Typography {...{level:'body-xs', color:'neutral'}} whiteSpace='nowrap'>{label}</Typography>
+            <Stack direction='row' overflow='hidden' alignItems='start'>
+                <Typography {...{level:'body-xs', color:'warning', title:msg}}
+                            sx={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                            }}>
+                    {pretty}
+                </Typography>
+                {endDecorator}
+            </Stack>
+        </Stack>
+    );
 }
+
+
