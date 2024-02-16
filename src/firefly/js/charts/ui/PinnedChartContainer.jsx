@@ -35,7 +35,7 @@ import {SplitPanel} from '../../ui/panel/DockLayoutPanel';
 import {hideInfoPopup, showInfoPopup, showPinMessage} from '../../ui/PopupUtil.jsx';
 import {TextButton} from '../../ui/TextButton.jsx';
 import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga';
-import {PinChartButton, ShowTableButton} from 'firefly/visualize/ui/Buttons.jsx';
+import {PinButton, ShowTableButton} from 'firefly/visualize/ui/Buttons.jsx';
 
 export const PINNED_CHART_PREFIX = 'pinned-';
 export const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
@@ -135,7 +135,7 @@ export const PinChart = ({viewerId, tbl_group}) => {
         }
         pinChart({chartId});
     };
-    return <PinChartButton onClick={doPinChart} tip='Pin this chart'/>;
+    return <PinButton onClick={doPinChart} tip='Pin this chart'/>;
 };
 
 export function pinChart({chartId, autoLayout=false }) {

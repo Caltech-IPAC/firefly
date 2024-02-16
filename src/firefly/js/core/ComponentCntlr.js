@@ -18,6 +18,7 @@ const SHOW_DIALOG = 'ComponentCntlr.showDialog';
 const HIDE_DIALOG = 'ComponentCntlr.hideDialog';
 const HIDE_ALL_DIALOGS = 'ComponentCntlr.hideAllDialogs';
 export const COMPONENT_STATE_CHANGE = 'ComponentCntlr.componentStateChange';
+export const SIDE_BAR_ID = 'SIDE_BAR_ID';
 
 
 

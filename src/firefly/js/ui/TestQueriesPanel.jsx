@@ -190,6 +190,7 @@ const WrapperPanel= ({children}) => {
                        return false;
                    }}
                    onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
+                   cancelText=''
                    params={{hideOnInvalid: false}}
                    inputStyle={{border:'none', padding:0, marginBottom:5}}
                    help_id  = {'muy-help-id'}>

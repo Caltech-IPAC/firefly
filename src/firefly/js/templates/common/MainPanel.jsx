@@ -31,19 +31,9 @@ export function MainPanel({dropDownComponent, footer, showDropDown, useDefaultEx
     const contentView  = () => useDefaultExpandedView && expanded !== LO_VIEW.none ? <ExpandedView expanded={expanded}/> : children;
     const dropDownView = () => {
         return (
-            <Stack id='drop-down' flexGrow={1} spacing={1} overflow='hidden'>
+            <Stack id='drop-down' flexGrow={1} spacing={1} mb={1} overflow='hidden'>
                 <Stack flexGrow={1} px={1} overflow='auto'>
                     {dropDownComponent}
-                </Stack>
-
-                <Stack direction='row'
-                       justifyContent='space-between'
-                       alignItems='center'
-                       sx={{background:`url(${FOOTER_BG}) repeat center center transparent`}}
-                >
-                    <div/>
-                    {footer}
-                    <VersionInfo/>
                 </Stack>
             </Stack>
         );

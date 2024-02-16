@@ -19,6 +19,7 @@ import {PagingControl} from '../../visualize/iv/ExpandedTools.jsx';
 import {ChartToolbar} from './ChartPanel';
 import {CloseButton} from '../../ui/CloseButton';
 import {closeExpandedChart} from 'firefly/charts/ui/ChartsContainer.jsx';
+import {AddBtn} from './PlotlyToolbar.jsx';
 
 
 export function MultiChartToolbarStandard({viewerId, chartId, tbl_group, expandable, expandedMode,
@@ -27,7 +28,10 @@ export function MultiChartToolbarStandard({viewerId, chartId, tbl_group, expanda
 
     return (
         <Stack direction='row' justifyContent='space-between'>
-            <MultiChartStd {...{viewerId, layoutType, activeItemId}}/>
+            <Stack direction='row' spacing={3}>
+                <AddBtn/>
+                <MultiChartStd {...{viewerId, layoutType, activeItemId}}/>
+            </Stack>
             <ChartToolbar {...{chartId, tbl_group, viewerId, expandable, expandedMode}}/>
         </Stack>
     );
@@ -52,7 +56,10 @@ export function MultiChartToolbarExpanded({viewerId, chartId, tbl_group, expanda
     return (
         <Stack direction='row' justifyContent='space-between' alignItems='center'>
             {closeable && <CloseButton onClick={() => closeExpandedChart(viewerId)}/>}
-            <MultiChartExt {...{viewerId, layoutType, activeItemId}}/>
+            <Stack direction='row' spacing={3}>
+                <AddBtn/>
+                <MultiChartExt {...{viewerId, layoutType, activeItemId}}/>
+            </Stack>
             <ChartToolbar {...{chartId, tbl_group, expandable, expandedMode, viewerId}}/>
         </Stack>
     );

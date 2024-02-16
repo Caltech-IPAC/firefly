@@ -52,9 +52,10 @@ export const ToolbarButton = memo((props) => {
         icon,text='',tip='',badgeCount=0,enabled=true, visible=true,
         imageStyle={}, iconButtonSize, shortcutKey='', color='neutral', variant='plain',
         disableHiding, active, sx, CheckboxOnIcon, CheckboxOffIcon,
-        useDropDownIndicator= false, hasCheckBox=false, checkBoxOn=false,
+        useDropDownIndicator= false, hasCheckBox=false, checkBoxOn=false, pressed=false,
         component, slotProps={}, dropPosition={}, dropDownCB, onClick} = props;
 
+    const buttonPressed= pressed || active;
     const {current:divElementRef}= useRef({divElement:undefined});
     const invertStyle= {filter : 'invert(1)'};
     const doInvert= useColorMode()?.activeMode==='dark' ? invertStyle : {};
@@ -110,11 +111,16 @@ export const ToolbarButton = memo((props) => {
                                  opacity: enabled ? '1' : '0.3',
                                  ...makeBorder(active,theme,color),
                                  ...iSize,
+                                 ['&[aria-pressed="true"]']: {
+                                     ...theme.variants.outlinedActive.neutral,
+                                     borderColor: theme.vars.palette.neutral.outlinedHoverBorder,
+                                 },
                              }),
 
                         className:'ff-toolbar-iconbutton ' + allowInput,
                         component,
                         variant:'soft', color:'neutral' ,
+                        'aria-pressed': buttonPressed ? 'true' : 'false',
                         'aria-label':tip, onClick:handleClick, disabled:!enabled}}>
                         {image}
                     </IconButton>) :
@@ -125,10 +131,15 @@ export const ToolbarButton = memo((props) => {
                         startDecorator: image,
                         component,
                         endDecorator: dropDownIndicator,
+                        'aria-pressed':buttonPressed ? 'true' : 'false',
                         sx:(theme) => ({whiteSpace:'nowrap', py:1/4, minHeight: 'unset',
                             color: enabled? undefined : theme.vars.palette.neutral?.softDisabledColor,
                             ...makeFontSettings(theme),
                             ...makeBorder(active,theme,color),
+                            ['&[aria-pressed="true"]']: {
+                               ...theme.variants.outlinedActive.neutral,
+                               borderColor: theme.vars.palette.neutral.outlinedHoverBorder,
+                             },
                         }),
                         ...slotProps?.button
                     }}>

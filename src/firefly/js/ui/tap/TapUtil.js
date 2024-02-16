@@ -60,8 +60,18 @@ export function makeUploadSchema(uploadFileName,serverFile, columns, totalRows, 
 
 
 /** * @type TapBrowserState */
-export const defTapBrowserState= {serviceUrl:undefined, schemaOptions:undefined, schemaName:undefined, tableOptions:undefined,
-    tableName:undefined, columnsModel:undefined, obsCoreEnabled:false, obsCoreTableModel:undefined, constraintFragments: new Map()};
+export const defTapBrowserState= {
+    serviceUrl:undefined,
+    schemaOptions:undefined,
+    schemaName:undefined,
+    tableOptions:undefined,
+    lastServicesShowing: false,
+    tableName:undefined,
+    columnsModel:undefined,
+    obsCoreEnabled:false,
+    obsCoreTableModel:undefined,
+    constraintFragments: new Map()
+};
 
 export function getColumnsTblId(serviceUrl, tableName) {
     // table name is unique across schemas

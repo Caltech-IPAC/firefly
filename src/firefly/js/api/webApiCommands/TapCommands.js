@@ -147,7 +147,7 @@ function showTapPanel(cmd,inParams) {
         params.radiusInArcSec= params[ReservedParams.SR.name] * 3600;
         Reflect.deleteProperty(params, ReservedParams.SR.name);
     }
-    const view= getAppOptions()?.multiTableSearchCmdOptions?.find( ({id}) => id==='tap') ? 'MultiTableSearchCmd' : 'TAPSearch';
+    const view= 'TAPSearch';
     dispatchShowDropDown({view, initArgs:{defaultSelectedId:'tap', urlApi:{...params}}});
 }
 

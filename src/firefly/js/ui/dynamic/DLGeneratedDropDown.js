@@ -427,6 +427,7 @@ function RootSearchPanel({additionalChildren, submitSearch, setClickFunc, docRow
     return (
         <FormPanel submitText = 'Search' groupKey = {GROUP_KEY}
                    onSubmit = {submitSearch}
+                   cancelText=''
                    params={{hideOnInvalid: false}}
                    inputStyle={{border:'none', padding:0, marginBottom:5}}
                    getDoOnClickFunc={(f) => setClickFunc({onClick:f})}

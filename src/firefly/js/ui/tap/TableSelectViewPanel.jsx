@@ -43,7 +43,7 @@ function matchesObsCoreHeuristic(schemaName, tableName, columnsModel) {
 }
 
 
-export function AdqlUI({serviceUrl, servicesShowing, setServicesShowing, setSelectBy}) {
+export function AdqlUI({serviceUrl, servicesShowing, setServicesShowing, setSelectBy, lockService}) {
     const [,setCapabilitiesChange] = useState(); // this is just to force a rerender
     const capabilities= getLoadedCapability(serviceUrl);
     useEffect(() => {
@@ -61,7 +61,7 @@ export function AdqlUI({serviceUrl, servicesShowing, setServicesShowing, setSele
                         </Stack>
                         <Typography color='warning' level='body-lg'>ADQL edits below will not be reflected in <b>Single Table</b> view</Typography>
                     </Stack>
-                    <NavButtons {...{setServicesShowing, servicesShowing, setNextPanel:(key) => setSelectBy(key), currentPanel:ADQL}}/>
+                    <NavButtons {...{setServicesShowing, servicesShowing, lockService, setNextPanel:(key) => setSelectBy(key), currentPanel:ADQL}}/>
                 </div>
             </div>
 
@@ -88,7 +88,8 @@ function useStateRef(initialState){
 }
 
 export function BasicUI(props) {
-    const {initArgs={}, setSelectBy, obsCoreTableModel, servicesShowing, setServicesShowing, hasObsCoreTable}= props;
+    const {initArgs={}, setSelectBy, obsCoreTableModel, servicesShowing,
+        setServicesShowing, hasObsCoreTable, lockService, lockObsCore:forceLockObsCore}= props;
     const {urlApi={},searchParams={}}= initArgs;
     const [getTapBrowserState,setTapBrowserState]= useFieldGroupMetaState(defTapBrowserState);
     const initState = getTapBrowserState();
@@ -229,6 +230,7 @@ export function BasicUI(props) {
     };
 
     useEffect(() => {
+        if (forceLockObsCore && hasObsCoreTable) setLockToObsCore(true);
         mountedRef.current = true;
         // properties changes due to changes in TapSearchPanel
         if(props.serviceUrl !== serviceUrl) {
@@ -269,69 +271,79 @@ export function BasicUI(props) {
     // is set correctly after unmount and mount
     const sOps= schemaOptions??[];
     const tOps= tableOptions??[];
+    const showTableSelectors= !(hasObsCoreTable && forceLockObsCore);
     return (
         <Fragment>
             <Sheet sx={{display:'flex', flexDirection: 'row', justifyContent:'space-between'}}>
-                <div style={{display:'flex', flexDirection:'row', justifyContent:'space-between', width: '100%'}}>
-                    <div style={{display:'flex', alignItems:'center', width:'100%'}}>
-                        <Stack>
-                            <Stack {...{direction:'row', justifyContent:'space-between', width:'14rem', alignItems:'center', mr:1}}>
-                                <Tooltip title={SCH_TAB_TITLE_TIP}>
-                                    <Typography {...{level:'h4', color:'primary', component:'div' }}>
-                                        <Stack {...{justifyContent:'center', height:55, overflow:'hidden'}}>
-                                            <div style={{ textOverflow: 'ellipsis', whiteSpace: 'normal', overflow: 'hidden' }} >
-                                                {`${serviceLabel} Tables`}
-                                            </div>
-                                        </Stack>
-                                    </Typography>
-                                </Tooltip>
-                                <HelpIcon helpId={tapHelpId('selectTable')}/>
+                <Stack {...{direction:'row', justifyContent:'space-between', width:1, pt:showTableSelectors?0:1}}>
+                    {showTableSelectors &&
+                        <Stack {...{direction:'row', alignItems:'center', width:1}}>
+                            <Stack>
+                                <Stack {...{direction:'row', justifyContent:'space-between', width:'14rem', alignItems:'center', mr:1}}>
+                                    <Tooltip title={SCH_TAB_TITLE_TIP}>
+                                        <Typography {...{level:'h4', color:'primary', component:'div' }}>
+                                            <Stack {...{justifyContent:'center', height:55, overflow:'hidden'}}>
+                                                <div style={{ textOverflow: 'ellipsis', whiteSpace: 'normal', overflow: 'hidden' }} >
+                                                    {`${serviceLabel} Tables`}
+                                                </div>
+                                            </Stack>
+                                        </Typography>
+                                    </Tooltip>
+                                    <HelpIcon helpId={tapHelpId('selectTable')}/>
+                                </Stack>
+                                {hasObsCoreTable && <TableTypeButton {...{
+                                    sx: {mr: 1},
+                                    lockToObsCore:obsCoreEnabled, setLockToObsCore}}/>}
                             </Stack>
-                            {hasObsCoreTable && <TableTypeButton {...{
-                                sx: {mr: 1},
-                                lockToObsCore:obsCoreEnabled, setLockToObsCore}}/>}
+                            <Stack {...{direction: 'row', width:1, spacing:1, mr: 1/2, maxWidth: 1000}}>
+                                <ListBoxInputFieldView {...{
+                                    sx:{'& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', maxWidth:'34rem', minHeight:'5rem'}},
+                                    title:SCHEMA_TIP,
+                                    options:sOps, value:schemaName, placeholder:'Loading...',
+                                    startDecorator:!sOps.length ? <Button loading={true}/> : undefined,
+                                    onChange:(ev, selectedTapSchema) => setSchemaName(selectedTapSchema),
+                                    renderValue:
+                                        ({value}) =>
+                                            (<OpRender {...{
+                                                ops: sOps, value,
+                                                label: schemaLabel ?? 'Table Collection (Schema)' }}/>),
+                                    decorator:
+                                        (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
+                                            ops: sOps, value,}}/>),
+                                }} />
+                                <ListBoxInputFieldView {...{
+                                    sx:{'& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', maxWidth:'34rem', minHeight:'5rem'}},
+                                    title:TABLE_TIP,
+                                    options:tOps, value:tableName, placeholder:'Loading...',
+                                    startDecorator:!tOps.length ? <Button loading={true}/> : undefined,
+                                    onChange:(ev, selectedTapTable) => {
+                                        setTableName(selectedTapTable);
+                                        setVal('tableName',selectedTapTable);
+                                    },
+                                    renderValue:
+                                        ({value}) =>
+                                            (<OpRender {...{ ops: tOps, value, label: 'Tables' }}/>),
+                                    decorator:
+                                        (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
+                                            ops: tOps, value}}/>),
+                                }} />
+                            </Stack>
                         </Stack>
-                        <Stack {...{direction: 'row', width:1, spacing:1, mr: 1/2, maxWidth: 1000}}>
-                            <ListBoxInputFieldView {...{
-                                sx:{'& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', maxWidth:'34rem', minHeight:'5rem'}},
-                                title:SCHEMA_TIP,
-                                options:sOps, value:schemaName, placeholder:'Loading...',
-                                startDecorator:!sOps.length ? <Button loading={true}/> : undefined,
-                                onChange:(ev, selectedTapSchema) => setSchemaName(selectedTapSchema),
-                                renderValue:
-                                    ({value}) =>
-                                        (<OpRender {...{
-                                            ops: sOps, value,
-                                            label: schemaLabel ?? 'Table Collection (Schema)' }}/>),
-                                decorator:
-                                    (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
-                                        ops: sOps, value,}}/>),
-                            }} />
-                            <ListBoxInputFieldView {...{
-                                sx:{'& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', maxWidth:'34rem', minHeight:'5rem'}},
-                                title:TABLE_TIP,
-                                options:tOps, value:tableName, placeholder:'Loading...',
-                                startDecorator:!tOps.length ? <Button loading={true}/> : undefined,
-                                onChange:(ev, selectedTapTable) => {
-                                    setTableName(selectedTapTable);
-                                    setVal('tableName',selectedTapTable);
-                                },
-                                renderValue:
-                                    ({value}) =>
-                                        (<OpRender {...{ ops: tOps, value, label: 'Tables' }}/>),
-                                decorator:
-                                    (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
-                                        ops: tOps, value}}/>),
-                            }} />
+                    }
+                    {!showTableSelectors &&
+                        <Stack {...{alignItems:'center', width:1}}>
+                            <Typography {...{level:'h3', component:'div' }}>
+                                {`${serviceLabel} ObsCore data product tables (images, spectra, ect)`}
+                            </Typography>
                         </Stack>
-                    </div>
+                    }
                     <div style={{display:'flex', flexDirection:'column', justifyContent: servicesShowing  ? 'center' :'space-between', alignItems:'flex-end', height:'100%'}}>
-                        <NavButtons {...{setServicesShowing, servicesShowing, setNextPanel:(key) => setSelectBy(key), currentPanel:SINGLE}}/>
+                        <NavButtons {...{setServicesShowing, servicesShowing, lockService, setNextPanel:(key) => setSelectBy(key), currentPanel:SINGLE}}/>
                     </div>
-                </div>
+                </Stack>
             </Sheet>
 
-            <Divider orientation='horizontal' sx={{my:1}}/>
+            {showTableSelectors && <Divider orientation='horizontal' sx={{my:1}}/>}
 
             <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
                 <div style={{ display: 'inline-flex', width: 'calc(100% - 3px)', justifyContent: 'space-between', margin:'5px 0 -8px 0'}}>

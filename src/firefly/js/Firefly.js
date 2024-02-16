@@ -12,6 +12,7 @@ import 'styles/global.css';
 import {APP_LOAD, dispatchAppOptions, dispatchUpdateAppData} from './core/AppDataCntlr.js';
 import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {FireflySlate} from './templates/fireflyslate/FireflySlate.jsx';
+import {DefaultLandingPage} from './templates/fireflyviewer/DefaultLandingPage.jsx';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
 import {routeEntry, ROUTER} from './templates/router/RouteHelper.jsx';
@@ -84,6 +85,8 @@ export const Templates = {
  * @prop {string} menu.type    use 'COMMAND' for actions that's not drop-down related.
  */
 
+const IRSA_CAT= 'IRSA searches';
+const ARCHIVE= 'Archive Searches';
 
 /**
  * @global
@@ -111,14 +114,16 @@ const defAppProps = {
     showUserInfo: false,
     showViewsSwitch: true,
     rightButtons: undefined,
+    landingPage: <DefaultLandingPage/>,
+    fileDropEventAction: 'FileUploadDropDownCmd',
 
     menu: [
-        {label:'Images', action:'ImageSelectDropDownCmd'},
-        {label:'TAP/Table Searches', action: 'MultiTableSearchCmd'},
-        // {label:'Tap Searches', action: 'TAPSearch'},
-        // {label:'Classic Searches', action: 'MultiTableSearchCmd'},
-        {label:'Charts', action:'ChartSelectDropDownCmd'},
-        {label:'Upload', action: 'FileUploadDropDownCmd'},
+        {label:'Images', action:'ImageSelectDropDownCmd', primary: true, category:IRSA_CAT},
+        {label:'TAP', action: 'TAPSearch', primary: true, category: ARCHIVE},
+        {label:'IRSA Catalogs', action: 'IrsaCatalog', primary: true, category:IRSA_CAT},
+        {label:'VO SCS Search', action: 'ClassicVOCatalogPanelCmd', primary: false, category: ARCHIVE},
+        {label:'NED', action: 'ClassicNedSearchCmd', primary: false, category:'NED Search'},
+        {label:'Upload', action: 'FileUploadDropDownCmd', primary: true},
     ],
 };
 
@@ -238,12 +243,14 @@ function fireflyInit(props, appSpecificOptions={}, webApiCommands) {
 
     if (initDone) return;
 
-    props = mergeObjectOnly(defAppProps, props);
-    const viewer = Templates[props.template];
+    const reactComponents= Object.entries(props).filter( ([,v]) => v?.props);
+    const appProps = {...mergeObjectOnly(defAppProps, props), ...Object.fromEntries(reactComponents)}; // mergeObjectOnly does not handle react components correctly
+
+    const viewer = Templates[appProps.template];
 
     if (viewer) {
         // in non API usages, renderTreeId is not used, this line is just for clarity
-        props.renderTreeId = undefined;
+        appProps.renderTreeId = undefined;
     }
     else {
         // in API mode, show propertySheet popup button unless it's set.
@@ -254,7 +261,7 @@ function fireflyInit(props, appSpecificOptions={}, webApiCommands) {
 
     // initialize UI or API depending on entry mode.
     documentReady().then(() => {
-        viewer ? renderRoot(undefined, viewer, props,webApiCommands) : initApi(props);
+        viewer ? renderRoot(undefined, viewer, appProps,webApiCommands) : initApi(props);
     });
     initDone = true;
 }
@@ -408,7 +415,7 @@ function renderRoot(root, viewer, props, webApiCommands) {
             routeEntry(rootToUse, props);
         } else {
             rootToUse.render(
-                <FireflyRoot>
+                <FireflyRoot ctxProperties={props}>
                     { React.createElement(viewer, {...props, normalInit: !webApi})}
                 </FireflyRoot>
             );

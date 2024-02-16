@@ -6,18 +6,20 @@ import {take} from 'redux-saga/effects';
 
 import {get, isEqual, isEmpty, filter, pick, uniqBy} from 'lodash';
 import Enum from 'enum';
+import {getBackgroundInfo} from './background/BackgroundUtil.js';
 import {flux} from './ReduxFlux';
 import {clone} from '../util/WebUtil.js';
 import {
-    smartMerge, getActiveTableId, getTblById, findGroupByTblId,
+    smartMerge, getActiveTableId, getTblById, findGroupByTblId, getTblIdsByGroup,
 } from '../tables/TableUtil.js';
-import {getDropDownNames} from '../ui/Menu.jsx';
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import { TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE, TABLE_REMOVE, TABLE_SPACE_PATH, TBL_RESULTS_ACTIVE, TABLE_LOADED
 } from '../tables/TablesCntlr.js';
 import {CHART_ADD, CHART_REMOVE, CHART_SPACE_PATH} from '../charts/ChartsCntlr.js';
-import {REPLACE_VIEWER_ITEMS} from '../visualize/MultiViewCntlr.js';
-import {REINIT_APP} from './AppDataCntlr.js';
+import {
+    DEFAULT_FITS_VIEWER_ID, getMultiViewRoot, getViewer, REPLACE_VIEWER_ITEMS
+} from '../visualize/MultiViewCntlr.js';
+import {COMMAND, getMenu, REINIT_APP} from './AppDataCntlr.js';
 import {getDefaultChartProps} from '../charts/ChartUtil.js';
 import {getPlotViewAry} from 'firefly/visualize/PlotViewUtil.js';
 import {MetaConst} from 'firefly/data/MetaConst';
@@ -295,6 +297,19 @@ export function getLayouInfo() {
         layout : {...layout, hasImages, hasTables, hasXyPlots, initLoadCompleted};
 }
 
+
+/**
+ * returns an array of drop down actions from menu items
+ * @returns {*}
+ */
+export function getDropDownNames() {
+    const menuItems = getMenu()?.menuItems;
+    if (!Array.isArray(menuItems)) return [];
+    return menuItems.filter((mi) => mi.type !== COMMAND)
+        .map((mi) => mi.action);
+}
+
+
 function getSelView(state, dropDown) {
     var {visible=!state.disableDefaultDropDown, view} = dropDown || {};
     if (visible && !view) {
@@ -303,6 +318,21 @@ function getSelView(state, dropDown) {
     return view;
 }
 
+export const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
+/**
+ *
+ * @return {{bgTableCnt: number, tableCnt: number, haveResults: boolean, imageCnt: number, pinChartCnt: number)}
+ */
+export function getResultCounts() {
+    const haveResults = filter(pick(getLayouInfo(), ['showTables', 'showXyPlots', 'showImages'])).length>0;
+    const tableCnt= getTblIdsByGroup('main')?.length ?? 0;
+    const imageCnt= getViewer(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID)?.itemIdAry?.length ?? 0;
+    const pinChartCnt= getViewer(getMultiViewRoot(), PINNED_VIEWER_ID)?.itemIdAry?.length ?? 0;
+    const {jobs={}}= getBackgroundInfo() ?? {};
+    const bgTableCnt= Object.values(jobs)
+        .filter((job) => job.jobInfo?.monitored && job.jobInfo?.type !== 'PACKAGE')?.length ?? 0;
+    return {haveResults,tableCnt,imageCnt,pinChartCnt,bgTableCnt};
+}
 
 /**
  * This handles the general use case of the drop-down panel.
@@ -314,7 +344,6 @@ function getSelView(state, dropDown) {
  */
 export function dropDownHandler(layoutInfo, action) {
     // calculate dropDown when new UI elements are added or removed from results
-    const count = filter(pick(layoutInfo, ['showTables', 'showXyPlots', 'showImages'])).length;
     switch (action.type) {
         case CHART_ADD:
         case TBL_RESULTS_ADDED:
@@ -339,17 +368,6 @@ export function dropDownHandler(layoutInfo, action) {
             const {useForSearchResults= true, useForCoverage}= action.payload.pvOptions;
             const visible= (!useForCoverage && !useForSearchResults) && layoutInfo.dropDown.visible;
             return smartMerge(layoutInfo, {dropDown: {visible}});
-        case CHART_REMOVE:
-        case SHOW_DROPDOWN:
-        case TABLE_REMOVE:
-        case TBL_RESULTS_REMOVE:
-        case ImagePlotCntlr.DELETE_PLOT_VIEW:
-            if (!get(layoutInfo, 'dropDown.visible', false)) {
-                if (count===0) {
-                    return smartMerge(layoutInfo, {dropDown: {visible: true}});
-                }
-            }
-            break;
     }
     return layoutInfo;
 }

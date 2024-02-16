@@ -3,15 +3,17 @@
  */
 
 import {Typography} from '@mui/joy';
-import React, {memo, useEffect} from 'react';
+import React, {memo, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import {Stack} from '@mui/joy';
-import {isEmpty, capitalize} from 'lodash';
+import {isEmpty, capitalize, isFunction} from 'lodash';
 import shallowequal from 'shallowequal';
 import {flux} from '../../core/ReduxFlux.js';
 
 import {dispatchSetMenu, dispatchOnAppReady, dispatchNotifyRemoteAppReady} from '../../core/AppDataCntlr.js';
-import {dispatchHideDropDown, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
+import {dispatchHideDropDown, dispatchShowDropDown, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
+import {AppConfigDrawer} from '../../ui/AppConfigDrawer.jsx';
+import {FileDropZone} from '../../visualize/ui/FileUploadViewPanel.jsx';
 import {lcManager, LC} from './LcManager.js';
 import {LcResult} from './LcResult.jsx';
 import {LcPeriodPlotly} from './LcPeriodPlotly.jsx';
@@ -32,7 +34,7 @@ import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
-import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
 import {makeSearchOnce} from '../../util/WebUtil.js';
 import {upload} from '../../rpc/CoreServices.js';
@@ -68,8 +70,11 @@ export const LcViewer = memo(({menu, dropdownPanels=[], appTitle, ...appProps}) 
     const subTitleStr= displayMode?.startsWith('period') ? '(Period Finder)' : '(Viewer)';
     const title = makeBannerTitle(appTitle || DEFAULT_TITLE, subTitleStr);
 
+    const drawerComponent= (
+        <AppConfigDrawer  appIcon={appProps.appIcon} appTitle={appTitle} allowMenuHide={false}/>);
+
     return (
-        <App dropdownPanels={[...dropdownPanels, <UploadPanel {...{fileLocation}}/>]}
+        <App drawerComponent={drawerComponent} dropdownPanels={[...dropdownPanels, <UploadPanel {...{fileLocation}}/>]}
              showTitleOnBanner={true} appTitle={title}  {...appProps} >
             <MainView {...{error, displayMode, periodProps}}/>
         </App>
@@ -152,7 +157,10 @@ function getUploadPanelState(oldState) {
 
 export const UploadPanel = ({initArgs}) =>{
     const {missionOptions,fileLocation} = useStoreConnector(getUploadPanelState );
+    const [,setUploadContainer]= useFieldGroupValue('uploadContainer', vFileKey);
+    const externalDropEvent= initArgs?.searchParams?.dropEvent;
 
+    const [dropEvent, setDropEvent] = useState(externalDropEvent);
     useEffect( () => {
         executeOnce( () => validateAutoSearch(initArgs), () => callAutoSearch(initArgs));
     },[initArgs]);
@@ -172,7 +180,7 @@ export const UploadPanel = ({initArgs}) =>{
                             ]
                 }} /> );
 
-    const showFileUploadButton = () => (
+    const showFileUploadButton = (setDropEvent,dropEvent) => (
             <Stack {...{minWidth: 450}}>
                 <Stack {...{direction:'row', spacing:2}}>
                     <Typography>Upload time series table</Typography>
@@ -180,6 +188,7 @@ export const UploadPanel = ({initArgs}) =>{
                 </Stack>
                 { fileLocation === 'isLocal' ?
                         <FileUpload fieldKey='rawTblSource'
+                                    setDropEvent={setDropEvent} dropEvent={dropEvent} canDragDrop={true}
                             initialState={{ tooltip: 'Select a Time Series Table file to upload',
                                 label: ''}}
                         />
@@ -195,27 +204,36 @@ export const UploadPanel = ({initArgs}) =>{
             <FormPanel groupKey={vFileKey}
                        onSubmit={(request) => onSearchSubmit(request)} onCancel={dispatchHideDropDown}
                        submitText={'Upload'} help_id={'loadingTSV'}>
-                <Stack {...{width:1, alignItems:'center'}}>
-                    <Stack {...{ml:0, mt:4, spacing:3}}>
-                        <Typography level='body-lg'>{instruction}</Typography>
-                        <FieldGroup groupKey={vFileKey} keepState={true}>
-                            <Stack {...{spacing:2}}>
-                                {uploadLocationChoice}
-                                {showFileUploadButton()}
-                                <Stack>
-                                    <Typography> Choose mission to view associated images </Typography>
-                                    <ListBoxInputField fieldKey='mission' wrapperStyle={wrapperStyle} options={options}
-                                                       initialState={{
-                                                           value: 'wise',
-                                                           tooltip: 'Choose mission to view associated images',
-                                                           label : '',
-                                                           labelWidth : 0
-                                                       }} />
+                <FileDropZone {...{
+                    dropEvent, setDropEvent,
+                    setLoadingOp: () => {
+                        setUploadContainer('isLocal');
+                        const newEv = {type: 'drop', dataTransfer: {files: Array.from(dropEvent.dataTransfer.files)}};
+                        setDropEvent(newEv);
+                    },
+                }}>
+                    <Stack {...{width:1, alignItems:'center'}}>
+                        <Stack {...{ml:0, mt:4, spacing:3}}>
+                            <Typography level='body-lg'>{instruction}</Typography>
+                            <FieldGroup groupKey={vFileKey} keepState={true}>
+                                <Stack {...{spacing:2}}>
+                                    {uploadLocationChoice}
+                                    {showFileUploadButton(setDropEvent,dropEvent)}
+                                    <Stack>
+                                        <Typography> Choose mission to view associated images </Typography>
+                                        <ListBoxInputField fieldKey='mission' wrapperStyle={wrapperStyle} options={options}
+                                                           initialState={{
+                                                               value: 'wise',
+                                                               tooltip: 'Choose mission to view associated images',
+                                                               label : '',
+                                                               labelWidth : 0
+                                                           }} />
+                                    </Stack>
                                 </Stack>
-                            </Stack>
-                        </FieldGroup>
+                            </FieldGroup>
+                        </Stack>
                     </Stack>
-                </Stack>
+                </FileDropZone>
             </FormPanel>
     );
 };
@@ -237,9 +255,19 @@ function onSearchSubmit(request) {
     const fields = FieldGroupUtils.getGroupFields(vFileKey);
     const displayName = fields.rawTblSource.displayValue && fields.rawTblSource.displayValue.split('\\');
     const uploadedFileName = displayName ? displayName[displayName.length-1] : 'Loaded Table';
-    const treq = converter.rawTableRequest(converter, request.rawTblSource,uploadedFileName);
+    if (isFunction(request.rawTblSource)) {
+        request.rawTblSource().then(
+            (ul)  => loadFileAndHide(converter,ul.value,uploadedFileName,request.uploadContainer) );
+    }
+    else {
+        loadFileAndHide(converter,request.rawTblSource,uploadedFileName,request.uploadContainer);
+    }
+    
+}
 
-    if (request.uploadContainer===ServerParams.IS_WS) treq[ServerParams.SOURCE_FROM]= ServerParams.IS_WS;
+function loadFileAndHide(converter,uploadPath,uploadedFileName, uploadContainer) {
+    const treq = converter.rawTableRequest(converter, uploadPath,uploadedFileName);
+    if (uploadContainer===ServerParams.IS_WS) treq[ServerParams.SOURCE_FROM]= ServerParams.IS_WS;
     dispatchTableSearch(treq, {removable: true});
     dispatchHideDropDown();
 }

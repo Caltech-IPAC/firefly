@@ -25,6 +25,7 @@ export const TestSearchPanel = (props) => {
                 width='640px' height='300px'
                 groupKey='TBL_BY_URL_PANEL'
                 onSubmit={(request) => onSearchSubmit(request)}
+                cancelText=''
                 onCancel={hideSearchPanel}>
                 <p>
                     <input type='button' name='dowload' value='Download Sample File' onClick={doFileDownload} />

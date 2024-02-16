@@ -57,13 +57,13 @@ function validUpdate(valid,onSuccess,onFail,registeredComponents, closeOnValid,g
 }
 
 function onClick(onSuccess,onFail,registeredComponents, closeOnValid,groupKey,
-                 dialogId,groupsToUse, includeUnmounted, changeMasking) {
+                 dialogId,groupsToUse, includeUnmounted, changeMasking, requireAllValid) {
     if (groupKey) {
         if (changeMasking) changeMasking(true);
         validateFieldGroup(groupsToUse(), includeUnmounted)
             .then( (valid)=> {
                 if (changeMasking) changeMasking(false);
-                validUpdate(valid,onSuccess,onFail,registeredComponents,closeOnValid,groupKey,dialogId, groupsToUse, includeUnmounted);
+                validUpdate(valid||!requireAllValid,onSuccess,onFail,registeredComponents,closeOnValid,groupKey,dialogId, groupsToUse, includeUnmounted);
             });
     }
     else {
@@ -76,7 +76,7 @@ function onClick(onSuccess,onFail,registeredComponents, closeOnValid,groupKey,
 
 
 export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
-                          color=undefined, variant=undefined,
+                          color=undefined, variant=undefined, requireAllValid=true,
                           closeOnValid=true, dialogId,includeUnmounted= false, primary=true,
                           groupsToUse= () => groupKey,
                           style={}, sx, changeMasking, fireOnEnter= false,
@@ -85,7 +85,7 @@ export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
     if (!groupKey && ctxGroupKey) groupKey= ctxGroupKey;
     if (groupKey===NONE) groupKey= undefined;
     const onComplete = () => onClick(onSuccess,onFail,registeredComponents,closeOnValid,groupKey,dialogId,
-                                      groupsToUse, includeUnmounted,changeMasking);
+                                      groupsToUse, includeUnmounted,changeMasking, requireAllValid);
 
 
     useEffect(() => {
