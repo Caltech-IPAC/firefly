@@ -397,7 +397,6 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
     }, [initRadius]);
 
     const title = '4. Select Data Set';
-    const targetStyle = {height: 40, width: 450};
     const isHips = isHipsImgType;
     const sizeLabel = isHips ? 'Field of view (optional):' : 'Cutout size (leave blank for full size):';
     const sizeKey = isHips ? 'sizeFov' : 'conesize';
@@ -435,12 +434,11 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
             </Sheet>
             {isHips ?
                 <HiPSImageSelect groupKey={groupKey} /> :
-                <Sheet {...{variant:'outlined', sx:{position:'static', mt:1/2,py:1,borderRadius: '5px'}}}>
-                    <Stack px={1}>
-                        <Typography {...{color:'primary', level:'title-md'}}>4. Select Data Set</Typography>
-                        <ImageSelect key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect,
-                            scrollDivId: noScroll ? undefined: scrollDivId }}/>
-                    </Stack>
+                <Sheet {...{variant:'outlined', sx:{position:'static', mt:1/2, p:1, borderRadius: '5px'}}}>
+                    <ImageSelect key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect,
+                        scrollDivId: noScroll ? undefined: scrollDivId }}
+                        header={() => <Typography {...{color:'primary', level:'title-md'}} sx={{width:175, flexShrink:0}}>4. Select Data Set</Typography>}
+                    />
                 </Sheet>
             }
         </Sheet>

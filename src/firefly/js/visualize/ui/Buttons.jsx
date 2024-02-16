@@ -49,6 +49,8 @@ import PanIco from '@mui/icons-material/OpenWithOutlined';
 import PinChartIco from '@mui/icons-material/PushPin';
 import ShowTableIco from '@mui/icons-material/CallReceived';
 import CombineChartIco from '@mui/icons-material/SyncAlt';
+import UnfoldMoreOutlinedIcon from '@mui/icons-material/UnfoldMoreOutlined';
+import UnfoldLessOutlinedIcon from '@mui/icons-material/UnfoldLessOutlined';
 
 
 // import ContentCopySharpIcon from '@mui/icons-material/ContentCopySharp';
@@ -236,6 +238,8 @@ export const CheckedClearButton= (props) => ( <TB {...{ icon: <RemoveDoneRounded
 export const CenterOnSelection= (props) => ( <TB {...{ icon: <CenterFocusStrongTwoToneIcon/>, ...props}}/>);
 export const CropButton= (props) => ( <TB {...{ icon: <CropRoundedIcon/>, ...props}}/>);
 export const StatsButton= (props) => ( <TB {...{ icon: <FunctionsOutlinedIcon/>, ...props}}/>);
+export const ExpandAll= (props) => ( <TB {...{icon: <UnfoldMoreOutlinedIcon/>, ...props}}/>);
+export const CollapseAll= (props) => ( <TB {...{icon: <UnfoldLessOutlinedIcon/>, ...props}}/>);
 
 export const FiltersOffButton= (props) => ( <TB {...{ icon: <ClearFilterIco/>, ...props}}/>);
 
