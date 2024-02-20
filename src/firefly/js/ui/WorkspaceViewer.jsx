@@ -1,3 +1,4 @@
+import {Button, Stack} from '@mui/joy';
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {get, truncate} from 'lodash';
@@ -22,8 +23,8 @@ import {showInfoPopup, INFO_POPUP} from './PopupUtil.jsx';
 import {HelpIcon} from './HelpIcon.jsx';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
 
-const HMargin = 15;
-const VMargin = 15;
+const HMargin = '1rem';
+const VMargin = '1rem';
 const workspacePopupGroup = 'workspacePopupGroup';
 const workspaceUploadDef = { file: {fkey: 'uploadfile', label: 'Workspace Upload'} };
 const workspacePopupId = 'workspacePopupId';
@@ -211,7 +212,7 @@ export function showWorkspaceDialog({onComplete, value, fieldKey}) {
 
 export function WorkspaceAsPopup({wrapperStyle, onComplete, value, isLoading, fieldKey}) {
     const style = Object.assign({whiteSpace:'nowrap', display: 'inline-block', height: 22}, wrapperStyle);
-
+    
     return (
         <div>
             <div style={style}>
@@ -431,8 +432,8 @@ export function workspacePopupMsg(msg, title) {
  */
 function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.file.fkey}) {
     const newList = getWorkspaceList() || [];
-    const dialogWidth = 650;
-    const dialogHeight = 400;
+    const dialogWidth = '40rem';
+    const dialogHeight = '28rem';
     const popupPanelResizableStyle = {
         width: dialogWidth,
         height: dialogHeight,
@@ -443,12 +444,11 @@ function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.fi
     const style = {
         marginLeft: HMargin,
         marginRight: HMargin,
-        marginTop: VMargin,
-        width: `calc(100% - ${HMargin*2+20}px)`,
-        height: `calc(100% - ${VMargin+25}px)`,
-        paddingLeft: 10,
-        paddingRight: 10,
-        paddingTop: 10,
+        width: '38rem',
+        height: '23rem',
+        paddingLeft: '1rem',
+        paddingRight: '1rem',
+        paddingTop: '1rem',
         border: '1px solid #a3aeb9',
         borderRadius: 5,
         overflow: 'auto'
@@ -458,40 +458,37 @@ function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.fi
         const showMask = isAccessWorkspace();
         const popup = (
             <PopupPanel title={'Read file from workspace'}>
+
                 <div style={popupPanelResizableStyle}>
-                    <FieldGroup style={{height: 'calc(100% - 80px)', width: '100%', position: 'relative'}}
-                                groupKey={workspacePopupGroup} keepState={true}>
-                        <div style={style}>
-                            <WorkspaceViewField fieldKey={fieldKey}
+                    <FieldGroup groupKey={workspacePopupGroup} keepState={true}>
+                        <Stack spacing={2}
+                               sx={{ps:2, my:2, justifyContent: 'space-between'}}>
+                            <Stack style={style}>
+                                <WorkspaceViewField fieldKey={fieldKey}
                                                 files={newList}
                                                 keepSelect={true}
                                                 initialState={{value, validator: isWsFolder(false)}}/>
-                        </div>
-                        {showMask && <div className='loading-mask' style={Object.assign({}, style, {top:0, marginTop: 0})}/>}
+                            </Stack>
+                            {showMask && <div className='loading-mask' style={Object.assign({}, style, {top:0, marginTop: 0})}/>}
+                            <Stack>
+                                <Stack mb={3} sx={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                                    <Stack spacing={1} direction='row' alignItems='center'>
+                                        <CompleteButton
+                                            groupKey={workspacePopupGroup}
+                                            onSuccess={onComplete}
+                                            onFail={resultFail(fieldKey)}
+                                            text={'Open'}
+                                            dialogId={workspacePopupId}
+                                        />
+                                        <Button onClick={() => resultCancel()}>Cancel</Button>
+                                    </Stack>
+                                    <Stack>
+                                        <HelpIcon helpId={'visualization.imageoptions'}/>
+                                    </Stack>
+                                </Stack>
+                            </Stack>
+                        </Stack>
                     </FieldGroup>
-
-                    <div style={{display: 'flex', justifyContent: 'space-between',
-                                 margin: `20px ${HMargin}px ${VMargin}px ${HMargin}px`}}>
-                        <div style={{display: 'flex', width: '60%', alignItems: 'flex-end'}}>
-                            <div style={{marginRight: 10}}>
-                                <CompleteButton
-                                    groupKey={workspacePopupGroup}
-                                    onSuccess={onComplete}
-                                    onFail={resultFail(fieldKey)}
-                                    text={'Open'}
-                                    dialogId={workspacePopupId}
-                                />
-                            </div>
-                            <div>
-                                <button type='button' className='button std hl'
-                                        onClick={() => resultCancel()}>Cancel
-                                </button>
-                            </div>
-                        </div>
-                        <div style={{ textAlign:'right', marginRight: 10}}>
-                            <HelpIcon helpId={'visualization.imageoptions'}/>
-                        </div>
-                    </div>
                 </div>
             </PopupPanel>
         );

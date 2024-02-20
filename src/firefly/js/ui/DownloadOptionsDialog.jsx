@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Stack} from '@mui/joy';
+import {Stack, Box, styled} from '@mui/joy';
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
@@ -25,7 +25,6 @@ export function getTypeData(key, val='', tip = '', labelV='', labelW='') {
         labelWidth: labelW
     };
 }
-
 
 export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWidth, style={}, dialogWidth, dialogHeight,
                                       workspace}) {
@@ -51,30 +50,24 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
                     <img style={{width:14,height:14}} src={LOADING}/>
                 </div>
         );
+        const StyledDiv = styled('div')(({ theme }) => ({
+            boxSizing: 'border-box',
+            overflow: 'auto',
+        }));
 
         const showSave = (
-            <div  style={{width: dialogWidth, height: dialogHeight}}>
-                <div style={{marginTop: 10,
-                             boxSizing: 'border-box',
-                             width: 'calc(100%)', height: 'calc(100% - 10px)',
-                             overflow: 'auto',
-                             padding: 5,
-                             border:'1px solid #a3aeb9'}}>
-                    <WorkspaceSave fieldKey={'wsSelect'} files={wsList} value={wsSelect}
-                        tooltip='workspace file system'/>
-                </div>
-            </div>
+            <Stack sx={{ display: 'flex', justifyContent: 'center'}}>
+                <StyledDiv>
+                  <WorkspaceSave fieldKey={'wsSelect'} files={wsList} value={wsSelect}
+                                          tooltip='workspace file system'/>
+                </StyledDiv>
+            </Stack>
         );
 
         const showNoWSFiles = (
-                <div style={{marginTop: 10,
-                             padding: 10,
-                             boxSizing: 'border-box',
-                             width: 'calc(100%)',
-                             textAlign: 'center',
-                             border:'1px solid #a3aeb9'}}>
+                <Stack spacing={2}>
                     {'Workspace access error: ' + getWorkspaceErrorMsg()}
-                </div>
+                </Stack>
         );
 
         return isUpdating ? loading : !isEmpty(wsList) ? showSave : showNoWSFiles;
