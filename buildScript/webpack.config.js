@@ -165,7 +165,7 @@ export default function makeWebpackConfig(config) {
             use: [ { loader: 'style-loader' }, { loader: 'css-loader' } ]
         },
         {
-            test: /\.(png|jpg|gif)$/,
+            test: /\.(png|jpg|gif|svg)$/,
             type: 'asset/inline'
         }
     ];
