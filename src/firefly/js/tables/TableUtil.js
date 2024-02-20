@@ -544,7 +544,7 @@ export function formatValue(col, val) {
     } else if (format) {
         return sprintf(format, val);
     } else if (isColumnType(col, COL_TYPE.INT)) {
-        if (isNaN(val)) return Number.NaN+'';
+        if (typeof val !== 'bigint' && isNaN(val)) return Number.NaN+'';
         return sprintf('%i', val);
     } else if (isColumnType(col, COL_TYPE.FLOAT)) {
         if (precision) {
