@@ -98,7 +98,7 @@ export function MetaInfo({tbl_id, isOpen=false, ...props}) {
                                 { rs.name && <Keyword label='name' value={rs.name}/> }
                                 { rs.UCD && <Keyword label='UCD' value={rs.UCD}/> }
                                 { rs.utype && <Keyword label='utype' value={rs.utype}/> }
-                                <a className='ff-href' onClick={showValue}> show value</a>
+                                <Link onClick={showValue}> show value</Link>
                             </div>
                         );
                     })

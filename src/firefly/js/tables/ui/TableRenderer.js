@@ -5,12 +5,13 @@
 import React, {useRef, useCallback, useState, useEffect} from 'react';
 import {Cell} from 'fixed-data-table-2';
 import {set, get, omit, isEmpty, isString, toNumber} from 'lodash';
-import {Typography, Checkbox, Stack, Box, Link, Sheet, Dropdown, Menu, MenuButton, MenuItem} from '@mui/joy';
+import {Typography, Checkbox, Stack, Box, Link, Sheet, Dropdown, Menu, MenuButton, MenuItem, IconButton, Button, Chip} from '@mui/joy';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
 import {
-    isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue, getTypeLabel,
-    getColumnIdx, getRowValues, getCellValue, getTableUiByTblId, splitCols, isOfType, splitVals
+    isColumnType, COL_TYPE, getTblById, getColumn, formatValue, getTypeLabel,
+    getColumnIdx, getRowValues, getCellValue, splitCols, isOfType, splitVals
 } from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
@@ -20,14 +21,14 @@ import {toBoolean, copyToClipboard} from '../../util/WebUtil.js';
 import ASC_ICO from 'html/images/sort_asc.gif';
 import DESC_ICO from 'html/images/sort_desc.gif';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField';
-import DialogRootContainer, {showDropDown, hideDropDown} from '../../ui/DialogRootContainer.jsx';
+import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {FieldGroup} from '../../ui/FieldGroup';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {useStoreConnector} from './../../ui/SimpleComponent.jsx';
 import {applyLinkSub, applyTokenSub} from '../../voAnalyzer/VoCoreUtils.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-import {dispatchTableUiUpdate, dispatchTableUpdate} from '../TablesCntlr.js';
+import {dispatchTableUpdate} from '../TablesCntlr.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 
@@ -38,11 +39,7 @@ import {FilterButton} from 'firefly/visualize/ui/Buttons.jsx';
 
 
 
-
-export const DDzIndex = 111;   // 110 is the z-index of a dropdown
-
 const html_regex = /<.+>|&.+;/;           // A rough detection of html elements or entities
-const filterStyle = {width: '100%', boxSizing: 'border-box'};
 
 const imageStubMap = {
     info: <img style={{width:'14px'}} src={infoIcon} alt='info'/>
@@ -124,25 +121,13 @@ const blurEnter = ['blur','enter'];
 function Filter({cname, onFilter, filterInfo, tbl_id}) {
 
     const colGetter= () => getColumn(getTblById((tbl_id)), cname) ?? {};
-
-    const inputRef = useRef(null);
-    const enumArrowEl = useRef(null);
     const col = useStoreConnector(colGetter);
+    const [disableHoverListener, setDisableHoverListener] = useState(false);
+    const dropdownEl = useRef(null);
 
-    const focusCol = useStoreConnector(() => getTableUiByTblId(tbl_id)?.focusCol);
     useEffect(() => {
-        const onFocus = () => {
-            const {tbl_ui_id} = getTableUiByTblId(tbl_id);
-            dispatchTableUiUpdate({tbl_ui_id, focusCol:cname});
-        };
-        if (focusCol !== cname) {
-            inputRef.current?.addEventListener('focus', onFocus);
-            return () => {
-                inputRef.current?.removeEventListener('focus', onFocus);
-            };
-        }
-    }, [inputRef]);
-    const autoFocus = focusCol === cname;
+        dropdownEl.current?.focus();
+    }, [dropdownEl.current]);
 
     const validator = useCallback((cond) => {
         return FilterInfo.conditionValidator(cond, tbl_id, cname);
@@ -153,27 +138,32 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
     if (!filterable) return <div style={{height:19}} />;      // column is not filterable
 
     const filterInfoCls = FilterInfo.parse(filterInfo);
-    const content =  <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />;
-    const onEnumClicked = () => {
-        showDropDown({id: tblDropDownId(tbl_id), content, atElRef: enumArrowEl.current, locDir: 33, style: {marginLeft: -10},
-            wrapperStyle: {zIndex: DDzIndex}});
-    };
 
-    const endDecorator = enumVals && <div ref={enumArrowEl} className='arrow-down clickable' onClick={onEnumClicked}/>;
+
+    const endDecorator = enumVals && (
+        <Dropdown onOpenChange={(_,v) => setDisableHoverListener(v) }>
+            <MenuButton slots={{ root: IconButton }} sx={{mr:-1}}><ArrowDropDownIcon/></MenuButton>
+            <Menu ref={dropdownEl}>
+                <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />
+            </Menu>
+        </Dropdown>
+    );
 
     return (
         <InputField
             validator={validator}
             fieldKey={name}
             sx={{width: 1, '--Input-radius': ''}}
-            slotProps={{ input: {autoFocus, size:'sm', endDecorator }}}
             tooltip={FILTER_CONDITION_TTIPS}
             value={filterInfoCls.getFilter(name)}
             onChange={onFilter}
             actOn={blurEnter}
             showWarning={false}
-            style={filterStyle}
-            wrapperStyle={filterStyle}/>
+            slotProps={{
+                input: {size:'sm', endDecorator },
+                tooltip: {disableHoverListener}
+            }}
+        />
     );
 }
 
@@ -200,7 +190,6 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
                            .join(',');
     }
 
-    const hideEnumSelect = () => hideDropDown(tblDropDownId(tbl_id));
     const onClear = () => {
         dispatchValueChange({fieldKey, groupKey, value: '', valid: true});
     };
@@ -214,20 +203,20 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
             value = `IN (${value})`;
         }
         onFilter({fieldKey: name, valid: true, value});
-        hideEnumSelect();
     };
 
     return (
-        <Box minWidth={100} p={1}>
+        <Sheet sx={{minWidth:'10em'}}>
             <FieldGroup groupKey='TableRenderer_enum'>
-                <Stack direction='row' justifyContent='space-between'>
-                    <Link onClick={onApply} title='Apply selected filter'>filter</Link>
-                    <Link onClick={onClear} title='Clear selection'>clear</Link>
-                    <Link className='btn-close' onClick={hideEnumSelect} style={{margin: -2, fontSize: 12}}/>
+                <Stack spacing={2} px={2}>
+                    <Chip onClick={onClear} title='Clear selection'>clear</Chip>
+                    <CheckboxGroupInputField slotProps={{ input: {size: 'sm'} }} {...{fieldKey, alignment: 'vertical', options, initialState:{value}}}/>
+                    <Stack direction='row' flexGrow={1}>
+                        <Button color='primary' variant='solid' size='sm' onClick={onApply} title='Apply selected filter'>Apply</Button>
+                    </Stack>
                 </Stack>
-                <CheckboxGroupInputField slotProps={{ input: {size: 'sm'} }} {...{fieldKey, alignment: 'vertical', options, initialState:{value}}}/>
             </FieldGroup>
-        </Box>
+        </Sheet>
     );
 }
 
@@ -261,7 +250,7 @@ export function SelectableCell ({rowIndex, selectInfoCls, onRowSelect, sx={}}) {
 
 /*---------------------------- CELL RENDERERS ----------------------------*/
 
-/**
+/*
  * returns cell related attributes for display {col, value, rvalues, text, isArray, textAlign, absRowIdx}
  * @returns {{col, value, rvalues, text, isArray, textAlign, absRowIdx, tableModel}}
  */
@@ -527,7 +516,7 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
  * an input field renderer that update tableModel.
  * @param p
  * @param p.tbl_id
- * @param p.col         the column for this render
+ * @param p.cname         the column for this render
  * @param p.tooltips
  * @param p.style
  * @param p.isReadOnly  a function returning true if this row is read only
