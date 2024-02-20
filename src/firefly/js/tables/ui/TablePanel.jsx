@@ -31,7 +31,6 @@ import {AddColumnBtn} from './AddOrUpdateColumn.jsx';
 
 import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
 import {META} from '../TableRequestUtil.js';
-import {DDzIndex} from 'firefly/tables/ui/TableRenderer.js';
 
 const logger = Logger('Tables').tag('TablePanel');
 
@@ -120,7 +119,7 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
 function showTableOptionDialog(onChange, onOptionReset, clearFilter, tbl_ui_id, tbl_id) {
 
     const content = (
-         <Stack height={550} width={700} overflow='hidden' sx={{resize:'both', minWidth:550, minHeight:200}}>
+         <Stack height='65vh' width='65vw' overflow='hidden' sx={{resize:'both', minWidth:550, minHeight:200}}>
                <TablePanelOptions
                   onChange={onChange}
                   onOptionReset={onOptionReset}
@@ -138,10 +137,10 @@ function showTableOptionDialog(onChange, onOptionReset, clearFilter, tbl_ui_id, 
 
 function showTableInfoDialog(tbl_id)  {
     const content = (
-        <Box width={500} height={300} minWidth={450} minHeight={200}
+        <Box width='65vw' height='65vh' minWidth={450} minHeight={200}
              sx={{resize:'both', overflow:'auto', position:'relative'}}>
             <TableInfo tbl_id={tbl_id}
-                       p={0} height='unset'
+                       p={0}
                        tabsProps={{
                            variant:'plain',
                            slotProps: {tabList: {sticky: 'top'}}

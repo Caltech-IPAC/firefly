@@ -5,7 +5,7 @@ import {Typography, Box, Link, Stack} from '@mui/joy';
 import {isEmpty} from 'lodash';
 import {getTblById, hasAuxData} from '../TableUtil.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-import {CollapsiblePanel} from '../../ui/panel/CollapsiblePanel.jsx';
+import {CollapsibleGroup, CollapsibleItem} from '../../ui/panel/CollapsiblePanel.jsx';
 import {ContentEllipsis} from './TableRenderer.js';
 import {ObjectTree} from './ObjectTree.jsx';
 import {StatefulTabs, Tab} from '../../ui/panel/TabPanel.jsx';
@@ -53,7 +53,7 @@ function MetaContent({tbl_id}) {
     if (hasAuxData(tbl_id)) {
         return <MetaInfo tbl_id={tbl_id} isOpen={true} sx={{ w: 1, border: 'none', m: 'unset', p: 'unset'}} />;
     } else {
-        return <div style={{margin: 20, fontWeight: 'bold'}}>No metadata available</div>;
+        return <Stack><Typography level='title-md'>No metadata available</Typography></Stack>;
     }
 }
 
@@ -67,78 +67,81 @@ export function MetaInfo({tbl_id, isOpen=false, ...props}) {
 
     return (
         <Stack {...props}>
-            { !isEmpty(keywords) &&
-            <CollapsiblePanel componentKey={tbl_id + '-meta'} header='Table Meta' isOpen={isOpen}>
-                {keywords.concat()                                             // make a copy so the original array does not mutate
-                    .filter( ({key}) => key)
-                    .sort(({key:k1}, {key:k2}) => (k1+'').localeCompare(k2+''))        // sort it by key
-                    .map(({value, key}, idx) => <KeywordBlock key={'keywords-' + idx} label={key} value={value}/>)
+            <CollapsibleGroup size='sm'>
+                { !isEmpty(keywords) &&
+                <CollapsibleItem componentKey={tbl_id + '-meta'} header='Table Meta' isOpen={isOpen}>
+                    {keywords.concat()                                             // make a copy so the original array does not mutate
+                        .filter( ({key}) => key)
+                        .sort(({key:k1}, {key:k2}) => (k1+'').localeCompare(k2+''))        // sort it by key
+                        .map(({value, key}, idx) => <KeywordBlock key={'keywords-' + idx} label={key} value={value}/>)
+                    }
+                </CollapsibleItem>
                 }
-            </CollapsiblePanel>
-            }
-            { !isEmpty(params) &&
-            <CollapsiblePanel componentKey={tbl_id + '-params'} header='Table Params' isOpen={isOpen}>
-                {params.concat()                                                          // same logic as keywords, but sort by name
-                    .sort(({name:k1}, {name:k2}) => k1.localeCompare(k2))
-                    .map(({name, value, type='N/A'}, idx) => <KeywordBlock key={'params-' + idx} label={`${name}(${type})`} value={value}/>)
+                { !isEmpty(params) &&
+                <CollapsibleItem componentKey={tbl_id + '-params'} header='Table Params' isOpen={isOpen}>
+                    {params.concat()                                                          // same logic as keywords, but sort by name
+                        .sort(({name:k1}, {name:k2}) => k1.localeCompare(k2))
+                        .map(({name, value, type='N/A'}, idx) => <KeywordBlock key={'params-' + idx} label={`${name}(${type})`} value={value}/>)
+                    }
+                </CollapsibleItem>
                 }
-            </CollapsiblePanel>
-            }
-            { !isEmpty(groups) &&
-            <CollapsiblePanel componentKey={tbl_id + '-groups'} header='Groups' isOpen={isOpen}>
-                {groups.map((rs, idx) => {
-                    const showValue = () => showInfoPopup(
-                        <div style={{whiteSpace: 'pre'}}>
-                            <ObjectTree data={rs} title={<b>Group</b>} className='MetaInfo__tree'/>
-                        </div> );
-                    return (
-                        <div key={'groups-' + idx} style={{display: 'inline-flex', alignItems: 'center'}}>
-                            { rs.ID && <Keyword label='ID' value={rs.ID}/> }
-                            { rs.name && <Keyword label='name' value={rs.name}/> }
-                            { rs.UCD && <Keyword label='UCD' value={rs.UCD}/> }
-                            { rs.utype && <Keyword label='utype' value={rs.utype}/> }
-                            <a className='ff-href' onClick={showValue}> show value</a>
-                        </div>
-                    );
-                })
+                { !isEmpty(groups) &&
+                <CollapsibleItem componentKey={tbl_id + '-groups'} header='Groups' isOpen={isOpen}>
+                    {groups.map((rs, idx) => {
+                        const showValue = () => showInfoPopup(
+                            <div style={{whiteSpace: 'pre'}}>
+                                <ObjectTree data={rs} title={<b>Group</b>} className='MetaInfo__tree'/>
+                            </div> );
+                        return (
+                            <div key={'groups-' + idx} style={{display: 'inline-flex', alignItems: 'center'}}>
+                                { rs.ID && <Keyword label='ID' value={rs.ID}/> }
+                                { rs.name && <Keyword label='name' value={rs.name}/> }
+                                { rs.UCD && <Keyword label='UCD' value={rs.UCD}/> }
+                                { rs.utype && <Keyword label='utype' value={rs.utype}/> }
+                                <a className='ff-href' onClick={showValue}> show value</a>
+                            </div>
+                        );
+                    })
+                    }
+                </CollapsibleItem>
                 }
-            </CollapsiblePanel>
-            }
-            { !isEmpty(links) &&
-            <CollapsiblePanel componentKey={tbl_id + '-links'} header='Links' isOpen={isOpen}>
-                {links.map((l, idx) => {
-                    return (
-                        <div key={'links-' + idx} style={{display: 'inline-flex', alignItems: 'center'}}>
-                            { l.ID && <Keyword label='ID' value={l.ID}/> }
-                            { l.role && <Keyword label='role' value={l.role}/> }
-                            { l.type && <Keyword label='type' value={l.type}/> }
-                            { l.href && <LinkTag {...l}/>}
-                        </div>
-                    );
-                })
+                { !isEmpty(links) &&
+                <CollapsibleItem componentKey={tbl_id + '-links'} header='Links' isOpen={isOpen}>
+                    {links.map((l, idx) => {
+                        return (
+                            <div key={'links-' + idx} style={{display: 'inline-flex', alignItems: 'center'}}>
+                                { l.ID && <Keyword label='ID' value={l.ID}/> }
+                                { l.role && <Keyword label='role' value={l.role}/> }
+                                { l.type && <Keyword label='type' value={l.type}/> }
+                                { l.href && <LinkTag {...l}/>}
+                            </div>
+                        );
+                    })
+                    }
+                </CollapsibleItem>
                 }
-            </CollapsiblePanel>
-            }
-            { !isEmpty(resources) &&
-            <CollapsiblePanel componentKey={tbl_id + '-resources'} header='Resources' isOpen={isOpen}>
-                {resources.map((rs, idx) => {
-                    const showValue = () => showInfoPopup(
-                        <div style={{whiteSpace: 'pre'}}>
-                            <ObjectTree data={rs} title={<b>Resource</b>} className='MetaInfo__tree'/>
-                        </div> );
-                    return (
-                        <div key={'resources-' + idx} style={{display: 'inline-flex', alignItems: 'center'}}>
-                            { rs.ID && <Keyword label='ID' value={rs.ID}/> }
-                            { rs.name && <Keyword label='name' value={rs.name}/> }
-                            { rs.type && <Keyword label='type' value={rs.type}/> }
-                            { rs.utype && <Keyword label='utype' value={rs.utype}/> }
-                            <a className='ff-href' onClick={showValue}> show value</a>
-                        </div>
-                    );
-                })
+                { !isEmpty(resources) &&
+                <CollapsibleItem componentKey={tbl_id + '-resources'} header='Resources' isOpen={isOpen}>
+                    {resources.map((rs, idx) => {
+                        const showValue = () => showInfoPopup(
+                            <div style={{whiteSpace: 'pre'}}>
+                                <ObjectTree data={rs} title={<b>Resource</b>} className='MetaInfo__tree'/>
+                            </div> );
+                        return (
+                            <Stack direction='row' key={'resources-' + idx}>
+                                { rs.ID && <Keyword label='ID' value={rs.ID}/> }
+                                { rs.name && <Keyword label='name' value={rs.name}/> }
+                                { rs.type && <Keyword label='type' value={rs.type}/> }
+                                { rs.utype && <Keyword label='utype' value={rs.utype}/> }
+                                <Link onClick={showValue}> show value</Link>
+                            </Stack>
+                        );
+                    })
+                    }
+                </CollapsibleItem>
                 }
-            </CollapsiblePanel>
-            }
+
+            </CollapsibleGroup>
         </Stack>
     );
 }

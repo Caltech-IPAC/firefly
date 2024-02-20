@@ -5,7 +5,7 @@
 import React, {useRef, useCallback, useState, useEffect} from 'react';
 import {Cell} from 'fixed-data-table-2';
 import {set, get, omit, isEmpty, isString, toNumber} from 'lodash';
-import {Typography, Checkbox, Stack, Box, Link, Sheet, Button} from '@mui/joy';
+import {Typography, Checkbox, Stack, Box, Link, Sheet, Dropdown, Menu, MenuButton, MenuItem} from '@mui/joy';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
 import {
@@ -19,7 +19,6 @@ import {toBoolean, copyToClipboard} from '../../util/WebUtil.js';
 
 import ASC_ICO from 'html/images/sort_asc.gif';
 import DESC_ICO from 'html/images/sort_desc.gif';
-import FILTER_SELECTED_ICO from 'html/images/icons-2014/16x16_Filter.png';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField';
 import DialogRootContainer, {showDropDown, hideDropDown} from '../../ui/DialogRootContainer.jsx';
 import {FieldGroup} from '../../ui/FieldGroup';
@@ -31,10 +30,14 @@ import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {dispatchTableUiUpdate, dispatchTableUpdate} from '../TablesCntlr.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import {TBL_CLZ_NAME} from './TablePanel.jsx';
 
 import infoIcon from 'html/images/info-icon.png';
 import {dd2sex} from '../../visualize/CoordUtil.js';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import {FilterButton} from 'firefly/visualize/ui/Buttons.jsx';
+
+
+
 
 export const DDzIndex = 111;   // 110 is the z-index of a dropdown
 
@@ -237,11 +240,9 @@ export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, s
                 onChange={(e) => onSelectAll(e.target.checked)}/>
             {showUnits && <Box height='1em'/>}
             {showTypes && <Box height='1em'/>}
-            {showFilters && <img className='clickable'
-                                 style={{marginBottom: 3}}
-                                 src={FILTER_SELECTED_ICO}
+            {showFilters && <FilterButton  iconButtonSize='32px'
                                  onClick={onFilterSelected}
-                                 title='Filter on selected rows'/>}
+                                 tip='Filter on selected rows'/>}
         </Stack>
     );
 }
@@ -314,72 +315,53 @@ export function makeDefaultRenderer(col={}) {
     return renderer;
 }
 
-function findTableFor(element) {
-    let cEl = element;
-    while (cEl && !cEl.classList.contains(TBL_CLZ_NAME)) {
-        cEl = cEl.parentNode;
-    }
-    return cEl;
-}
-
 export function ContentEllipsis({children, text, textAlign, sx, actions=[]}) {
 
-    const [hasActions, setHasActions] = useState(false);
-    const actionsEl = useRef(null);
-
-    const dropDownID = 'actions--dropdown';
-    const popupID = 'actions--popup';
-
-    const onActionsClicked = (ev) => {
-        ev.stopPropagation();
-        const boxEl = findTableFor(actionsEl.current);
-        showDropDown({id: dropDownID, content: dropDown, boxEl, atElRef: actionsEl.current, locDir: 33, style: {marginLeft: -10},
-            wrapperStyle: {zIndex: DDzIndex}});
-    };
-
-    const copyCB = () => {
-        copyToClipboard(text);
-        hideDropDown(dropDownID);
-    };
-
-    const viewAsText = () => {
-        DialogRootContainer.defineDialog(popupID, <ViewAsText text={text}/>);
-        dispatchShowDialog(popupID);
-        hideDropDown(dropDownID);
-    };
-
-    const buttonProps = {variant:'plain', size:'sm', fullWidth:true, color:'neutral', sx:{whiteSpace:'nowrap'}};
-    const dropDown =  (
-        <Stack p={1/4} spacing={1/4}>
-            <Button {...buttonProps} onClick={copyCB}>Copy to clipboard</Button>
-            <Button {...buttonProps} onClick={viewAsText}>View as plain text</Button>
-            {actions?.map((text, action) => <Button {...buttonProps} onClick={action}>{text}</Button>)}
-        </Stack>
-    );
+    const [showActions, setShowActions] = useState(false);
+    const [dropdown, setDropdown] = useState(false);
+    const contentEl = useRef(null);
 
     const checkOverflow = (ev) => {
         const w = ev?.currentTarget;
-        const c = ev?.currentTarget?.children?.[0];
-        setHasActions(w?.clientWidth < c?.scrollWidth-6);  // account for paddings
+        setShowActions(w?.clientWidth < contentEl?.current?.scrollWidth-4);  // account for paddings
     };
 
     return (
-        <Stack direction='row'  overflow='hidden' whiteSpace='nowrap' alignItems='center' justifyContent={textAlign} height={1} width={1} sx={sx}
-               onMouseEnter={checkOverflow} onMouseLeave={() => setHasActions(false)}
+        <Stack direction='row'  overflow='hidden' whiteSpace='nowrap' alignItems='center' justifyContent={textAlign} sx={sx}
+               onMouseEnter={checkOverflow} onMouseLeave={() => setShowActions(false)}
         >
-            {React.Children.only(children)}
-            {hasActions &&
-                <Link ref={actionsEl}
-                      variant='soft'
-                      level='body-xs'
-                      underline='none'
-                      sx={{position: 'absolute', right:1}}
-                      onClick={onActionsClicked} title='Display full cell contents'
-                >&#x25cf;&#x25cf;&#x25cf;</Link>
+            <Stack ref={contentEl}>{children}</Stack>
+            { (showActions || dropdown) &&
+                <ActionDropdown {...{text, actions, onChange: (v)=> setDropdown(v) | setShowActions(v)}}/>
             }
         </Stack>
     );
 }
+
+function ActionDropdown({text, actions, onChange}) {
+    const popupID = 'actions--popup';
+    const [open, setOpen] = useState(false);
+    const copyCB = () => {
+        copyToClipboard(text);
+    };
+    const viewAsText = () => {
+        DialogRootContainer.defineDialog(popupID, <ViewAsText text={text}/>);
+        dispatchShowDialog(popupID);
+    };
+    return (
+        <Dropdown open={open} onOpenChange={(_, open) => setOpen(open) | onChange(open)}>
+            <MenuButton variant='soft' size='sm' sx={{position: 'absolute', right:0, paddingInline:'.25em'}}>
+                <MoreHorizIcon/>
+            </MenuButton>
+            <Menu>
+                <MenuItem onClick={copyCB}>Copy to clipboard</MenuItem>
+                <MenuItem onClick={viewAsText}>View as plain text</MenuItem>
+                {actions?.map((text, action) => <MenuItem onClick={action}>{text}</MenuItem>)}
+            </Menu>
+        </Dropdown>
+    );
+};
+
 
 
 /**
@@ -398,7 +380,7 @@ export const CellWrapper =  React.memo( (props) => {
         </Stack>
     );
 
-    return CellRenderer?.allowActions ? <ContentEllipsis {...{textAlign, text}}>{content}</ContentEllipsis> : contentWithWrapper;
+    return CellRenderer?.allowActions ? <ContentEllipsis sx={{height:1, width:1}} {...{textAlign, text}}>{content}</ContentEllipsis> : contentWithWrapper;
 
 }, skipCellRender);
 
