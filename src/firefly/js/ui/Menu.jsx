@@ -59,6 +59,7 @@ export function Menu() {
         if (!ready) setReady(true);
         const pref= getPreference(MENU_PREF_ROOT+appTitle);
         if (!pref) return;
+        if (!menu.menuItems) return;
         const menuItems= menu.menuItems.map( (mi) => ({...mi, visible: pref[mi.action]}) );
         dispatchSetMenu({...menu, menuItems});
     }, []);
