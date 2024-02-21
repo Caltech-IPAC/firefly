@@ -107,7 +107,7 @@ const MakeFileOptions = ({plot,colors,hasOperation,threeC}) => {
                 options={isImage(plot) ? imageFileTypeOps : hipsFileTypeOps}
                 fieldKey='fileType'
                 orientation='horizontal'
-                label='Type of files'
+                label='Type of file'
                 tooltip='Please select a file type' />
             {hasOperation && renderOperationOption()}
             {threeC && <RenderThreeBand {...{colors}}/>}

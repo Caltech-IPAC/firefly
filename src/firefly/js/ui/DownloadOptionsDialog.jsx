@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Stack, Box, styled} from '@mui/joy';
+import {Stack, Box} from '@mui/joy';
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
@@ -50,22 +50,26 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
                     <img style={{width:14,height:14}} src={LOADING}/>
                 </div>
         );
-        const StyledDiv = styled('div')(({ theme }) => ({
-            boxSizing: 'border-box',
-            overflow: 'auto',
-        }));
+
+        const style = {
+                width: '100%',
+                paddingLeft: '1rem',
+                paddingRight: '1rem',
+                paddingTop: '1rem',
+                border: '1px solid #a3aeb9',
+                borderRadius: 5,
+                overflow: 'auto'
+            };
 
         const showSave = (
-            <Stack sx={{ display: 'flex', justifyContent: 'center'}}>
-                <StyledDiv>
-                  <WorkspaceSave fieldKey={'wsSelect'} files={wsList} value={wsSelect}
-                                          tooltip='workspace file system'/>
-                </StyledDiv>
-            </Stack>
+            <Box style={style} sx={{flexGrow: 1, overflow: 'auto', mt: 3 }}>
+                <WorkspaceSave fieldKey={'wsSelect'} files={wsList} value={wsSelect}
+                                      tooltip='workspace file system'/>
+            </Box>
         );
 
         const showNoWSFiles = (
-                <Stack spacing={2}>
+                <Stack>
                     {'Workspace access error: ' + getWorkspaceErrorMsg()}
                 </Stack>
         );
@@ -102,10 +106,11 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
                 label='File name'
                 tooltip='Please enter a filename, a default name will be used if it is blank'
             />
+            <Stack sx={{ps:2, my:2}}>
+                {workspace && showLocation}
 
-            {workspace && showLocation}
-
-            {where === WORKSPACE && <ShowWorkspace/>}
+                {where === WORKSPACE && <ShowWorkspace/>}
+            </Stack>
         </Stack>
     );
 }
