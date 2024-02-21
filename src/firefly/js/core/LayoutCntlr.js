@@ -324,7 +324,10 @@ export const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
  * @return {{bgTableCnt: number, tableCnt: number, haveResults: boolean, imageCnt: number, pinChartCnt: number)}
  */
 export function getResultCounts() {
-    const haveResults = filter(pick(getLayouInfo(), ['showTables', 'showXyPlots', 'showImages'])).length>0;
+    const layoutInfo= getLayouInfo();
+    const haveResults = filter(pick(layoutInfo, ['showTables', 'showXyPlots', 'showImages'])).length>0 ||
+            !isEmpty(layoutInfo.gridViewsData)
+                         ;
     const tableCnt= getTblIdsByGroup('main')?.length ?? 0;
     const imageCnt= getViewer(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID)?.itemIdAry?.length ?? 0;
     const pinChartCnt= getViewer(getMultiViewRoot(), PINNED_VIEWER_ID)?.itemIdAry?.length ?? 0;

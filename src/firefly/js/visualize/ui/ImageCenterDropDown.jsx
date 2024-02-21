@@ -122,15 +122,17 @@ export function ImageCenterDropDown({visRoot:vr, visible, mi}) {
                            onClick={() => dispatchRecenter({plotId, centerOnImage:true})} />
 
             <DropDownVerticalSeparator useLine={true}/>
-            <FieldGroup style={{display:'flex', fontSize:'10pt', padding:'5px 0 0 0'}}
-                        groupKey='TARGET_DROPDOWN' keepState={false}>
-                <TargetPanel groupKey={'target-move-group'} labelWidth={80}
-                             label={'Center On:'} defaultToActiveTarget={false}
-                             showResolveSourceOp={false} showExample={false}/>
-                <Stack {...{direction:'column'}}>
-                    <CompleteButton text= 'Go' innerStyle={{width:'100%'}} onSuccess={moveToTarget} fireOnEnter={true} />
-                    <CompleteButton style={{ marginTop:4, whiteSpace:'nowrap' }} innerStyle={{width:'100%'}}
-                                    text= 'Go & Mark' onSuccess={createMarkerAndMoveToTarget} />
+            <FieldGroup groupKey='TARGET_DROPDOWN'>
+                <Stack direction='row' spacing={1}>
+                    <TargetPanel groupKey={'target-move-group'} labelWidth={80}
+                                 label={'<Enter position to center on>'} defaultToActiveTarget={false}
+                                 showResolveSourceOp={false} showExample={false}/>
+                    <Stack {...{alignItems:'stretch'}}>
+                        <CompleteButton text= 'Go' onSuccess={moveToTarget} fireOnEnter={true}
+                                        sx={{'& button': {width:1}}}/>
+                        <CompleteButton style={{ marginTop:4, whiteSpace:'nowrap' }} innerStyle={{width:'100%'}}
+                                        text= 'Go & Mark' onSuccess={createMarkerAndMoveToTarget} />
+                    </Stack>
                 </Stack>
             </FieldGroup>
             {recentAry.length>0 && <DropDownVerticalSeparator useLine={true}/>}

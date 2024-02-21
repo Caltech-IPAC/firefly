@@ -1,9 +1,10 @@
 
 import {DialogTitle, Divider, Drawer, ModalClose, Stack, Typography} from '@mui/joy';
-import {bool, number, oneOfType, string} from 'prop-types';
-import React, {useState} from 'react';
+import {object, bool, number, oneOfType, string} from 'prop-types';
+import React, {useContext, useState} from 'react';
 import {dispatchHideDialog, isDialogVisible, SIDE_BAR_ID} from '../core/ComponentCntlr.js';
 import {modifyURLToFull} from '../util/WebUtil.js';
+import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
 import {useColorMode} from './FireflyRoot.jsx';
 import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import {SideBarMenu} from './Menu.jsx';
@@ -13,15 +14,19 @@ import {VersionInfo} from './VersionInfo.jsx';
 
 
 
-export function AppConfigDrawer({appTitle, appIcon, drawerWidth= '22rem', allowMenuHide= true, useSideBarMenu=true, children}) {
+export function AppConfigDrawer({containerElement, drawerWidth= '22rem', allowMenuHide= true, useSideBarMenu=true, children}) {
+
+    const {appTitle, appIcon} = useContext(AppPropertiesCtx);
     const visible= useStoreConnector(() => isDialogVisible(SIDE_BAR_ID));
     const closeSideBar= () => dispatchHideDialog(SIDE_BAR_ID);
     return (
-        <Drawer open={visible} onClose={() => closeSideBar()} sx={{ '--Drawer-horizontalSize': drawerWidth }} >
+        <Drawer container={containerElement} open={visible} onClose={() => closeSideBar()} sx={{ '--Drawer-horizontalSize': drawerWidth }} >
             <ModalClose/>
             <DialogTitle>
                 <Stack direction='row' spacing={1} alignItems='center'>
-                    <img style={{maxWidth:'50px'}} src={appIcon?.startsWith('data') ? appIcon : modifyURLToFull(appIcon)}/>
+                    <img style={{maxWidth:'50px'}} src={appIcon?.startsWith('data') ? appIcon : modifyURLToFull(appIcon)}
+                         onClick={() => closeSideBar()}
+                    />
                     <div>{appTitle}</div>
                 </Stack>
             </DialogTitle>
@@ -44,11 +49,10 @@ export function AppConfigDrawer({appTitle, appIcon, drawerWidth= '22rem', allowM
 }
 
 AppConfigDrawer.propTypes = {
-    appTitle: string,
-    appIcon: string,
     drawerWidth: oneOfType([string,number]),
     allowMenuHide: bool,
-    useSideBarMenu: bool
+    useSideBarMenu: bool,
+    containerElement: object
 };
 
 

@@ -65,7 +65,7 @@ export const defTapBrowserState= {
     schemaOptions:undefined,
     schemaName:undefined,
     tableOptions:undefined,
-    lastServicesShowing: false,
+    lastServicesShowing: true,
     tableName:undefined,
     columnsModel:undefined,
     obsCoreEnabled:false,

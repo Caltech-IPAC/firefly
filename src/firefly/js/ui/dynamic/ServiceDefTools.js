@@ -307,6 +307,7 @@ export function makeSearchAreaInfo(cisxUI) {
 }
 
 let tblCnt=1;
+const CHECK_SORT= false;
 
 export function makeServiceDescriptorSearchRequest(request, serviceDescriptor, extraMeta={}) {
     const {standardID = '', accessURL, utype, serDefParams, title, cisxUI=[]} = serviceDescriptor;
@@ -318,11 +319,14 @@ export function makeServiceDescriptorSearchRequest(request, serviceDescriptor, e
     const hideObj= hiddenColumns ?
         Object.fromEntries(hiddenColumns.split(',').map((c) => [ `col.${c}.visibility`, 'hide'] )) : {};
 
-    const sAry= tblSortOrder?.split(',');
+    const sAry= tblSortOrder?.split(',',2);
     let sortObj= {};
-    if (sAry?.length>1) {
-        const dir= sAry.shift();
-        sortObj= {sortInfo: sortInfoString(sAry, dir?.toUpperCase()==='ASC')};
+    if (sAry?.length>1 && CHECK_SORT) {
+        const dir= sAry[0].toUpperCase();
+        sortObj= {sortInfo: sortInfoString(tblSortOrder.substring(dir.length+1), dir==='ASC')};
+        // console.log('from service def: '+tblSortOrder);
+        // console.log('using sortInfoString)(): '+sortObj.sortInfo);
+        // sortObj= {sortInfo: tblSortOrder};
     }
 
     const options= {...sortObj, META_INFO: { ...hideObj, ...extraMeta }};

@@ -199,7 +199,7 @@ export function NavButtons({setServicesShowing, servicesShowing, currentPanel, s
 
     return (
         <Stack {...{direction:'column', justifyContent:'center', spacing:.5, alignItems:'flex-end', mr:.2,
-            sx:{ 'button': {width:'100px'} }
+            sx:{ 'button': {width:'80px', maxHeight:22 } }
         }}>
             {!lockService && <ShowServicesButton {...{setServicesShowing,servicesShowing}}/>}
             <GotoPanelButton {...{setNextPanel,currentPanel}}/>
@@ -229,6 +229,7 @@ function ShowServicesButton({setServicesShowing, servicesShowing }) {
     return (
             <RadioGroupInputFieldView {...{
                 options, value:currState, label:'TAP Services: ', orientation:'horizontal', buttonGroup:true,
+                slotProps: {button: {sx: {'--Button-minHeight' : 22, '--Button-gap': '.2rem', }}},
                 onChange:() => setServicesShowing(!servicesShowing)
             }}/>
     );
@@ -254,6 +255,11 @@ export function TableTypeButton({sx, lockToObsCore, setLockToObsCore}) {
     return (
         <CheckboxGroupInputFieldView  {...{
             sx,
+            slotProps: {
+                input: {
+                    sx:{ '--Switch-trackWidth': '20px', '--Switch-trackHeight': '12px', }
+                }
+            },
             type:'switch',
             options,
             tooltip,value:lockToObsCore?OBSCORE:'', labelWidth:1,

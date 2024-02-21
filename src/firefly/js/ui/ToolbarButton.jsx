@@ -5,7 +5,7 @@
 import {Badge, Box, Button, Checkbox, Divider, IconButton, Stack, Tooltip} from '@mui/joy';
 import {isString} from 'lodash';
 import React, {memo, useRef, useEffect} from 'react';
-import PropTypes, {bool, element, func, node, number, object, oneOfType, shape, string} from 'prop-types';
+import {bool, element, func, node, number, object, oneOfType, shape, string} from 'prop-types';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 import DROP_DOWN_ICON from 'html/images/dd-narrow.png';
@@ -209,17 +209,9 @@ function TbCheckBox({hasCheckBox, CheckboxOnIcon, CheckboxOffIcon, checkBoxOn, o
     return <Checkbox {...{variant:'plain', checked:checkBoxOn, onClick}}/>;
 }
 
-function makeBorder(active, theme,color) {
-    // const color= active ? theme.vars.palette.warning.softActiveBg : 'transparent';
+function makeBorder(active,theme,color) {
     const borderC= active ? theme.vars.palette[color]?.softActiveBg : 'transparent';
-    // const color= active ? theme.vars.palette.primary.softActiveColor: 'transparent';
-    return {
-        borderTop: `1px solid ${borderC}`,
-        borderLeft: `1px solid ${borderC}`,
-        borderRight: `1px solid ${borderC}`,
-        borderBottomRightRadius: active ?0 : undefined,
-        borderBottomLeftRadius: active ?0 : undefined,
-    };
+    return { border: `1px solid ${borderC}` };
 }
 
 function makeFontSettings(theme) {

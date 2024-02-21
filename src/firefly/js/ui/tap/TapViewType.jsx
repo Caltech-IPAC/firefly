@@ -1,5 +1,6 @@
 import {Button, Divider, Sheet, Stack, Tooltip, Typography} from '@mui/joy';
 import {truncate} from 'lodash';
+import {bool, string, func, object, shape} from 'prop-types';
 import React, {Fragment, useContext, useEffect, useRef, useState} from 'react';
 import SplitPane from 'react-split-pane';
 import {getColumnValues} from '../../tables/TableUtil.js';
@@ -43,7 +44,39 @@ function matchesObsCoreHeuristic(schemaName, tableName, columnsModel) {
 }
 
 
-export function AdqlUI({serviceUrl, servicesShowing, setServicesShowing, setSelectBy, lockService}) {
+export function TapViewType({serviceUrl, servicesShowing, setServicesShowing, lockService, setSelectBy,
+                                serviceLabel, selectBy, initArgs, lockObsCore, obsCoreTableModel, hasObsCoreTable}) {
+
+    return (
+        <Stack {...{pt: servicesShowing?0:1, height:1}}>
+            {selectBy==='adql' ?
+                <AdqlUI {...{serviceUrl, servicesShowing, setServicesShowing, lockService, setSelectBy}}/> :
+                <BasicUI  {...{serviceUrl, serviceLabel, selectBy, initArgs, lockService, lockObsCore, obsCoreTableModel,
+                    servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy}}/>
+            }
+        </Stack>
+    );
+}
+
+TapViewType.propTypes= {
+    serviceUrl: string,
+    servicesShowing: bool,
+    setServicesShowing: func,
+    lockService: bool,
+    setSelectBy: func,
+    serviceLabel: string,
+    selectBy: string,
+    initArgs: shape({
+        searchParams: object,
+        urlApi: object,
+    }),
+    lockObsCore: bool,
+    obsCoreTableModel: object,
+    hasObsCoreTable: bool,
+};
+
+
+function AdqlUI({serviceUrl, servicesShowing, setServicesShowing, setSelectBy, lockService}) {
     const [,setCapabilitiesChange] = useState(); // this is just to force a rerender
     const capabilities= getLoadedCapability(serviceUrl);
     useEffect(() => {
@@ -56,7 +89,7 @@ export function AdqlUI({serviceUrl, servicesShowing, setServicesShowing, setSele
                 <div style={{ display: 'inline-flex', alignItems: 'center', width: '100%', justifyContent:'space-between'}}>
                     <Stack {...{ direction: 'row', alignItems: 'center'}}>
                         <Stack {...{direction:'row', alignItems:'center', mr:4, width:'14rem', justifyContent:'space-between'}}>
-                            <Typography {...{level:'h4', color:'primary'}}>Advanced ADQL</Typography>
+                            <Typography {...{level:'title-lg', color:'primary'}}>Advanced ADQL</Typography>
                             <HelpIcon helpId={tapHelpId('adql')}/>
                         </Stack>
                         <Typography color='warning' level='body-lg'>ADQL edits below will not be reflected in <b>Single Table</b> view</Typography>
@@ -87,7 +120,7 @@ function useStateRef(initialState){
     return [state, stateRef, setState];
 }
 
-export function BasicUI(props) {
+function BasicUI(props) {
     const {initArgs={}, setSelectBy, obsCoreTableModel, servicesShowing,
         setServicesShowing, hasObsCoreTable, lockService, lockObsCore:forceLockObsCore}= props;
     const {urlApi={},searchParams={}}= initArgs;
@@ -275,13 +308,13 @@ export function BasicUI(props) {
     return (
         <Fragment>
             <Sheet sx={{display:'flex', flexDirection: 'row', justifyContent:'space-between'}}>
-                <Stack {...{direction:'row', justifyContent:'space-between', width:1, pt:showTableSelectors?0:1}}>
+                <Stack {...{direction:'row', justifyContent:'space-between', width:1, spacing:1}}>
                     {showTableSelectors &&
                         <Stack {...{direction:'row', alignItems:'center', width:1}}>
                             <Stack>
                                 <Stack {...{direction:'row', justifyContent:'space-between', width:'14rem', alignItems:'center', mr:1}}>
                                     <Tooltip title={SCH_TAB_TITLE_TIP}>
-                                        <Typography {...{level:'h4', color:'primary', component:'div' }}>
+                                        <Typography {...{level:'title-lg', color:'primary', component:'div' }}>
                                             <Stack {...{justifyContent:'center', height:55, overflow:'hidden'}}>
                                                 <div style={{ textOverflow: 'ellipsis', whiteSpace: 'normal', overflow: 'hidden' }} >
                                                     {`${serviceLabel} Tables`}
@@ -295,9 +328,11 @@ export function BasicUI(props) {
                                     sx: {mr: 1},
                                     lockToObsCore:obsCoreEnabled, setLockToObsCore}}/>}
                             </Stack>
-                            <Stack {...{direction: 'row', width:1, spacing:1, mr: 1/2, maxWidth: 1000}}>
+                            <Stack {...{direction: 'row', width:1, spacing:1, mr: 1/2, maxWidth: 1000, justifyContent:'space-between'}}>
                                 <ListBoxInputFieldView {...{
-                                    sx:{'& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', maxWidth:'34rem', minHeight:'5rem'}},
+                                    sx:{
+                                        width:1,
+                                        '& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', height:'5rem'}},
                                     title:SCHEMA_TIP,
                                     options:sOps, value:schemaName, placeholder:'Loading...',
                                     startDecorator:!sOps.length ? <Button loading={true}/> : undefined,
@@ -305,14 +340,16 @@ export function BasicUI(props) {
                                     renderValue:
                                         ({value}) =>
                                             (<OpRender {...{
-                                                ops: sOps, value,
+                                                ops: sOps, value, lineClamp:2,
                                                 label: schemaLabel ?? 'Table Collection (Schema)' }}/>),
                                     decorator:
                                         (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
                                             ops: sOps, value,}}/>),
                                 }} />
                                 <ListBoxInputFieldView {...{
-                                    sx:{'& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', maxWidth:'34rem', minHeight:'5rem'}},
+                                    sx:{
+                                        width:1,
+                                        '& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', height:'5rem'}},
                                     title:TABLE_TIP,
                                     options:tOps, value:tableName, placeholder:'Loading...',
                                     startDecorator:!tOps.length ? <Button loading={true}/> : undefined,
@@ -322,7 +359,7 @@ export function BasicUI(props) {
                                     },
                                     renderValue:
                                         ({value}) =>
-                                            (<OpRender {...{ ops: tOps, value, label: 'Tables' }}/>),
+                                            (<OpRender {...{ ops: tOps, value, label: 'Tables', lineClamp:2, }}/>),
                                     decorator:
                                         (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
                                             ops: tOps, value}}/>),
@@ -348,7 +385,7 @@ export function BasicUI(props) {
             <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
                 <div style={{ display: 'inline-flex', width: 'calc(100% - 3px)', justifyContent: 'space-between', margin:'5px 0 -8px 0'}}>
                     <Stack spacing={1} alignItems='center' direction={'row'}>
-                        <Typography {...{level:'h4', color:'primary'}}>Enter Constraints</Typography>
+                        <Typography {...{level:'title-lg', color:'primary'}}>Enter Constraints</Typography>
                         <HelpIcon helpId={tapHelpId('constraints')}/>
                     </Stack>
                     <TableColumnsConstraintsToolbar key={tableName} tableName={tableName} columnsModel={columnsModel} />
@@ -386,22 +423,31 @@ export function BasicUI(props) {
 
 
 
-    function OpRender({ops, value, label='', sx}) {
+    function OpRender({ops, value, label='', sx, lineClamp}) {
         const op = ops.find((t) => t.value === value);
         if (!op) return 'none';
         return (
-            <Stack {...{alignItems:'flex-start', sx}}>
+            <Stack {...{alignItems:'flex-start', alignSelf:'flex-start', sx}}>
                 <Stack {...{direction:'row', spacing:1}}>
                     {label&&
-                        <Typography level='title-lg'>
+                        <Typography level='title-md'>
                             {`${label}: `}
                         </Typography>
                     }
-                    <Typography level='body-lg' >
+                    <Typography level='body-md' >
                         {op.value}
                     </Typography>
                 </Stack>
-                <Typography level='body-sm' component='div' sx={{whiteSpace:'normal', textAlign:'left'}}>
+                <Typography level='body-sm'
+                            style={lineClamp?
+                                {
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    WebkitLineClamp: lineClamp+'',
+                                    display: '-webkit-box',
+                                    WebkitBoxOrient: 'vertical',
+                                } : {}}
+                            sx={{whiteSpace:'normal', textAlign:'left'}}>
                     {/*{op.label}*/}
                     <div dangerouslySetInnerHTML={{__html: `${cleanUp(op.label)}`}}/>
                 </Typography>

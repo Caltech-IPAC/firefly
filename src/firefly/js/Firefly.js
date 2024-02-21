@@ -274,7 +274,7 @@ function fireflyInit(props, appSpecificOptions={}, webApiCommands) {
  */
 export function startAsAppFromApi(divId, overrideProps={template: 'FireflySlate'}) {
 
-    const props = {...mergeObjectOnly({...window.firefly.originalAppProps}, overrideProps), div:divId};
+    const props = {...mergeObjectOnly({...window.firefly.originalAppProps}, overrideProps), div:divId, appFromApi:true};
     const viewer = Templates[props.template];
     if (!divId || !viewer) {
         !divId  && logger.error('required: divId');
@@ -285,6 +285,20 @@ export function startAsAppFromApi(divId, overrideProps={template: 'FireflySlate'
     props.disableDefaultDropDown && dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
     props.readoutDefaultPref && dispatchChangeReadoutPrefs(props.readoutDefaultPref);
     props.wcsMatchType && dispatchWcsMatch({matchType:props.wcsMatchType, lockMatch:true});
+
+
+    if (!props.menu) {
+        const other= 'Other Searches';
+        const general= 'General Searches';
+        props.menu= [
+            { label: 'Upload', action: 'FileUploadDropDownCmd', primary:true },
+            { label: 'TAP Searches', action: 'TAPSearch', primary:true, category: general },
+            { label: 'IRSA Images', action: 'ImageSelectDropDownSlateCmd', category: other },
+            { label: 'IRSA Catalogs', action: 'IrsaCatalogDropDown', category: other },
+        ];
+    }
+
+
     const e= document.getElementById(divId);
 
     const makeControlObj= () => {

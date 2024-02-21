@@ -1,5 +1,6 @@
 import React from 'react';
 
-export const DropDownDirCTX = React.createContext({
-    dropdownDirection : ''
+export const DropDownDirCtx = React.createContext({
+    dropdownDirection : '',
+    dropdownVertical : 'below'
 });

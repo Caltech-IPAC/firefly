@@ -3,7 +3,7 @@
  */
 
 
-import React, {PureComponent} from 'react';
+import React, {PureComponent, useContext} from 'react';
 import {object, bool, element, func, number, oneOfType, string} from 'prop-types';
 import uniqueId from 'lodash/uniqueId';
 import delay from 'lodash/delay';
@@ -12,7 +12,7 @@ import {DropDownMenuWrapper} from './DropDownMenu.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible, getDialogOwner} from '../core/ComponentCntlr.js';
 import {ToolbarButton} from './ToolbarButton.jsx';
-import {DropDownDirCTX} from './DropDownDirContext.js';
+import {DropDownDirCtx} from './DropDownDirContext.js';
 import {DROP_DOWN_WRAPPER_CLASSNAME} from './DropDownMenu';
 
 
@@ -29,8 +29,13 @@ function computeDropdownXY(buttonElement, dropdownElement) {
     let x = elemRect.left - bodyRect.left - 10;
     const leftAdjust= (bodyRect.right-20 < x + dropdownRect.width) ? dropdownRect.width-(elemRect.width*1.25) : 0;
     x-= leftAdjust;
-    const y = elemRect.bottom - bodyRect.top-4;
-    return {x,y};
+    let y = elemRect.bottom - bodyRect.top-4;
+    let above= false;
+    if (y+dropdownRect.height-20 > bodyRect.height) {
+        y= elemRect.y - dropdownRect.height + 4;
+        above= true;
+    }
+    return {x,y,above};
 }
 
 function calcDropDownDir(element, menuWidth){
@@ -58,10 +63,11 @@ function calcDropDownDir(element, menuWidth){
 function showDialog(dropDownKey,buttonElement,dropDown,ownerId,offButtonCB) {
 
     const beforeVisible= (e) =>{
-        if (!e) return;
-        const {x,y}= computeDropdownXY(buttonElement,e);
+        if (!e) return {};
+        const {x,y,above}= computeDropdownXY(buttonElement,e);
         e.style.left= x+'px';
         e.style.top= y+'px';
+        return {x,y,above};
     };
 
     const dropDownClone= React.cloneElement(dropDown, { toolbarElement:buttonElement});
@@ -80,6 +86,15 @@ export const DROP_DOWN_KEY= 'toolbar-dropDown';
 const OWNER_ROOT= 'toolbar-dropDown';
 const DEFAULT_DROPDOWN_DIR = 'right';
 
+
+function DropDownWithCtx({dropdownDirection, dropDown}) {
+    const {dropdownVertical='below'}= useContext(DropDownDirCtx);
+    return (
+        <DropDownDirCtx.Provider value={{dropdownDirection, dropdownVertical}}>
+            {dropDown}
+        </DropDownDirCtx.Provider>
+    );
+}
 
 export class DropDownToolbarButton extends PureComponent {
     constructor(props) {
@@ -159,11 +174,7 @@ export class DropDownToolbarButton extends PureComponent {
             const {dropDownVisible, dropDownOwnerId}= this.state;
 
             const dropdownDirection= calcDropDownDir(divElement, this.props.menuMaxWidth);
-            const dropDownWithContext= (
-                <DropDownDirCTX.Provider value={{dropdownDirection}}>
-                    {dropDown}
-                </DropDownDirCTX.Provider>
-            );
+            const dropDownWithContext= <DropDownWithCtx {...{dropDown,dropdownDirection}}/>;
 
             const dropDownKey= this.props.dropDownKey || DROP_DOWN_KEY;
             if (dropDownVisible) {
@@ -175,7 +186,6 @@ export class DropDownToolbarButton extends PureComponent {
                 else {
                     showDialog(dropDownKey, divElement,dropDownWithContext,this.ownerId,this.docMouseDownCallback);
                 }
-
             }
             else {
                 showDialog(dropDownKey, divElement,dropDownWithContext,this.ownerId,this.docMouseDownCallback);

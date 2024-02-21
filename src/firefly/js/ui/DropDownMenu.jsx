@@ -4,7 +4,7 @@ import {isFunction} from 'lodash';
 import React, {useContext, useEffect, useRef, useState} from 'react';
 import {Box, Button, Card, Stack, Tooltip} from '@mui/joy';
 import PropTypes from 'prop-types';
-import {DropDownDirCTX} from './DropDownDirContext.js';
+import {DropDownDirCtx} from './DropDownDirContext.js';
 
 const DEFAULT_DROPDOWN_DIR = 'right';
 export const DROP_DOWN_WRAPPER_CLASSNAME= 'ff-dropdown-menu';
@@ -17,8 +17,13 @@ function placeDropDown(e,x,y, beforeVisible) {
     if (left<5) left= 5;
     e.style.left= left +'px';
     e.style.top= (pos.y + 10)+'px';
-    if (isFunction(beforeVisible)) beforeVisible(e);
+    let isAbove= false;
+    if (isFunction(beforeVisible)) {
+        const {above}= beforeVisible(e) ?? {above:false};
+        isAbove= above;
+    }
     e.style.visibility='visible';
+    return isAbove;
 }
 
 
@@ -34,15 +39,24 @@ export function SingleColumnMenu({children, sx, color, variant, kind='drop'}) {
 
 
 export function DropDownMenu({children, sx, color='neutral', variant='outline', kind='drop'}) {
+    const {dropdownVertical}= useContext(DropDownDirCtx);
+
+    const above= dropdownVertical==='above';
+    const bRadius= kind==='drop' ?  above ?
+        {borderBottomLeftRadius: '2px', borderBottomRightRadius: '2px'} :
+        {borderTopLeftRadius: '2px', borderTopRightRadius: '2px'} :
+        {};
+
+    const shadow= above ? '1px -1px 3px' : '1px 1px 3px';
+
     return (
         <Card {...{
             color, variant:'outline',
             sx:(theme) => {
-                const bRadius= kind==='drop' ? {borderTopLeftRadius: '2px', borderTopRightRadius: '2px'} : {};
                 return {
                     p:.5,
                     ...bRadius,
-                    boxShadow: `1px 1px 3px ${theme.vars.palette.primary.softActiveColor}`,
+                    boxShadow: `${shadow} ${theme.vars.palette.primary.softActiveColor}`,
                     ...sx,
                 };
             }
@@ -56,23 +70,29 @@ export function DropDownMenu({children, sx, color='neutral', variant='outline', 
 export function DropDownMenuWrapper({x,y,content,beforeVisible, visible,zIndex}) {
 
     const [element,setElement]= useState();
+    const [above, setAbove]= useState(false);
 
     useEffect(() => {
         if (!element) return;
         setTimeout(
-            () =>placeDropDown(element,x,y, beforeVisible ),5
+            () =>{
+                const isAbove= placeDropDown(element,x,y, beforeVisible );
+                setAbove(isAbove);
+            },5
         );
     }, [element,x,y,content]);
 
     if (!visible) return false;
     if (!x && !y && !content) return false;
     return (
-        <Box {...{className:'ff-MenuWrapper', position:'absolute', left:0, top:0, visibility:'hidden', zIndex,
-             ref:(c) => setElement(c)}} >
-            <Box sx={{padding: .5}} className={DROP_DOWN_WRAPPER_CLASSNAME}>
-                {content}
+        <DropDownDirCtx.Provider value={{dropdownVertical: above ? 'above' : 'below'}}>
+            <Box {...{className:'ff-MenuWrapper', position:'absolute', left:0, top:0, visibility:'hidden', zIndex,
+                ref:(c) => setElement(c)}} >
+                <Box sx={{padding: .5}} className={DROP_DOWN_WRAPPER_CLASSNAME}>
+                    {content}
+                </Box>
             </Box>
-        </Box>
+        </DropDownDirCtx.Provider>
     );
 }
 
@@ -87,12 +107,12 @@ DropDownMenuWrapper.propTypes= {
 
 
 
-export function DropDownSubMenu({text, tip, visible=true, children}) {
+export function DropDownSubMenu({text, tip, visible=true, sx, children}) {
     const [showSubMenu,setShowSubMenu]= useState(false);
     const {current:timerRef}= useRef({timer:undefined});
     const [cascadeElement,setCascadeElement]= useState();
     const [buttonElement,setButtonElement]= useState();
-    const {dropdownDirection} = useContext(DropDownDirCTX) || DEFAULT_DROPDOWN_DIR;
+    const {dropdownDirection} = useContext(DropDownDirCtx) || DEFAULT_DROPDOWN_DIR;
 
     useEffect(() => {
         if (cascadeElement && buttonElement) {
@@ -123,8 +143,8 @@ export function DropDownSubMenu({text, tip, visible=true, children}) {
     };
 
     return (
-        <Tooltip title={tip} sx={{position:'relative'}}>
-            <Box onMouseEnter={show} onMouseLeave={hide}>
+        <Tooltip title={tip} >
+            <Box onMouseEnter={show} onMouseLeave={hide} sx={{position:'relative'}}>
                 <Button {...{variant:'plain', color:'neutral', 'aria-label':tip,
                     ref:(c) => setButtonElement(c),
                     endDecorator: (<div style={{marginLeft:5}} className='arrow-right'/>),

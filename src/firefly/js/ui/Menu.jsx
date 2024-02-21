@@ -4,7 +4,7 @@
 
 import {
     Badge, Box, Button, Chip, CircularProgress, Divider, IconButton, ListItemDecorator,
-    Stack, Tab, TabList, Tabs, Tooltip, Typography
+    Stack, Tab, TabList, Tabs, Typography
 } from '@mui/joy';
 import {tabClasses} from '@mui/joy/Tab';
 import {debounce} from 'lodash';
@@ -75,14 +75,14 @@ export function Menu() {
         }
     }, [selected,ready]);
 
-    if (!ready || !menuItems?.length) return <div/>;
+    if (!ready) return <div/>;
 
     const menuTabItems = menuItems
-        .filter(({action,type}) => (action!=='app_data.helpLoad' && type!=='COMMAND'))
-        .filter(itemVisible)
-        .filter((item) => item.type!=='COMMAND');
+        ?.filter(({action,type}) => (action!=='app_data.helpLoad' && type!=='COMMAND'))
+        ?.filter(itemVisible)
+        ?.filter((item) => item.type!=='COMMAND');
 
-    const helpItem= menuItems.find(({action,type}) => (action==='app_data.helpLoad' && type==='COMMAND'));
+    const helpItem= menuItems?.find(({action,type}) => (action==='app_data.helpLoad' && type==='COMMAND'));
 
     const bCntAdd= showBgMonitor?2:1;
     const size= getButtonSize(menuTabItems.length+bCntAdd,windowWidth);
@@ -108,12 +108,13 @@ export function MenuItemButton({menuItem, icon, size='lg', clickHandler, isWorki
 
     const item=(
         icon ?
-            (<IconButton {...{ className: 'ff-MenuItem', sx:{whiteSpace:'nowrap', ...sx}, size:'lg', color, variant,
-                onClick: () => onClick(clickHandler,menuItem) , startDecorator,}}>
+            (<IconButton {...{ className: 'ff-MenuItem', size:'lg', color, variant,
+                onClick: () => onClick(clickHandler,menuItem)}}>
                 {icon}
             </IconButton>) :
-            (<Button {...{ className: 'ff-MenuItem', sx:{whiteSpace:'nowrap', ...sx}, size, color, variant,
-                onClick: () => onClick(clickHandler,menuItem) , startDecorator,}}>
+            (<Button {...{startDecorator, className: 'ff-MenuItem', size, color, variant,
+                sx:{whiteSpace:'nowrap', ...sx},
+                onClick: () => onClick(clickHandler,menuItem) }}>
                 {menuItem.label}
             </Button>)
     );
@@ -129,7 +130,7 @@ function tabDivider(activeBg,size) {
                 content: '""',
                 display: 'block',
                 position: 'absolute',
-                height: size==='lg'? '1.5rem' : size==='md' ? '1.25rem' : '.9rem',
+                height: size==='lg'? '1.8rem' : size==='md' ? '1.25rem' : '.9rem',
                 bottom: 6,
                 width: 1,
                 right: -3,
@@ -144,12 +145,9 @@ function tabDivider(activeBg,size) {
 
 function setupTabCss(theme,size) {
     return {
-        marginLeft:'1px',
+        ml:'1px',
         whiteSpace: 'nowrap',
-        borderTopLeftRadius: theme.radius[size],
-        borderTopRightRadius: theme.radius[size],
-        borderBottomRightRadius: 0,
-        borderBottomLeftRadius: 0,
+        borderRadius: `${theme.radius[size]} ${theme.radius[size]} 0 0`,
         borderBottomWidth:0,
     };
 }
@@ -168,18 +166,18 @@ function MenuTabBarJoyTabBased({menuTabItems, size, selected, dropDown}) {
             dispatchHideDropDown();
         }
         else {
-            const clickItem= menuTabItems.find( (i) => i.action===action) ;
-            onClick(clickItem.clickHandler,clickItem);
+            const clickItem= menuTabItems?.find( (i) => i.action===action) ;
+            if (clickItem) onClick(clickItem.clickHandler,clickItem);
         }
     };
 
 
-    const items= menuTabItems.map((item, idx) => (
+    const items= menuTabItems?.map((item, idx) => (
         <Tab {...{ key: idx, value:item.action, disableIndicator:true,
             sx: (theme) => ({ ...setupTabCss(theme,size) }) }} >
             {item.label}
         </Tab>
-    ));
+    )) ?? [];
 
     return (
         <Tabs {...{size, color, variant, value:tabSelected,
@@ -197,11 +195,14 @@ function MenuTabBarJoyTabBased({menuTabItems, size, selected, dropDown}) {
                 })
 
             }}>
-                <Tab {...{key: resultValue, color:'success', variant:'soft', value:resultValue, disableIndicator:true,
+                <Tab {...{key: resultValue, color, variant, value:resultValue, disableIndicator:true,
                     sx: (theme) => {
                         return ({
+                            mb: '1px',
                             ...setupTabCss(theme,size),
+                            color: theme.vars.palette.success.plainColor,
                             '&[aria-selected="true"]': { // apply this to the selected tab
+                                mb: 0,
                                 background: theme.vars.palette.background.surface,
                                 color: theme.vars.palette.success.plainColor,
                             }
@@ -242,7 +243,7 @@ function getButtonSize(buttonCnt,windowWidth) {
     if (buttonCnt<5 || windowWidth>1600) return 'lg';
     const offsetEst= 300;
     const lgButtonSizeEst=130;
-    const mdButtonSizeEst=100;
+    const mdButtonSizeEst=80;
     const width= windowWidth-offsetEst;
     if (width> buttonCnt*lgButtonSizeEst) return 'lg';
     if (width> buttonCnt*mdButtonSizeEst) return 'md';
@@ -276,7 +277,7 @@ export function SideBarMenu({closeSideBar, allowMenuHide}) {
     const selected= getSelected(menu,dropDown);
 
 
-    const categoryList= [...new Set(menuItems.map( (mi) => mi.category ?? ''))];
+    const categoryList= menuItems ? [...new Set(menuItems.map( (mi) => mi.category ?? ''))] : [];
 
     return (
         <SideBarView {...{menu,appTitle, closeSideBar,haveResults,selected,dropDown,
@@ -287,14 +288,15 @@ export function SideBarMenu({closeSideBar, allowMenuHide}) {
 
 function SideBarView({menu,appTitle,closeSideBar,haveResults,selected,dropDown,
                          uploadItem,menuItems,categoryList,allowMenuHide}) {
-    const noCatItems= menuItems.filter( ({category}) => !category);
+    const noCatItems= menuItems?.filter( ({category}) => !category) ?? [];
     return (
         <Stack >
             <Typography level='h4' sx={{ml:1}}>Choose Option</Typography>
             <Stack spacing={1} ml={5} mt={1}>
                 <Stack style={{marginLeft:-16}} sx={{'& .ff-toolbar-button' : {minWidth:'13rem', justifyContent:'flex-start'}}}>
                     <Stack direction='row'>
-                        <Typography color='success'  startDecorator={ <InsightsIcon /> }/>
+                        <Typography color='success'  startDecorator={ <InsightsIcon sx={{width:20}}/> }/>
+                        <Box ml={-1/2}/>
                         <ToolbarButton {...{
                             pressed: !selected && !dropDown.visible,
                             text: (
@@ -316,6 +318,7 @@ function SideBarView({menu,appTitle,closeSideBar,haveResults,selected,dropDown,
                     {uploadItem &&
                         <Stack direction='row'>
                             <FileUploadOutlinedIcon/>
+                            <Box ml={-1/4}/>
                             <SideBarItem {...{key:'UPLOAD', item:uploadItem,selected,
                                 menu,closeSideBar,allowMenuHide}}/>
                         </Stack>
@@ -357,6 +360,7 @@ function SideBarView({menu,appTitle,closeSideBar,haveResults,selected,dropDown,
 }
 
 function tabsUpdated(menu) {
+    if (!menu?.menuItems) return false;
     return menu.menuItems.some( (mi) => {
         return (mi.visible??mi.primary)!==mi.primary;
     });
@@ -375,7 +379,7 @@ function SideBarItem({item,selected,menu,closeSideBar,allowMenuHide,icon,sx, hid
 
     if (!item) return <div>missing</div>;
     return (
-        <Stack direction='row' alignItems='center' sx={sx}>
+        <Stack direction='row' alignItems='center' spacing={1} sx={sx}>
             <ToolbarButton icon={icon} pressed={selected===item.action} onClick= {() => onClick(item)} text={item.label} />
             {(allowMenuHide && (item.visible ?? item.primary)) &&
                 <Chip {...{

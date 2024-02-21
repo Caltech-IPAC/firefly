@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isEmpty} from 'lodash';
-import React, {memo, useEffect} from 'react';
+import React, {memo, useContext, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 import {flux} from '../../core/ReduxFlux.js';
@@ -14,6 +14,8 @@ import {getLayouInfo, dispatchSetLayoutMode, getGridView, getGridViewColumns,
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
+import {AppConfigDrawer} from '../../ui/AppConfigDrawer.jsx';
+import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
 import {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {getMultiViewRoot, findViewerWithItemId, PLOT2D} from '../../visualize/MultiViewCntlr.js';
 import {ImageExpandedMode} from '../../visualize/iv/ImageExpandedMode.jsx';
@@ -58,9 +60,12 @@ function getNextState(prevS, renderTreeId) {
  * @param props
  *
  */
-export const FireflySlate= memo(( {initLoadingMessage, appTitle= 'Firefly', appIcon=FFTOOLS_ICO,
-                                      renderTreeId, menu:menuItems, showBgMonitor=false}) => {
+export const FireflySlate= memo(( {initLoadingMessage, renderTreeId, menu:menuItems, showBgMonitor=false}) => {
+
+
+    const {appTitle, appIcon=FFTOOLS_ICO, appFromApi} = useContext(AppPropertiesCtx);
     const state= useStoreConnector( (prevState) => getNextState(prevState,renderTreeId));
+    const [appRef,setAppRef]= useState(undefined);
 
 
     const {mode={}, gridView= [], gridColumns=1, menu={}, layoutInfo, initLoadCompleted, ...appProps} = state;
@@ -74,11 +79,21 @@ export const FireflySlate= memo(( {initLoadingMessage, appTitle= 'Firefly', appI
     },[]);
 
     if (showBgMonitor) menu.showBgMonitor= showBgMonitor;
+
+
+    const drawerComponent= <AppConfigDrawer containerElement={appRef}/>;
+    
+
     return (
         <RenderTreeIdCtx.Provider value={{renderTreeId}}>
-            <App {...{enableVersionDialog:true, appTitle, appIcon, ...appProps}}>
+            <div {...{ref:(c) => {
+                    if (appFromApi) setAppRef(c);
+                }
+            }}>
+            <App {...{drawerComponent, enableVersionDialog:true, appTitle, appIcon, ...appProps}}>
                 {mainView({expanded, gridView, gridColumns, initLoadingMessage, initLoadCompleted})}
             </App>
+            </div>
         </RenderTreeIdCtx.Provider>
     );
 });
