@@ -62,8 +62,8 @@ const tableFormatsExt = {
     'votable-fits-inline': 'vot',
 };
 
-const dialogWidth = '32rem';
-const dialogHeight = '22rem';
+const dialogWidth = '40rem';
+const dialogHeight = '40rem';
 const labelWidth = 100;
 const defValues = {
     [fKeyDef.fileName.fKey]: Object.assign(getTypeData(fKeyDef.fileName.fKey, '',
@@ -86,7 +86,7 @@ const popupPanelResizableStyle = {
     minWidth: dialogWidth,
     minHeight: dialogHeight,
     resize: 'both',
-    overflow: 'hidden',
+    overflow: 'auto',
     position: 'relative'
 };
 

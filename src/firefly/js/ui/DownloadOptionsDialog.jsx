@@ -53,6 +53,7 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
 
         const style = {
                 width: '100%',
+                height: '15rem',
                 paddingLeft: '1rem',
                 paddingRight: '1rem',
                 paddingTop: '1rem',
@@ -93,7 +94,7 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
     return (
         <Stack spacing={2} justifyContent={'center'}
                sx={{
-                 width: '80%',
+                 width: '90%',
                }}>
             <div>
                 {children}

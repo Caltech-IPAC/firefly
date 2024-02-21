@@ -32,10 +32,10 @@ import {useFieldGroupValue} from './SimpleComponent.jsx';
 import HelpIcon from './HelpIcon.jsx';
 
 const STRING_SPLIT_TOKEN= '--STR--';
-const dialogWidth ='32rem';
-const dialogHeightWS = '32rem';
-const dialogHeightLOCAL = '25rem';
-const mindialogHeightLOCAL ='19rem';
+const dialogWidth ='40rem';
+const dialogHeightWS = '40rem';
+const dialogHeightLOCAL = '30rem';
+const mindialogHeightLOCAL ='30rem';
 const dialogPopupId = 'fitsDownloadDialog';
 const fitsDownGroup = 'FITS_DOWNLOAD_FORM';
 const labelWidth = '6rem';
@@ -50,7 +50,7 @@ const popupPanelResizableStyle = {
     width: dialogWidth,
     minWidth: dialogWidth,
     resize: 'both',
-    overflow: 'hidden',
+    overflow: 'auto',
     position: 'relative'
 };
 
