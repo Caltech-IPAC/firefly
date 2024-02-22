@@ -5,12 +5,13 @@
 import React, {useRef, useCallback, useState, useEffect} from 'react';
 import {Cell} from 'fixed-data-table-2';
 import {set, get, omit, isEmpty, isString, toNumber} from 'lodash';
-import {Typography, Checkbox, Stack, Box, Link, Sheet, Button} from '@mui/joy';
+import {Typography, Checkbox, Stack, Box, Link, Sheet, Dropdown, Menu, MenuButton, MenuItem, IconButton, Button, Chip} from '@mui/joy';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
 import {
-    isColumnType, COL_TYPE, tblDropDownId, getTblById, getColumn, formatValue, getTypeLabel,
-    getColumnIdx, getRowValues, getCellValue, getTableUiByTblId, splitCols, isOfType, splitVals
+    isColumnType, COL_TYPE, getTblById, getColumn, formatValue, getTypeLabel,
+    getColumnIdx, getRowValues, getCellValue, splitCols, isOfType, splitVals
 } from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
@@ -19,27 +20,26 @@ import {toBoolean, copyToClipboard} from '../../util/WebUtil.js';
 
 import ASC_ICO from 'html/images/sort_asc.gif';
 import DESC_ICO from 'html/images/sort_desc.gif';
-import FILTER_SELECTED_ICO from 'html/images/icons-2014/16x16_Filter.png';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField';
-import DialogRootContainer, {showDropDown, hideDropDown} from '../../ui/DialogRootContainer.jsx';
+import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {FieldGroup} from '../../ui/FieldGroup';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {useStoreConnector} from './../../ui/SimpleComponent.jsx';
 import {applyLinkSub, applyTokenSub} from '../../voAnalyzer/VoCoreUtils.js';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-import {dispatchTableUiUpdate, dispatchTableUpdate} from '../TablesCntlr.js';
+import {dispatchTableUpdate} from '../TablesCntlr.js';
 import {dispatchShowDialog} from '../../core/ComponentCntlr.js';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
-import {TBL_CLZ_NAME} from './TablePanel.jsx';
 
 import infoIcon from 'html/images/info-icon.png';
 import {dd2sex} from '../../visualize/CoordUtil.js';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import {FilterButton} from 'firefly/visualize/ui/Buttons.jsx';
 
-export const DDzIndex = 111;   // 110 is the z-index of a dropdown
+
 
 const html_regex = /<.+>|&.+;/;           // A rough detection of html elements or entities
-const filterStyle = {width: '100%', boxSizing: 'border-box'};
 
 const imageStubMap = {
     info: <img style={{width:'14px'}} src={infoIcon} alt='info'/>
@@ -121,25 +121,13 @@ const blurEnter = ['blur','enter'];
 function Filter({cname, onFilter, filterInfo, tbl_id}) {
 
     const colGetter= () => getColumn(getTblById((tbl_id)), cname) ?? {};
-
-    const inputRef = useRef(null);
-    const enumArrowEl = useRef(null);
     const col = useStoreConnector(colGetter);
+    const [disableHoverListener, setDisableHoverListener] = useState(false);
+    const dropdownEl = useRef(null);
 
-    const focusCol = useStoreConnector(() => getTableUiByTblId(tbl_id)?.focusCol);
     useEffect(() => {
-        const onFocus = () => {
-            const {tbl_ui_id} = getTableUiByTblId(tbl_id);
-            dispatchTableUiUpdate({tbl_ui_id, focusCol:cname});
-        };
-        if (focusCol !== cname) {
-            inputRef.current?.addEventListener('focus', onFocus);
-            return () => {
-                inputRef.current?.removeEventListener('focus', onFocus);
-            };
-        }
-    }, [inputRef]);
-    const autoFocus = focusCol === cname;
+        dropdownEl.current?.focus();
+    }, [dropdownEl.current]);
 
     const validator = useCallback((cond) => {
         return FilterInfo.conditionValidator(cond, tbl_id, cname);
@@ -150,27 +138,32 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
     if (!filterable) return <div style={{height:19}} />;      // column is not filterable
 
     const filterInfoCls = FilterInfo.parse(filterInfo);
-    const content =  <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />;
-    const onEnumClicked = () => {
-        showDropDown({id: tblDropDownId(tbl_id), content, atElRef: enumArrowEl.current, locDir: 33, style: {marginLeft: -10},
-            wrapperStyle: {zIndex: DDzIndex}});
-    };
 
-    const endDecorator = enumVals && <div ref={enumArrowEl} className='arrow-down clickable' onClick={onEnumClicked}/>;
+
+    const endDecorator = enumVals && (
+        <Dropdown onOpenChange={(_,v) => setDisableHoverListener(v) }>
+            <MenuButton slots={{ root: IconButton }} sx={{mr:-1}}><ArrowDropDownIcon/></MenuButton>
+            <Menu ref={dropdownEl}>
+                <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />
+            </Menu>
+        </Dropdown>
+    );
 
     return (
         <InputField
             validator={validator}
             fieldKey={name}
             sx={{width: 1, '--Input-radius': ''}}
-            slotProps={{ input: {autoFocus, size:'sm', endDecorator }}}
             tooltip={FILTER_CONDITION_TTIPS}
             value={filterInfoCls.getFilter(name)}
             onChange={onFilter}
             actOn={blurEnter}
             showWarning={false}
-            style={filterStyle}
-            wrapperStyle={filterStyle}/>
+            slotProps={{
+                input: {size:'sm', endDecorator },
+                tooltip: {disableHoverListener}
+            }}
+        />
     );
 }
 
@@ -197,7 +190,6 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
                            .join(',');
     }
 
-    const hideEnumSelect = () => hideDropDown(tblDropDownId(tbl_id));
     const onClear = () => {
         dispatchValueChange({fieldKey, groupKey, value: '', valid: true});
     };
@@ -211,20 +203,20 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
             value = `IN (${value})`;
         }
         onFilter({fieldKey: name, valid: true, value});
-        hideEnumSelect();
     };
 
     return (
-        <Box minWidth={100} p={1}>
+        <Sheet sx={{minWidth:'10em'}}>
             <FieldGroup groupKey='TableRenderer_enum'>
-                <Stack direction='row' justifyContent='space-between'>
-                    <Link onClick={onApply} title='Apply selected filter'>filter</Link>
-                    <Link onClick={onClear} title='Clear selection'>clear</Link>
-                    <Link className='btn-close' onClick={hideEnumSelect} style={{margin: -2, fontSize: 12}}/>
+                <Stack spacing={2} px={2}>
+                    <Chip onClick={onClear} title='Clear selection'>clear</Chip>
+                    <CheckboxGroupInputField slotProps={{ input: {size: 'sm'} }} {...{fieldKey, alignment: 'vertical', options, initialState:{value}}}/>
+                    <Stack direction='row' flexGrow={1}>
+                        <Button color='primary' variant='solid' size='sm' onClick={onApply} title='Apply selected filter'>Apply</Button>
+                    </Stack>
                 </Stack>
-                <CheckboxGroupInputField slotProps={{ input: {size: 'sm'} }} {...{fieldKey, alignment: 'vertical', options, initialState:{value}}}/>
             </FieldGroup>
-        </Box>
+        </Sheet>
     );
 }
 
@@ -237,11 +229,9 @@ export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, s
                 onChange={(e) => onSelectAll(e.target.checked)}/>
             {showUnits && <Box height='1em'/>}
             {showTypes && <Box height='1em'/>}
-            {showFilters && <img className='clickable'
-                                 style={{marginBottom: 3}}
-                                 src={FILTER_SELECTED_ICO}
+            {showFilters && <FilterButton  iconButtonSize='32px'
                                  onClick={onFilterSelected}
-                                 title='Filter on selected rows'/>}
+                                 tip='Filter on selected rows'/>}
         </Stack>
     );
 }
@@ -260,7 +250,7 @@ export function SelectableCell ({rowIndex, selectInfoCls, onRowSelect, sx={}}) {
 
 /*---------------------------- CELL RENDERERS ----------------------------*/
 
-/**
+/*
  * returns cell related attributes for display {col, value, rvalues, text, isArray, textAlign, absRowIdx}
  * @returns {{col, value, rvalues, text, isArray, textAlign, absRowIdx, tableModel}}
  */
@@ -314,72 +304,53 @@ export function makeDefaultRenderer(col={}) {
     return renderer;
 }
 
-function findTableFor(element) {
-    let cEl = element;
-    while (cEl && !cEl.classList.contains(TBL_CLZ_NAME)) {
-        cEl = cEl.parentNode;
-    }
-    return cEl;
-}
-
 export function ContentEllipsis({children, text, textAlign, sx, actions=[]}) {
 
-    const [hasActions, setHasActions] = useState(false);
-    const actionsEl = useRef(null);
-
-    const dropDownID = 'actions--dropdown';
-    const popupID = 'actions--popup';
-
-    const onActionsClicked = (ev) => {
-        ev.stopPropagation();
-        const boxEl = findTableFor(actionsEl.current);
-        showDropDown({id: dropDownID, content: dropDown, boxEl, atElRef: actionsEl.current, locDir: 33, style: {marginLeft: -10},
-            wrapperStyle: {zIndex: DDzIndex}});
-    };
-
-    const copyCB = () => {
-        copyToClipboard(text);
-        hideDropDown(dropDownID);
-    };
-
-    const viewAsText = () => {
-        DialogRootContainer.defineDialog(popupID, <ViewAsText text={text}/>);
-        dispatchShowDialog(popupID);
-        hideDropDown(dropDownID);
-    };
-
-    const buttonProps = {variant:'plain', size:'sm', fullWidth:true, color:'neutral', sx:{whiteSpace:'nowrap'}};
-    const dropDown =  (
-        <Stack p={1/4} spacing={1/4}>
-            <Button {...buttonProps} onClick={copyCB}>Copy to clipboard</Button>
-            <Button {...buttonProps} onClick={viewAsText}>View as plain text</Button>
-            {actions?.map((text, action) => <Button {...buttonProps} onClick={action}>{text}</Button>)}
-        </Stack>
-    );
+    const [showActions, setShowActions] = useState(false);
+    const [dropdown, setDropdown] = useState(false);
+    const contentEl = useRef(null);
 
     const checkOverflow = (ev) => {
         const w = ev?.currentTarget;
-        const c = ev?.currentTarget?.children?.[0];
-        setHasActions(w?.clientWidth < c?.scrollWidth-6);  // account for paddings
+        setShowActions(w?.clientWidth < contentEl?.current?.scrollWidth-4);  // account for paddings
     };
 
     return (
-        <Stack direction='row'  overflow='hidden' whiteSpace='nowrap' alignItems='center' justifyContent={textAlign} height={1} width={1} sx={sx}
-               onMouseEnter={checkOverflow} onMouseLeave={() => setHasActions(false)}
+        <Stack direction='row'  overflow='hidden' whiteSpace='nowrap' alignItems='center' justifyContent={textAlign} sx={sx}
+               onMouseEnter={checkOverflow} onMouseLeave={() => setShowActions(false)}
         >
-            {React.Children.only(children)}
-            {hasActions &&
-                <Link ref={actionsEl}
-                      variant='soft'
-                      level='body-xs'
-                      underline='none'
-                      sx={{position: 'absolute', right:1}}
-                      onClick={onActionsClicked} title='Display full cell contents'
-                >&#x25cf;&#x25cf;&#x25cf;</Link>
+            <Stack ref={contentEl}>{children}</Stack>
+            { (showActions || dropdown) &&
+                <ActionDropdown {...{text, actions, onChange: (v)=> setDropdown(v) | setShowActions(v)}}/>
             }
         </Stack>
     );
 }
+
+function ActionDropdown({text, actions, onChange}) {
+    const popupID = 'actions--popup';
+    const [open, setOpen] = useState(false);
+    const copyCB = () => {
+        copyToClipboard(text);
+    };
+    const viewAsText = () => {
+        DialogRootContainer.defineDialog(popupID, <ViewAsText text={text}/>);
+        dispatchShowDialog(popupID);
+    };
+    return (
+        <Dropdown open={open} onOpenChange={(_, open) => setOpen(open) | onChange(open)}>
+            <MenuButton variant='soft' size='sm' sx={{position: 'absolute', right:0, paddingInline:'.25em'}}>
+                <MoreHorizIcon/>
+            </MenuButton>
+            <Menu>
+                <MenuItem onClick={copyCB}>Copy to clipboard</MenuItem>
+                <MenuItem onClick={viewAsText}>View as plain text</MenuItem>
+                {actions?.map((text, action) => <MenuItem onClick={action}>{text}</MenuItem>)}
+            </Menu>
+        </Dropdown>
+    );
+};
+
 
 
 /**
@@ -398,7 +369,7 @@ export const CellWrapper =  React.memo( (props) => {
         </Stack>
     );
 
-    return CellRenderer?.allowActions ? <ContentEllipsis {...{textAlign, text}}>{content}</ContentEllipsis> : contentWithWrapper;
+    return CellRenderer?.allowActions ? <ContentEllipsis sx={{height:1, width:1}} {...{textAlign, text}}>{content}</ContentEllipsis> : contentWithWrapper;
 
 }, skipCellRender);
 
@@ -545,7 +516,7 @@ export const createInputCell = (tooltips, size = 10, validator, onChange, style)
  * an input field renderer that update tableModel.
  * @param p
  * @param p.tbl_id
- * @param p.col         the column for this render
+ * @param p.cname         the column for this render
  * @param p.tooltips
  * @param p.style
  * @param p.isReadOnly  a function returning true if this row is read only
