@@ -25,7 +25,7 @@ export function DefaultLandingPage() {
                 dropEvent, setDropEvent,
                 setLoadingOp: () => {
                     const newEv = {type: 'drop', dataTransfer: {files: Array.from(dropEvent.dataTransfer.files)}};
-                    dispatchShowDropDown({fileDropEventAction, initArgs: {searchParams: {dropEvent: newEv}}});
+                    dispatchShowDropDown({view:fileDropEventAction, initArgs: {searchParams: {dropEvent: newEv}}});
                 },
             }}>
                 <Stack justifyContent='space-between' width={1}>
