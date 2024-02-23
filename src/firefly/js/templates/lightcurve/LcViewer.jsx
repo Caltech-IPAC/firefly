@@ -70,8 +70,7 @@ export const LcViewer = memo(({menu, dropdownPanels=[], appTitle, ...appProps}) 
     const subTitleStr= displayMode?.startsWith('period') ? '(Period Finder)' : '(Viewer)';
     const title = makeBannerTitle(appTitle || DEFAULT_TITLE, subTitleStr);
 
-    const drawerComponent= (
-        <AppConfigDrawer  appIcon={appProps.appIcon} appTitle={appTitle} allowMenuHide={false}/>);
+    const drawerComponent= (<AppConfigDrawer allowMenuHide={false}/>);
 
     return (
         <App drawerComponent={drawerComponent} dropdownPanels={[...dropdownPanels, <UploadPanel {...{fileLocation}}/>]}

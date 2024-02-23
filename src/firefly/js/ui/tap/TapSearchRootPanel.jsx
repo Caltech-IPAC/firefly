@@ -5,7 +5,7 @@ import {Box, Button, Stack, Switch, Typography} from '@mui/joy';
 import {once} from 'lodash';
 import {shape, object, bool, string} from 'prop-types';
 import React, {useContext, useEffect, useRef, useState} from 'react';
-import FieldGroupUtils, {getFieldVal, setFieldValue} from 'firefly/fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils from 'firefly/fieldGroup/FieldGroupUtils.js';
 import {makeSearchOnce} from 'firefly/util/WebUtil.js';
 import {dispatchMultiValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
@@ -31,7 +31,7 @@ import {
     getMaxrecHardLimit, tapHelpId, getTapServices,
     loadObsCoreSchemaTables, maybeQuote, defTapBrowserState, TAP_UPLOAD_SCHEMA, getAsEntryForTableName,
 } from 'firefly/ui/tap/TapUtil.js';
-import {AdqlUI, BasicUI} from 'firefly/ui/tap/TableSelectViewPanel.jsx';
+import {TapViewType} from './TapViewType.jsx';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 import {PREF_KEY} from 'firefly/tables/TablePref.js';
 
@@ -231,7 +231,7 @@ TapSearchPanel.propTypes= {
 function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setServicesShowing, onTapServiceOptionSelect,
                                       lockService, lockObsCore, tapOps, titleOn=true, selectBy, setSelectBy}) {
 
-    const label= getServiceLabel(serviceUrl);
+    const serviceLabel= getServiceLabel(serviceUrl);
     const [obsCoreTableModel, setObsCoreTableModel] = useState();
     const hasObsCoreTable = obsCoreTableModel?.tableData?.data?.length > 0;
 
@@ -251,11 +251,10 @@ function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setSer
                 {titleOn &&<Typography {...{level:'h3', sx:{m:1} }}> TAP Searches </Typography>}
                 <Services {...{serviceUrl, servicesShowing: (servicesShowing && !lockService),
                         tapOps, onTapServiceOptionSelect}}/>
-                { selectBy === 'adql' ?
-                    <AdqlUI {...{serviceUrl, servicesShowing, setServicesShowing, lockService, setSelectBy}}/> :
-                    <BasicUI  {...{serviceUrl, serviceLabel: label, selectBy, initArgs, lockService, lockObsCore, obsCoreTableModel,
-                        servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy}}/>
-                }
+                <TapViewType  {...{
+                    serviceUrl, serviceLabel, selectBy, initArgs, lockService, lockObsCore, obsCoreTableModel,
+                                            servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy
+                }} />
             </div>
         </Stack>
     );
@@ -277,12 +276,24 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
     return (
         <div
             className={servicesShowing?'TapSearch__section':'TapSearch__section TapSearch__hide'}
-            style={{height: servicesShowing?62:0, justifyContent:'space-between', alignItems:'center',...extraStyle}}
+            style={{height: servicesShowing?'4rem':0, justifyContent:'space-between', alignItems:'center',...extraStyle}}
             title={SERVICE_TIP}>
             <div style={{display:'flex', alignItems:'center', width:'100%'}}>
-                <Typography {...{level:'h4', color:'primary', sx:{width:'14rem', mr:1} }}>
-                    Select TAP Service
-                </Typography>
+                <Stack alignItems='flex-start'>
+                    <Typography {...{level:'title-lg', color:'primary', sx:{width:'14rem', mr:1} }}>
+                        Select TAP Service
+                    </Typography>
+                    <Switch {...{ size:'sm', endDecorator: enterUrl? 'Enter URL' : 'Use TAP List', checked:enterUrl,
+                        sx: {
+                            alignSelf: 'flex-start',
+                            '--Switch-trackWidth': '20px',
+                            '--Switch-trackHeight': '12px',
+                        },
+                        onChange: (ev) => {
+                            setEnterUrl(ev.target.checked);
+                        },
+                    }} />
+                </Stack>
                 <Stack {...{direction:'row', spacing:2}}>
                     {enterUrl ? (
                             <InputField orientation='horizontal'
@@ -295,7 +306,7 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
                             />
                     ) : (
                         <ListBoxInputFieldView {...{
-                            sx:{'& .MuiSelect-root':{width:'40rem'}},
+                            sx:{'& .MuiSelect-root':{width:'46.5rem'}},
                             options:tapOps, value:serviceUrl,
                             placeholder:'Choose TAP Service...',
                             startDecorator:!tapOps.length ? <Button loading={true}/> : undefined,
@@ -309,11 +320,6 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
                                 (label,value) => (<ServiceOpRender {...{ ops: tapOps, value}}/>),
                         }} /> )}
 
-                    <Switch {...{ size:'sm', endDecorator: enterUrl? 'enter URL' : 'Use TAP List', checked:enterUrl,
-                        onChange: (ev) => {
-                            setEnterUrl(ev.target.checked);
-                        },
-                        }} />
 
                 </Stack>
             </div>
@@ -328,10 +334,10 @@ function ServiceOpRender({ops, value, sx}) {
     return (
         <Stack {...{alignItems:'flex-start', sx}}>
             <Stack {...{direction:'row', spacing:1, alignItems:'center'}}>
-                <Typography level='title-lg'>
+                <Typography level='title-md'>
                     {`${op.labelOnly}: `}
                 </Typography>
-                <Typography level='body-lg' >
+                <Typography level='body-md' >
                     {op.value}
                 </Typography>
             </Stack>

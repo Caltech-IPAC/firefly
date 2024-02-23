@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {Sheet, Stack} from '@mui/joy';
-import React, {memo, useEffect, useState, PureComponent} from 'react';
+import React, {memo, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import {createRoot} from 'react-dom/client';
 import {get, set} from 'lodash';

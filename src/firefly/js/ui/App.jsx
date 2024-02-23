@@ -4,7 +4,6 @@ import {FireflyLayout} from 'firefly/templates/common/FireflyLayout.jsx';
 import {DropDownContainer} from 'firefly/ui/DropDownContainer.jsx';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {getLayouInfo} from 'firefly/core/LayoutCntlr.js';
-import {AppConfigDrawer} from './AppConfigDrawer.jsx';
 
 
 export  default function App({children, dropdownPanels, drawerComponent, watchInitArgs, selected, ...props}) {
@@ -22,9 +21,8 @@ export  default function App({children, dropdownPanels, drawerComponent, watchIn
         );
     }
 
-    const drawer= drawerComponent ?? <AppConfigDrawer  appIcon={props.appIcon} appTitle={props.appTitle}/>;
     return (
-        <FireflyLayout {...{dropDownComponent, drawerComponent:drawer, ...props}}>
+        <FireflyLayout {...{dropDownComponent, drawerComponent, ...props}}>
             {children}
         </FireflyLayout>
     );

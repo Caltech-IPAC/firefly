@@ -17,6 +17,7 @@ import {AppConfigDrawer} from '../../ui/AppConfigDrawer.jsx';
  * <banner/>                // menu, icons, title, etc
  * <warning|alerts/>
  * <main>                   // main section of the application.  displays either dropdown, results or expandedView.
+ *     <drawer>
  *     <dropdown>
  *         <content>
  *         <footer + version>
@@ -27,10 +28,12 @@ import {AppConfigDrawer} from '../../ui/AppConfigDrawer.jsx';
  * @param props.footer
  * @param props.useDefaultExpandedView uses the default ExpandedView.  Default to false.
  * @param props.dropDownComponent uses a dropdown component, e.g. DropDownContainer.
+ * @param props.drawerComponent
  * @param props.sx
  * @param props.children
  */
-export function FireflyLayout({footer, useDefaultExpandedView, drawerComponent, dropDownComponent, sx, children, ...props}) {
+export function FireflyLayout({footer, useDefaultExpandedView, drawerComponent=<AppConfigDrawer/>,
+                                  dropDownComponent, sx, children, ...props}) {
 
     const menu = useStoreConnector(getMenu);
     const isReady = useStoreConnector(isAppReady);

@@ -127,8 +127,8 @@ export function CenterColumns({lonCol,latCol, sx, cols, lonKey, latKey, openKey,
              <Typography component='div'>
                  <Stack {...{direction:'row', alignItems:'baseline', spacing:1}}>
                      <span>{headerTitle}</span>
-                     <Typography color='warning'>{(lonCol || latCol) ? `${lonCol || 'unset'}, ${latCol || 'unset'}` : 'unset'}</Typography>
-                     <Typography level='body-sm'>{`${headerPostTitle}`}</Typography>
+                     <Typography level={'body-md'} sx={{fontWeight:'normal'}}>{(lonCol || latCol) ? `${lonCol || 'unset'}, ${latCol || 'unset'}` : 'unset'}</Typography>
+                     <Typography level='body-sm' sx={{fontWeight:'normal'}}>{`${headerPostTitle}`}</Typography>
                  </Stack>
              </Typography>
          </Box>

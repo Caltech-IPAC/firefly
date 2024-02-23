@@ -253,7 +253,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                         <Stack {...{spacing:4}}>
                             <Stack {...{spacing:1}}>
                                 <Stack {...{direction: 'row', spacing:10, mr: 3, justifyContent: 'flex-start', alignItems: 'center'}}>
-                                    <Typography level='h4'>ADQL Query</Typography>
+                                    <Typography level='title-lg'>ADQL Query</Typography>
                                     <Stack {...{direction: 'row'}}>
                                         <Chip size='md' title='Reset to the initial query' style={{height: 24, marginRight: 5}} onClick={onReset}>Reset</Chip>
                                         <Chip size='md' title='Clear the query' style={{height: 24}} onClick={onClear}>Clear</Chip>
