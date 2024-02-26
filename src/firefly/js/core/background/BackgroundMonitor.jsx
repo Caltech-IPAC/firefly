@@ -223,7 +223,7 @@ function PackageItem({SINGLE, jobId, index}) {
     const dlState = downloadState?.[index];
 
     const doDownload = () => {
-        const url = jobInfo?.results?.[index];
+        const url = jobInfo?.results?.[index]?.href;
         if (!url) {
             showInfoPopup('Bad URL. Cannot download');
             return;

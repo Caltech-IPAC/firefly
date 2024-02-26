@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.util.StringUtils.groupFind;
+
 
 /**
  * Date: May 14, 2009
@@ -316,11 +318,12 @@ public class TableUtil {
     }
 
     /**
-     * @param cnames a string of column name(s)
-     * @return an array of column names split from a comma separated string, ignoring commas inside double-quotes
+     * @param cnames a string of column name(s).  It can also be expression including functions.
+     *               ignore commas inside double-quotes or parentheses(e.g. function parameters) when parsing
+     * @return an array of column names.
      */
     public static String[] splitCols(String cnames) {
-        return cnames == null ? new String[0] : cnames.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+        return cnames == null ? new String[0] : cnames.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)(?![^(]*\\))");
     }
 
 //====================================================================
