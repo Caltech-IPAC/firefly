@@ -8,7 +8,7 @@ import {
     Tab as JoyTab,
     Tabs as JoyTabs,
     TabPanel as JoyTabPanel,
-    TabList, ListItemDecorator, Box, Chip, Stack, Sheet, ChipDelete, Tooltip
+    TabList, ListItemDecorator, Box, Stack, Sheet, ChipDelete, Tooltip
 } from '@mui/joy';
 import {tabClasses} from '@mui/joy/Tab';
 import sizeMe from 'react-sizeme';
@@ -18,11 +18,10 @@ import {dispatchComponentStateChange, getComponentState} from '../../core/Compon
 import {isDefined} from '../../util/WebUtil.js';
 import {useFieldGroupConnector} from '../FieldGroupConnector.jsx';
 import {useStoreConnector} from '../SimpleComponent.jsx';
-import {hideDropDown, isDropDownShowing, showDropDown} from '../DialogRootContainer.jsx';
+import {DropDown} from '../DialogRootContainer.jsx';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getCellValue, getTblById, watchTableChanges} from '../../tables/TableUtil.js';
 import {TABLE_FILTER, TABLE_HIGHLIGHT, TABLE_SORT} from '../../tables/TablesCntlr.js';
-
 
 /*---------------------------------------------------------------------------------------------
 There are several type of Tab panels, each with slightly different behavior and use case.
@@ -59,17 +58,10 @@ export function TabPanel ({value, onTabSelect, tabId=uniqueTabId(), showOpenTabs
     const {useFlex, resizable, borderless,
         style={}, headerStyle, contentStyle={}, label, size, ...joyTabsProps} = rest;     // these are deprecated.  the rest(joyTabsProps) are pass-along props to Tabs.
 
-    const arrowEl = useRef(null);
-
-    useEffect( ()=> {
-        if (isDropDownShowing(tabId)) handleOpenTabs({tabId, doOpen: false});
-    }, [tabId]);
-
     // get the content(JoyTabPanel)
     const childrenAry = React.Children.toArray(children);
     const tabContents = childrenAry.map((c, idx) => getContentFromTab(c.props, idx, slotProps));
 
-    const showTabs = (ev) => handleOpenTabs({ev, doOpen: !isDropDownShowing(tabId), tabId, onSelect: onTabSelect, arrowEl, childrenAry});
     const onChange = useCallback((ev, val) => onTabSelect?.(val), []);
 
     // because we support additional actions to the right of the TabList, we need to implement some of TabList feature here.
@@ -99,9 +91,9 @@ export function TabPanel ({value, onTabSelect, tabId=uniqueTabId(), showOpenTabs
                 <Stack direction='row' flexShrink={0}>
                     {actions && actions()}
                     {showOpenTabs && (
-                        <Chip onClick={showTabs} ref={arrowEl} size='sm' title='Search open tabs' sx={{m:'2px'}}>
-                            <div className='arrow-down'/>
-                        </Chip>
+                        <DropDown title='Search open tabs'>
+                            <OpenTabs onSelect={onTabSelect} tabId={tabId} childrenAry={childrenAry}/>
+                        </DropDown>
                     )}
                 </Stack>
             </Sheet>
@@ -390,35 +382,33 @@ function getContentFromTab({value, id, children}, idx, slotProps) {
 
 /*----------------------------------------------------------------------------------------------*/
 
-function handleOpenTabs({ev, doOpen, tabId, onSelect, childrenAry, arrowEl}) {
-    ev?.stopPropagation?.();
-    if (doOpen) {
-        // create table model for the drop down
-        const columns = [{name: 'OPEN TABS', width: 50}];
-        const highlightedRow = childrenAry.findIndex((child) => child?.props?.selected);
-        const tbl_id = tabId;
-        const data = getTabTitles(childrenAry);
-        const tableModel = {tbl_id, tableData: {columns, data}, highlightedRow, totalRows: data.length};
+function OpenTabs({tabId, onSelect, childrenAry}) {
+
+    useEffect(() => {
         // monitor for changes
-        watchTableChanges(tabId, [TABLE_HIGHLIGHT, TABLE_SORT, TABLE_FILTER], () => {
+        return watchTableChanges(tabId, [TABLE_HIGHLIGHT, TABLE_SORT, TABLE_FILTER], () => {
             const tbl = getTblById(tabId) || {};
             const {highlightedRow} = tbl;
             const selRowIdx = getCellValue(tbl, highlightedRow, 'ROW_IDX');
             if (selRowIdx >= 0) onSelect(selRowIdx);
         }, tabId);          // make watcherId same as tabId so there can only be one watcher per tabpanel
+    }, [tabId]);
 
-        const width = 381;
-        const content =  (
-            <Stack width={width} height={200} position='relative'>
-                <TablePanel tbl_ui_id={tabId+'-ui'} tableModel={tableModel} showTypes={false}
-                            showToolbar={false} showFilters={true} selectable={false} showOptionButton={false}/>
-            </Stack>);
-        showDropDown({id: tabId, content, atElRef: arrowEl.current, locDir: 43,
-                    style: {marginLeft: -width+10, marginTop: -4}, wrapperStyle: {zIndex: 110}}); // 110 is the z-index of a dropdown
-    } else {
-        hideDropDown(tabId);
-    }
-};
+    // create table model for the drop down
+    const columns = [{name: 'OPEN TABS', width: 50}];
+    const highlightedRow = childrenAry.findIndex((child) => child?.props?.selected);
+    const tbl_id = tabId;
+    const data = getTabTitles(childrenAry);
+    const tableModel = {tbl_id, tableData: {columns, data}, highlightedRow, totalRows: data.length};
+
+    const width = 381;
+    return  (
+        <Stack width={width} height={200} position='relative'>
+            <TablePanel tbl_ui_id={tabId+'-ui'} tableModel={tableModel} showTypes={false} slotProps={{tablePanel: {variant:'plain'}}}
+                        showToolbar={false} showFilters={true} selectable={false} showOptionButton={false}/>
+        </Stack>
+    );
+}
 
 function getTabTitles(childrenAry) {
     return childrenAry.map((child, idx) => {

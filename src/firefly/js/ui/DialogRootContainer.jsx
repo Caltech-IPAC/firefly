@@ -1,18 +1,19 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Sheet, Stack} from '@mui/joy';
-import React, {memo, useEffect, useState} from 'react';
-import PropTypes from 'prop-types';
+import React, {memo, useEffect, useRef, useState} from 'react';
+import PropTypes, {bool, elementType, func, object, oneOfType, shape, string} from 'prop-types';
 import {createRoot} from 'react-dom/client';
-import {get, set} from 'lodash';
+import {Dropdown, IconButton, Menu, MenuButton, Sheet} from '@mui/joy';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+
+import {set} from 'lodash';
 import {dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr';
 import {flux} from '../core/ReduxFlux';
 import {FireflyRoot} from './FireflyRoot.jsx';
 
 
 const DIALOG_DIV= 'dialogRootDiv';
-const DROPDOWN_DIV_ROOT= 'dropDownPlane-root';
 const TMP_ROOT='TMP-';
 const DEFAULT_ZINDEX= 200;
 
@@ -24,110 +25,53 @@ let tmpCount=0;
 let divElement;
 let divElementRoot;
 
-const reactRoots= new Map();
-
 function init() {
     divElement= createDiv({id: DIALOG_DIV});
     divElementRoot= createRoot(divElement);
 }
 
-/**
- * locDir is a 2-digit number to indicate the location and direction of the drop-down.
- *   location is the first digit starting from 1-top-left to 4-bottom-left clockwise.
- *   direction is the 2nd digit used to denote direction.  It follows the same convention as above.
- *
- * example:  drop-down at bottom-right, spanning left.   34
- *
- * @param p parameters object
- * @param p.id
- * @param p.content     the content to display
- * @param p.style       overrideable style
- * @param p.atElRef     the element reference used to apply locDir to.
- * @param p.locDir      location and direction of the drop-down.  see desc for more info
- * @param p.wrapperStyle style to apply to dropdown wrapper div, ex. zIndex
- * @param p.boxEl       the container's element.  Used to deactivate the dropdown.
+/*
+ * Extend JoyUI Dropdown component to provide ease of use.
+ * This set focus to the popup panel on mount.  This allow any click to hide it.
+ * @param button    defaults to ArrowDropDownIcon
+ * @param title
+ * @param onOpenChange
+ * @param slotProps
+ * @param useIconButton     defaults to true.  more convenience than setting button.slots.root
  */
-export function showDropDown({id='',content, style={}, atElRef, locDir, wrapperStyle, boxEl}) {
-    const planeId= getddDiv(id);
-    const ddDiv = document.getElementById(planeId) || createDiv({id: planeId, wrapperStyle});
-    const root= createRoot(ddDiv);
-    reactRoots.set(divElement,root);
+export function DropDown({button, title, onOpenChange, slotProps, useIconButton=true, children, ...props}) {
+    const [_, setOpen] = useState(false);
 
-    const rootZindex= atElRef && computeZIndex(atElRef);
-    if (rootZindex) ddDiv.style.zIndex ??= rootZindex;
-    root.render(
-        <FireflyRoot>
-            <DropDown {...{id, content, style, atElRef, locDir, boxEl}}/>
-        </FireflyRoot>
-    );
-    return ddDiv;
-}
-
-export function isDropDownShowing(id) {
-    return document.getElementById(getddDiv(id));
-}
-
-export function hideDropDown(id='') {
-    const ddDiv = document.getElementById(getddDiv(id));
-    if (ddDiv) {
-        reactRoots.get(ddDiv)?.unmount();
-        ddDiv.parentNode.removeChild(ddDiv);
-    }
-}
-
-const getddDiv= (id) => id ? id+ '-dropdownPlane' : DROPDOWN_DIV_ROOT;
-
-function DropDown ({id, content, style={}, locDir, atElRef, boxEl}) {
-
-    const hide = () => hideDropDown(id);
-
-    // Effect to to hide DropDown when clicked elsewhere
+    const dropdownEl = useRef(null);
     useEffect(() => {
-        const box = boxEl || document;
-        box.addEventListener('click', hide);
-        return () => box.removeEventListener('click', hide);;
-    }, []);
+        dropdownEl.current?.focus();
+    }, [dropdownEl.current]);
 
-    if (!get(atElRef, 'isConnected', true)) hide();                                            // referenced element is no longer visible.. hide drop-down.
-    const {x:o_x, y:o_y, width:o_width, height:o_height} = document.documentElement.getBoundingClientRect();    // outer box
-    const {x=0, y=0, width=0, height=0} = atElRef ? atElRef.getBoundingClientRect() : {};                       // inner box
+    button ||= <ArrowDropDownIcon/>;
 
-
-    const [loc, dir] = [Math.floor(locDir/10), locDir%10];
-    const top    = (y-o_y) + (loc === 3 || loc === 4 ? height : 0);
-    const bottom = ((o_height-o_y) - y) - (loc === 3 || loc === 4 ? height : 0);
-    const left   = (x-o_x) + (loc === 2 || loc === 3 ? width : 0);
-    const right  = ((o_width-o_x) - x) - (loc === 2 || loc === 3 ? width : 0);
-
-    let pos;
-    switch (dir) {
-        case 1:
-            pos = {bottom, right}; break;
-        case 2:
-            pos = {bottom, left}; break;
-        case 3:
-            pos = {top, left}; break;
-        case 4:
-            pos = {top, right}; break;
-    }
-
-    const myStyle = Object.assign({ backgroundColor: '#FBFBFB',
-            ...pos,
-            boxShadow: '#c1c1c1 1px 1px 5px 0px',
-            position: 'absolute'},
-        style);
-    const stopEvent = (e) => {
-        e.stopPropagation();
-        e.nativeEvent && e.nativeEvent.stopImmediatePropagation();
+    const onChange = (_, open) => {
+        onOpenChange?.(open);
+        setOpen(open);
     };
-
+    const root = useIconButton ? IconButton : undefined;
     return (
-        <Stack style={myStyle} onClick={stopEvent}>
-            {content}
-        </Stack>
+        <Dropdown onOpenChange={onChange} {...props}>
+            <MenuButton title={title} {...slotProps?.button} slots={{ root, ...slotProps?.button?.slots }}>{button}</MenuButton>
+            <Menu ref={dropdownEl} {...slotProps?.menu}>{children}</Menu>
+        </Dropdown>
     );
 }
 
+DropDown.propTypes = {
+    button: object,
+    title: oneOfType([string, elementType]),
+    onOpenChange: func,
+    useIconButton: bool,
+    slotProps: shape({
+        button: object,
+        menu: object,            // will inject into each one
+    })
+};
 
 function requestOnTop(key) {
     const topKey= dialogs.sort( (d1,d2) => d2.zIndex-d1.zIndex)[0].dialogId;
