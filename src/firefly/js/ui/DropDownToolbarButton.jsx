@@ -31,7 +31,8 @@ function computeDropdownXY(buttonElement, dropdownElement) {
     x-= leftAdjust;
     let y = elemRect.bottom - bodyRect.top-4;
     let above= false;
-    if (y+dropdownRect.height-20 > bodyRect.height) {
+    const bodyHeight= document.body?.getBoundingClientRect()?.height ?? 0;
+    if (bodyHeight>10 && y+dropdownRect.height-20 > bodyHeight) {
         y= elemRect.y - dropdownRect.height + 4;
         above= true;
     }
