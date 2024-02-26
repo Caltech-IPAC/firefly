@@ -323,8 +323,6 @@ export function makeServiceDescriptorSearchRequest(request, serviceDescriptor, e
     if (sAry) {
         const [,dir,sortBy] = sAry;
         sortObj= {sortInfo: sortInfoString(sortBy, dir?.toUpperCase()==='ASC')};
-        // console.log('from service def: '+tblSortOrder);
-        // console.log('using sortInfoString)(): '+sortObj.sortInfo);
     }
 
     const options= {...sortObj, META_INFO: { ...hideObj, ...extraMeta }};

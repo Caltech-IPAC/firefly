@@ -196,7 +196,7 @@ export function DownloadOptionPanel ({groupKey, cutoutSize, help_id, children, s
         setBgKey(akey);
     }, [cutoutSize, dlParams, tbl_id]);
 
-    const showWarnings = hasProprietaryData(getTblById(tbl_id));
+    // const showWarnings = hasProprietaryData(getTblById(tbl_id)); // it feature is not working correctly
 
     const maskStyle = {
         position: 'absolute',
@@ -229,7 +229,6 @@ export function DownloadOptionPanel ({groupKey, cutoutSize, help_id, children, s
                 onCancel = {() => dispatchHideDialog(DOWNLOAD_DIALOG_ID)}
                 help_id  = {help_id}>
                 <FieldGroup groupKey={groupKey} keepState={true}>
-                    {showWarnings && <div style={noticeCss}>This table contains proprietary data. Only data to which you have access will be downloaded.</div>}
                     {preTitleMessage && <div style={preTitleCss}>{preTitleMessage}</div>}
                     <div className='FieldGroup__vertical--more'>
                         {showTitle && <TitleField {...{labelWidth, value:dlTitle }}/>}
