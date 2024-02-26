@@ -13,14 +13,11 @@ import React, {memo, useContext} from 'react';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
 import {allowPinnedCharts} from '../../charts/ChartUtil.js';
 import {ActiveChartsPanel} from '../../charts/ui/ChartsContainer.jsx';
-import {
-    dispatchSetLayoutMode, dispatchUpdateLayoutInfo, getLayouInfo, LO_MODE, LO_VIEW
-} from '../../core/LayoutCntlr.js';
+import { dispatchUpdateLayoutInfo, getLayouInfo, LO_VIEW } from '../../core/LayoutCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {AppInitLoadingMessage} from '../../ui/AppInitLoadingMessage.jsx';
 import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
 import {Tab, Tabs} from '../../ui/panel/TabPanel.jsx';
-import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 import {
@@ -35,6 +32,7 @@ const triViewKey= 'images | tables | xyplots';
 const tblImgKey= 'tables | images';
 const imgXyKey= 'images | xyplots';
 const tblXyKey= 'tables | xyplots';
+const xYTblKey= 'xyplots | tables';
 
 
 export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButtons, rightButtons,
@@ -42,13 +40,13 @@ export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButt
     const {landingPage}= useContext(AppPropertiesCtx);
     const state= useStoreConnector(() => pick(getLayouInfo(), stateKeys));
     const {title, mode, showTables, showImages, showXyPlots, images={}, coverageSide=LEFT} = state;
-    const {expanded, standard, closeable} = mode ?? {};
+    const {expanded, standard=triViewKey, closeable} = mode ?? {};
     const content = {};
     const {showMeta, showFits, dataProductTableId, showCoverage} = images;
     const coverageRight= showCoverage && coverageSide===RIGHT;
     const coverageLeft= showCoverage && coverageSide===LEFT;
     const currLayoutMode= getLayouInfo()?.mode?.standard?.toString() ?? triViewKey;
-    const imagesWithCharts= currLayoutMode===tblXyKey;
+    const imagesWithCharts= currLayoutMode===tblXyKey || currLayoutMode===xYTblKey;
 
     if (initLoadingMessage && !initLoadCompleted) return (<AppInitLoadingMessage message={initLoadingMessage}/>);
     if (!showImages && !showXyPlots && !showTables) return landingPage;
@@ -71,6 +69,7 @@ export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButt
                                            mode='both'
                                            closeable={closeable}
                                            expandedMode={expanded===LO_VIEW.tables}/>);
+        if (currLayoutMode===xYTblKey) content.flip= true;
     }
     return (
         <ResultsPanel {...{key:'results', title,
@@ -147,19 +146,19 @@ function makePinnedChartTab({pinnedLabel, chartExpandedMode, closeable, asTab}) 
     }
 
 
-function getCovSideOptions(currLayoutMode, showImages) {
-    const make= (l,r) => [ {label:l, value:LEFT}, {label:r, value:RIGHT}];
-
-    switch (currLayoutMode) {
-        case triViewKey: return make('Left', showImages?'Right':'Coverage w/Charts');
-        case tblImgKey: return make('Coverage showing', 'Coverage hidden');
-        case imgXyKey: return make('Left', 'Right');
-        case tblXyKey: return make('Coverage hidden', 'Coverage showing');
-        default: return make('Coverage left', 'Coverage right');
-    }
-}
-
-const LandingPageNotSpecified= () => ( <div>No Landing Page Specified</div> );
+// function getCovSideOptions(currLayoutMode, showImages) {
+//     const make= (l,r) => [ {label:l, value:LEFT}, {label:r, value:RIGHT}];
+//
+//     switch (currLayoutMode) {
+//         case triViewKey: return make('Left', showImages?'Right':'Coverage w/Charts');
+//         case tblImgKey: return make('Coverage showing', 'Coverage hidden');
+//         case imgXyKey: return make('Left', 'Right');
+//         case tblXyKey: return make('Coverage hidden', 'Coverage showing');
+//         default: return make('Coverage left', 'Coverage right');
+//     }
+// }
+//
+// const LandingPageNotSpecified= () => ( <div>No Landing Page Specified</div> );
 
 function searchDesc({showViewsSwitch, leftButtons, centerButtons, rightButtons}) {
 

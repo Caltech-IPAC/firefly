@@ -438,7 +438,7 @@ function BasicUI(props) {
                         {op.value}
                     </Typography>
                 </Stack>
-                <Typography level='body-sm'
+                <Typography level='body-sm' component='div'
                             style={lineClamp?
                                 {
                                     overflow: 'hidden',
@@ -448,7 +448,6 @@ function BasicUI(props) {
                                     WebkitBoxOrient: 'vertical',
                                 } : {}}
                             sx={{whiteSpace:'normal', textAlign:'left'}}>
-                    {/*{op.label}*/}
                     <div dangerouslySetInnerHTML={{__html: `${cleanUp(op.label)}`}}/>
                 </Typography>
             </Stack>

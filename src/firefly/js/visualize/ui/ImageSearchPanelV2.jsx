@@ -224,7 +224,7 @@ function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiS
     }, [wp]);
     useEffect(() => {
         if (!type) return;
-        setFieldValue(FG_KEYS.type,FG_KEYS.main,type);
+        setFieldValue(FG_KEYS.main,FD_KEYS.type,type);
     }, [type]);
 
     const imageType = useStoreConnector(() => getFieldVal(FG_KEYS.main, FD_KEYS.type));

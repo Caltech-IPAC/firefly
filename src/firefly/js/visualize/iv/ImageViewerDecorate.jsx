@@ -27,10 +27,7 @@ import {DataTypes} from '../draw/DrawLayer.js';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {getNumFilters} from '../../tables/FilterInfo';
 import {ZoomButton, ZoomType} from 'firefly/visualize/ui/ZoomButton.jsx';
-import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 import {expand} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
-
-import OUTLINE_EXPAND from 'images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
 
 const EMPTY_ARRAY=[];
 

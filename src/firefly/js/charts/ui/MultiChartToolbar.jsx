@@ -3,9 +3,10 @@
  */
 
 
-import React from 'react';
+import React, {useContext} from 'react';
 import PropTypes from 'prop-types';
 import {Sheet, Stack, Typography} from '@mui/joy';
+import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
 
 import {getChartData} from '../ChartsCntlr.js';
 import {dispatchChangeViewerLayout, dispatchUpdateCustom, getViewerItemIds, getViewer, getLayoutType, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
@@ -26,10 +27,12 @@ export function MultiChartToolbarStandard({viewerId, chartId, tbl_group, expanda
     layoutType=getLayoutType(getMultiViewRoot(), viewerId),
     activeItemId=getViewer(getMultiViewRoot(), viewerId).customData.activeItemId}) {
 
+
+    const {jsApi=false}= useContext(AppPropertiesCtx);
     return (
         <Stack direction='row' justifyContent='space-between'>
             <Stack direction='row' spacing={3}>
-                <AddBtn/>
+                {!jsApi && <AddBtn/>}
                 <MultiChartStd {...{viewerId, layoutType, activeItemId}}/>
             </Stack>
             <ChartToolbar {...{chartId, tbl_group, viewerId, expandable, expandedMode}}/>
@@ -50,6 +53,7 @@ MultiChartToolbarStandard.propTypes= {
 
 export function MultiChartToolbarExpanded({viewerId, chartId, tbl_group, expandable, expandedMode, closeable, layoutType, activeItemId}) {
 
+    const {jsApi=false}= useContext(AppPropertiesCtx);
     layoutType = layoutType || getLayoutType(getMultiViewRoot(), viewerId);
     activeItemId = activeItemId || getViewer(getMultiViewRoot(), viewerId)?.customData?.activeItemId;
 
@@ -57,7 +61,7 @@ export function MultiChartToolbarExpanded({viewerId, chartId, tbl_group, expanda
         <Stack direction='row' justifyContent='space-between' alignItems='center'>
             {closeable && <CloseButton onClick={() => closeExpandedChart(viewerId)}/>}
             <Stack direction='row' spacing={3}>
-                <AddBtn/>
+                {!jsApi && <AddBtn/>}
                 <MultiChartExt {...{viewerId, layoutType, activeItemId}}/>
             </Stack>
             <ChartToolbar {...{chartId, tbl_group, expandable, expandedMode, viewerId}}/>

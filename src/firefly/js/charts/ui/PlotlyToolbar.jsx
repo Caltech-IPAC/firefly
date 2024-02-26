@@ -1,7 +1,8 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import PropTypes from 'prop-types';
 import {Divider, IconButton, Stack, ToggleButtonGroup} from '@mui/joy';
 import {get, isEmpty} from 'lodash';
+import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
 
 import {dispatchChartUpdate, dispatchChartFilterSelection, dispatchChartSelect, getChartData, dispatchSetActiveTrace, dispatchChartExpanded, resetChart} from '../ChartsCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
@@ -304,12 +305,16 @@ function OptionsBtn({chartId}) {
              tip='Chart options and tools'/>
     );
 }
+
 export function AddBtn() {
-    const tbl_id = getActiveTableId();
-    const chartId= getActiveViewerItemId(DEFAULT_PLOT2D_VIEWER_ID);
     return (
-        <AddItem onClick={() => showChartsDialog(chartId,CHART_ADDNEW,tbl_id)}
-                        tip='Add a chart'/>
+        <AddItem
+            tip='Add a chart'
+            onClick={() => {
+                const chartId= getActiveViewerItemId(DEFAULT_PLOT2D_VIEWER_ID);
+                showChartsDialog(chartId,CHART_ADDNEW,getActiveTableId());
+            }}
+        />
     );
 }
 

@@ -19,7 +19,7 @@ import {isValidPoint, parseWorldPt} from '../visualize/Point.js';
 
 const TARGET= 'targetSource';
 const RESOLVER= 'resolverSource';
-const LABEL_DEFAULT='Coords or Obj Name';
+const LABEL_DEFAULT='Coordinates or Object Name';
 
 const nedThenSimbad= 'nedthensimbad';
 const simbadThenNed= 'simbadthenned';
@@ -267,7 +267,7 @@ function computeProps(viewProps, componentProps, fieldKey, groupKey) {
     return {
         ...viewProps,
         visible: true,
-        label: 'Coords or Obj Name',
+        label: 'Coordinates or Object Name',
         tooltip: 'Enter a target',
         value,
         feedback,

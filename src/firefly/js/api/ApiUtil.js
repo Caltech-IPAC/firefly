@@ -72,7 +72,7 @@ export function renderDOM(div, Component, props) {
     // divElement.classList.add('rootStyle');       // this is probably not necessary
 
     const renderStuff= (
-        <FireflyRoot sx={{height:1, width:1}}>
+        <FireflyRoot sx={{height:1, width:1}} ctxProperties={{jsApi:true}}>
             <Component {...props} />
         </FireflyRoot>
     );

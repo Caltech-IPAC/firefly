@@ -18,7 +18,7 @@ import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {layoutManager} from './FireflyViewerManager.js';
-import {LayoutChoiceAccordion} from './LayoutChoice.jsx';
+import {LayoutChoiceAccordion, LayoutChoiceVisualAccordion} from './LayoutChoice.jsx';
 import {TriViewPanel} from './TriViewPanel.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {startImagesLayoutWatcher} from '../../visualize/ui/TriViewImageSection.jsx';
@@ -73,7 +73,7 @@ export function FireflyViewer ({menu, options, initLoadCompleted, initLoadingMes
     }, []);
     const drawerComponent= (
         <AppConfigDrawer>
-            <LayoutChoiceAccordion/>
+            <LayoutChoiceVisualAccordion/>
         </AppConfigDrawer>
     );
 
