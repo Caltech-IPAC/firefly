@@ -30,6 +30,7 @@ import {getCmdSrvSyncURL} from '../../util/WebUtil';
 import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField.jsx';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {findTableCenterColumns} from 'firefly/voAnalyzer/TableAnalysis';
+import {Stacker} from 'firefly/ui/Stacker.jsx';
 
 const fKeyDef = {
     fileName: {fKey: 'fileName', label: 'File name'},
@@ -143,35 +144,32 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
         );
     };
     return (
-        <FieldGroup groupKey={tblDownloadGroupKey} reducerFunc={TableDLReducer(tbl_id)}>
-            <Stack spacing={2} justifyContent={'center'}
-                               sx={{px: 2}}>
-                <DownloadOptionsDialog fromGroupKey={tblDownloadGroupKey} style={{width: 'unset', height: 'unset'}}
-                                       children={fileFormatOptions()}
-                                       workspace={isWs}
-                                       dialogWidth='100%'
-                                       dialogHeight='100%'
-                />
-                <RadioGroupInputField fieldKey='mode' initialState={{value: 'displayed'}}
-                                      options={[{value:'displayed', label:'Save table as displayed'}, {value:'original', label:'Save table as originally retrieved'}]}/>
-                <Typography level='body-sm' sx={{textAlign: 'left'}}>
-                    {mode === 'original' ? asOriginalMsg : asDisplayedMsg}
-                </Typography>
-                <Stack sx={{flexDirection: 'row', justifyContent: 'space-between'}}>
-                    <Stack spacing={1} direction='row' alignItems='center'>
-                        <CompleteButton
-                            groupKey={tblDownloadGroupKey}
-                            onSuccess={resultSuccess(tbl_id, tbl_ui_id, onComplete, cenCols)}
-                            onFail={resultFail()}
-                            text={'Save'}/>
-                        <Button onClick={() => onComplete?.()}>Cancel</Button>
-                    </Stack>
-                    <Stack>
-                        <HelpIcon helpId={'tables.save'}/>
-                    </Stack>
+        <Stack spacing={1} height={1}>
+            <FieldGroup groupKey={tblDownloadGroupKey} reducerFunc={TableDLReducer(tbl_id)} sx={{flexGrow:1, display:'flex', alignItems:'start'}}>
+                <Stack spacing={2} justifyContent={'center'}
+                       sx={{px: 2}}>
+                    <DownloadOptionsDialog fromGroupKey={tblDownloadGroupKey} style={{width: 'unset', height: 'unset'}}
+                                           children={fileFormatOptions()}
+                                           workspace={isWs}
+                                           dialogWidth='100%'
+                                           dialogHeight='100%'
+                    />
+                    <RadioGroupInputField fieldKey='mode' initialState={{value: 'displayed'}}
+                                          options={[{value:'displayed', label:'Save table as displayed'}, {value:'original', label:'Save table as originally retrieved'}]}/>
+                    <Typography level='body-sm' sx={{textAlign: 'left'}}>
+                        {mode === 'original' ? asOriginalMsg : asDisplayedMsg}
+                    </Typography>
                 </Stack>
-            </Stack>
-        </FieldGroup>
+            </FieldGroup>
+            <Stacker endDecorator={<HelpIcon helpId={'tables.save'}/>}>
+                <CompleteButton
+                    groupKey={tblDownloadGroupKey}
+                    onSuccess={resultSuccess(tbl_id, tbl_ui_id, onComplete, cenCols)}
+                    onFail={resultFail()}
+                    text={'Save'}/>
+                <Button onClick={() => onComplete?.()}>Cancel</Button>
+            </Stacker>
+        </Stack>
     );
 }
 

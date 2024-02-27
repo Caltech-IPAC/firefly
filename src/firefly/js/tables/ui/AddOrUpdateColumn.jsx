@@ -28,7 +28,6 @@ import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 
 import MAGNIFYING_GLASS from 'images/icons-2014/magnifyingGlass.png';
-import INSERT_COLUMN from 'html/images/insert-col-right-24-24.png';
 import INFO from 'html/images/info-icon.png';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {setSelectInfo} from 'firefly/tables/TableRequestUtil.js';
@@ -36,6 +35,7 @@ import {dispatchHideDialog} from 'firefly/core/ComponentCntlr.js';
 import {FilterInfo} from 'firefly/tables/FilterInfo.js';
 import {AddColumnButton} from 'firefly/visualize/ui/Buttons.jsx';
 import {RequiredFieldMsg} from 'firefly/ui/InputField.jsx';
+import {Stacker} from 'firefly/ui/Stacker.jsx';
 
 
 let hideExpPopup;
@@ -128,14 +128,11 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
                     ]}/>
                 {mode === 'Custom' ? <CustomFields {...{tbl_ui_id, tbl_id, groupKey, editColName}}/> : <PresetFields {...{tbl_id, editColName}}/>}
             </FieldGroup>
-            <Stack direction='row' justifyContent='space-between'>
-                <Stack direction='row' spacing={1} alignItems='center'>
-                    <Button color='primary' variant='solid' onClick={doUpdate}>{buttonLabel}</Button>
-                    {editColName && DelBtn}
-                    <Button onClick={() => hidePopup?.()}> Cancel</Button>
-                </Stack>
-                <HelpIcon helpId={'tables.addColumn'}/>
-            </Stack>
+            <Stacker endDecorator={<HelpIcon helpId={'tables.addColumn'}/>}>
+                <Button color='primary' variant='solid' onClick={doUpdate}>{buttonLabel}</Button>
+                {editColName && DelBtn}
+                <Button onClick={() => hidePopup?.()}> Cancel</Button>
+            </Stacker>
         </Stack>
     );
 

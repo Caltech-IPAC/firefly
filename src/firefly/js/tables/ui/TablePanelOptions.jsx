@@ -33,6 +33,7 @@ import {BY_SCROLL} from './BasicTableView.jsx';
 import EDIT from 'html/images/16x16_edit_icon.png';
 import {MAX_ROW} from 'firefly/tables/TableRequestUtil';
 import {ClearFilterButton} from 'firefly/visualize/ui/Buttons.jsx';
+import {Stacker} from 'firefly/ui/Stacker.jsx';
 
 
 export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOptionReset, clearFilter}) => {
@@ -98,14 +99,11 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
                 }
             </StatefulTabs>
             {showTblPrefMsg && <TablePrefMsg/>}
-            <Stack direction='row' justifyContent='space-between'>
-                <Stack direction='row' alignItems='center' spacing={1}>
-                    <Button variant='solid' color='primary' onClick={onClose}>Close</Button>
-                    <Button onClick={onReset}>Reset column selection</Button>
-                    <Button onClick={onRemoveFilters}>Remove all filters</Button>
-                </Stack>
-                <HelpIcon helpId={'tables.options'}/>
-            </Stack>
+            <Stacker endDecorator={<HelpIcon helpId={'tables.options'}/>}>
+                <Button variant='solid' color='primary' onClick={onClose}>Close</Button>
+                <Button onClick={onReset}>Reset column selection</Button>
+                <Button onClick={onRemoveFilters}>Remove all filters</Button>
+            </Stacker>
         </Stack>
     );
 });
