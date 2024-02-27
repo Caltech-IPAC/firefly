@@ -13,6 +13,7 @@ import {getUserInfo} from '../core/AppDataCntlr.js';
 import {logout} from '../rpc/CoreServices.js';
 import {getVersionInfoStr, showFullVersionInfoDialog} from 'firefly/ui/VersionInfo.jsx';
 import './Banner.css';
+import {menuTabsBorderSx} from 'firefly/ui/Menu';
 
 const getVersionTipStr= (appTitle) => `${appTitle?appTitle+' ':''}Version:\n${getVersionInfoStr(true,true)}`;
 
@@ -28,8 +29,12 @@ export const Banner = memo( ({menu, enableVersionDialog= false, appTitle:titlePr
     const appTitle=  titleProp || ctx.appTitle;
     return (
         <Sheet {...{
-            className:'banner__main', variant, color, sx:{width:1, position:'relative' } }}>
-            <Stack {...{direction:'row', height:40, alignItems:'flex-end', pl:1}}>
+            className:'banner__main', variant, color, sx: (theme) => ({
+                width:1, position:'relative',
+                ...menuTabsBorderSx(theme)
+            })
+        }}>
+            <Stack {...{direction:'row', height:40, alignItems:'flex-end', pl:1, spacing: 0.5}}>
                 <AppConfigButton/>
                 <Box sx={{ alignSelf:'center', flexGrow:0, cursor: enableVersionDialog ? 'pointer' : 'inherit'}}
                      style={bannerLeftStyle}>

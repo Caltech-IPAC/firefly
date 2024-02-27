@@ -30,7 +30,6 @@ const props = mergeObjectOnly(defProps, window?.firefly?.app ?? {});
 const {template}= props;
 
 
-// props.showLandingHelp= template!=='LightCurveViewer';
 props.fileDropEventAction= template!=='LightCurveViewer' ? 'FileUploadDropDownCmd' : 'LCUpload';
 
 const defOptions = {

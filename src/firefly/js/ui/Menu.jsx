@@ -39,6 +39,12 @@ function onClick(clickHandler,menuItem) {
     clickHandler(menuItem);
 }
 
+export const menuTabsBorderSx = (theme) => ({
+    borderWidth: 1,
+    borderStyle: 'solid',
+    borderColor: theme.vars.palette.neutral.outlinedBorder //if need blue accent, can use primary.outlinedBorder or primary.outlinedActiveBg (more lighter)
+});
+
 
 export function Menu() {
     const [ready,setReady]= useState(false);
@@ -97,9 +103,9 @@ export function Menu() {
         <Stack direction='row' justifyContent={'space-between'}>
             <MenuTabBarJoyTabBased {...{menuTabItems,size,selected,bCntAdd,windowWidth,dropDown}}/>
             <Stack direction='row'>
-                {showBgMonitor && <Divider orientation='vertical' sx={{mx:1}} />}
+                {showBgMonitor && <Divider orientation='vertical' sx={{mx:0.5, my: 1}} />}
                 {showBgMonitor && <BgMonitorButton size={size}/> }
-                {Boolean(helpItem) && <Divider orientation='vertical' sx={{mx:1}} />}
+                {Boolean(helpItem) && <Divider orientation='vertical' sx={{mx:0.5, my: 1}} />}
                 {Boolean(helpItem) && <AppHelpButton {...{ menuItem:helpItem,size}}/>}
             </Stack>
         </Stack>
@@ -129,21 +135,19 @@ export function MenuItemButton({menuItem, icon, size='lg', clickHandler, isWorki
 
 
 
-function tabDivider(activeBg,size) {
+function tabDivider(size, placeAtEnd=true) {
     return {
         '&[aria-selected="false"]': {            // add pipes after non-selected tabs
-            '&::after': {
+            [`&::${placeAtEnd ? 'after' : 'before'}`]: {
                 content: '""',
                 display: 'block',
                 position: 'absolute',
                 height: size==='lg'? '1.8rem' : size==='md' ? '1.25rem' : '.9rem',
                 bottom: 6,
                 width: 1,
-                right: -3,
+                [placeAtEnd ? 'right' : 'left']: -3,
                 zIndex: 1,                      //zIndex necessary so the hover does not cover pipe
-                borderRightColor: 'divider',
-                borderRightStyle: 'solid',
-                borderRightWidth: '1px'
+                [placeAtEnd ? 'borderRight': 'borderLeft']: '1px solid var(--joy-palette-divider)',
             },
         }
     };
@@ -161,7 +165,6 @@ function setupTabCss(theme,size) {
 
 function MenuTabBarJoyTabBased({menuTabItems=[], size, selected, dropDown}) {
     const tabSelected= dropDown.visible ? selected : ResultCmd;
-    const activeBg = 'background.surface';
     const variant='soft';
     const color='primary';
 
@@ -186,13 +189,18 @@ function MenuTabBarJoyTabBased({menuTabItems=[], size, selected, dropDown}) {
             sx: {alignSelf:'flex-end'}, onChange: (ev,action) => doTabChange(action,menuTabItems) }} >
             <TabList {...{
                 sx: (theme) => ( {
+                    boxShadow: 'none', //hide the default underline created by TabList as inset box-shadow
                     paddingBottom:0,
+                    transform: 'translate(0px, 1px)', //to overlap banner's bottom border to create bleeding effect
                     [`& .${tabClasses.root}`]: {
-                        ...tabDivider(activeBg,size),
+                        ...tabDivider(size),
                         '&[aria-selected="true"]': { // apply to selected tab
                             background: theme.vars.palette.background.surface,
                             zIndex: 2,
-                        }
+                            ...menuTabsBorderSx(theme),
+                            borderBottomColor: 'transparent', //don't show border at bottom to let active tab's background bleed into tab panel
+                            // boxShadow: '0px -2px 8px -2px rgba(0 0 0 / 0.24)', //theme.shadow.md
+            }
                     }
                 })
 
@@ -394,12 +402,11 @@ function ResultsTab({size}) {
         <Tab {...{color, variant, value:ResultCmd, disableIndicator:true,
             sx: (theme) => {
                 return ({
-                    mb: '1px',
                     ...setupTabCss(theme,size),
+                    ...tabDivider(size,false), //add a divider at start too
+                    backgroundColor: 'transparent',
                     color: theme.vars.palette.success.plainColor,
                     '&[aria-selected="true"]': { // apply this to the selected tab
-                        mb: 0,
-                        background: theme.vars.palette.background.surface,
                         color: theme.vars.palette.success.plainColor,
                     }
                 });

@@ -12,7 +12,7 @@ import 'styles/global.css';
 import {APP_LOAD, dispatchAppOptions, dispatchUpdateAppData} from './core/AppDataCntlr.js';
 import {FireflyViewer} from './templates/fireflyviewer/FireflyViewer.js';
 import {FireflySlate} from './templates/fireflyslate/FireflySlate.jsx';
-import {DefaultLandingPage} from './templates/fireflyviewer/DefaultLandingPage.jsx';
+import {LandingPage} from './templates/fireflyviewer/LandingPage.jsx';
 import {LcViewer} from './templates/lightcurve/LcViewer.jsx';
 import {HydraViewer} from './templates/hydra/HydraViewer.jsx';
 import {routeEntry, ROUTER} from './templates/router/RouteHelper.jsx';
@@ -114,7 +114,7 @@ const defAppProps = {
     showUserInfo: false,
     showViewsSwitch: true,
     rightButtons: undefined,
-    landingPage: <DefaultLandingPage/>,
+    landingPage: <LandingPage/>,
     fileDropEventAction: 'FileUploadDropDownCmd',
 
     menu: [
