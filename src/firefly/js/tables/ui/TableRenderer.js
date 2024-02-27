@@ -37,6 +37,7 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import {FilterButton} from 'firefly/visualize/ui/Buttons.jsx';
 
 
+export const headerStyle = {fontSize:'var(--joy-fontSize-sm)', fontWeight:'var(--joy-fontWeight-md)'};  // maybe faulty becuase it's translated from Typography title-sm, which is dynamic.
 
 const html_regex = /<.+>|&.+;/;           // A rough detection of html elements or entities
 
@@ -399,7 +400,9 @@ function ViewAsText({text, ...rest}) {
                 <input id='doFormat' type='checkbox' title={label} onChange={onChange} checked={doFmt}/>
                 <label htmlFor='doFormat' style={{verticalAlign: ''}}>{label}</label>
             </div>
-            <textarea readOnly className='Actions__popup' value={text} style={{width: 650, height: 125}}/>
+            <Sheet variant='outlined' sx={{resize:'both', overflow:'auto', minWidth:'30em', minHeight:'15em',p:1}} >
+                <Typography whiteSpace='pre'>{text}</Typography>
+            </Sheet>
         </PopupPanel>
 
     );
@@ -782,7 +785,7 @@ const parseStyles = (styles='') =>  {
         .split(';')
         .filter((style) => style.split(':')[0] && style.split(':')[1])
         .map((style) => [
-            style.split(':')[0].trim().replace(/^-ms-/, 'ms-').replace(/-./g, c => c.substr(1).toUpperCase()),
+            style.split(':')[0].trim().replace(/^-ms-/, 'ms-').replace(/-./g, (c) => c.substr(1).toUpperCase()),
             style.split(':').slice(1).join(':').trim()
         ])
         .reduce((styleObj, style) => ({
@@ -791,3 +794,24 @@ const parseStyles = (styles='') =>  {
         }), {});
     // some
 };
+
+
+export function getPxWidth({text, fontSize, fontWeight}) {
+    const div = document.createElement('div');
+
+    // Set the style if given
+    if (fontSize)   div.style.fontSize = fontSize + 'px';
+    if (fontWeight) div.style.fontWeight = fontWeight + '';
+    div.style.fontFamily = 'var(--joy-fontFamily-body)';
+    div.textContent = text;
+
+    // Hide the element so it doesn't affect the layout
+    div.style.position = 'absolute';
+    div.style.visibility = 'hidden';
+
+    document.body.appendChild(div);
+    const width = div.getBoundingClientRect().width;
+    document.body.removeChild(div);
+
+    return width;
+}

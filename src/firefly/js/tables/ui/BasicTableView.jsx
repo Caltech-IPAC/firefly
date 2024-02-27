@@ -9,11 +9,11 @@ import {Column, Table} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, set, isEmpty, isUndefined, omitBy, pick} from 'lodash';
 
-import {calcColumnWidths, getCellValue, getColumns, getProprietaryInfo, getTableState, getTableUiById, getTblById, hasRowAccess, isClientTable, tableTextView, TBL_STATE, uniqueTblUiId} from '../TableUtil.js';
+import {calcColumnWidths, getCellValue, getColMaxValues, getColumns, getProprietaryInfo, getTableState, getTableUiById, getTblById, hasRowAccess, isClientTable, tableTextView, TBL_STATE, uniqueTblUiId} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
-import {CellWrapper, HeaderCell, makeDefaultRenderer, SelectableCell, SelectableHeader} from './TableRenderer.js';
+import {CellWrapper, getPxWidth, HeaderCell, headerLevel, headerStyle, makeDefaultRenderer, SelectableCell, SelectableHeader} from './TableRenderer.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableUiUpdate, TBL_UI_UPDATE} from '../TablesCntlr.js';
 import {Logger} from '../../util/Logger.js';
@@ -325,8 +325,16 @@ function correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredB
 }
 
 function columnWidthsInPixel(columns, data) {
-    return calcColumnWidths(columns, data, {maxColWidth: 100, maxAryWidth: 30, useCnameMultiplier: true})      // set max width for array columns
-            .map( (w) =>  (w + 2) * 7);
+
+    const maxVals = getColMaxValues(columns, data, {maxColWidth: 100, maxAryWidth: 30});
+
+    const paddings = 8;
+    return maxVals.map((text, idx) => {
+        const header = columns[idx].label || columns[idx].name;
+        const style = header === text ? headerStyle : {fontSize:12};
+        text = text.replace(/[^a-zA-Z0-9]/g, 'O');    // some non-alphanum values can be very narrow.  use 'O' in place of them.
+        return getPxWidth({text, ...style}) + paddings;
+    });
 }
 
 function defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx) {
