@@ -435,17 +435,14 @@ function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.fi
     const dialogWidth = '40rem';
     const dialogHeight = '28rem';
     const popupPanelResizableStyle = {
-        width: dialogWidth,
-        height: dialogHeight,
         minWidth: dialogWidth,
         minHeight: dialogHeight,
         resize: 'both',
         overflow: 'hidden'};
     const style = {
+        flexGrow: 1,
         marginLeft: HMargin,
         marginRight: HMargin,
-        width: '38rem',
-        height: '23rem',
         paddingLeft: '1rem',
         paddingRight: '1rem',
         paddingTop: '1rem',
@@ -459,10 +456,10 @@ function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.fi
         const popup = (
             <PopupPanel title={'Read file from workspace'}>
 
-                <div style={popupPanelResizableStyle}>
+                <Stack style={popupPanelResizableStyle}>
                     <FieldGroup groupKey={workspacePopupGroup} keepState={true}>
                         <Stack spacing={2}
-                               sx={{ps:2, my:2, justifyContent: 'space-between'}}>
+                               sx={{my:2, justifyContent: 'space-between'}}>
                             <Stack style={style}>
                                 <WorkspaceViewField fieldKey={fieldKey}
                                                 files={newList}
@@ -471,7 +468,7 @@ function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.fi
                             </Stack>
                             {showMask && <div className='loading-mask' style={Object.assign({}, style, {top:0, marginTop: 0})}/>}
                             <Stack>
-                                <Stack mb={3} sx={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                                <Stack sx={{mx:2, flexDirection: 'row', justifyContent: 'space-between'}}>
                                     <Stack spacing={1} direction='row' alignItems='center'>
                                         <CompleteButton
                                             groupKey={workspacePopupGroup}
@@ -489,7 +486,7 @@ function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.fi
                             </Stack>
                         </Stack>
                     </FieldGroup>
-                </div>
+                </Stack>
             </PopupPanel>
         );
 

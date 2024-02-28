@@ -51,22 +51,12 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
                 </div>
         );
 
-        const style = {
-                width: '100%',
-                height: '15rem',
-                paddingLeft: '1rem',
-                paddingRight: '1rem',
-                paddingTop: '1rem',
-                border: '1px solid #a3aeb9',
-                borderRadius: 5,
-                overflow: 'auto'
-            };
-
         const showSave = (
-            <Box style={style} sx={{flexGrow: 1, overflow: 'auto', mt: 3 }}>
+            <Stack sx={{width:'100%',px:'1rem', pt:'1rem', border: '1px solid #a3aeb9',
+                borderRadius: 5,overflow: 'auto', flexGrow:1, mt: 3 }}>
                 <WorkspaceSave fieldKey={'wsSelect'} files={wsList} value={wsSelect}
                                       tooltip='workspace file system'/>
-            </Box>
+            </Stack>
         );
 
         const showNoWSFiles = (
@@ -107,7 +97,7 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
                 label='File name'
                 tooltip='Please enter a filename, a default name will be used if it is blank'
             />
-            <Stack sx={{ps:2, my:2}}>
+            <Stack sx={{my:2}}>
                 {workspace && showLocation}
 
                 {where === WORKSPACE && <ShowWorkspace/>}

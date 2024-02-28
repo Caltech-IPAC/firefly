@@ -167,7 +167,7 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
                         <MakeFileOptions {...{plot, colors, hasOperation, threeC}}/>
                     </DownloadOptionsDialog>
                 </Stack>
-                <Stack>
+                <Stack px={2}>
                     <Stack mb={3} sx={{flexDirection: 'row', justifyContent: 'space-between'}}>
                         <Stack spacing={1} direction='row' alignItems='center'>
                             <CompleteButton text='Save' onSuccess={ (request) => resultsSuccess(request, pv, popupId )}
