@@ -74,6 +74,11 @@ const emailKey = 'Email';          // should match server DownloadRequest.EMAIL
  * 'All levels associated with this AOR will be downloaded.'
  * PreTitleMessage can be added to the dlParams from the parent and passed here (FIREFLY-723)
  * @param props
+ * @param props.tbl_id
+ * @param props.tbl_grp
+ * @param props.children
+ * @param props.checkSelectedRow
+ * @param props.makeButton
  * @returns {*}
  */
 export function DownloadButton({tbl_id:inTblId , tbl_grp, children, checkSelectedRow, makeButton}) {
@@ -181,7 +186,7 @@ export function DownloadOptionPanel ({groupKey, cutoutSize, help_id, children, s
         setBgKey(akey);
     }, [cutoutSize, dlParams, tbl_id]);
 
-    const showWarnings = hasProprietaryData(getTblById(tbl_id));
+    // const showWarnings = hasProprietaryData(getTblById(tbl_id)); // it feature is not working correctly
 
     const maskStyle = {
         position: 'absolute',
@@ -213,11 +218,6 @@ export function DownloadOptionPanel ({groupKey, cutoutSize, help_id, children, s
                 onCancel = {() => dispatchHideDialog(DOWNLOAD_DIALOG_ID)}
                 help_id  = {help_id}>
                 <FieldGroup groupKey={groupKey} keepState={true}>
-                    {showWarnings && (
-                        <Typography color={'warning'} level='title-md' mb={2}>
-                            This table contains proprietary data. Only data to which you have access will be downloaded.
-                        </Typography>
-                    )}
                     {preTitleMessage && (<Typography sx={{p:3,mb: 10,whiteSpace: 'wrap'}}>
                             {preTitleMessage}
                         </Typography>

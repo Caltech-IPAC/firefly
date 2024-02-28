@@ -8,7 +8,8 @@
 
 
 ## Version 2023.3
-- 2023.3.3 - (Feb 8, 2023),  _docker tag_: `latest`, `2023.3`, `2023.3.3`
+- 2023.3.4 - (Feb 28, 2023),  _docker tag_: `latest`, `2023.3`, `2023.3.4`
+- 2023.3.3 - (Feb 8, 2023),  _docker tag_: `2023.3.3`
 - 2023.3.2 - (Feb 7, 2023),  _docker tag_: `2023.3.2`
 - 2023.3.1 - (Dec 13, 2023),  _docker tag_: `2023.3.1`
 - 2023.3.0 - (Dec 12, 2023),  _docker tag_: `2023.3.0`
@@ -39,6 +40,10 @@
 - Fixed: ADQL text-entry field swallowing "(Command)-(backquote)" on macOS: [Firefly-1072](https://github.com/Caltech-IPAC/firefly/pull/1436)
 
 ### _Patches 2023.3_
+- 2023.3.4
+    - Bug fix: table sorting no right in DCE [PR](https://github.com/Caltech-IPAC/firefly/pull/1504) 
+    - Bug fix: packaging download background failing [Firefly-1419](https://github.com/Caltech-IPAC/firefly/pull/1504) 
+    - Bug fix:  [IRSA-1507](https://github.com/Caltech-IPAC/firefly/pull/1504) 
 - 2023.3.3
     - Bug fix: Obscore Packaging: a double extension was added
 - 2023.3.2

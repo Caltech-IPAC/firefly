@@ -198,8 +198,7 @@ function bgPackage(action) {
                         showInfoPopup(msg, 'Multipart download');
 
                     } else {
-                        const result= jobInfo?.results?.[0];
-                        const url= isObject(result) ? result?.href : result;
+                        const url= jobInfo?.results?.[0]?.href;
                         download(url);
                     }
                 }

@@ -60,7 +60,8 @@ export function sortInfoString(colName, isAscending=true) {
     }
 
     serialize() {
-        return this.direction === UNSORTED ? '' : `${this.direction},${this.sortColumns.map( (c) => `"${c}"`).join()}`;
+        return this.direction === UNSORTED ? '' :
+            `${this.direction},${this.sortColumns.map( (c) => c.includes('"') ? c : `"${c}"`).join()}`;         // if there's quotes in column name, don't add quotes.
     }
 
     static parse(sortInfo) {
