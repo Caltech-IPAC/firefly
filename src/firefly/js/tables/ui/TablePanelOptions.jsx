@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useEffect} from 'react';
+import React, {useCallback, useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {Box, Button, Stack, ToggleButtonGroup, Typography} from '@mui/joy';
+import {Box, Button, Checkbox, Divider, Stack, Typography} from '@mui/joy';
 import {badgeClasses} from '@mui/joy/Badge';
 
 import {cloneDeep, get, isEmpty} from 'lodash';
@@ -82,22 +82,23 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
     };
 
     const onSqlFilterChanged = ({op, sql}) =>  onChange({sqlFilter: sql ? `${op}::${sql}` : ''});
+    const actions = useCallback(() => <OptionsFilterStats tbl_id={ctm_tbl_id}/>, [ctm_tbl_id]);
 
     return (
-        <Stack height={1} p={1} pt={0} boxSizing='border-box' spacing={1}>
+        <Stack height={1} p={1} pt={0} spacing={1}>
             <Options {...{uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChange}} />
-            <StatefulTabs componentKey='TablePanelOptions' defaultSelected={0} actions={() => <OptionsFilterStats tbl_id={ctm_tbl_id}/>}>
-                <Tab name='Column Options'>
-                    <ColumnOptions {...{tbl_id, tbl_ui_id, ctm_tbl_id, onChange}} />
-                </Tab>
-                {showAdvFilter &&
-                    <Tab name={advFilterName} label={label()}>
-                        <div style={{display: 'flex', flex: '1 1 0', position: 'relative'}}>
-                            <SqlTableFilter {...{tbl_id, tbl_ui_id, onChange}} onChange={onSqlFilterChanged} />
-                        </div>
+            <Stack flexGrow={1} overflow='hidden'>
+                <StatefulTabs componentKey={`${tbl_id}-options`} defaultSelected={0} actions={actions}>
+                    <Tab name='Column Options'>
+                        <ColumnOptions {...{tbl_id, tbl_ui_id, ctm_tbl_id, onChange}} />
                     </Tab>
-                }
-            </StatefulTabs>
+                    {showAdvFilter &&
+                    <Tab name={advFilterName} label={label()}>
+                        <SqlTableFilter {...{tbl_id, tbl_ui_id, onChange}} onChange={onSqlFilterChanged} />
+                    </Tab>
+                    }
+                </StatefulTabs>
+            </Stack>
             {showTblPrefMsg && <TablePrefMsg/>}
             <Stacker endDecorator={<HelpIcon helpId={'tables.options'}/>}>
                 <Button variant='solid' color='primary' onClick={onClose}>Close</Button>
@@ -133,7 +134,7 @@ function OptionsFilterStats({tbl_id}) {
     );
 }
 
-function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChange}) {
+function Options({uiState, onChange}) {
     const {pageSize, showPaging=true, showUnits, allowUnits=true, showTypes, allowTypes=true, showFilters} = uiState || {};
 
     const onPageSize = (pageSize) => {
@@ -141,33 +142,19 @@ function Options({uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChang
             onChange && onChange({pageSize: pageSize.value});
         }
     };
-    const [value, setValue] = React.useState([
-                                    showUnits && 'showUnits',
-                                    showTypes && 'showTypes',
-                                    showFilters && 'showFilters'
-                                ].filter((v) => v));
+    const handleChange =(ev) => {
+        const bname = ev.target?.value;
+        onChange({[bname]: ev.target.checked});
+    };
     return (
         <Stack direction='row' alignItems='center' justifyContent='space-between'>
-            <Stack direction='row' spacing={1} alignItems='center'>
+            <Stack direction='row' spacing={2} alignItems='center'>
                 <Typography level='title-md'>Show/Hide:</Typography>
-                <ToggleButtonGroup
-                    variant='outlined'
-                    size='sm'
-                    value={value}
-                    onChange={(ev, val) => {
-                        setValue(val);
-                        const bname = ev.target?.value;
-                        onChange({[bname]: val.includes(bname)});
-                    }}
-                >
-                    {allowUnits &&
-                    <Button value='showUnits' size='sm'>Units</Button>
-                    }
-                    {allowUnits &&
-                    <Button value='showTypes' size='sm'>Data Type</Button>
-                    }
-                    <Button value='showFilters' size='sm'>Filters</Button>
-                </ToggleButtonGroup>
+                <Stack direction='row' spacing={1}>
+                    {allowUnits && <> <Checkbox size='sm' label='Units' value='showUnits' checked={showUnits} onChange={handleChange}/> <Divider orientation='vertical'/></>}
+                    {allowTypes && <> <Checkbox size='sm' label='Data Type' value='showTypes' checked={showTypes} onChange={handleChange}/> <Divider orientation='vertical'/></>}
+                    <Checkbox size='sm' label='Filters' value='showFilters' checked={showFilters} onChange={handleChange}/>
+                </Stack>
             </Stack>
             {showPaging && pageSize !== MAX_ROW &&
             <InputField
@@ -253,7 +240,7 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
     };
 
     return (
-        <div style={{flex: '1 1 0'}}>
+        <Stack position='relative' flexGrow={1} overflow='hidden'>
             <TablePanel
                 border={false}
                 tbl_ui_id = {cmt_tbl_ui_id}
@@ -267,7 +254,7 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
                 rowHeight = {26}
                 highlightedRowHandler = {()=>undefined}
             />
-        </div>
+        </Stack>
     );
 });
 

@@ -240,3 +240,17 @@ export function useWatcher(actions, callback, params) {
        };
    },[]);
 }
+
+export function useDebugCycle({id, render=true, mount=true}) {
+
+    useEffect(() => {
+        mount && console.log(id, 'mounting');
+        return () => {
+            mount && console.log(id, 'unmounting');
+        };
+    },[]);
+
+    useEffect(() => {
+        render && console.log(id, 'rendering');
+    });
+}

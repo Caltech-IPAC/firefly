@@ -1,22 +1,31 @@
-import {Stack} from '@mui/joy';
+import {Sheet, Stack} from '@mui/joy';
 import React from 'react';
-import {node, shape, object, number} from 'prop-types';
+import {node, shape, object, number, string} from 'prop-types';
 
-
-export function Stacker({endDecorator, startDecorator, gap=1, slotProps, children, ...props}) {
+/*
+ * A convenience component built around Sheet and Stack to provide a <start main end> layout
+ * with support for variant and color.  Use slopProps to customize
+ */
+export function Stacker({variant, color, endDecorator, startDecorator, gap=1, slotProps, children, ...props}) {
 
     return (
-        <Stack direction='row' justifyContent='space-between' alignItems='center' spacing={gap} {...slotProps?.root}>
+        <Sheet variant={variant} color={color} component={Stack}
+               direction='row' justifyContent='space-between' alignItems='center' spacing={gap}
+               {...slotProps?.root}>
+
             {startDecorator}
             <Stack spacing={1} direction='row' alignItems='center' flexGrow={1} {...props}>
                 {children}
             </Stack>
             {endDecorator}
-        </Stack>
+
+        </Sheet>
     );
 }
 
 Stacker.propTypes = {
+    variant: string,
+    color: string,
     endDecorator: node,
     startDecorator: node,
     gap: number,            // spacing between decorators and the main child
