@@ -50,7 +50,7 @@ export function TapViewType({serviceUrl, servicesShowing, setServicesShowing, lo
     return (
         <Stack {...{pt: servicesShowing?0:1, height:1}}>
             {selectBy==='adql' ?
-                <AdqlUI {...{serviceUrl, servicesShowing, setServicesShowing, lockService, setSelectBy}}/> :
+                <AdqlUI {...{serviceUrl, serviceLabel, servicesShowing, setServicesShowing, lockService, setSelectBy}}/> :
                 <BasicUI  {...{serviceUrl, serviceLabel, selectBy, initArgs, lockService, lockObsCore, obsCoreTableModel,
                     servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy}}/>
             }
@@ -76,7 +76,7 @@ TapViewType.propTypes= {
 };
 
 
-function AdqlUI({serviceUrl, servicesShowing, setServicesShowing, setSelectBy, lockService}) {
+function AdqlUI({serviceUrl, serviceLabel, servicesShowing, setServicesShowing, setSelectBy, lockService}) {
     const [,setCapabilitiesChange] = useState(); // this is just to force a rerender
     const capabilities= getLoadedCapability(serviceUrl);
     useEffect(() => {
@@ -85,18 +85,21 @@ function AdqlUI({serviceUrl, servicesShowing, setServicesShowing, setSelectBy, l
 
     return (
         <Sheet className='TapSearch__section' variant='outline' sx={{display:'flex', flexDirection: 'column', flexGrow: 1}}>
-            <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', width: '100%', justifyContent:'space-between'}}>
-                    <Stack {...{ direction: 'row', alignItems: 'center'}}>
-                        <Stack {...{direction:'row', alignItems:'center', mr:4, width:'14rem', justifyContent:'space-between'}}>
-                            <Typography {...{level:'title-lg', color:'primary'}}>Advanced ADQL</Typography>
-                            <HelpIcon helpId={tapHelpId('adql')}/>
+            <Stack spacing={1}>
+                {lockService && <Typography {...{level:'title-lg', color:'primary'}}>{serviceLabel}</Typography>}
+                <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', width: '100%', justifyContent:'space-between'}}>
+                        <Stack {...{ direction: 'row', alignItems: 'center'}}>
+                            <Stack {...{direction:'row', alignItems:'center', mr:4, width:'14rem', justifyContent:'space-between'}}>
+                                <Typography {...{level:'title-lg', color:'primary'}}>Advanced ADQL</Typography>
+                                <HelpIcon helpId={tapHelpId('adql')}/>
+                            </Stack>
+                            <Typography color='warning' level='body-lg'>ADQL edits below will not be reflected in <b>Single Table</b> view</Typography>
                         </Stack>
-                        <Typography color='warning' level='body-lg'>ADQL edits below will not be reflected in <b>Single Table</b> view</Typography>
-                    </Stack>
-                    <NavButtons {...{setServicesShowing, servicesShowing, lockService, setNextPanel:(key) => setSelectBy(key), currentPanel:ADQL}}/>
+                        <NavButtons {...{setServicesShowing, servicesShowing, lockService, setNextPanel:(key) => setSelectBy(key), currentPanel:ADQL}}/>
+                    </div>
                 </div>
-            </div>
+            </Stack>
 
             {capabilities ?
                 <div className='expandable'>
@@ -312,7 +315,7 @@ function BasicUI(props) {
                     {showTableSelectors &&
                         <Stack {...{direction:'row', alignItems:'center', width:1}}>
                             <Stack>
-                                <Stack {...{direction:'row', justifyContent:'space-between', width:'14rem', alignItems:'center', mr:1}}>
+                                <Stack {...{direction:'row', justifyContent:'space-between', width:'17rem', alignItems:'center', mr:1}}>
                                     <Tooltip title={SCH_TAB_TITLE_TIP}>
                                         <Typography {...{level:'title-lg', color:'primary', component:'div' }}>
                                             <Stack {...{justifyContent:'center', height:55, overflow:'hidden'}}>
@@ -368,8 +371,8 @@ function BasicUI(props) {
                         </Stack>
                     }
                     {!showTableSelectors &&
-                        <Stack {...{alignItems:'center', width:1}}>
-                            <Typography {...{level:'h3', component:'div' }}>
+                        <Stack {...{width:1}}>
+                            <Typography {...{level:'h4', component:'div', color:'primary' }}>
                                 {`${serviceLabel} ObsCore data product tables (images, spectra, ect)`}
                             </Typography>
                         </Stack>
@@ -380,7 +383,7 @@ function BasicUI(props) {
                 </Stack>
             </Sheet>
 
-            {showTableSelectors && <Divider orientation='horizontal' sx={{my:1}}/>}
+            <Divider orientation='horizontal' sx={{my:1}}/>
 
             <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
                 <div style={{ display: 'inline-flex', width: 'calc(100% - 3px)', justifyContent: 'space-between', margin:'5px 0 -8px 0'}}>
@@ -428,7 +431,7 @@ function BasicUI(props) {
         if (!op) return 'none';
         return (
             <Stack {...{alignItems:'flex-start', alignSelf:'flex-start', sx}}>
-                <Stack {...{direction:'row', spacing:1}}>
+                <Stack {...{direction:'row', spacing:1, flexWrap:'wrap'}}>
                     {label&&
                         <Typography level='title-md'>
                             {`${label}: `}

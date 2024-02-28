@@ -280,7 +280,7 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
             title={SERVICE_TIP}>
             <div style={{display:'flex', alignItems:'center', width:'100%'}}>
                 <Stack alignItems='flex-start'>
-                    <Typography {...{level:'title-lg', color:'primary', sx:{width:'14rem', mr:1} }}>
+                    <Typography {...{level:'title-lg', color:'primary', sx:{width:'17rem', mr:1} }}>
                         Select TAP Service
                     </Typography>
                     <Switch {...{ size:'sm', endDecorator: enterUrl? 'Enter URL' : 'Use TAP List', checked:enterUrl,

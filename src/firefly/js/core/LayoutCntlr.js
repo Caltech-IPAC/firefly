@@ -4,8 +4,9 @@
 
 import {take} from 'redux-saga/effects';
 
-import {get, isEqual, isEmpty, filter, pick, uniqBy} from 'lodash';
+import {get, isEqual, isEmpty, filter, pick, uniqBy, flatten} from 'lodash';
 import Enum from 'enum';
+import {dataProductRoot} from '../metaConvert/DataProductsCntlr.js';
 import {getBackgroundInfo} from './background/BackgroundUtil.js';
 import {flux} from './ReduxFlux';
 import {clone} from '../util/WebUtil.js';
@@ -21,7 +22,7 @@ import {
 } from '../visualize/MultiViewCntlr.js';
 import {COMMAND, getMenu, REINIT_APP} from './AppDataCntlr.js';
 import {getDefaultChartProps} from '../charts/ChartUtil.js';
-import {getPlotViewAry} from 'firefly/visualize/PlotViewUtil.js';
+import {getPlotViewAry, getPlotViewById} from 'firefly/visualize/PlotViewUtil.js';
 import {MetaConst} from 'firefly/data/MetaConst';
 
 export const LAYOUT_PATH = 'layout';
@@ -326,15 +327,27 @@ export const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
 export function getResultCounts() {
     const layoutInfo= getLayouInfo();
     const haveResults = filter(pick(layoutInfo, ['showTables', 'showXyPlots', 'showImages'])).length>0 ||
-            !isEmpty(layoutInfo.gridViewsData)
-                         ;
-    const tableCnt= getTblIdsByGroup('main')?.length ?? 0;
-    const imageCnt= getViewer(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID)?.itemIdAry?.length ?? 0;
+            !isEmpty(layoutInfo.gridViewsData) ;
+    const tblIds= getTblIdsByGroup('main') ?? [];
+    const tableCnt= tblIds?.length;
+    const tableLoadingCnt= tblIds.filter( (id) => getTblById(id)?.isFetching).length;
+
+    const imViewAry= dataProductRoot()
+        .map( (entry) => entry.activateParams?.imageViewerId)
+        .map( (viewId) => getViewer(getMultiViewRoot(), viewId)?.itemIdAry ?? []);
+
+
+    const defPvIdAry= getViewer(getMultiViewRoot(), DEFAULT_FITS_VIEWER_ID)?.itemIdAry ?? [];
+    const pvIdAry= [...defPvIdAry,  ...flatten(imViewAry)];
+
+
+    const imageCnt= pvIdAry?.length;
+    const imageLoadingCnt= pvIdAry.filter( (id) => getPlotViewById(visRoot(),id)?.serverCall==='working').length;
     const pinChartCnt= getViewer(getMultiViewRoot(), PINNED_VIEWER_ID)?.itemIdAry?.length ?? 0;
     const {jobs={}}= getBackgroundInfo() ?? {};
     const bgTableCnt= Object.values(jobs)
         .filter((job) => job.jobInfo?.monitored && job.jobInfo?.type !== 'PACKAGE')?.length ?? 0;
-    return {haveResults,tableCnt,imageCnt,pinChartCnt,bgTableCnt};
+    return {haveResults,tableCnt,tableLoadingCnt,imageCnt,imageLoadingCnt,pinChartCnt,bgTableCnt};
 }
 
 /**

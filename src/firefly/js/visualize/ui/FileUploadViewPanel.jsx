@@ -51,7 +51,7 @@ const REGION_MSG = 'A ds9 region file';
 const IMAGE_MSG = 'Images in FITS format, including multi-extension FITS files with images, tables, or a mixture of both';
 const MOC_MSG = 'A Multi-Order Coverage Map (MOC) in FITS format';
 const DL_MSG = 'A Data Link Table file';
-const UWS_MSG = 'A UWS Job File';
+const UWS_MSG = 'A UWS job file';
 
 
 const SUPPORTED_TYPES=[

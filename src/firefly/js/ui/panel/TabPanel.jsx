@@ -354,7 +354,7 @@ function getHeaderFromTab({name, value, label, startDecorator, removable, onTabR
             {label}
             {removable &&
                 <Tooltip title='Remove Tab'>
-                    <ChipDelete sx={{'--Chip-deleteSize': '1.2rem'}}
+                    <ChipDelete sx={{'--Chip-deleteSize': '1.2rem', zIndex:2}}
                                 onClick={(e) => {
                                     onTabRemove && onTabRemove(name);
                                     e.stopPropagation?.();

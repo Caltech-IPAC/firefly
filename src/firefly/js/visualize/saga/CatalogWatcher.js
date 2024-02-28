@@ -204,17 +204,20 @@ function updateDrawingLayer(tbl_id, tableModel, tableRequest,
     }
     else { // new drawing layer
         if (catalogPtType===PointType.WORLD) {
+
             const angleInRadian= isTableUsingRadians(tableModel, [columns.lonCol,columns.latCol]);
+
+
+            const color= getDrawLayersByType(dlRoot(),Catalog.TYPE_ID) // fine any other draw layers with this table and set the color
+                ?.find( (dl) => dl.tblId===tbl_id && dl.drawLayerId===coverageStandardCatalogId(tbl_id))?.drawingDef.color;
+            
+
             const catDL= dispatchCreateDrawLayer(Catalog.TYPE_ID,
-                {catalogId, tblId:tbl_id, title, tableData, tableMeta, tableRequest, highlightedRow,
+                {catalogId, tblId:tbl_id, title, tableData, tableMeta, tableRequest, highlightedRow, color,
                     selectInfo, columns, dataTooBigForSelection, catalogType:CatalogType.POINT,
                     layersPanelLayoutId: catalogId, angleInRadian});
-            // dispatchAttachLayerToPlot(catalogId, plotIdAry);
             attachToPlot(catalogId,plotIdAry);
 
-            getDrawLayersByType(dlRoot(),Catalog.TYPE_ID) // fine any other draw layers with this table and set the color
-                ?.filter( (dl) => dl.tblId===tbl_id && dl.drawLayerId===coverageStandardCatalogId(tbl_id))
-                ?.forEach( (dl) => dispatchChangeDrawingDef(dl.drawLayerId, {...dl.drawingDef,color:catDL.drawingDef.color}));
             if (searchTarget) {
                 const newDL = dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
                     {
@@ -225,7 +228,6 @@ function updateDrawingLayer(tbl_id, tableModel, tableRequest,
                         titlePrefix: 'Catalog ',
                         canUserDelete: true,
                     });
-                // dispatchAttachLayerToPlot(newDL.drawLayerId, plotIdAry, false);
                 attachToPlot(newDL.drawLayerId,plotIdAry);
             }
             const dl= getDrawLayerById(dlRoot(),catalogId);
@@ -243,7 +245,6 @@ function updateDrawingLayer(tbl_id, tableModel, tableRequest,
                 {catalogId, title, tableData, tableMeta, tableRequest, highlightedRow,
                     selectInfo, columns, dataTooBigForSelection, catalogType:CatalogType.POINT_IMAGE_PT,
                     layersPanelLayoutId: tbl_id });
-            // dispatchAttachLayerToPlot(catalogId, [pv.plotId]);
             attachToPlot(catalogId, [pv.plotId]);
         }
     }

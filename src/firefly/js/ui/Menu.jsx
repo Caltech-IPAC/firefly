@@ -4,7 +4,7 @@
 
 import {
     Badge, Box, Button, Chip, CircularProgress, Divider, IconButton, ListItemDecorator,
-    Stack, Tab, TabList, Tabs, Typography
+    Stack, Tab, TabList, Tabs, Tooltip, Typography
 } from '@mui/joy';
 import {tabClasses} from '@mui/joy/Tab';
 import {debounce} from 'lodash';
@@ -20,6 +20,11 @@ import {useStoreConnector} from './SimpleComponent.jsx';
 import InsightsIcon from '@mui/icons-material/Insights';
 import {ToolbarButton} from './ToolbarButton.jsx';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
+
+const UploadCmd= 'FileUploadDropDownCmd';
+const TapCmd= 'TAPSearch';
+const ResultCmd= 'result';
+
 
 function menuHandleAction (menuItem) {
     if (menuItem.type === COMMAND) {
@@ -154,41 +159,37 @@ function setupTabCss(theme,size) {
 }
 
 
-function MenuTabBarJoyTabBased({menuTabItems, size, selected, dropDown}) {
-    const resultValue= 'result';
-    const tabSelected= dropDown.visible ? selected : resultValue;
+function MenuTabBarJoyTabBased({menuTabItems=[], size, selected, dropDown}) {
+    const tabSelected= dropDown.visible ? selected : ResultCmd;
     const activeBg = 'background.surface';
     const variant='soft';
     const color='primary';
 
 
-    const doTabChange= (action) => {
-        if (action===resultValue) {
-            dispatchHideDropDown();
-        }
-        else {
-            const clickItem= menuTabItems?.find( (i) => i.action===action) ;
-            if (clickItem) onClick(clickItem.clickHandler,clickItem);
-        }
-    };
-
-
-    const items= menuTabItems?.map((item, idx) => (
-        <Tab {...{ key: idx, value:item.action, disableIndicator:true,
-            sx: (theme) => ({ ...setupTabCss(theme,size) }) }} >
-            {item.label}
-        </Tab>
-    )) ?? [];
+    const tabItems= [
+        <ResultsTab {...{key:'results-tab', size}}/>,
+        ...menuTabItems.map(({action,label,title}, idx) =>
+            {
+                const tab= (
+                    <Tab {...{ key: idx, value:action, disableIndicator:true,
+                        sx: (theme) => ({ ...setupTabCss(theme,size) }) }} >
+                        {action===UploadCmd && <ListItemDecorator> <FileUploadOutlinedIcon/> </ListItemDecorator>}
+                        {label}
+                    </Tab>);
+                const tip= getTip(title,action);
+                return tip ? <Tooltip key={idx} title={tip}>{tab}</Tooltip> : tab;
+            }
+        )];
 
     return (
         <Tabs {...{size, color, variant, value:tabSelected,
-            sx: {alignSelf:'flex-end'}, onChange: (ev,val) => doTabChange(val) }} >
+            sx: {alignSelf:'flex-end'}, onChange: (ev,action) => doTabChange(action,menuTabItems) }} >
             <TabList {...{
                 sx: (theme) => ( {
                     paddingBottom:0,
                     [`& .${tabClasses.root}`]: {
                         ...tabDivider(activeBg,size),
-                        '&[aria-selected="true"]': {// apply this to the selected tab
+                        '&[aria-selected="true"]': { // apply to selected tab
                             background: theme.vars.palette.background.surface,
                             zIndex: 2,
                         }
@@ -196,25 +197,7 @@ function MenuTabBarJoyTabBased({menuTabItems, size, selected, dropDown}) {
                 })
 
             }}>
-                <Tab {...{key: resultValue, color, variant, value:resultValue, disableIndicator:true,
-                    sx: (theme) => {
-                        return ({
-                            mb: '1px',
-                            ...setupTabCss(theme,size),
-                            color: theme.vars.palette.success.plainColor,
-                            '&[aria-selected="true"]': { // apply this to the selected tab
-                                mb: 0,
-                                background: theme.vars.palette.background.surface,
-                                color: theme.vars.palette.success.plainColor,
-                            }
-                        });
-                    } }}>
-                    <ListItemDecorator>
-                        <InsightsIcon/>
-                    </ListItemDecorator>
-                    Results
-                </Tab>
-                {items}
+                {tabItems}
             </TabList>
         </Tabs>
     );
@@ -272,8 +255,8 @@ export function SideBarMenu({closeSideBar, allowMenuHide}) {
     const {appTitle} = useContext(AppPropertiesCtx);
     const menu= useStoreConnector(() => getMenu());
     const {haveResults}= useStoreConnector(getCounts);
-    const uploadItem= menu.menuItems?.find(({action}) => action==='FileUploadDropDownCmd');
-    const menuItems= menu.menuItems?.filter(({type,action}) => type !== COMMAND && action!=='FileUploadDropDownCmd');
+    const uploadItem= menu.menuItems?.find(({action}) => action===UploadCmd);
+    const menuItems= menu.menuItems?.filter(({type,action}) => type !== COMMAND && action!==UploadCmd);
     const {dropDown={visible:false}}= getLayouInfo() ?? {};
     const selected= getSelected(menu,dropDown);
 
@@ -291,31 +274,32 @@ function SideBarView({menu,appTitle,closeSideBar,haveResults,selected,dropDown,
                          uploadItem,menuItems,categoryList,allowMenuHide}) {
     const noCatItems= menuItems?.filter( ({category}) => !category) ?? [];
     return (
-        <Stack >
-            <Typography level='h4' sx={{ml:1}}>Choose Option</Typography>
+        <Stack sx={{'& .ff-toolbar-button' : {minWidth:'13rem', justifyContent:'flex-start'}}}>
+            <Typography level='h4' sx={{ml:1}}>Search Options</Typography>
             <Stack spacing={1} ml={5} mt={1}>
-                <Stack style={{marginLeft:-16}} sx={{'& .ff-toolbar-button' : {minWidth:'13rem', justifyContent:'flex-start'}}}>
-                    <Stack direction='row'>
-                        <Typography color='success'  startDecorator={ <InsightsIcon sx={{width:20}}/> }/>
-                        <Box ml={-1/2}/>
-                        <ToolbarButton {...{
-                            pressed: !selected && !dropDown.visible,
-                            text: (
-                                <Stack direction='row' spacing={1} alignItems='baseline'>
-                                    <Typography sx={{color:'unset'}}>Results</Typography>
-                                    {!haveResults && <Typography level='body-xs'>(No results yet)</Typography>}
-                                </Stack>
-                            ),
-                            onClick: () => {
-                                dispatchHideDropDown();
-                                closeSideBar();
-                            },
-                            sx:(theme) =>( {
-                                    '& .ff-toolbar-button': {color:theme.vars.palette.success.solidBg
-                                    },}
-                            )
-                        }} />
-                    </Stack>
+                <Stack style={{marginLeft:-20}} sx={{'& .ff-toolbar-button' : {minWidth:'13rem', justifyContent:'flex-start'}}}>
+                    <ResultsTip>
+                        <Stack direction='row'>
+                            <Typography color='success'  startDecorator={ <InsightsIcon sx={{transform: 'scale(.8,1)'}}/> }/>
+                            <Box ml={-1}/>
+                            <ToolbarButton {...{
+                                pressed: !selected && !dropDown.visible,
+                                text: (
+                                    <Stack direction='row' spacing={1} alignItems='baseline'>
+                                        <Typography sx={{color:'unset'}}>Results</Typography>
+                                        {!haveResults && <Typography level='body-xs'>(No results yet)</Typography>}
+                                    </Stack>
+                                ),
+                                onClick: () => {
+                                    dispatchHideDropDown();
+                                    closeSideBar();
+                                },
+                                sx:(theme) =>( {
+                                        '& .ff-toolbar-button': {color:theme.vars.palette.success.solidBg },}
+                                )
+                            }} />
+                        </Stack>
+                    </ResultsTip>
                     {uploadItem &&
                         <Stack direction='row'>
                             <FileUploadOutlinedIcon/>
@@ -326,12 +310,12 @@ function SideBarView({menu,appTitle,closeSideBar,haveResults,selected,dropDown,
                     }
                 </Stack>
                 {Boolean(noCatItems?.length) &&
-                    <Stack sx={{pl:1, '& .ff-toolbar-button' : {minWidth:'13rem', justifyContent:'flex-start'}}}>
+                    <Stack sx={{pl:1}}>
                         {menuItems.filter( ({category}) => !category)
                             .map( (item) => (<SideBarItem {...{key:item.label, item,selected,menu,closeSideBar, allowMenuHide}}/>) )}
                     </Stack>
                 }
-                <Stack spacing={1} sx={{ml:3, '& .ff-toolbar-button' : {minWidth:'13rem', justifyContent:'flex-start'}}}>
+                <Stack spacing={1} sx={{ml:3.25, '& .ff-toolbar-button' : {minWidth:'13rem', justifyContent:'flex-start'}}}>
                     {categoryList.map( (cat) => {
                         return (
                             <Stack key={cat}>
@@ -346,16 +330,16 @@ function SideBarView({menu,appTitle,closeSideBar,haveResults,selected,dropDown,
                     }
                 </Stack>
 
-                {allowMenuHide && tabsUpdated(menu) && <Stack pt={1}>
-                    <Chip onClick={() => {
-                        const menuItems= menu.menuItems.map( (mi) => ({...mi, visible: undefined}) );
-                        dispatchHideDropDown();
-                        updateMenu(appTitle, {...menu, menuItems});
-                    } }>
-                        Reset Tabs to Default
-                    </Chip>
-                </Stack>}
             </Stack>
+            {allowMenuHide && tabsUpdated(menu) && <Stack pt={1} pl={2.5}>
+                <Chip onClick={() => {
+                    const menuItems= menu.menuItems.map( (mi) => ({...mi, visible: undefined}) );
+                    dispatchHideDropDown();
+                    updateMenu(appTitle, {...menu, menuItems});
+                } }>
+                    Reset tab visibility to default
+                </Chip>
+            </Stack>}
         </Stack>
     );
 }
@@ -367,8 +351,96 @@ function tabsUpdated(menu) {
     });
 }
 
+function getTip(title, action) {
+    if (title) return title;
+    if (action===UploadCmd) return  'Upload catalogs,tables, FITS, MOCs, or UWS job file';
+    if (action===TapCmd) return 'General TAP search for any TAP server';
+    return undefined;
+}
 
-function SideBarItem({item,selected,menu,closeSideBar,allowMenuHide,icon,sx, hideSx}) {
+function doTabChange(action,menuTabItems) {
+    if (action===ResultCmd) {
+        dispatchHideDropDown();
+    }
+    else {
+        const clickItem= menuTabItems?.find( (i) => i.action===action) ;
+        if (clickItem) onClick(clickItem.clickHandler,clickItem);
+    }
+}
+
+
+const workingIndicator= (<CircularProgress
+    color='success'
+    sx={{
+        '--CircularProgress-size': '18px',
+        '--CircularProgress-progressThickness': '2px',
+        '--CircularProgress-trackThickness': '2px',
+        '--CircularProgress-circulation': '1.2s linear 0s infinite normal none running',
+    }}
+    style= {{
+        '--CircularProgress-percent': '35', // for some reason joyUI put this in style and this is the only way to override
+    }}
+/>);
+
+
+function ResultsTab({size}) {
+    const variant='soft';
+    const color='primary';
+    const {tableLoadingCnt, imageLoadingCnt}= useStoreConnector(getCounts);
+    const loading= (tableLoadingCnt+imageLoadingCnt)>0;
+
+
+    const tab= (
+        <Tab {...{color, variant, value:ResultCmd, disableIndicator:true,
+            sx: (theme) => {
+                return ({
+                    mb: '1px',
+                    ...setupTabCss(theme,size),
+                    color: theme.vars.palette.success.plainColor,
+                    '&[aria-selected="true"]': { // apply this to the selected tab
+                        mb: 0,
+                        background: theme.vars.palette.background.surface,
+                        color: theme.vars.palette.success.plainColor,
+                    }
+                });
+            } }}>
+            <ListItemDecorator>
+                {loading ? workingIndicator: <InsightsIcon/>}
+            </ListItemDecorator>
+            Results
+        </Tab>
+    );
+
+    return <ResultsTip>{tab}</ResultsTip>;
+}
+
+function ResultsTip({useBadge=false,children}) {
+    const {haveResults,tableCnt,tableLoadingCnt, imageCnt, imageLoadingCnt, bgTableCnt, pinChartCnt}= useStoreConnector(getCounts);
+    const badgeCnt=useBadge && tableCnt+imageCnt+pinChartCnt;
+    if (!haveResults) return children;
+    const ttWrap= (
+        <Tooltip
+            followCursor={true}
+            title={(
+                <Stack>
+                    {imageCnt>0 && <Typography>{`${imageCnt} image${imageCnt>1?'s':''}`}</Typography>}
+                    {imageLoadingCnt>0 && <Typography>{`${imageLoadingCnt} image${imageLoadingCnt>1?'s':''} still loading`}</Typography>}
+                    {tableCnt>0 && <Typography>{`${tableCnt} table${tableCnt>1?'s':''}`}</Typography>}
+                    {tableLoadingCnt>0 && <Typography>{`${tableLoadingCnt} table${tableLoadingCnt>1?'s':''} still loading`}</Typography>}
+                    {pinChartCnt>0 && <Typography>{`${pinChartCnt} pinned chart${pinChartCnt>1?'s':''}`}</Typography>}
+                    {bgTableCnt>0 && <Typography>{`${bgTableCnt} table${bgTableCnt>1?'s':''} in Background Monitor`}</Typography>}
+                </Stack> )}>
+            {children}
+        </Tooltip>
+    );
+    return !badgeCnt ? ttWrap :
+        <Badge {...{badgeContent:badgeCnt, sx:{'& .MuiBadge-badge': {top:12, right:11, zIndex:2}}  }}>
+            {ttWrap}
+        </Badge>;
+}
+
+
+function SideBarItem({item,selected,menu,closeSideBar,allowMenuHide,icon,sx}) {
     const {appTitle} = useContext(AppPropertiesCtx);
 
     const onClick= (menuItem) => {
@@ -379,16 +451,18 @@ function SideBarItem({item,selected,menu,closeSideBar,allowMenuHide,icon,sx, hid
     };
 
     if (!item) return <div>missing</div>;
+    const {title,action,label,visible,primary}= item;
     return (
         <Stack direction='row' alignItems='center' spacing={1} sx={sx}>
-            <ToolbarButton icon={icon} pressed={selected===item.action} onClick= {() => onClick(item)} text={item.label} />
-            {(allowMenuHide && (item.visible ?? item.primary)) &&
+            <ToolbarButton tip={getTip(title,action)} icon={icon} text={label}
+                           pressed={selected===action} onClick= {() => onClick(item)}  />
+            {(allowMenuHide && (visible ?? primary)) &&
                 <Chip {...{
                     className: 'hideTab',
                     sx:{height:'1.5rem'},
                     onClick:() => {
                         const newMenuItems= menu.menuItems.map( (mi) => mi===item ? {...mi, visible:false} : mi);
-                        const current= selected===item.action;
+                        const current= selected===action;
                         updateMenu(appTitle, {...menu, menuItems:newMenuItems, selected:  current ? undefined : selected });
                         if (current) dispatchHideDropDown();
                     }

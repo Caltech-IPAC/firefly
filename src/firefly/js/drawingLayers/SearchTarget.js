@@ -34,7 +34,7 @@ var idCnt=0;
 
 function creator(initPayload, presetDefaults) {
 
-    const {drawLayerId, displayGroupId, plotId, layersPanelLayoutId, titlePrefix, searchTargetPoint, color, canUserDelete=false}= initPayload;
+    const {drawLayerId, displayGroupId, plotId, layersPanelLayoutId, titlePrefix, fullTitle, searchTargetPoint, color, canUserDelete=false}= initPayload;
     const drawingDef= {
         ...makeDrawingDef(color||getNextColor(), {lineWidth:1, size:10, fontWeight:'bolder', symbol: DrawSymbol.POINT_MARKER } ),
         ...presetDefaults};
@@ -45,6 +45,7 @@ function creator(initPayload, presetDefaults) {
         plotId,
         displayGroupId: displayGroupId ?? drawLayerId,
         layersPanelLayoutId,
+        fullTitle,
         titlePrefix,
         searchTargetPoint,
         isPointData:true,
@@ -110,21 +111,18 @@ function getTitle(pv, plot, dl) {
     let minWidth;
     let preStr;
     if (pt.type===Point.W_PT) {
-        preStr=  `${dl.titlePrefix}Search: `;
+        preStr=  dl.fullTitle || `${dl.titlePrefix}Search: `;
         const emGuess= preStr.length+2 + pt.objName?pt.objName.length: 18;
         const titleEmLen= Math.min(emGuess ,24);
         minWidth= (titleEmLen+8)+'em';
         ptDiv= (<Typography level={pt.objName ? 'body-sm' : 'body-xs'}> {formatWorldPt(pt,3,false)} </Typography>);
     }
     else {
-        preStr=  dl.titlePrefix+' ' || 'Image Point: ';
+        preStr=  dl.fullTitle || dl.titlePrefix+' ' || 'Image Point: ';
         const titleEmLen= Math.min(preStr.length+2+16,24);
         minWidth= (titleEmLen+8)+'em';
         const cc= CsysConverter.make(plot);
         const convertedWp= cc.getWorldCoords(pt);
-        // const convertedWp= '';
-        //{`(${Math.round(pt.x)}, ${Math.round(pt.y)})${convertedWp&&' '+formatWorldPt(convertedWp,3,false)}`}
-        // {`(${Math.round(pt.x)}, ${Math.round(pt.y)})`}
         ptDiv= (
             <Typography level='body-sm'>
                 {`(${Math.round(pt.x)}, ${Math.round(pt.y)})`}

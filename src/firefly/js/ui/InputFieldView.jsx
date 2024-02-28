@@ -29,13 +29,13 @@ export function InputFieldView(props) {
     // assign form to null or empty-string to use it within a form tag (similar to input tag without form attribute).
     // if form is not given, it will default to __ignore so that it does not interfere with embedded forms.
     form = form || undefined;
-
+    const showErrorTip= !valid && showWarning && message;
     const currValue = inputFieldValue(type, value);
     const tooltipProps = inputFieldTooltipProps({valid, message, showWarning, tooltip});
 
     return (
         <Stack {...{className:'ff-Input InputFieldView', sx}}>
-            <Tooltip {...{...tooltipProps, ...slotProps?.tooltip}}>
+            <Tooltip {...{...tooltipProps, placement:showErrorTip? 'right':undefined , ...slotProps?.tooltip}}>
                 <FormControl {...{orientation, required, error:!valid, ...slotProps?.control}}>
                     {label && <FormLabel {...slotProps?.label}>{label}</FormLabel>}
                     <Input {...{
