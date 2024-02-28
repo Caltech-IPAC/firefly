@@ -3,9 +3,9 @@
 import {pick} from 'lodash';
 import {func} from 'prop-types';
 import React, {useState} from 'react';
-import {Stack, Typography} from '@mui/joy';
+import {Card, Stack, Typography} from '@mui/joy';
 import {
-    dispatchSetLayoutMode, dispatchUpdateLayoutInfo, getLayouInfo, getResultCounts, LO_MODE
+    dispatchSetLayoutMode, dispatchUpdateLayoutInfo, getLayouInfo, getResultCounts, LO_MODE, LO_VIEW
 } from '../../core/LayoutCntlr.js';
 import {ListBoxInputFieldView} from '../../ui/ListBoxInputField.jsx';
 import {AccordionPanelView} from '../../ui/panel/AccordionPanel.jsx';
@@ -16,7 +16,8 @@ const triViewKey= 'images | tables | xyplots';
 const tblImgKey= 'tables | images';
 const imgXyKey= 'images | xyplots';
 const tblXyKey= 'tables | xyplots';
-const stateKeys= ['showTables', 'showImages', 'showXyPlots', 'images', 'coverageSide'];
+const xYTblKey= 'xyplots | tables';
+const stateKeys= ['mode', 'showTables', 'showImages', 'showXyPlots', 'images', 'coverageSide'];
 const LEFT= 'LEFT';
 const RIGHT= 'RIGHT';
 
@@ -53,6 +54,205 @@ LayoutChoiceAccordion.propTypes= {
     closeSideBar: func,
 };
 
+
+export function LayoutChoiceVisualAccordion({closeSideBar}) {
+    const haveResults= useStoreConnector(() => getResultCounts().haveResults);
+    const [panelOpen, setPanelOpen] = useState(true);
+
+    if (!haveResults) return <div/>;
+
+    return (
+        <AccordionPanelView
+            header={<Typography level='h4'>Results Layout</Typography>} expanded={panelOpen}
+            onChange = {(v) => setPanelOpen(v)}>
+            <LayoutChoiceLayoutVisual closeSideBar={closeSideBar}/>
+        </AccordionPanelView>
+    );
+}
+
+
+const TRIVIEW_IC_C_T= 'TRIVIEW_IC_C_T';
+const TRIVIEW_I_CC_T= 'TRIVIEW_I_CC_T';
+const BIVIEW_IC_C= 'BIVIEW_IC_C';
+const BIVIEW_I_CC= 'BIVIEW_I_CC';
+const BIVIEW_T_ICC= 'BIVIEW_T_ICC';
+const BIVIEW_ICC_T= 'BIVIEW_ICC_T';
+
+
+export function LayoutChoiceLayoutVisual({closeSideBar}) {
+    const {mode, showTables, showImages, showXyPlots, images={}, coverageSide=LEFT}=
+        useStoreConnector(() => pick(getLayouInfo(), stateKeys));
+
+    const {showCoverage} = images;
+    const coverageRight= showCoverage && coverageSide===RIGHT;
+    const currLayoutMode= getLayouInfo()?.mode?.standard?.toString() ?? triViewKey;
+    const isTriViewPossible = (showImages||showCoverage) && showXyPlots && showTables;
+
+    if (mode.expanded && mode.expanded!==LO_VIEW.none) {
+        return <Typography sx={{pt:1}}>Single View Expanded</Typography>;
+    }
+
+    const layoutOps= getOptions(isTriViewPossible,showImages,showCoverage);
+
+    const getCurrentOp= (currLayoutMode, showImages) => {
+        if (layoutOps.length===1) return layoutOps[0].value;
+        switch (currLayoutMode) {
+            case triViewKey:
+                if (showCoverage || showImages) {
+                    return (coverageRight) ? TRIVIEW_I_CC_T : TRIVIEW_IC_C_T;
+                }
+                else {
+                    return BIVIEW_ICC_T;
+                }
+            case imgXyKey:
+                return (coverageRight && showImages) ? BIVIEW_I_CC : BIVIEW_IC_C;
+            case tblXyKey: return BIVIEW_T_ICC;
+            case xYTblKey: return BIVIEW_ICC_T;
+        }
+        return TRIVIEW_I_CC_T;
+    };
+
+
+    return (
+        <Stack spacing={1} pt={1}>
+            <ListBoxInputFieldView {...{
+                slotProps: {
+                    input: {
+                        slotProps: { listbox: { sx: { maxHeight: '60vh' } } }
+                    }
+                },
+                options:layoutOps, value:getCurrentOp(currLayoutMode,showImages),
+                onChange:(ev,newVal) => {
+                    changeLayout(newVal);
+                    closeSideBar?.();
+                },
+                renderValue:
+                    ({value}) => (<OpRender {...{ key:value, value,useBorder:false, showImages,showCoverage}}/>),
+                decorator:
+                    (label,value) => (<OpRender {...{key:label, value, showImages,showCoverage}} />),
+
+            }} />
+        </Stack>
+    );
+}
+
+function getOptions(isTriViewPossible,showImages,showCoverage) {
+    const layoutOps= [];
+    if (isTriViewPossible) layoutOps.push({label:'Tri-view (L:Cov,I  R: Charts  B: Tables)', value:TRIVIEW_IC_C_T});  // L:Cov,Images - R: Charts - B: Tables
+    if (isTriViewPossible && (showImages&&showCoverage)) {
+        layoutOps.push({label:'Tri-view images (L:I  R: Charts,Cov   B: Tables)', value:TRIVIEW_I_CC_T}); // L:Images -  R: Cov,Charts - B: Tables
+    }
+
+    if (showCoverage) layoutOps.push({label:'Bi-view Charts', value:BIVIEW_IC_C});   // L:I,Cov  R:Charts  (no tables)
+    if (showCoverage && showImages) layoutOps.push({label:'Bi-view images', value:BIVIEW_I_CC});  // L:I - R:Cov,Charts - (no tables)
+    layoutOps.push({label:'Bi-view Tables', value:BIVIEW_T_ICC});   // L:Tables -  R: Charts,Cov,Images
+    layoutOps.push({label:'Bi-view Tables', value:BIVIEW_ICC_T});   // L: Charts,Cov,Images - R:Tables
+    return layoutOps;
+}
+
+function changeLayout(newVal)  {
+    switch (newVal) {
+        case TRIVIEW_IC_C_T:
+            dispatchSetLayoutMode(LO_MODE.standard, triViewKey);
+            dispatchUpdateLayoutInfo({coverageSide:LEFT});
+            break;
+        case TRIVIEW_I_CC_T:
+            dispatchSetLayoutMode(LO_MODE.standard, triViewKey);
+            dispatchUpdateLayoutInfo({coverageSide:RIGHT});
+            break;
+        case BIVIEW_IC_C:
+            dispatchSetLayoutMode(LO_MODE.standard, imgXyKey);
+            dispatchUpdateLayoutInfo({coverageSide:LEFT});
+            break;
+        case BIVIEW_I_CC:
+            dispatchSetLayoutMode(LO_MODE.standard, imgXyKey);
+            dispatchUpdateLayoutInfo({coverageSide:RIGHT});
+            break;
+        case BIVIEW_T_ICC:
+            dispatchSetLayoutMode(LO_MODE.standard, tblXyKey);
+            dispatchUpdateLayoutInfo({coverageSide:RIGHT});
+            break;
+        case BIVIEW_ICC_T:
+            dispatchSetLayoutMode(LO_MODE.standard, xYTblKey);
+            dispatchUpdateLayoutInfo({coverageSide:RIGHT});
+            break;
+    }
+}
+
+function getICDesc(showImages,showCoverage) {
+    if (showCoverage && showImages) return ['Coverage','Images'];
+    if (showCoverage) return ['Coverage'];
+    if (showImages) return ['Images'];
+    return [''];
+}
+
+function OpRender({value, width='12rem', useBorder=true, showImages, showCoverage}) {
+    const left= getICDesc(showImages,showCoverage);
+    switch (value) {
+        case TRIVIEW_IC_C_T:
+            return <TriViewItems {...{useBorder, width, left, right: ['Charts'], bottom:['Tables']}}/>;
+        case TRIVIEW_I_CC_T:
+            return <TriViewItems {...{useBorder, width, left:['Images'] , right: ['Coverage', 'Charts'], bottom:['Tables']}}/>;
+        case BIVIEW_IC_C:
+            return <BiViewItems {...{useBorder, width, left, right: ['Charts']}} />;
+        case BIVIEW_I_CC:
+            return <BiViewItems {...{useBorder, width, left:['Images'] , right: ['Coverage','Charts']}} />;
+        case BIVIEW_T_ICC:
+            const right=  [...getICDesc(showImages,showCoverage),'Charts'];
+            return <BiViewItems {...{useBorder, width, left:['Tables'] , right}} />;
+        case BIVIEW_ICC_T:
+            return <BiViewItems {...{useBorder, width, left:[...getICDesc(showImages,showCoverage), 'Charts'], right:['Tables']}} />;
+    }
+    return <div>{value}</div>;
+}
+
+const TriViewItems= ({left,right,bottom,width=1,useBorder}) => (
+    <Wrap {...{width,useBorder}}>
+        <Stack width={1} spacing={1/4}>
+            <HorizontalItems {...{left, right}} />
+            <Items stringAry={bottom}/>
+        </Stack>
+    </Wrap>
+);
+
+const BiViewItems= ({left,right,width=1,useBorder}) => (
+    <Wrap {...{width,useBorder}}>
+        <HorizontalItems {...{left, right}} />
+    </Wrap>
+);
+
+
+const HorizontalItems= ({left,right}) => (
+    <Stack {...{direction:'row', justifyContent:'space-between', width:1, spacing:1/4}}>
+        <Items {...{stringAry:left, sx:{width:1} }}/>
+        <Items {...{stringAry:right, sx:{width:1} }}/>
+    </Stack>
+);
+
+const Wrap= ({useBorder, width, children}) => (
+    <Card {...{variant:useBorder?'outlined':'plain',
+        sx:{'--Card-padding': useBorder?'.4rem':'.05rem', alignSelf:'stretch', width,
+            my: useBorder?1/2:0, backgroundColor:'transparent'} }}>
+        {children}
+    </Card>
+
+);
+
+
+const Items= ({stringAry, sx}) => (
+    <Card {...{color:'warning', variant:'outlined',
+        sx:{'--Card-padding': '.3rem', backgroundColor:'transparent', ...sx}}}>
+        <Stack {...{alignItems:'center', width:1}}>
+            {stringAry.map( (s) =>
+                <Typography {...{sx:{width:1}, color:'neutral', textAlign:'center', key:s, level:'body-sm'}}>{s}</Typography>)}
+        </Stack>
+    </Card>
+);
+
+
+
+
+
 export function LayoutChoice({closeSideBar, haveResults}) {
     const state= useStoreConnector(() => pick(getLayouInfo(), stateKeys));
     if (!haveResults) return <div/>;
@@ -71,6 +271,7 @@ export function LayoutChoice({closeSideBar, haveResults}) {
         {label:'Bi-view Images', value:imgXyKey},
         {label:'Bi-view Tables', value:tblXyKey},
     ];
+
 
     return (
         <Stack spacing={1} pt={1}>

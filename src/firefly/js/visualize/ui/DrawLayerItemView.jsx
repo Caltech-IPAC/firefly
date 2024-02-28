@@ -92,7 +92,7 @@ function makeHelpLine(helpLine) {
     if (helpLine) {
         return (
             <Typography {...{level:'body-sm',
-                pt:1,paddingBottom:.5,maxWidth:'30em',ml:2, whiteSpace: 'normal'}}>
+                paddingBottom:1,maxWidth:'30em',ml:2, whiteSpace: 'normal'}}>
                 {helpLine}
             </Typography>
         );

@@ -46,10 +46,10 @@ export const  FILE_ID = 'fileUpload';
 export const  URL_ID = 'urlUpload';
 const  WS_ID = 'wsUpload';
 
-const TABLE_MSG = 'Custom catalog in IPAC, CSV, TSV, VOTABLE, or FITS table format';
-const REGION_MSG = 'A Region file';
-const IMAGE_MSG = 'Any FITS file with images (including multiple HDUs)';
-const MOC_MSG = 'A MOC FITS file';
+const TABLE_MSG = 'Custom catalog or table in IPAC, CSV, TSV, VOTABLE, or FITS table format';
+const REGION_MSG = 'A ds9 region file';
+const IMAGE_MSG = 'Images in FITS format, including multi-extension FITS files with images, tables, or a mixture of both';
+const MOC_MSG = 'A Multi-Order Coverage Map (MOC) in FITS format';
 const DL_MSG = 'A Data Link Table file';
 const UWS_MSG = 'A UWS Job File';
 
@@ -868,7 +868,7 @@ const FileAnalysis = ({report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT
             <>
             <AcceptedList list={acceptList}/>
                 <Typography level='h2' component='div' color='warning' sx={{minHeight:'5rem', flex:'1 1 auto', mt:'4rem', textAlign: 'center'}}>
-                    Drag & Drop your files here
+                    Drag & drop your files here
                 </Typography>
             </>
         );

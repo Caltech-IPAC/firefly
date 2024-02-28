@@ -45,7 +45,7 @@ export const ClassicCatalogUploadPanel= () => (
                                          tooltips={{local: 'Select an IPAC catalog table file to upload',
                                              workspace: 'Select an IPAC catalog table file from workspace to upload'}}/>
                     <div>
-                        <em style={{color:'gray'}}>Custom catalog in IPAC, CSV, TSV, VOTABLE, or FITS table format</em>
+                        <em style={{color:'gray'}}>Custom catalog or table in IPAC, CSV, TSV, VOTABLE, or FITS table format</em>
                     </div>
                 </div>
             </div>

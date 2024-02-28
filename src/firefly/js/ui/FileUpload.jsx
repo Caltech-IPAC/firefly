@@ -7,8 +7,8 @@ import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {upload} from '../rpc/CoreServices.js';
 
 
-const DD_FILE_TXT= 'or Drag & Drop a file here';
-const DD_ANOTHER_FILE_TXT= 'or Drag & Drop another file';
+const DD_FILE_TXT= 'or drag & drop a file here';
+const DD_ANOTHER_FILE_TXT= 'or drag & drop another file';
 const NO_FILE_TXT= 'No file chosen';
 
 function FileUploadView({isLoading, label, valid, message, onChange, value,  sx, hasUploadedData,

@@ -5,6 +5,7 @@
 import React, {memo, useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 import {xor,isNil, isEmpty,isString, isFunction, throttle, isNumber, isArray} from 'lodash';
+import {getAppOptions} from '../core/AppDataCntlr.js';
 import {flux} from '../core/ReduxFlux.js';
 import {useColorMode} from '../ui/FireflyRoot.jsx';
 import {ImageRender} from './iv/ImageRender.jsx';
@@ -29,7 +30,6 @@ import {
 import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseSync.js';
 import {isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
 import {plotMove} from './PlotMove';
-import {getAppOptions} from 'firefly/api/ApiUtil.js';
 
 const DEFAULT_CURSOR= 'crosshair';
 

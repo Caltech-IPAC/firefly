@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Stack, Typography} from '@mui/joy';
+import {Box, Card, Stack, Typography} from '@mui/joy';
 import React, {PureComponent, useContext} from 'react';
 import PropTypes from 'prop-types';
 import {get} from 'lodash';
@@ -86,12 +86,14 @@ export class CatalogSearchMethodType extends PureComponent {
                                    : SpatialMethod['All Sky'].value;
 
         return (
-            <FieldGroup groupKey={groupKey} keepState={true}>
-                <Stack spacing={2}>
-                    {renderTargetPanel(groupKey, searchType)}
-                    {spatialSelection(withPos, polyIsDef, searchOption)}
-                    <SizeArea {...{groupKey, searchType, imageCornerCalc: fields?.imageCornerCalc?.value ?? 'image'}}/>
-                </Stack>
+            <FieldGroup groupKey={groupKey} keepState={true} sx={{height:1}}>
+                <Card sx={{height:1}}>
+                    <Stack spacing={2}>
+                        {renderTargetPanel(groupKey, searchType)}
+                        {spatialSelection(withPos, polyIsDef, searchOption)}
+                        <SizeArea {...{groupKey, searchType, imageCornerCalc: fields?.imageCornerCalc?.value ?? 'image'}}/>
+                    </Stack>
+                </Card>
             </FieldGroup>
         );
 

@@ -54,9 +54,9 @@ const ExpandedView = ({expanded, imagePlot, xyPlot, tables}) => {
 };
 
 
-const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, tables, rightSide}) => {
+const StandardView = ({visToolbar, title, searchDesc, standard, imagePlot, tables, rightSide, flip=false}) => {
     standard = LO_VIEW.get(standard) || LO_VIEW.none;
-    const components = resolveComponents(standard, imagePlot, tables, rightSide);
+    const components = resolveComponents(standard, imagePlot, tables, rightSide, flip);
     const config = generateLayout(standard, components.length);
 
     return (
@@ -94,8 +94,10 @@ function generateLayout(standard, componentCnt) {
     }
 }
 
-function resolveComponents(standard, imagePlot, tables, rightSide) {
+function resolveComponents(standard, imagePlot, tables, rightSide,flip) {
     const {showTables,showRightSide, showLeftSide}= getShow(standard);
-    if (showRightSide&&rightSide && showTables&&tables && !showLeftSide) return [tables,rightSide];
+    if (showRightSide&&rightSide && showTables&&tables && !showLeftSide) {
+        return flip ? [rightSide,tables] : [tables,rightSide];
+    }
     return [showLeftSide&&imagePlot, showRightSide&&rightSide, showTables&&tables].filter( (v) => v);
 }

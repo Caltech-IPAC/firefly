@@ -9,6 +9,7 @@ import {
 import {tabClasses} from '@mui/joy/Tab';
 import {debounce} from 'lodash';
 import React, {useCallback, useContext, useEffect, useState} from 'react';
+import shallowequal from 'shallowequal';
 import {COMMAND, dispatchAddPreference, dispatchSetMenu, getMenu, getPreference} from '../core/AppDataCntlr.js';
 import {flux} from '../core/ReduxFlux.js';
 import {dispatchHideDropDown, dispatchShowDropDown, getLayouInfo, getResultCounts} from '../core/LayoutCntlr.js';
@@ -403,10 +404,9 @@ function SideBarItem({item,selected,menu,closeSideBar,allowMenuHide,icon,sx, hid
 
 
 function getCounts(prev={}) {
-    const {haveResults,tableCnt,imageCnt,pinChartCnt,bgTableCnt}= getResultCounts();
-    if (prev?.tableCnt===tableCnt && prev?.imageCnt===imageCnt &&
-        bgTableCnt===prev.bgTableCnt && pinChartCnt===prev.pinChartCnt) return prev;
-    return {haveResults,tableCnt,imageCnt,pinChartCnt,bgTableCnt};
+    const results= getResultCounts();
+    if (prev && shallowequal(prev,results)) return prev;
+    return results;
 }
 
 
