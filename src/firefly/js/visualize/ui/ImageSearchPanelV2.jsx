@@ -418,7 +418,7 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
                     <FieldGroup groupKey={FG_KEYS.targetSelect} keepState={true}>
                         <Stack spacing={2} direction='column'>
                             <TargetPanel labelWidth={isHips ? 150 : 100}
-                                         label={isHips ? 'Coords or Obj Name (optional)' : 'Coords or Obj Name'}
+                                         label={isHips ? 'Coords or Object Name (optional)' : undefined}
                                          placeholderHighlight={!isHips}
                                          nullAllowed={true}/>
                             <SizeInputFields fieldKey={sizeKey} showFeedback={true}
