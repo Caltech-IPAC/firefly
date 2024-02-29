@@ -50,6 +50,7 @@ import UnfoldMoreOutlinedIcon from '@mui/icons-material/UnfoldMoreOutlined';
 import UnfoldLessOutlinedIcon from '@mui/icons-material/UnfoldLessOutlined';
 import AddCircleOutlineOutlinedIcon from '@mui/icons-material/AddCircleOutlineOutlined';
 
+import INSERT_COLUMN from 'html/images/insert-col-right-24-24.png';
 
 // import LockOpenTwoToneIcon from '@mui/icons-material/LockOpenTwoTone';
 // import LockTwoToneIcon from '@mui/icons-material/LockTwoTone';
@@ -189,7 +190,7 @@ export const TableViewButton = (props) => (
 );
 
 export const AddColumnButton = (props) => (
-    <ToolbarButton {...{icon: <AddColumnIco/>, tip: 'Add a column', iconButtonSize:'38px', ...props}}/>
+    <ToolbarButton icon={INSERT_COLUMN} tip='Add a column' {...props}/>
 );
 
 export const SettingsButton = (props) => (

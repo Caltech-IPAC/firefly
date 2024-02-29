@@ -1108,7 +1108,55 @@ export function tableDetailsView(tbl_id, highlightedRow, details_tbl_id) {
 }
 
 /**
- * returns an object map of the column name and its width.
+ * returns an array of the value with the maximum length for each column.
+ * The width is the number of characters needed to display
+ * the header and the data in a table given columns and dataAry.
+ * @param {TableColumn[]} columns  array of column object
+ * @param {TableData} dataAry  array of array.
+ * @param {object} opt options
+ * @param {number} opt.maxAryWidth  maximum width of column with array values
+ * @param {number} opt.maxColWidth  maximum width of column without array values
+ * @param {boolean} opt.useWidth    use width and prefWidth props in calculation
+ * @returns {string[]} an array of values corresponding to the given columns array.
+ * @memberof firefly.util.table
+ * @func calcColumnWidths
+ */
+export function getColMaxValues(columns, dataAry,
+                                 {
+                                     maxAryWidth = Number.MAX_SAFE_INTEGER,
+                                     maxColWidth = Number.MAX_SAFE_INTEGER,
+                                     useWidth = true,
+                                 }={}) {
+    return columns.map( (cv, idx) => {
+
+        const width = useWidth? cv.prefWidth || cv.width : 0;
+        if (width) {
+            return 'O'.repeat(width);           // O is a good reference for average width of a character
+        }
+
+        let maxVal = '';
+
+        // the 4 headers
+        [cv.label || cv.name, cv.units, getTypeLabel(cv), cv.nullString].forEach( (v) => {
+            if (v?.length > maxVal.length) maxVal = v;
+        });
+
+        // the data
+        dataAry.forEach((row) => {
+            const v = formatValue(columns[idx], row[idx]);
+            if (v.length > maxVal.length) maxVal = v;
+        });
+
+        // limits
+        if (cv.arraySize && maxVal.length > maxAryWidth) maxVal = maxVal.substr(0, maxAryWidth);
+        if (maxVal.length > maxColWidth) maxVal = maxVal.substr(0, maxColWidth);
+
+        return maxVal;
+    });
+}
+
+/**
+ * returns an array of the maximum width for each column.
  * The width is the number of characters needed to display
  * the header and the data in a table given columns and dataAry.
  * @param {TableColumn[]} columns  array of column object
@@ -1121,33 +1169,8 @@ export function tableDetailsView(tbl_id, highlightedRow, details_tbl_id) {
  * @memberof firefly.util.table
  * @func calcColumnWidths
  */
-export function calcColumnWidths(columns, dataAry,
-                                 {
-                                     maxAryWidth = Number.MAX_SAFE_INTEGER,
-                                     maxColWidth = Number.MAX_SAFE_INTEGER,
-                                     useWidth = true,
-                                     useCnameMultiplier = false,
-                                 }={}) {
-    return columns.map( (cv, idx) => {
-
-        let width = useWidth? cv.prefWidth || cv.width : 0;
-        if (width) {
-            return width;
-        }
-        const cnameLength = (cv.label || cv.name)?.length * (useCnameMultiplier ? 1.25 : 1);
-
-        width = Math.max(cnameLength, get(cv, 'units.length', 0),  getTypeLabel(cv).length, get(cv, 'nullString.length', 0));
-        dataAry.forEach((row) => {
-            const v = formatValue(columns[idx], row[idx]);
-            width = Math.max(width, v.length);
-        });
-
-        if (cv.arraySize) {
-            width = Math.min(width, maxAryWidth);
-        }
-        width = Math.min(width, maxColWidth);
-        return width;
-    });
+export function calcColumnWidths(columns, dataAry, opt) {
+    return getColMaxValues(columns, dataAry, opt).map((v) => v.length);
 }
 
 /**

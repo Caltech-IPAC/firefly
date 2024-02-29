@@ -5,8 +5,7 @@
 import React, {useRef, useCallback, useState, useEffect} from 'react';
 import {Cell} from 'fixed-data-table-2';
 import {set, get, omit, isEmpty, isString, toNumber} from 'lodash';
-import {Typography, Checkbox, Stack, Box, Link, Sheet, Dropdown, Menu, MenuButton, MenuItem, IconButton, Button, Chip} from '@mui/joy';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import {Typography, Checkbox, Stack, Box, Link, Sheet, MenuItem, Button, Chip} from '@mui/joy';
 
 import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
 import {
@@ -21,7 +20,7 @@ import {toBoolean, copyToClipboard} from '../../util/WebUtil.js';
 import ASC_ICO from 'html/images/sort_asc.gif';
 import DESC_ICO from 'html/images/sort_desc.gif';
 import {CheckboxGroupInputField} from '../../ui/CheckboxGroupInputField';
-import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
+import DialogRootContainer, {DropDown} from '../../ui/DialogRootContainer.jsx';
 import {FieldGroup} from '../../ui/FieldGroup';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
@@ -38,6 +37,7 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import {FilterButton} from 'firefly/visualize/ui/Buttons.jsx';
 
 
+export const headerStyle = {fontSize:'var(--joy-fontSize-sm)', fontWeight:'var(--joy-fontWeight-md)'};  // maybe faulty becuase it's translated from Typography title-sm, which is dynamic.
 
 const html_regex = /<.+>|&.+;/;           // A rough detection of html elements or entities
 
@@ -141,12 +141,9 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
 
 
     const endDecorator = enumVals && (
-        <Dropdown onOpenChange={(_,v) => setDisableHoverListener(v) }>
-            <MenuButton slots={{ root: IconButton }} sx={{mr:-1}}><ArrowDropDownIcon/></MenuButton>
-            <Menu ref={dropdownEl}>
-                <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />
-            </Menu>
-        </Dropdown>
+        <DropDown onOpenChange={(v) => setDisableHoverListener(v) } slotProps={{button:{sx:{mr:-1}}}}>
+            <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />
+        </DropDown>
     );
 
     return (
@@ -329,7 +326,6 @@ export function ContentEllipsis({children, text, textAlign, sx, actions=[]}) {
 
 function ActionDropdown({text, actions, onChange}) {
     const popupID = 'actions--popup';
-    const [open, setOpen] = useState(false);
     const copyCB = () => {
         copyToClipboard(text);
     };
@@ -338,16 +334,18 @@ function ActionDropdown({text, actions, onChange}) {
         dispatchShowDialog(popupID);
     };
     return (
-        <Dropdown open={open} onOpenChange={(_, open) => setOpen(open) | onChange(open)}>
-            <MenuButton variant='soft' size='sm' sx={{position: 'absolute', right:0, paddingInline:'.25em'}}>
-                <MoreHorizIcon/>
-            </MenuButton>
-            <Menu>
-                <MenuItem onClick={copyCB}>Copy to clipboard</MenuItem>
-                <MenuItem onClick={viewAsText}>View as plain text</MenuItem>
-                {actions?.map((text, action) => <MenuItem onClick={action}>{text}</MenuItem>)}
-            </Menu>
-        </Dropdown>
+        <DropDown button={<MoreHorizIcon/>} onOpenChange={onChange} useIconButton={false}
+                  slotProps={{
+                      button: {
+                          variant:'soft',
+                          size:'sm',
+                          sx:{position: 'absolute', right:0, paddingInline:'.25em'}
+                  }}}
+        >
+            <MenuItem onClick={copyCB}>Copy to clipboard</MenuItem>
+            <MenuItem onClick={viewAsText}>View as plain text</MenuItem>
+            {actions?.map((text, action) => <MenuItem onClick={action}>{text}</MenuItem>)}
+        </DropDown>
     );
 };
 
@@ -402,7 +400,9 @@ function ViewAsText({text, ...rest}) {
                 <input id='doFormat' type='checkbox' title={label} onChange={onChange} checked={doFmt}/>
                 <label htmlFor='doFormat' style={{verticalAlign: ''}}>{label}</label>
             </div>
-            <textarea readOnly className='Actions__popup' value={text} style={{width: 650, height: 125}}/>
+            <Sheet variant='outlined' sx={{resize:'both', overflow:'auto', minWidth:'30em', minHeight:'15em',p:1}} >
+                <Typography whiteSpace='pre'>{text}</Typography>
+            </Sheet>
         </PopupPanel>
 
     );
@@ -785,7 +785,7 @@ const parseStyles = (styles='') =>  {
         .split(';')
         .filter((style) => style.split(':')[0] && style.split(':')[1])
         .map((style) => [
-            style.split(':')[0].trim().replace(/^-ms-/, 'ms-').replace(/-./g, c => c.substr(1).toUpperCase()),
+            style.split(':')[0].trim().replace(/^-ms-/, 'ms-').replace(/-./g, (c) => c.substr(1).toUpperCase()),
             style.split(':').slice(1).join(':').trim()
         ])
         .reduce((styleObj, style) => ({
@@ -794,3 +794,24 @@ const parseStyles = (styles='') =>  {
         }), {});
     // some
 };
+
+
+export function getPxWidth({text, fontSize, fontWeight}) {
+    const div = document.createElement('div');
+
+    // Set the style if given
+    if (fontSize)   div.style.fontSize = fontSize + 'px';
+    if (fontWeight) div.style.fontWeight = fontWeight + '';
+    div.style.fontFamily = 'var(--joy-fontFamily-body)';
+    div.textContent = text;
+
+    // Hide the element so it doesn't affect the layout
+    div.style.position = 'absolute';
+    div.style.visibility = 'hidden';
+
+    document.body.appendChild(div);
+    const width = div.getBoundingClientRect().width;
+    document.body.removeChild(div);
+
+    return width;
+}

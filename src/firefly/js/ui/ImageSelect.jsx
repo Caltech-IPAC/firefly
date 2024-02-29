@@ -408,7 +408,7 @@ function DataProductList({filteredImageData, groupKey, multiSelect}) {
 
     return (
         <Stack flexGrow={1}>
-            <CollapsibleGroup disableDivider={true}>
+            <CollapsibleGroup disableDivider={true} sx={{'& button': {justifyContent: 'start'}}}>
                 {content}
             </CollapsibleGroup>
         </Stack>

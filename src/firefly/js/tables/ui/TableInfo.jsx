@@ -23,8 +23,8 @@ export function TableInfo({tbl_id, tabsProps, ...props}) {
    const jobId = getJobIdFromTblId(tbl_id);
 
     return (
-        <Stack p={1} height={1} spacing={1} {...props}>
-            <StatefulTabs componentKey='TablePanelOptions' {...tabsProps}>
+        <Stack p={1} height={1} spacing={1} overflow='hidden' {...props}>
+            <StatefulTabs componentKey='TablePanelOptions' {...tabsProps} sx={{overflow:'auto'}}>
                 {jobId &&
                 <Tab name='Job Info'>
                     <JobInfo jobId={jobId}/>
@@ -36,7 +36,7 @@ export function TableInfo({tbl_id, tabsProps, ...props}) {
                     </div>
                 </Tab>
             </StatefulTabs>
-            <Stack alignItems='flex-end'>
+            <Stack alignItems='end' pr={1}>
                 <HelpIcon helpId='tables.info'/>
             </Stack>
         </Stack>
