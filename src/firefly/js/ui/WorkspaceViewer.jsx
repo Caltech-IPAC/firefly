@@ -211,20 +211,23 @@ export function showWorkspaceDialog({onComplete, value, fieldKey}) {
 /*-----------------------------------------------------------------------------------------*/
 
 export function WorkspaceAsPopup({wrapperStyle, onComplete, value, isLoading, fieldKey}) {
-    const style = Object.assign({whiteSpace:'nowrap', display: 'inline-block', height: 22}, wrapperStyle);
     
     return (
-        <div>
-            <div style={style}>
-                <input  type='button'
-                        value='Choose Workspace File'
-                        onClick={()=>showWorkspaceDialog({onComplete, value, fieldKey})} />
-            </div>
-            <div style={{display:'inline-block', marginLeft: 5}}>
-                {value ? getWorkspacePath(value) : 'No workspace file chosen'}
-            </div>
-            {isLoading && <img style={{display: 'inline-block', marginLeft: 10, width:14,height:14}} src={LOADING}/> }
-        </div>
+        <Stack spacing={2} justifyContent={'center'} sx={{px: 2, wrapperStyle}}>
+            <Stack sx={{flexDirection: 'row'}}>
+                <Stack>
+                    <input  type='button'
+                            value='Choose Workspace File'
+                            onClick={()=>showWorkspaceDialog({onComplete, value, fieldKey})} />
+                </Stack>
+                <Stack sx={{mx:2}}>
+                    {value ? getWorkspacePath(value) : 'No workspace file chosen'}
+                </Stack>
+            </Stack>
+            <Stack justifyContent={'center'}>
+                {isLoading && <img style={{display: 'inline-block', marginLeft: '40%', width:14,height:14}} src={LOADING}/> }
+            </Stack>
+        </Stack>
     );
 }
 
@@ -438,9 +441,9 @@ function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.fi
         minWidth: dialogWidth,
         minHeight: dialogHeight,
         resize: 'both',
-        overflow: 'hidden'};
-    const style = {
         flexGrow: 1,
+        overflow: 'auto'};
+    const style = {
         marginLeft: HMargin,
         marginRight: HMargin,
         paddingLeft: '1rem',
