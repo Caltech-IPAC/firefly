@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {ButtonGroup, Stack} from '@mui/joy';
+import {Stack} from '@mui/joy';
 import React, {memo, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, capitalize} from 'lodash';
@@ -49,8 +49,9 @@ const imageFileTypeOps=  [
 const popupPanelResizableStyle = {
     width: dialogWidth,
     minWidth: dialogWidth,
+    minHeight: mindialogHeightLOCAL,
     resize: 'both',
-    overflow: 'auto',
+    overflow: 'hidden',
     position: 'relative'
 };
 
@@ -64,9 +65,9 @@ export function showFitsDownloadDialog() {
     const minHeight = (fileLocation === LOCALFILE) && (!isWs) ? mindialogHeightLOCAL : dialogHeightLOCAL;
     const  popup = (
         <PopupPanel title={'Save Image'}>
-            <div style={{...popupPanelResizableStyle, height: adHeight, minHeight}}>
+            <Stack style={{...popupPanelResizableStyle}}>
                 <FitsDownloadDialogForm groupKey={fitsDownGroup} popupId={dialogPopupId} isWs={isWs}/>
-            </div>
+            </Stack>
         </PopupPanel>
     );
     DialogRootContainer.defineDialog(dialogPopupId , popup);
@@ -157,9 +158,9 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
 
     return (
         <FieldGroup groupKey={groupKey}>
-            <Stack spacing={2} style={{height: mindialogHeightLOCAL}}
+            <Stack spacing={2}
                    sx={{px: 2, justifyContent: 'space-between'}}>
-                <Stack>
+                <Stack style={{width: 'unset', height: 'unset'}}>
                     <DownloadOptionsDialog {...{
                         fromGroupKey:groupKey, fileName: makeFileName(plot,band,'fits'), workspace:isWs,
                         labelWidth, dialogWidth:'100%', dialogHeight:'100%',
@@ -167,7 +168,7 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
                         <MakeFileOptions {...{plot, colors, hasOperation, threeC}}/>
                     </DownloadOptionsDialog>
                 </Stack>
-                <Stack px={2}>
+                <Stack>
                     <Stack mb={3} sx={{flexDirection: 'row', justifyContent: 'space-between'}}>
                         <Stack spacing={1} direction='row' alignItems='center'>
                             <CompleteButton text='Save' onSuccess={ (request) => resultsSuccess(request, pv, popupId )}

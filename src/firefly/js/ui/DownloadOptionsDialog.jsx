@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Stack, Box} from '@mui/joy';
+import {Stack} from '@mui/joy';
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
@@ -84,11 +84,11 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
     return (
         <Stack spacing={2} justifyContent={'center'}
                sx={{
-                 width: '90%',
+                 width: '100%',
                }}>
-            <div>
+            <Stack>
                 {children}
-            </div>
+            </Stack>
             <ValidationField
                 fieldKey={'fileName'}
                 initialState= {{
