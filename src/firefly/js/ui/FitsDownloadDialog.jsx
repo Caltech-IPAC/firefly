@@ -51,7 +51,7 @@ export function showFitsDownloadDialog() {
 
     const  popup = (
         <PopupPanel title={'Save Image'}>
-            <Stack minWidth='40em' minHeight='20em' height='60vh' sx={{resize:'both', overflow:'hidden'}}>
+            <Stack minWidth='40em' minHeight='28em' height='60vh' sx={{resize:'both', overflow:'hidden'}}>
                 <FitsDownloadDialogForm groupKey={fitsDownGroup} popupId={dialogPopupId} isWs={isWs}/>
             </Stack>
         </PopupPanel>

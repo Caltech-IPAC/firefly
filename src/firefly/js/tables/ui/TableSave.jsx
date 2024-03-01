@@ -130,7 +130,7 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
         );
     };
     return (
-        <Stack spacing={1} p={1} height='60vh' minWidth='40em' minHeight='20em' sx={{resize:'both', overflow:'hidden'}}>
+        <Stack spacing={1} p={1} height='60vh' minWidth='40em' minHeight='28em' sx={{resize:'both', overflow:'hidden'}}>
             <FieldGroup groupKey={tblDownloadGroupKey} reducerFunc={TableDLReducer(tbl_id)}
                         sx={{display:'flex', overflow:'hidden', flexGrow:1}}>
                 <Stack spacing={1} flexGrow={1}>
