@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Stack} from '@mui/joy';
+import {Sheet, Stack} from '@mui/joy';
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
@@ -26,9 +26,7 @@ export function getTypeData(key, val='', tip = '', labelV='', labelW='') {
     };
 }
 
-
-export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWidth, style={}, dialogWidth, dialogHeight,
-                                      workspace}) {
+export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWidth, workspace, sx}) {
 
     const isUpdating = useStoreConnector(isAccessWorkspace);
     const wsList = useStoreConnector(getWorkspaceList);
@@ -53,35 +51,23 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
         );
 
         const showSave = (
-            <div  style={{width: dialogWidth, height: dialogHeight}}>
-                <div style={{marginTop: 10,
-                             boxSizing: 'border-box',
-                             width: 'calc(100%)', height: 'calc(100% - 10px)',
-                             overflow: 'auto',
-                             padding: 5,
-                             border:'1px solid #a3aeb9'}}>
-                    <WorkspaceSave fieldKey={'wsSelect'} files={wsList} value={wsSelect}
-                        tooltip='workspace file system'/>
-                </div>
-            </div>
+            <Sheet variant='outlined' sx={{p:1}}>
+                <WorkspaceSave fieldKey={'wsSelect'} files={wsList} value={wsSelect}
+                                      tooltip='workspace file system'/>
+            </Sheet>
         );
 
         const showNoWSFiles = (
-                <div style={{marginTop: 10,
-                             padding: 10,
-                             boxSizing: 'border-box',
-                             width: 'calc(100%)',
-                             textAlign: 'center',
-                             border:'1px solid #a3aeb9'}}>
+                <Stack>
                     {'Workspace access error: ' + getWorkspaceErrorMsg()}
-                </div>
+                </Stack>
         );
 
         return isUpdating ? loading : !isEmpty(wsList) ? showSave : showNoWSFiles;
     };
 
     const showLocation = (
-        <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
+        <Stack spacing={1} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
                 <RadioGroupInputField
                     options={[{label: 'Local File', value: LOCALFILE},
                               {label: 'Workspace', value: WORKSPACE }] }
@@ -94,13 +80,8 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
     );
 
     return (
-        <Stack spacing={2} justifyContent={'center'}
-               sx={{
-                 width: '80%',
-               }}>
-            <div>
-                {children}
-            </div>
+        <Stack spacing={1} sx={sx}>
+            {children}
             <ValidationField
                 fieldKey={'fileName'}
                 initialState= {{
@@ -109,10 +90,11 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
                 label='File name'
                 tooltip='Please enter a filename, a default name will be used if it is blank'
             />
-
             {workspace && showLocation}
 
-            {where === WORKSPACE && <ShowWorkspace/>}
+            <Stack flexGrow={1} overflow='auto'>
+                {where === WORKSPACE && <ShowWorkspace/>}
+            </Stack>
         </Stack>
     );
 }

@@ -62,8 +62,6 @@ const tableFormatsExt = {
     'votable-fits-inline': 'vot',
 };
 
-const dialogWidth = '32rem';
-const dialogHeight = '22rem';
 const labelWidth = 100;
 const defValues = {
     [fKeyDef.fileName.fKey]: Object.assign(getTypeData(fKeyDef.fileName.fKey, '',
@@ -80,16 +78,6 @@ const defValues = {
 
 const tblDownloadGroupKey = 'TABLE_DOWNLOAD_FORM';
 
-const popupPanelResizableStyle = {
-    width: dialogWidth,
-    height: dialogHeight,
-    minWidth: dialogWidth,
-    minHeight: dialogHeight,
-    resize: 'both',
-    overflow: 'hidden',
-    position: 'relative'
-};
-
 export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
     return () => {
         const popupId = 'TABLE_DOWNLOAD_POPUP';
@@ -101,9 +89,7 @@ export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
         };
         const popup = (
             <PopupPanel title={'Save table'}>
-                <div style={{...popupPanelResizableStyle}}>
-                    <TableSavePanel {...{tbl_id, tbl_ui_id, onComplete}}/>
-                </div>
+                <TableSavePanel {...{tbl_id, tbl_ui_id, onComplete}}/>
             </PopupPanel>
         );
 
@@ -144,21 +130,22 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
         );
     };
     return (
-        <Stack spacing={1} height={1}>
-            <FieldGroup groupKey={tblDownloadGroupKey} reducerFunc={TableDLReducer(tbl_id)} sx={{flexGrow:1, display:'flex', alignItems:'start'}}>
-                <Stack spacing={2} justifyContent={'center'}
-                       sx={{px: 2}}>
-                    <DownloadOptionsDialog fromGroupKey={tblDownloadGroupKey} style={{width: 'unset', height: 'unset'}}
+        <Stack spacing={1} p={1} height='60vh' minWidth='40em' minHeight='28em' sx={{resize:'both', overflow:'hidden'}}>
+            <FieldGroup groupKey={tblDownloadGroupKey} reducerFunc={TableDLReducer(tbl_id)}
+                        sx={{display:'flex', overflow:'hidden', flexGrow:1}}>
+                <Stack spacing={1} flexGrow={1}>
+                    <DownloadOptionsDialog fromGroupKey={tblDownloadGroupKey}
                                            children={fileFormatOptions()}
                                            workspace={isWs}
-                                           dialogWidth='100%'
-                                           dialogHeight='100%'
+                                           sx={{flexGrow:1, overflow:'hidden'}}
                     />
-                    <RadioGroupInputField fieldKey='mode' initialState={{value: 'displayed'}}
-                                          options={[{value:'displayed', label:'Save table as displayed'}, {value:'original', label:'Save table as originally retrieved'}]}/>
-                    <Typography level='body-sm' sx={{textAlign: 'left'}}>
-                        {mode === 'original' ? asOriginalMsg : asDisplayedMsg}
-                    </Typography>
+                    <Stack spacing={1}>
+                        <RadioGroupInputField fieldKey='mode' initialState={{value: 'displayed'}}
+                                              options={[{value:'displayed', label:'Save table as displayed'}, {value:'original', label:'Save table as originally retrieved'}]}/>
+                        <Typography level='body-sm' sx={{textAlign: 'left'}}>
+                            {mode === 'original' ? asOriginalMsg : asDisplayedMsg}
+                        </Typography>
+                    </Stack>
                 </Stack>
             </FieldGroup>
             <Stacker endDecorator={<HelpIcon helpId={'tables.save'}/>}>
