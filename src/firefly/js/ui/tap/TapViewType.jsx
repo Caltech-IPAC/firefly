@@ -373,7 +373,7 @@ function BasicUI(props) {
                     {!showTableSelectors &&
                         <Stack {...{width:1}}>
                             <Typography {...{level:'h4', component:'div', color:'primary' }}>
-                                {`${serviceLabel} ObsCore data product tables (images, spectra, ect)`}
+                                {`${serviceLabel} ObsCore data product tables (images, spectra, etc.)`}
                             </Typography>
                         </Stack>
                     }

@@ -140,7 +140,7 @@ function creator(initPayload, presetDefaults={}) {
 }
 
 function layerRemoved(drawLayer,action) {
-    if (drawLayer.plotIdAry?.length) releaseColor(drawLayer.drawingDef.color);
+    // if (drawLayer.plotIdAry?.length) releaseColor(drawLayer.drawingDef.color);
 }
 
 function saveLastDown(mouseStatePayload) {

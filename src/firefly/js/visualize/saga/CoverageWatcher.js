@@ -714,7 +714,7 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, visi
                     plotId,
                     searchTargetPoint: searchTarget,
                     layersPanelLayoutId,
-                    fullTitle: 'Search Target:',
+                    fullTitle: 'Search Position:',
                     canUserDelete: true,
                 });
             dispatchAttachLayerToPlot(newDL.drawLayerId, plotId, false);
