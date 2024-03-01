@@ -45,13 +45,15 @@ function matchesObsCoreHeuristic(schemaName, tableName, columnsModel) {
 
 
 export function TapViewType({serviceUrl, servicesShowing, setServicesShowing, lockService, setSelectBy,
-                                serviceLabel, selectBy, initArgs, lockObsCore, obsCoreTableModel, hasObsCoreTable}) {
+                                serviceLabel, selectBy, initArgs, lockObsCore,
+                                obsCoreLockTitle, obsCoreTableModel, hasObsCoreTable}) {
 
     return (
         <Stack {...{pt: servicesShowing?0:1, height:1}}>
             {selectBy==='adql' ?
                 <AdqlUI {...{serviceUrl, serviceLabel, servicesShowing, setServicesShowing, lockService, setSelectBy}}/> :
-                <BasicUI  {...{serviceUrl, serviceLabel, selectBy, initArgs, lockService, lockObsCore, obsCoreTableModel,
+                <BasicUI  {...{serviceUrl, serviceLabel, selectBy, initArgs, lockService,
+                    lockObsCore, obsCoreLockTitle, obsCoreTableModel,
                     servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy}}/>
             }
         </Stack>
@@ -124,7 +126,7 @@ function useStateRef(initialState){
 }
 
 function BasicUI(props) {
-    const {initArgs={}, setSelectBy, obsCoreTableModel, servicesShowing,
+    const {initArgs={}, setSelectBy, obsCoreTableModel, servicesShowing, obsCoreLockTitle,
         setServicesShowing, hasObsCoreTable, lockService, lockObsCore:forceLockObsCore}= props;
     const {urlApi={},searchParams={}}= initArgs;
     const [getTapBrowserState,setTapBrowserState]= useFieldGroupMetaState(defTapBrowserState);
@@ -373,7 +375,7 @@ function BasicUI(props) {
                     {!showTableSelectors &&
                         <Stack {...{width:1}}>
                             <Typography {...{level:'h4', component:'div', color:'primary' }}>
-                                {`${serviceLabel} ObsCore data product tables (images, spectra, etc.)`}
+                                {obsCoreLockTitle ?? `${serviceLabel} ObsCore data product tables (images, spectra, etc.)`}
                             </Typography>
                         </Stack>
                     }
