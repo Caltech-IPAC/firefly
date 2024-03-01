@@ -35,6 +35,7 @@ import {isExistWorspaceFile} from '../visualize/WorkspaceCntlr';
 import {parseUploadResults} from '../rpc/CoreServices.js';
 import {fetchUrl} from '../util/fetch';
 import {getCmdSrvSyncURL} from '../util/WebUtil';
+import {Stacker} from 'firefly/ui/Stacker.jsx';
 
 /*-----------------------------------------------------------------------------------------*/
 /* core component as FilePicker wrapper
@@ -435,14 +436,6 @@ export function workspacePopupMsg(msg, title) {
  */
 function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.file.fkey}) {
     const newList = getWorkspaceList() || [];
-    const dialogWidth = '40rem';
-    const dialogHeight = '28rem';
-    const popupPanelResizableStyle = {
-        minWidth: dialogWidth,
-        minHeight: dialogHeight,
-        resize: 'both',
-        flexGrow: 1,
-        overflow: 'auto'};
     const style = {
         marginLeft: HMargin,
         marginRight: HMargin,
@@ -459,36 +452,26 @@ function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.fi
         const popup = (
             <PopupPanel title={'Read file from workspace'}>
 
-                <Stack style={popupPanelResizableStyle}>
-                    <FieldGroup groupKey={workspacePopupGroup} keepState={true}>
-                        <Stack spacing={2}
-                               sx={{my:2, justifyContent: 'space-between'}}>
-                            <Stack style={style}>
-                                <WorkspaceViewField fieldKey={fieldKey}
-                                                files={newList}
-                                                keepSelect={true}
-                                                initialState={{value, validator: isWsFolder(false)}}/>
-                            </Stack>
+                <Stack minWidth='40rem' minHeight='20rem' height='60vh' p={1} sx={{resize:'both', overflow:'hidden'}}>
+                    <Stack flexGrow={1} overflow='auto'>
+                        <FieldGroup groupKey={workspacePopupGroup} keepState={true}>
+                            <WorkspaceViewField fieldKey={fieldKey}
+                                            files={newList}
+                                            keepSelect={true}
+                                            initialState={{value, validator: isWsFolder(false)}}/>
                             {showMask && <div className='loading-mask' style={Object.assign({}, style, {top:0, marginTop: 0})}/>}
-                            <Stack>
-                                <Stack sx={{mx:2, flexDirection: 'row', justifyContent: 'space-between'}}>
-                                    <Stack spacing={1} direction='row' alignItems='center'>
-                                        <CompleteButton
-                                            groupKey={workspacePopupGroup}
-                                            onSuccess={onComplete}
-                                            onFail={resultFail(fieldKey)}
-                                            text={'Open'}
-                                            dialogId={workspacePopupId}
-                                        />
-                                        <Button onClick={() => resultCancel()}>Cancel</Button>
-                                    </Stack>
-                                    <Stack>
-                                        <HelpIcon helpId={'visualization.imageoptions'}/>
-                                    </Stack>
-                                </Stack>
-                            </Stack>
-                        </Stack>
-                    </FieldGroup>
+                        </FieldGroup>
+                    </Stack>
+                    <Stacker endDecorator={<HelpIcon helpId={'visualization.imageoptions'}/>}>
+                        <CompleteButton
+                            groupKey={workspacePopupGroup}
+                            onSuccess={onComplete}
+                            onFail={resultFail(fieldKey)}
+                            text={'Open'}
+                            dialogId={workspacePopupId}
+                        />
+                        <Button onClick={() => resultCancel()}>Cancel</Button>
+                    </Stacker>
                 </Stack>
             </PopupPanel>
         );

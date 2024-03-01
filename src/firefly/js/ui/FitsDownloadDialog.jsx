@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Stack} from '@mui/joy';
+import {Button, Stack} from '@mui/joy';
 import React, {memo, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, capitalize} from 'lodash';
@@ -30,12 +30,9 @@ import {upload} from '../rpc/CoreServices.js';
 import {download, downloadBlob, makeDefaultDownloadFileName} from '../util/fetch.js';
 import {useFieldGroupValue} from './SimpleComponent.jsx';
 import HelpIcon from './HelpIcon.jsx';
+import {Stacker} from 'firefly/ui/Stacker.jsx';
 
 const STRING_SPLIT_TOKEN= '--STR--';
-const dialogWidth ='40rem';
-const dialogHeightWS = '40rem';
-const dialogHeightLOCAL = '30rem';
-const mindialogHeightLOCAL ='30rem';
 const dialogPopupId = 'fitsDownloadDialog';
 const fitsDownGroup = 'FITS_DOWNLOAD_FORM';
 const labelWidth = '6rem';
@@ -46,26 +43,15 @@ const imageFileTypeOps=  [
     {label: 'FITS Image', value: 'fits', tooltip: 'Download the source FITS file' },
     ...hipsFileTypeOps];
 
-const popupPanelResizableStyle = {
-    width: dialogWidth,
-    minWidth: dialogWidth,
-    minHeight: mindialogHeightLOCAL,
-    resize: 'both',
-    overflow: 'hidden',
-    position: 'relative'
-};
-
 export function showFitsDownloadDialog() {
     const fileLocation = getFieldVal(fitsDownGroup, 'fileLocation', LOCALFILE);
     if (fileLocation === WORKSPACE) dispatchWorkspaceUpdate();
 
     const isWs = getWorkspaceConfig();
-    const adHeight = (fileLocation === WORKSPACE) ? dialogHeightWS
-                                                         : (isWs ? dialogHeightLOCAL : mindialogHeightLOCAL);
-    const minHeight = (fileLocation === LOCALFILE) && (!isWs) ? mindialogHeightLOCAL : dialogHeightLOCAL;
+
     const  popup = (
         <PopupPanel title={'Save Image'}>
-            <Stack style={{...popupPanelResizableStyle}}>
+            <Stack minWidth='40em' minHeight='20em' height='60vh' sx={{resize:'both', overflow:'hidden'}}>
                 <FitsDownloadDialogForm groupKey={fitsDownGroup} popupId={dialogPopupId} isWs={isWs}/>
             </Stack>
         </PopupPanel>
@@ -157,29 +143,22 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
     }, [getFileType, getFileName, getLocation, getBand]);
 
     return (
-        <FieldGroup groupKey={groupKey}>
-            <Stack spacing={2}
-                   sx={{px: 2, justifyContent: 'space-between'}}>
-                <Stack style={{width: 'unset', height: 'unset'}}>
-                    <DownloadOptionsDialog {...{
-                        fromGroupKey:groupKey, fileName: makeFileName(plot,band,'fits'), workspace:isWs,
-                        labelWidth, dialogWidth:'100%', dialogHeight:'100%',
-                    }}>
+        <FieldGroup groupKey={groupKey} sx={{display:'flex', flexGrow:1, overflow:'hidden', p:1}}>
+            <Stack spacing={1} flexGrow={1}>
+                <Stack flexGrow={1} overflow='hidden'>
+                    <DownloadOptionsDialog fromGroupKey={groupKey}
+                                           fileName={makeFileName(plot,band,'fits')}
+                                           workspace={isWs}
+                                           labelWidth={labelWidth}
+                                           sx={{flexGrow:1, overflow:'hidden'}}>
                         <MakeFileOptions {...{plot, colors, hasOperation, threeC}}/>
                     </DownloadOptionsDialog>
                 </Stack>
-                <Stack>
-                    <Stack mb={3} sx={{flexDirection: 'row', justifyContent: 'space-between'}}>
-                        <Stack spacing={1} direction='row' alignItems='center'>
-                            <CompleteButton text='Save' onSuccess={ (request) => resultsSuccess(request, pv, popupId )}
-                                            onFail={resultsFail} />
-                            <CompleteButton text='Cancel' groupKey='' primary={false} onSuccess={() => closePopup(popupId)} />
-                        </Stack>
-                        <Stack>
-                            <HelpIcon helpId={'visualization.saveimage'}/>
-                        </Stack>
-                    </Stack>
-                </Stack>
+                <Stacker endDecorator={<HelpIcon helpId={'visualization.saveimage'}/>}>
+                    <CompleteButton text='Save' onSuccess={ (request) => resultsSuccess(request, pv, popupId )}
+                                    onFail={resultsFail} />
+                    <Button onClick={() => closePopup(popupId)}>Cancel</Button>
+                </Stacker>
             </Stack>
         </FieldGroup>
     );

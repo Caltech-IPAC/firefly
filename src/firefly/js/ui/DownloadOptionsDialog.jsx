@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Stack} from '@mui/joy';
+import {Sheet, Stack} from '@mui/joy';
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty} from 'lodash';
@@ -26,8 +26,7 @@ export function getTypeData(key, val='', tip = '', labelV='', labelW='') {
     };
 }
 
-export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWidth, style={}, dialogWidth, dialogHeight,
-                                      workspace}) {
+export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWidth, workspace, sx}) {
 
     const isUpdating = useStoreConnector(isAccessWorkspace);
     const wsList = useStoreConnector(getWorkspaceList);
@@ -52,11 +51,10 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
         );
 
         const showSave = (
-            <Stack sx={{width:'100%',px:'1rem', pt:'1rem', border: '1px solid #a3aeb9',
-                borderRadius: 5,overflow: 'auto', flexGrow:1, mt: 3 }}>
+            <Sheet variant='outlined' sx={{p:1}}>
                 <WorkspaceSave fieldKey={'wsSelect'} files={wsList} value={wsSelect}
                                       tooltip='workspace file system'/>
-            </Stack>
+            </Sheet>
         );
 
         const showNoWSFiles = (
@@ -69,7 +67,7 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
     };
 
     const showLocation = (
-        <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
+        <Stack spacing={1} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
                 <RadioGroupInputField
                     options={[{label: 'Local File', value: LOCALFILE},
                               {label: 'Workspace', value: WORKSPACE }] }
@@ -82,13 +80,8 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
     );
 
     return (
-        <Stack spacing={2} justifyContent={'center'}
-               sx={{
-                 width: '100%',
-               }}>
-            <Stack>
-                {children}
-            </Stack>
+        <Stack spacing={1} sx={sx}>
+            {children}
             <ValidationField
                 fieldKey={'fileName'}
                 initialState= {{
@@ -97,9 +90,9 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
                 label='File name'
                 tooltip='Please enter a filename, a default name will be used if it is blank'
             />
-            <Stack sx={{my:2}}>
-                {workspace && showLocation}
+            {workspace && showLocation}
 
+            <Stack flexGrow={1} overflow='auto'>
                 {where === WORKSPACE && <ShowWorkspace/>}
             </Stack>
         </Stack>
