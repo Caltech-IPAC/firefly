@@ -40,6 +40,8 @@
 - Fixed: ADQL text-entry field swallowing "(Command)-(backquote)" on macOS: [Firefly-1072](https://github.com/Caltech-IPAC/firefly/pull/1436)
 
 ### _Patches 2023.3_
+- 2023.3.5
+    - Bug fix: undefined exception
 - 2023.3.4
     - Bug fix: table sorting no right in DCE [PR](https://github.com/Caltech-IPAC/firefly/pull/1504) 
     - Bug fix: packaging download background failing [Firefly-1419](https://github.com/Caltech-IPAC/firefly/pull/1504) 
