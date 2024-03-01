@@ -1,5 +1,5 @@
 
-import {DialogTitle, Divider, Drawer, ModalClose, Stack, Typography} from '@mui/joy';
+import {DialogTitle, Divider, Drawer, IconButton, ModalClose, Stack, Typography} from '@mui/joy';
 import {object, bool, number, oneOfType, string} from 'prop-types';
 import React, {useContext, useState} from 'react';
 import {dispatchHideDialog, isDialogVisible, SIDE_BAR_ID} from '../core/ComponentCntlr.js';
@@ -24,9 +24,9 @@ export function AppConfigDrawer({containerElement, drawerWidth= '22rem', allowMe
             <ModalClose/>
             <DialogTitle>
                 <Stack direction='row' spacing={1} alignItems='center'>
-                    <img style={{maxWidth:'50px'}} src={appIcon?.startsWith('data') ? appIcon : modifyURLToFull(appIcon)}
-                         onClick={() => closeSideBar()}
-                    />
+                    <IconButton onClick={() => closeSideBar()}>
+                        <img style={{maxWidth:'50px'}} src={appIcon?.startsWith('data') ? appIcon : modifyURLToFull(appIcon)} />
+                    </IconButton>
                     <div>{appTitle}</div>
                 </Stack>
             </DialogTitle>

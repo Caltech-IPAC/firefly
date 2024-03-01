@@ -138,6 +138,8 @@ const SizeInputFieldView= (props) => {
                             value:displayValue,
                             message:errmsg,
                             connectedMarker: connectedMarker || connectContext.controlConnected,
+                            sx:{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }},
+                            tooltip:'enter size within the valid range',
                             endDecorator:(
                                 <Stack direction='row' alignItems='center'>
                                     <Divider orientation='vertical'/>
@@ -159,8 +161,6 @@ const SizeInputFieldView= (props) => {
                                     />
                                 </Stack>
                             ),
-                            sx:{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }},
-                            tooltip:'enter size within the valid range'
                         }} />
                     </Stack>
                 </FormControl>

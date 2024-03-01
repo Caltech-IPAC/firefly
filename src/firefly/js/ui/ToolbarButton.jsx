@@ -96,7 +96,7 @@ export const ToolbarButton = memo((props) => {
 
 
     const b=  (
-        <Tooltip title={tip} {...slotProps?.tooltip}>
+        <Tooltip followCursor={true} title={tip} {...slotProps?.tooltip}>
             <Stack {...{direction:'row', sx, alignItems:'center', ref:setupRef, position:'relative' }} {...slotProps?.root}>
                 <TbCheckBox {...{hasCheckBox, CheckboxOnIcon, CheckboxOffIcon, checkBoxOn, onClick:handleClick}}/>
                 {useIconButton ?
