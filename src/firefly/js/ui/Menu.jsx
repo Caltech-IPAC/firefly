@@ -353,7 +353,7 @@ function tabsUpdated(menu) {
 
 function getTip(title, action) {
     if (title) return title;
-    if (action===UploadCmd) return  'Upload catalogs,tables, FITS, MOCs, or UWS job file';
+    if (action===UploadCmd) return  'Upload catalogs, tables, FITS, MOCs, or UWS job file';
     if (action===TapCmd) return 'General TAP search for any TAP server';
     return undefined;
 }
