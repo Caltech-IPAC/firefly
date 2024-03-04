@@ -60,7 +60,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
      * @return HttpServiceInput object or null
      * @throws DataAccessException when encountering an error
      */
-     HttpServiceInput createInput(TableServerRequest request) throws DataAccessException {
+     protected HttpServiceInput createInput(TableServerRequest request) throws DataAccessException {
         return null;
      }
 
@@ -175,7 +175,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
 //====================================================================
 //  UWS utils
 //====================================================================
-    static DataAccessException createDax(String url, String title, String errMsg) {
+    protected static DataAccessException createDax(String title, String url, String errMsg) {
         String msg = String.format("%s from the URL: [%s]", title, url);
         if (errMsg != null) msg += "\n\t with exception: " + errMsg;
         return new DataAccessException(msg);
