@@ -210,20 +210,22 @@ function getObsCoreRowMetaInfo(table,row) {
 function createObsCoreTitle(table,row) {
  // 1. try a template
     const template= getAppOptions().tapObsCore?.productTitleTemplate;
-    if (!(template??'').trim()) return '';
-    const templateColNames= template && getColNameFromTemplate(template);
-    const columns= getColumns(table);
-    if (templateColNames?.length && columns?.length) {
-        const cNames= columns.map( ({name}) => name);
-        const colObj= templateColNames.reduce((obj, v) => {
-            if (cNames.includes(v)) {
-                obj[v]= getCellValue(table,row,v);
+    if (template?.trim()==='') return ''; // setting template to empty string disables all title guessing
+    if (!template) {
+        const templateColNames= template && getColNameFromTemplate(template);
+        const columns= getColumns(table);
+        if (templateColNames?.length && columns?.length) {
+            const cNames= columns.map( ({name}) => name);
+            const colObj= templateColNames.reduce((obj, v) => {
+                if (cNames.includes(v)) {
+                    obj[v]= getCellValue(table,row,v);
+                }
+                return obj;
+            },{});
+            if (Object.keys(colObj).length===templateColNames.length) {
+                const titleStr= tokenSub(colObj,template);
+                if (titleStr) return titleStr;
             }
-            return obj;
-        },{});
-        if (Object.keys(colObj).length===templateColNames.length) {
-            const titleStr= tokenSub(colObj,template);
-            if (titleStr) return titleStr;
         }
     }
  // 2. try obs_title
