@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Button, Card, Divider, Stack} from '@mui/joy';
+import {Box, Button, Card, Divider, Sheet, Stack} from '@mui/joy';
 /**
  *  2/20/2018 LZ
  *  IRSA-663
@@ -194,7 +194,11 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                                 </Box>
                             </Stack>
                         </SplitContent>
-                        <SplitContent>{xyPlot}</SplitContent>
+                        <SplitContent>
+                            <Sheet variant='outlined' sx={{height:1, borderRadius:5}}>
+                                {xyPlot}
+                            </Sheet>
+                        </SplitContent>
                     </SplitPane>
                     <SplitContent>{imagePlot}</SplitContent>
                 </SplitPane>
