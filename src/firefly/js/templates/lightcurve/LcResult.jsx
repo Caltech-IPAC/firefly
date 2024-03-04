@@ -195,8 +195,10 @@ const StandardView = ({visToolbar, title, searchDesc, imagePlot, xyPlot, tables,
                             </Stack>
                         </SplitContent>
                         <SplitContent>
-                            <Sheet variant='outlined' sx={{height:1, borderRadius:5}}>
-                                {xyPlot}
+                            <Sheet variant='outlined' sx={ (theme) => ({ml:1/2, height:1, borderRadius:theme.radius.md})}>
+                                <Stack sx={{height:1, width:1, p:1/4}}>
+                                    {xyPlot}
+                                </Stack>
                             </Sheet>
                         </SplitContent>
                     </SplitPane>
