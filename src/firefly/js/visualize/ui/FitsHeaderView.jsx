@@ -177,8 +177,7 @@ function renderColorBandsFitsHeaders(plot, fitsHeaderInfo, popupId) {
     return (
         <Stack sx={ popupPanelResizableSx} >
           <Stack {...{width:1, height:1, direction: 'row', resize:'none'}}>
-              <Tabs {...{sx:{width:1}, slotProps:{panel:{sx:{p:0}}}, defaultSelected:0, useFlex:true,
-                    onTabSelect:onBandSelected(fitsHeaderInfo) }}>
+              <Tabs {...{sx:{width:1}, onTabSelect:onBandSelected(fitsHeaderInfo) }}>
                   {renderSingleTab(plot, bands[0],fitsHeaderInfo )}
                   {renderSingleTab(plot, bands[1],fitsHeaderInfo )}
                   {bands.length===3 && renderSingleTab(plot, bands[2],fitsHeaderInfo )}

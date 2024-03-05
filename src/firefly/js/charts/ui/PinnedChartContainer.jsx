@@ -82,7 +82,7 @@ export const PinnedChartContainer = (props) => {
     } else {
         return (
             <Stack id='chart-pinned-tabs' overflow='hidden' height={1}>
-                <StatefulTabs componentKey={PINNED_VIEWER_ID} defaultSelected={0} useFlex={true} style={{flex: '1 1 0', marginTop: 1}}>
+                <StatefulTabs componentKey={PINNED_VIEWER_ID}>
                     <Tab name={activeLabel}>
                         <ActiveChartsPanel {...props}/>
                     </Tab>

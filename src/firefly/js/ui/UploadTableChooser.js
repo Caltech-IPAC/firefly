@@ -272,7 +272,7 @@ const TapUploadPanel= ({setUploadInfo,groupKey= 'table-chooser',defaultColsEnabl
         <Stack style={{ resize: 'both', overflow: 'hidden', zIndex: 1, pt:1, minWidth: 600, minHeight: 500}}>
             <FieldGroupTabs initialState={{value: 'upload'}} fieldKey='upload-type-tabs' groupKey={groupKey}
                             sx={{width: 1,  flex: '1 1 auto'}}>
-                <Tab name='Upload Tables' id='upload' style={{fontSize:'larger'}}>
+                <Tab name='Upload Tables' id='upload' sx={{fontSize:'larger'}}>
                     <FileUploadDropdown {...{
                         sx:{height:1,
                             '.ff-FileUploadViewPanel-file':{ml:3},
@@ -283,7 +283,7 @@ const TapUploadPanel= ({setUploadInfo,groupKey= 'table-chooser',defaultColsEnabl
                         onSubmit:(request) => uploadSubmit(request,setUploadInfo,defaultColsEnabledObj),
                     }}/>
                 </Tab>
-                <Tab name='Loaded Tables' id='tableLoad' style={{fontSize:'larger'}}>
+                <Tab name='Loaded Tables' id='tableLoad' sx={{fontSize:'larger'}}>
                         <LoadedTables {...{
                             style:{height: '100%', width:'100%'}, keepState: true, groupKey:groupKey+'-tableLoad',
                             onCancel:() => dispatchHideDialog(dialogId),

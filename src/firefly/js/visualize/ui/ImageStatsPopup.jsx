@@ -119,7 +119,7 @@ function ImageStatsTab({statsResult, plotId})
 
     return (
         <Stack pt={1}>
-            <Tabs useFlex={true}>
+            <Tabs>
                 {allTabs}
             </Tabs>
             <ImageAreaStatsClose plotId={plotId}/>

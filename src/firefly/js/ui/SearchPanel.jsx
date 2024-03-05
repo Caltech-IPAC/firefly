@@ -61,7 +61,7 @@ export function SearchPanel({style={}, initArgs={}}) {
         return (
             <Stack id='search-tabs' flexGrow={1}>
                 {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
-                <StatefulTabs componentKey={`SearchPanel_${title}`} onTabSelect={onTabSelect} resizable={true} useFlex={true} borderless={true} contentStyle={{backgroundColor: 'transparent'}}>
+                <StatefulTabs componentKey={`SearchPanel_${title}`} onTabSelect={onTabSelect}>
                     {searchesAsTabs(allSearchItems, initArgs)}
                 </StatefulTabs>
             </Stack>

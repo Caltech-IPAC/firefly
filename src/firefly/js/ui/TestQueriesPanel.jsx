@@ -139,7 +139,7 @@ export class TestQueriesPanel extends PureComponent {
                     <FieldGroup groupKey='TEST_CAT_PANEL' keepState={true}
                                 style={{height:'100%', display:'flex', flexDirection:'column'}}>
                         <FieldGroupTabs initialState={{ value:'2massImage' }} fieldKey='Tabs' style={{flexGrow:1}} >
-                            <Tab name='2Mass Search' id='2massImage'>
+                            <Tab name='2Mass Search' id='2massImage' sx={{p:1}}>
                                 <div>{render2MassSearch(fields)}</div>
                             </Tab>
                             <Tab name='Inset Example' id='inset1'>

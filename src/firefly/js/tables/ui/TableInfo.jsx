@@ -31,9 +31,9 @@ export function TableInfo({tbl_id, tabsProps, ...props}) {
                 </Tab>
                 }
                 <Tab name='Table Metadata'>
-                    <div style={{width: '100%', height: '100%', overflow: 'auto'}}>
+                    <Stack p={1} overflow='auto'>
                         <MetaContent tbl_id={tbl_id}/>
-                    </div>
+                    </Stack>
                 </Tab>
             </StatefulTabs>
             <Stack alignItems='end' pr={1}>
