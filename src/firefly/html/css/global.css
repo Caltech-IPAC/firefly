@@ -524,3 +524,7 @@ div.rootStyle img {
     flex-direction: column;
     flex-grow: 1;
 }
+
+[data-joy-color-scheme="dark"] img.old-ff-icon-img {
+    filter: invert(1);
+}

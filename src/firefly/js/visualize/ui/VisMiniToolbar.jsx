@@ -38,11 +38,11 @@ import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {
     dispatchChangeActivePlotView, dispatchChangeExpandedMode, dispatchChangeHiPS, dispatchFlip,
-    dispatchOverlayColorLocking, dispatchRestoreDefaults, dispatchRotate, ExpandType, visRoot
+    dispatchRestoreDefaults, dispatchRotate, ExpandType, visRoot
 } from '../ImagePlotCntlr.js';
 import {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {
-    findPlotGroup, getActivePlotView, getAllDrawLayersForPlot, getPlotViewById, hasOverlayColorLock, hasWCSProjection,
+    getActivePlotView, getAllDrawLayersForPlot, getPlotViewById, hasWCSProjection,
     isImageCube, isThreeColor, primePlot, pvEqualExScroll
 } from '../PlotViewUtil.js';
 import {
@@ -57,18 +57,13 @@ import {
 
 import DRILL_DOWN from 'images/drill-down.png';
 import COMPASS_OFF from 'images/icons-2014/28x28_Compass.png';
-import COMPASS_ON from 'images/icons-2014/28x28_CompassON.png';
 import NEW_IMAGE from 'images/icons-2014/28x28_FITS_NewImage.png';
 import STRETCH from 'images/icons-2014/28x28_Log.png';
 import DS9_REGION from 'images/icons-2014/DS9.png';
-import GRID_ON from 'images/icons-2014/GreenGrid-ON.png';
 import GRID_OFF from 'images/icons-2014/GreenGrid.png';
 import MARKER from 'images/icons-2014/MarkerCirclesIcon_28x28.png';
-import ROTATE_NORTH_ON from 'images/icons-2014/RotateToNorth-ON.png';
 import ROTATE_NORTH_OFF from 'images/icons-2014/RotateToNorth.png';
 import MASK from 'images/mask_28x28.png';
-// import LOCKED from 'images/OverlayLocked.png';
-// import UNLOCKED from 'images/OverlayUnlocked.png';
 import PropTypes from 'prop-types';
 
 const omList= ['plotViewAry'];
@@ -124,7 +119,7 @@ export const VisMiniToolbar = memo( ({sx, manageExpand=true, expandGrid=false, v
 });
 
 VisMiniToolbar.propTypes= {
-    style : PropTypes.object,
+    sx : PropTypes.object,
     manageExpand : PropTypes.bool,
     expandGrid: PropTypes.bool,
     viewerId: PropTypes.string,
@@ -182,7 +177,6 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
     const plot= primePlot(pv);
     const image= !isHiPS(plot);
     const hips= isHiPS(plot);
-    const plotGroupAry= visRoot.plotGroupAry;
     const mi= pv?.plotViewCtx.menuItemKeys ?? getDefMenuItemKeys();
     const enabled= Boolean(plot);
     const isExpanded= visRoot.expandedMode!==ExpandType.COLLAPSE;
@@ -221,15 +215,8 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
             <ToolsDropDown tip='Tools drop down: save, rotate, extract, and more'
                                    dropDown={<ToolsDrop pv={pv} mi={mi} image={image} hips={hips} visRoot={visRoot}
                                                         modalEndInfo={modalEndInfo}
-                                                        plot={plot} unavailableCnt={unavailableCnt}
-                                                        plotGroupAry={plotGroupAry}
+                                                        unavailableCnt={unavailableCnt}
                                                         showRotateLocked={showRotateLocked}/>} />
-
-            {/*save this: We may end up putting zoom back*/}
-            {/*{mi.zoomDropDownMenu && <DropDownToolbarButton icon={ZOOM_DROP} tip='Zoom drop down'*/}
-            {/*                                              enabled={enabled}*/}
-            {/*                                              imageStyle={image24x24}*/}
-            {/*                                              dropDown={<ZoomDrop pv={pv} mi={mi} image={image}/>} />}*/}
 
             <ToolbarHorizontalSeparator/>
             <ColorButton colorDrops={colorDrops} enabled={enabled} pv={pv} />
@@ -248,14 +235,6 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
 
             {unavailableCnt<2 && farLeftButtonEnabled && <ToolbarHorizontalSeparator/>}
 
-            {/*{unavailableCnt<2 && <SimpleLayerOnOffButton plotView={pv}*/}
-            {/*                        isIconOn={pv&&plot? isOverlayColorLocked(pv,plotGroupAry) : false }*/}
-            {/*                        tip='Lock all images for color changes and overlays.'*/}
-            {/*                        iconOn={LOCKED} iconOff={UNLOCKED}*/}
-            {/*                        visible={mi.overlayColorLock} imageStyle={image24x24}*/}
-            {/*                        onClick={() => toggleOverlayColorLock(pv,plotGroupAry)} />*/}
-            {/*}*/}
-
             {unavailableCnt<1 &&
                     <MatchLockDropDown visRoot={visRoot} enabled={enabled} imageStyle={image24x24}
                                        visible={mi.matchLockDropDown} />
@@ -273,6 +252,7 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
 VisMiniToolbarView.propTypes= {
     visRoot : PropTypes.object.isRequired,
     dlCount : PropTypes.number,
+    tips: PropTypes.object,
     manageExpand : PropTypes.bool,
     expandGrid: PropTypes.bool,
     availableWidth: PropTypes.number,
@@ -310,17 +290,6 @@ function doRotateNorth(pv,rotate) {
     }
 }
 
-
-function isOverlayColorLocked(pv,plotGroupAry){
-    const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
-    return hasOverlayColorLock(pv,plotGroup);
-}
-
-function toggleOverlayColorLock(pv,plotGroupAry){
-    const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
-    dispatchOverlayColorLocking(pv.plotId,!hasOverlayColorLock(pv,plotGroup));
-}
-
 export function expand(plotId, grid) {
     dispatchChangeActivePlotView(plotId);
     dispatchSetLayoutMode( LO_MODE.expanded, LO_VIEW.images );
@@ -355,20 +324,8 @@ const ColorButton= ({colorDrops,enabled,pv}) => (
                            onClick={() =>showColorDialog()}/>
 );
 
-// save: if we put zoom back
-// const ZoomDrop= ({pv,mi, image}) => (
-//     <SingleColumnMenu style={{minWidth:1}}>
-//         <ZoomButton plotView={pv} zoomType={ZoomType.UP} visible={mi.zoomUp} />
-//         <ZoomButton plotView={pv} zoomType={ZoomType.DOWN} visible={mi.zoomDown} />
-//         <ZoomButton plotView={pv} zoomType={ZoomType.ONE} visible={mi.zoomOriginal && image} />
-//         <ZoomButton plotView={pv} zoomType={ZoomType.FIT} visible={mi.zoomFit} />
-//         <ZoomButton plotView={pv} zoomType={ZoomType.FILL} visible={mi.zoomFill} />
-//     </SingleColumnMenu>
-// );
-
-
-function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, modalEndInfo,
-                       showRotateLocked, unavailableCnt, plotGroupAry}) {
+function ToolsDrop({visRoot, pv,mi, enabled, image, hips, modalEndInfo,
+                       showRotateLocked, unavailableCnt}) {
 
     const makeMatchLock= mi.matchLockDropDown && unavailableCnt>0;
     const makeColorLock= mi.overlayColorLock && unavailableCnt>1;
@@ -376,10 +333,8 @@ function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, modalEndInfo,
     return (
         <DropDownMenu>
             <Stack>
-                <div style={{alignSelf:'flex-end'}}>
-                    <HelpIcon helpId={'visualization.toolbar'}/>
-                </div>
-                <SaveRestoreRow sx={{mt:-2}} pv={pv} mi={mi} enabled={enabled} image={image} hips={hips}/>
+                <HelpIcon sx={{alignSelf:'flex-end'}} helpId={'visualization.toolbar'}/>
+                <SaveRestoreRow sx={{mt:-2.5}} pv={pv} mi={mi} enabled={enabled} image={image} hips={hips}/>
                 <RotateFlipRow  pv={pv} mi={mi} enabled={enabled}
                                showRotateLocked={showRotateLocked} image={image}/>
                 <LayersRow pv={pv} mi={mi} enabled={enabled} image={image}
@@ -389,13 +344,7 @@ function ToolsDrop({visRoot, pv,plot, mi, enabled, image, hips, modalEndInfo,
                                             modalEndInfo={modalEndInfo}/>
                 }
                 {(makeMatchLock || makeColorLock) && <div style={{display:'flex', alignItems:'center', paddingTop:10}}>
-                    <div style={{width:130, fontSize:'larger'}}>More: </div>
-                    {/*{makeColorLock && <SimpleLayerOnOffButton plotView={pv}*/}
-                    {/*                                          isIconOn={pv&&plot? isOverlayColorLocked(pv,plotGroupAry) : false }*/}
-                    {/*                                          tip='Lock all images for color changes and overlays.'*/}
-                    {/*                                          iconOn={LOCKED} iconOff={UNLOCKED}*/}
-                    {/*                                          visible={mi.overlayColorLock}*/}
-                    {/*                                          onClick={() => toggleOverlayColorLock(pv,plotGroupAry)} />}*/}
+                    <Typography level='body-md' width='10em'>More:</Typography>
                     {makeMatchLock && <MatchLockDropDown visRoot={visRoot} enabled={enabled} inDropDown={true}
                                                          visible={mi.matchLockDropDown} />}
                 </div> }

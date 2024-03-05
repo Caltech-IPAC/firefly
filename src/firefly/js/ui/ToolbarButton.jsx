@@ -10,13 +10,6 @@ import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
 import DROP_DOWN_ICON from 'html/images/dd-narrow.png';
 import BrowserInfo, {Platform} from 'firefly/util/BrowserInfo.js';
-import { useColorMode } from './FireflyRoot.jsx';
-
-
-export function makeBadge(cnt, style={}) {
-    const cName= `ff-badge ${cnt<10 ? 'badge-1-digit' : 'badge-2-digit'}`;
-    return <div style={style} className={cName}>{Math.trunc(cnt)}</div>;
-}
 
 
 function getShortCutInfo(shortcutKey) {
@@ -29,6 +22,26 @@ function getShortCutInfo(shortcutKey) {
     else if (!requiresCtrl && !requiresMeta && shortcutKey.length!==1) return NO_SHORT;
     const testKey= (requiresCtrl || requiresMeta) ? shortcutKey[5] : shortcutKey[0];
     return {ctrl:requiresCtrl, meta:requiresMeta, key:testKey, hasShortcut:true};
+}
+
+function makeImage(icon,style={},className='') {
+    if (!icon) return;
+    if (isString(icon)) {
+        return <img className={`old-ff-icon-img${className?' ':''}${className}`} src={icon} style={{...style}}/>;
+    }
+    else if (!className) {
+        return icon;
+    }
+    else {
+        const cName= icon.props?.className ?? '';
+        const newCname= cName ? `${cName} ${className}` : className;
+        return React.cloneElement(icon, { className:newCname} );
+    }
+}
+
+export function IconButtonWrapper({icon,  title, ...rest }) {
+    const b = <IconButton {...{title,...rest}}> {makeImage(icon)} </IconButton>;
+    return title ? <Tooltip followCursor={true} title={title}>{b}</Tooltip> : b;
 }
 
 /**
@@ -49,16 +62,15 @@ function getShortCutInfo(shortcutKey) {
  */
 export const ToolbarButton = memo((props) => {
     const {
-        icon,text='',tip='',badgeCount=0,enabled=true, visible=true,
+        icon,text='',badgeCount=0,enabled=true, visible=true,
         imageStyle={}, iconButtonSize, shortcutKey='', color='neutral', variant='plain',
-        disableHiding, active, sx, CheckboxOnIcon, CheckboxOffIcon,
+        disableHiding, active, sx, CheckboxOnIcon, CheckboxOffIcon, value,
         useDropDownIndicator= false, hasCheckBox=false, checkBoxOn=false, pressed=false,
         component, slotProps={}, dropPosition={}, dropDownCB, onClick} = props;
 
+    const tip= props.tip || props.title || '';
     const buttonPressed= pressed || active;
     const {current:divElementRef}= useRef({divElement:undefined});
-    const invertStyle= {filter : 'invert(1)'};
-    const doInvert= useColorMode()?.activeMode==='dark' ? invertStyle : {};
 
     const handleClick= (ev) => {
         onClick?.(divElementRef.divElement,ev);
@@ -81,23 +93,17 @@ export const ToolbarButton = memo((props) => {
 
     const setupRef  = (c) => divElementRef.divElement= c;
 
-    let image= undefined;
-    if (isString(icon)) {
-        image= <img src={icon} style={{...imageStyle,...doInvert}} className={allowInput} />;
-    }
-    else {
-        image= icon;
-    }
+    const image= makeImage(icon,imageStyle,allowInput);
     const iSize= iconButtonSize ? {'--IconButton-size': iconButtonSize} : {};
 
     // const image= icon ? <img src={icon} style={imageStyle} className={allowInput} /> : undefined;
     const useIconButton= icon && !text;
-    const dropDownIndicator= useDropDownIndicator ? <img src={DROP_DOWN_ICON} style={doInvert}/> : undefined;
+    const dropDownIndicator= useDropDownIndicator ? makeImage(DROP_DOWN_ICON,undefined,allowInput) : undefined;
 
 
     const b=  (
         <Tooltip followCursor={true} title={tip} {...slotProps?.tooltip}>
-            <Stack {...{direction:'row', sx, alignItems:'center', ref:setupRef, position:'relative' }} {...slotProps?.root}>
+            <Stack {...{direction:'row', sx, value, alignItems:'center', ref:setupRef, position:'relative' }} {...slotProps?.root}>
                 <TbCheckBox {...{hasCheckBox, CheckboxOnIcon, CheckboxOffIcon, checkBoxOn, onClick:handleClick}}/>
                 {useIconButton ?
                     (<IconButton {...{
@@ -118,13 +124,14 @@ export const ToolbarButton = memo((props) => {
                              }),
 
                         className:'ff-toolbar-iconbutton ' + allowInput,
+                        value,
                         component,
                         variant:'soft', color:'neutral' ,
                         'aria-pressed': buttonPressed ? 'true' : 'false',
                         'aria-label':tip, onClick:handleClick, disabled:!enabled}}>
                         {image}
                     </IconButton>) :
-                    <Button {...{color, variant,
+                    <Button {...{color, variant, value,
                         'aria-label':tip, disabled:!enabled, onClick:handleClick,
                         size:'md',
                         className:'ff-toolbar-button ' + allowInput,
@@ -147,7 +154,7 @@ export const ToolbarButton = memo((props) => {
                     </Button>
                 }
                 {useIconButton && useDropDownIndicator &&
-                    <DropDownIndicator {...{dropPosition,onClick:handleClick,doInvert }}/>}
+                    <DropDownIndicator {...{dropPosition,onClick:handleClick,className:allowInput}}/>}
             </Stack>
         </Tooltip>
     );
@@ -159,6 +166,9 @@ ToolbarButton.propTypes= {
     icon : oneOfType([element,string]),
     text : node,
     tip : string,
+    value: string,
+    title: string,
+    pressed: bool,
     shortcutHelp : bool,
     badgeCount : number,
     enabled : bool,
@@ -188,13 +198,13 @@ ToolbarButton.propTypes= {
     variant: string,
 };
 
-const DropDownIndicator= ({dropPosition,onClick,doInvert}) => (
-    <Box {...{ className:'ff-toolbar-dropdown', onClick,
+const DropDownIndicator= ({dropPosition,onClick,className=''}) => (
+    <Box {...{ className:`ff-toolbar-dropdown${className?' ':''}${className}`, onClick,
         sx:{
             minHeight:'unset', minWidth:'unset',backgroundColor:'transparent',
             padding:0, position:'absolute', bottom:'0px', left:'3px', ...dropPosition
         }}}>
-        <img src={DROP_DOWN_ICON} style={doInvert}/>
+        {makeImage(DROP_DOWN_ICON)}
     </Box>
 );
 

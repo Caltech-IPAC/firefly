@@ -1,8 +1,7 @@
-import React from 'react';
 import {isString} from 'lodash';
 import {dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import SearchSelectTool from '../../drawingLayers/SearchSelectTool.js';
-import SelectArea, {getImageBoundsSelection, makeImageBoundingBox} from '../../drawingLayers/SelectArea.js';
+import SelectArea, {getImageBoundsSelection} from '../../drawingLayers/SelectArea.js';
 import {SelectedShape} from '../../drawingLayers/SelectedShape.js';
 import {sprintf} from '../../externalSource/sprintf.js';
 import {AREA} from '../../ui/dynamic/DynamicDef.js';
@@ -18,12 +17,12 @@ import {PlotAttribute} from '../PlotAttribute.js';
 import {getDrawLayerByType, getPlotViewById, isDrawLayerAttached, primePlot} from '../PlotViewUtil.js';
 import {isValidPoint, makeDevicePt, makeImagePt, makeWorldPt, parseWorldPt, pointEquals} from '../Point.js';
 import {computeCentralPointAndRadius, computeDistance, getPointOnEllipse} from '../VisUtil.js';
-import {getDevPixScaleDeg, getImagePixScaleDeg, isImage} from '../WebPlot.js';
+import {getDevPixScaleDeg, isImage} from '../WebPlot.js';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
 import {
     clearModalEndInfo, closeToolbarModalLayers, getModalEndInfo, setModalEndInfo
 } from './ToolbarToolModalEnd.js';
-import {dispatchActiveTarget} from "firefly/core/AppDataCntlr";
+import {dispatchActiveTarget} from '../../core/AppDataCntlr.js';
 
 
 export const SEARCH_REFINEMENT_DIALOG_ID = 'SEARCH_REFINEMENT_DIALOG';
@@ -47,7 +46,7 @@ function getCircumscribedCorners(cc,cen,rx,ry) {
 
     const {x:leftX}= getPointOnEllipse(cen.x,cen.y,rx,ry,16*PI/8);
     const {x:rightX}= getPointOnEllipse(cen.x,cen.y,rx,ry,8*PI/8);
-    const {y:yDiagUp}= getPointOnEllipse(cen.x,cen.y,rx,ry,1*PI/8);
+    const {y:yDiagUp}= getPointOnEllipse(cen.x,cen.y,rx,ry,PI/8);
     const {y:yDiagDown}= getPointOnEllipse(cen.x,cen.y,rx,ry,15*PI/8);
 
     return [

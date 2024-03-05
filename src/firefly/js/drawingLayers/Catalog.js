@@ -30,7 +30,7 @@ import {FilterInfo} from '../tables/FilterInfo.js';
 import DrawUtil from '../visualize/draw/DrawUtil.js';
 import SelectArea from './SelectArea.js';
 import {detachSelectArea} from '../visualize/ui/SelectAreaDropDownView.jsx';
-import CsysConverter, {CysConverter} from '../visualize/CsysConverter.js';
+import {CysConverter} from '../visualize/CsysConverter.js';
 import {parseObsCoreRegion} from '../util/ObsCoreSRegionParser.js';
 import {darker} from '../util/Color';
 import {isDefined} from '../util/WebUtil';
@@ -77,8 +77,7 @@ const pointBehavior= (catalogType) =>
 function creator(initPayload, presetDefaults={}) {
     const {catalogId, tableData, tableMeta, title, catalogType= CatalogType.POINT,
            selectInfo, columns, tableRequest, highlightedRow, color, angleInRadian=false,
-           symbol, size, tblId, dataTooBigForSelection=false, tableSelection,
-           searchTarget, searchTargetSymbol= DrawSymbol.POINT_MARKER, layersPanelLayoutId,
+           symbol, size, tblId, dataTooBigForSelection=false, tableSelection, layersPanelLayoutId,
 
     }= initPayload;
 
@@ -95,11 +94,6 @@ function creator(initPayload, presetDefaults={}) {
     drawingDef.color= (color || tableMeta?.[MetaConst.DEFAULT_COLOR] || getNextColor());
 
 
-    const searchTargetDrawingDef= {...makeDrawingDef(),
-            size: 10,
-            symbol: searchTargetSymbol,
-            color: darker(drawingDef.color)
-         };
 
     const helpText= `Click on ${(catalogType===CatalogType.REGION) ? 'region' : 'point'} to highlight`;
     const options= {
@@ -133,9 +127,6 @@ function creator(initPayload, presetDefaults={}) {
         angleInRadian,
         selectOption: tableSelection,
         tblId: tblId ? tblId : catalogId,
-        searchTarget,
-        searchTargetVisible: true,
-        searchTargetDrawingDef,
     };
 }
 
@@ -241,8 +232,7 @@ function getLayerChanges(drawLayer, action) {
 
     dd[DataTypes.HIGHLIGHT_DATA]= null;
 
-    if (changes.tableData || changes.selectOption || changes.searchTargetDrawingDef ||
-        isDefined(changes.searchTargetVisible) ||
+    if (changes.tableData || changes.selectOption ||
         (changes.selectInfo && selectOption === TableSelectOptions.selected.key)) {
         dd[DataTypes.DATA]= null;
     }
@@ -319,15 +309,6 @@ function computeDrawLayer(drawLayer, tableData, columns) {
 }
 
 
-function computeSearchTarget(drawLayer) {
-    if (!drawLayer.searchTarget || !drawLayer.searchTargetVisible) return;
-    const {searchTargetDrawingDef:{symbol,size,color}}= drawLayer;
-    const tSym= PointDataObj.make(drawLayer.searchTarget, size, symbol);
-    tSym.color= color;
-    return tSym;
-
-}
-
 
 function computePointDrawLayer(drawLayer, tableData, columns) {
 
@@ -371,8 +352,6 @@ function computePointDrawLayer(drawLayer, tableData, columns) {
         drawData= dataArray.map( (d) => PointDataObj.make(makeDrawPoint(d)));
     }
     
-    drawLayer.searchTarget && drawData.push(computeSearchTarget(drawLayer));
-
     return drawData;
 }
 
@@ -390,7 +369,6 @@ function computeBoxDrawLayer(drawLayer, tableData, columns) {
         });
         return FootprintObj.make([fp]);
     }).filter( (fp) => fp);
-    drawLayer.searchTarget && drawData.push(computeSearchTarget(drawLayer));
     return drawData;
 }
 
@@ -408,7 +386,6 @@ function computeRegionLayer(drawLayer, tableData, regionCols) {
         prev.push(...colObjs);
         return prev;
     }, []);
-    drawLayer.searchTarget && drawData.push(computeSearchTarget(drawLayer));
     return drawData;
 }
 

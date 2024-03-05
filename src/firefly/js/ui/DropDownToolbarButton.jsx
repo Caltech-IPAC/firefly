@@ -159,6 +159,7 @@ export class DropDownToolbarButton extends PureComponent {
             const onDropDownInput= ev &&
                 (focusIsDropwdownInput && tgt.tagName==='INPUT') ||
                 (tgt.className?.includes?.('allow-input')) ||
+                (tgt.parentElement.className?.includes?.('allow-input')) ||
                 (tgt.tagName==='SPAN' && tgt.className?.includes?.('MuiSlider'));
 
             if (!clickOnButton && !onDropDownInput && dropDownOwnerId===this.ownerId) {

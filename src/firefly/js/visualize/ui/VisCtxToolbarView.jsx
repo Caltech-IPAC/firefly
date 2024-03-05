@@ -41,16 +41,9 @@ import {isSpacialActionsDropVisible, ActionsDropDownButton} from '../../ui/Actio
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {DropDownToolbarButton} from 'firefly/ui/DropDownToolbarButton.jsx';
 
-import CROP from 'html/images/icons-2014/24x24_Crop.png';
-import STATISTICS from 'html/images/icons-2014/24x24_Statistics.png';
-import SELECTED from 'html/images/icons-2014/24x24_Checkmark.png';
-import UNSELECTED from 'html/images/icons-2014/24x24_CheckmarkOff_Circle.png';
-import FILTER from 'html/images/icons-2014/24x24_FilterAdd.png';
-import CLEAR_FILTER from 'html/images/icons-2014/24x24_FilterOff_Circle.png';
 import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
 import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import SELECTED_ZOOM from 'html/images/icons-2014/ZoomFitToSelectedSpace.png';
-import SELECTED_RECENTER from 'html/images/icons-2014/RecenterImage-selection.png';
 
 const image24x24={width:24, height:24};
 
@@ -238,7 +231,7 @@ export const VisCtxToolbarView= memo((props) => {
         showFilter || showClearFilter || !isEmpty(extensionAry) || hips || canConvertHF;
 
     const makeButtons= () => (
-        <Fragment>
+        <Stack {...{direction:'row', flexWrap:'wrap'}}>
 
             {showSelectionTools && image &&
             <CropButton tip='Crop the image to the selected area' visible={mi.crop} onClick={() => crop(pv)}/>}
@@ -275,7 +268,7 @@ export const VisCtxToolbarView= memo((props) => {
 
             {isSpacialActionsDropVisible(searchActions,pv) && <ActionsDropDownButton {...{searchActions,pv, style:{marginTop:3}}}/> }
             {makeExtensionButtons(extensionAry,pv)}
-        </Fragment>
+        </Stack>
         );
 
 
@@ -300,14 +293,14 @@ export const VisCtxToolbarView= memo((props) => {
 
    const makeTbSX= (theme) => ({
        backgroundColor: ctxToolbarBG(theme,94),
-       width: '100%',
-       height: '2.2rem',
+       width: 1,
        position: 'relative',
        whiteSpace: 'nowrap',
        overflow: 'hidden',
        verticalAlign: 'top',
-       flexWrap: 'nowrap',
+       flexWrap: 'wrap',
        alignItems: 'center',
+       pr: 1.5,
    } );
 
 
@@ -408,7 +401,7 @@ export function MultiImageControllerView({plotView:pv}) {
     if (cIdx<0) cIdx= 0;
 
     return (
-        <Stack {...{direction:'row', flexWrap:'nowrap', alignItems:'center',  height:28, position:'relative', title:tooltip }}>
+        <Stack {...{direction:'row', flexWrap:'wrap', alignItems:'center',  position:'relative', title:tooltip }}>
             {startStr && <Typography {...{level:'body-sm', width: '13em', overflow: 'hidden',
                 textOverflow: 'ellipsis', pl:1, textAlign: 'end'} }>
                 <span style={{fontStyle: 'italic', fontWeight: 'bold'}}> {startStr} </span>
@@ -416,12 +409,14 @@ export function MultiImageControllerView({plotView:pv}) {
             </Typography>}
 
             {multiHdu && <FrameNavigator {...{pv, currPlotIdx:cIdx, minForInput:4, displayType:'hdu',tooltip}} />}
-            {cube && multiHdu && <Divider orientation='vertical' sx={{mx:.5}}  />}
-            {cube &&
-                <Typography {...{level:'body-sm', fontWeight:'bold', fontStyle: 'italic',
-                    overflow: 'hidden', textOverflow: 'ellipsis', pl: 1}}>Plane: </Typography>}
-            {wlStr && <Typography {...{level:'body-sm', pl:.5}}>{wlStr}</Typography>}
-            {cube && <FrameNavigator {...{pv, currPlotIdx:cIdx, minForInput:6, displayType:image?'cube':'hipsCube',tooltip}} /> }
+            <Stack {...{direction:'row', alignItems:'center'}}>
+                {cube && multiHdu && <Divider orientation='vertical' sx={{mx:.5}}  />}
+                {cube &&
+                    <Typography {...{level:'body-sm', fontWeight:'bold', fontStyle: 'italic',
+                        overflow: 'hidden', textOverflow: 'ellipsis', pl: 1}}>Plane: </Typography>}
+                {wlStr && <Typography {...{level:'body-sm', pl:.5}}>{wlStr}</Typography>}
+                {cube && <FrameNavigator {...{pv, currPlotIdx:cIdx, minForInput:6, displayType:image?'cube':'hipsCube',tooltip}} /> }
+            </Stack>
         </Stack>
     );
 }

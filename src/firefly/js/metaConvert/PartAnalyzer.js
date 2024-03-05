@@ -51,7 +51,7 @@ export function analyzePart(part, request, table, row, fileFormat, dataTypeHint,
  */
 function findAvailableTypesForAnalysisPart(part, fileFormat) {
     const {type}= part;
-    const naxis= getIntHeader('NAXIS',part,0);
+    const naxis= getIntHeaderFromAnalysis('NAXIS',part,0);
     if (type===FileAnalysisType.HeaderOnly || type===FileAnalysisType.Unknown) return [];
     if (type!==FileAnalysisType.Image &&  fileFormat!=='FITS' &&  is1DImage(part) || type===FileAnalysisType.Table ) return [DPtypes.TABLE];
     if (type===FileAnalysisType.Image && naxis===1) {
@@ -64,11 +64,11 @@ function findAvailableTypesForAnalysisPart(part, fileFormat) {
 
 
 function imageCouldBeTable(part) {
-    const naxis= getIntHeader('NAXIS',part,0);
+    const naxis= getIntHeaderFromAnalysis('NAXIS',part,0);
     if (naxis<1) return false;
     if (naxis===1) return true;
     const naxisAry= [];
-    for(let i=0; i<naxis;i++) naxisAry[i]= getIntHeader(`NAXIS${i+1}`,part,0);
+    for(let i=0; i<naxis;i++) naxisAry[i]= getIntHeaderFromAnalysis(`NAXIS${i+1}`,part,0);
     if (naxis===2) return naxisAry[1]<=30;
     else {
         let couldBeTable= true;
@@ -78,11 +78,11 @@ function imageCouldBeTable(part) {
 }
 
 function is1DImage(part) {
-    const naxis= getIntHeader('NAXIS',part,0);
+    const naxis= getIntHeaderFromAnalysis('NAXIS',part,0);
     if (naxis<1) return false;
     if (naxis===1) return true;
     const naxisAry= [];
-    for(let i=0; i<naxis;i++) naxisAry[i]= getIntHeader(`NAXIS${i+1}`,part,0);
+    for(let i=0; i<naxis;i++) naxisAry[i]= getIntHeaderFromAnalysis(`NAXIS${i+1}`,part,0);
     let is1DImage= true;
     for(let i=1; (i<naxis);i++) if (naxisAry[i]>1) is1DImage= false;
     return is1DImage;
@@ -292,8 +292,8 @@ function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,
 }
 
 
-export const getIntHeader= (header, part, def) => {
-    const resultStr= getHeader(header,part);
+export const getIntHeaderFromAnalysis= (header, part, def) => {
+    const resultStr= getTableHeaderFromAnalysis(header,part);
     if (!resultStr) return def;
     const num= Number(resultStr);
     return isNaN(num) ? def : num;
@@ -305,13 +305,13 @@ function getHeadersThatMatch(header, part) {
         .map( (row) => row[2]) ?? [];
 }
 
-function getHeadersThatStartsWith(header, part) {
+function getHeadersThatStartsWithFromAnalysis(header, part) {
     return part.details?.tableData?.data
         .filter( (row) => row[1].startsWith(header))
         .map( (row) => row[2]) ?? [];
 }
 
-function getHeader(header, part) {
+export function getTableHeaderFromAnalysis(header, part) {
     const data=part.details?.tableData?.data;
     if (!data) return undefined;
     const foundRow= part.details.tableData.data.find( (row) => row[1].toLowerCase()===header.toLowerCase());
@@ -332,7 +332,7 @@ const tabNumericDataTypes= ['double', 'real', 'float', 'int', 'long', 'd', 'r', 
  */
 function getColumnNames(part, fileFormat) {
     if (fileFormat===Format.FITS) {
-        const naxis= getIntHeader('NAXIS',part);
+        const naxis= getIntHeaderFromAnalysis('NAXIS',part);
         const {tableColumnNames}= part;
         if (naxis===1) {
             if (isArray(tableColumnNames) && tableColumnNames.length===2) {
@@ -343,14 +343,14 @@ function getColumnNames(part, fileFormat) {
             }
         }
         else {
-            const ttNamesAry= getHeadersThatStartsWith('TTYPE',part);
+            const ttNamesAry= getHeadersThatStartsWithFromAnalysis('TTYPE',part);
             if (ttNamesAry.length) {
-                const ttFormAry= getHeadersThatStartsWith('TFORM',part);
+                const ttFormAry= getHeadersThatStartsWithFromAnalysis('TFORM',part);
 
                 return ttFormAry.length===ttNamesAry.length ?    // return if we can tell - then all numeric columns else all columns
                     ttNamesAry.filter( (n,idx) => isFitsTableDataTypeNumeric(ttFormAry[idx][ttFormAry[idx].length-1])) : ttNamesAry;
             }
-            const naxis2= getIntHeader('NAXIS2',part,0);
+            const naxis2= getIntHeaderFromAnalysis('NAXIS2',part,0);
             if (naxis2<=30) {
                 if (isArray(tableColumnNames) && tableColumnNames.length===naxis2+1) {
                     return tableColumnNames;
@@ -382,9 +382,9 @@ function getImageAsTableColCount(part, fileFormat) {
     if (part.type!==FileAnalysisType.Image) return 0;
     if (fileFormat !== 'FITS') return 0;
     if (is1DImage(part)) return 2;
-    const naxis = getIntHeader('NAXIS', part);
+    const naxis = getIntHeaderFromAnalysis('NAXIS', part);
     if (naxis!==2) return 0;
-    const naxis2= getIntHeader('NAXIS2',part,0);
+    const naxis2= getIntHeaderFromAnalysis('NAXIS2',part,0);
     if (naxis2>30) return 0;
     return naxis2+1;
 }
@@ -392,9 +392,9 @@ function getImageAsTableColCount(part, fileFormat) {
 function getRowCnt(part, fileFormat) {
     if (part.totalTableRows>0) return part.totalTableRows;
     if (fileFormat==='FITS') {
-        const naxis2= getIntHeader('NAXIS2',part);
-        const naxis1= getIntHeader('NAXIS1',part);
-        const ttNamesAry= getHeadersThatStartsWith('TTYPE',part);
+        const naxis2= getIntHeaderFromAnalysis('NAXIS2',part);
+        const naxis1= getIntHeaderFromAnalysis('NAXIS1',part);
+        const ttNamesAry= getHeadersThatStartsWithFromAnalysis('TTYPE',part);
         if (ttNamesAry.length) {
             return isNaN(naxis2) ? -1 : naxis2;
         }

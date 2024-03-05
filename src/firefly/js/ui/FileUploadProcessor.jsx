@@ -16,6 +16,7 @@ import WebPlotRequest from 'firefly/visualize/WebPlotRequest';
 import RangeValues from 'firefly/visualize/RangeValues';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from 'firefly/visualize/MultiViewCntlr';
 import {PlotAttribute} from 'firefly/visualize/PlotAttribute';
+import {getTableHeaderFromAnalysis} from '../metaConvert/PartAnalyzer.js';
 
 import {isAnalysisTableDatalink} from '../voAnalyzer/VoDataLinkServDef.js';
 import {fetchDatalinkUITable} from './dynamic/FetchDatalinkTable.js';
@@ -339,12 +340,20 @@ function sendRegionRequest(fileCacheKey,currentReport) {
     }
 }
 
+function getExtMarker(part, index) {
+    return getTableHeaderFromAnalysis('EXTNAME', part) ??
+        getTableHeaderFromAnalysis('UTYPE', part) ??
+        index;
+}
+
 function sendTableRequest(tableIndices, fileCacheKey, treatAsSpectrum, currentReport, loadToUI= true, metaData={}) {
     const {fileName, parts=[]} = currentReport;
 
     tableIndices.forEach((idx) => {
         const {index} = parts[idx];
-        const title = parts.length > 1 ? `${fileName}-${index}` : fileName;
+        const fileRoot= fileName?.split('.')?.[0] ?? fileName;
+        const extMarker= getExtMarker(parts[idx], idx);
+        const title = parts.length > 1 ? `${fileRoot}:${extMarker}` : fileRoot;
         const META_INFO= {...metaData};
         if (treatAsSpectrum) META_INFO[MetaConst.DATA_TYPE_HINT]= 'spectrum';
         const options=  {META_INFO};

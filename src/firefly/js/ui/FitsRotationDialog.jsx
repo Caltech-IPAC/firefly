@@ -84,47 +84,43 @@ function FitsRotationImmediatePanel() {
         changeRotation(newRot);
     };
 
-    if (!pv) return (<div style={{whiteSpace:'nowrap', padding:'10px 35px'}}>No Image Loaded</div>);
+    if (!pv) return (<Typography style={{whiteSpace:'nowrap', padding:'10px 35px'}}>No Image Loaded</Typography>);
     
     return (
         <Box className={'disable-select'}>
             <Box pt={0} pr={2.5} pb={1.25} pl={2.5}>
-                <Stack justifyContent='space-between' alignItems='center' p={'0px 3px'} spacing={1}>
-                    <Stack direction='row' justifyContent='space-evenly' alignItems='center' spacing={1}>
-                        <StateInputField defaultValue={currRotation+''} valueChange={(v) => changeRotation(v.value)}
-                                         label={'Angle: '}
-                                         tooltip={'Enter the angle between 0 and 359 degrees'}
-                                         message={'Angle must be a number between 0 and 359'}
-                                         showWarning={true}
-                                         validator={validator} onKeyDown={handleKeyDown} />
-
-                        <SimpleLayerOnOffButton plotView={pv}
-                                                style={{border: '1px solid rgba(0,0,0,.2)', marginTop:'15px'}}
-                                                isIconOn={pv&&plot ? pv.plotViewCtx.rotateNorthLock : false }
-                                                tip='Rotate this image so that North is up'
-                                                enabled={hasWcs}
-                                                visible={true}
-                                                iconOn={ROTATE_NORTH_ON}
-                                                iconOff={ROTATE_NORTH_OFF}
-                                                onClick={(pv,rNorth)=> doRotateNorth(rNorth)} />
-                    </Stack>
-
+                <Stack justifyContent='space-between' alignItems='center' spacing={1}>
+                    <StateInputField defaultValue={currRotation+''} valueChange={(v) => changeRotation(v.value)}
+                                     label={'Angle'}
+                                     tooltip={'Enter the angle between 0 and 359 degrees'}
+                                     message={'Angle must be a number between 0 and 359'}
+                                     showWarning={true}
+                                     endDecorator={
+                                         <SimpleLayerOnOffButton plotView={pv}
+                                                                 style={{border: '1px solid rgba(0,0,0,.2)', marginTop:'15px'}}
+                                                                 isIconOn={pv&&plot ? pv.plotViewCtx.rotateNorthLock : false }
+                                                                 tip='Rotate this image so that North is up'
+                                                                 enabled={hasWcs}
+                                                                 visible={true}
+                                                                 iconOn={ROTATE_NORTH_ON}
+                                                                 iconOff={ROTATE_NORTH_OFF}
+                                                                 onClick={(pv,rNorth)=> doRotateNorth(rNorth)} />
+                                     }
+                                     validator={validator} onKeyDown={handleKeyDown} />
                     <RangeSliderView {...{
                         sx:{pt: 2, width: 225},
                         min:0,max:359, step:1,vertical:false, marks,
                         defaultValue:currRotation, slideValue:currRotation,
                         handleChange:(v) => changeRotation(v)}} />
                 </Stack>
-                <Typography level='body-xs' pt={3} pb={2} sx={{textAlign: 'center'}}>
+                <Typography level='body-xs' pt={3} pb={2} textAlign={'center'}>
                     {hasWcs?'Angle in degrees East of North' : 'Angle in degrees counter clockwise'}
                 </Typography>
             </Box>
-            <div style={{textAlign:'center', display:'flex', justifyContent:'space-between', padding: '0 16px'}}>
+            <Stack {...{textAlign:'center', direction:'row', justifyContent:'space-between', px:1, pb:1}}>
                 <CompleteButton text='Close' dialogId={DIALOG_ID} />
-                <div style={{ textAlign:'center', marginBottom: 20}}>
-                    <HelpIcon helpId={'visualization.rotate'} />
-                </div>
-            </div>
+                <HelpIcon helpId={'visualization.rotate'} />
+            </Stack>
         </Box>
     );
 }

@@ -316,7 +316,7 @@ HiPSImage.propTypes = {
     groupKey: PropTypes.string,
     archiveName: PropTypes.string,
     initArgs: PropTypes.object,
-    imageMasterData: PropTypes.object,
+    imageMasterData: PropTypes.array,
 };
 
 function ImageType({}) {
