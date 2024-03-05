@@ -313,7 +313,7 @@ export const PinnedChartPanel = (props) => {
     };
 
     const makeItemViewer = (chartId) => (
-        <Sheet id='chart-item' sx={{height:1, width:1}}
+        <Sheet id='chart-item' sx={{height:1, width:1, display:'flex'}}
                variant='outlined'
                color={ chartId === activeItemId ? 'warning' : 'neutral'}
                onClick={(ev)=>onChartSelect(ev,chartId)}
@@ -324,7 +324,7 @@ export const PinnedChartPanel = (props) => {
     );
 
     const makeItemViewerFull = (chartId) => (
-        <Stack id='chart-itemFull' onClick={stopPropagation}
+        <Stack id='chart-itemFull' onClick={stopPropagation} sx={{height:1, width:1}}
                onTouchStart={stopPropagation}
                onMouseDown={stopPropagation}>
             <ChartPanel key={chartId} showToolbar={false} chartId={chartId} deletable={deletable}/>
