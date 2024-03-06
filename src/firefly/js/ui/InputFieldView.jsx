@@ -66,7 +66,7 @@ InputFieldView.propTypes= {
     visible : bool,
     disabled : bool,
     message : string,
-    tooltip : string,
+    tooltip : oneOfType([string, bool]),
     label : string,
     inline : bool,
     value   : oneOfType([string, number]).isRequired,
