@@ -100,8 +100,9 @@ export function showTableDownloadDialog({tbl_id, tbl_ui_id}) {
 
 function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
     const isWs = getWorkspaceConfig();
-    const currentFileLocation = getFieldVal(tblDownloadGroupKey, 'fileLocation', LOCALFILE);
-    if (currentFileLocation === WORKSPACE) {
+    const currentFileLocation = useStoreConnector(() => getFieldVal(tblDownloadGroupKey, 'fileLocation', LOCALFILE));
+    const wsSelected = currentFileLocation === WORKSPACE;
+    if (wsSelected) {
         dispatchWorkspaceUpdate();
     }
 
@@ -113,7 +114,7 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
     const cenCols = findTableCenterColumns(table, true);
 
     const fileFormatOptions = () => {
-        let fileOptions = tableFormats.enums.reduce((options, eItem) => {
+        const fileOptions = tableFormats.enums.reduce((options, eItem) => {
             options.push({label: eItem.value, value: eItem.key});
             return options;
         }, []);
@@ -129,8 +130,11 @@ function TableSavePanel({tbl_id, tbl_ui_id, onComplete}) {
             />
         );
     };
+
+    const sizing = wsSelected ? {height:'60vh', minHeight:'28em', resize:'both'} :
+                   isWs ? {height:'20em'} : {height:'19em'};
     return (
-        <Stack spacing={1} p={1} height='60vh' minWidth='40em' minHeight='28em' sx={{resize:'both', overflow:'hidden'}}>
+        <Stack spacing={1} p={1} overflow='hidden' minWidth='40em' sx={sizing}>
             <FieldGroup groupKey={tblDownloadGroupKey} reducerFunc={TableDLReducer(tbl_id)}
                         sx={{display:'flex', overflow:'hidden', flexGrow:1}}>
                 <Stack spacing={1} flexGrow={1}>
