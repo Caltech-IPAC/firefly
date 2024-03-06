@@ -9,7 +9,7 @@ import './VersionInfo.css';
 import IPAC_LOGO from 'images/ipac_logo-56x40.png';
 import CALTECH_LOGO from 'images/caltech-new-logo.png';
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-42x42.png';
-import {Stack, Typography, Link, Box, Chip, Button} from '@mui/joy';
+import {Stack, Typography, Link, Box, Button} from '@mui/joy';
 
 const VER = 'Version';
 const BUILT_ON = 'Built On';
@@ -43,7 +43,7 @@ export const VersionInfo = ({onClick, asButton=false, includeBuiltOnDate=true, i
     
     return asButton ?
         (<Button onClick={showDialog}> {text} </Button>) :
-        (<Typography level='body-xs' sx={{color:'neutral.400', p:1}} onClick={showDialog} > {text} </Typography>)
+        (<Typography level='body-xs' sx={{color:'neutral.400'}} onClick={showDialog} > {text} </Typography>);
 };
 
 const Entry = ({desc, value}) =>

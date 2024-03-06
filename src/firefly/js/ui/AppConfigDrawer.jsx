@@ -14,31 +14,34 @@ import {VersionInfo} from './VersionInfo.jsx';
 
 
 
-export function AppConfigDrawer({containerElement, drawerWidth= '22rem', allowMenuHide= true, useSideBarMenu=true, children}) {
+export function AppConfigDrawer({containerElement, drawerWidth= '20rem', allowMenuHide= true, useSideBarMenu=true, children}) {
 
     const {appTitle, appIcon} = useContext(AppPropertiesCtx);
     const visible= useStoreConnector(() => isDialogVisible(SIDE_BAR_ID));
     const closeSideBar= () => dispatchHideDialog(SIDE_BAR_ID);
+    const drawerTitleSx = {m: '0.5rem', height: '3rem'};
+
     return (
         <Drawer container={containerElement} open={visible} onClose={() => closeSideBar()} sx={{ '--Drawer-horizontalSize': drawerWidth }} >
-            <ModalClose/>
-            <DialogTitle>
-                <Stack direction='row' spacing={1} alignItems='center'>
+            <ModalClose sx={{transform: 'translateY(-50%)', top: `calc(${drawerTitleSx.height} / 2 + ${drawerTitleSx.m})`}}/>
+            <DialogTitle level='h4' sx={(theme) => ({m: drawerTitleSx.m, color: theme.vars.palette.text.tertiary, fontWeight: theme.vars.fontWeight.md})}>
+                <Stack direction='row' spacing={.5} alignItems='center'>
                     <IconButton onClick={() => closeSideBar()}>
-                        <img style={{maxWidth:'50px'}} src={appIcon?.startsWith('data') ? appIcon : modifyURLToFull(appIcon)} />
+                        <img style={{height: drawerTitleSx.height}} src={appIcon?.startsWith('data') ? appIcon : modifyURLToFull(appIcon)} />
                     </IconButton>
-                    <div>{appTitle}</div>
+                    <span>{appTitle}</span>
                 </Stack>
             </DialogTitle>
-            {useSideBarMenu && <Divider orientation='horizontal' sx={{mb:1}}/>}
+            <Divider orientation='horizontal'/>
+
+            {/* Drawer content --- */}
             <Stack justifyContent='space-between' height={1}>
                 {useSideBarMenu && <SideBarMenu closeSideBar={closeSideBar} allowMenuHide={allowMenuHide}/>}
-                <Stack>
+                <Stack divider={<Divider orientation='horizontal'/>}>
                     {React.Children.map(children,(c) => React.cloneElement(c, {closeSideBar}))}
-                    <Divider orientation='horizontal' sx={{my:1}}/>
                     <SideBarColorModeUI closeSideBar={closeSideBar}/>
-                    <Divider orientation='horizontal' sx={{mt:1}}/>
-                    <Stack width={1} alignItems='center'>
+                    <Stack p='0.75rem' //0.75 rem is the left padding used by accordions
+                           alignItems='center'>
                         <VersionInfo asButton={false} includeBuiltOnDate={true} includeBuildType={false}
                                      onClick={closeSideBar}/>
                     </Stack>

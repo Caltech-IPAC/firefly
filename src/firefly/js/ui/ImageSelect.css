@@ -20,7 +20,7 @@
     background-color: var(--joy-palette-background-surface,white);
     position: absolute;
     width: calc(100% - 6px);
-    top: 25px;
+    top: 0;
     box-sizing: border-box;
     border-bottom: 1px solid #bbbaba;
     padding: 1px 6px;

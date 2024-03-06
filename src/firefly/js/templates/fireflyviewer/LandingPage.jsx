@@ -16,30 +16,44 @@ export function LandingPage({slots={}, slotProps={}}) {
     const {appTitle,footer,
         fileDropEventAction='FileUploadDropDownCmd'} = useContext(AppPropertiesCtx);
 
-    const {tabsMenuHint: tabsMenuHintProps, bgMonitorHint: bgMonitorHintProps, topSection: topSectionProps,
-        bottomSection: bottomSectionProps} = slotProps;
+    const defaultSlots = {
+        tabsMenuHint: {
+            component: AppHint,
+            props: { appTitle, id: 'tabsMenu', hintText: 'Choose a search from the tabs menu', sx: { left: '16rem' } }
+        },
+        bgMonitorHint: {
+            component: AppHint,
+            props: { appTitle, id: 'bgMonitor', hintText: 'Load job results from background monitor',
+                tipPlacement: 'end', sx: { right: 8 } }
+        },
+        topSection: {
+            component: DefaultAppBranding,
+            props: { appTitle }
+        },
+        bottomSection: {
+            component: EmptyResults,
+            props: {
+                icon: <QueryStats sx={{ width: '5rem', height: '5rem' }} />,
+                text: 'No Search Results Yet',
+                subtext: 'Submit a search to see results here',
+                actionItems: [
+                    { text: 'Choose a search', subtext: 'from the tabs above' },
+                    { text: 'Browse all searches', subtext: 'from the side-menu' },
+                    { text: 'Upload a file', subtext: 'drag & drop here' }
+                ]
+            }
+        }
+    };
 
-    const {
-        tabsMenuHint=(
-            <AppHint appTitle={appTitle} id='tabsMenu'
-                     hintText='Choose a search from the tabs menu'
-                     {...tabsMenuHintProps}
-                     sx={{left: '16rem', ...tabsMenuHintProps?.sx}}/>
-        ),
-        bgMonitorHint=(
-            <AppHint appTitle={appTitle} id='bgMonitor'
-                     hintText='Load job results from background monitor'
-                     tipPlacement='end'
-                     {...bgMonitorHintProps}
-                     sx={{right: 8, ...bgMonitorHintProps?.sx}}/>
-        ),
-        topSection=(
-            <DefaultAppBranding appTitle={appTitle} {...topSectionProps}/>
-        ),
-        bottomSection=(
-            <EmptyResults {...bottomSectionProps}/>
-        )
-    } = slots;
+    const renderSlot = (slotName) => {
+        const Component = slots?.[slotName] ? slots[slotName] : defaultSlots[slotName].component;
+        const props = slots?.[slotName]
+            ? {...slotProps?.[slotName]} //if slot is changed, there's no default prop that needs to be present
+            : {...defaultSlots[slotName].props, ...slotProps?.[slotName],
+                sx: {...defaultSlots[slotName].props?.sx, ...slotProps?.[slotName]?.sx} //to allow deep merging for the sx prop
+        };
+        return (<Component {...props}/>);
+    };
 
     const [dropEvent, setDropEvent] = useState(undefined);
 
@@ -50,8 +64,8 @@ export function LandingPage({slots={}, slotProps={}}) {
 
     return (
         <Sheet className='ff-ResultsPanel-StandardView' sx={{width: 1, height: 1}}>
-            {tabsMenuHint}
-            {haveBgJobs && bgMonitorHint}
+            {renderSlot('tabsMenuHint')}
+            {haveBgJobs && renderSlot('bgMonitorHint')}
             <FileDropZone {...{
                 dropEvent, setDropEvent,
                 setLoadingOp: () => {
@@ -61,8 +75,8 @@ export function LandingPage({slots={}, slotProps={}}) {
             }}>
                 <Stack justifyContent='space-between' width={1}>
                     <Stack spacing={1} width={1} px={4} py={3}>
-                        {topSection}
-                        {bottomSection}
+                        {renderSlot('topSection')}
+                        {renderSlot('bottomSection')}
                     </Stack>
                     {footer ? footer : undefined}
                 </Stack>
@@ -82,15 +96,7 @@ function DefaultAppBranding({appTitle, appDescription}) {
 }
 
 
-function EmptyResults({
-                          icon=<QueryStats sx={{width: '5rem', height: '5rem'}}/>,
-                          text='No Search Results Yet',
-                          subtext='Submit a search to see results here',
-                          actionItems=[
-                              {text: 'Choose a search', subtext: 'from the tabs above'},
-                              {text: 'Browse all searches', subtext: 'from the side-menu'},
-                              {text: 'Upload a file', subtext: 'drag & drop here'}]
-                      }) {
+function EmptyResults({icon, text, subtext, actionItems}) {
     const renderActionItem = ({text, subtext}) => (
         <Stack spacing={.5} alignItems='center'>
             <Typography level={'title-lg'} color={'primary'}>{text}</Typography>
@@ -180,10 +186,10 @@ function AppHint({appTitle, id, hintText, tipPlacement='middle', sx={}}) {
 
 LandingPage.propTypes = {
     slots: PropTypes.shape({
-        tabsMenuHint: PropTypes.element, //defaults to AppHint
-        bgMonitorHint: PropTypes.element, //defaults to AppHint
-        topSection: PropTypes.element, //defaults to DefaultAppBranding
-        bottomSection: PropTypes.element //defaults to EmptyResults
+        tabsMenuHint: PropTypes.elementType, //defaults to AppHint
+        bgMonitorHint: PropTypes.elementType, //defaults to AppHint
+        topSection: PropTypes.elementType, //defaults to DefaultAppBranding
+        bottomSection: PropTypes.elementType //defaults to EmptyResults
     }),
     slotProps: PropTypes.shape({
         tabsMenuHint: PropTypes.object, //defaults to AppHint.propTypes
