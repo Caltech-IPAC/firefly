@@ -91,8 +91,8 @@ export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, 
     sx = {height: 1, pb: '2px', ...sx};
     return (
         <Sheet variant='plain' color={color} sx={sx} title={cdesc}>
-            <Stack width={1} height={1} spacing='2px' {...centerIt}>
-                <Stack width={1} height={1} spacing='2px' {...centerIt} className={clickable} onClick={onClick}>
+            <Stack width={1} height={1} {...centerIt}>
+                <Stack width={1} height={1} {...centerIt} className={clickable} onClick={onClick}>
                     <Stack direction='row' {...centerIt}>
                         <Stack textOverflow='ellipsis' overflow='hidden'>
                             <HeaderText val={label || name} level='title-sm'/>
@@ -110,7 +110,7 @@ export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, 
 
 export function HeaderText({val, level='body-sm', sx, ...rest}) {
     return (
-        <Typography component='div' level={level} {...rest} sx={{lineHeight:1.1, height:'1em', ...sx}}>
+        <Typography component='div' level={level} {...rest} sx={{lineHeight:1.2, height:'1.2em', ...sx}}>
             {val || ''}
         </Typography>
     );
