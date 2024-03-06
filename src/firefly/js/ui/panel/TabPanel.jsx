@@ -67,7 +67,7 @@ export function TabPanel ({value, onTabSelect, showOpenTabs, actions, slotProps,
 
     return (
         <JoyTabs size='sm'
-                 sx={{height: 1, boxSizing: 'border-box', ...sx}}
+                 sx={{height: 1, overflow: 'hidden', borderRadius:5, ...sx}}
                  aria-label='tabs'
                  value={value}
                  onChange={onChange}
@@ -76,6 +76,7 @@ export function TabPanel ({value, onTabSelect, showOpenTabs, actions, slotProps,
         >
             <Sheet component={Stack} direction='row' variant={tlVar}
                    sx={{
+                       pl:1,
                        boxShadow: 'inset 0 -1px var(--joy-palette-divider)',
                        position: 'unset',
                        justifyContent: 'space-between',
