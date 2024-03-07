@@ -84,10 +84,7 @@ function ExpandedView(props) {
 function StandardView(props) {
     const {tables, tableOptions, expandedMode, active, tbl_group, style={}} = props;
 
-    var activeIdx = Object.keys(tables).findIndex( (tbl_ui_id) => get(tables,[tbl_ui_id,'tbl_id']) === active);
-    activeIdx = activeIdx === -1 ? 0 : activeIdx;
-    const onTabSelect = (idx) => {
-        const tbl_id = get(tables, [Object.keys(tables)[idx], 'tbl_id']);
+    const onTabSelect = (tbl_id) => {
         tbl_id && dispatchActiveTableChanged(tbl_id, tbl_group);
     };
     const keys = Object.keys(tables);
@@ -96,9 +93,8 @@ function StandardView(props) {
     } else {
         const uid = hashCode(keys.join());
         return (
-            <TabPanel key={uid} sx={style} value={activeIdx}
-                      slotProps={{ panel:{sx:{p:0}} }}
-                      onTabSelect={onTabSelect} resizable={true} showOpenTabs={true} tabId={'TableContainers-' + (tbl_group||'main')}>
+            <TabPanel key={uid} sx={style} value={active}
+                      onTabSelect={onTabSelect} resizable={true} showOpenTabs={true}>
                 {tablesAsTab(tables, tableOptions, expandedMode)}
             </TabPanel>
         );
@@ -125,7 +121,7 @@ function tablesAsTab(tables, tableOptions, expandedMode) {
                 dispatchTableRemove(tbl_id);
             };
             return  (
-                <Tab key={tbl_ui_id} label={title} removable={removable} onTabRemove={onTabRemove}>
+                <Tab key={tbl_id} id={tbl_id} label={title} removable={removable} onTabRemove={onTabRemove}>
                     <TablePanel key={tbl_id}
                                 slotProps={{ toolbar:{variant:'plain'}, tablePanel:{variant: 'plain'} }}
                                 {...{tbl_id, tbl_ui_id, ...options, expandedMode, showTitle: false}} />

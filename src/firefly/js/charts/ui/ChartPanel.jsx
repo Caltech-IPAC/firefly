@@ -105,7 +105,7 @@ const ChartArea = (props) => {
     const deletable = isUndefined(get(chartData, 'deletable')) ? deletableProp : get(chartData, 'deletable');
     const errors  = getErrors(chartId);
     return (
-        <Stack id='chart-area' sx={{inset:0, position:'absolute'}}>
+        <Stack id='chart-area' flexGrow={1}>
             <ResizableChartArea
                 {...Object.assign({}, props, {errors})} />
             {glass && <Stack flexGrow={1} sx={{backgroundColor:'transparent'}}/>}

@@ -68,9 +68,7 @@ const getComponentAry= once(() => {
 const getDefTabIdx= once((initArgs) => getTabIdx(initArgs));
 
 function getTabIdx(args) {
-    if (!args.defaultSelectedId) return 0;
-    const idx= getComponentAry().findIndex( ({id}) => id===args.defaultSelectedId);
-    return idx>-1 ? idx : 0;
+    return args.defaultSelectedId;
 }
 
 const makeTabLabel= (str) => (<div style={tabStyle}>{str}</div>);

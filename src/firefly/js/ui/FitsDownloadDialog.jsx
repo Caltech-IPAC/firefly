@@ -28,7 +28,7 @@ import {INFO_POPUP, showInfoPopup} from './PopupUtil.jsx';
 import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 import {upload} from '../rpc/CoreServices.js';
 import {download, downloadBlob, makeDefaultDownloadFileName} from '../util/fetch.js';
-import {useFieldGroupValue} from './SimpleComponent.jsx';
+import {useFieldGroupValue, useStoreConnector} from './SimpleComponent.jsx';
 import HelpIcon from './HelpIcon.jsx';
 import {Stacker} from 'firefly/ui/Stacker.jsx';
 
@@ -44,19 +44,25 @@ const imageFileTypeOps=  [
     ...hipsFileTypeOps];
 
 export function showFitsDownloadDialog() {
-    const fileLocation = getFieldVal(fitsDownGroup, 'fileLocation', LOCALFILE);
-    if (fileLocation === WORKSPACE) dispatchWorkspaceUpdate();
 
-    const isWs = getWorkspaceConfig();
+    const Popup = (props) => {
+        const fileLocation = useStoreConnector(() => getFieldVal(fitsDownGroup, 'fileLocation', LOCALFILE));
+        const wsSelected = fileLocation === WORKSPACE;
+        if (wsSelected) dispatchWorkspaceUpdate();
+        const isWs = getWorkspaceConfig();
 
-    const  popup = (
-        <PopupPanel title={'Save Image'}>
-            <Stack minWidth='40em' minHeight='28em' height='60vh' sx={{resize:'both', overflow:'hidden'}}>
-                <FitsDownloadDialogForm groupKey={fitsDownGroup} popupId={dialogPopupId} isWs={isWs}/>
-            </Stack>
-        </PopupPanel>
-    );
-    DialogRootContainer.defineDialog(dialogPopupId , popup);
+        const sizing = wsSelected ? {height:'60vh', minHeight:'28em', resize:'both'} :
+                       isWs ? {height:'12em'} : {height:'11em'};
+        return (
+            <PopupPanel title={'Save Image'} {...props}>
+                <Stack overflow='hidden' minWidth='40em' sx={sizing}>
+                    <FitsDownloadDialogForm groupKey={fitsDownGroup} popupId={dialogPopupId} isWs={isWs}/>
+                </Stack>
+            </PopupPanel>
+        );
+    };
+
+    DialogRootContainer.defineDialog(dialogPopupId , <Popup/>);
     dispatchShowDialog(dialogPopupId);
 }
 

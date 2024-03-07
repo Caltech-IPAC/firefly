@@ -201,7 +201,7 @@ function FieldGroupWithMasterDependent() {
 const AllTest= () => (
         <div style={{padding:'5px', minWidth: 480}}>
             <div>
-                <StatefulTabs componentKey='exampleOuterTabs' defaultSelected={0} useFlex={true}>
+                <StatefulTabs componentKey='exampleOuterTabs' useFlex={true}>
                     <Tab name='First'>
                         <FieldGroupTest />
                     </Tab>

@@ -4,7 +4,7 @@
 import React, {memo, useEffect, useRef, useState} from 'react';
 import PropTypes, {bool, elementType, func, object, oneOfType, shape, string} from 'prop-types';
 import {createRoot} from 'react-dom/client';
-import {Dropdown, IconButton, Menu, MenuButton, Sheet} from '@mui/joy';
+import {Dropdown, IconButton, Menu, MenuButton, Sheet, Tooltip} from '@mui/joy';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
 import {set} from 'lodash';
@@ -33,30 +33,43 @@ function init() {
 /*
  * Extend JoyUI Dropdown component to provide ease of use.
  * This set focus to the popup panel on mount.  This allow any click to hide it.
- * @param button    defaults to ArrowDropDownIcon
- * @param title
- * @param onOpenChange
+ * It also show tooltip when dropdown is closed.
+ * @param button         defaults to ArrowDropDownIcon
+ * @param title          tooltips for this dropdown
+ * @param onOpenChange   called when dropdown open/close state changes
+ * @param onFocusChange  called when focus state changes.  focus is true when mouse in hover over button, or when dropdown is opened.
  * @param slotProps
  * @param useIconButton     defaults to true.  more convenience than setting button.slots.root
  */
-export function DropDown({button, title, onOpenChange, slotProps, useIconButton=true, children, ...props}) {
-    const [_, setOpen] = useState(false);
+export function DropDown({button, title, onOpenChange, onFocusChange, slotProps, useIconButton=true, children, ...props}) {
+    const [open, setOpen] = useState(false);
+    const [focus, setFocus] = useState();
 
     const dropdownEl = useRef(null);
     useEffect(() => {
         dropdownEl.current?.focus();
     }, [dropdownEl.current]);
 
+    useEffect(() => {
+        focus !== undefined && onFocusChange?.(focus);
+    }, [focus]);
+
     button ||= <ArrowDropDownIcon/>;
 
     const onChange = (_, open) => {
         onOpenChange?.(open);
         setOpen(open);
+        setFocus(open);
     };
+
     const root = useIconButton ? IconButton : undefined;
     return (
         <Dropdown onOpenChange={onChange} {...props}>
-            <MenuButton title={title} {...slotProps?.button} slots={{ root, ...slotProps?.button?.slots }}>{button}</MenuButton>
+            <Tooltip onMouseEnter={() => setFocus(true)}
+                     onMouseLeave={() => setFocus(open)}
+                     title={!open && title} {...slotProps?.tooltip}>
+                <MenuButton {...slotProps?.button} slots={{ root, ...slotProps?.button?.slots }}>{button}</MenuButton>
+            </Tooltip>
             <Menu ref={dropdownEl} {...slotProps?.menu}>{children}</Menu>
         </Dropdown>
     );
@@ -66,10 +79,12 @@ DropDown.propTypes = {
     button: object,
     title: oneOfType([string, elementType]),
     onOpenChange: func,
+    onFocusChange: func,
     useIconButton: bool,
     slotProps: shape({
         button: object,
-        menu: object,            // will inject into each one
+        menu: object,
+        tooltip: object,
     })
 };
 

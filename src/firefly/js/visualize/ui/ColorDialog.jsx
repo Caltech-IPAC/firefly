@@ -132,7 +132,7 @@ function renderStandardThreeColorView(plot,rFields,gFields,bFields) {
     return (
         <Box sx={{pt:.5}}>
             <FieldGroup groupKey={'colorDialogTabs'} keepState={false}>
-                <FieldGroupTabs initialState= {{ value:'red' }} tabId='colorTabs' fieldKey='colorTabs'>
+                <FieldGroupTabs initialState= {{ value:'red' }} fieldKey='colorTabs'>
                     {plotState.isBandUsed(Band.RED) &&
                     <Tab name='Red' id='red'>
                         <FieldGroup groupKey={RED_PANEL} keepState={true} reducerFunc={colorPanelRedReducer}>

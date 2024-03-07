@@ -88,8 +88,8 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
         <Stack height={1} p={1} pt={0} spacing={1}>
             <Options {...{uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChange}} />
             <Stack flexGrow={1} overflow='hidden'>
-                <StatefulTabs componentKey={`${tbl_id}-options`} defaultSelected={0} actions={actions}>
-                    <Tab name='Column Options'>
+                <StatefulTabs componentKey={`${tbl_id}-options`} actions={actions}>
+                    <Tab name='Column Options' sx={{p:1}}>
                         <ColumnOptions {...{tbl_id, tbl_ui_id, ctm_tbl_id, onChange}} />
                     </Tab>
                     {showAdvFilter &&

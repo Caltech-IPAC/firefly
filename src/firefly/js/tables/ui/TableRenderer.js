@@ -2,20 +2,17 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useRef, useCallback, useState, useEffect} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Cell} from 'fixed-data-table-2';
-import {set, get, omit, isEmpty, isString, toNumber} from 'lodash';
-import {Typography, Checkbox, Stack, Box, Link, Sheet, MenuItem, Button, Chip} from '@mui/joy';
+import {get, isEmpty, isString, omit, set, toNumber} from 'lodash';
+import {Box, Button, Checkbox, Chip, Link, MenuItem, Sheet, Stack, Tooltip, Typography} from '@mui/joy';
 
-import {FilterInfo, FILTER_CONDITION_TTIPS, NULL_TOKEN} from '../FilterInfo.js';
-import {
-    isColumnType, COL_TYPE, getTblById, getColumn, formatValue, getTypeLabel,
-    getColumnIdx, getRowValues, getCellValue, splitCols, isOfType, splitVals
-} from '../TableUtil.js';
+import {FILTER_CONDITION_TTIPS, FilterInfo, NULL_TOKEN} from '../FilterInfo.js';
+import {COL_TYPE, formatValue, getCellValue, getColumn, getColumnIdx, getRowValues, getTblById, getTypeLabel, isColumnType, isOfType, splitCols, splitVals} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
-import {toBoolean, copyToClipboard} from '../../util/WebUtil.js';
+import {copyToClipboard, toBoolean} from '../../util/WebUtil.js';
 
 import ASC_ICO from 'html/images/sort_asc.gif';
 import DESC_ICO from 'html/images/sort_desc.gif';
@@ -90,18 +87,20 @@ export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, 
 
     sx = {height: 1, pb: '2px', ...sx};
     return (
-        <Sheet variant='plain' color={color} sx={sx} title={cdesc}>
-            <Stack width={1} height={1} spacing='2px' {...centerIt}>
-                <Stack width={1} height={1} spacing='2px' {...centerIt} className={clickable} onClick={onClick}>
-                    <Stack direction='row' {...centerIt}>
-                        <Stack textOverflow='ellipsis' overflow='hidden'>
-                            <HeaderText val={label || name} level='title-sm'/>
+        <Sheet variant='plain' color={color} sx={sx}>
+            <Stack width={1} height={1} {...centerIt}>
+                <Tooltip title={cdesc} sx={{maxWidth:'20em'}}>
+                    <Stack width={1} height={1} {...centerIt} className={clickable} onClick={onClick}>
+                        <Stack direction='row' {...centerIt}>
+                            <Stack textOverflow='ellipsis' overflow='hidden'>
+                                <HeaderText val={label || name} level='title-sm'/>
+                            </Stack>
+                            <SortSymbol sortDir={sortDir}/>
                         </Stack>
-                        <SortSymbol sortDir={sortDir}/>
+                        { showUnits && <HeaderText val={unitsVal}/> }
+                        { showTypes && <HeaderText val={typeVal}/> }
                     </Stack>
-                    { showUnits && <HeaderText val={unitsVal}/> }
-                    { showTypes && <HeaderText val={typeVal}/> }
-                </Stack>
+                </Tooltip>
                 {showFilters && (<Filter {...{cname:name, onFilter, filterInfo, tbl_id}}/>)}
             </Stack>
         </Sheet>
@@ -110,7 +109,8 @@ export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, 
 
 export function HeaderText({val, level='body-sm', sx, ...rest}) {
     return (
-        <Typography component='div' level={level} {...rest} sx={{lineHeight:1.1, height:'1em', ...sx}}>
+        <Typography component='div' level={level} {...rest}
+                    sx={{lineHeight:1.2, height:'1.2em', whiteSpace:'nowrap', ...sx}}>
             {val || ''}
         </Typography>
     );
@@ -122,7 +122,7 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
 
     const colGetter= () => getColumn(getTblById((tbl_id)), cname) ?? {};
     const col = useStoreConnector(colGetter);
-    const [disableHoverListener, setDisableHoverListener] = useState(false);
+    const [showTooltip, setShowTooltip] = useState(true);
     const dropdownEl = useRef(null);
 
     useEffect(() => {
@@ -139,9 +139,11 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
 
     const filterInfoCls = FilterInfo.parse(filterInfo);
 
-
     const endDecorator = enumVals && (
-        <DropDown onOpenChange={(v) => setDisableHoverListener(v) } slotProps={{button:{sx:{mr:-1}}}}>
+        <DropDown onFocusChange={(v) => setShowTooltip(!v)}     // only show input tooltip when dropdown is not active
+                  slotProps={{button: {sx: {mr: -1}}}}
+                  title='Filter to a subset of values in this column'
+        >
             <EnumSelect {...{col, tbl_id, filterInfo, filterInfoCls, onFilter}} />
         </DropDown>
     );
@@ -151,14 +153,13 @@ function Filter({cname, onFilter, filterInfo, tbl_id}) {
             validator={validator}
             fieldKey={name}
             sx={{width: 1, '--Input-radius': ''}}
-            tooltip={FILTER_CONDITION_TTIPS}
+            tooltip={showTooltip && FILTER_CONDITION_TTIPS}
             value={filterInfoCls.getFilter(name)}
             onChange={onFilter}
             actOn={blurEnter}
             showWarning={false}
             slotProps={{
-                input: {size:'sm', endDecorator },
-                tooltip: {disableHoverListener}
+                input: {size:'sm', endDecorator }
             }}
         />
     );

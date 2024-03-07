@@ -4,7 +4,7 @@
 
 import React, {useCallback, useState} from 'react';
 import PropTypes from 'prop-types';
-import {Button, Skeleton, Stack, Link, Sheet, Typography, Box} from '@mui/joy';
+import {Button, Stack, Link, Sheet, Typography, Box} from '@mui/joy';
 import {delay} from 'lodash';
 import {UCDList} from '../../voAnalyzer/VoConst.js';
 
@@ -97,7 +97,6 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
     const buttonLabel = editColName ? 'Update Column' : 'Add Column';
     const DelBtn = (<button type='button' className='button std'onClick={doDelete}>Delete Column</button>);
 
-    if (isWorking) return <Skeleton className='loading-mask' style={{zIndex:1}}/>;
     return (
         <Stack p={1} width={500} spacing={1}
             sx={{
@@ -106,6 +105,7 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
                 label:{width:80},
                 input:{width:265}
             }}>
+            {isWorking && <div className='loading-mask' style={{zIndex:1}}/>}
             <RequiredFieldMsg/>
             <FieldGroup groupKey={groupKey}>
                 <ValidationField fieldKey='cname' label='Name:' inputRef={ref}

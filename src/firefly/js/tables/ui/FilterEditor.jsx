@@ -3,12 +3,11 @@
  */
 
 import React, {PureComponent, useEffect, useRef} from 'react';
-import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import {Box, Button, Link, Sheet, Stack, Typography} from '@mui/joy';
 import {isEmpty, cloneDeep, get} from 'lodash';
 import SplitPane from 'react-split-pane';
-import Tree, { TreeNode } from 'rc-tree';
+import Tree from 'rc-tree';
 import 'rc-tree/assets/index.css';
 
 import {BasicTableViewWithConnector} from './BasicTableView.jsx';
@@ -197,10 +196,6 @@ function makeRenderers(onFilter, tbl_id) {
 }
 
 
-
-
-
-
 /*----------------------------------------------  Advanced Filter panel -----------------------------------------------*/
 
 export const code = {style: {color: 'green', whiteSpace: 'pre', fontFamily: 'monospace', display: 'inline-block'}};
@@ -227,10 +222,15 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange, style={}, samples, 
     }, [tbl_id]);     // run only once
 
     const {columns, error} = uiState;
-    const treeNodes = cloneDeep(columns)
+    const treeData = cloneDeep(columns)
                         .filter( (c) => c.visibility !== 'hidden')
                         .sort( (c1,c2) => (c1.label || c1.name).localeCompare(c2.label || c2.name) )
-                        .map((c) => <TreeNode style={{marginLeft: -10}} key={c.name} title={`  ${c.label || c.name} (${c.type || '---'})`} isLeaf={true}/>);
+                        .map((c) => ({
+                            style:{marginLeft: -10},
+                            key:c.name,
+                            title:`  ${c.label || c.name} (${c.type || '---'})`,
+                            isLeaf:true
+                        }));
 
     const onApply = () => {
         const sql = getFieldVal(groupKey, sqlKey);
@@ -257,9 +257,7 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange, style={}, samples, 
             <SplitContent style={{display: 'flex', flexDirection: 'column'}}>
                 <Typography level='title-md'>Columns (sorted)</Typography>
                 <Box  style={{overflow: 'auto', flexGrow: 1}}>
-                    <Tree defaultExpandAll showLine onSelect={onNodeClick} icon={iconGen} >
-                        {treeNodes}
-                    </Tree>
+                    <Tree defaultExpandAll showLine onSelect={onNodeClick} icon={iconGen} treeData={treeData}/>
                 </Box>
             </SplitContent>
             <SplitContent style={{overflow: 'auto'}}>

@@ -40,9 +40,9 @@ import {getPlotViewAry} from 'firefly/visualize/PlotViewUtil.js';
  * @param p.dataProductTableId
  * @constructor
  */
-export function TriViewImageSection({showCoverage=false, showFits=false, selectedTab='fits',
+export function TriViewImageSection({showCoverage=false, showFits=false,
                                      showMeta=false, imageExpandedMode=false, closeable=true,
-                                     coverageSide= 'LEFT', dataProductTableId, style={}}) {
+                                     coverageSide= 'LEFT', dataProductTableId, }) {
 
     if (imageExpandedMode) {
         return  ( <ImageExpandedMode key='results-plots-expanded' closeFunc={closeable ? closeExpanded : null}/> );
@@ -53,10 +53,8 @@ export function TriViewImageSection({showCoverage=false, showFits=false, selecte
 
     if (showCoverage || showFits || showMeta) {
         return (
-            <Tabs key={key} style={{height: '100%', ...style}} onTabSelect={onTabSelect}
-                  slotProps={{ panel:{sx:{p:0}} }}
-                  defaultSelected={getDefSelected(showCoverage,showFits,showMeta)}
-                  useFlex={true} resizable={true}>
+            <Tabs key={key} onTabSelect={onTabSelect}
+                  defaultSelected={getDefSelected(showCoverage,showFits,showMeta)}>
                 { showCoverage && coverageSide==='LEFT' && makeCoverageTab() }
                 { showMeta && makeMultiProductViewerTab({dataProductTableId}) }
                 { showFits && makeFitsPinnedTab() }
