@@ -109,7 +109,8 @@ export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, 
 
 export function HeaderText({val, level='body-sm', sx, ...rest}) {
     return (
-        <Typography component='div' level={level} {...rest} sx={{lineHeight:1.2, height:'1.2em', ...sx}}>
+        <Typography component='div' level={level} {...rest}
+                    sx={{lineHeight:1.2, height:'1.2em', whiteSpace:'nowrap', ...sx}}>
             {val || ''}
         </Typography>
     );

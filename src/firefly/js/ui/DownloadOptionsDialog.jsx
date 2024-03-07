@@ -88,7 +88,7 @@ export function DownloadOptionsDialog({fromGroupKey, children, fileName, labelWi
                     value: fileName
                 }}
                 label='File name'
-                tooltip='Please enter a filename, a default name will be used if it is blank'
+                tooltip='Please enter a filename; a default name will be used if it is blank'
             />
             {workspace && showLocation}
 

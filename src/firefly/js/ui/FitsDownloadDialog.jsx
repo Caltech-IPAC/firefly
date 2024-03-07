@@ -45,7 +45,7 @@ const imageFileTypeOps=  [
 
 export function showFitsDownloadDialog() {
 
-    const Popup = () => {
+    const Popup = (props) => {
         const fileLocation = useStoreConnector(() => getFieldVal(fitsDownGroup, 'fileLocation', LOCALFILE));
         const wsSelected = fileLocation === WORKSPACE;
         if (wsSelected) dispatchWorkspaceUpdate();
@@ -54,7 +54,7 @@ export function showFitsDownloadDialog() {
         const sizing = wsSelected ? {height:'60vh', minHeight:'28em', resize:'both'} :
                        isWs ? {height:'12em'} : {height:'11em'};
         return (
-            <PopupPanel title={'Save Image'}>
+            <PopupPanel title={'Save Image'} {...props}>
                 <Stack overflow='hidden' minWidth='40em' sx={sizing}>
                     <FitsDownloadDialogForm groupKey={fitsDownGroup} popupId={dialogPopupId} isWs={isWs}/>
                 </Stack>

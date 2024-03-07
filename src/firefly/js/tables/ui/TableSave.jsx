@@ -65,9 +65,9 @@ const tableFormatsExt = {
 const labelWidth = 100;
 const defValues = {
     [fKeyDef.fileName.fKey]: Object.assign(getTypeData(fKeyDef.fileName.fKey, '',
-        'Please enter a filename, a default name will be used if it is blank', fKeyDef.fileName.label, labelWidth), {validator: null}),
+        'Please enter a filename; a default name will be used if left blank.', fKeyDef.fileName.label, labelWidth), {validator: null}),
     [fKeyDef.fileFormat.fKey]: Object.assign(getTypeData(fKeyDef.fileFormat.fKey, tableFormats.ipac.key,
-        'Please select a format option, the default is ipac', fKeyDef.fileFormat.label, labelWidth)),
+        'Please select a format option; the default is ipac', fKeyDef.fileFormat.label, labelWidth)),
     [fKeyDef.location.fKey]: Object.assign(getTypeData(fKeyDef.location.fKey, 'isLocal',
         'select the location where the file is downloaded to', fKeyDef.location.label, labelWidth), {validator: null}),
     [fKeyDef.wsSelect.fKey]: Object.assign(getTypeData(fKeyDef.wsSelect.fKey, '',
