@@ -245,7 +245,6 @@ function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiS
     } else if (imageMasterData) {
         return (
             <div className='flex-full' style={{position: 'relative'}}>
-                <Typography {...{level:'h4'}}>{title}</Typography>
                 <div className='flex-full' style={pStyle} id={scrollDivId}>
                     <ImageType/>
                     {isThreeColorImgType &&

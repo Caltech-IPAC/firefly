@@ -6,6 +6,5 @@ export const AppPropertiesCtx = React.createContext( {
     landingPage: undefined,
     footer: undefined,
     showUserInfo: false,
-    showLandingHelp: true,
     fileDropEventAction: 'FileUploadDropDownCmd',
 });
