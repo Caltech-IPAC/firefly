@@ -374,7 +374,7 @@ function fixClientTable(tableModel) {
         tableModel.title  = get(tableModel, 'request.META_INFO.title') || 'untitled';
     }
 
-    tableModel.totalRows = tableModel?.tableData?.data.length ?? 0;
+    tableModel.totalRows = tableModel?.tableData?.data?.length ?? 0;
 
     if (!tableModel.origTableModel) {
         tableModel = TblUtil.cloneClientTable(tableModel);

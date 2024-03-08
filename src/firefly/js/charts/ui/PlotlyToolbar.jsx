@@ -1,8 +1,8 @@
 import React, {useContext} from 'react';
 import PropTypes from 'prop-types';
-import {Divider, IconButton, Stack, ToggleButtonGroup} from '@mui/joy';
+import {IconButton, Stack, ToggleButtonGroup} from '@mui/joy';
 import {get, isEmpty} from 'lodash';
-import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
+import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 
 import {dispatchChartUpdate, dispatchChartFilterSelection, dispatchChartSelect, getChartData, dispatchSetActiveTrace, dispatchChartExpanded, resetChart} from '../ChartsCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
@@ -210,7 +210,7 @@ function ZoomBtn({chartId}) {
         <IconButton value='zoom'
                     onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'zoom', selection: undefined}})}
                     title='Zoom'
-        ><img src={ZoomIco}/></IconButton>
+        ><img className='old-ff-icon-img' src={ZoomIco}/></IconButton>
     );
 }
 
@@ -219,7 +219,7 @@ function PanBtn({chartId}) {
         <IconButton value='pan'
                     onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'pan', selection: undefined}})}
                     title='Pan'
-        ><img src={PanIco}/></IconButton>
+        ><img className='old-ff-icon-img' src={PanIco}/></IconButton>
     );
 }
 
@@ -228,7 +228,7 @@ function TurntableBtn({chartId}) {
         <IconButton value='turntable'
                     onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'turntable', selection: undefined}})}
                     title='Turntable rotation'
-        ><img src={TurntableIco}/></IconButton>
+        ><img className='old-ff-icon-img' src={TurntableIco}/></IconButton>
     );
 }
 
@@ -237,7 +237,7 @@ function OrbitBtn({chartId}) {
         <IconButton value='orbit'
                     onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'orbit', selection: undefined}})}
                     title='Orbital rotation'
-        ><img src={OrbitalIco}/></IconButton>
+        ><img className='old-ff-icon-img' src={OrbitalIco}/></IconButton>
     );
 }
 
@@ -246,7 +246,7 @@ function SelectBtn({chartId}) {
         <IconButton value='select'
                     onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'select', selection: undefined}})}
                     title='Select'
-        ><img src={SelectIco}/></IconButton>
+        ><img className='old-ff-icon-img' src={SelectIco}/></IconButton>
     );
 }
 
@@ -273,9 +273,7 @@ function ResetZoomBtn({style={}, chartId}) {
         }
     };
     return (
-        <IconButton onClick={doClick}
-             title='Zoom out to original range'
-        ><img src={ResetZoomIco}/></IconButton>
+        <ToolbarButton onClick={doClick} tip='Zoom out to original range' icon={ResetZoomIco}/>
     );
 }
 

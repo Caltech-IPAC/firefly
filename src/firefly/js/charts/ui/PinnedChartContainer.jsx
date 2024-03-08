@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Badge, Stack, Typography, Sheet} from '@mui/joy';
+import {Badge, Stack, Typography, Sheet, Button} from '@mui/joy';
 
 import React, {useContext, useEffect} from 'react';
 import PropTypes from 'prop-types';
@@ -33,7 +33,6 @@ import {HelpIcon} from '../../ui/HelpIcon';
 import {getComponentState, dispatchComponentStateChange} from '../../core/ComponentCntlr';
 import {SplitPanel} from '../../ui/panel/DockLayoutPanel';
 import {hideInfoPopup, showInfoPopup, showPinMessage} from '../../ui/PopupUtil.jsx';
-import {TextButton} from '../../ui/TextButton.jsx';
 import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga';
 import {PinButton, ShowTableButton} from 'firefly/visualize/ui/Buttons.jsx';
 
@@ -239,7 +238,10 @@ export const ToggleLayout = () => {
     const canToggle =  getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID)?.length > 0;
     const [modeLabel, modeTitle] = sideBySide ? ['As Tabs', 'Switch to tabs layout'] : ['Side-By-Side', 'Switch to Side-By-Side layout'];
 
-    return canToggle ? <TextButton onClick={toggleLayout} title={modeTitle}>{modeLabel}</TextButton> : null;
+    return canToggle &&
+        <Button variant='plain' onClick={toggleLayout} title={modeTitle}>
+            {modeLabel}
+        </Button>;
 };
 
 

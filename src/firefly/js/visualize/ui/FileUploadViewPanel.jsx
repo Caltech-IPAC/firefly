@@ -28,7 +28,7 @@ import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 
 import {useFieldGroupMetaState, useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
-import {getIntHeader} from '../../metaConvert/PartAnalyzer';
+import {getIntHeaderFromAnalysis} from '../../metaConvert/PartAnalyzer';
 import {FileAnalysisType} from '../../data/FileAnalysis';
 import {Format} from '../../data/FileAnalysis';
 import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
@@ -88,7 +88,7 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
     const [getUploadMetaInfo, setUploadMetaInfo]= useFieldGroupMetaState({message:undefined, analysisResult: undefined,
         report: undefined, summaryModel: undefined, detailsModel: undefined, prevAnalysisResult: undefined}, groupKey);
 
-    const {message, analysisResult, report, summaryModel, detailsModel, prevAnalysisResult} =
+    const {message, analysisResult, report, summaryModel, detailsModel, prevAnalysisResult, selectInfo} =
         useStoreConnector(() => {
             const loadingOp= getLoadingOp();
             const {analysisResult, message}= getField(groupKey, loadingOp) || {};
@@ -105,9 +105,9 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
     useEffect(() => {
         if (message || analysisResult) {
             setUploadMetaInfo({...getUploadMetaInfo(), prevAnalysisResult, report, summaryModel,
-                detailsModel, analysisResult, message});
+                detailsModel, analysisResult, message, selectInfo});
         }
-    }, [message, analysisResult, report, summaryModel, detailsModel, prevAnalysisResult]);
+    }, [message, analysisResult, report, summaryModel, detailsModel, prevAnalysisResult,selectInfo]);
 
     useEffect(() => {
         dispatchTableAddLocal(summaryModel, undefined, false);
@@ -125,7 +125,7 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
 
     useEffect(() => {
         setSubmitText?.(getLoadButtonText(summaryTblId,report,detailsModel,summaryModel,acceptList));
-    },[report,setSubmitText, summaryModel, detailsModel]);
+    },[report,setSubmitText, summaryModel, detailsModel,selectInfo]);
 
     let aWStatusKey;
     useEffect(() => {
@@ -314,50 +314,40 @@ function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, me
     if (!analysisResult) { //clearReport sets analysisResult:undefined, so set currentReport=undefined to clear the file
         currentReport = undefined;
     }
-    let modelToUseForDetails= summaryTbl ?? currentSummaryModel;
+    let summaryModelToUseForDetails= summaryTbl ?? currentSummaryModel;
 
     if (message) {
-        return {message, report:undefined, summaryModel:undefined, detailsModel:undefined};
+        return {message, report:undefined, summaryModel:undefined, detailsModel:undefined, selectInfo: undefined};
     } else if (analysisResult) {
         if (analysisResult !== prevAnalysisResult) {
             currentReport = JSON.parse(analysisResult);
             if (currentReport.fileFormat === Format.UNKNOWN) {
-                return {message:'Unrecognized file type', report:undefined, summaryModel:undefined, detailsModel:undefined};
+                return {message:'Unrecognized file type', report:undefined, summaryModel:undefined, detailsModel:undefined, selectInfo: undefined};
             }
 
             currentSummaryModel= makeSummaryModel(currentReport, summaryTblId, acceptList);
-            modelToUseForDetails= currentSummaryModel;
+            summaryModelToUseForDetails= currentSummaryModel;
 
             const firstExtWithData= getFirstExtWithData(currentReport.parts, acceptList, currentSummaryModel);
             if (firstExtWithData >= 0) {
                 const selectInfo = SelectInfo.newInstance({rowCount: currentSummaryModel.tableData.data.length});
                 !acceptOneItem && selectInfo.setRowSelect(firstExtWithData, true);        // default select first extension/part with data
                 !acceptOneItem && (currentSummaryModel.selectInfo = selectInfo.data);
-                modelToUseForDetails.highlightedRow= firstExtWithData;
+                summaryModelToUseForDetails.highlightedRow= firstExtWithData;
             }
 
         }
     }
 
-    let detailsModel = getDetailsModel(modelToUseForDetails, currentReport, detailsTblId, Format.UNKNOWN);
-    if (modelToUseForDetails) {
-        const {highlightedRow=0} = modelToUseForDetails;
+    const detailsModel = getDetailsModel(summaryModelToUseForDetails, currentReport, detailsTblId, Format.UNKNOWN);
+    if (summaryModelToUseForDetails) {
+        const {highlightedRow=0} = summaryModelToUseForDetails;
         if (currentSummaryModel) currentSummaryModel.highlightedRow = highlightedRow;
     }
 
-    if (shallowequal(detailsModel, currentDetailsModel)) {
-        detailsModel = currentDetailsModel;
-    }
-
     const newState= {message, analysisResult, report:currentReport, summaryModel:currentSummaryModel, detailsModel,
-                    prevAnalysisResult: oldState?.analysisResult};
-    if (statesEqual(oldState, newState)) {
-        return oldState;
-    } else if ( summaryModelEqual(newState.summaryModel, oldState.summaryModel) &&
-        oldState.analysisResult===newState.analysisResult) {
-        return oldState;
-    }
-    return newState;
+                    prevAnalysisResult: oldState?.analysisResult, selectInfo:summaryModelToUseForDetails?.selectInfo};
+    return statesEqual(oldState, newState) ? oldState : newState;
 }
 
 function statesEqual(s1,s2) {
@@ -376,6 +366,7 @@ function statesEqual(s1,s2) {
         return false;
     }
 
+    if (!shallowequal(s1.selectInfo,s2.selectInfo)) return false;
     if (!summaryModelEqual(s1.summaryModel, s2.summaryModel)) return false;
 
     const d1= s1.detailsModel;
@@ -407,7 +398,7 @@ function makeSummaryModel(report, summaryTblId, acceptList) {
     ];
     const {parts=[]} = report;
     const data = parts.map( (p) => {
-        const naxis= getIntHeader('NAXIS',p,0);
+        const naxis= getIntHeaderFromAnalysis('NAXIS',p,0);
         const entryType = (naxis===1 && p.type===FileAnalysisType.Image)?FileAnalysisType.Table :p.type;
         const isMoc=  isMOCFitsFromUploadAnalsysis(report)?.valid;
         const isDatalink=  isAnalysisTableDatalink(report);

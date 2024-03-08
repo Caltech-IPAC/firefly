@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Stack} from '@mui/joy';
+import {Box, Stack, Typography} from '@mui/joy';
 import {dispatchHideDialog, dispatchShowDialog, isDialogVisible} from 'firefly/core/ComponentCntlr.js';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {LayoutType, PopupPanel} from 'firefly/ui/PopupPanel.jsx';
@@ -118,6 +118,7 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
     const [getTargetWp,setTargetWp]= useFieldGroupValue(targetKey, groupKey);
     const [getHiPSRadius, setHiPSRadius]= useFieldGroupValue(sizeKey, groupKey);
     const [getPolygon, setPolygon]= useFieldGroupValue(polygonKey, groupKey);
+    const [mocError, setMocError]= useState();
     const {current:lastWhichOverlay}= useRef({lastValue:undefined});
 
     const userEnterWorldPt= () =>  parseWorldPt(getTargetWp());
@@ -147,7 +148,8 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
     },[hipsDisplayKey]);
 
     useEffect(() => {
-        void updateMoc(mocList,plotId);
+        setMocError();
+        void updateMoc(mocList,plotId,setMocError);
     }, [mocList]);
 
     useEffect(() => { // if plot view changes then update the target or polygon field
@@ -170,6 +172,10 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
 
     return (
         <Stack {...{minHeight:200, ...sx,}}>
+            {mocError &&
+                <Typography level='h4' color='danger' textAlign='center'>
+                    {`The coverage MOC is unavailable${mocError?.title?': '+mocError.title:''}`}
+                </Typography>}
             <MultiImageViewer viewerId= {viewerId} insideFlex={true}
                               canReceiveNewPlots={NewPlotMode.none.key}
                               showWhenExpanded={true}
@@ -384,7 +390,7 @@ async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg,
 
 let abortFunc= undefined;
 
-async function updateMoc(mocList, plotId) {
+async function updateMoc(mocList, plotId,setMocError) {
     abortFunc?.();
     abortFunc= undefined;
     await  onPlotComplete(plotId);
@@ -394,7 +400,7 @@ async function updateMoc(mocList, plotId) {
     }
     const newMocUrls= mocList.map( ({mocUrl}) => mocUrl);
     removeAllMocs(newMocUrls);
-    abortFunc= loadMocWithAbort(mocList,plotId);
+    abortFunc= loadMocWithAbort(mocList,plotId,setMocError);
 }
 
 function removeAllMocs(excludeList= []) {
@@ -406,7 +412,7 @@ function removeAllMocs(excludeList= []) {
 }
 
 
-function loadMocWithAbort(mocList, plotId) {
+function loadMocWithAbort(mocList, plotId,setMocError) {
     let abort= false;
     const doAbort= () => abort=true;
     const existingMocUrlsAry= getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID)?.map( (dl) => dl.mocFitsInfo.mocUrl);
@@ -429,6 +435,7 @@ function loadMocWithAbort(mocList, plotId) {
                 if (!getTblById(tbl_id)) {
                     dispatchAddTaskCount(plotId, tbl_id);
                     const {status, cacheKey}=  await upload(mocUrl, 'details', {hipsCache:true});
+                    setMocError();
                     dispatchRemoveTaskCount(plotId, tbl_id);
                     if (abort) return;
                     const request= makeFileRequest(title, cacheKey, undefined, {
@@ -461,6 +468,7 @@ function loadMocWithAbort(mocList, plotId) {
             removeAllMocs(newMocUrls);
         } catch (e) {
             console.log(`loadMOCList, exceptions: ${mocList?.[0]?.mocUrl}`, e);
+            setMocError(mocList?.[0]);
         }
     };
 

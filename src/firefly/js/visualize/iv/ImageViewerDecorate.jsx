@@ -282,17 +282,17 @@ const ImageViewerDecorate= memo((props) => {
 
     return (
         <Box style={outerStyle} className='disable-select' onTouchStart={makeActive} onClick={makeActive} >
-            <Box className='image-viewer-decorate' sx={innerStyle}>
-                <Box style={{position: 'absolute', width:'100%', top:0, bottom:0, display:'flex', flexDirection:'column'}}>
+            <Stack className='image-viewer-decorate' direction='row' sx={innerStyle}>
+                <Stack {...{position: 'absolute', width:1, top:0, bottom:0, mr:2 }}>
                     <ImageViewerLayout plotView={pv} drawLayersAry={drawLayersAry}
                                        width={iWidth} height={iHeight}
                                        externalWidth={width} externalHeight={height}/>
                     {ctxToolbar}
                     {(plot) ? <PlotTitle brief={brief}  plotView={pv} working={workingIcon} /> : undefined}
                     <ZoomGroup visRoot={visRoot} pv={pv} show={showZoom} />
-                </Box>
+                </Stack>
                 <VisInlineToolbarView pv={pv} showDelete={showDelete} show={showDel}/>
-            </Box>
+            </Stack>
         </Box>
         );
 

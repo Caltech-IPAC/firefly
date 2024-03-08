@@ -1,3 +1,4 @@
+import {Stack, Typography} from '@mui/joy';
 import React from 'react';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {LayoutType, PopupPanel} from '../../ui/PopupPanel.jsx';
@@ -8,17 +9,9 @@ import HelpIcon from '../../ui/HelpIcon.jsx';
 import {getTblById} from '../../tables/TableUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
 
-const tableStyle = {
-    boxSizing: 'border-box', paddingLeft:5,paddingRight:5, width: '100%',
-    overflow: 'hidden', flexGrow: 1, display: 'flex', resize:'none'
-};
 
 export const HIPS_PROPERTY_POPUP_ID = 'hipsPropertyID';
 
-const popupPanelResizableStyle = {
-    minWidth: 450, minHeight: 400, height: 400, marginTop: 5, display:'flex', flexDirection:'column',
-    resize: 'both', overflow: 'hidden', position: 'relative'
-};
 
 export function showHiPSPropertyView(pv, element, initLeft, initTop, onMove) {
     if (primePlot(pv)) showHiPSPropsPopup(primePlot(pv),element, initLeft,initTop, onMove);
@@ -47,30 +40,29 @@ function popupForm(plot, tableId, popupId) {
     if (!plot?.hipsProperties) return <NotFound/>;
     const tableModel= getTblById(tableId) || makeHiPSPropModel(plot.hipsProperties, plot.hipsUrlRoot,tableId);
     return (
-        <div style={popupPanelResizableStyle}>
+        <Stack {...{sx:{minWidth: 450, minHeight: 400, height: 400, mt:1/2,
+            resize: 'both', overflow: 'hidden', position: 'relative'}}}>
             {renderTable(tableModel)}
-            {renderCloseAndHelpButtons(popupId)}
-        </div> ) ;
+            <Stack {...{direction:'row', justifyContent:'space-between', my:1, alignItems:'center'}}>
+                <CompleteButton text='Close' onClick={()=>dispatchHideDialog( popupId)} dialogId={popupId} />
+                <HelpIcon helpId={'tables'}/>
+            </Stack>
+        </Stack> ) ;
 }
 
 const NotFound= () => (
-    <div style={{ width: 400, minWidth: 300, height: 300, minHeight: 200, paddingTop: 30,
+    <Typography {...{color:'warning', width: 400, minWidth: 300, height: 300, minHeight: 200, pt: 4,
         resize: 'both', overflow: 'hidden', position: 'relative', textAlign: 'center' }}>
         HiPS properties not found
-    </div>
+    </Typography>
 );
 
-const renderCloseAndHelpButtons = (popupId) => (
-    <div style={{display:'flex', justifyContent:'space-between', margin:'8px 7px 8px 5px', alignItems:'center'}}>
-        <CompleteButton text='Close' onClick={()=>dispatchHideDialog( popupId)} dialogId={popupId} />
-        <HelpIcon helpId={'tables'}/>
-    </div> );
-
 const renderTable= (tableModel) => (
-    <div style={ tableStyle}>
+    <Stack {...{direction:'row', px:1/2, width:1, overflow: 'hidden', flexGrow: 1,resize:'none'}}>
         <TablePanel
             key={tableModel.tbl_id} tbl_ui_id = {tableModel.tbl_id + '-ui'} tableModel={tableModel}
             height='calc(100% - 42px)'
             showToolbar={false} selectable={false} showOptionButton={false} allowUnits={false}
             showFilters={true} showTypes={false} />
-    </div> );
+    </Stack>
+);

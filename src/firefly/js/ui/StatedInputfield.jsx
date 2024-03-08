@@ -1,12 +1,13 @@
 import React, {useState, useEffect} from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, {element} from 'prop-types';
 import {has} from 'lodash';
 
 import {InputFieldView} from './InputFieldView.jsx';
 
 
 export function StateInputField({defaultValue, visible=true, message, label='', tooltip, showWarning, type,
-                                    sx={}, onKeyDown, onKeyUp, validator, valueChange}) {
+                                    startDecorator, endDecorator,
+                                    orientation, sx={}, onKeyDown, onKeyUp, validator, valueChange}) {
 
     const [value, setValue] = useState(defaultValue);
     const [valid, setValid] = useState(true);
@@ -28,7 +29,8 @@ export function StateInputField({defaultValue, visible=true, message, label='', 
 
     return (
         <InputFieldView {...{valid, visible, message, onChange, label, value, tooltip, type,
-            showWarning, sx, onKeyDown, onKeyUp}}
+            startDecorator, endDecorator,
+            orientation, showWarning, sx, onKeyDown, onKeyUp}}
         />
     );
 }
@@ -38,6 +40,7 @@ StateInputField.propTypes= {
     tooltip : PropTypes.string,
     label : PropTypes.string,
     inline : PropTypes.bool,
+    orientation: PropTypes.string,
     labelWidth: PropTypes.number,
     sx: PropTypes.object,
     defaultValue: PropTypes.string.isRequired,
@@ -45,6 +48,8 @@ StateInputField.propTypes= {
     showWarning : PropTypes.bool,
     type: PropTypes.string,
     validator: PropTypes.func,
+    startDecorator: element,
+    endDecorator: element,
     onKeyUp: PropTypes.func,
     onKeyDown: PropTypes.func,
     valueChange: PropTypes.func.isRequired,

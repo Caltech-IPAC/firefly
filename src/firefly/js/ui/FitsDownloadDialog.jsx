@@ -1,11 +1,12 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Button, Stack} from '@mui/joy';
+import {Button, Stack, Typography} from '@mui/joy';
 import React, {memo, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, capitalize} from 'lodash';
 import {dispatchShowDialog, dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
+import {getResultCounts} from '../core/LayoutCntlr.js';
 import {Operation} from '../visualize/PlotState.js';
 import {getRootURL, getCmdSrvSyncURL, encodeUrl, replaceExt} from '../util/WebUtil.js';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
@@ -29,8 +30,9 @@ import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 import {upload} from '../rpc/CoreServices.js';
 import {download, downloadBlob, makeDefaultDownloadFileName} from '../util/fetch.js';
 import {useFieldGroupValue, useStoreConnector} from './SimpleComponent.jsx';
-import HelpIcon from './HelpIcon.jsx';
+import HelpIcon, {HelpText} from './HelpIcon.jsx';
 import {Stacker} from 'firefly/ui/Stacker.jsx';
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 
 const STRING_SPLIT_TOKEN= '--STR--';
 const dialogPopupId = 'fitsDownloadDialog';
@@ -109,29 +111,24 @@ const MakeFileOptions = ({plot,colors,hasOperation,threeC}) => {
 
 const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
     const pv= getActivePlotView(visRoot());
+    const {tableCnt}= getResultCounts();
     const plot = primePlot(pv);
     const colors = getColors(plot);
     const threeC = isThreeColor(plot);
     const hasOperation = plot?.plotState.hasOperation(Operation.CROP) ?? false;
     const [getBand] = useFieldGroupValue ('threeBandColor', groupKey);
     const band= threeC ? getBand() : Band.NO_BAND.key;
-
-    const totalChildren = (isWs ? 3 : 2) + (hasOperation ? 1 : 0) + (threeC ? 1 : 0);// fileType + save as + (fileLocation)
-    const childH = (totalChildren * (2)).toString;
-
-    const [getFileType] = useFieldGroupValue ('fileType', groupKey);
+    const fileType = useFieldGroupValue ('fileType', groupKey)[0]();
+    const location = useFieldGroupValue('fileLocation', groupKey)[0]();
     const [getFileName, setFileName] = useFieldGroupValue('fileName', groupKey);
-    const [getLocation] = useFieldGroupValue('fileLocation', groupKey);
 
     useEffect(() => {
-        const fileType = getFileType();
         const fileName = getFileName();
-        const fileLocation = getLocation();
         const band = getBand();
         let fName = '';
 
         // change the filename if a file is selected from the file picker
-        if (fileLocation === 'isWs' && isValidWSFolder(fileName, false).valid) {
+        if (location === 'isWs' && isValidWSFolder(fileName, false).valid) {
             fName = fileName.substring(fileName.lastIndexOf('/') + 1);
         }
         else { //FileLocation = isLocal: check for fileType change or fileName change. If fileType changes, replace file extension
@@ -146,7 +143,7 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
             }
         }
         setFileName(fName);
-    }, [getFileType, getFileName, getLocation, getBand]);
+    }, [fileType, getFileName, location, getBand]);
 
     return (
         <FieldGroup groupKey={groupKey} sx={{display:'flex', flexGrow:1, overflow:'hidden', p:1}}>
@@ -159,6 +156,7 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
                                            sx={{flexGrow:1, overflow:'hidden'}}>
                         <MakeFileOptions {...{plot, colors, hasOperation, threeC}}/>
                     </DownloadOptionsDialog>
+                    {fileType==='reg' && tableCnt>0 && <RegionWarning/>}
                 </Stack>
                 <Stacker endDecorator={<HelpIcon helpId={'visualization.saveimage'}/>}>
                     <CompleteButton text='Save' onSuccess={ (request) => resultsSuccess(request, pv, popupId )}
@@ -175,6 +173,31 @@ FitsDownloadDialogForm.propTypes = {
     popupId: PropTypes.string,
     isWs: PropTypes.oneOfType([PropTypes.bool, PropTypes.string])
 };
+
+const RegionWarning= () => (
+    <Stack spacing={1} flexGrow={1}>
+        <Typography level='title-md' color='warning'>
+            Warning
+        </Typography>
+        <Typography level='body-sm' component={'div'}>
+            If you save the overlays as a regions file from this, the images pane, you get all the overlays,
+            which may not include the entirety of any catalog.
+            Using the table save you may save the entire catalog as a regions file but none of the other overlays.
+            <Stack direction='row' alignItems={'center'} spacing={1/2}>
+                <Typography level='body-sm'>
+                    Go to the
+                </Typography>
+                <SaveOutlinedIcon/>
+                <Typography level='body-sm'>
+                    in the table pane and choose region as the file format.
+                </Typography>
+            </Stack>
+            <HelpText helpId='visualization.saveimage.regionIssue'
+                      text= 'Click here for more details' />
+        </Typography>
+    </Stack>
+);
+
 
 function matchPossibleDefaultNames(plot,fileName) {
     const possibleRoots= [makeFileName(plot,Band.NO_BAND.key, 'fits'), makeFileName(plot,Band.RED.key, 'fits'),

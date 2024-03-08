@@ -8,7 +8,7 @@ import {isEmpty,omit} from 'lodash';
 import {flux} from '../../core/ReduxFlux.js';
 import {
     NewPlotMode, dispatchAddViewer, dispatchViewerUnmounted,
-    getMultiViewRoot, getViewer, getLayoutType, findViewerWithItemId, IMAGE, getViewerItemIds
+    getMultiViewRoot, getViewer, getLayoutType, findViewerWithItemId, IMAGE,
 } from '../MultiViewCntlr.js';
 import {MultiImageViewerView} from './MultiImageViewerView.jsx';
 import {visRoot, dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
