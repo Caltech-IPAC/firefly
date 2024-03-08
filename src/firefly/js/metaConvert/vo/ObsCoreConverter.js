@@ -2,8 +2,10 @@ import {isEmpty} from 'lodash';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {getCellValue, getColumns, hasRowAccess} from '../../tables/TableUtil.js';
 import {
-    getObsCoreAccessURL, getObsCoreProdTypeCol, getObsTitle, getProdTypeGuess, isFormatDataLink, isFormatPng,
-    isFormatVoTable, makeWorldPtUsingCenterColumns } from '../../voAnalyzer/TableAnalysis.js';
+    getObsCoreAccessURL, getObsCoreProdTypeCol, getObsReleaseDate, getObsTitle, getProdTypeGuess, isFormatDataLink,
+    isFormatPng,
+    isFormatVoTable, makeWorldPtUsingCenterColumns
+} from '../../voAnalyzer/TableAnalysis.js';
 import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {tokenSub} from '../../util/WebUtil.js';
 import {getSearchTarget} from '../../visualize/saga/CatalogWatcher.js';
@@ -137,8 +139,14 @@ export function getObsCoreDataProduct(table, row, activateParams, options) {
 
 function doErrorChecks(table, row, prodType, dataSource, isDataLink, isVoTable) {
     if (!dataSource) return dpdtSimpleMsg(`${prodType} is not supported`);
-    if (isDataLink && !isVoTable) dpdtSimpleMsg(`${prodType} is not supported`);
-    if (!hasRowAccess(table, row)) return dpdtSimpleMsg('You do not have access to these data.');
+    if (isDataLink && !isVoTable) return dpdtSimpleMsg(`${prodType} is not supported`);
+    if (!hasRowAccess(table, row)) {
+        const rDateStr= getObsReleaseDate(table,row);
+        const msg= rDateStr ?
+            `Proprietary data: the data publisher states it will become available on ${rDateStr}` :
+            'Proprietary data; the data publisher has not provided a release date yet';
+        return dpdtSimpleMsg(msg);
+    }
     return undefined;
 }
 

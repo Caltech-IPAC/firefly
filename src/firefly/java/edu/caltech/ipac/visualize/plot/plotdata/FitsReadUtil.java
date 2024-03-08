@@ -378,6 +378,9 @@ public class FitsReadUtil {
     public static int getNaxis2(Header h) { return h.getIntValue("NAXIS2", 0); }
     public static int getNaxis3(Header h) { return (getNaxis2(h) > 2) ? h.getIntValue("NAXIS3") : 1; }
     public static int getNaxis4(Header h) { return (getNaxis3(h) > 2) ? h.getIntValue("NAXIS4") : 1; }
+    public static int getZNaxis1(Header h) { return h.getIntValue("ZNAXIS1", -1); }
+    public static int getZNaxis2(Header h) { return h.getIntValue("ZNAXIS2", -1); }
+    public static int getZNaxis3(Header h) { return h.getIntValue("ZNAXIS3",-1); }
     public static double getBscale(Header h) { return h.getDoubleValue("BSCALE", 1.0); }
     public static double getBzero(Header h) { return h.getDoubleValue("BZERO", 0.0); }
     public static double getBlankValue(Header h) {

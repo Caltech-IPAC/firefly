@@ -256,6 +256,15 @@ export const getObsCoreSRegion = (tableOrId, rowIdx) => getObsCoreCellValue(tabl
 export const getObsTitle = (tableOrId, rowIdx) => {
     return getObsCoreCellValue(tableOrId, rowIdx, 'obs_title');
 };
+
+export const getObsReleaseDate = (tableOrId, rowIdx) => {
+    const table= getTableModel(tableOrId);
+    if (!table) return '';
+    return getCellValue(table,rowIdx,'obs_release_date');
+};
+
+
+
 /**
  * return access_url cell data
  * @param {TableModel|String} tableOrId - a table model or a table id
