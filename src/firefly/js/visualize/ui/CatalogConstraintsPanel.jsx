@@ -2,14 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Button, Stack, Typography} from '@mui/joy';
+import {Box, Button, Skeleton, Stack, Typography} from '@mui/joy';
 import React, {PureComponent, memo} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, merge, isNil, isArray, cloneDeep, has} from 'lodash';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {fetchTable} from '../../rpc/SearchServicesJson.js';
-import {getColumnIdx, getTblById, createErrorTbl} from '../../tables/TableUtil.js';
+import {getColumnIdx, getTblById, createErrorTbl, isFullyLoaded} from '../../tables/TableUtil.js';
 import {BasicTableViewWithConnector} from '../../tables/ui/BasicTableView.jsx';
 import {createLinkCell, createInputCell} from '../../tables/ui/TableRenderer.js';
 import * as TblCntlr from '../../tables/TablesCntlr.js';
@@ -104,7 +104,7 @@ export class CatalogConstraintsPanel extends PureComponent {
             const ddShort = makeFormType(showFormType, dd_short);
 
             return (
-                <Button onClick={ () => this.resetTable(catname,  ddShort, createDDRequest, groupKey, fieldKey)}>
+                <Button size='sm' onClick={ () => this.resetTable(catname,  ddShort, createDDRequest, groupKey, fieldKey)}>
                     Reset
                 </Button>
             );
@@ -123,23 +123,20 @@ export class CatalogConstraintsPanel extends PureComponent {
                        ]}
                        labelWidth={75}
                        label='Table Selection:'
-                       multiple={false}
+                       size='sm'
                    />
                 );
         };
 
-        if (isEmpty(tableModel) || !tableModel.tbl_id.startsWith(catname)) {
-            //return <div style={{top: 0}} className='loading-mask'></div>;
-            return <Box sx={{minHeight: 360}}/>; //to prevent the outer layout from shrinking while the table loads
-        }
+        if (isEmpty(tableModel) || !tableModel.tbl_id.startsWith(catname)) return  <Skeleton variant='rectangular' sx={{flexGrow:1}}/>;
 
         return (
-            <Stack spacing={1}>
+            <Stack spacing={1} flexGrow={1}>
                 <Stack direction='row' spacing={2}>
                     {!error && showFormType && formTypeList()}
                     {!error && resetButton()}
                 </Stack>
-                <Stack spacing={1}>
+                <Stack spacing={1} flexGrow={1}>
                     <TablePanelConnected {...{tableModel, fieldKey}} />
                     {!error && renderSqlArea()}
                 </Stack>
@@ -178,7 +175,8 @@ export class CatalogConstraintsPanel extends PureComponent {
 
         fetchTable(request).then((tableModel) => {
 
-            const urlDef = FieldGroupUtils.getGroupFields(groupKey)?.cattable?.coldef ?? 'null';
+            const fields = FieldGroupUtils.getGroupFields(groupKey);
+            const urlDef = FieldGroupUtils.getGroupFields(groupKey)?.cattable?.coldef;
 
             const tableModelFetched = tableModel;
             tableModelFetched.tbl_id = tblid;
@@ -393,7 +391,7 @@ class ConstraintPanel extends PureComponent {
             <Stack sx={{direction:'row', flex: '1 1 auto',
                 '& .fixedDataTableLayout_main': {borderRadius:'5px'} }}>
                 <Stack {...{ direction:'row', flex: '1 1 auto', position: 'relative', width: 1, height: 1}}>
-                    <Box sx={{minHeight:180, flex: '1 1 auto'}}>
+                    <Box sx={{minHeight:150, flex: '1 1 auto'}}>
                             <div className='TablePanel__table' style={{top: 0}}>
                                 <BasicTableViewWithConnector
                                     tbl_ui_id={tbl_ui_id}
@@ -571,6 +569,7 @@ function renderSqlArea() {
             <InputAreaFieldConnected fieldKey='txtareasql'
                                      placeholder={'Add additional constraints here (SQL)'}
                                      tooltip='Enter SQL additional constraints here'
+                                     maxRows={4}
             />
             <Stack>
                 <Typography level='body-sm' component='div'>

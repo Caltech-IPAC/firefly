@@ -78,7 +78,7 @@ export class CatalogSearchMethodType extends PureComponent {
 
     render() {
         const {fields}= this.state;
-        const {groupKey, polygonDefWhenPlot, withPos=true, searchOption}= this.props;
+        const {groupKey, polygonDefWhenPlot, withPos=true, searchOption, sx}= this.props;
 
         const plot = primePlot(visRoot());
         const polyIsDef= polygonDefWhenPlot && plot;
@@ -86,11 +86,11 @@ export class CatalogSearchMethodType extends PureComponent {
                                    : SpatialMethod['All Sky'].value;
 
         return (
-            <FieldGroup groupKey={groupKey} keepState={true} sx={{height:1}}>
+            <FieldGroup groupKey={groupKey} keepState={true} sx={{height:1, ...sx}}>
                 <Card sx={{height:1}}>
                     <Stack spacing={2}>
-                        {renderTargetPanel(groupKey, searchType)}
                         {spatialSelection(withPos, polyIsDef, searchOption)}
+                        {renderTargetPanel(groupKey, searchType)}
                         <SizeArea {...{groupKey, searchType, imageCornerCalc: fields?.imageCornerCalc?.value ?? 'image'}}/>
                     </Stack>
                 </Card>
@@ -402,9 +402,10 @@ function renderTargetPanel(groupKey, searchType) {
     const visible = (searchType === SpatialMethod.Cone.value ||
                      searchType === SpatialMethod.Box.value ||
                      searchType === SpatialMethod.Elliptical.value);
+    if (!visible) return ;
     return (
         <Box height={80}>
-            {visible && <TargetPanel labelWidth={60} groupKey={groupKey}/>}
+            <TargetPanel labelWidth={60} groupKey={groupKey}/>
         </Box>
     );
 }
