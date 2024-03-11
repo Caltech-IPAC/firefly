@@ -21,7 +21,7 @@ export function ListBoxInputFieldView({value:fieldValue='', onChange, fieldKey, 
                                           orientation='horizontal', sx, slotProps={},
                                           renderValue, decorator, startDecorator,
                                        multiple, placeholder, tooltip, label,
-                                          readonly=false}) {
+                                          readonly=false, size}) {
 
     const vAry= getCurrentValueArr(fieldValue);
     return (
@@ -30,7 +30,7 @@ export function ListBoxInputFieldView({value:fieldValue='', onChange, fieldKey, 
                 {label && <FormLabel {...slotProps?.label}>{label}</FormLabel>}
                 <Tooltip {...{title:tooltip, placement:'top', ...slotProps?.tooltip}}>
                     <Select {...{name: fieldKey, multiple, onChange, placeholder, renderValue, startDecorator,
-                        disabled: readonly, value: multiple ? vAry : fieldValue,
+                        disabled: readonly, size, value: multiple ? vAry : fieldValue,
                         ...slotProps?.input}}>
                         {options?.map((({value,label,disabled=false},idx) => {
                             return (
@@ -67,6 +67,7 @@ ListBoxInputFieldView.propTypes= {
     renderValue: func,
     decorator: func,
     startDecorator: element,
+    size: string,
     slotProps: shape({
         input: object,
         control: object,

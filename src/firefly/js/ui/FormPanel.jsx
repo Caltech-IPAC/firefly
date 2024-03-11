@@ -4,7 +4,7 @@
 
 import {Button, Sheet, Stack} from '@mui/joy';
 import React, {useCallback} from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, {object, shape} from 'prop-types';
 import CompleteButton from './CompleteButton.jsx';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {HelpIcon} from './HelpIcon.jsx';
@@ -12,6 +12,7 @@ import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {isNil} from 'lodash';
 import {dispatchFormCancel, dispatchFormSubmit} from 'firefly/core/AppDataCntlr.js';
+import {Stacker} from 'firefly/ui/Stacker.jsx';
 
 function handleFailure() {
 
@@ -49,19 +50,8 @@ export const FormPanel = function (props) {
     const { children, onSuccess, onSubmit, onCancel=dispatchHideDropDown, onError, groupKey, groupsToUse,
         action, params, title, getDoOnClickFunc, submitText='Search',cancelText='Cancel', help_id, changeMasking,
         requireAllValid,
-        includeUnmounted=false, extraWidgets=[], extraWidgetsRight=[], sx} = props;
-    let { style, inputStyle, submitBarStyle} = props;
-
-    // TODO: replace these with sx and slotProps and remove style attributes not needed
-    inputStyle = Object.assign({
-        padding: 5,
-        marginBottom: 5,
-        boxSizing: 'border-box',
-        flexGrow: 1
-    }, inputStyle);
-    style = Object.assign({height: '100%', display:'flex', flexDirection: 'column', boxSizing: 'border-box'}, style);
-    submitBarStyle = Object.assign({flexGrow: 0, display: 'inline-flex', justifyContent: 'space-between', boxSizing: 'border-box',
-                                  width: '100%', alignItems: 'flex-end', padding:'2px 0px 3px'}, submitBarStyle);
+        includeUnmounted=false, extraWidgets, extraWidgetsRight, sx, slotProps} = props;
+    const { style, inputStyle, submitBarStyle} = props;
 
     const doSubmit = ((p) => {
         const handler = onSuccess ?? createSuccessHandler(action, params, title, onSubmit);
@@ -81,36 +71,34 @@ export const FormPanel = function (props) {
         onCancel?.();
     }, []);
 
+    const searchBarEnd = (
+        <>
+            {extraWidgetsRight}
+            {help_id && <HelpIcon helpId={help_id} />}
+        </>
+    );
+
     return (
-        <Sheet className='ff-FormPanel' style={style} sx={sx}>
-            <div style={inputStyle}>
+        <Stack component={Sheet} className='ff-FormPanel' spacing={1} p={1} height={1} sx={{...style, ...sx}}>
+            <Stack flexGrow={1} sx={{...inputStyle, ...slotProps?.input}}>
                 {children}
-            </div>
-            <div style={submitBarStyle}>
-                <Stack spacing={2} direction='row'>
-                    <Stack spacing={1} direction='row'>
-                        <CompleteButton style={{display: 'inline-block', marginRight: 10}}
-                                        includeUnmounted={includeUnmounted}
-                                        groupKey={groupKey}
-                                        requireAllValid={requireAllValid}
-                                        getDoOnClickFunc={getDoOnClickFunc}
-                                        groupsToUse={groupsToUse}
-                                        onSuccess={doSubmit}
-                                        onFail={onError || handleFailure}
-                                        text = {submitText} changeMasking={changeMasking} />
-                        {cancelText && <ExtraButton onClick={doCancel} text={cancelText}/>}
-                    </Stack>
-                    {Boolean(extraWidgets?.length) &&
-                        <Stack spacing={1} direction='row' alignItems='center'>
-                            {extraWidgets}
-                        </Stack>}
-                </Stack>
-                <>
-                    {extraWidgetsRight}
-                    {help_id && <HelpIcon helpId={help_id} />}
-                </>
-            </div>
-        </Sheet>
+            </Stack>
+            <Stacker endDecorator={searchBarEnd} {...slotProps?.searchBar}
+                     sx={{...submitBarStyle, ...slotProps?.searchBar?.sx}}>
+                <CompleteButton style={{display: 'inline-block', marginRight: 10}}
+                                includeUnmounted={includeUnmounted}
+                                groupKey={groupKey}
+                                requireAllValid={requireAllValid}
+                                getDoOnClickFunc={getDoOnClickFunc}
+                                groupsToUse={groupsToUse}
+                                onSuccess={doSubmit}
+                                onFail={onError || handleFailure}
+                                text = {submitText} changeMasking={changeMasking} />
+                {cancelText && <ExtraButton onClick={doCancel} text={cancelText}/>}
+
+                {extraWidgets}
+            </Stacker>
+        </Stack>
     );
 };
 
@@ -138,7 +126,11 @@ FormPanel.propTypes = {
     changeMasking: PropTypes.func,
     includeUnmounted: PropTypes.bool,
     extraWidgets: PropTypes.arrayOf(PropTypes.element),
-    getDoOnClickFunc: PropTypes.func
+    getDoOnClickFunc: PropTypes.func,
+    slotProps: shape({
+        input: object,
+        searchBar: object,
+    }),
 };
 
 export function ExtraButton({text, onClick}) {

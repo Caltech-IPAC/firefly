@@ -14,7 +14,7 @@ import {FieldGroup} from 'firefly/ui/FieldGroup.jsx';
 import {getWorkspaceConfig} from 'firefly/visualize/WorkspaceCntlr.js';
 import {VoSearchPanel} from 'firefly/ui/VoSearchPanel.jsx';
 import {NedSearchPanel} from 'firefly/ui/NedSearchPanel.jsx';
-import {irsaCatalogGroupKey} from 'firefly/visualize/ui/CatalogSelectViewPanel.jsx';
+import {irsaCatalogGroupKey} from 'firefly/visualize/ui/IrsaCatalogSearch.jsx';
 import {FormPanel} from 'firefly/ui/FormPanel.jsx';
 import {showInfoPopup} from 'firefly/ui/PopupUtil.jsx';
 
