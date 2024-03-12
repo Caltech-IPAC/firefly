@@ -10,7 +10,7 @@ import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {ExpandType, dispatchChangeExpandedMode, dispatchExpandedAutoPlay, visRoot } from '../ImagePlotCntlr.js';
 import {primePlot, getActivePlotView} from '../PlotViewUtil.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
-import {GridTileButton, ListViewButton, OneTileButton} from '../ui/Buttons.jsx';
+import {DisplayTypeButtonGroup, ListViewButton} from '../ui/Buttons.jsx';
 import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {getMultiViewRoot, getExpandedViewerItemIds} from '../MultiViewCntlr.js';
@@ -18,8 +18,8 @@ import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
 import ACTIVE_DOT from 'html/images/green-dot-10x10.png';
 import INACTIVE_DOT from 'html/images/blue-dot-10x10.png';
-import NavigateNext from '@mui/icons-material/NavigateNext';
-import NavigateBefore from '@mui/icons-material/NavigateBefore';
+import NavigateNext from '@mui/icons-material/NavigateNextRounded';
+import NavigateBefore from '@mui/icons-material/NavigateBeforeRounded';
 
 function createOptions(expandedMode, singleAutoPlay, plotIdAry) {
     return (
@@ -62,7 +62,7 @@ export function ExpandedTools({closeFunc}) {
                 {!single &&
                     <Stack {...{direction:'column', justifyContent:'space-between', minHeight:25, className:'disable-select'}}>
                         <div style={{alignSelf:'flex-end', whiteSpace:'nowrap', display:'flex'}}>
-                            <WhichView/>
+                            <WhichView expandedMode={expandedMode}/>
                             {createOptions(expandedMode,singleAutoPlay, plotIdAry)}
                             <PagingControl
                                 viewerItemIds={getExpandedViewerItemIds(getMultiViewRoot())}
@@ -89,20 +89,24 @@ ExpandedTools.propTypes= {
 
 
 
-function WhichView() {
+function WhichView({expandedMode}) {
     const showViewButtons= getExpandedViewerItemIds(getMultiViewRoot()).length>1;
+    const value= expandedMode===ExpandType.SINGLE ? 'one' : 'grid';
     return (
-        <Stack direction='row' alignItems='center'>
+        <Stack direction='row' alignItems='center' pl={1}>
+            {showViewButtons && <DisplayTypeButtonGroup {...{value,
+                config:[
+                    { value:'one', title:'Show single image at full size',
+                        onClick: () => dispatchChangeExpandedMode(ExpandType.SINGLE)
+                    },
+                    { value:'grid', title:'Show all images as tiles',
+                        onClick: () => dispatchChangeExpandedMode(ExpandType.GRID)
+                    }
+                ]
+            }}/>}
             {showViewButtons &&
-                   <OneTileButton tip='Show single image at full size'
-                                  onClick={() => dispatchChangeExpandedMode(ExpandType.SINGLE)}/>}
-            {showViewButtons &&
-                   <GridTileButton tip='Show all images as tiles'
-                                  onClick={() => dispatchChangeExpandedMode(ExpandType.GRID)}/>
-            }
-            {showViewButtons &&
-                   <ListViewButton tip={'Choose which images to show'}
-                                  onClick={() =>showExpandedOptionsPopup() }/>
+                <ListViewButton title='Choose which images to show'
+                                onClick={() =>showExpandedOptionsPopup() }/>
             }
         </Stack>
     );

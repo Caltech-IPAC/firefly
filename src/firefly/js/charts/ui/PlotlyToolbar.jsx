@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import {IconButton, Stack, ToggleButtonGroup} from '@mui/joy';
 import {get, isEmpty} from 'lodash';
@@ -27,13 +27,13 @@ import {
 } from '../../visualize/ui/Buttons.jsx';
 
 import ZoomIco from 'html/images/icons-2014/24x24_ZoomIn.png';
-import PanIco from 'html/images/icons-2014/pan.png';
 import SelectIco from 'html/images/icons-2014/select.png';
 import TurntableIco from 'html/images/turntable-tmp.png';
 import OrbitalIco from 'html/images/orbital-tmp.png';
 import ApplySelectIco from 'html/images/icons-2014/24x24_Checkmark.png';
 import ApplyFilterIco from 'html/images/icons-2014/24x24_FilterAdd.png';
 import ResetZoomIco from 'html/images/icons-2014/Zoom1x-24x24-tmp.png';
+import PanToolRoundedIconIco from '@mui/icons-material/PanToolRounded';
 
 export function PlotlyToolbar({chartId, expandable}) {
     const {activeTrace} = getChartData(chartId);
@@ -218,8 +218,9 @@ function PanBtn({chartId}) {
     return (
         <IconButton value='pan'
                     onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'pan', selection: undefined}})}
-                    title='Pan'
-        ><img className='old-ff-icon-img' src={PanIco}/></IconButton>
+                    title='Pan' >
+            <PanToolRoundedIconIco/>
+        </IconButton>
     );
 }
 
@@ -250,7 +251,7 @@ function SelectBtn({chartId}) {
     );
 }
 
-function ResetZoomBtn({style={}, chartId}) {
+function ResetZoomBtn({chartId}) {
     const doClick = () => {
         const {_original, layout} = getChartData(chartId) || {};
 
@@ -347,7 +348,7 @@ export function ActiveTraceSelect({sx={}, chartId, activeTrace}) {
     />);
 }
 
-function FilterSelection({style={}, chartId}) {
+function FilterSelection({chartId}) {
     return (
         <IconButton onClick={() => dispatchChartFilterSelection({chartId})}
              title='Filter on the selected points'

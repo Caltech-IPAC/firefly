@@ -10,14 +10,29 @@ import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
-import nom.tam.fits.*;
+import nom.tam.fits.AbstractTableData;
+import nom.tam.fits.BasicHDU;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.fits.FitsFactory;
+import nom.tam.fits.Header;
+import nom.tam.fits.HeaderCard;
+import nom.tam.fits.ImageData;
+import nom.tam.fits.ImageHDU;
+import nom.tam.fits.TableHDU;
+import nom.tam.fits.UndefinedHDU;
 import nom.tam.image.compression.hdu.CompressedImageHDU;
 import nom.tam.util.ArrayFuncs;
 import nom.tam.util.Cursor;
 
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -226,10 +241,10 @@ public final class FITSTableReader
     }
 
     //This function is loosely based on the packagedType function from the FitsStarTable class (uk.ac.starlink.fits package)
-    private static Class<?> getClassType(Object base, int icol, boolean[] isScaled) {
+    private static Class<?> getClassType(Object base, int icol, boolean[] isScaled, String colFormat) {
         if (base == null) {
             if (isScaled[icol]) return Double.class;
-            return Object.class;
+            return getClassByTform(colFormat);
         } else {
             Class<?> cls = base.getClass().getComponentType();
             if (cls != null && Array.getLength(base) == 1) {
@@ -242,6 +257,32 @@ public final class FITSTableReader
             }
             return base.getClass();
         }
+    }
+
+    private static Class<?> getClassByTform(String tform) {
+        if (tform==null) return String.class;
+        Pattern pattern = Pattern.compile("^[0-9]*");
+        Matcher m= pattern.matcher(tform);
+        var startStr= m.find() ? m.group() : "";
+
+        int arrayLen;
+        try {
+            arrayLen= !startStr.isEmpty() ? Integer.parseInt(startStr) : 0;
+
+        } catch (NumberFormatException e) {
+            arrayLen= 0;
+        }
+        var isArray= arrayLen>0;
+
+        char typeChar= startStr.length()<tform.length() ? tform.charAt(startStr.length()) : 'A';
+        return switch (typeChar) {
+            case 'X', 'B', 'I', 'J' -> isArray ? int[].class : int.class;
+            case 'K' -> isArray ? long[].class : long.class;
+            case 'E' -> isArray ? float[].class : float.class;
+            case 'D' -> isArray ? double[].class : double.class;
+            case 'L' -> boolean.class;
+            default -> String.class;
+        };
     }
 
     /**
@@ -318,7 +359,9 @@ public final class FITSTableReader
                     throw new IOException("Error reading table entry");
                 }
 
-                bases[icol] = getClassType(entry, icol, isScaled);
+                bases[icol] =
+                        hduTable.getNRows()==0 ? getClassByTform(hduTable.getColumnFormat(icol)) :
+                                getClassType(entry, icol, isScaled, hduTable.getColumnFormat(icol));
             }
         }
         catch (NumberFormatException e) {

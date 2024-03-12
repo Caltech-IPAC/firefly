@@ -7,14 +7,10 @@ import React, {useContext} from 'react';
 import PropTypes from 'prop-types';
 import {Sheet, Stack, Typography} from '@mui/joy';
 import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
+import {BeforeButton, DisplayTypeButtonGroup, NextButton} from '../../visualize/ui/Buttons.jsx';
 
 import {getChartData} from '../ChartsCntlr.js';
 import {dispatchChangeViewerLayout, dispatchUpdateCustom, getViewerItemIds, getViewer, getLayoutType, getMultiViewRoot} from '../../visualize/MultiViewCntlr.js';
-import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import ONE from 'html/images/icons-2014/Images-One.png';
-import GRID from 'html/images/icons-2014/Images-Tiled.png';
-import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
-import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 
 import {PagingControl} from '../../visualize/iv/ExpandedTools.jsx';
 import {ChartToolbar} from './ChartPanel';
@@ -94,20 +90,23 @@ const MultiChartStd = ({viewerId, layoutType, activeItemId}) => {
     const nextIdx= cIdx===viewerItemIds.length-1 ? 0 : cIdx+1;
     const prevIdx= cIdx ? cIdx-1 : viewerItemIds.length-1;
 
+
     return (
-        <Stack direction='row'>
-            <ToolbarButton icon={ONE} tip={'Show single chart'}
-                           onClick={() => dispatchChangeViewerLayout(viewerId,'single')}/>
-            <ToolbarButton icon={GRID} tip={'Show all charts as tiles'}
-                           onClick={() => dispatchChangeViewerLayout(viewerId,'grid')}/>
+        <Stack direction='row' py={1/4}>
+            <DisplayTypeButtonGroup {...{value:getViewer(getMultiViewRoot(), viewerId)?.layout ?? 'single',
+                config:[
+                    { value:'single', title:'Show single chart',
+                        onClick: () => dispatchChangeViewerLayout(viewerId,'single')
+                    },
+                    { value:'grid', title:'Show all charts as tiles',
+                        onClick: () => dispatchChangeViewerLayout(viewerId,'grid')
+                    }
+                ]
+            }}/>
             {layoutType==='single' && viewerItemIds.length>2 &&
-            <img src={PAGE_LEFT}
-                 onClick={() => dispatchUpdateCustom(viewerId, {activeItemId: viewerItemIds[prevIdx]})} />
-            }
+            <BeforeButton onClick={() => dispatchUpdateCustom(viewerId, {activeItemId: viewerItemIds[prevIdx]})} /> }
             {layoutType==='single' && viewerItemIds.length>1 &&
-            <img src={PAGE_RIGHT}
-                 onClick={() => dispatchUpdateCustom(viewerId, {activeItemId: viewerItemIds[nextIdx]})} />
-            }
+                <NextButton onClick={() => dispatchUpdateCustom(viewerId, {activeItemId: viewerItemIds[nextIdx]})} /> }
         </Stack>
     );
 };
@@ -134,12 +133,16 @@ const MultiChartExt = ({viewerId, layoutType, activeItemId}) => {
             </Typography>
             <Stack direction='row' sx={{whiteSpace:'nowrap'}}>
                 <Stack direction='row'>
-                    <ToolbarButton icon={ONE} tip={'Show single chart'}
-                                   imageStyle={{width:24,height:24, flex: '0 0 auto'}}
-                                   onClick={() => dispatchChangeViewerLayout(viewerId,'single')}/>
-                    <ToolbarButton icon={GRID} tip={'Show all charts as tiles'}
-                                   imageStyle={{width:24,height:24,  paddingLeft:5, flex: '0 0 auto'}}
-                                   onClick={() => dispatchChangeViewerLayout(viewerId,'grid')}/>
+                    <DisplayTypeButtonGroup {...{value:getViewer(getMultiViewRoot(), viewerId)?.layout ?? 'single',
+                        config:[
+                            { value:'single', title:'Show single chart',
+                                onClick: () => dispatchChangeViewerLayout(viewerId,'single')
+                            },
+                            { value:'grid', title:'Show all charts as tiles',
+                                onClick: () => dispatchChangeViewerLayout(viewerId,'grid')
+                            }
+                        ]
+                    }}/>
                 </Stack>
                 <Stack>
                     <PagingControl

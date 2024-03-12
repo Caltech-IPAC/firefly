@@ -12,7 +12,7 @@ import {
     dispatchChangeViewerLayout, getViewer, getMultiViewRoot,
     GRID_FULL, GRID_RELATED, SINGLE, GRID, getLayoutDetails
 } from '../MultiViewCntlr.js';
-import {GridTileButton, GridTileCompactButton, OneTileButton} from './Buttons.jsx';
+import {DisplayTypeButtonGroup} from './Buttons.jsx';
 import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
 import {ImagePager} from './ImagePager.jsx';
 import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
@@ -46,6 +46,33 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
         metaControls= false;
     }
 
+    const gridConfig=[];
+    const gridValue= layoutType===SINGLE ? 'one' : layoutType===GRID && layoutDetail!==GRID_RELATED ? 'gridFull' : 'gridRelated';
+
+    if (showMultiImageOps) {
+        gridConfig.push(
+            { value:'one', title:'Show single image at full size',
+                onClick: () => dispatchChangeViewerLayout(viewerId,SINGLE, undefined, activeTable?.tbl_id)
+            }
+        );
+    }
+    if (canGrid) {
+        gridConfig.push(
+            { value:'gridFull', title:'Tile all images in the search result table',
+                onClick: () => dispatchChangeViewerLayout(viewerId,GRID,GRID_FULL,activeTable?.tbl_id)
+            }
+        );
+    }
+
+    if (hasRelatedBands) {
+        gridConfig.push(
+            { value:'gridRelated', title:'Tile all data products associated with the highlighted table row',
+                onClick: () =>
+                    dispatchChangeViewerLayout(viewerId,GRID,GRID_RELATED,activeTable?.tbl_id)
+            }
+        );
+    }
+
 
     return (
         <Sheet>
@@ -53,17 +80,7 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
                 {makeDropDown && makeDropDown()}
                 {(metaControls&&(showMultiImageOps||canGrid||hasRelatedBands||showThreeColorButton))&& <Divider orientation='vertical' sx={{mx:1}}/> }
                 {metaControls && <Stack direction='row' alignItems='center' whiteSpace='nowrap'>
-                    {showMultiImageOps && <OneTileButton tip='Show single image at full size'
-                                                         onClick={() => dispatchChangeViewerLayout(viewerId,SINGLE, undefined, activeTable?.tbl_id)}/>}
-
-                    {canGrid && <GridTileButton tip='Tile all images in the search result table'
-                                               onClick={() => dispatchChangeViewerLayout(viewerId,GRID,GRID_FULL,activeTable?.tbl_id)}/>}
-
-                    {hasRelatedBands  &&
-                        <GridTileCompactButton tip='Tile all data products associated with the highlighted table row'
-                                       sx={{ml: 2}}
-                                       onClick={() => dispatchChangeViewerLayout(viewerId,GRID,GRID_RELATED,activeTable?.tbl_id)}/>
-                    }
+                    {showMultiImageOps && <DisplayTypeButtonGroup {...{value:gridValue, config:gridConfig }}/>}
                     {showThreeColorButton &&
                         <ToolbarButton icon={THREE_COLOR} tip='Create three color image'
                                        imageStyle={{width:24,height:24, flex: '0 0 auto'}}

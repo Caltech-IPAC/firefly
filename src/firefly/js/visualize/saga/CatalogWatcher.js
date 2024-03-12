@@ -165,7 +165,7 @@ function handleCatalogUpdate(tbl_id) {
     if (totalRows > maxScatterRows) {
         const sreq = cloneRequest(sourceTable.request, {inclCols: `"${c1}","${c2}"`});
         req = makeTableFunctionRequest(sreq, 'DecimateTable', title,
-            {decimate: serializeDecimateInfo(c1, c2, 10000), pageSize: MAX_ROW});
+            {decimate: serializeDecimateInfo(c1, c2, maxScatterRows), pageSize: MAX_ROW});
         dataTooBigForSelection= true;
     }
 

@@ -9,12 +9,15 @@ import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 import {isEmpty,omit,isFunction} from 'lodash';
 import {getSearchActions} from '../../core/AppDataCntlr.js';
+import {getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView, MOUSE_CLICK_REASON} from '../ImagePlotCntlr.js';
 import {ExpandButton} from '../ui/Buttons.jsx';
 import {VisCtxToolbarView, canConvertHipsAndFits, ctxToolbarBG} from '../ui/VisCtxToolbarView';
 import {VisInlineToolbarView} from '../ui/VisInlineToolbarView.jsx';
-import {primePlot, isActivePlotView, getAllDrawLayersForPlot, getPlotViewById} from '../PlotViewUtil.js';
+import {
+    primePlot, isActivePlotView, getAllDrawLayersForPlot, getPlotViewById,
+} from '../PlotViewUtil.js';
 import {ImageViewerLayout}  from '../ImageViewerLayout.jsx';
 import {isImage, isHiPS} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
@@ -171,9 +174,13 @@ function contextToolbar(plotView,dlAry,extensionList, width) {
 
 
 function getBorderColor(theme, pv,visRoot) {
+    const containerList= getMultiViewRoot().filter( (v) => v.containerType===IMAGE && v.mounted);
+    const manyPlots= (containerList.length>1 || containerList[0]?.itemIdAry?.length>1);
     if (!pv?.plotId) return 'rgba(0,0,0,.4)';
     if (!pv.plotViewCtx.highlightFeedback) return 'rgba(0,0,0,.1)';
-    if (isActivePlotView(visRoot,pv.plotId)) return `rgba(${theme.vars.palette.warning.mainChannel} / 1)`;
+    if (isActivePlotView(visRoot,pv.plotId)) {
+        return manyPlots ? `rgba(${theme.vars.palette.warning.mainChannel} / 1)` : 'rgba(0,0,0,.1)';
+    }
     const group= getPlotGroupById(visRoot,pv.plotGroupId);
     if (group?.overlayColorLock) return 'rgba(0, 0, 0, .1)';
     else return 'rgba(0,0,0,.2)';

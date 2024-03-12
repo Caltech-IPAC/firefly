@@ -4,6 +4,7 @@
 
 import Enum from 'enum';
 import {flattenDeep, isEmpty, isNil, isObject, isString, isUndefined, pick, values} from 'lodash';
+import {getMaxScatterRows} from '../../charts/ChartUtil.js';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
@@ -313,13 +314,14 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
         };
 
         let req = cloneRequest(table.request, params);
-        if (table.totalRows > 10000) {
+        const maxScatterRows = getMaxScatterRows();
+        if (table.totalRows > maxScatterRows) {
             const cenCol = findTableCenterColumns(table);
             if (!cenCol) return;
             const sreq = cloneRequest(table.request, {inclCols: `"${cenCol.lonCol}","${cenCol.latCol}"`});
             req = makeTableFunctionRequest(sreq, 'DecimateTable', 'coverage',
                 {
-                    decimate: !isOrbitalPathTable(tbl_id) ? serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, 10000) : undefined,
+                    decimate: !isOrbitalPathTable(tbl_id) ? serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, maxScatterRows) : undefined,
                     pageSize: MAX_ROW
                 });
         }

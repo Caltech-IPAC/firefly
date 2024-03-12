@@ -1,4 +1,4 @@
-import {Box, Chip, FormLabel, Stack, Typography} from '@mui/joy';
+import {FormLabel, Stack} from '@mui/joy';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 import {ColsShape, getColValidator} from '../../charts/ui/ColumnOrExpression.jsx';
@@ -203,6 +203,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel,
                     {!obsCoreEnabled &&
                         <CenterColumns {...{lonCol: getVal(CenterLonColumns), latCol: getVal(CenterLatColumns),
                             headerTitle:'Position Columns:', openKey:posOpenKey,
+                            doQuoteNonAlphanumeric:false,
                             headerPostTitle:'(from the selected table on the right)',
                             openPreMessage:posOpenMsg,
                             cols, lonKey:CenterLonColumns, latKey:CenterLatColumns}} />}
@@ -259,7 +260,6 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
     const layoutMode= getSpacialLayoutMode(spacialType,obsCoreEnabled,capabilities?.canUpload);
     const isCone= spatialMethod === 'Cone';
     const containsPoint= spatialRegOpValue === 'contains_point';
-    const style= {display:'flex', flexDirection:'column', flexWrap:'no-wrap', width: SpatialWidth, marginTop: 5};
 
     const radiusField= <RadiusField {...{radiusInArcSec:initArgs?.urlApi?.radiusInArcSec}}/>;
 

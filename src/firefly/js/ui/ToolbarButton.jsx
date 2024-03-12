@@ -4,7 +4,7 @@
 
 import {Badge, Box, Button, Checkbox, Divider, IconButton, Stack, Tooltip} from '@mui/joy';
 import {isString} from 'lodash';
-import React, {memo, useRef, useEffect} from 'react';
+import React, {useRef, useEffect, forwardRef, useCallback, useImperativeHandle} from 'react';
 import {bool, element, func, node, number, object, oneOfType, shape, string} from 'prop-types';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
@@ -39,11 +39,6 @@ function makeImage(icon,style={},className='') {
     }
 }
 
-export function IconButtonWrapper({icon,  title, ...rest }) {
-    const b = <IconButton {...{title,...rest}}> {makeImage(icon)} </IconButton>;
-    return title ? <Tooltip followCursor={true} title={title}>{b}</Tooltip> : b;
-}
-
 /**
  *
  * @param icon icon to display
@@ -60,7 +55,7 @@ export function IconButtonWrapper({icon,  title, ...rest }) {
  * @param style - a style to apply
  * @return {object}
  */
-export const ToolbarButton = memo((props) => {
+export const ToolbarButton = forwardRef((props,fRef) => {
     const {
         icon,text='',badgeCount=0,enabled=true, visible=true,
         imageStyle={}, iconButtonSize, shortcutKey='', color='neutral', variant='plain',
@@ -71,11 +66,13 @@ export const ToolbarButton = memo((props) => {
     const tip= props.tip || props.title || '';
     const buttonPressed= pressed || active;
     const {current:divElementRef}= useRef({divElement:undefined});
+    useImperativeHandle(fRef, () => divElementRef.divElement);
+    const setupRef  = useCallback((c) => divElementRef.divElement= c, [divElementRef]);
 
-    const handleClick= (ev) => {
+    const handleClick= useCallback((ev) => {
         onClick?.(divElementRef.divElement,ev);
         dropDownCB ? dropDownCB(divElementRef.divElement) : dispatchHideDialog(DROP_DOWN_KEY);
-    };
+    },[onClick,dropDownCB,divElementRef.divElement]);
 
     useEffect( () => {
         const {cnrl,meta,key,hasShortcut}= getShortCutInfo(shortcutKey);
@@ -91,7 +88,6 @@ export const ToolbarButton = memo((props) => {
     if (!visible) return false;
     const allowInput= disableHiding?'allow-input':'normal-button-hide';
 
-    const setupRef  = (c) => divElementRef.divElement= c;
 
     const image= makeImage(icon,imageStyle,allowInput);
     const iSize= iconButtonSize ? {'--IconButton-size': iconButtonSize} : {};
@@ -159,7 +155,7 @@ export const ToolbarButton = memo((props) => {
         </Tooltip>
     );
 
-    return !badgeCount ? b : <Badge {...{badgeContent:badgeCount}}> {b} </Badge>;
+    return !badgeCount ? b : <Badge {...{badgeContent:badgeCount, sx:{'& .MuiBadge-badge': {top:'.7rem', right:'.4rem'}}}}> {b} </Badge>;
 } );
 
 ToolbarButton.propTypes= {

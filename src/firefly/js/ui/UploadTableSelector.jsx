@@ -16,7 +16,7 @@ export function UploadTableSelector({uploadInfo, setUploadInfo, uploadTable=fals
     const UploadCenterLonColumns = 'uploadCenterLonColumns';
     const UploadCenterLatColumns = 'uploadCenterLatColumns';
 
-    const {groupKey,setVal, register, unregister}= useContext(FieldGroupCtx);
+    const {setVal, register, unregister}= useContext(FieldGroupCtx);
     const [getLon,setLon]= useFieldGroupValue(UploadCenterLonColumns);
     const [getLat,setLat]= useFieldGroupValue(UploadCenterLatColumns);
 
@@ -119,7 +119,7 @@ UploadTableSelector.propTypes = {
 };
 
 export function CenterColumns({lonCol,latCol, sx, cols, lonKey, latKey, openKey,
-                           headerTitle, headerPostTitle = '', openPreMessage=''}) {
+                                  doQuoteNonAlphanumeric, headerTitle, headerPostTitle = '', openPreMessage=''}) {
 
 
     const posHeader= (
@@ -144,11 +144,13 @@ export function CenterColumns({lonCol,latCol, sx, cols, lonKey, latKey, openKey,
                                name='longitude column'  // label that appears in column chooser
                                tooltip='Center longitude column for spatial search'
                                label='Lon Column'
+                               doQuoteNonAlphanumeric={doQuoteNonAlphanumeric}
                                validator={getColValidator(cols, true, false)} />
                     <ColumnFld fieldKey={latKey} cols={cols}
                                name='latitude column' // label that appears in column chooser
                                tooltip='Center latitude column for spatial search'
                                label='Lat Column'
+                               doQuoteNonAlphanumeric={doQuoteNonAlphanumeric}
                                validator={getColValidator(cols, true, false)} />
                 </Stack>
             </FieldGroupCollapsible>
