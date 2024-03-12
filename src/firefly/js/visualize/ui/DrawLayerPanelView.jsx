@@ -8,7 +8,7 @@ import PropTypes from 'prop-types';
 import {padStart, groupBy} from 'lodash';
 import {
     isDrawLayerVisible, getAllDrawLayersForPlot,
-    getLayerTitle, getDrawLayersByDisplayGroup, primePlot
+    getLayerTitle, getDrawLayersByDisplayGroup, primePlot, getHDU
 } from '../PlotViewUtil.js';
 import {operateOnOverlayPlotViewsThatMatch, enableRelatedDataLayer,
                findUnactivatedRelatedData, setMaskVisible } from '../RelatedDataUtil.js';
@@ -84,8 +84,10 @@ function makePermInfo(pv,layers) {
 
 function showAllLayers(layers, pv, visible) {
 
+    const plot= primePlot(pv);
     pv.overlayPlotViews.forEach( (opv) => {
-        setMaskVisibleInGroup(opv,visible);
+        const match= !opv.plot || (opv.plot?.dataWidth===plot?.dataWidth && opv.plot?.dataHeight===plot?.dataHeight);
+        if (match) setMaskVisibleInGroup(opv,visible);
     });
     const overlayLayers = layers.filter( (l)=> l.drawLayerTypeId!==ImageRoot.TYPE_ID );
     return overlayLayers.forEach( (dl) => {
@@ -99,16 +101,18 @@ function makeAddRelatedDataAry(pv) {
 
     const relatedData= findUnactivatedRelatedData(pv);
 
-    return relatedData.map( (d,idx) => {
-        return (
-            <Stack {...{spacing:1, direction:'row', pr: 2, alignItems:'center', key:idx+''}}>
-                <Typography {...{color:'warning', mr:.5}}>
-                    {`${d.desc} Layer found :`}
-                </Typography>
-                <Button color='warning' onClick={() => enableRelatedDataLayer(visRoot(), pv, d)}> Enable</Button>
-            </Stack>
-        );
-    });
+    return relatedData
+        .filter( (d) => d.primaryHduIdx===getHDU(primePlot(pv)))
+        .map( (d,idx) => {
+            return (
+                <Stack {...{spacing:1, direction:'row', pr: 2, alignItems:'center', key:idx+''}}>
+                    <Typography {...{color:'warning', mr:.5}}>
+                        {`${d.desc} Layer found :`}
+                    </Typography>
+                    <Button color='warning' onClick={() => enableRelatedDataLayer(visRoot(), pv, d)}> Enable</Button>
+                </Stack>
+            );
+        });
 }
 
 

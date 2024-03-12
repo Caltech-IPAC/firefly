@@ -26,7 +26,7 @@ class SpectralCubeEval implements FitsEvaluation.Eval {
     @Override
     public List<RelatedData> evaluate(File f, FitsRead[] frAry, BasicHDU<?>[] HDUs, int fitsReadIndex, int hduIndex, WebPlotRequest req) {
         var tableHduList = findWaveTabHDU(HDUs);
-        if (tableHduList.size() == 0) return null;
+        if (tableHduList.isEmpty()) return null;
 
 
         var relatedDataList = new ArrayList<RelatedData>();
@@ -38,7 +38,9 @@ class SpectralCubeEval implements FitsEvaluation.Eval {
             params.put("tbl_index", tableHdu.hduIdx + "");
             params.put("source", ServerContext.replaceWithPrefix(f));
             relatedDataList.add(
-                    RelatedData.makeWavelengthTabularRelatedData(params, "WAVE-TAB", "Table Wavelength information",
+                    RelatedData.makeWavelengthTabularRelatedData(
+                            frAry[fitsReadIndex].getHduNumber(),
+                            params, "WAVE-TAB", "Table Wavelength information",
                             tableHdu.hduName, tableHdu.hduVersion, tableHdu.hduLevel, tableHdu.hduIdx));
         }
         return relatedDataList;

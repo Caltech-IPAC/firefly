@@ -65,10 +65,13 @@ public class FitsHDUUtil {
                     ptype = HeaderOnly;
                 }
 
-                String desc = FitsReadUtil.getExtName(header);
-                if (desc == null) desc = header.getStringValue("NAME");
-                if (desc == null) desc = header.getStringValue("HDUCLAS2");
-                if (desc == null && isCompressed) desc = "CompressedImage";
+                var compAttach= isCompressed ? " (compressed)" : "";
+                String desc=null;
+                if (FitsReadUtil.getExtName(header)!=null) desc= FitsReadUtil.getExtName(header) + compAttach;
+                else if (header.getStringValue("NAME")!=null) desc = header.getStringValue("NAME") + compAttach;
+                else if (header.getStringValue("HDUCLAS2")!=null) desc = header.getStringValue("HDUCLAS2") + compAttach;
+                else if (isCompressed) desc = "Compressed image";
+
 
 
                 FileAnalysisReport.Part part = new FileAnalysisReport.Part(ptype, desc);
@@ -87,9 +90,19 @@ public class FitsHDUUtil {
                 }
                 if (ptype == Image) {
                     if (desc==null) desc= "";
-                    int naxis1= FitsReadUtil.getNaxis1(header);
-                    int naxis2= FitsReadUtil.getNaxis2(header);
-                    int naxis3= FitsReadUtil.getNaxis3(header);
+                    int naxis1;
+                    int naxis2;
+                    int naxis3;
+                    if (isCompressed) {
+                        naxis1= FitsReadUtil.getZNaxis1(header)>-1 ? FitsReadUtil.getZNaxis1(header) : FitsReadUtil.getNaxis1(header);
+                        naxis2= FitsReadUtil.getZNaxis2(header)>-1 ? FitsReadUtil.getZNaxis2(header) : FitsReadUtil.getNaxis2(header);
+                        naxis3= FitsReadUtil.getZNaxis3(header)>-1 ? FitsReadUtil.getZNaxis3(header) : FitsReadUtil.getNaxis3(header);
+                    }
+                    else {
+                        naxis1= FitsReadUtil.getNaxis1(header);
+                        naxis2= FitsReadUtil.getNaxis2(header);
+                        naxis3= FitsReadUtil.getNaxis3(header);
+                    }
                     if (naxis>=3 && naxis3>1) {
                         desc+= String.format(" (cube %d x %d x %d)",naxis1,naxis2,naxis3);
                     }

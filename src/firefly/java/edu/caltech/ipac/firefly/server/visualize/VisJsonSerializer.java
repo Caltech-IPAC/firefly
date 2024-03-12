@@ -272,7 +272,7 @@ public class VisJsonSerializer {
         if (rData==null) return null;
         JSONObject retObj= new JSONObject();
         putStr(retObj,"dataType", rData.getDataType());
-        if (rData.getAvailableMask().size()>0) {
+        if (!rData.getAvailableMask().isEmpty()) {
             putJsonObj(retObj, "availableMask", new JSONObject(rData.getAvailableMask()));
         }
         putJsonObj(retObj, "searchParams", new JSONObject(rData.getSearchParams()));
@@ -284,6 +284,7 @@ public class VisJsonSerializer {
             putNum(retObj, "hduVersion", rData.getHduVersion());
             putNum(retObj, "hduLevel", rData.getHduLevel());
         }
+        putNum(retObj, "primaryHduIdx", rData.getPrimaryHduIdx());
         return retObj;
     }
 

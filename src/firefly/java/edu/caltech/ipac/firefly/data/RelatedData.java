@@ -27,6 +27,7 @@ public class RelatedData implements Serializable, HasSizeOf {
     /** related dataKey should be a unique string for a fits file */
     private Map<String,String> searchParams= new HashMap<>();
     private Map<String,String> availableMask= new HashMap<>();
+    private int primaryHduIdx =0;
     private String hduName= null;
     private int hduVersion= 1;
     private int hduLevel= 1;
@@ -42,19 +43,20 @@ public class RelatedData implements Serializable, HasSizeOf {
 
     /**
      * Factory method to create mask related data
+     * @param primaryHduIdx - hdu number of the primary
      * @param fileName - fits file name on the server
      * @param availableMask - a map with the key to be the bits number (as a string) and the value to be a description
      * @param extensionNumber - extension number of the fits file
      * @param dataKey - should be a unique string for a fits file
      * @return RelatedData
      */
-    public static RelatedData makeMaskRelatedData(String fileName, Map<String,String> availableMask, int extensionNumber, String dataKey) {
+    public static RelatedData makeMaskRelatedData(int primaryHduIdx, String fileName, Map<String,String> availableMask, int extensionNumber, String dataKey) {
         Map<String,String> searchParams= new HashMap<>();
         searchParams.put(WebPlotRequest.FILE, fileName);
         searchParams.put(WebPlotRequest.PLOT_AS_MASK, "true");
         searchParams.put(WebPlotRequest.TYPE, RequestType.FILE+"");
         searchParams.put(WebPlotRequest.MULTI_IMAGE_IDX, extensionNumber+"");
-        return makeMaskRelatedData(searchParams, availableMask, dataKey);
+        return makeMaskRelatedData(primaryHduIdx, searchParams, availableMask, dataKey);
     }
 
     /**
@@ -64,10 +66,11 @@ public class RelatedData implements Serializable, HasSizeOf {
      * @param dataKey - should be a unique string for a fits file
      * @return RelatedData
      */
-    public static RelatedData makeMaskRelatedData(Map<String,String> searchParams, Map<String,String> availableMask, String dataKey) {
+    public static RelatedData makeMaskRelatedData(int primaryHduIdx, Map<String,String> searchParams, Map<String,String> availableMask, String dataKey) {
         RelatedData d= new RelatedData(IMAGE_MASK, dataKey, "Mask");
         d.availableMask= availableMask;
         d.searchParams= searchParams;
+        d.primaryHduIdx = primaryHduIdx;
         return d;
     }
 
@@ -113,16 +116,18 @@ public class RelatedData implements Serializable, HasSizeOf {
         return d;
     }
 
-    public static RelatedData makeWavelengthTabularRelatedData(Map<String,String> searchParams,
-                                                               String dataKey, String desc,
-                                                               String hduName, int hduVersion, int hduLevel,
-                                                               int hduIdx ) {
+    public static RelatedData makeWavelengthTabularRelatedData( int primaryHduIdx,
+                                                                Map<String,String> searchParams,
+                                                                String dataKey, String desc,
+                                                                String hduName, int hduVersion, int hduLevel,
+                                                                int hduIdx ) {
         RelatedData d= new RelatedData(WAVELENGTH_TABLE, dataKey, desc);
         d.searchParams= searchParams;
         d.hduIdx= hduIdx;
         d.hduName= hduName;
         d.hduVersion= hduVersion;
         d.hduLevel= hduLevel;
+        d.primaryHduIdx=primaryHduIdx;
         return d;
     }
 
@@ -148,5 +153,6 @@ public class RelatedData implements Serializable, HasSizeOf {
     public int getHduVersion() { return hduVersion;}
     public int getHduLevel() {return hduLevel;}
     public int getHduIdx() { return hduIdx;}
+    public int getPrimaryHduIdx() { return primaryHduIdx;}
 }
 

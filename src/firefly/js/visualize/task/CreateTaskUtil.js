@@ -234,7 +234,8 @@ export function makeCubeCtxAry(plotCreate) {
                 processHeader: headerInfo.processHeader,
                 wlData: headerInfo.wlData,
                 wlTableRelatedAry: headerInfo.wlTableRelatedAry,
-                relatedData: cubeStartPC.relatedData,
+                relatedData: (idx===cubeStartIdx) ? cubeStartPC.relatedData :
+                    cubeStartPC.relatedData?.filter( ({dataType}) => dataType!==RDConst.IMAGE_MASK),
                 dataWidth: cubeStartPC.dataWidth,
                 dataHeight: cubeStartPC.dataHeight,
                 imageCoordSys: cubeStartPC.imageCoordSys,
@@ -352,7 +353,6 @@ export function addDrawLayers(request, pv, plot) {
                 const dl = getDrawLayerById(dlRoot(), rd.relatedDataId);
                 if (!dl) enableRelatedDataLayer(visRoot(), getPlotViewById(visRoot(), plotId), rd);
             }
-
         });
     }
 }

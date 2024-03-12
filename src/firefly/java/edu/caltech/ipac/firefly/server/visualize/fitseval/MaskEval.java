@@ -42,11 +42,14 @@ class MaskEval implements FitsEvaluation.Eval {
         if (HDUs.length<2) return null;
         String extType = frAry[fitsReadIndex].getExtType();
         if (extType.equalsIgnoreCase("IMAGE")) {
+            FitsRead baseFr= frAry[fitsReadIndex];
             List<RelatedData> relatedList = new ArrayList<>();
             for (int i = 0; (i < frAry.length); i++) {
                 if (i != fitsReadIndex) {
-                    if (isMask(frAry[i])) {
-                        RelatedData d = RelatedData.makeMaskRelatedData(f.getAbsolutePath(),
+                    if (isMask(frAry[i], baseFr.getNaxis1(), baseFr.getNaxis2())) {
+                        RelatedData d = RelatedData.makeMaskRelatedData(
+                                baseFr.getHduNumber(),
+                                f.getAbsolutePath(),
                                 getMaskHeaders(frAry[i].getHeader()), i, "mask");
                         relatedList.add(d);
                     }
@@ -76,8 +79,9 @@ class MaskEval implements FitsEvaluation.Eval {
         return maskHeaders;
     }
 
-    public boolean isMask(FitsRead fr) {
-        return fr.getExtType().equalsIgnoreCase("MASK");
+    public boolean isMask(FitsRead fr, int naxis1, int naxis2) {
+        if (fr.isCube() && fr.getPlaneNumber()>0) return false;
+        return (fr.getNaxis1()==naxis1 && fr.getNaxis2()==naxis2 && fr.getExtType().equalsIgnoreCase("MASK"));
     }
 
     public boolean isVariance(FitsRead fr) {

@@ -457,7 +457,8 @@ export const WebPlot= {
         }
         plot= {...plot, ...imagePlot};
         if (relatedData) {
-            plot.relatedData= relatedData.map( (d) => ({...d,relatedDataId: plotId+relatedIdRoot+d.dataKey}));
+            plot.relatedData= relatedData.map( (d) =>
+                ({...d,relatedDataId: plotId+relatedIdRoot+d.dataKey+'-'+dataWidth+'-'+dataHeight}));
         }
 
         if ((!cubeCtx || cubeCtx.cubePlane===0) && wlData && wlData.failReason)  {
