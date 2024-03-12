@@ -3,6 +3,7 @@
  */
 import React, {useContext} from 'react';
 import PropTypes, {object, shape} from 'prop-types';
+import {defaultsDeep} from 'lodash';
 import {Expression} from '../../util/expr/Expression.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
@@ -133,8 +134,12 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, tooltip='
                            }}
                            disableClearable={true}
                            endDecorator={!readOnly && helper ? helper : undefined}
-                           {...{required,readOnly,placeholder,slotProps,sx}}
-                            slotProps={{tooltip: {enterNextDelay:1500}}}
+                           {...{required,readOnly,placeholder,sx}}
+                           slotProps={defaultsDeep(slotProps,
+                               {tooltip: {
+                                   disableInteractive: true, //to hide tooltip when hovering over it, to prevent its long size blocking other fields
+                               }}
+                           )}
 
         />
     );

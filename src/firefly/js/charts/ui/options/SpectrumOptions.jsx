@@ -22,6 +22,7 @@ import {ValidationField} from 'firefly/ui/ValidationField';
 import {sprintf} from 'firefly/externalSource/sprintf';
 import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField';
 import {Box, Stack} from '@mui/joy';
+import {CollapsibleGroup} from 'firefly/ui/panel/CollapsiblePanel';
 
 
 export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
@@ -67,11 +68,13 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                     </Stack>
                     <Mode/>
                 </Stack>
-                <ScatterCommonOptions{...{activeTrace, tbl_id, chartId, groupKey}}/>
-                <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey}}
-                               XaxisTitle={() => <XaxisTitle readonly={true}/>}
-                               YaxisTitle={() => <YaxisTitle readonly={true}/>}
-                />
+                <CollapsibleGroup>
+                    <ScatterCommonOptions{...{activeTrace, tbl_id, chartId, groupKey}}/>
+                    <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey}}
+                                   XaxisTitle={() => <XaxisTitle readonly={true}/>}
+                                   YaxisTitle={() => <YaxisTitle readonly={true}/>}
+                    />
+                </CollapsibleGroup>
             </Stack>
         </FieldGroup>
     );

@@ -32,6 +32,9 @@ import {isImageDataRequestedEqual} from '../WebPlotRequest.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import Validate from '../../util/Validate.js';
 import {dispatchTableHighlight} from 'firefly/tables/TablesCntlr';
+import {Sheet, Stack, Typography} from '@mui/joy';
+import {SwitchInputFieldView} from 'firefly/ui/SwitchInputField';
+import {BeforeButton, NextButton} from 'firefly/visualize/ui/Buttons';
 
 
 const MAX_IMAGE_CNT= 7;
@@ -125,12 +128,14 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
         );
     }
     return (
-        <MultiImageViewer
-            {...{viewerId, Toolbar, insideFlex, defaultImageCnt, maxImageCnt, tableId:tbl_id,
-                makeRequestFromRow,defaultCutoutSizeAS, defaultWcsMatchType,
-                wcsMatchType, activePlotId, makeCustomLayout,
-                forceRowSize:1, canReceiveNewPlots: NewPlotMode.create_replace.key}}
-        />
+        <Sheet variant='outlined' sx={{display: 'flex', borderRadius: '5px', maxWidth: 1}}>
+            <MultiImageViewer
+                {...{viewerId, Toolbar, insideFlex, defaultImageCnt, maxImageCnt, tableId:tbl_id,
+                    makeRequestFromRow,defaultCutoutSizeAS, defaultWcsMatchType,
+                    wcsMatchType, activePlotId, makeCustomLayout,
+                    forceRowSize:1, canReceiveNewPlots: NewPlotMode.create_replace.key}}
+            />
+        </Sheet>
     );
 }
 
@@ -149,20 +154,24 @@ ImageTableRowViewer.propTypes= {
 
 
 function ImageSlider({viewerId, table, imageCnt, viewerItemIds, makeItemViewer, sliderRef, slideOnArrowClick, onSlideChange}) {
-    const isArrowDisabled = table?.highlightedRow===0 || table?.highlightedRow===table?.totalRows-1;
 
-    const SliderArrow = ({ className, onClick, isNext }) => (
-        <div
-            className={isArrowDisabled
-                ? className //keep default arrow style
-                : className.replace('slick-disabled', '') //remove disabled class if exists
-            }
-            onClick={(e) => slideOnArrowClick(isNext)
-                ? onClick?.(e)  // allow sliding
-                : e.preventDefault()  // prevent sliding
-            }
-        />
-    );
+    const SliderArrow = ({ onClick, isNext }) => {
+        // `onClick` prop is inserted by react-slick
+        const handleArrowClick = (e) => slideOnArrowClick(isNext)
+            ? onClick?.(e)  // allow sliding
+            : e.preventDefault();  // prevent sliding
+
+        const sx = {position: 'absolute', top: '50%', transform: 'translateY(-50%)'};
+        return isNext
+            ? <NextButton onClick={(_, e) => handleArrowClick(e)}
+                          tip={'Next Image'}
+                          enabled={table?.highlightedRow < table?.totalRows-1} //disable when last row/slide is selected
+                          sx={{...sx, right: -25}}/>
+            : <BeforeButton onClick={(_, e) => handleArrowClick(e)}
+                            tip={'Previous Image'}
+                            enabled={table?.highlightedRow > 0} //disable when 1st row/slide is selected
+                            sx={{...sx, left: -25}}/>;
+    };
 
     const settings = {
         dots: false,
@@ -195,18 +204,6 @@ function ImageSlider({viewerId, table, imageCnt, viewerItemIds, makeItemViewer, 
 }
 
 
-const toolsStyle= {
-    display:'flex',
-    flexDirection:'row',
-    flexWrap:'nowrap',
-    alignItems: 'center',
-    justifyContent:'space-between',
-    height: 30
-};
-
-const tStyle= { display:'inline-block', whiteSpace: 'nowrap', minWidth: '3em', paddingLeft : 5, marginTop: -1 };
-const closeButtonStyle= { padding: '1px 12px 0 1px' };
-
 function Toolbar({viewerId, tableId:tbl_id, closeFunc=null, maxImageCnt, defaultImageCnt, makeRequestFromRow,
                      defaultWcsMatchType=WcsMatchType.Standard, wcsMatchType, activePlotId,
                      defaultCutoutSizeAS, minCutoutSize=50, maxCutoutSize=1000}) {
@@ -219,20 +216,14 @@ function Toolbar({viewerId, tableId:tbl_id, closeFunc=null, maxImageCnt, default
     }, []);
 
     const wcsMatch = (defaultWcsMatchType===WcsMatchType.Standard || defaultWcsMatchType===WcsMatchType.Target) && (
-        <div style={{alignSelf:'center', padding: '0 10px 0 25px', display:'flex', alignItems:'center'}}>
-            <div style={{display:'inline-block'}}>
-                <input style={{margin: 0}}
-                       type='checkbox'
-                       checked={wcsMatchType===defaultWcsMatchType}
-                       onChange={(ev) => defaultWcsMatchType===WcsMatchType.Standard
-                           ? doWcsMatch(ev.target.checked, activePlotId)
-                           : wcsMatchTarget(ev.target.checked, activePlotId)}
-                />
-            </div>
-            <div style={tStyle}>
-                {defaultWcsMatchType===WcsMatchType.Standard ? 'WCS Match' : 'Target Match'}
-            </div>
-        </div>
+        <SwitchInputFieldView
+            size='sm'
+            value={wcsMatchType===defaultWcsMatchType}
+            onChange={(ev) => defaultWcsMatchType===WcsMatchType.Standard
+                ? doWcsMatch(ev.target.checked, activePlotId)
+                : wcsMatchTarget(ev.target.checked, activePlotId)}
+            endDecorator={defaultWcsMatchType===WcsMatchType.Standard ? 'WCS Match' : 'Target Match'}
+        />
     );
 
     const options= [];
@@ -242,41 +233,40 @@ function Toolbar({viewerId, tableId:tbl_id, closeFunc=null, maxImageCnt, default
 
     return (
         <FieldGroup groupKey={viewerId} keepState={true}>
-            <div style={{...toolsStyle, marginBottom: closeFunc ? 3 : 0}}>
-                {closeFunc &&<CloseButton style={closeButtonStyle} onClick={closeFunc}/>}
-                <div style={{whiteSpace: 'nowrap', paddingLeft: 7, display:'flex', alignItems:'center'}}>
-                    <div>Image Count:</div>
-                    <div style={{display:'inline-block', paddingLeft:7}}>
-                        <RadioGroupInputField {...{
-                            options, fieldKey:IMAGE_CNT_KEY,
-                            labelWidth:0, tooltip:'Choose number of images to show',
-                            initialState:{value: defaultImageCnt+''} }} />
-                    </div>
-                </div>
+            <Stack direction='row' spacing={1} alignItems='center' justifyContent='space-between' sx={{mx: 1}}>
+                {closeFunc && <CloseButton onClick={closeFunc}/>}
+                <RadioGroupInputField {...{
+                    label: 'Image Count:',
+                    options, fieldKey:IMAGE_CNT_KEY,
+                    orientation: 'horizontal', tooltip:'Choose number of images to show',
+                    initialState: {value: defaultImageCnt+''}
+                }} />
                 {defaultCutoutSizeAS && <ValidationField fieldKey={CUTOUT_SIZE}
                                  initialState= {{value: defaultCutoutSizeAS}}
                                  validator= {(v) =>  Validate.floatRange(minCutoutSize,maxCutoutSize,1,'cutout size',v,false)}
                                  tooltip='enter cutout size for the images'
-                                 labelWidth={100}
-                                 label= 'Cutout Size (arcsec):' />}
+                                 orientation='horizontal'
+                                 label= 'Cutout Size (arcsec):'
+                                 sx={{'.MuiInput-root': {width: '5rem'}}}
+                />}
                 <SortDirFeedback table={getTblById(tbl_id)}/>
                 {wcsMatch}
-                <VisMiniToolbar sx={{width:350}}/>
-            </div>
+                <VisMiniToolbar sx={{width:'auto'}}/>
+            </Stack>
         </FieldGroup>
     );
 }
 
 
 function SortDirFeedback({table})  {
-    if (!table?.request?.sortInfo) return <div/>;
+    if (!table?.request?.sortInfo) return;
     const sInfo = SortInfo.parse(table.request.sortInfo);
-    if (sInfo.direction === UNSORTED) return <div/>;
+    if (sInfo.direction === UNSORTED) return;
     const dirStr= sInfo.direction===SORT_ASC ? 'ascending' : 'descending';
     return (
-        <div>
+        <Typography level='body-sm'>
             {`Sorted by column: ${sInfo.sortColumns.join(',')}  ${dirStr}`};
-        </div>
+        </Typography>
     );
 }
 

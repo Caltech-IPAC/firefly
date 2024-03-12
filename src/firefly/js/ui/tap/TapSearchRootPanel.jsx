@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Box, Button, Stack, Switch, Typography} from '@mui/joy';
+import {Box, Button, FormHelperText, Stack, Switch, Typography} from '@mui/joy';
 import {once} from 'lodash';
 import {shape, object, bool, string} from 'prop-types';
 import React, {useContext, useEffect, useRef, useState} from 'react';
@@ -36,7 +36,6 @@ import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 import {PREF_KEY} from 'firefly/tables/TablePref.js';
 
 export const DEFAULT_TAP_PANEL_GROUP_KEY = 'TAP_PANEL_GROUP_KEY';
-const SERVICE_TIP= 'Select a TAP service, or type to enter the URL of any other TAP service';
 
 //-------------
 //-------------
@@ -280,16 +279,15 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
     }, [servicesShowing]);
 
     return (
-        <div
-            className={servicesShowing?'TapSearch__section':'TapSearch__section TapSearch__hide'}
-            style={{height: servicesShowing?'4rem':0, justifyContent:'space-between', alignItems:'center',...extraStyle}}
-            title={SERVICE_TIP}>
-            <div style={{display:'flex', alignItems:'center', width:'100%'}}>
-                <Stack alignItems='flex-start'>
+        <Stack className={servicesShowing?'TapSearch__section':'TapSearch__section TapSearch__hide'}
+            sx={{height: servicesShowing?'auto':0, pb: servicesShowing?1.5:0, justifyContent:'space-between',
+                alignItems:'center', ...extraStyle}}>
+            <Stack direction='row' spacing={1} sx={{alignItems:'center', width:1}}>
+                <Stack alignItems='flex-start' spacing={1}>
                     <Typography {...{level:'title-lg', color:'primary', sx:{width:'17rem', mr:1} }}>
                         Select TAP Service
                     </Typography>
-                    <Switch {...{ size:'sm', endDecorator: enterUrl? 'Enter URL' : 'Use TAP List', checked:enterUrl,
+                    <Switch {...{ size:'sm', endDecorator:'Enter my URL', checked:enterUrl,
                         sx: {
                             alignSelf: 'flex-start',
                             '--Switch-trackWidth': '20px',
@@ -297,19 +295,20 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
                         },
                         onChange: (ev) => {
                             setEnterUrl(ev.target.checked);
-                        },
+                        }
                     }} />
                 </Stack>
-                <Stack {...{direction:'row', spacing:2}}>
+                <Stack>
                     {enterUrl ? (
                             <InputField orientation='horizontal'
                                         placeholder='Enter TAP Url'
                                         value={serviceUrl}
                                         actOn={['enter']}
                                         tooltip='enter TAP URL'
-                                        slotProps={{input:{sx:{width:'40rem'}}}}
+                                        slotProps={{input:{sx:{width:'40rem', height: '2.25rem'}}}}
                                         onChange={(val) => onTapServiceOptionSelect(val)}
                             />
+
                     ) : (
                         <ListBoxInputFieldView {...{
                             sx:{'& .MuiSelect-root':{width:'46.5rem'}},
@@ -325,11 +324,12 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
                             decorator:
                                 (label,value) => (<ServiceOpRender {...{ ops: tapOps, value}}/>),
                         }} /> )}
-
-
+                    <FormHelperText sx={{m: .25}}>
+                        {enterUrl ? 'Type the url of a TAP service & press enter' : 'Choose a TAP service from the list'}
+                    </FormHelperText>
                 </Stack>
-            </div>
-        </div>
+            </Stack>
+        </Stack>
     );
 }
 

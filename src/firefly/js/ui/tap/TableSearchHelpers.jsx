@@ -5,9 +5,10 @@ import Prism from 'prismjs';
 import PropTypes from 'prop-types';
 import React, {useEffect, useRef} from 'react';
 import {getAppOptions} from '../../api/ApiUtil.js';
-import {CheckboxGroupInputField, CheckboxGroupInputFieldView} from '../CheckboxGroupInputField.jsx';
+import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 import {FieldGroupAccordionPanel} from '../panel/AccordionPanel.jsx';
 import {RadioGroupInputFieldView} from '../RadioGroupInputFieldView.jsx';
+import {SwitchInputFieldView} from 'firefly/ui/SwitchInputField';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
 
 // import HIDE_ICON from 'images/show-up-3.png';
@@ -249,20 +250,19 @@ function GotoPanelButton({currentPanel, setNextPanel}) {
 }
 
 export function TableTypeButton({sx, lockToObsCore, setLockToObsCore}) {
-    const options= [ {label:'Use Image Search (ObsTAP)', value:OBSCORE}];
-    const tooltip= lockToObsCore ? 'Selected and image Search' : 'Selected search for catalog or other tables';
+    const tooltip= lockToObsCore ? 'Selected an image Search' : 'Selected search for catalog or other tables';
 
     return (
-        <CheckboxGroupInputFieldView  {...{
+        <SwitchInputFieldView  {...{
             sx,
             slotProps: {
                 input: {
                     sx:{ '--Switch-trackWidth': '20px', '--Switch-trackHeight': '12px', }
                 }
             },
-            type:'switch',
-            options,
-            tooltip,value:lockToObsCore?OBSCORE:'', labelWidth:1,
+            size:'sm',
+            endDecorator: 'Use Image Search (ObsTAP)',
+            tooltip, value: lockToObsCore,
             onChange: () => setLockToObsCore(!lockToObsCore)
         }}/>
     );

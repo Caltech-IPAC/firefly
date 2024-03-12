@@ -6,6 +6,7 @@
 import React, {forwardRef} from 'react';
 import PropTypes from 'prop-types';
 import {SINGLE, GRID} from '../MultiViewCntlr.js';
+import {Divider, Stack} from '@mui/joy';
 
 const flexContainerStyle= {
     display:'flex',
@@ -67,9 +68,11 @@ export const MultiItemViewerView=forwardRef( (props, ref) =>  {
     return (
         <div style={s} ref={ref}>
             {makeToolbar &&
-                <div key='toolbar' style={{flex: '0 0 auto'}}>
+                <Stack key='toolbar'>
                     {makeToolbar()}
-                </div>}
+                    <Divider orientation={'horizontal'}/>
+                </Stack>}
+
             <div key='container' style={{position:'relative', width:'100%', height:'100%', flex:'1 1 auto',
                          overflow: gridDefFunc ? 'auto' : 'hidden' }}>
                 {container}

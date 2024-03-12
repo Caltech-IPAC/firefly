@@ -15,7 +15,7 @@ import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {basicOptions, evalChangesFromFields} from './options/BasicOptions.jsx';
 import {getCellValue, getColumnValues, getSelectedDataSync, getTblById} from '../../tables/TableUtil.js';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
-import {getGroupFields} from '../../fieldGroup/FieldGroupUtils.js';
+import {getFieldVal, getGroupFields} from '../../fieldGroup/FieldGroupUtils.js';
 import {getActiveViewerItemId} from './MultiChartViewer.jsx';
 import {CollapsibleGroup, CollapsibleItem} from '../../ui/panel/CollapsiblePanel.jsx';
 import {dispatchTableAddLocal} from '../../tables/TablesCntlr.js';
@@ -26,12 +26,13 @@ import {canUnitConv} from '../dataTypes/SpectrumUnitConversion.js';
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {CombineChartButton} from 'firefly/visualize/ui/Buttons.jsx';
-import {Button, FormControl, FormLabel, Stack, Switch, Typography} from '@mui/joy';
+import {Button, Stack, Typography} from '@mui/joy';
 import CompleteButton from 'firefly/ui/CompleteButton.jsx';
 import {getColValStats} from 'firefly/charts/TableStatsCntlr';
 import {quoteNonAlphanumeric} from 'firefly/util/expr/Variable';
 import {ValidationField} from 'firefly/ui/ValidationField';
 import Validate from 'firefly/util/Validate';
+import {SwitchInputField} from 'firefly/ui/SwitchInputField';
 
 const POPUP_ID = 'CombineChart-popup';
 
@@ -115,10 +116,11 @@ function createTableModel(showAll, tbl_id) {
 const CombineChartDialog = ({onComplete}) => {
 
     const [showAll, setShowAll] = useState(false);
-    const [doCascading, setDoCascading] = useState(false);
 
     const tbl_id = 'combinechart-tbl-id';
     const groupKey = 'combinechart-props';
+
+    const doCascading = useStoreConnector(()=>getFieldVal(groupKey, 'doCascading'));
 
     useEffect(() => {
         const selTbl = createTableModel(showAll, tbl_id);
@@ -131,7 +133,6 @@ const CombineChartDialog = ({onComplete}) => {
         const props = Object.fromEntries(
             Object.entries(fields).map(([k,v]) => [k, v.value])
         );
-        props['doCascading'] = doCascading;
 
         if (selChartIds?.length < 1) {
             showInfoPopup('You must select at least one chart to combine with');
@@ -166,7 +167,7 @@ const CombineChartDialog = ({onComplete}) => {
                         <TablePanel {...{tbl_id, showToolbar:false, showUnits:false, showTypes:false}}/>
                     </Stack>
                     <Title initialState={{value: 'combined'}}/>
-                    <CascadePlots {...{doCascading, setDoCascading}}/>
+                    <CascadePlots {...{doCascading}}/>
                     <SelChartProps {...{tbl_id, groupKey, showOrder: doCascading}}/>
                 </Stack>
 
@@ -183,14 +184,11 @@ const CombineChartDialog = ({onComplete}) => {
 };
 
 
-const CascadePlots = ({doCascading, setDoCascading}) => {
+const CascadePlots = ({doCascading}) => {
     const paddingValidator = (val) => Validate.floatRange(-1,1,0,'Cascade Padding', val, false);
     return (
         <Stack spacing={1}>
-            <FormControl orientation={'horizontal'} sx={{'.MuiSwitch-root': {margin: 0}}}>
-                <FormLabel>Apply Cascading: </FormLabel>
-                <Switch checked={doCascading} onChange={(e)=>setDoCascading(e.target.checked)}/>
-            </FormControl>
+            <SwitchInputField fieldKey='doCascading' label={'Apply cascading:'} initialState={{value: false}}/>
             {doCascading &&
                 <Stack spacing={.5} pl={1}>
                     <Typography>Y-axis: (y - min(y)) / (max(y) - min(y)) + (<b>i</b> * <b>P</b>)</Typography>
