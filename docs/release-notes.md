@@ -8,7 +8,9 @@
 
 
 ## Version 2023.3
-- 2023.3.4 - (Feb 28, 2023),  _docker tag_: `latest`, `2023.3`, `2023.3.4`
+- 2023.3.6 - (March 13, 2023),  _docker tag_: `latest`, `2023.6`, `2023.3.6`
+- 2023.3.5 - (Feb 29, 2023),  _docker tag_: `2023.3.5`
+- 2023.3.4 - (Feb 28, 2023),  _docker tag_: `2023.3.4`
 - 2023.3.3 - (Feb 8, 2023),  _docker tag_: `2023.3.3`
 - 2023.3.2 - (Feb 7, 2023),  _docker tag_: `2023.3.2`
 - 2023.3.1 - (Dec 13, 2023),  _docker tag_: `2023.3.1`
@@ -40,6 +42,8 @@
 - Fixed: ADQL text-entry field swallowing "(Command)-(backquote)" on macOS: [Firefly-1072](https://github.com/Caltech-IPAC/firefly/pull/1436)
 
 ### _Patches 2023.3_
+- 2023.3.6
+    - access to NEOWISE release year 10 [PR,IRSA-5732](https://github.com/Caltech-IPAC/firefly/pull/1515) 
 - 2023.3.5
     - Bug fix: undefined exception
 - 2023.3.4
