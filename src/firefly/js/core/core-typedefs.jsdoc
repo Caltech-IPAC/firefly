@@ -24,11 +24,12 @@
 /**
  * Information related to searches
  * @typedef {Object} SearchInfo
- * @prop {string} [title]    main title if any.  It will appears on top.
- * @prop {string} [flow]     'horizontal' or 'vertical'.  defaults to 'vertical'.
- * @prop {string} activeSearch    currently selected search.
- * @prop {Object.<string,Search>} allSearchItems  flatten maps of searches keyed by name
- * @prop {SearchGroup[]}          groups   search group
+ * @prop {string} [title]           main title if any.  It will appears on top.
+ * @prop {string} [flow]            'horizontal', 'vertical', or 'hidden'.  defaults to 'vertical'.
+ * @prop {string} activeSearch      currently selected search.
+ * @prop {boolean} renderAsMenuItems convert SearchInfo into MenuItems.  Defaults to false.  When this is true, flow is default to 'hidden', unless defined.
+ * @prop {Object.<string,Search>}   allSearchItems  flatten maps of searches keyed by name
+ * @prop {SearchGroup[]}            groups   search group
  */
 
 /**

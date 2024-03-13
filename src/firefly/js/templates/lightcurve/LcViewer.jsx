@@ -2,19 +2,17 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Typography} from '@mui/joy';
+import {Stack, Typography} from '@mui/joy';
 import React, {memo, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
-import {Stack} from '@mui/joy';
-import {isEmpty, capitalize, isFunction} from 'lodash';
+import {capitalize, isEmpty, isFunction} from 'lodash';
 import shallowequal from 'shallowequal';
 import {flux} from '../../core/ReduxFlux.js';
 
-import {dispatchSetMenu, dispatchOnAppReady, dispatchNotifyRemoteAppReady} from '../../core/AppDataCntlr.js';
-import {dispatchHideDropDown, dispatchShowDropDown, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
-import {AppConfigDrawer} from '../../ui/AppConfigDrawer.jsx';
+import {dispatchNotifyRemoteAppReady, dispatchOnAppReady, dispatchSetMenu} from '../../core/AppDataCntlr.js';
+import {dispatchHideDropDown, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
 import {FileDropZone} from '../../visualize/ui/FileUploadViewPanel.jsx';
-import {lcManager, LC} from './LcManager.js';
+import {LC, lcManager} from './LcManager.js';
 import {LcResult} from './LcResult.jsx';
 import {LcPeriodPlotly} from './LcPeriodPlotly.jsx';
 import {makeBannerTitle} from '../../ui/Banner.jsx';
@@ -22,13 +20,12 @@ import {getActionFromUrl} from '../../core/History.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {FormPanel} from './../../ui/FormPanel.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
+import FieldGroupUtils, {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {HelpIcon} from './../../ui/HelpIcon.jsx';
 import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
-import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {HelpText} from './../../ui/HelpText.jsx';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
@@ -36,9 +33,10 @@ import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.
 import {ServerParams} from '../../data/ServerParams.js';
 import {useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {startTTFeatureWatchers} from '../common/ttFeatureWatchers.js';
-import {makeSearchOnce} from '../../util/WebUtil.js';
+import {makeSearchOnce, setIf as setIfUndefined} from '../../util/WebUtil.js';
 import {upload} from '../../rpc/CoreServices.js';
 import App from 'firefly/ui/App.jsx';
+import {cloneDeep} from 'lodash/lang.js';
 
 
 const vFileKey = LC.FG_FILE_FINDER;
@@ -47,7 +45,7 @@ const DEFAULT_TITLE = 'Time Series Tool';
 /**
  * light curve viewer
  */
-export const LcViewer = memo(({menu, dropdownPanels=[], appTitle, ...appProps}) => {
+export const LcViewer = memo(({menu, dropdownPanels=[], appTitle, slotProps, ...appProps}) => {
 
     useEffect(() => {
         startTTFeatureWatchers();
@@ -70,11 +68,15 @@ export const LcViewer = memo(({menu, dropdownPanels=[], appTitle, ...appProps}) 
     const subTitleStr= displayMode?.startsWith('period') ? '(Period Finder)' : '(Viewer)';
     const title = makeBannerTitle(appTitle || DEFAULT_TITLE, subTitleStr);
 
-    const drawerComponent= (<AppConfigDrawer allowMenuHide={false}/>);
+    const mSlotProps = cloneDeep(slotProps || {});
+    setIfUndefined(mSlotProps,'drawer.allowMenuHide', false);
+    setIfUndefined(mSlotProps,'banner.title', title);
 
     return (
-        <App drawerComponent={drawerComponent} dropdownPanels={[...dropdownPanels, <UploadPanel {...{fileLocation}}/>]}
-             showTitleOnBanner={true} appTitle={title}  {...appProps} >
+        <App slotProps={mSlotProps}
+             dropdownPanels={[...dropdownPanels, <UploadPanel {...{fileLocation}}/>]}
+             appTitle={appTitle}  {...appProps}
+        >
             <MainView {...{error, displayMode, periodProps}}/>
         </App>
     );
@@ -83,15 +85,14 @@ export const LcViewer = memo(({menu, dropdownPanels=[], appTitle, ...appProps}) 
 /**
  * menu is an array of menu items {label, action, icon, desc, type}.
  * dropdownPanels is an array of additional react elements which are mapped to a menu item's action.
- * @type {{title: *, menu: *, appTitle: *, appIcon: *, altAppIcon: *, additionalTitleStyle: *, dropdownPanels: *, views: *}}
+ * @type {{title: *, menu: *, appTitle: *, appIcon: *, additionalTitleStyle: *, dropdownPanels: *, views: *}}
  */
 LcViewer.propTypes = {
     title: PropTypes.string,
     menu: PropTypes.arrayOf(PropTypes.object),
     appTitle: PropTypes.string,
     additionalTitleStyle: PropTypes.object,
-    appIcon: PropTypes.string,
-    altAppIcon: PropTypes.string,
+    appIcon: PropTypes.element,
     footer: PropTypes.element,
     dropdownPanels: PropTypes.arrayOf(PropTypes.element),
     style: PropTypes.object

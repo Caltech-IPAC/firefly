@@ -190,11 +190,13 @@ export function dispatchSetLayoutInfo(layoutInfo) {
 
 /**
  * show the drop down container
- * @param view name of the component to display in the drop-down container
- * @param {Object} initArgs - init args to pass to the view
+ * @param {object} p     parameters
+ * @param {string} p.view name of the component to display in the drop-down container
+ * @param {string} [p.action] the action associated with this view
+ * @param {Object} p.initArgs - init args to pass to the view
  */
-export function dispatchShowDropDown({view, initArgs}) {
-    flux.process({type: SHOW_DROPDOWN, payload: {visible: true, view, initArgs}});
+export function dispatchShowDropDown({view, action, initArgs}) {
+    flux.process({type: SHOW_DROPDOWN, payload: {visible: true, view, action, initArgs}});
 }
 
 /**

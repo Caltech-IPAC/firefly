@@ -5,47 +5,45 @@
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded.js';
 import {Box, IconButton, Sheet, Stack, Typography} from '@mui/joy';
 import React, {memo, useContext} from 'react';
-import PropTypes from 'prop-types';
+import {bool, element, node, object, shape, string} from 'prop-types';
 import {dispatchShowDialog, SIDE_BAR_ID} from '../core/ComponentCntlr.js';
 import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
 import {getVersionInfoStr, showFullVersionInfoDialog} from 'firefly/ui/VersionInfo.jsx';
-import './Banner.css';
 import {menuTabsBorderSx} from 'firefly/ui/Menu';
+import {Slot} from 'firefly/ui/SimpleComponent.jsx';
 
 const getVersionTipStr= (appTitle) => `${appTitle?appTitle+' ':''}Version:\n${getVersionInfoStr(true,true)}`;
 
 // todo - evaluate if we want soft/primary as our banner color
 const variant='soft';
-// const variant='solid';
-// const variant='outlined';
 const color='primary';
 
-export const Banner = memo( ({menu, enableVersionDialog= false, appTitle:titleProp, showTitleOnBanner=false}) => {
+export const Banner = memo( ({menu, enableVersionDialog= false, appIcon:pAppIdon, appTitle:pAppTitle, title, slotProps, sx, ...props}) => {
     const ctx = useContext(AppPropertiesCtx);
-    const {appIcon, bannerMiddleStyle, bannerLeftStyle} = ctx;
-    const appTitle=  titleProp || ctx.appTitle;
+    const {appIcon=pAppIdon, appTitle=pAppTitle} = ctx;
+    const appIconEl = appIcon && React.cloneElement( appIcon, {
+                                        onClick: () => enableVersionDialog && showFullVersionInfoDialog(appTitle),
+                                        title: enableVersionDialog ? getVersionTipStr(appTitle) : ''
+                                    });
     return (
-        <Sheet {...{
-            className:'banner__main', variant, color, sx: (theme) => ({
+        <Sheet {...{variant, color,
+            sx: (theme) => ({
                 width:1, position:'relative',
-                ...menuTabsBorderSx(theme)
-            })
+                ...menuTabsBorderSx(theme),
+                ...sx
+            }),
+            ...props
         }}>
             <Stack {...{direction:'row', height:40, alignItems:'center', px:1, py: .5,
                 spacing: 0.5}}>
                 <AppConfigButton/>
 
-                <Box sx={{flexGrow:0, cursor: enableVersionDialog ? 'pointer' : 'inherit'}}
-                     style={bannerLeftStyle}>
-                    {appIcon ?
-                        <img src={appIcon} alt={`${appTitle} icon`}
-                             onClick={() => enableVersionDialog && showFullVersionInfoDialog(appTitle) }
-                             title={enableVersionDialog ? getVersionTipStr(appTitle) : ''}/> :
-                        <Box {...{width: 75}}/>}
+                <Box {...slotProps?.icon} sx={{flexGrow:0, cursor: enableVersionDialog ? 'pointer' : 'inherit', ...slotProps?.icon?.sx}} >
+                    {appIconEl || <Box width={75}/>}
                 </Box>
 
-                <Stack {...{flexGrow:1, direction:'row',  style:bannerMiddleStyle }}>
-                    {showTitleOnBanner && makeBannerTitle(appTitle)}
+                <Stack {...{flexGrow:1, direction:'row', ...slotProps?.tabs}}>
+                    {title}
                     <Stack {...{ flexGrow: 0, width: 1}}>
                         {menu}
                     </Stack>
@@ -56,18 +54,16 @@ export const Banner = memo( ({menu, enableVersionDialog= false, appTitle:titlePr
 });
 
 Banner.propTypes= {
-    menu: PropTypes.object,
-    readout: PropTypes.object,
-    appIcon: PropTypes.string,
-    visPreview: PropTypes.object,
-    appTitle: PropTypes.oneOfType([
-        PropTypes.string,
-        PropTypes.element
-    ]),
-    additionalTitleStyle: PropTypes.object,
-    showUserInfo: PropTypes.bool,
-    enableVersionDialog: PropTypes.bool,
-    showTitleOnBanner: PropTypes.bool
+    menu: object,
+    appIcon: element,
+    appTitle: string,
+    enableVersionDialog: bool,
+    title: node,
+    sx: object,
+    slotProps: shape({
+        icon: object,
+        tabs: object
+    })
 };
 
 function AppConfigButton({sx}) {

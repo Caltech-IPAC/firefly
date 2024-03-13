@@ -868,3 +868,12 @@ export async function lowLevelDoFetch(url, options, doValidation, loggerFunc) {
     else if (response.status === 401) throw new Error('You are no longer logged in');
     else throw new Error(`Request failed with status ${response.status}: ${url}`);
 }
+
+/*
+  Works like lodash set.  However, it will only set if predicate returns true
+  predicate is invoked with the current value at the path.  Defaults to isUndefined
+ */
+export function setIf(object, path, value, predicate=isUndefined) {
+    const cv = get(object, path);
+    if (predicate?.(cv)) set(object, path, value);
+}

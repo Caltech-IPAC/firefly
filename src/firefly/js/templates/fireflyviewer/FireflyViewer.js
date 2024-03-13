@@ -5,6 +5,7 @@
 
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
+import {cloneDeep} from 'lodash/lang.js';
 
 import {flux} from '../../core/ReduxFlux.js';
 import {
@@ -28,6 +29,7 @@ import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.
 
 import {getAllStartIds, getObsCoreWatcherDef, startTTFeatureWatchers} from '../common/ttFeatureWatchers';
 import App from 'firefly/ui/App.jsx';
+import {setIf as setIfUndefined} from 'firefly/util/WebUtil.js';
 
 /**
  * This FireflyViewer is a generic application with some configurable behaviors.
@@ -38,14 +40,14 @@ import App from 'firefly/ui/App.jsx';
  * <li><b>title</b>:  This title will appears at center top of the results area. Defaults to 'FFTools'. </li>
  * <li><b>menu</b>:  menu is an array of menu items {label, action, icon, desc, type}.  Leave type blank for dropdown.  If type='COMMAND', it will fire the action without triggering dropdown.</li>
  * <li><b>appTitle</b>:  The title of the FireflyViewer.  It will appears at top left of the banner. Defaults to 'Firefly'. </li>
- * <li><b>appIcon</b>:  A url string to the icon to appear on the banner. </li>
+ * <li><b>appIcon</b>:  A react element rendered at where appIcon should appear. </li>
  * <li><b>footer</b>:   A react elements to place on the footer when the menu drop down. </li>
  * <li><b>dropdownPanels</b>:  An array of additional react elements which are mapped to a menu item's action. </li>
  * <li><b>views</b>:  The type of result view.  Choices are 'images', 'tables', and 'xyPlots'.  They can be combined with ' | ', i.e.  'images | tables'</li>
  *
  */
 export function FireflyViewer ({menu, options, initLoadCompleted, initLoadingMessage, views, showViewsSwitch, leftButtons,
-                                   centerButtons, rightButtons, normalInit=true, landingPage, ...appProps}){
+                                   centerButtons, rightButtons, normalInit=true, landingPage, slotProps, ...appProps}){
 
     useEffect(() => {
         getImageMasterData();
@@ -71,16 +73,19 @@ export function FireflyViewer ({menu, options, initLoadCompleted, initLoadingMes
         });
 
     }, []);
-    const drawerComponent= (
+
+    const FireflySidebar= () => (
         <AppConfigDrawer>
             <LayoutChoiceVisualAccordion/>
         </AppConfigDrawer>
     );
 
-
+    const mSlotProps = cloneDeep(slotProps || {});
+    setIfUndefined(mSlotProps, 'drawer.component', FireflySidebar);
+    setIfUndefined(mSlotProps, 'banner.enableVersionDialog', true);
 
     return (
-        <App {...{enableVersionDialog:true, views, drawerComponent, ...appProps}}>
+        <App slotProps={mSlotProps} {...{views, ...appProps}}>
             <DynamicResults {...{views, showViewsSwitch, landingPage, leftButtons, centerButtons,
                 rightButtons, initLoadingMessage, initLoadCompleted}}/>
         </App>
@@ -90,14 +95,13 @@ export function FireflyViewer ({menu, options, initLoadCompleted, initLoadingMes
 /**
  * menu is an array of menu items {label, action, icon, desc, type}.
  * dropdownPanels is an array of additional react elements which are mapped to a menu item's action.
- * @type {{title: *, menu: *, appTitle: *, appIcon: *, altAppIcon: *, dropdownPanels: *, views: *}}
+ * @type {{title: *, menu: *, appTitle: *, appIcon: *, dropdownPanels: *, views: *}}
  */
 FireflyViewer.propTypes = {
     title: PropTypes.string,
     menu: PropTypes.arrayOf(PropTypes.object),
     appTitle: PropTypes.string,
-    appIcon: PropTypes.string,
-    altAppIcon: PropTypes.string,
+    appIcon: PropTypes.element,
     showUserInfo: PropTypes.bool,
     footer: PropTypes.element,
     dropdownPanels: PropTypes.arrayOf(PropTypes.element),

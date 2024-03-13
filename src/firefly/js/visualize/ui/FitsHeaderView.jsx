@@ -153,7 +153,7 @@ function showFitsHeaderPopup(plot, fitsHeaderInfo, element, initLeft, initTop, o
 
 // update table sort when table tab is changed
 const onBandSelected = (fitsHeaderInfo) => {
-    return (index, id, name) => {
+    return (name) => {
         const tableModel = fitsHeaderInfo[name];
         if (tableModel) updateTableSort(tableModel);   // already in store, then sort it if needed
     };

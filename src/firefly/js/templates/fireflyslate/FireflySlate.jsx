@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isEmpty} from 'lodash';
+import {isEmpty, set} from 'lodash';
 import React, {memo, useContext, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
@@ -14,7 +14,6 @@ import {getLayouInfo, dispatchSetLayoutMode, getGridView, getGridViewColumns,
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../../charts/ui/ChartsContainer.jsx';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
-import {AppConfigDrawer} from '../../ui/AppConfigDrawer.jsx';
 import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
 import {visRoot} from '../../visualize/ImagePlotCntlr.js';
 import {getMultiViewRoot, findViewerWithItemId, PLOT2D} from '../../visualize/MultiViewCntlr.js';
@@ -26,7 +25,6 @@ import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {startLayoutManager} from './FireflySlateManager.js';
 import {GridLayoutPanel} from './GridLayoutPanel.jsx';
 
-import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-75x75.png';
 import App from 'firefly/ui/App.jsx';
 
 
@@ -54,7 +52,7 @@ function getNextState(prevS, renderTreeId) {
  * <li><b>menu</b>:  menu is an array of menu items {label, action, icon, desc, type}.  Leave type blank for dropdown.
  * If type='COMMAND', it will fire the action without triggering dropdown.</li>
  * <li><b>appTitle</b>:  The title of the FireflyViewer.  It will appears at top left of the banner. Defaults to 'Firefly'. </li>
- * <li><b>appIcon</b>:  A url string to the icon to appear on the banner. </li>
+ * <li><b>appIcon</b>:  A react element rendered at where appIcon should appear. </li>
  * <li><b>footer</b>:   A react elements to place on the footer when the menu drop down. </li>
  * <li><b>dropdownPanels</b>:  An array of additional react elements which are mapped to a menu item's action. </li>
  * @param props
@@ -63,7 +61,7 @@ function getNextState(prevS, renderTreeId) {
 export const FireflySlate= memo(( {initLoadingMessage, renderTreeId, menu:menuItems, showBgMonitor=false}) => {
 
 
-    const {appTitle, appIcon=FFTOOLS_ICO, appFromApi} = useContext(AppPropertiesCtx);
+    const {appTitle, appIcon, appFromApi, slotProps={}} = useContext(AppPropertiesCtx);
     const state= useStoreConnector( (prevState) => getNextState(prevState,renderTreeId));
     const [appRef,setAppRef]= useState(undefined);
 
@@ -81,16 +79,15 @@ export const FireflySlate= memo(( {initLoadingMessage, renderTreeId, menu:menuIt
     if (showBgMonitor) menu.showBgMonitor= showBgMonitor;
 
 
-    const drawerComponent= <AppConfigDrawer containerElement={appRef}/>;
-    
-
+    set(slotProps, 'drawer.containerElement', appRef);
+    set(slotProps, 'banner.enableVersionDialog', true);
     return (
         <RenderTreeIdCtx.Provider value={{renderTreeId}}>
             <div {...{ref:(c) => {
                     if (appFromApi) setAppRef(c);
                 }
             }}>
-            <App {...{drawerComponent, enableVersionDialog:true, appTitle, appIcon, ...appProps}}>
+            <App slotProps={slotProps} {...{appTitle, appIcon, ...appProps}}>
                 {mainView({expanded, gridView, gridColumns, initLoadingMessage, initLoadCompleted})}
             </App>
             </div>
@@ -101,14 +98,13 @@ export const FireflySlate= memo(( {initLoadingMessage, renderTreeId, menu:menuIt
 /**
  * menu is an array of menu items {label, action, icon, desc, type}.
  * dropdownPanels is an array of additional react elements which are mapped to a menu item's action.
- * @type {{title: *, menu: *, appTitle: *, appIcon: *, altAppIcon: *, dropdownPanels: *}}
+ * @type {{title: *, menu: *, appTitle: *, appIcon: *, dropdownPanels: *}}
  */
 FireflySlate.propTypes = {
     title: PropTypes.string,
     menu: PropTypes.arrayOf(PropTypes.object),
     appTitle: PropTypes.string,
-    appIcon: PropTypes.string,
-    altAppIcon: PropTypes.string,
+    appIcon: PropTypes.element,
     footer: PropTypes.element,
     dropdownPanels: PropTypes.arrayOf(PropTypes.element),
     style: PropTypes.object,

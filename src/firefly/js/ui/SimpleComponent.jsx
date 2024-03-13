@@ -1,3 +1,4 @@
+import React from 'react';
 import {isEmpty, uniqueId} from 'lodash';
 import {useCallback, useContext, useEffect, useState, useTransition} from 'react';
 import shallowequal from 'shallowequal';
@@ -8,6 +9,7 @@ import FieldGroupUtils, {
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 import {dispatchMetaStateChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {FieldGroupCtx} from './FieldGroup.jsx';
+import {smartMerge} from 'firefly/tables/TableUtil.js';
 
 
 /**
@@ -253,4 +255,33 @@ export function useDebugCycle({id, render=true, mount=true}) {
     useEffect(() => {
         render && console.log(id, 'rendering');
     });
+}
+
+/*
+ Enforces our usage of slotProps as a way to define both the slot's component as well as its props.
+ The default props and passed in props are deep merged using smartMerge.
+ <Need to revisit> smartMerge works for now, but ultimately, default props should use a path-based
+    key, so it can be precisely inject the default value without uncertainty.  e.g. webutil's updateSet or setIf based on lodash's set.
+
+ When slotProps is used, it will interpret as:
+ slotProps: {
+   component: elementType,  // when defined, it is used to render the props.  if null, nothing will render in this slot.
+   ...otherProps: any       // these props will be passed to the rendering component
+ }
+
+ Example:
+ const defProps= {text: 'hello world', customMsg: 'none'};
+ const passedInSlotProps = {
+    component: MyResults,
+    customMsg: 'I am Joe'
+ }
+
+ <Slot component={EmptyResults} {...defProps} slotProps={passedInSlotProps}/>
+ This will return:
+   <MyResults text='hello world' customMsg='I am Joe'/>
+ */
+export function Slot({component, slotProps={}, ...props}) {
+    const {component:Component=component, ...pProps} = slotProps;
+    props = smartMerge(props, pProps);
+    return Component && <Component {...props}/>;
 }

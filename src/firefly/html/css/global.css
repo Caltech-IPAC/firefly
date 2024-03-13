@@ -528,3 +528,7 @@ div.rootStyle img {
 [data-joy-color-scheme="dark"] img.old-ff-icon-img {
     filter: invert(1);
 }
+
+#app img {
+    -webkit-user-drag: none;
+}

@@ -7,13 +7,13 @@ import PropTypes from 'prop-types';
 import {Sheet, Stack, Tooltip, Typography, Button, ToggleButtonGroup} from '@mui/joy';
 import {set} from 'lodash';
 
-import {dispatchUpdateAppData} from '../core/AppDataCntlr.js';
-import {getSearchInfo} from '../core/AppDataCntlr.js';
+import {dispatchUpdateAppData, getSearchInfo} from '../core/AppDataCntlr.js';
 import {FormPanel} from './FormPanel.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
 import {StatefulTabs, Tab} from './panel/TabPanel.jsx';
 import {makeSearchOnce} from '../util/WebUtil';
 import {useNavigate, useInRouterContext} from 'react-router-dom';
+import {dispatchShowDropDown} from 'firefly/core/LayoutCntlr.js';
 
 const changeSearchOptionOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
 
@@ -31,7 +31,7 @@ export function SearchPanel({style={}, initArgs={}}) {
             callId);
     });
 
-    const isSingleSearch = Object.keys(allSearchItems).length === 1;
+    const isSingleSearch = Object.keys(allSearchItems).length === 1 || flow === 'hidden';
     if (isSingleSearch) {
         return (
             <Stack id='search-vertical' flexGrow={1}>
@@ -73,6 +73,13 @@ SearchPanel.propTypes = {
     style:  PropTypes.object,
     initArgs: PropTypes.object
 };
+
+export function searchClickHandler(menuItem) {
+    dispatchShowDropDown( {view: 'Search', action: menuItem.action});
+    dispatchUpdateAppData({searches: {activeSearch: menuItem.action}});
+}
+
+
 
 function searchesAsTabs(allSearchItems, initArgs) {
     return allSearchItems &&

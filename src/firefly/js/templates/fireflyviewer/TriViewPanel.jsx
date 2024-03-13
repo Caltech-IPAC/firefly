@@ -95,7 +95,7 @@ TriViewPanel.propTypes = {
 
 function RightSide({expanded, closeable, showXyPlots, showMeta, showFits, dataProductTableId, coverageRight, imagesWithCharts }) {
 
-    const onTabSelect = (idx, id) => dispatchUpdateLayoutInfo({rightSide:{selectedTab:id}});
+    const onTabSelect = (id) => dispatchUpdateLayoutInfo({rightSide:{selectedTab:id}});
     const chartExpandedMode= expanded===LO_VIEW.xyPlots;
     const cov= imagesWithCharts || coverageRight;
     const meta= imagesWithCharts && showMeta;

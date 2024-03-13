@@ -65,9 +65,9 @@ const getComponentAry= once(() => {
         .filter( (c) => c);
 } );
 
-const getDefTabIdx= once((initArgs) => getTabIdx(initArgs));
+const getDefTabId= once((initArgs) => getTabId(initArgs));
 
-function getTabIdx(args) {
+function getTabId(args) {
     return args.defaultSelectedId;
 }
 
@@ -88,7 +88,7 @@ export function MultiSearchPanel({initArgs={}}) {
             <Typography level='h4'>
                 Table Search
             </Typography>
-            <StatefulTabs componentKey='MultiCatalogTabs' defaultSelected={getDefTabIdx(initArgs)}>
+            <StatefulTabs componentKey='MultiCatalogTabs' defaultSelected={getDefTabId(initArgs)}>
                 {getComponentAry().map( ({id, title,tip,Component}) => (
                     <Tab name={tip} id={id} key={id} label={title}>
                         <Component initArgs={initArgs}/>
