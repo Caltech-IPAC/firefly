@@ -393,7 +393,8 @@ public class QueryWise extends IBESearchProcessor {
                 else imageSetConstraint += "2";
                 n++;
             }
-            if (imageSets.contains(WiseRequest.NEOWISER_YR1)) {
+            // commented out the internal wise image set (iwise gwt version)
+            /*if (imageSets.contains(WiseRequest.NEOWISER_YR1)) {
                 if (n>0) imageSetConstraint += ",6";
                 else imageSetConstraint += "6";
                 n++;
@@ -437,11 +438,11 @@ public class QueryWise extends IBESearchProcessor {
                 if (n>0) imageSetConstraint += ",14";
                 else imageSetConstraint += "14";
                 n++;
-            }
+            }*/
 
-            if (imageSets.contains(WiseRequest.NEOWISER)) {    // public merge upto yr9
-                if (n > 0) imageSetConstraint += ",6,7,8,9,10,11,12,13,14";
-                else imageSetConstraint += "6,7,8,9,10,11,12,13,14";
+            if (imageSets.contains(WiseRequest.NEOWISER)) {    // public merge upto yr10
+                if (n > 0) imageSetConstraint += ",6,7,8,9,10,11,12,13,14,15";
+                else imageSetConstraint += "6,7,8,9,10,11,12,13,14,15";
                 n++;
             }
 
