@@ -10,7 +10,6 @@ import {dispatchShowDialog, SIDE_BAR_ID} from '../core/ComponentCntlr.js';
 import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
 import {getVersionInfoStr, showFullVersionInfoDialog} from 'firefly/ui/VersionInfo.jsx';
 import {menuTabsBorderSx} from 'firefly/ui/Menu';
-import {Slot} from 'firefly/ui/SimpleComponent.jsx';
 
 const getVersionTipStr= (appTitle) => `${appTitle?appTitle+' ':''}Version:\n${getVersionInfoStr(true,true)}`;
 

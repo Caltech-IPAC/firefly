@@ -48,7 +48,9 @@
  * @prop {SearchForm} form  define form info
  * @prop {function} renderStandardView    a function to render the search results in standard mode.
  * @prop {function} [renderExpandedView]  a function to render the search results in expanded mode
- * @prop {function} download  a function that returns the download dialog.
+ * @prop {function} download    a function that returns the download dialog.
+ * @prop {bool} primary         used by MenItem; defaults to false
+ * @prop {string} path          used by routed-app for navigation
  */
 
 /**
@@ -60,6 +62,18 @@
  * @prop {string|function} title description of the search results.  if a function, the request will be passed in. 
  * @prop {string} [helpId] help ID if available
  * @prop {function} [onSubmit]  a function that handle the form submit.
+ */
+
+/**
+ * MenuItem information.
+ * @typedef {object} MenuItem
+ * @prop {string} action    action to trigger for the given menu item
+ * @prop {string} label     text on the button
+ * @prop {string} title     tooltips
+ * @prop {string} category  category/group of the given menu item
+ * @prop {bool} primary     shown as tab on init; defaults to false
+ * @prop {string} path      used by routed-app for navigation
+ * @prop {bool} visible     shown on tab menu
  */
 
 /**

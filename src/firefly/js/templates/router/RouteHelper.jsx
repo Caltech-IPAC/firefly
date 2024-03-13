@@ -1,13 +1,16 @@
 
 import React, {useEffect} from 'react';
+import {oneOfType, string, func} from 'prop-types';
 import {RouterProvider, useNavigate, redirect, useLocation} from 'react-router-dom';
+import {isFunction} from 'lodash';
 import {
-    dispatchNotifyRemoteAppReady, dispatchOnAppReady, dispatchSetMenu, FORM_CANCEL, FORM_SUBMIT, getMenu
+    dispatchOnAppReady, dispatchSetMenu, FORM_CANCEL, FORM_SUBMIT, getMenu
 } from '../../core/AppDataCntlr.js';
-import {dispatchSetLayoutInfo, getDropDownInfo} from '../../core/LayoutCntlr.js';
+import {dispatchHideDropDown, dispatchSetLayoutInfo, getDropDownInfo} from '../../core/LayoutCntlr.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {FireflyRoot} from '../../ui/FireflyRoot.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {dispatchComponentStateChange, getComponentState} from 'firefly/core/ComponentCntlr.js';
 
 export const ROUTER = 'router';
 
@@ -26,11 +29,9 @@ export function routeEntry(root, props) {
     const {getRouter} = props;
 
     window.firefly.ignoreHistory = true;
-    dispatchSetMenu({menuItems: props.menu});
-    dispatchNotifyRemoteAppReady();
 
     const view = (
-        <FireflyRoot>
+        <FireflyRoot ctxProperties={props}>
             <RouterProvider router={getRouter(props)} />
         </FireflyRoot>
     );
@@ -38,15 +39,16 @@ export function routeEntry(root, props) {
     root.render(view);
 }
 
-
-export function redirectOnMatch(pattern, url, {redirectTo, showDropDown = true}) {
+/*
+  Used by a route's loader.  Not fully thought out, yet.  Avoid using it for now.
+*/
+export function redirectOnMatch(pattern, url, {redirectTo}) {
 
     pattern = pattern instanceof RegExp ? pattern : new RegExp(pattern);
 
     const {pathname, search} = new URL(url);
     const queryStr = search ? '\\'+search : '';     // adding '\' to escape '?' at the beginning of search string
     if (pattern.test(pathname+queryStr)) {
-        dispatchSetLayoutInfo({dropDown:{visible: showDropDown}});
         return redirect(redirectTo);
     }
     return null;
@@ -66,6 +68,10 @@ export function FormWatcher({submitTo, onCancel, children}) {
     useFormWatcher(submitTo, onCancel);
     return children;
 }
+FormWatcher.propTypes = {
+    submitTo: oneOfType([string, func]),
+    onCancel: oneOfType([string, func]),
+};
 
 
 /**
@@ -74,7 +80,7 @@ export function FormWatcher({submitTo, onCancel, children}) {
  *                  if submitTo is a function, it will be called with action passed in.  Function may return a path or null to do nothing.
  * @param onCancel  similar to submitTo, but for cancel.  Defaults to submitTo.
  */
-export function useFormWatcher(submitTo='/?view', onCancel) {
+function useFormWatcher(submitTo='/?results', onCancel) {
     const navigate = useNavigate();
     onCancel ??= submitTo;
 
@@ -91,48 +97,70 @@ export function useFormWatcher(submitTo='/?view', onCancel) {
     },[]);
 }
 
-function handleSubmit(submitTo, navigate, action) {
-    let path = submitTo;
-    if (submitTo instanceof Function) {
-        path = submitTo(action?.payload, navigate);
-    }
-    if (path) {
-        navigate(path);
-    }
-}
-
-function handleCancel(onCancel, navigate) {
-    let path = onCancel;
-    if (onCancel instanceof Function) {
-        path = onCancel();
-    }
-    if (path) {
-        navigate(path);
-    }
-}
-
 /**
  * Custom hook to convert Firefly's drop down navigation as routes
  */
 export function useDropdownRoute() {
     const navigate = useNavigate();
-    const {pathname} = useLocation();
+    const {pathname, search} = useLocation();
     const view = useStoreConnector(() => getDropDownInfo()?.view);
+    const visible = useStoreConnector(() => getDropDownInfo()?.visible);
 
     useEffect(() => {
-        let cview = getMenuItems()?.find((mi) => pathname === mi.path)?.action;         // look for exact match
-        cview ??= getMenuItems()?.find((mi) => pathname.startsWith(mi.path))?.action;   // look for nested path
-        if (cview && view !== cview) {
-            dispatchSetLayoutInfo({dropDown:{view: cview}});
-            dispatchSetMenu({selected: cview});
+        const {path, visible} = getViewInfo();
+        if (pathname !== path) {
+            const menuItem = getMenuItem(pathname);
+            if (menuItem) {     // the requested pathname is in the menu
+                dispatchSetLayoutInfo({dropDown:{view: menuItem.action, menuItem, visible: true}});
+                dispatchSetMenu({selected: menuItem.action});
+            } else if (visible) {
+                dispatchHideDropDown();     // it's not a menu path, hide dropdown
+            }
         }
-    }, [pathname]);
+    }, [pathname]);         // when browser path changes, sync layout and menu state.
 
     useEffect(() => {
-        if (view) {
-            const path = getMenuItems()?.find((mi) => mi.action === view)?.path;
-            if (path && !pathname.startsWith(path)) navigate(path);
+        const {path, visible} = getViewInfo();
+        if (path && !pathname.startsWith(path)) {
+            navigate(path);
+        } else if( visible === false) {
+            const lastResultPath = getResultsPath() || '/';
+            navigate(lastResultPath);
         }
-    }, [view]);
+    }, [view]);             // when layout changes, navigate to that path
+
+    return [visible, search];
 }
 
+
+/*---------------------------------------------------------------------------------------------
+ Internal use only
+----------------------------------------------------------------------------------------------*/
+
+function handleSubmit(submitTo, navigate, action) {
+    const path = isFunction(submitTo) ? submitTo?.(action?.payload, navigate) : submitTo;
+    setResultsPath(path);
+}
+
+function handleCancel(onCancel, navigate) {
+    const path = isFunction(onCancel) ? onCancel?.() : onCancel;
+    setResultsPath(path);
+}
+
+function getViewInfo() {
+    const {view, menuItem, visible} = getDropDownInfo();
+    const path = menuItem?.path || getMenuItems()?.find((mi) => mi.action === view)?.path;
+    return {path, visible};
+}
+
+function getMenuItem(path) {
+    return getMenuItems()?.find((mi) => mi.path === path);
+}
+
+function setResultsPath(path) {
+    if (path) dispatchComponentStateChange(ROUTER,{RESULTS:path});
+}
+
+function getResultsPath() {
+    return getComponentState(ROUTER)?.RESULTS;
+}

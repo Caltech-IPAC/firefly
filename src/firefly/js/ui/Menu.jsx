@@ -30,10 +30,11 @@ const MENU_PREF_ROOT='menu-visibility-';
 
 
 function menuHandleAction (menuItem) {
+
     if (menuItem.type === COMMAND) {
         flux.process({ type: menuItem.action, payload: (menuItem.payload ?? {}) });
     } else {
-        dispatchShowDropDown( {view: menuItem.action});
+        dispatchShowDropDown( {view: menuItem.action, menuItem});
     }
 }
 
@@ -210,7 +211,7 @@ function setupTabCss(theme,size) {
 
 
 function MenuTabBar({menuTabItems=[], size, selected, dropDown, displayMask, setElement}) {
-    const tabSelected= dropDown.visible ? selected : ResultCmd;
+    const tabSelected= selected || ResultCmd;
     const variant='soft';
     const color='primary';
 
@@ -268,9 +269,12 @@ function itemVisible(menuItem) {
 }
 
 function getSelected(menu,dropDown) {
-    if (!menu || !dropDown?.visible) return '';
+    // if (!menu || !dropDown?.visible) return '';
+    if (!menu) return '';
     if (menu.selected) return menu.selected;
-    return menu.menuItems.find(({action}) => (action===dropDown?.view))?.action ?? menu.menuItems[0].action;
+    let selected = menu.menuItems.find(({action}) => (action===dropDown?.view))?.action;
+    if (!selected && dropDown?.visible) selected = menu.menuItems[0].action;
+    return selected;
 }
 
 function updateMenu(appTitle, menu) {

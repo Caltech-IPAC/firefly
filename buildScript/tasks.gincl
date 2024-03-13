@@ -192,8 +192,8 @@ task prepareWebapp (dependsOn: [loadConfig, createVersionTag, jar]) {
         }
 
         copy {
-            from("$rootDir/config") {include 'web.xml', 'context.xml'}
-            from('config') {include 'web.xml', 'context.xml'}
+            from("$rootDir/config") {include 'web.xml'}
+            from('config') {include 'web.xml'}
             into("${warDir}/WEB-INF")
             filter(ReplaceTokens, tokens: project.appConfigProps)
         }
