@@ -3,12 +3,9 @@
  */
 import React, {useContext} from 'react';
 import PropTypes, {object, shape} from 'prop-types';
-import {get} from 'lodash';
 import {Expression} from '../../util/expr/Expression.js';
-import {quoteNonAlphanumeric} from '../../util/expr/Variable.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
-import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 import ColValuesStatistics from '../ColValuesStatistics.js';
 import {showColSelectPopup} from './ColSelectView.jsx';
 import MAGNIFYING_GLASS from 'html/images/icons-2014/magnifyingGlass.png';
@@ -67,7 +64,7 @@ export function ColumnOrExpression({colValStats,params,groupKey,fldPath,label,la
         <ColumnFld
             cols={colValStats.map((c)=>{return {name: c.name, units: c.unit, type: c.type, desc: c.descr};})}
             fieldKey={fldPath}
-            initValue={initValue || get(params, fldPath)}
+            initValue={initValue || params?.[fldPath]}
             canBeExpression={true}
             tooltip={`Column or expression for ${tooltip ? tooltip : name}.${EXPRESSION_TTIPS}`}
             {...{groupKey, label, labelWidth, name, nullAllowed, readOnly, slotProps, sx}} />
@@ -91,6 +88,7 @@ ColumnOrExpression.propTypes = {
 };
 
 export function ColumnFld({cols, groupKey, fieldKey, initValue, label, tooltip='Table column', slotProps, sx,
+                              doQuoteNonAlphanumeric,
                            name, nullAllowed, canBeExpression=false, readOnly, helper, required, validator,
                               placeholder, colTblId=null,onSearchClicked=null}) {
     const value = initValue || getFieldVal(groupKey, fieldKey);
@@ -111,7 +109,8 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, tooltip='
                            tip={`Select ${name} column`}
                            onClick={(e) => {
                                if (!onSearchClicked || onSearchClicked()) {
-                                   showColSelectPopup(cols, onColSelected, `Choose ${name}`, 'OK', val, false, colTblId);
+                                   showColSelectPopup(cols, onColSelected, `Choose ${name}`, 'OK',
+                                       val, false, colTblId,doQuoteNonAlphanumeric);
                                }
                            }}
             />
@@ -155,6 +154,7 @@ ColumnFld.propTypes = {
     readOnly: PropTypes.bool,
     required: PropTypes.bool,
     helper: PropTypes.element,
+    doQuoteNonAlphanumeric: PropTypes.bool,
     colTblId: PropTypes.string,
     onSearchClicked: PropTypes.func,
     placeholder: PropTypes.string,

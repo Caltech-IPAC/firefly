@@ -5,17 +5,14 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {IconButton, Sheet, Stack} from '@mui/joy';
-import {dispatchChangeViewerLayout} from '../MultiViewCntlr.js';
+import {Sheet, Stack} from '@mui/joy';
+import {dispatchChangeViewerLayout, getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
-import {GridTileButton, ListViewButton, OneTileButton} from './Buttons.jsx';
+import {
+    BeforeButton, DisplayTypeButtonGroup, ListViewButton, NextButton } from './Buttons.jsx';
 import {showExpandedOptionsPopup} from './ExpandedOptionsPopup.jsx';
 import {VisMiniToolbar} from './VisMiniToolbar.jsx';
 import {getActivePlotView} from '../PlotViewUtil.js';
-
-import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
-import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
-
 
 
 export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, toolbarVariant,
@@ -29,6 +26,7 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, tool
     const moreThanOne= viewerPlotIds.length>1;
     const nextIdx= cIdx===viewerPlotIds.length-1 ? 0 : cIdx+1;
     const prevIdx= cIdx ? cIdx-1 : viewerPlotIds.length-1;
+    const layout= getViewer(getMultiViewRoot(), viewerId)?.layout ?? 'grid';
 
 
     const {showImageToolbar=true}= getActivePlotView(visRoot)?.plotViewCtx.menuItemKeys ?? {};
@@ -36,25 +34,32 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, tool
 
     return (
         <Sheet variant={toolbarVariant}>
-            <Stack {...{direction:'row', flexWrap:'nowrap', alignItems: 'center', justifyContent: 'space-between',
+            <Stack {...{pl:1/2, direction:'row', flexWrap:'nowrap', alignItems: 'center', justifyContent: 'space-between',
                 width:'100%', height: 32, style:toolbarStyle}}>
                 <Stack {...{direction:'row', alignItems: 'center', flexWrap:'nowrap'}}>
-                    {moreThanOne && <OneTileButton tip='Show single image at full size'
-                                                   onClick={() => dispatchChangeViewerLayout(viewerId,'single')}/>}
-                    {moreThanOne && <GridTileButton tip='Show all images as tiles'
-                                                   onClick={() => dispatchChangeViewerLayout(viewerId,'grid')}/>}
+
+                    {moreThanOne && <DisplayTypeButtonGroup {...{value:layout,
+                        config:[
+                            { value:'single', title:'Show single image at full size',
+                                onClick: () => dispatchChangeViewerLayout(viewerId,'single')
+                            },
+                            { value:'grid', title:'Show all images as tiles',
+                                onClick: () => dispatchChangeViewerLayout(viewerId,'grid')
+                            }
+                        ]
+                    }}/>}
                     {useImageList && moreThanOne &&
                         <ListViewButton tip='Choose which images to show'
                                        onClick={() =>showExpandedOptionsPopup('Pinned Images', viewerId) }/>
                     }
                     {layoutType==='single' && moreThanOne &&
                         <>
-                            <IconButton {...{ onClick:() => dispatchChangeActivePlotView(viewerPlotIds[prevIdx])}}>
-                                <img src={PAGE_LEFT}/>
-                            </IconButton>
-                            <IconButton {...{ onClick:() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])}}>
-                                <img src={PAGE_RIGHT}/>
-                            </IconButton>
+                        <BeforeButton
+                            title='Previous Image'
+                            onClick= {() => dispatchChangeActivePlotView(viewerPlotIds[prevIdx])}/>
+                        <NextButton
+                            title='Next Image'
+                            onClick= {() => dispatchChangeActivePlotView(viewerPlotIds[nextIdx])}/>
                         </>
                     }
                     {makeDropDown?.()}

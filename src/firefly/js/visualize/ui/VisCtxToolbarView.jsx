@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Checkbox, Divider, IconButton, Stack, Typography} from '@mui/joy';
+import {Checkbox, Divider, Stack, Tooltip, Typography} from '@mui/joy';
 import React, {memo,Fragment} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, isString} from 'lodash';
@@ -31,7 +31,9 @@ import Validate from '../../util/Validate.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {convertToHiPS, convertToImage, doHiPSImageConversionIfNecessary} from '../task/PlotHipsTask.js';
 import {
-    CenterOnSelection, CheckedButton, CheckedClearButton, CropButton, FilterAddButton, FiltersOffButton, StatsButton
+    BeforeButton,
+    CenterOnSelection, CheckedButton, CheckedClearButton, CropButton, FilterAddButton, FiltersOffButton, NextButton,
+    StatsButton
 } from './Buttons.jsx';
 import {
     clearFilterDrawingLayer, crop, filterDrawingLayer, recenterToSelection, selectDrawingLayer, stats,
@@ -41,8 +43,6 @@ import {isSpacialActionsDropVisible, ActionsDropDownButton} from '../../ui/Actio
 import {SingleColumnMenu} from '../../ui/DropDownMenu.jsx';
 import {DropDownToolbarButton} from 'firefly/ui/DropDownToolbarButton.jsx';
 
-import PAGE_RIGHT from 'html/images/icons-2014/20x20_PageRight.png';
-import PAGE_LEFT from 'html/images/icons-2014/20x20_PageLeft.png';
 import SELECTED_ZOOM from 'html/images/icons-2014/ZoomFitToSelectedSpace.png';
 
 const image24x24={width:24, height:24};
@@ -401,23 +401,25 @@ export function MultiImageControllerView({plotView:pv}) {
     if (cIdx<0) cIdx= 0;
 
     return (
-        <Stack {...{direction:'row', flexWrap:'wrap', alignItems:'center',  position:'relative', title:tooltip }}>
-            {startStr && <Typography {...{level:'body-sm', width: '13em', overflow: 'hidden',
-                textOverflow: 'ellipsis', pl:1, textAlign: 'end'} }>
-                <span style={{fontStyle: 'italic', fontWeight: 'bold'}}> {startStr} </span>
-                <span> {hduDesc} </span>
-            </Typography>}
+        <Tooltip title={tooltip} placement='top-end'>
+            <Stack {...{direction:'row', flexWrap:'wrap', alignItems:'center',  position:'relative' }}>
+                {startStr && <Typography {...{level:'body-sm', width: '13em', overflow: 'hidden',
+                    textOverflow: 'ellipsis', pl:1, textAlign: 'end'} }>
+                    <span style={{fontStyle: 'italic', fontWeight: 'bold'}}> {startStr} </span>
+                    <Typography level='body-sm' color='warning'> {hduDesc} </Typography>
+                </Typography>}
 
-            {multiHdu && <FrameNavigator {...{pv, currPlotIdx:cIdx, minForInput:4, displayType:'hdu',tooltip}} />}
-            <Stack {...{direction:'row', alignItems:'center'}}>
-                {cube && multiHdu && <Divider orientation='vertical' sx={{mx:.5}}  />}
-                {cube &&
-                    <Typography {...{level:'body-sm', fontWeight:'bold', fontStyle: 'italic',
-                        overflow: 'hidden', textOverflow: 'ellipsis', pl: 1}}>Plane: </Typography>}
-                {wlStr && <Typography {...{level:'body-sm', pl:.5}}>{wlStr}</Typography>}
-                {cube && <FrameNavigator {...{pv, currPlotIdx:cIdx, minForInput:6, displayType:image?'cube':'hipsCube',tooltip}} /> }
+                {multiHdu && <FrameNavigator {...{pv, currPlotIdx:cIdx, minForInput:4, displayType:'hdu',tooltip}} />}
+                <Stack {...{direction:'row', alignItems:'center'}}>
+                    {cube && multiHdu && <Divider orientation='vertical' sx={{mx:.5}}  />}
+                    {cube &&
+                        <Typography {...{level:'body-sm', fontWeight:'bold', fontStyle: 'italic',
+                            overflow: 'hidden', textOverflow: 'ellipsis', pl: 1}}>Plane: </Typography>}
+                    {wlStr && <Typography {...{level:'body-sm', color:'warning', pl:.5}}>{wlStr}</Typography>}
+                    {cube && <FrameNavigator {...{pv, currPlotIdx:cIdx, minForInput:6, displayType:image?'cube':'hipsCube'}} /> }
+                </Stack>
             </Stack>
-        </Stack>
+        </Tooltip>
     );
 }
 
@@ -451,7 +453,7 @@ function getEmLength(len) {
 }
 
 
-function FrameNavigator({pv, currPlotIdx, minForInput, displayType, tooltip}) {
+function FrameNavigator({pv, currPlotIdx, minForInput, displayType}) {
 
     const typeConvert= {
         hdu: {
@@ -508,17 +510,13 @@ function FrameNavigator({pv, currPlotIdx, minForInput, displayType, tooltip}) {
 
 
     return (
-        <Stack direction='row' alignItems='center' flexWrap='nowrap' title={tooltip} >
-            <IconButton aria-label={tooltip} onClick={() => changeFrameIdx({value:prevIdx+1}) }>
-                <img src={PAGE_LEFT}/>
-            </IconButton>
-            <IconButton aria-label={tooltip} onClick={() => changeFrameIdx({value:nextIdx+1}) }>
-                <img src={PAGE_RIGHT}/>
-            </IconButton>
+        <Stack direction='row' alignItems='center' flexWrap='nowrap'>
+            <BeforeButton title={'Next frame'} onClick={() => changeFrameIdx({value:prevIdx+1})}/>
+            <NextButton title={'Previous fraome'} onClick={() => changeFrameIdx({value:nextIdx+1})}/>
             {showNavControl ?
                 <StateInputField defaultValue={currStr} valueChange={changeFrameIdx}
                                  sx={{'& .MuiInput-root':{'minHeight':'3px', 'borderRadius':4, width:'5em'}}}
-                                 tooltip={`Enter frame number to jump to, right arrow goes forward, left arrow goes back\n${tooltip}`}
+                                 tooltip={'Enter frame number to jump to, right arrow goes forward, left arrow goes back'}
                                  style={{width:getEmLength(len), textAlign:'right'}}
                                  type='number'
                                  validator={validator} onKeyDown={handleKeyDown} />

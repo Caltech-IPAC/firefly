@@ -20,7 +20,7 @@ const popupId = 'XYColSelect';
 const TBL_ID ='selectCol';
 
 
-export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonText,currentVal,multiSelect=false,colTblId) {
+export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonText,currentVal,multiSelect=false,colTblId,doQuoteNonAlphanumeric=true) {
 
    if (getTblById(TBL_ID)) {
        hideColSelectPopup();
@@ -79,7 +79,7 @@ export function showColSelectPopup(colValStats,onColSelected,popupTitle,buttonTe
     // 360 is the width of table options
     const minWidth = Math.max(columns.reduce((rval, c) => isFinite(c.prefWidth) ? rval+c.prefWidth : rval, 0), 360);
     const popup = (<PopupPanel title={popupTitle}>
-            {popupForm(tableModel,onColSelected,buttonText,popupId,minWidth,multiSelect)}
+            {popupForm(tableModel,onColSelected,buttonText,popupId,minWidth,multiSelect,doQuoteNonAlphanumeric)}
         </PopupPanel>
 
     );
@@ -94,7 +94,7 @@ export function hideColSelectPopup() {
     }
 }
 
-function popupForm(tableModel, onColSelected,buttonText,popupId, minWidth,multiSelect) {
+function popupForm(tableModel, onColSelected,buttonText,popupId, minWidth,multiSelect,doQuoteNonAlphanumeric) {
     const tblId = tableModel.tbl_id;
     const tbl_ui_id = (tableModel.tbl_id || 'ColSelectView') + '-ui';
     return (
@@ -120,7 +120,9 @@ function popupForm(tableModel, onColSelected,buttonText,popupId, minWidth,multiS
 
             <CompleteButton
                 text={buttonText}
-                onSuccess={()=> multiSelect? setSelectedColumns(tblId,onColSelected) : setXYColumns(tblId,onColSelected)}
+                onSuccess={()=> multiSelect?
+                    setSelectedColumns(tblId,onColSelected,doQuoteNonAlphanumeric) :
+                    setXYColumns(tblId,onColSelected,doQuoteNonAlphanumeric)}
                 dialogId={popupId}
             />
         </Stack>
@@ -130,18 +132,19 @@ function popupForm(tableModel, onColSelected,buttonText,popupId, minWidth,multiS
 
 
 //returns (calls the callback fn with) an array of selected column naes
-function setSelectedColumns(tblId,onColSelected) {
+function setSelectedColumns(tblId,onColSelected,doQuoteNonAlphanumeric) {
     getSelectedData(tblId).then((result) => {
-        const selectedColNames = getColumnValues(result, 'Name').map((col) => quoteNonAlphanumeric(col)); //create an array of col names
+        const selectedColNames = getColumnValues(result, 'Name').map((col) => doQuoteNonAlphanumeric? quoteNonAlphanumeric(col) : col); //create an array of col names
         onColSelected(selectedColNames);
     });
 }
 
 //returns (calls the callback fn with) the selected column name
-function setXYColumns(tblId,onColSelected) {
+function setXYColumns(tblId,onColSelected,doQuoteNonAlphanumeric) {
     const tableModel = getTblById(tblId);
     const hlRow = tableModel.highlightedRow || 0;
-    const selectedColName = quoteNonAlphanumeric(tableModel.tableData.data[hlRow][0]);
+    const selectedColName = doQuoteNonAlphanumeric ?
+        quoteNonAlphanumeric(tableModel.tableData.data[hlRow][0]) :tableModel.tableData.data[hlRow][0];
     onColSelected(selectedColName);
     hideColSelectPopup();
 }

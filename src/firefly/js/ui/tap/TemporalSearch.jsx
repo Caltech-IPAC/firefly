@@ -84,9 +84,9 @@ export function findTimeColumn(columnsTable) {
     const nIdx= getColumnIdx(columnsTable,'column_name',true);
     const unitIdx= getColumnIdx(columnsTable,'unit',true);
     if (ucdIdx===-1 || nIdx===-1) return;
-    const timeRows= columnsTable.tableData.data?.filter( (row) => row[ucdIdx]?.includes('time.epoch') && row[unitIdx].startsWith('d'));
+    const timeRows= columnsTable.tableData.data?.filter( (row) => row[ucdIdx]?.includes('time.epoch') && row[unitIdx]?.startsWith('d'));
     if (!timeRows?.length) return;
-    const mainRows= timeRows?.filter( (row) => row[ucdIdx]?.includes('meta.main') && row[unitIdx].startsWith('d'));
+    const mainRows= timeRows?.filter( (row) => row[ucdIdx]?.includes('meta.main') && row[unitIdx]?.startsWith('d'));
     return mainRows?.length ? mainRows[0][nIdx] : timeRows[0][nIdx];
 }
 

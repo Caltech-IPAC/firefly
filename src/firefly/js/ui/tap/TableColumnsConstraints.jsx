@@ -6,7 +6,7 @@ import {getCellValue, getColumn, getColumns, getColumnValues, getTblById, watchT
 import {SelectInfo} from '../../tables/SelectInfo.js';
 import {dispatchTableFilter, dispatchTableAddLocal, TABLE_LOADED, TABLE_REPLACE, TABLE_SELECT} from '../../tables/TablesCntlr.js';
 import {ColumnConstraintsPanel, getTableConstraints} from './ColumnConstraintsPanel.jsx';
-import {ADQL_LINE_LENGTH} from './TapUtil.js';
+import {ADQL_LINE_LENGTH, maybeQuote} from './TapUtil.js';
 
 const COLS_TO_DISPLAY_FIRST = ['column_name','unit','ucd','description','datatype','arraysize','utype','xtype','principal'];
 
@@ -201,8 +201,9 @@ function reorganizeTableModel(tableModel, columnNames, reset) {
     return modifiedTableModel;
 }
 
-export function makeColsLines(selcolsArray, firstLineOffset=false) {
+export function makeColsLines(selcolsArrayIn, firstLineOffset=false) {
     const firstOff= firstLineOffset ? '       ' : '';
+    const selcolsArray= selcolsArrayIn.map( (c) => maybeQuote(c));
     const colSingleLine= selcolsArray?.join(',') ?? '';
     if (colSingleLine.length < ADQL_LINE_LENGTH) return `${firstOff}${colSingleLine}`;
 

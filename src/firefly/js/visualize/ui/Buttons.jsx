@@ -1,5 +1,5 @@
 import React from 'react';
-import {Box} from '@mui/joy';
+import {Box, IconButton, ToggleButtonGroup} from '@mui/joy';
 
 // TODO: we should use icon from one type(filled, outlined, rounded, two-tone, sharp).  It will yield better consistency.
 
@@ -38,7 +38,6 @@ import FilterIco from '@mui/icons-material/FilterAltOutlined';
 import ClearFilterIco from '@mui/icons-material/FilterAltOffOutlined';
 import TextViewIco from '@mui/icons-material/TextFieldsOutlined';
 import TableViewIco from '@mui/icons-material/TableChartOutlined';
-import AddColumnIco from '@mui/icons-material/PostAddOutlined';
 import SettingsIco from '@mui/icons-material/SettingsOutlined';
 import PropertySheetIco from '@mui/icons-material/ReadMoreOutlined';
 import ResetIco from '@mui/icons-material/RestartAltOutlined';
@@ -49,9 +48,17 @@ import CombineChartIco from '@mui/icons-material/JoinInner';
 import UnfoldMoreOutlinedIcon from '@mui/icons-material/UnfoldMoreOutlined';
 import UnfoldLessOutlinedIcon from '@mui/icons-material/UnfoldLessOutlined';
 import AddCircleOutlineOutlinedIcon from '@mui/icons-material/AddCircleOutlineOutlined';
+import ViewComfyAltRoundedIcon from '@mui/icons-material/ViewComfyAltRounded';
+import ViewModuleRoundedIcon from '@mui/icons-material/ViewModuleRounded';
+import NavigateNext from '@mui/icons-material/NavigateNextRounded';
+import NavigateBefore from '@mui/icons-material/NavigateBeforeRounded';
+
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import Crop169Icon from '@mui/icons-material/Crop169';
 
 import INSERT_COLUMN from 'html/images/insert-col-right-24-24.png';
 
+// import AddColumnIco from '@mui/icons-material/PostAddOutlined';
 // import LockOpenTwoToneIcon from '@mui/icons-material/LockOpenTwoTone';
 // import LockTwoToneIcon from '@mui/icons-material/LockTwoTone';
 // import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
@@ -93,6 +100,14 @@ import INSERT_COLUMN from 'html/images/insert-col-right-24-24.png';
 export const ExpandButton= ({expandGrid, ...props}) =>(
     <ToolbarButton {...{
         icon: (expandGrid? GRID_EXPAND : <OpenInFull sx={{transform: 'scale(1.1,-1.1)'}}/>), ...props }}/>);
+
+export const NextButton= (props) =>(
+    <ToolbarButton {...{
+        icon: (<NavigateNext sx={{transform: 'scale(1.6,1.6)'}}/>), ...props }}/>);
+
+export const BeforeButton= (props) =>(
+    <ToolbarButton {...{
+        icon: (<NavigateBefore sx={{transform: 'scale(1.6,1.6)'}}/>), ...props }}/>);
 
 
 // export const LockImages= ({locked, ...props}) =>{
@@ -189,9 +204,15 @@ export const TableViewButton = (props) => (
     <ToolbarButton {...{icon: <TableViewIco/>, tip: 'Table View', iconButtonSize:'38px', ...props}}/>
 );
 
-export const AddColumnButton = (props) => (
-    <ToolbarButton icon={INSERT_COLUMN} tip='Add a column' {...props}/>
-);
+export const AddColumnButton = (props) => {
+    const icon = (
+        <Box sx={{width: 24, height: 24}}>
+            <Crop169Icon sx={{position: 'absolute', top: 3, left:-1, transform: 'rotate(90deg) scale(1.3,1)'}}/>
+            <AddCircleOutlineIcon sx={{position: 'absolute', left: 11, top: 4, transform: 'scale(.75,.75)'}}/>
+        </Box>
+    );
+    return <ToolbarButton icon={icon} tip='Add a column' {...props}/>;
+}
 
 export const SettingsButton = (props) => (
     <ToolbarButton {...{icon: <SettingsIco/>, tip: 'Chart options and tools', iconButtonSize:'38px', ...props}}/>
@@ -228,9 +249,9 @@ export const RotateButton= (props) => ( <TB {...{ icon: <ThreeSixtyRoundedIcon/>
 export const SaveButton= (props) => ( <TB {...{ icon: <SaveOutlinedIcon/>, ...props}}/>);
 export const InfoButton= (props) => (<TB {...{ icon: <InfoOutlinedIcon/>, ...props}}/>);
 export const ColorButtonIcon= (props) => (<TB {...{ icon: <ColorLens/>, ...props}}/>);
-export const OneTileButton= (props) => ( <TB {...{ icon: <SquareRoundedIcon/>, ...props}}/>);
-export const GridTileButton= (props) => (<TB {...{ icon: <GridViewRoundedIcon/>, ...props}}/>);
-export const GridTileCompactButton= (props) => ( <TB {...{ icon: <ViewCompactIcon/>, ...props}}/>);
+// export const OneTileButton= (props) => ( <TB {...{ icon: <SquareRoundedIcon/>, ...props}}/>);
+// export const GridTileButton= (props) => (<TB {...{ icon: <GridViewRoundedIcon/>, ...props}}/>);
+// export const GridTileCompactButton= (props) => ( <TB {...{ icon: <ViewCompactIcon/>, ...props}}/>);
 export const ListViewButton= (props) => ( <TB {...{ icon: <FormatListBulletedRoundedIcon/>, ...props}}/>);
 export const CheckedButton= (props) => ( <TB {...{ icon: <DoneAllRoundedIcon/>, ...props,}}/>);
 export const CheckedClearButton= (props) => ( <TB {...{ icon: <RemoveDoneRoundedIcon/>, ...props}}/>);
@@ -245,3 +266,30 @@ export const FiltersOffButton= (props) => ( <TB {...{ icon: <ClearFilterIco/>, .
 // export const SettingsButton= (props) => ( <TB {...{ icon: <SettingsOutlinedIcon/>, ...props}}/>);
 
 const TB= ({icon, ...props}) => (<ToolbarButton {...{ icon, iconButtonSize:'42px', ...props}}/>);
+
+
+
+export function DisplayTypeButtonGroup({config, variant='outlined', size='sm', value, sx}) {
+
+    const lookup= (v) => {
+        switch (v) {
+            case 'one' :
+            case 'single' :
+                return <SquareRoundedIcon/>;
+            case 'grid' : return <GridViewRoundedIcon/>;
+            case 'gridFull' : return <ViewModuleRoundedIcon/>;
+            case 'gridRelated' : return <ViewComfyAltRoundedIcon/>;
+        }
+    };
+
+    return (
+        <ToggleButtonGroup {...{variant, size, value, sx}}>
+            {config.map( ({value,title,onClick}) =>
+                (<IconButton {...{value, title, onClick, key:value,
+                            sx:{ '--IconButton-size':'38px', minHeight:'unset', minWidth:'unset', p:1/4} }}>
+                    {lookup(value)}
+                </IconButton>)
+            )}
+        </ToggleButtonGroup>
+    );
+}
