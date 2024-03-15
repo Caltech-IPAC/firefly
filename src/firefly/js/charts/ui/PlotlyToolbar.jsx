@@ -33,7 +33,7 @@ import OrbitalIco from 'html/images/orbital-tmp.png';
 import ApplySelectIco from 'html/images/icons-2014/24x24_Checkmark.png';
 import ApplyFilterIco from 'html/images/icons-2014/24x24_FilterAdd.png';
 import ResetZoomIco from 'html/images/icons-2014/Zoom1x-24x24-tmp.png';
-import PanToolRoundedIconIco from '@mui/icons-material/PanToolRounded';
+import PanToolOutlinedIco from '@mui/icons-material/PanToolOutlined';
 
 export function PlotlyToolbar({chartId, expandable}) {
     const {activeTrace} = getChartData(chartId);
@@ -219,7 +219,7 @@ function PanBtn({chartId}) {
         <IconButton value='pan'
                     onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'pan', selection: undefined}})}
                     title='Pan' >
-            <PanToolRoundedIconIco/>
+            <PanToolOutlinedIco sx={{ml:-1/2, transform: 'scale(1.2,1.2)'}}/>
         </IconButton>
     );
 }
