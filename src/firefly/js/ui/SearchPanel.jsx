@@ -57,7 +57,7 @@ export function SearchPanel({style={}, initArgs={}}) {
             </Stack>
         );
     } else {
-        const onTabSelect = (index,id,name) => dispatchUpdateAppData(set({}, ['searches', 'activeSearch'], name));
+        const onTabSelect = (name) => dispatchUpdateAppData(set({}, ['searches', 'activeSearch'], name));
         return (
             <Stack id='search-tabs' flexGrow={1}>
                 {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
@@ -75,15 +75,14 @@ SearchPanel.propTypes = {
 };
 
 function searchesAsTabs(allSearchItems, initArgs) {
-
     return allSearchItems &&
         Object.values(allSearchItems).map( (searchItem) => {
             const label = searchItem.title || searchItem.name;
             return  (
                 <Tab key={label} name={label}>
-                    <div className='SearchPanel__form'>
+                    <Stack flexGrow={1}>
                         <SearchForm searchItem={searchItem} initArgs={initArgs}/>
-                    </div>
+                    </Stack>
                 </Tab>
             );
         } );
@@ -112,6 +111,7 @@ function SearchForm({searchItem, style, initArgs}) {
         useFormPanel ? (
             <FormPanel groupKey={name} style={style}
                        getDoOnClickFunc={(clickFunc) => executeOK(clickFunc,initArgs,searchItem)}
+                       cancelText=''
                        {...rest}>
                 <Render {...{searchItem, initArgs}} />
             </FormPanel>

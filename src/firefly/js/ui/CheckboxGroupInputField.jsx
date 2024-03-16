@@ -18,7 +18,6 @@ function convertValue(value,options) {
 
 export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip:toggleBoxTip, slotProps, type,
                                              options, alignment:orientation, value:fieldValue, sx}) {
-
     return (
         <Tooltip title={toggleBoxTip} sx={sx} {...slotProps?.tooltip}>
             <FormControl orientation={orientation}  {...slotProps?.control}>
