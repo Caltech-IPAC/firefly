@@ -16,10 +16,10 @@ import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {getMultiViewRoot, getExpandedViewerItemIds} from '../MultiViewCntlr.js';
 import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
-import ACTIVE_DOT from 'html/images/green-dot-10x10.png';
-import INACTIVE_DOT from 'html/images/blue-dot-10x10.png';
 import NavigateNext from '@mui/icons-material/NavigateNextRounded';
 import NavigateBefore from '@mui/icons-material/NavigateBeforeRounded';
+import ActiveDotIcon from '@mui/icons-material/FiberManualRecord';
+import InactiveDotIcon from '@mui/icons-material/FiberManualRecordOutlined';
 
 function createOptions(expandedMode, singleAutoPlay, plotIdAry) {
     return (
@@ -130,8 +130,8 @@ export function PagingControl({viewerItemIds,activeItemId,isPagingMode,getItemTi
         return (
                 <Tooltip title={tip} key={idx} >
                     <IconButton sz='sm' onClick={() => !active && onActiveItemChange(plotId)}
-                                sx={{minHeight:5, minWidth:5, p:'2px'}}>
-                        <img src={active ? ACTIVE_DOT : INACTIVE_DOT}/>
+                                sx={{minHeight:5, minWidth:5, p:'1px'}}>
+                        {active ? <ActiveDotIcon sx={{width:16}}/> : <InactiveDotIcon sx={{width:16}}/>}
                     </IconButton>
                 </Tooltip>
             );

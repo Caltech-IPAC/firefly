@@ -8,7 +8,7 @@ import React, {useRef, useEffect, forwardRef, useCallback, useImperativeHandle} 
 import {bool, element, func, node, number, object, oneOfType, shape, string} from 'prop-types';
 import {dispatchHideDialog} from '../core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from './DropDownToolbarButton.jsx';
-import DROP_DOWN_ICON from 'html/images/dd-narrow.png';
+import ArrowDropDownRoundedIcon from '@mui/icons-material/ArrowDropDownRounded';
 import BrowserInfo, {Platform} from 'firefly/util/BrowserInfo.js';
 
 
@@ -94,7 +94,11 @@ export const ToolbarButton = forwardRef((props,fRef) => {
 
     // const image= icon ? <img src={icon} style={imageStyle} className={allowInput} /> : undefined;
     const useIconButton= icon && !text;
-    const dropDownIndicator= useDropDownIndicator ? makeImage(DROP_DOWN_ICON,undefined,allowInput) : undefined;
+    // const dropDownIndicator= useDropDownIndicator ? makeImage(DROP_DOWN_ICON,undefined,allowInput) : undefined;
+    const dropDownIndicator= useDropDownIndicator ? <ArrowDropDownRoundedIcon sx={{transform:'scale(1.75)'}}/> : undefined;
+
+    // <ArrowDropDownRoundedIcon viewBox='8 8 10 10' sx={{position:'absolute', transform:'scale(1.5)', width:10,height:10, left:0, bottom:0}}/>
+
 
 
     const b=  (
@@ -200,7 +204,7 @@ const DropDownIndicator= ({dropPosition,onClick,className=''}) => (
             minHeight:'unset', minWidth:'unset',backgroundColor:'transparent',
             padding:0, position:'absolute', bottom:'0px', left:'3px', ...dropPosition
         }}}>
-        {makeImage(DROP_DOWN_ICON)}
+        <ArrowDropDownRoundedIcon viewBox='8 8 10 10' sx={{position:'absolute', transform:'scale(1.5)', width:10,height:10, left:0, bottom:0}}/>
     </Box>
 );
 

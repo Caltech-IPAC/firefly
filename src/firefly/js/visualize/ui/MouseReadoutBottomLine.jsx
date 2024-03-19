@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Checkbox, Chip, Stack, Switch, Tooltip, Typography} from '@mui/joy';
+import {Box, Chip, Stack, Switch, Tooltip, Typography} from '@mui/joy';
 import React, {memo, useEffect, useRef, useState} from 'react';
 import {object, bool, number} from 'prop-types';
 import BrowserInfo from '../../util/BrowserInfo.js';
@@ -13,7 +13,6 @@ import {CopyToClipboard} from './MouseReadout.jsx';
 import {dispatchChangeLockByClick, STANDARD_READOUT} from '../MouseReadoutCntlr.js';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 import {showMouseReadoutPopout} from 'firefly/visualize/ui/MouseReadPopoutAll.jsx';
-// import POPOUT_ICON from 'images/pop-out.png';
 import LaunchOutlinedIcon from '@mui/icons-material/LaunchOutlined';
 
 export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, style, slightlyTransparent=false, showOnInactive= false, radix}){

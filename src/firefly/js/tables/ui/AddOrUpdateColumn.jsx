@@ -28,7 +28,7 @@ import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {SuggestBoxInputField} from '../../ui/SuggestBoxInputField.jsx';
 
 import MAGNIFYING_GLASS from 'images/icons-2014/magnifyingGlass.png';
-import INFO from 'html/images/info-icon.png';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {setSelectInfo} from 'firefly/tables/TableRequestUtil.js';
 import {dispatchHideDialog} from 'firefly/core/ComponentCntlr.js';
@@ -367,5 +367,5 @@ function valueOnSuggestion(cval='', suggestion) {
 }
 
 function Info({url, target='info'}) {
-    return <Link href={url} target={target} tabIndex={-1} startDecorator={<img src={INFO} style={{height: 16}}/>}/>;
+    return <Link href={url} target={target} tabIndex={-1} startDecorator={<InfoOutlinedIcon  sx={{height: 16}}/>}/>;
 }

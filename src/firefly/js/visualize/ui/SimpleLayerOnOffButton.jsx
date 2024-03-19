@@ -2,9 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import FlipOutlinedIcon from '@mui/icons-material/FlipOutlined.js';
+// import FlipOutlinedIcon from '@mui/icons-material/FlipOutlined.js';
 import React from 'react';
-import PropTypes, {element, oneOfType, string} from 'prop-types';
+import PropTypes, {bool, element, object, oneOfType, string} from 'prop-types';
 import {getDrawLayerByType, isDrawLayerAttached, primePlot } from '../PlotViewUtil.js';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {DropDownToolbarButton} from '../../ui/DropDownToolbarButton.jsx';
@@ -16,6 +16,7 @@ import {clearModalEndInfo, setModalEndInfo} from './ToolbarToolModalEnd.js';
 
 
 export function SimpleLayerOnOffButton({plotView:pv,sx, tip,typeId,iconOn,iconOff,SvgIconComponent,visible=true,
+                                           useDropDownIndicator, dropPosition,
                                            modalEndInfo, endText, modalLayer= false,
                                             text, color, variant, iconButtonSize,
                                             plotTypeMustMatch= false, style={}, enabled= true, imageStyle,
@@ -44,12 +45,13 @@ export function SimpleLayerOnOffButton({plotView:pv,sx, tip,typeId,iconOn,iconOf
     if (dropDown && !isOn) {
         return (
             <DropDownToolbarButton  {...{icon, tip, text, color, variant, enabled:enableButton,
+                                    useDropDownIndicator, dropPosition,
                                     visible, imageStyle, dropDown }}/>
         );
     } else {
         return (
             <ToolbarButton {...{
-                icon, iconButtonSize,
+                icon, iconButtonSize,useDropDownIndicator, dropPosition,
                 color, variant, sx:sxToUse,
                 tip, text, enabled:enableButton, visible, style, imageStyle,
                 onClick:() => onClick ? onClick(pv,!isOn) :
@@ -81,6 +83,8 @@ SimpleLayerOnOffButton.propTypes= {
     endText: PropTypes.string,
     imageStyle : PropTypes.object,
     iconButtonSize : PropTypes.string,
+    useDropDownIndicator: bool,
+    dropPosition: object,
     sx : PropTypes.object,
 };
 

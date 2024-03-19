@@ -28,7 +28,6 @@ import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBullete
 import CenterFocusStrongTwoToneIcon from '@mui/icons-material/CenterFocusStrongTwoTone';
 
 import AddTwoToneIcon from '@mui/icons-material/AddTwoTone';
-import ViewCompactIcon from '@mui/icons-material/ViewCompact';
 import CropRoundedIcon from '@mui/icons-material/CropRounded';
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded';
 import RemoveDoneRoundedIcon from '@mui/icons-material/RemoveDoneRounded';
@@ -56,45 +55,13 @@ import NavigateBefore from '@mui/icons-material/NavigateBeforeRounded';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import Crop169Icon from '@mui/icons-material/Crop169';
 
-import INSERT_COLUMN from 'html/images/insert-col-right-24-24.png';
+import ZBaseIcon from '@mui/icons-material/SearchOutlined';
+import PlusIcon from '@mui/icons-material/AddOutlined';
+import MinusIcon from '@mui/icons-material/RemoveOutlined';
+import FitIcon from '@mui/icons-material/ZoomInMapOutlined';
+import FillIcon from '@mui/icons-material/OpenInFullOutlined';
+import OneXIcon from '@mui/icons-material/TimesOneMobiledataOutlined';
 
-// import AddColumnIco from '@mui/icons-material/PostAddOutlined';
-// import LockOpenTwoToneIcon from '@mui/icons-material/LockOpenTwoTone';
-// import LockTwoToneIcon from '@mui/icons-material/LockTwoTone';
-// import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
-// import ContentCopySharpIcon from '@mui/icons-material/ContentCopySharp';
-// import GridViewIcon from '@mui/icons-material/GridView';
-// import ViewListIcon from '@mui/icons-material/ViewList';
-// import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
-// import LockOutlinedIcon from '@mui/icons-material/Lock';
-// import PanoramaHorizontalOutlinedIcon from '@mui/icons-material/PanoramaHorizontalTwoTone';
-// import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-// import FilterAltTwoToneIcon from '@mui/icons-material/FilterAltTwoTone';
-// import FilterAltOffTwoToneIcon from '@mui/icons-material/FilterAltOffTwoTone';
-// --- save the following as other options for certain icons
-// import RotateRight from '@mui/icons-material/RotateRight';
-// import SettingsBackupRestoreRoundedIcon from '@mui/icons-material/SettingsBackupRestoreRounded';
-
-// --- save the following as reference where the old icons came from
-// import FLIP_Y_ON from 'images/icons-2014/Mirror-ON.png';
-// import FLIP_Y from 'images/icons-2014/Mirror.png';
-// import GRID_EXPAND from 'images/icons-2014/24x24_ExpandArrows-grid-3.png';
-// import OUTLINE_EXPAND from 'images/icons-2014/24x24_ExpandArrowsWhiteOutline.png';
-// import COLOR from 'images/icons-2014/28x28_ColorPalette.png';
-// import FITS_HEADER from 'images/icons-2014/28x28_FITS_Information.png';
-// import ROTATE from 'images/icons-2014/Rotate.png';
-// import BINOCULARS from 'images/b4.png';
-// import SAVE from 'images/icons-2014/Save.png';
-// import LAYER_ICON from 'images/icons-2014/TurnOnLayers.png';
-// import DIST_ON from 'images/icons-2014/Measurement-ON.png';
-// import DIST_OFF from 'images/icons-2014/Measurement.png';
-// import FLIP_Y_ON from 'images/icons-2014/Mirror-ON.png';
-// import FLIP_Y from 'images/icons-2014/Mirror.png';
-// import RESTORE from 'images/icons-2014/RevertToDefault.png';
-// import LINE_EXTRACTION from 'images/line-extract.png';
-// import POINT_EXTRACTION from 'images/points.png';
-// import TOOL_DROP from 'images/tools-again-try2.png';
-// import ZOOM_DROP from 'images/Zoom-drop.png';
 
 
 export const ExpandButton= ({expandGrid, ...props}) =>(
@@ -212,7 +179,7 @@ export const AddColumnButton = (props) => {
         </Box>
     );
     return <ToolbarButton icon={icon} tip='Add a column' {...props}/>;
-}
+};
 
 export const SettingsButton = (props) => (
     <ToolbarButton {...{icon: <SettingsIco/>, tip: 'Chart options and tools', iconButtonSize:'38px', ...props}}/>
@@ -265,7 +232,53 @@ export const FiltersOffButton= (props) => ( <TB {...{ icon: <ClearFilterIco/>, .
 
 // export const SettingsButton= (props) => ( <TB {...{ icon: <SettingsOutlinedIcon/>, ...props}}/>);
 
+
+const ZoomBase= ({type,size=22, iconSize}) => (
+    <Box sx={{width:size, height:size, position:'relative', overflow:'hidden'}}>
+        <ZBaseIcon viewBox={'2 2 15 15'}
+                   sx={{width:iconSize??size, height:iconSize??size, position: 'absolute', top: 0, left:0}}/>
+        {type}
+    </Box>
+);
+
+
+
+export const ZoomUpIcon= () => (
+    <ZoomBase type={<PlusIcon viewBox={'-1 -1 24 24'}
+                              sx={{position: 'absolute', width:21, height:21, left: 0, top: 0,
+                                  transform: 'scale(.65)'}}/>}/>);
+
+const ZoomDownIcon= () => (
+    <ZoomBase type={<MinusIcon viewBox={'-1 -1 24 24'}
+                               sx={{position: 'absolute', width:21, height:21, left: 0, top: 0,
+                                   transform: 'scale(.65)'}}/>}/>);
+
+export const Zoom1XIcon= ({size,iconSize, sx}) => (
+    <ZoomBase size={size} iconSize={iconSize}
+              type={<OneXIcon
+                  sx={{position: 'absolute', width:21, height:21, left: '.1rem', top: 1,
+                      transform: 'scale(.75)', ...sx}}/>}/>);
+
+
+const ZoomFitIcon= () => (
+    <ZoomBase type={<FitIcon viewBox={'1 1 24 24'}
+                             sx={{position: 'absolute', width:21, height:21, left: 1, top: 1,
+                                 transform: 'scale(.66)'}}/>}/>);
+
+const ZoomFillIcon= () => (
+    <ZoomBase type={<FillIcon
+        sx={{position: 'absolute', width:21, height:21, left: 0, top: 1,
+            transform: 'rotate(45deg) scale(.6)  translate(0px, -1px)'}}/>}/>);
+
 const TB= ({icon, ...props}) => (<ToolbarButton {...{ icon, iconButtonSize:'42px', ...props}}/>);
+
+
+
+export const ZoomUpButton = (props) => ( <ToolbarButton {...{icon: <ZoomUpIcon/>, ...props}}/> );
+export const ZoomDownButton = (props) => ( <ToolbarButton {...{icon: <ZoomDownIcon/>, ...props}}/> );
+export const Zoom1XButton = (props) => ( <ToolbarButton {...{icon: <Zoom1XIcon/>, ...props}}/> );
+export const ZoomFitButton = (props) => ( <ToolbarButton {...{icon: <ZoomFitIcon/>, ...props}}/> );
+export const ZoomFillButton = (props) => ( <ToolbarButton {...{icon: <ZoomFillIcon/>, ...props}}/> );
 
 
 

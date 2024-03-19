@@ -8,7 +8,6 @@ import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {LayoutType, PopupPanel} from 'firefly/ui/PopupPanel.jsx';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 import {computeCentralPointAndRadius,} from 'firefly/visualize/VisUtil.js';
-import CLICK from 'html/images/20x20_click.png';
 import PropTypes, {arrayOf, bool, number, object, oneOf, shape, string, func} from 'prop-types';
 import React, {useContext, useEffect, useRef, useState} from 'react';
 import {getTblById, makeFileRequest, onTableLoaded} from '../../api/ApiUtilTable.jsx';
@@ -49,7 +48,7 @@ import {
     convertStrToWpAry, initSearchSelectTool, updatePlotOverlayFromUserInput,
     updateUIFromPlot
 } from './VisualSearchUtils.js';
-
+import AdsClickIcon from '@mui/icons-material/AdsClick';
 
 const DIALOG_ID= 'HiPSPanelPopup';
 const DEFAULT_HIPS= 'ivo://CDS/P/DSS2/color';
@@ -298,7 +297,7 @@ function HiPSPanelPopupButton({groupKey:gk, polygonKey, whichOverlay=CONE_CHOICE
 
     return (
         <ToolbarButton {...{
-            icon:CLICK, tip, imageStyle:{height:18, width:18},
+            icon:<AdsClickIcon/> , tip, imageStyle:{height:18, width:18},
             onClick:(element) => showDialog(element)
         }}/>
     );

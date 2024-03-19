@@ -36,8 +36,9 @@ import '../../externalSource/prismLive/prism-live.js';
 import '../../externalSource/prismLive/prism.css';
 import '../../externalSource/prismLive/prism-live.css';
 
-import JOIN_ICO from 'html/images/join_16x16.png';
-const joinIcon = () => <img src={JOIN_ICO} style={{marginRight:2}}/> ;
+import JoinInnerOutlinedIcon from '@mui/icons-material/JoinInnerOutlined';
+const joinIcon = () =>
+    <JoinInnerOutlinedIcon sx={{pr:'2px', transform: 'translate(-4px, 5px) scale(1,.8) rotate(145deg)'}}/>;
 
 const FULLY_QUALIFIED= 'fullyQualified';
 const FILTER_STRING= 'filterString';

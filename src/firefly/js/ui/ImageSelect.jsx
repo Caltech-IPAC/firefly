@@ -21,7 +21,7 @@ import {FD_KEYS, FG_KEYS} from 'firefly/visualize/ui/UIConst';
 import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 
 import './ImageSelect.css';
-import infoIcon from 'html/images/info-icon.png';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import {CollapseAll, ExpandAll} from 'firefly/visualize/ui/Buttons.jsx';
 
 
@@ -447,7 +447,8 @@ function Header({project, hrefInfo='', multiSelect}) {
 
     const InfoIcon = () => hrefInfo && (
         <a onClick={(e) => e.stopPropagation()} target='_blank' href={hrefInfo}>
-            <img style={{width:14}} src={infoIcon} alt='info'/></a>
+            <InfoOutlinedIcon sx={{width:'1.2rem', verticalAlign:'middle'}}/>
+        </a>
     );
 
     if (multiSelect) {

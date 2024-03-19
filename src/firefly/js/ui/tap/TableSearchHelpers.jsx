@@ -10,8 +10,6 @@ import {FieldGroupAccordionPanel} from '../panel/AccordionPanel.jsx';
 import {RadioGroupInputFieldView} from '../RadioGroupInputFieldView.jsx';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
 
-// import HIDE_ICON from 'images/show-up-3.png';
-// import SHOW_ICON from 'images/hide-down-3.png';
 import KeyboardDoubleArrowUp from '@mui/icons-material/KeyboardDoubleArrowUp';
 import KeyboardDoubleArrowDown from '@mui/icons-material/KeyboardDoubleArrowDown';
 

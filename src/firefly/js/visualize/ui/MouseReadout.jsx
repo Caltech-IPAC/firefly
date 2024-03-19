@@ -2,18 +2,16 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Checkbox, Chip, Stack, Switch, Typography} from '@mui/joy';
+import {Chip, Stack, Switch, Typography} from '@mui/joy';
 import React, {Fragment,memo, useState} from 'react';
 import {number,string,oneOfType,object,func,bool} from 'prop-types';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 import {dispatchChangeLockByClick} from '../MouseReadoutCntlr.js';
 import {copyToClipboard} from '../../util/WebUtil';
 import {ToolbarButton} from '../../ui/ToolbarButton';
+import ContentPasteOutlinedIcon from '@mui/icons-material/ContentPasteOutlined';
+import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined';
 
-import CLIPBOARD from 'html/images/12x12_clipboard.png';
-import CHECKED from 'html/images/12x12_clipboard-checked.png';
-import CLIPBOARD_LARGE from 'html/images/20x20_clipboard.png';
-import CHECKED_LARGE from 'html/images/20x20_clipboard-checked.png';
 import './MouseReadout.css';
 
 export const MouseReadoutLock= memo(({gArea, gAreaLabel, style={}, lockByClick}) => {
@@ -104,8 +102,8 @@ DataReadoutItem.propTypes = {
 };
 
 export function CopyToClipboard({value, title, style, size=12, buttonStyle={}}) {
-    const uncheckedIco = size > 12 ? CLIPBOARD_LARGE : CLIPBOARD;
-    const checkedIco = size > 12 ? CHECKED_LARGE : CHECKED;
+    const uncheckedIco = <ContentPasteOutlinedIcon sx={{width:size,height:size}}/>;
+    const checkedIco = <AssignmentTurnedInOutlinedIcon sx={{width:size,height:size}}/>;
     title= title ||  `Copy to clipboard: ${value}`;
 
     const [clipIcon, setClipIcon] = useState(uncheckedIco);
