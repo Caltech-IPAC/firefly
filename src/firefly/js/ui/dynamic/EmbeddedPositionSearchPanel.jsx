@@ -1,5 +1,5 @@
 import {Sheet, Stack} from '@mui/joy';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {oneOfType, oneOf, element, bool, string, number, arrayOf, object, func, shape} from 'prop-types';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import {CONE_AREA_OPTIONS, CONE_AREA_OPTIONS_UPLOAD, CONE_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY
@@ -84,6 +84,7 @@ export function EmbeddedPositionSearchPanel({
     const [getConeAreaOp, setConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY);
     const [getUploadInfo, setUploadInfo]= useFieldGroupValue('uploadInfo');
     const uploadInfo= getUploadInfo() || undefined;
+    const [isHovered, setIsHovered] = useState(false);
 
     //conditionally show UploadTableChooser only when uploadInfo is empty - TAP like behavior
     useEffect(() => {
@@ -166,7 +167,10 @@ export function EmbeddedPositionSearchPanel({
                 whichOverlay: doGetConeAreaOp(), setWhichOverlay: doToggle ? setConeAreaOp : undefined,
                 targetKey, sizeKey, polygonKey, sx: {minHeight: 300, alignSelf: 'stretch', flexGrow:1}
             }}/>
-            <Sheet {...{className:`FFepsp-content ${insetSpacial ? 'inset' : ''}`,
+            <Sheet
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+                {...{className:`FFepsp-content ${insetSpacial ? 'inset' : ''}`,
                 sx: (theme) => (
                     {
                         alignItems: 'center',
@@ -175,8 +179,9 @@ export function EmbeddedPositionSearchPanel({
                         border: `3px solid ${theme.vars.palette['neutral']?.softActiveBg}`,
                         position: 'absolute',
                         px: 1/2,
-                        bottom: '1.5rem',
+                        bottom: '3.5rem',
                         left: 3,
+                        opacity: isHovered ? '100%' : '85%',
                     })
 
             }}>
