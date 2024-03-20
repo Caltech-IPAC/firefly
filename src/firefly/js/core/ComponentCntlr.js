@@ -38,6 +38,7 @@ export function dispatchShowDialog(dialogId,ownerId=undefined) {
 }
 
 export function dispatchHideDialog(dialogId) {
+    if (!isDialogVisible(dialogId)) return;
     flux.process({type: HIDE_DIALOG, payload: {dialogId}});
 }
 
