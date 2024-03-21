@@ -14,6 +14,7 @@ import {submitChangesSpectrum} from './SpectrumOptions.jsx';
 import {FireflyHistogramOptions, submitChangesFFHistogram} from './FireflyHistogramOptions.jsx';
 import {LayoutOptions, basicFieldReducer, submitChanges} from './BasicOptions.jsx';
 import {Stack} from '@mui/joy';
+import {CollapsibleGroup} from 'firefly/ui/panel/CollapsiblePanel';
 
 
 export function getSubmitChangesFunc(traceType, fireflyType) {
@@ -58,7 +59,9 @@ function getOptionsComponent({traceType, chartId, activeTrace, groupKey, tbl_id}
                     }}>
                         <ValidationField fieldKey={`_tables.data.${activeTrace}.x`}/>
                         <ValidationField fieldKey={`_tables.data.${activeTrace}.y`}/>
-                        <LayoutOptions {...{chartId, activeTrace, groupKey, tbl_id, noColor}}/>
+                        <CollapsibleGroup>
+                            <LayoutOptions {...{chartId, activeTrace, groupKey, tbl_id, noColor}}/>
+                        </CollapsibleGroup>
                     </Stack>
                 </FieldGroup>
             );

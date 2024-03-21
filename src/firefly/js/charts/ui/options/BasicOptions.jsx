@@ -6,7 +6,10 @@ import {dispatchChartAdd, dispatchChartUpdate, getChartData} from '../../ChartsC
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {getField, getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange, MULTI_VALUE_CHANGE, VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
-import {FieldGroupCollapsible} from '../../../ui/panel/CollapsiblePanel.jsx';
+import {
+    CollapsibleGroup,
+    FieldGroupCollapsibleItem
+} from '../../../ui/panel/CollapsiblePanel.jsx';
 
 import {showColorPickerDialog} from '../../../ui/ColorPicker.jsx';
 import Validate from '../../../util/Validate.js';
@@ -87,18 +90,18 @@ export function BasicOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId,
     return (
         <FieldGroup keepState={false} groupKey={groupKey}
                     reducerFunc={reducerFunc}>
-            <Stack spacing={2}>
+            <CollapsibleGroup>
                 {(multiTrace || !noColor) &&
                     //TODO: expose it as Trace Options and replace all usages of following
-                    <FieldGroupCollapsible  header='Trace Options' initialState= {{ value:'closed' }} fieldKey='traceOptions'>
+                    <FieldGroupCollapsibleItem header='Trace Options' initialState= {{ value:'closed' }} fieldKey='traceOptions'>
                         <Stack spacing={1} sx={{'.MuiFormLabel-root': {width: '6rem'}}}>
                             {multiTrace && <Name/>}
                             {!noColor && <Color/>}
                         </Stack>
-                    </FieldGroupCollapsible>
+                    </FieldGroupCollapsibleItem>
                 }
                 <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey}}/>
-            </Stack>
+            </CollapsibleGroup>
         </FieldGroup>
     );
 }
@@ -168,7 +171,8 @@ export function LayoutOptions({activeTrace, tbl_id, chartId, groupKey, noXY, xNo
     YaxisTitle = YaxisTitle || pYaxisTitle;
 
     return (
-        <FieldGroupCollapsible  header='Chart Options' initialState= {{ value:'closed' }} fieldKey='layoutOptions'>
+        <FieldGroupCollapsibleItem  header='Chart Options' initialState= {{ value:'closed' }} fieldKey='layoutOptions'
+                                    {...more /* to allow AccordionGroup styling props inserted by joy UI, propagate to Accordion */}>
             <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: '6rem'}}}>
                 <Title/>
                 {!noXY && <>
@@ -190,7 +194,7 @@ export function LayoutOptions({activeTrace, tbl_id, chartId, groupKey, noXY, xNo
                     <Yreset/>
                 </div>
             </Stack>
-        </FieldGroupCollapsible>
+        </FieldGroupCollapsibleItem>
     );
 }
 

@@ -8,10 +8,10 @@ import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 import {getChartProps} from '../../ChartUtil.js';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
-import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField.jsx';
 import {toBoolean} from '../../../util/WebUtil.js';
-import {FormControl, FormLabel, Stack} from '@mui/joy';
+import {Stack} from '@mui/joy';
 import {omit} from 'lodash/object';
+import {SwitchInputField} from 'firefly/ui/SwitchInputField';
 
 
 export const ERR_TYPE_OPTIONS = [
@@ -81,42 +81,54 @@ function Error({tbl_id:ptbl_id, chartId, groupKey, axis, activeTrace:pActiveTrac
     readonly = readonly || !showError;
 
     const ErrFld = ({path, slotProps, ...rest}) => {
-        const props = {groupKey, colValStats, readonly, fldPath:path(activeTrace, axis), nullAllowed:true,
-            sx: {'label.MuiFormLabel-root': {width: 'min-content'}},
-            slotProps: defaultsDeep(slotProps, {control: {orientation: 'horizontal'}}),
-            ...rest};
+        const props = {
+            groupKey, colValStats, readonly, fldPath:path(activeTrace, axis), nullAllowed:true,
+            slotProps: defaultsDeep(slotProps, {
+                control: {
+                    orientation: 'horizontal',
+                    sx: {'& label.MuiFormLabel-root': {width: 'min-content'}}
+                }
+            }),
+            ...rest
+        };
         return  (<ColumnOrExpression {...props}/>);
     };
     const axisU = axis.toUpperCase();
 
 
     return (
-        <FormControl {...slotProps?.control}>
-            <FormLabel {...slotProps?.label}>Error:</FormLabel>
-            <Stack direction='row' spacing={1} alignItems='center'>
-                <CheckboxGroupInputField fieldKey={showKey}
-                                         initialState= {{value: (showError ? 'true' : undefined)}}
-                                         tooltip='Turn error bars on/off'
-                                         options={[{value: 'true'}]}
-                                         slotProps={slotProps?.errorToggleInput}/>
-                <Stack direction='row' spacing={1} alignItems='center'>
-                    <ListBoxInputField
-                        initialState= {{value: type}}
-                        tooltip='Select type of the errors'
-                        options={ERR_TYPE_OPTIONS}
-                        fieldKey={errorTypeFieldKey(activeTrace, axis)}
-                        groupKey={groupKey}
-                        readonly={readonly}
-                        slotProps={defaultsDeep(slotProps?.errorTypeInput, {input: {size: 'sm'}})}/>
+        <Stack direction='row' spacing={1} alignItems='baseline'>
+            <SwitchInputField fieldKey={showKey}
+                              initialState= {{value: showError}}
+                              label='Error:'
+                              tooltip='Turn error bars on/off'
+                              slotProps={slotProps?.errorToggleInput}
+            />
+            <Stack direction='row' spacing={1} alignItems='baseline'>
+                <ListBoxInputField
+                    initialState= {{value: type}}
+                    tooltip='Select type of the errors'
+                    options={ERR_TYPE_OPTIONS}
+                    fieldKey={errorTypeFieldKey(activeTrace, axis)}
+                    groupKey={groupKey}
+                    readonly={readonly}
+                    slotProps={defaultsDeep(slotProps?.errorTypeInput, {input: {size: 'sm'}})}
+                    sx={{visibility: showError ? 'visible' : 'hidden'}} //to prevent layout from jumping when switch is toggled
+                />
+                {showError &&
                     <Stack spacing={.5}>
-                        {(type==='sym')  && <ErrFld name={`${axisU} Error`} initValue={error} path={errorFieldKey} slotProps={slotProps?.errorInput}/>}
-                        {(type==='asym') && <ErrFld name={`${axisU} Upper Error`} initValue={error} path={errorFieldKey} label={'\u2191'}
-                                                    slotProps={slotProps?.upperErrorInput}/>}
-                        {(type==='asym') && <ErrFld name={`${axisU} Lower Error`} initValue={errorMinus} path={errorMinusFieldKey} label={'\u2193'}
-                                                    slotProps={slotProps?.lowerErrorInput}/>}
+                        {(type === 'sym') && <ErrFld name={`${axisU} Error`} initValue={error} path={errorFieldKey}
+                                                     slotProps={slotProps?.errorInput}/>}
+                        {(type === 'asym') &&
+                            <ErrFld name={`${axisU} Upper Error`} initValue={error} path={errorFieldKey} label={'\u2191'}
+                                    slotProps={slotProps?.upperErrorInput}/>}
+                        {(type === 'asym') &&
+                            <ErrFld name={`${axisU} Lower Error`} initValue={errorMinus} path={errorMinusFieldKey}
+                                    label={'\u2193'}
+                                    slotProps={slotProps?.lowerErrorInput}/>}
                     </Stack>
-                </Stack>
+                }
             </Stack>
-        </FormControl>
+        </Stack>
     );
 }

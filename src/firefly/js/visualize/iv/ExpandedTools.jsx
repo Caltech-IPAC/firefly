@@ -38,10 +38,6 @@ function createOptions(expandedMode, singleAutoPlay, plotIdAry) {
     );
 }
 
-const closeButtonStyle= {
-    padding: '1px 12px 0 1px'
-};
-
 function getState() {
     const {expandedMode,activePlotId, singleAutoPlay, plotViewAry}= visRoot();
     return {expandedMode,activePlotId, singleAutoPlay, plotViewAry, pv:getActivePlotView(visRoot())};
@@ -57,8 +53,8 @@ export function ExpandedTools({closeFunc}) {
 
     return (
         <Sheet>
-            <Stack { ...{direction:'row', alignItems:'center', borderBottom: '1px solid rgba(0,0,0,.2)' }}>
-                {closeFunc && <CloseButton style={closeButtonStyle} onClick={closeFunc}/>}
+            <Stack { ...{direction:'row', alignItems:'center', sx: {px: .5}}}>
+                {closeFunc && <CloseButton onClick={closeFunc}/>}
                 {!single &&
                     <Stack {...{direction:'column', justifyContent:'space-between', minHeight:25, className:'disable-select'}}>
                         <div style={{alignSelf:'flex-end', whiteSpace:'nowrap', display:'flex'}}>

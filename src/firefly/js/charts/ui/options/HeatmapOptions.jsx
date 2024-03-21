@@ -1,8 +1,8 @@
-import React from 'react';
+import React, {useContext, useEffect} from 'react';
 import {get} from 'lodash';
 
 import {getChartData} from '../../ChartsCntlr.js';
-import {FieldGroup} from '../../../ui/FieldGroup.jsx';
+import {FieldGroup, FieldGroupCtx} from '../../../ui/FieldGroup.jsx';
 
 import {toBoolean} from '../../../util/WebUtil.js';
 import {intValidator} from '../../../util/Validate.js';
@@ -15,7 +15,10 @@ import {getColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 import {ALL_COLORSCALE_NAMES, PlotlyCS} from '../../Colorscale.js';
 import {getChartProps} from '../../ChartUtil.js';
-import {FieldGroupCollapsible} from '../../../ui/panel/CollapsiblePanel.jsx';
+import {
+    CollapsibleGroup,
+    FieldGroupCollapsibleItem
+} from '../../../ui/panel/CollapsiblePanel.jsx';
 import {Stack, Typography} from '@mui/joy';
 
 
@@ -33,31 +36,37 @@ export function HeatmapOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartI
     return (
         <FieldGroup keepState={false} groupKey={groupKey} reducerFunc={reducerFunc}>
             <Stack spacing={3}>
-                {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey}}/>}
-                {(multiTrace) &&
-                    <FieldGroupCollapsible  header='Trace Options' initialState= {{ value:'closed' }} fieldKey='traceOptions'>
-                        {multiTrace && <Name/>}
-                    </FieldGroupCollapsible>
-                }
-                <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey, noColor: true}}/>
+                {tablesource && <TableSourcesOptions {...{tablesource, activeTrace, groupKey, chartId}}/>}
+                <CollapsibleGroup>
+                    {(multiTrace) &&
+                        <FieldGroupCollapsibleItem  header='Trace Options' initialState= {{ value:'closed' }} fieldKey='traceOptions'>
+                            {multiTrace && <Name/>}
+                        </FieldGroupCollapsibleItem>
+                    }
+                    <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey}}/>
+                </CollapsibleGroup>
             </Stack>
         </FieldGroup>
     );
 }
+
+const getColorscaleName = ({data, fireflyData, activeTrace}) => {
+    let colorscaleName = fireflyData?.[activeTrace]?.colorscale;
+    if (!colorscaleName) {
+        const colorscale = data?.[activeTrace]?.colorscale;
+        if (colorscale && PlotlyCS.includes(colorscale)) {
+            colorscaleName = colorscale;
+        }
+    }
+    return colorscaleName;
+};
 
 export function fieldReducer({chartId, activeTrace}) {
     const basicReducer = basicFieldReducer({chartId, activeTrace});
 
     const getFields = () => {
         const {data, fireflyData, tablesources = {}} = getChartData(chartId);
-        const tablesourceMappings = get(tablesources[activeTrace], 'mappings');
-        let colorscaleName = get(fireflyData, `${activeTrace}.colorscale`);
-        if (!colorscaleName) {
-            const colorscale = get(data, `${activeTrace}.colorscale`);
-            if (colorscale && PlotlyCS.includes(colorscale)) {
-                colorscaleName = colorscale;
-            }
-        }
+        const tablesourceMappings = tablesources?.[activeTrace]?.mappings;
 
         const fields = {
 
@@ -77,7 +86,7 @@ export function fieldReducer({chartId, activeTrace}) {
             },
             [`fireflyData.${activeTrace}.colorscale`]: {
                 fieldKey: `fireflyData.${activeTrace}.colorscale`,
-                value: colorscaleName,
+                value: getColorscaleName({data, fireflyData, activeTrace}),
                 tooltip: 'Select colorscale for color map',
                 label: 'Color Scale:'
             },
@@ -116,12 +125,22 @@ export function fieldReducer({chartId, activeTrace}) {
     };
 }
 
-export function TableSourcesOptions({tablesource={}, activeTrace, groupKey, orientation='horizontal'}) {
+export function TableSourcesOptions({tablesource={}, activeTrace, groupKey, chartId, orientation='horizontal'}) {
     // _tables.  is prefixed the fieldKey.  it will be replaced with 'tables::val' on submitChanges.
     const tbl_id = get(tablesource, 'tbl_id');
     const colValStats = getColValStats(tbl_id);
     const xyProps = (xOrY) => ({fldPath:`_tables.data.${activeTrace}.${xOrY}`, label: `${xOrY.toUpperCase()}:`,
         name: xOrY.toUpperCase(), nullAllowed: false, colValStats, groupKey, slotProps: {control: {orientation}}});
+
+    const {setVal} = useContext(FieldGroupCtx);
+
+    //on the first render, update store with the color scale value reduced from chart data
+    //otherwise FieldGroupConnector is replacing it with stale state (1st option in ListBox)
+    useEffect(()=>{
+        const {data, fireflyData} = getChartData(chartId);
+        const colorscaleName = getColorscaleName({data, fireflyData, activeTrace});
+        colorscaleName && setVal(`fireflyData.${activeTrace}.colorscale`, colorscaleName);
+    }, []);
 
     return (
         <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: '5.5rem'}}}>
@@ -133,7 +152,7 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey, orie
             {colValStats && <ColumnOrExpression {...xyProps('y')}/>}
             <Stack direction='row' spacing={2}>
                 <ListBoxInputField fieldKey={`fireflyData.${activeTrace}.colorscale`}
-                                   options={[{label: 'Default', value: ''}].concat(ALL_COLORSCALE_NAMES.map((e)=>({value:e})))}
+                                   options={[{value: 'Default'}].concat(ALL_COLORSCALE_NAMES.map((e)=>({value:e})))}
                                    orientation={orientation}
                                    sx={{'.MuiSelect-root': {minWidth: '8.5rem'}}}
                 />

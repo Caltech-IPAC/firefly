@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import PropTypes, {object, shape} from 'prop-types';
-import {Checkbox, FormControl, FormLabel, Stack, Switch, Tooltip} from '@mui/joy';
+import {Checkbox, FormControl, FormLabel, Stack, Tooltip} from '@mui/joy';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {splitVals} from 'firefly/tables/TableUtil.js';
 
@@ -16,7 +16,7 @@ function convertValue(value,options) {
     else return value;
 }
 
-export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip:toggleBoxTip, slotProps, type,
+export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip:toggleBoxTip, slotProps,
                                              options, alignment:orientation, value:fieldValue, sx}) {
     return (
         <Tooltip title={toggleBoxTip} sx={sx} {...slotProps?.tooltip}>
@@ -25,14 +25,10 @@ export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip:
                 {/*following should be nested in a <FormGroup/> once joy-ui exposes it: https://mui.com/material-ui/react-checkbox/#formgroup*/}
                 <Stack className='ff-Checkbox-container' spacing={orientation==='vertical'?1:2} direction={orientation==='vertical' ? 'column' : 'row'}>
                     {options.map( ({value,label,tooltip}) => {
-                        const cb= type==='switch' ?
-                            (<Switch {...slotProps?.input}
-                                       {...{ size:'sm', name:fieldKey, key:value, value,
-                                           endDecorator: label,
-                                           checked:isChecked(value,fieldValue), onChange, label, }} />)
-                            :
-                            (<Checkbox {...slotProps?.input}
-                            {...{ className:'ff-Checkbox-item', size:'sm', name:fieldKey, key:value, value, checked:isChecked(value,fieldValue), onChange, label, }} />);
+                        const cb= (
+                            <Checkbox {...{ className:'ff-Checkbox-item', size:'sm', name:fieldKey, key:value, value,
+                                          checked:isChecked(value,fieldValue), onChange, label, ...slotProps?.input}} />
+                        );
                         return (
                             <FormControl key={value}>{
                                 //until https://github.com/mui/material-ui/issues/37764 & related issues are fixed,
@@ -64,7 +60,6 @@ CheckboxGroupInputFieldView.propTypes= {
         label: object,
         tooltip: object
     }),
-    type: PropTypes.oneOf(['switch', 'checkbox']) //undefined defaults to 'checkbox'
 };
 
 

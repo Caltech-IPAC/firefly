@@ -8,7 +8,10 @@ import {getChartData} from '../../ChartsCntlr.js';
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {getChartProps} from '../../ChartUtil.js';
-import {FieldGroupCollapsible} from '../../../ui/panel/CollapsiblePanel.jsx';
+import {
+    CollapsibleGroup,
+    FieldGroupCollapsibleItem
+} from '../../../ui/panel/CollapsiblePanel.jsx';
 import {Stack} from '@mui/joy';
 
 export function FireflyHistogramOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
@@ -23,17 +26,17 @@ export function FireflyHistogramOptions({activeTrace:pActiveTrace, tbl_id:ptbl_i
     const {Name, Color} = basicOptions({activeTrace, tbl_id, chartId, groupKey});
 
     const basicFields = (
-        <Stack spacing={2}>
+        <CollapsibleGroup>
             {(multiTrace || !noColor) &&
-                <FieldGroupCollapsible  header='Trace Options' initialState= {{ value:'closed' }} fieldKey='traceOptions'>
+                <FieldGroupCollapsibleItem  header='Trace Options' initialState= {{ value:'closed' }} fieldKey='traceOptions'>
                     <Stack spacing={1} sx={{'.MuiFormLabel-root': {width: '6rem'}}}>
                         {multiTrace && <Name/>}
                         {!noColor && <Color/>}
                     </Stack>
-                </FieldGroupCollapsible>
+                </FieldGroupCollapsibleItem>
             }
             <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey, xNoLog: true, noXY: false}}/>
-        </Stack>
+        </CollapsibleGroup>
     );
     const basicFieldsReducer = basicFieldReducer({chartId, activeTrace});
     basicFieldsReducer.ver = chartId+activeTrace;

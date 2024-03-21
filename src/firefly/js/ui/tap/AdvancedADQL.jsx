@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Chip, Divider, Stack, Switch, Tooltip, Typography} from '@mui/joy';
+import {Box, Chip, Divider, FormHelperText, Stack, Switch, Tooltip, Typography} from '@mui/joy';
 import React, {useState, useRef, useEffect, useContext, useCallback} from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
@@ -278,7 +278,6 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                                         <InputAreaFieldConnected
                                             ref={adqlEl}
                                             fieldKey={adqlKey}
-                                            tooltip='ADQL to submit to the selected TAP service'
                                             slotProps={{
                                                 input: {sx: {bgcolor: '#f5f2f0'}}, //the color defined on prism.css L59
                                                 textArea: {className: 'prism-live language-sql', id: 'adqlEditor'}
@@ -288,24 +287,22 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                                     </Stack>
                                 </Tooltip>
                                 <Stack spacing={1}>
-                                        <Tooltip placement='right'
-                                                 title={
-                                                     <Stack>
-                                                         <Typography>
-                                                             When selecting a column from the Schema browser use the full qualified name
-                                                         </Typography>
-                                                         <Typography color='warning'>
-                                                             Fully-qualified column names are recommended for table joins
-                                                         </Typography>
-                                                     </Stack>
-                                                 }>
-                                            <Switch {...{ size:'md', sx:{alignSelf:'flex-start'},
-                                                endDecorator: fullyQualified? 'Fully qualified column name' : 'Column name only', checked:fullyQualified,
-                                                onChange: (ev) => {
-                                                    setFullQualified(!getFullQualified());
-                                                },
-                                            }} />
-                                        </Tooltip>
+                                    <Switch {...{ size:'md', sx:{alignSelf:'flex-start'},
+                                        endDecorator: (
+                                            <Stack>
+                                                <Typography>
+                                                    Insert fully-qualified column names (recommended for table joins)
+                                                </Typography>
+                                                <FormHelperText>
+                                                    When selecting a column from the Schema browser use the full qualified name
+                                                </FormHelperText>
+                                            </Stack>
+                                        ),
+                                        checked:fullyQualified,
+                                        onChange: () => {
+                                            setFullQualified(!getFullQualified());
+                                        },
+                                    }} />
                                     {canUpload &&
                                         <Stack sx={{mt:2}}>
                                             <Stack {...{direction:'row', alignItems:'center', spacing:1}}>

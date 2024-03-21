@@ -21,7 +21,10 @@ import {getAppOptions} from '../../../core/AppDataCntlr.js';
 import {getTblById} from '../../../tables/TableUtil.js';
 import {PlotlyCS} from '../../Colorscale.js';
 import {getSpectrumProps, spectrumType} from '../../dataTypes/FireflySpectrum.js';
-import {FieldGroupCollapsible} from '../../../ui/panel/CollapsiblePanel.jsx';
+import {
+    CollapsibleGroup,
+    FieldGroupCollapsibleItem
+} from '../../../ui/panel/CollapsiblePanel.jsx';
 import {hideColSelectPopup} from '../ColSelectView.jsx';
 import {CheckboxGroupInputField} from '../../../ui/CheckboxGroupInputField.jsx';
 import {getFieldVal} from '../../../fieldGroup/FieldGroupUtils.js';
@@ -86,14 +89,16 @@ export function ScatterOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartI
                     }
                     <Mode/>
                 </Stack>
-                <ScatterCommonOptions {...{activeTrace, tbl_id, chartId, groupKey}}/>
-                <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey}}/>
+                <CollapsibleGroup>
+                    <ScatterCommonOptions {...{activeTrace, tbl_id, chartId, groupKey}}/>
+                    <LayoutOptions {...{activeTrace, tbl_id, chartId, groupKey}}/>
+                </CollapsibleGroup>
             </Stack>
         </FieldGroup>
     );
 }
 
-export function ScatterCommonOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey}) {
+export function ScatterCommonOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartId, groupKey, ...props}) {
 
     const {activeTrace, tbl_id, noColor, multiTrace} = getChartProps(chartId, ptbl_id, pActiveTrace);
     const {Symbol, ColorMap, ColorSize, ColorScale} = scatterInputs({activeTrace, tbl_id, chartId, groupKey});
@@ -102,7 +107,8 @@ export function ScatterCommonOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, 
     const isOrder = isSpectralOrder(chartId);
 
     return (
-        <FieldGroupCollapsible header='Trace Options' initialState={{value: 'closed'}} fieldKey='traceOptions'>
+        <FieldGroupCollapsibleItem header='Trace Options' initialState={{value: 'closed'}} fieldKey='traceOptions'
+                                   {...props /* to allow AccordionGroup styling props inserted by joy UI, propagate to Accordion */}>
             <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: '6rem'}}}>
                 {multiTrace && <Name/>}
                 <Symbol/>
@@ -115,7 +121,7 @@ export function ScatterCommonOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, 
                     </Stack>
                 )}
             </Stack>
-        </FieldGroupCollapsible>
+        </FieldGroupCollapsibleItem>
     );
 }
 

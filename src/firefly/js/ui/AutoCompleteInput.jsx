@@ -11,13 +11,13 @@ export function AutoCompleteInput({slotProps, orientation, label, required, free
 
     const {viewProps, fireValueChange}=  useFieldGroupConnector({...props, confirmValue: confirmValue(freeSolo)});
     const [open, setOpen] = useState(false);
+    const [tooltipOpen, setTooltipOpen] = useState(false);
 
     const {value, valid} = viewProps;
     const fixedOptions = viewProps.options?.map((v) => ({...v, label: v.label || v.value}));
 
     const inputProps= omit(props, 'initialState', 'fieldKey', 'groupKey');
-    let {title, ...tooltipProps} = inputFieldTooltipProps(viewProps);
-    title = open ? '' : title;          // remove tooltips when popup is open
+    const {title, enterDelay} = inputFieldTooltipProps(viewProps);
 
     const onChange = (e,v) => {
         const value = v.value ?? v;
@@ -26,7 +26,13 @@ export function AutoCompleteInput({slotProps, orientation, label, required, free
 
 
     return (
-        <Tooltip title={title} {...tooltipProps} {...slotProps?.tooltip}>
+        <Tooltip title={title} enterDelay={enterDelay}
+                 open={tooltipOpen}
+                 onOpen={()=> {
+                     !open && setTooltipOpen(true); //don't show tooltip as long as popup is open
+                 }}
+                 onClose={()=> setTooltipOpen(false)}
+                 {...slotProps?.tooltip}>
             <FormControl className='ff-Input' orientation={orientation} error={!valid} required={required} {...slotProps?.control}>
                 {label && <FormLabel {...slotProps?.label}>{label}</FormLabel>}
                 <Autocomplete autoComplete={true}
@@ -39,7 +45,10 @@ export function AutoCompleteInput({slotProps, orientation, label, required, free
                               endDecorator={endDecorator && <Decorator setOpen={setOpen}>{endDecorator}</Decorator>}
                               options={fixedOptions}
                               open={open}
-                              onOpen={() => setOpen(true)}
+                              onOpen={() => {
+                                  setOpen(true);
+                                  setTooltipOpen(false); //hide tooltip as soon as popup opens
+                              }}
                               onClose={() => setOpen(false)}
                               onInputChange={onChange}/>
             </FormControl>
