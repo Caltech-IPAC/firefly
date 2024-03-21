@@ -1,6 +1,6 @@
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {Box, Divider, Stack} from '@mui/joy';
+import {Box, ChipDelete, Divider, Stack} from '@mui/joy';
 import {get, isEmpty, isUndefined} from 'lodash';
 
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
@@ -110,11 +110,14 @@ const ChartArea = (props) => {
                 {...Object.assign({}, props, {errors})} />
             {glass && <Stack flexGrow={1} sx={{backgroundColor:'transparent'}}/>}
             {deletable &&
-            <img style={{display: 'inline-block', position: 'absolute', top: 0, right: 0, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
-                 title='Delete this chart'
-                 src={DELETE}
-                 onClick={(ev) => {dispatchChartRemove(chartId); ev.stopPropagation();}}
-            />}
+                <ChipDelete
+                    title='Delete this chart'
+                    style={{display: 'inline-block', position: 'absolute', top: 0, right: 0, alignSelf: 'baseline', padding: 2, cursor: 'pointer'}}
+                    onClick={(ev) => {
+                        dispatchChartRemove(chartId);
+                        ev.stopPropagation();
+                    }} />
+                }
         </Stack>
     );
 };

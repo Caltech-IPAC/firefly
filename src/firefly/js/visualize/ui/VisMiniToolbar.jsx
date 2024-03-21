@@ -58,7 +58,7 @@ import {
 import DRILL_DOWN from 'images/drill-down.png';
 import COMPASS_OFF from 'images/icons-2014/28x28_Compass.png';
 import NEW_IMAGE from 'images/icons-2014/28x28_FITS_NewImage.png';
-import STRETCH from 'images/icons-2014/28x28_Log.png';
+import STRETCH from 'images/icons-2014/24x24_Log.png';
 import DS9_REGION from 'images/icons-2014/DS9.png';
 import GRID_OFF from 'images/icons-2014/GreenGrid.png';
 import MARKER from 'images/icons-2014/MarkerCirclesIcon_28x28.png';
@@ -222,6 +222,8 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
             <ColorButton colorDrops={colorDrops} enabled={enabled} pv={pv} />
 
             <DropDownToolbarButton icon={STRETCH} tip='Stretch drop down: change the background image stretch'
+                                   useDropDownIndicator={true}
+                                   dropPosition={{left:3,bottom:-2}}
                                    enabled={enabled} visible={mi.stretchQuick && image}
                                    imageStyle={image24x24} dropDown={<StretchDropDownView plotView={pv}/>} />
 

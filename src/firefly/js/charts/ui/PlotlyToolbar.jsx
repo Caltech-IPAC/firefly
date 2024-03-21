@@ -23,16 +23,14 @@ import {
 import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField';
 import {
     AddItem, CheckedClearButton, ClearFilterButton, ExpandButton, FilterButton, RestoreButton, SaveButton,
-    SettingsButton,
+    SettingsButton, Zoom1XIcon, ZoomUpIcon,
 } from '../../visualize/ui/Buttons.jsx';
 
-import ZoomIco from 'html/images/icons-2014/24x24_ZoomIn.png';
 import SelectIco from 'html/images/icons-2014/select.png';
 import TurntableIco from 'html/images/turntable-tmp.png';
 import OrbitalIco from 'html/images/orbital-tmp.png';
 import ApplySelectIco from 'html/images/icons-2014/24x24_Checkmark.png';
 import ApplyFilterIco from 'html/images/icons-2014/24x24_FilterAdd.png';
-import ResetZoomIco from 'html/images/icons-2014/Zoom1x-24x24-tmp.png';
 import PanToolOutlinedIco from '@mui/icons-material/PanToolOutlined';
 
 export function PlotlyToolbar({chartId, expandable}) {
@@ -210,7 +208,7 @@ function ZoomBtn({chartId}) {
         <IconButton value='zoom'
                     onClick={() => dispatchChartUpdate({chartId, changes:{'layout.dragmode': 'zoom', selection: undefined}})}
                     title='Zoom'
-        ><img className='old-ff-icon-img' src={ZoomIco}/></IconButton>
+        ><ZoomUpIcon/></IconButton>
     );
 }
 
@@ -274,7 +272,8 @@ function ResetZoomBtn({chartId}) {
         }
     };
     return (
-        <ToolbarButton onClick={doClick} tip='Zoom out to original range' icon={ResetZoomIco}/>
+        <ToolbarButton onClick={doClick} tip='Zoom out to original range'
+                       icon={<Zoom1XIcon size={26} iconSize={24} sx={{left:2,top:2}}/>}/>
     );
 }
 

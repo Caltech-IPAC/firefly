@@ -55,7 +55,7 @@ const selectAreaInfo = once(() => ({
 
 export function getSelectedAreaIcon(isSelected = true) {
 
-    if (!isSelected) return SELECT_NONE;
+    if (!isSelected) return SELECT_CIRCLE;
     const drawLayer = getDrawLayerByType(getDlAry(), SelectArea.TYPE_ID);
     return  (drawLayer && drawLayer.selectedShape) ?
              selectAreaInfo()[drawLayer.selectedShape].iconId : SELECT_RECT;
@@ -127,11 +127,13 @@ export function detachSelectAreaRelatedLayers(pv, allPlots = true, selectId = Se
 const image24x24={width:24, height:24};
 
 export const SelectAreaButton= ({pv:plotView,tip,visible=true,modalEndInfo,imageStyle= image24x24, style, text, color, variant}) => (
-    <SimpleLayerOnOffButton {...{plotView, typeId:SelectArea.TYPE_ID, style, text, color, variant,
-        tip, iconOn:getSelectedAreaIcon(), iconOff:getSelectedAreaIcon(false),
-        visible, imageStyle, modalEndInfo, modalLayer:true,
-        dropDown: <SelectAreaDropDownView {...{plotView, modalEndInfo}} />}} />
-);
+        <SimpleLayerOnOffButton {...{plotView, typeId:SelectArea.TYPE_ID, style, text, color, variant,
+            tip, iconOn:getSelectedAreaIcon(), iconOff:getSelectedAreaIcon(false),
+            useDropDownIndicator: modalEndInfo?.key!=='SelectArea',
+            dropPosition:{left:3,bottom:-2},
+            visible, imageStyle, modalEndInfo, modalLayer:true,
+            dropDown: <SelectAreaDropDownView {...{plotView, modalEndInfo}} />}} />
+    );
 
 
 

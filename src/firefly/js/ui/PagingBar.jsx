@@ -8,14 +8,10 @@ import LOADING from 'html/images/gxt/loading.gif';
 import {MAX_ROW} from '../tables/TableRequestUtil.js';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 
-// import FIRST from 'html/images/icons-2014/16x16_BackwardToEnd.png';
 import FirstPage from '@mui/icons-material/FirstPage';
-// import LAST from 'html/images/icons-2014/16x16_ForwardToEnd.png';
 import LastPage from '@mui/icons-material/LastPage';
-// import NEXT from 'html/images/icons-2014/16x16_Forward.png';
 import NavigateNext from '@mui/icons-material/NavigateNext';
 import NavigateBefore from '@mui/icons-material/NavigateBefore';
-import PREVIOUS from 'html/images/icons-2014/16x16_Backward.png';
 
 
 export function PagingBar(props) {

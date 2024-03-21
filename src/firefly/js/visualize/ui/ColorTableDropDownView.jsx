@@ -52,8 +52,6 @@ import ColorTable18 from 'html/images/cbar/ct-18-rainbow-ds9.png';
 import ColorTable19 from 'html/images/cbar/ct-19-standard-ds9.png';
 import ColorTable20 from 'html/images/cbar/ct-20-staircase-ds9.png';
 import ColorTable21 from 'html/images/cbar/ct-21-color-ds9.png';
-import Arrow from 'html/images/popout-arrow_12x12.png';
-import {SimpleLayerOnOffButton} from './SimpleLayerOnOffButton.jsx';
 
 //=================================
 

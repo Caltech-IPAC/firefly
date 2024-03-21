@@ -4,7 +4,6 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {dispatchZoom} from '../ImagePlotCntlr.js';
 import {getZoomMax, getNextZoomLevel, UserZoomTypes, getZoomDesc} from '../ZoomUtil.js';
 import {primePlot} from '../PlotViewUtil.js';
@@ -13,21 +12,17 @@ import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {isImage} from '../WebPlot.js';
 import {MAX_SUPPORTED_HIPS_LEVEL} from '../HiPSUtil.js';
 
-import zoomDown from 'html/images/icons-2014/ZoomOut.png';
-import zoomUp from 'html/images/icons-2014/ZoomIn.png';
-import zoomOriginal from 'html/images/icons-2014/Zoom1x.png';
-import zoomFit from 'html/images/icons-2014/28x28_ZoomFitToSpace.png';
-import zoomFill from 'html/images/icons-2014/ZoomFillWidth.png';
+import { Zoom1XButton, ZoomDownButton, ZoomFillButton, ZoomFitButton, ZoomUpButton, } from './Buttons.jsx';
 
 const CLICK_TIME= 175;
-const makeZT= (name,icon,tip,utilZt) => ({name,icon,tip,utilZt});
+const makeZT= (name,tip,utilZt) => ({name,tip,utilZt});
 
 export const ZoomType= {
-    UP:  makeZT('UP',zoomUp,'Zoom the image in',UserZoomTypes.UP),
-    DOWN:makeZT('DOWN',zoomDown,'Zoom the image out',UserZoomTypes.DOWN),
-    ONE: makeZT('ONE',zoomOriginal,'Zoom to the original size',UserZoomTypes.ONE),
-    FIT: makeZT('FIT',zoomFit,'Zoom the image to fit entirely within its frame', UserZoomTypes.FIT),
-    FILL:makeZT('FILL',zoomFill, 'Zoom the image to fill its frame horizontally', UserZoomTypes.FILL)
+    UP:  makeZT('UP', 'Zoom the image in',UserZoomTypes.UP),
+    DOWN:makeZT('DOWN', 'Zoom the image out',UserZoomTypes.DOWN),
+    ONE: makeZT('ONE', 'Zoom to the original size',UserZoomTypes.ONE),
+    FIT: makeZT('FIT', 'Zoom the image to fit entirely within its frame', UserZoomTypes.FIT),
+    FILL:makeZT('FILL', 'Zoom the image to fill its frame horizontally', UserZoomTypes.FILL)
 };
 
 const isFitFill= (userZoomType) =>  (userZoomType===UserZoomTypes.FIT || userZoomType===UserZoomTypes.FILL);
@@ -79,12 +74,19 @@ export function isZoomMax(pv) {
     return (nextZ>zMax );
 }
 
-export const ZoomButton= ({plotView:pv,zoomType,visible=true, size=28}) => (
-        <ToolbarButton icon={zoomType.icon} tip={zoomType.tip} imageStyle={{flexGrow:0, width:size, height:size}}
-                       enabled={Boolean(primePlot(pv))} visible={visible}
-                       onClick={() => zoom(pv,zoomType)}/>
-    );
-
+export function ZoomButton({plotView:pv,zoomType,visible=true}) {
+    const sx= {'.ff-toolbar-iconbutton':{p:'1px'}};
+    const enabled= Boolean(primePlot(pv));
+    const tip= zoomType.tip;
+    const onClick= () => zoom(pv,zoomType);
+    switch (zoomType) {
+        case ZoomType.UP : return ( <ZoomUpButton {...{tip, enabled, visible, sx, onClick}}/> );
+        case ZoomType.DOWN : return ( <ZoomDownButton {...{tip, enabled, visible, sx, onClick}}/> );
+        case ZoomType.ONE : return ( <Zoom1XButton {...{tip, enabled, visible, sx, onClick}}/> );
+        case ZoomType.FIT : return ( <ZoomFitButton {...{tip, enabled, visible, sx, onClick}}/> );
+        case ZoomType.FILL : return ( <ZoomFillButton {...{tip, enabled, visible, sx, onClick}}/> );
+    };
+}
 
 ZoomButton.propTypes= {
     plotView : PropTypes.object,
