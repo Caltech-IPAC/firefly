@@ -10,24 +10,28 @@ import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import {SideBarMenu} from './Menu.jsx';
 import {AccordionPanelView} from './panel/AccordionPanel.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
-import {VersionInfo} from './VersionInfo.jsx';
+import {showFullVersionInfoDialog, VersionInfo} from './VersionInfo.jsx';
 
 
 
-export function AppConfigDrawer({containerElement, drawerWidth= '20rem', allowMenuHide= true, useSideBarMenu=true, children}) {
+export function AppConfigDrawer({containerElement, drawerWidth= '20rem', allowMenuHide= true, useSideBarMenu=true, children, sx, ...props}) {
 
     const {appTitle, appIcon} = useContext(AppPropertiesCtx);
     const visible= useStoreConnector(() => isDialogVisible(SIDE_BAR_ID));
     const closeSideBar= () => dispatchHideDialog(SIDE_BAR_ID);
     const drawerTitleSx = {m: '0.5rem', height: '3rem'};
 
+    const appIconEl = appIcon && React.cloneElement(appIcon, {
+        style: {height: drawerTitleSx.height}
+    });
+
     return (
-        <Drawer container={containerElement} open={visible} onClose={() => closeSideBar()} sx={{ '--Drawer-horizontalSize': drawerWidth }} >
+        <Drawer container={containerElement} open={visible} onClose={() => closeSideBar()} sx={{ '--Drawer-horizontalSize': drawerWidth, ...sx}} {...props} >
             <ModalClose sx={{transform: 'translateY(-50%)', top: `calc(${drawerTitleSx.height} / 2 + ${drawerTitleSx.m})`}}/>
             <DialogTitle level='h4' sx={(theme) => ({m: drawerTitleSx.m, color: theme.vars.palette.text.tertiary, fontWeight: theme.vars.fontWeight.md})}>
                 <Stack direction='row' spacing={.5} alignItems='center'>
                     <IconButton onClick={() => closeSideBar()}>
-                        <img style={{height: drawerTitleSx.height}} src={appIcon?.startsWith('data') ? appIcon : modifyURLToFull(appIcon)} />
+                        {appIconEl}
                     </IconButton>
                     <span>{appTitle}</span>
                 </Stack>

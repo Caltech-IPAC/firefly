@@ -2,14 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import React from 'react';
 import {firefly} from './Firefly.js';
 import {mergeObjectOnly} from './util/WebUtil.js';
 import {getFireflyViewerWebApiCommands} from './api/webApiCommands/ViewerWebApiCommands';
 import {getLcCommands} from './api/webApiCommands/LcWebApiCommands.js';
 import {getDatalinkUICommands} from './api/webApiCommands/DatalinkUICommands.js';
 import {getDefaultMOCList} from 'firefly/visualize/HiPSMocUtil.js';
-import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-42x42.png';
-
+import APP_ICON from 'html/images/fftools-logo-offset-small-42x42.png';
 
 /**
  * @example
@@ -23,7 +23,7 @@ import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-42x42.png';
 const defProps = {
     appTitle: 'Firefly',
     initLoadingMessage: window?.firefly?.options?.initLoadingMessage,
-    appIcon : FFTOOLS_ICO
+    appIcon: <img src={APP_ICON}/>
 };
 
 const props = mergeObjectOnly(defProps, window?.firefly?.app ?? {});

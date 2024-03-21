@@ -85,8 +85,7 @@ export const FormPanel = function (props) {
             </Stack>
             <Stacker endDecorator={searchBarEnd} {...slotProps?.searchBar}
                      sx={{...submitBarStyle, ...slotProps?.searchBar?.sx}}>
-                <CompleteButton style={{display: 'inline-block', marginRight: 10}}
-                                includeUnmounted={includeUnmounted}
+                <CompleteButton includeUnmounted={includeUnmounted}
                                 groupKey={groupKey}
                                 requireAllValid={requireAllValid}
                                 getDoOnClickFunc={getDoOnClickFunc}

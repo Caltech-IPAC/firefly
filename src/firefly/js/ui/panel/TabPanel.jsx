@@ -3,7 +3,7 @@
  */
 
 import React, {memo, useEffect, useState, useCallback, useRef} from 'react';
-import {bool, node, func, number, object, oneOfType, shape, string} from 'prop-types';
+import {bool, node, func, number, object, oneOfType, shape, string, array} from 'prop-types';
 import {
     Tab as JoyTab,
     Tabs as JoyTabs,
@@ -161,33 +161,34 @@ StatefulTabs.propTypes = {
 export const FieldGroupTabs = memo( ({children, ...props}) => {
     const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
 
-    const onChange = useCallback((idx, id, name) => {
-        let value= id||name;
-        if (!value) value= idx;
-
-        fireValueChange({ value});
-        if (viewProps.onTabSelect) {
-            viewProps.onTabSelect(idx, id, name);
-        }
+    const onChange = useCallback((value) => {
+        fireValueChange({value});
+        viewProps.onTabSelect?.(value);
     }, [viewProps, fireValueChange]);
 
     const newProps= {
-        ...pick(viewProps, Object.keys(TabPanel.propTypes)),  // useFieldGroupConnector is not removing all of its props, causing bad props going into the Tabs
+        ...omit(props, Object.keys(fieldPropTypes)),        // useFieldGroupConnector is not removing all of its props, causing bad props going into the Tabs
+        value: viewProps.value,
         children,
-        defaultSelected : viewProps.value,
         onTabSelect: onChange
     };
 
-    return (<Tabs {...newProps}/>);
+    return (<TabPanel {...newProps}/>);
 });
 
-FieldGroupTabs.propTypes = {
-    fieldKey: string,
-    forceReinit: bool,
+const fieldPropTypes = {
+    fieldKey : string,
+    groupKey : string,
+    forceReinit:  bool,
+    options: array,
     initialState: shape({
         value: string,
     }),
-    ...omit(Tabs.propTypes, 'defaultSelected')     //  defaultSelected is not used.. use value for defaultSelected.
+};
+
+FieldGroupTabs.propTypes = {
+    ...fieldPropTypes,
+    ...TabPanel.propTypes
 };
 
 /*---------------------------------------------------------------------------------------------
@@ -214,7 +215,7 @@ export const Tab = React.memo(({id, children, value, sx, removable, onTabRemove,
 
 Tab.propTypes = {
     id: string,           // ID for this tab; otherwises index will be used.
-    label:  oneOfType([string, node]),
+    label: node,
     name: string,
     value: oneOfType([number, string]),
     sx: object,

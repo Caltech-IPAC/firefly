@@ -330,14 +330,16 @@ function onlineHelpLoad( action )
 
 function loadSearches(action) {
     return function (dispatch) {
-        var {groups=[], activeSearch, ...rest} = action.payload;
+        var {groups=[], activeSearch, renderAsMenuItems=false, flow, ...rest} = action.payload;
         groups.forEach( (g) => {
             Object.entries(get(g, 'searchItems',{}))
                   .forEach(([k,v]) => v.name = k);      // insert key as name into the search object.
         });
         activeSearch = activeSearch || get(Object.values(get(groups, [0, 'searchItems'], {})), [0, 'name']);    // defaults to first searchItem
         const allSearchItems = Object.assign({}, ...map(groups, 'searchItems'));
-        Object.assign(searchInfo, rest, {allSearchItems, groups});
+        if (renderAsMenuItems) flow ??= 'hidden';
+
+        Object.assign(searchInfo, rest, {flow, renderAsMenuItems, allSearchItems, groups});
         dispatch({ type : APP_UPDATE, payload: {searches: {activeSearch}}});
     };
 }

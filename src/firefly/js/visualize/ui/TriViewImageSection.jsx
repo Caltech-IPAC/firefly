@@ -47,7 +47,7 @@ export function TriViewImageSection({showCoverage=false, showFits=false,
     if (imageExpandedMode) {
         return  ( <ImageExpandedMode key='results-plots-expanded' closeFunc={closeable ? closeExpanded : null}/> );
     }
-    const onTabSelect = (idx, id) => dispatchUpdateLayoutInfo({images:{selectedTab:id}});
+    const onTabSelect = (id) => dispatchUpdateLayoutInfo({images:{selectedTab:id}});
 
     const key= (showCoverage&&coverageSide==='LEFT') +'--'+ showFits +'--' + showMeta;
 

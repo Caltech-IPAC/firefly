@@ -52,6 +52,7 @@ export function defaultTheme() {
             },
             JoyTooltip: {
                 defaultProps: {
+                    disableInteractive: true,
                     variant:'soft',
                     enterDelay:1500,
                     placement: 'bottom-start',

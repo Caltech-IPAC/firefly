@@ -62,7 +62,7 @@ export const dropDownMap = {
  * Items in this container must have a 'name' property.  It will be used to
  * compare to the selected card.
  */
-export function DropDownContainer ({style={}, visible:defVisible, selected:defSelected, dropdownPanels, watchInitArgs= true, children}) {
+export function DropDownContainer ({style={}, visible:defVisible, selected:defSelected, dropdownPanels, defaultView, watchInitArgs= true, children}) {
 
     const visible   = useStoreConnector(() => getDropDownInfo()?.visible ?? defVisible);
     const selected  = useStoreConnector(() => getDropDownInfo()?.view ?? defSelected);       // the selected view name
@@ -70,6 +70,8 @@ export function DropDownContainer ({style={}, visible:defVisible, selected:defSe
     const [, setInit] = useState();
 
     let {view, layout} = dropDownMap[selected] || {};
+
+    view ??= defaultView;
 
     useEffect( () => {
         React.Children.forEach(children, (el) => {

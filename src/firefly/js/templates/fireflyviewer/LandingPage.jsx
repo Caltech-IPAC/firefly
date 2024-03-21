@@ -1,38 +1,26 @@
 import {Button, Divider, Sheet, Snackbar, Stack, Typography} from '@mui/joy';
 import React, {useContext, useState} from 'react';
+import {elementType, shape, object, string, arrayOf, element, oneOf} from 'prop-types';
 import QueryStats from '@mui/icons-material/QueryStats';
 import TipsAndUpdates from '@mui/icons-material/TipsAndUpdates';
-import PropTypes from 'prop-types';
 
 import {getBackgroundInfo} from '../../core/background/BackgroundUtil.js';
 import {dispatchShowDropDown} from '../../core/LayoutCntlr.js';
 import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
-import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {Slot, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {FileDropZone} from '../../visualize/ui/FileUploadViewPanel.jsx';
 import {dispatchAddPreference, getPreference} from 'firefly/core/AppDataCntlr';
 
 
-export function LandingPage({slots={}, slotProps={}}) {
+export function LandingPage({slotProps={}, sx, ...props}) {
     const {appTitle,footer,
         fileDropEventAction='FileUploadDropDownCmd'} = useContext(AppPropertiesCtx);
 
-    const defaultSlots = {
-        tabsMenuHint: {
-            component: AppHint,
-            props: { appTitle, id: 'tabsMenu', hintText: 'Choose a search from the tabs menu', sx: { left: '16rem' } }
-        },
-        bgMonitorHint: {
-            component: AppHint,
-            props: { appTitle, id: 'bgMonitor', hintText: 'Load job results from background monitor',
-                tipPlacement: 'end', sx: { right: 8 } }
-        },
-        topSection: {
-            component: DefaultAppBranding,
-            props: { appTitle }
-        },
+    const defSlotProps = {
+        tabsMenuHint: {appTitle, id: 'tabsMenu', hintText: 'Choose a search from the tabs menu', sx: { left: '16rem' }},
+        bgMonitorHint: {appTitle, id: 'bgMonitor', hintText: 'Load job results from background monitor', tipPlacement: 'end', sx: { right: 8 }},
+        topSection: { appTitle },
         bottomSection: {
-            component: EmptyResults,
-            props: {
                 icon: <QueryStats sx={{ width: '5rem', height: '5rem' }} />,
                 text: 'No Search Results Yet',
                 subtext: 'Submit a search to see results here',
@@ -41,18 +29,7 @@ export function LandingPage({slots={}, slotProps={}}) {
                     { text: 'Browse all searches', subtext: 'from the side-menu' },
                     { text: 'Upload a file', subtext: 'drag & drop here' }
                 ]
-            }
         }
-    };
-
-    const renderSlot = (slotName) => {
-        const Component = slots?.[slotName] ? slots[slotName] : defaultSlots[slotName].component;
-        const props = slots?.[slotName]
-            ? {...slotProps?.[slotName]} //if slot is changed, there's no default prop that needs to be present
-            : {...defaultSlots[slotName].props, ...slotProps?.[slotName],
-                sx: {...defaultSlots[slotName].props?.sx, ...slotProps?.[slotName]?.sx} //to allow deep merging for the sx prop
-        };
-        return (<Component {...props}/>);
     };
 
     const [dropEvent, setDropEvent] = useState(undefined);
@@ -63,9 +40,9 @@ export function LandingPage({slots={}, slotProps={}}) {
     const haveBgJobs = items.length > 0;
 
     return (
-        <Sheet className='ff-ResultsPanel-StandardView' sx={{width: 1, height: 1}}>
-            {renderSlot('tabsMenuHint')}
-            {haveBgJobs && renderSlot('bgMonitorHint')}
+        <Sheet className='ff-ResultsPanel-StandardView' sx={{width: 1, height: 1, ...sx}} {...props}>
+            <Slot component={AppHint} {...defSlotProps.tabsMenuHint} slotProps={slotProps?.tabsMenuHint}/>
+            {haveBgJobs && <Slot component={AppHint} {...defSlotProps.bgMonitorHint} slotProps={slotProps?.bgMonitorHint}/>}
             <FileDropZone {...{
                 dropEvent, setDropEvent,
                 setLoadingOp: () => {
@@ -74,9 +51,9 @@ export function LandingPage({slots={}, slotProps={}}) {
                 },
             }}>
                 <Stack justifyContent='space-between' width={1}>
-                    <Stack spacing={1} width={1} px={4} py={3}>
-                        {renderSlot('topSection')}
-                        {renderSlot('bottomSection')}
+                    <Stack spacing={1} width={1} px={4} py={3} {...slotProps?.contentSection}>
+                        <Slot component={DefaultAppBranding} {...defSlotProps.topSection} slotProps={slotProps?.topSection}/>
+                        <Slot component={EmptyResults} {...defSlotProps.bottomSection} slotProps={slotProps?.bottomSection}/>
                     </Stack>
                     {footer ? footer : undefined}
                 </Stack>
@@ -185,42 +162,50 @@ function AppHint({appTitle, id, hintText, tipPlacement='middle', sx={}}) {
 
 
 LandingPage.propTypes = {
-    slots: PropTypes.shape({
-        tabsMenuHint: PropTypes.elementType, //defaults to AppHint
-        bgMonitorHint: PropTypes.elementType, //defaults to AppHint
-        topSection: PropTypes.elementType, //defaults to DefaultAppBranding
-        bottomSection: PropTypes.elementType //defaults to EmptyResults
-    }),
-    slotProps: PropTypes.shape({
-        tabsMenuHint: PropTypes.object, //defaults to AppHint.propTypes
-        bgMonitorHint: PropTypes.object, //defaults to AppHint.propTypes
-        topSection: PropTypes.object, //defaults to DefaultAppBranding.propTypes
-        bottomSection: PropTypes.object //defaults to EmptyResults.propTypes
+    sx: object,
+    slotProps: shape({
+        tabsMenuHint: shape({
+            component: elementType,         // defaults to AppHint.  null to skip
+            ...AppHint.propTypes,           // defaults to AppHint.propTypes
+        }),
+        bgMonitorHint: shape({
+            component: elementType,         // defaults to AppHint.  null to skip
+            ...AppHint.propTypes,           // defaults to AppHint.propTypes
+        }),
+        topSection: shape({
+            component: elementType,         // defaults to DefaultAppBranding.  null to skip
+            ...DefaultAppBranding.propTypes,// defaults to DefaultAppBranding.propTypes
+        }),
+        bottomSection: shape({
+            component: elementType,         // defaults to EmptyResults.  null to skip
+            ...EmptyResults.propTypes,      // defaults to EmptyResults.propTypes
+        }),
+        contentSection: object,
     })
 };
 
 
 DefaultAppBranding.propTypes = {
-    appTitle: PropTypes.string,
-    appDescription: PropTypes.string,
+    appTitle: string,
+    appDescription: string,
 };
 
 
 EmptyResults.propTypes = {
-    icon: PropTypes.element,
-    text: PropTypes.string,
-    subtext: PropTypes.string,
-    actionItems: PropTypes.arrayOf(PropTypes.shape({
-        text: PropTypes.string,
-        subtext: PropTypes.string
+    icon: element,
+    text: string,
+    subtext: string,
+    actionItems: arrayOf(shape({
+        text: string,
+        subtext: string
     }))
 };
 
 
 AppHint.propTypes = {
-    appTitle: PropTypes.string.isRequired,
-    id: PropTypes.string.isRequired,
-    hintText: PropTypes.string.isRequired,
-    tipPlacement: PropTypes.oneOf(['start', 'middle', 'end']),
-    sx: PropTypes.object,
+    appTitle: string.isRequired,
+    id: string.isRequired,
+    hintText: string.isRequired,
+    tipPlacement: oneOf(['start', 'middle', 'end']),
+    sx: object,
 };

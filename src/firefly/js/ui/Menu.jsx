@@ -41,7 +41,7 @@ function menuHandleAction (menuItem) {
     }
 }
 
-function onClick(clickHandler,menuItem) {
+function onClickHandler(clickHandler,menuItem) {
     clickHandler ??= menuHandleAction;
     clickHandler(menuItem);
 }
@@ -129,12 +129,12 @@ export function MenuItemButton({menuItem, icon, size='lg', clickHandler, isWorki
     const item=(
         icon ?
             (<IconButton {...{ className: 'ff-MenuItem', size:'lg', color, variant,
-                onClick: () => onClick(clickHandler,menuItem)}}>
+                onClick: () => onClickHandler(clickHandler,menuItem)}}>
                 {icon}
             </IconButton>) :
             (<Button {...{startDecorator, className: 'ff-MenuItem', size, color, variant,
                 sx:{whiteSpace:'nowrap', ...sx},
-                onClick: () => onClick(clickHandler,menuItem) }}>
+                onClick: () => onClickHandler(clickHandler,menuItem) }}>
                 {menuItem.label}
             </Button>)
     );
@@ -421,7 +421,7 @@ function doTabChange(action,menuTabItems) {
     }
     else {
         const clickItem= menuTabItems?.find( (i) => i.action===action) ;
-        if (clickItem) onClick(clickItem.clickHandler,clickItem);
+        if (clickItem) onClickHandler(clickItem.clickHandler,clickItem);
     }
 }
 
@@ -499,7 +499,7 @@ function SideBarItem({item,selected,menu,closeSideBar,allowMenuHide,icon,sx}) {
     const onClick= (menuItem) => {
         const newMenuItems= menu.menuItems.map( (mi) => mi===menuItem ? {...mi, visible:true} : mi);
         updateMenu(appTitle, {...menu, menuItems:newMenuItems});
-        menuHandleAction(menuItem);
+        onClickHandler(menuItem.clickHandler, menuItem);
         closeSideBar();
     };
 
