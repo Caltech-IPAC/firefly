@@ -46,7 +46,7 @@ import {setIf as setIfUndefined} from 'firefly/util/WebUtil.js';
  * <li><b>views</b>:  The type of result view.  Choices are 'images', 'tables', and 'xyPlots'.  They can be combined with ' | ', i.e.  'images | tables'</li>
  *
  */
-export function FireflyViewer ({menu, options, initLoadCompleted, initLoadingMessage, views, showViewsSwitch, leftButtons,
+export function FireflyViewer ({menu, options, views, showViewsSwitch, leftButtons,
                                    centerButtons, rightButtons, normalInit=true, landingPage, slotProps, ...appProps}){
 
     useEffect(() => {
@@ -68,10 +68,7 @@ export function FireflyViewer ({menu, options, initLoadCompleted, initLoadingMes
     }, []);
 
     useEffect(() => {
-        dispatchOnAppReady(() => {
-            onReady({menu, views, options, initLoadingMessage, initLoadCompleted, normalInit});
-        });
-
+        dispatchOnAppReady(() => onReady({menu, options, normalInit}));
     }, []);
 
     const FireflySidebar= () => (
@@ -87,7 +84,7 @@ export function FireflyViewer ({menu, options, initLoadCompleted, initLoadingMes
     return (
         <App slotProps={mSlotProps} {...{views, ...appProps}}>
             <DynamicResults {...{views, showViewsSwitch, landingPage, leftButtons, centerButtons,
-                rightButtons, initLoadingMessage, initLoadCompleted}}/>
+                rightButtons}}/>
         </App>
     );
 }
@@ -112,7 +109,6 @@ FireflyViewer.propTypes = {
     centerButtons: PropTypes.arrayOf( PropTypes.func ),
     rightButtons: PropTypes.arrayOf( PropTypes.func ),
     options: PropTypes.object,
-    initLoadingMessage: PropTypes.string,
     normalInit: PropTypes.bool
 };
 
@@ -121,7 +117,7 @@ FireflyViewer.defaultProps = {
     views: 'images | tables | xyplots'
 };
 
-function onReady({menu, views, options={}, initLoadingMessage, initLoadCompleted, normalInit}) {
+function onReady({menu, options={}, normalInit}) {
     if (menu) {
         const {backgroundMonitor= true}= options;
         dispatchSetMenu({menuItems: menu, showBgMonitor:backgroundMonitor});

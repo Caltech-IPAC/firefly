@@ -154,7 +154,7 @@ export const ToolbarButton = forwardRef((props,fRef) => {
                     </Button>
                 }
                 {useIconButton && useDropDownIndicator &&
-                    <DropDownIndicator {...{dropPosition,onClick:handleClick,className:allowInput}}/>}
+                    <DropDownIndicator {...{dropPosition,enabled,onClick:handleClick,className:allowInput}}/>}
             </Stack>
         </Tooltip>
     );
@@ -198,12 +198,19 @@ ToolbarButton.propTypes= {
     variant: string,
 };
 
-const DropDownIndicator= ({dropPosition,onClick,className=''}) => (
+const DropDownIndicator= ({dropPosition,enabled, onClick,className=''}) => (
     <Box {...{ className:`ff-toolbar-dropdown${className?' ':''}${className}`, onClick,
-        sx:{
+        sx: (theme) => ({
             minHeight:'unset', minWidth:'unset',backgroundColor:'transparent',
-            padding:0, position:'absolute', bottom:'0px', left:'3px', ...dropPosition
-        }}}>
+            padding:0, position:'absolute', bottom:'0px', left:'3px', ...dropPosition,
+            opacity: enabled ? '1' : '0.3',
+            '& svg' : {
+                color: enabled?
+                    theme.vars.palette.neutral?.plainColor :
+                    theme.vars.palette.neutral?.softDisabledColor,
+            },
+        })
+    }}>
         <ArrowDropDownRoundedIcon viewBox='8 8 10 10' sx={{position:'absolute', transform:'scale(1.5)', width:10,height:10, left:0, bottom:0}}/>
     </Box>
 );

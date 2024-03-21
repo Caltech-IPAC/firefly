@@ -554,7 +554,7 @@ export function formatValue(col, val) {
             } else if (type === 'DMS') {
                 return dd2sex(val, true, true);     // use prec+4 to get num of decimal places
             } else {
-                if (isNaN(val)) return Number.NaN+'';
+                if (typeof val !== 'bigint' && isNaN(val)) return Number.NaN+'';
                 if (!type || type === 'F') type = 'f';
                 prec = '.' + prec;
                 return sprintf('%' + prec + type, val);

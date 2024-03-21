@@ -58,10 +58,10 @@ function getNextState(prevS, renderTreeId) {
  * @param props
  *
  */
-export const FireflySlate= memo(( {initLoadingMessage, renderTreeId, menu:menuItems, showBgMonitor=false}) => {
+export const FireflySlate= memo(( {renderTreeId, menu:menuItems, showBgMonitor=false}) => {
 
 
-    const {appTitle, appIcon, appFromApi, slotProps={}} = useContext(AppPropertiesCtx);
+    const {initLoadingMessage, appTitle, appIcon, appFromApi, slotProps={}} = useContext(AppPropertiesCtx);
     const state= useStoreConnector( (prevState) => getNextState(prevState,renderTreeId));
     const [appRef,setAppRef]= useState(undefined);
 
@@ -114,7 +114,6 @@ FireflySlate.propTypes = {
     rightButtons: PropTypes.arrayOf( PropTypes.func ),
     renderTreeId: PropTypes.string,
     showBgMonitor: PropTypes.bool,
-    initLoadingMessage: PropTypes.string,
 };
 
 
