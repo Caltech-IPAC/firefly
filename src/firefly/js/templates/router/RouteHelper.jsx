@@ -1,14 +1,17 @@
 
 import React, {useEffect} from 'react';
 import {RouterProvider, useNavigate, redirect, useLocation} from 'react-router-dom';
-import {dispatchNotifyRemoteAppReady, dispatchOnAppReady, dispatchSetMenu, FORM_CANCEL, FORM_SUBMIT} from '../../core/AppDataCntlr.js';
+import {
+    dispatchNotifyRemoteAppReady, dispatchOnAppReady, dispatchSetMenu, FORM_CANCEL, FORM_SUBMIT, getMenu
+} from '../../core/AppDataCntlr.js';
 import {dispatchSetLayoutInfo, getDropDownInfo} from '../../core/LayoutCntlr.js';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
 import {FireflyRoot} from '../../ui/FireflyRoot.jsx';
-import {getMenuItems} from '../../ui/Menu.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
 export const ROUTER = 'router';
+
+const getMenuItems= () => getMenu()?.menuItems;
 
 /**
  * React Router entry point.  See https://reactrouter.com/ for full details.

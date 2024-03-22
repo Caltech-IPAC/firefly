@@ -9,11 +9,11 @@ import {getTapCommands} from './TapCommands';
  * @param {Array.<string>|undefined} [cmdNameList] - a array of command names that will filter the returned command array
  * @return Array.<WebApiCommand>
  */
-export function getFireflyViewerWebApiCommands(cmdNameList) {
+export function getFireflyViewerWebApiCommands(cmdNameList, tapPanelList=[]) {
     const allCommands= [
         ...getImageCommands(),
         ...getTableCommands(),
-        ...getTapCommands(),
+        ...getTapCommands(tapPanelList),
     ];
 
     if (isEmpty(cmdNameList)) return allCommands;

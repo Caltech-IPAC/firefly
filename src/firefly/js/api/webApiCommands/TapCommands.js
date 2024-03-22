@@ -8,7 +8,7 @@ const tapPanelOverview= {
         'open tap panel'
     ],
     parameters: {
-        service: {desc:'tap service url', isRequired:true},
+        service: {desc:'tap service url'},
         schema : 'tap schema',
         table : 'tap table to search',
         WorldPt : 'coordinates of the image (semi-colon separated) - example-   10.68479;41.26906;EQ_J2000',
@@ -147,11 +147,17 @@ function showTapPanel(cmd,inParams) {
         params.radiusInArcSec= params[ReservedParams.SR.name] * 3600;
         Reflect.deleteProperty(params, ReservedParams.SR.name);
     }
-    const view= 'TAPSearch';
+    const view= params.view ?? 'TAPSearch';
+
     dispatchShowDropDown({view, initArgs:{defaultSelectedId:'tap', urlApi:{...params}}});
 }
 
-export function getTapCommands() {
+export function getTapCommands(tapPanelList) {
+    if (tapPanelList?.length) {
+        tapPanelOverview.parameters.view=
+            'a constrained tap panel, may be: ' + tapPanelList.map( ({name}) => name).join(', ');
+    }
+
     return [
         {
             cmd : 'tap',

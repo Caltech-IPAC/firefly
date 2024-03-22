@@ -1,6 +1,6 @@
 
 
-import {Box, Sheet, Stack, Typography} from '@mui/joy';
+import {Box, Link, Sheet, Stack, Typography} from '@mui/joy';
 import React, {Fragment} from 'react';
 import {isEmpty,isObject,isArray} from 'lodash';
 import {getReservedParamKeyDesc, makeExample, ReservedParams, WebApiHelpType} from '../api/WebApi';
@@ -39,7 +39,7 @@ export function WebApiHelpInfoPage({helpType,contextMessage='',cmd,params,webApi
     return (
         <Sheet sx={{py:3, pr:3}}>
             <Typography level='h2' style={{textAlign:'center'}}>{msg}</Typography>
-            {!showAllHelp && <Typography component='div' sx={{ml:1}}>Overview Help: <a href={overviewUrl}> {overviewUrl}</a> </Typography>}
+            {!showAllHelp && <Typography component='div' sx={{ml:1}}>Overview Help: <Link href={overviewUrl}> {overviewUrl}</Link> </Typography>}
             {!isEmpty(params) && <ParameterList params={{cmd, ...params}} url={window.location.href}
                                                 badParams={badParams} missingParams={missingParams}/>}
             <Typography sx={{ml:1}}>{showContextMsg && contextMessage}</Typography>
@@ -51,8 +51,8 @@ export function WebApiHelpInfoPage({helpType,contextMessage='',cmd,params,webApi
 
 const pEntryLine= (k,v,key) => (
     <Fragment key={key}>
-        <Typography level='body-sm' sx={{justifySelf: 'end', fontFamily: 'monospace'}}>{k||''}</Typography>
-        <div>{k?'-':''}</div>
+        <Typography level='body-xs' sx={{justifySelf: 'end', fontFamily: 'monospace'}}>{k||''}</Typography>
+        <Typography level='body-xs' >{k?'-':''}</Typography>
         <Typography level='body-xs'>{v}</Typography>
     </Fragment>
 );
@@ -87,7 +87,7 @@ function CommandOverview({webApiCommand}) {
         <Stack sx={{mt: 2, ml:1}}>
             <Stack direction='row' spacing={1/2} alignItems='center'>
                 <Typography level='h3'>Command:</Typography>
-                <Typography level='body-lg' style={{fontFamily:'monospace', pl:1}}>{webApiCommand.cmd}</Typography>
+                <Typography level='body-lg' color='warning' style={{fontFamily:'monospace', pl:1}}>{webApiCommand.cmd}</Typography>
             </Stack>
             <Stack sx={{ml: 3, mt:1}}>
                 {overview.map( (s) => <Typography key={s}>{s}</Typography>)}
@@ -140,7 +140,7 @@ function ShowExampleGroup({examples}) {
                     <Fragment key={e.url}>
                         <Typography level='body-sm' className='webApiExName'>{e.desc}</Typography>
                         <div/>
-                        <a href={e.url}>{e.url}</a>
+                        <Link level='body-sm' href={e.url}> {e.url} </Link>
                     </Fragment>
                 );}
             ) }
