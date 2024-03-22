@@ -25,7 +25,7 @@ import {
 } from '../../visualize/ui/TriViewImageSection.jsx';
 import {ResultsPanel} from './ResultsPanel.jsx';
 
-const stateKeys= ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'images', 'coverageSide'];
+const stateKeys= ['title', 'mode', 'showTables', 'showImages', 'showXyPlots', 'images', 'coverageSide', 'initLoadCompleted'];
 const LEFT= 'LEFT';
 const RIGHT= 'RIGHT';
 const triViewKey= 'images | tables | xyplots';
@@ -35,11 +35,10 @@ const tblXyKey= 'tables | xyplots';
 const xYTblKey= 'xyplots | tables';
 
 
-export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButtons, rightButtons,
-                                      initLoadingMessage, initLoadCompleted} ) => {
-    const {landingPage}= useContext(AppPropertiesCtx);
+export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButtons, rightButtons} ) => {
+    const {landingPage,initLoadingMessage}= useContext(AppPropertiesCtx);
     const state= useStoreConnector(() => pick(getLayouInfo(), stateKeys));
-    const {title, mode, showTables, showImages, showXyPlots, images={}, coverageSide=LEFT} = state;
+    const {title, mode, showTables, showImages, showXyPlots, images={}, coverageSide=LEFT, initLoadCompleted} = state;
     const {expanded, standard=triViewKey, closeable} = mode ?? {};
     const content = {};
     const {showMeta, showFits, dataProductTableId, showCoverage} = images;
@@ -86,10 +85,8 @@ TriViewPanel.propTypes = {
     leftButtons: PropTypes.arrayOf( PropTypes.func ),
     centerButtons: PropTypes.arrayOf( PropTypes.func ),
     rightButtons: PropTypes.arrayOf( PropTypes.func ),
-    initLoadingMessage:  PropTypes.string,
     coverageSide:  PropTypes.string,
     landingPage: PropTypes.object,
-    initLoadCompleted:  PropTypes.bool,
 };
 
 
