@@ -622,7 +622,8 @@ function BgMonitorButton ({sx,size}) {
     const monitoredJobs = Object.values(jobs).filter( (info) => info?.jobInfo?.monitored );
     const isWorking = monitoredJobs.some( (info) => isActive(info) );
 
-    const buttonSize= size==='lg' ? 'sm' : size==='md' ? 'lg' : 'md';
+    // const buttonSize= size==='lg' ? 'sm' : size==='md' ? 'lg' : 'md'; //todo make this work
+    const buttonSize= size==='lg' ? 'sm' : 'lg';
 
     return (
         <MenuItemButton {...{ sx, size:buttonSize, menuItem:showBgMonAction, isWorking,
