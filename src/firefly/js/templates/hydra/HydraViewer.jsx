@@ -24,7 +24,7 @@ import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
 import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 import App from 'firefly/ui/App.jsx';
 import {Slot, useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
-import {searchClickHandler, SearchPanel} from 'firefly/ui/SearchPanel.jsx';
+import {makeMenuItems, SearchPanel} from 'firefly/ui/SearchPanel.jsx';
 import {LandingPage} from 'firefly/templates/fireflyviewer/LandingPage.jsx';
 import {Stacker} from 'firefly/ui/Stacker.jsx';
 import {setIf as setIfUndefined} from 'firefly/util/WebUtil.js';
@@ -39,28 +39,12 @@ export function HydraViewer({menu, slotProps, ...props}) {
     useEffect(() => {
         dispatchAddSaga(hydraManager);
         startTTFeatureWatchers();
-    }, []);
-
-    useEffect(() => {
         dispatchOnAppReady(() => {
-            onReady({menu});
-            dispatchNotifyRemoteAppReady();
+            onReady(menu);
         });
     }, []);
 
-    const mSlotProps = cloneDeep(slotProps || {});
-
-    // defaultView is used when the requested view does not match any of the predefined views in dropdown.
-    // with Hydra's SearchPanel, component(view) are defined by a search's renderer, i.g. renderStandardView
-    // this is a convenience way to direct all undefined requests to SearchPanel.
-    setIfUndefined(mSlotProps,'dropdown.defaultView', <SearchPanel/>);
-
-    // adjust banner for appIcon
-    setIfUndefined(mSlotProps,'banner.slotProps.icon.style.marginTop', -43);
-    setIfUndefined(mSlotProps,'banner.slotProps.tabs.pl', '120px');
-
-    setIfUndefined(mSlotProps,'landing.icon', props?.appIcon);
-    setIfUndefined(mSlotProps,'landing.title', props?.appTitle);
+    const mSlotProps = applyLayoutFix({slotProps, props});
 
     return (
         <App slotProps={mSlotProps} {...props}>
@@ -96,10 +80,8 @@ HydraViewer.defaultProps = {
     appTitle: 'Time Series Viewer'
 };
 
-function onReady({menu=[]}) {
-    const {renderAsMenuItems , allSearchItems, groups} = getSearchInfo();
-   const menuItems = renderAsMenuItems ? makeMenuItems(groups, allSearchItems).concat(menu) : menu;
-    dispatchSetMenu({menuItems});
+function onReady(menu) {
+    dispatchSetMenu({menuItems: makeMenuItems(menu)});
 
     const {hasImages, hasTables, hasXyPlots} = getLayouInfo();
     if (!(hasImages || hasTables || hasXyPlots)) {
@@ -166,25 +148,7 @@ function closeExpanded() {
     dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
 }
 
-
-function makeMenuItems(groups, allSearchItems) {
-    const menuItems=[];
-    if (groups.length > 0) {
-        groups.forEach((g) => {
-            const category = g.title;
-            Object.entries(g.searchItems).forEach(([k,v]) => {
-                menuItems.push({label: k, action:k, primary: !!v?.primary, category, clickHandler: searchClickHandler});
-            });
-        });
-    } else {
-        Object.entries(allSearchItems).forEach(([k,v]) => {
-            menuItems.push({label: k, action:k, primary: !!v?.primary, clickHandler: searchClickHandler});
-        });
-    }
-    return menuItems;
-}
-
-function HydraLanding({icon, title, desc, slotProps, ...props} ) {
+export function HydraLanding({icon, title, desc, slotProps={}, ...props} ) {
 
     const Greetings = () => (
         <Stacker startDecorator={icon} direction='column' alignItems='start'>
@@ -208,3 +172,21 @@ HydraLanding.propTypes = {
     ...LandingPage.propTypes,
 };
 
+
+export function applyLayoutFix({slotProps, props}) {
+
+    const mSlotProps = cloneDeep(slotProps || {});
+
+    // defaultView is used when the requested view does not match any of the predefined views in dropdown.
+    // with Hydra's SearchPanel, component(view) are defined by a search's renderer, i.g. renderStandardView
+    // this is a convenience way to direct all undefined requests to SearchPanel.
+    setIfUndefined(mSlotProps,'dropdown.defaultView', <SearchPanel/>);
+
+    // adjust banner for appIcon
+    setIfUndefined(mSlotProps,'banner.slotProps.icon.style.marginTop', -43);
+    setIfUndefined(mSlotProps,'banner.slotProps.tabs.pl', '120px');
+
+    setIfUndefined(mSlotProps,'landing.icon', props?.appIcon);
+    setIfUndefined(mSlotProps,'landing.title', props?.appTitle);
+    return mSlotProps;
+}

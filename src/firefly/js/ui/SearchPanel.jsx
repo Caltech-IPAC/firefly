@@ -75,10 +75,38 @@ SearchPanel.propTypes = {
 };
 
 export function searchClickHandler(menuItem) {
-    dispatchShowDropDown( {view: 'Search', action: menuItem.action});
+    dispatchShowDropDown( {view: menuItem.action, menuItem});
     dispatchUpdateAppData({searches: {activeSearch: menuItem.action}});
 }
 
+
+export function makeMenuItems(menu) {
+    const {renderAsMenuItems , allSearchItems, groups} = getSearchInfo();
+    if (!renderAsMenuItems) return menu;
+
+    const toMenuItem = (k,v, category) => {
+        const action = v.name ?? k;
+        const label = v.title ?? k;
+        const title = v.desc;
+        const primary = !!v.primary;
+        const path = v.path;
+        return {action, label, title, primary, path, category, clickHandler: searchClickHandler};
+    };
+
+    const menuItems = [];
+    if (groups.length > 0) {
+        groups.forEach((g) => {
+            Object.entries(g.searchItems).forEach(([k,v]) => {
+                menuItems.push(toMenuItem(k,v, g.title));
+            });
+        });
+    } else {
+        Object.entries(allSearchItems).forEach(([k,v]) => {
+            menuItems.push(toMenuItem(k,v));
+        });
+    }
+    return [...menuItems, ...menu];
+}
 
 
 function searchesAsTabs(allSearchItems, initArgs) {

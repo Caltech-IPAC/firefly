@@ -55,8 +55,8 @@ export function appDataReducer(state, action={}) {
 export function menuReducer(state={}, action={}) {
     switch (action.type) {
         case SHOW_DROPDOWN  :
-            const {visible, view='', action:pAction} = action.payload;
-            const selected = visible ? pAction ?? view : '';
+            const {visible, view=''} = action.payload;
+            const selected = visible ? view : '';
             return updateSet(state, ['menu', 'selected'], selected);
         case MENU_UPDATE:
             const {menu} = action.payload;

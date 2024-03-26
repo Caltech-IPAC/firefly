@@ -71,14 +71,11 @@ export function DropDownContainer ({style={}, visible:defVisible, selected:defSe
 
     let {view, layout} = dropDownMap[selected] || {};
 
+    if (!view && React.Children.count(children) === 1 && React.isValidElement(children)) view = React.Children.toArray(children)[0];
+
     view ??= defaultView;
 
     useEffect( () => {
-        React.Children.forEach(children, (el) => {
-            const {name:key, layout} = el?.props || {};
-            if (key) dropDownMap[key] = {view: el, layout};
-        });
-
         if (dropdownPanels) {
             dropdownPanels.forEach( (el) => {
                 const {name:key, layout} = el?.props || {};
@@ -88,7 +85,6 @@ export function DropDownContainer ({style={}, visible:defVisible, selected:defSe
         setInit(true);
     }, [dropdownPanels]);
 
-    if (!view && React.Children.count(children) === 1 && React.isValidElement(children)) view = React.Children.toArray(children)[0];
     if (!visible) return <div/>;
 
     if (layout) Object.assign(style, layout);

@@ -80,10 +80,10 @@ export function reducer(state={}, action={}) {
             return smartMerge(state, {mode: {[mode]: view}});
 
         case SHOW_DROPDOWN :
-            const {visible = !state.disableDefaultDropDown, initArgs={}} = action.payload;
+            const {visible = !state.disableDefaultDropDown, menuItem, initArgs={}} = action.payload;
             const newState= {...state};
             if (newState?.dropDown?.initArgs) newState.dropDown.initArgs= undefined;
-            return smartMerge(state, {dropDown: {visible, view: getSelView(state, action.payload), initArgs}});
+            return smartMerge(state, {dropDown: {visible, view: getSelView(state, action.payload), menuItem, initArgs}});
         case ADD_CELL :
             return addCell(state, action.payload);
         case REMOVE_CELL :
@@ -192,11 +192,11 @@ export function dispatchSetLayoutInfo(layoutInfo) {
  * show the drop down container
  * @param {object} p     parameters
  * @param {string} p.view name of the component to display in the drop-down container
- * @param {string} [p.action] the action associated with this view
+ * @param {string} [p.menuItem] the menuItem associated with this view
  * @param {Object} [p.initArgs] - init args to pass to the view
  */
-export function dispatchShowDropDown({view, action, initArgs}) {
-    flux.process({type: SHOW_DROPDOWN, payload: {visible: true, view, action, initArgs}});
+export function dispatchShowDropDown({view, menuItem, initArgs}) {
+    flux.process({type: SHOW_DROPDOWN, payload: {visible: true, view, menuItem, initArgs}});
 }
 
 /**

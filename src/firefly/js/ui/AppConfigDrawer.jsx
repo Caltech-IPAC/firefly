@@ -3,14 +3,13 @@ import {DialogTitle, Divider, Drawer, IconButton, ModalClose, Stack, Typography}
 import {object, bool, number, oneOfType, string} from 'prop-types';
 import React, {useContext, useState} from 'react';
 import {dispatchHideDialog, isDialogVisible, SIDE_BAR_ID} from '../core/ComponentCntlr.js';
-import {modifyURLToFull} from '../util/WebUtil.js';
 import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
 import {useColorMode} from './FireflyRoot.jsx';
 import {ListBoxInputFieldView} from './ListBoxInputField.jsx';
 import {SideBarMenu} from './Menu.jsx';
 import {AccordionPanelView} from './panel/AccordionPanel.jsx';
 import {useStoreConnector} from './SimpleComponent.jsx';
-import {showFullVersionInfoDialog, VersionInfo} from './VersionInfo.jsx';
+import {VersionInfo} from './VersionInfo.jsx';
 
 
 
