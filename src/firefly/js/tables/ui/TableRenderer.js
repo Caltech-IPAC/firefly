@@ -220,13 +220,13 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
 
 export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, sx}) {
     return (
-        <Stack alignItems='center' height={1} justifyContent='space-between' pt='2px' sx={sx}>
+        <Stack alignItems='center' height={1} justifyContent='end' py='1px' sx={sx}>
             <Checkbox size='sm'
                 tabIndex={-1}
                 checked={checked}
                 onChange={(e) => onSelectAll(e.target.checked)}/>
-            {showUnits && <Box height='1em'/>}
-            {showTypes && <Box height='1em'/>}
+            {/*{showUnits && <Box height='1em'/>}*/}
+            {/*{showTypes && <Box height='1em'/>}*/}
             {showFilters && <FilterButton  iconButtonSize='32px'
                                  onClick={onFilterSelected}
                                  tip='Filter on selected rows'/>}
