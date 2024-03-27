@@ -170,15 +170,13 @@ function bgTracker(action, cancelSelf, params={}) {
                 if (isDone(jobInfo)) {
                     cancelSelf();
                     dispatchComponentStateChange(key, {inProgress:false});
-                    if(isSuccess(jobInfo)) {
-                        onComplete && onComplete(jobInfo);
-                    }
+                    onComplete?.(jobInfo);
                 }
                 break;
             case BG_JOB_ADD:
                 cancelSelf();
                 dispatchComponentStateChange(key, {inProgress:false});
-                sentToBg && sentToBg(jobInfo);
+                sentToBg?.(jobInfo);
                 break;
         }
     }
