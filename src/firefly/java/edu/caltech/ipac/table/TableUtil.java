@@ -28,8 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static edu.caltech.ipac.util.StringUtils.groupFind;
-
 
 /**
  * Date: May 14, 2009
@@ -113,7 +111,7 @@ public class TableUtil {
             int csvIdx = 0, tsvIdx = 1;
             int regionTextCnt= 0;
             if (isRegLine(line))  regionTextCnt++;
-            while (line != null && row < readAhead) {
+            while ( (line != null && !line.trim().isEmpty()) && row < readAhead) {
                 if (line.startsWith("|") || line.startsWith("\\")) {
                     return Format.IPACTABLE;
                 } else if (line.startsWith("COORD_SYSTEM: ") || line.startsWith("EQUINOX: ") ||
