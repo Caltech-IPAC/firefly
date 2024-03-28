@@ -60,7 +60,7 @@ export function getHelperConstraints(tapBrowserState) {
     return {
         valid: adqlConstraintErrorsArray?.length === 0,
         messages: adqlConstraintErrorsArray,
-        where: adqlConstraints.join(' AND ')
+        where: adqlConstraints.join('\n      AND ')
     };
 }
 

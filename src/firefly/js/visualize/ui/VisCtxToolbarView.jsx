@@ -512,7 +512,7 @@ function FrameNavigator({pv, currPlotIdx, minForInput, displayType}) {
     return (
         <Stack direction='row' alignItems='center' flexWrap='nowrap'>
             <BeforeButton title={'Next frame'} onClick={() => changeFrameIdx({value:prevIdx+1})}/>
-            <NextButton title={'Previous fraome'} onClick={() => changeFrameIdx({value:nextIdx+1})}/>
+            <NextButton title={'Previous frame'} onClick={() => changeFrameIdx({value:nextIdx+1})}/>
             {showNavControl ?
                 <StateInputField defaultValue={currStr} valueChange={changeFrameIdx}
                                  sx={{'& .MuiInput-root':{'minHeight':'3px', 'borderRadius':4, width:'5em'}}}

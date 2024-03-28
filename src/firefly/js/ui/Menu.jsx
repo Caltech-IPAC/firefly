@@ -143,7 +143,7 @@ function AdjustableMenu({menuTabItems, helpItem, selected, dropDown, showBgMonit
 
     lastButtonSize.size= size;
 
-    const divider= <Divider {...{orientation:'vertical', sx:{ ':first-child':  {ml:0}, mx:0.5, mt: 1.25, mb:3/4} }}/>;
+    const divider= <Divider {...{orientation:'vertical', sx:{ ':first-of-type':  {ml:0}, mx:0.5, mt: 1.25, mb:3/4} }}/>;
 
     return (
         <Stack direction='row' justifyContent={'space-between'} ref={(c) => setTabBarElement(c) }>
@@ -236,7 +236,7 @@ function MenuTabBar({menuTabItems=[], size, selected, dropDown, displayMask, set
 
     return (
         <Tabs {...{size, value:tabSelected,
-            sx: {height: 1, backgroundColor: 'transparent'}, onChange: (ev,action) => doTabChange(action,menuTabItems) }} >
+            sx: {height: 38, backgroundColor: 'transparent'}, onChange: (ev,action) => doTabChange(action,menuTabItems) }} >
             <TabList {...{
                 sx: (theme) => ( {
                     boxShadow: 'none', //hide the default underline created by TabList as inset box-shadow
@@ -410,7 +410,7 @@ function SideBarView({menu,appTitle,closeSideBar,haveResults,selected,dropDown,
                    '& .ff-toolbar-button' : {minWidth: itemMinWidth, justifyContent:'flex-start', fontWeight: 'initial'}
         }}>
             <Stack direction='row' sx={itemLayoutSx}>
-                <Typography level='h4' sx={{minWidth: itemMinWidth}}>Search Options</Typography>
+                <Typography level='h4' sx={{minWidth: itemMinWidth}}>Options</Typography>
                 {allowMenuHide && tabsUpdated(menu) &&
                     <Tooltip title={'Reset visibility of all the tabs to default'}>
                         <Chip
@@ -626,8 +626,7 @@ function BgMonitorButton ({sx,size}) {
     const monitoredJobs = Object.values(jobs).filter( (info) => info?.jobInfo?.monitored );
     const isWorking = monitoredJobs.some( (info) => isActive(info) );
 
-    // const buttonSize= size==='lg' ? 'sm' : size==='md' ? 'lg' : 'md'; //todo make this work
-    const buttonSize= size==='lg' ? 'sm' : 'lg';
+    const buttonSize= size==='lg' ? 'sm' : size==='md' ? 'lg' : 'md';
 
     return (
         <MenuItemButton {...{ sx, size:buttonSize, menuItem:showBgMonAction, isWorking,

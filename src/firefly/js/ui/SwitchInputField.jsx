@@ -23,6 +23,7 @@ export const SwitchInputField = memo((props) => {
     const {viewProps, fireValueChange} = useFieldGroupConnector(props);
     const newProps= {
         ...viewProps,
+        value: Boolean(viewProps.value),
         onChange: (ev) => handleOnChange(ev, viewProps, fireValueChange)
     };
     return (<SwitchInputFieldView {...newProps} />);

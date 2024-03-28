@@ -333,7 +333,7 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
                 { expandable && !expandedMode &&
                 <ExpandButton tip={TT_EXPAND} onClick={expandTable}/>
                 }
-                { help_id && <div style={{marginTop:-10}}> <HelpIcon helpId={help_id} /> </div>}
+                { help_id && <HelpIcon helpId={help_id} />}
             </Stack>
         </Sheet>
     );

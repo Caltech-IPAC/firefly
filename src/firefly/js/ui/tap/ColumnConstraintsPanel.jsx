@@ -97,7 +97,7 @@ export function getTableConstraints(tbl_id) {
                     return (pUpper==='AND' || pUpper==='OR') ? `${full} ${pUpper}` : `${full} ${qCol} ${part}`;
                 },'');
                 const oneConstraint= condAry>1 ? `(${constraint})` : constraint;
-                whereFragment += (whereFragment.length > 0 ? ` AND ${oneConstraint}` : oneConstraint);
+                whereFragment += (whereFragment.length > 0 ? `\n           AND ${oneConstraint}` : oneConstraint);
             }
             else {
                 errors += (errors.length > 0 ? `, "${filterStrings}"` : `Invalid constraints: "${filterStrings}"`);

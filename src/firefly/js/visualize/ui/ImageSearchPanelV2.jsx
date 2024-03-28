@@ -39,6 +39,7 @@ import WebPlotRequest, {WPConst} from '../../visualize/WebPlotRequest.js';
 import CoordinateSys from '../CoordSys';
 import {useForImageSearch} from '../HiPSListUtil.js';
 import {
+    DEFAULT_FITS_VIEWER_ID,
     findViewerWithItemId, getAViewFromMultiView, getMultiViewRoot, getViewer, IMAGE, NewPlotMode
 } from '../MultiViewCntlr.js';
 import {PlotAttribute} from '../PlotAttribute';
@@ -507,7 +508,7 @@ function onSearchSubmit({request, gridSupport, plotId, plotGroupId, viewerId, re
 
     const validInfo= validateInput(request);
     if (!validInfo.valid)  {
-        showInfoPopup(validInfo.message);
+        showInfoPopup(validInfo.message, 'Error');
         return false;
     }
     return doImageSearch({imageMasterData, request, gridSupport, plotId, plotGroupId, viewerId, renderTreeId});
@@ -816,7 +817,7 @@ function makeTableRequest(wp, radius, data) {
         });
 }
 
-function addStdParams(wpreq, plotId = nextPlotId(), plotGroupId = 'multiImageGroup') {
+function addStdParams(wpreq, plotId = nextPlotId(), plotGroupId = DEFAULT_FITS_VIEWER_ID) {
     wpreq.setPlotId(plotId);
     wpreq.setPlotGroupId(plotGroupId);
     wpreq.setGroupLocked(true);

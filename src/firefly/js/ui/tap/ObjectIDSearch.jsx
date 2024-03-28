@@ -1,4 +1,4 @@
-import {Stack, Typography} from '@mui/joy';
+import {Chip, Link, Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 import {ConstraintContext} from 'firefly/ui/tap/Constraints';
@@ -9,7 +9,9 @@ import {
     makeFieldErrorList,
     makePanelStatusUpdater
 } from 'firefly/ui/tap/TableSearchHelpers';
-import {getAsEntryForTableName, makeUploadSchema, tapHelpId} from 'firefly/ui/tap/TapUtil';
+import {
+    ADQL_LINE_LENGTH, getAsEntryForTableName, makeUploadSchema, maybeQuote, tapHelpId
+} from 'firefly/ui/tap/TapUtil';
 import PropTypes from 'prop-types';
 import {ExtraButton} from 'firefly/ui/FormPanel';
 import {showUploadTableChooser} from 'firefly/ui/UploadTableChooser';
@@ -17,10 +19,12 @@ import {showColSelectPopup} from 'firefly/charts/ui/ColSelectView';
 import {getSizeAsString} from 'firefly/util/WebUtil';
 import {ColsShape, ColumnFld, getColValidator} from 'firefly/charts/ui/ColumnOrExpression';
 import {FieldGroupCollapsible} from 'firefly/ui/panel/CollapsiblePanel';
-import {onTableLoaded} from 'firefly/tables/TableUtil';
+import {doFetchTable, onTableLoaded} from 'firefly/tables/TableUtil';
 import {get} from 'lodash';
 import {FilterInfo} from 'firefly/tables/FilterInfo';
 import {dispatchTableFilter} from 'firefly/tables/TablesCntlr';
+import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
+import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 
 const UploadObjectIDColumn = 'uploadObjectIDColumn';
 const ObjectIDColumn = 'objectIDColumn';
@@ -28,6 +32,14 @@ const panelTitle = 'Object ID Search';
 const panelValue = 'ObjectIDMatch';
 const TAB_COLUMNS_MSG = 'This will be matched against Object ID selected from the uploaded table above';
 const defaultTblId = 'objectID-table';
+
+const SELECT_IN_TOOLTIP=(
+        <Typography width='50rem'>
+            This option builds the ADQL select statement using a adql 'where IN' instead of using TAP upload.
+            Some TAP servers have trouble with upload so using this option may be preferred.
+            The results could be slightly different since upload creates more columns.
+        </Typography>
+);
 const panelPrefix = getPanelPrefix(panelValue);
 
 const checkHeaderCtl= makeCollapsibleCheckHeader(getPanelPrefix(panelValue));
@@ -38,6 +50,9 @@ let savedFileName;
 
 export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
     const [getUploadInfo, setUploadInfo]=  useFieldGroupValue('uploadInfoObjectID');
+    const [getSelectInObjList, setSelectInObjList]=  useFieldGroupValue('selectInObjList');
+    const [getUseSelectIn, setUseSelectIn]=  useFieldGroupValue('useSelectIn');
+    const [working,setWorking]= useState(false);
     const {setConstraintFragment}= useContext(ConstraintContext);
     const {canUpload=false}= capabilities ?? {};
     const [openMsg, setOpenMsg]= useState(TAB_COLUMNS_MSG);
@@ -61,11 +76,15 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
     );
 
     useEffect(() => {
+        if (canUpload && getUseSelectIn()==='use') return;
+        setUseSelectIn(!canUpload ? 'use' : '');
+    },[canUpload]);
+
+    useEffect(() => {
         if (uploadInfo?.columns && savedFileName!==uploadInfo.fileName) {
             checkHeaderCtl.setPanelActive(true);
             savedFileName= uploadInfo.fileName;
         }
-
     }, [uploadInfo]);
 
     useEffect(() => {
@@ -81,7 +100,8 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
     }, [columnsModel]);
 
     useEffect(() => {
-        const constraints= makeObjectIDConstraints(makeFldObj(fldListAry), uploadInfo, tableName, canUpload);
+        const constraints= makeObjectIDConstraints(makeFldObj(fldListAry), uploadInfo, tableName, canUpload,
+            getUseSelectIn()==='use',getSelectInObjList());
         updatePanelStatus(constraints, constraintResult, setConstraintResult);
     });
 
@@ -90,14 +110,13 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
         return () => setConstraintFragment(panelPrefix, '');
     }, [constraintResult]);
 
-    if (!canUpload) return <div />; //this service does not support uploads
-
     return (
         <CollapsibleCheckHeader title={panelTitle} helpID={tapHelpId(panelPrefix)}
                                 message={constraintResult?.simpleError??''} initialStateOpen={false}>
-            <div style={{marginTop: 5}}>
+            <Stack {...{mt: 1/2, spacing:1}}>
                 <Typography level='body-xs'>Performs an exact match on the ID(s) provided, not a spatial search in the neighborhood of the designated objects.</Typography>
-                <UploadTableSelectorObjectID {...{uploadInfo,setUploadInfo}}/>
+                {!canUpload && <Typography level='body-xs'>This search uses "Select IN" style SQL as this service does not support uploads.</Typography>}
+                <UploadTableSelectorObjectID {...{uploadInfo,setUploadInfo, setSelectInObjList, getUseSelectIn, setWorking}}/>
                 <ObjectIDCol {...{
                     objectCol: getVal(ObjectIDColumn), cols,
                     headerTitle: 'Object ID (from table):', openKey: posOpenKey,
@@ -109,7 +128,14 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
                     clickingSelectCols,
                     setClickingSelectCols
                 }} />
-            </div>
+                {canUpload && <CheckboxGroupInputField
+                    fieldKey='useSelectIn' alignment='horizontal' initialState={{ value: canUpload ? '' : 'use' }}
+                    tooltip={SELECT_IN_TOOLTIP}
+                    options={[{label:'Use "select IN" style SQL instead of TAP Upload', value:'use'}]}
+                />}
+                {working &&  <div className='loading-mask'/>}
+
+            </Stack>
         </CollapsibleCheckHeader>
     );
 }
@@ -143,7 +169,46 @@ function getDefaultObjectIDval(cols) {
     return colWithMetaMain.length === 0 ? colsWithMetaID[0].name : colWithMetaMain[0].name;
 }
 
-function UploadTableSelectorObjectID({uploadInfo, setUploadInfo}) {
+async function getColumnFromUploadTable(tableOnServer, columnName) {
+    const params= { startIdx : 0, pageSize : MAX_ROW, inclCols : `"${columnName}"` };
+    const tableModel= await doFetchTable(makeFileRequest('',tableOnServer,undefined,params));
+    return tableModel?.tableData?.data?.map( ([d]) => d);
+}
+
+const loadedColumns= new Map();
+
+
+function loadTableColumn(objectCol,serverFile,setSelectInObjList,setWorking) {
+    if (objectCol && serverFile) {
+        const cachedCol = loadedColumns.get(serverFile + '---' + objectCol);
+        if (cachedCol) {
+            setSelectInObjList(cachedCol);
+        } else {
+            setTimeout(
+                async () => {
+                    try {
+                        setWorking(true);
+                        const list = await getColumnFromUploadTable(serverFile, objectCol);
+                        loadedColumns.set(serverFile + '---' + objectCol, list);
+                        setSelectInObjList(list);
+                        setWorking(false);
+                    } catch (e) {
+                        setWorking(false);
+                        setSelectInObjList(undefined);
+                    }
+                }, 5);
+        }
+
+    } else {
+        setSelectInObjList(undefined);
+    }
+}
+
+
+
+
+
+function UploadTableSelectorObjectID({uploadInfo, setUploadInfo, setSelectInObjList,getUseSelectIn,setWorking}) {
     const [getObjectCol,setObjectCol]= useFieldGroupValue(UploadObjectIDColumn);
     const {fileName,columns,totalRows,fileSize}= uploadInfo ?? {};
     const columnsUsed= columns?.filter( ({use}) => use)?.length ?? 0;
@@ -152,13 +217,19 @@ function UploadTableSelectorObjectID({uploadInfo, setUploadInfo}) {
     useEffect(() => {
         //if user changes position column(s), make the new columns entries selectable in the columns/search
         const columns = uploadInfo?.columns;
+        if (columns?.length===1) {
+            setObjectCol(columns[0].name);
+        }
         if (getObjectCol()) {
             const cObj= columns.find((col) => col.name === getObjectCol());
             if (cObj) cObj.use = true;
         }
         uploadInfo = {...uploadInfo, columns};
         setUploadInfo(uploadInfo);
-    }, [getObjectCol]);
+        if (getUseSelectIn()==='use') {
+            loadTableColumn(getObjectCol(),uploadInfo.serverFile,setSelectInObjList,setWorking);
+        }
+    }, [getObjectCol, getUseSelectIn]);
 
     const preSetUploadInfo= (ui) => {
         setObjectCol('', {validator: getColValidator(ui.columns, true, false), valid: true});
@@ -199,12 +270,16 @@ function UploadTableSelectorObjectID({uploadInfo, setUploadInfo}) {
                         <span>{totalRows},</span>
                     </div>
                     <div style={{paddingLeft: 8, whiteSpace:'nowrap'}}>
-                        <a className='ff-href' onClick={() => showColSelectPopup(columns, onColsSelected, 'Choose Columns', 'OK',
-                            null,true)}>
-                            <span>Columns: </span>
-                            <span>{columns.length} (using {columnsUsed})</span>
-                        </a>
-                        {fileSize &&<span>,</span>}
+                        {getUseSelectIn()!=='use' &&
+                            <>
+                                <Chip onClick={() => showColSelectPopup(columns, onColsSelected, 'Choose Columns', 'OK',
+                                    null,true)}>
+                                    <span>Columns: </span>
+                                    <span>{columns.length} (using {columnsUsed})</span>
+                                </Chip>
+                                {fileSize &&<span>,</span>}
+                            </>
+                        }
                     </div>
                     {fileSize && <div style={{paddingLeft: 8, whiteSpace:'nowrap'}}>
                         <span>Size: </span>
@@ -277,22 +352,49 @@ function ObjectIDCol({objectCol, style={},cols, objectKey, openKey,
     );
 }
 
-function makeObjectIDConstraints(fldObj, uploadInfo, tableName, canUpload) {
+
+export function makeColsLines(objAry) {
+    const colSingleLine= objAry.map( (id) => `'${id}'`).join(',') ?? '';
+    if (colSingleLine.length < ADQL_LINE_LENGTH) return colSingleLine;
+
+    let multiLineCols = '';
+    let line = `\n           '${objAry[0]}'`;
+    const objCopy = objAry.slice(1);
+    objCopy.forEach((id) => {
+        if (id) line+=',';
+        if ((line + id).length > ADQL_LINE_LENGTH){
+            multiLineCols+= line + '\n';
+            line = '           ';
+        }
+        line += `'${id}'`;
+    });
+    multiLineCols += line;
+    return multiLineCols;
+}
+
+
+
+function makeObjectIDConstraints(fldObj, uploadInfo, tableName, canUpload, useSelectIn, selectInObjList) {
     const {fileName,serverFile, columns:uploadColumns, totalRows, fileSize}= uploadInfo ?? {};
     const {[UploadObjectIDColumn]:uploadObjectIDCol, [ObjectIDColumn]:objectIDCol }= fldObj;
-
     const errList= makeFieldErrorList();
+    let adqlConstraint;
     const uploadedObjectID = uploadObjectIDCol?.value;
     const objectID = objectIDCol?.value;
-    const tabAs= 'ut';
     errList.checkForError(uploadObjectIDCol);
     errList.checkForError(objectIDCol);
     if (!uploadedObjectID && !objectID) errList.addError('The Uploaded Table and Selected Table Object IDs are not set.');
     else if (!uploadedObjectID) errList.addError('Uploaded Table Object ID is not set');
     else if (!objectID) errList.addError('Selected Table (on the right) Object ID is not set');
-    const validUpload= Boolean(serverFile && canUpload);
-    const preFix= validUpload ? `${getAsEntryForTableName(tableName)}` : '';
-    const adqlConstraint = `(${tabAs}.${uploadedObjectID} = ${preFix}.${objectID})`;
+
+    if (useSelectIn && selectInObjList?.length) {
+        const str= makeColsLines(selectInObjList);
+        adqlConstraint = `${objectID} IN (${str})`;
+    }
+    else {
+        const preFix= (serverFile && canUpload) ? `${getAsEntryForTableName(tableName)}` : '';
+        adqlConstraint = `(ut.${uploadedObjectID} = ${preFix}.${objectID})`;
+    }
 
     const errAry= errList.getErrors();
     return {
@@ -300,7 +402,7 @@ function makeObjectIDConstraints(fldObj, uploadInfo, tableName, canUpload) {
         adqlConstraintsAry: adqlConstraint ? [adqlConstraint] : [],
         siaConstraints: [],
         siaConstraintErrors: [],
-        TAP_UPLOAD: makeUploadSchema(fileName, serverFile, uploadColumns, totalRows, fileSize),
+        TAP_UPLOAD: useSelectIn ? undefined : makeUploadSchema(fileName, serverFile, uploadColumns, totalRows, fileSize),
         uploadFile: fileName
     };
 }

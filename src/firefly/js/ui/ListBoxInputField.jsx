@@ -20,6 +20,7 @@ const convertValue= (value,options) => (!value) ? options?.[0]?.value : value;
 export function ListBoxInputFieldView({value:fieldValue='', onChange, fieldKey, options,
                                           orientation='horizontal', sx, slotProps={},
                                           renderValue, decorator, startDecorator,
+                                          forceLabelToValue=false,
                                        multiple, placeholder, tooltip, label,
                                           readonly=false, size}) {
 
@@ -34,7 +35,7 @@ export function ListBoxInputFieldView({value:fieldValue='', onChange, fieldKey, 
                         ...slotProps?.input}}>
                         {options?.map((({value,label,disabled=false},idx) => {
                             return (
-                                <Option {...{value, key:`k${idx}`, disabled:disabled ? 'disabled' : false}}>
+                                <Option {...{value, key:`k${idx}`, label:forceLabelToValue?value:label, disabled}}>
                                     {isFunction(decorator) ? decorator(label,value) : (label || value)}
                                 </Option>
                             );
@@ -55,6 +56,7 @@ ListBoxInputFieldView.propTypes= {
     onChange:  func,
     inline : bool,
     multiple : bool,
+    forceLabelToValue: bool,
     label:  string,
     tooltip:  string,
     selectStyle: object,
