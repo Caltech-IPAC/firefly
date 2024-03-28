@@ -187,11 +187,17 @@ public class QueryMOS extends EmbeddedDbProcessor {
         return new URL(url);
     }
 
+    //Add check for empty date string
     private static String getObsDate(String obsDateParam) {
         try {
-            DateUtils.parseDate(obsDateParam, new String[]{"yyyy-MM-dd", "yyyy-MM-dd hh:mm:ss", "yyyy-MM-dd'T'hh:mm:ssX"});     // check for valid dates
-            return obsDateParam.replaceAll("[^0-9:-]", " ").trim();   // convert to format expected by MOST
-        } catch (ParseException e) {
+                if (StringUtils.isEmpty(obsDateParam)) {
+                return obsDateParam = null;
+            } else {
+                DateUtils.parseDate(obsDateParam, new String[]{"yyyy-MM-dd", "yyyy-MM-dd hh:mm:ss", "yyyy-MM-dd'T'hh:mm:ssX"});     // check for valid dates
+                return obsDateParam.replaceAll("[^0-9:-]", " ").trim();   // convert to format expected by MOST
+            }
+        }
+         catch (ParseException e) {
             return null;
         }
     }
