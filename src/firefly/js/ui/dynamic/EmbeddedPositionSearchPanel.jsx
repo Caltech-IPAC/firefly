@@ -175,8 +175,8 @@ export function EmbeddedPositionSearchPanel({
                         border: `3px solid ${theme.vars.palette['neutral']?.softActiveBg}`,
                         position: 'absolute',
                         px: 1/2,
-                        bottom: '1.5rem',
-                        left: 3,
+                        bottom: '3.5rem',
+                        left: '1rem'
                     })
 
             }}>
