@@ -187,7 +187,7 @@ public class QueryMOS extends EmbeddedDbProcessor {
         return new URL(url);
     }
 
-    //Add check for empty date string
+    //Add check for empty date string and allow null string for obsDateParam
     private static String getObsDate(String obsDateParam) {
         try {
                 if (StringUtils.isEmpty(obsDateParam)) {
