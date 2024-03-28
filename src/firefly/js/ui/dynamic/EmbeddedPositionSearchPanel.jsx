@@ -1,5 +1,5 @@
-import {Sheet, Stack, Typhography} from '@mui/joy';
-import React, {useEffect, useState} from 'react';
+import {Sheet, Stack} from '@mui/joy';
+import React, {useEffect} from 'react';
 import {oneOfType, oneOf, element, bool, string, number, arrayOf, object, func, shape} from 'prop-types';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import {CONE_AREA_OPTIONS, CONE_AREA_OPTIONS_UPLOAD, CONE_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY
@@ -14,8 +14,6 @@ import {DEF_AREA_EXAMPLE, PolygonField} from './DynComponents.jsx';
 
 import {UploadTableSelector} from 'firefly/ui/UploadTableSelector';
 import {showUploadTableChooser} from 'firefly/ui/UploadTableChooser';
-import {CollapsibleGroup, CollapsibleItem} from 'firefly/ui/panel/CollapsiblePanel';
-import {getPanelPrefix, makeCollapsibleCheckHeader} from 'firefly/ui/tap/TableSearchHelpers';
 /**
  * Create search panel with HiPS Viewer with an embedded target/area selection
  * All properties are optional
@@ -87,9 +85,6 @@ export function EmbeddedPositionSearchPanel({
     const [getUploadInfo, setUploadInfo]= useFieldGroupValue('uploadInfo');
     const uploadInfo= getUploadInfo() || undefined;
 
-    const [isHovered, setIsHovered] = useState(false);
-
-
     //conditionally show UploadTableChooser only when uploadInfo is empty - TAP like behavior
     useEffect(() => {
         if (doGetConeAreaOp() === UPLOAD_CHOICE_KEY) {
@@ -114,7 +109,7 @@ export function EmbeddedPositionSearchPanel({
     const internals= (
         <Stack>
             <Stack>
-                {!insetSpacial && <div style={{paddingTop:1}}/>}
+                {!insetSpacial && <div style={{paddingTop:10}}/>}
                 {doToggle && <RadioGroupInputField {...{
                     sx:{alignSelf: 'center'},
                     fieldKey: CONE_AREA_KEY, orientation: 'horizontal',
@@ -161,54 +156,32 @@ export function EmbeddedPositionSearchPanel({
         ? <WrapperComponent {...additionalProps}>{internals}</WrapperComponent>
         : internals;
 
-    const SummaryInfo = function() {
-        return (
-            <Stack>
-                Search Summary: (additional items here)
-            </Stack>
-        );
-    };
-
     return (
         <div key='targetGroup'
              style={{display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch', height:'100%',
                  paddingBottom:insetSpacial?0:20, position: 'relative'}}>
-            <HiPSTargetView
-                {...{
+            <HiPSTargetView {...{
                 hipsUrl, centerPt:initCenterPt, hipsFOVInDeg, mocList, coordinateSys, sRegion, plotId,
                 minSize: minValue, maxSize: maxValue, toolbarHelpId,
                 whichOverlay: doGetConeAreaOp(), setWhichOverlay: doToggle ? setConeAreaOp : undefined,
                 targetKey, sizeKey, polygonKey, sx: {minHeight: 300, alignSelf: 'stretch', flexGrow:1}
             }}/>
-            <Sheet
-                //onMouseDown={onMouseDown}
-                onMouseEnter={() => setIsHovered(true)}
-                onMouseLeave={() => setIsHovered(false)}
-                {...{className:`FFepsp-content ${insetSpacial ? 'inset' : ''}`,
+            <Sheet {...{className:`FFepsp-content ${insetSpacial ? 'inset' : ''}`,
                 sx: (theme) => (
                     {
                         alignItems: 'center',
                         alignSelf: 'stretch',
+                        borderRadius: '5px 5px 2px 2px',
                         border: `3px solid ${theme.vars.palette['neutral']?.softActiveBg}`,
-                        px: 1/2,
                         position: 'absolute',
-                        left: '1rem',
-                        bottom:'3.5rem',
-                        opacity: isHovered ? '100%' : '100%' //ToDo: initially 100%, upon interaction with HiPSTargetView - reduce opacity
-                        //opacity: isDragging || !isHovered ? '75%' : '95%'
+                        px: 1/2,
+                        bottom: '3.5rem',
+                        left: '1rem'
                     })
 
             }}>
-
-                <CollapsibleGroup>
-                    <CollapsibleItem componentKey='embedSearchPanel'
-                                     header={SummaryInfo}
-                                     isOpen={true} title='Please select a search type'>
-                     {wrappedInternals}
-                    </CollapsibleItem>
-                </CollapsibleGroup>
+                {wrappedInternals}
             </Sheet>
-
         </div>
     );
 }
