@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import PropTypes, {object, shape} from 'prop-types';
+import {element, bool, object, shape, oneOfType, string, func, arrayOf} from 'prop-types';
 import {Checkbox, FormControl, FormLabel, Stack, Tooltip} from '@mui/joy';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {splitVals} from 'firefly/tables/TableUtil.js';
@@ -46,19 +46,19 @@ export function CheckboxGroupInputFieldView({fieldKey, onChange, label, tooltip:
 }
 
 CheckboxGroupInputFieldView.propTypes= {
-    options : PropTypes.array.isRequired,
-    onChange:  PropTypes.func,
-    alignment:  PropTypes.string,
-    fieldKey:  PropTypes.string,
-    value:  PropTypes.string.isRequired,
-    label:  PropTypes.string,
-    tooltip:  PropTypes.string,
+    options: arrayOf(shape( { value: string, label: string, tooltip: string} )).isRequired,
+    onChange:  func,
+    alignment:  string,
+    fieldKey:  string,
+    value:  string.isRequired,
+    label:  string,
     sx: object,
+    tooltip: oneOfType([string,element]),
     slotProps: shape({
         control: object,
         input: object,
         label: object,
-        tooltip: object
+        tooltip: oneOfType([string,element]),
     }),
 };
 
@@ -100,15 +100,16 @@ export const CheckboxGroupInputField = memo( (props) => {
 });
 
 CheckboxGroupInputField.propTypes= {
-    options : PropTypes.array.isRequired,
-    alignment:  PropTypes.string,
-    initialState: PropTypes.shape({
-        value: PropTypes.string,
-        tooltip: PropTypes.string,
-        label:  PropTypes.string,
+    options: arrayOf(shape( { value: string, label: string, tooltip: string} )).isRequired,
+    alignment:  string,
+    initialState: shape({
+        value: string,
+        tooltip: string,
+        label:  string,
     }),
-    forceReinit:  PropTypes.bool,
-    fieldKey:   PropTypes.string,
+    tooltip: oneOfType([string,element]),
+    forceReinit:  bool,
+    fieldKey:   string,
     sx: object,
 
 };

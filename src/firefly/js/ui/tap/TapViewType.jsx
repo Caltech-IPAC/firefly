@@ -3,7 +3,7 @@ import {truncate} from 'lodash';
 import {bool, string, func, object, shape} from 'prop-types';
 import React, {Fragment, useContext, useEffect, useRef, useState} from 'react';
 import SplitPane from 'react-split-pane';
-import {getColumnValues} from '../../tables/TableUtil.js';
+import {getColumnIdx, getColumnValues} from '../../tables/TableUtil.js';
 import {isColumnsMatchingToObsTap} from '../../voAnalyzer/ColumnsModelInfo.js';
 import {FieldGroupCtx} from '../FieldGroup.jsx';
 import {HelpIcon} from '../HelpIcon';
@@ -11,6 +11,7 @@ import {ListBoxInputFieldView} from '../ListBoxInputField.jsx';
 import {SplitContent} from '../panel/DockLayoutPanel';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 import {AdvancedADQL} from './AdvancedADQL.jsx';
+import {showTableSelectPopup} from './TableChooser.jsx';
 
 import {TableColumnsConstraints, TableColumnsConstraintsToolbar} from './TableColumnsConstraints.jsx';
 import {
@@ -142,6 +143,7 @@ function BasicUI(props) {
     const [,setCapabilitiesChange] = useState(); // this is just to force a rerender
     const [schemaOptions, setSchemaOptions] = useState();
     const [tableOptions, setTableOptions] = useState();
+    const [tableTableModel, setTableTableModel] = useState();
     const [columnsModel, setColumnsModel] = useState();
     const {schemaLabel}= getTapServices().find( ({value}) => value===serviceUrl) ?? {};
 
@@ -227,6 +229,7 @@ function BasicUI(props) {
                 return;
             }
             if (!tableModel.error) {
+                const rowsCol= getRowsColumnValues(tableModel);
                 const tables = getColumnValues(tableModel, 'table_name');
                 if (!(tables.length > 0)) {
                     requestTableName = undefined;
@@ -237,10 +240,11 @@ function BasicUI(props) {
                 const tableDescriptions = getColumnValues(tableModel, 'table_desc');
                 const tableOptions = tables.map((e, i) => {
                     const label = tableDescriptions[i] ? tableDescriptions[i] : `[${e}]`;
-                    return {label, value: e};
+                    return {label, value: e, rows:rowsCol?.[i]};
                 });
                 setTableName(requestTableName);
                 setTableOptions(tableOptions);
+                setTableTableModel(tableModel);
                 setVal('tableName',requestTableName);
             }
         });
@@ -334,41 +338,8 @@ function BasicUI(props) {
                                     lockToObsCore:obsCoreEnabled, setLockToObsCore}}/>}
                             </Stack>
                             <Stack {...{direction: 'row', width:1, spacing:1, mr: 1/2, maxWidth: 1000, justifyContent:'space-between'}}>
-                                <ListBoxInputFieldView {...{
-                                    sx:{
-                                        width:1,
-                                        '& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', height:'5rem'}},
-                                    title:SCHEMA_TIP,
-                                    options:sOps, value:schemaName, placeholder:'Loading...',
-                                    startDecorator:!sOps.length ? <Button loading={true}/> : undefined,
-                                    onChange:(ev, selectedTapSchema) => setSchemaName(selectedTapSchema),
-                                    renderValue:
-                                        ({value}) =>
-                                            (<OpRender {...{
-                                                ops: sOps, value, lineClamp:2,
-                                                label: schemaLabel ?? 'Table Collection (Schema)' }}/>),
-                                    decorator:
-                                        (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
-                                            ops: sOps, value,}}/>),
-                                }} />
-                                <ListBoxInputFieldView {...{
-                                    sx:{
-                                        width:1,
-                                        '& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', height:'5rem'}},
-                                    title:TABLE_TIP,
-                                    options:tOps, value:tableName, placeholder:'Loading...',
-                                    startDecorator:!tOps.length ? <Button loading={true}/> : undefined,
-                                    onChange:(ev, selectedTapTable) => {
-                                        setTableName(selectedTapTable);
-                                        setVal('tableName',selectedTapTable);
-                                    },
-                                    renderValue:
-                                        ({value}) =>
-                                            (<OpRender {...{ ops: tOps, value, label: 'Tables', lineClamp:2, }}/>),
-                                    decorator:
-                                        (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
-                                            ops: tOps, value}}/>),
-                                }} />
+                                <SchemaChooser {...{sOps,schemaName,setSchemaName,schemaLabel}}/>
+                                <TableChooser {...{tOps,tableTableModel, tableName,setTableName}}/>
                             </Stack>
                         </Stack>
                     }
@@ -426,39 +397,113 @@ function BasicUI(props) {
         </Fragment>
     );
 
-
-
-    function OpRender({ops, value, label='', sx, lineClamp}) {
-        const op = ops.find((t) => t.value === value);
-        if (!op) return 'none';
-        return (
-            <Stack {...{alignItems:'flex-start', alignSelf:'flex-start', sx}}>
-                <Stack {...{direction:'row', spacing:1, flexWrap:'wrap'}}>
-                    {label&&
-                        <Typography level='title-md'>
-                            {`${label}: `}
-                        </Typography>
-                    }
-                    <Typography level='body-md' >
-                        {op.value}
-                    </Typography>
-                </Stack>
-                <Typography level='body-sm' component='div'
-                            style={lineClamp?
-                                {
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    WebkitLineClamp: lineClamp+'',
-                                    display: '-webkit-box',
-                                    WebkitBoxOrient: 'vertical',
-                                } : {}}
-                            sx={{whiteSpace:'normal', textAlign:'left'}}>
-                    <div dangerouslySetInnerHTML={{__html: `${cleanUp(op.label)}`}}/>
-                </Typography>
-            </Stack>
-        );
-    }
 }
+
+function SchemaChooser({sOps,schemaName,setSchemaName,schemaLabel }) {
+    const realSchemaLabel= schemaLabel ?? 'Table Collection (Schema)';
+    return (
+        <Stack width={1}>
+            <ListBoxInputFieldView {...{
+                sx:{
+                    width:1,
+                    '& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', height:'5rem'}},
+                title:SCHEMA_TIP,
+                options:sOps, value:schemaName, placeholder:'Loading...',
+                startDecorator:!sOps.length ? <Button loading={true}/> : undefined,
+                onChange:(ev, selectedTapSchema) => setSchemaName(selectedTapSchema),
+                renderValue:
+                    ({value}) =>
+                        (<OpRender {...{
+                            ops: sOps, value, lineClamp:2, label: realSchemaLabel, rowDesc:'tables'}}/>),
+                decorator:
+                    (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
+                        ops: sOps, value, rowDesc:'tables'}}/>),
+            }} />
+            <Typography level='body-xs' pl={1}>{`${realSchemaLabel} count: ${sOps.length}`}</Typography>
+        </Stack>
+    );
+
+}
+
+function TableChooser({tOps,tableTableModel, tableName,setTableName}) {
+    const {setVal}= useContext(FieldGroupCtx);
+    return (
+        <Stack width={1}>
+            {(!tOps?.length || tOps.length<50) ?
+                <ListBoxInputFieldView {...{
+                    sx:{
+                        width:1,
+                        '& .MuiSelect-root':{minWidth:'12rem', flex:'1 1 auto', height:'5rem'}},
+                    title:TABLE_TIP,
+                    options:tOps, value:tableName, placeholder:'Loading...',
+                    startDecorator:!tOps.length ? <Button loading={true}/> : undefined,
+                    onChange:(ev, selectedTapTable) => {
+                        setTableName(selectedTapTable);
+                        setVal('tableName',selectedTapTable);
+                    },
+                    renderValue:
+                        ({value}) =>
+                            (<OpRender {...{ ops: tOps, value, label: 'Tables', lineClamp:2, rowDesc:'rows' }}/>),
+                    decorator:
+                        (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem', rowDesc:'rows'},
+                            ops: tOps, value}}/>),
+                }} /> :
+                <Button {...{ color:'neutral', variant:'outlined',
+                    sx:{
+                        width:1, minWidth:'12rem', flex:'1 1 auto', height:'5rem'},
+                    onClick:() => showTableSelectPopup(tableTableModel,
+                        (selectedTapTable) => {
+                            setTableName(selectedTapTable);
+                            setVal('tableName',selectedTapTable);
+                        }
+                    ) }}>
+                    <OpRender {...{sx:{width:'34rem', minHeight:'3rem', rowDesc:'rows'},
+                        ops: tOps, value:tableName}}/>
+                </Button>
+            }
+            <Typography level='body-xs' pl={1}>{`Table count: ${tOps.length}`}</Typography>
+        </Stack>
+    );
+
+}
+
+function OpRender({ops, value, label='', sx, lineClamp, rowDesc='rows'}) {
+    const op = ops.find((t) => t.value === value);
+    if (!op) return 'none';
+    return (
+        <Stack {...{alignItems:'flex-start', alignSelf:'flex-start', sx}}>
+            <Stack {...{direction:'row', spacing:1, alignItems:'flex-end', flexWrap:'wrap'}}>
+                {label&&
+                    <Typography level='title-md'>
+                        {`${label}: `}
+                    </Typography>
+                }
+                <Typography level='body-md' >
+                    {op.value}
+                </Typography>
+                {op.rows &&
+                    <>
+                        <Typography level='body-sm'> {`(${rowDesc}:`} </Typography>
+                        <Typography level='body-sm' color='warning'> {`${op.rows})`} </Typography>
+                    </>}
+            </Stack>
+            <Typography level='body-sm' component='div'
+                        style={lineClamp?
+                            {
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                WebkitLineClamp: lineClamp+'',
+                                display: '-webkit-box',
+                                WebkitBoxOrient: 'vertical',
+                            } : {}}
+                        sx={{whiteSpace:'normal', textAlign:'left'}}>
+                <div dangerouslySetInnerHTML={{__html: `${cleanUp(op.label)}`}}/>
+            </Typography>
+        </Stack>
+    );
+}
+
+
 
 const achoreRE= /<a.*(\/>|<\/a>)/;
 
@@ -473,4 +518,11 @@ function cleanUp(s) {
     tmp.children[0].innerHTML= truncate(tmp.children[0].innerHTML, {length: 80});
     return s.replace(achoreRE, tmp.innerHTML);
 
+}
+
+function getRowsColumnValues(tableModel) {
+    let rowIdx= getColumnIdx(tableModel, 'nrows');
+    if (rowIdx>-1) return getColumnValues(tableModel,'nrows');
+    rowIdx= getColumnIdx(tableModel, 'irsa_nrows');
+    if (rowIdx>-1) return getColumnValues(tableModel,'irsa_nrows');
 }

@@ -21,6 +21,7 @@ import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import {InputField} from '../InputField.jsx';
 import {ListBoxInputFieldView} from '../ListBoxInputField.jsx';
+import {SwitchInputField} from '../SwitchInputField.jsx';
 import {
     ConstraintContext, getTapUploadSchemaEntry, getUploadServerFile, getUploadTableName,
     getHelperConstraints, getUploadConstraint, isTapUpload
@@ -32,7 +33,7 @@ import {
     loadObsCoreSchemaTables, maybeQuote, defTapBrowserState, TAP_UPLOAD_SCHEMA, getAsEntryForTableName,
 } from 'firefly/ui/tap/TapUtil.js';
 import {TapViewType} from './TapViewType.jsx';
-import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
+import {useFieldGroupMetaState, useFieldGroupValue} from '../SimpleComponent.jsx';
 import {PREF_KEY} from 'firefly/tables/TablePref.js';
 
 export const DEFAULT_TAP_PANEL_GROUP_KEY = 'TAP_PANEL_GROUP_KEY';
@@ -267,7 +268,7 @@ function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setSer
 
 function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect} ) {
     const [extraStyle,setExtraStyle] = useState({overflow:'hidden'});
-    const [enterUrl,setEnterUrl]=  useState(false);
+    const enterUrl=  useFieldGroupValue('enterUrl')[0]();
 
     useEffect(() => {
         if (servicesShowing) {
@@ -287,15 +288,13 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
                     <Typography {...{level:'title-lg', color:'primary', sx:{width:'17rem', mr:1} }}>
                         Select TAP Service
                     </Typography>
-                    <Switch {...{ size:'sm', endDecorator:'Enter my URL', checked:enterUrl,
+                    <SwitchInputField {...{ size:'sm', endDecorator:'Enter my URL', fieldKey:'enterUrl',
+                        initState:{value:false},
                         sx: {
                             alignSelf: 'flex-start',
                             '--Switch-trackWidth': '20px',
                             '--Switch-trackHeight': '12px',
                         },
-                        onChange: (ev) => {
-                            setEnterUrl(ev.target.checked);
-                        }
                     }} />
                 </Stack>
                 <Stack>
@@ -549,7 +548,7 @@ function getAdqlQuery(tapBrowserState, showErrors= true) {
     let constraints = helperFragment.where || '';
     if (tableCol.where) {
         const addAnd = Boolean(constraints);
-        constraints += (addAnd ? ' AND ' : '') + `(${tableCol.where})`;
+        constraints += (addAnd ? '\n      AND ' : '') + `(${tableCol.where})`;
     }
 
     if (constraints) constraints = `WHERE ${constraints}`;

@@ -345,7 +345,7 @@ function onSearchSubmit(request) {
     if (!wp && (spatial === SpatialMethod.Cone.value
         || spatial === SpatialMethod.Box.value
         || spatial === SpatialMethod.Elliptical.value)) {
-        showInfoPopup('Target is required');
+        showInfoPopup('Target is required','Error');
         return false;
     }
     if (validateConstraints(irsaCatalogGroupKey)) {

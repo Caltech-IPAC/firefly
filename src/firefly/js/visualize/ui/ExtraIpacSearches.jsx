@@ -89,7 +89,7 @@ function doVoSearch(request, providerName = '') {
     let accessUrl;//.replace('&', 'URL_PARAM_SEP');
     const wp = parseWorldPt(request[ServerParams.USER_TARGET_WORLD_PT]);
     if (!wp) {
-        showInfoPopup('Target is required');
+        showInfoPopup('Target is required', 'Error');
         return false;
     }
     const nameUsed = wp.getObjName() || wp.toString();

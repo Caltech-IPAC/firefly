@@ -77,19 +77,6 @@ export const BeforeButton= (props) =>(
         icon: (<NavigateBefore sx={{transform: 'scale(1.6,1.6)'}}/>), ...props }}/>);
 
 
-// export const LockImages= ({locked, ...props}) =>{
-//     const lockSx={position:'absolute', left:'12px', bottom:'0px', transform: 'scale(.9,.9)'};
-//     const icon= (
-//         <Box sx={{width:24,height:24}}>
-//             <ContentCopySharpIcon sx={{position:'absolute', transform: 'scale(.85,.8)', top:'0px', left:'-1px'}}/>
-//             {locked ? <LockTwoToneIcon sx={lockSx}/> :
-//                 <LockOpenTwoToneIcon sx={lockSx}/>}
-//         </Box>
-//     );
-//
-//     return (<DropDownToolbarButton {...{ icon, dropPosition:{left:3,bottom:-2}, ...props, }}  />);
-// };
-
 export const LockImages= ({locked, ...props}) =>{
     const sx={position:'absolute', transform: 'scale(1.2,1.2)', top:1, left:4};
     const icon= (
@@ -97,7 +84,7 @@ export const LockImages= ({locked, ...props}) =>{
             {locked ? <LinkIcon {...{sx}}/> : <LinkOffIcon {...{sx}}/>}
         </Box>
     );
-    return (<DropDownToolbarButton {...{ icon, dropPosition:{left:3,bottom:-2}, ...props, }}  />);
+    return (<DropDownToolbarButton {...{ icon, dropPosition:{left:6,bottom:-2}, ...props, }}  />);
 };
 
 

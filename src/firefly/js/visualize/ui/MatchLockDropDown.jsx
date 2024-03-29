@@ -149,18 +149,4 @@ export function MatchLockDropDown({visRoot:vr, enabled, visible, inDropDown=fals
                                dropDown={dropDown}/>
 
     );
-
-    // return (
-    //     <DropDownToolbarButton icon={wcsMatchType?MATCH_LOCKED:MATCH_UNLOCKED }
-    //                            tip='Image alignment drop down. Determine how to align images'
-    //                            enabled={enabled} horizontal={true}
-    //                            visible={visible}
-    //                            disableHiding={inDropDown}
-    //                            dropDownKey={inDropDown? 'matchLock' : undefined}
-    //                            // useDropDownIndicator={true}
-    //                            imageStyle={imageStyle}
-    //                            dropDown={dropDown}/>
-    //
-    // );
-
 }
