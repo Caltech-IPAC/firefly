@@ -79,7 +79,7 @@ export const FormPanel = function (props) {
     );
 
     return (
-        <Stack component={Sheet} className='ff-FormPanel' spacing={1} p={1} height={1} sx={{...style, ...sx}}>
+        <Stack component={Sheet} className='ff-FormPanel' flexGrow={1} spacing={1} p={1} height={1} sx={{...style, ...sx}}>
             <Stack flexGrow={1} sx={{...inputStyle, ...slotProps?.input}}>
                 {children}
             </Stack>
