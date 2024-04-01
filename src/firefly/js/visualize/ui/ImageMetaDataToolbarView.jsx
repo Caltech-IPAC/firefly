@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Divider, Sheet, Stack} from '@mui/joy';
+import {Box, Divider, Sheet, Stack} from '@mui/joy';
 import {isEmpty, isEqual, omit} from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -77,13 +77,14 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
     return (
         <Sheet>
             <Stack direction='row' alignItems='center' style={{ flexWrap:'nowrap', justifyContent:'space-between', height: 32}}>
-                {makeDropDown && makeDropDown()}
-                {(metaControls&&(showMultiImageOps||canGrid||hasRelatedBands||showThreeColorButton))&& <Divider orientation='vertical' sx={{mx:1}}/> }
+                {makeDropDown ? makeDropDown() : <Box pr={1}/>}
+                {(makeDropDown&&metaControls&&(showMultiImageOps||canGrid||hasRelatedBands||showThreeColorButton))&& <Divider orientation='vertical' sx={{mx:1}}/> }
                 {metaControls && <Stack direction='row' alignItems='center' whiteSpace='nowrap'>
                     {showMultiImageOps && <DisplayTypeButtonGroup {...{value:gridValue, config:gridConfig }}/>}
                     {showThreeColorButton &&
                         <ToolbarButton icon={THREE_COLOR} tip='Create three color image'
-                                       imageStyle={{width:24,height:24, flex: '0 0 auto'}}
+                                       sx={{mt:1/4}}
+                                       imageStyle={{width:26,height:26, flex: '0 0 auto'}}
                                        onClick={() => showThreeColorOps(viewerId,converter,activeTable,converterId)}/>
                     }
                 </Stack> }
