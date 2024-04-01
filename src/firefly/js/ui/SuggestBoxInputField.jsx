@@ -269,20 +269,24 @@ export class SuggestBoxInputFieldView extends PureComponent {
         const pStyle = Object.assign({left: leftOffset, minWidth, zIndex: popupIndex}, popStyle);
 
         if (isOpen) {
-            const box= (
-                <div className={'SuggestBoxPopup'} style={pStyle} onMouseLeave={() => this.setState({highlightedIdx : undefined})}>
-                    <SuggestBox
-                        suggestions={suggestions}
-                        highlightedIdx={highlightedIdx}
-                        renderSuggestion={renderSuggestion || ((suggestion) => <span>{suggestion}</span>)}
-                        onChange={this.changeHighlighted.bind(this, true)}
-                        onComplete={this.changeValue}
-                        mouseTrigger={mouseTrigger}
-                    />
-                </div>);
-            setTimeout(() => {
-                showDrop(this.divElement,box,this.offComponentCallback);
-            },5);
+            if ((!isDialogVisible(dropKey) || this.lastHightlighedIdx!==highlightedIdx || this.lastSuggestions!==suggestions))  {
+                this.lastHightlighedIdx= highlightedIdx;
+                this.lastSuggestions= suggestions;
+                const box= (
+                    <div className={'SuggestBoxPopup'} style={pStyle} onMouseLeave={() => this.setState({highlightedIdx : undefined})}>
+                        <SuggestBox
+                            suggestions={suggestions}
+                            highlightedIdx={highlightedIdx}
+                            renderSuggestion={renderSuggestion || ((suggestion) => <span>{suggestion}</span>)}
+                            onChange={this.changeHighlighted.bind(this, true)}
+                            onComplete={this.changeValue}
+                            mouseTrigger={mouseTrigger}
+                        />
+                    </div>);
+                setTimeout(() => {
+                    showDrop(this.divElement,box,this.offComponentCallback);
+                },5);
+            }
         }
         else {
             setTimeout(() => dispatchHideDialog(dropKey),5);
