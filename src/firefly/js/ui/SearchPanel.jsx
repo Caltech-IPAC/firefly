@@ -144,7 +144,7 @@ function SearchForm({searchItem, style, initArgs}) {
 
     return (
         useFormPanel ? (
-            <FormPanel groupKey={name} style={style}
+            <FormPanel groupKey={name} sx={{...style, flexGrow:1}}
                        getDoOnClickFunc={(clickFunc) => executeOK(clickFunc,initArgs,searchItem)}
                        cancelText=''
                        {...rest}>
