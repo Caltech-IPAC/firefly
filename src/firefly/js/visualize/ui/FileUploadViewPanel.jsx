@@ -622,18 +622,22 @@ function SingleDataSet({type, desc, detailsModel, report, UNKNOWN_FORMAT, curren
     const showDetails= supported && detailsModel;
     const isUWSJobFile = isUWS(report);
     const jobUrl = report.parts[0].url;
-
     return (
-        <Stack {...{direction:'row', flex:'1 1 auto', justifyContent: showDetails || isUWSJobFile?'start':'center'}}>
-            <Box sx={{pt:4, pr:2, ml: isUWSJobFile?4:0}}>
+        <Stack spacing={2} {...{direction:'row', flex:'1 1 auto', justifyContent: showDetails || isUWSJobFile?'start':'center', position:'relative'}}>
+            <Stack spacing={1} sx={{ml: isUWSJobFile?4:0, flexShrink:0}}>
                 <Typography level='title-lg' sx={{whiteSpace:'nowrap', pb:5}}>
                     {type}{desc ? `: ${desc}` : ''}
                 </Typography>
                 <AnalysisInfo {...{report, supported, UNKNOWN_FORMAT}} />
                 {isUWSJobFile && <UWSInfo {...{jobUrl}}/>}
                 <Typography sx={{pt:2}}>No other detail about this file</Typography>
-            </Box>
-            {  showDetails && <Details detailsModel={detailsModel}/>}
+            </Stack>
+            {
+                showDetails &&
+                <Stack spacing={1} sx={{flexGrow:1, position:'relative'}}>
+                    <Details detailsModel={detailsModel}/>
+                </Stack>
+            }
         </Stack>
     );
 }
@@ -673,7 +677,7 @@ function Details({detailsModel}) {
     return (
         <TablePanel showTypes={false}  title='File Details'
                     tableModel={detailsModel}
-                    sx={{ml:1}}
+                    sx={{ml:1, position:'absolute', inset:0}}
                     {...tblOptions} showMetaInfo={true} selectable={false}/>
     );
 

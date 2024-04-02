@@ -1,4 +1,4 @@
-import {Stack} from '@mui/joy';
+import {Stack, Typography, Box} from '@mui/joy';
 import React from 'react';
 
 import {dispatchHideDialog, dispatchShowDialog} from '../core/ComponentCntlr.js';
@@ -17,10 +17,10 @@ import {TablePanel} from 'firefly/tables/ui/TablePanel';
 import {FormPanel} from 'firefly/ui/FormPanel';
 import {ServerParams} from 'firefly/data/ServerParams';
 import {doJsonRequest} from 'firefly/core/JsonUtils';
-import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr';
 import {dispatchTableSearch} from 'firefly/tables/TablesCntlr';
 import {MetaConst} from 'firefly/data/MetaConst';
 import {makeFileRequest} from 'firefly/api/ApiUtilTable';
+import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr';
 
 const dialogId = 'Upload-spatial-table';
 const UPLOAD_TBL_SOURCE= 'UPLOAD_TBL_SOURCE';
@@ -190,10 +190,9 @@ function applyDefColumnSelection(columns,defaultColsEnabled) {
 
 const NoTables = () => {
     return (
-        <div style={{margin: '40px 10px 10px 10px', fontSize: 'large',
-            padding: '5px 0 5px 0', textAlign: 'center', width: '100%'}}>
+        <Typography level={'title-lg'} color={'neutral'} textAlign='center' width={1} height={1} pt={2} mt={2}>
             {'No tables available to load.'}
-        </div>
+        </Typography>
     );
 };
 
@@ -214,7 +213,7 @@ const LoadedTables= (props) => {
     if (data.length === 0) {
         return <NoTables/>;
     }
-    const columns = [{name: 'Table Title', width: 45}, {name: 'No. of Cols', width: 15}, {name: 'No. of Rows', width:15},
+    const columns = [{name: 'Table Title', width: 40}, {name: 'No. of Cols', width: 15}, {name: 'No. of Rows', width:15},
         {name: 'tblId', visibility: 'hidden'}];
     const highlightedRow = 0; //default selection
     const tbl_id = 'existing-table-list';
@@ -222,24 +221,23 @@ const LoadedTables= (props) => {
     const tableModel = {tbl_id, tableData: {columns, data}, highlightedRow, totalRows: data.length};
 
     return (
-        <div style={{margin: '10px', position: 'relative', width: '100%', display: 'flex', alignItems: 'stretch', flexDirection: 'column'}}>
-            <div style={{color: 'gray', fontSize: 'larger', lineHeight: '1.3em'}}>
+        <Stack width={1} height={1}>
+            <Typography level={'title-lg'} color={'neutral'} p={1}>
                 {'Select one of the existing tables below to load into the TAP panel: '}
-            </div>
-            <FieldGroup groupKey={groupKey} keepState={keepState} style={{height:'100%', width: '100%',
-                display: 'flex', alignItems: 'stretch', flexDirection: 'column'}}>
+            </Typography>
+            <FieldGroup groupKey={groupKey} keepState={keepState} sx={{flexGrow: 1}}>
                 <FormPanel
                     onSubmit={onSubmit}
                     onCancel={onCancel}
                     params={{hideOnInvalid: false}}
-                    inputStyle={{height:'100%'}}
                     submitText={'Load Table'}
-                    submitBarStyle={{padding: '2px 3px 3px'}} >
+                    submitBarStyle={{padding:1/2}} >
                     <TablePanel tbl_id={tbl_id+'-ui'} tbl_ui_id={tbl_id+'-ui'} tableModel={tableModel} border={false} showTypes={false}
+                                sx={{position: 'absolute', inset:0}}
                                 showToolbar={false} showFilters={true} selectable={false} showOptionButton={false}/>
                 </FormPanel>
             </FieldGroup>
-        </div>);
+        </Stack>);
 };
 
 /**
@@ -268,28 +266,30 @@ export function showUploadTableChooser(setUploadInfo,groupKey= 'table-chooser',d
 
 const TapUploadPanel= ({setUploadInfo,groupKey= 'table-chooser',defaultColsEnabledObj}) => {
     return (
-    <FieldGroup groupKey={groupKey}>
-        <Stack style={{ resize: 'both', overflow: 'hidden', zIndex: 1, pt:1, minWidth: 600, minHeight: 500}}>
-            <FieldGroupTabs initialState={{value: 'upload'}} fieldKey='upload-type-tabs' groupKey={groupKey}
-                            sx={{width: 1,  flex: '1 1 auto'}}>
-                <Tab name='Upload Tables' id='upload' sx={{fontSize:'larger'}}>
-                    <FileUploadDropdown {...{
-                        sx:{height:1,
-                            '.ff-FileUploadViewPanel-file':{ml:3},
-                            '.ff-FileUploadViewPanel-acceptList':{ml:3},
-                        },
-                        acceptOneItem:true, acceptList:[TABLES], keepState:true, groupKey:groupKey+'-fileUpload',
-                        onCancel:() => dispatchHideDialog(dialogId),
-                        onSubmit:(request) => uploadSubmit(request,setUploadInfo,defaultColsEnabledObj),
-                    }}/>
-                </Tab>
-                <Tab name='Loaded Tables' id='tableLoad' sx={{fontSize:'larger'}}>
-                        <LoadedTables {...{
-                            style:{height: '100%', width:'100%'}, keepState: true, groupKey:groupKey+'-tableLoad',
-                            onCancel:() => dispatchHideDialog(dialogId),
-                            onSubmit:(request) => existingTableSubmit(request,setUploadInfo,defaultColsEnabledObj)
-                        }}/>
-                </Tab>
-            </FieldGroupTabs>
-        </Stack>
-    </FieldGroup> );};
+        <Stack height='35rem' sx={{resize:'both', overflow:'hidden',minHeight:'35rem', minWidth:'40rem'}}>
+            <FieldGroup groupKey={groupKey} sx={{ flexGrow: 1}}>
+                <Stack height='100%' pt={1}>
+                    <FieldGroupTabs initialState={{value: 'upload'}} fieldKey='upload-type-tabs' groupKey={groupKey}
+                                    sx={{width: 1,  flex: '1 1 auto'}}>
+                        <Tab name='Upload Tables' id='upload' sx={{fontSize:'larger'}}>
+                            <FileUploadDropdown {...{
+                                sx:{height:1,
+                                    '.ff-FileUploadViewPanel-file':{ml:3},
+                                    '.ff-FileUploadViewPanel-acceptList':{ml:3},
+                                },
+                                acceptOneItem:true, acceptList:[TABLES], keepState:true, groupKey:groupKey+'-fileUpload',
+                                onCancel:() => dispatchHideDialog(dialogId),
+                                onSubmit:(request) => uploadSubmit(request,setUploadInfo,defaultColsEnabledObj),
+                            }}/>
+                        </Tab>
+                        <Tab name='Loaded Tables' id='tableLoad' sx={{fontSize:'larger'}}>
+                                <LoadedTables {...{
+                                    keepState: true, groupKey:groupKey+'-tableLoad',
+                                    onCancel:() => dispatchHideDialog(dialogId),
+                                    onSubmit:(request) => existingTableSubmit(request,setUploadInfo,defaultColsEnabledObj)
+                                }}/>
+                        </Tab>
+                    </FieldGroupTabs>
+                </Stack>
+            </FieldGroup>
+        </Stack>);};
