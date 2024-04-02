@@ -59,6 +59,7 @@ export function WsSaveOptions (props) {
                 <RadioGroupInputField
                     fieldKey='fileLocation'
                     {...fileLocProps}
+                    orientation={'horizontal'}
                     options={[
                         {label: 'Local File', value: LOCALFILE},
                         {label: 'Workspace', value: WORKSPACE }
