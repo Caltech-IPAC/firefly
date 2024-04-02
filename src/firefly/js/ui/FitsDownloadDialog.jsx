@@ -53,8 +53,7 @@ export function showFitsDownloadDialog() {
         if (wsSelected) dispatchWorkspaceUpdate();
         const isWs = getWorkspaceConfig();
 
-        const sizing = wsSelected ? {height:'60vh', minHeight:'28em', resize:'both'} :
-                       isWs ? {height:'12em'} : {height:'11em'};
+        const sizing = wsSelected ? {height:'60vh', minHeight:'28em', resize:'both'} : {height:'14em'};
         return (
             <PopupPanel title={'Save Image'} {...props}>
                 <Stack overflow='hidden' minWidth='40em' sx={sizing}>
@@ -75,29 +74,29 @@ function closePopup(popupId) {
 
 const getColors= (plot) => isThreeColor(plot) ? plot.plotState.getBands().map( (b) => capitalize(b.key)) : ['NO_BAND'];
 const renderOperationOption= () => (
-        <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
             <RadioGroupInputField
                     options={[ { label:'Original', value:'fileTypeOrig'}, { label:'Cropped', value:'fileTypeCrop'} ]}
+                    orientation='horizontal'
+                    label='Which Image'
                     fieldKey='operationOption'
-                    tooltip='Please select an option'/>
-        </Stack> );
+                    tooltip='Please select an option'/>);
 
-const RenderThreeBand = ({colors}) => {
+function RenderThreeBand({colors}) {
     const [ft] = useFieldGroupValue ('fileType', fitsDownGroup);
     if (ft()==='png' || ft()==='reg') return false;
     return (
-        <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
             <RadioGroupInputField
                 options={colors.map( (c) => ({label: c, value: c}))}
                 fieldKey='threeBandColor'
                 orientation='horizontal'
-                label='Color Band:'
+                label='Color Band'
                 tooltip='Please select a color option'/>
-        </Stack> );
-};
+    );
+}
+
 const MakeFileOptions = ({plot,colors,hasOperation,threeC}) => {
      return (
-        <Stack spacing={2} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
+        <Stack spacing={1} sx={{'.MuiFormLabel-root': {width: labelWidth}}}>
             <RadioGroupInputField
                 options={isImage(plot) ? imageFileTypeOps : hipsFileTypeOps}
                 fieldKey='fileType'

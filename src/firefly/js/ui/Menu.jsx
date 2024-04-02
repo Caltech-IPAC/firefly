@@ -272,7 +272,7 @@ function getSelected(menu,dropDown) {
     // if (!menu || !dropDown?.visible) return '';
     if (!menu) return '';
     if (menu.selected) return menu.selected;
-    let selected = menu.menuItems.find(({action}) => (action===dropDown?.view))?.action;
+    let selected = menu.menuItems?.find(({action}) => (action===dropDown?.view))?.action;
     if (!selected && dropDown?.visible) selected = menu.menuItems[0].action;
     return selected;
 }

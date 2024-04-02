@@ -73,7 +73,7 @@ function ColorPickerWrapper ({callback,color,callbackOnOKOnly, callbackOnBoth,
                 <SketchPicker color={currentColor} presetColors={psColors}
                               styles={{
                                   picker:{
-                                      minWidth: 200,
+                                      minWidth: '20rem',
                                       padding: 8,
                                   }
                               }}
