@@ -124,10 +124,12 @@ const Help = () => <HelpIcon helpId={'chartarea.info'} style={{marginLeft:10}}/>
 
 export const PinChart = ({viewerId, tbl_group}) => {
 
-    if (viewerId === PINNED_VIEWER_ID) return null;
+    // don't show pin chart button in pinned chart panel
+    // and in data product viewer because pinning functionality requires chart data table to persist in store
+    if (viewerId === PINNED_VIEWER_ID || viewerId.startsWith('DPC')) return null;
 
     const doPinChart = () => {
-        let chartId = getActiveViewerItemId(viewerId);      // viewerId is Active Charts viewer
+        let chartId = getActiveViewerItemId(viewerId, true);      // viewerId is Active Charts viewer
         if (!chartId) {
             const tblId = getActiveTableId(tbl_group);
             chartId = getChartIdsInGroup(tblId)?.[0] ?? getChartIdsInGroup('default')?.[0];
