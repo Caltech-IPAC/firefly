@@ -35,7 +35,6 @@ export function AppConfigDrawer({containerElement, drawerWidth= '20rem', allowMe
                     <span>{appTitle}</span>
                 </Stack>
             </DialogTitle>
-            <Divider orientation='horizontal'/>
 
             {/* Drawer content --- */}
             <Stack justifyContent='space-between' height={1}>

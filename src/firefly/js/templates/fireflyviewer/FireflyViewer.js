@@ -71,8 +71,8 @@ export function FireflyViewer ({menu, options, views, showViewsSwitch, leftButto
         dispatchOnAppReady(() => onReady({menu, options, normalInit}));
     }, []);
 
-    const FireflySidebar= () => (
-        <AppConfigDrawer>
+    const FireflySidebar= (props) => (
+        <AppConfigDrawer {...props}>
             <LayoutChoiceVisualAccordion/>
         </AppConfigDrawer>
     );
