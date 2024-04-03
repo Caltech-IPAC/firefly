@@ -10,15 +10,12 @@ import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from '../../../ui/CheckboxGroupInputField.jsx';
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
-import {LayoutOptions, basicFieldReducer, submitChanges, basicOptions} from './BasicOptions.jsx';
+import {basicFieldReducer, basicOptions, LayoutOptions, submitChanges} from './BasicOptions.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 import {ALL_COLORSCALE_NAMES, PlotlyCS} from '../../Colorscale.js';
 import {getChartProps} from '../../ChartUtil.js';
-import {
-    CollapsibleGroup,
-    FieldGroupCollapsibleItem
-} from '../../../ui/panel/CollapsiblePanel.jsx';
+import {CollapsibleGroup, FieldGroupCollapsibleItem} from '../../../ui/panel/CollapsiblePanel.jsx';
 import {Stack, Typography} from '@mui/joy';
 
 
@@ -65,11 +62,9 @@ export function fieldReducer({chartId, activeTrace}) {
     const basicReducer = basicFieldReducer({chartId, activeTrace});
 
     const getFields = () => {
-        const {data, fireflyData, tablesources = {}} = getChartData(chartId);
-        const tablesourceMappings = tablesources?.[activeTrace]?.mappings;
+        const {data, fireflyData} = getChartData(chartId);
 
-        const fields = {
-
+        return {
             [`fireflyData.${activeTrace}.nbins.x`]: {
                 fieldKey: `fireflyData.${activeTrace}.nbins.x`,
                 value: get(fireflyData, `${activeTrace}.nbins.x`),
@@ -98,21 +93,6 @@ export function fieldReducer({chartId, activeTrace}) {
             },
             ...basicReducer(null)
         };
-        const tblRelFields = {
-            [`_tables.data.${activeTrace}.x`]: {
-                fieldKey: `_tables.data.${activeTrace}.x`,
-                value: get(tablesourceMappings, 'x', ''),
-                //tooltip: 'X axis',
-                label: 'X:'
-            },
-            [`_tables.data.${activeTrace}.y`]: {
-                fieldKey: `_tables.data.${activeTrace}.y`,
-                value: get(tablesourceMappings, 'y', ''),
-                //tooltip: 'Y axis',
-                label: 'Y:'
-            }
-        };
-        return tablesourceMappings? Object.assign({}, fields, tblRelFields) : fields;
     };
     return (inFields, action) => {
         if (!inFields) {
@@ -129,8 +109,11 @@ export function TableSourcesOptions({tablesource={}, activeTrace, groupKey, char
     // _tables.  is prefixed the fieldKey.  it will be replaced with 'tables::val' on submitChanges.
     const tbl_id = get(tablesource, 'tbl_id');
     const colValStats = getColValStats(tbl_id);
+
     const xyProps = (xOrY) => ({fldPath:`_tables.data.${activeTrace}.${xOrY}`, label: `${xOrY.toUpperCase()}:`,
-        name: xOrY.toUpperCase(), nullAllowed: false, colValStats, groupKey, slotProps: {control: {orientation}}});
+        name: xOrY.toUpperCase(), nullAllowed: false, colValStats, groupKey, slotProps: {control: {orientation}},
+        initValue: tablesource?.mappings?.[xOrY] ?? ''
+    });
 
     const {setVal} = useContext(FieldGroupCtx);
 
