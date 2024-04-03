@@ -4,7 +4,7 @@
 
 import PendingActionsOutlinedIcon from '@mui/icons-material/PendingActionsOutlined.js';
 import {
-    Badge, Button, Chip, CircularProgress, Divider, IconButton, ListItemDecorator,
+    Badge, Button, Chip, CircularProgress, Divider, IconButton, ListItemDecorator, Sheet,
     Stack, Tab, TabList, Tabs, Tooltip, Typography
 } from '@mui/joy';
 import {tabClasses} from '@mui/joy/Tab';
@@ -403,79 +403,88 @@ function SideBarView({menu,appTitle,closeSideBar,haveResults,selected,dropDown,
     const itemLayoutSx = {alignItems:'center', justifyContent:'space-between', '.MuiChip-root': {ml: 1.5, height:'1.5rem'}};
     const itemMinWidth = '13.5rem';
     const groupSpacingY = 0.5;
+    const showReset= allowMenuHide && tabsUpdated(menu);
 
     return (
-        <Stack spacing={groupSpacingY} //because the title of all menu items is basically the title of no-category group
-               sx={{p: '0.75rem', pr: '1rem', //0.75 rem is the left padding used by accordions
-                   '& .ff-toolbar-button' : {minWidth: itemMinWidth, justifyContent:'flex-start', fontWeight: 'initial'}
-        }}>
-            <Stack direction='row' sx={itemLayoutSx}>
-                <Typography level='h4' sx={{minWidth: itemMinWidth}}>Options</Typography>
-                {allowMenuHide && tabsUpdated(menu) &&
-                    <Tooltip title={'Reset visibility of all the tabs to default'}>
-                        <Chip
-                            onClick={() => {
-                                const menuItems= menu.menuItems.map( (mi) => ({...mi, visible: undefined}) );
-                                dispatchHideDropDown();
-                                updateMenu(appTitle, {...menu, menuItems});
-                            }}>
-                            Reset All
-                        </Chip>
-                    </Tooltip>
-                }
-            </Stack>
-
-            <Stack spacing={2}>
-                {/* No-category Group */}
-                <Stack spacing={groupSpacingY}>
-                    {/* Results */}
-                    <ResultsTip>
-                        <ToolbarButton {...{
-                            pressed: !selected && !dropDown.visible,
-                            text: (
-                                <Stack direction='row' spacing={.5} alignItems='center'>
-                                    <InsightsIcon color='success'/>
-                                    <Stack direction='row' spacing={1} alignItems='baseline'>
-                                        <Typography color='success' /*sx={{color:'unset'}}*/>Results</Typography>
-                                        {!haveResults && <Typography level='body-xs'>(No results yet)</Typography>}
-                                    </Stack>
-                                </Stack>
-                            ),
-                            onClick: () => {
-                                dispatchHideDropDown();
-                                closeSideBar();
-                            },
-                            sx:(theme) =>( {
-                                    '& .ff-toolbar-button': {color:theme.vars.palette.success.solidBg },}
-                            )
-                        }} />
-                    </ResultsTip>
-
-                    {/* Upload */}
-                    {uploadItem &&
-                        <SideBarItem {...{key:'UPLOAD', item:uploadItem,selected,
-                            menu,closeSideBar,allowMenuHide, sx:itemLayoutSx}}/>
-                    }
-
-                    {/* Other no-category items, if any */}
-                    {Boolean(noCatItems?.length) &&
-                        menuItems
-                            .filter( ({category}) => !category )
-                            .map( (item) => (<SideBarItem {...{key:item.label, item,selected,menu,closeSideBar, allowMenuHide, sx:itemLayoutSx}}/>) )
+        <Stack mt={1/2}>
+            <Divider orientation='horizontal'/>
+            <Sheet variant='soft'>
+                <Stack direction='row' sx={{py: '.25rem', px:'.75rem',...itemLayoutSx}}>
+                    <Typography level='h4' sx={{minWidth: itemMinWidth}}>Tab Selection</Typography>
+                    {showReset &&
+                        <Tooltip title={'Reset visibility of all the tabs to default'}>
+                            <Chip
+                                sx={{mr:1/2}}
+                                variant='outlined'
+                                onClick={() => {
+                                    const menuItems= menu.menuItems.map( (mi) => ({...mi, visible: undefined}) );
+                                    dispatchHideDropDown();
+                                    updateMenu(appTitle, {...menu, menuItems});
+                                }}>
+                                Reset All
+                            </Chip>
+                        </Tooltip>
                     }
                 </Stack>
+            </Sheet>
 
-                {/* Category Groups */}
-                {categoryList.map((cat) => (
-                    <Stack key={cat} spacing={groupSpacingY}>
-                        {Boolean(cat) && <Typography key={cat} level='title-sm'>{cat}</Typography>}
-                        {
+            <Stack
+                   sx={{pt:1, pl: '0.75rem', pr: '1rem', //0.75 rem is the left padding used by accordions
+                       '& .ff-toolbar-button' : {minWidth: itemMinWidth, justifyContent:'flex-start', fontWeight: 'initial'}
+                   }}>
+
+                <Stack spacing={2} >
+                    {/* No-category Group */}
+                    <Stack spacing={groupSpacingY}>
+                        {/* Results */}
+                        <ResultsTip>
+                            <ToolbarButton {...{
+                                pressed: !selected && !dropDown.visible,
+                                text: (
+                                    <Stack direction='row' spacing={.5} alignItems='center'>
+                                        <InsightsIcon color='success'/>
+                                        <Stack direction='row' spacing={1} alignItems='baseline'>
+                                            <Typography color='success' /*sx={{color:'unset'}}*/>Results</Typography>
+                                            {!haveResults && <Typography level='body-xs'>(No results yet)</Typography>}
+                                        </Stack>
+                                    </Stack>
+                                ),
+                                onClick: () => {
+                                    dispatchHideDropDown();
+                                    closeSideBar();
+                                },
+                                sx:(theme) =>( {
+                                        '& .ff-toolbar-button': {color:theme.vars.palette.success.solidBg },}
+                                )
+                            }} />
+                        </ResultsTip>
+
+                        {/* Upload */}
+                        {uploadItem &&
+                            <SideBarItem {...{key:'UPLOAD', item:uploadItem,selected,
+                                menu,closeSideBar,allowMenuHide, sx:itemLayoutSx}}/>
+                        }
+
+                        {/* Other no-category items, if any */}
+                        {Boolean(noCatItems?.length) &&
                             menuItems
-                                .filter( ({category}) => category===cat )
+                                .filter( ({category}) => !category )
                                 .map( (item) => (<SideBarItem {...{key:item.label, item,selected,menu,closeSideBar, allowMenuHide, sx:itemLayoutSx}}/>) )
                         }
                     </Stack>
-                ))}
+
+                    {/* Category Groups */}
+                    {categoryList.map((cat) => (
+                        <Stack key={cat} spacing={groupSpacingY}>
+                            {Boolean(cat) && <Typography key={cat} level='title-sm'>{cat}</Typography>}
+                            {
+                                menuItems
+                                    .filter( ({category}) => category===cat )
+                                    .map( (item) => (<SideBarItem {...{key:item.label, item,selected,menu,closeSideBar, allowMenuHide, sx:itemLayoutSx}}/>) )
+                            }
+                        </Stack>
+                    ))}
+                </Stack>
             </Stack>
         </Stack>
     );
