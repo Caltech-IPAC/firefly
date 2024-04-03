@@ -89,7 +89,7 @@ function ProjectPart() {
         }
     }, [valC]);     // if catalog changes, select first table of that catalog
 
-    if (!(catmaster && valP && valC)) return  <Skeleton variant='rectangular'/>;
+    if (!(catmaster && valP && valC)) return  <Skeleton/>;
 
     const optProjects = getProjectOptions(catmaster);
     const optCatalogs = getSubProjectOptions(catmaster, valP);
@@ -169,7 +169,7 @@ function PositionPart() {
     const optCatTable = getCatalogOptions(catmaster, valP, valC);
     const selCatTable = optCatTable?.find((c) => c.value === valT);
 
-    if (!(catmaster && valP && valC && selCatTable)) return  <Skeleton variant='rectangular'/>;
+    if (!(catmaster && valP && valC && selCatTable)) return  <Skeleton/>;
 
     const POS_COL = cols.findIndex((c) => c?.name?.toLowerCase() === 'pos');
 
@@ -196,7 +196,7 @@ function TableConstraint() {
     const cattableValue = useStoreConnector(() => getFieldVal(irsaCatalogGroupKey, 'cattable'));
     const ddform = useStoreConnector(() => getFieldVal(irsaCatalogGroupKey, 'ddform', 'true'));
 
-    if (!(masterTableInfo && valP && valC)) return  <Skeleton variant='rectangular' sx={{flexGrow:1}}/>;
+    if (!(masterTableInfo && valP && valC)) return  <Skeleton sx={{flexGrow:1}}/>;
 
     const {catmaster} = masterTableInfo;
     const catTable = getCatalogOptions(catmaster, valP, valC);

@@ -9,7 +9,7 @@ import {isEmpty, merge, isNil, isArray, cloneDeep, has} from 'lodash';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {fetchTable} from '../../rpc/SearchServicesJson.js';
-import {getColumnIdx, getTblById, createErrorTbl, isFullyLoaded} from '../../tables/TableUtil.js';
+import {getColumnIdx, getTblById, createErrorTbl} from '../../tables/TableUtil.js';
 import {BasicTableViewWithConnector} from '../../tables/ui/BasicTableView.jsx';
 import {createLinkCell, createInputCell} from '../../tables/ui/TableRenderer.js';
 import * as TblCntlr from '../../tables/TablesCntlr.js';
@@ -128,7 +128,7 @@ export class CatalogConstraintsPanel extends PureComponent {
                 );
         };
 
-        if (isEmpty(tableModel) || !tableModel.tbl_id.startsWith(catname)) return  <Skeleton variant='rectangular' sx={{flexGrow:1}}/>;
+        if (isEmpty(tableModel) || !tableModel.tbl_id.startsWith(catname)) return  <Skeleton sx={{flexGrow:1}}/>;
 
         return (
             <Stack spacing={1} flexGrow={1}>
