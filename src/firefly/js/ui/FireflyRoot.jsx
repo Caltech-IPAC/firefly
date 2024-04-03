@@ -14,9 +14,6 @@ import '@fontsource/inter/600.css'; // Semi-Bold
 import '@fontsource/inter/700.css'; // Bold
 import '@fontsource/inter/800.css'; // Bolder
 
-let localTheme;
-export function getTheme() {return localTheme; };
-
 export function FireflyRoot({sx, children, ctxProperties={}}) {
 
     const customTheme = getAppOptions().theme?.customized?.();
@@ -28,14 +25,14 @@ export function FireflyRoot({sx, children, ctxProperties={}}) {
                 <GlobalStyles styles={{
                     html: {fontSize:'87.5%'}
                 }}/>
-                <ScopedCssBaseline sx={(theme) => ({
-                    flexGrow:1 | (localTheme = theme),
+                <ScopedCssBaseline sx={{
+                    flexGrow:1,
                     height:1,
                     position:'relative',
                     fontSmooth: 'unset',
                     WebkitFontSmoothing: 'unset',
                     ...sx
-                })}>
+                }}>
                     <App>{children}</App>
                 </ScopedCssBaseline>
             </CssVarsProvider>
@@ -80,4 +77,13 @@ export function useColorMode() {
 
 }
 
+/**
+ * @param {*} light The value to be returned when the color mode is light.
+ * @param {*} dark The value to be returned when the color mode is dark.
+ * @param {object} theme The current theme
+ * @returns {*} returns the appropriate value based on the color mode (light or dark) of the theme.
+ */
+export function mode(light, dark, theme) {
+    return theme?.palette?.mode === 'dark' ? dark : light;
+}
 

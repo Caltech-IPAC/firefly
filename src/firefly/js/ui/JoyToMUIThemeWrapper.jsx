@@ -5,7 +5,7 @@ import {THEME_ID as MATERIAL_THEME_ID,
     useColorScheme as useMaterialColorScheme
 } from '@mui/material/styles';
 import {CssVarsProvider as JoyCssVarsProvider} from '@mui/joy/styles';
-import {useColorMode, getTheme} from 'firefly/ui/FireflyRoot';
+import {useTheme} from '@mui/material';
 
 
 /**
@@ -19,8 +19,8 @@ import {useColorMode, getTheme} from 'firefly/ui/FireflyRoot';
  * @param p.children
  */
 export function JoyToMUIThemeWrapper({children}) {
-    const {activeMode: joyMode} = useColorMode();
-    const joyTheme = getTheme();
+    const joyTheme = useTheme();
+    const joyMode = joyTheme.palette.mode;
     const joyPrimaryPalette = joyTheme.palette.primary;
 
     // Override the default MUI appearance of wrapped component (esp font, color, etc.) with JoyUI theme
