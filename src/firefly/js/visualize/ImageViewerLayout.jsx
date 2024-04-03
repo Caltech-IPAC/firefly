@@ -18,14 +18,17 @@ import {UserZoomTypes} from './ZoomUtil.js';
 import {
     primePlot, getPlotViewById, hasLocalStretchByteData, isActivePlotView, getFoV
 } from './PlotViewUtil.js';
-import {isImageViewerSingleLayout, getMultiViewRoot} from './MultiViewCntlr.js';
+import {
+    isImageViewerSingleLayout, getMultiViewRoot, findViewerWithItemId, IMAGE, getViewer, getExpandedViewerItemIds,
+    EXPANDED_MODE_RESERVED
+} from './MultiViewCntlr.js';
 import {contains, intersects} from './VisUtil.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 
 import {
     visRoot, ActionScope, dispatchPlotProgressUpdate, dispatchZoom, dispatchRecenter, dispatchProcessScroll,
     dispatchChangeCenterOfProjection, dispatchChangeActivePlotView,
-    dispatchUpdateViewSize, dispatchRequestLocalData, MOUSE_CLICK_REASON
+    dispatchUpdateViewSize, dispatchRequestLocalData, MOUSE_CLICK_REASON, ExpandType
 } from './ImagePlotCntlr.js';
 import {fireMouseCtxChange, makeMouseStatePayload, MouseState} from './VisMouseSync.js';
 import {isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
@@ -100,7 +103,7 @@ export const ImageViewerLayout= memo(({ plotView, drawLayersAry, width, height, 
             fireMouseEvent(dl,mouseState,mouseStatePayload);
         }
         else if (isWheel(mouseState)) {
-            if (!isActivePlotView(visRoot(),eventPlotId) && getAppOptions()?.wheelScrollRequiresImageActive) return;
+            if (!isActivePlotView(visRoot(),eventPlotId) && isWheelRequireImageActive(eventPlotId)) return;
             handleScrollWheelEvent(plotView,mouseState,screenPt,nativeEv);
             return;
         }
@@ -152,6 +155,19 @@ const zoomFromWheelOrTrackpad= (usingMouseWheel, params) => {
         zoomThrottle(params);
 };
 
+function isWheelRequireImageActive(plotId) {
+    const {expandedMode}= visRoot();
+    if (getAppOptions()?.wheelScrollRequiresImageActive) return true;
+    const mvRoot= getMultiViewRoot();
+
+    if (expandedMode!==ExpandType.COLLAPSE && getExpandedViewerItemIds(mvRoot)?.includes(plotId)) {
+        return getViewer(mvRoot,EXPANDED_MODE_RESERVED)?.scroll ?? false;
+    }
+    else {
+        const viewerId= findViewerWithItemId(mvRoot, plotId, IMAGE);
+        return getViewer(mvRoot, viewerId)?.scroll ?? false
+    }
+}
 
 
 /**

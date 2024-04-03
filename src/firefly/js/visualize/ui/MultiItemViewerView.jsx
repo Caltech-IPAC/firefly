@@ -26,6 +26,7 @@ export const MultiItemViewerView=forwardRef( (props, ref) =>  {
     const {layoutType, activeItemId,
         viewerItemIds, forceRowSize, forceColSize, makeCustomLayout, gridDefFunc,
         style, insideFlex=false, defaultDecoration=true, sparseGridTitleLocation= 'top',
+        scrollGrid=false,
         makeToolbar, makeItemViewer, makeItemViewerFull, autoRowOriented=true}= props;
     let wrapperStyle;
     if (insideFlex) {
@@ -58,6 +59,14 @@ export const MultiItemViewerView=forwardRef( (props, ref) =>  {
         const rows = viewerItemIds.length / forceColSize + (viewerItemIds.length % forceColSize);
         container= makePackedGrid(viewerItemIds,rows,forceColSize,true,makeItemViewer);
     }
+    else if (scrollGrid) {
+        let cols;
+        if (viewerItemIds.length>16) cols=4;
+        else if (viewerItemIds.length>9) cols=3;
+        else if (viewerItemIds.length>5) cols=2;
+        else cols=1;
+        container= makeScrollGrid(viewerItemIds,cols,makeItemViewer);
+    }
     else {                   // GRID automatic
         const dim= findAutoGridDim(viewerItemIds.length, autoRowOriented);
         container= makePackedGrid(viewerItemIds,dim.rows,dim.cols,true,makeItemViewer);
@@ -73,8 +82,9 @@ export const MultiItemViewerView=forwardRef( (props, ref) =>  {
                     <Divider orientation={'horizontal'}/>
                 </Stack>}
 
-            <div key='container' style={{position:'relative', width:'100%', height:'100%', flex:'1 1 auto',
-                         overflow: gridDefFunc ? 'auto' : 'hidden' }}>
+            <div key='container'
+                 style={{position:'relative', width:'100%', height:'100%', flex:'1 1 auto',
+                         overflow: (gridDefFunc||scrollGrid) ? 'auto' : 'hidden' }}>
                 {container}
             </div>
         </div>
@@ -90,8 +100,10 @@ MultiItemViewerView.propTypes= {
     forceColSize : PropTypes.number,  //optional - force a certain number of columns
     makeCustomLayout : PropTypes.func,  //optional - a function to present the items in a custom layout
     gridDefFunc : PropTypes.func,  // optional - a function to return the grid definition
-    gridComponent : PropTypes.object,  // a react element to define the grid - not implemented, just an idea
+    gridComponent : PropTypes.object,  // an element to define the grid - not implemented, just an idea
+    scrollGrid: PropTypes.bool,
     insideFlex :  PropTypes.bool,
+    autoRowOriented: PropTypes.bool,
 
     viewerItemIds : PropTypes.arrayOf(PropTypes.string).isRequired,
     activeItemId : PropTypes.string,
@@ -114,6 +126,13 @@ function makePackedGrid(viewerItemIds,rows,cols, columnBased,makeItemViewer) {
     return columnBased ?
         columnBasedIvAry(viewerItemIds,cols,percentWidth,percentHeight,width,height,makeItemViewer)  :
         rowBasedIvAry(viewerItemIds,rows,percentWidth,percentHeight,width,height,makeItemViewer);
+}
+
+function makeScrollGrid(viewerItemIds,cols,makeItemViewer) {
+    const size= 100/cols;
+    const width= `calc(${size}% - 2px)`;
+    const height= `calc(${size}% - 2px)`;
+    return columnBasedIvAry(viewerItemIds,cols,size,size,width,height,makeItemViewer);
 }
 
 
@@ -187,7 +206,7 @@ function findAutoGridDim(size, rowOriented=true) {
 /**
  *  gridDef parameter is an array of objects that contain an optional title and an array of plotIds
  *  each element of the array should represent a row and each plotId a plot in that row,
- *  an empty element will act as a place holder in the row.
+ *  an empty element will act as a placeholder in the row.
  *
  * @param {Array} viewerItemIds
  * @param {Array.<{string,string[]}>} gridDef

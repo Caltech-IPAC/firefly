@@ -357,6 +357,11 @@ export function getPlotStateAry(pv) {
 }
 
 
+/**
+ * @param {PlotView} pv
+ * @param {PlotGroup} plotGroup
+ * @return {boolean}
+ */
 export function hasOverlayColorLock(pv,plotGroup) {
     return Boolean(plotGroup && plotGroup.plotGroupId && plotGroup.overlayColorLock &&
         pv && pv.plotGroupId===plotGroup.plotGroupId);
@@ -369,7 +374,7 @@ export function hasOverlayColorLock(pv,plotGroup) {
  * @return {*}
  */
 export function findPlotGroup(plotGroupId, plotGroupAry) {
-    if (!plotGroupId || !plotGroupAry) return null;
+    if (!plotGroupId || !plotGroupAry) return undefined;
     return plotGroupAry.find( (pg) => pg.plotGroupId===plotGroupId);
 }
 

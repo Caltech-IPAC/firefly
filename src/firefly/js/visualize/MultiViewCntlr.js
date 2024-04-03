@@ -19,6 +19,7 @@ export const ADD_VIEWER= `${IMAGE_MULTI_VIEW_PREFIX}.AddViewer`;
 export const REMOVE_VIEWER= `${IMAGE_MULTI_VIEW_PREFIX}.RemoveViewer`;
 export const VIEWER_MOUNTED= `${IMAGE_MULTI_VIEW_PREFIX}.viewMounted`;
 export const VIEWER_UNMOUNTED= `${IMAGE_MULTI_VIEW_PREFIX}.viewUnmounted`;
+export const VIEWER_SCROLL= `${IMAGE_MULTI_VIEW_PREFIX}.viewScroll`;
 export const ADD_VIEWER_ITEMS= `${IMAGE_MULTI_VIEW_PREFIX}.addViewerItems`;
 export const REMOVE_VIEWER_ITEMS= `${IMAGE_MULTI_VIEW_PREFIX}.removeViewerItems`;
 export const REPLACE_VIEWER_ITEMS= `${IMAGE_MULTI_VIEW_PREFIX}.replaceViewerItems`;
@@ -60,6 +61,9 @@ export const GRID_FULL='gridFull';
  * @prop none
  * @type {Enum}
  */
+
+
+/** @type NewPlotMode*/
 export const NewPlotMode = new Enum(['create_replace', 'replace_only', 'none']);
 
 function initState() {
@@ -75,6 +79,7 @@ function initState() {
      * @prop {boolean} reservedContainer
      * @prop {string} containerType - one of 'image', 'plot2d', 'wrapper'
      * @prop {boolean} mounted - if the react component using the store is mounted
+     * @prop {boolean} scroll - if true, the ui can build the grid view to scroll
      * @prop {Object|String} layoutDetail - may be any object, string, etc- Hint for the UI, can be any string but with 2 reserved  GRID_RELATED, GRID_FULL
      * @prop {boolean} internallyManaged - this viewer is managed by other viewers
      * @prop {object} customData: {}
@@ -96,6 +101,7 @@ function initState() {
             canReceiveNewPlots: NewPlotMode.create_replace.key,
             reservedContainer:true,
             mounted: false,
+            scroll: false,
             containerType : IMAGE,
             layoutDetail : 'none',
             customData: {},
@@ -109,6 +115,7 @@ function initState() {
             canReceiveNewPlots: NewPlotMode.create_replace.key,
             reservedContainer:false,
             mounted: false,
+            scroll: false,
             containerType : IMAGE,
             layoutDetail : 'none',
             customData: {},
@@ -123,6 +130,7 @@ function initState() {
             canReceiveNewPlots: NewPlotMode.create_replace.key,
             reservedContainer:false,
             mounted: false,
+            scroll: false,
             containerType : PLOT2D,
             layoutDetail : 'none',
             customData: {},
@@ -136,6 +144,7 @@ function initState() {
             layout: SINGLE,
             canReceiveNewPlots: NewPlotMode.none.key,
             mounted: false,
+            scroll: false,
             containerType : WRAPPER,
             layoutDetail : 'none',
             customData: {},
@@ -223,6 +232,9 @@ export const dispatchViewerMounted= (viewerId) => flux.process({type: VIEWER_MOU
  * @param {string} viewerId
  */
 export const dispatchViewerUnmounted= (viewerId) => flux.process({type: VIEWER_UNMOUNTED , payload: {viewerId} });
+
+export const dispatchViewerScroll= ({viewerId,scroll=false}) =>
+    flux.process({type: VIEWER_SCROLL , payload: {viewerId,scroll} });
 
 /**
  *
@@ -445,6 +457,8 @@ function reducer(state=initState(), action={}) {
             return changeMount(state,payload.viewerId,true);
         case VIEWER_UNMOUNTED:
             return changeMount(state,payload.viewerId,false);
+        case VIEWER_SCROLL:
+            return changeScroll(state,payload.viewerId,payload.scroll);
         case UPDATE_VIEWER_CUSTOM_DATA:
             return updateCustomData(state,action);
         case ImagePlotCntlr.DELETE_PLOT_VIEW:
@@ -494,6 +508,7 @@ function addViewer(state,payload) {
         // set default layout for the viewer with viewerId, META_VIEWER_ID, is full-grid type
         const layoutDetail = viewerId === META_VIEWER_ID ? GRID_FULL : undefined;
         const entry = {viewerId, containerType, canReceiveNewPlots, layout, mounted, itemIdAry: [], customData: {},
+                       scroll: false,
                        lastActiveItemId, layoutDetail, renderTreeId, reservedContainer, internallyManaged};
         return [...state, entry];
     }
@@ -629,6 +644,13 @@ function changeMount(state,viewerId,mounted) {
     if (!viewer) return state;
     if (viewer.mounted===mounted) return state;
     return state.map( (entry) => entry.viewerId===viewerId ? {...entry, mounted} : entry);
+}
+
+function changeScroll(state,viewerId,scroll) {
+    const viewer= state.find( (entry) => entry.viewerId===viewerId);
+    if (!viewer) return state;
+    if (viewer.scroll===scroll) return state;
+    return state.map( (entry) => entry.viewerId===viewerId ? {...entry, scroll} : entry);
 }
 
 function updateCustomData(state,action) {

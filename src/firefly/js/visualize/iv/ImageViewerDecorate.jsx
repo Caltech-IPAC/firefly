@@ -9,7 +9,7 @@ import PropTypes from 'prop-types';
 import shallowequal from 'shallowequal';
 import {isEmpty,omit,isFunction} from 'lodash';
 import {getSearchActions} from '../../core/AppDataCntlr.js';
-import {getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
+import {EXPANDED_MODE_RESERVED, getMultiViewRoot, getViewer, GRID, IMAGE} from '../MultiViewCntlr.js';
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView, MOUSE_CLICK_REASON} from '../ImagePlotCntlr.js';
 import {ExpandButton} from '../ui/Buttons.jsx';
@@ -174,8 +174,13 @@ function contextToolbar(plotView,dlAry,extensionList, width) {
 
 
 function getBorderColor(theme, pv,visRoot) {
+    const expandedViewer= getViewer(getMultiViewRoot(), EXPANDED_MODE_RESERVED);
+    const manyExpanded= visRoot.expandedMode!==ExpandType.COLLAPSE &&
+        expandedViewer.itemIdAry.length>1 && expandedViewer.layout===GRID;
     const containerList= getMultiViewRoot().filter( (v) => v.containerType===IMAGE && v.mounted);
-    const manyPlots= (containerList.length>1 || containerList[0]?.itemIdAry?.length>1);
+    const manyPlots= manyExpanded ||
+        containerList.length>1 ||
+        (containerList[0]?.layout===GRID && containerList[0]?.itemIdAry?.length>1);
     if (!pv?.plotId) return 'rgba(0,0,0,.4)';
     if (!pv.plotViewCtx.highlightFeedback) return 'rgba(0,0,0,.1)';
     if (isActivePlotView(visRoot,pv.plotId)) {
