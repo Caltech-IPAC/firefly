@@ -77,7 +77,8 @@ export function EmbeddedPositionSearchPanel({
                                                 useUpload = false,
                                                 usePolygon= true,
                                                 searchItem,
-                                                initArgs
+                                                initArgs,
+                                                slotProps
                                             }
 ) {
 
@@ -177,6 +178,7 @@ export function EmbeddedPositionSearchPanel({
                         px: 1/2,
                         bottom: '1.5rem',
                         left: 3,
+                        ...slotProps?.searchRoot?.sx
                     })
 
             }}>
@@ -214,5 +216,8 @@ EmbeddedPositionSearchPanel.propTypes= {
     usePolygon: bool,
     useUpload: bool,
     searchItem: object,
-    initArgs: object
+    initArgs: object,
+    slotProps: shape({
+        searchRoot: object
+    }),
 };
