@@ -93,7 +93,7 @@ function makeModel(tbl_id, plotViewAry, allIds, oldModel) {
     columns[WAVE_LENGTH_UM].enumVals = makeEnumValues(data, WAVE_LENGTH_UM);
 
 
-    const newSi = SelectInfo.newInstance({rowCount: 0});
+    const newSi = SelectInfo.newInstance({rowCount: data.length});
     let request;
     if (oldModel) {
         const oldSi = SelectInfo.newInstance(oldModel.selectInfo);
@@ -104,7 +104,6 @@ function makeModel(tbl_id, plotViewAry, allIds, oldModel) {
             if (getPlotViewById(vr, plotId) && oldSi.isSelected(idx)) {
                 const newIdx = data.findIndex((r) => r[PID_IDX] === plotId);
                 newSi.setRowSelect(newIdx, true);
-                newSi.data.rowCount++;
                 filterStr += filterStr ? ',' + newIdx : newIdx;
             }
         });

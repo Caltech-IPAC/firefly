@@ -154,12 +154,16 @@ function getContrast(plot) {
     }
 }
 
+function isOverlayColorLocked(vr){
+    const pv= getActivePlotView(vr);
+    if (!pv) return false;
+    return hasOverlayColorLock(pv,findPlotGroup(pv?.plotGroupId,vr.plotGroupAry));
+}
+
 const AdvancedColorPanel= ({allowPopout}) => {
-    const plot = useStoreConnector( () => {
-        return primePlot(visRoot());
-    });
+    const plot = useStoreConnector( () => primePlot(visRoot()) );
+    const overlayColorLocked = useStoreConnector( () => isOverlayColorLocked(visRoot()) );
     const pv= getActivePlotView(visRoot());
-    const plotGroupAry= visRoot().plotGroupAry;
     const allLoaded = useStoreConnector(() => isAllStretchDataLoaded(visRoot()));
     const [bias,setBias]= useState( () => getBias(plot));
     const [contrast,setContrast]= useState( () => getContrast(plot));
@@ -325,12 +329,12 @@ const AdvancedColorPanel= ({allowPopout}) => {
             <ToolbarButton plotView={pv}
                            sx={allowPopout? {mt:-2.5, width:.85} : {}}
                            hasCheckBox={true}
-                           checkBoxOn={isOverlayColorLocked(pv,plotGroupAry)}
+                           checkBoxOn={overlayColorLocked}
                            CheckboxOnIcon={<LockIcon sx={{pt: 1/4}}/>}
                            CheckboxOffIcon={<LockOpenOutlinedIcon sx={{pt: 1/4}}/>}
-                           text='Lock color & overlays'
+                           text={ overlayColorLocked? 'Color & overlays locked' : 'Color & overlays unlocked' }
                            tip='Lock all images for color changes and overlays.'
-                           onClick={() => toggleOverlayColorLock(pv,plotGroupAry)} />
+                           onClick={() => toggleOverlayColorLock(pv,visRoot().plotGroupAry)} />
             <ToolbarHorizontalSeparator/>
             {!threeColor && makeItems()}
             {!threeColor && <Divider sx={{p: 0.1, mt: 0.2}}/>}
@@ -340,11 +344,6 @@ const AdvancedColorPanel= ({allowPopout}) => {
     );
 };
 
-function isOverlayColorLocked(pv,plotGroupAry){
-    if (!pv) return false;
-    const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
-    return hasOverlayColorLock(pv,plotGroup);
-}
 
 function toggleOverlayColorLock(pv,plotGroupAry){
     const plotGroup= findPlotGroup(pv.plotGroupId,plotGroupAry);
@@ -352,7 +351,7 @@ function toggleOverlayColorLock(pv,plotGroupAry){
 }
 
 export const ColorTableDropDownView= () => {
-    setTimeout(() => dispatchHideDialog(POPOUT_ID), 5)
+    setTimeout(() => dispatchHideDialog(POPOUT_ID), 5);
     return ( <AdvancedColorPanel allowPopout={true}/> );
 };
 

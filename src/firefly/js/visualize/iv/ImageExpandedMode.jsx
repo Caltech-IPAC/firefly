@@ -21,11 +21,13 @@ export const ImageExpandedMode= memo(({closeFunc,insideFlex=true,viewerId, force
 
     if (vr.expandedMode===ExpandType.COLLAPSE) return false;
     const layoutType= vr.expandedMode===ExpandType.GRID ? 'grid' : 'single';
-    const foundViewerId= viewerId || getViewer(getMultiViewRoot(),EXPANDED_MODE_RESERVED)?.viewerId;
+    const viewer=  getViewer(getMultiViewRoot(),EXPANDED_MODE_RESERVED);
+    const foundViewerId= viewerId || viewer?.viewerId;
     return (
         <MultiImageViewerView viewerPlotIds={getExpandedViewerItemIds(multiViewRoot)}
                               layoutType={layoutType} Toolbar={ExpandedTools}
                               viewerId={foundViewerId} visRoot={vr}
+                              scrollGrid={viewer?.scroll ?? false}
                               style={{flex:'1 1 auto'}} closeFunc={closeFunc}
                               defaultDecoration={false} showWhenExpanded={true}
                               insideFlex={insideFlex}

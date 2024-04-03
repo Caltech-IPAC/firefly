@@ -5,21 +5,37 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {Button, Checkbox, Divider, IconButton, Sheet, Stack, Tooltip} from '@mui/joy';
+import {Button, Checkbox, Divider, IconButton, Sheet, Stack, Switch, Tooltip, Typography} from '@mui/joy';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {ExpandType, dispatchChangeExpandedMode, dispatchExpandedAutoPlay, visRoot } from '../ImagePlotCntlr.js';
+import {
+    ExpandType, dispatchChangeExpandedMode, dispatchExpandedAutoPlay, visRoot,
+} from '../ImagePlotCntlr.js';
 import {primePlot, getActivePlotView} from '../PlotViewUtil.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {DisplayTypeButtonGroup, ListViewButton} from '../ui/Buttons.jsx';
 import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
-import {getMultiViewRoot, getExpandedViewerItemIds} from '../MultiViewCntlr.js';
+import {
+    getMultiViewRoot, getExpandedViewerItemIds, getViewer, EXPANDED_MODE_RESERVED, dispatchViewerScroll
+} from '../MultiViewCntlr.js';
 import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
 import NavigateNext from '@mui/icons-material/NavigateNextRounded';
 import NavigateBefore from '@mui/icons-material/NavigateBeforeRounded';
 import ActiveDotIcon from '@mui/icons-material/FiberManualRecord';
 import InactiveDotIcon from '@mui/icons-material/FiberManualRecordOutlined';
+
+
+const SCROLL_TIP=(
+    <Typography  level='body-sm' width='50rem'>
+        Use this mode when you have many images. When enabled...
+            <ul>
+                <li>You are able to use your browser to scroll through each image.</li>
+                <li>Images will remain larger and the whole image area can be scrolled</li>
+                <li>You may only zoom the active image in or out</li>
+            </ul>
+    </Typography>
+);
 
 function createOptions(expandedMode, singleAutoPlay, plotIdAry) {
     return (
@@ -46,8 +62,10 @@ function getState() {
 export function ExpandedTools({closeFunc}) {
 
     const {expandedMode,activePlotId, singleAutoPlay, plotViewAry}= useStoreConnector(getState);
-    const plotIdAry= getExpandedViewerItemIds(getMultiViewRoot());
-    const single= plotViewAry===1;
+    const viewer= getViewer(getMultiViewRoot(), EXPANDED_MODE_RESERVED);
+    const scroll= viewer?.scroll ?? false;
+    const plotIdAry= viewer.itemIdAry;
+    const single= plotViewAry?.length===1;
 
     const getPlotTitle = (plotId) => primePlot(visRoot(),plotId)?.title ?? '';
 
@@ -59,6 +77,18 @@ export function ExpandedTools({closeFunc}) {
                     <Stack {...{direction:'column', justifyContent:'space-between', minHeight:25, className:'disable-select'}}>
                         <div style={{alignSelf:'flex-end', whiteSpace:'nowrap', display:'flex'}}>
                             <WhichView expandedMode={expandedMode}/>
+                            {!single && expandedMode===ExpandType.GRID &&
+                                <>
+                                    <Divider orientation='vertical' sx={{mx:1}}/>
+                                    <Tooltip title={SCROLL_TIP}>
+                                        <Switch size='md' endDecorator={scroll ? `Scrolling ${plotIdAry.length} images` : 'scroll Images'}
+                                                checked={scroll}
+                                                onChange={() => {
+                                                    dispatchViewerScroll({viewerId:EXPANDED_MODE_RESERVED,scroll:!scroll});
+                                                }} />
+                                    </Tooltip>
+                                </>
+                            }
                             {createOptions(expandedMode,singleAutoPlay, plotIdAry)}
                             <PagingControl
                                 viewerItemIds={getExpandedViewerItemIds(getMultiViewRoot())}
