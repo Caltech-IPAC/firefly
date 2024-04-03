@@ -21,7 +21,7 @@ export function LandingPage({slotProps={}, sx, ...props}) {
         bgMonitorHint: {appTitle, id: 'bgMonitor', hintText: 'Load job results from background monitor', tipPlacement: 'end', sx: { right: 8 }},
         topSection: { appTitle },
         bottomSection: {
-                icon: <QueryStats sx={{ width: '5rem', height: '5rem' }} />,
+                icon: <QueryStats sx={{ width: '6rem', height: '6rem' }} />,
                 text: 'Getting Started',
                 subtext: undefined,
                 // subtext: undefined,
@@ -53,7 +53,7 @@ export function LandingPage({slotProps={}, sx, ...props}) {
                 },
             }}>
                 <Stack justifyContent='space-between' width={1}>
-                    <Stack spacing={1} width={1} px={4} py={3} {...slotProps?.contentSection}>
+                    <Stack spacing={2} width={1} px={4} py={3} {...slotProps?.contentSection}>
                         <Slot component={DefaultAppBranding} {...defSlotProps.topSection} slotProps={slotProps?.topSection}/>
                         <Slot component={EmptyResults} {...defSlotProps.bottomSection} slotProps={slotProps?.bottomSection}/>
                     </Stack>
@@ -68,7 +68,7 @@ export function LandingPage({slotProps={}, sx, ...props}) {
 function DefaultAppBranding({appTitle, appDescription}) {
     return (
         <Stack spacing={.25} alignItems='center'>
-            <Typography sx={{fontSize: 'xl4'}} color='neutral'> {`Welcome to ${appTitle}`}</Typography>
+            <Typography fontSize='xl3' color='neutral'>{`Welcome to ${appTitle}`}</Typography>
             {appDescription && <Typography level={'body-md'}>{appDescription}</Typography>}
         </Stack>
     );
@@ -84,27 +84,28 @@ function EmptyResults({icon, text, subtext, summaryText, actionItems}) {
     );
 
     return (
-        <Sheet variant='soft' sx={{py: 8}}>
-            <Stack spacing={6} alignItems='center'>
-                <Stack spacing={2} alignItems='center'>
-                    {icon}
-                    <Stack spacing={.5} alignItems='center'>
-                        <Typography level={'h3'} fontWeight={'var(--joy-fontWeight-md)'}>{text}</Typography>
-                        {Boolean(subtext) && <Typography level={'body-lg'}>{subtext}</Typography>}
+        <Sheet variant='soft' sx={{pt: 8, pb: 4, px: 2}}>
+            <Stack spacing={10} alignItems='center'>
+                <Stack spacing={Boolean(subtext) ? 6 : 3}>
+                    <Stack spacing={2} alignItems='center'>
+                        {icon}
+                        <Stack spacing={.5} alignItems='center'>
+                            <Typography level='h2' fontWeight='md'>{text}</Typography>
+                            {Boolean(subtext) && <Typography level={'body-lg'}>{subtext}</Typography>}
+                        </Stack>
                     </Stack>
-                </Stack>
-                <Stack direction='row' spacing={6}>
-                    {actionItems.map((actionItem, idx) => (
-                        <React.Fragment key={idx}>
-                            {idx > 0 && <Divider orientation='vertical' />}
-                            {renderActionItem(actionItem)}
-                        </React.Fragment>
-                    ))}
+                    <Stack direction='row' spacing={6}>
+                        {actionItems.map((actionItem, idx) => (
+                            <React.Fragment key={idx}>
+                                {idx > 0 && <Divider orientation='vertical' />}
+                                {renderActionItem(actionItem)}
+                            </React.Fragment>
+                        ))}
+                    </Stack>
                 </Stack>
                 {Boolean(summaryText) &&
                     <Stack spacing={2} alignItems='center'>
-                        <Typography level={'h3'} fontWeight={'var(--joy-fontWeight-md)'}>{summaryText}</Typography>
-                        {/*<Typography level={'title-lg'}>{summaryText}</Typography>*/}
+                        <Typography level={'body-lg'}>{summaryText}</Typography>
                     </Stack>}
             </Stack>
         </Sheet>
