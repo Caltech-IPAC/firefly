@@ -3,7 +3,8 @@
  */
 
 
-import React, {forwardRef} from 'react';
+import {debounce} from 'lodash';
+import React, {forwardRef, useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
 import {SINGLE, GRID} from '../MultiViewCntlr.js';
 import {Divider, Stack} from '@mui/joy';
@@ -23,12 +24,25 @@ const defDecStyle= {
 
 export const MultiItemViewerView=forwardRef( (props, ref) =>  {
 
+    const {current:gridContainerElement}= useRef({element:undefined});
+    const [,setWindowWidth]= useState(window?.innerWidth??1000);
     const {layoutType, activeItemId,
         viewerItemIds, forceRowSize, forceColSize, makeCustomLayout, gridDefFunc,
         style, insideFlex=false, defaultDecoration=true, sparseGridTitleLocation= 'top',
         scrollGrid=false,
         makeToolbar, makeItemViewer, makeItemViewerFull, autoRowOriented=true}= props;
     let wrapperStyle;
+
+    useEffect(() => {
+        if (!scrollGrid) return;
+        const doResize= () => setWindowWidth(window.innerWidth);
+        const browserResizeCallback= debounce(doResize,20);
+        window.addEventListener('resize', browserResizeCallback);
+        return () => {
+            window.removeEventListener('resize', browserResizeCallback);
+        };
+    },[]);
+
     if (insideFlex) {
         wrapperStyle= Object.assign({}, flexContainerStyle, {flex:'1 1 auto'});
     }
@@ -61,11 +75,12 @@ export const MultiItemViewerView=forwardRef( (props, ref) =>  {
     }
     else if (scrollGrid) {
         let cols;
+        const {width:containerWidth}= gridContainerElement?.element ?
+            gridContainerElement.element.getBoundingClientRect() : {width:0,height:0};
         if (viewerItemIds.length>16) cols=4;
-        else if (viewerItemIds.length>9) cols=3;
-        else if (viewerItemIds.length>5) cols=2;
-        else cols=1;
-        container= makeScrollGrid(viewerItemIds,cols,makeItemViewer);
+        else if (viewerItemIds.length>5) cols=3;
+        else cols=2;
+        container= makeScrollGrid(viewerItemIds,cols,containerWidth, makeItemViewer);
     }
     else {                   // GRID automatic
         const dim= findAutoGridDim(viewerItemIds.length, autoRowOriented);
@@ -82,7 +97,7 @@ export const MultiItemViewerView=forwardRef( (props, ref) =>  {
                     <Divider orientation={'horizontal'}/>
                 </Stack>}
 
-            <div key='container'
+            <div key='container' ref={(e) => gridContainerElement.element= e}
                  style={{position:'relative', width:'100%', height:'100%', flex:'1 1 auto',
                          overflow: (gridDefFunc||scrollGrid) ? 'auto' : 'hidden' }}>
                 {container}
@@ -128,11 +143,12 @@ function makePackedGrid(viewerItemIds,rows,cols, columnBased,makeItemViewer) {
         rowBasedIvAry(viewerItemIds,rows,percentWidth,percentHeight,width,height,makeItemViewer);
 }
 
-function makeScrollGrid(viewerItemIds,cols,makeItemViewer) {
+function makeScrollGrid(viewerItemIds,cols,containerWidth, makeItemViewer) {
     const size= 100/cols;
+    const sizePx= containerWidth ? Math.trunc((size/100)*containerWidth-2) : 0;
     const width= `calc(${size}% - 2px)`;
-    const height= `calc(${size}% - 2px)`;
-    return columnBasedIvAry(viewerItemIds,cols,size,size,width,height,makeItemViewer);
+    const height= containerWidth ? `${sizePx-2}px` : `calc(${size}% - 2px)`;
+    return columnBasedIvAry(viewerItemIds,cols,size,size,width,height,makeItemViewer,sizePx);
 }
 
 
@@ -150,12 +166,12 @@ function rowBasedIvAry(viewerItemIds,rows,percentWidth,percentHeight,width,heigh
 }
 
 
-function columnBasedIvAry(viewerItemIds,cols,percentWidth,percentHeight,width,height,makeItemViewer) {
+function columnBasedIvAry(viewerItemIds,cols,percentWidth,percentHeight,width,height,makeItemViewer,sizePx=0) {
     let col = 0;
     let row = 0;
     return viewerItemIds.map( (plotId) => {
         const left= `calc(${col*percentWidth}% + 1px)`;
-        const top= `calc(${row*percentHeight}% + 1px)`;
+        const top= sizePx ? `${row*sizePx+1}px`  : `calc(${row*percentHeight}% + 1px)`;
         col = (col < cols - 1) ? col + 1 : 0;
         if (col===0) row++;
         return renderItemViewer(makeItemViewer,plotId,top,left,width,height);
