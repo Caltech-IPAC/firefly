@@ -8,7 +8,7 @@ import {updateSet} from '../../util/WebUtil.js';
 import * as TblUtil from '../TableUtil.js';
 import * as Cntlr from '../TablesCntlr.js';
 import {SelectInfo} from '../SelectInfo.js';
-import {getColByUCD, getColByUtype, getTblById, getColumn} from '../TableUtil.js';
+import {getColByUCD, getColByUtype, getTblById, getColumn, parseError} from '../TableUtil.js';
 import {MetaConst} from '../../data/MetaConst.js';
 import {Logger} from '../../util/Logger.js';
 
@@ -173,8 +173,9 @@ function fixStatus(root, tbl_id) {
     if (table.status) {
         const {code, message} = table.status;
         if (code && (code < 200 || code >= 400)) {
-            if (table.error) {          // if there status with error but no error, add error for backward compatible.
-                return updateSet(root, [tbl_id, 'error'],  message || 'Unable to load table.');
+            if (!table.error) {          // if there error status but no error in tableModel, add error for backward compatibility.
+                const {message:error, cause} = parseError(message);
+                return updateSet(root, [tbl_id, 'error'],  new Error(error, {cause}) || 'Unable to load table.');
             }
         }
     } else {
@@ -188,6 +189,6 @@ function fixStatus(root, tbl_id) {
 
 function parseStatus(error) {
     if (!error) return {code:200, message: ''};
-    const [,code=500,message=error] = error.trim().match(/^(\d{3})\W+(.*)/) || [,,];
+    const [,code=500,message=error] = error.trim?.().match(/^(\d{3})\W+(.*)/) || [,,];
     return {code, message};
 }

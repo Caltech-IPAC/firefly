@@ -339,15 +339,16 @@ const Samples = () => {
 };
 
 
-function parseError(err) {
-    if (err) {
-        const [main, details] = err.message.split(';');
+function parseError({cause}) {
+    if (cause) {
+        const [_, type='', main, details] = cause.match(/(.+?): (.+?);(.+)/);
         return  (
-            <div>
-                <div style={{fontWeight: 'bold', marginBottom: 5}}>{main}</div>
-                <code>{details}</code>
-            </div>
+            <Stack spacing={1}>
+                <Typography level='title-lg' color='danger'>{main}</Typography>
+                <Typography level='body-md'>{details}</Typography>
+            </Stack>
         );
+
     } else return 'Operation failed with unexpected error.';
 }
 

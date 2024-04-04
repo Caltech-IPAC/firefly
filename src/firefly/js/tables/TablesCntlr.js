@@ -462,7 +462,7 @@ function highlightRow(action) {
                     dispatch({type: TABLE_UPDATE, payload: tableModel});
                     dispatchHighlight(dispatch, tableModel);
                 }).catch( (error) => {
-                    dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, `Unable to load table. \n   ${error.message}`)});
+                    dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, error)});
                 });
             }
         }
@@ -657,7 +657,7 @@ function syncFetch(request, hlRowIdx, dispatch, tbl_id) {
                 logger.error(e.stack);
             }
         }).catch((error) => {
-            dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, error.message)});
+            dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, error)});
         });
 }
 

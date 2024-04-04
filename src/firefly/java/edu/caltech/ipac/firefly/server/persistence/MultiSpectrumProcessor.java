@@ -65,7 +65,7 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
 
             return table;
         } catch (Exception e) {
-            throw new DataAccessException("Fail during QueryIBE:" + e.getMessage(), e);
+            throw new DataAccessException("IBE query failed",  e);
         }
     }
 

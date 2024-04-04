@@ -1252,7 +1252,7 @@ export function isColDegree(table, colName) {
 }
 
 export function createErrorTbl(tbl_id, error) {
-    return set({tbl_id, error: error||'something went wrong'}, 'tableMeta.Loading-Status', 'COMPLETED');
+    return set({tbl_id, error}, 'tableMeta.Loading-Status', 'COMPLETED');
 }
 
 
@@ -1480,6 +1480,17 @@ export function splitCols(cnames='') {
  */
 export function splitVals(values='') {
     return values.split(/,(?=(?:[^']*'[^']*')*[^']*$)/);
+}
+
+export function parseError(error) {
+    const message = error?.message ?? error;
+    if (error?.cause) {
+        const [_, type, cause] = error?.cause.match(/(.+?):(.+)/) || [];
+        return {message, type, cause};
+    } else {
+        const [_, error, cause] = message.match(/(.+?):(.+)/);     // formatted error messages; 'error:cause'
+        return {message: error || message, cause};
+    }
 }
 
 /*-------------------------------------private------------------------------------------------*/

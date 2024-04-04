@@ -42,7 +42,7 @@ public class WsServerUtils {
             String s=  wsUtil.upload(wsParams);
             return ServerContext.convertToFile(s);
         } catch (IOException|FailedRequestException e) {
-            throw new DataAccessException("Could now retrieve file from workspace",e);
+            throw new DataAccessException("Unable to retrieve file from workspace",e);
         }
     }
 

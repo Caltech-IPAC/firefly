@@ -169,7 +169,7 @@ public abstract class BaseGator extends EmbeddedDbProcessor {
         FileUtil.silentClose(fr);
         if (StringUtils.isEmpty(errStr)) {
             handleErr(outFile,
-                    "IRSA search failed, Catalog is unavailable",
+                    "IRSA search failed. Catalog is unavailable",
                     "No data returned from search- the output file is zero length");
         } else if (errStr.startsWith(ERR_START) && errStr.charAt(errStr.length() - 1) == ']') {
             String s = errStr.substring(ERR_START.length(), errStr.length() - 1);
@@ -185,20 +185,20 @@ public abstract class BaseGator extends EmbeddedDbProcessor {
 
         } else if (errStr.toLowerCase().contains(ANY_ERR_STR)) {
             handleErr(outFile,
-                    "IRSA search failed, Catalog is unavailable",
+                    "IRSA search failed. Catalog is unavailable",
                     "Receiving unrecognized errors from Gator, Error: " + errStr);
         } else if (errStr.toLowerCase().contains(HTML_ERR) &&
                 outFile.length() > MAX_ERROR_LEN) {
             handleErr(outFile,
-                    "IRSA search failed, Catalog is unavailable",
+                    "IRSA search failed. Catalog is unavailable",
                     "Receiving unrecognized errors from Gator, html send by mistake");
         } else if (errStr.toLowerCase().contains(HTML_ERR)) { // maybe send the html here
             handleErr(outFile,
-                    "IRSA search failed, Catalog is unavailable",
+                    "IRSA search failed. Catalog is unavailable",
                     "Receiving unrecognized errors from Gator, html send by mistake");
         } else if (errStr.contains(STRANGE_HEADER_ERR) && outFile.length() < 100) { // i don't know why but it is bad
             handleErr(outFile,
-                    "IRSA search failed, Catalog is unavailable or results are too large to process",
+                    "IRSA search failed. Catalog is unavailable or results are too large to process",
                     "Receiving unrecognized errors from Gator, sending html header in the body by mistake");
         }
     }
@@ -228,7 +228,7 @@ public abstract class BaseGator extends EmbeddedDbProcessor {
         if (!Double.isNaN(value)) {
             requiredParam(sb, name, value + "");
         } else {
-            throw new EndUserException("IRSA search failed, Catalog is unavailable",
+            throw new EndUserException("IRSA search failed. Catalog is unavailable",
                     "Search Processor did not find the required parameter: " + name);
         }
     }
@@ -237,7 +237,7 @@ public abstract class BaseGator extends EmbeddedDbProcessor {
         if (!StringUtils.isEmpty(value)) {
             sb.append(param(name, value));
         } else {
-            throw new EndUserException("IRSA search failed, Catalog is unavailable",
+            throw new EndUserException("IRSA search failed. Catalog is unavailable",
                     "Search Processor did not find the required parameter: " + name);
         }
     }
@@ -247,7 +247,7 @@ public abstract class BaseGator extends EmbeddedDbProcessor {
         if (!Double.isNaN(value)) {
             postParam(name, value + "");
         } else {
-            throw new EndUserException("IRSA search failed, Catalog is unavailable",
+            throw new EndUserException("IRSA search failed. Catalog is unavailable",
                     "Search Processor did not find the required parameter: " + name);
         }
     }
@@ -257,7 +257,7 @@ public abstract class BaseGator extends EmbeddedDbProcessor {
         if (!StringUtils.isEmpty(value)) {
             postParam(name, value);
         } else {
-            throw new EndUserException("IRSA search failed, Catalog is unavailable",
+            throw new EndUserException("IRSA search failed. Catalog is unavailable",
                     "Search Processor did not find the required parameter: " + name);
         }
     }
@@ -266,7 +266,7 @@ public abstract class BaseGator extends EmbeddedDbProcessor {
         if (f.canRead()) {
             _postBuilder.addFile(name, f);
         } else {
-            throw new EndUserException("IRSA search failed, Catalog is unavailable",
+            throw new EndUserException("IRSA search failed. Catalog is unavailable",
                     "Search Processor could not read file: " + f.getPath());
         }
     }
@@ -282,7 +282,7 @@ public abstract class BaseGator extends EmbeddedDbProcessor {
             }
         }
         if (badParam) {
-            throw new EndUserException("IRSA search failed, Catalog is unavailable",
+            throw new EndUserException("IRSA search failed. Catalog is unavailable",
                     "Search Processor did not find the required parameter: " + name);
         }
     }
