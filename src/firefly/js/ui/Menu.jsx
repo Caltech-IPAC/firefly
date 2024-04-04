@@ -417,9 +417,10 @@ function SideBarView({menu,appTitle,closeSideBar,haveResults,selected,dropDown,
                                 sx={{mr:1/2}}
                                 variant='outlined'
                                 onClick={() => {
-                                    const menuItems= menu.menuItems.map( (mi) => ({...mi, visible: undefined}) );
-                                    dispatchHideDropDown();
-                                    updateMenu(appTitle, {...menu, menuItems});
+                                    const newMI= menu.menuItems.map( (mi) => ({...mi, visible: undefined}) );
+                                    const selected= newMI.find( (m) => m.action===menu.selected && m.primary)?.action;
+                                    if (!selected) dispatchHideDropDown();
+                                    updateMenu(appTitle, {...menu, selected, menuItems: newMI});
                                 }}>
                                 Reset All
                             </Chip>
