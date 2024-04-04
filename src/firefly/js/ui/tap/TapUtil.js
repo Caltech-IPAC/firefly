@@ -95,7 +95,13 @@ async function doLoadTapSchemas(serviceUrl) {
         }
         const schemaNameIdx = getColumnIdx(tableModel, 'schema_name');
         const rTable = omit(tableModel, 'tableData.data');
-        rTable.tableData.data = uniqBy(tableModel.tableData.data, (row) => row[schemaNameIdx]);
+        rTable.tableData.data = uniqBy(tableModel.tableData.data, (row) => row[schemaNameIdx])
+            .map( ( (row) => {
+                const schemaName= row[schemaNameIdx];
+                const tableCnt= tableModel.tableData.data.filter( (fr) => fr[schemaNameIdx]===schemaName)?.length ?? 0;
+                return [...row,tableCnt];
+            }));
+        rTable.tableData.columns= [...rTable.tableData.columns,{name:'table_cnt',ID:'col_table_cnt',type:'int'}];
         rTable.totalRows = rTable.tableData?.data?.length || 0;
 
         if (rTable.totalRows === 0) return {error:'No schemas available'};
