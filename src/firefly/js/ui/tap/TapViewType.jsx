@@ -202,9 +202,10 @@ function BasicUI(props) {
                     requestSchemaName = schemas[0];
                 }
                 const schemaDescriptions = getColumnValues(tableModel, 'schema_desc');
+                const tableCnt = getColumnValues(tableModel, 'table_cnt');
                 const schemaOptions = schemas.map((e, i) => {
                     const label = schemaDescriptions[i] ? schemaDescriptions[i] : `[${e}]`;
-                    return {label, value: e};
+                    return {label, value: e, rows:tableCnt?.[i] ?? 0};
                 });
                 setSchemaName(requestSchemaName);
                 setSchemaOptions(schemaOptions);
