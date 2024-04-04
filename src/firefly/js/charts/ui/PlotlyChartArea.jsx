@@ -1,20 +1,114 @@
-import React, {Component} from 'react';
+import React, {useEffect, useRef} from 'react';
 import PropTypes from 'prop-types';
-import {flux} from '../../core/ReduxFlux.js';
 import {get, set, cloneDeep} from 'lodash';
-import shallowequal from 'shallowequal';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-import {getTheme} from '../../ui/FireflyRoot.jsx';
 
 import {dispatchChartHighlighted, dispatchChartUpdate, dispatchSetActiveTrace, getAnnotations, getChartData, usePlotlyReact} from '../ChartsCntlr.js';
 import {clearChartConn, flattenAnnotations, handleTableSourceConnections, isSpectralOrder, isScatter2d} from '../ChartUtil.js';
+import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
+import {Skeleton, useTheme} from '@mui/joy';
 
 const X_TICKLBL_PX = 60;
 const TITLE_PX = 30;
 const MIN_MARGIN_PX = 30; // should be enough to accommodate upper limit annotation
 
-function adjustLayout(layout={}) {
+
+export function PlotlyChartArea({chartId, widthPx, heightPx, thumbnail}) {
+
+    const theme = useTheme();
+
+    const {data=[], isLoading, highlighted, selected, layout={}, activeTrace=0, xyratio, stretch} = useStoreConnector(() => getChartState(chartId), [chartId]);
+
+    useEffect(()=> {
+        const {fireflyData} = getChartData(chartId);
+        handleTableSourceConnections({chartId, data, fireflyData});
+        return () => {
+            clearChartConn({chartId});
+        };
+    }, [chartId]);
+
+    const prevDim = useRef();       // save previous dimension to detect resizing
+    const doingResize = widthPx !== prevDim.current?.widthPx || heightPx !== prevDim.current?.heightPx;
+    prevDim.current = {widthPx, heightPx};
+
+    // handles no data
+    if (isLoading) return <Skeleton/>;
+    if (data.length === 0) return null;
+
+    // put the active trace after all inactive traces
+    let pdata = data.reduce((rdata, e, idx) =>  {
+        (idx !== activeTrace) && rdata.push(traceShallowCopy(e));
+        return rdata;
+    }, []);
+
+    pdata.push(traceShallowCopy(data[activeTrace]));
+
+    //let pdata = data.map((e) => Object.assign({}, e)); // create shallow copy of data elements to avoid sharing x,y,z arrays
+    let annotations = getAnnotations(chartId);
+    if (!data[activeTrace] || isScatter2d(get(data[activeTrace], 'type', ''))) {
+        // highlight makes sense only for scatter at the moment
+        // 3d scatter highlight and selected appear in front - not good: disable for the moment
+        if (selected) {
+            pdata = pdata.concat([traceShallowCopy(selected)]);
+            if (annotations.length>0) {
+                const selectedAnnotations = flattenAnnotations(get(selected, 'firefly.annotations'));
+                if (selectedAnnotations.length>0) { annotations = annotations.concat(selectedAnnotations); }
+            }
+        }
+        if (highlighted) {
+            pdata = pdata.concat([traceShallowCopy(highlighted)]);
+            if (annotations.length>0) {
+                const highlightedAnnotations = flattenAnnotations(get(highlighted, 'firefly.annotations'));
+                annotations = annotations.concat(highlightedAnnotations);
+            }
+        }
+    }
+    const {chartWidth, chartHeight} = calculateChartSize(widthPx, heightPx, xyratio, stretch);
+
+    const showlegend = data.length > 1;
+    const playout = cloneDeep(Object.assign({showlegend}, adjustLayout(layout, theme), {width: chartWidth, height: chartHeight, annotations}));
+
+    const style = {float: 'left'};
+    if (chartWidth > widthPx || chartHeight > heightPx) {
+        Object.assign(style, {overflow: 'auto', width: widthPx, height: heightPx});
+    }
+
+    if (thumbnail) renderAsThumbnail(playout);
+
+    const afterRedraw = (chart, pl) => {
+        chart.on('plotly_click', onClick(chartId));
+        chart.on('plotly_selected', onSelect(chartId));
+    };
+
+    return (
+        <div style={style}>
+            <PlotlyWrapper newPlotCB={afterRedraw} data={pdata} layout={playout}
+                           chartId={chartId}
+                           autoDetectResizing={false}
+                           thumbnail={thumbnail}
+                           doingResize={doingResize}
+                           key={chartId + thumbnail}/>
+        </div>
+    );
+}
+PlotlyChartArea.propTypes = {
+    chartId: PropTypes.string.isRequired,
+    widthPx: PropTypes.number,
+    heightPx: PropTypes.number,
+    thumbnail: PropTypes.bool
+};
+
+
+function getChartState(chartId) {
+    const {data, fireflyData=[], highlighted, layout, fireflyLayout={}, selected, activeTrace} = getChartData(chartId);
+    const isLoading = fireflyData.some((e)=>get(e, 'isLoading'));
+    const {xyratio, stretch} = fireflyLayout;
+    return {data, isLoading, highlighted, selected, layout, activeTrace, xyratio, stretch};
+}
+
+
+function adjustLayout(layout={}, theme) {
     const hasTitle = get(layout, 'title');
     const yaxis = get(layout, 'yaxis', {});
     const hasOppositeY = get(yaxis, 'side') === 'right';
@@ -28,9 +122,9 @@ function adjustLayout(layout={}) {
     set(layout, 'margin.t', hasOppositeX ? X_TICKLBL_PX: MIN_MARGIN_PX + (hasTitle ? TITLE_PX: 0));
 
     // make background same as app's background color
-    const bgSurface = getTheme()?.palette?.background?.surface?.split(',')[1].slice(0,-1);     // plotly will only take a color string
-    if (!layout?.paper_bgcolor) set(layout, 'paper_bgcolor', bgSurface);
-    if (!layout?.plot_bgcolor)  set(layout, 'plot_bgcolor', bgSurface);
+    const bgSurface = theme?.palette?.background?.surface?.split(',')[1].slice(0,-1);     // plotly will only take a color string
+    set(layout, 'paper_bgcolor', bgSurface);
+    set(layout, 'plot_bgcolor', bgSurface);
 
     return layout;
 }
@@ -44,148 +138,6 @@ function traceShallowCopy(trace) {
         return Object.assign({}, trace, {selectedpoints: null});
     }
 }
-
-export class PlotlyChartArea extends Component {
-
-    constructor(props) {
-        super(props);
-
-        const {chartId} = this.props;
-        const {data, fireflyData, mounted} = getChartData(chartId);
-        if (mounted === 1) {
-            handleTableSourceConnections({chartId, data, fireflyData});
-        }
-        this.state = this.getNextState();
-        this.afterRedraw = this.afterRedraw.bind(this);
-    }
-
-    shouldComponentUpdate(np, ns) {
-        const {widthPx, heightPx, chartId, thumbnail} = np;
-        const propsEqual =  widthPx === this.props.widthPx &&
-                            heightPx === this.props.heightPx &&
-                            chartId === this.props.chartId &&
-                            thumbnail === this.props.thumbnail;
-        const stateEqual = shallowequal(ns, this.state);
-        return !(propsEqual && stateEqual);
-    }
-
-    componentDidMount() {
-        this.removeListener = flux.addListener(() => this.storeUpdate());
-
-    }
-
-    componentWillUnmount() {
-        this.isUnmounted=true;
-        this.removeListener && this.removeListener();
-        const {chartId} = this.props;
-        const {mounted} = getChartData(chartId);
-        if (mounted === 0) {
-            clearChartConn({chartId});
-        }
-    }
-
-    getNextState() {
-        const {chartId} = this.props;
-        const {data, fireflyData=[], highlighted, layout, fireflyLayout={}, selected, activeTrace} = getChartData(chartId);
-        return  {data, isLoading: fireflyData.some((e)=>get(e, 'isLoading')), highlighted, selected, layout, activeTrace, xyratio: fireflyLayout.xyratio, stretch: fireflyLayout.stretch};
-    }
-
-    storeUpdate() {
-        if (!this.isUnmounted) {
-            const nextState = this.getNextState();
-            if (nextState && !shallowequal(nextState, this.state)) {
-                this.setState(nextState);
-            }
-        }
-    }
-
-    afterRedraw(chart, pl) {
-        const {chartId} = this.props;
-        chart.on('plotly_click', onClick(chartId));
-        chart.on('plotly_selected', onSelect(chartId));
-    }
-
-    render() {
-        const {chartId, widthPx, heightPx, thumbnail} = this.props;
-        const {data=[], isLoading, highlighted, selected, layout={}, activeTrace=0, xyratio, stretch} = this.state;
-        if (isLoading) {
-            return (
-                <div style={{position: 'relative', width: '100%', height: '100%'}}>
-                    <div className='loading-mask'/>
-                </div>
-            );
-        } else if (data.length === 0) {
-            return null;
-        }
-
-        let doingResize = false;
-        if (widthPx !== this.widthPx || heightPx !== this.heightPx) {
-            this.widthPx = widthPx;
-            this.heightPx = heightPx;
-            doingResize = true;
-        }
-        const showlegend = data.length > 1;
-
-        // put the active trace after all inactive traces
-
-
-        let pdata = data.reduce((rdata, e, idx) =>  {
-            (idx !== activeTrace) && rdata.push(traceShallowCopy(e));
-            return rdata;
-        }, []);
-
-        pdata.push(traceShallowCopy(data[activeTrace]));
-
-        //let pdata = data.map((e) => Object.assign({}, e)); // create shallow copy of data elements to avoid sharing x,y,z arrays
-        let annotations = getAnnotations(chartId);
-        if (!data[activeTrace] || isScatter2d(get(data[activeTrace], 'type', ''))) {
-            // highlight makes sense only for scatter at the moment
-            // 3d scatter highlight and selected appear in front - not good: disable for the moment
-            if (selected) {
-                pdata = pdata.concat([traceShallowCopy(selected)]);
-                if (annotations.length>0) {
-                    const selectedAnnotations = flattenAnnotations(get(selected, 'firefly.annotations'));
-                    if (selectedAnnotations.length>0) { annotations = annotations.concat(selectedAnnotations); }
-                }
-            }
-            if (highlighted) {
-                pdata = pdata.concat([traceShallowCopy(highlighted)]);
-                if (annotations.length>0) {
-                    const highlightedAnnotations = flattenAnnotations(get(highlighted, 'firefly.annotations'));
-                    annotations = annotations.concat(highlightedAnnotations);
-                }
-            }
-        }
-        const {chartWidth, chartHeight} = calculateChartSize(widthPx, heightPx, xyratio, stretch);
-        //const playout = Object.assign({showlegend}, adjustLayout(layout), {width: chartWidth, height: chartHeight, annotations});
-        const playout = cloneDeep(Object.assign({showlegend}, adjustLayout(layout), {width: chartWidth, height: chartHeight, annotations}));
-
-        const style = {float: 'left'};
-        if (chartWidth > widthPx || chartHeight > heightPx) {
-            Object.assign(style, {overflow: 'auto', width: widthPx, height: heightPx});
-        }
-
-        if (thumbnail) renderAsThumbnail(playout);
-
-        return (
-            <div style={style}>
-                <PlotlyWrapper newPlotCB={this.afterRedraw} data={pdata} layout={playout}
-                               chartId={chartId}
-                               autoDetectResizing={false}
-                               thumbnail={thumbnail}
-                               doingResize={doingResize}
-                               key={chartId + thumbnail}/>
-            </div>
-        );
-    }
-}
-
-PlotlyChartArea.propTypes = {
-    chartId: PropTypes.string.isRequired,
-    widthPx: PropTypes.number,
-    heightPx: PropTypes.number,
-    thumbnail: PropTypes.bool
-};
 
 function renderAsThumbnail(layout) {
     const axisOverride = {

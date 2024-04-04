@@ -3,7 +3,7 @@
  */
 
 import React, {useEffect} from 'react';
-import {Box, Stack, Typography, Sheet, Divider, ChipDelete, Tooltip} from '@mui/joy';
+import {Box, Stack, Typography, Sheet, Divider, ChipDelete, Tooltip, Skeleton} from '@mui/joy';
 import PropTypes, {object, shape} from 'prop-types';
 import {defer, truncate, get, set} from 'lodash';
 import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
@@ -416,11 +416,7 @@ function NotReady({showTitle, tbl_id, title, removable, backgroundable, error}) 
                 </div>
             );
         } else {
-            return (
-                <div style={{ position: 'relative', width: '100%', height: '100%'}}>
-                    <div className='loading-mask'/>
-                </div>
-            );
+            return <Skeleton/>;
         }
     }
 }
