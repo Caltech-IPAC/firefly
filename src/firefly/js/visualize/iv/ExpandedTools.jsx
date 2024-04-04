@@ -81,7 +81,7 @@ export function ExpandedTools({closeFunc}) {
                                 <>
                                     <Divider orientation='vertical' sx={{mx:1}}/>
                                     <Tooltip title={SCROLL_TIP}>
-                                        <Switch size='md' endDecorator={scroll ? `Scrolling ${plotIdAry.length} images` : 'scroll Images'}
+                                        <Switch size='md' endDecorator={scroll ? `Scrolling ${plotIdAry.length} images` : 'Scroll Images'}
                                                 checked={scroll}
                                                 onChange={() => {
                                                     dispatchViewerScroll({viewerId:EXPANDED_MODE_RESERVED,scroll:!scroll});
