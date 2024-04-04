@@ -4,7 +4,7 @@
 
 
 import React, {useEffect} from 'react';
-import PropTypes, {element, object, shape, string} from 'prop-types';
+import PropTypes, {element, node, object, shape, string} from 'prop-types';
 import {Typography} from '@mui/joy';
 import {cloneDeep} from 'lodash/lang.js';
 
@@ -168,7 +168,7 @@ export function HydraLanding({icon, title, desc, slotProps={}, ...props} ) {
 HydraLanding.propTypes = {
     icon: element,
     title: string,
-    desc: string,
+    desc: node,
     ...LandingPage.propTypes,
 };
 
