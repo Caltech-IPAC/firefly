@@ -148,7 +148,7 @@ export const ActiveChartsPanel = (props) => {
 
         if (!useOnlyChartsInViewer) {
             return watchTblGroup(viewerId, tbl_group, addDefaultChart, useOnlyChartsInViewer);
-        };
+        }
 
     }, [tbl_group, viewerId, chartId, useOnlyChartsInViewer]);
 
@@ -182,7 +182,8 @@ export const ActiveChartsPanel = (props) => {
                     viewerId,
                     tbl_group,
                     expandedMode,
-                    noChartToolbar}}
+                    noChartToolbar,
+                    showAddChart: true}}
                 />
             );
     }

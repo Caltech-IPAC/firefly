@@ -86,7 +86,7 @@ export class MultiChartViewer extends PureComponent {
     }
 
     render() {
-        const {viewerId, expandedMode, closeable, noChartToolbar, label, autoRowOriented=true} = this.props;
+        const {viewerId, expandedMode, closeable, noChartToolbar, label, showAddChart=false} = this.props;
         const {viewer}= this.state;
         const layoutType= getLayoutType(getMultiViewRoot(),viewerId);
         if (!viewer || isEmpty(viewer.itemIdAry)) {
@@ -160,7 +160,8 @@ export class MultiChartViewer extends PureComponent {
                             closeable,
                             viewerId,
                             layoutType,
-                            activeItemId
+                            activeItemId,
+                            showAddChart
                         }}/>
                         <Divider orientation='horizontal'/>
                     </>
@@ -185,6 +186,6 @@ MultiChartViewer.propTypes= {
     insideFlex : PropTypes.bool,
     closeable : PropTypes.bool,
     expandedMode: PropTypes.bool,
-    noChartToolbar: PropTypes.bool
-
+    noChartToolbar: PropTypes.bool,
+    showAddChart: PropTypes.bool
 };
