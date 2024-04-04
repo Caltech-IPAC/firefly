@@ -451,6 +451,7 @@ function TableChooser({tOps,tableTableModel, tableName,setTableName}) {
                 }} /> :
                 <Button {...{ color:'neutral', variant:'outlined',
                     sx:{
+                        justifyContent:'flex-start', overflow:'hidden',
                         width:1, minWidth:'12rem', flex:'1 1 auto', height:'5rem'},
                     onClick:() => showTableSelectPopup(tableTableModel,
                         (selectedTapTable) => {
@@ -458,7 +459,7 @@ function TableChooser({tOps,tableTableModel, tableName,setTableName}) {
                             setVal('tableName',selectedTapTable);
                         }
                     ) }}>
-                    <OpRender {...{sx:{width:'34rem', minHeight:'3rem', rowDesc:'rows'},
+                    <OpRender {...{sx:{minHeight:'3rem', rowDesc:'rows'},
                         ops: tOps, value:tableName}}/>
                 </Button>
             }
