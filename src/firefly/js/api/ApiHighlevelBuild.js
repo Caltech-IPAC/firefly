@@ -452,6 +452,7 @@ function buildImagePart(llApi) {
      * @param {number} fovDegFallOver the field of view size to determine when to move between a HiPS and an image
      * @param {WebPlotParams|WebPlotRequest} allSkyRequest a request object used to display allsky image.
      * @param {boolean} plotAllSkyFirst if plot allsky first
+     * @param {boolean} [userCanDeletePlots] if true the plot has an x so the user can delete it
      *
      * @memberof firefly
      * @public
@@ -473,9 +474,10 @@ function buildImagePart(llApi) {
      *
      *
      */
-    const showImageOrHiPS = (targetDiv, hipsRequest, imageRequest,  fovDegFallOver, allSkyRequest, plotAllSkyFirst) =>
+    const showImageOrHiPS = (targetDiv, hipsRequest, imageRequest,  fovDegFallOver,
+                             allSkyRequest, plotAllSkyFirst, userCanDeletePlots) =>
                         showImageOrHiPSInMultiViewer(llApi, targetDiv, hipsRequest, imageRequest,
-                                                     fovDegFallOver, allSkyRequest, plotAllSkyFirst);
+                                                     fovDegFallOver, allSkyRequest, plotAllSkyFirst, userCanDeletePlots);
 
     return {showImage, showHiPS, showImageOrHiPS, showImageFileOrUrl, setGlobalImageDef, showCoverage};
 }
@@ -570,7 +572,7 @@ function getPlotIdFromRequest(request) {
 }
 
 function showImageOrHiPSInMultiViewer(llApi, targetDiv, hipsRequest, imageRequest,
-                                                fovDegFallOver, allSkyRequest, plotAllSkyFirst) {
+                                                fovDegFallOver, allSkyRequest, plotAllSkyFirst, userCanDeletePlots=false) {
     const {dispatchPlotImageOrHiPS, dispatchAddViewer}= llApi.action;
     const {IMAGE, NewPlotMode}= llApi.util.image;
     const {MultiImageViewer, MultiViewStandardToolbar}= llApi.ui;
@@ -586,7 +588,8 @@ function showImageOrHiPSInMultiViewer(llApi, targetDiv, hipsRequest, imageReques
 
     const plotId= getPlotIdFromRequest(hipsRequest) || getPlotIdFromRequest(imageRequest);
     dispatchPlotImageOrHiPS({plotId, hipsRequest, viewerId: targetDiv,
-                             imageRequest, allSkyRequest, plotAllSkyFirst, fovDegFallOver});
+                             imageRequest, allSkyRequest, plotAllSkyFirst, fovDegFallOver,
+                             pvOptions: {userCanDeletePlots}});
 
     renderDOM(targetDiv, MultiImageViewer,
         {viewerId:targetDiv, canReceiveNewPlots:NewPlotMode.create_replace.key, Toolbar:MultiViewStandardToolbar,
