@@ -43,7 +43,7 @@ function createOptions(expandedMode, singleAutoPlay, plotIdAry) {
             {(expandedMode===ExpandType.SINGLE && plotIdAry.length>1) ?
                 <>
                     <Divider orientation='vertical' sx={{mx:1}}/>
-                    <Checkbox {...{label:'Auto Play', size:'sm', checked:singleAutoPlay,
+                    <Checkbox {...{label:'Auto play', size:'sm', checked:singleAutoPlay,
                         onChange:() => dispatchExpandedAutoPlay(!singleAutoPlay)
                     }} />
                     <Divider orientation='vertical' sx={{mx:1}}/>
