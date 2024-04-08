@@ -78,7 +78,7 @@ public class QueryIBE extends EmbeddedDbProcessor {
 
             // no search results situation
             if (ofile == null || !ofile.exists() || ofile.length() == 0) {
-                throw new DataAccessException("Fail during QueryIBE: no data returned");
+                throw new DataAccessException("No data returned");
             }
 
             if (request.getSortInfo() == null) {
@@ -89,7 +89,7 @@ public class QueryIBE extends EmbeddedDbProcessor {
             addAddtlMeta(dg.getTableMeta(), Arrays.asList(dg.getDataDefinitions()), request);
             return dg;
         } catch (IOException e) {
-            throw new DataAccessException("Fail during QueryIBE:" + e.getMessage(), e);
+            throw new DataAccessException("IBE query failed", e);
         }
     }
 

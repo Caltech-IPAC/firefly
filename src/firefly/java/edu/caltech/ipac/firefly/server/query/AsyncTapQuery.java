@@ -56,10 +56,11 @@ public class AsyncTapQuery extends UwsJobProcessor {
         inputs.setParam("LANG", lang); // in tap 1.0, lang param is required
         inputs.setParam("request", "doQuery"); // in tap 1.0, request param is required
         var uploadTable= request.getParam("adqlUploadSelectTable");
-        if (request.containsParam("UPLOAD") && uploadTable!=null) {
+        File ufile = ServerContext.convertToFile(request.getParam("UPLOAD"));
+        if (ufile != null && uploadTable!=null) {
             try {
                 inputs.setParam("UPLOAD",uploadTable+","+"param:temp.xml");
-                DataGroup dg= TableUtil.readAnyFormat(ServerContext.convertToFile(request.getParam("UPLOAD")));
+                DataGroup dg= TableUtil.readAnyFormat(ufile);
                 String uploadCols = request.getParam("UPLOAD_COLUMNS");
                 if (!StringUtils.isEmpty(uploadCols)) {
                     List<String> cols = Arrays.stream(TableUtil.splitCols(uploadCols))      // use this to allow commas in double-quotes
@@ -74,7 +75,7 @@ public class AsyncTapQuery extends UwsJobProcessor {
                 VoTableWriter.save(tempXml,dg, VO_TABLE);
                 inputs.setFile("temp.xml",tempXml);
             } catch (IOException e) {
-                throw new DataAccessException("AsyncTapQuery: Could not read uploaded file", e);
+                throw new DataAccessException.FileNotFound("Unable to read uploaded file", ufile);
             }
 
 

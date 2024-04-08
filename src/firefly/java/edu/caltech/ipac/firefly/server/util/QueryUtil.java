@@ -49,6 +49,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -513,13 +514,10 @@ public class QueryUtil {
                 }
             }
 
+        } catch (FileNotFoundException e) {
+            throw new DataAccessException.FileNotFound("Upload file not found", ufile);
         } catch (Exception e) {
-            String msg = e.getMessage();
-            if (msg==null) msg=e.getCause().getMessage();
-            if (msg==null) msg="";
-            throw new DataAccessException(
-                    new EndUserException("Exception while parsing the uploaded file: <br><i>" + msg + "</i>" ,
-                               e.getMessage(), e) );
+            throw new DataAccessException("Unable to parse uploaded file", e);
         }
         return targets;
     }
@@ -597,13 +595,10 @@ public class QueryUtil {
                 newdg.add(nrow);
             }
             return newdg;
+        } catch (FileNotFoundException e) {
+            throw new DataAccessException.FileNotFound("Upload file not found", ufile);
         } catch (Exception e) {
-            String msg = e.getMessage();
-            if (msg==null) msg=e.getCause().getMessage();
-            if (msg==null) msg="";
-            throw new DataAccessException(
-                    new EndUserException("Exception while parsing the uploaded file: <br><i>" + msg + "</i>" ,
-                            e.getMessage(), e) );
+            throw new DataAccessException("Unable to parse uploaded file", e);
         }
     }
 

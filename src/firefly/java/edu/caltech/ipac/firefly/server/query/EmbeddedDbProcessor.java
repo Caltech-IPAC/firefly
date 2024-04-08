@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableWriter;
@@ -559,13 +560,13 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 String name = CollectionUtil.get(msg.split(":"), 1, "").trim();
                 String sql = ex.getSql() == null ? "" : ex.getSql();
                 if (sql.matches(String.format(".*from\\s+%s.*", name))) {
-                    return "Table not found: " + name;
+                    return "Invalid statement: Table not found - " + name;
                 } else {
-                    return "Column not found: " + name;
+                    return "Invalid statement: Column not found - " + name;
                 }
             } else if (msg.toLowerCase().contains("object name already exists")) {
                 String name = CollectionUtil.get(msg.split(":"), 1, "").trim();
-                return "Duplicate table or column name: " + name;
+                return "Invalid statement: Duplicate table or column name - " + name;
             }
         }
 
@@ -593,20 +594,23 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                     }
 
                     if (msg.toLowerCase().contains(" cast")) {
-                        return "Data type mismatch: \n" + StringUtils.toString(possibleErrors, "\n");
+                        return "Data type mismatch: " + StringUtils.toString(possibleErrors, "\n");
                     }
 
                     if (msg.toLowerCase().contains("unexpected token:")) {
                         return CollectionUtil.get(msg.split("required:"), 0, "").trim() +
-                                "\n" + StringUtils.toString(possibleErrors, "\n");
+                                ":" + StringUtils.toString(possibleErrors, "\n");
                     }
                 }
             }
 
-            return "Invalid statement: \n" + StringUtils.toString(possibleErrors, "\n");
+            return "Invalid statement: " + StringUtils.toString(possibleErrors, "\n");
         }
-
-        return e.getMessage();
+        String[] errorCause = ServCommand.getErrorCause(e);
+        return errorCause[0] + (errorCause[1] != null ? ": " + errorCause[1] : "");
+        // TODO: ServCommand returns separate strings for 'error' and 'cause'.  This is then converted to JSON and passed along as javascript Error.
+        // This function however will only return a single string.  It's too much work to separate them in this current task.
+        // I will use the format 'error:cause' as a way to transport these messages.
     }
 
     /**

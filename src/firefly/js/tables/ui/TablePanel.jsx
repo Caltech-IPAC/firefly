@@ -3,7 +3,7 @@
  */
 
 import React, {useEffect} from 'react';
-import {Box, Stack, Typography, Sheet, Divider, ChipDelete, Tooltip, Skeleton} from '@mui/joy';
+import {Box, Stack, Typography, Sheet, Divider, ChipDelete, Tooltip, Skeleton, Button} from '@mui/joy';
 import PropTypes, {object, shape} from 'prop-types';
 import {defer, truncate, get, set} from 'lodash';
 import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
@@ -13,8 +13,10 @@ import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 import {ExpandButton, InfoButton, SaveButton, FilterButton, ClearFilterButton, TextViewButton, TableViewButton, SettingsButton, PropertySheetButton} from '../../visualize/ui/Buttons.jsx';
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableUiUpdate} from '../TablesCntlr.js';
-import {uniqueTblId, getTableUiById, makeBgKey, getResultSetRequest, isClientTable, getTableState,
-    TBL_STATE, getMetaEntry, getTblById} from '../TableUtil.js';
+import {
+    uniqueTblId, getTableUiById, makeBgKey, getResultSetRequest, isClientTable, getTableState,
+    TBL_STATE, getMetaEntry, getTblById, parseError
+} from '../TableUtil.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableInfo, MetaInfo} from './TableInfo.jsx';
@@ -404,16 +406,21 @@ function NotReady({showTitle, tbl_id, title, removable, backgroundable, error}) 
             dispatchTableFetch(JSON.parse(prevReq));
         };
         if (error) {
+            const {message, type, cause} = parseError(error);
             return (
-                <div className='TablePanel__error'>
-                    <div style={{textAlign: 'center'}}>
-                        <div style={{display: 'flex', flexDirection: 'column', margin: '5px 0'}}>
-                            <b>Table Load Error:</b>
-                            <pre style={{margin: '7px 0', whiteSpace: 'pre-wrap'}}>{error}</pre>
-                        </div>
-                        {prevReq && <button type='button' className='button std' onClick={reloadTable}>Back</button>}
-                    </div>
-                </div>
+                <Stack spacing={1} m='auto' width={.8} height={1} justifyContent='center'>
+                    <Typography level='title-lg' color='danger'>{message}</Typography>
+                    { cause && (
+                        <Stack>
+                            <Stack direction='row'>
+                                <Typography level='title-lg' mr={1}>Cause:</Typography>
+                                {type && <Typography level='body-md'>[{type}]</Typography>}
+                            </Stack>
+                            <Typography level='body-md' ml={1}>{cause}</Typography>
+                        </Stack>
+                    )}
+                    {prevReq && <Button color='neutral' variant='solid' onClick={reloadTable} sx={{alignSelf: 'baseline'}}>Back</Button>}
+                </Stack>
             );
         } else {
             return <Skeleton/>;

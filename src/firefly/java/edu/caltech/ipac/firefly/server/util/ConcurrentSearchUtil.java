@@ -220,7 +220,7 @@ public class ConcurrentSearchUtil {
             }
         }
         if (badParam) {
-            throw new EndUserException("IRSA search failed, Catalog is unavailable",
+            throw new EndUserException("IRSA search failed. Catalog is unavailable",
                     "Search Processor did not find the required parameter: " + filename);
         }
         return null;

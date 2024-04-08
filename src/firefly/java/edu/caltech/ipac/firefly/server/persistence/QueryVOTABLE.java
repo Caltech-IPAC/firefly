@@ -79,7 +79,7 @@ public abstract class QueryVOTABLE extends EmbeddedDbProcessor {
         } catch (IOException | EndUserException e) {
             throw new DataAccessException("query failed - network Error", e);
         } catch (Exception e) {
-            throw new DataAccessException("query failed - " + e.toString(), e);
+            throw new DataAccessException("query failed", e);
         }
     }
 
@@ -105,7 +105,7 @@ public abstract class QueryVOTABLE extends EmbeddedDbProcessor {
 
         } catch (FailedRequestException e) {
             _log.error(e, e.toString());
-            throw new DataAccessException("query failed - network error.", e);
+            throw new DataAccessException("query failed - network error", e);
 
         } catch (Exception e) {
             throw new DataAccessException("query failed", e);

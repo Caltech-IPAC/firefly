@@ -403,7 +403,7 @@ public class GatorQuery extends BaseGator {
         pt = VisUtil.convertToJ2000(pt);
 
         if (pt == null) {
-            throw new EndUserException("IRSA search failed, Catalog is unavailable",
+            throw new EndUserException("IRSA search failed. Catalog is unavailable",
                     "Search Processor did not find the required parameter: " +
                             CatalogRequest.RA_DEC_J2000);
         }
