@@ -7,9 +7,9 @@
    - Start a new section for this release
    - Move over any notes from firefly/docs/next-release-details.md
    - Reset firefly/docs/next-release-details.md (you can see what a reset looks like by looking at the last release)
-   - After looking at milestone tags make sure all the important changes are included in the notes.
+   - After looking at milestone tags, make sure all the important changes are included in the notes.
    - Make sure you edit the docker tags section of this release
-   - Update the "Pull Request for this release section", change the text and the URLs for all PR and bug fixes 
+   - Update the "Pull Request for this release section" change the text and the URLs for all PR and bug fixes 
    
 ### Ensure release passes Test
    - `gradle :firefly:test`
@@ -22,7 +22,7 @@
       - `git tag release-2024.1.1`
    
 ### Push
-   - Push to Github
+   - Push to GitHub
    - push the rc: _example:_ `git push origin rc-2024.1`
    - push the tags: `git push origin --tags`   
 

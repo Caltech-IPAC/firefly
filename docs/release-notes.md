@@ -2,9 +2,9 @@
 
 - You can find Firefly builds and the notes for running Firefly on the [Docker Page](https://hub.docker.com/r/ipac/firefly).
 - See Firefly Docker guidelines [here](firefly-docker.md).
-- To Access current (unstable) development - (Version _next_, unreleased) 
+- To Access current (unstable) development—(Version _next_, unreleased) 
   - use docker tag: `nightly`
-  - [Notes on next version](next-release-details.md)
+  - [Notes on the next version](next-release-details.md)
 
 ## Version 2024.1
 - 2024.4.1 - (April 8, 2024),  _docker tag_: `latest`, `2024.1`, `2024.1.0`
@@ -17,23 +17,30 @@
   - New UI library [Joy UI](https://mui.com/joy-ui/getting-started/)
   - UI clean up
   - Support dark mode
-  - Firefly more skinable for other applications (fonts, colors)
+  - Firefly is more skinable for other applications (fonts, colors)
+  - New icons
   - Nicer colors, consistent color usage
   - Nicer fonts, consistent font usage
-  - More consistency across UI (button layout, etc)
-  - Primary navigation (tabs across top) UX revamped
-  - Better support for multiple result layouts
+  - More consistency across UI (button layout, etc.)
+  - Better support for multiple result layouts. Detailed Tri-view and Bi-view layout control
+  - Added Landing page
+  - Primary navigation UX (tabs across top) revamped
+      - Clearer tab UX
+      - Results tab
+      - Sidebar for additional navigation and settings
 - TAP: Object ID can be searched using "Select...IN" [Firefly-1450](https://github.com/Caltech-IPAC/firefly/pull/1526)
+- TAP: TAP panels can now be locked into one TAP service
 - Charts: Cascade-style plots for spectra [Firefly-1370](https://github.com/Caltech-IPAC/firefly/pull/1499)
 - Upload: improved support [Firefly-1341](https://github.com/Caltech-IPAC/firefly/pull/1472)
+- Tables: improved table message handling [Firefly-1345](https://github.com/Caltech-IPAC/firefly/pull/1535)
 
 
 
 ### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2024.1+label%3abug)
 - All PRs
-   - [UI convesion](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2022.3+)
-   - [Other PRs](https://github.com/Caltech-IPAC/firefly/pulls?q=is%3Apr+milestone%3AUI-conversion)
+   - [UI conversion](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2022.3+)
+   - [Other 2024.1 PRs](https://github.com/Caltech-IPAC/firefly/pulls?q=is%3Apr+milestone%3AUI-conversion)
 
 
 
