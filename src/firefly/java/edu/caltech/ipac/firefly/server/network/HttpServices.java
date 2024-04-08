@@ -322,10 +322,20 @@ public class HttpServices {
         public String getErrMsg() { return errMsg; }
         public int getStatusCode() { return statusCode;}
 
+        public Exception getException() {
+            return isError() ? new HttpException(this) : null;
+        }
+
         public static Status getStatus(HttpMethod method) {
             return new Status(method.getStatusCode(), method.getStatusText());
         }
         public static Status ok() {return new Status(200, null);};
+
+        static class HttpException extends Exception {
+            public HttpException(Status status) {
+                super(status.getStatusCode() + " - " + status.getErrMsg());
+            }
+        }
     }
 
     public static class OutputStreamHandler implements Handler {

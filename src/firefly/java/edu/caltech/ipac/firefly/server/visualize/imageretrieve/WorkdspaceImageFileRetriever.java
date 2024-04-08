@@ -51,7 +51,7 @@ public class WorkdspaceImageFileRetriever implements FileRetriever {
                 File f= ServerContext.convertToFile(s);
                 return new FileInfo(f);
             } catch (IOException e) {
-                throw new FailedRequestException("Could now retrieve file from workspace",e);
+                throw new FailedRequestException("Unable to retrieve file from workspace",e);
             }
         }
         return null;

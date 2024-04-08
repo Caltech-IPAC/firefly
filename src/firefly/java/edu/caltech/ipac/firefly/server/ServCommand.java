@@ -1,5 +1,7 @@
 package edu.caltech.ipac.firefly.server;
 
+import edu.caltech.ipac.firefly.core.EndUserException;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -33,14 +35,12 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
             }
         } catch (Exception e) {
             _log.error(e, e.getMessage());
-            json.put("success", "false");
-            json.put("error", e.getMessage());
 
-            int cnt = 1;
-            for (Throwable t = e.getCause(); (t != null); t = t.getCause()) {
-                json.put("cause"+cnt,t.toString());
-                cnt++;
-            }
+            String[] errorCause = getErrorCause(e);
+
+            json.put("success", "false");
+            json.put("error", errorCause[0]);
+            if (errorCause[1] != null) json.put("cause1", errorCause[1] );   // kept cause1 for backward compatibility
             //make it size=1 array since the UI side expects an array
             jsonData= makeOneEntryArray(json);
         }
@@ -59,6 +59,19 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
         JSONArray jArray = new JSONArray();
         jArray.add(entry);
         return jArray.toJSONString();
+    }
+
+    /**
+     * @param e
+     * @return the error message of the exception plus the root cause, if it exists.
+     */
+    public static String[] getErrorCause(Exception e) {
+        String cause = null;
+        for (Throwable t = e.getCause(); (t != null); t = t.getCause()) {
+            String type = t instanceof EndUserException ? DataAccessException.class.getSimpleName() : t.getClass().getSimpleName();     // need to clean this up at some point
+            cause = type + ": " + t.getMessage();
+        }
+        return new String[]{e.getMessage(), cause};
     }
 }
 

@@ -114,7 +114,7 @@ public final class PackagingWorker implements Job.Worker {
             }
 
         } else {
-            throw new DataAccessException("Unable to resolve a search processor for this request.  Operation aborted:" + dlreq.getRequestId());
+            throw new DataAccessException("Operation aborted:" + dlreq.getRequestId(), new IllegalArgumentException("Unable to resolve a search processor for this request"));
         }
         closeZipFile();
 

@@ -44,17 +44,18 @@ function doCleanup() {
     workarea="${1}"
     timestamp=$(date +20%y%m%dT%H%M%S)
     log_file="${workarea}/cleanup_logs/cleanup.${timestamp}.log"
-    clean_dirs=("${workarea}/temp_files" "${workarea}/visualize/fits-cache" "${workarea}/upload" "${workarea}/visualize/users")
+    clean_dirs=("${workarea}/temp_files" "${workarea}/visualize/fits-cache" "${workarea}/visualize/users")
     dirs_to_clear=("${workarea}/visualize/users" "${workarea}/temp_files")
     echo 'Cleanup, log_file: ' "${log_file}"
     {
         echo "Cleaning up work files older that ${cleanupMinutes} minutes, dir: ${workarea}"
         [[ -d "${workarea}/HiPS" ]] && ${find_cmd} "${workarea}/HiPS" -type f -mtime +90 -exec /bin/rm '{}' \+ -print
         [[ -d "${workarea}/stage" ]] && ${find_cmd} "${workarea}/stage" -type f -mtime +7 -exec /bin/rm '{}' \+ -print
-        [[ -d "${workarea}/perm_files" ]] && ${find_cmd} "${workarea}/perm_files" -type f -mtime +1 -exec /bin/rm '{}' \+ -print
+        [[ -d "${workarea}/upload" ]] && ${find_cmd} "${workarea}/upload" -type f -mtime +7 -exec /bin/rm '{}' \+ -print
+        [[ -d "${workarea}/perm_files" ]] && ${find_cmd} "${workarea}/perm_files" -type f -atime +1 -exec /bin/rm '{}' \+ -print
         for dir in "${clean_dirs[@]}"; do
            if [ -d "${dir}" ]; then
-              ${find_cmd} "${dir}" -type f -mmin +${cleanupMinutes} -exec /bin/rm '{}' \+ -print
+              ${find_cmd} "${dir}" -type f -amin +${cleanupMinutes} -exec /bin/rm '{}' \+ -print
            fi
         done
         for dir in "${dirs_to_clear[@]}"; do    # remove empty directories excluding those at the starting level

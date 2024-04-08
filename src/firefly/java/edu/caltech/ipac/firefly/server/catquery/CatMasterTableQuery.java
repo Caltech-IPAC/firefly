@@ -18,6 +18,7 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import org.apache.commons.httpclient.HttpException;
 
 import java.io.File;
 import java.util.Arrays;
@@ -47,7 +48,7 @@ public class CatMasterTableQuery extends EmbeddedDbProcessor {
         IpacTableHandler handler = new IpacTableHandler();
         HttpServices.Status status = HttpServices.getData(new HttpServiceInput(MASTER_LOC), handler);
         if (status.isError()) {
-            throw new DataAccessException("Unable to parse Master Table: " + status.getErrMsg());
+            throw new DataAccessException("Unable to parse Master Table", status.getException());
         }
         DataGroup dg = handler.results;
 

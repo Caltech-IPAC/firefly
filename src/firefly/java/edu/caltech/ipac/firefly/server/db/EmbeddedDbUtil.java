@@ -214,7 +214,7 @@ public class EmbeddedDbUtil {
         } catch (Exception e) {
             // catch for debugging
             logger.debug(String.format("execQuery failed with error: %s \n\t sql: %s \n\t refTable: %s \n\t dbFile: %s", e.getMessage(), sql, refTable, dbFile.getAbsolutePath()) );
-            throw handleSqlExp(e);
+            throw handleSqlExp("Query failed", e);
         }
     }
 
@@ -314,7 +314,7 @@ public class EmbeddedDbUtil {
             }
         } catch (Exception e) {
             // DDL statement are transactionally isolated, therefore need to manually rollback if this succeed but the next few statements failed.
-            throw handleSqlExp(e);
+            throw handleSqlExp("Update column failed", e);
         }
         try {
             TransactionTemplate txnJdbc = JdbcFactory.getTransactionTemplate(jdbc.getDataSource());
@@ -337,7 +337,7 @@ public class EmbeddedDbUtil {
             if (!dtype.getKeyName().equals(editColName)) {
                 jdbc.update(String.format("ALTER TABLE %s ALTER COLUMN \"%s\" RENAME TO \"%s\"", MAIN_DB_TBL, dtype.getKeyName(), editColName));
             }
-            throw handleSqlExp(e);
+            throw handleSqlExp("Update column failed", e);
         }
     }
 
@@ -358,7 +358,7 @@ public class EmbeddedDbUtil {
             jdbc.update(String.format("ALTER TABLE %s ADD COLUMN \"%s\" %s BEFORE \"%s\"", MAIN_DB_TBL, dtype.getKeyName(), dbAdapter.toDbDataType(dtype), beforeCname));
         } catch (Exception e) {
             // DDL statement are transactionally isolated, therefore need to manually rollback if this succeed but the next few statements failed.
-            throw handleSqlExp(e);
+            throw handleSqlExp("Add column failed", e);
         }
         try {
             TransactionTemplate txnJdbc = JdbcFactory.getTransactionTemplate(jdbc.getDataSource());
@@ -379,7 +379,7 @@ public class EmbeddedDbUtil {
         } catch (Exception e) {
             // manually remove the added column
             jdbc.update(String.format("ALTER TABLE %s DROP COLUMN \"%s\"", MAIN_DB_TBL, dtype.getKeyName()));
-            throw handleSqlExp(e);
+            throw handleSqlExp("Add column failed", e);
         }
     }
 
@@ -733,28 +733,28 @@ public class EmbeddedDbUtil {
         return  null;
     }
 
-    private static DataAccessException handleSqlExp(Exception e) {
-        String msg = e.getMessage();
+    private static DataAccessException handleSqlExp(String msg, Exception e) {
+        String cause = e.getMessage();
         if (e instanceof BadSqlGrammarException) {
             // org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [select * from xyz order by aab]; nested exception is java.sql.SQLSyntaxErrorException: user lacks privilege or object not found: XYZ\n
-            String[] parts = groupMatch(".*\\[(.+)\\].* object not found: (.+)", msg);
+            String[] parts = groupMatch(".*\\[(.+)\\].* object not found: (.+)", cause);
             if (parts != null && parts.length == 2) {
                 if (parts[1].equals("PUBLIC.DATA")) {
-                    return new DataAccessException("TABLE out-of-sync; Reload table to resume");
+                    return new DataAccessException(msg, new SQLDataException("TABLE out-of-sync; Reload table to resume"));
                 } else {
-                    return new DataAccessException(String.format("[%s] not found; SQL=[%s]", parts[1], parts[0]));
+                    return new DataAccessException(msg, new SQLException(String.format("[%s] not found; SQL=[%s]", parts[1], parts[0])));
                 }
             }
             //org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [invalid sql]; nested exception is java.sql.SQLSyntaxErrorException: unexpected token: INVALID
-            parts = groupMatch(".*\\[(.+)\\].* unexpected token: (.+)", msg);
+            parts = groupMatch(".*\\[(.+)\\].* unexpected token: (.+)", cause);
             if (parts != null && parts.length == 2) {
-                return new DataAccessException(String.format("Unexpected token [%s]; SQL=[%s]", parts[1], parts[0]));
+                return new DataAccessException(msg, new SQLException(String.format("Unexpected token [%s]; SQL=[%s]", parts[1], parts[0])));
             }
         }
         if (e instanceof DataIntegrityViolationException) {
-            String[] parts = groupMatch(".*\\[(.+)\\].*", msg);
+            String[] parts = groupMatch(".*\\[(.+)\\].*", cause);
             if (parts != null && parts.length == 1) {
-                return new DataAccessException(String.format("Type mismatch; SQL=[%s]", parts[0]));
+                return new DataAccessException(msg, new SQLException(String.format("Type mismatch; SQL=[%s]", parts[0])));
             }
         }
 
