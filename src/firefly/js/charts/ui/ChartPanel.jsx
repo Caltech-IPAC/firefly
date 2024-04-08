@@ -74,7 +74,7 @@ const ResizableChartAreaInternal = React.memo((props) => {
     if (!knownSize) return <div/>;
 
     return (
-        <Stack id='chart-resizer' flexGrow={1} position='relative' overflow='hidden' height={1} width={1}>
+        <Stack id='chart-resizer' height={1} width={1} sx={{flexGrow:1, position:'absolute', overflow:'hidden', inset:0}}>
             {errors.length || isUndefined(Chart) ?
                 <ErrorPanel errors={errors}/> :
                 <Chart {...Object.assign({}, props, {widthPx, heightPx})}/>
@@ -105,7 +105,7 @@ const ChartArea = (props) => {
     const deletable = isUndefined(get(chartData, 'deletable')) ? deletableProp : get(chartData, 'deletable');
     const errors  = getErrors(chartId);
     return (
-        <Stack id='chart-area' flexGrow={1}>
+        <Stack id='chart-area' flexGrow={1} sx={{position:'relative'}}>
             <ResizableChartArea
                 {...Object.assign({}, props, {errors})} />
             {glass && <Stack flexGrow={1} sx={{backgroundColor:'transparent'}}/>}
