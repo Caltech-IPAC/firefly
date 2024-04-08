@@ -50,7 +50,7 @@ function validate(params) {
     return {valid:true};
 }
 
-function loadDLUITable(cmd,params, includeIdType) {
+function loadDLUITable(cmd,params, includeIdType,dlAction) {
     let urlAry;
     if (params.url) {
         urlAry= isArray(params.url) ? params.url : [params.url];
@@ -60,11 +60,11 @@ function loadDLUITable(cmd,params, includeIdType) {
         });
     }
     else if (includeIdType) {
-        void getServerAndLoadTablesById(cmd,params);
+        void getServerAndLoadTablesById(cmd,params,dlAction);
     }
 }
 
-async function getServerAndLoadTablesById(cmd,inParams) {
+async function getServerAndLoadTablesById(cmd,inParams, dlAction) {
     const urlRootAry= await getJsonProperty('inventory.serverURLAry');
     const params= {showChooser:false, ...inParams};
     const initArgs={urlApi:params};
@@ -72,7 +72,7 @@ async function getServerAndLoadTablesById(cmd,inParams) {
     const makeUrl= (id) =>  urlRoot +'?'+ new URLSearchParams({collection:id}).toString();
     const urlAry=  (isArray(params.id)) ? params.id.map( (id) => makeUrl(id))  : [makeUrl(params.id)];
     initArgs.urlApi.url= urlAry;
-    urlAry.forEach( (url) =>  void fetchDatalinkUITable(url,0,initArgs));
+    urlAry.forEach( (url) =>  void fetchDatalinkUITable(url,0,initArgs,dlAction));
 }
 
 
@@ -80,12 +80,13 @@ async function getServerAndLoadTablesById(cmd,inParams) {
 /**
  * get the data link command api definition
  * @param {boolean} includeIdType
+ * @param {String} dlAction
  * @return Array.<WebApiCommand>
  */
-export function getDatalinkUICommands(includeIdType) {
+export function getDatalinkUICommands(includeIdType,dlAction) {
     const examples= makeExamples('dl',  includeIdType ? [...urlExamples,...idExamples] : urlExamples);
     const cmd= 'dl';
-    const execute= (cmd,params) => loadDLUITable(cmd,params,includeIdType);
+    const execute= (cmd,params) => loadDLUITable(cmd,params,includeIdType,dlAction);
     const overview= [ 'Load Service Descriptor UI' ];
 
     const urlOnlyParameters= {

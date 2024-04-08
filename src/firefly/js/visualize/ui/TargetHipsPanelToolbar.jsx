@@ -50,17 +50,14 @@ export function TargetHipsPanelToolbar({visRoot, toolbarStyle={},
     if (!showImageToolbar) return <div/>;
 
     return (
-        <Sheet>
-            <Stack {...{direction:'column', alignItems:'flex-end', justifyContent: 'space-between',
-                flexWrap:'nowrap', width:'100%', height: 55, style:toolbarStyle}}>
-                <Stack direction='row' justifyContent='flex-start'>
-                    <VisMiniToolbar style={{width:'unset'}} viewerId={viewerId}
-                                    tips={{selectArea:'Select an area to search'}}/>
-                    <HelpIcon style={{alignSelf:'cenTer', paddingLeft:5}} helpId={toolbarHelpId} />
-                </Stack>
-                <HelpLines whichOverlay={whichOverlay}/>
+        <Stack {...{direction:'column', alignItems:'flex-end', justifyContent: 'space-between',
+            flexWrap:'nowrap',  height: 33, style:toolbarStyle}}>
+            <Stack direction='row' justifyContent='flex-start'>
+                <VisMiniToolbar style={{width:'unset'}} viewerId={viewerId}
+                                tips={{selectArea:'Select an area to search'}}/>
+                <HelpIcon style={{alignSelf:'cenTer', paddingLeft:5}} helpId={toolbarHelpId} />
             </Stack>
-        </Sheet>
+        </Stack>
     );
 }
 

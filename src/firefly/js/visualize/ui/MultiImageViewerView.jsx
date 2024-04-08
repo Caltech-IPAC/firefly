@@ -31,25 +31,25 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
 
     const {readout, readoutData, readoutShowing}= useMouseStoreConnector(makeState);
     const {Toolbar, visRoot, viewerPlotIds=[], showWhenExpanded=false, mouseReadoutEmbedded=true,
-        inlineTitle= true, aboveTitle=false, layoutType=GRID}= props;
+        handleToolbar=true, layoutType=GRID}= props;
+
+    const makeToolbar = Toolbar ? () => (<Toolbar {...props} />) : undefined;
 
     const makeItemViewer = (plotId) =>  {
         return (
-            <ImageViewer plotId={plotId} key={plotId}
-                         {...{showWhenExpanded, inlineTitle, aboveTitle}} />
+            <ImageViewer {...{plotId, key:plotId, makeToolbar, showWhenExpanded}} />
         );
     };
 
     const makeItemViewerFull = (plotId) => (
-        <ImageViewer plotId={plotId} key={plotId}
-                     {...{ showWhenExpanded, inlineTitle, aboveTitle, } } />
+        <ImageViewer {...{plotId, key:plotId,showWhenExpanded,makeToolbar} } />
     );
 
-    const makeToolbar = Toolbar ? () => (<Toolbar {...props} />) : undefined;
     const doReadoutAndShowing= readoutShowing && viewerPlotIds.includes(readoutData?.plotId);
 
     const newProps = Object.assign(omit(props, ['Toolbar', 'visRoot', 'viewerPlotIds', 'showWhenExpanded']),
-        {activeItemId: visRoot.activePlotId, viewerItemIds: viewerPlotIds, makeToolbar, makeItemViewer, makeItemViewerFull});
+        {activeItemId: visRoot.activePlotId, viewerItemIds: viewerPlotIds,
+            makeToolbar:handleToolbar?makeToolbar:undefined, makeItemViewer, makeItemViewerFull});
 
     let style= {display:'flex', flexDirection:'column', position:'relative'};
     if (props.insideFlex) {
@@ -107,8 +107,7 @@ MultiImageViewerView.propTypes= {
     gridDefFunc : PropTypes.func,  // optional - a function to return the grid definition
     gridComponent : PropTypes.object,  // a react element to define the grid - not implemented, just an idea
     insideFlex :  PropTypes.bool,
-    inlineTitle: PropTypes.bool,
-    aboveTitle: PropTypes.bool,
+    handleToolbar: PropTypes.bool,
     mouseReadoutEmbedded: PropTypes.bool
 };
 

@@ -83,7 +83,7 @@ export function resultSuccess(request) {
             return true;
 
         case LOAD_DL:
-            tableIndices.forEach((idx) => void fetchDatalinkUITable(fileCacheKey,idx,{searchParams:{url:fileCacheKey}}) );
+            tableIndices.forEach((idx) => void fetchDatalinkUITable(fileCacheKey,idx,{searchParams:{url:fileCacheKey}}, 'DLGeneratedDropDownCmd') );
             return true;
 
         case LOAD_FOOTPRINT:

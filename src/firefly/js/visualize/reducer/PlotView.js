@@ -87,6 +87,7 @@ import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
  * @prop {boolean} [rotateNorthLock]
  * @prop {boolean} [flipYLock]
  * @prop {boolean} [useSticky]
+ * @prop {boolean} [embedMainToolbar] default to false - if true then create the main toolbar within the plot
  * @prop {boolean} [highlightFeedback]
  * @prop {boolean} [useForCoverage=false]
  */
@@ -165,6 +166,7 @@ function createPlotViewContextData(req, pvOptions={}) {
         displayFixedTarget: pvOptions?.displayFixedTarget ?? true,
         annotationOps : req.getAnnotationOps(), // how titles are drawn - todo this might be deprecated - needs research
         zoomLockingEnabled : false,
+        embedMainToolbar: pvOptions.embedMainToolbar ?? false,
         zoomLockingType: UserZoomTypes.FIT, // can be FIT or FILL
         lastCollapsedZoomLevel: 0,
         highlightFeedback: pvOptions.highlightFeedback ?? true,
