@@ -24,7 +24,9 @@ export function PlotlyChartArea({chartId, widthPx, heightPx, thumbnail}) {
         const {fireflyData} = getChartData(chartId);
         handleTableSourceConnections({chartId, data, fireflyData});
         return () => {
-            clearChartConn({chartId});
+            if (getChartData(chartId)?.mounted === 0) {
+                clearChartConn({chartId});
+            }
         };
     }, [chartId]);
 
