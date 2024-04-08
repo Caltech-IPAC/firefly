@@ -32,7 +32,7 @@
 - TAP: TAP panels can now be locked into one TAP service
 - Charts: Cascade-style plots for spectra [Firefly-1370](https://github.com/Caltech-IPAC/firefly/pull/1499)
 - Upload: improved support [Firefly-1341](https://github.com/Caltech-IPAC/firefly/pull/1472)
-- Tables: improved table message handling [Firefly-1345](https://github.com/Caltech-IPAC/firefly/pull/1535)
+- Tables: improved table error message handling [Firefly-1345](https://github.com/Caltech-IPAC/firefly/pull/1535)
 
 
 
