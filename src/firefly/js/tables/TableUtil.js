@@ -1488,7 +1488,7 @@ export function parseError(error) {
         const [_, type, cause] = error?.cause.match(/(.+?):(.+)/) || [];
         return {message, type, cause};
     } else {
-        const [_, error, cause] = message.match(/(.+?):(.+)/);     // formatted error messages; 'error:cause'
+        const [_, error, cause] = message.match(/(.+?):(.+)/) || [];     // formatted error messages; 'error:cause'
         return {message: error || message, cause};
     }
 }
