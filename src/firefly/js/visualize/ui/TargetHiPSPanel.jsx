@@ -43,7 +43,7 @@ import {WebPlotRequest} from '../WebPlotRequest.js';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
 import {MultiImageViewer} from './MultiImageViewer.jsx';
 import {closeToolbarModalLayers} from './ToolbarToolModalEnd.js';
-import {TargetHipsPanelToolbar} from './TargetHipsPanelToolbar.jsx';
+import {HelpLines, TargetHipsPanelToolbar} from './TargetHipsPanelToolbar.jsx';
 import {
     convertStrToWpAry, initSearchSelectTool, updatePlotOverlayFromUserInput,
     updateUIFromPlot
@@ -175,11 +175,13 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
                 <Typography level='h4' color='danger' textAlign='center'>
                     {`The coverage MOC is unavailable${mocError?.title?': '+mocError.title:''}`}
                 </Typography>}
+            <HelpLines whichOverlay={whichOverlay}/>
             <MultiImageViewer viewerId= {viewerId} insideFlex={true}
                               canReceiveNewPlots={NewPlotMode.none.key}
                               showWhenExpanded={true}
                               whichOverlay={whichOverlay}
                               toolbarHelpId={toolbarHelpId}
+                              handleToolbar={false}
                               Toolbar={TargetHipsPanelToolbar}/>
         </Stack>
     );
@@ -370,6 +372,7 @@ async function initHiPSPlot({ hipsUrl, plotId, viewerId, centerPt, hipsFOVInDeg,
             displayFixedTarget:false,
             userCanDeletePlots: false,
             highlightFeedback: false,
+            embedMainToolbar: true,
             menuItemKeys: {
                 zoomDropDownMenu: false, overlayColorLock: false, matchLockDropDown: false, clickToSearch:false,
                 recenter: false, selectArea: true, restore: false,

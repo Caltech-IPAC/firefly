@@ -59,8 +59,12 @@ const defOptions = {
 const options = mergeObjectOnly(defOptions, window?.firefly?.options ?? {});
 
 let apiCommands;
-if (template==='FireflyViewer' || template==='FireflySlate') apiCommands= [...getFireflyViewerWebApiCommands(), ...getDatalinkUICommands(true)];
-else if (template==='LightCurveViewer') apiCommands= getLcCommands();
+if (template==='FireflyViewer' || template==='FireflySlate') {
+    apiCommands= [...getFireflyViewerWebApiCommands(), ...getDatalinkUICommands(false,'DLGeneratedDropDownCmd')];
+}
+else if (template==='LightCurveViewer') {
+    apiCommands= getLcCommands();
+}
 
 
 if (!template || template==='LightCurveViewer') options.searchActions= [];

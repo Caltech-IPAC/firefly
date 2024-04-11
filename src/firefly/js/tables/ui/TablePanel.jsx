@@ -352,7 +352,7 @@ function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
         const doclinkDesc = getMetaEntry(tbl_id, META.doclink.desc) || doclinkLabel;
 
         const doclink = (
-            <Stack direction='row'>
+            <Stack direction='row' key={`doclink-${tbl_id}`}>
                 {leftButtons?.length && <Divider orientation='vertical'/>}
                 <a href={doclinkUrl} target='doclink' title={doclinkDesc} key={doclinkUrl} style={{ textDecoration: 'none'}}>
                     <ToolbarButton text={doclinkLabel}/>

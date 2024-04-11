@@ -95,7 +95,7 @@ export class MultiImageViewer extends PureComponent {
     }
 
     render() {
-        const {viewerId,tableId,gridDefFunc}= this.props;
+        const {viewerId,tableId,gridDefFunc,handleToolbar=true}= this.props;
         const {viewer,visRoot,dlAry}= this.state;
         const layoutType= getLayoutType(getMultiViewRoot(),viewerId,tableId);
         if (!viewer) return false;
@@ -112,6 +112,7 @@ export class MultiImageViewer extends PureComponent {
                                   viewerPlotIds={viewer.itemIdAry}
                                   layoutType={layoutType}
                                   inlineTitle={true}
+                                  handleToolbar={handleToolbar}
                                   aboveTitle={false}
                                   visRoot={visRoot}
                                   ref={(c) => this.rootWidget= c}
@@ -125,6 +126,7 @@ MultiImageViewer.propTypes= {
     viewerId : PropTypes.string.isRequired,
     canReceiveNewPlots : PropTypes.string,
     Toolbar : PropTypes.func,
+    handleToolbar : PropTypes.bool,
     forceRowSize : PropTypes.number,
     forceColSize : PropTypes.number,
     gridDefFunc : PropTypes.func,

@@ -1,5 +1,4 @@
 import {isEmpty} from 'lodash';
-import {getDatalinkUICommands} from './DatalinkUICommands.js';
 import {getImageCommands} from './ImageCommands';
 import {getTableCommands} from './TableCommands';
 import {getTapCommands} from './TapCommands';

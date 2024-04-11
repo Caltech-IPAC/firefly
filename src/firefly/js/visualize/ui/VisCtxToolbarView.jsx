@@ -4,7 +4,7 @@
 
 import {Checkbox, Divider, Stack, Tooltip, Typography} from '@mui/joy';
 import React, {memo,Fragment} from 'react';
-import PropTypes from 'prop-types';
+import {oneOf, func, object, number, string, arrayOf, bool} from 'prop-types';
 import {isEmpty, isString} from 'lodash';
 import shallowequal from 'shallowequal';
 import {sprintf} from '../../externalSource/sprintf';
@@ -128,7 +128,7 @@ function HipsFitsConvertButton({pv}) {
     );
 }
 
-HipsFitsConvertButton.propTypes= { pv : PropTypes.object.isRequired};
+HipsFitsConvertButton.propTypes= { pv : object.isRequired};
 
 
 
@@ -195,8 +195,8 @@ const HiPSCoordSelect= memo(({plotId, imageCoordSys}) =>{
     );
 });
 HiPSCoordSelect.propTypes= {
-    plotId : PropTypes.string,
-    imageCoordSys : PropTypes.object,
+    plotId : string,
+    imageCoordSys : object,
 };
 
 
@@ -218,7 +218,8 @@ export const VisCtxToolbarView= memo((props) => {
         showCatSelect=false, showCatUnSelect=false, width,
         showFilter=false, showClearFilter=false,
         searchActions= undefined,
-        showMultiImageController=false }= props;
+        showMultiImageController=false,
+        makeToolbar}= props;
 
 
     const extraLine= showMultiImageController && width<350;
@@ -300,7 +301,7 @@ export const VisCtxToolbarView= memo((props) => {
        verticalAlign: 'top',
        flexWrap: 'wrap',
        alignItems: 'center',
-       pr: 1.5,
+       pr: pv?.plotViewCtx?.userCanDeletePlots ? 1.5 : .25,
    } );
 
 
@@ -314,16 +315,20 @@ export const VisCtxToolbarView= memo((props) => {
                     {makeButtons()}
                     {makeHipsControls()}
                 </Stack>
+                {pv.pv}
             </Stack>
         );
     }
     else {
         return (
-            <Stack {...{direction:'row', sx: makeTbSX }}>
-                {showMultiImageController && <MultiImageControllerView plotView={pv} />}
-                {showMultiImageController && showOptions && <Divider orientation='vertical' sx={{mx:.5}}  />}
-                {makeButtons()}
-                {makeHipsControls()}
+            <Stack {...{direction:'row', justifyContent:'space-between',  sx: makeTbSX }}>
+                <Stack {...{direction:'row', alignItems: 'center',flexWrap: 'wrap',}}>
+                    {showMultiImageController && <MultiImageControllerView plotView={pv} />}
+                    {showMultiImageController && showOptions && <Divider orientation='vertical' sx={{mx:.5}}  />}
+                    {makeButtons()}
+                    {makeHipsControls()}
+                </Stack>
+                {pv.plotViewCtx.embedMainToolbar && makeToolbar?.()}
             </Stack>
         );
     }
@@ -335,16 +340,16 @@ export const VisCtxToolbarView= memo((props) => {
 );
 
 VisCtxToolbarView.propTypes= {
-    plotView : PropTypes.object.isRequired,
-    extensionAry : PropTypes.arrayOf(PropTypes.object),
-    showSelectionTools : PropTypes.bool,
-    showCatSelect : PropTypes.bool,
-    showCatUnSelect : PropTypes.bool,
-    showFilter : PropTypes.bool,
-    showClearFilter : PropTypes.bool,
-    searchActions: PropTypes.arrayOf(PropTypes.object),
-    width : PropTypes.number,
-    showMultiImageController : PropTypes.bool
+    plotView : object.isRequired,
+    extensionAry : arrayOf(object),
+    showSelectionTools : bool,
+    showCatSelect : bool,
+    showCatUnSelect : bool,
+    showFilter : bool,
+    showClearFilter : bool,
+    searchActions: arrayOf(object),
+    width : number,
+    showMultiImageController : bool
 };
 
 
@@ -424,7 +429,7 @@ export function MultiImageControllerView({plotView:pv}) {
 }
 
 MultiImageControllerView.propTypes= {
-    plotView : PropTypes.object.isRequired,
+    plotView : object.isRequired,
 };
 
 const doFormat= (v,precision) => precision>0 ? sprintf(`%.${precision}f`,v) : Math.trunc(v)+'';
@@ -529,9 +534,10 @@ function FrameNavigator({pv, currPlotIdx, minForInput, displayType}) {
 }
 
 FrameNavigator.propTypes= {
-    pv: PropTypes.object,
-    currPlotIdx: PropTypes.number,
-    minForInput: PropTypes.number,
-    displayType: PropTypes.oneOf(['hdu', 'cube', 'images', 'hipsCube']),
-    tooltip: PropTypes.string,
+    pv: object,
+    currPlotIdx: number,
+    minForInput: number,
+    makeToolbar: func,
+    displayType: oneOf(['hdu', 'cube', 'images', 'hipsCube']),
+    tooltip: string,
 };
