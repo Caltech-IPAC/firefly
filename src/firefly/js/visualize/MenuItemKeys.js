@@ -9,7 +9,7 @@ export function getDefMenuItemKeys() {
         maskOverlay : false,
         irsaCatalog : false,
         fitsDownload : true,
-        imageSelect : true,
+        imageSelect : false,
         zoomDropDownMenu: true,
         zoomUp : true,
         zoomDown : true,
