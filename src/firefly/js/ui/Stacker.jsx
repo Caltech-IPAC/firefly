@@ -12,7 +12,7 @@ export function Stacker({variant, color, orientation='horizontal', endDecorator,
     const dir = orientation === 'horizontal' ? 'row' : 'column';
     return (
         <Stack variant={variant} color={color} component={component}
-               direction={dir} spacing={gap}
+               direction={dir} spacing={gap} alignItems='center'
                {...slotProps?.root}>
 
             {startDecorator}

@@ -9,7 +9,8 @@ import {dispatchShowDialog} from '../ComponentCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {CollapsiblePanel} from 'firefly/ui/panel/CollapsiblePanel.jsx';
 import {uwsJobInfo} from 'firefly/rpc/SearchServicesJson.js';
-import {Button} from '@mui/joy';
+import {Button, Stack} from '@mui/joy';
+import {OverflowMarker} from 'firefly/tables/ui/TablePanel.jsx';
 
 
 export function showJobInfo(jobId) {
@@ -58,7 +59,7 @@ export async function showUwsJob({jobUrl, jobId}) {
 }
 
 
-export function JobInfo({jobId, style}) {
+export function JobInfo({jobId, style, tbl_id}) {
     const {phase, startTime, endTime, results, errorSummary, jobInfo={}} = useStoreConnector(() => getJobInfo(jobId) || {});
     const {dataOrigin, summary, type} = jobInfo;
     return (
@@ -68,7 +69,7 @@ export function JobInfo({jobId, style}) {
                 <KeywordBlock label='Start Time' value={startTime}/>
                 {endTime && <KeywordBlock label='End Time' value={endTime}/>}
                 <DataOrigin {...{dataOrigin, type, jobId}}/>
-                <FinalMsg {...{phase, results, errorSummary, summary}}/>
+                <FinalMsg {...{phase, results, errorSummary, summary, tbl_id}}/>
                 <KeywordBlock label='ID' value={jobId} title='Internal query identifier, usable for diagnostics'/>
             </div>
         </div>
@@ -88,9 +89,14 @@ function DataOrigin({dataOrigin, type, jobId}) {
     );
 }
 
-function FinalMsg({phase, summary, error}) {
+function FinalMsg({phase, summary, error, tbl_id}) {
     if (phase === 'COMPLETED') {
-        return <KeywordBlock label='Summary' value={summary}/>;
+        return (
+            <Stack direction='row' spacing={1} alignItems='center'>
+                <KeywordBlock label='Summary' value={summary}/>
+                <OverflowMarker tbl_id={tbl_id}/>
+            </Stack>
+        );
     } else if(phase === 'ERROR') {
         return <KeywordBlock label='Error' value={error}/>;
     } else return null;
