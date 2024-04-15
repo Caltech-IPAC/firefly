@@ -51,6 +51,7 @@ import ViewComfyAltRoundedIcon from '@mui/icons-material/ViewComfyAltRounded';
 import ViewModuleRoundedIcon from '@mui/icons-material/ViewModuleRounded';
 import NavigateNext from '@mui/icons-material/NavigateNextRounded';
 import NavigateBefore from '@mui/icons-material/NavigateBeforeRounded';
+import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import Crop169Icon from '@mui/icons-material/Crop169';
@@ -75,6 +76,10 @@ export const NextButton= (props) =>(
 export const BeforeButton= (props) =>(
     <ToolbarButton {...{
         icon: (<NavigateBefore sx={{transform: 'scale(1.6,1.6)'}}/>), ...props }}/>);
+
+export const PDFButton= (props) =>(
+    <ToolbarButton {...{
+        icon: (<PictureAsPdfOutlinedIcon sx={{transform: 'scale(1.6,1.6)'}}/>), ...props }}/>);
 
 
 export const LockImages= ({locked, ...props}) =>{
