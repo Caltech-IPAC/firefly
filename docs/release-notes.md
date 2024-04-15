@@ -7,7 +7,8 @@
   - [Notes on the next version](next-release-details.md)
 
 ## Version 2024.1
-- 2024.4.1 - (April 8, 2024),  _docker tag_: `latest`, `2024.1`, `2024.1.0`
+- 2024.1.1 - (April 15, 2024),  _docker tag_: `latest`, `2024.1`, `2024.1.1`
+- 2024.1.0 - (April 8, 2024),  _docker tag_: `2024.1.0`
 
 ### _Notes_
 #### This release is a complete overhaul of the Firefly UI
@@ -21,19 +22,23 @@
   - New icons
   - Nicer colors, consistent color usage
   - Nicer fonts, consistent font usage
-  - More consistency across UI (button layout, etc.)
+  - More consistency across UI (buttons, layout, etc.)
   - Better support for multiple result layouts. Detailed Tri-view and Bi-view layout control
   - Added Landing page
   - Primary navigation UX (tabs across top) revamped
       - Clearer tab UX
       - Results tab
       - Sidebar for additional navigation and settings
-- TAP: Object ID can be searched using "Select...IN" [Firefly-1450](https://github.com/Caltech-IPAC/firefly/pull/1526)
-- TAP: TAP panels can now be locked into one TAP service
-- Charts: Cascade-style plots for spectra [Firefly-1370](https://github.com/Caltech-IPAC/firefly/pull/1499)
-- Upload: improved support [Firefly-1341](https://github.com/Caltech-IPAC/firefly/pull/1472)
-- Tables: improved table error message handling [Firefly-1345](https://github.com/Caltech-IPAC/firefly/pull/1535)
+- TAP: Object ID can be searched using "Select...IN" [PR:Firefly-1450](https://github.com/Caltech-IPAC/firefly/pull/1526)
+- TAP: TAP panels can now be locked to one TAP service or TAP obscore service
+- Charts: Cascade-style plots for spectra [PR:Firefly-1370](https://github.com/Caltech-IPAC/firefly/pull/1499)
+- Upload: improved support [PR:Firefly-1341](https://github.com/Caltech-IPAC/firefly/pull/1472)
+- Tables: improved table error message handling [PR:Firefly-1345](https://github.com/Caltech-IPAC/firefly/pull/1535)
 
+### _Patches 2024.1_
+- 2024.1.1
+  - Bug fix: API: app options being overwritten via api [PR:Firefly-1457](https://github.com/Caltech-IPAC/firefly/pull/1538)
+  - Bug fix: Tables: crash when Simbad search fails [PR:Firefly-1458](https://github.com/Caltech-IPAC/firefly/pull/1538)
 
 
 ### _Pull Requests in this release_
@@ -41,7 +46,6 @@
 - All PRs
    - [UI conversion](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2022.3+)
    - [Other 2024.1 PRs](https://github.com/Caltech-IPAC/firefly/pulls?q=is%3Apr+milestone%3AUI-conversion)
-
 
 
 # Older Release notes 2019 - 2023
