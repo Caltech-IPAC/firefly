@@ -74,7 +74,7 @@ export function UploadTableSelector({uploadInfo, setUploadInfo, uploadTable=fals
     };
 
     return (
-        <div style={{margin: '10px 0 0 0'}}>
+        <div>
             <Stack {...{direction:'row', alignItems:'center'}}>
                 <ExtraButton text={(fileName&&haveTable) ? 'Change Upload Table...' : 'Add Upload Table...'}
                              onClick={() => showUploadTableChooser(preSetUploadInfo)} />

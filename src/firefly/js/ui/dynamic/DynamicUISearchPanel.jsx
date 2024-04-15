@@ -266,8 +266,8 @@ function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='d
 
 
 
-    const nonSpacial= (
-        <Stack className='non-spatial'>
+    const nonSpacial = (Boolean(polyPanel) || useArea || Boolean(iFieldLayout) || Boolean(checkBoxFields) || childComponents)
+        ? (<Stack className='non-spatial'>
             {Boolean(polyPanel) &&
                 <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}> {polyPanel} </div>}
             <div style={{paddingLeft:5, display:'flex', flexDirection:'column', alignSelf:'flex-start'}}>
@@ -284,8 +284,9 @@ function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='d
                 </div>
             </div>
             {childComponents && childComponents}
-        </Stack>
-    );
+        </Stack>)
+        : undefined; //to avoid rendering empty div (that takes spacing in Stack)
+
 
     if (!useSpacial) {
         const wrappedInternals= WrapperComponent ? <WrapperComponent>{nonSpacial}</WrapperComponent> : nonSpacial;

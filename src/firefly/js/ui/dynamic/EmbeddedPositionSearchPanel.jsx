@@ -108,44 +108,42 @@ export function EmbeddedPositionSearchPanel({
     };
 
     const internals= (
-        <Stack>
-            <Stack>
-                {!insetSpacial && <div style={{paddingTop:10}}/>}
-                {doToggle && <RadioGroupInputField {...{
-                    sx:{alignSelf: 'center'},
-                    fieldKey: CONE_AREA_KEY, orientation: 'horizontal',
-                    tooltip: 'Chose type of search', initialState: {value: initToggle}, options: useUpload ? CONE_AREA_OPTIONS_UPLOAD : CONE_AREA_OPTIONS
+        <Stack spacing={.5} sx={{pt: insetSpacial ? 0 : 1}} {...slotProps?.searchInnerLayout}>
+            {doToggle && <RadioGroupInputField {...{
+                sx:{alignSelf: 'center'},
+                fieldKey: CONE_AREA_KEY, orientation: 'horizontal',
+                tooltip: 'Chose type of search', initialState: {value: initToggle}, options: useUpload ? CONE_AREA_OPTIONS_UPLOAD : CONE_AREA_OPTIONS
+            }} />}
+            {doGetConeAreaOp() === CONE_CHOICE_KEY &&
+                <Stack {...slotProps?.searchTypeCone}>
+                    <TargetPanel {...{
+                        sx:{width:'34rem'},
+                        fieldKey:targetKey, nullAllowed,
+                        targetPanelExampleRow1, targetPanelExampleRow2,
+                        slotProps: {
+                            feedback:{sx: {alignSelf:'center'} },
+                        }
+                    }}/>
+                    <SizeInputFields {...{
+                        fieldKey: sizeKey, showFeedback: true, labelWidth: 100, nullAllowed: false,
+                        // orientation:'horizontal',
+                        label: 'Search Radius',
+                        initialState: {unit: 'arcsec', value: searchAreaInDeg + '', min:minValue, max:maxValue},
+                        sx: {'.ff-Input': {width: 1}},
+                        slotProps: {
+                            feedback:{sx: {alignSelf:'center'} },
+                        }
+                    }} />
+                </Stack>
+            }
+            {doGetConeAreaOp() === POLY_CHOICE_KEY &&
+                <PolygonField {...{
+                    hideHiPSPopupPanelOnDismount: false, fieldKey: polygonKey,
+                    targetDetails: {targetPanelExampleRow1: polygonExampleRow1, targetPanelExampleRow2:polygonExampleRow2},
+                    placeholder: 'Coordinates',
+                    manageHiPS:false,
                 }} />}
-                {doGetConeAreaOp() === CONE_CHOICE_KEY &&
-                    <Stack {...{pt:1/2}}>
-                        <TargetPanel {...{
-                            sx:{width:'34rem'},
-                            fieldKey:targetKey, nullAllowed,
-                            targetPanelExampleRow1, targetPanelExampleRow2,
-                            slotProps: {
-                                feedback:{sx: {alignSelf:'center'} },
-                            }
-                        }}/>
-                        <SizeInputFields {...{
-                            fieldKey: sizeKey, showFeedback: true, labelWidth: 100, nullAllowed: false,
-                            // orientation:'horizontal',
-                            label: 'Search Radius',
-                            slotProps: {
-                                feedback:{sx: {alignSelf:'center'} },
-                            },
-                            initialState: {unit: 'arcsec', value: searchAreaInDeg + '', min:minValue, max:maxValue}
-                        }} />
-                    </Stack>
-                }
-                {doGetConeAreaOp() === POLY_CHOICE_KEY &&
-                    <PolygonField {...{
-                        hideHiPSPopupPanelOnDismount: false, fieldKey: polygonKey,
-                        targetDetails: {targetPanelExampleRow1: polygonExampleRow1, targetPanelExampleRow2:polygonExampleRow2},
-                        placeholder: 'Coordinates',
-                        manageHiPS:false,
-                    }} />}
-            </Stack>
-            {otherComponents && otherComponents}
+            {otherComponents}
             {doGetConeAreaOp() === UPLOAD_CHOICE_KEY &&
                 <UploadTableSelector {...{uploadInfo, setUploadInfo, uploadTable:true}}/>
             }
@@ -218,6 +216,9 @@ EmbeddedPositionSearchPanel.propTypes= {
     searchItem: object,
     initArgs: object,
     slotProps: shape({
-        searchRoot: object
+        searchRoot: object,
+        //following slotProps should be changed when this component is refactored to make it more slots-friendly
+        searchInnerLayout: object,
+        searchTypeCone: object
     }),
 };
