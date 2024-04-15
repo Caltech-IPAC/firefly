@@ -15,7 +15,7 @@ import {ExpandButton, InfoButton, SaveButton, FilterButton, ClearFilterButton, T
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableUiUpdate} from '../TablesCntlr.js';
 import {
     uniqueTblId, getTableUiById, makeBgKey, getResultSetRequest, isClientTable, getTableState,
-    TBL_STATE, getMetaEntry, getTblById, parseError
+    TBL_STATE, getMetaEntry, getTblById, parseError, isOverflow
 } from '../TableUtil.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
@@ -30,7 +30,7 @@ import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {BgMaskPanel} from '../../core/background/BgMaskPanel.jsx';
 import {Logger} from '../../util/Logger.js';
 import {AddColumnBtn} from './AddOrUpdateColumn.jsx';
-
+import WarningIcon from '@mui/icons-material/WarningAmberRounded';
 import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
 import {META} from '../TableRequestUtil.js';
 
@@ -83,7 +83,7 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
     if ([TBL_STATE.ERROR,TBL_STATE.LOADING].includes(tstate))  return <NotReady {...{showTitle, tbl_id, title, removable, backgroundable, error}}/>;
 
     return (
-        <Sheet {...{variant, ...slotProps?.tablePanel}}
+        <Sheet {...{variant, ...slotProps?.root}}
                sx ={{
                    borderRadius: variant==='outlined' ? '5px' : undefined,
                    position:'relative',
@@ -93,7 +93,7 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
                    ...sx
                }}
         >
-            <Stack height={1} width={1}>
+            <Stack sx={{inset:0, position:'absolute'}}>
                 {showMetaInfo && <MetaInfo tbl_id={tbl_id} {...slotProps?.meta}/> }
                 <Stack className={TBL_CLZ_NAME} flexGrow={1} overflow='hidden'
                        onClick={stopPropagation}
@@ -117,55 +117,6 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
         </Sheet>
     );
 }
-
-function showTableOptionDialog(onChange, onOptionReset, clearFilter, tbl_ui_id, tbl_id) {
-
-    const content = (
-         <Stack height='65vh' width='65vw' overflow='hidden' sx={{resize:'both', minWidth:550, minHeight:200}}>
-               <TablePanelOptions
-                  onChange={onChange}
-                  onOptionReset={onOptionReset}
-                  clearFilter={clearFilter}
-                  tbl_ui_id={tbl_ui_id}
-                  tbl_id={tbl_id}
-               />
-         </Stack>
-    );
-
-    showOptionsPopup({content, title: 'Table Options', modal: true, show: true});
-
-
-}
-
-function showTableInfoDialog(tbl_id)  {
-    const content = (
-        <Box width='65vw' height='65vh' minWidth={450} minHeight={200}
-             sx={{resize:'both', overflow:'auto', position:'relative'}}>
-            <TableInfo tbl_id={tbl_id}
-                       p={0}
-                       tabsProps={{
-                           variant:'plain',
-                           slotProps: {tabList: {sticky: 'top'}}
-                       }}
-            />
-        </Box>
-    );
-    showOptionsPopup({content, title: 'Table Info', modal: true, show: true});
-}
-
-function showTablePropSheetDialog(tbl_id) {
-    const {title=''} = getTblById(tbl_id) || {};
-    showOptionsPopup({show: false});   // hide the dialog if one is currently opened
-    const content = (
-        <Stack height={450} width={650} overflow='hidden' sx={{resize:'both', minWidth:'40rem', minHeight:'15rem'}}>
-          <PropertySheetAsTable tbl_id={tbl_id}/>
-        </Stack>
-    );
-    defer(() => showOptionsPopup({content, title: 'Row Details: ' + title, modal: false, show: true}));
-}
-
-const stopPropagation= (ev) => ev.stopPropagation();
-
 
 TablePanel.propTypes = {
     tbl_id: PropTypes.string,
@@ -209,7 +160,7 @@ TablePanel.propTypes = {
     rowHeightGetter: PropTypes.func,
     sx: PropTypes.object,
     slotProps: shape({
-        tablePanel: object,     // because there are already too many props, this is used specifically to pass custom props to top level component
+        root: object,     // because there are already too many props, this is used specifically to pass custom props to top level component
         meta: object,
         toolbar: object,
         table: object
@@ -237,6 +188,68 @@ TablePanel.defaultProps = {
     showToggleTextView: true,
     border: true,
 };
+
+export function OverflowMarker({tbl_id}) {
+    if (isOverflow(tbl_id)) {
+        return (
+            <Tooltip color='warning' variant='outlined'
+                     slotProps={{root:{sx:{width:'20em'}}}}
+                     title='Query truncated by MAXREC; more rows may be available by repeating the query with a larger MAXREC.'>
+                <WarningIcon color='warning'/>
+            </Tooltip>
+        );
+    }
+}
+
+
+function showTableOptionDialog(onChange, onOptionReset, clearFilter, tbl_ui_id, tbl_id) {
+
+    const content = (
+        <Stack height='65vh' width='65vw' overflow='hidden' sx={{resize:'both', minWidth:550, minHeight:200}}>
+            <TablePanelOptions
+                onChange={onChange}
+                onOptionReset={onOptionReset}
+                clearFilter={clearFilter}
+                tbl_ui_id={tbl_ui_id}
+                tbl_id={tbl_id}
+            />
+        </Stack>
+    );
+
+    showOptionsPopup({content, title: 'Table Options', modal: true, show: true});
+
+
+}
+
+function showTableInfoDialog(tbl_id)  {
+    const content = (
+        <Box width='65vw' height='65vh' minWidth={450} minHeight={200}
+             sx={{resize:'both', overflow:'auto', position:'relative'}}>
+            <TableInfo tbl_id={tbl_id}
+                       p={0}
+                       tabsProps={{
+                           variant:'plain',
+                           slotProps: {tabList: {sticky: 'top'}}
+                       }}
+            />
+        </Box>
+    );
+    showOptionsPopup({content, title: 'Table Info', modal: true, show: true});
+}
+
+function showTablePropSheetDialog(tbl_id) {
+    const {title=''} = getTblById(tbl_id) || {};
+    showOptionsPopup({show: false});   // hide the dialog if one is currently opened
+    const content = (
+        <Stack height={450} width={650} overflow='hidden' sx={{resize:'both', minWidth:'40rem', minHeight:'15rem'}}>
+            <PropertySheetAsTable tbl_id={tbl_id}/>
+        </Stack>
+    );
+    defer(() => showOptionsPopup({content, title: 'Row Details: ' + title, modal: false, show: true}));
+}
+
+const stopPropagation= (ev) => ev.stopPropagation();
+
 
 function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
 
@@ -299,7 +312,10 @@ function ToolBar({tbl_id, tbl_ui_id, connector, tblState, slotProps}) {
     return (
         <Sheet component={Stack} variant='soft' className='FF-Table-Toolbar' direction='row' justifyContent='space-between' width={1} {...slotProps?.toolbar}>
             <LeftToolBar {...{tbl_id, title, removable, showTitle, leftButtons}}/>
-            {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:connector}} /> }
+            <Stack direction='row' spacing={1} alignItems='center'>
+                {showPaging && <PagingBar {...{currentPage, pageSize, showLoading, totalRows, callbacks:connector}} /> }
+                <OverflowMarker tbl_id={tbl_id}/>
+            </Stack>
             <Stack direction='row' alignItems='center'>
                 {rightButtons}
                 {showSearchButton &&  isTableActionsDropVisible(searchActions,tbl_id ) &&

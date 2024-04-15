@@ -1493,6 +1493,15 @@ export function parseError(error) {
     }
 }
 
+export function isOverflow(tbl_id) {
+    const {resources, tableMeta} = getTblById(tbl_id) || {};
+
+    if (tableMeta?.QUERY_STATUS?.toUpperCase() === 'OVERFLOW') return true;
+
+    const results = resources?.find((r) => r.type === 'results');
+    return !!results?.params?.find((p) => p.QUERY_STATUS === 'OVERFLOW');
+}
+
 /*-------------------------------------private------------------------------------------------*/
 
 /**

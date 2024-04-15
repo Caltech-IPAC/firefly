@@ -31,7 +31,7 @@ export function PagingBar(props) {
 
     const pagestr = (totalRows === 0) ? '' :
                     `(${(startIdx+1).toLocaleString()} - ${endIdx.toLocaleString()} of ${totalRows?.toLocaleString()??''})`;
-    const showingLabel = (  <Typography level='body-sm' noWrap lineHeight={2}>{pagestr}</Typography> );
+    const showingLabel = (  <Typography level='body-sm' noWrap lineHeight={1}>{pagestr}</Typography> );
     if (showAll) {
         return showingLabel;
     } else {

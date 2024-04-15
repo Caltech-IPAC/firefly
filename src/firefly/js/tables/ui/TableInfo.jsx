@@ -27,7 +27,7 @@ export function TableInfo({tbl_id, tabsProps, ...props}) {
             <StatefulTabs componentKey='TablePanelOptions' {...tabsProps} sx={{overflow:'auto'}}>
                 {jobId &&
                 <Tab name='Job Info'>
-                    <JobInfo jobId={jobId}/>
+                    <JobInfo jobId={jobId} tbl_id={tbl_id}/>
                 </Tab>
                 }
                 <Tab name='Table Metadata'>
