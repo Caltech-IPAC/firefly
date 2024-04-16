@@ -153,6 +153,17 @@ public class HttpServiceInput implements Cloneable, Serializable {
         }
     }
 
+    /**
+     * @return this HttpServiceInput with necessary credentials added
+     */
+    public HttpServiceInput applyCredential() {
+        SsoAdapter ssoAdapter = ServerContext.getRequestOwner().getSsoAdapter();
+        if (ssoAdapter != null) {
+            ssoAdapter.setAuthCredential(this);
+        }
+        return this;
+    }
+
 //====================================================================
 //  convenience functions
 //====================================================================
@@ -169,23 +180,7 @@ public class HttpServiceInput implements Cloneable, Serializable {
      * @return
      */
     public static HttpServiceInput createWithCredential(String requestUrl) {
-        return applyCredential(new HttpServiceInput(requestUrl));
-    }
-
-    /**
-     * Include the necessary credentials based on the given input.
-     * @param input  HTTP request input
-     * @return
-     */
-    public static HttpServiceInput applyCredential(HttpServiceInput input) {
-        // Credential is normally based on the requestUrl.  It does not make sense to pass in a null input.
-        // A null input will most likely results in no credential added.
-        input = input == null ? new HttpServiceInput() : input;
-        SsoAdapter ssoAdapter = ServerContext.getRequestOwner().getSsoAdapter();
-        if (ssoAdapter != null) {
-            ssoAdapter.setAuthCredential(input);
-        }
-        return input;
+        return new HttpServiceInput(requestUrl).applyCredential();
     }
 
     public String getUniqueKey() {
