@@ -2,7 +2,9 @@ package edu.caltech.ipac.table;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Object representing the RESOURCE block of VOTABLE.  It is by design that INFO, LINK, TABLE, and RESOURCE are not included.
@@ -16,6 +18,7 @@ public class ResourceInfo implements Serializable, Cloneable {
     private String desc;
     private List<GroupInfo> groups = new ArrayList<>();     // for <GROUP> under <RESOURCE>
     private List<ParamInfo> params = new ArrayList<>();     // for <PARAM> under <RESOURCE>
+    private Map<String, String> infos = new HashMap<>();     // for <INFO> under <RESOURCE>
 
     public ResourceInfo() {}
 
@@ -47,6 +50,9 @@ public class ResourceInfo implements Serializable, Cloneable {
 
     public List<ParamInfo> getParams() { return params; }
     public void setParams(List<ParamInfo> params) { this.params = params; }
+
+    public Map<String, String> getInfos() { return infos; }
+    public void setInfos(Map<String, String> infos) { this.infos = infos; }
 }
 
 

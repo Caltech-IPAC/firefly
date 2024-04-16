@@ -123,7 +123,7 @@ function tablesAsTab(tables, tableOptions, expandedMode) {
             return  (
                 <Tab key={tbl_id} id={tbl_id} label={title} removable={removable} onTabRemove={onTabRemove}>
                     <TablePanel key={tbl_id}
-                                slotProps={{ toolbar:{variant:'plain'}, tablePanel:{variant: 'plain'} }}
+                                slotProps={{ toolbar:{variant:'plain'}, root:{variant: 'plain'} }}
                                 {...{tbl_id, tbl_ui_id, ...options, expandedMode, showTitle: false}} />
                 </Tab>
             );

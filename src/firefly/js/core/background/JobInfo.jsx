@@ -9,7 +9,7 @@ import {dispatchShowDialog} from '../ComponentCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {CollapsiblePanel} from 'firefly/ui/panel/CollapsiblePanel.jsx';
 import {uwsJobInfo} from 'firefly/rpc/SearchServicesJson.js';
-import {Button, Stack} from '@mui/joy';
+import {Button, Stack, Typography} from '@mui/joy';
 import {OverflowMarker} from 'firefly/tables/ui/TablePanel.jsx';
 
 
@@ -83,7 +83,7 @@ function DataOrigin({dataOrigin, type, jobId}) {
     if (!isUws) return <KeywordBlock label={label} value={dataOrigin} asLink={true}/>;
     return (
         <div style={{display: 'inline-flex'}}>
-            <KeywordBlock style={{width: 425}} label={label} value={dataOrigin} asLink={true}/>
+            <KeywordBlock style={{width: 425, alignItems:'center'}} label={label} value={dataOrigin} asLink={true}/>
             <Button ml={1/2} onClick={() => showUwsJob({jobId})}>Show</Button>
         </div>
     );
@@ -94,7 +94,7 @@ function FinalMsg({phase, summary, error, tbl_id}) {
         return (
             <Stack direction='row' spacing={1} alignItems='center'>
                 <KeywordBlock label='Summary' value={summary}/>
-                <OverflowMarker tbl_id={tbl_id}/>
+                <OverflowMarker tbl_id={tbl_id} showText={true}/>
             </Stack>
         );
     } else if(phase === 'ERROR') {

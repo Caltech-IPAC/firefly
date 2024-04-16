@@ -148,7 +148,7 @@ export function MetaInfo({tbl_id, isOpen=false, ...props}) {
 
 export function KeywordBlock({style={}, label, value, title, asLink}) {
     return (
-        <div style={{display: 'inline-flex', alignItems: 'center', ...style}}>
+        <div style={{display: 'inline-flex', alignItems: 'baseline', ...style}}>
             <Keyword {...{label, value, title, asLink}}/>
         </div>
     );
@@ -175,12 +175,13 @@ export function LinkTag({href, title}) {
     title = title || href;
     if (href) {
         return (
-            <Box overflow='hidden'>
-                <Link level='body-xs' sx={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}
-                    href={href} title={title} target='Links'
-                    startDecorator={<CopyToClipboard value={href} size={16} buttonStyle={{backgroundColor: 'unset'}}/>}
-                >{title}</Link>
-            </Box>
+            <Stack overflow='hidden' direction='row' spacing={1} alignItems='center'>
+                <CopyToClipboard value={href} size={16} buttonStyle={{backgroundColor: 'unset'}}/>
+                <Link level='body-xs' href={href} title={title} target='Links'
+                      sx={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                    {title}
+                </Link>
+            </Stack>
         );
     } else return null;
 }

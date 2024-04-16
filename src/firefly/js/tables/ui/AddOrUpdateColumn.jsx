@@ -95,7 +95,7 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
     };
 
     const buttonLabel = editColName ? 'Update Column' : 'Add Column';
-    const DelBtn = (<button type='button' className='button std'onClick={doDelete}>Delete Column</button>);
+    const DelBtn = (<Button color='danger' variant='solid' onClick={doDelete}>Delete Column</Button>);
 
     return (
         <Stack p={1} width={500} spacing={1}

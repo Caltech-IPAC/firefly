@@ -182,7 +182,7 @@ function makePropertySheetTab() {
     return (
         <Tab key='rowDetails' name='Details' removable={false} id='rowDetails'>
             <PropertySheetAsTable
-                slotProps={{ toolbar:{variant:'plain'}, tablePanel:{variant: 'plain'} }}
+                slotProps={{ toolbar:{variant:'plain'}, root:{variant: 'plain'} }}
             />
         </Tab>
     );

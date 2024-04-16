@@ -1499,7 +1499,7 @@ export function isOverflow(tbl_id) {
     if (tableMeta?.QUERY_STATUS?.toUpperCase() === 'OVERFLOW') return true;
 
     const results = resources?.find((r) => r.type === 'results');
-    return !!results?.params?.find((p) => p.QUERY_STATUS === 'OVERFLOW');
+    return results?.infos?.QUERY_STATUS === 'OVERFLOW';
 }
 
 /*-------------------------------------private------------------------------------------------*/

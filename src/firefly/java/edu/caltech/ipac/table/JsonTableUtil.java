@@ -538,6 +538,7 @@ public class JsonTableUtil {
             applyIfNotEmpty(ri.getDesc(),  v -> json.put("desc", v));
             if (ri.getGroups().size() > 0) json.put("groups", toJsonGroupInfos(ri.getGroups()));
             if (ri.getParams().size() > 0) json.put("params", toJsonParamInfos(ri.getParams()));
+            if (ri.getInfos().size() > 0)  json.put("infos", ri.getInfos());
             return json;
         }).collect(Collectors.toList());
     }
