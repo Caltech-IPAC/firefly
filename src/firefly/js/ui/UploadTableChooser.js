@@ -226,12 +226,12 @@ const LoadedTables= (props) => {
                 {'Select one of the existing tables below to load into the TAP panel: '}
             </Typography>
             <FieldGroup groupKey={groupKey} keepState={keepState} sx={{flexGrow: 1}}>
-                <FormPanel
-                    onSubmit={onSubmit}
-                    onCancel={onCancel}
-                    params={{hideOnInvalid: false}}
-                    submitText={'Load Table'}
-                    submitBarStyle={{padding:1/2}} >
+                <FormPanel onSuccess={onSubmit} onCancel={onCancel}
+                    slotProps={{
+                        searchBar: {p:1/2},
+                        completeBtn: {text: 'Load Table'},
+                    }}>
+
                     <TablePanel tbl_id={tbl_id+'-ui'} tbl_ui_id={tbl_id+'-ui'} tableModel={tableModel} border={false} showTypes={false}
                                 sx={{position: 'absolute', inset:0}}
                                 showToolbar={false} showFilters={true} selectable={false} showOptionButton={false}/>

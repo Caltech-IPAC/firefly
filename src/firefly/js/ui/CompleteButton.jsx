@@ -33,59 +33,52 @@ function addComponentData(inR={}, registeredComponents={}) {
 }
 
 
-function validUpdate(valid,onSuccess,onFail,registeredComponents, closeOnValid,groupKey,
-                     dialogId, groupsToUse, includeUnmounted= false) {
-    const funcToCall = valid ? onSuccess : onFail;
-    let continueValid= true;
+async function collectInputs(registeredComponents, groupKey, includeUnmounted= false) {
 
-    if (Array.isArray(groupKey)) {
-        const groupsToValidate= groupsToUse();
-        const requestObj = groupsToValidate.reduce( (obj,groupKey) => {
-            obj[groupKey]= getFieldGroupResults(groupKey,includeUnmounted);
+    if (!groupKey) return [{}, true];   // if no groupKey, then no parameters to collect and therefore pass validation
+
+    const groups = isFunction(groupKey) ? groupKey() : groupKey;
+    const valid = await validateFieldGroup(groups, includeUnmounted);
+
+    let inputs;
+    if (isFunction(groupKey)) {
+        const groupsToValidate= groupKey();
+        inputs = groupsToValidate.reduce( (obj,gkey) => {
+            obj[gkey]= getFieldGroupResults(gkey,includeUnmounted);
             return obj;
         },{});
-        if (funcToCall) funcToCall(addComponentData(requestObj,registeredComponents));
     }
     else {
-        const request = getFieldGroupResults(groupKey,includeUnmounted);
-        if (funcToCall) continueValid= funcToCall(addComponentData(request,registeredComponents));
+        inputs = getFieldGroupResults(groupKey,includeUnmounted);
     }
-
-    const stillValid= valid && (continueValid ?? true);
-
-    if (stillValid && dialogId && closeOnValid) dispatchHideDialog(dialogId);
-}
-
-function onClick(onSuccess,onFail,registeredComponents, closeOnValid,groupKey,
-                 dialogId,groupsToUse, includeUnmounted, changeMasking, requireAllValid) {
-    if (groupKey) {
-        if (changeMasking) changeMasking(true);
-        validateFieldGroup(groupsToUse(), includeUnmounted)
-            .then( (valid)=> {
-                if (changeMasking) changeMasking(false);
-                validUpdate(valid||!requireAllValid,onSuccess,onFail,registeredComponents,closeOnValid,groupKey,dialogId, groupsToUse, includeUnmounted);
-            });
-    }
-    else {
-        if (onSuccess) onSuccess();
-        if (dialogId && closeOnValid) dispatchHideDialog(dialogId);
-    }
+    return [addComponentData(addComponentData(inputs,registeredComponents)), valid];
 }
 
 
+async function onClick(onSuccess, onFail, registeredComponents, closeOnValid, groupKey,
+                       dialogId, includeUnmounted, changeMasking, requireAllValid) {
+
+    changeMasking?.(true);
+    const [inputs, valid] = await collectInputs(registeredComponents, groupKey, includeUnmounted);
+    changeMasking?.(false);
+
+    const passValidation = valid || !requireAllValid;
+    const funcToCall = (passValidation) ? onSuccess : onFail;
+    const continueValid = funcToCall?.(inputs, passValidation) ?? true;
+    if (continueValid && dialogId && closeOnValid) dispatchHideDialog(dialogId);
+}
 
 
 export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
                           color=undefined, variant=undefined, requireAllValid=true,
                           closeOnValid=true, dialogId,includeUnmounted= false, primary=true,
-                          groupsToUse= () => groupKey,
                           style={}, sx, changeMasking, fireOnEnter= false,
                                     getDoOnClickFunc}) {
     const {registeredComponents,groupKey:ctxGroupKey}= useContext(FieldGroupCtx);
     if (!groupKey && ctxGroupKey) groupKey= ctxGroupKey;
     if (groupKey===NONE) groupKey= undefined;
     const onComplete = () => onClick(onSuccess,onFail,registeredComponents,closeOnValid,groupKey,dialogId,
-                                      groupsToUse, includeUnmounted,changeMasking, requireAllValid);
+                                      includeUnmounted,changeMasking, requireAllValid);
 
 
     useEffect(() => {
@@ -121,8 +114,8 @@ export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
 CompleteButton.propTypes= {
     onFail: func,
     onSuccess: func,
-    groupsToUse: func,
-    groupKey: oneOfType([ string, arrayOf(string) ]),
+    // groupsToUse: func,                  // this is confusing and not necessary.  groupKey should be [string,func].
+    groupKey: oneOfType([ string, func ]),  // when func, it returns array of string
     text: string,
     closeOnValid: bool,
     dialogId: string,

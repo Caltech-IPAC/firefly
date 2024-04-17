@@ -22,9 +22,14 @@ import {showInfoPopup} from 'firefly/ui/PopupUtil.jsx';
 
 const FormTemplate= ({children, onSuccess,groupKey, help_id}) => (
         <Box sx={{width:1, height:1}} >
-            <FormPanel width='auto' height='auto' cancelText='' groupKey={groupKey} onSubmit={onSuccess}
-                       params={{hideOnInvalid: false}} buttonStyle={{justifyContent: 'left'}}
-                       submitBarStyle={{padding: '2px 3px 3px'}} help_id = {help_id} >
+            <FormPanel width='auto' height='auto'
+                       groupKey={groupKey}
+                       onSuccess={onSuccess}
+                       help_id = {help_id}
+                       slotProps={{
+                           searchBar:{px:1, py:1/2, justifyContent: 'left'},
+                           cancelBtn: {component:null}
+                       }}>
                 <FieldGroup groupKey={groupKey} keepState={true}> {children} </FieldGroup>
             </FormPanel>
         </Box>

@@ -47,15 +47,18 @@ export function DLuiRootSearchPanel({groupKey, children, submitSearch, setClickF
     ) : undefined;
 
     return (
-        <FormPanel submitText='Search' groupKey={groupKey}
-                   onSubmit={submitSearch}
-                   cancelText=''
-                   params={{hideOnInvalid: false}}
-                   inputStyle={{border: 'none', padding: 0, marginBottom: 5}}
-                   getDoOnClickFunc={(f) => setClickFunc({onClick: f})}
+        <FormPanel groupKey={groupKey}
+                   onSuccess={submitSearch}
                    onError={() => showInfoPopup('Fix errors and search again', 'Error')}
-                   extraWidgets={[<DocRows key='root' docRows={docRows}/>]}
-                   help_id={'search-collections-general'}>
+                   help_id={'search-collections-general'}
+                   slotProps={{
+                       input: {border:0, p:0, mb:1},
+                       cancelBtn: {component:null},
+                       searchBar: {actions: <DocRows key='root' docRows={docRows}/>},
+                       completeBtn: {
+                           getDoOnClickFunc:(f) => setClickFunc({onClick: f})
+                       }
+                   }}>
             <Stack {...{alignItems: 'flex-start',}}>
                 {children}
                 {options}

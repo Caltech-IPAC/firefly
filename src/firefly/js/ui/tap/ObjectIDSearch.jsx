@@ -13,7 +13,7 @@ import {
     ADQL_LINE_LENGTH, getAsEntryForTableName, makeUploadSchema, maybeQuote, tapHelpId
 } from 'firefly/ui/tap/TapUtil';
 import PropTypes from 'prop-types';
-import {ExtraButton} from 'firefly/ui/FormPanel';
+import {TextButton} from 'firefly/visualize/ui/Buttons.jsx';
 import {showUploadTableChooser} from 'firefly/ui/UploadTableChooser';
 import {showColSelectPopup} from 'firefly/charts/ui/ColSelectView';
 import {getSizeAsString} from 'firefly/util/WebUtil';
@@ -253,7 +253,7 @@ function UploadTableSelectorObjectID({uploadInfo, setUploadInfo, setSelectInObjL
         <div style={{margin: '10px 0 0 0'}}>
             <div style={{display:'flex', alignItems:'center'}}>
                 <div style={{display:'flex', alignItems:'center'}}>
-                    <ExtraButton text={fileName ? 'Change Upload Table...' : 'Add Upload Table...'}
+                    <TextButton text={fileName ? 'Change Upload Table...' : 'Add Upload Table...'}
                                  onClick={() => showUploadTableChooser(preSetUploadInfo,'objectIDMatch',{colTypes: ['int','long','string'],colCount: 3})} style={{marginLeft: 42}} />
                     {haveFile &&
                         <div style={{width:200, overflow:'hidden', whiteSpace:'nowrap', fontSize:'larger',

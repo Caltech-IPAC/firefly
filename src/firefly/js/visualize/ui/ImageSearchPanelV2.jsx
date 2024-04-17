@@ -119,17 +119,22 @@ function ImageSearchPanel({sx, resizable=true, onSubmit, gridSupport = false, mu
 
     return (
         <Stack sx={{...style, ...sx}}>
-            <FormPanel  inputStyle = {{display: 'flex', flexDirection: 'column', backgroundColor: 'transparent', padding: 'none', border: 'none'}}
-                        submitBarStyle = {{flexShrink: 0, padding: '0 4px 3px'}}
-                        groupKey = {Object.values(FG_KEYS)} includeUnmounted={true}
-                        groupsToUse={() => getGroupsToValidate(imageType)}
-                        params = {{hideOnInvalid: false}}
-                        submitText={submitText}
-                        onSubmit = {onSubmit}
+            <FormPanel  groupKey={() => getGroupsToValidate(imageType)}
+                        onSuccess={onSubmit}
                         onError = {searchFailed}
-                        onCancel = {onCancel}
-                        cancelText={onCancel?'Cancel':''}
-                        help_id = {'basics.searching'}>
+                        onCancel= {onCancel}
+                        help_id = {'basics.searching'}
+                        slotProps={{
+                            input: {bgcolor:'transparent', p:0, border:0},
+                            searchBar: {flexShrink: 0, px:1, pb:1},
+                            cancelBtn: {
+                                component: onCancel ? undefined : null,
+                            },
+                            completeBtn: {
+                                text:submitText,
+                                includeUnmounted:true,
+                            },
+                        }}>
                 <ImageSearchPanelV2 {...{multiSelect, archiveName, noScroll, initArgs}}/>
                 {gridSupport && <GridSupport/>}
             </FormPanel>

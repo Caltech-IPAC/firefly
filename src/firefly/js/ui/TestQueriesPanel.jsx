@@ -134,8 +134,7 @@ export class TestQueriesPanel extends PureComponent {
             <div style={{padding: 10, height: '100%',width:'100%'}}>
                 <FormPanel
                     groupKey='TEST_CAT_PANEL'
-                    onSubmit={(request) => onSearchSubmit(request)}
-                    onCancel={hideSearchPanel}>
+                    onSuccess={onSearchSubmit}>
                     <FieldGroup groupKey='TEST_CAT_PANEL' keepState={true}
                                 style={{height:'100%', display:'flex', flexDirection:'column'}}>
                         <FieldGroupTabs initialState={{ value:'2massImage' }} fieldKey='Tabs' style={{flexGrow:1}} >
@@ -176,24 +175,20 @@ TestQueriesPanel.defaultProps = {
     name: 'TestSearches'
 };
 
-
-function hideSearchPanel() {
-    dispatchHideDropDown();
-}
-
-
 const WrapperPanel= ({children}) => {
     return (
-        <FormPanel submitText = 'Search' groupKey = 'InsetUI'
-                   onSubmit = {(request) => {
+        <FormPanel groupKey = 'InsetUI'
+                   onSuccess= {(request) => {
                        showInfoPopup(`done: ${JSON.stringify(request)}`, 'information');
                        return false;
                    }}
                    onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
-                   cancelText=''
-                   params={{hideOnInvalid: false}}
-                   inputStyle={{border:'none', padding:0, marginBottom:5}}
-                   help_id  = {'muy-help-id'}>
+                   help_id  = {'muy-help-id'}
+                   slotProps={{
+                       cancelBtn: {component:null},
+                       input: {p:0, mb:1, border:'none'}
+                   }}>
+
             <div style={{ display:'flex', flexDirection:'column', alignItems:'center', }}>
                 <>
                         {children}

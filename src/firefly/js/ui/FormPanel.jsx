@@ -4,142 +4,103 @@
 
 import {Button, Sheet, Stack} from '@mui/joy';
 import React, {useCallback} from 'react';
-import PropTypes, {object, shape} from 'prop-types';
+import {elementType, shape, node, string, func, oneOfType, element, bool} from 'prop-types';
 import CompleteButton from './CompleteButton.jsx';
-import * as TablesCntlr from '../tables/TablesCntlr.js';
 import {HelpIcon} from './HelpIcon.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
-import {makeTblRequest} from '../tables/TableRequestUtil.js';
-import {isNil} from 'lodash';
 import {dispatchFormCancel, dispatchFormSubmit} from 'firefly/core/AppDataCntlr.js';
 import {Stacker} from 'firefly/ui/Stacker.jsx';
+import {Slot} from 'firefly/ui/SimpleComponent.jsx';
 
-function handleFailure() {
+/*
+onSuccess: This function is invoked when the submit button is pressed and all input fields pass validation.
+           It's the responsibility of the callback function to perform further validation or proceed with form submission.
+           The callback should return a boolean value indicating whether the form was submitted or not.
+           By default, this value is set to true.
+           When the form is submitted, it will call dispatchHideDropDown to hide the form.
 
-}
+onError: This function is invoked when the submit button is pressed and one or more input fields fail validation.
+         dispatchHideDropDown is not triggered, allowing the form to remain visible with validation errors.
 
-function createSuccessHandler(action, params={}, title, onSubmit) {
-    return (request={}) => {
-        request = Object.assign({}, params, request);
-        const reqTitle = title && (typeof title === 'function') ? title(request) : title;
-        request = makeTblRequest(request.id, reqTitle || request.title, request, params);
+onCancel: This function is invoked when the cancel button is pressed. The default behavior is to call dispatchHideDropDown
+          to hide the form. Customize cancelBtn as needed.
+ */
+export const FormPanel = function ({groupKey, onSuccess, onError, onCancel, help_id, disabledDropdownHide, slotProps, children, ...rootProps}) {
 
-        if (action) {
-            if (typeof action === 'function') {
-                action(request);
-            } else {
-                switch (action) {
-                    case TablesCntlr.TABLE_SEARCH  :
-                        TablesCntlr.dispatchTableSearch(request);
-                        break;
-                }
-            }
-        }
+    const doSubmit = ((p, valid) => {
 
-        let submitResult;
-        if (onSubmit) {
-            submitResult = onSubmit(request);
-        }
+        const funcToCall = valid ? onSuccess : onError;
 
-        // By default, onSubmit returns true.  So, return false only when onSubmit explicitly returns false
-        return isNil(submitResult) || submitResult;
-    };
-}
-
-export const FormPanel = function (props) {
-    const { children, onSuccess, onSubmit, onCancel=dispatchHideDropDown, onError, groupKey, groupsToUse,
-        action, params, title, getDoOnClickFunc, submitText='Search',cancelText='Cancel', help_id, changeMasking,
-        requireAllValid,
-        includeUnmounted=false, extraWidgets, extraWidgetsRight, sx, slotProps} = props;
-    const { style, inputStyle, submitBarStyle} = props;
-
-    const doSubmit = ((p) => {
-        const handler = onSuccess ?? createSuccessHandler(action, params, title, onSubmit);
-        const valid = handler(p);
-        if (valid) {
+        const submitted = funcToCall?.(p) ?? valid;
+        if (submitted) {
             dispatchFormSubmit(p);
+            !disabledDropdownHide && dispatchHideDropDown();
         }
-        // handle dropdown
-        if (params?.disabledDropdownHide) return;
-        if (valid || (params?.hideOnInvalid ?? true)) {
-            dispatchHideDropDown();
-        }
+        return submitted;
     });
 
-    const doCancel = useCallback(() => {
-        dispatchFormCancel();
-        onCancel?.();
-    }, []);
-
-    const searchBarEnd = (
-        <>
-            {extraWidgetsRight}
-            {help_id && <HelpIcon helpId={help_id} />}
-        </>
-    );
+    const searchBarEnd = help_id && <HelpIcon helpId={help_id}/>;
 
     return (
-        <Stack component={Sheet} className='ff-FormPanel' spacing={1} p={1} height={1} sx={{...style, ...sx}}>
-            <Stack flexGrow={1} sx={{...inputStyle, ...slotProps?.input}}>
+        <Stack component={Sheet} className='ff-FormPanel' spacing={1} p={1} height={1} {...rootProps}>
+            <Slot component={Stack} flexGrow={1} slotProps={slotProps?.input}>
                 {children}
-            </Stack>
-            <Stacker endDecorator={searchBarEnd} {...slotProps?.searchBar}
-                     sx={{...submitBarStyle, ...slotProps?.searchBar?.sx}}>
-                <CompleteButton includeUnmounted={includeUnmounted}
-                                groupKey={groupKey}
-                                requireAllValid={requireAllValid}
-                                getDoOnClickFunc={getDoOnClickFunc}
-                                groupsToUse={groupsToUse}
-                                onSuccess={doSubmit}
-                                onFail={onError || handleFailure}
-                                text = {submitText} changeMasking={changeMasking} />
-                {cancelText && <ExtraButton onClick={doCancel} text={cancelText}/>}
-
-                {extraWidgets}
-            </Stacker>
+            </Slot>
+            <Slot component={Stacker} endDecorator={searchBarEnd} slotProps={slotProps?.searchBar}>
+                <Slot component={CompleteButton}
+                      text='Search'
+                      groupKey={groupKey}
+                      onSuccess={doSubmit} onFail={doSubmit}
+                      slotProps={slotProps?.completeBtn}
+                />
+                <Slot component={CancelButton} size='md' text='Cancel' onClick={onCancel} disabledDropdownHide={disabledDropdownHide} slotProps={slotProps?.cancelBtn}/>
+                {slotProps?.searchBar?.actions}
+            </Slot>
         </Stack>
     );
 };
 
-
-// Use onSubmit, action, param, and title props when the callback expects a table request
-// Use onSuccess for a generic callback, expecting object with key-values for group fields
-// If onSuccess is provided, onSubmit, action, param, and title properties are ignored
 FormPanel.propTypes = {
-    submitText: PropTypes.string,
-    cancelText:PropTypes.string,
-    title: PropTypes.string,
-    sx: PropTypes.object,
-    style: PropTypes.object,
-    inputStyle: PropTypes.object,
-    submitBarStyle: PropTypes.object,
-    onSubmit: PropTypes.func, // onSubmit(request) - callback that accepts table request, use with action, params, and title props
-    onSuccess: PropTypes.func, // onSuccess(fields) - callback that takes fields object, its keys are the field keys for fields in the given group
-    onCancel: PropTypes.func,
-    onError: PropTypes.func,
-    groupKey: PropTypes.any,
-    groupsToUse: PropTypes.func,
-    action: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-    params: PropTypes.object,
-    help_id: PropTypes.string,
-    changeMasking: PropTypes.func,
-    includeUnmounted: PropTypes.bool,
-    extraWidgets: PropTypes.arrayOf(PropTypes.element),
-    getDoOnClickFunc: PropTypes.func,
+    groupKey: oneOfType([string, func]),
+    title: oneOfType([string, func]),
+    onSuccess: func,                // invoked when validation passed; func(params: object) => bool
+    onError: func,                  // invoked when validation failed; func(params: object) => bool
+    onCancel: func,                 // invoked when cancelBtn is pressed.
+    disabledDropdownHide: bool,     // if true, do not call dropdown hide when form is submitted.
+    help_id: string,
+    ...Sheet.propTypes,
     slotProps: shape({
-        input: object,
-        searchBar: object,
-    }),
+        input: shape({
+            ...Stack.propTypes
+        }),
+        searchBar: shape({
+            component: elementType,   // set to null to hide the search bar; true for any slots defined here.
+            actions: element,         // additional actions go between ok/cancel and help icon
+            ...Stack.propTypes
+        }),
+        completeBtn: shape({
+            component: elementType,
+            ...CompleteButton.propTypes
+        }),
+        cancelBtn: shape({
+            component: elementType,
+            text: node,
+            ...Button.propTypes
+        }),
+    })
 };
 
-export function ExtraButton({text, onClick}) {
-    return (
-        <Button {...{size:'md', onClick}}>{text}</Button>
-    );
+function CancelButton({text, onClick, disabledDropdownHide, ...props}) {
+
+    const doCancel = useCallback(() => {
+        dispatchFormCancel();
+        if (onClick) {
+            onClick();
+        } else {
+            // default implementation of onClick is not used
+            if (!disabledDropdownHide) dispatchHideDropDown();
+        };
+    }, []);
+
+    return <Button onClick={doCancel} {...props}>{text}</Button>;
 }
-
-ExtraButton.propTypes = {
-    text: PropTypes.string,
-    onClick: PropTypes.func,
-    style: PropTypes.object
-};

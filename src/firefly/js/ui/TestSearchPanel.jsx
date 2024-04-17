@@ -10,8 +10,6 @@ import {ListBoxInputField} from './ListBoxInputField';
 import Validate from '../util/Validate.js';
 import {FileUpload} from './FileUpload';
 
-import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
-
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
 import {makeFileRequest} from '../tables/TableRequestUtil.js';
 import {download} from '../util/fetch';
@@ -24,9 +22,11 @@ export const TestSearchPanel = (props) => {
             <FormPanel
                 width='640px' height='300px'
                 groupKey='TBL_BY_URL_PANEL'
-                onSubmit={(request) => onSearchSubmit(request)}
-                cancelText=''
-                onCancel={hideSearchPanel}>
+                onSuccess={onSearchSubmit}
+                slotProps={{
+                    cancelBtn: {component:null}
+                }}>
+
                 <p>
                     <input type='button' name='dowload' value='Download Sample File' onClick={doFileDownload} />
                 </p>
@@ -85,10 +85,6 @@ export const TestSearchPanel = (props) => {
 
 function doFileDownload() {
     download(getRootURL() + 'samplehistdata.csv');
-}
-
-function hideSearchPanel() {
-    dispatchHideDropDown();
 }
 
 function onSearchSubmit(request) {

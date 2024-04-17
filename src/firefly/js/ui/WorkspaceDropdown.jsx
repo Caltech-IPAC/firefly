@@ -38,9 +38,14 @@ export class WorkspaceDropdown extends PureComponent {
         return (
             <div style={{padding: 10}}>
                 <FormPanel
-                    cancelText=''
-                    submitText={'close'}
-                    changeMasking={this.changeMasking}>
+                    slotProps={{
+                        cancelBtn: {component:null},
+                        completeBtn: {
+                            text:'close',
+                            changeMasking: this.changeMasking
+                        },
+                    }}>
+
                     <WorkspaceViewPanel />
                 </FormPanel>
                 {this.state.doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
