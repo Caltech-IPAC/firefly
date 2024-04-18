@@ -377,7 +377,7 @@ function OpenTabs({onSelect, selTabId, children}) {
     const width = 381;
     return  (
         <Stack width={width} height={200} position='relative'>
-            <TablePanel tbl_ui_id={tbl_id+'-ui'} tableModel={tableModel} showTypes={false} slotProps={{tablePanel: {variant:'plain'}}}
+            <TablePanel tbl_ui_id={tbl_id+'-ui'} tableModel={tableModel} showTypes={false} slotProps={{root: {variant:'plain'}}}
                         showToolbar={false} showFilters={true} selectable={false} showOptionButton={false}/>
         </Stack>
     );

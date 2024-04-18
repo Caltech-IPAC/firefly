@@ -87,13 +87,13 @@ export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, 
 
     sx = {height: 1, pb: '2px', ...sx};
     return (
-        <Sheet variant='plain' color={color} sx={sx}>
+        <Sheet variant='plain' sx={sx}>
             <Stack width={1} height={1} {...centerIt}>
                 <Tooltip title={cdesc} sx={{maxWidth:'20em'}}>
                     <Stack width={1} height={1} {...centerIt} className={clickable} onClick={onClick}>
                         <Stack direction='row' {...centerIt}>
                             <Stack textOverflow='ellipsis' overflow='hidden'>
-                                <HeaderText val={label || name} level='title-sm'/>
+                                <HeaderText val={label || name} level='title-sm' color={color}/>
                             </Stack>
                             <SortSymbol sortDir={sortDir}/>
                         </Stack>

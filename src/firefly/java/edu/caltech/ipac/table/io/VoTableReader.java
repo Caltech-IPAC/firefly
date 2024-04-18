@@ -24,7 +24,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -204,7 +206,7 @@ public class VoTableReader {
         if (docRoot == null) return null;
 
         return Arrays.stream(docRoot.getChildrenByName("RESOURCE"))
-                .filter(res -> res.getChildrenByName("TABLE").length == 0)
+//                .filter(res -> res.getChildrenByName("TABLE").length == 0)
                 .map( res -> {
                     ResourceInfo ri = new ResourceInfo(res.getID(), res.getName(),
                                             res.getAttribute("type"), res.getAttribute("utype"),
@@ -216,6 +218,12 @@ public class VoTableReader {
                     List<GroupInfo> groups = Arrays.stream(res.getChildrenByName("GROUP"))
                             .map(VoTableReader::groupElToGroupInfo).collect(Collectors.toList());
                     if (groups.size() > 0) ri.setGroups(groups);
+
+                    Map<String, String> infos = new HashMap<>();
+                    Arrays.stream(res.getChildrenByName("INFO"))
+                            .forEach(i -> infos.put(i.getName(), i.getAttribute("value")));
+                    if (infos.size() > 0) ri.setInfos(infos);
+
 
                     return ri;
                 }).collect(Collectors.toList());

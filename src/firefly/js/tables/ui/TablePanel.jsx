@@ -189,13 +189,16 @@ TablePanel.defaultProps = {
     border: true,
 };
 
-export function OverflowMarker({tbl_id}) {
+export function OverflowMarker({tbl_id, showText}) {
     if (isOverflow(tbl_id)) {
         return (
             <Tooltip color='warning' variant='outlined'
                      slotProps={{root:{sx:{width:'20em'}}}}
                      title='Query truncated by MAXREC; more rows may be available by repeating the query with a larger MAXREC.'>
-                <WarningIcon color='warning'/>
+                <Stack spacing={1} direction='row' alignItems='center'>
+                    <WarningIcon color='warning'/>
+                    {showText && <Typography level='title-sm' color='warning'>Result Truncated</Typography>}
+                </Stack>
             </Tooltip>
         );
     }

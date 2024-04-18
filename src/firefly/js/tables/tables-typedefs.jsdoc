@@ -157,6 +157,7 @@
  * @prop {string} desc
  * @prop {PARAM[]} params   params if any
  * @prop {GROUP[]} groups   groups if any
+ * @prop {object} infos   dictionary of key/value pairs
  * @global
  * @public
  */
