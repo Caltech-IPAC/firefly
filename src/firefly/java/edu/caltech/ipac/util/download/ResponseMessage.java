@@ -62,6 +62,7 @@ public class ResponseMessage {
             case 422 -> "Unprocessable Entity";
             case 423 -> "Locked";
             case 424 -> "Failed Dependency";
+            case 495 -> "SSL Certificate Error";
             case 500 -> "Internal Server Error";
             case 501 -> "Not Implemented";
             case 502 -> "Bad Gateway";

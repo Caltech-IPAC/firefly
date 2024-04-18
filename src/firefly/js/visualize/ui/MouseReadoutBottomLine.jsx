@@ -23,9 +23,9 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
     useEffect( () => {
         if (divref.element) {
             const w= divref.element.getBoundingClientRect()?.width;
-            setWidth(w);
+            w && setWidth(w);
         }
-    });
+    }, [divref?.element]);
 
     const {readoutType}= readoutData;
     if (!readoutData.readoutItems) return (<div style={{height: showOnInactive?20:0, width:showOnInactive?1:0}}/>);
@@ -41,7 +41,7 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
     const sx= (theme) => ({
         justifyContent: 'space-between',
         alignItems:'center',
-        height: '1.3rem',
+        height: '1.5rem',
         borderRadius: '5px',
         overflow:'hidden',
         border: '2px solid rgba(0,0,0,.1)',

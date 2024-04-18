@@ -2,6 +2,7 @@ import {Button, CircularProgress, Input, Stack, Tooltip, Typography} from '@mui/
 import React, {memo, useEffect} from 'react';
 import {object, bool, func, number, string, shape} from 'prop-types';
 import {has, isFunction, isNil, isString} from 'lodash';
+import {getStatusFromFetchError} from '../util/WebUtil.js';
 import {InputFieldView} from './InputFieldView.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {upload} from '../rpc/CoreServices.js';
@@ -186,13 +187,15 @@ function makeDoUpload(file, type, isFromURL, fileAnalysis) {
                     }
                 }
             }
+            else {
+                throw new Error(isFromURL ?
+                                        `Unable to upload file from ${file}, status ${status}` :
+                                        `Unable to upload file: ${file?.name}`);
+            }
 
             return {isLoading: false, valid, message, value: cacheKey, analysisResult};
-        }).catch(() => {
-            return {isLoading: false, valid: false,
-                    message: (isFromURL ?
-                        `Unable to upload file from ${file}` :
-                        `Unable to upload file: ${file?.name}`)};
+        }).catch((e) => {
+            return {isLoading: false, valid: false, message: e.message};
         });
     };
 }
@@ -207,7 +210,8 @@ function doUpload(fileOrUrl, fileAnalysis, params={}) {
             faFunction && faFunction?.(false);
             return results;
         })
-        .catch(() => {
+        .catch((e) => {
             faFunction && faFunction?.(false);
+            return {status:getStatusFromFetchError(e.message),message:e.message};
         });
 }

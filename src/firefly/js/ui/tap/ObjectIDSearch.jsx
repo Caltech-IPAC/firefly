@@ -1,4 +1,4 @@
-import {Chip, Link, Stack, Typography} from '@mui/joy';
+import {Box, Chip, Link, Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 import {ConstraintContext} from 'firefly/ui/tap/Constraints';
@@ -302,14 +302,14 @@ function UploadTableSelectorObjectID({uploadInfo, setUploadInfo, setSelectInObjL
 function ObjectIDCol({objectCol, style={},cols, objectKey, openKey,
                            headerTitle, headerPostTitle = '', openPreMessage='', headerStyle,colTblId=null}) {
     const posHeader= (
-        <div style={{marginLeft:-8}}>
-            <span style={{fontWeight:'bold', ...headerStyle}}>
+        <Box ml={-1}>
+            <Typography display='inline' color={!objectCol?'warning':undefined} level='title-md' style={{...headerStyle}}>
                 {(objectCol) ? `${objectCol || 'unset'}` : 'unset'}
-            </span>
-            <span style={{paddingLeft:12, whiteSpace:'nowrap'}}>
+            </Typography>
+            <Typography display='inline' level='body-sm' pl={3}  whiteSpace='nowrap'>
                 {headerPostTitle}
-            </span>
-        </div>
+            </Typography>
+        </Box>
     );
 
     const [clickingSelectCols, setClickingSelectCols] = useState(false);

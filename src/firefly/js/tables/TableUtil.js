@@ -841,7 +841,7 @@ export function processRequest(tableModel, tableRequest, hlRowIdx) {
 /**
  * collects all available table information given the tbl_id
  * @param {string} tbl_id
- * @param {number} aPageSize  use this pageSize instead of the one in the request.
+ * @param {number} [aPageSize]  use this pageSize instead of the one in the request.
  * @returns {{tableModel, tbl_id, title, totalRows, request, startIdx, endIdx, hlRowIdx, currentPage, pageSize, totalPages, highlightedRow, selectInfo, error, tableMeta, backgroundable}}
  * @public
  * @memberof firefly.util.table

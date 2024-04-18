@@ -57,7 +57,7 @@ function makeImage(icon,style={},className='') {
  */
 export const ToolbarButton = forwardRef((props,fRef) => {
     const {
-        icon,text='',badgeCount=0,enabled=true, visible=true,
+        icon,text='',badgeCount=0,badgeAlert=false, enabled=true, visible=true,
         imageStyle={}, iconButtonSize, shortcutKey='', color='neutral', variant='plain',
         disableHiding, active, sx, CheckboxOnIcon, CheckboxOffIcon, value,
         useDropDownIndicator= false, hasCheckBox=false, checkBoxOn=false, pressed=false,
@@ -159,7 +159,9 @@ export const ToolbarButton = forwardRef((props,fRef) => {
         </Tooltip>
     );
 
-    return !badgeCount ? b : <Badge {...{badgeContent:badgeCount, sx:{'& .MuiBadge-badge': {top:'.7rem', right:'.4rem'}}}}> {b} </Badge>;
+    return (!badgeCount&&!badgeAlert) ? b : <Badge {...{badgeContent:badgeAlert?'!':badgeCount,
+        color:badgeAlert?'danger':undefined,
+        sx:{'& .MuiBadge-badge': {top:'.7rem', right:'.4rem'}}}}> {b} </Badge>;
 } );
 
 ToolbarButton.propTypes= {
@@ -255,8 +257,8 @@ function makeTextLabel(text,shortcutKey) {
 }
 
 
-export function ToolbarHorizontalSeparator({ style={}}) {
-    return <Divider orientation='vertical' style={style} sx={{mx:1}}/>;
+export function ToolbarHorizontalSeparator() {
+    return <Divider orientation='vertical' style={style} sx={{mx:1,my:1/2}}/>;
 }
 ToolbarHorizontalSeparator.propTypes= { style:object, top : number };
 

@@ -10,7 +10,7 @@ import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
 import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/ActionsDropDownButton.jsx';
 
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
+import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {ExpandButton, InfoButton, SaveButton, FilterButton, ClearFilterButton, TextViewButton, TableViewButton, SettingsButton, PropertySheetButton} from '../../visualize/ui/Buttons.jsx';
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableUiUpdate} from '../TablesCntlr.js';
 import {
@@ -372,11 +372,11 @@ function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
 
         const doclink = (
             <Stack direction='row' key={`doclink-${tbl_id}`}>
-                {leftButtons?.length && <Divider orientation='vertical'/>}
+                {leftButtons?.length && <ToolbarHorizontalSeparator/>}
                 <a href={doclinkUrl} target='doclink' title={doclinkDesc} key={doclinkUrl} style={{ textDecoration: 'none'}}>
                     <ToolbarButton text={doclinkLabel}/>
                 </a>
-                <Divider orientation='vertical'/>
+                <ToolbarHorizontalSeparator/>
             </Stack>
         );
         if (leftButtons) {

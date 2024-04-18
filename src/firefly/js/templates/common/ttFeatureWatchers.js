@@ -2,11 +2,11 @@ import React from 'react';
 import {cloneDeep, once} from 'lodash';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
-import {dispatchTableUiUpdate} from '../../tables/TablesCntlr.js';
+import {dispatchTableUiUpdate, TABLE_LOADED} from '../../tables/TablesCntlr.js';
 import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {getTapObsCoreOptions, getTapObsCoreOptionsGuess} from '../../ui/tap/TableSearchHelpers.jsx';
-import {isObsCoreLike} from '../../voAnalyzer/TableAnalysis.js';
+import {hasObsCoreLikeDataProducts, isObsCoreLikeWithProducts} from '../../voAnalyzer/TableAnalysis.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {getActiveRowCenterDef } from '../../visualize/saga/ActiveRowCenterWatcher.js';
@@ -35,13 +35,18 @@ export function startTTFeatureWatchers(startIds=[
 export const getObsCoreWatcherDef= once(() => ({
     id : 'ObsCorePackage',
     watcher : watchForObsCoreTable,
-    testTable : isObsCoreLike,
-    actions: []
+    testTable : hasObsCoreLikeDataProducts,
+    actions: [TABLE_LOADED]
 }));
+
+
+const addedTblIds=[];
 
 function watchForObsCoreTable(tbl_id, action, cancelSelf) {
     if (action) return;
+    if (addedTblIds.includes(tbl_id)) return;
     setupObsCorePackaging(tbl_id);
+    addedTblIds.push(tbl_id);
     cancelSelf();
 }
 

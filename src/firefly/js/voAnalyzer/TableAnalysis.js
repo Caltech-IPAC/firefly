@@ -143,8 +143,8 @@ function getObsCoreTableColumn(tableOrId, name) {
 export const getObsCoreProdTypeCol = (tableOrId) => getObsCoreTableColumn(tableOrId, 'dataproduct_type');
 
 /**
- * Return true this this table can be access as an ObsCore data
- * @param tableOrId
+ * Return true this table can be access as ObsCore data
+ * @param {TableModel|String} tableOrId
  * @return {boolean}
  */
 export function hasObsCoreLikeDataProducts(tableOrId) {
@@ -165,15 +165,16 @@ function columnMatches(table, cName) {
 }
 
 /**
- * Find the a data source column if is is defined in the metadata and a column exist with that name. The
- * meta data entry DataSource is case insensitive matched. The column name is also match case insensitive.
- * The meta data entry can have two forms 'abc' or '[abc,efe,hij]' if it is the second form the the first
+ * Find the data source column if it is defined in the metadata and a column exists with that name.
+ * The metadata entry 'DataSource' is case-insensitive matched.
+ * The column name is also match case-insensitive.
+ * The metadata entry can have two forms 'abc' or '[abc,efe,hij]' if it is the second form then the first
  * entry in the array to match a column is returned. The second form is useful when the code defining the DataSource
  * entry is handling a set of table where the data source could be one of several name such
  * as '[url,fileurl,file_url,data_url,data]'
  * @param {TableModel|String} tableOrId - a table model or a table id
- * @return {boolean|undefined|string} the column name if it exist, if the meta data is not included,
- *                                             false if defined but set to 'false' (case insensitive)
+ * @return {boolean|undefined|string} the column name if it exists, if the metadata is not included,
+ *                                             false if defined but set to 'false' (case-insensitive)
  */
 export function getDataSourceColumn(tableOrId) {
     const table = getTableModel(tableOrId);
@@ -300,7 +301,7 @@ export function getProdTypeGuess(tableOrId, rowIdx) {
  * Guess if this table has enough ObsCore attributes to be considered an ObsCore table.
  * - any column contains utype with 'obscore:' prefix
  * - matches 3 or more of ObsCore column names
- * @param tableModel
+ * @param {TableModel} tableModel
  * @returns {boolean}
  */
 export function isObsCoreLike(tableModel) {

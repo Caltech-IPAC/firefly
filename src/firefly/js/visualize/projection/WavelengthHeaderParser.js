@@ -112,6 +112,7 @@ function doParse(header, altWcs = '', zeroHeader, wlTableRelatedAry) {
     // If there are more than two, they are likely related to each other.
 
     const spectralWCSData = {
+        headerType: 'wavelength',
         spectralCoords,
         hasPlainOnlyCoordInfo: spectralCoords.some((c) => c.planeOnly),
         hasPixelLevelCoordInfo: spectralCoords.some((c) => !c.planeOnly),

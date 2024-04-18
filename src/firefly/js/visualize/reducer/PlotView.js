@@ -36,23 +36,23 @@ import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
  * array of WebPlots. The array length will only be one for normals fits files and n for multi image fits and cube fits
  * files. plots[primeIdx] refers to the plot currently showing in the plot view.
  *
- * @prop {String} plotId, immutable
- * @prop {String} plotGroupId, immutable
- * @prop {String} drawingSubGroupId, immutable
+ * @prop {String} plotId - immutable
+ * @prop {String} plotGroupId - immutable
+ * @prop {String} drawingSubGroupId - immutable
  * @prop {WebPlotRequest} request
  * @prop {boolean} visible true when we draw the base image
  * @prop {Array.<WebPlot>} plots all the plots that this plotView can show, usually the image in the fits file
- * @prop {String} plottingStatusMsg, end user description of the what is doing on
- * @prop {String} serverCall, one of 'success', 'working', 'fail'
- * @prop {number} primeIdx, which of the plots array is active
+ * @prop {String} plottingStatusMsg - end user description of the what is doing on
+ * @prop {String} serverCall - one of 'success', 'working', 'fail'
+ * @prop {number} primeIdx -  which of the plots array is active
  * @prop {number} scrollX scroll position X
  * @prop {number} scrollY scroll position Y
  * @prop {{width:number, height:number}} viewDim  size of viewable area  (div size: offsetWidth & offsetHeight)
  * @prop {Object} overlayPlotViews
  * @prop {Object} options
  * @prop {number} rotation if > 0 then the plot is rotated by this many degrees
- * @prop {boolean} flipY if true, the the plot is flipped on the Y axis
- * @prop {boolean} flipX - *not implemented*, if true, the the plot is flipped on the X axis
+ * @prop {boolean} flipY if true, the plot is flipped on the Y axis
+ * @prop {boolean} flipX - *not implemented*, if true, the plot is flipped on the X axis
  * @prop {PlotViewContextData} plotViewCtx
  */
 

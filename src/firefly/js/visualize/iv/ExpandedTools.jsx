@@ -5,18 +5,19 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {Button, Checkbox, Divider, IconButton, Sheet, Stack, Switch, Tooltip, Typography} from '@mui/joy';
+import {Button, Checkbox, IconButton, Sheet, Stack, Switch, Tooltip, Typography} from '@mui/joy';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {
     ExpandType, dispatchChangeExpandedMode, dispatchExpandedAutoPlay, visRoot,
 } from '../ImagePlotCntlr.js';
 import {primePlot, getActivePlotView} from '../PlotViewUtil.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
-import {DisplayTypeButtonGroup, ListViewButton} from '../ui/Buttons.jsx';
-import {showExpandedOptionsPopup} from '../ui/ExpandedOptionsPopup.jsx';
+import {DisplayTypeButtonGroup} from '../ui/Buttons.jsx';
+import {ViewOptionsButton} from '../ui/ExpandedOptionsPopup.jsx';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {
-    getMultiViewRoot, getExpandedViewerItemIds, getViewer, EXPANDED_MODE_RESERVED, dispatchViewerScroll
+    getMultiViewRoot, getExpandedViewerItemIds, getViewer, EXPANDED_MODE_RESERVED, dispatchViewerScroll,
 } from '../MultiViewCntlr.js';
 import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
@@ -25,28 +26,19 @@ import NavigateBefore from '@mui/icons-material/NavigateBeforeRounded';
 import ActiveDotIcon from '@mui/icons-material/FiberManualRecord';
 import InactiveDotIcon from '@mui/icons-material/FiberManualRecordOutlined';
 
+const viewerId= EXPANDED_MODE_RESERVED;
 
-const SCROLL_TIP=(
-    <Typography  level='body-sm' width='50rem'>
-        Use this mode when you have many images. When enabled...
-            <ul>
-                <li>You are able to use your browser to scroll through each image.</li>
-                <li>Images will remain larger and the whole image area can be scrolled</li>
-                <li>You may only zoom the active image in or out</li>
-            </ul>
-    </Typography>
-);
 
 function createOptions(expandedMode, singleAutoPlay, plotIdAry) {
     return (
         <Stack {...{direction:'row', alignItems: 'center', flexWrap:'nowrap'}}>
             {(expandedMode===ExpandType.SINGLE && plotIdAry.length>1) ?
                 <>
-                    <Divider orientation='vertical' sx={{mx:1}}/>
+                    <ToolbarHorizontalSeparator/>
                     <Checkbox {...{label:'Auto play', size:'sm', checked:singleAutoPlay,
                         onChange:() => dispatchExpandedAutoPlay(!singleAutoPlay)
                     }} />
-                    <Divider orientation='vertical' sx={{mx:1}}/>
+                    <ToolbarHorizontalSeparator/>
                 </>
                 : false
             }
@@ -62,12 +54,13 @@ function getState() {
 export function ExpandedTools({closeFunc}) {
 
     const {expandedMode,activePlotId, singleAutoPlay, plotViewAry}= useStoreConnector(getState);
-    const viewer= getViewer(getMultiViewRoot(), EXPANDED_MODE_RESERVED);
+    const viewer= getViewer(getMultiViewRoot(), viewerId);
     const scroll= viewer?.scroll ?? false;
     const plotIdAry= viewer.itemIdAry;
     const single= plotViewAry?.length===1;
 
     const getPlotTitle = (plotId) => primePlot(visRoot(),plotId)?.title ?? '';
+
 
     return (
         <Sheet>
@@ -79,14 +72,8 @@ export function ExpandedTools({closeFunc}) {
                             <WhichView expandedMode={expandedMode}/>
                             {!single && expandedMode===ExpandType.GRID &&
                                 <>
-                                    <Divider orientation='vertical' sx={{mx:1}}/>
-                                    <Tooltip title={SCROLL_TIP}>
-                                        <Switch size='md' endDecorator={scroll ? `Scrolling ${plotIdAry.length} images` : 'Scroll Images'}
-                                                checked={scroll}
-                                                onChange={() => {
-                                                    dispatchViewerScroll({viewerId:EXPANDED_MODE_RESERVED,scroll:!scroll});
-                                                }} />
-                                    </Tooltip>
+                                    <ToolbarHorizontalSeparator/>
+                                    <ViewerScroll {...{viewerId,checked:scroll,count:plotIdAry.length}}/>
                                 </>
                             }
                             {createOptions(expandedMode,singleAutoPlay, plotIdAry)}
@@ -112,7 +99,29 @@ ExpandedTools.propTypes= {
     closeFunc : PropTypes.func
 };
 
+const ViewerScrollTip=(
+    <Typography  level='body-sm' width='50rem' component='div'>
+        Use this mode when you have many images. When enabled...
+        <ul>
+            <li>You are able to use your browser to scroll through each image.</li>
+            <li>Images will remain larger and the whole image area can be scrolled</li>
+            <li>You may only zoom the active image in or out</li>
+        </ul>
+    </Typography>
+);
 
+export const ViewerScroll= ({viewerId,count,checked}) => (
+    <Tooltip title={ViewerScrollTip}>
+        <Switch size='sm'
+                endDecorator={
+                    <Typography sx={{textWrap:'nowrap'}} >
+                        {checked ? `Scrolling ${count} images` : 'Scroll Images'}
+                    </Typography>
+                }
+                checked={checked}
+                onChange={() => dispatchViewerScroll({viewerId,scroll:!checked})} />
+    </Tooltip>
+);
 
 
 function WhichView({expandedMode}) {
@@ -130,10 +139,7 @@ function WhichView({expandedMode}) {
                     }
                 ]
             }}/>}
-            {showViewButtons &&
-                <ListViewButton title='Choose which images to show'
-                                onClick={() =>showExpandedOptionsPopup() }/>
-            }
+            {showViewButtons && <ViewOptionsButton /> }
         </Stack>
     );
 }

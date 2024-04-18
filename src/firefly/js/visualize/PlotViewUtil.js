@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {ExpandType} from 'firefly/visualize/ImagePlotCntlr.js';
+import {dispatchDeletePlotView, ExpandType, visRoot} from 'firefly/visualize/ImagePlotCntlr.js';
 import {has, isArray, isEmpty, isObject, isString, isUndefined} from 'lodash';
 import shallowequal from 'shallowequal';
 import {memorizeLastCall} from '../util/WebUtil';
@@ -1138,3 +1138,13 @@ export function isDefaultCoverageActive(vr, mvr) {
 export const isImageExpanded = (expandedMode) => expandedMode === true ||
     expandedMode === ExpandType.GRID ||
     expandedMode === ExpandType.SINGLE;
+
+
+/**
+ * remove all the failed plots in the store
+ * @param {VisRoot} [vr]
+ */
+export const deleteAllFailedPlots = (vr= visRoot()) =>
+    getPlotViewAry(vr)
+        .filter((pv) => pv.serverCall === 'fail')
+        .forEach(({plotId}) => dispatchDeletePlotView({plotId}));
