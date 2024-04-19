@@ -208,7 +208,7 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
                                     includeUnmounted:true
                                 },
                                 searchBar: {
-                                    px:1, py:1/2,
+                                    px:1, py:1/2, alignItems:'center',
                                     actions: makeExtraWidgets(groupKey, initArgs,selectBy,setSelectBy, tapState)
                                 }
                             }}>

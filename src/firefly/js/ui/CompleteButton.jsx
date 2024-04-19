@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {delay, isFunction, isUndefined} from 'lodash';
+import Arrays, {delay, isFunction, isUndefined} from 'lodash';
 import React, {useContext, useEffect} from 'react';
 import {Box, Button} from '@mui/joy';
 import {object, string, func, bool, oneOfType, arrayOf} from 'prop-types';
@@ -41,17 +41,16 @@ async function collectInputs(registeredComponents, groupKey, includeUnmounted= f
     const valid = await validateFieldGroup(groups, includeUnmounted);
 
     let inputs;
-    if (isFunction(groupKey)) {
-        const groupsToValidate= groupKey();
-        inputs = groupsToValidate.reduce( (obj,gkey) => {
+    if (Arrays.isArray(groups)) {
+        inputs = groups.reduce( (obj,gkey) => {
             obj[gkey]= getFieldGroupResults(gkey,includeUnmounted);
             return obj;
         },{});
     }
     else {
-        inputs = getFieldGroupResults(groupKey,includeUnmounted);
+        inputs = getFieldGroupResults(groups,includeUnmounted);
     }
-    return [addComponentData(addComponentData(inputs,registeredComponents)), valid];
+    return [addComponentData(inputs,registeredComponents), valid];
 }
 
 
@@ -114,8 +113,7 @@ export function CompleteButton ({onFail, onSuccess, groupKey=null, text='OK',
 CompleteButton.propTypes= {
     onFail: func,
     onSuccess: func,
-    // groupsToUse: func,                  // this is confusing and not necessary.  groupKey should be [string,func].
-    groupKey: oneOfType([ string, func ]),  // when func, it returns array of string
+    groupKey: oneOfType([ string, arrayOf(string), func ]),  // when func, it returns array of string
     text: string,
     closeOnValid: bool,
     dialogId: string,
