@@ -163,11 +163,11 @@ function SearchForm({searchItem, style, initArgs}) {
     const defProps = {
         flexGrow:1,
         sx:style,
+        cancelText: '',
         slotProps: {
             completeBtn: {
                 getDoOnClickFunc: (clickFunc) => executeOK(clickFunc,initArgs,searchItem),       // this is a bit awkward
             },
-            cancelBtn: {component:null},
         }
     };
 

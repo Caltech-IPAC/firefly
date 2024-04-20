@@ -199,9 +199,9 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
         <Box width={1} height={1}>
             <ConstraintContext.Provider value={ctx}>
                 <FormPanel  onSuccess={(request) => onTapSearchSubmit(request, serviceUrl,tapState)}
+                            cancelText=''
                             help_id = {tapHelpId('form')}
                             slotProps={{
-                                cancelBtn: {component:null},
                                 completeBtn: {
                                     getDoOnClickFunc: (clickFunc) => (clickFuncRef.clickFunc= clickFunc),
                                     requireAllValid:false,

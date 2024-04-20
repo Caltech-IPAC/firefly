@@ -43,10 +43,10 @@ export function IrsaCatalogSearch() {
                 groupKey={() => ([irsaCatalogGroupKey, gkeySpacial])}
                 onSuccess={onSearchSubmit}
                 onError={onSearchFail}
+                cancelText=''
                 help_id={'catalogs.irsacatalogs'}
                 slotProps={{
                     input: {overflow: 'auto'},
-                    cancelBtn: {component:null}
                 }}>
 
                 <Stack spacing={1} height={1}>

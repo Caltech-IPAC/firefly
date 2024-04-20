@@ -44,14 +44,13 @@ export const FileUploadDropdown= ({sx, onCancel, onSubmit=resultSuccess, keepSta
             <FieldGroup groupKey={groupKey} keepState={keepState} sx={{height:1, width:1,
                 display: 'flex', alignItems: 'stretch', flexDirection: 'column'}}>
                 <FormPanel
-                    groupKey={groupKey} onSuccess={onSubmit} onError={resultFail} onCancel={onCancel}
+                    groupKey={groupKey} onSuccess={onSubmit} onError={resultFail}
+                    onCancel={onCancel}
+                    cancelText={onCancel?'Cancel':''}
                     help_id={helpId}
                     slotProps={{
                         input: {height:1},
                         searchBar: {p:1},
-                        cancelBtn: {
-                            component: onCancel ? undefined : null,
-                        },
                         completeBtn:{
                             text:submitText,
                             changeMasking,

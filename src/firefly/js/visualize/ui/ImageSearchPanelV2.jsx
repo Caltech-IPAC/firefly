@@ -123,13 +123,11 @@ function ImageSearchPanel({sx, resizable=true, onSubmit, gridSupport = false, mu
                         onSuccess={onSubmit}
                         onError = {searchFailed}
                         onCancel= {onCancel}
+                        cancelText={onCancel? 'Cancel': ''}
                         help_id = {'basics.searching'}
                         slotProps={{
                             input: {bgcolor:'transparent', p:0, border:0},
                             searchBar: {flexShrink: 0, px:1, pb:1},
-                            cancelBtn: {
-                                component: onCancel ? undefined : null,
-                            },
                             completeBtn: {
                                 text:submitText,
                                 includeUnmounted:true,

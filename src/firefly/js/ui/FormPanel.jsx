@@ -22,10 +22,9 @@ onSuccess: This function is invoked when the submit button is pressed and all in
 onError: This function is invoked when the submit button is pressed and one or more input fields fail validation.
          dispatchHideDropDown is not triggered, allowing the form to remain visible with validation errors.
 
-onCancel: This function is invoked when the cancel button is pressed. The default behavior is to call dispatchHideDropDown
-          to hide the form. Customize cancelBtn as needed.
+onCancel: This function is invoked when the cancel button is pressed.
  */
-export const FormPanel = function ({groupKey, onSuccess, onError, onCancel, help_id, disabledDropdownHide, slotProps, children, ...rootProps}) {
+export const FormPanel = function ({groupKey, onSuccess, onError, onCancel, cancelText, help_id, disabledDropdownHide, slotProps, children, ...rootProps}) {
 
     const doSubmit = ((p, valid) => {
 
@@ -53,7 +52,7 @@ export const FormPanel = function ({groupKey, onSuccess, onError, onCancel, help
                       onSuccess={doSubmit} onFail={doSubmit}
                       slotProps={slotProps?.completeBtn}
                 />
-                <Slot component={CancelButton} size='md' text='Cancel' onClick={onCancel} disabledDropdownHide={disabledDropdownHide} slotProps={slotProps?.cancelBtn}/>
+                <CancelButton  text={cancelText} disabledDropdownHide={disabledDropdownHide} onClick={onCancel}/>
                 {slotProps?.searchBar?.actions}
             </Slot>
         </Stack>
@@ -66,6 +65,7 @@ FormPanel.propTypes = {
     onSuccess: func,                // invoked when validation passed; func(params: object) => bool
     onError: func,                  // invoked when validation failed; func(params: object) => bool
     onCancel: func,                 // invoked when cancelBtn is pressed.
+    cancelText: node,               // text appear on cancel button; nullish value will remove cancel button
     disabledDropdownHide: bool,     // if true, do not call dropdown hide when form is submitted.
     help_id: string,
     ...Sheet.propTypes,
@@ -82,25 +82,17 @@ FormPanel.propTypes = {
             component: elementType,
             ...CompleteButton.propTypes
         }),
-        cancelBtn: shape({
-            component: elementType,
-            text: node,
-            ...Button.propTypes
-        }),
     })
 };
 
-function CancelButton({text, onClick, disabledDropdownHide, ...props}) {
+function CancelButton({text='Cancel', onClick, disabledDropdownHide}) {
 
     const doCancel = useCallback(() => {
         dispatchFormCancel();
-        if (onClick) {
-            onClick();
-        } else {
-            // default implementation of onClick is not used
-            if (!disabledDropdownHide) dispatchHideDropDown();
-        };
+        onClick?.();
+        // default implementation of onClick is not used
+        if (!disabledDropdownHide) dispatchHideDropDown();
     }, []);
 
-    return <Button onClick={doCancel} {...props}>{text}</Button>;
+    return text ? <Button size='md' onClick={doCancel}>{text}</Button> : false;
 }

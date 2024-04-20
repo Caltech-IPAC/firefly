@@ -117,12 +117,12 @@ export function ChartSelectPanel({tbl_id, chartId, chartAction, inputStyle={}, h
             onSuccess={onChartAction({chartAction: chartActionState,
                 tbl_id, chartId, hideDialog, renderTreeId})}
             onCancel={hideDialog}
+            cancelText='Close'
             help_id = 'plots.changing'
             sx={{m: 1, mt: 0, ...sx}}
             slotProps={{
                 input: {sx:inputStyle},
                 completeBtn:{text: (chartActionState===CHART_TRACE_MODIFY ? 'Apply' : 'OK')},
-                cancelBtn: {text: 'Close'}
             }}>
 
             <Stack spacing={2}>

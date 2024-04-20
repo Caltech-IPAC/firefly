@@ -51,9 +51,9 @@ export function DLuiRootSearchPanel({groupKey, children, submitSearch, setClickF
                    onSuccess={submitSearch}
                    onError={() => showInfoPopup('Fix errors and search again', 'Error')}
                    help_id={'search-collections-general'}
+                   cancelText=''
                    slotProps={{
                        input: {border:0, p:0, mb:1},
-                       cancelBtn: {component:null},
                        searchBar: {actions: <DocRows key='root' docRows={docRows}/>},
                        completeBtn: {
                            getDoOnClickFunc:(f) => setClickFunc({onClick: f})

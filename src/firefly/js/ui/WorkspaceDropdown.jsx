@@ -38,8 +38,8 @@ export class WorkspaceDropdown extends PureComponent {
         return (
             <div style={{padding: 10}}>
                 <FormPanel
+                    cancelText=''
                     slotProps={{
-                        cancelBtn: {component:null},
                         completeBtn: {
                             text:'close',
                             changeMasking: this.changeMasking

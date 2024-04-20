@@ -183,9 +183,9 @@ const WrapperPanel= ({children}) => {
                        return false;
                    }}
                    onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
+                   cancelText=''
                    help_id  = {'muy-help-id'}
                    slotProps={{
-                       cancelBtn: {component:null},
                        input: {p:0, mb:1, border:'none'}
                    }}>
 

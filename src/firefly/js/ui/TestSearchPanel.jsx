@@ -23,9 +23,7 @@ export const TestSearchPanel = (props) => {
                 width='640px' height='300px'
                 groupKey='TBL_BY_URL_PANEL'
                 onSuccess={onSearchSubmit}
-                slotProps={{
-                    cancelBtn: {component:null}
-                }}>
+                cancelText=''>
 
                 <p>
                     <input type='button' name='dowload' value='Download Sample File' onClick={doFileDownload} />

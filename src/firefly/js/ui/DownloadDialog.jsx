@@ -214,10 +214,10 @@ export function DownloadOptionPanel ({groupKey, cutoutSize, help_id, children, s
                 groupKey = {groupKey}
                 onSuccess= {onSubmit}
                 onCancel= {() => dispatchHideDialog(DOWNLOAD_DIALOG_ID)}
+                cancelText={cancelText}
                 help_id  = {help_id}
                 slotProps={{
                     completeBtn: {text:'Prepare Download'},
-                    cancelBtn: {text:cancelText}
                 }}>
 
                 <FieldGroup groupKey={groupKey} keepState={true}>

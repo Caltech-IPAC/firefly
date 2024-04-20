@@ -25,10 +25,10 @@ const FormTemplate= ({children, onSuccess,groupKey, help_id}) => (
             <FormPanel width='auto' height='auto'
                        groupKey={groupKey}
                        onSuccess={onSuccess}
+                       cancelText=''
                        help_id = {help_id}
                        slotProps={{
                            searchBar:{px:1, py:1/2, justifyContent: 'left'},
-                           cancelBtn: {component:null}
                        }}>
                 <FieldGroup groupKey={groupKey} keepState={true}> {children} </FieldGroup>
             </FormPanel>
