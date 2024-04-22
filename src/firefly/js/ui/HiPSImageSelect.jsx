@@ -114,11 +114,9 @@ export function showHiPSSurveysPopup(pv, moc= false) {
             <FieldGroup groupKey={groupKey} keepState={true} style={{width:'100%', height: '100%'}}>
                 <FormPanel groupKey={groupKey} onSuccess={onSubmit} onCancel={() => dispatchHideDialog(DIALOG_ID)}
                            sx={ { resize:'both', overflow: 'hidden', zIndex:1} }
+                           completeText={moc ? 'Add MOC' : 'Change HiPS'}
                            disabledDropdownHide={true}
-                           help_id='visualization.changehips'
-                           slotProps= {{
-                               completeBtn: {text: moc ? 'Add MOC' : 'Change HiPS'},
-                           }}>
+                           help_id='visualization.changehips'>
 
                     {moc &&
                         <FieldGroupTabs initialState= {{ value:'search' }} fieldKey='mocTabs'

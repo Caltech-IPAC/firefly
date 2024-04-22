@@ -284,5 +284,5 @@ export function useDebugCycle({id, render=true, mount=true}) {
 export function Slot({component, slotProps={}, ...defProps}) {
     const {component:Component=component, ...nProps} = slotProps;
     const props = defaultsDeep(nProps, defProps);
-    return Component === null ? false : <Component {...props}/>;
+    return Component ? <Component {...props}/> : false;
 }

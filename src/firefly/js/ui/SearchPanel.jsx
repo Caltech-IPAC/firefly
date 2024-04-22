@@ -152,10 +152,9 @@ function SearchForm({searchItem, style, initArgs}) {
         const reqTitle = isFunction(title) ? title(request) : title;
         request = makeTblRequest(request.id, reqTitle || request.title, request);
         if (isFunction(action)) {
-            return action(request) ?? true;
+            return action(request);
         } else if (action === TABLE_SEARCH) {
             dispatchTableSearch(request);
-            return true;
         }
         return false;       // return false to indicate no action were taken
     };

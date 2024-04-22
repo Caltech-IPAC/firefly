@@ -46,13 +46,13 @@ export const FileUploadDropdown= ({sx, onCancel, onSubmit=resultSuccess, keepSta
                 <FormPanel
                     groupKey={groupKey} onSuccess={onSubmit} onError={resultFail}
                     onCancel={onCancel}
+                    completeText={submitText}
                     cancelText={onCancel?'Cancel':''}
                     help_id={helpId}
                     slotProps={{
                         input: {height:1},
                         searchBar: {p:1},
                         completeBtn:{
-                            text:submitText,
                             changeMasking,
                         },
                     }}>

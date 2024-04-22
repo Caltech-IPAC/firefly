@@ -80,10 +80,8 @@ class ScripDownloadPanel extends PureComponent {
                     groupKey='ScriptDownloadDialog'
                     onSuccess={this.onSubmit}
                     onCancel={() => dispatchHideDialog(SCRIPT_DOWNLOAD_ID)}
-                    help_id={help_id}
-                    slotProps={{
-                        completeBtn: {text: 'OK'},
-                    }}>
+                    completeText='OK'
+                    help_id={help_id}>
 
                     <FieldGroup groupKey={'ScriptDownloadDialog'}>
                         <div style={{visibility: (urlsOnly ? 'hidden' : 'visible')}}>
