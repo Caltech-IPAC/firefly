@@ -126,7 +126,7 @@ public class HttpServices {
      * @return the status of this fetch
      */
     public static HttpServices.Status getWithAuth(HttpServiceInput input, int maxFollow, HttpServices.Handler handler) {
-        HttpServiceInput.applyCredential(input)
+        input.applyCredential()
                 .setFollowRedirect(false);
         return HttpServices.getData(input, (method -> {
             try {

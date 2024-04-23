@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import static edu.caltech.ipac.firefly.server.network.HttpServices.defaultHandler;
 import static edu.caltech.ipac.firefly.server.network.HttpServices.getWithAuth;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase;
+import static edu.caltech.ipac.firefly.server.query.DaliUtil.*;
 import static edu.caltech.ipac.util.StringUtils.*;
 
 /**
@@ -45,7 +46,7 @@ import static edu.caltech.ipac.util.StringUtils.*;
  */
 
 @SearchProcessorImpl(id = UwsJobProcessor.ID, params = {
-        @ParamDoc(name = UwsJobProcessor.JOB_URL, desc = "URL of a submitted UWS job")
+        @ParamDoc(name = UwsJobProcessor.JOB_URL, desc = "URL of a submitted UWS job; for monitoring and retrieving the results"),
 })
 public class UwsJobProcessor extends EmbeddedDbProcessor {
     public static final String ID = "UwsJob";
@@ -55,13 +56,16 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
     private String jobUrl;
 
     /**
+     * Return a HttpServiceInput with the standard DALI parameters taken from the given request.
      * override this method to be able to create a HttpServiceInput object
      * @param request request info needed to create HttpServiceInput object
      * @return HttpServiceInput object or null
      * @throws DataAccessException when encountering an error
      */
      protected HttpServiceInput createInput(TableServerRequest request) throws DataAccessException {
-        return null;
+        var inputs = new HttpServiceInput();
+        populateKnownInputs(inputs, request);
+        return inputs;
      }
 
 
@@ -175,12 +179,6 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
 //====================================================================
 //  UWS utils
 //====================================================================
-    protected static DataAccessException createDax(String title, String url, String errMsg) {
-        String msg = String.format("%s from the URL: [%s]", title, url);
-        if (errMsg != null) msg += "\n\t with exception: " + errMsg;
-        return new DataAccessException(msg);
-    }
-
 
     public DataGroup convertResultsToObsCoreTable(List<JobInfo.Result> results) {
         DataGroup table = new DataGroup("UWS results", new DataType[]{
@@ -225,13 +223,13 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
             // Using 'getWithAuth' because it will handle credential when redirected
             HttpServices.Status status = getWithAuth(url, HttpServices.defaultHandler(outFile));
             if (status.isError()) {
-                throw createDax("Fail to fetch result", url, status.getErrMsg());
+                throw createDax("Failed to retrieve the result from", url, status.getException());
             }
             DataGroup[] results = VoTableReader.voToDataGroups(outFile.getAbsolutePath());
             return results.length > 0 ? results[0] : null;
 
         } catch (Exception e) {
-            throw createDax("Fail to fetch result", url, e.getMessage());
+            throw createDax("Fail to fetch result", url, e);
         }
     }
 
@@ -247,7 +245,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 return new HttpServices.Status(400, e.getMessage());
             }
         });
-        if (status.isError()) throw createDax("Fail to fetch UWS job info", jobUrl, status.getErrMsg());
+        if (status.isError()) throw createDax("Fail to fetch UWS job info", jobUrl, status.getException());
 
         return jInfo.get();
     }
@@ -271,7 +269,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         ByteArrayOutputStream phase = new ByteArrayOutputStream();
         HttpServices.Status status = HttpServices.getWithAuth(new HttpServiceInput(jobUrl + "/phase"), defaultHandler(phase));
         if (status.isError()) {
-            throw createDax("Error getting phase", jobUrl, status.getErrMsg());
+            throw createDax("Error getting phase", jobUrl, status.getException());
         }
         try {
             return Phase.valueOf(phase.toString().trim());
@@ -373,38 +371,6 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
             }
         }
         throw new ParseException("Invalid UWS job document", 0);
-    }
-
-    private static String parseError(HttpMethod method, String errorUrl) {
-
-        String errMsg;
-        if (HttpServices.isOk(method)) {
-            String contentType = HttpServices.getResHeader(method, "Content-Type", "");
-            boolean isText = contentType.startsWith("text/plain");
-            try {
-                if (isText) {
-                    // error is text doc
-                    errMsg = HttpServices.getResponseBodyAsString(method);
-                } else {
-                    // error is VOTable doc
-                    InputStream is = HttpServices.getResponseBodyAsStream(method);
-                    try {
-                        String voError = VoTableReader.getError(is, errorUrl);
-                        if (voError == null) {
-                            voError = "Non-compliant error doc " + errorUrl;
-                        }
-                        errMsg = voError;
-                    } finally {
-                        FileUtil.silentClose(is);
-                    }
-                }
-            } catch (Exception e) {
-                errMsg = String.format("Error retrieving error document from %s: %s", errorUrl, e.getMessage());
-            }
-        } else {
-            errMsg = String.format("Error retrieving error document from %s: %s", errorUrl, method.getStatusText());
-        }
-        return errMsg;
     }
 
     /**

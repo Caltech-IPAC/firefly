@@ -29,9 +29,8 @@ public class AsyncTapQueryTest extends ConfigTest {
 	public void testSuccess() {
 		try {
 			TableServerRequest req = new TableServerRequest(AsyncTapQuery.ID);
-			req.setParam("serviceUrl", "https://irsa.ipac.caltech.edu/TAP");
-			req.setParam("QUERY", "SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',210.80225,54.34894,1.0))=1");
-			req.setParam("Phase","RUN");
+			req.setParam(AsyncTapQuery.SVC_URL, "https://irsa.ipac.caltech.edu/TAP");
+			req.setParam(AsyncTapQuery.QUERY, "SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',210.80225,54.34894,1.0))=1");
 
 			DataGroup results = new AsyncTapQuery().fetchDataGroup(req);
 
@@ -51,9 +50,8 @@ public class AsyncTapQueryTest extends ConfigTest {
     public void testError() {
         try {
             TableServerRequest req = new TableServerRequest(AsyncTapQuery.ID);
-            req.setParam("serviceUrl", "https://irsa.ipac.caltech.edu/TAP");
-            req.setParam("QUERY", "SELECT * FROM some_dummy_table_name WHERE CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',210.80225,54.34894,1.0))=1");
-            req.setParam("Phase","RUN");
+            req.setParam(AsyncTapQuery.SVC_URL, "https://irsa.ipac.caltech.edu/TAP");
+            req.setParam(AsyncTapQuery.QUERY, "SELECT * FROM some_dummy_table_name WHERE CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',210.80225,54.34894,1.0))=1");
 
             DataGroup results = new AsyncTapQuery().fetchDataGroup(req);
 			Assert.fail("testError did not produce exception on error");
@@ -72,9 +70,8 @@ public class AsyncTapQueryTest extends ConfigTest {
 		try {
 			String query = "SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',210.80225,54.34894,1.0))=1";
 			TableServerRequest req = new TableServerRequest(AsyncTapQuery.ID);
-			req.setParam("serviceUrl", "https://irsadev.ipac.caltech.edu/TAP");
-			req.setParam("QUERY", query);
-			req.setParam("Phase","RUN");
+			req.setParam(AsyncTapQuery.SVC_URL, "https://irsadev.ipac.caltech.edu/TAP");
+			req.setParam(AsyncTapQuery.QUERY, query);
 
 			String jobUrl = new AsyncTapQuery().submitJob(req);
 
