@@ -16,7 +16,7 @@ import {DisplayTypeButtonGroup} from './Buttons.jsx';
 import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
 import {ImagePager} from './ImagePager.jsx';
 import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
-import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
+import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 
 import THREE_COLOR from 'html/images/icons-2014/28x28_FITS_Modify3Image.png';
 
@@ -89,7 +89,7 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
                     }
                 </Stack> }
                 {showPager && <ImagePager pageSize={maxPlots} tbl_id={activeTable.tbl_id} style={{marginLeft:10}}/>}
-                {showPager && <Divider orientation='vertical' sx={{mx:1}}/>}
+                {showPager && <ToolbarHorizontalSeparator/>}
                 <VisMiniToolbar viewerId={viewerId}/>
             </Stack>
         </Sheet>

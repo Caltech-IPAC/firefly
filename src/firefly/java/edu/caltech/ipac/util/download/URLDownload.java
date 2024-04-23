@@ -13,6 +13,11 @@ import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.UTCTimeUtil;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,6 +33,9 @@ import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -43,12 +51,33 @@ public class URLDownload {
     private static final int BUFFER_SIZE = FileUtil.BUFFER_SIZE;
     private static final Logger.LoggerImpl _log = Logger.getLogger();
 
-//=====================================================================
-//----------- Public static methods -----------------------------------
-//=====================================================================
+    private static boolean DISABLE_SSL_VERIFICATION = false; // used for some testing
+
+    static {
+        if (DISABLE_SSL_VERIFICATION) disableSSLCertificateChecking();
+    }
+
 
     public static String getUserFromUrl(String url) { return getUserInfoPart(url,0); }
     public static String getPasswordFromUrl(String url) { return getUserInfoPart(url,1); }
+
+    private static void disableSSLCertificateChecking() { // use for testing
+        TrustManager[] trustAllCerts = new TrustManager[] {
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() { return null; }
+                    public void checkClientTrusted(X509Certificate[] arg0, String arg1) { }
+                    public void checkServerTrusted(X509Certificate[] arg0, String arg1) { }
+                } };
+
+        try {
+            SSLContext sc = SSLContext.getInstance("TLS");
+            sc.init(null, trustAllCerts, null);
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        } catch (KeyManagementException | NoSuchAlgorithmException e) {
+            _log.error(e);
+        }
+    }
+
 
     private static String getUserInfoPart(String url,int idx) {
         try {
@@ -155,10 +184,10 @@ public class URLDownload {
         if (!(conn instanceof HttpURLConnection) || cookies == null) return;
         StringBuilder sb = new StringBuilder(200);
         for (Map.Entry<String, String> entry : cookies.entrySet()) {
-            if (sb.length() > 0) sb.append("; ");
+            if (!sb.isEmpty()) sb.append("; ");
             sb.append(entry.getKey()).append("=").append(entry.getValue());
         }
-        if (sb.length() > 0) conn.setRequestProperty("Cookie", sb.toString());
+        if (!sb.isEmpty()) conn.setRequestProperty("Cookie", sb.toString());
     }
 
 //================================================================================
@@ -172,7 +201,6 @@ public class URLDownload {
      * @param requestHeaders a map of header as name value pairs, may be null
      * @return the results are in the HttpResultInfo object, call getData() or getResultAsString()
      * @throws FailedRequestException if it fails
-     * @throws IOException if it fails
      */
     public static HttpResultInfo getDataFromURL(URL url,
                                                 Map<String, String> postData,
@@ -190,6 +218,8 @@ public class URLDownload {
             byte[] results = out.toByteArray();
             logCompletedDownload(conn.getURL(), results.length);
             return new HttpResultInfo(results,getResponseCode(conn),conn.getContentType(),getSugestedFileName(conn));
+        } catch (SSLException e) {
+            return new HttpResultInfo(null,495,null,null);
         } catch (IOException e) {
             logError(url, postData, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e, getResponseCode(conn));
@@ -219,6 +249,8 @@ public class URLDownload {
             }
             FileUtil.silentClose(conn.getInputStream());
             return result;
+        } catch (SSLException e) {
+            return new HttpResultInfo(null,495,null,null);
         } catch (IOException e) {
             logError(url, null, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e), e, getResponseCode(conn));
@@ -327,27 +359,26 @@ public class URLDownload {
 
         try {
             FileInfo outFileData;
-            Map<String,List<String>> reqProp= conn.getRequestProperties();
-            Map<String,List<String>> sendHeaders= null;
+            Map<String, List<String>> reqProp = conn.getRequestProperties();
+            Map<String, List<String>> sendHeaders = null;
             long start = System.currentTimeMillis();
             try {
-                if (ops.timeoutInSec>0) {
+                if (ops.timeoutInSec > 0) {
                     conn.setConnectTimeout(ops.timeoutInSec * 1000);//Sets a specified timeout value, in milliseconds
                     conn.setReadTimeout(ops.timeoutInSec * 1000);
                 }
                 if (conn instanceof HttpURLConnection) {
-                    pushPostData(conn,postData);
-                    sendHeaders= conn.getRequestProperties();
+                    pushPostData(conn, postData);
+                    sendHeaders = conn.getRequestProperties();
                     if (ops.onlyIfModified) {
                         outFileData = checkAlreadyDownloaded(conn, outfile);
                         if (outFileData != null) return outFileData;
-                        if (getResponseCode(conn)==408) {
+                        if (getResponseCode(conn) == 408) {
                             throw new FailedRequestException("Timeout", "Timeout", 408);
                         }
                     }
-                }
-                else if (postData!=null) {
-                    doPostDataException(conn,postData);
+                } else if (postData != null) {
+                    doPostDataException(conn, postData);
                 }
             } catch (IllegalStateException e) {
                 // if I get this exception then the connection was already open and I can't set any more headers
@@ -358,23 +389,26 @@ public class URLDownload {
             //------
             logHeader(postData, conn, sendHeaders);
             validFileSize(conn, ops.maxFileSize);
-            netCopy(makeAnyInStream(conn,ops.uncompress), makeOutStream(outfile), conn, ops.maxFileSize, ops.dl);
+            netCopy(makeAnyInStream(conn, ops.uncompress), makeOutStream(outfile), conn, ops.maxFileSize, ops.dl);
             long elapse = System.currentTimeMillis() - start;
-            int responseCode= getResponseCode(conn);
+            int responseCode = getResponseCode(conn);
             outFileData = new FileInfo(outfile, getSugestedFileName(conn), responseCode,
                     ResponseMessage.getHttpResponseMessage(responseCode), conn.getContentType());
-            if (conn.getContentEncoding()!=null) outFileData.putAttribute("content-encoding", conn.getContentEncoding());
-            logDownload(outFileData, conn.getURL().toString(), elapse );
+            if (conn.getContentEncoding() != null)
+                outFileData.putAttribute("content-encoding", conn.getContentEncoding());
+            logDownload(outFileData, conn.getURL().toString(), elapse);
 
-            if (responseCode>=300 && responseCode<400) {
-                if (redirectCnt>0 && (responseCode==301 || responseCode==302 || responseCode==303) )  {
-                   return redirect(conn,outfile,reqProp, ops,redirectCnt-1) ;
+            if (responseCode >= 300 && responseCode < 400) {
+                if (redirectCnt > 0 && (responseCode == 301 || responseCode == 302 || responseCode == 303)) {
+                    return redirect(conn, outfile, reqProp, ops, redirectCnt - 1);
                 }
                 outFileData.putAttribute("Location", conn.getHeaderField("Location"));
                 throw new FailedRequestException(ResponseMessage.getHttpResponseMessage(responseCode),
-                                                 "Response Code: "+responseCode, responseCode, outFileData);
+                        "Response Code: " + responseCode, responseCode, outFileData);
             }
             return outFileData;
+        } catch (SSLException e) {
+            return new FileInfo(495);
         } catch (IOException e) {
             logError(conn.getURL(), null, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e),e, getResponseCode(conn));
@@ -642,8 +676,11 @@ public class URLDownload {
 
     private static DataInputStream makeDataInStream(URLConnection conn) throws IOException {
         if (conn instanceof HttpURLConnection && getResponseCode(conn)==-1) {
-            throw new IOException("Http Response Code is -1, invalid http protocol, " +
-                                          "probably no status line in response headers");
+//            throw new IOException("Http Response Code is -1, invalid http protocol, " +
+//                                          "probably no status line in response headers");
+            _log.warn("Http Response Code is -1, invalid http protocol, " +
+                                                      "probably no status line in response headers- trying anyway");
+            return new DataInputStream(makeInStream(conn));
         }
         else {
             try {

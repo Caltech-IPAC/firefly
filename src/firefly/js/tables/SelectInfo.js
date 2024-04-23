@@ -112,10 +112,10 @@ export class SelectInfo {
     /**
      * Destructing of the SelectInfo's data.
      * @param {Object}  p
-     * @param {number}  p.rowCount   IMPORTANT!!. Total number of rows in the table. defaults to zero.
-     * @param {boolean} p.selectAll boolean. Indicates selectAll mode. defaults to false.
-     * @param {Set}     p.exceptions    A set of exceptions based on selectAll mode.
-     * @param {number} offset     All indices passed into this class's funtion will be offsetted by this given value.
+     * @param {number} p.rowCount   IMPORTANT!!. Total number of rows in the table. defaults to zero.
+     * @param {boolean} [p.selectAll] Indicates selectAll mode. defaults to false.
+     * @param {Set}     [p.exceptions] A set of exceptions based on selectAll mode.
+     * @param {number} [offset]     All indices passed into this class's function will be offsetted by this given value.
      * @returns {SelectInfo}
      */
     static newInstance({selectAll=false, exceptions=(new Set()), rowCount=0}={}, offset) {

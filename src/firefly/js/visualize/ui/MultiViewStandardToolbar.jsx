@@ -3,14 +3,16 @@
  */
 
 
-import React from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {Sheet, Stack} from '@mui/joy';
+import {Divider, Sheet, Stack} from '@mui/joy';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
+import {ViewerScroll} from '../iv/ExpandedTools.jsx';
 import {dispatchChangeViewerLayout, getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
-import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
-import {
-    BeforeButton, DisplayTypeButtonGroup, ListViewButton, NextButton } from './Buttons.jsx';
-import {showExpandedOptionsPopup} from './ExpandedOptionsPopup.jsx';
+import {dispatchChangeActivePlotView, ExpandType} from '../ImagePlotCntlr.js';
+import {BeforeButton, DisplayTypeButtonGroup, NextButton } from './Buttons.jsx';
+import {ViewOptionsButton} from './ExpandedOptionsPopup.jsx';
 import {VisMiniToolbar} from './VisMiniToolbar.jsx';
 import {getActivePlotView} from '../PlotViewUtil.js';
 
@@ -26,7 +28,9 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, tool
     const moreThanOne= viewerPlotIds.length>1;
     const nextIdx= cIdx===viewerPlotIds.length-1 ? 0 : cIdx+1;
     const prevIdx= cIdx ? cIdx-1 : viewerPlotIds.length-1;
-    const layout= getViewer(getMultiViewRoot(), viewerId)?.layout ?? 'grid';
+    const viewer= getViewer(getMultiViewRoot(), viewerId);
+    const layout= viewer?.layout ?? 'grid';
+    const scroll= viewer?.scroll ?? false;
 
 
     const {showImageToolbar=true}= getActivePlotView(visRoot)?.plotViewCtx.menuItemKeys ?? {};
@@ -34,8 +38,8 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, tool
 
     return (
         <Sheet variant={toolbarVariant}>
-            <Stack {...{pl:1/2, direction:'row', flexWrap:'nowrap', alignItems: 'center', justifyContent: 'space-between',
-                width:'100%', height: 32, style:toolbarStyle}}>
+            <Stack {...{pl:1/2, direction:'row', flexWrap:'wrap-reverse', alignItems: 'center', justifyContent: 'space-between',
+                width:'100%', minHeight: 32, style:toolbarStyle}}>
                 <Stack {...{direction:'row', alignItems: 'center', flexWrap:'nowrap'}}>
 
                     {moreThanOne && <DisplayTypeButtonGroup {...{value:layout,
@@ -48,9 +52,12 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, tool
                             }
                         ]
                     }}/>}
-                    {useImageList && moreThanOne &&
-                        <ListViewButton tip='Choose which images to show'
-                                       onClick={() =>showExpandedOptionsPopup('Pinned Images', viewerId) }/>
+                    {useImageList && moreThanOne && <ViewOptionsButton title='Pinned Images' viewerId={viewerId}/> }
+                    {moreThanOne && layout==='grid' &&
+                        <>
+                            <ToolbarHorizontalSeparator/>
+                            <ViewerScroll {...{viewerId,checked:scroll,count:viewerPlotIds.length}}/>
+                        </>
                     }
                     {layoutType==='single' && moreThanOne &&
                         <>

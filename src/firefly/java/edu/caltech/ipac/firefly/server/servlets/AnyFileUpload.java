@@ -115,6 +115,11 @@ public class AnyFileUpload extends BaseHttpServlet {
             FileInfo statusFileInfo= result.statusFileInfo;
             int responseCode= statusFileInfo.getResponseCode();
 
+            if (responseCode>=400) {
+                res.sendError(statusFileInfo.getResponseCode(), statusFileInfo.getResponseCodeMsg());
+                return;
+            }
+
             if (FileUtil.isGZipFile(uploadFileInfo.getFile())) {
                 File f= uploadFileInfo.getFile();
                 String name= f.getName()+".gz";

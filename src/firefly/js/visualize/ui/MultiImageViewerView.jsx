@@ -31,7 +31,7 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
 
     const {readout, readoutData, readoutShowing}= useMouseStoreConnector(makeState);
     const {Toolbar, visRoot, viewerPlotIds=[], showWhenExpanded=false, mouseReadoutEmbedded=true,
-        handleToolbar=true, layoutType=GRID}= props;
+        handleToolbar=true, layoutType=GRID, scrollGrid}= props;
 
     const makeToolbar = Toolbar ? () => (<Toolbar {...props} />) : undefined;
 
@@ -71,6 +71,7 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
                                         slightlyTransparent={mouseReadoutEmbedded}
                                         readoutShowing={doReadoutAndShowing}
                                         showOnInactive={!mouseReadoutEmbedded}
+                                        scrollGrid={scrollGrid}
                                         radix={radix}
                                         style={mouseReadoutEmbedded? {position:'absolute', left:3, right:3, bottom:2}:{}} />
             </div>
@@ -81,9 +82,11 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
             <div style={style}>
                 <MultiItemViewerView {...{...newProps, ref, insideFlex:true, style:props.style}} />
                 <MouseReadoutBottomLine readout={readout} readoutData={readoutData}
-                                        style={mouseReadoutEmbedded?{position:'absolute', left:4, bottom:4, right:4}:{}}
+                                        style={
+                                          mouseReadoutEmbedded?{position:'absolute', left:1, bottom:1, right:scrollGrid?15:4}:{}}
                                         readoutShowing={doReadoutAndShowing}
                                         showOnInactive={!mouseReadoutEmbedded}
+                                        scrollGrid={scrollGrid}
                                         radix={radix}
                                         slightlyTransparent={mouseReadoutEmbedded}
                 />

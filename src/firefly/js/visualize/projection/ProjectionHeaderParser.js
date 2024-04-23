@@ -17,8 +17,6 @@ const CD1_2_HEADERS= ['CD1_2','CD001002'];
 const CD2_1_HEADERS= ['CD2_1','CD002001'];
 const CD2_2_HEADERS= ['CD2_2','CD002002'];
 
-const isDefined= (x) => x!==undefined;
-
 
 function getHeaderListD(parse, list, def, altWcs) {
 	const key= list.find( (i) =>  parse.header[i+altWcs]);
@@ -102,24 +100,9 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
 
     if (!header) return {};
 
-    let ctype1_trim = '';
 
 
     const parse= makeHeaderParse(header, altWcs);
-
-	// HeaderCard hc;
-	// Cursor extraIter= header.iterator();
-	// for(;extraIter.hasNext();) {
-	// 	hc= (HeaderCard)extraIter.next();
-	// 	if (hc.getKey().startsWith("MP") || hc.getKey().startsWith("HIERARCH.MP")) {
-	// 		maskHeaders.put(hc.getKey(), hc.getValue());
-	// 		sendToClientHeaders.put(hc.getKey(), hc.getValue());
-	// 	}
-	// 	if (hc.getKey().startsWith("LTV") || hc.getKey().startsWith("CR")) {
-	// 		sendToClientHeaders.put(hc.getKey(), hc.getValue());
-     //    }
-	// }
-
 
     const p= getBasicHeaderValues(parse);
     p.headerType= 'spacial';
@@ -149,18 +132,12 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
      * three-letter codes will reduce the chances). In such a case the axis should be treated as linear.
      *
      */
+    const ctype1Trim = parse.getValue('CTYPE1'+altWcs, '').trim();
+    const ctype1End = ctype1Trim.substring(4,8); //NON-LINEAR: ctypei=cccc-ppp, 0-3 coordinate, 4-7 projection
 	if (header['CTYPE1'+altWcs]) {
 	    p.ctype1 = parse.getValue('CTYPE1'+altWcs, '');
 	    p.ctype2 = parse.getValue('CTYPE2'+altWcs, '');
-	    ctype1_trim = p.ctype1.trim();
-	    var endstr = ctype1_trim.substring(ctype1_trim.length-4);
-        if (endstr==='-SIP') {
-            var ctype1End = ctype1_trim.substring(4,8);
-        }
-        else {
-            var ctype1End = endstr;
-        }
-        //NON-LINEAR: ctypei=cccc-ppp, first four characters represent coordinate and the character 6-8 represents projection
+
 	    switch (ctype1End) {
             case '-TAN': p.maptype = GNOMONIC; break;
             case '-TPV': p.maptype = TPV; break;
@@ -175,12 +152,9 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
             case '-GLS': p.maptype = SFL; break;
             case '----':
             case '':     p.maptype = LINEAR; break;
-            default :    p.maptype = UNRECOGNIZED;
+            default :    p.maptype = LINEAR;
         }
-        // Either CTYPEi = 'LINEAR' or ctypei is defined but the value is not specified, default to linear
-        if (ctype1_trim==='' || ctype1_trim==='LINEAR') p.maptype = LINEAR;
-
-        p.axes_reversed = startsWithAny(ctype1_trim, ['DEC','MM','GLAT','LAT','ELAT']);
+        p.axes_reversed = startsWithAny(ctype1Trim, ['DEC','MM','GLAT','LAT','ELAT']);
 	}
 	else {
         p.maptype = UNSPECIFIED;
@@ -289,8 +263,8 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
         }
     }
 
-    /* now do SIRTF distortion corrections */
-    if (ctype1_trim.endsWith('-SIP')) {
+    /* now do Spitzer distortion corrections */
+    if (ctype1Trim.endsWith('-SIP')) {
         p.map_distortion = true;
 
         p.a_order = parse.getIntValue('A_ORDER'+altWcs);

@@ -127,7 +127,7 @@ VisMiniToolbar.propTypes= {
 };
 
 const rS= {
-    width: 'calc(100% - 2px)',
+    // width: 'calc(100% - 2px)',
     height: 34,
     display: 'flex',
     position: 'relative',

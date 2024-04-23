@@ -277,9 +277,9 @@ export const VisCtxToolbarView= memo((props) => {
         <Fragment>
             {canConvertHF && <HipsFitsConvertButton pv={pv}/>}
             {hips && !canConvertHF && <HipsProjConvertButton pv={pv}/>}
-            {hips && <Divider orientation='vertical' sx={{mx:.5}}/> }
+            {hips && <Divider orientation='vertical' sx={{m:.5}}/> }
             {hips && <HiPSCoordSelect plotId={plot?.plotId} imageCoordSys={plot?.imageCoordSys}/>}
-            {hips && <Divider orientation='vertical' sx={{mx:.5}}/> }
+            {hips && <Divider orientation='vertical' sx={{m:.5}}/> }
             {hips && makeHiPSImageTable(pv)}
             {isHiPSAitoff(plot) &&
                 <ToolbarButton text='Center Galactic' tip='Align Aitoff HiPS to Galactic 0,0'
@@ -324,7 +324,7 @@ export const VisCtxToolbarView= memo((props) => {
             <Stack {...{direction:'row', justifyContent:'space-between',  sx: makeTbSX }}>
                 <Stack {...{direction:'row', alignItems: 'center',flexWrap: 'wrap',}}>
                     {showMultiImageController && <MultiImageControllerView plotView={pv} />}
-                    {showMultiImageController && showOptions && <Divider orientation='vertical' sx={{mx:.5}}  />}
+                    {showMultiImageController && showOptions && <Divider orientation='vertical' sx={{m:.5}}  />}
                     {makeButtons()}
                     {makeHipsControls()}
                 </Stack>
