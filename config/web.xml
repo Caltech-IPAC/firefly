@@ -44,6 +44,15 @@
         <url-pattern>/sticky/firefly/events</url-pattern>
     </filter-mapping>
 
+    <!--CORS Filter-->
+    <filter>
+        <filter-name>CorsFilter</filter-name>
+        <filter-class>edu.caltech.ipac.firefly.server.filters.CorsFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>CorsFilter</filter-name>
+        <url-pattern>*.woff2</url-pattern>
+    </filter-mapping>
 
     <!-- Firefly servlet and its mappings -->
     <servlet>

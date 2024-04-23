@@ -15,6 +15,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+import static edu.caltech.ipac.firefly.server.filters.CorsFilter.enableCors;
+
 /**
  * Date: Oct 27, 2008
  *
@@ -102,16 +104,6 @@ public abstract class BaseHttpServlet extends HttpServlet {
             handleException(req, res, e);
         } finally {
             StopWatch.getInstance().printLog(getClass().getSimpleName());
-        }
-    }
-
-    public static void enableCors(HttpServletRequest req, HttpServletResponse resp) {
-        if (req.getHeader("Origin") != null) {
-            resp.setHeader("Access-Control-Allow-Credentials", "true");
-            resp.setHeader("Access-Control-Allow-Origin", req.getHeader("Origin"));
-            resp.setHeader("Access-Control-Allow-Headers", req.getHeader("Access-Control-Request-Headers"));
-            resp.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
-            resp.setHeader("Access-Control-Max-Age", "86400");      // cache for 1 day
         }
     }
 
