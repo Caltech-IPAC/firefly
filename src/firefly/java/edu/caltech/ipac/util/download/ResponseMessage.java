@@ -20,8 +20,8 @@ import java.net.UnknownHostException;
  * @author Trey Roby
  */
 public class ResponseMessage {
-    public static String getHttpResponseMessage(int reponseCode) {
-        return switch (reponseCode) {
+    public static String getHttpResponseMessage(int reposeCode) {
+        return switch (reposeCode) {
             case 100 -> "Continue";
             case 101 -> "Switching Protocols";
             case 200 -> "OK";

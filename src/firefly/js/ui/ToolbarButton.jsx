@@ -258,7 +258,7 @@ function makeTextLabel(text,shortcutKey) {
 
 
 export function ToolbarHorizontalSeparator() {
-    return <Divider orientation='vertical' style={style} sx={{mx:1,my:1/2}}/>;
+    return <Divider orientation='vertical' sx={{mx:1,my:1/2}}/>;
 }
 ToolbarHorizontalSeparator.propTypes= { style:object, top : number };
 
