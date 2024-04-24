@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {Typography, Box, Link, Stack} from '@mui/joy';
+import {Typography, Link, Stack, Chip} from '@mui/joy';
 
 import {isEmpty} from 'lodash';
 import {getTblById, hasAuxData} from '../TableUtil.js';
@@ -64,6 +64,7 @@ export function MetaInfo({tbl_id, isOpen=false, ...props}) {
         return null;
     }
     const {keywords, links, params, resources, groups} = getTblById(tbl_id);
+    const keywordBlocksRowProps = { direction: 'row', alignItems: 'baseline', spacing: .5 };
 
     return (
         <Stack {...props}>
@@ -88,18 +89,14 @@ export function MetaInfo({tbl_id, isOpen=false, ...props}) {
                 { !isEmpty(groups) &&
                 <CollapsibleItem componentKey={tbl_id + '-groups'} header='Groups' isOpen={isOpen}>
                     {groups.map((rs, idx) => {
-                        const showValue = () => showInfoPopup(
-                            <div style={{whiteSpace: 'pre'}}>
-                                <ObjectTree data={rs} title={<b>Group</b>} className='MetaInfo__tree'/>
-                            </div> );
                         return (
-                            <div key={'groups-' + idx} style={{display: 'inline-flex', alignItems: 'center'}}>
-                                { rs.ID && <Keyword label='ID' value={rs.ID}/> }
-                                { rs.name && <Keyword label='name' value={rs.name}/> }
-                                { rs.UCD && <Keyword label='UCD' value={rs.UCD}/> }
-                                { rs.utype && <Keyword label='utype' value={rs.utype}/> }
-                                <Link onClick={showValue}> show value</Link>
-                            </div>
+                            <Stack key={'groups-' + idx} {...keywordBlocksRowProps}>
+                                { rs.ID && <KeywordBlock label='ID' value={rs.ID}/> }
+                                { rs.name && <KeywordBlock label='name' value={rs.name}/> }
+                                { rs.UCD && <KeywordBlock label='UCD' value={rs.UCD}/> }
+                                { rs.utype && <KeywordBlock label='utype' value={rs.utype}/> }
+                                <ShowObjectTreeBtn data={rs} title={'Group'}/>
+                            </Stack>
                         );
                     })
                     }
@@ -109,12 +106,12 @@ export function MetaInfo({tbl_id, isOpen=false, ...props}) {
                 <CollapsibleItem componentKey={tbl_id + '-links'} header='Links' isOpen={isOpen}>
                     {links.map((l, idx) => {
                         return (
-                            <div key={'links-' + idx} style={{display: 'inline-flex', alignItems: 'center'}}>
-                                { l.ID && <Keyword label='ID' value={l.ID}/> }
-                                { l.role && <Keyword label='role' value={l.role}/> }
-                                { l.type && <Keyword label='type' value={l.type}/> }
+                            <Stack key={'links-' + idx} {...keywordBlocksRowProps}>
+                                { l.ID && <KeywordBlock label='ID' value={l.ID}/> }
+                                { l.role && <KeywordBlock label='role' value={l.role}/> }
+                                { l.type && <KeywordBlock label='type' value={l.type}/> }
                                 { l.href && <LinkTag {...l}/>}
-                            </div>
+                            </Stack>
                         );
                     })
                     }
@@ -123,17 +120,13 @@ export function MetaInfo({tbl_id, isOpen=false, ...props}) {
                 { !isEmpty(resources) &&
                 <CollapsibleItem componentKey={tbl_id + '-resources'} header='Resources' isOpen={isOpen}>
                     {resources.map((rs, idx) => {
-                        const showValue = () => showInfoPopup(
-                            <div style={{whiteSpace: 'pre'}}>
-                                <ObjectTree data={rs} title={<b>Resource</b>} className='MetaInfo__tree'/>
-                            </div> );
                         return (
-                            <Stack direction='row' key={'resources-' + idx}>
-                                { rs.ID && <Keyword label='ID' value={rs.ID}/> }
-                                { rs.name && <Keyword label='name' value={rs.name}/> }
-                                { rs.type && <Keyword label='type' value={rs.type}/> }
-                                { rs.utype && <Keyword label='utype' value={rs.utype}/> }
-                                <Link onClick={showValue}> show value</Link>
+                            <Stack key={'resources-' + idx} {...keywordBlocksRowProps}>
+                                { rs.ID && <KeywordBlock label='ID' value={rs.ID}/> }
+                                { rs.name && <KeywordBlock label='name' value={rs.name}/> }
+                                { rs.type && <KeywordBlock label='type' value={rs.type}/> }
+                                { rs.utype && <KeywordBlock label='utype' value={rs.utype}/> }
+                                <ShowObjectTreeBtn data={rs} title={'Resource'}/>
                             </Stack>
                         );
                     })
@@ -146,11 +139,29 @@ export function MetaInfo({tbl_id, isOpen=false, ...props}) {
     );
 }
 
-export function KeywordBlock({style={}, label, value, title, asLink}) {
+
+const ShowObjectTreeBtn = ({data, title}) => {
+    const popupSx = {
+        '.FF-Popup-Content-root': {
+            overflow: 'auto', resize: 'both', justifyContent: 'space-between',
+            height: '50vh', minHeight: 200,
+            width: '60vh', minWidth: 200,
+        },
+        '.FF-Popup-Content': {height: 1, maxWidth: 'unset', minWidth: 'unset'} //unset width bounds because controlled by resizable parent (-root)
+    };
+    const sx = {overflow: 'auto', width: 1, height: 1};
+
     return (
-        <div style={{display: 'inline-flex', alignItems: 'baseline', ...style}}>
+        <Chip onClick={() => showInfoPopup(<ObjectTree {...{data, title, sx}}/>, undefined, popupSx)}
+              color='primary' sx={{alignSelf: 'center'}}> show </Chip>
+    );
+};
+
+export function KeywordBlock({sx={}, label, value, title, asLink}) {
+    return (
+        <Stack direction='row' display='inline-flex' alignItems='baseline' sx={sx}>
             <Keyword {...{label, value, title, asLink}}/>
-        </div>
+        </Stack>
     );
 }
 
@@ -162,7 +173,7 @@ export function Keyword({label, value, title, asLink}) {
             <>
                 {label && <Typography level='title-sm' title={title} mr={1/2}>{label}</Typography>}
                 { asLink ? <LinkTag title={value} href={value} /> :
-                    <ContentEllipsis text={value} sx={{p: '1px', margin: 'unset'}}><Typography level='body-xs' title={value} noWrap mr={1/2}>{value}</Typography></ContentEllipsis>
+                    <ContentEllipsis text={value} sx={{p: '1px', margin: 'unset'}}><Typography level='body-sm' title={value} noWrap mr={1/2}>{value}</Typography></ContentEllipsis>
                 }
             </>
         );
@@ -175,9 +186,9 @@ export function LinkTag({href, title}) {
     title = title || href;
     if (href) {
         return (
-            <Stack overflow='hidden' direction='row' spacing={1} alignItems='center'>
-                <CopyToClipboard value={href} size={16} buttonStyle={{backgroundColor: 'unset'}}/>
-                <Link level='body-xs' href={href} title={title} target='Links'
+            <Stack overflow='hidden' direction='row' spacing={.75} alignItems='baseline'>
+                <CopyToClipboard value={href} size={16} buttonStyle={{backgroundColor: 'unset'}} style={{alignSelf: 'end'}}/>
+                <Link level='body-sm' href={href} title={title} target='Links'
                       sx={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
                     {title}
                 </Link>

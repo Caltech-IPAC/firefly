@@ -540,7 +540,7 @@ public class JsonTableUtil {
             if (ri.getParams().size() > 0) json.put("params", toJsonParamInfos(ri.getParams()));
             if (ri.getInfos().size() > 0)  json.put("infos", ri.getInfos());
             return json;
-        }).collect(Collectors.toList());
+        }).filter(json -> !json.isEmpty()).collect(Collectors.toList());
     }
 
     /**

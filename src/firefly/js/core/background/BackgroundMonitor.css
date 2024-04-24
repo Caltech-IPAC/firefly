@@ -2,37 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-.JobInfo__main {
-    display: flex;
-    flex-direction: column;
-    padding: 10px;
-    overflow: hidden;
-}
-
-.JobInfo__popup {
-    width: 500px;
-    height: 150px;
-    min-height: 100px;
-    min-width: 250px;
-    resize: both;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-.JobInfo__popup.uws {
-    position: relative;
-    height: 200px;
-}
-
-.JobInfo__items {
-    display: flex;
-    flex-direction: column;
-}
-
-.JobInfo__items > * {
-    margin: 2px 0;
-}
 
 .JobInfo__items--link {
     height: 16px;

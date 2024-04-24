@@ -4,10 +4,11 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import {set, get, isObject} from 'lodash';
+import {set, get, isObject, isString} from 'lodash';
 
 import Tree from 'rc-tree';
 import 'rc-tree/assets/index.css';
+import {Sheet, Stack, Typography} from '@mui/joy';
 
 
 /**
@@ -16,12 +17,13 @@ import 'rc-tree/assets/index.css';
  * Based on rc-tree:  http://react-component.github.io/tree/
  *
  */
-export const ObjectTree = React.memo(({data, defaultExpandAll=true, selectable=false, onSelect, nodeClassName, className, style, title}) => {
+export const ObjectTree = React.memo(({data, defaultExpandAll=true, selectable=false, onSelect, nodeClassName, sx, title}) => {
     const treeData = transformToTreeNodes(data, nodeClassName);
     return (
-        <div className={className} style={style}> {title || ''}
+        <Sheet component={Stack} spacing={.5} variant='outlined' sx={{fontSize: 'sm', p: 1, ...sx}}>
+            {isString(title) ? <Typography level='title-md'>{title}</Typography> : (title || false)}
             <Tree {...{defaultExpandAll,onSelect,selectable }} treeData={get(treeData, [0, 'children'])}/>
-        </div>
+        </Sheet>
     );
 });
 
@@ -30,10 +32,9 @@ ObjectTree.propTypes = {
     defaultExpandAll:   PropTypes.bool,
     onSelect:           PropTypes.func,
     selectable:         PropTypes.bool,
-    className:          PropTypes.string,
     nodeClassName:      PropTypes.string,
-    style:              PropTypes.object,
-    title:              PropTypes.node
+    sx:                 PropTypes.object,
+    title:              PropTypes.oneOfType([PropTypes.element, PropTypes.string])
 };
 
 

@@ -102,7 +102,7 @@ export function hideInfoPopup() {
 
 function makeContent(content) {
     return (
-        <Stack {...{px:2, py:1, spacing:2}}>
+        <Stack {...{px:2, py:1, spacing:2, className:'FF-Popup-Content-root'}}>
             <Stack {...{className:'FF-Popup-Content', minWidth:350, maxWidth: 500, overflow: 'hidden'}}>
                 {isString(content) ? ( <Typography level='body-md'>{content}</Typography> ) : content}
             </Stack>
