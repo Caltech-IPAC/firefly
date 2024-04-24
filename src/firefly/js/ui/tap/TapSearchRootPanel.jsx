@@ -9,7 +9,8 @@ import FieldGroupUtils from 'firefly/fieldGroup/FieldGroupUtils.js';
 import {makeSearchOnce} from 'firefly/util/WebUtil.js';
 import {dispatchMultiValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
-import {ExtraButton, FormPanel} from 'firefly/ui/FormPanel.jsx';
+import {FormPanel} from 'firefly/ui/FormPanel.jsx';
+import {TextButton} from 'firefly/visualize/ui/Buttons.jsx';
 import {ValidationField} from 'firefly/ui/ValidationField.jsx';
 import {intValidator} from 'firefly/util/Validate.js';
 import {FieldGroup, FieldGroupCtx} from 'firefly/ui/FieldGroup.jsx';
@@ -197,16 +198,21 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
     return (
         <Box width={1} height={1}>
             <ConstraintContext.Provider value={ctx}>
-                <FormPanel  inputStyle = {{display: 'flex', flexDirection: 'column', backgroundColor: 'transparent', padding: 'none', border: 'none'}}
+                <FormPanel  onSuccess={(request) => onTapSearchSubmit(request, serviceUrl,tapState)}
                             cancelText=''
-                            getDoOnClickFunc={(clickFunc) => clickFuncRef.clickFunc= clickFunc}
-                            params={{hideOnInvalid: false}}
-                            onSubmit={(request) => onTapSearchSubmit(request, serviceUrl,tapState)}
-                            extraWidgets={makeExtraWidgets(groupKey, initArgs,selectBy,setSelectBy, tapState)}
-                            submitBarStyle={{padding: '2px 3px 3px'}}
-                            requireAllValid={false}
-                            includeUnmounted={true}
-                            help_id = {tapHelpId('form')} >
+                            help_id = {tapHelpId('form')}
+                            slotProps={{
+                                completeBtn: {
+                                    getDoOnClickFunc: (clickFunc) => (clickFuncRef.clickFunc= clickFunc),
+                                    requireAllValid:false,
+                                    includeUnmounted:true
+                                },
+                                searchBar: {
+                                    px:1, py:1/2, alignItems:'center',
+                                    actions: makeExtraWidgets(groupKey, initArgs,selectBy,setSelectBy, tapState)
+                                }
+                            }}>
+
                     <TapSearchPanelComponents {...{
                         servicesShowing, setServicesShowing, lockService, lockObsCore, obsCoreLockTitle,
                         initArgs, selectBy, setSelectBy, serviceUrl, onTapServiceOptionSelect, titleOn, tapOps, obsCoreEnabled}} />
@@ -364,11 +370,11 @@ function makeExtraWidgets(groupKey, initArgs, selectBy, setSelectBy, tapBrowserS
                          />)
         ];
     if (selectBy==='basic') {
-        extraWidgets.push( (<ExtraButton key='editADQL' text='Populate and edit ADQL'
+        extraWidgets.push( (<TextButton key='editADQL' text='Populate and edit ADQL'
                                          onClick={() => populateAndEditAdql(groupKey, tapBrowserState, setSelectBy)} />));
     }
     else {
-        extraWidgets.push( (<ExtraButton key='singleTable' text='Single Table (UI assisted)'
+        extraWidgets.push( (<TextButton key='singleTable' text='Single Table (UI assisted)'
                                          onClick={() => setSelectBy('basic')} />));
 
     }

@@ -52,13 +52,11 @@ export function DynamicForm({DynLayoutPanel, groupKey,fieldDefAry, onSubmit, onE
 
     return (
         <Box style={style}>
-            <FormPanel  {...{
-                inputStyle: {display: 'flex', flexDirection: 'column', backgroundColor: 'transparent', padding: 'none', border: 'none'},
-                submitBarStyle:{padding: '2px 3px 3px'},
-                buttonStyle:{justifyContent: 'left'},
-                groupKey, onSubmit:onSearchSubmit, onCancel, onError, help_id,
-                params:{hideOnInvalid: false},
-            }} >
+            <FormPanel  {...{groupKey, onSuccess:onSearchSubmit, onError, onCancel, help_id}}
+                slotProps={{
+                    searchBar: {px:1, py:1/2, justifyContent: 'left'},
+                }}>
+
                 <DynamicFieldGroupPanel {...{DynLayoutPanel, groupKey,fieldDefAry}}/>
             </FormPanel>
         </Box>

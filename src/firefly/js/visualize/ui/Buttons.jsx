@@ -1,5 +1,6 @@
 import React from 'react';
-import {Box, IconButton, ToggleButtonGroup} from '@mui/joy';
+import {node} from 'prop-types';
+import {Box, Button, IconButton, ToggleButtonGroup} from '@mui/joy';
 
 // TODO: we should use icon from one type(filled, outlined, rounded, two-tone, sharp).  It will yield better consistency.
 
@@ -298,3 +299,14 @@ export function DisplayTypeButtonGroup({config, variant='outlined', size='sm', v
         </ToggleButtonGroup>
     );
 }
+
+// moved from FormPanel
+export function TextButton({text, ...props}) {
+    return (
+        <Button size='md' {...props}>{text}</Button>
+    );
+}
+TextButton.propTypes = {
+    text: node,
+    ...Button.propTypes
+};

@@ -12,7 +12,7 @@ import 'rc-tree/assets/index.css';
 import {cloneDeep, defer, isArray, isObject, groupBy, uniqBy} from 'lodash';
 import {getSizeAsString, updateSet} from '../../util/WebUtil.js';
 import {FieldGroupCtx} from '../FieldGroup.jsx';
-import {ExtraButton} from '../FormPanel.jsx';
+import {TextButton} from 'firefly/visualize/ui/Buttons.jsx';
 
 import {InputAreaFieldConnected} from '../InputAreaField.jsx';
 import {InputFieldView} from '../InputFieldView.jsx';
@@ -307,7 +307,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                                         <Stack sx={{mt:2}}>
                                             <Stack {...{direction:'row', alignItems:'center', spacing:1}}>
                                                 <Stack {...{direction:'row', alignItems:'center', spacing:1}}>
-                                                    <ExtraButton text={serverFile ? 'Change Upload Table...' : 'Add Upload Table...'}
+                                                    <TextButton text={serverFile ? 'Change Upload Table...' : 'Add Upload Table...'}
                                                                  onClick={() => showUploadTableChooser(setUploadInfo)} style={{marginLeft: 10}} />
                                                     {haveTable &&
                                                         <Typography level='title-lg'

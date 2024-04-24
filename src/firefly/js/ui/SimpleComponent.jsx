@@ -10,6 +10,7 @@ import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/cor
 import {dispatchMetaStateChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {FieldGroupCtx} from './FieldGroup.jsx';
 import {smartMerge} from 'firefly/tables/TableUtil.js';
+import {defaultsDeep} from 'lodash/object.js';
 
 
 /**
@@ -280,8 +281,8 @@ export function useDebugCycle({id, render=true, mount=true}) {
  This will return:
    <MyResults text='hello world' customMsg='I am Joe'/>
  */
-export function Slot({component, slotProps={}, ...props}) {
-    const {component:Component=component, ...pProps} = slotProps;
-    props = smartMerge(props, pProps);
-    return Component && <Component {...props}/>;
+export function Slot({component, slotProps={}, ...defProps}) {
+    const {component:Component=component, ...nProps} = slotProps;
+    const props = defaultsDeep(nProps, defProps);
+    return Component ? <Component {...props}/> : false;
 }

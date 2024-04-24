@@ -56,12 +56,11 @@
 /**
  * Search information.
  * @typedef {object} SearchForm
- * @prop {function} render    a function that returns the search form.
- * @prop {string[]} actions
- * @prop {object} params  additional parameters to be sent with the search request.
+ * @prop {function} render     a function that returns the search form.
+ * @prop {string|func} action  a predefined function mapped by this string or a function to perform the form submission. Invoked with request passed in.
+ * @prop {object} params  additional parameters added to the request before action is invoked.
  * @prop {string|function} title description of the search results.  if a function, the request will be passed in. 
  * @prop {string} [helpId] help ID if available
- * @prop {function} [onSubmit]  a function that handle the form submit.
  */
 
 /**

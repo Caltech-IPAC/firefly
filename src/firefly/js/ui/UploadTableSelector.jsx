@@ -4,7 +4,7 @@ import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 import {useFieldGroupValue} from 'firefly/ui/SimpleComponent';
 import {findTableCenterColumns} from 'firefly/voAnalyzer/TableAnalysis';
 import {ColumnFld, getColValidator} from 'firefly/charts/ui/ColumnOrExpression';
-import {ExtraButton} from 'firefly/ui/FormPanel';
+import {TextButton} from 'firefly/visualize/ui/Buttons.jsx';
 import {showUploadTableChooser} from 'firefly/ui/UploadTableChooser';
 import {showColSelectPopup} from 'firefly/charts/ui/ColSelectView';
 import {getSizeAsString} from 'firefly/util/WebUtil';
@@ -76,7 +76,7 @@ export function UploadTableSelector({uploadInfo, setUploadInfo, uploadTable=fals
     return (
         <div>
             <Stack {...{direction:'row', alignItems:'center'}}>
-                <ExtraButton text={(fileName&&haveTable) ? 'Change Upload Table...' : 'Add Upload Table...'}
+                <TextButton text={(fileName&&haveTable) ? 'Change Upload Table...' : 'Add Upload Table...'}
                              onClick={() => showUploadTableChooser(preSetUploadInfo)} />
                 <Stack {...{direction:'row', alignItems:'center'}}>
                     {haveTable &&

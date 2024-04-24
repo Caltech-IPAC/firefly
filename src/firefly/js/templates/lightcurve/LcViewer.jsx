@@ -202,8 +202,10 @@ export const UploadPanel = ({initArgs}) =>{
 
     return (
             <FormPanel groupKey={vFileKey}
-                       onSubmit={(request) => onSearchSubmit(request)} onCancel={dispatchHideDropDown}
-                       submitText={'Upload'} help_id={'loadingTSV'}>
+                       onSuccess={onSearchSubmit}
+                       onCancel={dispatchHideDropDown}
+                       help_id={'loadingTSV'}
+                       completeText='Upload'>
                 <FileDropZone {...{
                     dropEvent, setDropEvent,
                     setLoadingOp: () => {

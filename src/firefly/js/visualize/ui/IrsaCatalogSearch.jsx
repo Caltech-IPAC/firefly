@@ -39,15 +39,16 @@ export function IrsaCatalogSearch() {
 
     return (
         <FieldGroup groupKey={irsaCatalogGroupKey} keepState={true} sx={{position:'relative', flexGrow:1}}>
-            <FormPanel sx={{position:'absolute', inset:'0 0 0 0', overflow:'hidden', maxWidth:'100em', margin:'0 auto'}}
-                groupKey={[irsaCatalogGroupKey, gkeySpacial]}
-                onSuccess={(request) => onSearchSubmit(request)}
-                onError={(request) => onSearchFail(request)}
-                params={{hideOnInvalid: false}}
-                help_id={'catalogs.irsacatalogs'}
+            <FormPanel sx={{position:'absolute', inset:0, overflow:'hidden', maxWidth:'100em', margin:'0 auto'}}
+                groupKey={() => ([irsaCatalogGroupKey, gkeySpacial])}
+                onSuccess={onSearchSubmit}
+                onError={onSearchFail}
                 cancelText=''
-                slotProps={{input: {overflow: 'auto'}}}
-            >
+                help_id={'catalogs.irsacatalogs'}
+                slotProps={{
+                    input: {overflow: 'auto'},
+                }}>
+
                 <Stack spacing={1} height={1}>
                     <Stack direction='row' spacing={1} height='24em'>
                         <ProjectPart/>

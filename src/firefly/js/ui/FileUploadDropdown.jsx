@@ -44,15 +44,19 @@ export const FileUploadDropdown= ({sx, onCancel, onSubmit=resultSuccess, keepSta
             <FieldGroup groupKey={groupKey} keepState={keepState} sx={{height:1, width:1,
                 display: 'flex', alignItems: 'stretch', flexDirection: 'column'}}>
                 <FormPanel
-                    groupKey={groupKey} onSubmit={onSubmit}
-                    onError={resultFail}
+                    groupKey={groupKey} onSuccess={onSubmit} onError={resultFail}
                     onCancel={onCancel}
+                    completeText={submitText}
                     cancelText={onCancel?'Cancel':''}
-                    submitText={submitText}
-                    params={{hideOnInvalid: false}}
-                    changeMasking={changeMasking}
-                    inputStyle={{height:'100%'}}
-                    submitBarStyle={{padding: '2px 3px 3px'}} help_id={helpId}>
+                    help_id={helpId}
+                    slotProps={{
+                        input: {height:1},
+                        searchBar: {p:1},
+                        completeBtn:{
+                            changeMasking,
+                        },
+                    }}>
+
                     <FileUploadViewPanel {...{setSubmitText, acceptList, acceptOneItem,
                         externalDropEvent:initArgs?.searchParams?.dropEvent}}/>
                 </FormPanel>

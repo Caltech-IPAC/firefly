@@ -14,6 +14,10 @@ import {StatefulTabs, Tab} from './panel/TabPanel.jsx';
 import {makeSearchOnce} from '../util/WebUtil';
 import {useNavigate, useInRouterContext} from 'react-router-dom';
 import {dispatchShowDropDown} from 'firefly/core/LayoutCntlr.js';
+import {makeTblRequest} from 'firefly/tables/TableRequestUtil.js';
+import {isFunction} from 'lodash/lang.js';
+import {dispatchTableSearch, TABLE_SEARCH} from 'firefly/tables/TablesCntlr.js';
+import {defaultsDeep} from 'lodash/object.js';
 
 const changeSearchOptionOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
 
@@ -140,14 +144,35 @@ export function executeOK(clickFunc,initArgs,searchItem) {
 
 function SearchForm({searchItem, style, initArgs}) {
     const {name, form} = searchItem;
-    const {render:Render, useFormPanel:useFormPanel=true,...rest} = form;
+    const {render:Render, useFormPanel:useFormPanel=true, title, action, params, ...formProps} = form;
+
+    // a simplified onSuccess impl based on action and params.  see core-typedefs.jsdoc#SearchForm for details
+    const onSuccess = (p) => {
+        let request = {...params, ...p};
+        const reqTitle = isFunction(title) ? title(request) : title;
+        request = makeTblRequest(request.id, reqTitle || request.title, request);
+        if (isFunction(action)) {
+            return action(request);
+        } else if (action === TABLE_SEARCH) {
+            dispatchTableSearch(request);
+        }
+        return false;       // return false to indicate no action were taken
+    };
+
+    const defProps = {
+        flexGrow:1,
+        sx:style,
+        cancelText: '',
+        slotProps: {
+            completeBtn: {
+                getDoOnClickFunc: (clickFunc) => executeOK(clickFunc,initArgs,searchItem),       // this is a bit awkward
+            },
+        }
+    };
 
     return (
         useFormPanel ? (
-            <FormPanel groupKey={name} sx={{...style, flexGrow:1}}
-                       getDoOnClickFunc={(clickFunc) => executeOK(clickFunc,initArgs,searchItem)}
-                       cancelText=''
-                       {...rest}>
+            <FormPanel groupKey={name} onSuccess={onSuccess} {...defaultsDeep(formProps, defProps)}>
                 <Render {...{searchItem, initArgs}} />
             </FormPanel>
         ) : (

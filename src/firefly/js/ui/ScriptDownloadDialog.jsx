@@ -77,10 +77,12 @@ class ScripDownloadPanel extends PureComponent {
         return (
             <div style = {{margin: '4px'}}>
                 <FormPanel
-                    submitText='OK'
                     groupKey='ScriptDownloadDialog'
-                    onSubmit={this.onSubmit}
-                    onCancel={() => dispatchHideDialog(SCRIPT_DOWNLOAD_ID)}>
+                    onSuccess={this.onSubmit}
+                    onCancel={() => dispatchHideDialog(SCRIPT_DOWNLOAD_ID)}
+                    completeText='OK'
+                    help_id={help_id}>
+
                     <FieldGroup groupKey={'ScriptDownloadDialog'}>
                         <div style={{visibility: (urlsOnly ? 'hidden' : 'visible')}}>
                             <ListBoxInputField

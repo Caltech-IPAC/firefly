@@ -114,14 +114,17 @@ export function ChartSelectPanel({tbl_id, chartId, chartAction, inputStyle={}, h
     return (
         <FormPanel
             groupKey={groupKey}
-            submitText={chartActionState===CHART_TRACE_MODIFY ? 'Apply' : 'OK'}
             onSuccess={onChartAction({chartAction: chartActionState,
                 tbl_id, chartId, hideDialog, renderTreeId})}
-            cancelText='Close'
             onCancel={hideDialog}
-            inputStyle = {inputStyle}
+            completeText={chartActionState===CHART_TRACE_MODIFY ? 'Apply' : 'OK'}
+            cancelText='Close'
             help_id = 'plots.changing'
-            sx={{m: 1, mt: 0, ...sx}}>
+            sx={{m: 1, mt: 0, ...sx}}
+            slotProps={{
+                input: {sx:inputStyle},
+            }}>
+
             <Stack spacing={2}>
                 {showActionOptions  &&
                     <ChartAction {...{chartId, chartActions, chartAction: chartActionState, chartActionChanged}}/>}
