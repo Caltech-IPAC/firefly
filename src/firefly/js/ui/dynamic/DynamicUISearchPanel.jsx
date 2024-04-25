@@ -245,9 +245,9 @@ function SimpleDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='d
 }
 
 function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='defaultHiPSTargetSearch', toolbarHelpId,
-                                 childComponents, WrapperComponent}) {
+                                 childComponents, WrapperComponent, submitSearch}) {
     const { DynSpacialPanel, areaFields, polyPanel, checkBoxFields, fieldsInputAry, opsInputAry,
-        useSpacial, useArea}= makeAllFields({ fieldDefAry,popupHiPS, plotId, toolbarHelpId, insetSpacial:true});
+        useSpacial, useArea}= makeAllFields({ fieldDefAry,popupHiPS, plotId, toolbarHelpId, insetSpacial:true, submitSearch});
 
     let iFieldLayout;
     if (fieldsInputAry.length || opsInputAry.length) {
