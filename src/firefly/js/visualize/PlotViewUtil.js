@@ -1147,4 +1147,19 @@ export const isImageExpanded = (expandedMode) => expandedMode === true ||
 export const deleteAllFailedPlots = (vr= visRoot()) =>
     getPlotViewAry(vr)
         .filter((pv) => pv.serverCall === 'fail')
-        .forEach(({plotId}) => dispatchDeletePlotView({plotId}));
+        .forEach(({plotId}) => dispatchDeletePlotView({plotId})); // set 20 as the maximum plot
+
+
+
+function* getHiPSPlotId() {
+    let index = 0;
+
+    while (true) {
+        ++index;
+        yield 'aHiPSId' + index;
+    }
+}
+
+const nextHipsId = getHiPSPlotId();
+
+export const getNextHiPSPlotId = () => nextHipsId.next().value;

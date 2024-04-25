@@ -7,8 +7,7 @@ import {dispatchAttachLayerToPlot} from '../DrawLayerCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById} from '../../tables/TableUtil.js';
 import {addNewMocLayer, getAppHiPSForMoc, isTableMOC} from '../HiPSMocUtil.js';
-import {getActivePlotView, getPlotViewAry, primePlot} from '../PlotViewUtil.js';
-import {genHiPSPlotId} from '../ui/ImageSearchPanelV2';
+import {getActivePlotView, getNextHiPSPlotId, getPlotViewAry, primePlot} from '../PlotViewUtil.js';
 import WebPlotRequest from '../WebPlotRequest.js';
 import {getAViewFromMultiView, getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import {dispatchPlotHiPS} from '../ImagePlotCntlr';
@@ -109,7 +108,7 @@ function findAnyHiPS() {
 }
 
 function plotHiPS(url) {
-    const plotId = genHiPSPlotId.next().value;
+    const plotId = getNextHiPSPlotId();
 
     const hipsUrl = url || getAppHiPSForMoc();
 

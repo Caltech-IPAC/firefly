@@ -83,7 +83,7 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
                 <MultiItemViewerView {...{...newProps, ref, insideFlex:true, style:props.style}} />
                 <MouseReadoutBottomLine readout={readout} readoutData={readoutData}
                                         style={
-                                          mouseReadoutEmbedded?{position:'absolute', left:1, bottom:1, right:scrollGrid?15:4}:{}}
+                                          mouseReadoutEmbedded?{position:'absolute', left:3, bottom:3, right:scrollGrid?15:6}:{}}
                                         readoutShowing={doReadoutAndShowing}
                                         showOnInactive={!mouseReadoutEmbedded}
                                         scrollGrid={scrollGrid}

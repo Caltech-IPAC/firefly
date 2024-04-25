@@ -8,6 +8,7 @@ import {Alert, Stack} from '@mui/joy';
 
 import {getDropDownInfo} from '../core/LayoutCntlr.js';
 import {SearchPanel} from '../ui/SearchPanel.jsx';
+import {HiPSSearchPanel} from '../visualize/ui/HiPSSearchPanel.jsx';
 import {IrsaCatalogSearch} from '../visualize/ui/IrsaCatalogSearch.jsx';
 import {ClassicNedSearchPanel, ClassicVOCatalogPanel} from '../visualize/ui/ExtraIpacSearches.jsx';
 import {ImageSearchDropDown} from '../visualize/ui/ImageSearchPanelV2.jsx';
@@ -42,14 +43,14 @@ export const dropDownMap = {
     MultiTableSearchCmd: {view: <MultiSearchPanel/>,  layout: {width: '100%'}},
     FileUploadDropDownCmd: {view: <FileUploadDropdown />, layout: {width: '100%'}},
     WorkspaceDropDownCmd: {view: <WorkspaceDropdown />},
-    DLGeneratedDropDownCmd: {view: <DLGeneratedDropDown key='DLGeneratedDropDownCmd' loadRegistry={false}/>, layout: {width: '100%'}},
+    DLGeneratedDropDownCmd: {view: <DLGeneratedDropDown name='DLGeneratedDropDownCmd' loadRegistry={false}/>, layout: {width: '100%'}},
     IrsaCatalog: {view: <IrsaCatalogSearch/>, layout: {width: '100%'}},
     ClassicVOCatalogPanelCmd : {view: <ClassicVOCatalogPanel/>, layout: {width: '100%'}},
     ClassicNedSearchCmd : {view: <ClassicNedSearchPanel/>, layout: {width: '100%'}},
     // --- testing
     TestSearch: {view: <TestSearchPanel />, layout: {width: '100%'}},
-    TestSearches: {view: <TestQueriesPanel />, layout: {width: '100%'}}
-
+    TestSearches: {view: <TestQueriesPanel />, layout: {width: '100%'}},
+    HiPSSearchPanel: {view: <HiPSSearchPanel name='HiPSSearchPanel'/>, layout: {width: '100%'}}
 };
 
 

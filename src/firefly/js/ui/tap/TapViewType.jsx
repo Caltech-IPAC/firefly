@@ -1,4 +1,4 @@
-import {Button, Divider, Sheet, Stack, Tooltip, Typography} from '@mui/joy';
+import {Box, Button, Divider, Sheet, Stack, Tooltip, Typography} from '@mui/joy';
 import {truncate} from 'lodash';
 import {bool, string, func, object, shape} from 'prop-types';
 import React, {Fragment, useContext, useEffect, useRef, useState} from 'react';
@@ -472,36 +472,43 @@ function TableChooser({tOps,tableTableModel, tableName,setTableName}) {
 function OpRender({ops, value, label='', sx, lineClamp, rowDesc='rows'}) {
     const op = ops.find((t) => t.value === value);
     if (!op) return 'none';
+    const details= cleanUp(op.label,0);
     return (
-        <Stack {...{alignItems:'flex-start', alignSelf:'flex-start', sx}}>
-            <Stack {...{direction:'row', spacing:1, alignItems:'flex-end', flexWrap:'wrap'}}>
-                {label&&
-                    <Typography level='title-md'>
-                        {`${label}: `}
-                    </Typography>
-                }
-                <Typography level='body-md' >
-                    {op.value}
+        <Tooltip title={
+                <Typography level='body-sm' component='div' width='30rem'>
+                    <div dangerouslySetInnerHTML={{__html: `${details}`}}/>
                 </Typography>
-                {op.rows &&
-                    <>
-                        <Typography level='body-sm'> {`(${rowDesc}:`} </Typography>
-                        <Typography level='body-sm' color='warning'> {`${op.rows})`} </Typography>
-                    </>}
-            </Stack>
-            <Typography level='body-sm' component='div'
-                        style={lineClamp?
-                            {
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                WebkitLineClamp: lineClamp+'',
-                                display: '-webkit-box',
-                                WebkitBoxOrient: 'vertical',
-                            } : {}}
-                        sx={{whiteSpace:'normal', textAlign:'left'}}>
+        }>
+            <Stack {...{alignItems: 'flex-start', alignSelf:'flex-start', sx}}>
+                <Stack {...{direction:'row', spacing:1, alignItems:'flex-end', flexWrap:'wrap'}}>
+                    {label&&
+                        <Typography level='title-md'>
+                            {`${label}: `}
+                        </Typography>
+                    }
+                    <Typography level='body-md' >
+                        {op.value}
+                    </Typography>
+                    {op.rows &&
+                        <>
+                            <Typography level='body-sm'> {`(${rowDesc}:`} </Typography>
+                            <Typography level='body-sm' color='warning'> {`${op.rows})`} </Typography>
+                        </>}
+                </Stack>
+                <Typography level='body-sm' component='div'
+                            style={lineClamp?
+                                {
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    WebkitLineClamp: lineClamp+'',
+                                    display: '-webkit-box',
+                                    WebkitBoxOrient: 'vertical',
+                                } : {}}
+                            sx={{whiteSpace:'normal', textAlign:'left'}}>
                 <div dangerouslySetInnerHTML={{__html: `${cleanUp(op.label)}`}}/>
-            </Typography>
-        </Stack>
+                </Typography>
+            </Stack>
+        </Tooltip>
     );
 }
 
@@ -509,10 +516,10 @@ function OpRender({ops, value, label='', sx, lineClamp, rowDesc='rows'}) {
 
 const achoreRE= /<a.*(\/>|<\/a>)/;
 
-function cleanUp(s) {
-    if (!s.includes('<a ')) return truncate(s, {length: 140});
+function cleanUp(s, truncLength=140) {
+    if (!s.includes('<a ')) return truncLength>0 ? truncate(s, {length: truncLength}) : s;
     const aStr= s.match(achoreRE)?.[0];
-    if (!aStr) return truncate(s, {length: 140});
+    if (!aStr) return truncLength>0 ? truncate(s, {length: truncLength}) : s;
     const tmp= document.createElement('div');
     tmp.innerHTML= aStr;
     tmp.children[0].target= 'tapOpen';

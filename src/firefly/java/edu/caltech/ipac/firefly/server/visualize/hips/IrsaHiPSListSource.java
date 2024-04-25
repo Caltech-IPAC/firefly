@@ -26,4 +26,5 @@ public class IrsaHiPSListSource implements HiPSMasterListSourceType {
         }
     }
 
+    public String getUrl() { return irsaHipsListUrl; }
 }

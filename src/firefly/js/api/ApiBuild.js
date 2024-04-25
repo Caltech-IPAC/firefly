@@ -263,8 +263,9 @@ function initExpandedView(div){
         expandedDivEl.id= EXPANDED_DIV;
     }
     
-    ApiUtil.renderDOM(expandedDivEl, ApiExpandedView);
+    ApiUtil.renderDOM(expandedDivEl, ApiExpandedView, undefined, false);
 }
+
 
 function fieldGroupWrap(Component, groupKey='firefly-api-fieldgroup') {
 

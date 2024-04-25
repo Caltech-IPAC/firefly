@@ -349,7 +349,8 @@ VisCtxToolbarView.propTypes= {
     showClearFilter : bool,
     searchActions: arrayOf(object),
     width : number,
-    showMultiImageController : bool
+    showMultiImageController : bool,
+    makeToolbar: func
 };
 
 

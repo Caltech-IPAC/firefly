@@ -37,8 +37,12 @@ export const LAYOUT_PATH = 'layout';
  * @prop xyPlots
  * @prop tableImageMeta
  * @prop coverageImage
+ * @prop {Function} get
  */
+
+/** @type LO_VIEW */
 export const LO_VIEW = new Enum(['none', 'tables', 'images', 'xyPlots', 'tableImageMeta', 'coverageImage'], { ignoreCase: true });
+
 /**
  * @typedef LO_MODE
  * @type {Enum}

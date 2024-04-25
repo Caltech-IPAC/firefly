@@ -8,6 +8,8 @@ import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
 import {useStoreConnector} from '../ui/SimpleComponent.jsx';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
+import {FireflyRoot} from '../ui/FireflyRoot.jsx';
+import {isDefined} from '../util/WebUtil.js';
 import {dispatchChangeExpandedMode, ExpandType} from '../visualize/ImagePlotCntlr.js';
 import {dispatchSetLayoutMode, getExpandedMode, LO_MODE, LO_VIEW} from '../core/LayoutCntlr.js';
 import {getExpandedChartProps} from '../charts/ChartsCntlr.js';
@@ -23,13 +25,24 @@ export function ApiExpandedView() {
 
     const expandType = LO_VIEW.get(expanded) ?? LO_VIEW.none;
     if (expandType === LO_VIEW.none) {
-        document.body.style.overflow= current.saveOverflow;
+        if (isDefined(current.saveOverflow)) document.body.style.overflow= current.saveOverflow;
         return false;
     }
 
-    const {chartId} = expandType === LO_VIEW.xyPlots ? getExpandedChartProps() : {};
     current.saveOverflow= document.body.style.overflow;
     document.body.style.overflow= 'hidden';
+
+    return (
+        <FireflyRoot sx={{height:1, width:1}} ctxProperties={{jsApi:true}}>
+            <ApiExpandedViewInner/>
+        </FireflyRoot>
+    );
+}
+
+
+function ApiExpandedViewInner({expandType}) {
+    if (expandType===LO_VIEW.none) return false;
+    const {chartId} = expandType===LO_VIEW.xyPlots ? getExpandedChartProps() : {};
     const view = expandType === LO_VIEW.tables ?
         (<TablesContainer  mode='expanded' />)
         : expandType === LO_VIEW.xyPlots ?

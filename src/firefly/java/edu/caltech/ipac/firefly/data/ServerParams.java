@@ -105,7 +105,10 @@ public class ServerParams {
     public static final String ALL = "all";
     public static final String CDS = "cds";
     public static final String HIPS_SOURCES = "hipsSources";
-    public static final String ADD_HOC_SOURCE = "addHocSource";
+    public static final String HIPS_LIST_SOURCE= "hipsListSource";
+    public static final String HIPS_LIST_SOURCE_NAME= "hipsListSourceName";
+    public static final String ENSURE_SOURCE= "ensureSource";
+    public static final String ADHOC_SOURCE = "adhocSource";
     public static final String HIPS_DATATYPES = "hipsDataTypes";
     public static final String HIPS_MERGE_PRIORITY = "mergedListPriority";
     public static final String HIPS_TABLE_TYPE= "hipsTableType";

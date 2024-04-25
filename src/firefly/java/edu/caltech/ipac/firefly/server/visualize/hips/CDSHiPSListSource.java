@@ -24,6 +24,8 @@ public class CDSHiPSListSource implements HiPSMasterListSourceType {
             return null;
         }
     }
+    
+    public String getUrl() { return HiPSCDSURL; }
 
     private String dataProduct(List<String> dtList) {
         return Arrays.stream(HiPSMasterList.HiPSDataType)

@@ -33,6 +33,7 @@ import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
@@ -117,6 +118,8 @@ public class URLDownload {
             return (conn instanceof HttpURLConnection) ? ((HttpURLConnection)conn).getResponseCode() : 200;
         } catch (SocketTimeoutException e) {
             return 408;
+        } catch (UnknownHostException e) {
+            return 404;
         } catch (IOException e) {
             return -1;
         }
@@ -409,6 +412,8 @@ public class URLDownload {
             return outFileData;
         } catch (SSLException e) {
             return new FileInfo(495);
+        } catch (UnknownHostException e) {
+            return new FileInfo(404);
         } catch (IOException e) {
             logError(conn.getURL(), null, e);
             throw new FailedRequestException(ResponseMessage.getNetworkCallFailureMessage(e),e, getResponseCode(conn));

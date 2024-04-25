@@ -124,6 +124,7 @@ const defAppProps = {
         {label:'VO SCS Search', action: 'ClassicVOCatalogPanelCmd', primary: false, category: ARCHIVE},
         {label:'NED', action: 'ClassicNedSearchCmd', primary: false, category:'NED Search'},
         {label:'Upload', action: 'FileUploadDropDownCmd', primary: true},
+        {label:'HiPS Search', action: 'HiPSSearchPanel', primary: false, category:ARCHIVE},
     ],
 };
 

@@ -54,13 +54,14 @@ const reactRoots= new Map();
  *
  * @param {string|Object} div a div element or a string id of the div element
  * @param {Object} Component a react component
- * @param {Object} [props] props for the react component
+ * @param {Object} [props] props for the React component
+ * @param {boolean} wrapWithFireflyRoot wrap component in FireflyRoot
  * @public
  * @function renderDOM
  * @memberof firefly.util
  */
 
-export function renderDOM(div, Component, props) {
+export function renderDOM(div, Component, props, wrapWithFireflyRoot= true) {
     const divElement= isString(div) ? document.getElementById(div) : div;
 
     const root= reactRoots.get(divElement) ?? createRoot(divElement);
@@ -72,9 +73,11 @@ export function renderDOM(div, Component, props) {
     // divElement.classList.add('rootStyle');       // this is probably not necessary
 
     const renderStuff= (
-        <FireflyRoot sx={{height:1, width:1}} ctxProperties={{jsApi:true}}>
+        wrapWithFireflyRoot ?
+            (<FireflyRoot sx={{height:1, width:1}} ctxProperties={{jsApi:true}}>
+                <Component {...props} />
+            </FireflyRoot>) :
             <Component {...props} />
-        </FireflyRoot>
     );
     root.render(renderStuff);
 }

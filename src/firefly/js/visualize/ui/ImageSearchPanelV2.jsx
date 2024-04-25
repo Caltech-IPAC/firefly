@@ -8,7 +8,6 @@ import PropTypes, {bool, object, shape, string} from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {dispatchHideDialog, dispatchShowDialog} from '../../core/ComponentCntlr.js';
-import {dispatchHideDropDown} from '../../core/LayoutCntlr.js';
 import {MetaConst} from '../../data/MetaConst';
 import {ServerParams} from '../../data/ServerParams.js';
 import {getFieldVal, setFieldValue} from '../../fieldGroup/FieldGroupUtils.js';
@@ -32,36 +31,25 @@ import {DEF_TARGET_PANEL_KEY, TargetPanel} from '../../ui/TargetPanel.jsx';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {isDefined} from '../../util/WebUtil';
-import {dispatchPlotHiPS, dispatchPlotImage, visRoot} from '../ImagePlotCntlr.js';
-import {parseWorldPt} from '../Point.js';
-import {getImageMasterData} from './AllImageSearchConfig.js';
 import WebPlotRequest, {WPConst} from '../../visualize/WebPlotRequest.js';
 import CoordinateSys from '../CoordSys';
 import {useForImageSearch} from '../HiPSListUtil.js';
+import {dispatchPlotHiPS, dispatchPlotImage, visRoot} from '../ImagePlotCntlr.js';
 import {
-    DEFAULT_FITS_VIEWER_ID,
-    findViewerWithItemId, getAViewFromMultiView, getMultiViewRoot, getViewer, IMAGE, NewPlotMode
+    DEFAULT_FITS_VIEWER_ID, findViewerWithItemId, getAViewFromMultiView, getMultiViewRoot, getViewer, IMAGE, NewPlotMode
 } from '../MultiViewCntlr.js';
 import {PlotAttribute} from '../PlotAttribute';
-import {DEFAULT_COVERAGE_PLOT_ID, DEFAULT_COVERAGE_VIEWER_ID, getPlotViewById} from '../PlotViewUtil.js';
+import {
+    DEFAULT_COVERAGE_PLOT_ID, DEFAULT_COVERAGE_VIEWER_ID, getNextHiPSPlotId, getPlotViewById
+} from '../PlotViewUtil.js';
+import {parseWorldPt} from '../Point.js';
 import VisUtil from '../VisUtil';
 import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
-import {FG_KEYS, FD_KEYS} from './UIConst';
+import {getImageMasterData} from './AllImageSearchConfig.js';
+import {FD_KEYS, FG_KEYS} from './UIConst';
 
 var imageMasterData;        // latest imageMasterData retrieved from server
 const scrollDivId = 'ImageSearchScroll';
-
-// set 20 as the maximum plot
-function* getHiPSPlotId() {
-    let index = 0;
-
-    while (true) {
-        ++index;
-        yield 'aHiPSId' + index;
-    }
-}
-
-export const genHiPSPlotId = getHiPSPlotId();
 
 /**
  * @typedef {Object} ContextInfo
@@ -88,7 +76,7 @@ function getContexInfo(renderTreeId, presetViewerId) {
     }
 
     if (!viewer || viewer.reservedContainer || canNotUpdatePlot(viewer)) {
-        // viewer does not exists or cannot be updated, find another one that can.
+        // viewer does not exist or cannot be updated, find another one that can.
         viewer = getAViewFromMultiView(mvroot, IMAGE, renderTreeId);
         viewerId =  viewer && viewer.viewerId;
     }
@@ -395,20 +383,8 @@ function ImageSource({groupKey, imageMasterData, multiSelect, archiveName='Archi
 }
 
 function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, noScroll, initArgs}) {
-    const {radius:initRadius}= initArgs?.searchParams ?? {};
-    const {setFld}= useContext(FieldGroupCtx);
-    useEffect(() => {
-        initRadius && setFld('sizeFov', {value:initRadius*2, unit : 'deg' });
-    }, [initRadius]);
-
     const title = '4. Select Data Set';
     const isHips = isHipsImgType;
-    const sizeLabel = isHips ? 'Field of view (optional):' : 'Cutout size (leave blank for full size):';
-    const sizeKey = isHips ? 'sizeFov' : 'conesize';
-    const minSize = isHips ? 9/3600 : 1/3600;
-    const maxSize = isHips ? 180 : 1;
-    const sizeVal = isHips ?  '' : (500/3600) + '';
-    const initUnit = isHips ? 'deg' : 'arcsec';
 
     return (
         <Sheet className='flex-full' sx={{position:'static',mt:1/2}}>
@@ -416,39 +392,70 @@ function SelectArchive({groupKey,  imageMasterData, multiSelect, isHipsImgType, 
                 <Stack direction={'row'} >
                     <Typography {...{px:1, width:200, color:'primary', level:'title-md'}}>3. Select Target</Typography>
                     <FieldGroup groupKey={FG_KEYS.targetSelect} keepState={true}>
-                        <Stack spacing={2} direction='column'>
-                            <TargetPanel labelWidth={isHips ? 150 : 100}
-                                         label={isHips ? 'Coords or Object Name (optional)' : undefined}
-                                         placeholderHighlight={!isHips}
-                                         nullAllowed={true}/>
-                            <SizeInputFields fieldKey={sizeKey} showFeedback={true}
-                                             feedbackStyle={{marginLeft: 185}}
-                                             initialState={{
-                                                 unit: initUnit,
-                                                 labelWidth: 0,
-                                                 nullAllowed: true,
-                                                 value: initRadius? initRadius*2 : sizeVal,
-                                                 min: minSize,
-                                                 max: maxSize
-                                             }}
-                                             label={sizeLabel}
-                                             key={`sizeInput_${groupKey}`}/>
-                        </Stack>
+                        <SpacialContent {...{isHips,initArgs}}/>
                     </FieldGroup>
                 </Stack>
             </Sheet>
             {isHips ?
-                <HiPSImageSelect groupKey={groupKey} /> :
+                <HiPSImageSelect variant='plain' groupKey={groupKey} /> :
                 <Sheet {...{variant:'outlined', sx:{position:'static', mt:1/2, p:1, borderRadius: '5px'}}}>
                     <ImageSelect key={`ImageSelect_${groupKey}`} {...{groupKey, title, addChangeListener, imageMasterData, multiSelect,
                         scrollDivId: noScroll ? undefined: scrollDivId }}
-                        header={() => <Typography {...{color:'primary', level:'title-md'}} sx={{width:175, flexShrink:0}}>4. Select Data Set</Typography>}
+                                 header={() => <Typography {...{color:'primary', level:'title-md'}} sx={{width:175, flexShrink:0}}>4. Select Data Set</Typography>}
                     />
                 </Sheet>
             }
         </Sheet>
     );
 }
+
+export function SpacialContent({isHips,initArgs={}}) {
+
+    const {setFld, groupKey} = useContext(FieldGroupCtx);
+    const {radius:initRadius}= initArgs.urlApi ?? initArgs.searchParams ?? {};
+
+    const sizeLabel = isHips ? 'Field of view (optional)' : 'Cutout size (leave blank for full size)';
+    const sizeKey = isHips ? 'sizeFov' : 'conesize';
+    const minSize = isHips ? 9/3600 : 1/3600;
+    const maxSize = isHips ? 180 : 1;
+    const initUnit = isHips ? 'deg' : 'arcsec';
+    const sizeVal = isHips ?  '' : (500/3600) + '';
+
+    useEffect(() => {
+        initRadius && setFld(sizeKey, {value:initRadius*(isHips?2:1), unit : 'deg' });
+    }, [initRadius]);
+
+
+    return (
+        <Stack spacing={2} direction='column'>
+            <TargetPanel labelWidth={isHips ? 150 : 100}
+                         label={isHips ? 'Coords or Object Name (optional)' : undefined}
+                         placeholderHighlight={!isHips}
+                         nullAllowed={true}/>
+            <SizeInputFields fieldKey={sizeKey} showFeedback={true}
+                             feedbackStyle={{marginLeft: 185}}
+                             initialState={{
+                                 unit: initUnit,
+                                 labelWidth: 0,
+                                 nullAllowed: true,
+                                 value: initRadius? initRadius*2 : sizeVal,
+                                 min: minSize,
+                                 max: maxSize
+                             }}
+                             label={sizeLabel}
+                             key={`sizeInput_${groupKey}`}/>
+        </Stack>
+    );
+}
+
+SpacialContent.propsTypes= {
+    isHips: bool,
+    initArgs: shape({
+        searchParams: object,
+        urlApi: object,
+    }),
+};
+
 
 
 function SelectUpload() {
@@ -641,7 +648,7 @@ function doImageSearch({ imageMasterData, request, plotId, plotGroupId, viewerId
     // hips
     if (isImageType()?.isHipsImgType) {
         if (!plotId) {
-            plotId = genHiPSPlotId.next().value;
+            plotId = getNextHiPSPlotId();
         }
         const wpRequest = makeHiPSWebPlotRequest(get(request, FG_KEYS.hips), plotId, plotGroupId);
         if (wpRequest) {
