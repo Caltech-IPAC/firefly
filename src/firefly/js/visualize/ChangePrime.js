@@ -5,6 +5,7 @@
 import ImagePlotCntlr, {IMAGE_PLOT_KEY, dispatchZoom, dispatchProcessScroll} from './ImagePlotCntlr.js';
 import {getPlotViewById, primePlot} from './PlotViewUtil.js';
 import {getPixScaleArcSec, getScreenPixScaleArcSec} from './WebPlot.js';
+import {hasWCSProjection} from './PlotViewUtil.js';
 import {UserZoomTypes, getZoomLevelForScale} from './ZoomUtil.js';
 import {CysConverter} from './CsysConverter.js';
 import {makeScreenPt} from './Point.js';
@@ -14,10 +15,9 @@ function matcher(oldP,newP) {
     return {
         isSameZoomLevel: oldP.zoomFactor===newP.zoomFactor,
         isSameSize: oldP.dataWidth===newP.dataWidth && oldP.dataHeight===newP.dataHeight,
-        isProjection: oldP.projection.isSpecified() && newP.projection.isSpecified(),
-        isSameScale: oldP.projection && oldP.projection.isSpecified() &&
-                     newP.projection && newP.projection.isSpecified() &&
-                     getPixScaleArcSec(oldP)===getPixScaleArcSec(newP)
+        isProjection: hasWCSProjection(oldP) && hasWCSProjection(newP),
+        isSameScale: hasWCSProjection(oldP) && hasWCSProjection(newP) &&
+            getPixScaleArcSec(oldP)===getPixScaleArcSec(newP)
     };
 }
 

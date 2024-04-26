@@ -30,7 +30,7 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
     const {readoutType}= readoutData;
     if (!readoutData.readoutItems) return (<div style={{height: showOnInactive?20:0, width:showOnInactive?1:0}}/>);
 
-    const displayEle= getNonFluxDisplayElements(readoutData.readoutItems,  readout.readoutPref, false);
+    const displayEle= getNonFluxDisplayElements(readoutData,  readout.readoutPref, false);
     const {readout1, showReadout1PrefChange, showWavelengthFailed, waveLength}= displayEle;
     const {lockByClick=false}= readout??{};
     const showCopy= lockByClick;

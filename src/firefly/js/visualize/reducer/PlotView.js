@@ -8,9 +8,8 @@ import {isImage, isHiPS} from '../WebPlot.js';
 import {WPConst} from '../WebPlotRequest';
 import {makeScreenPt, makeDevicePt, makeImagePt, makeWorldPt} from '../Point';
 import {getActiveTarget} from '../../core/AppDataCntlr.js';
-import { getCenterPtOfPlot, getLatDist, getLonDist } from '../VisUtil.js';
-import {
-    getPlotViewById, matchPlotViewByPositionGroup, primePlot, findCurrentCenterPoint } from '../PlotViewUtil.js';
+import {getCenterPtOfPlot, getLatDist, getLonDist } from '../VisUtil.js';
+import {findCurrentCenterPoint, getPlotViewById, hasWCSProjection, matchPlotViewByPositionGroup, primePlot} from '../PlotViewUtil.js';
 import {changeProjectionCenter} from '../HiPSUtil.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {ZoomType} from '../ZoomType.js';
@@ -350,6 +349,12 @@ export function updatePlotGroupScrollXY(visRoot, plotId,plotViewAry, plotGroupAr
 export function updateScrollToWcsMatch(wcsMatchType, masterPv, matchToPv) {
     if (!masterPv || !matchToPv || masterPv===matchToPv) return matchToPv;
     if (masterPv.plotId===matchToPv.plotId || !primePlot(masterPv)|| !primePlot(matchToPv)) return matchToPv;
+
+    // celestial WCS match should not affect non-celestial plots
+    if ((wcsMatchType === WcsMatchType.Standard || wcsMatchType === WcsMatchType.Target) &&
+        (!hasWCSProjection(primePlot(masterPv)) || !hasWCSProjection(primePlot(matchToPv)))) {
+        return matchToPv;
+    }
 
     const newScrollPoint= findWCSMatchScrollPosition(wcsMatchType, masterPv, matchToPv);
     return updatePlotViewScrollXY(matchToPv, newScrollPoint);

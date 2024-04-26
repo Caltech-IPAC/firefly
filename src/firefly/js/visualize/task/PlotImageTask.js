@@ -16,7 +16,7 @@ import {Band} from '../Band.js';
 import {PlotPref} from '../PlotPref.js';
 import {makePostPlotTitle} from '../reducer/PlotTitle.js';
 import {dispatchAddViewerItems, EXPANDED_MODE_RESERVED, IMAGE} from '../MultiViewCntlr.js';
-import {getPlotViewById, getPlotViewIdListInOverlayGroup} from '../PlotViewUtil.js';
+import {getPlotViewById, getPlotViewIdListInOverlayGroup, hasWCSProjection} from '../PlotViewUtil.js';
 import {enableMatchingRelatedData} from '../RelatedDataUtil.js';
 import {doFetchTable} from '../../tables/TableUtil.js';
 import {callGetWebPlot, callGetWebPlot3Color, callGetWebPlotGroup} from '../../rpc/PlotServicesJson.js';
@@ -283,7 +283,7 @@ function createPlots(plotCreate, plotCreateHeader, payload, requestKey) {
  * @param {WebPlot} plot
  */
 function updateActiveTarget(plot) {
-    if (!plot) return;
+    if (!plot || !hasWCSProjection(plot)) return;
     const req= plot.plotState.getWebPlotRequest();
     if (!req) return;
     let activeTarget;

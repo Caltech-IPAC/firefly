@@ -22,10 +22,10 @@ import { dispatchChangeReadoutPrefs} from '../../visualize/MouseReadoutCntlr.js'
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
-import {isHiPS} from '../WebPlot.js';
+import {isCelestialImage, isHiPS} from '../WebPlot.js';
 
 //define the labels and values for the radio options
-const coordOptions= [
+const celestialCoordOptions= [
 	{label: 'Equatorial J2000 HMS', value: 'eqj2000hms'},
 	{label: 'Equatorial J2000 decimal', value: 'eqj2000DCM' },
 	{label: 'Galactic', value: 'galactic'},
@@ -33,7 +33,7 @@ const coordOptions= [
 	{label: 'Ecliptic J2000', value: 'eclJ2000'},
 	{label: 'Ecliptic B1950', value: 'eclB1950'},
 	{label: 'FITS Image Pixel', value: 'fitsIP'},
-    {label: 'Zero based Image Pixel', value: 'zeroIP'}
+	{label: 'Zero based Image Pixel', value: 'zeroIP'}
 ];
 
 const hipsCoordOptions= [
@@ -53,6 +53,7 @@ const pixelOptions = [
 
 const groupKeys={
 	imageMouseReadout1:'COORDINATE_OPTION_FORM',
+	imageMouseNoncelestialReadout1:'COORDINATE_OPTION_FORM',
 	imageMouseReadout2:'COORDINATE_OPTION_FORM',
     hipsMouseReadout1:'COORDINATE_OPTION_FORM',
     hipsMouseReadout2:'COORDINATE_OPTION_FORM',
@@ -63,11 +64,23 @@ const rightColumn = {paddingLeft:18};
 const dialogStyle = { minWidth : 300, minHeight: 100 , padding:10};
 
 
-export function showMouseReadoutOptionDialog(fieldKey,radioValue, title='Choose Option') {
+function getNoncelestialCoordOptions(noncelestialOptionTitle='WCS Coordinates') {
+	return [
+		{label: noncelestialOptionTitle, value: 'wcsCoords'},
+		{label: 'FITS Image Pixel', value: 'fitsIP'},
+		{label: 'Zero based Image Pixel', value: 'zeroIP'}
+	];
+}
+
+export function showMouseReadoutOptionDialog(fieldKey, radioValue, title='Choose Option', noncelestialOptionTitle=undefined) {
+	const plot = primePlot(visRoot());
 	const popup = (
 		<PopupPanel title={title}  >
 			<MouseReadoutOptionDialog groupKey={groupKeys[fieldKey]} fieldKey={fieldKey}
-									  radioValue={radioValue} isHiPS={isHiPS(primePlot(visRoot()))}/>
+									  radioValue={radioValue} isHiPS={isHiPS(plot)}
+									  isCelestial={isCelestialImage(plot)}
+									  noncelestialOptionTitle={noncelestialOptionTitle}
+			/>
 		</PopupPanel>
 	);
 	DialogRootContainer.defineDialog(fieldKey, popup);
@@ -114,8 +127,10 @@ function doDispatch(fieldGroup,  fieldKey, dialogKey, hide= true){
 	},0);
 }
 
-function MouseReadoutOptionDialog({groupKey,fieldKey,radioValue, isHiPS}) {
+function MouseReadoutOptionDialog({groupKey, fieldKey, radioValue, isHiPS, isCelestial, noncelestialOptionTitle}) {
 		const [,setFields]= useState(FieldGroupUtils.getGroupFields(groupKey));
+		const options = (isHiPS && hipsCoordOptions) ||
+			(!isCelestial && getNoncelestialCoordOptions(noncelestialOptionTitle)) || celestialCoordOptions;
 
 		useEffect(() => {
 			let enabled= true;
@@ -131,7 +146,7 @@ function MouseReadoutOptionDialog({groupKey,fieldKey,radioValue, isHiPS}) {
 		return ( groupKey==='PIXEL_OPTION_FORM' ?
 				<PixelSizeOptionDialogForm groupKey={groupKey} fieldKey={fieldKey} radioValue={radioValue} /> :
 				<CoordinateOptionDialogForm groupKey={groupKey} fieldKey={fieldKey} radioValue={radioValue}
-											optionList={isHiPS ? hipsCoordOptions : coordOptions} />
+											optionList={options} />
 		);
 }
 
@@ -139,7 +154,8 @@ MouseReadoutOptionDialog.propTypes= {
 	groupKey:   PropTypes.string.isRequired,
 	fieldKey:   PropTypes.string.isRequired,
 	radioValue:   PropTypes.string.isRequired,
-    isHiPS: PropTypes.bool.isRequired
+    isHiPS: PropTypes.bool.isRequired,
+	isCelestial: PropTypes.bool.isRequired
 };
 
 

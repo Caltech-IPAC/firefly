@@ -4,7 +4,6 @@ import CoordUtil from '../visualize/CoordUtil.js';
 
 import {sprintf} from '../externalSource/sprintf.js';
 import VisUtil from 'firefly/visualize/VisUtil';
-import {instanceOf} from "prop-types";
 
 const errMsgRoot= 'Error: ';
 
@@ -104,7 +103,7 @@ export function formatPosForHelp(wp) {
               ${hmsRa},&nbsp;${hmsDec}&nbsp;&nbsp;${csys}
             </div>`;
 
-        if (wp.getCoordSys() != CoordinateSys.EQ_J2000) {
+        if (wp.getCoordSys() !== CoordinateSys.EQ_J2000) {
             s += getEQJ2000(wp);
         }
     }

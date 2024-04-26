@@ -111,7 +111,7 @@ export class CysConverter {
 
 
     /**
-     * This method returns false it the point is definitely not in plot.  It returns true if the point might be in the plot.
+     * This method returns false if the point is definitely not in plot.  It returns true if the point might be in the plot.
      * Used for tossing out points that we know that are not in plot without having to do all the math.  It is much faster.
      * @param {WorldPt} wp
      * @return {boolean} true in we guess it might be in the bounds, false if we know that it is not in the bounds
@@ -164,7 +164,7 @@ export class CysConverter {
 
     pointOnDisplay(pt) {
         if (!isValidPoint(pt)) return false;
-        if (isHiPS(this) && isHiPSAitoff(this)) return this.pointInView(pt)
+        if (isHiPS(this) && isHiPSAitoff(this)) return this.pointInView(pt);
         const devPt= this.getDeviceCoords(pt);
         if (!devPt) return false;
         const {x,y}= devPt;
@@ -367,7 +367,7 @@ export class CysConverter {
     /**
      * @desc Return the image coordinates given a WorldPt class.
      * @param {WorldPt} wpt the class containing the point in sky coordinates
-     * @returns {ImagePt} the translated coordinates
+     * @returns {ImagePt|null} the translated coordinates
      */
     getImageCoordsFromWorldPt(wpt) {
         if (!wpt) return null;
@@ -378,7 +378,8 @@ export class CysConverter {
             const originalWp= wpt;
             retval= this.conversionCache.get(checkedPt.toString() );
             if (!retval) {
-                if (this.imageCoordSys!==wpt.getCoordSys()) {
+                const csys = wpt.getCoordSys();
+                if (csys?.isCelestial() && this.imageCoordSys!==csys) {
                     wpt= convert(wpt,this.imageCoordSys);
                 }
                 const projPt= this.projection.getImageCoords(wpt.getLon(),wpt.getLat());
@@ -538,7 +539,7 @@ export class CysConverter {
             }
             else {
                 const originalWp= wpt;
-                if (this.imageCoordSys!==wpt.getCoordSys()) {
+                if (csys.isCelestial() && this.imageCoordSys!==csys) {
                     wpt= convert(wpt,this.imageCoordSys);
                 }
 
@@ -600,7 +601,7 @@ export class CysConverter {
      * @desc Return the sky coordinates given a image x (fsamp) and  y (fline)
      * @param {Point|undefined} pt  the point to convert
      * @param  {CoordinateSys} [outputCoordSys] (optional) The coordinate system to return, default to coordinate system of image
-     * @returns {WorldPt} the translated coordinates
+     * @returns {WorldPt|null} the translated coordinates
      */
     getWorldCoords(pt, outputCoordSys= undefined) {
         if (!isValidPoint(pt)) return null;
@@ -619,7 +620,12 @@ export class CysConverter {
                 retval= this.makeWorldPtFromIPt(this.getImageCoords(pt),outputCoordSys);
                 break;
             case Point.W_PT:
-                retval=  (outputCoordSys===pt.getCoordSys()) ? pt : convert(pt, outputCoordSys);
+                const csys = pt?.getCoordSys();
+                if (csys?.isCelestial() && outputCoordSys!==csys) {
+                    retval= convert(pt, outputCoordSys);
+                } else {
+                    retval= pt;
+                }
                 break;
         }
         return retval;
@@ -629,7 +635,8 @@ export class CysConverter {
     makeWorldPtFromIPt( ipt, outputCoordSys) {
         if (!ipt) return null;
         let wpt = this.projection.getWorldCoords(ipt.x - .5 ,ipt.y - .5);
-        if (wpt && outputCoordSys!==wpt.getCoordSys()) {
+        const csys = wpt?.getCoordSys();
+        if (csys?.isCelestial() && outputCoordSys!==csys) {
             wpt= convert(wpt, outputCoordSys);
         }
         return wpt;

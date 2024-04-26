@@ -13,7 +13,6 @@ import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 import {ThumbnailView} from 'firefly/visualize/ui/ThumbnailView.jsx';
 import {MagnifiedView} from 'firefly/visualize/ui/MagnifiedView.jsx';
 import {getActivePlotView, getPlotViewById, primePlot} from 'firefly/visualize/PlotViewUtil.js';
-import {get} from 'lodash';
 import {getFluxInfo, getNonFluxDisplayElements} from 'firefly/visualize/ui/MouseReadoutUIUtil.js';
 import {DataReadoutItem, MouseReadoutLock} from 'firefly/visualize/ui/MouseReadout.jsx';
 import {isImage} from 'firefly/visualize/WebPlot.js';
@@ -81,8 +80,8 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
     const isHiPS= readoutType===HIPS_STANDARD_READOUT;
     const image= readoutType===STANDARD_READOUT;
 
-    if (!get(readoutData,'readoutItems')) return <Box style={rS}/>;
-    const displayEle= getNonFluxDisplayElements(readoutData.readoutItems,  readout.readoutPref, isHiPS);
+    if (!readoutData?.readoutItems) return <Box style={rS}/>;
+    const displayEle= getNonFluxDisplayElements(readoutData,  readout.readoutPref, isHiPS);
     const {pixelSize, showPixelPrefChange, healpixPixelReadout, healpixNorderReadout}= displayEle;
     const fluxArray = getFluxInfo(readoutData, radix);
     const hipsPixel= showHealpixPixel && isHiPS;

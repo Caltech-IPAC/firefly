@@ -3,7 +3,7 @@
  */
 
 import {makeImagePt, makeProjectionPt, makeWorldPt} from '../Point.js';
-import {computeDistance} from '../VisUtil.js';
+import {computeDistance, convertAngle, isAngleUnit} from '../VisUtil.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {AitoffProjection} from './AitoffProjection.js';
 import {NCPProjection} from './NCPProjection.js';
@@ -208,16 +208,15 @@ export class Projection {
 	 *
      *
 	 * @prop {object} header
-	 * @prop {number} scale1
-	 * @prop {number} scale2
+	 * @prop {number} pixelScaleDeg
 	 * @prop {number} pixelScaleArcSec
 	 * @prop {CoordinateSys} coordSys
 	 * @public
 	 */
     constructor(header, coordSys)  {
-        this.header= {...header};
-        this.coordSys= coordSys;
-        const {crpix1,crpix2, cdelt1}= header;
+        this.header = {...header};
+        this.coordSys = coordSys;
+        const {crpix1, crpix2, cdelt1, cunit1} = header;
         if (!cdelt1 && crpix1 && crpix2) {
             const projCenter = this.getWorldCoords(crpix1 - 1, crpix2 - 1);
             const oneToRight = this.getWorldCoords(crpix1, crpix2 - 1);
@@ -228,8 +227,15 @@ export class Projection {
             }
 
         }
-        this.pixelScaleDeg = Math.abs(this.header.cdelt1);
-        this.pixelScaleArcSec = this.pixelScaleDeg * 3600.0;
+		if (coordSys.isCelestial()) {
+			// celestial coordinate systems must have degree as a unit
+			this.pixelScaleDeg = Math.abs(this.header.cdelt1);
+		} else if (isAngleUnit(cunit1)) {
+			this.pixelScaleDeg = convertAngle(cunit1, 'deg', Math.abs(this.header.cdelt1));
+		} else {
+			this.pixelScaleDeg = NaN;
+		}
+		this.pixelScaleArcSec = this.pixelScaleDeg * 3600.0;
     }
 
 	/**
@@ -255,7 +261,7 @@ export class Projection {
 	 * @return {ImagePt}
 	 * @public
 	 */
-    getImageCoords(ra, dec) { return getImageCoordsInternal(ra, dec, this.header, false); }
+    getImageCoords(ra, dec) { return getImageCoordsInternal(ra, dec, this.header); }
 
 	/**
 	 * @summary convert from a image point to a world point
@@ -264,7 +270,7 @@ export class Projection {
 	 * @return {WorldPt}
 	 * @public
 	 */
-	getWorldCoords( x, y) { return getWorldCoordsInternal(x, y, this.header, this.coordSys, false); }
+	getWorldCoords( x, y) { return getWorldCoordsInternal(x, y, this.header, this.coordSys); }
 
 	/**
 	 * @return {boolean} true, if this projection is implemented

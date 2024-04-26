@@ -116,7 +116,7 @@ export function wcsMatchActionCreator(action) {
         visRoot= getState()[IMAGE_PLOT_KEY];
         masterPv= getPlotViewById(visRoot, plotId);
         const masterPlot= primePlot(masterPv);
-        if (!masterPlot) return;
+        if (!masterPlot || !hasWCSProjection(masterPlot)) return;
 
         if (image) {
             const level = matchType ?

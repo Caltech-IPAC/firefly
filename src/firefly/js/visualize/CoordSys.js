@@ -10,15 +10,18 @@ export const GALACTIC_JSYS     = 2;
 export const ECLIPTIC_B   = 3;
 export const SUPERGALACTIC_JSYS   = 4;
 export const ECLIPTIC_J   = 13;
+export const NONCELESTIAL = -999;
 
 
 /**
  * @typedef {Object} CoordinateSys
  * @summary coordinate system
- * @description value is one of the following constants; EQ_J2000, EQ_B2000, EQ_B1950, GALACTIC,
- * SUPERGALACTIC, ECL_J2000, ECL_B1950, PIXEL, SCREEN_PIXEL, UNDEFINED,
+ * @description value is one of the following constants;
+ * EQ_J2000, EQ_B2000, EQ_B1950, GALACTIC, SUPERGALACTIC, ECL_J2000, ECL_B1950,
+ * PIXEL, SCREEN_PIXEL, ZERO_BASED, FITSPIXEL, UNDEFINED
  *
- * @prop {Function} isEquatorial
+ * @prop {Function} isEquatorial - True, if coordinate system is Equatorial
+ * @prop {Function} isCelestial - True, if coordinate system is a recognized celestial system
  * @prop {Function} getJsys
  * @prop {Function} getEquinox
  * @global
@@ -31,11 +34,13 @@ export const CoordinateSys = function () {
         return {
             toString() { return desc; },
             isEquatorial() { return equatorial; },
+            isCelestial() { return jsys !== NONCELESTIAL; },
             getJsys() { return jsys; },
             getEquinox() { return equinox; }
         };
     };
 
+    // recognized celestial coordinate systems
     const EQ_J2000 = init('EQ_J2000', true, EQUATORIAL_J, 2000 );
     const EQ_B2000 = init('EQ_B2000', true, EQUATORIAL_B, 2000);
     const EQ_B1950 = init('EQ_B1950', true, EQUATORIAL_B, 1950);
@@ -44,12 +49,12 @@ export const CoordinateSys = function () {
     const ECL_J2000 = init('EC_J2000', false, ECLIPTIC_J, 2000);
     const ECL_B1950 = init('EC_B1950', false, ECLIPTIC_B, 1950);
 
-    const PIXEL = init('PIXEL', false,-999, 0);
-    const SCREEN_PIXEL = init('SCREEN_PIXEL', false,-999, 0);
-    const UNDEFINED = init('UNDEFINED', false,-999, 0);
-    const ZEROBASED = init('ZERO-BASED', false, -999, 0);
-    const FITSPIXEL = init('FITSPIXEL', false, -999, 0);
+    const PIXEL = init('PIXEL', false, NONCELESTIAL, 0);
+    const SCREEN_PIXEL = init('SCREEN_PIXEL', false, NONCELESTIAL, 0);
+    const ZEROBASED = init('ZERO-BASED', false, NONCELESTIAL, 0);
+    const FITSPIXEL = init('FITSPIXEL', false, NONCELESTIAL, 0);
 
+    const UNDEFINED = init('UNDEFINED', false, NONCELESTIAL, 0);
 
     const parse= (desc) => {
         if (!desc) return undefined;

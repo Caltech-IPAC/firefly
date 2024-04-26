@@ -105,16 +105,16 @@ export function getLatDist(lat1,lat2) {
 }
 
 /**
- * Convert from one coordinate system to another.
+ * Convert from one coordinate system to another. No action, if the world point coordinate system is non-celestial.
  *
  * @param {WorldPt} wpt the world point to convert
- * @param {CoordinateSys} to CoordSys, the coordinate system to convert to
- * @return {WorldPt} the world point in the new coordinate system
+ * @param {CoordinateSys} to CoordSys, the coordinate system to convert to; defaults to J2000, ignored for non-celestial world points
+ * @return {WorldPt|undefined} the world point in the new coordinate system
  */
 export function convert(wpt, to= CoordinateSys.EQ_J2000) {
     if (!wpt) return;
     const from = wpt.getCoordSys();
-    if (!to || from===to) return wpt;
+    if (!to || !from.isCelestial() || from===to) return wpt;
 
     const tobs=  (from===CoordinateSys.EQ_B1950) ? 1983.5 : 0;
     const ll = doConv(
@@ -441,7 +441,7 @@ export function isPlotRotatedNorth(plot, csys= CoordinateSys.EQ_J2000) {
  */
 export function isEastLeftOfNorth(plot) {
     if (!plot?.projection) return true;
-    if (!plot.projection.isSpecified() || !plot.projection.isImplemented()) return true;
+    if (!plot.projection.isSpecified() || !plot.projection.isImplemented() || !plot.projection?.coordSys?.isCelestial()) return true;
 
     const mx = plot.dataWidth/2;
     const my = plot.dataHeight/2;

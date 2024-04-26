@@ -16,7 +16,7 @@ import {computeScreenDistance, getBoundingBox} from '../visualize/VisUtil.js';
 import SelectBox from '../visualize/draw/SelectBox.js';
 import FootPrintObj from '../visualize/draw/FootprintObj.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
-import {getDrawLayerById, getPlotViewById, primePlot} from '../visualize/PlotViewUtil.js';
+import {getDrawLayerById, getPlotViewById, hasWCSProjection, primePlot} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {SelectedShape} from './SelectedShape';
 
@@ -132,16 +132,12 @@ function getCursor(plotView, screenPt) {
     switch (corner) {
         case Corner.NE:
             return 'nesw-resize';
-            break;
         case Corner.NW:
             return 'nwse-resize';
-            break;
         case Corner.SE:
             return 'nwse-resize';
-            break;
         case Corner.SW:
             return 'nesw-resize';
-            break;
     }
     return null;
 }
@@ -257,7 +253,7 @@ function getPtAryForCorners(plot,pt0,pt1) {
     const screenPtAry= getPtAry(plot,pt0,pt1);
     if (isEmpty(screenPtAry)) return null;
     const cc= CsysConverter.make(plot);
-    const useWld=  cc.projection.isSpecified();
+    const useWld= hasWCSProjection(plot);
     return screenPtAry.map( (sp) => useWld ? cc.getWorldCoords(sp) : cc.getImageCoords(sp));
 }
 
@@ -268,7 +264,7 @@ function drag(drawLayer,action) {
     const pv= getPlotViewById(visRoot(),plotId);
     const plot= primePlot(pv);
     if (!plot) return;
-    const drawSel= makeSelectObj(drawLayer.originalCenterPt, drawLayer.firstPt, imagePt, CsysConverter.make(plot), pv.rotation, plot.title, drawLayer);
+    const drawSel= makeSelectObj(drawLayer.originalCenterPt, drawLayer.firstPt, imagePt, plot, pv.rotation, plot.title, drawLayer);
     const exclusiveDef= { exclusiveOnDown: true, type : 'vertexThenAnywhere' };
     return {currentPt:imagePt,
             drawData:{data:drawSel},
@@ -336,13 +332,13 @@ function findClosestCorner(cc,ptAry, spt, testDist) {
  * @param {object} originalCenterPt
  * @param {object} inFirstPt
  * @param {object} inCurrentPt
- * @param {CysConverter} cc
+ * @param {WebPlot} plot
  * @param {boolean} rotation is plot rotated
  * @param {string} title
  * @param {object} dl
  * @return {Array}
  */
-function makeSelectObj(originalCenterPt, inFirstPt,inCurrentPt,cc, rotation, title, dl) {
+function makeSelectObj(originalCenterPt, inFirstPt, inCurrentPt, plot, rotation, title, dl) {
     const firstPt= makeImagePt(inFirstPt.x,inFirstPt.y);
     const currentPt= makeImagePt(inCurrentPt.x,inCurrentPt.y);
     if (dl.selectedShape=== SelectedShape.circle.key) {
@@ -355,9 +351,11 @@ function makeSelectObj(originalCenterPt, inFirstPt,inCurrentPt,cc, rotation, tit
     }
 
 
+    const cc = CsysConverter.make(plot);
+    const world = hasWCSProjection(plot); // is plot in celestial coordinates
+
     const fallbackAry= [firstPt,currentPt];
 
-    const world= cc.projection.isSpecified();
     let twoPtAry=  world? [cc.getWorldCoords(firstPt),cc.getWorldCoords(currentPt)] : fallbackAry;
 
     if (!twoPtAry[0] || !twoPtAry[1]) twoPtAry= fallbackAry;
