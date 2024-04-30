@@ -23,7 +23,7 @@ import APP_ICON from 'html/images/fftools-logo-offset-small-42x42.png';
 const defProps = {
     appTitle: 'Firefly',
     initLoadingMessage: window?.firefly?.options?.initLoadingMessage,
-    appIcon: <img src={APP_ICON}/>
+    appIcon: <img src={APP_ICON} style={{width:38}}/>
 };
 
 const props = mergeObjectOnly(defProps, window?.firefly?.app ?? {});

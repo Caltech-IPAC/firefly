@@ -135,7 +135,7 @@ function AdjustableMenu({menuTabItems, helpItem, selected, dropDown, showBgMonit
         Object.keys(tabWidths).forEach( (key) => {
             if (Number(key)>=menuTabItems.length) tabWidths[key]= undefined;
         });
-    }, []);
+    }, [menuTabItems.length]);
 
     const selectedIdx= menuTabItems?.findIndex( ({action}) => action===selected);
     const {size,displayMask}= getTabDisplayInfo(selectedIdx, tabRenderedInfo.tabWidths,tbarElement.element,
@@ -146,9 +146,9 @@ function AdjustableMenu({menuTabItems, helpItem, selected, dropDown, showBgMonit
     const divider= <Divider {...{orientation:'vertical', sx:{ ':first-of-type':  {ml:0}, mx:0.5, mt: 1.25, mb:3/4} }}/>;
 
     return (
-        <Stack direction='row' justifyContent={'space-between'} ref={(c) => setTabBarElement(c) }>
+        <Stack direction='row' justifyContent={'space-between'} alignItems='flex-end' ref={(c) => setTabBarElement(c) }>
             <MenuTabBar {...{menuTabItems,size,selected,dropDown, displayMask, setElement}}/>
-            <Stack {...{direction:'row', divider}} >
+            <Stack {...{direction:'row', alignItems:'center', alignSelf:'center', divider}} >
                 {size==='lg' && showBgMonitor  && <React.Fragment/>}
                 {showBgMonitor && <BgMonitorButton size={size}/> }
                 {showHelp && <AppHelpButton {...{ menuItem:helpItem,size}}/>}
@@ -236,7 +236,7 @@ function MenuTabBar({menuTabItems=[], size, selected, dropDown, displayMask, set
 
     return (
         <Tabs {...{size, value:tabSelected,
-            sx: {height: 38, backgroundColor: 'transparent'}, onChange: (ev,action) => doTabChange(action,menuTabItems) }} >
+            sx: {minHeight: '2.5rem', height:1, mt:0, backgroundColor: 'transparent'}, onChange: (ev,action) => doTabChange(action,menuTabItems) }} >
             <TabList {...{
                 sx: (theme) => ( {
                     boxShadow: 'none', //hide the default underline created by TabList as inset box-shadow

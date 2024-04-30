@@ -33,15 +33,14 @@ export const Banner = memo( ({menu, enableVersionDialog= false, appIcon:pAppIdon
             }),
             ...props
         }}>
-            <Stack {...{direction:'row', height:40, alignItems:'center', px:1, py: .5,
-                spacing: 0.5}}>
+            <Stack {...{direction:'row', minHeight:40, alignItems:'center', px:1,spacing: 0.5}}>
                 <AppConfigButton/>
 
-                <Box {...slotProps?.icon} sx={{flexGrow:0, cursor: enableVersionDialog ? 'pointer' : 'inherit', ...slotProps?.icon?.sx}} >
+                <Stack direction='row' {...slotProps?.icon} sx={{flexGrow:0, cursor: enableVersionDialog ? 'pointer' : 'inherit', ...slotProps?.icon?.sx}} >
                     {appIconEl || <Box width={75}/>}
-                </Box>
+                </Stack>
 
-                <Stack {...{flexGrow:1, direction:'row', ...slotProps?.tabs}}>
+                <Stack {...{alignSelf:'flex-end', flexGrow:1, direction:'row', ...slotProps?.tabs}}>
                     {title}
                     <Stack {...{ flexGrow: 0, width: 1}}>
                         {menu}
