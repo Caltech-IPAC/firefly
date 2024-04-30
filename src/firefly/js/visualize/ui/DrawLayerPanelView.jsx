@@ -77,7 +77,7 @@ function makePermInfo(pv,layers) {
                     <Button onClick={() => showAllLayers(layers,pv,false)}> Hide All </Button>
                 </Tooltip>
             </Stack>
-            <HelpIcon helpId={'visualization.layerPanel'} style={{alignSelf:'center'}}/>
+            <HelpIcon helpId={'visualization.layerPanel'}/>
         </Stack>
     );
 }

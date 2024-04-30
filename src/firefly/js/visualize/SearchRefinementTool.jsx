@@ -177,7 +177,7 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
                         size:getSize()??searchAreaInDeg, cenWpt, op:getConeAreaOp()}}/>
                     <Stack {...{direction:'row', justifyContent:'space-between', alignItems:'center'}}>
                         <SelectAreaButton {...{pv,modalEndInfo,tip:'Reselect an area for search',text:'Select Again', variant:'soft'}}/>
-                        <HelpIcon helpId={'SearchRefinementTool'} style={{marginLeft:15}}/>
+                        <HelpIcon helpId={'SearchRefinementTool'}/>
                     </Stack>
                 </Stack>
             </FieldGroup>

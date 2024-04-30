@@ -142,12 +142,13 @@ public class DataGroupReadTest {
          */
 
         /*
-        FIREFLY-1297: Support null values
-        before:
+        Initial:
             perfTestEmbeddedDB:  Memory Usage peak=1114.47MB  final:  4.75MB  elapsed:12.35secs
-        after:
+        FIREFLY-1297: Support null values
             perfTestEmbeddedDB:  Memory Usage peak=1144.28MB  final:  4.75MB  elapsed:12.74secs
-         */
+        FIREFLY-1471-table-null-val
+            perfTestEmbeddedDB:  Memory Usage peak=1179.26MB  final:  4.74MB  elapsed:12.71secs
+        */
         logMemUsage(() -> {
             ConfigTest.setupServerContext(null);
             Logger.setLogLevel(Level.TRACE);
@@ -170,14 +171,16 @@ public class DataGroupReadTest {
     @Test
     public void perfTestMidSize() throws IOException {
         /*
-        FIREFLY-1297: Support null values
-        before:
+        Initial:
             11:31:20.200 [main] INFO  test - READ(49,933):  Memory Usage peak=100.78MB  final:  8.47MB  elapsed:0.41secs
             11:31:22.545 [main] INFO  test - WRITE(49,933):  Memory Usage peak= 44.11MB  final:  0.03MB  elapsed:2.30secs
-        after:
+        FIREFLY-1297: Support null values
             12:17:42.396 [main] INFO  test - READ(49,933):  Memory Usage peak=101.28MB  final:  9.15MB  elapsed:0.38secs
             12:17:44.556 [main] INFO  test - WRITE(49,933):  Memory Usage peak=104.11MB  final:  0.03MB  elapsed:2.12secs
-         */
+        FIREFLY-1471-table-null-val
+            13:41:09.291 [main] INFO  test - READ(49,933):  Memory Usage peak= 72.66MB  final:  8.39MB  elapsed:0.42secs
+            13:41:11.138 [main] INFO  test - WRITE(49,933):  Memory Usage peak=124.11MB  final:  0.03MB  elapsed:1.80secs
+        */
 
         Logger.setLogLevel(Level.DEBUG);
         tableIoTest(midIpacTable);
@@ -187,14 +190,17 @@ public class DataGroupReadTest {
     @Test
     public void perfTestLargeSize() throws IOException {
         /*
-        FIREFLY-1297: Support null values
-        before:
+        Initial:
             11:32:24.864 [main] INFO  test - READ(950,002):  Memory Usage peak=699.83MB  final:512.94MB  elapsed:4.61secs
             11:33:05.518 [main] INFO  test - WRITE(950,002):  Memory Usage peak=184.14MB  final:  0.03MB  elapsed:40.53secs
-        after:
+
+        FIREFLY-1297: Support null values
             12:20:33.105 [main] INFO  test - READ(950,002):  Memory Usage peak=919.18MB  final:563.41MB  elapsed:4.79secs
             12:21:13.399 [main] INFO  test - WRITE(950,002):  Memory Usage peak=520.13MB  final:  0.03MB  elapsed:40.13secs
-         */
+        FIREFLY-1471-table-null-val
+            13:44:29.975 [main] INFO  test - READ(950,002):  Memory Usage peak=1002.53MB  final:518.10MB  elapsed:4.54secs
+            13:45:09.884 [main] INFO  test - WRITE(950,002):  Memory Usage peak=264.13MB  final:  0.03MB  elapsed:39.79secs
+        */
         Logger.setLogLevel(Level.DEBUG);
         tableIoTest(largeIpacTable);
     }
@@ -207,47 +213,55 @@ public class DataGroupReadTest {
         final Ref<Object> ref = new Ref<>();        // prevent gc from collecting
 
         logMemUsage(() -> {
-            List<Object> olist = new ArrayList<>();
-            ref.set(olist);
-            for (int i=0; i< testSize; i++) olist.add(i + Math.random());
+            var list = new ArrayList<>();
+            ref.set(list);
+            for (int i=0; i< testSize; i++) list.add(i + Math.random());
             return String.format("List<Object>(%,d)", testSize);
         });
         ref.set(null);        // allow gc to collect
 
         logMemUsage(() -> {
-            PrimitiveList.Objects objects = new PrimitiveList.Objects();
-            ref.set(objects);
-            for (int i=0; i< testSize; i++) objects.add(i + Math.random());
+            var list = new PrimitiveList.Objects();
+            ref.set(list);
+            for (int i=0; i< testSize; i++) list.add(i + Math.random());
             return String.format("Object[](%,d)    ", testSize);
         });
         ref.set(null);
 
         logMemUsage(() -> {
-            List<Double> dlist = new ArrayList<>();
-            ref.set(dlist);
-            for (int i=0; i< testSize; i++) dlist.add(i + Math.random());
+            var list = new ArrayList<>();
+            ref.set(list);
+            for (int i=0; i< testSize; i++) list.add(i + Math.random());
             return String.format("List<Double>(%,d)", testSize);
         });
         ref.set(null);
 
         logMemUsage(() -> {
-            PrimitiveList.Doubles doubleAry = new PrimitiveList.Doubles();
-            ref.set(doubleAry);
-            for (int i=0; i< testSize; i++) doubleAry.add(i * Math.random());
+            var list = new PrimitiveList.Doubles();
+            ref.set(list);
+            for (int i=0; i< testSize; i++) list.add(i * Math.random());
             return String.format("double[](%,d)    ", testSize);
         });
         ref.set(null);
 
         logMemUsage(() -> {
-            PrimitiveList.Integers intAry = new PrimitiveList.Integers();
-            ref.set(intAry);
-            for (int i=0; i< testSize; i++) intAry.add((int) (i * Math.random()));
+            var list = new PrimitiveList.Longs();
+            ref.set(list);
+            for (int i=0; i< testSize; i++) list.add((long) (i * Math.random()));
+            return String.format("long[](%,d)       ", testSize);
+        });
+        ref.set(null);
+
+        logMemUsage(() -> {
+            var list = new PrimitiveList.Integers();
+            ref.set(list);
+            for (int i=0; i< testSize; i++) list.add((int) (i * Math.random()));
             return String.format("int[](%,d)       ", testSize);
         });
         ref.set(null);
 
         logMemUsage(() -> {
-            String[] strAry = new String[testSize];
+            var strAry = new String[testSize];
             ref.set(strAry);
             for (int i=0; i< testSize; i++) {
                 strAry[i] = String.valueOf(i%10);
@@ -257,10 +271,10 @@ public class DataGroupReadTest {
         ref.set(null);
 
         logMemUsage(() -> {
-            List<String> strList = new ArrayList<>();
-            ref.set(strList);
+            var list = new ArrayList<>();
+            ref.set(list);
             for (int i=0; i< testSize; i++) {
-                strList.add(String.valueOf(i%10));
+                list.add(String.valueOf(i%10));
             }
             return String.format("strList[](%,d)   ", testSize);
         });

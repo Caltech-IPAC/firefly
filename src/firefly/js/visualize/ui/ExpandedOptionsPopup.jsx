@@ -129,7 +129,7 @@ function ImageViewOptionsPanel({viewerId}) {
                 <Stack {...{direction: 'row', spacing: 1, sx: {'& .MuiButton-root': {whiteSpace: 'nowrap'}}}}>
                     <Button onClick={() => removeImageViewDisplaySelected()}>Remove Selected</Button>
                     <Button onClick={() => deleteAllFailedPlots()}>Delete Failed</Button>
-                    <HelpIcon helpId={'visualization.loaded-images'} style={{padding: '8px 9px 0 0'}}/>
+                    <HelpIcon helpId={'visualization.loaded-images'}/>
                 </Stack>
             </Stack>
         </Stack>

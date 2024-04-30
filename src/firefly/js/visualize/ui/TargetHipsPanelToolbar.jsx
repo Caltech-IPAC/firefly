@@ -55,7 +55,7 @@ export function TargetHipsPanelToolbar({visRoot, toolbarStyle={},
             <Stack direction='row' justifyContent='flex-start'>
                 <VisMiniToolbar style={{width:'unset'}} viewerId={viewerId}
                                 tips={{selectArea:'Select an area to search'}}/>
-                <HelpIcon style={{alignSelf:'cenTer', paddingLeft:5}} helpId={toolbarHelpId} />
+                <HelpIcon helpId={toolbarHelpId} />
             </Stack>
         </Stack>
     );

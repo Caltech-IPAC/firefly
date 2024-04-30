@@ -22,6 +22,7 @@ import {useStoreConnector} from './SimpleComponent.jsx';
 import InsightsIcon from '@mui/icons-material/Insights';
 import {ToolbarButton} from './ToolbarButton.jsx';
 import {logout} from 'firefly/rpc/CoreServices';
+import {useColorMode} from 'firefly/ui/FireflyRoot.jsx';
 
 const UploadCmd= 'FileUploadDropDownCmd';
 const TapCmd= 'TAPSearch';
@@ -339,6 +340,8 @@ function getButtonDisplayMask(tabWidths,tabBarElement,selectedTabIdx, showBgMoni
 }
 
 function AppHelpButton({menuItem,sx,size='lg'}) {
+    const {isDarkMode} = useColorMode();
+    menuItem.payload = {...menuItem.payload, isDarkMode};
     const onClick = useCallback(() => {
         menuHandleAction(menuItem);
     }, []);

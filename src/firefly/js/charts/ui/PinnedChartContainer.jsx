@@ -117,7 +117,7 @@ export const usePinnedChartInfo = ({viewerId}) => {
 };
 
 
-const Help = () => <HelpIcon helpId={'chartarea.info'} style={{marginLeft:10}}/>;
+const Help = () => <HelpIcon helpId={'chartarea.info'}/>;
 
 
 // --------------------- Pin Chart ---------------------------

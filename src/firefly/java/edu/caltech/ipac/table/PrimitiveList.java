@@ -4,8 +4,10 @@
 
 package edu.caltech.ipac.table;
 
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 
 /**
  * Date: 6/15/18
@@ -30,15 +32,6 @@ public interface PrimitiveList {
             throw new RuntimeException(String.format("Type mismatch(%s): expecting %s but found %s", val, getDataClass(), val.getClass()));
         }
     }
-
-    default Integer getIntValue(Object val) {
-        if (val == null) return null;
-        if (val instanceof Integer) return (Integer)val;
-        else if (val instanceof Byte) return ((Byte)val).intValue();
-        else if (val instanceof Short) return ((Short)val).intValue();
-        throw new RuntimeException(String.format("%s is with type %s, can not be assigned to Integer", val, getDataClass()));
-    }
-
 
     /**
      * returns a new capacity base on the given parameters
@@ -86,32 +79,32 @@ public interface PrimitiveList {
         public void trimToSize() { data.trimToSize(); }
     }
 
-    /**
-     * This class treats NaN, -Infinity, and +Infinity as equivalent to NULL, returning NULL in such cases.
-     * This is due to the fact that standard JSON does not provide direct support for representing these special values.
-     */
-    public static class Doubles implements PrimitiveList {
-        private double[] data;
+    abstract public static class NullablePrimitiveList implements PrimitiveList{
+        private Class clz;
+        private BitSet nulls = new BitSet();
         private int size;
 
-        public Doubles() { this(1000); }
-
-        public Doubles(int initCapacity) {
-            data  = new double[initCapacity];
+        public NullablePrimitiveList(Class clz) {
+            this.clz = clz;
         }
 
         public Class getDataClass() {
-            return Double.class;
+            return this.clz;
         }
 
         public Object get(int idx) {
-            return Double.isNaN(data[idx]) || Double.isInfinite(data[idx]) ? null : data[idx];
+            if (nulls.length() > idx && nulls.get(idx)) return null;
+            return getImpl(idx);
         }
 
         public void set(int idx, Object val) {
             checkType(val);
             ensureCapacity(idx);
-            data[idx] = val == null ? Double.NaN : (double) val;
+            if (val == null) {
+                nulls.set(idx, true);
+            } else {
+                setImpl(idx, val);
+            }
             if (idx >= size()) size = idx+1;
         }
 
@@ -120,212 +113,157 @@ public interface PrimitiveList {
         }
 
         public void clear() {
-            size = 0;
-            data = null;
+            nulls.clear();
+            clearImpl();
         }
+
+        abstract public Object getImpl(int idx);
+        abstract public void setImpl(int idx, @NotNull Object val);
+        abstract public void clearImpl();
+        abstract protected void ensureCapacity(int minCapacity);
+    }
+
+    public static class Doubles extends NullablePrimitiveList {
+        private double[] data;
+
+        public Doubles() { this(1000); }
+
+        public Doubles(int initCapacity) {
+            super(Double.class);
+            data  = new double[initCapacity];
+        }
+
+        public Object getImpl(int idx) { return data[idx]; }
+        public void setImpl(int idx, Object val) { data[idx] = (double) val; }
+        public void clearImpl() { data = null; }
 
         /**
          * ensure data have the given minimum capacity
          * @param minCapacity
          */
-        private void ensureCapacity(int minCapacity) {
+        protected void ensureCapacity(int minCapacity) {
             if (minCapacity >= data.length) {
                 data = Arrays.copyOf(data, newCapacity(minCapacity, data.length));
             }
         }
 
         public void trimToSize() {
-            if (size < data.length) {
-                data = (size == 0) ? null : Arrays.copyOf(data, size);
+            if (size() != data.length) {
+                data = Arrays.copyOf(data, size());
             }
         }
     }
 
-    /**
-     * This class treats NaN, -Infinity, and +Infinity as equivalent to NULL, returning NULL in such cases.
-     * This is due to the fact that standard JSON does not provide direct support for representing these special values.
-     */
-    public static class Floats implements PrimitiveList {
+    public static class Floats extends NullablePrimitiveList {
         private float[] data;
-        private int size;
 
         public Floats() { this(1000); }
 
         public Floats(int initCapacity) {
+            super(Float.class);
             data  = new float[initCapacity];
         }
 
-        public Class getDataClass() {
-            return Float.class;
-        }
+        public Object getImpl(int idx) { return data[idx]; }
+        public void setImpl(int idx, Object val) { data[idx] = (float) val; }
+        public void clearImpl() { data = null; }
 
-        public Object get(int idx) {
-            return Float.isNaN(data[idx]) || Float.isInfinite(data[idx]) ? null : data[idx];
-        }
-
-        public void set(int idx, Object val) {
-            checkType(val);
-            ensureCapacity(idx);
-            data[idx] = val == null ? Float.NaN : (float) val;
-            if (idx >= size()) size = idx+1;
-        }
-
-        public int size() {
-            return size;
-        }
-
-        public void clear() {
-            size = 0;
-            data = null;
-        }
-
-        private void ensureCapacity(int minCapacity) {
+        protected void ensureCapacity(int minCapacity) {
             if (minCapacity >= data.length) {
                 data = Arrays.copyOf(data, newCapacity(minCapacity, data.length));
             }
         }
 
         public void trimToSize() {
-            if (size < data.length) {
-                data = (size == 0) ? null : Arrays.copyOf(data, size);
+            if (size() != data.length) {
+                data = Arrays.copyOf(data, size());
             }
         }
     }
 
-    public static class Longs implements PrimitiveList {
-        private Long[] data;
-        private int size;
+    public static class Longs extends NullablePrimitiveList {
+        private long[] data;
 
         public Longs() { this(1000); }
 
-        public Longs(int initCapacity) { data  = new Long[initCapacity]; }
-
-        public Class getDataClass() {
-            return Long.class;
+        public Longs(int initCapacity) {
+            super(Long.class);
+            data  = new long[initCapacity];
         }
 
-        public Object get(int idx) {
+        public Object getImpl(int idx) {
             return data[idx];
         }
+        public void setImpl(int idx, Object val) { data[idx] = (long) val; }
+        public void clearImpl() { data = null; }
 
-        public void set(int idx, Object val) {
-            checkType(val);
-            ensureCapacity(idx);
-            data[idx] = (Long) val;
-            if (idx >= size()) size = idx+1;
-        }
-
-        public int size() {
-            return size;
-        }
-
-        public void clear() {
-            size = 0;
-            data = null;
-        }
-
-        private void ensureCapacity(int minCapacity) {
+        protected void ensureCapacity(int minCapacity) {
             if (minCapacity >= data.length) {
                 data = Arrays.copyOf(data, newCapacity(minCapacity,data.length));
             }
         }
 
         public void trimToSize() {
-            if (size < data.length) {
-                data = (size == 0) ? null : Arrays.copyOf(data, size);
+            if (size() != data.length) {
+                data = Arrays.copyOf(data, size());
             }
         }
     }
 
-    public static class Integers implements PrimitiveList {
-        private Integer[] data = null;
-        private int size;
+    public static class Integers extends NullablePrimitiveList {
+        private int[] data = null;
 
         public Integers() { this(1000); }
 
-        public Integers(int initCapacity) { data  = new Integer[initCapacity]; }
-
-        public Class getDataClass() {
-            return Integer.class;
+        public Integers(int initCapacity) {
+            super(Integer.class);
+            data  = new int[initCapacity];
         }
 
-        public Object get(int idx) {
+        public Object getImpl(int idx) {
             return data[idx];
         }
+        public void setImpl(int idx, Object val) { data[idx] = (int)val; }
+        public void clearImpl() { data = null; }
 
-        public void set(int idx, Object val) {
-            Integer ival = getIntValue(val);
-            ensureCapacity(idx);
-            data[idx] = ival;
-            if (idx >= size()) size = idx+1;
-        }
-
-        public int size() {
-            return size;
-        }
-
-        public void clear() {
-            size = 0;
-            data = null;
-        }
-
-        private void ensureCapacity(int minCapacity) {
+        protected void ensureCapacity(int minCapacity) {
             if (minCapacity >= data.length) {
                 data = Arrays.copyOf(data, newCapacity(minCapacity, data.length));
             }
         }
 
         public void trimToSize() {
-            if (size < data.length) {
-                data = (size == 0) ? null : Arrays.copyOf(data, size);
+            if (size() != data.length) {
+                data = Arrays.copyOf(data, size());
             }
         }
     }
 
-    public static class Booleans implements PrimitiveList {
-        private Boolean[] data = null;
-        private int size;
+    public static class Booleans extends NullablePrimitiveList {
+        private boolean[] data = null;
 
         public Booleans() { this(1000); }
 
         public Booleans(int initCapacity) {
-            data  = new Boolean[initCapacity];
+            super(Boolean.class);
+            data  = new boolean[initCapacity];
         }
 
-
-        public Class getDataClass() {
-            return Boolean.class;
-        }
-
-        public Object get(int idx) {
+        public Object getImpl(int idx) {
             return data[idx];
         }
+        public void setImpl(int idx, Object val) { data[idx] = (boolean) val;}
+        public void clearImpl() { data = null; }
 
-        public void set(int idx, Object val) {
-            checkType(val);
-            ensureCapacity(idx);
-            data[idx] = (Boolean) val;
-            if (idx >= size()) size = idx+1;
-        }
-
-        public int size() {
-            return size;
-        }
-
-        public void clear() {
-            size = 0;
-            data = null;
-        }
-
-        private void ensureCapacity(int minCapacity) {
+        protected void ensureCapacity(int minCapacity) {
             if (minCapacity >= data.length) {
                 data = Arrays.copyOf(data, newCapacity(minCapacity, data.length));
             }
         }
 
         public void trimToSize() {
-            if (size < data.length) {
-                data = (size == 0) ? null : Arrays.copyOf(data, size);
+            if (size() != data.length) {
+                data = Arrays.copyOf(data, size());
             }
         }
     }

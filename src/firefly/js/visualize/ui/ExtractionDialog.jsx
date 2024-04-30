@@ -503,7 +503,7 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
                     {plotlyData &&
                     <CompleteButton sx={{pl: 2}} primary={false} text='Download Chart' onSuccess={()=> downloadChart(CHART_ID)}/>}
                 </Stack>
-                <HelpIcon helpId={'visualization.extraction'} style={{paddingLeft:15}}/>
+                <HelpIcon helpId={'visualization.extraction'}/>
             </Stack>
         </Stack>
     );

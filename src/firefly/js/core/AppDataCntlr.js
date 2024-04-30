@@ -319,9 +319,12 @@ function onlineHelpLoad( action )
     return () => {
         let url = getAppOptions()?.['help.base.url'] || getProp('help.base.url');
         url = url.endsWith('/') ? url : url + '/';
-        url += action?.payload?.helpId ? '#id=' + action.payload.helpId : '';
-        url = new URL(url, getRootURL());                   // use rootURL instead of document.baseURI if relative
 
+        const {helpId, isDarkMode} = action?.payload || {};
+        if (isDarkMode) url += '?mode=dark';
+        if (helpId)     url += '#id=' + helpId;
+
+        url = new URL(url, getRootURL());                   // use rootURL instead of document.baseURI if relative
         const moduleName = getProp('help.subpath', getModuleName());
         const windowName = `onlineHelp-${moduleName}`;
         window.open(url.href, windowName);
