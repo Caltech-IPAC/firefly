@@ -5,7 +5,7 @@
 
 import {Box, Stack} from '@mui/joy';
 import React, {memo, useEffect, useState} from 'react';
-import PropTypes from 'prop-types';
+import {object, array, bool, string, func} from 'prop-types';
 import shallowequal from 'shallowequal';
 import {isEmpty,omit,isFunction} from 'lodash';
 import {getSearchActions} from '../../core/AppDataCntlr.js';
@@ -15,9 +15,7 @@ import {ExpandType, dispatchChangeActivePlotView, MOUSE_CLICK_REASON} from '../I
 import {ExpandButton} from '../ui/Buttons.jsx';
 import {VisCtxToolbarView, canConvertHipsAndFits, ctxToolbarBG} from '../ui/VisCtxToolbarView';
 import {VisInlineToolbarView} from '../ui/VisInlineToolbarView.jsx';
-import {
-    primePlot, isActivePlotView, getAllDrawLayersForPlot, getPlotViewById,
-} from '../PlotViewUtil.js';
+import { primePlot, isActivePlotView, getAllDrawLayersForPlot, getPlotViewById} from '../PlotViewUtil.js';
 import {ImageViewerLayout}  from '../ImageViewerLayout.jsx';
 import {isImage, isHiPS} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
@@ -36,10 +34,6 @@ const EMPTY_ARRAY=[];
 
 const briefAnno= [
     AnnotationOps.INLINE_BRIEF,
-    AnnotationOps.INLINE_BRIEF_TOOLS,
-    AnnotationOps.TITLE_BAR_BRIEF,
-    AnnotationOps.TITLE_BAR_BRIEF_TOOLS,
-    AnnotationOps.TITLE_BAR_BRIEF_CHECK_BOX
 ];
 
 const isCatalogPtData= (dl) => dl.drawLayerTypeId === Catalog.TYPE_ID && dl.catalogType===CatalogType.POINT;
@@ -247,7 +241,7 @@ function ZoomGroup({visRoot, pv, show}) {
 }
 
 const ImageViewerDecorate= memo((props) => {
-    const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId, workingIcon,
+    const {plotView:pv,drawLayersAry,extensionList,visRoot,mousePlotId, workingIcon,makeToolbar,
         size:{width,height}}= props;
 
     const [showDelAnyway, setShowSelAnyway]= useState(false);
@@ -264,9 +258,7 @@ const ImageViewerDecorate= memo((props) => {
     },[mousePlotId]);
 
     const showDelete= pv.plotViewCtx.userCanDeletePlots;
-    const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList,width, props.makeToolbar);
-    // const topOffset= ctxToolbar?32:0;
-    // const top= ctxToolbar?32:0;
+    const ctxToolbar= contextToolbar(pv,drawLayersAry,extensionList,width, makeToolbar);
     const expandedToSingle= (visRoot.expandedMode===ExpandType.SINGLE);
     const plot= primePlot(pv);
     const iWidth= Math.max(expandedToSingle ? width : width-4,0);
@@ -283,7 +275,7 @@ const ImageViewerDecorate= memo((props) => {
         overflow: 'hidden',
         position: 'absolute',
         borderStyle: 'solid',
-        borderWidth: expandedToSingle ? '0 0 0 0' : '3px 2px 2px 2px',
+        borderWidth: expandedToSingle ? '0 0 0 0' : 'rpx',
         borderRadius: '5px',
         borderColor: getBorderColor(theme, pv,visRoot),
     });
@@ -312,13 +304,14 @@ const ImageViewerDecorate= memo((props) => {
 
 
 ImageViewerDecorate.propTypes= {
-    plotView : PropTypes.object.isRequired,
-    drawLayersAry: PropTypes.array.isRequired,
-    visRoot: PropTypes.object.isRequired,
-    extensionList : PropTypes.array.isRequired,
-    mousePlotId : PropTypes.string,
-    size : PropTypes.object.isRequired,
-    workingIcon: PropTypes.bool,
+    plotView : object.isRequired,
+    drawLayersAry: array.isRequired,
+    visRoot: object.isRequired,
+    extensionList : array.isRequired,
+    mousePlotId : string,
+    size : object.isRequired,
+    workingIcon: bool,
+    makeToolbar: func,
 };
 
 export const ImageViewerView= wrapResizer(ImageViewerDecorate);

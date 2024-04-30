@@ -28,7 +28,7 @@ export const ImageExpandedMode= memo(({closeFunc,insideFlex=true,viewerId, force
                               layoutType={layoutType} Toolbar={ExpandedTools}
                               viewerId={foundViewerId} visRoot={vr}
                               scrollGrid={viewer?.scroll ?? false}
-                              style={{flex:'1 1 auto'}} closeFunc={closeFunc}
+                              style={{flex:'1 1 auto', marginBottom:1,marginLeft:1}} closeFunc={closeFunc}
                               defaultDecoration={false} showWhenExpanded={true}
                               insideFlex={insideFlex}
         />

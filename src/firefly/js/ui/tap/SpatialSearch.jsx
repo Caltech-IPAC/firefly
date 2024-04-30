@@ -24,7 +24,7 @@ import {DEF_TARGET_PANEL_KEY} from '../TargetPanel.jsx';
 import {ConstraintContext} from './Constraints.js';
 import {
     DebugObsCore, getPanelPrefix, LableSaptail, makeCollapsibleCheckHeader, makeFieldErrorList, makePanelStatusUpdater,
-    SpatialWidth} from './TableSearchHelpers.jsx';
+    } from './TableSearchHelpers.jsx';
 import {showUploadTableChooser} from '../UploadTableChooser.js';
 import {
     getAsEntryForTableName, getColumnAttribute, getTapServices, makeUploadSchema, maybeQuote, tapHelpId

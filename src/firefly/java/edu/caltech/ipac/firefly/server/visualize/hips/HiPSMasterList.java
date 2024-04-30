@@ -27,9 +27,13 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static edu.caltech.ipac.firefly.data.ServerParams.ENSURE_SOURCE;
+import static edu.caltech.ipac.firefly.data.ServerParams.HIPS_LIST_SOURCE;
+import static edu.caltech.ipac.firefly.data.ServerParams.HIPS_LIST_SOURCE_NAME;
 
 /**
  * @author Cindy Wang
@@ -37,19 +41,18 @@ import java.util.Map;
 @SearchProcessorImpl(id = "HiPSSearch", params =
         {@ParamDoc(name = ServerParams.HIPS_DATATYPES, desc = "types of HiPS data to search"),
          @ParamDoc(name = ServerParams.HIPS_SOURCES, desc = "HiPS sources"),
-         @ParamDoc(name = ServerParams.ADD_HOC_SOURCE, desc = "a comma list of IVOA ids to make the source"),
+         @ParamDoc(name = HIPS_LIST_SOURCE, desc = "HiPS list source url"),
+         @ParamDoc(name = ENSURE_SOURCE, desc = "if true then only ensure the source and an empty table is return"),
+         @ParamDoc(name = ServerParams.ADHOC_SOURCE, desc = "a comma list of IVOA ids to make the source, the HIPS_SOURCE parameter much include adhoc"),
          @ParamDoc(name = ServerParams.SORT_ORDER, desc = "HiPS order, source based"),
          @ParamDoc(name = ServerParams.HIPS_TABLE_TYPE, desc = "hips or moc, default hips")
         })
 public class HiPSMasterList extends EmbeddedDbProcessor {
     public final static String INFO_ICON_STUB = "<img data-src='info'/>";
-    public static String[] HiPSDataType = new String[]{ServerParams.IMAGE,
-                                                       ServerParams.CUBE,
-                                                       ServerParams.CATALOG};
+    public static String[] HiPSDataType = new String[]{ServerParams.IMAGE, ServerParams.CUBE, ServerParams.CATALOG};
 
-    private static final Map<String, HiPSMasterListSourceType> sources= new HashMap<>();
-    public static String[] defaultSourceOrder = new String[]{ServerParams.IRSA, ServerParams.LSST, ServerParams.CDS,
-                                                            ServerParams.EXTERNAL};
+    private static final ConcurrentHashMap<String, HiPSMasterListSourceType> sources= new ConcurrentHashMap<>();
+    public static String[] defaultSourceOrder = new String[]{ServerParams.IRSA, ServerParams.LSST, ServerParams.CDS};
 
     public static final List<String> noMocList = Arrays.asList(
             "ivo://CDS/P/HST/H",
@@ -81,7 +84,6 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
     static {
         sources.put(ServerParams.IRSA, new IrsaHiPSListSource());
         sources.put(ServerParams.CDS, new CDSHiPSListSource());
-        sources.put(ServerParams.EXTERNAL, new ExternalHiPSListSource());
         sources.put(ServerParams.LSST, new LsstHiPSListSource());
     }
 
@@ -89,19 +91,31 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
     private static final String errMsg = "HiPS Map search: no HiPS maps found";
 
     public DataGroup fetchDataGroup(TableServerRequest request) throws DataAccessException {
+
+        final String sourceUrl= request.getParam(HIPS_LIST_SOURCE);
+        String sourceUrlName= request.containsParam(HIPS_LIST_SOURCE_NAME) ?
+                request.getParam(HIPS_LIST_SOURCE_NAME) : sourceUrl;
+        if (sourceUrl != null) {
+            sources.computeIfAbsent(sourceUrlName, k -> new URLHiPSListSource(k,sourceUrl) );
+        }
+        if (request.getBooleanParam(ENSURE_SOURCE)) {
+            return createDataGroupFromSources(sourceUrlName);
+        }
+
+
         String hipsSources = request.getParam(ServerParams.HIPS_SOURCES);
         String hipsDataTypes = request.getParam(ServerParams.HIPS_DATATYPES);
         String hipsMergePriority = request.getParam(ServerParams.HIPS_MERGE_PRIORITY);
-        String adhocSrcParam = request.getParam(ServerParams.ADD_HOC_SOURCE);
+        String adhocSrcParam = request.getParam(ServerParams.ADHOC_SOURCE);
         boolean hipsTable = !"moc".equalsIgnoreCase(request.getParam(ServerParams.HIPS_TABLE_TYPE));
         String[] workingSources = (hipsSources != null) ? hipsSources.split(",") : null;
         String[] workingTypes = (hipsDataTypes != null) ? hipsDataTypes.split(",") : null;
         String[] prioritySources = (hipsMergePriority != null) ? hipsMergePriority.split(",") : null;
         List<HiPSMasterListEntry> allSourceData = new ArrayList<>();
-        List<String> adHocSources= Collections.emptyList();
+        List<String> adhocSources= Collections.emptyList();
 
         if (workingSources!=null && Arrays.asList(workingSources).contains("adhoc") && adhocSrcParam!=null) {
-            adHocSources= Arrays.asList(adhocSrcParam.split(","));
+            adhocSources= Arrays.asList(adhocSrcParam.split(","));
             workingSources= new String[] {ServerParams.ALL};
         }
 
@@ -135,12 +149,12 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
                 }
             }
 
-            if (allSourceData.size() == 0) {
+            if (allSourceData.isEmpty()) {
                 throw new IOException(errMsg);
             }
 
             if (workingSources.length > 1 && prioritySources.length != 0) {
-                allSourceData = mergeData(Arrays.asList(prioritySources), allSourceData, adHocSources);
+                allSourceData = mergeData(Arrays.asList(prioritySources), allSourceData, adhocSources);
             }
 
 
@@ -180,7 +194,7 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
             for (int j = n; j < totalS; j++) {
                 String ivo2 = dataAry[j].getMapInfo().get(PARAMS.IVOID.getKey());
 
-                if (ivo2 == null || !ivo1.equals(ivo2)) continue;
+                if (!ivo1.equals(ivo2)) continue;
                 String src2 = dataAry[j].getMapInfo().get(PARAMS.SOURCE.getKey());
                 String hsrc = getHigherPriority(src1, src2, prioritySources);
 
@@ -199,7 +213,7 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
             }
         }
 
-        List<HiPSMasterListEntry> newDataList = new ArrayList<>();
+        List<HiPSMasterListEntry> newDataList = new ArrayList<>(allSourceData.size());
         for (HiPSMasterListEntry oneEntry : allSourceData) {
             Map<String,String> map= oneEntry.getMapInfo();
             String ivoaStr= map.get(PARAMS.IVOID.getKey());
@@ -256,6 +270,20 @@ public class HiPSMasterList extends EmbeddedDbProcessor {
     }
 
     static boolean findHasMOCUsingLocalData= true; // this should always be true except for testing the services
+
+    private static DataGroup createDataGroupFromSources(String sName) {
+        DataType sourceId= new DataType("source","source", String.class);
+        DataType url= new DataType("url","url", String.class);
+        DataGroup dg = new DataGroup("HiPS list", new DataType[] {sourceId, url});
+        HiPSMasterListSourceType sType= sources.get(sName);
+        if (sName!=null && sources.containsKey(sName)) {
+            DataObject row = new DataObject(dg);
+            row.setDataElement(sourceId, sName);
+            row.setDataElement(url, sType.getUrl());
+            dg.add(row);
+        }
+        return dg;
+    }
 
     private static DataGroup createTableDataFromListEntry(List<HiPSMasterListEntry> hipsMaps, boolean hipsTable) {
         List<DataType> cols = hipsTable ?

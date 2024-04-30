@@ -2,6 +2,7 @@ import {get, isArray} from 'lodash';
 import Enum from 'enum';
 import {getAppOptions} from '../core/AppDataCntlr.js';
 import {makeTblRequest, MAX_ROW} from '../tables/TableRequestUtil.js';
+import {dispatchTableFetch} from '../tables/TablesCntlr.js';
 import {getColumnIdx, doFetchTable} from '../tables/TableUtil.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {isBlankHiPSURL} from './WebPlot.js';
@@ -77,7 +78,8 @@ export function getHiPSMergePriority() {
 }
 
 
-export function makeHiPSRequest(tableType, sources=getHiPSSources(), mocSources, tbl_id, types=HiPSData) {
+export function makeHiPSRequest(tableType, sources=getHiPSSources(), mocSources, tbl_id,
+                                types=HiPSData) {
     const sourceMergePriority = getHiPSMergePriority();
     const sp = sourceMergePriority?.join?.(',') || sourceMergePriority;
     const params=
@@ -87,8 +89,17 @@ export function makeHiPSRequest(tableType, sources=getHiPSSources(), mocSources,
             [ServerParams.HIPS_TABLE_TYPE]: tableType,
             [ServerParams.HIPS_MERGE_PRIORITY]: sp,
         };
-    if (mocSources) params[ServerParams.ADD_HOC_SOURCE]= mocSources.join(',');
-    return makeTblRequest('HiPSSearch', 'HiPS Maps', params, {tbl_id, pageSize: MAX_ROW});
+    if (mocSources) params[ServerParams.ADHOC_SOURCE]= mocSources.join(',');
+
+    return makeTblRequest('HiPSSearch', 'HiPS Maps', params,
+        {
+            tbl_id,
+            pageSize: MAX_ROW,
+            META_INFO: {
+                'col.Properties.PrefWidth':4,
+                'col.Properties.label':'Props',
+            }
+        });
 }
 
 function convertIvoToUrl(tableModel,ivo)  {

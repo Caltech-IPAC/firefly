@@ -11,4 +11,5 @@ import java.util.List;
 public interface HiPSMasterListSourceType {
 
     List<HiPSMasterListEntry> getHiPSListData(String[] dataTypes, String source);
+    String getUrl();
 }

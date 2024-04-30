@@ -21,7 +21,7 @@ import {makeWorldPt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {WebPlot, isHiPS, isImage, isBlankHiPSURL} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
-import {getRootURL} from '../../util/WebUtil.js';
+import {getRootURL, getStatusFromFetchError} from '../../util/WebUtil.js';
 import {
     findCurrentCenterPoint,
     getCenterOfProjection,
@@ -221,13 +221,15 @@ async function makeHiPSPlot(rawAction, dispatcher) {
     const requestKey= makeUniqueRequestKey('plotRequestKey');
     setActiveRequestKey(plotId,requestKey);
 
-    const hipsFail= (errStr) => dispatcher( { type: ImagePlotCntlr.PLOT_HIPS_FAIL,
-                                           payload:{ description: 'HiPS display failed: '+ errStr, plotId, wpRequest } });
+    const hipsFail= (msg) => dispatcher( { type: ImagePlotCntlr.PLOT_HIPS_FAIL,
+            payload:{ description: `HiPS display failed: ${msg}`, plotId, wpRequest } });
 
+
+    let resolvedHipsRootUrl;
+    let propertiesUrlForError;
     try {
-        const resolvedHipsRootUrl= await resolveHiPSIvoURL(wpRequest.getHipsRootUrl());
+        resolvedHipsRootUrl= await resolveHiPSIvoURL(wpRequest.getHipsRootUrl());
         if (getActiveRequestKey(plotId)!==requestKey) {
-            // hipsFail('hips plot expired or aborted');
             // console.log('hips plot expired or aborted');
             return;
         }
@@ -238,9 +240,11 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         }
 
         dispatchPlotProgressUpdate(plotId, 'Retrieving Info', false, null);
+        propertiesUrlForError= makeHiPSPropertiesUrl(resolvedHipsRootUrl, false);
         const result= await fetchUrl(makeHiPSPropertiesUrl(resolvedHipsRootUrl, PROXY), {}, true, PROXY);
+        propertiesUrlForError= undefined;
         if (!result.text) {
-            hipsFail('Could not retrieve HiPS properties file');
+            hipsFail('Could not retrieve HiPS properties file', resolvedHipsRootUrl);
             return;
         }
         const str= await result.text();
@@ -257,7 +261,6 @@ async function makeHiPSPlot(rawAction, dispatcher) {
             });
         }
         if (getActiveRequestKey(plotId)!==requestKey) {
-            // hipsFail('hips plot expired or aborted');
             // console.log('hips plot expired or aborted');
             return;
         }
@@ -271,7 +274,9 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         const pvNewPlotInfoAry= [ {plotId, plotAry: [plot]} ];
         dispatcher( { type: ImagePlotCntlr.PLOT_HIPS, payload: {...newPayload, plot,pvNewPlotInfoAry }});
     } catch (error) {
-        hipsFail(error.message);
+        const status= propertiesUrlForError ? getStatusFromFetchError(error.message) : 0;
+        const msg= status ? `status: ${status}, url: ${propertiesUrlForError}` : error.message;
+        hipsFail(msg);
     }
 }
 

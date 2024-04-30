@@ -164,7 +164,7 @@ function createPlotViewContextData(req, pvOptions={}) {
         useForSearchResults: pvOptions.useForSearchResults ?? true,  // marker boolean - plot used for some result
         canBeExpanded: pvOptions.canBeExpanded ?? true, // image can
         displayFixedTarget: pvOptions?.displayFixedTarget ?? true,
-        annotationOps : req.getAnnotationOps(), // how titles are drawn - todo this might be deprecated - needs research
+        annotationOps : req.getAnnotationOps(), // how titles are drawn - inline on inline_brief
         zoomLockingEnabled : false,
         embedMainToolbar: pvOptions.embedMainToolbar ?? false,
         zoomLockingType: UserZoomTypes.FIT, // can be FIT or FILL

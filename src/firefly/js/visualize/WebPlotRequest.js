@@ -70,22 +70,14 @@ export const TitleOptions= new Enum([
  * @typedef {Object} AnnotationOps
  * @prop INLINE
  * @prop INLINE_BRIEF
- * @prop INLINE_BRIEF_TOOLS
- * @prop TITLE_BAR
- * @prop TITLE_BAR_BRIEF
- * @prop TITLE_BAR_BRIEF_TOOLS
- * @prop TITLE_BAR_BRIEF_CHECK_BO
  *
  * @type {Enum}
  */
-export const AnnotationOps= new Enum([  // note - this is not completely implemented - only finder chart using it now
+
+/** @type AnnotationOps*/
+export const AnnotationOps= new Enum([
     'INLINE',    //default inline title full title and tools
-    'INLINE_BRIEF',  // inline brief title, no tools
-    'INLINE_BRIEF_TOOLS', // brief title w/ tools
-    'TITLE_BAR', // title full title and tools
-    'TITLE_BAR_BRIEF', // title bar brief title, no tools
-    'TITLE_BAR_BRIEF_TOOLS', // title bar brief with w/ tools
-    'TITLE_BAR_BRIEF_CHECK_BOX' // title bar brief title with a check box (used in planck)
+    'INLINE_BRIEF',  // inline brief title, details
 ], { ignoreCase: true });
 
 /**

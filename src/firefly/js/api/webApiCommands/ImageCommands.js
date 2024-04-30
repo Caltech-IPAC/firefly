@@ -1,3 +1,9 @@
+import {dispatchActiveTarget, dispatchAppOptions, getMenu} from '../../core/AppDataCntlr.js';
+import {dispatchShowDropDown, dispatchUpdateMenu} from '../../core/LayoutCntlr.js';
+import {ServerParams} from '../../data/ServerParams.js';
+import {makeTblRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
+import {doFetchTable} from '../../tables/TableUtil.js';
+import {toBoolean} from '../../util/WebUtil.js';
 import WebPlotRequest, {findInvalidWPRKeys, WPConst} from '../../visualize/WebPlotRequest';
 import {isEmpty,isArray,omit} from 'lodash';
 import {dispatchPlotHiPS, dispatchPlotImage} from '../../visualize/ImagePlotCntlr';
@@ -90,7 +96,7 @@ const hipsOverview= {
     ],
     parameters: {
         uri: {desc:'uri of the HiPS repository, you may have multiple uri parameters for mulitple HiPS', isRequired:true},
-        [ReservedParams.SR.name]: ['field of view of the HiPS image to show (optional)',...ReservedParams.SR.desc],
+        [ReservedParams.SR.name]: ['Radius of the field of view of the HiPS',...ReservedParams.SR.desc],
         [ReservedParams.POSITION.name]: ['Point to center HiPS on (optional)',...ReservedParams.POSITION.desc],
     },
 };
@@ -103,6 +109,26 @@ const hipsExamples= [
     {desc:'SDSS- m81, 60 arcmin', params:{uri: 'ivo://CDS/P/SDSS9/color', ra: '148.88822', dec: '69.06529', sr:'40m'}},
     {desc:'2 hips', params:{uri: ['ivo://CDS/P/DSS2/color','ivo://CDS/P/2MASS/color'], ra: '148.88822', dec: '69.06529', sr:'40m'}},
 ];
+
+
+const hipsPanelOverview= {
+    overview: [
+        'Show HiPS Panel'
+    ],
+    parameters: {
+        showPanel: {desc:'show HiPS panel'},
+        [ReservedParams.POSITION.name]: ['coordinates to center HiPS',...ReservedParams.POSITION.desc],
+        [ReservedParams.SR.name]: ['Radius of the field of view of the HiPS',...ReservedParams.SR.desc],
+        hipsListName: {desc:'a hips list server name'},
+        hipsListUrl: {desc:'a hips list server url'},
+    },
+};
+
+const hipsPanelExamples= [
+    {desc:'Show HiPS Panel', params:{showPanel: true}},
+];
+
+
 
 const imageRootStr= 'API_plotId';
 let nextId= 1;
@@ -171,6 +197,46 @@ function showHiPs(cmd,inParams) {
 
 }
 
+function validateHiPSPanel(params) {
+    return {valid:true};
+}
+
+function showHiPSPanel(cmd,inParams) {
+    setTimeout( async () => void showHiPSPanelAsync(cmd,inParams) );
+}
+
+async function showHiPSPanelAsync(cmd, inParams) {
+    const urlApi= {};
+    if (inParams[ReservedParams.POSITION.name]) dispatchActiveTarget(inParams[ReservedParams.POSITION.name]);
+    if (inParams[ReservedParams.SR.name]) {
+        urlApi.radius= inParams[ReservedParams.SR.name];
+    }
+
+    const {hipsListName,hipsListUrl,showPanel}= inParams;
+    if (hipsListUrl) {
+        const name= hipsListName || hipsListUrl;
+        dispatchAppOptions({extraHiPSListName:name});
+
+        const params= {
+            [ServerParams.HIPS_LIST_SOURCE]: hipsListUrl,
+            [ServerParams.HIPS_LIST_SOURCE_NAME]: name,
+            [ServerParams.ENSURE_SOURCE]: true,
+        };
+        const tbl_id= `source-${hipsListUrl}`;
+        await doFetchTable( makeTblRequest('HiPSSearch', 'ensure hips source', params, { tbl_id, pageSize: MAX_ROW, }));
+    }
+
+    if (toBoolean(showPanel)) {
+        const {menuItems,selected,showBgMonitor}= getMenu();
+        if (!menuItems?.find(({action}) => action==='HiPSSearchPanel')) { // add the toolbar option
+            const newMenuItems= [...menuItems];
+            const hipsPanel= {label:'HiPS Search', action: 'HiPSSearchPanel', primary: false, category:'extra'};
+            newMenuItems.splice(1,0,hipsPanel);
+            dispatchUpdateMenu({selected,showBgMonitor,menuItems:newMenuItems});
+        }
+        dispatchShowDropDown({view:'HiPSSearchPanel', initArgs:{urlApi}});
+    }
+}
 
 
 /**
@@ -191,6 +257,13 @@ export function getImageCommands() {
             execute: showHiPs,
             ...hipsOverview,
             examples: makeExamples('hips', hipsExamples),
+        },
+        {
+            cmd : 'hipsPanel',
+            validate : validateHiPSPanel,
+            execute: showHiPSPanel,
+            ...hipsPanelOverview,
+            examples: makeExamples('hipsPanel', hipsPanelExamples),
         },
     ];
 }

@@ -1,3 +1,4 @@
+import {getMenu} from '../core/AppDataCntlr.js';
 import {makeSearchActionObj, SearchTypes} from '../core/ClickToAction.js';
 import {flux} from '../core/ReduxFlux.js';
 import {ServerParams} from '../data/ServerParams.js';
@@ -31,7 +32,12 @@ export const showTapSearchPanel= (searchParams={}) => {
 
 const showImage= (initArgs) => {
     const modInitArgs= {...initArgs, searchParams: {...initArgs.searchParams, viewerId:DEFAULT_FITS_VIEWER_ID}};
-    dispatchShowDropDown( { view: 'ImageSelectDropDownCmd', initArgs:modInitArgs});
+    const {menuItems}= getMenu();
+    let view= 'ImageSelectDropDownCmd';
+    if (modInitArgs.searchParams?.type=== 'hipsImage') {
+        view= menuItems?.find(({action}) => action==='HiPSSearchPanel') ? 'HiPSSearchPanel' : 'ImageSelectDropDownCmd';
+    }
+    dispatchShowDropDown( { view, initArgs:modInitArgs});
 };
 
 export const makeDefTapSearchActions = () => {

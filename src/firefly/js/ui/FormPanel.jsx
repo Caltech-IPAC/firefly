@@ -4,7 +4,7 @@
 
 import {Button, Sheet, Stack} from '@mui/joy';
 import React, {useCallback} from 'react';
-import {elementType, shape, node, string, func, oneOfType, element, bool} from 'prop-types';
+import {elementType, shape, node, string, func, oneOfType, element, bool, arrayOf} from 'prop-types';
 import CompleteButton from './CompleteButton.jsx';
 import {HelpIcon} from './HelpIcon.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
@@ -65,7 +65,7 @@ FormPanel.propTypes = {
     onSuccess: func,                // invoked when validation passed; func(params: object) => bool
     onError: func,                  // invoked when validation failed; func(params: object) => bool
     onCancel: func,                 // invoked when cancelBtn is pressed.
-    completeText: node,             // Defautls to 'Search'
+    completeText: node,             // Defaults to 'Search'
     cancelText: node,               // Defaults to 'Cancel'; falsy value will remove cancel button
     disabledDropdownHide: bool,     // if true, do not call dropdown hide when form is submitted.
     help_id: string,
@@ -76,7 +76,7 @@ FormPanel.propTypes = {
         }),
         searchBar: shape({
             component: elementType,   // set to null to hide the search bar; true for any slots defined here.
-            actions: element,         // additional actions go between ok/cancel and help icon
+            actions: oneOfType([element, arrayOf(element)]),         // additional actions go between ok/cancel and help icon
             ...Stack.propTypes
         }),
         completeBtn: shape({

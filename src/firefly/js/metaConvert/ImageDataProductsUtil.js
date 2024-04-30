@@ -237,7 +237,6 @@ function replotImageDataProducts(activePlotId, makeActive, imageViewerId, tbl_id
     reqAry= reqAry.map( (r) => {
         const newR= r.makeCopy();
         newR.setPlotGroupId(groupId);
-        newR.setAnnotationOps(AnnotationOps.INLINE);
         const group= getPlotGroupById(visRoot(), groupId);
         if (group?.defaultRangeValues) newR.setInitialRangeValues(group.defaultRangeValues);
         return newR;

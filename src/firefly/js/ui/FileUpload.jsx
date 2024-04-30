@@ -2,6 +2,7 @@ import {Button, CircularProgress, Input, Stack, Tooltip, Typography} from '@mui/
 import React, {memo, useEffect} from 'react';
 import {object, bool, func, number, string, shape} from 'prop-types';
 import {has, isFunction, isNil, isString} from 'lodash';
+import {validateUrl} from '../util/Validate.js';
 import {getStatusFromFetchError} from '../util/WebUtil.js';
 import {InputFieldView} from './InputFieldView.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
@@ -176,7 +177,7 @@ function handleChange(ev, fireValueChange, type, fileAnalysis) {
 
 function makeDoUpload(file, type, isFromURL, fileAnalysis) {
     return () => {
-        return doUpload(file, fileAnalysis, {}).then(({status, message, cacheKey, fileFormat, analysisResult}) => {
+        return doUpload(isFromURL, file, fileAnalysis, {}).then(({status, message, cacheKey, fileFormat, analysisResult}) => {
             let valid = status === '200';
             if (valid) {        // json file is not supported currently (among many others)
                 if (!isNil(fileFormat)) { // TODO: doUpload is not returning fileFormat field (analysisResult JSON string has this field though), has to be refactored
@@ -200,8 +201,10 @@ function makeDoUpload(file, type, isFromURL, fileAnalysis) {
     };
 }
 
-function doUpload(fileOrUrl, fileAnalysis, params={}) {
-
+function doUpload(isFromURL, fileOrUrl, fileAnalysis, params={}) {
+    if (isFromURL && !validateUrl('',fileOrUrl).valid) {
+        return Promise.resolve({status:404,message:'bad Url'});
+    }
     const faFunction= isFunction(fileAnalysis) && fileAnalysis;
     faFunction && faFunction(true, isString(fileOrUrl) ? fileOrUrl : fileOrUrl?.name ? fileOrUrl.name : undefined);
     if (fileAnalysis) fileAnalysis=true;
