@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Checkbox, Divider, Stack, Tooltip, Typography} from '@mui/joy';
+import {Divider, Stack, Tooltip, Typography} from '@mui/joy';
 import React, {memo,Fragment} from 'react';
 import {oneOf, func, object, number, string, arrayOf, bool} from 'prop-types';
 import {isEmpty, isString} from 'lodash';
@@ -17,14 +17,12 @@ import {
 import {getExtName, getExtType} from '../FitsHeaderUtil.js';
 import {makeWorldPt} from '../Point.js';
 import {isHiPS, isHiPSAitoff, isImage} from '../WebPlot.js';
-import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
-import {RadioGroupInputFieldView} from '../../ui/RadioGroupInputFieldView.jsx';
+import {DropDownVerticalSeparator, ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {dispatchExtensionActivate} from '../../core/ExternalAccessCntlr.js';
 import {
     dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchChangeHipsImageConversion,
     dispatchChangePrimePlot, visRoot } from '../ImagePlotCntlr.js';
 import {makePlotSelectionExtActivateData} from '../../core/ExternalAccessUtils.js';
-import {ListBoxInputFieldView} from '../../ui/ListBoxInputField';
 import {showHiPSSurveysPopup} from '../../ui/HiPSImageSelect.jsx';
 import {StateInputField} from '../../ui/StatedInputfield.jsx';
 import Validate from '../../util/Validate.js';
@@ -94,65 +92,99 @@ function changeAutoConvert(pv, auto) {
     if (auto) doHiPSImageConversionIfNecessary(nextPv);
 }
 
-
-const projOptions= [
-    {label: 'HiPS', value: 'sin', tooltip: 'All-sky multi-resolution picture with spherical projection, up to 180 degrees'},
-    {label: 'HiPS/Aitoff', value: 'aitoff', tooltip: 'All-sky multi-resolution picture with AITOFF projection, up to 360 degrees'},
-];
-const defHFOptions= [
-    {label: 'FITS', value: 'fits', tooltip: 'Scientific pixel data over limited regions'},
-    ...projOptions
-];
-
-function HipsFitsConvertButton({pv}) {
-    const plot= primePlot(pv);
-    if (!plot) return undefined;
-
-    let value= 'fits';
-    if (isHiPS(plot)) value= isHiPSAitoff(plot) ? 'aitoff' : 'sin';
-
-    const buttonGroupTip= 'Auto-transition between FITS and HiPS depending on zoom';
-
-    const {autoConvertOnZoom:auto}= pv.plotViewCtx.hipsImageConversion;
-    return (
-        <Stack direction='row' alignItems='center' pl='.5'>
-            <RadioGroupInputFieldView {...{
-                options: defHFOptions, value, buttonGroup:true,
-                sx: {button:{height:'1.5em'}},
-                onChange: (ev) => doHiPSFitsConvert(pv,ev.target.value)
-            }}/>
-            <Checkbox label='Auto' checked={auto} onChange={() => changeAutoConvert(pv, !auto)}
-                      title={buttonGroupTip}
-                      sx={{pl:.5}} />
-        </Stack>
-    );
-}
-
-HipsFitsConvertButton.propTypes= { pv : object.isRequired};
-
-
-
 function HipsProjConvertButton({pv}) {
-
+    const AITOFF_TEXT= 'Aitoff';
+    const SPHER_TEXT= 'Spherical';
     const plot= primePlot(pv);
     if (!plot) return undefined;
-    const value= isHiPSAitoff(plot) ? 'aitoff' : 'sin';
-    const buttonGroupTip= 'Change HiPS projection between spherical (180 deg) and Aitoff (360 deg)';
-    return (
-        <RadioGroupInputFieldView {...{
-            options: projOptions, value, buttonGroup:true, title:buttonGroupTip,
-            sx: {pl:.5, button:{height:'1.5em'}},
-            onChange: (ev) => dispatchChangeCenterOfProjection({plotId:pv.plotId, fullSky:ev.target.value==='aitoff'})
-        }}/>
+    const {plotId}= plot;
+    const csysText= plot.imageCoordSys===CoordinateSys.GALACTIC ? 'Galactic' : 'Eq J2000';
+    const projText= isHiPSAitoff(plot) ? AITOFF_TEXT : SPHER_TEXT;
+
+    const canConvertHF= canConvertHipsAndFits(pv);
+    const text= canConvertHF ? 'Coverage Options' : `${csysText} / ${projText}`;
+    const {autoConvertOnZoom:auto=false}= pv.plotViewCtx.hipsImageConversion ?? {};
+
+    const dropDown= (
+        <SingleColumnMenu sx={ (theme) => ({
+            background:ctxToolbarBG(theme, 98),
+        })}>
+            {canConvertHF && <>
+                <Typography sx={{whiteSpace:'nowrap'}}>HiPS to FITS Conversion</Typography>
+                <ToolbarButton {...{
+                    hasCheckBox: true,
+                    checkBoxOn: auto,
+                    key: 'autoFITS',
+                    text: 'Auto HiPS to FITS convert',
+                    tip: 'Auto-transition between FITS and HiPS depending on zoom',
+                    onClick: () => changeAutoConvert(pv, !auto)
+                }}/>
+                <ToolbarButton {...{
+                    hasCheckBox: true,
+                    key: 'toFITS',
+                    text: 'Convert to ' + (isHiPS(plot) ? 'FITS' : 'HiPS'),
+                    tip: 'Scientific pixel data over limited regions',
+                    onClick: () => doHiPSFitsConvert(pv,isHiPS(plot) ? 'fits' : 'sin')
+                }}/>
+
+                {isHiPS(plot) && <DropDownVerticalSeparator useLine={true}/>}
+            </>}
+            {isHiPS(plot) &&
+                <>
+                    <Typography>HiPS Projection</Typography>
+                    <ToolbarButton {...{
+                        hasCheckBox: true,
+                        checkBoxOn: !isHiPSAitoff(plot),
+                        key: 'change Hips',
+                        text: SPHER_TEXT,
+                        tip: 'All-sky multi-resolution picture with spherical projection, up to 180 degrees',
+                        onClick: () => dispatchChangeCenterOfProjection({plotId: pv.plotId, fullSky: false})
+                    }}/>
+                    <ToolbarButton {...{
+                        hasCheckBox: true,
+                        checkBoxOn: isHiPSAitoff(plot),
+                        key: 'change aitoff',
+                        text: AITOFF_TEXT,
+                        tip: 'All-sky multi-resolution picture with AITOFF projection, up to 360 degrees',
+                        onClick: () => dispatchChangeCenterOfProjection({plotId: pv.plotId, fullSky: true})
+                    }}/>
+                    <DropDownVerticalSeparator useLine={true}/>
+                    <Typography sx={{whiteSpace:'nowrap'}}>HiPS Coordinate System</Typography>
+                    <ToolbarButton text='Galactic' tip='Use Galactic coordinate system' key={'gal'}
+                                   hasCheckBox={true}
+                                   checkBoxOn={plot.imageCoordSys===CoordinateSys.GALACTIC}
+                                   onClick={()=>dispatchChangeHiPS( {plotId,  coordSys: CoordinateSys.GALACTIC})}/>
+                    <ToolbarButton text='Eq J2000' tip='Use Equitorial J2000 coordinate system' key={'eqj'}
+                                   hasCheckBox={true}
+                                   checkBoxOn={plot.imageCoordSys===CoordinateSys.EQ_J2000}
+                                   onClick={()=>dispatchChangeHiPS( {plotId,  coordSys: CoordinateSys.EQ_J2000})}/>
+                </>
+            }
+        </SingleColumnMenu>
     );
+
+
+    return (
+        <DropDownToolbarButton {...{
+            sx:{button:{minWidth: '11rem', px:0}},
+            // text:isHiPSAitoff(plot) ? AITOFF_TEXT : SPHER_TEXT,
+            // text: 'Coord Sys / Projection',
+            text,
+            tip:'Change HiPS projection between spherical (180 deg) and Aitoff (360 deg)',
+            useDropDownIndicator:true, dropDown}} />
+    );
+
+
 }
 
-function makeHiPSImageTable(pv) {
+function HiPSImageTable({pv}) {
     if (!primePlot(pv)) return null;
     const mi= pv.plotViewCtx.menuItemKeys;
 
     const dropDown= (
-        <SingleColumnMenu>
+        <SingleColumnMenu sx={ (theme) => ({
+            background:ctxToolbarBG(theme, 98),
+        })}>
             <ToolbarButton text={'Change HiPS'} tip={'Choose a different HiPS Survey'}
                            key={'change Hips'}
                            visible={mi.hipsSurveyPopup}
@@ -165,39 +197,12 @@ function makeHiPSImageTable(pv) {
     );
 
     return (
-        <div style={{display:'flex'}}>
-                <DropDownToolbarButton
-                    text={'HiPS / MOC'} tip='Change displayed HiPS or add a MOC'
-                    useDropDownIndicator={true} dropDown={dropDown} />
-        </div>
+        <DropDownToolbarButton
+            text={'HiPS / MOC'} tip='Change displayed HiPS or add a MOC'
+            sx={{button:{px:0}}}
+            useDropDownIndicator={true} dropDown={dropDown} />
     );
 }
-
-
-const hipsCoordOptions= [
-    {label: 'Galactic', value:0, c: CoordinateSys.GALACTIC},
-    {label: 'Eq J2000', value:1, c: CoordinateSys.EQ_J2000},
-];
-
-
-const HiPSCoordSelect= memo(({plotId, imageCoordSys}) =>{
-    if (!imageCoordSys || !plotId) return undefined;
-    const selectedIdx= Math.max(hipsCoordOptions.findIndex( (s) => s.c===imageCoordSys), 0);
-    return (
-        <div>
-            <ListBoxInputFieldView {...{
-                sx: {'& .MuiSelect-root': {'minHeight': '1.6em'}},
-                inline: true, value: selectedIdx, options:hipsCoordOptions,
-                onChange: (ev,newValue) => dispatchChangeHiPS( {plotId,  coordSys: hipsCoordOptions[Number(newValue)].c}),
-                tooltip:'Change HiPS survey coordinate system',
-            }}/>
-        </div>
-    );
-});
-HiPSCoordSelect.propTypes= {
-    plotId : string,
-    imageCoordSys : object,
-};
 
 
 /**
@@ -273,24 +278,21 @@ export const VisCtxToolbarView= memo((props) => {
         );
 
 
-    const makeHipsControls= () => (
-        <Fragment>
-            {canConvertHF && <HipsFitsConvertButton pv={pv}/>}
-            {hips && !canConvertHF && <HipsProjConvertButton pv={pv}/>}
-            {hips && <Divider orientation='vertical' sx={{m:.5}}/> }
-            {hips && <HiPSCoordSelect plotId={plot?.plotId} imageCoordSys={plot?.imageCoordSys}/>}
-            {hips && <Divider orientation='vertical' sx={{m:.5}}/> }
-            {hips && makeHiPSImageTable(pv)}
-            {isHiPSAitoff(plot) &&
-                <ToolbarButton text='Center Galactic' tip='Align Aitoff HiPS to Galactic 0,0'
-                               onClick={() => dispatchChangeHiPS({
-                                   plotId:plot.plotId,
-                                   coordSys:CoordinateSys.GALACTIC,
-                                   centerProjPt:makeWorldPt(0, 0, CoordinateSys.GALACTIC) })
-                               } />
-            }
-        </Fragment>
-    );
+        const makeHipsControls= () => (
+            <Stack pl={1} direction='row' alignItems='center' divider={<ToolbarHorizontalSeparator/>}>
+                {(hips||canConvertHF) && <HipsProjConvertButton pv={pv}/>}
+                {hips && <HiPSImageTable pv={pv}/>}
+                {isHiPSAitoff(plot) &&
+                    <ToolbarButton text='Center Galactic' tip='Align Aitoff HiPS to Galactic 0,0'
+                                   sx={{button:{px:0}}}
+                                   onClick={() => dispatchChangeHiPS({
+                                       plotId:plot.plotId,
+                                       coordSys:CoordinateSys.GALACTIC,
+                                       centerProjPt:makeWorldPt(0, 0, CoordinateSys.GALACTIC) })
+                                   } />}
+                {hips && <></>}
+            </Stack>
+        );
 
    const makeTbSX= (theme) => ({
        backgroundColor: ctxToolbarBG(theme,94),
