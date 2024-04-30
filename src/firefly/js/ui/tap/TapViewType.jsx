@@ -15,12 +15,12 @@ import {showTableSelectPopup} from './TableChooser.jsx';
 
 import {TableColumnsConstraints, TableColumnsConstraintsToolbar} from './TableColumnsConstraints.jsx';
 import {
-    ADQL, SINGLE, SpatialPanelWidth, NavButtons, TableTypeButton
+    ADQL, SINGLE, SpatialPanelWidth, NavButtons, TableTypeButton, getTapObsCoreOptions
 } from './TableSearchHelpers.jsx';
 import {TableSearchMethods} from './TableSearchMethods.jsx';
 import {
     defTapBrowserState, getLoadedCapability, getTapServices, isCapabilityLoaded, loadTapCapabilities, loadTapColumns,
-    loadTapSchemas, loadTapTables, tapHelpId,
+    loadTapSchemas, loadTapTables, tapHelpId, loadObsCoreMetadata
 } from './TapUtil.js';
 
 import './TableSelectViewPanel.css';
@@ -145,6 +145,7 @@ function BasicUI(props) {
     const [tableOptions, setTableOptions] = useState();
     const [tableTableModel, setTableTableModel] = useState();
     const [columnsModel, setColumnsModel] = useState();
+    const [obsCoreMetadataModel, setObsCoreMetadataModel] = useState(undefined);
     const {schemaLabel}= getTapServices().find( ({value}) => value===serviceUrl) ?? {};
 
     const capabilities= getLoadedCapability(serviceUrl);
@@ -272,6 +273,21 @@ function BasicUI(props) {
         });
     };
 
+    const loadObsCoreMeta = (serviceUrl, obsCoreTableModel) => {
+        const [, obsCoreTable] = obsCoreTableModel?.tableData?.data?.[0];
+        const supportsObsCoreMetadataLoad = getTapObsCoreOptions(serviceLabel)?.enableMetadataLoad ?? false;
+        
+        if (!obsCoreTable || !supportsObsCoreMetadataLoad) {
+            setObsCoreMetadataModel(undefined); //indicates loading attempt wasn't made
+        }
+        else {
+            setObsCoreMetadataModel({loading: true}); //indicates intermediate state until tableModel is available (Promise is resolved/rejected)
+            loadObsCoreMetadata(serviceUrl, obsCoreTable).then((tableModel) => {
+                setObsCoreMetadataModel(tableModel);
+            });
+        }
+    };
+
     useEffect(() => {
         if (forceLockObsCore && hasObsCoreTable) setLockToObsCore(true);
         mountedRef.current = true;
@@ -295,6 +311,12 @@ function BasicUI(props) {
     useEffect(() => {
         tableName && loadColumns(serviceUrl, schemaName, tableName);
     }, [serviceUrl, schemaName, tableName]);
+
+    useEffect(() => {
+        // use hasObsCoreTable instead of obsCoreEnabled to not wait until user selects the obsCore switch/table
+        // fire the long-running query as soon as an ObsCore capable service is selected
+        hasObsCoreTable && loadObsCoreMeta(serviceUrl, obsCoreTableModel);
+    }, [hasObsCoreTable, serviceUrl, obsCoreTableModel]);
 
     useEffect(() => {
         if (error) setServicesShowing(true);
@@ -371,7 +393,8 @@ function BasicUI(props) {
                     <SplitPane split='vertical' maxSize={splitMax} mixSize={20} defaultSize={splitDef}>
                         <SplitContent>
                             {(capabilities && columnsModel) ?
-                                <TableSearchMethods {...{initArgs, serviceUrl, serviceLabel, columnsModel, obsCoreEnabled, capabilities,
+                                <TableSearchMethods {...{initArgs, serviceUrl, serviceLabel, columnsModel, obsCoreEnabled,
+                                    capabilities, obsCoreMetadataModel,
                                     sx:{mt:1},
                                     tableName:getTapBrowserState().tableName}}/>
                                 : <div className='loading-mask'/>

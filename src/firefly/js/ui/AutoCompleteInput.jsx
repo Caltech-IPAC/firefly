@@ -1,29 +1,44 @@
 import React, {useState} from 'react';
 import {bool, string, object, shape, arrayOf, func, oneOf, element} from 'prop-types';
 import {Autocomplete, FormControl, FormLabel, Stack, Tooltip} from '@mui/joy';
-import {isEmpty, omit} from 'lodash';
+import {isArray, isEmpty, omit} from 'lodash';
 
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {inputFieldTooltipProps} from 'firefly/ui/InputFieldView.jsx';
 
 
-export function AutoCompleteInput({slotProps, orientation, label, required, freeSolo=true, startDecorator, endDecorator, ...props}) {
+export function AutoCompleteInput({slotProps, orientation, label, required, freeSolo=true, startDecorator, endDecorator, multiple, ...props}) {
 
     const {viewProps, fireValueChange}=  useFieldGroupConnector({...props, confirmValue: confirmValue(freeSolo)});
     const [open, setOpen] = useState(false);
     const [tooltipOpen, setTooltipOpen] = useState(false);
 
-    const {value, valid} = viewProps;
+    const {value: fieldValue, valid} = viewProps;
     const fixedOptions = viewProps.options?.map((v) => ({...v, label: v.label || v.value}));
 
     const inputProps= omit(props, 'initialState', 'fieldKey', 'groupKey');
     const {title, enterDelay} = inputFieldTooltipProps(viewProps);
 
-    const onChange = (e,v) => {
-        const value = v.value ?? v;
-        fireValueChange({value});
+    // inputValue is always a string, it's the value displayed in the textbox of autocomplete
+    const onInputChange = (e, inputValue) => {
+        if (multiple) return;
+        fireValueChange({value: inputValue}); //set in the FieldGroup store
     };
 
+    // selectedValue is any object or list of objects (in multiple mode);
+    // it's the value(s) selected by the user from options listbox or by pressing enter
+    const onChange = (e, selectedValue) => {
+        const fieldValue = isArray(selectedValue) //in case of multiple
+            ? selectedValue.map((v) => v?.value ?? v).toString()
+            : selectedValue?.value ?? selectedValue;
+        fireValueChange({value: fieldValue}); //set in the FieldGroup store
+    };
+
+    const valStrToArr = (val) => val ? val.split(',') : [];
+
+    // state logic becomes complicated when using freeSolo (custom option) with multiple option mode
+    // also UX is not intuitive: user has to press enter to create a new chip for custom option
+    const allowFreeSolo = multiple ? false : freeSolo;
 
     return (
         <Tooltip title={title} enterDelay={enterDelay}
@@ -37,8 +52,12 @@ export function AutoCompleteInput({slotProps, orientation, label, required, free
                 {label && <FormLabel {...slotProps?.label}>{label}</FormLabel>}
                 <Autocomplete autoComplete={true}
                               autoSelect={true}
-                              freeSolo={freeSolo}
-                              value={value}
+                              multiple={multiple}
+                              freeSolo={allowFreeSolo}
+                              isOptionEqualToValue={(option, value) => (option?.value ?? option) === value}
+                              value={multiple ? valStrToArr(fieldValue) : fieldValue}
+                              onChange={onChange}
+                              onInputChange={onInputChange}
                               {...inputProps}
                               title=''
                               startDecorator={startDecorator && <Decorator setOpen={setOpen}>{startDecorator}</Decorator>}
@@ -49,8 +68,7 @@ export function AutoCompleteInput({slotProps, orientation, label, required, free
                                   setOpen(true);
                                   setTooltipOpen(false); //hide tooltip as soon as popup opens
                               }}
-                              onClose={() => setOpen(false)}
-                              onInputChange={onChange}/>
+                              onClose={() => setOpen(false)}/>
             </FormControl>
         </Tooltip>
     );
@@ -75,6 +93,7 @@ AutoCompleteInput.propTypes= {
     freeSolo: bool,                 // allow values not in options
     endDecorator: element,
     startDecorator: element,
+    multiple : bool,
     slotProps: shape({
         control: object,
         label: object,

@@ -172,10 +172,6 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         }
     }
 
-    static String getFilename(String urlStr) {
-        return urlStr.replace("(http:|https:)", "").replace("/", "");
-    }
-
 //====================================================================
 //  UWS utils
 //====================================================================
@@ -216,8 +212,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
     public static DataGroup getTableResult(String url, File workDir) throws DataAccessException {
         try {
             // download file first: failing to parse gaia results with topcat SAX parser from url
-            String filename = getFilename(url);
-            File outFile = File.createTempFile(filename, ".vot", workDir);
+            File outFile = File.createTempFile("results-", ".vot", workDir);
 
             // Must followRedirect because TAP specifically say this endpoint may be redirected.
             // Using 'getWithAuth' because it will handle credential when redirected
