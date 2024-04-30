@@ -24,9 +24,8 @@ import FieldGroupUtils, {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js'
 import {FileUpload} from '../../ui/FileUpload.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
-import {HelpIcon} from './../../ui/HelpIcon.jsx';
+import {HelpIcon, HelpLink} from './../../ui/HelpIcon.jsx';
 import {getAllConverterIds, getConverter, getMissionName} from './LcConverterFactory.js';
-import {HelpText} from './../../ui/HelpText.jsx';
 import {WorkspaceUpload} from '../../ui/WorkspaceViewer.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
 import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.js';
@@ -184,7 +183,7 @@ export const UploadPanel = ({initArgs}) =>{
             <Stack {...{minWidth: 450}}>
                 <Stack {...{direction:'row', spacing:2}}>
                     <Typography>Upload time series table</Typography>
-                    <HelpText helpId={'loadingTSV'} linkText={'(See requirements)'}/>
+                    <HelpLink helpId={'loadingTSV'} linkText={'(See requirements)'}/>
                 </Stack>
                 { fileLocation === 'isLocal' ?
                         <FileUpload fieldKey='rawTblSource'

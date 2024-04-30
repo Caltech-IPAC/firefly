@@ -176,7 +176,7 @@ const CombineChartDialog = ({onComplete}) => {
                         <CompleteButton onSuccess={doApply}>Ok</CompleteButton>
                         <Button variant='soft' onClick={closePopup}>Cancel</Button>
                     </Stack>
-                    <HelpIcon helpId={'chartarea.combineCharts'} style={{float: 'right', marginTop: 4}}/>
+                    <HelpIcon helpId={'chartarea.combineCharts'}/>
                 </Stack>
             </Stack>
         </FieldGroup>

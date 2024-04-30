@@ -52,7 +52,7 @@ export const FormPanel = function ({groupKey, onSuccess, onError, onCancel, canc
                       onSuccess={doSubmit} onFail={doSubmit}
                       slotProps={slotProps?.completeBtn}
                 />
-                <Slot component={CancelButton} size='md' text={cancelText} onClick={onCancel} disabledDropdownHide={disabledDropdownHide} slotProps={slotProps?.cancelBtn}/>
+                <Slot component={CancelButton} size='md' text={cancelText} onClick={onCancel} slotProps={slotProps?.cancelBtn}/>
                 {slotProps?.searchBar?.actions}
             </Slot>
         </Stack>
@@ -90,13 +90,11 @@ FormPanel.propTypes = {
     })
 };
 
-function CancelButton({text, onClick, disabledDropdownHide}) {
+function CancelButton({text, onClick}) {
 
     const doCancel = useCallback(() => {
         dispatchFormCancel();
         onClick?.();
-        // default implementation of onClick is not used
-        if (!disabledDropdownHide) dispatchHideDropDown();
     }, []);
 
     return text ? <Button size='md' onClick={doCancel}>{text}</Button> : false;

@@ -192,7 +192,7 @@ function FluxRadixDialog({readoutPrefs, dialogId}) {
 				<Divider orientation='horizontal'/>
 				<div style={{display:'flex', width:'100%', justifyContent:'space-between'}}>
 					<CompleteButton style={{alignSelf:'flex-start'}} dialogId={dialogId} text='Close'/>
-					<HelpIcon helpId={'visualization.radixOptions'} style={{alignSelf:'flex-end'}}/>
+					<HelpIcon helpId={'visualization.radixOptions'}/>
 				</div>
 			</Stack>
 		</FieldGroup>

@@ -4,33 +4,60 @@
 
 import {Link} from '@mui/joy';
 import React from 'react';
-import {string, object, oneOf, any} from 'prop-types';
+import PropTypes, {any, object, string} from 'prop-types';
 import {flux} from '../core/ReduxFlux.js';
 import {ToolbarButton} from './ToolbarButton.jsx';
 import {HELP_LOAD} from '../core/AppDataCntlr.js';
 import HelpOutline from '@mui/icons-material/HelpOutline';
+import {useColorMode} from 'firefly/ui/FireflyRoot.jsx';
 
-const onClick = (element,ev,helpId) => {
+const onClick = (ev,helpId, isDarkMode,element) => {
     ev.stopPropagation();
-    flux.process({ type: HELP_LOAD, payload: {helpId} });
+    flux.process({ type: HELP_LOAD, payload: {helpId, isDarkMode} });
 };
 
-export const HelpIcon= ({helpId, size='small', style={}, sx, component}) => (
-    <ToolbarButton {...{style, sx, icon:<HelpOutline/>, onClick: (e,ev)=> onClick(e,ev,helpId), component }}/>
-);
-
-export const HelpText= ({helpId, text, size='small', sx}) => (
-    <Link {...{sx, size,icon:<HelpOutline/>, onClick: (ev)=> onClick(undefined,ev,helpId),}}>
-        {text}
-    </Link>
-);
+export const HelpIcon= ({helpId, component, ...props}) => {
+    const {isDarkMode} = useColorMode();
+    return (
+        <ToolbarButton icon={<HelpOutline/>} component={component } {...props}
+                       onClick={(e,ev)=> onClick(ev, helpId, isDarkMode, e)}/>
+    );
+};
 
 HelpIcon.propTypes = {
     helpId: string,
-    size:   oneOf(['small', 'large']),
     style: object,
-    sx: object,
     component: any,
+    ...ToolbarButton.propTypes
 };
 
+
+export const HelpText= ({helpId, text, size='small', sx}) => {
+    const {isDarkMode} = useColorMode();
+    return (
+        <Link {...{sx, size,icon:<HelpOutline/>, onClick: (ev)=> onClick(ev, helpId, isDarkMode),}}>
+            {text}
+        </Link>
+    );
+};
+
+
+export function HelpLink({helpId, linkText, ...props}) {
+
+    const {isDarkMode} = useColorMode();
+    return (
+        <Link onClick={(ev) => onClick(ev, helpId, isDarkMode)} {...props}>
+            {linkText}
+        </Link>
+    );
+}
+
+HelpLink.propTypes = {
+    helpId: PropTypes.string,
+    linkText: PropTypes.string,
+    ...Link.propTypes
+};
+
+
 export default HelpIcon;
+
