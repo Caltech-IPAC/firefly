@@ -150,7 +150,7 @@ function SearchForm({searchItem, style, initArgs}) {
     const onSuccess = (p) => {
         let request = {...params, ...p};
         const reqTitle = isFunction(title) ? title(request) : title;
-        request = makeTblRequest(request.id, reqTitle || request.title, request);
+        request = makeTblRequest(request.id, reqTitle || request.title, request, params);
         if (isFunction(action)) {
             return action(request);
         } else if (action === TABLE_SEARCH) {
