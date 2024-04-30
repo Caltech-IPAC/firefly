@@ -3,6 +3,7 @@
  */
 
 import {isEmpty, isString} from 'lodash';
+import {getHttpErrorMessage} from '../../util/HttpErrorMessage.js';
 import {CoordinateSys} from '../CoordSys.js';
 import ImagePlotCntlr, {
     dispatchChangeCenterOfProjection,
@@ -275,7 +276,7 @@ async function makeHiPSPlot(rawAction, dispatcher) {
         dispatcher( { type: ImagePlotCntlr.PLOT_HIPS, payload: {...newPayload, plot,pvNewPlotInfoAry }});
     } catch (error) {
         const status= propertiesUrlForError ? getStatusFromFetchError(error.message) : 0;
-        const msg= status ? `status: ${status}, url: ${propertiesUrlForError}` : error.message;
+        const msg= status ? `status: ${status} (${getHttpErrorMessage(status)}), url: ${propertiesUrlForError}` : error.message;
         hipsFail(msg);
     }
 }

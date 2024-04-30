@@ -4,7 +4,7 @@
 
 import {Box, Divider, Stack} from '@mui/joy';
 import React, {memo, useContext, useEffect} from 'react';
-import PropTypes, {arrayOf, object, bool, number, string, shape} from 'prop-types';
+import PropTypes, {arrayOf, object, bool, string, shape} from 'prop-types';
 import {ConnectionCtx} from './ConnectionCtx.js';
 import {parseTarget} from './TargetPanelWorker.js';
 import {formatPosForTextField, formatTargetForHelp} from './PositionFieldDef.js';

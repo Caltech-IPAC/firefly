@@ -1163,3 +1163,14 @@ function* getHiPSPlotId() {
 const nextHipsId = getHiPSPlotId();
 
 export const getNextHiPSPlotId = () => nextHipsId.next().value;
+
+/**
+ * return true if the plotview can be converted between HiPS and FITS
+ * @param {PlotView} pv
+ * @return {boolean}
+ */
+export function canConvertBetweenHipsAndFits(pv) {
+    if (!pv?.plotViewCtx?.hipsImageConversion) return false;
+    const {hipsRequestRoot, imageRequestRoot} = pv.plotViewCtx.hipsImageConversion;
+    return Boolean(hipsRequestRoot && imageRequestRoot);
+}

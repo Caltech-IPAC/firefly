@@ -13,9 +13,11 @@ import {EXPANDED_MODE_RESERVED, getMultiViewRoot, getViewer, GRID, IMAGE} from '
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView, MOUSE_CLICK_REASON} from '../ImagePlotCntlr.js';
 import {ExpandButton} from '../ui/Buttons.jsx';
-import {VisCtxToolbarView, canConvertHipsAndFits, ctxToolbarBG} from '../ui/VisCtxToolbarView';
+import {VisCtxToolbarView, ctxToolbarBG} from '../ui/VisCtxToolbarView';
 import {VisInlineToolbarView} from '../ui/VisInlineToolbarView.jsx';
-import { primePlot, isActivePlotView, getAllDrawLayersForPlot, getPlotViewById} from '../PlotViewUtil.js';
+import {
+    primePlot, isActivePlotView, getAllDrawLayersForPlot, getPlotViewById, canConvertBetweenHipsAndFits
+} from '../PlotViewUtil.js';
 import {ImageViewerLayout}  from '../ImageViewerLayout.jsx';
 import {isImage, isHiPS} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
@@ -116,7 +118,7 @@ function contextToolbar(plotView,dlAry,extensionList, width, makeToolbar) {
     if (!plot) return;
 
     const showMultiImageController= isImage(plot) ? plotView.plots.length>1 : plot.cubeDepth>1;
-    const hipsFits= canConvertHipsAndFits(plotView);
+    const hipsFits= canConvertBetweenHipsAndFits(plotView);
 
     if (plot.attributes[PlotAttribute.SELECTION]) {
         const select= showSelect(plotView,dlAry);

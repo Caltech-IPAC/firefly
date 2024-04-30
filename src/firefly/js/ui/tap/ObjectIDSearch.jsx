@@ -1,4 +1,4 @@
-import {Box, Chip, Link, Stack, Typography} from '@mui/joy';
+import {Box, Chip, Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 import {ConstraintContext} from 'firefly/ui/tap/Constraints';
@@ -9,9 +9,7 @@ import {
     makeFieldErrorList,
     makePanelStatusUpdater
 } from 'firefly/ui/tap/TableSearchHelpers';
-import {
-    ADQL_LINE_LENGTH, getAsEntryForTableName, makeUploadSchema, maybeQuote, tapHelpId
-} from 'firefly/ui/tap/TapUtil';
+import { ADQL_LINE_LENGTH, getAsEntryForTableName, makeUploadSchema, tapHelpId } from 'firefly/ui/tap/TapUtil';
 import PropTypes from 'prop-types';
 import {TextButton} from 'firefly/visualize/ui/Buttons.jsx';
 import {showUploadTableChooser} from 'firefly/ui/UploadTableChooser';
@@ -25,6 +23,8 @@ import {FilterInfo} from 'firefly/tables/FilterInfo';
 import {dispatchTableFilter} from 'firefly/tables/TablesCntlr';
 import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
+import {InputAreaFieldConnected} from '../InputAreaField.jsx';
+import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
 
 const UploadObjectIDColumn = 'uploadObjectIDColumn';
 const ObjectIDColumn = 'objectIDColumn';
@@ -41,17 +41,26 @@ const SELECT_IN_TOOLTIP=(
         </Typography>
 );
 const panelPrefix = getPanelPrefix(panelValue);
+const ENTRY_TYPE='entryType';
+const OBJ_ID_ENTRY='objIdEntry';
+const ENTER= 'enter';
+const UPLOAD= 'upload';
+const objIdEntryType = [
+    {label: 'Enter list of object IDs', value: ENTER}, {label: 'Load object IDs from a table', value: UPLOAD}
+];
 
 const checkHeaderCtl= makeCollapsibleCheckHeader(getPanelPrefix(panelValue));
 const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 
-const fldListAry= [UploadObjectIDColumn, ObjectIDColumn];
+const fldListAry= [UploadObjectIDColumn, ObjectIDColumn, OBJ_ID_ENTRY,ENTRY_TYPE];
 let savedFileName;
 
 export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
     const [getUploadInfo, setUploadInfo]=  useFieldGroupValue('uploadInfoObjectID');
     const [getSelectInObjList, setSelectInObjList]=  useFieldGroupValue('selectInObjList');
     const [getUseSelectIn, setUseSelectIn]=  useFieldGroupValue('useSelectIn');
+    const entryType=  useFieldGroupValue(ENTRY_TYPE)[0]();
+    const objIdEntry=  useFieldGroupValue(OBJ_ID_ENTRY)[0]();
     const [working,setWorking]= useState(false);
     const {setConstraintFragment}= useContext(ConstraintContext);
     const {canUpload=false}= capabilities ?? {};
@@ -68,10 +77,10 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
 
     const updatePanelStatus= makePanelStatusUpdater(checkHeaderCtl.isPanelActive(), 'ObjectID');
 
-    useFieldGroupWatch([UploadObjectIDColumn, ObjectIDColumn],
-        ([uploadCol,selectedTableCol],isInit) => {
+    useFieldGroupWatch([UploadObjectIDColumn, OBJ_ID_ENTRY],
+        ([uploadCol,objIdEntry],isInit) => {
             if (isInit) return;
-            if (uploadCol||selectedTableCol) checkHeaderCtl.setPanelActive(true);
+            if (uploadCol||objIdEntry) checkHeaderCtl.setPanelActive(true);
         }
     );
 
@@ -88,6 +97,12 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
     }, [uploadInfo]);
 
     useEffect(() => {
+        if (entryType===UPLOAD) return;
+        const ids= objIdEntry?.split(/[,;\s]/).map( (id) => id.trim()).filter( (id) => id);
+        setSelectInObjList(ids?.length ? ids : undefined);
+    }, [entryType,objIdEntry]);
+
+    useEffect(() => {
         const errMsg= 'Object ID searches require identifying a table column containing an Object ID.  Please provide a column name.';
         const prevObjectIDcol = getVal(ObjectIDColumn);
         let prevObjectColExists = false;
@@ -101,7 +116,7 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
 
     useEffect(() => {
         const constraints= makeObjectIDConstraints(makeFldObj(fldListAry), uploadInfo, tableName, canUpload,
-            getUseSelectIn()==='use',getSelectInObjList());
+            getSelectInObjList(), getUseSelectIn()==='use');
         updatePanelStatus(constraints, constraintResult, setConstraintResult);
     });
 
@@ -116,7 +131,18 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
             <Stack {...{mt: 1/2, spacing:1}}>
                 <Typography level='body-xs'>Performs an exact match on the ID(s) provided, not a spatial search in the neighborhood of the designated objects.</Typography>
                 {!canUpload && <Typography level='body-xs'>This search uses "Select IN" style SQL as this service does not support uploads.</Typography>}
-                <UploadTableSelectorObjectID {...{uploadInfo,setUploadInfo, setSelectInObjList, getUseSelectIn, setWorking}}/>
+                <RadioGroupInputField {...{
+                    fieldKey:ENTRY_TYPE, options:objIdEntryType, initialState:{value: 'enter'},
+                    orientation:'horizontal', tooltip:`Enter object ID's as list or load from a table`,// eslint-disable-line  quotes
+                }} />
+
+                {entryType===ENTER ?
+                    <InputAreaFieldConnected {...{ fieldKey:OBJ_ID_ENTRY, placeholderHighlight: true,
+                        placeholder:`Enter one or more object id's separated by commas, semi-colon or space`, // eslint-disable-line  quotes
+                    }}/> :
+                    <UploadTableSelectorObjectID {...{uploadInfo,setUploadInfo, setSelectInObjList,
+                        getUseSelectIn, setWorking}}/>
+                }
                 <ObjectIDCol {...{
                     objectCol: getVal(ObjectIDColumn), cols,
                     headerTitle: 'Object ID (from table):', openKey: posOpenKey,
@@ -128,7 +154,7 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
                     clickingSelectCols,
                     setClickingSelectCols
                 }} />
-                {canUpload && <CheckboxGroupInputField
+                {canUpload && entryType===UPLOAD && <CheckboxGroupInputField
                     fieldKey='useSelectIn' alignment='horizontal' initialState={{ value: canUpload ? '' : 'use' }}
                     tooltip={SELECT_IN_TOOLTIP}
                     options={[{label:'Use "select IN" style SQL instead of TAP Upload', value:'use'}]}
@@ -374,20 +400,28 @@ export function makeColsLines(objAry) {
 
 
 
-function makeObjectIDConstraints(fldObj, uploadInfo, tableName, canUpload, useSelectIn, selectInObjList) {
+function makeObjectIDConstraints(fldObj, uploadInfo, tableName, canUpload, selectInObjList, useSelectIn) {
     const {fileName,serverFile, columns:uploadColumns, totalRows, fileSize}= uploadInfo ?? {};
-    const {[UploadObjectIDColumn]:uploadObjectIDCol, [ObjectIDColumn]:objectIDCol }= fldObj;
+    const { [UploadObjectIDColumn]:uploadObjectIDCol, [ObjectIDColumn]:objectIDCol, [ENTRY_TYPE]:entryType }= fldObj;
     const errList= makeFieldErrorList();
     let adqlConstraint;
     const uploadedObjectID = uploadObjectIDCol?.value;
     const objectID = objectIDCol?.value;
-    errList.checkForError(uploadObjectIDCol);
-    errList.checkForError(objectIDCol);
-    if (!uploadedObjectID && !objectID) errList.addError('The Uploaded Table and Selected Table Object IDs are not set.');
-    else if (!uploadedObjectID) errList.addError('Uploaded Table Object ID is not set');
-    else if (!objectID) errList.addError('Selected Table (on the right) Object ID is not set');
+    const type= entryType?.value;
 
-    if (useSelectIn && selectInObjList?.length) {
+    if (type===UPLOAD) {
+        errList.checkForError(uploadObjectIDCol);
+        errList.checkForError(objectIDCol);
+        if (!uploadedObjectID && !objectID) errList.addError('The Uploaded Table and Selected Table Object IDs are not set.');
+        else if (!uploadedObjectID) errList.addError('Uploaded Table Object ID is not set');
+        else if (!objectID) errList.addError('Selected Table (on the right) Object ID is not set');
+    }
+    else {
+        if (!objectID) errList.addError('Selected Table (on the right) Object ID is not set');
+        else if (!selectInObjList?.length) errList.addError(`Object id's are not set`);// eslint-disable-line  quotes
+    }
+
+    if ( (useSelectIn || type===ENTER) && selectInObjList?.length) {
         const str= makeColsLines(selectInObjList);
         adqlConstraint = `${objectID} IN (${str})`;
     }
@@ -402,7 +436,7 @@ function makeObjectIDConstraints(fldObj, uploadInfo, tableName, canUpload, useSe
         adqlConstraintsAry: adqlConstraint ? [adqlConstraint] : [],
         siaConstraints: [],
         siaConstraintErrors: [],
-        TAP_UPLOAD: useSelectIn ? undefined : makeUploadSchema(fileName, serverFile, uploadColumns, totalRows, fileSize),
+        TAP_UPLOAD: (useSelectIn || type===ENTER) ? undefined : makeUploadSchema(fileName, serverFile, uploadColumns, totalRows, fileSize),
         uploadFile: fileName
     };
 }

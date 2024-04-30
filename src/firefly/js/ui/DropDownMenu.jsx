@@ -57,7 +57,7 @@ export function DropDownMenu({children, sx, color='neutral', variant='outline', 
                     p:.5,
                     ...bRadius,
                     boxShadow: `${shadow} ${theme.vars.palette.primary.softActiveColor}`,
-                    ...sx,
+                    ...(isFunction(sx) ? sx(theme) : sx),
                 };
             }
         }}>

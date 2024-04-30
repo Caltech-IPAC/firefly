@@ -73,7 +73,7 @@ function PopoutMouseReadoutContents({vr,currMouseState, readout, readoutData}) {
 
 
 
-const rS = { width: 295, position: 'relative', p: .5};
+const rS = { width: '23rem', position: 'relative', p: .5};
 
 
 function Readout({readout, readoutData, showHealpixPixel=false, radix}){

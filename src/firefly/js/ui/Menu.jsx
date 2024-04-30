@@ -243,7 +243,7 @@ function MenuTabBar({menuTabItems=[], size, selected, dropDown, displayMask, set
                     boxShadow: 'none', //hide the default underline created by TabList as inset box-shadow
                     paddingBottom:0,
                     height: 1,
-                    transform: 'translate(0px, 2px)', //to overlap banner's bottom border to create bleeding effect; 0.25 * (py of banner)
+                    transform: 'translate(0px, 1px)', //to overlap banner's bottom border to create bleeding effect; 0.25 * (py of banner)
                     [`& .${tabClasses.root}`]: {
                         ...tabDivider(size),
                         '&[aria-selected="true"]': { // apply to selected tab

@@ -26,15 +26,13 @@ import {darker} from '../../util/Color';
 import {logger} from '../../util/Logger.js';
 import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
 import {
-    findTableCenterColumns,
-    findTableRegionColumn, hasCoverageData, isCatalog, isOrbitalPathTable, isTableWithRegion
+    findTableCenterColumns, findTableRegionColumn, hasCoverageData, isOrbitalPathTable, isTableWithRegion
 } from '../../voAnalyzer/TableAnalysis.js';
 import {getNextColor} from '../draw/DrawingDef.js';
 import {DrawSymbol} from '../draw/DrawSymbol.js';
 import {
-    dispatchAttachLayerToPlot, dispatchChangeDrawingDef, dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
-    dispatchModifyCustomField, dlRoot,
-    getDlAry
+    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
+    dispatchModifyCustomField, dlRoot, getDlAry
 } from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {
     dispatchDeletePlotView, dispatchPlotHiPS, dispatchPlotImageOrHiPS, visRoot

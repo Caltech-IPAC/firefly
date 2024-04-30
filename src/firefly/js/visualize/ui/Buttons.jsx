@@ -138,7 +138,7 @@ export const ExtractLine= (props) => (
 
 export const SearchDetailButton= (props) => (
     <DropDownToolbarButton {...{ icon: <BiotechOutlinedIcon/>, iconButtonSize:'44px', useDropDownIndicator: true,
-        dropPosition: {left: -1, bottom: 0}, ...props
+        dropPosition: {left: 2, bottom: 0}, ...props
     }}/>);
 
 export const ToolsDropDown= (props) => (

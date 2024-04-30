@@ -64,6 +64,7 @@ InputAreaFieldView.propTypes= {
     maxRows: PropTypes.number,
     placeholder: PropTypes.string,
     connectedMarker: bool,
+    placeholderHighlight: bool,
     orientation: PropTypes.string,
     slotProps: shape({
         control: object,

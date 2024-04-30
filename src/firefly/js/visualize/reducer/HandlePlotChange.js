@@ -29,7 +29,7 @@ import Point, {parseAnyPt, makeImagePt, makeWorldPt, makeDevicePt} from '../Poin
 import {UserZoomTypes} from '../ZoomUtil.js';
 import PlotState, {RotateType} from '../PlotState.js';
 import {updateTransform} from '../PlotTransformUtils.js';
-import {WebPlotRequest} from '../WebPlotRequest.js';
+import {WebPlotRequest, WPConst} from '../WebPlotRequest.js';
 import {logger} from '../../util/Logger.js';
 
 const isFitFill= (userZoomType) =>  (userZoomType===UserZoomTypes.FIT || userZoomType===UserZoomTypes.FILL);
@@ -367,7 +367,11 @@ function changeHiPS(state,action) {
 
     if (hipsProperties || hipsUrlRoot || !isUndefined(cubeIdx)) {
         plot.plotImageId= `${pv.plotId}--${pv.plotViewCtx.plotCounter}`;
-        plotViewCtx= {...plotViewCtx, plotCounter:plotViewCtx.plotCounter+1};
+        const hipsImageConversion=(hipsUrlRoot && plotViewCtx.hipsImageConversion) ?
+            {...plotViewCtx.hipsImageConversion,
+                hipsRequestRoot: plotViewCtx.hipsImageConversion.hipsRequestRoot?.makeCopy({[WPConst.HIPS_ROOT_URL]:hipsUrlRoot})} :
+            plotViewCtx.hipsImageConversion;
+        plotViewCtx= {...plotViewCtx, plotCounter:plotViewCtx.plotCounter+1, hipsImageConversion};
     }
 
     pv= replacePrimaryPlot(pv, plot);
