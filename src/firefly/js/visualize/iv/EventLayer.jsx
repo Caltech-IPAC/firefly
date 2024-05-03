@@ -76,7 +76,7 @@ export const EventLayer = memo( ({transform,plotId, eventCallback}) => {
 
     const onMouseDown= (ev) => {
         eRef.mouseDown= true;
-        fireEvent(ev,transform,plotId,MouseState.DOWN, eventCallback);
+        fireEvent(ev,transform,plotId,MouseState.DOWN, eventCallback,true,false);
         addDocListeners(eRef,onDocumentMouseMove,onDocumentMouseUp);
     };
 
@@ -86,7 +86,7 @@ export const EventLayer = memo( ({transform,plotId, eventCallback}) => {
 
     const onTouchCancel= (ev) => {
         eRef.mouseDown= false;
-        fireEvent(ev,transform,plotId,MouseState.UP, eventCallback);
+        fireEvent(ev,transform,plotId,MouseState.UP, eventCallback,true,false);
     };
 
     const onTouchEnd= (ev) => {
@@ -98,7 +98,7 @@ export const EventLayer = memo( ({transform,plotId, eventCallback}) => {
 
     const onTouchStart= (ev) => {
         eRef.mouseDown= true;
-        fireEvent(ev,transform,plotId,MouseState.DOWN, eventCallback);
+        fireEvent(ev,transform,plotId,MouseState.DOWN, eventCallback,true,false);
     };
 
     const onWheel= (ev) => {

@@ -225,7 +225,9 @@ function TbCheckBox({hasCheckBox, CheckboxOnIcon, CheckboxOffIcon, checkBoxOn, o
                 {checkBoxOn ? CheckboxOnIcon : CheckboxOffIcon}
             </Box>);
     }
-    return <Checkbox {...{variant:'plain', checked:checkBoxOn, onClick}}/>;
+    return (<Checkbox {...{variant:'plain', checked:checkBoxOn, onClick,
+        sx:{ '.MuiCheckbox-checkbox': { background:'transparent' } }
+    }}/>);
 }
 
 function makeBorder(active,theme,color) {
