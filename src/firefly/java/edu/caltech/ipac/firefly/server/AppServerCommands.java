@@ -42,12 +42,17 @@ public class AppServerCommands {
     public static class JsonProperty extends ServCommand {
         static final String INVENTORY_PROP = "inventory.serverURLAry";
         static final String FIREFLY_OPTIONS = "FIREFLY_OPTIONS";
+        static final String IRSA_REGION_URL = "irsa.regionURL";
+        static final String IRSA_MER_URL = "irsa.merURL";
+
         static final Map<String, String> map = new HashMap<>();
         static final List<String> validatedList = new ArrayList<>();
 
         static {
             map.put(FIREFLY_OPTIONS, getAppOptions());
             map.put(INVENTORY_PROP, AppProperties.getProperty(INVENTORY_PROP, "[]"));
+            map.put(IRSA_REGION_URL, AppProperties.getProperty(IRSA_REGION_URL, "[]"));
+            map.put(IRSA_MER_URL, AppProperties.getProperty(IRSA_MER_URL, "[]"));
             validateAll();
         }
 
