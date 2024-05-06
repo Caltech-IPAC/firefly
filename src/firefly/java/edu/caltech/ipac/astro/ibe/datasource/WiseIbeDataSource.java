@@ -473,25 +473,25 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
             String frameOp = queryInfo.get("frameOp");
             if (!StringUtils.isEmpty(frameOp)) {
                 String frameConstraint = "frame_num";
-                if (frameOp.equals("eq")) {
+                if (frameOp.equals("=")) {
                     String frameVal1 = queryInfo.get("frameVal1");
                     if (!StringUtils.isEmpty(frameVal1)) {
                         frameConstraint += "=" + frameVal1.trim();
                     }
 
-                } else if (frameOp.equals("gt")) {
+                } else if (frameOp.equals(">")) {
                     String frameVal1 = queryInfo.get("frameVal1");
                     if (!StringUtils.isEmpty(frameVal1)) {
                         frameConstraint += ">" + frameVal1.trim();
                     }
 
-                } else if (frameOp.equals("lt")) {
+                } else if (frameOp.equals("<")) {
                     String frameVal1 = queryInfo.get("frameVal1");
                     if (!StringUtils.isEmpty(frameVal1)) {
                         frameConstraint += "<" + frameVal1.trim();
                     }
 
-                } else if (frameOp.equals("in")) {
+                } else if (frameOp.equals("IN")) {
                     String frameVal3 = queryInfo.get("frameVal3");
                     if (!StringUtils.isEmpty(frameVal3)) {
                         String[] frameArray = frameVal3.split("[,; ]+");
@@ -516,7 +516,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
                         }
                     }
 
-                } else if (frameOp.equals("be")) {
+                } else if (frameOp.equals("BETWEEN")) {
                     String frameVal1 = queryInfo.get("frameVal1");
                     String frameVal2 = queryInfo.get("frameVal2");
                     if (!StringUtils.isEmpty(frameVal1) && StringUtils.isEmpty(frameVal2)) {
