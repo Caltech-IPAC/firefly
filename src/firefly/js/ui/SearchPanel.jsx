@@ -40,7 +40,7 @@ export function SearchPanel({style={}, initArgs={}}) {
         return (
             <Stack id='search-vertical' flexGrow={1}>
                 {title && <h2 style={{textAlign: 'center'}}>{title}</h2>}
-                <SearchForm style={{height: 'auto'}} searchItem={searchItem} initArgs={initArgs}/>
+                <SearchForm height='auto' searchItem={searchItem} initArgs={initArgs}/>
             </Stack>
         );
     }
@@ -142,7 +142,7 @@ export function executeOK(clickFunc,initArgs,searchItem) {
 }
 
 
-function SearchForm({searchItem, style, initArgs}) {
+function SearchForm({searchItem, initArgs, ...props}) {
     const {name, form} = searchItem;
     const {render:Render, useFormPanel:useFormPanel=true, title, action, params, ...formProps} = form;
 
@@ -160,20 +160,23 @@ function SearchForm({searchItem, style, initArgs}) {
     };
 
     const defProps = {
-        flexGrow:1,
-        sx:style,
+        flexGrow: 1,
         cancelText: '',
         slotProps: {
+            input: {position:'relative'},
             completeBtn: {
                 getDoOnClickFunc: (clickFunc) => executeOK(clickFunc,initArgs,searchItem),       // this is a bit awkward
             },
-        }
+        },
+        ...props
     };
 
     return (
         useFormPanel ? (
             <FormPanel groupKey={name} onSuccess={onSuccess} {...defaultsDeep(formProps, defProps)}>
-                <Render {...{searchItem, initArgs}} />
+                <Stack position='absolute' sx={{inset:0}} overflow='auto'>
+                    <Render {...{searchItem, initArgs}} />
+                </Stack>
             </FormPanel>
         ) : (
             <Render {...{searchItem, initArgs}} />
