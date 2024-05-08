@@ -60,12 +60,16 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
                 }
             }
             else if (UserTargetWorldPt) {
-                wp = parseWorldPt(UserTargetWorldPt);
+                const ra_in= getCellValue(table,row,'ra_in');
+                const dec_in= getCellValue(table,row,'dec_in');
                 // cutout is requested when in_ra, in_dec, and subsize are set (see WiseIbeDataSource)
-                req.setParam('center', `${wp.getLon()},${wp.getLat()}`); // degrees assumed if no unit
-                req.setParam('in_ra', `${wp.getLon()}`);
-                req.setParam('in_dec', `${wp.getLat()}`);
-                setSubSize();
+                if (ra_in && dec_in) {
+                    wp = makeWorldPt(ra_in, dec_in, CoordinateSys.EQ_J2000);
+                    req.setParam('center', `${wp.getLon()},${wp.getLat()}`);
+                    req.setParam('in_ra', `${wp.getLon()}`);
+                    req.setParam('in_dec', `${wp.getLat()}`);
+                    setSubSize();
+                }
             }
             wp && req.setOverlayPosition(wp);
         }
