@@ -113,6 +113,7 @@ const initState= () =>
             imageMouseReadout1:'eqj2000hms',
             imageMouseReadout2: 'fitsIP',
             imageMouseNoncelestialReadout1: 'wcsCoords',
+            imageMouseNoncelestialReadout2: 'fitsIP',
             pixelSize: 'pixelSize',
             hipsMouseReadout1:'eqj2000hms',
             hipsMouseReadout2:'galactic',

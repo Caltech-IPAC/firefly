@@ -55,7 +55,8 @@ const groupKeys={
 	imageMouseReadout1:'COORDINATE_OPTION_FORM',
 	imageMouseNoncelestialReadout1:'COORDINATE_OPTION_FORM',
 	imageMouseReadout2:'COORDINATE_OPTION_FORM',
-    hipsMouseReadout1:'COORDINATE_OPTION_FORM',
+	imageMouseNoncelestialReadout2:'COORDINATE_OPTION_FORM',
+	hipsMouseReadout1:'COORDINATE_OPTION_FORM',
     hipsMouseReadout2:'COORDINATE_OPTION_FORM',
 	pixelSize: 'PIXEL_OPTION_FORM'
 };

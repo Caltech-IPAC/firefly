@@ -42,8 +42,8 @@ const coordOpTitle= 'Choose readout coordinates';
 export function getNonFluxDisplayElements(readoutData, readoutPref, isHiPS= false) {
     const objList= getNonFluxReadoutElements(readoutData,  readoutPref, isHiPS);
 
-    const {imageMouseReadout1, imageMouseReadout2, imageMouseNoncelestialReadout1, hipsMouseReadout1,
-                     hipsMouseReadout2, pixelSize, healpixPixel, healpixNorder, wl} = objList;
+    const {imageMouseReadout1, imageMouseReadout2, imageMouseNoncelestialReadout1, imageMouseNoncelestialReadout2,
+        hipsMouseReadout1, hipsMouseReadout2, pixelSize, healpixPixel, healpixNorder, wl} = objList;
 
 
     let readout1, readout2, healpixPixelReadout, healpixNorderReadout, waveLength;
@@ -80,12 +80,12 @@ export function getNonFluxDisplayElements(readoutData, readoutPref, isHiPS= fals
             readout1 = {...imageMouseNoncelestialReadout1, label: label1 || labelMap[readoutPref.imageMouseNoncelestialReadout1]};
 
             let label2 = undefined;
-            if (readoutPref.imageMouseReadout2 === 'wcsCoords') {
+            if (readoutPref.imageMouseNoncelestialReadout2 === 'wcsCoords') {
                 label2 = wcsCoordLabel;
             }
-            readout2= {...imageMouseReadout2, label: label2 || labelMap[readoutPref.imageMouseReadout2]};
+            readout2= {...imageMouseNoncelestialReadout2, label: label2 || labelMap[readoutPref.imageMouseNoncelestialReadout2]};
             showReadout1PrefChange= () => showMouseReadoutOptionDialog('imageMouseNoncelestialReadout1', readoutPref.imageMouseNoncelestialReadout1, coordOpTitle, wcsCoordOptionTitle);
-            showReadout2PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout2', readoutPref.imageMouseReadout2, coordOpTitle, wcsCoordOptionTitle);
+            showReadout2PrefChange= () => showMouseReadoutOptionDialog('imageMouseNoncelestialReadout2', readoutPref.imageMouseNoncelestialReadout2, coordOpTitle, wcsCoordOptionTitle);
         }
 
 
