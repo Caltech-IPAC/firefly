@@ -99,12 +99,15 @@ export function getPlotGroupIdxById(ref,plotGroupId) {
 
 /**
  * @param {PlotView[]|PlotView|VisRoot|CysConverter|WebPlot} ref this can be the visRoot or the plotViewAry, or a plotView Object.
- * @return {boolean} true if there is a projection
+ * @param {Boolean} includeNoncelestial if True include non-celestial coordinate systems into consideration
+ * @return {boolean} true if there is a projection for recognized celestial system by default or,
+ *  if unrecognizedCelestial is true, for any coordinate system with recognized projection algorithm.
  */
-export function hasWCSProjection(ref) {
+export function hasWCSProjection(ref, includeNoncelestial=false) {
     if (!ref) return false;
     const projection= ref.projection ?? primePlot(ref)?.projection;
-    return Boolean(projection?.isSpecified() && projection?.isImplemented());
+    const hasProjection = Boolean(projection?.isSpecified() && projection?.isImplemented());
+    return hasProjection && projection?.coordSys?.isCelestial() || includeNoncelestial;
 }
 
 /**
@@ -469,7 +472,7 @@ export function matchPlotViewByPositionGroup(vr, sourcePv, plotViewAry, matchAny
 
 /**
  * perform an operation on a plotView or its related group depending on the lock state.
- * Typically used inside of reducer
+ * Typically, used inside of reducer.
  * @param {boolean} toAll
  * @param {Array.<PlotView>} plotViewAry plotViewAry
  * @param {string} plotId the that is primary.

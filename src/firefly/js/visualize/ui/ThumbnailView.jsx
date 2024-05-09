@@ -19,7 +19,7 @@ import {dispatchProcessScroll} from '../ImagePlotCntlr.js';
 import {makeMouseStatePayload,fireMouseCtxChange} from '../VisMouseSync.js';
 import {makeTransform,makeThumbnailTransformCSS} from '../PlotTransformUtils.js';
 import {findScrollPtToCenterImagePt} from '../reducer/PlotView.js';
-import {getPixScaleDeg, isHiPS} from '../WebPlot.js';
+import {getPixScaleDeg, isCelestialImage, isHiPS} from '../WebPlot.js';
 import {getEntry} from '../rawData/RawDataCache.js';
 import {SimpleCanvas} from '../draw/SimpleCanvas.jsx';
 
@@ -182,6 +182,19 @@ function makeDrawing(pv,width,height) {
     const wptC= getCenterPtOfPlot(plot);
     if (!wptC) return null;
 
+    const fp= getScrollBoxInfo(pv, width, height);
+    const scrollBox= FootprintObj.make([fp]);
+    scrollBox.renderOptions= {
+        shadow: {blur: 2, color: 'white', offX: 1, offY: 1}
+    };
+    scrollBox.style= Style.LIGHT;
+    scrollBox.color= COLOR_DRAW_2;
+
+    if (!isCelestialImage(plot)) {
+        return [undefined, undefined, scrollBox];
+    }
+
+    // E and N arrows
     const arrowLength= (Math.min(width,70)+Math.min(height,70))/3;
     const thumbZoomFact= getThumbZoomFact(plot,width,height);
     const cdelt1 = getPixScaleDeg(plot);
@@ -239,13 +252,5 @@ function makeDrawing(pv,width,height) {
     dataN.color= COLOR_DRAW_1;
     dataE.color= COLOR_DRAW_1;
 
-
-    const fp= getScrollBoxInfo(pv, width, height);
-    const scrollBox= FootprintObj.make([fp]);
-    scrollBox.renderOptions= {
-        shadow: {blur: 2, color: 'white', offX: 1, offY: 1}
-    };
-    scrollBox.style= Style.LIGHT;
-    scrollBox.color= COLOR_DRAW_2;
     return [dataN,dataE,scrollBox];
 }

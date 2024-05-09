@@ -5,14 +5,15 @@
 import {fill, isString} from 'lodash';
 import {sprintf} from '../../externalSource/sprintf';
 import {
-    STATUS_NAN, STATUS_UNAVAILABLE, STATUS_UNDEFINED, STATUS_VALUE, TYPE_BASE16, TYPE_BASE_OTHER, TYPE_DECIMAL_INT,
-    TYPE_EMPTY, TYPE_FLOAT
+    STATUS_NAN, STATUS_UNAVAILABLE, STATUS_UNDEFINED, STATUS_VALUE, TYPE_DECIMAL_INT, TYPE_EMPTY, TYPE_FLOAT
 } from '../MouseReadoutCntlr.js';
+import {visRoot} from '../ImagePlotCntlr.js';
+import {isCelestialImage} from '../WebPlot.js';
 import VisUtil from '../VisUtil.js';
 import CoordUtil from '../CoordUtil.js';
 import CoordinateSys from '../CoordSys.js';
 import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
-import {getFormattedWaveLengthUnits} from '../PlotViewUtil';
+import {getFormattedWaveLengthUnits, primePlot} from '../PlotViewUtil';
 import {showInfoPopup} from '../../ui/PopupUtil';
 
 
@@ -26,6 +27,7 @@ const labelMap = {
     eclB1950: 'ECL-B1950:',
     galactic: 'Gal:',
     eqb1950: 'Eq-B1950:',
+    wcsCoords: 'WCS-Coords:',
     fitsIP: 'Image Pixel:',
     zeroIP: '0 Based Pix:',
     pixelSize: 'Pixel Size:',
@@ -37,11 +39,11 @@ const labelMap = {
 
 const coordOpTitle= 'Choose readout coordinates';
 
-export function getNonFluxDisplayElements(readoutItems, readoutPref, isHiPS= false) {
-    const objList= getNonFluxReadoutElements(readoutItems,  readoutPref, isHiPS);
+export function getNonFluxDisplayElements(readoutData, readoutPref, isHiPS= false) {
+    const objList= getNonFluxReadoutElements(readoutData,  readoutPref, isHiPS);
 
-    const {imageMouseReadout1, imageMouseReadout2, hipsMouseReadout1,
-                     hipsMouseReadout2, pixelSize, healpixPixel, healpixNorder, wl} = objList;
+    const {imageMouseReadout1, imageMouseReadout2, imageMouseNoncelestialReadout1, imageMouseNoncelestialReadout2,
+        hipsMouseReadout1, hipsMouseReadout2, pixelSize, healpixPixel, healpixNorder, wl} = objList;
 
 
     let readout1, readout2, healpixPixelReadout, healpixNorderReadout, waveLength;
@@ -56,14 +58,41 @@ export function getNonFluxDisplayElements(readoutItems, readoutPref, isHiPS= fal
         healpixNorderReadout= {...healpixNorder, label: labelMap.healpixNorder};
     }
     else {
-        readout1= {...imageMouseReadout1, label: labelMap[readoutPref.imageMouseReadout1]};
-        readout2= {...imageMouseReadout2, label: labelMap[readoutPref.imageMouseReadout2]};
+        const readoutItems = readoutData.readoutItems;
+
+        // outside image use active plot (plotId=undefined)
+        const csys = readoutItems.worldPt?.value?.cSys;
+        const plotId = csys ? readoutData.plotId : undefined;
+        const isCelestial = isCelestialImage(primePlot(visRoot(), plotId));
+
+        if (isCelestial) {
+            readout1 = {...imageMouseReadout1, label: labelMap[readoutPref.imageMouseReadout1]};
+            readout2= {...imageMouseReadout2, label: labelMap[readoutPref.imageMouseReadout2]};
+            showReadout1PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout1', readoutPref.imageMouseReadout1, coordOpTitle);
+            showReadout2PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout2', readoutPref.imageMouseReadout2, coordOpTitle);
+        } else {
+            const wcsCoordLabel = createWCSCoordsLabel(plotId);
+            const wcsCoordOptionTitle = wcsCoordLabel && wcsCoordLabel.substring(0, wcsCoordLabel.length - 1);
+            let label1 = undefined;
+            if (readoutPref.imageMouseNoncelestialReadout1 === 'wcsCoords') {
+                label1 = wcsCoordLabel;
+            }
+            readout1 = {...imageMouseNoncelestialReadout1, label: label1 || labelMap[readoutPref.imageMouseNoncelestialReadout1]};
+
+            let label2 = undefined;
+            if (readoutPref.imageMouseNoncelestialReadout2 === 'wcsCoords') {
+                label2 = wcsCoordLabel;
+            }
+            readout2= {...imageMouseNoncelestialReadout2, label: label2 || labelMap[readoutPref.imageMouseNoncelestialReadout2]};
+            showReadout1PrefChange= () => showMouseReadoutOptionDialog('imageMouseNoncelestialReadout1', readoutPref.imageMouseNoncelestialReadout1, coordOpTitle, wcsCoordOptionTitle);
+            showReadout2PrefChange= () => showMouseReadoutOptionDialog('imageMouseNoncelestialReadout2', readoutPref.imageMouseNoncelestialReadout2, coordOpTitle, wcsCoordOptionTitle);
+        }
+
+
         if (wl?.value) {
             waveLength= {...wl, label:labelMap.wl};
             showWavelengthFailed= readoutItems.wl.failReason ? () => showInfoPopup(readoutItems.wl.failReason) : undefined;
         }
-        showReadout1PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout1', readoutPref.imageMouseReadout1, coordOpTitle);
-        showReadout2PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout2', readoutPref.imageMouseReadout2, coordOpTitle);
     }
 
     return {
@@ -75,7 +104,10 @@ export function getNonFluxDisplayElements(readoutItems, readoutPref, isHiPS= fal
 }
 
 
-export function getNonFluxReadoutElements(readoutItems, readoutPref, isHiPS= false) {
+export function getNonFluxReadoutElements(readoutData, readoutPref, isHiPS= false) {
+    const readoutItems = readoutData.readoutItems;
+    const plotId = readoutData.plotId;
+
     const keysToUse= Object.keys(readoutPref).filter( (key) =>
         isHiPS ?
             key.startsWith('hips') || !key.startsWith('image') :
@@ -83,7 +115,7 @@ export function getNonFluxReadoutElements(readoutItems, readoutPref, isHiPS= fal
 
     const retList={};
     keysToUse.forEach( (key) =>  {
-        retList[key]=getReadoutElement(readoutItems,  readoutPref[key] );
+        retList[key]=getReadoutElement(readoutItems, readoutPref[key], plotId);
     });
     return retList;
 }
@@ -94,9 +126,10 @@ export function getNonFluxReadoutElements(readoutItems, readoutPref, isHiPS= fal
  * Get the mouse readouts from the standard readout and convert to the values based on the toCoordinaeName
  * @param readoutItems
  * @param readoutKey
+ * @param plotId
  * @returns {*}
  */
-export function getReadoutElement(readoutItems, readoutKey) {
+export function getReadoutElement(readoutItems, readoutKey, plotId) {
 
     if (!readoutItems) return {value:''};
 
@@ -120,6 +153,10 @@ export function getReadoutElement(readoutItems, readoutKey) {
             return makeCoordReturn(wp, CoordinateSys.ECL_J2000, false);
         case 'eclB1950' :
             return makeCoordReturn(wp, CoordinateSys.ECL_B1950, false);
+        case 'wcsCoords' :
+            const plot = primePlot(visRoot(), plotId);
+            const unit = plot?.projection?.header?.cunit1 || '';
+            return {value:makeNoncelestialCoordReturn(wp, unit)};
         case 'fitsIP' :
             return {value:makeImagePtReturn(readoutItems?.fitsImagePt?.value)};
         case 'zeroIP' :
@@ -139,6 +176,23 @@ export function getReadoutElement(readoutItems, readoutKey) {
     return {value:''};
 }
 
+/**
+ * Label for non-celestial coordinates readout item.
+ * @param plotId
+ */
+function createWCSCoordsLabel(plotId) {
+    const plot = primePlot(visRoot(), plotId);
+    const header = plot?.projection?.header;
+    if (!header) return undefined;
+
+    const {ctype1, ctype2} = header;
+
+    if (ctype1 && ctype2) {
+        // CTYPE=LINEAR is a special case
+        if (ctype1 !== 'LINEAR') return ctype1?.split('-')?.[0] + ', ' + ctype2?.split('-')?.[0] + ':';
+    }
+    return undefined;
+}
 
 function getFluxValueByType(readoutType,radix,valueBase10,valueBase16,unit,label,precision) {
     const is16= radix===16;
@@ -213,7 +267,11 @@ function makeCoordReturn(wp, toCsys, hms= false) {
         str=  sprintf('%.7f, %.7f',p.getLon(), p.getLat());
     }
     return {value:str, copyValue:`${str} ${toCsys.toString()}`};
+}
 
+function makeNoncelestialCoordReturn(wp, unit = '') {
+    if (!wp) return '';
+    return sprintf('%.7f, %.7f %s', wp.getLon(), wp.getLat(), unit);
 }
 
 function makeImagePtReturn(imagePt) {

@@ -14,14 +14,14 @@ import {callGetFileFlux} from '../../rpc/PlotServicesJson.js';
 import {Band} from '../Band.js';
 import {MouseState} from '../VisMouseSync.js';
 import {CysConverter} from '../CsysConverter.js';
-import {getPixScaleArcSec, getScreenPixScaleArcSec, isImage, isHiPS, getFluxUnits} from '../WebPlot.js';
+import {getPixScale, getScreenPixScale, getScreenPixScaleArcSec, isImage, isHiPS, getFluxUnits} from '../WebPlot.js';
 import {getPlotTilePixelAngSize} from '../HiPSUtil.js';
 import {mouseUpdatePromise, fireMouseReadoutChange} from '../VisMouseSync';
 import {
     primePlot, getPlotStateAry, getPlotViewById, getImageCubeIdx, getPtWavelength,
     getWavelengthParseFailReason, getWaveLengthUnits, hasPixelLevelWLInfo, hasPlaneOnlyWLInfo,
     isImageCube, wavelengthInfoParsedSuccessfully, } from '../PlotViewUtil';
-import {getBixPix, getBScale, getNumberHeader, HdrConst} from '../FitsHeaderUtil.js';
+import {getBixPix} from '../FitsHeaderUtil.js';
 
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -408,6 +408,8 @@ function makeWLResult(plot,imagePt= undefined) {
 function makeReadout(plot, worldPt, screenPt, imagePt) {
     const csys= CysConverter.make(plot);
     if (csys.pointInPlot(imagePt)) {
+        const pixScale = getPixScale(plot);
+        const screenPixScale = getScreenPixScale(plot);
         return {
             worldPt: makePointReadoutItem('World Point', worldPt),
             screenPt: makePointReadoutItem('Screen Point', screenPt),
@@ -416,8 +418,8 @@ function makeReadout(plot, worldPt, screenPt, imagePt) {
             fitsImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getFitsStandardImagePtFromInternal(imagePt)),
             zeroBasedImagePt: makePointReadoutItem('FITS Standard Image Point', csys.getZeroBasedImagePtFromInternal(imagePt)),
             title: makeDescriptionItem(plot.title),
-            pixel: makeValueReadoutItem('Pixel Size',getPixScaleArcSec(plot),'arcsec', 3),
-            screenPixel:makeValueReadoutItem('Screen Pixel Size',getScreenPixScaleArcSec(plot),'arcsec', 3),
+            pixel: makeValueReadoutItem('Pixel Size', pixScale.value, pixScale.unit, 3),
+            screenPixel:makeValueReadoutItem('Screen Pixel Size', screenPixScale.value, screenPixScale.unit, 3),
             wl: makeWLResult(plot,imagePt)
         };
     }

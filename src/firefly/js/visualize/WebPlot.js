@@ -250,6 +250,7 @@ const relatedIdRoot= '-Related-';
 
 export const isHiPS= (plot) => Boolean(plot?.plotType==='hips');
 export const isImage= (plot) => Boolean(plot?.plotType==='image');
+export const isCelestialImage= (plot) => isImage(plot) && Boolean(plot?.projection?.coordSys?.isCelestial());
 export const isKnownType= (plot) => Boolean(plot?.plotType==='image' || plot?.plotType==='hips');
 
 /**
@@ -380,7 +381,7 @@ export const WebPlot= {
             wlTableRelatedAry= headerInfo.wlTableRelatedAry;
             wlData= headerInfo.wlData;
         }
-        const projection= makeProjectionNew(processHeader, processHeader.imageCoordSys);
+        let projection= makeProjectionNew(processHeader, processHeader.imageCoordSys);
         const processHeaderAry= !plotState.isThreeColor() ?
                                    [processHeader] :
                                     headerAry.map( (h,idx) => parseSpacialHeaderInfo(h,'',wpInit.zeroHeaderAry[idx]));
@@ -400,8 +401,21 @@ export const WebPlot= {
             wlData= Object.values(allWlMap)[0];
             allWlMap['']= undefined;
         }
+
+        // if main projection is not available, consider an alternate
+        if (!projection.isSpecified() || !projection.isImplemented()) {
+            const sortedAltWCSKeys = Object.keys(allWCSMap).sort();
+            for (const altWCSKey of sortedAltWCSKeys) {
+                const altProjection = allWCSMap[altWCSKey];
+                if (altProjection.isSpecified() && altProjection.isImplemented()) {
+                    projection = altProjection;
+                    break;
+                }
+            }
+        }
         allWCSMap['']= projection;
-        
+
+
         // because of history we keep directFileAccessData in the plot state, however now we compute it on the client
         // also- we need to keep a copy in plotState for backward compatibility and in the plot to put in back in the plotState
         // when a new one is generated
@@ -607,7 +621,11 @@ export const isHiPSAitoff= (plot) => isHiPS(plot) && plot.projection.header.mapt
  */
 function getInitZoomLevel(viewDim,  req, dataWidth, dataHeight, pixelScaleDeg) {
     const {width,height}= viewDim ?? {};
-    const zt= (width && height) ? req.getZoomType() : ZoomType.LEVEL;
+    let zt= (width && height) ? req.getZoomType() : ZoomType.LEVEL;
+    if (zt === ZoomType.ARCSEC_PER_SCREEN_PIX && (!isFinite(pixelScaleDeg) || req.getZoomArcsecPerScreenPix() === 0)) {
+        // we can not support ZoomType.ARCSEC_PER_SCREEN_PIX
+        zt = ZoomType.TO_WIDTH_HEIGHT;
+    }
     switch (zt) {
         case ZoomType.TO_HEIGHT: // this is not implemented, do FULL_SCREEN
         case ZoomType.FULL_SCREEN:
@@ -680,6 +698,24 @@ export const isPlot= (o) => Boolean(o && o.plotType && o.plotId && o.plotImageId
 export const clonePlotWithZoom= (plot,zoomFactor) =>
         plot && {...plot,zoomFactor,screenSize:{width:plot.dataWidth*zoomFactor, height:plot.dataHeight*zoomFactor}};
 
+
+/**
+ * @param {WebPlot} plot
+ * @return {{value: number, unit: string}}
+ */
+export function getScreenPixScale(plot) {
+    const screenPixScaleArcsec = getScreenPixScaleArcSec(plot);
+    if (!Number.isFinite(screenPixScaleArcsec)) {
+        const header = plot?.projection?.header;
+        const pixScale = header?.cdelt1 || 0;
+        const screenPixScale = pixScale / plot.zoomFactor;
+        const unit = header?.cunit1 || '';
+        return {value: screenPixScale, unit};
+    } else {
+        return {value: screenPixScaleArcsec, unit: 'arcsec'};
+    }
+}
+
 export const getScreenPixScaleArcSec= memorizeLastCall((plot) => {
     if (!plot || !plot.projection || !isKnownType(plot)) return 0;
     if (isImage(plot)) {
@@ -697,6 +733,23 @@ export const getScreenPixScaleArcSec= memorizeLastCall((plot) => {
 
 
 export const getFluxUnits= (plot,band) => (!plot || !band || !isImage(plot)) ? '' : plot.fluxUnitAry[band.value];
+
+
+/**
+ * @param {WebPlot} plot
+ * @return {{value: number, unit: string}}
+ */
+export function getPixScale(plot) {
+    const pixScaleArcsec = getPixScaleArcSec(plot);
+    if (!Number.isFinite(pixScaleArcsec)) {
+        const header = plot?.projection?.header;
+        const pixScale = header?.cdelt1 || 0;
+        const unit = header?.cunit1 || '';
+        return {value: pixScale, unit};
+    } else {
+        return {value: pixScaleArcsec, unit: 'arcsec'};
+    }
+}
 
 /**
  * @param {WebPlot|CysConverter} plot

@@ -19,7 +19,7 @@ function changeMatchType(vr, matchType, lockMatch) {
                 .filter( (pv) => !hasWCSProjection(primePlot(pv)) )
                 .map ( (pv) => primePlot(pv)?.title ?? '');
         if (warningTitles.length !== 0) { //at least one image without WCS
-            const msgTitle = 'The following image(s) do not have WCS:';
+            const msgTitle = 'The following image(s) do not have celestial WCS:';
             const msgDesc = warningTitles.join(', ');
             const renderContent = (
                 <Box>
