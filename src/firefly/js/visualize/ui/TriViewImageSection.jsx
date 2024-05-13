@@ -55,9 +55,9 @@ export function TriViewImageSection({showCoverage=false, showFits=false,
         return (
             <Tabs key={key} onTabSelect={onTabSelect}
                   defaultSelected={getDefSelected(showCoverage,showFits,showMeta)}>
-                { showCoverage && coverageSide==='LEFT' && makeCoverageTab() }
-                { showMeta && makeMultiProductViewerTab({dataProductTableId}) }
-                { showFits && makeFitsPinnedTab() }
+                { showCoverage && coverageSide==='LEFT' && makeCoverageTab({id:'coverage'}) }
+                { showMeta && makeMultiProductViewerTab({dataProductTableId,id:'meta'}) }
+                { showFits && makeFitsPinnedTab({id:'fits',asTab:true}) }
             </Tabs>
         );
 
@@ -67,19 +67,19 @@ export function TriViewImageSection({showCoverage=false, showFits=false,
     }
 }
 
-export const makeCoverageTab= () => (
-    <Tab key= 'coverage' name='Coverage' removable={false} id='coverage'>
+export const makeCoverageTab= ({id}) => (
+    <Tab key= 'coverage' name='Coverage' removable={false} id={id}>
         <CoverageViewer/>
     </Tab>
 );
 
-export const makeMultiProductViewerTab= ({dataProductTableId}) => {
+export const makeMultiProductViewerTab= ({id,dataProductTableId}) => {
     const activeTbl= getTblById(getActiveTableId());
     const table= getTblById(dataProductTableId);
     const title= table?.tableMeta?.title || table?.title || '';
     const metaTitle= activeTbl.isFetching ? 'Data Products' : `Data Product${title?': ' : ''}${title}`;
     return (
-        <Tab key='meta' name={metaTitle} removable={false} id='meta'>
+        <Tab key='meta' name={metaTitle} removable={false} id={id}>
             <MetaDataMultiProductViewer dataProductTableId={dataProductTableId} enableExtraction={true}/>
         </Tab>
     );
@@ -99,13 +99,18 @@ function BadgeLabel({labelStr}) {
         );
 }
 
-export function makeFitsPinnedTab()  {
+export function makeFitsPinnedTab({id,asTab})  {
+
+    const viewer= (<MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID} insideFlex={true} useImageList={true}
+                                     style={{height:asTab?undefined:'100%'}}
+                      Toolbar={MultiViewStandardToolbar} canReceiveNewPlots={NewPlotMode.create_replace.key} />);
     return (
-        <Tab key='fits' name='Pinned Images'  removable={false} id='fits'
-             label={<BadgeLabel labelStr={'Pinned Images'}/>}>
-            <MultiImageViewer viewerId= {DEFAULT_FITS_VIEWER_ID} insideFlex={true} useImageList={true}
-                              Toolbar={MultiViewStandardToolbar} canReceiveNewPlots={NewPlotMode.create_replace.key} />
-        </Tab>
+        asTab ?
+            (<Tab key='fits' name='Pinned Images'  removable={false} id={id}
+                  label={<BadgeLabel labelStr={'Pinned Images'}/>}>
+                {viewer}
+            </Tab>) :
+            viewer
     );
 };
 
@@ -147,7 +152,7 @@ export function startImagesLayoutWatcher() {
  * @param action
  * @param cancelSelf
  */
-function layoutHandler(action, cancelSelf) {
+function layoutHandler(action) {
 
     /**
      * This is the current state of the layout store.  Action handlers should return newLayoutInfo if state changes
@@ -174,27 +179,17 @@ function layoutHandler(action, cancelSelf) {
             newLayoutInfo = onPlotDelete(newLayoutInfo, action);
             break;
         case TABLE_LOADED:
-            if (action.payload.tbl_id) {
-                newLayoutInfo = handleNewTable(newLayoutInfo, action);
-            }
+            if (!action.payload.tbl_id) return;
+            newLayoutInfo = handleNewTable(newLayoutInfo, action);
             break;
         case TBL_RESULTS_ADDED:
-            if (action.payload.options.tbl_group==='main') {
-                newLayoutInfo = handleNewTable(newLayoutInfo, action);
-            }
+            if (action.payload.options.tbl_group!=='main') return;
+            newLayoutInfo = handleNewTable(newLayoutInfo, action);
             break;
         case TBL_RESULTS_ACTIVE:
-            if (action.payload.tbl_group==='main') {
-                newLayoutInfo = onActiveTable(newLayoutInfo, action);
-            }
-            break;
         case TABLE_HIGHLIGHT:
-            if (action.payload.tbl_group==='main') {
-                newLayoutInfo = onActiveTable(newLayoutInfo, action);
-            }
-            break;
-        case REINIT_APP:
-            cancelSelf();
+            if (action.payload.tbl_group!=='main') return;
+            newLayoutInfo = onActiveTable(newLayoutInfo, action);
             break;
     }
 

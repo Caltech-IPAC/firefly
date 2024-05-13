@@ -24,7 +24,7 @@ import {MetaConst} from 'firefly/data/MetaConst';
  * @param {string} [p.title] title to display
  * @param {string} [p.views] defaults to tri-view if not given.
  */
-export function* layoutManager({title, views='tables | images | xyplots'}) {
+export function* layoutManager({title, views='tables | images | xyplots', apiHandlesExpanded}) {
     views = LO_VIEW.get(views) || LO_VIEW.none;
 
     yield fork(dropDownManager);        // start the dropdown manager
@@ -56,7 +56,7 @@ export function* layoutManager({title, views='tables | images | xyplots'}) {
         var layoutInfo = getLayouInfo();
         var newLayoutInfo = layoutInfo;
 
-        newLayoutInfo = onAnyAction(newLayoutInfo, action, views);
+        newLayoutInfo = onAnyAction(newLayoutInfo, action, views, apiHandlesExpanded);
         // newLayoutInfo = dropDownHandler(newLayoutInfo, action);     // replaced with manager up above
         if (!newLayoutInfo.coverageSide) newLayoutInfo.coverageSide= getAppOptions()?.triViewCoverageSide;
 
@@ -66,7 +66,7 @@ export function* layoutManager({title, views='tables | images | xyplots'}) {
     }
 }
 
-function onAnyAction(layoutInfo, action, views) {
+function onAnyAction(layoutInfo, action, views, apiHandlesExpanded) {
     var {mode, hasXyPlots, hasTables, showImages, showXyPlots, showTables, autoExpand} = layoutInfo;
     var {expanded=LO_VIEW.none, standard=views} = mode || {};
 
@@ -102,7 +102,7 @@ function onAnyAction(layoutInfo, action, views) {
                     autoExpand = false;
                     expanded = LO_VIEW.none;
                 }
-            } else if (expanded === LO_VIEW.none && count === 1) {
+            } else if (expanded === LO_VIEW.none && count === 1 && !apiHandlesExpanded) {
                 // set mode into expanded view when there is only 1 component visible.
                 autoExpand = true;
                 expanded =  showImages ? LO_VIEW.images :

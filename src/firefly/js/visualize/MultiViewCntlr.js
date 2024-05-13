@@ -49,6 +49,7 @@ export const PLOT2D='plot2d';
 export const WRAPPER='wrapper';
 export const DEFAULT_FITS_VIEWER_ID= 'DEFAULT_FITS_VIEWER_ID';
 export const DEFAULT_PLOT2D_VIEWER_ID= 'DEFAULT_PLOT2D_VIEWER_ID';
+export const PINNED_CHART_VIEWER_ID = 'PINNED_CHART_VIEWER_ID';
 export const EXPANDED_MODE_RESERVED= 'EXPANDED_MODE_RESERVED';
 export const GRID_RELATED='gridRelated';
 export const GRID_FULL='gridFull';
@@ -393,18 +394,7 @@ export function getAViewFromMultiView(multiViewRoot, containerType, renderTreeId
                                             !entry.customData.independentLayout &&
                                             entry.containerType===containerType &&
                                             (entry?.canReceiveNewPlots===NewPlotMode.create_replace.key)));
-    if (viewer.reservedContainer && renderTreeId) {
-        const newId= `${viewer.viewerId}_${renderTreeId}`;
-        const modViewer= getViewer(multiViewRoot, newId);
-        if (modViewer) return modViewer;
-        dispatchAddViewer(newId, NewPlotMode.create_replace.key,
-                      containerType,false,renderTreeId);
-
-        return getViewer(getMultiViewRoot(), newId);
-    }
-    else {
-        return viewer;
-    }
+    return viewer;
 }
 
 /**
@@ -528,12 +518,6 @@ const removeViewer= (state,action) => state.filter( (v) => v.viewId!==action.pay
  * @return {MultiViewerRoot}
  */
 function addItems(state,viewerId,itemIdAry, containerType, renderTreeId) {
-    if (renderTreeId) {
-        itemIdAry.forEach( (id) => {
-            const v= getViewer(state,findViewerWithItemId(state, id, containerType));
-            if (v && v.renderTreeId!==renderTreeId) state= deleteSingleItem(state,id,containerType);
-        });
-    }
     let viewer= state.find( (entry) => entry.viewerId===viewerId);
 
     if (!viewer) {

@@ -53,10 +53,10 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
 
     let style= {display:'flex', flexDirection:'column', position:'relative'};
     if (props.insideFlex) {
-        style= {...style, flex:'1 1 auto', maxWidth:'100%'};
+        style= {...style, flex:'1 1 auto', maxWidth:'100%', ...props.style};
     }
     else {
-        style=  {...style, width:'100%', height:'100%'};
+        style=  {...style, width:'100%', height:'100%', ...props.style};
     }
     
     const {readoutPref}= readoutRoot();

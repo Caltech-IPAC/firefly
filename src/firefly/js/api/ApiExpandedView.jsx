@@ -4,9 +4,11 @@
 
 import {Sheet, Stack} from '@mui/joy';
 import React, {useRef} from 'react';
+import {PinnedChartPanel} from '../charts/ui/PinnedChartContainer.jsx';
 import {TablesContainer} from '../tables/ui/TablesContainer.jsx';
 import {ChartsContainer} from '../charts/ui/ChartsContainer.jsx';
 import {useStoreConnector} from '../ui/SimpleComponent.jsx';
+import {PINNED_CHART_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 import {ApiExpandedDisplay} from '../visualize/ui/ApiExpandedDisplay.jsx';
 import {FireflyRoot} from '../ui/FireflyRoot.jsx';
 import {isDefined} from '../util/WebUtil.js';
@@ -34,21 +36,15 @@ export function ApiExpandedView() {
 
     return (
         <FireflyRoot sx={{height:1, width:1}} ctxProperties={{jsApi:true}}>
-            <ApiExpandedViewInner/>
+            <ApiExpandedViewInner {...{expandType}}/>
         </FireflyRoot>
     );
 }
 
 
+
 function ApiExpandedViewInner({expandType}) {
     if (expandType===LO_VIEW.none) return false;
-    const {chartId} = expandType===LO_VIEW.xyPlots ? getExpandedChartProps() : {};
-    const view = expandType === LO_VIEW.tables ?
-        (<TablesContainer  mode='expanded' />)
-        : expandType === LO_VIEW.xyPlots ?
-            (<ChartsContainer {...{key:'api', expandedMode:true, closeable:true, chartId}}/>)
-            : (<ApiExpandedDisplay closeFunc={closeFunc}/>);
-
     return (
         <Sheet {...{variant:'soft',
             sx: (theme) => (
@@ -60,9 +56,26 @@ function ApiExpandedViewInner({expandType}) {
                 })
         }} >
             <Stack {...{p:1/4, width:1,height:1}}>
-                {view}
+                <ExpandedView {...{expandType}}/>
             </Stack>
         </Sheet>
     );
 }
 
+function ExpandedView({expandType}) {
+    if (expandType === LO_VIEW.tables) return <TablesContainer  mode='expanded' />;
+    if (expandType === LO_VIEW.xyPlots) {
+        const {chartId, expandedViewerId:viewerId} = expandType===LO_VIEW.xyPlots ? getExpandedChartProps() : {};
+        if (viewerId=== PINNED_CHART_VIEWER_ID) {
+            return (
+                <PinnedChartPanel {...{
+                    closeable:true, expandedMode:true, key:'api',
+                    useOnlyChartsInViewer:false, tbl_group:'main', addDefaultChart:true, }}/>
+            );
+        }
+        else {
+            return <ChartsContainer {...{key:'api', expandedMode:true, closeable:true, chartId}}/>;
+        }
+    }
+    return <ApiExpandedDisplay closeFunc={closeFunc}/>;
+}

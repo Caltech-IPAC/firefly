@@ -12,7 +12,9 @@ import {
     dataProductRoot, dispatchUpdateActiveKey, dispatchUpdateDataProducts,
     getActiveFileMenuKeyByKey, getDataProducts
 } from './DataProductsCntlr';
-import {dpdtImage, dpdtMessageWithDownload, dpdtMessageWithError, dpdtPNG, DPtypes,} from './DataProductsType';
+import {
+    dpdtImage, dpdtMessageWithDownload, dpdtMessageWithError, dpdtPNG, dpdtUploadError, DPtypes,
+} from './DataProductsType';
 import {dpdtSendToBrowser} from './DataProductsType.js';
 import {createSingleImageActivate, createSingleImageExtraction} from './ImageDataProductsUtil';
 import {analyzePart} from './PartAnalyzer';
@@ -101,6 +103,7 @@ export async function doUploadAndAnalysis({ table, row, request, activateParams=
         endUpdateWatcher(request.getURL());
         console.log('Call to Upload failed', e);
         dispatchUpdateDataProducts(dpId, {...makeErrorResult(e.message),menu, serDef, analysisActivateFunc});
+        return dpdtUploadError(request.getURL(),e);
     }
 }
 

@@ -19,7 +19,7 @@ import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {layoutManager} from './FireflyViewerManager.js';
-import {LayoutChoiceAccordion, LayoutChoiceVisualAccordion} from './LayoutChoice.jsx';
+import {LayoutChoiceVisualAccordion} from './LayoutChoice.jsx';
 import {TriViewPanel} from './TriViewPanel.jsx';
 import {getActionFromUrl} from '../../core/History.js';
 import {startImagesLayoutWatcher} from '../../visualize/ui/TriViewImageSection.jsx';
@@ -47,7 +47,8 @@ import {setIf as setIfUndefined} from 'firefly/util/WebUtil.js';
  *
  */
 export function FireflyViewer ({menu, options, views, showViewsSwitch, leftButtons,
-                                   centerButtons, rightButtons, normalInit=true, landingPage, slotProps, ...appProps}){
+                                   centerButtons, rightButtons, normalInit=true,
+                                   landingPage, slotProps, apiHandlesExpanded, ...appProps}){
 
     useEffect(() => {
         getImageMasterData();
@@ -63,7 +64,7 @@ export function FireflyViewer ({menu, options, views, showViewsSwitch, leftButto
             ]
         );
         if (eviews.has(LO_VIEW.images) ) startImagesLayoutWatcher();
-        dispatchAddSaga(layoutManager,{views});
+        dispatchAddSaga(layoutManager,{views,apiHandlesExpanded});
         if (getWorkspaceConfig()) { initWorkspace(); }
     }, []);
 

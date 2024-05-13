@@ -16,7 +16,7 @@ import {
 } from '../PlotViewUtil.js';
 import {callCrop} from '../../rpc/PlotServicesJson.js';
 import {WebPlotResult} from '../WebPlotResult.js';
-import {isHiPS, WebPlot} from '../WebPlot.js';
+import {isHiPS, isImage, WebPlot} from '../WebPlot.js';
 import {locateOtherIfMatched} from './WcsMatchTask';
 import {PlotAttribute} from '../PlotAttribute.js';
 import PlotState from '../PlotState.js';
@@ -37,6 +37,7 @@ export function requestLocalDataActionCreator(rawAction) {
         const {plotId, plotImageId, dataRequested= true, imageOverlayId}=rawAction.payload;
         const pv= getPlotViewById(visRoot(),plotId);
         const plot= imageOverlayId ? getOverlayById(pv,imageOverlayId)?.plot : findPlot(pv,plotImageId);
+        if (!isImage(plot)) return;
         if (dataRequested===false) {
             dispatcher(rawAction);
             return;
