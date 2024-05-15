@@ -123,6 +123,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
 
     public void clearData() {
         data.clear();
+        size = 0;
     }
 
     /**
@@ -509,6 +510,10 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
                         dataList = new PrimitiveList.Longs(initCapacity);
                     } else if (clz == Integer.class) {
                         dataList = new PrimitiveList.Integers(initCapacity);
+                    } else if (clz == Short.class) {
+                        dataList = new PrimitiveList.Shorts(initCapacity);
+                    } else if (clz == Byte.class) {
+                        dataList = new PrimitiveList.Bytes(initCapacity);
                     } else if (clz == Boolean.class) {
                         dataList = new PrimitiveList.Booleans(initCapacity);
                     } else {

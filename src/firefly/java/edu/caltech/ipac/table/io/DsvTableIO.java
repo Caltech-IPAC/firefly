@@ -23,6 +23,10 @@ import java.util.Iterator;
 import java.util.List;
 
 import static edu.caltech.ipac.table.IpacTableUtil.isKnownType;
+import static edu.caltech.ipac.table.TableUtil.*;
+import static edu.caltech.ipac.table.TableUtil.Format.CSV;
+import static edu.caltech.ipac.table.TableUtil.Format.TSV;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * This is a utility class used to read/write Delimiter-separated values(DSV)
@@ -39,16 +43,31 @@ import static edu.caltech.ipac.table.IpacTableUtil.isKnownType;
  */
 public class DsvTableIO {
 
+    public static DataGroup parse(File inf, Format format) throws IOException {
+        return parse(inf, toCsvFormat(format.type));
+    }
+
     public static DataGroup parse(InputStream inf, CSVFormat format) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inf, "UTF-8"), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         return getData(reader, format);
     }
     public static DataGroup parse(File inf, CSVFormat format) throws IOException {
-
         BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         return getData(reader, format);
 
     }
+
+    public static CSVFormat toCsvFormat(String format) {
+        format = format == null ? "null" : format;
+            if (format.equals(CSV.type)) {
+                return CSVFormat.DEFAULT;
+            } else if (format.equals(TSV.type)) {
+                return CSVFormat.TDF;
+            }
+        throw new IllegalArgumentException("Unknown format: " + format);
+    }
+
+
 
 
     private static DataGroup getData( BufferedReader reader, CSVFormat format)throws IOException{
@@ -60,7 +79,7 @@ public class DsvTableIO {
             CSVRecord cols = records.get(0);
             List<DataType> columns = convertToDataType(cols);
             DataGroup dg = new DataGroup(null, columns);
-            TableUtil.ParsedInfo colCheckInfo = new TableUtil.ParsedInfo();
+            ParsedInfo colCheckInfo = new ParsedInfo();
 
             // parse the data
             for (int i = 1; i < records.size(); i++) {
@@ -117,14 +136,14 @@ public class DsvTableIO {
             if ("\uFEFF".charAt(0) == s.toCharArray()[0]){
                 s = s.substring(1);//LZ fixed the issue with the BOM character
             }
-            if (!StringUtils.isEmpty(s)) {
+            if (!isEmpty(s)) {
                 columns.add(new DataType(s.trim(), null)); // unknown type
             }
         }
         return columns;
     }
 
-    static DataObject parseRow(DataGroup source, CSVRecord line, TableUtil.ParsedInfo colCheckInfo) {
+    static DataObject parseRow(DataGroup source, CSVRecord line, ParsedInfo colCheckInfo) {
 
         DataType[] headers = source.getDataDefinitions();
         if (line != null && line.size() > 0) {
@@ -132,13 +151,13 @@ public class DsvTableIO {
             String val;
                 for (int i = 0; i < headers.length; i++) {
                     DataType type = headers[i];
-                    val = StringUtils.isEmpty(line.get(i)) ? null : line.get(i).trim();
+                    val = isEmpty(line.get(i)) ? null : line.get(i).trim();
                     if (!isKnownType(type.getDataType())) {
                         IpacTableUtil.guessDataType(type,val);
                     }
                     row.setDataElement(type, type.convertStringToData(val));
 
-                    TableUtil.ParsedColInfo checkInfo = colCheckInfo.getInfo(type.getKeyName());
+                    ParsedColInfo checkInfo = colCheckInfo.getInfo(type.getKeyName());
                     IpacTableUtil.applyGuessLogic(type, val, checkInfo);
                 }
             return row;
@@ -146,11 +165,12 @@ public class DsvTableIO {
         return null;
     }
 
-    private static DataGroup getHeader(File infile, CSVFormat format)throws IOException{
+    private static DataGroup getHeader(File infile, String format)throws IOException{
+        CSVFormat csvFormat = format.equals(TSV.type) ? CSVFormat.TDF : CSVFormat.DEFAULT;
         BufferedReader reader = new BufferedReader(new FileReader(infile), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         try {
             reader.mark(IpacTableUtil.FILE_IO_BUFFER_SIZE);
-            CSVParser parser = new CSVParser(reader, format);
+            CSVParser parser = new CSVParser(reader, csvFormat);
             List<DataType> columns = convertToDataType(parser.iterator().next()); // read just the first line.
             DataGroup dg = new DataGroup(null, columns);
             reader.reset();
@@ -163,17 +183,16 @@ public class DsvTableIO {
         }
     }
 
-    public static FileAnalysisReport analyze(File infile, CSVFormat csvFormat, FileAnalysisReport.ReportType type) throws IOException {
-        DataGroup header = getHeader(infile, csvFormat);
-        String format = (csvFormat == CSVFormat.TDF) ? TableUtil.Format.TSV.name() : TableUtil.Format.CSV.name();
+    public static FileAnalysisReport analyze(File infile, String format, FileAnalysisReport.ReportType type) throws IOException {
+        DataGroup header = getHeader(infile, format);
         FileAnalysisReport report = new FileAnalysisReport(type, format, infile.length(), infile.getPath());
-        FileAnalysisReport.Part part = new FileAnalysisReport.Part(FileAnalysisReport.Type.Table, String.format("%s (%d cols x %s rows)", csvFormat.getClass().getSimpleName(), header.getDataDefinitions().length, header.size()));
+        FileAnalysisReport.Part part = new FileAnalysisReport.Part(FileAnalysisReport.Type.Table, String.format("%s (%d cols x %s rows)", format.getClass().getSimpleName(), header.getDataDefinitions().length, header.size()));
         part.setTotalTableRows(header.size());
         report.addPart(part);
         if (type.equals(FileAnalysisReport.ReportType.Details)) {
             IpacTableDef meta = new IpacTableDef();
             meta.setCols(Arrays.asList(header.getDataDefinitions()));
-            part.setDetails(TableUtil.getDetails(0, meta));
+            part.setDetails(getDetails(0, meta));
         }
         return report;
     }

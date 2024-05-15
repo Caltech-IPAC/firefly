@@ -353,7 +353,7 @@ public class IpacTableUtil {
 
     public static void applyGuessLogic(DataType type, String val, TableUtil.ParsedColInfo pci) {
 
-        if (!pci.formatChecked) {
+        if (!pci.formatChecked && val != null) {
             pci.formatChecked = guessFormatInfo(type, val);
         }
 

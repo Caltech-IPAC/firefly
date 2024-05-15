@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
 import static edu.caltech.ipac.table.JsonTableUtil.getMetaFromAllMeta;
 import static edu.caltech.ipac.table.JsonTableUtil.getPathValue;
 
@@ -54,17 +53,17 @@ public class VotableTest extends ConfigTest {
     @Test
     public void dbIngestTest() {
         try {
-            DataGroup data = VoTableReader.voToDataGroups(testFile.getAbsolutePath())[0];
+            final DataGroup data = VoTableReader.voToDataGroups(testFile.getAbsolutePath())[0];
 
             // ingest data into db
-            HsqlDbAdapter dbAdapter = new HsqlDbAdapter();
-            EmbeddedDbUtil.createDbFile(dbFile,dbAdapter);
-            EmbeddedDbUtil.ingestDataGroup(dbFile, data, dbAdapter, MAIN_DB_TBL);
+            HsqlDbAdapter dbAdapter = new HsqlDbAdapter(dbFile);
+            dbAdapter.initDbFile();
+            dbAdapter.ingestData(() -> data, dbAdapter.getDataTable());
 
             // get data back out
-            data = EmbeddedDbUtil.execQuery(dbAdapter, dbFile, "Select RA, \"Dec\", \"Name\", \"RVel\", \"e_RVel\", R from data", MAIN_DB_TBL);
+            DataGroup qdata = dbAdapter.execQuery("Select RA, \"Dec\", \"Name\", \"RVel\", \"e_RVel\", R from data", dbAdapter.getDataTable());
 
-            verifyTableData(data);
+            verifyTableData(qdata);
 
         } catch (Exception e) {
             Assert.fail("VotableTest.dbIngestTest failed with exception: " + e.getMessage());

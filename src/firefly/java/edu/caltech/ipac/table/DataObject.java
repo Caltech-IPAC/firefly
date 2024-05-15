@@ -163,7 +163,15 @@ public class DataObject implements Serializable, Cloneable {
 
     public float getFloat(String cname, float def) {
         Object v = getDataElement(cname);
-        return v == null ? def : Float.parseFloat(v.toString());
+        return v == null ? def :
+               (v instanceof Number d)? d.floatValue() :
+               Float.parseFloat(v.toString());
     }
 
+    public double getDouble(String cname, double def) {
+        Object v = getDataElement(cname);
+        return v == null ? def :
+               (v instanceof Number d)? d.doubleValue() :
+               Double.parseDouble(v.toString());
+    }
 }

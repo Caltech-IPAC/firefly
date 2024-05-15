@@ -31,6 +31,7 @@ import {showAddOrUpdateColumn} from './AddOrUpdateColumn.jsx';
 import {BY_SCROLL} from './BasicTableView.jsx';
 
 import EDIT from 'html/images/16x16_edit_icon.png';
+import ModeEditOutlinedIcon from '@mui/icons-material/ModeEditOutlined';
 import {MAX_ROW} from 'firefly/tables/TableRequestUtil';
 import {ClearFilterButton} from 'firefly/visualize/ui/Buttons.jsx';
 import {Stacker} from 'firefly/ui/Stacker.jsx';
@@ -339,9 +340,9 @@ function makeNameRenderer(tbl_id, tbl_ui_id, cmt_tbl_ui_id) {
         };
         if (c?.DERIVED_FROM) {
             return (
-                <Stack direction='row' spacing={1} onClick={editCol} className='clickable'>
+                <Stack direction='row' spacing={1} alignItems='center' onClick={editCol} className='clickable'>
                     <Typography level='body-sm' color='warning'>{value}</Typography>
-                    <img style={{marginLeft: 5}} src={EDIT}/>
+                    <ModeEditOutlinedIcon/>
                 </Stack>
             );
         } else return <div>{value}</div>;

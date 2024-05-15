@@ -244,11 +244,11 @@ function handleResourceRequest({resource={}, title, options={}, action='query'})
  * @func cloneRequest
  * @memberof firefly.util.table
  */
-export function cloneRequest(request, params = {}, createTblId) {
+export function cloneRequest(request={}, params = {}, createTblId) {
     const req = cloneDeep(omit(request, 'tbl_id'));
     if (createTblId) {
-        const tbl_id = uniqueId(request.tbl_id);
-        req.META_INFO.tbl_id = tbl_id;
+        const tbl_id = uniqueId(request.tbl_id || 'tbl_id-');
+        set(req, 'META_INFO.tbl_id', tbl_id);
         req.tbl_id = tbl_id;
     } else {
         unset(req, 'META_INFO.tbl_id');

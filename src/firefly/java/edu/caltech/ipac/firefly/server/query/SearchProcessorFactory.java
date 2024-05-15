@@ -31,8 +31,10 @@ public class SearchProcessorFactory {
 
                 for (Class<?> sproc : annotated) {
                     SearchProcessorImpl sprocAnna = sproc.getAnnotation(SearchProcessorImpl.class);
-                    String requestId = sprocAnna.id();
-                    searchProcessors.put(requestId, sproc);
+                    if (sprocAnna != null) {
+                        String requestId = sprocAnna.id();
+                        searchProcessors.put(requestId, sproc);
+                    }
                 }
                 Logger.debug("Getting search processors took "+(System.currentTimeMillis()-cTime)+"ms");
                 logSearchProcessors();

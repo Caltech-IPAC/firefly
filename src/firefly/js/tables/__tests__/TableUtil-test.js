@@ -1,4 +1,4 @@
-import {get} from 'lodash';
+import {get, set} from 'lodash';
 
 import * as TblUtil from '../TableUtil.js';         // used for named import
 import TableUtil, {formatValue, fixPageSize, getTblInfo} from '../TableUtil.js';            // using default import
@@ -491,6 +491,44 @@ describe('TableUtil: client_table', () => {
         expect(TblUtil.getColumnValues(res, 'c1')).toEqual(['abc', undefined, '123', null]); // testing IS NOT NULL
     });
 
+    test('smartMerge', () => {
+        const table = {
+            totalRows: 3,
+            request:{pageSize:100},
+            highlightedRow: 0,
+            tableData: {
+                columns: [ {name: 'a'}, {name: 'b'}, {name: 'c'}],
+                data: [
+                    ['a-1', 'b-1', 'c-1'],
+                    ['a-2', 'b-2', 'c-2'],
+                    ['a-3', 'b-3', 'c-3'],
+                ],
+            }
+        };
 
+        // simple update
+        let ntable = TblUtil.smartMerge(table, { request:{pageSize:999}} );
+        expect(ntable.request.pageSize).toBe(999);
+
+        // remove a path
+        ntable = TblUtil.smartMerge(table, { request: undefined});
+        expect(ntable.request).toBe(undefined);
+
+        // add rows
+        let changes = {totalRows: 5};
+        set(changes, 'tableData.data.3', ['a-4', 'b-4', 'c-4']);
+        set(changes, 'tableData.data.4', ['a-5', 'b-5', 'c-5']);
+
+        ntable = TblUtil.smartMerge(table, changes);
+        expect(ntable.totalRows).toBe(5);
+        expect(ntable.tableData.data.length).toBe(5);
+        expect(ntable.tableData.data[4][2]).toBe('c-5');
+
+        // clear tableData
+        ntable = TblUtil.smartMerge(table, { totalRows: 0, tableData: undefined});
+        expect(ntable.totalRows).toBe(0);
+        expect(ntable.tableData).toBe(undefined);
+
+    });
 });
 

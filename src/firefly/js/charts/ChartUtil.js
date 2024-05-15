@@ -15,7 +15,7 @@ import shallowequal from 'shallowequal';
 import {getAppOptions} from '../core/AppDataCntlr.js';
 import {
     COL_TYPE, getColumnType, getMetaEntry, getTblById, isColumnType, isFullyLoaded, isTableLoaded,
-    stripColumnNameQuotes, watchTableChanges
+    stripColumnNameQuotes, SYS_COLUMNS, watchTableChanges
 } from '../tables/TableUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_SELECT, TABLE_SORT} from '../tables/TablesCntlr.js';
 import {getSpectrumDM} from '../voAnalyzer/SpectrumDM.js';
@@ -119,10 +119,9 @@ export function colWithName(cols, name) {
 
 export function getNumericCols(cols) {
     const ncols = [];
-    const excludeNames = ['ROW_IDX', 'ROW_NUM'];
     cols.forEach((c) => {
         if (isColumnType(c, COL_TYPE.NUMBER)) {
-            if (!excludeNames.includes(c.name)) { ncols.push(c); }
+            if (!SYS_COLUMNS.includes(c.name)) { ncols.push(c); }
         }
     });
     return ncols;

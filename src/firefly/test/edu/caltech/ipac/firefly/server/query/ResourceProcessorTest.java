@@ -6,8 +6,7 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.db.BaseDbAdapter;
-import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.DbMonitor;
 import edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroupPart;
@@ -29,7 +28,7 @@ public class ResourceProcessorTest extends ConfigTest {
 
 	@After
 	public void tearDown() {
-		((BaseDbAdapter)DbAdapter.getAdapter()).cleanup(true, true);
+		DbMonitor.cleanup(true, true);
 	}
 
 	@Test
