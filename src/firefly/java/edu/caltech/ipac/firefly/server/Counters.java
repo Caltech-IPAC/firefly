@@ -10,6 +10,7 @@ package edu.caltech.ipac.firefly.server;
 
 
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
+import edu.caltech.ipac.firefly.server.servlets.ServerStatus;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.FileUtil;
@@ -224,6 +225,8 @@ public class Counters {
         long freeMem= rt.freeMemory();
         retList.add("Memory");
         long maxMem= rt.maxMemory();
+
+        addMemStrToList(retList,"Total RAM", FileUtil.getSizeAsString(ServerStatus.getTotalRam()));
         addMemStrToList(retList,"Used", FileUtil.getSizeAsString(totMem-freeMem));
         addMemStrToList(retList,"Max", FileUtil.getSizeAsString(maxMem));
         addMemStrToList(retList,"Max Free", FileUtil.getSizeAsString(maxMem-(totMem-freeMem)));

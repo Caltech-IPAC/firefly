@@ -68,10 +68,9 @@ public class ResourceProcessor extends EmbeddedDbProcessor {
      * Access info is saved in a file with a .acl extension.
      */
     public File getDbFile(TableServerRequest treq) {
-        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
         String resourceID = getResourceID(treq);
-        String fname = String.format("%s/%s.%s", SUBDIR_PATH, resourceID, dbAdapter.getName());
-        return new File(ServerContext.getHiPSDir(), fname);
+        String fname = String.format("%s/%s", SUBDIR_PATH, resourceID);
+        return DbAdapter.createDbFile(treq, fname, ServerContext.getHiPSDir());
     }
 
     /**
@@ -113,7 +112,7 @@ public class ResourceProcessor extends EmbeddedDbProcessor {
         if (!hasAccess(treq, dbFile)) throw new DataAccessException("Access denied");
         String action = treq.getParam(ACTION, QUERY);
         if (action.equals(DELETE)) {
-            DbAdapter.getAdapter(treq).close(dbFile, true);
+            DbAdapter.getAdapter(dbFile).close(true);
             getAclFile(dbFile).delete();
             return new DataGroupPart(new DataGroup("empty set", new DataType[]{new DataType("dummy", String.class)}), 0, 0);
         }

@@ -15,7 +15,7 @@ import {ExpandButton, InfoButton, SaveButton, FilterButton, ClearFilterButton, T
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableUiUpdate} from '../TablesCntlr.js';
 import {
     uniqueTblId, getTableUiById, makeBgKey, getResultSetRequest, isClientTable, getTableState,
-    TBL_STATE, getMetaEntry, getTblById, parseError, isOverflow
+    TBL_STATE, getMetaEntry, getTblById, parseError, isOverflow, getResultSetID
 } from '../TableUtil.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
@@ -78,7 +78,8 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
 
     const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
     const tstate = getTableState(tbl_id);
-    logger.debug(`render.. state:[${tstate}] -- ${tbl_id}  ${tbl_ui_id}`);
+    logger.debug({  state: `[${tstate}] -- ${tbl_id}  ${tbl_ui_id}`,
+                    from: getResultSetID(tbl_id)  });
 
     if ([TBL_STATE.ERROR,TBL_STATE.LOADING].includes(tstate))  return <NotReady {...{showTitle, tbl_id, title, removable, backgroundable, error}}/>;
 

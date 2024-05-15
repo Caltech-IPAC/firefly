@@ -8,8 +8,9 @@ import edu.caltech.ipac.firefly.messaging.Messenger;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
-import edu.caltech.ipac.firefly.server.db.BaseDbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.DbMonitor;
+import edu.caltech.ipac.firefly.server.db.DuckDbAdapter;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -35,6 +36,8 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.lang.management.ManagementFactory;
+import com.sun.management.OperatingSystemMXBean;
 
 import static edu.caltech.ipac.firefly.server.ServerContext.ACCESS_TEST_EXT;
 
@@ -55,10 +58,12 @@ public class ServerStatus extends BaseHttpServlet {
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
 
         boolean showHeaders = Boolean.parseBoolean(req.getParameter("headers"));
+        boolean execGC = Boolean.parseBoolean(req.getParameter("execGC"));
+        String showJobDetails = req.getParameter("job.details");
+
+        if (execGC)     System.gc();            // force garbage collection.
 
         res.addHeader("content-type", "text/plain");
-        String jobDetails = req.getParameter("job.details");
-
         PrintWriter writer = res.getWriter();
         try {
             showCountStatus(writer);
@@ -67,7 +72,7 @@ public class ServerStatus extends BaseHttpServlet {
             showWorkAreaStatus(writer);
             skip(writer);
 
-            showPackagingStatus(writer, jobDetails != null && Boolean.parseBoolean(jobDetails));
+            showPackagingStatus(writer, showJobDetails != null && Boolean.parseBoolean(showJobDetails));
             skip(writer);
 
             showMessagingStatus(writer);
@@ -94,12 +99,18 @@ public class ServerStatus extends BaseHttpServlet {
             writer.println(    "--------------------");
             writer.println("headers=[true|false]        Display all request's headers");
             writer.println("job.details=[true|false]    Display details of all jobs");
+            writer.println("execGC=[true|false]         Invoke JVM garbage collection");
 
         } finally {
             writer.flush();
             writer.close();
         }
 
+    }
+
+    public static long getTotalRam() {
+        OperatingSystemMXBean osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        return osBean.getTotalMemorySize();
     }
 
     private static void displayCacheInfo(PrintWriter writer, CacheManager cm) {
@@ -152,24 +163,27 @@ public class ServerStatus extends BaseHttpServlet {
 
     private static void showDatabaseStatus(PrintWriter writer) {
 
-        DbAdapter.EmbeddedDbStats stats = DbAdapter.getAdapter().getRuntimeStats(true);
+        DbAdapter.EmbeddedDbStats stats = DbMonitor.getRuntimeStats(true);
         writer.println("DATABASE INFORMATION");
         writer.println("--------------------");
-        writer.printf("MAX_IDLE(min):     %,10d  MAX_IDLE_RSC(min):   %,10d\n", DbAdapter.MAX_IDLE_TIME/1000/60, DbAdapter.MAX_IDLE_TIME_RSC/1000/60);
-        writer.printf("MAX_MEM_ROWS:      %,10d  COMPACT_FACTOR:      %10.2f\n", stats.maxMemRows, stats.compactFactor);
+        writer.printf("MAX_IDLE(min):     %,10d  MAX_IDLE_RSC(min):   %,10d\n", DbMonitor.MAX_IDLE_TIME/1000/60, DbMonitor.MAX_IDLE_TIME_RSC/1000/60);
+        writer.printf("MAX_MEM_ROWS(m):   %,10d  COMPACT_FACTOR:      %10.2f\n", stats.maxMemRows/1_000_000, stats.compactFactor);
         writer.printf("DB In Memory:      %,10d  Total DB count:      %,10d\n", stats.memDbs, stats.totalDbs);
         writer.printf("Rows In Memory:    %,10d  Peak Rows In Memory: %,10d\n", stats.memRows, stats.peakMemRows);
-        writer.println(              "Cleanup Last Ran:  " + new SimpleDateFormat("HH:mm:ss").format(stats.lastCleanup));
+        writer.printf("MAX_MEMORY(MB):    %,10d\n", stats.maxMemory/1024/1024);
+        writer.printf("Memory(MB):        %,10d  Peak Memory(MB):     %,10d\n", stats.memory/1024/1024, stats.peakMemory/1024/1024);
+        writer.println("Cleanup Last Ran:  " + new SimpleDateFormat("HH:mm:ss").format(stats.lastCleanup));
         writer.println("");
-        writer.println("Idled   Age     Rows        Columns  Tables  Total Rows   File Path         (elapsed time are in min:sec)");
-        writer.println("------  ------  ----------  -------  ------  ----------   ---------");
-        DbAdapter.getAdapter().getDbInstances().values().stream()
+        writer.println("Idled   Age     Rows        Columns  Tables  Total Rows       Memory  File Path     (elapsed time are in min:sec; memory is in MB)");
+        writer.println("------  ------  ----------  -------  ------  ----------       ------  ---------");
+        DbMonitor.getDbInstances().values().stream()
             .sorted((db1, db2) -> Long.compare(db2.getLastAccessed(), db1.getLastAccessed()))
-            .forEach((db) -> writer.printf("%6$tM:%6$tS   %7$tM:%7$tS   %,10d  %7d  %6d  %,10d  %s\n",
+            .forEach((db) -> writer.printf("%7$tM:%7$tS   %8$tM:%8$tS   %,10d  %7d  %6d  %,10d  %11.1f  %s\n",
                 db.getDbStats().rowCnt(),
                 db.getDbStats().colCnt(),
                 db.getDbStats().tblCnt(),
                 db.getDbStats().totalRows(),
+                db.getDbStats().memory()/1024/1024.0,
                 db.getDbFile().getPath(),
                 System.currentTimeMillis() - db.getLastAccessed(),
                 System.currentTimeMillis() - db.getCreated()

@@ -23,6 +23,7 @@ import {getCmdSrvSyncURL, toBoolean, strictParseInt} from '../util/WebUtil';
 import {upload} from '../rpc/CoreServices.js';
 import {dd2sex} from '../visualize/CoordUtil.js';
 
+export const SYS_COLUMNS = ['ROW_IDX', 'ROW_NUM'];
 
 // this is so test can mock the function when used within it's module
 const local = {
@@ -405,8 +406,8 @@ export function getFilterCount(tableModel) {
 
 export function clearFilters(tableModel) {
     const {request, tbl_id} = tableModel || {};
-    if (request && (request.filters || request.sqlFilters)) {
-        TblCntlr.dispatchTableFilter({tbl_id, filters: '', sqlFilters: ''});
+    if (request && (request.filters || request.sqlFilter)) {
+        TblCntlr.dispatchTableFilter({tbl_id, filters: '', sqlFilter: ''});
     }
 }
 

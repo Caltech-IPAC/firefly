@@ -498,7 +498,7 @@ public class URLDownload {
                 urlConn.setIfModifiedSince(outfile.lastModified());
                 if (getResponseCode(urlConn) == HttpURLConnection.HTTP_NOT_MODIFIED) {
                     String urlStr= urlConn.getURL().toString();
-                    _log.briefInfo(outfile.getName() + ": Not downloading, already have current version, from "+urlStr);
+                    _log.info(outfile.getName() + ": Not downloading, already have current version, from "+urlStr);
                     retval = new FileInfo(outfile, getSugestedFileName(urlConn), HttpURLConnection.HTTP_NOT_MODIFIED,
                                      ResponseMessage.getHttpResponseMessage(HttpURLConnection.HTTP_NOT_MODIFIED));
                     retval.putAttribute(FileInfo.FILE_DOWNLOADED,false+"");

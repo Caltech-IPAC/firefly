@@ -321,6 +321,7 @@ function getHeaderFromTab({name, value, label, startDecorator, removable, onTabR
         <JoyTab key={idx} component='div' {...{value, indicatorPlacement:'top', ...joyTabProps}}
                 sx={{
                     flex: 'none', scrollSnapAlign: 'start',
+                    justifyContent: 'space-between',
                     maxWidth: maxTitleWidth,
                     minWidth: 100
                 }}

@@ -2,7 +2,7 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
@@ -36,13 +36,6 @@ public class SubQueryProcessor extends EmbeddedDbProcessor {
         }
     }
 
-    @Override
-    public File createDbFile(TableServerRequest treq) throws DataAccessException {
-        // table function processor operates on the original table
-        // we don't want to create a dummy table in db
-        return null;
-    }
-
     /**
      * only called when original database no longer available.. recreate it.
      */
@@ -65,7 +58,7 @@ public class SubQueryProcessor extends EmbeddedDbProcessor {
         DataGroup baseResults = new SearchManager().getDataGroup(sreq).getData();
         String origTableName = baseResults.getTableMeta().getAttribute(RESULTSET_ID);
 
-        return EmbeddedDbUtil.execRequestQuery(treq, dbFile, origTableName);
+        return DbAdapter.getAdapter(dbFile).execRequestQuery(treq, origTableName);
     }
 
     protected EmbeddedDbProcessor getSearchProcessor(TableServerRequest searchReq) throws DataAccessException {

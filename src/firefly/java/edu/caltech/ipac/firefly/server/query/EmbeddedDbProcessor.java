@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.server.ServCommand;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableWriter;
@@ -16,7 +17,6 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
-import edu.caltech.ipac.firefly.server.db.DbInstance;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -47,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX;
@@ -85,6 +84,7 @@ import static edu.caltech.ipac.util.StringUtils.*;
 abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPart>, SearchProcessor.CanGetDataFile,
                                                      SearchProcessor.CanFetchDataGroup, Job.Worker {
     private static final Map<String, ReentrantLock> activeRequests = new HashMap<>();
+    private static final Logger.LoggerImpl logger = Logger.getLogger();
     private static final ReentrantLock lockChecker = new ReentrantLock();
     private Job job;
 
@@ -114,26 +114,11 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
      * @return
      */
     public File getDbFile(TableServerRequest treq) {
-        String fname = String.format("%s_%s.%s", treq.getRequestId(), DigestUtils.md5Hex(getUniqueID(treq)), DbAdapter.getAdapter(treq).getName());
-        return new File(QueryUtil.getTempDir(treq), fname);
+        return DbAdapter.createDbFile(treq, makeDbFname(treq), QueryUtil.getTempDir(treq));
     }
 
-    /**
-     * create a new database file base on the given request.
-     * if this is overridden, make sure to override getDbFile as well.
-     * @param treq
-     * @return
-     * @throws DataAccessException
-     */
-    public File createDbFile(TableServerRequest treq) throws DataAccessException {
-        try {
-            File dbFile = getDbFile(treq);
-            DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-            EmbeddedDbUtil.createDbFile(dbFile, dbAdapter);
-            return dbFile;
-        } catch (IOException e) {
-            throw new DataAccessException("Unable to create database file.");
-        }
+    protected String makeDbFname(TableServerRequest treq) {
+        return String.format("%s_%s", treq.getRequestId(), DigestUtils.md5Hex(getUniqueID(treq)));
     }
 
     public DataGroupPart getData(ServerRequest request) throws DataAccessException {
@@ -159,9 +144,10 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             boolean dbFileCreated = false;
             File dbFile = getDbFile(treq);
             jobExecIf(v -> v.progress(10, "fetching data..."));
-            if (!dbFile.exists() || !EmbeddedDbUtil.hasTable(treq, dbFile, MAIN_DB_TBL)) {
+            var dbAdapter = DbAdapter.getAdapter(dbFile);
+            if (!dbFile.exists() || !dbAdapter.hasTable(dbAdapter.getDataTable())) {
                 StopWatch.getInstance().start("createDbFile: " + treq.getRequestId());
-                dbFile = createDbFromRequest(treq);
+                createDbFromRequest(treq, dbFile);
                 dbFileCreated = true;
                 StopWatch.getInstance().stop("createDbFile: " + treq.getRequestId()).printLog("createDbFile: " + treq.getRequestId());
             }
@@ -175,7 +161,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 // table data exists.. but, bad grammar when querying for the resultset.
                 // should return table meta info + error message
                 // limit 0 does not work with oracle-like syntax
-                DataGroup dg = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(treq), dbFile, "select * from data where ROWNUM < 1", MAIN_DB_TBL);
+                DataGroup dg = dbAdapter.getHeaders(dbAdapter.getDataTable());
                 results = EmbeddedDbUtil.toDataGroupPart(dg, treq);
                 String error = retrieveMsgFromError(e, treq);
                 results.setErrorMsg(error);
@@ -186,7 +172,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             // ensure all meta are collected and set accordingly
             TableUtil.consumeColumnMeta(results.getData(), treq);
 
-            int totalRows =  results.getRowCount();
+            int totalRows = results.getRowCount();
             if (dbFileCreated) {
                 if (doLogging()) {
                     SearchProcessor.logStats(treq.getRequestId(), totalRows, 0, false, getDescResolver().getDesc(treq));
@@ -204,20 +190,22 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             jobExecIf(v -> v.getJobInfo().setSummary(String.format("%,d rows found", totalRows)));
 
             return results;
+        }catch (Exception e) {
+            logger.error(e);
+            throw e;
         } finally {
             activeRequests.remove(unigueReqID);
             lock.unlock();
         }
     }
 
-    private File createDbFromRequest(TableServerRequest treq) throws DataAccessException {
-        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-        File dbFile = createDbFile(treq);
+    private void createDbFromRequest(TableServerRequest treq, File dbFile) throws DataAccessException {
+        DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
         try {
             FileInfo dbFileInfo = ingestDataIntoDb(treq, dbFile);
             dbFile = dbFileInfo.getFile();
         } catch (Exception e) {
-            dbFile.delete();
+            dbAdapter.close(true);
             if (e instanceof DataAccessException) {
                 throw e;
             } else {
@@ -225,7 +213,6 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             }
         }
         EmbeddedDbUtil.setDbMetaInfo(treq, dbAdapter, dbFile);
-        return dbFile;
     }
 
     /**
@@ -240,24 +227,35 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
      */
     protected FileInfo ingestDataIntoDb(TableServerRequest req, File dbFile) throws DataAccessException {
 
-        DbAdapter dbAdapter = DbAdapter.getAdapter(req);
+        try {
+            DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
+            dbAdapter.initDbFile();
+            StopWatch.getInstance().start("ingestDataIntoDb: " + req.getRequestId());
 
-        StopWatch.getInstance().start("fetchDataGroup: " + req.getRequestId());
-        DataGroup dg = fetchDataGroup(req);
+            DbAdapter.DataGroupSupplier dataSupplier = () -> {
+                StopWatch.getInstance().start("fetchDataGroup: " + req.getRequestId());
+                DataGroup dg = fetchDataGroup(req);
+                StopWatch.getInstance().stop("fetchDataGroup: " + req.getRequestId()).printLog("fetchDataGroup: " + req.getRequestId());
 
-        StopWatch.getInstance().stop("fetchDataGroup: " + req.getRequestId()).printLog("fetchDataGroup: " + req.getRequestId());
+                if (dg == null) throw new DataAccessException("Failed to retrieve data");
 
-        if (dg == null) throw new DataAccessException("Failed to retrieve data");
+                jobExecIf(v -> v.progress(70, dg.size() + " rows of data found"));
 
-        jobExecIf(v -> v.progress(70, dg.size() + " rows of data found"));
+                prepareTableMeta(dg.getTableMeta(), Arrays.asList(dg.getDataDefinitions()), req);
+                TableUtil.consumeColumnMeta(dg, null);      // META-INFO in the request should only be pass-along and not persist.
 
-        prepareTableMeta(dg.getTableMeta(), Arrays.asList(dg.getDataDefinitions()), req);
-        TableUtil.consumeColumnMeta(dg, null);      // META-INFO in the request should only be pass-along and not persist.
+                return dg;
+            };
 
-        StopWatch.getInstance().start("ingestDataIntoDb: " + req.getRequestId());
-        FileInfo finfo = EmbeddedDbUtil.ingestDataGroup(dbFile, dg, dbAdapter, MAIN_DB_TBL);
-        StopWatch.getInstance().stop("ingestDataIntoDb: " + req.getRequestId()).printLog("ingestDataIntoDb: " + req.getRequestId());
-        return finfo;
+            // dataSupplier is passed in.  the adapter decides if fetch is needed.
+            FileInfo finfo = dbAdapter.ingestData(dataSupplier, dbAdapter.getDataTable());
+
+            StopWatch.getInstance().stop("ingestDataIntoDb: " + req.getRequestId()).printLog("ingestDataIntoDb: " + req.getRequestId());
+            return finfo;
+        } catch (IOException ex) {
+            logger.error(ex,"Failed to ingest data into the database:" + req.getRequestId());
+            throw new DataAccessException(ex);
+        }
     }
 
     public File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
@@ -275,7 +273,9 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             if (mode.equals(TableUtil.Mode.original)) {
                 treq = (TableServerRequest) treq.cloneRequest();
                 treq.keepBaseParamOnly();
-                DataGroup table = EmbeddedDbUtil.execQuery(getAdapter(treq), getDbFile(treq), "Select * from DATA limit 1", MAIN_DB_TBL);  // just the headers.
+                File dbFile =  getDbFile(treq);
+                var dbAdapter = getAdapter(dbFile);
+                DataGroup table = dbAdapter.getHeaders(dbAdapter.getDataTable());  // just the headers.
                 String[] cols = Arrays.stream(table.getDataDefinitions())
                                         .filter(c -> c.getDerivedFrom() == null)
                                         .map(dt -> "\"" + dt.getKeyName() + "\"")
@@ -344,10 +344,10 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     @NotNull
     public String getResultSetID(TableServerRequest treq) {
         String id = StringUtils.toString(treq.getResultSetParam(), "|");
-        return MAIN_DB_TBL + (isEmpty(id) ? "" : "_" + DigestUtils.md5Hex(id));
+        String rsid =  MAIN_DATA_TBL + (isEmpty(id) ? "" : "_" + DigestUtils.md5Hex(id));
+        return rsid.toUpperCase();
     }
 
-    private static List<String> ignoreCols = Arrays.asList(DataGroup.ROW_IDX, DataGroup.ROW_NUM, "\"" + DataGroup.ROW_IDX + "\"", "\"" + DataGroup.ROW_NUM + "\"");
     protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
 
         String rowIdx = "\"" + DataGroup.ROW_IDX + "\"";
@@ -355,47 +355,14 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
         String resultSetID = getResultSetID(treq);
 
-        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-        DbInstance dbInstance = dbAdapter.getDbInstance(dbFile);
+        DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
 
-        if (!EmbeddedDbUtil.hasTable(treq, dbFile, resultSetID)) {
+        if (!dbAdapter.hasTable(resultSetID)) {
             // does not exists.. create table from original 'data' table
-            List<String> cols = isEmpty(treq.getInclColumns()) ? dbAdapter.getColumnNames(dbInstance, MAIN_DB_TBL, "\"")
-                                : StringUtils.asList(treq.getInclColumns(), ",");
-            cols = cols.stream().filter((s) -> !ignoreCols.contains(s)).collect(Collectors.toList());   // remove rowIdx and rowNum because it will be automatically added
-
-            String selectPart = (cols.size() == 0 ? "" : StringUtils.toString(cols) + ", " )+ DataGroup.ROW_IDX;
-            String wherePart = dbAdapter.wherePart(treq);
-            String orderBy = dbAdapter.orderByPart(treq);
-
-            // copy data
-            String datasetSql = String.format("select %s from data %s %s", selectPart, wherePart, orderBy);
-            String datasetSqlWithIdx = String.format("select b.*, (ROWNUM-1) as %s from (%s) as b", DataGroup.ROW_NUM, datasetSql);
-            String sql = dbAdapter.createTableFromSelect(resultSetID, datasetSqlWithIdx);
-            JdbcFactory.getSimpleTemplate(dbInstance).update(sql);
-
-            // copy dd
-            List<String> cnames = dbAdapter.getColumnNames(dbInstance, resultSetID, "'");
-            String ddSql = String.format("select * from data_dd where cname in (%s)", StringUtils.toString(cnames));
-            ddSql = dbAdapter.createTableFromSelect(resultSetID + "_dd", ddSql);
-            JdbcFactory.getSimpleTemplate(dbInstance).update(ddSql);
-
-            // copy meta
-            String metaSql = "select * from data_meta";
-            metaSql = dbAdapter.createTableFromSelect(resultSetID + "_meta", metaSql);
-            try {
-                JdbcFactory.getSimpleTemplate(dbInstance).update(metaSql);
-            } catch (Exception mx) {/*ignore table may not exists*/}
-
-            // copy aux
-            String auxSql = "select * from data_aux";
-            auxSql = dbAdapter.createTableFromSelect(resultSetID + "_aux", auxSql);
-            try {
-                JdbcFactory.getSimpleTemplate(dbInstance).update(auxSql);
-            } catch (Exception ax) {/*ignore table may not exists*/}
+            dbAdapter.createTempResults(treq, resultSetID);
         }
 
-        // resultSetID is a table created sort and filter in consideration.  no need to re-apply.
+        // resultSetID is a table created with sort and filter in consideration.  no need to re-apply.
         TableServerRequest nreq = (TableServerRequest) treq.cloneRequest();
         nreq.setFilters(null);
         nreq.setSqlFilter(null);
@@ -405,7 +372,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             nreq.setInclColumns();
         } else {
             List<String> requestedCols = StringUtils.asList(treq.getInclColumns(), ",");
-            List<String> cols = dbAdapter.getColumnNames(dbInstance, resultSetID, "\"");
+            List<String> cols = dbAdapter.getColumnNames(resultSetID, "\"");
 
             // only return these columns if requested
             if (!requestedCols.contains(rowIdx)) cols.remove(rowIdx);
@@ -420,7 +387,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         // Otherwise, return as requested.
         int highlightedRow = handleHighlighedRowRequest(treq, nreq, dbFile, resultSetID);
 
-        DataGroupPart page = execRequestQuery(nreq, dbFile, resultSetID);
+        DataGroupPart page = dbAdapter.execRequestQuery(nreq, resultSetID);
         page.getData().setHighlightedRow(highlightedRow);
 
         // handle selectInfo
@@ -441,9 +408,9 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         int highlightedRow = StringUtils.getInt(treq.getOption(HIGHLIGHTED_ROW), -1);
         int hlRowByRowIdx = StringUtils.getInt(treq.getOption(HIGHLIGHTED_ROW_BY_ROWIDX), -1);
         if (hlRowByRowIdx >= 0) {
-            DbAdapter dbAdapter = DbAdapter.getAdapter(nreq);
+            DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
             try {
-                highlightedRow =  JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile))
+                highlightedRow =  JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance())
                         .queryForInt(String.format("select row_num from %s where ROW_IDX = %d", resultSetID, hlRowByRowIdx));
             } catch (Exception e) {
                 // row does not exists in new resultset.. reset highlightedRow.
@@ -483,18 +450,18 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
         String resultSetID = getResultSetID(tsr);
         SelectionInfo si = tsr.getSelectInfo();
-        DbAdapter dbAdapter = DbAdapter.getAdapter(tsr);
+        DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
         if (isEmpty(editColName)) {
-            EmbeddedDbUtil.addColumn(dbFile, dbAdapter, dtype, expression, preset, resultSetID, si);
+            EmbeddedDbUtil.addColumn(dbAdapter, dtype, expression, preset, resultSetID, si);
         } else {
-            EmbeddedDbUtil.updateColumn(dbFile, dbAdapter, dtype, expression, editColName, preset, resultSetID, si);
+            EmbeddedDbUtil.updateColumn(dbAdapter, dtype, expression, editColName, preset, resultSetID, si);
         }
     }
 
     public void deleteColumn(TableServerRequest tsr, String cname) {
         File dbFile = getDbFile(tsr);
-        DbAdapter dbAdapter = DbAdapter.getAdapter(tsr);
-        EmbeddedDbUtil.deleteColumn(dbFile, dbAdapter, cname);
+        DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
+        EmbeddedDbUtil.deleteColumn(dbAdapter, cname);
     }
 
 //====================================================================
@@ -502,10 +469,10 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 //====================================================================
 
     private String ensurePrevResultSetIfExists(TableServerRequest treq, File dbFile, String prevResultSetID) {
-
-        if (!EmbeddedDbUtil.hasTable(treq, dbFile, prevResultSetID)) {
+        DbAdapter dbAdapter = getAdapter(dbFile);
+        if (!dbAdapter.hasTable(prevResultSetID)) {
             // does not exists.. create table from original 'data' table
-            prevResultSetID = MAIN_DB_TBL;      // if fail to create the previous resultset, use data.
+            prevResultSetID = dbAdapter.getDataTable();      // if fail to create the previous resultset, use data.
             String resultSetRequest = treq.getMeta().get(TableMeta.RESULTSET_REQ);
             if (!isEmpty(resultSetRequest)) {
                 try {
@@ -528,14 +495,14 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         }
 
         String prevResultSetID = treq.getMeta(TableMeta.RESULTSET_ID);             // the previous resultset ID
-        prevResultSetID = isEmpty(prevResultSetID) ? MAIN_DB_TBL : prevResultSetID;
+        prevResultSetID = isEmpty(prevResultSetID) ? dbAdapter.getDataTable() : prevResultSetID;
 
         if ( selectInfo.getSelectedCount() > 0 && !String.valueOf(prevResultSetID).equals(String.valueOf(forTable)) ) {
             // there were row(s) selected from previous resultset.. make sure selectInfo is remapped to new resultset
             prevResultSetID = ensurePrevResultSetIfExists(treq, dbFile, prevResultSetID);
 
             String rowNums = StringUtils.toString(selectInfo.getSelected());
-            SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance(dbFile));
+            SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance());
             String origRowIds = String.format("Select ROW_IDX from %s where ROW_NUM in (%s)", prevResultSetID, rowNums);
 
             List<Integer> newRowNums = new ArrayList<>();

@@ -8,19 +8,13 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
-import edu.caltech.ipac.firefly.server.db.DbInstance;
-import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
-import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroupPart;
-import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.File;
 import java.util.SortedSet;
-
-import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
 
 
 /**
@@ -35,9 +29,8 @@ public abstract class SharedDbProcessor extends EmbeddedDbProcessor {
      * it can be easily cleared.
      */
     public File getDbFile(TableServerRequest treq) {
-        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-        String fname = String.format("%s_%s.%s", treq.getRequestId(), ServerContext.getRequestOwner().getRequestAgent().getSessId(), dbAdapter.getName());
-        return new File(QueryUtil.getTempDir(treq), fname);
+        String fname = String.format("%s_%s", treq.getRequestId(), ServerContext.getRequestOwner().getRequestAgent().getSessId());
+        return DbAdapter.createDbFile(treq, fname, QueryUtil.getTempDir(treq));
     }
 
     public FileInfo ingestDataIntoDb(TableServerRequest treq, File dbFile) throws DataAccessException {
@@ -47,21 +40,16 @@ public abstract class SharedDbProcessor extends EmbeddedDbProcessor {
 
     @Override
     protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
-        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-        DbInstance dbInstance =  dbAdapter.getDbInstance(dbFile);
+        DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
         SortedSet<Param> params = treq.getSearchParams();
         params.addAll(treq.getResultSetParam());
-        String tblName = MAIN_DB_TBL + "_" + DigestUtils.md5Hex(StringUtils.toString(params, "|"));
+        String tblName = dbAdapter.getDataTable() + "_" + DigestUtils.md5Hex(StringUtils.toString(params, "|"));
 
-        String tblExists = String.format("select count(*) from %s", tblName);
-        try {
-            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(tblExists);
-        } catch (Exception e) {
-            // DD for this catalog does not exists.. fetch data and populate
-            DataGroup data = fetchDataGroup(treq);
-            EmbeddedDbUtil.ingestDataGroup(dbFile, data, dbAdapter, tblName);
+        if (!dbAdapter.hasTable(tblName)) {
+            // Data for this request does not exist.. fetch data and ingest
+            dbAdapter.ingestData(() -> fetchDataGroup(treq), tblName);
         }
-        return EmbeddedDbUtil.execRequestQuery(treq, dbFile, tblName);
+        return dbAdapter.execRequestQuery(treq, tblName);
     }
 }
 

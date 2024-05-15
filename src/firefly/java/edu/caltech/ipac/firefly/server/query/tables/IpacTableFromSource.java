@@ -8,8 +8,10 @@ import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
+import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
@@ -17,89 +19,105 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
-import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
-import edu.caltech.ipac.table.io.IpacTableWriter;
-import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 
+import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
 import static edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource.PROC_ID;
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.SEARCH_REQUEST;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 
 @SearchProcessorImpl(id = PROC_ID)
-public class IpacTableFromSource extends IpacTablePartProcessor {
+public class IpacTableFromSource extends EmbeddedDbProcessor {
     public static final String PROC_ID = "IpacTableFromSource";
     private static final String TBL_TYPE = "tblType";
     private static final String TYPE_CATALOG = "catalog";
 
+    // because a SearchProcessor is created on each request,
+    // it's okay to save it as a member variable once it's fetched.
+    private File inf;
+    private boolean noSourceFile = false;
+    private DataAccessException fetchError;
 
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
 
-        String source = req.getParam(ServerParams.SOURCE);
-        String altSource = req.getParam(ServerParams.ALT_SOURCE);
         String processor = req.getParam("processor");
         String jsonSearchRequest = req.getParam(SEARCH_REQUEST);
 
         // by processor ID
-        if (!StringUtils.isEmpty(processor)) {
+        if (!isEmpty(processor)) {
             return getByProcessor(processor, req);
         }
 
         // by a TableRequest as json string
-        if (!StringUtils.isEmpty(jsonSearchRequest)) {
+        if (!isEmpty(jsonSearchRequest)) {
             return getByTableRequest(jsonSearchRequest);
         }
 
-        // file based source
-        File inf;
-
-        if (isWorkspace(req)) {
-            // by workspace
-            inf = getFromWorkspace(source, altSource);
-        } else {
-            // by source/altSource
-            inf = QueryUtil.resolveFileFromSource(source, req);
-            if (inf == null) {
-                inf = QueryUtil.resolveFileFromSource(altSource, req);
-            }
-        }
+        fetchSourceFile(req);
+        if (noSourceFile) throw fetchError;
 
         try {
             int tblIdx = req.getIntParam(TBL_INDEX, 0);
-            return TableUtil.readAnyFormat(inf, tblIdx, req);
+            DataGroup dataGroup = TableUtil.readAnyFormat(inf, tblIdx, req);
+
+            String type = req.getParam(TBL_TYPE, TYPE_CATALOG);
+            if (type.equals(TYPE_CATALOG)) {        // if catalog and overlay is not set, set it to "TRUE"
+                if (isEmpty(req.getMeta(MetaConst.CATALOG_OVERLAY_TYPE))) {
+                    dataGroup.getTableMeta().setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
+                }
+            }
+            return dataGroup;
+
         } catch (IOException e) {
             throw new DataAccessException(e.getMessage(), e);
         }
     }
 
-    protected File loadDataFile(TableServerRequest request) throws IOException, DataAccessException {
-
-        DataGroup dataGroup = fetchDataGroup(request);
-        File ofile = createFile(request, ".tbl");
-        IpacTableWriter.save(ofile, dataGroup);
-        return ofile;
+    public File getDbFile(TableServerRequest treq) {
+        fetchSourceFile(treq);
+        DbAdapter dbAdapter = (DbAdapter) DbAdapter.getDbCreator(treq.getMeta(TBL_FILE_TYPE));
+        dbAdapter = dbAdapter == null ? DbAdapter.getAdapter(inf) : dbAdapter;
+        if ( dbAdapter instanceof DuckDbReadable dr) {
+            treq.setMeta(TBL_FILE_TYPE, dr.getName());
+            return inf;
+        }
+        return DbAdapter.createDbFile(treq, makeDbFname(treq), QueryUtil.getTempDir(treq));
     }
 
+    private void fetchSourceFile (TableServerRequest req) {
 
-    @Override
-    public boolean doCache() {
-        return false;
-    }
+        if (noSourceFile || inf != null) return;
 
-    @Override
-    public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {
-        String type = request.getParam(TBL_TYPE);
-        if (type == null || type.equals(TYPE_CATALOG)) {
-            Map reqMeta= ((TableServerRequest) request).getMeta();
-            if (reqMeta==null || !reqMeta.containsKey(MetaConst.CATALOG_OVERLAY_TYPE)) {
-                defaults.setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
+        String processor = req.getParam("processor");
+        String jsonSearchRequest = req.getParam(SEARCH_REQUEST);
+        String source = req.getParam(ServerParams.SOURCE);
+        String altSource = req.getParam(ServerParams.ALT_SOURCE);
+
+        if (isEmpty(processor) && isEmpty(jsonSearchRequest)) {
+            try {
+
+                if (isWorkspace(req)) {
+                    // by workspace
+                    inf = getFromWorkspace(source, altSource);
+                } else {
+                    // by source/altSource
+                    inf = QueryUtil.resolveFileFromSource(source, req);
+                    if (inf == null) {
+                        inf = QueryUtil.resolveFileFromSource(altSource, req);
+                    }
+                }
+                if (inf == null) {
+                    noSourceFile = true;
+                    fetchError = new DataAccessException(String.format("Unable to fetch file from path[alt_path]: %s[%s]", source, altSource));
+                }
+            } catch (DataAccessException e) {
+                fetchError = e;
+                noSourceFile = true;
             }
         }
     }
@@ -125,7 +143,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
     private DataGroup getByTableRequest(String jsonSearchRequest) throws DataAccessException {
 
         TableServerRequest req = QueryUtil.convertToServerRequest(jsonSearchRequest);
-        if (StringUtils.isEmpty(req.getRequestId())) {
+        if (isEmpty(req.getRequestId())) {
             throw new DataAccessException("Search request must contain " + ServerParams.ID);
         }
         return getByProcessor(req.getRequestId(), req);
@@ -139,7 +157,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
         }
 
         if (file == null) {
-            String altSourceDesc=StringUtils.isEmpty(altSource) ? "" : " [" + altSource + "]";
+            String altSourceDesc= isEmpty(altSource) ? "" : " [" + altSource + "]";
             throw new DataAccessException("File not found for workspace path[alt_path]:" + source + altSourceDesc);
         }
 

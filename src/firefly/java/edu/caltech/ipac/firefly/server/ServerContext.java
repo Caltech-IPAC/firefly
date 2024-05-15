@@ -4,7 +4,7 @@
 package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
-import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.DbMonitor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
@@ -853,9 +853,9 @@ public class ServerContext {
                 ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(WEBAPP_CONFIG_LOC));
                 VersionUtil.initVersion(cntx);  // can be called multiple times, only inits on the first call
                 SCHEDULE_TASK_EXEC.scheduleAtFixedRate(
-                        () -> DbAdapter.getAdapter().cleanup(false),
-                        DbAdapter.CLEANUP_INTVL,
-                        DbAdapter.CLEANUP_INTVL,
+                        () -> DbMonitor.cleanup(false),
+                        DbMonitor.CLEANUP_INTVL,
+                        DbMonitor.CLEANUP_INTVL,
                         TimeUnit.MILLISECONDS);
             } catch (Throwable e) {
                 e.printStackTrace();
@@ -865,7 +865,7 @@ public class ServerContext {
         public void contextDestroyed(ServletContextEvent servletContextEvent) {
             try {
                 System.out.println("contextDestroyed...");
-                DbAdapter.getAdapter().cleanup(true);
+                DbMonitor.cleanup(true, true);
                 ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
                 try {
                     SHORT_TASK_EXEC.shutdownNow();

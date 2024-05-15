@@ -1,12 +1,12 @@
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.table.DataType.Visibility;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbInstance;
-import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroup;
@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.SEARCH_REQUEST;
 
 /**
@@ -39,7 +38,7 @@ public class StatisticsProcessor extends TableFunctionProcessor {
     };
 
     protected String getResultSetTablePrefix() {
-        return "stats";
+        return "STATS";
     }
 
     protected DataGroup fetchData(TableServerRequest treq, File dbFile, DbAdapter dbAdapter) throws DataAccessException {
@@ -47,28 +46,22 @@ public class StatisticsProcessor extends TableFunctionProcessor {
         EmbeddedDbProcessor proc = getSearchProcessor(sreq);
         String origDataTblName = proc.getResultSetID(sreq);
         // check to see if a resultset table exists... if not, use orginal data table.
-        DbInstance dbInstance = dbAdapter.getDbInstance(dbFile);
-        String tblExists = String.format("select count(*) from %s", origDataTblName);
-        try {
-            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(tblExists);
-        } catch (Exception e) {
-            origDataTblName = MAIN_DB_TBL;
+        if (!dbAdapter.hasTable(origDataTblName)) {
+            origDataTblName = dbAdapter.getDataTable();
         }
 
-        // get all cols from dd table
-        DataGroup dd = EmbeddedDbUtil.execQuery(dbAdapter, dbFile, String.format("select * from data_dd"), null);
+        // get all column info from DATA table
+        DataGroup dd = dbAdapter.getHeaders(dbAdapter.getDataTable());
+        var cols = dd.getDataDefinitions();
 
         //generate one sql for all the columns.  each as cname_min, cname_max, cname_count
         DataGroup stats = new DataGroup("stats", columns);
         List<String> sqlCols = new ArrayList<>();
-        for (int i = 0; i < dd.size(); i++) {
-            DataObject col = dd.get(i);
-            String type = (String) col.getDataElement("TYPE");
-            String visi = (String) col.getDataElement("VISIBILITY");
-            if (DataType.NUMERIC_TYPES.contains(type) && !StringUtils.areEqual(visi, "hidden")) {
-                String cname = col.getStringData("CNAME");
-                String desc = col.getStringData("DESC");
-                String units = col.getStringData("UNITS");
+        for (DataType col : cols) {
+            if (col.isNumeric() && col.getVisibility() != Visibility.hidden) {
+                String cname = col.getKeyName();
+                String desc = col.getDesc();
+                String units = col.getUnits();
                 DataObject row = new DataObject(stats);
                 row.setDataElement(columns[0], cname);
                 row.setDataElement(columns[1], desc);
@@ -81,7 +74,7 @@ public class StatisticsProcessor extends TableFunctionProcessor {
 
         }
         if (sqlCols.size() > 0) {
-            DataObject data = EmbeddedDbUtil.execQuery(dbAdapter, dbFile, String.format("select %s from %s",StringUtils.toString(sqlCols), origDataTblName), null).get(0);
+            DataObject data = dbAdapter.execQuery(String.format("select %s from %s",StringUtils.toString(sqlCols), origDataTblName), null).get(0);
             for (int i = 0; i < stats.size(); i++) {
                 DataObject col = stats.get(i);
                 String cname = col.getStringData("columnName");

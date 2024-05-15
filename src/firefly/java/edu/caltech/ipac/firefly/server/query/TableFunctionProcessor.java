@@ -5,7 +5,6 @@ import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbInstance;
-import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroupPart;
@@ -52,13 +51,6 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
         }
     }
 
-    @Override
-    public File createDbFile(TableServerRequest treq) throws DataAccessException {
-        // table function processor operates on the original table
-        // we don't want to create a dummy table in db
-        return null;
-    }
-
     /**
      * original database no longer available.. recreate it.
      */
@@ -78,17 +70,12 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
 
         String resTblName = getResultSetTable(treq);
 
-        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-        DbInstance dbInstance =  dbAdapter.getDbInstance(dbFile);
-        String tblExists = String.format("select count(*) from %s", resTblName);
-        try {
-            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(tblExists);
-        } catch (Exception e) {
+        DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
+        if (!dbAdapter.hasTable(resTblName)) {
             // does not exists.. fetch data and populate
-            DataGroup data = fetchData(treq, dbFile, dbAdapter);
-            EmbeddedDbUtil.ingestDataGroup(dbFile, data, dbAdapter, resTblName);
+            dbAdapter.ingestData(() -> fetchData(treq, dbFile, dbAdapter), resTblName);
         }
-        return EmbeddedDbUtil.execRequestQuery(treq, dbFile, resTblName);
+        return dbAdapter.execRequestQuery(treq, resTblName);
     }
 
     /**
@@ -109,7 +96,8 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
         }
         params.addAll(treq.getSearchParams());
         String id = StringUtils.toString(params, "|");
-        return String.format("%s_data_%s", getResultSetTablePrefix(), DigestUtils.md5Hex(id));
+        String rst = String.format("%s_data_%s", getResultSetTablePrefix(), DigestUtils.md5Hex(id));
+        return rst.toUpperCase();
     }
 
     protected EmbeddedDbProcessor getSearchProcessor(TableServerRequest searchReq) throws DataAccessException {

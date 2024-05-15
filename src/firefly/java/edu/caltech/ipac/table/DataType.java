@@ -47,27 +47,34 @@ public class DataType implements Serializable, Cloneable {
 
     public enum Visibility {show, hide, hidden};
 
+    // firefly data types
     public static final String BOOLEAN = "boolean";
-    public static final String BIT = "bit";
-    public static final String BYTE = "unsignedByte";
+    public static final String BYTE = "byte";
     public static final String SHORT = "short";
     public static final String INTEGER = "int";
     public static final String LONG = "long";
     public static final String CHAR = "char";
-    public static final String UNI_CHAR = "unicodeChar";
     public static final String FLOAT = "float";
     public static final String DOUBLE = "double";
-    public static final String COMPLEX_FLOAT = "floatComplex";
-    public static final String COMPLEX_DOUBLE = "doubleComplex";
+    public static final String DATE = "date";
 
+    // VOTable mapped types; use lower case for comparison,
+    public static final String BIT = "bit";
+    public static final String UNSIGNED_BYTE = "unsignedbyte";
+    public static final String UNI_CHAR = "unicodechar";
+    public static final String COMPLEX_FLOAT = "floatcomplex";
+    public static final String COMPLEX_DOUBLE = "doublecomplex";
+
+    // IPAC-Table mapped types
     public static final String REAL = "real";      // IPAC table
-    public static final String DATE = "date";      // IPAC table
     public static final String LOCATION = "location";
-    public static final String LONG_STRING = "long_string";
 
-    private static final List<String> FLOATING_TYPES = Arrays.asList(DOUBLE, REAL, FLOAT);
-    private static final List<String> INT_TYPES = Arrays.asList(INTEGER, LONG);
-    public static final List<String> NUMERIC_TYPES = Stream.concat(FLOATING_TYPES.stream(), INT_TYPES.stream()).collect(Collectors.toList());
+    // database mapped types
+    public static final String BIGINT = "bigint";      // IPAC table
+
+    private static final List<Class> FLOATING_TYPES = List.of(Double.class, Float.class);
+    private static final List<Class> INT_TYPES = List.of(Short.class, Integer.class, Long.class);
+    public static final List<Class> NUMERIC_TYPES = Stream.concat(FLOATING_TYPES.stream(), INT_TYPES.stream()).collect(Collectors.toList());
     private static final Pattern precisiontPattern = Pattern.compile("^(HMS|DMS|[EFG])?(\\d*)$", Pattern.CASE_INSENSITIVE);
 
 
@@ -384,7 +391,7 @@ public class DataType implements Serializable, Cloneable {
         } else if (!isEmpty(getFormat())) {
             return String.format(getFormat(), value);
 
-        } else if (FLOATING_TYPES.contains(getTypeDesc())) {
+        } else if (FLOATING_TYPES.contains(getDataType())) {
             // use precision
             String prec = getPrecision();
             if (!isEmpty(prec)) {
@@ -438,14 +445,17 @@ public class DataType implements Serializable, Cloneable {
 
     public boolean isFloatingPoint() {
         if (isFloatingPoint == null) {
-            isFloatingPoint = FLOATING_TYPES.contains(typeDesc);
+            if (type == null) {
+                System.out.println();
+            }
+            isFloatingPoint = FLOATING_TYPES.contains(type);
         }
         return isFloatingPoint;
     }
 
     public boolean isWholeNumber() {
         if (isWholeNumber == null) {
-            isWholeNumber = INT_TYPES.contains(typeDesc);
+            isWholeNumber = INT_TYPES.contains(type);
         }
         return isWholeNumber;
     }
@@ -608,7 +618,11 @@ public class DataType implements Serializable, Cloneable {
     }
 
     public static Class descToType(String desc) {
-        switch (desc) {
+        return descToType(desc, String.class);
+    }
+
+    public static Class descToType(String desc, Class defaultVal) {
+        switch (desc.toLowerCase()) {
             case DOUBLE:
             case COMPLEX_DOUBLE:
             case REAL:
@@ -617,6 +631,7 @@ public class DataType implements Serializable, Cloneable {
             case COMPLEX_FLOAT:
                 return Float.class;
             case LONG:
+            case BIGINT:
                 return Long.class;
             case INTEGER:
                 return Integer.class;
@@ -626,14 +641,16 @@ public class DataType implements Serializable, Cloneable {
                 return Boolean.class;
             case BIT:
             case BYTE:
+            case UNSIGNED_BYTE:
                 return Byte.class;
             case DATE:
                 return Date.class;
             case UNI_CHAR:
             case LOCATION:
+            case CHAR:
                 return String.class;
             default:
-                return String.class;
+                return defaultVal;
         }
     }
 

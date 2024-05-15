@@ -23,6 +23,7 @@ import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.TableUtil.Format;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
@@ -400,22 +401,11 @@ public class SrvParam {
         return QueryUtil.convertToDownloadRequest(dlReqStr, tableReqStr, selInfoStr);
     }
 
-    public TableUtil.Format getTableFormat() {
-        final String fileFormat = getOptional("file_format").toLowerCase();
+    public Format getTableFormat() {
+        final String fileFormat = getOptional("file_format", Format.IPACTABLE.name()).toLowerCase();
 
-        Map<String, TableUtil.Format> allFormats = TableUtil.getAllFormats();
-
-        String formatInMap;
-        if (StringUtils.isEmpty(fileFormat)) {
-            formatInMap = "ipac";
-        } else {
-            Object[] formats = allFormats.keySet().stream()
-                    .filter((t) -> fileFormat.equals(t))
-                    .toArray();
-            formatInMap = (formats.length != 1) ? "ipac" : (String)formats[0];
-        }
-
-        return allFormats.get(formatInMap);
+        Format formatInMap = TableUtil.getAllFormats().get(fileFormat);
+        return formatInMap == null ? Format.IPACTABLE : formatInMap;
     }
 
 }

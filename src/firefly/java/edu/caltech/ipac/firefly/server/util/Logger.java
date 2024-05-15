@@ -21,6 +21,8 @@ import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFact
 import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
 import org.apache.logging.log4j.util.Supplier;
 
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+
 /**
  * Date: Dec 10, 2008
  *
@@ -39,6 +41,19 @@ public class Logger {
                         }
 
     private static final String ARY_SEP = "\n" + AppProperties.getProperty("ArrayRenderer.padding", "    ");
+
+    static {
+        applyIfNotEmpty(AppProperties.getProperty("logger.level"), l -> {
+            Configurator.setLevel("edu.caltech.ipac", Level.toLevel(l));
+            Configurator.setLevel("org.springframework.jdbc", Level.toLevel(l));
+        });
+        applyIfNotEmpty(AppProperties.getProperty("logger.ipac.level"), l -> {
+            Configurator.setLevel("edu.caltech.ipac", Level.toLevel(l));
+        });
+        applyIfNotEmpty(AppProperties.getProperty("logger.jdbc.level"), l -> {
+            Configurator.setLevel("org.springframework.jdbc", Level.toLevel(l));
+        });
+    }
 
     /**
      * use static accessors methods

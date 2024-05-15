@@ -79,7 +79,7 @@ public interface PrimitiveList {
         public void trimToSize() { data.trimToSize(); }
     }
 
-    abstract public static class NullablePrimitiveList implements PrimitiveList{
+    abstract class NullablePrimitiveList implements PrimitiveList{
         private Class clz;
         private BitSet nulls = new BitSet();
         private int size;
@@ -103,6 +103,7 @@ public interface PrimitiveList {
             if (val == null) {
                 nulls.set(idx, true);
             } else {
+                nulls.set(idx, false);
                 setImpl(idx, val);
             }
             if (idx >= size()) size = idx+1;
@@ -123,7 +124,7 @@ public interface PrimitiveList {
         abstract protected void ensureCapacity(int minCapacity);
     }
 
-    public static class Doubles extends NullablePrimitiveList {
+    class Doubles extends NullablePrimitiveList {
         private double[] data;
 
         public Doubles() { this(1000); }
@@ -154,7 +155,7 @@ public interface PrimitiveList {
         }
     }
 
-    public static class Floats extends NullablePrimitiveList {
+    class Floats extends NullablePrimitiveList {
         private float[] data;
 
         public Floats() { this(1000); }
@@ -181,7 +182,7 @@ public interface PrimitiveList {
         }
     }
 
-    public static class Longs extends NullablePrimitiveList {
+    class Longs extends NullablePrimitiveList {
         private long[] data;
 
         public Longs() { this(1000); }
@@ -210,7 +211,7 @@ public interface PrimitiveList {
         }
     }
 
-    public static class Integers extends NullablePrimitiveList {
+    class Integers extends NullablePrimitiveList {
         private int[] data = null;
 
         public Integers() { this(1000); }
@@ -239,7 +240,65 @@ public interface PrimitiveList {
         }
     }
 
-    public static class Booleans extends NullablePrimitiveList {
+    class Shorts extends NullablePrimitiveList {
+        private short[] data = null;
+
+        public Shorts() { this(1000); }
+
+        public Shorts(int initCapacity) {
+            super(Short.class);
+            data  = new short[initCapacity];
+        }
+
+        public Object getImpl(int idx) {
+            return data[idx];
+        }
+        public void setImpl(int idx, Object val) { data[idx] = (short)val; }
+        public void clearImpl() { data = null; }
+
+        protected void ensureCapacity(int minCapacity) {
+            if (minCapacity >= data.length) {
+                data = Arrays.copyOf(data, newCapacity(minCapacity, data.length));
+            }
+        }
+
+        public void trimToSize() {
+            if (size() != data.length) {
+                data = Arrays.copyOf(data, size());
+            }
+        }
+    }
+
+    class Bytes extends NullablePrimitiveList {
+        private byte[] data = null;
+
+        public Bytes() { this(1000); }
+
+        public Bytes(int initCapacity) {
+            super(Byte.class);
+            data  = new byte[initCapacity];
+        }
+
+        public Object getImpl(int idx) {
+            return data[idx];
+        }
+        public void setImpl(int idx, Object val) { data[idx] = (byte)val; }
+        public void clearImpl() { data = null; }
+
+        protected void ensureCapacity(int minCapacity) {
+            if (minCapacity >= data.length) {
+                data = Arrays.copyOf(data, newCapacity(minCapacity, data.length));
+            }
+        }
+
+        public void trimToSize() {
+            if (size() != data.length) {
+                data = Arrays.copyOf(data, size());
+            }
+        }
+    }
+
+    class Booleans extends NullablePrimitiveList {
         private boolean[] data = null;
 
         public Booleans() { this(1000); }

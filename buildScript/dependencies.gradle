@@ -94,6 +94,9 @@ dependencies {
 
     // junit for java test
     implementation 'junit:junit:4.12'
+
+    // duckdb - SQL support for parquet, csv, and tsv files
+    implementation 'org.duckdb:duckdb_jdbc:0.10.2'
 }
 
 
@@ -102,11 +105,14 @@ task copyDependencies(dependsOn: jar) {
     doLast {
         def homePath = System.properties['user.home']
         def publishDir = project.group.replaceAll("\\.", "/") + "/${project.name}/${project.version}"
+        def repoDir = file("${homePath}/.m2/repository/" + publishDir)
 
+        if (repoDir.exists()) repoDir.deleteDir()        // clear out the old jars
         copy {
             from(configurations.runtimeClasspath)
-            into "${homePath}/.m2/repository/" + publishDir
+            into repoDir
         }
+        println "Firefly local maven directory: ${repoDir}"
     }
 }
 

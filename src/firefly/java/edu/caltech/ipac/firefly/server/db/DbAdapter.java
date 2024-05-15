@@ -1,17 +1,27 @@
 package edu.caltech.ipac.firefly.server.db;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.SelectionInfo;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ResourceProcessor;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * Date: 9/8/17
@@ -20,50 +30,23 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
  * @version $Id: $
  */
 public interface DbAdapter {
-    String H2 = "h2";
-    String SQLITE = "sqlite";
-    String HSQL = "hsql";
 
-    String MAIN_DB_TBL = "DATA";
+    String MAIN_DATA_TBL = "DATA";
+    List<String> MAIN_TABLES = Arrays.asList("DATA", "DATA_DD", "DATA_META", "DATA_AUX");
     String NULL_TOKEN = "%NULL";
 
-    /*
-      CLEAN UP POLICY:
-        A rough estimate:
-        1m rows; 30 cols table when displayed in triview(table+chart+image) uses 800mb -> 4 tables; 2m rows
-        After 2 sort, uses 1.5g ->  10 tables; 6m rows
-        2 more sort, uses 2.2g ->  16 tables; 10m rows
+    String DEF_DB_TYPE = AppProperties.getProperty("DbAdapter.type", HsqlDbAdapter.NAME);
 
-        There are two stages of clean-up; compact(remove all temp tables), then shutdown(remove from memory)
-        - Compact DB once it has idled longer than a time based on COMPACT_FACTOR
-        - Shutdown DB once it has expired; idle longer than MAX_IDLE_TIME
-        - Shutdown DB based on LRU(Least Recently Used) once the total rows have exceeded MAX_MEMORY_ROWS
+    List<String> ignoreCols = Arrays.asList(DataGroup.ROW_IDX, DataGroup.ROW_NUM, "\"" + DataGroup.ROW_IDX + "\"", "\"" + DataGroup.ROW_NUM + "\"");
 
-        Default settings:
-          - CLEANUP_INTVL:  1 minutes
-          - MAX_IDLE_TIME: 15 minutes
-          - MAX_IDLE_TIME_RSC: MAX_IDLE_TIME
-          - COMPACT_FACTOR: .5
-          - MAX_MEMORY_ROWS:  1m rows for every 1GB of memory at startup. minimum of 2 million.
-     */
-    long MAX_IDLE_PROP  = AppProperties.getLongProperty("dbTbl.maxIdle", 15);                       // idle time before DB is shutdown.  Defaults to 15 minutes.
-    long MAX_IDLE_TIME  = MAX_IDLE_PROP * 1000 * 60;                                                          // max idle time in ms
-    long MAX_IDLE_TIME_RSC = AppProperties.getLongProperty("dbRsc.maxIdle", MAX_IDLE_PROP) * 1000 * 60;  // same as dbTbl.maxIdle, but for Resource tables.
-    float COMPACT_FACTOR = AppProperties.getFloatProperty("dbTbl.compactFactor", 0.5f);             // when to compact the DB as a factor of MAX_IDLE.  defaults to 1/2 of MAX_IDLE_TIME
-    long MAX_MEM_ROWS   = AppProperties.getLongProperty("dbTbl.maxMemRows", maxMemRows());
-    int  CLEANUP_INTVL  = 1000 * 60;        // check every 1 minutes
-    /**
-     * Total number of rows allowed in memory at startup.
-     * When met, system will aggressively shutdown DBs even before expiry time starting with the
-     * earliest last modified date.
-     * @return
-     */
-    private static long maxMemRows() {
-        long freeMem = Runtime.getRuntime().maxMemory();                // using designated memory(-Xmx) to simplify the logic.
-        return Math.max(2000000, freeMem/1024/1024/1024 * 1000000);     // minimum 2m rows
-    }
-
-    EmbeddedDbStats getRuntimeStats(boolean doUpdate);
+    Map<String, DbAdapterCreator> allCreator = Map.of(
+            HsqlDbAdapter.NAME, new HsqlDbAdapter(),
+            DuckDbReadable.Parquet.NAME, new DuckDbReadable.Parquet(),
+            DuckDbReadable.Csv.NAME, new DuckDbReadable.Csv(),
+            DuckDbAdapter.NAME, new DuckDbAdapter(),
+            H2DbAdapter.NAME, new H2DbAdapter(),
+            SqliteDbAdapter.NAME, new SqliteDbAdapter()
+    );
 
     /**
      * @return the name of this database
@@ -71,21 +54,24 @@ public interface DbAdapter {
     String getName();
 
     /**
-     * @param dbFile
-     * @return a new DbInstance for the given dbFile
+     * @return the name of the main table data.  it's currently fixed to DATA, with related tables; DATA_DD, DATA_META, and DATA_AUX
      */
-    DbInstance getDbInstance(File dbFile);
+    default String getDataTable() { return MAIN_DATA_TBL; }
 
     /**
-     *  closes the database and release resources used by it.
-     * @param dbFile    the database file to disconnect from
-     * @param deleteFile    if true, also remove the file itself.
+     * Ensures that each adapter is associated with a functional database file.
+     * @return  The database file being adapted to
      */
-    void close(File dbFile, boolean deleteFile);
+    File getDbFile();
 
     /**
-     * @param type
-     * @return this database's datatype representation of the given java class.
+     * @return a new DbInstance for this database
+     */
+    DbInstance getDbInstance();
+
+    /**
+     * @param type DataGroup's equivalent of a column
+     * @return the database data type for the given column.  e.g. double, varchar, bigint, etc.
      */
     String toDbDataType(DataType type);
 
@@ -94,102 +80,259 @@ public interface DbAdapter {
      */
     boolean useTxnDuringLoad();
 
-    String createDataSql(DataType[] dataDefinitions, String tblName);
-    String insertDataSql(DataType[] dataDefinitions, String tblName);
+    /**
+     * @param forTable  table to query
+     * @param inclCols  only for these columns.  null to get all columns
+     * @return a DataGroup with all of the headers without data.  This includes info from DD, META, and AUX.
+     */
+    DataGroup getHeaders(String forTable, String ...inclCols) throws DataAccessException;
+
+    List<String> getColumnNames(String tblName, String enclosedBy);
+    List<String> getTableNames();
+    DbAdapter.DbStats getDbStats();
+
+    default boolean hasTable(String tableName) {
+        return getTableNames().stream()
+                .anyMatch(s -> s.equalsIgnoreCase(tableName));
+    }
+
+
+//===============================================================================
+//  Supported actions; each database may need to perform them slightly different
+//===============================================================================
 
     /**
-     * contains auxiliary info in datagroup that's not in meta and column info.
+     * create and initiate the database
+     * @throws IOException
      */
-    String createAuxDataSql(String forTable);
-    String insertAuxDataSql(String forTable);
-
-    String createMetaSql(String forTable);
-    String insertMetaSql(String forTable);
-
-    String createDDSql(String forTable);
-    String insertDDSql(String forTable);
-
-    String getDDSql(String forTable);
-    String getMetaSql(String forTable);
-    String getAuxDataSql(String forTable);
-
-    String selectPart(TableServerRequest treq);
-    String wherePart(TableServerRequest treq);
-    String orderByPart(TableServerRequest treq) ;
-    String pagingPart(TableServerRequest treq) ;
-
-    String createTableFromSelect(String tblName, String selectSql);
-    String translateSql(String sql);
-
-    List<String> getColumnNames(DbInstance dbInstance, String tblName, String enclosedBy);
+    File initDbFile() throws IOException;
 
     /**
-     * perform a cleanup routine which may close inactive database to free up memory
-     * @param force  true to force close all open databases
+     * Creates DATA, DATA_DD, and DATA_META tables.
+     * If the data is not already in the dbFile, a dataGroupSupplier may be used to retrieve it.
+     * * @param dataGroupSupplier  a lambda to retrieve a DataGroup as needed.
      */
-    void cleanup(boolean force);
-    public Map<String, BaseDbAdapter.EmbeddedDbInstance> getDbInstances();
+    FileInfo ingestData(DataGroupSupplier dataGroupSupplier, String forTable) throws DataAccessException;
+
+    /**
+     * Creates DATA_XXX, DATA_XXX_DD, and DATA_XXX_META tables from the original DATA.
+     * These tables are created to make subsequent actions faster, like paging
+     */
+    void createTempResults(TableServerRequest treg, String resultSetID);
+
+
+    /**
+     * Similar to execQuery, except this method creates the SQL statement from the given request object.
+     * It need to take filter, sort, and paging into consideration.
+     * @param treq      request parameters used for select, where, order by, and limit
+     * @param forTable  table to run the query on.
+     * @return
+     */
+    DataGroupPart execRequestQuery(TableServerRequest treq, String forTable) throws DataAccessException;
+
+    /**
+     * Executes the give sql and returns the results as a DataGroup.  If refTable is provided, it will query the
+     * ?_DD and ?_META tables of this refTable and add the information into the returned DataGroup.
+     * @param sql           complete SQL statement
+     * @param refTable      use meta information from this table
+     * @return
+     */
+    DataGroup execQuery(String sql, String refTable) throws DataAccessException;
+
+
+    /**
+     * A wrapper around jdbc update call for logging and error handling.
+     * It may also apply any discrepancies among the different DbAdapters.
+     * @param sql       the sql to execute update on
+     * @param params    parameters used by sql
+     * @return the number of rows affected by this update
+     * @throws RuntimeException exception thrown by jdbc call
+     */
+    int execUpdate(String sql, Object ...params) throws RuntimeException;
+
+    /**
+     * A wrapper around jdbc batchUpdate call for logging and error handling.
+     * It may also apply any discrepancies among the different DbAdapters.
+     * @param sql       the sql to execute update on
+     * @param params    a list of values to supply to batchUpdate
+     * @throws RuntimeException exception thrown by jdbc call
+     */
+    void batchUpdate(String sql, List<Object[]> params) throws RuntimeException;
+
+
+    /**
+     * Add a column to the DATA table
+     * @param col           column to add
+     * @param atIndex       add this column at the given index.  If out-of-range, it will be added to the end.
+     * @param expression    used to populate the column's value.  required if preset is not selected.
+     * @param preset        if preset is used, resultSetID and si may be needed as well.
+     * @param resultSetID   the temp table name to use
+     * @param si            current selection info of this temp table
+     */
+    void addColumn(DataType col, int atIndex, String expression, String preset, String resultSetID, SelectionInfo si) throws DataAccessException;
+
+    /**
+     * update a column
+     * @param editColName   name of column to update
+     * @param newCol        new column info to update to
+     * @param expression    used to populate the column's value.  required if preset is not selected.
+     * @param preset        if preset is used, resultSetID and si may be needed as well.
+     * @param resultSetID   the temp table name to use
+     * @param si            current selection info of this temp table
+     */
+    void updateColumn(DataType newCol, String expression, String editColName, String preset, String resultSetID, SelectionInfo si) throws DataAccessException;
+
+    /**
+     * Delete a column from the DATA table
+     * @param cname         column to delete
+     */
+    void deleteColumn(String cname);
 
 //====================================================================
-//
+//  management functions
 //====================================================================
 
-    String DEF_DB_TYPE = AppProperties.getProperty("DbAdapter.type", HSQL);
+    /**
+     * clear all temp data created and keep only the original data.  e.g. temp tables, indexes, etc.
+     */
+    void clearCachedData();
 
-    static DbAdapter getAdapter() {
-        return getAdapter(DEF_DB_TYPE);
+    /**
+     * remove what's necessary to free up memory
+     */
+    void compact();
+
+    /**
+     *  closes the database and release resources used by it.
+     * @param deleteFile    if true, also remove the file itself.
+     */
+    void close(boolean deleteFile);
+
+//=====================================================================
+//  static functions for resolving or finding suitable database adapter
+//=====================================================================
+
+    static DbAdapterCreator getDbCreator(String type) {
+        return type == null ? null : allCreator.get(type);
     }
 
-    static DbAdapter getAdapter(TableServerRequest treq) {
-        return getAdapter(treq.getMeta(TBL_FILE_TYPE));
+    static DbAdapter getDefaultAdapter() {
+        File dbFile = createDbFile(DEF_DB_TYPE, DigestUtils.md5Hex(System.currentTimeMillis()+""), null);
+        return getAdapter(dbFile);
     }
 
-    static DbAdapter getAdapter(String type) {
-        type = StringUtils.isEmpty(type) ? DEF_DB_TYPE : type;
-        switch (type) {
-            case H2:
-                return new H2DbAdapter();
-            case SQLITE:
-                return new SqliteDbAdapter();
-            case HSQL:
-                return new HsqlDbAdapter();
-            default:
-                return new HsqlDbAdapter();   // when an unrecognized type is given.
-        }
+    /**
+     * Creates a dbFile for the given request.  If no db info is in the treq, use default db type.
+     * @see #createDbFile(String, String, File)
+     */
+    static File createDbFile(TableServerRequest treq, String fname, File dir) {
+        String dbType = treq.getMeta(TBL_FILE_TYPE);
+        String adapterName =  isEmpty(dbType) ? DEF_DB_TYPE : dbType;
+        return createDbFile(adapterName, fname, dir);
     }
 
-    record DbStats(int tblCnt, int colCnt, int rowCnt, int totalRows){
-        public DbStats() {
-            this(-1, -1, -1, -1);
-        }
+    /**
+     * Creates a dbFile for the given parameters.
+     * @param type  a supported database type
+     * @param fname file name.  Don't include extension.  One will be added.
+     * @param dir   The directory to create it in.  Use java.io.tmpdir if null.
+     * @return a valid dbFile for a supported DbAdapter
+     */
+    private static File createDbFile(String type, String fname, File dir) {
+
+        var creator = getDbCreator(type);
+        if (creator == null) throw new UnsupportedOperationException("Not a supported database type: " + type);
+
+        dir = dir == null ? new File(System.getProperty("java.io.tmpdir")) : dir;
+        dir = dir.isFile() ? dir.getParentFile() : dir;
+        fname = fname + "." + creator.getFileExt();
+        return new File(dir, fname);
+
     }
+
+    /**
+     * @param dbFile
+     * @return a DbAdapter that supports the given dbFile; otherwise, return null.
+     */
+    static DbAdapter getAdapter(File dbFile) {
+        return allCreator.values().stream()
+                .map(ad -> ad.create(dbFile))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
+
+//====================================================================
+//  Inner classes or interfaces used by this class
+//====================================================================
+
+    /**
+     * Interface to delegate the action of data fetching to DbAdapter.
+     * This allow DuckDB to interact with the input file directly without
+     * the need to convert to DataGroup
+     */
+    interface DataGroupSupplier {
+        DataGroup get() throws DataAccessException;
+    }
+
+    /**
+     * returns DbAdapter if it can handle the given dbFile
+     */
+    interface DbAdapterCreator {
+        String getFileExt();
+        DbAdapter create(File dbFile);
+    }
+
+
+    /**
+     * Info for each database
+     * rowCnt and colCnt are based on the original DATA table
+     * tblCnt is total number of tables, including DD, META, and AUX
+     * totalRows is the total number of row for all tables
+     */
+    class DbStats {
+        int tblCnt = -1;
+        int colCnt = -1;
+        int rowCnt = -1;
+        int totalRows = -1;
+        long memory = -1;
+
+        public int tblCnt() { return tblCnt; }
+        public int colCnt() { return colCnt;}
+        public int rowCnt() { return rowCnt; }
+        public int totalRows() { return totalRows;}
+        public long memory() { return memory;}
+    }
+
+    /**
+     * Extended version of DbInstance to contains additional information
+     * so Firefly can enforce policy to manage memory usage.
+     */
     class EmbeddedDbInstance extends DbInstance {
         ReentrantLock lock = new ReentrantLock();
         long lastAccessed;
         long created;
-        File dbFile;
+        DbAdapter dbAdapter;
         boolean isCompact;
         DbStats dbStats;
         boolean isResourceDb;
 
-        EmbeddedDbInstance(String type, File dbFile, String dbUrl, String driver) {
-            this(type, dbFile, dbUrl, driver, System.currentTimeMillis());
+        EmbeddedDbInstance(String type, DbAdapter dbAdapter, String dbUrl, String driver) {
+            this(type, dbAdapter, dbUrl, driver, System.currentTimeMillis());
         }
 
-        EmbeddedDbInstance(String type, File dbFile, String dbUrl, String driver, long created) {
+        EmbeddedDbInstance(String type, DbAdapter dbAdapter, String dbUrl, String driver, long created) {
             super(false, null, dbUrl, null, null, driver, type);
             lastAccessed = System.currentTimeMillis();
-            this.dbFile = dbFile;
+            this.dbAdapter = dbAdapter;
             this.created = created;
-            isResourceDb = dbFile.getParentFile().getName().equals(ResourceProcessor.SUBDIR_PATH);
+            isResourceDb = dbAdapter.getDbFile().getParentFile().getName().equals(ResourceProcessor.SUBDIR_PATH);
         }
 
-        @Override
         public boolean equals(Object obj) {
             return StringUtils.areEqual(this.dbUrl,((EmbeddedDbInstance)obj).dbUrl);
         }
 
-        @Override
         public int hashCode() {
             return this.dbUrl.hashCode();
         }
@@ -205,11 +348,11 @@ public interface DbAdapter {
         }
 
         public boolean mayCompact() {
-            return !isCompact && getDbStats().totalRows() > 0 && System.currentTimeMillis() - lastAccessed > maxIdle() * COMPACT_FACTOR;
+            return !isCompact && getDbStats().totalRows > 0 && System.currentTimeMillis() - lastAccessed > maxIdle() * DbMonitor.COMPACT_FACTOR;
         }
 
         public File getDbFile() {
-            return dbFile;
+            return dbAdapter.getDbFile();
         }
 
         public void touch() {
@@ -218,7 +361,7 @@ public interface DbAdapter {
         }
 
         private long maxIdle() {
-            return isResourceDb ? MAX_IDLE_TIME_RSC : MAX_IDLE_TIME;
+            return isResourceDb ? DbMonitor.MAX_IDLE_TIME_RSC : DbMonitor.MAX_IDLE_TIME;
         }
 
         public ReentrantLock getLock() {
@@ -227,22 +370,29 @@ public interface DbAdapter {
         public void setCompact(boolean compact) { isCompact = compact;}
         public boolean isCompact() { return isCompact; }
 
-        public void setDbStats(DbStats dbStats) { this.dbStats = dbStats; }
+        public void updateStats() { this.dbStats = dbAdapter.getDbStats(); }
         public DbStats getDbStats() { return dbStats == null ? new DbStats() : dbStats; }
     }
 
+    /**
+     * Info on Firefly embedded database usage.
+     */
     class EmbeddedDbStats {
-        public long maxMemRows = MAX_MEM_ROWS;
-        public float compactFactor = COMPACT_FACTOR;
+        public long maxMemRows = DbMonitor.MAX_MEM_ROWS;
+        public long maxMemory = DbMonitor.MAX_MEMORY;
+        public float compactFactor = DbMonitor.COMPACT_FACTOR;
         public long memDbs;
         public long totalDbs;
         public long memRows;
         public long peakMemDbs;
         public long peakMemRows;
+        public long memory;
+        public long peakMemory;
         public long lastCleanup;
     }
 
-    }
+
+}
 /*
 * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA
 * INSTITUTE OF TECHNOLOGY (CALTECH) UNDER A U.S. GOVERNMENT CONTRACT WITH
