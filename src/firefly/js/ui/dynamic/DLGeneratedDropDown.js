@@ -299,7 +299,7 @@ function ServDescPanel({fds, sx, desc, groupKey, setSideBarShowing, sideBarShowi
         <Stack {...{justifyContent:'space-between', sx}}>
             <DLSearchTitle {...{desc,isAllSky,sideBarShowing,setSideBarShowing,...slotProps.searchTitle}}/>
             <DynLayoutPanelTypes.Inset fieldDefAry={fds} plotId={HIPS_PLOT_ID} style={{height:'100%', marginTop:4}}
-                                       WrapperComponent={SearchPanelWrapper} toolbarHelpId={'dlGenerated.VisualSelection'} />
+                                       WrapperComponent={SearchPanelWrapper} toolbarHelpId={'dlGenerated.VisualSelection'} submitSearch={submitSearch} />
         </Stack>
     );
 }

@@ -1,12 +1,12 @@
-import {Sheet, Stack} from '@mui/joy';
-import React, {useEffect} from 'react';
+import {Sheet, Stack, Typography} from '@mui/joy';
+import React, {useContext, useEffect, useState} from 'react';
 import {oneOfType, oneOf, element, bool, string, number, arrayOf, object, func, shape} from 'prop-types';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import {CONE_AREA_OPTIONS, CONE_AREA_OPTIONS_UPLOAD, CONE_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY
 } from '../../visualize/ui/CommonUIKeys.js';
 import {HiPSTargetView} from '../../visualize/ui/TargetHiPSPanel.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
-import {useFieldGroupValue} from '../SimpleComponent.jsx';
+import {Slot, useFieldGroupRerender, useFieldGroupValue} from '../SimpleComponent.jsx';
 import {SizeInputFields} from '../SizeInputField.jsx';
 import {DEF_TARGET_PANEL_KEY, TargetPanel} from '../TargetPanel.jsx';
 import {CONE_AREA_KEY} from './DynamicDef.js';
@@ -14,6 +14,12 @@ import {DEF_AREA_EXAMPLE, PolygonField} from './DynComponents.jsx';
 
 import {UploadTableSelector} from 'firefly/ui/UploadTableSelector';
 import {showUploadTableChooser} from 'firefly/ui/UploadTableChooser';
+import {CollapsibleGroup, CollapsibleItem} from 'firefly/ui/panel/CollapsiblePanel';
+import {FormPanel} from 'firefly/ui/FormPanel';
+import {parseWorldPt} from 'firefly/visualize/Point';
+import {formatWorldPtToString} from 'firefly/visualize/ui/WorldPtFormat';
+import {getFieldGroupResults} from 'firefly/fieldGroup/FieldGroupUtils';
+import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 /**
  * Create search panel with HiPS Viewer with an embedded target/area selection
  * All properties are optional
@@ -46,6 +52,7 @@ import {showUploadTableChooser} from 'firefly/ui/UploadTableChooser';
  * @param {Boolean} [props.useUpload] - true to allow uploads
  * @param {Object} [props.searchItem] - used for URL API (similar to SearchPanel)
  * @param {Object} [props.initArgs] - used for URL API (similar to SearchPanel)
+ * @param {function} [props.doSearch] - used for FormPanel's onSuccess search func from collapsed search panel
  * @return {JSX.Element|boolean}
  * @constructor
  */
@@ -78,13 +85,17 @@ export function EmbeddedPositionSearchPanel({
                                                 usePolygon= true,
                                                 searchItem,
                                                 initArgs,
-                                                slotProps
+                                                slotProps,
+                                                doSearch
                                             }
 ) {
 
     const [getConeAreaOp, setConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY);
     const [getUploadInfo, setUploadInfo]= useFieldGroupValue('uploadInfo');
     const uploadInfo= getUploadInfo() || undefined;
+
+    const [isHovered, setIsHovered] = useState(true);
+    const [isSearchPanel, setIsSearchPanel] = useState(false);
 
     //conditionally show UploadTableChooser only when uploadInfo is empty - TAP like behavior
     useEffect(() => {
@@ -108,7 +119,7 @@ export function EmbeddedPositionSearchPanel({
     };
 
     const internals= (
-        <Stack spacing={.5} sx={{pt: insetSpacial ? 0 : 1}} {...slotProps?.searchInnerLayout}>
+        <Stack spacing={0.5} sx={{pt: insetSpacial ? 0 : 1}} {...slotProps?.searchInnerLayout}>
             {doToggle && <RadioGroupInputField {...{
                 sx:{alignSelf: 'center'},
                 fieldKey: CONE_AREA_KEY, orientation: 'horizontal',
@@ -156,33 +167,68 @@ export function EmbeddedPositionSearchPanel({
         : internals;
 
     return (
-        <div key='targetGroup'
-             style={{display: 'flex', flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch', height:'100%',
-                 paddingBottom:insetSpacial?0:20, position: 'relative'}}>
-            <HiPSTargetView {...{
+        <Stack key='targetGroup' alignItems='center' height='100%' paddingBottom={insetSpacial ? 0 : 20}
+           onMouseDown={() => {
+               setIsHovered(isSearchPanel);
+           }}
+           sx={{alignSelf: 'stretch', position: 'relative'}}>
+            <HiPSTargetView
+                {...{
                 hipsUrl, centerPt:initCenterPt, hipsFOVInDeg, mocList, coordinateSys, sRegion, plotId,
                 minSize: minValue, maxSize: maxValue, toolbarHelpId,
                 whichOverlay: doGetConeAreaOp(), setWhichOverlay: doToggle ? setConeAreaOp : undefined,
                 targetKey, sizeKey, polygonKey, sx: {minHeight: 300, alignSelf: 'stretch', flexGrow:1}
             }}/>
-            <Sheet {...{className:`FFepsp-content ${insetSpacial ? 'inset' : ''}`,
-                sx: (theme) => (
-                    {
-                        alignItems: 'center',
-                        alignSelf: 'stretch',
-                        borderRadius: '5px 5px 2px 2px',
-                        border: `3px solid ${theme.vars.palette['neutral']?.softActiveBg}`,
-                        position: 'absolute',
-                        px: 1/2,
-                        bottom: '1.5rem',
-                        left: 3,
-                        ...slotProps?.searchRoot?.sx
-                    })
-
-            }}>
-                {wrappedInternals}
+            <Sheet
+                onMouseEnter={() => {
+                    setIsHovered(true);
+                    setIsSearchPanel(true);
+                }}
+                onMouseLeave={() => {
+                    setIsSearchPanel(false);
+                }}
+                {...{className:`FFepsp-content ${insetSpacial ? 'inset' : ''}`,
+                    sx: (theme) => (
+                        {
+                            alignItems: 'center',
+                            alignSelf: 'stretch',
+                            borderRadius: '5px 5px 2px 2px',
+                            border: `3px solid ${theme.vars.palette['neutral']?.softActiveBg}`,
+                            position: 'absolute',
+                            px: 1/2,
+                            bottom: '1.5rem',
+                            maxWidth: '50em',
+                            left: 3,
+                            opacity: isHovered ? '100%' : '40%',
+                            ...slotProps?.searchRoot?.sx
+                        })
+                }}>
+                <CollapsibleGroup variant={'plain'}
+                    sx={{'& .MuiAccordionSummary-root': {
+                            paddingBlockStart: '0.5rem',
+                            paddingBlockEnd: '0.5rem',
+                            minBlockSize: '1rem',
+                            '&.Mui-expanded': {
+                                height: '1rem '
+                            }
+                    }}}>
+                    <CollapsibleItem componentKey='embedSearchPanel'
+                         slotProps={{
+                             header: {sx: { whiteSpace: 'normal',
+                                     '& .MuiAccordionSummary-button': {
+                                         minBlockSize: '1rem'
+                             }}},
+                             content: { sx: {
+                                 '& .MuiAccordionDetails-content.Mui-expanded': {
+                                     padding: 0
+                             }}}
+                         }}
+                         header={(isOpen) => <Header isOpen={isOpen} doSearch={doSearch} targetKey={targetKey} sizeKey={sizeKey} polygonKey={polygonKey}/>} isOpen={true} title='Please select a search type'>
+                            {wrappedInternals}
+                    </CollapsibleItem>
+                </CollapsibleGroup>
             </Sheet>
-        </div>
+        </Stack>
     );
 }
 
@@ -215,10 +261,79 @@ EmbeddedPositionSearchPanel.propTypes= {
     useUpload: bool,
     searchItem: object,
     initArgs: object,
+    doSearch: func,
     slotProps: shape({
         searchRoot: object,
         //following slotProps should be changed when this component is refactored to make it more slots-friendly
         searchInnerLayout: object,
-        searchTypeCone: object
+        searchTypeCone: object,
+        searchSummary: object
     }),
 };
+
+const Header = function({isOpen, doSearch, targetKey, sizeKey, polygonKey}) {
+    const {groupKey} = useContext(FieldGroupCtx);
+    const reqObj = getFieldGroupResults(groupKey,true);
+
+    useFieldGroupRerender([targetKey,sizeKey,polygonKey,CONE_AREA_KEY]);
+
+    return (
+        isOpen ?
+            <div/>:
+            <Stack p={0}>
+                <FormPanel
+                    onSuccess={(request) => doSearch(request)}
+                    direction={'row'}
+                    width={'100%'}
+                    slotProps={{
+                        searchBar: {p:0, justifyContent: 'right'},
+                    }}
+                    cancelText=''>
+                    <Stack {...{width:'100%', alignItems:'center'}}>
+                        <Slot component={SearchSummary} request={reqObj}/>
+                    </Stack>
+                </FormPanel>
+            </Stack>
+    );
+};
+
+
+function SearchSummary({request}) {
+    const searchType = request?.[CONE_AREA_KEY] === CONE_CHOICE_KEY ? 'Cone' : (request?.[CONE_AREA_KEY] === POLY_CHOICE_KEY  ? 'Polygon' : 'Multi-Object');
+    const target = request?.UserTargetWorldPt || request?.circleTarget;
+    const userEnterWorldPt= () =>  parseWorldPt(target);
+    const coords = searchType === 'Cone' ? formatWorldPtToString(userEnterWorldPt()) : (request?.Polygon || request?.['POS-polygon']);
+    const radius = request?.radius || request?.circleSize;
+
+    //in case of Multi-Object, get the fileName & rows
+    const fileName = searchType === 'Multi-Object' ? request?.uploadInfo?.fileName : undefined;
+    const rows = searchType === 'Multi-Object' ? request?.uploadInfo?.totalRows : undefined;
+
+    const keyVal = (k, v, isLast) => (
+        <>
+            <Typography component='span' color={'primary'}>{k}: </Typography> {v}
+            {!isLast && ', '}
+        </>
+    );
+
+    //Label/Key & Value pairs do display, calculating here to determine easily where the last comma should be
+    const keyValuePairs = [
+        { k: 'Search Type', v: searchType },
+        ...(radius && searchType === 'Cone' ? [{ k: 'Search Radius', v: radius }] : []),
+        ...(coords && searchType !== 'Multi-Object' ? [{ k: 'Coordinates', v: coords }] : []),
+        ...(fileName && rows && searchType === 'Multi-Object' ? [
+            { k: 'File Name', v: fileName },
+            { k: 'Rows', v: rows }
+        ] : [])
+    ];
+
+    return (
+        <Stack>
+            <Typography color={'neutral'} level='body-md'>
+                {keyValuePairs.map((pair, index) =>
+                    keyVal(pair.k, pair.v, index === keyValuePairs.length - 1)
+                )}
+            </Typography>
+        </Stack>
+    );
+}
