@@ -87,6 +87,7 @@ public class FitsCacher {
 
     /**
      * load the fits, it may not be on disk, so use the file name only for caching
+     * fyi - this call is only from crop - todo -  can i remove this function?
      */
     static FitsDataEval loadFits(Fits fits, File cachePath) throws FitsException, IOException {
         FitsDataEval fitsDataEval= FitsEvaluation.readAndEvaluate(fits, cachePath, true, null);

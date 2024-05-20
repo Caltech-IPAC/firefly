@@ -98,21 +98,14 @@ public class FitsReadUtil {
         String fBase= FileUtil.getBase(originalFile);
         String dir= originalFile.getParent();
         File retFile= new File(dir+"/"+ fBase+"---hdu-uncompressed"+".fits");
-        List<BasicHDU<?>> outHDUsList= new ArrayList<>(HDUs.length);
         Fits fits= new Fits();
         for (BasicHDU<?> hdu : HDUs) {
-            if (hdu instanceof CompressedImageHDU) {
-                ImageHDU iHdu= ((CompressedImageHDU) hdu).asImageHDU();
-                fits.addHDU(iHdu);
-                outHDUsList.add(iHdu);
-            }
-            else {
-                fits.addHDU(hdu);
-                outHDUsList.add(hdu);
-            }
+            fits.addHDU( hdu instanceof CompressedImageHDU ?  ((CompressedImageHDU) hdu).asImageHDU() : hdu );
         }
         fits.write(retFile);
-        return new UncompressFitsInfo(retFile,outHDUsList.toArray(new BasicHDU[0]), fits);
+        closeFits(fits);
+        Fits retReadFits= new Fits(retFile);
+        return new UncompressFitsInfo(retFile,FitsReadUtil.readHDUs(retReadFits), retReadFits);
     }
 
     public static BasicHDU<?>[] getImageHDUArray(BasicHDU<?>[] HDUs, boolean onlyFireCubeHdu) throws FitsException {
