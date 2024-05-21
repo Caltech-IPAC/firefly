@@ -327,7 +327,7 @@ export function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', s
 
     const help = [
         'Each vertex is defined by a J2000 RA and Dec position pair',
-        '3 to 15 vertices is allowed, separated by a comma (,)',
+        '3 to 15 vertices is allowed, optionally separated by a comma (,)',
         isArray(targetPanelExampleRow1) ? targetPanelExampleRow1[0] :targetPanelExampleRow1,
         helpRow2
     ];

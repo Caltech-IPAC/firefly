@@ -127,12 +127,32 @@ export function makeRelativePolygonAry(plot, polygonAry) {
 export function convertStrToWpAry(str) {
     if (!str) return;
     if (!isString(str)) return [];
-    const ptStrAry = str?.split(',');
+   /* const ptStrAry = str?.split(',');
     if (!(ptStrAry?.length > 1)) return [];
     const wpAry = ptStrAry
         .map((s) => splitByWhiteSpace(s))
         .filter((sAry) => sAry.length === 2 && !isNaN(Number(sAry[0])) && !isNaN(Number(sAry[1])))
         .map((sAry) => makeWorldPt(sAry[0], sAry[1]));
+    return wpAry;*/
+
+    //this is the logic to handle polygon pairs with or without commas, just reduce the array into pairs
+    const normalizedInput = str.replace(/,/g, ' '); //replace every comma with a space
+    const ptStrAry = splitByWhiteSpace(normalizedInput);
+    if (!(ptStrAry?.length > 2)) return [];
+
+    const pairs = ptStrAry.reduce((acc, curr, index) => {
+        if (index % 2 === 0) {
+            acc.push([curr]);
+        } else {
+            acc[acc.length - 1].push(curr);
+        }
+        return acc;
+    }, []);
+
+    // Filter valid pairs and map to makeWorldPt
+    const wpAry = pairs
+        .filter((pair) => pair.length === 2 && !isNaN(Number(pair[0])) && !isNaN(Number(pair[1])))
+        .map((pair) => makeWorldPt(pair[0], pair[1]));
     return wpAry;
 }
 
