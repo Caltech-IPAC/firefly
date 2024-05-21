@@ -23,6 +23,7 @@ import {
     loadTapSchemas, loadTapTables, tapHelpId, loadObsCoreMetadata
 } from './TapUtil.js';
 
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import './TableSelectViewPanel.css';
 
 
@@ -337,6 +338,7 @@ function BasicUI(props) {
     const sOps= schemaOptions??[];
     const tOps= tableOptions??[];
     const showTableSelectors= !(hasObsCoreTable && forceLockObsCore);
+    const realSchemaLabel= schemaLabel ?? 'Table Collection (Schema)';
     return (
         <Fragment>
             <Sheet sx={{display:'flex', flexDirection: 'row', justifyContent:'space-between'}}>
@@ -361,8 +363,8 @@ function BasicUI(props) {
                                     lockToObsCore:obsCoreEnabled, setLockToObsCore}}/>}
                             </Stack>
                             <Stack {...{direction: 'row', width:1, spacing:1, mr: 1/2, maxWidth: 1000, justifyContent:'space-between'}}>
-                                <SchemaChooser {...{sOps,schemaName,setSchemaName,schemaLabel}}/>
-                                <TableChooser {...{tOps,tableTableModel, tableName,setTableName}}/>
+                                <SchemaChooser {...{sOps,schemaName,setSchemaName,schemaLabel:realSchemaLabel}}/>
+                                <TableChooser {...{tOps,tableTableModel, tableName,setTableName,popupTitle:`${realSchemaLabel}: ${schemaName}`}}/>
                             </Stack>
                         </Stack>
                     }
@@ -424,7 +426,6 @@ function BasicUI(props) {
 }
 
 function SchemaChooser({sOps,schemaName,setSchemaName,schemaLabel }) {
-    const realSchemaLabel= schemaLabel ?? 'Table Collection (Schema)';
     return (
         <Stack width={1}>
             <ListBoxInputFieldView {...{
@@ -438,18 +439,18 @@ function SchemaChooser({sOps,schemaName,setSchemaName,schemaLabel }) {
                 renderValue:
                     ({value}) =>
                         (<OpRender {...{
-                            ops: sOps, value, lineClamp:2, label: realSchemaLabel, rowDesc:'tables'}}/>),
+                            ops: sOps, value, lineClamp:2, label: schemaLabel, rowDesc:'tables'}}/>),
                 decorator:
                     (label,value) => (<OpRender {...{sx:{width:'34rem', minHeight:'3rem'},
                         ops: sOps, value, rowDesc:'tables'}}/>),
             }} />
-            <Typography level='body-xs' pl={1}>{`${realSchemaLabel} count: ${sOps.length}`}</Typography>
+            <Typography level='body-xs' pl={1}>{`${schemaLabel} count: ${sOps.length}`}</Typography>
         </Stack>
     );
 
 }
 
-function TableChooser({tOps,tableTableModel, tableName,setTableName}) {
+function TableChooser({tOps,tableTableModel, tableName,setTableName,popupTitle}) {
     const {setVal}= useContext(FieldGroupCtx);
     return (
         <Stack width={1}>
@@ -474,15 +475,20 @@ function TableChooser({tOps,tableTableModel, tableName,setTableName}) {
                 }} /> :
                 <Button {...{ color:'neutral', variant:'outlined',
                     sx:{
-                        justifyContent:'flex-start', overflow:'hidden',
+                        justifyContent:'space-between', overflow:'hidden',
+                        fontWeight: 'unset',
                         width:1, minWidth:'12rem', flex:'1 1 auto', height:'5rem'},
-                    onClick:() => showTableSelectPopup(tableTableModel,
+                    endDecorator: <MoreVertRoundedIcon/>,
+                    onClick:() => showTableSelectPopup(
+                        `Choose Table- ${popupTitle}`,
+                        tableTableModel,
                         (selectedTapTable) => {
                             setTableName(selectedTapTable);
                             setVal('tableName',selectedTapTable);
                         }
                     ) }}>
                     <OpRender {...{sx:{minHeight:'3rem', rowDesc:'rows'},
+                        label: 'Tables',
                         ops: tOps, value:tableName}}/>
                 </Button>
             }

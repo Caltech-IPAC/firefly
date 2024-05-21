@@ -1,5 +1,5 @@
-import {FormLabel, Stack} from '@mui/joy';
-import PropTypes from 'prop-types';
+import {FormLabel, Stack, Typography} from '@mui/joy';
+import PropTypes, {object,  bool, string} from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 import {ColsShape, getColValidator} from '../../charts/ui/ColumnOrExpression.jsx';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
@@ -71,6 +71,7 @@ const fldListAry= [ServerParams.USER_TARGET_WORLD_PT,SpatialRegOp,SPATIAL_TYPE,
 export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel, tableName, initArgs={}, obsCoreEnabled:requestObsCore, capabilities}) {
     const {searchParams={}}= initArgs ?? {};
     const obsCoreEnabled= requestObsCore && canSupportAtLeastOneObsCoreOption(capabilities);
+    const disablePanel= !canSupportGeneralSpacial(capabilities) && !obsCoreEnabled;
     const panelTitle = !obsCoreEnabled ? Spatial : 'Location';
     const panelPrefix = getPanelPrefix(panelTitle);
     const posOpenKey= 'pos-columns';
@@ -130,7 +131,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel,
         setVal(CenterLatColumns, lat, {validator: getColValidator(cols, true, false, errMsg), valid: true});
         const noDefaults= !lon || !lat;
         setVal(posOpenKey, (noDefaults) ? 'open' : 'closed');
-        if (noDefaults) checkHeaderCtl.setPanelActive(false);
+        if (noDefaults || disablePanel) checkHeaderCtl.setPanelActive(false);
         checkHeaderCtl.setPanelOpen(!noDefaults);
         setPosOpenMsg(noDefaults?'':TAB_COLUMNS_MSG);
     }, [columnsModel, obsCoreEnabled]);
@@ -176,6 +177,16 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel,
         return () => setConstraintFragment(panelPrefix, '');
     }, [constraintResult]);
 
+    if (disablePanel) {
+        return (
+            <Typography color='warning' pl={3}>
+                Warning: Spatial search is not supported by the selected TAP service.
+            </Typography>
+        );
+    }
+
+
+
     return (
         <CollapsibleCheckHeader sx={sx} title={panelTitle} helpID={tapHelpId(panelPrefix)}
                                 message={constraintResult?.simpleError ?? ''}
@@ -216,13 +227,14 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel,
 
 SpatialSearch.propTypes = {
     cols: ColsShape ?? {},
-    initArgs: PropTypes.object,
-    capabilities: PropTypes.object,
-    obsCoreEnabled: PropTypes.bool,
-    serviceUrl: PropTypes.string,
-    columnsModel: PropTypes.object,
-    serviceLabel: PropTypes.string,
-    tableName: PropTypes.string,
+    initArgs: object,
+    capabilities: object,
+    obsCoreEnabled: bool,
+    serviceUrl: string,
+    columnsModel: object,
+    serviceLabel: string,
+    tableName: string,
+    sx: PropTypes.object
 };
 
 const warningMsg = (msg) => {
@@ -351,6 +363,10 @@ function canSupportAtLeastOneObsCoreOption(capabilities) {
     return ops.length>0;
 }
 
+function canSupportGeneralSpacial(capabilities) {
+    const { canUsePoint, canUseCircle, canUsePolygon, canUseContains} = capabilities ?? {};
+    return (canUseContains && canUsePoint && (canUseCircle || canUsePolygon));
+}
 
 const RegionOpField= ({initArgs, capabilities}) => {
 

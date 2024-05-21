@@ -328,7 +328,7 @@ export function findIndex(tbl_id, filterInfo) {
 export function getColumnIdx(tableModel, colName, ignoreCase= false) {
     const cols = getAllColumns(tableModel);
     return cols.findIndex((col) => {
-        return ignoreCase? col?.name?.toLowerCase()===colName?.toLowerCase() : col.name === colName;
+        return ignoreCase? col?.name?.toLowerCase()===colName?.toLowerCase() : col?.name === colName;
     });
 }
 

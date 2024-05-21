@@ -19,20 +19,22 @@ import {closeExpandedChart} from 'firefly/charts/ui/ChartsContainer.jsx';
 import {AddBtn} from './PlotlyToolbar.jsx';
 
 
-export function MultiChartToolbarStandard({viewerId, chartId, tbl_group, expandable, expandedMode, showAddChart,
+export function MultiChartToolbarStandard({viewerId, chartId, tbl_group, expandable, expandedMode, showAddChart, toolbarVariant,
     layoutType=getLayoutType(getMultiViewRoot(), viewerId),
     activeItemId=getViewer(getMultiViewRoot(), viewerId).customData.activeItemId}) {
 
 
     const {jsApi=false}= useContext(AppPropertiesCtx);
     return (
-        <Stack direction='row' justifyContent='space-between'>
-            <Stack direction='row' spacing={3}>
-                {!jsApi && showAddChart && <AddBtn/>}
-                <MultiChartStd {...{viewerId, layoutType, activeItemId}}/>
+        <Sheet variant={toolbarVariant}>
+            <Stack direction='row' justifyContent='space-between'>
+                <Stack direction='row' spacing={3}>
+                    {!jsApi && showAddChart && <AddBtn/>}
+                    <MultiChartStd {...{viewerId, layoutType, activeItemId}}/>
+                </Stack>
+                <ChartToolbar {...{chartId, tbl_group, viewerId, expandable, expandedMode}}/>
             </Stack>
-            <ChartToolbar {...{chartId, tbl_group, viewerId, expandable, expandedMode}}/>
-        </Stack>
+        </Sheet>
     );
 }
 
@@ -44,26 +46,29 @@ MultiChartToolbarStandard.propTypes= {
     tbl_group: PropTypes.string,
     expandable: PropTypes.bool,
     expandedMode: PropTypes.bool,
+    toolbarVariant: PropTypes.string,
     showAddChart: PropTypes.bool
 };
 
 
 export function MultiChartToolbarExpanded({viewerId, chartId, tbl_group, expandable, expandedMode, closeable,
-                                              layoutType, activeItemId, showAddChart}) {
+                                              toolbarVariant, layoutType, activeItemId, showAddChart}) {
 
     const {jsApi=false}= useContext(AppPropertiesCtx);
     layoutType = layoutType || getLayoutType(getMultiViewRoot(), viewerId);
     activeItemId = activeItemId || getViewer(getMultiViewRoot(), viewerId)?.customData?.activeItemId;
 
     return (
-        <Stack direction='row' justifyContent='space-between' alignItems='center'>
-            {closeable && <CloseButton onClick={() => closeExpandedChart(viewerId)}/>}
-            <Stack direction='row' spacing={3}>
-                {!jsApi && showAddChart && <AddBtn/>}
-                <MultiChartExt {...{viewerId, layoutType, activeItemId}}/>
+        <Sheet variant={toolbarVariant}>
+            <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                {closeable && <CloseButton onClick={() => closeExpandedChart(viewerId)}/>}
+                <Stack direction='row' spacing={3}>
+                    {!jsApi && showAddChart && <AddBtn/>}
+                    <MultiChartExt {...{viewerId, layoutType, activeItemId}}/>
+                </Stack>
+                <ChartToolbar {...{chartId, tbl_group, expandable, expandedMode, viewerId}}/>
             </Stack>
-            <ChartToolbar {...{chartId, tbl_group, expandable, expandedMode, viewerId}}/>
-        </Stack>
+        </Sheet>
     );
 
 }
@@ -77,6 +82,7 @@ MultiChartToolbarExpanded.propTypes= {
     expandable: PropTypes.bool,
     expandedMode: PropTypes.bool,
     closeable: PropTypes.bool,
+    toolbarVariant: PropTypes.string,
     showAddChart: PropTypes.bool
 };
 

@@ -86,7 +86,8 @@ export class MultiChartViewer extends PureComponent {
     }
 
     render() {
-        const {viewerId, expandedMode, closeable, noChartToolbar, label, showAddChart=false} = this.props;
+        const {viewerId, expandedMode, closeable, noChartToolbar, label, showAddChart=false,
+            toolbarVariant, useBorder} = this.props;
         const {viewer}= this.state;
         const layoutType= getLayoutType(getMultiViewRoot(),viewerId);
         if (!viewer || isEmpty(viewer.itemIdAry)) {
@@ -151,8 +152,10 @@ export class MultiChartViewer extends PureComponent {
         const ToolBar = expandedMode ? MultiChartToolbarExpanded : MultiChartToolbarStandard;
         const showChartToolbar = !Boolean(noChartToolbar);
 
+        const borderSettings= useBorder ?
+            {border: '1px solid', borderColor: 'divider', borderRadius: '5px'} : {};
         return (
-            <Stack id='chart-multiviewer' width={1} height={1} position='relative'>
+            <Stack {...{id:'chart-multiviewer', width:1, height:1, position:'relative', ...borderSettings} }>
                 {showChartToolbar &&
                     <>
                         <ToolBar chartId={activeItemId} expandable={!expandedMode} {...{
@@ -161,6 +164,7 @@ export class MultiChartViewer extends PureComponent {
                             viewerId,
                             layoutType,
                             activeItemId,
+                            toolbarVariant,
                             showAddChart
                         }}/>
                         <Divider orientation='horizontal'/>
@@ -187,5 +191,7 @@ MultiChartViewer.propTypes= {
     closeable : PropTypes.bool,
     expandedMode: PropTypes.bool,
     noChartToolbar: PropTypes.bool,
+    toolbarVariant : PropTypes.string,
+    label : PropTypes.string,
     showAddChart: PropTypes.bool
 };

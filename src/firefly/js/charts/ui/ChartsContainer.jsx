@@ -131,7 +131,8 @@ ChartsContainer.propTypes = {
  */
 export const ActiveChartsPanel = (props) => {
 
-    const {viewerId=DEFAULT_PLOT2D_VIEWER_ID, tbl_group, addDefaultChart, chartId, useOnlyChartsInViewer, expandedMode, closeable, noChartToolbar} = props;
+    const {viewerId=DEFAULT_PLOT2D_VIEWER_ID, tbl_group, addDefaultChart, chartId, useOnlyChartsInViewer,
+        expandedMode, closeable, noChartToolbar, toolbarVariant, useBorder} = props;
 
     useEffect(() => {
         if (tbl_group) {
@@ -161,6 +162,7 @@ export const ActiveChartsPanel = (props) => {
                     chartId,
                     tbl_group,
                     noChartToolbar,
+                    toolbarVariant,
                     viewerId
                 }}/>
             );
@@ -171,6 +173,7 @@ export const ActiveChartsPanel = (props) => {
                     expandable: true,
                     chartId,
                     tbl_group,
+                    toolbarVariant,
                     showToolbar: !Boolean(noChartToolbar),
                 }}/>
             );
@@ -183,6 +186,8 @@ export const ActiveChartsPanel = (props) => {
                     tbl_group,
                     expandedMode,
                     noChartToolbar,
+                    toolbarVariant,
+                    useBorder,
                     showAddChart: true}}
                 />
             );

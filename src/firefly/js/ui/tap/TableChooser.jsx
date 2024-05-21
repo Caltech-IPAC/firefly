@@ -12,10 +12,10 @@ import CompleteButton from '../../ui/CompleteButton.jsx';
 const popupId = 'TableChooserPopup';
 
 
-export function showTableSelectPopup(tableModel, onTableNameSelected) {
+export function showTableSelectPopup(title, tableModel, onTableNameSelected) {
 
     DialogRootContainer.defineDialog(popupId,
-        <PopupPanel title={'Choose Table'}>
+        <PopupPanel title={title}>
             <TableChooser tableModel={tableModel} onTableNameSelected={onTableNameSelected}/>
         </PopupPanel> );
     dispatchShowDialog(popupId);
@@ -28,11 +28,11 @@ function TableChooser({tableModel, onTableNameSelected= () => undefined}) {
         if (visable.includes(c.name)) {
             switch (c.name) {
                 case 'table_name':
-                    c.prefWidth= 18;
+                    c.prefWidth= 22;
                     c.label= 'Table Name';
                     break;
                 case 'table_desc':
-                    c.prefWidth= 75;
+                    c.prefWidth= 80;
                     c.label= 'Description';
                     break;
                 case 'nrows':
