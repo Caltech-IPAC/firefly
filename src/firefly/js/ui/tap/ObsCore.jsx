@@ -14,6 +14,8 @@ import {ColsShape} from '../../charts/ui/ColumnOrExpression';
 import {FieldGroupCtx, ForceFieldGroupValid} from '../FieldGroup.jsx';
 import {useFieldGroupRerender, useFieldGroupWatch} from '../SimpleComponent.jsx';
 import {ConstraintContext} from './Constraints.js';
+import {AutoCompleteInput} from 'firefly/ui/AutoCompleteInput';
+import {omit} from 'lodash';
 
 const panelTitle = 'Observation Type and Source';
 const panelValue = 'ObsCore';
@@ -51,42 +53,51 @@ const makeConstraints = function(hasSubType, fldObj) {
     const siaConstraints = [];
     const siaConstraintErrors = [];
 
+    const siaHasErrors = (value, siaErrorFields) => (siaErrorFields.some((v) => value.indexOf(v) >= 0));
+
     const {obsCoreCollection, obsCoreCalibrationLevel, obsCoreTypeSelection,
         obsCoreSubType, obsCoreInstrumentName}=fldObj;
 
     // const {obsCoreCollection, obsCoreCalibrationLevel, obsCoreTypeSelection, obsCoreSubType, obsCoreInstrumentName} = fields;
     errList.checkForError(obsCoreCollection);
     if (obsCoreCollection.value?.length > 0) {
-        adqlConstraintsAry.push(`obs_collection = '${obsCoreCollection.value}'`);
-        siaConstraints.push(`COLLECTION=${obsCoreCollection.value}`);
+        const mcResult = multiConstraint(obsCoreCollection.value, 'obs_collection', 'COLLECTION', '\'');
+        adqlConstraintsAry.push(mcResult.adqlConstraint);
+        siaConstraints.push(...mcResult.siaConstraints);
     }
+
     errList.checkForError(obsCoreCalibrationLevel);
     if (obsCoreCalibrationLevel.value) {
         const mcResult = multiConstraint(obsCoreCalibrationLevel.value, 'calib_level', 'CALIB', '');
         adqlConstraintsAry.push(mcResult.adqlConstraint);
         siaConstraints.push(...mcResult.siaConstraints);
     }
+
     errList.checkForError(obsCoreTypeSelection);
     if (obsCoreTypeSelection.value) {
         const mcResult = multiConstraint(obsCoreTypeSelection.value, 'dataproduct_type', 'DPTYPE', '\'', true);
         adqlConstraintsAry.push(mcResult.adqlConstraint);
+
         const siaErrorFields = ['visibility', 'event', 'null'];
-        if (siaErrorFields.some((v) => obsCoreTypeSelection.value.indexOf(v) >= 0)){
-            siaConstraintErrors.push(`values ${siaErrorFields} not valid SIA DPTYPE options`);
-        } else {
-            siaConstraints.push(...mcResult.siaConstraints);
-        }
+        siaHasErrors(obsCoreTypeSelection.value, siaErrorFields)
+            ? siaConstraintErrors.push(`values ${siaErrorFields} are not valid SIA DPTYPE options`)
+            : siaConstraints.push(...mcResult.siaConstraints);
     }
+
     errList.checkForError(obsCoreInstrumentName);
     if (obsCoreInstrumentName.value?.length) {
-        const mcResult = multiConstraint(obsCoreInstrumentName.value, 'instrument_name', 'INSTRUMENT', '\'');
+        const mcResult = multiConstraint(obsCoreInstrumentName.value, 'instrument_name', 'INSTRUMENT', '\'', true);
         adqlConstraintsAry.push(mcResult.adqlConstraint);
-        siaConstraints.push(...mcResult.siaConstraints);
+        siaHasErrors(obsCoreInstrumentName.value, ['null'])
+            ? siaConstraintErrors.push('null is not a valid SIA INSTRUMENT option')
+            : siaConstraints.push(...mcResult.siaConstraints);
     }
+
     if (hasSubType){
         errList.checkForError(obsCoreSubType);
         if (obsCoreSubType.value?.length > 0) {
-            adqlConstraintsAry.push(`dataproduct_subtype = '${obsCoreSubType.value}'`);
+            const mcResult = multiConstraint(obsCoreSubType.value, 'dataproduct_subtype', '', '\'');
+            adqlConstraintsAry.push(mcResult.adqlConstraint);
             siaConstraintErrors.push('Not able to translate dataproduct_subtype to SIAV2 query');
         }
     }
@@ -129,7 +140,7 @@ const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 const fldListAry= ['obsCoreCalibrationLevel', 'obsCoreTypeSelection', 'obsCoreSubType', 'obsCoreInstrumentName', 'obsCoreCollection'];
 
 
-export function ObsCoreSearch({sx, cols, serviceLabel, initArgs={}}) {
+export function ObsCoreSearch({sx, cols, obsCoreMetadataModel, serviceLabel, initArgs={}}) {
     const {urlApi={}}= initArgs;
     const {setConstraintFragment}= useContext(ConstraintContext);
     const tapObsCoreOps= getTapObsCoreOptions(serviceLabel);
@@ -203,29 +214,26 @@ export function ObsCoreSearch({sx, cols, serviceLabel, initArgs={}}) {
                                            wrapperStyle={{marginRight: 15, padding: '8px 0 5px 0', display: 'flex'}}
                                            multiple={true}
                         />
-                        <ValidationField fieldKey='obsCoreInstrumentName'
-                                         inputWidth={Width_Column}
-                                         inputStyle={{overflow: 'auto', height: 16}}
-                                         tooltip={obsCoreInstrumentNameOptions.tooltip || 'Select ObsCore Instrument Name'}
-                                         placeholder={obsCoreInstrumentNameOptions.placeholder}
-                                         label='Instrument Name'
-                                         labelWidth={labelWidth}
-                                         initialState={{ value: urlApi.obsCoreInstrumentName || '' }}
+                        <ObsCoreInputField fieldKey='obsCoreInstrumentName'
+                                           tooltip={obsCoreInstrumentNameOptions.tooltip || 'Select ObsCore Instrument Name'}
+                                           label='Instrument Name'
+                                           initialState={{ value: urlApi.obsCoreInstrumentName || '' }}
+                                           placeholder={obsCoreInstrumentNameOptions.placeholder}
+                                           columnName='instrument_name'
+                                           obsCoreMetadataModel={obsCoreMetadataModel}
                         />
                         {obsCoreInstrumentNameOptions.helptext &&
                             <div style={{marginLeft: LableSaptail, marginTop: 5, padding: 2}}>
                                 <i>{obsCoreInstrumentNameOptions.helptext}</i>
                             </div>
                         }
-                        <ValidationField fieldKey='obsCoreCollection'
-                                         inputWidth={Width_Column}
-                                         inputStyle={{overflow: 'auto', height: 16}}
-                                         tooltip={obsCoreCollectionOptions.tooltip || 'Select ObsCore Collection Name'}
-                                         placeholder={obsCoreCollectionOptions.placeholder}
-                                         label='Collection'
-                                         labelWidth={labelWidth}
-                                         initialState={{ value: urlApi.obsCoreCollection || ''
-                                         }}
+                        <ObsCoreInputField fieldKey='obsCoreCollection'
+                                           tooltip={obsCoreCollectionOptions.tooltip || 'Select ObsCore Collection Name'}
+                                           placeholder={obsCoreCollectionOptions.placeholder}
+                                           label='Collection'
+                                           initialState={{ value: urlApi.obsCoreCollection || '' }}
+                                           columnName='obs_collection'
+                                           obsCoreMetadataModel={obsCoreMetadataModel}
                         />
                         {obsCoreCollectionOptions.helptext &&
                             <div style={{marginLeft: LableSaptail, marginTop: 5, padding: 2}}>
@@ -234,14 +242,13 @@ export function ObsCoreSearch({sx, cols, serviceLabel, initArgs={}}) {
                         }
                     </Stack>
                     {hasSubType && <div style={{marginTop: 5}}>
-                        <ValidationField fieldKey='obsCoreSubType'
-                                         inputWidth={Width_Column}
-                                         inputStyle={{overflow: 'auto', height: 16}}
-                                         tooltip={obsCoreSubTypeOptions.tooltip || 'Select ObsCore Dataproduct Subtype Name'}
-                                         placeholder={obsCoreSubTypeOptions.placeholder}
-                                         label='Data Product Subtype:'
-                                         labelWidth={labelWidth}
-                                         initialState={{ value: urlApi.obsCoreSubType || '' }}
+                        <ObsCoreInputField fieldKey='obsCoreSubType'
+                                           tooltip={obsCoreSubTypeOptions.tooltip || 'Select ObsCore Dataproduct Subtype Name'}
+                                           placeholder={obsCoreSubTypeOptions.placeholder}
+                                           label='Data Product Subtype:'
+                                           initialState={{ value: urlApi.obsCoreSubType || '' }}
+                                           columnName='dataproduct_subtype'
+                                           obsCoreMetadataModel={obsCoreMetadataModel}
                         />
                         {obsCoreSubTypeOptions.helptext &&
                             <div style={{marginLeft: LableSaptail, marginTop: 5, padding: 2}}>
@@ -249,7 +256,7 @@ export function ObsCoreSearch({sx, cols, serviceLabel, initArgs={}}) {
                             </div>
                         }
                     </div>}
-                    <DebugObsCore {...{constraintResult}}/>
+                    <DebugObsCore {...{constraintResult, includeSia: true}}/>
                 </ForceFieldGroupValid>
             </div>
         </CollapsibleCheckHeader>
@@ -259,6 +266,33 @@ export function ObsCoreSearch({sx, cols, serviceLabel, initArgs={}}) {
 ObsCoreSearch.propTypes = {
     cols: ColsShape,
     initArgs: PropTypes.object,
-    fields: PropTypes.object
+    fields: PropTypes.object,
+    sx: PropTypes.object,
+    obsCoreMetadataModel: PropTypes.object,
+    serviceLabel: PropTypes.string
 };
 
+
+const ObsCoreInputField = ({obsCoreMetadataModel, columnName, ...props}) => {
+    const loading = obsCoreMetadataModel?.loading ?? false;
+    const options = (obsCoreMetadataModel?.tableData?.data ?? [])
+        .filter((row) => row?.[0] === columnName).map((row) => row?.[1]);
+
+    const fieldProps = omit(props, 'obsCoreMetadataModel', 'columnName');
+
+    return (loading || (options && options?.length > 0))
+        ? <AutoCompleteInput orientation='vertical'
+                             multiple={true}
+                             options={labelValuePairs(options)}
+                             loading={loading}
+                             {...fieldProps}/>
+        : <ValidationField inputWidth={Width_Column}
+                           inputStyle={{overflow: 'auto', height: 16}}
+                           labelWidth={labelWidth}
+                           {...fieldProps}/>;
+};
+
+
+const labelValuePairs = (options) => options.map((opt) => opt?.value
+    ? opt
+    : (opt===null ? {label: 'null', value: 'null'} : {label: opt, value: opt}));

@@ -13,7 +13,7 @@ import {ObjectIDSearch} from 'firefly/ui/tap/ObjectIDSearch';
 const TAP_SEARCH_METHODS_GROUP= 'TAP_SEARCH_METHODS_GROUP';
 
 export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serviceUrl, sx,
-                                       serviceLabel, tableName, capabilities}) => {
+                                       serviceLabel, tableName, capabilities, obsCoreMetadataModel}) => {
 
     const [controlConnected, setControlConnected] = useState(false);
 
@@ -21,7 +21,7 @@ export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serv
         <ConnectionCtx.Provider value={{controlConnected, setControlConnected}}>
             <Box sx={{...sx, height: '100%', overflow: 'auto'}} >
                 <HelperComponents {...{initArgs,cols:getAvailableColumns(columnsModel), tableName,
-                    columnsModel,serviceUrl,serviceLabel,obsCoreEnabled,capabilities}}/>
+                    columnsModel,serviceUrl,serviceLabel,obsCoreEnabled,capabilities,obsCoreMetadataModel}}/>
             </Box>
         </ConnectionCtx.Provider>
     );
@@ -29,11 +29,12 @@ export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serv
 
 const CompDivide= () => <Box sx={{my:1}}/>;
 
-function HelperComponents({initArgs, cols, columnsModel, serviceUrl, serviceLabel, obsCoreEnabled, tableName, capabilities}) {
+function HelperComponents({initArgs, cols, columnsModel, serviceUrl, serviceLabel, obsCoreEnabled, tableName,
+                              capabilities, obsCoreMetadataModel}) {
     return obsCoreEnabled ?
         (
             <>
-                <ObsCoreSearch {...{sx:{mt:1}, cols, serviceLabel, initArgs}} />
+                <ObsCoreSearch {...{sx:{mt:1}, cols, obsCoreMetadataModel, serviceLabel, initArgs}} />
                 <CompDivide/>
                 <SpatialSearch {...{cols, serviceUrl, serviceLabel, columnsModel, initArgs, obsCoreEnabled, tableName, capabilities}} />
                 <CompDivide/>

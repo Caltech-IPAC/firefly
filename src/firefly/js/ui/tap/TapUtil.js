@@ -3,8 +3,8 @@ import {sprintf} from 'firefly/externalSource/sprintf.js';
 import {isArray, memoize, omit, sortBy, uniqBy} from 'lodash';
 import {getCapabilities} from '../../rpc/SearchServicesJson.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
-import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
-import {alterFalsyVal, doFetchTable, getColumnIdx, getColumnValues, sortTableData} from '../../tables/TableUtil.js';
+import {makeFileRequest, makeTblRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
+import {alterFalsyVal, doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.js';
 import {Logger} from '../../util/Logger.js';
 import {getProp, hashCode} from '../../util/WebUtil.js';
 
@@ -22,6 +22,7 @@ const schemaCache={};
 const obsCoreSchemaCache={};
 const tableCache={};
 const columnCache={};
+const obsCoreMetadataCache={};
 // end cache objects
 
 
@@ -263,6 +264,27 @@ async function doLoadTapColumns(serviceUrl, schemaName, tableName) {
 
     } catch (reason) {
         const error = `Failed to get columns for ${serviceUrl} schema ${schemaName} table ${tableName}: ${reason?.message ?? reason}`;
+        logger.error(error);
+        return {error};
+    }
+}
+
+export async function loadObsCoreMetadata(serviceUrl, obscoreTable) {
+    if (obsCoreMetadataCache[serviceUrl]) return obsCoreMetadataCache[serviceUrl];
+    const tableModel= await doLoadObsCoreMetadata(serviceUrl, obscoreTable);
+    obsCoreMetadataCache[serviceUrl]= tableModel;
+    return tableModel;
+}
+
+async function doLoadObsCoreMetadata(serviceUrl, obscoreTable) {
+    const columns = ['obs_collection', 'instrument_name', 'facility_name', 'dataproduct_subtype'].join(',');
+
+    try {
+        const tableModel = await doFetchTable(makeTblRequest('ObsCoreMetadataQuery', 'loadObsCoreMetadata',
+            {serviceUrl, obscoreTable, columns}));
+        return tableModel;
+    } catch (reason) {
+        const error = `Failed to get metadata for any column in [${columns}] for ${serviceUrl} obscore table ${obscoreTable}: ${reason?.message ?? reason}`;
         logger.error(error);
         return {error};
     }
