@@ -14,6 +14,7 @@ const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
 export const ADQL_LINE_LENGTH = 100;
 export const ADQL_UPLOAD_TABLE_NAME= 'upload_table';
 export const TAP_UPLOAD_SCHEMA= 'TAP_UPLOAD';
+const EMPTY_SCHEMA_NAME= 'EMPTY_SCHEMA_NAME';
 
 
 // cache objects - they only grow, but I don't think they will ever get too big
@@ -95,14 +96,28 @@ async function doLoadTapSchemas(serviceUrl) {
             return tableModel;
         }
         const schemaNameIdx = getColumnIdx(tableModel, 'schema_name');
+        const descIdx = getColumnIdx(tableModel, 'table_desc');
+        const tableNameIdx = getColumnIdx(tableModel, 'table_name');
+        const doSwap= (descIdx>-1) && descIdx<tableNameIdx;
         const rTable = omit(tableModel, 'tableData.data');
         rTable.tableData.data = uniqBy(tableModel.tableData.data, (row) => row[schemaNameIdx])
             .map( ( (row) => {
                 const schemaName= row[schemaNameIdx];
                 const tableCnt= tableModel.tableData.data.filter( (fr) => fr[schemaNameIdx]===schemaName)?.length ?? 0;
-                return [...row,tableCnt];
+                const nRow= [...row];
+                if (doSwap) {
+                    const desc= row[descIdx];
+                    nRow[descIdx]= row[tableNameIdx];
+                    nRow[tableNameIdx]= desc;
+                }
+                return [...nRow,tableCnt];
             }));
         rTable.tableData.columns= [...rTable.tableData.columns,{name:'table_cnt',ID:'col_table_cnt',type:'int'}];
+        if (doSwap) {
+            const descCol= rTable.tableData.columns[descIdx];
+            rTable.tableData.columns[descIdx]= rTable.tableData.columns[tableNameIdx];
+            rTable.tableData.columns[tableNameIdx]= descCol;
+        }
         rTable.totalRows = rTable.tableData?.data?.length || 0;
 
         if (rTable.totalRows === 0) return {error:'No schemas available'};
@@ -189,9 +204,25 @@ async function doLoadTapTables(serviceUrl, schemaName) {
         }
         const schemaNameIdx = getColumnIdx(tableModel, 'schema_name');
         const tableNameIdx = getColumnIdx(tableModel, 'table_name');
+        const descIdx = getColumnIdx(tableModel, 'table_desc');
+        const doSwap= (descIdx>-1) && descIdx<tableNameIdx;
 
         const rTable = omit(tableModel, 'tableData.data');
         rTable.tableData.data = tableModel.tableData.data.filter((row) => row[schemaNameIdx] === schemaName);
+        if (doSwap) {
+            rTable.tableData.data = rTable.tableData.data
+                .map( (row) => {
+                    const nRow= [...row];
+                    const desc= row[descIdx];
+                    nRow[descIdx]= row[tableNameIdx];
+                    nRow[tableNameIdx]= desc;
+                    return nRow;
+                });
+            rTable.tableData.columns= [...rTable.tableData.columns];
+            const descCol= rTable.tableData.columns[descIdx];
+            rTable.tableData.columns[descIdx]= rTable.tableData.columns[tableNameIdx];
+            rTable.tableData.columns[tableNameIdx]= descCol;
+        }
         rTable.totalRows = rTable.tableData?.data?.length || 0;
 
         if (tableNameIdx < 0)  return {error: `Invalid tables returned for ${serviceUrl} schema ${schemaName}`};
@@ -213,7 +244,14 @@ async function doLoadTapTables(serviceUrl, schemaName) {
 export async function loadTapCapabilities(serviceUrl) {
     if (capabilityCache[serviceUrl]) return capabilityCache[serviceUrl];
     const capResult= await getCapabilities(serviceUrl+'/capabilities');
-    if (capResult && capResult.success) capabilityCache[serviceUrl]= capResult.data?.tapCapability;
+    if (capResult && capResult.success) {
+        if (isOldTap(serviceUrl) && capResult.data?.tapCapability) {
+            capResult.data.tapCapability.canUseCircle= false;
+            capResult.data.tapCapability.canUsePolygon= false;
+            capResult.data.tapCapability.canUseContains= false;
+        }
+        capabilityCache[serviceUrl]= capResult.data?.tapCapability;
+    }
     return capabilityCache[serviceUrl];
 }
 
@@ -309,9 +347,34 @@ async function loadSchemaDefJoin(serviceUrl) {
     if (schemaDesc) schemaDesc.name = 'schema_desc';
     const tableDesc = tableModel.tableData.columns.findLast((col) => col.name.toLowerCase().startsWith('description'));
     if (tableDesc) tableDesc.name = 'table_desc';
+    if (isOldTap(serviceUrl)) modifyModelForOldTap(tableModel);
+
+    const schemaNameIdx= getColumnIdx(tableModel,'schema_name');
+    if (schemaNameIdx>-1) {
+        tableModel.tableData.data.forEach( (row) => {
+            if (!row[schemaNameIdx]) row[schemaNameIdx]=EMPTY_SCHEMA_NAME;
+        });
+    }
 
 
     return tableModel;
+}
+
+function modifyModelForOldTap(tableModel) {
+    const tableTypeIdx= getColumnIdx(tableModel,'table_type');
+    const tableNameIdx= getColumnIdx(tableModel,'table_name');
+    const schemaNameIdx= getColumnIdx(tableModel,'schema_name');
+    const {tableData}= tableModel;
+    if (tableNameIdx===-1 || tableTypeIdx===-1 || schemaNameIdx===-1) return;
+    if (tableData.data.some( (row) => row[schemaNameIdx])) return;
+    tableData.data.forEach( (row) => {
+        const tType= row[tableTypeIdx];
+        const tnameGeneric= row[tableNameIdx];
+        row[tableTypeIdx]= '';
+        row[tableNameIdx]= tType;
+        if (!row[schemaNameIdx]) row[schemaNameIdx]= tnameGeneric;
+    });
+    tableData.columns[tableTypeIdx].name= 'table_desc';
 }
 
 async function loadSchemaDefNoJoin(serviceUrl) {
@@ -355,6 +418,11 @@ function supportJoin(serviceUrl) {
     // most services does not have schema_index and/or table_index.
     // to make it work for most services, had to use 'select *'.
     return !serviceUrl.toLowerCase().includes('heasarc.gsfc.nasa.gov');
+}
+
+function isOldTap(serviceUrl) {
+    // norlab is using an old version of TAP and there is no other way to recognize it
+    return serviceUrl.toLowerCase().includes('datalab.noirlab.edu');
 }
 
 export const loadSchemaDef = memoize(async (serviceUrl) => {

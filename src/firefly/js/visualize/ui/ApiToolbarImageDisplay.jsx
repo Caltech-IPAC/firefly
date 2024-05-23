@@ -13,7 +13,9 @@ import {RenderTreeIdCtx} from '../../ui/RenderTreeIdCtx.jsx';
 
 export const ApiToolbarImageDisplay= memo(({viewerId, renderTreeId}) => (
         <RenderTreeIdCtx.Provider value={{renderTreeId}}>
-            <Stack {...{width:1, height:1, flexWrap:'nowrap', alignItems:'stretch', position: 'relative'}}>
+            <Stack {...{width:1, height:1, flexWrap:'nowrap', alignItems:'stretch', position: 'relative',
+                border: '1px solid', borderColor: 'divider', borderRadius: '5px'
+            }}>
                 <Stack {...{flex: '1 1 auto', direction:'row', width:1}}>
                     <MultiImageViewer viewerId= {viewerId}
                                       insideFlex={true}

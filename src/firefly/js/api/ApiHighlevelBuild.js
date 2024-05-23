@@ -716,7 +716,7 @@ function doShowChart(llApi, targetDiv, params={}) {
     const {ChartsContainer}= llApi.ui;
 
     const tbl_group = params.tbl_group;
-    // when tbl_group parameter is set, show a default chart
+    // when tbl_group parameter is set, show a default ch
     // for an active table in this table group
     if (!tbl_group) {
         params = Object.assign({
@@ -734,7 +734,9 @@ function doShowChart(llApi, targetDiv, params={}) {
             tbl_group,
             addDefaultChart: Boolean(tbl_group),
             closeable: false,
+            useBorder: true,
             expandedMode: false,
+            toolbarVariant:'soft',
             noChartToolbar: params.noChartToolbar
         }
     );
