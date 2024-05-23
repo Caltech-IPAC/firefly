@@ -5,11 +5,11 @@
 import React, {useEffect, useState} from 'react';
 import {cloneDeep, get, pick, set} from 'lodash';
 
-import {getMultiViewRoot, getViewerItemIds} from '../../visualize/MultiViewCntlr.js';
+import {getMultiViewRoot, getViewerItemIds, PINNED_CHART_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 import {getSpectrumDM} from '../../voAnalyzer/SpectrumDM.js';
 import {dispatchChartAdd, getChartData} from '../ChartsCntlr.js';
 import {getNewTraceDefaults, getTblIdFromChart, isSpectralOrder, uniqueChartId} from '../ChartUtil.js';
-import {PINNED_VIEWER_ID, PINNED_GROUP, PINNED_CHART_PREFIX} from './PinnedChartContainer.jsx';
+import {PINNED_GROUP, PINNED_CHART_PREFIX} from './PinnedChartContainer.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import {basicOptions, evalChangesFromFields} from './options/BasicOptions.jsx';
@@ -46,9 +46,9 @@ const POPUP_ID = 'CombineChart-popup';
  */
 export const CombineChart = ({viewerId}) => {
 
-    if (viewerId !== PINNED_VIEWER_ID) return null;
+    if (viewerId !== PINNED_CHART_VIEWER_ID) return null;
 
-    const chartIds = getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID);
+    const chartIds = getViewerItemIds(getMultiViewRoot(), PINNED_CHART_VIEWER_ID);
     const showCombine = chartIds?.length > 1;
 
     const doCombine = async () => {
@@ -59,7 +59,7 @@ export const CombineChart = ({viewerId}) => {
             ...chartData,
             chartId: uniqueChartId(PINNED_CHART_PREFIX),
             groupId: PINNED_GROUP,
-            viewerId: PINNED_VIEWER_ID,
+            viewerId: PINNED_CHART_VIEWER_ID,
             deletable: true,
             mounted: true
         });
@@ -84,7 +84,7 @@ function addTracesTitle(chartId, current=[]) {
 /* returns the selected chartId as well as a table of matching charts to combine */
 function createTableModel(showAll, tbl_id) {
 
-    const chartIds = getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID);
+    const chartIds = getViewerItemIds(getMultiViewRoot(), PINNED_CHART_VIEWER_ID);
     const selChartId = getSelChartId();
 
     const columns = [
@@ -430,6 +430,6 @@ function canCombine(chartId) {
     return xUnit === newXUnit && yUnit === newYUnit;
 }
 
-function getSelChartId(viewerId=PINNED_VIEWER_ID) {
+function getSelChartId(viewerId=PINNED_CHART_VIEWER_ID) {
     return  getActiveViewerItemId(viewerId, true);
 }

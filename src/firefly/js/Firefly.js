@@ -4,6 +4,7 @@
  */
 
 import 'isomorphic-fetch';
+import {Stack, Typography} from '@mui/joy';
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {set, defer, once} from 'lodash';
@@ -275,7 +276,27 @@ function fireflyInit(props, appSpecificOptions={}, webApiCommands) {
  */
 export function startAsAppFromApi(divId, overrideProps={template: 'FireflySlate'}) {
 
-    const props = {...mergeObjectOnly({...window.firefly.originalAppProps}, overrideProps), div:divId, appFromApi:true};
+
+    const Message = ({}) => (
+        <Stack alignItems='center'>
+            <Typography sx={{fontSize: 'xl4'}} color='neutral'> Welcome to Firefly Viewer for Python</Typography>
+        </Stack>
+    );
+
+    const landingPage= (<LandingPage slotProps={{
+        topSection: {component: Message},
+        bottomSection : {
+            actionItems: [
+                { text: 'Use API to send data', subtext: 'load data using Python API' },
+                { text: 'Search for data', subtext: 'using the tabs above or side menu' },
+                { text: 'Upload a file', subtext: 'drag & drop here' }
+            ]
+        }
+    }}/>);
+
+    const props = {
+        landingPage,
+        ...mergeObjectOnly({...window.firefly.originalAppProps}, overrideProps), div:divId, appFromApi:true};
     const viewer = Templates[props.template];
     if (!divId || !viewer) {
         !divId  && logger.error('required: divId');
@@ -286,7 +307,9 @@ export function startAsAppFromApi(divId, overrideProps={template: 'FireflySlate'
     props.disableDefaultDropDown && dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
     props.readoutDefaultPref && dispatchChangeReadoutPrefs(props.readoutDefaultPref);
     props.wcsMatchType && dispatchWcsMatch({matchType:props.wcsMatchType, lockMatch:true});
+    props.apiHandlesExpanded= true;
 
+    dispatchAppOptions({ charts: { allowPinnedCharts: true}});
 
     if (!props.menu) {
         const other= 'Other Searches';

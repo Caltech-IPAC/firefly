@@ -18,7 +18,7 @@ import { TBL_RESULTS_ADDED, TBL_RESULTS_REMOVE, TABLE_REMOVE, TABLE_SPACE_PATH, 
 } from '../tables/TablesCntlr.js';
 import {CHART_ADD, CHART_REMOVE, CHART_SPACE_PATH} from '../charts/ChartsCntlr.js';
 import {
-    DEFAULT_FITS_VIEWER_ID, getMultiViewRoot, getViewer, REPLACE_VIEWER_ITEMS
+    DEFAULT_FITS_VIEWER_ID, getMultiViewRoot, getViewer, PINNED_CHART_VIEWER_ID, REPLACE_VIEWER_ITEMS
 } from '../visualize/MultiViewCntlr.js';
 import {COMMAND, getMenu, REINIT_APP} from './AppDataCntlr.js';
 import {getDefaultChartProps} from '../charts/ChartUtil.js';
@@ -49,6 +49,7 @@ export const LO_VIEW = new Enum(['none', 'tables', 'images', 'xyPlots', 'tableIm
  * @prop expanded
  * @prop standard
  */
+/** @type LO_MODE */
 export const LO_MODE = new Enum(['expanded', 'standard']);
 export const SPECIAL_VIEWER = new Enum(['tableImageMeta', 'coverageImage'], { ignoreCase: true });
 
@@ -58,11 +59,23 @@ export const UPDATE_LAYOUT     = `${LAYOUT_PATH}.updateLayout`;
 export const UPDATE_GRID_VIEW  = `${LAYOUT_PATH}.updateGridView`;
 export const SET_LAYOUT         = `${LAYOUT_PATH}.setLayout`;
 export const SET_LAYOUT_MODE    = `${LAYOUT_PATH}.setLayoutMode`;
+export const TRIVIEW_LAYOUT    = `${LAYOUT_PATH}.triviewLayout`;
 export const SHOW_DROPDOWN      = `${LAYOUT_PATH}.showDropDown`;
 export const ADD_CELL           = `${LAYOUT_PATH}.addCell`;
 export const REMOVE_CELL        = `${LAYOUT_PATH}.removeCell`;
 export const ENABLE_SPECIAL_VIEWER= `${LAYOUT_PATH}.enableSpecialViewer`;
 export const MENU_UPDATE      = `${LAYOUT_PATH}.menuUpdate`;
+
+
+export const TRIVIEW_ICov_Ch_T= 'TRIVIEW_ICov_Ch_T'; //top left: image/cov, top right: charts, bottom: tables
+export const TRIVIEW_I_ChCov_T= 'TRIVIEW_I_ChCov_T';//top left: image, top right: charts/cov, bottom: tables
+export const BIVIEW_ICov_Ch= 'BIVIEW_ICov_Ch'; //left: image/cov, right: charts
+export const BIVIEW_I_ChCov= 'BIVIEW_I_ChCov'; //left: image, right: charts/cov
+export const BIVIEW_T_IChCov= 'BIVIEW_T_IChCov'; //left: tables, right: image/charts/cov
+export const BIVIEW_IChCov_T= 'BIVIEW_IChCov_T'; //left: image/charts/cov, right: tables
+
+
+
 
 /*---------------------------- Reducers ----------------------------*/
 
@@ -82,7 +95,8 @@ export function reducer(state={}, action={}) {
             return updateGridView(state, action.payload);
         case SET_LAYOUT_MODE :
             return smartMerge(state, {mode: {[mode]: view}});
-
+        case TRIVIEW_LAYOUT :
+            return updateTriviewLayout(state, action);
         case SHOW_DROPDOWN :
             const {visible = !state.disableDefaultDropDown, menuItem, initArgs={}} = action.payload;
             const newState= {...state};
@@ -103,6 +117,47 @@ export function reducer(state={}, action={}) {
 }
 
 /*---------------------------- Reducer helpers -----------------------------*/
+
+
+function updateTriviewLayout(state,action) {
+    const {triviewLayout=TRIVIEW_ICov_Ch_T}= action.payload;
+    const triViewKey= 'images | tables | xyplots';
+    const imgXyKey= 'images | xyplots';
+    const tblXyKey= 'tables | xyplots';
+    const xYTblKey= 'xyplots | tables';
+    const LEFT= 'LEFT';
+    const RIGHT= 'RIGHT';
+
+    const newObj={};
+
+    switch (triviewLayout) {
+        case TRIVIEW_ICov_Ch_T:
+            newObj.mode= {[LO_MODE.standard]: triViewKey};
+            newObj.coverageSide= LEFT;
+            break;
+        case TRIVIEW_I_ChCov_T:
+            newObj.mode= {[LO_MODE.standard]: triViewKey};
+            newObj.coverageSide= RIGHT;
+            break;
+        case BIVIEW_ICov_Ch:
+            newObj.mode= {[LO_MODE.standard]: imgXyKey};
+            newObj.coverageSide= LEFT;
+            break;
+        case BIVIEW_I_ChCov:
+            newObj.mode= {[LO_MODE.standard]: imgXyKey};
+            newObj.coverageSide= RIGHT;
+            break;
+        case BIVIEW_T_IChCov:
+            newObj.mode= {[LO_MODE.standard]: tblXyKey};
+            newObj.coverageSide= RIGHT;
+            break;
+        case BIVIEW_IChCov_T:
+            newObj.mode= {[LO_MODE.standard]: xYTblKey};
+            newObj.coverageSide= RIGHT;
+            break;
+    }
+    return smartMerge(state, newObj);
+}
 
 function enableSpecialViewer(state,payload) {
     const {viewerType, cellId}= payload;
@@ -163,6 +218,15 @@ function removeCell(state,payload) {
  */
 export function dispatchSetLayoutMode(mode=LO_MODE.standard, view) {
     flux.process({type: SET_LAYOUT_MODE, payload: {mode, view}});
+}
+
+/**
+ * change triview layout
+ * @param {Object} payload
+ * @param payload.triviewLayout - one of TRIVIEW_ICov_Ch_T, TRIVIEW_I_ChCov_T, BIVIEW_ICov_Ch, BIVIEW_I_ChCov, BIVIEW_T_IChCov, BIVIEW_IChCov_T,
+ */
+export function dispatchTriviewLayout({triviewLayout}) {
+    flux.process({type: TRIVIEW_LAYOUT, payload: {triviewLayout}});
 }
 
 /**
@@ -325,7 +389,6 @@ function getSelView(state, dropDown) {
     return view;
 }
 
-export const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
 /**
  *
  * @return {{bgTableCnt: number, tableCnt: number, haveResults: boolean, imageCnt: number, pinChartCnt: number)}
@@ -349,7 +412,7 @@ export function getResultCounts() {
 
     const imageCnt= pvIdAry?.length;
     const imageLoadingCnt= pvIdAry.filter( (id) => getPlotViewById(visRoot(),id)?.serverCall==='working').length;
-    const pinChartCnt= getViewer(getMultiViewRoot(), PINNED_VIEWER_ID)?.itemIdAry?.length ?? 0;
+    const pinChartCnt= getViewer(getMultiViewRoot(), PINNED_CHART_VIEWER_ID)?.itemIdAry?.length ?? 0;
     const {jobs={}}= getBackgroundInfo() ?? {};
     const bgTableCnt= Object.values(jobs)
         .filter((job) => job.jobInfo?.monitored && job.jobInfo?.type !== 'PACKAGE')?.length ?? 0;
@@ -380,8 +443,8 @@ export function dropDownHandler(layoutInfo, action) {
         case ImagePlotCntlr.PLOT_IMAGE :
             return smartMerge(layoutInfo, {dropDown: {visible: false}});
         case ImagePlotCntlr.PLOT_IMAGE_START :
-            const VISUALIZED_TABLE_IDS = action.payload.attributes.VISUALIZED_TABLE_IDS;
-            if (VISUALIZED_TABLE_IDS && VISUALIZED_TABLE_IDS.length > 0) {
+            const VISUALIZED_TABLE_IDS = action.payload?.attributes?.VISUALIZED_TABLE_IDS;
+            if (VISUALIZED_TABLE_IDS?.length) {
                 const lastId = VISUALIZED_TABLE_IDS[VISUALIZED_TABLE_IDS.length - 1];
                 // Check if the last entry contains 'Upload_Tbl' - and return layoutInfo as is if it does
                 const containsUploadTbl = lastId.includes('Upload_Tbl');

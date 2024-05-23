@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {get, intersection, isEmpty, isString} from 'lodash';
+import {defDataSourceGuesses} from '../metaConvert/DefaultConverter.js';
 import {ACCESS_FORMAT, ACCESS_URL, DEFAULT_TNAME_OPTIONS, obsPrefix, OBSTAP_CNAMES, S_REGION} from './VoConst.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {getCornersColumns} from '../tables/TableInfoUtil.js';
@@ -219,10 +220,18 @@ export function isDataProductsTable(tableOrId) {
         dataSourceColumn ||
         hasObsCoreLikeDataProducts(table) ||
         hasServiceDescriptors(table) ||
+        hasGuessedDataProductsColumn(table) ||
         isTableWithRegion(tableOrId));
 }
 
 
+function hasGuessedDataProductsColumn(table) {
+    const columns= table?.tableData?.columns ?? [];
+
+    const found= defDataSourceGuesses.some( (n) => columns
+        .some( (c) => c.name.toUpperCase()===n));
+    return found;
+}
 
 /**
  * find the ObsCore defined 'access_url' column

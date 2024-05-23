@@ -13,7 +13,8 @@ import {ChartPanel} from './ChartPanel.jsx';
 import {MultiItemViewerView} from '../../visualize/ui/MultiItemViewerView.jsx';
 import {
     dispatchAddViewer, dispatchViewerUnmounted, dispatchUpdateCustom,
-    getMultiViewRoot, getViewer, getLayoutType, PLOT2D, getViewerItemIds, dispatchRemoveViewerItems, dispatchAddViewerItems, NewPlotMode
+    getMultiViewRoot, getViewer, getLayoutType, PLOT2D, getViewerItemIds, dispatchRemoveViewerItems,
+    dispatchAddViewerItems, NewPlotMode, PINNED_CHART_VIEWER_ID
 } from '../../visualize/MultiViewCntlr.js';
 import {
     getExpandedChartProps, getChartData, CHART_ADD, CHART_REMOVE, getChartIdsInGroup, dispatchChartAdd, dispatchChartRemove, CHART_UPDATE
@@ -37,15 +38,14 @@ import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga';
 import {PinButton, ShowTableButton} from 'firefly/visualize/ui/Buttons.jsx';
 
 export const PINNED_CHART_PREFIX = 'pinned-';
-export const PINNED_VIEWER_ID = 'PINNED_CHARTS_VIEWER';
-export const PINNED_GROUP = PINNED_VIEWER_ID;                 // use same id for now.
+export const PINNED_GROUP = PINNED_CHART_VIEWER_ID;                 // use same id for now.
 const logger = Logger('PinnedChartContainer');
 const PINNED_MAX = 12;
 
 export const PinnedChartContainer = (props) => {
     const {viewerId} = props;
 
-    const tabs          = useStoreConnector(() =>  getComponentState(PINNED_VIEWER_ID));
+    const tabs          = useStoreConnector(() =>  getComponentState(PINNED_CHART_VIEWER_ID));
     const {showPinnedTab, activeLabel, pinnedLabel} = usePinnedChartInfo(({viewerId}));
 
     const TabToolbar = () => {
@@ -81,7 +81,7 @@ export const PinnedChartContainer = (props) => {
     } else {
         return (
             <Stack id='chart-pinned-tabs' overflow='hidden' height={1}>
-                <StatefulTabs componentKey={PINNED_VIEWER_ID}>
+                <StatefulTabs componentKey={PINNED_CHART_VIEWER_ID}>
                     <Tab name={activeLabel}>
                         <ActiveChartsPanel {...props}/>
                     </Tab>
@@ -126,7 +126,7 @@ export const PinChart = ({viewerId, tbl_group}) => {
 
     // don't show pin chart button in pinned chart panel
     // and in data product viewer because pinning functionality requires chart data table to persist in store
-    if (viewerId === PINNED_VIEWER_ID || viewerId.startsWith('DPC')) return null;
+    if (viewerId === PINNED_CHART_VIEWER_ID || viewerId.startsWith('DPC')) return null;
 
     const doPinChart = () => {
         let chartId = getActiveViewerItemId(viewerId, true);      // viewerId is Active Charts viewer
@@ -162,7 +162,7 @@ export function pinChart({chartId, autoLayout=false }) {
 }
 
 export function BadgeLabel({labelStr}) {
-    const badgeCnt= useStoreConnector(() => getViewerItemIds(getMultiViewRoot(),PINNED_VIEWER_ID)?.length??0);
+    const badgeCnt= useStoreConnector(() => getViewerItemIds(getMultiViewRoot(),PINNED_CHART_VIEWER_ID)?.length??0);
     return badgeCnt===0 ?  labelStr:
         (
             <Badge {...{badgeContent:badgeCnt,
@@ -179,7 +179,7 @@ function doPinChart({chartId, autoLayout=true }) {
     const chartData = cloneDeep(omit(getChartData(chartId), ['_original', 'mounted']));
     chartData?.tablesources?.forEach((ts) => Reflect.deleteProperty(ts, '_cancel'));
 
-    const pinnedCnt = getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID)?.length ?? 0;
+    const pinnedCnt = getViewerItemIds(getMultiViewRoot(), PINNED_CHART_VIEWER_ID)?.length ?? 0;
     if (pinnedCnt >= PINNED_MAX) {
         showInfoPopup('Only pinning table: You have reached the maximum number of allowable pinned charts.', 'Max Pinned Charts');
         return;
@@ -190,7 +190,7 @@ function doPinChart({chartId, autoLayout=true }) {
             ...chartData,
             chartId: uniqueChartId(PINNED_CHART_PREFIX),
             groupId: PINNED_GROUP,
-            viewerId: PINNED_VIEWER_ID,
+            viewerId: PINNED_CHART_VIEWER_ID,
             deletable: true,
             mounted: true
         });
@@ -198,7 +198,7 @@ function doPinChart({chartId, autoLayout=true }) {
             // if auto-layout, show side-by-side on first pinned chart
             setLayout(true);
         }
-        const {sideBySide} = getComponentState(PINNED_VIEWER_ID);
+        const {sideBySide} = getComponentState(PINNED_CHART_VIEWER_ID);
         if (!sideBySide) showPinMessage('Pinning chart');
     };
 
@@ -221,11 +221,11 @@ export const ShowTable = ({viewerId, tbl_group}) => {
 
     const activeTblId = useStoreConnector(() => getActiveTableId());
     const activeChartTblId = useStoreConnector(() => {
-        const chartId = getActiveViewerItemId(PINNED_VIEWER_ID, true);
+        const chartId = getActiveViewerItemId(PINNED_CHART_VIEWER_ID, true);
         return getTblIdFromChart(chartId);
     });
 
-    if (viewerId !== PINNED_VIEWER_ID) return null;
+    if (viewerId !== PINNED_CHART_VIEWER_ID) return null;
 
     const showTable = () => dispatchActiveTableChanged(activeChartTblId, tbl_group);
     const enabled = activeChartTblId !== activeTblId;
@@ -236,8 +236,8 @@ export const ShowTable = ({viewerId, tbl_group}) => {
 
 export const ToggleLayout = () => {
 
-    const {sideBySide=false} = getComponentState(PINNED_VIEWER_ID);
-    const canToggle =  getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID)?.length > 0;
+    const {sideBySide=false} = getComponentState(PINNED_CHART_VIEWER_ID);
+    const canToggle =  getViewerItemIds(getMultiViewRoot(), PINNED_CHART_VIEWER_ID)?.length > 0;
     const [modeLabel, modeTitle] = sideBySide ? ['As Tabs', 'Switch to tabs layout'] : ['Side-By-Side', 'Switch to Side-By-Side layout'];
 
     return canToggle &&
@@ -248,17 +248,17 @@ export const ToggleLayout = () => {
 
 
 export const toggleLayout = () => {
-    const {sideBySide=false} = getComponentState(PINNED_VIEWER_ID);
+    const {sideBySide=false} = getComponentState(PINNED_CHART_VIEWER_ID);
     setLayout(!sideBySide);
 };
 
 const setLayout = (sideBySide) => {
-    dispatchComponentStateChange(PINNED_VIEWER_ID, {sideBySide});
+    dispatchComponentStateChange(PINNED_CHART_VIEWER_ID, {sideBySide});
 };
 
 export const showAsTabs = (showPinnedCharts=false) => {
     if (showPinnedCharts) {
-        switchTab(PINNED_VIEWER_ID, 1);     // tab index 1 is pinned charts
+        switchTab(PINNED_CHART_VIEWER_ID, 1);     // tab index 1 is pinned charts
     }
     setLayout(false);
 };
@@ -271,7 +271,7 @@ export const PinnedChartPanel = (props) => {
 
     const {tbl_group='main', expandedMode, closeable} = props;
     const canReceiveNewItems=NewPlotMode.create_replace.key;
-    const viewerId = 'PINNED_CHARTS_VIEWER';
+    const viewerId = PINNED_CHART_VIEWER_ID;
 
     const {renderTreeId} = useContext(RenderTreeIdCtx);
 
@@ -380,9 +380,9 @@ function doUpdateViewer(viewerId, tbl_group, action) {
             break;
         }
         case CHART_REMOVE: {
-            const pinnedCnt = getViewerItemIds(getMultiViewRoot(), PINNED_VIEWER_ID)?.length ?? 0;
+            const pinnedCnt = getViewerItemIds(getMultiViewRoot(), PINNED_CHART_VIEWER_ID)?.length ?? 0;
             if (pinnedCnt <= 0) {
-                switchTab(PINNED_VIEWER_ID, 0);  // set selected tab back to 0
+                switchTab(PINNED_CHART_VIEWER_ID, 0);  // set selected tab back to 0
             }
             break;
         }

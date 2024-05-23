@@ -5,7 +5,10 @@ import {func} from 'prop-types';
 import React, {useState} from 'react';
 import {Card, Stack, Typography} from '@mui/joy';
 import {
-    dispatchSetLayoutMode, dispatchUpdateLayoutInfo, getLayouInfo, getResultCounts, LO_MODE, LO_VIEW
+    BIVIEW_I_ChCov, BIVIEW_ICov_Ch,
+    BIVIEW_IChCov_T, BIVIEW_T_IChCov,
+    dispatchSetLayoutMode, dispatchTriviewLayout, dispatchUpdateLayoutInfo, getLayouInfo, getResultCounts, LO_MODE,
+    LO_VIEW, TRIVIEW_I_ChCov_T, TRIVIEW_ICov_Ch_T
 } from '../../core/LayoutCntlr.js';
 import {ListBoxInputFieldView} from '../../ui/ListBoxInputField.jsx';
 import {AccordionPanelView} from '../../ui/panel/AccordionPanel.jsx';
@@ -70,15 +73,6 @@ export function LayoutChoiceVisualAccordion({closeSideBar}) {
     );
 }
 
-
-const TRIVIEW_IC_C_T= 'TRIVIEW_IC_C_T';
-const TRIVIEW_I_CC_T= 'TRIVIEW_I_CC_T';
-const BIVIEW_IC_C= 'BIVIEW_IC_C';
-const BIVIEW_I_CC= 'BIVIEW_I_CC';
-const BIVIEW_T_ICC= 'BIVIEW_T_ICC';
-const BIVIEW_ICC_T= 'BIVIEW_ICC_T';
-
-
 export function LayoutChoiceLayoutVisual({closeSideBar}) {
     const {mode, showTables, showImages, showXyPlots, images={}, coverageSide=LEFT}=
         useStoreConnector(() => pick(getLayouInfo(), stateKeys));
@@ -88,7 +82,7 @@ export function LayoutChoiceLayoutVisual({closeSideBar}) {
     const currLayoutMode= getLayouInfo()?.mode?.standard?.toString() ?? triViewKey;
     const isTriViewPossible = (showImages||showCoverage) && showXyPlots && showTables;
 
-    if (mode.expanded && mode.expanded!==LO_VIEW.none) {
+    if (mode?.expanded && mode.expanded!==LO_VIEW.none) {
         return <Typography sx={{pt:1}}>Single View Expanded</Typography>;
     }
 
@@ -99,17 +93,17 @@ export function LayoutChoiceLayoutVisual({closeSideBar}) {
         switch (currLayoutMode) {
             case triViewKey:
                 if (showCoverage || showImages) {
-                    return (coverageRight) ? TRIVIEW_I_CC_T : TRIVIEW_IC_C_T;
+                    return (coverageRight) ? TRIVIEW_I_ChCov_T : TRIVIEW_ICov_Ch_T;
                 }
                 else {
-                    return BIVIEW_ICC_T;
+                    return BIVIEW_IChCov_T;
                 }
             case imgXyKey:
-                return (coverageRight && showImages) ? BIVIEW_I_CC : BIVIEW_IC_C;
-            case tblXyKey: return BIVIEW_T_ICC;
-            case xYTblKey: return BIVIEW_ICC_T;
+                return (coverageRight && showImages) ? BIVIEW_I_ChCov : BIVIEW_ICov_Ch;
+            case tblXyKey: return BIVIEW_T_IChCov;
+            case xYTblKey: return BIVIEW_IChCov_T;
         }
-        return TRIVIEW_I_CC_T;
+        return TRIVIEW_I_ChCov_T;
     };
 
 
@@ -138,45 +132,20 @@ export function LayoutChoiceLayoutVisual({closeSideBar}) {
 
 function getOptions(isTriViewPossible,showImages,showCoverage) {
     const layoutOps= [];
-    if (isTriViewPossible) layoutOps.push({label:'Tri-view (L:Cov,I  R: Charts  B: Tables)', value:TRIVIEW_IC_C_T});  // L:Cov,Images - R: Charts - B: Tables
+    if (isTriViewPossible) layoutOps.push({label:'Tri-view (L:Cov,I  R: Charts  B: Tables)', value:TRIVIEW_ICov_Ch_T});  // L:Cov,Images - R: Charts - B: Tables
     if (isTriViewPossible && (showImages&&showCoverage)) {
-        layoutOps.push({label:'Tri-view images (L:I  R: Charts,Cov   B: Tables)', value:TRIVIEW_I_CC_T}); // L:Images -  R: Cov,Charts - B: Tables
+        layoutOps.push({label:'Tri-view images (L:I  R: Charts,Cov   B: Tables)', value:TRIVIEW_I_ChCov_T}); // L:Images -  R: Cov,Charts - B: Tables
     }
 
-    if (showCoverage) layoutOps.push({label:'Bi-view Charts', value:BIVIEW_IC_C});   // L:I,Cov  R:Charts  (no tables)
-    if (showCoverage && showImages) layoutOps.push({label:'Bi-view images', value:BIVIEW_I_CC});  // L:I - R:Cov,Charts - (no tables)
-    layoutOps.push({label:'Bi-view Tables', value:BIVIEW_T_ICC});   // L:Tables -  R: Charts,Cov,Images
-    layoutOps.push({label:'Bi-view Tables', value:BIVIEW_ICC_T});   // L: Charts,Cov,Images - R:Tables
+    if (showCoverage) layoutOps.push({label:'Bi-view Charts', value:BIVIEW_ICov_Ch});   // L:I,Cov  R:Charts  (no tables)
+    if (showCoverage && showImages) layoutOps.push({label:'Bi-view images', value:BIVIEW_I_ChCov});  // L:I - R:Cov,Charts - (no tables)
+    layoutOps.push({label:'Bi-view Tables', value:BIVIEW_T_IChCov});   // L:Tables -  R: Charts,Cov,Images
+    layoutOps.push({label:'Bi-view Tables', value:BIVIEW_IChCov_T});   // L: Charts,Cov,Images - R:Tables
     return layoutOps;
 }
 
 function changeLayout(newVal)  {
-    switch (newVal) {
-        case TRIVIEW_IC_C_T:
-            dispatchSetLayoutMode(LO_MODE.standard, triViewKey);
-            dispatchUpdateLayoutInfo({coverageSide:LEFT});
-            break;
-        case TRIVIEW_I_CC_T:
-            dispatchSetLayoutMode(LO_MODE.standard, triViewKey);
-            dispatchUpdateLayoutInfo({coverageSide:RIGHT});
-            break;
-        case BIVIEW_IC_C:
-            dispatchSetLayoutMode(LO_MODE.standard, imgXyKey);
-            dispatchUpdateLayoutInfo({coverageSide:LEFT});
-            break;
-        case BIVIEW_I_CC:
-            dispatchSetLayoutMode(LO_MODE.standard, imgXyKey);
-            dispatchUpdateLayoutInfo({coverageSide:RIGHT});
-            break;
-        case BIVIEW_T_ICC:
-            dispatchSetLayoutMode(LO_MODE.standard, tblXyKey);
-            dispatchUpdateLayoutInfo({coverageSide:RIGHT});
-            break;
-        case BIVIEW_ICC_T:
-            dispatchSetLayoutMode(LO_MODE.standard, xYTblKey);
-            dispatchUpdateLayoutInfo({coverageSide:RIGHT});
-            break;
-    }
+    dispatchTriviewLayout({triviewLayout:newVal});
 }
 
 function getICDesc(showImages,showCoverage) {
@@ -189,18 +158,18 @@ function getICDesc(showImages,showCoverage) {
 function OpRender({value, width='12rem', useBorder=true, showImages, showCoverage}) {
     const left= getICDesc(showImages,showCoverage);
     switch (value) {
-        case TRIVIEW_IC_C_T:
+        case TRIVIEW_ICov_Ch_T:
             return <TriViewItems {...{useBorder, width, left, right: ['Charts'], bottom:['Tables']}}/>;
-        case TRIVIEW_I_CC_T:
+        case TRIVIEW_I_ChCov_T:
             return <TriViewItems {...{useBorder, width, left:['Images'] , right: ['Coverage', 'Charts'], bottom:['Tables']}}/>;
-        case BIVIEW_IC_C:
+        case BIVIEW_ICov_Ch:
             return <BiViewItems {...{useBorder, width, left, right: ['Charts']}} />;
-        case BIVIEW_I_CC:
+        case BIVIEW_I_ChCov:
             return <BiViewItems {...{useBorder, width, left:['Images'] , right: ['Coverage','Charts']}} />;
-        case BIVIEW_T_ICC:
+        case BIVIEW_T_IChCov:
             const right=  [...getICDesc(showImages,showCoverage),'Charts'];
             return <BiViewItems {...{useBorder, width, left:['Tables'] , right}} />;
-        case BIVIEW_ICC_T:
+        case BIVIEW_IChCov_T:
             return <BiViewItems {...{useBorder, width, left:[...getICDesc(showImages,showCoverage), 'Charts'], right:['Tables']}} />;
     }
     return <div>{value}</div>;

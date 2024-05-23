@@ -4,7 +4,7 @@
 
 import {Box, Stack} from '@mui/joy';
 import {
-    BadgeLabel, PINNED_VIEWER_ID, PinnedChartPanel, usePinnedChartInfo
+    BadgeLabel, PinnedChartPanel, usePinnedChartInfo
 } from 'firefly/charts/ui/PinnedChartContainer.jsx';
 import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
 import {pick} from 'lodash';
@@ -13,13 +13,13 @@ import React, {memo, useContext} from 'react';
 import {getExpandedChartProps} from '../../charts/ChartsCntlr.js';
 import {allowPinnedCharts} from '../../charts/ChartUtil.js';
 import {ActiveChartsPanel} from '../../charts/ui/ChartsContainer.jsx';
-import { dispatchUpdateLayoutInfo, getLayouInfo, LO_VIEW } from '../../core/LayoutCntlr.js';
+import {dispatchUpdateLayoutInfo, getLayouInfo, getResultCounts, LO_VIEW} from '../../core/LayoutCntlr.js';
 import {TablesContainer} from '../../tables/ui/TablesContainer.jsx';
 import {AppInitLoadingMessage} from '../../ui/AppInitLoadingMessage.jsx';
 import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
 import {Tab, Tabs} from '../../ui/panel/TabPanel.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
+import {DEFAULT_PLOT2D_VIEWER_ID, PINNED_CHART_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 import {
     makeCoverageTab, makeFitsPinnedTab, makeMultiProductViewerTab, TriViewImageSection
 } from '../../visualize/ui/TriViewImageSection.jsx';
@@ -36,7 +36,7 @@ const xYTblKey= 'xyplots | tables';
 
 
 export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButtons, rightButtons} ) => {
-    const {landingPage,initLoadingMessage}= useContext(AppPropertiesCtx);
+    const {landingPage,initLoadingMessage,apiHandlesExpanded=false}= useContext(AppPropertiesCtx);
     const state= useStoreConnector(() => pick(getLayouInfo(), stateKeys));
     const {title, mode, showTables, showImages, showXyPlots, images={}, coverageSide=LEFT, initLoadCompleted} = state;
     const {expanded, standard=triViewKey, closeable} = mode ?? {};
@@ -70,6 +70,10 @@ export const TriViewPanel= memo(( {showViewsSwitch=true, leftButtons, centerButt
                                            expandedMode={expanded===LO_VIEW.tables}/>);
         if (currLayoutMode===xYTblKey) content.flip= true;
     }
+
+    const expandType = LO_VIEW.get(expanded) ?? LO_VIEW.none;
+    if (apiHandlesExpanded && expandType!==LO_VIEW.none) return;
+    
     return (
         <ResultsPanel {...{key:'results', title,
                       searchDesc:searchDesc({showViewsSwitch, leftButtons, centerButtons, rightButtons, }),
@@ -89,73 +93,102 @@ TriViewPanel.propTypes = {
     landingPage: PropTypes.object,
 };
 
+let lastSelected;
+
+const ACTIVE_CHART_TAB_ID= 'activeCharts';
+const PINNED_CHART_TAB_ID= 'pinnedCharts';
+const COVERAGE_TAB_ID= 'coverage';
+const DP_TAB_ID='meta';
+const PINNED_IMAGE_TAB_ID='fits';
+const PROPERTY_SHEET_TAB_ID='rowDetails';
+
+function getSelectedTab(idObj,coverageRight,showXyPlots,showFits,anyTables,anyPinnedCharts) {
+    const tabIds= Object.entries(idObj).filter(([,v]) => v).map(([k]) => k);
+    if (tabIds.includes(lastSelected)) return lastSelected;
+    if (!anyTables) {
+        if (showFits) return PINNED_IMAGE_TAB_ID;
+        if (anyPinnedCharts) return PINNED_CHART_TAB_ID;
+    }
+    return coverageRight ? COVERAGE_TAB_ID : showXyPlots ? ACTIVE_CHART_TAB_ID : PINNED_CHART_TAB_ID;
+}
+
+function makeKey(idObj) {
+    return Object.entries(idObj)
+        .filter(([,v]) => v)
+        .map(([k]) => k)
+        .join('-');
+}
+
+
 
 function RightSide({expanded, closeable, showXyPlots, showMeta, showFits, dataProductTableId, coverageRight, imagesWithCharts }) {
 
-    const onTabSelect = (id) => dispatchUpdateLayoutInfo({rightSide:{selectedTab:id}});
+    const onTabSelect = (id) => {
+        lastSelected= id;
+        dispatchUpdateLayoutInfo({rightSide:{selectedTab:id}});
+    };
+
     const chartExpandedMode= expanded===LO_VIEW.xyPlots;
-    const cov= imagesWithCharts || coverageRight;
-    const meta= imagesWithCharts && showMeta;
-    const fits= imagesWithCharts && showFits;
-    const showPropertySheet = true;             // this should be true.  We always want to show it.
     const {expandedViewerId}= getExpandedChartProps();
     const viewerId = DEFAULT_PLOT2D_VIEWER_ID;
-
     const {showPinnedTab, activeLabel, pinnedLabel} = usePinnedChartInfo({viewerId});
 
-    if (chartExpandedMode || !allowPinnedCharts() ) {
-        if (expandedViewerId === PINNED_VIEWER_ID) {
+    if (chartExpandedMode) {
+        if (expandedViewerId === PINNED_CHART_VIEWER_ID) {
             return makePinnedChartTab({viewerId, activeLabel, chartExpandedMode, closeable});
         } else {
             return makeActiveChartTab({viewerId, activeLabel, chartExpandedMode, closeable});
         }
     }
 
+    const {pinChartCnt=0,tableCnt=0}= getResultCounts() ?? {};
+    const anyTables= Boolean(tableCnt);
+    const anyPinnedCharts= Boolean(pinChartCnt);
+    const idObj= {
+        [ACTIVE_CHART_TAB_ID]: anyTables && showXyPlots,
+        [PINNED_CHART_TAB_ID]: allowPinnedCharts() && showPinnedTab,
+        [COVERAGE_TAB_ID]: anyTables && (imagesWithCharts || coverageRight),
+        [DP_TAB_ID]: imagesWithCharts && showMeta,
+        [PINNED_IMAGE_TAB_ID]: imagesWithCharts && showFits,
+        [PROPERTY_SHEET_TAB_ID]:anyTables,
+    };
+
     const style= {height: '100%'};
-    const defaultSelected= coverageRight ? 'coverage' : showXyPlots ? 'activeCharts' : 'fits';
-    const key= `${showXyPlots&&'xyplot'}-${cov&&'cov'}-${meta&&'meta'}-${fits&&'fits'}`;
+    const defaultSelected= getSelectedTab(idObj,coverageRight,showXyPlots,showFits,anyTables,anyPinnedCharts);
+
+
+    if (idObj[PINNED_IMAGE_TAB_ID] && Object.values(idObj).filter( (v) => v).length===1) {
+        return makeFitsPinnedTab({id:PINNED_IMAGE_TAB_ID,asTab:false});
+    }
+
+
     return(
-        <Tabs {...{key, style, onTabSelect, defaultSelected} } >
-            {showXyPlots && makeActiveChartTab({activeLabel, chartExpandedMode, closeable, asTab:true}) }
-            {showPinnedTab && makePinnedChartTab({pinnedLabel, chartExpandedMode, closeable, asTab:true}) }
-            {cov && makeCoverageTab()}
-            {meta && makeMultiProductViewerTab({dataProductTableId})}
-            {fits && makeFitsPinnedTab()}
-            {showPropertySheet && makePropertySheetTab()}
+        <Tabs {...{key:makeKey(idObj), style, onTabSelect, defaultSelected} } >
+            {idObj[ACTIVE_CHART_TAB_ID] && makeActiveChartTab({activeLabel, chartExpandedMode, closeable, asTab:true, id:ACTIVE_CHART_TAB_ID}) }
+            {idObj[PINNED_CHART_TAB_ID] && makePinnedChartTab({pinnedLabel, chartExpandedMode, closeable, asTab:true, id:PINNED_CHART_TAB_ID}) }
+            {idObj[COVERAGE_TAB_ID] && makeCoverageTab({id:COVERAGE_TAB_ID})}
+            {idObj[DP_TAB_ID] && makeMultiProductViewerTab({dataProductTableId,id:DP_TAB_ID})}
+            {idObj[PINNED_IMAGE_TAB_ID] && makeFitsPinnedTab({id:PINNED_IMAGE_TAB_ID,asTab:true})}
+            {idObj[PROPERTY_SHEET_TAB_ID] && makePropertySheetTab({id:PROPERTY_SHEET_TAB_ID})}
         </Tabs>
     );
 }
 
-function makeActiveChartTab({activeLabel, chartExpandedMode, closeable, asTab}) {
+function makeActiveChartTab({activeLabel, chartExpandedMode, closeable, asTab, id}) {
     const chartpanel = (<ActiveChartsPanel closeable={closeable} expandedMode={chartExpandedMode}
                               useOnlyChartsInViewer={false}
                               tbl_group='main' addDefaultChart={true}/>);
 
-    return asTab ? <Tab name={activeLabel} removable={false} id='activeCharts'>{chartpanel}</Tab> : chartpanel;
+    return asTab ? <Tab name={activeLabel} removable={false} id={id}>{chartpanel}</Tab> : chartpanel;
 }
 
-function makePinnedChartTab({pinnedLabel, chartExpandedMode, closeable, asTab}) {
+function makePinnedChartTab({pinnedLabel, chartExpandedMode, closeable, asTab,id}) {
     const chartpanel =(<PinnedChartPanel closeable={closeable} expandedMode={chartExpandedMode}
                              useOnlyChartsInViewer={false}
                              tbl_group='main' addDefaultChart={true}/>);
 
-    return asTab ? <Tab name={pinnedLabel} removable={false} id='pinnedCharts' label={<BadgeLabel labelStr={pinnedLabel}/>}>{chartpanel}</Tab> : chartpanel;
+    return asTab ? <Tab name={pinnedLabel} removable={false} id={id} label={<BadgeLabel labelStr={pinnedLabel}/>}>{chartpanel}</Tab> : chartpanel;
     }
-
-
-// function getCovSideOptions(currLayoutMode, showImages) {
-//     const make= (l,r) => [ {label:l, value:LEFT}, {label:r, value:RIGHT}];
-//
-//     switch (currLayoutMode) {
-//         case triViewKey: return make('Left', showImages?'Right':'Coverage w/Charts');
-//         case tblImgKey: return make('Coverage showing', 'Coverage hidden');
-//         case imgXyKey: return make('Left', 'Right');
-//         case tblXyKey: return make('Coverage hidden', 'Coverage showing');
-//         default: return make('Coverage left', 'Coverage right');
-//     }
-// }
-//
-// const LandingPageNotSpecified= () => ( <div>No Landing Page Specified</div> );
 
 function searchDesc({showViewsSwitch, leftButtons, centerButtons, rightButtons}) {
 
@@ -178,9 +211,9 @@ function searchDesc({showViewsSwitch, leftButtons, centerButtons, rightButtons})
     );
 }
 
-function makePropertySheetTab() {
+function makePropertySheetTab({id}) {
     return (
-        <Tab key='rowDetails' name='Details' removable={false} id='rowDetails'>
+        <Tab key='rowDetails' name='Details' removable={false} id={id}>
             <PropertySheetAsTable
                 slotProps={{ toolbar:{variant:'plain'}, root:{variant: 'plain'} }}
             />

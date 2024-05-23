@@ -63,6 +63,7 @@
 
 
 export const DPtypes= {
+    ERROR: 'error',
     MESSAGE: 'message',
     SEND_TO_BROWSER: 'send-to-browser',
     PROMISE: 'promise',
@@ -97,6 +98,10 @@ export function dpdtMessage(message, menu= undefined, extra={}) {
 
 export function dpdtSimpleMsg(message) {
     return {displayType:DPtypes.MESSAGE, message, menuKey:'message-0'};
+}
+
+export function dpdtUploadError(url,e) {
+    return {displayType:DPtypes.ERROR, error:e, url};
 }
 
 /**

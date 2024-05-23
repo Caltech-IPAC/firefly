@@ -4,6 +4,8 @@
 
 import {isArray} from 'lodash';
 import ComponentCntlr from '../core/ComponentCntlr.js';
+import {getHttpErrorMessage} from '../util/HttpErrorMessage.js';
+import {getStatusFromFetchError} from '../util/WebUtil.js';
 import {isDataProductsTable} from '../voAnalyzer/TableAnalysis.js';
 import {Band} from '../visualize/Band.js';
 import {TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACTIVE} from '../tables/TablesCntlr.js';
@@ -276,13 +278,15 @@ function updateDataProducts(factoryKey, action, firstTime, tbl_id, activateParam
 function handleProductResult(p, dpId, tbl_id, isPromiseAborted, imageViewer, layout) {
     return p.then((displayTypeParams) => {
         if (isPromiseAborted()) return;
-        if (displayTypeParams) {
-            dispatchUpdateDataProducts(dpId,displayTypeParams);
-        }
-        else {
-            dispatchUpdateDataProducts(dpId,dpdtSimpleMsg('Error- Search for Data product failed'));
+
+        if (!displayTypeParams  || displayTypeParams.displayType===DPtypes.ERROR) {
+            const {error,url}= displayTypeParams ?? {};
+            const status= getStatusFromFetchError(error.message);
+            if (!status) dispatchUpdateDataProducts(dpId,dpdtSimpleMsg('Error- Search for Data product failed'));
+            dispatchUpdateDataProducts(dpId,dpdtSimpleMsg(`Error- Search for Data product failed, status ${status} (${getHttpErrorMessage(status)}), url: ${url}`));
             return;
         }
+        dispatchUpdateDataProducts(dpId,displayTypeParams);
         if (displayTypeParams.gridNotSupported && layout===GRID) {
             dispatchChangeViewerLayout(imageViewer.viewerId, SINGLE, undefined, tbl_id);
         }
