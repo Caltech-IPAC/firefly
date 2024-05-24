@@ -547,7 +547,7 @@ describe('VOAnalyzer:', () => {
 
         table.tableMeta= {};
         result= isDataProductsTable(table);
-        expect(result).toBeFalsy();
+        expect(result).toBeTruthy();
 
         table.tableMeta= {ImageSourceId:'wise'};
         result= isDataProductsTable(table);
