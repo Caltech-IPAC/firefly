@@ -352,6 +352,7 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
 
     const fdAry= qAna?.primarySearchDef.map( (fd) => {
         const {serviceDef}= fd; //todo handle case with only an access url
+        if (!serviceDef) return;
         const standId= (serviceDef.standardID??'').toLowerCase();
         const utype= (serviceDef.utype||'').toLowerCase();
         let fdEntryAry;
@@ -374,7 +375,7 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
             return fdEntryAry;
         }
 
-    });
+    }).filter( (entry) => entry);
 
 
     const searchObjFds= fdAry

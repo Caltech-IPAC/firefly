@@ -213,7 +213,8 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
 
     const tbl_id=  options?.tableIdList?.find( (e) => e.description===title)?.tbl_id ?? options?.tableIdBase;
     const chartId=  options?.chartIdList?.find( (e) => e.description===title)?.chartId ?? options?.chartIdBase;
-    if (tableOnly) {
+    const noChartParams= (!xCol || !yCol) && !chartParamsAry && !useChartChooser;
+    if (tableOnly || noChartParams) {
         return dpdtTable(ddTitleStr,
             createChartTableActivate({source:fileOnServer,titleInfo,activateParams, tbl_index, dataTypeHint, cNames, cUnits,
                                      tbl_id}),
@@ -221,9 +222,6 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
             undefined, {extractionText: 'Pin Table', paIdx:tbl_index,requestDefault});
     }
     else {
-
-        if ( (!xCol || !yCol) && !chartParamsAry && !useChartChooser) return;
-
 
         let {chartTableDefOption}= part;
         if (getRowCnt(part,partFormat)===1) {
