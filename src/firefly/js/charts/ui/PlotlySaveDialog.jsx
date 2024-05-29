@@ -73,7 +73,7 @@ const PlotLySavePanel= function( {isWs,Plotly, chartDiv, filename}) {
                         tooltip: 'Enter filename of chart png',
                         label: 'Chart Filename',
                     }} />
-                <Stack flexDirection='row' justifyContent='space-between'>
+                <Stack direction='row' justifyContent='space-between'>
                     <Stack spacing={1} direction='row' alignItems='center'>
                         <CompleteButton text='Save' dialogId={DIALOG_ID}
                                         onSuccess={(request) => saveFile(request,Plotly, chartDiv)} />
