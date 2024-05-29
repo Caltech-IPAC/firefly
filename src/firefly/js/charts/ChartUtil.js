@@ -578,7 +578,9 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
     } else {
         if (!isFullyLoaded(tbl_id)) return;
         const tableModel = getTblById(tbl_id);
-        dispatchLoadTblStats(tableModel.request);
+        if (!getColValStats(tbl_id)) {
+            dispatchLoadTblStats(tableModel.request);
+        }
 
         const changes = getDataChangesForMappings({mappings, traceNum});
 
@@ -1101,10 +1103,14 @@ function isNonNumColumn(tbl_id, colExp) {
     if (colType) {
         return !numTypes.includes(colType);
     } else {
-        const colValidator = getColValidator(getColValStats(tbl_id));
-        const {valid} = colValidator(colExp);
-
-        return !valid;
+        const colValStats = getColValStats(tbl_id);
+        if (colValStats) {
+            const colValidator = getColValidator(colValStats);
+            const {valid} = colValidator(colExp);
+            return !valid;
+        } else {
+            return false;
+        }
     }
 }
 

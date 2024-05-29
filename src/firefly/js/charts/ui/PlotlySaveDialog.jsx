@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import {Button,Stack} from '@mui/joy';
+import {Box, Button, Stack} from '@mui/joy';
 import {getWorkspaceConfig} from 'firefly/visualize/WorkspaceCntlr.js';
 import {PopupPanel} from 'firefly/ui/PopupPanel.jsx';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
@@ -24,15 +24,16 @@ export function showPlotLySaveDialog(Plotly, chartDiv) {
     const isWs = getWorkspaceConfig(); //todo - keep if we add workspace support
     const  popup = (
         <PopupPanel title={'Save Chart'}>
-            <Stack sx={{
+            <Box sx={{
                 minWidth: '32rem',
                 minHeight: '10rem',
+                height: '10rem',
                 resize: 'both',
                 overflow: 'hidden',
                 position: 'relative'
             }}>
                 <PlotLySavePanel {...{Plotly, chartDiv, isWs, filename:getDefaultFilename(chartDiv)}}/>
-            </Stack>
+            </Box>
         </PopupPanel>
     );
     DialogRootContainer.defineDialog(DIALOG_ID, popup);
@@ -63,8 +64,8 @@ async function saveFile(request, Plotly, chartDiv) {
 
 const PlotLySavePanel= function( {isWs,Plotly, chartDiv, filename}) {
     return (
-        <Stack p={1} flexGrow={1} justifyContent='space-between'>
-            <FieldGroup groupKey={'PlotLySaveField'} >
+        <FieldGroup groupKey={'PlotLySaveField'} sx={{height: 1}}>
+            <Stack p={1} justifyContent='space-between' spacing={2} height={1}>
                 <ValidationField
                     fieldKey={'filename'}
                     initialState= {{
@@ -72,16 +73,15 @@ const PlotLySavePanel= function( {isWs,Plotly, chartDiv, filename}) {
                         tooltip: 'Enter filename of chart png',
                         label: 'Chart Filename',
                     }} />
-            </FieldGroup>
-
-            <Stack flexDirection='row' justifyContent='space-between'>
-                <Stack spacing={1} direction='row' alignItems='center'>
-                    <CompleteButton text='Save' dialogId={DIALOG_ID}
-                                    onSuccess={(request) => saveFile(request,Plotly, chartDiv)} />
-                    <Button onClick={() => dispatchHideDialog(DIALOG_ID)}>Cancel</Button>
+                <Stack direction='row' justifyContent='space-between'>
+                    <Stack spacing={1} direction='row' alignItems='center'>
+                        <CompleteButton text='Save' dialogId={DIALOG_ID}
+                                        onSuccess={(request) => saveFile(request,Plotly, chartDiv)} />
+                        <Button onClick={() => dispatchHideDialog(DIALOG_ID)}>Cancel</Button>
+                    </Stack>
+                    <HelpIcon helpId={'chart.save'}/>
                 </Stack>
-                <HelpIcon helpId={'chart.save'}/>
             </Stack>
-        </Stack>
+        </FieldGroup>
     );
 };
