@@ -65,7 +65,7 @@ const BasicTableViewInternal = React.memo((props) => {
     const onFilter       = useCallback( doFilter.bind({callbacks, filterInfo}), [callbacks, filterInfo]);
     const onFilterSelected = useCallback( doFilterSelected.bind({callbacks, selectInfoCls}), [callbacks, selectInfoCls]);
 
-    const headerHeight = showHeader ? 18 + (showUnits && 13) + (showTypes && 13) + (showFilters && 26) : 0;
+    const headerHeight = showHeader ? 19 + (showUnits && 15) + (showTypes && 14) + (showFilters && 25) : 0;
     let totalColWidths = 0;
     if (!isEmpty(columns) && !isEmpty(columnWidths)) {
         totalColWidths = columns.reduce((pv, c, idx) => {
@@ -82,9 +82,10 @@ const BasicTableViewInternal = React.memo((props) => {
     useEffect( () => {
         const changes = {};
         if (!isEmpty(columns)){
-            if (isSingleColumnTable(columns) && (!columnWidths || columnWidths[0]!==width-15)) {
+            const calcWidth = width-15-( selectable ? 25 : 0);
+            if (isSingleColumnTable(columns) && (!columnWidths || columnWidths[0]!==calcWidth)) {
                 // set 1st (only visible) column's width to table's width minus scrollbar's width (15px)
-                changes.columnWidths = [width-15, ...Array(columns.length - 1).fill(0)];
+                changes.columnWidths = [calcWidth, ...Array(columns.length - 1).fill(0)];
             }
             else if(!columnWidths) changes.columnWidths = columnWidthsInPixel(columns, data);
         }
@@ -324,7 +325,7 @@ function correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredB
     return scrollLeft;
 }
 
-function columnWidthsInPixel(columns, data) {
+function columnWidthsInPixel(columns, data, minWidth=45) {
 
     const maxVals = getColMaxValues(columns, data, {maxColWidth: 100, maxAryWidth: 30});
 
@@ -333,7 +334,8 @@ function columnWidthsInPixel(columns, data) {
         const header = columns[idx].label || columns[idx].name;
         const style = header === text ? headerStyle : {fontSize:12};
         text = text.replace(/[^a-zA-Z0-9]/g, 'O');    // some non-alphanum values can be very narrow.  use 'O' in place of them.
-        return getPxWidth({text, ...style}) + paddings;
+        const pxNum =  getPxWidth({text, ...style}) + paddings;
+        return pxNum < minWidth ? minWidth : pxNum;
     });
 }
 
