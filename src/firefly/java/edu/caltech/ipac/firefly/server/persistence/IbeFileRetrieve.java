@@ -15,7 +15,6 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.query.BaseFileInfoProcessor;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
@@ -23,7 +22,6 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.query.ibe.IbeQueryArtifact;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.visualize.plot.WorldPt;
-import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 import java.io.File;
 import java.io.IOException;
