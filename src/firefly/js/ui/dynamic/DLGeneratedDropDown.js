@@ -465,7 +465,7 @@ const doSubmitSearch= (r,docRows,qAna,fdAry,searchObjFds,tabsKey) => {
     if (!hasValidSpacialSearch(r,fds)) {
         showInfoPopup( getSpacialSearchType(r,fds)===CONE_CHOICE_KEY ?
                 'Target is required' :
-                'Search Area is require and must have at least 3 point pairs, each separated by commas',
+                'Search Area is require and must have at least 3 point pairs, each optionally separated by commas',
             'Error');
         return false;
     }
