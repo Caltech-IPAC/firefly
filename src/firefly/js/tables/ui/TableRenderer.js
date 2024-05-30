@@ -403,7 +403,7 @@ function ViewAsText({text, ...rest}) {
                 <input id='doFormat' type='checkbox' title={label} onChange={onChange} checked={doFmt}/>
                 <label htmlFor='doFormat' style={{verticalAlign: ''}}>{label}</label>
             </div>
-            <Sheet variant='outlined' sx={{resize:'both', overflow:'auto', minWidth:'30em', minHeight:'15em',p:1}} >
+            <Sheet variant='outlined' sx={{resize:'both', overflow:'auto', minWidth:'30em', minHeight:'15em', maxWidth:'90vw', maxHeight:'90vh', p:1}} >
                 {content}
             </Sheet>
         </PopupPanel>
