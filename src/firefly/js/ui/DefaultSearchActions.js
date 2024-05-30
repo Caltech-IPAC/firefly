@@ -204,7 +204,8 @@ async function searchWholeTable(table) {
         const columns = tbl.columns.map((col) =>
             col.visibility === 'hide' || col.visibility === 'hidden'? ({...col, use:false}) :  ({...col, use:true}));
         const {lonCol='', latCol=''}= findTableCenterColumns({tableData:{columns}}) ?? {};
-        const columnsSelected = columns.map((col) => col.name === lonCol || col.name === latCol? ({...col, use:true}) :  ({...col, use:false})); //select position cols
+        const columnsList = columns.map((col) => col.name === lonCol || col.name === latCol? ({...col, use:true}) :  ({...col, use:false})); //select position cols
+        const columnsSelected = columnsList.filter( (c) => c.visibility!=='hidden');
         const result = await doJsonRequest(ServerParams.TABLE_SAVE, params);
         if (!result.success) {
             showInfoPopup('Error loading this table', result.error);
