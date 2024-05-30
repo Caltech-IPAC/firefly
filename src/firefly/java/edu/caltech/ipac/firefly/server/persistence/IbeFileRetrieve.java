@@ -23,6 +23,7 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.query.ibe.IbeQueryArtifact;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.visualize.plot.WorldPt;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,12 +66,20 @@ public class IbeFileRetrieve extends BaseFileInfoProcessor {
         String mission = r.getParam(MISSION);
         WorldPt wp= getWorldPtFromCenterParam(r.getParam("center"));
         String subsize= r.getParam("subsize");
-        if (wp==null || mission==null || subsize==null) return null;
 
         switch (mission.toLowerCase()) {
             case "wise":
-                return IbeQueryArtifact.getWiseRelatedData(wp, subsize,r.getParam("band"));
+                String scanId = r.getParam("scan_id");
+                String frameNum = r.getParam("frame_num");
+                if ( mission==null || subsize==null) return null;
+                if (wp != null) {
+                    return IbeQueryArtifact.getWiseRelatedData(wp, subsize, r.getParam("band"));
+                } else if (wp==null && scanId !=null) {
+                    return IbeQueryArtifact.getWiseScanIdRelatedData(scanId, subsize, r.getParam("band"), frameNum);
+
+                }
             case "2mass":
+                if (wp==null || mission==null || subsize==null) return null;
                 return IbeQueryArtifact.get2MassRelatedData(wp, subsize);
             default:
                 return null;

@@ -50,7 +50,7 @@ import java.util.Map;
         @ParamDoc(name = "type", desc = "artifact type:  wise: P,O,H or D, 2mass: glint or pers"),
         @ParamDoc(name = "UserTargetWorldPt", desc = "target string, example- 2.3;4.5;EQJ2000 or 6.7;8.9;GAL"),
         @ParamDoc(name = "subsize", desc = "the radius in degrees"),
-
+        @ParamDoc(name = "scanid", desc = "WISE Scan Id" ),
         @ParamDoc(name = WiseRequest.HOST, desc = "todo add support for: (optional) the hostname, including port"),
         @ParamDoc(name = WiseRequest.SCHEMA_GROUP, desc = "todo add support for: the name of the schema group"),
         @ParamDoc(name = WiseRequest.SCHEMA, desc = "todo add support for: the name of the schema within the schema group")
@@ -128,6 +128,16 @@ public class IbeQueryArtifact extends IpacTablePartProcessor {
             // some may not have artifacts
         }
         return null;
+    }
+
+    public static  List<RelatedData> getWiseScanIdRelatedData(String scanId, String sizeInDeg, String band, String frameNum) {
+
+        List<RelatedData> rdList= new ArrayList<>();
+        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "P", "latents","WISE Latents"));
+        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "O", "ghost","WISE Optical Ghosts"));
+        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "H", "halos","WISE Halos"));
+        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "D", "diff_spikes","WISE Diffraction Spikes"));
+        return rdList;
     }
 
     private File get2MassArtifact(final TableServerRequest req) throws IOException, DataAccessException {
@@ -208,6 +218,20 @@ public class IbeQueryArtifact extends IpacTablePartProcessor {
         return rdList;
     }
 
+    private static RelatedData makeWiseRelatedScanIdDataItem(String scanId, String sizeInDeg, String band,
+                                                             String frameNum, String type, String dataKey, String desc) {
+        Map<String,String> params= new HashMap<>();
+        params.put("id", IbeQueryArtifact.ID);
+        params.put("service", "wise");
+        params.put("band", band);
+        params.put("type", type);
+        params.put("subsize", sizeInDeg);
+        params.put("scan_id", scanId);
+        params.put("frame_num", frameNum);
+        params.put(WiseRequest.PRODUCT_LEVEL, "1b");
+        return RelatedData.makeTabularRelatedData(params, dataKey, desc);
+    }
+
     public static  List<RelatedData> get2MassRelatedData(WorldPt wp, String sizeInDeg) {
         List<RelatedData> rdList= new ArrayList<>();
         rdList.add(get2MassRelatedDataItem(wp,sizeInDeg,"glint","glint_arti","2MASS Glints Artifacts"));
@@ -228,6 +252,32 @@ public class IbeQueryArtifact extends IpacTablePartProcessor {
         params.put(WiseRequest.PRODUCT_LEVEL, ServiceRetriever.WISE_3A);
         return RelatedData.makeTabularRelatedData(params, dataKey, desc);
     }
+
+    private File getWiseScanIdArtifact(final TableServerRequest req) throws IOException, DataAccessException {
+
+           WiseRequest sreq= new WiseRequest();
+           sreq.setParam(QueryIBE.MISSION, WiseIbeDataSource.WISE);
+           sreq.setParam("scanid", req.getParam("scanid"));
+           sreq.setParam("band", req.getParam("band"));
+           sreq.setParam("subsize", req.getParam("subsize"));
+           sreq.setParam(WiseRequest.PRODUCT_LEVEL, "1b");
+           sreq.setSchema(WiseRequest.MERGE);
+
+           try {
+               DataObject row = queryIBE(sreq);
+               //Step 2: modify TableServerRequest
+               if (row != null) {
+                   sreq.setParams(req.getParams());
+                   sreq.setParams(IpacTableUtil.asMap(row));
+
+                   return getIBEData(sreq);
+               }
+           } catch (Exception e) {
+               // some may not have artifacts
+           }
+           return null;
+       }
+
 
     private static RelatedData get2MassRelatedDataItem(WorldPt wp, String sizeInDeg,
                                                 String type, String dataKey, String desc) {
