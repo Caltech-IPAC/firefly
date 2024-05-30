@@ -129,17 +129,7 @@ function existingTableSubmit(request,setUploadInfo,defaultColsEnabled) {
             totalRows: activeTbl.totalRows,
             tableSource: EXISTING_TBL_SOURCE
         };
-        const META_INFO= {
-            [MetaConst.CATALOG_OVERLAY_TYPE]:'TRUE',
-            [MetaConst.UPLOAD_TABLE]:'TRUE'
-        };
         tblCount++;
-        const options=  {
-            META_INFO,
-            tbl_id: 'Upload_Tbl_'+tblCount
-        };
-        const tblReq = makeFileRequest('Upload_Tbl_'+tblCount, uploadInfo.serverFile, null, options);
-        dispatchTableSearch(tblReq);
         setUploadInfo(uploadInfo);
         dispatchHideDialog(dialogId);
     });
@@ -185,7 +175,7 @@ function applyDefColumnSelection(columns,defaultColsEnabled) {
         const {lonCol='', latCol=''} = findTableCenterColumns({tableData:{columns}}) ?? {}; //centerCols
         columnsSelected = columns.map((col) => col.name === lonCol || col.name === latCol? ({...col, use:true}) :  ({...col, use:false})); //select position cols only
     }
-    return columnsSelected;
+    return columnsSelected?.filter( (c) => c.visibility!=='hidden');
 }
 
 const NoTables = () => {
@@ -207,7 +197,9 @@ const LoadedTables= (props) => {
         const tbl = getTblById(tblId);
         if (!tbl.tableData) continue;
         //ToFix: converted row and col to string because searching their columns as number gives an error
-        const title = [tables[tblId].title, (tbl.tableData.columns.length).toString(), (tbl.totalRows).toString(), tblId];
+        const title = [tables[tblId].title,
+            (tbl.tableData.columns?.filter( (c) => c.visibility!=='hidden').length).toString(),
+            (tbl.totalRows).toString(), tblId];
         data.push(title);
     }
     if (data.length === 0) {

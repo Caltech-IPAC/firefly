@@ -90,7 +90,7 @@ export function makeRequestSimpleMoving(table, row, includeSingle, includeStanda
 
 }
 
-export const defDataSourceGuesses = ['FILE', 'FITS', 'DATA', 'SOURCE', 'URL', 'IMAGE_URL'];
+export const defDataSourceGuesses = ['FILE', 'FITS', 'DATA', 'SOURCE', 'URL', 'IMAGE_URL', 'access_url'];
 
 export function findADataSourceColumn(table) {
     if (!table || table.isFetching) return false;

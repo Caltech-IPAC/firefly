@@ -88,7 +88,7 @@ export function UploadTableSelector({uploadInfo, setUploadInfo, uploadTable=fals
                 </Stack>
             </Stack>
             {haveTable &&
-                <Stack {...{direction:'row', ml: 22, justifyContent:'flex-start'}}>
+                <Stack {...{direction:'row', ml: 22, justifyContent:'flex-start', alignItems:'flex-end'}}>
                     <Typography wx={{whiteSpace:'nowrap'}}>
                         {`Rows: ${totalRows}`}
                     </Typography>
