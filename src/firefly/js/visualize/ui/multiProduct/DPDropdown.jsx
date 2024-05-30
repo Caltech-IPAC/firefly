@@ -1,4 +1,4 @@
-import {Button, Divider, Stack} from '@mui/joy';
+import {Stack} from '@mui/joy';
 import React from 'react';
 import {array, object, string} from 'prop-types';
 import {
@@ -8,7 +8,7 @@ import {
 import {DPtypes} from '../../../metaConvert/DataProductsType.js';
 import {SingleColumnMenu} from '../../../ui/DropDownMenu.jsx';
 import {DropDownToolbarButton} from '../../../ui/DropDownToolbarButton.jsx';
-import {ToolbarButton} from '../../../ui/ToolbarButton.jsx';
+import {ToolbarButton, ToolbarHorizontalSeparator} from '../../../ui/ToolbarButton.jsx';
 import {PinButton} from '../Buttons.jsx';
 
 /**
@@ -38,7 +38,8 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
                       analysisActivateFunc, showRedoSearchButton, activeMenuLookupKey,
                       extraction, extractionText}) {
     return (
-        <Stack {...{direction:'row', alignItems:'center', height: 30}}>
+        <Stack {...{direction:'row', alignItems:'center', height: 30}}
+            divider={<ToolbarHorizontalSeparator/>}>
             {!hasMenu ?
                 <div style={{width: 50, height: 1}}/> :
                 <DropDownToolbarButton
@@ -50,7 +51,6 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
 
             {hasFileMenu &&
                 <Stack direction='row'>
-                    {hasMenu && <Divider orientation='vertical'/>}
                     <DropDownToolbarButton
                         text='File Contents' tip='Other data in file' useDropDownIndicator={true}
                         style={{pr: 2}}
@@ -59,14 +59,12 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
             }
             {extraction &&
                 <Stack direction='row'>
-                    {hasMenu||hasFileMenu && <Divider orientation='vertical'/>}
                     <PinButton onClick={() => extraction()} tip={extractionText || 'Pin'}
                     />
                 </Stack>
                 }
             {showRedoSearchButton && analysisActivateFunc &&
                 <Stack direction='row'>
-                    {hasMenu||hasFileMenu||extraction && <Divider orientation='vertical'/>}
                     <ToolbarButton
                         text='Redo Search' tip='Redo Search'
                         onClick={() => {

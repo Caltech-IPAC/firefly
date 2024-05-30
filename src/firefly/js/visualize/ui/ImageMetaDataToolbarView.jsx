@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Divider, Sheet, Stack} from '@mui/joy';
+import {Divider, Sheet, Stack} from '@mui/joy';
 import {isEmpty, isEqual, omit} from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -12,13 +12,11 @@ import {
     dispatchChangeViewerLayout, getViewer, getMultiViewRoot,
     GRID_FULL, GRID_RELATED, SINGLE, GRID, getLayoutDetails
 } from '../MultiViewCntlr.js';
-import {DisplayTypeButtonGroup} from './Buttons.jsx';
+import {DisplayTypeButtonGroup, ThreeColor} from './Buttons.jsx';
 import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
 import {ImagePager} from './ImagePager.jsx';
 import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
-import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
-
-import THREE_COLOR from 'html/images/icons-2014/28x28_FITS_Modify3Image.png';
+import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 
 
 
@@ -76,20 +74,21 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
 
     return (
         <Sheet>
-            <Stack direction='row' alignItems='center' style={{ flexWrap:'nowrap', justifyContent:'space-between', height: 32}}>
-                {makeDropDown ? makeDropDown() : <Box pr={1}/>}
-                {(makeDropDown&&metaControls&&(showMultiImageOps||canGrid||hasRelatedBands||showThreeColorButton))&& <Divider orientation='vertical' sx={{mx:1}}/> }
-                {metaControls && <Stack direction='row' alignItems='center' whiteSpace='nowrap'>
-                    {showMultiImageOps && <DisplayTypeButtonGroup {...{value:gridValue, config:gridConfig }}/>}
-                    {showThreeColorButton &&
-                        <ToolbarButton icon={THREE_COLOR} tip='Create three color image'
-                                       sx={{mt:1/4}}
-                                       imageStyle={{width:26,height:26, flex: '0 0 auto'}}
-                                       onClick={() => showThreeColorOps(viewerId,converter,activeTable,converterId)}/>
-                    }
-                </Stack> }
-                {showPager && <ImagePager pageSize={maxPlots} tbl_id={activeTable.tbl_id} style={{marginLeft:10}}/>}
-                {showPager && <ToolbarHorizontalSeparator/>}
+            <Stack direction='row' alignItems='center'
+                   sx={{ flexWrap:'wrap', justifyContent:'space-between', minHeight: 32}}>
+                <Stack direction='row' alignItems='center' divider={<ToolbarHorizontalSeparator/>}
+                       sx={{ pl: 1/2, flexWrap:'wrap'}}>
+                    {makeDropDown ? makeDropDown() : false}
+                    {metaControls &&
+                        <Stack direction='row' spacing={1} alignItems='center' whiteSpace='nowrap'>
+                            {showMultiImageOps && <DisplayTypeButtonGroup {...{value:gridValue, config:gridConfig }}/>}
+                            {showThreeColorButton &&
+                                <ThreeColor tip='Create three color image'
+                                            onClick={() => showThreeColorOps(viewerId,converter,activeTable,converterId)}/>
+                            }
+                        </Stack> }
+                    {showPager && <ImagePager pageSize={maxPlots} tbl_id={activeTable.tbl_id}/>}
+                </Stack>
                 <VisMiniToolbar viewerId={viewerId}/>
             </Stack>
         </Sheet>
