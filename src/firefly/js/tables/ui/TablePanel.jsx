@@ -78,7 +78,6 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
     const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
     const tstate = getTableState(tbl_id);
     logger.debug(`render.. state:[${tstate}] -- ${tbl_id}  ${tbl_ui_id}`);
-    const borderTop = showToolbar ? '1px solid #d3d3d3' : undefined;
 
     if ([TBL_STATE.ERROR,TBL_STATE.LOADING].includes(tstate))  return <NotReady {...{showTitle, tbl_id, title, removable, backgroundable, error}}/>;
 
@@ -101,8 +100,12 @@ export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', s
                        onMouseDown={stopPropagation}
                 >
                     <ToolBar {...{tbl_id, tbl_ui_id, connector, tblState, slotProps}}/>
-                    <Stack lineHeight={1} borderTop={borderTop} flexGrow={1} overflow='hidden'
-                            sx={{'& .fixedDataTableLayout_main': {border:'none'}}}
+                    <Stack lineHeight={1} flexGrow={1} overflow='hidden'
+                            sx={{
+                                '& .fixedDataTableLayout_main': {border:'none'},
+                                borderTop: showToolbar ? 1 : undefined,
+                                borderColor: 'neutral.outlinedBorder'
+                            }}
                            {...slotProps?.table}>
                         <BasicTableView
                             callbacks={connector}
