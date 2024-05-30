@@ -318,7 +318,7 @@ function render2MassSearch(fields) {
                     fieldKey='ds'
                     orientation='vertical'
                     initialState={{
-                        tooltip: 'Spacial Type',
+                        tooltip: 'Spatial Type',
                         value: 'Cone'
                     }}
                     options={[

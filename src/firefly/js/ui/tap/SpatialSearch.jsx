@@ -592,7 +592,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
             const { valid, userArea}=
                 checkUserArea(spatialMethod, wpField,radiusSizeField, polygonCornersStr, worldSys, ICRS, errList);
             if (valid)  adqlConstraint = `CONTAINS(${point},${userArea})=1`;
-            else errList.addError('Spacial input not complete');
+            else errList.addError('Spatial input not complete');
         }
         else if (validUpload) {
             if (!radiusSizeField.value) errList.addError('Missing radius input');
@@ -600,7 +600,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
                 getUploadConeUserArea(tabAs, upLonCol, upLatCol, uploadColumns,
                     radiusSizeField, adqlCoordSys, errList);
             if (valid) adqlConstraint= `CONTAINS(${point}, ${userArea})=1`;
-            else errList.addError('Spacial input not complete');
+            else errList.addError('Spatial input not complete');
         }
 
     } else {
@@ -610,7 +610,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
             if (spatialType===SINGLE) {
                 const {valid, x, y} = checkPoint(worldSys, ICRS, wpField, errList);
                 if (valid) adqlConstraint = `CONTAINS(POINT('${ICRS}', ${x}, ${y}), s_region)=1`;
-                else errList.addError('Spacial input not complete');
+                else errList.addError('Spatial input not complete');
             }
             else if (validUpload)  {
                 adqlConstraint = `CONTAINS(POINT('${ICRS}', ${tabAs}.${upLonCol}, ${tabAs}.${upLatCol}), s_region)=1`;
@@ -621,13 +621,13 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
                 const {valid, userArea} =
                     checkUserArea(spatialMethod, wpField,radiusSizeField, polygonCornersStr, worldSys, ICRS, errList);
                 if (valid) adqlConstraint= makeUserAreaConstraint(regionOp,userArea, ICRS );
-                else errList.addError('Spacial input not complete');
+                else errList.addError('Spatial input not complete');
             }
             else if (validUpload)  {
                 const {valid, userArea}=
                     getUploadConeUserArea(tabAs, upLonCol, upLatCol, uploadColumns, radiusSizeField, ICRS, errList);
                 if (valid) adqlConstraint= makeUserAreaConstraint(regionOp,userArea, ICRS );
-                else errList.addError('Spacial input not complete');
+                else errList.addError('Spatial input not complete');
             }
         }
     }
