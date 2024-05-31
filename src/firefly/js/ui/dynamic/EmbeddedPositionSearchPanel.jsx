@@ -154,7 +154,7 @@ export function EmbeddedPositionSearchPanel({
                     placeholder: 'Coordinates',
                     manageHiPS:false,
                 }} />}
-            {otherComponents}
+            {otherComponents && otherComponents(doGetConeAreaOp())}
             {doGetConeAreaOp() === UPLOAD_CHOICE_KEY &&
                 <UploadTableSelector {...{uploadInfo, setUploadInfo, uploadTable:true}}/>
             }
