@@ -7,7 +7,7 @@ import {get, isNil} from 'lodash';
 import {makeServerRequestBuilder} from '../ImageDataProductsUtil.js';
 import {RangeValues,STRETCH_LINEAR,SIGMA} from '../../visualize/RangeValues.js';
 import {getCellValue, getMetaEntry} from '../../tables/TableUtil.js';
-import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
+import {makeWorldPt} from '../../visualize/Point.js';
 import {convertAngle} from '../../visualize/VisUtil.js';
 import {PlotAttribute} from '../../visualize/PlotAttribute.js';
 import {CoordinateSys} from '../../visualize/CoordSys.js';

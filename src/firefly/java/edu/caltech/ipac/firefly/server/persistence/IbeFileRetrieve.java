@@ -73,9 +73,9 @@ public class IbeFileRetrieve extends BaseFileInfoProcessor {
                 if ( mission==null || subsize==null) return null;
                 if (wp != null) {
                     return IbeQueryArtifact.getWiseRelatedData(wp, subsize, r.getParam("band"));
-                } else if (wp==null && scanId !=null) {
+                } else if (scanId !=null) {
                     return IbeQueryArtifact.getWiseScanIdRelatedData(scanId, subsize, r.getParam("band"), frameNum);
-                }  else if (wp==null && coaddId !=null) {
+                } else if (coaddId !=null) {
                     return IbeQueryArtifact.getWiseCoaddIdRelatedData(coaddId, subsize, r.getParam("band"));
                 }
             case "2mass":

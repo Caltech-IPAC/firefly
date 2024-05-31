@@ -274,57 +274,7 @@ public class IbeQueryArtifact extends IpacTablePartProcessor {
         rdList.add(get2MassRelatedDataItem(wp,sizeInDeg,"pers","pers_arti","2MASS Persistence Artifacts"));
         return rdList;
     }
-
-    private File getWiseScanIdArtifact(final TableServerRequest req) throws IOException, DataAccessException {
-
-       WiseRequest sreq= new WiseRequest();
-       sreq.setParam(QueryIBE.MISSION, WiseIbeDataSource.WISE);
-       sreq.setParam("scanid", req.getParam("scan_id"));
-       sreq.setParam("band", req.getParam("band"));
-       sreq.setParam("subsize", req.getParam("subsize"));
-       sreq.setParam(WiseRequest.PRODUCT_LEVEL, "1b");
-       sreq.setSchema(WiseRequest.MERGE);
-
-       try {
-           DataObject row = queryIBE(sreq);
-           //Step 2: modify TableServerRequest
-           if (row != null) {
-               sreq.setParams(req.getParams());
-               sreq.setParams(IpacTableUtil.asMap(row));
-
-               return getIBEData(sreq);
-           }
-       } catch (Exception e) {
-           // some may not have artifacts
-       }
-       return null;
-   }
-
-    private File getWiseCoaddIdArtifact(final TableServerRequest req) throws IOException, DataAccessException {
-
-       WiseRequest sreq= new WiseRequest();
-       sreq.setParam(QueryIBE.MISSION, WiseIbeDataSource.WISE);
-       sreq.setParam("coaddid", req.getParam("coaddid"));
-       sreq.setParam("band", req.getParam("band"));
-       sreq.setParam("subsize", req.getParam("subsize"));
-       sreq.setParam(WiseRequest.PRODUCT_LEVEL, "3A");
-       sreq.setSchema(WiseRequest.MERGE);
-
-       try {
-           DataObject row = queryIBE(sreq);
-           //Step 2: modify TableServerRequest
-           if (row != null) {
-               sreq.setParams(req.getParams());
-               sreq.setParams(IpacTableUtil.asMap(row));
-
-               return getIBEData(sreq);
-           }
-       } catch (Exception e) {
-           // some may not have artifacts
-       }
-       return null;
-   }
-
+    
     private static RelatedData get2MassRelatedDataItem(WorldPt wp, String sizeInDeg,
                                                 String type, String dataKey, String desc) {
         Map<String,String> params= new HashMap<>();
