@@ -227,6 +227,7 @@ export function documentReady() {
  */
 export function loadCancelableImage(src) {
     const im = new Image();
+    im.crossOrigin='anonymous'
     let promiseReject;
     let continueExecution= true;
     let imageCompleted= false;

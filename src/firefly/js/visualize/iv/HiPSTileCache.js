@@ -98,9 +98,14 @@ export function addTileCachedImage(url, image, colorTableId,bias,contrast) {
         cacheImage.getContext('2d').drawImage(image,0,0);
     }
     const key= makeKey(url,colorTableId,bias,contrast);
-    if (cacheImage.getContext('2d').getImageData(0,0,1,1).data[3]===0) {
-        cachedImages.remove(key); // remove any previous version of this tile
-        return; // if any pixel is fully transparent, then something is wrong with the tile, don't cache
+    try {
+        if (cacheImage.getContext('2d').getImageData(0,0,1,1).data[3]===0) {
+            cachedImages.remove(key); // remove any previous version of this tile
+            return; // if any pixel is fully transparent, then something is wrong with the tile, don't cache
+        }
+    } catch (e) { // probably getImageData failed. This can happen in some CORS environments
+        console.log(`HiPS warning: ${e.toString()}`);
+        return;
     }
     cachedImages.set( key,
         {url, image:cacheImage, colorTableId,bias,contrast, emptyTile:false, colorTable: 'todo', time: Date.now()});
