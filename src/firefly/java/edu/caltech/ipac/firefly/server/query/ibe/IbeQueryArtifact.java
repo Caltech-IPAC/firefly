@@ -130,16 +130,6 @@ public class IbeQueryArtifact extends IpacTablePartProcessor {
         return null;
     }
 
-    public static  List<RelatedData> getWiseScanIdRelatedData(String scanId, String sizeInDeg, String band, String frameNum) {
-
-        List<RelatedData> rdList= new ArrayList<>();
-        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "P", "latents","WISE Latents"));
-        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "O", "ghost","WISE Optical Ghosts"));
-        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "H", "halos","WISE Halos"));
-        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "D", "diff_spikes","WISE Diffraction Spikes"));
-        return rdList;
-    }
-
     private File get2MassArtifact(final TableServerRequest req) throws IOException, DataAccessException {
 
         try {
@@ -218,6 +208,26 @@ public class IbeQueryArtifact extends IpacTablePartProcessor {
         return rdList;
     }
 
+    public static  List<RelatedData> getWiseScanIdRelatedData(String scanId, String sizeInDeg, String band, String frameNum) {
+
+        List<RelatedData> rdList= new ArrayList<>();
+        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "P", "latents","WISE Latents"));
+        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "O", "ghost","WISE Optical Ghosts"));
+        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "H", "halos","WISE Halos"));
+        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "D", "diff_spikes","WISE Diffraction Spikes"));
+        return rdList;
+    }
+
+    public static  List<RelatedData> getWiseCoaddIdRelatedData(String coaddId, String sizeInDeg, String band) {
+
+        List<RelatedData> rdList= new ArrayList<>();
+        rdList.add(makeWiseRelatedCoaddIdDataItem(coaddId,sizeInDeg,band,"P", "latents","WISE Latents"));
+        rdList.add(makeWiseRelatedCoaddIdDataItem(coaddId,sizeInDeg,band, "O", "ghost","WISE Optical Ghosts"));
+        rdList.add(makeWiseRelatedCoaddIdDataItem(coaddId,sizeInDeg,band, "H", "halos","WISE Halos"));
+        rdList.add(makeWiseRelatedCoaddIdDataItem(coaddId,sizeInDeg,band, "D", "diff_spikes","WISE Diffraction Spikes"));
+        return rdList;
+    }
+
     private static RelatedData makeWiseRelatedScanIdDataItem(String scanId, String sizeInDeg, String band,
                                                              String frameNum, String type, String dataKey, String desc) {
         Map<String,String> params= new HashMap<>();
@@ -232,13 +242,18 @@ public class IbeQueryArtifact extends IpacTablePartProcessor {
         return RelatedData.makeTabularRelatedData(params, dataKey, desc);
     }
 
-    public static  List<RelatedData> get2MassRelatedData(WorldPt wp, String sizeInDeg) {
-        List<RelatedData> rdList= new ArrayList<>();
-        rdList.add(get2MassRelatedDataItem(wp,sizeInDeg,"glint","glint_arti","2MASS Glints Artifacts"));
-        rdList.add(get2MassRelatedDataItem(wp,sizeInDeg,"pers","pers_arti","2MASS Persistence Artifacts"));
-        return rdList;
+    private static RelatedData makeWiseRelatedCoaddIdDataItem(String coaddId, String sizeInDeg, String band,
+                                                                 String type, String dataKey, String desc) {
+        Map<String,String> params= new HashMap<>();
+        params.put("id", IbeQueryArtifact.ID);
+        params.put("service", "wise");
+        params.put("band", band);
+        params.put("type", type);
+        params.put("subsize", sizeInDeg);
+        params.put("coadd_id", coaddId);
+        params.put(WiseRequest.PRODUCT_LEVEL, "3a");
+        return RelatedData.makeTabularRelatedData(params, dataKey, desc);
     }
-
 
     private static RelatedData makeWiseRelatedDataItem(WorldPt wp, String sizeInDeg, String band,
                                                 String type, String dataKey, String desc) {
@@ -253,31 +268,62 @@ public class IbeQueryArtifact extends IpacTablePartProcessor {
         return RelatedData.makeTabularRelatedData(params, dataKey, desc);
     }
 
+    public static  List<RelatedData> get2MassRelatedData(WorldPt wp, String sizeInDeg) {
+        List<RelatedData> rdList= new ArrayList<>();
+        rdList.add(get2MassRelatedDataItem(wp,sizeInDeg,"glint","glint_arti","2MASS Glints Artifacts"));
+        rdList.add(get2MassRelatedDataItem(wp,sizeInDeg,"pers","pers_arti","2MASS Persistence Artifacts"));
+        return rdList;
+    }
+
     private File getWiseScanIdArtifact(final TableServerRequest req) throws IOException, DataAccessException {
 
-           WiseRequest sreq= new WiseRequest();
-           sreq.setParam(QueryIBE.MISSION, WiseIbeDataSource.WISE);
-           sreq.setParam("scanid", req.getParam("scanid"));
-           sreq.setParam("band", req.getParam("band"));
-           sreq.setParam("subsize", req.getParam("subsize"));
-           sreq.setParam(WiseRequest.PRODUCT_LEVEL, "1b");
-           sreq.setSchema(WiseRequest.MERGE);
+       WiseRequest sreq= new WiseRequest();
+       sreq.setParam(QueryIBE.MISSION, WiseIbeDataSource.WISE);
+       sreq.setParam("scanid", req.getParam("scan_id"));
+       sreq.setParam("band", req.getParam("band"));
+       sreq.setParam("subsize", req.getParam("subsize"));
+       sreq.setParam(WiseRequest.PRODUCT_LEVEL, "1b");
+       sreq.setSchema(WiseRequest.MERGE);
 
-           try {
-               DataObject row = queryIBE(sreq);
-               //Step 2: modify TableServerRequest
-               if (row != null) {
-                   sreq.setParams(req.getParams());
-                   sreq.setParams(IpacTableUtil.asMap(row));
+       try {
+           DataObject row = queryIBE(sreq);
+           //Step 2: modify TableServerRequest
+           if (row != null) {
+               sreq.setParams(req.getParams());
+               sreq.setParams(IpacTableUtil.asMap(row));
 
-                   return getIBEData(sreq);
-               }
-           } catch (Exception e) {
-               // some may not have artifacts
+               return getIBEData(sreq);
            }
-           return null;
+       } catch (Exception e) {
+           // some may not have artifacts
        }
+       return null;
+   }
 
+    private File getWiseCoaddIdArtifact(final TableServerRequest req) throws IOException, DataAccessException {
+
+       WiseRequest sreq= new WiseRequest();
+       sreq.setParam(QueryIBE.MISSION, WiseIbeDataSource.WISE);
+       sreq.setParam("coaddid", req.getParam("coaddid"));
+       sreq.setParam("band", req.getParam("band"));
+       sreq.setParam("subsize", req.getParam("subsize"));
+       sreq.setParam(WiseRequest.PRODUCT_LEVEL, "3A");
+       sreq.setSchema(WiseRequest.MERGE);
+
+       try {
+           DataObject row = queryIBE(sreq);
+           //Step 2: modify TableServerRequest
+           if (row != null) {
+               sreq.setParams(req.getParams());
+               sreq.setParams(IpacTableUtil.asMap(row));
+
+               return getIBEData(sreq);
+           }
+       } catch (Exception e) {
+           // some may not have artifacts
+       }
+       return null;
+   }
 
     private static RelatedData get2MassRelatedDataItem(WorldPt wp, String sizeInDeg,
                                                 String type, String dataKey, String desc) {

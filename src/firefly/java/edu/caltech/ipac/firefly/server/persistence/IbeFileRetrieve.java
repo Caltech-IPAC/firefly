@@ -69,12 +69,14 @@ public class IbeFileRetrieve extends BaseFileInfoProcessor {
             case "wise":
                 String scanId = r.getParam("scan_id");
                 String frameNum = r.getParam("frame_num");
+                String coaddId = r.getParam("coaddid");
                 if ( mission==null || subsize==null) return null;
                 if (wp != null) {
                     return IbeQueryArtifact.getWiseRelatedData(wp, subsize, r.getParam("band"));
                 } else if (wp==null && scanId !=null) {
                     return IbeQueryArtifact.getWiseScanIdRelatedData(scanId, subsize, r.getParam("band"), frameNum);
-
+                }  else if (wp==null && coaddId !=null) {
+                    return IbeQueryArtifact.getWiseCoaddIdRelatedData(coaddId, subsize, r.getParam("band"));
                 }
             case "2mass":
                 if (wp==null || mission==null || subsize==null) return null;
