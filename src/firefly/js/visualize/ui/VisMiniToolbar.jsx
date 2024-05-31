@@ -34,7 +34,6 @@ import {StretchDropDownView} from 'firefly/visualize/ui/StretchDropDownView.jsx'
 import {isHiPS} from 'firefly/visualize/WebPlot.js';
 import {getPreference} from '../../core/AppDataCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {getDlAry} from '../DrawLayerCntlr.js';
 import {
     dispatchChangeActivePlotView, dispatchChangeExpandedMode, dispatchChangeHiPS, dispatchFlip,
@@ -110,11 +109,11 @@ function getStoreState(oldState) {
 }
 
 export const VisMiniToolbar = memo( ({sx, manageExpand=true, expandGrid=false, viewerId, tips={}}) => {
-    const {visRoot,dlCount, recentTargetAry, modalEndInfo} = useStoreConnector(getStoreState,[],true);
-
+    const {visRoot,dlCount, modalEndInfo} = useStoreConnector(getStoreState,[],true);
     return (
-        <VisMiniTBWrapper {...{visRoot, dlCount, sx, recentTargetAry, viewerId,
-                          manageExpand, expandGrid, modalEndInfo, tips}} />
+        <Box sx={{...rS, ...sx}} className='disable-select' >
+            <VisMiniToolbarView {...{visRoot, dlCount, manageExpand, expandGrid,modalEndInfo, viewerId, tips}} />
+        </Box>
     );
 });
 
@@ -127,7 +126,6 @@ VisMiniToolbar.propTypes= {
 };
 
 const rS= {
-    // width: 'calc(100% - 2px)',
     height: 34,
     display: 'flex',
     position: 'relative',
@@ -135,14 +133,6 @@ const rS= {
     flexDirection: 'row',
     justifyContent: 'flex-end'
 };
-
-const VisMiniTBWrapper= wrapResizer(
-    ({visRoot, dlCount, sx= {}, size:{width}, manageExpand, expandGrid, viewerId, modalEndInfo, tips={}}) => (
-        <Box sx={{...rS, ...sx}} className='disable-select' >
-            <VisMiniToolbarView {...{visRoot, dlCount, availableWidth:width, manageExpand, expandGrid,modalEndInfo, viewerId, tips}} />
-        </Box>
-    ));
-
 
 function getCorrectPlotView(visRoot, viewerId) {
     const pv= getActivePlotView(visRoot);
@@ -156,7 +146,7 @@ function getCorrectPlotView(visRoot, viewerId) {
 }
 
 
-const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, expandGrid, modalEndInfo, viewerId, tips}) => {
+const VisMiniToolbarView= memo( ({visRoot,dlCount,manageExpand, expandGrid, modalEndInfo, viewerId, tips}) => {
     const {apiToolsView}= visRoot;
     const {current:divref}= useRef({element:undefined});
     const [colorDrops,setColorDrops]= useState(true);
@@ -180,7 +170,6 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
     const mi= pv?.plotViewCtx.menuItemKeys ?? getDefMenuItemKeys();
     const enabled= Boolean(plot);
     const isExpanded= visRoot.expandedMode!==ExpandType.COLLAPSE;
-    const farLeftButtonEnabled= mi.overlayColorLock && mi.matchLockDropDown && mi.expand;
 
     const onMouseEnter= () => {
             if (getActivePlotView(visRoot)?.plotId !== pv?.plotId && pv.plotId) {
@@ -190,7 +179,6 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
 
     let showRotateLocked= false;
     if (plot) showRotateLocked = image ? pv.plotViewCtx.rotateNorthLock : plot.imageCoordSys===CoordinateSys.EQ_J2000;
-    const unavailableCnt= getUnavailableCnt(availableWidth, mi, apiToolsView,image, isExpanded, manageExpand);
     const rS= { display: 'flex', alignItems:'center', position: 'relative', whiteSpace: 'nowrap' };
 
     return (
@@ -213,9 +201,8 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
                                             visible={mi.imageSelect} onClick={showImagePopup}/>}
 
             <ToolsDropDown tip='Tools drop down: save, rotate, extract, and more'
-                                   dropDown={<ToolsDrop pv={pv} mi={mi} image={image} hips={hips} visRoot={visRoot}
+                                   dropDown={<ToolsDrop pv={pv} mi={mi} image={image} hips={hips}
                                                         modalEndInfo={modalEndInfo}
-                                                        unavailableCnt={unavailableCnt}
                                                         showRotateLocked={showRotateLocked}/>} />
 
             <ToolbarHorizontalSeparator/>
@@ -235,12 +222,8 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,availableWidth, manageExpand, 
 
             <LayerButton pv={pv} dlCount={dlCount}/>
 
-            {unavailableCnt<2 && farLeftButtonEnabled && <ToolbarHorizontalSeparator/>}
-
-            {unavailableCnt<1 &&
-                    <MatchLockDropDown visRoot={visRoot} enabled={enabled} imageStyle={image24x24}
-                                       visible={mi.matchLockDropDown} />
-            }
+            <MatchLockDropDown visRoot={visRoot} enabled={enabled} imageStyle={image24x24}
+                               visible={mi.matchLockDropDown} />
 
             {manageExpand && <ExpandButton expandGrid={expandGrid}
                                            tip='Expand this panel to take up a larger area'
@@ -261,27 +244,6 @@ VisMiniToolbarView.propTypes= {
     modalEndInfo: PropTypes.object,
     viewerId: PropTypes.string
 };
-
-
-function getUnavailableCnt(availableWidth, mi, apiToolsView,image, isExpanded, manageExpand) {
-    const maxWidth= getEstimatedWidth(mi, apiToolsView,image, isExpanded, manageExpand );
-    const fullSize= availableWidth>maxWidth;
-    const buttonSize = 28;
-    return fullSize ? 0 : Math.round((maxWidth-availableWidth) / buttonSize)+1;
-}
-
-function getEstimatedWidth(mi, apiToolsView,image, isExpanded, manageExpand) {
-    let retval= 340;
-    if (!apiToolsView || !mi.imageSelect) retval-= 28;
-    if (!mi.stretchQuick || !image) retval-= 28;
-    if (!mi.recenter) retval-= 28;
-    if (!mi.selectArea) retval-=28;
-    if (!mi.overlayColorLock) retval-=28;
-    if (!mi.matchLockDropDown) retval-=28;
-    if (isExpanded || !manageExpand) retval-=28;
-    return retval;
-}
-
 
 function doRotateNorth(pv,rotate) {
     if (isHiPS(primePlot(pv))) {
@@ -326,11 +288,8 @@ const ColorButton= ({colorDrops,enabled,pv}) => (
                            onClick={() =>showColorDialog()}/>
 );
 
-function ToolsDrop({visRoot, pv,mi, enabled, image, hips, modalEndInfo,
-                       showRotateLocked, unavailableCnt}) {
+function ToolsDrop({pv,mi, enabled, image, hips, modalEndInfo, showRotateLocked}) {
 
-    const makeMatchLock= mi.matchLockDropDown && unavailableCnt>0;
-    const makeColorLock= mi.overlayColorLock && unavailableCnt>1;
     const showExtract= Boolean(image) && mi.extract;
     return (
         <DropDownMenu>
@@ -345,11 +304,6 @@ function ToolsDrop({visRoot, pv,mi, enabled, image, hips, modalEndInfo,
                 {showExtract && <ExtractRow pv={pv} mi={mi} enabled={enabled} image={image}
                                             modalEndInfo={modalEndInfo}/>
                 }
-                {(makeMatchLock || makeColorLock) && <div style={{display:'flex', alignItems:'center', paddingTop:10}}>
-                    <Typography level='body-md' width='10em'>More:</Typography>
-                    {makeMatchLock && <MatchLockDropDown visRoot={visRoot} enabled={enabled} inDropDown={true}
-                                                         visible={mi.matchLockDropDown} />}
-                </div> }
             </Stack>
         </DropDownMenu>
     );
