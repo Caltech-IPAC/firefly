@@ -85,7 +85,7 @@ export const HeaderCell = React.memo( ({col, showUnits, showTypes, showFilters, 
     const onClick = toBoolean(sortable, true) ? () => onSort(sortCol) : () => showInfoPopup('This column is not sortable');
     const centerIt = {justifyContent:'center', alignItems:'center'};
 
-    sx = {height: 1, pb: '2px', ...sx};
+    sx = {py: '2px', ...sx};
     return (
         <Sheet variant='plain' sx={sx}>
             <Stack width={1} height={1} {...centerIt}>
@@ -220,14 +220,14 @@ function EnumSelect({col, tbl_id, filterInfoCls, onFilter}) {
 
 export function SelectableHeader ({checked, onSelectAll, showUnits, showTypes, showFilters, onFilterSelected, sx}) {
     return (
-        <Stack alignItems='center' height={1} justifyContent='end' py='1px' sx={sx}>
+        <Stack alignItems='center' height={1} justifyContent='space-between' py='2px' sx={sx}>
             <Checkbox size='sm'
                 tabIndex={-1}
                 checked={checked}
                 onChange={(e) => onSelectAll(e.target.checked)}/>
             {/*{showUnits && <Box height='1em'/>}*/}
             {/*{showTypes && <Box height='1em'/>}*/}
-            {showFilters && <FilterButton  iconButtonSize='32px'
+            {showFilters && <FilterButton  iconButtonSize='28px'
                                  onClick={onFilterSelected}
                                  tip='Filter on selected rows'/>}
         </Stack>
@@ -344,7 +344,7 @@ function ActionDropdown({text, actions, onChange}) {
                   }}}
         >
             <MenuItem onClick={copyCB}>Copy to clipboard</MenuItem>
-            <MenuItem onClick={viewAsText}>View as plain text</MenuItem>
+            <MenuItem onClick={viewAsText}>View full text</MenuItem>
             {actions?.map((text, action) => <MenuItem onClick={action}>{text}</MenuItem>)}
         </DropDown>
     );
@@ -394,15 +394,17 @@ function ViewAsText({text, ...rest}) {
         } catch (e) {}      // if text is not JSON, just show as is.
     }
 
+    const content = doFmt && html_regex.test(text) ? <div dangerouslySetInnerHTML={{__html: text}}/> : <Typography whiteSpace='pre'>{text}</Typography>;
+
     const label = 'View with formatting';
     return (
-        <PopupPanel title={'View as plain text'} sx={{flexDirection: 'column'}} {...rest}>
+        <PopupPanel title={'View full text'} sx={{flexDirection: 'column'}} {...rest}>
             <div style={{display: 'flex', alignItems: 'center'}}>
                 <input id='doFormat' type='checkbox' title={label} onChange={onChange} checked={doFmt}/>
                 <label htmlFor='doFormat' style={{verticalAlign: ''}}>{label}</label>
             </div>
-            <Sheet variant='outlined' sx={{resize:'both', overflow:'auto', minWidth:'30em', minHeight:'15em',p:1}} >
-                <Typography whiteSpace='pre'>{text}</Typography>
+            <Sheet variant='outlined' sx={{resize:'both', overflow:'auto', minWidth:'30em', minHeight:'15em', maxWidth:'90vw', maxHeight:'90vh', p:1}} >
+                {content}
             </Sheet>
         </PopupPanel>
 

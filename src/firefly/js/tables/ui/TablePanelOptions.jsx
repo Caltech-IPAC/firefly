@@ -339,9 +339,10 @@ function makeNameRenderer(tbl_id, tbl_ui_id, cmt_tbl_ui_id) {
         };
         if (c?.DERIVED_FROM) {
             return (
-                <div style={{color:'maroon', display: 'inline-flex', alignItems: 'center'}} onClick={editCol}>
-                    {value} <img className='clickable' style={{marginLeft: 5}} src={EDIT}/>
-                </div>
+                <Stack direction='row' spacing={1} onClick={editCol} className='clickable'>
+                    <Typography level='body-sm' color='warning'>{value}</Typography>
+                    <img style={{marginLeft: 5}} src={EDIT}/>
+                </Stack>
             );
         } else return <div>{value}</div>;
     };
