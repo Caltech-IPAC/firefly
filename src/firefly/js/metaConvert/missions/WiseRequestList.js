@@ -3,11 +3,11 @@
  */
 
 
-import {get} from 'lodash';
+import {get, isNil} from 'lodash';
 import {makeServerRequestBuilder} from '../ImageDataProductsUtil.js';
 import {RangeValues,STRETCH_LINEAR,SIGMA} from '../../visualize/RangeValues.js';
 import {getCellValue, getMetaEntry} from '../../tables/TableUtil.js';
-import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
+import {makeWorldPt} from '../../visualize/Point.js';
 import {convertAngle} from '../../visualize/VisUtil.js';
 import {PlotAttribute} from '../../visualize/PlotAttribute.js';
 import {CoordinateSys} from '../../visualize/CoordSys.js';
@@ -53,36 +53,26 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
                 const dec_obj= getCellValue(table,row,'dec_obj');
                 if (ra_obj && dec_obj) {
                     wp = makeWorldPt(ra_obj, dec_obj, CoordinateSys.EQ_J2000);
-                    req.setParam('center', `${wp.getLon()},${wp.getLat()}`);
-                    req.setParam('in_ra', `${wp.getLon()}`);
-                    req.setParam('in_dec', `${wp.getLat()}`);
+                    req.setParam('center', `${ra_obj},${dec_obj}`);
+                    req.setParam('in_ra', `${ra_obj}`);
+                    req.setParam('in_dec', `${dec_obj}`);
                     setSubSize();
                 }
             }
             else if (UserTargetWorldPt) {
-                const ra_in= getCellValue(table,row,'ra_in');
-                const dec_in= getCellValue(table,row,'dec_in');
+                const ra_in= getCellValue(table,row,'in_ra');
+                const dec_in= getCellValue(table,row,'in_dec');
                 // cutout is requested when in_ra, in_dec, and subsize are set (see WiseIbeDataSource)
-                if (ra_in && dec_in) {
-                    wp = makeWorldPt(ra_in, dec_in, CoordinateSys.EQ_J2000);
-                    req.setParam('center', `${wp.getLon()},${wp.getLat()}`);
-                    req.setParam('in_ra', `${wp.getLon()}`);
-                    req.setParam('in_dec', `${wp.getLat()}`);
+                if (!isNil(ra_in) && !isNil(dec_in)) {
+                    req.setParam('center', `${ra_in},${dec_in}`);
+                    req.setParam('in_ra', `${ra_in}`);
+                    req.setParam('in_dec', `${dec_in}`);
                     setSubSize();
+                    wp = makeWorldPt(ra_in, dec_in, CoordinateSys.EQ_J2000);
                 }
             }
             wp && req.setOverlayPosition(wp);
         }
-        /*
-        if (table.request.table_name.includes('3band')||table.request.table_name.includes('2band')) {
-            const tblBand = table.request.table_name.includes('3band') ? 3 : 2;
-
-            // add note to replace the query returned fail reason 'No Found'
-            if (Number(extraParams.band) > tblBand) {
-                req.setParam('userFailReason', {'not found': 'No image for band ' + extraParams.band});
-            }
-        }
-        */
         return req;
     };
 
