@@ -7,12 +7,7 @@ package edu.caltech.ipac.firefly.server.query.ibe;
 import edu.caltech.ipac.astro.ibe.BaseIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.TwoMassIbeDataSource;
 import edu.caltech.ipac.astro.ibe.datasource.WiseIbeDataSource;
-import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.data.RelatedData;
-import edu.caltech.ipac.firefly.data.ServerParams;
-import edu.caltech.ipac.firefly.data.ServerRequest;
-import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.WiseRequest;
+import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.firefly.server.persistence.IbeFileRetrieve;
@@ -65,21 +60,28 @@ public class IbeQueryArtifact extends IpacTablePartProcessor {
 
     @Override
     protected File loadDataFile(TableServerRequest req) throws IOException, DataAccessException {
-        return getFinderChartArtifact(req);
+        return getProjectArtifact(req);
     }
 
-    private File getFinderChartArtifact(TableServerRequest req) throws IOException, DataAccessException {
+    private File getProjectArtifact(TableServerRequest req) throws IOException, DataAccessException {
         String service = req.getParam("service");
-
+        String scanId = req.getParam("scan_id");
+        String coaddId = req.getParam("coadd_id");
         if (service==null) throw new IOException("Missing service param");
 
         File retFile = null;
         if (service.equalsIgnoreCase("wise")) {
-            retFile = getWiseArtifact(req);
+            if (scanId != null) {
+                retFile = getWiseScanIdArtifact(req);
+            } else if (coaddId != null) {
+                retFile = getWiseCoaddIdArtifact(req);
+            } else {
+                retFile = getWiseArtifact(req);
+            }
         } else if (service.equalsIgnoreCase("2mass")) {
             retFile = get2MassArtifact(req);
         } else {
-            _log.error("getFinderChartArtifact() unable to process TableServerRequest with service="+service);
+            _log.error("getProjectArtifact() unable to process TableServerRequest with service="+service);
         }
 
         return retFile;
@@ -208,48 +210,46 @@ public class IbeQueryArtifact extends IpacTablePartProcessor {
         return rdList;
     }
 
-    public static  List<RelatedData> getWiseScanIdRelatedData(String scanId, String sizeInDeg, String band, String frameNum) {
+    public static  List<RelatedData> getWiseScanIdRelatedData(String scanId, String band, String frameNum) {
 
         List<RelatedData> rdList= new ArrayList<>();
-        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "P", "latents","WISE Latents"));
-        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "O", "ghost","WISE Optical Ghosts"));
-        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "H", "halos","WISE Halos"));
-        rdList.add(makeWiseRelatedScanIdDataItem(scanId,sizeInDeg,band,frameNum, "D", "diff_spikes","WISE Diffraction Spikes"));
+        rdList.add(makeWiseRelatedScanIdDataItem(scanId,band,frameNum, "P", "latents","WISE Latents"));
+        rdList.add(makeWiseRelatedScanIdDataItem(scanId,band,frameNum, "O", "ghost","WISE Optical Ghosts"));
+        rdList.add(makeWiseRelatedScanIdDataItem(scanId,band,frameNum, "H", "halos","WISE Halos"));
+        rdList.add(makeWiseRelatedScanIdDataItem(scanId,band,frameNum, "D", "diff_spikes","WISE Diffraction Spikes"));
         return rdList;
     }
 
-    public static  List<RelatedData> getWiseCoaddIdRelatedData(String coaddId, String sizeInDeg, String band) {
+    public static  List<RelatedData> getWiseCoaddIdRelatedData(String coaddId, String band) {
 
         List<RelatedData> rdList= new ArrayList<>();
-        rdList.add(makeWiseRelatedCoaddIdDataItem(coaddId,sizeInDeg,band,"P", "latents","WISE Latents"));
-        rdList.add(makeWiseRelatedCoaddIdDataItem(coaddId,sizeInDeg,band, "O", "ghost","WISE Optical Ghosts"));
-        rdList.add(makeWiseRelatedCoaddIdDataItem(coaddId,sizeInDeg,band, "H", "halos","WISE Halos"));
-        rdList.add(makeWiseRelatedCoaddIdDataItem(coaddId,sizeInDeg,band, "D", "diff_spikes","WISE Diffraction Spikes"));
+        rdList.add(makeWiseRelatedCoaddIdDataItem(coaddId, band,"P", "latents","WISE Latents"));
+        rdList.add(makeWiseRelatedCoaddIdDataItem(coaddId, band, "O", "ghost","WISE Optical Ghosts"));
+        rdList.add(makeWiseRelatedCoaddIdDataItem(coaddId, band, "H", "halos","WISE Halos"));
+        rdList.add(makeWiseRelatedCoaddIdDataItem(coaddId, band, "D", "diff_spikes","WISE Diffraction Spikes"));
         return rdList;
     }
 
-    private static RelatedData makeWiseRelatedScanIdDataItem(String scanId, String sizeInDeg, String band,
+    private static RelatedData makeWiseRelatedScanIdDataItem(String scanId, String band,
                                                              String frameNum, String type, String dataKey, String desc) {
         Map<String,String> params= new HashMap<>();
         params.put("id", IbeQueryArtifact.ID);
         params.put("service", "wise");
         params.put("band", band);
         params.put("type", type);
-        params.put("subsize", sizeInDeg);
         params.put("scan_id", scanId);
         params.put("frame_num", frameNum);
         params.put(WiseRequest.PRODUCT_LEVEL, "1b");
         return RelatedData.makeTabularRelatedData(params, dataKey, desc);
     }
 
-    private static RelatedData makeWiseRelatedCoaddIdDataItem(String coaddId, String sizeInDeg, String band,
+    private static RelatedData makeWiseRelatedCoaddIdDataItem(String coaddId, String band,
                                                                  String type, String dataKey, String desc) {
         Map<String,String> params= new HashMap<>();
         params.put("id", IbeQueryArtifact.ID);
         params.put("service", "wise");
         params.put("band", band);
         params.put("type", type);
-        params.put("subsize", sizeInDeg);
         params.put("coadd_id", coaddId);
         params.put(WiseRequest.PRODUCT_LEVEL, "3a");
         return RelatedData.makeTabularRelatedData(params, dataKey, desc);
@@ -274,7 +274,55 @@ public class IbeQueryArtifact extends IpacTablePartProcessor {
         rdList.add(get2MassRelatedDataItem(wp,sizeInDeg,"pers","pers_arti","2MASS Persistence Artifacts"));
         return rdList;
     }
-    
+
+    private File getWiseScanIdArtifact(final TableServerRequest req) throws IOException, DataAccessException {
+
+       WiseRequest sreq= new WiseRequest();
+       sreq.setParam(QueryIBE.MISSION, WiseIbeDataSource.WISE);
+       sreq.setParam("scan_id", req.getParam("scan_id"));
+       sreq.setParam("band", req.getParam("band"));
+       sreq.setParam(WiseRequest.PRODUCT_LEVEL, "1b");
+       sreq.setSchema(WiseRequest.MERGE);
+
+       try {
+           DataObject row = queryIBE(sreq);
+           //Step 2: modify TableServerRequest
+           if (row != null) {
+               sreq.setParams(req.getParams());
+               sreq.setParams(IpacTableUtil.asMap(row));
+
+               return getIBEData(sreq);
+           }
+       } catch (Exception e) {
+           // some may not have artifacts
+       }
+       return null;
+   }
+
+    private File getWiseCoaddIdArtifact(final TableServerRequest req) throws IOException, DataAccessException {
+
+       WiseRequest sreq= new WiseRequest();
+       sreq.setParam(QueryIBE.MISSION, WiseIbeDataSource.WISE);
+       sreq.setParam("coadd_id", req.getParam("coadd_id"));
+       sreq.setParam("band", req.getParam("band"));
+       sreq.setParam(WiseRequest.PRODUCT_LEVEL, "3A");
+       sreq.setSchema(WiseRequest.MERGE);
+
+       try {
+           DataObject row = queryIBE(sreq);
+           //Step 2: modify TableServerRequest
+           if (row != null) {
+               sreq.setParams(req.getParams());
+               sreq.setParams(IpacTableUtil.asMap(row));
+
+               return getIBEData(sreq);
+           }
+       } catch (Exception e) {
+           // some may not have artifacts
+       }
+       return null;
+   }
+
     private static RelatedData get2MassRelatedDataItem(WorldPt wp, String sizeInDeg,
                                                 String type, String dataKey, String desc) {
         Map<String,String> params= new HashMap<>();

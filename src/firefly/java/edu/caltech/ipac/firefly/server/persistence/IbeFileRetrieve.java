@@ -64,22 +64,21 @@ public class IbeFileRetrieve extends BaseFileInfoProcessor {
         String mission = r.getParam(MISSION);
         WorldPt wp= getWorldPtFromCenterParam(r.getParam("center"));
         String subsize= r.getParam("subsize");
-
+        if ( mission==null ) return null;
         switch (mission.toLowerCase()) {
             case "wise":
                 String scanId = r.getParam("scan_id");
                 String frameNum = r.getParam("frame_num");
-                String coaddId = r.getParam("coaddid");
-                if ( mission==null || subsize==null) return null;
-                if (wp != null) {
+                String coaddId = r.getParam("coadd_id");
+                if (wp!=null && subsize!=null) {
                     return IbeQueryArtifact.getWiseRelatedData(wp, subsize, r.getParam("band"));
                 } else if (scanId !=null) {
-                    return IbeQueryArtifact.getWiseScanIdRelatedData(scanId, subsize, r.getParam("band"), frameNum);
+                    return IbeQueryArtifact.getWiseScanIdRelatedData(scanId, r.getParam("band"), frameNum);
                 } else if (coaddId !=null) {
-                    return IbeQueryArtifact.getWiseCoaddIdRelatedData(coaddId, subsize, r.getParam("band"));
+                    return IbeQueryArtifact.getWiseCoaddIdRelatedData(coaddId, r.getParam("band"));
                 }
             case "2mass":
-                if (wp==null || mission==null || subsize==null) return null;
+                if (wp==null || subsize==null) return null;
                 return IbeQueryArtifact.get2MassRelatedData(wp, subsize);
             default:
                 return null;
