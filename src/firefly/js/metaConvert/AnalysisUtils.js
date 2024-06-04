@@ -33,10 +33,10 @@ export function makeAnalysisGetSingleDataProduct(makeReq) {
 }
 
 
-export async function uploadAndAnalyze({request, table, row, activateParams, dataTypeHint = '', options}) {
+export async function uploadAndAnalyze({request, table, row, activateParams, dataTypeHint = '', options, serviceDescMenuList}) {
     if (!hasRowAccess(table, row)) dpdtSimpleMsg('You do not have access to this data.');
     if (isNonAnalysisType(request)) return fileExtensionSingleProductAnalysis(request);
-    const analysisPromise = doUploadAndAnalysis({table, row, request, activateParams, dataTypeHint, options});
+    const analysisPromise = doUploadAndAnalysis({table, row, request, activateParams, dataTypeHint, options, serviceDescMenuList});
     return dpdtWorkingPromise(LOADING_MSG, analysisPromise, request);
 }
 
@@ -126,7 +126,7 @@ export function makeAnalysisActivateFunc({table, row, request, activateParams, m
         dispatchUpdateDataProducts(dpId, dpdtWorkingMessage(LOADING_MSG,menuKey));
         // do the uploading and analyzing
         const dPDisplayType= await doUploadAndAnalysis({ table, row, request, activateParams, dataTypeHint, options, menu,
-            serDef, userInputParams, analysisActivateFunc, originalTitle});
+            serDef, userInputParams, analysisActivateFunc, originalTitle, menuKey});
         // activate the result of the analysis
        dispatchResult(dPDisplayType, menu,menuKey,dpId, serDef, analysisActivateFunc);
     };

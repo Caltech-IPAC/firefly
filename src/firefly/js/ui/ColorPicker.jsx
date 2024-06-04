@@ -5,7 +5,7 @@
 import {Stack, Tooltip, Typography} from '@mui/joy';
 import React, {useState} from 'react';
 import PropTypes from 'prop-types';
-import {dispatchShowDialog} from '../core/ComponentCntlr.js';
+import {dispatchHideDialog, dispatchShowDialog} from '../core/ComponentCntlr.js';
 import {PopupPanel} from './PopupPanel.jsx';
 import CompleteButton from './CompleteButton.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
@@ -80,9 +80,12 @@ function ColorPickerWrapper ({callback,color,callbackOnOKOnly, callbackOnBoth,
                               onChangeComplete={updateColor}
                               onChange={(ev) => updateStateFromRGBA(ev.rgb)}/>
                 <Stack {...{ direction:'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <CompleteButton onSuccess={() => (callbackOnOKOnly||callbackOnBoth) && callback(lastEv,true)}
-                                    text={(callbackOnOKOnly||callbackOnBoth)? 'OK' : 'Close'}
-                                    dialogId='ColorPickerDialog'/>
+                    <CompleteButton
+                        text={(callbackOnOKOnly||callbackOnBoth)? 'OK' : 'Close'}
+                        onSuccess={() => {
+                        (callbackOnOKOnly||callbackOnBoth) && callback(lastEv,true);
+                        dispatchHideDialog('ColorPickerDialog');
+                    }} />
                     <div style={{ textAlign:'center'}}>
                         <HelpIcon helpId={helpId} />
                     </div>

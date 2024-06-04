@@ -44,6 +44,11 @@ public class MetaConst {
     public static final String IMAGE_AS_TABLE_UNITS= "IMAGE_AS_TABLE_UNITS";
 
     /*
+     * plane of cube to extract
+     */
+    public static final String IMAGE_AS_TABLE_PLANE= "IMAGE_AS_TABLE_PLANE";
+
+    /*
      * a string the default says what this data type might be such as 'spectrum', 'sed', 'timeseries', etc
      */
     public static final String DATA_TYPE_HINT = "DATA_TYPE_HINT";

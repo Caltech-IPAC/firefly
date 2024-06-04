@@ -3,11 +3,14 @@
  */
 import {get, intersection, isEmpty, isString} from 'lodash';
 import {defDataSourceGuesses} from '../metaConvert/DefaultConverter.js';
-import {ACCESS_FORMAT, ACCESS_URL, DEFAULT_TNAME_OPTIONS, obsPrefix, OBSTAP_CNAMES, S_REGION} from './VoConst.js';
+import {
+    ACCESS_FORMAT, ACCESS_URL, DEFAULT_TNAME_OPTIONS, obsPrefix, OBSTAP_CNAMES, POS_EQ_UCD, S_REGION, SSA_COV_UTYPE,
+    SSA_TTTLE_UTYPE
+} from './VoConst.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {getCornersColumns} from '../tables/TableInfoUtil.js';
 import {
-    getBooleanMetaEntry, getCellValue, getColumn, getColumns, getMetaEntry, isTableUsingRadians
+    getBooleanMetaEntry, getCellValue, getColumn, getColumns, getMetaEntry, getTblRowAsObj, isTableUsingRadians
 } from '../tables/TableUtil.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import {makeAnyPt, makeWorldPt} from '../visualize/Point.js';
@@ -370,3 +373,25 @@ export function getObsCoreCellValue(tableOrId, rowIdx, obsColName) {
 }
 // moved from java, if we decide to use it this is what we had before
 export const findTargetName = (columns) => columns.find( (c) => DEFAULT_TNAME_OPTIONS.includes(c));
+
+
+export function isSSATable(tableOrId) {
+    const table= getTableModel(tableOrId);
+    if (!table) return false;
+    const foundParts= table.tableData.columns
+        .filter((c) => {
+            if (c?.utype?.toLowerCase().includes(SSA_COV_UTYPE)) return true;
+            if (c?.utype?.toLowerCase().includes(SSA_TTTLE_UTYPE )) return true;
+        });
+    return foundParts.length>=2;
+}
+
+export function getSSATitle(tableOrId,row) {
+    const table= getTableModel(tableOrId);
+    if (!table) return false;
+    const foundCol= table.tableData.columns
+        .filter((c) => {
+            if (c?.utype?.toLowerCase().includes(SSA_TTTLE_UTYPE )) return true;
+        });
+    return foundCol.length>0 ? getCellValue(table,row,foundCol[0].name) : undefined;
+}

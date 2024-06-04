@@ -1,3 +1,4 @@
+import {getCellValue} from '../../tables/TableUtil.js';
 import {makeWorldPtUsingCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {Band} from '../../visualize/Band.js';
@@ -178,4 +179,14 @@ function get3CBandIdxes(datalinkTable) {
         g: bandAry.findIndex( (v) => v===Band.GREEN),
         b: bandAry.findIndex( (v) => v===Band.BLUE),
     };
+}
+
+export function makeDlUrl(dlServDesc, table, row) {
+    if (!dlServDesc) return undefined;
+    const {serDefParams, accessURL}= dlServDesc;
+    const sendParams={};
+    serDefParams?.filter( ({ref}) => ref).forEach( (p) => sendParams[p.name]= getCellValue(table, row, p.colName));
+    const newUrl= new URL(accessURL);
+    Object.entries(sendParams).forEach( ([k,v]) => newUrl.searchParams.append(k,v));
+    return newUrl.toString();
 }

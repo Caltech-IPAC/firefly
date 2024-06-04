@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isArray,isEmpty} from 'lodash';
-import {getProdTypeGuess} from '../voAnalyzer/TableAnalysis.js';
+import {getProdTypeGuess, getSSATitle, isSSATable} from '../voAnalyzer/TableAnalysis.js';
 import {isFitsTableDataTypeNumeric} from '../visualize/FitsHeaderUtil.js';
 import {dpdtChartTable, dpdtImage, dpdtTable, DPtypes, SHOW_CHART, SHOW_TABLE, AUTO} from './DataProductsType';
 import {FileAnalysisType, Format, UIEntry, UIRender} from '../data/FileAnalysis';
@@ -22,7 +22,7 @@ import {createSingleImageActivate, createSingleImageExtraction} from './ImageDat
  * @param serverCacheFileKey
  * @param {ActivateParams} activateParams
  * @param {DataProductsFactoryOptions} options
- * @return {{tableResult: DataProductsDisplayType|undefined, imageResult: DataProductsDisplayType|undefined}}
+ * @return {{tableResult: DataProductsDisplayType|Array.<DataProductsDisplayType>|undefined, imageResult: DataProductsDisplayType|undefined}}
  */
 export function analyzePart(part, request, table, row, fileFormat, dataTypeHint, serverCacheFileKey, activateParams, options) {
 
@@ -70,6 +70,7 @@ function imageCouldBeTable(part) {
     const naxisAry= [];
     for(let i=0; i<naxis;i++) naxisAry[i]= getIntHeaderFromAnalysis(`NAXIS${i+1}`,part,0);
     if (naxis===2) return naxisAry[1]<=30;
+    if (naxis===3) return naxisAry[1]===1;
     else {
         let couldBeTable= true;
         for(let i=1; (i<naxis);i++) if (naxisAry[i]>1) couldBeTable= false;
@@ -107,22 +108,29 @@ const SPACITAL_C_COL2= ['dec','lat','c_dec','dec1'];
  * @param title
  * @param part
  * @param fileFormat
+ * @param table
  * @return {ChartInfo}
  */
-function getTableChartColInfo(title, part, fileFormat) {
+function getTableChartColInfo(title, part, fileFormat,table) {
     if (isImageAsTable(part,fileFormat)) {
+        const ssa= isSSATable(table);
         let cNames= [];
         const {tableColumnNames:overrideColNames, tableColumnUnits=[]}= part;
         const colCnt= getImageAsTableColCount(part,fileFormat);
         if (isArray(overrideColNames) && overrideColNames.length===colCnt) {
             cNames= overrideColNames;
         }
+        if (ssa && colCnt===1) {
+            cNames.push('offset');
+            cNames.push('wavelength');
+        }
         else {
             for(let i=0; i<colCnt; i++) cNames.push(i===0?'naxis1_idx': `naxis1_data_${(i-1)}`);
             if (colCnt===2) cNames[1]= !title || title.startsWith('(')? 'pixel value':title;
         }
         const cUnits= cNames.length===tableColumnUnits.length ? tableColumnUnits : undefined;
-        return {xCol:cNames[0],yCol:cNames[1],cNames,cUnits, connectPoints:false};
+        const naxis3= getIntHeaderFromAnalysis('NAXIS3',part,0);
+        return {xCol:cNames[0],yCol:cNames[1],cNames,cUnits, cubePlanes: naxis3, connectPoints:false};
     }
     else {
         const tabColNames= getColumnNames(part,fileFormat);
@@ -201,12 +209,17 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
         else if (uiRender!==UIRender.Chart) return undefined;
     }
 
-    const ddTitleStr= getTableDropTitleStr(title,part,partFormat,tableOnly);
-    const {xCol,yCol,cNames,cUnits,connectPoints,useChartChooser}= getTableChartColInfo(title, part, partFormat);
+    let ddTitleStr= getTableDropTitleStr(title,part,partFormat,tableOnly);
+    const {xCol,yCol,cNames,cUnits,cubePlanes,connectPoints,useChartChooser}= getTableChartColInfo(title, part, partFormat,table);
 
     //define title for table and chart
     const titleInfo={titleStr:title, showChartTitle:true};
-    if (!title){
+    if (isSSATable(table)) {
+        titleInfo.titleStr= getSSATitle(table,row)??'spectrum';
+        ddTitleStr= titleInfo.titleStr;
+        titleInfo.showChartTitle=false;
+    }
+    else if (!title){
         titleInfo.titleStr=`table_${part.index}`;
         titleInfo.showChartTitle=false;
     }
@@ -215,11 +228,27 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
     const chartId=  options?.chartIdList?.find( (e) => e.description===title)?.chartId ?? options?.chartIdBase;
     const noChartParams= (!xCol || !yCol) && !chartParamsAry && !useChartChooser;
     if (tableOnly || noChartParams) {
-        return dpdtTable(ddTitleStr,
-            createChartTableActivate({source:fileOnServer,titleInfo,activateParams, tbl_index, dataTypeHint, cNames, cUnits,
-                                     tbl_id}),
-            createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits, dataTypeHint),
-            undefined, {extractionText: 'Pin Table', paIdx:tbl_index,requestDefault});
+        if (cubePlanes===0) {
+            const extraction= createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits, 0, dataTypeHint);
+            const activate= createChartTableActivate({source:fileOnServer,titleInfo,activateParams, tbl_index, dataTypeHint, cNames, cUnits,
+                    tbl_id});
+            return dpdtTable(ddTitleStr, activate, extraction, undefined,
+                {extractionText: 'Pin Table', paIdx:tbl_index,requestDefault});
+        }
+        else {
+            const retAry= [];
+            for(let i=0;i<cubePlanes;i++) {
+                const tInfoIdx= {titleStr:titleInfo.titleStr+ ` (Plane: ${i})` , ...titleInfo};
+                const extraction= createTableExtraction(fileOnServer,tInfoIdx,tbl_index, cNames, cUnits, i, dataTypeHint);
+                const activate= createChartTableActivate({source:fileOnServer,titleInfo:tInfoIdx,activateParams, tbl_index, dataTypeHint, cNames, cUnits,
+                            tbl_id, cubePlane:i});
+                retAry.push(
+                    dpdtTable(ddTitleStr+ ` (Plane: ${i})`, activate, extraction, undefined,
+                        {extractionText: 'Pin Table', paIdx:tbl_index,requestDefault})
+                );
+            }
+            return retAry;
+        }
     }
     else {
 
@@ -229,7 +258,7 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
             if (chartTableDefOption===AUTO) chartTableDefOption= SHOW_TABLE;
             return dpdtChartTable(ddTitleStr,
                 createChartSingleRowArrayActivate(fileOnServer,'Row 1 Chart',activateParams,xCol,yCol,0,tbl_index, dataTypeHint),
-                createTableExtraction(fileOnServer,'Row 1 Chart',tbl_index, cNames, cUnits, dataTypeHint),
+                createTableExtraction(fileOnServer,'Row 1 Chart',tbl_index, cNames, cUnits, 0, dataTypeHint),
                 undefined, {extractionText: 'Pin Table', paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
         }
         else {
@@ -246,12 +275,46 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
             else if (chartTableDefOption===AUTO) {
                 chartTableDefOption= imageAsTableColCnt===2 ? SHOW_CHART : SHOW_TABLE;
             }
-            return dpdtChartTable(ddTitleStr,
-                createChartTableActivate({chartAndTable:true, source:fileOnServer,titleInfo,activateParams,chartInfo,
-                    tbl_index,dataTypeHint:dataTypeHintOverride, colNames:cNames,colUnits:cUnits,connectPoints,
-                    tbl_id, chartId }),
-                createTableExtraction(fileOnServer,titleInfo,tbl_index, cNames, cUnits, dataTypeHint),
-                undefined, {extractionText: 'Pin Table', paIdx:tbl_index, chartTableDefOption, interpretedData, requestDefault});
+            if (cubePlanes===0) {
+                const extraction= createTableExtraction(fileOnServer, titleInfo, tbl_index, cNames, cUnits, 0, dataTypeHint);
+                const activate= createChartTableActivate({
+                            chartAndTable: true, source: fileOnServer, titleInfo, activateParams, chartInfo,
+                            tbl_index, dataTypeHint: dataTypeHintOverride,
+                            colNames: cNames, colUnits: cUnits, connectPoints, tbl_id, chartId });
+                return dpdtChartTable(ddTitleStr, activate, extraction, undefined,
+                    { extractionText: 'Pin Table', paIdx: tbl_index, chartTableDefOption, interpretedData, requestDefault });
+            }
+            else {
+                const retAry= [];
+                for(let i=0;i<cubePlanes;i++) {
+                    const tInfoIdx= {titleStr:titleInfo.titleStr+ ` (Plane: ${i})` , ...titleInfo};
+                    const extraction= createTableExtraction(fileOnServer, titleInfo, tbl_index, cNames, cUnits, i, dataTypeHint);
+                    const activate= createChartTableActivate({
+                                chartAndTable: true, source: fileOnServer, titleInfo:tInfoIdx, activateParams, chartInfo,
+                                tbl_index, dataTypeHint: dataTypeHintOverride,
+                                cubePlane:i,
+                                colNames: cNames, colUnits: cUnits, connectPoints, tbl_id, chartId });
+                    retAry.push(
+                        dpdtChartTable(ddTitleStr+ ` (Plane: ${i})`, activate, extraction, undefined,
+                            {
+                                extractionText: 'Pin Table', paIdx: tbl_index, chartTableDefOption,
+                                interpretedData, requestDefault
+                            })
+                    );
+
+
+
+
+                    //
+                    //     dpdtTable(ddTitleStr+ ` (Plane: ${i})`,
+                    //         createChartTableActivate({source:fileOnServer,titleInfo:tInfoIdx,activateParams, tbl_index, dataTypeHint, cNames, cUnits,
+                    //             tbl_id, cubePlane:i}),
+                    //         createTableExtraction(fileOnServer,tInfoIdx,tbl_index, cNames, cUnits, i, dataTypeHint),
+                    //         undefined, {extractionText: 'Pin Table', paIdx:tbl_index,requestDefault})
+                    // );
+                }
+                return retAry;
+            }
         }
     }
 }
@@ -381,8 +444,9 @@ function getImageAsTableColCount(part, fileFormat) {
     if (fileFormat !== 'FITS') return 0;
     if (is1DImage(part)) return 2;
     const naxis = getIntHeaderFromAnalysis('NAXIS', part);
-    if (naxis!==2) return 0;
     const naxis2= getIntHeaderFromAnalysis('NAXIS2',part,0);
+    if (naxis===3) return naxis2;
+    if (naxis!==2) return 0;
     if (naxis2>30) return 0;
     return naxis2+1;
 }

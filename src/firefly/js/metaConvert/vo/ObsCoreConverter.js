@@ -14,7 +14,7 @@ import {dispatchUpdateActiveKey} from '../DataProductsCntlr.js';
 import {dpdtFromMenu, dpdtMessageWithDownload, dpdtPNG, dpdtSimpleMsg,} from '../DataProductsType.js';
 import {createGuessDataType} from './DataLinkProcessor.js';
 import {
-    createGridResult, datalinkDescribeThreeColor, getDatalinkRelatedGridProduct, getDatalinkSingleDataProduct
+    createGridResult, datalinkDescribeThreeColor, getDatalinkRelatedGridProduct, getDatalinkSingleDataProduct, makeDlUrl
 } from './DatalinkProducts.js';
 
 import {createServDescMenuRet} from './ServDescProducts.js';
@@ -67,9 +67,9 @@ export function makeObsCoreConverter(table,converterTemplate,options={}) {
 }
 
 function describeObsThreeColor(table, row, options) {
-    const {dataSource:dlTableUrl,prodType,isVoTable,isDataLink, isPng}= getObsCoreRowMetaInfo(table,row);
-    const errMsg= doErrorChecks(table,row,prodType,dlTableUrl,isDataLink,isVoTable);
-    if (errMsg || prodType!=='image' || isPng || !isDataLink) return;
+    const {dataSource:dlTableUrl,prodType,isVoTable,isDataLinkRow, isPng}= getObsCoreRowMetaInfo(table,row);
+    const errMsg= doErrorChecks(table,row,prodType,dlTableUrl,isDataLinkRow,isVoTable);
+    if (errMsg || prodType!=='image' || isPng || !isDataLinkRow) return;
     return datalinkDescribeThreeColor(dlTableUrl, table,row, options);
 }
 
@@ -82,7 +82,8 @@ function describeObsThreeColor(table, row, options) {
  * @return {Promise.<DataProductsDisplayType>}
  */
 export function getObsCoreGridDataProduct(table, plotRows, activateParams, options) {
-    const pAry= plotRows.map( (pR) => getObsCoreSingleDataProduct(table,pR.row,activateParams,undefined,false,options));
+        const pAry= plotRows.map( (pR) => getObsCoreSingleDataProduct(
+            { table ,row:pR.row,activateParams,doFileAnalysis:false,options} ));
     return createGridResult(pAry,activateParams,table,plotRows);
 }
 
@@ -101,12 +102,12 @@ export async function getObsCoreRelatedDataProduct(table, row, threeColorOps, hi
 
     const canGrid= options?.allowImageRelatedGrid ?? false;
     if (!canGrid) return Promise.reject('related data products not supported');
-    const {titleStr,dataSource,prodType,isVoTable,isDataLink, isPng}= getObsCoreRowMetaInfo(table,row);
-    const errMsg= doErrorChecks(table,row,prodType,dataSource,isDataLink,isVoTable);
+    const {titleStr,dataSource,prodType,isVoTable,isDataLinkRow, isPng}= getObsCoreRowMetaInfo(table,row);
+    const errMsg= doErrorChecks(table,row,prodType,dataSource,isDataLinkRow,isVoTable);
     if (errMsg) return errMsg;
     if (prodType!=='image') return dpdtSimpleMsg(`${prodType} is not supported for grid`);
     if (isPng) return dpdtSimpleMsg(`${prodType} must be fits for related grid support`);
-    if (!isDataLink) return dpdtSimpleMsg('datalink required for supported for related grid');
+    if (!isDataLinkRow) return dpdtSimpleMsg('datalink required for supported for related grid');
 
     return getDatalinkRelatedGridProduct({dlTableUrl:dataSource, activateParams,table,row,threeColorOps, titleStr,options});
 }
@@ -115,25 +116,27 @@ export async function getObsCoreRelatedDataProduct(table, row, threeColorOps, hi
 
 
 export function getObsCoreDataProduct(table, row, activateParams, options) {
-    let descriptors= getServiceDescriptors(table);
-    descriptors= descriptors && descriptors.filter( (dDesc) => !isDataLinkServiceDesc(dDesc));
+    const descriptorsInFile= getServiceDescriptors(table);
+    const descriptors= descriptorsInFile && descriptorsInFile?.filter( (dDesc) => !isDataLinkServiceDesc(dDesc));
+    const dlDescriptors= descriptorsInFile && descriptorsInFile?.filter( (dDesc) => isDataLinkServiceDesc(dDesc));
+
 
     if (isEmpty(descriptors)) {
-        return getObsCoreSingleDataProduct(table, row, activateParams, undefined, true, options);
+        return getObsCoreSingleDataProduct({table, row, activateParams, options});
     }
 
     const positionWP= makeWorldPtUsingCenterColumns(table,row);
     const activeMenuLookupKey= `${descriptors[0].accessURL}--${table.tbl_id}--${row}`;
-    let serDescMenu= createServDescMenuRet({descriptors,positionWP,table,row,activateParams,
+    let serviceDescMenuList= createServDescMenuRet({descriptors,positionWP,table,row,activateParams,
         activeMenuLookupKey, options});
 
-    serDescMenu= serDescMenu.map( (m) =>
+    serviceDescMenuList= serviceDescMenuList.map( (m) =>
         ({...m,
             semantics: m.semantics ?? '#additional-service-descriptor',
             size: m.size ?? 0,
         }));
 
-    return getObsCoreSingleDataProduct(table, row, activateParams, serDescMenu, true, options);
+    return getObsCoreSingleDataProduct({table, row, activateParams, serviceDescMenuList, dlDescriptors, options});
 }
 
 
@@ -153,21 +156,23 @@ function doErrorChecks(table, row, prodType, dataSource, isDataLink, isVoTable) 
 
 /**
  * Support ObsCore single product
- * @param table
- * @param row
- * @param {ActivateParams} activateParams
- * @param {Array.<DataProductsDisplayType>} serviceDescMenuList
- * @param {boolean} doFileAnalysis - if true the build a menu if possible
- * @param {DataProductsFactoryOptions} options
+ * @param {Object} obj
+ * @param obj.table
+ * @param obj.row
+ * @param {ActivateParams} obj.activateParams
+ * @param {Array.<DataProductsDisplayType>} [obj.serviceDescMenuList]
+ * @param {ServiceDescriptorDef} [obj.dlDescriptors]
+ * @param {boolean} [obj.doFileAnalysis] - if true the build a menu if possible
+ * @param {DataProductsFactoryOptions} obj.options
  * @return {Promise.<DataProductsDisplayType>}
  */
-async function getObsCoreSingleDataProduct(table, row, activateParams, serviceDescMenuList, doFileAnalysis= true, options) {
+async function getObsCoreSingleDataProduct({table, row, activateParams, serviceDescMenuList, dlDescriptors, doFileAnalysis= true, options}) {
 
-    const {size,titleStr,dataSource,prodType,isVoTable,isDataLink, isPng}= getObsCoreRowMetaInfo(table,row);
-    const errMsg= doErrorChecks(table,row,prodType,dataSource,isDataLink,isVoTable);
+    const {size,titleStr,dataSource,prodType,isVoTable,isDataLinkRow, isPng}= getObsCoreRowMetaInfo(table,row);
+    const errMsg= doErrorChecks(table,row,prodType,dataSource,isDataLinkRow,isVoTable);
     if (errMsg) return errMsg;
 
-    if (isDataLink) {
+    if (isDataLinkRow) {
         return getDatalinkSingleDataProduct({dlTableUrl:dataSource, options, sourceTable:table, row,
             activateParams,titleStr, additionalServiceDescMenuList:serviceDescMenuList, doFileAnalysis});
     }
@@ -177,11 +182,21 @@ async function getObsCoreSingleDataProduct(table, row, activateParams, serviceDe
     else if (size>GIG) {
         return dpdtMessageWithDownload('Data is too large to load', 'Download File: '+titleStr, dataSource);
     }
-    else {
+    else { // this row has a data product, may have service descriptors, and may have a datalink service descriptor
+        if (dlDescriptors?.length) { // get the DL rows and add them to the menu
+            const dlTableUrl= makeDlUrl(dlDescriptors[0],table, row); // only support one DL service descriptor for now
+            const dlProd= await getDatalinkSingleDataProduct({
+                dlTableUrl, options, sourceTable:table, row,
+                activateParams,titleStr, undefined, doFileAnalysis});
+            const dlProdMenu= dlProd?.menu?.map( (p) =>  ({...p,menuKey:'extraDl-'+p.menuKey})) ?? [];
+            serviceDescMenuList= serviceDescMenuList ? [...(serviceDescMenuList??[]),...dlProdMenu] : dlProdMenu;
+        }
+
+
         const positionWP= getSearchTarget(table.request,table) ?? makeWorldPtUsingCenterColumns(table,row);
         const request= makeObsCoreRequest(dataSource, positionWP, titleStr,table,row);
         const primDPType= doFileAnalysis ?
-            await uploadAndAnalyze({request,table,row,activateParams}) :
+            await uploadAndAnalyze({request,table,row,activateParams,serviceDescMenuList}) :
             createGuessDataType(titleStr,'guess-0',dataSource,prodType,undefined,activateParams, positionWP,table,row,size);
         return makeSingleDataProductWithMenu(activateParams.dpId, primDPType,size, serviceDescMenuList);
     }
@@ -190,7 +205,7 @@ async function getObsCoreSingleDataProduct(table, row, activateParams, serviceDe
 
 
 
-function makeSingleDataProductWithMenu(dpId, primDPType, size, serviceDescMenuList) {
+export function makeSingleDataProductWithMenu(dpId, primDPType, size, serviceDescMenuList) {
     if (!serviceDescMenuList) return primDPType;
     const activeMenuLookupKey= serviceDescMenuList[0].activeMenuLookupKey;
     primDPType= { ...primDPType, semantics: primDPType.semantics ?? '#this', size, activeMenuLookupKey};
@@ -207,12 +222,12 @@ function getObsCoreRowMetaInfo(table,row) {
     const dataSource= getObsCoreAccessURL(table,row);
     const prodType= getProdTypeGuess(table,row);
     const isVoTable= isFormatVoTable(table, row);
-    const isDataLink= isFormatDataLink(table,row);
+    const isDataLinkRow= isFormatDataLink(table,row);
     const iName= getCellValue(table,row,'instrument_name') || '';
     const obsId= getCellValue(table,row,'obs_id') || '';
     const size= Number(getCellValue(table,row,'access_estsize')) || 0;
 
-    return {iName,obsId,size,titleStr,dataSource,prodType,isVoTable,isDataLink,isPng:isFormatPng(table,row)};
+    return {iName,obsId,size,titleStr,dataSource,prodType,isVoTable,isDataLinkRow,isPng:isFormatPng(table,row)};
 }
 
 function createObsCoreTitle(table,row) {

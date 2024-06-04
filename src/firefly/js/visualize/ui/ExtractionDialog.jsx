@@ -329,6 +329,7 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const hduNum= getHDU(plot);
     const plane= getImageCubeIdx(plot)>-1 ? getImageCubeIdx(plot) : 0;
     const {x:chartX,y:chartY}=plot?.attributes?.[PlotAttribute.SELECT_ACTIVE_CHART_PT] ?? {};
+    const singleLine= plot.dataWidth===1 || plot.dataHeight===1;
 
     useEffect(() => {
         const getData= async () => {
@@ -366,6 +367,23 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
                 <Box>
                     <Typography> Draw line on image to extract point on line and show chart. </Typography>
                     {pvCnt>1 && <Typography {...{mt:3}}> Shift-click will change the selected image without selecting a new line. </Typography>}
+                    {singleLine &&
+                        <Stack pt={2} spacing={1}>
+                           <Typography>
+                               {`This is a ${plot.dataWidth}x${plot.dataHeight} image, would you like to extract the whole line?`}
+                           </Typography>
+                            <CompleteButton style={{paddingLeft: 15}} text='Extract whole line'
+                                            onSuccess={()=> {
+                                                const sel= {
+                                                    pt0:makeImagePt( makeImagePt(0,0)),
+                                                    pt1:makeImagePt( plot.dataHeight===1 ? makeImagePt(plot.dataWidth-1,0) : makeImagePt(0,plot.dataHeight-1) )
+                                                };
+                                                dispatchAttributeChange({plotId:plot.plotId, toAllPlotsInPlotView:true, overlayColorScope:false,
+                                                    changes: { [PlotAttribute.ACTIVE_DISTANCE]: sel, [PlotAttribute.EXTRACTION_DATA]: true, }
+                                                });
+                                            }} />
+                        </Stack>
+                    }
                 </Box>
             ),
             afterRedraw: (chart,pl) => afterLineChartRedraw(pv,chart,pl,imPtAry,makeImagePt(x1,y1), makeImagePt(x2,y2)),

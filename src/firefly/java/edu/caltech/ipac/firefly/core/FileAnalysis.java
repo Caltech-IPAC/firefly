@@ -16,6 +16,8 @@ import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.FitsHDUUtil;
+import edu.caltech.ipac.util.download.FailedRequestException;
+import edu.caltech.ipac.util.download.ResponseMessage;
 import nom.tam.fits.FitsException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -236,7 +238,10 @@ public class FileAnalysis {
                 FileAnalysisReport.ReportType.Details, Format.UNKNOWN.name(),
                 infile.length(), infile.getPath());
         FileAnalysisReport.Part part= new FileAnalysisReport.Part(FileAnalysisReport.Type.ErrorResponse, "Error");
-        part.setDesc("Error in File Retrieve: " + responseCode);
+
+        String desc= "Error in File Retrieve: " + ResponseMessage.getHttpResponseMessage(responseCode) +
+                " (response code: "+ responseCode + ")";
+        part.setDesc(desc);
         if (infile.length()<500 && contentType!=null && contentType.toLowerCase().contains("text/plain")) {
             try {
                 String content = FileUtil.readFile(infile);
@@ -272,7 +277,14 @@ public class FileAnalysis {
         FileAnalysisReport report = new FileAnalysisReport( FileAnalysisReport.ReportType.Details,
                 Format.UNKNOWN.name(), 0, "");
         FileAnalysisReport.Part part= new FileAnalysisReport.Part(FileAnalysisReport.Type.ErrorResponse, "Error");
-        part.setDesc("Error in File Retrieve: " + e.getMessage());
+        String desc;
+        if (e instanceof FailedRequestException fre) {
+            desc= "Error in File Retrieve: " + e.getMessage() + " (response code: "+ fre.getResponseCode() + ")";
+        }
+        else {
+            desc= "Error in File Retrieve: " + e.getMessage();
+        }
+        part.setDesc(desc);
         report.addPart(part);
         return report;
 

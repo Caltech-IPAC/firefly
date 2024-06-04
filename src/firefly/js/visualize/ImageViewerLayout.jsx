@@ -22,7 +22,7 @@ import {
     isImageViewerSingleLayout, getMultiViewRoot, findViewerWithItemId, IMAGE, getViewer, getExpandedViewerItemIds,
     EXPANDED_MODE_RESERVED
 } from './MultiViewCntlr.js';
-import {contains, intersects} from './VisUtil.js';
+import {contains, getBoundingBox, intersects} from './VisUtil.js';
 import BrowserInfo from '../util/BrowserInfo.js';
 
 import {
@@ -396,7 +396,11 @@ function isImageOnScreen(plotView) {
 
     if (!found) {
         found= screenAsDevAry.some( (pt) => pt && (contains(0,0,viewDim.width, viewDim.height,pt.x,pt.y) ||
-                                            intersects(0,0,viewDim.width, viewDim.height,pt.x,pt.y,1,1)));
+            intersects(0,0,viewDim.width, viewDim.height,pt.x,pt.y,1,1) ));
+        if (!found) {
+            const {x,y,w,h}= getBoundingBox(screenAsDevAry);
+            found= !found && intersects(0,0,viewDim.width, viewDim.height,x,y,w,h);
+        }
     }
     return found;
 }

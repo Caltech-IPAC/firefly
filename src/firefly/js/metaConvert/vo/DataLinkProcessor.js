@@ -7,7 +7,8 @@ import {getSearchTarget} from '../../visualize/saga/CatalogWatcher.js';
 import {makeAnalysisActivateFunc} from '../AnalysisUtils.js';
 import {dispatchUpdateActiveKey, getActiveMenuKey, getCurrentActiveKeyID} from '../DataProductsCntlr.js';
 import {
-    dpdtAnalyze, dpdtChartTable, dpdtDownload, dpdtDownloadMenuItem, dpdtFromMenu, dpdtImage, dpdtMessage, dpdtPNG,
+    dpdtAnalyze, dpdtChartTable, dpdtDownload, dpdtDownloadMenuItem, dpdtFromMenu, dpdtImage, dpdtMessage,
+    dpdtMessageWithError, dpdtPNG,
     dpdtTable, DPtypes
 } from '../DataProductsType.js';
 import {createSingleImageActivate, createSingleImageExtraction} from '../ImageDataProductsUtil.js';
@@ -17,8 +18,6 @@ import {
 } from '../TableDataProductUtils.js';
 import {makeServiceDefDataProduct} from './ServDescProducts.js';
 import {makeObsCoreRequest} from './VORequest.js';
-import {isSpectrum} from "firefly/charts/ChartUtil";
-
 
 export const USE_ALL= 'useAllAlgorithm';
 export const RELATED_IMAGE_GRID= 'relatedImageGridAlgorithm';
@@ -314,8 +313,15 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
 
     const menu= filterDLList(parsingAlgorithm,dataLinkData)
         .map( (dlData,idx) => {
-            const {semantics,url, dlAnalysis:{isAux,isThis}}= dlData;
+            const {semantics,url,error_message, dlAnalysis:{isAux,isThis}}= dlData;
             const name= makeName(semantics, url, auxTot, auxCnt, primeCnt, baseTitle);
+            if (error_message) {
+                const edp= dpdtMessageWithError(error_message);
+                edp.complexMessage= false;
+                edp.menuKey='dlt-'+idx;
+                edp.name= `Error in related data (datalink) row ${idx}`;
+                return edp;
+            }
             const menuEntry= makeMenuEntry({dlTableUrl,dlData,idx, baseTitle, sourceTable,
                 sourceRow, options, name, doFileAnalysis, activateParams});
             if (isAux) auxCnt++;

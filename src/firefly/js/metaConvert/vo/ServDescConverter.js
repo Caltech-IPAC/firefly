@@ -1,12 +1,12 @@
 import {isEmpty} from 'lodash';
-import {getCellValue, hasRowAccess} from '../../tables/TableUtil.js';
+import {hasRowAccess} from '../../tables/TableUtil.js';
 import {makeWorldPtUsingCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {getSearchTarget} from '../../visualize/saga/CatalogWatcher.js';
 import {getActiveMenuKey} from '../DataProductsCntlr.js';
 import {dpdtFromMenu, dpdtSimpleMsg} from '../DataProductsType.js';
 import {
-    createGridResult, datalinkDescribeThreeColor, getDatalinkRelatedGridProduct, getDatalinkSingleDataProduct
+    createGridResult, datalinkDescribeThreeColor, getDatalinkRelatedGridProduct, getDatalinkSingleDataProduct, makeDlUrl
 } from './DatalinkProducts.js';
 import {createServDescMenuRet} from './ServDescProducts.js';
 
@@ -106,15 +106,6 @@ export async function getServiceDescRelatedDataProduct(table, row, threeColorOps
 
 
 
-function makeDlUrl(dlServDesc, table, row) {
-    if (!dlServDesc) return undefined;
-    const {serDefParams, accessURL}= dlServDesc;
-    const sendParams={};
-    serDefParams?.filter( ({ref}) => ref).forEach( (p) => sendParams[p.name]= getCellValue(table, row, p.colName));
-    const newUrl= new URL(accessURL);
-    Object.entries(sendParams).forEach( ([k,v]) => newUrl.searchParams.append(k,v));
-    return newUrl.toString();
-}
 
 
 const findDataLinkServeDescs= (sdAry) => sdAry?.filter( (serDef) => isDataLinkServiceDesc(serDef));

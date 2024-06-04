@@ -66,18 +66,31 @@ import OneXIcon from '@mui/icons-material/TimesOneMobiledataOutlined';
 
 import FiberManualRecordRoundedIcon from '@mui/icons-material/FiberManualRecordRounded';
 
+const ThreeCIcon = () => (
+    <Box sx={{width: 24, height: 24}}>
+        <FiberManualRecordRoundedIcon style={{color:'red'}} sx={{position: 'absolute', left: 7, top: -4,  transform: 'scale(.5)'}}/>
+        <FiberManualRecordRoundedIcon style={{color:'green'}} sx={{position: 'absolute', left: -2, top: 0,  transform: 'scale(.5)'}}/>
+        <FiberManualRecordRoundedIcon style={{color:'blue'}} sx={{position: 'absolute', left: -4, top: 10,  transform: 'scale(.5)'}}/>
+        <AddCircleOutlineIcon sx={{position: 'absolute', left: 8, top: 8, transform: 'scale(.85)'}}/>
+    </Box>
+);
 
 export const ThreeColor = (props) => {
-    const icon = (
-        <Box sx={{width: 24, height: 24}}>
-            <FiberManualRecordRoundedIcon style={{color:'red'}} sx={{position: 'absolute', left: 7, top: -4,  transform: 'scale(.5)'}}/>
-            <FiberManualRecordRoundedIcon style={{color:'green'}} sx={{position: 'absolute', left: -2, top: 0,  transform: 'scale(.5)'}}/>
-            <FiberManualRecordRoundedIcon style={{color:'blue'}} sx={{position: 'absolute', left: -4, top: 10,  transform: 'scale(.5)'}}/>
-            <AddCircleOutlineIcon sx={{position: 'absolute', left: 8, top: 8, transform: 'scale(.85)'}}/>
-        </Box>
-    );
-    return <ToolbarButton icon={icon} tip='Three Color' {...props}/>;
+    return <ToolbarButton icon={<ThreeCIcon/>} tip='Three Color' {...props}/>;
 };
+
+
+export const ThreeColorOnOff= ({isIconOn, sx, ...props}) => {
+    const sxToUse= (theme) => ({
+        'button' :{
+            background: isIconOn ? theme.vars.palette.primary?.softDisabledColor : undefined,
+        },
+        ...sx
+    });
+    return (<ToolbarButton {...{sx:sxToUse, icon: <ThreeCIcon/>, isIconOn, ...props}}/>);
+};
+
+
 
 export const ExpandButton= ({expandGrid, ...props}) =>(
     <ToolbarButton {...{

@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
+import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.dataArrayFromFitsFile;
 
 /**
 * Convert an FITS file or FITS binary table(s) to list of DataGroup.
@@ -152,11 +153,16 @@ public final class FITSTableReader
         // todo try to read it as an image
         String[] colNames= new String[]{"index"};
         String[] colUnits= null;
+        int planeNumber= 0;
         if (metaInfo!=null) {
             String colNameStr = metaInfo.get(MetaConst.IMAGE_AS_TABLE_COL_NAMES);
             if (colNameStr != null && colNameStr.length() > 1) colNames =colNameStr.split(",");
             String colUnitsStr = metaInfo.get(MetaConst.IMAGE_AS_TABLE_UNITS);
             if (colUnitsStr != null && colUnitsStr.length() > 1) colUnits =colUnitsStr.split(",");
+            String planeStr = metaInfo.get(MetaConst.IMAGE_AS_TABLE_PLANE);
+            if (!isEmpty(planeStr)) {
+                planeNumber= Integer.parseInt(planeStr);
+            }
         }
 
         if ((hdu instanceof ImageHDU) || (hdu instanceof CompressedImageHDU || hdu instanceof UndefinedHDU)) {
@@ -194,14 +200,21 @@ public final class FITSTableReader
                 }
                 dataGroup.trimToSize();
                 return dataGroup;
-            } else if (naxis == 2 && naxis2 > 0) {
-                double[][] data;
+            } else if ((naxis == 2 || naxis == 3)  && naxis2 > 0) {
+                double[][] data= null;
                 if (naxis2 > 30) return null; // right now we only support 30 columns, this could be a parameter
                 if ((hdu instanceof ImageHDU) || (hdu instanceof CompressedImageHDU)) {
                     ImageHDU imageHDU = (hdu instanceof CompressedImageHDU) ?
                             ((CompressedImageHDU) hdu).asImageHDU() : (ImageHDU) hdu;
-                    ImageData imageDataObj = imageHDU.getData();
-                    data = (double[][]) ArrayFuncs.convertArray(imageDataObj.getData(), Double.TYPE, true);
+                    if (naxis==2) {
+                        ImageData imageDataObj = imageHDU.getData();
+                        data = (double[][]) ArrayFuncs.convertArray(imageDataObj.getData(), Double.TYPE, true);
+                    }
+                    else if (naxis2==1) {
+                        double[] data1D = (double[])dataArrayFromFitsFile(imageHDU,0,0,naxis1,naxis2, planeNumber,Double.TYPE);
+                        data= new double[1][data1D.length];
+                        data[0]= data1D;
+                    }
                 } else { //hdu instanceof UndefinedHDU is always true here
                     data = (double[][]) ArrayFuncs.convertArray(hdu.getData().getData(), Double.TYPE, true);
                 }
