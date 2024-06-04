@@ -148,7 +148,10 @@ const BasicTableViewInternal = React.memo((props) => {
     };
 
     return (
-        <Box tabIndex='-1' onKeyDown={onKeyDown} sx={{lineHeight:1, flexGrow:1, minHeight:0, minWidth:0}}>
+        <Box tabIndex='-1' onKeyDown={onKeyDown} sx={{
+            lineHeight:1, flexGrow:1, minHeight:0, minWidth:0,
+            color: 'text.secondary' //otherwise parent's font color bleeds (which is not same in dark mode)
+        }}>
             {content()}
             <Status/>
         </Box>

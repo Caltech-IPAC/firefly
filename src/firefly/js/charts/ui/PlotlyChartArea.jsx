@@ -123,10 +123,14 @@ function adjustLayout(layout={}, theme) {
     set(layout, 'margin.b', hasOppositeX ? MIN_MARGIN_PX: X_TICKLBL_PX);
     set(layout, 'margin.t', hasOppositeX ? X_TICKLBL_PX: MIN_MARGIN_PX + (hasTitle ? TITLE_PX: 0));
 
+    const getColorStr = (cssVarStr) => cssVarStr?.split(',')[1].slice(0,-1);  // plotly will only take a color string
+
     // make background same as app's background color
-    const bgSurface = theme?.palette?.background?.surface?.split(',')[1].slice(0,-1);     // plotly will only take a color string
+    const bgSurface = getColorStr(theme?.palette?.background?.surface);
     set(layout, 'paper_bgcolor', bgSurface);
     set(layout, 'plot_bgcolor', bgSurface);
+
+    set(layout, 'font.color', getColorStr(theme?.palette?.text?.tertiary));
 
     return layout;
 }

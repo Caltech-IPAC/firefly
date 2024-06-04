@@ -685,7 +685,6 @@ export function applyDefaults(chartData={}, resetColor = true) {
         xaxis: {
             autorange:true,
             showgrid: false,
-            lineColor: '#e9e9e9',
             tickwidth: 1,
             ticklen: 5,
             title: {
@@ -702,7 +701,6 @@ export function applyDefaults(chartData={}, resetColor = true) {
         yaxis: {
             autorange:true,
             showgrid: !noXYAxis,
-            lineColor: '#e9e9e9',
             tickwidth: 1,
             ticklen: 5,
             title: {

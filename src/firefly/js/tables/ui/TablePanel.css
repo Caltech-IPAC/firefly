@@ -19,7 +19,6 @@
 }
 
 .TablePanel__table {
-    background-color: white;
     display: flex;
     position: absolute;
     bottom: 0;
@@ -122,6 +121,10 @@ Overriding default fixed-table css
     border-width: 0 1px 1px 0;
 }
 
+.public_fixedDataTable_main {
+    border-color: var(--joy-palette-neutral-outlinedBorder);
+}
+
 .fixedDataTableRowLayout_main div, .fixedDataTableCellLayout_main [role=columnheader]{
     background-color: var(--joy-palette-background-surface, #FBFCFE);
 }
@@ -149,12 +152,38 @@ Overriding default fixed-table css
     background-image: none;
     background-color: unset;
     font-weight: unset;
+    border-color: var(--joy-palette-neutral-outlinedBorder);
+}
+
+.public_fixedDataTableRow_fixedColumnsDivider {
+    border-color: var(--joy-palette-neutral-outlinedBorder);
 }
 
 .fixedDataTableCellLayout_columnResizerContainer, .public_fixedDataTable_scrollbarSpacer {
     background-color: unset !important;
 }
 
+.public_Scrollbar_main.public_Scrollbar_mainActive,
+.public_Scrollbar_main {
+    background-color: var(--joy-palette-background-surface);
+    border-color: var(--joy-palette-neutral-outlinedBorder);
+}
+
+.public_Scrollbar_mainOpaque,
+.public_Scrollbar_mainOpaque.public_Scrollbar_mainActive,
+.public_Scrollbar_mainOpaque:hover {
+    background-color: var(--joy-palette-background-surface);
+}
+
+.public_Scrollbar_face:after {
+    background-color: var(--joy-palette-neutral-softActiveBg);
+}
+
+.public_Scrollbar_main:hover .public_Scrollbar_face:after,
+.public_Scrollbar_mainActive .public_Scrollbar_face:after,
+.public_Scrollbar_faceActive:after {
+    background-color: var(--joy-palette-neutral-solidBg);
+}
 
 .public_fixedDataTableRow_columnsShadow {
     background-image: none;
