@@ -1,4 +1,5 @@
 import {RequestType} from 'firefly/api/ApiUtilImage.jsx';
+import {isArray} from 'lodash';
 import {getAppOptions} from '../core/AppDataCntlr';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga';
 import {DataProductTypes, FileAnalysisType} from '../data/FileAnalysis';
@@ -18,6 +19,7 @@ import {
 import {dpdtSendToBrowser} from './DataProductsType.js';
 import {createSingleImageActivate, createSingleImageExtraction} from './ImageDataProductsUtil';
 import {analyzePart} from './PartAnalyzer';
+import {makeSingleDataProductWithMenu} from './vo/ObsCoreConverter.js';
 import {makeUrlFromParams} from './vo/ServDescProducts.js';
 
 
@@ -43,10 +45,11 @@ const parseAnalysis= (serverCacheFileKey, analysisResult) =>
  * @param {Object} [obj.userInputParams]
  * @param {Function} [obj.analysisActivateFunc]
  * @param {string} [obj.originalTitle]
+ * @param {string} [obj.menuKey]
  * @return {Promise.<DataProductsDisplayType>}
  */
-export async function doUploadAndAnalysis({ table, row, request, activateParams={}, dataTypeHint='', options,
-                                 menu, serDef, userInputParams, analysisActivateFunc, originalTitle}) {
+export async function doUploadAndAnalysis({ table, row, request, activateParams={}, dataTypeHint='', options, menuKey,
+                                 menu, serDef, userInputParams, analysisActivateFunc, originalTitle,serviceDescMenuList}) {
 
     const {dpId}= activateParams;
 
@@ -56,8 +59,12 @@ export async function doUploadAndAnalysis({ table, row, request, activateParams=
             return dpdtMessageWithDownload('No displayable data available for this row: Unknown file type',
                                                   fileAnalysis.fileName&&'Download File', request.getURL());
         }
-        return processAnalysisResult({ table, row, request, activateParams, serverCacheFileKey,
-            fileAnalysis, dataTypeHint, analysisActivateFunc, serDef, originalTitle, options});
+        const result=  processAnalysisResult({ table, row, request, activateParams, serverCacheFileKey,
+            fileAnalysis, dataTypeHint, analysisActivateFunc, serDef, originalTitle, options, menuKey});
+        if (serviceDescMenuList && result) {
+             return makeSingleDataProductWithMenu(activateParams.dpId,result,1,serviceDescMenuList);
+        }
+        return result;
     };
 
 
@@ -194,11 +201,12 @@ function makeAllImageEntry(request, path, parts, imageViewerId,  tbl_id, row, im
  * @param {ServiceDescriptorDef} obj.serDef
  * @param {String} obj.originalTitle
  * @param {DataProductsFactoryOptions} obj.options
+ * @param {String} obj.menuKey
  * @return {DataProductsDisplayType}
  */
 function processAnalysisResult({table, row, request, activateParams,
                                    serverCacheFileKey, fileAnalysis, dataTypeHint,
-                                  analysisActivateFunc, serDef, originalTitle, options}) {
+                                  analysisActivateFunc, serDef, originalTitle, options, menuKey}) {
 
     const {parts,fileName,fileFormat}= fileAnalysis;
     if (!parts) return makeErrorResult('',fileName,serverCacheFileKey);
@@ -206,7 +214,7 @@ function processAnalysisResult({table, row, request, activateParams,
 
     const url= request.getURL() || serverCacheFileKey;
 
-    const immediateResponse= getImmediateResponse(fileFormat,request,url,serDef,parts);
+    const immediateResponse= getImmediateResponse(fileFormat,request,url,serDef,parts,menuKey);
     if (immediateResponse) return immediateResponse;
 
     return deeperInspection({
@@ -243,7 +251,12 @@ function deeperInspection({ table, row, request, activateParams,
 
     if (imageEntry) fileMenu.menu.push(imageEntry);
     partAnalysis.forEach( (pa) => {
-        if (pa.imageResult && pa.tableResult) {
+        if (pa.imageResult && isArray(pa.tableResult)) {
+            pa.tableResult.forEach( (r) => {
+                fileMenu.menu.push({...r, imageActivate:pa.imageResult.activate});
+            });
+        }
+        else if (pa.imageResult && pa.tableResult) {
             fileMenu.menu.push({...pa.tableResult, imageActivate:pa.imageResult.activate});
         }
         else {
@@ -293,9 +306,10 @@ function makeErrorMsg(parts, fileFormat) {
  * @param {String} url
  * @param {ServiceDescriptorDef} serDef
  * @param parts
+ * @param menuKey
  * @return {DataProductsDisplayType}
  */
-function getImmediateResponse(fileFormat,request,url,serDef,parts) {
+function getImmediateResponse(fileFormat,request,url,serDef,parts,menuKey) {
     switch (fileFormat) {
         case FileAnalysisType.PDF:
             return dpdtMessageWithDownload('Cannot not display PDF file, you may only download it', 'Download PDF File', url);
@@ -313,6 +327,7 @@ function getImmediateResponse(fileFormat,request,url,serDef,parts) {
                 const m = dpdtMessageWithError(parts[0].desc);
                 m.serDefParams = serDef?.serDefParams;
                 m.badUrl = url;
+                m.resetMenuKey=menuKey;
                 return m;
             }
             break;

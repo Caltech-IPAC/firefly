@@ -85,7 +85,7 @@ const OtherOptionsDropDown= ({menu, dpId, activeMenuLookupKey}) => {
     return (
         <SingleColumnMenu>
             {menu.map( (menuItem, idx) => (
-                <ToolbarButton text={menuItem.name} tip={`${menuItem.semantics} - ${menuItem.url}`}
+                <ToolbarButton text={menuItem.name??menuItem.message} tip={`${menuItem.semantics} - ${menuItem.url}`}
                                horizontal={false} key={'otherOptions-'+idx} hasCheckBox={true}
                                checkBoxOn={menuItem.menuKey===getActiveMenuKey(dpId, activeMenuLookupKey)}
                                onClick={() => {

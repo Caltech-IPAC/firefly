@@ -6,7 +6,7 @@ import {MetaConst} from '../data/MetaConst.js';
 import {getColumn, getColumnIdx, getColumns, getMetaEntry} from '../tables/TableUtil.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import {
-    alternateMainPos, ColNameIdx, mainMeta, obsCorePosColumns, OBSTAPCOLUMNS, posCol, S_REGION,
+    alternateMainPos, ColNameIdx, mainMeta, obsCorePosColumns, OBSTAPCOLUMNS, POS_EQ_UCD, posCol, S_REGION,
     SSA_COV_UTYPE, UCDCoord, ucdSyntaxMap, UtypeColIdx
 } from './VoConst.js';
 import {getObsTabColEntry, isUCDWith} from './VoCoreUtils.js';
@@ -408,8 +408,9 @@ export class VoTableRecognizer {
         if (centerColumnInfo) return centerColumnInfo;
 
         const c = getColumn(this.tableModel, 'coord_obs');
-        if (acceptArrayCol && c?.utype?.toLowerCase().includes(SSA_COV_UTYPE) && c?.arraySize &&
-            (c?.type === 'double' || c?.type === 'float')) {
+        if (acceptArrayCol && c?.arraySize &&
+            (c?.type === 'double' || c?.type === 'float')
+            (c?.utype?.toLowerCase().includes(SSA_COV_UTYPE) || c?.UCD?.toLowerCase().includes(POS_EQ_UCD) ) ) {
             return this.setCenterColumnsInfo([c, c]);
         }
         return undefined;

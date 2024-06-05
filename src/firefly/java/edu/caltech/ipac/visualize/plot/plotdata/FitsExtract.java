@@ -108,6 +108,8 @@ public class FitsExtract {
         if (y<0) y= 0;
         if (x+ptSize>=naxis1) x-= (x+ptSize-naxis1+1);
         if (y+ptSize>=naxis2) y-= (y+ptSize-naxis2+1);
+        if (x<0) x= 0;
+        if (y<0) y= 0;
 
         Class<?> arrayType= switch (bitpix) {
             case -32 -> Float.TYPE;

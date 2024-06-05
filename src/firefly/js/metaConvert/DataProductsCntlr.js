@@ -365,6 +365,8 @@ function activateMenuItem(state,action) {
                 break;
             case DPtypes.ANALYZE:
                 dpData.dataProducts= {...aMenuItem, menuKey, menu, activeMenuKey:menuKey, activeMenuLookupKey};
+            case DPtypes.MESSAGE:
+                dpData.dataProducts= {...aMenuItem, menuKey, menu, activeMenuKey:menuKey, activeMenuLookupKey};
         }
 
     }

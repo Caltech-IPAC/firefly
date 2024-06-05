@@ -140,7 +140,7 @@ export function getDataLinkData(dataLinkTableOrId) {
             const {
                 semantics, local_semantics: localSemantics, service_def: serviceDefRef,
                 content_type: contentType, content_qualifier: contentQualifier,
-                access_url: url, description, content_length: size,
+                access_url: url, description, content_length: size, error_message,
             } = rowObj;
 
             const idKey= Object.keys(rowObj).find((k) => k.toLowerCase()==='id');
@@ -148,11 +148,12 @@ export function getDataLinkData(dataLinkTableOrId) {
             const dlAnalysis= analyzeDatalinkRow({semantics, localSemantics, contentType, contentQualifier});
             return {
                 id: rowObj[idKey],
-                contentType, contentQualifier, semantics, localSemantics, url,
+                contentType, contentQualifier, semantics, localSemantics, url, error_message,
                 description, size, serviceDefRef, serDef, rowIdx: idx, dlAnalysis,
             };
         })
-        .filter(({url, serviceDefRef}) => serviceDefRef || url?.startsWith('http') || url?.startsWith('ftp'));
+        .filter(({url='', serviceDefRef, error_message}) =>
+            serviceDefRef || error_message || url.startsWith('http') || url.startsWith('ftp'));
 }
 
 function getServiceDescriptorForId(table, matchId, dataLinkTableRowIdx) {

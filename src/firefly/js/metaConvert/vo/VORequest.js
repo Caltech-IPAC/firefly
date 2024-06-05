@@ -5,6 +5,7 @@ import {PlotAttribute} from '../../visualize/PlotAttribute.js';
 import RangeValues from '../../visualize/RangeValues.js';
 import {TitleOptions, WebPlotRequest} from '../../visualize/WebPlotRequest.js';
 import {ZoomType} from '../../visualize/ZoomType.js';
+import {getSSATitle, isSSATable} from '../../voAnalyzer/TableAnalysis.js';
 
 /**
  *
@@ -19,10 +20,13 @@ export function makeObsCoreRequest(dataSource, positionWP, titleStr, table, row)
     if (!dataSource) return undefined;
     const r = WebPlotRequest.makeURLPlotRequest(dataSource, 'DataProduct');
     r.setZoomType(ZoomType.FULL_SCREEN);
-    if (titleStr.length > 7) {
+    const ssa= isSSATable(table);
+    const titleStringToUse= ssa ? getSSATitle(table,row) ?? 'spectrum' : titleStr;
+    if (titleStringToUse?.length > 7) {
         r.setTitleOptions(TitleOptions.NONE);
-        r.setTitle(titleStr);
-    } else {
+        r.setTitle(titleStringToUse);
+    }
+    else {
         r.setTitleOptions(TitleOptions.FILE_NAME);
     }
     r.setPlotId(uniqueId('obscore-'));

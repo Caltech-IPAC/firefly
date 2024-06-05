@@ -135,6 +135,8 @@ export const OBSTAPCOLUMNS = [
     ['instrument_name', 'meta.id;instr', 'Provenance.ObsConfig.Instrument.name']
 ];
 export const SSA_COV_UTYPE = 'char.spatialaxis.coverage.location.value';
+export const SSA_TTTLE_UTYPE = 'dataid.title';
+export const POS_EQ_UCD = 'pos.eq';
 
 const OBSTAP_OPTIONAL_CNAMES = [
     'dataproduct_subtype', 'target_class', 'obs_title', 'obs_creation_date', 'obs_creator_name',

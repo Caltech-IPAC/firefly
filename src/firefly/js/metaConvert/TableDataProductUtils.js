@@ -60,11 +60,12 @@ function isTableChartNormalViewAction(payload, type) {
  * @param {number} tbl_index
  * @param {Array.<string>} colNames
  * @param {Array.<string>} colUnits
+ * @param {number} cubePlane - plane of cube - ignored for non-cubes
  * @param {String} dataTypeHint
  * @param {boolean} extraction
  * @return {TableRequest}
  */
-function makeTableRequest(source, titleInfo, tbl_id, tbl_index, colNames, colUnits, dataTypeHint, extraction=false) {
+function makeTableRequest(source, titleInfo, tbl_id, tbl_index, colNames, colUnits, cubePlane, dataTypeHint, extraction=false) {
     const colNamesStr= colNames && makeCommaSeparated(colNames);
     const colUnitsStr= colUnits && makeCommaSeparated(colUnits);
     const META_INFO= !extraction ?
@@ -77,11 +78,14 @@ function makeTableRequest(source, titleInfo, tbl_id, tbl_index, colNames, colUni
         {
             tbl_id : !extraction ? tbl_id : undefined,
             tbl_index,
+            cubePlane,
             startIdx : 0,
             META_INFO,
         });
     if (colNamesStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_COL_NAMES]=  colNamesStr;
     if (colUnitsStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_UNITS]=  colUnitsStr;
+    dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_PLANE]=  cubePlane;
+    
     return dataTableReq;
 }
 
@@ -120,10 +124,10 @@ function loadTableAndCharts(dataTableReq, tbl_id, tableGroupViewerId, dispatchCh
     };
 }
 
-export function createTableExtraction(source,titleInfo,tbl_index,colNames,colUnits,dataTypeHint) {
+export function createTableExtraction(source,titleInfo,tbl_index,colNames,colUnits,cubePlane=0,dataTypeHint) {
     return () => {
         const ti= isString(titleInfo) ? {titleStr:titleInfo} : titleInfo;
-        const dataTableReq= makeTableRequest(source,ti,undefined,tbl_index,colNames,colUnits,dataTypeHint, true);
+        const dataTableReq= makeTableRequest(source,ti,undefined,tbl_index,colNames,colUnits,cubePlane,dataTypeHint, true);
         dispatchTableSearch(dataTableReq,
             { setAsActive: false, logHistory: false, showFilters: true, showInfoButton: true });
         showPinMessage('Pinning to Table Area');
@@ -145,18 +149,19 @@ export function createTableExtraction(source,titleInfo,tbl_index,colNames,colUni
  * @param {Array.<String>} p.colNames - an array of column names
  * @param {Array.<String>} p.colUnits - an array of types names
  * @param {boolean} [p.connectPoints] if a default scatter chart then connect the points
+ * @param {number} [p.cubePlane] - plane of cube - ignored for non-cubes
  * @param {String} [p.chartId]
  * @param {String} [p.tbl_id]
  * @return {function} the activate function
  */
 export function createChartTableActivate({chartAndTable=false,
                                              source, titleInfo, activateParams, chartInfo={},
-                                         tbl_index=0, dataTypeHint,
+                                         tbl_index=0, dataTypeHint,cubePlane=0,
                                          colNames= undefined, colUnits= undefined, connectPoints=true,
                                          chartId='part-result-chart', tbl_id= 'part-result-tbl'}) {
     return () => {
         const dispatchCharts=  chartAndTable && makeChartObj(chartInfo, activateParams,titleInfo,connectPoints,chartId,tbl_id);
-        const dataTableReq= makeTableRequest(source,titleInfo,tbl_id,tbl_index,colNames,colUnits,dataTypeHint, false);
+        const dataTableReq= makeTableRequest(source,titleInfo,tbl_id,tbl_index,colNames,colUnits,cubePlane,dataTypeHint, false);
         const savedRequest= loadedTablesIds.has(tbl_id) && JSON.stringify(loadedTablesIds.get(tbl_id)?.request);
 
         if (savedRequest!==JSON.stringify(dataTableReq)) {
