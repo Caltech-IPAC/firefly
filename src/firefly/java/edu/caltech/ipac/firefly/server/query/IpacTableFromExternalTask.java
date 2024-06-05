@@ -43,7 +43,7 @@ public class IpacTableFromExternalTask extends IpacTablePartProcessor {
             if (!ServerContext.isFileInPath(outFile)) {
                 throw new SecurityException("Access is not permitted.");
             }
-            return TableUtil.readAnyFormat(outFile, tblIdx, request.getMeta());
+            return TableUtil.readAnyFormat(outFile, tblIdx, request);
         } catch (IOException e) {
             throw new DataAccessException(e.getMessage(), e);
         }

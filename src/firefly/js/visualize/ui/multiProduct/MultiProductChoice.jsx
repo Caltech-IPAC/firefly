@@ -1,11 +1,17 @@
 import {Box, Stack} from '@mui/joy';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {MultiChartViewer} from '../../../charts/ui/MultiChartViewer.jsx';
+import {getActiveFileMenuKeyByKey} from '../../../metaConvert/DataProductsCntlr';
 import {SHOW_CHART, SHOW_IMAGE, SHOW_TABLE} from '../../../metaConvert/DataProductsType.js';
 import {getMetaEntry, getTableGroup, getTblById, onTableLoaded} from '../../../tables/TableUtil.js';
 import {TablesContainer} from '../../../tables/ui/TablesContainer.jsx';
 import {RadioGroupInputFieldView} from '../../../ui/RadioGroupInputFieldView.jsx';
+import {useStoreConnector} from '../../../ui/SimpleComponent';
+import {dispatchChangePrimePlot, visRoot} from '../../ImagePlotCntlr';
 import {NewPlotMode} from '../../MultiViewCntlr.js';
+import {
+    convertHDUIdxToImageIdx, getActivePlotView, getHDUIndex, getImageCubeIdx, getPlotViewById, hasImageCubes, primePlot
+} from '../../PlotViewUtil';
 import {ImageMetaDataToolbar} from '../ImageMetaDataToolbar.jsx';
 import {MultiImageViewer} from '../MultiImageViewer.jsx';
 
@@ -15,10 +21,12 @@ const imageOp= {label: 'Image', value: SHOW_IMAGE};
 
 
 
-export function MultiProductChoice({
+export function MultiProductChoice({ dataProductsState, dpId,
                                        makeDropDown, chartViewerId, imageViewerId, metaDataTableId,
                                        tableGroupViewerId, whatToShow, onChange, mayToggle = false, factoryKey
                                    }) {
+    const primeIdx= useStoreConnector(() => getActivePlotView(visRoot())?.primeIdx ?? -1);
+    const {current:showingStatus}= useRef({oldWhatToShow:undefined});
     const chartTableOptions = [{label: 'Table', value: SHOW_TABLE}, {label: 'Chart', value: SHOW_CHART}];
     const options = !imageViewerId ? chartTableOptions : [...chartTableOptions, imageOp];
     const [chartName, setChartName] = useState('Chart');
@@ -32,6 +40,31 @@ export function MultiProductChoice({
             setChartName(name);
         });
     }, [table]);
+
+    const activeItemKey= getActiveFileMenuKeyByKey(dpId,dataProductsState?.fileMenu?.activeItemLookupKey);
+    const cubeIdx= dataProductsState?.fileMenu?.menu.find( (i) => i.menuKey===activeItemKey)?.cubeIdx ?? -1;
+
+    useEffect(() => {
+        if (!imageViewerId) return;
+        const pv= getActivePlotView(visRoot());
+        if (!pv || !hasImageCubes(pv) || cubeIdx<0) return;
+        showingStatus.oldWhatToShow= whatToShow;
+        showingStatus.cubeSet= false;
+    }, [whatToShow,cubeIdx]);
+
+    useEffect(() => {
+        if (!imageViewerId || primeIdx===-1 || cubeIdx<0) return;
+        if (showingStatus.cubeSet) return;
+        const pv= getActivePlotView(visRoot());
+        if (!pv || !hasImageCubes(pv)) return;
+        showingStatus.cubeSet= true;
+        const hduIdx= getHDUIndex(pv);
+        const newPrimeIdx= convertHDUIdxToImageIdx(pv,hduIdx,cubeIdx) ?? 0;
+        if (primeIdx!==newPrimeIdx) dispatchChangePrimePlot({plotId:pv.plotId,primeIdx:newPrimeIdx});
+    }, [table,primeIdx,cubeIdx]);
+
+
+
     const toolbar = (
         <Stack {...{direction:'row', alignItems:'center', height:30}}>
             {makeDropDown && <Box sx={{height: 30}}> {makeDropDown()} </Box>}

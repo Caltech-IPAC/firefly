@@ -43,7 +43,7 @@ public class UserCatalogQuery extends IpacTablePartProcessor {
         }
         try {
             int tblIdx = req.getIntParam(TableServerRequest.TBL_INDEX, 0);
-            return TableUtil.readAnyFormat(userCatFile, tblIdx, req.getMeta());
+            return TableUtil.readAnyFormat(userCatFile, tblIdx, req);
         } catch (IOException e) {
             throw new DataAccessException(e.getMessage(), e);
         }

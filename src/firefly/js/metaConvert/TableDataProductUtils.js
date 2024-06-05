@@ -5,7 +5,6 @@
 import {getDefaultChartProps} from 'firefly/charts/ChartUtil.js';
 import {showPinMessage} from 'firefly/ui/PopupUtil.jsx';
 import {isString} from 'lodash';
-import {awrap} from 'regenerator-runtime';
 import {CHART_UI_EXPANDED, dispatchChartAdd, dispatchChartRemove} from '../charts/ChartsCntlr';
 import {LO_MODE, LO_VIEW, SET_LAYOUT_MODE} from '../core/LayoutCntlr.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga';
@@ -84,8 +83,7 @@ function makeTableRequest(source, titleInfo, tbl_id, tbl_index, colNames, colUni
         });
     if (colNamesStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_COL_NAMES]=  colNamesStr;
     if (colUnitsStr) dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_UNITS]=  colUnitsStr;
-    dataTableReq.META_INFO[MetaConst.IMAGE_AS_TABLE_PLANE]=  cubePlane;
-    
+
     return dataTableReq;
 }
 

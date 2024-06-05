@@ -3,13 +3,11 @@
  */
 package edu.caltech.ipac.firefly.server.query.tables;
 
-import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.IpacTablePartProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
@@ -17,30 +15,22 @@ import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
-import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.IpacTableWriter;
-import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.util.cache.StringKey;
-import edu.caltech.ipac.util.download.FailedRequestException;
-import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
-import static edu.caltech.ipac.firefly.server.util.QueryUtil.SEARCH_REQUEST;
 import static edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource.PROC_ID;
+import static edu.caltech.ipac.firefly.server.util.QueryUtil.SEARCH_REQUEST;
 
 
 @SearchProcessorImpl(id = PROC_ID)
@@ -83,7 +73,7 @@ public class IpacTableFromSource extends IpacTablePartProcessor {
 
         try {
             int tblIdx = req.getIntParam(TBL_INDEX, 0);
-            return TableUtil.readAnyFormat(inf, tblIdx, req.getMeta());
+            return TableUtil.readAnyFormat(inf, tblIdx, req);
         } catch (IOException e) {
             throw new DataAccessException(e.getMessage(), e);
         }

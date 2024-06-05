@@ -806,7 +806,7 @@ export const getHDU= (plot) => getNumberHeader(plot,HdrConst.SPOT_EXT,0);
 
 /**
  *
- * @param {PlotView} pv
+ * @param {PlotView|undefined} pv
  * @param {WebPlot|undefined} plot
  * @return {number}
  */
@@ -821,7 +821,7 @@ export function getHDUIndex(pv, plot= undefined) {
 
 /**
  * Find if there are image cube this this plotview
- * @param {PlotView} pv
+ * @param {PlotView|undefined} pv
  * @return {boolean} true if there are any image cube in the PlotView
  */
 export const hasImageCubes = (pv) => getNumberOfCubesInPV(pv)>0;
@@ -843,7 +843,7 @@ export const isImageCube = (plot) => getImageCubeIdx(plot) > -1;
 
 /**
  * Given a HDU index and optionally a cube index, return the image idx
- * @param {PlotView} pv
+ * @param {PlotView|undefined} pv
  * @param {number} hduIdx
  * @param {number|'follow'} cubeIdx
  * @return {number|undefined} the hdu number or undefined if bad parameters

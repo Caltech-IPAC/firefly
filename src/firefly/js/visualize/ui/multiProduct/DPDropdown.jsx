@@ -59,8 +59,7 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
             }
             {extraction &&
                 <Stack direction='row'>
-                    <PinButton onClick={() => extraction()} tip={extractionText || 'Pin'}
-                    />
+                    <PinButton onClick={() => extraction()} tip={extractionText || 'Pin'} />
                 </Stack>
                 }
             {showRedoSearchButton && analysisActivateFunc &&

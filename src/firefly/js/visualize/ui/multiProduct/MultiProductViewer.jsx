@@ -142,14 +142,15 @@ function ViewerRender({dpId, dataProductsState, noProductMessage, metaDataTableI
         case DPtypes.DOWNLOAD_MENU_ITEM :
             return (<ProductMessage {...{menu, singleDownload, makeDropDown, message}} />);
         case DPtypes.IMAGE :
-            return (<MultiProductChoice {...{dpId,makeDropDown,metaDataTableId, imageViewerId,whatToShow:SHOW_IMAGE, factoryKey}}/>);
+            return (<MultiProductChoice {...{dataProductsState,dpId,makeDropDown,metaDataTableId, imageViewerId,whatToShow:SHOW_IMAGE, factoryKey}}/>);
         case DPtypes.TABLE :
-            return (<MultiProductChoice {...{dpId,makeDropDown,tableGroupViewerId,whatToShow:SHOW_TABLE, factoryKey}}/>);
+            return (<MultiProductChoice {...{dataProductsState,dpId,makeDropDown,tableGroupViewerId,whatToShow:SHOW_TABLE, factoryKey}}/>);
         case DPtypes.CHART :
-            return (<MultiProductChoice {...{dpId,makeDropDown,chartViewerId,whatToShow:SHOW_CHART, factoryKey}}/>);
+            return (<MultiProductChoice {...{dataProductsState,dpId,makeDropDown,chartViewerId,whatToShow:SHOW_CHART, factoryKey}}/>);
         case DPtypes.CHOICE_CTI :
             return (
                 <MultiProductChoice { ...{
+                    dataProductsState,dpId,
                     makeDropDown,chartViewerId, imageViewerId:imageActivate?imageViewerId:'',
                     metaDataTableId, tableGroupViewerId,whatToShow:ctiChoice, ctLookupKey,mayToggle:true,
                     factoryKey,

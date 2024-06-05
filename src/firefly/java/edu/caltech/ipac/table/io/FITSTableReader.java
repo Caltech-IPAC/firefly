@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.table.io;
 
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
@@ -73,9 +74,9 @@ public final class FITSTableReader
      */
     public static final String DEFAULT = "DEFAULT";
 
-    public static DataGroup convertFitsToDataGroup(String fits_filename, Map<String,String> metaInfo,
+    public static DataGroup convertFitsToDataGroup(String fits_filename, TableServerRequest request,
                                                    String strategy, int table_idx) throws FitsException, IOException {
-        return convertFitsToDataGroup(fits_filename,null,null,strategy,metaInfo,table_idx);
+        return convertFitsToDataGroup(fits_filename,null,null,strategy,request,table_idx);
     }
 
     /**
@@ -93,11 +94,12 @@ public final class FITSTableReader
                                                          String[] dataCols,
                                                          String[] headerCols,
                                                          String strategy,
-                                                         Map<String,String> metaInfo,
+                                                         TableServerRequest request,
                                                          int table_idx) throws FitsException, IOException {
 
 
         FitsFactory.useThreadLocalSettings(true);
+        var metaInfo= request!=null ? request.getMeta() : null;
         try (Fits fits = new Fits(fits_filename)) {
             // disable long string for HeaderCard creation while collecting table with table_idx from StarTableFactory to work around
             // the exception error sent from nom.tam.fits.
@@ -111,7 +113,7 @@ public final class FITSTableReader
             BasicHDU<?> hdu= hdus[table_idx];
 
             if (table_idx==0) { //FITS tables are not at 0, if at zero try to read it as an image first
-                result = getFitsImageAsTable(hdu,metaInfo);
+                result = getFitsImageAsTable(hdu,request);
                 if (result==null && hdus.length>1) {
                     FitsFactory.setLongStringsEnabled(false);
                     result = readFitsTable(hdus[1], fits_filename, dataCols, headerCols, table_idx);
@@ -121,7 +123,7 @@ public final class FITSTableReader
                 FitsFactory.setLongStringsEnabled(false);
                 result = readFitsTable(hdu, fits_filename, dataCols, headerCols, table_idx);
                 FitsFactory.setLongStringsEnabled(true);
-                if (result == null) result = getFitsImageAsTable(hdu,metaInfo);
+                if (result == null) result = getFitsImageAsTable(hdu,request);
             }
             String dataTypeHint= metaInfo !=null ? metaInfo.getOrDefault(MetaConst.DATA_TYPE_HINT,"").toLowerCase() : "";
             if (result != null) SpectrumMetaInspector.searchForSpectrum(result,hdus[table_idx], dataTypeHint.equals("spectrum"));
@@ -147,22 +149,19 @@ public final class FITSTableReader
         return hasNAxis1Data && otherDimsAre1;
     }
 
-    private static DataGroup getFitsImageAsTable(BasicHDU<?> hdu,
-                                                 Map<String,String> metaInfo) throws FitsException, IOException {
+    private static DataGroup getFitsImageAsTable(BasicHDU<?> hdu,TableServerRequest request)
+                                                 throws FitsException, IOException {
 
         // todo try to read it as an image
         String[] colNames= new String[]{"index"};
         String[] colUnits= null;
-        int planeNumber= 0;
+        int planeNumber= request!=null ? request.getIntParam("cubePlane",0) : 0;
+        var metaInfo= request!=null ? request.getMeta() : null;
         if (metaInfo!=null) {
             String colNameStr = metaInfo.get(MetaConst.IMAGE_AS_TABLE_COL_NAMES);
             if (colNameStr != null && colNameStr.length() > 1) colNames =colNameStr.split(",");
             String colUnitsStr = metaInfo.get(MetaConst.IMAGE_AS_TABLE_UNITS);
             if (colUnitsStr != null && colUnitsStr.length() > 1) colUnits =colUnitsStr.split(",");
-            String planeStr = metaInfo.get(MetaConst.IMAGE_AS_TABLE_PLANE);
-            if (!isEmpty(planeStr)) {
-                planeNumber= Integer.parseInt(planeStr);
-            }
         }
 
         if ((hdu instanceof ImageHDU) || (hdu instanceof CompressedImageHDU || hdu instanceof UndefinedHDU)) {

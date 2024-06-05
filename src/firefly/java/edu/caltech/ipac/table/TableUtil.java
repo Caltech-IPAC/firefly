@@ -49,10 +49,10 @@ public class TableUtil {
         return readAnyFormat(inf, tableIndex, null);
     }
 
-    public static DataGroup readAnyFormat(File inf, int tableIndex, Map<String, String> metaInfo) throws IOException {
+    public static DataGroup readAnyFormat(File inf, int tableIndex, TableServerRequest request) throws IOException {
         Format format = guessFormat(inf);
         if (format == Format.IPACTABLE) {
-            return IpacTableReader.read(inf,metaInfo);
+            return IpacTableReader.read(inf, request!=null?request.getMeta():null);
         } else if (format == Format.VO_TABLE) {
             DataGroup[] tables = VoTableReader.voToDataGroups(inf.getAbsolutePath(), tableIndex);
             if (tables.length > 0) {
@@ -63,7 +63,7 @@ public class TableUtil {
         } else if (format == Format.FITS ) {
             try {
                 // Switch to the new function:
-                return FITSTableReader.convertFitsToDataGroup(inf.getAbsolutePath(), metaInfo, FITSTableReader.DEFAULT, tableIndex);
+                return FITSTableReader.convertFitsToDataGroup(inf.getAbsolutePath(), request, FITSTableReader.DEFAULT, tableIndex);
             } catch (Exception e) {
                 throw new IOException("Unable to read FITS file:" + inf, e);
             }

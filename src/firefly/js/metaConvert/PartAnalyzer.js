@@ -121,8 +121,8 @@ function getTableChartColInfo(title, part, fileFormat,table) {
             cNames= overrideColNames;
         }
         if (ssa && colCnt===1) {
-            cNames.push('offset');
             cNames.push('wavelength');
+            cNames.push('amplitude');
         }
         else {
             for(let i=0; i<colCnt; i++) cNames.push(i===0?'naxis1_idx': `naxis1_data_${(i-1)}`);
@@ -297,21 +297,10 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
                     retAry.push(
                         dpdtChartTable(ddTitleStr+ ` (Plane: ${i})`, activate, extraction, undefined,
                             {
-                                extractionText: 'Pin Table', paIdx: tbl_index, chartTableDefOption,
+                                extractionText: 'Pin Table', paIdx: tbl_index, cubeIdx:i, chartTableDefOption,
                                 interpretedData, requestDefault
                             })
                     );
-
-
-
-
-                    //
-                    //     dpdtTable(ddTitleStr+ ` (Plane: ${i})`,
-                    //         createChartTableActivate({source:fileOnServer,titleInfo:tInfoIdx,activateParams, tbl_index, dataTypeHint, cNames, cUnits,
-                    //             tbl_id, cubePlane:i}),
-                    //         createTableExtraction(fileOnServer,tInfoIdx,tbl_index, cNames, cUnits, i, dataTypeHint),
-                    //         undefined, {extractionText: 'Pin Table', paIdx:tbl_index,requestDefault})
-                    // );
                 }
                 return retAry;
             }
