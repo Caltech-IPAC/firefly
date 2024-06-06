@@ -16,7 +16,9 @@ import {dispatchAttributeChange, dispatchChangeCenterOfProjection, visRoot} from
 import {PlotAttribute} from '../PlotAttribute.js';
 import {getDrawLayerByType, getPlotViewById, isDrawLayerAttached, primePlot} from '../PlotViewUtil.js';
 import {isValidPoint, makeDevicePt, makeImagePt, makeWorldPt, parseWorldPt, pointEquals} from '../Point.js';
-import {computeCentralPointAndRadius, computeDistance, getPointOnEllipse} from '../VisUtil.js';
+import {
+    calculatePosition, computeCentralPointAndRadius, computeDistance, getPointOnEllipse
+} from '../VisUtil.js';
 import {getDevPixScaleDeg, isImage} from '../WebPlot.js';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
 import {
@@ -225,7 +227,8 @@ export function updateUIFromPlot({plotId, setWhichOverlay, whichOverlay, setTarg
             setTimeout(() => {
                 canUpdateModalEndInfo ? updateModalEndInfo(plot.plotId) : closeToolbarModalLayers();
             }, 10);
-        } else {
+        }
+        else {
             const wp = plot.attributes[PlotAttribute.USER_SEARCH_WP];
             if (!wp) return;
             const utWPt = userEnterWorldPt();
@@ -237,21 +240,26 @@ export function updateUIFromPlot({plotId, setWhichOverlay, whichOverlay, setTarg
                 }
             }
         }
-    } else {
+    }
+    else {
+        let wpStr;
         if (plot.attributes[PlotAttribute.SELECTION] && plot.attributes[PlotAttribute.SELECTION_SOURCE]===SelectArea.TYPE_ID) {
             if (isWpArysEquals(corners, userEnterPolygon())) return;
+            wpStr= cenWpt.toString();
             setPolygon(convertWpAryToStr(corners, plot));
             setTimeout(() => {
                 canUpdateModalEndInfo ? updateModalEndInfo(plot.plotId) : closeToolbarModalLayers();
             }, 10);
         } else {
             const polyWpAry = plot.attributes[PlotAttribute.POLYGON_ARY];
+            wpStr = plot.attributes[PlotAttribute.USER_SEARCH_WP];
             if (polyWpAry?.length) {
                 if (isWpArysEquals(polyWpAry, userEnterPolygon())) return;
                 setPolygon(convertWpAryToStr(polyWpAry, plot));
                 canUpdateModalEndInfo ? updateModalEndInfo(plot.plotId) : closeToolbarModalLayers();
             }
         }
+        if (wpStr && wpStr !== getTargetWp()) setTargetWp(wpStr);
     }
 }
 
@@ -321,16 +329,16 @@ export function updatePlotOverlayFromUserInput(plotId, whichOverlay, wp, radius,
     dispatchChangeDrawingDef(dl.drawLayerId,{...dl.drawingDef,color:'yellow'},plotId);
     dispatchModifyCustomField(dl.drawLayerId,{isInteractive: true},plotId);
 
-    if (!polygonAry && !isCone && wp && radius && canGeneratePolygon) {
+    if (!isCone && wp && radius && canGeneratePolygon) {
         const cc= CsysConverter.make(plot);
         const cen= cc.getDeviceCoords(wp);
-        const ptOnCone= cc.getDeviceCoords(makeWorldPt(wp.x,wp.y+radius));
-        const dist= Math.abs(cen.y-ptOnCone.y);
+        const ptOnCone= cc.getDeviceCoords(calculatePosition(wp,radius*3600,radius*3600));
+        const dist= Math.abs(cen.y-ptOnCone.y)*2;
         polygonAry= getCircumscribedCorners(cc,cen,dist,dist);
     }
 
     let changes= {
-        [PlotAttribute.USER_SEARCH_WP]: isCone ? wp : undefined,
+        [PlotAttribute.USER_SEARCH_WP]: wp,
         [PlotAttribute.USER_SEARCH_RADIUS_DEG]: isCone ? radius : undefined,
         [PlotAttribute.POLYGON_ARY]: isCone ? undefined : polygonAry,
         [PlotAttribute.RELATIVE_IMAGE_POLYGON_ARY]: isCone ? undefined : makeRelativePolygonAry(primePlot(visRoot(), plotId), polygonAry),

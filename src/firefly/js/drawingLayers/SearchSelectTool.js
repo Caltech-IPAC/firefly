@@ -13,7 +13,9 @@ import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import ShapeDataObj, {UnitType} from '../visualize/draw/ShapeDataObj.js';
-import {makeImagePt, pointEquals} from 'firefly/visualize/Point.js';
+import {makeImagePt, makeScreenPt, pointEquals} from 'firefly/visualize/Point.js';
+import {getScreenPixScaleArcSec} from '../visualize/WebPlot';
+import {SelectedShape} from './SelectedShape.js';
 
 const ID= 'SEARCH_SELECT_TOOL';
 const TYPE_ID= 'SEARCH_SELECT_TOOL_TYPE';
@@ -42,17 +44,37 @@ function dispatchSelectPoint(mouseStatePayload) {
 
     if (plot.attributes[PlotAttribute.USE_POLYGON]){
         const ptAry= plot.attributes[PlotAttribute.POLYGON_ARY];
-        if (!ptAry?.length) return;
-        const relPloygonAry= plot.attributes[PlotAttribute.RELATIVE_IMAGE_POLYGON_ARY];
-        if (!relPloygonAry) return;
-        const dp= cc.getImageCoords(wp);
-        const polygonAry= relPloygonAry.map( (pt) => cc.getWorldCoords( makeImagePt(dp.x-pt.x, dp.y-pt.y)));
-        dispatchAttributeChange({plotId,changes: {
-                [PlotAttribute.POLYGON_ARY] : polygonAry,
+        if (!ptAry?.length) {
+            const {x,y}= screenPt;
+            const scale= 250/getScreenPixScaleArcSec(plot);
+            const pAry= [
+                cc.getWorldCoords( makeScreenPt(x-scale,y-scale)),
+                cc.getWorldCoords( makeScreenPt(x+scale,y-scale)),
+                cc.getWorldCoords( makeScreenPt(x+scale,y+scale)),
+                cc.getWorldCoords( makeScreenPt(x-scale,y+scale))
+            ];
+            dispatchAttributeChange({plotId,changes: {
+                    [PlotAttribute.POLYGON_ARY] : pAry,
+                    [PlotAttribute.USER_SEARCH_WP]:wp
             }});
+        }
+        else {
+            const relPloygonAry= plot.attributes[PlotAttribute.RELATIVE_IMAGE_POLYGON_ARY];
+            if (!relPloygonAry) return;
+            const dp= cc.getImageCoords(wp);
+            const polygonAry= relPloygonAry.map( (pt) => cc.getWorldCoords( makeImagePt(dp.x-pt.x, dp.y-pt.y)));
+            dispatchAttributeChange({plotId,changes: {
+                    [PlotAttribute.POLYGON_ARY] : polygonAry,
+                    [PlotAttribute.USER_SEARCH_WP]:wp
+                }});
+        }
     }
     else {
-        dispatchAttributeChange( {plotId, changes:{[PlotAttribute.USER_SEARCH_WP]:wp} });
+        dispatchAttributeChange( {plotId, changes:{
+                [PlotAttribute.SELECTION_TYPE]: SelectedShape.circle.key,
+                [PlotAttribute.USER_SEARCH_WP]:wp
+            }
+        });
     }
     dispatchForceDrawLayerUpdate(drawLayer.drawLayerId, plotId);
 }
