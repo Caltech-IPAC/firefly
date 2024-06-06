@@ -50,8 +50,6 @@ import {PlotlyWrapper} from '../charts/ui/PlotlyWrapper.jsx';
 import {buildHighLevelApi} from './ApiHighlevelBuild.js';
 import {buildViewerApi} from './ApiViewer.js';
 
-// CSS
-import './ApiStyle.css';
 import {startTTFeatureWatchers} from '../templates/common/ttFeatureWatchers.js';
 import {getActiveRowCenterDef} from '../visualize/saga/ActiveRowCenterWatcher.js';
 import {getUrlLinkWatcherDef} from '../visualize/saga/UrlLinkWatcher.js';

@@ -2,7 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import './CollapsiblePanel.css';
 import {Accordion, AccordionDetails, AccordionGroup, AccordionSummary, Button} from '@mui/joy';
 import React, {memo} from 'react';
 import PropTypes, {string, func, node, object, bool} from 'prop-types';

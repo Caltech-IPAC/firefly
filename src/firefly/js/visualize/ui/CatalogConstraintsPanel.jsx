@@ -393,7 +393,7 @@ class ConstraintPanel extends PureComponent {
                 '& .fixedDataTableLayout_main': {borderRadius:'5px'} }}>
                 <Stack {...{ direction:'row', flex: '1 1 auto', position: 'relative', width: 1, height: 1}}>
                     <Box sx={{minHeight:150, flex: '1 1 auto'}}>
-                            <div className='TablePanel__table' style={{top: 0}}>
+                            <Stack sx={{m: '1px', position: 'absolute', top: 0, bottom: 0, left: 0, right: 0}}>
                                 <BasicTableViewWithConnector
                                     tbl_ui_id={tbl_ui_id}
                                     columns={columns}
@@ -414,7 +414,7 @@ class ConstraintPanel extends PureComponent {
                                         constraints: { cellRenderer: this.newInputCell}
                                     }}
                                 />
-                            </div>
+                            </Stack>
                     </Box>
                 </Stack>
             </Stack>

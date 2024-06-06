@@ -265,7 +265,7 @@ function CustomFields({tbl_ui_id, tbl_id, groupKey, editColName}) {
                        canBeExpression={true} nullAllowed={false} validator={textValidator({min:1})}
                        helper={<Helper {...{tbl_ui_id, tbl_id, onChange}}/>} tooltip={EXPRESSION_TTIPS}
             />
-            <div className='AddColumn__datatype'>
+            <Stack direction='row' spacing={3} alignItems='center'>
                 <ListBoxInputField fieldKey='dtype' label='Data Type:'
                                    options={[{value:'double'}, {value:'long'}, {value:'char'}]}
                                    initialState={{value: col.type}}
@@ -273,7 +273,7 @@ function CustomFields({tbl_ui_id, tbl_id, groupKey, editColName}) {
                 {dtype === 'double' &&
                 <ValidationField fieldKey='precision' label='Precision:'
                                  sx={{
-                                     label:{width:50, ml:2},
+                                     label:{width:60},
                                      input:{width: 100}
                                  }}
                                  orientation='horizontal'
@@ -283,7 +283,7 @@ function CustomFields({tbl_ui_id, tbl_id, groupKey, editColName}) {
                                              'And when En, n is the precision in scientific notation'
                                      })}}
                 />}
-            </div>
+            </Stack>
             <ValidationField fieldKey='units' label='Units:'
                              slotProps={{
                                  input:{endDecorator: <Info url='https://ivoa.net/documents/VOUnits'/>}

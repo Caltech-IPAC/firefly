@@ -112,14 +112,14 @@ function ImageViewOptionsPanel({viewerId}) {
         <Stack {...{ spacing: 2,
             sx:{p:1, overflow: 'hidden', resize:'both', width: 660, height: 450, minWidth: 250, minHeight: 200} }}>
             <Box {...{position: 'relative', width: 1, height: 1}}>
-                <div className='TablePanel__table' style={{top: 0}}>
+                <Stack sx={{m: '1px', position: 'absolute', top: 0, bottom: 0, left: 0, right: 0}}>
                     <TablePanel {...{
                         tbl_ui_id, tableModel, rowHeight:23,
                         showToolbar:true, showFilters:true, selectable:true, showOptionButton:true,
                         border:false, showTitle:false, showPaging:false, showSave:false,
                         showTypes:false, showToggleTextView:false, expandable:false, showUnits:true,
                     }} />
-                </div>
+                </Stack>
             </Box>
 
             <Stack {...{direction: 'row', justifyContent: 'space-between'}}>
