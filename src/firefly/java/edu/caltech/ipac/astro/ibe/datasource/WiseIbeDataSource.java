@@ -27,7 +27,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
     public static final String WISE = "wise";
     public static final String FTYPE = "type";
 
-    public final static String SOURCE_ID_PATTERN_1B = "[0-9]{5}[abcders][0-9]{3}-[0-9]{6}";
+    public final static String SOURCE_ID_PATTERN_1B = "[0-9]{5}[abcderstuvw][0-9]{3}-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A = "[0-9]{4}[pm][0-9]{3}_a[abc][1-9]{2}-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3O = "[0-9]{4}[pm][0-9]{3}_[^a].*-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A_PASS1 = "[0-9]{4}[pm][0-9]{3}_aa[1-9]{2}-[0-9]{6}";
@@ -620,7 +620,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
         CRYO_3BAND_1B("cryo_3band", "3band_p1bm_frm", "allsky_3band_p1bs_psd", "links-3band/l1b-3band/"),
         CRYO_3BAND_3A("cryo_3band", "3band_p3am_cdd", "allsky_3band_p3as_psd", "links-3band/l3a-3band/"),  // currently they are different: p1bm_frm and p3am_cdd
         POSTCRYO_1B("postcryo", "2band_p1bm_frm", "allsky_2band_p1bs_psd", "links-postcryo/l1b-2band/"),
-        MERGE_1B("merge", "merge_p1bm_frm", "allsky_4band_p1bs_psd", "links-allsky/l1b-merge/"),         // exists under links-allsky
+        MERGE_1B("merge", "merge_p1bm_frm", "neowiser_p1bs_psd", "links-allsky/l1b-merge/"),         // exists under links-allsky
         MERGE_INT_1B("merge_int", "merge_i1bm_frm", "merge_i1bs_psd", "links-merge/l1b/"),
         MERGE_3A("merge", "merge_p3am_cdd", "allsky_4band_p1bs_psd", "links-allwise/l3a-merge/"),       // exists under links-allwise
         MERGE_INT_3A("merge_int", "merge_p3am_cdd", "allsky_4band_p3as_psd", "links-merge/l3a/"),

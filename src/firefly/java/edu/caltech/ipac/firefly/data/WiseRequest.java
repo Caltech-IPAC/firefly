@@ -39,7 +39,7 @@ public class WiseRequest extends TableServerRequest {
     public final static String REF_BY          = "refby";
     public final static String OPT_LEVEL       = "optLevel";
 
-    public final static String SOURCE_ID_PATTERN_1B = "[0-9]{5}[abcde][0-9]{3}-[0-9]{6}";
+    public final static String SOURCE_ID_PATTERN_1B = "[0-9]{5}[abcderstuvw][0-9]{3}-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A = "[0-9]{4}[pm][0-9]{3}_a[abc][1-9]{2}-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3O = "[0-9]{4}[pm][0-9]{3}_[^a].*-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A_PASS1 = "[0-9]{4}[pm][0-9]{3}_aa[1-9]{2}-[0-9]{6}";
@@ -177,9 +177,9 @@ public class WiseRequest extends TableServerRequest {
             put(CRYO_3BAND+"|1b",   new String[]{"3band_p1bm_frm", "p1bs_psd"});
             put(CRYO_3BAND+"|3a",   new String[]{"3band_p3am_cdd", "p3as_psd"});  // currently they are different: p1bm_frm and p3am_cdd
             put(POSTCRYO+"|1b",  new String[]{"2band_p1bm_frm", "2band_p1bs_psd"});
-            put(MERGE+"|1b", new String[]{"merge_p1bm_frm", "merge_p1bs_psd"});
-            put(MERGE+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
-            put(NEOWISER +"|1b", new String[]{"p1bm_frm", "p1bs_psd"});
+            put(MERGE+"|1b", new String[]{"merge_p1bm_frm", "merge_p1bs_psd"});   // note there is no merge_p1bs_psd catalog
+            put(MERGE+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});   // note there is no merge_p3as_psd catalog
+            put(NEOWISER +"|1b", new String[]{"p1bm_frm", "p1bs_psd"});           //  neowiser catalogs
 
             put(PASS1+"|1b", new String[]{"i1bm_frm", "i1bs_psd"});
             put(PASS1+"|3a", new String[]{"i3am_cdd", "i3as_psd"});
@@ -218,7 +218,7 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND, new Integer[]{712, 7101});
             put(CRYO_3BAND, new Integer[]{7101, 8744});
             put(POSTCRYO, new Integer[]{8745, 12514});
-            put(NEOWISER, new Integer[]{44212, 99799});  //public data to end of the yr5
+            put(NEOWISER, new Integer[]{44212, 99799});  //public data to end of the yr5, the highest scanid for public data
 
             put(PASS1, new Integer[]{712, 12514});
             put(PASS2_4BAND, new Integer[]{712, 7101});
