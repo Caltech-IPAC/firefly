@@ -6,9 +6,11 @@
   - use docker tag: `nightly`
   - [Notes on the next version](next-release-details.md)
 
-## Version 2024.2
-- 2024.2 - development
-  - docker tag: `lastest`, `2024.2`, `2024.2.0`
+[//]: # (## Version 2024.2)
+## Version 2024.2 - release target: mid-june
+
+[//]: # (  - docker tag: `lastest`, `2024.2`, `2024.2.0`)
+  - docker tag: `nightly`
 
 ### _Notes_
 #### This release has a lot of bug fixes and clean up after the JoyUI conversion. It also includes some long requested updates.
