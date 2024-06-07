@@ -131,9 +131,11 @@ DownloadButton.defaultProps = {
 let dlTitleIdx = 0;
 const newBgKey = () => 'DownloadOptionPanel-' + Date.now();
 
+// TODO: showEmailNotify changed to default of false, when we make a notification plan we can change it back.
+
 export function DownloadOptionPanel ({groupKey, cutoutSize, help_id, children, style, title, dlParams,
                                          updateSearchRequest, updateDownloadRequest, validateOnSubmit,
-                                         cancelText='Cancel', showZipStructure=true, showEmailNotify=true,
+                                         cancelText='Cancel', showZipStructure=true, showEmailNotify=false,
                                          showFileLocation=true, showTitle=true, ...props}) {
     const {tbl_id:p_tbl_id, checkSelectedRow} = React.useContext(OptionsContext);
     const tbl_id = props.tbl_id || p_tbl_id;
