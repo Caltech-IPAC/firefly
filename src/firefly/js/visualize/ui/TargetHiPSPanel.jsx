@@ -33,6 +33,7 @@ import {
     dispatchChangeActivePlotView, dispatchChangeHiPS, dispatchDeletePlotView, dispatchPlotHiPS, visRoot
 } from '../ImagePlotCntlr.js';
 import {NewPlotMode} from '../MultiViewCntlr.js';
+import {PlotAttribute} from '../PlotAttribute';
 import {onPlotComplete} from '../PlotCompleteMonitor.js';
 import {
     getActivePlotView, getDrawLayersByType, getPlotViewById, isDrawLayerAttached, primePlot
@@ -152,16 +153,25 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
     }, [mocList]);
 
     useEffect(() => { // if plot view changes then update the target or polygon field
-        updateUIFromPlot({plotId,setWhichOverlay, whichOverlay,setTargetWp,getTargetWp,
+        const setWhichOverlayWrapper= setWhichOverlay ?
+            (overLay) => {
+                setWhichOverlay(overLay);
+                lastWhichOverlay.lastValue= overLay;
+            } : undefined;
+        updateUIFromPlot({plotId,setWhichOverlay:setWhichOverlayWrapper, whichOverlay,setTargetWp,getTargetWp,
             setHiPSRadius,getHiPSRadius,setPolygon,getPolygon,minSize,maxSize,
             canUpdateModalEndInfo:false
         });
     },[pv]);
 
     useEffect(() => { // if target or radius field change then hips plot to reflect it
-        const canGeneratePolygon= whichOverlay!==lastWhichOverlay.lastValue;
+        const canGenerate= whichOverlay!==lastWhichOverlay.lastValue;
+        if (canGenerate && whichOverlay===CONE_CHOICE_KEY && !userEnterWorldPt()) {
+             const wp = primePlot(visRoot(), plotId)?.attributes[PlotAttribute.USER_SEARCH_WP];
+             wp && setTargetWp(wp.toString());
+         }
         updatePlotOverlayFromUserInput(plotId, whichOverlay, userEnterWorldPt(),
-            userEnterSearchRadius(), userEnterPolygon(), false, canGeneratePolygon);
+            userEnterSearchRadius(), userEnterPolygon(), false, canGenerate);
         lastWhichOverlay.lastValue= whichOverlay;
     }, [getTargetWp, getHiPSRadius, getPolygon, whichOverlay]);
 

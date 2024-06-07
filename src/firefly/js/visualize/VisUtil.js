@@ -734,7 +734,7 @@ export function getCenterPtOfPlot(plot) {
  * @param {number} offsetDec in arcseconds
  * @return {WorldPt}
  */
-function calculatePosition(pos1, offsetRa, offsetDec ) {
+export function calculatePosition(pos1, offsetRa, offsetDec ) {
     const ra = toRadians(pos1.getLon());
     const dec = toRadians(pos1.getLat());
     const de = toRadians(offsetRa/3600.0); // east

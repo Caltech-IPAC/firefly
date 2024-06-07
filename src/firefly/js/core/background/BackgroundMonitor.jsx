@@ -89,13 +89,15 @@ function BgFooter ({help_id='basics.bgmon', email, enableEmail}) {
 
     };
 
+      // TODO: email is commented out, when we make a notification plan we can re-add it.
+
     return (
         <Stack direction='row' alignItems='flex-start' justifyContent='space-between'>
             <Tooltip title='Hide Background Monitor'>
                 <CompleteButton color='primary' onSuccess={onHide} text={'Hide'} />
             </Tooltip>
             <Stack>
-                <Checkbox p={1} size='sm' checked={enableEmail} onChange={toggleEnableEmail} label={'Enable email notification'}/>
+                {/*<Checkbox p={1} size='sm' checked={enableEmail} onChange={toggleEnableEmail} label={'Enable email notification'}/>*/ }
                 {enableEmail &&
                     <Stack direction='row' alignItems='center' width={200}>
                         <Typography component='label' level='title-md' sx={{mr: 1}}>
