@@ -334,8 +334,10 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     useEffect(() => {
         const getData= async () => {
             if (ipt1 && ipt2 && plot) {
+                const {dataWidth,dataHeight}= plot;
                 const {direction}= xLineData(ipt1,ipt2);
-                const newImPtAry= getLinePointAry(ipt1,ipt2);
+                const newImPtAry= getLinePointAry(ipt1,ipt2)
+                    .filter( ({x,y}) => x>=0 && y>=0 && x<dataWidth && y<dataHeight);
                 if (!newImPtAry?.length) {
                     setImPtAry(undefined);
                     setChartParams({});

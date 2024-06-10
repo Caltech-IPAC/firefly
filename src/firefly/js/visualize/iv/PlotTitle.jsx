@@ -50,7 +50,10 @@ export const PlotTitle= memo(({plotView:pv, brief, working}) => {
         return (
             <Tooltip title={tooltip} placement='right-end'>
                 <Stack direction='row' alignItems='center' sx={plotTitleInlineTitleContainer}>
-                    <Typography {...{level:'title-sm', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '35ch'}}>{plot.title}</Typography>
+                    <Typography {...{component:'div', level:'title-sm', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '35ch'}}>
+                        <div/>
+                        {plot.title}
+                    </Typography>
                     <Typography {...{level:'body-sm', pl:.75, overflow: 'hidden', component:'div'}}>
                         <div dangerouslySetInnerHTML={{__html:zlStr}}/>
                     </Typography>

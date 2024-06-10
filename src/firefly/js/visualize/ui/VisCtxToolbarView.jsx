@@ -425,8 +425,11 @@ export function MultiImageControllerView({plotView:pv}) {
     return (
         <Tooltip title={tooltip} placement='top-end'>
             <Stack {...{direction:'row', flexWrap:'wrap', alignItems:'center',  position:'relative' }}>
-                {startStr && <Typography {...{level:'body-sm', width: '13em', overflow: 'hidden',
+                {startStr && <Typography {...{
+                    component:'div',
+                    level:'body-sm', width: '13em', overflow: 'hidden',
                     textOverflow: 'ellipsis', pl:1, textAlign: 'end'} }>
+                    <div/>
                     <span style={{fontStyle: 'italic', fontWeight: 'bold'}}> {startStr} </span>
                     <Typography level='body-sm' color='warning'> {hduDesc} </Typography>
                 </Typography>}

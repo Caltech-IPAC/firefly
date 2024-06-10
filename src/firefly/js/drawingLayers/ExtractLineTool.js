@@ -203,7 +203,6 @@ function start(drawLayer, action) {
     const mode= getMode(plot);
     if (!plot || shiftDown) return;
     const cc= CsysConverter.make(plot);
-    if (!cc.pointInData(imagePt)) return;
     let retObj= {};
     if (mode==='select' || shiftDown) {
         retObj= setupSelect(imagePt);

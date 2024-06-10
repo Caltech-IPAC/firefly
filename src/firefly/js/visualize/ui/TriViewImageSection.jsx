@@ -179,7 +179,7 @@ function layoutHandler(action) {
             newLayoutInfo = onPlotDelete(newLayoutInfo, action);
             break;
         case TABLE_LOADED:
-            if (!action.payload.tbl_id) return;
+            if (!action.payload.tbl_id || findGroupByTblId(action.payload.tbl_id)!=='main') return;
             newLayoutInfo = handleNewTable(newLayoutInfo, action);
             break;
         case TBL_RESULTS_ADDED:
