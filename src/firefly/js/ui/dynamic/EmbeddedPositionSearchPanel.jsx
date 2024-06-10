@@ -1,4 +1,5 @@
 import {Sheet, Stack, Typography} from '@mui/joy';
+import {isFunction} from 'lodash';
 import React, {useContext, useEffect, useState} from 'react';
 import {oneOfType, oneOf, element, bool, string, number, arrayOf, object, func, shape} from 'prop-types';
 import CoordinateSys from '../../visualize/CoordSys.js';
@@ -154,7 +155,7 @@ export function EmbeddedPositionSearchPanel({
                     placeholder: 'Coordinates',
                     manageHiPS:false,
                 }} />}
-            {otherComponents && otherComponents(doGetConeAreaOp())}
+            {isFunction(otherComponents) ? otherComponents() : otherComponents}
             {doGetConeAreaOp() === UPLOAD_CHOICE_KEY &&
                 <UploadTableSelector {...{uploadInfo, setUploadInfo, uploadTable:true}}/>
             }
