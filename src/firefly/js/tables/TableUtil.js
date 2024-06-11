@@ -176,7 +176,7 @@ export function getTableGroup(tbl_group='main') {
  * returns the table group name given a tbl_id.  it will return undefined if
  * the given tbl_id is not in a group.
  * @param {string} tbl_id    table id
- * @returns {TableGroup}
+ * @returns {String}
  * @public
  * @memberof firefly.util.table
  * @func findGroupByTblId
