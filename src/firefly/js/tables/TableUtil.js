@@ -1121,38 +1121,39 @@ export function tableDetailsView(tbl_id, highlightedRow, details_tbl_id) {
  * @memberof firefly.util.table
  * @func calcColumnWidths
  */
-export function getColMaxValues(columns, dataAry,
-                                 {
-                                     maxAryWidth = Number.MAX_SAFE_INTEGER,
-                                     maxColWidth = Number.MAX_SAFE_INTEGER,
-                                     useWidth = true,
-                                 }={}) {
-    return columns.map( (cv, idx) => {
+export function getColMaxValues(columns, dataAry, opt) {
+    return columns.map( (cv, idx) => getColMaxVal(cv, idx, dataAry, opt));
+}
 
-        const width = useWidth? cv.prefWidth || cv.width : 0;
-        if (width) {
-            return 'O'.repeat(width);           // O is a good reference for average width of a character
-        }
+export function getColMaxVal(col, columnIndex, dataAry,
+                                {
+                                    maxAryWidth = Number.MAX_SAFE_INTEGER,
+                                    maxColWidth = Number.MAX_SAFE_INTEGER,
+                                    useWidth = true,
+                                }={}) {
+    const width = useWidth? col.prefWidth || col.width : 0;
+    if (width) {
+        return 'O'.repeat(width);           // O is a good reference for average width of a character
+    }
 
-        let maxVal = '';
+    let maxVal = '';
 
-        // the 4 headers
-        [cv.label || cv.name, cv.units, getTypeLabel(cv), cv.nullString].forEach( (v) => {
-            if (v?.length > maxVal.length) maxVal = v;
-        });
-
-        // the data
-        dataAry.forEach((row) => {
-            const v = formatValue(columns[idx], row[idx]);
-            if (v.length > maxVal.length) maxVal = v;
-        });
-
-        // limits
-        if (cv.arraySize && maxVal.length > maxAryWidth) maxVal = maxVal.substr(0, maxAryWidth);
-        if (maxVal.length > maxColWidth) maxVal = maxVal.substr(0, maxColWidth);
-
-        return maxVal;
+    // the 4 headers
+    [col.label || col.name, col.units, getTypeLabel(col), col.nullString].forEach( (v) => {
+        if (v?.length > maxVal.length) maxVal = v;
     });
+
+    // the data
+    dataAry.forEach((row) => {
+        const v = formatValue(col, row[columnIndex]);
+        if (v.length > maxVal.length) maxVal = v;
+    });
+
+    // limits
+    if (col.arraySize && maxVal.length > maxAryWidth) maxVal = maxVal.substr(0, maxAryWidth);
+    if (maxVal.length > maxColWidth) maxVal = maxVal.substr(0, maxColWidth);
+
+    return maxVal;
 }
 
 /**

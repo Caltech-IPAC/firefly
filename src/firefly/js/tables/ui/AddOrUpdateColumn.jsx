@@ -12,7 +12,7 @@ import {SqlTableFilter, code} from './FilterEditor.jsx';
 import {addOrUpdateColumn, deleteColumn} from '../../rpc/SearchServicesJson.js';
 import {getGroupFields, validateFieldGroup, getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
-import {getAllColumns, getColumn, getTblById} from '../TableUtil.js';
+import {getAllColumns, getColumn, getTableUiById, getTblById} from '../TableUtil.js';
 import {showPopup, showInfoPopup, showYesNoPopup} from '../../ui/PopupUtil.jsx';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
@@ -68,9 +68,8 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
                 setIsWorking(true);
                 addOrUpdateColumn(request, params).then( () => {
                         hidePopup?.();
-                        dispatchTableUiUpdate( {tbl_ui_id, columns:[], columnWidths: undefined, scrollLeft:100000});        // reset columns and scroll to the right-most of the table so the added column is visible
+                        reloadTable(tbl_ui_id, request, editColName, params.cname);
                         onChange?.();
-                    reloadTable(request,editColName, params.cname);
                     }).catch( (err) => {
                         showInfoPopup(parseError(err, params), 'Add Column Failed');
                     }).finally(() => setIsWorking(false));
@@ -83,9 +82,7 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
                 const {request} = getTblById(tbl_id);
                 deleteColumn(request, editColName).then( () => {
                     hidePopup?.();
-                    dispatchTableUiUpdate( {tbl_ui_id, columns:[], columnWidths: undefined});        // reset columns and scroll to the right-most of the table so the added column is visible
-                    // dispatchTableUiUpdate()
-                    reloadTable(request,editColName);
+                    reloadTable(tbl_ui_id, request, editColName);
                     onChange?.();
                 }).catch( (err) => showInfoPopup(parseError(err), 'Delete Column Failed'));
             }
@@ -145,12 +142,32 @@ AddOrUpdateColumn.propTypes = {
     editColName: PropTypes.string
 };
 
-function reloadTable(request, editColName, newColName) {
+function reloadTable(tbl_ui_id, request, editColName, newColName) {
 
-    if (editColName && editColName !== newColName) {
-        const {sortInfo, filters, inclCols, sqlFilter} = request;
+    const add = newColName && !editColName;
+    const del = editColName && !newColName;
+
+    let {columns, columnWidths, scrollLeft} = getTableUiById(tbl_ui_id);
+
+
+
+    if (add) {
+        const colIdx = columns.findIndex((c) => c.name === 'ROW_IDX');
+        columns.splice(colIdx, 0, {});
+        columnWidths.splice(colIdx, 0, -1);
+        // for now, we always add to the end; we can keep all previous values intact
+        scrollLeft = 100000;    // scroll to the right-most of the table so the added column is visible
+    } else {
+        // updating a column
+        const colIdx = columns.findIndex((c) => c.name === editColName);
+        if (del) {
+            columns.splice(colIdx, 1);
+            columnWidths.splice(colIdx, 1);
+        }
 
         // if editColumn is in sort or filter, clear it.
+        const {sortInfo, filters, inclCols, sqlFilter} = request;
+
         if (sortInfo) {
             if (sortInfo.match(/[A-Z],(.+)/)?.[1]?.replaceAll('"','').split(',')?.includes(editColName)) {
                 Reflect.deleteProperty(request,'sortInfo');
@@ -166,6 +183,7 @@ function reloadTable(request, editColName, newColName) {
                 Reflect.deleteProperty(request,'sqlFilter');
             }
         }
+
         // if editColumn is in the 'select' portion, remove it.
         if (inclCols) {
             const cols = inclCols.split(',');
@@ -174,7 +192,9 @@ function reloadTable(request, editColName, newColName) {
             }
         }
     }
+
     dispatchTableFetch(request);
+    dispatchTableUiUpdate( {tbl_ui_id, columns, columnWidths, scrollLeft});        // update columns and scroll
 }
 
 export const AddColumnBtn = ({tbl_ui_id, tbl_id}) => (
