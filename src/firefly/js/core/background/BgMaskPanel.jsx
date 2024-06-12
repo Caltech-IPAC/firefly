@@ -1,7 +1,6 @@
 import React, {useEffect} from 'react';
-import PropTypes from 'prop-types';
+import {bool, string, func, object} from 'prop-types';
 import {Button, Stack} from '@mui/joy';
-import shallowequal from 'shallowequal';
 
 import {dispatchJobAdd, dispatchJobCancel} from './BackgroundCntlr.js';
 import {dispatchComponentStateChange, getComponentState} from '../ComponentCntlr.js';
@@ -23,16 +22,13 @@ const logger = Logger('BgMaskPanel');
  */
 
 
-export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, style={}}) => {
+export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, showError= true, style={}}) => {
 
-    const {inProgress, jobInfo} = useStoreConnector((oldState={}) => {
-        const {inProgress:oProg, jobInfo:oInfo} = oldState;
-        const {inProgress=false, jobId} = getComponentState(componentKey);
-        const jobInfo = getJobInfo(jobId);
-        if (oProg === inProgress && shallowequal(oInfo, jobInfo)) return oldState;
-        return {inProgress, jobInfo};
-    });
-
+    const inProgress = useStoreConnector(() => getComponentState(componentKey)?.inProgress || false);
+    const jobInfo    = useStoreConnector(() => {
+                           const {jobId} = getComponentState(componentKey);
+                           return jobId && getJobInfo(jobId);
+                       });
     const sendToBg = () => {
         if (jobInfo) {
             dispatchComponentStateChange(componentKey, {inProgress:false});
@@ -52,10 +48,10 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, style={}})
 
     const msg = jobInfo?.errorSummary?.message || jobInfo?.jobInfo?.progressDesc || 'Working...';
 
-    const Options = () => ( (inProgress || true) &&
+    const Options = () => (
         <Stack direction='row' spacing={1}>
-            <Button variant='solid' color='primary' onClick={sendToBg}>Send to background</Button>
-            <Button onClick={abort}>Cancel</Button>
+            <Button variant='solid' color='primary' disabled={!jobInfo} onClick={sendToBg}>Send to background</Button>
+            <Button disabled={!jobInfo} onClick={abort}>Cancel</Button>
         </Stack>
     );
 
@@ -82,7 +78,7 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, style={}})
                 </div>
             </div>
         );
-    } else if (errorInJob) {
+    } else if (errorInJob && showError) {
         return (
             <div className='BgMaskPanel' style={style}>
                 <div className='mask-only'/>
@@ -101,7 +97,8 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, style={}})
 });
 
 BgMaskPanel.propTypes = {
-    componentKey: PropTypes.string.isRequired,  // key used to identify this background job
-    style: PropTypes.object,                    // used for overriding default styling
-    onMaskComplete: PropTypes.func
+    componentKey: string.isRequired,  // key used to identify this background job
+    style: object,                    // used for overriding default styling
+    onMaskComplete: func,
+    showError: bool
 };

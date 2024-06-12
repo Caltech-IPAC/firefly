@@ -3,7 +3,7 @@
  */
 
 import {flux} from './ReduxFlux';
-import {get} from 'lodash';
+import {get, isNil} from 'lodash';
 import update from 'immutability-helper';
 import {REINIT_APP} from './AppDataCntlr.js';
 
@@ -168,6 +168,14 @@ const hideAllDialogsChange= function(state) {
 const changeComponentState=  function(state, action) {
     const {componentId, componentState} = action.payload;
     if (!componentId) {return state;}
+
+    if (isNil(componentState)) {
+        return update(state,
+            {
+                [COMPONENT_KEY]: {[componentId]: {$set: undefined}}
+            });
+    }
+
     if (!state[COMPONENT_KEY][componentId]) {
         state = update(state,
             {

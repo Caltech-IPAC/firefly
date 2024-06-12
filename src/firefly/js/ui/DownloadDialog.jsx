@@ -192,10 +192,6 @@ export function DownloadOptionPanel ({groupKey, cutoutSize, help_id, children, s
 
     const maskStyle = {
         position: 'absolute',
-        top:-26,
-        bottom:-4,
-        right:-4,
-        left:-4,
         width:undefined,
         height:undefined,
         backgroundColor: 'rgba(0,0,0,0.2)'
