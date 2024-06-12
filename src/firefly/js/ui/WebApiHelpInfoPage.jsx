@@ -5,7 +5,6 @@ import React, {Fragment} from 'react';
 import {isEmpty,isObject,isArray} from 'lodash';
 import {getReservedParamKeyDesc, makeExample, ReservedParams, WebApiHelpType} from '../api/WebApi';
 
-import './WebApiHelpInfoPage.css';
 
 export function WebApiHelpInfoPage({helpType,contextMessage='',cmd,params,webApiCommands, badParams, missingParams}) {
     let showContextMsg= false;
@@ -80,6 +79,14 @@ function OverViewEntries({parameters}) {
 }
 
 
+const webApiParamsGridSx = {
+    display: 'grid',
+    columnGap: '3px',
+    gridTemplateColumns: '12em 10px 65em',
+    gridTemplateRows: 'auto',
+    rowGap: '1px',
+};
+
 function CommandOverview({webApiCommand}) {
     const {overview, parameters, examples}= webApiCommand;
 
@@ -95,7 +102,7 @@ function CommandOverview({webApiCommand}) {
             {examples && <ShowExamples examples={examples}/> }
             <Stack sx={{mt:1, ml:2}}>
                 <Typography level='h4'>Parameters</Typography>
-                <Box sx={{ml:7}} className='webApiParamsGrid'>
+                <Box sx={{ml:7, ...webApiParamsGridSx}}>
                     <OverViewEntries parameters={parameters} />
                 </Box>
             </Stack>
@@ -134,11 +141,25 @@ function ShowExamples({examples}) {
 
 function ShowExampleGroup({examples}) {
     return (
-        <Box sx={{mt:1, mb:1/2, ml:1}} className='webApiExamplesGrid'>
+        <Box sx={{
+            mt:1, mb:.5, ml: 1,
+            display: 'grid',
+            columnGap: '3px',
+            gridTemplateColumns: '10em 10px 80em',
+            gridTemplateRows: 'auto',
+            rowGap: '10px',
+        }}>
             {examples.map( (e) => {
                 return (
                     <Fragment key={e.url}>
-                        <Typography level='body-sm' className='webApiExName'>{e.desc}</Typography>
+                        <Typography level='body-sm'
+                                    sx={{
+                                        justifySelf: 'start',
+                                        display: 'list-item',
+                                        listStyleType: 'circle',
+                                        marginLeft: '1em'}}>
+                            {e.desc}
+                        </Typography>
                         <div/>
                         <Link level='body-sm' href={e.url}> {e.url} </Link>
                     </Fragment>
@@ -155,7 +176,7 @@ const ParameterList = ({params, url, badParams=[], missingParams=[]})  => (
                 <Typography style={{fontStyle: 'italic', paddingRight: 10}}>URL:</Typography>
                 <Typography>{url}</Typography>
             </Stack>
-            <Box className='webApiParamsGrid'>
+            <Box sx={webApiParamsGridSx}>
                 {Object.entries(params).map( ([k,v]) => {
                     const isBad= badParams.includes(k);
                     return (

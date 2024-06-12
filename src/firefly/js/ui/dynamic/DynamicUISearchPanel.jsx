@@ -19,7 +19,6 @@ import {
 import {
     getSpacialSearchType, hasValidSpacialSearch, makeAllFields, makeUnitsStr
 } from './DynComponents.jsx';
-import './DynamicUI.css';
 import {findFieldDefType} from './ServiceDefTools.js';
 
 
@@ -319,7 +318,15 @@ const labelAry= fieldDefAry
         } );
 
         gridFieldLayout= (
-            <div className='dynGrid' style={{paddingTop:20}}>
+            <div style={{
+                paddingTop: 20,
+                display: 'grid',
+                columnGap: '3px',
+                rowGap: '2px',
+                gridTemplateRows : 'auto',
+                gridTemplateColumns : 'auto auto auto auto',
+                alignItems: 'center',
+            }}>
                 {combinedAry}
             </div>);
     }

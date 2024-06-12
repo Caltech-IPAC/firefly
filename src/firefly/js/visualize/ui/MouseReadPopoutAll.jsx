@@ -86,11 +86,25 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
     const fluxArray = getFluxInfo(readoutData, radix);
     const hipsPixel= showHealpixPixel && isHiPS;
     const showCopy= readout.lockByClick;
-    const gridClasses= `mouseReadoutPopupInlineFullGrid${threeColor?' mouseReadoutPopupInlineFullGrid-3c':''}` ;
     const {readout1, readout2, showReadout1PrefChange, showReadout2PrefChange, showWavelengthFailed, waveLength}= displayEle;
 
     return (
-        <Box className={gridClasses} sx={rS}>
+        <Box sx={{
+            display: 'grid',
+            columnGap: .5,
+            rowGap: .75,
+            gridTemplateColumns: '6em 14px auto',
+            gridTemplateRows: `2em 1.4em 1.4em 1.4em 1.4em${threeColor ? ' 1.4em 1.4em' : ''}`,
+            alignItems: 'center',
+            gridTemplateAreas: `". . lock"
+                                "pixSizeLabel . pixSizeValue"
+                                "pixReadoutTopLabel clipboardIconTop pixReadoutTopValue"
+                                "pixReadoutBottomLabel clipboardIconBottom pixReadoutBottomValue"
+                                "redLabel . redValue"
+                                "greenLabel . greenValue"
+                                " blueLabel . blueValue"`,
+            ...rS
+        }}>
             <DataReadoutItem lArea='pixReadoutTopLabel' vArea='pixReadoutTopValue' cArea='clipboardIconTop'
                              label={readout1.label} value={readout1.value}
                              copyValue={readout1.copyValue} showCopy={showCopy}

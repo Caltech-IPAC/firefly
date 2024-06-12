@@ -12,7 +12,6 @@ import {ToolbarButton} from '../../ui/ToolbarButton';
 import ContentPasteOutlinedIcon from '@mui/icons-material/ContentPasteOutlined';
 import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined';
 
-import './MouseReadout.css';
 
 export const MouseReadoutLock= memo(({gArea, gAreaLabel, style={}, lockByClick}) => {
     const s= gArea ? {gridArea:gArea,...style} : style;
@@ -59,7 +58,15 @@ export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueSt
     const lS= lArea ? {gridArea:lArea,...baseLS,...labelStyle} : {...baseLS,...labelStyle};
     const vS= vArea ? {gridArea:vArea,...baseVS, ...valueStyle} : {...baseVS,...valueStyle};
     const cS= cArea ? {gridArea:cArea, overflow:'hidden', justifySelf:'center'} : undefined;
-    const labelClass= prefChangeFunc ? 'mouseReadoutLabel mouseReadoutClickLabel' : 'mouseReadoutLabel';
+    const mouseReadoutLabelSx = {
+        cursor: 'default',
+        justifySelf: 'end',
+        ...(prefChangeFunc && {
+            cursor: 'pointer',
+            textDecoration: 'underline',
+            fontStyle: 'italic',
+            })
+    };
     const copyTitle= `Copy to clipboard: ${copyValue||value}`;
 
     let clipComponent= undefined;
@@ -72,13 +79,12 @@ export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueSt
 
     return (
         <Fragment>
-            {
-                prefChangeFunc ?
-                    <Chip variant='soft' color='neutral' title={value+''} sx={{borderRadius:5}} style={lS} onClick={prefChangeFunc}>{label}</Chip> :
-                    <Typography level='body-sm' className={labelClass} title={value+''} style={lS} onClick={prefChangeFunc}>{label}</Typography>
+            {prefChangeFunc
+                ? <Chip variant='soft' color='neutral' title={value+''} sx={{borderRadius:5, ...lS}} onClick={prefChangeFunc}>{label}</Chip>
+                : <Typography level='body-sm' title={value+''} sx={{...mouseReadoutLabelSx, ...lS}} onClick={prefChangeFunc}>{label}</Typography>
             }
-            <Typography level='body-sm' color='warning' style={{...vS, ...mStyle}} title={value+''}> {value} </Typography>
-            <Typography level='body-sm' color='warning' style={vS} title={value+''}>
+            <Typography level='body-sm' color='warning' sx={{...vS, ...mStyle}} title={value+''}> {value} </Typography>
+            <Typography level='body-sm' color='warning' sx={vS} title={value+''}>
                 <span style={mStyle}> {value}</span>
                 <span> {unit}</span>
             </Typography>

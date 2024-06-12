@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Chip, ChipDelete, Link, Sheet, Stack, Tooltip, Typography} from '@mui/joy';
+import {ChipDelete, Link, Stack, Tooltip, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 
 import PropTypes from 'prop-types';
@@ -20,7 +20,6 @@ import {useFieldGroupValue, useFieldGroupWatch, useStoreConnector} from './Simpl
 import {FD_KEYS, FG_KEYS} from 'firefly/visualize/ui/UIConst';
 import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 
-import './ImageSelect.css';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import {CollapseAll, ExpandAll} from 'firefly/visualize/ui/Buttons.jsx';
 
@@ -45,14 +44,13 @@ const PROJ_PREFIX = 'PROJ_ALL_';
  */
 
 export function ImageSelect({imageMasterData, header, groupKey, multiSelect=true, addChangeListener, scrollDivId}) {
-
-    const [toolbarClz, setToolbarClz] = useState();
+    const [isToolbarSticky, setIsToolbarSticky] = useState(false);
 
     useEffect(() => {
         addChangeListener && addChangeListener('ImageSelect', fieldsReducer(imageMasterData, groupKey));
         if (scrollDivId) {
             document.getElementById(scrollDivId).onscroll = (e) => {
-                setToolbarClz((e.target.scrollTop > 260 ?  ' ImageSelect__toolbar--popup' : ''));
+                setIsToolbarSticky(e.target.scrollTop > 260);
             };
         }
     }, [addChangeListener, imageMasterData, groupKey, scrollDivId]);
@@ -63,11 +61,25 @@ export function ImageSelect({imageMasterData, header, groupKey, multiSelect=true
 
     const filteredImageData = useStoreConnector(() => getFilteredImageData(imageMasterData, groupKey));
     const [, setLastMod] = useState(new Date().getTime());
-    // const pStyle = scrollDivId ? {flexGrow: 1, display: 'flex'} : {display: 'flex', maxHeight:200};
+
+    const toolbarSx = isToolbarSticky
+        ? {
+            zIndex: 1,
+            backgroundColor: 'background.surface',
+            position: 'absolute',
+            top: 0,
+            left: 8,
+            right: 8,
+            borderBottom: 1,
+            borderColor: 'neutral.outlinedBorder',
+            pb: 1,
+        }
+        : {};
 
     return (
         <Stack spacing={1}>
-            <ToolBar className={toolbarClz} {...{filteredImageData, header, groupKey, onChange: () => setLastMod(new Date().getTime())}}/>
+            <ToolBar {...{filteredImageData, header, groupKey, onChange: () => setLastMod(new Date().getTime()),
+                sx: toolbarSx}}/>
             <Stack spacing={1} direction='row'>
                 <FilterPanel {...{imageMasterData, groupKey}}/>
                 <DataProductList {...{filteredImageData, groupKey, multiSelect}}/>
@@ -158,7 +170,7 @@ function isAllSelected(filteredImageData, inFields, proj) {
 
 }
 
-function ToolBar({className, header, filteredImageData, groupKey, onChange}) {
+function ToolBar({sx, header, filteredImageData, groupKey, onChange}) {
     const projects= uniqBy(filteredImageData, 'project').map( (d) => d.project);
     const setDSListMode = (flg) => {
         projects.forEach((k) => dispatchComponentStateChange(k, {isOpen:flg}));
@@ -199,7 +211,7 @@ function ToolBar({className, header, filteredImageData, groupKey, onChange}) {
     );
 
     return (
-        <Stack className={className} direction='row'>
+        <Stack direction='row' sx={sx}>
             {header?.()}
             <Stack direction='row' justifyContent='space-between' flex={1} alignItems='start' overflow='hidden' spacing={2}>
                 <Stack flexGrow={1} overflow='hidden'>

@@ -19,7 +19,6 @@ import {dispatchTableUiUpdate, TBL_UI_UPDATE} from '../TablesCntlr.js';
 import {Logger} from '../../util/Logger.js';
 
 import 'fixed-data-table-2/dist/fixed-data-table.css';
-import './TablePanel.css';
 import {updateSet} from 'firefly/util/WebUtil.js';
 import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
 import {TableErrorMsg} from 'firefly/tables/ui/TablePanel.jsx';
@@ -29,6 +28,75 @@ const noDataMsg = 'No Data Found';
 const noDataFromFilter = 'No data match these criteria';
 
 export const BY_SCROLL = 'byScroll';
+
+
+// Override default fixed-data-table-2 css with joy-ui colors and styles
+const tableStyleOverrides = {
+    '.public_fixedDataTableCell_main, .public_fixedDataTableCell_cellContent': {
+        padding: '0 2px',
+    },
+    '.fixedDataTableRowLayout_rowWrapper': {
+        fontSize: '12px',
+    },
+    '.fixedDataTableCellLayout_main': {
+        borderStyle: 'solid',
+        borderWidth: '0 1px 1px 0',
+    },
+    '.public_fixedDataTable_main': {
+        borderColor: 'neutral.outlinedBorder',
+    },
+    '.fixedDataTableRowLayout_main div, .fixedDataTableCellLayout_main [role=columnheader]': {
+        backgroundColor: 'background.surface',
+    },
+    '.fixedDataTableRowLayout_main.highlighted div': {
+        backgroundColor: 'warning.softHoverBg',
+    },
+    '.fixedDataTableRowLayout_main.related div': {
+        backgroundColor: 'warning.softBg',
+    },
+    '.fixedDataTableRowLayout_main.no-access div': {
+        backgroundColor: 'danger.softBg',
+    },
+    '.fixedDataTableRowLayout_main.no-access-highlighted div': {
+        backgroundColor: 'danger.softHoverBg',
+    },
+    '.public_fixedDataTableCell_main, .public_fixedDataTableRow_main, .public_fixedDataTable_scrollbarSpacer, .public_fixedDataTableRow_highlighted .public_fixedDataTableCell_main, .public_fixedDataTable_header .public_fixedDataTableCell_main': {
+        backgroundImage: 'none',
+        backgroundColor: 'unset',
+        fontWeight: 'unset',
+        borderColor: 'neutral.outlinedBorder',
+    },
+    '.public_fixedDataTableRow_fixedColumnsDivider': {
+        borderColor: 'neutral.outlinedBorder',
+    },
+    '.fixedDataTableCellLayout_columnResizerContainer, .public_fixedDataTable_scrollbarSpacer': {
+        backgroundColor: 'unset !important',
+    },
+    '.public_Scrollbar_main.public_Scrollbar_mainActive, .public_Scrollbar_main': {
+        backgroundColor: 'var(--scrollbar-color-track)',
+        borderColor: 'neutral.outlinedBorder',
+    },
+    '.public_Scrollbar_mainOpaque, .public_Scrollbar_mainOpaque.public_Scrollbar_mainActive, .public_Scrollbar_mainOpaque:hover': {
+        backgroundColor: 'var(--scrollbar-color-track)',
+    },
+    '.public_Scrollbar_face:after': {
+        backgroundColor: 'var(--scrollbar-color-thumb)',
+    },
+    '.public_Scrollbar_main:hover .public_Scrollbar_face:after, .public_Scrollbar_mainActive .public_Scrollbar_face:after, .public_Scrollbar_faceActive:after': {
+        backgroundColor: 'var(--scrollbar-color-thumb-active)',
+    },
+    '.public_fixedDataTableRow_columnsShadow': {
+        backgroundImage: 'none',
+        backgroundColor: 'unset',
+    },
+};
+
+
+export const NoDataTableView = ({sx, children}) => (
+    <Box sx={{position: 'absolute', top: '50%', left: '50%', zIndex: 1, fontSize: 'lg', color: 'text.tertiary', ...sx}}>
+        {children}
+    </Box>
+);
 
 
 const BasicTableViewInternal = React.memo((props) => {
@@ -148,14 +216,15 @@ const BasicTableViewInternal = React.memo((props) => {
                        tstate === TBL_STATE.NO_MATCH ? msg || noDataFromFilter :
                        tstate === TBL_STATE.LOADING ? 'Loading...' : '';
 
-        if (status) return <div className='TablePanel_NoData'> {status} </div>;
+        if (status) return <NoDataTableView> {status} </NoDataTableView>;
         else return null;
     };
 
     return (
         <Box tabIndex='-1' onKeyDown={onKeyDown} sx={{
             lineHeight:1, flexGrow:1, minHeight:0, minWidth:0,
-            color: 'text.secondary' //otherwise parent's font color bleeds (which is not same in dark mode)
+            color: 'text.secondary', //otherwise parent's font color bleeds (which is not same in dark mode)
+            '&': tableStyleOverrides
         }}>
             {content()}
             <Status/>
@@ -272,7 +341,7 @@ function doFilter({fieldKey, valid, value}) {
             callbacks.onFilter(filterInfoCls.serialize());
         }
     }
-};
+}
 
 function doSort(cname) {
     const {callbacks, sortInfo} = this;
@@ -280,7 +349,7 @@ function doSort(cname) {
         const sortInfoCls = SortInfo.parse(sortInfo);
         callbacks.onSort(sortInfoCls.toggle(cname));
     }
-};
+}
 
 function doSelectAll(checked) {
     const {callbacks} = this;

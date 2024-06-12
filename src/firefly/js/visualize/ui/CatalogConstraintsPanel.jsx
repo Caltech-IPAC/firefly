@@ -20,7 +20,6 @@ import {InputAreaFieldConnected} from '../../ui/InputAreaField.jsx';
 import {useFieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
 const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width: 10};
 
-import '../../tables/ui/TablePanel.css';
 import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
 
 /*
@@ -393,7 +392,7 @@ class ConstraintPanel extends PureComponent {
                 '& .fixedDataTableLayout_main': {borderRadius:'5px'} }}>
                 <Stack {...{ direction:'row', flex: '1 1 auto', position: 'relative', width: 1, height: 1}}>
                     <Box sx={{minHeight:150, flex: '1 1 auto'}}>
-                            <Stack sx={{m: '1px', position: 'absolute', top: 0, bottom: 0, left: 0, right: 0}}>
+                            <Stack sx={{m: '1px', position: 'absolute', inset: 0}}>
                                 <BasicTableViewWithConnector
                                     tbl_ui_id={tbl_ui_id}
                                     columns={columns}

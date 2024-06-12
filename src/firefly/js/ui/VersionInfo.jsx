@@ -5,7 +5,6 @@ import {
 
 import {CopyToClipboard} from '../visualize/ui/MouseReadout.jsx';
 import {showInfoPopup} from './PopupUtil.jsx';
-import './VersionInfo.css';
 import IPAC_LOGO from 'images/ipac_logo-56x40.png';
 import CALTECH_LOGO from 'images/caltech-new-logo.png';
 import FFTOOLS_ICO from 'html/images/fftools-logo-offset-small-42x42.png';
@@ -64,7 +63,7 @@ function VersionInfoFull() {
         + (ffTag ? `\n${FF_TAG}:         ${ffTag}` : '');
 
     return (
-        <Box>
+        <Stack spacing={1}>
             <Stack direction='row'>
                 <Stack alignItems='center'>
                     <Link href='https://github.com/Caltech-IPAC/firefly' target='github-window'>
@@ -78,33 +77,32 @@ function VersionInfoFull() {
                     </Link>
                 </Stack>
                 <Stack justifyContent='space-evenly' direction='row' alignItems='flex-start' sx={{ml:5.75}}>
-                    <div className='Version-grid'>
+                    <Box display='grid' gridTemplateColumns='auto auto' gap={.75} userSelect='text'>
                         <Entry desc={VER} value={version}/>
                         <Entry desc={BUILT_ON} value={BuildTime}/>
                         <Entry desc={COMMIT} value={BuildCommit}/>
                         {major ? <Entry desc={FF_LIB} value={getFireflyLibraryVersionStr()}/> : ''}
                         {ffCommit && <Entry desc={FF_COM} value={ffCommit}/>}
                         {ffTag && <Entry desc={FF_TAG} value={ffTag}/>}
-                    </div>
+                    </Box>
                     <CopyToClipboard style={{justifySelf: 'start', marginLeft:10}}
                                                                value={versionAsText} size={16} buttonStyle={{backgroundColor: 'unset'}}/>
                 </Stack>
             </Stack>
-            {
-                !isVersionFormalRelease() &&
+            {!isVersionFormalRelease() &&
                 <Stack direction='row' justifyContent={'center'}>
-                    <div className='Version-grid-warning'>
+                    <Typography color='warning'>
                         {isVersionPreRelease() ?
                             `Warning: Early preview of Firefly ${getDevCycle()}` :
                             `Warning: Development build of Firefly on dev cycle ${getDevCycle()}`
                         }
-                    </div>
+                    </Typography>
                 </Stack>
             }
             <Stack direction='row' justifyContent={'center'}>
                 <Acknowledgement/>
             </Stack>
-        </Box>
+        </Stack>
     );
 }
 
