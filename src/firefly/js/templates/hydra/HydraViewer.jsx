@@ -9,7 +9,13 @@ import {Typography} from '@mui/joy';
 import {cloneDeep} from 'lodash/lang.js';
 
 import {flux} from '../../core/ReduxFlux.js';
-import {dispatchSetMenu, dispatchOnAppReady, dispatchNotifyRemoteAppReady, getSearchInfo} from '../../core/AppDataCntlr.js';
+import {
+    dispatchSetMenu,
+    dispatchOnAppReady,
+    dispatchNotifyRemoteAppReady,
+    getSearchInfo,
+    dispatchAddPreference
+} from '../../core/AppDataCntlr.js';
 import {getLayouInfo, SHOW_DROPDOWN, LO_VIEW} from '../../core/LayoutCntlr.js';
 import {hydraManager} from './HydraManager';
 import {getActionFromUrl} from '../../core/History.js';
@@ -25,7 +31,7 @@ import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 import App from 'firefly/ui/App.jsx';
 import {Slot, useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {makeMenuItems, SearchPanel} from 'firefly/ui/SearchPanel.jsx';
-import {LandingPage} from 'firefly/templates/fireflyviewer/LandingPage.jsx';
+import {APP_HINT_IDS, appHintPrefName, LandingPage} from 'firefly/templates/fireflyviewer/LandingPage.jsx';
 import {Stacker} from 'firefly/ui/Stacker.jsx';
 import {setIf as setIfUndefined} from 'firefly/util/WebUtil.js';
 
@@ -33,14 +39,14 @@ import {setIf as setIfUndefined} from 'firefly/util/WebUtil.js';
 /*
  * This is a viewer.
  */
-export function HydraViewer({menu, slotProps, ...props}) {
+export function HydraViewer({menu, appTitle, slotProps, ...props}) {
 
 
     useEffect(() => {
         dispatchAddSaga(hydraManager);
         startTTFeatureWatchers();
         dispatchOnAppReady(() => {
-            onReady(menu);
+            onReady(menu, appTitle);
         });
     }, []);
 
@@ -80,13 +86,17 @@ HydraViewer.defaultProps = {
     appTitle: 'Time Series Viewer'
 };
 
-function onReady(menu) {
+function onReady(menu, appTitle) {
     dispatchSetMenu({menuItems: makeMenuItems(menu)});
 
     const {hasImages, hasTables, hasXyPlots} = getLayouInfo();
     if (!(hasImages || hasTables || hasXyPlots)) {
         const goto = getActionFromUrl() || {type: SHOW_DROPDOWN};
-        if (goto) flux.process(goto);
+        if (goto) {
+            flux.process(goto);
+            // if app didn't start with Results view, app hint for tabs menu is not needed
+            goto?.type === SHOW_DROPDOWN && dispatchAddPreference(appHintPrefName(appTitle, APP_HINT_IDS.TABS_MENU), false);
+        }
     }
     dispatchNotifyRemoteAppReady();
 }

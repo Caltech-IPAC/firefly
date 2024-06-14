@@ -10,7 +10,7 @@ import {cloneDeep} from 'lodash/lang.js';
 import {flux} from '../../core/ReduxFlux.js';
 import {
     dispatchSetMenu,
-    dispatchOnAppReady, dispatchNotifyRemoteAppReady, getAppOptions,
+    dispatchOnAppReady, dispatchNotifyRemoteAppReady, getAppOptions, dispatchAddPreference,
 } from '../../core/AppDataCntlr.js';
 import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
 import {AppConfigDrawer} from '../../ui/AppConfigDrawer.jsx';
@@ -30,6 +30,7 @@ import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.
 import {getAllStartIds, getObsCoreWatcherDef, startTTFeatureWatchers} from '../common/ttFeatureWatchers';
 import App from 'firefly/ui/App.jsx';
 import {setIf as setIfUndefined} from 'firefly/util/WebUtil.js';
+import {APP_HINT_IDS, appHintPrefName} from 'firefly/templates/fireflyviewer/LandingPage';
 
 /**
  * This FireflyViewer is a generic application with some configurable behaviors.
@@ -47,7 +48,7 @@ import {setIf as setIfUndefined} from 'firefly/util/WebUtil.js';
  *
  */
 export function FireflyViewer ({menu, options, views, showViewsSwitch, leftButtons,
-                                   centerButtons, rightButtons, normalInit=true,
+                                   centerButtons, rightButtons, normalInit=true, appTitle,
                                    landingPage, slotProps, apiHandlesExpanded, ...appProps}){
 
     useEffect(() => {
@@ -69,7 +70,7 @@ export function FireflyViewer ({menu, options, views, showViewsSwitch, leftButto
     }, []);
 
     useEffect(() => {
-        dispatchOnAppReady(() => onReady({menu, options, normalInit}));
+        dispatchOnAppReady(() => onReady({menu, options, normalInit, appTitle}));
     }, []);
 
     const FireflySidebar= (props) => (
@@ -118,7 +119,7 @@ FireflyViewer.defaultProps = {
     views: 'images | tables | xyplots'
 };
 
-function onReady({menu, options={}, normalInit}) {
+function onReady({menu, options={}, normalInit, appTitle}) {
     if (menu) {
         const {backgroundMonitor= true}= options;
         dispatchSetMenu({menuItems: menu, showBgMonitor:backgroundMonitor});
@@ -126,11 +127,19 @@ function onReady({menu, options={}, normalInit}) {
     const {hasImages, hasTables, hasXyPlots} = getLayouInfo();
     if (normalInit && (!(hasImages || hasTables || hasXyPlots))) {
         let goto = getActionFromUrl();
-        if (!goto) {
-            const landingItem= menu.find( (item) => item.landing);
-            goto= landingItem && {type:SHOW_DROPDOWN, payload:{view:landingItem.action}};
+
+        const landingItem= menu.find( (item) => item.landing);
+        if (!goto && landingItem) {
+            goto = {type:SHOW_DROPDOWN, payload: { view: landingItem.action }};
         }
-        if (goto) flux.process(goto);
+
+        if (goto) {
+            flux.process(goto);
+            // if app didn't start with Results view, app hint for tabs menu is not needed
+            if (goto?.type === SHOW_DROPDOWN && (!goto?.payload?.view || goto?.payload?.view !== landingItem?.action)) {
+                dispatchAddPreference(appHintPrefName(appTitle, APP_HINT_IDS.TABS_MENU), false);
+            }
+        }
     }
     dispatchNotifyRemoteAppReady();
 }
