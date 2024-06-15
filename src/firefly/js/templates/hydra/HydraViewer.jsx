@@ -8,17 +8,14 @@ import PropTypes, {element, node, object, shape, string} from 'prop-types';
 import {Typography} from '@mui/joy';
 import {cloneDeep} from 'lodash/lang.js';
 
-import {flux} from '../../core/ReduxFlux.js';
 import {
     dispatchSetMenu,
     dispatchOnAppReady,
     dispatchNotifyRemoteAppReady,
     getSearchInfo,
-    dispatchAddPreference
 } from '../../core/AppDataCntlr.js';
-import {getLayouInfo, SHOW_DROPDOWN, LO_VIEW} from '../../core/LayoutCntlr.js';
+import {getLayouInfo, LO_VIEW} from '../../core/LayoutCntlr.js';
 import {hydraManager} from './HydraManager';
-import {getActionFromUrl} from '../../core/History.js';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 
 import {ImageExpandedMode} from '../../visualize/iv/ImageExpandedMode.jsx';
@@ -31,9 +28,10 @@ import {DEFAULT_PLOT2D_VIEWER_ID} from '../../visualize/MultiViewCntlr.js';
 import App from 'firefly/ui/App.jsx';
 import {Slot, useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {makeMenuItems, SearchPanel} from 'firefly/ui/SearchPanel.jsx';
-import {APP_HINT_IDS, appHintPrefName, LandingPage} from 'firefly/templates/fireflyviewer/LandingPage.jsx';
+import {LandingPage} from 'firefly/templates/fireflyviewer/LandingPage.jsx';
 import {Stacker} from 'firefly/ui/Stacker.jsx';
 import {setIf as setIfUndefined} from 'firefly/util/WebUtil.js';
+import {handleInitialAppNavigation} from 'firefly/templates/common/FireflyLayout';
 
 
 /*
@@ -91,12 +89,7 @@ function onReady(menu, appTitle) {
 
     const {hasImages, hasTables, hasXyPlots} = getLayouInfo();
     if (!(hasImages || hasTables || hasXyPlots)) {
-        const goto = getActionFromUrl() || {type: SHOW_DROPDOWN};
-        if (goto) {
-            flux.process(goto);
-            // if app didn't start with Results view, app hint for tabs menu is not needed
-            goto?.type === SHOW_DROPDOWN && dispatchAddPreference(appHintPrefName(appTitle, APP_HINT_IDS.TABS_MENU), false);
-        }
+        handleInitialAppNavigation({menu, appTitle, defaultToShowDropdown: true});
     }
     dispatchNotifyRemoteAppReady();
 }

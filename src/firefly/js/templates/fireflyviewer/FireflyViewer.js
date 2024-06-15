@@ -7,12 +7,11 @@ import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {cloneDeep} from 'lodash/lang.js';
 
-import {flux} from '../../core/ReduxFlux.js';
 import {
     dispatchSetMenu,
-    dispatchOnAppReady, dispatchNotifyRemoteAppReady, getAppOptions, dispatchAddPreference,
+    dispatchOnAppReady, dispatchNotifyRemoteAppReady, getAppOptions,
 } from '../../core/AppDataCntlr.js';
-import {LO_VIEW, getLayouInfo, SHOW_DROPDOWN} from '../../core/LayoutCntlr.js';
+import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
 import {AppConfigDrawer} from '../../ui/AppConfigDrawer.jsx';
 import {getActiveRowCenterDef} from '../../visualize/saga/ActiveRowCenterWatcher.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
@@ -21,7 +20,6 @@ import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {layoutManager} from './FireflyViewerManager.js';
 import {LayoutChoiceVisualAccordion} from './LayoutChoice.jsx';
 import {TriViewPanel} from './TriViewPanel.jsx';
-import {getActionFromUrl} from '../../core/History.js';
 import {startImagesLayoutWatcher} from '../../visualize/ui/TriViewImageSection.jsx';
 import {dispatchAddSaga} from '../../core/MasterSaga.js';
 import {getImageMasterData} from '../../visualize/ui/AllImageSearchConfig.js';
@@ -30,7 +28,7 @@ import {getWorkspaceConfig, initWorkspace} from '../../visualize/WorkspaceCntlr.
 import {getAllStartIds, getObsCoreWatcherDef, startTTFeatureWatchers} from '../common/ttFeatureWatchers';
 import App from 'firefly/ui/App.jsx';
 import {setIf as setIfUndefined} from 'firefly/util/WebUtil.js';
-import {APP_HINT_IDS, appHintPrefName} from 'firefly/templates/fireflyviewer/LandingPage';
+import {handleInitialAppNavigation} from 'firefly/templates/common/FireflyLayout';
 
 /**
  * This FireflyViewer is a generic application with some configurable behaviors.
@@ -126,20 +124,7 @@ function onReady({menu, options={}, normalInit, appTitle}) {
     }
     const {hasImages, hasTables, hasXyPlots} = getLayouInfo();
     if (normalInit && (!(hasImages || hasTables || hasXyPlots))) {
-        let goto = getActionFromUrl();
-
-        const landingItem= menu.find( (item) => item.landing);
-        if (!goto && landingItem) {
-            goto = {type:SHOW_DROPDOWN, payload: { view: landingItem.action }};
-        }
-
-        if (goto) {
-            flux.process(goto);
-            // if app didn't start with Results view, app hint for tabs menu is not needed
-            if (goto?.type === SHOW_DROPDOWN && (!goto?.payload?.view || goto?.payload?.view !== landingItem?.action)) {
-                dispatchAddPreference(appHintPrefName(appTitle, APP_HINT_IDS.TABS_MENU), false);
-            }
-        }
+        handleInitialAppNavigation({menu, appTitle});
     }
     dispatchNotifyRemoteAppReady();
 }

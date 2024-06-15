@@ -71,6 +71,7 @@
  * @prop {string} title     tooltips
  * @prop {string} category  category/group of the given menu item
  * @prop {bool} primary     shown as tab on init; defaults to false
+ * @prop {bool} landing     whether the app starts with this tab; defaults to false
  * @prop {string} path      used by routed-app for navigation
  * @prop {bool} visible     shown on tab menu
  */

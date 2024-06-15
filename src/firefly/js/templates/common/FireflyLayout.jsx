@@ -7,10 +7,14 @@ import {warningDivId} from 'firefly/ui/LostConnection.jsx';
 import {Alerts} from 'firefly/ui/DropDownContainer.jsx';
 import {Banner} from 'firefly/ui/Banner.jsx';
 import {Menu} from 'firefly/ui/Menu.jsx';
-import {getMenu, isAppReady} from 'firefly/core/AppDataCntlr.js';
+import {dispatchAddPreference, getMenu, isAppReady} from 'firefly/core/AppDataCntlr.js';
 import {Slot, useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {MainPanel} from 'firefly/templates/common/MainPanel.jsx';
 import {AppConfigDrawer} from '../../ui/AppConfigDrawer.jsx';
+import {getActionFromUrl} from 'firefly/core/History';
+import {SHOW_DROPDOWN} from 'firefly/core/LayoutCntlr';
+import {flux} from 'firefly/core/ReduxFlux';
+import {APP_HINT_IDS, appHintPrefName} from 'firefly/templates/fireflyviewer/LandingPage';
 
 /*
  __________________________________________
@@ -123,4 +127,32 @@ function BannerSection({menu, banner, ...rest}) {
     );
 }
 
+/**
+ * Handles where to go when the application starts. It determines goto location based on URL action, `landing` configuration
+ * in menu items, and a default flag (in order). Also, updates hint preferences if not starting with "Results" view.
+ * @param p props
+ * @param p.menu {MenuItem[]} menu info
+ * @param p.appTitle {string} application title
+ * @param p.defaultToShowDropdown {boolean} flag to default to the display of dropdown (a tab that is not 'Results')
+ */
+export const handleInitialAppNavigation = ({menu, appTitle, defaultToShowDropdown = false}) => {
+    const urlAction = getActionFromUrl();
+    const landingItem = menu.find((item) => item.landing);
 
+    let gotoAction;
+    if (urlAction) {
+        gotoAction = urlAction; // goto where URL points, can be TABLE_SEARCH, SHOW_DROPDOWN, etc.
+    } else if (landingItem) {
+        gotoAction = { type: SHOW_DROPDOWN, view: landingItem.action }; // goto menu item with landing=true
+    } else if (defaultToShowDropdown) {
+        gotoAction = { type: SHOW_DROPDOWN }; // goto 1st shown tab that isn't "Results"
+    }
+
+    if (gotoAction) {
+        flux.process(gotoAction);
+
+        if (gotoAction.type === SHOW_DROPDOWN) { // app didn't start with Results view, app hint for tabs menu is not needed
+            dispatchAddPreference(appHintPrefName(appTitle, APP_HINT_IDS.TABS_MENU), false);
+        }
+    }
+};
