@@ -11,14 +11,19 @@ import {Slot, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {FileDropZone} from '../../visualize/ui/FileUploadViewPanel.jsx';
 import {dispatchAddPreference, getPreference} from 'firefly/core/AppDataCntlr';
 
+export const APP_HINT_IDS = {
+    TABS_MENU: 'tabsMenu',
+    BG_MONITOR: 'bgMonitor'
+};
+
 
 export function LandingPage({slotProps={}, sx, ...props}) {
     const {appTitle,footer,
         fileDropEventAction='FileUploadDropDownCmd'} = useContext(AppPropertiesCtx);
 
     const defSlotProps = {
-        tabsMenuHint: {appTitle, id: 'tabsMenu', hintText: 'Choose a tab to search for or upload data.', sx: { left: '16rem' }},
-        bgMonitorHint: {appTitle, id: 'bgMonitor', hintText: 'Load job results from background monitor', tipPlacement: 'end', sx: { right: 8 }},
+        tabsMenuHint: {appTitle, id: APP_HINT_IDS.TABS_MENU, hintText: 'Choose a tab to search for or upload data.', sx: { left: '16rem' }},
+        bgMonitorHint: {appTitle, id: APP_HINT_IDS.BG_MONITOR, hintText: 'Load job results from background monitor', tipPlacement: 'end', sx: { right: 8 }},
         topSection: { appTitle },
         bottomSection: {
                 icon: <QueryStats sx={{ width: '6rem', height: '6rem' }} />,
@@ -112,11 +117,11 @@ function EmptyResults({icon, text, subtext, summaryText, actionItems}) {
     );
 }
 
+// An app hint needs to be shown only the first time user loads an app. So this is controlled by a flag saved as app preference
+export const appHintPrefName = (appTitle, hintId) => `showAppHint__${appTitle}--${hintId}`;
 
 function AppHint({appTitle, id, hintText, tipPlacement='middle', sx={}}) {
-    // An app hint needs to be shown only the first time user loads an app. So this is controlled by a flag saved as app preference
-    const appHintPrefName = `showAppHint__${appTitle}--${id}`;
-    const showAppHint = useStoreConnector(() => getPreference(appHintPrefName, true));
+    const showAppHint = useStoreConnector(() => getPreference(appHintPrefName(appTitle, id), true));
 
     const arrowTip = {
         '&::before': {
@@ -151,13 +156,13 @@ function AppHint({appTitle, id, hintText, tipPlacement='middle', sx={}}) {
                   onClose={(e, reason)=> {
                       //don't close a hint if the click made outside it (clickaway) originated from another hint
                       if (reason==='clickaway' && e?.target?.closest('.MuiSnackbar-root')) return;
-                      dispatchAddPreference(appHintPrefName, false);
+                      dispatchAddPreference(appHintPrefName(appTitle, id), false);
                   }}
                   sx={{...positioningSx, ...sx, ...arrowTip}}
                   startDecorator={<TipsAndUpdates/>}
                   endDecorator={
                       <Button
-                          onClick={() => dispatchAddPreference(appHintPrefName, false)}
+                          onClick={() => dispatchAddPreference(appHintPrefName(appTitle, id), false)}
                           variant='outlined'
                           color='primary'>
                           Got it
