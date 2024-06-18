@@ -3,7 +3,7 @@
  */
 
 import React, {useEffect} from 'react';
-import {Box, Stack, Typography, Sheet, Divider, ChipDelete, Tooltip, Skeleton, Button} from '@mui/joy';
+import {Box, Stack, Typography, Sheet, ChipDelete, Tooltip, Button} from '@mui/joy';
 import PropTypes, {object, shape} from 'prop-types';
 import {defer, truncate, get, set} from 'lodash';
 import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
@@ -33,6 +33,7 @@ import {AddColumnBtn} from './AddOrUpdateColumn.jsx';
 import WarningIcon from '@mui/icons-material/WarningAmberRounded';
 import {PropertySheetAsTable} from 'firefly/tables/ui/PropertySheet';
 import {META} from '../TableRequestUtil.js';
+import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
 
 const logger = Logger('Tables').tag('TablePanel');
 
@@ -428,26 +429,28 @@ function NotReady({showTitle, tbl_id, title, removable, backgroundable, error}) 
             dispatchTableFetch(JSON.parse(prevReq));
         };
         if (error) {
-            const {message, type, cause} = parseError(error);
-            return (
-                <Stack spacing={1} m='auto' width={.8} height={1} justifyContent='center'>
-                    <Typography level='title-lg' color='danger'>{message}</Typography>
-                    { cause && (
-                        <Stack>
-                            <Stack direction='row'>
-                                <Typography level='title-lg' mr={1}>Cause:</Typography>
-                                {type && <Typography level='body-md'>[{type}]</Typography>}
-                            </Stack>
-                            <Typography level='body-md' ml={1}>{cause}</Typography>
-                        </Stack>
-                    )}
-                    {prevReq && <Button color='neutral' variant='solid' onClick={reloadTable} sx={{alignSelf: 'baseline'}}>Back</Button>}
-                </Stack>
-            );
+            return <TableErrorMsg {...{error, prevReq, reloadTable}}/>;
         } else {
-            return <Skeleton/>;
+            return <TableMask/>;
         }
     }
 }
 
-
+export function TableErrorMsg({error, prevReq, reloadTable, ...props}) {
+    const {message, type, cause} = parseError(error);
+    return (
+        <Stack spacing={1} m='auto' width={.8} height={1} justifyContent='center' {...props}>
+            <Typography level='title-lg' color='danger'>{message}</Typography>
+            { cause && (
+                <Stack>
+                    <Stack direction='row'>
+                        <Typography level='title-lg' mr={1}>Cause:</Typography>
+                        {type && <Typography level='body-md'>[{type}]</Typography>}
+                    </Stack>
+                    <Typography level='body-md' ml={1}>{cause}</Typography>
+                </Stack>
+            )}
+            {prevReq && <Button color='neutral' variant='solid' onClick={reloadTable} sx={{alignSelf: 'baseline'}}>Back</Button>}
+        </Stack>
+    );
+}

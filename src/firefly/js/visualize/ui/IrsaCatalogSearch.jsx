@@ -24,6 +24,7 @@ import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {PREF_KEY} from 'firefly/tables/TablePref.js';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {OptionListField} from 'firefly/ui/OptionListField.jsx';
+import {GridMask} from 'firefly/ui/panel/MaskPanel.jsx';
 
 /**
  * group key for fieldgroup comp
@@ -90,7 +91,7 @@ function ProjectPart() {
         }
     }, [valC]);     // if catalog changes, select first table of that catalog
 
-    if (!(catmaster && valP && valC)) return  <Skeleton/>;
+    if (!(catmaster && valP && valC)) return <GridMask cols={1} rows={2} sx={{flexGrow:1}}/>;
 
     const optProjects = getProjectOptions(catmaster);
     const optCatalogs = getSubProjectOptions(catmaster, valP);
@@ -170,7 +171,7 @@ function PositionPart() {
     const optCatTable = getCatalogOptions(catmaster, valP, valC);
     const selCatTable = optCatTable?.find((c) => c.value === valT);
 
-    if (!(catmaster && valP && valC && selCatTable)) return  <Skeleton/>;
+    if (!(catmaster && valP && valC && selCatTable)) return  <Skeleton variant='rectangle' sx={{flexGrow:1}}/>;
 
     const POS_COL = cols.findIndex((c) => c?.name?.toLowerCase() === 'pos');
 
@@ -197,7 +198,7 @@ function TableConstraint() {
     const cattableValue = useStoreConnector(() => getFieldVal(irsaCatalogGroupKey, 'cattable'));
     const ddform = useStoreConnector(() => getFieldVal(irsaCatalogGroupKey, 'ddform', 'true'));
 
-    if (!(masterTableInfo && valP && valC)) return  <Skeleton sx={{flexGrow:1}}/>;
+    if (!(masterTableInfo && valP && valC)) return  <Skeleton  variant='rectangle' sx={{flexGrow:1}}/>;
 
     const {catmaster} = masterTableInfo;
     const catTable = getCatalogOptions(catmaster, valP, valC);

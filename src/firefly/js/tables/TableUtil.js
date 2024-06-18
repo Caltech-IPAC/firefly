@@ -1443,10 +1443,12 @@ export function hasAuxData(tbl_id) {
 
 /**
  * @param tbl_id  ID of the table
+ * @param tableModel  or, the tableModel itself.
  * @return TBL_STATE of the table.
  */
-export function getTableState(tbl_id) {
-    const {error, status, isFetching, totalRows, filters, sqlFilter} = getTblById(tbl_id) || {};
+export function getTableState(tbl_id, tableModel={}) {
+    const {error, status, isFetching, totalRows, request={}} = getTblById(tbl_id) || tableModel;
+    const {filters, sqlFilter} = request;
 
     if (error) return TBL_STATE.ERROR;
     if (isFetching) return TBL_STATE.LOADING;
@@ -1489,7 +1491,7 @@ export function parseError(error) {
         const [_, type, cause] = error?.cause.match(/(.+?):(.+)/) || [];
         return {message, type, cause};
     } else {
-        const [_, error, cause] = message.match(/(.+?):(.+)/) || [];     // formatted error messages; 'error:cause'
+        const [_, error, cause] = message?.match(/(.+?):(.+)/) || [];     // formatted error messages; 'error:cause'
         return {message: error || message, cause};
     }
 }

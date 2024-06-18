@@ -21,6 +21,8 @@ import {Logger} from '../../util/Logger.js';
 import 'fixed-data-table-2/dist/fixed-data-table.css';
 import './TablePanel.css';
 import {updateSet} from 'firefly/util/WebUtil.js';
+import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
+import {TableErrorMsg} from 'firefly/tables/ui/TablePanel.jsx';
 
 const logger = Logger('Tables').tag('BasicTable');
 const noDataMsg = 'No Data Found';
@@ -108,11 +110,10 @@ const BasicTableViewInternal = React.memo((props) => {
     const rowClassNameGetter = highlightedRowHandler || defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx);
 
 
-    const tstate = getTableState(tbl_id);
+    const tstate = getTableState(tbl_id, {error});      // tableModel is used when tbl_id is not defined.
     logger.debug(`render.. state:[${tstate}] -- ${tbl_id}`);
-
-    if (tstate === TBL_STATE.ERROR)   return  <div style={{padding: 10}}>{error}</div>;
-    if (tstate === TBL_STATE.LOADING || isEmpty(columnWidths)) return <div style={{top: 0}} className='loading-mask'/>;
+    if (tstate === TBL_STATE.ERROR)   return  <TableErrorMsg error={error}/>;
+    if (tstate === TBL_STATE.LOADING || isEmpty(columnWidths)) return <TableMask width={1}/>;
 
     const content = () => {
         if (textView) {
@@ -337,8 +338,7 @@ function columnWidthsInPixel(columns, data, minWidth) {
     return maxVals.map((text, idx) => colWidthInPixel(text, columns[idx]), minWidth);
 }
 
-const paddings = 8;
-function colWidthInPixel(text, col, minWidth=45) {
+function colWidthInPixel(text, col, minWidth=45, paddings=8) {
     const header = col.label || col.name;
     const style = header === text ? headerStyle : {fontSize:12};
     text = text.replace(/[^a-zA-Z0-9]/g, 'O');    // some non-alphanum values can be very narrow.  use 'O' in place of them.

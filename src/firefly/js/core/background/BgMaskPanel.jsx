@@ -1,14 +1,14 @@
 import React, {useEffect} from 'react';
-import {bool, string, func, object} from 'prop-types';
-import {Button, Stack} from '@mui/joy';
+import {bool, string, func, object, element} from 'prop-types';
+import {Button, LinearProgress, Skeleton, Stack, Typography} from '@mui/joy';
 
 import {dispatchJobAdd, dispatchJobCancel} from './BackgroundCntlr.js';
 import {dispatchComponentStateChange, getComponentState} from '../ComponentCntlr.js';
-import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {useStoreConnector, Slot} from '../../ui/SimpleComponent.jsx';
 import {Logger} from '../../util/Logger.js';
 import {showJobInfo} from './JobInfo.jsx';
 import {getJobInfo} from './BackgroundUtil.js';
-import INFO from 'html/images/info-icon.png';
+import {InfoButton} from 'firefly/visualize/ui/Buttons.jsx';
 
 const logger = Logger('BgMaskPanel');
 
@@ -22,7 +22,7 @@ const logger = Logger('BgMaskPanel');
  */
 
 
-export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, showError= true, style={}}) => {
+export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, mask, showError= true, ...props}) => {
 
     const inProgress = useStoreConnector(() => getComponentState(componentKey)?.inProgress || false);
     const jobInfo    = useStoreConnector(() => {
@@ -40,10 +40,6 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, showError=
             dispatchComponentStateChange(componentKey, {inProgress:false});
             dispatchJobCancel(jobInfo.jobId);
         }
-    };
-
-    const showInfo = () => {
-        jobInfo && showJobInfo(jobInfo.jobId);
     };
 
     const msg = jobInfo?.errorSummary?.message || jobInfo?.jobInfo?.progressDesc || 'Working...';
@@ -65,40 +61,42 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, showError=
     logger.debug(inProgress ? 'show' : 'hide');
     if (inProgress) {
         return (
-            <div className='BgMaskPanel' style={style}>
-                <div className='loading-mask'/>
-                <div style={{display: 'flex', alignItems: 'center'}}>
-                    <div className='BgMaskPanel__content'>
-                        <div style={{display: 'inline-flex', alignItems: 'center', justifyContent: 'center'}}>
-                            <div className='BgMaskPanel__msg'>{msg}</div>
-                            <img className='JobInfo__items--link' onClick={showInfo} src={INFO} style={{height: 20}}/>
-                        </div>
-                        <Options/>
-                    </div>
-                </div>
-            </div>
+            <MaskP msg={msg} jobInfo={jobInfo} mask={mask} {...props}>
+                <Options/>
+            </MaskP>
         );
     } else if (errorInJob && showError) {
         return (
-            <div className='BgMaskPanel' style={style}>
-                <div className='mask-only'/>
-                <div style={{display: 'flex', alignItems: 'center'}}>
-                    <div className='BgMaskPanel__content'>
-                        <div style={{display: 'inline-flex', alignItems: 'center', justifyContent: 'center'}}>
-                            <div style={{marginRight: 5, fontSize: 18}}> {jobInfo.phase} </div>
-                            <img className='JobInfo__items--link' onClick={showInfo} src={INFO} style={{height: 20}}/>
-                        </div>
-                        <div className='BgMaskPanel__msg'>{msg}</div>
-                    </div>
-                </div>
-            </div>
+            <MaskP msg={msg} jobInfo={jobInfo} mask={mask} {...props}/>
         );
     } else return null;
 });
+
+function MaskP({msg, jobInfo, children, mask=<Skeleton/>, ...props}) {
+    const showInfo = () => {
+        showJobInfo(jobInfo.jobId);
+    };
+
+    return (
+        <Slot component={Stack} position='absolute' sx={{inset:0}} slotProps={props}>
+            {mask}
+            <Stack whiteSpace='nowrap' position='absolute' zIndex={10} top='50%' left='50%' spacing={2} sx={{transform: 'translate(-50%, -50%)'}}>
+                <Stack direction='row' alignItems='center' justifyContent='center' spacing={1}>
+                    <Typography level='title-md' color='warning' fontStyle='italic' noWrap={true}>{msg}</Typography>
+                    <InfoButton enabled={!!jobInfo} onClick={showInfo}/>
+                </Stack>
+                {children}
+                <LinearProgress color='neutral'/>
+            </Stack>
+        </Slot>
+
+    );
+}
 
 BgMaskPanel.propTypes = {
     componentKey: string.isRequired,  // key used to identify this background job
     style: object,                    // used for overriding default styling
     onMaskComplete: func,
-    showError: bool
+    showError: bool,
+    mask: element
 };
