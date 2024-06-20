@@ -7,7 +7,7 @@ import {
     dispatchOnAppReady, dispatchSetMenu, FORM_CANCEL, FORM_SUBMIT, getMenu
 } from '../../core/AppDataCntlr.js';
 import {dispatchHideDropDown, dispatchSetLayoutInfo, getDropDownInfo} from '../../core/LayoutCntlr.js';
-import {dispatchAddActionWatcher} from '../../core/MasterSaga.js';
+import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../../core/MasterSaga.js';
 import {FireflyRoot} from '../../ui/FireflyRoot.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchComponentStateChange, getComponentState} from 'firefly/core/ComponentCntlr.js';
@@ -94,7 +94,9 @@ function useFormWatcher(submitTo='/?results', onCancel) {
                 }
             });
         });
-    },[]);
+
+        return (() => dispatchCancelActionWatcher(id));
+    },[submitTo]);
 }
 
 /**
