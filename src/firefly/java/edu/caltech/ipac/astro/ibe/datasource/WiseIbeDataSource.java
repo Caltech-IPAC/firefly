@@ -245,7 +245,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
             }
             else if (sourceProductLevel == "3a") {
                 String sourceSchema = getSchemaFromSourceId(sourceId);
-                String ss = sourceSchema.toUpperCase();
+                String ss = sourceSchema.replaceAll("-", "_").toUpperCase();
                 String tt = sourceProductLevel.toUpperCase();
                 DataProduct sourcedt = DataProduct.valueOf(ss + "_" + tt);
                 String sourceTable = sourcedt.getSourceTable();
@@ -260,19 +260,18 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
             }
             if (sourceProductLevel == "1b") {
                 String sourceSpec = WISE + "." + wds.getSourceTable() + "(\"source_id\":\"" + refSourceId + "\")";
-                //queryParam.setRefBy(sourceSpec);
+                //queryParam.setRefBy(sourceSpec);  commented out not using RefBy search,
+                // getting the images with the sourceId identified scanId and frame_num only
                 String scanId = refSourceId.trim().substring(0,6);
                 String framNum = String.valueOf(Integer.parseInt(refSourceId.trim().substring(6,9)));
                 String ref1B =  "scan_id=" + "\'"+ scanId + "\'"+" AND " + "frame_num="+"\'"+framNum+"\'";
-                //queryParam.setRefBy(sourceSpec+"&where="+ref1B);
                 queryParam.setWhere(ref1B);
             } else if (sourceProductLevel == "3a") {
                 String coaddId = refSourceId.trim().substring(0,13);
                 DataProduct sourcedt = DataProduct.ALLSKY_4BAND_3A;
                 String sourceTable = sourcedt.getSourceTable();
                 String sourceSpec = WISE + "." + sourceTable + "(\"source_id\":\"" + refSourceId + "\")";
-                String ref3A = "coadd_id="+"\'"+coaddId+"\'";
-                //queryParam.setRefBy(sourceSpec+"&where=" + ref3A);
+                String ref3A = "coadd_id="+"\'"+coaddId+"\'";  //get the images with the coadd_id given by the source_id
                 queryParam.setWhere(ref3A);
             }
         }
