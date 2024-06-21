@@ -494,19 +494,25 @@ div.rootStyle img {
 
 /*------------------- generic-browser scrollbars ---------------------*/
 /* from https://developer.chrome.com/docs/css-ui/scrollbar-styling */
+:root {
+    --scrollbar-color-thumb: var(--joy-palette-neutral-softActiveBg);
+    --scrollbar-color-track: var(--joy-palette-background-surface);
+    --scrollbar-color-thumb-active: var(--joy-palette-neutral-softDisabledColor); /* one shade darker than softActiveBg */
+}
+
 /* Modern browsers with `scrollbar-*` support */
 @supports (scrollbar-width: auto) {
-    #app {
-        scrollbar-color: var(--joy-palette-neutral-solidBg) var(--joy-palette-background-level1); /*thumb-color track-color*/
+    body {
+        scrollbar-color: var(--scrollbar-color-thumb) var(--scrollbar-color-track);
     }
 }
 
 /* Legacy browsers with `::-webkit-scrollbar-*` support */
 @supports selector(::-webkit-scrollbar) {
-    #app::-webkit-scrollbar-thumb {
-        background: var(--joy-palette-neutral-solidBg);
+    body::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-color-thumb);
     }
-    #app::-webkit-scrollbar-track {
-        background: var(--joy-palette-background-level1);
+    body::-webkit-scrollbar-track {
+        background: var(--scrollbar-color-track);
     }
 }

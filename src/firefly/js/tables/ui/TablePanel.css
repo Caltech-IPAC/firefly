@@ -165,24 +165,24 @@ Overriding default fixed-table css
 
 .public_Scrollbar_main.public_Scrollbar_mainActive,
 .public_Scrollbar_main {
-    background-color: var(--joy-palette-background-surface);
+    background-color: var(--scrollbar-color-track);
     border-color: var(--joy-palette-neutral-outlinedBorder);
 }
 
 .public_Scrollbar_mainOpaque,
 .public_Scrollbar_mainOpaque.public_Scrollbar_mainActive,
 .public_Scrollbar_mainOpaque:hover {
-    background-color: var(--joy-palette-background-surface);
+    background-color: var(--scrollbar-color-track);
 }
 
 .public_Scrollbar_face:after {
-    background-color: var(--joy-palette-neutral-softActiveBg);
+    background-color: var(--scrollbar-color-thumb);
 }
 
 .public_Scrollbar_main:hover .public_Scrollbar_face:after,
 .public_Scrollbar_mainActive .public_Scrollbar_face:after,
 .public_Scrollbar_faceActive:after {
-    background-color: var(--joy-palette-neutral-solidBg);
+    background-color: var(--scrollbar-color-thumb-active);
 }
 
 .public_fixedDataTableRow_columnsShadow {
