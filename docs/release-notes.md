@@ -74,7 +74,7 @@
 - TAP: TAP panels can now be locked to one TAP service or TAP obscore service
 - Charts: Cascade-style plots for spectra [PR:Firefly-1370](https://github.com/Caltech-IPAC/firefly/pull/1499)
 - Upload: improved support [PR:Firefly-1341](https://github.com/Caltech-IPAC/firefly/pull/1472)
-- Tables: improved table error message handling [PR:Firefly-1345](https://github.com/Caltech-IPAC/firefly/pull/1535)
+- Tables: improved table error message handling [PR:Firefly-1445](https://github.com/Caltech-IPAC/firefly/pull/1535)
 
 ### _Patches 2024.1_
 - 2024.1.1
