@@ -23,7 +23,7 @@ import {RangeSliderView} from '../../ui/RangeSliderView.jsx';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchHideDialog, dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from 'firefly/ui/DropDownToolbarButton.jsx';
-import {Typography, Box, Stack, Divider, IconButton} from '@mui/joy';
+import {Typography, Box, Stack, Divider, IconButton, Skeleton} from '@mui/joy';
 // import LockOpenTwoToneIcon from '@mui/icons-material/LockOpenTwoTone';
 // import LockTwoToneIcon from '@mui/icons-material/LockTwoTone';
 import LockIcon from '@mui/icons-material/Lock';
@@ -100,7 +100,7 @@ const handleColorChange= (plot,cbarId, bias= .5, contrast= 1) => {
 
 const makeMask= () => (
     <div style={maskWrapper}>
-        <div style= {{background: 'rgba(0,0,0,.5)'}} className='loading-mask'/>
+        <Skeleton/>
         <div style={{
             position: 'absolute',
             top: 132,
@@ -108,7 +108,8 @@ const makeMask= () => (
             color: 'white',
             width: 150,
             fontSize: '12pt',
-            textAlign: 'center'
+            textAlign: 'center',
+            zIndex: 10
         }}>
             Loading Advanced Options
         </div>
@@ -261,7 +262,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
                     defaultValue:contrastInt, slideValue:contrastInt,
                     handleChange:(v) => changeBiasContrastColor(colorTableId, bias,v/10)}} />
             </Stack> : <div/>}
-            {!allLoaded && makeMask() }
+            { (true || !allLoaded) && makeMask() }
         </Box>
     );
 
@@ -310,7 +311,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
                             ))
                         }
             </Box>
-            {!allLoaded && makeMask() }
+            {(true || !allLoaded) && makeMask() }
         </Box>
     );
 

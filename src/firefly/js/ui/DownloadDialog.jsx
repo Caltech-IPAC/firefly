@@ -190,18 +190,8 @@ export function DownloadOptionPanel ({groupKey, cutoutSize, help_id, children, s
 
     // const showWarnings = hasProprietaryData(getTblById(tbl_id)); // it feature is not working correctly
 
-    const maskStyle = {
-        position: 'absolute',
-        top:-26,
-        bottom:-4,
-        right:-4,
-        left:-4,
-        width:undefined,
-        height:undefined,
-        backgroundColor: 'rgba(0,0,0,0.2)'
-    };
-    const maskPanel = <BgMaskPanel key={bgKey} componentKey={bgKey} style={maskStyle}
-                                   onMaskComplete={() =>hideDownloadDialog()}/>;
+    const maskPanel = (<BgMaskPanel key={bgKey} componentKey={bgKey}
+                                   onMaskComplete={() =>hideDownloadDialog()}/>);
 
     const saveAsProps = {
         initialState: {

@@ -2,10 +2,9 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box} from '@mui/joy';
+import {Box, Skeleton} from '@mui/joy';
 import React, {useState} from 'react';
 import {FormPanel} from './FormPanel.jsx';
-import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import {FileUploadViewPanel, resultFail} from '../visualize/ui/FileUploadViewPanel.jsx';
 import {getAppOptions} from 'firefly/api/ApiUtil.js';
 import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
@@ -15,7 +14,6 @@ import {resultSuccess} from 'firefly/ui/FileUploadProcessor';
 import {FieldGroup} from 'firefly/ui/FieldGroup';
 import {DATA_LINK_TABLES, IMAGES, MOC_TABLES, REGIONS, SPECTRUM_TABLES, TABLES, UWS} from 'firefly/ui/FileUploadUtil';
 
-const maskWrapper= { position:'absolute', left:0, top:0, width:'100%', height:'100%' };
 const panelKey = 'FileUploadAnalysis';
 
 const defaultAcceptList = [
@@ -40,7 +38,7 @@ export const FileUploadDropdown= ({sx, onCancel, onSubmit=resultSuccess, keepSta
     const [doMask, changeMasking]= useState(() => false);
     const helpId = getAppOptions()?.uploadPanelHelpId ?? 'basics.searching';
     return (
-        <Box sx={{width: 1, height:1, ...sx}}>
+        <Box position='relative' sx={{width: 1, height:1, ...sx}}>
             <FieldGroup groupKey={groupKey} keepState={keepState} sx={{height:1, width:1,
                 display: 'flex', alignItems: 'stretch', flexDirection: 'column'}}>
                 <FormPanel
@@ -61,7 +59,7 @@ export const FileUploadDropdown= ({sx, onCancel, onSubmit=resultSuccess, keepSta
                         externalDropEvent:initArgs?.searchParams?.dropEvent}}/>
                 </FormPanel>
             </FieldGroup>
-            {doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
+            {doMask && <Skeleton sx={{inset:0, zIndex:10}}/>}       // zIndex:10 because '.file-drop-zone' raises plane to z-index:10.
         </Box>
     );
 };

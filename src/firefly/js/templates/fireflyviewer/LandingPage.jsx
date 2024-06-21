@@ -110,7 +110,7 @@ function EmptyResults({icon, text, subtext, summaryText, actionItems}) {
                 </Stack>
                 {Boolean(summaryText) &&
                     <Stack spacing={2} alignItems='center'>
-                        <Typography level={'body-lg'}>{summaryText}</Typography>
+                        <Typography component='div' level={'body-lg'}>{summaryText}</Typography>
                     </Stack>}
             </Stack>
         </Sheet>

@@ -1,4 +1,4 @@
-import {Box, Chip, Stack, Typography} from '@mui/joy';
+import {Box, Chip, Skeleton, Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 import {ConstraintContext} from 'firefly/ui/tap/Constraints';
@@ -128,7 +128,9 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
     return (
         <CollapsibleCheckHeader title={panelTitle} helpID={tapHelpId(panelPrefix)}
                                 message={constraintResult?.simpleError??''} initialStateOpen={false}>
-            <Stack {...{mt: 1/2, spacing:1}}>
+            <Stack {...{mt: 1/2, spacing:1, position:'relative'}}>
+                {working &&  <Skeleton/>}
+
                 <Typography level='body-xs'>Performs an exact match on the ID(s) provided, not a spatial search in the neighborhood of the designated objects.</Typography>
                 {!canUpload && <Typography level='body-xs'>This search uses "Select IN" style SQL as this service does not support uploads.</Typography>}
                 <RadioGroupInputField {...{
@@ -159,7 +161,6 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
                     tooltip={SELECT_IN_TOOLTIP}
                     options={[{label:'Use "select IN" style SQL instead of TAP Upload', value:'use'}]}
                 />}
-                {working &&  <div className='loading-mask'/>}
 
             </Stack>
         </CollapsibleCheckHeader>

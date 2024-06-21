@@ -8,6 +8,7 @@ import PropTypes from 'prop-types';
 import {FormPanel} from './FormPanel.jsx';
 import {dispatchHideDropDown} from '../core/LayoutCntlr.js';
 import {WorkspaceViewPanel, resultSuccess, resultFail} from '../visualize/ui/WorkspaceViewPanel.jsx';
+import {Skeleton, Stack} from '@mui/joy';
 
 const dropdownName = 'WorkspaceDropDownCmd';
 
@@ -36,7 +37,7 @@ export class WorkspaceDropdown extends PureComponent {
 
     render() {
         return (
-            <div style={{padding: 10}}>
+            <Stack p={1} position='relative'>
                 <FormPanel
                     cancelText=''
                     completeText='close'
@@ -48,8 +49,8 @@ export class WorkspaceDropdown extends PureComponent {
 
                     <WorkspaceViewPanel />
                 </FormPanel>
-                {this.state.doMask && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
-            </div>
+                {this.state.doMask && <Skeleton sx={{inset:0}}/> }
+            </Stack>
         );
     }
 }

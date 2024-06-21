@@ -47,6 +47,7 @@ import VisUtil from '../VisUtil';
 import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {getImageMasterData} from './AllImageSearchConfig.js';
 import {FD_KEYS, FG_KEYS} from './UIConst';
+import {GridMask} from 'firefly/ui/panel/MaskPanel.jsx';
 
 var imageMasterData;        // latest imageMasterData retrieved from server
 const scrollDivId = 'ImageSearchScroll';
@@ -248,11 +249,7 @@ function ImageSearchPanelV2 ({archiveName='Search', title='Image Search', multiS
             </div>
         );
     } else {
-        return (
-            <Box sx={{position: 'absolute', left: 0, top: 0, width: 1, height: 1}}>
-                <div className='loading-mask'/>
-            </Box>
-        );
+        return (<GridMask cols={1} rows={3}/>);
     }
 }
 

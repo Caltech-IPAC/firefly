@@ -308,30 +308,6 @@ div.rootStyle img {
 
 
 /*-------------------< loading mask ---------------------*/
-.mask-only {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-color: var(--joy-palette-background-backdrop);
-    backdrop-filter: blur(8px);
-}
-
-.loading-mask {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-}
-
-.loading-mask::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    background-color: var(--joy-palette-background-backdrop);
-    backdrop-filter: blur(8px);
-}
 @-webkit-keyframes spin {
     from { transform: rotate(0deg);}
     to {transform: rotate(359deg);}
@@ -346,23 +322,6 @@ div.rootStyle img {
     border-style: solid;
     border-color: transparent rgb(255, 255, 255) rgb(255, 255, 255);
     border-radius: 50%;
-    top: calc(50% - 12px);
-    left: calc(50% - 12px);
-    animation-name: spin;
-    animation-duration: 2s;
-    animation-iteration-count: infinite;
-    animation-timing-function: linear;
-}
-
-.loading-mask::after {
-    content: "";
-    position: absolute;
-    border-width: 3px;
-    border-style: solid;
-    border-color: transparent rgb(255, 255, 255) rgb(255, 255, 255);
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
     top: calc(50% - 12px);
     left: calc(50% - 12px);
     animation-name: spin;
@@ -535,19 +494,25 @@ div.rootStyle img {
 
 /*------------------- generic-browser scrollbars ---------------------*/
 /* from https://developer.chrome.com/docs/css-ui/scrollbar-styling */
+:root {
+    --scrollbar-color-thumb: var(--joy-palette-neutral-softActiveBg);
+    --scrollbar-color-track: var(--joy-palette-background-surface);
+    --scrollbar-color-thumb-active: var(--joy-palette-neutral-softDisabledColor); /* one shade darker than softActiveBg */
+}
+
 /* Modern browsers with `scrollbar-*` support */
 @supports (scrollbar-width: auto) {
-    #app {
-        scrollbar-color: var(--joy-palette-neutral-solidBg) var(--joy-palette-background-level1); /*thumb-color track-color*/
+    body {
+        scrollbar-color: var(--scrollbar-color-thumb) var(--scrollbar-color-track);
     }
 }
 
 /* Legacy browsers with `::-webkit-scrollbar-*` support */
 @supports selector(::-webkit-scrollbar) {
-    #app::-webkit-scrollbar-thumb {
-        background: var(--joy-palette-neutral-solidBg);
+    body::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-color-thumb);
     }
-    #app::-webkit-scrollbar-track {
-        background: var(--joy-palette-background-level1);
+    body::-webkit-scrollbar-track {
+        background: var(--scrollbar-color-track);
     }
 }

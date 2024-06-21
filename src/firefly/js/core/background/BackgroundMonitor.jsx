@@ -29,7 +29,6 @@ import CANCEL from 'html/images/stop.gif';
 import DOWNLOAED from 'html/images/blue_check-on_10x10.gif';
 import FAILED from 'html/images/exclamation16x16.gif';
 import INFO from 'html/images/info-icon.png';
-import './BackgroundMonitor.css';
 import CompleteButton from 'firefly/ui/CompleteButton';
 
 

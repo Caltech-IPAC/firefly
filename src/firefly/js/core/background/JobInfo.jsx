@@ -9,12 +9,17 @@ import {dispatchShowDialog} from '../ComponentCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {CollapsibleItem, CollapsibleGroup} from 'firefly/ui/panel/CollapsiblePanel.jsx';
 import {uwsJobInfo} from 'firefly/rpc/SearchServicesJson.js';
-import {Box, Button, Stack} from '@mui/joy';
+import {Box, Button, Skeleton, Stack} from '@mui/joy';
 import {OverflowMarker} from 'firefly/tables/ui/TablePanel.jsx';
 
 
-const popupSx = {justifyContent: 'space-between', resize: 'both', overflow: 'auto',
-    minHeight: 200, minWidth: 450};
+const popupSx = {
+    justifyContent: 'space-between',
+    resize: 'both',
+    overflow: 'auto',
+    minHeight: 200, minWidth: 450,
+    width: '45vh', height: '45wh'
+};
 
 export function showJobInfo(jobId) {
     const ID = 'show-job-info';
@@ -36,7 +41,7 @@ export async function showUwsJob({jobUrl, jobId}) {
     const mask = (
         <PopupPanel title='UWS Job' >
             <Box key={jobId} sx={{...popupSx, position: 'relative'}}>
-                <div className='loading-mask'/>
+                <Skeleton/>
             </Box>
         </PopupPanel>
     );

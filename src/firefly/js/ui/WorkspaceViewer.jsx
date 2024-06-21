@@ -1,4 +1,4 @@
-import {Button, Stack} from '@mui/joy';
+import {Button, Skeleton, Stack} from '@mui/joy';
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
 import {get, truncate} from 'lodash';
@@ -459,7 +459,7 @@ function showWorkspaceAsPopup({onComplete, value, fieldKey=workspaceUploadDef.fi
                                             files={newList}
                                             keepSelect={true}
                                             initialState={{value, validator: isWsFolder(false)}}/>
-                            {showMask && <div className='loading-mask' style={Object.assign({}, style, {top:0, marginTop: 0})}/>}
+                            {showMask && <Skeleton/>}
                         </FieldGroup>
                     </Stack>
                     <Stacker endDecorator={<HelpIcon helpId={'visualization.imageoptions'}/>}>

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Button, Skeleton, Stack, Typography} from '@mui/joy';
+import {Box, Button, Stack, Typography} from '@mui/joy';
 import React, {PureComponent, memo} from 'react';
 import PropTypes from 'prop-types';
 import {isEmpty, merge, isNil, isArray, cloneDeep, has} from 'lodash';
@@ -21,6 +21,7 @@ import {useFieldGroupConnector} from '../../ui/FieldGroupConnector.jsx';
 const sqlConstraintsCol = {name: 'constraints', idx: 1, type: 'char', width: 10};
 
 import '../../tables/ui/TablePanel.css';
+import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
 
 /*
  * update short_dd to be one of ['short', 'long', ''] based on if 'showForm' is true or not
@@ -128,7 +129,7 @@ export class CatalogConstraintsPanel extends PureComponent {
                 );
         };
 
-        if (isEmpty(tableModel) || !tableModel.tbl_id.startsWith(catname)) return  <Skeleton sx={{flexGrow:1}}/>;
+        if (isEmpty(tableModel) || !tableModel.tbl_id.startsWith(catname)) return  <TableMask sx={{flexGrow:1}}/>;
 
         return (
             <Stack spacing={1} flexGrow={1}>

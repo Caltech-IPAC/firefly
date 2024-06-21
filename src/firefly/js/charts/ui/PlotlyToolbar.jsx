@@ -22,15 +22,13 @@ import {
 } from '../../visualize/MultiViewCntlr.js';
 import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField';
 import {
-    AddItem, CheckedClearButton, ClearFilterButton, ExpandButton, FilterButton, RestoreButton, SaveButton,
-    SettingsButton, Zoom1XIcon, ZoomUpIcon,
+    AddItem, CheckedButton, CheckedClearButton, ClearFilterButton, ExpandButton,
+    FilterAddButton, FilterButton, RestoreButton, SaveButton, SettingsButton, Zoom1XIcon, ZoomUpIcon,
 } from '../../visualize/ui/Buttons.jsx';
 
 import SelectIco from 'html/images/icons-2014/select.png';
 import TurntableIco from 'html/images/turntable-tmp.png';
 import OrbitalIco from 'html/images/orbital-tmp.png';
-import ApplySelectIco from 'html/images/icons-2014/24x24_Checkmark.png';
-import ApplyFilterIco from 'html/images/icons-2014/24x24_FilterAdd.png';
 import PanToolOutlinedIco from '@mui/icons-material/PanToolOutlined';
 
 export function PlotlyToolbar({chartId, expandable}) {
@@ -182,10 +180,10 @@ function SelectionPart({chartId, hasFilter, hasSelection, hasSelected, tbl_id}) 
     }
     return (
         <>
-            {hasFilter    && <ClearFilter {...{tbl_id}} />}
+            {showSelectSelection && <SelectSelection {...{chartId}} />}
             {hasSelected  && <ClearSelected {...{chartId}} />}
             {hasSelection && <FilterSelection {...{chartId}} />}
-            {showSelectSelection && <SelectSelection {...{chartId}} />}
+            {hasFilter    && <ClearFilter {...{tbl_id}} />}
         </>
     );
 }
@@ -349,9 +347,8 @@ export function ActiveTraceSelect({sx={}, chartId, activeTrace}) {
 
 function FilterSelection({chartId}) {
     return (
-        <IconButton onClick={() => dispatchChartFilterSelection({chartId})}
-             title='Filter on the selected points'
-        ><img src={ApplyFilterIco}/></IconButton>
+        <FilterAddButton onClick={() => dispatchChartFilterSelection({chartId})}
+                           title='Filter on the selected points'/>
     );
 }
 
@@ -360,11 +357,7 @@ function SelectSelection({chartId}) {
             const selIndexes = get(getChartData(chartId), 'selection.points', []);
             dispatchChartSelect({chartId, selIndexes, chartTrigger: true});
         };
-    return (
-        <IconButton onClick={onClick}
-             title='Select the enclosed points'
-        ><img src={ApplySelectIco}/></IconButton>
-    );
+    return ( <CheckedButton onClick={onClick} title='Select the enclosed points'/> );
 }
 
 function ClearSelected({chartId}) {
