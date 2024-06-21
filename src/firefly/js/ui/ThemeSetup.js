@@ -83,6 +83,11 @@ export function defaultTheme() {
                 defaultProps: {
                     size:'sm',
                 }
+            },
+            JoySkeleton: {
+                defaultProps: {
+                    animation: 'wave',
+                }
             }
         }
     });

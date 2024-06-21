@@ -4,22 +4,25 @@
 
 import React, {useCallback, useEffect} from 'react';
 import {Box, Typography} from '@mui/joy';
-import PropTypes, {func} from 'prop-types';
+import {arrayOf, array, bool, func, instanceOf, number, object, objectOf, shape, string} from 'prop-types';
 import {Column, Table} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, set, isEmpty, isUndefined, omitBy, pick} from 'lodash';
 
-import {calcColumnWidths, getCellValue, getColMaxValues, getColumns, getProprietaryInfo, getTableState, getTableUiById, getTblById, hasRowAccess, isClientTable, tableTextView, TBL_STATE, uniqueTblUiId} from '../TableUtil.js';
+import {getCellValue, getColMaxVal, getColMaxValues, getColumns, getProprietaryInfo, getTableState, getTableUiById, getTblById, hasRowAccess, isClientTable, tableTextView, TBL_STATE, uniqueTblUiId} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
-import {CellWrapper, getPxWidth, HeaderCell, headerLevel, headerStyle, makeDefaultRenderer, SelectableCell, SelectableHeader} from './TableRenderer.js';
+import {CellWrapper, getPxWidth, HeaderCell, headerStyle, makeDefaultRenderer, SelectableCell, SelectableHeader} from './TableRenderer.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableUiUpdate, TBL_UI_UPDATE} from '../TablesCntlr.js';
 import {Logger} from '../../util/Logger.js';
 
 import 'fixed-data-table-2/dist/fixed-data-table.css';
 import './TablePanel.css';
+import {updateSet} from 'firefly/util/WebUtil.js';
+import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
+import {TableErrorMsg} from 'firefly/tables/ui/TablePanel.jsx';
 
 const logger = Logger('Tables').tag('BasicTable');
 const noDataMsg = 'No Data Found';
@@ -86,8 +89,11 @@ const BasicTableViewInternal = React.memo((props) => {
             if (isSingleColumnTable(columns) && (!columnWidths || columnWidths[0]!==calcWidth)) {
                 // set 1st (only visible) column's width to table's width minus scrollbar's width (15px)
                 changes.columnWidths = [calcWidth, ...Array(columns.length - 1).fill(0)];
+            } else if(!columnWidths) {
+                changes.columnWidths = columnWidthsInPixel(columns, data);
+            } else if (columnWidths.some?.((w) => w < 0)) {       // at least one column needs width calc
+                changes.columnWidths = columnWidths.map((w, idx) => w >0 ? w : colWidthInPixel( getColMaxVal(columns[idx], idx,data), columns[idx]));
             }
-            else if(!columnWidths) changes.columnWidths = columnWidthsInPixel(columns, data);
         }
         if (adjScrollTop !== scrollTop)     changes.scrollTop = adjScrollTop;
         if (adjScrollLeft !== scrollLeft)   changes.scrollLeft = adjScrollLeft;
@@ -104,11 +110,10 @@ const BasicTableViewInternal = React.memo((props) => {
     const rowClassNameGetter = highlightedRowHandler || defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx);
 
 
-    const tstate = getTableState(tbl_id);
+    const tstate = getTableState(tbl_id, {error});      // tableModel is used when tbl_id is not defined.
     logger.debug(`render.. state:[${tstate}] -- ${tbl_id}`);
-
-    if (tstate === TBL_STATE.ERROR)   return  <div style={{padding: 10}}>{error}</div>;
-    if (tstate === TBL_STATE.LOADING || isEmpty(columnWidths)) return <div style={{top: 0}} className='loading-mask'/>;
+    if (tstate === TBL_STATE.ERROR)   return  <TableErrorMsg error={error}/>;
+    if (tstate === TBL_STATE.LOADING || isEmpty(columnWidths)) return <TableMask width={1}/>;
 
     const content = () => {
         if (textView) {
@@ -160,41 +165,41 @@ const BasicTableViewInternal = React.memo((props) => {
 
 
 BasicTableViewInternal.propTypes = {
-    tbl_ui_id: PropTypes.string,
-    columns: PropTypes.arrayOf(PropTypes.object),
-    data: PropTypes.arrayOf(PropTypes.array),
-    hlRowIdx: PropTypes.number,
-    selectInfoCls: PropTypes.instanceOf(SelectInfo),
-    filterInfo: PropTypes.string,
-    sortInfo: PropTypes.string,
-    selectable: PropTypes.bool,
-    showUnits: PropTypes.bool,
-    showTypes: PropTypes.bool,
-    showFilters: PropTypes.bool,
-    showHeader: PropTypes.bool,
-    textView: PropTypes.bool,
-    rowHeight: PropTypes.number,
-    rowHeightGetter: PropTypes.func,  // params: rowData and columnWidths, returns height
-    showMask: PropTypes.bool,
-    currentPage: PropTypes.number,
-    startIdx: PropTypes.number,
-    error:  PropTypes.string,
-    size: PropTypes.object.isRequired,
-    highlightedRowHandler: PropTypes.func,
-    onRowDoubleClick: PropTypes.func,
-    renderers: PropTypes.objectOf(
-        PropTypes.shape({
-            cellRenderer: PropTypes.func,
-            headRenderer: PropTypes.func
+    tbl_ui_id: string,
+    columns: arrayOf(object),
+    data: arrayOf(array),
+    hlRowIdx: number,
+    selectInfoCls: instanceOf(SelectInfo),
+    filterInfo: string,
+    sortInfo: string,
+    selectable: bool,
+    showUnits: bool,
+    showTypes: bool,
+    showFilters: bool,
+    showHeader: bool,
+    textView: bool,
+    rowHeight: number,
+    rowHeightGetter: func,  // params: rowData and columnWidths, returns height
+    showMask: bool,
+    currentPage: number,
+    startIdx: number,
+    error:  string,
+    size: object.isRequired,
+    highlightedRowHandler: func,
+    onRowDoubleClick: func,
+    renderers: objectOf(
+        shape({
+            cellRenderer: func,
+            headRenderer: func
         })
     ),
-    callbacks: PropTypes.shape({
-        onRowHighlight: PropTypes.func,
-        onRowSelect: PropTypes.func,
-        onSelectAll: PropTypes.func,
-        onSort: PropTypes.func,
-        onFilter: PropTypes.func,
-        onGotoPage: PropTypes.func
+    callbacks: shape({
+        onRowHighlight: func,
+        onRowSelect: func,
+        onSelectAll: func,
+        onSort: func,
+        onFilter: func,
+        onGotoPage: func
     })
 
 };
@@ -226,11 +231,10 @@ function doScrollEnd(scrollLeft, scrollTop) {
 }
 
 function doColumnResize(newColumnWidth, columnKey) {
-    const {columnWidths={}, tbl_ui_id} = this;
-    dispatchTableUiUpdate({
-        tbl_ui_id,
-        columnWidths: Object.assign({}, columnWidths, {[columnKey]: newColumnWidth})
-    });
+    const {columnWidths=[], tbl_ui_id} = this;
+    if(columnKey >= 0 && columnKey < columnWidths.length) {
+        dispatchTableUiUpdate({ tbl_ui_id, columnWidths: updateSet(columnWidths, columnKey, newColumnWidth)});
+    }
 }
 
 function doKeyDown(e) {
@@ -328,19 +332,20 @@ function correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredB
     return scrollLeft;
 }
 
-function columnWidthsInPixel(columns, data, minWidth=45) {
+function columnWidthsInPixel(columns, data, minWidth) {
 
     const maxVals = getColMaxValues(columns, data, {maxColWidth: 100, maxAryWidth: 30});
-
-    const paddings = 8;
-    return maxVals.map((text, idx) => {
-        const header = columns[idx].label || columns[idx].name;
-        const style = header === text ? headerStyle : {fontSize:12};
-        text = text.replace(/[^a-zA-Z0-9]/g, 'O');    // some non-alphanum values can be very narrow.  use 'O' in place of them.
-        const pxNum =  getPxWidth({text, ...style}) + paddings;
-        return pxNum < minWidth ? minWidth : pxNum;
-    });
+    return maxVals.map((text, idx) => colWidthInPixel(text, columns[idx]), minWidth);
 }
+
+function colWidthInPixel(text, col, minWidth=45, paddings=8) {
+    const header = col.label || col.name;
+    const style = header === text ? headerStyle : {fontSize:12};
+    text = text.replace(/[^a-zA-Z0-9]/g, 'O');    // some non-alphanum values can be very narrow.  use 'O' in place of them.
+    const pxNum =  getPxWidth({text, ...style}) + paddings;
+    return pxNum < minWidth ? minWidth : pxNum;
+}
+
 
 function defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx) {
 

@@ -203,7 +203,7 @@ function bgPackage(action) {
                     }
                 }
             } else {
-                showInfoPopup(jobInfo?.error);
+                jobInfo?.error && showInfoPopup(jobInfo.error);
             }
         };
         doPackageRequest({dlRequest, searchRequest, selectInfo:selectionInfo, bgKey, onComplete});

@@ -1,4 +1,4 @@
-import {Box, Link, Sheet, Stack, Typography} from '@mui/joy';
+import {Box, Link, Sheet, Skeleton, Stack, Typography} from '@mui/joy';
 import {isArray, isEmpty} from 'lodash';
 import {bool, func, object, shape, string} from 'prop-types';
 import React, {useEffect, useState} from 'react';
@@ -451,7 +451,7 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
 
 const NotLoaded= ({regHasUrl,regLoaded, url}) => (
     (regHasUrl || !regLoaded) ?
-        (<Box sx={{position:'relative', width:1, height:1}}> <div className='loading-mask'/> </Box>) :
+        (<Box sx={{position:'relative', width:1, height:1}}> <Skeleton/> </Box>) :
         (<Typography level='title-lg' color='warning' sx={{alignSelf:'center', pl:5}}>
             {`No collections to load from: ${url}`}
         </Typography>)
