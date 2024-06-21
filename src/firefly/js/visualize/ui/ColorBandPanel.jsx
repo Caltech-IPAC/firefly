@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Stack, Typography} from '@mui/joy';
+import {Box, Skeleton, Stack, Typography} from '@mui/joy';
 import React, {memo, useState, useEffect, useRef} from 'react';
 import PropTypes from 'prop-types';
 import {debounce, get} from 'lodash';
@@ -99,6 +99,7 @@ export const ColorBandPanel= memo(({fields,plot,band, groupKey}) => {
 
     return (
         <Stack {...{spacing:2, minHeight:305, minWidth:360, padding:.5, position:'relative'}}>
+            {doMask && <Skeleton sx={{inset:0}}/>}
             <Stack>
                 {dataHistUrl && <img style={histImStyle} src={dataHistUrl} key={dataHistUrl}
                                      onMouseMove={mouseMove} onMouseLeave={() => setExit(true)} />}
@@ -114,7 +115,6 @@ export const ColorBandPanel= memo(({fields,plot,band, groupKey}) => {
                 <SuggestedValuesPanel {...{plot,band}}/>
                 <img style={cbarImStyle} src={cbarUrl} key={cbarUrl}/>
             </Stack>
-            {doMask && <Box style={maskWrapper}> <Box className='loading-mask'/> </Box> }
        </Stack>
    );
 });

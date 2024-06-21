@@ -1,10 +1,10 @@
 import React from 'react';
 import {Sheet, Skeleton, Stack} from '@mui/joy';
 
-export function TableMask({cols=5, sx, ...props}) {
+export function TableMask({cols=5, withToolbar=true, ...props}) {
     return (
-        <Stack component={Sheet} spacing={1/2} height={1} sx={sx} {...props}>
-            <Skeleton variant='rectangular' height={30}/>
+        <Stack component={Sheet} spacing={1/2} height={1} {...props}>
+            {withToolbar && <Skeleton variant='rectangular' height={30}/>}
             <Stack direction='row' spacing={1/2} height={30}>
                 {[...Array(cols).keys()].map((value) => (
                     <Skeleton key={value} variant='rectangular'/>
@@ -19,9 +19,9 @@ export function TableMask({cols=5, sx, ...props}) {
     );
 }
 
-export function GridMask({rows=3, cols=3, sx, ...props}) {
+export function GridMask({rows=3, cols=3, ...props}) {
     return (
-        <Stack component={Sheet} spacing={1/2} height={1} sx={sx} {...props}>
+        <Stack component={Sheet} spacing={1/2} height={1} {...props}>
             {[...Array(rows).keys()].map((idx) => (
                 <Stack key={idx} direction='row' spacing={1/2} flexGrow={1}>
                     {[...Array(cols).keys()].map((idx) => (

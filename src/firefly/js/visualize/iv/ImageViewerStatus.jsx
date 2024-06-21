@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Box, Card, Typography} from '@mui/joy';
+import {Box, Card, Skeleton, Typography} from '@mui/joy';
 import React, {useEffect, memo, useState} from 'react';
 import PropTypes from 'prop-types';
 import {CompleteButton} from '../../ui/CompleteButton.jsx';
@@ -60,7 +60,7 @@ export const ImageViewerStatus= memo(
 
     return (
         <Box sx={{...statusContainer, top}}>
-            {working && showing.maskShowing && <div style={maskWrapper}> <div className='loading-mask'/> </div> }
+            {working && showing.maskShowing && <div style={maskWrapper}> <Skeleton/> </div> }
             { showing.messageShowing &&
                 <Card {...{color:'warning', variant:'soft',
                     sx: (theme) => !useMessageAlpha ? statusText : { ...statusText, backgroundColor: ctxBG(theme,65)} }}>

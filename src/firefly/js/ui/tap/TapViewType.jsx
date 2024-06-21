@@ -1,4 +1,4 @@
-import {Box, Button, Divider, Sheet, Stack, Tooltip, Typography} from '@mui/joy';
+import {Box, Button, Divider, Sheet, Skeleton, Stack, Tooltip, Typography} from '@mui/joy';
 import {truncate} from 'lodash';
 import {bool, string, func, object, shape} from 'prop-types';
 import React, {Fragment, useContext, useEffect, useRef, useState} from 'react';
@@ -25,6 +25,7 @@ import {
 
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import './TableSelectViewPanel.css';
+import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
 
 
 const SCHEMA_TIP= 'Select a table collection (TAP ‘schema’); type to search the schema names and descriptions.';
@@ -111,7 +112,7 @@ function AdqlUI({serviceUrl, serviceLabel, servicesShowing, setServicesShowing, 
                         <AdvancedADQL {...{adqlKey:'adqlQuery', defAdqlKey:'defAdqlKey', serviceUrl, capabilities}}/>
                     </div>
                 </div>
-                : <div className='loading-mask'/>
+                : <Skeleton/>
             }
         </Sheet>
     );
@@ -399,7 +400,7 @@ function BasicUI(props) {
                                     capabilities, obsCoreMetadataModel,
                                     sx:{mt:1},
                                     tableName:getTapBrowserState().tableName}}/>
-                                : <div className='loading-mask'/>
+                                : <Skeleton/>
                             }
                         </SplitContent>
                         <SplitContent>
@@ -414,7 +415,7 @@ function BasicUI(props) {
                                         columnsModel={columnsModel}
                                     />
                                 </Stack>
-                                : <div className='loading-mask'/>
+                                : <TableMask/>
                             }
                         </SplitContent>
                     </SplitPane>

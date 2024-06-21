@@ -14,6 +14,7 @@ import {logger} from '../../util/Logger.js';
 import BrowserInfo from '../../util/BrowserInfo.js';
 import Enum from 'enum';
 import {showPlotLySaveDialog} from 'firefly/charts/ui/PlotlySaveDialog.jsx';
+import {Skeleton} from '@mui/joy';
 
 const PLOTLY_BASE_ID= 'plotly-plot';
 const MASKING_DELAY= 400;
@@ -397,7 +398,7 @@ export class PlotlyWrapper extends Component {
         return (
             <div style={nstyle} >
                 <div id={chartId || this.id} style={{height: '100%', width: '100%'}} ref={this.refUpdate}/>
-                {showMask && <div style={maskWrapper}> <div className='loading-mask'/> </div>}
+                {showMask && <div style={maskWrapper}> <Skeleton/> </div>}
             </div>
         );
     }
