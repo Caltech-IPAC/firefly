@@ -33,8 +33,9 @@
   - TAP: Hidden columns included in column count- Firefly-1486 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1564))
   - Table: Column resets after a derived column fixed- Firefly-1494 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1574))
   - Some components have double tooltips in Safari- Firefly-1501 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1572))
+  - Issues with backgrounded downloads- Firefly-1502 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1574))
 - Clean up:
-  - icons- IRSA-5925 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1524)), Firefly-1488 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1565)), Firefly-1506 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1576))
+  - Icons- IRSA-5925 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1524)), Firefly-1488 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1565)), Firefly-1506 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1576))
   - Table Info dialog- Firefly-1464 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1546))
   - Improved HiPS toolbar- Firefly-1473 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1551))
   - TAP: table selection- Firefly-1478 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1560))
