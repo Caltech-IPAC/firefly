@@ -26,6 +26,7 @@
 
 #### Bug fix and clean up
 - Bug fixes:
+  - Data product table handling- Firefly-1462 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1543))
   - Images: readout wrong with compressed files- Firefly-1476 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1558))
   - The main menu better adjust with font sizes- Firefly-1472 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1550))
   - Binned plot and chart-saving bugs- Firefly-1480 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1562))
