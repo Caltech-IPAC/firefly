@@ -9,12 +9,14 @@ import edu.caltech.ipac.util.StringUtils;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Enumeration;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 
 /**
  * Date: 4/20/15
@@ -146,16 +148,24 @@ public class RequestAgent {
 //====================================================================
 
     public static class HTTP extends RequestAgent {
-        public static String AUTH_KEY = "JOSSO_SESSIONID";
-        public static String TO_BE_DELETE = "-";
+        private static final String AUTH_KEY = "JOSSO_SESSIONID";
         private static final Logger.LoggerImpl LOG = Logger.getLogger();
-        private HttpServletRequest request;
-        private HttpServletResponse response;
-        private static final String[] ID_COOKIE_NAMES = new String[]{AUTH_KEY, "ISIS"};
+        private final HashMap<String, String> headers = new HashMap<>();      // key stored as lowercase; multiple values are separated by \t.
+        private final HashMap<String, Cookie> cookies = new HashMap<>();
+        private final HttpServletResponse response;
+        private final String realPath;
+
+
 
         public HTTP(HttpServletRequest request, HttpServletResponse response) {
-            this.request = request;
             this.response = response;
+
+            Collections.list(request.getHeaderNames()).forEach(h -> {
+                headers.put(h.toLowerCase(), StringUtils.toString(Collections.list(request.getHeaders(h)), "\t"));
+            });
+            applyIfNotEmpty(request.getCookies(), v -> {
+                Arrays.stream(v).forEach(c -> cookies.put(c.getName(), c));
+            });
 
             // getting the base url including the application path is a bit tricky when behind reverse proxy(ies)
             String proto = getHeader("X-Forwarded-Proto", request.getScheme());
@@ -188,24 +198,18 @@ public class RequestAgent {
             setRemoteIP(remoteIP);
             setSessId(request.getSession(true).getId());
             setServletPath(request.getServletPath());
+
+            realPath = request.getServletContext().getRealPath("/");
         }
 
         @Override
         protected Map<String, Cookie> extractCookies() {
-            HashMap<String, Cookie> cookies = new HashMap<>();
-            if (request != null) {
-                if (request.getCookies() != null) {
-                    for (javax.servlet.http.Cookie c : request.getCookies()) {
-                        cookies.put(c.getName(), c);
-                    }
-                }
-            }
             return cookies;
         }
 
         @Override
         public String getRealPath(String relPath) {
-            return response != null ? request.getRealPath(relPath) : null;
+            return new File(realPath, relPath).getAbsolutePath();
         }
 
         @Override
@@ -217,13 +221,8 @@ public class RequestAgent {
 
         @Override
         public String getHeader(String name, String def) {
-            if (request != null) {
-                String retval = request.getHeader(name);
-                retval = retval == null ? request.getHeader(name.toLowerCase()) : retval;
-                return StringUtils.isEmpty(retval) ? def : retval;
-            } else {
-                return def;
-            }
+            String retval = name == null ? null : headers.get(name.toLowerCase());
+            return StringUtils.isEmpty(retval) ? def : retval;
         }
 
         @Override

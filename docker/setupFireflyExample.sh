@@ -5,7 +5,7 @@
 # - modify the script line of the html files so that they will load
 # to test: http://localhost:<port>/local/
 #
-aWarFile=`ls ${CATALINA_HOME}/webapps/*.war | head -1 | awk '{print $1}'`
+aWarFile=`ls ${CATALINA_HOME}/webapps-ref/*.war | head -1 | awk '{print $1}'`
 onlyWar=`echo ${aWarFile} | awk -F/ '{print $NF}'`
 dirEmpty=`find /local/www -maxdepth 0 -empty -exec echo true \;`
 if [ "$onlyWar" = "firefly.war" ] && [ "$dirEmpty" = "true" ]; then

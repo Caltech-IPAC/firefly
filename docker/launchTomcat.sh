@@ -85,7 +85,7 @@ fi
 
 if [ "$1" = "--help" ] || [ "$1" = "-help" ] || [ "$1" = "-h" ]; then
     sed "s:ipac/firefly:${NAME}:" ./start-examples.txt
-    aWarFile=`ls ${CATALINA_HOME}/webapps/*.war | head -1 | awk '{print $1}'`
+    aWarFile=`ls ${CATALINA_HOME}/webapps-ref/*.war | head -1 | awk '{print $1}'`
     onlyWar=`echo ${aWarFile} | awk -F/ '{print $NF}'`
     if [ "$onlyWar" = "firefly.war" ]; then
         cat ./customize-firefly.txt

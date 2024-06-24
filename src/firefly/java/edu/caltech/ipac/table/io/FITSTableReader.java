@@ -447,14 +447,16 @@ public final class FITSTableReader
                 return null;
             }
             else if (!elem.getClass().isArray()) {
-                return elem instanceof String && isEmpty((String)elem) ? null : elem;
+                if (elem instanceof String) return isEmpty((String)elem) ? null : elem;
+                if (elem instanceof Byte || elem instanceof Short) return ((Number)elem).intValue();
+                return elem;
             }
             else if (Array.getLength(elem) == 1) {
                 String cls = elem.getClass().getComponentType().toString();
                 EvalVal evaluator = new EvalVal(blanks[icol], isScaled[icol], hasBlank[icol], scales[icol], zeros[icol]);
                 return switch (cls) {
-                    case "byte" -> evaluator.evalValue(((byte[])(elem))[0]);
-                    case "short" -> evaluator.evalValue(((short[])(elem))[0]);
+                    case "byte" -> evaluator.evalValue((int)((byte[])(elem))[0]);
+                    case "short" -> evaluator.evalValue((int)((short[])(elem))[0]);
                     case "int" -> evaluator.evalValue(((int[])(elem))[0]);
                     case "long" -> evaluator.evalValue(((long[])(elem))[0]);
                     case "float" -> evaluator.evalValue(((float[])(elem))[0]);

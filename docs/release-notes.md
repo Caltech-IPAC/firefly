@@ -7,7 +7,8 @@
   - [Notes on the next version](next-release-details.md)
 
 ## Version 2024.2
-  - docker tag: `latest`, `2024.2`, `2024.2.0`
+  - 2024.2.1 - (June 24, 2024),  _docker tag_: `latest`, `2024.2`, `2024.2.1`
+  - 2024.2.0 - (June 21, 2024),  _docker tag_: `2024.2.0`
 
 ### _Notes_
 #### This release has a lot of bug fixes and clean up after the JoyUI conversion. It also includes some long requested updates.
@@ -44,6 +45,11 @@
   - Typos in visible text- Firefly-1487 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1561))
   - UI: background handling- Firefly-1494 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1574))
   - Embedded search panel clean up and improvement- IRSA-5916 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1539)), Firefly-1451 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1548))
+  - 
+### _Patches 2024.2_
+- 2024.2.1
+  - Bug fix: Avoid IllegalStateException related to recycled request objects in Tomcat [Commit](https://github.com/Caltech-IPAC/firefly/commit/02ea84b4d3cc758fb426341356cf2ef07920ceb6)
+  - Bug fix: regression when parsing non-cube fits tables [Commit](https://github.com/Caltech-IPAC/firefly/commit/c95b830ab9a57487d517db31f6d50c967228e4aa)
 
 ##### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2024.2+label%3abug)
