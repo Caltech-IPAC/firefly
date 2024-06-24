@@ -7,7 +7,8 @@
   - [Notes on the next version](next-release-details.md)
 
 ## Version 2024.2
-  - docker tag: `latest`, `2024.2`, `2024.2.0`
+  - 2024.2.1 - (June 24, 2024),  _docker tag_: `latest`, `2024.2`, `2024.2.1`
+  - 2024.2.0 - (June 21, 2024),  _docker tag_: `2024.2.0`
 
 ### _Notes_
 #### This release has a lot of bug fixes and clean up after the JoyUI conversion. It also includes some long requested updates.
@@ -26,20 +27,29 @@
 
 #### Bug fix and clean up
 - Bug fixes:
+  - Data product table handling- Firefly-1462 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1543))
   - Images: readout wrong with compressed files- Firefly-1476 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1558))
   - The main menu better adjust with font sizes- Firefly-1472 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1550))
   - Binned plot and chart-saving bugs- Firefly-1480 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1562))
   - TAP: Hidden columns included in column count- Firefly-1486 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1564))
   - Table: Column resets after a derived column fixed- Firefly-1494 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1574))
+  - Remove non-functional option to email on background query completion- Firefly-1499 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1570))
   - Some components have double tooltips in Safari- Firefly-1501 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1572))
+  - Issues with backgrounded downloads- Firefly-1502 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1574))
 - Clean up:
-  - icons- IRSA-5925 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1524)), Firefly-1488 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1565)), Firefly-1506 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1576))
+  - Icons- IRSA-5925 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1524)), Firefly-1488 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1565)), Firefly-1506 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1576))
   - Table Info dialog- Firefly-1464 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1546))
   - Improved HiPS toolbar- Firefly-1473 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1551))
   - TAP: table selection- Firefly-1478 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1560))
   - Table related cleanup- Firefly-1479, Firefly-1481, Firefly-1484 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1563))
+  - Typos in visible text- Firefly-1487 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1561))
   - UI: background handling- Firefly-1494 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1574))
   - Embedded search panel clean up and improvement- IRSA-5916 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1539)), Firefly-1451 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1548))
+  - 
+### _Patches 2024.2_
+- 2024.2.1
+  - Bug fix: Avoid IllegalStateException related to recycled request objects in Tomcat [Commit](https://github.com/Caltech-IPAC/firefly/commit/02ea84b4d3cc758fb426341356cf2ef07920ceb6)
+  - Bug fix: regression when parsing non-cube fits tables [Commit](https://github.com/Caltech-IPAC/firefly/commit/c95b830ab9a57487d517db31f6d50c967228e4aa)
 
 ##### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2024.2+label%3abug)
@@ -74,7 +84,7 @@
 - TAP: TAP panels can now be locked to one TAP service or TAP obscore service
 - Charts: Cascade-style plots for spectra [PR:Firefly-1370](https://github.com/Caltech-IPAC/firefly/pull/1499)
 - Upload: improved support [PR:Firefly-1341](https://github.com/Caltech-IPAC/firefly/pull/1472)
-- Tables: improved table error message handling [PR:Firefly-1345](https://github.com/Caltech-IPAC/firefly/pull/1535)
+- Tables: improved table error message handling [PR:Firefly-1445](https://github.com/Caltech-IPAC/firefly/pull/1535)
 
 ### _Patches 2024.1_
 - 2024.1.1
