@@ -210,7 +210,7 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
     }
 
     let ddTitleStr= getTableDropTitleStr(title,part,partFormat,tableOnly);
-    const {xCol,yCol,cNames,cUnits,cubePlanes,connectPoints,useChartChooser}= getTableChartColInfo(title, part, partFormat,table);
+    const {xCol,yCol,cNames,cUnits,cubePlanes=0,connectPoints,useChartChooser}= getTableChartColInfo(title, part, partFormat,table);
 
     //define title for table and chart
     const titleInfo={titleStr:title, showChartTitle:true};
