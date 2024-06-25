@@ -45,13 +45,14 @@ Try in the firefly dev build you just made
    - merge rc into dev, use `--no-ff` to create a new commit
      - `git checkout dev`
      - `git merge --no-ff <rc-branch>` 
+#### Do only for major release
    - Add the new dev cycle tag, but only if you just did the `.0` release
       - _Important:_ Only do this step if this on `.0` releases.
-         - For example- if you just did the `2024.2.0` do this step. If you just did the `2024.2.1` skip this step.
-     - Tag the dev branch with the new cycle with the form - `cycle-yyyy.x`
-     - For example- If you just did the 2024.1.0 release, and we are beginning work on the 2024.2 cycle: 
-       - on the dev branch
-       - `git tag cycle-2024.2`
+      - For example- if you just did the `2024.2.0` do this step. If you just did the `2024.2.1` skip this step.
+   - Tag the dev branch with the new cycle with the form - `cycle-yyyy.x`
+   - For example- If you just did the 2024.1.0 release, and we are beginning work on the 2024.2 cycle: 
+      - on the dev branch
+      - `git tag cycle-2024.2`
 
 ### Update Docs
    - add any improvements to this file
