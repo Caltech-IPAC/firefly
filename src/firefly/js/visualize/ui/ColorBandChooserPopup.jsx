@@ -4,7 +4,7 @@
 
 import {Stack, Typography} from '@mui/joy';
 import React from 'react';
-import PropTypes from 'prop-types';
+import {string,object} from 'prop-types';
 import {omit, isArray} from 'lodash';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
@@ -57,57 +57,61 @@ function ColorBandChooserPanel ({viewerId, bandData, dataId}) {
     const initGreenVal= getKey(threeOp,Band.GREEN) ?? 'NONE';
     const initBlueVal= getKey(threeOp,Band.BLUE) ?? 'NONE';
 
-    const [getRed]= useFieldGroupValue(Band.RED.key, 'WHICH_BANDS');
-    const [getGreen]= useFieldGroupValue(Band.GREEN.key, 'WHICH_BANDS');
-    const [getBlue]= useFieldGroupValue(Band.BLUE.key, 'WHICH_BANDS');
+    const red= useFieldGroupValue(Band.RED.key, 'WHICH_BANDS')[0]();
+    const green= useFieldGroupValue(Band.GREEN.key, 'WHICH_BANDS')[0]();
+    const blue= useFieldGroupValue(Band.BLUE.key, 'WHICH_BANDS')[0]();
 
-    const dups= hasDuplicateBands(getRed()??initRedVal, getGreen()??initGreenVal, getBlue()??initBlueVal);
+    const dups= hasDuplicateBands(red??initRedVal, green??initGreenVal, blue??initBlueVal);
 
     return (
         <FieldGroup groupKey='WHICH_BANDS'
-                    sx={{display:'flex', flexDirection:'column', alignItems:'center', width:'22rem' }}>
-            <Stack {...{spacing:2, alignItems:'center', width:1}}>
+                    sx={{display:'flex', px:2, flexDirection:'column', alignItems:'center', minWidth:'22rem' }}>
+            <Stack {...{spacing:2, alignItems:'flex-start', width:1}}>
                 <ListBoxInputField labelWidth={40}
                                    initialState= {{ value: initRedVal, tooltip: 'Select Red band', label : 'Red' }}
                                    orientation='vertical'
+                                   slotProps={{ label: {sx: {color:'red'}} }}
                                    options={options} fieldKey={Band.RED.key} />
 
                 <ListBoxInputField labelWidth={40}
                                    initialState= {{value: initGreenVal, tooltip: 'Select Green band', label : 'Green' }}
                                    orientation='vertical'
+                                   slotProps={{ label: {sx: {color:'green'}} }}
                                    options={options} fieldKey={Band.GREEN.key} />
 
                 <ListBoxInputField labelWidth={40}
                                    initialState= {{value: initBlueVal, tooltip: 'Select Blue band', label : 'Blue' }}
                                    orientation='vertical'
+                                   slotProps={{ label: {sx: {color:'blue'}} }}
                                    options={options} fieldKey={Band.BLUE.key} />
 
                 {dups && <Typography color='warning'>Duplicate Bands</Typography>}
-                <Stack {...{direction:'row', alignSelf:'stretch', spacing:2,
-                    justifyContent:threeColorVisible ?'space-around':'space-between', p:1 }}>
-                    <CompleteButton
-                        text={`${threeColorVisible?'Update':'Show'} Three Color`}
-                        onSuccess={(request) => update3Color(request,bandData, viewerId, dataId)}
-                        closeOnValid={true}
-                        dialogId={POPUP_ID} />
+                <Stack {...{direction:'row', alignSelf:'stretch', alignItems: 'center', justifyContent:'space-between', py:2}}>
+                    <Stack {...{direction:'row',  spacing:2}}>
+                        <CompleteButton
+                            text={`${threeColorVisible?'Update':'Show'} Three Color`}
+                            onSuccess={(request) => update3Color(request,bandData, viewerId, dataId)}
+                            closeOnValid={true}
+                            dialogId={POPUP_ID} />
 
-                    {threeColorVisible && <CompleteButton
-                        primary={false} text='Hide Three Color'
-                        onSuccess={() => hideThreeColor(viewerId, dataId)}
-                        closeOnValid={true} dialogId={POPUP_ID} />}
+                        {threeColorVisible &&
+                            <CompleteButton
+                                primary={false} text='Hide Three Color'
+                                onSuccess={() => hideThreeColor(viewerId, dataId)}
+                                closeOnValid={true} dialogId={POPUP_ID} />}
+                    </Stack>
                     <HelpIcon helpId={'visualization.imageview3color'} />
                 </Stack>
             </Stack>
-
         </FieldGroup>
     );
 }
 
 
 ColorBandChooserPanel.propTypes= {
-    viewerId: PropTypes.string.isRequired,
-    bandData: PropTypes.object.isRequired,
-    dataId : PropTypes.string.isRequired
+    viewerId: string.isRequired,
+    bandData: object.isRequired,
+    dataId : string.isRequired
 };
 
 

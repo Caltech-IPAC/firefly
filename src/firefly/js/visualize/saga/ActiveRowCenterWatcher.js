@@ -78,18 +78,23 @@ const isImageAitoff= (plot) => (isImage(plot) && plot.projection.isWrappingProje
 
 /**
  * return true if the point is not one the display
- * @param pv
- * @param wp
+ * @param {PlotView} pv
+ * @param {WorldPt} wp
+ * @param {TableModel} tbl
  * @param {boolean} force
  * @return {boolean}
  */
-function shouldRecenterSimple(pv,wp, force) {
+function shouldRecenterSimple(pv,wp, tbl, force) {
     const plot= primePlot(pv);
     if (force) {
         if (!isImageAitoff(plot)) return true; // if not an image aitoff projection
         return !(isFullyOnScreen(plot,pv.viewDim));
     }
     if (!plot) return false;
+    const {attributes}= plot;
+    if (tbl.tbl_id===attributes[PlotAttribute.DATALINK_TABLE_ID] && attributes[PlotAttribute.DATALINK_TABLE_ROW]) {
+        if (Number(attributes[PlotAttribute.DATALINK_TABLE_ROW])!==tbl.highlightedRow) return;
+    }
     const cc= CysConverter.make(plot);
     return !cc.pointOnDisplay(wp);
 }
@@ -116,7 +121,7 @@ function recenterImageActiveRow(tbl_id, force=false) {
     const wp= getRowCenterWorldPt(tbl);
     if (!wp) return;
 
-    if (shouldRecenterSimple(pv,wp,force)) {
+    if (shouldRecenterSimple(pv,wp,tbl,force)) {
         isImageAitoff(plot) && willFitOnScreenAtCurrentZoom(pv) ?
             dispatchRecenter({plotId: plot.plotId, centerOnImage:true}) : dispatchRecenter({plotId: plot.plotId, centerPt: wp});
         if (plot && isImage(plot) && plot.attributes[PlotAttribute.REPLOT_WITH_NEW_CENTER]) {

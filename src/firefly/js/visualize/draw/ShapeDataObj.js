@@ -63,7 +63,7 @@ export function makePoint(pt, plot, toType) {
 export function flipTextLocAroundY(plot, textLoc) {
     const pv = getPlotViewById(visRoot(), plot.plotId);
 
-    if (pv.flipY) {
+    if (pv?.flipY) {
         const locSet = [TextLocation.CIRCLE_NE, TextLocation.CIRCLE_NW,
             TextLocation.CIRCLE_SE, TextLocation.CIRCLE_SW,
             TextLocation.RECT_NE, TextLocation.RECT_NW,
