@@ -7,7 +7,8 @@
   - [Notes on the next version](next-release-details.md)
 
 ## Version 2024.2
-  - 2024.2.1 - (June 24, 2024),  _docker tag_: `latest`, `2024.2`, `2024.2.1`
+  - 2024.2.2 - (June 25, 2024),  _docker tag_: `latest`, `2024.2`, `2024.2.2`
+  - 2024.2.1 - (June 24, 2024),  _docker tag_: `2024.2.1`
   - 2024.2.0 - (June 21, 2024),  _docker tag_: `2024.2.0`
 
 ### _Notes_
@@ -48,8 +49,12 @@
   - 
 ### _Patches 2024.2_
 - 2024.2.1
-  - Bug fix: Avoid IllegalStateException related to recycled request objects in Tomcat [Commit](https://github.com/Caltech-IPAC/firefly/commit/02ea84b4d3cc758fb426341356cf2ef07920ceb6)
-  - Bug fix: regression when parsing non-cube fits tables [Commit](https://github.com/Caltech-IPAC/firefly/commit/c95b830ab9a57487d517db31f6d50c967228e4aa)
+  - Bug fix: Avoid IllegalStateException related to recycled request objects in Tomcat ([Commit](https://github.com/Caltech-IPAC/firefly/commit/02ea84b4d3cc758fb426341356cf2ef07920ceb6))
+  - Bug fix: regression when parsing non-cube fits tables ([Commit](https://github.com/Caltech-IPAC/firefly/commit/c95b830ab9a57487d517db31f6d50c967228e4aa))
+- 2024.2.2
+  - Bug fix: FITS table reader failing on byte columns ([Commit](https://github.com/Caltech-IPAC/firefly/commit/b28b11f7912252e053128de0f8cd3a4ddb868896))
+  - Bug fix: Regression issue. mask not going away with color dropdown ([Commit](https://github.com/Caltech-IPAC/firefly/commit/fa9439b533f08b72757f6ea480c0602c45d210f5))
+  - Bug fix: source id extracted from image search- IRSA-5367 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1571))
 
 ##### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2024.2+label%3abug)

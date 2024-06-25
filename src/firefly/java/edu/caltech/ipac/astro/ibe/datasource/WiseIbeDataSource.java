@@ -27,7 +27,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
     public static final String WISE = "wise";
     public static final String FTYPE = "type";
 
-    public final static String SOURCE_ID_PATTERN_1B = "[0-9]{5}[abcders][0-9]{3}-[0-9]{6}";
+    public final static String SOURCE_ID_PATTERN_1B = "[0-9]{5}[abcderstuvw][0-9]{3}-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A = "[0-9]{4}[pm][0-9]{3}_a[abc][1-9]{2}-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3O = "[0-9]{4}[pm][0-9]{3}_[^a].*-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A_PASS1 = "[0-9]{4}[pm][0-9]{3}_aa[1-9]{2}-[0-9]{6}";
@@ -245,7 +245,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
             }
             else if (sourceProductLevel == "3a") {
                 String sourceSchema = getSchemaFromSourceId(sourceId);
-                String ss = sourceSchema.toUpperCase();
+                String ss = sourceSchema.replaceAll("-", "_").toUpperCase();
                 String tt = sourceProductLevel.toUpperCase();
                 DataProduct sourcedt = DataProduct.valueOf(ss + "_" + tt);
                 String sourceTable = sourcedt.getSourceTable();
@@ -260,12 +260,22 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
             }
             if (sourceProductLevel == "1b") {
                 String sourceSpec = WISE + "." + wds.getSourceTable() + "(\"source_id\":\"" + refSourceId + "\")";
-                queryParam.setRefBy(sourceSpec);
+                //queryParam.setRefBy(sourceSpec);  commented out not using RefBy search,
+                // getting the images with the sourceId identified scanId and frame_num only
+                String scanId = refSourceId.trim().substring(0,6);
+                String framNum = String.valueOf(Integer.parseInt(refSourceId.trim().substring(6,9)));
+                String ref1B =  "scan_id=" + "\'"+ scanId + "\'"+" AND " + "frame_num="+"\'"+framNum+"\'";
+                queryParam.setWhere(ref1B);
             } else if (sourceProductLevel == "3a") {
-                DataProduct sourcedt = DataProduct.ALLSKY_4BAND_3A;
+                String coaddId = refSourceId.trim().substring(0,13);
+                String sourceSchema = getSchemaFromSourceId(refSourceId);
+                String ss = sourceSchema.replaceAll("-", "_").toUpperCase();
+                String tt = sourceProductLevel.toUpperCase();
+                DataProduct sourcedt = DataProduct.valueOf(ss + "_" + tt);
                 String sourceTable = sourcedt.getSourceTable();
                 String sourceSpec = WISE + "." + sourceTable + "(\"source_id\":\"" + refSourceId + "\")";
-                queryParam.setRefBy(sourceSpec);
+                String ref3A = "coadd_id="+"\'"+coaddId+"\'";  //get the images with the coadd_id given by the source_id
+                queryParam.setWhere(ref3A);
             }
         }
 
@@ -614,7 +624,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
         PRELIM_1B("prelim","p1bm_frm", "prelim_p1bs_psd", "links-prelim/l1b/"),
         PRELIM_3A("prelim","p3am_cdd", "prelim_p3as_psd", "links-prelim/l3a/"),
         PRELIM_POSTCRYO_1B("prelim_postcryo","p1bm_frm", "prelim_2band_p1bs_psd", "links-postcryo-prelim/l1b-2band/"),
-        ALLWISE_MULTIBAND_3A("allwise","p3am_cdd", "allsky_4band_p1bs_psd", "links-allwise/l3a/"), // TODO: change for production, changed XW
+        ALLWISE_MULTIBAND_3A("allwise","p3am_cdd", "allwise_p3as_psd", "links-allwise/l3a/"), // TODO: change for production, changed XW
         ALLSKY_4BAND_1B("allsky", "4band_p1bm_frm", "allsky_4band_p1bs_psd", "links-allsky/l1b-4band/"),
         ALLSKY_4BAND_3A("allsky", "4band_p3am_cdd", "allsky_4band_p3as_psd", "links-allsky/l3a-4band/"),
         CRYO_3BAND_1B("cryo_3band", "3band_p1bm_frm", "allsky_3band_p1bs_psd", "links-3band/l1b-3band/"),
