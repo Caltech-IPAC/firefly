@@ -663,10 +663,10 @@ export const NumberRange = React.memo(({cellInfo, base, upper, lower, style={}, 
 
     if (upperVal && lowerVal) {
         delta = (
-            <div className='CellRenderer__numrange'>
+            <Stack justifyContent='center' lineHeight='normal'>
                 <div style={ustyle}>+{upperVal}</div>
                 <div style={lstyle}>-{lowerVal}</div>
-            </div>
+            </Stack>
         );
     }
 

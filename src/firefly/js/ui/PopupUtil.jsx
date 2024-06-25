@@ -43,7 +43,7 @@ export function showTmpModal(content, displayTime=3000) {
 }
 
 export function showPinMessage(text) {
-    showTmpModal( ( <Typography color='primary' level='h2' sx={{p: 1}}>{text}</Typography> ), 500 );
+    showTmpModal( ( <Typography color='primary' level='h2'>{text}</Typography> ), 500 );
 }
 
 /**

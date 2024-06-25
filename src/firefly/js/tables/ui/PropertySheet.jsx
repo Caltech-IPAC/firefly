@@ -4,6 +4,8 @@ import React, {useEffect} from 'react';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent';
 import {dispatchTableAddLocal, dispatchTableUiUpdate} from 'firefly/tables/TablesCntlr';
 import {getAppOptions} from 'firefly/core/AppDataCntlr';
+import {NoDataTableView} from 'firefly/tables/ui/BasicTableView';
+import {TableMask} from 'firefly/ui/panel/MaskPanel';
 
 /**
  * A wrapper/watcher component for property sheet i.e., vertical display of all the data from a single table row, with additional metadata.
@@ -35,19 +37,13 @@ export function PropertySheet({tbl_group='main', tbl_id, children, fetcher}){
     // TODO: use fetcher if defined
 
     if(isFetching) {
-        return (
-            <div className='TablePanel_NoData'>
-                <span style={{width: 20, height: 20, marginRight: 10, borderColor: 'transparent currentColor currentColor'}}
-                      className='loading-animation'/>
-                Loading...
-            </div>
-        );
+        return <TableMask/>;
     }
     else if (totalRows === 0) {
-        return <div className='TablePanel_NoData'>No rows in table</div>;
+        return <NoDataTableView>No rows in table</NoDataTableView>;
     }
     else if (!highlightedRow && highlightedRow!==0) {
-        return <div className='TablePanel_NoData'>No currently selected row</div>;
+        return <NoDataTableView>No currently selected row</NoDataTableView>;
     }
     else {
         return React.cloneElement(children, {...{tbl_id: watchTblId, highlightedRow}});

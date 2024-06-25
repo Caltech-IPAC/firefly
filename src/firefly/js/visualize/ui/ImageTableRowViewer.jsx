@@ -9,7 +9,6 @@ import {difference, isNil, xor} from 'lodash';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
-import './ImageTableRowViewer.css';
 
 import {useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {getTblById} from '../../tables/TableUtil.js';
@@ -32,7 +31,7 @@ import {isImageDataRequestedEqual} from '../WebPlotRequest.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import Validate from '../../util/Validate.js';
 import {dispatchTableHighlight} from 'firefly/tables/TablesCntlr';
-import {Sheet, Stack, Typography} from '@mui/joy';
+import {Box, Sheet, Stack, Typography} from '@mui/joy';
 import {SwitchInputFieldView} from 'firefly/ui/SwitchInputField';
 import {BeforeButton, NextButton} from 'firefly/visualize/ui/Buttons';
 
@@ -128,7 +127,7 @@ export function ImageTableRowViewer({viewerId, makeRequestFromRow, defaultCutout
         );
     }
     return (
-        <Sheet variant='outlined' sx={{display: 'flex', borderRadius: '5px', maxWidth: 1}}>
+        <Sheet variant='outlined' sx={{display: 'flex', flexGrow: 1, borderRadius: '5px', maxWidth: 1}}>
             <MultiImageViewer
                 {...{viewerId, Toolbar, insideFlex, defaultImageCnt, maxImageCnt, tableId:tbl_id,
                     makeRequestFromRow,defaultCutoutSizeAS, defaultWcsMatchType,
@@ -187,19 +186,33 @@ function ImageSlider({viewerId, table, imageCnt, viewerItemIds, makeItemViewer, 
         }
     };
 
+    // override default styles of slick-carousel (used by react-slick)
+    const sliderStyleOverrides = {
+        '.slick-slider': {
+            width: 'calc(100% - 50px)', //each slider arrow is 25px wide
+            height: 1,
+            margin: 'auto'
+        },
+        '.slick-list, .slick-track' : { height: 1 },
+        '.slick-slide': { position: 'relative' },
+        '.slick-disabled:before': { cursor: 'auto' }
+    };
+
     return (
-        <Slider ref={sliderRef} className='ImageTableRowViewer' {...settings}>
-            {Array.from({length: table?.totalRows || viewerItemIds.length}).map((_, i)=>(
-                <div key={'slide-'+i}>
-                    {viewerItemIds.includes(makePlotId(viewerId,i))
-                        ? <div className='ImageTableRowViewer__item'>
-                            {makeItemViewer(makePlotId(viewerId,i))}
-                        </div>
-                        : <span/> //empty placeholder-slide
-                    }
-                </div>
-            ))}
-        </Slider>
+        <Stack sx={{ height: 1, width: 1, '&': sliderStyleOverrides }}>
+            <Slider ref={sliderRef} {...settings}>
+                {Array.from({length: table?.totalRows || viewerItemIds.length}).map((_, i)=>(
+                    <div key={'slide-'+i}>
+                        {viewerItemIds.includes(makePlotId(viewerId,i))
+                            ? <Box sx={{display: 'inline-block', position: 'absolute', top: 0, width: 1, height: 1}}>
+                                {makeItemViewer(makePlotId(viewerId,i))}
+                            </Box>
+                            : <span/> //empty placeholder-slide
+                        }
+                    </div>
+                ))}
+            </Slider>
+        </Stack>
     );
 }
 

@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Box, Button, FormHelperText, Stack, Switch, Typography} from '@mui/joy';
+import {Box, Button, FormHelperText, Stack, Typography} from '@mui/joy';
 import {once} from 'lodash';
 import {shape, object, bool, string} from 'prop-types';
 import React, {useContext, useEffect, useRef, useState} from 'react';
@@ -257,17 +257,15 @@ function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setSer
     }, [serviceUrl]);
 
     return (
-        <Stack {...{direction:'row', flexGrow: 1}}>
-            <div className='TapSearch'>
-                {titleOn &&<Typography {...{level:'h3', sx:{m:1} }}> TAP Searches </Typography>}
-                <Services {...{serviceUrl, servicesShowing: (servicesShowing && !lockService),
-                        tapOps, onTapServiceOptionSelect}}/>
-                <TapViewType  {...{
-                    serviceUrl, serviceLabel, selectBy, initArgs, lockService,
-                    lockObsCore, obsCoreLockTitle, obsCoreTableModel,
-                    servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy
-                }} />
-            </div>
+        <Stack flexGrow={1}>
+            {titleOn &&<Typography {...{level:'h3', sx:{m:1} }}> TAP Searches </Typography>}
+            <Services {...{serviceUrl, servicesShowing: (servicesShowing && !lockService),
+                    tapOps, onTapServiceOptionSelect}}/>
+            <TapViewType  {...{
+                serviceUrl, serviceLabel, selectBy, initArgs, lockService,
+                lockObsCore, obsCoreLockTitle, obsCoreTableModel,
+                servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy
+            }} />
         </Stack>
     );
 }
@@ -286,9 +284,13 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
     }, [servicesShowing]);
 
     return (
-        <Stack className={servicesShowing?'TapSearch__section':'TapSearch__section TapSearch__hide'}
-            sx={{height: servicesShowing?'auto':0, pb: servicesShowing?1.5:0, justifyContent:'space-between',
-                alignItems:'center', ...extraStyle}}>
+        <Stack sx={{
+            height: servicesShowing ? 'auto' : 0,
+            pb: servicesShowing ? 1.5 : 0,
+            justifyContent:'space-between',
+            alignItems:'center',
+            transition: 'all .2s ease-in-out', //to animate height changes (hide/show Services)
+            ...extraStyle}}>
             <Stack direction='row' spacing={1} sx={{alignItems:'center', width:1}}>
                 <Stack alignItems='flex-start' spacing={1}>
                     <Typography {...{level:'title-lg', color:'primary', sx:{width:'17rem', mr:1} }}>

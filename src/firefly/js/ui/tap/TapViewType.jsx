@@ -24,7 +24,6 @@ import {
 } from './TapUtil.js';
 
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
-import './TableSelectViewPanel.css';
 import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
 
 
@@ -80,6 +79,12 @@ TapViewType.propTypes= {
     hasObsCoreTable: bool,
 };
 
+const expandableTapSectionSx = {
+    display: 'flex',
+    position: 'relative',
+    flexGrow: 1,
+    width: 1,
+};
 
 function AdqlUI({serviceUrl, serviceLabel, servicesShowing, setServicesShowing, setSelectBy, lockService}) {
     const [,setCapabilitiesChange] = useState(); // this is just to force a rerender
@@ -89,7 +94,7 @@ function AdqlUI({serviceUrl, serviceLabel, servicesShowing, setServicesShowing, 
     }, [serviceUrl]);
 
     return (
-        <Sheet className='TapSearch__section' variant='outline' sx={{display:'flex', flexDirection: 'column', flexGrow: 1}}>
+        <Sheet variant='outline' sx={{display:'flex', flexDirection: 'column', flexGrow: 1}}>
             <Stack spacing={1}>
                 {lockService && <Typography {...{level:'title-lg', color:'primary'}}>{serviceLabel}</Typography>}
                 <div style={{display:'flex', flexDirection:'column', width:'100%'}}>
@@ -107,11 +112,9 @@ function AdqlUI({serviceUrl, serviceLabel, servicesShowing, setServicesShowing, 
             </Stack>
 
             {capabilities ?
-                <div className='expandable'>
-                    <div style={{flexGrow: 1}}>
-                        <AdvancedADQL {...{adqlKey:'adqlQuery', defAdqlKey:'defAdqlKey', serviceUrl, capabilities}}/>
-                    </div>
-                </div>
+                <Box sx={expandableTapSectionSx}>
+                    <AdvancedADQL {...{adqlKey:'adqlQuery', defAdqlKey:'defAdqlKey', serviceUrl, capabilities}}/>
+                </Box>
                 : <Skeleton/>
             }
         </Sheet>
@@ -384,7 +387,7 @@ function BasicUI(props) {
 
             <Divider orientation='horizontal' sx={{my:1}}/>
 
-            <div className='TapSearch__section' style={{flexDirection: 'column', flexGrow: 1}}>
+            <Stack sx={{flexGrow: 1}}>
                 <div style={{ display: 'inline-flex', width: 'calc(100% - 3px)', justifyContent: 'space-between', margin:'5px 0 -8px 0'}}>
                     <Stack spacing={1} alignItems='center' direction={'row'}>
                         <Typography {...{level:'title-lg', color:'primary'}}>Enter Constraints</Typography>
@@ -392,7 +395,7 @@ function BasicUI(props) {
                     </Stack>
                     <TableColumnsConstraintsToolbar key={tableName} tableName={tableName} columnsModel={columnsModel} />
                 </div>
-                <div className='expandable'>
+                <Box sx={expandableTapSectionSx}>
                     <SplitPane split='vertical' maxSize={splitMax} mixSize={20} defaultSize={splitDef}>
                         <SplitContent>
                             {(capabilities && columnsModel) ?
@@ -419,8 +422,8 @@ function BasicUI(props) {
                             }
                         </SplitContent>
                     </SplitPane>
-                </div>
-            </div>
+                </Box>
+            </Stack>
         </Fragment>
     );
 

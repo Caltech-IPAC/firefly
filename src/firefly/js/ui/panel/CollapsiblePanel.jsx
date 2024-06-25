@@ -2,7 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import './CollapsiblePanel.css';
 import React from 'react';
 import PropTypes, {bool, func, node, object, oneOfType, shape, string} from 'prop-types';
 import {isFunction, omit} from 'lodash';
