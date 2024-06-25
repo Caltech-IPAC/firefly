@@ -44,7 +44,7 @@ export function processDatalinkTable({sourceTable, row, datalinkTable, activateP
                                      additionalServiceDescMenuList, dlTableUrl, doFileAnalysis=true,
                                          options, parsingAlgorithm = USE_ALL}) {
     const dataLinkData= getDataLinkData(datalinkTable);
-    const isImageGrid= dataLinkData.filter( (dl) => dl.dlAnalysis.isImage && dl.dlAnalysis.isGrid).length>1;
+    const isImageGrid= options.allowImageRelatedGrid &&  dataLinkData.filter( (dl) => dl.dlAnalysis.isImage && dl.dlAnalysis.isGrid).length>1;
     const isMultiTableSpectrum= dataLinkData.filter( (dl) => dl.dlAnalysis.isThis && dl.dlAnalysis.isGrid && dl.dlAnalysis.isSpectrum).length>1;
     if (parsingAlgorithm===USE_ALL && isMultiTableSpectrum) parsingAlgorithm= SPECTRUM; // todo this is probably temporary for testing
 
@@ -197,12 +197,12 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
     else if (isAnalysisType(contentType)) {
         if (doFileAnalysis) {
             const dataTypeHint= dlData.dlAnalysis.isSpectrum ? 'spectrum' : prodType;
+            const prodTypeHint= dlData.dlAnalysis.isSpectrum ? 'spectrum' : (dlData.contentType || prodType);
             const request= makeObsCoreRequest(url,positionWP,name,sourceTable,sourceRow);
             const activate= makeAnalysisActivateFunc({table:sourceTable,row:sourceRow, request,
                 activateParams,menuKey, dataTypeHint, options});
             return dpdtAnalyze({name:'Show: '+name,
-                activate,url,menuKey, semantics, size, activeMenuLookupKey,request, sRegion,
-                prodTypeHint:dlData.contentType || prodType});
+                activate,url,menuKey, semantics, size, activeMenuLookupKey,request, sRegion, prodTypeHint});
         }
         else {
             return createGuessDataType(name,menuKey,url,contentType,semantics, activateParams, positionWP,sourceTable,sourceRow,size);
