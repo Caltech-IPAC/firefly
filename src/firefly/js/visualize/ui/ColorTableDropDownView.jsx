@@ -24,8 +24,6 @@ import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
 import {dispatchHideDialog, dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
 import {DROP_DOWN_KEY} from 'firefly/ui/DropDownToolbarButton.jsx';
 import {Typography, Box, Stack, Divider, IconButton, Skeleton} from '@mui/joy';
-// import LockOpenTwoToneIcon from '@mui/icons-material/LockOpenTwoTone';
-// import LockTwoToneIcon from '@mui/icons-material/LockTwoTone';
 import LockIcon from '@mui/icons-material/Lock';
 import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined';
 import ArrowOutwardOutlinedIcon from '@mui/icons-material/ArrowOutwardOutlined';
@@ -262,7 +260,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
                     defaultValue:contrastInt, slideValue:contrastInt,
                     handleChange:(v) => changeBiasContrastColor(colorTableId, bias,v/10)}} />
             </Stack> : <div/>}
-            { (true || !allLoaded) && makeMask() }
+            { !allLoaded && makeMask() }
         </Box>
     );
 
@@ -311,7 +309,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
                             ))
                         }
             </Box>
-            {(true || !allLoaded) && makeMask() }
+            {!allLoaded && makeMask() }
         </Box>
     );
 
