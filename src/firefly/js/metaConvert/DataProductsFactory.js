@@ -311,6 +311,7 @@ export const getDefaultFactoryOptions= once(() => ({
     initialLayout: undefined, //todo - an datalink use this?
     tableIdBase: undefined,
     chartIdBase: undefined,
+    cutoutParam: undefined,
     tableIdList: [], // list of ids
     chartIdList: [],// list of ids
     paramNameKeys: [],
@@ -340,7 +341,7 @@ function getConverterTemplates(factoryKey='DEFAULT_FACTORY')  {
  * @param options
  */
 export function setFactoryTemplateOptions(factoryKey='DEFAULT_FACTORY', options)  {
-    FACTORY_OPTIONS[factoryKey]= options;
+    FACTORY_OPTIONS[factoryKey]= {...getDefaultFactoryOptions(), ...options};
 }
 
 export function getFactoryTemplateOptions(factoryKey='DEFAULT_FACTORY') {
@@ -371,6 +372,8 @@ export function makeDataProductsConverter(table, factoryKey= undefined) {
         maxPlots: options.maxPlots ?? t.maxPlots ?? 1,
         initialLayout: options.initialLayout ?? t.initialLayout ?? SINGLE,
         threeColor: options.threeColor ?? t.threeColor ?? false,
+        cutoutParam: options.cutoutParam,
+        dataProductsComponentKey: options.dataProductsComponentKey
     };
     const retObj= t.create(table,pT, options);
     return {options, ...retObj};
