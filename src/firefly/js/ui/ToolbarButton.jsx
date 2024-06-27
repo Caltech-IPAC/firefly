@@ -173,6 +173,7 @@ ToolbarButton.propTypes= {
     pressed: bool,
     shortcutHelp : bool,
     badgeCount : number,
+    badgeAlert: bool,
     enabled : bool,
     visible : bool,
     imageStyle : object,
