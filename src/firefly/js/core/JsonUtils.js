@@ -63,6 +63,7 @@ export function jsonFetch(url, params, doPost, useBigInt) {
             }
         }).catch( (e) => {
             console.log(`jsonFetch: ${e}`);
+            reject(e);
         });
     });
 }
