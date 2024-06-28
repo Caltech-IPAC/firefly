@@ -5,7 +5,7 @@
 import {loadScript, getRootURL} from '../util/WebUtil.js';
 import {logger} from '../util/Logger.js';
 
-const PLOTLY_SCRIPT= 'plotly-2.14.0.min.js';
+const PLOTLY_SCRIPT= 'plotly-2.32.0.min.js';
 const LOAD_ERR_MSG= 'Load Failed: could not load Plotly';
 
 function initPlotLyRetriever(loadNow) {
