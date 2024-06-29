@@ -150,7 +150,7 @@ public class RequestAgent {
     public static class HTTP extends RequestAgent {
         private static final String AUTH_KEY = "JOSSO_SESSIONID";
         private static final Logger.LoggerImpl LOG = Logger.getLogger();
-        private final HashMap<String, String> headers = new HashMap<>();      // key stored as lowercase; multiple values are separated by \t.
+        private final HashMap<String, String> headers = new HashMap<>();      // key stored as lowercase;
         private final HashMap<String, Cookie> cookies = new HashMap<>();
         private final HttpServletResponse response;
         private final String realPath;
@@ -161,7 +161,7 @@ public class RequestAgent {
             this.response = response;
 
             Collections.list(request.getHeaderNames()).forEach(h -> {
-                headers.put(h.toLowerCase(), StringUtils.toString(Collections.list(request.getHeaders(h)), "\t"));
+                headers.put(h.toLowerCase(), request.getHeader(h));
             });
             applyIfNotEmpty(request.getCookies(), v -> {
                 Arrays.stream(v).forEach(c -> cookies.put(c.getName(), c));
