@@ -52,7 +52,7 @@
     "validator": "~13.9"
   },
   "devDependencies": {
-    "@babel/core": "~7.16",
+    "@babel/core": "^7.24.7",
     "@babel/eslint-parser": "~7.16",
     "@babel/plugin-transform-runtime": "~7.16",
     "@babel/preset-env": "~7.16",
@@ -77,7 +77,7 @@
     "jsdoc-jsx": "~0.1",
     "publish-release": "~1.6",
     "style-loader": "~3.3",
-    "webpack": "~5.65",
+    "webpack": "^5.92.1",
     "webpack-cli": "~4.9",
     "worker-loader": "^3.0"
   },
