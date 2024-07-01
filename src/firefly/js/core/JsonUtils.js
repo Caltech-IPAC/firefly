@@ -61,6 +61,9 @@ export function jsonFetch(url, params, doPost, useBigInt) {
                     reject(err);
                 });
             }
+        }).catch( (e) => {
+            const eStr= `fetch: ${url}:  ${e} (no status returned, most likely a bad url or a bad redirected url)`;
+            reject(new Error(eStr));
         });
     });
 }
