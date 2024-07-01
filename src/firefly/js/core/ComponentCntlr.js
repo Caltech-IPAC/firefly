@@ -66,7 +66,7 @@ export function getDialogOwner(dialogKey) {
 }
 
 export function getComponentState(componentKey, defaultValue={}) {
-    return get(flux.getState()[DIALOG_OR_COMPONENT_KEY], [COMPONENT_KEY,componentKey], defaultValue);
+    return flux.getState()[DIALOG_OR_COMPONENT_KEY]?.[COMPONENT_KEY]?.[componentKey] ?? defaultValue;
 }
 
 /*

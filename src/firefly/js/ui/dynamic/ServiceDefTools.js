@@ -328,16 +328,14 @@ export function makeServiceDescriptorSearchRequest(request, serviceDescriptor, e
     const options= {...sortObj, META_INFO: { ...hideObj, ...extraMeta }};
 
     if (isSIAStandardID(standardID)) {
-        // we know this is a table so make a table request
         const url = accessURL + '?' + new URLSearchParams(request).toString();
         return makeFileRequest(tblTitle, url, undefined, options);   //todo- figure out title
     }
     else if (isSSAStandardID(standardID)) {
-            const url = accessURL + '?' + new URLSearchParams(request).toString();
-            return makeFileRequest(tblTitle, url, undefined, options);   //todo- figure out title
+        const url = accessURL + '?' + new URLSearchParams(request).toString();
+        return makeFileRequest(tblTitle, url, undefined, options);   //todo- figure out title
     }
     else if (isCisxTapStandardID(standardID, utype)) {
-        // we know this is a table so make a table request either sync or async
         const doAsync = standardID.toLowerCase().includes('async');
         const query = serDefParams.find(({name}) => name === 'QUERY')?.value;
         const finalQuery = tokenSub(request, query);

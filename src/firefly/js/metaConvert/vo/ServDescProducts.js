@@ -40,6 +40,10 @@ export function makeServiceDefDataProduct({
     const {semantics, size, sRegion, prodTypeHint, serviceDefRef} = datalinkExtra;
 
     if (activateServiceDef && noInputRequired) {
+        // todo: getComponentInputs(serDef,options) effectively creates a request but it is not converted
+        //         using DynamicUISearchPanel:convertRequest() to support the standardID type
+        //         so SIA will probably not work
+        //         So - I think the following line is too simple
         const url= makeUrlFromParams(accessURL, serDef, idx, getComponentInputs(serDef,options));
         const request = makeObsCoreRequest(url, positionWP, titleStr, sourceTable, sourceRow);
         const activate = makeAnalysisActivateFunc({table:sourceTable, row:sourceRow, request, activateParams,
@@ -78,13 +82,13 @@ function getComponentInputs(serDef, options) {
         return obj;
     },{});
     const ucdParams= ucdKeys.reduce( (obj, key) => {
-        if (isDefined(valueObj[key])) return obj;
+        if (!isDefined(valueObj[key])) return obj;
         const foundParam= serDefParams.find((p) => p.UCD===key);
         if (foundParam) obj[foundParam.name]= valueObj[key];
         return obj;
     },{});
     const utypeParams= utypeKeys.reduce( (obj, key) => {
-        if (isDefined(valueObj[key])) return obj;
+        if (!isDefined(valueObj[key])) return obj;
         const foundParam= serDefParams.find((p) => p.utype===key);
         if (foundParam) obj[foundParam.name]= valueObj[key];
         return obj;
