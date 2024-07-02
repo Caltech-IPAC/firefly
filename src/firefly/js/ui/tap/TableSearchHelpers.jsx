@@ -32,6 +32,16 @@ const DEF_ERR_MSG= 'Constraints Error';
 export const getTapObsCoreOptions= (serviceLabel) =>
     getAppOptions().tapObsCore?.[serviceLabel] ?? getAppOptions().tapObsCore ?? {};
 
+/**
+ * @param key
+ * @param [serviceLabel]
+ * @return {*}
+ */
+export function getObsCoreOption(key,serviceLabel=undefined) {
+    const slOps= serviceLabel ? getAppOptions().tapObsCore?.[serviceLabel] ?? {} : {};
+    const ops= getAppOptions().tapObsCore ?? {};
+    return slOps[key] ?? ops[key];
+}
 
 
 export function getTapObsCoreOptionsGuess(serviceLabelGuess) {

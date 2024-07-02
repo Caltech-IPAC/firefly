@@ -183,10 +183,10 @@ export const dpdtMessageWithError= (message,detailMsgAry) => {
  * @return {DataProductsDisplayType}
  */
 export function dpdtImage({name, activate, extraction, menuKey='image-0', extractionText='Pin Image',
-                              request, override, interpretedData, requestDefault,
-                              url, semantics,size }) {
-    return { displayType:DPtypes.IMAGE, name, activate, extraction, menuKey, extractionText,
-        request, override, interpretedData, requestDefault,url, semantics,size,};
+                              request, override, interpretedData, requestDefault, enableCutout,
+                              url, semantics,size, serDef }) {
+    return { displayType:DPtypes.IMAGE, name, activate, extraction, menuKey, extractionText, enableCutout,
+        request, override, interpretedData, requestDefault,url, semantics,size,serDef};
 }
 
 /**

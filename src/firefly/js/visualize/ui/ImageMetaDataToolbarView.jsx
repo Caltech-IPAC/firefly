@@ -2,11 +2,18 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Divider, Sheet, Stack} from '@mui/joy';
+import {Sheet, Stack} from '@mui/joy';
 import {isEmpty, isEqual, omit} from 'lodash';
 import React from 'react';
 import PropTypes from 'prop-types';
+import {SD_CUTOUT_KEY} from '../../metaConvert/vo/ServDescProducts';
 import {getTblInfo} from '../../tables/TableUtil.js';
+import {getComponentState} from '../../core/ComponentCntlr.js';
+import {showCutoutSizeDialog} from '../../ui/CutoutSizeDialog.jsx';
+import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {getObsCoreOption} from '../../ui/tap/TableSearchHelpers';
+import {makeFoVString} from '../ZoomUtil.js';
+import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {
     dispatchChangeViewerLayout, getViewer, getMultiViewRoot,
@@ -16,18 +23,20 @@ import {DisplayTypeButtonGroup, ThreeColor} from './Buttons.jsx';
 import {showColorBandChooserPopup} from './ColorBandChooserPopup.jsx';
 import {ImagePager} from './ImagePager.jsx';
 import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
-import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
+
+import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
 
 
-
-
-export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType, factoryKey,
+export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType, factoryKey, serDef, enableCutout,
                                           activeTable, makeDataProductsConverter, makeDropDown}) {
 
     const converter= makeDataProductsConverter(activeTable,factoryKey) || {};
-    if (!converter) return <div/>;
+    const {canGrid, hasRelatedBands, converterId, maxPlots, threeColor, dataProductsComponentKey}= converter ?? {};
+    const cutoutValue= useStoreConnector( () => getComponentState(dataProductsComponentKey)[SD_CUTOUT_KEY]) ?? getObsCoreOption('cutoutDefSizeDeg') ?? .01;
 
-    const {canGrid, hasRelatedBands, converterId, maxPlots, threeColor}= converter;
+    if (!converter) return <div/>;
+    const cSize= dataProductsComponentKey&&enableCutout ? makeFoVString(Number(cutoutValue)) : '';
+
 
     const layoutDetail= getLayoutDetails(getMultiViewRoot(), viewerId, activeTable?.tbl_id);
 
@@ -79,6 +88,11 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
                 <Stack direction='row' alignItems='center' divider={<ToolbarHorizontalSeparator/>}
                        sx={{ pl: 1/2, flexWrap:'wrap'}}>
                     {makeDropDown ? makeDropDown() : false}
+                    {enableCutout &&
+                        <ToolbarButton
+                            icon={<ContentCutRoundedIcon/>}
+                            text={`${cSize}`} onClick={() => showCutoutSizeDialog(cutoutValue,dataProductsComponentKey)}/>
+                    }
                     {metaControls &&
                         <Stack direction='row' spacing={1} alignItems='center' whiteSpace='nowrap'>
                             {showMultiImageOps && <DisplayTypeButtonGroup {...{value:gridValue, config:gridConfig }}/>}
@@ -104,6 +118,7 @@ ImageMetaDataToolbarView.propTypes= {
     activeTable: PropTypes.object,
     makeDataProductsConverter: PropTypes.func,
     makeDropDown: PropTypes.func,
+    serDef: PropTypes.object,
     factoryKey: PropTypes.string
 };
 

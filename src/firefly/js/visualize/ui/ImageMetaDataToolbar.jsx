@@ -49,9 +49,10 @@ export class ImageMetaDataToolbar extends Component {
 
     render() {
         const {activeTable}= this.state;
-        const {visRoot, viewerId, viewerPlotIds, layoutType, dlAry, makeDropDown, factoryKey}= this.props;
+        const {visRoot, viewerId, viewerPlotIds, layoutType, dlAry, makeDropDown, serDef, factoryKey, enableCutout}= this.props;
         return (
-            <ImageMetaDataToolbarView activePlotId={visRoot.activePlotId} viewerId={viewerId}
+            <ImageMetaDataToolbarView activePlotId={visRoot.activePlotId} viewerId={viewerId}  serDef={serDef}
+                                      enableCutout={enableCutout}
                                       viewerPlotIds={viewerPlotIds} layoutType={layoutType} dlAry={dlAry}
                                       activeTable={activeTable} makeDataProductsConverter={makeDataProductsConverter}
                                       makeDropDown={makeDropDown} factoryKey={factoryKey} />

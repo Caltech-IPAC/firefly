@@ -131,7 +131,7 @@ export function convertRequest(request, fieldDefAry, standardIDType) {
 
 
 
-function makeCircleString(ra,dec,radius,standardID) {
+export function makeCircleString(ra,dec,radius,standardID) {
      return `${standardID?.toLowerCase()?.startsWith(standardIDs.sia)?'CIRCLE ':''}${ra} ${dec} ${radius}`;
 }
 function makePointString(ra,dec,standardID) {
