@@ -157,6 +157,9 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
             case '':     p.maptype = LINEAR; break;
             default :    p.maptype = UNRECOGNIZED;
         }
+        if (p.maptype===UNRECOGNIZED && !ctype1Trim.match(/[ -]/)?.[0]) { // catch some non-standard LINEAR projections that go outsize the first 4 pixels
+            p.maptype = LINEAR;
+        }
         p.axes_reversed = startsWithAny(ctype1Trim, ['DEC','MM','GLAT','LAT','ELAT']);
     }
     else {

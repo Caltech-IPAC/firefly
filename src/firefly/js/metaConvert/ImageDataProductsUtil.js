@@ -30,7 +30,7 @@ export function createRelatedDataGridActivate(reqRet, imageViewerId, tbl_id, hig
     return () => replotImageDataProducts(highlightPlotId, true, imageViewerId, tbl_id, reqRet.standard, reqRet.threeColor);
 }
 
-export function createRelatedGridImagesActivate(inReqAry, threeColorReqAry, imageViewerId, tbl_id) {
+export function createRelatedGridImagesActivate({requestAry:inReqAry, threeColorReqAry, imageViewerId, tbl_id, serDef}) {
     const reqAry= inReqAry.filter( (r) => r);
     if (tbl_id) reqAry.forEach( (r) => r.setAttributes({ [PlotAttribute.DATALINK_TABLE_ID]: tbl_id }));
     return () => replotImageDataProducts(reqAry[0]?.getPlotId(), true, imageViewerId, tbl_id, reqAry, threeColorReqAry);

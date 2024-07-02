@@ -25,6 +25,7 @@ export function MultiProductChoice({ dataProductsState, dpId,
                                        makeDropDown, chartViewerId, imageViewerId, metaDataTableId,
                                        tableGroupViewerId, whatToShow, onChange, mayToggle = false, factoryKey
                                    }) {
+    const {serDef, enableCutout}= dataProductsState;
     const primeIdx= useStoreConnector(() => getActivePlotView(visRoot())?.primeIdx ?? -1);
     const {current:showingStatus}= useRef({oldWhatToShow:undefined});
     const chartTableOptions = [{label: 'Table', value: SHOW_TABLE}, {label: 'Chart', value: SHOW_CHART}];
@@ -94,7 +95,7 @@ export function MultiProductChoice({ dataProductsState, dpId,
                 <Stack {...{direction: 'column', width:'100%', height:'100%'}}>
                     {mayToggle && toolbar}
                     <MultiImageViewer {...{
-                        viewerId:imageViewerId, insideFlex:true,
+                        viewerId:imageViewerId, insideFlex:true, serDef, enableCutout,
                         canReceiveNewPlots: NewPlotMode.none.key, tableId:metaDataTableId, controlViewerMounting:false,
                         makeDropDown: !mayToggle ? makeDropDown : undefined,
                         Toolbar:ImageMetaDataToolbar, factoryKey}} />

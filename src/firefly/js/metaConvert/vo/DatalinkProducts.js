@@ -29,7 +29,6 @@ import {
  */
 export async function getDatalinkRelatedGridProduct({dlTableUrl, activateParams, table, row, threeColorOps, titleStr, options}) {
     try {
-        const positionWP = getSearchTarget(table.request, table) ?? makeWorldPtUsingCenterColumns(table, row);
         const datalinkTable = await fetchDatalinkTable(dlTableUrl);
 
         const gridData = getDataLinkData(datalinkTable).filter(({dlAnalysis}) => dlAnalysis.isThis && dlAnalysis.isGrid && dlAnalysis.isImage);
@@ -37,7 +36,7 @@ export async function getDatalinkRelatedGridProduct({dlTableUrl, activateParams,
 
 
         const dataLinkGrid = processDatalinkTable({
-            sourceTable: table, row, datalinkTable, positionWP, activateParams,
+            sourceTable: table, row, datalinkTable, activateParams,
             baseTitle: titleStr, dlTableUrl, doFileAnalysis: false,
             options, parsingAlgorithm: RELATED_IMAGE_GRID
         });
@@ -55,9 +54,11 @@ export async function getDatalinkRelatedGridProduct({dlTableUrl, activateParams,
 
         const threeColorReqAry= (threeColorOps && requestAry.length>1) &&
                                           make3ColorRequestAry(requestAry,threeColorOps,datalinkTable.tbl_id);
-        const activate = createRelatedGridImagesActivate(requestAry, threeColorReqAry, imageViewerId, table.tbl_id);
+        const activate = createRelatedGridImagesActivate({requestAry, threeColorReqAry, imageViewerId, tbl_id:table.tbl_id});
         const extraction = createSingleImageExtraction(requestAry);
-        return dpdtImage({name:'image grid', activate, extraction, menuKey:'image-grid-0'});
+        return dpdtImage({name:'image grid', activate, extraction,
+            enableCutout:true,
+            menuKey:'image-grid-0',serDef:dataLinkGrid.serDef});
     } catch (reason) {
         return dpdtMessageWithDownload(`No data to display: Could not retrieve datalink data, ${reason}`, 'Download File: ' + titleStr, dlTableUrl);
     }

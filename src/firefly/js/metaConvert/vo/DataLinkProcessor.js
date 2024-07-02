@@ -130,7 +130,7 @@ function getDLMenuEntryData({dlTableUrl, dlData,idx, sourceTable, sourceRow}) {
 
 function makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow, options,
                         name, activateParams}) {
-    const {serDef, semantics,size,serviceDefRef}= dlData;
+    const {serDef, semantics,size,serviceDefRef,dlAnalysis}= dlData;
     const {positionWP,sRegion,prodType,
         activeMenuLookupKey,menuKey}= getDLMenuEntryData({dlTableUrl, dlData,idx,sourceTable,sourceRow});
 
@@ -140,7 +140,7 @@ function makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTabl
     return makeServiceDefDataProduct({
         serDef, sourceTable, sourceRow, idx, positionWP, activateParams, options, name,
                                                titleStr, activeMenuLookupKey, menuKey,
-        datalinkExtra: {semantics, size, sRegion, prodTypeHint: dlData.contentType || prodType, serviceDefRef}
+        datalinkExtra: {semantics, size, sRegion, prodTypeHint: dlData.contentType || prodType, serviceDefRef, dlAnalysis}
     });
 }
 

@@ -4,8 +4,11 @@
 
 import {bool, string, object} from 'prop-types';
 import React, {memo} from 'react';
+import {dispatchComponentStateChange, getComponentState} from '../../../core/ComponentCntlr';
 import {setFactoryTemplateOptions, getDefaultFactoryOptions} from '../../../metaConvert/DataProductsFactory.js';
 import {startDataProductsWatcher} from '../../../metaConvert/DataProductsWatcher.js';
+import {SD_CUTOUT_KEY} from '../../../metaConvert/vo/ServDescProducts';
+import {getObsCoreOption, getTapObsCoreOptions} from '../../../ui/tap/TableSearchHelpers';
 import {MultiProductViewer} from './MultiProductViewer.jsx';
 
 const startedWatchers=[];
@@ -15,7 +18,14 @@ function startWatcher(dpId, options) {
     setFactoryTemplateOptions(dpId, options);
     startDataProductsWatcher({ dataTypeViewerId:dpId, factoryKey:dpId});
     startedWatchers.push(dpId);
-};
+    const defOps= getDefaultFactoryOptions();
+    const key= options.dataProductsComponentKey ?? defOps.dataProductsComponentKey;
+    if (!getComponentState(key,{})[SD_CUTOUT_KEY]) {
+        dispatchComponentStateChange(key,{
+            [SD_CUTOUT_KEY]: (getObsCoreOption('cutoutDefSizeDeg') ?? .01)
+        } );
+    }
+}
 
 
 /**
