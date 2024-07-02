@@ -47,7 +47,7 @@ function matchesObsCoreHeuristic(schemaName, tableName, columnsModel) {
 
 
 export function TapViewType({serviceUrl, servicesShowing, setServicesShowing, lockService, setSelectBy,
-                                serviceLabel, selectBy, initArgs, lockObsCore,
+                                serviceLabel, selectBy, initArgs, lockObsCore, lockedSchemaName,
                                 obsCoreLockTitle, obsCoreTableModel, hasObsCoreTable}) {
 
     return (
@@ -55,7 +55,7 @@ export function TapViewType({serviceUrl, servicesShowing, setServicesShowing, lo
             {selectBy==='adql' ?
                 <AdqlUI {...{serviceUrl, serviceLabel, servicesShowing, setServicesShowing, lockService, setSelectBy}}/> :
                 <BasicUI  {...{serviceUrl, serviceLabel, selectBy, initArgs, lockService,
-                    lockObsCore, obsCoreLockTitle, obsCoreTableModel,
+                    lockObsCore, obsCoreLockTitle, lockedSchemaName, obsCoreTableModel,
                     servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy}}/>
             }
         </Stack>
@@ -69,6 +69,8 @@ TapViewType.propTypes= {
     lockService: bool,
     setSelectBy: func,
     serviceLabel: string,
+    lockedSchemaName: string,
+    obsCoreLockTitle: string,
     selectBy: string,
     initArgs: shape({
         searchParams: object,
@@ -133,7 +135,7 @@ function useStateRef(initialState){
 
 function BasicUI(props) {
     const {initArgs={}, setSelectBy, obsCoreTableModel, servicesShowing, obsCoreLockTitle,
-        setServicesShowing, hasObsCoreTable, lockService, lockObsCore:forceLockObsCore}= props;
+        setServicesShowing, lockedSchemaName, hasObsCoreTable, lockService, lockObsCore:forceLockObsCore}= props;
     const {urlApi={},searchParams={}}= initArgs;
     const [getTapBrowserState,setTapBrowserState]= useFieldGroupMetaState(defTapBrowserState);
     const initState = getTapBrowserState();
@@ -142,7 +144,7 @@ function BasicUI(props) {
     const {setVal}= useContext(FieldGroupCtx);
     const serviceLabel= props.serviceLabel ?? initState.serviceLabel;
     const [serviceUrl, serviceUrlRef, setServiceUrl] = useStateRef(initState.serviceUrl || props.serviceUrl);
-    const [schemaName, schemaRef, setSchemaName] = useStateRef(searchParams.schema || initState.schemaName || urlApi.schema);
+    const [schemaName, schemaRef, setSchemaName] = useStateRef(lockedSchemaName || searchParams.schema || initState.schemaName || urlApi.schema);
     const [tableName, tableRef, setTableName] = useStateRef(searchParams.table || initState.tableName || urlApi.table);
     const [obsCoreEnabled, setObsCoreEnabled] = useState(initState.obsCoreEnabled || initArgs.urlApi?.selectBy === 'obscore');
     const [,setCapabilitiesChange] = useState(); // this is just to force a rerender
@@ -152,6 +154,8 @@ function BasicUI(props) {
     const [columnsModel, setColumnsModel] = useState();
     const [obsCoreMetadataModel, setObsCoreMetadataModel] = useState(undefined);
     const {schemaLabel}= getTapServices().find( ({value}) => value===serviceUrl) ?? {};
+
+    const schemaIsLocked= !forceLockObsCore && Boolean(lockedSchemaName);
 
     const capabilities= getLoadedCapability(serviceUrl);
 
@@ -347,32 +351,10 @@ function BasicUI(props) {
         <Fragment>
             <Sheet sx={{display:'flex', flexDirection: 'row', justifyContent:'space-between'}}>
                 <Stack {...{direction:'row', justifyContent:'space-between', width:1, spacing:1}}>
-                    {showTableSelectors &&
-                        <Stack {...{direction:'row', alignItems:'center', width:1}}>
-                            <Stack>
-                                <Stack {...{direction:'row', justifyContent:'space-between', width:'17rem', alignItems:'center', mr:1}}>
-                                    <Tooltip title={SCH_TAB_TITLE_TIP}>
-                                        <Typography {...{level:'title-lg', color:'primary', component:'div' }}>
-                                            <Stack {...{justifyContent:'center', height:55, overflow:'hidden'}}>
-                                                <div style={{ textOverflow: 'ellipsis', whiteSpace: 'normal', overflow: 'hidden' }} >
-                                                    {`${serviceLabel} Tables`}
-                                                </div>
-                                            </Stack>
-                                        </Typography>
-                                    </Tooltip>
-                                    <HelpIcon helpId={tapHelpId('selectTable')}/>
-                                </Stack>
-                                {hasObsCoreTable && <TableTypeButton {...{
-                                    sx: {mr: 1},
-                                    lockToObsCore:obsCoreEnabled, setLockToObsCore}}/>}
-                            </Stack>
-                            <Stack {...{direction: 'row', width:1, spacing:1, mr: 1/2, maxWidth: 1000, justifyContent:'space-between'}}>
-                                <SchemaChooser {...{sOps,schemaName,setSchemaName,schemaLabel:realSchemaLabel}}/>
-                                <TableChooser {...{tOps,tableTableModel, tableName,setTableName,popupTitle:`${realSchemaLabel}: ${schemaName}`}}/>
-                            </Stack>
-                        </Stack>
-                    }
-                    {!showTableSelectors &&
+                    {showTableSelectors ?
+                        <TableSelectors {...{hasObsCoreTable,obsCoreEnabled, setLockToObsCore, serviceLabel,
+                            sOps,schemaName,setSchemaName, realSchemaLabel, schemaIsLocked,
+                            tOps,tableTableModel, tableName,setTableName}}/> :
                         <Stack {...{width:1}}>
                             <Typography {...{level:'h4', component:'div', color:'primary' }}>
                                 {obsCoreLockTitle ?? `${serviceLabel} ObsCore data product tables (images, spectra, etc.)`}
@@ -427,6 +409,41 @@ function BasicUI(props) {
         </Fragment>
     );
 
+}
+
+function TableSelectors({hasObsCoreTable,obsCoreEnabled, setLockToObsCore, serviceLabel,
+                            sOps,schemaName,setSchemaName, realSchemaLabel, schemaIsLocked,
+                            tOps,tableTableModel, tableName,setTableName}) {
+    return (
+        <Stack {...{direction:'row', alignItems:'center', width:1}}>
+                <Stack>
+                    <Stack {...{direction:'row', justifyContent:'space-between', width:'17rem', alignItems:'center', mr:1}}>
+                        <Tooltip title={SCH_TAB_TITLE_TIP}>
+                            <Typography {...{level:'title-lg', color:'primary', component:'div' }}>
+                                <Stack {...{justifyContent:'center', height:55, overflow:'hidden'}}>
+                                    <div style={{ textOverflow: 'ellipsis', whiteSpace: 'normal', overflow: 'hidden' }} >
+                                        {schemaIsLocked ?
+                                            `${serviceLabel}: ${schemaName}` :
+                                            `${serviceLabel} Tables`}
+                                    </div>
+                                </Stack>
+                            </Typography>
+                        </Tooltip>
+                        <HelpIcon helpId={tapHelpId('selectTable')}/>
+                    </Stack>
+                    {hasObsCoreTable && <TableTypeButton {...{
+                        sx: {mr: 1},
+                        lockToObsCore:obsCoreEnabled, setLockToObsCore}}/>}
+                </Stack>
+            <Stack {...{direction: 'row', width:1, spacing:1, mr: 1/2, maxWidth: 1000, justifyContent:'space-between'}}>
+                {!schemaIsLocked &&
+                    <SchemaChooser {...{sOps,schemaName,setSchemaName,schemaLabel:realSchemaLabel}}/>
+                }
+                <TableChooser {...{tOps,tableTableModel, tableName,setTableName,popupTitle:`${realSchemaLabel}: ${schemaName}`}}/>
+                {schemaIsLocked && <Box width={1}/>}
+            </Stack>
+        </Stack>
+    );
 }
 
 function SchemaChooser({sOps,schemaName,setSchemaName,schemaLabel }) {

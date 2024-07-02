@@ -59,7 +59,7 @@ FormWatcher:  Wrap around FormPanel.  Necessary whe the application feature more
 useDropdownRoute:  The hook marrying route behavior on top of Firefly's layout controller.
 
 */
-export  default function RoutedApp({slotProps, menu, mainPanel, children, ...props}) {
+export  default function RoutedApp({slotProps, menu, mainPanel, children, dropdownPanels, ...props}) {
 
     useEffect(() => {
         startTTFeatureWatchers();
@@ -82,7 +82,7 @@ export  default function RoutedApp({slotProps, menu, mainPanel, children, ...pro
     let dropDownComponent = null;
     if (visible && outlet) {
         dropDownComponent = (
-            <DropDownContainer visible={true} footer={<IrsaFooterSmall/>} {...mSlotProps?.dropdown}>
+            <DropDownContainer visible={true} dropdownPanels={dropdownPanels} footer={<IrsaFooterSmall/>} {...mSlotProps?.dropdown}>
                 {outlet}
             </DropDownContainer>
         );
