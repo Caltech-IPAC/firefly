@@ -58,12 +58,12 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
             return getByTableRequest(jsonSearchRequest);
         }
 
-        fetchSourceFile(req);
+        var srcFile = fetchSourceFile(req);
         if (noSourceFile) throw fetchError;
 
         try {
             int tblIdx = req.getIntParam(TBL_INDEX, 0);
-            DataGroup dataGroup = TableUtil.readAnyFormat(inf, tblIdx, req);
+            DataGroup dataGroup = TableUtil.readAnyFormat(srcFile, tblIdx, req);
 
             String type = req.getParam(TBL_TYPE, TYPE_CATALOG);
             if (type.equals(TYPE_CATALOG)) {        // if catalog and overlay is not set, set it to "TRUE"
@@ -78,20 +78,20 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
         }
     }
 
-    public File getDbFile(TableServerRequest treq) {
-        fetchSourceFile(treq);
-        DbAdapter dbAdapter = (DbAdapter) DbAdapter.getDbCreator(treq.getMeta(TBL_FILE_TYPE));
-        dbAdapter = dbAdapter == null ? DbAdapter.getAdapter(inf) : dbAdapter;
-        if ( dbAdapter instanceof DuckDbReadable dr) {
-            treq.setMeta(TBL_FILE_TYPE, dr.getName());
-            return inf;
+    public DbAdapter getDbAdapter(TableServerRequest treq) {
+        var srcFile = fetchSourceFile(treq);
+        DbAdapter test = DbAdapter.getAdapter(srcFile);     // test to see if srcFile can be imported directly by DuckDB
+        if ( test instanceof DuckDbReadable dr) {
+            dr.useDbFileFrom(makeDbFile(treq));
+            return dr;
+        }else {
+            return super.getDbAdapter(treq);
         }
-        return DbAdapter.createDbFile(treq, makeDbFname(treq), QueryUtil.getTempDir(treq));
     }
 
-    private void fetchSourceFile (TableServerRequest req) {
+    private File fetchSourceFile (TableServerRequest req) {
 
-        if (noSourceFile || inf != null) return;
+        if (noSourceFile || inf != null) return inf;        // already resolved
 
         String processor = req.getParam("processor");
         String jsonSearchRequest = req.getParam(SEARCH_REQUEST);
@@ -120,6 +120,7 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
                 noSourceFile = true;
             }
         }
+        return inf;
     }
 
 //====================================================================
@@ -129,7 +130,7 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
     private DataGroup getByProcessor(String processor, TableServerRequest request) throws DataAccessException {
 
         TableServerRequest nReq = new TableServerRequest(processor, request);
-        nReq.setPageSize(Integer.MAX_VALUE);    // to ensure we're getting all of the data
+        nReq.setPageSize(Integer.MAX_VALUE);    // to ensure we're getting all the data
         nReq.setStartIndex(0);
         SearchProcessor<DataGroupPart> proc = SearchManager.getProcessor(processor);
         if (proc != null) {

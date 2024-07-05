@@ -19,7 +19,6 @@ import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -54,7 +53,7 @@ public class CatMasterTableQuery extends EmbeddedDbProcessor {
         return dg;
     }
 
-    protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
+    protected DataGroupPart getResultSet(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
 
         String cols = Arrays.stream("projectshort,subtitle,description,server,catname,cols,nrows,coneradius,infourl,ddlink,pos"
                             .split(",")).map(s -> "\"" + s + "\"").collect(Collectors.joining(","));    // enclosed in quotes
@@ -62,7 +61,6 @@ public class CatMasterTableQuery extends EmbeddedDbProcessor {
 
         TableServerRequest tsr = (TableServerRequest) treq.cloneRequest();
         tsr.setInclColumns(cols.split(","));
-        var dbAdapter = DbAdapter.getAdapter(dbFile);
         return dbAdapter.execRequestQuery(tsr, dbAdapter.getDataTable());
     }
 

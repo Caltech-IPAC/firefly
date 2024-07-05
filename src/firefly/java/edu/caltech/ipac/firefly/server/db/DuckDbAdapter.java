@@ -80,10 +80,9 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
     List<String> getSupportedExts () { return SUPPORTS; }
 
     protected EmbeddedDbInstance createDbInstance() {
-        File db = getDuckDbFile();
-        String dbUrl = "jdbc:duckdb:" + db.getAbsolutePath();          // open an in-memory db
-        EmbeddedDbInstance dbInst = new EmbeddedDbInstance(getName(), this, dbUrl, "org.duckdb.DuckDBDriver");
-        return dbInst;
+        String filePath = getDbFile() == null ? "" : getDbFile().getAbsolutePath();
+        String dbUrl = "jdbc:duckdb:" + filePath;
+        return new EmbeddedDbInstance(getName(), this, dbUrl, "org.duckdb.DuckDBDriver");
     }
 
     void createUDFs() {
@@ -97,6 +96,12 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
         execUpdate(String.format("SET memory_limit = '%s'", maxMemory));
     }
 
+    @Override
+    List<String> getColumnNamesFromSys(String forTable, String enclosedBy) {
+        String sql = String.format("select column_name from duckdb_columns() where table_name = '%s'", forTable.toUpperCase());
+        return JdbcFactory.getSimpleTemplate(getDbInstance()).query(sql, (rs, i) -> (enclosedBy == null) ? rs.getString(1) : enclosedBy + rs.getString(1) + enclosedBy);
+    }
+
     protected void renameColumn(String from, String to) {
         execUpdate(String.format("ALTER TABLE %s RENAME COLUMN \"%s\" TO \"%s\"", getDataTable(), from, to));
         execUpdate(String.format("UPDATE %s_DD SET cname='%s' WHERE cname='%s'", getDataTable(), to, from));
@@ -106,8 +111,7 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
 
     public File initDbFile() throws IOException {
         close(true);              // if database exists in memory, close it and remove all files related to it.
-        File duckdbFile = getDuckDbFile();
-        if (!duckdbFile.getParentFile().exists()) duckdbFile.getParentFile().mkdirs();
+        if (!getDbFile().getParentFile().exists()) getDbFile().getParentFile().mkdirs();
         createUDFs();   // add user defined functions
         return getDbFile();
     }
@@ -119,7 +123,7 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
 
     protected void shutdown(EmbeddedDbInstance db) {}
     protected void removeDbFile() {
-        if (!getDuckDbFile().delete()) {
+        if (!getDbFile().delete()) {
             LOGGER.warn("Unable to remove duckdb file:" + getDbFile().getAbsolutePath());
         }
     }
@@ -239,7 +243,4 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
     public DbAdapter create(File dbFile) {
         return canHandle(dbFile) ? new DuckDbAdapter(dbFile) : null;
     }
-
-    File getDuckDbFile() { return getDbFile(); }
-
 }

@@ -28,19 +28,18 @@ public abstract class SharedDbProcessor extends EmbeddedDbProcessor {
      * All results from this processor will be saved in the same database.  It's also based on sessionID so that
      * it can be easily cleared.
      */
-    public File getDbFile(TableServerRequest treq) {
+    public DbAdapter getDbAdapter(TableServerRequest treq) {
         String fname = String.format("%s_%s", treq.getRequestId(), ServerContext.getRequestOwner().getRequestAgent().getSessId());
-        return DbAdapter.createDbFile(treq, fname, QueryUtil.getTempDir(treq));
+        return DbAdapter.getDbCreator(treq).create(QueryUtil.getTempDir(treq), fname);
     }
 
-    public FileInfo ingestDataIntoDb(TableServerRequest treq, File dbFile) throws DataAccessException {
+    public FileInfo ingestDataIntoDb(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
         // nothing to do here.
-        return new FileInfo(dbFile);
+        return new FileInfo(dbAdapter.getDbFile());
     }
 
     @Override
-    protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
-        DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
+    protected DataGroupPart getResultSet(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
         SortedSet<Param> params = treq.getSearchParams();
         params.addAll(treq.getResultSetParam());
         String tblName = dbAdapter.getDataTable() + "_" + DigestUtils.md5Hex(StringUtils.toString(params, "|"));

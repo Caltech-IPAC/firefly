@@ -17,6 +17,7 @@ import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
 import edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource;
 import edu.caltech.ipac.firefly.util.FileLoader;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.Level;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -42,7 +43,9 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		try {
 			// needed by test testGetSelectedData because it's dealing with code running in a server's context, ie  SearchProcessor, RequestOwner, etc.
 			setupServerContext(null);
-			var dbAdapter = DbAdapter.getDefaultAdapter();
+			var creator = DbAdapter.getDbCreator(null);  // get default
+			File tmp = new File(System.getProperty("java.io.tmpdir"));
+			var dbAdapter = creator.create(tmp, DigestUtils.md5Hex(System.currentTimeMillis()+""));
 			dbFile = dbAdapter.initDbFile();
 
 			testFile = FileLoader.resolveFile(EmbeddedDbUtilTest.class, "/embedded_db_test.tbl");

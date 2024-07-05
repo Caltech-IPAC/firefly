@@ -8,6 +8,8 @@ import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
 import java.util.List;
@@ -17,26 +19,78 @@ import java.util.List;
  * @version $Id: DbInstance.java,v 1.3 2012/03/15 20:35:40 loi Exp $
  */
 public abstract class DuckDbReadable extends DuckDbAdapter {
+    File sourceFile;
+    File dbFile;
+    String name;
+    List<String> supports;
 
-    public DuckDbReadable(File dbFile) {
-        super(dbFile);
+    public DuckDbReadable(File dbFile, String name, List<String> supports) {
+        this.name = name;
+        this.supports = supports;
+        if (canHandle(dbFile)) {
+            this.sourceFile = dbFile;
+            useDbFileFrom(sourceFile);
+        } else {
+            this.dbFile = dbFile;
+        }
+    }
+
+    @Override // to allow dbFile to be saved elsewhere
+    public File getDbFile() {
+        return dbFile;
     }
 
     /**
-     * This adapter store the data file as dbFile.  This data file can be directly imported into DuckDB.
-     * @return the .duckdb file associated with this database
+     * Convert this file name into duckdb file extension, then set it as this Adapter's dbFile
+     * @param srcFile
      */
-    public File getDuckDbFile() {
-        String fname =  getDbFile().getName()+ ".duckdb";
-        return new File(getDbFile().getParentFile(), fname);
+    public void useDbFileFrom(File srcFile) {
+        var ext = StringUtils.groupMatch("(.+)\\.(.+)$", srcFile.getName());
+        String fname = (ext == null ? srcFile.getName() : ext[0]) + "." + DuckDbAdapter.NAME;
+        this.dbFile = new File(srcFile.getParentFile(), fname);
+    }
+
+    public static TableUtil.Format guessFileFormat(File srcFile) {
+        if (new Parquet().canHandle(srcFile)) {
+            return TableUtil.Format.PARQUET;
+        }
+        var csv = new Csv().canHandle(srcFile);
+        var tsv = new Tsv().canHandle(srcFile);
+        if (csv && tsv) {
+            return  new Csv(srcFile).canRead() > new Tsv(srcFile).canRead() ? TableUtil.Format.CSV : TableUtil.Format.TSV;
+        }
+        if (csv) return TableUtil.Format.CSV;
+        if (tsv) return TableUtil.Format.TSV;
+        return null;
+    }
+
+    public File getSourceFile() { return sourceFile; }
+
+    String getSrcFileSql() {
+        return "'%s'".formatted(getSourceFile().getAbsolutePath());
+    }
+
+    List<String> getSupportedExts() {
+        return  supports;
+    }
+
+    public String getName() { return name; }
+
+    public int canRead() {
+        try {
+            var jdbc = JdbcFactory.getSimpleTemplate(createDbInstance());
+            var rows = jdbc.queryForList("select column_name from ( describe from %s )".formatted(getSrcFileSql()));
+            return rows.size();
+        } catch (Exception ignored){}
+        return -1;
     }
 
     public DataGroup getInfo() throws DataAccessException {
-        StopWatch.getInstance().start("getInfo: " + getDbFile().getAbsolutePath());
-        int count = JdbcFactory.getSimpleTemplate(getDbInstance()).queryForInt(String.format("SELECT count(*) from '%s'", getDbFile()));
-        DataGroup table = execQuery(String.format("SELECT * from '%s' LIMIT 0", getDbFile()), null);
+        StopWatch.getInstance().start("getInfo: " + getSourceFile());
+        int count = JdbcFactory.getSimpleTemplate(getDbInstance()).queryForInt("SELECT count(*) from %s".formatted(getSrcFileSql()));
+        DataGroup table = execQuery("SELECT * from %s LIMIT 0".formatted(getSrcFileSql()), null);
         table.setSize(count);
-        StopWatch.getInstance().printLog("getInfo: " + getDbFile().getAbsolutePath());
+        StopWatch.getInstance().printLog("getInfo: " + getSourceFile());
         return table;
     }
 
@@ -44,7 +98,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
 
         if (!forTable.equals(getDataTable())) return super.ingestData(dataGroupSupplier, forTable);
 
-        StopWatch.getInstance().start(String.format("%s:ingestData for %s", getName(), forTable));
+        StopWatch.getInstance().start("%s:ingestData for %s".formatted(getName(), forTable));
 
         // import data directly from source file.
         // no need to get data from dataGroupSupplier.  query the data directly from the dbFile
@@ -53,13 +107,13 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         StopWatch.getInstance().start("  ingestData: load data for " + forTable);
 
         // create data table
-        String dataSqlWithIdx = String.format("select b.*, (%s - 1) as %s, (%s - 1) as %s from '%s' as b", rownumSql(), DataGroup.ROW_IDX, rownumSql(), DataGroup.ROW_NUM, getDbFile().getAbsolutePath());
+        String dataSqlWithIdx = "select b.*, (%s - 1) as %s, (%s - 1) as %s from %s as b".formatted(rownumSql(), DataGroup.ROW_IDX, rownumSql(), DataGroup.ROW_NUM, getSrcFileSql());
         String sql = createTableFromSelect(forTable, dataSqlWithIdx);
         jdbc.update(sql);
 
         // copy dd
         jdbc.update(createDDSql(forTable));
-        String insert = String.format("INSERT INTO %s %s", forTable + "_DD", ddSql());
+        String insert = "INSERT INTO %s %s".formatted(forTable + "_DD", ddSql());
         jdbc.update(insert);
 
 
@@ -67,7 +121,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         jdbc.update(createMetaSql(forTable));
         String metaSql = metaSql();
         if (metaSql != null) {
-            String meta = String.format("INSERT INTO %s %s", forTable + "_META", metaSql());
+            String meta = "INSERT INTO %s %s".formatted(forTable + "_META", metaSql());
             jdbc.update(meta);
         }
 
@@ -75,13 +129,13 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         jdbc.update(createAuxDataSql(forTable));
         String auxSql = auxSql();
         if (auxSql != null) {
-            String insertAux = String.format("INSERT INTO %s %s", forTable + "_AUX", auxSql);
+            String insertAux = "INSERT INTO %s %s".formatted(forTable + "_AUX", auxSql);
             jdbc.update(insertAux);
         }
 
         StopWatch.getInstance().printLog("  ingestData: load data for " + forTable);
 
-        StopWatch.getInstance().printLog(String.format("%s:ingestData for %s", getName(), forTable));
+        StopWatch.getInstance().printLog("%s:ingestData for %s".formatted(getName(), forTable));
         return new FileInfo(getDbFile());
     }
 
@@ -117,7 +171,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
            row_number() over() as order_index
            FROM (DESCRIBE table '%s')
            """;
-        return String.format(dd, getDbFile().getAbsolutePath());
+        return dd.formatted(getSourceFile().getAbsolutePath());
     }
 
     protected String metaSql() {
@@ -140,23 +194,29 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
          * used by DbAdapterCreator only
          */
         Parquet() {
-            super(null);
-        }
+            this(null);
+        }   // used by DbAdapterCreator only
         public Parquet(File dbFile) {
-            super(dbFile);
+            super(dbFile, NAME, SUPPORTS);
+        }
+
+        @Override
+        boolean canHandle(File dbFile) {
+            boolean can = super.canHandle(dbFile);
+            if (can) return true;
+            sourceFile = dbFile;
+            return canRead() > 0;
         }
 
         public DbAdapter create(File dbFile) {
             return canHandle(dbFile) ? new Parquet(dbFile) : null;
         }
-
-        List<String> getSupportedExts() {
-            return  SUPPORTS;
+        protected String metaSql() {
+            return "select decode(key) as key, decode(value) as value, true as isKeyword from parquet_kv_metadata('%s')".formatted(getSourceFile().getAbsolutePath());
         }
 
-        public String getName() { return NAME; }
-        protected String metaSql() {
-            return String.format("select decode(key) as key, decode(value) as value, true as isKeyword from parquet_kv_metadata('%s')", getDbFile().getAbsolutePath());
+        String getSrcFileSql() {
+            return "read_parquet('%s')".formatted(getSourceFile().getAbsolutePath());
         }
     }
 
@@ -168,12 +228,37 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
          * used by DbAdapterCreator only
          */
         Csv() {
-            super(null);
-        }
-        public Csv(File dbFile) { super(dbFile); }
+            this(null);
+        }       // used by DbAdapterCreator only
+        public Csv(File dbFile) { super(dbFile, NAME, SUPPORTS); }
 
         public DbAdapter create(File dbFile) {
             return canHandle(dbFile) ? new Csv(dbFile) : null;
+        }
+
+        boolean canHandle(File dbFile) {
+            boolean can = super.canHandle(dbFile);
+            if (can) return true;
+            sourceFile = dbFile;
+            return canRead() > 1;       // unless filename is in the supported list, file need to have at least 2 columns
+        }
+
+        String getSrcFileSql() {
+            return "read_csv('%s', delim=',')".formatted(getSourceFile().getAbsolutePath());
+        }
+    }
+
+    public static class Tsv extends DuckDbReadable implements DbAdapterCreator{
+        public static final String NAME = "tsv";
+        private static final List<String> SUPPORTS = List.of(NAME);
+
+        Tsv() {
+            this(null);
+        }           // used by DbAdapterCreator only
+        public Tsv(File dbFile) { super(dbFile, NAME, SUPPORTS); }
+
+        public DbAdapter create(File dbFile) {
+            return canHandle(dbFile) ? new Tsv(dbFile) : null;
         }
 
         List<String> getSupportedExts() {
@@ -181,7 +266,17 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         }
 
         public String getName() { return NAME; }
-        protected static List<String> supportFileExtensions() { return SUPPORTS; }
+
+        boolean canHandle(File dbFile) {
+            boolean can = super.canHandle(dbFile);
+            if (can) return true;
+            sourceFile = dbFile;
+            return canRead() > 1;       // unless file extension is in the supported list, file need to have at least 2 columns
+        }
+
+        String getSrcFileSql() {
+                return "read_csv('%s', delim='\\t')".formatted(getSourceFile().getAbsolutePath());
+        }
     }
 
 }

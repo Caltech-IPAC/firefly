@@ -93,7 +93,9 @@ public class TableUtil {
         if (inf.getName().toLowerCase().endsWith("tar")) {
             return Format.TAR;
         }
-        if (DbAdapter.getAdapter(inf) instanceof DuckDbReadable.Parquet) return Format.PARQUET;
+
+        var fmt = DuckDbReadable.guessFileFormat(inf);      // test for files that DuckDb can import directly
+        if (fmt != null) return fmt;
 
         // guess by sampling file content
         int readAhead = 10;

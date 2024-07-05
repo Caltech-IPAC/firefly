@@ -227,7 +227,7 @@ public class DuckDbAdapterTest extends ConfigTest {
 		treq.setPageSize(1);  // we won't be testing data
 
 		EmbeddedDbProcessor proc = (EmbeddedDbProcessor) SearchManager.getProcessor(IpacTableFromSource.PROC_ID);
-		DbAdapter dbAdapter = DbAdapter.getAdapter(proc.getDbFile(treq));
+		DbAdapter dbAdapter = proc.getDbAdapter(treq);
 
 		assertEquals("DuckDB is used for parquet files", DuckDbReadable.Parquet.NAME, dbAdapter.getName());
 
@@ -245,8 +245,8 @@ public class DuckDbAdapterTest extends ConfigTest {
 
 		dbAdapter.close(true);
 		DuckDbReadable duckDb = (DuckDbReadable) dbAdapter;
-		assertFalse("DuckDb file is deleted", duckDb.getDuckDbFile().exists());
-		assertTrue("DuckDb data file is still there", duckDb.getDbFile().exists());
+		assertFalse("DuckDb file is deleted", duckDb.getDbFile().exists());
+		assertTrue("DuckDb data file is still there", duckDb.getSourceFile().exists());
 	}
 
 	@Test

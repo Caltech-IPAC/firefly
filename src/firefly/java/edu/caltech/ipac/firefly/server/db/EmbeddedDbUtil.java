@@ -22,19 +22,11 @@ import edu.caltech.ipac.table.*;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.BadSqlGrammarException;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
-import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.sql.rowset.serial.SerialBlob;
 import javax.validation.constraints.NotNull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
@@ -61,8 +53,8 @@ public class EmbeddedDbUtil {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
     private static final int MAX_COL_ENUM_COUNT = AppProperties.getIntProperty("max.col.enum.count", 32);
 
-    public static void setDbMetaInfo(TableServerRequest treq, DbAdapter dbAdapter, File dbFile) {
-        treq.setMeta(TBL_FILE_PATH, ServerContext.replaceWithPrefix(dbFile));
+    public static void setDbMetaInfo(TableServerRequest treq, DbAdapter dbAdapter) {
+        treq.setMeta(TBL_FILE_PATH, ServerContext.replaceWithPrefix(dbAdapter.getDbFile()));
         treq.setMeta(TBL_FILE_TYPE, dbAdapter.getName());
     }
 
@@ -133,8 +125,7 @@ public class EmbeddedDbUtil {
         TableServerRequest treq = (TableServerRequest)searchRequest;
         EmbeddedDbProcessor proc = (EmbeddedDbProcessor) SearchManager.getProcessor(searchRequest.getRequestId());
         String selCols = cols == null || cols.length == 0 ? "*" : Arrays.stream(cols).map( c -> (c.contains("\"") ? c : "\"" + c + "\"")).collect(Collectors.joining(","));
-        File dbFile = proc.getDbFile(treq);
-        DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
+        DbAdapter dbAdapter = proc.getDbAdapter(treq);
         String tblName = proc.getResultSetID(treq);
         String inRows = selRows != null && selRows.size() > 0 ? StringUtils.toString(selRows) : "-1";
 
@@ -211,12 +202,12 @@ public class EmbeddedDbUtil {
         dbAdapter.deleteColumn(cname);
     }
 
-    public static void enumeratedValuesCheckBG(File dbFile, DataGroupPart results, TableServerRequest treq) {
+    public static void enumeratedValuesCheckBG(DbAdapter dbAdapter, DataGroupPart results, TableServerRequest treq) {
         RequestOwner owner = ServerContext.getRequestOwner();
         ServerEvent.EventTarget target = new ServerEvent.EventTarget(ServerEvent.Scope.SELF, owner.getEventConnID(),
                 owner.getEventChannel(), owner.getUserKey());
         SHORT_TASK_EXEC.submit(() -> {
-            enumeratedValuesCheck(dbFile, results, treq);
+            enumeratedValuesCheck(dbAdapter, results, treq);
             DataGroup updates = new DataGroup(null, results.getData().getDataDefinitions());
             updates.getTableMeta().setTblId(results.getData().getTableMeta().getTblId());
             JSONObject changes = JsonTableUtil.toJsonDataGroup(updates);
@@ -226,13 +217,13 @@ public class EmbeddedDbUtil {
             ServerEventManager.fireAction(action, target);
         });
     }
-    public static void enumeratedValuesCheck(File dbFile, DataGroupPart results, TableServerRequest treq) {
+    public static void enumeratedValuesCheck(DbAdapter dbAdapter, DataGroupPart results, TableServerRequest treq) {
         StopWatch.getInstance().start("enumeratedValuesCheck: " + treq.getRequestId());
-        enumeratedValuesCheck(dbFile, DbAdapter.getAdapter(dbFile), results.getData().getDataDefinitions());
+        enumeratedValuesCheck(dbAdapter, results.getData().getDataDefinitions());
         StopWatch.getInstance().stop("enumeratedValuesCheck: " + treq.getRequestId()).printLog("enumeratedValuesCheck: " + treq.getRequestId());
     }
 
-    public static void enumeratedValuesCheck(File dbFile, DbAdapter dbAdapter, DataType[] inclCols) {
+    public static void enumeratedValuesCheck(DbAdapter dbAdapter, DataType[] inclCols) {
         if (inclCols != null && inclCols.length > 0)
         try {
             String cols = Arrays.stream(inclCols)

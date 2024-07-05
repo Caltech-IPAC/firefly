@@ -72,16 +72,16 @@ public class DataType implements Serializable, Cloneable {
     // database mapped types
     public static final String BIGINT = "bigint";      // IPAC table
 
-    private static final List<Class> FLOATING_TYPES = List.of(Double.class, Float.class);
-    private static final List<Class> INT_TYPES = List.of(Short.class, Integer.class, Long.class);
-    public static final List<Class> NUMERIC_TYPES = Stream.concat(FLOATING_TYPES.stream(), INT_TYPES.stream()).collect(Collectors.toList());
+    private static final List<Class<?>> FLOATING_TYPES = List.of(Double.class, Float.class);
+    private static final List<Class<?>> INT_TYPES = List.of(Short.class, Integer.class, Long.class);
+    public static final List<Class<?>> NUMERIC_TYPES = Stream.concat(FLOATING_TYPES.stream(), INT_TYPES.stream()).collect(Collectors.toList());
     private static final Pattern precisiontPattern = Pattern.compile("^(HMS|DMS|[EFG])?(\\d*)$", Pattern.CASE_INSENSITIVE);
 
 
     private       String keyName;
     private       String label;
     private       String typeDesc;
-    private       Class type;
+    private       Class<?> type;
     private       String units;
     private       String nullString;
     private       String desc;
@@ -122,17 +122,17 @@ public class DataType implements Serializable, Cloneable {
 
 
     public DataType(String keyName,
-                    Class  type) {
+                    Class<?>  type) {
         this(keyName, type, null, null, null, null);
     }
 
     public DataType(String keyName,
                     String label,
-                    Class  type) {
+                    Class<?>  type) {
         this(keyName, type, label, null, null, null);
     }
 
-    public DataType(String keyName, Class type, String label, String units, String nullString, String desc) {
+    public DataType(String keyName, Class<?> type, String label, String units, String nullString, String desc) {
         // our db engine does not allow quotes in column names
         this.keyName = keyName == null ? null : keyName.replace("\"","");
         setDataType(type);
@@ -166,11 +166,11 @@ public class DataType implements Serializable, Cloneable {
         this.typeDesc = typeDesc;
     }
 
-    public Class getDataType() {
+    public Class<?> getDataType() {
         return type;
     }
 
-    public void setDataType(Class type) {
+    public void setDataType(Class<?> type) {
         this.type = type;
         if (type != null && typeDesc == null) {
             typeDesc = typeToDesc(type);
@@ -560,14 +560,14 @@ public class DataType implements Serializable, Cloneable {
                 for (int i=0; i<strAry.length; i++) ary[i] = Byte.parseByte(strAry[i]);
                 return ary;
             }
-        } catch (Exception e) {}  // ignore
+        } catch (Exception ignored) {}  // ignore
         return strAry;
     }
 
 
     private Object strToObject(String s) {
         try {
-            if (s.length() == 0 || type == String.class) {
+            if (s.isEmpty() || type == String.class) {
                 return s;
             } else if (type ==Boolean.class) {
                 return Boolean.valueOf(s);
@@ -593,7 +593,7 @@ public class DataType implements Serializable, Cloneable {
             else if (type ==HREF.class) {
                 return HREF.parseHREF(s);
             }
-        } catch (IllegalArgumentException iae) {} // ok to ignore
+        } catch (IllegalArgumentException ignored) {} // ok to ignore
         return null;
     }
 
@@ -603,7 +603,7 @@ public class DataType implements Serializable, Cloneable {
         return derived == null ? null : derived[0];
     }
 
-    public static String typeToDesc(Class type) {
+    public static String typeToDesc(Class<?> type) {
 
         if (type == Double.class)   return DOUBLE;
         if (type == Float.class)    return FLOAT;
@@ -617,41 +617,31 @@ public class DataType implements Serializable, Cloneable {
         return CHAR;
     }
 
-    public static Class descToType(String desc) {
+    public static Class<?> descToType(String desc) {
         return descToType(desc, String.class);
     }
 
-    public static Class descToType(String desc, Class defaultVal) {
-        switch (desc.toLowerCase()) {
-            case DOUBLE:
-            case COMPLEX_DOUBLE:
-            case REAL:
-                return Double.class;
-            case FLOAT:
-            case COMPLEX_FLOAT:
-                return Float.class;
-            case LONG:
-            case BIGINT:
-                return Long.class;
-            case INTEGER:
-                return Integer.class;
-            case SHORT:
-                return Short.class;
-            case BOOLEAN:
-                return Boolean.class;
-            case BIT:
-            case BYTE:
-            case UNSIGNED_BYTE:
-                return Byte.class;
-            case DATE:
-                return Date.class;
-            case UNI_CHAR:
-            case LOCATION:
-            case CHAR:
-                return String.class;
-            default:
-                return defaultVal;
-        }
+    public static Class<?> descToType(String desc, Class<?> defaultVal) {
+        return switch (desc.toLowerCase()) {
+            case DOUBLE,
+                 COMPLEX_DOUBLE,
+                 REAL -> Double.class;
+            case FLOAT,
+                 COMPLEX_FLOAT -> Float.class;
+            case LONG,
+                 BIGINT -> Long.class;
+            case INTEGER -> Integer.class;
+            case SHORT -> Short.class;
+            case BOOLEAN -> Boolean.class;
+            case BIT,
+                 BYTE,
+                 UNSIGNED_BYTE -> Byte.class;
+            case DATE -> Date.class;
+            case UNI_CHAR,
+                 LOCATION,
+                 CHAR -> String.class;
+            default -> defaultVal;
+        };
     }
 
     public String toString() {
@@ -667,7 +657,7 @@ public class DataType implements Serializable, Cloneable {
 
     /**
      * convenience clone method to avoid catching exception and casting
-     * @return
+     * @return a clone copy of this object
      */
     public DataType newCopyOf() {
         try {

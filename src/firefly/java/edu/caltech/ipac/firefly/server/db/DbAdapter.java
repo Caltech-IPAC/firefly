@@ -5,6 +5,7 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ResourceProcessor;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.util.AppProperties;
@@ -43,6 +44,7 @@ public interface DbAdapter {
             HsqlDbAdapter.NAME, new HsqlDbAdapter(),
             DuckDbReadable.Parquet.NAME, new DuckDbReadable.Parquet(),
             DuckDbReadable.Csv.NAME, new DuckDbReadable.Csv(),
+            DuckDbReadable.Tsv.NAME, new DuckDbReadable.Tsv(),
             DuckDbAdapter.NAME, new DuckDbAdapter(),
             H2DbAdapter.NAME, new H2DbAdapter(),
             SqliteDbAdapter.NAME, new SqliteDbAdapter()
@@ -83,7 +85,7 @@ public interface DbAdapter {
     /**
      * @param forTable  table to query
      * @param inclCols  only for these columns.  null to get all columns
-     * @return a DataGroup with all of the headers without data.  This includes info from DD, META, and AUX.
+     * @return a DataGroup with all the headers without data.  This includes info from DD, META, and AUX.
      */
     DataGroup getHeaders(String forTable, String ...inclCols) throws DataAccessException;
 
@@ -92,6 +94,7 @@ public interface DbAdapter {
     DbAdapter.DbStats getDbStats();
 
     default boolean hasTable(String tableName) {
+        if (getDbFile() == null || !getDbFile().exists()) return false;
         return getTableNames().stream()
                 .anyMatch(s -> s.equalsIgnoreCase(tableName));
     }
@@ -123,7 +126,7 @@ public interface DbAdapter {
 
     /**
      * Similar to execQuery, except this method creates the SQL statement from the given request object.
-     * It need to take filter, sort, and paging into consideration.
+     * It needs to take filter, sort, and paging into consideration.
      * @param treq      request parameters used for select, where, order by, and limit
      * @param forTable  table to run the query on.
      * @return
@@ -212,42 +215,14 @@ public interface DbAdapter {
 //  static functions for resolving or finding suitable database adapter
 //=====================================================================
 
-    static DbAdapterCreator getDbCreator(String type) {
-        return type == null ? null : allCreator.get(type);
-    }
-
-    static DbAdapter getDefaultAdapter() {
-        File dbFile = createDbFile(DEF_DB_TYPE, DigestUtils.md5Hex(System.currentTimeMillis()+""), null);
-        return getAdapter(dbFile);
-    }
-
     /**
-     * Creates a dbFile for the given request.  If no db info is in the treq, use default db type.
-     * @see #createDbFile(String, String, File)
+     * @param treq  use to extract DB type; use null to get the default
+     * @return a DbAdapterCreator that can support a DB type
      */
-    static File createDbFile(TableServerRequest treq, String fname, File dir) {
-        String dbType = treq.getMeta(TBL_FILE_TYPE);
-        String adapterName =  isEmpty(dbType) ? DEF_DB_TYPE : dbType;
-        return createDbFile(adapterName, fname, dir);
-    }
-
-    /**
-     * Creates a dbFile for the given parameters.
-     * @param type  a supported database type
-     * @param fname file name.  Don't include extension.  One will be added.
-     * @param dir   The directory to create it in.  Use java.io.tmpdir if null.
-     * @return a valid dbFile for a supported DbAdapter
-     */
-    private static File createDbFile(String type, String fname, File dir) {
-
-        var creator = getDbCreator(type);
-        if (creator == null) throw new UnsupportedOperationException("Not a supported database type: " + type);
-
-        dir = dir == null ? new File(System.getProperty("java.io.tmpdir")) : dir;
-        dir = dir.isFile() ? dir.getParentFile() : dir;
-        fname = fname + "." + creator.getFileExt();
-        return new File(dir, fname);
-
+    static DbAdapterCreator getDbCreator(TableServerRequest treq) {
+        String type = treq == null ? null : treq.getMeta(TBL_FILE_TYPE);
+        type = isEmpty(type) ? DEF_DB_TYPE : type;
+        return allCreator.get(type);
     }
 
     /**
@@ -281,6 +256,9 @@ public interface DbAdapter {
     interface DbAdapterCreator {
         String getFileExt();
         DbAdapter create(File dbFile);
+        default DbAdapter create(File dir, String dbName) {
+            return create(new File(dir, dbName + "." + getFileExt()));
+        }
     }
 
 
@@ -326,7 +304,7 @@ public interface DbAdapter {
             lastAccessed = System.currentTimeMillis();
             this.dbAdapter = dbAdapter;
             this.created = created;
-            isResourceDb = dbAdapter.getDbFile().getParentFile().getName().equals(ResourceProcessor.SUBDIR_PATH);
+            isResourceDb = dbAdapter.getDbFile() != null && dbAdapter.getDbFile().getParentFile().getName().equals(ResourceProcessor.SUBDIR_PATH);
         }
 
         public boolean equals(Object obj) {

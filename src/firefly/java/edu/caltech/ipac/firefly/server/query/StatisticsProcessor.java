@@ -6,8 +6,6 @@ import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
-import edu.caltech.ipac.firefly.server.db.DbInstance;
-import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
@@ -41,7 +39,7 @@ public class StatisticsProcessor extends TableFunctionProcessor {
         return "STATS";
     }
 
-    protected DataGroup fetchData(TableServerRequest treq, File dbFile, DbAdapter dbAdapter) throws DataAccessException {
+    protected DataGroup fetchData(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
         TableServerRequest sreq = QueryUtil.getSearchRequest(treq);
         EmbeddedDbProcessor proc = getSearchProcessor(sreq);
         String origDataTblName = proc.getResultSetID(sreq);

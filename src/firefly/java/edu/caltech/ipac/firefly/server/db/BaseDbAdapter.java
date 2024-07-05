@@ -61,7 +61,7 @@ import static edu.caltech.ipac.util.StringUtils.groupMatch;
  */
 abstract public class BaseDbAdapter implements DbAdapter {
     static final Logger.LoggerImpl LOGGER = Logger.getLogger();
-    private final File dbFile;
+    private File dbFile;
 
     private static final String DD_INSERT_SQL = "insert into %s_DD values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String DD_CREATE_SQL = "create table %s_DD "+
@@ -127,10 +127,10 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public DbInstance getDbInstance(boolean create) {
-        EmbeddedDbInstance ins = getDbInstances().get(dbFile.getPath());
+        EmbeddedDbInstance ins = getDbInstances().get(getDbFile().getPath());
         if (ins == null && create) {
             ins = createDbInstance();
-            getDbInstances().put(dbFile.getPath(), ins);
+            getDbInstances().put(getDbFile().getPath(), ins);
             getRuntimeStats().totalDbs++;
             getRuntimeStats().peakMemDbs = Math.max(getDbInstances().size(), getRuntimeStats().peakMemDbs);
         }
@@ -147,7 +147,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     /**
-     * Return a DataGroup with all of the headers without data.  This includes info from DD, META, and AUX.
+     * Return a DataGroup with all the headers without data.  This includes info from DD, META, and AUX.
      * @param forTable  table to query
      * @param forTable  table to query
      * @param inclCols  only for these columns.  null to get all columns
@@ -161,6 +161,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     /**
+     * _DD table must exists
      * @param forTable a table name
      * @param enclosedBy enclose each column with this string
      * @return the correctly ordered column names of the given table
@@ -170,11 +171,21 @@ abstract public class BaseDbAdapter implements DbAdapter {
         return JdbcFactory.getSimpleTemplate(getDbInstance()).query(sql, (rs, i) -> (enclosedBy == null) ? rs.getString(1) : enclosedBy + rs.getString(1) + enclosedBy);
     }
 
+    /**
+     * return column names using system DB info.  this can be called without _DD dependency
+     * @param forTable a table name
+     * @param enclosedBy enclose each column with this string
+     * @return  all the columns names of a forTable
+     */
+    List<String> getColumnNamesFromSys(String forTable, String enclosedBy) {
+        String sql = String.format("SELECT column_name FROM INFORMATION_SCHEMA.SYSTEM_COLUMNS where table_name = '%s'", forTable.toUpperCase());
+        return JdbcFactory.getSimpleTemplate(getDbInstance()).query(sql, (rs, i) -> (enclosedBy == null) ? rs.getString(1) : enclosedBy + rs.getString(1) + enclosedBy);
+    }
+
     public List<String> getTableNames() {
         String sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES where table_schema = 'PUBLIC'";
         return JdbcFactory.getSimpleTemplate(getDbInstance()).query(sql, (rs, i) -> rs.getString(1));
     }
-
 
     public boolean useTxnDuringLoad() {
         return false;
@@ -182,10 +193,10 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
     public File initDbFile() throws IOException {
         close(true);              // in case database exists in memory, close it and remove all files related to it.
-        if (!dbFile.getParentFile().exists()) dbFile.getParentFile().mkdirs();
-        dbFile.createNewFile();                     // creates the file
+        if (!getDbFile().getParentFile().exists()) getDbFile().getParentFile().mkdirs();
+        getDbFile().createNewFile();                     // creates the file
         createUDFs();   // add user defined functions
-        return dbFile;
+        return getDbFile();
     }
 
     public FileInfo ingestData(DataGroupSupplier dataGroupSupplier, String forTable) throws DataAccessException {
@@ -230,17 +241,13 @@ abstract public class BaseDbAdapter implements DbAdapter {
             String datasetSql = String.format("select %s FROM %s %s %s", selectPart, getDataTable(), wherePart, orderBy);
             String datasetSqlWithIdx = String.format("select b.*, (%s -1) as %s from (%s) as b", rownumSql(), DataGroup.ROW_NUM, datasetSql);
             String sql = createTableFromSelect(resultSetID, datasetSqlWithIdx);
-            try {
-                JdbcFactory.getSimpleTemplate(getDbInstance()).update(sql);
-            } catch (RuntimeException e) {
-                LOGGER.error(e);
-            }
+            execUpdate(sql);
 
             // copy dd
-            List<String> cnames = cols.stream().map(s -> s.replaceAll("^\"|\"$", "'")).collect(Collectors.toList());
+            List<String> cnames = getColumnNamesFromSys(resultSetID, "'");
             String ddSql = "select * from DATA_DD" + (cnames.size() > 0 ? String.format(" where cname in (%s)", StringUtils.toString(cnames)) : "");
             ddSql = createTableFromSelect(resultSetID + "_DD", ddSql);
-            JdbcFactory.getSimpleTemplate(getDbInstance()).update(ddSql);
+            execUpdate(ddSql);
 
             // copy meta
             String metaSql = "select * from DATA_META";
@@ -254,12 +261,12 @@ abstract public class BaseDbAdapter implements DbAdapter {
             auxSql = createTableFromSelect(resultSetID + "_AUX", auxSql);
             try {
                 JdbcFactory.getSimpleTemplate(getDbInstance()).update(auxSql);
-            } catch (Exception ax) {/*ignore table may not exists*/}
+            } catch (Exception ax) {/*ignore table may not exist*/}
 
         }catch (RuntimeException e) {
-            LOGGER.debug("createTempResults failed with error: " + e.getMessage(),
+            LOGGER.error("createTempResults failed with error: " + e.getMessage(),
                     "resultSetID: " + resultSetID,
-                    "dbFile: " + dbFile.getAbsolutePath());
+                    "dbFile: " + getDbFile().getAbsolutePath());
             throw e;
         } finally {
             StopWatch.getInstance().printLog(String.format("%s:createTempResults for ", getName(), resultSetID));
@@ -268,7 +275,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
     /**
      * Similar to execQuery, except this method creates the SQL statement from the given request object.
-     * It need to take filter, sort, and paging into consideration.
+     * It needs to take filter, sort, and paging into consideration.
      * @param treq      request parameters used for select, where, order by, and limit
      * @param forTable  table to run the query on.
      * @return
@@ -279,9 +286,11 @@ abstract public class BaseDbAdapter implements DbAdapter {
         String orderByPart = orderByPart(treq);
         String pagingPart = pagingPart(treq);
 
-        // fix select * so that it select the columns in its supposed order
-        if (selectPart.toLowerCase().replaceAll("\\s", "").equals("select*")) {
-            selectPart = "select " + StringUtils.toString(getColumnNames(forTable, "\""));
+        if (forTable.equals(getDataTable())) {
+            // fix select * so that it selects the columns in its supposed order
+            if (selectPart.toLowerCase().replaceAll("\\s", "").equals("select*")) {
+                selectPart = "select " + StringUtils.toString(getColumnNames(forTable, "\""));
+            }
         }
 
         String sql = String.format("%s FROM %s %s %s %s", selectPart, forTable, wherePart, orderByPart, pagingPart);
@@ -331,8 +340,8 @@ abstract public class BaseDbAdapter implements DbAdapter {
                     LOGGER.trace("getDDSql failed(ignored): " + e.getMessage(),
                             "ddSql: " + ddSql,
                             "refTable: " + refTable,
-                            "dbFile: " + dbFile.getAbsolutePath());
-                    // ignore.. may not have DD table
+                            "dbFile: " + getDbFile().getAbsolutePath());
+                    // ignore. may not have DD table
                 }
 
                 // insert table meta info into the results
@@ -343,8 +352,8 @@ abstract public class BaseDbAdapter implements DbAdapter {
                     LOGGER.trace("getMetaSql failed(ignored): " + e.getMessage(),
                             "metaSql: " + metaSql,
                             "refTable: " + refTable,
-                            "dbFile: " + dbFile.getAbsolutePath());
-                    // ignore.. may not have meta table
+                            "dbFile: " + getDbFile().getAbsolutePath());
+                    // ignore; may not have meta table
                 }
 
                 // insert aux data info into the results
@@ -357,7 +366,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
                     LOGGER.trace("getAuxDataSql failed(ignored): " + e.getMessage(),
                             "auxDataSqlSql: " + auxDataSqlSql,
                             "refTable: " + refTable,
-                            "dbFile: " + dbFile.getAbsolutePath());
+                            "dbFile: " + getDbFile().getAbsolutePath());
                     // ignore.. may not have meta table
                 }
             }
@@ -371,10 +380,10 @@ abstract public class BaseDbAdapter implements DbAdapter {
             return dg;
         } catch (Exception e) {
             // catch for debugging
-            LOGGER.debug("execQuery failed with error: " + e.getMessage(),
+            LOGGER.warn("execQuery failed with error: " + e.getMessage(),
                     "sql: " + sql,
                     "refTable: " + refTable,
-                    "dbFile: " + dbFile.getAbsolutePath());
+                    "dbFile: " + getDbFile().getAbsolutePath());
             throw handleSqlExp("Query failed", e);
         }
     }
@@ -395,7 +404,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             return JdbcFactory.getSimpleTemplate(dbInstance).update(sql, params);
         } catch (Exception e) {
             // catch for debugging
-            LOGGER.debug("execUpdate failed with error: " + e.getMessage(),
+            LOGGER.warn("execUpdate failed with error: " + e.getMessage(),
                     "sql: " + sql,
                     "dbFile: " + getDbFile().getAbsolutePath());
             throw e;
@@ -410,7 +419,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             JdbcFactory.getSimpleTemplate(dbInstance).batchUpdate(sql, params);
         } catch (Exception e) {
             // catch for debugging
-            LOGGER.debug("batchUpdate failed with error: " + e.getMessage(),
+            LOGGER.warn("batchUpdate failed with error: " + e.getMessage(),
                     "sql: " + sql,
                     "dbFile: " + getDbFile().getAbsolutePath());
             throw e;
@@ -447,7 +456,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 clearCachedData();
                 return st;
             });
-            EmbeddedDbUtil.enumeratedValuesCheck(getDbFile(), this, new DataType[]{col});        // if successful, check for enum values of this new column
+            EmbeddedDbUtil.enumeratedValuesCheck(this, new DataType[]{col});        // if successful, check for enum values of this new column
         } catch (Exception e) {
             // manually remove the added column
             var sql = String.format("ALTER TABLE %s DROP COLUMN \"%s\"", getDataTable(), col.getKeyName());
@@ -500,7 +509,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 clearCachedData();
                 return st;
             });
-            EmbeddedDbUtil.enumeratedValuesCheck(getDbFile(), this, new DataType[]{newCol});        // if successful, check for enum values of this new updated column
+            EmbeddedDbUtil.enumeratedValuesCheck(this, new DataType[]{newCol});        // if successful, check for enum values of this new updated column
 
             // if swapName is used; rename column back to swapName
             if (swapCname != null) {
@@ -665,8 +674,8 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public void close(boolean deleteFile) {
-        LOGGER.debug(String.format("%s -> closing DB, delete(%s): %s", getName(), deleteFile, dbFile.getPath()));
-        EmbeddedDbInstance db = getDbInstances().get(dbFile.getPath());
+        LOGGER.debug(String.format("%s -> closing DB, delete(%s): %s", getName(), deleteFile, getDbFile().getPath()));
+        EmbeddedDbInstance db = getDbInstances().get(getDbFile().getPath());
         if (db != null) {
             try {
                 db.getLock().lock();
@@ -1050,6 +1059,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     public String getFileExt() { return getName(); }
 
     boolean canHandle(File dbFile) {
+        if (dbFile == null) return false;
         String ext = FileUtil.getExtension(dbFile);
         return getSupportedExts()
                 .stream()

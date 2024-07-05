@@ -67,10 +67,10 @@ public class ResourceProcessor extends EmbeddedDbProcessor {
      * One database per resource with basic access information.
      * Access info is saved in a file with a .acl extension.
      */
-    public File getDbFile(TableServerRequest treq) {
+    public DbAdapter getDbAdapter(TableServerRequest treq) {
         String resourceID = getResourceID(treq);
         String fname = String.format("%s/%s", SUBDIR_PATH, resourceID);
-        return DbAdapter.createDbFile(treq, fname, ServerContext.getHiPSDir());
+        return DbAdapter.getDbCreator(treq).create(ServerContext.getHiPSDir(), fname);
     }
 
     /**
@@ -87,13 +87,13 @@ public class ResourceProcessor extends EmbeddedDbProcessor {
         }
     }
 
-    protected FileInfo ingestDataIntoDb(TableServerRequest req, File dbFile) throws DataAccessException {
-        writeStringToFile(getAclFile(dbFile), String.format("scope=%s\nsecret=%s\nuser=%s\n",
+    protected FileInfo ingestDataIntoDb(TableServerRequest req, DbAdapter dbAdapter) throws DataAccessException {
+        writeStringToFile(getAclFile(dbAdapter.getDbFile()), String.format("scope=%s\nsecret=%s\nuser=%s\n",
                 req.getParam(SCOPE, GLOBAL),
                 req.getParam(SECRET, ""),
                 ServerContext.getRequestOwner().getUserKey()));
 
-        return super.ingestDataIntoDb(req, dbFile);
+        return super.ingestDataIntoDb(req, dbAdapter);
     }
 
     public DataGroup fetchDataGroup(TableServerRequest treq) throws DataAccessException {
@@ -108,17 +108,17 @@ public class ResourceProcessor extends EmbeddedDbProcessor {
         }
     }
 
-    protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
-        if (!hasAccess(treq, dbFile)) throw new DataAccessException("Access denied");
+    protected DataGroupPart getResultSet(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
+        if (!hasAccess(treq, dbAdapter.getDbFile())) throw new DataAccessException("Access denied");
         String action = treq.getParam(ACTION, QUERY);
         if (action.equals(DELETE)) {
-            DbAdapter.getAdapter(dbFile).close(true);
-            getAclFile(dbFile).delete();
+            dbAdapter.close(true);
+            getAclFile(dbAdapter.getDbFile()).delete();
             return new DataGroupPart(new DataGroup("empty set", new DataType[]{new DataType("dummy", String.class)}), 0, 0);
         }
 
         if (action.equals(CREATE)) treq.setPageSize(1);            // when creating... just load database.  don't return any data. this version of hsqldb 0 return all.  so, set to 1 instead.
-        return super.getResultSet(treq, dbFile);
+        return super.getResultSet(treq, dbAdapter);
     }
 
     public boolean doLogging() {

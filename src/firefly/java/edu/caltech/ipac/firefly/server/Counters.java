@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.server;
-/**
+/*
  * User: roby
  * Date: 7/26/13
  * Time: 9:57 AM
@@ -148,6 +148,7 @@ public class Counters {
         String elapse= UTCTimeUtil.getDHMS((System.currentTimeMillis()-startTime)/1000);
         retList.add("Overview");
         addToList(retList,"Hostname", HOST_NAME);
+        addToList(retList,"Total physical memory", FileUtil.getSizeAsString(ServerStatus.getTotalRam()));
         addToList(retList,"IP", FileUtil.getIPString());
         addToList(retList, "Up time", elapse);
         addToList(retList, "Client Base URL", ServerContext.getRequestOwner().getBaseUrl());
@@ -223,10 +224,9 @@ public class Counters {
         Runtime rt= Runtime.getRuntime();
         long totMem= rt.totalMemory();
         long freeMem= rt.freeMemory();
-        retList.add("Memory");
+        retList.add("JVM Memory");
         long maxMem= rt.maxMemory();
 
-        addMemStrToList(retList,"Total RAM", FileUtil.getSizeAsString(ServerStatus.getTotalRam()));
         addMemStrToList(retList,"Used", FileUtil.getSizeAsString(totMem-freeMem));
         addMemStrToList(retList,"Max", FileUtil.getSizeAsString(maxMem));
         addMemStrToList(retList,"Max Free", FileUtil.getSizeAsString(maxMem-(totMem-freeMem)));
