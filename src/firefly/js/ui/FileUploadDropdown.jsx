@@ -59,7 +59,7 @@ export const FileUploadDropdown= ({sx, onCancel, onSubmit=resultSuccess, keepSta
                         externalDropEvent:initArgs?.searchParams?.dropEvent}}/>
                 </FormPanel>
             </FieldGroup>
-            {doMask && <Skeleton sx={{inset:0, zIndex:10}}/>}       // zIndex:10 because '.file-drop-zone' raises plane to z-index:10.
+            { doMask && <Skeleton sx={{inset:0, zIndex:10}}/> }
         </Box>
     );
 };
