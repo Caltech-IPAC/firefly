@@ -13,7 +13,7 @@ import {DEF_TARGET_PANEL_KEY, TargetPanel} from '../TargetPanel.jsx';
 import {CONE_AREA_KEY} from './DynamicDef.js';
 import {DEF_AREA_EXAMPLE, PolygonField} from './DynComponents.jsx';
 
-import {UploadTableSelector} from 'firefly/ui/UploadTableSelector';
+import {UploadTableSelectorPosCol} from 'firefly/ui/UploadTableSelectorPosCol';
 import {showUploadTableChooser} from 'firefly/ui/UploadTableChooser';
 import {CollapsibleGroup, CollapsibleItem} from 'firefly/ui/panel/CollapsiblePanel';
 import {FormPanel} from 'firefly/ui/FormPanel';
@@ -155,10 +155,25 @@ export function EmbeddedPositionSearchPanel({
                     placeholder: 'Coordinates',
                     manageHiPS:false,
                 }} />}
-            {isFunction(otherComponents) ? otherComponents() : otherComponents}
             {doGetConeAreaOp() === UPLOAD_CHOICE_KEY &&
-                <UploadTableSelector {...{uploadInfo, setUploadInfo, uploadTable:true}}/>
-            }
+                <Stack pb={0.5}>
+                    <UploadTableSelectorPosCol {...{uploadInfo, setUploadInfo,
+                        slotProps: {
+                            centerColsInnerStack: {sx: {ml: 1, pt: 1.5}}
+                        }
+                    }}/>
+                    <SizeInputFields {...{
+                        fieldKey: sizeKey, showFeedback: true, labelWidth: 100, nullAllowed: false,
+                        // orientation:'horizontal',
+                        label: 'Search Radius',
+                        initialState: {unit: 'arcsec', value: searchAreaInDeg + '', min:minValue, max:maxValue},
+                        sx: {'.ff-Input': {width: 1}, pt:0.5},
+                        slotProps: {
+                            feedback:{sx: {alignSelf:'center'} },
+                        }
+                    }} />
+                </Stack>}
+                {isFunction(otherComponents) ? otherComponents() : otherComponents}
         </Stack>
     );
 

@@ -29,7 +29,7 @@ import {showUploadTableChooser} from '../UploadTableChooser.js';
 import {
     getAsEntryForTableName, getColumnAttribute, getTapServices, makeUploadSchema, maybeQuote, tapHelpId
 } from './TapUtil.js';
-import {CenterColumns, UploadTableSelector} from 'firefly/ui/UploadTableSelector';
+import {CenterColumns, UploadTableSelectorPosCol} from 'firefly/ui/UploadTableSelectorPosCol';
 
 const CenterLonColumns = 'centerLonColumns';
 const CenterLatColumns = 'centerLatColumns';
@@ -293,7 +293,7 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
             return (
                 <Stack spacing={1} direction='column'>
                     <RegionOpField {...{initArgs, capabilities}}/>
-                    <UploadTableSelector {...{uploadInfo, setUploadInfo}}/>
+                    <UploadTableSelectorPosCol {...{uploadInfo, setUploadInfo}}/>
                     {!containsPoint && radiusOrPolygon}
                 </Stack>
             );
@@ -308,7 +308,7 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
         case NORMAL_UPLOAD_LAYOUT:
             return (
                 <Stack spacing={1} direction='column'>
-                    <UploadTableSelector {...{uploadInfo, setUploadInfo}}/>
+                    <UploadTableSelectorPosCol {...{uploadInfo, setUploadInfo}}/>
                     {radiusField}
                 </Stack>
             );
