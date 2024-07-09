@@ -36,7 +36,7 @@ public interface DbAdapter {
     List<String> MAIN_TABLES = Arrays.asList("DATA", "DATA_DD", "DATA_META", "DATA_AUX");
     String NULL_TOKEN = "%NULL";
 
-    String DEF_DB_TYPE = AppProperties.getProperty("DbAdapter.type", HsqlDbAdapter.NAME);
+    String DEF_DB_TYPE = AppProperties.getProperty("DbAdapter.type", DuckDbAdapter.NAME);
 
     List<String> ignoreCols = Arrays.asList(DataGroup.ROW_IDX, DataGroup.ROW_NUM, "\"" + DataGroup.ROW_IDX + "\"", "\"" + DataGroup.ROW_NUM + "\"");
 

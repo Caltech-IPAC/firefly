@@ -8,8 +8,6 @@ BuildType=@BuildType@
 # app.prop env sensitive properties
 #==========================================================
 
-DbAdapter.type = hsql
-
 # a directory for storing intermediate files
 # default to System.getProperty("java.io.tmpdir") + "/workarea"
 work.directory=@work.directory@

@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server;
 
+import com.sun.management.OperatingSystemMXBean;
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
 import edu.caltech.ipac.firefly.server.db.DbMonitor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorFactory;
@@ -28,6 +29,8 @@ import javax.websocket.HandshakeResponse;
 import javax.websocket.server.HandshakeRequest;
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -881,4 +884,14 @@ public class ServerContext {
         }
     }
 
+    public static Info getSeverInfo() {
+        OperatingSystemMXBean osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        long pMem =  osBean.getTotalMemorySize();
+        Runtime rt= Runtime.getRuntime();
+        long totMem= rt.totalMemory();
+        long freeMem= rt.freeMemory();
+        long maxMem= rt.maxMemory();
+        return new Info(FileUtil.getHostname(), pMem, FileUtil.getIPString(), maxMem, totMem, freeMem);
+    }
+    public record Info(String host, long pMemory, String ip, long jvmMax, long jvmTotal, long jvmFree) {}
 }

@@ -107,7 +107,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         StopWatch.getInstance().start("  ingestData: load data for " + forTable);
 
         // create data table
-        String dataSqlWithIdx = "select b.*, (%s - 1) as %s, (%s - 1) as %s from %s as b".formatted(rownumSql(), DataGroup.ROW_IDX, rownumSql(), DataGroup.ROW_NUM, getSrcFileSql());
+        String dataSqlWithIdx = "select b.*, (%s - 1) as %s, (%s - 1) as %s from %s as b".formatted(rowNumSql(), DataGroup.ROW_IDX, rowNumSql(), DataGroup.ROW_NUM, getSrcFileSql());
         String sql = createTableFromSelect(forTable, dataSqlWithIdx);
         jdbc.update(sql);
 

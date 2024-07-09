@@ -139,7 +139,7 @@ public class DuckDbAdapterTest extends ConfigTest {
 		duckReq.setPageSize(-1);
 
 		TableServerRequest hsqlReq = (TableServerRequest) duckReq.cloneRequest();
-		hsqlReq.setMeta(TBL_FILE_TYPE, H2DbAdapter.NAME);
+		hsqlReq.setMeta(TBL_FILE_TYPE, HsqlDbAdapter.NAME);
 
 		SearchManager sm = new SearchManager();
 

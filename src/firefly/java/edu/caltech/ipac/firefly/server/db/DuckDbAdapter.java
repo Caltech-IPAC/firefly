@@ -3,42 +3,29 @@
  */
 package edu.caltech.ipac.firefly.server.db;
 
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.servlets.ServerStatus;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.table.GroupInfo;
-import edu.caltech.ipac.table.LinkInfo;
-import edu.caltech.ipac.table.ParamInfo;
-import edu.caltech.ipac.table.ResourceInfo;
 import edu.caltech.ipac.util.AppProperties;
 import org.duckdb.DuckDBAppender;
 import org.duckdb.DuckDBConnection;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallbackWithoutResult;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.time.LocalDate;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.stream.IntStream;
 
-import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.deserialize;
-import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.serialize;
+import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.*;
 import static edu.caltech.ipac.util.StringUtils.*;
 
 /**
@@ -47,19 +34,19 @@ import static edu.caltech.ipac.util.StringUtils.*;
  */
 public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterCreator {
     public static final String NAME = "duckdb";
+    public static final String DRIVER = "org.duckdb.DuckDBDriver";
     public static String maxMemory = AppProperties.getProperty("duckdb.max.memory");        // in GB; 2G, 5.5G, etc
 
     static {
         if (DEF_DB_TYPE.equals(NAME)) {
-            if (isEmpty(maxMemory)) {
-                long bytes = ServerStatus.getTotalRam();
-                maxMemory = String.format("%.1fG", Math.max(bytes/5.0/(1024.0 * 1024 * 1024), 1));       // 20% or RAM or 1G if less.
-            }
-            String[] v = groupMatch("^([0-9]*\\.?[0-9]*)G$", maxMemory);
-            if (v != null && v.length > 0) {
-                DbMonitor.MAX_MEMORY = (long) (Float.parseFloat(v[0]) * 1024 * 1024 * 1024);
-            }
-            DbMonitor.MAX_MEM_ROWS = 1_000_000_000;
+            // no need manual cleanup; let DuckDB handles it.
+            DbMonitor.MAX_MEMORY = 1_000_000_000_000L;
+            DbMonitor.MAX_MEM_ROWS = DbMonitor.MAX_MEMORY;
+        }
+        if (isEmpty(maxMemory)) {
+            ServerContext.Info sInfo = ServerContext.getSeverInfo();
+            var dbMaxMem = Math.max(sInfo.pMemory() - sInfo.jvmMax(), 500*1024*1024);     // Greater of available RAM or 500MB.
+            maxMemory = "%.1fG".formatted(dbMaxMem/(1024.0 * 1024 * 1024));
         }
     }
 
@@ -82,7 +69,9 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
     protected EmbeddedDbInstance createDbInstance() {
         String filePath = getDbFile() == null ? "" : getDbFile().getAbsolutePath();
         String dbUrl = "jdbc:duckdb:" + filePath;
-        return new EmbeddedDbInstance(getName(), this, dbUrl, "org.duckdb.DuckDBDriver");
+        var db = new EmbeddedDbInstance(getName(), this, dbUrl, DRIVER);
+        db.consumeProps("memory_limit=%s,threads=1".formatted(maxMemory));
+        return db;
     }
 
     void createUDFs() {
@@ -93,7 +82,6 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
                 LOGGER.error("Fail to create custom function:" + cf);
             }
         }
-        execUpdate(String.format("SET memory_limit = '%s'", maxMemory));
     }
 
     @Override
@@ -129,7 +117,7 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
     }
     /*------------------*/
 
-    protected String rownumSql() {
+    protected String rowNumSql() {
         return "row_number() over()";
     }
 
@@ -175,9 +163,10 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
 
             // using try-with-resources to automatically close the appender at the end of the scope
             try (var appender = conn.createAppender(DuckDBConnection.DEFAULT_SCHEMA, tblName)) {
-
+                List<Integer> aryIdx = colIdxWithArrayData(colsAry);
                 for (int r=0; r < totalRows; r++) {
                     Object[] row = dg.get(r).getData();
+                    aryIdx.forEach(idx -> row[idx] = serialize(row[idx]));      // serialize array data if necessary
                     addRow(appender, row, r);
                 }
             }
@@ -214,6 +203,8 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
                 appender.appendBigDecimal(v);
             } else if (d instanceof Date v) {
                 appender.appendLocalDateTime(LocalDateTime.ofInstant(v.toInstant(), ZoneId.of("UTC")));  // date/time should be stored as utc.
+            } else if (d instanceof Timestamp v) {
+                appender.appendLocalDateTime(LocalDateTime.ofInstant(v.toInstant(), ZoneId.of("UTC")));  // date/time should be stored as utc.
             }
             else {
                 throw new IllegalStateException("Unexpected value: " + d);
@@ -232,6 +223,16 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
             return sql.replaceAll("BEFORE .+$", "");
         }
         return sql;
+    }
+
+    public static DataGroup getDuckDbSettings() {
+        var db = new DuckDbAdapter(null);
+        try {
+            return db.execQuery("SELECT * FROM duckdb_settings() WHERE name in ('external_threads','max_memory','memory_limit','threads', 'worker_threads','TimeZone')", null);
+        } catch (DataAccessException e) {
+            LOGGER.error(e);
+            return null;
+        }
     }
 
 //====================================================================

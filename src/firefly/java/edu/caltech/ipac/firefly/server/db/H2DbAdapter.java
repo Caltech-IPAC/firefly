@@ -26,7 +26,7 @@ public class H2DbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterCre
     }
 
     public DbAdapter create(File dbFile) {
-        return canHandle(dbFile) ? new HsqlDbAdapter(dbFile) : null;
+        return canHandle(dbFile) ? new H2DbAdapter(dbFile) : null;
     }
 
     List<String> getSupportedExts() {

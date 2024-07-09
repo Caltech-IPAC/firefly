@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -106,6 +107,19 @@ public class StringUtils {
      */
     public static <T> void applyIfNotEmpty(T v, Consumer<T> f){
         if (!isEmpty(v)) f.accept(v);
+    }
+
+    public interface FuncWithEx<R> {
+        R apply() throws Exception;
+    }
+
+    public static <T, R> R getOrDefault(FuncWithEx<R> func, R defaultVal) {
+        try {
+            R v = func.apply();
+            return v == null ? defaultVal : v;
+        } catch (Exception e) {
+            return defaultVal;
+        }
     }
 
     public static String shrink(String s, int size) {

@@ -102,7 +102,7 @@ fi
 #---------   CATALINA_OPTS must be exported for catalina.sh to pick them up
 export CATALINA_OPTS="\
   -XX:InitialRAMPercentage=${INIT_RAM_PERCENT:-10} \
-  -XX:MaxRAMPercentage=${MAX_RAM_PERCENT:-100} \
+  -XX:MaxRAMPercentage=${MAX_RAM_PERCENT:-80} \
   -DADMIN_USER=${ADMIN_USER} \
   -DADMIN_PASSWORD=${ADMIN_PASSWORD} \
   -Dhost.name=${HOSTNAME} \

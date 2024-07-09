@@ -11,6 +11,7 @@ import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbMonitor;
 import edu.caltech.ipac.firefly.server.db.DuckDbAdapter;
+import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -36,8 +37,6 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.lang.management.ManagementFactory;
-import com.sun.management.OperatingSystemMXBean;
 
 import static edu.caltech.ipac.firefly.server.ServerContext.ACCESS_TEST_EXT;
 
@@ -63,6 +62,7 @@ public class ServerStatus extends BaseHttpServlet {
 
         if (execGC)     System.gc();            // force garbage collection.
 
+        ServerContext.Info sInfo = ServerContext.getSeverInfo();
         res.addHeader("content-type", "text/plain");
         PrintWriter writer = res.getWriter();
         try {
@@ -83,8 +83,8 @@ public class ServerStatus extends BaseHttpServlet {
 
             EhcacheProvider prov = (EhcacheProvider) edu.caltech.ipac.util.cache.CacheManager.getCacheProvider();
 
-            displayCacheInfo(writer, prov.getEhcacheManager());
-            displayCacheInfo(writer, prov.getSharedManager());
+            displayCacheInfo(writer, prov.getEhcacheManager(), sInfo);
+            displayCacheInfo(writer, prov.getSharedManager(), sInfo);
             skip(writer);
 
             showDatabaseStatus(writer);
@@ -108,23 +108,13 @@ public class ServerStatus extends BaseHttpServlet {
 
     }
 
-    public static long getTotalRam() {
-        OperatingSystemMXBean osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-        return osBean.getTotalMemorySize();
-    }
-
-    private static void displayCacheInfo(PrintWriter writer, CacheManager cm) {
+    private static void displayCacheInfo(PrintWriter writer, CacheManager cm, ServerContext.Info sInfo) {
         writer.println(cm.getName() + " EHCACHE INFORMATION:");
         writer.println("-------------------:");
         writer.println("Manager Status: " + cm.getStatus());
         writer.println("DiskStore Path: " + cm.getConfiguration().getDiskStoreConfiguration().getPath());
         writer.println();
-
-        try {
-            writer.println("Host IP Address: " + InetAddress.getLocalHost().getHostAddress());
-        } catch (Exception e) {
-            writer.println("Host IP Address: n/a" );
-        }
+        writer.println("Host IP Address: " + sInfo.ip());
 
         writer.println("Caches: ");
         Map<String, CacheManagerPeerProvider> peerProvs = cm.getCacheManagerPeerProviders();
@@ -162,19 +152,14 @@ public class ServerStatus extends BaseHttpServlet {
     }
 
     private static void showDatabaseStatus(PrintWriter writer) {
-
         DbAdapter.EmbeddedDbStats stats = DbMonitor.getRuntimeStats(true);
-        writer.println("DATABASE INFORMATION");
-        writer.println("--------------------");
-        writer.printf("MAX_IDLE(min):     %,10d  MAX_IDLE_RSC(min):   %,10d\n", DbMonitor.MAX_IDLE_TIME/1000/60, DbMonitor.MAX_IDLE_TIME_RSC/1000/60);
-        writer.printf("MAX_MEM_ROWS(m):   %,10d  COMPACT_FACTOR:      %10.2f\n", stats.maxMemRows/1_000_000, stats.compactFactor);
-        writer.printf("DB In Memory:      %,10d  Total DB count:      %,10d\n", stats.memDbs, stats.totalDbs);
-        writer.printf("Rows In Memory:    %,10d  Peak Rows In Memory: %,10d\n", stats.memRows, stats.peakMemRows);
-        writer.printf("MAX_MEMORY(MB):    %,10d\n", stats.maxMemory/1024/1024);
-        writer.printf("Memory(MB):        %,10d  Peak Memory(MB):     %,10d\n", stats.memory/1024/1024, stats.peakMemory/1024/1024);
-        writer.println("Cleanup Last Ran:  " + new SimpleDateFormat("HH:mm:ss").format(stats.lastCleanup));
+        if (DbAdapter.DEF_DB_TYPE.equals(DuckDbAdapter.NAME)) {
+            duckDbConfig(writer);
+        } else {
+            hsqldbConfig(writer, stats);
+        }
         writer.println("");
-        writer.println("Idled   Age     Rows        Columns  Tables  Total Rows       Memory  File Path     (elapsed time are in min:sec; memory is in MB)");
+        writer.println("Idled   Age     Rows        Columns  Tables  Total Rows       Memory  db.url     (elapsed time are in min:sec; memory is in MB)");
         writer.println("------  ------  ----------  -------  ------  ----------       ------  ---------");
         DbMonitor.getDbInstances().values().stream()
             .sorted((db1, db2) -> Long.compare(db2.getLastAccessed(), db1.getLastAccessed()))
@@ -184,10 +169,35 @@ public class ServerStatus extends BaseHttpServlet {
                 db.getDbStats().tblCnt(),
                 db.getDbStats().totalRows(),
                 db.getDbStats().memory()/1024/1024.0,
-                db.getDbFile().getPath(),
+                db.getDbUrl(),
                 System.currentTimeMillis() - db.getLastAccessed(),
                 System.currentTimeMillis() - db.getCreated()
         ));
+    }
+
+    private static void hsqldbConfig(PrintWriter writer, DbAdapter.EmbeddedDbStats stats) {
+        writer.println("DATABASE INFORMATION");
+        writer.println("--------------------");
+        writer.printf("MAX_IDLE(min):     %,10d  MAX_IDLE_RSC(min):   %,10d\n", DbMonitor.MAX_IDLE_TIME/1000/60, DbMonitor.MAX_IDLE_TIME_RSC/1000/60);
+        writer.printf("MAX_MEM_ROWS(m):   %,10d  COMPACT_FACTOR:      %10.2f\n", stats.maxMemRows/1_000_000, stats.compactFactor);
+        writer.printf("DB In Memory:      %,10d  Total DB count:      %,10d\n", stats.memDbs, stats.totalDbs);
+        writer.printf("Rows In Memory:    %,10d  Peak Rows In Memory: %,10d\n", stats.memRows, stats.peakMemRows);
+        writer.println("Cleanup Last Ran:  " + new SimpleDateFormat("HH:mm:ss").format(stats.lastCleanup));
+        writer.printf("\ndb.driver:     %s\n", HsqlDbAdapter.DRIVER);
+    }
+
+    private static void duckDbConfig(PrintWriter w) {
+        w.println("DUCKDB CONFIGURATION");
+        w.println("-".repeat(136));
+        w.printf("| %20s | %20s | %60s | %10s | %10s |\n".formatted("name", "value", "description", "input_type", "scope" ));
+        w.println("-".repeat(136));
+        var dg = DuckDbAdapter.getDuckDbSettings();
+        if (dg != null) {
+            dg.forEach(r -> {
+                w.printf("| %20s | %20s | %60s | %10s | %10s |\n".formatted(r.getData()));
+            });
+        }
+        w.printf("\ndb.driver:     %s\n", DuckDbAdapter.DRIVER);
     }
 
     private static String getStats(Ehcache c) {

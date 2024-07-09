@@ -16,9 +16,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Date: Oct 7, 2008
@@ -122,10 +124,11 @@ public class JdbcFactory {
 
     private static DataSource getDirectDataSource(DbInstance dbInstance) {
         logger.trace("Getting a new database connection for " + dbInstance.dbUrl + " using DriverManager");
-        DriverManagerDataSource driver = new DriverManagerDataSource(
+        DriverManagerDataSource driver = new DataSourceWithProps(
                     dbInstance.dbUrl,
                     dbInstance.userId,
-                    dbInstance.password
+                    dbInstance.password,
+                    dbInstance.getProps()
                 );
 
         driver.setDriverClassName(dbInstance.jdbcDriver);
@@ -148,6 +151,31 @@ public class JdbcFactory {
         protected Map<DbInstance, DataSource> initialValue() {
             return new HashMap<DbInstance, DataSource>();
         }
+    }
+
+    /**
+     * This class will add all the properties defined in props to the connection.
+     * Super class's setConnectionProperties will only set them as default values which will
+     * not be used unless it is specifically queried.
+     */
+    static class DataSourceWithProps extends DriverManagerDataSource {
+        Map<String,String> props;
+
+        public DataSourceWithProps(String url, String username, String password, Map<String,String> props) {
+            super(url, username, password);
+            this.props = props;
+        }
+
+        @Override
+        protected Connection getConnectionFromDriverManager(String url, Properties props) throws SQLException {
+            return super.getConnectionFromDriverManager(url, addProps(props));
+        }
+
+        private Properties addProps(Properties props) {
+            if (this.props != null) props.putAll(this.props);
+            return props;
+        }
+
     }
 
 

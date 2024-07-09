@@ -14,7 +14,6 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
-import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
 import edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -168,7 +167,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 	 */
 	@Test
 	public void testExecQuery() throws DataAccessException{
-		HsqlDbAdapter dbAdapter = new HsqlDbAdapter(dbFile);
+		DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
 		String sql = "select d.* from (select \"designation\", \"RA(deg)\"+1 as ABC from data where \"sigdec\" > 0.0750) as d order by d.ABC";
 		DataGroup data = dbAdapter.execQuery(sql, dbAdapter.getDataTable());
 
@@ -230,7 +229,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		File dbFile = File.createTempFile("perfTest", ".hsql");
 		dbFile.deleteOnExit();
 
-		HsqlDbAdapter dbAdapter = new HsqlDbAdapter(dbFile);
+		DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
 
 		Logger.setLogLevel(Level.TRACE, "edu.caltech");
 		DataGroup data = IpacTableReader.read(testFile);
@@ -309,4 +308,30 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		}
 	}
 
+	@Test
+	public void testSerializer() {
+		// array of boolean
+		Object in = new Boolean[]{true, false, true};
+		String s = EmbeddedDbUtil.serialize(in);
+		Object d = EmbeddedDbUtil.deserialize(s);
+		if (d instanceof Boolean[] v) {
+			Assert.assertArrayEquals(v, (Boolean[])in);
+		} else Assert.fail("Deserialized type Boolean mismatch");
+
+		// array of double
+		in = new Double[]{1.0, 2.0, 3.0};
+		s = EmbeddedDbUtil.serialize(in);
+		d = EmbeddedDbUtil.deserialize(s);
+		if (d instanceof Double[] v) {
+			Assert.assertArrayEquals(v, (Double[])in);
+		} else Assert.fail("Deserialized type Double mismatch");
+
+		// array of integer
+		in = new Integer[]{1, 2, 3};
+		s = EmbeddedDbUtil.serialize(in);
+		d = EmbeddedDbUtil.deserialize(s);
+		if (d instanceof Integer[] v) {
+			Assert.assertArrayEquals(v, (Integer[])in);
+		} else Assert.fail("Deserialized type Integer mismatch");
+	}
 }

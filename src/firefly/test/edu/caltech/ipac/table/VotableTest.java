@@ -4,8 +4,7 @@
 package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.firefly.ConfigTest;
-import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
-import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import edu.caltech.ipac.table.io.VoTableReader;
 import org.json.simple.JSONObject;
@@ -56,7 +55,7 @@ public class VotableTest extends ConfigTest {
             final DataGroup data = VoTableReader.voToDataGroups(testFile.getAbsolutePath())[0];
 
             // ingest data into db
-            HsqlDbAdapter dbAdapter = new HsqlDbAdapter(dbFile);
+            DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
             dbAdapter.initDbFile();
             dbAdapter.ingestData(() -> data, dbAdapter.getDataTable());
 

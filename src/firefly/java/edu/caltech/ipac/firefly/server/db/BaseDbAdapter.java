@@ -24,7 +24,6 @@ import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.BadSqlGrammarException;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.transaction.TransactionStatus;
@@ -33,7 +32,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLDataException;
 import java.sql.SQLException;
@@ -48,8 +46,7 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.parseSqlFilter;
 import static edu.caltech.ipac.firefly.server.db.DbMonitor.getDbInstances;
 import static edu.caltech.ipac.firefly.server.db.DbMonitor.getRuntimeStats;
-import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.deserialize;
-import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.serialize;
+import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.*;
 import static edu.caltech.ipac.table.DataGroup.ROW_IDX;
 import static edu.caltech.ipac.table.DataGroup.ROW_NUM;
 import static edu.caltech.ipac.util.StringUtils.*;
@@ -62,57 +59,6 @@ import static edu.caltech.ipac.util.StringUtils.groupMatch;
 abstract public class BaseDbAdapter implements DbAdapter {
     static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     private File dbFile;
-
-    private static final String DD_INSERT_SQL = "insert into %s_DD values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    private static final String DD_CREATE_SQL = "create table %s_DD "+
-            "(" +
-            "  cname    varchar(64000)" +
-            ", label    varchar(64000)" +
-            ", type     varchar(255)" +
-            ", units    varchar(255)" +
-            ", null_str varchar(255)" +
-            ", format   varchar(255)" +
-            ", fmtDisp  varchar(64000)" +
-            ", width    int" +
-            ", visibility varchar(255)" +
-            ", sortable   boolean" +
-            ", filterable boolean" +
-            ", fixed      boolean" +
-            ", description varchar(64000)" +
-            ", enumVals varchar(64000)" +
-            ", ID       varchar(64000)" +
-            ", precision varchar(64000)" +
-            ", ucd      varchar(64000)" +
-            ", utype    varchar(64000)" +
-            ", ref      varchar(64000)" +
-            ", maxValue varchar(64000)" +
-            ", minValue varchar(64000)" +
-            ", links    blob" +
-            ", dataOptions varchar(64000)" +
-            ", arraySize varchar(255)" +
-            ", cellRenderer varchar(64000)" +
-            ", sortByCols varchar(64000)" +
-            ", order_index    int" +
-            ")";
-
-    private static final String META_INSERT_SQL = "insert into %s_META values (?,?,?)";
-    private static final String META_CREATE_SQL = "create table %s_META "+
-            "(" +
-            "  key      varchar(1024)" +
-            ", value    varchar(64000)" +
-            ", isKeyword boolean" +
-            ")";
-
-    private static final String AUX_DATA_INSERT_SQL = "insert into %s_AUX values (?,?,?,?,?,?)";
-    private static final String AUX_DATA_CREATE_SQL = "create table %s_AUX "+
-            "(" +
-            "  title     varchar(64000)" +
-            ", size      int" +
-            ", groups    blob" +                        // we'll put serializable Java objects for these
-            ", links     blob" +
-            ", params    blob" +
-            ", resources blob" +
-            ")";
 
 
 //====================================================================
@@ -127,6 +73,8 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public DbInstance getDbInstance(boolean create) {
+        if (getDbFile() == null) return createDbInstance();
+
         EmbeddedDbInstance ins = getDbInstances().get(getDbFile().getPath());
         if (ins == null && create) {
             ins = createDbInstance();
@@ -147,11 +95,9 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     /**
-     * Return a DataGroup with all the headers without data.  This includes info from DD, META, and AUX.
-     * @param forTable  table to query
      * @param forTable  table to query
      * @param inclCols  only for these columns.  null to get all columns
-     * @return
+     * @return a DataGroup with all the headers without data.  This includes info from DD, META, and AUX.
      */
     public DataGroup getHeaders(String forTable, String ...inclCols) throws DataAccessException {
         String cols = inclCols.length == 0 ? "*" : StringUtils.toString(inclCols, ", ");
@@ -168,7 +114,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
      */
     public List<String> getColumnNames(String forTable, String enclosedBy) {
         String sql = String.format("SELECT * from %s_DD order by order_index", forTable);
-        return JdbcFactory.getSimpleTemplate(getDbInstance()).query(sql, (rs, i) -> (enclosedBy == null) ? rs.getString(1) : enclosedBy + rs.getString(1) + enclosedBy);
+        return getJdbc().query(sql, (rs, i) -> (enclosedBy == null) ? rs.getString(1) : enclosedBy + rs.getString(1) + enclosedBy);
     }
 
     /**
@@ -179,12 +125,12 @@ abstract public class BaseDbAdapter implements DbAdapter {
      */
     List<String> getColumnNamesFromSys(String forTable, String enclosedBy) {
         String sql = String.format("SELECT column_name FROM INFORMATION_SCHEMA.SYSTEM_COLUMNS where table_name = '%s'", forTable.toUpperCase());
-        return JdbcFactory.getSimpleTemplate(getDbInstance()).query(sql, (rs, i) -> (enclosedBy == null) ? rs.getString(1) : enclosedBy + rs.getString(1) + enclosedBy);
+        return getJdbc().query(sql, (rs, i) -> (enclosedBy == null) ? rs.getString(1) : enclosedBy + rs.getString(1) + enclosedBy);
     }
 
     public List<String> getTableNames() {
         String sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES where table_schema = 'PUBLIC'";
-        return JdbcFactory.getSimpleTemplate(getDbInstance()).query(sql, (rs, i) -> rs.getString(1));
+        return getJdbc().query(sql, (rs, i) -> rs.getString(1));
     }
 
     public boolean useTxnDuringLoad() {
@@ -239,7 +185,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
             // copy data
             String datasetSql = String.format("select %s FROM %s %s %s", selectPart, getDataTable(), wherePart, orderBy);
-            String datasetSqlWithIdx = String.format("select b.*, (%s -1) as %s from (%s) as b", rownumSql(), DataGroup.ROW_NUM, datasetSql);
+            String datasetSqlWithIdx = String.format("select b.*, (%s -1) as %s from (%s) as b", rowNumSql(), DataGroup.ROW_NUM, datasetSql);
             String sql = createTableFromSelect(resultSetID, datasetSqlWithIdx);
             execUpdate(sql);
 
@@ -253,14 +199,14 @@ abstract public class BaseDbAdapter implements DbAdapter {
             String metaSql = "select * from DATA_META";
             metaSql = createTableFromSelect(resultSetID + "_META", metaSql);
             try {
-                JdbcFactory.getSimpleTemplate(getDbInstance()).update(metaSql);
+                getJdbc().update(metaSql);
             } catch (Exception mx) {/*ignore table may not exists*/}
 
             // copy aux
             String auxSql = "select * from DATA_AUX";
             auxSql = createTableFromSelect(resultSetID + "_AUX", auxSql);
             try {
-                JdbcFactory.getSimpleTemplate(getDbInstance()).update(auxSql);
+                getJdbc().update(auxSql);
             } catch (Exception ax) {/*ignore table may not exist*/}
 
         }catch (RuntimeException e) {
@@ -300,7 +246,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
         if (!isEmpty(pagingPart)) {
             // fetch total row count for the query.. datagroup may contain partial results(paging)
             String cntSql = String.format("select count(*) FROM %s %s", forTable, wherePart);
-            rowCnt = JdbcFactory.getSimpleTemplate(getDbInstance()).queryForInt(cntSql);
+            rowCnt = getJdbc().queryForInt(cntSql);
         }
 
         DataGroupPart page = EmbeddedDbUtil.toDataGroupPart(data, treq);
@@ -324,52 +270,17 @@ abstract public class BaseDbAdapter implements DbAdapter {
         StopWatch.getInstance().start(String.format("%s:execQuery: %s", getName(), refTable));
 
         DbInstance dbInstance = getDbInstance();
-        SimpleJdbcTemplate jdbc = JdbcFactory.getSimpleTemplate(getDbInstance());
+        SimpleJdbcTemplate jdbc = getJdbc();
         sql = translateSql(sql);
         LOGGER.trace("execQuery => SQL: " + sql);
         try {
             DataGroup dg = (DataGroup)JdbcFactory.getTemplate(dbInstance).query(sql, rs -> {
-                return EmbeddedDbUtil.dbToDataGroup(rs, dbInstance);
+                DataGroup tmpDg = new DataGroup(null, getCols(rs, getDbInstance()));
+                applyDdToDataType(tmpDg, refTable, jdbc);
+                applyMetaToTable(tmpDg, refTable, jdbc);
+                applyAuxToTable(tmpDg, refTable, jdbc);
+                return EmbeddedDbUtil.dbToDataGroup(rs, tmpDg);
             });
-
-            if (refTable != null) {
-                String ddSql = getDDSql(refTable);
-                try {
-                    JdbcFactory.getSimpleTemplate(dbInstance).query(ddSql, (ddrs, i) -> dbToDD(dg, ddrs));
-                } catch (Exception e) {
-                    LOGGER.trace("getDDSql failed(ignored): " + e.getMessage(),
-                            "ddSql: " + ddSql,
-                            "refTable: " + refTable,
-                            "dbFile: " + getDbFile().getAbsolutePath());
-                    // ignore. may not have DD table
-                }
-
-                // insert table meta info into the results
-                String metaSql = getMetaSql(refTable);
-                try {
-                    jdbc.query(metaSql, (rs, i) -> dbToMeta(dg, rs));
-                } catch (Exception e) {
-                    LOGGER.trace("getMetaSql failed(ignored): " + e.getMessage(),
-                            "metaSql: " + metaSql,
-                            "refTable: " + refTable,
-                            "dbFile: " + getDbFile().getAbsolutePath());
-                    // ignore; may not have meta table
-                }
-
-                // insert aux data info into the results
-                String auxDataSqlSql = getAuxDataSql(refTable);
-                try {
-                    if (!isEmpty(auxDataSqlSql)) {
-                        jdbc.query(auxDataSqlSql, (rs, i) -> dbToAuxData(dg, rs));
-                    }
-                } catch (Exception e) {
-                    LOGGER.trace("getAuxDataSql failed(ignored): " + e.getMessage(),
-                            "auxDataSqlSql: " + auxDataSqlSql,
-                            "refTable: " + refTable,
-                            "dbFile: " + getDbFile().getAbsolutePath());
-                    // ignore.. may not have meta table
-                }
-            }
 
             // if rowidx or rownum is returned, make it not visible
             applyIfNotEmpty(dg.getDataDefintion(ROW_IDX), dt -> dt.setVisibility(DataType.Visibility.hidden));
@@ -439,7 +350,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             var sql = String.format("ALTER TABLE %s ADD COLUMN \"%s\" %s", getDataTable(), col.getKeyName(), toDbDataType(col));
             execUpdate(sql);
         } catch (Exception e) {
-            // DDL statement are transactionally isolated, therefore need to manually rollback if this succeed but the next few statements failed.
+            // DDL statement are transactionally isolated, therefore need to manually rollback if this succeeds but the next few statements failed.
             throw handleSqlExp("Add column failed", e);
         }
         try {
@@ -626,9 +537,12 @@ abstract public class BaseDbAdapter implements DbAdapter {
         }
     }
 
+    String longStringDbType() {
+        return "TEXT";
+    }
 
     public String toDbDataType(DataType dataType) {
-        if (dataType.isArrayType()) return "other";
+        if (dataType.isArrayType()) return longStringDbType();
 
         Class type = dataType.getDataType();
         if (type == null || String.class.isAssignableFrom(type)) {
@@ -693,7 +607,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
     protected void shutdown(EmbeddedDbInstance db) {}
     protected void removeDbFile() {}
-    protected String rownumSql() { return "ROWNUM"; }
+    protected String rowNumSql() { return "ROWNUM"; }
 
     protected List<String> getTempTables() {
         return getTableNames().stream()
@@ -741,13 +655,13 @@ abstract public class BaseDbAdapter implements DbAdapter {
         return String.format("CREATE TABLE IF NOT EXISTS %s AS (%s)", tblName, selectSql);
     }
 
-    protected int createDataTbl(DataGroup dg, String tblName) throws DataAccessException {
+    int createDataTbl(DataGroup dg, String tblName) throws DataAccessException {
 
         DataType[] colsAry = EmbeddedDbUtil.makeDbCols(dg);
         int totalRows = dg.size();
 
         String createDataSql = createDataSql(colsAry, tblName);
-        JdbcFactory.getSimpleTemplate(getDbInstance()).update(createDataSql);
+        getJdbc().update(createDataSql);
 
         if (totalRows > 0) {
             JdbcTemplate jdbc = JdbcFactory.getTemplate(getDbInstance());
@@ -757,49 +671,25 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 TransactionTemplate txnJdbc = JdbcFactory.getTransactionTemplate(jdbc.getDataSource());
                 txnJdbc.execute(new TransactionCallbackWithoutResult() {
                     public void doInTransactionWithoutResult(TransactionStatus status) {
-                        doTableLoad(jdbc, insertDataSql, dg);
+                        EmbeddedDbUtil.loadDataToDb(jdbc, insertDataSql, dg);
                     }
                 });
             } else {
-                doTableLoad(jdbc, insertDataSql, dg);
+                EmbeddedDbUtil.loadDataToDb(jdbc, insertDataSql, dg);
             }
         }
 
         return totalRows;
     }
 
-    protected void doTableLoad(JdbcTemplate jdbc, String insertDataSql, DataGroup data) {
-        int loaded = 0;
-        int rows = data.size();
-        while (loaded < rows) {
-            int batchSize = Math.min(rows-loaded, 10000);   // set batchSize limit to 10k to  ensure HUGE table do not require unnecessary amount of memory to load
-            final int roffset = loaded;
-            loaded += batchSize;
-            jdbc.batchUpdate(insertDataSql, new BatchPreparedStatementSetter() {
-                final DataType[] cols = data.getDataDefinitions();
-                public void setValues(PreparedStatement ps, int i) throws SQLException {
-                    int ridx = roffset+i;
-                    for (int cidx = 0; cidx < cols.length; cidx++)  {
-                        ps.setObject(cidx+1, data.getData(cols[cidx].getKeyName(), ridx));
-                    }
-                    ps.setObject(cols.length+1, ridx);         // add ROW_IDX
-                    ps.setObject(cols.length+2, ridx);         // add ROW_NUM
-                }
-                public int getBatchSize() {
-                    return batchSize;
-                }
-            });
-        }
-    }
+    String createAuxDataSql(String forTable) { return EmbeddedDbUtil.AUX_DATA_CREATE_SQL.formatted(forTable); }
+    String insertAuxDataSql(String forTable) { return EmbeddedDbUtil.AUX_DATA_INSERT_SQL.formatted(forTable); }
 
-    String createAuxDataSql(String forTable) { return String.format(AUX_DATA_CREATE_SQL, forTable); }
-    String insertAuxDataSql(String forTable) { return String.format(AUX_DATA_INSERT_SQL, forTable); }
+    String createMetaSql(String forTable) { return EmbeddedDbUtil.META_CREATE_SQL.formatted(forTable); }
+    String insertMetaSql(String forTable) { return EmbeddedDbUtil.META_INSERT_SQL.formatted(forTable); }
 
-    String createMetaSql(String forTable) { return String.format(META_CREATE_SQL, forTable); }
-    String insertMetaSql(String forTable) { return String.format(META_INSERT_SQL, forTable); }
-
-    String createDDSql(String forTable) { return String.format(DD_CREATE_SQL, forTable); }
-    String insertDDSql(String forTable) { return String.format(DD_INSERT_SQL, forTable); }
+    String createDDSql(String forTable) { return EmbeddedDbUtil.DD_CREATE_SQL.formatted(forTable); }
+    String insertDDSql(String forTable) { return EmbeddedDbUtil.DD_INSERT_SQL.formatted(forTable); }
 
     String createDataSql(DataType[] dtTypes, String tblName) {
         tblName = isEmpty(tblName) ? getDataTable() : tblName;
@@ -851,16 +741,54 @@ abstract public class BaseDbAdapter implements DbAdapter {
         };
     }
 
-    String getMetaSql(String forTable) {
-        return String.format("select * from %s_META", forTable);
+    // insert column info into the table
+    void applyDdToDataType(DataGroup dg, String refTable, SimpleJdbcTemplate jdbc) {
+        if (isEmpty(refTable)) return;
+
+        String ddSql = "select * from %s_DD".formatted(refTable);
+        try {
+            jdbc.query(ddSql, (ddrs, i) -> dbToDD(dg, ddrs));
+        } catch (Exception e) {
+            LOGGER.trace("getDDSql failed(ignored): " + e.getMessage(),
+                    "ddSql: " + ddSql,
+                    "refTable: " + refTable,
+                    "dbFile: " + getDbFile().getAbsolutePath());
+            // ignore. may not have DD table
+        }
     }
 
-    String getAuxDataSql(String forTable) {
-        return String.format("select * from %s_AUX", forTable);
+    // insert table meta info into the results
+    void applyMetaToTable(DataGroup dg, String refTable, SimpleJdbcTemplate jdbc) {
+        if (isEmpty(refTable)) return;
+        String metaSql = "select * from %s_META".formatted(refTable);
+        try {
+            jdbc.query(metaSql, (rs, i) -> dbToMeta(dg, rs));
+        } catch (Exception e) {
+            LOGGER.trace("getMetaSql failed(ignored): " + e.getMessage(),
+                    "metaSql: " + metaSql,
+                    "refTable: " + refTable,
+                    "dbFile: " + getDbFile().getAbsolutePath());
+            // ignore; may not have meta table
+        }
     }
 
-    String getDDSql(String forTable) {
-        return String.format("select * from %s_DD", forTable);
+    // insert aux info into the table
+    void applyAuxToTable(DataGroup dg, String refTable, SimpleJdbcTemplate jdbc) {
+
+        if (isEmpty(refTable)) return;
+
+        String auxDataSqlSql = "select * from %s_AUX".formatted(refTable);
+        try {
+            if (!isEmpty(auxDataSqlSql)) {
+                jdbc.query(auxDataSqlSql, (rs, i) -> dbToAuxData(dg, rs));
+            }
+        } catch (Exception e) {
+            LOGGER.trace("getAuxDataSql failed(ignored): " + e.getMessage(),
+                    "auxDataSqlSql: " + auxDataSqlSql,
+                    "refTable: " + refTable,
+                    "dbFile: " + getDbFile().getAbsolutePath());
+            // ignore; may not have meta table
+        }
     }
 
     String selectPart(TableServerRequest treq) {
@@ -928,6 +856,9 @@ abstract public class BaseDbAdapter implements DbAdapter {
         return page;
     }
 
+    SimpleJdbcTemplate getJdbc() {
+        return JdbcFactory.getSimpleTemplate(getDbInstance());
+    }
 
 
 //====================================================================
@@ -937,7 +868,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     void metaToDb(DataGroup dg, String forTable) {
         TableMeta meta = dg.getTableMeta();
         String createMetaSql = createMetaSql(forTable);
-        JdbcFactory.getSimpleTemplate(getDbInstance()).update(createMetaSql);
+        getJdbc().update(createMetaSql);
 
         // for consistency, we will create the table even if no metadata exists; but no data
         if (meta.isEmpty()) return;
@@ -950,7 +881,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 .filter(kw -> !kw.isKeyword())
                 .forEach(kw -> data.add(new Object[]{kw.getKey(), kw.getValue(), kw.isKeyword()}));
         String insertMetaSql = insertMetaSql(forTable);
-        JdbcFactory.getSimpleTemplate(getDbInstance()).batchUpdate(insertMetaSql, data);
+        getJdbc().batchUpdate(insertMetaSql, data);
     }
 
     private static int dbToMeta(DataGroup dg, ResultSet rs) {
@@ -980,12 +911,12 @@ abstract public class BaseDbAdapter implements DbAdapter {
     void auxDataToDb(DataGroup dg, String tblName) {
 
         String createAuxDataSql = createAuxDataSql(tblName);
-        JdbcFactory.getSimpleTemplate(getDbInstance()).update(createAuxDataSql);
+        getJdbc().update(createAuxDataSql);
 
         List<Object[]> data = new ArrayList<>();
         data.add( getAuxFrom(dg));
         String insertAuxSql = insertAuxDataSql(tblName);
-        JdbcFactory.getSimpleTemplate(getDbInstance()).batchUpdate(insertAuxSql, data);
+        getJdbc().batchUpdate(insertAuxSql, data);
     }
 
 
@@ -1040,7 +971,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
         DataType[] colsAry = EmbeddedDbUtil.makeDbCols(dg);
         String createDDSql = createDDSql(tblName);
-        JdbcFactory.getSimpleTemplate(getDbInstance()).update(createDDSql);
+        getJdbc().update(createDDSql);
 
         List<Object[]> data = new ArrayList<>();
         for (int i = 0; i < colsAry.length; i++) {
@@ -1048,7 +979,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             data.add(acol);
         }
         String insertDDSql = insertDDSql(tblName);
-        JdbcFactory.getSimpleTemplate(getDbInstance()).batchUpdate(insertDDSql, data);
+        getJdbc().batchUpdate(insertDDSql, data);
     }
 
 
@@ -1097,6 +1028,4 @@ abstract public class BaseDbAdapter implements DbAdapter {
         }
         return new DataAccessException(msg, e);
     }
-
-
 }

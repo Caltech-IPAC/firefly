@@ -22,11 +22,12 @@ import edu.caltech.ipac.table.*;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.validation.constraints.NotNull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
@@ -34,6 +35,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.Date;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_PATH;
@@ -52,6 +54,54 @@ import static edu.caltech.ipac.util.StringUtils.*;
 public class EmbeddedDbUtil {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
     private static final int MAX_COL_ENUM_COUNT = AppProperties.getIntProperty("max.col.enum.count", 32);
+    static final String DD_INSERT_SQL = "insert into %s_DD values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    static final String DD_CREATE_SQL = "create table %s_DD "+
+            "(" +
+            "  cname    varchar(64000)" +
+            ", label    varchar(64000)" +
+            ", type     varchar(255)" +
+            ", units    varchar(255)" +
+            ", null_str varchar(255)" +
+            ", format   varchar(255)" +
+            ", fmtDisp  varchar(64000)" +
+            ", width    int" +
+            ", visibility varchar(255)" +
+            ", sortable   boolean" +
+            ", filterable boolean" +
+            ", fixed      boolean" +
+            ", description varchar(64000)" +
+            ", enumVals varchar(64000)" +
+            ", ID       varchar(64000)" +
+            ", precision varchar(64000)" +
+            ", ucd      varchar(64000)" +
+            ", utype    varchar(64000)" +
+            ", ref      varchar(64000)" +
+            ", maxValue varchar(64000)" +
+            ", minValue varchar(64000)" +
+            ", links    TEXT" +
+            ", dataOptions varchar(64000)" +
+            ", arraySize varchar(255)" +
+            ", cellRenderer varchar(64000)" +
+            ", sortByCols varchar(64000)" +
+            ", order_index    int" +
+            ")";
+    static final String META_INSERT_SQL = "insert into %s_META values (?,?,?)";
+    static final String META_CREATE_SQL = "create table %s_META "+
+                    "(" +
+                    "  key      varchar(1024)" +
+                    ", value    varchar(64000)" +
+                    ", isKeyword boolean" +
+                    ")";
+    static final String AUX_DATA_INSERT_SQL = "insert into %s_AUX values (?,?,?,?,?,?)";
+    static final String AUX_DATA_CREATE_SQL = "create table %s_AUX "+
+                            "(" +
+                            "  title     varchar(64000)" +
+                            ", size      int" +
+                            ", groups    TEXT" +                        // we'll put serializable Java objects for these
+                            ", links     TEXT" +
+                            ", params    TEXT" +
+                            ", resources TEXT" +
+                            ")";
 
     public static void setDbMetaInfo(TableServerRequest treq, DbAdapter dbAdapter) {
         treq.setMeta(TBL_FILE_PATH, ServerContext.replaceWithPrefix(dbAdapter.getDbFile()));
@@ -69,29 +119,34 @@ public class EmbeddedDbUtil {
 //====================================================================
 //  common util functions
 //====================================================================
-
     public static DataGroup dbToDataGroup(ResultSet rs, DbInstance dbInstance) throws SQLException {
-
         DataGroup dg = new DataGroup(null, getCols(rs, dbInstance));
+        return dbToDataGroup(rs, dg);
+    }
 
+    public static DataGroup dbToDataGroup(ResultSet rs, DataGroup dg) throws SQLException {
         try {
             advanceCursor(rs);
         } catch (Exception ignored) {
             return dg;                // no row found
         }
-
+        List<Boolean> isAryType = isColumnTypeArray(dg.getDataDefinitions());
         do {
             DataObject row = new DataObject(dg);
             for (int i = 0; i < dg.getDataDefinitions().length; i++) {
                 DataType dt = dg.getDataDefinitions()[i];
                 int idx = i + 1;
-                Object val = rs.getObject(idx);
-                if (dt.getDataType() == Float.class && val instanceof Double) {
+                Object val = isAryType.get(i) ? deserialize(rs, idx) : rs.getObject(idx);
+                if (dt.getDataType() == Float.class && val instanceof Double cv) {
                     // this is needed because hsql stores float as double.
-                    val = ((Double) val).floatValue();
-                } else if (dt.getDataType() == Double.class && val instanceof BigDecimal) {
+                    val = cv.floatValue();
+                } else if (dt.getDataType() == Double.class && val instanceof BigDecimal cv) {
                     // When expression involved big number like, long(bigint), BigDecimal is returned. Need to convert that back to double
-                    val = ((BigDecimal) val).doubleValue();
+                    val = cv.doubleValue();
+                } else if (dt.getDataType() == Short.class && val instanceof Integer cv) {
+                    val = cv.shortValue();
+                } else if (dt.getDataType() == Integer.class && val instanceof Long cv) {
+                    val = cv.intValue();
                 }
                 row.setDataElement(dt, val);
             }
@@ -316,9 +371,12 @@ public class EmbeddedDbUtil {
 
 //====================================================================
 //  serialize/deserialize of Java object
+//  Using duckdb appender greatly improve performance when ingesting large volume of data.
+//  But, direct BLOB support is not available.  Therefore, we will serialize Java object
+//  into base64 string for storage.
 //====================================================================
 
-    public static byte[] serialize(Object obj) {
+    public static String serialize(Object obj) {
         if (obj == null) return null;
         try {
             ByteArrayOutputStream bstream = new ByteArrayOutputStream();
@@ -326,7 +384,7 @@ public class EmbeddedDbUtil {
             ostream.writeObject(obj);
             ostream.flush();
             byte[] bytes =  bstream.toByteArray();
-            return bytes;
+            return Base64.getEncoder().encodeToString(bytes);
         } catch (Exception e) {
             logger.warn(e);
             return null;
@@ -334,11 +392,16 @@ public class EmbeddedDbUtil {
     }
 
     public static Object deserialize(ResultSet rs, String cname) {
-        try {
-            Blob blob = rs.getBlob(cname);
-            if (blob == null) return null;
+        return getOrDefault(() -> deserialize(rs.getString(cname)), null);
+    }
+    public static Object deserialize(ResultSet rs, int cidx) {
+        return getOrDefault(() -> deserialize(rs.getString(cidx)), null);
+    }
 
-            byte[] bytes = blob.getBytes(1, (int) blob.length());
+    public static Object deserialize(String base64) {
+        try {
+            if (base64 == null) return null;
+            byte[] bytes = Base64.getDecoder().decode(base64);
             ByteArrayInputStream bstream = new ByteArrayInputStream(bytes);
             ObjectInputStream ostream = new ObjectInputStream(bstream);
             return ostream.readObject();
@@ -369,42 +432,21 @@ public class EmbeddedDbUtil {
 
     static Class convertToClass(int val, DbInstance dbInstance) {
         JDBCType type = JDBCType.valueOf(val);
-        switch (type) {
-            case CHAR:
-            case VARCHAR:
-            case LONGVARCHAR:
-                return String.class;
-            case TINYINT:
-                return Byte.class;
-            case SMALLINT:
-                return Short.class;
-            case INTEGER:
-                return Integer.class;
-            case BIGINT:
-                return Long.class;
-            case FLOAT:
-                return Float.class;
-            case REAL: {
-                if (dbInstance.getBoolProp(USE_REAL_AS_DOUBLE, false)) return Double.class;
-                else return Float.class;
-            }
-            case DOUBLE:
-            case NUMERIC:
-            case DECIMAL:
-                return Double.class;
-            case BIT:
-            case BOOLEAN:
-                return Boolean.class;
-            case DATE:
-            case TIME:
-            case TIMESTAMP:
-                return Date.class;
-            case BINARY:
-            case VARBINARY:
-            case LONGVARBINARY:
-            default:
-                return String.class;
-        }
+        Class clz = switch (type) {
+            case CHAR, VARCHAR, LONGVARCHAR -> String.class;
+            case TINYINT    -> Byte.class;
+            case SMALLINT   -> Short.class;
+            case INTEGER    -> Integer.class;
+            case BIGINT     -> Long.class;
+            case FLOAT  -> Float.class;
+            case REAL -> dbInstance.getBoolProp(USE_REAL_AS_DOUBLE, false) ? Double.class : Float.class;
+            case DOUBLE, NUMERIC, DECIMAL   -> Double.class;
+            case BIT, BOOLEAN -> Boolean.class;
+            case DATE, TIME, TIMESTAMP  ->Date.class;
+            case BINARY, VARBINARY, LONGVARBINARY -> String.class;
+            default -> String.class;
+        };
+        return clz;
     }
 
     static DataType[] makeDbCols(DataGroup dg) {
@@ -438,4 +480,54 @@ public class EmbeddedDbUtil {
             if (!hasData) throw new SQLWarning("No row found");
         }
     }
+
+    static void loadDataToDb(JdbcTemplate jdbc, String insertDataSql, DataGroup data) {
+        int loaded = 0;
+        int rows = data.size();
+        while (loaded < rows) {
+            int batchSize = Math.min(rows-loaded, 10000);   // set batchSize limit to 10k to  ensure HUGE table do not require unnecessary amount of memory to load
+            final int roffset = loaded;
+            loaded += batchSize;
+            jdbc.batchUpdate(insertDataSql, new BatchPreparedStatementSetter() {
+                final DataType[] cols = data.getDataDefinitions();
+                List<Boolean> cIsAry = isColumnTypeArray(cols);
+                public void setValues(PreparedStatement ps, int i) throws SQLException {
+                    int ridx = roffset+i;
+                    for (int cidx = 0; cidx < cols.length; cidx++)  {
+                        Object v = data.getData(cols[cidx].getKeyName(), ridx);
+                        if (cIsAry.get(cidx)) {
+                            v = serialize(v);
+                        }
+                        ps.setObject(cidx+1, v);
+                    }
+                    ps.setObject(cols.length+1, ridx);         // add ROW_IDX
+                    ps.setObject(cols.length+2, ridx);         // add ROW_NUM
+                }
+                public int getBatchSize() {
+                    return batchSize;
+                }
+            });
+        }
+    }
+
+    /**
+     * Checks if the specified columns contain array data types
+     * @param cols columns to search
+     * @return  a list of boolean indicating if a column contains array data type
+     */
+    static List<Boolean> isColumnTypeArray(DataType[] cols) {
+        return Arrays.stream(cols).map(c -> c.isArrayType()).toList();
+    }
+
+    /**
+     * @param cols columns to search
+     * @return  a list of
+     */
+    static List<Integer> colIdxWithArrayData(DataType[] cols) {
+        return IntStream.range(0, cols.length)
+                .mapToObj(i -> cols[i].isArrayType() ? i : -1)
+                .filter(i -> i >= 0)
+                .collect(Collectors.toList());
+    }
+
 }

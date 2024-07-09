@@ -45,7 +45,7 @@ public class SqliteDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapte
         return true;
     }
 
-    public String translateSql(String sql) {
-        return sql.replaceAll("ROWNUM", "ROWID");
+    protected String rowNumSql() {
+        return "ROWID";
     }
 }
