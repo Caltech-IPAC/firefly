@@ -735,7 +735,7 @@ export const ATag = React.memo(({cellInfo, label, title, href, target, style={},
         label = html_regex.test(label) ? <div dangerouslySetInnerHTML={{__html: label}}/> : label;
     }
 
-    return <Link {...{title, href, target, style}}> {label} </Link>;
+    return href ? <Link {...{title, href, target, style}}> {label} </Link> : '';
 });
 
 export const TextCell = React.memo(({cellInfo, text, ...rest}) => {
