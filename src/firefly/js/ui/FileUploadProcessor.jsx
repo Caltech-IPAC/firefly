@@ -157,11 +157,12 @@ function determineLoadType(acceptList, uniqueTypes, summaryModel, summaryTblId, 
     const highlightedRow = summaryModel?.tableData?.data?.[highlightedRowIdx];
     const entryType = highlightedRow?
         highlightedRow[1]: summaryModel?.tableData?.data?.[0]?.[1];
+    const singleAxisImageAsTable= request.singleRowImageAsTable==='singleAxisImage';
 
     const tableIndices = acceptOneItem && entryType === FileAnalysisType.Table? [highlightedRowIdx] :
-        getSelectedRows(FileAnalysisType.Table, summaryTblId, report, summaryModel);
+        getSelectedRows(FileAnalysisType.Table, summaryTblId, report, summaryModel, singleAxisImageAsTable);
     const imageIndices = acceptOneItem && entryType === FileAnalysisType.Image? [highlightedRowIdx] :
-        getSelectedRows(FileAnalysisType.Image, summaryTblId, report, summaryModel);
+        getSelectedRows(FileAnalysisType.Image, summaryTblId, report, summaryModel, singleAxisImageAsTable);
 
     const isMocFits =  isMOCFitsFromUploadAnalsysis(report);
     const isDL=  isAnalysisTableDatalink(report);
@@ -193,6 +194,24 @@ function determineLoadType(acceptList, uniqueTypes, summaryModel, summaryTblId, 
             return {loadType: LOAD_IMAGE_ONLY, tableIndices, imageIndices};
         }
     }
+}
+
+export function findSingleAxisImages(report) {
+    const singleAxis= report?.parts
+            .filter( ({type}) => type==='Image')
+            .map( (part) => {
+                return (
+                    {
+                        index: part.index,
+                        NAXIS1: Number(getTableHeaderFromAnalysis('NAXIS1',part)),
+                        NAXIS2: Number(getTableHeaderFromAnalysis('NAXIS2',part))
+                    }
+                );
+            })
+            .filter( ({NAXIS1,NAXIS2})=> !isNaN(NAXIS1) || !isNaN(NAXIS2))
+            .filter( ({NAXIS2})=> NAXIS2===1)
+        ?? [];
+    return singleAxis;
 }
 
 const errorObj = {
@@ -435,17 +454,28 @@ function sendImageRequest(imageIndices, request, fileCacheKey, currentReport) {
     }
 }
 
-export function getSelectedRows(type, summaryTblId, currentReport, currentSummaryModel) {
+export function getSelectedRows(type, summaryTblId, report, currentSummaryModel, singleAxisImageAsTable=false) {
 
-    if (getPartCnt(currentReport)===1) {
-        if (type===getFirstPartType(currentSummaryModel)) {
-            return [0];
-        }
-        return [];
+    const singleAxisIdxs= singleAxisImageAsTable ? findSingleAxisImages(report).map( ({index}) => index) : [];
+
+    let retRows= [];
+    if (getPartCnt(report)===1) {
+        if (type===getFirstPartType(currentSummaryModel)) retRows= [0];
     }
-    const {totalRows=0, tableData} = getSelectedDataSync(summaryTblId, ['Index', 'Type']);
-    if (totalRows === 0) return [];
-    const selectedRows = tableData.data;
-    return selectedRows.filter((row) => row[1] === type)            // take only rows with the right type
-        .map((row) => row[0]);                       // returns only the index
+    else {
+        const {totalRows=0, tableData} = getSelectedDataSync(summaryTblId, ['Index', 'Type']);
+        if (totalRows>0) {
+            retRows= tableData.data.filter((row) => row[1] === type)            // take only rows with the right type
+                .map((row) => row[0]);                       // returns only the index
+        }
+    }
+    if (!singleAxisIdxs.length) return retRows;
+
+    if (type===FileAnalysisType.Table) {
+        retRows.push(...singleAxisIdxs);
+    }
+    else if (type===FileAnalysisType.Image){
+        retRows= retRows.filter( (idx) => !singleAxisIdxs.includes(idx));
+    }
+    return retRows;
 }

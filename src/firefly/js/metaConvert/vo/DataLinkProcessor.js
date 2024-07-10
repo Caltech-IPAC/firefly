@@ -260,7 +260,7 @@ export function filterDLList(parsingAlgorithm, dataLinkData) {
         return dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.isImage);
     }
     if (parsingAlgorithm===RELATED_IMAGE_GRID) {
-        return dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.isThis && dlAnalysis.isGrid && dlAnalysis.isImage);
+        return dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.isGrid && dlAnalysis.isImage);
     }
     if (parsingAlgorithm===SPECTRUM) {
         return dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.isSpectrum);
@@ -312,17 +312,17 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
     let primeCnt=0;
 
     const menu= filterDLList(parsingAlgorithm,dataLinkData)
-        .map( (dlData,idx) => {
+        .map( (dlData) => {
             const {semantics,url,error_message, dlAnalysis:{isAux,isThis}}= dlData;
             const name= makeName(semantics, url, auxTot, auxCnt, primeCnt, baseTitle);
             if (error_message) {
                 const edp= dpdtMessageWithError(error_message);
                 edp.complexMessage= false;
-                edp.menuKey='dlt-'+idx;
-                edp.name= `Error in related data (datalink) row ${idx}`;
+                edp.menuKey='dlt-'+dlData.rowIdx;
+                edp.name= `Error in related data (datalink) row ${dlData.rowIdx}`;
                 return edp;
             }
-            const menuEntry= makeMenuEntry({dlTableUrl,dlData,idx, baseTitle, sourceTable,
+            const menuEntry= makeMenuEntry({dlTableUrl,dlData,idx:dlData.rowIdx, baseTitle, sourceTable,
                 sourceRow, options, name, doFileAnalysis, activateParams});
             if (isAux) auxCnt++;
             if (isThis) primeCnt++;

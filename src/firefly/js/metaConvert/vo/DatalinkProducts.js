@@ -1,8 +1,6 @@
 import {getCellValue} from '../../tables/TableUtil.js';
-import {makeWorldPtUsingCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {Band} from '../../visualize/Band.js';
-import {getSearchTarget} from '../../visualize/saga/CatalogWatcher.js';
 import {WPConst} from '../../visualize/WebPlotRequest.js';
 import {dpdtImage, dpdtMessageWithDownload, dpdtSimpleMsg, DPtypes} from '../DataProductsType.js';
 import {
@@ -31,7 +29,7 @@ export async function getDatalinkRelatedGridProduct({dlTableUrl, activateParams,
     try {
         const datalinkTable = await fetchDatalinkTable(dlTableUrl);
 
-        const gridData = getDataLinkData(datalinkTable).filter(({dlAnalysis}) => dlAnalysis.isThis && dlAnalysis.isGrid && dlAnalysis.isImage);
+        const gridData = getDataLinkData(datalinkTable).filter(({dlAnalysis}) => dlAnalysis.isGrid && dlAnalysis.isImage);
         if (!gridData.length) return dpdtSimpleMsg('no support for related grid in datalink file');
 
 
