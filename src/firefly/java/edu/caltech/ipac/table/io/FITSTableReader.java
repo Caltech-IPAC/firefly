@@ -185,7 +185,7 @@ public final class FITSTableReader
 
                 //------------- here -------------------
 
-                String cName = (colNames.length > 1) ? colNames[1] : "data";
+                String cName = (colNames.length > 1) ? colNames[1] : "value";
                 DataType dataDT = new DataType(cName, cName, Double.class);
                 if (colUnits!=null && colUnits.length>1) idxDT.setUnits(colUnits[1]);
                 dataTypes.add(dataDT);

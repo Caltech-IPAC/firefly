@@ -28,13 +28,15 @@ import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 
 import {useFieldGroupMetaState, useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
-import {getIntHeaderFromAnalysis} from '../../metaConvert/PartAnalyzer';
+import {getIntHeaderFromAnalysis, getTableHeaderFromAnalysis} from '../../metaConvert/PartAnalyzer';
 import {FileAnalysisType} from '../../data/FileAnalysis';
 import {Format} from '../../data/FileAnalysis';
 import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField.jsx';
-import {getFileFormat, getFirstPartType, getSelectedRows, isRegion, isUWS} from 'firefly/ui/FileUploadProcessor';
+import {
+    findSingleAxisImages, getFileFormat, getFirstPartType, getSelectedRows, isRegion, isUWS
+} from 'firefly/ui/FileUploadProcessor';
 import {
     acceptAnyTables, acceptDataLinkTables, acceptImages, acceptMocTables, acceptNonDataLinkTables,
     acceptNonMocTables, acceptOnlyTables, acceptRegions, acceptTableOrSpectrum, acceptUWS, DATA_LINK_TABLES,
@@ -45,6 +47,7 @@ import {uwsJobInfo} from 'firefly/rpc/SearchServicesJson';
 export const  FILE_ID = 'fileUpload';
 export const  URL_ID = 'urlUpload';
 const  WS_ID = 'wsUpload';
+const SINGLE_ROW_AS_TABLE= 'singleRowImageAsTable';
 
 const TABLE_MSG = 'Custom catalog or table in IPAC, CSV, TSV, VOTABLE, or FITS table format';
 const REGION_MSG = 'A ds9 region file';
@@ -77,6 +80,7 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
 
     const isWsUpdating          = useStoreConnector(() => isAccessWorkspace());
     const [getLoadingOp, setLoadingOp]= useFieldGroupValue(uploadOptions);
+    const singleAxisImageAsTable= useFieldGroupValue(SINGLE_ROW_AS_TABLE)[0]()==='singleAxisImage';
 
     //dropEvent is used for files being dragged and drooped for uploads
     const [dropEvent, setDropEvent] = useState(() => externalDropEvent);
@@ -124,8 +128,8 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
     }, [detailsModel]);
 
     useEffect(() => {
-        setSubmitText?.(getLoadButtonText(summaryTblId,report,detailsModel,summaryModel,acceptList));
-    },[report,setSubmitText, summaryModel, detailsModel,selectInfo]);
+        setSubmitText?.(getLoadButtonText(summaryTblId,report,detailsModel,summaryModel,acceptList,singleAxisImageAsTable));
+    },[report,setSubmitText, summaryModel, detailsModel,selectInfo,singleAxisImageAsTable]);
 
     let aWStatusKey;
     useEffect(() => {
@@ -260,12 +264,12 @@ const LoadingMessage= ({message}) => (
     </div>
 );
 
-function getLoadButtonText(summaryTblId,currentReport,currentDetailsModel,currentSummaryModel,acceptList) {
-    const tblCnt = getSelectedRows(FileAnalysisType.Table, summaryTblId, currentReport, currentSummaryModel, acceptList)?.length ?? 0;
+function getLoadButtonText(summaryTblId,currentReport,currentDetailsModel,currentSummaryModel,acceptList,singleAxisImageAsTable) {
+    const tblCnt = getSelectedRows(FileAnalysisType.Table, summaryTblId, currentReport, currentSummaryModel, singleAxisImageAsTable)?.length ?? 0;
     if (tblCnt && isMOCFitsFromUploadAnalsysis(currentReport).valid && acceptMocTables(acceptList)) return 'Load MOC';
     if (isRegion(currentSummaryModel) && acceptRegions(acceptList)) return 'Load Region';
 
-    const imgCnt = getSelectedRows(FileAnalysisType.Image, summaryTblId, currentReport, currentSummaryModel, acceptList)?.length ?? 0;
+    const imgCnt = getSelectedRows(FileAnalysisType.Image, summaryTblId, currentReport, currentSummaryModel, singleAxisImageAsTable)?.length ?? 0;
 
     if (isLsstFootprintTable(currentDetailsModel) ) return 'Load Footprint';
     if ((tblCnt && !imgCnt && acceptAnyTables(acceptList)) || (tblCnt && imgCnt && !acceptImages(acceptList))) return tblCnt>1 ? `Load ${tblCnt} Tables` : 'Load Table';
@@ -503,19 +507,33 @@ function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, cur
 function ImageDisplayOption({summaryTblId, currentReport, currentSummaryModel, acceptList}) {
     const selectedImages = getSelectedRows('Image', summaryTblId, currentReport, currentSummaryModel);
 
-    if ( selectedImages.length < 2) return null;
+    const singleAxis= findSingleAxisImages(currentReport);
+
+    if ( selectedImages.length < 2 && !singleAxis.length) return null;
 
     const imgOptions = [{value: 'oneWindow', label: 'All images in one window'},
         {value: 'mulWindow', label: 'One extension image per window'}];
     if (acceptList.includes(IMAGES)) {
         return (
-            <RadioGroupInputField
-                sx={{mt:1/2}}
-                orientation='horizontal'
-                tooltip='display image extensions in one window or multiple windows'
-                fieldKey='imageDisplay'
-                options={imgOptions}
-            />
+            <Stack mt={1/2} mx={1} spacing={1}>
+                {(selectedImages.length > 1) && <RadioGroupInputField
+                    orientation='horizontal'
+                    tooltip='display image extensions in one window or multiple windows'
+                    fieldKey='imageDisplay'
+                    options={imgOptions}
+                />}
+                {singleAxis.length > 0 &&
+                    <CheckboxGroupInputField
+                                        options={[{value: 'singleAxisImage',
+                                            title:'Show Nx1 images as table and chart',
+                                            label:'Show Nx1 images as table and chart',
+                                            }]}
+                                        initialState={{value: 'singleAxisImage'}}
+                                        fieldKey={SINGLE_ROW_AS_TABLE}
+                                        labelWidth={90}
+                                    />}
+
+            </Stack>
         );
     }
     else { //could still be a FITS file, but acceptList only accepts Tables & not Images

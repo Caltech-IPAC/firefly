@@ -24,7 +24,7 @@ export function analyzeDatalinkRow({semantics = '', localSemantics = '', content
     const locSemL = localSemantics.toLowerCase();
     const isThis = semL.includes('#this');
     const isAux = semL === '#auxiliary';
-    const isGrid = semL.includes('-grid') || (isThis && locSemL.includes('-grid') || (isThis && locSemL.includes('#grid')));
+    const isGrid = semL.includes('-grid') || (locSemL.includes('-grid') || ( locSemL.includes('#grid')));
     const isCutout = semL.includes('cutout') || semL.includes('#cutout') || semL.includes('-cutout') || locSemL.includes('cutout');
     const isSpectrum = locSemL.includes('spectrum');
     const rBand = semL.includes('-red') || locSemL.includes('-red');
