@@ -42,12 +42,12 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
         const req= svcBuilder(plotId, reqKey, title, rowNum, extraParams);
         req.setAttributes({[PlotAttribute.PREFERENCE_COLOR_KEY]:'wise-color-pref'});
         const subsize = get(table, 'request.subsize');
-        const {UserTargetWorldPt, sizeUnit} = get(table, 'request', {});
+        const {UserTargetWorldPt, sizeUnit, refSourceId, sourceId} = get(table, 'request', {});
 
 
         const setSubSize= () => req.setParam('subsize', `${sizeUnit? convertAngle(sizeUnit, 'deg', subsize) : subsize}`);
+        let wp;
         if (subsize>0) {
-            let wp;
             if (getMetaEntry(table,'DataType')==='MOS') {
                 const ra_obj= getCellValue(table,row,'ra_obj');
                 const dec_obj= getCellValue(table,row,'dec_obj');
@@ -58,8 +58,7 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
                     req.setParam('in_dec', `${dec_obj}`);
                     setSubSize();
                 }
-            }
-            else if (UserTargetWorldPt) {
+            } else if (UserTargetWorldPt || sourceId) {
                 const ra_in= getCellValue(table,row,'in_ra');
                 const dec_in= getCellValue(table,row,'in_dec');
                 // cutout is requested when in_ra, in_dec, and subsize are set (see WiseIbeDataSource)
@@ -70,6 +69,18 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
                     setSubSize();
                     wp = makeWorldPt(ra_in, dec_in, CoordinateSys.EQ_J2000);
                 }
+            }
+            wp && req.setOverlayPosition(wp);
+        }
+        if (refSourceId) {
+            const ra_in= getCellValue(table,row,'crval1');
+            const dec_in= getCellValue(table,row,'crval2');
+            //no cutout
+            if (!isNil(ra_in) && !isNil(dec_in)) {
+                req.setParam('center', `${ra_in},${dec_in}`);
+                req.setParam('in_ra', `${ra_in}`);
+                req.setParam('in_dec', `${dec_in}`);
+                wp = makeWorldPt(ra_in, dec_in, CoordinateSys.EQ_J2000);
             }
             wp && req.setOverlayPosition(wp);
         }
