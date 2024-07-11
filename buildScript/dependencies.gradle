@@ -43,7 +43,7 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-core:2.20.0'
 
     // nom tam fits
-    implementation 'gov.nasa.gsfc.heasarc:nom-tam-fits:1.18.1'
+    implementation 'gov.nasa.gsfc.heasarc:nom-tam-fits:1.20.0'
 
     // openidconnect
     implementation ('net.minidev:json-smart:2.3')

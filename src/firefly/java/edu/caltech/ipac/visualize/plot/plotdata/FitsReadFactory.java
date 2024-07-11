@@ -33,7 +33,7 @@ public class FitsReadFactory {
      * read a fits with extensions or cube data to create a list of the FistRead object
      */
     public static FitsRead[] createFitsReadArray(Fits fits) throws FitsException {
-        return createFitsReadArray(FitsReadUtil.readHDUs(fits),null,false);
+        return createFitsReadArray(fits.read(),null,false);
     }
 
     public static FitsRead[] createFitsReadArray(BasicHDU<?>[] HDUs, File f, boolean clearHdu) throws FitsException {
@@ -166,16 +166,14 @@ public class FitsReadFactory {
         if (aRefFitsRead != null) {
             ImageHeader refHeader = new ImageHeader(aRefFitsRead.getHeader());
             Geom geom = new Geom();
-            //geom.override_naxis1=0;
             geom.n_override_naxis1 = aDoscale;
 
             ImageHeader imageHeader = geom.open_in(aFitsRead);
             double primCdelt1 = Math.abs(imageHeader.cdelt1);
             double refCdelt1 = Math.abs(refHeader.cdelt1);
-            int imageScaleFactor = 1;
             boolean shouldScale = 2 * refCdelt1 < primCdelt1;
             if (aDoscale && shouldScale) {
-                imageScaleFactor = (int) (primCdelt1 / refCdelt1);
+                int imageScaleFactor = (int) (primCdelt1 / refCdelt1);
                 geom.override_cdelt1 = refHeader.cdelt1 * imageScaleFactor;
                 geom.n_override_cdelt1 = true;
                 geom.override_cdelt2 = refHeader.cdelt2 * imageScaleFactor;
@@ -199,7 +197,7 @@ public class FitsReadFactory {
                 }
             }
 
-            //make a copy of the reference  fits
+            //make a copy of the reference fits
             Fits modFits = geom.do_geom(aRefFitsRead);
 
             FitsRead[] fitsReadArray = createFitsReadArray(modFits);
@@ -225,7 +223,7 @@ public class FitsReadFactory {
         Header refHeader = getRefHeader(geom, fitsRead, positionAngle, coordinateSys);
 
         //create a ImageHDU with the null data
-        ImageHDU refHDU = FitsReadUtil.makeImageHDU(refHeader, null);
+        ImageHDU refHDU = FitsReadUtil.makeEmptyImageHDU(refHeader);
         Fits refFits = new Fits();
         refFits.addHDU(refHDU);
 

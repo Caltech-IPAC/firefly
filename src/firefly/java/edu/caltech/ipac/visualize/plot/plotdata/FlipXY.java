@@ -14,10 +14,13 @@ package edu.caltech.ipac.visualize.plot.plotdata;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.SUTDebug;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
-import nom.tam.fits.*;
-import nom.tam.util.ArrayFuncs;
+import nom.tam.fits.BasicHDU;
+import nom.tam.fits.Fits;
+import nom.tam.fits.FitsException;
+import nom.tam.fits.Header;
 import nom.tam.fits.ImageData;
-import nom.tam.fits.HeaderCardException;
+import nom.tam.fits.ImageHDU;
+import nom.tam.util.ArrayFuncs;
 
 /**
  * This class flips the FitsRead image to either x (naxis2) or y(naxis1) direction
@@ -40,7 +43,7 @@ public class FlipXY {
      * @param inFitsRead - a FitsRead object
      * @param fipDirection - a String, "xAxis" or "yAsix"
      */
-    public FlipXY(FitsRead inFitsRead, String fipDirection) throws FitsException {
+    public FlipXY(FitsRead inFitsRead, String fipDirection) {
         fitsRead = inFitsRead;
         direction = fipDirection;
         inFitsHeader = FitsReadUtil.cloneHeaderFrom(inFitsRead.getHeader());
@@ -63,9 +66,8 @@ public class FlipXY {
     /**
      * This method does the flip according to the flip  direction.
      * @return
-     * @throws FitsException
      */
-      public FitsRead doFlip()throws FitsException {
+      public FitsRead doFlip() throws FitsException {
 
 
           if (inFitsHeader == null) {
@@ -233,9 +235,8 @@ public class FlipXY {
     /**
      * Based on the input fits header to create an output fits header
      * @return
-     * @throws HeaderCardException
      */
-    private Header getOutFitsHeader() throws HeaderCardException {
+    private Header getOutFitsHeader() {
 
         Header outFitsHeader = FitsReadUtil.cloneHeaderFrom(inFitsHeader);
         outFitsHeader.resetOriginalSize();
@@ -281,9 +282,8 @@ public class FlipXY {
      * @param xOrder
      * @param length
      * @param values
-     * @throws HeaderCardException
      */
-    private void addABXOrderCards( Header outFitsHeader, String xOrder, double length, double[][] values) throws HeaderCardException {
+    private void addABXOrderCards( Header outFitsHeader, String xOrder, double length, double[][] values) {
 
         for (int i = 0; i <= length; i += 2) {// do only odd i values
             for (int j = 0; j <= length; j++) {
@@ -300,9 +300,8 @@ public class FlipXY {
     /**
      * Add the cd1 and cd2 cards if they exist in the inFitsHeader
      * @param outFitsHeader
-     * @throws HeaderCardException
      */
-    private void addCDCards( Header outFitsHeader) throws HeaderCardException {
+    private void addCDCards( Header outFitsHeader) {
 
         if (inFitsHeader.containsKey("CD1_1")) {
             double cd1_1 = inFitsHeader.getDoubleValue("CD1_1");
