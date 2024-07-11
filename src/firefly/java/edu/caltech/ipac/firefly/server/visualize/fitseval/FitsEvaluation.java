@@ -35,7 +35,7 @@ public class FitsEvaluation {
     public static FitsDataEval readAndEvaluate(Fits fits, File f, boolean clearHdu, WebPlotRequest req) throws FitsException, IOException {
         FitsReadUtil.UncompressFitsInfo uFitsInfo= null;
         try  {
-            BasicHDU<?>[] HDUs= FitsReadUtil.readHDUs(fits);
+            BasicHDU<?>[] HDUs= fits.read();
             if (FitsReadUtil.hasCompressedImageHDUS(HDUs)) uFitsInfo = FitsReadUtil.createdUncompressImageHDUFile(HDUs,f);
 
             File fitsFile= uFitsInfo!=null ? uFitsInfo.file() : f;

@@ -21,7 +21,7 @@ public class FitsExtract {
     public enum CombineType {AVG, SUM, OR}
 
     private static  Number combineArray(List<Number> aryList, CombineType ct, Class<?> type) {
-        if (aryList.size() == 0) return Double.NaN;
+        if (aryList.isEmpty()) return Double.NaN;
         if (aryList.size() == 1) return aryList.get(0);
         double cnt = 0;
         var realCt=  (ct==CombineType.OR && (type==Float.TYPE || type==Double.TYPE)) ? CombineType.AVG : ct;
@@ -60,8 +60,8 @@ public class FitsExtract {
         return Double.NaN;
     }
     private static boolean isNaN(Number v) {
-        if (v instanceof Double) return ((Double) v).isNaN();
-        if (v instanceof Float) return ((Float) v).isNaN();
+        if (v instanceof Double d) return d.isNaN();
+        if (v instanceof Float f) return f.isNaN();
         return false;
     }
 
@@ -147,8 +147,7 @@ public class FitsExtract {
         if ( !(hdus[idx] instanceof ImageHDU) && !(hdus[idx] instanceof CompressedImageHDU) ) {
             throw new FitsException(idx + " is not a cube");
         }
-        return (hdus[idx] instanceof CompressedImageHDU) ?
-                        ((CompressedImageHDU) hdus[idx]).asImageHDU() : (ImageHDU) hdus[idx];
+        return (hdus[idx] instanceof CompressedImageHDU cHDU) ? cHDU.asImageHDU() : (ImageHDU) hdus[idx];
     }
 
     public static List<Number> getPointDataAry(ImagePt[] ptAry, int plane, BasicHDU<?>[] hdus, int hduNum, int refHduNum, int ptSize, CombineType ct)
@@ -185,7 +184,7 @@ public class FitsExtract {
 
             int minX = (int)Math.min(x1, x2);
             int maxX = (int)Math.max(x1, x2) ;
-            int n = (int)Math.rint(Math.ceil(maxX-minX))+1;
+            int n = maxX - minX +1;
             List<Number> pts= new ArrayList<>(n);
             for (x=minX; x<=maxX; x+=1) {
                 y = (int)(slope*x + yIntercept);
@@ -198,7 +197,7 @@ public class FitsExtract {
 
             int minY = (int)Math.min(y1, y2);
             int maxY = (int)Math.max(y1, y2);
-            int n = (int)Math.rint(Math.ceil(maxY - minY))+1;
+            int n = maxY - minY +1;
             List<Number> pts= new ArrayList<>(n);
 
             for (y=minY; y<=maxY; y+=1) {
@@ -214,7 +213,7 @@ public class FitsExtract {
                                                                  boolean allMatchingHDUs, Extractor extractor)
             throws FitsException, IOException {
         try (Fits fits = new Fits(fitsFile)) {
-            BasicHDU<?>[] hdus = FitsReadUtil.readHDUs(fits);
+            BasicHDU<?>[] hdus = fits.read();
             BasicHDU<?> hdu = hdus[refHduNum];
             validateImageAtHDU(hdus, refHduNum);
             Header refHeader = hdu.getHeader();
@@ -243,7 +242,7 @@ public class FitsExtract {
     public static List<Number> extractFromHDU(File fitsFile, int hduNum, Extractor extractor)
             throws FitsException, IOException {
         try (Fits fits= new Fits(fitsFile)) {
-            return extractor.extractAry(FitsReadUtil.readHDUs(fits), hduNum);
+            return extractor.extractAry(fits.read(), hduNum);
         }
     }
 
@@ -323,7 +322,7 @@ public class FitsExtract {
         }
     }
 
-    interface Extractor { List<Number> extractAry(BasicHDU<?>[] hdus, int hduNum) throws FitsException, IOException; }
+    public interface Extractor { List<Number> extractAry(BasicHDU<?>[] hdus, int hduNum) throws FitsException, IOException; }
 
     public record ExtractionResults(int hduNum, String extName, List<Number> aryData, boolean refHDU, Header header) { }
 }

@@ -44,7 +44,7 @@ public class FitsHDUUtil {
         Header[] headerAry;
 
         try (Fits fits= new Fits(infile)) {
-            BasicHDU<?>[] parts = FitsReadUtil.readHDUs(fits);
+            BasicHDU<?>[] parts = fits.read();
             headerAry= new Header[parts.length];
             for(int i = 0; i < parts.length; i++) {
                 FileAnalysisReport.Type ptype;

@@ -105,7 +105,7 @@ public final class FITSTableReader
             // the exception error sent from nom.tam.fits.
             DataGroup result;
             ;
-            BasicHDU<?>[] hdus = FitsReadUtil.readHDUs(fits);
+            BasicHDU<?>[] hdus = fits.read();
 
             if (table_idx >= hdus.length) {
                 throw new FitsException( "table index of " +table_idx+" exceeds the number of HDUS " + hdus.length);

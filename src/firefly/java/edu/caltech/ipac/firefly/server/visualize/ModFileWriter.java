@@ -9,7 +9,6 @@ import edu.caltech.ipac.firefly.visualize.Band;
 import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
-import nom.tam.fits.FitsException;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +38,7 @@ public class ModFileWriter {
         PlotStateUtil.setWorkingFitsFile(state, targetFile, band);
         try {
             fr.writeSimpleFitsFile(targetFile);
-        } catch (FitsException|IOException e) {
+        } catch (IOException e) {
             Logger.getLogger().warn(e,"geom write failed", "geom file: "+targetFile.getPath());
         }
     }

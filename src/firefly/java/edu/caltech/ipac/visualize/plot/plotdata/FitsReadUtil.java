@@ -46,11 +46,9 @@ public class FitsReadUtil {
     public static final String SPOT_BP = "SPOT_BP"; // original bitpix
     public static final String SPOT_PL = "SPOT_PL"; // cube plane number, only used with cubes, deprecated
 
-    public static ImageData getImageData(BasicHDU<?> refHdu, float[] float1d) throws FitsException {
-        Header header = refHdu.getHeader();
-        int naxis1 = header.getIntValue("NAXIS1");
-        int naxis2 = header.getIntValue("NAXIS2");
-        int[] dims2 = new int[]{naxis1, naxis2};
+    public static ImageData getImageData(BasicHDU<?> refHdu, float[] float1d) {
+        Header h = refHdu.getHeader();
+        int[] dims2 = new int[] {getNaxis1(h), getNaxis2(h)};
         float[][] fdata = (float[][]) ArrayFuncs.curl(float1d, dims2);
         Object data = ArrayFuncs.convertArray(fdata, getDataType(refHdu), true);
         return new ImageData(data);
@@ -77,16 +75,13 @@ public class FitsReadUtil {
 
 
     public static boolean hasCompressedImageHDUS(BasicHDU<?>[] HDUs)  {
-        for (BasicHDU<?> hdu : HDUs) {
-            if (hdu instanceof CompressedImageHDU) return true;
-        }
-        return false;
+        return Arrays.stream(HDUs).anyMatch(h -> h instanceof CompressedImageHDU);
     }
 
     public static Header getTopFitsHeader(File f) {
         try (Fits fits= new Fits(f)) {
             return fits.getHDU(0).getHeader();
-        } catch (FitsException|IOException  e) {
+        } catch (IOException  e) {
             return null;
         }
     }
@@ -94,7 +89,7 @@ public class FitsReadUtil {
     public record UncompressFitsInfo(File file, BasicHDU<?>[] HDUs, Fits fits) {}
 
     public static UncompressFitsInfo createdUncompressImageHDUFile(BasicHDU<?>[] HDUs, File originalFile)
-            throws FitsException, IOException {
+            throws IOException {
         String fBase= FileUtil.getBase(originalFile);
         String dir= originalFile.getParent();
         File retFile= new File(dir+"/"+ fBase+"---hdu-uncompressed"+".fits");
@@ -105,10 +100,10 @@ public class FitsReadUtil {
         fits.write(retFile);
         closeFits(fits);
         Fits retReadFits= new Fits(retFile);
-        return new UncompressFitsInfo(retFile,FitsReadUtil.readHDUs(retReadFits), retReadFits);
+        return new UncompressFitsInfo(retFile,fits.read(), retReadFits);
     }
 
-    public static BasicHDU<?>[] getImageHDUArray(BasicHDU<?>[] HDUs, boolean onlyFireCubeHdu) throws FitsException {
+    public static BasicHDU<?>[] getImageHDUArray(BasicHDU<?>[] HDUs, boolean onlyFireCubeHdu) {
         ArrayList<BasicHDU<?>> HDUList = new ArrayList<>();
 
         String delayedExceptionMsg = null; // the exception can be ignored if HDUList size is greater than 0
@@ -161,7 +156,7 @@ public class FitsReadUtil {
 
         } //end j loop
 
-        if (HDUList.size() == 0 && delayedExceptionMsg != null) {
+        if (HDUList.isEmpty() && delayedExceptionMsg != null) {
             throw new FitsException(delayedExceptionMsg);
         }
         return HDUList.toArray(new BasicHDU<?>[0]);
@@ -169,7 +164,7 @@ public class FitsReadUtil {
 
 
 
-    private static void insertPositionIntoHeader(Header header, int pos, long hduOffset) throws FitsException {
+    private static void insertPositionIntoHeader(Header header, int pos, long hduOffset) {
         if (hduOffset < 0) hduOffset = 0;
         if (pos < 0) pos = 0;
         long headerSize = getHeaderSize(header);
@@ -182,7 +177,7 @@ public class FitsReadUtil {
     }
 
 
-    private static BasicHDU<?>[] splitFits3DCube(BasicHDU<?> inHdu, boolean onlyFirstCubeHdu) throws FitsException {
+    private static BasicHDU<?>[] splitFits3DCube(BasicHDU<?> inHdu, boolean onlyFirstCubeHdu) {
         ImageHDU hdu = (inHdu instanceof ImageHDU) ? (ImageHDU) inHdu : ((CompressedImageHDU) inHdu).asImageHDU();  // if we have to uncompress a cube it could take a long time
         BasicHDU<?>[] hduList = new BasicHDU<?>[hdu.getHeader().getIntValue("NAXIS3", 0)];
 
@@ -191,7 +186,7 @@ public class FitsReadUtil {
                 hduList[i] = null;
             }
             else {
-                hduList[i] = makeImageHDU(cloneHeaderFrom(hdu.getHeader()), null);
+                hduList[i] = makeEmptyImageHDU(cloneHeaderFrom(hdu.getHeader()));
                 //set the header pointer to the BITPIX location to add the new key. Without calling this line, the pointer is point
                 //to the end of the Header, the SPOT_PL is added after the "END" key, which leads the image loading failure.
                 hduList[i].getHeader().getIntValue("BITPIX", -1);
@@ -204,7 +199,7 @@ public class FitsReadUtil {
 
     }
 
-    private static BasicHDU<?>[] splitFitsCube(BasicHDU<?> inHdu, boolean onlyFirstCubeHdu) throws FitsException {
+    private static BasicHDU<?>[] splitFitsCube(BasicHDU<?> inHdu, boolean onlyFirstCubeHdu) {
         int naxis = inHdu.getHeader().getIntValue("NAXIS", -1);
 
         switch (naxis) {
@@ -270,8 +265,8 @@ public class FitsReadUtil {
 
         Header header = imageHDU.getHeader();
         double cdelt2 = header.getDoubleValue("CDELT2");
-        int naxis1 = header.getIntValue("NAXIS1");
-        int naxis2 = header.getIntValue("NAXIS2");
+        int naxis1 = getNaxis1(header);
+        int naxis2 = getNaxis2(header);
 
         try {
             if (imageDataObj.getTiler() != null) {
@@ -342,11 +337,18 @@ public class FitsReadUtil {
         return header.getOriginalSize() > 0 ? header.getOriginalSize() : header.getSize();
     }
 
-    public static ImageHDU makeImageHDU(Header newHeader, nom.tam.fits.ImageData imageData) {
-        return new ImageHDU(newHeader,  imageData );
+
+    public static ImageHDU makeImageHDU(Header newHeader, ImageData imageData) {
+        var hdu= (ImageHDU) Fits.makeHDU(imageData);
+        hdu.getHeader().updateLines(newHeader);
+        return hdu;
     }
 
-    public static void writeFitsFile(File outfile, FitsRead[] fitsReadAry, Fits refFits) throws FitsException, IOException {
+    public static ImageHDU makeEmptyImageHDU(Header newHeader) {
+        return new ImageHDU(newHeader,  null);
+    }
+
+    public static void writeFitsFile(File outfile, FitsRead[] fitsReadAry, Fits refFits) throws IOException {
         Fits outputFits = new Fits();
         for (FitsRead fr : fitsReadAry) {
             BasicHDU<?> refHdu = refFits.getHDU(0);
@@ -355,15 +357,6 @@ public class FitsReadUtil {
         }
         outputFits.write(outfile);
     }
-
-    /**
-     * Read the fits objs and return an array of HDUs.
-     * As of the last fits update this function is not really necessary since we no longer
-     * have to deal with the PaddingException issue. However, since it is used in about
-     * 8 difference places we should keep it around.
-     * @param fits the fits object to read
-     */
-    public static BasicHDU<?>[] readHDUs(Fits fits) throws FitsException { return fits.read(); }
 
     public static int getBitPix(Header h) {return h.getIntValue("BITPIX"); }
     public static int getNaxis(Header h) { return h.getIntValue("NAXIS", 0); }
@@ -464,7 +457,7 @@ public class FitsReadUtil {
 
     public static Class<?> getDataType(Bitpix bp){ return bp.getNumberType(); }
 
-    public static Class<?> getDataType(BasicHDU<?> hdu) throws FitsException { return hdu.getBitpix().getNumberType(); }
+    public static Class<?> getDataType(BasicHDU<?> hdu) { return hdu.getBitpix().getNumberType(); }
 
 
 }

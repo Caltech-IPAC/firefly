@@ -86,9 +86,9 @@ public class FitsRead implements Serializable, HasSizeOf {
 
     }
 
-    public static ImageHDU makeImageHDU(BasicHDU<?> hdu) throws FitsException {
-        if (hdu instanceof ImageHDU) return (ImageHDU)hdu;
-        else if (hdu instanceof CompressedImageHDU) return ((CompressedImageHDU) hdu).asImageHDU();
+    private static ImageHDU makeImageHDU(BasicHDU<?> hdu) throws FitsException {
+        if (hdu instanceof ImageHDU iHdu) return iHdu;
+        if (hdu instanceof CompressedImageHDU cHdu) return cHdu.asImageHDU();
         throw new FitsException("imageHdu much be a ImageHDU or a CompressedImageHDU");
     }
 
@@ -122,12 +122,12 @@ public class FitsRead implements Serializable, HasSizeOf {
         if (float1d!=null) return float1d;
         if (!deferredRead) throw new IllegalArgumentException("FitsRead not setup for deferred reading");
         try (Fits fits = new Fits(this.file)) {
-            BasicHDU<?> hdu= FitsReadUtil.readHDUs(fits)[this.hduNumber];
+            BasicHDU<?> hdu= fits.read()[this.hduNumber];
             if (!(hdu instanceof ImageHDU)) return null;
             float1d= (float [])dataArrayFromFitsFile((ImageHDU)hdu, 0,0,getNaxis1(),getNaxis2(), planeNumber,Float.TYPE);
             return float1d;
         }
-        catch (FitsException|IOException|ArrayIndexOutOfBoundsException e) {
+        catch (Exception e) {
             Logger.getLogger("FitsRead").error(e,"Could not ready cube FITS plane");
             return null;
         }
@@ -308,13 +308,13 @@ public class FitsRead implements Serializable, HasSizeOf {
         return retSize;
     }
 
-    public void writeSimpleFitsFile(File f) throws FitsException, IOException{
+    public void writeSimpleFitsFile(File f) throws IOException{
         createNewFits().write(f);
     }
 
     public void clearHDU() { this.hdu= null; }
 
-    public Fits createNewFits() throws FitsException, IOException {
+    public Fits createNewFits() throws IOException {
         if (hdu==null) {
             throw new IOException("HDU has been clear, this FitsRead no longer supports re-writing the FITS file");
         }
