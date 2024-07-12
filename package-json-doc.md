@@ -108,6 +108,7 @@ JSDoc packages:
 - jsdoc-jsx
 - ink-docstrap
 - publish-release
+- taffydb  - JSDoc claims not to need this for 4.0 but I think ink-docstrap needs it
 
 #### `ESLint`
 ESLint is completely up to date. We should always keep this up-to-date
