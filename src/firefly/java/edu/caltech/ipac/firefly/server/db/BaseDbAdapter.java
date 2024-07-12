@@ -101,7 +101,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
      */
     public DataGroup getHeaders(String forTable, String ...inclCols) throws DataAccessException {
         String cols = inclCols.length == 0 ? "*" : StringUtils.toString(inclCols, ", ");
-        DataGroup table = execQuery(String.format("Select %s from %s limit 1", cols, forTable), forTable);
+        DataGroup table = execQuery("Select %s from %s limit 1".formatted(cols, forTable), forTable);
         table.clearData();     // remove the one row fetch earlier because some database returns the whole table when limit is 0;
         return table;
     }
@@ -113,7 +113,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
      * @return the correctly ordered column names of the given table
      */
     public List<String> getColumnNames(String forTable, String enclosedBy) {
-        String sql = String.format("SELECT * from %s_DD order by order_index", forTable);
+        String sql = "SELECT * from %s_DD order by order_index".formatted(forTable);
         return getJdbc().query(sql, (rs, i) -> (enclosedBy == null) ? rs.getString(1) : enclosedBy + rs.getString(1) + enclosedBy);
     }
 
@@ -124,7 +124,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
      * @return  all the columns names of a forTable
      */
     List<String> getColumnNamesFromSys(String forTable, String enclosedBy) {
-        String sql = String.format("SELECT column_name FROM INFORMATION_SCHEMA.SYSTEM_COLUMNS where table_name = '%s'", forTable.toUpperCase());
+        String sql = "SELECT column_name FROM INFORMATION_SCHEMA.SYSTEM_COLUMNS where table_name = '%s'".formatted(forTable.toUpperCase());
         return getJdbc().query(sql, (rs, i) -> (enclosedBy == null) ? rs.getString(1) : enclosedBy + rs.getString(1) + enclosedBy);
     }
 
@@ -146,7 +146,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public FileInfo ingestData(DataGroupSupplier dataGroupSupplier, String forTable) throws DataAccessException {
-        StopWatch.getInstance().start(String.format("%s:ingestData for %s", getName(), forTable));
+        StopWatch.getInstance().start("%s:ingestData for %s".formatted(getName(), forTable));
 
         StopWatch.getInstance().start("  ingestData: getDataGroup");
         var dg = dataGroupSupplier.get();
@@ -168,12 +168,12 @@ abstract public class BaseDbAdapter implements DbAdapter {
         FileInfo finfo = new FileInfo(getDbFile());
         StopWatch.getInstance().printLog("  ingestData: load data for " + forTable);
 
-        StopWatch.getInstance().printLog(String.format("%s:ingestData for %s", getName(), forTable));
+        StopWatch.getInstance().printLog("%s:ingestData for %s".formatted(getName(), forTable));
         return finfo;
     }
 
     public void createTempResults(TableServerRequest treq, String resultSetID) {
-        StopWatch.getInstance().start(String.format("%s:createTempResults for %s", getName(), resultSetID));
+        StopWatch.getInstance().start("%s:createTempResults for %s".formatted(getName(), resultSetID));
         try {
             List<String> cols = isEmpty(treq.getInclColumns()) ? getColumnNames(getDataTable(), "\"")
                     : StringUtils.asList(treq.getInclColumns(), ",");
@@ -184,14 +184,14 @@ abstract public class BaseDbAdapter implements DbAdapter {
             String orderBy = orderByPart(treq);
 
             // copy data
-            String datasetSql = String.format("select %s FROM %s %s %s", selectPart, getDataTable(), wherePart, orderBy);
-            String datasetSqlWithIdx = String.format("select b.*, (%s -1) as %s from (%s) as b", rowNumSql(), DataGroup.ROW_NUM, datasetSql);
+            String datasetSql = "select %s FROM %s %s %s".formatted(selectPart, getDataTable(), wherePart, orderBy);
+            String datasetSqlWithIdx = "select b.*, (%s -1) as %s from (%s) as b".formatted(rowNumSql(), DataGroup.ROW_NUM, datasetSql);
             String sql = createTableFromSelect(resultSetID, datasetSqlWithIdx);
             execUpdate(sql);
 
             // copy dd
             List<String> cnames = getColumnNamesFromSys(resultSetID, "'");
-            String ddSql = "select * from DATA_DD" + (cnames.size() > 0 ? String.format(" where cname in (%s)", StringUtils.toString(cnames)) : "");
+            String ddSql = "select * from DATA_DD" + (cnames.size() > 0 ? " where cname in (%s)".formatted(StringUtils.toString(cnames)) : "");
             ddSql = createTableFromSelect(resultSetID + "_DD", ddSql);
             execUpdate(ddSql);
 
@@ -215,7 +215,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
                     "dbFile: " + getDbFile().getAbsolutePath());
             throw e;
         } finally {
-            StopWatch.getInstance().printLog(String.format("%s:createTempResults for ", getName(), resultSetID));
+            StopWatch.getInstance().printLog("%s:createTempResults for ".formatted(getName(), resultSetID));
         }
     }
 
@@ -239,13 +239,13 @@ abstract public class BaseDbAdapter implements DbAdapter {
             }
         }
 
-        String sql = String.format("%s FROM %s %s %s %s", selectPart, forTable, wherePart, orderByPart, pagingPart);
+        String sql = "%s FROM %s %s %s %s".formatted(selectPart, forTable, wherePart, orderByPart, pagingPart);
         DataGroup data = execQuery(sql, forTable);
 
         int rowCnt = data.size();
         if (!isEmpty(pagingPart)) {
-            // fetch total row count for the query.. datagroup may contain partial results(paging)
-            String cntSql = String.format("select count(*) FROM %s %s", forTable, wherePart);
+            // fetch total row count for the query; datagroup may contain partial results(paging)
+            String cntSql = "select count(*) FROM %s %s".formatted(forTable, wherePart);
             rowCnt = getJdbc().queryForInt(cntSql);
         }
 
@@ -267,7 +267,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
      */
     public DataGroup execQuery(String sql, String refTable) throws DataAccessException {
 
-        StopWatch.getInstance().start(String.format("%s:execQuery: %s", getName(), refTable));
+        StopWatch.getInstance().start("%s:execQuery: %s".formatted(getName(), refTable));
 
         DbInstance dbInstance = getDbInstance();
         SimpleJdbcTemplate jdbc = getJdbc();
@@ -286,7 +286,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             applyIfNotEmpty(dg.getDataDefintion(ROW_IDX), dt -> dt.setVisibility(DataType.Visibility.hidden));
             applyIfNotEmpty(dg.getDataDefintion(ROW_NUM), dt -> dt.setVisibility(DataType.Visibility.hidden));
 
-            StopWatch.getInstance().printLog(String.format("%s:execQuery: %s", getName(), refTable));
+            StopWatch.getInstance().printLog("%s:execQuery: %s".formatted(getName(), refTable));
 
             return dg;
         } catch (Exception e) {
@@ -347,7 +347,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
         try {
             // add column to main table
-            var sql = String.format("ALTER TABLE %s ADD COLUMN \"%s\" %s", getDataTable(), col.getKeyName(), toDbDataType(col));
+            var sql = "ALTER TABLE %s ADD COLUMN \"%s\" %s".formatted(getDataTable(), col.getKeyName(), toDbDataType(col));
             execUpdate(sql);
         } catch (Exception e) {
             // DDL statement are transactionally isolated, therefore need to manually rollback if this succeeds but the next few statements failed.
@@ -370,7 +370,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             EmbeddedDbUtil.enumeratedValuesCheck(this, new DataType[]{col});        // if successful, check for enum values of this new column
         } catch (Exception e) {
             // manually remove the added column
-            var sql = String.format("ALTER TABLE %s DROP COLUMN \"%s\"", getDataTable(), col.getKeyName());
+            var sql = "ALTER TABLE %s DROP COLUMN \"%s\"".formatted(getDataTable(), col.getKeyName());
             execUpdate(sql);
             throw handleSqlExp("Add column failed", e);
         }
@@ -392,14 +392,14 @@ abstract public class BaseDbAdapter implements DbAdapter {
             }
 
             // change column type if different
-            String oldType = String.valueOf(jdbc.queryForObject(String.format("SELECT type from DATA_DD where cname='%s'", newCol.getKeyName()), String.class));
+            String oldType = String.valueOf(jdbc.queryForObject("SELECT type from DATA_DD where cname='%s'".formatted(newCol.getKeyName()), String.class));
             if (!oldType.equals(newCol.getTypeDesc())) {
                 // race condition; cannot change double values into boolean even when they are NULLs
                 // instead, we will add tmp column, populate values, drop original column, then rename tmp column back to original cname
                 swapCname = newCol.getKeyName();
                 newCol.setKeyName(newCol.getKeyName() + "_tmp");
-                var sql = String.format("ALTER TABLE %s ADD COLUMN \"%s\" %s", getDataTable(), newCol.getKeyName(), toDbDataType(newCol));
-                execUpdate(String.format("UPDATE %s_DD SET cname='%s' WHERE cname='%s'", getDataTable(), newCol.getKeyName(), swapCname));
+                var sql = "ALTER TABLE %s ADD COLUMN \"%s\" %s".formatted(getDataTable(), newCol.getKeyName(), toDbDataType(newCol));
+                execUpdate("UPDATE %s_DD SET cname='%s' WHERE cname='%s'".formatted(getDataTable(), newCol.getKeyName(), swapCname));
                 execUpdate(sql);
             }
         } catch (Exception e) {
@@ -424,13 +424,13 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
             // if swapName is used; rename column back to swapName
             if (swapCname != null) {
-                execUpdate(String.format("ALTER TABLE %s DROP COLUMN \"%s\"", getDataTable(), swapCname));
+                execUpdate("ALTER TABLE %s DROP COLUMN \"%s\"".formatted(getDataTable(), swapCname));
                 renameColumn(newCol.getKeyName(), swapCname);
             }
 
         } catch (Exception e) {
             if (swapCname != null) {
-                execUpdate(String.format("ALTER TABLE %s DROP COLUMN \"%s\"", getDataTable(), newCol.getKeyName()));
+                execUpdate("ALTER TABLE %s DROP COLUMN \"%s\"".formatted(getDataTable(), newCol.getKeyName()));
             }
             // manually revert the name change
             if (!newCol.getKeyName().equals(editColName)) {
@@ -447,7 +447,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     public void deleteColumn(String cname) {
 
         // drop column from DATA table
-        execUpdate(String.format("ALTER TABLE %s DROP COLUMN \"%s\"", getDataTable(), cname));
+        execUpdate("ALTER TABLE %s DROP COLUMN \"%s\"".formatted(getDataTable(), cname));
 
         int atIndex = getColumnNames(getDataTable(), null).indexOf(cname);
         if (atIndex >= 0) {
@@ -491,12 +491,12 @@ abstract public class BaseDbAdapter implements DbAdapter {
      */
     private void shiftColsAt(JdbcTemplate jdbc, int atIndex, int shiftBy) {
         jdbc = jdbc == null ? JdbcFactory.getTemplate(getDbInstance()) : jdbc;
-        jdbc.update(String.format("UPDATE %s_DD SET order_index = order_index + (%d) WHERE order_index >= %d", getDataTable(), shiftBy, atIndex));
+        jdbc.update("UPDATE %s_DD SET order_index = order_index + (%d) WHERE order_index >= %d".formatted(getDataTable(), shiftBy, atIndex));
     }
 
     protected void renameColumn(String from, String to) {
-        execUpdate(String.format("ALTER TABLE %s ALTER COLUMN \"%s\" RENAME TO \"%s\"", getDataTable(), from, to));
-        execUpdate(String.format("UPDATE %s_DD SET cname='%s' WHERE cname='%s'", getDataTable(), to, from));
+        execUpdate("ALTER TABLE %s ALTER COLUMN \"%s\" RENAME TO \"%s\"".formatted(getDataTable(), from, to));
+        execUpdate("UPDATE %s_DD SET cname='%s' WHERE cname='%s'".formatted(getDataTable(), to, from));
     }
 
     protected boolean useIndexWhenUpdateColumnValue() { return true; }
@@ -507,32 +507,32 @@ abstract public class BaseDbAdapter implements DbAdapter {
     protected void populateColumnValues(JdbcTemplate jdbc, String forTable, DataType dtype, String expression, String preset, String resultSetID, SelectionInfo si) {
         // populate column with new values
         if (isEmpty(preset)) {
-            jdbc.update(String.format("UPDATE %s SET \"%s\" = %s", forTable, dtype.getKeyName(), expression));
+            jdbc.update("UPDATE %s SET \"%s\" = %s".formatted(forTable, dtype.getKeyName(), expression));
         } else {
             if (useIndexWhenUpdateColumnValue()) {
-                jdbc.update(String.format("CREATE INDEX  IF NOT EXISTS data_idx ON %s (row_idx)", forTable));
+                jdbc.update("CREATE INDEX  IF NOT EXISTS data_idx ON %s (row_idx)".formatted(forTable));
                 if (!resultSetID.equals(forTable)) {
-                    jdbc.update(String.format("CREATE INDEX  IF NOT EXISTS %s_idx ON %s (row_idx)", resultSetID, resultSetID));
+                    jdbc.update("CREATE INDEX  IF NOT EXISTS %s_idx ON %s (row_idx)".formatted(resultSetID, resultSetID));
                 }
             }
             if (preset.equals("filtered")) {
                 String sql = resultSetID.equals(forTable) ? "TRUE" : String.format("(SELECT 1 from %s as t WHERE t.ROW_IDX = d.ROW_IDX)", resultSetID);
-                jdbc.update(String.format("UPDATE %s as d SET \"%s\" = %s", forTable, dtype.getKeyName(), sql));
+                jdbc.update("UPDATE %s as d SET \"%s\" = %s".formatted(forTable, dtype.getKeyName(), sql));
             } else if (preset.equals("selected")) {
                 String sql = "FALSE";
                 if (si != null && si.getSelectedCount() > 0) {
                     if (resultSetID.equals(forTable)) {
-                        sql =  si.isSelectAll() ? "TRUE" : String.format("(ROW_IDX in (%s))", StringUtils.toString(si.getSelected()));
+                        sql =  si.isSelectAll() ? "TRUE" : "(ROW_IDX in (%s))".formatted(StringUtils.toString(si.getSelected()));
                     } else {
                         String rowNums = StringUtils.toString(si.getSelected());
                         List<Integer> rowIdxs = new SimpleJdbcTemplate(jdbc).query(String.format("Select ROW_IDX from %s where ROW_NUM in (%s)", resultSetID, rowNums), (resultSet, i) -> resultSet.getInt(1));
-                        sql = String.format("(ROW_IDX in (%s))", StringUtils.toString(rowIdxs));
+                        sql = "(ROW_IDX in (%s))".formatted(StringUtils.toString(rowIdxs));
                     }
                 }
-                jdbc.update(String.format("UPDATE %s SET \"%s\" = %s", forTable, dtype.getKeyName(), sql));
+                jdbc.update("UPDATE %s SET \"%s\" = %s".formatted(forTable, dtype.getKeyName(), sql));
             } else if (preset.equals("ROW_NUM")) {
-                String sql = resultSetID.equals(forTable) ? "(ROW_NUM + 1)" : String.format("(SELECT t.ROW_NUM+1 from %s as t WHERE t.ROW_IDX = d.ROW_IDX)", resultSetID);
-                jdbc.update(String.format("UPDATE %s as d SET \"%s\" = %s", forTable, dtype.getKeyName(), sql));
+                String sql = resultSetID.equals(forTable) ? "(ROW_NUM + 1)" : "(SELECT t.ROW_NUM+1 from %s as t WHERE t.ROW_IDX = d.ROW_IDX)".formatted(resultSetID);
+                jdbc.update("UPDATE %s as d SET \"%s\" = %s".formatted(forTable, dtype.getKeyName(), sql));
             }
         }
     }
@@ -572,7 +572,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
     public void clearCachedData() {
         EmbeddedDbInstance db = (EmbeddedDbInstance) getDbInstance();
-        LOGGER.debug(String.format("DbAdapter -> compacting DB: %s", getDbFile().getPath()));
+        LOGGER.debug("DbAdapter -> compacting DB: %s".formatted(getDbFile().getPath()));
         List<String> tables = getTempTables();
         if (tables.size() > 0) {
             // remove all temporary tables
@@ -588,7 +588,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public void close(boolean deleteFile) {
-        LOGGER.debug(String.format("%s -> closing DB, delete(%s): %s", getName(), deleteFile, getDbFile().getPath()));
+        LOGGER.debug("%s -> closing DB, delete(%s): %s".formatted(getName(), deleteFile, getDbFile().getPath()));
         EmbeddedDbInstance db = getDbInstances().get(getDbFile().getPath());
         if (db != null) {
             try {
@@ -652,7 +652,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
     void createUDFs() {}
 
     String createTableFromSelect(String tblName, String selectSql) {
-        return String.format("CREATE TABLE IF NOT EXISTS %s AS (%s)", tblName, selectSql);
+        return "CREATE TABLE IF NOT EXISTS %s AS (%s)".formatted(tblName, selectSql);
     }
 
     int createDataTbl(DataGroup dg, String tblName) throws DataAccessException {
@@ -695,10 +695,10 @@ abstract public class BaseDbAdapter implements DbAdapter {
         tblName = isEmpty(tblName) ? getDataTable() : tblName;
         List<String> coldefs = new ArrayList<>();
         for(DataType dt : dtTypes) {
-            coldefs.add( String.format("\"%s\" %s", dt.getKeyName(), toDbDataType(dt)));       // add quotes to avoid reserved words clashes
+            coldefs.add("\"%s\" %s".formatted(dt.getKeyName(), toDbDataType(dt)));       // add quotes to avoid reserved words clashes
         }
 
-        return String.format("create table %s (%s)", tblName, StringUtils.toString(coldefs, ","));
+        return "create table %s (%s)".formatted(tblName, StringUtils.toString(coldefs, ","));
     }
 
     String insertDataSql(DataType[] dtTypes, String tblName) {
@@ -706,7 +706,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
         String[] var = new String[dtTypes.length];
         Arrays.fill(var , "?");
-        return String.format("insert into %s values(%s)", tblName, StringUtils.toString(var, ","));
+        return "insert into %s values(%s)".formatted(tblName, StringUtils.toString(var, ","));
     }
 
     protected Object[] getDdFrom(DataType dt, int colIdx) {
@@ -809,7 +809,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
                             }
                             String[] parts = StringUtils.groupMatch("(.+) IN (.+)", eCond, Pattern.CASE_INSENSITIVE);
                             if (parts != null && eCond.contains(NULL_TOKEN)) {
-                                eCond = String.format("%s OR %s IS NULL", eCond.replace(NULL_TOKEN, NULL_TOKEN.substring(1)), parts[0]);
+                                eCond = "%s OR %s IS NULL".formatted(eCond.replace(NULL_TOKEN, NULL_TOKEN.substring(1)), parts[0]);
                             }
                             return eCond;
                         }).collect(Collectors.joining(""));
@@ -825,9 +825,9 @@ abstract public class BaseDbAdapter implements DbAdapter {
         String[] opSql = parseSqlFilter(treq.getSqlFilter());
         if (!isEmpty(opSql[1])) {
             if (where.length() > 0) {
-                where += String.format(" %s (%s)", opSql[0], opSql[1]);
+                where += " %s (%s)".formatted(opSql[0], opSql[1]);
             } else {
-                where = String.format("where %s", opSql[1]);
+                where = "where %s".formatted(opSql[1]);
             }
         }
 
@@ -852,7 +852,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
     String pagingPart(TableServerRequest treq) {
         if (treq.getPageSize() < 0 || treq.getPageSize() == Integer.MAX_VALUE) return "";
-        String page = String.format("limit %d offset %d", treq.getPageSize(), treq.getStartIndex());
+        String page = "limit %d offset %d".formatted(treq.getPageSize(), treq.getStartIndex());
         return page;
     }
 
@@ -1008,19 +1008,19 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 if (parts[1].equals("PUBLIC.DATA")) {
                     return new DataAccessException(msg, new SQLDataException("TABLE out-of-sync; Reload table to resume"));
                 } else {
-                    return new DataAccessException(msg, new SQLException(String.format("[%s] not found; SQL=[%s]", parts[1], parts[0])));
+                    return new DataAccessException(msg, new SQLException("[%s] not found; SQL=[%s]".formatted(parts[1], parts[0])));
                 }
             }
             //org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [invalid sql]; nested exception is java.sql.SQLSyntaxErrorException: unexpected token: INVALID
             parts = groupMatch(".*\\[(.+)\\].* unexpected token: (.+)", cause);
             if (parts != null && parts.length == 2) {
-                return new DataAccessException(msg, new SQLException(String.format("Unexpected token [%s]; SQL=[%s]", parts[1], parts[0])));
+                return new DataAccessException(msg, new SQLException("Unexpected token [%s]; SQL=[%s]".formatted(parts[1], parts[0])));
             }
         }
         if (e instanceof DataIntegrityViolationException) {
             String[] parts = groupMatch(".*\\[(.+)\\].*", cause);
             if (parts != null && parts.length == 1) {
-                return new DataAccessException(msg, new SQLException(String.format("Type mismatch; SQL=[%s]", parts[0])));
+                return new DataAccessException(msg, new SQLException("Type mismatch; SQL=[%s]".formatted(parts[0])));
             }
         }
         if (e instanceof DataAccessException dax) {

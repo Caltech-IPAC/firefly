@@ -37,7 +37,7 @@ public class SqliteDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapte
     protected static List<String> supportFileExtensions() { return SUPPORTS; }
 
     protected EmbeddedDbInstance createDbInstance() {
-        String dbUrl = String.format("jdbc:sqlite:%s", getDbFile().getPath());
+        String dbUrl = "jdbc:sqlite:%s".formatted(getDbFile().getPath());
         return new EmbeddedDbInstance(getName(), this, dbUrl, "org.sqlite.JDBC");
     }
 

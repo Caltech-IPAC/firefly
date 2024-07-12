@@ -37,12 +37,12 @@ public class H2DbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterCre
     protected static List<String> supportFileExtensions() { return SUPPORTS; }
 
     protected EmbeddedDbInstance createDbInstance() {
-        String dbUrl = String.format("jdbc:h2:%s;CACHE_SIZE=1048576;LOG=0;UNDO_LOG=0;MVCC=true", getDbFile().getPath());
+        String dbUrl = "jdbc:h2:%s;CACHE_SIZE=1048576;LOG=0;UNDO_LOG=0;MVCC=true".formatted(getDbFile().getPath());
         return new EmbeddedDbInstance(getName(), this, dbUrl, "org.h2.Driver");
     }
 
     public String createTableFromSelect(String tblName, String selectSql) {
-        return String.format("CREATE TABLE %s AS (%s)", tblName, selectSql);
+        return "CREATE TABLE %s AS (%s)".formatted(tblName, selectSql);
     }
 
 }

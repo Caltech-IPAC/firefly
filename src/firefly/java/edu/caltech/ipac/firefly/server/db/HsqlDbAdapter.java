@@ -57,14 +57,14 @@ public class HsqlDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
     protected static List<String> supportFileExtensions() { return SUPPORTS; }
 
     protected EmbeddedDbInstance createDbInstance() {
-        String dbUrl = String.format("jdbc:hsqldb:file:%s;hsqldb.log_data=false;sql.syntax_ora=true;sql.ignore_case=true;sql.double_nan=false", getDbFile().getPath());
+        String dbUrl = "jdbc:hsqldb:file:%s;hsqldb.log_data=false;sql.syntax_ora=true;sql.ignore_case=true;sql.double_nan=false".formatted(getDbFile().getPath());
         EmbeddedDbInstance dbInst = new EmbeddedDbInstance(getName(), this, dbUrl, DRIVER);
-        dbInst.consumeProps(String.format("%s=%s", DbInstance.USE_REAL_AS_DOUBLE, true));
+        dbInst.consumeProps("%s=%s".formatted(DbInstance.USE_REAL_AS_DOUBLE, true));
         return dbInst;
     }
 
     public String createTableFromSelect(String tblName, String selectSql) {
-        return String.format("CREATE TABLE %s AS (%s) WITH DATA", tblName, selectSql);
+        return "CREATE TABLE %s AS (%s) WITH DATA".formatted(tblName, selectSql);
     }
 
     protected void shutdown(EmbeddedDbInstance db) {

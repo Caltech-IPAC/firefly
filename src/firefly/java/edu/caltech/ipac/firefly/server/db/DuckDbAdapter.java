@@ -86,13 +86,13 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
 
     @Override
     List<String> getColumnNamesFromSys(String forTable, String enclosedBy) {
-        String sql = String.format("select column_name from duckdb_columns() where table_name = '%s'", forTable.toUpperCase());
+        String sql = "select column_name from duckdb_columns() where table_name = '%s'".formatted(forTable.toUpperCase());
         return JdbcFactory.getSimpleTemplate(getDbInstance()).query(sql, (rs, i) -> (enclosedBy == null) ? rs.getString(1) : enclosedBy + rs.getString(1) + enclosedBy);
     }
 
     protected void renameColumn(String from, String to) {
-        execUpdate(String.format("ALTER TABLE %s RENAME COLUMN \"%s\" TO \"%s\"", getDataTable(), from, to));
-        execUpdate(String.format("UPDATE %s_DD SET cname='%s' WHERE cname='%s'", getDataTable(), to, from));
+        execUpdate("ALTER TABLE %s RENAME COLUMN \"%s\" TO \"%s\"".formatted(getDataTable(), from, to));
+        execUpdate("UPDATE %s_DD SET cname='%s' WHERE cname='%s'".formatted(getDataTable(), to, from));
     }
 
     protected boolean useIndexWhenUpdateColumnValue() { return false; }

@@ -137,22 +137,22 @@ public class EmbeddedDbUtil {
                 DataType dt = dg.getDataDefinitions()[i];
                 int idx = i + 1;
                 Object val = isAryType.get(i) ? deserialize(rs, idx) : rs.getObject(idx);
-                if (dt.getDataType() == Float.class && val instanceof Double cv) {
-                    // this is needed because hsql stores float as double.
-                    val = cv.floatValue();
-                } else if (dt.getDataType() == Double.class && val instanceof BigDecimal cv) {
-                    // When expression involved big number like, long(bigint), BigDecimal is returned. Need to convert that back to double
-                    val = cv.doubleValue();
-                } else if (dt.getDataType() == Short.class && val instanceof Integer cv) {
-                    val = cv.shortValue();
-                } else if (dt.getDataType() == Integer.class && val instanceof Long cv) {
-                    val = cv.intValue();
-                }
+
+                // Database may store data in larger data types. Convert it back to the appropriate type when necessary.
+                val = switch (dt.getDataType().getSimpleName()) {
+                    case "Float"    -> (val instanceof Double cv) ? cv.floatValue() : val;
+                    case "Double"   -> (val instanceof BigDecimal cv) ? cv.doubleValue() : val;
+                    case "Short"    -> (val instanceof Integer cv) ? cv.shortValue() : val;
+                    case "Integer"  -> (val instanceof Long cv) ? cv.intValue() : val;
+                    case "Byte"     -> (val instanceof Short cv) ? cv.byteValue() : val;
+                    default -> val;
+                };
+
                 row.setDataElement(dt, val);
             }
             dg.add(row);
         } while (rs.next()) ;
-        logger.trace(String.format("converting a %,d rows ResultSet into a DataGroup", dg.size()));
+        logger.trace("converting a %,d rows ResultSet into a DataGroup".formatted(dg.size()));
         return dg;
     }
 
@@ -193,7 +193,7 @@ public class EmbeddedDbUtil {
             }
         }
 
-        String sql = String.format("select %s from %s where %s in (%s)", selCols, tblName, DataGroup.ROW_NUM, inRows);
+        String sql = "select %s from %s where %s in (%s)".formatted(selCols, tblName, DataGroup.ROW_NUM, inRows);
         return dbAdapter.execQuery(sql ,tblName);
     }
 
@@ -250,7 +250,7 @@ public class EmbeddedDbUtil {
     static String getFieldDesc(DataType dtype, String expression, String preset) {
         String desc = isEmpty(dtype.getDesc()) ? "" : dtype.getDesc();
         String derivedFrom = isEmpty(preset) ? expression : "preset:" + preset;
-        return String.format("(%s=%s) ", DERIVED_FROM, derivedFrom) + desc;     // prepend DERIVED_FROM value into the description.  This is how we determine if a column is derived.
+        return "(%s=%s) %s".formatted(DERIVED_FROM, derivedFrom, desc);     // prepend DERIVED_FROM value into the description.  This is how we determine if a column is derived.
     }
 
     public static void deleteColumn(DbAdapter dbAdapter, String cname) {
@@ -283,18 +283,18 @@ public class EmbeddedDbUtil {
         try {
             String cols = Arrays.stream(inclCols)
                     .filter(dt -> maybeEnums(dt))
-                    .map(dt -> String.format("count(distinct \"%s\") as \"%s\"", dt.getKeyName(), dt.getKeyName()))
+                    .map(dt -> "count(distinct \"%s\") as \"%s\"".formatted(dt.getKeyName(), dt.getKeyName()))
                     .collect(Collectors.joining(", "));
 
             List<Map<String, Object>> rs = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance())
-                    .queryForList(String.format("SELECT %s FROM %s limit 500", cols, dbAdapter.getDataTable()));
+                    .queryForList("SELECT %s FROM %s limit 500".formatted(cols, dbAdapter.getDataTable()));
 
             List<Object[]> params = new ArrayList<>();
             rs.get(0).forEach( (cname,v) -> {
                 Long count = (Long) v ;
                 if (count > 0 && count <= MAX_COL_ENUM_COUNT) {
                     List<Map<String, Object>> vals = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance())
-                            .queryForList(String.format("SELECT distinct \"%s\" FROM data order by 1", cname));
+                            .queryForList("SELECT distinct \"%s\" FROM data order by 1".formatted(cname));
 
                     DataType col = findColByName(inclCols, cname);
                     if (col != null && vals.size() <= MAX_COL_ENUM_COUNT) {

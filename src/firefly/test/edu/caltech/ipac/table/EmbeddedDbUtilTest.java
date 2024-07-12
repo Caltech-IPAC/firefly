@@ -5,6 +5,7 @@ package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
@@ -27,6 +28,7 @@ import org.junit.experimental.categories.Category;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.getAdapter;
@@ -87,23 +89,24 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 
 		// test rollback conditions
 
-		// bad expression:  dec + 3 is a bad expression since DEC is not a column; dec without quotes is treated as uppercase
+		// bad expression:  decx + 3 is a bad expression since decx is not a column
 		nCol.setKeyName("NEW_COL_2");
 		try {
-			EmbeddedDbUtil.addColumn(dbAdapter, nCol, "dec + 3");
+			EmbeddedDbUtil.addColumn(dbAdapter, nCol, "decx + 3");
 		} catch (Exception ignored){}
 		res = dbAdapter.execQuery(String.format("select * from %s", dbAdapter.getDataTable()), dbAdapter.getDataTable());
 		Assert.assertEquals("same number of columns as before", 10, res.getDataDefinitions().length);
 		Assert.assertNull("new column not added", res.getDataDefintion("NEW_COL_2"));
 
-		// bad column name:  exceeded 128 characters
-		nCol.setKeyName("c12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890");
-		try {
-			EmbeddedDbUtil.addColumn(dbAdapter, nCol , "\"dec\" + 3");
-		} catch (Exception ignored){}
-		res = dbAdapter.execQuery(String.format("select * from %s", dbAdapter.getDataTable()), dbAdapter.getDataTable());
-		Assert.assertEquals("same number of columns as before", 10, res.getDataDefinitions().length);
-
+		// bad column name:  exceeded 128 characters; this is a hsqldb limitation
+		if (DbAdapter.DEF_DB_TYPE.equals(HsqlDbAdapter.NAME)) {
+			nCol.setKeyName("c".repeat(130));
+			try {
+				EmbeddedDbUtil.addColumn(dbAdapter, nCol , "\"dec\" + 3");
+			} catch (Exception ignored){}
+			res = dbAdapter.execQuery(String.format("select * from %s", dbAdapter.getDataTable()), dbAdapter.getDataTable());
+			Assert.assertEquals("same number of columns as before", 10, res.getDataDefinitions().length);
+		}
 	}
 
 
@@ -198,7 +201,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		// test meta
 		Assert.assertEquals("ORIGIN value", data.getAttribute("ORIGIN"));
 		Assert.assertEquals("SQL value", data.getAttribute("SQL"));
-		Assert.assertEquals("repeated key will get overriden", data.getTableMeta().getKeywords().get(5).getValue());  // but, it's still in keywords
+		Assert.assertEquals("repeated key will get overriden", data.getTableMeta().getKeywords().get(4).getValue());  // but, it's still in keywords
 
 		// test column meta
 		DataType dt = data.getDataDefintion("dec");

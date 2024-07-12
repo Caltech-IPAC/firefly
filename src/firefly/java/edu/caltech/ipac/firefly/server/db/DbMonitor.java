@@ -121,7 +121,7 @@ class DbMonitor {
             List<DbAdapter.EmbeddedDbInstance> toBeRemove = dbInstances.values().stream()
                     .filter((db) -> db.hasExpired() || force).collect(Collectors.toList());
             if (toBeRemove.size() > 0) {
-                LOGGER.info(String.format("There are currently %d databases open.  Of which, %d will be closed.", dbInstances.size(), toBeRemove.size()));
+                LOGGER.info("There are currently %d databases open.  Of which, %d will be closed.".formatted(dbInstances.size(), toBeRemove.size()));
                 toBeRemove.forEach((db) -> DbAdapter.getAdapter(db.getDbFile()).close(deleteFile));
             }
 
