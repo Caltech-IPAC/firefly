@@ -28,8 +28,8 @@ import static org.apache.commons.lang.StringUtils.stripEnd;
  * VOTable         FITS  Bytes   Meaning              IPACTable   Firefly   NOTES
  * --------        ----  -----   -------              ---------   -------   -----------
  * boolean         L     1       Logical              char        boolean
- * bit             X     *       Bit                  int         byte
- * unsignedByte    B     1       Byte (0 to 255)      int         byte
+ * bit             X     *       Bit                  int         boolean
+ * unsignedByte    B     1       Byte (0 to 255)      int         short
  * short           I     2       Short Integer        int         short
  * int             J     4       Integer              int         int
  * long            K     8       Long integer         long        long
@@ -623,23 +623,15 @@ public class DataType implements Serializable, Cloneable {
 
     public static Class<?> descToType(String desc, Class<?> defaultVal) {
         return switch (desc.toLowerCase()) {
-            case DOUBLE,
-                 COMPLEX_DOUBLE,
-                 REAL -> Double.class;
-            case FLOAT,
-                 COMPLEX_FLOAT -> Float.class;
-            case LONG,
-                 BIGINT -> Long.class;
-            case INTEGER -> Integer.class;
-            case SHORT -> Short.class;
-            case BOOLEAN -> Boolean.class;
-            case BIT,
-                 BYTE,
-                 UNSIGNED_BYTE -> Byte.class;
-            case DATE -> Date.class;
-            case UNI_CHAR,
-                 LOCATION,
-                 CHAR -> String.class;
+            case DOUBLE, COMPLEX_DOUBLE, REAL -> Double.class;
+            case FLOAT, COMPLEX_FLOAT   -> Float.class;
+            case LONG, BIGINT           -> Long.class;
+            case INTEGER                -> Integer.class;
+            case SHORT, UNSIGNED_BYTE   -> Short.class;
+            case BOOLEAN, BIT           -> Boolean.class;
+            case BYTE                   -> Byte.class;
+            case DATE                   -> Date.class;
+            case UNI_CHAR, LOCATION, CHAR -> String.class;
             default -> defaultVal;
         };
     }

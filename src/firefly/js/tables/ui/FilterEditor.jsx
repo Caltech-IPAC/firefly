@@ -14,7 +14,7 @@ import {BasicTableViewWithConnector} from './BasicTableView.jsx';
 import {SelectInfo} from '../SelectInfo.js';
 import {createInputCell} from './TableRenderer.js';
 import {FILTER_CONDITION_TTIPS, FILTER_TTIPS, FilterInfo, getFiltersAsSql} from '../FilterInfo.js';
-import {sortTableData, calcColumnWidths, getTableUiByTblId, getTableUiById, getSqlFilter} from  '../TableUtil.js';
+import {sortTableData, calcColumnWidths, getTableUiByTblId, getTableUiById, getSqlFilter, DOC_FUNCTIONS_URL} from '../TableUtil.js';
 import {InputAreaField} from '../../ui/InputAreaField.jsx';
 import {toBoolean} from '../../util/WebUtil.js';
 import {NOT_CELL_DATA} from './TableRenderer.js';
@@ -343,7 +343,7 @@ const Usages = () => {
                 <code>{'  +, -, *, /, =, >, <, >=, <=, !=, LIKE, IN, IS NULL, IS NOT NULL'}</code> <br/><br/>
 
                 You may use functions as well.  A few of the common functions are listed below. <br/>
-                For a list of all available functions, click <Link href='http://hsqldb.org/doc/2.0/guide/builtinfunctions-chapt.html' target='_blank'>here</Link> <br/>
+                For a list of all available functions, click <Link href={DOC_FUNCTIONS_URL} target='_blank'>here</Link> <br/>
                 String functions: <br/>
                 <code>CONCAT(s1,s2[,...]]) INSTR(s,pattern[,offset]) LENGTH(s) SUBSTR(s,offset,length)</code> <br/>
                 Numeric functions: <br/>

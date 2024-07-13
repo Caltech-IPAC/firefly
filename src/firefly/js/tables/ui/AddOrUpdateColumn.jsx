@@ -12,7 +12,7 @@ import {SqlTableFilter} from './FilterEditor.jsx';
 import {addOrUpdateColumn, deleteColumn} from '../../rpc/SearchServicesJson.js';
 import {getGroupFields, validateFieldGroup, getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
-import {getAllColumns, getColumn, getColumns, getTableUiById, getTblById} from '../TableUtil.js';
+import {DOC_FUNCTIONS_URL, getAllColumns, getColumn, getColumns, getTableUiById, getTblById} from '../TableUtil.js';
 import {showPopup, showInfoPopup, showYesNoPopup} from '../../ui/PopupUtil.jsx';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
@@ -319,7 +319,7 @@ const Usages = () => {
                 <code>{'  +, -, *, /, =, >, <, >=, <=, !=, LIKE, IN, IS NULL, IS NOT NULL'}</code> <br/><br/>
 
                 You may use functions as well.  A few of the common functions are listed below. <br/>
-                For a list of all available functions, click <Link href='http://hsqldb.org/doc/2.0/guide/builtinfunctions-chapt.html' target='_blank'>here</Link> <br/>
+                For a list of all available functions, click <Link href={DOC_FUNCTIONS_URL} target='_blank'>here</Link> <br/>
                 String functions: <br/>
                 <code>CONCAT(s1,s2[,...]]) SUBSTR(s,offset,length)</code> <br/>
                 Numeric functions: <br/>
@@ -346,11 +346,11 @@ const Samples = () => {
 
 function parseError({cause}) {
     if (cause) {
-        const [type='Unknown', msg='Unexpected error'] = cause.split(':');
+        const [_, type='Unknown', msg=cause] = cause.match(/([^:]+):(.+)/) || [];
         return  (
             <Stack spacing={1}>
-                <Typography level='title-lg' color='danger'>{type}</Typography>
-                <Typography level='body-md'>{msg}</Typography>
+                <Typography level='title-lg' color='danger'>{type.trim()}</Typography>
+                <Typography level='body-md'>{msg.trim()}</Typography>
             </Stack>
         );
 

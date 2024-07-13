@@ -5,13 +5,11 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ResourceProcessor;
-import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
-import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -94,7 +92,7 @@ public interface DbAdapter {
     DbAdapter.DbStats getDbStats();
 
     default boolean hasTable(String tableName) {
-        if (getDbFile() == null || !getDbFile().exists()) return false;
+        if (isEmpty(tableName) || getDbFile() == null || !getDbFile().exists()) return false;
         return getTableNames().stream()
                 .anyMatch(s -> s.equalsIgnoreCase(tableName));
     }
@@ -190,6 +188,8 @@ public interface DbAdapter {
      * @param cname         column to delete
      */
     void deleteColumn(String cname);
+
+    DataAccessException handleSqlExp(String msg, Exception e);
 
 //====================================================================
 //  management functions

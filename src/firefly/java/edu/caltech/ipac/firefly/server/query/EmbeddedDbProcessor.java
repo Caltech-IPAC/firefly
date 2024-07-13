@@ -31,7 +31,6 @@ import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.core.background.JobInfo;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.core.NestedRuntimeException;
-import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.apache.commons.csv.CSVFormat;
 
@@ -40,6 +39,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -165,7 +165,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 // limit 0 does not work with oracle-like syntax
                 DataGroup dg = dbAdapter.getHeaders(dbAdapter.getDataTable());
                 results = EmbeddedDbUtil.toDataGroupPart(dg, treq);
-                String error = retrieveMsgFromError(e, treq);
+                String error = retrieveMsgFromError(e, treq, dbAdapter);
                 results.setErrorMsg(error);
                 jobExecIf(v -> v.setError(500, error));
             }
@@ -209,7 +209,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             if (e instanceof DataAccessException) {
                 throw e;
             } else {
-                throw new DataAccessException(retrieveMsgFromError(e, treq), e);
+                throw new DataAccessException(retrieveMsgFromError(e, treq, dbAdapter), e);
             }
         }
         EmbeddedDbUtil.setDbMetaInfo(treq, dbAdapter);
@@ -510,24 +510,11 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         return selectInfo;
     }
 
-    private static String retrieveMsgFromError(Exception e, TableServerRequest treq) {
+    private static String retrieveMsgFromError(Exception e, TableServerRequest treq, DbAdapter dbAdapter) {
 
-        if (e instanceof BadSqlGrammarException) {
-            // object not found condition
-            BadSqlGrammarException ex = (BadSqlGrammarException) e;
-            String msg = ex.getRootCause().getMessage();
-            if (msg.toLowerCase().contains("object not found")) {
-                String name = CollectionUtil.get(msg.split(":"), 1, "").trim();
-                String sql = ex.getSql() == null ? "" : ex.getSql();
-                if (sql.matches(String.format(".*from\\s+%s.*", name))) {
-                    return "Invalid statement: Table not found - " + name;
-                } else {
-                    return "Invalid statement: Column not found - " + name;
-                }
-            } else if (msg.toLowerCase().contains("object name already exists")) {
-                String name = CollectionUtil.get(msg.split(":"), 1, "").trim();
-                return "Invalid statement: Duplicate table or column name - " + name;
-            }
+        if (e.getCause() instanceof SQLException) {
+            var x = dbAdapter.handleSqlExp("Invalid statement", e);
+            return "%s: %s".formatted(x.getMessage(), x.getCause().getMessage());
         }
 
         if (e instanceof NestedRuntimeException) {

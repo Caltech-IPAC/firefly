@@ -4,11 +4,18 @@
 package edu.caltech.ipac.firefly.server.db;
 
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.decimate.DecimateKey;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.BadSqlGrammarException;
 
 import java.io.File;
+import java.sql.SQLDataException;
+import java.sql.SQLException;
 import java.util.List;
+
+import static edu.caltech.ipac.util.StringUtils.groupMatch;
 
 /**
  * @author loi
@@ -114,6 +121,36 @@ public class HsqlDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
 
     public static String getDecimateKey(double xVal, double yVal, double xMin, double yMin, int nX, int nY, double xUnit, double yUnit) {
         return new DecimateKey(xMin, yMin, nX, nY, xUnit, yUnit).getKey(xVal, yVal);
+    }
+
+    public DataAccessException handleSqlExp(String msg, Exception e) {
+        String cause = e.getMessage();
+        if (e instanceof BadSqlGrammarException) {
+            // org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [select * from xyz order by aab]; nested exception is java.sql.SQLSyntaxErrorException: user lacks privilege or object not found: XYZ\n
+            String[] parts = groupMatch(".*\\[(.+)\\].* object not found: (.+)", cause);
+            if (parts != null && parts.length == 2) {
+                if (parts[1].equals("PUBLIC.DATA")) {
+                    return new DataAccessException(msg, new SQLDataException("TABLE out-of-sync; Reload table to resume"));
+                } else {
+                    return new DataAccessException(msg, new SQLException("[%s] not found; SQL=[%s]".formatted(parts[1], parts[0])));
+                }
+            }
+            //org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [invalid sql]; nested exception is java.sql.SQLSyntaxErrorException: unexpected token: INVALID
+            parts = groupMatch(".*\\[(.+)\\].* unexpected token: (.+)", cause);
+            if (parts != null && parts.length == 2) {
+                return new DataAccessException(msg, new SQLException("Unexpected token [%s]; SQL=[%s]".formatted(parts[1], parts[0])));
+            }
+        }
+        if (e instanceof DataIntegrityViolationException) {
+            String[] parts = groupMatch(".*\\[(.+)\\].*", cause);
+            if (parts != null && parts.length == 1) {
+                return new DataAccessException(msg, new SQLException("Type mismatch; SQL=[%s]".formatted(parts[0])));
+            }
+        }
+        if (e instanceof DataAccessException dax) {
+            return new DataAccessException(msg, dax.getCause());
+        }
+        return new DataAccessException(msg, e);
     }
 
 

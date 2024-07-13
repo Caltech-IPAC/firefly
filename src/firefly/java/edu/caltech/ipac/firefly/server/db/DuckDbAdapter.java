@@ -157,8 +157,10 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
 
         String createDataSql = createDataSql(colsAry, tblName);
 
-        try (DuckDBConnection conn = (DuckDBConnection) JdbcFactory.getDataSource(getDbInstance()).getConnection();){
-            Statement  stmt = conn.createStatement();
+        try (DuckDBConnection conn = (DuckDBConnection) JdbcFactory.getDataSource(getDbInstance()).getConnection();
+             Statement  stmt = conn.createStatement() ) {
+
+            conn.setAutoCommit(false);
             stmt.execute(createDataSql);
 
             // using try-with-resources to automatically close the appender at the end of the scope
@@ -169,8 +171,9 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
                     aryIdx.forEach(idx -> row[idx] = serialize(row[idx]));      // serialize array data if necessary
                     addRow(appender, row, r);
                 }
+                appender.flush();
             }
-            stmt.close();
+            conn.commit();
         } catch (SQLException e) {
             LOGGER.error(e, "Failed to create table: " + tblName);
             throw new DataAccessException(e);

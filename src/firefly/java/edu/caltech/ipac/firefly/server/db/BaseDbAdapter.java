@@ -22,8 +22,7 @@ import edu.caltech.ipac.table.ResourceInfo;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.BadSqlGrammarException;
+import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import org.springframework.transaction.TransactionStatus;
@@ -999,28 +998,15 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
     abstract List<String> getSupportedExts();
 
-    DataAccessException handleSqlExp(String msg, Exception e) {
-        String cause = e.getMessage();
-        if (e instanceof BadSqlGrammarException) {
-            // org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [select * from xyz order by aab]; nested exception is java.sql.SQLSyntaxErrorException: user lacks privilege or object not found: XYZ\n
-            String[] parts = groupMatch(".*\\[(.+)\\].* object not found: (.+)", cause);
-            if (parts != null && parts.length == 2) {
-                if (parts[1].equals("PUBLIC.DATA")) {
-                    return new DataAccessException(msg, new SQLDataException("TABLE out-of-sync; Reload table to resume"));
-                } else {
-                    return new DataAccessException(msg, new SQLException("[%s] not found; SQL=[%s]".formatted(parts[1], parts[0])));
-                }
-            }
-            //org.springframework.jdbc.BadSqlGrammarException: StatementCallback; bad SQL grammar [invalid sql]; nested exception is java.sql.SQLSyntaxErrorException: unexpected token: INVALID
-            parts = groupMatch(".*\\[(.+)\\].* unexpected token: (.+)", cause);
-            if (parts != null && parts.length == 2) {
-                return new DataAccessException(msg, new SQLException("Unexpected token [%s]; SQL=[%s]".formatted(parts[1], parts[0])));
-            }
-        }
-        if (e instanceof DataIntegrityViolationException) {
-            String[] parts = groupMatch(".*\\[(.+)\\].*", cause);
+    public DataAccessException handleSqlExp(String msg, Exception e) {
+        if( e instanceof UncategorizedSQLException ce) {
+            //java.sql.SQLException: Binder Error: Referenced column "sldfjas" not found in FROM clause!
+            //Candidate bindings: "DATA.a"
+            //LINE 1: UPDATE DATA SET "a" = sldfjas > 0
+            //                              ^
+            String[] parts = groupMatch("java.sql.SQLException: (.*)",  ce.getSQLException().getMessage().split("\\n")[0]);
             if (parts != null && parts.length == 1) {
-                return new DataAccessException(msg, new SQLException("Type mismatch; SQL=[%s]".formatted(parts[0])));
+                return new DataAccessException(msg, new SQLDataException(parts[0]));
             }
         }
         if (e instanceof DataAccessException dax) {

@@ -20,6 +20,7 @@ import uk.ac.starlink.votable.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -274,12 +275,14 @@ public class VoTableReader {
                         DataType dtype = cols.get(i);
                         Object val = rs.getCell(i);
 
-                        if ((val instanceof Double && Double.isNaN((Double) val)) ||
-                                (val instanceof Float && Float.isNaN((Float) val))    )    {
-                            val = null;
+                        if (val instanceof Double cv)   {
+                            val = cv.isNaN() ? null : val;
+                        } else if (val instanceof Float cv) {
+                            val = cv.isNaN() ? null : val;
                         } else if(val instanceof String || val instanceof Character) {
                             val = (String.valueOf(val)).trim();
                         }
+
                         row.setDataElement(dtype, val);
                     }
                     dg.add(row);
@@ -452,7 +455,6 @@ public class VoTableReader {
         applyIfNotEmpty(el.getAttribute("xtype"), dt::setXType);
         applyIfNotEmpty(el.getDescription(), dt::setDesc);
         applyIfNotEmpty(el.getAttribute("datatype"), v -> {
-            dt.setTypeDesc(v);
             dt.setDataType(DataType.descToType(v));
         });
         applyIfNotEmpty(el.getAttribute("type"), v -> {

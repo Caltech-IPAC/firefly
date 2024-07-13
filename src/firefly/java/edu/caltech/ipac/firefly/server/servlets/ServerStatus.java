@@ -26,7 +26,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -69,9 +68,6 @@ public class ServerStatus extends BaseHttpServlet {
             showCountStatus(writer);
             skip(writer);
 
-            showWorkAreaStatus(writer);
-            skip(writer);
-
             showPackagingStatus(writer, showJobDetails != null && Boolean.parseBoolean(showJobDetails));
             skip(writer);
 
@@ -81,13 +77,16 @@ public class ServerStatus extends BaseHttpServlet {
             showEventsStatus(writer);
             skip(writer);
 
+            showDatabaseStatus(writer);
+            skip(writer);
+
+            showWorkAreaStatus(writer);
+            skip(writer);
+
             EhcacheProvider prov = (EhcacheProvider) edu.caltech.ipac.util.cache.CacheManager.getCacheProvider();
 
             displayCacheInfo(writer, prov.getEhcacheManager(), sInfo);
             displayCacheInfo(writer, prov.getSharedManager(), sInfo);
-            skip(writer);
-
-            showDatabaseStatus(writer);
 
             if (showHeaders) {
                 skip(writer);
