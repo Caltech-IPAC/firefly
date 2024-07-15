@@ -7,16 +7,16 @@ import PropTypes from 'prop-types';
 import {Alert, Stack} from '@mui/joy';
 
 import {getDropDownInfo} from '../core/LayoutCntlr.js';
-import {SearchPanel} from '../ui/SearchPanel.jsx';
+import {SearchPanel} from './SearchPanel';
 import {HiPSSearchPanel} from '../visualize/ui/HiPSSearchPanel.jsx';
 import {IrsaCatalogSearch} from '../visualize/ui/IrsaCatalogSearch.jsx';
 import {ClassicNedSearchPanel, ClassicVOCatalogPanel} from '../visualize/ui/ExtraIpacSearches.jsx';
 import {ImageSearchDropDown} from '../visualize/ui/ImageSearchPanelV2.jsx';
-import {TestSearchPanel} from '../ui/TestSearchPanel.jsx';
-import {TestQueriesPanel} from '../ui/TestQueriesPanel.jsx';
-import {ChartSelectDropdown} from '../ui/ChartSelectDropdown.jsx';
-import {FileUploadDropdown} from '../ui/FileUploadDropdown.jsx';
-import {WorkspaceDropdown} from '../ui/WorkspaceDropdown.jsx';
+import {TestSearchPanel} from './TestSearchPanel';
+import {TestQueriesPanel} from './TestQueriesPanel';
+import {ChartSelectDropdown} from './ChartSelectDropdown';
+import {FileUploadDropdown} from './FileUploadDropdown';
+import {WorkspaceDropdown} from './WorkspaceDropdown';
 import {getAlerts} from '../core/AppDataCntlr.js';
 import {MultiSearchPanel} from 'firefly/ui/MultiSearchPanel.jsx';
 import {TapSearchPanel} from 'firefly/ui/tap/TapSearchRootPanel.jsx';
@@ -63,7 +63,7 @@ export const dropDownMap = {
  * Items in this container must have a 'name' property.  It will be used to
  * compare to the selected card.
  */
-export function DropDownContainer ({style={}, visible:defVisible, selected:defSelected, dropdownPanels, defaultView, watchInitArgs= true, children}) {
+export function DropDownContainer ({style={}, visible:defVisible=false, selected:defSelected, dropdownPanels, defaultView, watchInitArgs= true, children}) {
 
     const visible   = useStoreConnector(() => getDropDownInfo()?.visible ?? defVisible);
     const selected  = useStoreConnector(() => getDropDownInfo()?.view ?? defSelected);       // the selected view name
@@ -103,9 +103,6 @@ DropDownContainer.propTypes = {
     dropdownPanels: PropTypes.arrayOf(PropTypes.element),
     alerts: PropTypes.node,
     watchInitArgs: PropTypes.bool
-};
-DropDownContainer.defaultProps = {
-    visible: false
 };
 
 export function Alerts() {

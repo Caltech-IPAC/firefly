@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import PropTypes from 'prop-types';
+import PropTypes, {number, oneOfType, string} from 'prop-types';
 
 import {InputFieldView, propTypes} from './InputFieldView.jsx';
 import {NOT_CELL_DATA} from '../tables/ui/TableRenderer.js';        // this is not right.. should revisit
@@ -16,7 +16,7 @@ function shouldAct(e, actOn) {
     }
 }
 
-export const InputFieldActOn = React.memo(({View, fieldKey, valid=true, value, onChange, validator, actOn, ...others}) => {
+export const InputFieldActOn = React.memo(({View, fieldKey, valid=true, value='', onChange, validator, actOn, ...others}) => {
     const [fieldState, setFieldState] = useState({valid, value, message:''});
 
     useEffect(() => {
@@ -53,26 +53,28 @@ export const InputFieldActOn = React.memo(({View, fieldKey, valid=true, value, o
     );
 });
 
-
-export const InputField = (props) => <InputFieldActOn View={InputFieldView} {...props}/>;
+export const InputField = ({
+                               fieldKey='undef',
+                               value= '',
+                               showWarning = true,
+                               actOn= ['changes'],
+                               labelWidth= 0,
+                               inline= false,
+                               visible= true,
+                               ...rest}) => (
+    <InputFieldActOn View={InputFieldView} {...{
+        fieldKey, value, showWarning, actOn, labelWidth, inline, visible, ...rest }}/>
+);
 
 InputField.propTypes = {
     ...propTypes,
+    value   : oneOfType([string, number]),
     fieldKey: PropTypes.string,
     onChange: PropTypes.func,
     actOn: PropTypes.arrayOf(PropTypes.oneOf(['blur', 'enter', 'changes'])),
     validator: PropTypes.func
 };
 
-InputField.defaultProps = {
-    fieldKey:'undef',
-    value: '',
-    showWarning : true,
-    actOn: ['changes'],
-    labelWidth: 0,
-    inline: false,
-    visible: true
-};
 
 
 

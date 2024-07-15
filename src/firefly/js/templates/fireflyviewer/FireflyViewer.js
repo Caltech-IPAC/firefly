@@ -45,8 +45,8 @@ import {handleInitialAppNavigation} from 'firefly/templates/common/FireflyLayout
  * <li><b>views</b>:  The type of result view.  Choices are 'images', 'tables', and 'xyPlots'.  They can be combined with ' | ', i.e.  'images | tables'</li>
  *
  */
-export function FireflyViewer ({menu, options, views, showViewsSwitch, leftButtons,
-                                   centerButtons, rightButtons, normalInit=true, appTitle,
+export function FireflyViewer ({menu, options, views='images | tables | xyplots', showViewsSwitch, leftButtons,
+                                   centerButtons, rightButtons, normalInit=true, appTitle='Firefly',
                                    landingPage, slotProps, apiHandlesExpanded, ...appProps}){
 
     useEffect(() => {
@@ -112,10 +112,6 @@ FireflyViewer.propTypes = {
     normalInit: PropTypes.bool
 };
 
-FireflyViewer.defaultProps = {
-    appTitle: 'Firefly',
-    views: 'images | tables | xyplots'
-};
 
 function onReady({menu, options={}, normalInit, appTitle}) {
     if (menu) {

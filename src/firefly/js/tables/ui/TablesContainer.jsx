@@ -21,9 +21,8 @@ import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
 const logger = Logger('Tables').tag('TablesContainer');
 
-
 export function TablesContainer(props) {
-    const {mode, closeable, tableOptions, style, expandedMode:xMode} = props;
+    const {mode='both', closeable=true, tableOptions, style, expandedMode:xMode=false} = props;
     let {tbl_group} = props;
 
     const tables = useStoreConnector(() => TblUtil.getTableGroup(tbl_group)?.tables);
@@ -52,11 +51,6 @@ TablesContainer.propTypes = {
     style: PropTypes.object,
     tableOptions: PropTypes.object,
     mode: PropTypes.oneOf(['expanded', 'standard', 'both'])
-};
-TablesContainer.defaultProps = {
-    expandedMode: false,
-    closeable: true,
-    mode: 'both'
 };
 
 

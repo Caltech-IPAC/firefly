@@ -37,7 +37,7 @@ import {handleInitialAppNavigation} from 'firefly/templates/common/FireflyLayout
 /*
  * This is a viewer.
  */
-export function HydraViewer({menu, appTitle, slotProps, ...props}) {
+export function HydraViewer({menu, appTitle= 'Time Series Viewer', slotProps, ...props}) {
 
 
     useEffect(() => {
@@ -78,10 +78,6 @@ HydraViewer.propTypes = {
         dropdown: object,
         landing: object
     })
-};
-
-HydraViewer.defaultProps = {
-    appTitle: 'Time Series Viewer'
 };
 
 function onReady(menu, appTitle) {

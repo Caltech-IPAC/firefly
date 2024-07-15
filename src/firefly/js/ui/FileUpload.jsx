@@ -14,8 +14,8 @@ const DD_FILE_TXT= 'or drag & drop a file here';
 const DD_ANOTHER_FILE_TXT= 'or drag & drop another file';
 const NO_FILE_TXT= 'No file chosen';
 
-function FileUploadView({isLoading, label, valid, message, onChange, value,  sx, hasUploadedData,
-                         isFromURL, onUrlAnalysis, canDragDrop}) {
+function FileUploadView({isLoading=false, label, valid, message, onChange, value,  sx, hasUploadedData,
+                         isFromURL=false, onUrlAnalysis, canDragDrop}) {
     return (
         <Stack {...{ direction:'row', spacing:1, alignItems:'center', whiteSpace:'nowrap', sx}}>
             {isFromURL ?
@@ -79,34 +79,28 @@ const ChooseUploadFile= ({onChange, value, fileName, canDragDrop}) => (
 
 
 FileUploadView.propTypes = {
-    fileType: string.isRequired,
-    isLoading: bool.isRequired,
+    fileType: string,
+    isLoading: bool,
     message: string.isRequired,
     onChange: func.isRequired,
     value : string.isRequired,
     label: string,
-    labelWidth: number,
     valid: bool,
     sx: object,
-    isFromURL: bool.isRequired,
+    isFromURL: bool,
     onUrlAnalysis: func,
     canDragDrop: bool
 };
 
-FileUploadView.defaultProps = {
-    fileType: 'TABLE',
-    isLoading: false,
-    isFromURL: false,
-    labelWidth: 0
-};
 
 export const FileUpload= memo( (props) => {
     const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
+    const {fileType='TABLE'} = viewProps;
     let modViewProps;
 
     useEffect(() => {
         if (viewProps.dropEvent) {
-            handleChange(viewProps.dropEvent, fireValueChange, viewProps.fileType, viewProps.fileAnalysis);
+            handleChange(viewProps.dropEvent, fireValueChange, fileType, viewProps.fileAnalysis);
         }
     },[viewProps.dropEvent]);
 
@@ -115,14 +109,14 @@ export const FileUpload= memo( (props) => {
             ...viewProps,
             onChange: (ev) => onUrlChange(ev, viewProps, fireValueChange),
             value:  viewProps.displayValue,
-            onUrlAnalysis: (value) => doUrlAnalysis(value, fireValueChange, viewProps.fileType, viewProps.fileAnalysis)
+            onUrlAnalysis: (value) => doUrlAnalysis(value, fireValueChange, fileType, viewProps.fileAnalysis)
         };
     }
     else {
         modViewProps= {
             ...viewProps,
             value: viewProps.displayValue,
-            onChange: (ev) => handleChange(ev, fireValueChange, viewProps.fileType, viewProps.fileAnalysis)
+            onChange: (ev) => handleChange(ev, fireValueChange, fileType, viewProps.fileAnalysis)
         };
     }
     return <FileUploadView {...{...modViewProps, hasUploadedData:Boolean(modViewProps.analysisResult) }}/> ;
@@ -132,7 +126,6 @@ FileUpload.propTypes = {
     fieldKey : string.isRequired,
     isFromURL: bool,
     label: string,
-    labelWidth: number,
     sx: object,
     fileAnalysis: func,
     canDragDrop: bool,

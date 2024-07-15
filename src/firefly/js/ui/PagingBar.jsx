@@ -13,9 +13,8 @@ import LastPage from '@mui/icons-material/LastPage';
 import NavigateNext from '@mui/icons-material/NavigateNext';
 import NavigateBefore from '@mui/icons-material/NavigateBefore';
 
-
 export function PagingBar(props) {
-    const {currentPage, totalRows, pageSize, showLoading, callbacks} = props;
+    const {currentPage=1, totalRows, pageSize=100, showLoading=false, callbacks} = props;
 
     const showAll = (totalRows === 0) || (pageSize === MAX_ROW);
     const startIdx = (currentPage-1) * pageSize;
@@ -70,9 +69,4 @@ PagingBar.propTypes = {
     })
 };
 
-PagingBar.defaultProps = {
-    currentPage: 1,
-    showLoading: false,
-    pageSize: 100
-};
 

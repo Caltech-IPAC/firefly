@@ -118,7 +118,7 @@ const defPeriodogram = {
  * @returns {Element}
  */
 export function LcPeriodogram(props) {
-    const {displayMode, groupKey=pgfinderkey, expanded} = props;
+    const {displayMode='period', groupKey=pgfinderkey, expanded} = props;
     const resultProps = {expanded, groupKey};
 
     if (displayMode&&displayMode==='period') {
@@ -137,10 +137,6 @@ LcPeriodogram.propTypes = {
     displayMode: PropTypes.string.isRequired,
     expanded: PropTypes.object,
     groupKey: PropTypes.string
-};
-
-LcPeriodogram.defaultProps = {
-    displayMode: 'period'
 };
 
 /**

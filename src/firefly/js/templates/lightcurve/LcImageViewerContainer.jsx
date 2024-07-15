@@ -23,7 +23,7 @@ import {LcImageToolbarView} from './LcImageToolbarView.jsx';
  * @returns {Object}
  * @constructor
  */
-export function LcImageViewerContainer({viewerId, imageExpandedMode=false, closeable=true, insideFlex=false,
+export function LcImageViewerContainer({viewerId=DEFAULT_FITS_VIEWER_ID, imageExpandedMode=false, closeable=true, insideFlex=false,
                                         forceRowSize, activeTableId, Toolbar= LcImageToolbarView}) {
     
     if (imageExpandedMode) {
@@ -64,6 +64,3 @@ LcImageViewerContainer.propTypes = {
     Toolbar: PropTypes.element
 };
 
-LcImageViewerContainer.defaultProps = {
-    viewerId: DEFAULT_FITS_VIEWER_ID
-};

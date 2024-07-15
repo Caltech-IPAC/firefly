@@ -128,7 +128,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
 
     useEffect(() => {
         // We need to get prism-live to adopt to the textarea
-        const textArea = ReactDOM.findDOMNode(adqlEl.current)?.querySelector('textarea');
+        const textArea = adqlEl.current?.querySelector('textarea');
         // adopt textArea
         prismLiveRef.current = new Prism.Live(textArea);
     }, []);

@@ -18,11 +18,13 @@ export function inputFieldTooltipProps({valid, message, showWarning=true, toolti
 
 export const inputFieldValue = (type, value) => (type==='file') ? '' : (value??'');
 
+
+
 export function InputFieldView(props) {
-    const {visible,label,tooltip,value,inputRef, slotProps,
-        valid,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, showWarning,
-        message, type, placeholder, sx, startDecorator, endDecorator,
-        readonly, required, orientation='vertical'}= props;
+    const {visible=true,label,tooltip,value,inputRef, slotProps,
+        valid=true,onChange, onBlur, onKeyPress, onKeyDown, onKeyUp, showWarning=true,
+        message='', type='text', placeholder, sx, startDecorator, endDecorator,
+        readonly=false, required=false, orientation='vertical'}= props;
     if (!visible) return null;
     let {form='__ignore'}= props;
     // form to relate this input field to.
@@ -91,16 +93,6 @@ InputFieldView.propTypes= {
         label: object,
         tooltip: object
     })
-};
-
-InputFieldView.defaultProps= {
-    showWarning : true,
-    valid : true,
-    visible : true,
-    message: '',
-    type: 'text',
-    readonly: false,
-    required: false
 };
 
 export const propTypes = InputFieldView.propTypes;

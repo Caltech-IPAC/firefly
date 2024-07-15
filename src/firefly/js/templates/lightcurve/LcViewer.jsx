@@ -154,7 +154,7 @@ function getUploadPanelState(oldState) {
 }
 
 
-export const UploadPanel = ({initArgs}) =>{
+export const UploadPanel = ({initArgs, name= 'LCUpload'}) =>{
     const {missionOptions,fileLocation} = useStoreConnector(getUploadPanelState );
     const [,setUploadContainer]= useFieldGroupValue('uploadContainer', vFileKey);
     const externalDropEvent= initArgs?.searchParams?.dropEvent;
@@ -243,10 +243,6 @@ export const UploadPanel = ({initArgs}) =>{
 UploadPanel.propTypes = {
     name: PropTypes.oneOf(['LCUpload']),
     initArgs: PropTypes.object
-};
-
-UploadPanel.defaultProps = {
-    name: 'LCUpload'
 };
 
 function onSearchSubmit(request) {
