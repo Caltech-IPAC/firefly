@@ -94,7 +94,7 @@ export function getViewer(channel, file=defaultViewerFile, scriptUrl) {
 
         /**
          * The interface to remotely communicate to the firefly viewer.
-         * @public                                             mq/n
+         * @public
          * @namespace firefly.ApiViewer
          */
         const viewer= {dispatch, reinitViewer, channel,

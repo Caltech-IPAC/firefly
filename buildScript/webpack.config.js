@@ -1,12 +1,11 @@
 /* eslint-env node */
+/* global process */
 
 import webpack from 'webpack';
 import TerserPlugin from 'terser-webpack-plugin';
 import path from 'path';
 import fs from 'fs';
 
-
-const exclude_dirs = /(node_modules|java|python|config|test)/;
 
 process.traceDeprecation = true;
 
@@ -138,12 +137,12 @@ export default function makeWebpackConfig(config) {
                         ['@babel/preset-env',
                             {
                                 targets: {
-                                    browsers: ['safari >= 12', 'chrome >= 90', 'firefox >= 90', 'edge >= 90']
+                                    browsers: ['safari >= 15', 'chrome >= 115', 'firefox >= 115', 'edge >= 115']
                                 },
                                 debug: false,
                                 modules: false,  // preserve application module style - in our case es6 modules
                                 useBuiltIns : 'usage',
-                                corejs: 3
+                                corejs: '3.37' // should specify the minor version: https://babeljs.io/docs/babel-preset-env#corejs
                             }
                         ],
                         '@babel/preset-react'
@@ -196,7 +195,6 @@ export default function makeWebpackConfig(config) {
             cached: false,
             children: true,
             excludeModules: () => true,
-
         },
         performance: { hints: false }  // Warning disabled the references: https://webpack.js.org/guides/code-splitting/
     };
@@ -215,9 +213,9 @@ function firefly_loader(loadScript, outpath, nameRoot, loaderPostfix, localBuild
     return function ()  {
         this.hooks.done.tap('done',
             (stats) => {
-                // not we not get the hash from stats.compilation.hash not stats.compilation.fullHash
+                // now we get the hash from stats.compilation.hash not stats.compilation.fullHash
                 // this is what matches [fullhash] for the filename
-                // this is not very consistent so we should watch it in the future
+                // this is not very consistent, so we should watch it in the future
                 const hash = localBuild ? 'dev' : stats.compilation.hash;
 
                 const loaderScript= getLoadScript(nameRoot,loaderPostfix);
