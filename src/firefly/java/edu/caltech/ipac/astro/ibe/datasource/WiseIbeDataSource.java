@@ -34,6 +34,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
     public final static String SOURCE_ID_PATTERN_3A_PASS2_4B = "[0-9]{4}[pm][0-9]{3}_ab4[1-9]-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A_PASS2_3B = "[0-9]{4}[pm][0-9]{3}_ab3[1-9]-[0-9]{6}";
     public final static String SOURCE_ID_PATTERN_3A_ALLWISE = "[0-9]{4}[pm][0-9]{3}_ac5[1-9]-[0-9]{6}";
+    public final static String SOURCE_ID_PATTERN_3A_PRELIM = "[0-9]{4}[pm][0-9]{3}_aa[1-9]{2}-[0-9]{6}";
 
     // Image sets (public)
         public final static String PRELIM = "prelim";
@@ -129,9 +130,10 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
                 productLevel = getProductLevelFromSourceId(refsourceId);
                 if (productLevel == null) {
                     throw new IllegalArgumentException("Invalid Source ID: " + refsourceId);
+                } else if (productLevel == "3a" && imageset == "prelim_postcryo") {
+                    throw new IllegalArgumentException("There is no coadd (level 3) for Prelim Post-Cryo image set, try a different search for your source ID: " + refsourceId);
                 }
             }
-
         }
 
         String ds = imageset.replaceAll("-", "_").toUpperCase();
@@ -233,6 +235,7 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
 
         String refSourceId = queryInfo.get("refSourceId");
         String sourceId = queryInfo.get("sourceId");
+        String schema = queryInfo.get("schema");
         
         if (sourceId != null) {
             String sourceProductLevel = getProductLevelFromSourceId(sourceId);
@@ -624,20 +627,22 @@ public class WiseIbeDataSource extends BaseIbeDataSource {
         PRELIM_1B("prelim","p1bm_frm", "prelim_p1bs_psd", "links-prelim/l1b/"),
         PRELIM_3A("prelim","p3am_cdd", "prelim_p3as_psd", "links-prelim/l3a/"),
         PRELIM_POSTCRYO_1B("prelim_postcryo","p1bm_frm", "prelim_2band_p1bs_psd", "links-postcryo-prelim/l1b-2band/"),
-        ALLWISE_MULTIBAND_3A("allwise","p3am_cdd", "allwise_p3as_psd", "links-allwise/l3a/"), // TODO: change for production, changed XW
+        PRELIM_POSTCRYO_3A("merge", "merge_p3am_cdd", "prelim_2band_p1bs_psd", "links-allwise/l3a-merge/"), //map to merge_3a, should just show no data for post-cryo
+        ALLWISE_MULTIBAND_3A("allwise","p3am_cdd", "allwise_p3as_psd", "links-allwise/l3a/"), 
         ALLSKY_4BAND_1B("allsky", "4band_p1bm_frm", "allsky_4band_p1bs_psd", "links-allsky/l1b-4band/"),
         ALLSKY_4BAND_3A("allsky", "4band_p3am_cdd", "allsky_4band_p3as_psd", "links-allsky/l3a-4band/"),
         CRYO_3BAND_1B("cryo_3band", "3band_p1bm_frm", "allsky_3band_p1bs_psd", "links-3band/l1b-3band/"),
         CRYO_3BAND_3A("cryo_3band", "3band_p3am_cdd", "allsky_3band_p3as_psd", "links-3band/l3a-3band/"),  // currently they are different: p1bm_frm and p3am_cdd
         POSTCRYO_1B("postcryo", "2band_p1bm_frm", "allsky_2band_p1bs_psd", "links-postcryo/l1b-2band/"),
         MERGE_1B("merge", "merge_p1bm_frm", "allsky_4band_p1bs_psd", "links-allsky/l1b-merge/"),         // exists under links-allsky
-        MERGE_INT_1B("merge_int", "merge_i1bm_frm", "merge_i1bs_psd", "links-merge/l1b/"),
         MERGE_3A("merge", "merge_p3am_cdd", "allsky_4band_p1bs_psd", "links-allwise/l3a-merge/"),       // exists under links-allwise
+        NEOWISER_1B("neowiser", "p1bm_frm", "neowiser_p1bs_psd", "links-neowiser/l1b/"),
+
+        // internal dataset
+        MERGE_INT_1B("merge_int", "merge_i1bm_frm", "merge_i1bs_psd", "links-merge/l1b/"),
         MERGE_INT_3A("merge_int", "merge_p3am_cdd", "allsky_4band_p3as_psd", "links-merge/l3a/"),
         NEOWISER_PROV_1B("neowiser_prov", "i1bm_frm", "i1bs_psd", "links-nprov/l1b/"),
         NEOWISER_YR1_1B("neowiser_yr1", "yr1_p1bm_frm", "yr1_p1bs_psd", "links-neowiser/l1b-yr1/"),
-        NEOWISER_1B("neowiser", "p1bm_frm", "neowiser_p1bs_psd", "links-neowiser/l1b/"),
-
         PASS1_1B("pass1", "i1bm_frm", "i1bs_psd", "links-pass1/l1b/"),
         PASS1_3A("pass1", "i3am_cdd", "i3as_psd", "links-pass1/l3a/"),
         PASS1_3O("pass1", "i3om_cdd", "i3os_psd", "links-pass1/l3o/"),
