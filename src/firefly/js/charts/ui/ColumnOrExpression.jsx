@@ -54,7 +54,7 @@ export function getColValidator(cols, required=true, canBeExpression=true, messa
 }
 
 function getOptions(cols, canBeExpression=true) {
-    return cols.map( ({name, label})=> ( { value: name, label: label || name} ));
+    return cols.filter(({visibility}) => visibility !== 'hidden').map( ({name, label})=> ( { value: name, label: label || name} ));
 }
 
 

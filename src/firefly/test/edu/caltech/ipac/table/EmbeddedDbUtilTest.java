@@ -5,6 +5,7 @@ package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
@@ -14,10 +15,11 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
-import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
 import edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource;
 import edu.caltech.ipac.firefly.util.FileLoader;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.Level;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -27,31 +29,38 @@ import org.junit.experimental.categories.Category;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
-import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
+import static edu.caltech.ipac.firefly.server.db.DbAdapter.getAdapter;
 
 public class EmbeddedDbUtilTest extends ConfigTest {
 
 	public static File dbFile;
 	public static File testFile;
+	public static File csvFile;
 
 	@BeforeClass
 	public static void setUp() {
 		try {
 			// needed by test testGetSelectedData because it's dealing with code running in a server's context, ie  SearchProcessor, RequestOwner, etc.
 			setupServerContext(null);
+			var creator = DbAdapter.getDbCreator(null);  // get default
+			File tmp = new File(System.getProperty("java.io.tmpdir"));
+			var dbAdapter = creator.create(tmp, DigestUtils.md5Hex(System.currentTimeMillis()+""));
+			dbFile = dbAdapter.initDbFile();
 
-			dbFile = File.createTempFile("TestDb_", ".hsql");
-			dbFile.deleteOnExit();
-
-			HsqlDbAdapter dbAdapter = new HsqlDbAdapter();
 			testFile = FileLoader.resolveFile(EmbeddedDbUtilTest.class, "/embedded_db_test.tbl");
 			DataGroup data = IpacTableReader.read(testFile);
-			EmbeddedDbUtil.createDbFile(dbFile,dbAdapter);
-			EmbeddedDbUtil.ingestDataGroup(dbFile, data, dbAdapter, MAIN_DB_TBL);
-		} catch (IOException e) {
+			dbAdapter.ingestData(() -> data, dbAdapter.getDataTable());
+		} catch (IOException|DataAccessException e) {
 			Assert.fail("Unable to ingest data into the database");
 		}
+	}
+
+	@AfterClass
+	public static void cleanup() {
+		DbAdapter.getAdapter(dbFile).close(true);
+		System.out.println("DbAdapter closed.");
 	}
 
 	/**
@@ -59,11 +68,12 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 	 */
 	@Test
 	public void testAddColumn() throws DataAccessException {
+		DbAdapter dbAdapter = getAdapter(dbFile);
 
 		DataType nCol = new DataType("NEW_COL_1", Double.class, "label", "units", null, "desc");
 		nCol.setUCD("ucd");
-		EmbeddedDbUtil.addColumn(dbFile, DbAdapter.getAdapter(), nCol, "\"dec\" + 3");
-		DataGroup res = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, String.format("select * from %s", MAIN_DB_TBL), MAIN_DB_TBL);
+		EmbeddedDbUtil.addColumn(dbAdapter, nCol, "\"dec\" + 3");
+		DataGroup res = dbAdapter.execQuery(String.format("select * from %s", dbAdapter.getDataTable()), dbAdapter.getDataTable());
 
 		DataType c = res.getDataDefintion("NEW_COL_1");
 		Assert.assertEquals("test number of columns", 10, res.getDataDefinitions().length);			// column added
@@ -79,23 +89,24 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 
 		// test rollback conditions
 
-		// bad expression:  dec + 3 is a bad expression since DEC is not a column; dec without quotes is treated as uppercase
+		// bad expression:  decx + 3 is a bad expression since decx is not a column
 		nCol.setKeyName("NEW_COL_2");
 		try {
-			EmbeddedDbUtil.addColumn(dbFile, DbAdapter.getAdapter(), nCol, "dec + 3");
+			EmbeddedDbUtil.addColumn(dbAdapter, nCol, "decx + 3");
 		} catch (Exception ignored){}
-		res = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, String.format("select * from %s", MAIN_DB_TBL), MAIN_DB_TBL);
+		res = dbAdapter.execQuery(String.format("select * from %s", dbAdapter.getDataTable()), dbAdapter.getDataTable());
 		Assert.assertEquals("same number of columns as before", 10, res.getDataDefinitions().length);
 		Assert.assertNull("new column not added", res.getDataDefintion("NEW_COL_2"));
 
-		// bad column name:  exceeded 128 characters
-		nCol.setKeyName("c12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890");
-		try {
-			EmbeddedDbUtil.addColumn(dbFile, DbAdapter.getAdapter(), nCol , "\"dec\" + 3");
-		} catch (Exception ignored){}
-		res = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, String.format("select * from %s", MAIN_DB_TBL), MAIN_DB_TBL);
-		Assert.assertEquals("same number of columns as before", 10, res.getDataDefinitions().length);
-
+		// bad column name:  exceeded 128 characters; this is a hsqldb limitation
+		if (DbAdapter.DEF_DB_TYPE.equals(HsqlDbAdapter.NAME)) {
+			nCol.setKeyName("c".repeat(130));
+			try {
+				EmbeddedDbUtil.addColumn(dbAdapter, nCol , "\"dec\" + 3");
+			} catch (Exception ignored){}
+			res = dbAdapter.execQuery(String.format("select * from %s", dbAdapter.getDataTable()), dbAdapter.getDataTable());
+			Assert.assertEquals("same number of columns as before", 10, res.getDataDefinitions().length);
+		}
 	}
 
 
@@ -108,13 +119,14 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 			TableServerRequest req = new TableServerRequest("n/a (id not used)");
 			req.setPageSize(9);
 			req.setInclColumns("\"designation\", \"dec\", \"sigdec\"");
-			DataGroupPart res = EmbeddedDbUtil.execRequestQuery(req, dbFile, MAIN_DB_TBL);
+			var dbAdapter = getAdapter(dbFile);
+			DataGroupPart res = dbAdapter.execRequestQuery(req, dbAdapter.getDataTable());
 			DataGroup data = res.getData();
 
 			// test total rows, returned rows, and cols
-			Assert.assertEquals(res.getRowCount(), 10);
-			Assert.assertEquals(data.size(), 9);
-			Assert.assertEquals(data.getDataDefinitions().length, 3);
+			Assert.assertEquals(10, res.getRowCount());
+			Assert.assertEquals(9, data.size());
+			Assert.assertEquals(3, data.getDataDefinitions().length);
 
 			// random tests of returned values
 			Assert.assertEquals("J132955.35+471336.8", data.get(0).getDataElement("designation"));
@@ -126,7 +138,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 			// test sort;  reset request object
 			req = new TableServerRequest("n/a (id not used)");
 			req.setSortInfo(new SortInfo(SortInfo.Direction.DESC, "sigra"));
-			res = EmbeddedDbUtil.execRequestQuery(req, dbFile, MAIN_DB_TBL);
+			res = dbAdapter.execRequestQuery(req, dbAdapter.getDataTable());
 			data = res.getData();
 			Assert.assertEquals(0.0744, data.get(0).getDataElement("sigra"));
 			Assert.assertEquals(0.0413, data.get(9).getDataElement("sigra"));
@@ -137,8 +149,8 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 			// test filter;  reset request object
 			req = new TableServerRequest("n/a (id not used)");
 			req.setSortInfo(new SortInfo(SortInfo.Direction.DESC, "sigra"));
-			req.setFilters(Arrays.asList(String.format("\"%s\" in (%f, %f, %f)", "sigra", 0.0413, 0.0744, 12345.6)));
-			res = EmbeddedDbUtil.execRequestQuery(req, dbFile, MAIN_DB_TBL);
+			req.setFilters(List.of(String.format("\"%s\" in (%f, %f, %f)", "sigra", 0.0413, 0.0744, 12345.6)));
+			res = dbAdapter.execRequestQuery(req, dbAdapter.getDataTable());
 			data = res.getData();
 			Assert.assertEquals(2, data.size());		// the 3rd values(12345.6) is not in the table
 			Assert.assertEquals(0.0755, data.get(0).getDataElement("sigdec"));
@@ -158,9 +170,9 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 	 */
 	@Test
 	public void testExecQuery() throws DataAccessException{
-		HsqlDbAdapter dbAdapter = new HsqlDbAdapter();
+		DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
 		String sql = "select d.* from (select \"designation\", \"RA(deg)\"+1 as ABC from data where \"sigdec\" > 0.0750) as d order by d.ABC";
-		DataGroup data = EmbeddedDbUtil.execQuery(dbAdapter, dbFile, sql, MAIN_DB_TBL);
+		DataGroup data = dbAdapter.execQuery(sql, dbAdapter.getDataTable());
 
 		Assert.assertEquals(203.4851848, data.get(0).getDataElement("ABC"));
 		Assert.assertEquals(203.4874371, data.get(1).getDataElement("ABC"));
@@ -176,9 +188,9 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		treq.setParam(ServerParams.SOURCE, testFile.toString());
 		treq.setPageSize(Integer.MAX_VALUE);
 		treq.setSortInfo(new SortInfo("sigra"));
-		treq.setFilters(Arrays.asList("\"sigra\" < 0.06"));
+		treq.setFilters(List.of("\"sigra\" < 0.06"));
 
-		MappedData selVals = EmbeddedDbUtil.getSelectedMappedData(treq, Arrays.asList(1, 3, 5), "dec", "clon+1", "RA(deg)");
+		MappedData selVals = EmbeddedDbUtil.getSelectedMappedData(treq, List.of(1, 3, 5), "dec", "clon+1", "RA(deg)");
 
 		Assert.assertEquals("13h29m56.55s", selVals.get(1, "clon+1"));
 		Assert.assertEquals(47.2321996, selVals.get(3, "dec"));
@@ -189,7 +201,7 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		// test meta
 		Assert.assertEquals("ORIGIN value", data.getAttribute("ORIGIN"));
 		Assert.assertEquals("SQL value", data.getAttribute("SQL"));
-		Assert.assertEquals("repeated key will get overriden", data.getTableMeta().getKeywords().get(5).getValue());  // but, it's still in keywords
+		Assert.assertEquals("repeated key will get overriden", data.getTableMeta().getKeywords().get(4).getValue());  // but, it's still in keywords
 
 		// test column meta
 		DataType dt = data.getDataDefintion("dec");
@@ -220,18 +232,18 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		File dbFile = File.createTempFile("perfTest", ".hsql");
 		dbFile.deleteOnExit();
 
-		HsqlDbAdapter dbAdapter = new HsqlDbAdapter();
+		DbAdapter dbAdapter = DbAdapter.getAdapter(dbFile);
 
 		Logger.setLogLevel(Level.TRACE, "edu.caltech");
 		DataGroup data = IpacTableReader.read(testFile);
 		StopWatch.getInstance().start("ingest DB file");
-		EmbeddedDbUtil.createDbFile(dbFile,dbAdapter);
-		EmbeddedDbUtil.ingestDataGroup(dbFile, data, dbAdapter, MAIN_DB_TBL);
+		dbAdapter.initDbFile();
+		dbAdapter.ingestData(() -> data, dbAdapter.getDataTable());
 		StopWatch.getInstance().printLog("ingest DB file");
 
 		StopWatch.getInstance().start("sort DATA table");
 		String sql = "select * from DATA order by \"w1mpro\"";
-		EmbeddedDbUtil.execQuery(dbAdapter, dbFile, sql, MAIN_DB_TBL);
+		dbAdapter.execQuery(sql, dbAdapter.getDataTable());
 		StopWatch.getInstance().printLog("sort DATA table");
 
 	}
@@ -239,29 +251,30 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 	@Ignore
 	@Test
 	public void testSqlErrors() {
+		DbAdapter dbAdapter = getAdapter(dbFile);
 		try {
-			EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, "select * from xyz", MAIN_DB_TBL);
+			dbAdapter.execQuery("select * from xyz", dbAdapter.getDataTable());
 			Assert.fail("test bad table name failed");
 		}catch (DataAccessException e) {
 			Assert.assertEquals("[XYZ] not found; SQL=[select * from xyz]", e.getMessage());
 		}
 
 		try {
-			EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, "select xyz from data", MAIN_DB_TBL);
+			dbAdapter.execQuery("select xyz from data", dbAdapter.getDataTable());
 			Assert.fail("test bad column name failed");
 		}catch (DataAccessException e) {
 			Assert.assertEquals("[XYZ] not found; SQL=[select xyz from data]", e.getMessage());
 		}
 
 		try {
-			EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, "not an sql statement", MAIN_DB_TBL);
+			dbAdapter.execQuery("not an sql statement", dbAdapter.getDataTable());
 			Assert.fail("test invalid sql statement failed");
 		}catch (DataAccessException e) {
 			Assert.assertEquals("Unexpected token [NOT]; SQL=[not an sql statement]", e.getMessage());
 		}
 
 		try {
-			EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(), dbFile, "select * from data where \"dec\" = 'ac'", MAIN_DB_TBL);
+			dbAdapter.execQuery("select * from data where \"dec\" = 'ac'", dbAdapter.getDataTable());
 			Assert.fail("test type mismatched(comparing char to double) failed");
 		}catch (DataAccessException e) {
 			Assert.assertEquals("Type mismatch; SQL=[select * from data where \"dec\" = 'ac']", e.getMessage());
@@ -271,9 +284,10 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 	@Ignore
 	@Test
 	public void testAddColumnErrors() {
+		DbAdapter dbAdapter = getAdapter(dbFile);
 		try {
 			DataType aCol = new DataType("col", Double.class);
-			EmbeddedDbUtil.addColumn(dbFile, DbAdapter.getAdapter(), aCol, "\"dummy\" + 3");
+			EmbeddedDbUtil.addColumn(dbAdapter, aCol, "\"dummy\" + 3");
 			Assert.fail("test bad column name in expression failed");
 		}catch (DataAccessException e) {
 			Assert.assertEquals("[dummy] not found; SQL=[UPDATE DATA SET \"col\" = \"dummy\" + 3]", e.getMessage());
@@ -281,20 +295,46 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 
 		try {
 			DataType aCol = new DataType("col", Double.class);
-			EmbeddedDbUtil.addColumn(dbFile, DbAdapter.getAdapter(), aCol, "'abc'");
+			EmbeddedDbUtil.addColumn(dbAdapter, aCol, "'abc'");
 			Assert.fail("test column data type mismatch failed");		// setting string 'abc' into a double column
 		}catch (DataAccessException e) {
 			Assert.assertEquals("Type mismatch; SQL=[UPDATE DATA SET \"col\" = 'abc']", e.getMessage());
 		}
 
 		try {
-			DbAdapter.getAdapter().close(dbFile, true); 	// close the database and delete the file.  this should not happen under normal operation
+			dbAdapter.close(true); 	// close the database and delete the file.  this should not happen under normal operation
 			DataType aCol = new DataType("col", Double.class);
-			EmbeddedDbUtil.addColumn(dbFile, DbAdapter.getAdapter(), aCol, "'abc'");
+			EmbeddedDbUtil.addColumn(dbAdapter, aCol, "'abc'");
 			Assert.fail("test stale database file failed");
 		}catch (DataAccessException e) {
 			Assert.assertEquals("TABLE out-of-sync; Reload table to resume", e.getMessage());
 		}
 	}
 
+	@Test
+	public void testSerializer() {
+		// array of boolean
+		Object in = new Boolean[]{true, false, true};
+		String s = EmbeddedDbUtil.serialize(in);
+		Object d = EmbeddedDbUtil.deserialize(s);
+		if (d instanceof Boolean[] v) {
+			Assert.assertArrayEquals(v, (Boolean[])in);
+		} else Assert.fail("Deserialized type Boolean mismatch");
+
+		// array of double
+		in = new Double[]{1.0, 2.0, 3.0};
+		s = EmbeddedDbUtil.serialize(in);
+		d = EmbeddedDbUtil.deserialize(s);
+		if (d instanceof Double[] v) {
+			Assert.assertArrayEquals(v, (Double[])in);
+		} else Assert.fail("Deserialized type Double mismatch");
+
+		// array of integer
+		in = new Integer[]{1, 2, 3};
+		s = EmbeddedDbUtil.serialize(in);
+		d = EmbeddedDbUtil.deserialize(s);
+		if (d instanceof Integer[] v) {
+			Assert.assertArrayEquals(v, (Integer[])in);
+		} else Assert.fail("Deserialized type Integer mismatch");
+	}
 }

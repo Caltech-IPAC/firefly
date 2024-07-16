@@ -4,6 +4,8 @@
 package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.util.JsonToDataGroup;
 import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.table.io.FITSTableReader;
@@ -59,7 +61,7 @@ public class TableUtil {
                 return tables[0];
             } else return null;
         } else if (format == Format.CSV || format == Format.TSV) {
-            return DsvTableIO.parse(inf, format.type);
+            return DsvTableIO.parse(inf, format);
         } else if (format == Format.FITS ) {
             try {
                 // Switch to the new function:
@@ -87,13 +89,17 @@ public class TableUtil {
 
     public static Format guessFormat(File inf) throws IOException {
 
-        int readAhead = 10;
-
-        int row = 0;
-
+        // guess based on filename extension
         if (inf.getName().toLowerCase().endsWith("tar")) {
             return Format.TAR;
         }
+
+        var fmt = DuckDbReadable.guessFileFormat(inf);      // test for files that DuckDb can import directly
+        if (fmt != null) return fmt;
+
+        // guess by sampling file content
+        int readAhead = 10;
+        int row = 0;
 
         BufferedReader subsetReader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
         char[] charAry= new char[IpacTableUtil.FILE_IO_BUFFER_SIZE];
@@ -330,39 +336,42 @@ public class TableUtil {
 
         public enum Mode { original, displayed};
 
-        public enum Format { TSV(CSVFormat.TDF, ".tsv"), CSV(CSVFormat.DEFAULT, ".csv"), IPACTABLE(".tbl"), UNKNOWN(null),
-                         FIXEDTARGETS(".tbl"), FITS(".fits"), JSON(".json"), PDF(".pdf"), TAR(".tar"), HTML(".html"),
-                         VO_TABLE(".xml"), VO_TABLE_TABLEDATA(".vot"), VO_TABLE_BINARY(".vot"), VO_TABLE_BINARY2(".vot"),
-                         VO_TABLE_FITS(".vot"), REGION(".reg"), PNG(".png"), UWS(".xml");
-        public CSVFormat type;
+        public enum Format {
+                        TSV("tsv", ".tsv"),
+                        CSV("csv", ".csv"),
+                        IPACTABLE("ipac", ".tbl"),
+                        UNKNOWN("null", null),
+                        FIXEDTARGETS("fixed-targets", ".tbl"),
+                        FITS("fits",".fits"),
+                        JSON("json", ".json"),
+                        PDF("pdf", ".pdf"),
+                        TAR("tar", ".tar"),
+                        HTML("html", ".html"),
+                        VO_TABLE("votable", ".xml"),
+                        VO_TABLE_TABLEDATA("votable-tabledata", ".vot"),
+                        VO_TABLE_BINARY("votable-binary-inline", ".vot"),
+                        VO_TABLE_BINARY2("votable-binary2-inline", ".vot"),
+                        VO_TABLE_FITS("votable-fits-inline",".vot"),
+                        REGION("reg", ".reg"),
+                        PNG("png", ".png"),
+                        UWS("uws", ".xml"),
+                        PARQUET(DuckDbReadable.Parquet.NAME, "."+DuckDbReadable.Parquet.NAME);
+        public String type;
         String fileNameExt;
-        Format(String ext) {this.fileNameExt = ext;}
-        Format(CSVFormat type, String ext) {
+        Format(String type, String ext) {
             this.type = type;
             this.fileNameExt = ext;
         }
         public String getFileNameExt() {
             return fileNameExt;
         }
+        public String toString() {return type;}
     }
 
-    private static Map<String, Format> allFormats = new HashMap<>();
-    static {
-        allFormats.put("ipac", Format.IPACTABLE);
-        allFormats.put("csv", Format.CSV);
-        allFormats.put("tsv", Format.TSV);
-        allFormats.put("votable-tabledata", Format.VO_TABLE_TABLEDATA);
-        allFormats.put("votable-binary-inline", Format.VO_TABLE_BINARY);
-        allFormats.put("votable-binary2-inline", Format.VO_TABLE_BINARY2);
-        allFormats.put("votable-fits-inline", Format.VO_TABLE_FITS);
-        allFormats.put("fits", Format.FITS);
-        allFormats.put("pdf", Format.PDF);
-        allFormats.put("png", Format.PNG);
-        allFormats.put("uws", Format.UWS);
-        allFormats.put("reg", Format.REGION);
+    public static Map<String, Format> getAllFormats() {
+        return Arrays.stream(Format.values())
+                .collect(Collectors.toMap(f -> f.type, f -> f));
     }
-
-    public static Map<String, Format> getAllFormats() { return allFormats; }
 
     public static class ParsedInfo {
         HashMap<String, ParsedColInfo> parsedInfo = new HashMap<>();  // keyed by column name

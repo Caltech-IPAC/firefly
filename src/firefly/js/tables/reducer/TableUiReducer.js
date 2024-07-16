@@ -6,7 +6,7 @@ import {has, get, isEmpty, cloneDeep, findKey, omit, set} from 'lodash';
 
 import {updateSet, updateMerge} from '../../util/WebUtil.js';
 import * as Cntlr from '../TablesCntlr.js';
-import {getTblInfo, isTableLoaded, smartMerge, getAllColumns} from '../TableUtil.js';
+import {getTblInfo, isTableLoaded, smartMerge, getAllColumns, getColumn, getColumnIdx, getTableUiById} from '../TableUtil.js';
 import {getNumFilters} from '../FilterInfo.js';
 import {makeDefaultRenderer} from '../ui/TableRenderer.js';
 import {applyTblPref} from '../TablePref.js';
@@ -59,6 +59,12 @@ function handleUiUpdates(root, action, state) {
             const changes = onUiUpdate(omit(action.payload, 'options'));
             let ui = updateMerge(root, [tbl_ui_id], {triggeredBy: action.type, ...changes});
             if (action.payload.options)  ui = updateMerge(ui, [tbl_ui_id, 'options'], action.payload.options);
+
+            // update previous
+            const {columns, columnWidths} = getTableUiById(tbl_ui_id) || {};        // these are current values
+            if (has(changes, 'columns'))      ui = updateSet(ui, [tbl_ui_id,'previous', 'columns'], columns);
+            if (has(changes, 'columnWidths')) ui = updateSet(ui, [tbl_ui_id,'previous', 'columnWidths'], columnWidths);
+
             return ui;
 
         case (Cntlr.TBL_UI_EXPANDED) :
@@ -99,21 +105,19 @@ function uiStateReducer(ui, tableModel, action) {
     Object.keys(ui).filter( (ui_id) => {
         return get(ui, [ui_id, 'tbl_id']) === tbl_id;
     }).forEach( (tbl_ui_id) => {
-        const columns = get(ui, [tbl_ui_id, 'columns']);
+        const {columns, columnWidths, previous, cellRenderers} = ui?.[tbl_ui_id] || {};
 
         // create cellRenderers if not exist
-        if (!ui?.[tbl_ui_id]?.cellRenderers) {
+        if (!cellRenderers) {
             tableModel?.tableData?.columns?.forEach((col,idx) => {
                 set(uiData, ['cellRenderers', idx], makeDefaultRenderer(col));
             });
         }
-        uiData.columns = ensureColumns({tableModel, columns});
 
         if (action === Cntlr.TABLE_LOADED) applyTblPref(tbl_ui_id, uiData);
 
-        if (!isEmpty(columns) && get(tableModel, 'tableData.columns') && !hasSameCnames(tableModel, columns)) {
-            uiData.columnWidths = undefined;
-        }
+        uiData = adjustColInfo({uiData, tableModel, columns, previous});
+
         ui = updateMerge(ui, [tbl_ui_id], uiData);
     });
     return ui;
@@ -127,13 +131,29 @@ function onUiUpdate(uiData) {
     return uiData;
 }
 
-function ensureColumns({tableModel, columns}) {
+function adjustColInfo({uiData, tableModel, columns, previous}) {
     const origCols = cloneDeep(get(tableModel, 'tableData.columns', []));
     if (isEmpty(columns) || !hasSameCnames(tableModel, columns)) {
-        return origCols;
-    } else {
-        return smartMerge(origCols, columns);
+        if (!isEmpty(origCols) && previous ) {
+            const {columns, columnWidths} = previous;   // update new columns info based on previous state.
+            const prevTbl = {tableData:{columns}};      // partial table used for getting column info
+            const nColWidths = new Array(origCols.length).fill(-1);
+            origCols.forEach((col, idx) => {
+                const c = getColumn(prevTbl, col.name);
+                if (c) {
+                    const cidx = getColumnIdx(prevTbl, col.name);
+                    ['visibility', 'fixed', 'resizable'].forEach((k) => c[k] && (col[k] = c[k]));
+                    columnWidths?.[cidx] && set(nColWidths, idx, columnWidths[cidx]);
+                }
+            });
+            uiData.columnWidths = nColWidths;
+            uiData.columns = origCols;
+            uiData.previous = {columns:origCols, columnWidths: nColWidths};
+        } else {
+            uiData.columns = origCols;
+        }
     }
+    return uiData;
 }
 
 function hasSameCnames(tableModel, columns=[]) {

@@ -2,12 +2,11 @@ package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
 
-import java.io.File;
 import static edu.caltech.ipac.table.TableMeta.RESULTSET_ID;
 
 /**
@@ -26,46 +25,39 @@ public class SubQueryProcessor extends EmbeddedDbProcessor {
     }
 
     @Override
-    public File getDbFile(TableServerRequest treq) {
+    public DbAdapter getDbAdapter(TableServerRequest treq) {
         try {
             TableServerRequest sreq = QueryUtil.getSearchRequest(treq);
-            return getSearchProcessor(sreq).getDbFile(sreq);
+            return getSearchProcessor(sreq).getDbAdapter(sreq);
         } catch (DataAccessException e) {
             // should not happen
-            return super.getDbFile(treq);
+            return super.getDbAdapter(treq);
         }
-    }
-
-    @Override
-    public File createDbFile(TableServerRequest treq) throws DataAccessException {
-        // table function processor operates on the original table
-        // we don't want to create a dummy table in db
-        return null;
     }
 
     /**
      * only called when original database no longer available.. recreate it.
      */
     @Override
-    public FileInfo ingestDataIntoDb(TableServerRequest treq, File dbFile) throws DataAccessException {
+    public FileInfo ingestDataIntoDb(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
         TableServerRequest sreq = QueryUtil.getSearchRequest(treq);
         sreq.setPageSize(1);  // set to small number it's not used.
         new SearchManager().getDataGroup(sreq).getData();
-        return new FileInfo(getDbFile(treq));
+        return new FileInfo(dbAdapter.getDbFile());
     }
 
     /**
      * generate stats for the given search request if not exists.  otherwise, return the stats
      */
     @Override
-    protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
+    protected DataGroupPart getResultSet(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
 
         TableServerRequest sreq = QueryUtil.getSearchRequest(treq);
         sreq.setPageSize(1);  // set to small number it's not used.
         DataGroup baseResults = new SearchManager().getDataGroup(sreq).getData();
         String origTableName = baseResults.getTableMeta().getAttribute(RESULTSET_ID);
 
-        return EmbeddedDbUtil.execRequestQuery(treq, dbFile, origTableName);
+        return dbAdapter.execRequestQuery(treq, origTableName);
     }
 
     protected EmbeddedDbProcessor getSearchProcessor(TableServerRequest searchReq) throws DataAccessException {

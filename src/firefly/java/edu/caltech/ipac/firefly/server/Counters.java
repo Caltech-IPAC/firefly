@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.server;
-/**
+/*
  * User: roby
  * Date: 7/26/13
  * Time: 9:57 AM
@@ -43,7 +43,6 @@ public class Counters {
     private final KeyComparator keyComparator= new KeyComparator();
     private final SizeComparator sizeComparator= new SizeComparator();
     private static final long startTime= System.currentTimeMillis();
-    private static final String HOST_NAME= FileUtil.getHostname();
 
 
 
@@ -138,6 +137,7 @@ public class Counters {
     }
 
     public List<String> reportStatus() {
+        ServerContext.Info sInfo = ServerContext.getSeverInfo();
         List<String> outList= new ArrayList<String>(cntMap.keySet());
         List<String> retList= new ArrayList<String>(cntMap.size()+40);
         Collections.sort(outList,catComparator);
@@ -146,8 +146,9 @@ public class Counters {
 
         String elapse= UTCTimeUtil.getDHMS((System.currentTimeMillis()-startTime)/1000);
         retList.add("Overview");
-        addToList(retList,"Hostname", HOST_NAME);
-        addToList(retList,"IP", FileUtil.getIPString());
+        addToList(retList,"Hostname", sInfo.host());
+        addToList(retList,"Total physical memory", FileUtil.getSizeAsString(sInfo.pMemory()));
+        addToList(retList,"IP", sInfo.ip());
         addToList(retList, "Up time", elapse);
         addToList(retList, "Client Base URL", ServerContext.getRequestOwner().getBaseUrl());
         SsoAdapter ssoAdapter = ServerContext.getRequestOwner().getSsoAdapter();
@@ -157,7 +158,7 @@ public class Counters {
         addToList(retList, "User Key", ServerContext.getRequestOwner().getUserKey());
 
         retList.add("");
-        addMemoryStatus(retList);
+        addMemoryStatus(retList, sInfo);
 
         retList.add("");
         addVersionInfo(retList);
@@ -218,17 +219,14 @@ public class Counters {
 
 
 
-    public void addMemoryStatus(List<String> retList) {
-        Runtime rt= Runtime.getRuntime();
-        long totMem= rt.totalMemory();
-        long freeMem= rt.freeMemory();
-        retList.add("Memory");
-        long maxMem= rt.maxMemory();
-        addMemStrToList(retList,"Used", FileUtil.getSizeAsString(totMem-freeMem));
-        addMemStrToList(retList,"Max", FileUtil.getSizeAsString(maxMem));
-        addMemStrToList(retList,"Max Free", FileUtil.getSizeAsString(maxMem-(totMem-freeMem)));
-        addMemStrToList(retList,"Free Active", FileUtil.getSizeAsString(freeMem));
-        addMemStrToList(retList,"Total Active", FileUtil.getSizeAsString(totMem));
+    public void addMemoryStatus(List<String> retList, ServerContext.Info sInfo) {
+        retList.add("JVM Memory");
+
+        addMemStrToList(retList,"Used", FileUtil.getSizeAsString(sInfo.jvmTotal()-sInfo.jvmFree()));
+        addMemStrToList(retList,"Max", FileUtil.getSizeAsString(sInfo.jvmMax()));
+        addMemStrToList(retList,"Max Free", FileUtil.getSizeAsString(sInfo.jvmMax()-(sInfo.jvmTotal()-sInfo.jvmFree())));
+        addMemStrToList(retList,"Free Active", FileUtil.getSizeAsString(sInfo.jvmFree()));
+        addMemStrToList(retList,"Total Active", FileUtil.getSizeAsString(sInfo.jvmTotal()));
         retList.add("");
         retList.add("Cores - "+ Runtime.getRuntime().availableProcessors());
         retList.add("");

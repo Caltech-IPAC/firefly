@@ -8,6 +8,7 @@ import edu.caltech.ipac.util.AppProperties;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -41,7 +42,7 @@ public class DbInstance {
     /**
      * convenience constructor to create a DbInstance using properties based on
      * the given name.
-     * @param name
+     * @param name  the dbInstance name.  Property is constructed using {name}.{prop}, eg. mydb.db.driver=org.duckdb.DuckDBDriver
      */
     public DbInstance(String name) {
         this.name = name;
@@ -99,8 +100,21 @@ public class DbInstance {
         return name;
     }
 
-    @Override
-    public String toString() {
+    public String getDbUrl() {
         return this.dbUrl;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof DbInstance c) {
+            return (c.name + c.dbUrl).equals(name + dbUrl);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, dbUrl);
+    }
+
 }

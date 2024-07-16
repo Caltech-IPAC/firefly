@@ -3,8 +3,9 @@
  */
 package edu.caltech.ipac.firefly.server;
 
+import com.sun.management.OperatingSystemMXBean;
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
-import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.DbMonitor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
@@ -28,6 +29,8 @@ import javax.websocket.HandshakeResponse;
 import javax.websocket.server.HandshakeRequest;
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -853,9 +856,9 @@ public class ServerContext {
                 ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(WEBAPP_CONFIG_LOC));
                 VersionUtil.initVersion(cntx);  // can be called multiple times, only inits on the first call
                 SCHEDULE_TASK_EXEC.scheduleAtFixedRate(
-                        () -> DbAdapter.getAdapter().cleanup(false),
-                        DbAdapter.CLEANUP_INTVL,
-                        DbAdapter.CLEANUP_INTVL,
+                        () -> DbMonitor.cleanup(false),
+                        DbMonitor.CLEANUP_INTVL,
+                        DbMonitor.CLEANUP_INTVL,
                         TimeUnit.MILLISECONDS);
             } catch (Throwable e) {
                 e.printStackTrace();
@@ -865,7 +868,7 @@ public class ServerContext {
         public void contextDestroyed(ServletContextEvent servletContextEvent) {
             try {
                 System.out.println("contextDestroyed...");
-                DbAdapter.getAdapter().cleanup(true);
+                DbMonitor.cleanup(true, true);
                 ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
                 try {
                     SHORT_TASK_EXEC.shutdownNow();
@@ -881,4 +884,14 @@ public class ServerContext {
         }
     }
 
+    public static Info getSeverInfo() {
+        OperatingSystemMXBean osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        long pMem =  osBean.getTotalMemorySize();
+        Runtime rt= Runtime.getRuntime();
+        long totMem= rt.totalMemory();
+        long freeMem= rt.freeMemory();
+        long maxMem= rt.maxMemory();
+        return new Info(FileUtil.getHostname(), pMem, FileUtil.getIPString(), maxMem, totMem, freeMem);
+    }
+    public record Info(String host, long pMemory, String ip, long jvmMax, long jvmTotal, long jvmFree) {}
 }

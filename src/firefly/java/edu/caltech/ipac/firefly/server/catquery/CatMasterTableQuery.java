@@ -3,7 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.catquery;
 
-import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.network.IpacTableHandler;
@@ -18,14 +18,9 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.StringUtils;
-import org.apache.commons.httpclient.HttpException;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.stream.Collectors;
-
-import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
-
 
 /**
  * Date: Jun 5, 2009
@@ -58,7 +53,7 @@ public class CatMasterTableQuery extends EmbeddedDbProcessor {
         return dg;
     }
 
-    protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
+    protected DataGroupPart getResultSet(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
 
         String cols = Arrays.stream("projectshort,subtitle,description,server,catname,cols,nrows,coneradius,infourl,ddlink,pos"
                             .split(",")).map(s -> "\"" + s + "\"").collect(Collectors.joining(","));    // enclosed in quotes
@@ -66,7 +61,7 @@ public class CatMasterTableQuery extends EmbeddedDbProcessor {
 
         TableServerRequest tsr = (TableServerRequest) treq.cloneRequest();
         tsr.setInclColumns(cols.split(","));
-        return EmbeddedDbUtil.execRequestQuery(tsr, dbFile, MAIN_DB_TBL);
+        return dbAdapter.execRequestQuery(tsr, dbAdapter.getDataTable());
     }
 
     private static String getValue(DataObject row, String colName) {

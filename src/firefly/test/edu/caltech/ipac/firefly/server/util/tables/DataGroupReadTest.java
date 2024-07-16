@@ -8,6 +8,7 @@ import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.DbMonitor;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -161,7 +162,7 @@ public class DataGroupReadTest {
                 dgp = (DataGroupPart) SearchManager.getProcessor(tsr.getRequestId()).getData(tsr);
             } catch (DataAccessException ignored) {}
             System.out.println("total rows: " + dgp.getRowCount());
-            DbAdapter.getAdapter().cleanup(true);
+            DbMonitor.cleanup(true,true);
             return "perfTestEmbeddedDB";
         });
 

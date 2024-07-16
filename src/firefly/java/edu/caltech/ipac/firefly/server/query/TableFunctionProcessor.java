@@ -4,16 +4,12 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.Param;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
-import edu.caltech.ipac.firefly.server.db.DbInstance;
-import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
-import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 
-import java.io.File;
 import java.util.TreeSet;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.FILTERS;
@@ -39,56 +35,43 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
      * @return
      */
     abstract protected String getResultSetTablePrefix();
-    abstract protected DataGroup fetchData(TableServerRequest treq, File dbFile, DbAdapter dbAdapter) throws DataAccessException;
+    abstract protected DataGroup fetchData(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException;
 
     @Override
-    public File getDbFile(TableServerRequest treq) {
+    public DbAdapter getDbAdapter(TableServerRequest treq) {
         try {
             TableServerRequest sreq = QueryUtil.getSearchRequest(treq);
-            return getSearchProcessor(sreq).getDbFile(sreq);
+            return getSearchProcessor(sreq).getDbAdapter(sreq);
         } catch (DataAccessException e) {
             // should not happen
-            return super.getDbFile(treq);
+            return super.getDbAdapter(treq);
         }
-    }
-
-    @Override
-    public File createDbFile(TableServerRequest treq) throws DataAccessException {
-        // table function processor operates on the original table
-        // we don't want to create a dummy table in db
-        return null;
     }
 
     /**
      * original database no longer available.. recreate it.
      */
     @Override
-    public FileInfo ingestDataIntoDb(TableServerRequest treq, File dbFile) throws DataAccessException {
+    public FileInfo ingestDataIntoDb(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
         TableServerRequest sreq = QueryUtil.getSearchRequest(treq);
         sreq.setPageSize(1);  // set to small number it's not used.
         new SearchManager().getDataGroup(sreq).getData();
-        return new FileInfo(getDbFile(treq));
+        return new FileInfo(dbAdapter.getDbFile());
     }
 
     /**
      * generate stats for the given search request if not exists.  otherwise, return the stats
      */
     @Override
-    protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
+    protected DataGroupPart getResultSet(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
 
         String resTblName = getResultSetTable(treq);
 
-        DbAdapter dbAdapter = DbAdapter.getAdapter(treq);
-        DbInstance dbInstance =  dbAdapter.getDbInstance(dbFile);
-        String tblExists = String.format("select count(*) from %s", resTblName);
-        try {
-            JdbcFactory.getSimpleTemplate(dbInstance).queryForInt(tblExists);
-        } catch (Exception e) {
+        if (!dbAdapter.hasTable(resTblName)) {
             // does not exists.. fetch data and populate
-            DataGroup data = fetchData(treq, dbFile, dbAdapter);
-            EmbeddedDbUtil.ingestDataGroup(dbFile, data, dbAdapter, resTblName);
+            dbAdapter.ingestData(() -> fetchData(treq, dbAdapter), resTblName);
         }
-        return EmbeddedDbUtil.execRequestQuery(treq, dbFile, resTblName);
+        return dbAdapter.execRequestQuery(treq, resTblName);
     }
 
     /**
@@ -109,7 +92,8 @@ public abstract class TableFunctionProcessor extends EmbeddedDbProcessor {
         }
         params.addAll(treq.getSearchParams());
         String id = StringUtils.toString(params, "|");
-        return String.format("%s_data_%s", getResultSetTablePrefix(), DigestUtils.md5Hex(id));
+        String rst = String.format("%s_data_%s", getResultSetTablePrefix(), DigestUtils.md5Hex(id));
+        return rst.toUpperCase();
     }
 
     protected EmbeddedDbProcessor getSearchProcessor(TableServerRequest searchReq) throws DataAccessException {

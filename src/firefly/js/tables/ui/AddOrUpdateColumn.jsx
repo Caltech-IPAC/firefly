@@ -8,11 +8,11 @@ import {Button, Stack, Link, Sheet, Typography, Box, Skeleton} from '@mui/joy';
 import {delay} from 'lodash';
 import {UCDList} from '../../voAnalyzer/VoConst.js';
 
-import {SqlTableFilter, code} from './FilterEditor.jsx';
+import {SqlTableFilter} from './FilterEditor.jsx';
 import {addOrUpdateColumn, deleteColumn} from '../../rpc/SearchServicesJson.js';
 import {getGroupFields, validateFieldGroup, getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {ValidationField} from '../../ui/ValidationField.jsx';
-import {getAllColumns, getColumn, getTableUiById, getTblById} from '../TableUtil.js';
+import {DOC_FUNCTIONS_URL, getAllColumns, getColumn, getColumns, getTableUiById, getTblById} from '../TableUtil.js';
 import {showPopup, showInfoPopup, showYesNoPopup} from '../../ui/PopupUtil.jsx';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
@@ -68,7 +68,7 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
                 setIsWorking(true);
                 addOrUpdateColumn(request, params).then( () => {
                         hidePopup?.();
-                        reloadTable(tbl_ui_id, request, editColName, params.cname);
+                        clearColumnInfo(tbl_ui_id, request, editColName, params.cname);
                         onChange?.();
                     }).catch( (err) => {
                         showInfoPopup(parseError(err, params), 'Add Column Failed');
@@ -82,7 +82,7 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
                 const {request} = getTblById(tbl_id);
                 deleteColumn(request, editColName).then( () => {
                     hidePopup?.();
-                    reloadTable(tbl_ui_id, request, editColName);
+                    clearColumnInfo(tbl_ui_id, request, editColName);
                     onChange?.();
                 }).catch( (err) => showInfoPopup(parseError(err), 'Delete Column Failed'));
             }
@@ -142,30 +142,17 @@ AddOrUpdateColumn.propTypes = {
     editColName: PropTypes.string
 };
 
-function reloadTable(tbl_ui_id, request, editColName, newColName) {
+function clearColumnInfo(tbl_ui_id, request, editColName, newColName) {
 
     const add = newColName && !editColName;
-    const del = editColName && !newColName;
 
-    let {columns, columnWidths, scrollLeft} = getTableUiById(tbl_ui_id);
-
-
+    let {scrollLeft} = getTableUiById(tbl_ui_id);
 
     if (add) {
-        const colIdx = columns.findIndex((c) => c.name === 'ROW_IDX');
-        columns.splice(colIdx, 0, {});
-        columnWidths.splice(colIdx, 0, -1);
-        // for now, we always add to the end; we can keep all previous values intact
+        // for now, we always add to the end
         scrollLeft = 100000;    // scroll to the right-most of the table so the added column is visible
     } else {
-        // updating a column
-        const colIdx = columns.findIndex((c) => c.name === editColName);
-        if (del) {
-            columns.splice(colIdx, 1);
-            columnWidths.splice(colIdx, 1);
-        }
-
-        // if editColumn is in sort or filter, clear it.
+        // when update or delete a column; clear sort, filter, or inclCols if they contains this column
         const {sortInfo, filters, inclCols, sqlFilter} = request;
 
         if (sortInfo) {
@@ -183,8 +170,6 @@ function reloadTable(tbl_ui_id, request, editColName, newColName) {
                 Reflect.deleteProperty(request,'sqlFilter');
             }
         }
-
-        // if editColumn is in the 'select' portion, remove it.
         if (inclCols) {
             const cols = inclCols.split(',');
             if (cols?.includes(editColName)) {
@@ -193,8 +178,8 @@ function reloadTable(tbl_ui_id, request, editColName, newColName) {
         }
     }
 
+    dispatchTableUiUpdate( {tbl_ui_id, columns:undefined, columnWidths:undefined, scrollLeft});        // clear column infos
     dispatchTableFetch(request);
-    dispatchTableUiUpdate( {tbl_ui_id, columns, columnWidths, scrollLeft});        // update columns and scroll
 }
 
 export const AddColumnBtn = ({tbl_ui_id, tbl_id}) => (
@@ -246,7 +231,7 @@ function CustomFields({tbl_ui_id, tbl_id, groupKey, editColName}) {
 
     const dtype = useStoreConnector(() => getFieldVal(groupKey, 'dtype', 'double'));
     const exprKey = 'expression';
-    const cols = getAllColumns(getTblById(tbl_id));
+    const cols = getColumns(getTblById(tbl_id));
 
     const onChange = ({sql}) => {
         dispatchValueChange({fieldKey: exprKey, groupKey, value:sql, valid: true});
@@ -334,7 +319,7 @@ const Usages = () => {
                 <code>{'  +, -, *, /, =, >, <, >=, <=, !=, LIKE, IN, IS NULL, IS NOT NULL'}</code> <br/><br/>
 
                 You may use functions as well.  A few of the common functions are listed below. <br/>
-                For a list of all available functions, click <Link href='http://hsqldb.org/doc/2.0/guide/builtinfunctions-chapt.html' target='_blank'>here</Link> <br/>
+                For a list of all available functions, click <Link href={DOC_FUNCTIONS_URL} target='_blank'>here</Link> <br/>
                 String functions: <br/>
                 <code>CONCAT(s1,s2[,...]]) SUBSTR(s,offset,length)</code> <br/>
                 Numeric functions: <br/>
@@ -361,11 +346,11 @@ const Samples = () => {
 
 function parseError({cause}) {
     if (cause) {
-        const [_, type='', main, details] = cause.match(/(.+?): (.+?);(.+)/);
+        const [_, type='Unknown', msg=cause] = cause.match(/([^:]+):(.+)/) || [];
         return  (
             <Stack spacing={1}>
-                <Typography level='title-lg' color='danger'>{main}</Typography>
-                <Typography level='body-md'>{details}</Typography>
+                <Typography level='title-lg' color='danger'>{type.trim()}</Typography>
+                <Typography level='body-md'>{msg.trim()}</Typography>
             </Stack>
         );
 

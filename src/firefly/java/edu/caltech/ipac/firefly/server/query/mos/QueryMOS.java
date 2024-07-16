@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.core.EndUserException;
 import edu.caltech.ipac.firefly.data.MOSRequest;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
@@ -31,7 +32,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -66,13 +66,13 @@ public class QueryMOS extends EmbeddedDbProcessor {
      * By creating new dbFile, it will force a fetchDataGroup.
      */
     @Override
-    public File getDbFile(TableServerRequest treq) {
-        File dbFile = super.getDbFile(treq);
+    public DbAdapter getDbAdapter(TableServerRequest treq) {
+        DbAdapter dbAdapter = super.getDbAdapter(treq);
         if (getTblName(treq).equals(ORBITAL_PATH_TABLE_NAME)) {
-            return new File(dbFile.getParentFile(), "orb-" + dbFile.getName());
-        } else {
-            return dbFile;
+            File dbFile = dbAdapter.getDbFile();
+            return DbAdapter.getAdapter(new File(dbFile.getParentFile(), "orb-" + dbFile.getName()));
         }
+        return dbAdapter;
     }
 
     @Override

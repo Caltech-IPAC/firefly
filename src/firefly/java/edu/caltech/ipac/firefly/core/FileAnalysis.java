@@ -6,8 +6,12 @@ package edu.caltech.ipac.firefly.core;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.messaging.JsonHelper;
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.dpanalyze.DataProductAnalyzer;
 import edu.caltech.ipac.firefly.server.dpanalyze.DataProductAnalyzerFactory;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.TableUtil.Format;
@@ -24,10 +28,12 @@ import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static edu.caltech.ipac.table.TableUtil.getDetails;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
@@ -85,7 +91,8 @@ public class FileAnalysis {
                 break;
             case CSV:
             case TSV:
-                report =  DsvTableIO.analyze(infile, format.type, mtype);
+            case PARQUET:
+                report = analyzeDuckReadable(infile, format, mtype);
                 break;
             case PDF:
                 report =  analyzePDF(infile, mtype);
@@ -117,6 +124,26 @@ public class FileAnalysis {
 
 
         return productReport;
+    }
+
+    private static FileAnalysisReport analyzeDuckReadable(File infile, Format format, FileAnalysisReport.ReportType type) {
+        try {
+            DuckDbReadable dbAdapter = (DuckDbReadable) DbAdapter.getAdapter(infile);
+            DataGroup header = dbAdapter.getInfo();
+            FileAnalysisReport report = new FileAnalysisReport(type, format.name(), infile.length(), infile.getPath());
+            FileAnalysisReport.Part part = new FileAnalysisReport.Part(FileAnalysisReport.Type.Table, String.format("%s (%d cols x %s rows)", format.name(), header.getDataDefinitions().length, header.size()));
+            part.setTotalTableRows(header.size());
+            report.addPart(part);
+            if (type.equals(FileAnalysisReport.ReportType.Details)) {
+                IpacTableDef meta = new IpacTableDef();
+                meta.setCols(Arrays.asList(header.getDataDefinitions()));
+                part.setDetails(getDetails(0, meta));
+            }
+            dbAdapter.close(true);
+            return report;
+        } catch (Exception e) {
+            return makeReportFromException(e);
+        }
     }
 
 

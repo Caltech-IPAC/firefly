@@ -14,6 +14,8 @@ import org.json.simple.JSONValue;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -630,10 +632,13 @@ public class JsonTableUtil {
 
 
     private static final SimpleDateFormat JSON_DATE = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");       // similar to JSON.stringify()
+    private static final DateTimeFormatter DATE_LOCAL = DateTimeFormatter.ofPattern("yyyy-MM-dd");                 // similar to JSON.stringify()
     public static JSONAware getJsonMapper(Object obj) {
 
         if (obj instanceof Date) {
             return () -> "\"" + JSON_DATE.format(obj) + "\"";
+        } else if (obj instanceof LocalDate ldate) {
+            return () -> "\"" + (ldate).format(DATE_LOCAL) + "\"";
         }
         return null;
     }

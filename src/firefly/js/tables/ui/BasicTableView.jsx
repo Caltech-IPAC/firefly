@@ -157,7 +157,7 @@ const BasicTableViewInternal = React.memo((props) => {
             if (isSingleColumnTable(columns) && (!columnWidths || columnWidths[0]!==calcWidth)) {
                 // set 1st (only visible) column's width to table's width minus scrollbar's width (15px)
                 changes.columnWidths = [calcWidth, ...Array(columns.length - 1).fill(0)];
-            } else if(!columnWidths) {
+            } else if(columnWidths?.length !== columns.length) {
                 changes.columnWidths = columnWidthsInPixel(columns, data);
             } else if (columnWidths.some?.((w) => w < 0)) {       // at least one column needs width calc
                 changes.columnWidths = columnWidths.map((w, idx) => w >0 ? w : colWidthInPixel( getColMaxVal(columns[idx], idx,data), columns[idx]));
@@ -393,10 +393,8 @@ function correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredB
     if (scrollLeft < 0) {
         return undefined;
     } else if (scrollLeft > 0 && triggeredBy === TBL_UI_UPDATE) {
-        if (totalColWidths < width) {
-            // if the total widths of the columns is less than the view's width, don't apply scrollLeft
-            return undefined;
-        }
+        if (totalColWidths < width) return undefined;       // if the total widths of the columns is less than the view's width, don't apply scrollLeft
+        if (scrollLeft > totalColWidths) return totalColWidths;               // cannot scroll beyond width
     }
     return scrollLeft;
 }
@@ -445,9 +443,9 @@ function defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx) {
 }
 
 function makeColumns (props) {
-    const {columns} = props;
+    const {columns, columnWidths} = props;
 
-    if (isEmpty(columns)) return false;
+    if (isEmpty(columns) || columns.length !== columnWidths?.length) return false;
 
     var colsEl = columns.map((col, idx) => makeColumnTag(props, col, idx));
     const selBoxCol = makeSelColTag(props);

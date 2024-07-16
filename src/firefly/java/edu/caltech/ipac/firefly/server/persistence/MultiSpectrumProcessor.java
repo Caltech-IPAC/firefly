@@ -12,7 +12,6 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
-import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.ParamDoc;
@@ -34,7 +33,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static edu.caltech.ipac.firefly.server.db.DbAdapter.MAIN_DB_TBL;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -70,20 +68,20 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
     }
 
     @Override
-    protected DataGroupPart getResultSet(TableServerRequest treq, File dbFile) throws DataAccessException {
+    protected DataGroupPart getResultSet(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
         Mode mode = Mode.valueOf(treq.getParam(MODE, Mode.fetch.name()));
 
-        MultiSpecInfo multiSpecInfo = findSpectrums(treq, dbFile);
+        MultiSpecInfo multiSpecInfo = findSpectrums(treq, dbAdapter);
         if (multiSpecInfo != null && multiSpecInfo.spectrums().size() > 0) {
             if (mode == Mode.fetch) {
-                return createDataProductTable(treq, dbFile, multiSpecInfo);
+                return createDataProductTable(treq, dbAdapter, multiSpecInfo);
             } else if (mode == Mode.links) {
-                return createLinksTable(treq, dbFile, multiSpecInfo);
+                return createLinksTable(treq, dbAdapter, multiSpecInfo);
             } else if (mode == Mode.extract) {
-                return createSpectrumTable(treq, dbFile, multiSpecInfo);
+                return createSpectrumTable(treq, dbAdapter, multiSpecInfo);
             }
         }
-        return super.getResultSet(treq, dbFile);
+        return super.getResultSet(treq, dbAdapter);
     }
 
 
@@ -95,9 +93,8 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
     record MultiSpecInfo(DataGroup table, List<DataType> metaCols, List<GroupInfo> spectrums){}
 
 
-    private static MultiSpecInfo findSpectrums(TableServerRequest treq, File dbFile) throws DataAccessException {
-
-        DataGroup table = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(treq), dbFile, "select * from data where ROWNUM < 1", MAIN_DB_TBL);
+    private static MultiSpecInfo findSpectrums(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
+        DataGroup table = dbAdapter.getHeaders(dbAdapter.getDataTable());
 
         if (!table.getAttribute(TableMeta.UTYPE, "").equalsIgnoreCase("ipac:MultiSpectrum")) return null;
 
@@ -110,7 +107,7 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
         return new MultiSpecInfo(table, metaCols, spectrums);
     }
 
-    private DataGroupPart createSpectrumTable(TableServerRequest treq, File dbFile, MultiSpecInfo specs) throws DataAccessException {
+    private DataGroupPart createSpectrumTable(TableServerRequest treq, DbAdapter dbAdapter, MultiSpecInfo specs) throws DataAccessException {
 
         int selRow = treq.getIntParam(SEL_ROW_IDX, 0);
         int spectrIdx = treq.getIntParam(SPECTR_IDX, 0);
@@ -128,9 +125,9 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
         String cnames = cols.stream().map(ri -> toCname(ri.getRef(), specs.table))
                         .map(this::quote)
                         .collect(Collectors.joining(","));
-        String sql = String.format("SELECT %s FROM %s WHERE ROW_IDX = %d", cnames, MAIN_DB_TBL, selRow);
+        String sql = String.format("SELECT %s FROM %s WHERE ROW_IDX = %d", cnames, dbAdapter.getDataTable(), selRow);
 
-        DataGroup table = EmbeddedDbUtil.execQuery(DbAdapter.getAdapter(treq), dbFile, sql, MAIN_DB_TBL);
+        DataGroup table = dbAdapter.execQuery(sql, dbAdapter.getDataTable());
 
         table = transformArrayToRows(table, getAllParamRef(selSpec));
         if (table == null) {
@@ -155,7 +152,7 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
         return new DataGroupPart(table, 0, table.size());
     }
 
-    private DataGroupPart createLinksTable(TableServerRequest treq, File dbFile, MultiSpecInfo specs) {
+    private DataGroupPart createLinksTable(TableServerRequest treq, DbAdapter dbAdapter, MultiSpecInfo specs) {
         int selRow = treq.getIntParam(SEL_ROW_IDX, 0);
 
         DataGroup links = new DataGroup("links to spectra", new DataType[]{
@@ -179,7 +176,7 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
         return new DataGroupPart(links, 0, links.size());
     }
 
-    private DataGroupPart createDataProductTable(TableServerRequest treq, File dbFile, MultiSpecInfo specs) throws DataAccessException {
+    private DataGroupPart createDataProductTable(TableServerRequest treq, DbAdapter dbAdapter, MultiSpecInfo specs) throws DataAccessException {
         if (isEmpty(treq.getInclColumns())) {
             treq = (TableServerRequest) treq.cloneRequest();
             treq.setInclColumns(  specs.metaCols.stream()
@@ -189,7 +186,7 @@ public class MultiSpectrumProcessor extends EmbeddedDbProcessor {
             );
         }
 
-        DataGroupPart dgp = EmbeddedDbUtil.execRequestQuery(treq, dbFile, MAIN_DB_TBL);
+        DataGroupPart dgp = dbAdapter.execRequestQuery(treq, dbAdapter.getDataTable());
         DataGroup table = dgp.getData();
 
         Arrays.asList("dataproduct_type", "access_format", "access_url")

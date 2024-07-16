@@ -11,19 +11,18 @@ import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.DataGroup;
 
-import java.io.File;
 
-
-@SearchProcessorImpl(id = "DecimateTable")
+@SearchProcessorImpl(id = DecimationProcessor.ID)
 public class DecimationProcessor extends TableFunctionProcessor {
+    public static final String ID = "DecimateTable";
     public static final String DECIMATE_INFO = "decimate";
 
 
     protected String getResultSetTablePrefix() {
-        return "deci";
+        return "DECI";
     }
 
-    protected DataGroup fetchData(TableServerRequest treq, File dbFile, DbAdapter dbAdapter) throws DataAccessException {
+    protected DataGroup fetchData(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
 
         DecimateInfo decimateInfo = getDecimateInfo(treq);
         TableServerRequest sreq = QueryUtil.getSearchRequest(treq);

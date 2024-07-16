@@ -122,7 +122,7 @@ public class FileAnalysisTest extends ConfigTest {
         assertEquals(csvTable.length(), report.getFileSize());
         assertEquals(1, report.getParts().size());
         assertEquals(FileAnalysisReport.Type.Table, report.getParts().get(0).getType());
-        assertEquals("CSVFormat (6 cols x 1000 rows)", report.getParts().get(0).getDesc());
+        assertEquals("CSV (6 cols x 1000 rows)", report.getParts().get(0).getDesc());
 
         // files with multiple parts
         // --------------------------------------------------------------------------------------------
