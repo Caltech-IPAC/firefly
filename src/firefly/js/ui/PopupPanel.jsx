@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Box, Card, ChipDelete, DialogContent, DialogTitle, IconButton, Stack, Tooltip} from '@mui/joy';
+import {Box, Card, ChipDelete, DialogTitle, Stack} from '@mui/joy';
 import React, {memo, useState, useEffect, useRef} from 'react';
 import Enum from 'enum';
 import {object,element,func,number,string,bool,oneOfType} from 'prop-types';
@@ -79,10 +79,10 @@ export const PopupPanel= memo((props) => {
 
     if (!visible) return false;
     return (
-        <PopupHeaderTop {...{modal,zIndex,left,top,ctxRef,dialogMoveStart,dialogMoveEnd, onMouseEnter,onMouseLeave, sx,
+        <PopupLayout {...{modal,zIndex,left,top,ctxRef,dialogMoveStart,dialogMoveEnd, onMouseEnter,onMouseLeave, sx,
             dialogMove,children,title,askParentToClose, visibility:layout===LayoutType.NONE ? 'hidden' : 'visible'}}>
             {children}
-        </PopupHeaderTop>
+        </PopupLayout>
     );
 });
 
@@ -105,7 +105,7 @@ PopupPanel.propTypes= {
     element,
 };
 
-function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart,dialogMoveEnd,sx,
+function PopupLayout({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart,dialogMoveEnd,sx,
                             onMouseEnter,onMouseLeave,dialogMove,children,title,askParentToClose}) {
     return (
         <Box sx={{...sx, zIndex, position:'relative'}}>
@@ -113,8 +113,6 @@ function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart
                 <Box sx={{ position: 'fixed', backgroundColor: 'rgba(0, 0, 0, 0.2)',
                          top: 0, left: 0, bottom: 0, right: 0, }}/>}
             <Card {...{className:'ff-PopupPanel', color:'neutral', variant:'plain', ref:(c) => ctxRef.popupRef=c,
-                onTouchStart:dialogMoveStart, onTouchMove:dialogMove,
-                onTouchEnd:dialogMoveEnd, onMouseEnter, onMouseLeave,
                 sx:(theme) => (
                     {
                         left,
@@ -122,21 +120,27 @@ function PopupHeaderTop({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart
                         position: 'absolute',
                         p:.5,
                         visibility,
+                        userSelect : 'none',
                         boxShadow: `1px 1px 5px ${theme.vars.palette.primary.softActiveColor}`,
                         '& .ff-dialog-title-bar' : { cursor:'grab' },
                         '& .ff-dialog-title-bar:active' : { cursor:'grabbing' }
                     }) }}>
-                <Stack direction='row' justifyContent='space-between' alignItems='center'
-                       className='ff-dialog-title-bar'
-                       sx={{position:'relative', height:'1.8em', mb:.5, ml:.5}}
-                       ref={(c) => ctxRef.titleBarRef=c}
-                       onTouchStart={dialogMoveStart} onTouchMove={dialogMove}
-                       onTouchEnd={dialogMoveEnd} onMouseDownCapture={dialogMoveStart}>
-                    <DialogTitle  sx= {{ display:'block', textOverflow:'ellipsis',
-                        width:10, flex:'1 1 auto',
-                        whiteSpace:'nowrap', overflow:'hidden'}} >
-                        {title}
-                    </DialogTitle>
+                <Stack {...{direction:'row', justifyContent:'space-between', alignItems:'center',
+                    sx:{width:1, position:'relative', mb:.5, ml:.5, pr:.5},
+                    ref:(c) => ctxRef.titleBarRef=c, }}>
+                    <Stack {...{
+                        direction:'row', justifyContent:'space-between', alignItems:'center',
+                        className: 'ff-dialog-title-bar',
+                        sx:{ width:1, position:'relative', height:'1.8em' },
+                        onTouchStart:dialogMoveStart, onTouchMove:dialogMove,
+                        onTouchEnd:dialogMoveEnd, onMouseDownCapture:dialogMoveStart,
+                        onMouseEnter, onMouseLeave}}>
+                        <DialogTitle  sx= {{ width:1, display:'block', textOverflow:'ellipsis',
+                             flex:'1 1 auto',
+                            whiteSpace:'nowrap', overflow:'hidden'}} >
+                            {title}
+                        </DialogTitle>
+                    </Stack>
                     <ChipDelete onClick={askParentToClose}/>
                 </Stack>
                 <Box className='ff-dialog-content' sx={{ml:.5}}>
