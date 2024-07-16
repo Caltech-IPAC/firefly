@@ -1,19 +1,25 @@
+import BrowserInfo from '../../util/BrowserInfo';
 import {allBandAry, Band} from '../Band.js';
 import {ServerParams} from '../../data/ServerParams.js';
+import {getGpuJs, getGpuJsImmediate} from './GpuJsConfig';
 import {addRawDataToCache, getEntry, getEntryCount, removeRawData} from './RawDataThreadCache.js';
 import PlotState from '../PlotState.js';
 import {RawDataThreadActions} from '../../threadWorker/WorkerThreadActions.js';
 import {lowLevelDoFetch} from '../../util/WebUtil.js';
 import {
     abortFetch, getRealDataDim, getTransferable,
-    makeFetchOptions, populateRawImagePixelDataInWorker, TILE_SIZE } from './RawDataCommon.js';
+    makeFetchOptions, populateRawImagePixelDataInWorker, shouldUseGpuInWorker, TILE_SIZE
+} from './RawDataCommon.js';
 
-const {FETCH_DATA, STRETCH, COLOR, GET_FLUX, REMOVE_RAW_DATA, FETCH_STRETCH_BYTE_DATA, ABORT_FETCH, CLOSE_WHEN_IDLE}= RawDataThreadActions;
+const {FETCH_DATA, STRETCH, COLOR, MASK_COLOR, GET_FLUX, REMOVE_RAW_DATA, FETCH_STRETCH_BYTE_DATA, ABORT_FETCH, CLOSE_WHEN_IDLE}= RawDataThreadActions;
 
 
 
-export function doRawDataWork({type,payload}) {
+export async function doRawDataWork({type,payload}) {
     let scheduleClose= false;
+    if (shouldUseGpuInWorker() && !BrowserInfo.supportsWebGpu() && !getGpuJsImmediate()  && payload.rootUrl) {
+        await getGpuJs(payload.rootUrl); // make sure the GPU code is loaded up front
+    }
     try {
         payload= deserialize(payload);
 
@@ -21,26 +27,27 @@ export function doRawDataWork({type,payload}) {
             case ABORT_FETCH: return abortFetch(payload);
             case FETCH_STRETCH_BYTE_DATA: return fetchByteDataArray(payload);
             case COLOR: return doColorChange(payload);
+            case MASK_COLOR: return doMaskColorChange(payload);
             case REMOVE_RAW_DATA: {
-                abortFetch(payload);
-                return Promise.resolve({data:{type:REMOVE_RAW_DATA, entryCnt:removeRawData(payload.plotImageId)}});
+                void abortFetch(payload);
+                return {data:{type:REMOVE_RAW_DATA, entryCnt:removeRawData(payload.plotImageId)}};
             }
             case CLOSE_WHEN_IDLE: {
                 if (!scheduleClose) {
                     scheduleClose=true;
                     doScheduleClose(payload?.workerKey);
                 }
-                return Promise.resolve({data:{success:true, type: RawDataThreadActions.CLOSE_WHEN_IDLE}});
+                return {data:{success:true, type: RawDataThreadActions.CLOSE_WHEN_IDLE}};
             }
 
             case FETCH_DATA:
             case STRETCH:
             case GET_FLUX:
-                return Promise.resolve({success:false, error:`${type} is disabled`});
+                return {success:false, error:`${type} is disabled`};
         }
     }
     catch (error) {
-        return Promise.resolve({success:false, error});
+        return {success:false, error};
     }
 }
 
@@ -73,6 +80,18 @@ async function doColorChange(payload) {
     return {data:{...result, type:COLOR, transferable: getTransferable(result)}};
 }
 
+async function doMaskColorChange(payload) {
+    const {plotImageId,plotState,maskColor, rootUrl,} = payload;
+    const entry = getEntry(plotImageId);
+    const newPlotState = plotState.copy();
+
+    const {retRawTileDataGroup, localRawTileDataGroup}=
+        await populateRawImagePixelDataInWorker({rawTileDataGroup:entry.rawTileDataGroup, mask:true, maskColor,rootUrl});
+    entry.rawTileDataGroup= localRawTileDataGroup;
+
+    const result=  {rawTileDataGroup:retRawTileDataGroup, plotStateSerialized: newPlotState.toJson(true)};
+    return {data:{...result, type:MASK_COLOR, transferable: getTransferable(result)}};
+}
 
 function convertToBits(ary) {
     const retAry= new Uint8ClampedArray(Math.trunc(ary.length/8)+1);
@@ -83,6 +102,15 @@ function convertToBits(ary) {
         }
     }
     return retAry;
+}
+
+function convertToUint32(ary) {
+    const retAry= new Uint32Array(ary.length);
+    for(let i=0;(i<ary.length);i++) {
+       retAry[i] = ary[i];
+    }
+    return retAry;
+
 }
 
 async function fetchByteDataArray(payload) {
@@ -197,9 +225,7 @@ export async function callStretchedByteData(plotImageId,plotStateSerialized,plot
     if (!response.ok) {
         const message= `Fatal: Error from Server for getStretchedByteData: code: ${response.status}, text: ${response.statusText}`;
         console.log('callStretchedByteData: '+message);
-        return {
-            success:false, message, allTileAry:[]
-        };
+        return { success:false, message, allTileAry:[] };
     }
     const byte1d= new Uint8ClampedArray(await response.arrayBuffer());
     if (!byte1d.length) {
@@ -308,7 +334,7 @@ export function createImageTileData(x,y,width,height) {
         lastLine: y +height -1,
         pixelDataStandard: undefined,
         pixelData3C: undefined,
-        workerTmpTile: undefined,
+        workerBitMapTile: undefined,
         imageMasks: undefined,
         rawImageTile: undefined,
     };

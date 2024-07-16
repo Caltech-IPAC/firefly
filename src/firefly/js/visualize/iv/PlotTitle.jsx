@@ -8,6 +8,7 @@ import PropTypes from 'prop-types';
 import {hasWorkingTask} from '../../core/AppDataCntlr';
 import {sprintf} from '../../externalSource/sprintf';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {visRoot} from '../ImagePlotCntlr';
 import {HALF, QUARTER} from '../rawData/RawDataCommon.js';
 import {getDataCompress} from '../rawData/RawDataOps.js';
 import {ctxToolbarBG} from '../ui/VisCtxToolbarView.jsx';
@@ -17,15 +18,19 @@ import {isImage} from '../WebPlot.js';
 import {hasWCSProjection, pvEqualExScroll} from '../PlotViewUtil';
 
 export const PlotTitle= memo(({plotView:pv, brief}) => {
-        const {dataCompress,working}= useStoreConnector(() =>
-            ({working:hasWorkingTask(pv?.plotId), dataCompress:getDataCompress(pv?.plotId)}));
+        const {dataCompress,working}= useStoreConnector(() => (
+            {
+                working: hasWorkingTask(pv?.plotId),
+                dataCompress: getDataCompress(primePlot(visRoot(), pv.plotId)?.plotImageId)
+            }
+        ));
         const plot= primePlot(pv);
         const world= hasWCSProjection(plot);
         const zlRet= getZoomDesc(pv);
         const flipString= pv.flipY ? ', Flip Y' : '';
         const rotString= getRotateStr(pv);
 
-        const zlStr= world ? `${getSpaces(dataCompress)}FOV:${zlRet.fovFormatted}` : zlRet.zoomLevelFormatted;
+        const zlStr= world ? `${getSpaces(dataCompress)}FOV:${zlRet.fovFormatted}` : `${getSpaces(dataCompress)}${zlRet.zoomLevelFormatted}`;
 
         const tooltip= (
             <Stack direction='column'>
@@ -85,9 +90,14 @@ const WorkingIndicator= () => (
         }}
     />);
 
+
+const space= '&nbsp;';
+// const space= '-'; // for debugging rendered compression
+const space2= space+space;
+
 function getSpaces(dataCompress) {
-    if (dataCompress===QUARTER) return '&nbsp;&nbsp;';
-    if (dataCompress===HALF) return '&nbsp;';
+    if (dataCompress===QUARTER) return space2;
+    if (dataCompress===HALF) return space;
     return '';
 }
 

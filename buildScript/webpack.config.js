@@ -32,6 +32,10 @@ export default function makeWebpackConfig(config) {
     const ENV_DEV_MODE= process.env.DEV_MODE;
     const {BUILD_ENV='local'}   = process.env;
     const localBuild= BUILD_ENV === 'local';
+    const MIN_SAFARI_VERSION= '17';
+    const MIN_CHROME_VERSION= '130';
+    const MIN_FIREFOX_VERSION= '134';
+    const MIN_EDGE_VERSION= '130';
 
     if (!process.env.NODE_ENV) {
         process.env.NODE_ENV = ['local', 'dev'].includes(BUILD_ENV) ? 'development' : 'production';
@@ -79,11 +83,17 @@ export default function makeWebpackConfig(config) {
         });
     }
 
+
+
     const globals = {
         __PROPS__       : {
             BUILD_ENV   : JSON.stringify(process.env.BUILD_ENV),
             SCRIPT_NAME : JSON.stringify(script_names),
-            MODULE_NAME : JSON.stringify(config.name)
+            MODULE_NAME : JSON.stringify(config.name),
+            MIN_SAFARI_VERSION,
+            MIN_CHROME_VERSION,
+            MIN_FIREFOX_VERSION,
+            MIN_EDGE_VERSION,
         }
 
     };
@@ -137,7 +147,12 @@ export default function makeWebpackConfig(config) {
                         ['@babel/preset-env',
                             {
                                 targets: {
-                                    browsers: ['safari >= 16', 'chrome >= 130', 'firefox >= 134', 'edge >= 130']
+                                    browsers: [
+                                        'safari >= '+MIN_SAFARI_VERSION,
+                                        'chrome >= '+MIN_CHROME_VERSION,
+                                        'firefox >= '+MIN_FIREFOX_VERSION,
+                                        'edge >= '+MIN_EDGE_VERSION
+                                    ],
                                 },
                                 debug: false,
                                 modules: false,  // preserve application module style - in our case es6 modules

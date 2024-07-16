@@ -46,7 +46,7 @@ export const DEFAULT_HEATMAP_LABELS= true;
 export function getHeatMapGridSize() {
     const HPX_GRID_SIZE_VERY_SMALL= 32;
     const HPX_GRID_SIZE_VERY_SMALL_PERFORMANT= 16;
-    if (BrowserInfo.isChrome()) return HPX_GRID_SIZE_VERY_SMALL_PERFORMANT;
+    if (BrowserInfo.isChromeLike()) return HPX_GRID_SIZE_VERY_SMALL_PERFORMANT;
     if (BrowserInfo.isSafari()) return HPX_GRID_SIZE_VERY_SMALL;
     if (BrowserInfo.isFirefox()) return HPX_GRID_SIZE_VERY_SMALL_PERFORMANT;
     return HPX_GRID_SIZE_VERY_SMALL;
@@ -59,7 +59,7 @@ export function getHeatMapNorder(largeSizeNorder) {
     if (largeSizeNorder===DATA_NORDER-3) return {showLabels:true, norder:DATA_NORDER-2};
 
     let performant= false;
-    if (BrowserInfo.isChrome()) performant= true;
+    if (BrowserInfo.isChromeLike()) performant= true;
 
     if (performant) {
         return {showLabels:false, norder:largeSizeNorder+3};

@@ -4,7 +4,7 @@
 
 import {isNil} from 'lodash';
 import {callWhileAwaiting} from '../../util/WebUtil';
-import {NO_COLOR_TABLE} from '../rawData/rawAlgorithm/ColorTable';
+import {NO_COLOR_TABLE} from '../rawData/ColorTable';
 import {retrieveAndProcessImage} from './ImageProcessor.js';
 import {drawOneHiPSTile} from './HiPSSingleTileRender.js';
 import {findTileCachedImage, addTileCachedImage, addFailedImage, isInFailTileCached} from './HiPSTileCache.js';
@@ -54,7 +54,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
      * @param bias
      * @param contrast
      */
-    const drawTileAsync= (src, tile, colorTableId,bias,contrast) => {
+    const drawTileAsync= async (src, tile, colorTableId,bias,contrast) => {
         if (abortRender) return;
         let inCache;
         let tileData;
@@ -64,7 +64,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
         if (colorTableId!==NO_COLOR_TABLE && !cachedTile) {
             cachedTile= findTileCachedImage(src);
             if (cachedTile) {
-                const coloredImage= hipsColorOps.changeHiPSColor(cachedTile.image,colorTableId,bias,contrast);
+                const coloredImage= await hipsColorOps.changeHiPSColor(cachedTile.image,colorTableId,bias,contrast);
                 addTileCachedImage(src, coloredImage,colorTableId,bias,contrast);
                 cachedTile= findTileCachedImage(src,colorTableId,bias,contrast);
             }
@@ -98,7 +98,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
                 now-firstRenderTime>2000);
         };
 
-        p.then((imageData) => {
+        p.then(async (imageData) => {
             renderedCnt++;
 
             let image;
@@ -106,7 +106,7 @@ export function makeHipsRenderer(screenRenderParams, totalCnt, isBaseImage, scre
                 image= imageData.image;
                 addTileCachedImage(src, image);
                 if (colorTableId!==NO_COLOR_TABLE) {
-                    image= hipsColorOps.changeHiPSColor(image,colorTableId,bias,contrast);
+                    image= await hipsColorOps.changeHiPSColor(image,colorTableId,bias,contrast);
                     addTileCachedImage(src, image,colorTableId,bias,contrast);
                 }
 

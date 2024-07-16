@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {loadScript, getRootURL, getGlobalObj} from '../../util/WebUtil.js';
+import {loadScript, getRootURL} from '../../util/WebUtil.js';
 
 // const GPU_JS_SCRIPT= 'gpu-browser.min-2.15.0.js';
 const GPU_JS_SCRIPT= 'gpu-browser.min-2.15.0-FIX-GPUX.js';
@@ -26,7 +26,7 @@ function initGpuJsRetriever(loadNow) {
         if (!gpuJsLoadBegin) {
             gpuJsLoadBegin= true;
             loadScript(script).then( () => {
-                loadedGpuJs= getGlobalObj().GPUX;
+                loadedGpuJs= globalThis.GPUX;
                 if (loadedGpuJs) {
                     foundGPU= loadedGpuJs;
                     waitingResolvers.forEach((r) => r(loadedGpuJs));

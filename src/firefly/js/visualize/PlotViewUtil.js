@@ -1118,10 +1118,6 @@ export function hasLocalStretchByteData(plot) {
     return hasLocalStretchByteDataInStore(plot);
 }
 
-export function hasClearedByteData(plot) {
-    return hasClearedDataInStore(plot);
-}
-
 export function isAllStretchDataLoaded(vr) {
     return getPlotViewAry(vr)
         .map( (pv) => primePlot(pv))

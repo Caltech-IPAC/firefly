@@ -7,18 +7,19 @@ import {RawDataThreadActions} from '../../threadWorker/WorkerThreadActions.js';
 /**
  * @typedef RawDataStoreEntry
  *
- * @prop plotImageId
+ * @prop {String} plotImageId
+ * @prop {boolean} initialized - true if initialized
  * @prop {Canvas} thumbnailEncodedImage
  * @prop {Array.<{x:number,y:number,width:number,height:number,local:boolean}>} localScreenTileDefList
  * @prop {RawTileDataGroup}
  *
- * @prop {number} loadingCnt - number of times this is loading, it should be 0,1,2
+ * @prop {number} loadingPromise - a promise to the current load
  */
 
 export const STRETCH_ONLY= 'STRETCH_ONLY';
 export const CLEARED= 'CLEARED';
 
-export const {addRawDataToCache, getEntry, removeRawData}= (() => {
+export const {addRawDataToCache, getEntry, removeRawData,addLoadingPromise, markOutOfMemory}= (() => {
 
     let rawDataStore= [];
 
@@ -37,30 +38,56 @@ export const {addRawDataToCache, getEntry, removeRawData}= (() => {
             entry[band.key]= bandEntry;
             entry.workerKey= workerKey;
             entry.dataType= dataType;
+            entry.initialized= true;
         }
         else {
-            rawDataStore.push({plotImageId, [band.key]:bandEntry, workerKey, dataType, loadingCnt:0});
+            rawDataStore.push({plotImageId, [band.key]:bandEntry, workerKey, dataType, loadingPromise:undefined});
         }
-    };
-
-    const updateCacheData= (plot, cacheData) => {
-        //todo  this should update the cache
-        //       make getEntry clone the results, so updateCacheData must be called
     };
 
     const removeRawData= (plotImageId) => {
         const entry= getEntry(plotImageId);
-        if (entry) {
-            rawDataStore= rawDataStore.filter( (s) => s.plotImageId!==plotImageId);
+        rawDataStore= rawDataStore.filter( (s) => s.plotImageId!==plotImageId);
+        if (entry.initialized) {
             const action= {type:RawDataThreadActions.REMOVE_RAW_DATA, workerKey:entry.workerKey, payload:{plotImageId}};
             postToWorker(action).then(({entryCnt}) => {
                 if (entryCnt===0) removeWorker(entry.workerKey);
             });
         }
     };
-    const getEntry= (plotImageId) => rawDataStore.find( (e)  => e.plotImageId===plotImageId);
+    const getEntry= (plotImageId,create=true) => {
+        if (!plotImageId) return create ? {initialized:false} : undefined;
+        let entry= rawDataStore.find( (e)  => e.plotImageId===plotImageId);
+        if (!entry && create) {
+            entry= {plotImageId, loadingPromise:undefined, initialized: false, outOfMemory:false};
+            rawDataStore.push(entry);
+        }
+        return entry;
+    };
 
-    return { addRawDataToCache, removeRawData, getEntry};
+    const addLoadingPromise= (plotImageId,loadingPromise) => {
+        const entry= getEntry(plotImageId);
+        if (!entry) return;
+        entry.loadingPromise= loadingPromise;
+
+        const clearPromise= () => {
+            if (loadingPromise===entry.loadingPromise) entry.loadingPromise=undefined;
+        };
+
+        loadingPromise
+            .then(() => clearPromise(loadingPromise) )
+            .catch(() => clearPromise(loadingPromise) );
+    };
+
+    const markOutOfMemory= (plotImageId) => {
+        const workerKey= getEntry(plotImageId,false)?.workerKey;
+        if (!workerKey) return;
+        rawDataStore.forEach( (e)  => {
+            if (e.workerKey===workerKey) e.outOfMemory= true;
+        });
+    };
+
+    return { addRawDataToCache, removeRawData, getEntry,addLoadingPromise, markOutOfMemory};
 
 })();
 

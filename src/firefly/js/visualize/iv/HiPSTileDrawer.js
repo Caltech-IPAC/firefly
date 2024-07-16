@@ -3,6 +3,8 @@
  */
 
 import Enum from 'enum';
+import {dispatchAddWorkingTask} from '../../core/AppDataCntlr';
+import {callWhileAwaiting} from '../../util/WebUtil';
 import {createImageUrl,initOffScreenCanvas, computeBounding} from './TileDrawHelper.jsx';
 import {primePlot} from '../PlotViewUtil.js';
 import {getPointMaxSide, getHiPSNorderlevel, makeHiPSAllSkyUrlFromPlot, loadImageMultiCall} from '../HiPSUtil.js';
@@ -10,7 +12,7 @@ import {findAllSkyCachedImage, findTileCachedImage, addAllSkyCachedImage} from '
 import {makeHipsRenderer} from './HiPSRenderer.js';
 import {isHiPS, isHiPSAitoff} from '../WebPlot';
 import {getHipsColorOps} from './HipsColor.js';
-import {getColorModel, NO_COLOR_TABLE} from '../rawData/rawAlgorithm/ColorTable.js';
+import {getColorModel, NO_COLOR_TABLE} from '../rawData/ColorTable.js';
 import {brighter, darker} from 'firefly/util/Color.js';
 import {findCellOnScreen} from 'firefly/visualize/iv/HiPSCellFinder.js';
 
@@ -31,15 +33,14 @@ export const DrawTiming= new Enum(['IMMEDIATE','ASYNC', 'DELAY']);
 /**
  * Return a function that should be called on every render to draw the image
  * @param targetCanvas
- * @param GPU
  * @return {*}
  */
-export function createHiPSDrawer(targetCanvas, GPU) {
+export function createHiPSDrawer(targetCanvas) {
     if (!targetCanvas) return () => undefined;
     let abortLastDraw= null;
     let lastDrawNorder= 0;
     let lastFov;
-    const hipsColorOps= getHipsColorOps(GPU);
+    const hipsColorOps= getHipsColorOps();
 
 
     return (plot, opacity,plotView,colorMode) => {
@@ -161,9 +162,9 @@ const fovEqual= (fov1,fov2) => Math.trunc(fov1*10000) === Math.trunc(fov2*10000)
  * @param p.tilesToLoad
  * @param p.useAllSky
  * @param p.drawAllSkyOnlyIfCached
- * @param p.drawAllSkyOnlyIfCached
  * @param p.opacity
  * @param p.drawTiming
+ * @param p.desiredNorder
  * @param p.screenRenderEnabled
  * @param {boolean} [p.isMaxOrder] true if this norder is the max order
  */
@@ -195,23 +196,19 @@ function drawDisplay({targetCanvas, offscreenCanvas, plot,
 }
 
 
-/**
- * first look for an allsky image with the correct color, it not found look at see if we have the base allsky image
- * if not found return, if we have the base one then change the color and that version to the cache, then return it
- * @param allSkyURL
- * @param {String} ctId
- * @param {number} bias
- * @param {number} contrast
- * @param hipsColorOps
- * @return {HiPSAllSkyCacheInfo|undefined}
- */
-function findCachedAllSkyToFitColor(allSkyURL,ctId,bias,contrast, hipsColorOps) {
-    const cachedAllSkyData= findAllSkyCachedImage(allSkyURL,ctId,bias,contrast);
-    if (cachedAllSkyData) return cachedAllSkyData; // found and returned
-    const cachedAllSkyOriginalData= findAllSkyCachedImage(allSkyURL);  //look for the based all sky image (without color change)
-    if (!cachedAllSkyOriginalData || ctId===NO_COLOR_TABLE) return cachedAllSkyOriginalData;
-       // at this point we have a base all sky image that needs to have the color changed
-    const coloredAllSkyCanvas= hipsColorOps.changeHiPSColor(cachedAllSkyOriginalData.order3,ctId,bias,contrast);
+
+function findCachedAllSky(allSkyURL,ctId,bias,contrast) {
+    const cachedAllSkyData = findAllSkyCachedImage(allSkyURL, ctId, bias, contrast);
+    if (cachedAllSkyData) return {matchingAllSky:cachedAllSkyData, found:true}; // found and returned
+
+    const cachedAllSkyOriginalData = findAllSkyCachedImage(allSkyURL);  //look for the based all sky image (without color change)
+    if (!cachedAllSkyOriginalData) return {matchingAllSky:undefined, found:false};
+    if (cachedAllSkyOriginalData && ctId===NO_COLOR_TABLE) return {matchingAllSky:cachedAllSkyOriginalData, found:true};
+    return {matchingAllSky:undefined, originalAllSky:cachedAllSkyOriginalData, found:true};
+}
+
+async function insertColorInAllSky(allSkyURL,ctId,bias,contrast,cachedAllSkyOriginalData,hipsColorOps) {
+    const coloredAllSkyCanvas= await hipsColorOps.changeHiPSColor(cachedAllSkyOriginalData.order3,ctId,bias,contrast);
     addAllSkyCachedImage(allSkyURL, coloredAllSkyCanvas,ctId,bias,contrast);
     return findAllSkyCachedImage(allSkyURL,ctId,bias,contrast);
 }
@@ -220,24 +217,34 @@ async function drawDisplayUsingAllSky(drawer, plot, hipsColorOps, tilesToLoad, d
     const allSkyURL= makeHiPSAllSkyUrlFromPlot(plot);
     const ctId= colorId(plot);
     const {bias,contrast}= plot.rawData.bandData[0];
-    const findAllSkyCached= () => findCachedAllSkyToFitColor(allSkyURL,ctId,bias,contrast, hipsColorOps);
+    const findAllSky= () => findCachedAllSky(allSkyURL,ctId,bias,contrast);
 
+    const doDrawing= async (matchingAllSky, originalAllSky) => {
+        let allSky= matchingAllSky;
+        if (!allSky) {
+            allSky= await callWhileAwaiting(
+                insertColorInAllSky(allSkyURL,ctId,bias,contrast,originalAllSky,hipsColorOps),
+                (p) => dispatchAddWorkingTask(plot.plotId,p), 500 );
+        }
+        drawer.drawAllSky(allSky, tilesToLoad);
+    };
 
-    const cachedAllSkyData= findAllSkyCached();
-    if (cachedAllSkyData) {
-        drawer.drawAllSky(cachedAllSkyData, tilesToLoad);
+    const {matchingAllSky,originalAllSky, found}= findAllSky();
+    if (found) {
+        void doDrawing(matchingAllSky, originalAllSky);
         return;
     }
     if (drawOnlyIfCached) {
         const allSkyImage= await loadImageMultiCall(allSkyURL);
-        if (!findAllSkyCached()) addAllSkyCachedImage(allSkyURL, allSkyImage);
+        if (!findAllSky().found) addAllSkyCachedImage(allSkyURL, allSkyImage);
         return;
     }
     try {
         const allSkyImage= await loadImageMultiCall(allSkyURL);
-        if (!findAllSkyCached()) addAllSkyCachedImage(allSkyURL, allSkyImage);
-        const processedAllSkyData= findAllSkyCached();
-        drawer.drawAllSky(processedAllSkyData, tilesToLoad);
+        const secondTry= findAllSky();
+        if (!secondTry.found) addAllSkyCachedImage(allSkyURL, allSkyImage);
+        const finalTry= findAllSky();
+        void doDrawing(finalTry.matchingAllSky, finalTry.originalAllSky);
     } catch (e) {// should not happen - there is no all sky image, so we are using the full tiles.
         drawer.drawAllTilesAsync(tilesToLoad,plot);
     }
@@ -318,8 +325,7 @@ function makeOffScreenCanvas(plotView, plot, overlayTransparent, colorMode) {
         // ctx.fillStyle = 'red'; //for testing
     }
     else {
-        const cm= getColorModel(colorId(plot));
-        const [r,g,b]=[Math.trunc(cm[0]*255),Math.trunc(cm[1]*255),Math.trunc(cm[2]*255)];
+        const [r,g,b]= getColorModel(colorId(plot));
         ctx.fillStyle = `rgba(${r},${g},${b},1)`;
     }
     ctx.fillRect(0, 0, width, height);

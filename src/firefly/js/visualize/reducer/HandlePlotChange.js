@@ -101,6 +101,7 @@ export function reducer(state, action) {
         case Cntlr.CHANGE_IMAGE_VISIBILITY: return changeVisibility(state,action);
         case Cntlr.REQUEST_LOCAL_DATA: return requestLocalData(state,action);
         case Cntlr.CHANGE_SUBHIGHLIGHT_PLOT_VIEW: return changeSubHighPlotView(state,action);
+        case Cntlr.MARK_OUT_OF_MEMORY: return doMarkOutOfMemory(state,action);
     }
     return retState;
 }
@@ -866,6 +867,18 @@ function changeSubHighPlotView(state,action) {
         if (pv.subHighlight===entry.subHighlight) return pv;
         anyChanged= true;
         return {...pv, subHighlight:entry.subHighlight};
+    });
+    return anyChanged ? {...state, plotViewAry} : state;
+}
+
+function doMarkOutOfMemory(state, action) {
+    const {markOutOfMemory= false,plotId}= action.payload;
+    let anyChanged= false;
+    const plotViewAry= state.plotViewAry.map( (pv) => {
+        if (pv.plotId!==plotId) return pv;
+        if (pv.plotViewCtx.markOutOfMemory===markOutOfMemory) return pv;
+        anyChanged= true;
+        return {...pv, plotViewCtx:{...pv.plotViewCtx, markOutOfMemory}};
     });
     return anyChanged ? {...state, plotViewAry} : state;
 }

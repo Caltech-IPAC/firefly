@@ -33,6 +33,26 @@ export function makeColorAction({plot, colorTableId, bias, contrast, bandUse, na
     };
 }
 
+
+/**
+ * change mask color
+ * @param obj
+ * @param obj.plot
+ * @param obj.maskColor
+ * @param obj.workerKey
+ * @return {WorkerAction}
+ */
+export function makeMaskColorAction({plot, maskColor, workerKey}) {
+    const {plotImageId, plotState} = plot;
+    return {
+        type: RawDataThreadActions.MASK_COLOR,
+        workerKey,
+        payload: { plotImageId, maskColor, plotStateSerialized: plotState.toJson(true), rootUrl: getRootURL() }
+    };
+}
+
+
+
 /**
  *
  * @param {String} plotImageId

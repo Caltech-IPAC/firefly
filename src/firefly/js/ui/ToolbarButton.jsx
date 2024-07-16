@@ -257,7 +257,7 @@ function makeFontSettings(theme) {
 function makeTextLabel(text,shortcutKey) {
     const {meta,key,hasShortcut}= getShortCutInfo(shortcutKey);
     if (!hasShortcut) return text;
-    if (hasShortcut && meta && BrowserInfo.isPlatform(Platform.MAC)) {
+    if (hasShortcut && meta && BrowserInfo.isPlatform(Platform.MACOS)) {
         shortcutKey= String.fromCharCode(0x2318) + '-'+key;
     }
     return (

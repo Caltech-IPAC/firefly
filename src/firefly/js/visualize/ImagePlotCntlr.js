@@ -128,6 +128,7 @@ const PROCESS_SCROLL= `${PLOTS_PREFIX}.ProcessScroll`;
 const CHANGE_CENTER_OF_PROJECTION= `${PLOTS_PREFIX}.changeCenterOfProjection`;
 /** Action Type: Recenter in image on the active target */
 const RECENTER= `${PLOTS_PREFIX}.recenter`;
+const MARK_OUT_OF_MEMORY= `${PLOTS_PREFIX}.makeOutOfMemory`;
 /** Action Type: replot the image with the original plot parameters */
 const RESTORE_DEFAULTS= `${PLOTS_PREFIX}.restoreDefaults`;
 const POSITION_LOCKING= `${PLOTS_PREFIX}.PositionLocking`;
@@ -328,7 +329,7 @@ export default {
     PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, PLOT_MASK_LAZY_LOAD, DELETE_OVERLAY_PLOT, BYTE_DATA_REFRESH,
     OVERLAY_PLOT_CHANGE_ATTRIBUTES, WCS_MATCH, API_TOOLS_VIEW, CHANGE_MOUSE_READOUT_MODE,
     CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_TABLE_AUTO_SCROLL, USE_TABLE_AUTO_SCROLL,REQUEST_LOCAL_DATA,
-    CHANGE_SUBHIGHLIGHT_PLOT_VIEW
+    CHANGE_SUBHIGHLIGHT_PLOT_VIEW, MARK_OUT_OF_MEMORY
 };
 
 const KEY_ROOT= 'progress-';
@@ -606,6 +607,9 @@ export function dispatchRecenter({plotId, centerPt= undefined, centerOnImage=fal
     dispatcher({type: RECENTER, payload: {plotId, centerPt, centerOnImage, updateFixedTarget, updateWcsPrimId} });
 }
 
+export function dispatchMarkOutOfMemory({plotId, markOutOfMemory= true, dispatcher= flux.process}) {
+    dispatcher({type: MARK_OUT_OF_MEMORY, payload: {plotId, markOutOfMemory}});
+}
 /**
  * @summary replot the image with the original plot parameters
  *
@@ -1065,13 +1069,13 @@ const changeActions= convertToIdentityObj([
     STRETCH_CHANGE, RECENTER, OVERLAY_COLOR_LOCKING, POSITION_LOCKING,
     PLOT_PROGRESS_UPDATE, OVERLAY_PLOT_CHANGE_ATTRIBUTES, CHANGE_PRIME_PLOT, CHANGE_CENTER_OF_PROJECTION,
     CHANGE_HIPS, CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_IMAGE_VISIBILITY, BYTE_DATA_REFRESH,
-    REQUEST_LOCAL_DATA,CHANGE_SUBHIGHLIGHT_PLOT_VIEW
+    REQUEST_LOCAL_DATA,CHANGE_SUBHIGHLIGHT_PLOT_VIEW, MARK_OUT_OF_MEMORY,
 ]);
 
 const adminActions= convertToIdentityObj([
     API_TOOLS_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_EXPANDED_MODE, CHANGE_MOUSE_READOUT_MODE,
     EXPANDED_AUTO_PLAY, CHANGE_POINT_SELECTION, DELETE_PLOT_VIEW, WCS_MATCH, CHANGE_TABLE_AUTO_SCROLL,
-    USE_TABLE_AUTO_SCROLL
+    USE_TABLE_AUTO_SCROLL,
 ]);
 
 
