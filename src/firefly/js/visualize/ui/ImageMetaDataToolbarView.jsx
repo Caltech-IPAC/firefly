@@ -30,10 +30,12 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
     const {canGrid, hasRelatedBands, converterId, maxPlots, threeColor}= converter;
 
     const layoutDetail= getLayoutDetails(getMultiViewRoot(), viewerId, activeTable?.tbl_id);
+    const viewer= getViewer(getMultiViewRoot(), viewerId);
 
     // single mode stuff
 
-    const showThreeColorButton= threeColor && layoutDetail!==GRID_FULL && !(viewerPlotIds[0].includes(GRID_FULL.toLowerCase()));
+    const showThreeColorButton= threeColor && viewer?.layout===GRID &&
+        layoutDetail!==GRID_FULL && !(viewerPlotIds[0].includes(GRID_FULL.toLowerCase()));
     const showPager= activeTable && canGrid && layoutType===GRID && layoutDetail===GRID_FULL;
     const showMultiImageOps= canGrid || hasRelatedBands;
 
