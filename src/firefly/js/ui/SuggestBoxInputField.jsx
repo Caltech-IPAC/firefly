@@ -15,11 +15,10 @@ import './SuggestBoxInputField.css';
 
 /**
  *  Make sure a component (like highlighted suggestion) is visible
- *  @param {ReactComponent} c
+ *  @param  el
  *  @param {Number} highlightedIdx
  */
-function ensureVisible(c, highlightedIdx) {
-    const el = ReactDOM.findDOMNode(c); //DOMElement
+function ensureVisible(el, highlightedIdx) {
     if (el && highlightedIdx) {
         const nSuggestions = el.children.length;
         if (nSuggestions>1) {

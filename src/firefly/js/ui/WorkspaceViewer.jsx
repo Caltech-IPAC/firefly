@@ -43,8 +43,8 @@ import {Stacker} from 'firefly/ui/Stacker.jsx';
 
 export const WorkspaceView = memo( (props) => {
 
-    const {canCreateFolder, canCreateFiles, canRenameFolder, canRenameFile,
-        canDeleteFolder, canDeleteFile, onClickItem, files, wrapperStyle={width: '100%', height: '100%'},
+    const {canCreateFolder=false, canCreateFiles=false, canRenameFolder=false, canRenameFile=false,
+        canDeleteFolder=false, canDeleteFile=false, onClickItem, files=[], wrapperStyle={width: '100%', height: '100%'},
         keepSelect, folderLevel=1, selectedItem} = props;
     const eventHandlers = {
         onCreateFolder: canCreateFolder ? onCreateFolder : undefined,
@@ -73,16 +73,6 @@ export const WorkspaceView = memo( (props) => {
     );
 });
 
-WorkspaceView.defaultProps = {
-    canCreateFolder: false,
-    canCreateFiles: false,
-    canRenameFolder: false,
-    canRenameFile: false,
-    canDeleteFolder: false,
-    canDeleteFile: false,
-    onClickItem: null,
-    files: []
-};
 
 WorkspaceView.propTypes = {
     canCreateFolder: PropTypes.bool,
@@ -211,7 +201,7 @@ export function showWorkspaceDialog({onComplete, value, fieldKey}) {
 
 /*-----------------------------------------------------------------------------------------*/
 
-export function WorkspaceAsPopup({wrapperStyle, onComplete, value, isLoading, fieldKey}) {
+export function WorkspaceAsPopup({wrapperStyle, onComplete, value, isLoading=false, fieldKey}) {
     
     return (
         <Stack spacing={2} justifyContent={'center'} sx={{px: 2, wrapperStyle}}>
@@ -238,10 +228,6 @@ WorkspaceAsPopup.propTypes = {
     wrapperStyle: PropTypes.object,
     onComplete: PropTypes.func.isRequired,
     isLoading: PropTypes.bool.isRequired
-};
-
-WorkspaceAsPopup.defaultProps = {
-    isLoading: false
 };
 
 

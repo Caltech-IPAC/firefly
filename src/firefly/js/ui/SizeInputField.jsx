@@ -37,7 +37,7 @@ const isSizeValid = (sizeDeg,  min, max) => (
 
 const isFieldValid= (valInDeg, nullAllowed, min, max) => (nullAllowed && !valInDeg) || isSizeValid(valInDeg, min, max);
 
-function updateSizeInfo({unit, value, nullAllowed, min, max, displayValue}) {
+function updateSizeInfo({unit='deg', value, nullAllowed, min, max, displayValue}) {
     return {
         unit: unit || 'deg',
         valid: isFieldValid(value, nullAllowed, min, max),
@@ -82,7 +82,7 @@ function getFeedback(unit, min, max, showFeedback) {
 const SizeInputFieldView= (props) => {
     const {nullAllowed, min, max, sx, inputStyle={}, connectedMarker= false,
         orientation='vertical', slotProps,
-        label, showFeedback, onChange} = props;
+        label='Size: ', showFeedback=false, onChange} = props;
     const [{value, valid, displayValue, unit},setState]= useState(() => updateSizeInfo(props));
     const {feedback, errmsg}= getFeedback(unit,min,max,showFeedback);
 
@@ -192,11 +192,6 @@ SizeInputFieldView.propTypes = {
     })
 };
 
-SizeInputFieldView.defaultProps = {
-    label: 'Size: ',
-    unit: 'deg',
-    showFeedback: false
-};
 
 
 export const SizeInputFields = memo( (props) => {

@@ -17,7 +17,8 @@ import {CombineChart} from './CombineChart.jsx';
 
 function ChartPanelView(props) {
 
-    const {chartId, tbl_group, chartData, expandable, expandedMode, Toolbar, showToolbar, glass} = props;
+    const {chartId, Chart= PlotlyChartArea, tbl_group, chartData, expandable, expandedMode, Toolbar=PlotlyToolbar,
+        showToolbar=true, showChart=true, glass} = props;
 
     useEffect(() => {
         dispatchChartMounted(chartId);
@@ -34,14 +35,14 @@ function ChartPanelView(props) {
         // chart with toolbar
         return (
             <Stack id='chart-panel' height={1} overflow='hidden'>
-                <ChartToolbar {...{chartId, tbl_group, expandable, expandedMode, Toolbar}}/>
+                <ChartToolbar {...{Chart, chartId, tbl_group, expandable, expandedMode, Toolbar}}/>
                 <Divider orientation='horizontal'/>
                 <ChartArea glass={glass} {...props}/>
             </Stack>
         );
     } else {
         // chart only
-        return <ChartArea glass={glass} {...props}/>;
+        return <ChartArea glass={glass} {...{...props, showToolbar, showChart, Chart}}/>;
     }
 }
 
@@ -59,12 +60,6 @@ ChartPanelView.propTypes = {
     Toolbar: PropTypes.func
 };
 
-ChartPanelView.defaultProps = {
-    showToolbar: true,
-    showChart: true,
-    Chart: PlotlyChartArea,
-    Toolbar: PlotlyToolbar
-};
 
 const ResizableChartAreaInternal = React.memo((props) => {
     const {errors, Chart, size}= props;

@@ -98,9 +98,10 @@ export const NoDataTableView = ({sx, children}) => (
     </Box>
 );
 
-
-const BasicTableViewInternal = React.memo((props) => {
-
+const BasicTableViewInternal = React.memo(({ selectable:selectableIn= false, showTypes:showTypesIn= false,
+                                               showMask= false, rowHeight:rowHeightIn= 20, currentPage:currentPageIn= -1, ...rest }) => {
+    const props= { selectable:selectableIn, showTypes:showTypesIn, showMask, rowHeight:rowHeightIn,
+        currentPage:currentPageIn, ...rest} ;
     const {width, height} = props.size;
     const {columns, data, hlRowIdx, renderers, selectInfoCls, callbacks, rowHeight, rowHeightGetter, showHeader=true,
             error, tbl_ui_id=uniqueTblUiId(), currentPage, startIdx=0, highlightedRowHandler, cellRenderers, onRowDoubleClick} = props;

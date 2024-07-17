@@ -20,7 +20,7 @@ import {dispatchLoadTblStats, getColValStats} from '../charts/TableStatsCntlr.js
 const dropdownName = 'ChartSelectDropDownCmd';
 
 
-export function ChartSelectDropdown({tblGroup}) {
+export function ChartSelectDropdown({tblGroup,name=dropdownName}) {
 
     const tblId = useStoreConnector(() => getActiveTableId(tblGroup));
 
@@ -67,10 +67,6 @@ export function ChartSelectDropdown({tblGroup}) {
 ChartSelectDropdown.propTypes = {
     tblGroup: string, // if not present, default table group is used
     name: string
-};
-
-ChartSelectDropdown.defaultProps = {
-    name: dropdownName
 };
 
 function hideSearchPanel() {

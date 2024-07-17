@@ -15,18 +15,12 @@ function onChange(ev, validator, fireValueChange) {
 }
 
 
-export const InputAreaFieldConnected = forwardRef( (props, ref) => {
-    const {viewProps, fireValueChange}=  useFieldGroupConnector(props);
-    return (<InputAreaFieldView ref={ref} {...viewProps} onChange={(ev) => onChange(ev,viewProps.validator, fireValueChange)}/>);
-});
+export const InputAreaFieldConnected =
+    forwardRef( ({showWarning=true, actOn=['changes'], visible=true ,...rest}, ref) => {
+        const {viewProps, fireValueChange}=  useFieldGroupConnector({showWarning,actOn,visible,...rest});
+        return (<InputAreaFieldView ref={ref} {...viewProps} onChange={(ev) => onChange(ev,viewProps.validator, fireValueChange)}/>);
+    });
 
-
-
-InputAreaFieldConnected.defaultProps = {
-    showWarning: true,
-    actOn: ['changes'],
-    visible: true,
-};
 
 InputAreaFieldConnected.propTypes = {
     ...omit(propTypes, ['value']),

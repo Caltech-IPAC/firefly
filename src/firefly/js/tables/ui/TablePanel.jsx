@@ -5,7 +5,7 @@
 import React, {useEffect} from 'react';
 import {Box, Stack, Typography, Sheet, ChipDelete, Tooltip, Button} from '@mui/joy';
 import PropTypes, {object, shape} from 'prop-types';
-import {defer, truncate, get, set} from 'lodash';
+import {defer, truncate, get, set, isUndefined, defaults} from 'lodash';
 import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
 import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/ActionsDropDownButton.jsx';
 
@@ -44,10 +44,32 @@ const TT_CLEAR_FILTER = 'Remove all filters';
 const TT_EXPAND = 'Expand this panel to take up a larger area';
 const TT_PROPERTY_SHEET = 'Show details for the selected row';
 
+const defaultOptions = {
+    showMetaInfo: false,
+    allowUnits: true,
+    showToolbar: true,
+    showTitle: true,
+    showPaging: true,
+    showSave: true,
+    showOptionButton: true,
+    showFilterButton: true,
+    showInfoButton: true,
+    showAddColumn: true,
+    showTypes: true,
+    selectable: true,
+    showSearchButton: true,
+    showHeader: true,
+    expandedMode: false,
+    expandable: true,
+    showToggleTextView: true,
+    border: true,
+};
+
 
 export const TBL_CLZ_NAME = 'FF-Table';
 
-export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', sx, slotProps, ...options}) {
+export function TablePanel({tbl_id, tbl_ui_id, tableModel, variant='outlined', sx, slotProps, ...inOptions}) {
+    const options= defaults({...inOptions},defaultOptions);
     tbl_id = tbl_id || tableModel?.tbl_id || uniqueTblId();
     tbl_ui_id = tbl_ui_id || `${tbl_id}-ui`;
 
@@ -171,27 +193,6 @@ TablePanel.propTypes = {
         table: object
     })
 
-};
-
-TablePanel.defaultProps = {
-    showMetaInfo: false,
-    allowUnits: true,
-    showToolbar: true,
-    showTitle: true,
-    showPaging: true,
-    showSave: true,
-    showOptionButton: true,
-    showFilterButton: true,
-    showInfoButton: true,
-    showAddColumn: true,
-    showTypes: true,
-    selectable: true,
-    showSearchButton: true,
-    showHeader: true,
-    expandedMode: false,
-    expandable: true,
-    showToggleTextView: true,
-    border: true,
 };
 
 export function OverflowMarker({tbl_id, showText}) {

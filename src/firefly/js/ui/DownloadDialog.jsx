@@ -81,7 +81,7 @@ const emailKey = 'Email';          // should match server DownloadRequest.EMAIL
  * @param props.makeButton
  * @returns {*}
  */
-export function DownloadButton({tbl_id:inTblId , tbl_grp, children, checkSelectedRow, makeButton}) {
+export function DownloadButton({tbl_id:inTblId , tbl_grp, children, checkSelectedRow=true, makeButton}) {
 
     const tblIdGetter = () => inTblId || getActiveTableId(tbl_grp);
     const selectInfoGetter = () => get(getTblById(tblIdGetter()), 'selectInfo');
@@ -123,17 +123,12 @@ DownloadButton.propTypes = {
     checkSelectedRow:PropTypes.bool
 };
 
-
-DownloadButton.defaultProps = {
-    checkSelectedRow:true
-};
-
 let dlTitleIdx = 0;
 const newBgKey = () => 'DownloadOptionPanel-' + Date.now();
 
 // TODO: showEmailNotify changed to default of false, when we make a notification plan we can change it back.
 
-export function DownloadOptionPanel ({groupKey, cutoutSize, help_id, children, style, title, dlParams,
+export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, help_id, children, style, title, dlParams,
                                          updateSearchRequest, updateDownloadRequest, validateOnSubmit,
                                          cancelText='Cancel', showZipStructure=true, showEmailNotify=false,
                                          showFileLocation=true, showTitle=true, ...props}) {
@@ -256,11 +251,6 @@ DownloadOptionPanel.propTypes = {
         FileGroupProcessor: PropTypes.string.isRequired,
     })
 };
-
-DownloadOptionPanel.defaultProps= {
-    groupKey: 'DownloadDialog',
-};
-
 
 export function TitleField({style={}, labelWidth, value, label='Title:', size=30}) {
 

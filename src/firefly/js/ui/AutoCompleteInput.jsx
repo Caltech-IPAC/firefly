@@ -6,8 +6,7 @@ import {isArray, isEmpty, omit} from 'lodash';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 import {inputFieldTooltipProps} from 'firefly/ui/InputFieldView.jsx';
 
-
-export function AutoCompleteInput({slotProps, orientation, label, required, freeSolo=true, startDecorator, endDecorator, multiple, ...props}) {
+export function AutoCompleteInput({slotProps, orientation='horizontal', label, required, freeSolo=true, startDecorator, endDecorator, multiple, ...props}) {
 
     const {viewProps, fireValueChange}=  useFieldGroupConnector({...props, confirmValue: confirmValue(freeSolo)});
     const [open, setOpen] = useState(false);
@@ -101,9 +100,6 @@ AutoCompleteInput.propTypes= {
     }),
 };
 
-AutoCompleteInput.defaultProps = {
-    orientation: 'horizontal'
-};
 
 // may not be needed
 function confirmValue(freeSolo) {
