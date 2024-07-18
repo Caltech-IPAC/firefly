@@ -1,37 +1,27 @@
-import {Box, Chip, Skeleton, Stack, Typography} from '@mui/joy';
+import {Skeleton, Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect, useState} from 'react';
 import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 import {ConstraintContext} from 'firefly/ui/tap/Constraints';
 import {useFieldGroupRerender, useFieldGroupValue, useFieldGroupWatch} from 'firefly/ui/SimpleComponent';
-import {
-    getPanelPrefix,
-    makeCollapsibleCheckHeader,
-    makeFieldErrorList,
-    makePanelStatusUpdater
+import {getPanelPrefix, makeCollapsibleCheckHeader, makeFieldErrorList, makePanelStatusUpdater
 } from 'firefly/ui/tap/TableSearchHelpers';
 import { ADQL_LINE_LENGTH, getAsEntryForTableName, makeUploadSchema, tapHelpId } from 'firefly/ui/tap/TapUtil';
 import PropTypes from 'prop-types';
-import {TextButton} from 'firefly/visualize/ui/Buttons.jsx';
-import {showUploadTableChooser} from 'firefly/ui/UploadTableChooser';
-import {showColSelectPopup} from 'firefly/charts/ui/ColSelectView';
-import {getSizeAsString} from 'firefly/util/WebUtil';
-import {ColsShape, ColumnFld, getColValidator} from 'firefly/charts/ui/ColumnOrExpression';
-import {FieldGroupCollapsible} from 'firefly/ui/panel/CollapsiblePanel';
-import {doFetchTable, onTableLoaded} from 'firefly/tables/TableUtil';
-import {get} from 'lodash';
-import {FilterInfo} from 'firefly/tables/FilterInfo';
-import {dispatchTableFilter} from 'firefly/tables/TablesCntlr';
-import {makeFileRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
+import {ColsShape, getColValidator} from 'firefly/charts/ui/ColumnOrExpression';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 import {InputAreaFieldConnected} from '../InputAreaField.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
+import {SingleCol, UploadTableSelectorSingleCol
+} from 'firefly/ui/UploadTableSelectorSingleCol';
+import {makeFileRequest, MAX_ROW} from 'firefly/tables/TableRequestUtil';
+import {doFetchTable} from 'firefly/tables/TableUtil';
 
-const UploadObjectIDColumn = 'uploadObjectIDColumn';
+const UploadSingleColumn = 'uploadSingleColumn'; //UploadObjectIDColumn
 const ObjectIDColumn = 'objectIDColumn';
 const panelTitle = 'Object ID Search';
 const panelValue = 'ObjectIDMatch';
 const TAB_COLUMNS_MSG = 'This will be matched against Object ID selected from the uploaded table above';
-const defaultTblId = 'objectID-table';
+const defaultTblId = 'singleColTable';
 
 const SELECT_IN_TOOLTIP=(
         <Typography width='50rem'>
@@ -52,7 +42,7 @@ const objIdEntryType = [
 const checkHeaderCtl= makeCollapsibleCheckHeader(getPanelPrefix(panelValue));
 const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 
-const fldListAry= [UploadObjectIDColumn, ObjectIDColumn, OBJ_ID_ENTRY,ENTRY_TYPE];
+const fldListAry= [UploadSingleColumn, ObjectIDColumn, OBJ_ID_ENTRY,ENTRY_TYPE];
 let savedFileName;
 
 export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
@@ -77,7 +67,7 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
 
     const updatePanelStatus= makePanelStatusUpdater(checkHeaderCtl.isPanelActive(), 'ObjectID');
 
-    useFieldGroupWatch([UploadObjectIDColumn, OBJ_ID_ENTRY],
+    useFieldGroupWatch([UploadSingleColumn, OBJ_ID_ENTRY],
         ([uploadCol,objIdEntry],isInit) => {
             if (isInit) return;
             if (uploadCol||objIdEntry) checkHeaderCtl.setPanelActive(true);
@@ -135,24 +125,24 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
                 {!canUpload && <Typography level='body-xs'>This search uses "Select IN" style SQL as this service does not support uploads.</Typography>}
                 <RadioGroupInputField {...{
                     fieldKey:ENTRY_TYPE, options:objIdEntryType, initialState:{value: 'enter'},
-                    orientation:'horizontal', tooltip:`Enter object ID's as list or load from a table`,// eslint-disable-line  quotes
+                    orientation:'horizontal', tooltip:`Enter object ID's as list or load from a table`,
                 }} />
 
                 {entryType===ENTER ?
                     <InputAreaFieldConnected {...{ fieldKey:OBJ_ID_ENTRY, placeholderHighlight: true,
-                        placeholder:`Enter one or more object id's separated by commas, semi-colon or space`, // eslint-disable-line  quotes
+                        placeholder:`Enter one or more object id's separated by commas, semi-colon or space`,
                     }}/> :
-                    <UploadTableSelectorObjectID {...{uploadInfo,setUploadInfo, setSelectInObjList,
-                        getUseSelectIn, setWorking}}/>
+                    <UploadTableSelectorObjectID {...{uploadInfo,setUploadInfo, setSelectInObjList, getUseSelectIn, setWorking}}/>
                 }
-                <ObjectIDCol {...{
-                    objectCol: getVal(ObjectIDColumn), cols,
+                <SingleCol {...{
+                    singleCol: getVal(ObjectIDColumn), cols,
                     headerTitle: 'Object ID (from table):', openKey: posOpenKey,
                     headerPostTitle: '(from the selected table on the right)',
                     openPreMessage:openMsg,
                     headerStyle:{paddingLeft:1},
-                    objectKey: ObjectIDColumn,
+                    colKey: ObjectIDColumn,
                     colTblId: defaultTblId,
+                    colName: 'Object ID',
                     clickingSelectCols,
                     setClickingSelectCols
                 }} />
@@ -174,20 +164,6 @@ ObjectIDSearch.propTypes = {
     columnsModel: PropTypes.object
 };
 
-function filterTable(cols, tbl) {
-    const colsWithMetaID = cols.filter((col) => { if (col.ucd) {return col.ucd.includes('meta.id');}  });
-    if (colsWithMetaID.length > 1) {
-        if (!tbl) return;
-        const filterInfo = get(tbl, 'request.filters');
-        const filterInfoCls = FilterInfo.parse(filterInfo);
-        const meta = 'meta.id';
-        const filter = `like '%${meta}%'`;
-        filterInfoCls.setFilter('UCD', filter);
-        const newRequest = {tbl_id: tbl.tbl_id, filters: filterInfoCls.serialize()};
-        dispatchTableFilter(newRequest);
-    }
-}
-
 function getDefaultObjectIDval(cols) {
     const colsWithMetaID = cols.filter((col) => { if (col.ucd) {return col.ucd.includes('meta.id');}  });
     if (colsWithMetaID.length === 0) return '';
@@ -195,190 +171,6 @@ function getDefaultObjectIDval(cols) {
     //return first instance of meta.id if meta.id;meta.main doesn't exist
     return colWithMetaMain.length === 0 ? colsWithMetaID[0].name : colWithMetaMain[0].name;
 }
-
-async function getColumnFromUploadTable(tableOnServer, columnName) {
-    const params= { startIdx : 0, pageSize : MAX_ROW, inclCols : `"${columnName}"` };
-    const tableModel= await doFetchTable(makeFileRequest('',tableOnServer,undefined,params));
-    return tableModel?.tableData?.data?.map( ([d]) => d);
-}
-
-const loadedColumns= new Map();
-
-
-function loadTableColumn(objectCol,serverFile,setSelectInObjList,setWorking) {
-    if (objectCol && serverFile) {
-        const cachedCol = loadedColumns.get(serverFile + '---' + objectCol);
-        if (cachedCol) {
-            setSelectInObjList(cachedCol);
-        } else {
-            setTimeout(
-                async () => {
-                    try {
-                        setWorking(true);
-                        const list = await getColumnFromUploadTable(serverFile, objectCol);
-                        loadedColumns.set(serverFile + '---' + objectCol, list);
-                        setSelectInObjList(list);
-                        setWorking(false);
-                    } catch (e) {
-                        setWorking(false);
-                        setSelectInObjList(undefined);
-                    }
-                }, 5);
-        }
-
-    } else {
-        setSelectInObjList(undefined);
-    }
-}
-
-
-
-
-
-function UploadTableSelectorObjectID({uploadInfo, setUploadInfo, setSelectInObjList,getUseSelectIn,setWorking}) {
-    const [getObjectCol,setObjectCol]= useFieldGroupValue(UploadObjectIDColumn);
-    const {fileName,columns,totalRows,fileSize}= uploadInfo ?? {};
-    const columnsUsed= columns?.filter( ({use}) => use)?.length ?? 0;
-    const openKey= 'upload-objectID-column';
-
-    useEffect(() => {
-        //if user changes position column(s), make the new columns entries selectable in the columns/search
-        const columns = uploadInfo?.columns;
-        if (columns?.length===1) {
-            setObjectCol(columns[0].name);
-        }
-        if (getObjectCol()) {
-            const cObj= columns.find((col) => col.name === getObjectCol());
-            if (cObj) cObj.use = true;
-        }
-        uploadInfo = {...uploadInfo, columns};
-        setUploadInfo(uploadInfo);
-        if (getUseSelectIn()==='use') {
-            loadTableColumn(getObjectCol(),uploadInfo.serverFile,setSelectInObjList,setWorking);
-        }
-    }, [getObjectCol, getUseSelectIn]);
-
-    const preSetUploadInfo= (ui) => {
-        setObjectCol('', {validator: getColValidator(ui.columns, true, false), valid: true});
-        setUploadInfo(ui);
-    };
-
-    const haveFile= Boolean(fileName && columns);
-
-    const onColsSelected = (selectedColNames) => {
-        //get rid of extra quotes within each selectedColNames - because non-alphanumeric entries may have
-        //been quoted by calling quoteNonAlphanumeric
-        // , e.g.: ['"Object Name"', 'RA', 'Notes']
-        selectedColNames = selectedColNames.map((col) => col.replace(/^"(.*)"$/, '$1'));
-        const columns = uploadInfo?.columns.map((col) => (
-            {...col, use:selectedColNames.includes((col.name))}));
-        uploadInfo = {...uploadInfo, columns};
-        setUploadInfo(uploadInfo);
-    };
-
-    return (
-        <div style={{margin: '10px 0 0 0'}}>
-            <div style={{display:'flex', alignItems:'center'}}>
-                <div style={{display:'flex', alignItems:'center'}}>
-                    <TextButton text={fileName ? 'Change Upload Table...' : 'Add Upload Table...'}
-                                 onClick={() => showUploadTableChooser(preSetUploadInfo,'objectIDMatch',{colTypes: ['int','long','string'],colCount: 3})} style={{marginLeft: 42}} />
-                    {haveFile &&
-                        <div style={{width:200, overflow:'hidden', whiteSpace:'nowrap', fontSize:'larger',
-                            textOverflow:'ellipsis', lineHeight:'2em', paddingLeft:15}}>
-                            {`${fileName}`}
-                        </div>
-                    }
-                </div>
-            </div>
-            {haveFile &&
-                <div style={{display:'flex', flexDirection:'row', marginLeft: 195, justifyContent:'flex-start'}}>
-                    <div style={{whiteSpace:'nowrap'}}>
-                        <span>Rows: </span>
-                        <span>{totalRows},</span>
-                    </div>
-                    <div style={{paddingLeft: 8, whiteSpace:'nowrap'}}>
-                        {getUseSelectIn()!=='use' &&
-                            <>
-                                <Chip onClick={() => showColSelectPopup(columns, onColsSelected, 'Choose Columns', 'OK',
-                                    null,true)}>
-                                    <span>Columns: </span>
-                                    <span>{columns.length} (using {columnsUsed})</span>
-                                </Chip>
-                                {fileSize &&<span>,</span>}
-                            </>
-                        }
-                    </div>
-                    {fileSize && <div style={{paddingLeft: 8, whiteSpace:'nowrap'}}>
-                        <span>Size: </span>
-                        <span>{getSizeAsString(fileSize)}</span>
-                    </div>}
-                </div>
-            }
-            {haveFile &&
-            <ObjectIDCol {...{objectCol: getObjectCol(), cols:columns,
-                headerTitle:'Uploaded Object ID:', openKey,
-                headerPostTitle:'(from the uploaded table)',
-                headerStyle:{paddingLeft:1},
-                style:{margin:'0 0 10px 195px'},
-                objectKey:UploadObjectIDColumn}} />
-            }
-        </div>
-    );
-}
-
-function ObjectIDCol({objectCol, style={},cols, objectKey, openKey,
-                           headerTitle, headerPostTitle = '', openPreMessage='', headerStyle,colTblId=null}) {
-    const posHeader= (
-        <Box ml={-1}>
-            <Typography display='inline' color={!objectCol?'warning':undefined} level='title-md' style={{...headerStyle}}>
-                {(objectCol) ? `${objectCol || 'unset'}` : 'unset'}
-            </Typography>
-            <Typography display='inline' level='body-sm' pl={3}  whiteSpace='nowrap'>
-                {headerPostTitle}
-            </Typography>
-        </Box>
-    );
-
-    const [clickingSelectCols, setClickingSelectCols] = useState(false);
-
-    //clickingSelectCols is toggled each time user clicks on the 'magnifying glass' to select cols, rendering this useEffect
-    useEffect(() => {
-        onTableLoaded(defaultTblId).then((tbl) => {
-            filterTable(cols,tbl);
-        });
-    }, [clickingSelectCols]);
-
-    return (
-        <div style={{margin: '5px 0 0 0',...style}}>
-            <Stack {...{direction:'row', spacing:1}}>
-                <Typography sx={{width:'14rem', pt:1, whiteSpace:'nowrap'}} component='div'>
-                    {headerTitle}
-                </Typography>
-                <FieldGroupCollapsible header={posHeader}
-                                       initialState={{value:'open'}} fieldKey={openKey}>
-                    {openPreMessage && <div style={{padding:'0 0 10px 0'}}>
-                        {openPreMessage}
-                    </div>}
-                    <ColumnFld fieldKey={objectKey} cols={cols}
-                               name='Object ID Column'  // label that appears in column chooser
-                               tooltip='Object ID Column'
-                               label='Object ID'
-                               placeholder='choose object id column'
-                               validator={getColValidator(cols, true, false)}
-                               colTblId={colTblId}
-                               onSearchClicked= {() => {
-                                   if (clickingSelectCols) setClickingSelectCols(false);
-                                   else setClickingSelectCols?.(true);
-                                   return true;
-                                }}
-                    />
-                </FieldGroupCollapsible>
-
-            </Stack>
-        </div>
-    );
-}
-
 
 export function makeColsLines(objAry) {
     const colSingleLine= objAry.map( (id) => `'${id}'`).join(',') ?? '';
@@ -399,11 +191,68 @@ export function makeColsLines(objAry) {
     return multiLineCols;
 }
 
+export function UploadTableSelectorObjectID({uploadInfo, setUploadInfo, setSelectInObjList, getUseSelectIn, setWorking}) {
+    const [getSingleCol,setSingleCol]= useFieldGroupValue(UploadSingleColumn);
+
+    useEffect(() => {
+        const columns = uploadInfo?.columns;
+        if (columns?.length === 1) {
+            setSingleCol(columns[0].name);
+        }
+        if (getSingleCol()) {
+            const cObj = columns.find((col) => col.name === getSingleCol());
+            if (cObj) cObj.use = true;
+        }
+        uploadInfo = { ...uploadInfo, columns };
+        setUploadInfo(uploadInfo);
+        if (getUseSelectIn() === 'use') {
+            loadTableColumn(getSingleCol(), uploadInfo.serverFile, setSelectInObjList, setWorking);
+        }
+    }, [getSingleCol, getUseSelectIn]);
+
+    return ( <UploadTableSelectorSingleCol uploadInfo={uploadInfo} setUploadInfo={setUploadInfo}
+        headerTitle={'Uploaded Object ID:'} colName={'Object ID'} getUseSelectIn={getUseSelectIn}
+    />);
+}
+
+async function getColumnFromUploadTable(tableOnServer, columnName) {
+    const params= { startIdx : 0, pageSize : MAX_ROW, inclCols : `"${columnName}"` };
+    const tableModel= await doFetchTable(makeFileRequest('',tableOnServer,undefined,params));
+    return tableModel?.tableData?.data?.map( ([d]) => d);
+}
+
+const loadedColumns= new Map();
+
+function loadTableColumn(singleCol,serverFile,setSelectInObjList,setWorking) {
+    if (singleCol && serverFile) {
+        const cachedCol = loadedColumns.get(serverFile + '---' + singleCol);
+        if (cachedCol) {
+            setSelectInObjList(cachedCol);
+        } else {
+            setTimeout(
+                async () => {
+                    try {
+                        setWorking(true);
+                        const list = await getColumnFromUploadTable(serverFile, singleCol);
+                        loadedColumns.set(serverFile + '---' + singleCol, list);
+                        setSelectInObjList(list);
+                        setWorking(false);
+                    } catch (e) {
+                        setWorking(false);
+                        setSelectInObjList(undefined);
+                    }
+                }, 5);
+        }
+
+    } else {
+        setSelectInObjList(undefined);
+    }
+}
 
 
 function makeObjectIDConstraints(fldObj, uploadInfo, tableName, canUpload, selectInObjList, useSelectIn) {
     const {fileName,serverFile, columns:uploadColumns, totalRows, fileSize}= uploadInfo ?? {};
-    const { [UploadObjectIDColumn]:uploadObjectIDCol, [ObjectIDColumn]:objectIDCol, [ENTRY_TYPE]:entryType }= fldObj;
+    const { [UploadSingleColumn]:uploadObjectIDCol, [ObjectIDColumn]:objectIDCol, [ENTRY_TYPE]:entryType }= fldObj;
     const errList= makeFieldErrorList();
     let adqlConstraint;
     const uploadedObjectID = uploadObjectIDCol?.value;
@@ -419,7 +268,7 @@ function makeObjectIDConstraints(fldObj, uploadInfo, tableName, canUpload, selec
     }
     else {
         if (!objectID) errList.addError('Selected Table (on the right) Object ID is not set');
-        else if (!selectInObjList?.length) errList.addError(`Object id's are not set`);// eslint-disable-line  quotes
+        else if (!selectInObjList?.length) errList.addError(`Object id's are not set`); 
     }
 
     if ( (useSelectIn || type===ENTER) && selectInObjList?.length) {

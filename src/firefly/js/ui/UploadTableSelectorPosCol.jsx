@@ -11,7 +11,7 @@ import {getSizeAsString} from 'firefly/util/WebUtil';
 import React, {useContext, useEffect} from 'react';
 import {FieldGroupCollapsible} from 'firefly/ui/panel/CollapsiblePanel';
 
-export function UploadTableSelector({uploadInfo, setUploadInfo, uploadTable=false}) {
+export function UploadTableSelectorPosCol({uploadInfo, setUploadInfo, uploadTable=false, slotProps}) {
 
     const UploadCenterLonColumns = 'uploadCenterLonColumns';
     const UploadCenterLatColumns = 'uploadCenterLatColumns';
@@ -74,7 +74,7 @@ export function UploadTableSelector({uploadInfo, setUploadInfo, uploadTable=fals
     };
 
     return (
-        <div>
+        <Box>
             <Stack {...{direction:'row', alignItems:'center'}}>
                 <TextButton text={(fileName&&haveTable) ? 'Change Upload Table...' : 'Add Upload Table...'}
                              onClick={() => showUploadTableChooser(preSetUploadInfo)} />
@@ -106,20 +106,23 @@ export function UploadTableSelector({uploadInfo, setUploadInfo, uploadTable=fals
                     sx:{ml:22},
                     headerTitle:'Position Columns:', openKey,
                     headerPostTitle:'(from the uploaded table)',
-                    lonKey:UploadCenterLonColumns, latKey:UploadCenterLatColumns}} />
+                    lonKey:UploadCenterLonColumns, latKey:UploadCenterLatColumns, slotProps}} />
             }
-        </div>
+        </Box>
     );
 }
 
-UploadTableSelector.propTypes = {
+UploadTableSelectorPosCol.propTypes = {
     uploadInfo: PropTypes.object,
     setUploadInfo: PropTypes.func,
-    uploadTable: PropTypes.bool
+    uploadTable: PropTypes.bool,
+    slotProps: PropTypes.shape({
+        centerColsInnerStack: PropTypes.object, // Define the specific prop for the inner Stack
+    })
 };
 
 export function CenterColumns({lonCol,latCol, sx, cols, lonKey, latKey, openKey,
-                                  doQuoteNonAlphanumeric, headerTitle, headerPostTitle = '', openPreMessage=''}) {
+                                  doQuoteNonAlphanumeric, headerTitle, headerPostTitle = '', openPreMessage='', slotProps}) {
 
 
     const posHeader= (
@@ -139,7 +142,7 @@ export function CenterColumns({lonCol,latCol, sx, cols, lonKey, latKey, openKey,
             <FieldGroupCollapsible header={posHeader}
                                    initialState={{value:'closed'}} fieldKey={openKey}>
                 {openPreMessage && <Typography sx={{pb:1}}> {openPreMessage} </Typography>}
-                <Stack {...{direction:'row', spacing:1, sx:{'& .ff-Input': {width:'11rem'}} }}>
+                <Stack {...{direction:'row', spacing:1, sx:{'& .ff-Input': {width:'11rem'}, ...slotProps?.centerColsInnerStack?.sx} }}>
                     <ColumnFld fieldKey={lonKey} cols={cols}
                                name='longitude column'  // label that appears in column chooser
                                tooltip='Center longitude column for spatial search'
