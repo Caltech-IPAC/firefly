@@ -8,8 +8,8 @@ FROM eclipse-temurin:17-jdk-jammy AS deps
 RUN apt-get update && apt-get install -y curl git htmldoc unzip wget ca-certificates gnupg
 
 RUN apt-get update \
-# use node v20.x (from https://github.com/nodesource/distributions because it may not be available via apt-get)
-    && curl -fsSL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh \
+# use node v18.x (from https://github.com/nodesource/distributions because it may not be available via apt-get)
+    && curl -fsSL https://deb.nodesource.com/setup_18.x -o nodesource_setup.sh \
     && bash nodesource_setup.sh \
     && apt-get install -y nodejs \
     && npm install yarn -g  \
