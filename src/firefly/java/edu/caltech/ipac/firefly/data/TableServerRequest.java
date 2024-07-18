@@ -123,7 +123,7 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
 
     public String getInclColumns() { return getParam(INCL_COLUMNS); }
     public void setInclColumns(String ...cols) {
-        if (cols == null) {
+        if (cols == null || cols.length == 0) {
             removeParam(INCL_COLUMNS);
         } else {
             setParam(INCL_COLUMNS, StringUtils.toString(cols, ","));

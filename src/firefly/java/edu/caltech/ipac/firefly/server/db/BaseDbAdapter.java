@@ -150,20 +150,21 @@ abstract public class BaseDbAdapter implements DbAdapter {
         StopWatch.getInstance().start("  ingestData: getDataGroup");
         var dg = dataGroupSupplier.get();
         StopWatch.getInstance().printLog("  ingestData: getDataGroup");
+        if (dg != null) {
+            // remove ROW_IDX or ROW_NUM if exists
+            // these are transient values and should not be persisted.
+            dg.removeDataDefinition(DataGroup.ROW_IDX);
+            dg.removeDataDefinition(DataGroup.ROW_NUM);
 
-        // remove ROW_IDX or ROW_NUM if exists
-        // these are transient values and should not be persisted.
-        dg.removeDataDefinition(DataGroup.ROW_IDX);
-        dg.removeDataDefinition(DataGroup.ROW_NUM);
+            IpacTableUtil.consumeColumnInfo(dg);
 
-        IpacTableUtil.consumeColumnInfo(dg);
+            StopWatch.getInstance().start("  ingestData: load data for " + forTable);
+            createDataTbl(dg, forTable);
 
-        StopWatch.getInstance().start("  ingestData: load data for " + forTable);
-        createDataTbl(dg, forTable);
-
-        ddToDb(dg, forTable);
-        metaToDb(dg, forTable);
-        auxDataToDb(dg, forTable);
+            ddToDb(dg, forTable);
+            metaToDb(dg, forTable);
+            auxDataToDb(dg, forTable);
+        }
         FileInfo finfo = new FileInfo(getDbFile());
         StopWatch.getInstance().printLog("  ingestData: load data for " + forTable);
 
@@ -268,16 +269,14 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
         StopWatch.getInstance().start("%s:execQuery: %s".formatted(getName(), refTable));
 
-        DbInstance dbInstance = getDbInstance();
-        SimpleJdbcTemplate jdbc = getJdbc();
         sql = translateSql(sql);
         LOGGER.trace("execQuery => SQL: " + sql);
         try {
-            DataGroup dg = (DataGroup)JdbcFactory.getTemplate(dbInstance).query(sql, rs -> {
+            DataGroup dg = (DataGroup)getJdbcTmpl().query(sql, rs -> {
                 DataGroup tmpDg = new DataGroup(null, getCols(rs, getDbInstance()));
-                applyDdToDataType(tmpDg, refTable, jdbc);
-                applyMetaToTable(tmpDg, refTable, jdbc);
-                applyAuxToTable(tmpDg, refTable, jdbc);
+                applyDdToDataType(tmpDg, refTable);
+                applyMetaToTable(tmpDg, refTable);
+                applyAuxToTable(tmpDg, refTable);
                 return EmbeddedDbUtil.dbToDataGroup(rs, tmpDg);
             });
 
@@ -311,7 +310,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
         sql = translateSql(sql);
         LOGGER.trace("execUpdate => SQL: " + sql);
         try {
-            return JdbcFactory.getSimpleTemplate(dbInstance).update(sql, params);
+            return getJdbc().update(sql, params);
         } catch (Exception e) {
             // catch for debugging
             LOGGER.warn("execUpdate failed with error: " + e.getMessage(),
@@ -326,7 +325,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
         sql = translateSql(sql);
         LOGGER.trace("batchUpdate => SQL: " + sql);
         try {
-            JdbcFactory.getSimpleTemplate(dbInstance).batchUpdate(sql, params);
+            getJdbc().batchUpdate(sql, params);
         } catch (Exception e) {
             // catch for debugging
             LOGGER.warn("batchUpdate failed with error: " + e.getMessage(),
@@ -342,7 +341,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 //====================================================================
 
     public void addColumn(DataType col, int atIndex, String expression, String preset, String resultSetID, SelectionInfo si)  throws DataAccessException {
-        JdbcTemplate jdbc = JdbcFactory.getTemplate(getDbInstance());
+        JdbcTemplate jdbc = getJdbcTmpl();
 
         try {
             // add column to main table
@@ -380,7 +379,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
         if (isEmpty(editColName)) return;
 
-        JdbcTemplate jdbc = JdbcFactory.getTemplate(getDbInstance());
+        JdbcTemplate jdbc = getJdbcTmpl();
 
         String swapCname = null;     // set if swap is in play; use for rollback.
 
@@ -470,7 +469,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
      * @param atIndex   the order index to add this column at.
      */
     protected void addColumnToDD(JdbcTemplate jdbc, DataType col, int atIndex) {
-        jdbc = jdbc == null ? JdbcFactory.getTemplate(getDbInstance()) : jdbc;
+        jdbc = jdbc == null ? getJdbcTmpl() : jdbc;
         int colCnt = getColumnNames(getDataTable(), null).size();
         if (atIndex<0 || atIndex>colCnt) {
             atIndex = colCnt + 1;
@@ -489,7 +488,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
      * @param shiftBy   the number of position to shift.  Normally, it's either +1 or -1.
      */
     private void shiftColsAt(JdbcTemplate jdbc, int atIndex, int shiftBy) {
-        jdbc = jdbc == null ? JdbcFactory.getTemplate(getDbInstance()) : jdbc;
+        jdbc = jdbc == null ? getJdbcTmpl() : jdbc;
         jdbc.update("UPDATE %s_DD SET order_index = order_index + (%d) WHERE order_index >= %d".formatted(getDataTable(), shiftBy, atIndex));
     }
 
@@ -570,13 +569,12 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     public void clearCachedData() {
-        EmbeddedDbInstance db = (EmbeddedDbInstance) getDbInstance();
         LOGGER.debug("DbAdapter -> compacting DB: %s".formatted(getDbFile().getPath()));
         List<String> tables = getTempTables();
         if (tables.size() > 0) {
             // remove all temporary tables
             String[] stmts = tables.stream().map(s -> "drop table IF EXISTS " + s).toArray(String[]::new);
-            JdbcFactory.getTemplate(db).batchUpdate(stmts);
+            getJdbcTmpl().batchUpdate(stmts);
 
         }
     }
@@ -663,7 +661,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
         getJdbc().update(createDataSql);
 
         if (totalRows > 0) {
-            JdbcTemplate jdbc = JdbcFactory.getTemplate(getDbInstance());
+            JdbcTemplate jdbc = getJdbcTmpl();
 
             String insertDataSql = insertDataSql(colsAry, tblName);
             if (useTxnDuringLoad()) {
@@ -741,52 +739,40 @@ abstract public class BaseDbAdapter implements DbAdapter {
     }
 
     // insert column info into the table
-    void applyDdToDataType(DataGroup dg, String refTable, SimpleJdbcTemplate jdbc) {
+    void applyDdToDataType(DataGroup dg, String refTable) {
         if (isEmpty(refTable)) return;
 
         String ddSql = "select * from %s_DD".formatted(refTable);
         try {
-            jdbc.query(ddSql, (ddrs, i) -> dbToDD(dg, ddrs));
+            getJdbcTmpl().query(ddSql, rs -> { return dbToDD(dg, rs); });
         } catch (Exception e) {
-            LOGGER.trace("getDDSql failed(ignored): " + e.getMessage(),
-                    "ddSql: " + ddSql,
-                    "refTable: " + refTable,
-                    "dbFile: " + getDbFile().getAbsolutePath());
-            // ignore. may not have DD table
+            LOGGER.trace("missing DD(ignored): " + refTable);
         }
     }
 
     // insert table meta info into the results
-    void applyMetaToTable(DataGroup dg, String refTable, SimpleJdbcTemplate jdbc) {
+    void applyMetaToTable(DataGroup dg, String refTable) {
         if (isEmpty(refTable)) return;
         String metaSql = "select * from %s_META".formatted(refTable);
         try {
-            jdbc.query(metaSql, (rs, i) -> dbToMeta(dg, rs));
+            getJdbcTmpl().query(metaSql, rs -> { return dbToMeta(dg, rs); });
         } catch (Exception e) {
-            LOGGER.trace("getMetaSql failed(ignored): " + e.getMessage(),
-                    "metaSql: " + metaSql,
-                    "refTable: " + refTable,
-                    "dbFile: " + getDbFile().getAbsolutePath());
-            // ignore; may not have meta table
+            LOGGER.trace("missing META(ignored): " + refTable);
         }
     }
 
     // insert aux info into the table
-    void applyAuxToTable(DataGroup dg, String refTable, SimpleJdbcTemplate jdbc) {
+    void applyAuxToTable(DataGroup dg, String refTable) {
 
         if (isEmpty(refTable)) return;
 
         String auxDataSqlSql = "select * from %s_AUX".formatted(refTable);
         try {
             if (!isEmpty(auxDataSqlSql)) {
-                jdbc.query(auxDataSqlSql, (rs, i) -> dbToAuxData(dg, rs));
+                getJdbcTmpl().query(auxDataSqlSql, rs -> { return dbToAuxData(dg, rs); });
             }
         } catch (Exception e) {
-            LOGGER.trace("getAuxDataSql failed(ignored): " + e.getMessage(),
-                    "auxDataSqlSql: " + auxDataSqlSql,
-                    "refTable: " + refTable,
-                    "dbFile: " + getDbFile().getAbsolutePath());
-            // ignore; may not have meta table
+            LOGGER.trace("missing AUX(ignored): " + refTable);
         }
     }
 
@@ -859,12 +845,16 @@ abstract public class BaseDbAdapter implements DbAdapter {
         return JdbcFactory.getSimpleTemplate(getDbInstance());
     }
 
+    JdbcTemplate getJdbcTmpl() {
+        return JdbcFactory.getTemplate(getDbInstance());
+    }
+
 
 //====================================================================
 //  O-R mapping functions
 //====================================================================
 
-    void metaToDb(DataGroup dg, String forTable) {
+    public void metaToDb(DataGroup dg, String forTable) {
         TableMeta meta = dg.getTableMeta();
         String createMetaSql = createMetaSql(forTable);
         getJdbc().update(createMetaSql);
@@ -883,15 +873,9 @@ abstract public class BaseDbAdapter implements DbAdapter {
         getJdbc().batchUpdate(insertMetaSql, data);
     }
 
-    private static int dbToMeta(DataGroup dg, ResultSet rs) {
+    private static Object dbToMeta(DataGroup dg, ResultSet rs) {
         try {
-            try {
-                EmbeddedDbUtil.advanceCursor(rs);
-            } catch (Exception ignored) {
-                return -1;                // no row found
-            }
-
-            do {
+            while (rs.next()) {
                 String key = rs.getString("key");
                 String value = rs.getString("value");
                 boolean isKeyword = rs.getBoolean("isKeyword");
@@ -900,7 +884,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 } else {
                     dg.getTableMeta().setAttribute(key, value);
                 }
-            } while (rs.next());
+            };
         } catch (SQLException e) {
             LOGGER.error(e);
         }
@@ -930,24 +914,24 @@ abstract public class BaseDbAdapter implements DbAdapter {
         };
     }
 
-    int dbToAuxData(DataGroup dg, ResultSet rs) {
+    Object dbToAuxData(DataGroup dg, ResultSet rs) {
         try {
-            do {
+            while (rs.next()) {
                 dg.setTitle(rs.getString("title"));
                 dg.setLinkInfos( (List<LinkInfo>) deserialize  (rs, "links") );
                 dg.setGroupInfos( (List<GroupInfo>) deserialize(rs, "groups") );
                 dg.setParamInfos( (List<ParamInfo>) deserialize(rs, "params") );
                 dg.setResourceInfos( (List<ResourceInfo>) deserialize(rs, "resources") );
-            } while (rs.next());
+            };
         } catch (SQLException e) {
             LOGGER.error(e);
         }
         return 0;
     }
 
-    int dbToDD(DataGroup dg, ResultSet rs) {
+    Object dbToDD(DataGroup dg, ResultSet rs) {
         try {
-            do {
+            while (rs.next()) {
                 String cname = rs.getString("cname");
                 DataType dtype = dg.getDataDefintion(cname, true);
                 // if this column is not in DataGroup.  no need to update the info
@@ -955,7 +939,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
                     EmbeddedDbUtil.dbToDataType(dtype, rs);
                     handleSpecialDTypes(dtype, dg, rs);
                 }
-            } while (rs.next());
+            };
         } catch (SQLException e) {
             LOGGER.error(e);
         }

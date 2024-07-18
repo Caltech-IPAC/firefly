@@ -392,10 +392,10 @@ public class EmbeddedDbUtil {
     }
 
     public static Object deserialize(ResultSet rs, String cname) {
-        return getOrDefault(() -> deserialize(rs.getString(cname)), null);
+        return getSafe(() -> deserialize(rs.getString(cname)));
     }
     public static Object deserialize(ResultSet rs, int cidx) {
-        return getOrDefault(() -> deserialize(rs.getString(cidx)), null);
+        return getSafe(() -> deserialize(rs.getString(cidx)));
     }
 
     public static Object deserialize(String base64) {

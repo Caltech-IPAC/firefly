@@ -5,6 +5,8 @@ package edu.caltech.ipac.util.decimate;
 
 import edu.caltech.ipac.util.StringUtils;
 
+import static edu.caltech.ipac.firefly.server.util.QueryUtil.quotes;
+
 /**
  * This is a class, which holds the information
  * necessary to calculate a unique cell key in
@@ -13,7 +15,7 @@ import edu.caltech.ipac.util.StringUtils;
  * and preserves one row per cell.
  * @author tatianag
  */
-public class DecimateKey {
+public class DecimateKey implements Cloneable {
     public final static String DECIMATE_KEY = "decimate_key";
     public final static String XY_SEPARATOR = ":";
 
@@ -28,6 +30,9 @@ public class DecimateKey {
 
     String xColNameOrExpr;
     String yColNameOrExpr;
+
+    int xCount;
+    int yCount;
 
     public DecimateKey(double xMin, double yMin, int nX, int nY, double xUnit, double yUnit) {
         this.xMin = xMin;
@@ -75,6 +80,11 @@ public class DecimateKey {
     public double getXUnit() {return xUnit; }
     public double getYUnit() {return yUnit; }
 
+    public int getxCount() { return xCount; }
+    public void setxCount(int xCount) { this.xCount = xCount;}
+
+    public int getyCount() { return yCount; }
+    public void setyCount(int yCount) { this.yCount = yCount; }
 
     public static DecimateKey parse(String str) {
         if (StringUtils.isEmpty(str)) return null;
@@ -105,7 +115,15 @@ public class DecimateKey {
 
     @Override
     public String toString() {
-        return DECIMATE_KEY+"(\""+xColNameOrExpr+"\",\""+yColNameOrExpr+"\","+
+        return DECIMATE_KEY+"(" + quotes(xColNameOrExpr) + "," + quotes(yColNameOrExpr) + ","+
                 xMin+","+yMin+","+nX+","+nY+","+xUnit+","+yUnit+")";
+    }
+
+    public DecimateKey clone() {
+        try {
+            return  (DecimateKey) super.clone();
+        } catch (CloneNotSupportedException e) {
+            return null;        // should not happen
+        }
     }
 }

@@ -7,6 +7,8 @@ import edu.caltech.ipac.util.StringUtils;
 
 import java.io.Serializable;
 
+import static edu.caltech.ipac.firefly.server.util.QueryUtil.quotes;
+
 /**
  * Date: Jan 31, 2014
  *
@@ -27,6 +29,10 @@ public class DecimateInfo implements Serializable, Comparable {
     private double yMax = Double.NaN;
 
     private int deciEnableSize = -1;
+
+    // used when xColumnName is an expression;  compatible with old code.  should revisit
+    transient private String xExp;
+    transient private String yExp;
 
     public DecimateInfo() {
     }
@@ -165,6 +171,10 @@ public class DecimateInfo implements Serializable, Comparable {
         return s;
     }
 
+    public String getxExp() { return xExp == null ? quotes(xColumnName) : xExp; }
+    public void setxExp(String xExp) { this.xExp = quotes(xExp); }
+    public String getyExp() { return yExp == null ? quotes(yColumnName) : yExp; }
+    public void setyExp(String yExp) { this.yExp = quotes(yExp);}
 //====================================================================
 //  Implements Comparable
 //====================================================================

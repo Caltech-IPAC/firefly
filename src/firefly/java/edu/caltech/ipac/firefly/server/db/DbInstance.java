@@ -99,10 +99,11 @@ public class DbInstance {
     public String name() {
         return name;
     }
-
     public String getDbUrl() {
         return this.dbUrl;
     }
+    public boolean isPooled() { return isPooled; }
+    public void setPooled(boolean pooled) { isPooled = pooled;}
 
     @Override
     public boolean equals(Object obj) {

@@ -174,13 +174,8 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         return dd.formatted(getSourceFile().getAbsolutePath());
     }
 
-    protected String metaSql() {
-        return null;
-    }
-
-    protected String auxSql() {
-        return null;
-    }
+    protected String metaSql() { return null; }
+    protected String auxSql() { return null; }
 
 //====================================================================
 //  Supported file types
@@ -211,9 +206,9 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         public DbAdapter create(File dbFile) {
             return canHandle(dbFile) ? new Parquet(dbFile) : null;
         }
-        protected String metaSql() {
-            return "select decode(key) as key, decode(value) as value, true as isKeyword from parquet_kv_metadata('%s')".formatted(getSourceFile().getAbsolutePath());
-        }
+//        protected String metaSql() {
+//            return "select decode(key) as key, decode(value) as value, true as isKeyword from parquet_kv_metadata('%s')".formatted(getSourceFile().getAbsolutePath());
+//        }
 
         String getSrcFileSql() {
             return "read_parquet('%s')".formatted(getSourceFile().getAbsolutePath());

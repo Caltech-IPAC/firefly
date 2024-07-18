@@ -75,7 +75,7 @@ public class QueryUtil {
     public static final Logger.LoggerImpl LOGGER = Logger.getLogger();
     public static final String SEARCH_REQUEST = "searchRequest";
 
-    private static final int DECI_DEF_MAX_POINTS = AppProperties.getIntProperty("decimation.def.max.points", 100000);
+    public static final int DECI_DEF_MAX_POINTS = AppProperties.getIntProperty("decimation.def.max.points", 100000);
     public static final int DECI_ENABLE_SIZE = AppProperties.getIntProperty("decimation.enable.size", 5000);
 
     public static String makeUrlBase(String url) {
@@ -611,6 +611,15 @@ public class QueryUtil {
     }
 
     /**
+     * Add double quotes around the str if it does not contain quotes
+     * @param str the string to apply
+     * @return a new string
+     */
+    public static String quotes(String str) {
+        return str.contains("\"") ? str : "\"" + str + "\"";
+    }
+
+    /**
      * returns 4 columns; x-column, y-column, rowidx, weight, decimate_key
      * @param dg input data group
      * @param decimateInfo DecimateInfo object
@@ -633,8 +642,6 @@ public class QueryUtil {
         if (xColOrExpr.equals(yColOrExpr)) {
             throw new DataAccessException("Same column is used for decimation.");
         }
-
-        int maxPoints = decimateInfo.getMaxPoints() == 0 ? DECI_DEF_MAX_POINTS : decimateInfo.getMaxPoints();
 
         int deciEnableSize = decimateInfo.getDeciEnableSize() > -1 ? decimateInfo.getDeciEnableSize() : DECI_ENABLE_SIZE;
         boolean doDecimation = dg.size() >= deciEnableSize;
@@ -755,22 +762,7 @@ public class QueryUtil {
 
                 java.util.Date startTime = new java.util.Date();
 
-                // determine the number of cells on each axis
-                int nXs = (int)Math.sqrt(maxPoints * decimateInfo.getXyRatio());  // number of cells on the x-axis
-                int nYs = (int)Math.sqrt(maxPoints/decimateInfo.getXyRatio());  // number of cells on the x-axis
-
-                double xUnit = (xMax - xMin)/nXs;        // the x size of a cell
-                double yUnit = (yMax - yMin)/nYs;        // the y size of a cell
-
-                // case when min and max values are the same
-                if (xUnit == 0) xUnit = Math.abs(xMin) > 0 ? Math.abs(xMin) : 1;
-                if (yUnit == 0) yUnit = Math.abs(yMin) > 0 ? Math.abs(yMin) : 1;
-
-                // increase cell size a bit to include max values into grid
-                xUnit += xUnit/1000.0/nXs;
-                yUnit += yUnit/1000.0/nYs;
-
-                DecimateKey decimateKey = new DecimateKey(xMin, yMin, nXs, nYs, xUnit, yUnit);
+                DecimateKey decimateKey = getDecimateKey(decimateInfo, xMax, xMin, yMax, yMin);
 
                 HashMap<String, SamplePoint> samples = new HashMap<>();
                 // decimating the data now....
@@ -822,17 +814,7 @@ public class QueryUtil {
                     retval.add(row);
                 }
                 String decimateInfoStr = decimateInfo.toString();
-                retval.addAttribute(DecimateInfo.DECIMATE_TAG,
-                        decimateInfoStr.substring(DecimateInfo.DECIMATE_TAG.length() + 1));
-                decimateKey.setCols(decimateInfo.getxColumnName(), decimateInfo.getyColumnName());
-                retval.addAttribute(DecimateKey.DECIMATE_KEY,
-                        decimateKey.toString());
-                retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".X-UNIT", String.valueOf(xUnit));
-                retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".Y-UNIT", String.valueOf(yUnit));
-                retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".WEIGHT-MIN", String.valueOf(minWeight));
-                retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".WEIGHT-MAX", String.valueOf(maxWeight));
-                retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".XBINS", String.valueOf(nXs));
-                retval.addAttribute(DecimateInfo.DECIMATE_TAG + ".YBINS", String.valueOf(nYs));
+                insertDecimateInfo(retval, decimateInfo, decimateKey, minWeight, maxWeight);
 
                 java.util.Date endTime = new java.util.Date();
                 Logger.briefInfo(decimateInfoStr + " - took "+(endTime.getTime()-startTime.getTime())+"ms");
@@ -840,6 +822,44 @@ public class QueryUtil {
         }
 
         return retval;
+    }
+
+    public static void insertDecimateInfo(DataGroup dg, DecimateInfo decimateInfo, DecimateKey decimateKey, long minWeight, long maxWeight) {
+        String decimateInfoStr = decimateInfo.toString();
+        dg.addAttribute(DecimateInfo.DECIMATE_TAG,
+                decimateInfoStr.substring(DecimateInfo.DECIMATE_TAG.length() + 1));
+//                decimateKey.setCols(decimateInfo.getxColumnName(), decimateInfo.getyColumnName());
+        dg.addAttribute(DecimateKey.DECIMATE_KEY,
+                decimateKey.toString());
+        dg.addAttribute(DecimateInfo.DECIMATE_TAG + ".X-UNIT", String.valueOf(decimateKey.getXUnit()));
+        dg.addAttribute(DecimateInfo.DECIMATE_TAG + ".Y-UNIT", String.valueOf(decimateKey.getYUnit()));
+        dg.addAttribute(DecimateInfo.DECIMATE_TAG + ".WEIGHT-MIN", String.valueOf(minWeight));
+        dg.addAttribute(DecimateInfo.DECIMATE_TAG + ".WEIGHT-MAX", String.valueOf(maxWeight));
+        dg.addAttribute(DecimateInfo.DECIMATE_TAG + ".XBINS", String.valueOf(decimateKey.getNX()));
+        dg.addAttribute(DecimateInfo.DECIMATE_TAG + ".YBINS", String.valueOf(decimateKey.getNY()));
+    }
+
+    public static DecimateKey getDecimateKey(DecimateInfo decimateInfo, double xMax, double xMin, double yMax, double yMin) {
+
+        int maxPoints = decimateInfo.getMaxPoints() == 0 ? DECI_DEF_MAX_POINTS : decimateInfo.getMaxPoints();
+        // determine the number of cells on each axis
+        int nXs = (int)Math.sqrt(maxPoints * decimateInfo.getXyRatio());  // number of cells on the x-axis
+        int nYs = (int)Math.sqrt(maxPoints/decimateInfo.getXyRatio());  // number of cells on the x-axis
+
+        double xUnit = (xMax - xMin)/nXs;        // the x size of a cell
+        double yUnit = (yMax - yMin)/nYs;        // the y size of a cell
+
+        // case when min and max values are the same
+        if (xUnit == 0) xUnit = Math.abs(xMin) > 0 ? Math.abs(xMin) : 1;
+        if (yUnit == 0) yUnit = Math.abs(yMin) > 0 ? Math.abs(yMin) : 1;
+
+        // increase cell size a bit to include max values into grid
+        xUnit += xUnit/1000.0/nXs;
+        yUnit += yUnit/1000.0/nYs;
+
+        DecimateKey decimateKey = new DecimateKey(xMin, yMin, nXs, nYs, xUnit, yUnit);
+        decimateKey.setCols(decimateInfo.getxColumnName(), decimateInfo.getyColumnName());
+        return decimateKey;
     }
 
     private static int getFirstSigDigitPos(double num) {
