@@ -4,16 +4,17 @@
 
 import {Box, Chip, Divider, FormHelperText, Stack, Switch, Tooltip, Typography} from '@mui/joy';
 import React, {useState, useRef, useEffect, useContext, useCallback} from 'react';
-import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
 import SplitPane from 'react-split-pane';
 import Tree from 'rc-tree';
 import 'rc-tree/assets/index.css';
 import {cloneDeep, defer, isArray, isObject, groupBy, uniqBy} from 'lodash';
+import West from '@mui/icons-material/West';
+import JoinInnerOutlinedIcon from '@mui/icons-material/JoinInnerOutlined';
+
 import {getSizeAsString, updateSet} from '../../util/WebUtil.js';
 import {FieldGroupCtx} from '../FieldGroup.jsx';
 import {TextButton} from 'firefly/visualize/ui/Buttons.jsx';
-
 import {InputAreaFieldConnected} from '../InputAreaField.jsx';
 import {InputFieldView} from '../InputFieldView.jsx';
 import {SplitContent} from '../panel/DockLayoutPanel';
@@ -25,18 +26,25 @@ import {
 } from './TapUtil';
 import {getColumnIdx} from '../../tables/TableUtil.js';
 import {dispatchValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
-import West from '@mui/icons-material/West';
+import {useColorMode} from 'firefly/ui/FireflyRoot';
+import CssStrThemeWrapper from 'firefly/ui/CssStrThemeWrapper';
 
+//--- PrismJs imports ---
 import Prism from 'prismjs';
-// bliss is needed for prism-live
-import 'blissfuljs';
-import '../../externalSource/prismLive/prism-sql.js';
+import 'prismjs/components/prism-sql.js';
+import 'blissfuljs'; // bliss is needed for prism-live
 import '../../externalSource/prismLive/prism-live.js';
 
-import '../../externalSource/prismLive/prism.css';
-import '../../externalSource/prismLive/prism-live.css';
+// 'primjs/themes/*.css' uses same classnames, so to avoid css overriding, we import light and dark theme css files
+// into 2 separate strings using `?raw` resourceQuery (see the corresponding rule defined in webpack.config.js)
+import prismLightCss from 'prismjs/themes/prism.css?raw';
+import prismDarkCss from 'prismjs/themes/prism-okaidia.css?raw';
 
-import JoinInnerOutlinedIcon from '@mui/icons-material/JoinInnerOutlined';
+// 'prism-live.css' needs to be imported in same way as above otherwise specificity of CSS selectors will change
+import prismLiveCss from '../../externalSource/prismLive/prism-live.css?raw';
+//--- PrismJs imports end ---
+
+
 const joinIcon = () =>
     <JoinInnerOutlinedIcon sx={{pr:'2px', transform: 'translate(-4px, 5px) scale(1,.8) rotate(145deg)'}}/>;
 
@@ -54,9 +62,11 @@ function getExamples(serviceUrl) {
     return ex.map( ({description, statement},idx) =>
         (<Stack {...{key:description}}>
             <Typography level='body-sm'>{description}</Typography>
-            <code className='language-sql' style={{borderRadius:5, display: 'block', whiteSpace: 'pre-wrap', paddingLeft:3 }}>
-                {statement}
-            </code>
+            <pre style={{margin: 0}}>
+                <code className='language-sql'>
+                    {statement}
+                </code>
+            </pre>
         </Stack>)
     );
 }
@@ -122,6 +132,14 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
     }, [serviceUrl, uploadSchema]);
 
     useEffect(() => {
+        // Insert ADQL function tokens to Prism SQL language
+        Prism.languages.insertBefore('sql', 'function', {
+            'adql-function': {
+                pattern: /\b(POINT|POLYGON|CIRCLE|BOX|DISTANCE|INTERSECTS|CONTAINS)\b/i,
+                alias: 'function'
+            }
+        });
+
         // highlight help text/code snippets
         Prism.highlightAll();
     },  [serviceUrl]);
@@ -223,6 +241,12 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
     const haveTable= Boolean(fileName && uploadSchema);
     const {serverFile,totalRows,fileSize}= uploadSchema?.[fileName] ?? {};
 
+    // based on active mode, set BG color needed for the parent container of prism-live textarea
+    // (hardcoding because prism css files don't have bg color defined as reusable variables yet)
+    const {isDarkMode} = useColorMode();
+    const prismCssBgColor = isDarkMode
+        ? '#272822' //bgColor on L41 in prismDarkCss
+        : '#f5f2f0'; //bgColor on L59 in prismLightCss
 
     return (
             <SplitPane split='vertical' defaultSize={275} style={{position: 'relative', ...style}}>
@@ -250,118 +274,127 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                     </div>
                 </SplitContent>
                 <SplitContent style={{overflow: 'auto'}}>
-                    <Stack {...{flexGrow:1, ml:1, spacing:1}}>
-                        <Stack {...{spacing:4}}>
-                            <Stack {...{spacing:1}}>
-                                <Stack {...{direction: 'row', spacing:10, mr: 3, justifyContent: 'flex-start', alignItems: 'center'}}>
-                                    <Typography level='title-lg'>ADQL Query</Typography>
-                                    <Stack {...{direction: 'row'}}>
-                                        <Chip size='md' title='Reset to the initial query' style={{height: 24, marginRight: 5}} onClick={onReset}>Reset</Chip>
-                                        <Chip size='md' title='Clear the query' style={{height: 24}} onClick={onClear}>Clear</Chip>
+                    <CssStrThemeWrapper cssStr={{light: prismLightCss, dark: prismDarkCss}}>
+                        <Stack flexGrow={1} ml={1} spacing={1}>
+                            <Stack {...{spacing:4}}>
+                                <Stack {...{spacing:1}}>
+                                    <Stack {...{direction: 'row', spacing:10, mr: 3, justifyContent: 'flex-start', alignItems: 'center'}}>
+                                        <Typography level='title-lg'>ADQL Query</Typography>
+                                        <Stack {...{direction: 'row'}}>
+                                            <Chip size='md' title='Reset to the initial query' style={{height: 24, marginRight: 5}} onClick={onReset}>Reset</Chip>
+                                            <Chip size='md' title='Clear the query' style={{height: 24}} onClick={onClear}>Clear</Chip>
+                                        </Stack>
                                     </Stack>
-                                </Stack>
-                                <Tooltip placement='bottom'
-                                         title={
-                                             <Stack>
-                                                 <Typography>ADQL to submit to the selected TAP service </Typography>
-                                                 <Typography>Type ADQL text</Typography>
-                                                 <Typography sx={{pl:2}}>or</Typography>
-                                                 <Stack direction='row' spacing={1} alignItems='center'>
-                                                     <West/>
-                                                     <Typography color='warning'>
-                                                         Use the Schema Browser to insert table and column names.
-                                                     </Typography>
+                                    <Tooltip placement='bottom'
+                                             title={
+                                                 <Stack>
+                                                     <Typography>ADQL to submit to the selected TAP service </Typography>
+                                                     <Typography>Type ADQL text</Typography>
+                                                     <Typography sx={{pl:2}}>or</Typography>
+                                                     <Stack direction='row' spacing={1} alignItems='center'>
+                                                         <West/>
+                                                         <Typography color='warning'>
+                                                             Use the Schema Browser to insert table and column names.
+                                                         </Typography>
+                                                     </Stack>
                                                  </Stack>
-                                             </Stack>
-                                         }>
-                                    <Stack>
-                                        <InputAreaFieldConnected
-                                            ref={adqlEl}
-                                            fieldKey={adqlKey}
-                                            slotProps={{
-                                                input: {sx: {bgcolor: '#f5f2f0'}}, //the color defined on prism.css L59
-                                                textArea: {className: 'prism-live language-sql', id: 'adqlEditor'}
-                                            }}
-                                        />
-                                        <Typography level='body-sm' sx={{mt:-2}}>Type ADQL text; you can use the Schema Browser on the left to insert table and column names.</Typography>
-                                    </Stack>
-                                </Tooltip>
-                                <Stack spacing={1}>
-                                    <Switch {...{ size:'md', sx:{alignSelf:'flex-start'},
-                                        endDecorator: (
-                                            <Stack>
-                                                <Typography>
-                                                    Insert fully-qualified column names (recommended for table joins)
-                                                </Typography>
-                                                <FormHelperText>
-                                                    When selecting a column from the Schema browser use the full qualified name
-                                                </FormHelperText>
-                                            </Stack>
-                                        ),
-                                        checked:fullyQualified,
-                                        onChange: () => {
-                                            setFullQualified(!getFullQualified());
-                                        },
-                                    }} />
-                                    {canUpload &&
-                                        <Stack sx={{mt:2}}>
-                                            <Stack {...{direction:'row', alignItems:'center', spacing:1}}>
-                                                <Stack {...{direction:'row', alignItems:'center', spacing:1}}>
-                                                    <TextButton text={serverFile ? 'Change Upload Table...' : 'Add Upload Table...'}
-                                                                 onClick={() => showUploadTableChooser(setUploadInfo)} style={{marginLeft: 10}} />
-                                                    {haveTable &&
-                                                        <Typography level='title-lg'
-                                                                    sx={{w:200, overflow:'hidden', whiteSpace:'nowrap',
-                                                                        textOverflow:'ellipsis'}}>
-                                                            {fileName}
-                                                        </Typography>
-                                                    }
-                                                    {serverFile && <Chip onClick={() => setUploadInfo(undefined)}>Clear</Chip>}
+                                             }>
+                                        <Stack>
+                                            <CssStrThemeWrapper cssStr={
+                                                // nest the styles in InputAreaFieldView class to make them more specific than prismCss for overriding
+                                                `.InputAreaFieldView {${prismLiveCss}}`
+                                            }>
+                                                <InputAreaFieldConnected
+                                                    ref={adqlEl}
+                                                    fieldKey={adqlKey}
+                                                    slotProps={{
+                                                        input: {sx: {bgcolor: prismCssBgColor}},
+                                                        textArea: {className: 'prism-live language-sql', id: 'adqlEditor'}
+                                                    }}
+                                                />
+                                            </CssStrThemeWrapper>
+                                            <Typography level='body-sm' sx={{mt:-2}}>Type ADQL text; you can use the Schema Browser on the left to insert table and column names.</Typography>
+                                        </Stack>
+                                    </Tooltip>
+                                    <Stack spacing={1}>
+                                        <Switch {...{ size:'md', sx:{alignSelf:'flex-start'},
+                                            endDecorator: (
+                                                <Stack>
+                                                    <Typography>
+                                                        Insert fully-qualified column names (recommended for table joins)
+                                                    </Typography>
+                                                    <FormHelperText>
+                                                        When selecting a column from the Schema browser use the full qualified name
+                                                    </FormHelperText>
                                                 </Stack>
-                                            </Stack>
-                                            {haveTable &&
-                                                <Stack {...{direction:'row'}}>
-                                                    <Typography sx={{whiteSpace:'nowrap'}}>
-                                                        {`Rows: ${totalRows},`}
-                                                    </Typography>
-                                                    <Typography sx={{pl: 1, whiteSpace:'nowrap'}}>
-                                                        {`Size: ${getSizeAsString(fileSize)}`}
-                                                    </Typography>
-                                                </Stack>}
-                                        </Stack>}
+                                            ),
+                                            checked:fullyQualified,
+                                            onChange: () => {
+                                                setFullQualified(!getFullQualified());
+                                            },
+                                        }} />
+                                        {canUpload &&
+                                            <Stack sx={{mt:2}}>
+                                                <Stack {...{direction:'row', alignItems:'center', spacing:1}}>
+                                                    <Stack {...{direction:'row', alignItems:'center', spacing:1}}>
+                                                        <TextButton text={serverFile ? 'Change Upload Table...' : 'Add Upload Table...'}
+                                                                     onClick={() => showUploadTableChooser(setUploadInfo)} style={{marginLeft: 10}} />
+                                                        {haveTable &&
+                                                            <Typography level='title-lg'
+                                                                        sx={{w:200, overflow:'hidden', whiteSpace:'nowrap',
+                                                                            textOverflow:'ellipsis'}}>
+                                                                {fileName}
+                                                            </Typography>
+                                                        }
+                                                        {serverFile && <Chip onClick={() => setUploadInfo(undefined)}>Clear</Chip>}
+                                                    </Stack>
+                                                </Stack>
+                                                {haveTable &&
+                                                    <Stack {...{direction:'row'}}>
+                                                        <Typography sx={{whiteSpace:'nowrap'}}>
+                                                            {`Rows: ${totalRows},`}
+                                                        </Typography>
+                                                        <Typography sx={{pl: 1, whiteSpace:'nowrap'}}>
+                                                            {`Size: ${getSizeAsString(fileSize)}`}
+                                                        </Typography>
+                                                    </Stack>}
+                                            </Stack>}
 
+                                </Stack>
                             </Stack>
-                        </Stack>
-                            <Stack>
-                                <Typography level='body-lg'>Popular Functions</Typography>
-                                <Box sx={{ml: 2}}>
-                                    <code className='language-sql' style={{borderRadius:5, display: 'block', whiteSpace: 'pre-wrap'}}>
-                                        {(`\
-                                    TOP n  -- Limit the results to n number of records
-                                    ORDER BY [ASC/DESC] -- Used for sorting
-                                    POINT('<coordinate system>', RIGHT_ASCENSION, DECLINATION)
-                                    CIRCLE('<coordinate system>', RIGHT_ASCENSION_CENTER, DECLINATION_CENTER, RADIUS)
-                                    BOX('<coordinate system>', RIGHT_ASCENSION_CENTER, DECLINATION_CENTER, WIDTH, HEIGHT)
-                                    POLYGON('<coordinate system>', POINT1, POINT2, POINT3...)
-                                    DISTANCE(POINT1, POINT2)
-                                    CONTAINS(REGION1, REGION2)
-                                    INTERSECTS(REGION1, REGION2)`).replace(/    +/g, '')
-                                        }
-                                    </code>
-                                </Box>
-                            </Stack>
+                                <Stack>
+                                    <Typography level='body-lg'>Popular Functions</Typography>
+                                    <Box sx={{ml: 2}}>
+                                        <pre>
+                                            <code className='language-sql'>
+                                                {(`\
+                                            TOP n  -- Limit the results to n number of records
+                                            ORDER BY [ASC/DESC] -- Used for sorting
+                                            POINT('<coordinate system>', RIGHT_ASCENSION, DECLINATION)
+                                            CIRCLE('<coordinate system>', RIGHT_ASCENSION_CENTER, DECLINATION_CENTER, RADIUS)
+                                            BOX('<coordinate system>', RIGHT_ASCENSION_CENTER, DECLINATION_CENTER, WIDTH, HEIGHT)
+                                            POLYGON('<coordinate system>', POINT1, POINT2, POINT3...)
+                                            DISTANCE(POINT1, POINT2)
+                                            CONTAINS(REGION1, REGION2)
+                                            INTERSECTS(REGION1, REGION2)`).replace(/    +/g, '')
+                                                }
+                                            </code>
+                                        </pre>
+                                    </Box>
+                                </Stack>
 
-                            <Stack>
-                                <Typography level='body-lg'>Sample Queries</Typography>
-                                <Stack {...{ml: 2, spacing:2}}>
-                                    { getExamples(serviceUrl) }
-                                    <Typography level='body-sm'>
-                                        These examples may not be directly usable in any TAP service you have selected.
-                                    </Typography>
+                                <Stack>
+                                    <Typography level='body-lg'>Sample Queries</Typography>
+                                    <Stack {...{ml: 2, spacing:2}}>
+                                        { getExamples(serviceUrl) }
+                                        <Typography level='body-sm'>
+                                            These examples may not be directly usable in any TAP service you have selected.
+                                        </Typography>
+                                    </Stack>
                                 </Stack>
                             </Stack>
                         </Stack>
-                    </Stack>
+                    </CssStrThemeWrapper>
                 </SplitContent>
             </SplitPane>
     );
