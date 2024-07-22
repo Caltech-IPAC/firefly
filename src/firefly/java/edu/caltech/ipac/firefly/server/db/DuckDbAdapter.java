@@ -23,7 +23,6 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.stream.IntStream;
 
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.*;
 import static edu.caltech.ipac.util.StringUtils.*;
@@ -36,17 +35,21 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
     public static final String NAME = "duckdb";
     public static final String DRIVER = "org.duckdb.DuckDBDriver";
     public static String maxMemory = AppProperties.getProperty("duckdb.max.memory");        // in GB; 2G, 5.5G, etc
+    private static int threadCnt=1;    // min 125mb per thread.  recommend 5gb per thread; we will config 1gb per thread but not more than 4.
 
     static {
         if (DEF_DB_TYPE.equals(NAME)) {
             // no need manual cleanup; let DuckDB handles it.
             DbMonitor.MAX_MEMORY = 1_000_000_000_000L;
             DbMonitor.MAX_MEM_ROWS = DbMonitor.MAX_MEMORY;
+            DbMonitor.MAX_IDLE_TIME = 60;       // since we don't compact duckdb, this is the time before info is removed from DB Monitor
         }
         if (isEmpty(maxMemory)) {
             ServerContext.Info sInfo = ServerContext.getSeverInfo();
             var dbMaxMem = Math.max(sInfo.pMemory() - sInfo.jvmMax(), 500*1024*1024);     // Greater of available RAM or 500MB.
-            maxMemory = "%.1fG".formatted(dbMaxMem/(1024.0 * 1024 * 1024));
+            var maxMemInGb = dbMaxMem/(1024.0 * 1024 * 1024);
+            maxMemory = "%.1fG".formatted(maxMemInGb);
+            threadCnt = Math.max(Math.min(4, (int)maxMemInGb), 1);
         }
     }
 
@@ -70,7 +73,7 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
         String filePath = getDbFile() == null ? "" : getDbFile().getAbsolutePath();
         String dbUrl = "jdbc:duckdb:" + filePath;
         var db = new EmbeddedDbInstance(getName(), this, dbUrl, DRIVER);
-        db.consumeProps("memory_limit=%s,threads=1".formatted(maxMemory));
+        db.consumeProps("memory_limit=%s,threads=%d".formatted(maxMemory, threadCnt));
         return db;
     }
 
@@ -112,7 +115,7 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
     protected void shutdown(EmbeddedDbInstance db) {}
     protected void removeDbFile() {
         if (!getDbFile().delete()) {
-            LOGGER.warn("Unable to remove duckdb file:" + getDbFile().getAbsolutePath());
+            LOGGER.trace("Unable to remove duckdb file:" + getDbFile().getAbsolutePath());
         }
     }
     /*------------------*/

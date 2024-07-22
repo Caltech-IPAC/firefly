@@ -40,14 +40,14 @@ class DbMonitor {
           - COMPACT_FACTOR: .5
           - MAX_MEMORY_ROWS:  1m rows for every 1GB of memory at startup. minimum of 2 million.
      */
-    public static long MAX_MEM_ROWS   = AppProperties.getLongProperty("dbTbl.maxMemRows", maxMemRows());
-    public static long MAX_MEMORY   = AppProperties.getLongProperty("dbTbl.maxMemory", maxMemory());
-
     public static final long MAX_IDLE_PROP  = AppProperties.getLongProperty("dbTbl.maxIdle", 15);                       // idle time before DB is shutdown.  Defaults to 15 minutes.
     public static final long MAX_IDLE_TIME_RSC = AppProperties.getLongProperty("dbRsc.maxIdle", MAX_IDLE_PROP) * 1000 * 60;  // same as dbTbl.maxIdle, but for Resource tables.
-    public static final long MAX_IDLE_TIME  = MAX_IDLE_PROP * 1000 * 60;                                                          // max idle time in ms
     public static final float COMPACT_FACTOR = AppProperties.getFloatProperty("dbTbl.compactFactor", 0.5f);             // when to compact the DB as a factor of MAX_IDLE.  defaults to 1/2 of MAX_IDLE_TIME
     public static final int  CLEANUP_INTVL  = 1000 * 60;        // check every 1 minutes
+
+    public static long MAX_MEM_ROWS   = AppProperties.getLongProperty("dbTbl.maxMemRows", maxMemRows());
+    public static long MAX_MEMORY   = AppProperties.getLongProperty("dbTbl.maxMemory", maxMemory());
+    public static long MAX_IDLE_TIME  = MAX_IDLE_PROP * 1000 * 60;                                                          // max idle time in ms
 
     /**
      * When met, system will aggressively shutdown DBs even before expiry time starting with the
