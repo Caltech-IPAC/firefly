@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import static edu.caltech.ipac.util.StringUtils.getWith;
+
 /**
  * Date: Oct 7, 2008
  *
@@ -39,7 +41,10 @@ public class JdbcFactory {
      */
     public static JdbcTemplate getTemplate(DbInstance dbInstance) {
         DataSource datasource = getDataSource(dbInstance);
-        return datasource == null ? null : new JdbcTemplate(datasource);
+        if (datasource == null) return null;
+        return getWith( () -> new JdbcTemplate(datasource),
+                (jdbc) -> jdbc.queryForInt("SELECT 1 FROM (VALUES (0)) AS dummy") > 0,
+                3);     // return null if failed after 3 tries
     }
 
     /**
@@ -64,12 +69,15 @@ public class JdbcFactory {
      */
     public static SimpleJdbcTemplate getSimpleTemplate(DbInstance dbInstance) {
         DataSource datasource = getDataSource(dbInstance);
-        return datasource == null ? null : new SimpleJdbcTemplate(getDataSource(dbInstance));
+        if (datasource == null) return null;
+        return getWith( () -> new SimpleJdbcTemplate(datasource),
+                (jdbc) -> jdbc.queryForInt("SELECT 1 FROM (VALUES (0)) AS dummy") > 0,
+                3);     // return null if failed after 3 tries
     }
 
     /**
      * return a JdbcTemplate with a single underlying connection.
-     * this allow a user to perform multiple tasks on one connection.
+     * this allows a user to perform multiple tasks on one connection.
      * this implementation is not thread-safe.
      * @param dbInstance
      * @return
@@ -108,11 +116,12 @@ public class JdbcFactory {
     }
 
     public static DataSource getDataSource(DbInstance dbInstance) {
-
         try {
+            if (!dbInstance.isPooled()) return getDirectDataSource(dbInstance);
+
             DataSource ds = dataSourceMap.get().get(dbInstance);
             if (ds == null) {
-                ds = dbInstance.isPooled ? getPooledDataSource(dbInstance) : getDirectDataSource(dbInstance);
+                ds = getDirectDataSource(dbInstance);
                 dataSourceMap.get().put(dbInstance, ds);
             }
             return ds;
@@ -123,7 +132,6 @@ public class JdbcFactory {
     }
 
     private static DataSource getDirectDataSource(DbInstance dbInstance) {
-        logger.trace("Getting a new database connection for " + dbInstance.dbUrl + " using DriverManager");
         DriverManagerDataSource driver = new DataSourceWithProps(
                     dbInstance.dbUrl,
                     dbInstance.userId,
@@ -132,16 +140,17 @@ public class JdbcFactory {
                 );
 
         driver.setDriverClassName(dbInstance.jdbcDriver);
-        logger.trace("returned DataSource:" + driver);
+        logger.trace("Getting a new database connection for " + dbInstance.dbUrl + " using DriverManager",
+                "DataSource returned: " + driver);
         return driver;
     }
 
     private static DataSource getPooledDataSource(DbInstance dbInstance) throws Exception {
-        logger.briefDebug("Getting pooled database connection from " + dbInstance.datasourcePath);
         Context initContext = new InitialContext();
         Context envContext  = (Context)initContext.lookup("java:/comp/env");
         DataSource ds = (DataSource)envContext.lookup(dbInstance.datasourcePath);
-        logger.trace("returned DataSource:" + ds);
+        logger.trace("Getting pooled database connection from " + dbInstance.datasourcePath,
+                "returned DataSource:" + ds);
         return ds;
     }
 
@@ -177,6 +186,4 @@ public class JdbcFactory {
         }
 
     }
-
-
 }

@@ -868,7 +868,7 @@ public class ServerContext {
         public void contextDestroyed(ServletContextEvent servletContextEvent) {
             try {
                 System.out.println("contextDestroyed...");
-                DbMonitor.cleanup(true, true);
+                DbMonitor.cleanup(true, false);
                 ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
                 try {
                     SHORT_TASK_EXEC.shutdownNow();

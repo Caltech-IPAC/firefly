@@ -57,18 +57,29 @@ public class ServerStatus extends BaseHttpServlet {
 
         boolean showHeaders = Boolean.parseBoolean(req.getParameter("headers"));
         boolean execGC = Boolean.parseBoolean(req.getParameter("execGC"));
-        String showJobDetails = req.getParameter("job.details");
+        boolean showJobDetails = Boolean.parseBoolean(req.getParameter("job.details"));
 
         if (execGC)     System.gc();            // force garbage collection.
 
         ServerContext.Info sInfo = ServerContext.getSeverInfo();
-        res.addHeader("content-type", "text/plain");
+        res.addHeader("content-type", "text/html");
         PrintWriter writer = res.getWriter();
+        writer.println("<pre style='font-size: -1'>");
         try {
+
+            // show optional parameters
+            writer.println("Available Actions");
+            writer.println("--------------------");
+            writer.println("<li><a href=./status>Default View</a>:   Default set of information");
+            writer.println("<li><a href=./status?headers=true>Full Headers</a>:   Display all request's headers");
+            writer.println("<li><a href=./status?job.details=true>Job Details</a>:    View detailed Async Job Information");
+            writer.println("<li><a href=./status?execGC=true>Trigger GC</a>:     Invoke JVM garbage collection");
+            skip(writer);
+
             showCountStatus(writer);
             skip(writer);
 
-            showPackagingStatus(writer, showJobDetails != null && Boolean.parseBoolean(showJobDetails));
+            showPackagingStatus(writer, showJobDetails);
             skip(writer);
 
             showMessagingStatus(writer);
@@ -93,12 +104,7 @@ public class ServerStatus extends BaseHttpServlet {
                 showHeaders(writer, req);
             }
 
-            // show optional parameters
-            writer.println("\n\nAvailable Parameters");
-            writer.println(    "--------------------");
-            writer.println("headers=[true|false]        Display all request's headers");
-            writer.println("job.details=[true|false]    Display details of all jobs");
-            writer.println("execGC=[true|false]         Invoke JVM garbage collection");
+            writer.println("</pre>");
 
         } finally {
             writer.flush();
@@ -152,13 +158,25 @@ public class ServerStatus extends BaseHttpServlet {
 
     private static void showDatabaseStatus(PrintWriter writer) {
         DbAdapter.EmbeddedDbStats stats = DbMonitor.getRuntimeStats(true);
+        String driver;
         if (DbAdapter.DEF_DB_TYPE.equals(DuckDbAdapter.NAME)) {
             duckDbConfig(writer);
+            driver = DuckDbAdapter.DRIVER;
         } else {
             hsqldbConfig(writer, stats);
+            driver = HsqlDbAdapter.DRIVER;
         }
-        writer.println("");
-        writer.println("Idled   Age     Rows        Columns  Tables  Total Rows       Memory  db.url     (elapsed time are in min:sec; memory is in MB)");
+
+        writer.printf(""" 
+            <div style="font-size:small">
+            To browse the data in these databases, follow these steps:            
+            1. Open the <a href=%sadmin/db/ target='_blank'>Database Console</a>.
+            2. Enter the Driver Class: %s
+            3. Enter the JDBC URL: Copy and paste a JDBC URL from the options below that you wish to browse.
+            4. Click "Connect"
+            </div>
+            """, ServerContext.getRequestOwner().getBaseUrl(), driver);
+        writer.println("Idled   Age     Rows        Columns  Tables  Total Rows       Memory  JDBC URL     (elapsed time are in min:sec; memory is in MB)");
         writer.println("------  ------  ----------  -------  ------  ----------       ------  ---------");
         DbMonitor.getDbInstances().values().stream()
             .sorted((db1, db2) -> Long.compare(db2.getLastAccessed(), db1.getLastAccessed()))
@@ -182,7 +200,6 @@ public class ServerStatus extends BaseHttpServlet {
         writer.printf("DB In Memory:      %,10d  Total DB count:      %,10d\n", stats.memDbs, stats.totalDbs);
         writer.printf("Rows In Memory:    %,10d  Peak Rows In Memory: %,10d\n", stats.memRows, stats.peakMemRows);
         writer.println("Cleanup Last Ran:  " + new SimpleDateFormat("HH:mm:ss").format(stats.lastCleanup));
-        writer.printf("\ndb.driver:     %s\n", HsqlDbAdapter.DRIVER);
     }
 
     private static void duckDbConfig(PrintWriter w) {
@@ -196,7 +213,6 @@ public class ServerStatus extends BaseHttpServlet {
                 w.printf("| %20s | %20s | %60s | %10s | %10s |\n".formatted(r.getData()));
             });
         }
-        w.printf("\ndb.driver:     %s\n", DuckDbAdapter.DRIVER);
     }
 
     private static String getStats(Ehcache c) {

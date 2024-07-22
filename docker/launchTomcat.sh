@@ -103,6 +103,7 @@ fi
 export CATALINA_OPTS="\
   -XX:InitialRAMPercentage=${INIT_RAM_PERCENT:-10} \
   -XX:MaxRAMPercentage=${MAX_RAM_PERCENT:-80} \
+  -XX:+UnlockExperimentalVMOptions -XX:TrimNativeHeapInterval=30000 \
   -DADMIN_USER=${ADMIN_USER} \
   -DADMIN_PASSWORD=${ADMIN_PASSWORD} \
   -Dhost.name=${HOSTNAME} \
@@ -115,6 +116,10 @@ export CATALINA_OPTS="\
   -Dalerts.dir=/firefly/alerts \
   -Dvisualize.fits.search.path=${VIS_PATH} \
 	"
+
+#	This was added because the current version of DuckDB does not free up memory aggressively.
+# This causes it to use more than the designated limit.
+#  -XX:+UnlockExperimentalVMOptions -XX:TrimNativeHeapInterval=30000 \
 
 #----- remove ADMIN_PROTECTED path so it no longer restricted by basic auth
 if [ "${USE_ADMIN_AUTH,,}" = "false" ]; then export CATALINA_OPTS="${CATALINA_OPTS} -DADMIN_PROTECTED="; fi
