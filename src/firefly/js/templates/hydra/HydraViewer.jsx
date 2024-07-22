@@ -99,7 +99,7 @@ function ResultSection({slotProps}) {
     const layoutInfo = useStoreConnector(getLayouInfo);
     const {showImages, showXyPlots, showTables} = layoutInfo;
 
-    if (!(showImages || showXyPlots || showTables)) return <Slot component={HydraLanding} {...slotProps?.landing}/>;
+    if (!(showImages || showXyPlots || showTables)) return <Slot component={HydraLanding} slotProps={slotProps?.landing}/>;
 
 
     const {currentSearch, images} = layoutInfo;
