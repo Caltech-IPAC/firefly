@@ -13,22 +13,18 @@
 
 
 import {isUndefined} from 'lodash';
-import {encodeServerUrl, getRootURL, loadImage} from '../util/WebUtil.js';
-import {CysConverter} from './CsysConverter.js';
-import {makeDevicePt, makeWorldPt} from './Point.js';
 import {
-    ang2pixNest,
-    HealpixIndex,
-    ORDER_MAX,
-    radecToPolar,
-    SpatialVector
+    ang2pixNest, HealpixIndex, ORDER_MAX, radecToPolar, SpatialVector
 } from '../externalSource/aladinProj/HealpixIndex.js';
-import {computeDistance, convert, toDegrees, toRadians} from './VisUtil.js';
-import {getScreenPixScaleArcSec, isHiPSAitoff, replaceProjection} from './WebPlot.js';
-import {getFoV, primePlot} from './PlotViewUtil.js';
-import {CoordinateSys} from './CoordSys.js';
 import {getFireflySessionId} from '../Firefly';
-import {makeHiPSProjection} from './WebPlot';
+import {encodeServerUrl, getRootURL, loadImage} from '../util/WebUtil.js';
+import {CoordinateSys} from './CoordSys.js';
+import {CysConverter} from './CsysConverter.js';
+import {getFoV, primePlot} from './PlotViewUtil.js';
+import {makeDevicePt, makeWorldPt} from './Point.js';
+import {makeHiPSProjection} from './projection/Projection';
+import {computeDistance, convertCelestial, toDegrees, toRadians} from './VisUtil.js';
+import {changeHiPSProjectionCenter, getScreenPixScaleArcSec, isHiPSAitoff} from './WebPlot.js';
 
 
 export const MAX_SUPPORTED_HIPS_LEVEL= ORDER_MAX-2;
@@ -48,28 +44,6 @@ function getHealpixIndex(nside) {
     return workingHealpixIdx;
 }
 
-
-
-/**
- * @param {WebPlot|CysConverter} plot
- * @param {WorldPt} wp new center of projection
- */
-export const changeProjectionCenter= (plot, wp) => changeProjectionCenterAndType(plot, wp);
-
-/**
- * @param {WebPlot|CysConverter} plot
- * @param {WorldPt} [wp] new center of projection, if undefined then it will keep the same center point
- * @param {boolean} [fullSky] true if this is a fullSky projection (AITOFF), if undefined then it will stay the same
- * @return {WebPlot}
- */
-export function changeProjectionCenterAndType(plot, wp, fullSky) {
-    if (!plot) return undefined;
-    const fullSkyToUse= isUndefined(fullSky) ? isHiPSAitoff(plot) : fullSky;
-    const cWp= convert(wp, plot.projection.coordSys);
-    const x= cWp?.x ?? plot.projection.header.crval1;
-    const y= cWp?.y ?? plot.projection.header.crval2;
-    return replaceProjection(plot, makeHiPSProjection(plot.projection.coordSys, x, y, fullSkyToUse));
-}
 
 
 /**
@@ -280,7 +254,7 @@ export function getHiPSZoomLevelForFOV(pv, fov) {
     if (!plot || !width || !height) return 1;
    
     // make version of plot centered at 0,0 with zoom level 1
-    const tmpPlot= changeProjectionCenter({...plot, zoomFactor:1}, makeWorldPt(0,0, plot.imageCoordSys));
+    const tmpPlot= changeHiPSProjectionCenter({...plot, zoomFactor:1}, makeWorldPt(0,0, plot.imageCoordSys));
     const cc= CysConverter.make(tmpPlot);
     const pt1= cc.getDeviceCoords( makeWorldPt(0,0, plot.imageCoordSys));
     const pt2= cc.getDeviceCoords( makeWorldPt(fov/2,0, plot.imageCoordSys));
@@ -427,6 +401,7 @@ function healpixPixelTo512TileXY(pixel) {
  * @param desiredNorder - when render very deep desired norder give an indication how deep the zoom is beyond the tile level
  * @param {WorldPt} centerWp - center of visible area, coordinate system of this point should be same as the projection
  * @param {number} fov - Math.max(width, height) of the field of view in degrees (i think)
+ * @param {{width:number,height:number}} viewDim
  * @param {CoordinateSys} dataCoordSys
  * @param {Boolean} isAitoff
  * @return {Array.<{ipix:number, wpCorners:Array.<WorldPt>}>} an array of objects the contain the healpix
@@ -437,7 +412,7 @@ export function getVisibleHiPSCells (norder, desiredNorder, centerWp, fov, viewD
         return getHealpixCornerTool().getFullCellList(norder,dataCoordSys);
     }
     else if (fov>80 && norder<=3) { // get all the cells and filter them
-        const dataCenterWp= convert(centerWp, dataCoordSys);
+        const dataCenterWp= convertCelestial(centerWp, dataCoordSys);
         return filterAllSky(dataCenterWp, getHealpixCornerTool().getFullCellList(norder,dataCoordSys));
     }
     else { // get only the healpix number for the fov and create the cell list
@@ -451,7 +426,7 @@ export function getVisibleHiPSCells (norder, desiredNorder, centerWp, fov, viewD
  * @param desiredNorder - when render very deep desired norder give an indication how deep the zoom is beyond the tile level
  * @param {WorldPt} centerWp - center of visible area, coordinate system of this point should be same as the projection
  * @param {number} fov - Math.max(width, height) of the field of view in degrees (i think)
- * @prop {{width:number, height:number}} viewDim
+ * @param {{width:number, height:number}} viewDim
  * @param {CoordinateSys} dataCoordSys
  * @return {Array.<{ipix:number, wpCorners:Array.<WorldPt>}>} an array of objects the contain the healpix
  *            pixel number and a worldPt array of corners
@@ -461,7 +436,7 @@ function getPixCellList(norder,desiredNorder, centerWp, fov, viewDim, dataCoordS
     const diag= (width**2 + height**2)**.5; // Pythagorean theorem
     const diagRatio= diag/width;
     const healpixCache=getHealpixCornerTool();
-    const dataCenterWp= convert(centerWp, dataCoordSys);
+    const dataCenterWp= convertCelestial(centerWp, dataCoordSys);
     const norderToUse= norder>=desiredNorder ? norder : desiredNorder;
     const radiusRad= getSearchRadiusInRadians(fov*diagRatio); // use a radius for the diagonal of the view
     const nsideToUse = 2**norderToUse;
@@ -491,7 +466,7 @@ export function getCornersForCell(norder, ipix, dataCoordSys) {
  */
 export function getAllVisibleHiPSCells (norder, centerWp, fov, dataCoordSys, isAitoff) {
     const healpixCache= getHealpixCornerTool();
-    const dataCenterWp= convert(centerWp, dataCoordSys);
+    const dataCenterWp= convertCelestial(centerWp, dataCoordSys);
 
     if (isAitoff && fov > 130 && norder<=3) {
         return healpixCache.getFullCellList(norder,dataCoordSys);
@@ -628,7 +603,7 @@ export function isTileInside(norder1, npix1, norder2, npix2) {
  * @return {WebPlot}
  */
 export function replaceHiPSProjection(plot, coordinateSys, wp = makeWorldPt(0, 0)) {
-    const newWp = convert(wp, coordinateSys);
+    const newWp = convertCelestial(wp, coordinateSys);
     const projection = makeHiPSProjection(coordinateSys, newWp.x, newWp.y, isHiPSAitoff(plot));
     //note: the dataCoordSys stays the same
     return {...plot, imageCoordSys: projection.coordSys, projection, allWCSMap: {'': projection}};

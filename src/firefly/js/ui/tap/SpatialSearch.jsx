@@ -13,7 +13,7 @@ import {PlotAttribute} from '../../visualize/PlotAttribute.js';
 import {getActivePlotView, primePlot} from '../../visualize/PlotViewUtil.js';
 import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
 import {VisualTargetPanel} from '../../visualize/ui/TargetHiPSPanel.jsx';
-import {convert} from '../../visualize/VisUtil.js';
+import {convertCelestial} from '../../visualize/VisUtil.js';
 import {calcCornerString, renderPolygonDataArea} from '../CatalogSearchMethodType.jsx';
 import {FieldGroupCtx, ForceFieldGroupValid} from '../FieldGroup.jsx';
 import {ListBoxInputField} from '../ListBoxInputField.jsx';
@@ -437,7 +437,7 @@ function checkPoint(worldSys, adqlCoordSys, wpField, errList) {
     let valid= false;
     if (wpField.valid){
         if (worldPt){
-            newWpt = convert(worldPt, worldSys);
+            newWpt = convertCelestial(worldPt, worldSys);
             valid= true;
         } else {
             errList.addError('no target found');
@@ -465,7 +465,7 @@ function getPolygonUserArea(polygonCornersStr='', adqlCoordSys, worldSys, errLis
             return undefined;
         } else {
             if (!p) return undefined;
-            p.push(convert(makeWorldPt(corner[0], corner[1]), worldSys));
+            p.push(convertCelestial(makeWorldPt(corner[0], corner[1]), worldSys));
         }
         return p;
     }, []);

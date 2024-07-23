@@ -3,14 +3,14 @@
  */
 
 import CoordinateSys from './CoordSys.js';
-import VisUtil from './VisUtil.js';
+import {convertCelestial} from './VisUtil.js';
 import {makeImagePt} from './Point';
 import {getPixScaleDeg} from './WebPlot.js';
 
 
 function getJ2XY(wp) {
     if (CoordinateSys.EQ_J2000!==wp.getCoordSys()) {
-        wp= VisUtil.convert(wp,CoordinateSys.EQ_J2000);
+        wp= convertCelestial(wp,CoordinateSys.EQ_J2000);
     }
     return {x: wp.getLon(), y: wp.getLat()};
 }

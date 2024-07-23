@@ -1,21 +1,20 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isArray, isBoolean, isEmpty, isNumber} from 'lodash';
 import {ZoomType} from 'firefly/visualize/ZoomType.js';
+import {isArray, isBoolean, isEmpty, isNumber, isUndefined} from 'lodash';
+import {memorizeLastCall} from '../util/WebUtil';
 import CoordinateSys from './CoordSys.js';
-import {
-    HIPS_AITOFF, HIPS_SIN, makeProjection, makeProjectionNew, UNRECOGNIZED, UNSPECIFIED
-} from './projection/Projection.js';
-import PlotState from './PlotState.js';
-import {makeDevicePt, makeScreenPt, makeWorldPt} from './Point.js';
-import {changeProjectionCenter} from './HiPSUtil.js';
 import {CysConverter} from './CsysConverter.js';
+import PlotState, {makePlotStateShimForHiPS} from './PlotState';
 import {makeImagePt} from './Point';
+import {makeDevicePt, makeScreenPt, makeWorldPt} from './Point.js';
+import {
+    HIPS_AITOFF, HIPS_DATA_HEIGHT, HIPS_DATA_WIDTH, makeHiPSProjection, makeProjectionNew, UNRECOGNIZED, UNSPECIFIED
+} from './projection/Projection.js';
 import {makeDirectFileAccessData, parseSpacialHeaderInfo} from './projection/ProjectionHeaderParser.js';
 import {parseWavelengthHeaderInfo} from './projection/WavelengthHeaderParser.js';
-import {memorizeLastCall} from '../util/WebUtil';
-import {makePlotStateShimForHiPS} from './PlotState';
+import {convertCelestial} from './VisUtil';
 
 export const BLANK_HIPS_URL= 'blank';
 export const DEFAULT_BLANK_HIPS_TITLE= 'Blank HiPS Projection';
@@ -32,9 +31,6 @@ export const RDConst= {
     WAVELENGTH_TABLE_RESOLVED: 'WAVELENGTH_TABLE_RESOLVED',
     SUPPORTED_DATATYPES: ['IMAGE_MASK', 'TABLE']
 };
-
-const HIPS_DATA_WIDTH=  10000000000;
-const HIPS_DATA_HEIGHT= 10000000000;
 
 
 
@@ -588,27 +584,6 @@ export const WebPlot= {
 };
 
 
-/**
- *
- * @param {CoordinateSys} coordinateSys
- * @param lon
- * @param lat
- * @param {boolean} fullSky
- * @return {Projection}
- */
-export function makeHiPSProjection(coordinateSys, lon=0, lat=0, fullSky= false) {
-    const header= {
-        cdelt1: 180/HIPS_DATA_WIDTH,
-        cdelt2: 180/HIPS_DATA_HEIGHT,
-        maptype: fullSky ? HIPS_AITOFF : HIPS_SIN,
-        crpix1: HIPS_DATA_WIDTH*.5,
-        crpix2: HIPS_DATA_HEIGHT*.5,
-        crval1: lon,
-        crval2: lat
-    };
-    return makeProjection({header, coorindateSys:coordinateSys.toString()});
-}
-
 export const isHiPSAitoff= (plot) => isHiPS(plot) && plot.projection.header.maptype===HIPS_AITOFF;
 
 
@@ -716,6 +691,27 @@ export function getScreenPixScale(plot) {
     }
 }
 
+/**
+ * @param {WebPlot|CysConverter} plot
+ * @param {WorldPt} wp new center of projection
+ */
+export const changeHiPSProjectionCenter = (plot, wp) => changeHiPSProjectionCenterAndType(plot, wp);
+
+/**
+ * @param {WebPlot|CysConverter} plot
+ * @param {WorldPt} [wp] new center of projection, if undefined then it will keep the same center point
+ * @param {boolean} [fullSky] true if this is a fullSky projection (AITOFF), if undefined then it will stay the same
+ * @return {WebPlot}
+ */
+export function changeHiPSProjectionCenterAndType(plot, wp, fullSky) {
+    if (!plot) return undefined;
+    const fullSkyToUse = isUndefined(fullSky) ? isHiPSAitoff(plot) : fullSky;
+    const cWp = convertCelestial(wp, plot.projection.coordSys);
+    const x = cWp?.x ?? plot.projection.header.crval1;
+    const y = cWp?.y ?? plot.projection.header.crval2;
+    return replaceProjection(plot, makeHiPSProjection(plot.projection.coordSys, x, y, fullSkyToUse));
+}
+
 export const getScreenPixScaleArcSec= memorizeLastCall((plot) => {
     if (!plot || !plot.projection || !isKnownType(plot)) return 0;
     if (isImage(plot)) {
@@ -723,7 +719,7 @@ export const getScreenPixScaleArcSec= memorizeLastCall((plot) => {
     }
     else if (isHiPS(plot)) {
         const pt00= makeWorldPt(0,0, plot.imageCoordSys);
-        const tmpPlot= changeProjectionCenter(plot, pt00);
+        const tmpPlot= changeHiPSProjectionCenter(plot, pt00);
         const cc= CysConverter.make(tmpPlot);
         const scrP= cc.getScreenCoords( pt00);
         const pt2= cc.getWorldCoords( makeScreenPt(scrP.x-1, scrP.y), plot.imageCoordSys);
@@ -770,7 +766,7 @@ export function getPixScaleDeg(plot) {
     }
     else if (isHiPS(plot)) {
         const pt00= makeWorldPt(0,0, plot.imageCoordSys);
-        const tmpPlot= changeProjectionCenter(plot, pt00);
+        const tmpPlot= changeHiPSProjectionCenter(plot, pt00);
         const cc= CysConverter.make(tmpPlot);
         const imP= cc.getImageCoords( pt00);
         const pt2= cc.getWorldCoords( makeImagePt(imP.x-1, imP.y), plot.imageCoordSys);
@@ -786,7 +782,7 @@ export function getDevPixScaleDeg(plot) {
     }
     else if (isHiPS(plot)) {
         const pt00= makeWorldPt(0,0, plot.imageCoordSys);
-        const tmpPlot= changeProjectionCenter(plot, pt00);
+        const tmpPlot= changeHiPSProjectionCenter(plot, pt00);
         const cc= CysConverter.make(tmpPlot);
         const devP= cc.getDeviceCoords( pt00);
         if (!devP) return 0;
@@ -804,7 +800,7 @@ export function getImagePixScaleDeg(plot) {
     }
     else if (isHiPS(plot)) {
         const pt00= makeWorldPt(0,0, plot.imageCoordSys);
-        const tmpPlot= changeProjectionCenter(plot, pt00);
+        const tmpPlot= changeHiPSProjectionCenter(plot, pt00);
         const cc= CysConverter.make(tmpPlot);
         const devP= cc.getImageCoords( pt00);
         const pt2= cc.getWorldCoords( makeImagePt(devP.x-1, devP.y), plot.imageCoordSys);

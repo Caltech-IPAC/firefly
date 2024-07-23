@@ -43,7 +43,7 @@ import {
     DEFAULT_COVERAGE_PLOT_ID, DEFAULT_COVERAGE_VIEWER_ID, getNextHiPSPlotId, getPlotViewById
 } from '../PlotViewUtil.js';
 import {parseWorldPt} from '../Point.js';
-import VisUtil from '../VisUtil';
+import {convertCelestial} from '../VisUtil';
 import {getWorkspaceConfig} from '../WorkspaceCntlr.js';
 import {getImageMasterData} from './AllImageSearchConfig.js';
 import {FD_KEYS, FG_KEYS} from './UIConst';
@@ -766,8 +766,8 @@ function resolveHRefValWithParams(wp,radius, maxRangeDeg, href='') {
     const rNum= Number(radius);
     const sizeArcMin= rNum ? radius*60 : '';
     const sizeArcSec= rNum ? radius*3600 : '';
-    const j2Wp= VisUtil.convert(wp, CoordinateSys.EQ_J2000);
-    const galWp= VisUtil.convert(wp, CoordinateSys.GALACTIC);
+    const j2Wp= convertCelestial(wp, CoordinateSys.EQ_J2000);
+    const galWp= convertCelestial(wp, CoordinateSys.GALACTIC);
 
     return resolveHRefVal(
         {

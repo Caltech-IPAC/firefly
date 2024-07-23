@@ -10,7 +10,6 @@ import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import BrowserInfo from '../util/BrowserInfo.js';
-import VisUtil from '../visualize/VisUtil.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
 import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
@@ -18,6 +17,7 @@ import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {hasWCSProjection} from '../visualize/PlotViewUtil';
 import {DrawingType} from '../visualize/draw/DrawObj';
 import {DrawSymbol} from 'firefly/visualize/draw/DrawSymbol.js';
+import {computeScreenDistance} from '../visualize/VisUtil';
 
 
 const EDIT_DISTANCE= BrowserInfo.isTouchInput() ? 18 : 5;
@@ -279,7 +279,7 @@ function findClosestPtIdx(ptAry, pt) {
 
 }
 
-const screenDistance= (pt1,pt2) => VisUtil.computeScreenDistance(pt1.x,pt1.y,pt2.x,pt2.y);
+const screenDistance= (pt1,pt2) => computeScreenDistance(pt1.x,pt1.y,pt2.x,pt2.y);
 
 
 /**

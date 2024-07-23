@@ -8,13 +8,14 @@ import {memorizeLastCall} from '../util/WebUtil';
 import CysConverter, {CCUtil} from './CsysConverter';
 import {getNumberHeader, HdrConst} from './FitsHeaderUtil.js';
 import {getViewer} from './MultiViewCntlr.js';
+import {getMatchingPlotRotationAngle, getRotationAngle, isPlotNorth } from './WebPlotAnalysis';
 import {getPlotGroupById} from './PlotGroup.js';
 import {makeTransform} from './PlotTransformUtils.js';
 import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
 import {getWavelength} from './projection/Wavelength.js';
 import {removeRawData} from './rawData/RawDataCache.js';
 import {hasClearedDataInStore, hasLocalStretchByteDataInStore} from './rawData/RawDataOps.js';
-import {computeDistance, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth} from './VisUtil';
+import {computeDistance} from './VisUtil';
 import {isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
 
 
@@ -1087,31 +1088,6 @@ export function isRotationMatching(pv1, pv2) {
 
 const isNorthCountingRotation = (pv, plot) => pv.plotViewCtx.rotateNorthLock || (isPlotNorth(plot) && !pv.rotation);
 
-/**
- * return an angle that will rotate the pv to match the rotation of masterPv
- * @param {PlotView} masterPv
- * @param {PlotView} pv
- * @return {number}
- */
-export function getMatchingRotationAngle(masterPv, pv) {
-    const plot = primePlot(pv);
-    const masterPlot = primePlot(masterPv);
-    if (!plot || !masterPlot) return 0;
-    const masterRot = masterPv.rotation * (masterPv.flipY ? -1 : 1);
-    const rot = getRotationAngle(plot);
-    let targetRotation;
-    if (isEastLeftOfNorth(masterPlot)) {
-        targetRotation = ((getRotationAngle(masterPlot) + masterRot) - rot) * (masterPv.flipY ? 1 : -1);
-    } else {
-        targetRotation = ((getRotationAngle(masterPlot) + (360 - masterRot)) - rot) * (masterPv.flipY ? 1 : -1);
-
-    }
-    if (!isCsysDirMatching(plot, masterPlot)) targetRotation = 360 - targetRotation;
-    if (targetRotation < 0) targetRotation += 360;
-    if (targetRotation > 359) targetRotation %= 360;
-    return targetRotation;
-}
-
 export function hasLocalStretchByteData(plot) {
     return hasLocalStretchByteDataInStore(plot);
 }
@@ -1176,4 +1152,15 @@ export function canConvertBetweenHipsAndFits(pv) {
     if (!pv?.plotViewCtx?.hipsImageConversion) return false;
     const {hipsRequestRoot, imageRequestRoot} = pv.plotViewCtx.hipsImageConversion;
     return Boolean(hipsRequestRoot && imageRequestRoot);
+}
+
+/**
+ * return an angle that will rotate the pv to match the rotation of masterPv
+ * @param {PlotView} masterPv
+ * @param {PlotView} pv
+ * @return {number}
+ */
+export function getMatchingRotationAngle(masterPv, pv) {
+    const masterPlot = primePlot(masterPv);
+    return getMatchingPlotRotationAngle(masterPlot,primePlot(pv),masterPv?.rotation,masterPv?.flipY);
 }

@@ -5,7 +5,7 @@
 import {Box} from '@mui/joy';
 import React, {memo, useEffect, useRef, useState} from 'react';
 import PropTypes from 'prop-types';
-import {isPlotNorth,getCenterPtOfPlot} from '../VisUtil.js';
+import {getCenterPtOfPlot, isPlotNorth} from '../WebPlotAnalysis';
 import {DrawerComponent} from '../draw/DrawerComponent.jsx';
 import {makeScreenPt,makeWorldPt, makeDevicePt} from '../Point.js';
 import {CysConverter} from '../CsysConverter.js';

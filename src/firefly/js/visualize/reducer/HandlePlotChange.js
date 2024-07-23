@@ -5,32 +5,34 @@ import {isEmpty, isUndefined, isString, isNumber} from 'lodash';
 import {Band} from '../Band.js';
 import {getExtType} from '../FitsHeaderUtil.js';
 import Cntlr, {ExpandType, WcsMatchType, ActionScope} from '../ImagePlotCntlr.js';
-import {getPlotGroupById} from '../PlotGroup.js';
+import {
+    getRotationAngle, isCsysDirMatching, isEastLeftOfNorth, isPlotNorth
+} from '../WebPlotAnalysis';
+import {RotateType} from '../PlotState';
 import {replacePlotView, replacePrimaryPlot, changePrimePlot, updatePlotViewScrollXY,
         findScrollPtToCenterImagePt, findScrollPtToPlaceOnDevPt,
         updateScrollToWcsMatch, updatePlotGroupScrollXY} from './PlotView.js';
 import {
     WebPlot, clonePlotWithZoom, isHiPS, isImage,
-    replaceHiPSProjectionUsingProperties, getHiPsTitleFromProperties, DEFAULT_BLANK_HIPS_TITLE, isHiPSAitoff
+    replaceHiPSProjectionUsingProperties, getHiPsTitleFromProperties, DEFAULT_BLANK_HIPS_TITLE,
+    changeHiPSProjectionCenterAndType, changeHiPSProjectionCenter
 } from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute.js';
-import {replaceHiPSProjection, changeProjectionCenter, changeProjectionCenterAndType} from '../HiPSUtil.js';
+import {replaceHiPSProjection} from '../HiPSUtil.js';
 import {updateSet} from '../../util/WebUtil.js';
 import {CCUtil, CysConverter} from '../CsysConverter.js';
-import {convert, isPlotNorth, getRotationAngle, isCsysDirMatching, isEastLeftOfNorth} from '../VisUtil';
+import {convertCelestial} from '../VisUtil';
 import {PlotPref} from '../PlotPref';
 import {
     primePlot, clonePvAry, clonePvAryWithPv, applyToOnePvOrAll, applyToOnePvOrOverlayGroup,
     matchPlotViewByPositionGroup, getPlotViewIdxById, getPlotGroupIdxById, findPlotGroup,
-    getPlotViewById, findCurrentCenterPoint, getCenterOfProjection, getMatchingRotationAngle,
-    isRotationMatching, hasWCSProjection, isThreeColor, isImageCube, getImageCubeIdx, getHDU
+    getPlotViewById, findCurrentCenterPoint, getCenterOfProjection,
+    isRotationMatching, hasWCSProjection, isThreeColor, getHDU, getMatchingRotationAngle
 } from '../PlotViewUtil.js';
 import Point, {parseAnyPt, makeImagePt, makeWorldPt, makeDevicePt} from '../Point.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
-import PlotState, {RotateType} from '../PlotState.js';
 import {updateTransform} from '../PlotTransformUtils.js';
 import {WebPlotRequest, WPConst} from '../WebPlotRequest.js';
-import {logger} from '../../util/Logger.js';
 
 const isFitFill= (userZoomType) =>  (userZoomType===UserZoomTypes.FIT || userZoomType===UserZoomTypes.FILL);
 
@@ -280,7 +282,7 @@ function updateForStretch(inPv, plot) {
             if (!stretchChangeMatch(p)) return p;
             const newPlotState= p.plotState.copy();
             newPlotState.setRangeValues(Band.NO_BAND,rv);
-            return {...p,dataRequested:false,plotState:newPlotState}
+            return {...p,dataRequested:false,plotState:newPlotState};
         });
     }
     return pv;
@@ -307,7 +309,7 @@ function processProjectionChange(state,action) {
     const newPlotViewAry= applyToOnePvOrAll(state.positionLock, plotViewAry, plotId, false,
          (pv)=> {
              const plot= primePlot(pv);
-             if (plot) pv= replacePrimaryPlot(pv, changeProjectionCenterAndType(plot,centerProjPt,fullSky));
+             if (plot) pv= replacePrimaryPlot(pv, changeHiPSProjectionCenterAndType(plot,centerProjPt,fullSky));
              return pv;
          } );
     const matchingByWcs= wcsMatchType===WcsMatchType.Standard || wcsMatchType===WcsMatchType.Target;
@@ -356,7 +358,7 @@ function changeHiPS(state,action) {
         plot.cubeIdx= Number(hipsProperties?.hips_cube_firstframe) || 0;
         plot= replaceHiPSProjectionUsingProperties(plot, hipsProperties, getCenterOfProjection(plot) );
         if (!centerProjPt) {
-            centerProjPt= convert(getCenterOfProjection(originalPlot), plot.dataCoordSys);
+            centerProjPt= convertCelestial(getCenterOfProjection(originalPlot), plot.dataCoordSys);
         }
     }
 
@@ -382,13 +384,13 @@ function changeHiPS(state,action) {
 
     if (coordSys) {
         plotViewAry= changeHipsCoordinateSys(plotViewAry, pv, coordSys, applyToGroup && positionLock);
-        if (!centerProjPt) centerProjPt= convert(getCenterOfProjection(originalPlot), coordSys);
+        if (!centerProjPt) centerProjPt= convertCelestial(getCenterOfProjection(originalPlot), coordSys);
     }
 
     if (centerProjPt) {
         plotViewAry= applyToOnePvOrAll(state.positionLock, plotViewAry, plot.plotId, false,
             (pv) => {
-                const p= changeProjectionCenter(primePlot(pv),centerProjPt);
+                const p= changeHiPSProjectionCenter(primePlot(pv),centerProjPt);
                 return replacePrimaryPlot(pv, p);
             });
     }
@@ -689,7 +691,7 @@ function recenterPv(centerPt,  centerOnImage, updateFixedTarget= false) {
             if (centerPt) cp= CCUtil.getWorldCoords(plot,centerPt);
             if (!cp) cp= plot.attributes[PlotAttribute.FIXED_TARGET];
             if (!cp) cp= makeWorldPt(0,0,plot.imageCoordSys);
-            const newPlot= changeProjectionCenter(plot,cp);
+            const newPlot= changeHiPSProjectionCenter(plot,cp);
             if (updateFixedTarget || centerPt?.type===Point.W_PT) {
                 newPlot.attributes= {...newPlot.attributes, [PlotAttribute.FIXED_TARGET]:centerPt};
             }

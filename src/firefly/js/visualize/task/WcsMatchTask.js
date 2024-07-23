@@ -8,13 +8,14 @@ import ImagePlotCntlr, {
     dispatchPositionLocking, dispatchRecenter, dispatchRotate, dispatchUpdateViewSize, dispatchZoom, IMAGE_PLOT_KEY,
     visRoot, WcsMatchType
 } from '../ImagePlotCntlr.js';
+import {isEastLeftOfNorth, isPlotRotatedNorth} from '../WebPlotAnalysis';
 import {
     applyToOnePvOrAll, findCurrentCenterPoint, getCenterOfProjection, getCorners, getDrawLayerByType,
-    getMatchingRotationAngle, getPlotViewAry, getPlotViewById, hasWCSProjection, isRotationMatching, primePlot
+    getMatchingRotationAngle,
+    getPlotViewAry, getPlotViewById, hasWCSProjection, isRotationMatching, primePlot
 } from '../PlotViewUtil.js';
 import {isHiPS, isImage} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute';
-import {isEastLeftOfNorth, isPlotRotatedNorth} from '../VisUtil.js';
 import {
     FullType, getArcSecPerPix, getEstimatedFullZoomFactor, getZoomLevelForScale, UserZoomTypes
 } from '../ZoomUtil.js';

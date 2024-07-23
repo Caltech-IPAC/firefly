@@ -7,9 +7,8 @@ import Enum from 'enum';
 import {CoordinateSys} from '../visualize/CoordSys.js';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
 import Point, {makeWorldPt, makeImagePt} from '../visualize/Point.js';
-import {convertAngle} from '../visualize/VisUtil.js';
+import {calculatePosition, convertAngle} from '../visualize/VisUtil.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
-import VisUtil from '../visualize/VisUtil.js';
 
 const regionShape = new Enum(['circle', 'box', 'polygon', 'position', 'point']);
 const CoordSys = new Enum(['ECLIPTIC', 'FK4', 'FK5', 'J2000', 'GALACTIC', 'ICRS', 'UNKNOWNFRAME']);
@@ -75,10 +74,10 @@ function  getCornersByCenter(centerPt, w, h) {
             corners.push(makeImagePt(centerPt.x+ d[0], centerPt.x+d[1]));
         });
     } else {
-        const posLeft = VisUtil.calculatePosition(centerPt, +w, 0.0); // go east
-        const posRight = VisUtil.calculatePosition(centerPt, -w, 0.0); // go west
-        const posUp = VisUtil.calculatePosition(centerPt, 0.0, +h);   // go north
-        const posDown = VisUtil.calculatePosition(centerPt, 0.0, -h); // go south
+        const posLeft = calculatePosition(centerPt, +w, 0.0); // go east
+        const posRight = calculatePosition(centerPt, -w, 0.0); // go west
+        const posUp = calculatePosition(centerPt, 0.0, +h);   // go north
+        const posDown = calculatePosition(centerPt, 0.0, -h); // go south
 
         corners.push(makeWorldPt(posLeft.getLon(), posUp.getLat()));
         corners.push(makeWorldPt(posRight.getLon(), posUp.getLat()));

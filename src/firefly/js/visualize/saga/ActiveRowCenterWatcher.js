@@ -7,6 +7,7 @@ import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL
 import {findTableCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {visRoot, dispatchRecenter} from '../ImagePlotCntlr.js';
 import {getTblById, getCellValue} from '../../tables/TableUtil.js';
+import {computeBoundingBoxInDeviceCoordsForPlot, isFullyOnScreen} from '../WebPlotAnalysis';
 import {makeAnyPt} from '../Point.js';
 import { getActivePlotView, hasWCSProjection, primePlot, } from '../PlotViewUtil';
 import {CysConverter} from '../CsysConverter';
@@ -16,7 +17,6 @@ import {PlotAttribute} from '../PlotAttribute';
 import {isImage} from '../WebPlot';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import CoordinateSys from '../CoordSys';
-import {computeBoundingBoxInDeviceCoordsForPlot, isFullyOnScreen} from '../VisUtil';
 
 
 

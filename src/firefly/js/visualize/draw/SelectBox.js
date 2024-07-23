@@ -6,7 +6,7 @@
 import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
 import {makeScreenPt, makeDevicePt, makeImagePt} from '../Point.js';
-import VisUtil from '../VisUtil.js';
+import {intersects} from '../VisUtil.js';
 import {Style} from './DrawingDef.js';
 import CsysConverter from '../CsysConverter.js';
 import {RegionValue, RegionDimension, RegionValueUnit, RegionType, regionPropsList} from '../region/Region.js';
@@ -160,7 +160,7 @@ function crossesDisplay(plot, devPt1, devPt2) {
                 sHeight*= -1;
             }
 
-            retval= VisUtil.intersects(x0,y0, sWidth,sHeight, //todo: this need to be fixed
+            retval= intersects(x0,y0, sWidth,sHeight, //todo: this need to be fixed
                                        0,0, dim.width, dim.height );
         }
     }

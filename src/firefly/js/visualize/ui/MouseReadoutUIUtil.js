@@ -8,8 +8,8 @@ import {
     STATUS_NAN, STATUS_UNAVAILABLE, STATUS_UNDEFINED, STATUS_VALUE, TYPE_DECIMAL_INT, TYPE_EMPTY, TYPE_FLOAT
 } from '../MouseReadoutCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
+import {convertCelestial} from '../VisUtil';
 import {isCelestialImage} from '../WebPlot.js';
-import VisUtil from '../VisUtil.js';
 import CoordUtil from '../CoordUtil.js';
 import CoordinateSys from '../CoordSys.js';
 import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
@@ -256,7 +256,7 @@ export function getFluxInfo(sndReadout, radix=10){
 
 function makeCoordReturn(wp, toCsys, hms= false) {
     if (!wp) return {value:''};
-    const p= VisUtil.convert(wp, toCsys);
+    const p= convertCelestial(wp, toCsys);
     let str;
     if (hms) {
         const hmsLon = CoordUtil.convertLonToString(p.getLon(), toCsys);

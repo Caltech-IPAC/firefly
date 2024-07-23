@@ -5,7 +5,10 @@
 import Enum from 'enum';
 import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil';
-import VisUtil, {convertAngle, convert, lineCrossesRect, segmentIntersectRect} from '../VisUtil.js';
+import {
+    convertAngle, convertCelestial, lineCrossesRect, segmentIntersectRect, calculatePosition, distToLine, distanceToPolygon,
+    computeSimpleDistance, computeSimpleSlopeAngle
+} from '../VisUtil.js';
 import {TextLocation, Style, DEFAULT_FONT_SIZE} from './DrawingDef.js';
 import Point, {makeScreenPt, makeDevicePt, makeOffsetPt, makeWorldPt, makeImagePt, SimplePt} from '../Point.js';
 import {toRegion} from './ShapeToRegion.js';
@@ -324,8 +327,8 @@ const draw=  {
     getScreenDist(drawObj,plot, pt) {
         let dist = -1;
 
-        if (drawObj.sType === ShapeType.Line ) return VisUtil.distToLine(drawObj.pts, plot, pt);
-        if (drawObj.sType === ShapeType.Polygon) return VisUtil.distanceToPolygon(drawObj.pts, plot, pt);
+        if (drawObj.sType === ShapeType.Line ) return distToLine(drawObj.pts, plot, pt);
+        if (drawObj.sType === ShapeType.Polygon) return distanceToPolygon(drawObj.pts, plot, pt);
         if (drawObj.sType === ShapeType.Circle) return distanceToCircle(drawObj, plot, pt);
         if (drawObj.sType === ShapeType.Rectangle) return distanceToRectangle(drawObj, plot, pt);
 
@@ -440,15 +443,15 @@ function getRectCorners(pt, isCenter, width, height, plot) {
     if (!wpt) return false;
     // compute 4 corners in J2000
     if (!isCenter) {
-        const posCenter = VisUtil.calculatePosition(wpt, +w, -h); // go east and south to find the center
+        const posCenter = calculatePosition(wpt, +w, -h); // go east and south to find the center
 
         wpt = makeWorldPt(posCenter.getLon(), posCenter.getLat());
     }
 
-    const posLeft = VisUtil.calculatePosition(wpt, +w, 0.0); // go east
-    const posRight = VisUtil.calculatePosition(wpt, -w, 0.0);
-    const posUp = VisUtil.calculatePosition(wpt, 0.0, +h);   // go north
-    const posDown = VisUtil.calculatePosition(wpt, 0.0, -h);
+    const posLeft = calculatePosition(wpt, +w, 0.0); // go east
+    const posRight = calculatePosition(wpt, -w, 0.0);
+    const posUp = calculatePosition(wpt, 0.0, +h);   // go north
+    const posDown = calculatePosition(wpt, 0.0, -h);
 
     const upperLeft = makeWorldPt(posLeft.getLon(), posUp.getLat());
     const upperRight = makeWorldPt(posRight.getLon(), posUp.getLat());
@@ -779,7 +782,7 @@ function drawLine(drawObj, ctx,  plot, drawParams, onlyAddToPath) {
     }
 
     if ([Style.HANDLED, Style.STARTHANDLED, Style.ENDHANDLED].includes(style)) {
-        const rAngle = VisUtil.computeSimpleSlopeAngle(devPt0, devPt1);
+        const rAngle = computeSimpleSlopeAngle(devPt0, devPt1);
         const rOptions = {};
 
         rOptions.rotAngle = rAngle;
@@ -1295,7 +1298,7 @@ function drawCompositeObject(drawObj, ctx, plot, drawParams, onlyAddToPath) {
  */
 function getWorldPtByAngleFromProjectCenter(pt, plot, angleFromCenter) {
     const pt1 = getCenterOfProjection(plot);
-    const pt2 = convert(pt, plot.projection.coordSys);
+    const pt2 = convertCelestial(pt, plot.projection.coordSys);
 
     /* world point to Cartesian coordinate */
     const WorldPtToxyz = (wpt) => {
@@ -1332,7 +1335,7 @@ function getWorldPtByAngleFromProjectCenter(pt, plot, angleFromCenter) {
             if (ra < 0) ra += 360;
         }
 
-        return convert(makeWorldPt(ra, dec, plot.projection.coordSys));
+        return convertCelestial(makeWorldPt(ra, dec, plot.projection.coordSys));
     };
 
     // get norm in cartesian coordinate
@@ -1615,7 +1618,7 @@ function makeTextLocationLine(plot, textLoc, fontSize, inPt0, inPt1, tIndex, dra
 
     if (textLoc===TextLocation.LINE_MID_POINT || textLoc===TextLocation.LINE_MID_POINT_OR_BOTTOM ||
             textLoc===TextLocation.LINE_MID_POINT_OR_TOP) {
-        const dist= VisUtil.computeSimpleDistance(pt1,pt0);
+        const dist= computeSimpleDistance(pt1,pt0);
         if (textLoc===TextLocation.LINE_MID_POINT_OR_BOTTOM && dist<100) {
             textLoc= TextLocation.LINE_BOTTOM;
         }
@@ -1640,7 +1643,7 @@ function makeTextLocationLine(plot, textLoc, fontSize, inPt0, inPt1, tIndex, dra
             break;
         case TextLocation.LINE_TOP_STACK:    // stack multiple text lines at top side of the line
                                              // calculate rotation angle on screen coordinate domain
-            const slope = VisUtil.computeSimpleSlopeAngle(pt0, pt1);
+            const slope = computeSimpleSlopeAngle(pt0, pt1);
             const ratio = [1/5, 4/5];
             let   offset = height * (tIndex + 0.5);
             const r = -1;
@@ -2065,7 +2068,7 @@ export function distanceToCircle(drawObj, cc, pt) {
         radius = cc ? lengthToScreenPixel(radius, cc, unitType) : radius;
     }
 
-    return VisUtil.distanceToCircle(radius, drawObj.pts, cc, pt);
+    return distanceToCircle(radius, drawObj.pts, cc, pt);
 }
 
 export function distanceToRectangle(drawObj, cc, pt) {
@@ -2103,7 +2106,7 @@ export function distanceToRectangle(drawObj, cc, pt) {
 
     return corners.reduce((prev, pt, idx) => {
         const nIdx = (idx+1)%4;
-        const d = VisUtil.distToLine([corners[idx], corners[nIdx]], cc, spt);
+        const d = distToLine([corners[idx], corners[nIdx]], cc, spt);
 
         if (d < prev) {
             prev = d;

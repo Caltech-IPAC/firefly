@@ -5,6 +5,7 @@ import {get, set, has, isEmpty, isString,  isUndefined, pickBy} from 'lodash';
 import {makeDrawingDef, TextLocation, Style} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
+import {getSelectedPts} from '../visualize/WebPlotAnalysis';
 import {primePlot, getAllDrawLayersForPlot} from '../visualize/PlotViewUtil.js';
 import DrawLayerCntlr, {RegionSelStyle, dlRoot, dispatchSelectRegion} from '../visualize/DrawLayerCntlr.js';
 import {clone} from '../util/WebUtil.js';
@@ -19,7 +20,6 @@ import {dispatchTableHighlight,  dispatchTableSelect, dispatchTableFilter} from 
 import {getTblById} from '../tables/TableUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {getSelectedShape} from './Catalog.js';
-import {getSelectedPts} from '../visualize/VisUtil.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {detachSelectArea} from '../visualize/ui/SelectAreaDropDownView.jsx';
 import {FilterInfo} from '../tables/FilterInfo.js';
