@@ -42,7 +42,7 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
             // no need manual cleanup; let DuckDB handles it.
             DbMonitor.MAX_MEMORY = 1_000_000_000_000L;
             DbMonitor.MAX_MEM_ROWS = DbMonitor.MAX_MEMORY;
-            DbMonitor.MAX_IDLE_TIME = 60;       // since we don't compact duckdb, this is the time before info is removed from DB Monitor
+            DbMonitor.MAX_IDLE_TIME = 60 * 1000 * 60;       // (60 minutes) since we don't compact duckdb, this is the time before info is removed from DB Monitor
         }
         if (isEmpty(maxMemory)) {
             ServerContext.Info sInfo = ServerContext.getSeverInfo();

@@ -116,9 +116,7 @@ function prepareOptionData(columns, sortInfo, filterInfo, selectable, allowUnits
     data.forEach( (v, idx) => {
         selectInfoCls.setRowSelect(idx, get(v, '4', true));
     } );
-    var tableRowCount = data.length;
-
-    return {cols, data, tableRowCount, selectInfoCls};
+    return {cols, data, selectInfoCls};
 }
 
 function makeCallbacks(onChange, columns, data, orgFilterInfo='') {

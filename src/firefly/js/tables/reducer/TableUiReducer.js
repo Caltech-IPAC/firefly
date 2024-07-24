@@ -2,15 +2,43 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {has, get, isEmpty, cloneDeep, findKey, omit, set} from 'lodash';
+import {has, get, isEmpty, cloneDeep, findKey, omit, set, isNil} from 'lodash';
 
 import {updateSet, updateMerge} from '../../util/WebUtil.js';
 import * as Cntlr from '../TablesCntlr.js';
-import {getTblInfo, isTableLoaded, smartMerge, getAllColumns, getColumn, getColumnIdx, getTableUiById} from '../TableUtil.js';
+import {getTblInfo, isTableLoaded, getAllColumns, getColumn, getColumnIdx, getTableUiById} from '../TableUtil.js';
 import {getNumFilters} from '../FilterInfo.js';
 import {makeDefaultRenderer} from '../ui/TableRenderer.js';
 import {applyTblPref} from '../TablePref.js';
 
+
+/*
+`table_space`(table store) is separated into 3 parts; data, ui, and results
+This is the 'ui' reducer.  It manages the current UI elements of a table.
+Below are known props of a table UI:
+tbl_id:
+startIdx:
+endIdx:
+filterCount:
+request:    the request used to fetch this table
+data:       the current page of data
+tableModel: the table model
+tableMeta:  tableMeta from table model
+title:      UI element used as table title
+totalRows:
+hlRowIdx:
+currentPage:
+pageSize:
+totalPages:
+highlightedRow:
+selectInfo:
+showLoading:
+showMask:
+triggeredBy:
+cellRenderers:  cellRenderers used on this table.  if not set, defaults will be created
+All table options are saved here, e.g.
+    backgroundable, showFilters, showUnits, selectable,  ...
+*/
 
 /*---------------------------- REDUCERS -----------------------------*/
 export function uiReducer(state={ui:{}}, action={}) {
@@ -98,14 +126,17 @@ function uiStateReducer(ui, tableModel, action) {
     const showMask = tableModel && tableModel.isFetching;
 
     var data = has(tableModel, 'tableData.data') ? tableModel.tableData.data.slice(startIdx, endIdx) : [];
-    var tableRowCount = data.length;
 
-    var uiData = {tbl_id, startIdx, endIdx, tableRowCount, sortInfo, filterInfo, sqlFilter, filterCount, request, data, showLoading, showMask, triggeredBy: 'byTable', ...others};
+    var uiData = {tbl_id, startIdx, endIdx, sortInfo, filterInfo, sqlFilter, filterCount, request, data, showLoading, showMask, triggeredBy: 'byTable', ...others};
 
     Object.keys(ui).filter( (ui_id) => {
         return get(ui, [ui_id, 'tbl_id']) === tbl_id;
     }).forEach( (tbl_ui_id) => {
-        const {columns, columnWidths, previous, cellRenderers} = ui?.[tbl_ui_id] || {};
+        const {columns, title, previous, cellRenderers} = ui?.[tbl_ui_id] || {};
+
+        if (title) {
+            delete uiData.title;        // don't update UI title once it's set
+        }
 
         // create cellRenderers if not exist
         if (!cellRenderers) {
