@@ -18,6 +18,7 @@ import {CloseButton} from '../../ui/CloseButton.jsx';
 
 import {Logger} from '../../util/Logger.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {getTableUiById} from '../TableUtil.js';
 
 const logger = Logger('Tables').tag('TablesContainer');
 
@@ -109,7 +110,8 @@ function tablesAsTab(tables, tableOptions, expandedMode) {
 
     return tables &&
         Object.keys(tables).map( (key) => {
-            var {tbl_id, title, removable, tbl_ui_id, options={}} = tables[key];
+            var {tbl_id, removable, tbl_ui_id, options={}} = tables[key];
+            const {title='untitled'} = getTableUiById(tbl_ui_id) || {};
             options = Object.assign({}, options, tableOptions);
             const onTabRemove = () => {
                 dispatchTableRemove(tbl_id);

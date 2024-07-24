@@ -5,7 +5,7 @@
 import React, {useEffect} from 'react';
 import {Box, Stack, Typography, Sheet, ChipDelete, Tooltip, Button} from '@mui/joy';
 import PropTypes, {object, shape} from 'prop-types';
-import {defer, truncate, get, set, isUndefined, defaults} from 'lodash';
+import {defer, truncate, get, set, isUndefined, defaults, isString} from 'lodash';
 import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
 import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/ActionsDropDownButton.jsx';
 
@@ -149,7 +149,7 @@ TablePanel.propTypes = {
     tbl_id: PropTypes.string,
     tbl_ui_id: PropTypes.string,
     tableModel: PropTypes.object,
-    title: PropTypes.string,
+    title: PropTypes.node,
     rowHeight: PropTypes.number,
     help_id: PropTypes.string,
     expandedMode: PropTypes.bool,
@@ -401,9 +401,10 @@ function LeftToolBar({tbl_id, title, removable, showTitle, leftButtons}) {
 }
 
 function Title({title, removable, tbl_id}) {
+    const titleUi = isString(title) ? <Typography level='body-sm' noWrap={true} title={title}>{truncate(title)}</Typography> : title;
     return (
         <Stack direction='row' alignSelf='start' sx={{ml:1/4}}>
-            <Typography level='body-sm' noWrap title={title}>{truncate(title)}</Typography>
+            {titleUi}
             {removable &&
                 <Tooltip title='Remove table'>
                     <ChipDelete sx={{'--Chip-deleteSize': '1.2rem'}} onClick={() => dispatchTableRemove(tbl_id)}/>

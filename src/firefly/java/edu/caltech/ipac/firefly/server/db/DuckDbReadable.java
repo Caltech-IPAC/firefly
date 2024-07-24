@@ -217,7 +217,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
 
     public static class Csv extends DuckDbReadable implements DbAdapterCreator{
         public static final String NAME = "csv";
-        private static final List<String> SUPPORTS = List.of(NAME, "tsv");
+        private static final List<String> SUPPORTS = List.of(NAME);
 
         /**
          * used by DbAdapterCreator only
@@ -232,10 +232,8 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         }
 
         boolean canHandle(File dbFile) {
-            boolean can = super.canHandle(dbFile);
-            if (can) return true;
-            sourceFile = dbFile;
-            return canRead() > 1;       // unless filename is in the supported list, file need to have at least 2 columns
+            return super.canHandle(dbFile);
+            // will use duckdb to sniff file.  it is too easy to return false positive
         }
 
         String getSrcFileSql() {
@@ -263,10 +261,8 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         public String getName() { return NAME; }
 
         boolean canHandle(File dbFile) {
-            boolean can = super.canHandle(dbFile);
-            if (can) return true;
-            sourceFile = dbFile;
-            return canRead() > 1;       // unless file extension is in the supported list, file need to have at least 2 columns
+            return super.canHandle(dbFile);
+            // will use duckdb to sniff file.  it is too easy to return false positive
         }
 
         String getSrcFileSql() {

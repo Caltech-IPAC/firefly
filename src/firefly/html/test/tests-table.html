@@ -482,6 +482,42 @@ added in this test.  Open console, then
 </template>
 
 
+<template title="Custom Table Title" class="tpl">
+    <div id="expected" >
+        <div style="margin: 10px">
+            Instead of a label, table title is a 'Click Me' button. <br>
+            Shown in Tabs as well as single table.
+        </div>
+    </div>
+    <div id="actual" style="display: inline-flex" class="box x3">
+        <div id="single" style="width: 50%"></div>
+        <div id="tabs" style="width: 50%; margin-left: 4px" ></div>
+    </div>
+    <script>
+        function onFireflyLoaded(firefly) {
+            //-----------  client table -----------
+            const columns = [{name: 'col_1'}, {name: 'col_2'}];
+            const data = [
+                columns.map( (c) => 'row_1'),
+                columns.map( (c) => 'row_2'),
+                columns.map( (c) => 'row_3'),
+            ];
+            const table1 = { tbl_id: 'table1', tableData: { columns, data } };
+            const table2 = { tbl_id: 'table2', tableData: { columns, data } };
+            const table3 = { tbl_id: 'table3', tableData: { columns, data } };
+            firefly.showClientTable('single', table1);
+            firefly.showClientTable('single', table2);
+            firefly.showClientTable('tabs', table3);
+            [2,3].forEach(i => {
+                const {tbl_ui_id} = firefly.util.table.getTableUiByTblId("table"+i);
+                var title = firefly.createElement('button', {onClick: ()=> alert("Hello World")}, 'Click Me!');
+                firefly.action.dispatchTableUiUpdate({tbl_ui_id, title});
+            })
+        }
+    </script>
+</template>
+
+
 
 <!-- this is where test cases will be attached-->
 <div id="tst-container"/>
