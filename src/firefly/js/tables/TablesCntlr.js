@@ -371,7 +371,7 @@ function fixClientTable(tableModel) {
         tableModel.tbl_id = get(tableModel, 'request.tbl_id') || TblUtil.uniqueTblId();
     }
     if (!tableModel.title) {
-        tableModel.title  = get(tableModel, 'request.META_INFO.title') || 'untitled';
+        tableModel.title  = get(tableModel, 'request.META_INFO.title');
     }
 
     tableModel.totalRows = tableModel?.tableData?.data?.length ?? 0;

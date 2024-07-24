@@ -18,7 +18,7 @@ import {CloseButton} from '../../ui/CloseButton.jsx';
 
 import {Logger} from '../../util/Logger.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {getTableUiById} from '../TableUtil.js';
+import {getTableUiById, getTblInfo} from '../TableUtil.js';
 
 const logger = Logger('Tables').tag('TablesContainer');
 
@@ -111,13 +111,14 @@ function tablesAsTab(tables, tableOptions, expandedMode) {
     return tables &&
         Object.keys(tables).map( (key) => {
             var {tbl_id, removable, tbl_ui_id, options={}} = tables[key];
-            const {title='untitled'} = getTableUiById(tbl_ui_id) || {};
+            const {title} = getTblInfo(tbl_id);
+            const {title:titleUI} = getTableUiById(tbl_ui_id) || {};
             options = Object.assign({}, options, tableOptions);
             const onTabRemove = () => {
                 dispatchTableRemove(tbl_id);
             };
             return  (
-                <Tab key={tbl_id} id={tbl_id} label={title} removable={removable} onTabRemove={onTabRemove}>
+                <Tab key={tbl_id} id={tbl_id} label={titleUI} name={title} removable={removable} onTabRemove={onTabRemove}>
                     <TablePanel key={tbl_id}
                                 slotProps={{ toolbar:{variant:'plain'}, root:{variant: 'plain'} }}
                                 {...{tbl_id, tbl_ui_id, ...options, expandedMode, showTitle: false}} />
