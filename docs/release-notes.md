@@ -7,7 +7,8 @@
   - [Notes on the next version](next-release-details.md)
 
 ## Version 2024.2
-  - 2024.2.3 - (July 1, 2024),   _docker tag_: `latest`, `2024.2`, `2024.2.3`
+  - 2024.2.4 - (July 24, 2024),   _docker tag_: `latest`, `2024.2`, `2024.2.4`
+  - 2024.2.3 - (July 1, 2024),   _docker tag_: `2024.2.3`
   - 2024.2.2 - (June 25, 2024),  _docker tag_: `2024.2.2`
   - 2024.2.1 - (June 24, 2024),  _docker tag_: `2024.2.1`
   - 2024.2.0 - (June 21, 2024),  _docker tag_: `2024.2.0`
@@ -58,6 +59,11 @@
   - Bug fix: source id extracted from image search- IRSA-5367 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1571))
 - 2024.2.3
    - regression issue fixed with storing headers: ([PR](https://github.com/Caltech-IPAC/firefly/commit/0761857553bf74e0a00fa5c2478feaa7bb805609))
+- 2024.2.4 
+   - Bug fix: Issue with Hydra template slot props  ([Commit](https://github.com/Caltech-IPAC/firefly/commit/1aec3593bb6c6fc817dff7cb797acfd5e75a43a7))
+   - Bug fix: MultiProductViewer: 3 color button showing in single mode  ([Commit](https://github.com/Caltech-IPAC/firefly/commit/9209284c00605319e8e40f596766f15e82eb402e))
+   - Bug fix: Issues for WISE application ([Commit](https://github.com/Caltech-IPAC/firefly/commit/58185602365cea888941798f15e5e03c378589c3)), ([Commit](https://github.com/Caltech-IPAC/firefly/commit/009ad7bd80e83f6ceae4d694b06d69a018393278))
+   - Bug fix: comment displayed in JSX code ([Commit](https://github.com/Caltech-IPAC/firefly/commit/031ffd63e89f53213f53a68b344939427a1de124))
 
 ##### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2024.2+label%3abug)
