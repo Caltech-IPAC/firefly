@@ -6,12 +6,12 @@ import {dispatchRecenter} from '../visualize/ImagePlotCntlr.js';
 import Point from '../visualize/Point.js';
 import {CopyToClipboard} from '../visualize/ui/MouseReadout.jsx';
 import {formatLonLatToString} from '../visualize/ui/WorldPtFormat.jsx';
-import {convert} from '../visualize/VisUtil.js';
+import {convertCelestial} from '../visualize/VisUtil.js';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 
 export function FixedPtControl({pv, wp, sx = {}}) {
     const llStr = wp.type === Point.W_PT ?
-        formatLonLatToString(convert(wp, CoordinateSys.EQ_J2000)) : `${Math.round(wp.x)},${Math.round(wp.y)}`;
+        formatLonLatToString(convertCelestial(wp, CoordinateSys.EQ_J2000)) : `${Math.round(wp.x)},${Math.round(wp.y)}`;
 
     return (
         <Stack direction='row' sx={sx} alignItems='center'>

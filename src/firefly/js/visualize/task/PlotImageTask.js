@@ -4,13 +4,13 @@
 
 import {flatten, isArray, uniqBy} from 'lodash';
 import {getExtName, getExtType} from '../FitsHeaderUtil.js';
+import {getCenterPtOfPlot} from '../WebPlotAnalysis';
 import {DEFAULT_THUMBNAIL_SIZE, WebPlotRequest, WPConst} from '../WebPlotRequest.js';
 import ImagePlotCntlr, {IMAGE_PLOT_KEY, makeUniqueRequestKey, visRoot,
     dispatchPlotProgressUpdate, dispatchRecenter, dispatchWcsMatch} from '../ImagePlotCntlr.js';
 import {dispatchActiveTarget, getActiveTarget} from '../../core/AppDataCntlr.js';
 import {RDConst, WebPlot} from '../WebPlot.js';
 import {PlotAttribute} from '../PlotAttribute';
-import {getCenterPtOfPlot} from '../VisUtil.js';
 import {PlotState} from '../PlotState.js';
 import {Band} from '../Band.js';
 import {PlotPref} from '../PlotPref.js';

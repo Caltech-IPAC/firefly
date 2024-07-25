@@ -13,9 +13,9 @@ import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import CsysConverter from '../visualize/CsysConverter.js';
 import { makeOffsetPt, makeWorldPt} from '../visualize/Point.js';
 import BrowserInfo from '../util/BrowserInfo.js';
-import VisUtil from '../visualize/VisUtil.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import {primePlot, getDrawLayerById} from '../visualize/PlotViewUtil.js';
+import {computeDistance, computeScreenDistance, getPositionAngle} from '../visualize/VisUtil';
 import {getUIComponent} from './DistanceToolUI.jsx';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {hasWCSProjection} from '../visualize/PlotViewUtil';
@@ -344,7 +344,7 @@ function findClosestPtIdx(ptAry, pt) {
 
 
 
-const screenDistance= (pt1,pt2) => VisUtil.computeScreenDistance(pt1.x,pt1.y,pt2.x,pt2.y);
+const screenDistance= (pt1,pt2) => computeScreenDistance(pt1.x,pt1.y,pt2.x,pt2.y);
 
 
 /**
@@ -374,7 +374,7 @@ function getPosAngleText(pt0, pt1, isWorld, cc, pref) {
     const PAPrefix = 'PA = ';
     const w0 = cc.getWorldCoords(pt0);
     const w1 = cc.getWorldCoords(pt1);
-    let   posAngle = VisUtil.getPositionAngle(w0.x, w0.y, w1.x, w1.y);
+    let   posAngle = getPositionAngle(w0.x, w0.y, w1.x, w1.y);
 
     while (true) {
         if (posAngle > 180.0) {
@@ -414,7 +414,7 @@ function isPointBelowLine(line_pt1, line_pt2, pt, cc) {
     return ((pt2.x <= pt1.x) && (diff >= 0)) || ((pt2.x > pt1.x) && (diff < 0)) ;
 }
 
-function computeDistance(pt1, pt2, cc, pref) {
+function lookupDistance(pt1, pt2, cc, pref) {
     let anyPt1, anyPt2;
 
     if (pref === PIXEL) {
@@ -426,7 +426,7 @@ function computeDistance(pt1, pt2, cc, pref) {
         anyPt1 = cc.getWorldCoords(pt1);
         anyPt2 = cc.getWorldCoords(pt2);
         if (!anyPt1 || !anyPt2) return null;
-        return  VisUtil.computeDistance(anyPt1,anyPt2);
+        return  computeDistance(anyPt1,anyPt2);
     }
 }
 /**
@@ -459,7 +459,7 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
         anyPt1 = cc.getWorldCoords(ptAry[0]);
         anyPt2 = cc.getWorldCoords(ptAry[1]);
         if (!anyPt1 || !anyPt2) return null;
-        dist= VisUtil.computeDistance(anyPt1,anyPt2);
+        dist= computeDistance(anyPt1,anyPt2);
     }
 
     const obj= ShapeDataObj.makeLine(anyPt1, anyPt2, true);   // make line with arrow at the current end
@@ -523,8 +523,8 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
             lat2= makeImagePt(highPt.x, highPt.y);
         }
 
-        const adjDist = computeDistance(lon1, lon2, cc, pref);
-        const opDist = computeDistance(lat1, lat2, cc, pref);
+        const adjDist = lookupDistance(lon1, lon2, cc, pref);
+        const opDist = lookupDistance(lat1, lat2, cc, pref);
 
         const adj = ShapeDataObj.makeLine(cc.getWorldCoords(lon1),cc.getWorldCoords(lon2));
         const op = ShapeDataObj.makeLine(cc.getWorldCoords(lat1), cc.getWorldCoords(lat2));

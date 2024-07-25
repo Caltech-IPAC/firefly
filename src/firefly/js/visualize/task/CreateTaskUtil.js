@@ -1,4 +1,5 @@
 import {isArray, uniqueId} from 'lodash';
+import {getRotationAngle, isPlotRotatedNorth} from '../WebPlotAnalysis';
 import {setActiveRequestKey} from './ActivePlottingTask.js';
 import {
     getAllDrawLayersForPlot, getDrawLayerById, getDrawLayerByType, getDrawLayersByType, getPlotViewById,
@@ -13,7 +14,6 @@ import { DEFAULT_FITS_VIEWER_ID, findViewerWithItemId, getMultiViewRoot, IMAGE }
 import {isImage, processHeaderData, RDConst} from '../WebPlot.js';
 import {enableRelatedDataLayer} from '../RelatedDataUtil.js';
 import {getArcSecPerPix} from '../ZoomUtil.js';
-import {getRotationAngle, isPlotRotatedNorth} from '../VisUtil.js';
 import {ZoomType} from '../ZoomType.js';
 import {isDefined} from '../../util/WebUtil.js';
 import {HdrConst} from '../FitsHeaderUtil.js';

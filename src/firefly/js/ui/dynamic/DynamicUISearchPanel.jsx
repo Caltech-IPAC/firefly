@@ -8,7 +8,7 @@ import {CoordinateSys, parseWorldPt} from '../../api/ApiUtilImage.jsx';
 import {standardIDs} from '../../voAnalyzer/VoConst.js';
 
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
-import {convert} from '../../visualize/VisUtil.js';
+import {convertCelestial} from '../../visualize/VisUtil.js';
 import CompleteButton from '../CompleteButton.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {FormPanel} from '../FormPanel.jsx';
@@ -97,7 +97,7 @@ export function convertRequest(request, fieldDefAry, standardIDType) {
                 return out;
             case POSITION:
                 if (raKey && decKey) {
-                    const wp= convert(parseWorldPt(request[key]), CoordinateSys.EQ_J2000);
+                    const wp= convertCelestial(parseWorldPt(request[key]), CoordinateSys.EQ_J2000);
                     out[raKey]= wp?.x;
                     out[decKey]= wp?.y;
                 }
@@ -107,14 +107,14 @@ export function convertRequest(request, fieldDefAry, standardIDType) {
                 return out;
             case POINT:
                 if (targetKey) {
-                    const wp= convert(parseWorldPt(request[targetKey]), CoordinateSys.EQ_J2000);
+                    const wp= convertCelestial(parseWorldPt(request[targetKey]), CoordinateSys.EQ_J2000);
                     if (wp) out[key]= makePointString(wp.x, wp.y,standardIDType);
                 }
                 return out;
             case CIRCLE:
                 if (targetKey) {
                     const radius= request[sizeKey];
-                    const wp= convert(parseWorldPt(request[targetKey]), CoordinateSys.EQ_J2000);
+                    const wp= convertCelestial(parseWorldPt(request[targetKey]), CoordinateSys.EQ_J2000);
                     if (radius && wp) out[key]= makeCircleString(wp.x,wp.y,radius,standardIDType);
                 }
                 return out;
@@ -191,10 +191,10 @@ export function findTargetFromRequest(request, fieldDefAry) {
     fieldDefAry?.forEach( ({key,type, targetDetails:{raKey,decKey, targetKey}={} }) => {
         switch (type) {
             case POSITION:
-                if (raKey && decKey) wp= convert(parseWorldPt(request[key]), CoordinateSys.EQ_J2000);
+                if (raKey && decKey) wp= convertCelestial(parseWorldPt(request[key]), CoordinateSys.EQ_J2000);
                 return;
             case CIRCLE:
-                wp= convert(parseWorldPt(request[targetKey]), CoordinateSys.EQ_J2000);
+                wp= convertCelestial(parseWorldPt(request[targetKey]), CoordinateSys.EQ_J2000);
                 return;
         }
     });

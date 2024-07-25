@@ -4,23 +4,17 @@
 
 import {uniqBy, differenceBy, isEmpty, isNumber, isString, uniq} from 'lodash';
 import Cntlr, {WcsMatchType} from '../ImagePlotCntlr.js';
+import {getRotationAngle} from '../WebPlotAnalysis';
 import {
     replacePlots, makePlotView, updatePlotViewScrollXY,
     findScrollPtToCenterImagePt, updateScrollToWcsMatch, initScrollCenterPoint
 } from './PlotView.js';
 import {makeOverlayPlotView, replaceOverlayPlots} from './OverlayPlotView.js';
 import {
-    primePlot,
-    getPlotViewById,
-    clonePvAry,
-    getOverlayById,
-    getPlotViewIdListByPositionLock,
-    hasImageCubes, getCubePlaneCnt, getHDU, getImageCubeIdx, isMultiHDUFits
-} from '../PlotViewUtil.js';
-import {getPlotGroupById, makePlotGroup} from '../PlotGroup.js';
+    primePlot, getPlotViewById, clonePvAry, getOverlayById, getPlotViewIdListByPositionLock,
+    getCubePlaneCnt, getHDU, getImageCubeIdx, } from '../PlotViewUtil.js'; import {getPlotGroupById, makePlotGroup} from '../PlotGroup.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {CCUtil} from '../CsysConverter.js';
-import {getRotationAngle} from '../VisUtil.js';
 import {updateTransform} from '../PlotTransformUtils.js';
 import {makeImagePt} from '../Point.js';
 import {isImage} from '../WebPlot';

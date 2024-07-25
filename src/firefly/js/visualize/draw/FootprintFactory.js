@@ -7,7 +7,7 @@ import {has} from 'lodash';
 import Point, {makeWorldPt, makeImagePt} from '../Point.js';
 import {RegionFactory} from '../region/RegionFactory.js';
 import {drawRegions} from '../region/RegionDrawer.js';
-import VisUtil from '../VisUtil.js';
+import {computeCentralPointAndRadius, getTranslateAndRotatePosition} from '../VisUtil.js';
 
 const PRELIM = 'prelim.';
 const NoPRELIM = '';
@@ -99,7 +99,7 @@ export class FootprintFactory {
     static getDrawObjFromOriginalRegion(regions, refCenter, moveToRelativeCenter, cc) {
         const getCenter = (wpAry) => {
             if (wpAry[0].type === Point.W_PT) {
-                return VisUtil.computeCentralPointAndRadius(wpAry).centralPoint;
+                return computeCentralPointAndRadius(wpAry).centralPoint;
             } else {
                 return getImageCenter(wpAry);
             }
@@ -119,7 +119,7 @@ export class FootprintFactory {
                 if (!region.wpAry || region.wpAry.length <= 0 ) return;
                 if (region.wpAry[0].type === Point.W_PT) {
                     const centerWpt = moveToRelativeCenter && instCenter ? instCenter : makeWorldPt(0, 0);
-                    region.wpAry = region.wpAry.map((wp) => VisUtil.getTranslateAndRotatePosition(centerWpt, refCenter, wp));
+                    region.wpAry = region.wpAry.map((wp) => getTranslateAndRotatePosition(centerWpt, refCenter, wp));
                 } else {
                     // move center of footprint or image pt (0,0) to refCenter
                     const refCenterImg = cc.getImageCoords(refCenter);

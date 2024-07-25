@@ -3,14 +3,14 @@
  */
 
 import update from 'immutability-helper';
+import {getCenterPtOfPlot} from '../WebPlotAnalysis';
 import {PlotAttribute} from '../PlotAttribute';
-import {isImage, isHiPS} from '../WebPlot.js';
+import {isImage, isHiPS, changeHiPSProjectionCenter} from '../WebPlot.js';
 import {WPConst} from '../WebPlotRequest';
 import {makeScreenPt, makeDevicePt, makeImagePt, makeWorldPt} from '../Point';
 import {getActiveTarget} from '../../core/AppDataCntlr.js';
-import {getCenterPtOfPlot, getLatDist, getLonDist } from '../VisUtil.js';
+import {getLatDist, getLonDist} from '../VisUtil.js';
 import {findCurrentCenterPoint, getPlotViewById, hasWCSProjection, matchPlotViewByPositionGroup, primePlot} from '../PlotViewUtil.js';
-import {changeProjectionCenter} from '../HiPSUtil.js';
 import {UserZoomTypes} from '../ZoomUtil.js';
 import {ZoomType} from '../ZoomType.js';
 import {PlotPref} from '../PlotPref.js';
@@ -198,7 +198,7 @@ export function initScrollCenterPoint(pv)  {
         const plot= primePlot(pv);
         if (!plot || !plot.attributes[PlotAttribute.FIXED_TARGET]) return pv;
         const wp= CCUtil.getWorldCoords(plot, plot.attributes[PlotAttribute.FIXED_TARGET]);
-        return replacePrimaryPlot(pv, changeProjectionCenter(plot,wp));
+        return replacePrimaryPlot(pv, changeHiPSProjectionCenter(plot,wp));
     }
 }
 
@@ -580,7 +580,7 @@ export function findHipsCenProjToPlaceWptOnDevPtByInteration(pv, wpt, targetDevP
 
     let tmpPlot= plot;
     for(let i=0; (i<10); i++) {
-        tmpPlot= changeProjectionCenter(tmpPlot, newCenterIterationWP);
+        tmpPlot= changeHiPSProjectionCenter(tmpPlot, newCenterIterationWP);
         const tmpCC= CysConverter.make(tmpPlot);
         const testDevPt= tmpCC.getDeviceCoords(wpt);
         const errX= targetDevPtPos.x-testDevPt.x;

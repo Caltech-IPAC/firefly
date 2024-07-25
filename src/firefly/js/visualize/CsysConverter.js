@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import CoordinateSys from './CoordSys.js';
-import {convert, computeDistance} from './VisUtil.js';
+import {convertCelestial, computeDistance} from './VisUtil.js';
 import {makeRoughGuesser} from './ImageBoundsData.js';
 import Point, {makeImageWorkSpacePt, makeImagePt,
     makeScreenPt, makeWorldPt, makeDevicePt,
@@ -380,7 +380,7 @@ export class CysConverter {
             if (!retval) {
                 const csys = wpt.getCoordSys();
                 if (csys?.isCelestial() && this.imageCoordSys!==csys) {
-                    wpt= convert(wpt,this.imageCoordSys);
+                    wpt= convertCelestial(wpt,this.imageCoordSys);
                 }
                 const projPt= this.projection.getImageCoords(wpt.getLon(),wpt.getLat());
                 retval= projPt ? makeImagePt( projPt.x+ 0.5 ,  projPt.y+ 0.5) : null;
@@ -540,7 +540,7 @@ export class CysConverter {
             else {
                 const originalWp= wpt;
                 if (csys.isCelestial() && this.imageCoordSys!==csys) {
-                    wpt= convert(wpt,this.imageCoordSys);
+                    wpt= convertCelestial(wpt,this.imageCoordSys);
                 }
 
                 const  proj_pt= this.projection.getImageCoords(wpt.getLon(),wpt.getLat());
@@ -622,7 +622,7 @@ export class CysConverter {
             case Point.W_PT:
                 const csys = pt?.getCoordSys();
                 if (csys?.isCelestial() && outputCoordSys!==csys) {
-                    retval= convert(pt, outputCoordSys);
+                    retval= convertCelestial(pt, outputCoordSys);
                 } else {
                     retval= pt;
                 }
@@ -637,7 +637,7 @@ export class CysConverter {
         let wpt = this.projection.getWorldCoords(ipt.x - .5 ,ipt.y - .5);
         const csys = wpt?.getCoordSys();
         if (csys?.isCelestial() && outputCoordSys!==csys) {
-            wpt= convert(wpt, outputCoordSys);
+            wpt= convertCelestial(wpt, outputCoordSys);
         }
         return wpt;
     }

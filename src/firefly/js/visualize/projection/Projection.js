@@ -2,22 +2,21 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {Projection as AladinProjection} from '../../externalSource/aladinProj/AladinProjections.js';
+import {CoordinateSys} from '../CoordSys.js';
 import {makeImagePt, makeProjectionPt, makeWorldPt} from '../Point.js';
 import {computeDistance, convertAngle, isAngleUnit} from '../VisUtil.js';
-import {CoordinateSys} from '../CoordSys.js';
 import {AitoffProjection} from './AitoffProjection.js';
-import {NCPProjection} from './NCPProjection.js';
 import {ARCProjection} from './ARCProjection.js';
-import {GnomonicProjection} from './GnomonicProjection.js';
-import {SansonFlamsteedProjection } from './SansonFlamsteedProjection.js';
-import {LinearProjection} from './LinearProjection.js';
 import {CartesianProjection} from './CartesianProjection.js';
-import {OrthographicProjection} from './OrthographicProjection.js';
 import {CylindricalProjection} from './CylindricalProjection.js';
+import {GnomonicProjection} from './GnomonicProjection.js';
+import {LinearProjection} from './LinearProjection.js';
+import {NCPProjection} from './NCPProjection.js';
+import {OrthographicProjection} from './OrthographicProjection.js';
 import {PlateProjection} from './PlateProjection.js';
+import {SansonFlamsteedProjection} from './SansonFlamsteedProjection.js';
 import {TpvProjection} from './TpvProjection.js';
-import {Projection as AladinProjection} from '../../externalSource/aladinProj/AladinProjections.js';
-
 
 
 const unspecifiedProject= () => null;
@@ -41,6 +40,8 @@ export const UNRECOGNIZED = 1999; // TESTED
 
 export const HIPS_SIN     = 5;
 export const HIPS_AITOFF  = 6;
+export const HIPS_DATA_WIDTH = 10000000000;
+export const HIPS_DATA_HEIGHT = 10000000000;
 
 
 
@@ -341,4 +342,26 @@ function revHiPSProjection(aProj, ra, dec,  header) {
 	const imX= x*widthHalf +widthHalf;
 	const imY= y*(heightHalf+yshift) + heightHalf;
 	return makeImagePt(  imX, height - imY);
+}
+
+
+/**
+ *
+ * @param {CoordinateSys} coordinateSys
+ * @param lon
+ * @param lat
+ * @param {boolean} fullSky
+ * @return {Projection}
+ */
+export function makeHiPSProjection(coordinateSys, lon = 0, lat = 0, fullSky = false) {
+	const header = {
+		cdelt1: 180 / HIPS_DATA_WIDTH,
+		cdelt2: 180 / HIPS_DATA_HEIGHT,
+		maptype: fullSky ? HIPS_AITOFF : HIPS_SIN,
+		crpix1: HIPS_DATA_WIDTH * .5,
+		crpix2: HIPS_DATA_HEIGHT * .5,
+		crval1: lon,
+		crval2: lat
+	};
+	return makeProjection({header, coorindateSys: coordinateSys.toString()});
 }

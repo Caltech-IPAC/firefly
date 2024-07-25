@@ -5,6 +5,7 @@
 
 import {isEmpty,isArray} from 'lodash';
 import Enum from 'enum';
+import {getSelectedPts} from '../visualize/WebPlotAnalysis';
 import {primePlot, getAllDrawLayersForPlot, getCenterOfProjection} from '../visualize/PlotViewUtil.js';
 import {visRoot, dispatchUseTableAutoScroll} from '../visualize/ImagePlotCntlr.js';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
@@ -21,7 +22,6 @@ import {dispatchTableHighlight,dispatchTableFilter, dispatchTableSelect} from '.
 import {COLOR_HIGHLIGHTED_PT} from '../visualize/draw/DrawingDef.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
-import {getSelectedPts} from '../visualize/VisUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
 import {getTblById,getCellValue} from '../tables/TableUtil.js';

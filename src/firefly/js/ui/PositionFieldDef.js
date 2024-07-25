@@ -3,7 +3,7 @@ import CoordinateSys from '../visualize/CoordSys.js';
 import CoordUtil from '../visualize/CoordUtil.js';
 
 import {sprintf} from '../externalSource/sprintf.js';
-import VisUtil from 'firefly/visualize/VisUtil';
+import {convertCelestial} from '../visualize/VisUtil';
 
 const errMsgRoot= 'Error: ';
 
@@ -69,7 +69,7 @@ export function formatTargetForHelp(wp) {
 }
 
 function getEQJ2000(wp) {
-    const wpEQ = VisUtil.convert(wp, CoordinateSys.EQ_J2000);
+    const wpEQ = convertCelestial(wp, CoordinateSys.EQ_J2000);
     if (typeof wpEQ === 'undefined') return '';
     const [ra, dec] = [wpEQ.getLon().toFixed(5), wpEQ.getLat().toFixed(5)];
     const hmsRa = CoordUtil.convertLonToString(ra,  CoordinateSys.EQ_J2000);

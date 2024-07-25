@@ -11,7 +11,7 @@ import DrawOp from './DrawOp.js';
 import CsysConverter from '../CsysConverter.js';
 import {Style, TextLocation,DEFAULT_FONT_SIZE} from './DrawingDef.js';
 import {rateOpacity} from '../../util/Color.js';
-import VisUtil from '../VisUtil.js';
+import {distanceToPolygon} from '../VisUtil.js';
 import {isHiPSAitoff} from 'firefly/visualize/WebPlot.js';
 import {getFoV} from 'firefly/visualize/PlotViewUtil.js';
 
@@ -87,7 +87,7 @@ const draw=  {
 		let minDist = Number.MAX_VALUE;
 		const {drawObjAry} = drawObj || {};
         drawObjAry?.forEach( (dObj) => {
-            const d = VisUtil.distanceToPolygon(dObj.pts, plot, pt);
+            const d = distanceToPolygon(dObj.pts, plot, pt);
             if (d < minDist) {
                 minDist = d;
             }

@@ -8,7 +8,7 @@ import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {primePlot, isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
 import {
     getHiPSNorderlevel, getVisibleHiPSCells,
-    getPointMaxSide, getMaxDisplayableHiPSGridLevel, tileCoordsWrap, changeProjectionCenterAndType
+    getPointMaxSide, getMaxDisplayableHiPSGridLevel, tileCoordsWrap
 } from '../visualize/HiPSUtil.js';
 import FootprintObj from '../visualize/draw/FootprintObj.js';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
@@ -20,7 +20,7 @@ import CysConverter from '../visualize/CsysConverter';
 import {getUIComponent} from './HiPSGridlUI.jsx';
 import {getAllPlotViewIdByOverlayLock} from '../visualize/PlotViewUtil';
 import {isDefined} from '../util/WebUtil.js';
-import {isHiPSAitoff} from 'firefly/visualize/WebPlot.js';
+import {changeHiPSProjectionCenterAndType, isHiPSAitoff} from 'firefly/visualize/WebPlot.js';
 
 const ID= 'HIPS_GRID';
 const TYPE_ID= 'HIPS_GRID_TYPE';
@@ -121,7 +121,7 @@ function computeDrawDataForId(plotId, gridType, gridLockLevel, projectionTypeCha
     let aitoff= isHiPSAitoff(plot);
     if (projectionTypeChange) {
         aitoff= !aitoff;
-        plot= changeProjectionCenterAndType(plot,undefined,aitoff);
+        plot= changeHiPSProjectionCenterAndType(plot,undefined,aitoff);
     }
 
     const cc= CysConverter.make(plot);

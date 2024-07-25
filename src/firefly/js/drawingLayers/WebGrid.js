@@ -15,12 +15,11 @@ import {primePlot} from '../visualize/PlotViewUtil.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {getUIComponent} from './WebGridUI.jsx';
 import { makeGridDrawData } from './ComputeWebGridData.js';
-import {isHiPSAitoff, isImage} from '../visualize/WebPlot.js';
+import {changeHiPSProjectionCenterAndType, isHiPSAitoff, isImage} from '../visualize/WebPlot.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import {getPreference} from '../core/AppDataCntlr.js';
 import {flux} from '../core/ReduxFlux.js';
 import CoordinateSys from '../visualize/CoordSys.js';
- import {changeProjectionCenterAndType} from 'firefly/visualize/HiPSUtil.js';
 
 
 export const COORDINATE_PREFERENCE = 'coordinate';
@@ -88,7 +87,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
      if (projectionTypeChange) {
          let aitoff= isHiPSAitoff(plot);
          aitoff= !aitoff;
-         plot= changeProjectionCenterAndType(plot,undefined,aitoff);
+         plot= changeHiPSProjectionCenterAndType(plot,undefined,aitoff);
      }
 
      const cc= CsysConverter.make(plot);

@@ -2,10 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {getArrowCoords} from '../VisUtil';
 import DrawObj from './DrawObj';
 import DrawUtil from './DrawUtil.js';
 import Point, {makeScreenPt} from '../Point.js';
-import VisUtil from '../VisUtil.js';
 import CsysConverter from '../CsysConverter.js';
 import {startRegionDes, setRegionPropertyDes, endRegionDes} from '../region/RegionDescription.js';
 import {regionPropsList, RegionType} from '../region/Region.js';
@@ -117,7 +117,7 @@ function drawDirectionArrow(ctx,plot, startPt,endPt,drawParams,renderOptions) {
     const pt2= plot ? plot.getDeviceCoords(endPt) : endPt;
     const {color,text}=  drawParams;
 
-    const ret= VisUtil.getArrowCoords(pt1.x, pt1.y, pt2.x, pt2.y);
+    const ret= getArrowCoords(pt1.x, pt1.y, pt2.x, pt2.y);
     const drawList= [];
     const textScreen = makeDevicePt(ret.textX, ret.textY);
     // const textLoc = plot ? plot.getDeviceCoords(textScreen) : textScreen;
@@ -139,7 +139,7 @@ function toRegion(startPt,endPt,plot,drawParams,renderOptions) {
     const pt1 = startPt;    // screen point
     const pt2 = endPt;
     const {color,text}=  drawParams;
-    const ret = VisUtil.getArrowCoords(pt1.x, pt1.y, pt2.x, pt2.y);
+    const ret = getArrowCoords(pt1.x, pt1.y, pt2.x, pt2.y);
     const cc = CsysConverter.make(plot);
     let des;
     const retList = [];

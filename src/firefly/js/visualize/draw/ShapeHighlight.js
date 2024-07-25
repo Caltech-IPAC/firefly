@@ -2,14 +2,13 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import VisUtil, {convertAngle} from '../VisUtil.js';
+import {computeScreenDistance, convertAngle} from '../VisUtil.js';
 import ShapeDataObj, {rectOnImage, lengthToImagePixel, widthAfterRotation, heightAfterRotation } from './ShapeDataObj.js';
 import {makeScreenPt, makeImagePt} from '../Point.js';
 import {get, isNil, set, has, cloneDeep} from 'lodash';
 import {defaultRegionSelectColor, defaultRegionSelectStyle, RegionSelColor, RegionSelStyle} from '../DrawLayerCntlr.js';
 import {TextLocation} from './DrawingDef.js';
 import {SimplePt} from '../Point.js';
-import {isHiPS} from '../WebPlot.js';
 
 const doAry = 'drawObjAry';
 export const defaultDashline = [8, 5, 2, 5];
@@ -515,7 +514,7 @@ function isInDrawobjCircle(drawObj, sPt, cc, def) {
     var lw = lineWidth ? Math.floor((lineWidth+1)/2) : 1;
     var scrRadius = area.width * cc.zoomFactor/2;
     var scrCenter = cc.getScreenCoords(area.center);
-    var dist = VisUtil.computeScreenDistance(sPt.x, sPt.y, scrCenter.x, scrCenter.y);
+    var dist = computeScreenDistance(sPt.x, sPt.y, scrCenter.x, scrCenter.y);
 
     inside = (dist < (scrRadius + DELTA + lw ));
 
@@ -587,7 +586,7 @@ function isInDrawobjRectangle(drawObj, sPt, cc, def) {
 
     var scrCenter = cc.getScreenCoords(centerPt);
     if (inside) {
-        dist = VisUtil.computeScreenDistance(sPt.x, sPt.y, scrCenter.x, scrCenter.y);
+        dist = computeScreenDistance(sPt.x, sPt.y, scrCenter.x, scrCenter.y);
     }
     return {inside, dist};
 
@@ -645,7 +644,7 @@ function isInDrawobjEllipse(drawObj, sPt, cc, def) {
     inside = (((newx * newx) + (newy * newy)) <= 1.0); // (xcos(a) + ysin(a))^2/r1^2 + (xsin(a)-ycos(a))^2/r2^2 = 1.0
 
     if (inside) {
-        dist = VisUtil.computeScreenDistance(sPt.x, sPt.y, centerPt.x, centerPt.y);
+        dist = computeScreenDistance(sPt.x, sPt.y, centerPt.x, centerPt.y);
     }
 
     return {inside, dist};
@@ -676,7 +675,7 @@ function isInDrawobjPolygon(drawObj, sPt, cc) {
             return prev;
         }, {x: 0, y: 0});
 
-        dist = VisUtil.computeScreenDistance(sPt.x, sPt.y, sumPt.x/corners.length, sumPt.y/corners.length);
+        dist = computeScreenDistance(sPt.x, sPt.y, sumPt.x/corners.length, sumPt.y/corners.length);
     }
 
     return {inside, dist};

@@ -72,7 +72,7 @@ import {sprintf} from '../externalSource/sprintf';
 import { getDrawLayerParameters} from './WebGrid.js';
 import {Regrid} from '../util/Interp/Regrid.js';
 import {getPointMaxSide} from  '../visualize/HiPSUtil.js';
-import {convert} from '../visualize/VisUtil.js';
+import {convertCelestial} from '../visualize/VisUtil.js';
 import {isHiPS, isHiPSAitoff} from '../visualize/WebPlot.js';
 import {getFoV} from '../visualize/PlotViewUtil.js';
 
@@ -102,7 +102,7 @@ export function makeGridDrawData (plot,  cc, useLabels, numOfGridLines=11){
     const wpt = cc.getWorldCoords(makeImagePt(1, 1), csys);
     const aitoff = (!wpt);
     const {fov, centerWp}= getPointMaxSide(plot, plot.viewDim);
-    const centerWpt = convert(centerWp,csys);
+    const centerWpt = convertCelestial(centerWp,csys);
 
 
     if (centerWpt && width > 0 && height >0) {

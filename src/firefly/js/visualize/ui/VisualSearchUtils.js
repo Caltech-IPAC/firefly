@@ -11,7 +11,6 @@ import {
     dispatchAttachLayerToPlot, dispatchChangeDrawingDef, dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
     dispatchForceDrawLayerUpdate, dispatchModifyCustomField, getDlAry
 } from '../DrawLayerCntlr.js';
-import {changeProjectionCenter} from '../HiPSUtil.js';
 import {dispatchAttributeChange, dispatchChangeCenterOfProjection, visRoot} from '../ImagePlotCntlr.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {getDrawLayerByType, getPlotViewById, isDrawLayerAttached, primePlot} from '../PlotViewUtil.js';
@@ -19,7 +18,7 @@ import {isValidPoint, makeDevicePt, makeImagePt, makeWorldPt, parseWorldPt, poin
 import {
     calculatePosition, computeCentralPointAndRadius, computeDistance, getPointOnEllipse
 } from '../VisUtil.js';
-import {getDevPixScaleDeg, isImage} from '../WebPlot.js';
+import {changeHiPSProjectionCenter, getDevPixScaleDeg, isImage} from '../WebPlot.js';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from './CommonUIKeys.js';
 import {
     clearModalEndInfo, closeToolbarModalLayers, getModalEndInfo, setModalEndInfo
@@ -266,7 +265,7 @@ export function updateUIFromPlot({plotId, setWhichOverlay, whichOverlay, setTarg
 
 function convertConeToSelection(plot,wp,radius) {
     if (!wp) return {};
-    const tmpPlot= changeProjectionCenter(plot, wp);
+    const tmpPlot= changeHiPSProjectionCenter(plot, wp);
     const dist= radius/(getDevPixScaleDeg(tmpPlot));
     const ccTmpPlot= CysConverter.make(tmpPlot);
     const cen= ccTmpPlot.getDeviceCoords(wp);

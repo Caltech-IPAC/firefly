@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {computeScreenDistance} from '../VisUtil';
 import DrawObj from './DrawObj.js';
 import DrawUtil from './DrawUtil.js';
 import {TextLocation, DEFAULT_FONT_SIZE} from './DrawingDef.js';
@@ -12,7 +13,6 @@ import {startRegionDes, setRegionPropertyDes} from '../region/RegionDescription.
 import ShapeDataObj, {fontHeight, drawText, translateTo, rotateAround, getPVRotateAngle} from './ShapeDataObj.js';
 import {isWithinPolygon, makeShapeHighlightRenderOptions, DELTA, defaultDashline} from './ShapeHighlight.js';
 import { handleTextFromRegion } from './ShapeToRegion.js';
-import VisUtil from '../VisUtil.js';
 import {isNil, isEmpty, has, set, get, cloneDeep} from 'lodash';
 import {defaultRegionSelectColor, defaultRegionSelectStyle} from '../DrawLayerCntlr.js';
 import {DrawSymbol} from './DrawSymbol.js';
@@ -514,7 +514,7 @@ export function isInPointDataobj(drawObj, cc, pt) {
                                   makeScreenPt(centerPt.x + w/2, centerPt.y + h/2),
                                   makeScreenPt(centerPt.x - w/2, centerPt.y + h/2)], cc);
     if (inside) {
-        dist = VisUtil.computeScreenDistance(sPt.x, sPt.y, centerPt.x, centerPt.y);
+        dist = computeScreenDistance(sPt.x, sPt.y, centerPt.x, centerPt.y);
     }
 
     return {inside, dist};

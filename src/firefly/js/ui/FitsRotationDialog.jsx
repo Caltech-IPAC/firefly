@@ -4,6 +4,7 @@
 import React, {useEffect} from 'react';
 import {dispatchShowDialog, dispatchHideDialog} from '../core/ComponentCntlr.js';
 import Validate from '../util/Validate.js';
+import {isEastLeftOfNorth} from '../visualize/WebPlotAnalysis';
 import CompleteButton from './CompleteButton.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';
 import {PopupPanel} from './PopupPanel.jsx';
@@ -13,7 +14,6 @@ import {SimpleLayerOnOffButton} from '../visualize/ui/SimpleLayerOnOffButton';
 import {RotateType} from '../visualize/PlotState.js';
 import {StateInputField} from './StatedInputfield';
 import {useStoreConnector} from './SimpleComponent';
-import {isEastLeftOfNorth} from '../visualize/VisUtil';
 import {RangeSliderView} from './RangeSliderView';
 
 import HelpIcon from './HelpIcon.jsx';
