@@ -152,8 +152,11 @@ function dispatchResult(dpType, menu,menuKey,dpId, serDef, analysisActivateFunc)
         window.open(dpType.url, '_blank');
         dispatchUpdateDataProducts(dpId, dpdtMessage('Loaded in new tab',menu,{complexMessage:true, menuKey, resetMenuKey:menuKey, serDef}));
     }
-    else {
+    else if (dpType.fileMenu) {
         dispatchActivateFileMenuItem({dpId,fileMenu:dpType.fileMenu,menu,currentMenuKey:menuKey});
+    }
+    else {
+        console.log('AnalysisUtils: nothing to dispatch');
     }
 }
 

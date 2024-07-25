@@ -281,7 +281,7 @@ function handleProductResult(p, dpId, tbl_id, isPromiseAborted, imageViewer, lay
 
         if (!displayTypeParams  || displayTypeParams.displayType===DPtypes.ERROR) {
             const {error,url}= displayTypeParams ?? {};
-            const status= getStatusFromFetchError(error.message);
+            const status= getStatusFromFetchError(error?.message ?? 'Unknown Error');
             if (!status) dispatchUpdateDataProducts(dpId,dpdtSimpleMsg('Error- Search for Data product failed'));
             dispatchUpdateDataProducts(dpId,dpdtSimpleMsg(`Error- Search for Data product failed, status ${status} (${getHttpErrorMessage(status)}), url: ${url}`));
             return;

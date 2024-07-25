@@ -291,7 +291,7 @@ function attachToCatalog(tbl_id, payload) {
 
 
 export function getSearchTarget(r, tableModel, searchTargetStr, overlayPositionStr) {
-    if (!r) r= tableModel.request;
+    if (!r) r= tableModel?.request;
     if (searchTargetStr) return parseWorldPt(searchTargetStr);
     if (overlayPositionStr) return parseWorldPt(overlayPositionStr);
     const pos= getMetaEntry(tableModel,MetaConst.OVERLAY_POSITION);

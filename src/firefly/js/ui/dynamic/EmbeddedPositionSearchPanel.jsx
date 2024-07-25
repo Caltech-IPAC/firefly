@@ -1,6 +1,6 @@
 import {Sheet, Stack, Typography} from '@mui/joy';
 import {isFunction} from 'lodash';
-import React, {useContext, useEffect, useState} from 'react';
+import React, {Fragment, useContext, useEffect, useState} from 'react';
 import {oneOfType, oneOf, element, bool, string, number, arrayOf, object, func, shape} from 'prop-types';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import {CONE_AREA_OPTIONS, CONE_AREA_OPTIONS_UPLOAD, CONE_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY
@@ -325,11 +325,11 @@ function SearchSummary({request}) {
     const fileName = searchType === 'Multi-Object' ? request?.uploadInfo?.fileName : undefined;
     const rows = searchType === 'Multi-Object' ? request?.uploadInfo?.totalRows : undefined;
 
-    const keyVal = (k, v, isLast) => (
-        <>
+    const keyVal = (k, v, isLast, key) => (
+        <Fragment key={key+''}>
             <Typography component='span' color={'primary'}>{k}: </Typography> {v}
             {!isLast && ', '}
-        </>
+        </Fragment>
     );
 
     //Label/Key & Value pairs do display, calculating here to determine easily where the last comma should be
@@ -347,7 +347,7 @@ function SearchSummary({request}) {
         <Stack>
             <Typography color={'neutral'} level='body-md'>
                 {keyValuePairs.map((pair, index) =>
-                    keyVal(pair.k, pair.v, index === keyValuePairs.length - 1)
+                    keyVal(pair.k, pair.v, index === keyValuePairs.length - 1, index)
                 )}
             </Typography>
         </Stack>

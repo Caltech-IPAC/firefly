@@ -336,7 +336,7 @@ function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,
                            `${title} (image)` :  `HDU #${hduIdx||0} (image) ${title}`;
 
     return dpdtImage({name:ddTitleStr,
-        activate: createSingleImageActivate(newReq,imageViewerId,table.tbl_id,row),
+        activate: createSingleImageActivate(newReq,imageViewerId,table?.tbl_id,row),
         extraction: createSingleImageExtraction(newReq),
         request:newReq, override, interpretedData, requestDefault:Boolean(defaultPart)});
 }

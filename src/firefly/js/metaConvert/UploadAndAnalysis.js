@@ -247,7 +247,7 @@ function deeperInspection({ table, row, request, activateParams,
 
 
     const imageEntry= makeAllImageOption &&
-        makeAllImageEntry(request,fileAnalysis.filePath, parts,imageViewerId,table.tbl_id,row,imageParts.length);
+        makeAllImageEntry(request,fileAnalysis.filePath, parts,imageViewerId,table?.tbl_id,row,imageParts.length);
 
     if (imageEntry) fileMenu.menu.push(imageEntry);
     partAnalysis.forEach( (pa) => {

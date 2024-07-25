@@ -4,7 +4,8 @@
 import {isArray, isNil} from 'lodash';
 import {
     adhocServiceUtype, cisxAdhocServiceUtype,
-    ACCESS_URL, CONTENT_LENGTH, CONTENT_TYPE, DESCRIPTION, SEMANTICS, standardIDs, VO_TABLE_CONTENT_TYPE
+    ACCESS_URL, CONTENT_LENGTH, CONTENT_TYPE, DESCRIPTION, SEMANTICS, standardIDs, VO_TABLE_CONTENT_TYPE,
+    SERVICE_DESC_COL_NAMES
 } from './VoConst.js';
 import {columnIDToName, getColumnIdx, getTblRowAsObj} from '../tables/TableUtil.js';
 import {getTableModel} from './VoCoreUtils.js';
@@ -175,15 +176,13 @@ export function isAnalysisTableDatalink(report) {
     if (report?.parts.length !== 1 || report?.parts[0]?.type !== 'Table' || !report?.parts[0]?.details) {
         return false;
     }
-    const SERVICE_DESC_CNAMES = ['id', ACCESS_URL, 'service_def', 'error_message', SEMANTICS,
-        DESCRIPTION, CONTENT_TYPE, CONTENT_LENGTH];
 
     /**@type FileAnalysisPart*/
     const part = report.parts[0];
     const {tableData} = part.details;
     if (!tableData.data?.length) return;
     const tabColNames = tableData.data.map((d) => d?.[0]?.toLowerCase());
-    const hasCorrectCols = SERVICE_DESC_CNAMES.every((cname) => tabColNames.includes(cname));
+    const hasCorrectCols = SERVICE_DESC_COL_NAMES.every((cname) => tabColNames.includes(cname));
     if (!hasCorrectCols) return false;
     return hasCorrectCols && part.totalTableRows < 50; // 50 is arbitrary, it is protections from dealing with files that are very big
 }
