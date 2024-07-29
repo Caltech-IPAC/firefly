@@ -121,11 +121,11 @@ function convertAllToDownload(menu) {
 }
 
 function getDLMenuEntryData({dlTableUrl, dlData,idx, sourceTable, sourceRow}) {
-    const positionWP= getSearchTarget(sourceTable.request,sourceTable) ?? makeWorldPtUsingCenterColumns(sourceTable,sourceRow);
+    const positionWP= getSearchTarget(sourceTable?.request,sourceTable) ?? makeWorldPtUsingCenterColumns(sourceTable,sourceRow);
     const sRegion= getObsCoreSRegion(sourceTable,sourceRow);
     const prodType= getObsCoreProdType(sourceTable,sourceRow);
     const contentType= dlData.contentType.toLowerCase();
-    return {positionWP,contentType, sRegion,prodType, activeMenuLookupKey:dlTableUrl,menuKey:'dlt-'+idx};
+    return {positionWP,contentType, sRegion,prodType, activeMenuLookupKey:dlTableUrl??`no-table-${idx}`,menuKey:'dlt-'+idx};
 }
 
 function makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow, options,
@@ -349,6 +349,28 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
     return sortMenu(menu);
 }
 
+export function createDataLinkSingleRowItem({dlData, activateParams, baseTitle, options}) {
+    const {semantics,url,error_message, dlAnalysis:{isAux,isThis}, serDef, serviceDefRef}= dlData;
+    const name= semantics;
+    if (error_message) {
+        const edp= dpdtMessageWithError(error_message);
+        edp.complexMessage= false;
+        edp.menuKey='dlt-'+dlData.rowIdx;
+        edp.name= `Error in related data (datalink) row ${dlData.rowIdx}`;
+        return edp;
+    }
+    if (serviceDefRef && !serDef) {
+        const edp= dpdtMessageWithError('Datalink row has an unsupported or missing service descriptor (async service descriptors are not supported)');
+        edp.complexMessage= false;
+        edp.menuKey='dlt-'+dlData.rowIdx;
+        edp.name= `Error in related data (datalink) row ${dlData.rowIdx}`;
+        return edp;
+    }
+    const menuEntry= makeMenuEntry({dlTableUrl:'none',dlData,idx:dlData.rowIdx, baseTitle,
+        options, name, doFileAnalysis:true, activateParams});
+    return menuEntry;
+
+}
 
 
 const analysisTypes= ['fits', 'cube', 'table', 'spectrum', 'auxiliary'];

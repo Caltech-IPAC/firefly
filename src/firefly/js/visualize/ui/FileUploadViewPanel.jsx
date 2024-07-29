@@ -196,7 +196,8 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
                     <FileAnalysis {...{report, summaryModel, detailsModel, isMoc, UNKNOWN_FORMAT, acceptList,
                         isDatalink, acceptOneItem, summaryTblId}}/>
                     <ImageDisplayOption {...{summaryTblId, currentReport:report, currentSummaryModel:summaryModel, acceptList}}/>
-                    <TableDisplayOption {...{isMoc, isDatalink, summaryTblId, currentReport:report, currentSummaryModel:summaryModel,
+                    <TableDisplayOption {...{isMoc, isDatalink, summaryTblId,
+                        currentReport:report, currentSummaryModel:summaryModel, currentDetailsModel:detailsModel,
                         acceptList, acceptOneItem}}/>
                 </Stack>
             </FileDropZone>
@@ -450,7 +451,8 @@ function getDetailsModel(tableModel, report, detailsTblId, UNKNOWN_FORMAT) {
     return details;
 }
 
-function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, currentSummaryModel, acceptList, acceptOneItem}) {
+function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, currentSummaryModel,
+                                currentDetailsModel, acceptList, acceptOneItem}) {
 
     const highlightedRowIdx = currentSummaryModel?.highlightedRow;
     const highlightedRow = currentSummaryModel?.tableData?.data?.[highlightedRowIdx];
@@ -471,22 +473,19 @@ function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, cur
     else if (isMoc && acceptTableOrSpectrum(acceptList)) {
         const options= [{label:'Load as MOC Overlay', value:'moc'}, {label:'Load as Table', value:'table'}];
         return (
-            <RadioGroupInputField options={options} sx={{pt:1/2}} labelWidth={100} orientation='horizontal'
-                                  defaultValue='moc' fieldKey='mocOp' />
-
+            <RadioGroupInputField {...{ options, sx:{pt:1/2}, orientation:'horizontal',
+                                  initialState: {value: 'moc'}, fieldKey:'mocOp' }}/>
         );
     }
     else if (isDatalink && acceptList.includes(DATA_LINK_TABLES)) {
         const options= [{label:'Load as Datalink Search UI', value:'datalinkUI'}, {label:'Load as Table', value:'table'}];
+        let defaultValue= 'table';
+        if (currentDetailsModel?.resources.some( ({utype=''}) => utype.toLowerCase().startsWith('cisx'))) {
+            defaultValue= 'datalinkOp';
+        }
         return (
-            <div style={{padding: '5px 0 5px 0'}}>
-                <RadioGroupInputField options={options}
-                                      labelWidth={100}
-                                      alignment={'horizontal'}
-                                      defaultValue = {'datalinkUI'}
-                                      fieldKey = 'datalinkOp' />
-
-            </div>
+            <RadioGroupInputField {...{sx: {py:1/2}, options, alignment:'horizontal',
+                initialState: {value: defaultValue}, fieldKey:'datalinkOp' }} />
         );
     }
 
@@ -498,7 +497,6 @@ function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, cur
                         title:'If possible - interpret table columns names to fit into a spectrum data model',
                         label:'Attempt to interpret tables as spectra'}]}
                     fieldKey='tablesAsSpectrum'
-                    labelWidth={90}
                 />}
         </div>
     );
@@ -530,7 +528,6 @@ function ImageDisplayOption({summaryTblId, currentReport, currentSummaryModel, a
                                             }]}
                                         initialState={{value: 'singleAxisImage'}}
                                         fieldKey={SINGLE_ROW_AS_TABLE}
-                                        labelWidth={90}
                                     />}
 
             </Stack>

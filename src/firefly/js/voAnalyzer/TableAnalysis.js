@@ -1,16 +1,15 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, intersection, isEmpty, isString} from 'lodash';
+import {get, intersection, isEmpty, isString, isUndefined} from 'lodash';
 import {defDataSourceGuesses} from '../metaConvert/DefaultConverter.js';
 import {
-    ACCESS_FORMAT, ACCESS_URL, DEFAULT_TNAME_OPTIONS, obsPrefix, OBSTAP_CNAMES, POS_EQ_UCD, S_REGION, SSA_COV_UTYPE,
-    SSA_TTTLE_UTYPE
-} from './VoConst.js';
+    ACCESS_FORMAT, ACCESS_URL, DEFAULT_TNAME_OPTIONS, obsPrefix,
+    OBSTAP_CNAMES, S_REGION, SERVICE_DESC_COL_NAMES, SSA_COV_UTYPE, SSA_TITLE_UTYPE } from './VoConst.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {getCornersColumns} from '../tables/TableInfoUtil.js';
 import {
-    getBooleanMetaEntry, getCellValue, getColumn, getColumns, getMetaEntry, getTblRowAsObj, isTableUsingRadians
+    getBooleanMetaEntry, getCellValue, getColumn, getColumns, getMetaEntry, isTableUsingRadians
 } from '../tables/TableUtil.js';
 import CoordinateSys from '../visualize/CoordSys.js';
 import {makeAnyPt, makeWorldPt} from '../visualize/Point.js';
@@ -51,6 +50,7 @@ export function findImageCenterColumns(table) {
  * @return {WorldPt|undefined} a world point or undefined it no center columns exist
  */
 export function makeWorldPtUsingCenterColumns(table, row) {
+    if (!table || isUndefined(row)) return;
     const cen = findTableCenterColumns(table);
     return cen && makeWorldPt(getCellValue(table, row, cen.lonCol), getCellValue(table, row, cen.latCol), cen.csys);
 }
@@ -157,7 +157,11 @@ export function hasObsCoreLikeDataProducts(tableOrId) {
     const hasFormat = getObsCoreTableColumn(table, ACCESS_FORMAT);
     const hasProdType = getObsCoreProdTypeCol(table);
     return Boolean(hasUrl && hasFormat && hasProdType);
+}
 
+export function isDatalinkTable(tableOrId) {
+    const columns = getTableModel(tableOrId)?.tableData?.columns?.map( (c) => c?.name?.toLowerCase() ?? '') ?? [];
+    return SERVICE_DESC_COL_NAMES.every((cname) => columns.includes(cname));
 }
 
 function columnMatches(table, cName) {
@@ -381,7 +385,7 @@ export function isSSATable(tableOrId) {
     const foundParts= table.tableData.columns
         .filter((c) => {
             if (c?.utype?.toLowerCase().includes(SSA_COV_UTYPE)) return true;
-            if (c?.utype?.toLowerCase().includes(SSA_TTTLE_UTYPE )) return true;
+            if (c?.utype?.toLowerCase().includes(SSA_TITLE_UTYPE )) return true;
         });
     return foundParts.length>=2;
 }
@@ -391,7 +395,7 @@ export function getSSATitle(tableOrId,row) {
     if (!table) return false;
     const foundCol= table.tableData.columns
         .filter((c) => {
-            if (c?.utype?.toLowerCase().includes(SSA_TTTLE_UTYPE )) return true;
+            if (c?.utype?.toLowerCase().includes(SSA_TITLE_UTYPE )) return true;
         });
     return foundCol.length>0 ? getCellValue(table,row,foundCol[0].name) : undefined;
 }

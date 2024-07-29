@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import Enum from 'enum';
-import {CoordinateSys} from '../api/ApiUtilImage.jsx';
+import {CoordinateSys} from '../visualize/CoordSys';
 
 
 export const SEMANTICS = 'semantics';
@@ -14,10 +14,15 @@ export const ACCESS_URL = 'access_url';
 export const ACCESS_FORMAT = 'access_format';
 export const S_REGION = 's_region';
 export const DESCRIPTION = 'description';
+export const SERVICE_DEF= 'service_def';
+export const ERROR_MESSAGE= 'error_message';
 export const UCDCoord = new Enum(['eq', 'ecliptic', 'galactic']);
 export const obsPrefix = 'obscore:';
 export const ColNameIdx = 0;
 export const UtypeColIdx = 2;
+
+export const SERVICE_DESC_COL_NAMES = ['id', ACCESS_URL, SERVICE_DEF, ERROR_MESSAGE, SEMANTICS,
+    DESCRIPTION, CONTENT_TYPE, CONTENT_LENGTH];
 
 export const adhocServiceUtype = 'adhoc:service';
 export const cisxAdhocServiceUtype = 'cisx:adhoc:service';
@@ -136,7 +141,7 @@ export const OBSTAPCOLUMNS = [
     ['instrument_name', 'meta.id;instr', 'Provenance.ObsConfig.Instrument.name']
 ];
 export const SSA_COV_UTYPE = 'char.spatialaxis.coverage.location.value';
-export const SSA_TTTLE_UTYPE = 'dataid.title';
+export const SSA_TITLE_UTYPE = 'dataid.title';
 export const POS_EQ_UCD = 'pos.eq';
 
 const OBSTAP_OPTIONAL_CNAMES = [

@@ -5,7 +5,7 @@
 import {isArray, once} from 'lodash';
 import {MetaConst} from '../data/MetaConst.js';
 import {getMetaEntry} from '../tables/TableUtil';
-import {hasObsCoreLikeDataProducts} from '../voAnalyzer/TableAnalysis.js';
+import {hasObsCoreLikeDataProducts, isDatalinkTable} from '../voAnalyzer/TableAnalysis.js';
 import {hasServiceDescriptors} from '../voAnalyzer/VoDataLinkServDef.js';
 import {Band} from '../visualize/Band';
 import {SINGLE} from '../visualize/MultiViewCntlr';
@@ -21,6 +21,7 @@ import {makeShaPlotRequest, makeShaViewCreate} from './missions/ShaRequestList.j
 import {make2MassPlotRequest} from './missions/TwoMassRequestList.js';
 import {makeWisePlotRequest, makeWiseViewCreate} from './missions/WiseRequestList.js';
 import {makeZtfPlotRequest, makeZtfViewCreate} from './missions/ZtfRequestList.js';
+import {getDatalinkStandAlineDataProduct, makeDatalinkStaneAloneConverter} from './vo/DataLinkStandAloneConverter';
 import {
     getObsCoreDataProduct, getObsCoreGridDataProduct, getObsCoreRelatedDataProduct, makeObsCoreConverter
 } from './vo/ObsCoreConverter.js';
@@ -214,6 +215,18 @@ function initConverterTemplates() {
             getSingleDataProduct: getSingleDataProductWrapper(makeZtfPlotRequest),
             getGridDataProduct: getGridDataProductWrapper(makeZtfPlotRequest),
             getRelatedDataProduct: getRelatedDataProductWrapper(makeZtfPlotRequest),
+        },
+        {
+            converterId: 'DataLinkStandaloneTable',
+            tableMatches: isDatalinkTable,
+            create: makeDatalinkStaneAloneConverter,
+            threeColor: false,
+            hasRelatedBands: false,
+            canGrid: false,
+            maxPlots: 1,
+            getSingleDataProduct: getDatalinkStandAlineDataProduct,
+            getGridDataProduct: () => Promise.reject('grid not supported'),
+            getRelatedDataProduct: () => Promise.reject('related data products not supported')
         },
         {
             converterId: 'ObsCore',
