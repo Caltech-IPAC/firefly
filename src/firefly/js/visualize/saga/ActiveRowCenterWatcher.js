@@ -154,12 +154,23 @@ function toAngle(d, radianToDegree)  {
 export function getRowCenterWorldPt(tableOrId) {
     const tbl=  getTableModel(tableOrId);
     if (!tbl) return;
-    const cenCol= findTableCenterColumns(tbl);
+    const cenCol= findTableCenterColumns(tbl,true);
     if (!cenCol) return;
     const {lonCol,latCol,csys}= cenCol;
-    const rad= isTableUsingRadians(tbl, [lonCol,latCol]);
-    const lon= toAngle(getCellValue(tbl,tbl.highlightedRow, lonCol),rad);
-    const lat= toAngle(getCellValue(tbl,tbl.highlightedRow, latCol),rad);
+
+    let lon;
+    let lat;
+
+    if (lonCol===latCol) {
+        const latlonAry= getCellValue(tbl,tbl.highlightedRow, lonCol);
+        lon= toAngle(latlonAry[0],false);
+        lat= toAngle(latlonAry[1],false);
+    }
+    else {
+        const rad= isTableUsingRadians(tbl, [lonCol,latCol]);
+        lon= toAngle(getCellValue(tbl,tbl.highlightedRow, lonCol),rad);
+        lat= toAngle(getCellValue(tbl,tbl.highlightedRow, latCol),rad);
+    }
     if (isNaN(lon) || isNaN(lat)) return;
     return makeAnyPt(lon,lat,csys||CoordinateSys.EQ_J2000);
 }

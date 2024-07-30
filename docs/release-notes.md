@@ -7,7 +7,8 @@
   - [Notes on the next version](next-release-details.md)
 
 ## Version 2024.2
-  - 2024.2.4 - (July 24, 2024),   _docker tag_: `latest`, `2024.2`, `2024.2.4`
+  - 2024.2.5 - (July 31, 2024),   _docker tag_: `latest`, `2024.2`, `2024.2.5`
+  - 2024.2.4 - (July 24, 2024),   _docker tag_: `2024.2.4`
   - 2024.2.3 - (July 1, 2024),   _docker tag_: `2024.2.3`
   - 2024.2.2 - (June 25, 2024),  _docker tag_: `2024.2.2`
   - 2024.2.1 - (June 24, 2024),  _docker tag_: `2024.2.1`
@@ -64,6 +65,9 @@
    - Bug fix: MultiProductViewer: 3 color button showing in single mode  ([Commit](https://github.com/Caltech-IPAC/firefly/commit/9209284c00605319e8e40f596766f15e82eb402e))
    - Bug fix: Issues for WISE application ([Commit](https://github.com/Caltech-IPAC/firefly/commit/58185602365cea888941798f15e5e03c378589c3)), ([Commit](https://github.com/Caltech-IPAC/firefly/commit/009ad7bd80e83f6ceae4d694b06d69a018393278))
    - Bug fix: comment displayed in JSX code ([Commit](https://github.com/Caltech-IPAC/firefly/commit/031ffd63e89f53213f53a68b344939427a1de124))
+- 2024.2.5 
+   - Bug fix: bug in table column analyzing ([Commit](https://github.com/Caltech-IPAC/firefly/commit/a94a467367f47c9612030a36ada6b37f24546dac))
+   - Bug fix: Active row watch not handling SSA tables correctly ([Commit](https://github.com/Caltech-IPAC/firefly/commit/0316fea849aa67cf49342cdb1c2b2b4ad72dab4b))
 
 ##### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2024.2+label%3abug)
