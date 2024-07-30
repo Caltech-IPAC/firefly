@@ -409,7 +409,7 @@ export class VoTableRecognizer {
 
         const c = getColumn(this.tableModel, 'coord_obs');
         if (acceptArrayCol && c?.arraySize &&
-            (c?.type === 'double' || c?.type === 'float')
+            (c?.type === 'double' || c?.type === 'float') ||
             (c?.utype?.toLowerCase().includes(SSA_COV_UTYPE) || c?.UCD?.toLowerCase().includes(POS_EQ_UCD) ) ) {
             return this.setCenterColumnsInfo([c, c]);
         }
