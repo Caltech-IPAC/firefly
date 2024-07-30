@@ -200,7 +200,7 @@ FieldGroupTabs.propTypes = {
  * 'label' is converted to Tab, and 'children' are wrapped inside a Joy TabPanel
  * It is designed to be used with TabPanel.
  */
-export const Tab = React.memo(({id, children, value, sx, removable, onTabRemove, label, name, ...props}) => {
+export const Tab = React.memo(({id, children, value, sx, removable, onTabRemove, colorSwatch, label, name, ...props}) => {
     // removable, onTabRemove;  not used by JoyTabPanel
     value ??= getTabId({id, name, label});
     return (
@@ -222,6 +222,7 @@ Tab.propTypes = {
     startDecorator: node,
     removable: bool,
     onTabRemove: func,
+    colorSwatch: string,
 };
 
 
@@ -306,7 +307,7 @@ function TabHeader({children, slotProps}) {
 }
 
 function getHeaderFromTab({name, value, label, startDecorator, removable, onTabRemove, ...rest}, idx, maxTitleWidth) {
-    const {selected, onSelect, style, id, ...joyTabProps} = rest;     // deprecated; filtered out.
+    const {selected, onSelect, style, colorSwatch, id, ...joyTabProps} = rest;     // deprecated; filtered out.
 
     // to support deprecated props
     label ??= name;
@@ -359,12 +360,17 @@ function OpenTabs({onSelect, selTabId, children}) {
     useEffect(() => {       //
         // create table model for the drop down
         const childrenAry = React.Children.toArray(children);
+        const hasColor= childrenAry.some( ({props})  => Boolean(props?.colorSwatch));
         const columns = [
-            {name: 'OPEN TABS', width: 50},
+            {name: 'Open Tabs', width: 50},
             {name: 'tabID', visibility: 'hidden'}
         ];
+        if (hasColor) {
+            columns.unshift({name: '', width: 1, cellRenderer: 'ColorSwatch::size=10px',
+                sortable:false, filterable:false});
+        }
         const highlightedRow = childrenAry.findIndex((child) => getTabId(child.props) === selTabId);
-        const data = makeOpenTabsData(childrenAry);
+        const data = makeOpenTabsData(childrenAry,hasColor);
         setTableModel({tbl_id, tableData: {columns, data}, highlightedRow, totalRows: data.length});
 
         return watchTableChanges(tbl_id, [TABLE_HIGHLIGHT, TABLE_SORT, TABLE_FILTER], () => {
@@ -375,7 +381,7 @@ function OpenTabs({onSelect, selTabId, children}) {
         }, tbl_id);          // make watcherId same as tbl_id so there can only be one watcher per tabpanel
     }, [tbl_id]);
 
-    const width = 381;
+    const width = '30rem';
     return  (
         <Stack width={width} height={200} position='relative'>
             <TablePanel tbl_ui_id={tbl_id+'-ui'} tableModel={tableModel} showTypes={false} slotProps={{root: {variant:'plain'}}}
@@ -384,12 +390,12 @@ function OpenTabs({onSelect, selTabId, children}) {
     );
 }
 
-function makeOpenTabsData(childrenAry) {
+function makeOpenTabsData(childrenAry,hasColor) {
     return childrenAry.map((child, idx) => {
         const p = child?.props || {};
         const title = isString(p.label) ? p.label : p.name || `[blank]-${idx}`;
         const tabId = getTabId(p);
-        return [title, tabId];
+        return hasColor ? [p.colorSwatch ?? '', title, tabId] : [title, tabId];
     });
 
 }

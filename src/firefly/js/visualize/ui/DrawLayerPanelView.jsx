@@ -3,30 +3,24 @@
  */
 
 import {Box, Button, Stack, Tooltip, Typography} from '@mui/joy';
-import React from 'react';
-import PropTypes from 'prop-types';
-import {padStart, groupBy} from 'lodash';
-import {
-    isDrawLayerVisible, getAllDrawLayersForPlot,
-    getLayerTitle, getDrawLayersByDisplayGroup, primePlot, getHDU
-} from '../PlotViewUtil.js';
-import {operateOnOverlayPlotViewsThatMatch, enableRelatedDataLayer,
-               findUnactivatedRelatedData, setMaskVisible } from '../RelatedDataUtil.js';
-import {DrawLayerItemView} from './DrawLayerItemView.jsx';
-import {ColorChangeType} from '../draw/DrawLayer.js';
-import {GroupingScope} from '../DrawLayerCntlr.js';
-import {clone} from '../../util/WebUtil.js';
-import {dispatchChangeDrawingDef, dispatchChangeVisibility,
-        dispatchDetachLayerFromPlot, getDlAry} from '../DrawLayerCntlr.js';
-import {visRoot, dispatchOverlayPlotChangeAttributes, dispatchDeleteOverlayPlot} from '../ImagePlotCntlr.js';
-import {showColorPickerDialog} from '../../ui/ColorPicker.jsx';
-import {showPointShapeSizePickerDialog} from '../../ui/PointShapeSizePicker.jsx';
-import {getPlotViewById} from '../PlotViewUtil';
-import ImageRoot from '../../drawingLayers/ImageRoot.js';
 import {HelpIcon} from 'firefly/ui/HelpIcon.jsx';
 import {toRGB} from 'firefly/util/Color.js';
-
-
+import {groupBy, padStart} from 'lodash';
+import PropTypes from 'prop-types';
+import React from 'react';
+import ImageRoot from '../../drawingLayers/ImageRoot.js';
+import {showColorPickerDialog} from '../../ui/ColorPicker.jsx';
+import {showPointShapeSizePickerDialog} from '../../ui/PointShapeSizePicker.jsx';
+import {clone} from '../../util/WebUtil.js';
+import {dispatchChangeVisibility, dispatchDetachLayerFromPlot, GroupingScope} from '../DrawLayerCntlr.js';
+import {dispatchDeleteOverlayPlot, dispatchOverlayPlotChangeAttributes, visRoot} from '../ImagePlotCntlr.js';
+import {getPlotViewById} from '../PlotViewUtil';
+import {getAllDrawLayersForPlot, getHDU, getLayerTitle, isDrawLayerVisible, primePlot} from '../PlotViewUtil.js';
+import {
+    enableRelatedDataLayer, findUnactivatedRelatedData, operateOnOverlayPlotViewsThatMatch, setMaskVisible
+} from '../RelatedDataUtil.js';
+import {DrawLayerItemView} from './DrawLayerItemView.jsx';
+import {modifyDrawColor} from './DrawLayerUIComponents';
 
 
 export function DrawLayerPanelView({dlAry, plotView, mouseOverMaskValue, drawLayerFactory}) {
@@ -147,7 +141,7 @@ function makeDrawLayerItemAry(layers,pv, maxTitleChars, factory) {
             autoFormatTitle: l.autoFormatTitle,
             title: getLayerTitle(pv.plotId,l),
             visible: isDrawLayerVisible(l,pv.plotId),
-            modifyColor: () => modifyColor(l,pv.plotId),
+            modifyColor: () => modifyDrawColor(l,pv.plotId,l.tbl_id),
             modifyShape: () => modifyShape(l,pv.plotId),
             deleteLayer: () => deleteLayer(l,pv.plotId),
             changeVisible: () => flipVisible(l,pv.plotId),
@@ -209,16 +203,6 @@ function makeOverlayTitle(opv,mouseOn, dataWidth, dataHeight) {
     );
 }
 
-
-function modifyColor(dl,plotId) {
-    showColorPickerDialog(dl.drawingDef.color, dl.canUserChangeColor===ColorChangeType.STATIC, false,
-        (ev) => {
-            const {r,g,b,a}= ev.rgb;
-            const rgbStr= `rgba(${r},${g},${b},${a})`;
-            dl = getDrawLayersByDisplayGroup(getDlAry(), dl.displayGroupId);
-            dispatchChangeDrawingDef(dl.displayGroupId, Object.assign({},dl.drawingDef,{color:rgbStr}),plotId, dl.titleMatching);
-        }, '');
-}
 
 const hexC= (v) =>  padStart(v.toString(16),2,'0');
 

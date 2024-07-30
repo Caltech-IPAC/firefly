@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
-import PropTypes, {bool, array, string, number, object, shape, oneOfType, element, arrayOf} from 'prop-types';
-import {isEmpty, isUndefined, get}  from 'lodash';
+import PropTypes, {bool, string, shape, oneOfType, element, arrayOf} from 'prop-types';
+import {isEmpty, isUndefined}  from 'lodash';
 import {RadioGroupInputFieldView} from './RadioGroupInputFieldView.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 
@@ -12,11 +12,9 @@ const assureValue= (props) => {
 };
 
 function handleOnChange(ev, params, fireValueChange) {
-    const val = get(ev, 'target.value', '');
-    const checked = get(ev, 'target.checked', false);
-    if (checked) {
-        fireValueChange({ value: val, valid: true});
-    }
+    const value = ev?.target?.value ?? '';
+    if (ev?.target?.checked) fireValueChange({ value, valid: true});
+
 }
 
 function checkForUndefined(v,props) {
@@ -45,8 +43,5 @@ RadioGroupInputField.propTypes= {
     orientation: PropTypes.oneOf(['vertical', 'horizontal']),
     tooltip : oneOfType([string,element]),
     isGrouped: bool,
-    initialState: shape({
-        value: string,
-        label:  string,
-    }),
+    initialState: shape({ value: string, label: string}),
 };

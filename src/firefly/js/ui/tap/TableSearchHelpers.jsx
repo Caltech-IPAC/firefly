@@ -1,5 +1,10 @@
-import {Box, Stack, Typography} from '@mui/joy';
+import KeyboardDoubleArrowDown from '@mui/icons-material/KeyboardDoubleArrowDown';
+
+import KeyboardDoubleArrowUp from '@mui/icons-material/KeyboardDoubleArrowUp';
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
+import {Box, Button, IconButton, Stack, Typography} from '@mui/joy';
 import HelpIcon from 'firefly/ui/HelpIcon';
+import {SwitchInputFieldView} from 'firefly/ui/SwitchInputField';
 import {isEqual, isObject} from 'lodash';
 import Prism from 'prismjs';
 import PropTypes from 'prop-types';
@@ -8,11 +13,10 @@ import {getAppOptions} from '../../api/ApiUtil.js';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 import {FieldGroupAccordionPanel} from '../panel/AccordionPanel.jsx';
 import {RadioGroupInputFieldView} from '../RadioGroupInputFieldView.jsx';
-import {SwitchInputFieldView} from 'firefly/ui/SwitchInputField';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
-
-import KeyboardDoubleArrowUp from '@mui/icons-material/KeyboardDoubleArrowUp';
-import KeyboardDoubleArrowDown from '@mui/icons-material/KeyboardDoubleArrowDown';
+import {showResultTitleDialog} from './ResultTitleDialog';
+import {ADQL_QUERY_KEY, makeTapSearchTitle, USER_ENTERED_TITLE} from './TapUtil';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 
 export const HeaderFont = {fontSize: 12, fontWeight: 'bold', alignItems: 'center'};
 
@@ -310,6 +314,49 @@ export function DebugObsCore({constraintResult, includeSia=false}) {
         </div> );
 }
 
+
+
+export function TitleCustomizeButton({groupKey, tapBrowserState, selectBy}) {
+
+    const [getUserTitle,setUserTitle]= useFieldGroupValue(USER_ENTERED_TITLE,groupKey);
+    const [getADQL,]= useFieldGroupValue(ADQL_QUERY_KEY,groupKey);
+    const getDefTitle= () =>
+        selectBy === 'adql' ?
+            makeTapSearchTitle(getADQL(), tapBrowserState.serviceUrl) :
+            makeTapSearchTitle(undefined, tapBrowserState.serviceUrl, tapBrowserState.tableName);
+
+    const onClick= () => {
+        const defTitle= getDefTitle();
+        showResultTitleDialog(getUserTitle(), defTitle, (newTitle) => setUserTitle(newTitle===defTitle ? undefined : newTitle) );
+    };
+
+    const title= getUserTitle() || getDefTitle();
+    if (!title) return undefined;
+
+    return (
+            <Stack direction='row' alignItems='center' sx={{pl:3}}>
+                <IconButton onClick={onClick} sx={{minWidth:0}}>
+                    <EditOutlinedIcon/>
+                </IconButton>
+                <Typography
+                    {...{
+                        level: 'body-sm',
+                        sx: {
+                            textAlign:'left',
+                            width: '13rem',
+                            textWrap: 'nowrap',
+                            textOverflow: 'ellipsis',
+                            overflow: 'hidden'
+                        }
+                    }}
+                >
+                    <Typography level='title-md'>Title: </Typography>
+                    {`${getUserTitle() || getDefTitle() || ''}`}
+                </Typography>
+
+            </Stack>
+    );
+}
 
 
 

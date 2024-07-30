@@ -2,42 +2,47 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {Box, Button, FormHelperText, Stack, Typography} from '@mui/joy';
-import {once} from 'lodash';
-import {shape, object, bool, string} from 'prop-types';
-import React, {useContext, useEffect, useRef, useState} from 'react';
-import FieldGroupUtils from 'firefly/fieldGroup/FieldGroupUtils.js';
-import {makeSearchOnce} from 'firefly/util/WebUtil.js';
-import {dispatchMultiValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
-import {FormPanel} from 'firefly/ui/FormPanel.jsx';
-import {TextButton} from 'firefly/visualize/ui/Buttons.jsx';
-import {ValidationField} from 'firefly/ui/ValidationField.jsx';
-import {intValidator} from 'firefly/util/Validate.js';
-import {FieldGroup, FieldGroupCtx} from 'firefly/ui/FieldGroup.jsx';
-import {makeTblRequest, setNoCache} from 'firefly/tables/TableRequestUtil.js';
-import {dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
-import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil.jsx';
 import {dispatchHideDialog} from 'firefly/core/ComponentCntlr.js';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr.js';
-import {MetaConst} from '../../data/MetaConst.js';
-import {InputField} from '../InputField.jsx';
-import {ListBoxInputFieldView} from '../ListBoxInputField.jsx';
-import {SwitchInputField} from '../SwitchInputField.jsx';
-import {
-    ConstraintContext, getTapUploadSchemaEntry, getUploadServerFile, getUploadTableName,
-    getHelperConstraints, getUploadConstraint, isTapUpload
-} from './Constraints.js';
+import {dispatchMultiValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
+import FieldGroupUtils, {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils.js';
+import {PREF_KEY} from 'firefly/tables/TablePref.js';
+import {makeTblRequest, setNoCache} from 'firefly/tables/TableRequestUtil.js';
+import {dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
+import {FieldGroup, FieldGroupCtx} from 'firefly/ui/FieldGroup.jsx';
+import {FormPanel} from 'firefly/ui/FormPanel.jsx';
+import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil.jsx';
 
 import {makeColsLines, tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints.jsx';
 import {
-    getMaxrecHardLimit, tapHelpId, getTapServices,
-    loadObsCoreSchemaTables, maybeQuote, defTapBrowserState, TAP_UPLOAD_SCHEMA, getAsEntryForTableName,
+    ADQL_QUERY_KEY,
+    defTapBrowserState, getAsEntryForTableName, getMaxrecHardLimit, getTapServices, loadObsCoreSchemaTables,
+    makeNumberedTitle,
+    makeTapSearchTitle,
+    maybeQuote, TAP_UPLOAD_SCHEMA, tapHelpId, USER_ENTERED_TITLE,
 } from 'firefly/ui/tap/TapUtil.js';
-import {TapViewType} from './TapViewType.jsx';
+import {ValidationField} from 'firefly/ui/ValidationField.jsx';
+import {intValidator} from 'firefly/util/Validate.js';
+import {makeSearchOnce} from 'firefly/util/WebUtil.js';
+import {TextButton} from 'firefly/visualize/ui/Buttons.jsx';
+import {once} from 'lodash';
+import {bool, object, shape, string} from 'prop-types';
+import React, {useContext, useEffect, useRef, useState} from 'react';
+import {MetaConst} from '../../data/MetaConst.js';
+import {InputField} from '../InputField.jsx';
+import {ListBoxInputFieldView} from '../ListBoxInputField.jsx';
 import {useFieldGroupMetaState, useFieldGroupValue} from '../SimpleComponent.jsx';
-import {PREF_KEY} from 'firefly/tables/TablePref.js';
+import {SwitchInputField} from '../SwitchInputField.jsx';
+import {
+    ConstraintContext, getHelperConstraints, getTapUploadSchemaEntry, getUploadConstraint, getUploadServerFile,
+    getUploadTableName, isTapUpload
+} from './Constraints.js';
+import {showResultTitleDialog} from './ResultTitleDialog';
+import {TitleCustomizeButton} from './TableSearchHelpers';
+import {TapViewType} from './TapViewType.jsx';
 
-export const DEFAULT_TAP_PANEL_GROUP_KEY = 'TAP_PANEL_GROUP_KEY';
+const DEFAULT_TAP_PANEL_GROUP_KEY = 'TAP_PANEL_GROUP_KEY';
 
 //-------------
 //-------------
@@ -135,6 +140,7 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
                                 obsCoreLockTitle, lockObsCore}) {
     const {setVal,getVal,setFld,groupKey}= useContext(FieldGroupCtx);
     const [getTapBrowserState,setTapBrowserState]= useFieldGroupMetaState(defTapBrowserState);
+    const [getUserTitle,setUserTitle]= useFieldGroupValue(USER_ENTERED_TITLE);
     const tapState= getTapBrowserState();
     if (!initArgs?.urlApi?.execute) searchFromAPIOnce(true); // if not execute then mark as done, i.e. disable any auto searching
     initApiAddedServiceOnce(initArgs);  // only look for the extra service the first time
@@ -161,8 +167,8 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
 
     const onTapServiceOptionSelect= (selectedOption) => {
         if (!selectedOption) return;
-        setVal('defAdqlKey', '');
-        setFld('adqlQuery', {placeholder: '', value: ''});
+        setVal(ADQL_QUERY_KEY, '');
+        setFld(ADQL_QUERY_KEY, {placeholder: '', value: ''});
         const serviceUrl= selectedOption?.value;
         setServiceUrl(serviceUrl);
         setObsCoreTableModel(undefined);
@@ -200,7 +206,7 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
     return (
         <Box width={1} height={1}>
             <ConstraintContext.Provider value={ctx}>
-                <FormPanel  onSuccess={(request) => onTapSearchSubmit(request, serviceUrl,tapState)}
+                <FormPanel  onSuccess={(request) => onTapSearchSubmit(request, serviceUrl,tapState, setUserTitle)}
                             cancelText=''
                             help_id = {tapHelpId('form')}
                             slotProps={{
@@ -211,7 +217,8 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
                                 },
                                 searchBar: {
                                     px:1, py:1/2, alignItems:'center',
-                                    actions: makeExtraWidgets(groupKey, initArgs,selectBy,setSelectBy, tapState)
+                                    actions: makeExtraWidgets(groupKey, initArgs,selectBy,setSelectBy,
+                                        getUserTitle, setUserTitle, tapState)
                                 }
                             }}>
 
@@ -364,26 +371,37 @@ function ServiceOpRender({ops, value, sx}) {
 
 
 
-function makeExtraWidgets(groupKey, initArgs, selectBy, setSelectBy, tapBrowserState) {
+function makeExtraWidgets(groupKey, initArgs, selectBy, setSelectBy, getUserTitle, setUserTitle, tapBrowserState) {
     const extraWidgets = [
-        (<ValidationField orientation='horizontal' fieldKey='maxrec' key='maxrec' groupKey={groupKey}
-                         tooltip='Maximum number of rows to return (via MAXREC)' label= 'Row Limit:'
-                         initialState= {{
-                             value: Number(initArgs?.urlApi?.MAXREC) || Number(getAppOptions().tap?.defaultMaxrec ?? 50000),
-                             validator: intValidator(0, getMaxrecHardLimit(), 'Maximum number of rows'),
-                         }}
-                         wrapperStyle={{marginLeft: 30}}
-                         />)
-        ];
-    if (selectBy==='basic') {
-        extraWidgets.push( (<TextButton key='editADQL' text='Populate and edit ADQL'
-                                         onClick={() => populateAndEditAdql(groupKey, tapBrowserState, setSelectBy)} />));
-    }
-    else {
-        extraWidgets.push( (<TextButton key='singleTable' text='Single Table (UI assisted)'
-                                         onClick={() => setSelectBy('basic')} />));
+        (<ValidationField {...{
+            orientation: 'horizontal', fieldKey: 'maxrec', key: 'maxrec', groupKey,
+            tooltip: 'Maximum number of rows to return (via MAXREC)', label: 'Row Limit:',
+            validator: intValidator(1, getMaxrecHardLimit(), 'Maximum number of rows'),
+            initialState: {
+                value: Number(initArgs?.urlApi?.MAXREC) || Number(getAppOptions().tap?.defaultMaxrec ?? 50000),
+            },
+            sx: {pl: 3},
+            slotProps : {
+                input : {sx: { width: '8em' } }
+            },
+        }}/>)
+    ];
+    extraWidgets.push( <TitleCustomizeButton {...{key:'setTitle', groupKey,
+        tapBrowserState,selectBy, getADQL: () => getFieldVal(groupKey,ADQL_QUERY_KEY,'') }}/> );
 
-    }
+    extraWidgets.push(
+        <Box key={'whichButton'}>
+            {
+                selectBy==='basic' ?
+                    <TextButton text='Populate and edit ADQL' sx={{ml:5}}
+                                onClick={() => populateAndEditAdql(groupKey, tapBrowserState, setSelectBy)} />
+                    :
+                    <TextButton text='Single Table (UI assisted)' sx={{ml:5}}
+                                onClick={() => setSelectBy('basic')} />
+            }
+        </Box>
+    );
+
     return extraWidgets;
 }
 
@@ -395,7 +413,7 @@ function populateAndEditAdql(groupKey,tapBrowserState,setSelectBy,inAdql) {
     dispatchMultiValueChange(groupKey,   //set adql and switch tab to ADQL
         [
             {fieldKey: 'defAdqlKey', value: adql},
-            {fieldKey: 'adqlQuery', value: adql},
+            {fieldKey: ADQL_QUERY_KEY, value: adql},
             {fieldKey: 'TAP_UPLOAD', value: TAP_UPLOAD},
             {fieldKey: 'uploadFile', value: uploadFile},
         ]
@@ -403,25 +421,6 @@ function populateAndEditAdql(groupKey,tapBrowserState,setSelectBy,inAdql) {
 }
 
 const getTapServiceOptions= () => getTapServices(webApiUserAddedService).map(({label,value})=>({label:value, value, labelOnly:label}));
-
-function getTableNameFromADQL(adql) {
-    if (!adql) return;
-    const adqlUp= adql.toUpperCase();
-    const start= adqlUp.toUpperCase().indexOf('FROM ')+5;
-    const end= adqlUp.lastIndexOf('WHERE');
-    if  (start>5 && end>-1) {
-        const tStr=  adql.substring(start,end)?.trim();
-        if (tStr) return tStr.split(/[\s,]+/)[0]; // pull the first works out between the FROM and the WHERE
-    }
-    return undefined;
-}
-
-function getTitle(adql, serviceUrl) {
-    const tName = getTableNameFromADQL(adql);
-    const host= serviceUrl?.match(/.*:\/\/(.*)\/.*/i)?.[1]; // table name or service url
-    if (tName && host) return `${tName} - ${host}`;
-    return tName || host;
-}
 
 const disableRowLimitMsg = (
     <div style={{width: 260}}>
@@ -433,17 +432,19 @@ const disableRowLimitMsg = (
 );
 
 
-function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
-    const isADQL = (request.selectBy === 'adql');
+function onTapSearchSubmit(request,serviceUrl,tapBrowserState,setUserTitle) {
+    const isUserEnteredADQL = (request.selectBy === 'adql');
     let adql;
     let isUpload;
     let serverFile;
     let uploadTableName;
     let schemaEntry;
     let userColumns;
+    const userTitle= request[USER_ENTERED_TITLE];
+    console.log(userTitle);
 
-    if (isADQL) {
-        adql = request.adqlQuery;
+    if (isUserEnteredADQL) {
+        adql = request[ADQL_QUERY_KEY];
         const {TAP_UPLOAD,uploadFile}= request;
         isUpload = Boolean(TAP_UPLOAD && uploadFile);
         serverFile = isUpload && TAP_UPLOAD[uploadFile].serverFile;
@@ -472,13 +473,14 @@ function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
         if (isUpload) {
             params.UPLOAD= serverFile;
             params.adqlUploadSelectTable= uploadTableName;
-            if (!isADQL) params.UPLOAD_COLUMNS= userColumns;
+            if (!isUserEnteredADQL) params.UPLOAD_COLUMNS= userColumns;
         }
         if (hasMaxrec) params.MAXREC = maxrec;
-        const treq = makeTblRequest('AsyncTapQuery', getTitle(adqlClean,serviceUrl), params);
+        const title= makeNumberedTitle(userTitle || makeTapSearchTitle(adqlClean,serviceUrl));
+        const treq = makeTblRequest('AsyncTapQuery', title, params);
         setNoCache(treq);
         const additionalMeta= {};
-        if (!isADQL) {
+        if (!isUserEnteredADQL) {
             additionalMeta[PREF_KEY]= `${tapBrowserState.schemaName}-${tapBrowserState.tableName}`;
         }
         additionalMeta.serviceLabel= serviceLabel;
