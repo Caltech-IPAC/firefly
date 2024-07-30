@@ -67,6 +67,7 @@
    - Bug fix: comment displayed in JSX code ([Commit](https://github.com/Caltech-IPAC/firefly/commit/031ffd63e89f53213f53a68b344939427a1de124))
 - 2024.2.5 
    - Bug fix: bug in table column analyzing ([Commit](https://github.com/Caltech-IPAC/firefly/commit/a94a467367f47c9612030a36ada6b37f24546dac))
+   - Bug fix: Active row watch not handling SSA tables correctly ([Commit](https://github.com/Caltech-IPAC/firefly/commit/0316fea849aa67cf49342cdb1c2b2b4ad72dab4b))
 
 ##### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2024.2+label%3abug)
