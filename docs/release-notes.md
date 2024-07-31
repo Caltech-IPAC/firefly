@@ -70,7 +70,7 @@
   - Bug fix: Avoid IllegalStateException related to recycled request objects in Tomcat ([Commit](https://github.com/Caltech-IPAC/firefly/commit/02ea84b4d3cc758fb426341356cf2ef07920ceb6))
   - Bug fix: regression when parsing non-cube fits tables ([Commit](https://github.com/Caltech-IPAC/firefly/commit/c95b830ab9a57487d517db31f6d50c967228e4aa))
 
-##### _Pull Requests in this release_
+### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2024.2+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2024.2+)
 
