@@ -8,19 +8,17 @@ import {getHttpErrorMessage} from '../util/HttpErrorMessage.js';
 import {getStatusFromFetchError} from '../util/WebUtil.js';
 import {isDataProductsTable} from '../voAnalyzer/TableAnalysis.js';
 import {Band} from '../visualize/Band.js';
-import {TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,TABLE_UPDATE, TBL_RESULTS_ACTIVE} from '../tables/TablesCntlr.js';
-import ImagePlotCntlr, {
-    visRoot, dispatchDeletePlotView, MOUSE_CLICK_REASON
-} from '../visualize/ImagePlotCntlr.js';
+import {TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_REMOVE, TABLE_UPDATE, TBL_RESULTS_ACTIVE} from '../tables/TablesCntlr.js';
+import ImagePlotCntlr, {visRoot, dispatchDeletePlotView, MOUSE_CLICK_REASON} from '../visualize/ImagePlotCntlr.js';
 import {REINIT_APP} from '../core/AppDataCntlr.js';
 import {getTblById,getTblInfo,getActiveTableId,isTblDataAvail} from '../tables/TableUtil.js';
 import {isDefaultCoverageActive} from '../visualize/PlotViewUtil.js';
 import MultiViewCntlr, {
     getViewerItemIds, dispatchChangeViewerLayout,
-    getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE, getLayoutType, getLayoutDetails, dispatchUpdateCustom
+    getMultiViewRoot, getViewer, GRID, GRID_FULL, SINGLE, getLayoutType, getLayoutDetails
 } from '../visualize/MultiViewCntlr.js';
 import {
-    makeDataProductsConverter, initImage3ColorDisplayManagement, getFactoryTemplateOptions
+    makeDataProductsConverter, getFactoryTemplateOptions
 } from './DataProductsFactory.js';
 import {findGridTableRows} from './TableDataProductUtils.js';
 import {dispatchAddTableTypeWatcherDef} from '../core/MasterSaga.js';

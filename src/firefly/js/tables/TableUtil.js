@@ -198,6 +198,12 @@ export function removeTablesFromGroup(tbl_group_id = 'main') {
     });
 }
 
+export function removeTablesByIDs(tblAry) {
+    tblAry && tblAry.forEach((tbl_id) => {
+        TblCntlr.dispatchTableRemove(tbl_id, true);        
+    });
+}
+
 /**
  * returns an array of tbl_id for the given tbl_group_id
  * @param {string} tbl_group_id    table group name.  defaults to 'main' if not given
