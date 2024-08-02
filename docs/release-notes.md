@@ -51,25 +51,26 @@
   - Embedded search panel clean up and improvement- IRSA-5916 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1539)), Firefly-1451 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1548))
   - 
 ### _Patches 2024.2_
-- 2024.2.1
-  - Bug fix: Avoid IllegalStateException related to recycled request objects in Tomcat ([Commit](https://github.com/Caltech-IPAC/firefly/commit/02ea84b4d3cc758fb426341356cf2ef07920ceb6))
-  - Bug fix: regression when parsing non-cube fits tables ([Commit](https://github.com/Caltech-IPAC/firefly/commit/c95b830ab9a57487d517db31f6d50c967228e4aa))
-- 2024.2.2
-  - Bug fix: FITS table reader failing on byte columns ([Commit](https://github.com/Caltech-IPAC/firefly/commit/b28b11f7912252e053128de0f8cd3a4ddb868896))
-  - Bug fix: Regression issue. mask not going away with color dropdown ([Commit](https://github.com/Caltech-IPAC/firefly/commit/fa9439b533f08b72757f6ea480c0602c45d210f5))
-  - Bug fix: source id extracted from image search- IRSA-5367 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1571))
-- 2024.2.3
-   - regression issue fixed with storing headers: ([PR](https://github.com/Caltech-IPAC/firefly/commit/0761857553bf74e0a00fa5c2478feaa7bb805609))
+
+- 2024.2.5 
+   - Bug fix: bug in table column analyzing ([Commit](https://github.com/Caltech-IPAC/firefly/commit/a94a467367f47c9612030a36ada6b37f24546dac))
+   - Bug fix: Active row watch not handling SSA tables correctly ([Commit](https://github.com/Caltech-IPAC/firefly/commit/0316fea849aa67cf49342cdb1c2b2b4ad72dab4b))
 - 2024.2.4 
    - Bug fix: Issue with Hydra template slot props  ([Commit](https://github.com/Caltech-IPAC/firefly/commit/1aec3593bb6c6fc817dff7cb797acfd5e75a43a7))
    - Bug fix: MultiProductViewer: 3 color button showing in single mode  ([Commit](https://github.com/Caltech-IPAC/firefly/commit/9209284c00605319e8e40f596766f15e82eb402e))
    - Bug fix: Issues for WISE application ([Commit](https://github.com/Caltech-IPAC/firefly/commit/58185602365cea888941798f15e5e03c378589c3)), ([Commit](https://github.com/Caltech-IPAC/firefly/commit/009ad7bd80e83f6ceae4d694b06d69a018393278))
    - Bug fix: comment displayed in JSX code ([Commit](https://github.com/Caltech-IPAC/firefly/commit/031ffd63e89f53213f53a68b344939427a1de124))
-- 2024.2.5 
-   - Bug fix: bug in table column analyzing ([Commit](https://github.com/Caltech-IPAC/firefly/commit/a94a467367f47c9612030a36ada6b37f24546dac))
-   - Bug fix: Active row watch not handling SSA tables correctly ([Commit](https://github.com/Caltech-IPAC/firefly/commit/0316fea849aa67cf49342cdb1c2b2b4ad72dab4b))
+- 2024.2.3
+   - regression issue fixed with storing headers: ([PR](https://github.com/Caltech-IPAC/firefly/commit/0761857553bf74e0a00fa5c2478feaa7bb805609))
+- 2024.2.2
+  - Bug fix: FITS table reader failing on byte columns ([Commit](https://github.com/Caltech-IPAC/firefly/commit/b28b11f7912252e053128de0f8cd3a4ddb868896))
+  - Bug fix: Regression issue. mask not going away with color dropdown ([Commit](https://github.com/Caltech-IPAC/firefly/commit/fa9439b533f08b72757f6ea480c0602c45d210f5))
+  - Bug fix: source id extracted from image search- IRSA-5367 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1571))
+- 2024.2.1
+  - Bug fix: Avoid IllegalStateException related to recycled request objects in Tomcat ([Commit](https://github.com/Caltech-IPAC/firefly/commit/02ea84b4d3cc758fb426341356cf2ef07920ceb6))
+  - Bug fix: regression when parsing non-cube fits tables ([Commit](https://github.com/Caltech-IPAC/firefly/commit/c95b830ab9a57487d517db31f6d50c967228e4aa))
 
-##### _Pull Requests in this release_
+### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2024.2+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2024.2+)
 
