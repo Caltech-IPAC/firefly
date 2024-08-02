@@ -4,7 +4,7 @@
 package edu.caltech.ipac.table.io;
 
 import edu.caltech.ipac.firefly.core.FileAnalysisReport;
-import edu.caltech.ipac.firefly.data.table.MetaConst;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
@@ -21,7 +21,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * read in the file in IPAC table format
@@ -37,10 +36,10 @@ public final class IpacTableReader {
        return read(inf,null, onlyColumns) ;
     }
 
-    public static DataGroup read(File inf, Map<String, String> passedMetaInfo, String... onlyColumns) throws IOException {
+    public static DataGroup read(File inf, TableServerRequest request, String... onlyColumns) throws IOException {
         IpacTableDef tableDef = IpacTableUtil.getMetaInfo(inf);
         BufferedReader bufferedReader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
-        return doRead(bufferedReader, passedMetaInfo, tableDef, onlyColumns);
+        return doRead(bufferedReader, request, tableDef, onlyColumns);
     }
 
     public static DataGroup read(InputStream inputStream, String... onlyColumns) throws IOException {
@@ -49,7 +48,7 @@ public final class IpacTableReader {
         return  doRead(bufferedReader, null, tableDef, onlyColumns);
     }
 
-    static DataGroup doRead(BufferedReader bufferedReader, Map<String, String> passedMetaInfo,
+    static DataGroup doRead(BufferedReader bufferedReader, TableServerRequest request,
                             IpacTableDef tableDef, String... onlyColumns) throws IOException {
 
         DataGroup outData = create(tableDef, onlyColumns);
@@ -80,8 +79,7 @@ public final class IpacTableReader {
         } finally {
             bufferedReader.close();
         }
-        String dataTypeHint= passedMetaInfo !=null ? passedMetaInfo.getOrDefault(MetaConst.DATA_TYPE_HINT,"").toLowerCase() : "";
-        SpectrumMetaInspector.searchForSpectrum(outData,dataTypeHint.equals("spectrum"));
+        SpectrumMetaInspector.searchForSpectrum(outData,request);
         outData.trimToSize();
         return outData;
     }

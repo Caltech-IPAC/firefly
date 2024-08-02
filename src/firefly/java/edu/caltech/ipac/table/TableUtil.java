@@ -4,7 +4,6 @@
 package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.util.JsonToDataGroup;
 import edu.caltech.ipac.table.io.DsvTableIO;
@@ -54,14 +53,14 @@ public class TableUtil {
     public static DataGroup readAnyFormat(File inf, int tableIndex, TableServerRequest request) throws IOException {
         Format format = guessFormat(inf);
         if (format == Format.IPACTABLE) {
-            return IpacTableReader.read(inf, request!=null?request.getMeta():null);
+            return IpacTableReader.read(inf, request);
         } else if (format == Format.VO_TABLE) {
-            DataGroup[] tables = VoTableReader.voToDataGroups(inf.getAbsolutePath(), tableIndex);
+            DataGroup[] tables = VoTableReader.voToDataGroups(inf.getAbsolutePath(), request, tableIndex);
             if (tables.length > 0) {
                 return tables[0];
             } else return null;
         } else if (format == Format.CSV || format == Format.TSV) {
-            return DsvTableIO.parse(inf, format);
+            return DsvTableIO.parse(inf, format, request);
         } else if (format == Format.FITS ) {
             try {
                 // Switch to the new function:
@@ -70,7 +69,7 @@ public class TableUtil {
                 throw new IOException("Unable to read FITS file:" + inf, e);
             }
         } else if (format == Format.JSON) {
-            return JsonToDataGroup.parse(inf);
+            return JsonToDataGroup.parse(inf, request);
         } else {
             throw new IOException("Unsupported format, file:" + inf);
         }

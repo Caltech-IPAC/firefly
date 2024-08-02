@@ -4,23 +4,37 @@
 package edu.caltech.ipac.table.io;
 
 import edu.caltech.ipac.firefly.core.FileAnalysisReport;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.persistence.MultiSpectrumProcessor;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.table.*;
+import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataObject;
+import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.GroupInfo;
+import edu.caltech.ipac.table.IpacTableDef;
+import edu.caltech.ipac.table.LinkInfo;
+import edu.caltech.ipac.table.ParamInfo;
+import edu.caltech.ipac.table.ResourceInfo;
+import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.xml.sax.SAXException;
-import uk.ac.starlink.table.*;
-import uk.ac.starlink.votable.*;
+import uk.ac.starlink.table.RowSequence;
+import uk.ac.starlink.table.StarTable;
+import uk.ac.starlink.table.StoragePolicy;
+import uk.ac.starlink.votable.TableElement;
+import uk.ac.starlink.votable.VOElement;
+import uk.ac.starlink.votable.VOElementFactory;
+import uk.ac.starlink.votable.VOStarTable;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -68,7 +82,15 @@ public class VoTableReader {
      * @return an array of DataGroup objects
      */
     public static DataGroup[] voToDataGroups(String location, int ...indices) throws IOException {
-        return voToDataGroups(location, false, indices);
+        return voToDataGroups(location, false, null, indices);
+    }
+
+    public static DataGroup[] voToDataGroups(String location, TableServerRequest request, int ...indices) throws IOException {
+        return voToDataGroups(location, false, request, indices);
+    }
+
+    public static DataGroup[] voToDataGroups(String location, boolean headerOnly, int ...indices) throws IOException {
+        return voToDataGroups(location, headerOnly, null, indices);
     }
 
     /**
@@ -78,7 +100,10 @@ public class VoTableReader {
      * @param indices   only return table from this list of indices
      * @return an array of DataGroup object
      */
-    public static DataGroup[] voToDataGroups(String location, boolean headerOnly, int ...indices) throws IOException {
+    public static DataGroup[] voToDataGroups(String location,
+                                             boolean headerOnly,
+                                             TableServerRequest request,
+                                             int ...indices) throws IOException {
         List<DataGroup> groups = new ArrayList<>();
 
         try {
@@ -90,6 +115,7 @@ public class VoTableReader {
                 if (indices == null || indices.length == 0 || indicesList.contains(i)) {
                     TableElement tableEl = tableAry.get(i);
                     DataGroup dg = convertToDataGroup(tableEl, new VOStarTable(tableEl), headerOnly);
+                    if (SpectrumMetaInspector.hasSpectrumHint(request)) SpectrumMetaInspector.searchForSpectrum(dg,true);
                     if (resources != null) dg.setResourceInfos(resources);
                     groups.add(dg);
                 }

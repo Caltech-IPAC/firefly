@@ -5,6 +5,7 @@ package edu.caltech.ipac.util.download;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.HttpResultInfo;
+import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
@@ -143,7 +144,12 @@ public class URLDownload {
             if (conn instanceof HttpURLConnection) {
                 conn.setRequestProperty("User-Agent", VersionUtil.getUserAgentString());
                 conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
-                addCookiesToConnection(conn, cookies);
+                if (cookies != null) {
+                    var filteredCookies= new HashMap<>(cookies);
+                    filteredCookies.remove("JSESSIONID");
+                    filteredCookies.remove(RequestOwner.USER_KEY);
+                    if (!filteredCookies.isEmpty()) addCookiesToConnection(conn, filteredCookies);
+                }
                 String[] userInfo = getUserInfo(url);
                 if (userInfo != null) {
                     String authStringEnc = Base64.encode(userInfo[0] + ":" + userInfo[1]);
