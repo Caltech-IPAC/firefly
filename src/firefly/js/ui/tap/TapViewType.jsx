@@ -20,7 +20,7 @@ import {
 import {TableSearchMethods} from './TableSearchMethods.jsx';
 import {
     defTapBrowserState, getLoadedCapability, getTapServices, isCapabilityLoaded, loadTapCapabilities, loadTapColumns,
-    loadTapSchemas, loadTapTables, tapHelpId, loadObsCoreMetadata
+    loadTapSchemas, loadTapTables, tapHelpId, loadObsCoreMetadata, ADQL_QUERY_KEY
 } from './TapUtil.js';
 
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
@@ -115,7 +115,7 @@ function AdqlUI({serviceUrl, serviceLabel, servicesShowing, setServicesShowing, 
 
             {capabilities ?
                 <Box sx={expandableTapSectionSx}>
-                    <AdvancedADQL {...{adqlKey:'adqlQuery', defAdqlKey:'defAdqlKey', serviceUrl, capabilities}}/>
+                    <AdvancedADQL {...{adqlKey:ADQL_QUERY_KEY, defAdqlKey:'defAdqlKey', serviceUrl, capabilities}}/>
                 </Box>
                 : <Skeleton/>
             }

@@ -4,7 +4,9 @@ import {isArray, memoize, omit, sortBy, uniqBy} from 'lodash';
 import {getCapabilities} from '../../rpc/SearchServicesJson.js';
 import {sortInfoString} from '../../tables/SortInfo.js';
 import {makeFileRequest, makeTblRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
-import {alterFalsyVal, doFetchTable, getColumnIdx, sortTableData} from '../../tables/TableUtil.js';
+import {
+    alterFalsyVal, doFetchTable, getColumnIdx, getTblById, getTblIdsByGroup, sortTableData
+} from '../../tables/TableUtil.js';
 import {Logger} from '../../util/Logger.js';
 import {getProp, hashCode} from '../../util/WebUtil.js';
 
@@ -14,6 +16,8 @@ const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
 export const ADQL_LINE_LENGTH = 100;
 export const ADQL_UPLOAD_TABLE_NAME= 'upload_table';
 export const TAP_UPLOAD_SCHEMA= 'TAP_UPLOAD';
+export const ADQL_QUERY_KEY= 'adqlQuery';
+export const USER_ENTERED_TITLE= 'USER_ENTERED_TITLE';
 const EMPTY_SCHEMA_NAME= 'EMPTY_SCHEMA_NAME';
 
 
@@ -671,3 +675,43 @@ export const TAP_SERVICES_FALLBACK = [
             'POLYGON(\'ICRS\', 9.4999, -1.18268, 9.4361, -1.18269, 9.4361, -1.11891, 9.4999, -1.1189))=1'
     }
 ];
+
+function getTableNameFromADQL(adql) {
+    if (!adql) return;
+    const adqlUp = adql.toUpperCase();
+    const start = adqlUp.toUpperCase().indexOf('FROM ') + 5;
+    const end = adqlUp.lastIndexOf('WHERE');
+    if (start > 5) {
+        if (end > -1) {
+            const tStr = adql.substring(start, end)?.trim();
+            if (tStr) return tStr.split(/[\s,]+/)[0]; // pull the first works out between the FROM and the WHERE
+        }
+        else {
+            return adql.substring(start)?.trim();
+        }
+    }
+    return undefined;
+}
+
+export function makeTapSearchTitle(adql, serviceUrl='', tableName) {
+    const tName = adql ? getTableNameFromADQL(adql) : tableName;
+    const host = serviceUrl?.match(/.*:\/\/(.*)\/.*/i)?.[1]; // table name or service url
+    const simpleHost= host?.split('.')[0];
+    if (tName && simpleHost) return `${tName} - ${simpleHost}`;
+    return tName || simpleHost || host;
+}
+
+export function makeNumberedTitle(inTitle) {
+    if (getTblIdsByGroup().map((tbl_id) => getTblById(tbl_id)?.title).every( (t) => t!==inTitle)) {
+       return inTitle;
+    }
+    const numList = getTblIdsByGroup()
+        .map((tbl_id) => getTblById(tbl_id)?.title)
+        .filter((title) => title && title.startsWith(inTitle))
+        .map((title) => title?.substring(inTitle.length).trim().split('-')?.[1])
+        .map(Number)
+        .filter(Boolean);
+
+    const maxNum = numList?.length ? Math.max(...numList) : 0;
+    return inTitle + ` - ${maxNum + 1}`;
+}

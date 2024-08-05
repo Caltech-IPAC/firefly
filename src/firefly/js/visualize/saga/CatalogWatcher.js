@@ -8,7 +8,7 @@ import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL
 import {findImageCenterColumns, findTableCenterColumns, isCatalog} from '../../voAnalyzer/TableAnalysis.js';
 import {
     SUBGROUP, dispatchAttachLayerToPlot, dispatchChangeVisibility, dispatchCreateDrawLayer,
-    dispatchDestroyDrawLayer, dispatchModifyCustomField, dispatchChangeDrawingDef
+    dispatchDestroyDrawLayer, dispatchModifyCustomField,
 } from '../DrawLayerCntlr.js';
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {getTblById, doFetchTable, isTableUsingRadians} from '../../tables/TableUtil.js';
@@ -209,11 +209,11 @@ function updateDrawingLayer(tbl_id, tableModel, tableRequest,
 
 
             const color= getDrawLayersByType(dlRoot(),Catalog.TYPE_ID) // fine any other draw layers with this table and set the color
-                ?.find( (dl) => dl.tblId===tbl_id && dl.drawLayerId===coverageStandardCatalogId(tbl_id))?.drawingDef.color;
-            
+                ?.find( (dl) => dl.tbl_id===tbl_id && dl.drawLayerId===coverageStandardCatalogId(tbl_id))?.drawingDef.color;
+
 
             const catDL= dispatchCreateDrawLayer(Catalog.TYPE_ID,
-                {catalogId, tblId:tbl_id, title, tableData, tableMeta, tableRequest, highlightedRow, color,
+                {catalogId, tbl_id, title, tableData, tableMeta, tableRequest, highlightedRow, color,
                     selectInfo, columns, dataTooBigForSelection, catalogType:CatalogType.POINT,
                     layersPanelLayoutId: catalogId, angleInRadian});
             attachToPlot(catalogId,plotIdAry);
@@ -244,6 +244,7 @@ function updateDrawingLayer(tbl_id, tableModel, tableRequest,
             dispatchCreateDrawLayer(Catalog.TYPE_ID,
                 {catalogId, title, tableData, tableMeta, tableRequest, highlightedRow,
                     selectInfo, columns, dataTooBigForSelection, catalogType:CatalogType.POINT_IMAGE_PT,
+                    tbl_id,
                     layersPanelLayoutId: tbl_id });
             attachToPlot(catalogId, [pv.plotId]);
         }

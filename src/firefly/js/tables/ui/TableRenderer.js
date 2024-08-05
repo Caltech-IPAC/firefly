@@ -744,6 +744,20 @@ export const TextCell = React.memo(({cellInfo, text, ...rest}) => {
     return html_regex.test(text) ? <div dangerouslySetInnerHTML={{__html: text}}/> : text;
 });
 
+export const ColorSwatch = React.memo(({cellInfo, text, size, ...rest}) => {
+    const {value} = cellInfo || getCellInfo(rest);
+    if (!value) return <div/>;
+              // must use style (not sx): {backgroundColor: value}, sx will get overridden.
+    return (
+        <Stack direction='column' alignItems='center'>
+            <Box {...{
+                width:size, height:size, border:'1px solid transparent', borderRadius:3,
+                style: {backgroundColor: value}
+            }}/>
+        </Stack>
+    );
+});
+
 /**
  * Custom coordinate cell rendering
  * @param p             parameters
@@ -773,7 +787,8 @@ export const RendererXRef = {
     NumberRange,
     CoordCell,
     ImageCell,
-    ATag
+    ATag,
+    ColorSwatch
 };
 
 

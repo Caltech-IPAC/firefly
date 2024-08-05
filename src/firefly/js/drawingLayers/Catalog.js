@@ -5,26 +5,29 @@
 
 import {isEmpty,isArray} from 'lodash';
 import Enum from 'enum';
+import {makeTableColorTitle} from '../visualize/ui/DrawLayerUIComponents';
 import {getSelectedPts} from '../visualize/WebPlotAnalysis';
 import {primePlot, getAllDrawLayersForPlot, getCenterOfProjection} from '../visualize/PlotViewUtil.js';
 import {visRoot, dispatchUseTableAutoScroll} from '../visualize/ImagePlotCntlr.js';
 import PointDataObj from '../visualize/draw/PointDataObj.js';
 import {DrawSymbol} from '../visualize/draw/DrawSymbol.js';
 import FootprintObj from '../visualize/draw/FootprintObj.js';
-import {makeDrawingDef, getNextColor, releaseColor} from '../visualize/draw/DrawingDef.js';
+import {makeDrawingDef, getNextColor} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes,ColorChangeType} from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import DrawLayerCntlr, {dlRoot, SUBGROUP} from '../visualize/DrawLayerCntlr.js';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import DrawOp from '../visualize/draw/DrawOp.js';
 import {makeImagePt, makeWorldPt, pointEquals} from '../visualize/Point.js';
-import {dispatchTableHighlight,dispatchTableFilter, dispatchTableSelect} from '../tables/TablesCntlr.js';
+import {
+    dispatchTableHighlight, dispatchTableFilter, dispatchTableSelect, dispatchTableUiUpdate
+} from '../tables/TablesCntlr.js';
 import {COLOR_HIGHLIGHTED_PT} from '../visualize/draw/DrawingDef.js';
 import {MetaConst} from '../data/MetaConst.js';
 import {SelectInfo} from '../tables/SelectInfo.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import {showInfoPopup} from '../ui/PopupUtil.jsx';
-import {getTblById,getCellValue} from '../tables/TableUtil.js';
+import {getTblById, getCellValue, getTableUiByTblId} from '../tables/TableUtil.js';
 import {getUIComponent, TableSelectOptions} from './CatalogUI.jsx';
 import {FilterInfo} from '../tables/FilterInfo.js';
 import DrawUtil from '../visualize/draw/DrawUtil.js';
@@ -32,8 +35,6 @@ import SelectArea from './SelectArea.js';
 import {detachSelectArea} from '../visualize/ui/SelectAreaDropDownView.jsx';
 import {CysConverter} from '../visualize/CsysConverter.js';
 import {parseObsCoreRegion} from '../util/ObsCoreSRegionParser.js';
-import {darker} from '../util/Color';
-import {isDefined} from '../util/WebUtil';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj';
 import {getNumFilters} from '../tables/FilterInfo';
 import {SelectedShape} from './SelectedShape';
@@ -50,6 +51,8 @@ const TYPE_ID= 'CATALOG_TYPE';
  * @prop POINT_IMAGE_PT
  * @type {Enum}
  */
+
+/** @type CatalogType */
 export const CatalogType = new Enum(['POINT', 'BOX', 'REGION', 'ORBITAL_PATH', 'POINT_IMAGE_PT']);
 let lastProjectionCenter= undefined;
 
@@ -77,9 +80,12 @@ const pointBehavior= (catalogType) =>
 function creator(initPayload, presetDefaults={}) {
     const {catalogId, tableData, tableMeta, title, catalogType= CatalogType.POINT,
            selectInfo, columns, tableRequest, highlightedRow, color, angleInRadian=false,
-           symbol, size, tblId, dataTooBigForSelection=false, tableSelection, layersPanelLayoutId,
+           tableCanControlColor:inTableCanControlColor,
+           symbol, size, tbl_id, dataTooBigForSelection=false, tableSelection, layersPanelLayoutId,
 
     }= initPayload;
+
+    const tableCanControlColor= inTableCanControlColor ?? catalogType === CatalogType.POINT;
 
     const drawingDef= {...makeDrawingDef(),
             size: size || 5,
@@ -116,6 +122,18 @@ function creator(initPayload, presetDefaults={}) {
     const rawDl= DrawLayer.makeDrawLayer(catalogId,TYPE_ID,
                                       title || `Catalog: ${tableMeta?.title?.catalogId}`,
                                       options, drawingDef, null, pairs );
+
+    setTimeout(() => {
+        if (tbl_id && tableCanControlColor) {
+            const {tbl_ui_id} = getTableUiByTblId(tbl_id) ?? {};
+            if (!tbl_ui_id) return;
+            dispatchTableUiUpdate({tbl_ui_id,
+                title:makeTableColorTitle(drawingDef.color,rawDl.drawLayerId,undefined,tbl_id) ,
+                color: drawingDef.color
+            });
+        }
+    });
+
     return {...rawDl,
         catalogId,
         tableData,
@@ -125,13 +143,14 @@ function creator(initPayload, presetDefaults={}) {
         highlightedRow,
         columns,
         angleInRadian,
+        tableCanControlColor,
         selectOption: tableSelection,
-        tblId: tblId ? tblId : catalogId,
+        tbl_id: tbl_id || catalogId,
     };
 }
 
+// eslint-disable-next-line no-unused-vars
 function layerRemoved(drawLayer,action) {
-    // if (drawLayer.plotIdAry?.length) releaseColor(drawLayer.drawingDef.color);
 }
 
 function saveLastDown(mouseStatePayload) {
@@ -192,10 +211,10 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt) {
                 }
                 if (tableMeta.decimate_key) {
                     const colIdx= tableData.columns.findIndex((c) => c.name==='rowidx');
-                    dispatchTableHighlight(drawLayer.tblId,tableData.data[closestIdx][colIdx],tableRequest);
+                    dispatchTableHighlight(drawLayer.tbl_id,tableData.data[closestIdx][colIdx],tableRequest);
                 }
                 else {
-                    dispatchTableHighlight(drawLayer.tblId,closestIdx,tableRequest);
+                    dispatchTableHighlight(drawLayer.tbl_id,closestIdx,tableRequest);
                 }
             }
         }
@@ -450,7 +469,7 @@ function computeHighlightLayer(drawLayer, columns) {
 function computePointHighlightLayer(drawLayer, columns) {
 
     const {angleInRadian=false, catalogType}= drawLayer;
-    const tbl= getTblById(drawLayer.tblId);
+    const tbl= getTblById(drawLayer.tbl_id);
     if (!tbl) return undefined;
 
     if (catalogType===CatalogType.ORBITAL_PATH) {
@@ -551,8 +570,7 @@ export function selectCatalog(pv, dlAry= dlRoot().drawLayerAry) {
     if (catDlAry.length) {
         const tooBig= catDlAry.some( (dl) => dl.canSelect && dl.dataTooBigForSelection);
         if (tooBig) {
-            showInfoPopup('Your data set is too large to select. You must filter it down first.',
-                `Can't Select`); // eslint-disable-line quotes
+            showInfoPopup('Your data set is too large to select. You must filter it down first.', `Can't Select`);
         }
         else {
             catDlAry.forEach( (dl) => {
@@ -560,7 +578,7 @@ export function selectCatalog(pv, dlAry= dlRoot().drawLayerAry) {
                     const selectInfoCls = SelectInfo.newInstance({rowCount: dl.drawData.data.length});
                     getSelectedPts(sel, p, dl.drawData.data, selectedShape)
                         .forEach((idx) => selectInfoCls.setRowSelect(idx, true));
-                    dispatchTableSelect(dl.tblId, selectInfoCls.data);
+                    dispatchTableSelect(dl.tbl_id, selectInfoCls.data);
                 }
             });
             detachSelectArea(pv);
@@ -573,7 +591,7 @@ export function unselectCatalog(pv,dlAry) {
         .forEach( (dl) => {
             if (dl.canSelect) {
                 const selectInfoCls = SelectInfo.newInstance({rowCount: dl.drawData.data.length});
-                dispatchTableSelect(dl.tblId, selectInfoCls.data);
+                dispatchTableSelect(dl.tbl_id, selectInfoCls.data);
             }
         });
 }
@@ -600,14 +618,14 @@ export function filterCatalog(pv,dlAry) {
 
 function doClearFilter(dl) {
     if (dl.canFilter) {
-        dispatchTableFilter({tbl_id: dl.tblId, filters: ''});
+        dispatchTableFilter({tbl_id: dl.tbl_id, filters: ''});
     }
 }
 
 
 function doFilter(dl,p,sel, selectedShape) {
 
-    const tbl= getTblById(dl.tblId);
+    const tbl= getTblById(dl.tbl_id);
     if (!tbl || !dl.tableData.data) return;
     const tableDataLength = dl.tableData.data.length;
     const filterInfo = tbl?.request?.filters;

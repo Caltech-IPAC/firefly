@@ -4,7 +4,7 @@
 
 import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
-import {isEmpty, get} from 'lodash';
+import {isEmpty, get, union} from 'lodash';
 
 import * as TblUtil from '../TableUtil.js';
 import {TablePanel} from './TablePanel.jsx';
@@ -18,7 +18,7 @@ import {CloseButton} from '../../ui/CloseButton.jsx';
 
 import {Logger} from '../../util/Logger.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {getTableUiById, getTblInfo} from '../TableUtil.js';
+import {getTableUiById, getTableUiByTblId, getTblIdsByGroup} from '../TableUtil.js';
 
 const logger = Logger('Tables').tag('TablesContainer');
 
@@ -29,6 +29,11 @@ export function TablesContainer(props) {
     const tables = useStoreConnector(() => TblUtil.getTableGroup(tbl_group)?.tables);
     const active = useStoreConnector(() => TblUtil.getTableGroup(tbl_group)?.active);
     const expandedMode = useStoreConnector(() => xMode || getExpandedMode() === LO_VIEW.tables);
+    useStoreConnector((lastTitles) => {// force a rerender if any title ui changes
+        const titles= getTblIdsByGroup().map( (tbl_id) => getTableUiByTblId(tbl_id)?.title);
+        if (!lastTitles) return titles;
+        return (union(titles,lastTitles).length === titles?.length) ? lastTitles : titles;
+    });
 
     useEffect(() => {
         if (expandedMode && mode !== 'standard') {
@@ -107,18 +112,16 @@ function SingleTable({table, tableOptions, expandedMode}) {
 }
 
 function tablesAsTab(tables, tableOptions, expandedMode) {
-
     return tables &&
         Object.keys(tables).map( (key) => {
-            var {tbl_id, removable, tbl_ui_id, options={}} = tables[key];
-            const {title} = getTblInfo(tbl_id);
-            const {title:titleUI} = getTableUiById(tbl_ui_id) || {};
-            options = Object.assign({}, options, tableOptions);
+            const {tbl_id, removable, tbl_ui_id, options:inOptions={}, title:titleStr} = tables[key];
+            const {title:titleUI, color} = getTableUiById(tbl_ui_id) || {};
+            const options = {...inOptions, tableOptions};
             const onTabRemove = () => {
                 dispatchTableRemove(tbl_id);
             };
             return  (
-                <Tab key={tbl_id} id={tbl_id} label={titleUI} name={title} removable={removable} onTabRemove={onTabRemove}>
+                <Tab key={tbl_id} id={tbl_id} label={titleUI} name={titleStr} colorSwatch={color} removable={removable} onTabRemove={onTabRemove}>
                     <TablePanel key={tbl_id}
                                 slotProps={{ toolbar:{variant:'plain'}, root:{variant: 'plain'} }}
                                 {...{tbl_id, tbl_ui_id, ...options, expandedMode, showTitle: false}} />

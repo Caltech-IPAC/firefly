@@ -664,13 +664,13 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, visi
         }
 
         const catColor= getDrawLayersByType(dlRoot(),Catalog.TYPE_ID)
-            ?.filter( (dl) => dl.tblId===tbl_id && dl.drawLayerId===catalogWatcherStandardCatalogId(tbl_id))[0]?.drawingDef.color; // most times this returns undefined
+            ?.filter( (dl) => dl.tbl_id===tbl_id && dl.drawLayerId===catalogWatcherStandardCatalogId(tbl_id))[0]?.drawingDef.color; // most times this returns undefined
 
         const color=  catColor ?? drawOp[cId].color;
         dispatchCreateDrawLayer(Catalog.TYPE_ID, {
             catalogId: cId,
             layersPanelLayoutId,
-            tblId: tbl_id,
+            tbl_id,
             title,
             color,
             tableData,

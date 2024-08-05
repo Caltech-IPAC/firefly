@@ -18,7 +18,7 @@ const DEF_PRESET_COLORS= ['#D0021B', '#F5A623', '#F8E71C', '#8B572A', '#7ED321',
     '#9013FE', '#4A90E2', '#50E3C2', '#B8E986', '#000000', '#4A4A4A', '#9B9B9B', '#FFFFFF'];
 
 const dialogTip= (
-    <Typography sx={{'ul li': {listStyleType:'circle'}}}>
+    <Typography component='div' sx={{'ul li': {listStyleType:'circle'}}}>
         Choose a color
         <ul>
             <li>graphically</li>
@@ -29,10 +29,12 @@ const dialogTip= (
     </Typography>);
 
 
+export const hideColorPickerDialog= () => dispatchHideDialog('ColorPickerDialog');
+
 export function showColorPickerDialog(color, callbackOnOKOnly, callbackOnBoth, cb, Id = '',
-                                      helpId, presetAlpha,  presetColors) {
+                                      helpId, presetAlpha,  presetColors, postTitle) {
     const popup= (
-        <PopupPanel title={'Color Picker'+ (Id ? ` - ${Id}`: '')} >
+        <PopupPanel title={'Color Picker'+ (Id ? ` - ${Id}`: '') + (postTitle ? ` - ${postTitle}`: '')} >
             <ColorPickerWrapper callback={cb} color={color} helpId={helpId}
                                 callbackOnOKOnly={callbackOnOKOnly} callbackOnBoth={callbackOnBoth}
                                 presetColors={presetColors}  presetAlpha={presetAlpha} />

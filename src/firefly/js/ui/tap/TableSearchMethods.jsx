@@ -2,15 +2,12 @@ import {Box} from '@mui/joy';
 import React, {useState} from 'react';
 import {getColumnIdx} from '../../tables/TableUtil.js';
 import {ConnectionCtx} from '../ConnectionCtx.js';
-import {FieldGroup} from '../FieldGroup.jsx';
 import {ObsCoreSearch} from './ObsCore.jsx';
 import {ExposureDurationSearch} from './ObsCoreExposureDuration.jsx';
 import {SpatialSearch} from './SpatialSearch.jsx';
 import {TemporalSearch} from './TemporalSearch.jsx';
 import {ObsCoreWavelengthSearch} from './WavelengthPanel.jsx';
 import {ObjectIDSearch} from 'firefly/ui/tap/ObjectIDSearch';
-
-const TAP_SEARCH_METHODS_GROUP= 'TAP_SEARCH_METHODS_GROUP';
 
 export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serviceUrl, sx,
                                        serviceLabel, tableName, capabilities, obsCoreMetadataModel}) => {
