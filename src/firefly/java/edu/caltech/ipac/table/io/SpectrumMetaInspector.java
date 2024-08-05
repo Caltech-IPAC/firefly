@@ -1,6 +1,8 @@
 package edu.caltech.ipac.table.io;
 
 
+import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.GroupInfo;
@@ -18,7 +20,7 @@ import java.util.List;
 /**
  * Utility to search for Spectrum Data Model information from the meta of a FITS table
  */
-class SpectrumMetaInspector {
+public class SpectrumMetaInspector {
     private static final List<String> wlColNames= Arrays.asList("wave", "wavelength", "wavelengths", "wl", "wls");
     private static final List<String> enColNames= Arrays.asList("ener", "energy");
     private static final List<String> freqColNames= Arrays.asList("freq", "frequency");
@@ -26,7 +28,7 @@ class SpectrumMetaInspector {
     private static final String[] waveLoColName= new String[] {"wave_lo"};
     private static final String[] waveHiColName= new String[] {"wave_hi"};
     private static final String[] fluxColNames= new String[] {"flux", "fluxdensity", "flux_density", "flux", "flx", "fl", "fls", "flu", "data", "value", "signal"};
-    private static final String[] errColNames= new String[] {"err", "error", "errors", "flerr", "flerrs"};
+    private static final String[] errColNames= new String[] {"err", "error", "errors", "flerr", "flerrs", "flux_error"};
     private static final String[] errHiColNames= new String[] {"err_hi", "error_hi", "err_high", "error_high","flerr_high", "flerrs_hi"};
     private static final String[] errLowColNames= new String[] {"err_lo", "error_lo", "err_low", "error_low","flerr_low", "flerrs_lo"};
     private static final String[] orderColNames= new String[] {"order", "ord", "spec_order"};
@@ -59,8 +61,20 @@ class SpectrumMetaInspector {
         specColNames= l.toArray(new String[0]);
     }
 
+    public static void searchForSpectrum(DataGroup dg, TableServerRequest request) {
+        searchForSpectrum(dg,hasSpectrumHint(request));
+    }
+
+
     public static void searchForSpectrum(DataGroup dg, boolean spectrumHint) {
         searchForSpectrum(dg,null,spectrumHint);
+    }
+
+    public static boolean hasSpectrumHint(TableServerRequest request) {
+        if (request==null) return false;
+        var passedMetaInfo= request.getMeta();
+        if (passedMetaInfo==null) return false;
+        return passedMetaInfo.getOrDefault(MetaConst.DATA_TYPE_HINT,"").equalsIgnoreCase("spectrum");
     }
 
     /**

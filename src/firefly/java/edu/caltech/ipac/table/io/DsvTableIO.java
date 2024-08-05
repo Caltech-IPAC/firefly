@@ -4,28 +4,38 @@
 package edu.caltech.ipac.table.io;
 
 import edu.caltech.ipac.firefly.core.FileAnalysisReport;
-import edu.caltech.ipac.table.IpacTableDef;
-import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.table.IpacTableUtil;
-import edu.caltech.ipac.util.StringUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
 import static edu.caltech.ipac.table.IpacTableUtil.isKnownType;
-import static edu.caltech.ipac.table.TableUtil.*;
+import static edu.caltech.ipac.table.TableUtil.Format;
 import static edu.caltech.ipac.table.TableUtil.Format.CSV;
 import static edu.caltech.ipac.table.TableUtil.Format.TSV;
+import static edu.caltech.ipac.table.TableUtil.ParsedColInfo;
+import static edu.caltech.ipac.table.TableUtil.ParsedInfo;
+import static edu.caltech.ipac.table.TableUtil.getDetails;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
@@ -47,13 +57,22 @@ public class DsvTableIO {
         return parse(inf, toCsvFormat(format.type));
     }
 
+    public static DataGroup parse(File inf, Format format, TableServerRequest request) throws IOException {
+        return parse(inf, toCsvFormat(format.type), request);
+    }
+
     public static DataGroup parse(InputStream inf, CSVFormat format) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(inf, "UTF-8"), IpacTableUtil.FILE_IO_BUFFER_SIZE);
-        return getData(reader, format);
+        return getData(reader, format, null);
     }
+
     public static DataGroup parse(File inf, CSVFormat format) throws IOException {
+        return parse(inf,format,null);
+    }
+
+    public static DataGroup parse(File inf, CSVFormat format, TableServerRequest request) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
-        return getData(reader, format);
+        return getData(reader, format, request);
 
     }
 
@@ -70,7 +89,9 @@ public class DsvTableIO {
 
 
 
-    private static DataGroup getData( BufferedReader reader, CSVFormat format)throws IOException{
+    private static DataGroup getData( BufferedReader reader,
+                                      CSVFormat format,
+                                      TableServerRequest request) throws IOException{
         CSVParser parser = new CSVParser(reader, format);
         List<CSVRecord> records = parser.getRecords();
         if (records !=null && records.size() > 0) {
@@ -88,6 +109,7 @@ public class DsvTableIO {
                     dg.add(row);
                 }
             }
+            SpectrumMetaInspector.searchForSpectrum(dg,request);
             dg.trimToSize();
             return dg;
         }

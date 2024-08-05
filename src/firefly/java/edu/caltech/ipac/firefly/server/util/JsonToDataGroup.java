@@ -1,8 +1,10 @@
 package edu.caltech.ipac.firefly.server.util;
 
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.io.SpectrumMetaInspector;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -51,7 +53,7 @@ public class JsonToDataGroup {
 
     //private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
-    public static DataGroup parse (File jsonFile) throws IOException {
+    public static DataGroup parse (File jsonFile, TableServerRequest request) throws IOException {
 
         JSONObject json = null;
          try {
@@ -115,6 +117,7 @@ public class JsonToDataGroup {
                         dg.add(dObj);
                     }
                 }
+                SpectrumMetaInspector.searchForSpectrum(dg,request);
                 return dg;
             }
         }
