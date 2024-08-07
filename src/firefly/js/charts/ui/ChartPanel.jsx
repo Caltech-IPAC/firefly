@@ -9,10 +9,9 @@ import {PlotlyToolbar} from './PlotlyToolbar.jsx';
 import {dispatchChartMounted, dispatchChartRemove, dispatchChartUnmounted, getChartData, getErrors} from '../ChartsCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
-import DELETE from 'html/images/blue_delete_10x10.png';
 import {allowPinnedCharts} from '../ChartUtil.js';
 import {PinChart, ShowTable} from './PinnedChartContainer.jsx';
-import {CombineChart} from './CombineChart.jsx';
+import {CombinePinnedCharts} from './CombineChart.jsx';
 
 
 function ChartPanelView(props) {
@@ -85,7 +84,7 @@ export const ChartToolbar = (props={}) => {
     if (allowPinnedCharts()) {
         return (
             <Stack id='chart-toolbar' direction='row' alignItems='center'>
-                <CombineChart {...{viewerId, tbl_group}} />
+                <CombinePinnedCharts {...{viewerId, tbl_group}} />
                 <ShowTable {...{viewerId, tbl_group}} />
                 <PinChart {...{viewerId, tbl_group}}/>
                 <Toolbar {...{chartId, expandable, expandedMode}}/>
