@@ -5,6 +5,10 @@
 
 
 import {isNumber} from 'lodash';
+import HpxCatalog from '../../drawingLayers/hpx/HpxCatalog';
+import {
+    clearHpxFilterCatalog, filterHpxCatalog, selectHpxCatalog, unselectHxpCatalog
+} from '../../drawingLayers/hpx/HpxCatalogUtil';
 import {
     getAllDrawLayersForPlot,
     getDrawLayersByType,
@@ -333,6 +337,7 @@ export function selectDrawingLayer(pv) {
         if (allLayers.some((l) => l.drawLayerTypeId === Catalog.TYPE_ID)) {
             selectCatalog(pv);
         }
+        selectHpxCatalog(pv);
         if (allLayers.some((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID)) {
             selectFootprint(pv);
         }
@@ -345,6 +350,7 @@ export function unselectDrawingLayer(pv) {
         if (allLayers.some((l) => l.drawLayerTypeId === Catalog.TYPE_ID)) {
             unselectCatalog(pv, allLayers);
         }
+        unselectHxpCatalog(pv, allLayers);
         if (allLayers.some((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID)) {
             unselectFootprint(pv, allLayers);
         }
@@ -357,6 +363,7 @@ export function filterDrawingLayer(pv) {
         if (allLayers.some((l) => l.drawLayerTypeId === Catalog.TYPE_ID)) {
             filterCatalog(pv, allLayers);
         }
+        filterHpxCatalog(pv, allLayers);
         if (allLayers.some((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID)) {
             filterFootprint(pv, allLayers);
         }
@@ -369,6 +376,7 @@ export function clearFilterDrawingLayer(pv) {
         if (allLayers.some((l) => l.drawLayerTypeId === Catalog.TYPE_ID)) {
             clearFilterCatalog(pv, allLayers);
         }
+        clearHpxFilterCatalog(pv, allLayers);
         if (allLayers.some((l) => l.drawLayerTypeId === LSSTFootprint.TYPE_ID)) {
             clearFilterFootprint(pv, allLayers);
         }

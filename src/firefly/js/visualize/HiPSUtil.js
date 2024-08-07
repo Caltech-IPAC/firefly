@@ -53,7 +53,7 @@ function getHealpixIndex(nside) {
  */
 export function getMaxDisplayableHiPSGridLevel(plot) {
     let {norder}= getHiPSNorderlevel(plot);
-    norder = norder>3 ? norder+3 : norder+2;
+    norder = norder>3 ? norder+5 : norder+2;
     return (norder>MAX_SUPPORTED_HIPS_LEVEL) ? MAX_SUPPORTED_HIPS_LEVEL : norder;
 }
 
@@ -127,7 +127,31 @@ export function getHiPSNorderlevel(plot, limitToImageDepth= false) {
 
 }
 
+
+export function getCatalogNorderlevel(plot,minNOrder=7, maxNorder) {
+    if (!plot) return -1;
+
+    const screenPixArcsecSize= getScreenPixScaleArcSec(plot);
+    if (screenPixArcsecSize> 100) return minNOrder;
+    const sizeInArcSecKey= screenPixArcsecSize.toFixed(7);
+    let norder= catalogNOrderForPixAsSizeCacheMap[sizeInArcSecKey];
+    if (!norder) {
+        const nside = HealpixIndex.calculateNSide(screenPixArcsecSize*128);
+        norder= Math.max(minNOrder, Math.log2(nside));
+        norder= Math.min(norder, maxNorder);
+        if (norder>maxNorder) norder= maxNorder;
+        catalogNOrderForPixAsSizeCacheMap[sizeInArcSecKey]= norder;
+    }
+    return norder;
+}
+
+
+
+
+
+
 const nOrderForPixAsSizeCacheMap= {};
+const catalogNOrderForPixAsSizeCacheMap= {};
 
 /**
  * Return the best norder for a given screen pixel angular size in arc seconds
@@ -148,6 +172,17 @@ function getNOrderForPixArcSecSize(sizeInArcSec) {
     return norder;
 }
 
+function getCatalogNOrderForPixArcSecSize(sizeInArcSec) {
+    const sizeInArcSecKey= sizeInArcSec.toFixed(7);
+    let norder= catalogNOrderForPixAsSizeCacheMap[sizeInArcSecKey];
+    if (isUndefined(norder)) {
+        const nside = HealpixIndex.calculateNSide(sizeInArcSec*56);
+        norder = Math.log2(nside);
+        norder= Math.max(5, norder);
+        catalogNOrderForPixAsSizeCacheMap[sizeInArcSecKey]= norder;
+    }
+    return norder;
+}
 
 export function makeHiPSTileUrl(plot, nOrder, tileNumber) {
     if (!plot) return null;
@@ -457,12 +492,12 @@ export function getCornersForCell(norder, ipix, dataCoordSys) {
 
 /**
  * get any HiPS cells which is fully or partially visible within given fov area
- * @param norder
- * @param centerWp
- * @param fov
- * @param dataCoordSys
+ * @param {Number} norder
+ * @param {WorldPt} centerWp
+ * @param {Number} fov
+ * @param {CoordinateSys} dataCoordSys
  * @param {Boolean} isAitoff
- * @returns {*}
+ * @returns {Array.<{ipix:Number, wpCorners:Array.<WorldPt>}>}
  */
 export function getAllVisibleHiPSCells (norder, centerWp, fov, dataCoordSys, isAitoff) {
     const healpixCache= getHealpixCornerTool();

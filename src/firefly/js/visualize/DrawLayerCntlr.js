@@ -60,7 +60,7 @@ const UPDATE_DRAWING_LAYER= `${DRAWLAYER_PREFIX}.updateDrawLayer`;
 const DESTROY_DRAWING_LAYER= `${DRAWLAYER_PREFIX}.destroyDrawLayer`;
 const CHANGE_VISIBILITY= `${DRAWLAYER_PREFIX}.changeVisibility`;
 const CHANGE_DRAWING_DEF= `${DRAWLAYER_PREFIX}.changeDrawingDef`;
-const ATTACH_LAYER_TO_PLOT= `${DRAWLAYER_PREFIX}.attachLayerToPlot`;
+export const ATTACH_LAYER_TO_PLOT= `${DRAWLAYER_PREFIX}.attachLayerToPlot`;
 const PRE_ATTACH_LAYER_TO_PLOT= `${DRAWLAYER_PREFIX}.attachLayerToPlot`;
 const DETACH_LAYER_FROM_PLOT= `${DRAWLAYER_PREFIX}.detachLayerFromPlot`;
 const MODIFY_CUSTOM_FIELD= `${DRAWLAYER_PREFIX}.modifyCustomField`;
@@ -315,7 +315,7 @@ export function dispatchModifyCustomField(id,changes, plotId) {
 
 /**
  *
- * @param {DrawLayer} drawLayer
+ * @param {DrawLayer|Object} drawLayer
  */
 export function dispatchUpdateDrawLayer(drawLayer) {
     flux.process({type: UPDATE_DRAWING_LAYER, payload: {drawLayer}});

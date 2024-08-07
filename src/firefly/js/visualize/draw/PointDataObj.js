@@ -25,7 +25,7 @@ const DEFAULT_SYMBOL = DrawSymbol.X;
 
 /**
  * drawObj for point, optional: textLoc
- * @param {{x:name,y:name,type:string}} pt
+ * @param {Point|WorldPt} pt
  * @param {number} [size]
  * @param {Enum} [symbol]
  * @param {string} [text]
@@ -258,18 +258,20 @@ export function getPointDataobjArea(drawObj, cc) {
 }
 /**
  * calculate the text location based on text location, offset, font size, point size and point symbol.
+ * @param {CanvasRenderingContext2D} ctx
  * @param drawObj
  * @param plot
  * @param textLoc
- * @param fontSize
+ * @param text
  * @returns {*}
  */
-function makeTextLocationPoint(drawObj, plot, textLoc, fontSize) {
+function makeTextLocationPoint(ctx, drawObj, plot, text, textLoc) {
     var area = getPointDataobjArea(drawObj, plot);   // in screen pixel
     if (!area) return null;
 
     var {centerPt, width, height} = area;
-    var fHeight = fontHeight(fontSize);
+    const {width:fWidth, fontBoundingBoxAscent, fontBoundingBoxDescent}= ctx.measureText(text);
+    var fHeight = fontBoundingBoxAscent+fontBoundingBoxDescent;
     var opt;
 
     switch(textLoc) {
@@ -284,6 +286,9 @@ function makeTextLocationPoint(drawObj, plot, textLoc, fontSize) {
             break;
         case TextLocation.REGION_SW:
             opt = makeOffsetPt(width/2, height/2 + fHeight);
+            break;
+        case TextLocation.CENTER:
+            opt = makeOffsetPt(-fWidth/2, -fHeight/2);
             break;
         default:
             opt = makeOffsetPt(0, 0);
@@ -310,7 +315,7 @@ function drawXY(ctx, pt, plot, drawObj, drawParams,renderOptions, onlyAddToPath)
     let vpt;
 
     if (textLoc) {
-        vpt = plot.getDeviceCoords(makeTextLocationPoint(drawObj, plot, textLoc, fontSize));
+        vpt = plot.getDeviceCoords(makeTextLocationPoint(ctx,drawObj, plot, text, textLoc));
     } else {
         vpt = plot.getDeviceCoords(pt);
     }

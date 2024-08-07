@@ -1,23 +1,23 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, intersection, isEmpty, isString, isUndefined} from 'lodash';
-import {defDataSourceGuesses} from '../metaConvert/DefaultConverter.js';
-import {
-    ACCESS_FORMAT, ACCESS_URL, DEFAULT_TNAME_OPTIONS, obsPrefix,
-    OBSTAP_CNAMES, S_REGION, SERVICE_DESC_COL_NAMES, SSA_COV_UTYPE, SSA_TITLE_UTYPE } from './VoConst.js';
+import {get, intersection, isEmpty, isNaN, isString, isUndefined} from 'lodash';
 import {MetaConst} from '../data/MetaConst.js';
+import {defDataSourceGuesses} from '../metaConvert/DefaultConverter.js';
 import {getCornersColumns} from '../tables/TableInfoUtil.js';
 import {
     getBooleanMetaEntry, getCellValue, getColumn, getColumns, getMetaEntry, isTableUsingRadians
 } from '../tables/TableUtil.js';
-import CoordinateSys from '../visualize/CoordSys.js';
-import {makeAnyPt, makeWorldPt} from '../visualize/Point.js';
 import {isDefined} from '../util/WebUtil.js';
+import CoordinateSys from '../visualize/CoordSys.js';
+import {makeAnyPt, makeWorldPt, parseWorldPt} from '../visualize/Point.js';
+import {
+    ACCESS_FORMAT, ACCESS_URL, DEFAULT_TNAME_OPTIONS, obsPrefix, OBSTAP_CNAMES, S_REGION, SERVICE_DESC_COL_NAMES,
+    SSA_COV_UTYPE, SSA_TITLE_UTYPE
+} from './VoConst.js';
 import {getObsTabColEntry, getTableModel} from './VoCoreUtils.js';
 import {hasServiceDescriptors} from './VoDataLinkServDef.js';
 import {VoTableRecognizer} from './VoTableRecognizer.js';
-
 
 
 export function isOrbitalPathTable(tableOrId) {
@@ -38,7 +38,8 @@ export function findTableCenterColumns(table, acceptArrayCol = false) {
     return tblRecog && tblRecog.getCenterColumns(acceptArrayCol);
 }
 
-export function findImageCenterColumns(table) {
+export function findImageCenterColumns(tableOrId) {
+    const table = getTableModel(tableOrId);
     const tblRecog = get(table, ['tableData', 'columns']) && VoTableRecognizer.newInstance(table);
     return getMetaEntry(table, MetaConst.FITS_FILE_PATH) && tblRecog?.getImagePtColumnsOnMeta();
 }
@@ -398,4 +399,56 @@ export function getSSATitle(tableOrId,row) {
             if (c?.utype?.toLowerCase().includes(SSA_TITLE_UTYPE )) return true;
         });
     return foundCol.length>0 ? getCellValue(table,row,foundCol[0].name) : undefined;
+}
+
+export function getSearchTarget(r, tableModel, searchTargetStr, overlayPositionStr) {
+    if (!r) r = tableModel?.request;
+    if (searchTargetStr) return parseWorldPt(searchTargetStr);
+    if (overlayPositionStr) return parseWorldPt(overlayPositionStr);
+    const pos = getMetaEntry(tableModel, MetaConst.OVERLAY_POSITION);
+    if (pos) return parseWorldPt(pos);
+    if (!r) return;
+    if (r.UserTargetWorldPt) return parseWorldPt(r.UserTargetWorldPt);
+    if (r.QUERY) return extractCircleFromADQL(r.QUERY);
+    if (r.source?.toLowerCase()?.includes('circle')) return extractCircleFromUrl(r.source);
+}
+
+function extractCircleFromUrl(url) {
+    const params = new URL(url)?.searchParams;
+    if (!params) return;
+    if (params.has('ADQL')) return extractCircleFromADQL(params.get('ADQL'));
+    if (params.has('POS')) return extractCircleFromPOS(params.get('POS'));
+    const pts = [...params.entries()]
+        .map(([, v]) => v)
+        .filter((v) => v.toLowerCase()?.includes('circle'))
+        .map((cStr) => extractCircleFromPOS(cStr))
+        .filter((wp) => wp);
+    return (pts.length > 0) ? pts[0] : undefined;
+}
+
+function extractCircleFromPOS(circleStr) {
+    const c = circleStr?.toLowerCase();
+    if (!c?.startsWith('circle')) return;
+    const cAry = c.split(' ').filter((s) => s);
+    const raNum = cAry[1];
+    const decNum = cAry[2];
+    if (isNaN(raNum) || isNaN(decNum)) return;
+    return makeWorldPt(raNum, decNum);
+}
+
+function extractCircleFromADQL(adql) {
+    const regEx = /CIRCLE\s?\(.*\)/;
+    const result = regEx.exec(adql);
+    if (!result) return;
+    const circle = result[0];
+    const parts = circle.split(',');
+    if (parts.length < 4) return;
+    let cStr = parts[0].split('(')[1];
+    if (!cStr) return;
+    if (cStr.startsWith(`\'`) && cStr.endsWith(`\'`)) { // eslint-disable-line quotes
+        cStr = cStr.substring(1, cStr.length - 1);
+    }
+    if (!isNaN(Number(parts[1])) && !isNaN(Number(parts[1]))) {
+        return makeWorldPt(parts[1], parts[2], CoordinateSys.parse(cStr));
+    }
 }

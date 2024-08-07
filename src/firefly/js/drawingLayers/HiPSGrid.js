@@ -46,7 +46,8 @@ function creator(initPayload, presetDefaults) {
         hasPerPlotData:true,
         isPointData:false,
         canUserChangeColor: ColorChangeType.DYNAMIC,
-        gridType: 'auto'
+        gridType: 'auto',
+        showLabels: true
     };
     return DrawLayer.makeDrawLayer(`${ID}-${idCnt}`,TYPE_ID, {}, options, drawingDef);
 }
@@ -86,7 +87,15 @@ function getTitle() {
 
 function dealWithMods(drawLayer,action) {
     const {changes}= action.payload;
-    if (changes.gridType) {
+    if (isDefined(changes.showLabels)) {
+        return {
+            ...drawLayer,
+            showLabels: changes.showLabels,
+            drawData:
+                computeDrawData({...drawLayer, showLabels: changes.showLabels},action,drawLayer.gridType,drawLayer.gridLockLevel)
+        };
+    }
+    else if (changes.gridType) {
         const gridLockLevel= changes.gridLockLevel || drawLayer.gridLockLevel;
        return {gridType:changes.gridType, gridLockLevel,
               drawData:computeDrawData(drawLayer,action,changes.gridType,gridLockLevel) };
@@ -103,7 +112,7 @@ function computeDrawData(drawLayer,action, gridType, gridLockLevel, isVisible = 
 
         plotIdAry.forEach( (plotId) => {
             if (plotId && (isDrawLayerVisible(drawLayer, plotId) || isVisible)) {
-                drawData.data[plotId] = computeDrawDataForId(plotId, gridType, gridLockLevel, projectionTypeChange);
+                drawData.data[plotId] = computeDrawDataForId(plotId, gridType, gridLockLevel, projectionTypeChange, drawLayer.showLabels);
             } else {
                 drawData.data[plotId] = null;
             }
@@ -115,7 +124,7 @@ function computeDrawData(drawLayer,action, gridType, gridLockLevel, isVisible = 
     }
 }
 
-function computeDrawDataForId(plotId, gridType, gridLockLevel, projectionTypeChange) {
+function computeDrawDataForId(plotId, gridType, gridLockLevel, projectionTypeChange, showLabels=true) {
     let plot= primePlot(visRoot(),plotId);
     if (!plot) return [];
     let aitoff= isHiPSAitoff(plot);
@@ -154,7 +163,8 @@ function computeDrawDataForId(plotId, gridType, gridLockLevel, projectionTypeCha
 
 
 
-    const idAry= nonWrapCells
+
+    const idAry= showLabels? nonWrapCells
         .map( (c) => {
             const s1= cc.getImageCoords(c.wpCorners[0]);
             const s2= cc.getImageCoords(c.wpCorners[2]);
@@ -162,7 +172,7 @@ function computeDrawDataForId(plotId, gridType, gridLockLevel, projectionTypeCha
             return ShapeDataObj.makeTextWithOffset(makeImagePt(-10,-6),
                  makeImagePt( (s1.x+s2.x)/2, (s1.y+s2.y)/2), `${norder}/${c.ipix}`);
         })
-        .filter( (v) => v);
+        .filter( (v) => v) : [];
     return [FootprintObj.make(fpAry), ...idAry];
 }
 

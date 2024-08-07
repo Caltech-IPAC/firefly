@@ -80,6 +80,7 @@ function handleOtherAction(drawLayer,action,factory) {
 function updateFromLayer(drawLayer,action,factory) {
     let {plotIdAry}= action.payload;
     if (!plotIdAry) plotIdAry= [action.payload.plotId];
+    if (!plotIdAry?.length && drawLayer.hasPerPlotData) plotIdAry= drawLayer.visiblePlotIdAry;
     drawLayer= Object.assign({}, drawLayer, factory.getLayerChanges(drawLayer,action));
     if (drawLayer.hasPerPlotData) {
         plotIdAry.forEach( (id) => {

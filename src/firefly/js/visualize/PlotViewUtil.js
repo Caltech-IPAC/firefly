@@ -252,11 +252,13 @@ export function getAllDrawLayersForPlot(ref,plotId,mustBeVisible=false) {
 }
 
 
-export function getConnectedPlotsIds(ref, drawLayerId) {
-    if (!ref) return null;
+export function getConnectedPlotsIds(ref, drawLayerId, mustBeVisible=false) {
+    if (!ref) return [];
     const dlAry= ref.drawLayerAry ? ref.drawLayerAry : ref;
     const dl= getDrawLayerById(dlAry,drawLayerId);
-    return dl ? dl.plotIdAry : [];
+    if (!dl) return [];
+    const ary= mustBeVisible ? dl.visiblePlotIdAry : dl.plotIdAry;
+    return dl ? ary : [];
 }
 
 

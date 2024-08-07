@@ -32,7 +32,7 @@ const doBigIntRequest = (cmd, params) => {
 };
 
 
-function createSearchParams(tableRequest) {
+export function createTableSearchParams(tableRequest) {
     const def = {
         startIdx: 0,
         pageSize : MAX_ROW,
@@ -58,7 +58,7 @@ function createSearchParams(tableRequest) {
  */
 export function fetchTable(tableRequest, hlRowIdx) {
 
-    const params = createSearchParams(tableRequest);
+    const params = createTableSearchParams(tableRequest);
 
     return doBigIntRequest(ServerParams.TABLE_SEARCH, params)
     .then( (tableModel) => {
@@ -91,7 +91,7 @@ export function fetchTable(tableRequest, hlRowIdx) {
 }
 
 export function asyncFetchTable(tableRequest) {
-    const params = createSearchParams(tableRequest);
+    const params = createTableSearchParams(tableRequest);
     return submitJob(ServerParams.TABLE_SEARCH, params);
 }
 

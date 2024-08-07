@@ -14,10 +14,13 @@ import Enum from 'enum';
  * @prop EMP_SQUARE_X
  * @prop BOXCIRCLE
  * @prop ARROW
+ * @prop TEXT
  * @type {Enum}
  */
+
+/** @type DrawSymbol */
 export const DrawSymbol = new Enum([
     'X','SQUARE','CROSS','DIAMOND','DOT','CIRCLE', 'SQUARE_X', 'EMP_CROSS','EMP_SQUARE_X',
-    'BOXCIRCLE', 'ARROW', 'ROTATE', 'POINT_MARKER'
+    'BOXCIRCLE', 'ARROW', 'ROTATE', 'POINT_MARKER', 'TEXT'
 ], { ignoreCase: true });
 

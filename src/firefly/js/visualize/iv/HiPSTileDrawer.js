@@ -6,7 +6,6 @@ import Enum from 'enum';
 import {createImageUrl,initOffScreenCanvas, computeBounding} from './TileDrawHelper.jsx';
 import {primePlot} from '../PlotViewUtil.js';
 import {getPointMaxSide, getHiPSNorderlevel, makeHiPSAllSkyUrlFromPlot, loadImageMultiCall} from '../HiPSUtil.js';
-import {loadImage} from '../../util/WebUtil.js';
 import {findAllSkyCachedImage, findTileCachedImage, addAllSkyCachedImage} from './HiPSTileCache.js';
 import {makeHipsRenderer} from './HiPSRenderer.js';
 import {isHiPS, isHiPSAitoff} from '../WebPlot';

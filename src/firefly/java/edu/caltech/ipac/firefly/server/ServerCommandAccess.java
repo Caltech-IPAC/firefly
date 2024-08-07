@@ -76,6 +76,8 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.UWS_JOB_INFO,           new SearchServerCommands.UwsJobInfo());
         _cmdMap.put(ServerParams.GET_CAPABILITIES,       new SearchServerCommands.GetCapabilities());
 
+        _cmdMap.put(ServerParams.TABLE_SEARCH_SPATIAL_BINARY, new SearchServerCommands.TableSearchSpatialBinary());
+
         _cmdMap.put(ServerParams.REPORT_USER_ACTION,     new SearchServerCommands.ReportUserAction());
         _cmdMap.put(ServerParams.PACKAGE_REQUEST,        new SearchServerCommands.PackageRequest());
         _cmdMap.put(ServerParams.TABLE_SEARCH,           new SearchServerCommands.TableSearch());

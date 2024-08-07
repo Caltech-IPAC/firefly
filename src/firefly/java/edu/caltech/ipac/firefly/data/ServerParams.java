@@ -135,6 +135,8 @@ public class ServerParams {
     public static final String JSON_DATA = "JsonData";
     public static final String RESOLVE_NAME= "CmdResolveName";
     public static final String RESOLVE_NAIFID = "CmdResolveNaifid";
+    public static final String TABLE_SEARCH_SPATIAL_BINARY = "TableSearchSpatialBinary";
+
 
     // Background Job related
     public static final String JOB_ID= "jobId";

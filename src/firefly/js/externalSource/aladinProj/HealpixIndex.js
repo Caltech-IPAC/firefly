@@ -302,6 +302,12 @@ export class HealpixIndex {
         this.fact1 = (nside << 1) * this.fact2;
         this.order = nside2order(nside);
     }
+
+    /**
+     *
+     * @param {number} pixsize
+     * @return {number}
+     */
     static calculateNSide(pixsize) {
         let i = 0;
         const a = 180 / Constants.PI;

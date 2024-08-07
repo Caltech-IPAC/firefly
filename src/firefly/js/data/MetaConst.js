@@ -51,6 +51,8 @@ export const MetaConst = {
 
     /**
      * Fits Image server file path, a path to a FITS file that is associated with this table
+     * It is used in extraction.  An extracted tables set the fits file path from the server.
+     * FITS_FILE_PATH in a table can match the plotState.getWorkingFitsFileStr() from a WebPlot
      */
     FITS_FILE_PATH: 'FitsFilePath',
 

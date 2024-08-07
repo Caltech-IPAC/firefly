@@ -13,6 +13,7 @@ import * as ChartsCntlr from '../charts/ChartsCntlr.js';
 import * as TablesCntlr from '../tables/TablesCntlr.js';
 import * as ReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
 import * as ImPlotCntlr from '../visualize/ImagePlotCntlr.js';
+import * as HpxIndexCntlr from '../tables/HpxIndexCntlr.js';
 import * as MultiViewCntlr from '../visualize/MultiViewCntlr.js';
 import * as AppDataCntlr from '../core/AppDataCntlr.js';
 import * as DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
@@ -174,6 +175,7 @@ export function buildLowlevelAPI() {
         findActionType(ReadoutCntlr, ReadoutCntlr.READOUT_PREFIX),
         findActionType(MultiViewCntlr, MultiViewCntlr.IMAGE_MULTI_VIEW_PREFIX),
         findActionType(ImPlotCntlr.default, ImPlotCntlr.PLOTS_PREFIX),
+        findActionType(HpxIndexCntlr, HpxIndexCntlr.SPACIAL_HPX_INDX_PREFIX),
         findActionType(AppDataCntlr, AppDataCntlr.APP_DATA_PATH),
         findActionType(DrawLayerCntlr.default, DrawLayerCntlr.DRAWLAYER_PREFIX)
     );
@@ -187,6 +189,7 @@ export function buildLowlevelAPI() {
         findDispatch(ReadoutCntlr),
         findDispatch(MultiViewCntlr),
         findDispatch(ImPlotCntlr),
+        findDispatch(HpxIndexCntlr),
         findDispatch(AppDataCntlr),
         findDispatch(DrawLayerCntlr),
         {dispatchAddCell, dispatchRemoveCell, dispatchEnableSpecialViewer},

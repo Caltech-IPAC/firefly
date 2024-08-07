@@ -3,7 +3,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Stack} from '@mui/joy';
+import {Checkbox, Stack} from '@mui/joy';
 import React from 'react';
 import PropTypes from 'prop-types';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
@@ -24,14 +24,19 @@ export const getUIComponent = (drawLayer,pv) => <HiPSGridUI drawLayer={drawLayer
 function HiPSGridUI({drawLayer,pv}) {
 
     const {gridType}= drawLayer;
-
-
     return (
-        <Stack {...{direction:'row', alignItems: 'flex-end',  pl:1}}>
-            <RadioGroupInputFieldView options={options}  value={gridType}
-                                      alignment={'vertical'}
-                                      onChange={(ev) => changeHipsPref(drawLayer,pv,ev.target.value)} />
-            {gridType==='lock' && showLevelOp(drawLayer,pv) }
+        <Stack spacing={1} pl={1}>
+
+            <Checkbox {...{checked:drawLayer.showLabels, label:'Show Labels', size:'sm',
+                onChange:() =>
+                    dispatchModifyCustomField(drawLayer.drawLayerId, {showLabels:!drawLayer.showLabels},pv.plotId)
+            }} />
+            <Stack {...{direction:'row', alignItems: 'flex-end'}}>
+                <RadioGroupInputFieldView options={options}  value={gridType}
+                                          alignment={'vertical'}
+                                          onChange={(ev) => changeHipsPref(drawLayer,pv,ev.target.value)} />
+                {gridType==='lock' && showLevelOp(drawLayer,pv) }
+            </Stack>
         </Stack>
     );
 }

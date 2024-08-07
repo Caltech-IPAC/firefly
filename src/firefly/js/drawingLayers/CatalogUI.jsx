@@ -9,7 +9,11 @@ import Enum from 'enum';
 import {CatalogType} from 'firefly/drawingLayers/Catalog.js';
 
 import {isEmpty, startCase} from 'lodash';
+import * as AppDataCntlr from '../core/AppDataCntlr';
 import {dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
+import {MIN_ROWS_FOR_HIERARCHICAL} from '../tables/HpxIndexCntlr';
+import {getTblById} from '../tables/TableUtil';
+import {ListBoxInputFieldView} from '../ui/ListBoxInputField';
 import {INFO_POPUP, showInfoPopup} from '../ui/PopupUtil.jsx';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
 import {DataTypes} from '../visualize/draw/DrawLayer.js';
@@ -18,6 +22,9 @@ import {isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
 import {InfoButton} from '../visualize/ui/Buttons.jsx';
 
 import PriorityHighRoundedIcon from '@mui/icons-material/PriorityHighRounded';
+import {
+    BOX_GROUP_TYPE, ELLIPSE_GROUP_TYPE, HEALPIX_GROUP_TYPE, HPX_GROUP_TYPE_PREF, HPX_MIN_GROUP_PREF
+} from './hpx/HpxCatalogUtil';
 
 export const TableSelectOptions = new Enum(['all', 'selected', 'highlighted']);
 export const getUIComponent = (drawLayer,pv,maxTitleChars) =>
@@ -26,6 +33,8 @@ export const getUIComponent = (drawLayer,pv,maxTitleChars) =>
 
 function CatalogUI({drawLayer,pv}) {
 
+    const isHpx= drawLayer.drawLayerTypeId.toLowerCase().startsWith('hpx') &&
+        getTblById(drawLayer.tbl_id)?.totalRows>MIN_ROWS_FOR_HIERARCHICAL;
     const options= [ {label: 'All', value: 'GROUP'},
                    {label: 'Row', value: 'SUBGROUP'},
                    {label: 'Image', value: 'SINGLE'}
@@ -72,7 +81,12 @@ function CatalogUI({drawLayer,pv}) {
                 </Stack>
             );
         } else {
-            tableOptions = subTitle;
+            tableOptions = (
+                <Stack>
+                    {isHpx && showMinGroupOp(drawLayer)}
+                    {subTitle}
+                </Stack>
+            );
         }
         return tableOptions;
     };
@@ -149,6 +163,40 @@ function changeVisibilityScope(drawLayer,pv,value) {
             break;
     }
 }
+
+function showMinGroupOp(drawLayer) {
+    const groupOp= [];
+    for(let i= 5; i<=50;i+=5) groupOp.push({label:i+'', value:i});
+
+    const groupTypeOp= [
+        {label: 'Ellipse', value: ELLIPSE_GROUP_TYPE},
+        {label: 'Box', value: BOX_GROUP_TYPE},
+        {label: 'Healpix Grid', value: HEALPIX_GROUP_TYPE},
+    ];
+
+    return (
+        <Stack direction='row' spacing={2}>
+            <ListBoxInputFieldView
+                label='Min Group' tooltip='Choose min grouping'
+                options={groupOp} value={drawLayer.minGroupSize}
+                onChange={(ev, newValue) => {
+                    dispatchModifyCustomField(drawLayer.drawLayerId, {minGroupSize:newValue});
+                    AppDataCntlr.dispatchAddPreference(HPX_MIN_GROUP_PREF,newValue);
+                }}
+            />
+            <ListBoxInputFieldView
+                label='Grouping Type' tooltip='Choose grouping type'
+                options={groupTypeOp} value={ drawLayer.groupType || groupTypeOp[0]}
+                onChange={(ev, newValue) => {
+                    dispatchModifyCustomField(drawLayer.drawLayerId, {groupType:newValue});
+                    AppDataCntlr.dispatchAddPreference(HPX_GROUP_TYPE_PREF,newValue);
+                }}
+            />
+        </Stack>
+    );
+}
+
+
 
 CatalogUI.propTypes= {
     drawLayer     : object.isRequired,

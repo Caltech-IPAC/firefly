@@ -7,7 +7,9 @@ import {chunk, cloneDeep, get, has, isArray, isEmpty, isNil, isObject, isPlainOb
 import Enum from 'enum';
 
 import {getWsConnId} from '../core/AppDataCntlr.js';
+import {doJsonRequest} from '../core/JsonUtils';
 import {sprintf} from '../externalSource/sprintf.js';
+import {fetchUrl} from '../util/fetch';
 import {makeFileRequest, MAX_ROW} from './TableRequestUtil.js';
 import * as TblCntlr from './TablesCntlr.js';
 import {SortInfo, SORT_ASC, UNSORTED} from './SortInfo.js';
@@ -15,7 +17,7 @@ import {FilterInfo, getNumFilters, FILTER_SEP} from './FilterInfo.js';
 import {SelectInfo} from './SelectInfo.js';
 import {flux} from '../core/ReduxFlux.js';
 import {encodeServerUrl, uniqueID} from '../util/WebUtil.js';
-import {fetchTable, queryTable, selectedValues} from '../rpc/SearchServicesJson.js';
+import {createTableSearchParams, fetchTable, queryTable, selectedValues} from '../rpc/SearchServicesJson.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga.js';
 import {MetaConst} from '../data/MetaConst';
@@ -96,6 +98,17 @@ export function doFetchTable(tableRequest, hlRowIdx) {
     } else {
         return fetchTable(tableRequest, hlRowIdx);
     }
+}
+
+export async function fetchSpacialBinary(tableRequest) {
+    const params = createTableSearchParams(tableRequest);
+    const cmd= ServerParams.TABLE_SEARCH_SPATIAL_BINARY;
+    const response= await fetchUrl(getCmdSrvSyncURL()+`?${ServerParams.COMMAND}=${cmd}`,{method:'POST', params },false);
+    if (!response.ok) {
+        throw(new Error(`Error from Server for ${cmd}: code: ${response.status}, text: ${response.statusText}`));
+    }
+    const arrayBuffer= await response.arrayBuffer();
+    return arrayBuffer;
 }
 
 
@@ -1223,8 +1236,8 @@ export function uniqueTblUiId() {
 }
 /**
  *  This function provides a patch until we can reliably determine that the ra/dec columns use radians or degrees.
- * @param table the table model
- * @param {Array.<String>} columnNames
+ * @param {TableModel} table the table model
+ * @param {Array.<String>} [columnNames]
  * @memberof firefly.util.table
  * @func isTableUsingRadians
  *
