@@ -311,8 +311,7 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
 function getPartProdGuess(part,table,row) {
     const utype= part?.details?.tableMeta?.utype ?? part?.details?.tableMeta?.UTYPE;
     if (utype) return utype;
-    const foundUtypes= part?.details?.resources
-        .map( (r) => r.utype)
+    const foundUtypes= part?.details?.resources?.map( (r) => r.utype)
         .filter( (utype='') => utype.toLowerCase().includes('spec'));
     if (foundUtypes?.length) return foundUtypes?.[0];
     return getProdTypeGuess(table,row);
