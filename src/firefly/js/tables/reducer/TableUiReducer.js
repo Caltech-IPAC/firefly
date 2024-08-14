@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {has, get, isEmpty, cloneDeep, findKey, omit, set, isNil} from 'lodash';
+import {has, get, isEmpty, cloneDeep, findKey, omit, set} from 'lodash';
 
 import {updateSet, updateMerge} from '../../util/WebUtil.js';
 import * as Cntlr from '../TablesCntlr.js';
@@ -61,8 +61,17 @@ function handleTableUpdates(root, action, state) {
             return removeTable(root, action);
 
         case (Cntlr.TBL_RESULTS_ADDED) :
+            const tblModel = get(state, ['data', tbl_id]);
             const options = onUiUpdate(get(action, 'payload.options', {}));
-            return updateSet(root, [tbl_ui_id], {tbl_ui_id, tbl_id, triggeredBy: 'byTable', ...options});
+            root = updateSet(root, [tbl_ui_id], {tbl_ui_id, tbl_id, triggeredBy: 'byTable', ...options});
+
+            //This handles the case where: if tblModel exists, and table is fully loaded, TBL_RESULTS_ADDED
+            //may have been called standalone (without a previous dispatchTableFetch), so update the ui state.
+            if (tblModel && isTableLoaded(tblModel)) {
+                console.log('just checking not in here');
+                root = uiStateReducer(root, get(state, ['data', tbl_id]), action.type);
+            }
+            return root;
 
         case (Cntlr.TABLE_FETCH)      :
         case (Cntlr.TABLE_FILTER)      :

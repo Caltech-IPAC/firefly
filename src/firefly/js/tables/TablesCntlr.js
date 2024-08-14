@@ -393,7 +393,6 @@ function tblResultsAdded(action) {
 
             options = Object.assign({tbl_group: 'main', removable: true, setAsActive:true}, options);
             if (options.pageSize)   options.pageSize = fixPageSize(options.pageSize);
-
             if (!TblUtil.getTableInGroup(tbl_id, options.tbl_group)) {
                 tbl_ui_id = tbl_ui_id || TblUtil.uniqueTblUiId();
                 dispatch({type: TBL_RESULTS_ADDED, payload: {tbl_id, title, tbl_ui_id, options}});

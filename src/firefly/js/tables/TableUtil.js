@@ -200,7 +200,7 @@ export function removeTablesFromGroup(tbl_group_id = 'main') {
 
 export function removeTablesByIDs(tblAry) {
     tblAry && tblAry.forEach((tbl_id) => {
-        TblCntlr.dispatchTableRemove(tbl_id, true);        
+        TblCntlr.dispatchTblResultsRemove(tbl_id, true);
     });
 }
 
