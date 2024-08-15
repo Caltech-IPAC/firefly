@@ -1,5 +1,5 @@
 import React from 'react';
-import {get, range, isEqual} from 'lodash';
+import {get, range, isEqual, memoize} from 'lodash';
 import {getSpectrumDM, REF_POS} from '../../../voAnalyzer/SpectrumDM.js';
 
 import {getChartData} from '../../ChartsCntlr.js';
@@ -295,7 +295,7 @@ function Units({activeTrace, value, axis, ...rest}) {
 
 }
 
-export function spectrumInputs ({chartId, groupKey}) {
+export const spectrumInputs = memoize( ({chartId, groupKey}) => {
 
     const {activeTrace=0, fireflyData={}} = getChartData(chartId);
 
@@ -310,7 +310,7 @@ export function spectrumInputs ({chartId, groupKey}) {
                 : <ValidationField fieldKey={SFOptionFieldKeys(activeTrace).value} initialState={{value: sfRefPos}} readonly={true} {...allProps}/>;
         },
     };
-}
+}, (props) => Object.values(props).join('|'));
 
 const SFOptionFieldKeys = (activeTrace) => {
     const baseKey = `fireflyData.${activeTrace}.spectralFrameOption`;
