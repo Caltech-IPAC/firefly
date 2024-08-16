@@ -323,8 +323,7 @@ function chartUpdate(action) {
     return (dispatch) => {
         const {chartId, changes} = action.payload;
         // when selection  is undefined, selections layer must be removed
-        if (changes.hasOwnProperty('selection') && !changes.selection)
-            changes['layout.selections'] = []
+        if (changes.hasOwnProperty('selection') && !changes.selection) changes['layout.selections'] = [];
         // remove any table's mappings from changes because it will be applied by the connectors.
         const changesWithoutTblMappings = omitBy(changes, (v) => isString(v) && v.match(TBL_SRC_PATTERN));
         set(action, 'payload.changes', changesWithoutTblMappings);

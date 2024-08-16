@@ -73,7 +73,7 @@ export const LcViewer = memo(({menu, dropdownPanels=[], appTitle, slotProps, ...
 
     return (
         <App slotProps={mSlotProps}
-             dropdownPanels={[...dropdownPanels, <UploadPanel {...{fileLocation}}/>]}
+             dropdownPanels={[...dropdownPanels, <UploadPanel {...{fileLocation, name:'LCUpload'}}/>]}
              appTitle={appTitle}  {...appProps}
         >
             <MainView {...{error, displayMode, periodProps}}/>
@@ -154,8 +154,8 @@ function getUploadPanelState(oldState) {
 }
 
 
-export const UploadPanel = ({initArgs, name= 'LCUpload'}) =>{
-    const {missionOptions,fileLocation} = useStoreConnector(getUploadPanelState );
+export const UploadPanel = ({initArgs,name= 'LCUpload'}) =>{
+    const {missionOptions, fileLocation} = useStoreConnector(getUploadPanelState );
     const [,setUploadContainer]= useFieldGroupValue('uploadContainer', vFileKey);
     const externalDropEvent= initArgs?.searchParams?.dropEvent;
 
@@ -239,9 +239,8 @@ export const UploadPanel = ({initArgs, name= 'LCUpload'}) =>{
     );
 };
 
-
 UploadPanel.propTypes = {
-    name: PropTypes.oneOf(['LCUpload']),
+    name: PropTypes.string,
     initArgs: PropTypes.object
 };
 

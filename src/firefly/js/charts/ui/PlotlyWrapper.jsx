@@ -280,7 +280,7 @@ export class PlotlyWrapper extends Component {
                         this.restyle(this.div, Plotly, data, dataUpdate, dataUpdateTraces);
                         break;
                     case RenderType.RELAYOUT:
-                        Plotly.relayout(this.div, layoutUpdate);
+                        Plotly.relayout(this.div, layout);
                         break;
                     case RenderType.RESTYLE_AND_RELAYOUT:
                         this.restyle(this.div, Plotly, data, dataUpdate, dataUpdateTraces);
@@ -308,7 +308,7 @@ export class PlotlyWrapper extends Component {
                             chart.on('plotly_relayout', () => this.showMask(false));
                             chart.on('plotly_restyle', () => this.showMask(false));
                             chart.on('plotly_redraw', () => this.showMask(false));
-                            chart.on('plotly_relayout', (changes) => this.syncLayout(chartId, changes));
+                            chart.on('plotly_relayout', (changes) => {this.syncLayout(chartId, changes);});
                         }
                         else {
                             this.showMask(false);
