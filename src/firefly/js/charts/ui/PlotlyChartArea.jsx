@@ -75,7 +75,7 @@ export function PlotlyChartArea({chartId, widthPx, heightPx, thumbnail}) {
     if (chartWidth > widthPx || chartHeight > heightPx) {
         Object.assign(style, {overflow: 'auto', width: widthPx, height: heightPx});
     }
-
+    thumbnail = false;
     if (thumbnail) renderAsThumbnail(playout);
 
     const afterRedraw = (chart, pl) => {

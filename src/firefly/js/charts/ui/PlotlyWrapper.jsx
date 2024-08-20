@@ -280,7 +280,7 @@ export class PlotlyWrapper extends Component {
                         this.restyle(this.div, Plotly, data, dataUpdate, dataUpdateTraces);
                         break;
                     case RenderType.RELAYOUT:
-                        Plotly.relayout(this.div, layout);
+                        Plotly.relayout(this.div, layoutUpdate);
                         break;
                     case RenderType.RESTYLE_AND_RELAYOUT:
                         this.restyle(this.div, Plotly, data, dataUpdate, dataUpdateTraces);
