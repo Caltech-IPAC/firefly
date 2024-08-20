@@ -1165,3 +1165,9 @@ export function getTblIdFromChart(chartId, traceNum) {
     traceNum = traceNum ?? activeTrace;
     return data?.[traceNum]?.tbl_id || fireflyData?.[traceNum]?.tbl_id;
 }
+
+export function hasTracesFromSameTable(chartId) {
+    const {data=[], fireflyData=[]} = getChartData(chartId) || {};
+    const tracesTblIds = data.map(({tbl_id}, traceIdx) => tbl_id ?? fireflyData?.[traceIdx]?.tbl_id);
+    return tracesTblIds.every((traceTblId, idx, arr) => traceTblId===arr[0] && traceTblId);
+}

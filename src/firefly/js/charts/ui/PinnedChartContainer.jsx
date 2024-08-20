@@ -26,7 +26,7 @@ import {useStoreConnector} from '../../ui/SimpleComponent';
 import {Logger} from '../../util/Logger.js';
 import {findGroupByTblId, getActiveTableId, getTblById, monitorChanges} from '../../tables/TableUtil';
 import {TABLE_LOADED, TBL_RESULTS_ACTIVE, TABLE_REMOVE, dispatchActiveTableChanged} from '../../tables/TablesCntlr';
-import {getTblIdFromChart, isChartLoading, uniqueChartId} from '../ChartUtil';
+import {getTblIdFromChart, hasTracesFromSameTable, isChartLoading, uniqueChartId} from '../ChartUtil';
 import {getActiveViewerItemId} from './MultiChartViewer';
 import {ActiveChartsPanel} from './ChartsContainer';
 import {StatefulTabs, switchTab, Tab} from '../../ui/panel/TabPanel';
@@ -220,12 +220,14 @@ function doPinChart({chartId, autoLayout=true }) {
 export const ShowTable = ({viewerId, tbl_group}) => {
 
     const activeTblId = useStoreConnector(() => getActiveTableId());
-    const activeChartTblId = useStoreConnector(() => {
+    const {chartId, activeChartTblId} = useStoreConnector(() => {
         const chartId = getActiveViewerItemId(PINNED_CHART_VIEWER_ID, true);
-        return getTblIdFromChart(chartId);
+        const activeChartTblId = getTblIdFromChart(chartId);
+        return {chartId, activeChartTblId};
     });
 
-    if (viewerId !== PINNED_CHART_VIEWER_ID) return null;
+    // this button should only appear inside pinned charts viewer and when the selected chart has traces' data in the same table
+    if (viewerId !== PINNED_CHART_VIEWER_ID || !hasTracesFromSameTable(chartId)) return null;
 
     const showTable = () => dispatchActiveTableChanged(activeChartTblId, tbl_group);
     const enabled = activeChartTblId !== activeTblId;
