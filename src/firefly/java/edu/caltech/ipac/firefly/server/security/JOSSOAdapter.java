@@ -37,7 +37,11 @@ import org.josso.gateway.ws._1_2.wsdl.SSOSessionManager;
 import org.josso.gateway.ws._1_2.wsdl.SSOSessionManagerWSLocator;
 
 import javax.xml.rpc.ServiceException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.rmi.RemoteException;
+
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * Date: Mar 30, 2010
@@ -221,6 +225,50 @@ public class JOSSOAdapter {
             LOGGER.error(e);
         }
         return null;
+    }
+
+    public static boolean requireAuthCredential(String reqUrl) {
+        String reqAuthHosts = "ipac.caltech.edu";
+        if (isEmpty(reqUrl)) return false;
+        try {
+            String reqHost = new URL(resolveUrl(reqUrl)).getHost().toLowerCase();
+            String host = ServerContext.getRequestOwner().getHostUrl();
+            if (reqHost.equals(host.toLowerCase())) {
+                return true;
+            } else if (reqHost.endsWith(reqAuthHosts.trim().toLowerCase())) {
+                return true;
+            }
+        } catch (MalformedURLException e) {
+            // ignore..
+        }
+        return false;
+    }
+
+    /**
+     * This function attempt to convert a relative URL into an absolute URL.
+     * If an absolute url is given, it'll return the url as is.
+     * Otherwise, it will return an absolute URL based on the given url.
+     * If the given url starts with '/', then it's relative to the host, otherwise
+     * it's relative to the deployed context.
+     * @param url - full or "relative" url string
+     * @return an absolute url
+     */
+    static String resolveUrl(String url) {
+        if (url == null) {
+            throw new IllegalArgumentException("null URL is passed to resolveUrl");
+        }
+        if (url.toLowerCase().startsWith("http")) return url;
+        try {
+            if (url.startsWith("/")) {
+                // it's a URI path.
+                return ServerContext.getRequestOwner().getHostUrl() + url;
+            } else {
+                // assume it's a URL relative to the app's context
+                return ServerContext.getRequestOwner().getBaseUrl() + url;
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException("host url can not be derived");
+        }
     }
 
     public static void main(String[] args) {

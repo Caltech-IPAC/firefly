@@ -3,6 +3,8 @@
  */
 package edu.caltech.ipac.firefly.server.network;
 
+import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.security.JOSSOAdapter;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -30,6 +32,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -112,17 +115,34 @@ public class HttpServices {
      * @return  true is the request was successfully received, understood, and accepted (code 2xx).
      */
     public static boolean executeMethod(HttpMethod method, String userId, String password, Map<String, String> cookies) {
+        String url = method.toString();
         try {
             if (!StringUtils.isEmpty(userId)) {
                 UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(userId, password);
                 httpClient.getState().setCredentials(AuthScope.ANY, credentials);
             } else {
                 // check to see if the userId and password is in the url
-                userId = URLDownload.getUserFromUrl(method.toString());
+                userId = URLDownload.getUserFromUrl(url);
                 if (userId != null) {
-                    password = URLDownload.getPasswordFromUrl(method.toString());
+                    password = URLDownload.getPasswordFromUrl(url);
                     UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(userId, password);
                     httpClient.getState().setCredentials(AuthScope.ANY, credentials);
+                }
+            }
+
+            // quick and dirty fix to pass along credential to IRSA backend services
+            if (JOSSOAdapter.requireAuthCredential(url)) {
+                String auth = ServerContext.getRequestOwner().getRequestAgent().getHeader("Authorization");
+                if (auth != null && auth.startsWith("Basic")) {
+                    method.setRequestHeader("Authorization", auth);
+                }
+                Map<String, String> ids = ServerContext.getRequestOwner().getIdentityCookies();
+                if (ids != null) {
+                    if (cookies == null) {
+                        cookies = ids;
+                    } else {
+                        cookies.putAll(ids);
+                    }
                 }
             }
 
@@ -155,7 +175,7 @@ public class HttpServices {
             }
             return isSuccess;
         } catch (Exception e) {
-            LOG.error(e, "Unable to connect to:" + method.toString());
+            LOG.error(e, "Unable to connect to:" + url);
         }
         return false;
     }
