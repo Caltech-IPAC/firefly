@@ -57,21 +57,11 @@ function handleTableUpdates(root, action, state) {
     const {tbl_ui_id, tbl_id} = action.payload;
     switch (action.type) {
         case (Cntlr.TABLE_REMOVE)    :
-        case (Cntlr.TBL_RESULTS_REMOVE)    :
             return removeTable(root, action);
 
         case (Cntlr.TBL_RESULTS_ADDED) :
-            const tblModel = get(state, ['data', tbl_id]);
             const options = onUiUpdate(get(action, 'payload.options', {}));
-            root = updateSet(root, [tbl_ui_id], {tbl_ui_id, tbl_id, triggeredBy: 'byTable', ...options});
-
-            //This handles the case where: if tblModel exists, and table is fully loaded, TBL_RESULTS_ADDED
-            //may have been called standalone (without a previous dispatchTableFetch), so update the ui state.
-            if (tblModel && isTableLoaded(tblModel)) {
-                console.log('just checking not in here');
-                root = uiStateReducer(root, get(state, ['data', tbl_id]), action.type);
-            }
-            return root;
+            return updateMerge(root, [tbl_ui_id], {tbl_ui_id, tbl_id, triggeredBy: 'byTable', ...options});
 
         case (Cntlr.TABLE_FETCH)      :
         case (Cntlr.TABLE_FILTER)      :
