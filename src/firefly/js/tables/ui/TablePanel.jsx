@@ -5,7 +5,7 @@
 import React, {useEffect} from 'react';
 import {Box, Stack, Typography, Sheet, ChipDelete, Tooltip, Button} from '@mui/joy';
 import PropTypes, {object, shape} from 'prop-types';
-import {defer, truncate, get, set, isUndefined, defaults, isString} from 'lodash';
+import {defer, truncate, get, set, defaults, isString} from 'lodash';
 import {getAppOptions, getSearchActions} from '../../core/AppDataCntlr.js';
 import {ActionsDropDownButton, isTableActionsDropVisible} from '../../ui/ActionsDropDownButton.jsx';
 
@@ -13,10 +13,8 @@ import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {ExpandButton, InfoButton, SaveButton, FilterButton, ClearFilterButton, TextViewButton, TableViewButton, SettingsButton, PropertySheetButton} from '../../visualize/ui/Buttons.jsx';
 import {dispatchTableRemove, dispatchTblExpanded, dispatchTableFetch, dispatchTableAddLocal, dispatchTableUiUpdate} from '../TablesCntlr.js';
-import {
-    uniqueTblId, getTableUiById, makeBgKey, getResultSetRequest, isClientTable, getTableState,
-    TBL_STATE, getMetaEntry, getTblById, parseError, isOverflow, getResultSetID
-} from '../TableUtil.js';
+import {uniqueTblId, getTableUiById, makeBgKey, getResultSetRequest, isClientTable, getTableState,
+    TBL_STATE, getMetaEntry, getTblById, parseError, isOverflow, getResultSetID} from '../TableUtil.js';
 import {TablePanelOptions} from './TablePanelOptions.jsx';
 import {BasicTableView} from './BasicTableView.jsx';
 import {TableInfo, MetaInfo} from './TableInfo.jsx';

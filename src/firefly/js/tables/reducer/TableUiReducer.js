@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {has, get, isEmpty, cloneDeep, findKey, omit, set, isNil} from 'lodash';
+import {has, get, isEmpty, cloneDeep, findKey, omit, set} from 'lodash';
 
 import {updateSet, updateMerge} from '../../util/WebUtil.js';
 import * as Cntlr from '../TablesCntlr.js';
@@ -57,12 +57,11 @@ function handleTableUpdates(root, action, state) {
     const {tbl_ui_id, tbl_id} = action.payload;
     switch (action.type) {
         case (Cntlr.TABLE_REMOVE)    :
-        case (Cntlr.TBL_RESULTS_REMOVE)    :
             return removeTable(root, action);
 
         case (Cntlr.TBL_RESULTS_ADDED) :
             const options = onUiUpdate(get(action, 'payload.options', {}));
-            return updateSet(root, [tbl_ui_id], {tbl_ui_id, tbl_id, triggeredBy: 'byTable', ...options});
+            return updateMerge(root, [tbl_ui_id], {tbl_ui_id, tbl_id, triggeredBy: 'byTable', ...options});
 
         case (Cntlr.TABLE_FETCH)      :
         case (Cntlr.TABLE_FILTER)      :
