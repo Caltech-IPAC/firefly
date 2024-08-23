@@ -14,7 +14,7 @@ import {fieldReducer, submitChangesScatter, scatterInputs, ScatterCommonOptions}
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 import {updateSet, toBoolean} from '../../../util/WebUtil.js';
 import {isSpectralOrder, getChartProps} from '../../ChartUtil.js';
-import {basicOptions, LayoutOptions} from './BasicOptions.jsx';
+import {basicOptions, basicPropResolver, LayoutOptions} from './BasicOptions.jsx';
 import {getSpectrumProps} from '../../dataTypes/FireflySpectrum.js';
 import {getFieldVal, revalidateFields} from 'firefly/fieldGroup/FieldGroupUtils';
 import {isFloat} from 'firefly/util/Validate';
@@ -310,7 +310,7 @@ export const spectrumInputs = memoize( ({chartId, groupKey}) => {
                 : <ValidationField fieldKey={SFOptionFieldKeys(activeTrace).value} initialState={{value: sfRefPos}} readonly={true} {...allProps}/>;
         },
     };
-}, (props) => Object.values(props).join('|'));
+}, basicPropResolver);
 
 const SFOptionFieldKeys = (activeTrace) => {
     const baseKey = `fireflyData.${activeTrace}.spectralFrameOption`;

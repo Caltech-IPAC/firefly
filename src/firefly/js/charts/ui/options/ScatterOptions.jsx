@@ -9,7 +9,7 @@ import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
-import {basicFieldReducer, basicOptions, LayoutOptions, submitChanges,} from './BasicOptions.jsx';
+import {basicFieldReducer, basicOptions, basicPropResolver, LayoutOptions, submitChanges,} from './BasicOptions.jsx';
 import {toBoolean, updateSet} from '../../../util/WebUtil.js';
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
@@ -354,6 +354,6 @@ export const scatterInputs = memoize( ({activeTrace:pActiveTrace, tbl_id:ptbl_id
                                          wrapperStyle={{marginBottom: 10, marginLeft: -4}}
                                          options={[{label: 'Use spectrum preset', value: 'true'}]} {...withDefaults(props)}/>),
     };
-}, (props) => Object.values(props).join('|'));
+}, basicPropResolver);
 
 

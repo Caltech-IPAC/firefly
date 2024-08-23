@@ -465,7 +465,12 @@ function filterOptions(options, opts) {
     return opts.filter((opt) => options.includes(opt) || options.includes('_all_')).toString();
 }
 
-
+export function basicPropResolver(props) {
+    return Object.entries(props)
+        .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+        .map(([key, value]) => `${key}=${value}`)
+        .join('|');
+}
 
 
 export const basicOptions = memoize( ({activeTrace:pActiveTrace, chartId, tbl_id, groupKey, isXNotNumeric,
@@ -593,4 +598,4 @@ export const basicOptions = memoize( ({activeTrace:pActiveTrace, chartId, tbl_id
             );
         },
     };
-}, (props) => Object.values(props).join('|'));
+}, basicPropResolver);
