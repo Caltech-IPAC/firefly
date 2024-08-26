@@ -73,7 +73,7 @@ FieldGroupCollapsibleItem.propTypes = {
 /*
  * A stateful collapsible container, intended to be used with CollapsibleGroup. State is backed by ComponentCntlr.
  */
-export function CollapsibleItem ({componentKey, isOpen:defOpen, ...props}) {
+export function CollapsibleItem ({componentKey, isOpen:defOpen=false, ...props}) {
 
     const isOpen = useStoreConnector(()=>(getComponentState(componentKey)?.isOpen ?? defOpen));
     const onToggle = (newIsOpen)=>{
@@ -137,8 +137,7 @@ export function CollapsibleItemView({isOpen, header, title, onToggle, slotProps,
     };
 
     return (
-        <Accordion {...props} expanded={isOpen} onChange={onChange}
-        >
+        <Accordion {...props} expanded={isOpen} onChange={onChange}>
             <Tooltip {...{title, ...slotProps?.tooltip}}>
                 <AccordionSummary {...slotProps?.header}
                                   sx={{whiteSpace:'nowrap', ...slotProps?.header?.sx}}

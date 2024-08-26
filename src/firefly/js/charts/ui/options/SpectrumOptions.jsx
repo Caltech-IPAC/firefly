@@ -1,5 +1,5 @@
 import React from 'react';
-import {get, range, isEqual} from 'lodash';
+import {get, range, isEqual, memoize} from 'lodash';
 import {getSpectrumDM, REF_POS} from '../../../voAnalyzer/SpectrumDM.js';
 
 import {getChartData} from '../../ChartsCntlr.js';
@@ -14,7 +14,7 @@ import {fieldReducer, submitChangesScatter, scatterInputs, ScatterCommonOptions}
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 import {updateSet, toBoolean} from '../../../util/WebUtil.js';
 import {isSpectralOrder, getChartProps} from '../../ChartUtil.js';
-import {basicOptions, LayoutOptions} from './BasicOptions.jsx';
+import {basicOptions, basicPropResolver, LayoutOptions} from './BasicOptions.jsx';
 import {getSpectrumProps} from '../../dataTypes/FireflySpectrum.js';
 import {getFieldVal, revalidateFields} from 'firefly/fieldGroup/FieldGroupUtils';
 import {isFloat} from 'firefly/util/Validate';
@@ -295,7 +295,7 @@ function Units({activeTrace, value, axis, ...rest}) {
 
 }
 
-export function spectrumInputs ({chartId, groupKey}) {
+export const spectrumInputs = memoize( ({chartId, groupKey}) => {
 
     const {activeTrace=0, fireflyData={}} = getChartData(chartId);
 
@@ -310,7 +310,7 @@ export function spectrumInputs ({chartId, groupKey}) {
                 : <ValidationField fieldKey={SFOptionFieldKeys(activeTrace).value} initialState={{value: sfRefPos}} readonly={true} {...allProps}/>;
         },
     };
-}
+}, basicPropResolver);
 
 const SFOptionFieldKeys = (activeTrace) => {
     const baseKey = `fireflyData.${activeTrace}.spectralFrameOption`;
