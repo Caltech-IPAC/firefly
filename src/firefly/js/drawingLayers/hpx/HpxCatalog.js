@@ -221,7 +221,6 @@ function getMaxExpandedTiles(norder,tbl_id,ipixAry) {
     let totalPts= 0;
     if (hasOrderDataReady(tbl_id) && norder<11) {
         const idxData = getHpxIndexData(tbl_id);
-        console.log(idxData, ipixAry);
         totalPts= ipixAry.reduce( (sum, ipix) => sum+idxData.orderData[norder].tiles.get(ipix).count,0);
     }
 
