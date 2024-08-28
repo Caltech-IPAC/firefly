@@ -2066,9 +2066,15 @@ export function distanceToCircle(drawObj, cc, pt) {
 
     if (radius) {
         radius = cc ? lengthToScreenPixel(radius, cc, unitType) : radius;
+        const devIn= cc.getDeviceCoords(pt);
+        const devC= cc.getDeviceCoords(drawObj.pts[0]);
+        return computeSimpleDistance(devIn,devC);
+    }
+    else {
+         return 1;
     }
 
-    return distanceToCircle(radius, drawObj.pts, cc, pt);
+    // return distanceToCircle(radius, drawObj.pts, cc, pt);
 }
 
 export function distanceToRectangle(drawObj, cc, pt) {

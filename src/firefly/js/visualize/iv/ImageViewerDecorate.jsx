@@ -9,6 +9,8 @@ import {object, array, bool, string, func} from 'prop-types';
 import shallowequal from 'shallowequal';
 import {isEmpty,omit,isFunction} from 'lodash';
 import {getSearchActions} from '../../core/AppDataCntlr.js';
+import HpxCatalog from '../../drawingLayers/hpx/HpxCatalog';
+import {getTblById} from '../../tables/TableUtil';
 import {EXPANDED_MODE_RESERVED, getMultiViewRoot, getViewer, GRID, IMAGE} from '../MultiViewCntlr.js';
 import {getPlotGroupById}  from '../PlotGroup.js';
 import {ExpandType, dispatchChangeActivePlotView, MOUSE_CLICK_REASON} from '../ImagePlotCntlr.js';
@@ -38,7 +40,9 @@ const briefAnno= [
     AnnotationOps.INLINE_BRIEF,
 ];
 
-const isCatalogPtData= (dl) => dl.drawLayerTypeId === Catalog.TYPE_ID && dl.catalogType===CatalogType.POINT;
+const isCatDl= (dl) => (dl?.drawLayerTypeId === Catalog.TYPE_ID || dl?.drawLayerTypeId === HpxCatalog.TYPE_ID);
+
+const isCatalogPtData= (dl) => isCatDl(dl) && dl.catalogType===CatalogType.POINT;
 
 
 /**
@@ -63,7 +67,8 @@ function showFilter(pv,dlAry) {
 function showClearFilter(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
         .some( (dl) => {
-            const filterCnt= getNumFilters(dl.tableRequest);
+            const request= dl.tableRequest ?? getTblById(dl.tbl_id)?.request;
+            const filterCnt= getNumFilters(request);
             return (isCatalogPtData(dl) &&  filterCnt) ||
                    (dl.drawLayerTypeId === LSSTFootprint.TYPE_ID && filterCnt);
         });
@@ -80,13 +85,15 @@ function showClearFilter(pv,dlAry) {
 function showUnselect(pv,dlAry) {
     return getAllDrawLayersForPlot(dlAry, pv.plotId,true)
         .filter( (dl) => {
-            return (dl.drawLayerTypeId===Catalog.TYPE_ID && dl.catalogType===CatalogType.POINT) ||
-                   (dl.drawLayerTypeId===LSSTFootprint.TYPE_ID);
+            return (isCatalogPtData(dl) || dl.drawLayerTypeId===LSSTFootprint.TYPE_ID);
         })
         .some( (dl) => {
-                  const selectIdxs=dl.drawData[DataTypes.SELECTED_IDXS];
-                  const hasIndexes= isFunction(selectIdxs) || !isEmpty(selectIdxs);
-                  return (hasIndexes && dl.canSelect);
+
+            const {exceptions= new Set(), selectAll= false}= getTblById(dl.tbl_id)?.selectInfo ?? {};
+            const hasSelections= exceptions.size || (selectAll && !exceptions.size);
+            // const selectIdxs=dl.drawData[DataTypes.SELECTED_IDXS];
+            // const hasIndexes= isFunction(selectIdxs) || !isEmpty(selectIdxs);
+            return (hasSelections && dl.canSelect);
         });
 }
 

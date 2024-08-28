@@ -120,6 +120,7 @@ export const ServerParams = {
         JSON_DATA : 'JsonData',
         RESOLVE_NAME: 'CmdResolveName',
         RESOLVE_NAIFID: 'CmdResolveNaifid',
+        TABLE_SEARCH_SPATIAL_BINARY: 'TableSearchSpatialBinary',
 
         // Background Job related
         UWS_JOB_INFO: 'uwsJobInfo',

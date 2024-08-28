@@ -8,6 +8,7 @@ import {applyMiddleware, combineReducers, createStore} from 'redux';
 import createSagaMiddleware from 'redux-saga';
 import thunkMiddleware from 'redux-thunk';
 import {createLogger} from 'redux-logger';
+import HpxIndexCntlr from '../tables/HpxIndexCntlr.js';
 
 import * as LayoutCntlr from './LayoutCntlr.js';
 import ExternalAccessCntlr from './ExternalAccessCntlr.js';
@@ -19,6 +20,7 @@ import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
 import FieldGroupCntlr, {MOUNT_COMPONENT} from '../fieldGroup/FieldGroupCntlr.js';
 import MouseReadoutCntlr from '../visualize/MouseReadoutCntlr.js';
 import TablesCntlr from '../tables/TablesCntlr.js';
+import HpxIndexCntrl from '../tables/HpxIndexCntlr.js';
 import DrawLayerCntlr from '../visualize/DrawLayerCntlr.js';
 import ChartsCntlrDef from '../charts/ChartsCntlr.js';
 import MultiViewCntlr from '../visualize/MultiViewCntlr.js';
@@ -38,6 +40,7 @@ import NorthUpCompass from '../drawingLayers/NorthUpCompass.js';
 import ImageRoot from '../drawingLayers/ImageRoot.js';
 import SearchTarget from '../drawingLayers/SearchTarget.js';
 import Catalog from '../drawingLayers/Catalog.js';
+import HpxCatalog from '../drawingLayers/hpx/HpxCatalog.js';
 import Artifact from '../drawingLayers/Artifact.js';
 import WebGrid from '../drawingLayers/WebGrid.js';
 import RegionPlot from '../drawingLayers/RegionPlot.js';
@@ -63,6 +66,7 @@ const USE_LOGGING_MIDDLEWARE= false; // logging middleware is useful for debuggi
  *
  * @prop {VisRoot} allPlots - image plotting store  (Controller: ImagePlotCntlr.js)
  * @prop {TableSpace} table_space - table data store (Controller: TablesCntlr.js)
+ * @prop {HealpixTableIndex} HpxIndexCntlr- table data store (Controller: TablesCntlr.js)
  * @prop {Object} charts - information about 2D plots (Controller: ChartsCntlr.js)
  * @prop {FieldGroupStore} fieldGroup - field group data for form and dialog input (Controller: FieldGroupCntlr.js)
  * @prop {Object} readout - mouse readout information (Controller: ReadoutCntlr.js)
@@ -109,7 +113,7 @@ export const getBootstrapRegistry= once(() => {
 
     const drawLayerFactory= DrawLayerFactory.makeFactory(
         FixedMarker, SelectArea,DistanceTool, ExtractLineTool, ExtractPoints,
-        PointSelection, StatsPoint, NorthUpCompass, ImageRoot, SearchTarget, Catalog, Artifact, WebGrid,
+        PointSelection, StatsPoint, NorthUpCompass, ImageRoot, SearchTarget, Catalog, HpxCatalog, Artifact, WebGrid,
         RegionPlot, MarkerTool, FootprintTool, SearchSelectTool,
         HiPSGrid, HiPSMOC, ImageOutline, ImageLineBasedFootprint);
 
@@ -143,6 +147,7 @@ export const getBootstrapRegistry= once(() => {
     registerCntlr(MouseReadoutCntlr);
     registerCntlr(ExternalAccessCntlr);
     registerCntlr(TablesCntlr);
+    registerCntlr(HpxIndexCntlr);
     registerCntlr(DrawLayerCntlr.getDrawLayerCntlrDef(drawLayerFactory));
     registerCntlr(ChartsCntlrDef);
     registerCntlr(MultiViewCntlr);

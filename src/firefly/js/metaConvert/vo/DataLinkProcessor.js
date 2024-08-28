@@ -1,9 +1,10 @@
-import {getObsCoreProdType, getObsCoreSRegion, makeWorldPtUsingCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
+import {
+    getObsCoreProdType, getObsCoreSRegion, getSearchTarget, makeWorldPtUsingCenterColumns
+} from '../../voAnalyzer/TableAnalysis.js';
 import {
     getDataLinkData, isDownloadType, isGzipType, isSimpleImageType, isTarType, isVoTable
 } from '../../voAnalyzer/VoDataLinkServDef.js';
 import {GIG} from '../../util/WebUtil.js';
-import {getSearchTarget} from '../../visualize/saga/CatalogWatcher.js';
 import {makeAnalysisActivateFunc} from '../AnalysisUtils.js';
 import {dispatchUpdateActiveKey, getActiveMenuKey, getCurrentActiveKeyID} from '../DataProductsCntlr.js';
 import {

@@ -12,12 +12,15 @@ import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga';
 import {MetaConst} from '../../data/MetaConst.js';
 import Catalog, {CatalogType} from '../../drawingLayers/Catalog.js';
 import {TableSelectOptions} from '../../drawingLayers/CatalogUI.jsx';
+import HpxCatalog from '../../drawingLayers/hpx/HpxCatalog';
 import SearchTarget from '../../drawingLayers/SearchTarget.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
+import {dispatchEnableHpxIndex, getHpxIndexData, onOrderDataReady} from '../../tables/HpxIndexCntlr';
 import {getCornersColumns} from '../../tables/TableInfoUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {
-    TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_REMOVE, TABLE_SELECT, TABLE_UPDATE, TBL_RESULTS_ACTIVE
+    TABLE_HIGHLIGHT,
+    TABLE_LOADED, TABLE_REMOVE, TABLE_SELECT,
 } from '../../tables/TablesCntlr.js';
 import {
     doFetchTable, getActiveTableId, getBooleanMetaEntry, getMetaEntry, getTableInGroup, getTblById, isTableUsingRadians
@@ -26,14 +29,17 @@ import {darker} from '../../util/Color';
 import {logger} from '../../util/Logger.js';
 import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
 import {
-    findTableCenterColumns, findTableRegionColumn, hasCoverageData, isOrbitalPathTable, isTableWithRegion
+    findTableCenterColumns, findTableRegionColumn, getSearchTarget, hasCoverageData, isOrbitalPathTable,
+    isTableWithRegion
 } from '../../voAnalyzer/TableAnalysis.js';
+import CoordSys from '../CoordSys';
 import {getNextColor} from '../draw/DrawingDef.js';
 import {DrawSymbol} from '../draw/DrawSymbol.js';
 import {
     dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
     dispatchModifyCustomField, dlRoot, getDlAry
 } from '../DrawLayerCntlr.js';
+import {getCornersForCell} from '../HiPSUtil';
 import ImagePlotCntlr, {
     dispatchDeletePlotView, dispatchPlotHiPS, dispatchPlotImageOrHiPS, visRoot
 } from '../ImagePlotCntlr.js';
@@ -45,7 +51,7 @@ import {makeWorldPt, pointEquals} from '../Point.js';
 import {computeCentralPtRadiusAverage} from '../VisUtil.js';
 import {BLANK_HIPS_URL, isBlankHiPSURL, isHiPS} from '../WebPlot';
 import {WebPlotRequest} from '../WebPlotRequest.js';
-import {catalogWatcherStandardCatalogId, getSearchTarget} from './CatalogWatcher';
+import {catalogWatcherStandardCatalogId} from './CatalogWatcher';
 import {memorizeLastCall} from 'firefly/util/WebUtil';
 
 /**
@@ -59,6 +65,8 @@ import {memorizeLastCall} from 'firefly/util/WebUtil';
  * @prop GUESS
  * @type {Enum}
  */
+
+/** @type CoverageType */
 const CoverageType = new Enum(['X', 'BOX', 'REGION', 'ORBITAL_PATH', 'ALL', 'GUESS']);
 const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
 
@@ -148,15 +156,15 @@ export const getCoverageWatcherDef = () => ({
     sharedData: { preparedTables: {}, tblCatIdMap: {}},
     watcher : watchCoverage,
     allowMultiples: false,
-    actions: [TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE, TBL_RESULTS_ACTIVE,
+    actions: [TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT, TABLE_REMOVE,
         ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_HIPS,
         MultiViewCntlr.ADD_VIEWER, MultiViewCntlr.VIEWER_MOUNTED, MultiViewCntlr.VIEWER_UNMOUNTED]
 });
 
 const getOptions= (inputOptions) => ({...defOptions, ...cleanUpOptions(inputOptions)});
-const centerId = (tbl_id) => (tbl_id+'_coverage_center');
+// const centerId = (tbl_id) => (tbl_id+'_coverage_center');
 const regionId = (tbl_id) => (tbl_id+'_coverage_region');
-export const coverageStandardCatalogId = (tbl_id) => (tbl_id+'_coverage_normal');
+export const coverageCatalogId = (tbl_id) => (tbl_id+'_coverage_normal');
 const searchTargetId = (tbl_id) => (tbl_id+'coverage_searchTarget');
 
 /**
@@ -228,20 +236,14 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
         case TABLE_LOADED:
             if (!getTableInGroup(tbl_id)) return {paused};
             setPreferredHipsOnSharedData();
-            updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL, sharedData.preferredHipsSource360URL);
+            void updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL, sharedData.preferredHipsSource360URL);
             break;
-
-        // case TBL_RESULTS_ACTIVE:
-        //     if (!getTableInGroup(tbl_id)) return {paused};
-        //     sharedData.preferredHipsSourceURL= findPreferredHiPS(tbl_id, sharedData.preferredHipsSourceURL, options.hipsSourceURL, preparedTables[tbl_id]);
-        //     updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL);
-        //     break;
 
         case TABLE_REMOVE:
             removeCoverage(payload.tbl_id, preparedTables);
             if (!isEmpty(preparedTables)) {
                 setPreferredHipsOnSharedData();
-                updateCoverage(getActiveTableId(), viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL, sharedData.preferredHipsSource360URL, payload.tbl_id);
+                void updateCoverage(getActiveTableId(), viewerId, preparedTables, options, tblCatIdMap, sharedData.preferredHipsSourceURL, sharedData.preferredHipsSource360URL, payload.tbl_id);
                 removeTableComponentStateStatus(payload.tbl_id);
             }
             cancelSelf();
@@ -254,7 +256,6 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
             break;
 
         case TABLE_HIGHLIGHT:
-        case TABLE_UPDATE:
             tblCatIdMap[tbl_id]?.forEach(( cId ) => {
                 dispatchModifyCustomField(cId, {highlightedRow: action.payload.highlightedRow});
             });
@@ -294,7 +295,7 @@ function removeCoverage(tbl_id, preparedTables) {
  * @param {string} preferredHipsSource360URL
  * @param {string} deletedTblId
  */
-function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, preferredHipsSourceURL, preferredHipsSource360URL, deletedTblId= undefined) {
+async function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, preferredHipsSourceURL, preferredHipsSource360URL, deletedTblId= undefined) {
 
     try {
         const table = getTblById(tbl_id);
@@ -310,48 +311,58 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
             pageSize: MAX_ROW,
             inclCols: getCovColumnsForQuery(options, table)
         };
+        const largeTable= table.totalRows > getMaxScatterRows();
 
         let req = cloneRequest(table.request, params);
-        const maxScatterRows = getMaxScatterRows();
-        if (table.totalRows > maxScatterRows) {
+        let covType= getCoverageType(options,tbl_id);
+        if (covType===CoverageType.REGION && largeTable) covType= CoverageType.X;
+
+
+        
+        if (covType!== CoverageType.X && largeTable) {
             const cenCol = findTableCenterColumns(table);
             if (!cenCol) return;
             const sreq = cloneRequest(table.request, {inclCols: `"${cenCol.lonCol}","${cenCol.latCol}"`});
             req = makeTableFunctionRequest(sreq, 'DecimateTable', 'coverage',
                 {
-                    decimate: !isOrbitalPathTable(tbl_id) ? serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, maxScatterRows) : undefined,
+                    decimate: !isOrbitalPathTable(tbl_id) ? serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, getMaxScatterRows()) : undefined,
                     pageSize: MAX_ROW
                 });
         }
 
-        req.tbl_id = `cov-${tbl_id}`;
+        const isRegion = isTableWithRegion(table);
+        const regionAry = getRegionAryFromTable(table);
+        tblCatIdMap[tbl_id] = (isRegion && regionAry.length > 0) ? [coverageCatalogId(tbl_id), regionId(tbl_id)] : [coverageCatalogId(tbl_id), searchTargetId(tbl_id)];
 
-        if (preparedTables[tbl_id]) { //todo support decimated data
-            updateCoverageWithData(viewerId, table, options, tbl_id, preparedTables[tbl_id], preparedTables,
-                isTableUsingRadians(table), tblCatIdMap, preferredHipsSourceURL, preferredHipsSource360URL, deletedTblId );
+        req.tbl_id = `cov-${tbl_id}`;
+        if (covType===CoverageType.X) {
+            dispatchEnableHpxIndex({tbl_id});
+            await onOrderDataReady(tbl_id);
+             preparedTables[tbl_id] = table;
         }
-        else {
+        const usesRadians= isTableUsingRadians(table);
+
+        if (preparedTables[tbl_id]) {
+            updateCoverageWithData(viewerId, table, options, tbl_id, preparedTables[tbl_id], preparedTables,
+                usesRadians, tblCatIdMap, preferredHipsSourceURL, preferredHipsSource360URL, deletedTblId );
+        }
+        else if (covType!== CoverageType.X) {
             preparedTables[tbl_id] = 'WORKING';
             if (isOrbitalPathTable(tbl_id)) req.sortInfo= undefined;
-            doFetchTable(req).then(
-                (allRowsTable) => {
-                    if (allRowsTable?.tableData?.data?.length > 0) {
-                        preparedTables[tbl_id] = allRowsTable;
-                        const isRegion = isTableWithRegion(allRowsTable);
-                        const regionAry = getRegionAryFromTable(table);
-                        tblCatIdMap[tbl_id] = (isRegion && regionAry.length > 0) ? [centerId(tbl_id), regionId(tbl_id)] : [coverageStandardCatalogId(tbl_id), searchTargetId(tbl_id)];
-                        updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, preparedTables,
-                            isTableUsingRadians(table), tblCatIdMap, preferredHipsSourceURL, preferredHipsSource360URL);
-                    }
+            try {
+                const preparedTable= await doFetchTable(req);
+                if (preparedTable?.tableData?.data?.length > 0) {
+                    preparedTables[tbl_id] = preparedTable;
+                    preparedTable.coverageType= covType;
+                    updateCoverageWithData(viewerId, table, options, tbl_id, preparedTable, preparedTables,
+                        usesRadians, tblCatIdMap, preferredHipsSourceURL, preferredHipsSource360URL, deletedTblId);
                 }
-            ).catch(
-                (reason) => {
-                    preparedTables[tbl_id] = undefined;
-                    tblCatIdMap[tbl_id] = undefined;
-                    logger.error(`Failed to catalog plot data: ${reason}`, reason);
-                }
-            );
 
+            } catch (reason) {
+                preparedTables[tbl_id] = undefined;
+                tblCatIdMap[tbl_id] = undefined;
+                logger.error(`Failed to catalog plot data: ${reason}`, reason);
+            }
         }
     } catch (e) {
         logger.error('Error updating coverage', e);
@@ -362,10 +373,10 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
 /**
  *
  * @param {string} viewerId
- * @param {TableData} table
+ * @param {TableModel} table
  * @param {CoverageOptions} options
  * @param {string} tbl_id
- * @param allRowsTable
+ * @param preparedTable
  * @param preparedTables
  * @param usesRadians
  * @param {object} tblCatIdMap
@@ -373,7 +384,7 @@ function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatIdMap, 
  * @param {string} preferredHipsSource360URL
  * @param {string} deletedTblId - only defined if a table has been deleted
  */
-function updateCoverageWithData(viewerId, table, options, tbl_id, allRowsTable, preparedTables,
+function updateCoverageWithData(viewerId, table, options, tbl_id, preparedTable, preparedTables,
                                 usesRadians, tblCatIdMap, preferredHipsSourceURL, preferredHipsSource360URL, deletedTblId ) {
 
 
@@ -502,9 +513,14 @@ function computeSize(options, preparedTables, usesRadians) {
         .filter( (t) => t && t!=='WORKING')
         .map( (t) => {
             let ptAry= [];
-            const covType= getCoverageType(options,t);
+            const covType= t.coverageType ?? CoverageType.X;
             switch (covType) {
                 case CoverageType.X:
+                    ptAry= [...getHpxIndexData(t.tbl_id).orderData[8].tiles.values()].map(
+                        ({pixel}) => {
+                            return getCornersForCell(8,pixel,CoordSys.EQ_J2000)?.wpCorners ?? [];
+                        }).flat();
+                    break;
                 case CoverageType.ORBITAL_PATH:
                     ptAry= getPtAryFromTable(options,t, usesRadians);
                     break;
@@ -630,78 +646,84 @@ const getCatalogType= (dataType) => {
  * @param {string} plotId
  * @param {CoverageOptions} options
  * @param {TableData} table
- * @param {TableData|String} allRowsTable
+ * @param {TableData|String} preparedTable
  * @param {string} drawOp
  * @param visibleMap - when added it is visible
  */
-function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, visibleMap) {
+function addToCoverageDrawing(plotId, options, table, preparedTable, drawOp, visibleMap) {
 
-    if (allRowsTable==='WORKING') return;
-    const covType= getCoverageType(options,allRowsTable);
-    const {tableMeta, tableData}= allRowsTable;
-    const {showCatalogSearchTarget}= getAppOptions();
+    if (preparedTable==='WORKING') return;
     const {tbl_id}= table;
-    const layersPanelLayoutId= 'catgroup-'+ table.tbl_id;
+    const covType= preparedTable.coverageType ?? CoverageType.X;
+    const {showCatalogSearchTarget}= getAppOptions();
+    const layersPanelLayoutId= 'catgroup-'+ tbl_id;
     const searchTarget= showCatalogSearchTarget ? getSearchTarget(undefined, table,
-                                                   lookupOption(options, 'searchTarget', table.tbl_id),
-                                                   lookupOption(options, 'overlayPosition', table.tbl_id)) : undefined;
+                                                   lookupOption(options, 'searchTarget', tbl_id),
+                                                   lookupOption(options, 'overlayPosition', tbl_id)) : undefined;
 
+    const baseTitle= `Coverage: ${table?.title || tbl_id}`;
 
     const createDrawLayer = (cId, dataType, visible, titleAddition='') => {
-        const columns= getColumns(dataType,covType,allRowsTable);
-        const dl = getDlAry().find((dl) => dl.drawLayerTypeId === Catalog.TYPE_ID && dl.catalogId === cId);
-        const title= `Coverage: ${table?.title || tbl_id}${titleAddition}`;
-        const tableRequest= table?.request;
-        const highlightedRow= table.highlightedRow;
-        const selectInfo= table.selectInfo;
-        const dataTooBigForSelection= table.totalRows > 10000;
 
+        if (covType === CoverageType.X) {
+            console.log('X should use createHpxDrawLayer');
+            return;
+        }
+        const dl = getDlAry().find((dl) => (dl.drawLayerTypeId === Catalog.TYPE_ID) && dl.catalogId === cId);
+        const columns= getColumns(dataType,covType,preparedTable);
         if (isEmpty(columns)) return;
+
+        const title= `${baseTitle}${titleAddition}`;
         if (dl) {
+            const {tableMeta, tableData}= preparedTable;
+            const tableRequest= table?.request;
+            const selectInfo= table.selectInfo;
+            const highlightedRow= table.highlightedRow;
+            const dataTooBigForSelection= table.totalRows > 10000;
             dispatchModifyCustomField(cId, {title, tableData, tableMeta, tableRequest,
                 highlightedRow, selectInfo, columns, dataTooBigForSelection});
             return;
         }
 
-        const catColor= getDrawLayersByType(dlRoot(),Catalog.TYPE_ID)
-            ?.filter( (dl) => dl.tbl_id===tbl_id && dl.drawLayerId===catalogWatcherStandardCatalogId(tbl_id))[0]?.drawingDef.color; // most times this returns undefined
-
-        const color=  catColor ?? drawOp[cId].color;
+        const {color,symbol,size}= getColorSymbolSize(drawOp,options,cId,tbl_id);
+        const {tableMeta, tableData}= preparedTable;
+        const tableRequest= table?.request;
+        const selectInfo= table.selectInfo;
+        const highlightedRow= table.highlightedRow;
+        const dataTooBigForSelection= table.totalRows > 10000;
         dispatchCreateDrawLayer(Catalog.TYPE_ID, {
             catalogId: cId,
             layersPanelLayoutId,
             tbl_id,
             title,
             color,
-            tableData,
-            tableMeta,
-            tableRequest,
+            symbol,
+            size,
             highlightedRow,
             catalogType: getCatalogType(dataType),
             columns,
-            symbol: drawOp.symbol || lookupOption(options, 'symbol', cId),
-            size: drawOp.size || lookupOption(options, 'symbolSize', cId),
+            tableData,
+            tableMeta,
+            tableRequest,
             selectInfo,
             angleInRadian: isUsingRadians(dataType,table,columns),
             dataTooBigForSelection,
             tableSelection: (dataType === CoverageType.REGION) ? (drawOp[cId].selectOption || TableSelectOptions.all.key) : null,
         });
         dispatchAttachLayerToPlot(cId, plotId, false, visible);
+
+
     };
 
     if (covType === CoverageType.BOX) {
-        createDrawLayer(coverageStandardCatalogId(tbl_id), covType, visibleMap[tbl_id] ?? true);
+        createDrawLayer(coverageCatalogId(tbl_id), covType, isVisible(visibleMap,tbl_id));
     } else if (covType === CoverageType.X) {
-        createDrawLayer(coverageStandardCatalogId(tbl_id), covType, visibleMap[tbl_id] ?? true);
+        createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,baseTitle,drawOp,options,isVisible(visibleMap,tbl_id));
     } else if (covType === CoverageType.ORBITAL_PATH) {
-        createDrawLayer(coverageStandardCatalogId(tbl_id), covType, visibleMap[tbl_id] ?? true);
+        createDrawLayer(coverageCatalogId(tbl_id), covType, isVisible(visibleMap,tbl_id));
     } else if (covType === CoverageType.REGION) {
-        const layerType = [CoverageType.X, CoverageType.REGION];
-        const layerId = [centerId(tbl_id), regionId(tbl_id)];
-        const titleAddition=[' positions', ' regions'];
-        const visible= layerId.map( (lId) => visibleMap[lId] ?? true);
-
-        layerType.forEach((type, idx) => createDrawLayer(layerId[idx], layerType[idx], visible[idx], titleAddition[idx]));
+        createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,baseTitle+' positions',drawOp,options, isVisible(coverageCatalogId(visibleMap,tbl_id)));
+        createDrawLayer(regionId(tbl_id),CoverageType.REGION,isVisible(visibleMap,regionId(tbl_id)),' regions');
     }
 
     if (searchTarget) {
@@ -709,7 +731,7 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, visi
         if (!newDL) {
             newDL = dispatchCreateDrawLayer(SearchTarget.TYPE_ID,
                 {
-                    color: darker(drawOp[covType === CoverageType.REGION? centerId(tbl_id) : coverageStandardCatalogId(tbl_id)].color),
+                    color: darker(drawOp[covType === CoverageType.REGION? coverageCatalogId(tbl_id) : coverageCatalogId(tbl_id)].color),
                     drawLayerId: searchTargetId(tbl_id),
                     plotId,
                     searchTargetPoint: searchTarget,
@@ -720,8 +742,30 @@ function addToCoverageDrawing(plotId, options, table, allRowsTable, drawOp, visi
             dispatchAttachLayerToPlot(newDL.drawLayerId, plotId, false);
         }
     }
+}
+
+const isVisible= (visibleMap, tbl_id) => visibleMap[tbl_id] ?? true;
 
 
+function createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,title,drawOp,options,visible) {
+    const catalogId= coverageCatalogId(tbl_id);
+    const dl = getDlAry().find((dl) => (dl.drawLayerTypeId === HpxCatalog.TYPE_ID) && dl.catalogId === catalogId);
+    if (dl) return;
+    const {color,symbol,size}= getColorSymbolSize(drawOp,options,catalogId,tbl_id);
+    dispatchCreateDrawLayer(HpxCatalog.TYPE_ID, {
+        catalogId, layersPanelLayoutId, tbl_id, title, color, symbol, size });
+    dispatchAttachLayerToPlot(catalogId, plotId, false, visible);
+}
+
+function getColorSymbolSize(drawOp, options, catalogId, tbl_id) {
+    const catColor= [...getDrawLayersByType(dlRoot(),Catalog.TYPE_ID), ...getDrawLayersByType(dlRoot(),HpxCatalog.TYPE_ID)]
+        ?.filter( (dl) => dl.tbl_id===tbl_id && dl.drawLayerId===catalogWatcherStandardCatalogId(tbl_id))[0]?.drawingDef.color; // most times this returns undefined
+
+    return {
+        color:  catColor ?? drawOp[catalogId].color,
+        symbol: drawOp[catalogId].symbol || lookupOption(options, 'symbol', catalogId),
+        size: drawOp[catalogId].size || lookupOption(options, 'symbolSize', catalogId),
+    };
 }
 
 
@@ -738,17 +782,17 @@ function lookupOption(options, key, tbl_id) {
     return isObject(value) ? value[tbl_id] : value;
 }
 
-function getCoverageType(options,table) {
+function getCoverageType(options,tableOrId) {
 
+    const table= isString(tableOrId) ? getTblById(tableOrId) : tableOrId;
     if (isOrbitalPathTable(table)) return CoverageType.ORBITAL_PATH;
-    const x = hasCorners(options, table);
 
     if (options.coverageType===CoverageType.GUESS ||
         options.coverageType===CoverageType.REGION ||
         options.coverageType===CoverageType.BOX ||
         options.coverageType===CoverageType.ALL) {
         const regionAry = getRegionAryFromTable(table);
-        if (isTableWithRegion(table) && regionAry.length === 0) {
+        if (isTableWithRegion(table.tbl_id) && regionAry.length === 0) {
             //helpful note for developer/user in the console
             console.log(`Note: We could not parse s_region correctly, possibly because we do not support this format yet, 
             hence it is not displayed in the coverage map.`);
@@ -854,24 +898,6 @@ function findPreferredHiPS(tbl_id,prevPreferredHipsSourceURL, optionHipsSourceUR
     if (prevPreferredHipsSourceURL) return makeRet(prevPreferredHipsSourceURL, prevPreferredHipsSourceURL);
     if (optionHipsSourceURL) return makeRet(optionHipsSourceURL, optionHipsSource360URL);
 }
-
-// function findPreferred360HiPS(tbl_id,prevPreferredHipsSourceURL, optionHipsSourceURL, optionHipsSource360URL, preparedTable) {
-//     const normalUrl= findPreferredHiPS(tbl_id,prevPreferredHipsSourceURL, optionHipsSourceURL, preparedTable);
-//     const table = getTblById(tbl_id);
-//     if (!preparedTable) { // if a new table then the meta takes precedence
-//         const sim= getBooleanMetaEntry(table, MetaConst.SIMULATED_TABLE, false);
-//         const covHips= getMetaEntry(table,MetaConst.COVERAGE_HIPS);
-//         if (covHips) return covHips;
-//         if (sim) return BLANK_HIPS_URL;
-//     }
-//     const plot= primePlot(visRoot(), PLOT_ID);
-//     if (isHiPS(plot)) {
-//         return plot.hipsUrlRoot;
-//     }
-//     return optionHipsSource360URL ?? optionHipsSourceURL;
-//
-// }
-//
 
 function getCommonSearchTarget(tableAry,options) {
     const searchTargetAry= tableAry

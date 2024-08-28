@@ -9,31 +9,47 @@ package edu.caltech.ipac.firefly.server.query;
  */
 
 
+import edu.caltech.ipac.firefly.core.background.Job;
+import edu.caltech.ipac.firefly.core.background.JobInfo;
+import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
-import edu.caltech.ipac.firefly.data.*;
+import edu.caltech.ipac.firefly.core.background.ServCmdJob;
+import edu.caltech.ipac.firefly.data.ServerEvent;
+import edu.caltech.ipac.firefly.data.ServerParams;
+import edu.caltech.ipac.firefly.data.ServerRequest;
+import edu.caltech.ipac.firefly.data.SortInfo;
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServCommand;
+import edu.caltech.ipac.firefly.server.ServerCommandAccess;
+import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.packagedata.PackagedEmail;
 import edu.caltech.ipac.firefly.server.packagedata.PackagingWorker;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
+import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.JsonTableUtil;
-import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.StringUtils;
-import edu.caltech.ipac.firefly.core.background.Job;
-import edu.caltech.ipac.firefly.core.background.JobInfo;
-import edu.caltech.ipac.firefly.core.background.JobManager;
-import edu.caltech.ipac.firefly.core.background.ServCmdJob;
 import org.json.simple.JSONObject;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URL;
-import java.util.*;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
+import java.util.List;
 
 import static edu.caltech.ipac.firefly.data.ServerParams.EMAIL;
 import static edu.caltech.ipac.firefly.data.ServerParams.JOB_ID;
@@ -65,7 +81,7 @@ public class SearchServerCommands {
             TableServerRequest tsr = params.getTableServerRequest();
             String format = params.getOptional(FORMAT, "json");
 
-            SearchProcessor processor = SearchManager.getProcessor(tsr.getRequestId());
+            SearchProcessor<?> processor = SearchManager.getProcessor(tsr.getRequestId());
             if (processor instanceof Job.Worker) setWorker((Job.Worker)processor);
 
             if (format.toLowerCase().contains("votable")) {
@@ -79,6 +95,82 @@ public class SearchServerCommands {
             }
         }
     }
+
+    public static class TableSearchSpatialBinary extends ServerCommandAccess.HttpCommand{
+
+        public void processRequest(HttpServletRequest req, HttpServletResponse res, SrvParam params) throws Exception {
+            TableServerRequest tsr = params.getTableServerRequest();
+            var raName= tsr.getParam("lonCol");
+            var decName= tsr.getParam("latCol");
+            if (isEmpty(raName) || isEmpty(decName)) {
+                throw new IllegalArgumentException("missing parameters: lonCol or latCol in TableServerRequest");
+            }
+
+            TableServerRequest finalTsr= (TableServerRequest)tsr.cloneRequest();
+            finalTsr.removeParam("lonCol");
+            finalTsr.removeParam("latCol");
+            var raDecArrayCol= raName.equals(decName);
+            var inclCol= raDecArrayCol ?
+                    String.format("\"%s\"", raName) : String.format("\"%s\",\"%s\"", raName, decName);
+            finalTsr.setInclColumns(inclCol);
+
+            SearchProcessor<?> processor = SearchManager.getProcessor(finalTsr.getRequestId());
+            DataGroupPart dgp = new SearchManager().getDataGroup(finalTsr, processor);
+            DataGroup dg= dgp.getData();
+
+            if (!dg.containsKey(raName) || !dg.containsKey(decName)) {
+                throw new IllegalArgumentException("table does not match: lonCol or latCol parameters");
+            }
+
+            byte[] raByteAry= new byte[dg.size()*4];
+            int[] decAry= new int[dg.size()];
+            double pow= Math.pow(10,7);
+            var len= dg.size();
+            DataObject obj;
+            if (raDecArrayCol) {
+                if (!(dg.get(0).getDataElement(raName) instanceof double[])) {
+                    throw new IllegalArgumentException(
+                            "table that should ra/dec columns as double[] is not correct, found: " +
+                            dg.get(0).getDataElement(raName).getClass());
+                }
+                for(int i=0; (i<len);i++) {
+                    obj= dg.get(i);
+                    double[] raDecAry= (double[])obj.getDataElement(raName);
+                    long raVal= (long)(raDecAry[0]*pow);
+                    populateToLittleEndianByte(raVal,raByteAry,i*4);
+                    decAry[i]= (int)(raDecAry[1]*pow);
+                }
+            }
+            else {
+                for(int i=0; (i<len);i++) {
+                    obj= dg.get(i);
+                    long raVal= (long)((obj.getDouble(raName,0))*pow);
+                    populateToLittleEndianByte(raVal,raByteAry,i*4);
+                    decAry[i]= (int)((obj.getDouble(decName,0))*pow);
+                }
+            }
+
+            res.setContentType("application/octet-stream");
+            ByteBuffer decByteBuf = ByteBuffer.allocateDirect( len * Integer.BYTES);
+            decByteBuf.order(ByteOrder.LITTLE_ENDIAN);
+            IntBuffer decIntBuff= decByteBuf.asIntBuffer();
+            decIntBuff.put(decAry);
+            decByteBuf.position(0);
+            WritableByteChannel chan= Channels.newChannel(res.getOutputStream());
+            chan.write(ByteBuffer.wrap(raByteAry));
+            chan.write(decByteBuf);
+            chan.close();
+        }
+
+        private static void populateToLittleEndianByte(long v, byte[] raByteAry, int bIdx) {
+            var bAry= BigInteger.valueOf(v).toByteArray();
+            var start= bAry.length-1;
+            for(var i=0;i<4;i++) {
+                raByteAry[bIdx+i]= start-i<0 ? 0 : bAry[start-i];
+            }
+        }
+    }
+
     public static class AddOrUpdateColumn extends ServCommand {
 
         public boolean getCanCreateJson() { return false; }

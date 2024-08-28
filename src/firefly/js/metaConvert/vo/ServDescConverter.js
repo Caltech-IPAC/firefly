@@ -1,8 +1,7 @@
 import {isEmpty} from 'lodash';
 import {hasRowAccess} from '../../tables/TableUtil.js';
-import {makeWorldPtUsingCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
+import {getSearchTarget, makeWorldPtUsingCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
-import {getSearchTarget} from '../../visualize/saga/CatalogWatcher.js';
 import {getActiveMenuKey} from '../DataProductsCntlr.js';
 import {dpdtFromMenu, dpdtSimpleMsg} from '../DataProductsType.js';
 import {

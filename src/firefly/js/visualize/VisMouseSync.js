@@ -119,6 +119,7 @@ export function makeMouseStatePayload(plotId,mouseState,screenPt,screenX,screenY
     payload.plotId= plotId;
     payload.imagePt= cc.getImageCoords(screenPt);
     const worldPt= cc.getWorldCoords(screenPt);
+    payload.devicePt= cc.getDeviceCoords(screenPt);
     payload.worldPt= worldPt;
     if (isHiPS(plot) && worldPt) {
         const result= getHealpixPixel(plot,worldPt);

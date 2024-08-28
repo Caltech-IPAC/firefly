@@ -54,10 +54,6 @@ export function recenterImages(tbl_id, action, cancelSelf, params) {
             recenterImageActiveRow(tbl_id, imageScrollsToActiveTableOnLoadOrSelect);
             break;
 
-        case TABLE_SELECT:
-            recenterImageActiveRow(tbl_id);
-            break;
-
         case TABLE_HIGHLIGHT:
         case TABLE_UPDATE:
             recenterImageActiveRow(tbl_id);

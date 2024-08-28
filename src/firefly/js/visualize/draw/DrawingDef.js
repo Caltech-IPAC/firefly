@@ -16,8 +16,13 @@ const COLOR_PT_5 =  '#990099'; //purple
 const COLOR_PT_6 = '#ff00FF'; //pinkish
 const COLOR_PT_7 = '#00ffff'; //Aqua
 const COLOR_PT_8 = '#800000'; //Maroon
+const COLOR_PT_9 = '#AAFFA2';
+const COLOR_PT_10 = '#AAAAFF';
 
-const USED_COLORS= [COLOR_PT_1, COLOR_PT_2, COLOR_PT_3, COLOR_PT_5, COLOR_PT_6, COLOR_PT_7, COLOR_PT_8];
+const USED_COLORS= [
+    COLOR_PT_1, COLOR_PT_2, COLOR_PT_3, COLOR_PT_5, COLOR_PT_6,
+    COLOR_PT_7, COLOR_PT_8,COLOR_PT_9, COLOR_PT_10
+];
 
 export const COLOR_DRAW_1 = '#ff0000'; // red
 export const COLOR_DRAW_2 = '#5500ff'; // purple

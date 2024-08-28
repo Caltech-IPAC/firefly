@@ -79,7 +79,7 @@ export function singleTraceUI() {
  * @returns {*}
  */
 export function getMaxScatterRows() {
-    return get(getAppOptions(), 'charts.maxRowsForScatter', 5000);
+    return get(getAppOptions(), 'charts.maxRowsForScatter', 25000);
 }
 
 
@@ -378,7 +378,9 @@ export function updateSelected(chartId, selectInfo) {
     const {data, activeTrace=0} = getChartData(chartId);
     const selectInfoCls = SelectInfo.newInstance(selectInfo);
     const selIndexes = getSelIndexes(data, selectInfoCls, activeTrace);
-    if (selIndexes) {
+              // added a check for very long selections, this will disable charts showing selection in this case.
+              // The application locks up without it.
+    if (selIndexes && selIndexes.length<getMaxScatterRows()) {
         dispatchChartSelect({chartId, selIndexes});
     }
 }

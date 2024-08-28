@@ -80,6 +80,11 @@ export const computeSimpleSlopeAngle = function (fromPt, toPt) {
     return Math.atan2(dy, dx);
 };
 
+export const computeSimpleSlope= function (fromPt, toPt) {
+    const dx = toPt.x - fromPt.x;
+    const dy = toPt.y - fromPt.y;
+    return dy/dx;
+};
 
 export function getLonDist(lon1,lon2) {
     if (lon1>lon2) {
@@ -424,6 +429,48 @@ export const intersects= function(x0, y0, w0, h0, x, y, w, h) {
     return (x + w > x0 && y + h > y0 && x < x0 + w0 && y < y0 + h0);
 };
 
+export function linesIntersect1(a,b,c,d,p,q,r,s) {
+  var det, gamma, lambda;
+  det = (c - a) * (s - q) - (r - p) * (d - b);
+  if (det === 0) {
+    return false;
+  } else {
+    lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det;
+    gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det;
+    return (0 < lambda && lambda < 1) && (0 < gamma && gamma < 1);
+  }
+}
+
+export function lineIntersect2(x1,y1,x2,y2, x3,y3,x4,y4) {
+    var x=((x1*y2-y1*x2)*(x3-x4)-(x1-x2)*(x3*y4-y3*x4))/((x1-x2)*(y3-y4)-(y1-y2)*(x3-x4));
+    var y=((x1*y2-y1*x2)*(y3-y4)-(y1-y2)*(x3*y4-y3*x4))/((x1-x2)*(y3-y4)-(y1-y2)*(x3-x4));
+    if (isNaN(x)||isNaN(y)) {
+        return false;
+    } else {
+        if (x1>=x2) {
+            if (!(x2<=x&&x<=x1)) {return false;}
+        } else {
+            if (!(x1<=x&&x<=x2)) {return false;}
+        }
+        if (y1>=y2) {
+            if (!(y2<=y&&y<=y1)) {return false;}
+        } else {
+            if (!(y1<=y&&y<=y2)) {return false;}
+        }
+        if (x3>=x4) {
+            if (!(x4<=x&&x<=x3)) {return false;}
+        } else {
+            if (!(x3<=x&&x<=x4)) {return false;}
+        }
+        if (y3>=y4) {
+            if (!(y4<=y&&y<=y3)) {return false;}
+        } else {
+            if (!(y3<=y&&y<=y4)) {return false;}
+        }
+    }
+    return true;
+}
+
 
 /**
  * test to see if a point is in a rectangle
@@ -435,7 +482,7 @@ export const intersects= function(x0, y0, w0, h0, x, y, w, h) {
  * @param y the second point y, top left
  * @return {boolean} true if rectangles intersect
  */
-export const contains= function(x0, y0, w0, h0, x, y) {
+export function contains(x0, y0, w0, h0, x, y) {
     return (x >= x0 && y >= y0 && x < x0 + w0 && y < y0 + h0);
 };
 

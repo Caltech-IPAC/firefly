@@ -295,7 +295,11 @@ function endFillPath(ctx, close = true, bStroke = true) {
 
 function addStyle(ctx,renderOptions) {
     if (!ctx || !renderOptions) return;
-    const {shadow,rotAngle,translation, lineDash}= renderOptions;
+    const {shadow,rotAngle,translation, lineDash, lineJoin}= renderOptions;
+
+    if (lineJoin) {
+       ctx.lineJoin= lineJoin;
+    }
 
     if (lineDash) {
         ctx.setLineDash(lineDash);

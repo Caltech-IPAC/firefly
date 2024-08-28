@@ -202,7 +202,7 @@ export function dispatchTableSort(request, hlRowIdx, dispatcher= flux.process) {
 /**
  * Filter the table given the request.
  * @param request a table request params object.
- * @param hlRowIdx set the highlightedRow.  default to startIdx.
+ * @param [hlRowIdx] set the highlightedRow.  default to startIdx.
  * @param {function} dispatcher only for special dispatching uses such as remote
  */
 export function dispatchTableFilter(request, hlRowIdx, dispatcher= flux.process) {

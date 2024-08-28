@@ -2,13 +2,13 @@ import {isEmpty} from 'lodash';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {getCellValue, getColumns, hasRowAccess} from '../../tables/TableUtil.js';
 import {
-    getObsCoreAccessURL, getObsCoreProdTypeCol, getObsReleaseDate, getObsTitle, getProdTypeGuess, isFormatDataLink,
+    getObsCoreAccessURL, getObsCoreProdTypeCol, getObsReleaseDate, getObsTitle, getProdTypeGuess, getSearchTarget,
+    isFormatDataLink,
     isFormatPng,
     isFormatVoTable, makeWorldPtUsingCenterColumns
 } from '../../voAnalyzer/TableAnalysis.js';
 import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {tokenSub} from '../../util/WebUtil.js';
-import {getSearchTarget} from '../../visualize/saga/CatalogWatcher.js';
 import {uploadAndAnalyze} from '../AnalysisUtils.js';
 import {dispatchUpdateActiveKey} from '../DataProductsCntlr.js';
 import {dpdtFromMenu, dpdtMessageWithDownload, dpdtPNG, dpdtSimpleMsg,} from '../DataProductsType.js';
