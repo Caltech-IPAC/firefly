@@ -223,14 +223,14 @@ const AdvancedColorPanel= ({allowPopout}) => {
 
     const ctArray= (image? colorTables : hipsColorTables);
 
-    const makeItems= () =>
-        ctArray.map( (ct) =>
-            (<ToolbarButton icon={ct.icon} tip={ct.tip} style={{padding: '2px 0 2px 0'}}
-                            text={ct.icon ? undefined : 'Default Color Map' }
+    const makeItems = () =>
+        ctArray.map((ct) =>
+            (<ToolbarButton icon={<img src={ct.icon} style={{height:8, width:200}}/>}
+                            tip={ct.tip} style={{padding: '2px 0 2px 0'}}
+                            text={ct.icon ? undefined : 'Default Color Map'}
                             enabled={true} horizontal={false} key={ct.id}
-                            hasCheckBox={true} checkBoxOn={colorTableId===ct.id}
-                            imageStyle={{height:8,width:200}}
-                            onClick={() => changeBiasContrastColor(ct.id, bias,contrast)}/>) );
+                            hasCheckBox={true} checkBoxOn={colorTableId === ct.id}
+                            onClick={() => changeBiasContrastColor(ct.id, bias, contrast)}/>));
 
     const makeAdvancedStandardFeatures= () => (
         <Box width={230} height={180}>
