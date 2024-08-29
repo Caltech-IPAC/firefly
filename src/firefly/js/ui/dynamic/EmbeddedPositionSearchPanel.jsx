@@ -30,7 +30,7 @@ import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
  * @param {String} [props.hipsUrl] - url for the hips url
  * @param [props.hipsFOVInDeg] - field of view of the initial HiPS display
  * @param {WorldPt} [props.initCenterPt] - center point of the initial HiPS display - string - 1.1;2.2;EQ_J2000
- * @param {Array.<{mocUrl:String, title:String}>} [props.mocList] - a list of MOCS to display, an array of MOC URLs
+ * @param {Array.<{mocUrl:String, mocColor:String, title:String}>} [props.mocList] - a list of MOCS to display, an array of MOC URLs
  * @param {String} [props.sRegion] - an sRegion to display
  * @param {String} [props.coordinateSys] - coordinate system of HiPS - must be 'EQ_J2000' or 'GALACTIC'
  * @param {String} [props.targetKey] - field group key for the target field

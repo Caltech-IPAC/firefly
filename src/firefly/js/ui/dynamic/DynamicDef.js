@@ -24,12 +24,13 @@ export const CIRCLE = 'circle';
  * @param {WorldPt} obj.centerPt
  * @param {number} obj.hipsFOVInDeg
  * @param {CoordinateSys} obj.coordinateSys
- * @param {String|Array.<String>} obj.mocList
+ * @param {Array.<{mocUrl:String, mocColor:String, title:String}>} obj.mocList
  * @param {boolean} obj.nullAllowed
  * @param {number} obj.minValue
  * @param {number} obj.maxValue
  * @param {String} obj.targetPanelExampleRow1
  * @param {String} obj.targetPanelExampleRow2
+ * @param {String} sRegion
  * @return {FieldDef}
  */
 export function makeTargetDef({
@@ -138,10 +139,10 @@ export const makeUnknownDef = ({key, desc, tooltip, units, initValue, nullAllowe
  * @param {number} obj.initValue
  * @param {number} obj.minValue
  * @param {number} obj.maxValue
- * @param {boolean} obj.nullAllowed
+ * @param {boolean} [obj.nullAllowed]
  * @return {FieldDef}
  */
-export const makeAreaDef = ({key, minValue, maxValue, desc, tooltip, initValue, nullAllowed}) =>
+export const makeAreaDef = ({key, minValue, maxValue, desc, tooltip, initValue, nullAllowed=false}) =>
     ({type: AREA, key, desc, tooltip, initValue, minValue, maxValue, nullAllowed});
 
 /**
@@ -161,7 +162,7 @@ export const makeAreaDef = ({key, minValue, maxValue, desc, tooltip, initValue, 
  * @param obj.coordinateSys
  * @param {String} [obj.sRegion]  an obsCore s_region type string
  * @param obj.hipsUrl
- * @param obj.mocList
+ * @param {Array.<{mocUrl:String, mocColor:String, title:String}>} obj.mocList
  * @param {String} [obj.targetPanelExampleRow1]
  * @param {String} [obj.targetPanelExampleRow2]
  * @returns {FieldDef}
@@ -218,7 +219,7 @@ export const makeRangeDef = ({key, desc, tooltip,
  * @prop {WorldPt} centerPt
  * @prop {number} hipsFOVInDeg
  * @prop {string} coordinateSys - one of 'GALACTIC' or 'EQ_J2000'
- * @prop {Array.<{mocUrl:String, title:String}>} mocList
+ * @prop {Array.<{mocUrl:String, mocColor:String, title:String}>} mocList
  * @prop {boolean} nullAllowed
  * @prop {String} raKey
  * @prop {String} decKey

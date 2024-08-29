@@ -68,7 +68,7 @@ const sharedPropTypes= {
     whichOverlay: string,
     setWhichOverlay: func,
     coordinateSys: oneOf([CoordinateSys.GALACTIC, CoordinateSys.EQ_J2000]),
-    mocList: arrayOf( shape({ mocUrl: string, title: string }) ),
+    mocList: arrayOf( shape({ mocUrl: string, title: string, mocColor:string }) ),
 };
 
 export function VisualPolygonPanel({label, initValue, tooltip, fieldKey, sx, placeholder,
