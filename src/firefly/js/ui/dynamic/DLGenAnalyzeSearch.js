@@ -130,7 +130,7 @@ export function isSpatialTypeSupported(serviceDef, spacialType) {
  * @typedef {Object} QueryAnalysis
  *
  * @prop {Array.<SearchDefinition>} primarySearchDef - this is the main search
- * @prop {Array.<SearchDefinition>} concurrentSearchDef - these search could happen along with the main serach
+ * @prop {Array.<SearchDefinition>} concurrentSearchDef - these search could happen along with the main search
  * @prop {Array.<SearchDefinition>} urlRows - should be not service def just a simple URL to call
  */
 
@@ -146,5 +146,6 @@ export function isSpatialTypeSupported(serviceDef, spacialType) {
  * @prop {String} desc - from the description column
  * @prop {String} id
  * @prop {String} semantic - from the semantic column
+ * @prop {ServiceDescriptorDef} serviceDef - the service descriptor
  *
  */

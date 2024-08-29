@@ -1,4 +1,4 @@
-import {Box, Link, Sheet, Skeleton, Stack, Typography} from '@mui/joy';
+import {Box, Sheet, Skeleton, Stack, Typography} from '@mui/joy';
 import {isArray, isEmpty} from 'lodash';
 import {bool, func, object, shape, string} from 'prop-types';
 import React, {useEffect, useState} from 'react';
@@ -24,6 +24,7 @@ import {CONE_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
 import {isHiPS} from '../../visualize/WebPlot.js';
 import {UserZoomTypes} from '../../visualize/ZoomUtil.js';
 import {cisxAdhocServiceUtype, standardIDs} from '../../voAnalyzer/VoConst.js';
+import {getStandardId, getUtype} from '../../voAnalyzer/VoDataLinkServDef';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {FieldGroupTabs, Tab} from '../panel/TabPanel.jsx';
 import {showInfoPopup} from '../PopupUtil.jsx';
@@ -31,7 +32,7 @@ import {useStoreConnector} from '../SimpleComponent.jsx';
 import {analyzeQueries, handleSearch} from './DLGenAnalyzeSearch.js';
 import {DLSearchTitle, SideBarAnimation, SideBarTable} from './DLuiDecoration.jsx';
 import {DLuiRootSearchPanel} from './DLuiRootSearchPanel.jsx';
-import {CIRCLE, POSITION, RANGE} from './DynamicDef.js';
+import {CIRCLE, POINT, POSITION, RANGE} from './DynamicDef.js';
 import {convertRequest, DynLayoutPanelTypes, findTargetFromRequest} from './DynamicUISearchPanel.jsx';
 import {getSpacialSearchType, hasValidSpacialSearch} from './DynComponents.jsx';
 import {confirmDLMenuItem} from './FetchDatalinkTable.js';
@@ -236,13 +237,13 @@ function DLGeneratedDropDownTables({registryTblId, regLoaded, loadedTblIds, setL
     const currentTblId= loadedTblIds?.[url];
     useEffect(() => {
         if (regLoaded && !currentTblId) {
+            if (!url) return;
             const loadOptions=  {META_INFO:{
                     [MetaConst.LOAD_TO_DATALINK_UI]: 'true',
                     [MetaConst.IMAGE_SOURCE_ID] : 'FALSE',
                     ...searchAttributes,
                 },
             };
-            if (!url) return;
             console.log(`Dataset url: ${url}`);
             const req= makeFileRequest('Data link UI', url, undefined, loadOptions);
             const {tbl_id}= req.META_INFO;
@@ -341,42 +342,16 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
     useEffect(() => {
         if (initArgs?.urlApi?.execute && onClick && matchUrl) {
             executeInitOnce(true, () => {
-                logger.warn(`execute (${initArgs.urlApi.callId}) url: ${initArgs?.urlApi.url}`, initArgs?.urlApi);
-                setCallId(initArgs.urlApi.callId ?? 'none'); //forces one more render after unmount
+                const callId= initArgs.urlApi.callId ?? 'none';
+                setCallId(callId); //forces one more render after unmount
+                logger.warn(`execute (${callId}) url: ${initArgs?.urlApi.url}`, initArgs?.urlApi);
                 dispatchMountFieldGroup(groupKey, false, false); // unmount to force to forget default so it will reinit
                 setTimeout(() => onClick(),10);
             }, initArgs.urlApi.callId);
         }
     }, [onClick, initArgs?.urlApi?.callId, matchUrl]);
 
-
-    const fdAry= qAna?.primarySearchDef.map( (fd) => {
-        const {serviceDef}= fd; //todo handle case with only an access url
-        if (!serviceDef) return;
-        const standId= (serviceDef.standardID??'').toLowerCase();
-        const utype= (serviceDef.utype||'').toLowerCase();
-        let fdEntryAry;
-        if (utype===cisxAdhocServiceUtype && standId.startsWith(standardIDs.tap) && serviceDef.cisxTokenSub) {
-            fdEntryAry= makeFieldDefs(serviceDef.cisxTokenSub, undefined, makeSearchAreaInfo(serviceDef.cisxUI), false);
-        }
-        else {
-            fdEntryAry= makeFieldDefs(serviceDef.serDefParams, undefined, makeSearchAreaInfo(serviceDef.cisxUI), true);
-        }
-        if (!isEmpty(initArgs.urlApi)) {
-            const originalWp= fdEntryAry.find((fd) => fd.type===POSITION)?.initValue ?? fdEntryAry.find((fd) => fd.type===CIRCLE)?.targetDetails?.centerPt;
-            const initFdEntryAry= ingestInitArgs(fdEntryAry,initArgs.urlApi);
-            const initWp= initFdEntryAry.find((fd) => fd.type===POSITION)?.initValue ?? initFdEntryAry.find((fd) => fd.type===CIRCLE)?.targetDetails?.centerPt;
-            if (!pointEquals(originalWp,initWp)) {
-                executeInitTargetOnce(true, () => initWp && dispatchActiveTarget(initWp), initArgs?.urlApi?.callId);
-            }
-            return initFdEntryAry;
-        }
-        else {
-            return fdEntryAry;
-        }
-
-    }).filter( (entry) => entry);
-
+    const fdAry= makePrimarySearchFieldDefAry(qAna,initArgs);
 
     const searchObjFds= fdAry
         ?.map((fds,idx) => {
@@ -387,41 +362,17 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
             return {fds, standardID, idx, ID, desc};
         });
 
-    const findFieldDefInfo= (request) =>
-        searchObjFds.length===1 ? searchObjFds[0] : searchObjFds.find(({ID}) => ID===request[tabsKey]) ?? {};
-
 
     useEffect(() => { // on table change: recenter hips if no target entered, change hips if new one is specified
         if (!currentTblId) return;
-        const plot= primePlot(visRoot(),HIPS_PLOT_ID);
-        if (!plot || !isHiPS(plot)) return;
-        if (!qAna?.primarySearchDef?.[0]?.serviceDef?.cisxUI) return;
-        const request= getFieldGroupResults(groupKey); // todo: this might not be right, there might be an array of field groups
-        const {fds}= findFieldDefInfo(request) ?? {};
-        const tgt= findTargetFromRequest(request,fds);
-        if (tgt) return;
-
-        const {cisxUI}= qAna.primarySearchDef[0].serviceDef;
-        const raStr= cisxUI.find( (e) => e.name==='hips_initial_ra')?.value;
-        const decStr= cisxUI.find( (e) => e.name==='hips_initial_dec')?.value;
-        const ucdStr= cisxUI.find( (e) => e.name==='hips_initial_ra')?.UCD;
-        const fovStr= cisxUI.find( (e) => e.name==='hips_initial_fov')?.value;
-        const coordSys= ucdStr==='pos.galactic.lon' ? CoordSys.GALACTIC : CoordSys.EQ_J2000;
-        const centerProjPt= makeWorldPt(raStr, decStr, coordSys);
-        if (!centerProjPt) return;
-        dispatchChangeCenterOfProjection({plotId:HIPS_PLOT_ID, centerProjPt});
-        const fov= Number(fovStr);
-        const pv= getPlotViewById(visRoot(),HIPS_PLOT_ID);
-        if (fov && pv) {
-            const MIN_FOV_SIZE= .0025; // 9 arcsec - minimum fov for initial size
-            const cleanFov= Math.max(fov,MIN_FOV_SIZE);
-            const level= getHiPSZoomLevelForFOV(pv,cleanFov);
-            if (level) dispatchZoom({plotId:pv.plotId, userZoomType: UserZoomTypes.LEVEL, level});
-       }
+        const request= getFieldGroupResults(groupKey);
+        const fds= searchObjFds.length===1 ?
+            searchObjFds[0].fds :
+            searchObjFds.find(({ID}) => ID===request[tabsKey])?.fds;
+        alignHiPS(currentTblId,qAna,groupKey, fds);
     }, [currentTblId]);
 
-    const {cisxUI}= qAna?.primarySearchDef?.[0]?.serviceDef ?? {};
-    const isAllSky= toBoolean(cisxUI?.find( (e) => e.name==='data_covers_allsky')?.value);
+    const isAllSky= toBoolean(getCisxUI(qAna)?.find( (e) => e.name==='data_covers_allsky')?.value);
     const docRows= qAna?.urlRows.filter( ({semantic}) => semantic?.toLowerCase().endsWith('documentation'));
     const submitSearch= (request) => doSubmitSearch(request,docRows,qAna,fdAry,searchObjFds,tabsKey);
 
@@ -448,6 +399,99 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
 }
 
 
+/**
+ * recenter hips if no target entered, change hips if new one is specified
+ *
+ * @param {String} currentTblId
+ * @param {QueryAnalysis} qAna - the description of all the searches to do for this table
+ * @param {String} groupKey
+ * @param {Array.<FieldDef>} fieldDefAry
+ */
+function alignHiPS(currentTblId, qAna, groupKey, fieldDefAry) {
+    if (!currentTblId) return;
+    const plot= primePlot(visRoot(),HIPS_PLOT_ID);
+    if (!isHiPS(plot)) return;
+    if (!getCisxUI(qAna).length) return;
+    const request= getFieldGroupResults(groupKey); // todo: this might not be right, there might be an array of field groups
+    const tgt= findTargetFromRequest(request,fieldDefAry);
+    if (tgt) return;
+
+    const cisxUI= getCisxUI(qAna);
+    const raStr= cisxUI.find( (e) => e.name==='hips_initial_ra')?.value;
+    const decStr= cisxUI.find( (e) => e.name==='hips_initial_dec')?.value;
+    const ucdStr= cisxUI.find( (e) => e.name==='hips_initial_ra')?.UCD;
+    const fovStr= cisxUI.find( (e) => e.name==='hips_initial_fov')?.value;
+    const coordSys= ucdStr==='pos.galactic.lon' ? CoordSys.GALACTIC : CoordSys.EQ_J2000;
+    const centerProjPt= makeWorldPt(raStr, decStr, coordSys);
+    if (!centerProjPt) return;
+    dispatchChangeCenterOfProjection({plotId:HIPS_PLOT_ID, centerProjPt});
+    const fov= Number(fovStr);
+    const pv= getPlotViewById(visRoot(),HIPS_PLOT_ID);
+    if (!fov || !pv) return;
+    const MIN_FOV_SIZE= .0025; // 9 arcsec - minimum fov for initial size
+    const cleanFov= Math.max(fov,MIN_FOV_SIZE);
+    const level= getHiPSZoomLevelForFOV(pv,cleanFov);
+    if (level) dispatchZoom({plotId:pv.plotId, userZoomType: UserZoomTypes.LEVEL, level});
+}
+
+
+/**
+ * @param {QueryAnalysis|ServiceDescriptorDef} qAnaOrSd - accept a QueryAnalysis or a ServiceDescriptorDef
+ * @return {CISXui|Array} ui parameters or an empty array
+ */
+function getCisxUI(qAnaOrSd) {
+    if (!qAnaOrSd) return [];
+    if (qAnaOrSd.primarySearchDef) { // is QueryAnalysis
+        return qAnaOrSd.primarySearchDef[0]?.serviceDef?.cisxUI ?? [];
+    }
+    else if (qAnaOrSd.accessURL) { // is ServiceDescriptorDef
+        return qAnaOrSd.cisxUI ?? [];
+    }
+    return [];
+}
+/**
+ * map the primarySearchDef (a SearchDefinition) array in QueryAnalysis to an array of FieldDef arrays.
+ * Usually there is only one primarySearchDef
+ *
+ * @param {QueryAnalysis} qAna - the description of all the searches to do for this table
+ * @param {Object} initArgs
+ * @return {Array.<Array.<FieldDef>>}
+ */
+function makePrimarySearchFieldDefAry(qAna, initArgs) {
+    return qAna?.primarySearchDef.map( (fd) => {
+        const {serviceDef}= fd; //todo handle case with only an access url
+        if (!serviceDef) return;
+        const standId= getStandardId(serviceDef);
+        const utype= getUtype(serviceDef);
+        let fdEntryAry;
+        if (utype===cisxAdhocServiceUtype && standId.startsWith(standardIDs.tap) && serviceDef.cisxTokenSub) {
+            fdEntryAry= makeFieldDefs(serviceDef.cisxTokenSub, undefined, makeSearchAreaInfo(getCisxUI(serviceDef)), false);
+        }
+        else {
+            fdEntryAry= makeFieldDefs(serviceDef.serDefParams, undefined, makeSearchAreaInfo(getCisxUI(serviceDef)), true);
+        }
+        if (!isEmpty(initArgs.urlApi)) {
+            const originalWp= fdEntryAry.find((fd) => fd.type===POSITION)?.initValue ?? fdEntryAry.find((fd) => fd.type===CIRCLE)?.targetDetails?.centerPt;
+            const initFdEntryAry= ingestInitArgs(fdEntryAry,initArgs.urlApi);
+            const initWp= findInitWp(initFdEntryAry);
+            if (!pointEquals(originalWp,initWp)) {
+                executeInitTargetOnce(true, () => initWp && dispatchActiveTarget(initWp), initArgs?.urlApi?.callId);
+            }
+            return initFdEntryAry;
+        }
+        else {
+            return fdEntryAry;
+        }
+
+    }).filter(Boolean);
+}
+
+
+function findInitWp(initFdEntryAry) {
+    return initFdEntryAry.find((fd) => fd.type===POSITION)?.initValue ??
+        initFdEntryAry.find((fd) => fd.type===POINT)?.initValue ??
+        initFdEntryAry.find((fd) => fd.type===CIRCLE)?.targetDetails?.centerPt;
+}
 
 const NotLoaded= ({regHasUrl,regLoaded, url}) => (
     (regHasUrl || !regLoaded) ?
