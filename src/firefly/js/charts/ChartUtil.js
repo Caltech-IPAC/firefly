@@ -36,7 +36,7 @@ import {getTraceTSEntries as histogramTSGetter} from './dataTypes/FireflyHistogr
 import {getTraceTSEntries as heatmapTSGetter} from './dataTypes/FireflyHeatmap.js';
 import {getTraceTSEntries as genericTSGetter} from './dataTypes/FireflyGenericData.js';
 import {getTraceTSEntries as spectrumTSGetter, spectrumPlot, spectrumType} from './dataTypes/FireflySpectrum.js';
-import Color from '../util/Color.js';
+import {toRGBA as colorToRGBA} from '../util/Color.js';
 import {MetaConst} from '../data/MetaConst';
 import {ALL_COLORSCALE_NAMES, colorscaleNameToVal} from './Colorscale.js';
 import {getColValidator} from './ui/ColumnOrExpression.jsx';
@@ -792,7 +792,7 @@ export const TRACE_COLORSCALE = ALL_COLORSCALE_NAMES;
 
 export function toRGBA(c, alpha) {
     if (!alpha) { alpha = DEFAULT_ALPHA; }
-    const [r, g, b, a] = Color.toRGBA(c, alpha);
+    const [r, g, b, a] = colorToRGBA(c, alpha);
     return `rgba(${r},${g},${b},${a})`;
 }
 

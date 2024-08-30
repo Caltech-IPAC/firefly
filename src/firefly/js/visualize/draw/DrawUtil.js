@@ -7,7 +7,7 @@ import {toRadians} from '../VisUtil.js';
 
 const FALLBACK_COLOR = 'red';
 
-export default {getColor, beginPath, stroke, strokeRec, drawLine, drawText, drawTextCanvas, drawPath, makeShadow,
+export default {getColor, beginPath, stroke, fill, strokeRec, drawLine, drawText, drawTextCanvas, drawPath, makeShadow,
                 drawHandledLine, drawInnerRecWithHandles, drawCircleWithHandles, drawEclipseWithHandles, rotateAroundScreenPt,
                 drawX, drawSquareX, drawSquare, drawEmpSquareX, drawCross, drawSymbol, drawPointMarker,
                 drawEmpCross, drawDiamond, drawDot, drawCircle, drawEllipse, drawBoxcircle,
@@ -262,6 +262,11 @@ function beginPath(ctx,color,lineWidth,renderOptions) {
 
 function stroke(ctx) {
     ctx.stroke();
+    ctx.restore();
+}
+
+function fill(ctx,fillPath) {
+    ctx.fill(fillPath);
     ctx.restore();
 }
 

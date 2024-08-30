@@ -128,15 +128,15 @@ export function getHiPSNorderlevel(plot, limitToImageDepth= false) {
 }
 
 
-export function getCatalogNorderlevel(plot,minNOrder=7, maxNorder) {
+export function getCatalogNorderlevel(plot,minNOrder=7, maxNorder,gridSize=128) {
     if (!plot) return -1;
 
     const screenPixArcsecSize= getScreenPixScaleArcSec(plot);
     if (screenPixArcsecSize> 100) return minNOrder;
-    const sizeInArcSecKey= screenPixArcsecSize.toFixed(7);
+    const sizeInArcSecKey= `${screenPixArcsecSize.toFixed(7)}---${gridSize}`;
     let norder= catalogNOrderForPixAsSizeCacheMap[sizeInArcSecKey];
     if (!norder) {
-        const nside = HealpixIndex.calculateNSide(screenPixArcsecSize*128);
+        const nside = HealpixIndex.calculateNSide(screenPixArcsecSize*gridSize);
         norder= Math.max(minNOrder, Math.log2(nside));
         norder= Math.min(norder, maxNorder);
         if (norder>maxNorder) norder= maxNorder;

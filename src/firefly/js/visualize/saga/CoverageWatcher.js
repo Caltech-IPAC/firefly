@@ -101,7 +101,7 @@ const defOptions= {
     tip: 'Coverage',
     coverageType : CoverageType.ALL,
     symbol : DrawSymbol.SQUARE,
-    symbolSize : 5,
+    symbolSize : 3.5,
     overlayPosition: undefined,
     color : null,
     highlightedColor : 'blue',

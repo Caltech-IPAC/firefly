@@ -1,4 +1,6 @@
-import {getProGradeTileNumbers, getTile} from '../../tables/HpxIndexCntlr';
+import chroma from 'chroma-js';
+import {getHistgramForNorder, getProGradeTileNumbers, getTile} from '../../tables/HpxIndexCntlr';
+import {getBWBackground} from '../../util/Color';
 import CoordSys from '../../visualize/CoordSys';
 import {TextLocation} from '../../visualize/draw/DrawingDef';
 import {DrawSymbol} from '../../visualize/draw/DrawSymbol';
@@ -8,9 +10,9 @@ import ShapeDataObj, {UnitType} from '../../visualize/draw/ShapeDataObj';
 import {getCornersForCell} from '../../visualize/HiPSUtil';
 import {makeDevicePt} from '../../visualize/Point';
 import {computeSimpleDistance, computeSimpleSlope, lineIntersect2, RtoD} from '../../visualize/VisUtil';
-import {BOX_GROUP_TYPE, ELLIPSE_GROUP_TYPE, HEALPIX_GROUP_TYPE} from './HpxCatalogUtil';
+import {BOX_GROUP_TYPE, ELLIPSE_GROUP_TYPE, HEALPIX_GROUP_TYPE, HEAT_MAP_GROUP_TYPE} from './HpxCatalogUtil';
 
-export function makeSmartGridTypeGroupDrawPoint(idxData, count, norder, ipix, cell, cc, drawingDef, selected, selectionCount, tblIdx, groupType) {
+export function makeSmartGridTypeGroupDrawPoint(idxData, count, norder, showLabels, ipix, cell, cc, drawingDef, selected, selectionCount, tblIdx, groupType) {
     const devC = getDevPointAry(idxData,cc,cell,ipix,norder);
     if (devC.length < 4) return devC.length ? [makeSingleDrawPoint(selected,tblIdx,devC[0],drawingDef)] : [];
 
@@ -19,13 +21,15 @@ export function makeSmartGridTypeGroupDrawPoint(idxData, count, norder, ipix, ce
             return makeBoxGroupPoint(devC,tblIdx,norder, ipix, count,selected,selectionCount,drawingDef);
         case HEALPIX_GROUP_TYPE:
             return makeHealpixGroupPoint(devC,tblIdx,norder, ipix, count,selected,selectionCount,drawingDef);
+        case HEAT_MAP_GROUP_TYPE:
+            return makeColorFillGroupPoint(idxData,devC,tblIdx,norder, showLabels, ipix, count,selected,selectionCount,drawingDef);
         case ELLIPSE_GROUP_TYPE:
         default:
-            return makeEllipseGroupPoint(devC,tblIdx,norder, ipix, count,selected,selectionCount,drawingDef);
+            return makeEllipseGroupPoint(idxData,devC,tblIdx,norder, ipix, count,selected,selectionCount,drawingDef);
     }
 }
 
-function makeEllipseGroupPoint(devC,tblIdx,norder, ipix, count,selected,selectionCount,drawingDef) {
+function makeEllipseGroupPoint(idxData, devC,tblIdx,norder, ipix, count,selected,selectionCount,drawingDef) {
 
     const {offX,offY,textOffX,textOffY}= getGroupOffset(tblIdx);
     const {dm,angle,maxD,minD}= getMidPointAndDist(devC);
@@ -34,7 +38,7 @@ function makeEllipseGroupPoint(devC,tblIdx,norder, ipix, count,selected,selectio
 
 
     const areaPoint = ShapeDataObj.makeEllipse(dmMod, minD * .8, maxD * .9, UnitType.PIXEL, angle, UnitType.PIXEL, false);
-    areaPoint.renderOptions = {shadow: {blur: 1, color: '#ffffff', offX: 1, offY: 1,}};
+    areaPoint.renderOptions = {lineDash: [10,5], shadow: {blur: 1, color: '#ffffff', offX: 1, offY: 1,}};
     areaPoint.lineWidth = 1;
     areaPoint.norder = norder;
     areaPoint.ipix = ipix;
@@ -136,13 +140,41 @@ function makeBoxGroupPoint(devC, tblIdx, norder, ipix, count, selected, selectio
     return ptAry;
 }
 
+function makeColorFillGroupPoint(idxData,devC,tblIdx,norder, showLabels, ipix, count,selected,selectionCount,drawingDef={}) {
+    const {dm}= getMidPointAndDist(devC);
+    const {color,selectedColor}= drawingDef;
+
+    const footPrint= FootprintObj.make([devC]);
+    footPrint.fill= true;
+    const newColor= getColorFromColorMap(selected?selectedColor:color,idxData,norder,count);
+    footPrint.fillStyle= newColor;
+    footPrint.norder= norder;
+    footPrint.ipix= ipix;
+
+    const ptAry= [footPrint];
+    if (showLabels) {
+        const textPt= PointDataObj.make(makeDevicePt(dm.x,dm.y));
+        textPt.size= getPtSize(count);
+        textPt.text= `${count}`;
+        textPt.textOffset= makeDevicePt(-2, 0);
+        textPt.textLoc= TextLocation.CENTER;
+        textPt.norder= norder;
+        textPt.ipix= ipix;
+        textPt.symbol= DrawSymbol.TEXT;
+        textPt.color=getBWBackground(newColor);
+        ptAry.push(textPt);
+    }
+    return ptAry;
+}
 
 
 function getDevPointAry(idxData,cc, cell, ipix,norder) {
     const devC = cell.wpCorners.map((wp) => cc.getDeviceCoords(wp)).filter(Boolean);
     if (devC.length < 4) return devC;
 
-    const pgTiles= getProGradeTileNumbers(ipix).map( (ipix) => getTile(idxData.orderData, norder+1, ipix));
+    let pgTiles= getProGradeTileNumbers(ipix).map( (ipix) => getTile(idxData.orderData, norder+1, ipix));
+    pgTiles= pgTiles?.filter(Boolean);
+    if (!pgTiles || pgTiles.length!==4) return devC;
     let useAllTiles= pgTiles.every( (t) => t);
     if (!useAllTiles) useAllTiles= (pgTiles[1] && pgTiles[2]) || (pgTiles[0] && pgTiles[3]);
 
@@ -166,7 +198,13 @@ function getDevPointAry(idxData,cc, cell, ipix,norder) {
         else if (filteredPg.length===2) {
             const {wpCorners:c1}= getCornersForCell(norder+1,filteredPg[0].pixel,CoordSys.EQ_J2000);
             const {wpCorners:c2}= getCornersForCell(norder+1,filteredPg[1].pixel,CoordSys.EQ_J2000);
-            wpAry= adjoiningToOne(cc, c1,c2);
+            if (c1?.length===4 && c2.length===4) {
+                wpAry= adjoiningToOne(cc, c1,c2);
+            }
+            else {
+                return devC;
+            }
+            
         }
         else {
             wpAry= cell.wpCorners;
@@ -267,3 +305,24 @@ export function adjoiningToOne(cc,wpAry1,wpAry2) {
 }
 
 
+const chromaCache= new Map();
+
+function getColorFromColorMap(inColor, idxData, norder, count) {
+    const hist=getHistgramForNorder(idxData,norder);
+    if (!hist) return inColor;
+    const {min,max,standDev,mean}= hist;
+
+    const sd3= standDev*3;
+    const newMax= (mean+sd3 > max ? mean+sd3 : max);
+    let binPercent= count/ newMax;
+    const minAdd= (mean-standDev<0 ? standDev : standDev-min);
+    if (count>newMax) binPercent=1;
+    else if (count < minAdd) binPercent= (count+minAdd)/ max;
+    const color= inColor;
+    let getColor= chromaCache.get(inColor);
+    if (!getColor) {
+        getColor= chroma.scale([chroma(color).brighten(3),  chroma(color).darken(2)]  );
+        chromaCache.set(inColor,getColor);
+    }
+    return getColor(binPercent).toString();
+}

@@ -256,7 +256,7 @@ const HistogramAlgorithmParameters = ({groupKey, histogramParams, orientation, l
     const fixedBinSizeSelection = useStoreConnector(()=>getFieldVal(groupKey, 'fixedBinSizeSelection'));
 
     const sx = {pl: `calc(${labelWidth} + 2.25rem)`, '.MuiInput-root': {width: '7rem'}};
-    console.log({histogramParams, algorithm, fixedBinSizeSelection});
+    // console.log({histogramParams, algorithm, fixedBinSizeSelection});
 
     if (algorithm === 'bayesianBlocks') {
         return (

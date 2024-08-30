@@ -104,7 +104,8 @@ const draw=  {
 
 	draw(drawObj,ctx,plot,def,vpPtM,onlyAddToPath) {
 		const drawParams= makeDrawParams(drawObj,def);
-		drawFootprint(ctx, plot, drawObj.footprintAry, drawParams, drawObj.renderOptions, onlyAddToPath);
+		if (!onlyAddToPath && drawObj.fill && drawObj.fillStyle) ctx.fillStyle= drawObj.fillStyle;
+		drawFootprint(ctx, plot, drawObj.footprintAry, drawParams, drawObj.renderOptions, onlyAddToPath, drawObj.fill??false);
 	},
 
 	toRegion(drawObj, plot, def) {
@@ -219,7 +220,7 @@ function ptSegDistSq(x1, y1, x2, y2, px, py) {
 }
 
 
-function drawFootprint(ctx, plot, footprintAry, drawParams, renderOptions, onlyAddToPath) {
+function drawFootprint(ctx, plot, footprintAry, drawParams, renderOptions, onlyAddToPath, fill=false) {
 	let inView = false;
 	let footprint= null;
 	let pt= null;
@@ -238,20 +239,27 @@ function drawFootprint(ctx, plot, footprintAry, drawParams, renderOptions, onlyA
 
 	if (inView || !plot) {
 		for (footprint of footprintAry) {
-			drawStandardFootprint(ctx, footprint, plot, drawParams, renderOptions, onlyAddToPath);
+			drawStandardFootprint(ctx, footprint, plot, drawParams, renderOptions, onlyAddToPath, fill);
 		}
 	}
 }
 
 
-function drawStandardFootprint(ctx, footprint, plot, drawParams, renderOptions, onlyAddToPath) {
+function drawStandardFootprint(ctx, footprint, plot, drawParams, renderOptions, onlyAddToPath, fill= false) {
 
 	let wpt0 = footprint[footprint.length - 1];
 	let wpt= null;
 	let pt0;
 	let pt;
 	const {color,lineWidth} = drawParams;
-	if (!onlyAddToPath) DrawUtil.beginPath(ctx,color,lineWidth, renderOptions);
+	let fillPath;
+	if (!onlyAddToPath) {
+		DrawUtil.beginPath(ctx,color,lineWidth, renderOptions);
+		if (fill) {
+			 fillPath= new Path2D();
+		}
+	}
+	let firstTime= true;
 	for (wpt of footprint) {
         pt0 = plot ? plot.getDeviceCoords(wpt0) : wpt0;
         pt = plot ? plot.getDeviceCoords(wpt) : wpt;
@@ -260,12 +268,27 @@ function drawStandardFootprint(ctx, footprint, plot, drawParams, renderOptions, 
 			return;
         }
 		ctx.moveTo(pt0.x, pt0.y);
+		if (fill && firstTime) {
+			firstTime= false;
+			fillPath.moveTo(pt0.x, pt0.y);
+		}
 		if (!plot || !plot.coordsWrap(wpt0, wpt)) {
 			ctx.lineTo(pt.x, pt.y);
+			if (fill) {
+				fillPath.lineTo(pt0.x, pt0.y);
+			}
 		}
 		wpt0 = wpt;
 	}
-	if (!onlyAddToPath) DrawUtil.stroke(ctx);
+	if (!onlyAddToPath) {
+		if (fill ) {
+			fillPath.closePath();
+			DrawUtil.fill(ctx,fillPath);
+		}
+		else {
+			DrawUtil.stroke(ctx);
+		}
+	}
 }
 
 
