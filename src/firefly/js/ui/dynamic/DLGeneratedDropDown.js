@@ -31,7 +31,7 @@ import {useStoreConnector} from '../SimpleComponent.jsx';
 import {analyzeQueries, handleSearch} from './DLGenAnalyzeSearch.js';
 import {DLSearchTitle, SideBarAnimation, SideBarTable} from './DLuiDecoration.jsx';
 import {DLuiRootSearchPanel} from './DLuiRootSearchPanel.jsx';
-import {CIRCLE, POSITION, RANGE} from './DynamicDef.js';
+import {CIRCLE, POINT, POSITION, RANGE} from './DynamicDef.js';
 import {convertRequest, DynLayoutPanelTypes, findTargetFromRequest} from './DynamicUISearchPanel.jsx';
 import {getSpacialSearchType, hasValidSpacialSearch} from './DynComponents.jsx';
 import {confirmDLMenuItem} from './FetchDatalinkTable.js';
@@ -341,8 +341,9 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
     useEffect(() => {
         if (initArgs?.urlApi?.execute && onClick && matchUrl) {
             executeInitOnce(true, () => {
-                logger.warn(`execute (${initArgs.urlApi.callId}) url: ${initArgs?.urlApi.url}`, initArgs?.urlApi);
-                setCallId(initArgs.urlApi.callId ?? 'none'); //forces one more render after unmount
+                const callId= initArgs.urlApi.callId ?? 'none';
+                setCallId(callId); //forces one more render after unmount
+                logger.warn(`execute (${callId}) url: ${initArgs?.urlApi.url}`, initArgs?.urlApi);
                 dispatchMountFieldGroup(groupKey, false, false); // unmount to force to forget default so it will reinit
                 setTimeout(() => onClick(),10);
             }, initArgs.urlApi.callId);
@@ -365,7 +366,7 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
         if (!isEmpty(initArgs.urlApi)) {
             const originalWp= fdEntryAry.find((fd) => fd.type===POSITION)?.initValue ?? fdEntryAry.find((fd) => fd.type===CIRCLE)?.targetDetails?.centerPt;
             const initFdEntryAry= ingestInitArgs(fdEntryAry,initArgs.urlApi);
-            const initWp= initFdEntryAry.find((fd) => fd.type===POSITION)?.initValue ?? initFdEntryAry.find((fd) => fd.type===CIRCLE)?.targetDetails?.centerPt;
+            const initWp= findInitWp(initFdEntryAry);
             if (!pointEquals(originalWp,initWp)) {
                 executeInitTargetOnce(true, () => initWp && dispatchActiveTarget(initWp), initArgs?.urlApi?.callId);
             }
@@ -448,6 +449,11 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
 }
 
 
+function findInitWp(initFdEntryAry) {
+    return initFdEntryAry.find((fd) => fd.type===POSITION)?.initValue ??
+        initFdEntryAry.find((fd) => fd.type===POINT)?.initValue ??
+        initFdEntryAry.find((fd) => fd.type===CIRCLE)?.targetDetails?.centerPt;
+}
 
 const NotLoaded= ({regHasUrl,regLoaded, url}) => (
     (regHasUrl || !regLoaded) ?

@@ -10,7 +10,7 @@ import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
 import {
     AREA, CHECKBOX, CIRCLE, ENUM, FLOAT, INT, makeAreaDef, makeCircleDef, makeEnumDef, makeFloatDef, makeIntDef,
     makePointDef,
-    makePolygonDef, makeRangeDef, makeTargetDef, makeUnknownDef, POLYGON, POSITION, UNKNOWN
+    makePolygonDef, makeRangeDef, makeTargetDef, makeUnknownDef, POINT, POLYGON, POSITION, RANGE, UNKNOWN
 } from './DynamicDef.js';
 
 /**
@@ -25,6 +25,7 @@ export function hasAnySpacial(fieldDefAry) {
         findFieldDefType(fieldDefAry,POLYGON) ||
         findFieldDefType(fieldDefAry,CIRCLE) ||
         findFieldDefType(fieldDefAry,POSITION) ||
+        findFieldDefType(fieldDefAry,POINT) ||
         findFieldDefType(fieldDefAry,AREA)
     );
 }
@@ -44,28 +45,19 @@ export function getStandardIdType(standardID) {
 export const isCisxTapStandardID = (standardID, utype) =>
     standardID.toLowerCase().startsWith(standardIDs.tap) && utype.toLowerCase() === cisxAdhocServiceUtype;
 
-const isFloatingType = (type) => (type === 'float' || type === 'double');
 
 const isCircleField = ({type, arraySize, xtype = '', units = ''}) =>
-    (isFloatingType(type) && Number(arraySize) === 3 && xtype.toLowerCase() === 'circle' && units.toLowerCase() === 'deg');
+    isFloating(type) && Number(arraySize) === 3 && isXtype(xtype,CIRCLE) && isDeg(units);
 
-const isCircleFieldLenient = ({xtype = '', units = ''}) =>
-    (xtype.toLowerCase() === 'circle' && (units.toLowerCase() === 'deg' || units.toLowerCase() === ''));
-
-const isPointField = ({xtype = '', units = ''}) =>
-    (xtype.toLowerCase() === 'point' && (units.toLowerCase() === 'deg' || units.toLowerCase() === ''));
-
-const isPolygonField = ({type, xtype = '', units = ''}) =>
-    (isFloatingType(type) && xtype.toLowerCase() === 'polygon' && units.toLowerCase() === 'deg');
-
-const isPolygonFieldLenient = ({xtype = '', units = ''}) =>
-    (xtype.toLowerCase() === 'polygon' && (units.toLowerCase() === 'deg' || units.toLowerCase() === ''));
-
-const isRangeField = ({xtype = '', units = ''}) =>
-    (xtype.toLowerCase() === 'range' && (units.toLowerCase() === 'deg' || units.toLowerCase() === ''));
-
-const isAreaField = ({ UCD = '', units = '' }) =>
-    UCD.toLowerCase().startsWith('phys.size') && units.toLowerCase() === 'deg';
+const isCircleFieldLenient = ({xtype, units}) => isXtype(xtype,CIRCLE) && isDeg(units);
+const isPointField = ({xtype, units}) => isXtype(xtype,POINT) && isDeg(units);
+const isPolygonField = ({type, xtype, units}) => isFloating(type) && isXtype(xtype,POLYGON) && isDeg(units);
+const isPolygonFieldLenient = ({xtype, units}) => (isXtype(xtype,POLYGON) && isDeg(units));
+const isRangeField = ({xtype, units}) => isXtype(xtype,RANGE) && isDeg(units);
+const isAreaField = ({UCD, units}) => UCD?.toLowerCase().startsWith('phys.size') && isDeg(units);
+const isDeg= (units='') => units.toLowerCase() === 'deg' || units === '';
+const isXtype= (xtype='',type) => xtype.toLowerCase() === type;
+const isFloating = (type='') => (type.toLowerCase() === 'float' || type.toLowerCase() === 'double');
 
 function getCircleValues(s) {
     const strAry = splitByWhiteSpace(s);
@@ -114,7 +106,7 @@ const getPolygonInfo = ({minValue = '', maxValue = '', value = ''}) => {
 };
 
 const isNumberField = ({type, minValue, maxValue, value}) =>
-    (type === 'int' || isFloatingType(type)) ||
+    (type === 'int' || isFloating(type)) ||
     (value || minValue || maxValue) &&
     (!isNaN(Number(value)) || !isNaN(Number(minValue)) || !isNaN(Number(maxValue)));
 
@@ -130,10 +122,7 @@ function prefilterRADec(serDefParams, searchAreaInfo = {}) {
         raKey: foundRa.name,
         decKey: foundDec.name,
         hipsFOVInDeg: searchAreaInfo.hips_initial_fov,
-        mocList: searchAreaInfo.moc ? [{
-            mocUrl: searchAreaInfo.moc,
-            title: searchAreaInfo?.mocDesc ?? 'MOC'
-        }] : undefined,
+        mocList: getMOCList(searchAreaInfo),
         hipsUrl: searchAreaInfo.HiPS,
         coordinateSys: searchAreaInfo.coordinateSys,
         targetPanelExampleRow1: searchAreaInfo.examples ? searchAreaInfo.examples.split('|') : undefined
@@ -158,7 +147,7 @@ function makeExamples(inExample) {
 
 /**
  *
- * @param serDefParams
+ * @param {Array.<ServiceDescriptorInputParam>} serDefParams
  * @param {String} [sRegion]
  * @param {SearchAreaInfo} [searchAreaInfo]
  * @param {boolean} [hidePredefinedStringFields]
@@ -167,109 +156,175 @@ function makeExamples(inExample) {
  * @returns {Array.<FieldDef>}
  */
 export function makeFieldDefs(serDefParams, sRegion, searchAreaInfo = {}, hidePredefinedStringFields = false, hipsUrl, fovSize) {
-
     const {filteredParams, posDef} = prefilterRADec(serDefParams, searchAreaInfo);
-
     const fdAry = filteredParams
-        .filter((sdP) => !sdP.ref)
-        .map((sdP) => {
-            const {type, optionalParam: nullAllowed, value = '', name, options, desc: tooltip, units = ''} = sdP;
-            const mocList = searchAreaInfo?.moc ? [{
-                mocUrl: searchAreaInfo.moc,
-                title: searchAreaInfo?.mocDesc ?? 'MOC',
-                mocColor: searchAreaInfo?.mocColor,
-            }] : undefined;
-            const {targetPanelExampleRow1,targetPanelExampleRow2}= makeExamples(searchAreaInfo?.examples );
-
-            if (options) {
-                const fieldOps = options.split(',').map((op) => ({label: op, value: op}));
-                return makeEnumDef({
-                    key: name, desc: name, tooltip, units,
-                    initValue: fieldOps[0].value, enumValues: fieldOps
-                });
-            }
-            if (isCircleField(sdP) || isCircleFieldLenient(sdP)) {
-                const {wpt: centerPt, radius, minValue, maxValue} = getCircleInfo(sdP);
-                const hipsFOVInDeg= searchAreaInfo?.hips_initial_fov ?? fovSize ?? radius * 2 + radius * .2;
-                return makeCircleDef({
-                    key: name, desc: name, tooltip, units,
-                    hipsUrl: searchAreaInfo?.HiPS ?? hipsUrl,
-                    targetKey: 'circleTarget', sizeKey: 'circleSize',
-                    initValue: radius,
-                    centerPt: searchAreaInfo?.centerWp ?? centerPt, minValue, maxValue,
-                    hipsFOVInDeg,
-                    coordinateSys: searchAreaInfo?.coordinateSys,
-                    sRegion,
-                    mocList,
-                    targetPanelExampleRow1,
-                    targetPanelExampleRow2
-                });
-            }
-            if (isPointField(sdP)) {
-                const wpt = getPointInfo(sdP);
-                return makePointDef({
-                    key: name, desc: name, tooltip, units,
-                    hipsUrl: searchAreaInfo?.HiPS ?? hipsUrl,
-                    targetKey: 'circleTarget',
-                    centerPt: wpt,
-                    hipsFOVInDeg: searchAreaInfo?.hips_initial_fov ?? fovSize ?? 2,
-                    coordinateSys: searchAreaInfo?.coordinateSys,
-                    sRegion, mocList, targetPanelExampleRow1, targetPanelExampleRow2
-                });
-            }
-            else if (isPolygonField(sdP) || isPolygonFieldLenient(sdP)) {
-                const {targetPanelExampleRow1,targetPanelExampleRow2}= makeExamples(searchAreaInfo?.polygon_examples);
-                const {value} = getPolygonInfo(sdP);
-                return makePolygonDef({key: name, desc: name, tooltip, units, initValue: value, sRegion,
-                    targetPanelExampleRow1,targetPanelExampleRow2});
-            }
-            else if (isRangeField(sdP)) {
-                return makeRangeDef({key: name, desc: name, tooltip, units});
-            }
-            else if (isAreaField(sdP)) {
-                const maxNum = Number(sdP.maxValue);
-                const valNum = Number(value);
-                const minValue = Number(sdP.minValue) || .000277778;
-                const maxValue = !isNaN(maxNum) ? maxNum : !isNaN(valNum) ? valNum : 5;
-                return makeAreaDef({
-                    key: name, desc: tooltip, tooltip,
-                    initValue: valNum < maxValue && valNum > minValue ? valNum : maxValue,
-                    minValue, maxValue
-                });
-            }
-            else if (isNumberField(sdP)) {
-                const minNum = Number(sdP.minValue);
-                const maxNum = Number(sdP.maxValue);
-                const vNum = Number(value);
-                if (type === 'int') {
-                    return makeIntDef({
-                        key: name, desc: name, tooltip, units, precision: 4, nullAllowed,
-                        initValue: !isNaN(vNum) ? vNum : undefined,
-                        minValue: !isNaN(minNum) ? minNum : undefined,
-                        maxValue: !isNaN(maxNum) ? maxNum : undefined,
-                    });
-                }
-                else if (isFloatingType(type)) {
-                    return makeFloatDef({
-                        key: name, desc: name, tooltip, units, precision: 4, nullAllowed,
-                        initValue: !isNaN(vNum) ? vNum : undefined,
-                        minValue: !isNaN(minNum) ? minNum : undefined,
-                        maxValue: !isNaN(maxNum) ? maxNum : undefined,
-                    });
-                }
-                else {
-                    return makeUnknownDef({key: name, desc: name, tooltip, units, initValue: value});
-                }
-            } else {
-                return makeUnknownDef({
-                    key: name, desc: name, tooltip, units, initValue: value ?? '',
-                    hide: Boolean(value && hidePredefinedStringFields)
-                });
-            }
-        });
+        .filter((serDefParam) => !serDefParam.ref)
+        .map((serDefParam) => makeFieldDef(serDefParam,sRegion,searchAreaInfo,hidePredefinedStringFields,hipsUrl,fovSize) );
     if (posDef) fdAry.push(posDef);
     return fdAry;
 }
+
+
+/**
+ *
+ * @param {ServiceDescriptorInputParam} serDefParam
+ * @param {String} [sRegion]
+ * @param {SearchAreaInfo} [searchAreaInfo]
+ * @param {boolean} [hidePredefinedStringFields]
+ * @param {String} [hipsUrl]
+ * @param {Number} [fovSize]
+ * @return {FieldDef}
+ */
+function makeFieldDef(serDefParam, sRegion, searchAreaInfo, hidePredefinedStringFields, hipsUrl, fovSize) {
+        if (!serDefParam) return;
+        if (serDefParam.options) {
+            return doMakeEnumDef(serDefParam);
+        }
+        else if (isCircleField(serDefParam) || isCircleFieldLenient(serDefParam)) {
+            return doMakeCircleDef(serDefParam,sRegion,searchAreaInfo,hipsUrl,fovSize);
+        }
+        else if (isPointField(serDefParam)) {
+            return doMakePointDef(serDefParam,sRegion,searchAreaInfo,hipsUrl,fovSize);
+        }
+        else if (isPolygonField(serDefParam) || isPolygonFieldLenient(serDefParam)) {
+            return doMakePolygonField(serDefParam,sRegion,searchAreaInfo);
+        }
+        else if (isRangeField(serDefParam)) {
+            return doMakeRangeDef(serDefParam);
+        }
+        else if (isAreaField(serDefParam)) {
+            return doMakeAreaDef(serDefParam);
+        }
+        else if (isNumberField(serDefParam)) {
+            return doMakeNumberDef(serDefParam);
+        } else {
+            return doMakeUnknownDef(serDefParam,hidePredefinedStringFields);
+        }
+}
+
+/**
+ *
+ * @param {SearchAreaInfo} searchAreaInfo
+ * @return {Array.<{mocUrl: String, mocColor: String, title:String}>|undefined}
+ */
+function getMOCList(searchAreaInfo) {
+    const mocAry= Object.keys(searchAreaInfo)
+        .filter( (k) => k.toLowerCase()==='moc' || k.match(/moc\d+$/i) )
+        .map( (k) => {
+            const cnt= k.substring(3,k.length);
+            return {
+                mocUrl : searchAreaInfo[k],
+                title : searchAreaInfo['mocDesc'+cnt] ?? 'MOC'+cnt,
+                mocColor: searchAreaInfo['mocColor'+cnt],
+            };
+        });
+    return mocAry.length ? mocAry : undefined;
+}
+
+function doMakeUnknownDef(serDefParam, hidePredefinedStringFields) {
+    const {value='', name, desc: tooltip, units = ''} = serDefParam;
+    return makeUnknownDef({
+        key: name, desc: name, tooltip, units, initValue: value ?? '',
+        hide: Boolean(value && hidePredefinedStringFields)
+    });
+}
+
+function doMakeRangeDef({name, desc: tooltip, units = ''}) {
+    return makeRangeDef({key: name, desc: name, tooltip, units});
+}
+
+function doMakeEnumDef(serDefParam) {
+    const {name, desc: tooltip, options, units = ''} = serDefParam;
+    const fieldOps = options.split(',').map((op) => ({label: op, value: op}));
+    return makeEnumDef({
+        key:name, desc: name, tooltip, units,
+        initValue: fieldOps[0].value, enumValues: fieldOps
+    });
+
+}
+
+function doMakePolygonField(serDefParam, sRegion, searchAreaInfo) {
+    const {name, desc: tooltip, units = ''} = serDefParam;
+    const {targetPanelExampleRow1,targetPanelExampleRow2}= makeExamples(searchAreaInfo?.polygon_examples);
+    const {value} = getPolygonInfo(serDefParam);
+    return makePolygonDef({key: name, desc: name, tooltip, units, initValue: value, sRegion,
+        targetPanelExampleRow1,targetPanelExampleRow2});
+}
+
+function doMakeCircleDef(serDefParam, sRegion, searchAreaInfo, hipsUrl, fovSize) {
+    const {targetPanelExampleRow1,targetPanelExampleRow2}= makeExamples(searchAreaInfo?.examples );
+    const {name, desc: tooltip, units = ''} = serDefParam;
+    const {wpt: centerPt, radius, minValue, maxValue} = getCircleInfo(serDefParam);
+    const hipsFOVInDeg= searchAreaInfo?.hips_initial_fov ?? fovSize ?? radius * 2 + radius * .2;
+    return makeCircleDef({
+        key:name, desc: name, tooltip, units,
+        hipsUrl: searchAreaInfo?.HiPS ?? hipsUrl,
+        targetKey: 'circleTarget', sizeKey: 'circleSize',
+        initValue: radius,
+        centerPt: searchAreaInfo?.centerWp ?? centerPt, minValue, maxValue,
+        hipsFOVInDeg,
+        coordinateSys: searchAreaInfo?.coordinateSys,
+        sRegion,
+        mocList: getMOCList(searchAreaInfo),
+        targetPanelExampleRow1,
+        targetPanelExampleRow2
+    });
+}
+
+function doMakePointDef(serDefParam, sRegion, searchAreaInfo, hipsUrl, fovSize) {
+    const {targetPanelExampleRow1,targetPanelExampleRow2}= makeExamples(searchAreaInfo?.examples );
+    const {name, desc: tooltip, units = ''} = serDefParam;
+    return makePointDef({
+        key:name, desc: name, tooltip, units,
+        hipsUrl: searchAreaInfo?.HiPS ?? hipsUrl,
+        targetKey: 'circleTarget',
+        centerPt: getPointInfo(serDefParam),
+        hipsFOVInDeg: searchAreaInfo?.hips_initial_fov ?? fovSize ?? 2,
+        coordinateSys: searchAreaInfo?.coordinateSys,
+        mocList: getMOCList(searchAreaInfo),
+        sRegion, targetPanelExampleRow1, targetPanelExampleRow2
+    });
+}
+
+function doMakeAreaDef(serDefParam) {
+    const {name, value = '', desc: tooltip} = serDefParam;
+    const maxNum = Number(serDefParam.maxValue);
+    const valNum = Number(value);
+    const minValue = Number(serDefParam.minValue) || .000277778;
+    const maxValue = !isNaN(maxNum) ? maxNum : !isNaN(valNum) ? valNum : 5;
+    const initValue= valNum < maxValue && valNum > minValue ? valNum : maxValue;
+    return makeAreaDef({ key:name, desc: tooltip, tooltip, initValue, minValue, maxValue});
+}
+
+function doMakeNumberDef(serDefParam) {
+    const {type, optionalParam: nullAllowed, value = '', name, desc: tooltip, units = ''} = serDefParam;
+    const key= name;
+    const desc= name;
+    const minNum = Number(serDefParam.minValue);
+    const maxNum = Number(serDefParam.maxValue);
+    const vNum = Number(value);
+    if (type === 'int') {
+        return makeIntDef({
+            key, desc, tooltip, units, precision: 4, nullAllowed,
+            initValue: !isNaN(vNum) ? vNum : undefined,
+            minValue: !isNaN(minNum) ? minNum : undefined,
+            maxValue: !isNaN(maxNum) ? maxNum : undefined,
+        });
+    }
+    else if (isFloating(type)) {
+        return makeFloatDef({
+            key, desc, tooltip, units, precision: 4, nullAllowed,
+            initValue: !isNaN(vNum) ? vNum : undefined,
+            minValue: !isNaN(minNum) ? minNum : undefined,
+            maxValue: !isNaN(maxNum) ? maxNum : undefined,
+        });
+    }
+    else {
+        return makeUnknownDef({key: name, desc: name, tooltip, units, initValue: value});
+    }
+
+}
+
 
 /**
  *
@@ -278,7 +333,7 @@ export function makeFieldDefs(serDefParams, sRegion, searchAreaInfo = {}, hidePr
  */
 export function makeSearchAreaInfo(cisxUI) {
     if (!cisxUI) return;
-    const tmpObj = cisxUI.reduce((obj, {name, value, UCD, desc}) => {
+    const tmpObj = cisxUI.reduce((obj, {name, value, UCD}) => {
         switch (name) {
             case 'hips_initial_fov':
                 obj[name] = Number(value);
@@ -288,23 +343,40 @@ export function makeSearchAreaInfo(cisxUI) {
                 obj[name] = Number(value);
                 obj.ptIsGalactic= UCD?.includes('galactic');
                 break;
-            case 'moc':
-                obj[name] = value;
-                obj.mocDesc = desc;
-                break;
             default:
-                obj[name] = value;
+                if (!name?.startsWith('moc')) obj[name] = value;
                 break;
         }
         return obj;
     }, {});
-    const {hips_initial_ra, hips_initial_dec, hips_frame, ptIsGalactic, moc_color} = tmpObj;
+
+    const mocsObj= findMocs(cisxUI);
+    const {hips_initial_ra, hips_initial_dec, hips_frame, ptIsGalactic} = tmpObj;
     const hipsProjCsys = hips_frame?.trim().toLowerCase()==='galactic' ? CoordinateSys.GALACTIC : CoordinateSys.EQ_J2000;
     const ptCsys= ptIsGalactic ? CoordinateSys.GALACTIC : CoordinateSys.EQ_J2000;
     const centerWp = makeWorldPt(hips_initial_ra, hips_initial_dec, ptCsys);
-    return {...tmpObj, mocColor: moc_color,
-        centerWp, coordinateSys: hipsProjCsys.toString()};
+    return {...tmpObj, ...mocsObj, centerWp, coordinateSys: hipsProjCsys.toString()};
 }
+
+
+function findMocs(cisxUI) {
+    const mocColor= cisxUI.filter( (obj) => obj?.name?.toLowerCase().startsWith('moc_color'));
+    const moc=  cisxUI.filter( (obj) => obj?.name?.toLowerCase()==='moc' || obj?.name?.match(/moc\d+$/i) );
+    const combinedObj= [...mocColor,...moc].reduce( (obj, {name, value, UCD, desc}) => {
+        if (name.startsWith('moc_color')) {
+            obj['mocColor'+ name.substring(9,name.length)]= value;
+        }
+        else {
+            obj[name]= value;
+            obj['mocDesc'+ name.substring(3,name.length)] = desc;
+        }
+        return obj;
+    },{});
+    return combinedObj;
+}
+
+
+
 
 let tblCnt=1;
 
@@ -401,6 +473,7 @@ export function ingestInitArgs(fdAry, args) {
                 if (args[key] && !isNaN(parseFloat(args[key]))) return {...fd, initValue:parseFloat(args[key])};
                 return fd;
             case POSITION:
+            case POINT:
                 if (args[ReservedParams.POSITION.name]) return {...fd, initValue:args[ReservedParams.POSITION.name]};
                 if (args[key] && parseWorldPt(args[key]))  return {...fd, initValue:parseWorldPt(args[POSITION])};
                 return fd;
