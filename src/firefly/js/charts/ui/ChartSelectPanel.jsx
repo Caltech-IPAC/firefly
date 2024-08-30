@@ -10,7 +10,7 @@ import {getChartData, dispatchChartTraceRemove, dispatchChartUpdate} from '../Ch
 import {NewTracePanel, getNewTraceType, getSubmitChangesFunc, addNewTrace} from './options/NewTracePanel.jsx';
 import {PopupPanel} from './../../ui/PopupPanel.jsx';
 import {isSpectralOrder, isScatter2d, getTblIdFromChart} from '../ChartUtil.js';
-import {basicOptions, BasicOptions} from './options/BasicOptions.jsx';
+import {BasicOptions, useBasicOptions} from './options/BasicOptions.jsx';
 import {ScatterOptions} from './options/ScatterOptions.jsx';
 import {HeatmapOptions} from './options/HeatmapOptions.jsx';
 import {SpectrumOptions} from './options/SpectrumOptions.jsx';
@@ -152,7 +152,7 @@ ChartSelectPanel.propTypes = {
 function ChartAction({chartId, chartActions, chartAction, chartActionChanged}) {
 
     const activeTrace = useStoreConnector(() => getChartData(chartId)?.activeTrace ?? 0);
-    const {ChooseTrace} = basicOptions({chartId, activeTrace});
+    const {ChooseTrace} = useBasicOptions({chartId, activeTrace});
 
     const options = [];
 

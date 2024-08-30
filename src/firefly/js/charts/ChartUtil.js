@@ -579,9 +579,9 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
     } else {
         if (!isFullyLoaded(tbl_id)) return;
         const tableModel = getTblById(tbl_id);
-        if (!getColValStats(tbl_id)) {
-            dispatchLoadTblStats(tableModel.request);
-        }
+
+        // may not need to call it as often.  if this becomes a performance issue, then optimize.
+        dispatchLoadTblStats(tableModel.request);
 
         const changes = getDataChangesForMappings({mappings, traceNum});
 

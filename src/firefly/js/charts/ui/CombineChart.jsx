@@ -12,7 +12,7 @@ import {getNewTraceDefaults, getTblIdFromChart, isSpectralOrder, uniqueChartId} 
 import {PINNED_GROUP, PINNED_CHART_PREFIX} from './PinnedChartContainer.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import {basicOptions, evalChangesFromFields} from './options/BasicOptions.jsx';
+import {evalChangesFromFields, useBasicOptions} from './options/BasicOptions.jsx';
 import {getColumnValues, getSelectedDataSync, getTblById} from '../../tables/TableUtil.js';
 import {TablePanel} from '../../tables/ui/TablePanel.jsx';
 import {getFieldVal, getGroupFields} from '../../fieldGroup/FieldGroupUtils.js';
@@ -242,7 +242,7 @@ const CombineChartDialog = ({onComplete, chartIds, selectedChartId, showChartSel
     };
     const closePopup = () => dispatchHideDialog(POPUP_ID);
 
-    const {Title} = basicOptions({groupKey});
+    const {Title} = useBasicOptions({groupKey});
 
     const dimensionsSx = {height: 500, width: 700};
 
@@ -313,7 +313,7 @@ const SelChartOpt = ({chartId, groupKey, header, traceTitles, idx}) => {
     const key = `cOpt-${idx}`;
 
     const TraceOpt = ({traceNum, title}) => {
-        const {Name} = basicOptions({activeTrace: traceNum, groupKey});
+        const {Name} = useBasicOptions({activeTrace: traceNum, groupKey});
         return <Name initialState={{value: title}}/>;
     };
     const isOpen = !isSpectralOrder(chartId);
