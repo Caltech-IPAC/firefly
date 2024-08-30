@@ -1,10 +1,9 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {isArray, isNil} from 'lodash';
+import {isArray} from 'lodash';
 import {
-    adhocServiceUtype, cisxAdhocServiceUtype,
-    ACCESS_URL, CONTENT_LENGTH, CONTENT_TYPE, DESCRIPTION, SEMANTICS, standardIDs, VO_TABLE_CONTENT_TYPE,
+    adhocServiceUtype, cisxAdhocServiceUtype, standardIDs, VO_TABLE_CONTENT_TYPE,
     SERVICE_DESC_COL_NAMES
 } from './VoConst.js';
 import {columnIDToName, getColumnIdx, getTblRowAsObj} from '../tables/TableUtil.js';
@@ -186,3 +185,12 @@ export function isAnalysisTableDatalink(report) {
     if (!hasCorrectCols) return false;
     return hasCorrectCols && part.totalTableRows < 50; // 50 is arbitrary, it is protections from dealing with files that are very big
 }
+
+
+/**
+ *
+ * @param {ServiceDescriptorDef} serviceDef
+ * @return {string} the standard id string or an empty string
+ */
+export const getStandardId= (serviceDef) => (serviceDef.standardID??'').toLowerCase();
+export const getUtype= (serviceDef) => (serviceDef?.utype??'').toLowerCase();

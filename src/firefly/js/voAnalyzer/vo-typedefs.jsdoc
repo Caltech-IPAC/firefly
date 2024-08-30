@@ -133,9 +133,22 @@
  * @prop {boolean} allowsInput - use may change the parameter
  * @prop dataLinkTableRowIdx - if defined then this is the row to use from the datalink table
  * @prop {boolean} inputRequired - user must enter something
- * @prop {Array.<ServiceDescriptorInputParam>} [cisxUI] - names should be one of: HiPS, FOV, hips_initial_ra, hips_initial_dec, moc, examples, hipsCtype1, hipsCtype2
+ * @prop {CISXui} [cisxUI] - names should be one of: HiPS, FOV, hips_initial_ra, hips_initial_dec, moc, examples, hipsCtype1, hipsCtype2
  * @prop {Array.<ServiceDescriptorInputParam>} [cisxTokenSub]
  * @prop {Array.<ServiceDescriptorInputParam>} serDefParams
+ */
+
+/**
+ * @global
+ * @public
+ * @typedef {Array.<ServiceDescriptorInputParam>} CISXui
+ *
+ * This is a special array of ServiceDescriptorInputParam for building the UI.
+ *
+ * The field names will include the following:
+ *
+ * hips_initial_fov, hips_initial_ra, hips_initial_dec, moc_color, moc, data_covers_allsky, hips_frame, examples,
+ * polygon_examples, hidden_columns, table_sort_order
  */
 
 /**
