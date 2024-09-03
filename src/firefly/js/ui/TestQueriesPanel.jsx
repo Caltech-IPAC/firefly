@@ -175,42 +175,36 @@ TestQueriesPanel.defaultProps = {
     name: 'TestSearches'
 };
 
-const WrapperPanel= ({children}) => {
-    return (
-        <FormPanel groupKey = 'InsetUI'
-                   onSuccess= {(request) => {
-                       showInfoPopup(`done: ${JSON.stringify(request)}`, 'information');
-                       return false;
-                   }}
-                   onError = {() => showInfoPopup('Fix errors and search again', 'Error') }
-                   cancelText=''
-                   help_id  = {'muy-help-id'}
-                   slotProps={{
-                       input: {p:0, mb:1, border:'none'}
-                   }}>
-
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', }}>
-                <>
-                        {children}
-                        <div>here i am</div>
-                </>
-            </div>
-        </FormPanel>
-    );
-};
-
 function makeInsetSearchExample() {
     return (
         <div style={{width:'100%', height:'100%', display:'flex', flexDirection:'column'}}>
             <FieldGroup groupKey='InsetUI' keepState={true}
                         style={ { width:'100%', height:'100%', display: 'flex', flexDirection: 'column', alignItems: 'center' } }>
                 <EmbeddedPositionSearchPanel {...{
-                    toolbarHelpId: 'exampleHelp',
-                    WrapperComponent: WrapperPanel,
-                    hipsFOVInDeg:30, hipsUrl:'ivo://CDS/P/DSS2/color',
-                    minValue: 5/3600, maxValue: 1.5, searchAreaInDeg:.5
-
-                }}/>
+                    slotProps: {
+                        formPanel: {
+                            onSuccess: (request) => {
+                                showInfoPopup(`done: ${JSON.stringify(request)}`, 'information');
+                                return false;
+                            },
+                            onError: () => showInfoPopup('Fix errors and search again', 'Error'),
+                            help_id: 'muy-help-id',
+                            slotProps: {
+                                input: {p: 0, mb: 1, border: 'none'}
+                            },
+                        },
+                        hipsTargetView: {
+                            hipsFOVInDeg: 30, hipsUrl: 'ivo://CDS/P/DSS2/color', toolbarHelpId: 'exampleHelp',
+                        },
+                        sizeInput: {min: 5 / 3600, max: 1.5, initValue: .5}
+                    },
+                }}>
+                    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center',}}>
+                        <>
+                            <div>here i am</div>
+                        </>
+                    </div>
+                </EmbeddedPositionSearchPanel>
             </FieldGroup>
         </div>
     );
@@ -218,7 +212,7 @@ function makeInsetSearchExample() {
 
 function makeDynamic2() {
     return (
-        <div style={{width:'100%', height:'100%', display:'flex', flexDirection:'column'}}>
+        <div style={{width: '100%', height: '100%', display: 'flex', flexDirection: 'column'}}>
             <DynamicFieldGroupPanel
                 groupKey={'simpledyngroup'}
                 DynLayoutPanel={DynLayoutPanelTypes.Simple}

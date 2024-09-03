@@ -1,11 +1,11 @@
-import {Sheet, Stack, Typography} from '@mui/joy';
-import {isFunction} from 'lodash';
+import {Box, Sheet, Stack, Typography} from '@mui/joy';
 import React, {Fragment, useContext, useEffect, useState} from 'react';
 import {oneOfType, oneOf, element, bool, string, number, arrayOf, object, func, shape} from 'prop-types';
 import CoordinateSys from '../../visualize/CoordSys.js';
 import {CONE_AREA_OPTIONS, CONE_AREA_OPTIONS_UPLOAD, CONE_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY
 } from '../../visualize/ui/CommonUIKeys.js';
 import {HiPSTargetView} from '../../visualize/ui/TargetHiPSPanel.jsx';
+import {showInfoPopup} from '../PopupUtil';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
 import {Slot, useFieldGroupRerender, useFieldGroupValue} from '../SimpleComponent.jsx';
 import {SizeInputFields} from '../SizeInputField.jsx';
@@ -21,76 +21,33 @@ import {parseWorldPt} from 'firefly/visualize/Point';
 import {formatWorldPtToString} from 'firefly/visualize/ui/WorldPtFormat';
 import {getFieldGroupResults} from 'firefly/fieldGroup/FieldGroupUtils';
 import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
-/**
- * Create search panel with HiPS Viewer with an embedded target/area selection
- * All properties are optional
- * @param {Object} props
- * @param {String} [props.toolbarHelpId] - help id for the toolbar
- * @param {JSX.Element} [props.WrapperComponent] - A component to wrap all the widgets in the embedded UI
- * @param {String} [props.hipsUrl] - url for the hips url
- * @param [props.hipsFOVInDeg] - field of view of the initial HiPS display
- * @param {WorldPt} [props.initCenterPt] - center point of the initial HiPS display - string - 1.1;2.2;EQ_J2000
- * @param {Array.<{mocUrl:String, mocColor:String, title:String}>} [props.mocList] - a list of MOCS to display, an array of MOC URLs
- * @param {String} [props.sRegion] - an sRegion to display
- * @param {String} [props.coordinateSys] - coordinate system of HiPS - must be 'EQ_J2000' or 'GALACTIC'
- * @param {String} [props.targetKey] - field group key for the target field
- * @param {String} [props.polygonKey] - field group key for the polygon field
- * @param {String} [props.sizeKey] - field group key for the size field
- * @param {String} [props.plotId] - plotId for the HiPS display
- * @param {String} [props.initSelectToggle]
- * @param {number} [props.minValue] - min value for the search area in degrees
- * @param {number} [props.maxValue] - max value for the search area in degrees
- * @param {number} [props.searchAreaInDeg] - default value for the search area in degrees
- * @param {Array.<String>} [props.targetPanelExampleRow1] - string for examples for target for row 1, 3 max in array
- * @param {Array.<String>} [props.targetPanelExampleRow2] - string for examples for target for row 2, 3 max in array
- * @param {Array.<String>} [props.polygonExampleRow1] - string for examples for polygon for row 1, 2 max in array
- * @param {Array.<String>} [props.polygonExampleRow2] - string for examples for polygon for row 2, 2 max in array
- * @param {Boolean} [props.nullAllowed] - null input is allowed
- * @param {Boolean} [props.insetSpacial] - true if spacial layout is inset
- * @param {JSX.Element} [props.otherComponents] - More component that can be added under target/polygon components
- * @param {Boolean} [props.usePosition] - true to use the target
- * @param {Boolean} [props.usePolygon] - true to use the polygon
- * @param {Boolean} [props.useUpload] - true to allow uploads
- * @param {Object} [props.searchItem] - used for URL API (similar to SearchPanel)
- * @param {Object} [props.initArgs] - used for URL API (similar to SearchPanel)
- * @param {function} [props.doSearch] - used for FormPanel's onSuccess search func from collapsed search panel
- * @return {JSX.Element|boolean}
- * @constructor
- */
+
+
+const DEFAULT_FOV_DEG= 30;
+const DEFAULT_HIPS= 'ivo://CDS/P/DSS2/color';
+const DEFAULT_PLOT_ID= 'defaultHiPSTargetSearch';
+const DEFAULT_TARGET_PANEL_WIDTH= '34rem';
+const DEFAULT_SIZE_KEY= 'radius';
+const DEFAULT_INIT_SIZE_VALUE= .005;
+const DEFAULT_POLYGON_KEY= 'Polygon';
+
+
+
+
+
 export function EmbeddedPositionSearchPanel({
-                                                toolbarHelpId= undefined,
-                                                WrapperComponent,
-                                                hipsUrl= 'ivo://CDS/P/DSS2/color',
-                                                hipsFOVInDeg = 30,
-                                                initCenterPt= undefined,
-                                                mocList= undefined,
-                                                sRegion= undefined,
-                                                coordinateSys: csysStr = 'EQ_J2000',
-                                                targetKey= DEF_TARGET_PANEL_KEY,
-                                                polygonKey= 'Polygon',
-                                                sizeKey= 'radius',
                                                 initSelectToggle= CONE_AREA_KEY,
-                                                plotId= 'defaultHiPSTargetSearch',
-                                                minValue= 1 / 3600,
-                                                maxValue= 1,
-                                                searchAreaInDeg= .005,
-                                                targetPanelExampleRow1,
-                                                targetPanelExampleRow2,
-                                                polygonExampleRow1=DEF_AREA_EXAMPLE,
-                                                polygonExampleRow2,
                                                 nullAllowed= false,
                                                 insetSpacial=true,
-                                                otherComponents= undefined,
                                                 usePosition= true,
                                                 useUpload = false,
                                                 usePolygon= true,
-                                                searchItem,
-                                                initArgs,
-                                                slotProps,
-                                                doSearch
-                                            }
-) {
+                                                slotProps={},
+                                                doSearch,
+                                                children
+                                            } ) {
 
+    const {groupKey}= useContext(FieldGroupCtx);
     const [getConeAreaOp, setConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY);
     const [getUploadInfo, setUploadInfo]= useFieldGroupValue('uploadInfo');
     const uploadInfo= getUploadInfo() || undefined;
@@ -106,7 +63,6 @@ export function EmbeddedPositionSearchPanel({
         }
     }, [uploadInfo]);
 
-    const coordinateSys = CoordinateSys.parse(csysStr) ?? CoordinateSys.EQ_J2000;
     if (!usePolygon && !usePosition && !useUpload) return false;
     const doToggle= usePosition && usePolygon;
     const initToggle= initSelectToggle;
@@ -119,68 +75,30 @@ export function EmbeddedPositionSearchPanel({
         return CONE_CHOICE_KEY;
     };
 
-    const internals= (
-        <Stack spacing={0.5} sx={{pt: insetSpacial ? 0 : 1}} {...slotProps?.searchInnerLayout}>
-            {doToggle && <RadioGroupInputField {...{
-                sx:{alignSelf: 'center'},
-                fieldKey: CONE_AREA_KEY, orientation: 'horizontal',
-                tooltip: 'Chose type of search', initialState: {value: initToggle}, options: useUpload ? CONE_AREA_OPTIONS_UPLOAD : CONE_AREA_OPTIONS
-            }} />}
-            {doGetConeAreaOp() === CONE_CHOICE_KEY &&
-                <Stack {...slotProps?.searchTypeCone}>
-                    <TargetPanel {...{
-                        sx:{width:'34rem'},
-                        fieldKey:targetKey, nullAllowed,
-                        targetPanelExampleRow1, targetPanelExampleRow2,
-                        slotProps: {
-                            feedback:{sx: {alignSelf:'center'} },
-                        }
-                    }}/>
-                    <SizeInputFields {...{
-                        fieldKey: sizeKey, showFeedback: true, labelWidth: 100, nullAllowed: false,
-                        // orientation:'horizontal',
-                        label: 'Search Radius',
-                        initialState: {unit: 'arcsec', value: searchAreaInDeg + '', min:minValue, max:maxValue},
-                        sx: {'.ff-Input': {width: 1}},
-                        slotProps: {
-                            feedback:{sx: {alignSelf:'center'} },
-                        }
-                    }} />
-                </Stack>
-            }
-            {doGetConeAreaOp() === POLY_CHOICE_KEY &&
-                <PolygonField {...{
-                    hideHiPSPopupPanelOnDismount: false, fieldKey: polygonKey,
-                    targetDetails: {targetPanelExampleRow1: polygonExampleRow1, targetPanelExampleRow2:polygonExampleRow2},
-                    placeholder: 'Coordinates',
-                    manageHiPS:false,
-                }} />}
-            {doGetConeAreaOp() === UPLOAD_CHOICE_KEY &&
-                <Stack pb={0.5}>
-                    <UploadTableSelectorPosCol {...{uploadInfo, setUploadInfo,
-                        slotProps: {
-                            centerColsInnerStack: {sx: {ml: 1, pt: 1.5}}
-                        }
-                    }}/>
-                    <SizeInputFields {...{
-                        fieldKey: sizeKey, showFeedback: true, labelWidth: 100, nullAllowed: false,
-                        // orientation:'horizontal',
-                        label: 'Search Radius',
-                        initialState: {unit: 'arcsec', value: searchAreaInDeg + '', min:minValue, max:maxValue},
-                        sx: {'.ff-Input': {width: 1}, pt:0.5},
-                        slotProps: {
-                            feedback:{sx: {alignSelf:'center'} },
-                        }
-                    }} />
-                </Stack>}
-                {isFunction(otherComponents) ? otherComponents() : otherComponents}
-        </Stack>
-    );
+    const {targetKey=DEF_TARGET_PANEL_KEY}= slotProps.targetPanel ?? {};
+    const {polygonKey=DEFAULT_POLYGON_KEY, }= slotProps.polygonField ?? {};
+    const { sizeKey= DEFAULT_SIZE_KEY, min= 1 / 3600, max= 1}= slotProps.sizeInput ?? {};
 
-    const additionalProps= {searchItem, initArgs};
-    const wrappedInternals = WrapperComponent
-        ? <WrapperComponent {...additionalProps}>{internals}</WrapperComponent>
-        : internals;
+
+    const {
+        hipsUrl= DEFAULT_HIPS,
+        hipsFOVInDeg = DEFAULT_FOV_DEG,
+        plotId= DEFAULT_PLOT_ID,
+        initCenterPt= undefined,
+        mocList= undefined,
+        sRegion= undefined,
+        toolbarHelpId= undefined,
+        coordinateSys : csysStr = 'EQ_J2000',
+        sx:hipsTargetViewSx={},
+    }= slotProps.hipsTargetView ?? {};
+
+    const defFormPanelProps= slotProps.formPanel ? {
+        help_id: 'embeddedDefaultSearchPanelHelp',
+        cancelText:'',
+        completeText:'Submit', groupKey,
+        onError:() => showInfoPopup('Fix errors and search again', 'Error'),
+    } : {};
+
 
     return (
         <Stack key='targetGroup' alignItems='center' height='100%' paddingBottom={insetSpacial ? 0 : 20}
@@ -190,11 +108,14 @@ export function EmbeddedPositionSearchPanel({
            sx={{alignSelf: 'stretch', position: 'relative'}}>
             <HiPSTargetView
                 {...{
-                hipsUrl, centerPt:initCenterPt, hipsFOVInDeg, mocList, coordinateSys, sRegion, plotId,
-                minSize: minValue, maxSize: maxValue, toolbarHelpId,
-                whichOverlay: doGetConeAreaOp(), setWhichOverlay: doToggle ? setConeAreaOp : undefined,
-                targetKey, sizeKey, polygonKey, sx: {minHeight: 300, alignSelf: 'stretch', flexGrow:1}
-            }}/>
+                    hipsUrl, centerPt:initCenterPt, hipsFOVInDeg, mocList,
+                    coordinateSys: CoordinateSys.parse(csysStr) ?? CoordinateSys.EQ_J2000,
+                    sRegion, plotId,
+                    minSize: min, maxSize: max, toolbarHelpId,
+                    whichOverlay: doGetConeAreaOp(), setWhichOverlay: doToggle ? setConeAreaOp : undefined,
+                    targetKey, sizeKey, polygonKey,
+                    sx: {minHeight: 300, alignSelf: 'stretch', flexGrow:1, ...hipsTargetViewSx}
+                }}/>
             <Sheet
                 onMouseEnter={() => {
                     setIsHovered(true);
@@ -224,23 +145,34 @@ export function EmbeddedPositionSearchPanel({
                             paddingBlockStart: '0.5rem',
                             paddingBlockEnd: '0.5rem',
                             minBlockSize: '1rem',
-                            '&.Mui-expanded': {
-                                height: '1rem '
-                            }
+                            '&.Mui-expanded': { height: '1rem ' }
                     }}}>
-                    <CollapsibleItem componentKey='embedSearchPanel'
-                         slotProps={{
-                             header: {sx: { whiteSpace: 'normal',
-                                     '& .MuiAccordionSummary-button': {
-                                         minBlockSize: '1rem'
-                             }}},
-                             content: { sx: {
-                                 '& .MuiAccordionDetails-content.Mui-expanded': {
-                                     padding: 0
-                             }}}
-                         }}
-                         header={(isOpen) => <Header isOpen={isOpen} doSearch={doSearch} targetKey={targetKey} sizeKey={sizeKey} polygonKey={polygonKey}/>} isOpen={true} title='Please select a search type'>
-                            {wrappedInternals}
+                    <CollapsibleItem {...{
+                        componentKey:'embedSearchPanel', isOpen:true, title:'Please select a search type',
+                        header: (isOpen) => (<Header {...{isOpen, doSearch, targetKey, sizeKey, polygonKey, slotProps}}/>),
+                        slotProps: {
+                            header: {
+                                sx: {
+                                    whiteSpace: 'normal',
+                                    '& .MuiAccordionSummary-button': { minBlockSize: '1rem' }
+                                },
+                                slotProps: {
+                                    button: {
+                                        component:'div',
+                                    }
+                                }
+                            },
+                            content: {
+                                sx: { '& .MuiAccordionDetails-content.Mui-expanded': { padding: 0 } }
+                            }
+                        } }}>
+                        <Slot {...{ component: slotProps.formPanel ? FormPanel : Box,
+                            slotProps: slotProps.formPanel,
+                            ...defFormPanelProps}} >
+                            <SpatialSearch {...{slotProps,insetSpacial,uploadInfo, setUploadInfo,
+                                coneAreaOp:doGetConeAreaOp(), doToggle,initToggle, nullAllowed, useUpload}}/>
+                            {children}
+                        </Slot>
                     </CollapsibleItem>
                 </CollapsibleGroup>
             </Sheet>
@@ -248,46 +180,66 @@ export function EmbeddedPositionSearchPanel({
     );
 }
 
+
 EmbeddedPositionSearchPanel.propTypes= {
-    toolbarHelpId: string,
-    WrapperComponent: oneOfType([func,element]),
-    hipsUrl: string,
-    hipsFOVInDeg: number,
-    initCenterPt: object,
-    mocList: arrayOf(shape( { mocUrl: string, title: string} )),
-    sRegion: string,
-    coordinateSys: oneOf(['EQ_J2000','GALACTIC']),
-    targetKey: string,
-    polygonKey: string,
-    sizeKey: string,
     initSelectToggle: string,
-    plotId: string,
-    minValue: number,
-    maxValue: number,
-    searchAreaInDeg: number,
-    targetPanelExampleRow1: arrayOf(string),
-    targetPanelExampleRow2: arrayOf(string),
-    polygonExampleRow1: arrayOf(string),
-    polygonExampleRow2: arrayOf(string),
     nullAllowed: bool,
     insetSpacial: bool,
     otherComponents: oneOfType([func,element]),
     usePosition: bool,
     usePolygon: bool,
     useUpload: bool,
-    searchItem: object,
-    initArgs: object,
     doSearch: func,
-    slotProps: shape({
-        searchRoot: object,
-        //following slotProps should be changed when this component is refactored to make it more slots-friendly
-        searchInnerLayout: object,
-        searchTypeCone: object,
-        searchSummary: object
+    slotProps: shape({ // all slotProps are optional except for formPanel.onSuccess
+        formPanel : shape({
+            onSuccess: func,  // note- onSuccess is required for this panel to function like a FormPanel
+            component: element,
+            ...FormPanel.props,
+        } ),
+        searchRoot: shape({
+            sx: object,
+        }),
+        hipsTargetView: shape({
+            plotId: string,
+            hipsUrl: string,
+            mocList: arrayOf(shape( { mocUrl: string, mocColor: string, title: string} )),
+            hipsFOVInDeg: number,
+            sRegion: string,
+            toolbarHelpId: string,
+            sx: object,
+            initCenterPt: object,
+            coordinateSys: oneOf(['EQ_J2000','GALACTIC']),
+        }),
+        targetPanel: shape({
+            targetKey: string,
+            targetPanelExampleRow1: arrayOf(string),
+            targetPanelExampleRow2: arrayOf(string),
+            sx: object,
+        }),
+        polygonField: shape({
+            polygonKey: string,
+            polygonExampleRow1: arrayOf(string),
+            polygonExampleRow2: arrayOf(string),
+            sx: object,
+        }),
+        sizeInput : shape({
+            sizeKey: string,
+            min: number,
+            max: number,
+            initValue: number,
+            sx: object,
+        }),
+        searchSummary: shape({
+            component: element,
+        }),
+        header: object,
+        spacialSearch: shape({
+            sx: object
+        } )
     }),
 };
 
-const Header = function({isOpen, doSearch, targetKey, sizeKey, polygonKey}) {
+const Header = function({isOpen, slotProps={}, targetKey, sizeKey, polygonKey}) {
     const {groupKey} = useContext(FieldGroupCtx);
     const reqObj = getFieldGroupResults(groupKey,true);
 
@@ -296,17 +248,17 @@ const Header = function({isOpen, doSearch, targetKey, sizeKey, polygonKey}) {
     return (
         isOpen ?
             <div/>:
-            <Stack p={0}>
+            <Stack p={0} width={1}>
                 <FormPanel
-                    onSuccess={(request) => doSearch(request)}
-                    direction={'row'}
-                    width={'100%'}
+                    onSuccess={slotProps?.formPanel.onSuccess}
+                    direction='row'
+                    sx={{width:1}}
                     slotProps={{
                         searchBar: {p:0, justifyContent: 'right'},
                     }}
                     cancelText=''>
                     <Stack {...{width:'100%', alignItems:'center'}}>
-                        <Slot component={SearchSummary} request={reqObj}/>
+                        <Slot {...{component:SearchSummary, slotProps:slotProps.header, request:reqObj}}/>
                     </Stack>
                 </FormPanel>
             </Stack>
@@ -352,4 +304,103 @@ function SearchSummary({request}) {
             </Typography>
         </Stack>
     );
+}
+
+function SpatialSearch({slotProps,insetSpacial,uploadInfo, setUploadInfo,coneAreaOp, doToggle,initToggle, nullAllowed, useUpload}) {
+
+    return (
+        <Stack spacing={0.5} sx={{pt: insetSpacial ? 0 : 1, ...slotProps.spacialSearch?.sx}}>
+            {doToggle && <RadioGroupInputField {...{
+                sx:{alignSelf: 'center'},
+                fieldKey: CONE_AREA_KEY, orientation: 'horizontal',
+                tooltip: 'Chose type of search', initialState: {value: initToggle},
+                options: useUpload ? CONE_AREA_OPTIONS_UPLOAD : CONE_AREA_OPTIONS
+            }} />}
+            {coneAreaOp === CONE_CHOICE_KEY && <ConeOp {...{slotProps,nullAllowed}}/> }
+            {coneAreaOp === POLY_CHOICE_KEY && <PolyOp {...{slotProps}}/> }
+            {coneAreaOp === UPLOAD_CHOICE_KEY && <UploadOp {...{slotProps,uploadInfo,setUploadInfo}}/>}
+        </Stack>
+    );
+}
+
+
+function ConeOp({slotProps,nullAllowed}) {
+    const {
+        sizeKey= DEFAULT_SIZE_KEY,
+        min= 1 / 3600,
+        max= 1,
+        initValue= DEFAULT_INIT_SIZE_VALUE
+    }= slotProps.sizeInput ?? {};
+    const {
+        targetKey=DEF_TARGET_PANEL_KEY,
+        targetPanelExampleRow1,
+        targetPanelExampleRow2
+    }= slotProps.targetPanel ?? {};
+    return (
+        <Stack>
+            <TargetPanel {...{
+                sx:{width:DEFAULT_TARGET_PANEL_WIDTH, ...slotProps.targetPanel?.sx},
+                fieldKey:targetKey, nullAllowed,
+                targetPanelExampleRow1, targetPanelExampleRow2,
+                slotProps: {
+                    feedback:{sx: {alignSelf:'center'} },
+                }
+            }}/>
+            <SizeInputFields {...{
+                fieldKey: sizeKey, showFeedback: true, labelWidth: 100, nullAllowed: false,
+                label: 'Search Radius',
+                initialState: {unit: 'arcsec', value: initValue+'', min, max},
+                sx: {'.ff-Input': {width: 1}},
+                slotProps: {
+                    feedback:{sx: {alignSelf:'center'} },
+                }
+            }} />
+        </Stack>
+    );
+}
+
+function PolyOp({slotProps}) {
+    const {
+        polygonKey=DEFAULT_POLYGON_KEY,
+        polygonExampleRow1= DEF_AREA_EXAMPLE,
+        polygonExampleRow2
+    }= slotProps.polygonField ?? {};
+    return (
+        <PolygonField {...{
+            hideHiPSPopupPanelOnDismount: false, fieldKey: polygonKey,
+            targetDetails: {targetPanelExampleRow1: polygonExampleRow1, targetPanelExampleRow2:polygonExampleRow2},
+            placeholder: 'Coordinates',
+            manageHiPS:false,
+        }} />
+    );
+}
+
+function UploadOp({slotProps, uploadInfo, setUploadInfo}) {
+    const {
+        sizeKey= DEFAULT_SIZE_KEY,
+        min= 1 / 3600,
+        max= 1,
+        initValue= DEFAULT_INIT_SIZE_VALUE
+    }= slotProps.sizeInput ?? {};
+
+    return (
+        <Stack pb={0.5}>
+            <UploadTableSelectorPosCol {...{uploadInfo, setUploadInfo,
+                slotProps: {
+                    centerColsInnerStack: {sx: {ml: 1, pt: 1.5}}
+                }
+            }}/>
+            <SizeInputFields {...{
+                fieldKey: sizeKey, showFeedback: true, labelWidth: 100, nullAllowed: false,
+                label: 'Search Radius',
+                initialState: {unit: 'arcsec', value: initValue+'', min, max},
+                sx: {'.ff-Input': {width: 1}, pt:0.5},
+                slotProps: {
+                    feedback:{sx: {alignSelf:'center'} },
+                }
+            }} />
+        </Stack>
+
+        );
+
 }

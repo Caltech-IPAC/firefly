@@ -13,6 +13,7 @@ import CompleteButton from '../CompleteButton.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {FormPanel} from '../FormPanel.jsx';
 import {showInfoPopup} from '../PopupUtil.jsx';
+import {Slot} from '../SimpleComponent';
 import {
     AREA, CHECKBOX, CIRCLE, CONE_AREA_KEY, ENUM, FLOAT, INT, POINT, POLYGON, POSITION, UNKNOWN
 } from './DynamicDef.js';
@@ -244,7 +245,7 @@ function SimpleDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='d
 }
 
 function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='defaultHiPSTargetSearch', toolbarHelpId,
-                                 childComponents, WrapperComponent, submitSearch}) {
+                                 childComponents, slotProps, submitSearch, children}) {
     const { DynSpacialPanel, areaFields, polyPanel, checkBoxFields, fieldsInputAry, opsInputAry,
         useSpacial, useArea}= makeAllFields({ fieldDefAry,popupHiPS, plotId, toolbarHelpId, insetSpacial:true, submitSearch});
 
@@ -286,16 +287,29 @@ function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='d
 
 
     if (!useSpacial) {
-        const wrappedInternals= WrapperComponent ? <WrapperComponent>{nonSpacial}</WrapperComponent> : nonSpacial;
         return (
-            <div style={style}> {wrappedInternals} </div>
+            <div style={style}>
+                <Slot {...{
+                    component: FormPanel,
+                    slotProps: slotProps.FormPanel,
+                    help_id: 'dynDefaultSearchPanelHelp',
+                    onError:() => showInfoPopup('Fix errors and search again', 'Error'),
+                    cancelText:'',
+                    completeText:'Submit',
+                }} >
+                    {nonSpacial}
+                    {children}
+                </Slot>
+            </div>
         );
     }
 
     return (
         <div style={style}>
             <Stack {...{alignItems:'center', height:'100%'}}>
-                <DynSpacialPanel otherComponents={nonSpacial} WrapperComponent={WrapperComponent}/>
+                <DynSpacialPanel otherComponents={nonSpacial} slotProps={slotProps}>
+                    {children}
+                </DynSpacialPanel>
             </Stack>
         </div>
     );

@@ -26,14 +26,13 @@ import {UserZoomTypes} from '../../visualize/ZoomUtil.js';
 import {cisxAdhocServiceUtype, standardIDs} from '../../voAnalyzer/VoConst.js';
 import {getStandardId, getUtype} from '../../voAnalyzer/VoDataLinkServDef';
 import {FieldGroup} from '../FieldGroup.jsx';
-import {FieldGroupTabs, Tab} from '../panel/TabPanel.jsx';
 import {showInfoPopup} from '../PopupUtil.jsx';
 import {useStoreConnector} from '../SimpleComponent.jsx';
 import {analyzeQueries, handleSearch} from './DLGenAnalyzeSearch.js';
-import {DLSearchTitle, SideBarAnimation, SideBarTable} from './DLuiDecoration.jsx';
-import {DLuiRootSearchPanel} from './DLuiRootSearchPanel.jsx';
+import {SideBarAnimation, SideBarTable} from './DLuiDecoration.jsx';
+import {DLuiServDescPanel, DLuiTabView} from './DLuiServDescPanel.jsx';
 import {CIRCLE, POINT, POSITION, RANGE} from './DynamicDef.js';
-import {convertRequest, DynLayoutPanelTypes, findTargetFromRequest} from './DynamicUISearchPanel.jsx';
+import {convertRequest, findTargetFromRequest} from './DynamicUISearchPanel.jsx';
 import {getSpacialSearchType, hasValidSpacialSearch} from './DynComponents.jsx';
 import {confirmDLMenuItem} from './FetchDatalinkTable.js';
 import {getStandardIdType, ingestInitArgs, makeFieldDefs, makeSearchAreaInfo} from './ServiceDefTools.js';
@@ -273,56 +272,6 @@ function DLGeneratedDropDownTables({registryTblId, regLoaded, loadedTblIds, setL
 
 
 
-/**
- *
- * @param {Object} props
- * @param props.fds
- * @param props.groupKey
- * @param props.sx
- * @param props.desc
- * @param props.setSideBarShowing
- * @param props.sideBarShowing
- * @param props.docRows
- * @param props.setClickFunc
- * @param props.submitSearch
- * @param props.isAllSky
- * @param props.slotProps
- * @param {QueryAnalysis} props.qAna
- * @return {JSX.Element}
- * @constructor
- */
-function ServDescPanel({fds, sx, desc, groupKey, setSideBarShowing, sideBarShowing, docRows, setClickFunc, submitSearch, isAllSky, qAna={},slotProps})  {
-    const {concurrentSearchDef}= qAna;
-    const SearchPanelWrapper= ({children}) => (
-        <DLuiRootSearchPanel {...{children, groupKey, submitSearch, setClickFunc, docRows, concurrentSearchDef}}/>
-    );
-    return  (
-        <Stack {...{justifyContent:'space-between', sx}}>
-            <DLSearchTitle {...{desc,isAllSky,sideBarShowing,setSideBarShowing,...slotProps.searchTitle}}/>
-            <DynLayoutPanelTypes.Inset fieldDefAry={fds} plotId={HIPS_PLOT_ID} style={{height:'100%', marginTop:4}}
-                                       WrapperComponent={SearchPanelWrapper} toolbarHelpId={'dlGenerated.VisualSelection'} submitSearch={submitSearch} />
-        </Stack>
-    );
-}
-
-const TabView= ({tabsKey, groupKey, setSideBarShowing, sideBarShowing, searchObjFds,qAna, docRows, isAllSky, setClickFunc, submitSearch, slotProps}) => (
-    <FieldGroupTabs style ={{height:'100%', width:'100%'}} initialState={{ value:searchObjFds[0]?.ID}} fieldKey={tabsKey}>
-        {
-            searchObjFds.map((sFds) => {
-                const {fds, idx, ID, desc}= sFds;
-                return (
-                    <Tab name={`${qAna.primarySearchDef[idx].desc}`} id={ID} key={idx+''}>
-                        <ServDescPanel{...{fds, groupKey, setSideBarShowing, sideBarShowing, sx:{width:1}, desc, docRows,
-                            isAllSky, setClickFunc, submitSearch, qAna, slotProps}}/>
-                    </Tab>
-                );
-            })
-        }
-    </FieldGroupTabs>
-);
-
-
-
 const executeInitOnce= makeSearchOnce(false);
 const executeInitTargetOnce= makeSearchOnce(false);
 
@@ -383,10 +332,10 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
                     {sideBar && <SideBarAnimation {...{sideBar,sideBarShowing,...slotProps.sideBar}}/>}
                     <FieldGroup groupKey={groupKey} keepState={true} style={{width:'100%'}}>
                         {(regLoaded && qAna) ? searchObjFds.length===1 ?
-                                <ServDescPanel{...{initArgs, groupKey, setSideBarShowing, sideBarShowing, fds:searchObjFds[0].fds,
+                                <DLuiServDescPanel{...{initArgs, setSideBarShowing, sideBarShowing, fds:searchObjFds[0].fds,
                                     setClickFunc, submitSearch, isAllSky, qAna, slotProps,
                                     sx:{width:1,height:1}, desc:searchObjFds[0].desc, docRows}} /> :
-                                <TabView{...{initArgs, groupKey, tabsKey, setSideBarShowing, sideBarShowing, searchObjFds, qAna,
+                                <DLuiTabView{...{initArgs, tabsKey, setSideBarShowing, sideBarShowing, searchObjFds, qAna,
                                     docRows, isAllSky, setClickFunc, submitSearch, slotProps}}/>
                             :
                             <NotLoaded {...{regHasUrl,regLoaded,url}}/>

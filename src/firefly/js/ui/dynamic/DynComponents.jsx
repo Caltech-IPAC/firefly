@@ -175,7 +175,7 @@ function CircleAndPolyFieldPopup({fieldDefAry, typeForCircle= CIRCLE, plotId='de
 
 
 export function PositionAndPolyFieldEmbed({fieldDefAry, plotId, toolbarHelpId, insetSpacial,
-                                       otherComponents, WrapperComponent, submitSearch}) {
+                                       slotProps={}, children}) {
 
     const polyType = findFieldDefType(fieldDefAry, POLYGON);
     const posType = findFieldDefType(fieldDefAry, POINT) ?? findFieldDefType(fieldDefAry, POSITION);
@@ -206,28 +206,29 @@ export function PositionAndPolyFieldEmbed({fieldDefAry, plotId, toolbarHelpId, i
 
     return (
         <EmbeddedPositionSearchPanel {...{
-            toolbarHelpId,
-            WrapperComponent,
-            hipsUrl, hipsFOVInDeg,
-            initCenterPt,
-            mocList, sRegion,
-            coordinateSys: csysStr,
-            targetKey,
-            polygonKey,
-            sizeKey,
             initSelectToggle: initToggle,
             usePosition,
             usePolygon,
-            plotId,
-            minValue, maxValue, searchAreaInDeg,
             targetPanelExampleRow1, targetPanelExampleRow2,
-            polygonExampleRow1:polyType?.targetDetails?.targetPanelExampleRow1,
-            polygonExampleRow2:polyType?.targetDetails?.targetPanelExampleRow2,
             nullAllowed,
             insetSpacial,
-            otherComponents,
-            doSearch:submitSearch
-            }}/>
+            slotProps: {
+                hipsTargetView: {
+                    mocList, sRegion, plotId, toolbarHelpId, hipsUrl, hipsFOVInDeg, initCenterPt,
+                    coordinateSys: csysStr,
+                },
+                targetPanel: { targetKey, targetPanelExampleRow1, targetPanelExampleRow2, },
+                sizeInput: {min:minValue,max:maxValue,sizeKey, initValue: searchAreaInDeg},
+                polygonField: {
+                    polygonKey,
+                    polygonExampleRow1:polyType?.targetDetails?.targetPanelExampleRow1,
+                    polygonExampleRow2:polyType?.targetDetails?.targetPanelExampleRow2,
+                },
+                formPanel: slotProps.FormPanel,
+            }
+            }}>
+            {children}
+        </EmbeddedPositionSearchPanel>
 
     );
 
@@ -358,7 +359,7 @@ export function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', s
 
 function makeDynSpacialPanel({fieldDefAry, manageAllSpacial= true, popupHiPS= false,
                              plotId= 'defaultHiPSTargetSearch', toolbarHelpId, insetSpacial, submitSearch}) {
-    const DynSpacialPanel= ({otherComponents, WrapperComponent}) => {
+    const DynSpacialPanel= ({slotProps, children}) => {
         const posType = findFieldDefType(fieldDefAry, POINT) ?? findFieldDefType(fieldDefAry, POSITION) ;
         const areaType = findFieldDefType(fieldDefAry, AREA);
         const circleType = findFieldDefType(fieldDefAry, CIRCLE);
@@ -380,7 +381,9 @@ function makeDynSpacialPanel({fieldDefAry, manageAllSpacial= true, popupHiPS= fa
         if (manageAllSpacial && sizeKey) {
             return popupHiPS ?
                 <CircleAndPolyFieldPopup {...{fieldDefAry,typeForCircle:circleType?CIRCLE:POSITION, plotId, toolbarHelpId}}/> :
-                <PositionAndPolyFieldEmbed {...{fieldDefAry, plotId, insetSpacial, otherComponents, WrapperComponent, toolbarHelpId, submitSearch}}/>;
+                <PositionAndPolyFieldEmbed {...{fieldDefAry, plotId, insetSpacial, slotProps, toolbarHelpId, submitSearch}}>
+                    {children}
+                </PositionAndPolyFieldEmbed>;
         }
         else {
             if (popupHiPS) {
