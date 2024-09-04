@@ -89,7 +89,11 @@ function handleNewSearch(layoutInfo, action) {
     const {activeSearch} = getSearchInfo();
     var {showTables=true, showXyPlots=true, showImages=true, images={}} = layoutInfo;
 
-    if (currentSearch && currentSearch !== activeSearch ) {
+    // checking the table search is IRSA catalog search or External search
+    // only do cleanup for new app searches
+    if (currentSearch && currentSearch !== activeSearch &&
+        layoutInfo.dropDown.menuItem.category !== 'IRSA search tabs'
+        && layoutInfo.dropDown.menuItem.category !== 'External archive search tabs') {
         cleanup();
         // remove all charts
         removeChartsInGroup();
