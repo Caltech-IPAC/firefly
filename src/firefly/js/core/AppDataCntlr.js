@@ -10,6 +10,7 @@ import Point, {isValidPoint} from '../visualize/Point.js';
 import {getModuleName, getProp, getRootURL, isFullURL} from '../util/WebUtil.js';
 import {dispatchRemoteAction} from './JsonUtils.js';
 import {getWsConn} from './messaging/WebSocketClient';
+import {getLayouInfo} from 'firefly/core/LayoutCntlr';
 
 export const APP_DATA_PATH = 'app_data';
 export const COMMAND = 'COMMAND';
@@ -211,6 +212,11 @@ export function getSearchInfo() {
     return Object.assign({}, searchInfo, {activeSearch});
 }
 
+export function getSearchByName(name) {
+    const {allSearchItems={}} = getSearchInfo();
+    return allSearchItems[name];
+}
+
 export function getMenu() {
     return get(flux.getState(), [APP_DATA_PATH, 'menu']);
 }
@@ -294,6 +300,23 @@ export function getWsChannel(baseUrl) {
  */
 export function getWsConnId(baseUrl) {
     return getWsConn(baseUrl)?.connId;
+}
+
+/**
+ * Returns the name/action of the select menu item.  If not set, it will determine what it should be
+ * @param {object} menu
+ * @param {object} dropDown
+ * @returns {string} the name/action selected menu item
+ */
+export function getSelectedMenuItem(menu,dropDown) {
+    menu ??= getMenu();
+    dropDown ??= getLayouInfo()?.dropDown;
+    // if (!menu || !dropDown?.visible) return '';
+    if (!menu) return '';
+    if (menu.selected) return menu.selected;
+    let selected = menu.menuItems?.find(({action}) => (action===dropDown?.view))?.action;
+    if (!selected && dropDown?.visible) selected = menu.menuItems[0].action;
+    return selected;
 }
 
 

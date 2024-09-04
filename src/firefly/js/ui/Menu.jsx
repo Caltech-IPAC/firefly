@@ -11,8 +11,10 @@ import {tabClasses} from '@mui/joy/Tab';
 import {debounce} from 'lodash';
 import React, {forwardRef, memo, useCallback, useContext, useEffect, useRef, useState} from 'react';
 import shallowequal from 'shallowequal';
-import { COMMAND, dispatchAddPreference, dispatchSetMenu,
-    getMenu, getPreference, getUserInfo } from '../core/AppDataCntlr.js';
+import {
+    COMMAND, dispatchAddPreference, dispatchSetMenu,
+    getMenu, getPreference, getSelectedMenuItem, getUserInfo
+} from '../core/AppDataCntlr.js';
 import {getBackgroundInfo, isActive} from '../core/background/BackgroundUtil.js';
 import {flux} from '../core/ReduxFlux.js';
 import {dispatchHideDropDown, dispatchShowDropDown, getLayouInfo, getResultCounts} from '../core/LayoutCntlr.js';
@@ -59,7 +61,7 @@ export function Menu() {
     const {menuItems=[], showBgMonitor=true} = menu;
     const layoutInfo= getLayouInfo() ?? {};
     const {dropDown={}}=  layoutInfo;
-    const selected= getSelected(menu,dropDown);
+    const selected= getSelectedMenuItem(menu,dropDown);
 
     useEffect(() => {
         const doResize= () => setWindowWidth(window.innerWidth);
@@ -269,15 +271,6 @@ function itemVisible(menuItem) {
     return visible ?? primary;
 }
 
-function getSelected(menu,dropDown) {
-    // if (!menu || !dropDown?.visible) return '';
-    if (!menu) return '';
-    if (menu.selected) return menu.selected;
-    let selected = menu.menuItems?.find(({action}) => (action===dropDown?.view))?.action;
-    if (!selected && dropDown?.visible) selected = menu.menuItems[0].action;
-    return selected;
-}
-
 function updateMenu(appTitle, menu) {
     const pref= menu.menuItems
         .map( (mi)  => [mi.action, Boolean(mi.visible ?? mi.primary)] );
@@ -390,7 +383,7 @@ export function SideBarMenu({closeSideBar, allowMenuHide}) {
     const uploadItem= menu.menuItems?.find(({action}) => action===UploadCmd);
     const menuItems= menu.menuItems?.filter(({type,action}) => type !== COMMAND && action!==UploadCmd);
     const {dropDown={visible:false}}= getLayouInfo() ?? {};
-    const selected= getSelected(menu,dropDown);
+    const selected= getSelectedMenuItem(menu,dropDown);
     const categoryList= menuItems ? [...new Set(menuItems.map( (mi) => mi.category ?? ''))] : [];
 
     return (
