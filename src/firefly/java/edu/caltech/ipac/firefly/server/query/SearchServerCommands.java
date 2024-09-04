@@ -53,6 +53,7 @@ import java.util.List;
 
 import static edu.caltech.ipac.firefly.data.ServerParams.EMAIL;
 import static edu.caltech.ipac.firefly.data.ServerParams.JOB_ID;
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
@@ -322,14 +323,17 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             String jobUrl = params.getOptional(UwsJobProcessor.JOB_URL);
-            if (isEmpty(jobUrl)) {
-                String jobId = params.getRequired(JOB_ID);
-                JobInfo info = JobManager.getJobInfo(jobId);
-                if (info == null || info.getType() != Job.Type.UWS) return null;
-                jobUrl = info.getDataOrigin();
+            String jobId = params.getOptional(JOB_ID);
+            JobInfo uws = isEmpty(jobUrl) ? null : UwsJobProcessor.getUwsJobInfo(jobUrl);
+            JobInfo local = isEmpty(jobId) ? null : JobManager.getJobInfo(jobId);
+
+            if (uws != null && local != null) {
+                // apply additional local info as needed
+                applyIfNotEmpty(local.getLocalRunId(), uws::setLocalRunId);
             }
-            JobInfo uws = UwsJobProcessor.getUwsJobInfo(jobUrl);
-            return JobManager.toJson(uws);
+
+            if (uws != null) return JobManager.toJson(uws);
+            return local != null ? JobManager.toJson(local) : null;
         }
     }
 

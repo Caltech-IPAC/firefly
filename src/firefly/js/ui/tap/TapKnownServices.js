@@ -28,11 +28,11 @@ function makeServices() {
         tapEntry('MAST Images', 'https://vao.stsci.edu/CAOMTAP/TapService.aspx'),
         tapEntry('CADC', 'https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/argus/'),
         // CDS???
-        tapEntry('VizieR (CDS)', 'http://tapvizier.u-strasbg.fr/TAPVizieR/tap/'),
+        tapEntry('VizieR (CDS)', 'https://tapvizier.u-strasbg.fr/TAPVizieR/tap/'),
         tapEntry('Simbad (CDS)', 'https://simbad.u-strasbg.fr/simbad/sim-tap'),
         // more ESA??
         tapEntry('Gaia', 'https://gea.esac.esa.int/tap-server/tap',undefined,undefined,undefined, undefined, gaiaExamples()),
-        tapEntry('GAVO', 'http://dc.g-vo.org/tap'),
+        tapEntry('GAVO', 'https://dc.g-vo.org/tap'),
         tapEntry('HSA',  'https://archives.esac.esa.int/hsa/whsa-tap-server/tap'),
     ];
 

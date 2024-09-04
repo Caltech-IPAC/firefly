@@ -159,7 +159,7 @@ const ShowObjectTreeBtn = ({data, title}) => {
 
 export function KeywordBlock({sx={}, label, value, title, asLink}) {
     return (
-        <Stack direction='row' display='inline-flex' alignItems='baseline' sx={sx}>
+        <Stack direction='row' whiteSpace='nowrap' alignItems='baseline' sx={sx}>
             <Keyword {...{label, value, title, asLink}}/>
         </Stack>
     );

@@ -5,12 +5,13 @@ import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {KeywordBlock} from '../../tables/ui/TableInfo.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
-import {dispatchShowDialog} from '../ComponentCntlr.js';
+import {dispatchHideDialog, dispatchShowDialog} from '../ComponentCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {CollapsibleItem, CollapsibleGroup} from 'firefly/ui/panel/CollapsiblePanel.jsx';
 import {uwsJobInfo} from 'firefly/rpc/SearchServicesJson.js';
 import {Box, Button, Skeleton, Stack} from '@mui/joy';
-import {OverflowMarker} from 'firefly/tables/ui/TablePanel.jsx';
+import {OverflowMarker, TableErrorMsg} from 'firefly/tables/ui/TablePanel.jsx';
+import {showInfoPopup} from 'firefly/ui/PopupUtil';
 
 
 const popupSx = {
@@ -48,18 +49,23 @@ export async function showUwsJob({jobUrl, jobId}) {
     DialogRootContainer.defineDialog(id, mask);
     dispatchShowDialog(id);
 
-    const jobInfo = await uwsJobInfo(jobUrl, jobId);
-    const popup = (
-        <PopupPanel title='UWS Job' >
-            <Stack key={jobId} sx={popupSx}>
-                <UwsJobInfo jobInfo={jobInfo} sx={{overflow: 'auto'}}/>
-                <HelpIcon helpId={'basics.uwsJob'} sx={{ml: 'auto'}}/>
-            </Stack>
-        </PopupPanel>
-    );
+    try {
+        const jobInfo = await uwsJobInfo(jobUrl, jobId);
+        const popup = (
+            <PopupPanel title='UWS Job' >
+                <Stack key={jobId} sx={popupSx}>
+                    <UwsJobInfo jobInfo={jobInfo} sx={{overflow: 'auto'}}/>
+                    <HelpIcon helpId={'basics.uwsJob'} sx={{ml: 'auto'}}/>
+                </Stack>
+            </PopupPanel>
+        );
 
-    DialogRootContainer.defineDialog(id, popup);
-    dispatchShowDialog(id);
+        DialogRootContainer.defineDialog(id, popup);
+        dispatchShowDialog(id);
+    } catch (error) {
+        dispatchHideDialog(id);
+        showInfoPopup(<TableErrorMsg error={error}/>, 'Error');
+    }
 }
 
 
@@ -84,10 +90,10 @@ function DataOrigin({dataOrigin, type, jobId}) {
     const label = isUws ? 'UWS Job URL' : 'Service URL';
     if (!isUws) return <KeywordBlock label={label} value={dataOrigin} asLink={true}/>;
     return (
-        <div style={{display: 'inline-flex'}}>
+        <Stack direction='row' spacing={1}>
             <KeywordBlock sx={{width: 425, alignItems:'center'}} label={label} value={dataOrigin} asLink={true}/>
             <Button ml={1/2} size='sm' onClick={() => showUwsJob({jobId})}>Show</Button>
-        </div>
+        </Stack>
     );
 }
 
@@ -112,7 +118,9 @@ export function UwsJobInfo({jobInfo, sx, isOpen=false}) {
                     .filter(([k]) => !['parameters', 'results', 'errorSummary', 'jobInfo'].includes(k))
                     .map(([k,v]) => <KeywordBlock key={k} label={k} value={v}/>)
             }
-
+            {
+                <KeywordBlock key='runId' label='runId' value={jobInfo?.jobInfo?.localRunId}/>
+            }
             <CollapsibleGroup>
                 <OptionalBlock label='parameters' value={jobInfo.parameters} isOpen={isOpen}/>
                 <OptionalBlock label='results' value={hrefs} asLink={true} isOpen={isOpen}/>
