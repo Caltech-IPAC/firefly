@@ -54,7 +54,7 @@ export function dispatchLoadTblStats(searchRequest, dispatcher= flux.process) {
     // use resultSetID to determine if a call needs to be placed
     const {resultSetID, numericColCnt} = get(flux.getState(), [TBLSTATS_DATA_KEY, tbl_id], {});
     const resultSetIDNow = get(getTblById(tbl_id), 'tableMeta.resultSetID');
-    const curNumericColCnt = getColumns(getTblById(tbl_id), COL_TYPE.NUMBER);
+    const curNumericColCnt = getColumns(getTblById(tbl_id), COL_TYPE.NUMBER)?.length;
 
     if (resultSetID !== resultSetIDNow
         || curNumericColCnt !== numericColCnt) {  // also reload stats if the number of numeric columns changes.
@@ -176,7 +176,7 @@ function fetchTblStats(dispatch, activeTableServerRequest) {
                     return colstats;
                 }, []);
             }
-            const numericColCnt = getColumns(getTblById(tbl_id), COL_TYPE.NUMBER);
+            const numericColCnt = getColumns(getTblById(tbl_id), COL_TYPE.NUMBER)?.length;
             dispatch(updateTblStats(
                 {
                     tblId: tbl_id,

@@ -1,5 +1,5 @@
-import React from 'react';
-import {get, range, isEqual, memoize} from 'lodash';
+import React, {useCallback} from 'react';
+import {get, range, isEqual} from 'lodash';
 import {getSpectrumDM, REF_POS} from '../../../voAnalyzer/SpectrumDM.js';
 
 import {getChartData} from '../../ChartsCntlr.js';
@@ -10,11 +10,11 @@ import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
 import {FieldGroup} from '../../../ui/FieldGroup.jsx';
 import {errorFieldKey, errorMinusFieldKey, errorShowFieldKey} from './Errors.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
-import {fieldReducer, submitChangesScatter, scatterInputs, ScatterCommonOptions} from './ScatterOptions.jsx';
+import {fieldReducer, submitChangesScatter, ScatterCommonOptions, useScatterInputs} from './ScatterOptions.jsx';
 import {VALUE_CHANGE} from '../../../fieldGroup/FieldGroupCntlr.js';
 import {updateSet, toBoolean} from '../../../util/WebUtil.js';
 import {isSpectralOrder, getChartProps} from '../../ChartUtil.js';
-import {basicOptions, basicPropResolver, LayoutOptions} from './BasicOptions.jsx';
+import {LayoutOptions, useBasicOptions} from './BasicOptions.jsx';
 import {getSpectrumProps} from '../../dataTypes/FireflySpectrum.js';
 import {getFieldVal, revalidateFields} from 'firefly/fieldGroup/FieldGroupUtils';
 import {isFloat} from 'firefly/util/Validate';
@@ -34,9 +34,9 @@ export function SpectrumOptions ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
     const {tbl_id} = getChartProps(chartId, ptbl_id, activeTrace);
     const {xErrArray, yErrArray, xMax, xMin, yMax, yMin} = getSpectrumProps(tbl_id);
 
-    const {Xunit, Yunit, SpectralFrame} = spectrumInputs({activeTrace, tbl_id, chartId, groupKey});
-    const {UseSpectrum, X, Xmax, Xmin, Y, Ymax, Ymin, Yerrors, Xerrors, Mode} = scatterInputs({activeTrace, tbl_id, chartId, groupKey});
-    const {XaxisTitle, YaxisTitle} = basicOptions({activeTrace, tbl_id, chartId, groupKey});
+    const {Xunit, Yunit, SpectralFrame} = useSpectrumInputs({activeTrace, tbl_id, chartId, groupKey});
+    const {UseSpectrum, X, Xmax, Xmin, Y, Ymax, Ymin, Yerrors, Xerrors, Mode} = useScatterInputs({activeTrace, tbl_id, chartId, groupKey});
+    const {XaxisTitle, YaxisTitle} = useBasicOptions({activeTrace, tbl_id, chartId, groupKey});
 
     const reducerFunc = spectrumReducer({chartId, activeTrace, tbl_id});
     reducerFunc.ver = chartId+activeTrace+tbl_id;
@@ -295,22 +295,26 @@ function Units({activeTrace, value, axis, ...rest}) {
 
 }
 
-export const spectrumInputs = memoize( ({chartId, groupKey}) => {
+/*
+ * This function returns a collection of components using `useCallback`, ensuring they are not recreated between re-renders.
+ * To modify this behavior, you can set the `deps` parameter accordingly.
+ */
+export const useSpectrumInputs = ({chartId, groupKey}, deps=[]) => {
 
     const {activeTrace=0, fireflyData={}} = getChartData(chartId);
 
     return {
-        Xunit: (props={}) => <Units {...{activeTrace, axis: 'x', value: get(fireflyData, `${activeTrace}.xUnit`), ...props}}/>,
-        Yunit: (props={}) => <Units {...{activeTrace, axis: 'y', value: get(fireflyData, `${activeTrace}.yUnit`), ...props}}/>,
-        SpectralFrame: (props={}) => {
+        Xunit: useCallback((props={}) => <Units {...{activeTrace, axis: 'x', value: get(fireflyData, `${activeTrace}.xUnit`), ...props}}/>, deps),
+        Yunit: useCallback((props={}) => <Units {...{activeTrace, axis: 'y', value: get(fireflyData, `${activeTrace}.yUnit`), ...props}}/>, deps),
+        SpectralFrame: useCallback((props={}) => {
             const allProps = {label: 'Spectral Frame:', ...props};
             const sfRefPos = fireflyData[activeTrace].spectralFrame.refPos.toUpperCase();
             return Object.values(REF_POS).includes(sfRefPos) //only show options when TOPOCENTER or CUSTOM
                 ? <SpectralFrameOptions groupKey={groupKey} activeTrace={activeTrace} refPos={sfRefPos} fireflyData={fireflyData} {...allProps}/>
                 : <ValidationField fieldKey={SFOptionFieldKeys(activeTrace).value} initialState={{value: sfRefPos}} readonly={true} {...allProps}/>;
-        },
+        }, deps),
     };
-}, basicPropResolver);
+};
 
 const SFOptionFieldKeys = (activeTrace) => {
     const baseKey = `fireflyData.${activeTrace}.spectralFrameOption`;

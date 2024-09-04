@@ -10,7 +10,7 @@ import {ValidationField} from '../../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../../ui/ListBoxInputField.jsx';
 import {CheckboxGroupInputField} from '../../../ui/CheckboxGroupInputField.jsx';
 import {useStoreConnector} from '../../../ui/SimpleComponent.jsx';
-import {basicFieldReducer, basicOptions, LayoutOptions, submitChanges} from './BasicOptions.jsx';
+import {basicFieldReducer, LayoutOptions, submitChanges, useBasicOptions} from './BasicOptions.jsx';
 import {getColValStats} from '../../TableStatsCntlr.js';
 import {ColumnOrExpression} from '../ColumnOrExpression.jsx';
 import {ALL_COLORSCALE_NAMES, PlotlyCS} from '../../Colorscale.js';
@@ -25,7 +25,7 @@ export function HeatmapOptions({activeTrace:pActiveTrace, tbl_id:ptbl_id, chartI
 
     groupKey = groupKey || `${chartId}-heatmap-${activeTrace}`;
     const {tablesource, tbl_id, multiTrace} = getChartProps(chartId, ptbl_id, activeTrace);
-    const {Name} = basicOptions({activeTrace, tbl_id, chartId, groupKey});
+    const {Name} = useBasicOptions({activeTrace, tbl_id, chartId, groupKey});
 
     const reducerFunc = fieldReducer({chartId, activeTrace});
     reducerFunc.ver = chartId+activeTrace;

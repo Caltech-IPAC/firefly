@@ -1,7 +1,7 @@
 import React from 'react';
 import {get, set} from 'lodash';
 
-import {LayoutOptions, basicFieldReducer, submitChanges, basicOptions} from './BasicOptions.jsx';
+import {LayoutOptions, basicFieldReducer, submitChanges, useBasicOptions} from './BasicOptions.jsx';
 import {HistogramOptions} from '../HistogramOptions.jsx';
 import {getChartData} from '../../ChartsCntlr.js';
 
@@ -23,7 +23,7 @@ export function FireflyHistogramOptions({activeTrace:pActiveTrace, tbl_id:ptbl_i
     const colValStats = getColValStats(tbl_id);
 
     const histogramParams = toHistogramOptions(chartId, activeTrace);
-    const {Name, Color} = basicOptions({activeTrace, tbl_id, chartId, groupKey});
+    const {Name, Color} = useBasicOptions({activeTrace, tbl_id, chartId, groupKey});
 
     const basicFields = (
         <CollapsibleGroup>
