@@ -3,6 +3,9 @@
  */
 package edu.caltech.ipac.util.download;
 
+import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.security.JOSSOAdapter;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.Base64;
 import edu.caltech.ipac.util.ClientLog;
 import edu.caltech.ipac.util.FileUtil;
@@ -29,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
@@ -147,7 +151,17 @@ public class URLDownload {
         try {
 
             URLConnection conn = url.openConnection();
-            if (conn instanceof HttpURLConnection) addCookiesToConnection((HttpURLConnection) conn, cookies);
+            if (conn instanceof HttpURLConnection) {
+                // quick and dirty fix to pass along credential to IRSA backend services
+                if (JOSSOAdapter.requireAuthCredential(url.toString())) {
+                    String auth = ServerContext.getRequestOwner().getRequestAgent().getHeader("Authorization");
+                    if (auth != null && auth.startsWith("Basic")) {
+                        Logger.getLogger().debug("auth: " + auth);
+                        conn.setRequestProperty("Authorization", auth);
+                    }
+                    addCookiesToConnection((HttpURLConnection) conn, cookies);
+                }
+            }
             String[] userInfo = getUserInfo(url);
             if (userInfo != null) {
                 String authStringEnc = Base64.encode(userInfo[0] + ":" + userInfo[1]);
