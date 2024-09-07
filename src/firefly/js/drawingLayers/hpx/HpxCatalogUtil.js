@@ -5,6 +5,7 @@ import {
 import {SelectInfo} from '../../tables/SelectInfo';
 import {dispatchTableFilter, dispatchTableSelect} from '../../tables/TablesCntlr';
 import {getTblById} from '../../tables/TableUtil';
+import BrowserInfo from '../../util/BrowserInfo';
 import CoordSys from '../../visualize/CoordSys';
 import CysConverter from '../../visualize/CsysConverter';
 import {dlRoot} from '../../visualize/DrawLayerCntlr';
@@ -23,8 +24,45 @@ export const HPX_MIN_GROUP_PREF= 'HPX_MIN_GROUP_PREF';
 export const BOX_GROUP_TYPE = 'BOX_GROUP_TYPE';
 export const ELLIPSE_GROUP_TYPE = 'ELLIPSE_GROUP_TYPE';
 export const HEALPIX_GROUP_TYPE = 'HEALPIX_GROUP_TYPE';
+export const HEAT_MAP_GROUP_TYPE = 'HEAT_MAP_GROUP_TYPE';
+export const HPX_GRID_SIZE_PREF= 'HPX_GROUP_SIZE_PREF';
+export const HPX_HEATMAP_LABEL_PREF= 'HPX_HEATMAP_LABEL_PREF';
+export const HPX_GRID_SIZE_LARGE= 128;
+export const HPX_GRID_SIZE_SMALL= 64;
 export const DEFAULT_MIN_HPX_GROUP= 15;
-export const DEFAULT_HPX_GROUP_TYPE= ELLIPSE_GROUP_TYPE;
+export const DEFAULT_HPX_GRID_SIZE= HPX_GRID_SIZE_LARGE;
+export const DEFAULT_HPX_GROUP_TYPE= HEALPIX_GROUP_TYPE;
+export const DEFAULT_HEATMAP_LABELS= true;
+
+export function getHeatMapGridSize() {
+    const HPX_GRID_SIZE_VERY_SMALL= 32;
+    const HPX_GRID_SIZE_VERY_SMALL_PERFORMANT= 16;
+    if (BrowserInfo.isChrome()) return HPX_GRID_SIZE_VERY_SMALL_PERFORMANT;
+    if (BrowserInfo.isSafari()) return HPX_GRID_SIZE_VERY_SMALL;
+    if (BrowserInfo.isFirefox()) return HPX_GRID_SIZE_VERY_SMALL_PERFORMANT;
+    return HPX_GRID_SIZE_VERY_SMALL;
+}
+
+export function getHeatMapNorder(largeSizeNorder) {
+    if (largeSizeNorder>=DATA_NORDER) return {showLabels:true, norder:DATA_NORDER};
+    if (largeSizeNorder===DATA_NORDER-1) return {showLabels:true, norder:DATA_NORDER};
+    if (largeSizeNorder===DATA_NORDER-2) return {showLabels:true, norder:DATA_NORDER-1};
+    if (largeSizeNorder===DATA_NORDER-3) return {showLabels:true, norder:DATA_NORDER-2};
+
+    let performant= false;
+    if (BrowserInfo.isChrome()) performant= true;
+
+    if (performant) {
+        return {showLabels:false, norder:largeSizeNorder+3};
+    }
+    else {
+        if (largeSizeNorder<=6) return {showLabels:false, norder:largeSizeNorder+3};
+        else return {showLabels:false, norder:largeSizeNorder+2};
+    }
+}
+
+
+
 
 const getLayers = (pv, dlAry) =>
     getAllDrawLayersForPlot(dlAry, pv.plotId, true).filter((dl) => dl.drawLayerTypeId === TYPE_ID);
@@ -85,7 +123,7 @@ function doFilter(dl, p, sel, selectedShape) {
 
 function getHpxSelectedPts(dl, p, sel, selectedShape) {
     const minNOrder = 8;
-    const norder = getCatalogNorderlevel(p, minNOrder, DATA_NORDER);
+    const norder = getCatalogNorderlevel(p, minNOrder, DATA_NORDER,dl.gridSize);
     const idxData = getHpxIndexData(dl.tbl_id);
     const allCellList = getAllTilesAtNorder(idxData.orderData, norder) ?? [];
     const selectedIdxs = getSelectedHealPixFromShape(idxData, sel, p, allCellList, norder, selectedShape);

@@ -1,7 +1,7 @@
 import {getPreference} from '../../core/AppDataCntlr';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga';
 import {MetaConst} from '../../data/MetaConst';
-import {getHpxIndexData, getIpixForWp, hasOrderDataReady, makeHpxWpt} from '../../tables/HpxIndexCntlr';
+import {getHpxIndexData, getIpixForWp, hasOrderDataReady, makeHpxWpt, MIN_NORDER} from '../../tables/HpxIndexCntlr';
 import {
     dispatchTableHighlight, dispatchTableUiUpdate, TABLE_HIGHLIGHT, TABLE_REMOVE, TABLE_SELECT, TABLE_UPDATE
 } from '../../tables/TablesCntlr';
@@ -28,13 +28,14 @@ import {isHiPS, isImage} from '../../visualize/WebPlot';
 import {CatalogType} from '../Catalog';
 import {getUIComponent} from '../CatalogUI';
 import {
-    HPX_GROUP_TYPE_PREF, DEFAULT_MIN_HPX_GROUP, HPX_MIN_GROUP_PREF, TYPE_ID, DEFAULT_HPX_GROUP_TYPE
+    HPX_GROUP_TYPE_PREF, DEFAULT_MIN_HPX_GROUP, HPX_MIN_GROUP_PREF, TYPE_ID, DEFAULT_HPX_GROUP_TYPE, HPX_GRID_SIZE_PREF,
+    DEFAULT_HPX_GRID_SIZE, HPX_HEATMAP_LABEL_PREF, DEFAULT_HEATMAP_LABELS
 } from './HpxCatalogUtil';
 import {createTileDataMaker} from './TileDataMaker';
 
 const getLayerActions= () => [
     DrawLayerCntlr.ATTACH_LAYER_TO_PLOT, DrawLayerCntlr.DESTROY_DRAWING_LAYER,
-    DrawLayerCntlr.MODIFY_CUSTOM_FIELD
+    DrawLayerCntlr.MODIFY_CUSTOM_FIELD, DrawLayerCntlr.CHANGE_DRAWING_DEF
 ];
 const getTableActions= () => [ TABLE_HIGHLIGHT,TABLE_UPDATE, TABLE_SELECT ];
 
@@ -56,7 +57,7 @@ function creator(initPayload, presetDefaults={}) {
     const table= getTblById(tbl_id);
 
     const drawingDef= {...makeDrawingDef(),
-        size: size || 5,
+        size: size || 3,
         symbol: DrawSymbol.get(symbol) || DrawSymbol.get(table.tableMeta?.[MetaConst.DEFAULT_SYMBOL]) || DrawSymbol.SQUARE,
         ...presetDefaults};
 
@@ -103,6 +104,8 @@ function creator(initPayload, presetDefaults={}) {
         tableCanControlColor,
         minGroupSize:getPreference(HPX_MIN_GROUP_PREF,DEFAULT_MIN_HPX_GROUP),
         groupType: getPreference(HPX_GROUP_TYPE_PREF,DEFAULT_HPX_GROUP_TYPE),
+        gridSize: getPreference(HPX_GRID_SIZE_PREF,DEFAULT_HPX_GRID_SIZE),
+        heatMapLabels: getPreference(HPX_HEATMAP_LABEL_PREF,DEFAULT_HEATMAP_LABELS),
         dataTooBigForSelection: false,
     };
 }
@@ -163,6 +166,7 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt,worldPt) {
             if (closestIdx > -1) {
                 if (data[closestIdx].norder && data[closestIdx].ipix) {
                     const norder= data[closestIdx].norder;
+                    if (norder<MIN_NORDER) return;
                     const updatedDl= getDrawLayerById(dlRoot(),drawLayer.drawLayerId);
                     let expandedTiles= updatedDl.expandedTiles ?? {};
                     if (!expandedTiles[plotId]) {
@@ -284,7 +288,9 @@ function handleLayerActions(action,cancelSelf,params) {
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
             action.payload.plotIdAry.forEach((plotId) => void makeTileDataAndUpdate(dl, plotId, tbl_id));
             break;
-
+        case DrawLayerCntlr.CHANGE_DRAWING_DEF:
+            dl?.visiblePlotIdAry?.forEach((plotId) => void makeTileDataAndUpdate(dl, plotId, tbl_id, false));
+            break;
         case DrawLayerCntlr.MODIFY_CUSTOM_FIELD:
             dl?.visiblePlotIdAry?.forEach((plotId) => void makeTileDataAndUpdate(dl, plotId, tbl_id, false));
             break;
@@ -305,7 +311,7 @@ function handleTableActions(action,cancelSelf,params) {
     switch (action.type) {
         case TABLE_SELECT:
             setTimeout(() =>
-                dl.visiblePlotIdAry.forEach((plotId) => void makeTileDataAndUpdate(dl, plotId, tbl_id)), 5 );
+                dl.visiblePlotIdAry.forEach((plotId) => void makeTileDataAndUpdate(dl, plotId, tbl_id)), 1 );
             break;
         case TABLE_HIGHLIGHT:
         case TABLE_UPDATE:

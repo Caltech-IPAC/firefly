@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {IconButton, Stack, Typography} from '@mui/joy';
+import {IconButton, Stack, Switch, Typography} from '@mui/joy';
 import React from 'react';
 import {object,number} from 'prop-types';
 import Enum from 'enum';
@@ -18,12 +18,14 @@ import {INFO_POPUP, showInfoPopup} from '../ui/PopupUtil.jsx';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
 import {DataTypes} from '../visualize/draw/DrawLayer.js';
 import {dispatchChangeVisibility, dispatchModifyCustomField, GroupingScope} from '../visualize/DrawLayerCntlr.js';
+import {dispatchViewerScroll} from '../visualize/MultiViewCntlr';
 import {isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
 import {InfoButton} from '../visualize/ui/Buttons.jsx';
 
 import PriorityHighRoundedIcon from '@mui/icons-material/PriorityHighRounded';
 import {
-    BOX_GROUP_TYPE, ELLIPSE_GROUP_TYPE, HEALPIX_GROUP_TYPE, HPX_GROUP_TYPE_PREF, HPX_MIN_GROUP_PREF
+    BOX_GROUP_TYPE, ELLIPSE_GROUP_TYPE, HEALPIX_GROUP_TYPE, HEAT_MAP_GROUP_TYPE, HPX_GRID_SIZE_LARGE,
+    HPX_GRID_SIZE_PREF, HPX_GRID_SIZE_SMALL, HPX_GROUP_TYPE_PREF, HPX_HEATMAP_LABEL_PREF, HPX_MIN_GROUP_PREF
 } from './hpx/HpxCatalogUtil';
 
 export const TableSelectOptions = new Enum(['all', 'selected', 'highlighted']);
@@ -83,7 +85,7 @@ function CatalogUI({drawLayer,pv}) {
         } else {
             tableOptions = (
                 <Stack>
-                    {isHpx && showMinGroupOp(drawLayer)}
+                    {isHpx && showHpxOptions(drawLayer)}
                     {subTitle}
                 </Stack>
             );
@@ -164,7 +166,7 @@ function changeVisibilityScope(drawLayer,pv,value) {
     }
 }
 
-function showMinGroupOp(drawLayer) {
+function showHpxOptions(drawLayer) {
     const groupOp= [];
     for(let i= 5; i<=50;i+=5) groupOp.push({label:i+'', value:i});
 
@@ -172,26 +174,56 @@ function showMinGroupOp(drawLayer) {
         {label: 'Ellipse', value: ELLIPSE_GROUP_TYPE},
         {label: 'Box', value: BOX_GROUP_TYPE},
         {label: 'Healpix Grid', value: HEALPIX_GROUP_TYPE},
+        {label: 'Heatmap', value: HEAT_MAP_GROUP_TYPE},
+    ];
+    const gridSizeOp= [
+        {label: 'Large', value: HPX_GRID_SIZE_LARGE},
+        {label: 'Small', value: HPX_GRID_SIZE_SMALL},
     ];
 
+    const heatmap=  drawLayer.groupType===HEAT_MAP_GROUP_TYPE;
+
     return (
-        <Stack direction='row' spacing={2}>
+        <Stack direction='row' spacing={1}>
             <ListBoxInputFieldView
+                label='Grouping' tooltip='Choose grouping type'
+                sx={{minWidth: '16rem'}}
+                options={groupTypeOp} value={ drawLayer.groupType || groupTypeOp[0]}
+                onChange={(ev, newValue) => {
+                    dispatchModifyCustomField(drawLayer.drawLayerId, {groupType:newValue});
+                    AppDataCntlr.dispatchAddPreference(HPX_GROUP_TYPE_PREF, newValue);
+                }}
+            />
+            {!heatmap && <ListBoxInputFieldView
                 label='Min Group' tooltip='Choose min grouping'
+                sx={{minWidth: '10rem'}}
                 options={groupOp} value={drawLayer.minGroupSize}
                 onChange={(ev, newValue) => {
                     dispatchModifyCustomField(drawLayer.drawLayerId, {minGroupSize:newValue});
                     AppDataCntlr.dispatchAddPreference(HPX_MIN_GROUP_PREF,newValue);
                 }}
-            />
-            <ListBoxInputFieldView
-                label='Grouping Type' tooltip='Choose grouping type'
-                options={groupTypeOp} value={ drawLayer.groupType || groupTypeOp[0]}
+            />}
+            {!heatmap && <ListBoxInputFieldView
+                label='Size' tooltip='Choose grid size'
+                sx={{minWidth: '8rem'}}
+                options={gridSizeOp} value={ drawLayer.gridSize || gridSizeOp[0]}
                 onChange={(ev, newValue) => {
-                    dispatchModifyCustomField(drawLayer.drawLayerId, {groupType:newValue});
-                    AppDataCntlr.dispatchAddPreference(HPX_GROUP_TYPE_PREF,newValue);
+                    dispatchModifyCustomField(drawLayer.drawLayerId, {gridSize:newValue});
+                    if (newValue===HPX_GRID_SIZE_SMALL || newValue===HPX_GRID_SIZE_LARGE) {
+                        AppDataCntlr.dispatchAddPreference(HPX_GRID_SIZE_PREF,newValue);
+                    }
                 }}
-            />
+            />}
+            {heatmap && <Switch size='sm'
+                    endDecorator={
+                        <Typography sx={{textWrap:'nowrap'}} >Show labels if possible</Typography>
+                    }
+                    checked={drawLayer.heatMapLabels}
+                    onChange={(ev) => {
+                        dispatchModifyCustomField(drawLayer.drawLayerId, {heatMapLabels:Boolean(ev.target.checked)});
+                        AppDataCntlr.dispatchAddPreference(HPX_HEATMAP_LABEL_PREF,Boolean(ev.target.checked));
+                    }} />
+            }
         </Stack>
     );
 }

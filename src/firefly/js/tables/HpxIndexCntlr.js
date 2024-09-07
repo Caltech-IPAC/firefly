@@ -13,7 +13,7 @@ export const DATA_NORDER= 12;
 export const MIN_NORDER= 4;
 export const MIN_NORDER_TO_ALWAYS_GROUP= 6;
 export const MIN_NORDER_FOR_COVERAGE= 2;
-export const MIN_ROWS_FOR_HIERARCHICAL= 300;
+export const MIN_ROWS_FOR_HIERARCHICAL= 1000;
 const DATA_NSIDE= 2**DATA_NORDER;
 const UINT_SCALE= 10**7;
 
@@ -30,7 +30,7 @@ const UINT_SCALE= 10**7;
  * @prop {Float32Array} latAry
  * @prop {CoordinateSys} csys
  * @prop {boolean} tableUsingRadians
- * @prop {Object} orderData - object {number, HealpixLevel}
+ * @prop {Object.<number, HealpixLevel>} orderData - object {number, HealpixLevel}
  * @prop {Object} selectionOrderData - object {number, HealpixLevel}
  */
 
@@ -41,6 +41,7 @@ const UINT_SCALE= 10**7;
  * @summary Data for Healpix data
  *
  * @prop {Number} norder
+ * @prop {Object} histogramInfo
  * @prop  {Map.<Number,TileEntry>} tiles at this level
  */
 
@@ -87,7 +88,8 @@ export default { reducers, actionCreators, };
 
 function reducer(state={}, action={}) {
     const {type,payload} = action;
-    const {ready=true,csys,orderData,lonAry,latAry,selectionOrderData, selectAll,tbl_id}= payload ?? {};
+    const {ready=true,csys,orderData,lonAry,latAry,selectionOrderData,
+        selectAll,tableUsingRadians=false,tbl_id}= payload ?? {};
 
 
     switch (type) {
@@ -97,7 +99,7 @@ function reducer(state={}, action={}) {
 
         case ENABLE_HPX_INDEX:
             return {...state,[tbl_id]:
-                    {ready,orderData,lonAry,latAry, csys,selectionOrderData, selectAll} };
+                    {ready,orderData,lonAry,latAry, csys,selectionOrderData, selectAll, tableUsingRadians} };
 
         case ADD_SELECTION_HPX_INDEX:
             const tblHpxData= {...state[tbl_id],selectionOrderData,selectAll,ready};
@@ -263,6 +265,10 @@ function watchTable(action, cancelSelf, params) {
  */
 export function getTile(orderData, norder, tileNumber) {
     return orderData?.[norder]?.tiles?.get(tileNumber);
+}
+
+export function getHistgramForNorder(idxData, norder) {
+    return idxData?.orderData?.[norder]?.histogramInfo;
 }
 
 export function getAllTilesAtNorder(orderData,norder) {
@@ -457,11 +463,37 @@ function doCreateHealPixWork(resolve, lonAry, latAry, csys, runId) {
                 if (rowIdx % 10000 === 0) return;
             }
             done= true;
+
+            for(let i= MIN_NORDER_FOR_COVERAGE; (i<DATA_NORDER); i++) {
+                orderData[i].histogramInfo=orderData?.[i]?.tiles ?
+                    getArrayStats( [...orderData?.[i]?.tiles?.values()]?.map( ({count}) => count)) : undefined;
+            }
             resolve(orderData);
         });
 }
 
 
+function getArrayStats(ary) {
+    // basic stats
+     const stats= ary.reduce( (obj,entry) => {
+        if (entry>obj.max) obj.max= entry;
+        if (entry<obj.min) obj.min= entry;
+         obj.total+= entry;
+        return obj;
+    },{min:Number.MAX_SAFE_INTEGER, max:0, total:0});
+
+
+    const mean = stats.total / ary.length;
+
+    // calculate standard deviation
+    let prep = 0;
+    for(let i=0; (i<ary.length); i++) {
+        prep += Math.pow((parseFloat(ary[i]) - mean),2);
+    }
+    const standDev = Math.sqrt(prep/(ary.length-1));
+
+    return {...stats,standDev,mean};
+}
 
 
 

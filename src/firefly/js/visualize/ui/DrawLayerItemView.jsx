@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import {Box, Checkbox, ChipDelete, Divider, Stack, Switch, Tooltip, Typography} from '@mui/joy';
+import {Box, ChipDelete, Divider, Stack, Switch, Tooltip, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import {isFunction} from 'lodash';
 import {getMinMaxWidth, makeColorChange, makeShape} from './DrawLayerUIComponents';

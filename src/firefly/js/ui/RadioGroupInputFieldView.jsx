@@ -3,7 +3,7 @@ import {
     Button, FormControl, FormLabel, IconButton, Radio, RadioGroup, Sheet, Stack, ToggleButtonGroup, Tooltip
 } from '@mui/joy';
 import React from 'react';
-import {array, string, func, bool, object, oneOf, shape, oneOfType, element, arrayOf} from 'prop-types';
+import {array, string, func, bool, object, oneOf, shape, oneOfType, element, arrayOf, any} from 'prop-types';
 
 
 function makeRadioGroup(options,orientation='horizontal',radioValue,onChange,radioTooltip,slotProps={}) {
@@ -85,7 +85,7 @@ export function RadioGroupInputFieldView({options,orientation='vertical',value,
 }
 
 RadioGroupInputFieldView.propTypes= {
-    options: arrayOf(shape( { value: string, label: string, tooltip: string} )).isRequired,
+    options: arrayOf(shape( { value: string, label: any, tooltip: string} )).isRequired,
     value: string.isRequired,
     orientation: oneOf(['vertical', 'horizontal']),
     onChange: func,
