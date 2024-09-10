@@ -25,7 +25,9 @@ import {InfoButton} from '../visualize/ui/Buttons.jsx';
 import PriorityHighRoundedIcon from '@mui/icons-material/PriorityHighRounded';
 import {
     BOX_GROUP_TYPE, ELLIPSE_GROUP_TYPE, HEALPIX_GROUP_TYPE, HEAT_MAP_GROUP_TYPE, HPX_GRID_SIZE_LARGE,
-    HPX_GRID_SIZE_PREF, HPX_GRID_SIZE_SMALL, HPX_GROUP_TYPE_PREF, HPX_HEATMAP_LABEL_PREF, HPX_MIN_GROUP_PREF
+    HPX_GRID_SIZE_PREF, HPX_GRID_SIZE_SMALL, HPX_GROUP_TYPE_PREF, HPX_HEATMAP_LABEL_PREF, HPX_HEATMAP_STRETCH_PREF,
+    HPX_MIN_GROUP_PREF,
+    HPX_STRETCH_LINEAR, HPX_STRETCH_LOG
 } from './hpx/HpxCatalogUtil';
 
 export const TableSelectOptions = new Enum(['all', 'selected', 'highlighted']);
@@ -180,6 +182,10 @@ function showHpxOptions(drawLayer) {
         {label: 'Large', value: HPX_GRID_SIZE_LARGE},
         {label: 'Small', value: HPX_GRID_SIZE_SMALL},
     ];
+    const stretchOp= [
+        {label: 'Linear Stretch', value: HPX_STRETCH_LINEAR},
+        {label: 'Log Stretch', value: HPX_STRETCH_LOG},
+    ];
 
     const heatmap=  drawLayer.groupType===HEAT_MAP_GROUP_TYPE;
 
@@ -214,15 +220,27 @@ function showHpxOptions(drawLayer) {
                     }
                 }}
             />}
-            {heatmap && <Switch size='sm'
-                    endDecorator={
-                        <Typography sx={{textWrap:'nowrap'}} >Show labels if possible</Typography>
-                    }
-                    checked={drawLayer.heatMapLabels}
-                    onChange={(ev) => {
-                        dispatchModifyCustomField(drawLayer.drawLayerId, {heatMapLabels:Boolean(ev.target.checked)});
-                        AppDataCntlr.dispatchAddPreference(HPX_HEATMAP_LABEL_PREF,Boolean(ev.target.checked));
-                    }} />
+            {heatmap &&
+                <Stack spacing={1}>
+                    <Switch size='sm'
+                            endDecorator={
+                                <Typography sx={{textWrap:'nowrap'}} >Show labels if possible</Typography>
+                            }
+                            checked={drawLayer.heatMapLabels}
+                            onChange={(ev) => {
+                                dispatchModifyCustomField(drawLayer.drawLayerId, {heatMapLabels:Boolean(ev.target.checked)});
+                                AppDataCntlr.dispatchAddPreference(HPX_HEATMAP_LABEL_PREF,Boolean(ev.target.checked));
+                            }} />
+                    <ListBoxInputFieldView
+                        tooltip='Choose stretch type'
+                        sx={{minWidth: '8rem'}}
+                        options={stretchOp} value={ drawLayer.heatMapStretch|| stretchOp[0]}
+                        onChange={(ev, newValue) => {
+                            dispatchModifyCustomField(drawLayer.drawLayerId, {heatMapStretch:newValue});
+                            AppDataCntlr.dispatchAddPreference(HPX_HEATMAP_STRETCH_PREF,newValue);
+                        }}
+                    />
+                </Stack>
             }
         </Stack>
     );

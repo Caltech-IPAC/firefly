@@ -29,7 +29,7 @@ import {CatalogType} from '../Catalog';
 import {getUIComponent} from '../CatalogUI';
 import {
     HPX_GROUP_TYPE_PREF, DEFAULT_MIN_HPX_GROUP, HPX_MIN_GROUP_PREF, TYPE_ID, DEFAULT_HPX_GROUP_TYPE, HPX_GRID_SIZE_PREF,
-    DEFAULT_HPX_GRID_SIZE, HPX_HEATMAP_LABEL_PREF, DEFAULT_HEATMAP_LABELS
+    DEFAULT_HPX_GRID_SIZE, HPX_HEATMAP_LABEL_PREF, DEFAULT_HEATMAP_LABELS, HPX_HEATMAP_STRETCH_PREF, DEFAULT_HPX_STRETCH
 } from './HpxCatalogUtil';
 import {createTileDataMaker} from './TileDataMaker';
 
@@ -106,6 +106,7 @@ function creator(initPayload, presetDefaults={}) {
         groupType: getPreference(HPX_GROUP_TYPE_PREF,DEFAULT_HPX_GROUP_TYPE),
         gridSize: getPreference(HPX_GRID_SIZE_PREF,DEFAULT_HPX_GRID_SIZE),
         heatMapLabels: getPreference(HPX_HEATMAP_LABEL_PREF,DEFAULT_HEATMAP_LABELS),
+        heatMapStretch: getPreference(HPX_HEATMAP_STRETCH_PREF,DEFAULT_HPX_STRETCH),
         dataTooBigForSelection: false,
     };
 }

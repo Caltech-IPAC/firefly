@@ -87,6 +87,7 @@ export function createTileDataMaker() {
             tblIdx,
             totalRows: table.totalRows,
             groupType,
+            heatMapStretch:drawLayer.heatMapStretch,
         };
 
         return doAsync ?
@@ -157,7 +158,7 @@ function hasCoverageTables(centerWp, fov, plot) {
 
 
 function getDrawDataForCell({ cell, minGroupSize, cc, idxData, norder, expandedTiles, totalRows,
-                                showLabels, tblIdx, drawingDef, selectAll, groupType}) {
+                                showLabels, tblIdx, drawingDef, selectAll, groupType,heatMapStretch}) {
 
     const belowMinRow= totalRows < MIN_ROWS_FOR_HIERARCHICAL;
     const showAllPoints = norder > MIN_NORDER_TO_ALWAYS_GROUP && belowMinRow;
@@ -195,8 +196,8 @@ function getDrawDataForCell({ cell, minGroupSize, cc, idxData, norder, expandedT
             const selectedCnt= selectAll ? count-sCnt : sCnt;
             const groupTypeToUse= belowMinRow ? BOX_GROUP_TYPE  : groupType;
             return makeSmartGridTypeGroupDrawPoint(
-                idxData, count, norder, showLabels, tileData.pixel, cell, cc,
-                drawingDef, selected, selectedCnt, tblIdx, groupTypeToUse);
+                {idxData, count, norder, showLabels, ipix:tileData.pixel, cell, cc,
+                drawingDef, selected, selectedCnt, tblIdx, groupType:groupTypeToUse,heatMapStretch});
         }
     } else { // draw the points if at the data level
         const selectedIndexes = selectionTileData?.tableIndexes ?? [];

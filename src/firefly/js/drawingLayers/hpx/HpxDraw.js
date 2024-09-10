@@ -10,26 +10,29 @@ import ShapeDataObj, {UnitType} from '../../visualize/draw/ShapeDataObj';
 import {getCornersForCell} from '../../visualize/HiPSUtil';
 import {makeDevicePt} from '../../visualize/Point';
 import {computeSimpleDistance, computeSimpleSlope, lineIntersect2, RtoD} from '../../visualize/VisUtil';
-import {BOX_GROUP_TYPE, ELLIPSE_GROUP_TYPE, HEALPIX_GROUP_TYPE, HEAT_MAP_GROUP_TYPE} from './HpxCatalogUtil';
+import {
+    BOX_GROUP_TYPE, ELLIPSE_GROUP_TYPE, HEALPIX_GROUP_TYPE, HEAT_MAP_GROUP_TYPE, HPX_STRETCH_LOG
+} from './HpxCatalogUtil';
 
-export function makeSmartGridTypeGroupDrawPoint(idxData, count, norder, showLabels, ipix, cell, cc, drawingDef, selected, selectionCount, tblIdx, groupType) {
+export function makeSmartGridTypeGroupDrawPoint({idxData, count, norder, showLabels, ipix, cell, cc, drawingDef,
+                                                    selected, selectedCnt, tblIdx, groupType,heatMapStretch}) {
     const devC = getDevPointAry(idxData,cc,cell,ipix,norder);
     if (devC.length < 4) return devC.length ? [makeSingleDrawPoint(selected,tblIdx,devC[0],drawingDef)] : [];
 
     switch (groupType) {
         case BOX_GROUP_TYPE:
-            return makeBoxGroupPoint(devC,tblIdx,norder, ipix, count,selected,selectionCount,drawingDef);
+            return makeBoxGroupPoint(devC,tblIdx,norder, ipix, count,selected,selectedCnt,drawingDef);
         case HEALPIX_GROUP_TYPE:
-            return makeHealpixGroupPoint(devC,tblIdx,norder, ipix, count,selected,selectionCount,drawingDef);
+            return makeHealpixGroupPoint(devC,tblIdx,norder, ipix, count,selected,selectedCnt,drawingDef);
         case HEAT_MAP_GROUP_TYPE:
-            return makeColorFillGroupPoint(idxData,devC,tblIdx,norder, showLabels, ipix, count,selected,selectionCount,drawingDef);
+            return makeColorFillGroupPoint(idxData,devC,tblIdx,norder, showLabels, ipix, count,selected,selectedCnt,drawingDef,heatMapStretch);
         case ELLIPSE_GROUP_TYPE:
         default:
-            return makeEllipseGroupPoint(idxData,devC,tblIdx,norder, ipix, count,selected,selectionCount,drawingDef);
+            return makeEllipseGroupPoint(idxData,devC,tblIdx,norder, ipix, count,selected,selectedCnt,drawingDef);
     }
 }
 
-function makeEllipseGroupPoint(idxData, devC,tblIdx,norder, ipix, count,selected,selectionCount,drawingDef) {
+function makeEllipseGroupPoint(idxData, devC, tblIdx, norder, ipix, count, selected, selectedCnt, drawingDef) {
 
     const {offX,offY,textOffX,textOffY}= getGroupOffset(tblIdx);
     const {dm,angle,maxD,minD}= getMidPointAndDist(devC);
@@ -53,11 +56,11 @@ function makeEllipseGroupPoint(idxData, devC,tblIdx,norder, ipix, count,selected
     const ptAry = [areaPoint, textPt];
     if (selected) {
         areaPoint.color = drawingDef.selectedColor;
-        if (!isNaN(selectionCount) && selectionCount !== count) {
+        if (!isNaN(selectedCnt) && selectedCnt !== count) {
             textPt.textOffset = makeDevicePt(2, 0);
             textPt.text = `/ ${count}`;
             const selectionCntPt = PointDataObj.make(textMod);
-            selectionCntPt.text = `${selectionCount}`;
+            selectionCntPt.text = `${selectedCnt}`;
             selectionCntPt.textOffset = makeDevicePt((textPt.text.length - 1) * -5, 0);
             selectionCntPt.textLoc = TextLocation.CENTER;
             selectionCntPt.symbol = DrawSymbol.TEXT;
@@ -73,7 +76,7 @@ function makeEllipseGroupPoint(idxData, devC,tblIdx,norder, ipix, count,selected
 
 }
 
-function makeHealpixGroupPoint(devC,tblIdx,norder, ipix, count,selected,selectionCount,drawingDef) {
+function makeHealpixGroupPoint(devC, tblIdx, norder, ipix, count, selected, selectedCnt, drawingDef) {
     const {dm}= getMidPointAndDist(devC);
     const {textOffX,textOffY}= getGroupOffset(tblIdx);
     const textPt= PointDataObj.make(makeDevicePt(dm.x+textOffX,dm.y+textOffY));
@@ -92,11 +95,11 @@ function makeHealpixGroupPoint(devC,tblIdx,norder, ipix, count,selected,selectio
     const ptAry= [footPrint,textPt];
     if (selected) {
         footPrint.color = drawingDef.selectedColor;
-        if (!isNaN(selectionCount) && selectionCount !== count) {
+        if (!isNaN(selectedCnt) && selectedCnt !== count) {
             textPt.textOffset = makeDevicePt(2, 0);
             textPt.text = `/ ${count}`;
             const selectionCntPt = PointDataObj.make(makeDevicePt(dm.x+textOffX,dm.y+textOffY));
-            selectionCntPt.text = `${selectionCount}`;
+            selectionCntPt.text = `${selectedCnt}`;
             selectionCntPt.textOffset = makeDevicePt((textPt.text.length - 1) * -5, 0);
             selectionCntPt.textLoc = TextLocation.CENTER;
             selectionCntPt.symbol = DrawSymbol.TEXT;
@@ -112,7 +115,7 @@ function makeHealpixGroupPoint(devC,tblIdx,norder, ipix, count,selected,selectio
 }
 
 
-function makeBoxGroupPoint(devC, tblIdx, norder, ipix, count, selected, selectionCount, drawingDef) {
+function makeBoxGroupPoint(devC, tblIdx, norder, ipix, count, selected, selectedCnt, drawingDef) {
     const {dm}= getMidPointAndDist(devC);
     const {offX,offY}= getGroupOffset(tblIdx);
 
@@ -127,7 +130,7 @@ function makeBoxGroupPoint(devC, tblIdx, norder, ipix, count, selected, selectio
     const ptAry= [point];
     if (selected) {
         point.color=drawingDef.selectedColor;
-        if (!isNaN(selectionCount) && selectionCount!==count) {
+        if (!isNaN(selectedCnt) && selectedCnt!==count) {
             point.symbol= DrawSymbol.CIRCLE;
             const p2= PointDataObj.make(dm);
             p2.size= getPtSize(count);
@@ -140,13 +143,16 @@ function makeBoxGroupPoint(devC, tblIdx, norder, ipix, count, selected, selectio
     return ptAry;
 }
 
-function makeColorFillGroupPoint(idxData,devC,tblIdx,norder, showLabels, ipix, count,selected,selectionCount,drawingDef={}) {
+function makeColorFillGroupPoint(idxData, devC, tblIdx, norder, showLabels, ipix, count, selected, selectedCnt, drawingDef={},heatMapStretch) {
     const {dm}= getMidPointAndDist(devC);
     const {color,selectedColor}= drawingDef;
 
     const footPrint= FootprintObj.make([devC]);
     footPrint.fill= true;
-    const newColor= getColorFromColorMap(selected?selectedColor:color,idxData,norder,count);
+    const newColor= heatMapStretch===HPX_STRETCH_LOG ?
+        getColorFromColorMapLog(selected?selectedColor:color,idxData,norder,count) :
+        getColorFromColorMapLinear(selected?selectedColor:color,idxData,norder,count);
+        
     footPrint.fillStyle= newColor;
     footPrint.norder= norder;
     footPrint.ipix= ipix;
@@ -307,7 +313,21 @@ export function adjoiningToOne(cc,wpAry1,wpAry2) {
 
 const chromaCache= new Map();
 
-function getColorFromColorMap(inColor, idxData, norder, count) {
+function getColorFromColorMapLog(inColor, idxData, norder, count) {
+    const hist=getHistgramForNorder(idxData,norder);
+    if (!hist) return inColor;
+    const {min,max,standDev,mean}= hist;
+
+    const newMin= min<5 ? 5 : min;
+    const newMax= max-newMin;
+    if (count<newMin) count= newMin;
+
+    let binPercent= Math.log(count)/ Math.log(newMax);
+    if (binPercent>1) binPercent= 1;
+    return getMapColor(inColor,binPercent);
+}
+
+function getColorFromColorMapLinear(inColor, idxData, norder, count) {
     const hist=getHistgramForNorder(idxData,norder);
     if (!hist) return inColor;
     const {min,max,standDev,mean}= hist;
@@ -318,6 +338,10 @@ function getColorFromColorMap(inColor, idxData, norder, count) {
     const minAdd= (mean-standDev<0 ? standDev : standDev-min);
     if (count>newMax) binPercent=1;
     else if (count < minAdd) binPercent= (count+minAdd)/ max;
+    return getMapColor(inColor,binPercent);
+}
+
+function getMapColor(inColor,binPercent) {
     const color= inColor;
     let getColor= chromaCache.get(inColor);
     if (!getColor) {
