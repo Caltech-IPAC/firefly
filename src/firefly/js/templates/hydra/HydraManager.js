@@ -3,19 +3,20 @@
  */
 import {take, fork} from 'redux-saga/effects';
 
-import {SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
-        dispatchSetLayoutInfo, dropDownManager} from '../../core/LayoutCntlr.js';
+import {
+    SHOW_DROPDOWN, SET_LAYOUT_MODE, getLayouInfo,
+    dispatchSetLayoutInfo, dropDownManager, getResultCounts
+} from '../../core/LayoutCntlr.js';
 import {removeChartsInGroup} from '../../charts/ChartsCntlr.js';
-import {TABLE_SEARCH, TBL_RESULTS_ADDED, TABLE_REMOVE, TABLE_LOADED, TBL_RESULTS_ACTIVE
+import {TABLE_SEARCH, TBL_RESULTS_ADDED, TABLE_REMOVE
 } from '../../tables/TablesCntlr.js';
 import {visRoot, dispatchDeletePlotView} from '../../visualize/ImagePlotCntlr.js';
-import {removeTablesFromGroup, getAllTableGroupIds, smartMerge, getTblById} from '../../tables/TableUtil.js';
-import {getSearchInfo} from '../../core/AppDataCntlr.js';
+import {removeTablesFromGroup, getAllTableGroupIds, smartMerge} from '../../tables/TableUtil.js';
+import {getSearchByName, getSearchInfo, getSelectedMenuItem} from '../../core/AppDataCntlr.js';
 import ImagePlotCntlr from '../../visualize/ImagePlotCntlr.js';
 import {CHART_ADD} from '../../charts/ChartsCntlr.js';
 import {REPLACE_VIEWER_ITEMS} from '../../visualize/MultiViewCntlr.js';
 import {deleteAllDrawLayers} from '../../visualize/DrawLayerCntlr';
-import {MetaConst} from 'firefly/data/MetaConst';
 
 /**
  * Configurable part of this template
@@ -56,13 +57,13 @@ export function* hydraManager() {
         newLayoutInfo = smartMerge(layoutInfo, {showImages, showXyPlots, showTables});
 
         switch (action.type) {
-            case TBL_RESULTS_ADDED:
-            case TABLE_LOADED:
-            case TBL_RESULTS_ACTIVE:
-                const tbl = getTblById(action.payload.tbl_id);
-                if (tbl?.request?.META_INFO?.[MetaConst.UPLOAD_TABLE]) break; //to not change layoutInfo if it is an upload table
-                //intentional fallthrough
-            case CHART_ADD:
+            // case TBL_RESULTS_ADDED:
+            // case TABLE_LOADED:
+            // case TBL_RESULTS_ACTIVE:
+            //     const tbl = getTblById(action.payload.tbl_id);
+            //     if (tbl?.request?.META_INFO?.[MetaConst.UPLOAD_TABLE]) break; //to not change layoutInfo if it is an upload table
+            //     //intentional fallthrough
+            // case CHART_ADD:
             case TABLE_SEARCH:
                 newLayoutInfo = handleNewSearch(newLayoutInfo, action);
                 break;
@@ -86,18 +87,28 @@ export function* hydraManager() {
 function handleNewSearch(layoutInfo, action) {
 
     const {currentSearch} = layoutInfo;
-    const {activeSearch} = getSearchInfo();
-    var {showTables=true, showXyPlots=true, showImages=true, images={}} = layoutInfo;
 
-    if (currentSearch && currentSearch !== activeSearch ) {
+    if (!getResultCounts()?.haveResults) {
+        // if no results, setup layout with init values;
+        layoutInfo = { ...layoutInfo, showTables:true, showXyPlots:true, showImages:true, currentSearch: getSearchInfo()?.activeSearch};
+    }
+    //reset image object for every new search
+    layoutInfo = { ...layoutInfo, images: undefined};
+
+    // below logic applies only to searches that uses Hydra's SearchInfo
+    // ignore if selectedMenuItem is not one of SearchInfo
+    const selectMenuItem = getSelectedMenuItem();
+    const isSearchCmdSelected = !!getSearchByName(selectMenuItem);
+    if (! isSearchCmdSelected) return layoutInfo;
+
+    if (currentSearch && currentSearch !== selectMenuItem ) {
         cleanup();
         // remove all charts
         removeChartsInGroup();
-        showTables=showXyPlots=showImages=true;
+        layoutInfo = { ...layoutInfo, showTables:true, showXyPlots:true, showImages:true};
     }
-    //reset image object for every new search
-    images= undefined;
-    layoutInfo = Object.assign({}, layoutInfo, {showTables, showXyPlots, showImages, currentSearch:activeSearch, images});
+
+    layoutInfo = { ...layoutInfo, currentSearch:selectMenuItem};
     return layoutInfo;
 }
 
