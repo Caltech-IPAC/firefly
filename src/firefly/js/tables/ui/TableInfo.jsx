@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {Typography, Link, Stack, Chip} from '@mui/joy';
+import {Typography, Link, Stack, Chip, Sheet} from '@mui/joy';
 
 import {isEmpty} from 'lodash';
 import {getTblById, hasAuxData} from '../TableUtil.js';
@@ -23,7 +23,7 @@ export function TableInfo({tbl_id, tabsProps, ...props}) {
    const jobId = getJobIdFromTblId(tbl_id);
 
     return (
-        <Stack p={1} height={1} spacing={1} overflow='hidden' {...props}>
+        <Stack component={Sheet} variant='outlined' p={1} height={1} spacing={1} overflow='hidden' {...props}>
             <StatefulTabs componentKey='TablePanelOptions' {...tabsProps} sx={{overflow:'auto'}}>
                 {jobId &&
                 <Tab name='Job Info'>

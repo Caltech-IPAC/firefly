@@ -339,7 +339,7 @@ public class VoTableReader {
         applyIfNotEmpty(table.getAttribute(REF), v -> dg.getTableMeta().addKeyword(TableMeta.REF, v));
         applyIfNotEmpty(table.getAttribute(UCD), v -> dg.getTableMeta().addKeyword(TableMeta.UCD, v));
         applyIfNotEmpty(table.getAttribute(UTYPE), v -> dg.getTableMeta().addKeyword(TableMeta.UTYPE, v));
-        applyIfNotEmpty(table.getDescription(), v -> dg.getTableMeta().addKeyword(TableMeta.DESC, v.replace("\n", " ")));
+        applyIfNotEmpty(table.getDescription(), v -> dg.getTableMeta().addKeyword(TableMeta.DESC, v));
 
         // PARAMs info
         Arrays.stream(table.getChildrenByName("PARAM"))

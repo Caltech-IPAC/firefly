@@ -177,20 +177,37 @@ public class IpacTableUtil {
         if (attribs == null) return;
         // write attributes first
         for (DataGroup.Attribute kw : attribs) {
-            if (ignoreList == null || !CollectionUtil.exists(ignoreList, kw.getKey())) {
+            if (!CollectionUtil.exists(ignoreList, kw.getKey())) {
                 if ( !(kw.isComment() || (ignoreSysMeta && isSysMeta(kw.getKey()))) ) {
-                    writer.println(kw.toString());
+                    if (!kw.getKey().equals(DESC) )  writer.println(kw);    // ignore DESC.  we will handle it at the end.
                 }
             }
         }
         // then write comments
         for (DataGroup.Attribute kw : attribs) {
-            if (ignoreList == null || !CollectionUtil.exists(ignoreList, kw.getKey())) {
+            if (!CollectionUtil.exists(ignoreList, kw.getKey())) {
                 if (kw.isComment()) {
                     writer.println(kw.toString());
                 }
             }
         }
+        // now, write description if exists
+        String desc = attribs.stream()
+                .filter(a -> a.getKey() != null && a.getKey().equals(DESC))
+                .findFirst()
+                .map(a -> a.getValue())
+                .orElse(null);
+
+        if (!isEmpty(desc)) {
+            List<String> descAsList = breakIntoMultipleLines(desc, 80);
+            descAsList.forEach((s) -> writer.println("\\ %s".formatted(s)));
+        }
+    }
+
+    public static void writeDescriptionAsComment(PrintWriter writer, String desc) {
+        if (isEmpty(desc)) return;
+        List<String> descAsList = breakIntoMultipleLines(desc, 80);
+        descAsList.forEach((s) -> writer.println("\\ %s".formatted(s)));
     }
 
     public static boolean isSysMeta(String m) {

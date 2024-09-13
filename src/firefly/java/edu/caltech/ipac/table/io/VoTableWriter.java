@@ -91,15 +91,12 @@ public class VoTableWriter {
         public String xmlINFOs() {
             List<DataGroup.Attribute> metaList = infosInTable(tableMeta);
 
-            if (metaList.size() == 0) {
-                return "";
-            }
-
-            return metaList.size() == 0 ? "" : metaList.stream()
-                                                .map( oneAtt -> "<INFO" +
-                                                        VOSerializer.formatAttribute(TableMeta.NAME, oneAtt.getKey()) +
-                                                        VOSerializer.formatAttribute("value", oneAtt.getValue()) + "/>" )
-                                                .collect(Collectors.joining("\n"));
+            return metaList.isEmpty() ? ""
+                    : metaList.stream()
+                        .map( oneAtt -> "<INFO" +
+                                VOSerializer.formatAttribute(TableMeta.NAME, oneAtt.getKey()) +
+                                VOSerializer.formatAttribute("value", oneAtt.getValue()) + "/>" )
+                        .collect(Collectors.joining("\n"));
         }
 
         private String xmlDESCRIPTION() {

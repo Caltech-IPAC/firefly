@@ -67,7 +67,7 @@ public class TableMeta implements Serializable {
     public static final String UCD = "ucd";
     public static final String UTYPE = "utype";
     public static final String XTYPE = "xtype";
-    public static final String DESC = "desc";
+    public static final String DESC = "description";
     public static final String NAME = "name";
     public static final String DERIVED_FROM = "DERIVED_FROM";
 

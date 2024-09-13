@@ -130,6 +130,31 @@ public class StringUtils {
         return msg;
     }
 
+    /**
+     * Splits the input string into multiple lines using newline characters. Ensures that each line
+     * does not exceed the specified maxLength. If a line exceeds maxLength, it is further broken
+     * into smaller lines.
+     *
+     * @param input         the input string
+     * @param maxLength     the maximum length of each line
+     * @return a list of strings, each with a length no greater than maxLength
+     */
+    public static List<String> breakIntoMultipleLines(String input, int maxLength) {
+        List<String> result = new ArrayList<>();
+        String[] lines = input.split("\n"); // split the input into lines
+        for (String line : lines) {
+            while (line.length() > maxLength) {
+                int breakAt = line.lastIndexOf(' ', maxLength);     // find the last space within the maxLength range
+                if (breakAt == -1)  breakAt = maxLength;                // if there's no space, break at the maxLength
+                // Add the broken line segment to the result list
+                result.add(line.substring(0, breakAt));
+                line = line.substring(breakAt).trim(); // remove leading spaces from the next segment
+            }
+            result.add(line); // add the remaining part or a short line
+        }
+        return result;
+    }
+
     public static String pad(int length, String str) {
         return pad(length, str, Align.LEFT);
     }
