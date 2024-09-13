@@ -33,14 +33,14 @@ public class AsyncTapQuery extends UwsJobProcessor {
 
     // links taken from src/firefly/js/ui/tap/TapKnownServices.js#makeServices
     private static final List<String> SVC_RUNID_NOT_SUPPORTED = Arrays.asList(
-            "https://irsa.ipac.caltech.edu/TAP",                // Return exception, BAD_REQUEST: RUNID not implemented
-            "https://exoplanetarchive.ipac.caltech.edu/TAP/",   // Bad implementation. it replaces it with its own identifier, e.g. 109294
-            "https://koa.ipac.caltech.edu/TAP/",                // Bad implementation. it replaces it with its own identifier, e.g. 109294
-            "https://heasarc.gsfc.nasa.gov/xamin/vo/tap",       // Accepted the parameter, but did not return its value
-            "https://vao.stsci.edu/CAOMTAP/TapService.aspx",    // Accepted the parameter, but did not return its value
-            "https://gea.esac.esa.int/tap-server/tap",          // Accepted the parameter, but did not return its value
-            "https://dc.g-vo.org/tap",                          // Accepted the parameter, but did not return its value
-            "https://archives.esac.esa.int/hsa/whsa-tap-server/tap"     // Accepted the parameter, but did not return its value
+            "https://irsa.ipac.caltech.edu/TAP"                // Return exception, BAD_REQUEST: RUNID not implemented
+//            "https://exoplanetarchive.ipac.caltech.edu/TAP/",   // Bad implementation. it replaces it with its own identifier, e.g. 109294
+//            "https://koa.ipac.caltech.edu/TAP/",                // Bad implementation. it replaces it with its own identifier, e.g. 109294
+//            "https://heasarc.gsfc.nasa.gov/xamin/vo/tap",       // Accepted the parameter, but did not return its value
+//            "https://vao.stsci.edu/CAOMTAP/TapService.aspx",    // Accepted the parameter, but did not return its value
+//            "https://gea.esac.esa.int/tap-server/tap",          // Accepted the parameter, but did not return its value
+//            "https://dc.g-vo.org/tap",                          // Accepted the parameter, but did not return its value
+//            "https://archives.esac.esa.int/hsa/whsa-tap-server/tap"     // Accepted the parameter, but did not return its value
     );
 
     public HttpServiceInput createInput(TableServerRequest request) throws DataAccessException {

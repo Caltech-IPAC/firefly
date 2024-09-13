@@ -18,8 +18,8 @@ const popupSx = {
     justifyContent: 'space-between',
     resize: 'both',
     overflow: 'auto',
-    minHeight: 200, minWidth: 450,
-    width: '45vh', height: '45wh'
+    minHeight: 200, minWidth: 500,
+    width: '45vh'
 };
 
 export function showJobInfo(jobId) {
@@ -92,7 +92,7 @@ function DataOrigin({dataOrigin, type, jobId}) {
     return (
         <Stack direction='row' spacing={1}>
             <KeywordBlock sx={{width: 425, alignItems:'center'}} label={label} value={dataOrigin} asLink={true}/>
-            <Button ml={1/2} size='sm' onClick={() => showUwsJob({jobId})}>Show</Button>
+            <Button ml={1/2} size='sm' onClick={() => showUwsJob({jobId, jobUrl:dataOrigin})}>Show</Button>
         </Stack>
     );
 }
