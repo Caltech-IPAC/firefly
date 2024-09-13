@@ -215,6 +215,7 @@ public class JobManager {
         applyIfNotEmpty(info.getProgressDesc(),   v -> addtlInfo.put("progressDesc", v));
         applyIfNotEmpty(info.getDataOrigin(), v -> addtlInfo.put("dataOrigin", v));
         applyIfNotEmpty(info.getSummary(),   v -> addtlInfo.put("summary", v));
+        applyIfNotEmpty(info.getLocalRunId(),   v -> addtlInfo.put("localRunId", v));
 
         return rval;
     }

@@ -16,7 +16,6 @@ import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.FileUtil;
-import org.apache.commons.httpclient.HttpMethod;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -33,9 +32,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static edu.caltech.ipac.firefly.server.network.HttpServices.defaultHandler;
-import static edu.caltech.ipac.firefly.server.network.HttpServices.getWithAuth;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase;
+import static edu.caltech.ipac.firefly.server.network.HttpServices.*;
 import static edu.caltech.ipac.firefly.server.query.DaliUtil.*;
 import static edu.caltech.ipac.util.StringUtils.*;
 
@@ -234,7 +232,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         Ref<JobInfo> jInfo = new Ref<>();
         HttpServices.Status status = getWithAuth(jobUrl, method -> {
             try {
-                jInfo.set(parse(method.getResponseBodyAsStream()));
+                jInfo.set(parse(getResponseBodyAsStream(method)));
                 return HttpServices.Status.ok();
             } catch (Exception e) {
                 return new HttpServices.Status(400, e.getMessage());
@@ -326,12 +324,12 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 applyIfNotEmpty(getVal(root, prefix + "ownerId"), jobInfo::setOwner);
                 applyIfNotEmpty(getVal(root, prefix + "phase"), v -> jobInfo.setPhase(Phase.valueOf(v)));
 
-                applyIfNotEmpty(getVal(root, prefix + "quote"), v -> jobInfo.setQuote(Instant.parse(v)));
-                applyIfNotEmpty(getVal(root, prefix + "creationTime"), v -> jobInfo.setCreationTime(Instant.parse(v)));
-                applyIfNotEmpty(getVal(root, prefix + "startTime"), v -> jobInfo.setStartTime(Instant.parse(v)));
-                applyIfNotEmpty(getVal(root, prefix + "endTime"), v -> jobInfo.setEndTime(Instant.parse(v)));
+                applyIfNotEmpty(getVal(root, prefix + "quote"), v -> jobInfo.setQuote(getInstant(v)));
+                applyIfNotEmpty(getVal(root, prefix + "creationTime"), v -> jobInfo.setCreationTime(getInstant(v)));
+                applyIfNotEmpty(getVal(root, prefix + "startTime"), v -> jobInfo.setStartTime(getInstant(v)));
+                applyIfNotEmpty(getVal(root, prefix + "endTime"), v -> jobInfo.setEndTime(getInstant(v)));
                 applyIfNotEmpty(getVal(root, prefix + "executionDuration"), v -> jobInfo.setExecutionDuration(Integer.parseInt(v)));
-                applyIfNotEmpty(getVal(root, prefix + "destruction"), v -> jobInfo.setDestruction(Instant.parse(v)));
+                applyIfNotEmpty(getVal(root, prefix + "destruction"), v -> jobInfo.setDestruction(getInstant(v)));
 
                 applyIfNotEmpty(getEl(root, prefix + "parameters"), params -> {
                     NodeList plist = params.getElementsByTagName(prefix + "parameter");
@@ -358,14 +356,27 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
 
                 applyIfNotEmpty(getEl(root, "uws:errorSummary"), errsum -> {
                     String type = errsum.getAttribute("type");
-                    int code = type == null || type.equals("transient") ? 500 : 400;
-                    jobInfo.setError(new JobInfo.Error(code, getVal(errsum, prefix + "message")));
+                    int code = type.equals("transient") ? 500 : 400;
+                    String msg = getVal(errsum, prefix + "message");
+                    if (!isEmpty(msg)) {
+                        jobInfo.setError(new JobInfo.Error(code, msg));
+                    }
                 });
 
                 return jobInfo;
             }
         }
         throw new ParseException("Invalid UWS job document", 0);
+    }
+
+    private static Instant getInstant(String v) {
+        // UWS: Times must be expressed in the UTC timezone, and this is signified with the 'Z' timezone designator
+        // many services failed to follow standard.  Apply simple fix when possible
+        v = v.replaceFirst("[+-]0000$", "Z");
+        v = v.endsWith("Z") ? v : v + "Z";
+        try {
+            return Instant.parse(v);
+        } catch (Exception e) { return null; }
     }
 
     /**

@@ -51,6 +51,7 @@ public class JobInfo implements Serializable {
     private String dataOrigin;
     private boolean monitored;
     private String label;
+    private String localRunId;
 
     // not sent to client
     private String eventConnId;
@@ -151,30 +152,29 @@ public class JobInfo implements Serializable {
     public void setQuote(Instant time) { quote = time; }
 
     public Job.Type getType() { return type; }
-
     public void setType(Job.Type type) { this.type = type; }
 
     public String getEventConnId() { return eventConnId; }
-
     public void setEventConnId(String eventConnId) { this.eventConnId = eventConnId; }
 
     public boolean isMonitored() { return monitored;}
-
     public void setMonitored(boolean monitored) {
         this.monitored = monitored;
     }
-
-
-    public int getProgress() { return progress; }
 
     /**
      * a number between 0 and 100 representing the job's percentage of completion.
      * @param progress
      */
     public void setProgress(int progress) { this.progress = Math.min(Math.max(progress, 0), 100); }
+    public int getProgress() { return progress; }
 
     public String getProgressDesc() { return progressDesc; }
     public void setProgressDesc(String progressDesc) { this.progressDesc = progressDesc;}
+
+    // Not all services support UWS RUNID.  Store info here instead.
+    public String getLocalRunId() { return localRunId; }
+    public void setLocalRunId(String localRunId) { this.localRunId = localRunId;}
 
     public void addResult(Result result) { results.add(result);}
 

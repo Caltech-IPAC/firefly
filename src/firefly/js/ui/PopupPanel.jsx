@@ -120,7 +120,7 @@ function PopupLayout({modal,zIndex,left,top,visibility,ctxRef,dialogMoveStart,di
                         position: 'absolute',
                         p:.5,
                         visibility,
-                        userSelect : 'none',
+                        // userSelect : 'none',                                         // not sure why this was needed.  we'll comment out until it becomes a problem.
                         boxShadow: `1px 1px 5px ${theme.vars.palette.primary.softActiveColor}`,
                         '& .ff-dialog-title-bar' : { cursor:'grab' },
                         '& .ff-dialog-title-bar:active' : { cursor:'grabbing' }
