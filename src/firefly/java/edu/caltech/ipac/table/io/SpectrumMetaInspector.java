@@ -21,13 +21,17 @@ import java.util.List;
  * Utility to search for Spectrum Data Model information from the meta of a FITS table
  */
 public class SpectrumMetaInspector {
-    private static final List<String> wlColNames= Arrays.asList("wave", "wavelength", "wavelengths", "wl", "wls");
-    private static final List<String> enColNames= Arrays.asList("ener", "energy");
-    private static final List<String> freqColNames= Arrays.asList("freq", "frequency");
+    private static final List<String> wlColNames= Arrays.asList(
+            "wave", "wavelength", "wavelengths", "wl", "wls", "lambda", "lambda_eff", "v_lsr");
+    private static final List<String> enColNames= Arrays.asList("ener", "energy", "lsr_velocity");
+    private static final List<String> freqColNames= Arrays.asList("freq", "frequency", "nu");
     private static final String[] specColNames;
     private static final String[] waveLoColName= new String[] {"wave_lo"};
     private static final String[] waveHiColName= new String[] {"wave_hi"};
-    private static final String[] fluxColNames= new String[] {"flux", "fluxdensity", "flux_density", "flux", "flx", "fl", "fls", "flu", "data", "value", "signal"};
+    private static final String[] fluxColNames= new String[] {"flux", "fluxdensity", "flux_density", "flux",
+            "flx", "fl", "fls", "flu", "data", "value", "signal",
+            "fullap and psf (two different extractions)", "c(lambda)",
+            "t_mb", "t(k)", "main beam temperature" };
     private static final String[] errColNames= new String[] {"err", "error", "errors", "flerr", "flerrs", "flux_error"};
     private static final String[] errHiColNames= new String[] {"err_hi", "error_hi", "err_high", "error_high","flerr_high", "flerrs_hi"};
     private static final String[] errLowColNames= new String[] {"err_lo", "error_lo", "err_low", "error_low","flerr_low", "flerrs_lo"};

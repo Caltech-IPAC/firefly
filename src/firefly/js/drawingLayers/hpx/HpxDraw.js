@@ -11,7 +11,8 @@ import {getCornersForCell} from '../../visualize/HiPSUtil';
 import {makeDevicePt} from '../../visualize/Point';
 import {computeSimpleDistance, computeSimpleSlope, lineIntersect2, RtoD} from '../../visualize/VisUtil';
 import {
-    BOX_GROUP_TYPE, ELLIPSE_GROUP_TYPE, HEALPIX_GROUP_TYPE, HEAT_MAP_GROUP_TYPE, HPX_STRETCH_LOG
+    BOX_GROUP_TYPE, ELLIPSE_GROUP_TYPE, HEALPIX_GROUP_TYPE, HEAT_MAP_GROUP_TYPE, HPX_STRETCH_LINEAR,
+    HPX_STRETCH_LINEAR_COMPRESSED, HPX_STRETCH_LOG
 } from './HpxCatalogUtil';
 
 export function makeSmartGridTypeGroupDrawPoint({idxData, count, norder, showLabels, ipix, cell, cc, drawingDef,
@@ -149,10 +150,8 @@ function makeColorFillGroupPoint(idxData, devC, tblIdx, norder, showLabels, ipix
 
     const footPrint= FootprintObj.make([devC]);
     footPrint.fill= true;
-    const newColor= heatMapStretch===HPX_STRETCH_LOG ?
-        getColorFromColorMapLog(selected?selectedColor:color,idxData,norder,count) :
-        getColorFromColorMapLinear(selected?selectedColor:color,idxData,norder,count);
-        
+    const newColor= getColorFromColorMap(heatMapStretch, color, selectedColor, selected, idxData, norder, count);
+
     footPrint.fillStyle= newColor;
     footPrint.norder= norder;
     footPrint.ipix= ipix;
@@ -311,19 +310,35 @@ export function adjoiningToOne(cc,wpAry1,wpAry2) {
 }
 
 
+
+function getColorFromColorMap(heatMapStretch, color, selectedColor, selected, idxData, norder, count) {
+    const inColor= selected?selectedColor:color;
+    switch (heatMapStretch) {
+        case HPX_STRETCH_LOG :
+            return getColorFromColorMapLog(inColor,idxData,norder,count);
+        case HPX_STRETCH_LINEAR_COMPRESSED :
+            return getColorFromColorMapLinearCompressed(inColor,idxData,norder,count);
+        case HPX_STRETCH_LINEAR :
+        default:
+            return getColorFromColorMapLinear(inColor,idxData,norder,count);
+    }
+}
+
 const chromaCache= new Map();
 
 function getColorFromColorMapLog(inColor, idxData, norder, count) {
     const hist=getHistgramForNorder(idxData,norder);
     if (!hist) return inColor;
-    const {min,max,standDev,mean}= hist;
+    const {min,max}= hist;
 
     const newMin= min<5 ? 5 : min;
     const newMax= max-newMin;
     if (count<newMin) count= newMin;
+    const newMaxLog= Math.log(newMax);
+    const newMinLog= Math.log(newMin);
+    const diff= newMaxLog-newMinLog;
 
-    let binPercent= Math.log(count)/ Math.log(newMax);
-    if (binPercent>1) binPercent= 1;
+    const binPercent= (Math.log(count)-newMinLog) / diff;
     return getMapColor(inColor,binPercent);
 }
 
@@ -331,22 +346,40 @@ function getColorFromColorMapLinear(inColor, idxData, norder, count) {
     const hist=getHistgramForNorder(idxData,norder);
     if (!hist) return inColor;
     const {min,max,standDev,mean}= hist;
+    const newMin= min<5 ? 5 : min;
 
     const sd3= standDev*3;
     const newMax= (mean+sd3 > max ? mean+sd3 : max);
-    let binPercent= count/ newMax;
-    const minAdd= (mean-standDev<0 ? standDev : standDev-min);
-    if (count>newMax) binPercent=1;
-    else if (count < minAdd) binPercent= (count+minAdd)/ max;
+    const diff= newMax-newMin;
+    const minAdd= mean-standDev<0 ? standDev : standDev-newMin;
+
+    const binPercent= ( (count-newMin)+minAdd)/ diff;
     return getMapColor(inColor,binPercent);
 }
 
+function getColorFromColorMapLinearCompressed(inColor, idxData, norder, count) {
+    const hist=getHistgramForNorder(idxData,norder);
+    if (!hist) return inColor;
+    const {min,max,standDev,mean}= hist;
+    const newMin= min<5 ? 5 : min;
+
+    const sd4= standDev*4;
+    const newMax= (mean+sd4 < max ? mean+sd4 : max);
+    const diff= newMax-newMin;
+    const minAdd= mean-standDev<0 ? standDev : standDev-newMin;
+
+    const binPercent= ( (count-newMin)+minAdd)/ diff;
+    return getMapColor(inColor,binPercent);
+}
+
+
 function getMapColor(inColor,binPercent) {
+    const percent= binPercent>1 ? 1 : binPercent;
     const color= inColor;
     let getColor= chromaCache.get(inColor);
     if (!getColor) {
         getColor= chroma.scale([chroma(color).brighten(3),  chroma(color).darken(2)]  );
         chromaCache.set(inColor,getColor);
     }
-    return getColor(binPercent).toString();
+    return getColor(percent).toString();
 }

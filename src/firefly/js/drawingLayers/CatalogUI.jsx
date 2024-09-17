@@ -27,7 +27,7 @@ import {
     BOX_GROUP_TYPE, ELLIPSE_GROUP_TYPE, HEALPIX_GROUP_TYPE, HEAT_MAP_GROUP_TYPE, HPX_GRID_SIZE_LARGE,
     HPX_GRID_SIZE_PREF, HPX_GRID_SIZE_SMALL, HPX_GROUP_TYPE_PREF, HPX_HEATMAP_LABEL_PREF, HPX_HEATMAP_STRETCH_PREF,
     HPX_MIN_GROUP_PREF,
-    HPX_STRETCH_LINEAR, HPX_STRETCH_LOG
+    HPX_STRETCH_LINEAR, HPX_STRETCH_LINEAR_COMPRESSED, HPX_STRETCH_LOG
 } from './hpx/HpxCatalogUtil';
 
 export const TableSelectOptions = new Enum(['all', 'selected', 'highlighted']);
@@ -184,6 +184,7 @@ function showHpxOptions(drawLayer) {
     ];
     const stretchOp= [
         {label: 'Linear Stretch', value: HPX_STRETCH_LINEAR},
+        {label: 'Linear Compressed Stretch', value: HPX_STRETCH_LINEAR_COMPRESSED},
         {label: 'Log Stretch', value: HPX_STRETCH_LOG},
     ];
 
