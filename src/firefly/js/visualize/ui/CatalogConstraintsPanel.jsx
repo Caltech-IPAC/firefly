@@ -112,7 +112,7 @@ export class CatalogConstraintsPanel extends PureComponent {
 
         const formTypeList = () => {
                 return (
-                   <ListBoxInputField fieldKey={'ddform'} inline={true}
+                   <ListBoxInputField fieldKey={'ddform'}
                        initialState={{
                             tooltip: 'Select form',
                             value: 'false'
@@ -121,7 +121,6 @@ export class CatalogConstraintsPanel extends PureComponent {
                             {label: 'Standard', value: 'true'},
                             {label: 'Long form', value: 'false'}
                        ]}
-                       labelWidth={75}
                        label='Table Selection:'
                        size='sm'
                    />

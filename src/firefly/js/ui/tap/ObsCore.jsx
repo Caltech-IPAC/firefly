@@ -20,7 +20,6 @@ import {omit} from 'lodash';
 const panelTitle = 'Observation Type and Source';
 const panelValue = 'ObsCore';
 const panelPrefix = getPanelPrefix(panelValue);
-const labelWidth= 105;
 
 
 const multiConstraint = (value, columnName, siaName, quote, checkForNull) => {
@@ -208,10 +207,8 @@ export function ObsCoreSearch({sx, cols, obsCoreMetadataModel, serviceLabel, ini
                                            label={'Data Product Type'}
                                            orientation='vertical'
                                            placeholder={'<None Selected>'}
-                                           labelWidth={labelWidth}
                                            initialState={{value: urlApi.obsCoreTypeSelection || 'image'}}
                                            options={typeOptions()}
-                                           wrapperStyle={{marginRight: 15, padding: '8px 0 5px 0', display: 'flex'}}
                                            multiple={true}
                         />
                         <ObsCoreInputField fieldKey='obsCoreInstrumentName'
@@ -288,7 +285,6 @@ const ObsCoreInputField = ({obsCoreMetadataModel, columnName, ...props}) => {
                              {...fieldProps}/>
         : <ValidationField inputWidth={Width_Column}
                            inputStyle={{overflow: 'auto', height: 16}}
-                           labelWidth={labelWidth}
                            {...fieldProps}/>;
 };
 

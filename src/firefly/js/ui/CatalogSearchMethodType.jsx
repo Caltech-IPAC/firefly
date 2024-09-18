@@ -132,7 +132,6 @@ const spatialSelection = (withPos, polyIsDef, searchOption) => {
             initialState={{
                               tooltip: 'Enter a search method',
                               label : 'Search Method:',
-                              labelWidth: 80,
                               value: polyIsDef ? SpatialMethod.Polygon.value : SpatialMethod.Cone.value
                          }}
             options={ spatialOptions(searchOption) }
@@ -246,7 +245,6 @@ function radiusInField({label = 'Radius'}= {}) {
         <SizeInputFields fieldKey='conesize' showFeedback={true}
                          initialState={{
                                                unit: 'arcsec',
-                                               labelWidth : 100,
                                                nullAllowed: false,
                                                value:  (10/3600)+'',
                                                min: 1 / 3600,
@@ -371,7 +369,6 @@ export function renderPolygonDataArea({imageCornerCalc,
     return (
         <Stack {...{spacing:1}}>
             {pv && <RadioGroupInputField
-                    inline={false}
                     orientation='horizontal'
                     tooltip='Choose corners of polygon'
                     label='Search area'
@@ -405,7 +402,7 @@ function renderTargetPanel(groupKey, searchType) {
     if (!visible) return ;
     return (
         <Box height={80}>
-            <TargetPanel labelWidth={60} groupKey={groupKey}/>
+            <TargetPanel groupKey={groupKey}/>
         </Box>
     );
 }

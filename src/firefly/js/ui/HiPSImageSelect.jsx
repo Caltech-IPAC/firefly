@@ -53,7 +53,7 @@ export const HiPSImageSelect= ({ variant, groupKey, urlTitleText='4. Enter URL',
             <Sheet variant='outlined' sx={{py:1, width:1, display:'flex', flexDirection:'column', flex:'1 1 auto'}}>
                 <Stack direction='row' spacing={2}>
                     <Typography {...{px:1, color:'primary', level:'title-md'}}>{urlTitleText}</Typography>
-                    <ValidationField labelWidth={150} sx={{width: .7}} fieldKey='txURL'
+                    <ValidationField sx={{width: .7}} fieldKey='txURL'
                                      tooltip='Enter HiPS URL'
                                      validator={
                                          (v) => validateUrl('HiPS URL',v)
@@ -183,8 +183,7 @@ function SourceSelect({moc=false, extraHiPSListName }) {
         sourceOptions.unshift({label:extraHiPSListName,value:extraHiPSListName});
     }
     return (
-        <CheckboxGroupInputField wrapperStyle={{color: 'black', fontWeight: 'normal', fontSize: 12, display: 'inline-flex', alignItems: 'center', marginTop: -4}}
-                                 fieldKey={moc ? useSourceMOC : useSourceHiPS}
+        <CheckboxGroupInputField fieldKey={moc ? useSourceMOC : useSourceHiPS}
                                  initialState={{value: sourceOptions?.[0]?.value}}
                                  options={sourceOptions}/>
     );

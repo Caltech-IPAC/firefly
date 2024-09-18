@@ -130,8 +130,6 @@ function onReady({menu}) {
 
 
 
-const labelW = 150;
-
 const executeOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
 const validateAutoSearch= (initArgs) => !isEmpty(initArgs?.urlApi);
 
@@ -227,7 +225,6 @@ export const UploadPanel = ({initArgs,name= 'LCUpload'}) =>{
                                                                value: 'wise',
                                                                tooltip: 'Choose mission to view associated images',
                                                                label : '',
-                                                               labelWidth : 0
                                                            }} />
                                     </Stack>
                                 </Stack>

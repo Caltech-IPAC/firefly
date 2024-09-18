@@ -268,7 +268,6 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
     const spatialMethod= getVal(SpatialMethod)??'Cone';
     const cornerCalcTypeValue= getVal(cornerCalcType)??'image';
     const spatialRegOpValue= getVal(SpatialRegOp) ?? 'contains_point';
-    const polygonLabelWidth= 105;
     const layoutMode= getSpacialLayoutMode(spacialType,obsCoreEnabled,capabilities?.canUpload);
     const isCone= spatialMethod === 'Cone';
     const containsPoint= spatialRegOpValue === 'contains_point';
@@ -277,7 +276,7 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
 
     const radiusOrPolygon= isCone ?
         radiusField :
-        renderPolygonDataArea({ cornerCalcTypeValue, hipsUrl, centerWP, fovDeg, labelWidth: polygonLabelWidth });
+        renderPolygonDataArea({ cornerCalcTypeValue, hipsUrl, centerWP, fovDeg});
 
     switch (layoutMode) {
         case OBSCORE_SINGLE_LAYOUT:
@@ -381,7 +380,7 @@ const RegionOpField= ({initArgs, capabilities}) => {
     return (
         <div style={{marginTop: '5px'}}>
             <ListBoxInputField
-                fieldKey={SpatialRegOp} multiple={false} label={'Query Type'} labelWidth={LableSaptail+40}
+                fieldKey={SpatialRegOp} multiple={false} label={'Query Type'}
                 options={ops} initialState={{ value: defVal}}
             />
         </div>
@@ -392,8 +391,7 @@ function TargetPanelForSpacial({hasRadius=true,
                                    hipsUrl= getAppOptions().coverage?.hipsSourceURL  ??  'ivo://CDS/P/2MASS/color',
                                    centerWP, fovDeg=240}) {
     return (
-        <VisualTargetPanel labelWidth={LableSaptail} feedbackStyle={{height: 40, marginLeft:105, width:460}}
-                           sizeKey={hasRadius? RadiusSize : undefined}
+        <VisualTargetPanel sizeKey={hasRadius? RadiusSize : undefined}
                            hipsDisplayKey={fovDeg}
                            hipsUrl={hipsUrl} hipsFOVInDeg={fovDeg} centerPt={parseWorldPt(centerWP)} />
     );

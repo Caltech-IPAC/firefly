@@ -18,7 +18,7 @@ import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import FieldGroupUtils, {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
 import {useFieldGroupValue} from '../../ui/SimpleComponent.jsx';
-import { dispatchChangeReadoutPrefs} from '../../visualize/MouseReadoutCntlr.js';
+import { dispatchChangeReadoutPrefs} from '../MouseReadoutCntlr';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
@@ -180,7 +180,6 @@ function FluxRadixDialog({readoutPrefs, dialogId}) {
 						Integer data readout radix:
 					</Typography>
 					<RadioGroupInputField
-						wrapperStyle={rightColumn}
 						options={
 							[ {label: 'Decimal', value: '10'}, {label: 'Hexadecimal', value: '16'}, ]
 						}
@@ -193,7 +192,6 @@ function FluxRadixDialog({readoutPrefs, dialogId}) {
 						Floating Point data readout radix:
 					</Typography>
 					<RadioGroupInputField
-						wrapperStyle={rightColumn}
 						options={
 							[ {label: 'Decimal', value: '10'}, {label: 'Hexadecimal', value: '16'}, ]
 						}
@@ -224,7 +222,7 @@ const CoordinateOptionDialogForm= ({ groupKey,fieldKey,radioValue, optionList}) 
 			<Stack {...{direction:'row', spacing:1, alignItems:'center', m:2, onClick:() => doDispatch(groupKey, fieldKey)}}>
 				<Typography {...{level:'body-md', whiteSpace:'nowrap'}}>Readout Options:</Typography>
 				<RadioGroupInputField
-					wrapperStyle={rightColumn} options={optionList} alignment={'vertical'} fieldKey={fieldKey}
+					options={optionList} alignment={'vertical'} fieldKey={fieldKey}
 					initialState={{ tooltip: 'Please select an option', value:radioValue }} />
 			</Stack>
 		</FieldGroup>
@@ -243,7 +241,7 @@ const PixelSizeOptionDialogForm= ( {groupKey,fieldKey, radioValue} ) => (
 			<Typography {...{whiteSpace:'nowrap'}}>Pixel Options:</Typography>
 			<RadioGroupInputField
 				initialState={{ tooltip: 'Please select an option', value:radioValue }}
-				wrapperStyle={rightColumn} options={ pixelOptions } alignment={'vertical'} fieldKey={fieldKey} />
+				options={ pixelOptions } alignment={'vertical'} fieldKey={fieldKey} />
 		</Stack>
 	</FieldGroup>
 );

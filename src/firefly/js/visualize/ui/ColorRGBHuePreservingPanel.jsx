@@ -29,8 +29,6 @@ export const ColorRGBHuePreservingPanel= ({rgbFields,groupKey}) => {
     if (!rgbFields) return <div/>;
     const {zscale} = rgbFields;
     const zscaleValue = zscale?.value;
-    const textPadding = {paddingBottom:3};
-    const LABEL_WIDTH= 90;
     const renderRange = (isZscale) => {
         if (isZscale) {
             return null;
@@ -40,25 +38,21 @@ export const ColorRGBHuePreservingPanel= ({rgbFields,groupKey}) => {
                                         initialState= {{ value:'closed' }}
                                         fieldKey='rangeParameters'>
                     <Stack spacing={1}>
-                        <ValidationField wrapperStyle={textPadding} inline={true}
-                                         sx={{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }}}
+                        <ValidationField sx={{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }}}
                                          endDecorator={getTypeMinField('lowerWhichRed')}
                                          fieldKey='lowerRangeRed'
                         />
-                        <ValidationField wrapperStyle={textPadding} inline={true}
-                                         sx={{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }}}
+                        <ValidationField sx={{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }}}
                                          endDecorator={getTypeMinField('lowerWhichGreen')}
                                          fieldKey='lowerRangeGreen'
                         />
-                        <ValidationField wrapperStyle={textPadding} inline={true}
+                        <ValidationField
                                          sx={{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }}}
                                          endDecorator={getTypeMinField('lowerWhichBlue')}
                                          fieldKey='lowerRangeBlue'
                         />
                         {isDebug() && <div style={{whiteSpace: 'no-wrap'}}>
-                            <ValidationField wrapperStyle={textPadding} inline={true}
-                                             labelWidth={LABEL_WIDTH}
-                                             fieldKey='stretch'/>
+                            <ValidationField fieldKey='stretch'/>
                         </div>}
                     </Stack>
                 </FieldGroupCollapsible>
@@ -66,8 +60,7 @@ export const ColorRGBHuePreservingPanel= ({rgbFields,groupKey}) => {
         }
     };
 
-    const wrapperStyle = zscaleValue ? {paddingBottom: 40} : {paddingBottom: 10};
-    const asinH = renderAsinH(rgbFields, renderRange(zscaleValue), doReplot, wrapperStyle, true);
+    const asinH = renderAsinH(rgbFields, renderRange(zscaleValue), doReplot, true);
     const scale = renderScalingCoefficients(rgbFields, doReplot);
     return (
         <Stack spacing={2} sx={{mt:1, minWidth:360}}>

@@ -11,7 +11,7 @@ export const NedSearchPanel= () => {
     return (
         <Stack sx={{width: 700, m:3}}>
             <Stack spacing={2} >
-                <TargetPanel labelWidth={100}/>
+                <TargetPanel/>
                 <SizeInputFields fieldKey='nedconesize' showFeedback={true} label='Radius:'
                                  initialState={{
                                      value: parseFloat(10/3600).toString(),

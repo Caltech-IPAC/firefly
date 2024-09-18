@@ -91,7 +91,6 @@ function renderThreeColorView(plot, rFields, gFields, bFields, rgbFields, isHueP
                 {label: 'Hue preserving stretch', value: 'huePreserving'}
 
             ]}
-            wrapperStyle={{padding: 5}}
             value={isHuePreservingSelected ? 'huePreserving' : 'perBand'}
             onChange={(ev) => setHuePreserving(ev.target.value==='huePreserving')}
         />;

@@ -10,7 +10,7 @@ import {getBixPix} from '../FitsHeaderUtil.js';
 import {SINGLE, GRID} from '../MultiViewCntlr.js';
 import {getPlotViewById, primePlot} from '../PlotViewUtil.js';
 import {MultiItemViewerView} from './MultiItemViewerView.jsx';
-import {ImageViewer} from './../iv/ImageViewer.jsx';
+import {ImageViewer} from '../iv/ImageViewer';
 import {useMouseStoreConnector} from 'firefly/visualize/ui/MouseStoreConnector.jsx';
 import {lastMouseCtx, lastMouseImageReadout} from 'firefly/visualize/VisMouseSync.js';
 import {isLockByClick, readoutRoot} from 'firefly/visualize/MouseReadoutCntlr.js';

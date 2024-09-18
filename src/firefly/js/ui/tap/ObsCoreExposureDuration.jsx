@@ -18,7 +18,6 @@ import {tapHelpId} from './TapUtil.js';
 
 const START_EXP_GREATER_MSG= 'exposure time max must be greater than time min';
 const ONE_POPULATED= 'at least one field must be populated';
-const labelWidth= 105;
 
 const panelTitle = 'Timing';
 const panelValue = 'Exposure';
@@ -147,7 +146,7 @@ export function ExposureDurationSearch({initArgs}) {
                     <Stack direction='column' spacing={2}>
                         <ListBoxInputField
                             {...{fieldKey:'exposureRangeType', options: exposureRangeOptions,
-                                label:'Time of Observation', labelWidth,
+                                label:'Time of Observation',
                                 initialState:{value: initArgs?.urlApi?.exposureRangeType || 'since'} }} />
                         {isRange ?
                             <TimeRangePanel {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive(),

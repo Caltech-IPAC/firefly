@@ -203,7 +203,7 @@ ReadoutPanel.propTypes= {
 
 export function getTypeMinField(lowerWhich='lowerWhich') {
     return (
-        <ListBoxInputField fieldKey={lowerWhich} inline={true} labelWidth={0}
+        <ListBoxInputField fieldKey={lowerWhich}
                            options={ [ {label: '%', value: PERCENTAGE},
                                        {label: 'Data', value: ABSOLUTE},
                                        {label: 'Sigma', value: SIGMA}
@@ -215,7 +215,7 @@ export function getTypeMinField(lowerWhich='lowerWhich') {
 
 function getTypeMaxField() {
     return (
-        <ListBoxInputField fieldKey='upperWhich' inline={true} labelWidth={0}
+        <ListBoxInputField fieldKey='upperWhich'
                            options={ [ {label: '%', value: PERCENTAGE},
                                        {label: 'Data', value: ABSOLUTE},
                                        {label: 'Sigma', value: SIGMA}
@@ -235,9 +235,9 @@ export const ZscaleCheckbox= () => (
 function renderZscale() {
     return (
         <Stack {...{spacing:1}}>
-            <ValidationField wrapperStyle={textPadding} labelWidth={LABEL_WIDTH} fieldKey='zscaleContrast' />
-            <ValidationField wrapperStyle={textPadding} labelWidth={LABEL_WIDTH} fieldKey='zscaleSamples' />
-            <ValidationField wrapperStyle={textPadding} labelWidth={LABEL_WIDTH} fieldKey='zscaleSamplesPerLine' />
+            <ValidationField fieldKey='zscaleContrast' />
+            <ValidationField fieldKey='zscaleSamples' />
+            <ValidationField fieldKey='zscaleSamplesPerLine' />
         </Stack>
     );
 }
@@ -261,7 +261,7 @@ function getUpperAndLowerFields() {
 
 const StretchTypeField= () => (
         <div style={{paddingBottom:12}}>
-            <ListBoxInputField fieldKey='algorithm' inline={true}
+            <ListBoxInputField fieldKey='algorithm'
                                options={ [
                                     {label: 'Linear',                 value: STRETCH_LINEAR},
                                     {label: 'Log',                    value: STRETCH_LOG},
@@ -283,7 +283,7 @@ function renderGamma(fields) {
         <div>
             {range}
             <div style={{paddingTop:10}}/>
-            <ValidationField wrapperStyle={textPadding}  labelWidth={LABEL_WIDTH} fieldKey='gamma' />
+            <ValidationField fieldKey='gamma' />
         </div>
     );
 }

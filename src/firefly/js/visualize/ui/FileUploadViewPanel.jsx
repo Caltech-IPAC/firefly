@@ -176,8 +176,7 @@ export function FileUploadViewPanel({setSubmitText, acceptList, acceptOneItem, e
                             slotProps={{radio:{size:'md'}}}
                             fieldKey={uploadOptions}
                             orientation='horizontal'
-                            options={uploadMethod}
-                            wrapperStyle={{fontWeight: 'bold', fontSize: 12}}/>
+                            options={uploadMethod} />
                         <Stack {...{pt: 1, direction:'row', justifyContent:'space-between'}}>
                             <UploadOptions {...{uploadSrc: dropEvent ? FILE_ID : getLoadingOp(), isLoading, isWsUpdating,  uploadKey, dropEvent, setDropEvent}}/>
                             <Stack>

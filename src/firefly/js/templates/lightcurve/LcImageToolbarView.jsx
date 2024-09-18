@@ -38,7 +38,7 @@ export function LcImageToolbarView({viewerId, tableId, closeFunc=null}) {
                 {closeFunc && <CloseButton onClick={closeFunc}/>}
                 <Stack {...{whiteSpace: 'nowrap', pl: 1, spacing:1, direction:'row', alignItems:'center'}}>
                     <Typography level='body-sm'>Image Count:</Typography>
-                    <RadioGroupInputFieldView options={options} inline={true}  value={String(count)}
+                    <RadioGroupInputFieldView options={options} value={String(count)}
                                               orientation='horizontal'
                                               onChange={(ev) => changeSize(viewerId, ev.target.value)} />
                 </Stack>

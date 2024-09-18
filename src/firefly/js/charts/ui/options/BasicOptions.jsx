@@ -572,7 +572,7 @@ export const useBasicOptions = ({activeTrace:pActiveTrace, chartId, tbl_id, grou
                 </div>
             );
             return (
-                <ValidationField inline={true} fieldKey={`data.${activeTrace}.marker.color`}
+                <ValidationField fieldKey={`data.${activeTrace}.marker.color`}
                                  initialState={{value: color}}
                                  tooltip='Set series color'
                                  label='Color:'

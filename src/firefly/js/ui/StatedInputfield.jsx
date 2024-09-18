@@ -41,7 +41,6 @@ StateInputField.propTypes= {
     label : PropTypes.string,
     inline : PropTypes.bool,
     orientation: PropTypes.string,
-    labelWidth: PropTypes.number,
     sx: PropTypes.object,
     defaultValue: PropTypes.string.isRequired,
     size : PropTypes.number,

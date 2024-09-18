@@ -70,7 +70,6 @@ InputFieldView.propTypes= {
     message : string,
     tooltip : oneOfType([string, bool]),
     label : string,
-    inline : bool,
     orientation: string,
     value   : oneOfType([string, number]).isRequired,
     onChange : func.isRequired,

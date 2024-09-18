@@ -347,7 +347,7 @@ function ConeOp({slotProps,nullAllowed}) {
                 }
             }}/>
             <SizeInputFields {...{
-                fieldKey: sizeKey, showFeedback: true, labelWidth: 100, nullAllowed: false,
+                fieldKey: sizeKey, showFeedback: true, nullAllowed: false,
                 label: 'Search Radius',
                 initialState: {unit: 'arcsec', value: initValue+'', min, max},
                 sx: {'.ff-Input': {width: 1}},
@@ -391,7 +391,7 @@ function UploadOp({slotProps, uploadInfo, setUploadInfo}) {
                 }
             }}/>
             <SizeInputFields {...{
-                fieldKey: sizeKey, showFeedback: true, labelWidth: 100, nullAllowed: false,
+                fieldKey: sizeKey, showFeedback: true, nullAllowed: false,
                 label: 'Search Radius',
                 initialState: {unit: 'arcsec', value: initValue+'', min, max},
                 sx: {'.ff-Input': {width: 1}, pt:0.5},

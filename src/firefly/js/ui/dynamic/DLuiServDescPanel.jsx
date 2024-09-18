@@ -49,8 +49,8 @@ export function DLuiServDescPanel({fds, sx, desc, setSideBarShowing, sideBarShow
         <Stack {...{alignItems: 'flex-start',}}>
             {Boolean(cNames?.length) &&
                 <CheckboxGroupInputField
-                    wrapperStyle={{marginTop: 5}} fieldKey='searchOptions'
-                    alignment='horizontal' labelWidth={115} labelStyle={{fontSize: 'larger'}}
+                    fieldKey='searchOptions'
+                    alignment='horizontal' labelStyle={{fontSize: 'larger'}}
                     label={`Include Search${cNames.length > 1 ? 'es' : ''} of: `}
                     options={cNames.map((c) => ({label: c, value: c}))}
                     initialState={{value: cNames.join(' '), tooltip: 'Additional Searches', label: ''}}

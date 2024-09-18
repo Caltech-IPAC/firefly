@@ -66,7 +66,6 @@ const emailKey = 'Email';          // should match server DownloadRequest.EMAIL
  *                         label : 'Title for this download:'
  *                     }}
  *                 fieldKey='Title'
- *                 labelWidth={110}/>
  *         </DownloadOptionPanel>
  *     </DownloadButton>
  * </code>
@@ -135,7 +134,6 @@ export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, hel
     const {tbl_id:p_tbl_id, checkSelectedRow} = React.useContext(OptionsContext);
     const tbl_id = props.tbl_id || p_tbl_id;
 
-    const labelWidth = 110;
     const [bgKey, setBgKey] = useState(newBgKey());
 
     const onSubmit = useCallback((formInputs={}) => {
@@ -211,13 +209,13 @@ export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, hel
                         </Typography>
                     )}
                     <Stack spacing={1}>
-                        {showTitle && <TitleField {...{labelWidth, value:dlTitle}}/>}
+                        {showTitle && <TitleField {...{value:dlTitle}}/>}
 
                         {children}
 
-                        {cutoutSize         && <DownloadCutout {...{labelWidth}} />}
-                        {showZipStructure   && <ZipStructure {...{labelWidth}} />}
-                        {showFileLocation   && <WsSaveOptions {...{groupKey, labelWidth, saveAsProps}}/>}
+                        {cutoutSize         && <DownloadCutout />}
+                        {showZipStructure   && <ZipStructure />}
+                        {showFileLocation   && <WsSaveOptions {...{groupKey, labelWidth:110, saveAsProps}}/>}
                         {showEmailNotify    && <EmailNotification {...{groupKey}}/>}
                     </Stack>
                 </FieldGroup>
@@ -252,22 +250,21 @@ DownloadOptionPanel.propTypes = {
     })
 };
 
-export function TitleField({style={}, labelWidth, value, label='Title:', size=30}) {
+export function TitleField({style={}, value, label='Title:', size=30}) {
 
     return (
         <ValidationField
             forceReinit={true}
             fieldKey='Title'
             tooltip='Enter a description to identify this download.'
-            {...{validator:NotBlank, initialState:{value}, label, labelWidth, size, style}}
+            {...{validator:NotBlank, initialState:{value}, label, size, style}}
         />
     );
 }
 
-export function ZipStructure({style={}, fieldKey='zipType', labelWidth}) {
+export function ZipStructure({fieldKey='zipType'}) {
     return (
         <ListBoxInputField
-            wrapperStyle={style}
             fieldKey = {fieldKey}
             initialState = {{
                 tooltip: 'Zip File Structure',
@@ -277,16 +274,14 @@ export function ZipStructure({style={}, fieldKey='zipType', labelWidth}) {
                 {label: 'Structured (with folders)', value: 'folder'},
                 {label: 'Flattened (no folders)', value: 'flat'}
             ]}
-            labelWidth = {labelWidth}
         />
 
     );
 }
 
-export function DownloadCutout({style={}, fieldKey='dlCutouts', labelWidth}) {
+export function DownloadCutout({fieldKey='dlCutouts'}) {
     return (
         <ListBoxInputField
-            wrapperStyle = {style}
             fieldKey = {fieldKey}
             initialState = {{
                 tooltip: 'Download Cutouts Option',
@@ -296,7 +291,6 @@ export function DownloadCutout({style={}, fieldKey='dlCutouts', labelWidth}) {
                 {label: 'Specified Cutouts', value: 'cut'},
                 {label: 'Original Images', value: 'orig'}
             ]}
-            labelWidth = {labelWidth}
         />
     );
 }
@@ -316,7 +310,6 @@ export function EmailNotification({style, groupKey}) {
                     validator={Validate.validateEmail.bind(null, 'an email field')}
                     tooltip='Enter an email to be notified when a process completes.'
                     label='Email:'
-                    labelWidth={35}
                     labelStyle={{marginLeft: 18, fontWeight: 'bold'}}
                     placeholder='Enter an email to get notification'
                     style={{width: 170}}
