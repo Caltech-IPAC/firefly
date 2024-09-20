@@ -262,7 +262,7 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
 
 
     const bottomUI = plotlyData ?
-            (<RadioGroupInputFieldView value={chartXAxis} buttonGroup={true} wrapperStyle={{paddingTop: 5}}
+            (<RadioGroupInputFieldView value={chartXAxis} buttonGroup={true}
                                        options={ [ {label: 'Image X', value: 'imageX'}, {label: 'Image Y', value: 'imageY'} ]}
                                        onChange={(ev) => setChartXAxis(ev.target.value)} />) :
             undefined;
@@ -487,11 +487,11 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
                     <Typography >Aperture (Values will be combined)</Typography>
                 </Tooltip>
                 <ListBoxInputFieldView
-                    inline={true} value={pointSize} onChange={(ev,newVal) => setPointSize(newVal)}
-                    labelWidth={10} tooltip={ pointSizeTip} options={sizeOp} multiple={false} />
+                    value={pointSize} onChange={(ev,newVal) => setPointSize(newVal)}
+                    tooltip={ pointSizeTip} options={sizeOp} multiple={false} />
                 {pointSize>1 && <ListBoxInputFieldView
-                    inline={true} value={combineOp} onChange={(ev,newVal) => setCombineOp(newVal)}
-                    labelWidth={10} tooltip={pointSizeTip}
+                    value={combineOp} onChange={(ev,newVal) => setCombineOp(newVal)}
+                    tooltip={pointSizeTip}
                     options={hasFloatingData?combineOps:combineIntOps}
                     multiple={false} />}
             </Stack>

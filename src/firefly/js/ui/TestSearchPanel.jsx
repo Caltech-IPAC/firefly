@@ -35,13 +35,11 @@ export const TestSearchPanel = (props) => {
                                                                 value: '/Users/loi/data/300k.tbl',
                                                                 tooltip: 'path to a table file',
                                                                 label : 'Source Table:',
-                                                                labelWidth : 120
                                                              }}
                     />
                     <ListBoxInputField initialState={{
                                           tooltip: 'db engine to use',
                                           label : 'dbType:',
-                                          labelWidth : 120
                                       }}
                                        options={[{value: 'hsql'},{value: 'h2'},{value: 'sqlite'}]}
                                        multiple={false}
@@ -54,7 +52,6 @@ export const TestSearchPanel = (props) => {
                                                                 placeholder: 'Apply this filter on the table above',
                                                                 value: '',
                                                                 label : 'Filters:',
-                                                                labelWidth : 120
                                                              }}
                     />
 
@@ -72,7 +69,6 @@ export const TestSearchPanel = (props) => {
                                             size: 4,
                                             validator: Validate.intRange.bind(null, 0, 100000),
                                             label : 'Table Index:',
-                                            labelWidth : 60
                                          }}
                     />
                 </FieldGroup>

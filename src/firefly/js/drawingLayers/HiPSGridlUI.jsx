@@ -53,11 +53,9 @@ function showLevelOp(drawLayer, pv) {
 
     return (
         <ListBoxInputFieldView
-            inline={true}
             value={value}
             onChange={(ev, newValue) => changeLockLevelPref(drawLayer,pv,newValue)}
-            labelWidth={10}
-            label={' '}
+            label=' '
             tooltip={ 'Choose HiPS grid level'}
             options={lockOp}
             multiple={false}

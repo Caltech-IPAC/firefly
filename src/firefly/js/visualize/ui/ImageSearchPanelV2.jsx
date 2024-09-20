@@ -425,7 +425,7 @@ export function SpacialContent({isHips,initArgs={}}) {
 
     return (
         <Stack spacing={2} direction='column'>
-            <TargetPanel labelWidth={isHips ? 150 : 100}
+            <TargetPanel
                          label={isHips ? 'Coords or Object Name (optional)' : undefined}
                          placeholderHighlight={!isHips}
                          nullAllowed={true}/>
@@ -433,7 +433,6 @@ export function SpacialContent({isHips,initArgs={}}) {
                              feedbackStyle={{marginLeft: 185}}
                              initialState={{
                                  unit: initUnit,
-                                 labelWidth: 0,
                                  nullAllowed: true,
                                  value: initRadius? initRadius*2 : sizeVal,
                                  min: minSize,
@@ -484,7 +483,7 @@ function SelectUrl() {
         <Sheet variant='outlined' sx={{mt:1/2, py:1, width:'100%', display:'flex', flexDirection:'column', flex:'1 1 auto',borderRadius: '5px'}}>
             <Stack direction='row' spacing={2}>
                 <Typography {...{px:1, color:'primary', level:'title-md'}}>3. Enter URL</Typography>
-                <ValidationField labelWidth={150} sx={{width: .8}} fieldKey='txURL' />
+                <ValidationField sx={{width: .8}} fieldKey='txURL' />
             </Stack>
         </Sheet>
     );

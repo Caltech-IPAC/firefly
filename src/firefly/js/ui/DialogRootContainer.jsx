@@ -160,7 +160,7 @@ function showTmpPopup(popup) {
     };
 }
 
-function createDiv({id, appendTo=document.body, wrapperStyle={}}) {
+function createDiv({id, appendTo=document.body, style = {}}) {
     const el= document.createElement('div');
     appendTo.appendChild(el);
     el.id= id;
@@ -170,7 +170,7 @@ function createDiv({id, appendTo=document.body, wrapperStyle={}}) {
     el.style.left= '0';
     el.style.top= '0';
     el.style.zIndex= DEFAULT_ZINDEX;
-    Object.entries(wrapperStyle).forEach(([k,v]) => set(el.style, [k], v));
+    Object.entries(style).forEach(([k,v]) => set(el.style, [k], v));
     return el;
 }
 

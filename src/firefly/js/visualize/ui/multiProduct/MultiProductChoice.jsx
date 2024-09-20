@@ -69,8 +69,7 @@ export function MultiProductChoice({ dataProductsState, dpId,
     const toolbar = (
         <Stack {...{direction:'row', alignItems:'center', height:30}}>
             {makeDropDown && <Box sx={{height: 30}}> {makeDropDown()} </Box>}
-            {mayToggle && <RadioGroupInputFieldView wrapperStyle={{paddingLeft: 20}}
-                                                    {...{options, value: whatToShow, buttonGroup: true, onChange}} />}
+            {mayToggle && <RadioGroupInputFieldView {...{options, value: whatToShow, buttonGroup: true, onChange}} />}
         </Stack>);
 
     switch (whatToShow) {

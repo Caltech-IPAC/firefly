@@ -124,7 +124,7 @@ export function ImageCenterDropDown({visRoot:vr, visible, mi}) {
             <DropDownVerticalSeparator useLine={true}/>
             <FieldGroup groupKey='TARGET_DROPDOWN'>
                 <Stack direction='row' spacing={1}>
-                    <TargetPanel groupKey={'target-move-group'} labelWidth={80}
+                    <TargetPanel groupKey={'target-move-group'}
                                  label={'<Enter position to center on>'} defaultToActiveTarget={false}
                                  showResolveSourceOp={false} showExample={false}/>
                     <Stack {...{alignItems:'stretch'}}>

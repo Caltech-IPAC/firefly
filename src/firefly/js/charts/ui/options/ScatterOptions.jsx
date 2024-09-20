@@ -353,7 +353,6 @@ export const useScatterInputs = ({activeTrace:pActiveTrace, tbl_id:ptbl_id, char
                                          {...withDefaults(props)}/>), deps),
         UseSpectrum: useCallback((props) => (null && <CheckboxGroupInputField fieldKey={`fireflyData.${activeTrace}.useSpectrum`}    // null to temporarily disable it
                                          initialState={{value: getFieldVal(groupKey, `fireflyData.${activeTrace}.useSpectrum`) ?? fireflyData?.[activeTrace]?.useSpectrum}}
-                                         wrapperStyle={{marginBottom: 10, marginLeft: -4}}
                                          options={[{label: 'Use spectrum preset', value: 'true'}]} {...withDefaults(props)}/>), deps),
     };
 };

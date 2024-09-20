@@ -67,20 +67,17 @@ function ColorBandChooserPanel ({viewerId, bandData, dataId}) {
         <FieldGroup groupKey='WHICH_BANDS'
                     sx={{display:'flex', px:2, flexDirection:'column', alignItems:'center', minWidth:'22rem' }}>
             <Stack {...{spacing:2, alignItems:'flex-start', width:1}}>
-                <ListBoxInputField labelWidth={40}
-                                   initialState= {{ value: initRedVal, tooltip: 'Select Red band', label : 'Red' }}
+                <ListBoxInputField initialState= {{ value: initRedVal, tooltip: 'Select Red band', label : 'Red' }}
                                    orientation='vertical'
                                    slotProps={{ label: {sx: {color:'red'}} }}
                                    options={options} fieldKey={Band.RED.key} />
 
-                <ListBoxInputField labelWidth={40}
-                                   initialState= {{value: initGreenVal, tooltip: 'Select Green band', label : 'Green' }}
+                <ListBoxInputField initialState= {{value: initGreenVal, tooltip: 'Select Green band', label : 'Green' }}
                                    orientation='vertical'
                                    slotProps={{ label: {sx: {color:'green'}} }}
                                    options={options} fieldKey={Band.GREEN.key} />
 
-                <ListBoxInputField labelWidth={40}
-                                   initialState= {{value: initBlueVal, tooltip: 'Select Blue band', label : 'Blue' }}
+                <ListBoxInputField initialState= {{value: initBlueVal, tooltip: 'Select Blue band', label : 'Blue' }}
                                    orientation='vertical'
                                    slotProps={{ label: {sx: {color:'blue'}} }}
                                    options={options} fieldKey={Band.BLUE.key} />

@@ -172,9 +172,7 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
                         fieldKey={'obsCoreWavelengthSelectionType'}
                         options={[{label: 'By Filter Bands', value: 'filter'}, {label: 'By Wavelength', value: 'numerical'}]}
                         orientation='horizontal'
-                        wrapperStyle={{marginTop: '10px'}}
                         label={'Query Type:'}
-                        labelWidth={LableSaptail}
                     />}
                     {hasFilters && selectionType === 'filter' &&
                         <div style={{marginTop: 10}}>
@@ -187,9 +185,7 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
                                             fieldKey={'filter' + filterDefinition.name}
                                             options={filterDefinition.options}
                                             alignment='horizontal'
-                                            wrapperStyle={{whiteSpace: 'normal', marginTop: '5px'}}
                                             label={filterDefinition.name}
-                                            labelWidth={85}
                                         />);
                                 })
                                 }
@@ -207,7 +203,6 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
                                                    initialState={{ value: initArgs?.urlApi?.obsCoreWavelengthRangeType || 'contains' }}
                                                    label='Select observations whose wavelength coverage'
                                                    orientation='vertical'
-                                                   labelWidth={236}
                                                    multiple={false} />
                             </div>
                             <div style={{display: 'inline-flex', marginTop: '10px'}}>

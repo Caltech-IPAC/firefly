@@ -53,7 +53,6 @@ export function MaskAddPanel({vr}) {
                                           validator: Validate.floatRange.bind(null, 1, 1000, 'Mask number'),
                                           tooltip: 'mask number',
                                           label : 'Mask number:',
-                                          labelWidth : 100
                                       }} />
             <ValidationField fieldKey='hduIdx'
                              initialState= {{
@@ -62,7 +61,6 @@ export function MaskAddPanel({vr}) {
                                           validator: Validate.floatRange.bind(null, 1, 1000, 'HDU index'),
                                           tooltip: 'mask index',
                                           label : 'HDU Index:',
-                                          labelWidth : 100
                                       }} />
 
             <CompleteButton style={{paddingTop: 10}}

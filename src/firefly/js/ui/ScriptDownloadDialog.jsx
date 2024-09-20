@@ -108,8 +108,6 @@ class ScripDownloadPanel extends PureComponent {
                                             {label: 'ditto - on Mac, best for files larger than 2GB', value: 'Ditto'},
                                             {label: "Don't unzip the files", value: '-'}
                                            ]}
-                                labelWidth = {110}
-                                wrapperStyle = {{marginTop: 3}}
                             />
                         </div>
 
@@ -119,8 +117,6 @@ class ScripDownloadPanel extends PureComponent {
                             options={[
                                         {label: 'Download just a list of URLs', value: 'URLsOnly'}
                                     ]}
-                            labelWidth = {110}
-                            wrapperStyle = {{marginTop: 15}}
                         />
                     </FieldGroup>
                 </FormPanel>

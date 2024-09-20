@@ -26,7 +26,7 @@ const simbadThenNed= 'simbadthenned';
 
 const TargetPanelView = (props) =>{
     const {showHelp, feedback, valid, message, onChange, value, button, slotProps,
-        children, resolver, feedbackStyle, showResolveSourceOp= true, showExample= true,
+        children, resolver, showResolveSourceOp= true, showExample= true,
         label= LABEL_DEFAULT,
         targetPanelExampleRow1, targetPanelExampleRow2,
         connectedMarker=false, placeholderHighlight=true,
@@ -82,7 +82,6 @@ TargetPanelView.propTypes = {
     onChange: PropTypes.func.isRequired,
     value : PropTypes.string.isRequired,
     onUnmountCB : PropTypes.func,
-    feedbackStyle: PropTypes.object,
     nullAllowed: PropTypes.bool,
     showResolveSourceOp: PropTypes.bool,
     targetPanelExampleRow1: PropTypes.arrayOf(PropTypes.string),
@@ -111,7 +110,7 @@ function makeEndDecorator(showResolveSourceOp, onChange, resolver, button) {
                 }}
                 onChange={(ev,newValue) => onChange(newValue, RESOLVER)}
                 value={resolver} multiple={false}
-                tooltip='Select which name resolver' label='' labelWidth={3} wrapperStyle={{}} />) : undefined;
+                tooltip='Select which name resolver' label=''  />) : undefined;
 
     if  (resolverOp || button) {
         return (

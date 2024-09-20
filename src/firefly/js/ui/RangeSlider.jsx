@@ -1,7 +1,7 @@
 import React, {memo} from 'react';
 import PropTypes, {element,object,bool,objectOf,func,arrayOf,shape,number,string} from 'prop-types';
 import {isNaN} from 'lodash';
-import {RangeSliderView, checkMarksObject} from './RangeSliderView.jsx';
+import {RangeSliderView} from './RangeSliderView.jsx';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
 
 /**
@@ -49,7 +49,6 @@ RangeSlider.propTypes={
     handle:      element,                      // custom made slider handle
     style: object,                             // style for entire component
     sliderStyle: object,                       // style for slider component
-    labelWidth: number,                        // label width
     tooltip:  string,                          // tooltip on label
     minStop:  number,                          // minimum value the slider can be changed to
     maxStop:  number,                          // maximum value the slider can be changed to

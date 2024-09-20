@@ -142,7 +142,7 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
                     {usingToggle &&
                         <Stack {...{mb:1, direction:'column', justifyContent:'space-around', alignItems:'center'}}>
                             <RadioGroupInputField {...{
-                                inline: true, fieldKey: CONE_AREA_KEY, wrapperStyle: {padding: '10px 0 10px 0'},
+                                inline: true, fieldKey: CONE_AREA_KEY,
                                 tooltip: 'Chose type of search',
                                 orientation:'horizontal',
                                 initialState: {value: cone ? CONE_CHOICE_KEY : POLY_CHOICE_KEY},
@@ -152,11 +152,7 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
                     }
                     {whichOverlay === CONE_CHOICE_KEY &&
                         <Stack>
-                            <TargetPanel labelWidth={40} label='Center'
-                                         feedbackStyle={{height:35}}
-                                         defaultToActiveTarget={false}
-                                         labelStyle={{paddingRight:0, textAlign:'right'}}
-                                         inputStyle={{width:250}}/>
+                            <TargetPanel label='Center' defaultToActiveTarget={false} />
                             {hasRadius && <SizeInputFields {...{
                                 fieldKey:SIZE_KEY, showFeedback:true, nullAllowed:false,
                                 label: 'Size', sx:{mt:2},

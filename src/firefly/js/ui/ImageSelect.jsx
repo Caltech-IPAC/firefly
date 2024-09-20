@@ -329,8 +329,6 @@ function FilterSelect ({type, dataList, maxShown=6}) {
                                 label : '' }}
                 options={dispOptions}
                 alignment='vertical'
-                labelWidth={35}
-                wrapperStyle={{whiteSpace: 'nowrap'}}
             />
 
             { hasMore && <Link onClick={() => setShowExpanded(true)}>more</Link>
@@ -475,7 +473,6 @@ function Header({project, hrefInfo='', multiSelect}) {
                             label : '' }}
                         options={[{label:project, value:'_all_'}]}
                         alignment='horizontal'
-                        labelWidth={35}
                         sx={{fontWeight: 'normal'}}
                     />
                 </div>
@@ -533,8 +530,6 @@ function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSele
                          }}
                     options={options}
                     orientation='horizontal'
-                    labelWidth={35}
-                    wrapperStyle={{whiteSpace: 'normal'}}
                 />
             </Stack>
         );
@@ -558,8 +553,6 @@ function BandSelect({groupKey, subProject, projectData, labelMaxWidth, multiSele
                     options={options}
                     defaultValue=''
                     orientation='horizontal'
-                    labelWidth={35}
-                    wrapperStyle={{whiteSpace: 'normal'}}
                 />
             </Stack>
         );

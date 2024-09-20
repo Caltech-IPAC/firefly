@@ -106,7 +106,7 @@ export function makeAllFields({fieldDefAry, noLabels=false, popupHiPS, toolbarHe
 const countFieldDefType= (fieldDefAry, type) => fieldDefAry.filter( (entry) => entry.type===type).length;
 
 function makeInputFields(fieldDefAry, noLabels) {
-    const noLabelOp= noLabels ? {labelWidth:0,desc:''} : {};
+    const noLabelOp= noLabels ? {desc:''} : {};
     const fieldsInputAry= fieldDefAry
         .filter( ({type}) => type===FLOAT || type===INT || type===UNKNOWN)
         .map( (param) => makeValidationField({...param, ...noLabelOp}) );

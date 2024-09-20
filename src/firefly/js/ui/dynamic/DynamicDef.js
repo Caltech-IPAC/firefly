@@ -202,7 +202,6 @@ export const makeRangeDef = ({key, desc, tooltip,
  * @prop {boolean} nullAllowed - true if can be null
  * @prop {string} units - will show up in description and tooltip
  * @prop {string} tooltip
- * @prop {number} labelWidth
  * @prop {number} precision - used with float
  * @prop {number|string} initValue - used with float, int, enum
  * @prop {string} areaType - only used with area - one of square, circleRadius, circleDiameter, none

@@ -85,19 +85,18 @@ export function VisualPolygonPanel({label, initValue, tooltip, fieldKey, sx, pla
     );
 }
 
-export function VisualTargetPanel({fieldKey, labelWidth= 100, label, labelStyle, feedbackStyle,
+export function VisualTargetPanel({fieldKey, label, feedbackStyle,
                                       targetPanelExampleRow1, targetPanelExampleRow2, ...restOfProps}) {
     const popupButton= (
         <Box sx={{pr: 1/4}}>
             <HiPSPanelPopupButton {...{targetKey:fieldKey, whichOverlay:CONE_CHOICE_KEY, ...restOfProps}} />
         </Box>
     );
-    return ( <TargetPanel {...{fieldKey, button:popupButton, labelWidth, label, feedbackStyle,
+    return ( <TargetPanel {...{fieldKey, button:popupButton, label, feedbackStyle,
         targetPanelExampleRow1, targetPanelExampleRow2}}/> );
 }
 
 VisualTargetPanel.propTypes= {
-    labelWidth: number,
     targetPanelExampleRow1: PropTypes.arrayOf(PropTypes.string),
     targetPanelExampleRow2: PropTypes.arrayOf(PropTypes.string),
     ...sharedPropTypes
@@ -211,7 +210,7 @@ export const TargetHiPSPanel = ({searchAreaInDeg, style,
                              minSize:min, maxSize:max, sx:{minHeight:400} }}/>
         <Stack {...{ml:12.5}}>
             <TargetPanel sx={{pt: 1, width:'34rem'}}/>
-            <SizeInputFields fieldKey='HiPSPanelRadius' showFeedback={true} labelWidth= {100}  nullAllowed={false}
+            <SizeInputFields fieldKey='HiPSPanelRadius' showFeedback={true} nullAllowed={false}
                              label='Search Area'
                              labelStyle={{textAlign:'right', paddingRight:4}}
                              initialState={{ unit: 'arcsec', value: searchAreaInDeg+'', min, max }} />

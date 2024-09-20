@@ -58,12 +58,10 @@ export const InputField = ({
                                value= '',
                                showWarning = true,
                                actOn= ['changes'],
-                               labelWidth= 0,
-                               inline= false,
                                visible= true,
                                ...rest}) => (
     <InputFieldActOn View={InputFieldView} {...{
-        fieldKey, value, showWarning, actOn, labelWidth, inline, visible, ...rest }}/>
+        fieldKey, value, showWarning, actOn, visible, ...rest }}/>
 );
 
 InputField.propTypes = {
