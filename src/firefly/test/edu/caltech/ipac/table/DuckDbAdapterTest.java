@@ -284,9 +284,9 @@ public class DuckDbAdapterTest extends ConfigTest {
 			long a = i % 2;
 			p.submit(() -> {
                     if (a == 0 ) {
-                        even.add(setResults.apply("even")/1000);
+                        even.add(Math.round(setResults.apply("even")/1000.0));
                     } else {
-                        odd.add(setResults.apply("odd")/1000);
+                        odd.add(Math.round(setResults.apply("odd")/1000.0));
                     }
             });
 		}
