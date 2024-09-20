@@ -757,6 +757,7 @@ export function flattenObject(object, prefix='', testFunc=isPlainObject) {
 
 
 export function hashCode(str) {
+    if (!str) return '';
     let hash = 5381;
     let i = str.length;
 

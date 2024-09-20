@@ -27,6 +27,8 @@ import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
 
 
+const SERVICE_EXIST_ERROR= 'TAP does not appear to exist or is not accessible';
+
 const SCHEMA_TIP= 'Select a table collection (TAP ‘schema’); type to search the schema names and descriptions.';
 const TABLE_TIP= 'Select a table; type to search the table names and descriptions.';
 const SCH_TAB_TITLE_TIP= 'Select a table collection (TAP ‘schema’), then select a table';
@@ -48,15 +50,15 @@ function matchesObsCoreHeuristic(schemaName, tableName, columnsModel) {
 
 export function TapViewType({serviceUrl, servicesShowing, setServicesShowing, lockService, setSelectBy,
                                 serviceLabel, selectBy, initArgs, lockObsCore, lockedSchemaName,
-                                obsCoreLockTitle, obsCoreTableModel, hasObsCoreTable}) {
+                                obsCoreLockTitle, obsCoreTableModel, hasObsCoreTable, setError}) {
 
     return (
         <Stack {...{pt: servicesShowing?0:1, height:1}}>
             {selectBy==='adql' ?
-                <AdqlUI {...{serviceUrl, serviceLabel, servicesShowing, setServicesShowing, lockService, setSelectBy}}/> :
+                <AdqlUI {...{serviceUrl, serviceLabel, servicesShowing, setServicesShowing, lockService, setSelectBy, setError}}/> :
                 <BasicUI  {...{serviceUrl, serviceLabel, selectBy, initArgs, lockService,
                     lockObsCore, obsCoreLockTitle, lockedSchemaName, obsCoreTableModel,
-                    servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy}}/>
+                    servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy, setError}}/>
             }
         </Stack>
     );
@@ -68,6 +70,7 @@ TapViewType.propTypes= {
     setServicesShowing: func,
     lockService: bool,
     setSelectBy: func,
+    setError: func,
     serviceLabel: string,
     lockedSchemaName: string,
     obsCoreLockTitle: string,
@@ -88,11 +91,17 @@ const expandableTapSectionSx = {
     width: 1,
 };
 
-function AdqlUI({serviceUrl, serviceLabel, servicesShowing, setServicesShowing, setSelectBy, lockService}) {
+function AdqlUI({serviceUrl, serviceLabel, servicesShowing, setServicesShowing, setSelectBy, lockService, setError}) {
     const [,setCapabilitiesChange] = useState(); // this is just to force a rerender
     const capabilities= getLoadedCapability(serviceUrl);
     useEffect(() => {
-        !isCapabilityLoaded(serviceUrl) && loadTapCapabilities(serviceUrl).then((c) => setCapabilitiesChange(c??{}));
+        if (!isCapabilityLoaded(serviceUrl)) {
+            loadTapCapabilities(serviceUrl)
+                .then((c) => setCapabilitiesChange(c??{}))
+                .catch( (error) => {
+                    setError(`Fail to retrieve capability for: ${serviceUrl}`);
+                });
+        }
     }, [serviceUrl]);
 
     return (
@@ -115,7 +124,7 @@ function AdqlUI({serviceUrl, serviceLabel, servicesShowing, setServicesShowing, 
 
             {capabilities ?
                 <Box sx={expandableTapSectionSx}>
-                    <AdvancedADQL {...{adqlKey:ADQL_QUERY_KEY, defAdqlKey:'defAdqlKey', serviceUrl, capabilities}}/>
+                    <AdvancedADQL {...{adqlKey:ADQL_QUERY_KEY, defAdqlKey:'defAdqlKey', serviceUrl, capabilities, setError}}/>
                 </Box>
                 : <Skeleton/>
             }
@@ -135,11 +144,10 @@ function useStateRef(initialState){
 
 function BasicUI(props) {
     const {initArgs={}, setSelectBy, obsCoreTableModel, servicesShowing, obsCoreLockTitle,
-        setServicesShowing, lockedSchemaName, hasObsCoreTable, lockService, lockObsCore:forceLockObsCore}= props;
+        setServicesShowing, lockedSchemaName, hasObsCoreTable, lockService, lockObsCore:forceLockObsCore, setError}= props;
     const {urlApi={},searchParams={}}= initArgs;
     const [getTapBrowserState,setTapBrowserState]= useFieldGroupMetaState(defTapBrowserState);
     const initState = getTapBrowserState();
-    const [error, setError] = useState(undefined);
     const mountedRef = useRef(false);
     const {setVal}= useContext(FieldGroupCtx);
     const serviceLabel= props.serviceLabel ?? initState.serviceLabel;
@@ -160,7 +168,13 @@ function BasicUI(props) {
     const capabilities= getLoadedCapability(serviceUrl);
 
     useEffect(() => {
-        !isCapabilityLoaded(serviceUrl) && loadTapCapabilities(serviceUrl).then((c) => setCapabilitiesChange(c??{}));
+        if (!isCapabilityLoaded(serviceUrl)) {
+            loadTapCapabilities(serviceUrl)
+                .then((c) => setCapabilitiesChange(c??{}))
+                .catch( (error) => {
+                    setError(`${SERVICE_EXIST_ERROR}: ${serviceUrl}`);
+                });
+        }
     }, [serviceUrl]);
 
     const setLockToObsCore= (doLock) => {
@@ -201,8 +215,9 @@ function BasicUI(props) {
                 return;
             }
             if (tableModel.error) {
-                setError(tableModel.error);
-            } else  {
+                setError(`${SERVICE_EXIST_ERROR}: ${serviceUrl}`);
+            }
+            else  {
                 const schemas = getColumnValues(tableModel, 'schema_name');
                 if(!(schemas.length > 0)){
                     requestSchemaName = undefined;
@@ -326,20 +341,6 @@ function BasicUI(props) {
         // fire the long-running query as soon as an ObsCore capable service is selected
         hasObsCoreTable && loadObsCoreMeta(serviceUrl, obsCoreTableModel);
     }, [hasObsCoreTable, serviceUrl, obsCoreTableModel]);
-
-    useEffect(() => {
-        if (error) setServicesShowing(true);
-    }, [error]);
-
-
-    if (error) {
-        return (
-            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '10px 5px'}}>
-                <b>Error:</b>
-                <pre style={{margin: '7px 0', whiteSpace: 'pre-wrap'}}>{error}</pre>
-            </div>
-        );
-    }
 
     // need to set initialState on list fields so that the initial value that is not the first index
     // is set correctly after unmount and mount

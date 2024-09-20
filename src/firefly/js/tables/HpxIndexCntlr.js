@@ -339,13 +339,15 @@ export function getFirstIndex(orderData, norder, tileNumber) {
  * @param {Number} idx
  * @return {WorldPt}
  */
-export const makeHpxWpt= (hpxIndexData, idx) =>
-    makeWorldPt(
+export function makeHpxWpt(hpxIndexData, idx) {
+    if (!hpxIndexData?.latAry || !hpxIndexData?.latAry) return;
+    return makeWorldPt(
         hpxIndexData.lonAry[idx]/UINT_SCALE,
         hpxIndexData.latAry[idx]/UINT_SCALE,
         hpxIndexData.csys,
         false,
         hpxIndexData.tableUsingRadians);
+}
 
 /**
  *

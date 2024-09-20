@@ -1,4 +1,4 @@
-import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
+import {dispatchAddPreference, getAppOptions, getPreference} from 'firefly/core/AppDataCntlr.js';
 import {sprintf} from 'firefly/externalSource/sprintf.js';
 import {isArray, memoize, omit, sortBy, uniqBy} from 'lodash';
 import {getCapabilities} from '../../rpc/SearchServicesJson.js';
@@ -19,6 +19,7 @@ export const TAP_UPLOAD_SCHEMA= 'TAP_UPLOAD';
 export const ADQL_QUERY_KEY= 'adqlQuery';
 export const USER_ENTERED_TITLE= 'USER_ENTERED_TITLE';
 const EMPTY_SCHEMA_NAME= 'EMPTY_SCHEMA_NAME';
+export const USER_SERVICE_PREFS= 'UserEnteredServices';
 
 
 // cache objects - they only grow, but I don't think they will ever get too big
@@ -248,6 +249,7 @@ async function doLoadTapTables(serviceUrl, schemaName) {
 export async function loadTapCapabilities(serviceUrl) {
     if (capabilityCache[serviceUrl]) return capabilityCache[serviceUrl];
     const capResult= await getCapabilities(serviceUrl+'/capabilities');
+    if (!capResult.success) throw Error('could not find capabilities');
     if (capResult && capResult.success) {
         if (isOldTap(serviceUrl) && capResult.data?.tapCapability) {
             capResult.data.tapCapability.canUseCircle= false;
@@ -554,13 +556,46 @@ function mergeAdditionalServices(tapServices, additional) {
     return [...mergeAdditional,...unmodifiedOriginal];
 }
 
-export function getTapServices(webApiUserAddedService) {
+// let userServices;
+
+export function getTapServices() {
     const {tap} = getAppOptions();
     const startingTapServices= hasElements(tap?.services) ? [...tap.services] : [...TAP_SERVICES_FALLBACK];
     const mergedServices= mergeAdditionalServices(startingTapServices,tap?.additional?.services);
-    webApiUserAddedService && mergedServices.push(webApiUserAddedService);
+    mergedServices.push(...getUserServiceAry());
     return mergedServices;
 }
+
+const baseName= 'User Entered';
+
+function getUserServiceAry() {
+    return getPreference(USER_SERVICE_PREFS, []);
+}
+
+export function addUserService(serviceUrl) {
+    const userServices= getUserServiceAry();
+    if (getTapServices().some( (({value}) => value===serviceUrl))) { // don't add if service already exist
+        return;
+    }
+    const usedNumAry= userServices
+        .map( (s) => s.label)
+        .filter((title) => title && title.startsWith(baseName))
+        .map((title) => title.trim().split('-')?.[1])
+        .map(Number)
+        .filter(Boolean);
+
+    const maxNum = usedNumAry?.length ? Math.max(...usedNumAry) : 0;
+    const label= userServices.every( (s) => s.label!==baseName) ? baseName : baseName + ` - ${maxNum + 1}`;
+    userServices.push({ label, value: serviceUrl, userAdded: true});
+    dispatchAddPreference(USER_SERVICE_PREFS, userServices);
+}
+
+export function deleteUserService(serviceUrl) {
+    const userServices= getUserServiceAry().filter( (s) => s.value!==serviceUrl);
+    dispatchAddPreference(USER_SERVICE_PREFS, userServices);
+}
+
+
 
 const validTableNameRE= /^[A-Za-z][A-Za-z_0-9]*(\.[A-Za-z][A-Za-z_0-9]*){0,2}$/;
 const validColumnNameRE=/^[A-Za-z][A-Za-z_0-9]*(\.[A-Za-z][A-Za-z_0-9]*){0,3}$/;

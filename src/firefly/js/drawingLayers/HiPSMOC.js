@@ -111,10 +111,8 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
  */
 function creator(initPayload) {
 
-    const defStyle= Style.get(getAppOptions().hips.mocDefaultStyle) ??Style.DESTINATION_OUTLINE;
     const drawingDef= makeDrawingDef(colorList[idCnt%colorN],
-                                     {style: defStyle,
-                                      textLoc: TextLocation.CENTER,
+                                     {textLoc: TextLocation.CENTER,
                                       canUseOptimization: true});
     idCnt++;
     const options= {
@@ -139,9 +137,23 @@ function creator(initPayload) {
 
     const preloadedTbl= tablePreloaded && getTblById(tbl_id);
     drawingDef.color = preloadedTbl?.tableMeta?.[MetaConst.DEFAULT_COLOR] ?? defColors[mocGroupDefColorId] ?? color;
-    drawingDef.style = Style.get(preloadedTbl?.tableMeta?.[MetaConst.MOC_DEFAULT_STYLE] ?? defStyle);
-
-
+    const defStyle= getAppOptions().hips.mocDefaultStyle ?? 'outline';
+    const inStyleStr= getMetaEntry(preloadedTbl, MetaConst.MOC_DEFAULT_STYLE, defStyle).toLowerCase();
+    switch (inStyleStr) {
+        case 'moc tile outline':
+        case 'tile outline':
+        case 'tile_outline':
+            drawingDef.style= Style.STANDARD;
+            break;
+        case 'fill':
+            drawingDef.style= Style.FILL;
+            break;
+        case 'outline':
+        case 'destination_outline':
+        default:
+            drawingDef.style= Style.DESTINATION_OUTLINE;
+            break;
+    }
 
     const dl = DrawLayer.makeDrawLayer( id, TYPE_ID, get(initPayload, 'title', MocPrefix +id.replace('_moc', '')),
                                         options, drawingDef, actionTypes);

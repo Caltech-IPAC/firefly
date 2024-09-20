@@ -39,7 +39,7 @@ public class VosiCapabilityRetrieve {
                 TapCapability tc=  h.getTapCapability();
                 return new Capabilities(tc);
             } catch (FailedRequestException | IOException | SAXException | ParserConfigurationException e) {
-                _log.warn(e, "Coule not parse capabilities");
+                _log.warn(e, "Could not parse capabilities");
             }
         } catch (IOException e) {
             _log.warn(e, "Could not parse capabilities");

@@ -5,7 +5,7 @@
  */
 
 
-import  {get, isBoolean, isEmpty} from 'lodash';
+import  {get, isBoolean} from 'lodash';
 import {clone, isDefined} from '../util/WebUtil.js';
 import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef} from '../visualize/draw/DrawingDef.js';
@@ -24,7 +24,7 @@ import CoordinateSys from '../visualize/CoordSys.js';
 
 export const COORDINATE_PREFERENCE = 'coordinate';
 
-const  coordinateArray = [
+const coordinateArray = [
      {coordName:'eq2000hms',        csys:CoordinateSys.EQ_J2000},
      {coordName:'eq2000dcm',        csys:CoordinateSys.EQ_J2000},
      {coordName:'eqb1950hms',       csys:CoordinateSys.EQ_B1950},
@@ -54,10 +54,10 @@ var idCnt=0;
  */
 function creator(params) {
 
-    var drawingDef= makeDrawingDef( DEF_GRID_COLOR);
+    const drawingDef= makeDrawingDef( DEF_GRID_COLOR);
     const useLabels= isBoolean(params.useLabels) ? params.useLabels : true;
     const id= params.drawLayerId || `${ID}-${idCnt}`;
-    var options= {
+    const options= {
         hasPerPlotData:true,
         isPointData:false,
         useLabels,
@@ -65,7 +65,7 @@ function creator(params) {
         destroyWhenAllDetached: true
     };
     
-    return DrawLayer.makeDrawLayer( id, TYPE_ID, 'grid', options , drawingDef, [ImagePlotCntlr.UPDATE_VIEW_SIZE, UPDATE_GRID ]);
+    return DrawLayer.makeDrawLayer( id, TYPE_ID, 'Grid', options , drawingDef, [ImagePlotCntlr.UPDATE_VIEW_SIZE, UPDATE_GRID ]);
 }
 
  /**
@@ -153,19 +153,12 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
   * @returns {{width: (dataWidth|*), height: (*|dataHeight), screenWidth: *, csys: *, labelFormat: string}}
   */
  export function getDrawLayerParameters(plot){
-     var width = plot.dataWidth;
-     var height = plot.dataHeight;
-     var screenWidth = plot.screenSize.width;
+     const prefCsysName = getPreference(COORDINATE_PREFERENCE);
+     const nameList= coordinateArray.map(({coordName}) => coordName);
+     const csysName= nameList.includes(prefCsysName) ? prefCsysName : 'eq2000hms';
 
-     var csysName = getPreference(COORDINATE_PREFERENCE);
-     if (!csysName || isEmpty(csysName) ) {
-         //set default
-         csysName = 'eq2000hms';
-     }
-     var csys=getCoordinateSystem(csysName);
-     var labelFormat=csysName.endsWith('hms')? 'hms':'dcm';
-
-     return {width, height, screenWidth, csys,labelFormat};
+     return {width:plot.dataWidth, height:plot.dataHeight, screenWidth:plot.screenSize.width,
+         csys:getCoordinateSystem(csysName),labelFormat:csysName.endsWith('hms')? 'hms':'dcm'};
  }
 
  /**
