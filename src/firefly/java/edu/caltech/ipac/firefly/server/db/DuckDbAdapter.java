@@ -114,8 +114,11 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
 
     protected void shutdown(EmbeddedDbInstance db) {}
     protected void removeDbFile() {
-        if (!getDbFile().delete()) {
-            LOGGER.trace("Unable to remove duckdb file:" + getDbFile().getAbsolutePath());
+        var dbFile = getDbFile();
+        if (dbFile.exists()) {
+            if (!dbFile.delete()) {
+                LOGGER.trace("Unable to remove duckdb file:" + dbFile.getAbsolutePath());
+            }
         }
     }
     /*------------------*/

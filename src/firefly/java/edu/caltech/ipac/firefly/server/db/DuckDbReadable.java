@@ -44,10 +44,11 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
      * Convert this file name into duckdb file extension, then set it as this Adapter's dbFile
      * @param srcFile
      */
-    public void useDbFileFrom(File srcFile) {
+    public DuckDbReadable useDbFileFrom(File srcFile) {
         var ext = StringUtils.groupMatch("(.+)\\.(.+)$", srcFile.getName());
         String fname = (ext == null ? srcFile.getName() : ext[0]) + "." + DuckDbAdapter.NAME;
         this.dbFile = new File(srcFile.getParentFile(), fname);
+        return this;
     }
 
     public static TableUtil.Format guessFileFormat(File srcFile) {

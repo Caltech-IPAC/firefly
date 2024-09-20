@@ -42,10 +42,8 @@ import java.io.OutputStreamWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW;
@@ -83,9 +81,8 @@ import static edu.caltech.ipac.util.StringUtils.*;
  */
 abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPart>, SearchProcessor.CanGetDataFile,
                                                      SearchProcessor.CanFetchDataGroup, Job.Worker {
-    private static final Map<String, ReentrantLock> activeRequests = new HashMap<>();
     private static final Logger.LoggerImpl logger = Logger.getLogger();
-    private static final ReentrantLock lockChecker = new ReentrantLock();
+    private static final SynchronizedAccess GET_DATA_CHECKER = new SynchronizedAccess();
     private Job job;
 
     public void setJob(Job job) {
@@ -127,30 +124,15 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     public DataGroupPart getData(ServerRequest request) throws DataAccessException {
         TableServerRequest treq = (TableServerRequest) request;
 
-        String unigueReqID = this.getUniqueID(request);
-
-        lockChecker.lock();
-        ReentrantLock lock = null;
-        try {
-            lock = activeRequests.get(unigueReqID);
-            if (lock == null) {
-                lock = new ReentrantLock();
-                activeRequests.put(unigueReqID, lock);
-            }
-        } finally {
-            lockChecker.unlock();
-        }
-
         // make sure multiple requests for the same data waits for the first one to create before accessing.
-        lock.lock();
+        String uniqueID = this.getUniqueID(request);
+        var release = GET_DATA_CHECKER.lock(uniqueID);
         try {
-            boolean dbFileCreated = false;
             var dbAdapter = getDbAdapter(treq);
             jobExecIf(v -> v.progress(10, "fetching data..."));
             if (!dbAdapter.hasTable(dbAdapter.getDataTable())) {
                 StopWatch.getInstance().start("createDbFile: " + treq.getRequestId());
                 createDbFromRequest(treq, dbAdapter);
-                dbFileCreated = true;
                 StopWatch.getInstance().stop("createDbFile: " + treq.getRequestId()).printLog("createDbFile: " + treq.getRequestId());
             }
 
@@ -175,17 +157,6 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             TableUtil.consumeColumnMeta(results.getData(), treq);
 
             int totalRows = results.getRowCount();
-            if (dbFileCreated) {
-                if (doLogging()) {
-                    SearchProcessor.logStats(treq.getRequestId(), totalRows, 0, false, getDescResolver().getDesc(treq));
-                }
-                // check for values that can be enumerated
-                if (totalRows < 5000) {
-                    enumeratedValuesCheck(dbAdapter, results, treq);
-                } else {
-                    enumeratedValuesCheckBG(dbAdapter, results, treq);        // when it's more than 5000 rows, send it by background so it doesn't slow down response time.
-                }
-            }
 
             results.getData().getTableMeta().setAttribute(DataGroupPart.LOADING_STATUS, DataGroupPart.State.COMPLETED.name());
 
@@ -196,14 +167,27 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             logger.error(e);
             throw e;
         } finally {
-            activeRequests.remove(unigueReqID);
-            lock.unlock();
+            release.run();
         }
     }
 
-    private void createDbFromRequest(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
+    protected void createDbFromRequest(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
         try {
             FileInfo dbFileInfo = ingestDataIntoDb(treq, dbAdapter);
+            if (dbAdapter.hasTable(dbAdapter.getDataTable())) {
+                int totalRows = JdbcFactory.getSimpleTemplate(dbAdapter.getDbInstance()).queryForInt("Select count(*) from " + dbAdapter.getDataTable());
+                var headers = dbAdapter.getHeaders(dbAdapter.getDataTable());
+                if (doLogging()) {
+                    SearchProcessor.logStats(treq.getRequestId(), totalRows, 0, false, getDescResolver().getDesc(treq));
+                }
+
+                // check for values that can be enumerated
+                if (totalRows < 5000) {
+                    enumeratedValuesCheck(dbAdapter, new DataGroupPart(headers, 0, totalRows), treq);
+                } else {
+                    enumeratedValuesCheckBG(dbAdapter, new DataGroupPart(headers, 0, totalRows), treq);        // when it's more than 5000 rows, send it by background so it doesn't slow down response time.
+                }
+            }
         } catch (Exception e) {
             dbAdapter.close(true);
             if (e instanceof DataAccessException) {

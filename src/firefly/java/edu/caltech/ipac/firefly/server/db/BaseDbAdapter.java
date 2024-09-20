@@ -596,8 +596,8 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 shutdown(db);
             } finally {
                 db.getLock().unlock();
+                getDbInstances().remove(db.getDbFile().getPath());
             }
-            getDbInstances().remove(db.getDbFile().getPath());
         }
         if (deleteFile) removeDbFile();
     }

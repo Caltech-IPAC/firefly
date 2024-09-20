@@ -17,6 +17,7 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DecimationProcessor;
 import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
+import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.FileLoader;
@@ -29,8 +30,18 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.LongFunction;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -250,11 +261,48 @@ public class DuckDbAdapterTest extends ConfigTest {
 	}
 
 	@Test
-	public void testGetInfo() throws DataAccessException {
-		File testFile = FileLoader.resolveFile(DuckDbAdapterTest.class, "/iris.parquet");
+	public void testSynchronizedAccess() throws InterruptedException {
+		ArrayList<Long> even = new ArrayList<>();
+		ArrayList<Long> odd = new ArrayList<>();
 
+		var locker = new SearchProcessor.SynchronizedAccess();
+		Function<String,Long> setResults = (q) -> {
+			long start = System.currentTimeMillis();
+			var release = locker.lock(q);
+            try {
+				Thread.sleep(1_000);
+            } catch (InterruptedException e) {}
+			finally {
+				release.run();
+            }
+			return System.currentTimeMillis() - start;
+        };
 
-	}
+		int ntimes = 10;
+		var p = Executors.newFixedThreadPool(ntimes);		// when all threads start at the same time, all be blocked.
+		for(int i = 0; i < ntimes; i++) {
+			long a = i % 2;
+			p.submit(() -> {
+                    if (a == 0 ) {
+                        even.add(setResults.apply("even")/1000);
+                    } else {
+                        odd.add(setResults.apply("odd")/1000);
+                    }
+            });
+		}
+		p.shutdown();
+		if (!p.awaitTermination(10, TimeUnit.SECONDS)) {
+			System.out.println("Not all tasks completed in time.");
+		}
+//		even.forEach(System.out::println);
+//		odd.forEach(System.out::println);
+
+		assertTrue("Max elapsed time should be %ds".formatted(ntimes/2), Collections.max(even) == ntimes/2);
+		assertTrue("Min elapsed time should be 1s", Collections.min(even) == 1);
+		assertTrue("Max elapsed time should be %ds".formatted(ntimes/2), Collections.max(odd) == ntimes/2);
+		assertTrue("Min elapsed time should be 1s", Collections.min(odd) == 1);
+    }
+
 
 
 //====================================================================
