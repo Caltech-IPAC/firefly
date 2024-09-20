@@ -119,8 +119,8 @@ class DbMonitor {
 
             // remove expired search results
             List<DbAdapter.EmbeddedDbInstance> toBeRemove = dbInstances.values().stream()
-                    .filter((db) -> db.hasExpired() || force).collect(Collectors.toList());
-            if (toBeRemove.size() > 0) {
+                    .filter((db) -> db.hasExpired() || force).toList();
+            if (!toBeRemove.isEmpty()) {
                 LOGGER.info("There are currently %d databases open.  Of which, %d will be closed.".formatted(dbInstances.size(), toBeRemove.size()));
                 toBeRemove.forEach((db) -> DbAdapter.getAdapter(db.getDbFile()).close(deleteFile));
             }

@@ -23,6 +23,7 @@ import edu.caltech.ipac.table.TableUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
 import static edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource.PROC_ID;
@@ -35,6 +36,8 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
     public static final String PROC_ID = "IpacTableFromSource";
     private static final String TBL_TYPE = "tblType";
     private static final String TYPE_CATALOG = "catalog";
+    private static final SynchronizedAccess SOURCE_FILE_CHECKER = new SynchronizedAccess();
+    private static final HashMap<String, DbAdapter> adapters = new HashMap<>();
 
     // because a SearchProcessor is created on each request,
     // it's okay to save it as a member variable once it's fetched.
@@ -77,14 +80,29 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
         }
     }
 
+    /**
+     * Fetches the data file to determine if DuckDB can read it directly,
+     * then returns the appropriate DbAdapter.
+     * @param treq the table request
+     * @return the DbAdapter for the corresponding data file
+     */
     public DbAdapter getDbAdapter(TableServerRequest treq) {
-        var srcFile = fetchSourceFile(treq);
-        DbAdapter test = DbAdapter.getAdapter(srcFile);     // test to see if srcFile can be imported directly by DuckDB
-        if ( test instanceof DuckDbReadable dr) {
-            dr.useDbFileFrom(makeDbFile(treq));
-            return dr;
-        }else {
-            return super.getDbAdapter(treq);
+        String id = getUniqueID(treq);
+        var release = SOURCE_FILE_CHECKER.lock(id);
+        try {
+            DbAdapter adpt = adapters.get(id);
+            if (adpt != null && adpt.hasTable(adpt.getDataTable())) return adpt;
+            // no DB; create and load DB since we need sourcefile to determine the loading logic
+            var srcFile = fetchSourceFile(treq);
+            adpt = DbAdapter.getAdapter(srcFile) instanceof DuckDbReadable dr
+                    ? dr.useDbFileFrom(makeDbFile(treq)) : super.getDbAdapter(treq);
+            createDbFromRequest(treq, adpt);
+            adapters.put(id, adpt);
+            return adpt;
+        } catch (DataAccessException e) {
+            throw new RuntimeException(e);
+        } finally {
+            release.run();
         }
     }
 

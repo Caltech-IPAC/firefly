@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.SortedSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.FF_SESSION_ID;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
@@ -92,12 +94,36 @@ public interface SearchProcessor<Type> {
         public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException;
     }
 
-
     /**
      * Date: 9/13/17
      *
      */
     interface CanGetDataFile {
         File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException;
+    }
+
+    class SynchronizedAccess {
+        private final ConcurrentHashMap<String, ReentrantLock> activeRequests = new ConcurrentHashMap<>();
+
+        /**
+         * Acquires a lock associated with the given ID. If the lock does not already exist, it is created.
+         *
+         * @param id the identifier for the lock
+         * @return a {@code Runnable} that, when executed, releases the lock and removes it from the active requests
+         */
+        public Runnable lock(String id) {
+            ReentrantLock lock = activeRequests.computeIfAbsent(id, k -> new ReentrantLock());
+            Logger.getLogger().trace("waiting %s: %s\n".formatted(id, lock));
+            lock.lock();
+            Logger.getLogger().trace("got lock %s: %s\n".formatted(id, lock));
+            return () -> {
+                try {
+                    lock.unlock();              // Ensure lock is released even if an exception occurs
+                } finally {
+                    if (!lock.isLocked()) activeRequests.remove(id);  // Remove the lock from activeRequests if no threads are using it
+                    Logger.getLogger().trace("unlock %s: %s\n".formatted(id, lock));
+                }
+            };
+        }
     }
 }
