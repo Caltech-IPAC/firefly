@@ -297,10 +297,10 @@ public class DuckDbAdapterTest extends ConfigTest {
 //		even.forEach(System.out::println);
 //		odd.forEach(System.out::println);
 
-		assertTrue("Max elapsed time should be %ds".formatted(ntimes/2), Collections.max(even) == ntimes/2);
-		assertTrue("Min elapsed time should be 1s", Collections.min(even) == 1);
-		assertTrue("Max elapsed time should be %ds".formatted(ntimes/2), Collections.max(odd) == ntimes/2);
-		assertTrue("Min elapsed time should be 1s", Collections.min(odd) == 1);
+		assertEquals(ntimes/2, (long)Collections.max(even));
+		assertEquals(1L, (long)Collections.min(even));
+		assertEquals(ntimes/2, (long)Collections.max(odd));
+		assertEquals(1L, (long)Collections.min(odd));
     }
 
 
