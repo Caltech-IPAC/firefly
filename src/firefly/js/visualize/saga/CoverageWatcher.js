@@ -708,6 +708,7 @@ function addToCoverageDrawing(plotId, options, table, preparedTable, drawOp, vis
             selectInfo,
             angleInRadian: isUsingRadians(dataType,table,columns),
             dataTooBigForSelection,
+            tableCanControlColor:true,
             tableSelection: (dataType === CoverageType.REGION) ? (drawOp[cId].selectOption || TableSelectOptions.all.key) : null,
         });
         dispatchAttachLayerToPlot(cId, plotId, false, visible);
