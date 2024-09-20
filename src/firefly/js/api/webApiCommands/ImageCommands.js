@@ -1,5 +1,5 @@
 import {dispatchActiveTarget, dispatchAppOptions, getMenu} from '../../core/AppDataCntlr.js';
-import {dispatchShowDropDown, dispatchUpdateMenu} from '../../core/LayoutCntlr.js';
+import {dispatchHideDropDown, dispatchShowDropDown, dispatchUpdateMenu} from '../../core/LayoutCntlr.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import {makeTblRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {doFetchTable} from '../../tables/TableUtil.js';
@@ -113,19 +113,36 @@ const hipsExamples= [
 
 const hipsPanelOverview= {
     overview: [
-        'Show HiPS Panel'
+        'Show HiPS Panel, configure HiPS panel, show HiPS: you may also use any parameter from the hips command'
     ],
     parameters: {
         showPanel: {desc:'show HiPS panel'},
         [ReservedParams.POSITION.name]: ['coordinates to center HiPS',...ReservedParams.POSITION.desc],
         [ReservedParams.SR.name]: ['Radius of the field of view of the HiPS',...ReservedParams.SR.desc],
-        hipsListName: {desc:'a hips list server name'},
-        hipsListUrl: {desc:'a hips list server url'},
+        hipsListName: {desc:'a HiPS list server name'},
+        hipsListUrl: {desc:'a HiPS list server url'},
+        uri: {desc:'if included, the HiPS panel will not initially show: the HiPS will load'},
     },
 };
 
 const hipsPanelExamples= [
     {desc:'Show HiPS Panel', params:{showPanel: true}},
+    {desc:'Add HiPS List Server', params:{
+        showPanel: true,
+        hipsListUrl: 'https://irsa.ipac.caltech.edu/data/hips/list',
+        hipsListName: 'test server',
+    }},
+    {desc:'Add HiPS List Server and show 2 HiPS', params:{
+            hipsListUrl: 'https://irsa.ipac.caltech.edu/data/hips/list',
+            hipsListName: 'test server',
+            uri: ['ivo://CDS/P/DSS2/color','ivo://CDS/P/2MASS/color'],
+        }},
+    {desc:'Add HiPS List Server and show HiPS, 2 deg, at m31', params:{
+            hipsListUrl: 'https://irsa.ipac.caltech.edu/data/hips/list',
+            hipsListName: 'test server',
+            uri: ['ivo://CDS/P/DSS2/color'],
+            ra: '10.674', dec: '41.270', sr:'2d'
+        }},
 ];
 
 
@@ -194,7 +211,6 @@ function showHiPs(cmd,inParams) {
             r.setRequestType(RequestType.HiPS);
             dispatchPlotHiPS({plotId, wpRequest:r, viewerId:DEFAULT_FITS_VIEWER_ID });
         });
-
 }
 
 function validateHiPSPanel(params) {
@@ -212,7 +228,7 @@ async function showHiPSPanelAsync(cmd, inParams) {
         urlApi.radius= inParams[ReservedParams.SR.name];
     }
 
-    const {hipsListName,hipsListUrl,showPanel}= inParams;
+    const {hipsListName,hipsListUrl,showPanel, ...plotParams}= inParams;
     if (hipsListUrl) {
         const name= hipsListName || hipsListUrl;
         dispatchAppOptions({extraHiPSListName:name});
@@ -235,6 +251,14 @@ async function showHiPSPanelAsync(cmd, inParams) {
             dispatchUpdateMenu({selected,showBgMonitor,menuItems:newMenuItems});
         }
         dispatchShowDropDown({view:'HiPSSearchPanel', initArgs:{urlApi}});
+    }
+
+    if (plotParams.uri) {
+        // dispatchShowDropDown( {view: undefined});
+        setTimeout(() => {
+            dispatchHideDropDown();
+            showHiPs(cmd,plotParams);
+        },10);
     }
 }
 
