@@ -398,7 +398,7 @@ function makeSummaryModel(report, summaryTblId, acceptList) {
     const columns = [
         {name: 'Index', type: 'int', desc: 'Extension Index'},
         {name: 'Type', type: 'char', desc: 'Data Type'},
-        {name: 'Description', type: 'char', desc: 'Extension Description', width: 60},
+        {name: 'Description', type: 'char', desc: 'Extension Description', width: 30},
         {name: 'AllowedType', type: 'boolean', desc: 'Type in AcceptList', visibility: 'hidden'}
     ];
     const {parts=[]} = report;
@@ -619,7 +619,7 @@ function AnalysisTable({summaryModel, detailsModel, report, isMoc, UNKNOWN_FORMA
 
     // Details table needs to render first to create a stub to collect data when Summary table is loaded.
     return (
-        <Stack {...{direction:'row', flexGrow:1, position:'relative', minHeight:'22rem'}}>
+        <Stack {...{direction:'row', flexGrow:1, position:'relative', minHeight:'1rem'}}>
             {(summaryModel.tableData.data.length>1) ?
                 <MultiDataSet summaryModel={summaryModel} detailsModel={detailsModel} isMoc={isMoc}
                               acceptOneItem={acceptOneItem}/> :
@@ -667,7 +667,7 @@ function MultiDataSet({summaryModel, detailsModel, isMoc, acceptOneItem}) {
                 </Typography>
             }
             <Box sx={{height:1, position:'relative'}}>
-                <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={550}>
+                <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={350}>
                     {acceptOneItem && <TablePanel {...{showTypes:false, title:'File Summary', tableModel:summaryModel,
                         ...tblOptions, selectable:false, }} />}
                     {!acceptOneItem && <TablePanel {...{sx:{mr:1}, showTypes:false, title:'File Summary', tableModel:summaryModel,
@@ -692,7 +692,7 @@ function Details({detailsModel}) {
     return (
         <TablePanel showTypes={false}  title='File Details'
                     tableModel={detailsModel}
-                    sx={{ml:1, position:'absolute', inset:0}}
+                    sx={{ml:1, position:'relative', inset:0}}
                     {...tblOptions} showMetaInfo={true} selectable={false}/>
     );
 
