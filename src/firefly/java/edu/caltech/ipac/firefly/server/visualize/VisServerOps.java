@@ -220,7 +220,7 @@ public class VisServerOps {
 
     public static WebPlotResult crop(PlotState[] stateAry, ImagePt c1, ImagePt c2, boolean cropMultiAll) {
         List<WebPlotResult> resultsList= Arrays.stream(stateAry).map((s) -> crop(s, c1, c2, cropMultiAll)).toList();
-        boolean success= resultsList.stream().filter(r -> !r.success()).toList().size()==0;
+        boolean success= resultsList.stream().filter(r -> !r.success()).toList().isEmpty();
         WebPlotResult result = WebPlotResult.make(WebPlotResult.RESULT_ARY, resultsList.toArray(new WebPlotResult[0]));
         return success ? result : resultsList.get(0);
     }

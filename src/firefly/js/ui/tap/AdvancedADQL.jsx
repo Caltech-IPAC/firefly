@@ -71,7 +71,7 @@ function getExamples(serviceUrl) {
     );
 }
 
-export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, style={}}) {
+export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, style={}, setError}) {
 
     const [treeData, setTreeData] = useState([]);                               // using a useState hook
     const [displayedTreeData, setDisplayedTreeData] = useState((treeData));
@@ -113,6 +113,10 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
         const key = cFetchKey;
         // reload TAP schema when serviceUrl changes
         loadTapSchemas(serviceUrl).then(async (tm) => {
+            if (tm.error) {
+                setError(`Fail to retrieve schema for: ${serviceUrl}`);
+                return;
+            }
             if (key === cFetchKey) {
                 const tableData = tm?.tableData?.data ?? [];
                 const cidx = getColumnIdx(tm, 'schema_name');

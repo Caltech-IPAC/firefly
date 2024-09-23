@@ -46,7 +46,7 @@ export const computeScreenDistance= function (x1, y1, x2, y2) {
  * @param p2 WorldPt
  * @return {number}
  */
-export const computeDistance= (p1, p2) => computeDistanceAngularDistance(p1.x, p1.y, p2.x, p2.y);
+export const computeDistance= (p1, p2) => (p1 && p2) ? computeDistanceAngularDistance(p1.x, p1.y, p2.x, p2.y) : 0;
 
 
 const computeDistanceAngularDistance= memorizeUsingMap( (lon1,lat1,lon2,lat2) => {

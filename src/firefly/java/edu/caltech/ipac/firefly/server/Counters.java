@@ -11,6 +11,7 @@ package edu.caltech.ipac.firefly.server;
 
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
+import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.util.ComparisonUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -228,7 +229,9 @@ public class Counters {
         addMemStrToList(retList,"Free Active", FileUtil.getSizeAsString(sInfo.jvmFree()));
         addMemStrToList(retList,"Total Active", FileUtil.getSizeAsString(sInfo.jvmTotal()));
         retList.add("");
-        retList.add("Cores - "+ Runtime.getRuntime().availableProcessors());
+        retList.add("Limits");
+        addToList(retList, "Cores", Runtime.getRuntime().availableProcessors());
+        addToList(retList, "Max FITS File size", FileUtil.getSizeAsString(VisContext.FITS_MAX_SIZE));
         retList.add("");
     }
 
@@ -237,6 +240,7 @@ public class Counters {
         retList.add("Version Information");
         VersionUtil.getVersionInfo().forEach(verInfoKeyVal ->
                 addToList(retList, verInfoKeyVal.getKey(), verInfoKeyVal.getValue()));
+        addToList(retList,"Java Version", System.getProperty("java.version"));
         retList.add("");
     }
 

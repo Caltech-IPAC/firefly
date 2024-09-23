@@ -200,6 +200,9 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
 
     if (paused) {
         paused= !(getViewer(getMultiViewRoot(), viewerId)?.mounted ?? false);
+        if (paused && (action?.type===TABLE_HIGHLIGHT || action?.type===TABLE_SELECT)) {
+            handleSelectOrHighlight(action,tblCatIdMap,tbl_id);
+        }
     }
     if (!action) {
         if (!paused) {
@@ -249,16 +252,9 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
             cancelSelf();
             break;
 
-        case TABLE_SELECT:
-            tblCatIdMap[tbl_id]?.forEach(( cId ) => {
-                dispatchModifyCustomField(cId, {selectInfo: action.payload.selectInfo});
-            });
-            break;
-
         case TABLE_HIGHLIGHT:
-            tblCatIdMap[tbl_id]?.forEach(( cId ) => {
-                dispatchModifyCustomField(cId, {highlightedRow: action.payload.highlightedRow});
-            });
+        case TABLE_SELECT:
+            handleSelectOrHighlight(action,tblCatIdMap,tbl_id);
             break;
 
         case MultiViewCntlr.VIEWER_UNMOUNTED:
@@ -277,6 +273,18 @@ function watchCoverage(tbl_id, action, cancelSelf, params) {
 }
 
 
+function handleSelectOrHighlight(action,tblCatIdMap,tbl_id) {
+    switch (action?.type) {
+        case TABLE_HIGHLIGHT:
+            tblCatIdMap[tbl_id]?.forEach((cId) =>
+                dispatchModifyCustomField(cId, {highlightedRow: action.payload.highlightedRow}));
+            return;
+        case TABLE_SELECT:
+            tblCatIdMap[tbl_id]?.forEach((cId) =>
+                dispatchModifyCustomField(cId, {selectInfo: action.payload.selectInfo}));
+            return;
+    }
+}
 
 function removeCoverage(tbl_id, preparedTables) {
     if (tbl_id) Reflect.deleteProperty(preparedTables, tbl_id);

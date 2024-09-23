@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {Box, Button, FormHelperText, Stack, Typography} from '@mui/joy';
+import {Box, Button, ChipDelete, FormHelperText, Stack, Typography} from '@mui/joy';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 import {dispatchHideDialog} from 'firefly/core/ComponentCntlr.js';
 import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr.js';
@@ -16,8 +16,10 @@ import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil.jsx';
 
 import {makeColsLines, tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints.jsx';
 import {
+    addUserService,
     ADQL_QUERY_KEY,
-    defTapBrowserState, getAsEntryForTableName, getMaxrecHardLimit, getTapServices, loadObsCoreSchemaTables,
+    defTapBrowserState, deleteUserService, getAsEntryForTableName, getMaxrecHardLimit, getTapServices,
+    loadObsCoreSchemaTables,
     makeNumberedTitle,
     makeTapSearchTitle,
     maybeQuote, TAP_UPLOAD_SCHEMA, tapHelpId, USER_ENTERED_TITLE,
@@ -38,7 +40,6 @@ import {
     ConstraintContext, getHelperConstraints, getTapUploadSchemaEntry, getUploadConstraint, getUploadServerFile,
     getUploadTableName, isTapUpload
 } from './Constraints.js';
-import {showResultTitleDialog} from './ResultTitleDialog';
 import {TitleCustomizeButton} from './TableSearchHelpers';
 import {TapViewType} from './TapViewType.jsx';
 
@@ -51,7 +52,6 @@ const DEFAULT_TAP_PANEL_GROUP_KEY = 'TAP_PANEL_GROUP_KEY';
 //-------------
 //-------------
 
-let webApiUserAddedService;
 const initServiceUsingAPIOnce= makeSearchOnce(false); // call one time during first construction
 const searchFromAPIOnce= makeSearchOnce(); // setup options to immediately execute the search the first time
 
@@ -68,7 +68,9 @@ const initApiAddedServiceOnce= once((initArgs) => {
     const {service}= initArgs?.urlApi ?? {};
     if (service) {
         const listedEntry= getTapServiceOptions().find( (e) => e.value===service);
-        if (!listedEntry) webApiUserAddedService = {label: initArgs.urlApi?.service, value: service};
+        if (!listedEntry) {
+            addUserService(service);
+        }
     }
 });
 
@@ -141,6 +143,7 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
     const {setVal,getVal,setFld,groupKey}= useContext(FieldGroupCtx);
     const [getTapBrowserState,setTapBrowserState]= useFieldGroupMetaState(defTapBrowserState);
     const [getUserTitle,setUserTitle]= useFieldGroupValue(USER_ENTERED_TITLE);
+    const [srvNameKey, setSrvNameKey]= useState(() => getServiceNamesAsKey());
     const tapState= getTapBrowserState();
     if (!initArgs?.urlApi?.execute) searchFromAPIOnce(true); // if not execute then mark as done, i.e. disable any auto searching
     initApiAddedServiceOnce(initArgs);  // only look for the extra service the first time
@@ -166,12 +169,16 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
     const obsCoreEnabled = obsCoreTableModel?.tableData?.data?.length > 0;
 
     const onTapServiceOptionSelect= (selectedOption) => {
-        if (!selectedOption) return;
+        if (!selectedOption) {
+            setSrvNameKey(getServiceNamesAsKey());
+            return;
+        }
         setVal(ADQL_QUERY_KEY, '');
         setFld(ADQL_QUERY_KEY, {placeholder: '', value: ''});
         const serviceUrl= selectedOption?.value;
         setServiceUrl(serviceUrl);
         setObsCoreTableModel(undefined);
+        setSrvNameKey(getServiceNamesAsKey());
         setTapBrowserState({...getTapBrowserState(), serviceUrl});
     };
 
@@ -224,7 +231,7 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
 
                     <TapSearchPanelComponents {...{
                         servicesShowing, setServicesShowing, lockService, lockObsCore, obsCoreLockTitle,
-                        lockedSchemaName,
+                        lockedSchemaName, srvNameKey,
                         initArgs, selectBy, setSelectBy, serviceUrl, onTapServiceOptionSelect, titleOn, tapOps, obsCoreEnabled}} />
                 </FormPanel>
             </ConstraintContext.Provider>
@@ -255,6 +262,7 @@ function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setSer
 
     const serviceLabel= getServiceLabel(serviceUrl);
     const [obsCoreTableModel, setObsCoreTableModel] = useState();
+    const [error, setError] = useState(undefined);
     const hasObsCoreTable = obsCoreTableModel?.tableData?.data?.length > 0;
 
     const loadObsCoreTables = (requestServiceUrl) => {
@@ -262,6 +270,17 @@ function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setSer
             setObsCoreTableModel(tableModel);
         });
     };
+
+    const showWarning= error || !serviceUrl;
+
+    useEffect(() => {
+        if (error) setServicesShowing(true);
+    }, [error]);
+
+    useEffect(() => {
+        if (!serviceUrl) setServicesShowing(true);
+        if (serviceUrl) setError(undefined);
+    }, [serviceUrl]);
 
     useEffect(() => {
         loadObsCoreTables(serviceUrl);
@@ -272,13 +291,35 @@ function TapSearchPanelComponents({initArgs, serviceUrl, servicesShowing, setSer
             {titleOn &&<Typography {...{level:'h3', sx:{m:1} }}> TAP Searches </Typography>}
             <Services {...{serviceUrl, servicesShowing: (servicesShowing && !lockService),
                     tapOps, onTapServiceOptionSelect}}/>
-            <TapViewType  {...{
-                serviceUrl, serviceLabel, selectBy, initArgs, lockService,
-                lockObsCore, obsCoreLockTitle, obsCoreTableModel, lockedSchemaName,
-                servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy
-            }} />
+            { showWarning ?
+                <ServiceWarning {...{error,serviceUrl}}/> :
+                <TapViewType  {...{
+                    serviceUrl, serviceLabel, selectBy, initArgs, lockService,
+                    lockObsCore, obsCoreLockTitle, obsCoreTableModel, lockedSchemaName,
+                    servicesShowing, setServicesShowing, hasObsCoreTable, setSelectBy, setError
+                }} />
+            }
         </Stack>
     );
+}
+
+function ServiceWarning({error,serviceUrl}) {
+
+    if (!serviceUrl) {
+        return (
+            <Typography level='h3' color='warning' sx={{textAlign:'center', mt:5}}>Select a TAP Service</Typography>
+            );
+    }
+    else if (error)  {
+        return (
+            <Stack>
+                <Typography level='h3' color='warning' sx={{textAlign:'center', mt:5}}>Error</Typography>
+                <Typography color='warning' sx={{textAlign:'center', mt:5}}>{error}</Typography>
+            </Stack>
+        );
+    }
+    return <div/>;
+
 }
 
 function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect} ) {
@@ -324,7 +365,10 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
                                         actOn={['enter']}
                                         tooltip='enter TAP URL'
                                         slotProps={{input:{sx:{width:'40rem', height: '2.25rem'}}}}
-                                        onChange={(val) => onTapServiceOptionSelect(val)}
+                                        onChange={(val) => {
+                                            onTapServiceOptionSelect(val);
+                                            addUserService(val.value);
+                                        }}
                             />
 
                     ) : (
@@ -338,9 +382,10 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
                             },
                             renderValue:
                                 ({value}) =>
-                                    (<ServiceOpRender {...{ ops: tapOps, value}}/>),
+                                    (<ServiceOpRender {...{ ops: tapOps, value,
+                                        onTapServiceOptionSelect, clearServiceOnDelete:true}}/>),
                             decorator:
-                                (label,value) => (<ServiceOpRender {...{ ops: tapOps, value}}/>),
+                                (label,value) => (<ServiceOpRender {...{ ops: tapOps, value, onTapServiceOptionSelect}}/>),
                         }} /> )}
                     <FormHelperText sx={{m: .25}}>
                         {enterUrl ? 'Type the url of a TAP service & press enter' : 'Choose a TAP service from the list'}
@@ -352,23 +397,34 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
 }
 
 
-function ServiceOpRender({ops, value, sx}) {
+function ServiceOpRender({ops, value, onTapServiceOptionSelect, sx, clearServiceOnDelete=false}) {
     const op = ops.find((t) => t.value === value);
     if (!op) return 'none';
     return (
-        <Stack {...{alignItems:'flex-start', sx}}>
-            <Stack {...{direction:'row', spacing:1, alignItems:'center'}}>
-                <Typography level='title-md'>
-                    {`${op.labelOnly}: `}
-                </Typography>
-                <Typography level='body-md' >
-                    {op.value}
-                </Typography>
+        <Stack {...{alignItems:'flex-start', sx:{...sx, width:1}}}>
+            <Stack {...{direction:'row', spacing:5, alignItems:'center', justifyContent:'space-between', width:1}}>
+                <Stack {...{direction:'row', spacing:1, alignItems:'center'}}>
+                    <Typography level='title-md'>
+                        {`${op.labelOnly}: `}
+                    </Typography>
+                    <Typography level='body-md' >
+                        {op.value}
+                    </Typography>
+                </Stack>
+                { op.userAdded &&
+                    <ChipDelete component='div' size='sm' sx={{zIndex:2}}
+                                onClick={(e) => {
+                                    deleteUserService(value);
+                                    if (clearServiceOnDelete) onTapServiceOptionSelect({value:''});
+                                    else onTapServiceOptionSelect();
+                                    e.stopPropagation?.();
+                                }}
+                    />
+                }
             </Stack>
         </Stack>
     );
 }
-
 
 
 function makeExtraWidgets(groupKey, initArgs, selectBy, setSelectBy, getUserTitle, setUserTitle, tapBrowserState) {
@@ -420,7 +476,11 @@ function populateAndEditAdql(groupKey,tapBrowserState,setSelectBy,inAdql) {
     );
 }
 
-const getTapServiceOptions= () => getTapServices(webApiUserAddedService).map(({label,value})=>({label:value, value, labelOnly:label}));
+
+const getServiceNamesAsKey= () => getTapServiceOptions().map(({label}) => label).join('-');
+
+const getTapServiceOptions= () =>
+    getTapServices().map(({label,value,userAdded=false})=>({label:value, value, labelOnly:label, userAdded}));
 
 const disableRowLimitMsg = (
     <div style={{width: 260}}>
