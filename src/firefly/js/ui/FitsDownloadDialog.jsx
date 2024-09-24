@@ -53,7 +53,7 @@ export function showFitsDownloadDialog() {
         if (wsSelected) dispatchWorkspaceUpdate();
         const isWs = getWorkspaceConfig();
 
-        const sizing = wsSelected ? {height:'60vh', minHeight:'28em', resize:'both'} : {height:'14em'};
+        const sizing = wsSelected ? {height:'60vh', minHeight:'28em', resize:'both'} : {height:'20vh', minHeight:'20em', resize: 'both'};
         return (
             <PopupPanel title={'Save Image'} {...props}>
                 <Stack overflow='hidden' minWidth='40em' sx={sizing}>
@@ -155,8 +155,8 @@ const FitsDownloadDialogForm= memo( ({isWs, popupId, groupKey}) => {
                                            sx={{flexGrow:1, overflow:'hidden'}}>
                         <MakeFileOptions {...{plot, colors, hasOperation, threeC}}/>
                     </DownloadOptionsDialog>
-                    {fileType==='reg' && tableCnt>0 && <RegionWarning/>}
                 </Stack>
+                {fileType==='reg' && tableCnt>0 && <RegionWarning/>}
                 <Stacker endDecorator={<HelpIcon helpId={'visualization.saveimage'}/>}>
                     <CompleteButton text='Save' onSuccess={ (request) => resultsSuccess(request, pv, popupId )}
                                     onFail={resultsFail} />
