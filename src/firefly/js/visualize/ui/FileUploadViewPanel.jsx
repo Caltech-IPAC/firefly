@@ -28,7 +28,7 @@ import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 
 import {useFieldGroupMetaState, useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
-import {getIntHeaderFromAnalysis, getTableHeaderFromAnalysis} from '../../metaConvert/PartAnalyzer';
+import {getIntHeaderFromAnalysis} from '../../metaConvert/PartAnalyzer';
 import {FileAnalysisType} from '../../data/FileAnalysis';
 import {Format} from '../../data/FileAnalysis';
 import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';

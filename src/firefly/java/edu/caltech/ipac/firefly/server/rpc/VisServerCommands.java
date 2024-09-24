@@ -133,6 +133,8 @@ public class VisServerCommands {
             String exType= sp.getRequired(ServerParams.EXTRACTION_TYPE);
             boolean useFloat = sp.getOptionalInt(ServerParams.EXTRACTION_FLOAT_SIZE,64)==32;
             int ptSize= sp.getOptionalInt(ServerParams.POINT_SIZE,1);
+            int ptSizeX= sp.getOptionalInt(ServerParams.POINT_SIZE_X,1);
+            int ptSizeY= sp.getOptionalInt(ServerParams.POINT_SIZE_Y,1);
             int hduNum= sp.getRequiredInt(ServerParams.HDU_NUM);
             FitsExtract.CombineType ct= Enum.valueOf(FitsExtract.CombineType.class,sp.getOptional(ServerParams.COMBINE_OP,"AVG"));
 
@@ -153,7 +155,7 @@ public class VisServerCommands {
                         VisServerOps.getPointDataAry(state,
                                 sp.getRequiredImagePtAry(ServerParams.PTARY),
                                 sp.getRequiredInt(ServerParams.PLANE),
-                                hduNum, ptSize, ct);
+                                hduNum, ptSizeX, ptSizeY, ct);
                 default -> throw new IllegalArgumentException(ServerParams.EXTRACTION_TYPE + " is not supported");
             };
 

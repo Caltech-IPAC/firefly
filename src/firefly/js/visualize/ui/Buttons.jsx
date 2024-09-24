@@ -1,3 +1,4 @@
+import PriorityHighRoundedIcon from '@mui/icons-material/PriorityHighRounded';
 import React from 'react';
 import {node} from 'prop-types';
 import {Box, Button, IconButton, ToggleButtonGroup} from '@mui/joy';
@@ -176,6 +177,11 @@ export const ToolsDropDown= (props) => (
 // Table and Chart buttons -->
 export const FilterButton = (props) => (
     <ToolbarButton {...{icon: <FilterIco/>, tip: 'Show/edit filters', iconButtonSize:'38px', ...props}}/>
+);
+
+export const WarningButton = (props) => (
+    <ToolbarButton {...{icon: <PriorityHighRoundedIcon />,
+        tip: 'warning', color:'danger', iconButtonSize:'38px', ...props}}/>
 );
 
 export const ClearFilterButton = (props) => (

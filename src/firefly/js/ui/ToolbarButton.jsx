@@ -111,8 +111,8 @@ export const ToolbarButton = forwardRef((props,fRef) => {
                              {minHeight:'unset', minWidth:'unset', p:1/4, backgroundColor:'transparent',
                                  '& svg' : {
                                      color: enabled?
-                                         theme.vars.palette.neutral?.plainColor :
-                                         theme.vars.palette.neutral?.softDisabledColor,
+                                         theme.vars.palette[color]?.plainColor :
+                                         theme.vars.palette[color]?.softDisabledColor,
                                  },
                                  opacity: enabled ? '1' : '0.3',
                                  ...makeBorder(active,theme,color),

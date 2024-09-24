@@ -16,6 +16,7 @@ import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsExtract;
+import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.FitsException;
 
 import java.io.File;
@@ -54,9 +55,9 @@ public class FITSExtractToTable {
         return getFirstNonNaN(valueList).getClass();
     }
 
-    private static String addSize(String desc, int drillSize, FitsExtract.CombineType ct) {
-        if (drillSize<2) return desc;
-        return desc+ " ("+drillSize+"x"+drillSize+","+ct.toString()+")";
+    private static String addSize(String desc, int ptSizeX, int ptSizeY, FitsExtract.CombineType ct) {
+        if (ptSizeX<2 && ptSizeY < 2) return desc;
+        return desc+ " ("+ptSizeX+"x"+ptSizeY+","+ct.toString()+")";
     }
 
     private static double rnd(double d, int decimalPlaces) {
@@ -94,12 +95,12 @@ public class FITSExtractToTable {
     }
 
     public static DataGroup getCubeZaxisAsTable(ImagePt pt, WorldPt wpt, String filename, int refHduNum,
-                                                boolean allMatchingHDUs, int drillSize, FitsExtract.CombineType ct,
+                                                boolean allMatchingHDUs, int ptSize, FitsExtract.CombineType ct,
                                                 double[] wlAry, String wlUnit, Map<Integer,String> fluxUnit)
             throws IOException, FitsException {
         File f= ServerContext.convertToFile(filename);
         List<FitsExtract.ExtractionResults> results= FitsExtract.getAllZAxisAryFromRelatedCubes(
-                pt, f, refHduNum, allMatchingHDUs, drillSize, ct);
+                pt, f, refHduNum, allMatchingHDUs, ptSize, ct);
         ArrayList<DataType> dataTypes = new ArrayList<>();
         int len= results.get(0).aryData().size();
         dataTypes.add(new DataType("plane","Plane", Integer.class));
@@ -110,7 +111,7 @@ public class FITSExtractToTable {
         String refKey= null;
         for(FitsExtract.ExtractionResults result : results) {
             String desc= result.extName()!=null ? result.extName() : "HDU# "+result.hduNum();
-            desc= addSize(desc,drillSize,ct);
+            desc= addSize(desc,ptSize,ptSize,ct);
             String key= makeKeyforHDUTab(result);
             String u= fluxUnit.get(result.hduNum());
             Class<?> dataType= getDataType(result.aryData());
@@ -145,12 +146,12 @@ public class FITSExtractToTable {
     }
 
     public static DataGroup getPointsAsTable(ImagePt[] ptAry, WorldPt[] wptAry, String filename, int refHduNum, int plane,
-                                             boolean allMatchingHDUs, int drillSize, FitsExtract.CombineType ct,
+                                             boolean allMatchingHDUs, int ptSizeX, int ptSizeY, FitsExtract.CombineType ct,
                                              double[] wlAry, String wlUnit)
             throws IOException, FitsException {
         File f= ServerContext.convertToFile(filename);
         List<FitsExtract.ExtractionResults> results= FitsExtract.getAllPointsFromRelatedHDUs(
-                ptAry, f, refHduNum, plane, allMatchingHDUs, drillSize, ct );
+                ptAry, f, refHduNum, plane, allMatchingHDUs, ptSizeX, ptSizeY, ct );
         ArrayList<DataType> dataTypes = new ArrayList<>();
         int len= results.get(0).aryData().size();
         dataTypes.add(new DataType("x", Integer.class, "x", "pixel", null, null));
@@ -166,10 +167,10 @@ public class FITSExtractToTable {
         String defYCol= "";
         for(FitsExtract.ExtractionResults result : results) {
             String desc= result.extName()!=null ? result.extName() : "HDU# "+result.hduNum();
-            desc= addSize(desc,drillSize,ct);
+            desc= addSize(desc,ptSizeX,ptSizeY,ct);
             String key= makeKeyforHDUTab(result);
-            String bunit= result.header().getStringValue("BUNIT");
-            Class dataType= getDataType(result.aryData());
+            String bunit= FitsReadUtil.getBUnit(result.header());
+            Class<?> dataType= getDataType(result.aryData());
             DataType dt = new DataType(key,dataType, desc, bunit, null,null);
             if (result.refHDU()) defYCol= key;
             dataTypes.add(dt);
@@ -207,12 +208,12 @@ public class FITSExtractToTable {
 
 
     public static DataGroup getLineSelectAsTable(ImagePt[] ptAry, WorldPt[] wptAry, String filename, int refHduNum, int plane,
-                                                 boolean allMatchingHDUs, int drillSize, FitsExtract.CombineType ct,
+                                                 boolean allMatchingHDUs, int ptSizeX, int ptSizeY, FitsExtract.CombineType ct,
                                                  double[] wlAry, String wlUnit )
             throws IOException, FitsException {
         File f= ServerContext.convertToFile(filename);
         List<FitsExtract.ExtractionResults> results= FitsExtract.getAllPointsFromRelatedHDUs(
-                ptAry, f, refHduNum, plane, allMatchingHDUs, drillSize, ct);
+                ptAry, f, refHduNum, plane, allMatchingHDUs, ptSizeX, ptSizeY, ct);
         ArrayList<DataType> dataTypes = new ArrayList<>();
         int len= results.get(0).aryData().size();
         boolean hasWpt= wptAry!=null && wptAry.length==ptAry.length;
@@ -231,13 +232,13 @@ public class FITSExtractToTable {
         for(FitsExtract.ExtractionResults result : results) {
             String desc= result.extName()!=null ? result.extName() : "HDU# "+result.hduNum();
             String key= makeKeyforHDUTab(result);
-            String bunit= result.header().getStringValue("BUNIT");
+            String bunit= FitsReadUtil.getBUnit(result.header());
             Class<?> dataType= getDataType(result.aryData());
             FitsExtract.CombineType activeCt= ct;
             if (refHduNum!=result.hduNum() && (dataType==Long.class || dataType==Integer.class)) {
                 activeCt= FitsExtract.CombineType.OR;
             }
-            desc= addSize(desc,drillSize,activeCt);
+            desc= addSize(desc,ptSizeX,ptSizeY,activeCt);
             DataType dt = new DataType(key,dataType, desc, bunit, null,null);
             if (result.refHDU()) defYCol= key;
             dataTypes.add(dt);

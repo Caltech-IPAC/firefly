@@ -359,6 +359,8 @@ function sendRegionRequest(fileCacheKey,currentReport) {
     }
 }
 
+const hasExtName= (part) => Boolean(getTableHeaderFromAnalysis('EXTNAME', part));
+
 function getExtMarker(part, index) {
     return getTableHeaderFromAnalysis('EXTNAME', part) ??
         getTableHeaderFromAnalysis('UTYPE', part) ??
@@ -372,7 +374,10 @@ function sendTableRequest(tableIndices, fileCacheKey, treatAsSpectrum, currentRe
         const {index} = parts[idx];
         const fileRoot= fileName?.split('.')?.[0] ?? fileName;
         const extMarker= getExtMarker(parts[idx], idx);
-        const title = parts.length > 1 ? `${fileRoot}:${extMarker}` : fileRoot;
+        const title = parts.length > 1
+            ? hasExtName(parts[idx])
+                ? `${extMarker}:${fileRoot}`
+                : `${fileRoot}:${extMarker}` : fileRoot;
         const META_INFO= {...metaData};
         if (treatAsSpectrum) META_INFO[MetaConst.DATA_TYPE_HINT]= 'spectrum';
         const options=  {META_INFO};

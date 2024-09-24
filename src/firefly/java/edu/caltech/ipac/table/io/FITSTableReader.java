@@ -152,8 +152,9 @@ public final class FITSTableReader
     private static DataGroup getFitsImageAsTable(BasicHDU<?> hdu,TableServerRequest request)
                                                  throws FitsException, IOException {
 
-        // todo try to read it as an image
-        String[] colNames= new String[]{"index"};
+        Header header = hdu.getHeader();
+        var indexColName= header.getStringValue("CNAME1", "Index");
+        String[] colNames= new String[]{indexColName};
         String[] colUnits= null;
         int planeNumber= request!=null ? request.getIntParam("cubePlane",0) : 0;
         var metaInfo= request!=null ? request.getMeta() : null;
@@ -165,7 +166,6 @@ public final class FITSTableReader
         }
 
         if ((hdu instanceof ImageHDU) || (hdu instanceof CompressedImageHDU || hdu instanceof UndefinedHDU)) {
-            Header header = hdu.getHeader();
             int naxis = FitsReadUtil.getNaxis(header);
             if (naxis < 1) return null;
             int naxis1 = FitsReadUtil.getNaxis1(header);
@@ -176,17 +176,19 @@ public final class FITSTableReader
             if (desc == null) desc = "No Name";
             ArrayList<DataType> dataTypes = new ArrayList<>();
             DataType idxDT = new DataType(colNames[0], colNames[0], Integer.class);
+            idxDT.setUnits("pixel");
             if (colUnits!=null) idxDT.setUnits(colUnits[0]);
             dataTypes.add(idxDT);
 
             if (is1dImage(hdu)) {
                 double[] data = FitsReadUtil.getImageHDUDataInDoubleArray(hdu);
                 if (data == null) return null;
+                String bunit= FitsReadUtil.getBUnit(header);
+                String extname= FitsReadUtil.getExtName(header);
 
-                //------------- here -------------------
-
-                String cName = (colNames.length > 1) ? colNames[1] : "value";
-                DataType dataDT = new DataType(cName, cName, Double.class);
+                String dataCName = (colNames.length > 1) ? colNames[1] : !isEmpty(extname) ? extname : "value";
+                DataType dataDT = new DataType(dataCName, dataCName, Double.class);
+                if (!isEmpty(bunit)) dataDT.setUnits(bunit);
                 if (colUnits!=null && colUnits.length>1) idxDT.setUnits(colUnits[1]);
                 dataTypes.add(dataDT);
                 DataGroup dataGroup = new DataGroup(desc, dataTypes);

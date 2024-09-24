@@ -34,6 +34,7 @@ function makeServices() {
         tapEntry('Gaia', 'https://gea.esac.esa.int/tap-server/tap',undefined,undefined,undefined, undefined, gaiaExamples()),
         tapEntry('GAVO', 'https://dc.g-vo.org/tap'),
         tapEntry('HSA',  'https://archives.esac.esa.int/hsa/whsa-tap-server/tap'),
+        tapEntry('NOIR Lab',  'https://datalab.noirlab.edu/tap'),
     ];
 
 }

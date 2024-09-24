@@ -94,20 +94,24 @@ public class FitsExtract {
      *
      * @throws IOException if it can't read the fits file
      */
-    static Number valueFromFitsFile(ImageHDU hdu, int x, int y, int plane, int ptSize, CombineType ct, boolean primaryHdu) throws IOException {
+    static Number valueFromFitsFile(ImageHDU hdu, int x, int y, int plane, int ptSizeX, int ptSizeY, CombineType ct, boolean primaryHdu) throws IOException {
         Header header= hdu.getHeader();
         int naxis1= FitsReadUtil.getNaxis1(header);
         int naxis2= FitsReadUtil.getNaxis2(header);
         int bitpix= FitsReadUtil.getBitPix(header);
-        if (ptSize<1) ptSize= 1;
-        else if (ptSize>5) ptSize= 5;
-        int adjust= (int)Math.floor((ptSize-1) / 2.0);
-        x= x - adjust;
-        y= y - adjust;
+        if (ptSizeX<1) ptSizeX= 1;
+        else if (ptSizeX>5) ptSizeX= 5;
+        if (ptSizeY<1) ptSizeY= 1;
+        else if (ptSizeY>5) ptSizeY= 5;
+        int adjustX= (int)Math.floor((ptSizeX-1) / 2.0);
+        int adjustY= (int)Math.floor((ptSizeY-1) / 2.0);
+        x= x - adjustX;
+        y= y - adjustY;
         if (x<0) x= 0;
         if (y<0) y= 0;
-        if (x+ptSize>=naxis1) x-= (x+ptSize-naxis1+1);
-        if (y+ptSize>=naxis2) y-= (y+ptSize-naxis2+1);
+
+        if (x+ptSizeX>=naxis1) x-= (x+ptSizeX-naxis1+1);
+        if (y+ptSizeY>=naxis2) y-= (y+ptSizeY-naxis2+1);
         if (x<0) x= 0;
         if (y<0) y= 0;
 
@@ -121,7 +125,7 @@ public class FitsExtract {
         if (!primaryHdu && (arrayType==Integer.TYPE || arrayType==Long.TYPE)) {
            ct= CombineType.OR;
         }
-        Object ary= FitsReadUtil.dataArrayFromFitsFile(hdu,x,y,ptSize,ptSize,plane,arrayType);
+        Object ary= FitsReadUtil.dataArrayFromFitsFile(hdu,x,y,ptSizeX,ptSizeY,plane,arrayType);
         Number aveValue= combineArray(objToNumberAry(ary,arrayType), ct, arrayType);
 
         var bscale= FitsReadUtil.getBscale(header);
@@ -150,13 +154,13 @@ public class FitsExtract {
         return (hdus[idx] instanceof CompressedImageHDU cHDU) ? cHDU.asImageHDU() : (ImageHDU) hdus[idx];
     }
 
-    public static List<Number> getPointDataAry(ImagePt[] ptAry, int plane, BasicHDU<?>[] hdus, int hduNum, int refHduNum, int ptSize, CombineType ct)
+    public static List<Number> getPointDataAry(ImagePt[] ptAry, int plane, BasicHDU<?>[] hdus, int hduNum, int refHduNum, int ptSizeX, int ptSizeY, CombineType ct)
             throws FitsException, IOException {
         ImageHDU hdu= getImageHDU(hdus,hduNum);
         boolean primaryHdu= hduNum==refHduNum;
         var pts= new ArrayList<Number>(ptAry.length);
         for (ImagePt pt : ptAry) {
-            pts.add(valueFromFitsFile(hdu, (int) pt.getX(), (int) pt.getY(), plane, ptSize, ct, primaryHdu));
+            pts.add(valueFromFitsFile(hdu, (int) pt.getX(), (int) pt.getY(), plane, ptSizeX, ptSizeY, ct, primaryHdu));
         }
         return pts;
     }
@@ -188,7 +192,7 @@ public class FitsExtract {
             List<Number> pts= new ArrayList<>(n);
             for (x=minX; x<=maxX; x+=1) {
                 y = (int)(slope*x + yIntercept);
-                pts.add(valueFromFitsFile(hdu, x,y,plane,ptSize,ct,primaryHdu));
+                pts.add(valueFromFitsFile(hdu, x,y,plane,ptSize,ptSize,ct,primaryHdu));
             }
             return pts;
         } else if (y1 != y2) {
@@ -202,7 +206,7 @@ public class FitsExtract {
 
             for (y=minY; y<=maxY; y+=1) {
                 x = (int)(islope*y + xIntercept);
-                pts.add(valueFromFitsFile(hdu, x,y,plane,ptSize,ct, primaryHdu));
+                pts.add(valueFromFitsFile(hdu, x,y,plane,ptSize,ptSize,ct, primaryHdu));
             }
             return pts;
         }
@@ -248,11 +252,11 @@ public class FitsExtract {
 
     public static List<ExtractionResults> getAllPointsFromRelatedHDUs(ImagePt[] ptAry, File fitsFile,
                                                                       int refHduNum, int plane,
-                                                                      boolean allMatchingHDUs, int ptSize,
+                                                                      boolean allMatchingHDUs, int ptSizeX, int ptSizeY,
                                                                       CombineType ct)
             throws FitsException, IOException {
         return extractFromRelatedHDUs(fitsFile, refHduNum, allMatchingHDUs,
-                (hdus, hduNum) -> getPointDataAry(ptAry, plane, hdus, hduNum, refHduNum, ptSize, ct));
+                (hdus, hduNum) -> getPointDataAry(ptAry, plane, hdus, hduNum, refHduNum, ptSizeX, ptSizeY,  ct));
     }
 
     public static List<ExtractionResults> getAllLinesFromRelatedHDUs(ImagePt pt, ImagePt pt2, File fitsFile,
@@ -273,9 +277,9 @@ public class FitsExtract {
     }
 
     public static List<Number> getPointDataAryFromFile(ImagePt[] ptAry, int plane, File fitsFile, int hduNum, int refHduNum,
-                                                       int ptSize, CombineType ct)
+                                                       int ptSizeX, int ptSizeY, CombineType ct)
             throws FitsException, IOException {
-        return extractFromHDU(fitsFile,hduNum, (hdus,num) -> getPointDataAry(ptAry,plane, hdus,num,refHduNum, ptSize,ct));
+        return extractFromHDU(fitsFile,hduNum, (hdus,num) -> getPointDataAry(ptAry,plane, hdus,num,refHduNum, ptSizeX, ptSizeY, ct));
     }
 
     public static List<Number> getLineDataAryFromFile(ImagePt pt, ImagePt pt2, int plane, File fitsFile, int hduNum, int refHduNum,
@@ -298,7 +302,7 @@ public class FitsExtract {
         int zLen= FitsReadUtil.getNaxis3(header);
         List<Number> retList= new ArrayList<>(zLen);
         for(int i=0;i<zLen; i++) {
-            retList.add(valueFromFitsFile(hdu,(int)pt.getX(), (int)pt.getY(),i,ptSize, ct,primaryHdu));
+            retList.add(valueFromFitsFile(hdu,(int)pt.getX(), (int)pt.getY(),i,ptSize, ptSize, ct,primaryHdu));
         }
         return retList;
     }

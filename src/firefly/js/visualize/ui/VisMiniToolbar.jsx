@@ -22,7 +22,7 @@ import {showRegionFileUploadPanel} from 'firefly/visualize/region/RegionFileUplo
 import {findUnactivatedRelatedData} from 'firefly/visualize/RelatedDataUtil.js';
 import {ColorTableDropDownView, showColorDialog} from 'firefly/visualize/ui/ColorTableDropDownView.jsx';
 import {showDrawingLayerPopup} from 'firefly/visualize/ui/DrawLayerPanel.jsx';
-import {endExtraction, LINE, POINTS, showExtractionDialog, Z_AXIS} from 'firefly/visualize/ui/ExtractionDialog.jsx';
+import {endExtraction, LINE, POINTS, showExtractionDialog, Z_AXIS} from './extraction/ExtractionDialog.jsx';
 import {showImageSelPanel} from 'firefly/visualize/ui/ImageSearchPanelV2.jsx';
 import {MarkerDropDownView} from 'firefly/visualize/ui/MarkerDropDownView.jsx';
 import {showMaskDialog} from 'firefly/visualize/ui/MaskAddPanel.jsx';

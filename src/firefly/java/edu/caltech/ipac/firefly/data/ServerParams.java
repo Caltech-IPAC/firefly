@@ -2,12 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.data;
-/**
- * User: roby
- * Date: 2/7/12
- * Time: 10:14 AM
- */
-
 
 /**
  * @author Trey Roby
@@ -187,7 +181,10 @@ public class ServerParams {
     public static final String TILE_SIZE = "tileSize";
     public static final String DATA_COMPRESS = "dataCompress";
     public static final String POINT_SIZE= "pointSize";
+    public static final String POINT_SIZE_X= "pointSizeX";
+    public static final String POINT_SIZE_Y= "pointSizeY";
     public static final String COMBINE_OP= "combineOp";
+    public static final String AXIS= "axis";
     public static final String EXTRACTION_TYPE= "extractionType";
     public static final String EXTRACTION_FLOAT_SIZE= "extractionFloatSize";
     public static final String HDU_NUM= "hduNum";

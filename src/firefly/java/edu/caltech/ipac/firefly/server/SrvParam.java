@@ -6,12 +6,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.firefly.server;
-/**
- * User: roby
- * Date: 12/19/12
- * Time: 11:46 AM
- */
-
 
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.ServerParams;
@@ -24,7 +18,6 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.TableUtil.Format;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import org.json.simple.JSONArray;
@@ -41,6 +34,7 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.FF_SESSION_ID;
 /**
  * @author Trey Roby
  */
+
 public class SrvParam {
 
     private final Map<String, String[]> paramMap;
@@ -60,9 +54,9 @@ public class SrvParam {
     public int size() { return paramMap.size(); }
 
     /**
-     * Return any parameters that are not in ignore list. If the parameter has more then one entry, only return the first
+     * Return any parameters that are not in ignore list. If the parameter has more than one entry, only return the first
      * @param ignoreList an array list of parameters to ignore
-     * @return a map of the parameters that we not ignored
+     * @return a map of the parameters that are not ignored
      */
     public Map<String, String> getParamMapUsingExcludeList(List<String> ignoreList) {
         Map<String,String> retMap= new HashMap<>();
@@ -134,18 +128,18 @@ public class SrvParam {
     }
 
     public PlotState[] getStateAry() {
-        List<PlotState> stateList= new ArrayList<PlotState>();
+        List<PlotState> stateList= new ArrayList<>();
         PlotState state= getState(0,true);
         stateList.add(state);
         for(int i=1;(state!=null); i++) {
             state= getState(i,false);
             if (state!=null) stateList.add(state);
         }
-        return stateList.toArray(new PlotState[stateList.size()]);
+        return stateList.toArray(new PlotState[0]);
     }
 
     public List<WebPlotRequest> getRequestList() {
-        List<WebPlotRequest> reqList= new ArrayList<WebPlotRequest>();
+        List<WebPlotRequest> reqList= new ArrayList<>();
         WebPlotRequest wpr= getRequiredWebPlotRequest(ServerParams.REQUEST+"0");
         reqList.add(wpr);
         for(int i=1;(wpr!=null); i++) {
@@ -163,16 +157,8 @@ public class SrvParam {
      */
     public String getID() { return getRequired(ServerParams.ID); }
 
-    /**
-     * Look for the ServerParams.ID keys and a list of values
-     * Throw an exception if at least one is not found
-     * @return in ID values
-     */
-    public List<String> getIDList() { return getRequiredList(ServerParams.ID); }
-
-
     public String getRequired(String key) {
-        String ary[]= paramMap.get(key);
+        String[] ary = paramMap.get(key);
         if (ary != null && ary.length>0) {
             return ary[0];
         }
@@ -182,7 +168,7 @@ public class SrvParam {
     }
 
     public List<String> getRequiredList(String key) {
-        String ary[]= paramMap.get(key);
+        String[] ary = paramMap.get(key);
         if (ary != null && ary.length>0) {
             return Arrays.asList(ary);
         }
@@ -192,7 +178,7 @@ public class SrvParam {
     }
 
     public List<String> getOptionalList(String key) {
-        String ary[]= paramMap.get(key);
+        String[] ary = paramMap.get(key);
         if (ary != null && ary.length>0) {
             return Arrays.asList(ary);
         }
@@ -202,7 +188,7 @@ public class SrvParam {
     }
 
     public String getOptional(String key) {
-        String ary[]= paramMap.get(key);
+        String[] ary = paramMap.get(key);
         if (ary != null && ary.length>0) {
             return ary[0];
         }
@@ -217,7 +203,7 @@ public class SrvParam {
     }
 
     public float getOptionalFloat(String key, float defValue) {
-        String ary[]= paramMap.get(key);
+        String[] ary = paramMap.get(key);
         if (ary != null && ary.length>0) {
             try {
                 return Float.parseFloat(ary[0]);
@@ -231,7 +217,7 @@ public class SrvParam {
     }
 
     public int getOptionalInt(String key, int defValue) {
-        String ary[]= paramMap.get(key);
+        String[] ary = paramMap.get(key);
         if (ary != null && ary.length>0) {
             try {
                 return Integer.parseInt(ary[0]);
@@ -303,7 +289,7 @@ public class SrvParam {
         if (json==null) return null;
         JsonHelper helper= JsonHelper.parse(json);
         JSONArray list= helper.getValue(new JSONArray());
-        if (list==null || list.size()==0) return null;
+        if (list==null || list.isEmpty()) return null;
         ImagePt[] ptAry= new ImagePt[list.size()];
         for(int i=0;(i<ptAry.length);i++) {
             ptAry[i]= ImagePt.parse((String)list.get(i));
@@ -316,7 +302,7 @@ public class SrvParam {
         if (json==null) return null;
         JsonHelper helper= JsonHelper.parse(json);
         JSONArray list= helper.getValue(new JSONArray());
-        if (list==null || list.size()==0) return null;
+        if (list==null || list.isEmpty()) return null;
         WorldPt[] ptAry= new WorldPt[list.size()];
         for(int i=0;(i<ptAry.length);i++) {
             ptAry[i]= WorldPt.parse((String)list.get(i));
@@ -329,15 +315,17 @@ public class SrvParam {
         if (json==null) return null;
         JsonHelper helper= JsonHelper.parse(json);
         JSONArray list= helper.getValue(new JSONArray());
-        if (list==null || list.size()==0) return null;
+        if (list==null || list.isEmpty()) return null;
         double[] dAry= new double[list.size()];
         for(int i=0;(i<dAry.length);i++) {
             try{
                 Object v= list.get(i);
-                if (v instanceof Double) dAry[i]= (Double) v;
-                else if (v instanceof Long) dAry[i]= (Long) v;
-                else if (v instanceof Integer) dAry[i]= (Integer) v;
-                else dAry[i]= Double.NaN;
+                switch (v) {
+                    case Double aDouble -> dAry[i] = aDouble;
+                    case Long l -> dAry[i] = l;
+                    case Integer integer -> dAry[i] = integer;
+                    case null, default -> dAry[i] = Double.NaN;
+                }
             } catch (ClassCastException e) {
                 return null;
             }
@@ -349,7 +337,7 @@ public class SrvParam {
         if (json==null) return null;
         JsonHelper helper= JsonHelper.parse(json);
         JSONArray list= helper.getValue(new JSONArray());
-        if (list==null || list.size()==0) return null;
+        if (list==null || list.isEmpty()) return null;
         String[] sAry= new String[list.size()];
         for(int i=0;(i<sAry.length);i++) {
             Object v= list.get(i);
@@ -360,11 +348,11 @@ public class SrvParam {
 
     public boolean getOptionalBoolean(String key, boolean defval) {
         String v= getOptional(key);
-        return v==null ? defval : Boolean.valueOf(v);
+        return v==null ? defval : Boolean.parseBoolean(v);
     }
 
     public boolean getRequiredBoolean(String key) {
-        return Boolean.valueOf(getRequired(key));
+        return Boolean.parseBoolean(getRequired(key));
     }
 
     public WebPlotRequest getOptionalWebPlotRequest(String key) {
