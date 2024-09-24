@@ -204,7 +204,7 @@ export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, hel
                 help_id  = {help_id}>
 
                 <FieldGroup groupKey={groupKey} keepState={true}>
-                    {preTitleMessage && (<Typography sx={{p:3,mb: 10,whiteSpace: 'wrap'}}>
+                    {preTitleMessage && (<Typography sx={{p:1,mb:1,whiteSpace: 'wrap'}}>
                             {preTitleMessage}
                         </Typography>
                     )}
