@@ -18,7 +18,8 @@ publishing {
 
 dependencies {
   implementation project(':firefly_data')
-  webappLib configurations.runtimeClasspath, ":firefly"
+  webappLib files(configurations.runtimeClasspath)
+  webappLib project(":firefly")
 }
 
 sourceSets {

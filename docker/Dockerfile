@@ -3,7 +3,7 @@ ARG target=firefly:warAll
 ARG env=local
 ARG BranchOverride=''
 
-FROM eclipse-temurin:17-jdk-jammy AS deps
+FROM eclipse-temurin:21-jdk-jammy AS deps
 
 RUN apt-get update && apt-get install -y curl git htmldoc unzip wget ca-certificates gnupg
 
@@ -13,12 +13,12 @@ RUN apt-get update \
     && bash nodesource_setup.sh \
     && apt-get install -y nodejs \
     && npm install yarn -g  \
-# gradle version 7.4  Not available via apt-get
+# gradle version 8.10  Not available via apt-get
     && cd /usr/local \
-    && wget  -q https://services.gradle.org/distributions/gradle-7.4-bin.zip \
-    && unzip -q gradle-7.4-bin.zip \
-    && ln -sf /usr/local/gradle-7.4/bin/gradle /usr/local/bin/  \
-    && rm gradle-7.4-bin.zip \
+    && wget  -q https://services.gradle.org/distributions/gradle-8.10-bin.zip \
+    && unzip -q gradle-8.10-bin.zip \
+    && ln -sf /usr/local/gradle-8.10/bin/gradle /usr/local/bin/  \
+    && rm gradle-8.10-bin.zip \
 # cleanup
     && rm -rf /var/lib/apt/lists/*;
 
@@ -38,7 +38,7 @@ RUN apt-get update \
 # cleanup
     && rm -rf /var/lib/apt/lists/*;
 
-COPY --from=tomcat:9.0-jre17 /usr/local/tomcat /usr/local/tomcat
+COPY --from=tomcat:9.0-jre21-temurin-jammy /usr/local/tomcat /usr/local/tomcat
 
 
 ENV CATALINA_HOME=/usr/local/tomcat \
@@ -106,7 +106,7 @@ RUN gradle -Penv=${env} -PBranchOverride=${BranchOverride} ${target}
 # /external                 : default external data directory visible to Firefly
 
 
-FROM tomcat:9.0-jre17
+FROM tomcat:9.0-jre21-temurin-jammy
 
 ARG build_dir
 ARG user=tomcat
