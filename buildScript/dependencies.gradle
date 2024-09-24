@@ -21,6 +21,7 @@ repositories {
 configurations {
     webappLib {
         description = 'web app runtime dependencies.'
+        canBeResolved = true
     }
     tests
 }

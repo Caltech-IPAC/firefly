@@ -38,7 +38,7 @@ war {
     duplicatesStrategy = 'exclude'
 
     doFirst {
-        archiveName = "${webapp.baseWarName}.war"
+        archiveFileName = "${webapp.baseWarName}.war"
     }
 }
 
