@@ -273,14 +273,15 @@ task deploy (dependsOn: [loadConfig]) {
         if (!file(tomcat_home).exists()) {
             throw ProjectConfigurationException("Tomcat installation directory does not exists: $tomcat_home")
         }
-        if (!file("${war.destinationDirectory}/${webapp.baseWarName}.war").exists()) {
-            println ">> ${webapp.baseWarName}.war not found.  Skipping deploy."
-            throw new StopExecutionException("${webapp.baseWarName}.war not found.  Skipping deploy.")
+        def warFile = "${war.destinationDirectory.get()}/${webapp.baseWarName}.war"
+        if (!file(warFile).exists()) {
+            println ">> $warFile not found.  Skipping deploy."
+            throw new StopExecutionException("$warFile not found.  Skipping deploy.")
         }
         copy {
-            println ">> deploying file:$war.destinationDirectory/${webapp.baseWarName}.war"
+            println ">> deploying file:$warFile"
             delete("$tomcat_home/webapps/${webapp.baseWarName}")
-            from("$war.destinationDirectory/${webapp.baseWarName}.war")
+            from(warFile)
             into "$tomcat_home/webapps/"
         }
     }
