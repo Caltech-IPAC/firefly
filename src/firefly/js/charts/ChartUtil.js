@@ -41,6 +41,7 @@ import {MetaConst} from '../data/MetaConst';
 import {ALL_COLORSCALE_NAMES, colorscaleNameToVal} from './Colorscale.js';
 import {getColValidator} from './ui/ColumnOrExpression.jsx';
 
+export const MAX_CHART_SELECT= 30000;
 export const DEFAULT_ALPHA = 0.5;
 
 export const SCATTER = 'scatter';
@@ -263,6 +264,7 @@ export function getPointIdx(traceData, rowIdx) {
 }
 
 export function isScatter2d(type) {
+    if (!type) return false;
     return type.includes('scatter') && !type.endsWith('3d');
 }
 
@@ -374,14 +376,18 @@ export function flattenAnnotations(annotations) {
     return [];
 }
 
-export function updateSelected(chartId, selectInfo) {
+export function updateScatterChartSelected(chartId, selectInfo) {
     const {data, activeTrace=0} = getChartData(chartId);
+    if (!isScatter2d(data?.[activeTrace]?.type)) return;
     const selectInfoCls = SelectInfo.newInstance(selectInfo);
     const selIndexes = getSelIndexes(data, selectInfoCls, activeTrace);
-              // added a check for very long selections, this will disable charts showing selection in this case.
-              // The application locks up without it.
-    if (selIndexes && selIndexes.length<getMaxScatterRows()) {
-        dispatchChartSelect({chartId, selIndexes});
+    if (selIndexes) {
+        if (selIndexes.length<MAX_CHART_SELECT) {
+            dispatchChartSelect({chartId, selIndexes, chartTrigger:false});
+        }
+        else {
+            dispatchChartSelect({chartId, selIndexes:[], chartTrigger:false});
+        }
     }
 }
 
@@ -502,7 +508,7 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
                     const tableModel = getTblById(traceTS.tbl_id);
                     const {highlightedRow, selectInfo={}} = tableModel;
                     updateHighlighted(chartId, idx, highlightedRow);
-                    updateSelected(chartId, selectInfo);
+                    updateScatterChartSelected(chartId, selectInfo);
                 }
             }
             if (!traceTS._cancel) traceTS._cancel = setupTableWatcher(chartId, traceTS, idx);
@@ -575,7 +581,7 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
         const {activeTrace=0} = getChartData(chartId);
         if (traceNum !== activeTrace) return;
         const {selectInfo={}} = action.payload;
-        updateSelected(chartId, selectInfo);
+        updateScatterChartSelected(chartId, selectInfo);
     } else {
         if (!isFullyLoaded(tbl_id)) return;
         const tableModel = getTblById(tbl_id);
@@ -1079,6 +1085,20 @@ function scatterOrHeatmap({tbl_id, xCol, yCol, xOptions}) {
 
 }
 
+/**
+ *
+ * @param {String} tbl_id
+ * @param {String} chartId
+ * @return {Array.<Number>} the selected indexes
+ */
+export function getSelIndexesForTable(tbl_id,chartId) {
+    const {selectInfo} = getTblById(tbl_id) || {};
+    if (!selectInfo) return [];
+    const {data, activeTrace=0} = getChartData(chartId);
+    if (!data?.length) return [];
+    const selectInfoCls = SelectInfo.newInstance(selectInfo);
+    return getSelIndexes(data, selectInfoCls, activeTrace);
+}
 
 export function getSelIndexes(data, selectInfoCls, traceIdx) {
     return Array.from(selectInfoCls.getSelected()).map((rowIdx) => {

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {IconButton, Stack, ToggleButtonGroup} from '@mui/joy';
-import {get, isEmpty} from 'lodash';
+import {get, isEmpty, once} from 'lodash';
 import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 
 import {dispatchChartUpdate, dispatchChartFilterSelection, dispatchChartSelect, getChartData, dispatchSetActiveTrace, dispatchChartExpanded, resetChart} from '../ChartsCntlr.js';
@@ -13,17 +13,17 @@ import {downloadChart} from './PlotlyWrapper.jsx';
 import {getColValidator} from './ColumnOrExpression.jsx';
 import {getColValStats} from '../TableStatsCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
-import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
+import {showInfoPopup, showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {CHART_ADDNEW, CHART_TRACE_MODIFY, showChartsDialog} from './ChartSelectPanel.jsx';
 import {FilterEditorWrapper} from './FilterEditorWrapper.jsx';
-import {isScatter2d} from '../ChartUtil.js';
+import {getSelIndexesForTable, isScatter2d, MAX_CHART_SELECT} from '../ChartUtil.js';
 import {
     DEFAULT_PLOT2D_VIEWER_ID, findViewerWithItemId, getLayoutType, getMultiViewRoot, PLOT2D
 } from '../../visualize/MultiViewCntlr.js';
 import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField';
 import {
     AddItem, CheckedButton, CheckedClearButton, ClearFilterButton, ExpandButton,
-    FilterAddButton, FilterButton, RestoreButton, SaveButton, SettingsButton, Zoom1XIcon, ZoomUpIcon,
+    FilterAddButton, FilterButton, RestoreButton, SaveButton, SettingsButton, WarningButton, Zoom1XIcon, ZoomUpIcon,
 } from '../../visualize/ui/Buttons.jsx';
 
 import SelectIco from 'html/images/icons-2014/select.png';
@@ -62,22 +62,33 @@ function getToolbarStates(chartId) {
     const hasSelection = !isEmpty(selection);
     const traceNames = data.map((t) => t.name).toString();
     const activeTraceType = get(data, `${activeTrace}.type`);
+    const selCount= getSelIndexesForTable(tbl_id,chartId).length;
+    const isScatter= isScatter2d(data?.[activeTrace]?.type);
     return {hasSelection, hasFilter, activeTrace, activeTraceType, tbl_id, hasSelected,
-            dragmode: get(layout, 'dragmode'), traceNames, columns};
+            dragmode: get(layout, 'dragmode'), traceNames, columns, selCount, isScatter};
 }
 
 
 function ScatterToolbar({chartId, expandable}) {
     const scatterToolbarState = useStoreConnector(() => getToolbarStates(chartId), [chartId]);
 
-    const {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected, dragmode} = scatterToolbarState;
+    const {hasSelection, hasFilter, activeTrace, tbl_id, hasSelected, dragmode, selCount, isScatter} = scatterToolbarState;
+
+    useEffect(() => {
+        isScatter&&selCount>MAX_CHART_SELECT && showMaxSelectionWarningOnce();
+    }, [selCount]);
+
+
     const hasSelectionMode = Boolean(tbl_id);
     const help_id = getChartData(chartId)?.help_id;
 
     return (
         <Stack direction='row' alignItems='center'>
+            {isScatter && selCount>MAX_CHART_SELECT&&
+                <SelectionWarningBtn
+                    warningStr={`Scatter chart cannot show selection above ${MAX_CHART_SELECT}, currently there are ${selCount} points selected but not shown not the chart`}/>}
             <ActiveTraceSelect {...{chartId, activeTrace}}/>
-            <SelectionPart {...{chartId, hasFilter, activeTrace, hasSelection, hasSelected, tbl_id}}/>
+            <SelectionPart {...{chartId, hasFilter, activeTrace, hasSelection, hasSelected, selCount, tbl_id}}/>
             <DragModePart {...{chartId, tbl_id, dragmode, hasSelectionMode, sx:{mx:1}}}/>
             <ResetZoomBtn {...{chartId}} />
             <SaveBtn {...{chartId}} />
@@ -169,8 +180,8 @@ function BasicToolbar({chartId, expandable}) {
 }
 
 
-function SelectionPart({chartId, hasFilter, hasSelection, hasSelected, tbl_id}) {
-    if (! (hasFilter || hasSelection || hasSelected)) return null;   // don't show if nothing to show
+function SelectionPart({chartId, hasFilter, hasSelection, hasSelected, selCount, tbl_id}) {
+    if (!hasFilter&&!hasSelection&&!hasSelected&&!selCount) return;
     let showSelectSelection = hasSelection;
     if (hasSelection) {
         const {data, activeTrace} = getChartData(chartId);
@@ -181,7 +192,7 @@ function SelectionPart({chartId, hasFilter, hasSelection, hasSelected, tbl_id}) 
     return (
         <>
             {showSelectSelection && <SelectSelection {...{chartId}} />}
-            {hasSelected  && <ClearSelected {...{chartId}} />}
+            {(hasSelected  || selCount>MAX_CHART_SELECT) && <ClearSelected {...{chartId}} />}
             {hasSelection && <FilterSelection {...{chartId}} />}
             {hasFilter    && <ClearFilter {...{tbl_id}} />}
         </>
@@ -301,6 +312,18 @@ function OptionsBtn({chartId}) {
              tip='Chart options and tools'/>
     );
 }
+
+function SelectionWarningBtn({warningStr}) {
+    return (
+        <WarningButton onClick={() => showInfoPopup(warningStr, 'Selection Warning')} tip={warningStr}/>
+    );
+}
+
+const showMaxSelectionWarningOnce = once(() => {
+    const str= `The scatter chart cannot show selection above ${MAX_CHART_SELECT}, the data is still selected just not shown in the chart`;
+    showInfoPopup(str,'Chart Selection Warning');
+});
+
 
 export function AddBtn() {
     return (

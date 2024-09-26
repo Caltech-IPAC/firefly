@@ -396,7 +396,7 @@ function chartSelect(action) {
         if (get(data, `${activeTrace}.hoverinfo`) === 'skip') { return; }
 
         let selected = undefined;
-        if (!isEmpty(tablesources)) {
+        if (chartTrigger && !isEmpty(tablesources)) {
             const {tbl_id} = tablesources[activeTrace] || {};
             const {totalRows} = getTblById(tbl_id);
             const selectInfoCls = SelectInfo.newInstance({rowCount: totalRows});

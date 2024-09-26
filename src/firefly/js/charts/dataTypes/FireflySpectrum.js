@@ -6,7 +6,7 @@ import {isEmpty, pickBy, cloneDeep, set} from 'lodash';
 import {getTblById, getColumn, doFetchTable, getColumnIdx} from '../../tables/TableUtil.js';
 import {getSpectrumDM, REF_POS} from '../../voAnalyzer/SpectrumDM.js';
 import {dispatchChartUpdate, dispatchError} from '../ChartsCntlr.js';
-import {getDataChangesForMappings, updateHighlighted, updateSelected, getMinScatterGLRows, isSpectralOrder} from '../ChartUtil.js';
+import {getDataChangesForMappings, updateHighlighted, updateScatterChartSelected, getMinScatterGLRows, isSpectralOrder} from '../ChartUtil.js';
 import {addOtherChanges, createChartTblRequest, getTraceTSEntries as genericTSGetter} from './FireflyGenericData.js';
 
 import {quoteNonAlphanumeric} from '../../util/expr/Variable.js';
@@ -68,7 +68,7 @@ async function fetchData(chartId, traceNum, tablesource) {
 
         dispatchChartUpdate({chartId, changes});
         updateHighlighted(chartId, traceNum, highlightedRow);
-        updateSelected(chartId, selectInfo);
+        updateScatterChartSelected(chartId, selectInfo);
     } else {
         dispatchError(chartId, traceNum, 'No data');
     }
