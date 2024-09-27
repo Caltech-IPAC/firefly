@@ -93,6 +93,25 @@ export class SelectInfo {
         return this.data.selectAll + '-' + Array.from(this.data.exceptions).join(',') + '-' + this.data.rowCount;
     }
 
+    /**
+     * lodash isEqual is really slow when comparing huge Set and maybe array as well.
+     * This is a custom isEqual of the SelectInfos that perform reasonably well.
+     * @param si1  a SelectInfo data
+     * @param si2  another SelectInfo data to compare with
+     * @returns {boolean}
+     */
+    static isEqual(si1, si2) {
+        if (si1?.selectAll !== si2?.selectAll) return false;
+        if (si1?.rowCount !== si2?.rowCount) return false;
+        if (si1?.exceptions.size !== si2?.exceptions.size) return false;
+        for (const value of si1.exceptions) {
+            if (!si2.exceptions.has(value)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     static parse(s) {
         var selecInfo = {};
         var parts = s.split('-');

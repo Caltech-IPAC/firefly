@@ -44,6 +44,7 @@ import {getColValidator} from './ui/ColumnOrExpression.jsx';
 export const DEFAULT_ALPHA = 0.5;
 
 export const SCATTER = 'scatter';
+export const SCATTERGL = 'scattergl';
 export const HEATMAP = 'heatmap';
 
 export const SELECTED_COLOR = 'rgba(255, 200, 0, 1)';
@@ -376,11 +377,12 @@ export function flattenAnnotations(annotations) {
 
 export function updateSelected(chartId, selectInfo) {
     const {data, activeTrace=0} = getChartData(chartId);
+
+    if (!data?.some((t) => isSelectionSupported(t?.type))) return;      // skip if no trace support selection
+
     const selectInfoCls = SelectInfo.newInstance(selectInfo);
     const selIndexes = getSelIndexes(data, selectInfoCls, activeTrace);
-              // added a check for very long selections, this will disable charts showing selection in this case.
-              // The application locks up without it.
-    if (selIndexes && selIndexes.length<getMaxScatterRows()) {
+    if (selIndexes) {
         dispatchChartSelect({chartId, selIndexes});
     }
 }
@@ -734,6 +736,10 @@ export function applyDefaults(chartData={}, resetColor = true) {
         // default dragmode is select if box selection is supported
         type && !chartData.layout.dragmode && (chartData.layout.dragmode = isBoxSelectionSupported(type) ? 'select' : 'zoom');
     });
+}
+
+export function isSelectionSupported(type) {
+    return [SCATTER, SCATTERGL].includes(type);
 }
 
 export function isBoxSelectionSupported(type) {

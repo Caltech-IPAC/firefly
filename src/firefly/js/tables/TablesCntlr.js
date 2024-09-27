@@ -1,7 +1,7 @@
 /*
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
-import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, isEqual, unset, merge} from 'lodash';
+import {get, set, omitBy, pickBy, pick, isNil, cloneDeep, findKey, unset, merge} from 'lodash';
 
 import {flux} from '../core/ReduxFlux.js';
 import * as TblUtil from './TableUtil.js';
@@ -19,6 +19,7 @@ import {REINIT_APP, getAppOptions} from '../core/AppDataCntlr.js';
 import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
 import {fixPageSize} from './TableUtil.js';
+import {SelectInfo} from 'firefly/tables/SelectInfo';
 
 
 export const TABLE_SPACE_PATH = 'table_space';
@@ -472,7 +473,7 @@ function tableSelect(action) {
     return (dispatch) => {
         const {tbl_id, selectInfo={}} = action.payload;
         const cSelectInfo = get(TblUtil.getTblById(tbl_id), 'selectInfo', {});
-        if (!isEqual(selectInfo, cSelectInfo)) {
+        if (!SelectInfo.isEqual(selectInfo, cSelectInfo)) {
             dispatch(action);       // only dispatch action if changes are needed.
         }
     };

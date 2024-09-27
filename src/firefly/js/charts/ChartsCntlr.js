@@ -395,18 +395,19 @@ function chartSelect(action) {
         // disable chart select in this case
         if (get(data, `${activeTrace}.hoverinfo`) === 'skip') { return; }
 
-        let selected = undefined;
-        if (!isEmpty(tablesources)) {
-            const {tbl_id} = tablesources[activeTrace] || {};
-            const {totalRows} = getTblById(tbl_id);
-            const selectInfoCls = SelectInfo.newInstance({rowCount: totalRows});
-
-            selIndexes.forEach(([ptIdx, traceIdx]) => selectInfoCls.setRowSelect(getRowIdx(data[traceIdx], ptIdx), true));
-            TablesCntlr.dispatchTableSelect(tbl_id, selectInfoCls.data);
-        }
         // avoid updating chart twice
         // don't update before table select
-        if (!chartTrigger) {
+        if (chartTrigger) {
+            if (!isEmpty(tablesources)) {
+                const {tbl_id} = tablesources[activeTrace] || {};
+                const {totalRows} = getTblById(tbl_id);
+                const selectInfoCls = SelectInfo.newInstance({rowCount: totalRows});
+
+                selIndexes.forEach(([ptIdx, traceIdx]) => selectInfoCls.setRowSelect(getRowIdx(data[traceIdx], ptIdx), true));
+                TablesCntlr.dispatchTableSelect(tbl_id, selectInfoCls.data);
+            }
+        } else {
+            let selected = undefined;
             const hasSelected = !isEmpty(selIndexes);
             if (isSpectralOrder(chartId)) {
                 selected = combineAllTraceFrom(chartId, selIndexes, SELECTED_PROPS);
