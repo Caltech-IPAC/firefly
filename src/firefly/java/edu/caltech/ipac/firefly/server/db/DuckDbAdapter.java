@@ -31,7 +31,7 @@ import static edu.caltech.ipac.util.StringUtils.*;
  * @author loi
  * @version $Id: DbInstance.java,v 1.3 2012/03/15 20:35:40 loi Exp $
  */
-public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterCreator {
+public class DuckDbAdapter extends BaseDbAdapter {
     public static final String NAME = "duckdb";
     public static final String DRIVER = "org.duckdb.DuckDBDriver";
     public static String maxMemory = AppProperties.getProperty("duckdb.max.memory");        // in GB; 2G, 5.5G, etc
@@ -63,6 +63,7 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
 
     private static final List<String> SUPPORTS = List.of("duckdb");
 
+    public DuckDbAdapter(DbFileCreator dbFileCreator) { this(dbFileCreator.create(NAME)); }
     public DuckDbAdapter(File dbFile) { super(dbFile); }
 
     public String getName() { return NAME; }
@@ -235,7 +236,7 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
     }
 
     public static DataGroup getDuckDbSettings() {
-        var db = new DuckDbAdapter(null);
+        var db = new DuckDbAdapter((File) null);
         try {
             return db.execQuery("SELECT * FROM duckdb_settings() WHERE name in ('external_threads','max_memory','memory_limit','threads', 'worker_threads','TimeZone')", null);
         } catch (DataAccessException e) {
@@ -244,13 +245,5 @@ public class DuckDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
         }
     }
 
-//====================================================================
-//
-//====================================================================
 
-    /* implement DbAdapterCreator */
-    public DuckDbAdapter() { super(null); }
-    public DbAdapter create(File dbFile) {
-        return canHandle(dbFile) ? new DuckDbAdapter(dbFile) : null;
-    }
 }

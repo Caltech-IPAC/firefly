@@ -3,18 +3,21 @@
  */
 package edu.caltech.ipac.firefly.server.query.tables;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.DuckDbAdapter;
 import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorImpl;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.table.DataGroup;
@@ -23,7 +26,6 @@ import edu.caltech.ipac.table.TableUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
 import static edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource.PROC_ID;
@@ -36,17 +38,12 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
     public static final String PROC_ID = "IpacTableFromSource";
     private static final String TBL_TYPE = "tblType";
     private static final String TYPE_CATALOG = "catalog";
-    private static final SynchronizedAccess SOURCE_FILE_CHECKER = new SynchronizedAccess();
-    private static final HashMap<String, DbAdapter> adapters = new HashMap<>();
 
-    // because a SearchProcessor is created on each request,
-    // it's okay to save it as a member variable once it's fetched.
-    private File inf;
-    private boolean noSourceFile = false;
-    private DataAccessException fetchError;
-
+    /**
+     * This method should not be called anymore because ingestDataIntoDb is overridden.
+     */
+    @Deprecated
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
-
         String processor = req.getParam("processor");
         String jsonSearchRequest = req.getParam(SEARCH_REQUEST);
 
@@ -61,8 +58,10 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
         }
 
         var srcFile = fetchSourceFile(req);
-        if (noSourceFile) throw fetchError;
+        return fetchDataFromFile(req, srcFile);
+    }
 
+    DataGroup fetchDataFromFile(TableServerRequest req, File srcFile) throws DataAccessException {
         try {
             int tblIdx = req.getIntParam(TBL_INDEX, 0);
             DataGroup dataGroup = TableUtil.readAnyFormat(srcFile, tblIdx, req);
@@ -80,62 +79,77 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
         }
     }
 
-    /**
-     * Fetches the data file to determine if DuckDB can read it directly,
-     * then returns the appropriate DbAdapter.
-     * @param treq the table request
-     * @return the DbAdapter for the corresponding data file
-     */
-    public DbAdapter getDbAdapter(TableServerRequest treq) {
-        String id = getUniqueID(treq);
-        var release = SOURCE_FILE_CHECKER.lock(id);
-        try {
-            DbAdapter adpt = adapters.get(id);
-            if (adpt != null && adpt.hasTable(adpt.getDataTable())) return adpt;
-            // no DB; create and load DB since we need sourcefile to determine the loading logic
-            var srcFile = fetchSourceFile(treq);
-            adpt = DbAdapter.getAdapter(srcFile) instanceof DuckDbReadable dr
-                    ? dr.useDbFileFrom(makeDbFile(treq)) : super.getDbAdapter(treq);
-            createDbFromRequest(treq, adpt);
-            adapters.put(id, adpt);
-            return adpt;
-        } catch (DataAccessException e) {
-            throw new RuntimeException(e);
-        } finally {
-            release.run();
-        }
-    }
-
-    private File fetchSourceFile (TableServerRequest req) {
-
-        if (noSourceFile || inf != null) return inf;        // already resolved
+    @Override
+    protected FileInfo ingestDataIntoDb(TableServerRequest req, DbAdapter dbAdapter) throws DataAccessException {
 
         String processor = req.getParam("processor");
         String jsonSearchRequest = req.getParam(SEARCH_REQUEST);
+
+        try {
+            dbAdapter.initDbFile();
+            if (!isEmpty(processor)) {
+                return dbAdapter.ingestData(makeDgSupplier(req, () -> getByProcessor(processor, req)), dbAdapter.getDataTable());
+            } else if(!isEmpty(jsonSearchRequest)) {
+                return dbAdapter.ingestData(makeDgSupplier(req, () -> getByTableRequest(jsonSearchRequest)), dbAdapter.getDataTable());
+            } else {
+                File srcFile = fetchSourceFile(req);
+                TableUtil.Format format = DuckDbReadable.guessFileFormat(srcFile.getAbsolutePath());
+                if (format != null && dbAdapter instanceof DuckDbAdapter duckdb) {
+                    return DuckDbReadable.castInto(format, duckdb).ingestDataDirectly(srcFile.getAbsolutePath());
+                } else {
+                    return dbAdapter.ingestData(makeDgSupplier(req, () -> fetchDataFromFile(req, srcFile)), dbAdapter.getDataTable());
+                }
+            }
+        } catch (IOException e) {
+            Logger.getLogger().error(e,"Failed to ingest data into the database:" + req.getRequestId());
+            throw new DataAccessException(e);
+        }
+    }
+
+//    /**
+//     * Fetches the data file to determine if DuckDB can read it directly,
+//     * then returns the appropriate DbAdapter.
+//     * @param treq the table request
+//     * @return the DbAdapter for the corresponding data file
+//     */
+//    public DbAdapter getDbAdapter(TableServerRequest treq) {
+//        String id = getUniqueID(treq);
+//        var release = SOURCE_FILE_CHECKER.lock(id);
+//        try {
+//            DbAdapter adpt = adapters.get(id);
+//            if (adpt != null && adpt.hasTable(adpt.getDataTable())) return adpt;
+//            // no DB; create and load DB since we need sourcefile to determine the loading logic
+//            var srcFile = fetchSourceFile(treq);
+//            adpt = DbAdapter.getAdapter(srcFile) instanceof DuckDbReadable dr
+//                    ? dr.useDbFileFrom(getDbFileCreator(treq)) : super.getDbAdapter(treq);
+//            createDbFromRequest(treq, adpt);
+//            adapters.put(id, adpt);
+//            return adpt;
+//        } catch (DataAccessException e) {
+//            throw new RuntimeException(e);
+//        } finally {
+//            release.run();
+//        }
+//    }
+
+    private File fetchSourceFile (TableServerRequest req) throws DataAccessException {
+
         String source = req.getParam(ServerParams.SOURCE);
         String altSource = req.getParam(ServerParams.ALT_SOURCE);
 
-        if (isEmpty(processor) && isEmpty(jsonSearchRequest)) {
-            try {
-
-                if (isWorkspace(req)) {
-                    // by workspace
-                    inf = getFromWorkspace(source, altSource);
-                } else {
-                    // by source/altSource
-                    inf = QueryUtil.resolveFileFromSource(source, req);
-                    if (inf == null) {
-                        inf = QueryUtil.resolveFileFromSource(altSource, req);
-                    }
-                }
-                if (inf == null) {
-                    noSourceFile = true;
-                    fetchError = new DataAccessException(String.format("Unable to fetch file from path[alt_path]: %s[%s]", source, altSource));
-                }
-            } catch (DataAccessException e) {
-                fetchError = e;
-                noSourceFile = true;
+        File inf = null;
+        if (isWorkspace(req)) {
+            // by workspace
+            inf = getFromWorkspace(source, altSource);
+        } else {
+            // by source/altSource
+            inf = QueryUtil.resolveFileFromSource(source, req);
+            if (inf == null) {
+                inf = QueryUtil.resolveFileFromSource(altSource, req);
             }
+        }
+        if (inf == null) {
+            throw new DataAccessException(String.format("Unable to fetch file from path[alt_path]: %s[%s]", source, altSource));
         }
         return inf;
     }

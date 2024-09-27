@@ -21,7 +21,7 @@ import static edu.caltech.ipac.util.StringUtils.groupMatch;
  * @author loi
  * @version $Id: DbInstance.java,v 1.3 2012/03/15 20:35:40 loi Exp $
  */
-public class HsqlDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterCreator {
+public class HsqlDbAdapter extends BaseDbAdapter {
     public static final String NAME = "hsql";
     public static final String DRIVER = "org.hsqldb.jdbc.JDBCDriver";
     private static final List<String> SUPPORTS = List.of(NAME);
@@ -45,18 +45,8 @@ public class HsqlDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterC
     /**
      * used by DbAdapterCreator only
      */
-    HsqlDbAdapter() {
-        super(null);
-    }
+    public HsqlDbAdapter(DbFileCreator dbFileCreator) { this(dbFileCreator.create(NAME)); }
     public HsqlDbAdapter(File dbFile) { super(dbFile); }
-
-    public DbAdapter create(File dbFile) {
-        return canHandle(dbFile) ? new HsqlDbAdapter(dbFile) : null;
-    }
-
-    List<String> getSupportedExts() {
-        return  SUPPORTS;
-    }
 
     public String getName() {
         return NAME;

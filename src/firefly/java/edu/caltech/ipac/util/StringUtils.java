@@ -6,6 +6,8 @@ package edu.caltech.ipac.util;
 import edu.caltech.ipac.firefly.server.util.Logger;
 
 import javax.validation.constraints.NotNull;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -761,6 +763,17 @@ public class StringUtils {
         return null;
     }
 
+    /**
+     * Return a URL if the input can be successfully parsed as a URL; otherwise, return null.
+     * @param urlString  URL string
+     * @return
+     */
+    public static URL toUrl(String urlString) {
+        try {
+            new URL(urlString);
+        } catch (MalformedURLException ignored) {}
+        return null;
+    }
 
 
     //=========================================================================================

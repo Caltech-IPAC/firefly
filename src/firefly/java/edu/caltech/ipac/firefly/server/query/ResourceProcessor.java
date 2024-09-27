@@ -69,8 +69,9 @@ public class ResourceProcessor extends EmbeddedDbProcessor {
      */
     public DbAdapter getDbAdapter(TableServerRequest treq) {
         String resourceID = getResourceID(treq);
-        String fname = String.format("%s/%s", SUBDIR_PATH, resourceID);
-        return DbAdapter.getDbCreator(treq).create(ServerContext.getHiPSDir(), fname);
+        return DbAdapter.getAdapter(treq, (ext) ->
+                new File(ServerContext.getHiPSDir(), "%s/%s.%s".formatted(SUBDIR_PATH, resourceID, ext))
+        );
     }
 
     /**

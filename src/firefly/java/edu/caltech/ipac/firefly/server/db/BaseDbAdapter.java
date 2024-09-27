@@ -171,6 +171,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
         StopWatch.getInstance().printLog("%s:ingestData for %s".formatted(getName(), forTable));
         return finfo;
     }
+    
 
     public void createTempResults(TableServerRequest treq, String resultSetID) {
         StopWatch.getInstance().start("%s:createTempResults for %s".formatted(getName(), resultSetID));
@@ -200,7 +201,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             metaSql = createTableFromSelect(resultSetID + "_META", metaSql);
             try {
                 getJdbc().update(metaSql);
-            } catch (Exception mx) {/*ignore table may not exists*/}
+            } catch (Exception mx) {/*ignore table may not exist*/}
 
             // copy aux
             String auxSql = "select * from DATA_AUX";
@@ -218,15 +219,8 @@ abstract public class BaseDbAdapter implements DbAdapter {
             StopWatch.getInstance().printLog("%s:createTempResults for ".formatted(getName(), resultSetID));
         }
     }
-
-    /**
-     * Similar to execQuery, except this method creates the SQL statement from the given request object.
-     * It needs to take filter, sort, and paging into consideration.
-     * @param treq      request parameters used for select, where, order by, and limit
-     * @param forTable  table to run the query on.
-     * @return
-     */
-    public DataGroupPart execRequestQuery(TableServerRequest treq, String forTable) throws DataAccessException {
+    
+    protected String buildSqlFrom(TableServerRequest treq, String forTable) {
         String selectPart = selectPart(treq);
         String wherePart = wherePart(treq);
         String orderByPart = orderByPart(treq);
@@ -238,14 +232,24 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 selectPart = "select " + StringUtils.toString(getColumnNames(forTable, "\""));
             }
         }
-
-        String sql = "%s FROM %s %s %s %s".formatted(selectPart, forTable, wherePart, orderByPart, pagingPart);
+        return  "%s FROM %s %s %s %s".formatted(selectPart, forTable, wherePart, orderByPart, pagingPart);
+    }
+    
+    /**
+     * Similar to execQuery, except this method creates the SQL statement from the given request object.
+     * It needs to take filter, sort, and paging into consideration.
+     * @param treq      request parameters used for select, where, order by, and limit
+     * @param forTable  table to run the query on.
+     * @return
+     */
+    public DataGroupPart execRequestQuery(TableServerRequest treq, String forTable) throws DataAccessException {
+        String sql = buildSqlFrom(treq, forTable);
         DataGroup data = execQuery(sql, forTable);
 
         int rowCnt = data.size();
-        if (!isEmpty(pagingPart)) {
+        if (!isEmpty(pagingPart(treq))) {
             // fetch total row count for the query; datagroup may contain partial results(paging)
-            String cntSql = "select count(*) FROM %s %s".formatted(forTable, wherePart);
+            String cntSql = "select count(*) FROM %s %s".formatted(forTable, wherePart(treq));
             rowCnt = getJdbc().queryForInt(cntSql);
         }
 
@@ -969,18 +973,6 @@ abstract public class BaseDbAdapter implements DbAdapter {
 //====================================================================
 //
 //====================================================================
-
-    public String getFileExt() { return getName(); }
-
-    boolean canHandle(File dbFile) {
-        if (dbFile == null) return false;
-        String ext = FileUtil.getExtension(dbFile);
-        return getSupportedExts()
-                .stream()
-                .anyMatch(s -> s.equalsIgnoreCase(ext));
-    }
-
-    abstract List<String> getSupportedExts();
 
     public DataAccessException handleSqlExp(String msg, Exception e) {
         if( e instanceof UncategorizedSQLException ce) {

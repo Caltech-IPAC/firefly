@@ -10,26 +10,12 @@ import java.util.List;
  * @author loi
  * @version $Id: DbInstance.java,v 1.3 2012/03/15 20:35:40 loi Exp $
  */
-public class SqliteDbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterCreator {
+public class SqliteDbAdapter extends BaseDbAdapter {
     public static final String NAME = "sqlite";
     private static final List<String> SUPPORTS = List.of(NAME);
 
-    /**
-     * used by DbAdapterCreator only
-     */
-    SqliteDbAdapter() {
-        super(null);
-    }
-
+    public SqliteDbAdapter(DbFileCreator dbFileCreator) { this(dbFileCreator.create(NAME)); }
     public SqliteDbAdapter(File dbFile) { super(dbFile); }
-
-    public DbAdapter create(File dbFile) {
-        return canHandle(dbFile) ? new SqliteDbAdapter(dbFile) : null;
-    }
-
-    List<String> getSupportedExts() {
-        return  SUPPORTS;
-    }
 
     public String getName() {
         return NAME;

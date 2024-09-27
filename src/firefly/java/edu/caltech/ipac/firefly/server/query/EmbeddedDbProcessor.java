@@ -4,12 +4,12 @@
 package edu.caltech.ipac.firefly.server.query;
 
 import edu.caltech.ipac.firefly.server.ServCommand;
+import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.table.io.IpacTableWriter;
 import edu.caltech.ipac.table.io.RegionTableWriter;
-import edu.caltech.ipac.table.io.DsvTableIO;
 import edu.caltech.ipac.table.io.VoTableWriter;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
@@ -32,7 +32,6 @@ import edu.caltech.ipac.firefly.core.background.JobInfo;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
-import org.apache.commons.csv.CSVFormat;
 
 import javax.validation.constraints.NotNull;
 import java.io.File;
@@ -45,6 +44,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX;
@@ -105,20 +105,16 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     abstract public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException;
 
     /**
-     * returns the database file for the given request.
+     * returns the DbAdapter for the given request.
      * This implementation returns a file based on sessionId + search parameters
-     *
      * @param treq
      * @return
      */
     public DbAdapter getDbAdapter(TableServerRequest treq) {
-        return DbAdapter.getAdapter(makeDbFile(treq));
-    }
-
-    protected File makeDbFile(TableServerRequest treq) {
-        var creator = getDbCreator(treq);
-        String fname = String.format("%s_%s.%s", treq.getRequestId(), DigestUtils.md5Hex(getUniqueID(treq)), creator.getFileExt());
-        return new File(QueryUtil.getTempDir(treq), fname);
+        String reqId = treq.getRequestId();
+        String hash = DigestUtils.md5Hex(getUniqueID(treq));
+        DbFileCreator dbFileCreator = (ext) -> new File(QueryUtil.getTempDir(treq), "%s_%s.%s".formatted(reqId, hash, ext));
+        return DbAdapter.getAdapter(treq, dbFileCreator);
     }
 
     public DataGroupPart getData(ServerRequest request) throws DataAccessException {
@@ -216,23 +212,8 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             dbAdapter.initDbFile();
             StopWatch.getInstance().start("ingestDataIntoDb: " + req.getRequestId());
 
-            DbAdapter.DataGroupSupplier dataSupplier = () -> {
-                StopWatch.getInstance().start("fetchDataGroup: " + req.getRequestId());
-                DataGroup dg = fetchDataGroup(req);
-                StopWatch.getInstance().stop("fetchDataGroup: " + req.getRequestId()).printLog("fetchDataGroup: " + req.getRequestId());
-
-                if (dg == null) throw new DataAccessException("Failed to retrieve data");
-
-                jobExecIf(v -> v.progress(70, dg.size() + " rows of data found"));
-
-                prepareTableMeta(dg.getTableMeta(), Arrays.asList(dg.getDataDefinitions()), req);
-                TableUtil.consumeColumnMeta(dg, null);      // META-INFO in the request should only be pass-along and not persist.
-
-                return dg;
-            };
-
             // dataSupplier is passed in.  the adapter decides if fetch is needed.
-            FileInfo finfo = dbAdapter.ingestData(dataSupplier, dbAdapter.getDataTable());
+            FileInfo finfo = dbAdapter.ingestData(makeDgSupplier(req, () -> fetchDataGroup(req)), dbAdapter.getDataTable());
 
             StopWatch.getInstance().stop("ingestDataIntoDb: " + req.getRequestId()).printLog("ingestDataIntoDb: " + req.getRequestId());
             return finfo;
@@ -240,6 +221,23 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             logger.error(ex,"Failed to ingest data into the database:" + req.getRequestId());
             throw new DataAccessException(ex);
         }
+    }
+
+    protected DataGroupSupplier makeDgSupplier(TableServerRequest req, DataGroupSupplier getter) throws DataAccessException {
+        return () -> {
+            StopWatch.getInstance().start("fetchDataGroup: " + req.getRequestId());
+            DataGroup dg = getter.get();
+            StopWatch.getInstance().stop("fetchDataGroup: " + req.getRequestId()).printLog("fetchDataGroup: " + req.getRequestId());
+
+            if (dg == null) throw new DataAccessException("Failed to retrieve data");
+
+            jobExecIf(v -> v.progress(70, dg.size() + " rows of data found"));
+
+            prepareTableMeta(dg.getTableMeta(), Arrays.asList(dg.getDataDefinitions()), req);
+            TableUtil.consumeColumnMeta(dg, null);      // META-INFO in the request should only be pass-along and not persist.
+
+            return dg;
+        };
     }
 
     public File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
@@ -265,15 +263,13 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                                         .toArray(String[]::new);
                 treq.setInclColumns(cols);
             }
-
             DataGroupPart page = getData(treq);
-
             switch(format) {
                 case CSV:
-                    DsvTableIO.write(new OutputStreamWriter(out), page.getData(), CSVFormat.DEFAULT);
+                    new DuckDbReadable.Csv(dbAdapter.getDbFile()).export(treq, out);
                     break;
                 case TSV:
-                    DsvTableIO.write(new OutputStreamWriter(out), page.getData(), CSVFormat.TDF);
+                    new DuckDbReadable.Tsv(dbAdapter.getDbFile()).export(treq, out);
                     break;
                 case REGION:
                     RegionTableWriter.write(new OutputStreamWriter(out), page.getData(), request.getParam("center_cols"));

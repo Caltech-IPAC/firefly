@@ -29,9 +29,12 @@ public abstract class SharedDbProcessor extends EmbeddedDbProcessor {
      * it can be easily cleared.
      */
     public DbAdapter getDbAdapter(TableServerRequest treq) {
-        String fname = String.format("%s_%s", treq.getRequestId(), ServerContext.getRequestOwner().getRequestAgent().getSessId());
-        return DbAdapter.getDbCreator(treq).create(QueryUtil.getTempDir(treq), fname);
+        String sessId = ServerContext.getRequestOwner().getRequestAgent().getSessId();
+        return DbAdapter.getAdapter(treq, (ext) ->
+                new File(QueryUtil.getTempDir(treq), "%s_%s.%s".formatted(treq.getRequestId(), sessId, ext))
+        );
     }
+
 
     public FileInfo ingestDataIntoDb(TableServerRequest treq, DbAdapter dbAdapter) throws DataAccessException {
         // nothing to do here.

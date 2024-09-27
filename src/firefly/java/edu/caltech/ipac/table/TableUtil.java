@@ -93,7 +93,7 @@ public class TableUtil {
             return Format.TAR;
         }
 
-        var fmt = DuckDbReadable.guessFileFormat(inf);      // test for files that DuckDb can import directly
+        var fmt = DuckDbReadable.guessFileFormat(inf.getAbsolutePath());      // test for files that DuckDb can import directly
         if (fmt != null) return fmt;
 
         // guess by sampling file content
