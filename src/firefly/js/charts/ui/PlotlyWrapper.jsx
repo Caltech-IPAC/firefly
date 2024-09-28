@@ -280,7 +280,7 @@ export class PlotlyWrapper extends Component {
                         this.restyle(this.div, Plotly, data, dataUpdate, dataUpdateTraces);
                         break;
                     case RenderType.RELAYOUT:
-                        Plotly.relayout(this.div, layout);
+                        Plotly.relayout(this.div, layoutUpdate);
                         break;
                     case RenderType.RESTYLE_AND_RELAYOUT:
                         this.restyle(this.div, Plotly, data, dataUpdate, dataUpdateTraces);
@@ -297,6 +297,8 @@ export class PlotlyWrapper extends Component {
                         break;
                     case RenderType.NEW_PLOT:
                         Plotly.newPlot(this.div, data, layout, config);
+                        //after Plotly.newPlot, the div is updated with a new layout, update this for the chart as well
+                        this.syncLayout(chartId, this.div.layout);
                         if (this.div.on) {
                             const chart = this.div;
                             // make sure clicked or selected chart is active
