@@ -3,63 +3,58 @@
  */
 
 
-
-import {Box, Card, Divider, Stack, Tooltip, Typography} from '@mui/joy';
+import {Box, Button, Divider, Stack, Tooltip, Typography} from '@mui/joy';
 import React, {useEffect, useState} from 'react';
 import sizeMe from 'react-sizeme';
-import {downloadChart, PlotlyWrapper} from '../../charts/ui/PlotlyWrapper.jsx';
-import {PopupPanel} from 'firefly/ui/PopupPanel.jsx';
-import DialogRootContainer from 'firefly/ui/DialogRootContainer.jsx';
-import {dispatchHideDialog, dispatchShowDialog} from 'firefly/core/ComponentCntlr.js';
-import ImagePlotCntlr, { dispatchAttributeChange, dispatchChangePointSelection,
-    dispatchChangePrimePlot, visRoot } from 'firefly/visualize/ImagePlotCntlr.js';
-import CompleteButton from 'firefly/ui/CompleteButton.jsx';
-import HelpIcon from 'firefly/ui/HelpIcon.jsx';
-import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
+import {getAppOptions} from '../../../api/ApiUtil.js';
+import {makeImagePt} from '../../Point';
+import {allowPinnedCharts} from '../../../charts/ChartUtil';
+import {ensureDefaultChart} from '../../../charts/ui/ChartsContainer.jsx';
+import {pinChart} from '../../../charts/ui/PinnedChartContainer.jsx';
+import {downloadChart, PlotlyWrapper} from '../../../charts/ui/PlotlyWrapper.jsx';
+import {dispatchHideDialog, dispatchShowDialog} from '../../../core/ComponentCntlr.js';
+import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../../../core/MasterSaga.js';
+import ExtractLineTool, {
+    addLineDistAttributesToPlots, COLUMN_SELECTION, FREE_SELECTION, LINE_SELECTION
+} from '../../../drawingLayers/ExtractLineTool.js';
+import ExtractPointsTool from '../../../drawingLayers/ExtractPointsTool.js';
+import {callGetCubeDrillDownAry, callGetPointExtractionAry} from '../../../rpc/PlotServicesJson.js';
+import {onTableLoaded} from '../../../tables/TableUtil.js';
+import CompleteButton from '../../../ui/CompleteButton.jsx';
+import DialogRootContainer from '../../../ui/DialogRootContainer.jsx';
+import {FieldGroup} from '../../../ui/FieldGroup';
+import HelpIcon from '../../../ui/HelpIcon.jsx';
+import {ListBoxInputField, ListBoxInputFieldView} from '../../../ui/ListBoxInputField.jsx';
+import {PopupPanel} from '../../../ui/PopupPanel.jsx';
+import {RadioGroupInputFieldView} from '../../../ui/RadioGroupInputFieldView.jsx';
+import {useFieldGroupValue, useStoreConnector} from '../../../ui/SimpleComponent.jsx';
+import {ValidationField} from '../../../ui/ValidationField';
+import {intValidator} from '../../../util/Validate';
+import {CCUtil, CysConverter} from '../../CsysConverter.js';
 import {
-    convertHDUIdxToImageIdx, getActivePlotView, getAllWaveLengthsForCube, getCubePlaneFromWavelength,
-    getDrawLayerByType, getHDU, getHDUIndex, getHduPlotStartIndexes, getImageCubeIdx,
-    getPlotViewAry, getPlotViewById, getPtWavelength, getWaveLengthUnits, hasPixelLevelWLInfo, hasWCSProjection,
-    hasWLInfo,
-    isDrawLayerAttached,
-    isImageCube, isMultiHDUFits, primePlot
-} from 'firefly/visualize/PlotViewUtil.js';
-import {PlotAttribute} from 'firefly/visualize/PlotAttribute.js';
-import {CCUtil, CysConverter} from 'firefly/visualize/CsysConverter.js';
-import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField.jsx';
-import {callGetCubeDrillDownAry, callGetPointExtractionAry } from 'firefly/rpc/PlotServicesJson.js';
-import {getExtName, hasFloatingData} from 'firefly/visualize/FitsHeaderUtil.js';
-import {dispatchTableFetch, dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
-import {makeTblRequest} from 'firefly/tables/TableRequestUtil.js';
-import ExtractLineTool from 'firefly/drawingLayers/ExtractLineTool.js';
-import ExtractPointsTool from 'firefly/drawingLayers/ExtractPointsTool.js';
+    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchDetachLayerFromPlot,
+    dispatchModifyCustomField, getDlAry
+} from '../../DrawLayerCntlr.js';
+import {getExtName, hasFloatingData} from '../../FitsHeaderUtil.js';
+import ImagePlotCntlr, {
+    dispatchAttributeChange, dispatchChangePointSelection, dispatchChangePrimePlot, visRoot
+} from '../../ImagePlotCntlr.js';
+import {PlotAttribute} from '../../PlotAttribute.js';
 import {
-    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
-    dispatchDetachLayerFromPlot, dispatchModifyCustomField, getDlAry
-} from 'firefly/visualize/DrawLayerCntlr.js';
-import {makeImagePt} from 'firefly/api/ApiUtilImage.jsx';
-import {computeDistance, computeScreenDistance, getLinePointAry} from 'firefly/visualize/VisUtil.js';
-import {RadioGroupInputFieldView} from 'firefly/ui/RadioGroupInputFieldView.jsx';
-import {addZAxisExtractionWatcher} from 'firefly/visualize/ui/ExtractionWatchers.js';
-import {sprintf} from 'firefly/externalSource/sprintf.js';
-import {getFluxUnits} from 'firefly/visualize/WebPlot.js';
-import {Band} from 'firefly/visualize/Band.js';
-import {onTableLoaded} from 'firefly/tables/TableUtil.js';
-import {showTableDownloadDialog} from 'firefly/tables/ui/TableSave.jsx';
-import {getAppOptions, ServerParams} from 'firefly/api/ApiUtil.js';
-import {showInfoPopup, showPinMessage} from 'firefly/ui/PopupUtil.jsx';
-import {MetaConst} from 'firefly/data/MetaConst.js';
-import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
-import {allowPinnedCharts} from 'firefly/charts/ChartUtil';
-import {pinChart} from 'firefly/charts/ui/PinnedChartContainer.jsx';
-import {ensureDefaultChart} from 'firefly/charts/ui/ChartsContainer.jsx';
+    convertHDUIdxToImageIdx, getActivePlotView, getCubePlaneFromWavelength, getDrawLayerByType, getHDU, getHDUIndex,
+    getImageCubeIdx, getPlotViewAry, getPlotViewById, hasWCSProjection, hasWLInfo, isDrawLayerAttached, isImageCube,
+    isMultiHDUFits, primePlot
+} from '../../PlotViewUtil.js';
+import {computeDistance, computeScreenDistance, getLinePointAry} from '../../VisUtil.js';
+import {genPointChartData, genSliceChartData, genZAxisChartData} from './ExtractionChart';
+import {keepLineExtraction, keepPointsExtraction, keepZAxisExtraction} from './ExtractionTable';
 
 
-
-const DIALOG_ID= 'extrationDialog';
+const DIALOG_ID= 'extractionDialog';
 const CHART_ID= 'extractionChart';
-// const LINE_POINT_SELECTION_ID= 'lineSelectExtraction';
 const ZAXIS_POINT_SELECTION_ID= 'z-axisExtraction';
+
+const SELECT_TYPE_TIP= 'Choose mouse selection type: mouse line lock, mouse column lock or free selection';
 
 export const Z_AXIS= 'Z_AXIS';
 export const LINE= 'LINE';
@@ -125,7 +120,7 @@ function ExtractDialog({extractionType,wasCanceled}) {
     };
 
     return(
-        <PopupPanel title={`Extract - ${primePlot(pv)?.title ?? ''}`}
+        <PopupPanel title={`Extract: ${primePlot(pv)?.title ?? ''}`}
                     closeCallback={doCancel} requestToClose={doCancel}  >
             <Panel canCreateExtractionTable={canCreateExtractionTable} pv={pv} pvCnt={pvCnt}/>
         </PopupPanel>
@@ -144,8 +139,6 @@ function getStoreState(prevResult) {
     return {pv,pvCnt:pvAry.length};
 }
 
-const sizeOp=[];
-for(let i= 1; i<=7;i+=2) sizeOp.push({label:`${i}x${i}`, value:i});
 
 const AVG= 'AVG';
 const combineOps= [
@@ -270,7 +263,7 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     useEffect(() => {
         const getData= async () => {
             if (imPtAry && imPtAry.length && plot) {
-                const dataAry= await callGetPointExtractionAry(plot, hduNum, plane, imPtAry, pointSize, combineOp, allRelatedHDUS);
+                const dataAry= await callGetPointExtractionAry(plot, hduNum, plane, imPtAry, pointSize, pointSize, combineOp, allRelatedHDUS);
                 const chartTitle= 'Point Extract Preview';
                 let activeIdx= 0;
                 const key= lastChartChartXAxis==='imageX' ? 'x' : 'y';
@@ -310,11 +303,15 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
 
 
 function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
+    const dl= getDrawLayerByType(getDlAry(), ExtractLineTool.TYPE_ID) ?? {};
+    const {selectionType= FREE_SELECTION}= dl;
     const [{plotlyDivStyle, plotlyData, plotlyLayout},setChartParams]= useState({});
     const [imPtAry,setImPtAry]= useState(undefined);
     const [pointSize,setPointSize]= useState(1);
     const [combineOp,setCombineOp]= useState(AVG);
+    const [,setSelectionTypeInState]= useState(selectionType);
     const [allRelatedHDUS,setAllRelatedHDUS]= useState(true);
+    const [axis,setAxis]= useState('x');
     const plot= primePlot(pv);
     const {pt0:pt1,pt1:pt2}=plot?.attributes?.[PlotAttribute.ACTIVE_DISTANCE] ?? {};
     const extractionData=plot?.attributes?.[PlotAttribute.EXTRACTION_DATA] ?? false;
@@ -329,13 +326,12 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const hduNum= getHDU(plot);
     const plane= getImageCubeIdx(plot)>-1 ? getImageCubeIdx(plot) : 0;
     const {x:chartX,y:chartY}=plot?.attributes?.[PlotAttribute.SELECT_ACTIVE_CHART_PT] ?? {};
-    const singleLine= plot.dataWidth===1 || plot.dataHeight===1;
 
     useEffect(() => {
         const getData= async () => {
             if (ipt1 && ipt2 && plot) {
                 const {dataWidth,dataHeight}= plot;
-                const {direction}= xLineData(ipt1,ipt2);
+                const {direction,axis:newAxis}= xLineData(ipt1,ipt2);
                 const newImPtAry= getLinePointAry(ipt1,ipt2)
                     .filter( ({x,y}) => x>=0 && y>=0 && x<dataWidth && y<dataHeight);
                 if (!newImPtAry?.length) {
@@ -345,16 +341,19 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
                 }
                 const cc= CysConverter.make(plot);
 
-                const dataAry= await callGetPointExtractionAry(plot, hduNum, plane, newImPtAry, pointSize, combineOp, allRelatedHDUS);
+                const pointSizeX= newAxis==='y' ? pointSize : 1;
+                const pointSizeY= newAxis==='x' ? pointSize : 1;
+                const dataAry= await callGetPointExtractionAry(plot, hduNum, plane, newImPtAry, pointSizeX, pointSizeY, combineOp, allRelatedHDUS);
                 const chartTitle= makeLineExtractionTitle(pv,x1,y1,x2,y2);
                 const pt0= hasWCSProjection(plot) ? cc.getWorldCoords(newImPtAry[0]) : newImPtAry[0];
-                const xOffAry= hasWCSProjection(plot) ?
-                    newImPtAry.map( (pt) => computeDistance(pt0,cc.getWorldCoords(pt))*3600) :
-                    newImPtAry.map( (pt) => computeScreenDistance(pt0.x,pt0.y,pt.x,pt.y));
+                const xOffAry= hasWCSProjection(plot)
+                    ? newImPtAry.map( (pt) => computeDistance(pt0,cc.getWorldCoords(pt))*3600)
+                    : newImPtAry.map( (pt) => computeScreenDistance(pt0.x,pt0.y,pt.x,pt.y));
                 const chartData=
                     genSliceChartData(plot, ipt1,ipt2,xOffAry, dataAry, chartX, chartY, pointSize, combineOp, chartTitle, direction<0);
                 setChartParams(chartData);
                 setImPtAry(newImPtAry);
+                setAxis(newAxis);
             }
             if (!pv) cancelLineExtraction();
         };
@@ -365,47 +364,176 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
         <ExtractionPanelView {...{
             allRelatedHDUS, setAllRelatedHDUS, pointSize, setPointSize, combineOp, setCombineOp, canCreateExtractionTable,
             plotlyDivStyle, plotlyData: extractionData&&plotlyData, plotlyLayout, hasFloatingData:hasFloatingData(plot),
+            sizeType: axis==='y'?SIZE_HORIZONTAL:SIZE_VERTICAL,
             startUpHelp: (
-                <Box>
+                <Stack alignItems='center'>
                     <Typography> Draw line on image to extract point on line and show chart. </Typography>
                     {pvCnt>1 && <Typography {...{mt:3}}> Shift-click will change the selected image without selecting a new line. </Typography>}
-                    {singleLine &&
-                        <Stack pt={2} spacing={1}>
-                           <Typography>
-                               {`This is a ${plot.dataWidth}x${plot.dataHeight} image, would you like to extract the whole line?`}
-                           </Typography>
-                            <CompleteButton style={{paddingLeft: 15}} text='Extract whole line'
-                                            onSuccess={()=> {
-                                                const sel= {
-                                                    pt0:makeImagePt( makeImagePt(0,0)),
-                                                    pt1:makeImagePt( plot.dataHeight===1 ? makeImagePt(plot.dataWidth-1,0) : makeImagePt(0,plot.dataHeight-1) )
-                                                };
-                                                dispatchAttributeChange({plotId:plot.plotId, toAllPlotsInPlotView:true, overlayColorScope:false,
-                                                    changes: { [PlotAttribute.ACTIVE_DISTANCE]: sel, [PlotAttribute.EXTRACTION_DATA]: true, }
-                                                });
-                                            }} />
-                        </Stack>
-                    }
-                </Box>
+                    <Typography pt={1} color='warning' size={'body-lg'}>OR</Typography>
+                    <Stack pt={1} spacing={1}>
+                        <FieldGroup groupKey='extract-full-line' >
+                            <ExtractWholeLine plot={plot}/>
+                        </FieldGroup>
+                    </Stack>
+                </Stack>
             ),
             afterRedraw: (chart,pl) => afterLineChartRedraw(pv,chart,pl,imPtAry,makeImagePt(x1,y1), makeImagePt(x2,y2)),
             callKeepExtraction: (download, doOverlay) =>
                 keepLineExtraction(ipt1,ipt2, pv, plot, plot.plotState.getWorkingFitsFileStr(),
-                    hduNum, plane, pointSize, combineOp, download, doOverlay),
-        }} /> );
+                    hduNum, plane,
+                    axis==='x' ? 1 : pointSize,
+                    axis==='y' ? 1: pointSize,
+                    combineOp, download, doOverlay),
+        }}>
+            {Boolean(extractionData&&plotlyData) &&
+                <Stack {...{ spacing:1, alignItems:'center', alignSelf:'center', direction:'row', height: 30, maxHeight:30, mt:.5}}>
+                    <Tooltip title={SELECT_TYPE_TIP}>
+                        <Typography >Mouse Selection</Typography>
+                    </Tooltip>
+                    <ListBoxInputFieldView {...{
+                        value: selectionType,
+                        tooltip: SELECT_TYPE_TIP,
+                        onChange: (ev, newVal) => {
+                            dispatchModifyCustomField( ExtractLineTool.TYPE_ID, {selectionType:newVal}, plotId);
+                            setSelectionTypeInState(newVal);
+                        },
+                        options:[
+                            {label: 'Free', value: FREE_SELECTION},
+                            {label: 'Line lock', value: LINE_SELECTION},
+                            {label: 'Column lock', value: COLUMN_SELECTION}
+                        ]
+                    }} />
+                </Stack>
+            }
+        </ExtractionPanelView>);
 }
+
+
+function getPts(isLine,line,col,plot) {
+    let pt0= undefined;
+    let pt1= undefined;
+    const {dataHeight,dataWidth}= plot ?? {};
+    if (!plot) return {pt0,pt1};
+
+    const validLine= !isNaN(parseInt(line)) && !isNaN(Number(line));
+    const validCol= !isNaN(parseInt(col)) && !isNaN(Number(col));
+
+    if ( (isLine && validLine) || (!isLine && validCol) ) {
+        if (isLine && line>dataHeight) return {pt0,pt1};
+        if (!isLine && col>dataWidth) return {pt0,pt1};
+        pt0= isLine ? makeImagePt(0,line) : makeImagePt(col, 0);
+        pt1= isLine ? makeImagePt(dataWidth-1,line) : makeImagePt(col, dataHeight-1);
+    }
+    return {pt0,pt1};
+}
+
+
+function ExtractWholeLine({plot}) {
+    const dirVal= useFieldGroupValue('direction')[0]() ?? 'X';
+    const col= useFieldGroupValue('column')[0]();
+    const line= useFieldGroupValue('line')[0]();
+    const isLine= dirVal==='X';
+    const {dataHeight,dataWidth}= plot ?? {};
+    const singleLine= dataWidth===1 || dataHeight===1;
+
+    const {pt0, pt1}= !singleLine ? getPts(isLine,line,col,plot) :
+        dataWidth===1 ? getPts(false, '',0,plot) : getPts(true,0,'',plot);
+        
+
+    useEffect(() => {
+        if (!plot) return;
+        dispatchModifyCustomField( ExtractLineTool.TYPE_ID,
+            {
+                newFirst: pt0,
+                newCurrent: pt1,
+                plotId: plot.plotId,
+                newSelectionType: isLine ? LINE_SELECTION : COLUMN_SELECTION,
+            },
+            plot.plotId);
+
+    }, [line,col,dirVal]);
+
+
+    if (!plot) return;
+
+    const direction= (
+        <ListBoxInputField
+                    fieldKey='direction'
+                    options={[ {label: 'Line', value: 'X'}, {label: 'Column', value: 'Y'} ]}
+                    slotProps={{
+                        input: { variant:'plain', sx:{minHeight:'unset'} }
+                    }}
+                    initialState= {{ value:dirVal}}
+                    tooltip='Select line or column' label=''  />
+    );
+
+
+    const extractButton= (
+        <Button
+                variant= 'solid'
+                color= 'primary'
+                disabled={Boolean(!pt0 && !pt1)}
+                onClick={()=> {
+                    const dl= getDrawLayerByType(getDlAry(), ExtractLineTool.TYPE_ID);
+                    if (!dl) return;
+                    addLineDistAttributesToPlots(dl,plot.plotId,{pt0,pt1});
+                }} >
+            Extract
+        </Button>
+    );
+
+    const text= !singleLine
+        ? 'Extract a whole line or column'
+        : dataWidth===1
+            ? 'Extract a whole column'
+            : 'Extract a whole line';
+
+    return (
+        <Stack spacing={1} alignItems='center'>
+            <Typography whiteSpace='nowrap'>{text} </Typography>
+            {singleLine ?
+                extractButton :
+                <ValidationField {...{
+                    nullAllowed: true,
+                    placeholder: isLine ?
+                        `Enter line # 0 - ${dataHeight-1}` :
+                        `Enter column # 0 - ${dataWidth-1}`,
+                    fieldKey: isLine ? 'line' : 'column',
+                    key: isLine ? 'line' : 'column',
+                    initialState: {
+                        value: undefined,
+                        validator: intValidator(0,
+                            isLine ? dataHeight - 1 : dataWidth - 1,
+                            isLine ? 'line' : 'column')
+                    },
+                    tooltip: isLine ? 'choose a line' : 'choose a column',
+                    startDecorator: direction,
+                    endDecorator: extractButton,
+                    sx: {
+                        width: '27rem',
+                        '& .MuiInput-root': {paddingInline: 0},
+                        '& .MuiInput-endDecorator': {mr: 1}
+                    },
+                }} />
+            }
+        </Stack>
+        );
+}
+
 
 const xLineData= (pt1,pt2) => {
     if (usingXAxis(pt1,pt2)) {
         return {
             startValue: minValue(pt1,pt2),
-            direction: pt1.x-pt2.x < 0 ? 1 : -1
+            direction: pt1.x-pt2.x < 0 ? 1 : -1,
+            axis:'x'
         };
     }
     else {
         return {
             startValue: minValue(pt1,pt2),
-            direction: pt1.y - pt2.y < 0 ? 1 : -1
+            direction: pt1.y - pt2.y < 0 ? 1 : -1,
+            axis:'y'
         };
     }
 };
@@ -474,10 +602,27 @@ const pointSizeTip= 'Extract and manipulate the pixel values in the specified ap
 
 const extractAddedChartInfo = ({payload}) => ( {chartId: payload.chartId, tbl_id: payload.data?.[0].tbl_id});
 
+const SIZE_SQUARE= 'sizeSquare';
+const SIZE_VERTICAL= 'sizeVertical';
+const SIZE_HORIZONTAL= 'sizeHorizontal';
+
 function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivStyle,
-                                 plotlyData, canCreateExtractionTable,
+                                 plotlyData, canCreateExtractionTable, sizeType= SIZE_SQUARE,
                                  plotlyLayout, startUpHelp, callKeepExtraction,
-                                 bottomUI, combineOp, setCombineOp, hasFloatingData}) {
+                                 bottomUI, combineOp, setCombineOp, hasFloatingData, children}) {
+
+
+    const sizeOp=[];
+    if (sizeType===SIZE_HORIZONTAL) {
+        for(let i= 1; i<=7;i+=2) sizeOp.push({label:`${i}x1`, value:i});
+    }
+    else if (sizeType===SIZE_VERTICAL) {
+        for(let i= 1; i<=7;i+=2) sizeOp.push({label:`1x${i}`, value:i});
+    }
+    else {
+        for(let i= 1; i<=7;i+=2) sizeOp.push({label:`${i}x${i}`, value:i});
+    }
+
 
     return (
         <Stack {...{p:.5, alignItems:'stretch', overflow: 'hidden', zIndex:1, direction:'column',
@@ -488,12 +633,12 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
                 </Tooltip>
                 <ListBoxInputFieldView
                     value={pointSize} onChange={(ev,newVal) => setPointSize(newVal)}
-                    tooltip={ pointSizeTip} options={sizeOp} multiple={false} />
+                    tooltip={ pointSizeTip} options={sizeOp} />
                 {pointSize>1 && <ListBoxInputFieldView
                     value={combineOp} onChange={(ev,newVal) => setCombineOp(newVal)}
                     tooltip={pointSizeTip}
                     options={hasFloatingData?combineOps:combineIntOps}
-                    multiple={false} />}
+                    />}
             </Stack>
             {plotlyData && <Divider sx={{mt:.5}}/>}
             <Stack {...{minWidth:440, minHeight:200, direction:'row', sx:{flex: '1 1 auto'}}}>
@@ -503,6 +648,7 @@ function ExtractionPanelView({pointSize, setPointSize, afterRedraw, plotlyDivSty
                 }
             </Stack>
             {plotlyData && <Divider sx={{mb:.5}}/>}
+            {children}
             {bottomUI && <div>{bottomUI} </div>}
             <Stack {...{
                 textAlign:'center', alignSelf: 'stretch', direction:'row',
@@ -557,265 +703,4 @@ function cancelPointExtraction() {
 }
 
 
-let idCnt= 0;
-const getNextTblId= () => 'extraction-table-'+(idCnt++);
-
-
-
-async function doDispatchTableSaving(req, doOverlay) {
-    const {tbl_id}= req;
-    const sendReq= {...req};
-    sendReq.META_INFO= !doOverlay ? {...sendReq.META_INFO, [MetaConst.CATALOG_OVERLAY_TYPE]: 'FALSE'} :{...sendReq.META_INFO};
-    dispatchTableFetch(sendReq,{ tbl_group: 'main', backgroundable: false});
-    await onTableLoaded(tbl_id);
-    showTableDownloadDialog({tbl_id,tbl_ui_id:undefined})();
-}
-
-
-
-function doDispatchTable(req, doOverlay) {
-    showPinMessage('Pinning Extraction to Table Area');
-    const sendReq= {...req};
-    sendReq.META_INFO= !doOverlay ? {...sendReq.META_INFO, [MetaConst.CATALOG_OVERLAY_TYPE]: 'FALSE'} :{...sendReq.META_INFO};
-    dispatchTableSearch(sendReq,{
-        logHistory: false,
-        removable:true,
-        tbl_group: 'main',
-        backgroundable: false,
-        showFilters: true,
-        showInfoButton: true
-    });
-}
-
-let titleCnt= 1;
-
-function keepZAxisExtraction(pt,pv, plot, filename,refHDUNum,extractionSize, combineOp, save=false, doOverlay=true) {
-    if (!pv || !plot  || !filename) {
-        showInfoPopup('Plot no longer exist. Cannot extract.');
-        return;
-    }
-    const wlUnit= getWaveLengthUnits(plot);
-    const wpt= CCUtil.getWorldCoords(plot,pt);
-    const fluxUnit= getHduPlotStartIndexes(pv)
-        .map( (idx) => ({hdu:getHDU(pv.plots[idx]), unit:getFluxUnits(pv.plots[idx],Band.NO_BAND)}))
-        .map( ({hdu,unit}) => `${hdu}=${unit}`);
-
-    const tbl_id= getNextTblId();
-    addZAxisExtractionWatcher(tbl_id);
-    const dataTableReq= makeTblRequest('ExtractFromImage', `Extraction Z-Axis - ${titleCnt}`,
-        {
-            startIdx : 0,
-            extractionType: 'z-axis',
-            pt: pt.toString(),
-            wpt: wpt?.toString(),
-            wlAry: hasWLInfo(plot) ? JSON.stringify(getAllWaveLengthsForCube(pv,pt)) : undefined,
-            wlUnit,
-            fluxUnit: JSON.stringify(fluxUnit),
-            filename,
-            refHDUNum,
-            extractionSize,
-            [ServerParams.COMBINE_OP]: combineOp,
-            allMatchingHDUs: true,
-        },
-        {tbl_id});
-    if (save) dataTableReq.pageSize = 0;
-    save ? doDispatchTableSaving(dataTableReq, doOverlay) : doDispatchTable(dataTableReq, doOverlay);
-    idCnt++;
-    titleCnt++;
-    return tbl_id;
-}
-
-function keepLineExtraction(pt, pt2,pv, plot, filename,refHDUNum,plane,extractionSize, combineOp, save=false,doOverlay=true) {
-    if (!pv || !plot  || !filename) {
-        showInfoPopup('Plot no longer exist. Cannot extract.');
-        return;
-    }
-    const tbl_id= getNextTblId();
-    const imPtAry= getLinePointAry(pt,pt2);
-    const cc= CysConverter.make(plot);
-
-    const wlAry= hasPixelLevelWLInfo(plot) ?
-       imPtAry.map( (pt) => getPtWavelength(plot,pt,0))
-        : undefined;
-
-    const wptStrAry= hasWCSProjection(plot) ?
-        imPtAry.map( (pt) => cc.getWorldCoords(pt)).map( (wpt) => wpt.toString()) : undefined;
-    const dataTableReq= makeTblRequest('ExtractFromImage', makePlaneTitle('Extract Line',pv,plot,titleCnt), {
-            startIdx : 0,
-            extractionType: 'line',
-            ptAry: JSON.stringify(imPtAry.map((pt) => pt.toString())),
-            wptAry: JSON.stringify(wptStrAry),
-            wlAry,
-            wlUnit: getWaveLengthUnits(plot),
-            filename,
-            refHDUNum,
-            plane,
-            extractionSize,
-            [ServerParams.COMBINE_OP]: combineOp,
-            allMatchingHDUs: true,
-        },
-        {tbl_id});
-    save ? doDispatchTableSaving(dataTableReq, doOverlay) : doDispatchTable(dataTableReq, doOverlay);
-    idCnt++;
-    titleCnt++;
-    return tbl_id;
-}
-
-function makePlaneTitle(rootStr, pv,plot,cnt) {
-    let hduStr='';
-    let cubeStr='';
-    if (isMultiHDUFits(pv)) {
-        if (getExtName(plot)) hduStr= `- ${getExtName(plot)}`;
-        else hduStr= `- HDU#${getHDU(plot)} `;
-    }
-    if (isImageCube(plot)) cubeStr= `- Plane: ${getImageCubeIdx(plot)+1}`;
-    return `${rootStr} ${cnt}${hduStr}${cubeStr}`;
-}
-
-function keepPointsExtraction(ptAry,pv, plot, filename,refHDUNum,plane,extractionSize, combineOp, save=false,doOverlay=true) {
-    if (!pv || !plot  || !filename) {
-        showInfoPopup('Plot no longer exist. Cannot extract.');
-        return;
-    }
-    const tbl_id= getNextTblId();
-    const cc= CysConverter.make(plot);
-    const wlAry= hasPixelLevelWLInfo(plot) ?
-        ptAry.map( (pt) => getPtWavelength(plot,pt,0))
-        : undefined;
-    const wptStrAry=
-        hasWCSProjection(plot) ?
-            ptAry.map( (pt) => cc.getWorldCoords(pt)).map( (pt) => pt.toString()) :
-            undefined;
-    const dataTableReq= makeTblRequest('ExtractFromImage', makePlaneTitle('Points',pv,plot,titleCnt),
-        {
-            startIdx : 0,
-            extractionType: 'points',
-            ptAry: JSON.stringify(ptAry.map((pt) => pt.toString())),
-            wptAry: JSON.stringify(wptStrAry),
-            wlAry,
-            wlUnit: getWaveLengthUnits(plot),
-            filename,
-            refHDUNum,
-            plane,
-            extractionSize,
-            [ServerParams.COMBINE_OP]: combineOp,
-            allMatchingHDUs: true,
-        },
-        {tbl_id});
-    save ? doDispatchTableSaving(dataTableReq,doOverlay) : doDispatchTable(dataTableReq,doOverlay);
-    idCnt++;
-    titleCnt++;
-    return tbl_id;
-}
-
-const plotlyDivStyle= { border: '1px solid a5a5a5', borderRadius: 5, width: '100%', height: '100%' };
-
-
-function makePlotlyLayoutObj(title,xAxis,yAxis, reversed=false) {
-    const font= {size: 12};
-    return {
-        hovermode: 'closest',
-        title: {text: title, font},
-        showlegend: false,
-        xaxis: {
-            title: {text: xAxis, font},
-            gridLineWidth: 1,
-            type: 'linear',
-            lineColor: '#e9e9e9',
-            zeroline: false,
-            tickfont: font,
-            exponentformat:'e',
-            autorange: reversed ? 'reversed': true,
-        },
-        yaxis: {
-            title: {text: yAxis, font},
-            gridLineWidth: 1,
-            type: 'linear',
-            lineColor: '#e9e9e9',
-            exponentformat:'e'
-        },
-        margin: { l: 50, r: 50, b: 50, t: 30, pad: 2 }
-    };
-}
-
-
-const dataRoot= { displaylogo: false, mode: 'markers', hoverinfo: 'text', hovermode: 'closest'};
-
-function makePlotlyDataObj(xDataAry, yDataAry,x,y,ttXStr,ttYStr, makeXDesc= (i)=> xDataAry[i], highlightXDesc=x+'') {
-    const result= [
-        {
-            ...dataRoot,
-            type: xDataAry?.length>6000 ? 'scattergl' : 'scatter',
-            marker: { symbol: 'circle', size: 6, color: 'rgba(63, 127, 191, 0.5)' },
-            x: xDataAry,
-            y: yDataAry,
-            hovertext: Array.from(yDataAry).map((d,i) => `<span> ${ttXStr} = ${makeXDesc(i)}  <br> ${ttYStr}= ${d}   </span>`),
-            textfont: {color: 'rgba(31,119,180,0.5)'},
-        },
-        {
-            ...dataRoot,
-            type: 'scatter',
-            marker: { symbol: 'circle', size: 6, color: 'rgba(255, 200, 0, 1)' },
-            x: [x],
-            y: [y],
-            hovertext: [`<span> ${ttXStr} = ${highlightXDesc}  <br> ${ttYStr} = ${y}   </span>`],
-        }
-    ];
-    return result;
-}
-
-
-function genSliceChartData(plot, ipt1,ipt2, xDataAry,yDataAry,x,y, pointSize, combineOp, title, reversed) {
-    const unitStr= hasWCSProjection(plot) ? ' (arcsec)' : '';
-    const yUnits= getFluxUnits(plot,Band.NO_BAND);
-    const yAxisLabel= getExtName(plot) || 'HDU# '+getHDU(plot);
-    return {
-        plotlyDivStyle,
-        plotlyData: makePlotlyDataObj(xDataAry, yDataAry, x, y, 'Offset'+unitStr, yAxisLabel),
-        plotlyLayout: makePlotlyLayoutObj(title, 'Offset'+unitStr,
-            `${yAxisLabel} (${yUnits})${pointSize > 1 ? ` (${pointSize}x${pointSize} ${combineOp.toLowerCase()})` : ''}`, reversed),
-    };
-}
-
-function genPointChartData(plot, dataAry,imPtAry, x,y, pointSize, combineOp, title, chartXAxis, activeIdx) {
-
-    const xAxis= chartXAxis==='imageX' ? imPtAry.map( (pt) => pt.x) : imPtAry.map( (pt) => pt.y);
-    const xAxisTitle= chartXAxis==='imageX' ? 'Image X': 'Image Y';
-    const xLabel= (i) => `(${imPtAry[i].x},${imPtAry[i].y})`;
-    const yUnits= getFluxUnits(plot,Band.NO_BAND);
-    const yAxisLabel= getExtName(plot) || 'HDU# '+getHDU(plot);
-
-    return {
-        plotlyDivStyle,
-        plotlyData: makePlotlyDataObj(xAxis, dataAry, x, y, xAxisTitle, yAxisLabel,
-          xLabel , xLabel(activeIdx)),
-        plotlyLayout: makePlotlyLayoutObj(title, xAxisTitle, `${yAxisLabel} (${yUnits})${pointSize > 1 ? ` (${pointSize}x${pointSize} ${combineOp.toLowerCase()})` : ''}`),
-    };
-}
-
-
-
-function genZAxisChartData(imPt, pv, dataAry,x,y, pointSize, combineOp, title) {
-    const plot= primePlot(pv);
-    const hasWL= hasWLInfo(plot);
-    const xAry= hasWL ? getAllWaveLengthsForCube(pv,imPt) : dataAry.map( (d,i) => i+1);
-    const highlightX= hasWL ? getPtWavelength(primePlot(pv), imPt,x)  : x+1;
-    const highlightXLabel=
-        isNaN(highlightX) ?
-            `${highlightX+''} (plane: ${x+1})` :
-            `${sprintf('%5.4f',highlightX)} (plane: ${x+1})`;
-
-    const format= (v) => isNaN(v) ? '' : sprintf('%5.4f',v);
-    const xLabel= (i) => `${format(getPtWavelength(primePlot(pv), imPt,x))} (plane: ${i+1})`;
-
-    const plotlyData= hasWL ?
-       makePlotlyDataObj(xAry,dataAry,highlightX,y, 'Wavelength', 'z-azis', xLabel, highlightXLabel) :
-       makePlotlyDataObj(xAry,dataAry,highlightX,y,'Plane','z-azis');
-
-    return {
-        plotlyDivStyle,
-        plotlyData,
-        plotlyLayout: makePlotlyLayoutObj(title,hasWL?'Wavelength':'cube plane', `Z-Axis${pointSize>1?` (${pointSize}x${pointSize} ${combineOp.toLowerCase()})`:''}`),
-    };
-}
 

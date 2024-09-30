@@ -368,7 +368,7 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
 
 
 
-    p.bunit = parse.getValue('BUNIT');
+    p.bunit = parse.getValue(HdrConst.BUNIT);
     if (!p.bunit) p.bunit = 'DN';
     p.fluxUnits= getFluxUnits(parse, zeroHeader);
 
@@ -378,7 +378,7 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
 
 
 function getFluxUnits(parse, zeroHeader) {
-    let bunit = parse.getValue('BUNIT', 'NONE');
+    let bunit = parse.getValue(HdrConst.BUNIT, 'NONE');
     if (bunit==='NONE') {
         bunit= zeroHeader  ? getHeader(zeroHeader, 'BUNIT', 'DN') : 'DN';
     }

@@ -201,7 +201,7 @@ function updateHpxCatalogDrawingLayer(tbl_id, tableRequest, highlightedRow) {
     const catDL= dispatchCreateDrawLayer(HpxCatalog.TYPE_ID,
         {catalogId, tbl_id, title, highlightedRow, color, layersPanelLayoutId: catalogId});
     const plotIdAry= visRoot().plotViewAry
-        .filter( (pv) => pv.useForSearchResults)
+        .filter( (pv) => pv.plotViewCtx.useForSearchResults)
         .map( (pv) => pv.plotId);
     attachToPlot(catalogId,plotIdAry);
 

@@ -120,13 +120,14 @@ export async function callGetLineExtractionAry(plot, hduNum, plane, pt, pt2, ptS
         });
 }
 
-export async function callGetPointExtractionAry(plot, hduNum, plane, ptAry, ptSize, combineOp, relatedHDUS) {
+export async function callGetPointExtractionAry(plot, hduNum, plane, ptAry, ptSizeX, ptSizeY, combineOp, relatedHDUS) {
     return fetchExtraction(plot,
         {
             [ServerParams.EXTRACTION_TYPE]: 'points',
             [ServerParams.STATE]: plot.plotState.toJson(false),
             [ServerParams.PTARY] : JSON.stringify(ptAry.map( (pt) => pt.toString())),
-            [ServerParams.POINT_SIZE] : ptSize+'',
+            [ServerParams.POINT_SIZE_X] : ptSizeX+'',
+            [ServerParams.POINT_SIZE_Y] : ptSizeY+'',
             [ServerParams.COMBINE_OP] : combineOp,
             [ServerParams.PLANE] : plane+'',
             [ServerParams.HDU_NUM] : hduNum+'',

@@ -6,6 +6,7 @@ import DrawLayerCntlr, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js'
 import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef,Style, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
+import {makeImagePt} from '../visualize/Point';
 import {MouseState} from '../visualize/VisMouseSync.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import CsysConverter from '../visualize/CsysConverter.js';
@@ -29,6 +30,10 @@ const TYPE_ID= 'EXTRACT_LINE_TOOL_TYPE';
 const selHelpText='Click and drag to extract a line';
 const editHelpText='Click and drag at either end to adjust extraction';
 
+export const LINE_SELECTION= 'line';
+export const COLUMN_SELECTION= 'column';
+export const FREE_SELECTION= 'free';
+
 const factoryDef= makeFactoryDef(TYPE_ID,creator,null,getLayerChanges,onDetach);
 
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
@@ -48,7 +53,7 @@ export function extractLineToolStartActionCreator(rawAction) {
 
 
 
-function addDistAttributesToPlots(drawLayer, plotId, sel) {
+export function addLineDistAttributesToPlots(drawLayer, plotId, sel) {
     const srcPlot= primePlot(visRoot(),plotId);
     const cc= CsysConverter.make(srcPlot);
     const srcWorld = hasWCSProjection(cc);
@@ -84,7 +89,7 @@ export function extractLineToolEndActionCreator(rawAction) {
         drawLayer= getDrawLayerById(getState()[DRAWING_LAYER_KEY], drawLayer.drawLayerId); // make sure it is the most recent version
         const sel= {pt0:drawLayer.firstPt,pt1:drawLayer.currentPt};
         if (sel.pt0===sel.pt1) return;
-        addDistAttributesToPlots(drawLayer,plotId,sel);
+        addLineDistAttributesToPlots(drawLayer,plotId,sel);
     };
 }
 
@@ -109,6 +114,7 @@ function creator() {
         offsetCal: false,
         moveHead: true,      // drag start from head or not
         vertexDef: {points:null, pointDist:EDIT_DISTANCE},
+        selectionType: FREE_SELECTION,
     };
     return DrawLayer.makeDrawLayer( `${ID}-${idCnt++}`, TYPE_ID, 'Extract Line Tool',
                                      options, makeDrawingDef('red'), actionTypes, pairs, exclusiveDef, getCursor );
@@ -157,7 +163,7 @@ function getLayerChanges(drawLayer, action) {
 /**
  * @param {Point} firstPt
  * @param {Point} currPt
- * @param {Point} drawAry
+ * @param  drawAry
  * @return {object}
  */
 function makeBaseReturnObj(firstPt,currPt,drawAry )  {
@@ -171,15 +177,40 @@ function makeBaseReturnObj(firstPt,currPt,drawAry )  {
 
 function dealWithMods(drawLayer,action) {
     const {changes,plotIdAry}= action.payload;
-    if (Object.keys(changes).includes('activePt')) {
+    if (Object.keys(changes).includes('activePt') || Object.keys(changes).includes('selectionType')) {
         let plot= primePlot(visRoot());
         if (!plotIdAry.includes(plot.plotId)) plot= primePlot(visRoot(),plotIdAry[0]);
         const cc= CsysConverter.make(plot);
         if (!cc) return null;
-        const {activePt}= changes;
-        const {firstPt,currentPt}= drawLayer;
-        const drawAry= makeSelectObj(drawLayer.firstPt, drawLayer.currentPt, activePt, drawLayer.offsetCal, cc);
-        return {activePt, ...makeBaseReturnObj(firstPt, currentPt,drawAry)};
+        const {activePt=drawLayer.activePoint, selectionType=drawLayer.selectionType}= changes;
+        let {firstPt,currentPt}= drawLayer;
+        if (!firstPt || !currentPt) return;
+        if (selectionType!==drawLayer.selectionType) {
+            const {dataWidth,dataHeight}= plot;
+            if (selectionType===LINE_SELECTION) {
+                firstPt= makeImagePt(0,currentPt.y);
+                currentPt= makeImagePt(dataWidth-1, currentPt.y);
+            }
+            else if (selectionType===COLUMN_SELECTION) {
+                firstPt= makeImagePt(currentPt.x,0);
+                currentPt= makeImagePt(currentPt.x,dataHeight-1);
+            }
+        }
+        const drawAry= makeSelectObj(firstPt, currentPt, activePt, selectionType, drawLayer.offsetCal, cc);
+        return {activePt, selectionType,firstPt, currentPt, ...makeBaseReturnObj(firstPt, currentPt,drawAry)};
+    }
+    else if (Object.keys(changes).includes('newFirst') || Object.keys(changes).includes('newCurrent') ){
+        const {newFirst,newCurrent, newSelectionType=drawLayer.selectionType}= changes;
+        if (!changes.plotId) return;
+        const plot= primePlot(visRoot(),changes.plotId);
+        const cc= CsysConverter.make(plot);
+        if (!newFirst) {
+            return makeBaseReturnObj(newFirst, newCurrent,[]);
+        }
+        const drawAry= makeSelectObj(newFirst, newCurrent, undefined, drawLayer.selectionType, drawLayer.offsetCal, cc);
+        return { firstPt: newFirst, currentPt:newCurrent, activePt:undefined, selectionType: newSelectionType,
+            ...makeBaseReturnObj(newFirst, newCurrent,drawAry)
+        };
     }
     return null;
 }
@@ -188,7 +219,7 @@ function attach(drawLayer) {
     const plotId= drawLayer.plotIdAry[0];
     if (!plotId || !drawLayer.firstPt || !drawLayer.currentPt) return;
     const sel= {pt0:drawLayer.firstPt,pt1:drawLayer.currentPt};
-    setTimeout( () => addDistAttributesToPlots(drawLayer, plotId,sel), 3);
+    setTimeout( () => addLineDistAttributesToPlots(drawLayer, plotId,sel), 3);
 }
 
 function getMode(plot) {
@@ -199,6 +230,10 @@ function getMode(plot) {
 
 function start(drawLayer, action) {
     const {imagePt,plotId,shiftDown}= action.payload;
+    if (drawLayer.selectionType===LINE_SELECTION || drawLayer.selectionType===COLUMN_SELECTION) {
+        const newDl= {...drawLayer, ...setupSelect(imagePt)};
+        return drag(newDl, action);
+    }
     const plot= primePlot(visRoot(),plotId);
     const mode= getMode(plot);
     if (!plot || shiftDown) return;
@@ -217,14 +252,15 @@ function start(drawLayer, action) {
         if (!testPt) return {};
         retObj.activePt= undefined;
 
-        if (screenDistance(testPt,spt)<EDIT_DISTANCE) {   // swap the first and current point, redraw the distance tool
+        if (screenDistance(testPt,spt)<EDIT_DISTANCE && drawLayer.selectionType==='free') {   // swap the first and current point, redraw the distance tool
             retObj.moveHead = (idx === 1);
             retObj.firstPt= cc.getImageWorkSpaceCoords(ptAry[0]);
             retObj.currentPt= cc.getImageWorkSpaceCoords(ptAry[1]);
             retObj.activePt= undefined;
             if (!retObj.firstPt || !retObj.currentPt) return {};
 
-            const drawAry = makeSelectObj(retObj.firstPt, retObj.currentPt, undefined, drawLayer.offsetCal, CsysConverter.make(plot));
+            const drawAry = makeSelectObj(retObj.firstPt, retObj.currentPt, undefined, drawLayer.selectionType,
+                drawLayer.offsetCal, CsysConverter.make(plot));
             return Object.assign(retObj, makeBaseReturnObj(retObj.firstPt, retObj.currentPt, drawAry));
         }
         else {
@@ -241,12 +277,25 @@ function drag(drawLayer,action) {
     const plot= primePlot(visRoot(),plotId);
     const cc= CsysConverter.make(plot);
     if (!cc || shiftDown) return;
+    const {dataWidth,dataHeight}= plot;
+    let newFirst, newCurrent;
 
-    const newFirst = drawLayer.moveHead ? drawLayer.firstPt : imagePt;
-    const newCurrent = drawLayer.moveHead ? imagePt : drawLayer.currentPt;
+    if (drawLayer.selectionType===LINE_SELECTION) {
+        newFirst= makeImagePt(0,imagePt.y);
+        newCurrent= makeImagePt(dataWidth-1, imagePt.y);
+    }
+    else if (drawLayer.selectionType===COLUMN_SELECTION) {
+        newFirst= makeImagePt(imagePt.x,0);
+        newCurrent= makeImagePt(imagePt.x,dataHeight-1);
+    }
+    else {
+        newFirst = drawLayer.moveHead ? drawLayer.firstPt : imagePt;
+        newCurrent = drawLayer.moveHead ? imagePt : drawLayer.currentPt;
+    }
 
-    const drawAry= makeSelectObj(newFirst, newCurrent, undefined, drawLayer.offsetCal, cc);
-    const line= Object.assign({firstPt: newFirst, currentPt:newCurrent, activePt:undefined}, makeBaseReturnObj(newFirst, newCurrent,drawAry));
+    const drawAry= makeSelectObj(newFirst, newCurrent, undefined, drawLayer.selectionType, drawLayer.offsetCal, cc);
+    const line= {firstPt: newFirst, currentPt:newCurrent, activePt:undefined,
+        ...makeBaseReturnObj(newFirst, newCurrent,drawAry)};
     return line;
 }
 
@@ -286,11 +335,12 @@ const screenDistance= (pt1,pt2) => computeScreenDistance(pt1.x,pt1.y,pt2.x,pt2.y
  * @param {Point} firstPt
  * @param {Point} currentPt
  * @param {Point} activePt
+ * @param {String} selectionType
  * @param {boolean} offsetCal
  * @param {CysConverter} cc
  * @return {Array}
  */
-function makeSelectObj(firstPt,currentPt, activePt, offsetCal, cc) {
+function makeSelectObj(firstPt,currentPt, activePt, selectionType, offsetCal, cc) {
     const ptAry= [firstPt,currentPt];
     let anyPt1;    // for ends of all ruler vectors
     let anyPt2;

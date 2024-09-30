@@ -374,6 +374,7 @@ public class FitsReadUtil {
         return getBitPix(h) > 0 ? h.getDoubleValue("BLANK", Double.NaN) : Double.NaN;
     }
 
+    public static String getBUnit(Header h) { return h.getStringValue("BUNIT", ""); }
     public static String getExtName(Header h) { return h.getStringValue("EXTNAME"); }
     public static String getExtType(Header h, String defVal) { return h.getStringValue("EXTTYPE",defVal); }
     public static String getUtype(Header h) { return h.getStringValue("UTYPE"); }

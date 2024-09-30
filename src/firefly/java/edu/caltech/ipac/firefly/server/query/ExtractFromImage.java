@@ -30,7 +30,8 @@ import java.util.Map;
                 @ParamDoc(name="fluxUnit", desc="flux units. if defined"),
                 @ParamDoc(name="filename", desc="filename on the server"),
                 @ParamDoc(name="refHDUNum", desc="hdu number to extract"),
-                @ParamDoc(name="extractionSize", desc="number of the square size of the extract, i.e. 4 would be 4x4"),
+                @ParamDoc(name="extractionSizeX", desc="number of the square size of the extract, i.e. 4 would be 4x4"),
+                @ParamDoc(name="extractionSizeY", desc="number of the square size of the extract, i.e. 4 would be 4x4"),
                 @ParamDoc(name="allMatchingHDUs", desc="extract every HDU that matches the refHDU")
         })
 public class ExtractFromImage extends EmbeddedDbProcessor {
@@ -39,14 +40,16 @@ public class ExtractFromImage extends EmbeddedDbProcessor {
     public static final String EXTRACTION_TYPE = "extractionType";
     public static final String FILENAME = "filename";
     public static final String REF_HDU_NUM = "refHDUNum";
-    public static final String EXTRACTION_SIZE = "extractionSize";
+    public static final String EXTRACTION_SIZE_X = "extractionSizeX";
+    public static final String EXTRACTION_SIZE_Y = "extractionSizeY";
     public static final String ALL_MATCHING_HDUS = "allMatchingHDUs";
 
     @Override
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
         String extType = req.getParam(EXTRACTION_TYPE);
         String filename = req.getParam(FILENAME);
-        int extractionSize = req.getIntParam(EXTRACTION_SIZE, 1);
+        int ptSizeX = req.getIntParam(EXTRACTION_SIZE_X, 1);
+        int ptSizeY = req.getIntParam(EXTRACTION_SIZE_Y, 1);
         int refHduNum = req.getIntParam(REF_HDU_NUM, -1);
         int plane = req.getIntParam(ServerParams.PLANE, -1);
         FitsExtract.CombineType ct= Enum.valueOf(FitsExtract.CombineType.class,req.getParam(ServerParams.COMBINE_OP,"AVG"));
@@ -60,20 +63,20 @@ public class ExtractFromImage extends EmbeddedDbProcessor {
                 checkZAxisParams(pt, filename, refHduNum);
                 Map<Integer,String> fluxUnit= makeMapOfUnitsFromParam(req);
                 return FITSExtractToTable.getCubeZaxisAsTable(pt, wpt, filename, refHduNum, allMatchingHDUs,
-                        extractionSize, ct, wlAry,wlUnit,fluxUnit);
+                        ptSizeX, ct, wlAry,wlUnit,fluxUnit);
             }
             else if (extType.equals("line")) {
                 ImagePt[] ptAry= SrvParam.getImagePtAryFromJson(req.getParam(ServerParams.PTARY));
                 WorldPt[] wptAry= SrvParam.getWorldPtAryFromJson(req.getParam(ServerParams.WPT_ARY));
                 checkPointParams(ptAry, plane, filename, refHduNum);
                 return FITSExtractToTable.getLineSelectAsTable(ptAry, wptAry, filename, refHduNum, plane, allMatchingHDUs,
-                        extractionSize, ct, wlAry, wlUnit);
+                        ptSizeX, ptSizeY, ct, wlAry, wlUnit);
             } else if (extType.equals("points")) {
                 ImagePt[] ptAry= SrvParam.getImagePtAryFromJson(req.getParam(ServerParams.PTARY));
                 WorldPt[] wptAry= SrvParam.getWorldPtAryFromJson(req.getParam(ServerParams.WPT_ARY));
                 checkPointParams(ptAry, plane, filename, refHduNum);
                 return FITSExtractToTable.getPointsAsTable(ptAry, wptAry, filename, refHduNum, plane,
-                        allMatchingHDUs, extractionSize, ct, wlAry, wlUnit);
+                        allMatchingHDUs, ptSizeX, ptSizeY, ct, wlAry, wlUnit);
             }
         } catch (IOException | FitsException e) {
             throw new IllegalArgumentException("Could not make a table from extracted data");
