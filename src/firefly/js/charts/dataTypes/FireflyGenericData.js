@@ -5,7 +5,7 @@ import {get, isArray, isUndefined, uniqueId, isNil} from 'lodash';
 import {getTblById, getColumns, getColumn, doFetchTable, stripColumnNameQuotes} from '../../tables/TableUtil.js';
 import {cloneRequest, makeSubQueryRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {dispatchChartUpdate, dispatchError, getChartData, getTraceSymbol, hasUpperLimits, hasLowerLimits} from '../ChartsCntlr.js';
-import {formatColExpr, getDataChangesForMappings, updateHighlighted, updateSelected, isScatter2d, getMaxScatterRows, getMinScatterGLRows} from '../ChartUtil.js';
+import {formatColExpr, getDataChangesForMappings, updateHighlighted, updateSelection, isScatter2d, getMaxScatterRows, getMinScatterGLRows} from '../ChartUtil.js';
 import {getTraceTSEntries as heatmapTSGetter} from './FireflyHeatmap.js';
 import {errorTypeFieldKey} from '../ui/options/Errors.jsx';
 
@@ -91,7 +91,7 @@ async function fetchData(chartId, traceNum, tablesource) {
         const {activeTrace} = getChartData(chartId);
         if (isUndefined(activeTrace) || activeTrace === traceNum) {
             updateHighlighted(chartId, traceNum, highlightedRow);
-            updateSelected(chartId, selectInfo);
+            updateSelection(chartId, selectInfo);
         }
     } else {
         dispatchError(chartId, traceNum, 'No data');
