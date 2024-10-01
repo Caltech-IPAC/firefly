@@ -1,18 +1,45 @@
 # Notes for next Release
 
-## Version 2024.3 (unreleased, rough target: Sept 15)
+## Version 2024.3 (unreleased, rough target: Oct 8)
 - 2024.3 - development
   - docker tag: `nightly`
 
 
 ### _Notes_
-#### This release has a lot of bug fixes and clean up after the JoyUI conversion. It also includes some long requested updates.
+#### This is probably one of new most new feature pack releases of firefly in several years. It also includes a many, many bug fixes, clean up and optimization (not all list below). 
+
+
+#### Major Features
+- Tables: parquet support- Firefly-1477 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1582)) 
+- Tables: internal data optimization using duckdb - Firefly-1477 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1582)) 
+- Tables: Color in table tabs- Firefly-1510 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1600)) 
+- Images/HiPS: hierarchical catalogs- Firefly-1437 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1607)) 
+- Data product viewer: recognizes service def cutouts- Firefly-1491 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1580)) 
 
 #### New Features
+- Images: Improve image sorting and filtering- Firefly-1448 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1543))
+- Images: Improve line extraction- Firefly-1560 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1627))
+- Table: Improve table of fits image processing- Firefly-1180 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1627))
+- Table: runid job name is table name- Firefly-1533 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1618))
+- TAP: Save users added TAP servers as preference- Firefly-1558 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1623)) 
+- TAP: set search title- Firefly-1510 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1600)) 
 
+#### Bug fix / cleanup
+- Fixed: Firefly-1535, reversal of axes bug ([PR](https://github.com/Caltech-IPAC/firefly/pull/1632))
+- Fixed: Dialog sizing: Firefly-1555 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1626)), Firefly-1553 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1624))
+- Fixed: Chart related bugs- Firefly-1521 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1614))
+- Fixed: Images: Color dropdown color wrongly invert in dark mode- Firefly-1547 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1612))
+- Fixed: Charts: changing x/y axis does not work- IRSA-6084 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1608))
+- Fixed: not parsing gaia datalink correctly- Firefly-1529 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1601))
+- Fixed: chart is not recognizing short- Firefly-1516 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1595)) 
+- Fixed: popup not closing until second click- Firefly-1514 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1589)) 
+- Cleanup: TAP: ADQL dark mode screen- Firefly-1509 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1590)) 
 
-#### Bug fix 
-
+#### Infrastructure
+- Java 21-  Firefly-1559 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1628))
+- plot.ly 2.32-  Firefly-1504 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1579))
+- nom.tam.fits 1.20-  Firefly-1512 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1585))
+                                        
 ##### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2024.3+label%3abug)
 - [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2024.3+)
