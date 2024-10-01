@@ -49,7 +49,7 @@ export const  URL_ID = 'urlUpload';
 const  WS_ID = 'wsUpload';
 const SINGLE_ROW_AS_TABLE= 'singleRowImageAsTable';
 
-const TABLE_MSG = 'Custom catalog or table in IPAC, CSV, TSV, VOTABLE, or FITS table format';
+const TABLE_MSG = 'Custom catalog or table in IPAC, CSV, TSV, VOTABLE, Parquet, or FITS table format';
 const REGION_MSG = 'A ds9 region file';
 const IMAGE_MSG = 'Images in FITS format, including multi-extension FITS files with images, tables, or a mixture of both';
 const MOC_MSG = 'A Multi-Order Coverage Map (MOC) in FITS format';
