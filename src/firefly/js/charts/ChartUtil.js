@@ -8,8 +8,10 @@
  * Created by tatianag on 3/17/16.
  */
 
-import {assign, cloneDeep, flatten, get, has, isArray, isEmpty, isObject, isString,
-    isUndefined, merge, pick, range, set, uniqueId} from 'lodash';
+import {
+    assign, flatten, get, has, isArray, isEmpty, isObject, isString,
+    isUndefined, merge, pick, range, set, uniqueId
+} from 'lodash';
 import shallowequal from 'shallowequal';
 
 import {getAppOptions} from '../core/AppDataCntlr.js';
@@ -44,6 +46,7 @@ import {getColValidator} from './ui/ColumnOrExpression.jsx';
 export const DEFAULT_ALPHA = 0.5;
 
 export const SCATTER = 'scatter';
+export const SCATTERGL = 'scattergl';
 export const HEATMAP = 'heatmap';
 
 export const SELECTED_COLOR = 'rgba(255, 200, 0, 1)';
@@ -247,7 +250,7 @@ export function makeHistogramParams(params) {
  */
 export function getRowIdx(traceData, pointIdx) {
     // firefly.rowIdx array in the trace data connects plotly points to table row indexes
-    return Number(get(traceData, `firefly.rowIdx.${pointIdx}`, pointIdx));
+    return get(traceData, `firefly.rowIdx.${pointIdx}`, pointIdx);
 }
 
 /**
@@ -321,19 +324,19 @@ export function combineAllTraceFrom(chartId, selIndexes, newTraceProps) {
 
 export function newTraceFrom(data, selIndexes, newTraceProps, traceAnnotations) {
 
-    const sdata = cloneDeep(pick(data, ['x', 'y', 'z', 'legendgroup', 'error_x', 'error_y', 'text', 'hovertext', 'marker', 'hoverinfo', 'firefly' ]));
+    const sdata = simpleCloneDeep(pick(data, ['x', 'y', 'z', 'legendgroup', 'error_x', 'error_y', 'text', 'hovertext', 'marker', 'hoverinfo', 'firefly' ]));
     Object.assign(sdata, {showlegend: false, type: get(data, 'type', 'scatter'), mode: 'markers'});
 
     // the rowIdx doesn't exist for generic plotly chart case
     if (isScatter2d(get(data, 'type', '')) &&
         !get(sdata, 'firefly.rowIdx') &&
         get(sdata, 'x.length', 0) !== 0) {
-        const rowIdx = range(get(sdata, 'x.length')).map(String);
+        const rowIdx = Array.from({ length: sdata.x.length }, (_, i) => i);
         set(sdata, 'firefly.rowIdx', rowIdx);
     }
 
     if (isArray(traceAnnotations) && traceAnnotations.length > 0) {
-        const annotations = cloneDeep(traceAnnotations);
+        const annotations = simpleCloneDeep(traceAnnotations);
         const color = get(newTraceProps, 'marker.color');
 
         flattenAnnotations(annotations).forEach((a) => {a && (a.arrowcolor = color);});
@@ -374,13 +377,14 @@ export function flattenAnnotations(annotations) {
     return [];
 }
 
-export function updateSelected(chartId, selectInfo) {
+export function updateSelection(chartId, selectInfo) {
     const {data, activeTrace=0} = getChartData(chartId);
+
+    if (!data?.some((t) => isSelectionSupported(t?.type))) return;      // skip if no trace support selection
+
     const selectInfoCls = SelectInfo.newInstance(selectInfo);
     const selIndexes = getSelIndexes(data, selectInfoCls, activeTrace);
-              // added a check for very long selections, this will disable charts showing selection in this case.
-              // The application locks up without it.
-    if (selIndexes && selIndexes.length<getMaxScatterRows()) {
+    if (selIndexes) {
         dispatchChartSelect({chartId, selIndexes});
     }
 }
@@ -502,7 +506,7 @@ export function handleTableSourceConnections({chartId, data, fireflyData}) {
                     const tableModel = getTblById(traceTS.tbl_id);
                     const {highlightedRow, selectInfo={}} = tableModel;
                     updateHighlighted(chartId, idx, highlightedRow);
-                    updateSelected(chartId, selectInfo);
+                    updateSelection(chartId, selectInfo);
                 }
             }
             if (!traceTS._cancel) traceTS._cancel = setupTableWatcher(chartId, traceTS, idx);
@@ -575,7 +579,7 @@ function updateChartData(chartId, traceNum, tablesource, action={}) {
         const {activeTrace=0} = getChartData(chartId);
         if (traceNum !== activeTrace) return;
         const {selectInfo={}} = action.payload;
-        updateSelected(chartId, selectInfo);
+        updateSelection(chartId, selectInfo);
     } else {
         if (!isFullyLoaded(tbl_id)) return;
         const tableModel = getTblById(tbl_id);
@@ -734,6 +738,10 @@ export function applyDefaults(chartData={}, resetColor = true) {
         // default dragmode is select if box selection is supported
         type && !chartData.layout.dragmode && (chartData.layout.dragmode = isBoxSelectionSupported(type) ? 'select' : 'zoom');
     });
+}
+
+export function isSelectionSupported(type) {
+    return [SCATTER, SCATTERGL].includes(type);
 }
 
 export function isBoxSelectionSupported(type) {
@@ -1172,4 +1180,24 @@ export function hasTracesFromSameTable(chartId) {
     const {data=[], fireflyData=[]} = getChartData(chartId) || {};
     const tracesTblIds = data.map(({tbl_id}, traceIdx) => tbl_id ?? fireflyData?.[traceIdx]?.tbl_id);
     return tracesTblIds.every((traceTblId, idx, arr) => traceTblId===arr[0] && traceTblId);
+}
+
+/**
+ * This implementation prioritizes performance over robustness.
+ * It only handles plain objects and arrays, skipping more complex cases such as Map, Set, Date, RegExp, and others.
+ * Also, it does not include type checking or manage circular references.
+ * @param {object} obj
+ * @returns {object} a deep clone of the given object
+ */
+function simpleCloneDeep(obj) {
+    if (obj === null || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(simpleCloneDeep);
+
+    const copy = {};
+    for (const key of Object.keys(obj)) {
+        if (obj.hasOwnProperty(key)) {
+            copy[key] = simpleCloneDeep(obj[key]);
+        }
+    }
+    return copy;
 }
