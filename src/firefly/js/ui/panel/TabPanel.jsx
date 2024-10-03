@@ -12,7 +12,7 @@ import {
 } from '@mui/joy';
 import {tabClasses} from '@mui/joy/Tab';
 import sizeMe from 'react-sizeme';
-import {omit, isString, pick} from 'lodash';
+import {omit, isString} from 'lodash';
 
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import {useFieldGroupConnector} from '../FieldGroupConnector.jsx';
@@ -252,8 +252,8 @@ function TabHeader({children, slotProps}) {
     useEffect(() => {
         const tbEl = toolbarEl.current;
         if (tbEl) {
-            const width = tbEl.getBoundingClientRect().width;
-            setMaxTitleWidth( (width/tabHeaders.length) -4 );   // -4 account for margin and padding
+            const maxWidth = calcOptimalTabSize(tbEl);
+            setMaxTitleWidth(maxWidth);
         }
     }, [toolbarEl?.current?.getBoundingClientRect()?.width]);
 
@@ -265,7 +265,8 @@ function TabHeader({children, slotProps}) {
                     overflow: 'auto',
                     scrollSnapType: 'x mandatory',              // make tab snap to the nearest tab
                     fontWeight: theme.fontWeight.md,
-                    '&::-webkit-scrollbar': { display: 'none' },
+                    scrollbarWidth: 'none',                     // ensure scrollbar is not visible
+                    '&::-webkit-scrollbar': { display: 'none' },// ensure scrollbar is not visible
                     [`& .${tabClasses.root}`]: {
                         '&[aria-selected="true"]': {            // apply this to the selected tab
                             bgcolor: activeBg,                  // set tab background to active color
@@ -324,7 +325,7 @@ function getHeaderFromTab({name, value, label, startDecorator, removable, onTabR
                     flex: 'none', scrollSnapAlign: 'start',
                     justifyContent: 'space-between',
                     maxWidth: maxTitleWidth,
-                    minWidth: 100
+                    minWidth: removable ? 60 : 40
                 }}
         >
             {startDecorator && (
@@ -412,5 +413,16 @@ function getAllTabId(children) {
     return React.Children.toArray(children).map((c) => getTabId(c.props)).filter((id) => id);
 }
 
+function calcOptimalTabSize(tabEl) {
+    const tabAry = Array.from(tabEl.children).filter((c) => c.offsetWidth > 0);        // ignore hidden children.
+    const availW = tabEl.getBoundingClientRect().width;
+    const maxW = availW/tabAry.length;
+    const relTabs = tabAry.filter((t) => t.offsetWidth > maxW);
+    if (relTabs.length === 0) return maxW;      // all tabs fit, no adjustment needed.
 
-
+    // these don't need adjusting. so, ignore them in calculation
+    const ignTabsW = tabAry.map((t) => t.offsetWidth)
+                           .filter((w) => w <= maxW).reduce((sum, w) => sum + w, 0);
+    const adjAvailWidth = availW - ignTabsW;
+    return adjAvailWidth/relTabs.length;
+}
