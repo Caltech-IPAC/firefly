@@ -37,7 +37,8 @@ public class DataGroupStarTable extends RandomStarTable {
 
     public ColumnInfo getColumnInfo(int idx) {
         String cname = columns.get(idx);
-        return convertToColumnInfo(dataGroup.getDataDefintion(cname), dataGroup.getData(cname, 0));
+        var sampleData = dataGroup.size() > 0 ? dataGroup.getData(cname, 0) : null ;
+        return convertToColumnInfo(dataGroup.getDataDefintion(cname), sampleData);
     }
 
     public Object getCell(long irow, int icol) throws IOException {

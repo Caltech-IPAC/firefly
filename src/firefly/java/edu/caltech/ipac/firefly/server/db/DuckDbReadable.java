@@ -8,12 +8,26 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataGroup;
+import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.io.VoTableReader;
+import edu.caltech.ipac.table.io.VoTableWriter;
+import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.download.Downloader;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author loi
@@ -25,20 +39,25 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
     DuckDbReadable(File dbFile) { super(dbFile); }
 
     public static TableUtil.Format guessFileFormat(String srcFile) {
+
+        // based on file extension
+        String fExt = FileUtil.getExtension(srcFile).toLowerCase();
+        switch (fExt) {
+            case Parquet.NAME, "parq" -> {
+                return TableUtil.Format.PARQUET;
+            }
+            case Csv.NAME -> {
+                return TableUtil.Format.CSV;
+            }
+            case Tsv.NAME -> {
+                return TableUtil.Format.TSV;
+            }
+        }
+
         DataGroup info = getInfoOrNull(new Parquet(), srcFile);
         if (info != null && info.getDataDefinitions() != null) {
             return TableUtil.Format.PARQUET;
         }
-
-        DataGroup csv = getInfoOrNull(new Csv(), srcFile);
-        DataGroup tsv = getInfoOrNull(new Tsv(), srcFile);
-
-        if (csv != null && tsv != null) {
-            return csv.getDataDefinitions().length > tsv.getDataDefinitions().length ? TableUtil.Format.CSV : TableUtil.Format.TSV;
-        }
-
-        if (csv != null) return TableUtil.Format.CSV;
-        if (tsv != null) return TableUtil.Format.TSV;
         return null;
     }
     private static DataGroup getInfoOrNull(DuckDbReadable duckReadable, String srcFile) {
@@ -90,10 +109,11 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
     /**
      * Ingest data directly from a source file.  This file can be local or remote.
      * @param source can be a local file path or a URL
+     * @param treq the initiating table request
      * @return FileInfo on the dbFile
      * @throws DataAccessException
      */
-    public FileInfo ingestDataDirectly(String source) throws DataAccessException {
+    public FileInfo ingestDataDirectly(String source, TableServerRequest treq) throws DataAccessException {
 
         String forTable = getDataTable();
         String sqlReadSource = sqlReadSource(source);
@@ -111,71 +131,29 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         String sql = createTableFromSelect(forTable, dataSqlWithIdx);
         jdbc.update(sql);
 
-        // copy dd
-        jdbc.update(createDDSql(forTable));
-        String insert = "INSERT INTO %s %s".formatted(forTable + "_DD", ddSql(sqlReadSource));
-        jdbc.update(insert);
-
-
-        // create META table
-        jdbc.update(createMetaSql(forTable));
-        String metaSql = metaSql(sqlReadSource);
-        if (metaSql != null) {
-            String meta = "INSERT INTO %s %s".formatted(forTable + "_META", metaSql(sqlReadSource));
-            jdbc.update(meta);
-        }
-
-        // copy aux
-        jdbc.update(createAuxDataSql(forTable));
-        String auxSql = auxSql(sqlReadSource);
-        if (auxSql != null) {
-            String insertAux = "INSERT INTO %s %s".formatted(forTable + "_AUX", auxSql);
-            jdbc.update(insertAux);
+        DataGroup tableMeta = getTableMeta(source, treq);     //collect all meta, then update the database with this information.
+        if (tableMeta != null) {
+            ddToDb(tableMeta, getDataTable());
+            metaToDb(tableMeta, getDataTable());
+            auxDataToDb(tableMeta, getDataTable());
         }
 
         StopWatch.getInstance().printLog("  ingestData: load data for " + forTable);
 
         StopWatch.getInstance().printLog("%s:ingestData for %s".formatted(getName(), forTable));
         return new FileInfo(getDbFile());
-    };
-
-    protected String ddSql(String sqlReadSource) {
-        String dd = """
-           SELECT
-           column_name as cname,
-           NULL as label,
-           NULL as type,
-           NULL as units,
-           NULL as null_str,
-           NULL as format,
-           NULL as fmtDisp,
-           NULL as width,
-           NULL as visibility,
-           true as sortable,
-           true as filterable,
-           NULL as fixed,
-           NULL as description,
-           NULL as enumVals,
-           NULL as ID,
-           NULL as precision,
-           NULL as ucd,
-           NULL as utype,
-           NULL as ref,
-           NULL as maxValue,
-           NULL as minValue,
-           NULL as links,
-           NULL as dataOptions,
-           NULL as arraySize,
-           NULL as cellRenderer,
-           NULL as sortByCols,
-           row_number() over() as order_index
-           FROM (DESCRIBE select * from %s)
-           """;
-        return dd.formatted(sqlReadSource);
     }
 
-    protected String metaSql(String sqlReadSource) { return null; }
-    protected String auxSql(String sqlReadSource) { return null; }
+    protected DataGroup getTableMeta(String source, TableServerRequest req) throws DataAccessException {
+        List<DataType> cols = new ArrayList<>();
+        DataGroup tbl = execQuery("DESCRIBE from %s".formatted(sqlReadSource(source)), null);
+        for (int i = 0; i < tbl.size(); i++) {
+            var cname = tbl.get(i).getStringData("column_name");
+            var ctype = DataType.descToType(tbl.get(i).getStringData("column_type"));
+            cols.add( new DataType(cname, ctype));
+        }
+        return new DataGroup(source, cols);
+    }
 
     public void export(TableServerRequest treq, OutputStream out) throws DataAccessException {
         throw new UnsupportedOperationException("Not supported yet.");
@@ -192,12 +170,52 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         public Parquet(File dbFile) { super(dbFile); }
         Parquet() { this((File)null);}
 
-//        protected String metaSql() {
-//            return "select decode(key) as key, decode(value) as value, true as isKeyword from parquet_kv_metadata('%s')".formatted(getSourceFile().getAbsolutePath());
-//        }
-
+        public String getName() { return NAME;}
         String sqlReadSource(String srcFile) {
             return "read_parquet('%s')".formatted(srcFile);
+        }
+
+        @Override
+        protected DataGroup getTableMeta(String source, TableServerRequest treq) throws DataAccessException {
+            var jdbc = JdbcFactory.getSimpleTemplate(getDbInstance());
+            try {
+                var votable = jdbc.queryForObject(
+                        "SELECT decode(value) FROM parquet_kv_metadata('%s') where key = 'IVOA.VOTable-Parquet.content'".formatted(source),
+                        String.class);
+                if (votable != null) {
+                    return VoTableReader.voToDataGroups(new ByteArrayInputStream(votable.getBytes()), false)[0];
+                }
+            } catch (Exception ignored) {}        // ignored if it can't read
+            return super.getTableMeta(source, treq);
+        }
+
+        public void export(TableServerRequest treq, OutputStream out) throws DataAccessException {
+            String selectSql = buildSqlFrom(treq, getDataTable());
+            try {
+                DataGroup headers = getHeaders(getDataTable(), StringUtils.split(treq.getInclColumns(), ","));
+                var voTable = new ByteArrayOutputStream();
+                VoTableWriter.save(voTable, headers, TableUtil.Format.VO_TABLE);
+                // FileUtil.writeStringToFile(File.createTempFile("votable-", ".vot", QueryUtil.getTempDir(treq)), voTable.toString(StandardCharsets.UTF_8));       // for testing only.  removed once done.
+                String exportSql = """
+                        COPY (%s) TO '%s' ( FORMAT PARQUET,
+                            KV_METADATA {
+                                'IVOA.VOTable-Parquet.type': 'Parquet-local-XML',
+                                'IVOA.VOTable-Parquet.encoding': 'utf-8',
+                                'IVOA.VOTable-Parquet.content': '%s',
+                                'IVOA.VOTable-Parquet.version': '1.0'
+                            }
+                        );""";
+
+                File tmp = File.createTempFile("duck-", "."+getName(), QueryUtil.getTempDir(treq));
+                execUpdate(exportSql.formatted(selectSql, tmp.getAbsolutePath(), voTable.toString(StandardCharsets.UTF_8).replaceAll("'", "''")));
+                if (tmp.canRead()) {
+                    Downloader downloader = new Downloader(new DataInputStream(new FileInputStream(tmp)), out, tmp.length());
+                    downloader.download();
+                    tmp.delete();
+                }
+            } catch (Exception e) {
+                throw new DataAccessException(e);
+            }
         }
     }
 
@@ -208,6 +226,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         public Csv(File dbFile) { super(dbFile); }
         Csv() { this((File)null);}
 
+        public String getName() { return NAME;}
         Character getDelimiter() { return ','; }
 
         String sqlReadSource(String srcFile) {
@@ -217,8 +236,13 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         public void export(TableServerRequest treq, OutputStream out) throws DataAccessException {
             String sql = buildSqlFrom(treq, getDataTable());
             try {
-                File tmp = File.createTempFile("duck-", ".csv", ServerContext.getTempWorkDir());
+                File tmp = File.createTempFile("export-", "."+getName(), ServerContext.getTempWorkDir());
                 execUpdate("COPY (%s) TO '%s' (HEADER, DELIMITER '%c')".formatted(sql, tmp.getAbsolutePath(), getDelimiter()));
+                if (tmp.canRead()) {
+                    Downloader downloader = new Downloader(new DataInputStream(new FileInputStream(tmp)), out, tmp.length());
+                    downloader.download();
+                    tmp.delete();
+                }
             } catch (Exception e) {
                 throw new DataAccessException(e);
             }
@@ -232,6 +256,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         public Tsv(File dbFile) { super(dbFile); }
         Tsv() { this((File)null);}
 
+        public String getName() { return NAME;}
         Character getDelimiter() { return '\t'; }
     }
 

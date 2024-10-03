@@ -15,6 +15,8 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.util.decimate.DecimateKey;
 
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.*;
+import static edu.caltech.ipac.table.DataGroup.ROW_IDX;
+import static edu.caltech.ipac.table.DataGroup.ROW_NUM;
 
 
 @SearchProcessorImpl(id = DecimationProcessor.ID)
@@ -62,6 +64,12 @@ public class DecimationProcessor extends TableFunctionProcessor {
 
         EmbeddedDbProcessor proc = (EmbeddedDbProcessor) SearchManager.getProcessor(sreq.getRequestId());
         String dataTbl = proc.getResultSetID(sreq);
+        if (!dbAdapter.hasTable(dataTbl)) {
+            // if table does not exist; load it.
+            sreq.setPageSize(1);    // load table into database; ignore results.
+            new SearchManager().getDataGroup(sreq);
+        }
+
         DecimateKey deciKey = getDeciKey(deciInfo, dbAdapter, dataTbl);
         DecimateKey deciFunc = deciKey.clone();     // decimate_key function to execute over the dataTbl
         deciFunc.setCols(deciInfo.getxExp(), deciInfo.getyExp());
@@ -72,17 +80,17 @@ public class DecimationProcessor extends TableFunctionProcessor {
         if (dataPoints < deciEnableSize) {
             String sql = """
                 CREATE TABLE %s as (
-                SELECT %s as "%s", %s as "%s", ROW_NUM as "rowidx"
+                SELECT %s as "%s", %s as "%s", ROW_NUM as "rowidx", ROW_NUMBER() OVER () AS %s, ROW_NUMBER() OVER () AS %s,
                 FROM %s
-                """.formatted(tblName, deciInfo.getxExp(), deciKey.getXCol(), deciInfo.getyExp(), deciKey.getYCol(), dataTbl);
+                """.formatted(tblName, deciInfo.getxExp(), deciKey.getXCol(), deciInfo.getyExp(), deciKey.getYCol(), ROW_NUM, ROW_IDX, dataTbl);
             dbAdapter.execUpdate(sql);
         } else {
             String sql = """
                 CREATE TABLE %s as (
-                SELECT FIRST(%s) as "%s", FIRST(%s) as "%s", FIRST(ROW_NUM) as "rowidx", count(*) as "weight", %s as "dkey"
+                SELECT FIRST(%s) as "%s", FIRST(%s) as "%s", FIRST(ROW_NUM) as "rowidx", count(*) as "weight", %s as "dkey", ROW_NUMBER() OVER () AS %s, ROW_NUMBER() OVER () AS %s,
                 FROM %s
                 GROUP BY "dkey" )
-                """.formatted(tblName, deciInfo.getxExp(), deciKey.getXCol(), deciInfo.getyExp(), deciKey.getYCol(), deciFunc, dataTbl);
+                """.formatted(tblName, deciInfo.getxExp(), deciKey.getXCol(), deciInfo.getyExp(), deciKey.getYCol(), deciFunc, ROW_NUM, ROW_IDX, dataTbl);
             dbAdapter.execUpdate(sql);
 
             // add decimation info to the returned table

@@ -263,14 +263,20 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                                         .toArray(String[]::new);
                 treq.setInclColumns(cols);
             }
-            DataGroupPart page = getData(treq);
             switch(format) {
                 case CSV:
                     new DuckDbReadable.Csv(dbAdapter.getDbFile()).export(treq, out);
-                    break;
+                    return new FileInfo(dbAdapter.getDbFile());
                 case TSV:
                     new DuckDbReadable.Tsv(dbAdapter.getDbFile()).export(treq, out);
-                    break;
+                    return new FileInfo(dbAdapter.getDbFile());
+                case PARQUET:
+                    new DuckDbReadable.Parquet(dbAdapter.getDbFile()).export(treq, out);
+                    return new FileInfo(dbAdapter.getDbFile());
+            }
+
+            DataGroupPart page = getData(treq);
+            switch(format) {
                 case REGION:
                     RegionTableWriter.write(new OutputStreamWriter(out), page.getData(), request.getParam("center_cols"));
                     break;
@@ -297,7 +303,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     }
 
     public void prepareTableMeta(TableMeta defaults, List<DataType> columns, ServerRequest request) {
-        // This is part of the older api.  In the new API, you should update these info directly in fetchDataGroup().
+        // This is part of the older api.  Opportunity for SearchProcessor to add additonal TaIn the new API, you should update these info directly in fetchDataGroup().
     }
 
     public QueryDescResolver getDescResolver() {

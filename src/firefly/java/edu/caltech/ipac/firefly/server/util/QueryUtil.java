@@ -661,7 +661,7 @@ public class QueryUtil {
         columns[2] = new DataType("rowidx", Integer.class); // need it to tie highlighted and selected to table
         if (doDecimation) {
             columns[3] = new DataType("weight", Integer.class);
-            columns[4] = new DataType(DecimateKey.DECIMATE_KEY, String.class);
+            columns[4] = new DataType("dkey", String.class);
         }
         Class xColClass = columns[0].getDataType();
         Class yColClass = columns[1].getDataType();

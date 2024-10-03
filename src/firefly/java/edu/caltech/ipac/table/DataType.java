@@ -71,6 +71,8 @@ public class DataType implements Serializable, Cloneable {
 
     // database mapped types
     public static final String BIGINT = "bigint";      // IPAC table
+    public static final String TINYINT = "tinyint";
+    public static final String SMALLINT = "smallint";
 
     private static final List<Class<?>> FLOATING_TYPES = List.of(Double.class, Float.class);
     private static final List<Class<?>> INT_TYPES = List.of(Short.class, Integer.class, Long.class);
@@ -623,15 +625,15 @@ public class DataType implements Serializable, Cloneable {
 
     public static Class<?> descToType(String desc, Class<?> defaultVal) {
         return switch (desc.toLowerCase()) {
-            case DOUBLE, COMPLEX_DOUBLE, REAL -> Double.class;
-            case FLOAT, COMPLEX_FLOAT   -> Float.class;
-            case LONG, BIGINT           -> Long.class;
-            case INTEGER                -> Integer.class;
-            case SHORT, UNSIGNED_BYTE   -> Short.class;
-            case BOOLEAN, BIT           -> Boolean.class;
-            case BYTE                   -> Byte.class;
-            case DATE                   -> Date.class;
-            case UNI_CHAR, LOCATION, CHAR -> String.class;
+            case DOUBLE, COMPLEX_DOUBLE, REAL       -> Double.class;
+            case FLOAT, COMPLEX_FLOAT               -> Float.class;
+            case LONG, BIGINT                       -> Long.class;
+            case INTEGER                            -> Integer.class;
+            case SHORT, UNSIGNED_BYTE, SMALLINT     -> Short.class;
+            case BOOLEAN, BIT                       -> Boolean.class;
+            case BYTE, TINYINT                      -> Byte.class;
+            case DATE                               -> Date.class;
+            case UNI_CHAR, LOCATION, CHAR           -> String.class;
             default -> defaultVal;
         };
     }

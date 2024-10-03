@@ -95,7 +95,7 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
                 File srcFile = fetchSourceFile(req);
                 TableUtil.Format format = DuckDbReadable.guessFileFormat(srcFile.getAbsolutePath());
                 if (format != null && dbAdapter instanceof DuckDbAdapter duckdb) {
-                    return DuckDbReadable.castInto(format, duckdb).ingestDataDirectly(srcFile.getAbsolutePath());
+                    return DuckDbReadable.castInto(format, duckdb).ingestDataDirectly(srcFile.getAbsolutePath(), req);
                 } else {
                     return dbAdapter.ingestData(makeDgSupplier(req, () -> fetchDataFromFile(req, srcFile)), dbAdapter.getDataTable());
                 }
@@ -105,33 +105,6 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
             throw new DataAccessException(e);
         }
     }
-
-//    /**
-//     * Fetches the data file to determine if DuckDB can read it directly,
-//     * then returns the appropriate DbAdapter.
-//     * @param treq the table request
-//     * @return the DbAdapter for the corresponding data file
-//     */
-//    public DbAdapter getDbAdapter(TableServerRequest treq) {
-//        String id = getUniqueID(treq);
-//        var release = SOURCE_FILE_CHECKER.lock(id);
-//        try {
-//            DbAdapter adpt = adapters.get(id);
-//            if (adpt != null && adpt.hasTable(adpt.getDataTable())) return adpt;
-//            // no DB; create and load DB since we need sourcefile to determine the loading logic
-//            var srcFile = fetchSourceFile(treq);
-//            adpt = DbAdapter.getAdapter(srcFile) instanceof DuckDbReadable dr
-//                    ? dr.useDbFileFrom(getDbFileCreator(treq)) : super.getDbAdapter(treq);
-//            createDbFromRequest(treq, adpt);
-//            adapters.put(id, adpt);
-//            return adpt;
-//        } catch (DataAccessException e) {
-//            throw new RuntimeException(e);
-//        } finally {
-//            release.run();
-//        }
-//    }
-
     private File fetchSourceFile (TableServerRequest req) throws DataAccessException {
 
         String source = req.getParam(ServerParams.SOURCE);
