@@ -3,26 +3,18 @@
  */
 import {Box, Button, ChipDelete, FormHelperText, Stack, Typography} from '@mui/joy';
 import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
-import {dispatchHideDialog} from 'firefly/core/ComponentCntlr.js';
-import {dispatchHideDropDown} from 'firefly/core/LayoutCntlr.js';
 import {dispatchMultiValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import FieldGroupUtils, {getFieldVal} from 'firefly/fieldGroup/FieldGroupUtils.js';
-import {PREF_KEY} from 'firefly/tables/TablePref.js';
-import {makeTblRequest, setNoCache} from 'firefly/tables/TableRequestUtil.js';
-import {dispatchTableSearch} from 'firefly/tables/TablesCntlr.js';
 import {FieldGroup, FieldGroupCtx} from 'firefly/ui/FieldGroup.jsx';
 import {FormPanel} from 'firefly/ui/FormPanel.jsx';
-import {showInfoPopup, showYesNoPopup} from 'firefly/ui/PopupUtil.jsx';
-
-import {makeColsLines, tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints.jsx';
 import {
     addUserService,
     ADQL_QUERY_KEY,
-    defTapBrowserState, deleteUserService, getAsEntryForTableName, getMaxrecHardLimit, getTapServices,
-    loadObsCoreSchemaTables,
-    makeNumberedTitle,
-    makeTapSearchTitle,
-    maybeQuote, TAP_UPLOAD_SCHEMA, tapHelpId, USER_ENTERED_TITLE,
+    defTapBrowserState, deleteUserService, getMaxrecHardLimit,
+    loadObsCoreSchemaTables, tapHelpId, USER_ENTERED_TITLE,
+    getServiceLabel,
+    getServiceNamesAsKey,
+    getTapServiceOptions,
 } from 'firefly/ui/tap/TapUtil.js';
 import {ValidationField} from 'firefly/ui/ValidationField.jsx';
 import {intValidator} from 'firefly/util/Validate.js';
@@ -31,17 +23,14 @@ import {TextButton} from 'firefly/visualize/ui/Buttons.jsx';
 import {once} from 'lodash';
 import {bool, object, shape, string} from 'prop-types';
 import React, {useContext, useEffect, useRef, useState} from 'react';
-import {MetaConst} from '../../data/MetaConst.js';
 import {InputField} from '../InputField.jsx';
 import {ListBoxInputFieldView} from '../ListBoxInputField.jsx';
 import {useFieldGroupMetaState, useFieldGroupValue} from '../SimpleComponent.jsx';
 import {SwitchInputField} from '../SwitchInputField.jsx';
-import {
-    ConstraintContext, getHelperConstraints, getTapUploadSchemaEntry, getUploadConstraint, getUploadServerFile,
-    getUploadTableName, isTapUpload
-} from './Constraints.js';
+import {ConstraintContext, getHelperConstraints, getUploadConstraint, isTapUpload} from './Constraints.js';
 import {TitleCustomizeButton} from './TableSearchHelpers';
 import {TapViewType} from './TapViewType.jsx';
+import {getAdqlQuery, onTapSearchSubmit} from 'firefly/ui/tap/TapSearchSubmit';
 
 const DEFAULT_TAP_PANEL_GROUP_KEY = 'TAP_PANEL_GROUP_KEY';
 
@@ -111,17 +100,6 @@ function getInitServiceUrl(tapBrowserState,initArgs,tapOps, lockedServiceUrl,loc
     });
     return serviceUrl;
 }
-
-export function getServiceLabel(serviceUrl) {
-    const tapOps= getTapServiceOptions();
-    return (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.labelOnly)) || '';
-}
-
-export function getServiceHiPS(serviceUrl) {
-    const tapOps= getTapServices();
-    return (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.hipsUrl)) || '';
-}
-
 
 export function TapSearchPanel({initArgs= {}, titleOn=false,
                                    lockService=false, lockedServiceUrl, lockedServiceName, lockObsCore=false,
@@ -474,161 +452,4 @@ function populateAndEditAdql(groupKey,tapBrowserState,setSelectBy,inAdql) {
             {fieldKey: 'uploadFile', value: uploadFile},
         ]
     );
-}
-
-
-const getServiceNamesAsKey= () => getTapServiceOptions().map(({label}) => label).join('-');
-
-const getTapServiceOptions= () =>
-    getTapServices().map(({label,value,userAdded=false})=>({label:value, value, labelOnly:label, userAdded}));
-
-const disableRowLimitMsg = (
-    <div style={{width: 260}}>
-        Disabling the row limit is not recommended. <br/>
-        You are about to submit a query without a TOP or WHERE constraint. <br/>
-        This may results in a HUGE amount of data. <br/><br/>
-        Are you sure you want to continue?
-    </div>
-);
-
-
-function onTapSearchSubmit(request,serviceUrl,tapBrowserState,setUserTitle) {
-    const isUserEnteredADQL = (request.selectBy === 'adql');
-    let adql;
-    let isUpload;
-    let serverFile;
-    let uploadTableName;
-    let schemaEntry;
-    let userColumns;
-    const userTitle= request[USER_ENTERED_TITLE];
-    console.log(userTitle);
-
-    if (isUserEnteredADQL) {
-        adql = request[ADQL_QUERY_KEY];
-        const {TAP_UPLOAD,uploadFile}= request;
-        isUpload = Boolean(TAP_UPLOAD && uploadFile);
-        serverFile = isUpload && TAP_UPLOAD[uploadFile].serverFile;
-        uploadTableName = isUpload && TAP_UPLOAD[uploadFile].table;
-    }
-    else {
-        adql = getAdqlQuery(tapBrowserState);
-        isUpload = isTapUpload(tapBrowserState);
-        schemaEntry = getTapUploadSchemaEntry(tapBrowserState);
-        const cols = schemaEntry.columns;
-        userColumns = cols?.filter((col) => col.use).map((col) => col.name).join(',');
-        serverFile = isUpload && getUploadServerFile(tapBrowserState);
-        uploadTableName = isUpload && getUploadTableName(tapBrowserState);
-    }
-
-    if (!adql) return false;
-
-
-    const maxrec = request.maxrec;
-    const hasMaxrec = !isNaN(parseInt(maxrec));
-    const doSubmit = () => {
-        const serviceLabel= getServiceLabel(serviceUrl);
-        const hips= getServiceHiPS(serviceUrl);
-        const adqlClean = adql.replace(/\s/g, ' ');    // replace all whitespaces with spaces
-        const params = {serviceUrl, QUERY: adqlClean};
-        if (isUpload) {
-            params.UPLOAD= serverFile;
-            params.adqlUploadSelectTable= uploadTableName;
-            if (!isUserEnteredADQL) params.UPLOAD_COLUMNS= userColumns;
-        }
-        if (hasMaxrec) params.MAXREC = maxrec;
-        const title= makeNumberedTitle(userTitle || makeTapSearchTitle(adqlClean,serviceUrl));
-        const treq = makeTblRequest('AsyncTapQuery', title, params);
-        setNoCache(treq);
-        const additionalMeta= {};
-        if (!isUserEnteredADQL) {
-            additionalMeta[PREF_KEY]= `${tapBrowserState.schemaName}-${tapBrowserState.tableName}`;
-        }
-        additionalMeta.serviceLabel= serviceLabel;
-        if (hips) additionalMeta[MetaConst.COVERAGE_HIPS]= hips;
-
-        treq.META_INFO= {...treq.META_INFO, ...additionalMeta };
-        dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true});
-    };
-
-    if (!hasMaxrec && !adql.toUpperCase().match(/ TOP | WHERE /)) {
-        showYesNoPopup(disableRowLimitMsg,(id, yes) => {
-            if (yes) {
-                doSubmit();
-                dispatchHideDropDown();
-            }
-            dispatchHideDialog(id);
-        });
-    } else {
-        doSubmit();
-        return true;
-    }
-    return false;
-}
-
-
-
-
-/**
- *
- * @param {TapBrowserState} tapBrowserState
- * @param [showErrors]
- * @returns {string|null}
- */
-function getAdqlQuery(tapBrowserState, showErrors= true) {
-    const tableName = maybeQuote(tapBrowserState?.tableName, true);
-    if (!tableName) return;
-    const isUpload= isTapUpload(tapBrowserState);
-
-    if (isUpload) { //check for more than one upload file (in Spatial and in ObjectID col) - should this be a utility function in constraints.js?
-        const { constraintFragments } = tapBrowserState;
-        const entries = [...constraintFragments.values()];
-        const matchingEntries = entries.filter((c) => Boolean(c.uploadFile && c.TAP_UPLOAD && c.adqlConstraint));
-        if (matchingEntries.length > 1) {
-            if (showErrors) showInfoPopup('We currently do not support searches with more than one uploaded table.', 'Error');
-            return;
-        }
-    }
-
-    const helperFragment = getHelperConstraints(tapBrowserState);
-    const tableCol = tableColumnsConstraints(tapBrowserState.columnsModel,
-        isUpload?getAsEntryForTableName(tableName):undefined);
-
-    const { table:uploadTable, asTable:uploadAsTable, columns:uploadColumns}= isUpload ?
-        getTapUploadSchemaEntry(tapBrowserState) : {};
-
-    const fromTables= isUpload ?
-        `${tableName} AS ${getAsEntryForTableName(tableName)}, ${TAP_UPLOAD_SCHEMA}.${uploadTable} ${uploadAsTable ? 'AS '+uploadAsTable : ''}` :
-        tableName;
-
-    // check for errors
-    if (!helperFragment.valid) {
-        if (showErrors) showInfoPopup(helperFragment.messages[0], 'Error');
-        return;
-    }
-    if (!tableCol.valid) {
-        if (showErrors) showInfoPopup(tableCol.message, 'Error');
-        return;
-    }
-
-    // build columns
-    let selcols = tableCol.selcols || (isUpload ? `${tableName}.*` : '*');
-    if (isUpload) {
-        const ut= uploadAsTable ?? uploadTable ?? '';
-        const tCol= uploadColumns.filter(({use}) => use).map( ({name}) => ut+'.'+name);
-        selcols+= tCol.length ? ',\n' + makeColsLines(tCol,true) : '';
-    }
-
-    // build up constraints
-    let constraints = helperFragment.where || '';
-    if (tableCol.where) {
-        const addAnd = Boolean(constraints);
-        constraints += (addAnd ? '\n      AND ' : '') + `(${tableCol.where})`;
-    }
-
-    if (constraints) constraints = `WHERE ${constraints}`;
-
-    // if we use TOP  when maxrec is set `${maxrec ? `TOP ${maxrec} `:''}`,
-    // overflow indicator will not be included with the results,
-    // and we will not know if the results were truncated
-    return `SELECT ${selcols} \nFROM ${fromTables} \n${constraints}`;
 }

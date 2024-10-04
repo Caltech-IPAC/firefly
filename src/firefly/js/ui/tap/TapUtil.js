@@ -20,6 +20,7 @@ export const ADQL_QUERY_KEY= 'adqlQuery';
 export const USER_ENTERED_TITLE= 'USER_ENTERED_TITLE';
 const EMPTY_SCHEMA_NAME= 'EMPTY_SCHEMA_NAME';
 export const USER_SERVICE_PREFS= 'UserEnteredServices';
+export const SERVICE_EXIST_ERROR= 'TAP service does not appear to exist or is not accessible';
 
 
 // cache objects - they only grow, but I don't think they will ever get too big
@@ -750,3 +751,40 @@ export function makeNumberedTitle(inTitle) {
     const maxNum = numList?.length ? Math.max(...numList) : 0;
     return inTitle + ` - ${maxNum + 1}`;
 }
+
+/**
+ * Assembles an array of objects with column attributes in the format that ColumnFld accepts
+ * @param columnsModel
+ */
+export function getAvailableColumns(columnsModel){
+    const attrIdx  = [
+        //[<column name in columnModel>, <column attribute name ColumnFld wants>]
+        ['column_name', 'name'],
+        ['unit', 'units'],
+        ['datatype', 'type'],
+        ['ucd', 'ucd'],
+        ['description', 'desc']
+    ].map(([c,k])=>[k,getColumnIdx(columnsModel, c)]);
+
+    const td= columnsModel?.tableData?.data ?? [] ;
+    return td.map((r) => {
+        const col = {};
+        attrIdx.forEach(([k,i]) => { col[k] = r[i]; });
+        return col;
+    });
+}
+
+export function getServiceLabel(serviceUrl) {
+    const tapOps= getTapServiceOptions();
+    return (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.labelOnly)) || '';
+}
+
+export function getServiceHiPS(serviceUrl) {
+    const tapOps= getTapServices();
+    return (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.hipsUrl)) || '';
+}
+
+export const getTapServiceOptions= () =>
+    getTapServices().map(({label,value,userAdded=false})=>({label:value, value, labelOnly:label, userAdded}));
+
+export const getServiceNamesAsKey= () => getTapServiceOptions().map(({label}) => label).join('-');

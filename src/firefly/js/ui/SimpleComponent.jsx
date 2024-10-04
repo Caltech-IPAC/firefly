@@ -264,12 +264,15 @@ export function useDebugCycle({id, render=true, mount=true}) {
     key, so it can be precisely inject the default value without uncertainty.  e.g. webutil's updateSet or setIf based on lodash's set.
 
  When slotProps is used, it will interpret as:
+ ```
  slotProps: {
    component: elementType,  // when defined, it is used to render the props.  if null, nothing will render in this slot.
    ...otherProps: any       // these props will be passed to the rendering component
  }
+ ```
 
  Example:
+ ```
  const defProps= {text: 'hello world', customMsg: 'none'};
  const passedInSlotProps = {
     component: MyResults,
@@ -277,8 +280,11 @@ export function useDebugCycle({id, render=true, mount=true}) {
  }
 
  <Slot component={EmptyResults} {...defProps} slotProps={passedInSlotProps}/>
+ ```
  This will return:
+ ```
    <MyResults text='hello world' customMsg='I am Joe'/>
+ ```
  */
 export function Slot({component, slotProps={}, ...defProps}) {
     const {component:Component=component, ...nProps} = slotProps;

@@ -20,14 +20,12 @@ import {
 import {TableSearchMethods} from './TableSearchMethods.jsx';
 import {
     defTapBrowserState, getLoadedCapability, getTapServices, isCapabilityLoaded, loadTapCapabilities, loadTapColumns,
-    loadTapSchemas, loadTapTables, tapHelpId, loadObsCoreMetadata, ADQL_QUERY_KEY
+    loadTapSchemas, loadTapTables, tapHelpId, loadObsCoreMetadata, ADQL_QUERY_KEY, SERVICE_EXIST_ERROR
 } from './TapUtil.js';
 
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
 
-
-const SERVICE_EXIST_ERROR= 'TAP service does not appear to exist or is not accessible';
 
 const SCHEMA_TIP= 'Select a table collection (TAP ‘schema’); type to search the schema names and descriptions.';
 const TABLE_TIP= 'Select a table; type to search the table names and descriptions.';
