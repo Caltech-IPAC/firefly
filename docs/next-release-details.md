@@ -7,14 +7,15 @@
 
 ### _Notes_
 #### This is probably one of new most new feature pack releases of firefly in several years. It also includes a many, many bug fixes, clean up and optimization (not all list below). 
-
+                                                                                                           `
 
 #### Major Features
 - Tables: parquet support- Firefly-1477 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1582)) 
+- Tables: save table as parquet using `parquet.votable`- Firefly-1550 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1633)) 
 - Tables: internal data optimization using duckdb - Firefly-1477 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1582)) 
-- Tables: Color in table tabs- Firefly-1510 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1600)) 
+- Tables: Drawing Overlay Color in table tabs- Firefly-1510 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1600)) 
 - Images/HiPS: hierarchical catalogs- Firefly-1437 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1607)) 
-- Data product viewer: recognizes service def cutouts- Firefly-1491 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1580)) 
+- Data product viewer: recognizes service descriptor defined cutouts- Firefly-1491 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1580)) 
 
 #### New Features
 - Images: Improve image sorting and filtering- Firefly-1448 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1543))
@@ -33,6 +34,7 @@
 - Fixed: not parsing gaia datalink correctly- Firefly-1529 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1601))
 - Fixed: chart is not recognizing short- Firefly-1516 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1595)) 
 - Fixed: popup not closing until second click- Firefly-1514 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1589)) 
+- Cleanup: Better tap sizing- Firefly-1562 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1634)) 
 - Cleanup: TAP: ADQL dark mode screen- Firefly-1509 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1590)) 
 
 #### Not user facing
