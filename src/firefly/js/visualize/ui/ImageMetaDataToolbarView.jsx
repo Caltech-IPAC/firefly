@@ -27,7 +27,8 @@ import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
 
 
-export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType, factoryKey, serDef, enableCutout,
+export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType, factoryKey, serDef,
+                                             enableCutout, pixelBasedCutout,
                                           activeTable, makeDataProductsConverter, makeDropDown}) {
 
     const converter= makeDataProductsConverter(activeTable,factoryKey) || {};
@@ -35,7 +36,16 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
     const cutoutValue= useStoreConnector( () => getComponentState(dataProductsComponentKey)[SD_CUTOUT_KEY]) ?? getObsCoreOption('cutoutDefSizeDeg') ?? .01;
 
     if (!converter) return <div/>;
-    const cSize= dataProductsComponentKey&&enableCutout ? makeFoVString(Number(cutoutValue)) : '';
+    let cSize='';
+    if (dataProductsComponentKey&&enableCutout) {
+        if (pixelBasedCutout) {
+            cSize= cutoutValue+'';
+        }
+        else {
+            cSize= makeFoVString(Number(cutoutValue));
+        }
+
+    }
 
 
     const layoutDetail= getLayoutDetails(getMultiViewRoot(), viewerId, activeTable?.tbl_id);
@@ -93,7 +103,7 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
                     {enableCutout &&
                         <ToolbarButton
                             icon={<ContentCutRoundedIcon/>}
-                            text={`${cSize}`} onClick={() => showCutoutSizeDialog(cutoutValue,dataProductsComponentKey)}/>
+                            text={`${cSize}`} onClick={() => showCutoutSizeDialog(cutoutValue,pixelBasedCutout,dataProductsComponentKey)}/>
                     }
                     {metaControls &&
                         <Stack direction='row' spacing={1} alignItems='center' whiteSpace='nowrap'>
@@ -121,6 +131,8 @@ ImageMetaDataToolbarView.propTypes= {
     makeDataProductsConverter: PropTypes.func,
     makeDropDown: PropTypes.func,
     serDef: PropTypes.object,
+    enableCutout: PropTypes.bool,
+    pixelBasedCutout: PropTypes.bool,
     factoryKey: PropTypes.string
 };
 

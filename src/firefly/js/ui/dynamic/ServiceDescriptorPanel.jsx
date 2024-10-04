@@ -53,26 +53,6 @@ export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDef, setSe
     };
 
 
-
-
-
-    const Wrapper= ({children}) => (
-        <Stack direction='column' alignItems='flex-start' p={.25}>
-            {children}
-            <Stack {...{direction:'row', justifyContent:'space-between', alignItems:'flex-start',
-                          pt:.5, pr:.5, width:'100%', alignSelf:'flex-start' }}>
-                <CompleteButton onSuccess={(r) => submitSearch(r)}
-                                onFail={() => showInfoPopup('Some field are not valid')}
-                                text={'Submit'} groupKey={GROUP_KEY} />
-                {hasAnySpacial(fieldDefAry) &&
-                    <Typography level='body-xs'>Enter search position or click on background HiPS</Typography>}
-            </Stack>
-        </Stack>
-    );
-
-
-
-
     return (
         <Stack {...{direction:'row', key:serviceDefRef, width:1, height:1}}>
             <Stack {...{direction:'column', p:.25, width:1}}>
@@ -83,8 +63,24 @@ export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDef, setSe
 
                 <FieldGroup groupKey={GROUP_KEY} keepState={false} style={{display:'flex', flexGrow:1}}>
                     <DynLayoutPanelTypes.Inset fieldDefAry={fieldDefAry} style={{width: '100%'}}
-                                               WrapperComponent={Wrapper}
-                                               plotId={plotId}/>
+                                               slotProps={{
+                                                   FormPanel: {
+                                                      onSuccess: (r) => submitSearch(r),
+                                                       onError: () => showInfoPopup('Some field are not valid')
+                                                   }
+                                               }}
+                                               plotId={plotId}>
+                        <Stack direction='column' alignItems='flex-start' p={.25}>
+                            <Stack {...{direction:'row', justifyContent:'space-between', alignItems:'flex-start',
+                                pt:.5, pr:.5, width:'100%', alignSelf:'flex-start' }}>
+                                {/*<CompleteButton onSuccess={(r) => submitSearch(r)}*/}
+                                {/*                onFail={() => showInfoPopup('Some field are not valid')}*/}
+                                {/*                text={'Submit'} groupKey={GROUP_KEY} />*/}
+                                {hasAnySpacial(fieldDefAry) &&
+                                    <Typography level='body-xs'>Enter search position or click on background HiPS</Typography>}
+                            </Stack>
+                        </Stack>
+                    </DynLayoutPanelTypes.Inset>
                 </FieldGroup>
             </Stack>
         </Stack>

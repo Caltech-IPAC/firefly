@@ -1,9 +1,12 @@
 import {isEmpty} from 'lodash';
-import {getComponentState} from '../../core/ComponentCntlr.js';
-import {getCellValue} from '../../tables/TableUtil.js';
+import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {getCellValue, getColumnByRef} from '../../tables/TableUtil.js';
 import {makeCircleString} from '../../ui/dynamic/DynamicUISearchPanel';
 import {isSIAStandardID} from '../../ui/dynamic/ServiceDefTools';
-import {CUTOUT_UCDs, standardIDs} from '../../voAnalyzer/VoConst';
+import {getObsCoreOption} from '../../ui/tap/TableSearchHelpers';
+import {makeWorldPt} from '../../visualize/Point';
+import {isDatalinkTable, isObsCoreLike} from '../../voAnalyzer/TableAnalysis';
+import {CUTOUT_UCDs, DEC_UCDs, RA_UCDs, standardIDs} from '../../voAnalyzer/VoConst';
 
 import {isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {isDefined} from '../../util/WebUtil.js';
@@ -11,6 +14,7 @@ import {makeAnalysisActivateFunc} from '../AnalysisUtils.js';
 import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY} from '../DataProductsCntlr.js';
 import {dpdtAnalyze, dpdtImage} from '../DataProductsType.js';
 import {createSingleImageActivate, createSingleImageExtraction} from '../ImageDataProductsUtil';
+import {getObsCoreRowMetaInfo} from './ObsCoreConverter';
 import {makeObsCoreRequest} from './VORequest.js';
 
 
@@ -44,7 +48,7 @@ export function makeServiceDefDataProduct({
     const noInputRequired = serDefParams.some((p) => !p.inputRequired);
     const {semantics, size, sRegion, prodTypeHint, serviceDefRef, dlAnalysis} = datalinkExtra;
 
-    if (dlAnalysis?.isCutout && canMakeCutoutProduct(serDef,positionWP)) {
+    if (dlAnalysis?.isCutout && canMakeCutoutProduct(serDef,positionWP,sourceRow)) {
        return makeCutoutProduct({
            name, serDef, sourceTable, sourceRow, idx, positionWP, activateParams,
            options, titleStr, activeMenuLookupKey, menuKey, datalinkExtra
@@ -72,30 +76,84 @@ export function makeServiceDefDataProduct({
     }
 }
 
-function canMakeCutoutProduct(serDef, positionWP){
+
+const CUTOUT_NAME_GUESS_LIST= ['size'];
+
+function canMakeCutoutProduct(serDef, positionWP,sourceRow){
     const {standardID,serDefParams} = serDef;
 
-    if (!positionWP) return false;
+    if (!positionWP) { // look for ra/dec columns
+        const wp= findWorldPtInServiceDef(serDef,sourceRow);
+        if (!wp) return false;
+    }
+
     if (isSIAStandardID(standardID) || serDefParams.find( ({xtype}) => xtype?.toLowerCase()==='circle')  ) {
         return true;
     }
     const obsFieldParam= serDefParams.find( ({UCD=''}) =>
         CUTOUT_UCDs.find( (testUcd) => UCD.toLowerCase().includes(testUcd)) );
-    return Boolean(obsFieldParam);
+    if (obsFieldParam) return true;
+
+
+    const nameGuess= serDefParams.find( ({name=''}) =>
+        CUTOUT_NAME_GUESS_LIST.find( (testName) => name.toLowerCase()===testName) );
+
+    return Boolean(nameGuess);
+}
+
+function findWorldPtInServiceDef(serDef,sourceRow) {
+    const {serDefParams,sdSourceTable, dataLinkTableRowIdx} = serDef;
+    const raParam= serDefParams.find( ({UCD=''}) =>
+        RA_UCDs.find( (testUcd) => UCD.toLowerCase().includes(testUcd)) );
+    const decParam= serDefParams.find( ({UCD=''}) =>
+        DEC_UCDs.find( (testUcd) => UCD.toLowerCase().includes(testUcd)) );
+    if (!raParam && !decParam) return;
+
+    let raVal= raParam.value;
+    let decVal= decParam.value;
+
+    if (raVal && decVal) return makeWorldPt(raVal,decVal);
+    if (!sdSourceTable) return;
+
+    const hasDLTable= isDatalinkTable(sdSourceTable);
+    const hasDLRow= isDefined(dataLinkTableRowIdx);
+    const hasSourceRow= isDefined(sourceRow);
+    const row= hasDLTable && hasDLRow ? dataLinkTableRowIdx : hasSourceRow ? sourceRow : undefined;
+
+    if (!raVal && raParam.ref) {
+        const col = getColumnByRef(sdSourceTable, raParam.ref);
+        if (col && row > -1) raVal = getCellValue(sdSourceTable, row, col.name);
+    }
+
+    if (!decVal && decParam.ref) {
+        const col = getColumnByRef(sdSourceTable, decParam.ref);
+        if (col && row > -1) decVal = getCellValue(sdSourceTable, row, col.name);
+    }
+
+    return (raVal && decVal) ? makeWorldPt(raVal,decVal) : undefined;
 }
 
 function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, positionWP, activateParams,
                              options, titleStr, menuKey}) {
 
-    const {accessURL, standardID, serDefParams} = serDef;
+    const {accessURL, standardID, serDefParams, sdSourceTable} = serDef;
     const key= options.dataProductsComponentKey ?? DEFAULT_DATA_PRODUCTS_COMPONENT_KEY;
     const cutoutSize= getComponentState(key,{})[SD_CUTOUT_KEY] ?? 0.0213;
     if (cutoutSize<=0) return; // must be greater than 0
-    if (!positionWP) return; // this must exist, should check in calling function
+    if (!positionWP) {
+        positionWP= findWorldPtInServiceDef(serDef,sourceRow);
+    }
+    if (!positionWP) return;  // this must exist, should check in calling function
 
+    let titleToUse= titleStr;
+
+    if (isDefined(serDef.dataLinkTableRowIdx) && isObsCoreLike(sourceTable)) { // this service def, from datalink, in obscore (normal cawse)
+        titleToUse= getObsCoreRowMetaInfo(sourceTable,sourceRow)?.titleStr ?? titleStr;
+    }
     let params;
     const cutoutOptions= {...options};
-    const {xtypeKeys=[],ucdKeys=[]}= cutoutOptions;
+    const {xtypeKeys=[],ucdKeys=[],paramNameKeys=[]}= cutoutOptions;
+    let pixelBasedCutout= false;
     if (isSIAStandardID(standardID) || serDefParams.find( ({xtype}) => xtype?.toLowerCase()==='circle')  ) {
         cutoutOptions.xtypeKeys= [...xtypeKeys,'circle'];
         params= {circle : makeCircleString(positionWP.x,positionWP.y,cutoutSize,standardID)};
@@ -103,18 +161,39 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, position
     else {
         const obsFieldParam= serDefParams.find( ({UCD=''}) =>
                               CUTOUT_UCDs.find( (testUcd) => UCD.toLowerCase().includes(testUcd)) );
-        const ucd= obsFieldParam.UCD;
-        cutoutOptions.ucdKeys= [...ucdKeys,ucd];
-        params= {[ucd] : cutoutSize};
+        if (obsFieldParam) {
+            const ucd= obsFieldParam.UCD;
+            cutoutOptions.ucdKeys= [...ucdKeys,ucd];
+            params= {[ucd] : cutoutSize};
+        }
+        else {
+            const nameGuess= serDefParams.find( ({name=''}) =>
+                CUTOUT_NAME_GUESS_LIST.find( (testName) => name.toLowerCase()===testName) );
+            cutoutOptions.paramNameKeys= [...paramNameKeys,nameGuess.name];
+            const sizeStr= cutoutSize ? cutoutSize+'' : '';
+            if (sizeStr.endsWith('px')) {
+                params= {[nameGuess.name] : cutoutSize.substring(0,sizeStr.length-2)};
+            }
+            else {
+                const valNum= parseInt(nameGuess.value);
+                params= {[nameGuess.name] : valNum};
+                dispatchComponentStateChange(key,{
+                    [SD_CUTOUT_KEY]: valNum+'px'
+                } );
+            }
+            pixelBasedCutout= true;
+        }
     }
     const url= makeUrlFromParams(accessURL, serDef, idx, getComponentInputs(serDef,cutoutOptions,params));
-    const request = makeObsCoreRequest(url, positionWP, titleStr, sourceTable, sourceRow);
+    const request = makeObsCoreRequest(url, positionWP, titleToUse, sourceTable, sourceRow);
 
-    const activate= createSingleImageActivate(request,activateParams.imageViewerId,sourceTable.tbl_id,sourceTable.highlightedRow);
+    const tbl= sourceTable ?? sdSourceTable;
+    const activate= createSingleImageActivate(request,activateParams.imageViewerId, tbl?.tbl_id,
+        tbl?.highlightedRow);
     return dpdtImage({
-        name:'Show: ' + (titleStr || name),
+        name:'Show: Cutout: ' + (titleToUse || name),
         activate, menuKey,
-        extraction: createSingleImageExtraction(request), enableCutout:true,
+        extraction: createSingleImageExtraction(request), enableCutout:true, pixelBasedCutout,
         request, override:false, interpretedData:false, requestDefault:false});
 }
 

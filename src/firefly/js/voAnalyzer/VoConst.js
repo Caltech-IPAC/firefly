@@ -106,6 +106,8 @@ export const UCDList = ['arith', 'arith.diff', 'arith.factor', 'arith.grad', 'ar
     'time.period.revolution', 'time.period.rotation', 'time.phase', 'time.processing', 'time.publiYear', 'time.relax', 'time.release', 'time.resolution', 'time.scale', 'time.start']; // Columns required for heuristic matching
 
 export const CUTOUT_UCDs= ['phys.size','phys.size.radius','phys.angSize', 'pos.spherical.r'];
+export const RA_UCDs= ['pos.eq.ra'];
+export const DEC_UCDs= ['pos.eq.dec'];
 
 export const OBSTAPCOLUMNS = [
     ['dataproduct_type', 'meta.id', 'ObsDataset.dataProductType'],
