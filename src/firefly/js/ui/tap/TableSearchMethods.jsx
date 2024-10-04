@@ -1,6 +1,5 @@
 import {Box} from '@mui/joy';
 import React, {useState} from 'react';
-import {getColumnIdx} from '../../tables/TableUtil.js';
 import {ConnectionCtx} from '../ConnectionCtx.js';
 import {ObsCoreSearch} from './ObsCore.jsx';
 import {ExposureDurationSearch} from './ObsCoreExposureDuration.jsx';
@@ -8,6 +7,7 @@ import {SpatialSearch} from './SpatialSearch.jsx';
 import {TemporalSearch} from './TemporalSearch.jsx';
 import {ObsCoreWavelengthSearch} from './WavelengthPanel.jsx';
 import {ObjectIDSearch} from 'firefly/ui/tap/ObjectIDSearch';
+import {getAvailableColumns} from 'firefly/ui/tap/TapUtil';
 
 export const TableSearchMethods = ({initArgs, obsCoreEnabled, columnsModel, serviceUrl, sx,
                                        serviceLabel, tableName, capabilities, obsCoreMetadataModel}) => {
@@ -53,25 +53,3 @@ function HelperComponents({initArgs, cols, columnsModel, serviceUrl, serviceLabe
         );
 }
 
-
-/**
- * Assembles an array of objects with column attributes in the format that ColumnFld accepts
- * @param columnsModel
- */
-function getAvailableColumns(columnsModel){
-    const attrIdx  = [
-        //[<column name in columnModel>, <column attribute name ColumnFld wants>]
-        ['column_name', 'name'],
-        ['unit', 'units'],
-        ['datatype', 'type'],
-        ['ucd', 'ucd'],
-        ['description', 'desc']
-    ].map(([c,k])=>[k,getColumnIdx(columnsModel, c)]);
-
-    const td= columnsModel?.tableData?.data ?? [] ;
-    return td.map((r) => {
-        const col = {};
-        attrIdx.forEach(([k,i]) => { col[k] = r[i]; });
-        return col;
-    });
-}

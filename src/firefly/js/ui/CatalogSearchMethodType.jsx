@@ -330,7 +330,7 @@ function SizeArea({groupKey, searchType, imageCornerCalc}) {
             </Stack>
         );
     } else if (searchType === SpatialMethod.Polygon.value) {
-        return renderPolygonDataArea({imageCornerCalc});
+        return <PolygonDataArea {...{imageCornerCalc}}/>;
     } else {
         return (
             <Typography level='body-lg' sx={{p:4}}>
@@ -340,9 +340,9 @@ function SizeArea({groupKey, searchType, imageCornerCalc}) {
     }
 }
 
-export function renderPolygonDataArea({imageCornerCalc,
+export function PolygonDataArea({imageCornerCalc,
                                           hipsUrl= getAppOptions().coverage?.hipsSourceURL  ??  'ivo://CDS/P/2MASS/color',
-                                          centerWP, fovDeg=240 }) {
+                                          centerWP, fovDeg=240, showCornerTypeField=true, slotProps }) {
     let cornerTypeOps=
         [
             {label: 'Image', value: 'image'},
@@ -368,13 +368,14 @@ export function renderPolygonDataArea({imageCornerCalc,
     const wp= parseWorldPt(centerWP);
     return (
         <Stack {...{spacing:1}}>
-            {pv && <RadioGroupInputField
+            {showCornerTypeField && pv && <RadioGroupInputField
                     orientation='horizontal'
                     tooltip='Choose corners of polygon'
                     label='Search area'
                     initialState= {{value: 'image' }}
                     options={cornerTypeOps}
                     fieldKey='imageCornerCalc'
+                    {...slotProps?.cornerType}
                 />
             }
             <VisualPolygonPanel {...{
@@ -384,8 +385,10 @@ export function renderPolygonDataArea({imageCornerCalc,
                 hipsFOVInDeg:fovDeg,
                 centerPt:wp,
                 label:'Coordinates:',
-                tooltip:'Enter polygon coordinates search', }} />
-            <Typography level='body-sm' component='ul' sx={{pl:1, li: {listStyleType: 'none'}}}>
+                tooltip:'Enter polygon coordinates search',
+                ...slotProps?.polygonPanel
+            }} />
+            <Typography level='body-sm' component='ul' sx={{pl:1, li: {listStyleType: 'none'}}} {...slotProps?.polygonHelp}>
                 <li>- Each vertex is defined by a J2000 RA and Dec position pair</li>
                 <li>- A max of 15 and min of 3 vertices is allowed</li>
                 <li>- Vertices must be separated by a comma (,)</li>
@@ -394,6 +397,19 @@ export function renderPolygonDataArea({imageCornerCalc,
         </Stack>
     );
 }
+
+PolygonDataArea.propTypes = {
+    imageCornerCalc: PropTypes.string,
+    hipsUrl: PropTypes.string,
+    centerWP: PropTypes.string,
+    fovDeg: PropTypes.number,
+    showCornerTypeField: PropTypes.bool,
+    slotProps: PropTypes.shape({
+        cornerType: PropTypes.object,
+        polygonPanel: PropTypes.object,
+        polygonHelp: PropTypes.object,
+    })
+};
 
 function renderTargetPanel(groupKey, searchType) {
     const visible = (searchType === SpatialMethod.Cone.value ||
