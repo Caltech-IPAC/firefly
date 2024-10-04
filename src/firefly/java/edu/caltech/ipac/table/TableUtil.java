@@ -93,7 +93,7 @@ public class TableUtil {
             return Format.TAR;
         }
 
-        var fmt = DuckDbReadable.guessFileFormat(inf);      // test for files that DuckDb can import directly
+        var fmt = DuckDbReadable.guessFileFormat(inf.getAbsolutePath());      // test for files that DuckDb can import directly
         if (fmt != null) return fmt;
 
         // guess by sampling file content
@@ -229,7 +229,7 @@ public class TableUtil {
     }
 
     /**
-     * takes all of the TableMeta that is column's related and use it to set column's properties.
+     * takes all the TableMeta that is column's related and use it to set column's properties.
      * remove the TableMeta that was used.
      * @param dg
      * @param treq  if not null, merge META-INFO from this request into TableMeta before consuming

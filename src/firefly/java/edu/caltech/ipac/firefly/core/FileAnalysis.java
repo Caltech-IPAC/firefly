@@ -128,8 +128,7 @@ public class FileAnalysis {
 
     private static FileAnalysisReport analyzeDuckReadable(File infile, Format format, FileAnalysisReport.ReportType type) {
         try {
-            DuckDbReadable dbAdapter = (DuckDbReadable) DbAdapter.getAdapter(infile);
-            DataGroup header = dbAdapter.getInfo();
+            DataGroup header = DuckDbReadable.getInfo(format, infile.getAbsolutePath());
             FileAnalysisReport report = new FileAnalysisReport(type, format.name(), infile.length(), infile.getPath());
             FileAnalysisReport.Part part = new FileAnalysisReport.Part(FileAnalysisReport.Type.Table, String.format("%s (%d cols x %s rows)", format.name(), header.getDataDefinitions().length, header.size()));
             part.setTotalTableRows(header.size());
@@ -139,7 +138,6 @@ public class FileAnalysis {
                 meta.setCols(Arrays.asList(header.getDataDefinitions()));
                 part.setDetails(getDetails(0, meta));
             }
-            dbAdapter.close(true);
             return report;
         } catch (Exception e) {
             return makeReportFromException(e);

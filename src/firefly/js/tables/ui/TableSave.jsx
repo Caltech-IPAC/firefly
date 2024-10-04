@@ -45,7 +45,8 @@ const tableFormats = new Enum({ipac: 'IPAC Table (.tbl)',
                                tsv: 'Tab-separated values (.tsv)',
                                'votable-tabledata': 'VOTable - TABLEDATA (.vot)',
                                'votable-binary2-inline': 'VOTable - BINARY2 (.vot)',
-                               'votable-fits-inline': 'VOTable - FITS (.vot)'
+                               'votable-fits-inline': 'VOTable - FITS (.vot)',
+                               'parquet': 'Parquet file with VOTable metadata(.parquet)'
                                //'votable-binary-inline': 'votable-binary: inline BINARY-format VOTable',           // (deprecated) removed
                                //'votable-binary-href': 'votable-binary-href: External BINARY-format VOTable',
                                //'votable-binary2-href': 'votable-binary2-href: External BINAR2Y-format VOTable',
@@ -60,6 +61,7 @@ const tableFormatsExt = {
     'votable-tabledata': 'vot',
     'votable-binary2-inline': 'vot',
     'votable-fits-inline': 'vot',
+    'parquet': 'parquet'
 };
 
 const labelWidth = 100;

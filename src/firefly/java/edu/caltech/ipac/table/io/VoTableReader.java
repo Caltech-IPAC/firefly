@@ -32,7 +32,9 @@ import uk.ac.starlink.votable.VOElement;
 import uk.ac.starlink.votable.VOElementFactory;
 import uk.ac.starlink.votable.VOStarTable;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -82,15 +84,18 @@ public class VoTableReader {
      * @return an array of DataGroup objects
      */
     public static DataGroup[] voToDataGroups(String location, int ...indices) throws IOException {
-        return voToDataGroups(location, false, null, indices);
+        return voToDataGroups(location, false, indices);
     }
 
+    /**
+     * Similar to VoTableReader#voToDataGroups(java.lang.String, int...), but it also applies additional transformations
+     * to the returned DataGroup(s) based on the hints provided by the given request.
+     */
     public static DataGroup[] voToDataGroups(String location, TableServerRequest request, int ...indices) throws IOException {
-        return voToDataGroups(location, false, request, indices);
-    }
+        return Arrays.stream(voToDataGroups(location, false, indices)).peek(dg -> {
+            if (SpectrumMetaInspector.hasSpectrumHint(request)) SpectrumMetaInspector.searchForSpectrum(dg,true);
+        }).toArray(DataGroup[]::new);
 
-    public static DataGroup[] voToDataGroups(String location, boolean headerOnly, int ...indices) throws IOException {
-        return voToDataGroups(location, headerOnly, null, indices);
     }
 
     /**
@@ -102,31 +107,56 @@ public class VoTableReader {
      */
     public static DataGroup[] voToDataGroups(String location,
                                              boolean headerOnly,
-                                             TableServerRequest request,
+                                             int ...indices) throws IOException {
+        VOElement docRoot = getVoTableRoot(location, null);
+        return voToDataGroups(docRoot, headerOnly, indices);
+    }
+
+    /**
+     * Similar to VoTableReader#voToDataGroups(java.lang.String, boolean, int...), except it accepts an InputStream as the source,
+     * enabling streaming of data rather than reading from a file.
+     */
+    public static DataGroup[] voToDataGroups(InputStream source, boolean headerOnly, int ...indices) throws IOException {
+        try {
+            VOElement docRoot = getVoTableRoot(source, null);
+            return voToDataGroups(docRoot, headerOnly, indices);
+        } catch (Exception e) {
+            throw new IOException("Unable to parse VOTable from stream: \n" + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * returns an array of DataGroup from a votable file.
+     * @param docRoot  the root element of the votable.
+     * @param headerOnly  if true, returns only the headers, not the data.
+     * @param indices   only return table from this list of indices
+     * @return an array of DataGroup object
+     */
+    private static DataGroup[] voToDataGroups(VOElement docRoot,
+                                             boolean headerOnly,
                                              int ...indices) throws IOException {
         List<DataGroup> groups = new ArrayList<>();
 
         try {
             List<Integer> indicesList = indices == null ? null : CollectionUtil.asList(indices);
-            VOElement docRoot = getVoTableRoot(location, null);
             List<TableElement> tableAry = getAllTableElements(docRoot);
             List<ResourceInfo> resources = getAllResources(docRoot);
             for (int i = 0; i < tableAry.size(); i++) {
                 if (indices == null || indices.length == 0 || indicesList.contains(i)) {
                     TableElement tableEl = tableAry.get(i);
                     DataGroup dg = convertToDataGroup(tableEl, new VOStarTable(tableEl), headerOnly);
-                    if (SpectrumMetaInspector.hasSpectrumHint(request)) SpectrumMetaInspector.searchForSpectrum(dg,true);
                     if (resources != null) dg.setResourceInfos(resources);
                     groups.add(dg);
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOG.error(e);
             throw new IOException(e.getMessage());
         }
 
         return groups.toArray(new DataGroup[groups.size()]);
     }
+
 
     public static String getError(InputStream inputStream, String location) throws DataAccessException {
         try {
@@ -197,14 +227,18 @@ public class VoTableReader {
         }
 
         try {
-            policy = policy == null ? PREFER_MEMORY : policy;
-            VOElementFactory voFactory =  new VOElementFactory();
-            voFactory.setStoragePolicy(policy);
-            return voFactory.makeVOElement(voTablePath);
-        }  catch (SAXException | IOException e) {
+            // at this point, voTablePath is a file path.
+            return getVoTableRoot(new FileInputStream(voTablePath), policy);
+        }  catch (Exception e) {
             throw new IOException("Unable to parse VOTABLE from "+ location + "\n" +
                     e.getMessage(), e);
         }
+    }
+    private static VOElement getVoTableRoot(InputStream source, StoragePolicy policy) throws Exception {
+        policy = policy == null ? PREFER_MEMORY : policy;
+        VOElementFactory voFactory =  new VOElementFactory();
+        voFactory.setStoragePolicy(policy);
+        return voFactory.makeVOElement(new BufferedInputStream(source), null);
     }
 
     // get all <TABLE> from one votable file

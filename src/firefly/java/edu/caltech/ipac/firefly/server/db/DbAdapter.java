@@ -7,9 +7,12 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.ResourceProcessor;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
+import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
+import org.apache.commons.io.FilenameUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
@@ -37,16 +41,6 @@ public interface DbAdapter {
     String DEF_DB_TYPE = AppProperties.getProperty("DbAdapter.type", DuckDbAdapter.NAME);
 
     List<String> ignoreCols = Arrays.asList(DataGroup.ROW_IDX, DataGroup.ROW_NUM, "\"" + DataGroup.ROW_IDX + "\"", "\"" + DataGroup.ROW_NUM + "\"");
-
-    Map<String, DbAdapterCreator> allCreator = Map.of(
-            HsqlDbAdapter.NAME, new HsqlDbAdapter(),
-            DuckDbReadable.Parquet.NAME, new DuckDbReadable.Parquet(),
-            DuckDbReadable.Csv.NAME, new DuckDbReadable.Csv(),
-            DuckDbReadable.Tsv.NAME, new DuckDbReadable.Tsv(),
-            DuckDbAdapter.NAME, new DuckDbAdapter(),
-            H2DbAdapter.NAME, new H2DbAdapter(),
-            SqliteDbAdapter.NAME, new SqliteDbAdapter()
-    );
 
     /**
      * @return the name of this database
@@ -215,14 +209,21 @@ public interface DbAdapter {
 //  static functions for resolving or finding suitable database adapter
 //=====================================================================
 
-    /**
-     * @param treq  use to extract DB type; use null to get the default
-     * @return a DbAdapterCreator that can support a DB type
-     */
-    static DbAdapterCreator getDbCreator(TableServerRequest treq) {
-        String type = treq == null ? null : treq.getMeta(TBL_FILE_TYPE);
-        type = isEmpty(type) ? DEF_DB_TYPE : type;
-        return allCreator.get(type);
+    static DbAdapter getAdapter(TableServerRequest treq, DbFileCreator dbFileCreator) {
+        return getAdapter(treq.getMeta(TableServerRequest.TBL_FILE_TYPE), dbFileCreator);
+    }
+
+    static DbAdapter getAdapter(String name, DbFileCreator dbFileCreator) {
+        if (isEmpty(name))  name = DEF_DB_TYPE;
+        return switch (name) {
+            case HsqlDbAdapter.NAME -> new HsqlDbAdapter(dbFileCreator);
+            case H2DbAdapter.NAME -> new H2DbAdapter(dbFileCreator);
+            case SqliteDbAdapter.NAME -> new SqliteDbAdapter(dbFileCreator);
+            case DuckDbReadable.Parquet.NAME -> new DuckDbReadable.Parquet(dbFileCreator);
+            case DuckDbReadable.Csv.NAME -> new DuckDbReadable.Csv(dbFileCreator);
+            case DuckDbReadable.Tsv.NAME -> new DuckDbReadable.Tsv(dbFileCreator);
+            default -> new DuckDbAdapter(dbFileCreator);
+        };
     }
 
     /**
@@ -230,16 +231,18 @@ public interface DbAdapter {
      * @return a DbAdapter that supports the given dbFile; otherwise, return null.
      */
     static DbAdapter getAdapter(File dbFile) {
-        return allCreator.values().stream()
-                .map(ad -> ad.create(dbFile))
-                .filter(Objects::nonNull)
-                .findFirst()
-                .orElse(null);
+        String ext = FilenameUtils.getExtension(dbFile.getName());
+        return getAdapter(ext, (s) -> dbFile);
     }
 
 //====================================================================
 //  Inner classes or interfaces used by this class
 //====================================================================
+
+    @FunctionalInterface
+    public interface DbFileCreator {
+        File create(String dbFileExtension);
+    }
 
     /**
      * Interface to delegate the action of data fetching to DbAdapter.
@@ -249,18 +252,6 @@ public interface DbAdapter {
     interface DataGroupSupplier {
         DataGroup get() throws DataAccessException;
     }
-
-    /**
-     * returns DbAdapter if it can handle the given dbFile
-     */
-    interface DbAdapterCreator {
-        String getFileExt();
-        DbAdapter create(File dbFile);
-        default DbAdapter create(File dir, String dbName) {
-            return create(new File(dir, dbName + "." + getFileExt()));
-        }
-    }
-
 
     /**
      * Info for each database

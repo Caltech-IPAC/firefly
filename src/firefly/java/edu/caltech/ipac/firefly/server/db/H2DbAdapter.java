@@ -10,7 +10,7 @@ import java.util.List;
  * @author loi
  * @version $Id: DbInstance.java,v 1.3 2012/03/15 20:35:40 loi Exp $
  */
-public class H2DbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterCreator {
+public class H2DbAdapter extends BaseDbAdapter {
     public static final String NAME = "mv.db";
 
     private static final List<String> SUPPORTS = List.of(NAME, "h2.db", "db");
@@ -18,19 +18,9 @@ public class H2DbAdapter extends BaseDbAdapter implements DbAdapter.DbAdapterCre
     /**
      * used by DbAdapterCreator only
      */
-    H2DbAdapter() {
-        super(null);
-    }
+    public H2DbAdapter (DbFileCreator dbFileCreator) { this(dbFileCreator.create(NAME)); }
     public H2DbAdapter(File dbFile) {
         super(dbFile);
-    }
-
-    public DbAdapter create(File dbFile) {
-        return canHandle(dbFile) ? new H2DbAdapter(dbFile) : null;
-    }
-
-    List<String> getSupportedExts() {
-        return  SUPPORTS;
     }
 
     public String getName() { return NAME; }

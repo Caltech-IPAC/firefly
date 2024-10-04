@@ -30,10 +30,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
 import java.util.Date;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -137,23 +137,28 @@ public class EmbeddedDbUtil {
                 DataType dt = dg.getDataDefinitions()[i];
                 int idx = i + 1;
                 Object val = isAryType.get(i) ? deserialize(rs, idx) : rs.getObject(idx);
-
-                // Database may store data in larger data types. Convert it back to the appropriate type when necessary.
-                val = switch (dt.getDataType().getSimpleName()) {
-                    case "Float"    -> (val instanceof Double cv) ? cv.floatValue() : val;
-                    case "Double"   -> (val instanceof BigDecimal cv) ? cv.doubleValue() : val;
-                    case "Short"    -> (val instanceof Integer cv) ? cv.shortValue() : val;
-                    case "Integer"  -> (val instanceof Long cv) ? cv.intValue() : val;
-                    case "Byte"     -> (val instanceof Short cv) ? cv.byteValue() : val;
-                    default -> val;
-                };
-
+                // Database may store data in a different data type than what defined by DD. Convert it back to the appropriate type when necessary.
+                val = convertToType(dt.getDataType(), val);
                 row.setDataElement(dt, val);
             }
             dg.add(row);
         } while (rs.next()) ;
         logger.trace("converting a %,d rows ResultSet into a DataGroup".formatted(dg.size()));
         return dg;
+    }
+
+    private static Object convertToType(Class clz, Object val) {
+        if (val == null) return null;
+        if (clz.isInstance(val))    return val;
+        if (val instanceof Number n) {
+            if (clz == Double.class)    return n.doubleValue();
+            if (clz == Integer.class)   return n.intValue();
+            if (clz == Float.class)     return n.floatValue();
+            if (clz == Long.class)      return n.longValue();
+            if (clz == Short.class)     return n.shortValue();
+            if (clz == Byte.class)      return n.byteValue();
+        }
+        return val;
     }
 
     public static List<DataType> getCols(ResultSet rs, DbInstance dbInstance) throws SQLException {

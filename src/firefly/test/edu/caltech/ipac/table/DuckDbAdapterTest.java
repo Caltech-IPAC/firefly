@@ -199,7 +199,7 @@ public class DuckDbAdapterTest extends ConfigTest {
 		duckReq.setParam(SEARCH_REQUEST, JsonTableUtil.toJsonTableRequest(duck).toJSONString());
 		duckReq.setParam(DecimationProcessor.DECIMATE_INFO, new DecimateInfo("ra", "dec").toString());
 		duckReq.setPageSize(-1);
-		duckReq.setSortInfo(new SortInfo("decimate_key"));
+		duckReq.setSortInfo(new SortInfo("dkey"));
 
 		TableServerRequest hsqlReq = (TableServerRequest) duckReq.cloneRequest();
 		hsqlReq.setParam(SEARCH_REQUEST, JsonTableUtil.toJsonTableRequest(hsql).toJSONString());
@@ -240,7 +240,7 @@ public class DuckDbAdapterTest extends ConfigTest {
 		EmbeddedDbProcessor proc = (EmbeddedDbProcessor) SearchManager.getProcessor(IpacTableFromSource.PROC_ID);
 		DbAdapter dbAdapter = proc.getDbAdapter(treq);
 
-		assertEquals("DuckDB is used for parquet files", DuckDbReadable.Parquet.NAME, dbAdapter.getName());
+		assertEquals("DuckDB is used for parquet files", DuckDbReadable.NAME, dbAdapter.getName());
 
 		// load the data into the database; 4 tables will be created.  DATA, DATA_DD, DATA_META, and DATA_AUX
 		proc.getData(treq);
@@ -255,9 +255,7 @@ public class DuckDbAdapterTest extends ConfigTest {
 		assertEquals("Temp tables are removed", 4, dbAdapter.getTableNames().size());
 
 		dbAdapter.close(true);
-		DuckDbReadable duckDb = (DuckDbReadable) dbAdapter;
-		assertFalse("DuckDb file is deleted", duckDb.getDbFile().exists());
-		assertTrue("DuckDb data file is still there", duckDb.getSourceFile().exists());
+		assertFalse("DuckDb file is deleted", dbAdapter.getDbFile().exists());
 	}
 
 	@Test
