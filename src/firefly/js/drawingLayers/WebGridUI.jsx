@@ -37,7 +37,7 @@ function WebGridUI({drawLayer,pv}) {
            <ListBoxInputFieldView
                onChange={(ev,newValue) => onCoordinateChange( pv.plotId,drawLayer,newValue) }
                options={coordinateOptionArray}
-               value= {pref}
+               value= {pref || coordinateOptionArray[0].value }
                tooltip={'select a coordinate'}
            />
     );

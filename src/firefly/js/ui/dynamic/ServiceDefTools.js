@@ -111,11 +111,14 @@ const isNumberField = ({type, minValue, maxValue, value}) =>
     (!isNaN(Number(value)) || !isNaN(Number(minValue)) || !isNaN(Number(maxValue)));
 
 function prefilterRADec(serDefParams, searchAreaInfo = {}) {
-    const foundRa = serDefParams.find(({UCD}) => UCD === 'pos.eq.ra');
-    const foundDec = serDefParams.find(({UCD}) => UCD === 'pos.eq.dec');
+    let foundRa = serDefParams.find(({UCD}) => UCD === 'pos.eq.ra');
+    if (!foundRa) foundRa= serDefParams.find(({name}) => name === 'ra');
+    let foundDec = serDefParams.find(({UCD}) => UCD === 'pos.eq.dec');
+    if (!foundDec) foundDec= serDefParams.find(({name}) => name === 'dec');
     if (!foundRa?.name || !foundDec?.name) return {filteredParams: serDefParams, posDef: undefined};
 
-    const filteredParams = serDefParams.filter(({UCD}) => UCD !== 'pos.eq.ra' && UCD !== 'pos.eq.dec');
+    const filteredParams = serDefParams.filter(({UCD,name}) =>
+        UCD !== 'pos.eq.ra' && UCD !== 'pos.eq.dec' && name !== 'ra' && name !== 'dec');
 
     const posDef = makeTargetDef({
         centerPt: searchAreaInfo.centerWp,
@@ -302,8 +305,18 @@ function doMakeNumberDef(serDefParam) {
     const desc= name;
     const minNum = Number(serDefParam.minValue);
     const maxNum = Number(serDefParam.maxValue);
-    const vNum = Number(value);
-    if (type === 'int') {
+    let vNum = Number(value);
+    let workingType= type;
+    let workingValue= value;
+    if (type!=='int' && !isFloating(type)
+        && (!isNaN(minNum) || !isNaN(maxNum)) && (value==='' || !isNaN(parseFloat(value))) ) {
+        workingType= 'double';
+        vNum= parseFloat(value);
+        workingValue= value==='' ? '' : vNum+'';
+    }
+
+
+    if (workingType === 'int') {
         return makeIntDef({
             key, desc, tooltip, units, precision: 4, nullAllowed,
             initValue: !isNaN(vNum) ? vNum : undefined,
@@ -311,7 +324,7 @@ function doMakeNumberDef(serDefParam) {
             maxValue: !isNaN(maxNum) ? maxNum : undefined,
         });
     }
-    else if (isFloating(type)) {
+    else if (isFloating(workingType)) {
         return makeFloatDef({
             key, desc, tooltip, units, precision: 4, nullAllowed,
             initValue: !isNaN(vNum) ? vNum : undefined,
@@ -320,7 +333,7 @@ function doMakeNumberDef(serDefParam) {
         });
     }
     else {
-        return makeUnknownDef({key: name, desc: name, tooltip, units, initValue: value});
+        return makeUnknownDef({key: name, desc: name, tooltip, units, initValue: workingValue});
     }
 
 }

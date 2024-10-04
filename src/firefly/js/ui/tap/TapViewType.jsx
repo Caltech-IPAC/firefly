@@ -27,7 +27,7 @@ import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
 
 
-const SERVICE_EXIST_ERROR= 'TAP does not appear to exist or is not accessible';
+const SERVICE_EXIST_ERROR= 'TAP service does not appear to exist or is not accessible';
 
 const SCHEMA_TIP= 'Select a table collection (TAP ‘schema’); type to search the schema names and descriptions.';
 const TABLE_TIP= 'Select a table; type to search the table names and descriptions.';

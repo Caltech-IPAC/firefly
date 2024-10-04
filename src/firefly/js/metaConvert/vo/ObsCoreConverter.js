@@ -216,7 +216,7 @@ export function makeSingleDataProductWithMenu(dpId, primDPType, size, serviceDes
 
 
 
-function getObsCoreRowMetaInfo(table,row) {
+export function getObsCoreRowMetaInfo(table,row) {
     if (!table || row<0) return {};
     const titleStr= createObsCoreTitle(table,row);
     const dataSource= getObsCoreAccessURL(table,row);

@@ -225,7 +225,7 @@ const AdvancedColorPanel= ({allowPopout}) => {
 
     const makeItems = () =>
         ctArray.map((ct) =>
-            (<ToolbarButton icon={<img src={ct.icon} style={{height:8, width:200}}/>}
+            (<ToolbarButton icon={ct.icon ? <img src={ct.icon} style={{height:8, width:200}}/> : undefined}
                             tip={ct.tip} style={{padding: '2px 0 2px 0'}}
                             text={ct.icon ? undefined : 'Default Color Map'}
                             enabled={true} horizontal={false} key={ct.id}

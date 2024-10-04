@@ -3,6 +3,7 @@
  */
 
 import {flatten, isArray, uniqBy} from 'lodash';
+import shallowequal from 'shallowequal';
 import {getExtName, getExtType} from '../FitsHeaderUtil.js';
 import {getCenterPtOfPlot} from '../WebPlotAnalysis';
 import {DEFAULT_THUMBNAIL_SIZE, WebPlotRequest, WPConst} from '../WebPlotRequest.js';
@@ -129,22 +130,35 @@ function getRequestFromResult(result) {
     return PlotState.makePlotStateWithJson(result.PlotCreate[0].plotState)?.getWebPlotRequest();
 }
 
-function getRelatedData(successAry) {
-    const promiseAry= [Promise.resolve()];
-    successAry.forEach( (s) => s.PlotCreate.forEach( (pc) => {
-        const tTypeAry= pc.relatedData && pc.relatedData.filter( (r) => r.dataType==='WAVELENGTH_TABLE');
-        if (tTypeAry?.length) {
-            tTypeAry.forEach( ({searchParams, dataKey, hduIdx, hduName, hduVersion, hduLevel}) => {
-                const p= doFetchTable(searchParams).then( (wlTable) => {
-                    pc.relatedData.push({
-                        dataType:RDConst.WAVELENGTH_TABLE_RESOLVED, dataKey:dataKey+'-resolved',
-                        table:wlTable, hduIdx, hduName, hduVersion, hduLevel
-                    });
-                });
-                promiseAry.push(p);
+
+async function setRelatedDataItem(pc, searchParams, dataKey, hduIdx, hduName, hduVersion, hduLevel) {
+    try {
+        const wlTable= await doFetchTable(searchParams);
+        if (wlTable) {
+            pc.relatedData.push({
+                dataType:RDConst.WAVELENGTH_TABLE_RESOLVED, dataKey:dataKey+'-resolved',
+                table:wlTable, hduIdx, hduName, hduVersion, hduLevel
             });
         }
-    }));
+    }
+    catch (e) {
+        console.log(`failed: related data: hdu: ${hduIdx}, hdu name: ${hduName}, used for: ${dataKey} --- server error: ${e.toString()}`);
+    }
+
+}
+
+function getRelatedData(successAry) {
+    const promiseAry= [Promise.resolve()];
+    successAry.forEach( (s) => s.PlotCreate
+        .forEach( (pc) => {
+            const tTypeAry= pc.relatedData && pc.relatedData.filter( (r) => r.dataType==='WAVELENGTH_TABLE');
+            if (tTypeAry?.length) {
+                tTypeAry.forEach( async ({searchParams, dataKey, hduIdx, hduName, hduVersion, hduLevel}) => {
+                    const p= setRelatedDataItem(pc, searchParams, dataKey, hduIdx, hduName, hduVersion, hduLevel);
+                    promiseAry.push(p);
+                });
+            }
+        }));
     return Promise.all(promiseAry);
 }
 
@@ -171,7 +185,12 @@ async function processPlotImageSuccessResponse(dispatcher, payload, result) {
         dispatchPlotProgressUpdate(wpRequest.getPlotId(), 'Loading Images', false,wpRequest.getRequestKey());
     });
 
-    await getRelatedData(successAry);
+    // try {
+        await getRelatedData(successAry);
+    // }
+    // catch (e) {
+    //    console.log('related data failed'+ e) ;
+    // }
     successAry.forEach( (r) => {
         onViewDimDefined(getRequestFromResult(r)?.getPlotId())
             .then(() => processSuccessResult(dispatcher, payload, [r]));

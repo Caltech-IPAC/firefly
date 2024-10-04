@@ -47,18 +47,24 @@ class SpectralCubeEval implements FitsEvaluation.Eval {
     }
 
 
-    public static List<TableHdu> findWaveTabHDU(BasicHDU<?>[] HDUs) {
+    private static List<TableHdu> findWaveTabHDU(BasicHDU<?>[] HDUs) {
         List<TableHdu> tableHduList = new ArrayList<>();
         for (int i = 0; (i < HDUs.length); i++) {
             var altProjList = FitsReadUtil.getAtlProjectionIDs(HDUs[i].getHeader());
             var tabHdu = findWaveTabHDU(HDUs, i, "");
-            if (tabHdu != null) tableHduList.add(tabHdu);
+            if (tabHdu != null) addTableHdu(tableHduList,tabHdu);
             for (String alt : altProjList) {
                 tabHdu = findWaveTabHDU(HDUs, i, alt);
-                if (tabHdu != null) tableHduList.add(tabHdu);
+                if (tabHdu != null) addTableHdu(tableHduList,tabHdu);
             }
         }
         return tableHduList;
+    }
+
+    private static void addTableHdu(List<TableHdu> tableHduList, TableHdu tabHdu) {
+        if (tableHduList.stream().noneMatch( (h) -> h.hduIdx==tabHdu.hduIdx)) {
+            tableHduList.add(tabHdu);
+        }
     }
 
     private record TableHdu(int hduIdx, String hduName, int hduVersion, int hduLevel) {}
@@ -66,7 +72,7 @@ class SpectralCubeEval implements FitsEvaluation.Eval {
     private record ExtId(String extName, int extVer, int extLevel) {}
 
     /**
-     * If a FITS file contains multiple XTENSION HDUs (headerdata
+     * If a FITS file contains multiple XTENSION HDUs (header data
      * units) with the specified EXTNAME, EXTVER, and EXTLEVEL,
      * then the result of the WCS table lookup is undefined.
      * If the specified FITS BINTABLE contains no column, or multiple
@@ -113,7 +119,7 @@ class SpectralCubeEval implements FitsEvaluation.Eval {
      * @param hduIdx image HDU
      * @return info lookup table
      */
-    public static TableHdu findWaveTabHDU(BasicHDU<?>[] HDUs, int hduIdx, String alt) {
+    private static TableHdu findWaveTabHDU(BasicHDU<?>[] HDUs, int hduIdx, String alt) {
 
         if (HDUs.length < 2) return null;
 
@@ -126,7 +132,7 @@ class SpectralCubeEval implements FitsEvaluation.Eval {
 
         // check if -TAB coordinate is present in the hdu
         List<Integer> ctypeList = getCtypeWithWave(header, alt);
-        if (ctypeList.size() == 0) return null;
+        if (ctypeList.isEmpty()) return null;
 
         for (int idx : ctypeList) {
             TableHdu tableHdu = findWaveTabHDUForCtypeIdx(HDUs, header, alt, idx);
@@ -136,7 +142,7 @@ class SpectralCubeEval implements FitsEvaluation.Eval {
     }
 
 
-    public static TableHdu findWaveTabHDUForCtypeIdx(BasicHDU<?>[] HDUs, Header header, String alt, int idx) {
+    private static TableHdu findWaveTabHDUForCtypeIdx(BasicHDU<?>[] HDUs, Header header, String alt, int idx) {
 
         // parameter keywords used for the -TAB algorithm to find the extension with lookup table
         // PSi_0a table extension name (EXTNAME)

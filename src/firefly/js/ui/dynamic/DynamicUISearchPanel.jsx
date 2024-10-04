@@ -5,6 +5,7 @@
 import {Box, Stack} from '@mui/joy';
 import React from 'react';
 import {CoordinateSys, parseWorldPt} from '../../api/ApiUtilImage.jsx';
+import {isDefined} from '../../util/WebUtil';
 import {standardIDs} from '../../voAnalyzer/VoConst.js';
 
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
@@ -85,6 +86,7 @@ export function convertRequest(request, fieldDefAry, standardIDType) {
                 out[key]= request[key];
                 return out;
             case UNKNOWN:
+                if (isDefined(request[key])) out[key]= request[key];
                 return out;
             case POLYGON:
                 if (standardIDType===standardIDs.sia) out[key]= 'POLYGON ' +cleanupPolygonString(request[polygonKey]);
@@ -291,7 +293,7 @@ function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='d
             <div style={style}>
                 <Slot {...{
                     component: FormPanel,
-                    slotProps: slotProps.FormPanel,
+                    slotProps: slotProps?.FormPanel,
                     help_id: 'dynDefaultSearchPanelHelp',
                     onError:() => showInfoPopup('Fix errors and search again', 'Error'),
                     cancelText:'',

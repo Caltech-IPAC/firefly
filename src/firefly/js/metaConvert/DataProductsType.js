@@ -183,9 +183,9 @@ export const dpdtMessageWithError= (message,detailMsgAry) => {
  * @return {DataProductsDisplayType}
  */
 export function dpdtImage({name, activate, extraction, menuKey='image-0', extractionText='Pin Image',
-                              request, override, interpretedData, requestDefault, enableCutout,
+                              request, override, interpretedData, requestDefault, enableCutout, pixelBasedCutout,
                               url, semantics,size, serDef }) {
-    return { displayType:DPtypes.IMAGE, name, activate, extraction, menuKey, extractionText, enableCutout,
+    return { displayType:DPtypes.IMAGE, name, activate, extraction, menuKey, extractionText, enableCutout, pixelBasedCutout,
         request, override, interpretedData, requestDefault,url, semantics,size,serDef};
 }
 
