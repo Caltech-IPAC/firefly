@@ -28,6 +28,7 @@ import {getFieldVal} from '../../fieldGroup/FieldGroupUtils.js';
 import {CopyToClipboard} from '../../visualize/ui/MouseReadout';
 
 import RIGHT_ARROW from 'html/images/right-arrow-in-16x16.png';
+import {applyFilterChanges} from 'firefly/tables/TableConnector';
 
 
 export class FilterEditor extends PureComponent {
@@ -260,7 +261,7 @@ export function SqlTableFilter({tbl_ui_id, tbl_id, onChange, style={}, samples, 
             </SplitContent>
             <SplitContent style={{overflow: 'auto'}}>
                 <Stack height={1} spacing={1} overflow='hidden'>
-                    <ColumnFilter {...{colFilters, onChange}}/>
+                    <ColumnFilter {...{colFilters, tbl_id}}/>
                     <Stack direction='row' justifyContent='space-between' alignItems='center'>
                         <Typography level='title-md'>{inputLabel}</Typography>
                         <Stack direction='row' alignItems='center' spacing={1}>
@@ -309,17 +310,16 @@ SqlTableFilter.propTypes= {
     onOptionReset: PropTypes.func
 };
 
-function ColumnFilter({colFilters, onChange}) {
-    const clearFilters = () => onChange({filterInfo: ''});
+function ColumnFilter({colFilters, tbl_id}) {
+    const clearFilters = () => applyFilterChanges({tbl_id, filterInfo: ''});
 
     if (colFilters){
         return (
             <Stack>
-                <Stack direction='row' spacing={1}>
+                <Stack direction='row' spacing={1} alignItems='center'>
                     <Typography level='title-md'>Current Constraints: </Typography>
-                    <Link onClick={clearFilters}
-                          endDecorator={<CopyToClipboard value={colFilters}/>}
-                    >Clear</Link>
+                    <Link onClick={clearFilters}>Clear</Link>
+                    <CopyToClipboard value={colFilters}/>
                 </Stack>
                 <Sheet variant='soft' title={colFilters}>
                     <Typography color='warning' level='body-sm'><code>{colFilters}</code></Typography>
