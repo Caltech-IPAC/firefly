@@ -95,7 +95,7 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
                     </Tab>
                     {showAdvFilter &&
                     <Tab name={advFilterName} label={label()}>
-                        <SqlTableFilter {...{tbl_id, tbl_ui_id, onChange}} onChange={onSqlFilterChanged} />
+                        <SqlTableFilter {...{tbl_id, tbl_ui_id}} onChange={onSqlFilterChanged} />
                     </Tab>
                     }
                 </StatefulTabs>
