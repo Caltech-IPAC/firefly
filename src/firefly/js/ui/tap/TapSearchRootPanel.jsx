@@ -191,7 +191,7 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
     return (
         <Box width={1} height={1}>
             <ConstraintContext.Provider value={ctx}>
-                <FormPanel  onSuccess={(request) => onTapSearchSubmit(request, serviceUrl,tapState, setUserTitle)}
+                <FormPanel  onSuccess={(request) => onTapSearchSubmit(request, serviceUrl, tapState)}
                             cancelText=''
                             help_id = {tapHelpId('form')}
                             slotProps={{

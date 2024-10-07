@@ -373,7 +373,7 @@ export function AdvancedADQL({adqlKey, defAdqlKey, serviceUrl, capabilities, sty
                                             <code className='language-sql'>
                                                 {(`\
                                             TOP n  -- Limit the results to n number of records
-                                            ORDER BY [ASC/DESC] -- Used for sorting
+                                            ORDER BY column [ASC/DESC] -- Used for sorting
                                             POINT('<coordinate system>', RIGHT_ASCENSION, DECLINATION)
                                             CIRCLE('<coordinate system>', RIGHT_ASCENSION_CENTER, DECLINATION_CENTER, RADIUS)
                                             BOX('<coordinate system>', RIGHT_ASCENSION_CENTER, DECLINATION_CENTER, WIDTH, HEIGHT)
