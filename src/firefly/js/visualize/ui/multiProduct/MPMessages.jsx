@@ -23,8 +23,8 @@ export function AdvancedMessage({dpId, dataProductsState, noProductMessage, doRe
 
 
 export function ProductMessage({menu, singleDownload, makeDropDown, isWorkingState=false, message, url}) {
-    let dMsg = singleDownload && menu[0].name;
-    if (dMsg && menu[0].fileType) dMsg = `${dMsg}, type: ${menu[0].fileType}`;
+    let dMsg = singleDownload && (menu?.[0].name ?? '');
+    if (dMsg && menu?.[0].fileType) dMsg = `${dMsg}, type: ${menu[0].fileType}`;
     let actionUrl = url;
     if (singleDownload && !url) actionUrl = isArray(menu) && menu.length && menu[0].url;
 
@@ -39,7 +39,7 @@ export function ProductMessage({menu, singleDownload, makeDropDown, isWorkingSta
                 <Typography level='title-lg' sx={{alignSelf: 'center', textAlign:'center'}}>{message}</Typography>
             </Stack>
             {
-                singleDownload && <CompleteButton sx={{alignSelf: 'center', pt: 3}} text={dMsg}
+                actionUrl && singleDownload && <CompleteButton sx={{alignSelf: 'center', pt: 3}} text={dMsg}
                                                   onSuccess={() => doDownload(actionUrl)}/>
             }
         </Stack>

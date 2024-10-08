@@ -41,7 +41,7 @@ export function InputFieldView(props) {
                 <FormControl {...{orientation, required, error:!valid, ...slotProps?.control}}>
                     {label && <FormLabel {...slotProps?.label}>{label}</FormLabel>}
                     <Input {...{
-                        value: currValue,
+                        value: currValue??'',
                         disabled:readonly,
                         ref: inputRef,
                         startDecorator, endDecorator,

@@ -4,9 +4,11 @@
 
 
 import {Box, Button, Divider, Stack, Tooltip, Typography} from '@mui/joy';
+import {isUndefined} from 'lodash';
 import React, {useEffect, useState} from 'react';
 import sizeMe from 'react-sizeme';
 import {getAppOptions} from '../../../api/ApiUtil.js';
+import {isDefined} from '../../../util/WebUtil';
 import {makeImagePt} from '../../Point';
 import {allowPinnedCharts} from '../../../charts/ChartUtil';
 import {ensureDefaultChart} from '../../../charts/ui/ChartsContainer.jsx';
@@ -303,13 +305,12 @@ function PointExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
 
 
 function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
-    const dl= getDrawLayerByType(getDlAry(), ExtractLineTool.TYPE_ID) ?? {};
-    const {selectionType= FREE_SELECTION}= dl;
+    const dl= useStoreConnector(() => getDrawLayerByType(getDlAry(), ExtractLineTool.TYPE_ID) ?? {});
+    const {selectionType= FREE_SELECTION, helpWarning=false}= dl;
     const [{plotlyDivStyle, plotlyData, plotlyLayout},setChartParams]= useState({});
     const [imPtAry,setImPtAry]= useState(undefined);
     const [pointSize,setPointSize]= useState(1);
     const [combineOp,setCombineOp]= useState(AVG);
-    const [,setSelectionTypeInState]= useState(selectionType);
     const [allRelatedHDUS,setAllRelatedHDUS]= useState(true);
     const [axis,setAxis]= useState('x');
     const plot= primePlot(pv);
@@ -327,13 +328,14 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
     const plane= getImageCubeIdx(plot)>-1 ? getImageCubeIdx(plot) : 0;
     const {x:chartX,y:chartY}=plot?.attributes?.[PlotAttribute.SELECT_ACTIVE_CHART_PT] ?? {};
 
+
     useEffect(() => {
         const getData= async () => {
             if (ipt1 && ipt2 && plot) {
                 const {dataWidth,dataHeight}= plot;
                 const {direction,axis:newAxis}= xLineData(ipt1,ipt2);
                 const newImPtAry= getLinePointAry(ipt1,ipt2)
-                    .filter( ({x,y}) => x>=0 && y>=0 && x<dataWidth && y<dataHeight);
+                    ?.filter( ({x,y}) => x>=0 && y>=0 && x<dataWidth && y<dataHeight);
                 if (!newImPtAry?.length) {
                     setImPtAry(undefined);
                     setChartParams({});
@@ -357,26 +359,17 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
             }
             if (!pv) cancelLineExtraction();
         };
-        if (extractionData) getData();
+        if (extractionData) void getData();
     },[x1,y1,x2,y2,hduNum,plotId,plotImageId,pointSize,combineOp,chartX,chartY]);
+
+    const plotlyDataToUse= extractionData&&!helpWarning ? plotlyData : undefined;
 
     return (
         <ExtractionPanelView {...{
             allRelatedHDUS, setAllRelatedHDUS, pointSize, setPointSize, combineOp, setCombineOp, canCreateExtractionTable,
-            plotlyDivStyle, plotlyData: extractionData&&plotlyData, plotlyLayout, hasFloatingData:hasFloatingData(plot),
+            plotlyDivStyle, plotlyData: plotlyDataToUse, plotlyLayout, hasFloatingData:hasFloatingData(plot),
             sizeType: axis==='y'?SIZE_HORIZONTAL:SIZE_VERTICAL,
-            startUpHelp: (
-                <Stack alignItems='center'>
-                    <Typography> Draw line on image to extract point on line and show chart. </Typography>
-                    {pvCnt>1 && <Typography {...{mt:3}}> Shift-click will change the selected image without selecting a new line. </Typography>}
-                    <Typography pt={1} color='warning' size={'body-lg'}>OR</Typography>
-                    <Stack pt={1} spacing={1}>
-                        <FieldGroup groupKey='extract-full-line' >
-                            <ExtractWholeLine plot={plot}/>
-                        </FieldGroup>
-                    </Stack>
-                </Stack>
-            ),
+            startUpHelp: <LineStartUpHelp {...{helpWarning,plot,pvCnt}}/>,
             afterRedraw: (chart,pl) => afterLineChartRedraw(pv,chart,pl,imPtAry,makeImagePt(x1,y1), makeImagePt(x2,y2)),
             callKeepExtraction: (download, doOverlay) =>
                 keepLineExtraction(ipt1,ipt2, pv, plot, plot.plotState.getWorkingFitsFileStr(),
@@ -385,28 +378,43 @@ function LineExtractionPanel({canCreateExtractionTable, pv, pvCnt}) {
                     axis==='y' ? 1: pointSize,
                     combineOp, download, doOverlay),
         }}>
-            {Boolean(extractionData&&plotlyData) &&
-                <Stack {...{ spacing:1, alignItems:'center', alignSelf:'center', direction:'row', height: 30, maxHeight:30, mt:.5}}>
-                    <Tooltip title={SELECT_TYPE_TIP}>
-                        <Typography >Mouse Selection</Typography>
-                    </Tooltip>
-                    <ListBoxInputFieldView {...{
-                        value: selectionType,
-                        tooltip: SELECT_TYPE_TIP,
-                        onChange: (ev, newVal) => {
-                            dispatchModifyCustomField( ExtractLineTool.TYPE_ID, {selectionType:newVal}, plotId);
-                            setSelectionTypeInState(newVal);
-                        },
-                        options:[
-                            {label: 'Free', value: FREE_SELECTION},
-                            {label: 'Line lock', value: LINE_SELECTION},
-                            {label: 'Column lock', value: COLUMN_SELECTION}
-                        ]
-                    }} />
-                </Stack>
-            }
-        </ExtractionPanelView>);
+            <LineExtractionType {...{plotlyData:plotlyDataToUse, plotId, selectionType}}/>
+        </ExtractionPanelView>
+    );
 }
+
+const LineStartUpHelp= ({helpWarning,plot,pvCnt}) => (
+    <Stack alignItems='center'>
+        <Typography {...{color: helpWarning?'warning':undefined, level:helpWarning?'h4':undefined}}>
+            Draw line on image to extract point on line and show chart. </Typography>
+        {pvCnt>1 && !helpWarning && <Typography {...{mt:3}}> Shift-click will change the selected image without selecting a new line. </Typography>}
+        {!helpWarning && <Typography pt={1} color='warning' size={'body-lg'}>OR</Typography>}
+        {!helpWarning && <Stack pt={1} spacing={1}>
+            <FieldGroup groupKey='extract-full-line' >
+                <ExtractWholeLine plot={plot}/>
+            </FieldGroup>
+        </Stack>}
+    </Stack>
+);
+
+const LineExtractionType= ({plotlyData,plotId,selectionType}) => (
+    plotlyData ?
+        (<Stack {...{ spacing:1, alignItems:'center', alignSelf:'center', direction:'row', height: 30, maxHeight:30, mt:.5}}>
+            <ListBoxInputFieldView {...{
+                value: selectionType,
+                tooltip: SELECT_TYPE_TIP,
+                onChange: (ev, newVal) => {
+                    dispatchModifyCustomField( ExtractLineTool.TYPE_ID, {selectionType:newVal}, plotId);
+                },
+                options:[
+                    {label: 'Free Hand Selection - click and draw on image', value: FREE_SELECTION},
+                    {label: 'Line Selection - click on image', value: LINE_SELECTION},
+                    {label: 'Column Selection - click on image', value: COLUMN_SELECTION}
+                ]
+            }} />
+        </Stack>)
+        : undefined
+);
 
 
 function getPts(isLine,line,col,plot) {
@@ -441,7 +449,7 @@ function ExtractWholeLine({plot}) {
         
 
     useEffect(() => {
-        if (!plot) return;
+        if (!plot || (isUndefined(line) && isUndefined(col))) return;
         dispatchModifyCustomField( ExtractLineTool.TYPE_ID,
             {
                 newFirst: pt0,

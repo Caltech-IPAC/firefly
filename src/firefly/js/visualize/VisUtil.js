@@ -1025,7 +1025,7 @@ export function getLinePointAry(pt1, pt2) {
         }
         return pts;
     }
-    return null;
+    return;
 }
 
 function getEllipsePointForAngle(cx, cy, rx, ry, rotationAngle, theta) {
