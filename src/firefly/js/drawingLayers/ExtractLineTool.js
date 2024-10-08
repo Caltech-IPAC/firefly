@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import DrawLayerCntlr, {DRAWING_LAYER_KEY} from '../visualize/DrawLayerCntlr.js';
+import DrawLayerCntlr, {DRAWING_LAYER_KEY, getDlAry} from '../visualize/DrawLayerCntlr.js';
 import {visRoot,dispatchAttributeChange} from '../visualize/ImagePlotCntlr.js';
 import {makeDrawingDef,Style, TextLocation} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {ColorChangeType}  from '../visualize/draw/DrawLayer.js';
@@ -52,6 +52,12 @@ export function extractLineToolStartActionCreator(rawAction) {
 }
 
 
+function addLineDistAttributesToPlotsLater(drawLayerId, plotId, sel) {
+    setTimeout(() => {
+        const dl= getDrawLayerById(getDlAry(),drawLayerId);
+        addLineDistAttributesToPlots(dl,plotId,sel);
+    },0);
+}
 
 export function addLineDistAttributesToPlots(drawLayer, plotId, sel) {
     const srcPlot= primePlot(visRoot(),plotId);
@@ -61,7 +67,7 @@ export function addLineDistAttributesToPlots(drawLayer, plotId, sel) {
         (pId) => {
             if (pId===plotId) {
                 dispatchAttributeChange({plotId:pId, toAllPlotsInPlotView:true, overlayColorScope:false,
-                    changes: { [PlotAttribute.ACTIVE_DISTANCE]: sel, [PlotAttribute.EXTRACTION_DATA]: true, }
+                    changes: { [PlotAttribute.ACTIVE_DISTANCE]: sel, [PlotAttribute.EXTRACTION_DATA]: Boolean(sel) }
                 });
             }
             else {
@@ -70,8 +76,9 @@ export function addLineDistAttributesToPlots(drawLayer, plotId, sel) {
                     const targetCC= CsysConverter.make(p);
                     const pt0= targetCC.getImageCoords(cc.getWorldCoords(drawLayer.firstPt));
                     const pt1= targetCC.getImageCoords(cc.getWorldCoords(drawLayer.currentPt));
+                    const plotSel= sel ? {pt0,pt1} : undefined;
                     dispatchAttributeChange({plotId:pId, toAllPlotsInPlotView:false, overlayColorScope:false,
-                        changes:{ [PlotAttribute.ACTIVE_DISTANCE]: {pt0,pt1}, [PlotAttribute.EXTRACTION_DATA]: true, },
+                        changes:{ [PlotAttribute.ACTIVE_DISTANCE]: plotSel, [PlotAttribute.EXTRACTION_DATA]: true, },
                     });
                 }
             }
@@ -113,7 +120,8 @@ function creator() {
         helpLine: selHelpText,
         offsetCal: false,
         moveHead: true,      // drag start from head or not
-        vertexDef: {points:null, pointDist:EDIT_DISTANCE},
+        startSelectCnt: 0,
+        vertexDef: {points:undefined, pointDist:EDIT_DISTANCE},
         selectionType: FREE_SELECTION,
     };
     return DrawLayer.makeDrawLayer( `${ID}-${idCnt++}`, TYPE_ID, 'Extract Line Tool',
@@ -171,6 +179,7 @@ function makeBaseReturnObj(firstPt,currPt,drawAry )  {
     const exclusiveDef= { exclusiveOnDown: true, type : 'vertexThenAnywhere' };
     return {drawData:{data:drawAry},
             exclusiveDef,
+            helpWarning:false,
             vertexDef:{points:[firstPt, currPt], pointDist:EDIT_DISTANCE}
     };
 }
@@ -195,8 +204,15 @@ function dealWithMods(drawLayer,action) {
                 firstPt= makeImagePt(currentPt.x,0);
                 currentPt= makeImagePt(currentPt.x,dataHeight-1);
             }
+            else if (selectionType===FREE_SELECTION) {
+                firstPt=  (drawLayer.selectionType===LINE_SELECTION) ?
+                    makeImagePt(0,currentPt.y) : makeImagePt(currentPt.x,0);
+                firstPt= makeImagePt(currentPt.x,0);
+                currentPt= makeImagePt(dataWidth/2,dataHeight/2);
+            }
         }
         const drawAry= makeSelectObj(firstPt, currentPt, activePt, selectionType, drawLayer.offsetCal, cc);
+        addLineDistAttributesToPlotsLater(drawLayer.drawLayerId, plot.plotId, {pt0:firstPt,pt1:currentPt});
         return {activePt, selectionType,firstPt, currentPt, ...makeBaseReturnObj(firstPt, currentPt,drawAry)};
     }
     else if (Object.keys(changes).includes('newFirst') || Object.keys(changes).includes('newCurrent') ){
@@ -225,13 +241,13 @@ function attach(drawLayer) {
 function getMode(plot) {
     if (!plot) return 'select';
     const selection = plot.attributes[PlotAttribute.ACTIVE_DISTANCE];
-    return (selection) ? 'edit' : 'select';
+    return selection ? 'edit' : 'select';
 }
 
 function start(drawLayer, action) {
     const {imagePt,plotId,shiftDown}= action.payload;
     if (drawLayer.selectionType===LINE_SELECTION || drawLayer.selectionType===COLUMN_SELECTION) {
-        const newDl= {...drawLayer, ...setupSelect(imagePt)};
+        const newDl= {...drawLayer, ...setupSelect(imagePt,drawLayer)};
         return drag(newDl, action);
     }
     const plot= primePlot(visRoot(),plotId);
@@ -240,7 +256,7 @@ function start(drawLayer, action) {
     const cc= CsysConverter.make(plot);
     let retObj= {};
     if (mode==='select' || shiftDown) {
-        retObj= setupSelect(imagePt);
+        retObj= setupSelect(imagePt,drawLayer);
     }
     else if (mode==='edit') {
         const ptAry= getPtAry(plot);
@@ -257,6 +273,7 @@ function start(drawLayer, action) {
             retObj.firstPt= cc.getImageWorkSpaceCoords(ptAry[0]);
             retObj.currentPt= cc.getImageWorkSpaceCoords(ptAry[1]);
             retObj.activePt= undefined;
+            retObj.startSelectCnt=0;
             if (!retObj.firstPt || !retObj.currentPt) return {};
 
             const drawAry = makeSelectObj(retObj.firstPt, retObj.currentPt, undefined, drawLayer.selectionType,
@@ -264,8 +281,12 @@ function start(drawLayer, action) {
             return Object.assign(retObj, makeBaseReturnObj(retObj.firstPt, retObj.currentPt, drawAry));
         }
         else {
-            retObj= setupSelect(imagePt) ;
+            retObj= setupSelect(imagePt,drawLayer) ;
         }
+    }
+    if (retObj.startSelectCnt>2) {
+        retObj= {...makeBaseReturnObj(undefined,undefined,[]), ...retObj, helpWarning:true};
+        addLineDistAttributesToPlotsLater(drawLayer.drawLayerId, plot.plotId);
     }
     return retObj;
 
@@ -294,7 +315,7 @@ function drag(drawLayer,action) {
     }
 
     const drawAry= makeSelectObj(newFirst, newCurrent, undefined, drawLayer.selectionType, drawLayer.offsetCal, cc);
-    const line= {firstPt: newFirst, currentPt:newCurrent, activePt:undefined,
+    const line= {firstPt: newFirst, currentPt:newCurrent, activePt:undefined, startSelectCnt:0,
         ...makeBaseReturnObj(newFirst, newCurrent,drawAry)};
     return line;
 }
@@ -303,7 +324,7 @@ function end(action) {
     const {plotId, shiftDown}= action.payload;
     if (shiftDown) return;
     const mode= getMode(primePlot(visRoot(),plotId));
-    const retObj= {};
+    const retObj= {startSelectCnt:0};
     if (mode==='select') {
         retObj.helpLine= editHelpText;
     }
@@ -311,8 +332,9 @@ function end(action) {
 }
 
 
-function setupSelect(imagePt) {
-    return {firstPt: imagePt, currentPt: imagePt,  activePt:undefined, moveHead: true};
+function setupSelect(imagePt, drawLayer) {
+    return {firstPt: imagePt, currentPt: imagePt,  activePt:undefined,
+        moveHead: true, helpWarning:false, startSelectCnt:drawLayer.startSelectCnt+1};
 }
 
 function findClosestPtIdx(ptAry, pt) {

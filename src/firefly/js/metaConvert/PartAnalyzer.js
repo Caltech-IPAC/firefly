@@ -253,8 +253,7 @@ function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOn
     else {
 
         let {chartTableDefOption}= part;
-        if (getRowCnt(part,partFormat)===1) {
-            if (!xCol || !yCol) return;
+        if (getRowCnt(part,partFormat)===1 && xCol && yCol) {
             if (chartTableDefOption===AUTO) chartTableDefOption= SHOW_TABLE;
             return dpdtChartTable(ddTitleStr,
                 createChartSingleRowArrayActivate(fileOnServer,'Row 1 Chart',activateParams,xCol,yCol,0,tbl_index, dataTypeHint),
