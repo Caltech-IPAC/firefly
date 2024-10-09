@@ -1,7 +1,6 @@
 import {Divider, Stack, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
-import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {floatValidator, maximumPositiveFloatValidator, minimumPositiveFloatValidator} from '../../util/Validate.js';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 import {FieldGroupCtx, ForceFieldGroupValid} from '../FieldGroup.jsx';
@@ -11,7 +10,7 @@ import {useFieldGroupRerender, useFieldGroupWatch} from '../SimpleComponent.jsx'
 import {ValidationField} from '../ValidationField.jsx';
 import {makeAdqlQueryRangeFragment, ConstraintContext, siaQueryRange} from './Constraints.js';
 import {
-    DebugObsCore, getPanelPrefix, getTapObsCoreOptions, LableSaptail, LeftInSearch, makeCollapsibleCheckHeader,
+    DebugObsCore, getPanelPrefix, getTapObsCoreOptions, LeftInSearch, makeCollapsibleCheckHeader,
     makeFieldErrorList,
     makePanelStatusUpdater, SmallFloatNumericWidth, SpatialWidth,
 } from './TableSearchHelpers.jsx';
@@ -109,7 +108,7 @@ const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 const fldKeys= ['obsCoreWavelengthContains', 'obsCoreWavelengthMinRange','obsCoreWavelengthSelectionType',
                 'obsCoreWavelengthRangeType', 'obsCoreWavelengthMaxRange', 'obsCoreWavelengthUnits'];
 
-export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
+export function ObsCoreWavelengthSearch({initArgs, serviceLabel, slotProps}) {
     const filterDefinitions = getTapObsCoreOptions(serviceLabel).filterDefinitions ?? [];
     const fdDefsKeys= filterDefinitions.length ? filterDefinitions.map((fd) =>'filter' +fd.name ) : [];
 
@@ -157,7 +156,8 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
                                        sx:{minHeight:'unset'}
                                    } }}
                                initialState={{ value: initArgs?.urlApi?.obsCoreWavelengthUnits || 'nm' }}
-                               multiple={false} />
+                               multiple={false}
+                               {...slotProps?.obsCoreWavelengthUnits} />
         </Stack>
     );
 
@@ -166,18 +166,19 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
     return (
         <CollapsibleCheckHeader title={panelTitle} helpID={tapHelpId(panelPrefix)}
                                 message={constraintResult?.simpleError??''} initialStateOpen={false}>
-            <div style={{display: 'flex', flexDirection: 'column', width: SpatialWidth, justifyContent: 'flex-start'}}>
+            <Stack {...{spacing: 2, width: SpatialWidth, justifyContent: 'flex-start'}}>
                 <ForceFieldGroupValid forceValid={!checkHeaderCtl.isPanelActive()}>
                     {hasFilters && <RadioGroupInputField
                         fieldKey={'obsCoreWavelengthSelectionType'}
                         options={[{label: 'By Filter Bands', value: 'filter'}, {label: 'By Wavelength', value: 'numerical'}]}
                         orientation='horizontal'
                         label={'Query Type:'}
+                        {...slotProps?.obsCoreWavelengthSelectionType}
                     />}
                     {hasFilters && selectionType === 'filter' &&
-                        <div style={{marginTop: 10}}>
-                            <div style={{paddingTop: 4}}>Require coverage at the approximate center of these filters:</div>
-                            <div style={{marginLeft: LeftInSearch}}>
+                        <Stack spacing={1}>
+                            <Typography>Require coverage at the approximate center of these filters:</Typography>
+                            <Stack spacing={.5} style={{marginLeft: LeftInSearch}}>
                                 {filterDefinitions.map((filterDefinition) => {
                                     return (
                                         <CheckboxGroupInputField
@@ -186,69 +187,75 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel}) {
                                             options={filterDefinition.options}
                                             alignment='horizontal'
                                             label={filterDefinition.name}
+                                            {...slotProps?.obsCoreFilterDefinitions}
                                         />);
-                                })
-                                }
-                            </div>
-                        </div>
+                                })}
+                            </Stack>
+                        </Stack>
                     }
                     {useNumerical &&
-                        <div style={{marginTop: '10px'}}>
-                           <div style={{display: 'flex'}}>
+                        <Stack spacing={1}>
+                            <div style={{display: 'flex'}}>
                                 <ListBoxInputField fieldKey='obsCoreWavelengthRangeType'
-                                                   options={ [
+                                                   options={[
                                                        {label: 'contains', value: 'contains'},
                                                        {label: 'overlaps', value: 'overlaps'},
                                                    ]}
-                                                   initialState={{ value: initArgs?.urlApi?.obsCoreWavelengthRangeType || 'contains' }}
+                                                   initialState={{value: initArgs?.urlApi?.obsCoreWavelengthRangeType || 'contains'}}
                                                    label='Select observations whose wavelength coverage'
                                                    orientation='vertical'
-                                                   multiple={false} />
+                                                   multiple={false}
+                                                   {...slotProps?.obsCoreWavelengthRangeType}
+                                />
                             </div>
-                            <div style={{display: 'inline-flex', marginTop: '10px'}}>
-                                {rangeType === 'contains' &&
-                                    <div style={{display: 'flex'}}>
-                                        <ValidationField fieldKey='obsCoreWavelengthContains'
-                                                         size={SmallFloatNumericWidth}
-                                                         inputStyle={{overflow: 'auto', height: 16}}
-                                                         placeholder='enter wavelength'
-                                                         sx={{'& .MuiInput-root':{ 'paddingInlineEnd': 0, }}}
-                                                         validator={floatValidator(0, 100e15, 'Wavelength')}
-                                                         endDecorator={units}
-                                                         initialState={{value: initArgs?.urlApi?.obsCoreWavelengthContains || ''}} />
-                                    </div>
-                                }
-                                {rangeType === 'overlaps' &&
-                                    <Stack direction='row' spacing={1} alignItems='center'>
-                                        <ValidationField {...{
-                                            fieldKey:'obsCoreWavelengthMinRange',
-                                            sx:{'& .MuiInput-root':{'width': 100}},
-                                            validator: minimumPositiveFloatValidator('Min Wavelength'),
-                                            placeholder:'-Inf',
-                                            initialState: {value: initArgs?.urlApi?.obsCoreWavelengthMinRange},
-                                        }}/>
-                                        <Typography level='body-md'>to</Typography>
-                                        <ValidationField {...{
-                                            fieldKey: 'obsCoreWavelengthMaxRange',
-                                            sx:{'& .MuiInput-root':{'width': 100}},
-                                            validator: maximumPositiveFloatValidator('Max Wavelength'),
-                                            placeholder: '+Inf',
-                                            initialState:{value: initArgs?.urlApi?.obsCoreWavelengthMaxRange}
-                                        }}/>
-                                        {units}
-                                    </Stack>
-                                }
-                            </div>
-                        </div>
+                            {rangeType === 'contains' &&
+                                <div style={{display: 'flex'}}>
+                                    <ValidationField fieldKey='obsCoreWavelengthContains'
+                                                     size={SmallFloatNumericWidth}
+                                                     inputStyle={{overflow: 'auto', height: 16}}
+                                                     placeholder='enter wavelength'
+                                                     sx={{'& .MuiInput-root': {'paddingInlineEnd': 0,}}}
+                                                     validator={floatValidator(0, 100e15, 'Wavelength')}
+                                                     endDecorator={units}
+                                                     initialState={{value: initArgs?.urlApi?.obsCoreWavelengthContains || ''}}/>
+                                </div>
+                            }
+                            {rangeType === 'overlaps' &&
+                                <Stack direction='row' spacing={1} alignItems='center'>
+                                    <ValidationField {...{
+                                        fieldKey: 'obsCoreWavelengthMinRange',
+                                        sx: {'& .MuiInput-root': {'width': 100}},
+                                        validator: minimumPositiveFloatValidator('Min Wavelength'),
+                                        placeholder: '-Inf',
+                                        initialState: {value: initArgs?.urlApi?.obsCoreWavelengthMinRange},
+                                    }}/>
+                                    <Typography level='body-md'>to</Typography>
+                                    <ValidationField {...{
+                                        fieldKey: 'obsCoreWavelengthMaxRange',
+                                        sx: {'& .MuiInput-root': {'width': 100}},
+                                        validator: maximumPositiveFloatValidator('Max Wavelength'),
+                                        placeholder: '+Inf',
+                                        initialState: {value: initArgs?.urlApi?.obsCoreWavelengthMaxRange}
+                                    }}/>
+                                    {units}
+                                </Stack>
+                            }
+                        </Stack>
                     }
                     <DebugObsCore {...{constraintResult}}/>
                 </ForceFieldGroupValid>
-            </div>
+            </Stack>
         </CollapsibleCheckHeader>
     );
 }
 
 ObsCoreWavelengthSearch.propTypes = {
     initArgs: PropTypes.object,
-    serviceLabel: PropTypes.string
+    serviceLabel: PropTypes.string,
+    slotProps: PropTypes.shape({
+        obsCoreWavelengthUnits: PropTypes.object,
+        obsCoreFilterDefinitions: PropTypes.object,
+        obsCoreWavelengthSelectionType: PropTypes.object,
+        obsCoreWavelengthRangeType: PropTypes.object,
+    })
 };

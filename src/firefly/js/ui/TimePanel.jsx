@@ -78,7 +78,7 @@ function TimeFeedback({showHelp, feedback, sx={}, examples, timeMode=ISO, isTime
     examples = timeMode===ISO ? (examples?.[ISO] ?? defaulISOtExample) : (examples?.[MJD] ?? defaultMJDExample);
     return (
         <FormHelperText sx={{
-            height: isTimeModeFixed ? 'auto' : '4rem', // fixed height so that layout doesn't jump on toggling radio button
+            minHeight: isTimeModeFixed ? 'auto' : '3rem', // fixed height so that layout doesn't jump on toggling radio button
             alignItems: 'flex-start',
             ...sx
         }}>

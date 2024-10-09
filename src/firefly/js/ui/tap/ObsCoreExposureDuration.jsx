@@ -117,7 +117,7 @@ const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 const fldListAry= ['exposureSinceValue', 'exposureLengthMin', 'exposureLengthMax',
             'exposureMin', 'exposureMax', 'exposureSinceOptions', 'exposureRangeType'];
 
-export function ExposureDurationSearch({initArgs}) {
+export function ExposureDurationSearch({initArgs, slotProps}) {
     const {getVal,makeFldObj}= useContext(FieldGroupCtx);
     const {setConstraintFragment}= useContext(ConstraintContext);
     const [constraintResult, setConstraintResult] = useState({});
@@ -147,12 +147,16 @@ export function ExposureDurationSearch({initArgs}) {
                         <ListBoxInputField
                             {...{fieldKey:'exposureRangeType', options: exposureRangeOptions,
                                 label:'Time of Observation',
-                                initialState:{value: initArgs?.urlApi?.exposureRangeType || 'since'} }} />
-                        {isRange ?
-                            <TimeRangePanel {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive(),
+                                initialState:{value: initArgs?.urlApi?.exposureRangeType || 'since'},
+                                ...slotProps?.exposureRangeType
+                            }} />
+                        {isRange
+                            ? <TimeRangePanel {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive(),
                                 fromTip:"'Exposure start from' time (t_min)",
-                                toTip:"'Exposure end to' time (t_min)"}}/> :
-                            <ExposureSince {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()}} />
+                                toTip:"'Exposure end to' time (t_min)",
+                                ...slotProps?.exposureTimeRange}}/>
+                            : <ExposureSince {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive(),
+                                ...slotProps?.exposureSince}} />
                         }
                         <ExposureLength {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()}}/>
                         <DebugObsCore {...{constraintResult}}/>
@@ -165,6 +169,11 @@ export function ExposureDurationSearch({initArgs}) {
 
 ExposureDurationSearch.propTypes = {
     initArgs: PropTypes.object,
+    slotProps: PropTypes.shape({
+        exposureRangeType: PropTypes.object,
+        exposureTimeRange: PropTypes.object,
+        exposureSince: PropTypes.object,
+    })
 };
 
 
