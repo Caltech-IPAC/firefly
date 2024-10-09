@@ -148,9 +148,10 @@
  */
 
 /**
- * Table resources
+ * The first resource (index 0) belongs to this table. The remaining resources are from the same table set,
+ * where no table data exists, only metadata.
  * @typedef {object} RESOURCE
- * @prop {string} ID     ID used to reference this LINK.
+ * @prop {string} ID     ID used to reference this RESOURCE.
  * @prop {string} name
  * @prop {string} type
  * @prop {string} utype
@@ -165,7 +166,7 @@
 /**
  * Table group info
  * @typedef {object} GROUP
- * @prop {string} ID     ID used to reference this LINK.
+ * @prop {string} ID     ID used to reference this GROUP.
  * @prop {string} name
  * @prop {string} ucd
  * @prop {string} utype
