@@ -34,9 +34,9 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLDataException;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -563,7 +563,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             return "double";
         } else if (Boolean.class.isAssignableFrom(type)) {
             return "boolean";
-        } else if (Date.class.isAssignableFrom(type)) {
+        } else if (LocalDate.class.isAssignableFrom(type)) {
             return "date";
         } else if (Character.class.isAssignableFrom(type)) {
             return "char";

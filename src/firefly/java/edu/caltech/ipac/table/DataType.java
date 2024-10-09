@@ -9,8 +9,8 @@ import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONArray;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
@@ -51,7 +51,8 @@ public class DataType implements Serializable, Cloneable {
     public static final String BOOLEAN = "boolean";
     public static final String BYTE = "byte";
     public static final String SHORT = "short";
-    public static final String INTEGER = "int";
+    public static final String INT = "int";
+    public static final String INTEGER = "integer";
     public static final String LONG = "long";
     public static final String CHAR = "char";
     public static final String FLOAT = "float";
@@ -412,7 +413,7 @@ public class DataType implements Serializable, Cloneable {
                     } catch (Exception e) { return "NaN"; }
                 }
             }
-        } else if (Date.class.isAssignableFrom(getDataType())) {
+        } else if (LocalDate.class.isAssignableFrom(getDataType())) {
             // default Date format:  yyyy-mm-dd hh:mm:ss ie. 2018-11-16 14:55:12
             return String.format("%1$tF %1$tT", value);
         }
@@ -614,7 +615,7 @@ public class DataType implements Serializable, Cloneable {
         if (type == Short.class)    return SHORT;
         if (type == Boolean.class)  return BOOLEAN;
         if (type == Byte.class)     return BYTE;
-        if (type == Date.class)     return DATE;
+        if (type == LocalDate.class)  return DATE;
 
         return CHAR;
     }
@@ -628,12 +629,12 @@ public class DataType implements Serializable, Cloneable {
             case DOUBLE, COMPLEX_DOUBLE, REAL       -> Double.class;
             case FLOAT, COMPLEX_FLOAT               -> Float.class;
             case LONG, BIGINT                       -> Long.class;
-            case INTEGER                            -> Integer.class;
+            case INT, INTEGER                       -> Integer.class;
+            case UNI_CHAR, LOCATION, CHAR           -> String.class;
             case SHORT, UNSIGNED_BYTE, SMALLINT     -> Short.class;
             case BOOLEAN, BIT                       -> Boolean.class;
             case BYTE, TINYINT                      -> Byte.class;
-            case DATE                               -> Date.class;
-            case UNI_CHAR, LOCATION, CHAR           -> String.class;
+            case DATE                               -> LocalDate.class;
             default -> defaultVal;
         };
     }
