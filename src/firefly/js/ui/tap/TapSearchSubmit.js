@@ -23,7 +23,7 @@ import {dispatchHideDialog} from 'firefly/core/ComponentCntlr';
 import {makeColsLines, tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints';
 
 
-export function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
+export function onTapSearchSubmit(request, serviceUrl, tapBrowserState, additionalClauses='', metaInfo={}) {
     const isUserEnteredADQL = (request.selectBy === 'adql');
     let adql;
     let isUpload;
@@ -42,7 +42,7 @@ export function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
         uploadTableName = isUpload && TAP_UPLOAD[uploadFile].table;
     }
     else {
-        adql = getAdqlQuery(tapBrowserState);
+        adql = getAdqlQuery(tapBrowserState, additionalClauses);
         isUpload = isTapUpload(tapBrowserState);
         schemaEntry = getTapUploadSchemaEntry(tapBrowserState);
         const cols = schemaEntry.columns;
@@ -70,14 +70,14 @@ export function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
         const title= makeNumberedTitle(userTitle || makeTapSearchTitle(adqlClean,serviceUrl));
         const treq = makeTblRequest('AsyncTapQuery', title, params);
         setNoCache(treq);
-        const additionalMeta= {};
+        const additionalTapMeta= {};
         if (!isUserEnteredADQL) {
-            additionalMeta[PREF_KEY]= `${tapBrowserState.schemaName}-${tapBrowserState.tableName}`;
+            additionalTapMeta[PREF_KEY]= `${tapBrowserState.schemaName}-${tapBrowserState.tableName}`;
         }
-        additionalMeta.serviceLabel= serviceLabel;
-        if (hips) additionalMeta[MetaConst.COVERAGE_HIPS]= hips;
+        additionalTapMeta.serviceLabel= serviceLabel;
+        if (hips) additionalTapMeta[MetaConst.COVERAGE_HIPS]= hips;
 
-        treq.META_INFO= {...treq.META_INFO, ...additionalMeta };
+        treq.META_INFO= {...treq.META_INFO, ...additionalTapMeta, ...metaInfo };
         dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true});
     };
 
@@ -101,10 +101,11 @@ export function onTapSearchSubmit(request,serviceUrl,tapBrowserState) {
 /**
  *
  * @param {TapBrowserState} tapBrowserState
+ * @param {string} additionalClauses post-WHERE clauses like ORDER BY, GROUP BY, etc. that can't be extracted from UI inputs
  * @param [showErrors]
  * @returns {string|null}
  */
-export function getAdqlQuery(tapBrowserState, showErrors= true) {
+export function getAdqlQuery(tapBrowserState, additionalClauses, showErrors= true) {
     const tableName = maybeQuote(tapBrowserState?.tableName, true);
     if (!tableName) return;
     const isUpload= isTapUpload(tapBrowserState);
@@ -160,7 +161,9 @@ export function getAdqlQuery(tapBrowserState, showErrors= true) {
     // if we use TOP  when maxrec is set `${maxrec ? `TOP ${maxrec} `:''}`,
     // overflow indicator will not be included with the results,
     // and we will not know if the results were truncated
-    return `SELECT ${selcols} \nFROM ${fromTables} \n${constraints}`;
+    let query = `SELECT ${selcols} \nFROM ${fromTables} \n${constraints}`;
+    if (additionalClauses) query = `${query} \n${additionalClauses}`;
+    return query;
 }
 
 
