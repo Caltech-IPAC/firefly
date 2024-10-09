@@ -26,8 +26,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author loi
@@ -145,14 +143,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
     }
 
     protected DataGroup getTableMeta(String source, TableServerRequest req) throws DataAccessException {
-        List<DataType> cols = new ArrayList<>();
-        DataGroup tbl = execQuery("DESCRIBE from %s".formatted(sqlReadSource(source)), null);
-        for (int i = 0; i < tbl.size(); i++) {
-            var cname = tbl.get(i).getStringData("column_name");
-            var ctype = DataType.descToType(tbl.get(i).getStringData("column_type"));
-            cols.add( new DataType(cname, ctype));
-        }
-        return new DataGroup(source, cols);
+        return execQuery("SELECT * from %s LIMIT 0".formatted(sqlReadSource(source)), null);
     }
 
     public void export(TableServerRequest treq, OutputStream out) throws DataAccessException {

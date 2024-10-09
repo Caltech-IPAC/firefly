@@ -31,9 +31,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.*;
-import java.util.Date;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -46,6 +45,7 @@ import static edu.caltech.ipac.firefly.server.db.DbInstance.USE_REAL_AS_DOUBLE;
 import static edu.caltech.ipac.table.DataGroup.ROW_IDX;
 import static edu.caltech.ipac.table.TableMeta.DERIVED_FROM;
 import static edu.caltech.ipac.util.StringUtils.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * @author loi
@@ -135,10 +135,7 @@ public class EmbeddedDbUtil {
             DataObject row = new DataObject(dg);
             for (int i = 0; i < dg.getDataDefinitions().length; i++) {
                 DataType dt = dg.getDataDefinitions()[i];
-                int idx = i + 1;
-                Object val = isAryType.get(i) ? deserialize(rs, idx) : rs.getObject(idx);
-                // Database may store data in a different data type than what defined by DD. Convert it back to the appropriate type when necessary.
-                val = convertToType(dt.getDataType(), val);
+                Object val = convertToType(dt.getDataType(), rs, i, isAryType.get(i));  // ResultSet index starts from 1
                 row.setDataElement(dt, val);
             }
             dg.add(row);
@@ -147,32 +144,53 @@ public class EmbeddedDbUtil {
         return dg;
     }
 
-    private static Object convertToType(Class clz, Object val) {
+    private static Object convertToType(Class clz, ResultSet rs, int idx, boolean isAry) throws SQLException {
+
+        Object val = rs.getObject(idx+1);       // ResultSet index starts from 1
         if (val == null) return null;
-        if (clz.isInstance(val))    return val;
-        if (val instanceof Number n) {
-            if (clz == Double.class)    return n.doubleValue();
-            if (clz == Integer.class)   return n.intValue();
-            if (clz == Float.class)     return n.floatValue();
-            if (clz == Long.class)      return n.longValue();
-            if (clz == Short.class)     return n.shortValue();
-            if (clz == Byte.class)      return n.byteValue();
-        }
-        return val;
+        if ( val.getClass() == clz ) return val;
+        try {
+            if (val instanceof Number n) {
+                if (clz == Double.class)    return n.doubleValue();
+                if (clz == Float.class)     return n.floatValue();
+                if (clz == Long.class)      return n.longValue();
+                if (clz == Integer.class)   return n.intValue();
+                if (clz == Short.class)     return n.shortValue();
+                if (clz == Byte.class)      return n.byteValue();
+            } else if (val instanceof Array) {
+                if (isAry) return val;
+            } else if (val instanceof Blob b) {
+                if (clz == String.class) {
+                    return new String(b.getBytes(1, (int)b.length()), UTF_8);
+                } else {
+                    return deserialize(rs, idx);
+                }
+            } else if (val instanceof java.sql.Date sd) {
+                if (clz == LocalDate.class)      return sd.toLocalDate();
+            }
+        } catch (Exception ignored) {}
+        throw new SQLException("Can't convert " + val + " to " + clz);
     }
 
     public static List<DataType> getCols(ResultSet rs, DbInstance dbInstance) throws SQLException {
         ResultSetMetaData rsmd = rs.getMetaData();
         List<DataType> cols = new ArrayList<>();
+        boolean useRealAsDouble = dbInstance.getBoolProp(USE_REAL_AS_DOUBLE, false);
         for (int i = 1; i <= rsmd.getColumnCount(); i++) {
             String cname = rsmd.getColumnLabel(i);
-            Class type = EmbeddedDbUtil.convertToClass(rsmd.getColumnType(i), dbInstance);
-            DataType dt = new DataType(cname, type);
+            JDBCType type = JDBCType.valueOf(rsmd.getColumnType(i));
+            boolean isArray = type == JDBCType.ARRAY;
+            if (isArray) {
+                String typeDesc = rsmd.getColumnTypeName(i).replace("[]", "");
+                type = JDBCType.valueOf(typeDesc);
+            }
+            Class clz = convertToClass(type, useRealAsDouble);
+            DataType dt = new DataType(cname, clz);
+            if (isArray)    dt.setArraySize("*");
             cols.add(dt);
         }
         return cols;
     }
-
 
     /**
      * returns a DataGroup containing of the given cols from the selRows
@@ -435,23 +453,21 @@ public class EmbeddedDbUtil {
 
     }
 
-    static Class convertToClass(int val, DbInstance dbInstance) {
-        JDBCType type = JDBCType.valueOf(val);
-        Class clz = switch (type) {
+    static Class convertToClass(JDBCType type, boolean useRealAsDouble) {
+        return switch (type) {
             case CHAR, VARCHAR, LONGVARCHAR -> String.class;
             case TINYINT    -> Byte.class;
             case SMALLINT   -> Short.class;
             case INTEGER    -> Integer.class;
             case BIGINT     -> Long.class;
             case FLOAT  -> Float.class;
-            case REAL -> dbInstance.getBoolProp(USE_REAL_AS_DOUBLE, false) ? Double.class : Float.class;
+            case REAL -> useRealAsDouble ? Double.class : Float.class;
             case DOUBLE, NUMERIC, DECIMAL   -> Double.class;
             case BIT, BOOLEAN -> Boolean.class;
-            case DATE, TIME, TIMESTAMP  ->Date.class;
+            case DATE, TIME, TIMESTAMP  -> LocalDate.class;
             case BINARY, VARBINARY, LONGVARBINARY -> String.class;
             default -> String.class;
         };
-        return clz;
     }
 
     static DataType[] makeDbCols(DataGroup dg) {
