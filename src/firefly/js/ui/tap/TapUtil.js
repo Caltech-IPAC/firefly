@@ -434,6 +434,7 @@ function isOldTap(serviceUrl) {
 export const loadSchemaDef = memoize(async (serviceUrl) => {
 
     try {
+        if (!serviceUrl) return;
         const tableModel= supportJoin(serviceUrl)
                 ? await loadSchemaDefJoin(serviceUrl)
                 : await loadSchemaDefNoJoin(serviceUrl);

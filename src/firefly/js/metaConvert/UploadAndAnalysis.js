@@ -14,7 +14,7 @@ import {
     getActiveFileMenuKeyByKey, getDataProducts
 } from './DataProductsCntlr';
 import {
-    dpdtImage, dpdtMessageWithDownload, dpdtMessageWithError, dpdtPNG, dpdtUploadError, DPtypes,
+    dpdtImage, dpdtMessage, dpdtMessageWithDownload, dpdtMessageWithError, dpdtPNG, dpdtUploadError, DPtypes,
 } from './DataProductsType';
 import {dpdtSendToBrowser} from './DataProductsType.js';
 import {createSingleImageActivate, createSingleImageExtraction} from './ImageDataProductsUtil';
@@ -281,8 +281,7 @@ function deeperInspection({ table, row, request, activateParams,
         if (actIdx<0) actIdx= fileMenu.initialDefaultIndex;
     }
     else {// error case
-        const msg= makeErrorMsg(parts,fileFormat);
-        return dpdtMessageWithDownload(msg, 'Download File', url, fileFormat==='FITS'&&'FITS');
+        return makeErrorDP(parts,fileFormat);
     }
     dispatchUpdateActiveKey({dpId, activeFileMenuKeyChanges:{[fileMenu.activeItemLookupKey]:fileMenu.menu[actIdx].menuKey}});
     return {...fileMenu.menu[actIdx],fileMenu};
@@ -290,12 +289,13 @@ function deeperInspection({ table, row, request, activateParams,
 }
 
 
-function makeErrorMsg(parts, fileFormat) {
+function makeErrorDP(parts, fileFormat, url) {
     if (parts.every( (p) => p.type===FileAnalysisType.HeaderOnly) && fileFormat==='FITS') {
-        return 'You may only download this File - Nothing to display - FITS file has only header HDUs';
+        const msg= 'You may only download this File - Nothing to display - FITS file has only header HDUs';
+        return dpdtMessageWithDownload(msg, 'Download File', url, fileFormat==='FITS'&&'FITS');
     }
     else {
-        return 'Cannot analyze file';
+        return dpdtMessage('Cannot analyze file');
     }
 }
 

@@ -385,7 +385,8 @@ function Services({serviceUrl, servicesShowing, tapOps, onTapServiceOptionSelect
                                     (<ServiceOpRender {...{ ops: tapOps, value,
                                         onTapServiceOptionSelect, clearServiceOnDelete:true}}/>),
                             decorator:
-                                (label,value) => (<ServiceOpRender {...{ ops: tapOps, value, onTapServiceOptionSelect}}/>),
+                                (label,value) => (<ServiceOpRender {...{ ops: tapOps, value,
+                                    onTapServiceOptionSelect, clearServiceOnDelete:value===serviceUrl}}/>),
                         }} /> )}
                     <FormHelperText sx={{m: .25}}>
                         {enterUrl ? 'Type the url of a TAP service & press enter' : 'Choose a TAP service from the list'}

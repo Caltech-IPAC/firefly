@@ -2,9 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.visualize.plot;
-
 import edu.caltech.ipac.firefly.data.HasSizeOf;
-import edu.caltech.ipac.util.SUTDebug;
 
 import java.util.Arrays;
 
@@ -12,7 +10,6 @@ import java.util.Arrays;
  * Creates a histogram of an image
  *
  * @author Booth Hartley
- *
  * Edit history
  * LZ 6/15/15
  *         - Renamed and rewrote the getTblArray method and commented out the eq_tbl and deq_dtbl
@@ -21,8 +18,9 @@ import java.util.Arrays;
 
 
 public class Histogram implements HasSizeOf {
-    private static int HISTSIZ2 = 4096;  /* full size of hist array */
-    private static int HISTSIZ = 2048;     /* half size of hist array */
+    private static final int HISTSIZ2 = 4096;  /* full size of hist array */
+    private static final int HISTSIZ = 2048;     /* half size of hist array */
+    private static final boolean debug= false;
 
     private final int[] hist;
     private double histMin;
@@ -42,7 +40,6 @@ public class Histogram implements HasSizeOf {
             datamax = -Double.MAX_VALUE;
             datamin = Double.MAX_VALUE;
             for (int k = 0; k < float1dArray.length; k++) {
-
                 if (!Double.isNaN(float1dArray[k])) {
                     if (float1dArray[k] < datamin)
                         datamin = float1dArray[k];
@@ -74,29 +71,22 @@ public class Histogram implements HasSizeOf {
                 if (!Double.isNaN(float1dArray[k]))
                 {
                    int i = (int) ((float1dArray[k] - histMin) / histBinsize);
-                      if (i<0)
-                    {
-                        //redo_flag = true;   /* hist_min was bad */
+                    if (i<0) {
                         underflowCount++;
                     }
-                    else if (i>HISTSIZ2)
-                    {
-                        //redo_flag = true;   /* hist_max was bad */
+                    else if (i>HISTSIZ2) {
                         overflowCount++;
                     }
-                    else
-                    {
+                    else {
                         hist[i] ++;
                     }
-                    if (float1dArray[k] < histDatamin)
-                        histDatamin = float1dArray[k];
-                    if (float1dArray[k] > histDatamax)
-                        histDatamax = float1dArray[k];
+                    if (float1dArray[k] < histDatamin) histDatamin = float1dArray[k];
+                    if (float1dArray[k] > histDatamax) histDatamax = float1dArray[k];
                 }
             }
 
 
-            printeDebugInfo(histMax, underflowCount, overflowCount);
+            printDebugInfo(histMax, underflowCount, overflowCount);
             datamin = histDatamin;
             datamax = histDatamax;
 
@@ -138,13 +128,10 @@ public class Histogram implements HasSizeOf {
             }
 
 
-            if (SUTDebug.isDebug())
-                System.out.println("done");
+            if (debug) System.out.println("done");
 
             if ( !doing_redo  &&  redo_flag ) {
-
-                if (SUTDebug.isDebug())
-                    System.out.println("rebuilding histogram . . ");
+                if (debug) System.out.println("rebuilding histogram . . ");
                 doing_redo = true;
             } else
                 break;
@@ -181,8 +168,6 @@ public class Histogram implements HasSizeOf {
 
     private int getHighSumIndex(int lowLimit) {
         int highSum = 0;
-
-
         for (int i = HISTSIZ2; i >= 0; i--) {
             highSum += hist[i];
             if (highSum > lowLimit) {
@@ -200,17 +185,12 @@ public class Histogram implements HasSizeOf {
         return (int) (goodpix * 0.0005);
     }
 
-    private void printeDebugInfo(double hist_max, int underFlowCount, int overFlowCount) {
-        if (SUTDebug.isDebug()) {
+    private void printDebugInfo(double hist_max, int underFlowCount, int overFlowCount) {
+        if (debug) {
             System.out.println("histMin = " + histMin);
             System.out.println("hist_max = " + hist_max);
             System.out.println("histBinsize = " + histBinsize);
-
-
-            System.out.println("underFlowCount = " + underFlowCount +
-                    "  overFlowCount = " + overFlowCount);
-
-
+            System.out.println("underFlowCount = " + underFlowCount + "  overFlowCount = " + overFlowCount);
         }
     }
 
@@ -258,7 +238,7 @@ public class Histogram implements HasSizeOf {
             i++;
             sum = sum + hist[i];
         } while (sum < goal);
-        if (SUTDebug.isDebug()) {
+        if (debug) {
             System.out.println("goodpix = " + goodpix
                     + "   goal = " + goal
                     + "   i = " + i
@@ -404,9 +384,7 @@ public class Histogram implements HasSizeOf {
         return tbl;
     }
 
-    public long getSizeOf() {
-        return hist.length*4L + 32L;
-    }
+    public long getSizeOf() { return hist.length*4L + 40L; }
 
     public double getLargeBinPercent() { return largeBinPercent; }
 }

@@ -6,15 +6,15 @@
 
 
 ### _Notes_
-#### This is probably one of new most new feature pack releases of firefly in several years. It also includes a many, many bug fixes, clean up and optimization (not all list below). 
-                                                                                                           `
+This Firefly release has a lot of new features, probably among the most new features packed into one release over the past several years. 
+It also includes many, many bug fixes, clean up, and optimization (not all are listed below).
 
 #### Major Features
 - Tables: parquet support- Firefly-1477 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1582)) 
 - Tables: save table as parquet using `parquet.votable`- Firefly-1550 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1633)) 
 - Tables: internal data optimization using duckdb - Firefly-1477 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1582)) 
 - Tables: Drawing Overlay Color in table tabs- Firefly-1510 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1600)) 
-- Images/HiPS: hierarchical catalogs- Firefly-1437 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1607)) 
+- Images/HiPS: hierarchical catalogs- Firefly-1457 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1607)) 
 - Data product viewer: recognizes service descriptor defined cutouts- Firefly-1491 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1580)) 
 
 #### New Features
@@ -27,7 +27,7 @@
 
 #### Bug fix / cleanup
 - Fixed: Firefly-1535, reversal of axes bug ([PR](https://github.com/Caltech-IPAC/firefly/pull/1632))
-- Fixed: Dialog sizing: Firefly-1555 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1626)), Firefly-1553 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1624))
+- Fixed: Dialog sizing- Firefly-1555 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1626)), Firefly-1553 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1624))
 - Fixed: Chart related bugs- Firefly-1521 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1614))
 - Fixed: Images: Color dropdown color wrongly invert in dark mode- Firefly-1547 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1612))
 - Fixed: Charts: changing x/y axis does not work- IRSA-6084 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1608))
