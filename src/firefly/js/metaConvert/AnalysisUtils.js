@@ -64,8 +64,8 @@ export function makeAnalysisGetGridDataProduct(makeReq) {
                 if (!r || !r.single) return;
                 r.single.setPlotId(pR.plotId);
                 r.single.setAttributes({
-                    [PlotAttribute.DATALINK_TABLE_ROW]: pR.row + '',
-                    [PlotAttribute.DATALINK_TABLE_ID]: table.tbl_id
+                    [PlotAttribute.RELATED_TABLE_ROW]: pR.row + '',
+                    [PlotAttribute.RELATED_TABLE_ID]: table.tbl_id
                 });
                 return r.single;
             })

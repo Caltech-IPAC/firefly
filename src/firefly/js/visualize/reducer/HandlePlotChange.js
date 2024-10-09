@@ -98,6 +98,7 @@ export function reducer(state, action) {
         case Cntlr.BYTE_DATA_REFRESH: return markByteDataRefresh(state,action);
         case Cntlr.CHANGE_IMAGE_VISIBILITY: return changeVisibility(state,action);
         case Cntlr.REQUEST_LOCAL_DATA: return requestLocalData(state,action);
+        case Cntlr.CHANGE_SUBHIGHLIGHT_PLOT_VIEW: return changeSubHighPlotView(state,action);
     }
     return retState;
 }
@@ -845,4 +846,18 @@ function changeVisibility(state,action) {
         return {...state,plotViewAry:clonePvAry(state,plotId, {visible})};
     }
 
+}
+
+function changeSubHighPlotView(state,action) {
+    const {subHighlightAry}= action.payload;
+    let anyChanged= false;
+
+    const plotViewAry= state.plotViewAry.map( (pv) => {
+        const entry= subHighlightAry.find( (e) => e.plotId===pv.plotId);
+        if (!entry) return pv;
+        if (pv.subHighlight===entry.subHighlight) return pv;
+        anyChanged= true;
+        return {...pv, subHighlight:entry.subHighlight};
+    });
+    return anyChanged ? {...state, plotViewAry} : state;
 }
