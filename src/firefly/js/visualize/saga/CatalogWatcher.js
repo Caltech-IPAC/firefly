@@ -259,7 +259,7 @@ function attachToCatalog(tbl_id, payload) {
     pvNewPlotInfoAry.forEach( (info, idx) => {
         let r= wpRequest || get(wpRequestAry,idx);
         if (!r) r= (redReq || blueReq || greenReq);
-        if (!r || r.getAttributes[PlotAttribute.DATALINK_TABLE_ID]===tbl_id) return; //Don't overlay catalogs on image data products
+        if (!r || r.getAttributes[PlotAttribute.RELATED_TABLE_ID]===tbl_id) return; //Don't overlay catalogs on image data products
         const pv= getPlotViewById(visRoot(), info.plotId);
         if (pv?.plotViewCtx?.useForCoverage) return;
         dispatchAttachLayerToPlot(dl.drawLayerId, info.plotId,false, shouldDlBeVisible(dl,pv));

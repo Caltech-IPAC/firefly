@@ -5,13 +5,15 @@
 import {isString, isObject, once} from 'lodash';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
 import {findTableCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
-import {visRoot, dispatchRecenter} from '../ImagePlotCntlr.js';
-import {getTblById, getCellValue} from '../../tables/TableUtil.js';
+import {visRoot, dispatchRecenter, dispatchChangeSubHighPlotView} from '../ImagePlotCntlr.js';
+import {
+    getTblById, getCellValue, hasSubHighlightRows, isSubHighlightRow, getActiveTableId
+} from '../../tables/TableUtil.js';
 import {computeBoundingBoxInDeviceCoordsForPlot, isFullyOnScreen} from '../WebPlotAnalysis';
 import {makeAnyPt} from '../Point.js';
 import { getActivePlotView, hasWCSProjection, primePlot, } from '../PlotViewUtil';
 import {CysConverter} from '../CsysConverter';
-import {dispatchPlotImage, dispatchUseTableAutoScroll} from '../ImagePlotCntlr';
+import ImagePlotCntlr, {dispatchPlotImage, dispatchUseTableAutoScroll} from '../ImagePlotCntlr';
 import {isTableUsingRadians} from '../../tables/TableUtil';
 import {PlotAttribute} from '../PlotAttribute';
 import {isImage} from '../WebPlot';
@@ -20,53 +22,63 @@ import CoordinateSys from '../CoordSys';
 
 
 
+
 function willFitOnScreenAtCurrentZoom(pv) {
     const {w,h}=computeBoundingBoxInDeviceCoordsForPlot(primePlot(pv)) ?? {};
     return (pv.viewDim.width+3>=w && pv.viewDim.height+3>=h);
 }
 
+const getTableActions= () =>  [TABLE_LOADED, TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TBL_RESULTS_ACTIVE, TABLE_REMOVE];
+const getImageActions= () =>  [ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW, ImagePlotCntlr.ANY_REPLOT];
 
 
 /**
  *
  * @returns {TableWatcherDef}
  */
-export const getActiveRowCenterDef= once(() => ({
-    id : 'ActiveRowCenter',
-    watcher : recenterImages,
+export const getActiveRowToImageDef= once(() => ({
+    id : 'ActiveRowToImage',
+    watcher : updateImages,
     testTable : (table) => {
-        return Boolean(findTableCenterColumns(table));
+        return Boolean(findTableCenterColumns(table) || hasSubHighlightRows(table));
     },
     allowMultiples: false,
-    actions: [TABLE_LOADED, TABLE_SELECT, TABLE_HIGHLIGHT, TABLE_UPDATE, TBL_RESULTS_ACTIVE, TABLE_REMOVE]
+    actions: [...getTableActions(), ...getImageActions()]
 }));
 
-export function recenterImages(tbl_id, action, cancelSelf, params) {
+export function updateImages(tbl_id, action, cancelSelf, params) {
 
     if (!action) return;
 
     const {imageScrollsToActiveTableOnLoadOrSelect}= getAppOptions();
     const {payload}= action;
-    if (payload.tbl_id && payload.tbl_id!==tbl_id) return params;
 
-    switch (action.type) {
-        case TABLE_LOADED:
-            recenterImageActiveRow(tbl_id, imageScrollsToActiveTableOnLoadOrSelect);
-            break;
 
-        case TABLE_HIGHLIGHT:
-        case TABLE_UPDATE:
-            recenterImageActiveRow(tbl_id);
-            break;
+    if (getImageActions().includes(action.type)) {
+        if (getActiveTableId()!==tbl_id) return;
+        checkSubHighlight(tbl_id);
+        return params;
+    }
 
-        case TABLE_REMOVE:
-            cancelSelf();
-            break;
+    if (getTableActions().includes(action.type)) {
+        if (payload.tbl_id && payload.tbl_id !== tbl_id) return params;
+        checkSubHighlight(tbl_id);
+        switch (action.type) {
+            case TBL_RESULTS_ACTIVE:
+            case TABLE_LOADED:
+                recenterImageActiveRow(tbl_id, imageScrollsToActiveTableOnLoadOrSelect);
+                break;
 
-        case TBL_RESULTS_ACTIVE:
-            recenterImageActiveRow(tbl_id, imageScrollsToActiveTableOnLoadOrSelect);
-            break;
+            case TABLE_HIGHLIGHT:
+            case TABLE_UPDATE:
+                recenterImageActiveRow(tbl_id);
+                break;
 
+            case TABLE_REMOVE:
+                cancelSelf();
+                break;
+        }
+        return params;
     }
 }
 
@@ -88,8 +100,8 @@ function shouldRecenterSimple(pv,wp, tbl, force) {
     }
     if (!plot) return false;
     const {attributes}= plot;
-    if (tbl.tbl_id===attributes[PlotAttribute.DATALINK_TABLE_ID] && attributes[PlotAttribute.DATALINK_TABLE_ROW]) {
-        if (Number(attributes[PlotAttribute.DATALINK_TABLE_ROW])!==tbl.highlightedRow) return;
+    if (tbl.tbl_id===attributes[PlotAttribute.RELATED_TABLE_ID] && attributes[PlotAttribute.RELATED_TABLE_ROW]) {
+        if (Number(attributes[PlotAttribute.RELATED_TABLE_ROW])!==tbl.highlightedRow) return;
     }
     const cc= CysConverter.make(plot);
     return !cc.pointOnDisplay(wp);
@@ -105,19 +117,21 @@ function recenterImageActiveRow(tbl_id, force=false) {
 
     const vr= visRoot();
     if (!force && !vr.autoScrollToHighlightedTableRow) return;
+    const table= getTblById(tbl_id);
+    if (!findTableCenterColumns(table)) return;
+
     if (!vr.useAutoScrollToHighlightedTableRow) {
         dispatchUseTableAutoScroll(true);
         return;
     }
-    const tbl= getTblById(tbl_id);
     const pv = getActivePlotView(visRoot());
     const plot = primePlot(pv);
 
     if (!plot || !hasWCSProjection(plot)) return;
-    const wp= getRowCenterWorldPt(tbl);
+    const wp= getRowCenterWorldPt(table);
     if (!wp) return;
 
-    if (shouldRecenterSimple(pv,wp,tbl,force)) {
+    if (shouldRecenterSimple(pv,wp,table,force)) {
         isImageAitoff(plot) && willFitOnScreenAtCurrentZoom(pv) ?
             dispatchRecenter({plotId: plot.plotId, centerOnImage:true}) : dispatchRecenter({plotId: plot.plotId, centerPt: wp});
         if (plot && isImage(plot) && plot.attributes[PlotAttribute.REPLOT_WITH_NEW_CENTER]) {
@@ -180,4 +194,29 @@ function getTableModel(tableOrId) {
     if (isString(tableOrId)) return getTblById(tableOrId);  // was passed a table Id
     if (isObject(tableOrId)) return tableOrId;
     return undefined;
+}
+
+/**
+ *
+ * @param tbl_id
+ */
+function checkSubHighlight(tbl_id) {
+    const table= getTblById(tbl_id);
+    if (!table?.tableMeta) return;
+    if (!hasSubHighlightRows(table)) return;
+    const {highlightedRow:row}= table;
+    if (isNaN(row) || row<0) return;
+
+    const newSubAry= visRoot().plotViewAry
+        .map((pv) => {
+            const plot= primePlot(pv);
+            if (!plot) return;
+            const imRow= Number(plot.attributes[PlotAttribute.RELATED_TABLE_ROW]);
+            const imTblId= plot.attributes[PlotAttribute.RELATED_TABLE_ID];
+            if (!imTblId || isNaN(imRow) || row<0) return;
+            const subHighlight= tbl_id===imTblId && isSubHighlightRow(tbl_id,imRow);
+            return {plotId:plot.plotId, subHighlight};
+        })
+        .filter(Boolean);
+    if (newSubAry.length) dispatchChangeSubHighPlotView({subHighlightAry:newSubAry});
 }

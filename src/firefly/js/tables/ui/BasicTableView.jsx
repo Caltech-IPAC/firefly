@@ -9,7 +9,11 @@ import {Column, Table} from 'fixed-data-table-2';
 import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, set, isEmpty, isUndefined, omitBy, pick} from 'lodash';
 
-import {getCellValue, getColMaxVal, getColMaxValues, getColumns, getProprietaryInfo, getTableState, getTableUiById, getTblById, hasRowAccess, isClientTable, tableTextView, TBL_STATE, uniqueTblUiId} from '../TableUtil.js';
+import {
+    getCellValue, getColMaxVal, getColMaxValues, getColumns, getProprietaryInfo, getTableState, getTableUiById,
+    getTblById, hasRowAccess, hasSubHighlightRows, isClientTable, isSubHighlightRow, tableTextView, TBL_STATE,
+    uniqueTblUiId
+} from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
@@ -419,19 +423,7 @@ function defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx) {
 
     const tableModel = getTblById(tbl_id);
     const hasProprietaryInfo = !isEmpty(getProprietaryInfo(tableModel));
-    const relatedCols = tableModel?.tableMeta?.['tbl.relatedCols'];
-    const relatedColsHL = relatedCols?.split(',')
-                            .map((cname) => getCellValue(tableModel, hlRowIdx, cname?.trim()))
-                            .join('|');
-    const isRelated = (ridx) => {
-        if (relatedCols) {
-            const cVal = relatedCols.split(',')
-                            .map((cname) => getCellValue(tableModel, ridx, cname?.trim()))
-                            .join('|');
-            return relatedColsHL === cVal;
-        }
-        return false;
-    };
+    const hasRelated= hasSubHighlightRows(tableModel);
 
     return (rowIndex) => {
         const absRowIndex = startIdx + rowIndex;
@@ -439,7 +431,7 @@ function defHighlightedRowHandler(tbl_id, hlRowIdx, startIdx) {
             return hlRowIdx === rowIndex ? 'no-access-highlighted' : 'no-access';
         }
         if (hlRowIdx === rowIndex) return 'highlighted';
-        if (isRelated(rowIndex)) return 'related';
+        if (hasRelated && isSubHighlightRow(tableModel,rowIndex,hlRowIdx)) return 'related';
     };
 }
 

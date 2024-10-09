@@ -189,7 +189,7 @@ function hasManyPlots(pv,visRoot) {
 function getBorderColor(manyPlots, theme, pv,visRoot) {
     if (!pv?.plotId) return 'rgba(0,0,0,.4)';
     if (!pv.plotViewCtx.highlightFeedback) return 'rgba(0,0,0,.1)';
-    if (isActivePlotView(visRoot,pv.plotId)) {
+    if (isActivePlotView(visRoot,pv.plotId) || pv.subHighlight) {
         return manyPlots ? `rgba(${theme.vars.palette.warning.mainChannel} / 1)` : 'rgba(0,0,0,.02)';
     }
     const group= getPlotGroupById(visRoot,pv.plotGroupId);
@@ -282,18 +282,19 @@ const ImageViewerDecorate= memo((props) => {
 
     const innerStyle= (theme) => {
         const manyPlots= hasManyPlots(pv,visRoot);
+        const active= isActivePlotView(visRoot,pv.plotId);
         return {
             width: !manyPlots  ? 1 : 'calc(100% - 4px)',
             bottom: 0,
             top: 0,
             overflow: 'hidden',
             position: 'absolute',
-            borderStyle: manyPlots ? 'solid' : undefined,
+            borderStyle: !manyPlots ? undefined : (pv.subHighlight && !active) ? 'dashed' : 'solid' ,
             borderWidth: (expandedToSingle || !manyPlots) ? '0 0 0 0' : '1px',
             borderRadius: manyPlots ? '5px' : undefined,
             borderColor: getBorderColor(manyPlots, theme, pv,visRoot),
         };
-    }
+    };
 
     const makeActive= () => pv?.plotId && dispatchChangeActivePlotView(pv.plotId,MOUSE_CLICK_REASON);
     const showZoom= mousePlotId===pv?.plotId;

@@ -413,7 +413,7 @@ export function isImageViewerSingleLayout(multiViewRoot, visRoot, plotId) {
         const viewer = viewerId ? getViewer(multiViewRoot, viewerId) : null;
         if (!viewer) return true;
         const plot= primePlot(visRoot,plotId);
-        const tbl_id= plot?.attributes.tbl_id ?? plot?.attributes[PlotAttribute.DATALINK_TABLE_ID];
+        const tbl_id= plot?.attributes.tbl_id ?? plot?.attributes[PlotAttribute.RELATED_TABLE_ID];
         const layout= getLayoutType(multiViewRoot,viewerId,tbl_id);
         return layout===SINGLE;
     }

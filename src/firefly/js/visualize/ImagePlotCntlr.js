@@ -136,6 +136,7 @@ const OVERLAY_COLOR_LOCKING= `${PLOTS_PREFIX}.OverlayColorLocking`;
 const CHANGE_POINT_SELECTION= `${PLOTS_PREFIX}.ChangePointSelection`;
 
 const CHANGE_ACTIVE_PLOT_VIEW= `${PLOTS_PREFIX}.ChangeActivePlotView`;
+const CHANGE_SUBHIGHLIGHT_PLOT_VIEW= `${PLOTS_PREFIX}.ChangeSubHighlightPlotView`;
 const CHANGE_PLOT_ATTRIBUTE= `${PLOTS_PREFIX}.ChangePlotAttribute`;
 
 /** Action Type: display mode to or from expanded */
@@ -326,7 +327,8 @@ export default {
     DELETE_PLOT_VIEW, CHANGE_ACTIVE_PLOT_VIEW, CHANGE_PRIME_PLOT, CHANGE_IMAGE_VISIBILITY,
     PLOT_MASK, PLOT_MASK_START, PLOT_MASK_FAIL, PLOT_MASK_LAZY_LOAD, DELETE_OVERLAY_PLOT, BYTE_DATA_REFRESH,
     OVERLAY_PLOT_CHANGE_ATTRIBUTES, WCS_MATCH, API_TOOLS_VIEW, CHANGE_MOUSE_READOUT_MODE,
-    CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_TABLE_AUTO_SCROLL, USE_TABLE_AUTO_SCROLL,REQUEST_LOCAL_DATA
+    CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_TABLE_AUTO_SCROLL, USE_TABLE_AUTO_SCROLL,REQUEST_LOCAL_DATA,
+    CHANGE_SUBHIGHLIGHT_PLOT_VIEW
 };
 
 const KEY_ROOT= 'progress-';
@@ -924,6 +926,15 @@ export function dispatchChangeActivePlotView(plotId,reason=OTHER_REASON) {
 }
 
 /**
+ * Set the plotId ot be subhighlight
+ * @param {Object}  p this function takes a single parameter
+ * @param {Array.<{plotId:String, subHighlight:boolean}>} p.subHighlightAry subHighlight updates
+ */
+export function dispatchChangeSubHighPlotView({subHighlightAry}) {
+    flux.process({ type: CHANGE_SUBHIGHLIGHT_PLOT_VIEW, payload: {subHighlightAry} });
+}
+
+/**
  *
  * @param {Object}  p this function takes a single parameter
  * @param p.plotId
@@ -1051,7 +1062,7 @@ const changeActions= convertToIdentityObj([
     STRETCH_CHANGE, RECENTER, OVERLAY_COLOR_LOCKING, POSITION_LOCKING,
     PLOT_PROGRESS_UPDATE, OVERLAY_PLOT_CHANGE_ATTRIBUTES, CHANGE_PRIME_PLOT, CHANGE_CENTER_OF_PROJECTION,
     CHANGE_HIPS, CHANGE_HIPS_IMAGE_CONVERSION, CHANGE_IMAGE_VISIBILITY, BYTE_DATA_REFRESH,
-    REQUEST_LOCAL_DATA
+    REQUEST_LOCAL_DATA,CHANGE_SUBHIGHLIGHT_PLOT_VIEW
 ]);
 
 const adminActions= convertToIdentityObj([

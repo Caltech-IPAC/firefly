@@ -57,7 +57,7 @@ import HiPSGrid from '../../drawingLayers/HiPSGrid.js';
 import {isUrlInHipsList, resolveHiPSIvoURL} from '../HiPSListUtil.js';
 import {addNewMocLayer, isMOCFitsFromUploadAnalsysis, makeMocTableId, MOCInfo, UNIQCOL} from '../HiPSMocUtil.js';
 import HiPSMOC from '../../drawingLayers/HiPSMOC.js';
-import {getRowCenterWorldPt} from '../saga/ActiveRowCenterWatcher';
+import {getRowCenterWorldPt} from '../saga/ActiveRowToImageWatcher';
 import {getActiveTableId, getTblById} from '../../tables/TableUtil';
 import {locateOtherIfMatched, matchHiPStoPlotView} from './WcsMatchTask';
 import {upload} from '../../rpc/CoreServices.js';

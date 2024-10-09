@@ -32,7 +32,7 @@ export function createRelatedDataGridActivate(reqRet, imageViewerId, tbl_id, hig
 
 export function createRelatedGridImagesActivate({requestAry:inReqAry, threeColorReqAry, imageViewerId, tbl_id, serDef}) {
     const reqAry= inReqAry.filter( (r) => r);
-    if (tbl_id) reqAry.forEach( (r) => r.setAttributes({ [PlotAttribute.DATALINK_TABLE_ID]: tbl_id }));
+    if (tbl_id) reqAry.forEach( (r) => r.setAttributes({ [PlotAttribute.RELATED_TABLE_ID]: tbl_id }));
     return () => replotImageDataProducts(reqAry[0]?.getPlotId(), true, imageViewerId, tbl_id, reqAry, threeColorReqAry);
 }
 
@@ -50,8 +50,8 @@ export function createGridImagesActivate(inReqAry, imageViewerId, tbl_id, plotRo
             if (!r) return;
             if (tbl_id) {
                 r.setAttributes({
-                    [PlotAttribute.DATALINK_TABLE_ROW]: plotRows[idx].row+'',
-                    [PlotAttribute.DATALINK_TABLE_ID]: tbl_id
+                    [PlotAttribute.RELATED_TABLE_ROW]: plotRows[idx].row+'',
+                    [PlotAttribute.RELATED_TABLE_ID]: tbl_id
                 });
             }
             r.setPlotId(plotRows[idx].plotId);
@@ -76,8 +76,8 @@ export function createSingleImageActivate(request, imageViewerId, tbl_id, highli
     if (!request) return undefined;
     if (!request.getPlotId()) request.setPlotId(`${tbl_id|'no-table'}-singleview`);
     if (tbl_id) {
-        request.setAttributes({[PlotAttribute.DATALINK_TABLE_ROW]: highlightedRow+'',
-            [PlotAttribute.DATALINK_TABLE_ID]: tbl_id});
+        request.setAttributes({[PlotAttribute.RELATED_TABLE_ROW]: highlightedRow+'',
+            [PlotAttribute.RELATED_TABLE_ID]: tbl_id});
     }
     return () => {
         // const covViewer= ;
@@ -175,7 +175,7 @@ export function resetImageFullGridActivePlot(tbl_id, plotIdAry) {
         const plot = primePlot(vr, pId);
         if (!plot) return false;
 
-        if (Number(get(plot.attributes, PlotAttribute.DATALINK_TABLE_ROW, -1)) !== highlightedRow) return false;
+        if (Number(get(plot.attributes, PlotAttribute.RELATED_TABLE_ROW, -1)) !== highlightedRow) return false;
 
         dispatchChangeActivePlotView(pId);
         return true;
@@ -185,7 +185,7 @@ export function resetImageFullGridActivePlot(tbl_id, plotIdAry) {
 export function changeTableHighlightToMatchPlotView(plotId, tbl_id) {
     const plot= primePlot(visRoot(), plotId);
     if (!plot) return;
-    const row= Number(get(plot.attributes, PlotAttribute.DATALINK_TABLE_ROW, -1));
+    const row= Number(get(plot.attributes, PlotAttribute.RELATED_TABLE_ROW, -1));
     if (row<0) return;
     const table= getTblById(tbl_id);
     if (!table) return;
@@ -293,8 +293,8 @@ function replotImageDataProducts(activePlotId, makeActive, imageViewerId, tbl_id
             .filter( (pv) => {
                 const plot= primePlot(pv);
                 if (!table || !plot) return true;
-                return Number(plot.attributes[PlotAttribute.DATALINK_TABLE_ROW])!== table.highlightedRow||
-                       plot.attributes[PlotAttribute.DATALINK_TABLE_ID]!==table.tbl_id;
+                return Number(plot.attributes[PlotAttribute.RELATED_TABLE_ROW])!== table.highlightedRow||
+                       plot.attributes[PlotAttribute.RELATED_TABLE_ID]!==table.tbl_id;
             })
             .forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId}) );
         plottingThree && dispatchDeletePlotView({plotId:threeCPlotId});

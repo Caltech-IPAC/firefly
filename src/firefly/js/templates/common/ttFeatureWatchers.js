@@ -9,23 +9,23 @@ import {getTapObsCoreOptions, getTapObsCoreOptionsGuess} from '../../ui/tap/Tabl
 import {hasObsCoreLikeDataProducts, isObsCoreLikeWithProducts} from '../../voAnalyzer/TableAnalysis.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
-import {getActiveRowCenterDef } from '../../visualize/saga/ActiveRowCenterWatcher.js';
+import {getActiveRowToImageDef } from '../../visualize/saga/ActiveRowToImageWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
 
 export const getAllStartIds= ()=> [
     getMocWatcherDef().id,
     getCatalogWatcherDef().id,
     getUrlLinkWatcherDef().id,
-    getActiveRowCenterDef().id,
+    getActiveRowToImageDef().id,
     getObsCoreWatcherDef().id,
 ];
 
 export function startTTFeatureWatchers(startIds=[
-    getMocWatcherDef().id, getCatalogWatcherDef().id, getUrlLinkWatcherDef().id, getActiveRowCenterDef().id]) {
+    getMocWatcherDef().id, getCatalogWatcherDef().id, getUrlLinkWatcherDef().id, getActiveRowToImageDef().id]) {
     startIds.includes(getMocWatcherDef().id) && dispatchAddTableTypeWatcherDef(getMocWatcherDef());
     startIds.includes(getCatalogWatcherDef().id) && dispatchAddTableTypeWatcherDef(getCatalogWatcherDef());
     startIds.includes(getUrlLinkWatcherDef().id) && dispatchAddTableTypeWatcherDef(getUrlLinkWatcherDef());
-    startIds.includes(getActiveRowCenterDef().id) && dispatchAddTableTypeWatcherDef(getActiveRowCenterDef());
+    startIds.includes(getActiveRowToImageDef().id) && dispatchAddTableTypeWatcherDef(getActiveRowToImageDef());
     startIds.includes(getObsCoreWatcherDef().id) && dispatchAddTableTypeWatcherDef(getObsCoreWatcherDef());
 }
 

@@ -13,7 +13,7 @@ import {
 } from '../../core/AppDataCntlr.js';
 import {LO_VIEW, getLayouInfo} from '../../core/LayoutCntlr.js';
 import {AppConfigDrawer} from '../../ui/AppConfigDrawer.jsx';
-import {getActiveRowCenterDef} from '../../visualize/saga/ActiveRowCenterWatcher.js';
+import {getActiveRowToImageDef} from '../../visualize/saga/ActiveRowToImageWatcher.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
@@ -58,7 +58,7 @@ export function FireflyViewer ({menu, options, views='images | tables | xyplots'
                 getMocWatcherDef().id,
                 getCatalogWatcherDef().id,
                 getUrlLinkWatcherDef().id,
-                getActiveRowCenterDef().id,
+                getActiveRowToImageDef().id,
                 getAppOptions().enableObsCoreDownload && getObsCoreWatcherDef().id,
             ]
         );

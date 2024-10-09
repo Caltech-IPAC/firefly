@@ -40,6 +40,7 @@ import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
  * @prop {String} drawingSubGroupId - immutable
  * @prop {WebPlotRequest} request
  * @prop {boolean} visible true when we draw the base image
+ * @prop {boolean} subHighlight true when plot should be subHighlighted
  * @prop {Array.<WebPlot>} plots all the plots that this plotView can show, usually the image in the fits file
  * @prop {String} plottingStatusMsg - end user description of the what is doing on
  * @prop {String} serverCall - one of 'success', 'working', 'fail'
@@ -89,6 +90,7 @@ import {updateTransform, makeTransform} from '../PlotTransformUtils.js';
  * @prop {boolean} [embedMainToolbar] default to false - if true then create the main toolbar within the plot
  * @prop {boolean} [highlightFeedback]
  * @prop {boolean} [useForCoverage=false]
+ * @prop {boolean} [subHighlight=false]
  */
 
 /**
@@ -128,6 +130,7 @@ export function makePlotView(plotId, req, pvOptions= {}) {
         drawingSubGroupId: req.getDrawingSubGroupId(), //immutable - todo, string, this is an id, should never change
         plots:[],
         visible: pvOptions.visible ?? true,
+        subHighlight: Boolean(pvOptions.subHighlight ?? false),
         request: req && req.makeCopy(),
         plottingStatusMsg:'Plotting...',
         serverCall:'success', // one of 'success', 'working', 'fail'

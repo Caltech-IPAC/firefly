@@ -999,6 +999,35 @@ export function setHlRowByRowIdx(nreq, tableModel) {
     }
 }
 
+
+/**
+ *
+ * @param {TableModel|String} tableOrId - parameters accepts the table model or tha table id
+ * @param {number} rowIdx - rowIdx to check
+ * @param {number} [hlRowIdx] - highlighted row index, defaults to tableModel.highlightedRow
+ * @return {boolean} true if it is sub-highlight
+ */
+export function isSubHighlightRow(tableOrId, rowIdx, hlRowIdx) {
+    const tableModel = getTM(tableOrId);
+    if (!tableModel?.tableMeta) return false;
+    const relatedCols = tableModel.tableMeta['tbl.relatedCols'];
+    if (!relatedCols) return false;
+    const colNameAry= relatedCols.split(',').map( (c) => c.trim());
+    const highlightedRow= hlRowIdx ?? tableModel.highlightedRow;
+
+    const makeCellKey= (row) => colNameAry.map((cname) => getCellValue(tableModel, row, cname)).join('|');
+        
+    return makeCellKey(highlightedRow) === makeCellKey(rowIdx);
+}
+
+export function hasSubHighlightRows(tableOrId) {
+    const tableModel = getTM(tableOrId);
+    if (!tableModel?.tableMeta) return false;
+    return Boolean(tableModel.tableMeta['tbl.relatedCols']);
+}
+
+
+
 /**
  * convert this table into IPAC format
  * @param tableModel
@@ -1414,6 +1443,11 @@ export function tblDropDownId(tbl_id) {
     return `table_dropDown-${tbl_id}`;
 }
 
+/**
+ *
+ * @param {String} tableOrId
+ * @return {undefined|TableModel}
+ */
 function getTM(tableOrId) {
     if (isString(tableOrId)) return getTblById(tableOrId);  // was passed a table Id
     if (isObject(tableOrId)) return tableOrId;

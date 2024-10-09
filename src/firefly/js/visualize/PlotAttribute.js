@@ -131,10 +131,10 @@ export const PlotAttribute= {
 
 
     /** A source datalink (or similar) table row that was used to construct this plot */
-    DATALINK_TABLE_ROW : 'DATALINK_TABLE_ROW',
+    RELATED_TABLE_ROW : 'DATALINK_TABLE_ROW',
 
     /** A source datalink (or similar) table id related that was used to construct this plot */
-    DATALINK_TABLE_ID : 'DATALINK_TABLE_ID',
+    RELATED_TABLE_ID : 'DATALINK_TABLE_ID',
 
     /** an array of table ids used by coverage or other representation of these tables */
     VISUALIZED_TABLE_IDS : 'VISUALIZED_TABLE_IDS',
