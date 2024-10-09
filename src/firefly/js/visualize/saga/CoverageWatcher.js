@@ -508,6 +508,16 @@ function initRequest(r,viewerId,plotId, overlayPos, wp) {
     return r;
 }
 
+
+function getBestOrderCoverageSize(hpxIndex) {
+    const orderData = hpxIndex?.orderData;
+    if (orderData[8].tiles.size < 20000) return 8;
+    if (orderData[7].tiles.size < 20000) return 7;
+    if (orderData[6].tiles.size < 20000) return 6;
+    if (orderData[5].tiles.size < 5000) return 5;
+    return 4;
+}
+
 /**
  *
  * @param {CoverageOptions} options
@@ -524,9 +534,11 @@ function computeSize(options, preparedTables, usesRadians) {
             const covType= t.coverageType ?? CoverageType.X;
             switch (covType) {
                 case CoverageType.X:
-                    ptAry= [...getHpxIndexData(t.tbl_id).orderData[8].tiles.values()].map(
+                    const hpxIndex= getHpxIndexData(t.tbl_id);
+                    const tileIndex= getBestOrderCoverageSize(hpxIndex)  ;
+                    ptAry= [...hpxIndex.orderData[tileIndex].tiles.values()].map(
                         ({pixel}) => {
-                            return getCornersForCell(8,pixel,CoordSys.EQ_J2000)?.wpCorners ?? [];
+                            return getCornersForCell(tileIndex,pixel,CoordSys.EQ_J2000)?.wpCorners ?? [];
                         }).flat();
                     break;
                 case CoverageType.ORBITAL_PATH:
