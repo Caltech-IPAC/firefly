@@ -64,7 +64,7 @@ export function makeShaPlotRequest(table, row, includeSingle,includeStandard) {
         title = `bcd-${bcdId}`;
     } else if (dataType === 'AOR') {
         wp = makeWorldPt(ra, dec, CoordinateSys.EQ_J2000);
-        title = `${datatitle} ` + `${aorKey}`;
+        title = `${datatitle} ` + `${aorKey}: Depth of Coverage`;
     } else {
         wp = makeWorldPt(ra, dec, CoordinateSys.EQ_J2000);
         title = `${datatitle} ` + `${bandpass}`;
