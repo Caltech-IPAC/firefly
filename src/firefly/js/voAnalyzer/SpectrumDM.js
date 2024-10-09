@@ -81,9 +81,10 @@ export const REF_POS = {
  * @returns {SpectrumDM|undefined}
  */
 export function getSpectrumDM(tableModel) {
-    const utype = tableModel?.tableMeta?.utype?.toLowerCase();
-    const isSpectrum = utype === 'spec:Spectrum'.toLowerCase();
+    let utype = tableModel?.tableMeta?.utype?.toLowerCase();
+    utype ??= tableModel?.resources?.[0]?.utype?.toLowerCase();      // If the table doesn't have a utype, use the utype from its resources, which is at index 0.
 
+    const isSpectrum = utype === 'spec:Spectrum'.toLowerCase();
     const isSED = utype === 'ipac:Spectrum.SED'.toLowerCase();
 
     if (!isSpectrum && !isSED) return;
