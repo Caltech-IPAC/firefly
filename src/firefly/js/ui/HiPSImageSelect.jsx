@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Sheet, Stack, Typography} from '@mui/joy';
+import {Box, Sheet, Stack, Typography} from '@mui/joy';
 import React, {useContext, useEffect} from 'react';
 import {object, string} from 'prop-types';
 import {validateUrl} from '../util/Validate.js';
@@ -126,37 +126,39 @@ export function showHiPSSurveysPopup(pv, moc= false) {
 
     const popup = (
         <PopupPanel title={moc ? 'Add MOC Layer' : 'Change HiPS Image'} modal={true}>
-            <FieldGroup groupKey={groupKey} keepState={true} style={{width:'100%', height: '100%'}}>
-                <FormPanel groupKey={groupKey} onSuccess={onSubmit} onCancel={() => dispatchHideDialog(DIALOG_ID)}
-                           sx={ { resize:'both', overflow: 'hidden', zIndex:1} }
-                           completeText={moc ? 'Add MOC' : 'Change HiPS'}
-                           disabledDropdownHide={true}
-                           help_id='visualization.changehips'>
+            <Stack height='42rem' sx={{resize:'both', overflow:'hidden',minHeight:'42rem', minWidth:'40rem'}}>
+                <FieldGroup groupKey={groupKey} keepState={true} sx={{ flexGrow: 1}}>
+                    <FormPanel groupKey={groupKey} onSuccess={onSubmit} onCancel={() => dispatchHideDialog(DIALOG_ID)}
+                               sx={ { resize:'both', overflow: 'hidden', zIndex:1} }
+                               completeText={moc ? 'Add MOC' : 'Change HiPS'}
+                               disabledDropdownHide={true}
+                               help_id='visualization.changehips'>
 
-                    {moc &&
-                        <FieldGroupTabs initialState= {{ value:'search' }} fieldKey='mocTabs'
-                                            style={{minWidth:715, minHeight:500, width:'100%', height: '100%'}}>
-                            <Tab name='Search' id='search'>
-                                <Stack {...{py:1, px:1/2, spacing: 1, resize:'both', width:1, height:1, minWidth:715, minHeight:500}}>
-                                    <SourceSelect {...{moc,extraHiPSListName}}/>
-                                    <HiPSSurveyTable groupKey={groupKey} moc={moc}/>
-                                </Stack>
-                            </Tab>
+                        {moc &&
+                            <FieldGroupTabs initialState= {{ value:'search' }} fieldKey='mocTabs'
+                                            sx={{width: 1,  flex: '1 1 auto'}}>
+                                <Tab name='Search' id='search'>
+                                    <Stack {...{py:1, px:1/2, spacing: 1, resize:'both', width:1, height:1, minWidth:715, minHeight:500}}>
+                                        <SourceSelect {...{moc,extraHiPSListName}}/>
+                                        <HiPSSurveyTable groupKey={groupKey} moc={moc}/>
+                                    </Stack>
+                                </Tab>
 
-                            <Tab name='Use my MOC' id='uploadMoc'>
-                                <div style={{width:'100%', minWidth:715, minHeight:500}} >
-                                    <FileUploadViewPanel acceptList={[MOC_TABLES]}/>
-                                </div>
-                            </Tab>
-                        </FieldGroupTabs>}
+                                <Tab name='Use my MOC' id='uploadMoc'>
+                                    <Box height='35rem'>
+                                        <FileUploadViewPanel acceptList={[MOC_TABLES]}/>
+                                    </Box>
+                                </Tab>
+                            </FieldGroupTabs>}
 
-                    {!moc &&
-                        <Stack {...{spacing: 1, resize:'both', width:1, height:1, minWidth:715, minHeight:500}}>
-                            <SourceSelect {...{moc,extraHiPSListName}}/>
-                            <HiPSSurveyTable groupKey={groupKey} moc={moc}/>
-                        </Stack>}
-                </FormPanel>
-            </FieldGroup>
+                        {!moc &&
+                            <Stack {...{spacing: 1, resize:'both', width:1, height:1, minWidth:715, minHeight:500}}>
+                                <SourceSelect {...{moc,extraHiPSListName}}/>
+                                <HiPSSurveyTable groupKey={groupKey} moc={moc}/>
+                            </Stack>}
+                    </FormPanel>
+                </FieldGroup>
+            </Stack>
         </PopupPanel>
     );
 
