@@ -76,7 +76,7 @@ public class VoTableReader {
             Pattern.compile( "POS_EQ_DEC.*|pos\\.eq\\.dec.*",
                     Pattern.CASE_INSENSITIVE );
 
-    private static Logger.LoggerImpl LOG = Logger.getLogger();
+    private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
     /**
      * returns an array of DataGroup from a vo table.
@@ -140,10 +140,10 @@ public class VoTableReader {
         try {
             List<Integer> indicesList = indices == null ? null : CollectionUtil.asList(indices);
             List<TableElement> tableAry = getAllTableElements(docRoot);
-            List<ResourceInfo> resources = getAllResources(docRoot);
             for (int i = 0; i < tableAry.size(); i++) {
                 if (indices == null || indices.length == 0 || indicesList.contains(i)) {
                     TableElement tableEl = tableAry.get(i);
+                    List<ResourceInfo> resources = getResourcesForTable(docRoot, tableEl);
                     DataGroup dg = convertToDataGroup(tableEl, new VOStarTable(tableEl), headerOnly);
                     if (resources != null) dg.setResourceInfos(resources);
                     groups.add(dg);
@@ -154,7 +154,7 @@ public class VoTableReader {
             throw new IOException(e.getMessage());
         }
 
-        return groups.toArray(new DataGroup[groups.size()]);
+        return groups.toArray(new DataGroup[0]);
     }
 
 
@@ -252,7 +252,7 @@ public class VoTableReader {
                             .forEach(table -> tableAry.add((TableElement) table));
                 });
 
-        if (tableAry.size() == 0) {
+        if (tableAry.isEmpty()) {
             String error = getQueryStatusError(docRoot);
             if (error != null) {
                 throw new IOException(error);
@@ -261,35 +261,38 @@ public class VoTableReader {
         return tableAry;
     }
 
-    // get all non-table <RESOURCEs> from one votable file
-    private static List<ResourceInfo> getAllResources(VOElement docRoot) throws IOException {
+    private static ResourceInfo makeResourceInfo(VOElement res) {
+        if (res == null) return null;
+        ResourceInfo ri = new ResourceInfo(res.getID(), res.getName(),
+                res.getAttribute("type"), res.getAttribute("utype"),
+                res.getDescription());
+        List<ParamInfo> params = Arrays.stream(res.getChildrenByName("PARAM"))
+                .map(VoTableReader::paramElToParamInfo).collect(Collectors.toList());
+        if (!params.isEmpty()) ri.setParams(params);
 
-        if (docRoot == null) return null;
+        List<GroupInfo> groups = Arrays.stream(res.getChildrenByName("GROUP"))
+                .map(VoTableReader::groupElToGroupInfo).collect(Collectors.toList());
+        if (!groups.isEmpty()) ri.setGroups(groups);
 
-        return Arrays.stream(docRoot.getChildrenByName("RESOURCE"))
-//                .filter(res -> res.getChildrenByName("TABLE").length == 0)
-                .map( res -> {
-                    ResourceInfo ri = new ResourceInfo(res.getID(), res.getName(),
-                                            res.getAttribute("type"), res.getAttribute("utype"),
-                                            res.getDescription());
-                    List<ParamInfo> params = Arrays.stream(res.getChildrenByName("PARAM"))
-                            .map(VoTableReader::paramElToParamInfo).collect(Collectors.toList());
-                    if (params.size() > 0) ri.setParams(params);
-
-                    List<GroupInfo> groups = Arrays.stream(res.getChildrenByName("GROUP"))
-                            .map(VoTableReader::groupElToGroupInfo).collect(Collectors.toList());
-                    if (groups.size() > 0) ri.setGroups(groups);
-
-                    Map<String, String> infos = new HashMap<>();
-                    Arrays.stream(res.getChildrenByName("INFO"))
-                            .forEach(i -> infos.put(i.getName(), i.getAttribute("value")));
-                    if (infos.size() > 0) ri.setInfos(infos);
-
-
-                    return ri;
-                }).collect(Collectors.toList());
+        Map<String, String> infos = new HashMap<>();
+        Arrays.stream(res.getChildrenByName("INFO"))
+                .forEach(i -> infos.put(i.getName(), i.getAttribute("value")));
+        if (!infos.isEmpty()) ri.setInfos(infos);
+        return ri;
     }
 
+    // return this table's resource as well as all non-table <RESOURCE> from the given votable
+    private static List<ResourceInfo> getResourcesForTable(VOElement docRoot, TableElement table) {
+
+        if (docRoot == null) return null;
+        List<ResourceInfo> resources = new ArrayList<>();
+        applyIfNotEmpty(makeResourceInfo(table.getParent()), resources::add);      // ensure the first resource is for the given table.
+
+        Arrays.stream(docRoot.getChildrenByName("RESOURCE"))
+                .filter(res -> res.getChildrenByName("TABLE").length == 0)      // only the ones without TABLE
+                .forEach( res -> applyIfNotEmpty(makeResourceInfo(res), resources::add));
+        return resources;
+    }
 
     /**
      * convert votable content into DataGroup mainly by collecting TABLE elements and TABLE included metadata and data
@@ -398,7 +401,7 @@ public class VoTableReader {
             // if no nrows attribute, pull in the data and count the rows.
             try {
                 dg.setSize((int)  new VOStarTable(table).getRowCount());
-            } catch (IOException e) { }     // just ignore it.
+            } catch (IOException ignored) { }     // just ignore it.
         }
         return dg;
     }
@@ -410,15 +413,14 @@ public class VoTableReader {
     }
 
     /**
-     * returns the column name for the given field.
      * Although name is a required attribute for FIELD, some VOTable may not provide it.
      * When name is not given, use ID if exists. Otherwise, use COLUMN_${IDX} where IDX is the index of the fields.
-     *
      * In VOTable section 3.2, name does not need to be unique, although it is recommended that name of a FIELD be unique for a TABLE.
      * In Firefly, DataType.name has to be unique.  Therefore, if name is not unique, we will append _${IDX} to it.
-     * @param el
-     * @param colIdx
-     * @return
+     * @param el    element of the field
+     * @param colIdx    column index
+     * @param cols  the list of columns
+     * @return the column name for the given field.
      */
     private static String getCName(VOElement el, int colIdx, List<DataType> cols) {
         if (el == null) return null;
@@ -589,7 +591,6 @@ public class VoTableReader {
 
         VOElement docRoot = getVoTableRoot(infile.getAbsolutePath(), null);
         List<TableElement> tables = getAllTableElements(docRoot);
-        List<ResourceInfo> resources = getAllResources(docRoot);
 
         List<FileAnalysisReport.Part> parts = new ArrayList<>();
         tables.forEach(table -> {
@@ -601,6 +602,7 @@ public class VoTableReader {
             part.setIndex(parts.size());
             part.setFileLocationIndex(parts.size());
             DataGroup dg = getTableHeader(table);
+            List<ResourceInfo> resources = getResourcesForTable(docRoot, table);
             if (resources != null) dg.setResourceInfos(resources);
             String title = isEmpty(dg.getTitle()) ? "VOTable" : dg.getTitle().trim();
             part.setDetails(dg);
