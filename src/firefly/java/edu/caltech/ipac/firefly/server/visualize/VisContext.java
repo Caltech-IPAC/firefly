@@ -65,7 +65,7 @@ public class VisContext {
         footprintMap.put("JWST_FGS",    "footprint/Footprint_JWST.reg");
         footprintMap.put("JWST_MIRI",   "footprint/Footprint_JWST.reg");
         footprintMap.put("JWST_NIRCAM", "footprint/Footprint_JWST.reg");
-        footprintMap.put("JWST_NIS",    "footprint/Footprint_JWST.reg");
+        footprintMap.put("JWST_NIRISS",    "footprint/Footprint_JWST.reg");
         footprintMap.put("JWST_NIRSPEC","footprint/Footprint_JWST.reg");
         footprintMap.put("Spitzer",     "footprint/Footprint_SPITZER.reg" );
         footprintMap.put("Spitzer_IRAC36", "footprint/Footprint_SPITZER.reg");
