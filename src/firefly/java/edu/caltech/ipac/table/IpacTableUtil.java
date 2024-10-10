@@ -177,7 +177,7 @@ public class IpacTableUtil {
         if (attribs == null) return;
         // write attributes first
         for (DataGroup.Attribute kw : attribs) {
-            if (!CollectionUtil.exists(ignoreList, kw.getKey())) {
+            if (!CollectionUtil.exists(kw.getKey(), ignoreList)) {
                 if ( !(kw.isComment() || (ignoreSysMeta && isSysMeta(kw.getKey()))) ) {
                     if (!kw.getKey().equals(DESC) )  writer.println(kw);    // ignore DESC.  we will handle it at the end.
                 }
@@ -185,7 +185,7 @@ public class IpacTableUtil {
         }
         // then write comments
         for (DataGroup.Attribute kw : attribs) {
-            if (!CollectionUtil.exists(ignoreList, kw.getKey())) {
+            if (!CollectionUtil.exists(kw.getKey(), ignoreList)) {
                 if (kw.isComment()) {
                     writer.println(kw.toString());
                 }
