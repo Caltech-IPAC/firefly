@@ -181,7 +181,7 @@ public class CollectionUtil {
         };
     }
 
-    public static <T> boolean exists(T[] srcAry, T compareTo) {
+    public static <T> boolean exists(T compareTo, T ...srcAry) {
         if (srcAry == null || compareTo == null) return false;
         for(T s : srcAry) {
             if ( s.equals(compareTo)) {

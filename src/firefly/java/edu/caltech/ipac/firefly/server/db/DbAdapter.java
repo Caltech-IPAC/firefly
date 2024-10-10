@@ -86,9 +86,13 @@ public interface DbAdapter {
     DbAdapter.DbStats getDbStats();
 
     default boolean hasTable(String tableName) {
-        if (isEmpty(tableName) || getDbFile() == null || !getDbFile().exists()) return false;
-        return getTableNames().stream()
-                .anyMatch(s -> s.equalsIgnoreCase(tableName));
+        try {
+            if (isEmpty(tableName) || getDbFile() == null || !getDbFile().exists()) return false;
+            return getTableNames().stream()
+                    .anyMatch(s -> s.equalsIgnoreCase(tableName));
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 

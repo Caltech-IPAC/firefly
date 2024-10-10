@@ -20,6 +20,7 @@ import edu.caltech.ipac.table.LinkInfo;
 import edu.caltech.ipac.table.ParamInfo;
 import edu.caltech.ipac.table.ResourceInfo;
 import edu.caltech.ipac.table.TableMeta;
+import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.springframework.jdbc.UncategorizedSQLException;
@@ -474,9 +475,11 @@ abstract public class BaseDbAdapter implements DbAdapter {
      */
     protected void addColumnToDD(JdbcTemplate jdbc, DataType col, int atIndex) {
         jdbc = jdbc == null ? getJdbcTmpl() : jdbc;
-        int colCnt = getColumnNames(getDataTable(), null).size();
+        int colCnt = getColumnNames(getDataTable(), null).stream()
+                        .filter(cname -> !CollectionUtil.exists(cname, ROW_IDX, ROW_NUM))
+                        .toList().size();
         if (atIndex<0 || atIndex>colCnt) {
-            atIndex = colCnt + 1;
+            atIndex = colCnt;
         } else {
             shiftColsAt(jdbc, atIndex, 1);       // added to the middle, need to shift the other cols;
         }

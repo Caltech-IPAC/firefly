@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {useCallback, useEffect} from 'react';
+import React, {useCallback, useEffect, useRef} from 'react';
 import {Box, Typography} from '@mui/joy';
 import {arrayOf, array, bool, func, instanceOf, number, object, objectOf, shape, string} from 'prop-types';
 import {Column, Table} from 'fixed-data-table-2';
@@ -109,6 +109,7 @@ const BasicTableViewInternal = React.memo(({ selectable:selectableIn= false, sho
     const uiStates = getTableUiById(tbl_ui_id) || {};
     const {tbl_id, columnWidths, scrollLeft=0, scrollTop=0, triggeredBy, showTypes, showFilters, showUnits, filterInfo,
             selectable, sortInfo, textView} = uiStates;
+    const tableRef = useRef();
 
     useEffect( () => {
         if (!isEmpty(columns)) {
@@ -138,16 +139,10 @@ const BasicTableViewInternal = React.memo(({ selectable:selectableIn= false, sho
     const onFilterSelected = useCallback( doFilterSelected.bind({callbacks, selectInfoCls}), [callbacks, selectInfoCls]);
 
     const headerHeight = showHeader ? 19 + (showUnits && 15) + (showTypes && 14) + (showFilters && 25) : 0;
-    let totalColWidths = 0;
-    if (!isEmpty(columns) && !isEmpty(columnWidths)) {
-        totalColWidths = columns.reduce((pv, c, idx) => {
-            const delta =  get(c, ['visibility'], 'show') === 'show' ?  columnWidths[idx] : 0;
-            return pv + delta;
-        }, 0);
-    }
+    const maxScrollWidth = tableRef.current?.getApi().getCellGroupWidth() || -1;
 
-    const adjScrollTop = correctScrollTopIfNeeded(totalColWidths, scrollTop, width, height-headerHeight, rowHeight, hlRowIdx, triggeredBy);
-    const adjScrollLeft = correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredBy);
+    const adjScrollTop = correctScrollTopIfNeeded(maxScrollWidth, scrollTop, width, height-headerHeight, rowHeight, hlRowIdx, triggeredBy);
+    const adjScrollLeft = correctScrollLeftIfNeeded(maxScrollWidth, scrollLeft, width, triggeredBy);
 
     const isSingleColumnTable = (columns) => getColumns({tableData: {columns}}).length === 1;
 
@@ -165,7 +160,6 @@ const BasicTableViewInternal = React.memo(({ selectable:selectableIn= false, sho
             }
         }
         if (adjScrollTop !== scrollTop)     changes.scrollTop = adjScrollTop;
-        if (adjScrollLeft !== scrollLeft)   changes.scrollLeft = adjScrollLeft;
 
         if (!isEmpty(changes)) {
             dispatchTableUiUpdate({tbl_ui_id, ...changes});
@@ -189,7 +183,8 @@ const BasicTableViewInternal = React.memo(({ selectable:selectableIn= false, sho
             return <TextView { ...{columns, data, showUnits, width, height} }/>;
         } else {
             return (
-                <Table rowHeight={rowHeight}
+                <Table ref={tableRef}
+                       rowHeight={rowHeight}
                        rowHeightGetter={rowHeightGetter && data?.length && columnWidths?.length
                            ? (rowIdx)=>rowHeightGetter(data[rowIdx], columnWidths) : undefined}
                        headerHeight={headerHeight}
@@ -374,11 +369,11 @@ const TextView = ({columns, data, width, height}) => {
     );
 };
 
-function correctScrollTopIfNeeded(totalColWidths, scrollTop, width, height, rowHeight, hlRowIdx, triggeredBy) {
+function correctScrollTopIfNeeded(maxScrollWidth, scrollTop, width, height, rowHeight, hlRowIdx, triggeredBy) {
     const rowHpos = hlRowIdx * rowHeight;
     if (triggeredBy !== BY_SCROLL) {
         // delta is a workaround for the horizontal scrollbar hiding part of the last row when visible
-        const delta = totalColWidths > width ? (.5*rowHeight) : 0;
+        const delta = maxScrollWidth > width ? (.5*rowHeight) : 0;
 
         if (rowHpos < scrollTop) {
             return rowHpos - (height * .3);
@@ -389,13 +384,13 @@ function correctScrollTopIfNeeded(totalColWidths, scrollTop, width, height, rowH
     return scrollTop;
 }
 
-function correctScrollLeftIfNeeded(totalColWidths, scrollLeft, width, triggeredBy) {
+function correctScrollLeftIfNeeded(maxScrollWidth, scrollLeft, width, triggeredBy) {
 
-    if (scrollLeft < 0) {
+    if (scrollLeft < 0 || maxScrollWidth < 0) {
         return undefined;
     } else if (scrollLeft > 0 && triggeredBy === TBL_UI_UPDATE) {
-        if (totalColWidths < width) return undefined;       // if the total widths of the columns is less than the view's width, don't apply scrollLeft
-        if (scrollLeft > totalColWidths) return totalColWidths;               // cannot scroll beyond width
+        if (maxScrollWidth < width) return undefined;       // if the total widths of the columns is less than the view's width, don't apply scrollLeft
+        if (scrollLeft > maxScrollWidth) return maxScrollWidth;               // cannot scroll beyond width
     }
     return scrollLeft;
 }
