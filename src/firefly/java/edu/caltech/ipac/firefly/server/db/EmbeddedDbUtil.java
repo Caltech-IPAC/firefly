@@ -148,8 +148,9 @@ public class EmbeddedDbUtil {
 
         Object val = rs.getObject(idx+1);       // ResultSet index starts from 1
         if (val == null) return null;
-        if ( val.getClass() == clz ) return val;
+        if ( val.getClass() == clz ) return val;            // if data type matches, return.
         try {
+            // needs conversion
             if (val instanceof Number n) {
                 if (clz == Double.class)    return n.doubleValue();
                 if (clz == Float.class)     return n.floatValue();
@@ -158,16 +159,18 @@ public class EmbeddedDbUtil {
                 if (clz == Short.class)     return n.shortValue();
                 if (clz == Byte.class)      return n.byteValue();
             } else if (val instanceof Array) {
-                if (isAry) return val;
+                if (isAry) return val;          // we will assume the data type matches
             } else if (val instanceof Blob b) {
                 if (clz == String.class) {
-                    return new String(b.getBytes(1, (int)b.length()), UTF_8);
+                    return new String(b.getBytes(1, (int)b.length()), UTF_8);   // handles binary UTF-8 encoded string
                 } else {
-                    return deserialize(rs, idx);
+                    return deserialize(rs, idx);        // handles Java serialized objects
                 }
             } else if (val instanceof java.sql.Date sd) {
                 if (clz == LocalDate.class)      return sd.toLocalDate();
             }
+            // if type is a string but the data is stored differently, use toString().
+            if (clz == String.class)      return val.toString();
         } catch (Exception ignored) {}
         throw new SQLException("Can't convert " + val + " to " + clz);
     }
