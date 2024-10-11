@@ -9,8 +9,8 @@ import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONArray;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
@@ -58,6 +58,7 @@ public class DataType implements Serializable, Cloneable {
     public static final String FLOAT = "float";
     public static final String DOUBLE = "double";
     public static final String DATE = "date";
+    public static final String TIME = "time";
 
     // VOTable mapped types; use lower case for comparison,
     public static final String BIT = "bit";
@@ -413,7 +414,7 @@ public class DataType implements Serializable, Cloneable {
                     } catch (Exception e) { return "NaN"; }
                 }
             }
-        } else if (LocalDate.class.isAssignableFrom(getDataType())) {
+        } else if (Date.class.isAssignableFrom(getDataType())) {
             // default Date format:  yyyy-mm-dd hh:mm:ss ie. 2018-11-16 14:55:12
             return String.format("%1$tF %1$tT", value);
         }
@@ -608,6 +609,7 @@ public class DataType implements Serializable, Cloneable {
 
     public static String typeToDesc(Class<?> type) {
 
+        if (type == String.class)   return CHAR;
         if (type == Double.class)   return DOUBLE;
         if (type == Float.class)    return FLOAT;
         if (type == Long.class)     return LONG;
@@ -615,7 +617,7 @@ public class DataType implements Serializable, Cloneable {
         if (type == Short.class)    return SHORT;
         if (type == Boolean.class)  return BOOLEAN;
         if (type == Byte.class)     return BYTE;
-        if (type == LocalDate.class)  return DATE;
+        if (type == Date.class)     return DATE;
 
         return CHAR;
     }
@@ -634,7 +636,7 @@ public class DataType implements Serializable, Cloneable {
             case SHORT, UNSIGNED_BYTE, SMALLINT     -> Short.class;
             case BOOLEAN, BIT                       -> Boolean.class;
             case BYTE, TINYINT                      -> Byte.class;
-            case DATE                               -> LocalDate.class;
+            case DATE, TIME                         -> Date.class;
             default -> defaultVal;
         };
     }
