@@ -635,10 +635,12 @@ public class JsonTableUtil {
     private static final DateTimeFormatter DATE_LOCAL = DateTimeFormatter.ofPattern("yyyy-MM-dd");                 // similar to JSON.stringify()
     public static JSONAware getJsonMapper(Object obj) {
 
-        if (obj instanceof Date) {
+        if (obj instanceof java.sql.Date d) {
+            return () -> "\"" + d.toLocalDate().format(DATE_LOCAL) + "\"";
+        } else if (obj instanceof LocalDate d) {
+            return () -> "\"" + d.format(DATE_LOCAL) + "\"";
+        } else if (obj instanceof Date) {
             return () -> "\"" + JSON_DATE.format(obj) + "\"";
-        } else if (obj instanceof LocalDate ldate) {
-            return () -> "\"" + (ldate).format(DATE_LOCAL) + "\"";
         }
         return null;
     }

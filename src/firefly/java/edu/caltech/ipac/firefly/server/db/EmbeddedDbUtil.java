@@ -33,6 +33,7 @@ import java.io.ObjectOutputStream;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.Date;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -145,31 +146,41 @@ public class EmbeddedDbUtil {
     }
 
     private static Object convertToType(Class clz, ResultSet rs, int idx, boolean isAry) throws SQLException {
-
-        Object val = rs.getObject(idx+1);       // ResultSet index starts from 1
-        if (val == null) return null;
-        if ( val.getClass() == clz ) return val;
-        try {
-            if (val instanceof Number n) {
-                if (clz == Double.class)    return n.doubleValue();
-                if (clz == Float.class)     return n.floatValue();
-                if (clz == Long.class)      return n.longValue();
-                if (clz == Integer.class)   return n.intValue();
-                if (clz == Short.class)     return n.shortValue();
-                if (clz == Byte.class)      return n.byteValue();
-            } else if (val instanceof Array) {
-                if (isAry) return val;
-            } else if (val instanceof Blob b) {
-                if (clz == String.class) {
-                    return new String(b.getBytes(1, (int)b.length()), UTF_8);
-                } else {
-                    return deserialize(rs, idx);
-                }
-            } else if (val instanceof java.sql.Date sd) {
-                if (clz == LocalDate.class)      return sd.toLocalDate();
+        int cIdx = idx+1;      // ResultSet index starts from 1
+        if (isAry) {
+            Object val = rs.getObject(cIdx);
+            if (val == null)            return null;
+            if (val instanceof Array)   return val;    // we will assume the data type matches
+            return deserialize(val.toString());        // handles base64 encoded Java serialized objects
+        } else if (clz == String.class) {
+            Object val = rs.getObject(cIdx);
+            if (val == null) return null;
+            if (val instanceof Blob b) {
+                return new String(b.getBytes(1, (int) b.length()), UTF_8);   // handles binary UTF-8 encoded string
+            } else {
+                return val.toString();
             }
-        } catch (Exception ignored) {}
-        throw new SQLException("Can't convert " + val + " to " + clz);
+        }else if (clz == Double.class) {
+            return rs.getDouble(cIdx);
+        } else if (clz == Float.class) {
+            return rs.getFloat(cIdx);
+        } else if (clz == Integer.class) {
+            return rs.getInt(cIdx);
+        } else if (clz == Long.class) {
+            return rs.getLong(cIdx);
+        } else if (clz == Short.class) {
+            return rs.getShort(cIdx);
+        } else if (clz == Byte.class) {
+            return rs.getByte(cIdx);
+        } else if (clz == Boolean.class) {
+            return rs.getBoolean(cIdx);
+        } else if (clz == Date.class) {
+            Object val = rs.getObject(cIdx);
+            if (val == null)                return null;
+            if (val instanceof Date d)      return d;
+            if (val instanceof LocalDate d) return java.sql.Date.valueOf(d);        // date only
+        }
+        throw new SQLException("Can't convert " + rs.getObject(cIdx) + " to " + clz);
     }
 
     public static List<DataType> getCols(ResultSet rs, DbInstance dbInstance) throws SQLException {
@@ -464,7 +475,7 @@ public class EmbeddedDbUtil {
             case REAL -> useRealAsDouble ? Double.class : Float.class;
             case DOUBLE, NUMERIC, DECIMAL   -> Double.class;
             case BIT, BOOLEAN -> Boolean.class;
-            case DATE, TIME, TIMESTAMP  -> LocalDate.class;
+            case DATE, TIME, TIMESTAMP  -> Date.class;
             case BINARY, VARBINARY, LONGVARBINARY -> String.class;
             default -> String.class;
         };

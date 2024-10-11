@@ -21,7 +21,6 @@ import edu.caltech.ipac.table.ParamInfo;
 import edu.caltech.ipac.table.ResourceInfo;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.CollectionUtil;
-import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.springframework.jdbc.UncategorizedSQLException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -35,9 +34,9 @@ import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLDataException;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -566,8 +565,8 @@ abstract public class BaseDbAdapter implements DbAdapter {
             return "double";
         } else if (Boolean.class.isAssignableFrom(type)) {
             return "boolean";
-        } else if (LocalDate.class.isAssignableFrom(type)) {
-            return "date";
+        } else if (Date.class.isAssignableFrom(type)) {
+            return "timestamp";         // Firefly only support util.Date which has both date and time.
         } else if (Character.class.isAssignableFrom(type)) {
             return "char";
         } else {

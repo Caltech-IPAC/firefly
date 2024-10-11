@@ -16,12 +16,12 @@ import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
 
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.*;
@@ -211,12 +211,15 @@ public class DuckDbAdapter extends BaseDbAdapter {
                 appender.append(v);
             } else if (d instanceof BigDecimal v) {
                 appender.appendBigDecimal(v);
+            } else if (d instanceof java.sql.Date v) {
+                appender.appendLocalDateTime(v.toLocalDate().atStartOfDay());
+            } else if (d instanceof LocalDate v) {
+                appender.appendLocalDateTime(v.atStartOfDay());
+            } else if (d instanceof LocalDateTime v) {
+                appender.appendLocalDateTime(v.atZone(ZoneOffset.UTC).toLocalDateTime());
             } else if (d instanceof Date v) {
-                appender.appendLocalDateTime(LocalDateTime.ofInstant(v.toInstant(), ZoneId.of("UTC")));  // date/time should be stored as utc.
-            } else if (d instanceof Timestamp v) {
-                appender.appendLocalDateTime(LocalDateTime.ofInstant(v.toInstant(), ZoneId.of("UTC")));  // date/time should be stored as utc.
-            }
-            else {
+                appender.appendLocalDateTime(LocalDateTime.ofInstant(v.toInstant(), ZoneOffset.UTC));  // date/time should be stored as utc.
+            } else {
                 throw new IllegalStateException("Unexpected value: " + d);
             }
         }
