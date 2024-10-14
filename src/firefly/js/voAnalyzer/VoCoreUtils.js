@@ -16,9 +16,7 @@ import {ColNameIdx, OBSTAPCOLUMNS, UCDSyntax, UtypeColIdx} from './VoConst.js';
  * @returns {string}    the resolved href after subsitution
  */
 export function applyLinkSub(tableModel, href='', rowIdx, fval='') {
-    const encode = !!href && !href.match(/^\${[\w -.]+}$/g);      // don't encode if href is blank or consists of exact one token.
-    if (encode) fval = encodeURIComponent(fval);                // if encoding is needed, then fval needs to be encoded.
-    const rhref = applyTokenSub(tableModel, href, rowIdx, '', encode);
+    const rhref = applyTokenSub(tableModel, href, rowIdx, '');
     if (rhref === href) {
         return fval ? href + fval : '';       // no substitution given, append defval to the url.  set A.1
     }
@@ -33,10 +31,9 @@ export function applyLinkSub(tableModel, href='', rowIdx, fval='') {
  * @param val           the value to resolve
  * @param rowIdx        row index to be resolved
  * @param def           return value if val is nullish
- * @param encode        apply url encode to val if true.  default to false
  * @returns {string}    the resolved href after subsitution
  */
-export function applyTokenSub(tableModel, val='', rowIdx, def, encode=false) {
+export function applyTokenSub(tableModel, val='', rowIdx, def) {
 
     const vars = val?.match?.(/\${[\w -.]+}/g);
     let rval = val;
@@ -45,7 +42,6 @@ export function applyTokenSub(tableModel, val='', rowIdx, def, encode=false) {
             const [,cname] = v.match(/\${([\w -.]+)}/) || [];
             const col = getColumnByRef(tableModel, cname);
             let cval = col ? getCellValue(tableModel, rowIdx, col.name) : '';  // if the variable cannot be resolved, return empty string
-            if (encode) cval = encodeURIComponent(cval);
             rval = (!cval && v === rval) ? cval : rval.replace(v, cval);
         });
     }
