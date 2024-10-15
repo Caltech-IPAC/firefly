@@ -12,7 +12,7 @@ import {COL_TYPE, formatValue, getCellValue, getColumn, getColumnIdx, getRowValu
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
-import {copyToClipboard, toBoolean} from '../../util/WebUtil.js';
+import {copyToClipboard, encodeUrlString, toBoolean} from '../../util/WebUtil.js';
 
 import ASC_ICO from 'html/images/sort_asc.gif';
 import DESC_ICO from 'html/images/sort_desc.gif';
@@ -734,7 +734,7 @@ export const ATag = React.memo(({cellInfo, label, title, href, target, style={},
     } else {
         label = html_regex.test(label) ? <div dangerouslySetInnerHTML={{__html: label}}/> : label;
     }
-
+    href = encodeUrlString(href);
     return href ? <Link {...{title, href, target, style}}> {label} </Link> : '';
 });
 

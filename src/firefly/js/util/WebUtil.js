@@ -53,7 +53,7 @@ const getScriptURL = once(() => {
 });
 
 export const getRootURL = once(() => {
-    if (getProp('SCRIPT_NAME') === undefined) return '//localhost:8080/';
+    if (getProp('SCRIPT_NAME') === undefined) return 'http://localhost:8080/';
     const workingURL = getScriptURL() || globalObj?.location.href;
     return workingURL.substring(0, workingURL.lastIndexOf('/')) + '/';
 });
@@ -254,6 +254,22 @@ export function loadCancelableImage(src) {
     return {promise, cancelImageLoad};
 }
 
+/**
+ * @param urlString     a URL string
+ * @param baseUrl       base URL if given a relative URL
+ * @returns {string}    a properly encoded URL.
+ */
+export const encodeUrlString= (urlString, baseUrl = getRootURL()) => {
+    try {
+        const url = new URL(urlString, baseUrl);
+        let query = url.searchParams.toString();
+            query = query ? '?' + query : '';
+        const hash = url.hash ? '#' + url.hash : '';
+        return `${url.protocol}//${url.hostname}${url.pathname}${query}${hash}`;
+    } catch (e) {
+        return urlString;
+    }
+};
 
 /**
  * Returns a string where all characters that are not valid for a complete URL have been escaped.

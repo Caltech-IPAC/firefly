@@ -28,15 +28,16 @@
             const columns = [
                 {name: 'location', type: 'location', width: 20},
                 {name: 'multi links', links: [
-                        {href: "https://irsa.ipac.caltech.edu/?id="},
-                        {href: "https://ivoa.net/?id=${multi links}", value: 'ivoa-${multi links}'}
+                        {href: "https://irsa.ipac.caltech.edu/"},
+                        {href: "https://irsa.ipac.caltech.edu/?id=${multi links}", value: 'ivoa-${multi links}'}
                     ]},
                 {name: 'with html', width: 10, links: [{href: "https://ivoa.net/?id=${with html}", value: '${with html}'}]},
                 {name: 'bad url',  links:[{href: "${abc}"}]},
             ];
 
             const data = [
-                ['https://irsa.ipac.caltech.edu', 'links', '<b>dollar</b> = &pound;0.81', 'bad url']
+                ['https://irsa.ipac.caltech.edu'    , 'links'              , '<b>dollar</b> = &pound;0.81', 'bad url'],
+                ['https://irsatest.ipac.caltech.edu', 'subpath/a/ref?a=/x/y z/', '<b>dollar</b> = &pound;0.81', '']
             ];
             const table = { tableData: { columns, data } };
 
