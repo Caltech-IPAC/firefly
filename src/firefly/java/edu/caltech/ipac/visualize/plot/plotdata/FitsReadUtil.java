@@ -88,11 +88,13 @@ public class FitsReadUtil {
 
     public record UncompressFitsInfo(File file, BasicHDU<?>[] HDUs, Fits fits) {}
 
-    public static UncompressFitsInfo createdUncompressImageHDUFile(BasicHDU<?>[] HDUs, File originalFile)
+    public static UncompressFitsInfo createdUncompressVersionOfFile(BasicHDU<?>[] HDUs, File originalFile)
             throws IOException {
         String fBase= FileUtil.getBase(originalFile);
         String dir= originalFile.getParent();
-        File retFile= new File(dir+"/"+ fBase+"---hdu-uncompressed"+".fits");
+        var gzType= FileUtil.isGZipFile(originalFile) ? "---gzip" : "";
+        var hduType=  FitsReadUtil.hasCompressedImageHDUS(HDUs) ? "---hdu" : "";
+        File retFile= new File(dir+"/"+ fBase+gzType+hduType+"-uncompressed"+".fits");
         Fits fits= new Fits();
         for (BasicHDU<?> hdu : HDUs) {
             fits.addHDU( hdu instanceof CompressedImageHDU ?  ((CompressedImageHDU) hdu).asImageHDU() : hdu );

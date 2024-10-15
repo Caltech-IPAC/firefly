@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.server.visualize.fitseval;
 
 import edu.caltech.ipac.firefly.data.RelatedData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
+import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadFactory;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
@@ -36,7 +37,9 @@ public class FitsEvaluation {
         FitsReadUtil.UncompressFitsInfo uFitsInfo= null;
         try  {
             BasicHDU<?>[] HDUs= fits.read();
-            if (FitsReadUtil.hasCompressedImageHDUS(HDUs)) uFitsInfo = FitsReadUtil.createdUncompressImageHDUFile(HDUs,f);
+            if (FileUtil.isGZipFile(f) || FitsReadUtil.hasCompressedImageHDUS(HDUs)) {
+                uFitsInfo = FitsReadUtil.createdUncompressVersionOfFile(HDUs,f);
+            }
 
             File fitsFile= uFitsInfo!=null ? uFitsInfo.file() : f;
             BasicHDU<?>[]  workingHDUS= uFitsInfo!=null ? uFitsInfo.HDUs() : HDUs;
