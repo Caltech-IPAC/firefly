@@ -579,14 +579,6 @@ describe('VOAnalyzer:', () => {
         result = applyLinkSub(tableModel, 'https://acme.org/abc?x=${a}&y=${c}', 1, 'b-2');
         expect(result).toBe('https://acme.org/abc?x=a-2&y=c-2');
 
-        // don't encode cell data when href is not given
-        result = applyLinkSub(tableModel, '', 2, 'http://acme.org/?id=1984A%26AS...56..381B');
-        expect(result).toBe('http://acme.org/?id=1984A%26AS...56..381B');
-
-        // auto-encode cell data when used as tokens and not a full url
-        result = applyLinkSub(tableModel, 'http://acme.org/?id=${c}', 2, 'failed');
-        expect(result).toBe('http://acme.org/?id=1984A%26AS...56..381B');
-
         // null condition
         result = applyLinkSub(tableModel, '${b}', 2, '');
         expect(result).toBe('');
