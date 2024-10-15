@@ -42,10 +42,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.LongFunction;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
+import static edu.caltech.ipac.firefly.server.db.DuckDbAdapter.*;
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.SEARCH_REQUEST;
 import static org.junit.Assert.*;
 
@@ -301,7 +304,36 @@ public class DuckDbAdapterTest extends ConfigTest {
 		assertEquals(1L, (long)Collections.min(odd));
     }
 
+	@Test
+	public void testLikeSubstitution() {
+		// replace uppercase LIKE
+		assertEquals("WHERE col ILIKE '%abc%'",
+				replaceLike("WHERE col LIKE '%abc%'"));
 
+		// replace lower case like
+		assertEquals("WHERE col ILIKE '%xyz%'",
+				replaceLike("WHERE col like '%xyz%'"));
+
+		// ignore when inside of single quotes
+		assertEquals("WHERE col = 'This is LIKE something'",
+				replaceLike("WHERE col = 'This is LIKE something'"));
+
+		// ignore when inside of double quotes
+		assertEquals("WHERE \"col like\" = 'Some string LIKE pattern'",
+				replaceLike("WHERE \"col like\" = 'Some string LIKE pattern'"));
+
+		// LIKE outside and inside quotes
+		assertEquals("WHERE abc ILIKE '%abc%' and col = 'Some string LIKE pattern'",
+				replaceLike("WHERE abc like '%abc%' and col = 'Some string LIKE pattern'"));
+
+		// no match; return original
+		assertEquals("WHERE col like-one '%xyz%'",
+				replaceLike("WHERE col like-one '%xyz%'"));
+
+		// mixing single and double quotes
+		assertEquals("'test ILIKE inside\" badly quoted ILIKE ",
+				replaceLike("'test like inside\" badly quoted like "));
+	}
 
 //====================================================================
 //  PRIVATE section

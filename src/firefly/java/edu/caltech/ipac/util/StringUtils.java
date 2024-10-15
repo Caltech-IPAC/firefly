@@ -105,18 +105,37 @@ public class StringUtils {
         return res.size() > 0 ? res.toArray(new String[0]) : null;
     }
 
-    public static String shrink(String s, int size) {
-        if (s == null || s.length() <= size) return s;
-        size = size <=0 ? 1 : size;
-        if (size < 4) {
-            char[] str = new char[size];
-            Arrays.fill(str, '.');
-            return String.valueOf(str);
-        } else {
-            String pre = s.substring(0, size/2 - 1);
-            String suf = s.substring(s.length() - (size/2-2));
-            return pre + "..." + suf;
+    /**
+     * Replaces all occurrences of oldVal with newVal, ignoring cases where they are inside quotes.
+     *
+     * @param input  The input string to process.
+     * @param oldVal The value to search for.
+     * @param newVal The value to replace with.
+     * @return The modified string.
+     */
+    public static String replaceUnquoted(String input, String oldVal, String newVal) {
+        newVal = " %s ".formatted(newVal);
+        StringBuilder result = new StringBuilder();
+        Pattern quotePattern = Pattern.compile("(['\"]).*?\\1"); // Matches anything inside single or double quotes
+        Matcher matcher = quotePattern.matcher(input);
+
+        int lastIndex = 0;
+        while (matcher.find()) {
+            // Replace oldVal in the text before this quoted section
+            String beforeQuote = input.substring(lastIndex, matcher.start());
+            result.append(beforeQuote.replaceAll("(?i)\\s%s\\s".formatted(oldVal), newVal));
+
+            // Append the quoted section unchanged
+            result.append(matcher.group());
+
+            // Update lastIndex to continue after the quoted section
+            lastIndex = matcher.end();
         }
+
+        // Replace oldVal in the text after the last quoted section
+        result.append(input.substring(lastIndex).replaceAll("(?i)\\s%s\\s".formatted(oldVal), newVal));
+
+        return result.toString();
     }
 
     /**

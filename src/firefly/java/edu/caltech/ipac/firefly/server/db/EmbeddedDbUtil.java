@@ -32,6 +32,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.sql.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.Date;
 import java.util.stream.Collectors;
@@ -47,6 +49,7 @@ import static edu.caltech.ipac.table.DataGroup.ROW_IDX;
 import static edu.caltech.ipac.table.TableMeta.DERIVED_FROM;
 import static edu.caltech.ipac.util.StringUtils.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.ZoneOffset.UTC;
 
 /**
  * @author loi
@@ -147,14 +150,14 @@ public class EmbeddedDbUtil {
 
     private static Object convertToType(Class clz, ResultSet rs, int idx, boolean isAry) throws SQLException {
         int cIdx = idx+1;      // ResultSet index starts from 1
+        Object val = rs.getObject(cIdx);
+        if (val == null)         return null;
+        if (clz.isInstance(val)) return val;
+
         if (isAry) {
-            Object val = rs.getObject(cIdx);
-            if (val == null)            return null;
             if (val instanceof Array)   return val;    // we will assume the data type matches
             return deserialize(val.toString());        // handles base64 encoded Java serialized objects
         } else if (clz == String.class) {
-            Object val = rs.getObject(cIdx);
-            if (val == null) return null;
             if (val instanceof Blob b) {
                 return new String(b.getBytes(1, (int) b.length()), UTF_8);   // handles binary UTF-8 encoded string
             } else {
@@ -175,10 +178,8 @@ public class EmbeddedDbUtil {
         } else if (clz == Boolean.class) {
             return rs.getBoolean(cIdx);
         } else if (clz == Date.class) {
-            Object val = rs.getObject(cIdx);
-            if (val == null)                return null;
-            if (val instanceof Date d)      return d;
             if (val instanceof LocalDate d) return java.sql.Date.valueOf(d);        // date only
+            if (val instanceof LocalDateTime d) return Date.from(d.atZone(UTC).toInstant());
         }
         throw new SQLException("Can't convert " + rs.getObject(cIdx) + " to " + clz);
     }
