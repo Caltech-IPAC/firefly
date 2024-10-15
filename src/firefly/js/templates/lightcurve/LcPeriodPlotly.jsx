@@ -20,12 +20,12 @@ import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import Validate from '../../util/Validate.js';
 import {dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
-import FieldGroupCntlr, {dispatchValueChange, dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
+import FieldGroupCntlr, {dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getActiveTableId, getColumnIdx, getTblById} from '../../tables/TableUtil.js';
 import {LC, updateLayoutDisplay, getValidValueFrom, getFullRawTable} from './LcManager.js';
 import {doPFCalculate, getPhase} from './LcPhaseTable.js';
 import {LcPeriodogram, cancelPeriodogram, popupId, startPeriodogramPopup} from './LcPeriodogram.jsx';
-import {ReadOnlyText, getTypeData} from './LcUtil.jsx';
+import {getTypeData} from './LcUtil.jsx';
 import {LO_VIEW, getLayouInfo,dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 import {isDialogVisible, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {updateSet} from '../../util/WebUtil.js';
@@ -47,8 +47,6 @@ export var isBetween = (a, b, c) => (c >= a && c <= b);
 
 const PanelResizableStyle = {
     width: 550,
-    minWidth: 400,
-    minHeight: 300,
     marginLeft: 15,
     overflow: 'auto',
     padding: '2px'
@@ -221,18 +219,23 @@ const PeriodStandardView = (props) => {
     // const aroundButton = {margin: space};
 
     return (
-        <FieldGroup groupKey={pfinderkey} style={{display: 'flex', flexDirection: 'column', position: 'relative', flexGrow: 1, minHeight: 500}}
+        <FieldGroup groupKey={pfinderkey} sx={{ display: 'flex', flexDirection: 'column', position: 'relative', flexGrow: 1, minHeight: 500 }}
                     reducerFunc={LcPFReducer(initState)}  keepState={true}>
             <div style={{flexGrow: 1, position: 'relative'}}>
                 <SplitPane split='horizontal' primary='second' maxSize={-100} minSize={100} defaultSize={400}>
                     <SplitContent>
-                        <div className='phaseFolded'>
-                            <Box {...{
-                                mr: 1/4, px: 1, width: 1, maxWidth: 540, overflow: 'auto' }}>
-                                <LcPFOptionsBox/>
-                            </Box>
-                            <PhaseFoldingChart/>
-                        </div>
+
+                        <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={565}>
+                            <SplitContent>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow:'auto'}}>
+                                    <LcPFOptionsBox/>
+                                </Box>
+                            </SplitContent>
+                            <SplitContent>
+                                <PhaseFoldingChart/>
+                            </SplitContent>
+                        </SplitPane>
+
                     </SplitContent>
                     <LcPeriodogram displayMode={displayMode}/>
                 </SplitPane>
@@ -349,8 +352,8 @@ class PhaseFoldingChartInternal extends PureComponent {
                     exponentformat:'e'
                 },
                 margin: {
-                    l: 50,
-                    r: 5,
+                    l: 60,
+                    r: 30,
                     b: 50,
                     t: 50,
                     pad: 2
@@ -415,24 +418,25 @@ class PhaseFoldingChartInternal extends PureComponent {
 
     render() {
         const {dataUpdate} = this.state;
-        const {plotlyData, plotlyDivStyle, plotlyLayout}= this.chartingInfo;
+        const {plotlyData, plotlyDivStyle, plotlyLayout} = this.chartingInfo;
 
+        //original div below insted of stack: <div className='ChartPanel__chartresizer' >
         return (
-            <div className='ChartPanel__chartresizer' >
-                <PlotlyWrapper data={plotlyData} layout={plotlyLayout}  style={plotlyDivStyle}
+            <Stack sx={{height: '100%', width: '98%'}}>
+                <PlotlyWrapper data={plotlyData} layout={plotlyLayout} style={plotlyDivStyle}
                                dataUpdate={dataUpdate}
                                autoSizePlot={true}
                                autoDetectResizing={true}
-                               divUpdateCB={(div) => this.chart= div}
+                               divUpdateCB={(div) => this.chart = div}
                                newPlotCB={this.afterRedraw}
                 />
-            </div>
+            </Stack>
         );
     }
 
 }
 
-export const PhaseFoldingChart= wrapResizer(PhaseFoldingChartInternal);
+export const PhaseFoldingChart = wrapResizer(PhaseFoldingChartInternal);
 
 //<ReactHighcharts config={this.state.config} isPureConfig={true} ref='chart'/>
 
@@ -595,16 +599,17 @@ function LcPFOptions({fields}) {
     const offset = 16;
     const highlightW = PanelResizableStyle.width-panelSpace - offset;
     const hasPeriodgramData= Boolean(peridogramTbl?.isFetching===false && peridogramTbl?.tableData?.data?.length);
+
     return (
-        <Stack>
-            <Card>
-                <Stack {...{spacing:3}}>
-                    <Stack {...{spacing:1}}>
-                        <Stack direction='row' spacing={2} alignItems='flexStart'>
+        <Stack sx={{flexGrow: 1, p:2}}>
+            <Card sx={{ flexGrow: 1}}>
+                <Stack {...{spacing:3, sx:{flexGrow: 1}}}>
+                    <Stack {...{spacing:1,sx:{flexGrow: 1, justifyContent: 'space-evenly', alignItems:'stretch'}}}>
+                        <Stack direction='row' spacing={2} alignItems='flexStart' sx={{flexGrow: 1}}>
                             <Typography level='body-sm'> {PERIOD_FINDER_HELP} </Typography>
                             <HelpIcon helpId={'findpTSV.settings'}/>
                         </Stack>
-                        <Stack {...{direction:'row', spacing:3}}>
+                        <Stack {...{direction:'row', spacing:3, sx:{flexGrow:1}}}>
                             <Stack {...{direction:'row', spacing:1}}>
                                 <Typography >{defValues?.[fKeyDef.time.fkey]?.label}</Typography>
                                 <Typography color='warning'> {getVal(fKeyDef.time.fkey)} </Typography>
@@ -614,7 +619,7 @@ function LcPFOptions({fields}) {
                                 <Typography color='warning'> {getVal(fKeyDef.flux.fkey)} </Typography>
                             </Stack>
                         </Stack>
-                        <Stack>
+                        <Stack sx={{flexGrow: 1}}>
                             <Stack {...{direction:'row',spacing:1,alignItems:'center'}}>
                                 <Typography level='body-lg'>Set Period</Typography>
                                 <Typography level='body-sm'>(three ways)</Typography>
@@ -655,7 +660,7 @@ function LcPFOptions({fields}) {
 
                         <ValidationField fieldKey={fKeyDef.tz.fkey} label='Time Offset' sx={{width:'12rem'}}/>
                     </Stack>
-                    <Stack {...{direction: 'row', justifyContent:'space-between'}}>
+                    <Stack {...{direction: 'row', sx:{flexGrow: 1, justifyContent: 'space-between', alignItems:'flex-end'}}}>
                         <Stack {...{direction: 'row', spacing:2}}>
                             <CompleteButton groupKey={[pfinderkey]} onSuccess={setPFTableSuccess()} onFail={setPFTableFail()}
                                             text='Accept' includeUnmounted={true} />
