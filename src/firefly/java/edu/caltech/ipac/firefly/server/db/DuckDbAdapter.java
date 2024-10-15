@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.db;
 
+import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -75,8 +76,6 @@ public class DuckDbAdapter extends BaseDbAdapter {
     public DuckDbAdapter(File dbFile) { super(dbFile); }
 
     public String getName() { return NAME; }
-
-    List<String> getSupportedExts () { return SUPPORTS; }
 
     protected EmbeddedDbInstance createDbInstance() {
         String filePath = getDbFile() == null ? "" : getDbFile().getAbsolutePath();
@@ -236,6 +235,13 @@ public class DuckDbAdapter extends BaseDbAdapter {
         appender.endRow();
     }
 
+    @Override
+    // DuckDB do not have a global property to make all LIKE operations case-insensitive
+    String wherePart(TableServerRequest treq) {
+        String where = super.wherePart(treq);
+        return replaceLike(where);
+    }
+
     public String translateSql(String sql) {
         // duckdb does not support BEFORE.  new column will always be added to the end.
         // when a column data type is changed, we delete the old column and add the new one.
@@ -256,5 +262,8 @@ public class DuckDbAdapter extends BaseDbAdapter {
         }
     }
 
+    public static String replaceLike(String input) {
+        return replaceUnquoted(input, "like", "ILIKE");
+    }
 
 }
