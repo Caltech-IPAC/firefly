@@ -59,6 +59,14 @@ public class DuckDbAdapter extends BaseDbAdapter {
             """         // make sure this matches DecimateKey.getKey()
             ,
             "CREATE FUNCTION lg(val) AS LOG10(val)"
+            ,
+            """
+            CREATE FUNCTION nvl2(expr1, expr2, expr3) AS
+              CASE
+                WHEN expr1 IS NOT NULL THEN expr2
+                ELSE expr3
+              END
+            """
     };
 
     private static final List<String> SUPPORTS = List.of("duckdb");
