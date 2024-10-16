@@ -505,7 +505,6 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             /*sortInfo: sortInfoString('Power', false)*/
         }, {tbl_id: LC.PERIODOGRAM_TABLE, inclCols : '"Period", "Power"'});
 
-
         if (tReq !== null) {
             dispatchTableSearch(tReq, {removable: true, tbl_group: LC.PERIODOGRAM_GROUP});
             const dispatchParams= {
@@ -523,7 +522,8 @@ function periodogramSuccess(popupId, hideDropDown = false) {
                     title: {text: 'Periodogram'},
                     xaxis: {type: 'log', showgrid: true},
                     yaxis: {showgrid: true, range: [0, undefined]}
-                }
+                },
+                mounted: true
             };
             dispatchChartAdd(dispatchParams);
         }
