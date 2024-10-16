@@ -169,7 +169,11 @@ export default function makeWebpackConfig(config) {
             use: [ { loader: 'style-loader' }, { loader: 'css-loader' } ]
         },
         {
-            test: /\.(png|jpg|gif|svg)$/,
+            test: /\.svg$/,
+            use: ['@svgr/webpack'],
+        },
+        {
+            test: /\.(png|jpg|gif)$/,
             type: 'asset/inline'
         }
     ];

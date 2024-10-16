@@ -1,5 +1,4 @@
 import React, {useEffect} from 'react';
-import {cloneDeep} from 'lodash';
 import {useOutlet} from 'react-router-dom';
 
 import {FireflyLayout} from 'firefly/templates/common/FireflyLayout.jsx';
@@ -8,8 +7,7 @@ import {useDropdownRoute} from './RouteHelper.jsx';
 import {DropDownContainer} from 'firefly/ui/DropDownContainer.jsx';
 import {startTTFeatureWatchers} from 'firefly/templates/common/ttFeatureWatchers.js';
 import {dispatchNotifyRemoteAppReady, dispatchOnAppReady, dispatchSetMenu} from 'firefly/core/AppDataCntlr.js';
-import {HydraLanding} from 'firefly/templates/hydra/HydraViewer.jsx';
-import {setIf as setIfUndefined} from 'firefly/util/WebUtil.js';
+import {applyLayoutFix, HydraLanding} from 'firefly/templates/hydra/HydraViewer.jsx';
 import {Slot} from 'firefly/ui/SimpleComponent.jsx';
 
 
@@ -72,12 +70,7 @@ export  default function RoutedApp({slotProps, menu, mainPanel, children, dropdo
     const [visible, search] = useDropdownRoute();
     const outlet = useOutlet();
 
-    const mSlotProps = cloneDeep(slotProps || {});
-    // adjust banner for appIcon
-    setIfUndefined(mSlotProps,'banner.slotProps.icon.style.marginTop', -43);
-    setIfUndefined(mSlotProps,'banner.slotProps.tabs.pl', '120px');
-    setIfUndefined(mSlotProps,'landing.icon', props?.appIcon);
-    setIfUndefined(mSlotProps,'landing.title', props?.appTitle);
+    const mSlotProps = applyLayoutFix({slotProps, props});
 
     let dropDownComponent = null;
     if (visible && outlet) {

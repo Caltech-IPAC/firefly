@@ -18,10 +18,10 @@ export function AppConfigDrawer({containerElement, drawerWidth= '20rem', allowMe
     const {appTitle, appIcon} = useContext(AppPropertiesCtx);
     const visible= useStoreConnector(() => isDialogVisible(SIDE_BAR_ID));
     const closeSideBar= () => dispatchHideDialog(SIDE_BAR_ID);
-    const drawerTitleSx = {m: '0.5rem', height: '3rem'};
+    const drawerTitleSx = {m: '0.25rem', p: 0, height: '3rem', width: '3rem'};
 
     const appIconEl = appIcon && React.cloneElement(appIcon, {
-        style: {height: drawerTitleSx.height}
+        sx: drawerTitleSx
     });
 
     return (
