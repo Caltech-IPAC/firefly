@@ -14,7 +14,7 @@ It also includes many, many bug fixes, clean up, and optimization (not all are l
 - Tables: save table as parquet using `parquet.votable`- Firefly-1550 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1633)) 
 - Tables: internal data optimization using duckdb - Firefly-1477 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1582)) 
 - Tables: Drawing Overlay Color in table tabs- Firefly-1510 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1600)) 
-- Images/HiPS: hierarchical catalogs- Firefly-1457 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1607)) 
+- Images/HiPS: hierarchical catalogs- Firefly-1537 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1607)) 
 - Data product viewer: recognizes service descriptor defined cutouts- Firefly-1491 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1580)) 
 
 #### New Features
