@@ -453,6 +453,10 @@ export function cancelPeriodogram() {
     dispatchHideDialog(popupId);
 }
 
+//When recalculating periodogram, if chartId is same as before, the chart won't re-mount (see ChartPanelView's useEffect in ChartPanel.jsx)
+//therefore, just add a unique index (which will increment) to the chartId each time we recalculate periodogram
+let periodogramChartCount = 0;
+
 /**
  * @summary create periodogram tables and charts
  * @param popupId
@@ -505,13 +509,12 @@ function periodogramSuccess(popupId, hideDropDown = false) {
             /*sortInfo: sortInfoString('Power', false)*/
         }, {tbl_id: LC.PERIODOGRAM_TABLE, inclCols : '"Period", "Power"'});
 
-
         if (tReq !== null) {
             dispatchTableSearch(tReq, {removable: true, tbl_group: LC.PERIODOGRAM_GROUP});
             const dispatchParams= {
                 viewerId: LC.PERIODOGRAM_GROUP,
                 groupId: LC.PERIODOGRAM_TABLE,
-                chartId: LC.PERIODOGRAM_TABLE,
+                chartId: LC.PERIODOGRAM_TABLE + '_' + periodogramChartCount++,
                 help_id: 'findpTSV.pgramresults',
                 data: [{
                     tbl_id: LC.PERIODOGRAM_TABLE,
