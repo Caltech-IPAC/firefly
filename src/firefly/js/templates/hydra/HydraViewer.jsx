@@ -50,6 +50,11 @@ export function HydraViewer({menu, appTitle= 'Time Series Viewer', slotProps, ..
 
     const mSlotProps = applyLayoutFix({slotProps, props});
 
+    // defaultView is used when the requested view does not match any of the predefined views in dropdown.
+    // with Hydra's SearchPanel, component(view) are defined by a search's renderer, i.g. renderStandardView
+    // this is a convenience way to direct all undefined requests to SearchPanel.
+    setIfUndefined(mSlotProps,'dropdown.defaultView', <SearchPanel/>);
+
     return (
         <App slotProps={mSlotProps} {...props}>
             <ResultSection slotProps={mSlotProps}/>
@@ -173,19 +178,13 @@ HydraLanding.propTypes = {
 
 
 export function applyLayoutFix({slotProps, props}) {
-
     const mSlotProps = cloneDeep(slotProps || {});
 
-    // defaultView is used when the requested view does not match any of the predefined views in dropdown.
-    // with Hydra's SearchPanel, component(view) are defined by a search's renderer, i.g. renderStandardView
-    // this is a convenience way to direct all undefined requests to SearchPanel.
-    setIfUndefined(mSlotProps,'dropdown.defaultView', <SearchPanel/>);
-
     // adjust banner for appIcon
-    setIfUndefined(mSlotProps,'banner.slotProps.icon.style.marginTop', -43);
+    setIfUndefined(mSlotProps,'banner.slotProps.icon.style.marginTop', -40); //won't take precedence if defined in sx
+    setIfUndefined(mSlotProps,'banner.slotProps.icon.sx', {color: 'primary.softActiveColor'}); //same as active tab's font color
     setIfUndefined(mSlotProps,'banner.slotProps.tabs.pl', '120px');
 
-    setIfUndefined(mSlotProps,'landing.icon', props?.appIcon);
     setIfUndefined(mSlotProps,'landing.title', props?.appTitle);
     return mSlotProps;
 }
