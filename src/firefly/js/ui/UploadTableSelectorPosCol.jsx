@@ -82,7 +82,7 @@ export function UploadTableSelectorPosCol({uploadInfo, setUploadInfo, uploadTabl
                     {haveTable &&
                         <Typography level='title-lg' sx={{width:200, overflow:'hidden', whiteSpace:'nowrap',
                             textOverflow:'ellipsis', pl:1.5}}>
-                            {`${fileName}`}
+                            {fileName}
                         </Typography>
                     }
                 </Stack>

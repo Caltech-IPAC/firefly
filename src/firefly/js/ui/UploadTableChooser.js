@@ -122,7 +122,7 @@ function existingTableSubmit(request,setUploadInfo,defaultColsEnabled) {
         }
         const uploadInfo = {
             serverFile: result?.serverFile ?? null,
-            title: activeTbl.title,
+            title: tableRequest?.META_INFO?.title,
             fileName: activeTbl.title,
             tbl_id: activeTblId,
             columns:columnsSelected,
