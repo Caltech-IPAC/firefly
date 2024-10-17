@@ -48,6 +48,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.table.TableUtil.getAliasName;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static uk.ac.starlink.table.StoragePolicy.PREFER_MEMORY;
@@ -602,6 +603,7 @@ public class VoTableReader {
             part.setIndex(parts.size());
             part.setFileLocationIndex(parts.size());
             DataGroup dg = getTableHeader(table);
+            Arrays.stream(dg.getDataDefinitions()).forEach(dt -> dt.setKeyName(getAliasName(dt)));  // show case-sensitive column names if exists
             List<ResourceInfo> resources = getResourcesForTable(docRoot, table);
             if (resources != null) dg.setResourceInfos(resources);
             String title = isEmpty(dg.getTitle()) ? "VOTable" : dg.getTitle().trim();
