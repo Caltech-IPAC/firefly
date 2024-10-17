@@ -166,7 +166,7 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, position
             cutoutOptions.ucdKeys= [...ucdKeys,ucd];
             params= {[ucd] : cutoutSize};
         }
-        else {
+        else { // handle pixel based cutout
             const nameGuess= serDefParams.find( ({name=''}) =>
                 CUTOUT_NAME_GUESS_LIST.find( (testName) => name.toLowerCase()===testName) );
             cutoutOptions.paramNameKeys= [...paramNameKeys,nameGuess.name];

@@ -264,6 +264,7 @@ function getHighlightData(dl) {
     if (!idxData) return [];
 
     const wpt= makeHpxWpt(idxData,dl.highlightedRow);
+    if (!wpt) return [];
     const s = dl.drawingDef.size+2 || 5;
     const s2 = DrawUtil.getSymbolSizeBasedOn(DrawSymbol.X, Object.assign({}, dl.drawingDef, {size: s}));
     const obj= PointDataObj.make(wpt, s, dl.drawingDef.symbol);

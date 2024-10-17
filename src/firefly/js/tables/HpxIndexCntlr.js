@@ -106,7 +106,9 @@ function reducer(state={}, action={}) {
             return {...state,[tbl_id]: tblHpxData };
 
         case CLEAR_IDX:
-            return {...state,[tbl_id]: {ready:false} };
+            const newState= {...state};
+            delete newState[tbl_id];
+            return newState;
 
         case ORDER_DATA_READY:
             return {...state,[tbl_id]: {...state[tbl_id], ready} };

@@ -77,7 +77,7 @@ function VersionInfoFull() {
                     </Link>
                 </Stack>
                 <Stack justifyContent='space-evenly' direction='row' alignItems='flex-start' sx={{ml:5.75}}>
-                    <Box display='grid' gridTemplateColumns='auto auto' gap={.75} userSelect='text'>
+                    <Box sx={{display:'grid', gridTemplateColumns:'auto auto', gap:.75, userSelect:'text'}}>
                         <Entry desc={VER} value={version}/>
                         <Entry desc={BUILT_ON} value={BuildTime}/>
                         <Entry desc={COMMIT} value={BuildCommit}/>

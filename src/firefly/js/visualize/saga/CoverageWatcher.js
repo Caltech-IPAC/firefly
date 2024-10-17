@@ -3,14 +3,13 @@
  */
 
 import Enum from 'enum';
-import {flattenDeep, isEmpty, isNil, isObject, isString, isUndefined, pick, values} from 'lodash';
-import {getMaxScatterRows} from '../../charts/ChartUtil.js';
+import {flattenDeep, isEmpty, isObject, isString, isUndefined, pick, values} from 'lodash';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import {REINIT_APP} from '../../core/AppDataCntlr.js';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga';
 import {MetaConst} from '../../data/MetaConst.js';
-import Catalog, {CatalogType} from '../../drawingLayers/Catalog.js';
+import Catalog from '../../drawingLayers/Catalog.js';
 import {TableSelectOptions} from '../../drawingLayers/CatalogUI.jsx';
 import HpxCatalog from '../../drawingLayers/hpx/HpxCatalog';
 import SearchTarget from '../../drawingLayers/SearchTarget.js';
@@ -18,16 +17,12 @@ import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {dispatchEnableHpxIndex, getHpxIndexData, onOrderDataReady} from '../../tables/HpxIndexCntlr';
 import {getCornersColumns} from '../../tables/TableInfoUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
-import {
-    TABLE_HIGHLIGHT,
-    TABLE_LOADED, TABLE_REMOVE, TABLE_SELECT,
-} from '../../tables/TablesCntlr.js';
+import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_REMOVE, TABLE_SELECT,} from '../../tables/TablesCntlr.js';
 import {
     doFetchTable, getActiveTableId, getBooleanMetaEntry, getMetaEntry, getTableInGroup, getTblById, isTableUsingRadians
 } from '../../tables/TableUtil.js';
 import {darker} from '../../util/Color';
 import {logger} from '../../util/Logger.js';
-import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
 import {
     findTableCenterColumns, findTableRegionColumn, getSearchTarget, hasCoverageData, isOrbitalPathTable,
     isTableWithRegion
@@ -36,8 +31,8 @@ import CoordSys from '../CoordSys';
 import {getNextColor} from '../draw/DrawingDef.js';
 import {DrawSymbol} from '../draw/DrawSymbol.js';
 import {
-    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
-    dispatchModifyCustomField, dlRoot, getDlAry
+    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer, dispatchModifyCustomField, dlRoot,
+    getDlAry
 } from '../DrawLayerCntlr.js';
 import {getCornersForCell} from '../HiPSUtil';
 import ImagePlotCntlr, {
@@ -45,6 +40,7 @@ import ImagePlotCntlr, {
 } from '../ImagePlotCntlr.js';
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {PlotAttribute} from '../PlotAttribute.js';
+import {onPlotComplete} from '../PlotCompleteMonitor';
 import {DEFAULT_COVERAGE_PLOT_ID, getDrawLayersByType, isDrawLayerVisible} from '../PlotViewUtil';
 import {getDrawLayerById, primePlot} from '../PlotViewUtil.js';
 import {makeWorldPt, pointEquals} from '../Point.js';
@@ -52,7 +48,7 @@ import {computeCentralPtRadiusAverage} from '../VisUtil.js';
 import {BLANK_HIPS_URL, isBlankHiPSURL, isHiPS} from '../WebPlot';
 import {WebPlotRequest} from '../WebPlotRequest.js';
 import {catalogWatcherStandardCatalogId} from './CatalogWatcher';
-import {memorizeLastCall} from 'firefly/util/WebUtil';
+import {CoverageType, getCatalogType, getCoverageType, getRegionAryFromTable, updateWarnings} from './CoverageUtil';
 
 /**
  * @typedef {Object} CoverageType
@@ -66,8 +62,6 @@ import {memorizeLastCall} from 'firefly/util/WebUtil';
  * @type {Enum}
  */
 
-/** @type CoverageType */
-const CoverageType = new Enum(['X', 'BOX', 'REGION', 'ORBITAL_PATH', 'ALL', 'GUESS']);
 const FitType=  new Enum (['WIDTH', 'WIDTH_HEIGHT']);
 
 const COVERAGE_TARGET = 'COVERAGE_TARGET';
@@ -93,6 +87,7 @@ const COVERAGE_FOV = 'COVERAGE_FOV';
  * @prop {boolean} multiCoverage - overlay more than one table  on the coverage
  * @prop {string} gridOn - one of 'FALSE','TRUE','TRUE_LABELS_FALSE'
  * @prop {boolean} exclusiveHiPS - only show hips for coverage, never fits
+ * @prop {number} maxRegionObjects
  */
 
 
@@ -126,7 +121,9 @@ const defOptions= {
     autoConvertOnZoom: false,
     fovDegMinSize: .1,
     viewerId:'DefCoverageId',
-    paused: true
+    paused: true,
+    maxRegionObjects: 30000,
+    // maxRegionObjects: 1000,
 };
 
 export const COVERAGE_WATCH_CID= 'COVERAGE_WATCH_CID';
@@ -319,21 +316,21 @@ async function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatI
             pageSize: MAX_ROW,
             inclCols: getCovColumnsForQuery(options, table)
         };
-        const largeTable= table.totalRows > getMaxScatterRows();
+        const largeTable= table.totalRows > options.maxRegionObjects;
 
         let req = cloneRequest(table.request, params);
         let covType= getCoverageType(options,tbl_id);
-        if (covType===CoverageType.REGION && largeTable) covType= CoverageType.X;
+        if ((covType===CoverageType.REGION || covType===CoverageType.BOX) && largeTable) covType= CoverageType.X;
 
 
         
-        if (covType!== CoverageType.X && largeTable) {
+        if (covType!== CoverageType.BOX && covType!== CoverageType.ORBITAL_PATH && covType!== CoverageType.X && largeTable) {
             const cenCol = findTableCenterColumns(table);
             if (!cenCol) return;
             const sreq = cloneRequest(table.request, {inclCols: `"${cenCol.lonCol}","${cenCol.latCol}"`});
             req = makeTableFunctionRequest(sreq, 'DecimateTable', 'coverage',
                 {
-                    decimate: !isOrbitalPathTable(tbl_id) ? serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, getMaxScatterRows()) : undefined,
+                    decimate: !isOrbitalPathTable(tbl_id) ? serializeDecimateInfo(cenCol.lonCol, cenCol.latCol, options.maxRegionObjects) : undefined,
                     pageSize: MAX_ROW
                 });
         }
@@ -362,6 +359,7 @@ async function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatI
                 if (preparedTable?.tableData?.data?.length > 0) {
                     preparedTables[tbl_id] = preparedTable;
                     preparedTable.coverageType= covType;
+                    preparedTable.originalTableModel= table;
                     updateCoverageWithData(viewerId, table, options, tbl_id, preparedTable, preparedTables,
                         usesRadians, tblCatIdMap, preferredHipsSourceURL, preferredHipsSource360URL, deletedTblId);
                 }
@@ -464,8 +462,10 @@ function updateCoverageWithData(viewerId, table, options, tbl_id, preparedTable,
             pvOptions: {userCanDeletePlots:false, displayFixedTarget:false, useForCoverage:true},
             attributes,
         });
-
     }
+    onPlotComplete(DEFAULT_COVERAGE_PLOT_ID).then( () => {
+        setTimeout(() => updateWarnings(preparedTables,options) ,300);
+    });
     updateTableComponentStateStatus(tbl_id,'success');
 }
 
@@ -511,6 +511,7 @@ function initRequest(r,viewerId,plotId, overlayPos, wp) {
 
 function getBestOrderCoverageSize(hpxIndex) {
     const orderData = hpxIndex?.orderData;
+    if (!orderData) return 8;
     if (orderData[8].tiles.size < 20000) return 8;
     if (orderData[7].tiles.size < 20000) return 7;
     if (orderData[6].tiles.size < 20000) return 6;
@@ -536,7 +537,7 @@ function computeSize(options, preparedTables, usesRadians) {
                 case CoverageType.X:
                     const hpxIndex= getHpxIndexData(t.tbl_id);
                     const tileIndex= getBestOrderCoverageSize(hpxIndex)  ;
-                    ptAry= [...hpxIndex.orderData[tileIndex].tiles.values()].map(
+                    ptAry= [...(hpxIndex?.orderData?.[tileIndex]?.tiles.values() ?? [])].map(
                         ({pixel}) => {
                             return getCornersForCell(tileIndex,pixel,CoordSys.EQ_J2000)?.wpCorners ?? [];
                         }).flat();
@@ -574,10 +575,7 @@ function makeOverlayCoverageDrawing() {
         if (!plot && !affectedTblId) return;
         const tblIdAry=  plot ? plot.attributes[PlotAttribute.VISUALIZED_TABLE_IDS] : [affectedTblId];
         if (isEmpty(tblIdAry)) return;
-        const visibleMap= tblCatIdMap[affectedTblId]?.reduce( (obj, catId) => {
-            obj[catId]= true;
-            return obj;
-        }, {} ) ?? {};
+        const visibleMap= {};
 
         tblIdAry.forEach( (tbl_id) => {
             if (!tbl_id) return;
@@ -618,7 +616,7 @@ function makeOverlayCoverageDrawing() {
                 tblCatIdMap[id] && tblCatIdMap[id].forEach((cId) => {
                     if (!drawingOptions[cId]) drawingOptions[cId] = {};
                     if (!drawingOptions[cId].color) {
-                        drawingOptions[cId].color = preparedTables[id].tableMeta[MetaConst.DEFAULT_COLOR] || lookupOption(options, 'color', cId) || getNextColor();
+                        drawingOptions[cId].color = preparedTables[id]?.tableMeta?.[MetaConst.DEFAULT_COLOR] || lookupOption(options, 'color', cId) || getNextColor();
                     }
                     if (selectOps[cId]) drawingOptions[cId].selectOption = selectOps[cId];
                 });
@@ -650,16 +648,6 @@ function getColumns(dataType,covType,allRowsTable) {
                 findTableCenterColumns(allRowsTable, true))
     );
 }
-
-const getCatalogType= (dataType) => {
-    switch (dataType) {
-        case CoverageType.REGION: return CatalogType.REGION;
-        case CoverageType.X: return CatalogType.POINT;
-        case CoverageType.ORBITAL_PATH: return CatalogType.ORBITAL_PATH;
-        case CoverageType.BOX: return CatalogType.BOX;
-        default: return CatalogType.POINT;
-    }
-};
 
 /**
  *
@@ -736,15 +724,17 @@ function addToCoverageDrawing(plotId, options, table, preparedTable, drawOp, vis
 
     };
 
+    const catV= isVisible(visibleMap,coverageCatalogId(tbl_id));
     if (covType === CoverageType.BOX) {
-        createDrawLayer(coverageCatalogId(tbl_id), covType, isVisible(visibleMap,tbl_id));
+        createDrawLayer(coverageCatalogId(tbl_id), covType, catV);
     } else if (covType === CoverageType.X) {
-        createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,baseTitle,drawOp,options,isVisible(visibleMap,tbl_id));
+        createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,baseTitle,drawOp,options,catV);
     } else if (covType === CoverageType.ORBITAL_PATH) {
-        createDrawLayer(coverageCatalogId(tbl_id), covType, isVisible(visibleMap,tbl_id));
+        createDrawLayer(coverageCatalogId(tbl_id), covType, catV);
     } else if (covType === CoverageType.REGION) {
-        createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,baseTitle+' positions',drawOp,options, isVisible(coverageCatalogId(visibleMap,tbl_id)));
-        createDrawLayer(regionId(tbl_id),CoverageType.REGION,isVisible(visibleMap,regionId(tbl_id)),' regions');
+        const regionV= isVisible(visibleMap,regionId(tbl_id));
+        createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,baseTitle+' positions',drawOp,options, catV);
+        createDrawLayer(regionId(tbl_id),CoverageType.REGION,regionV,' regions');
     }
 
     if (searchTarget) {
@@ -765,7 +755,7 @@ function addToCoverageDrawing(plotId, options, table, preparedTable, drawOp, vis
     }
 }
 
-const isVisible= (visibleMap, tbl_id) => visibleMap[tbl_id] ?? true;
+const isVisible= (visibleMap, catalogId) => visibleMap[catalogId] ?? true;
 
 
 function createHpxDrawLayer(tbl_id,plotId,layersPanelLayoutId,title,drawOp,options,visible) {
@@ -803,38 +793,8 @@ function lookupOption(options, key, tbl_id) {
     return isObject(value) ? value[tbl_id] : value;
 }
 
-function getCoverageType(options,tableOrId) {
 
-    const table= isString(tableOrId) ? getTblById(tableOrId) : tableOrId;
-    if (isOrbitalPathTable(table)) return CoverageType.ORBITAL_PATH;
 
-    if (options.coverageType===CoverageType.GUESS ||
-        options.coverageType===CoverageType.REGION ||
-        options.coverageType===CoverageType.BOX ||
-        options.coverageType===CoverageType.ALL) {
-        const regionAry = getRegionAryFromTable(table);
-        if (isTableWithRegion(table.tbl_id) && regionAry.length === 0) {
-            //helpful note for developer/user in the console
-            console.log(`Note: We could not parse s_region correctly, possibly because we do not support this format yet, 
-            hence it is not displayed in the coverage map.`);
-        }
-        return  (isTableWithRegion(table) && regionAry.length>0) ? CoverageType.REGION :
-                                    (hasCorners(options,table) ? CoverageType.BOX : CoverageType.X);
-    }
-    return options.coverageType;
-}
-
-const isValidNum= (n) => !isNil(n) && !isNaN(Number(n));
-
-function hasCorners(options, table) {
-    const cornerColumns= getCornersColumns(table);
-    if (isEmpty(cornerColumns)) return false;
-    const tblData = table?.tableData?.data ?? [];
-    const dataCnt= tblData.reduce( (tot, row) =>
-        cornerColumns.every( (cDef) => isValidNum(row[cDef.lonIdx]) && isValidNum(row[cDef.lonIdx]) ) ? tot+1 : tot
-    ,0);
-    return dataCnt > 0;
-}
 
 function getPtAryFromTable(options,table, usesRadians){
     const cDef= findTableCenterColumns(table, true);
@@ -849,24 +809,21 @@ function getPtAryFromTable(options,table, usesRadians){
         ).filter( (v) => v);
 }
 
-function getBoxAryFromTable(options,table, usesRadians){
-    const cDefAry= getCornersColumns(table);
-    return (table?.tableData?.data ?? [])
+function getBoxAryFromTable(options, allDataTable, usesRadians){
+    if (!allDataTable) return [];
+
+    if (allDataTable.originalTableModel &&
+        !getMetaEntry(allDataTable, MetaConst.ALL_CORNERS) &&
+        getMetaEntry(allDataTable.originalTableModel, MetaConst.ALL_CORNERS)) {
+       allDataTable.tableMeta[MetaConst.ALL_CORNERS]= getMetaEntry(allDataTable.originalTableModel, MetaConst.ALL_CORNERS);
+    }
+    const cDefAry= getCornersColumns(allDataTable);
+    return (allDataTable?.tableData?.data ?? [])
         .map( (row) => cDefAry
             .map( (cDef) => makeWorldPt(row[cDef.lonIdx], row[cDef.latIdx], cDef.csys, true, usesRadians) ))
         .filter( (row) => row.every( (v) => v));
 }
 
-const getRegionAryFromTable = memorizeLastCall( (table) => {
-    const rCol = findTableRegionColumn(table);
-    if (!rCol) return [];
-    return (table?.tableData?.data ?? [])
-        .map((row) => {
-             const cornerInfo = parseObsCoreRegion(row[rCol.regionIdx], rCol.unit, true);
-
-            return cornerInfo.valid ? cornerInfo.corners : [];
-        }).filter((r) => !isEmpty(r));
-});
 
 function getCovColumnsForQuery(options, table) {
     const cAry= [...getCornersColumns(table), findTableCenterColumns(table,true), findTableRegionColumn(table)];

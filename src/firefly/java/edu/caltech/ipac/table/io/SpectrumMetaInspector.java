@@ -119,7 +119,7 @@ public class SpectrumMetaInspector {
         // look for wavelength
         if (hasCol(specColNames,dtAry, SPEC_SPECT_AXIS+".Value")) {
             List<GroupInfo.RefInfo> l= new ArrayList<>();
-            addSpectrumRef(dtAry,l);
+            addSpectrumRef(dg, dtAry,l);
             findAndAddRef(orderColNames,dtAry,l, SPEC_ORDER);
             findAndAddRef(relOrderColNames,dtAry,l, SPEC_REL_ORDER);
             findAndAddRef(waveLoColName,dtAry,l, SPEC_SPECT_AXIS+ACCURACY+".BinLow");
@@ -178,7 +178,7 @@ public class SpectrumMetaInspector {
             GroupInfo fluxGr = new GroupInfo(SPEC_FL_AXIS, "", fcList);
             groupList.add(fluxGr);
         }
-        if (groupList.size()>0) dg.setGroupInfos(groupList);
+        if (!groupList.isEmpty()) dg.setGroupInfos(groupList);
     }
 
 
@@ -217,13 +217,36 @@ public class SpectrumMetaInspector {
         list.add(new GroupInfo.RefInfo(colName, ucd,utype));
     }
 
-    private static void addSpectrumRef(List<DataType> dtAry, List<GroupInfo.RefInfo> list) {
+    private static void addSpectrumRef(DataGroup dg, List<DataType> dtAry, List<GroupInfo.RefInfo> list) {
         String utype= SPEC_SPECT_AXIS+VALUE;
         String colName= findColByUtypeOrNames(specColNames,dtAry,utype);
         if (colName==null) return;
+        insertWlUnitsIfEmpty(dg,dtAry,colName);
         String ucd= getUCD(dtAry,colName);
         if (StringUtils.isEmpty(ucd)) ucd= guessSpectrumUCD(colName);
         list.add(new GroupInfo.RefInfo(colName, ucd,utype));
+    }
+
+    private static void insertWlUnitsIfEmpty(DataGroup dg, List<DataType> dtAry, String colName) {
+        DataType specDt= dtAry.stream().filter(dt -> colName.equals(dt.getKeyName())).findAny().orElse(null);
+        if (specDt==null || !StringUtils.isEmpty(specDt.getUnits())) return;
+        // Add a list of metadata checks to set units, right now only one....
+        if (anyMatchingAttribute(dg, "INSTRUM","IRSX")) { // IRSX attribute is always microns
+            specDt.setUnits("microns");
+            return;
+        }
+        // add more unit checks here
+    }
+
+    private static boolean anyMatchingAttribute(DataGroup dg, String partialKey, String partialValue) {
+        var objAry= dg.getAttributeList().stream().filter( a -> a.getKey().contains(partialKey)).toArray();
+        for (Object o : objAry) {
+            if (o instanceof DataGroup.Attribute specAtt) {
+                String v = specAtt.getValue();
+                if (v != null && v.contains(partialValue)) return true;
+            }
+        }
+        return false;
     }
 
     private static String find(List<String> l, String name) {
