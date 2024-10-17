@@ -1,12 +1,11 @@
-import {isEmpty} from 'lodash';
+import {isEmpty, isNumber} from 'lodash';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
 import {getCellValue, getColumnByRef} from '../../tables/TableUtil.js';
 import {makeCircleString} from '../../ui/dynamic/DynamicUISearchPanel';
 import {isSIAStandardID} from '../../ui/dynamic/ServiceDefTools';
-import {getObsCoreOption} from '../../ui/tap/TableSearchHelpers';
 import {makeWorldPt} from '../../visualize/Point';
 import {isDatalinkTable, isObsCoreLike} from '../../voAnalyzer/TableAnalysis';
-import {CUTOUT_UCDs, DEC_UCDs, RA_UCDs, standardIDs} from '../../voAnalyzer/VoConst';
+import {CUTOUT_UCDs, DEC_UCDs, RA_UCDs} from '../../voAnalyzer/VoConst';
 
 import {isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {isDefined} from '../../util/WebUtil.js';
@@ -19,6 +18,8 @@ import {makeObsCoreRequest} from './VORequest.js';
 
 
 export const SD_CUTOUT_KEY= 'sdCutoutSize';
+export const SD_DEFAULT_SPACIAL_CUTOUT_SIZE= .01;
+export const SD_DEFAULT_PIXEL_CUTOUT_SIZE= 200;
 
 /**
  *
@@ -163,8 +164,17 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, position
                               CUTOUT_UCDs.find( (testUcd) => UCD.toLowerCase().includes(testUcd)) );
         if (obsFieldParam) {
             const ucd= obsFieldParam.UCD;
+            const sdSizeValue= Number(obsFieldParam.value);
             cutoutOptions.ucdKeys= [...ucdKeys,ucd];
-            params= {[ucd] : cutoutSize};
+
+            // note: the size is set as a number, if is a string it is coming from the dialog
+            if (isNumber(cutoutSize) && cutoutSize===SD_DEFAULT_SPACIAL_CUTOUT_SIZE && sdSizeValue) {
+                params= {[ucd] : sdSizeValue};
+                dispatchComponentStateChange(key,{ [SD_CUTOUT_KEY]: sdSizeValue } );
+            }
+            else {
+                params= {[ucd] : cutoutSize};
+            }
         }
         else { // handle pixel based cutout
             const nameGuess= serDefParams.find( ({name=''}) =>
@@ -175,11 +185,9 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, position
                 params= {[nameGuess.name] : cutoutSize.substring(0,sizeStr.length-2)};
             }
             else {
-                const valNum= parseInt(nameGuess.value);
+                const valNum= parseInt(nameGuess.value) || SD_DEFAULT_PIXEL_CUTOUT_SIZE;
                 params= {[nameGuess.name] : valNum};
-                dispatchComponentStateChange(key,{
-                    [SD_CUTOUT_KEY]: valNum+'px'
-                } );
+                dispatchComponentStateChange(key,{ [SD_CUTOUT_KEY]: valNum+'px' } );
             }
             pixelBasedCutout= true;
         }

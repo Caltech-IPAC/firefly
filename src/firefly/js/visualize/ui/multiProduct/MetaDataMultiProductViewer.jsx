@@ -7,8 +7,8 @@ import React, {memo} from 'react';
 import {dispatchComponentStateChange, getComponentState} from '../../../core/ComponentCntlr';
 import {setFactoryTemplateOptions, getDefaultFactoryOptions} from '../../../metaConvert/DataProductsFactory.js';
 import {startDataProductsWatcher} from '../../../metaConvert/DataProductsWatcher.js';
-import {SD_CUTOUT_KEY} from '../../../metaConvert/vo/ServDescProducts';
-import {getObsCoreOption, getTapObsCoreOptions} from '../../../ui/tap/TableSearchHelpers';
+import {SD_CUTOUT_KEY, SD_DEFAULT_SPACIAL_CUTOUT_SIZE} from '../../../metaConvert/vo/ServDescProducts';
+import {getObsCoreOption} from '../../../ui/tap/TableSearchHelpers';
 import {MultiProductViewer} from './MultiProductViewer.jsx';
 
 const startedWatchers=[];
@@ -22,7 +22,7 @@ function startWatcher(dpId, options) {
     const key= options.dataProductsComponentKey ?? defOps.dataProductsComponentKey;
     if (!getComponentState(key,{})[SD_CUTOUT_KEY]) {
         dispatchComponentStateChange(key,{
-            [SD_CUTOUT_KEY]: (getObsCoreOption('cutoutDefSizeDeg') ?? .01)
+            [SD_CUTOUT_KEY]: (getObsCoreOption('cutoutDefSizeDeg') ?? SD_DEFAULT_SPACIAL_CUTOUT_SIZE)
         } );
     }
 }
