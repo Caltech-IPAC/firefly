@@ -1,4 +1,3 @@
-import PriorityHighRoundedIcon from '@mui/icons-material/PriorityHighRounded';
 import React from 'react';
 import {node} from 'prop-types';
 import {Box, Button, IconButton, ToggleButtonGroup} from '@mui/joy';
@@ -64,6 +63,7 @@ import MinusIcon from '@mui/icons-material/RemoveOutlined';
 import FitIcon from '@mui/icons-material/ZoomInMapOutlined';
 import FillIcon from '@mui/icons-material/OpenInFullOutlined';
 import OneXIcon from '@mui/icons-material/TimesOneMobiledataOutlined';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 
 import FiberManualRecordRoundedIcon from '@mui/icons-material/FiberManualRecordRounded';
 
@@ -180,7 +180,7 @@ export const FilterButton = (props) => (
 );
 
 export const WarningButton = (props) => (
-    <ToolbarButton {...{icon: <PriorityHighRoundedIcon />,
+    <ToolbarButton {...{icon: <WarningAmberOutlinedIcon/>,
         tip: 'warning', color:'danger', iconButtonSize:'38px', ...props}}/>
 );
 
