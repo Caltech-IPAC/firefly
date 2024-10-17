@@ -9,6 +9,8 @@ import edu.caltech.ipac.util.StringUtils;
 import java.io.Serializable;
 import java.util.*;
 
+import static edu.caltech.ipac.table.TableUtil.fixDuplicates;
+
 /**
  * Object representing tabular data.  For historic reason, DataObject represent a row and DataType represent a column.
  */
@@ -38,6 +40,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
 
     public DataGroup(String title, List<DataType> dataDefs) {
         this.title = title;
+        fixDuplicates(dataDefs);
         dataDefs.forEach(this::addDataDefinition);
     }
 

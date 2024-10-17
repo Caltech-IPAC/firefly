@@ -487,7 +487,7 @@ public class IpacTableUtil {
                     int endoffset = Math.min(pci.endIdx, endOfLine);
                     String val = line.substring(pci.startIdx, endoffset).trim();
 
-                    if (!isKnownType(dt.getDataType())) {
+                    if (dt.getDataType() == null) {
                         IpacTableUtil.guessDataType(dt, val);
                     }
                     applyGuessLogic(dt, val, pci);

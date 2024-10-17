@@ -25,9 +25,12 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 
 /**
@@ -78,7 +81,7 @@ public class TableUtil {
 
 
     private static boolean isRegLine(String line) {
-        if (StringUtils.isEmpty(line)) return false;
+        if (isEmpty(line)) return false;
         line= line.trim().toLowerCase();
         for(String sw : regStartWith) {
             if (line.startsWith(sw)) return true;
@@ -327,6 +330,33 @@ public class TableUtil {
      */
     public static String[] splitCols(String cnames) {
         return cnames == null ? new String[0] : cnames.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)(?![^(]*\\))");
+    }
+
+    /**
+     * If both ID and label exists, the label should be used in contexts where
+     * case sensitivity is supported.
+     * @param dt Firefly table column
+     * @return the resolved name
+     */
+    public static String getAliasName(DataType dt) {
+        return !isEmpty(dt.getID()) && !isEmpty(dt.getLabel()) ? dt.getLabel() : dt.getKeyName();
+    }
+
+    public static void fixDuplicates(List<DataType> cols) {
+        HashSet<String> cnames = new HashSet<>();
+        for (DataType dt : cols) {
+            if (cnames.contains(dt.getKeyName().toUpperCase())) {
+                int idx = 1;
+                String nCname;
+                do {
+                    nCname = "%s_%d".formatted(dt.getKeyName(), idx++);
+                } while (cnames.contains(nCname.toUpperCase()));
+                if (isEmpty(dt.getID()))    dt.setID(dt.getKeyName());      // if we change cname, save original as ID.
+                dt.setLabel(dt.getKeyName());
+                dt.setKeyName(nCname);
+            }
+            cnames.add(dt.getKeyName().toUpperCase());
+        }
     }
 
 //====================================================================
