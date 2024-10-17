@@ -146,5 +146,8 @@ export const PlotAttribute= {
     USER_SEARCH_WP: 'USER_SEARCH_WP',
 
     /** the radius of the search */
-    USER_SEARCH_RADIUS_DEG: 'USER_SEARCH_RADIUS_DEG'
+    USER_SEARCH_RADIUS_DEG: 'USER_SEARCH_RADIUS_DEG',
+
+    /** an object warnings: {key: string, warning:string} */
+    USER_WARNINGS: 'USER_WARNINGS'
 };

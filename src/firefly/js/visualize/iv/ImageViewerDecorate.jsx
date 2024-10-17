@@ -310,7 +310,7 @@ const ImageViewerDecorate= memo((props) => {
                     {(plot) ? <PlotTitle brief={brief}  plotView={pv} working={workingIcon} /> : undefined}
                     <ZoomGroup visRoot={visRoot} pv={pv} show={showZoom} />
                 </Stack>
-                <VisInlineToolbarView pv={pv} showDelete={showDelete} show={showDel}/>
+                <VisInlineToolbarView pv={pv} showDelete={showDelete} deleteVisible={showDel}/>
             </Stack>
         </Box>
         );
