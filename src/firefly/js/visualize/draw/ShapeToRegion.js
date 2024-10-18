@@ -2,7 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import CsysConverter from '../CsysConverter.js';
+import CsysConverter, {CCUtil} from '../CsysConverter.js';
+import {hasWCSProjection} from '../PlotViewUtil';
 import {convertAngle} from '../VisUtil.js';
 import {makeScreenPt} from '../Point.js';
 import {startRegionDes, setRegionPropertyDes, endRegionDes} from '../region/RegionDescription.js';
@@ -22,41 +23,23 @@ const HTML_DEG= '&deg;';
  * @return {Array}
  */
 export function toRegion(drawObj, plot, drawParams) {
-    var {sType,pts}= drawObj;
-    var retList= [];
+    const cc = CsysConverter.make(plot);
+    const forceWpt= hasWCSProjection(plot) && drawObj.forceWptForRegion;
+    const pts= drawObj.pts.map( (pt) => forceWpt ? CCUtil.getWorldCoords(plot,pt) : pt);
+    const regDrawObj= forceWpt  ? {...drawObj,isOnWorld:true} : drawObj;
 
-    var cc = CsysConverter.make(plot);
-
-    switch (sType) {
-        case ShapeDataObj.ShapeType.Text:
-            retList= makeTextRegion(pts[0], cc, drawObj, drawParams);
-            break;
-        case ShapeDataObj.ShapeType.Line:
-            retList= makeLineRegion(pts, cc, drawObj, drawParams);
-            break;
-        case ShapeDataObj.ShapeType.Circle:
-            retList= makeCircleRegion(pts, cc, drawObj, drawParams);
-            break;
-        case ShapeDataObj.ShapeType.Rectangle:
-            retList= makeRectangleRegion(pts, cc, drawObj, drawParams);
-            break;
-        case ShapeDataObj.ShapeType.Ellipse:
-            retList = makeEllipseRegion(pts, cc, drawObj, drawParams);
-            break;
-        case ShapeDataObj.ShapeType.Annulus:
-            retList = makeAnnulusRegion(pts, cc, drawObj, drawParams);
-            break;
-        case ShapeDataObj.ShapeType.BoxAnnulus:
-            retList = makeBoxAnnulusRegion(pts, cc, drawObj, drawParams);
-            break;
-        case ShapeDataObj.ShapeType.EllipseAnnulus:
-            retList = makeEllipseAnnulusRegion(pts, cc, drawObj, drawParams);
-            break;
-        case ShapeDataObj.ShapeType.Polygon:
-            retList = makePolygonRegion(pts, cc, drawObj, drawParams);
-            break;
+    switch (drawObj.sType) {
+        case ShapeDataObj.ShapeType.Text: return makeTextRegion(pts[0], cc, regDrawObj, drawParams);
+        case ShapeDataObj.ShapeType.Line: return makeLineRegion(pts, cc, regDrawObj, drawParams);
+        case ShapeDataObj.ShapeType.Circle: return makeCircleRegion(pts, cc, regDrawObj, drawParams);
+        case ShapeDataObj.ShapeType.Rectangle: return makeRectangleRegion(pts, cc, regDrawObj, drawParams);
+        case ShapeDataObj.ShapeType.Ellipse: return makeEllipseRegion(pts, cc, regDrawObj, drawParams);
+        case ShapeDataObj.ShapeType.Annulus: return makeAnnulusRegion(pts, cc, regDrawObj, drawParams);
+        case ShapeDataObj.ShapeType.BoxAnnulus: return makeBoxAnnulusRegion(pts, cc, regDrawObj, drawParams);
+        case ShapeDataObj.ShapeType.EllipseAnnulus: return makeEllipseAnnulusRegion(pts, cc, regDrawObj, drawParams);
+        case ShapeDataObj.ShapeType.Polygon: return makePolygonRegion(pts, cc, regDrawObj, drawParams);
+        default: return [];
     }
-    return retList;
 }
 
 

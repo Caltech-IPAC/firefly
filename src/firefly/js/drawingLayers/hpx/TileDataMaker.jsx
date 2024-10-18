@@ -170,7 +170,8 @@ function getDrawDataForCell({ cell, minGroupSize, cc, idxData, norder, expandedT
     const {count = 0} = tileData ?? {};
     if (!count) return [];
     if (tileData.summaryTile) {
-        if (expandedTiles?.[norder]?.includes(cell.ipix) || showAllPoints) { // if we should force expanded groups
+        const doShow= showAllPoints || (groupType!==HEAT_MAP_GROUP_TYPE && norder > MIN_NORDER_TO_ALWAYS_GROUP-2 && count < 4);
+        if (expandedTiles?.[norder]?.includes(cell.ipix) || doShow) { // if we should force expanded groups
             const expandedIdxs = getAllDataIndexes(idxData, norder, cell.ipix);
             const selectedIndexes = getAllSelectedIndexes(idxData, norder, cell.ipix);
             return expandedIdxs.map((idx) => {
@@ -178,7 +179,7 @@ function getDrawDataForCell({ cell, minGroupSize, cc, idxData, norder, expandedT
                 const wp = makeHpxWpt(idxData, idx);
                 return makeSingleDrawPoint(selected, idx, wp, drawingDef);
             });
-        } else if (count > 1 && count < minGroupSize && norder > MIN_NORDER_TO_ALWAYS_GROUP) { // expand if group is small
+        } else if (count > 1 && count < minGroupSize && norder >= MIN_NORDER_TO_ALWAYS_GROUP) { // expand if group is small
             const selectedIndexes = getAllSelectedIndexes(idxData, norder, cell.ipix);
             return getAllDataIndexes(idxData, norder, cell.ipix).map((idx) => {
                 const selected = isSelected(selectedIndexes.includes(idx));

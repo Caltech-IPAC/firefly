@@ -21,6 +21,7 @@ export const DrawingType= new Enum(['WcsCoordsOnly', 'ImageCoordsOnly', 'All']);
  * @prop {Object} supportedDrawingTypes
  * @prop {Object} renderOptions
  * @prop {String} type
+ * @prop {boolean} forceWptForRegion
  */
 
 
