@@ -38,6 +38,11 @@ describe('A test suite for WebUtil.js', () => {
         expect(encoded).toBe('http://acme.org/relative-path/ref?a=key%3D123');
         const enUrl = new URL(encoded);
         expect(enUrl.searchParams.get('a')).toBe('key=123');
+        // encode hash
+        expect(encodeUrlString( 'http://acme.org/relative-path/ref#key=123'))
+            .toBe('http://acme.org/relative-path/ref#key%3D123');
+        expect(encodeUrlString( 'http://acme.org/relative-path/ref#ID'))
+            .toBe('http://acme.org/relative-path/ref#ID');
 
         // identify encoded URL and avoid re-encoding it.
         const first = encodeUrlString('http://acme.org/relative path/ref?a=key=123');
