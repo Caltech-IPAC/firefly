@@ -50,6 +50,8 @@ import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX;
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.*;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.*;
+import static edu.caltech.ipac.table.DataGroup.ROW_IDX;
+import static edu.caltech.ipac.table.DataGroup.ROW_NUM;
 import static edu.caltech.ipac.util.StringUtils.*;
 
 /**
@@ -258,9 +260,10 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 treq.keepBaseParamOnly();
                 DataGroup table = dbAdapter.getHeaders(dbAdapter.getDataTable());  // just the headers.
                 String[] cols = Arrays.stream(table.getDataDefinitions())
-                                        .filter(c -> c.getDerivedFrom() == null)
-                                        .map(dt -> "\"" + dt.getKeyName() + "\"")
-                                        .toArray(String[]::new);
+                                .filter(c -> c.getDerivedFrom() == null                                     // remove derived columns
+                                             && !CollectionUtil.exists(c.getKeyName(), ROW_IDX, ROW_NUM))   // remove system added columns
+                                .map(dt -> "\"" + dt.getKeyName() + "\"")
+                                .toArray(String[]::new);
                 treq.setInclColumns(cols);
             }
             switch(format) {
