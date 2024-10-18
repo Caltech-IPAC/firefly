@@ -908,41 +908,18 @@ public class RegionFactory {
     public static String serialize(Region r) { return serialize(r,null,true); }
 
     public static String serialize(Region r, Global global, boolean supportExt) {
-        String retval= null;
-        if (r instanceof RegionAnnulus) {
-            RegionAnnulus ra= (RegionAnnulus)r;
-            retval= ra.isCircle() ? makeCircleString(ra,global, supportExt) :
-                                    makeAnnulusString(ra,global,supportExt);
-        }
-        else if (r instanceof RegionBox) {
-            retval= makeBoxString((RegionBox)r,global,supportExt);
-        }
-        else if (r instanceof RegionBoxAnnulus) {
-            retval= makeBoxAnnulusString((RegionBoxAnnulus)r,global,supportExt);
-        }
-        else if (r instanceof RegionEllipse) {
-            RegionEllipse re= (RegionEllipse)r;
-            throw new IllegalArgumentException("not implemented");
-
-        }
-        else if (r instanceof RegionEllipseAnnulus) {
-            RegionEllipseAnnulus rea= (RegionEllipseAnnulus)r;
-            throw new IllegalArgumentException("not implemented");
-        }
-        else if (r instanceof RegionLines) {
-            RegionLines rl= (RegionLines)r;
-            retval= rl.isPolygon() ? makePolygonString(rl,global,supportExt) :
-                                     makeLineString(rl,global,supportExt);
-        }
-        else if (r instanceof RegionPoint) {
-            retval= makePointString((RegionPoint)r,global,supportExt);
-
-        }
-        else if (r instanceof RegionText) {
-            retval= makeTextString((RegionText)r,global,supportExt);
-        }
-
-        return retval;
+        return switch (r) {
+            case RegionAnnulus ra ->
+                    ra.isCircle() ? makeCircleString(ra, global, supportExt) : makeAnnulusString(ra, global, supportExt);
+            case RegionBox rb -> makeBoxString(rb, global, supportExt);
+            case RegionBoxAnnulus ra -> makeBoxAnnulusString(ra, global, supportExt);
+            case RegionEllipse re -> makeElipseString(re, global, supportExt);
+            case RegionLines rl -> rl.isPolygon() ? makePolygonString(rl, global, supportExt) :
+                    makeLineString(rl, global, supportExt);
+            case RegionPoint rp -> makePointString(rp, global, supportExt);
+            case RegionText rt -> makeTextString(rt, global, supportExt);
+            case null, default -> throw new IllegalArgumentException("not implemented");
+        };
     }
 
 
@@ -1077,6 +1054,13 @@ public class RegionFactory {
                 "box " + makeXY(rb.getPt()) + " "+
                 dim.getWidth() + " " + dim.getHeight() +" " +
                 rb.getAngle() + makePropOut(rb,g,supportExt);
+    }
+
+    private static String makeElipseString(RegionEllipse re, Global g, boolean supportExt) {
+        return makeCoordStart(re) +
+                "ellipse " + makeXY(re.getPt()) + " "+
+                re.getRadius1() + " " + re.getRadius1() +" " +
+                re.getAngle() + makePropOut(re,g,supportExt);
     }
 
     private static String makeBoxAnnulusString(RegionBoxAnnulus ra, Global g, boolean supportExt) {

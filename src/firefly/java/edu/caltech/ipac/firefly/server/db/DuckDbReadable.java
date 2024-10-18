@@ -26,6 +26,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
+import static edu.caltech.ipac.table.TableUtil.getAliasName;
 
 /**
  * @author loi
@@ -98,9 +101,10 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         StopWatch.getInstance().start("getInfo: " + source);
         String readSource = sqlReadSource(source);
         int count = JdbcFactory.getSimpleTemplate(getDbInstance()).queryForInt("SELECT count(*) from %s".formatted(readSource));
-        DataGroup table = execQuery("SELECT * from %s LIMIT 0".formatted(readSource), null);
+        DataGroup table = getTableMeta(source, null);
+        Arrays.stream(table.getDataDefinitions()).forEach(dt -> dt.setKeyName(getAliasName(dt)));  // show case-sensitive column names if exists
         table.setSize(count);
-        StopWatch.getInstance().printLog("getInfo: " + readSource);
+        StopWatch.getInstance().printLog("getInfo: " + source);
         return table;
     }
 

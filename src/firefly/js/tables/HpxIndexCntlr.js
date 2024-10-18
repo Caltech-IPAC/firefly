@@ -11,7 +11,7 @@ import {doFetchTable, fetchSpacialBinary, getColumnIdx, getTblById, isTableUsing
 
 export const DATA_NORDER= 12;
 export const MIN_NORDER= 4;
-export const MIN_NORDER_TO_ALWAYS_GROUP= 6;
+export const MIN_NORDER_TO_ALWAYS_GROUP= 4;
 export const MIN_NORDER_FOR_COVERAGE= 2;
 export const MIN_ROWS_FOR_HIERARCHICAL= 1000;
 const DATA_NSIDE= 2**DATA_NORDER;

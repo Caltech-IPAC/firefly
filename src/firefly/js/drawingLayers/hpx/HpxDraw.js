@@ -46,6 +46,7 @@ function makeEllipseGroupPoint(idxData, devC, tblIdx, norder, ipix, count, selec
     areaPoint.lineWidth = 1;
     areaPoint.norder = norder;
     areaPoint.ipix = ipix;
+    areaPoint.forceWptForRegion= true;
 
     const textPt = PointDataObj.make(textMod);
     textPt.symbol = DrawSymbol.TEXT;
