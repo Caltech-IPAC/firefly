@@ -11,7 +11,6 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.table.io.VoTableWriter;
@@ -111,11 +110,11 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
     /**
      * Ingest data directly from a source file.  This file can be local or remote.
      * @param source can be a local file path or a URL
-     * @param treq the initiating table request
+     * @param meta  meta to ingest along with the table
      * @return FileInfo on the dbFile
      * @throws DataAccessException
      */
-    public FileInfo ingestDataDirectly(String source, TableServerRequest treq) throws DataAccessException {
+    public FileInfo ingestDataDirectly(String source, DataGroup meta) throws DataAccessException {
 
         String forTable = getDataTable();
         String sqlReadSource = sqlReadSource(source);
@@ -133,7 +132,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         String sql = createTableFromSelect(forTable, dataSqlWithIdx);
         jdbc.update(sql);
 
-        DataGroup tableMeta = getTableMeta(source, treq);     //collect all meta, then update the database with this information.
+        DataGroup tableMeta = getTableMeta(source, meta);     // collect all meta, then update the database with this information.
         if (tableMeta != null) {
             ddToDb(tableMeta, getDataTable());
             metaToDb(tableMeta, getDataTable());
@@ -146,8 +145,10 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         return new FileInfo(getDbFile());
     }
 
-    protected DataGroup getTableMeta(String source, TableServerRequest req) throws DataAccessException {
-        return execQuery("SELECT * from %s LIMIT 0".formatted(sqlReadSource(source)), null);
+    protected DataGroup getTableMeta(String source, DataGroup meta) throws DataAccessException {
+        DataGroup tableMeta = execQuery("SELECT * from %s LIMIT 0".formatted(sqlReadSource(source)), null);
+        if (tableMeta != null)    tableMeta.addMetaFrom(meta);
+        return tableMeta;
     }
 
     public void export(TableServerRequest treq, OutputStream out) throws DataAccessException {
@@ -171,17 +172,19 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         }
 
         @Override
-        protected DataGroup getTableMeta(String source, TableServerRequest treq) throws DataAccessException {
+        protected DataGroup getTableMeta(String source, DataGroup meta) throws DataAccessException {
             var jdbc = JdbcFactory.getSimpleTemplate(getDbInstance());
             try {
                 var votable = jdbc.queryForObject(
                         "SELECT decode(value) FROM parquet_kv_metadata('%s') where key = 'IVOA.VOTable-Parquet.content'".formatted(source),
                         String.class);
                 if (votable != null) {
-                    return VoTableReader.voToDataGroups(new ByteArrayInputStream(votable.getBytes()), false)[0];
+                    DataGroup tableMeta = VoTableReader.voToDataGroups(new ByteArrayInputStream(votable.getBytes()), false)[0];
+                    if (tableMeta != null)    tableMeta.addMetaFrom(meta);
+                    return tableMeta;
                 }
             } catch (Exception ignored) {}        // ignored if it can't read
-            return super.getTableMeta(source, treq);
+            return super.getTableMeta(source, meta);
         }
 
         public void export(TableServerRequest treq, OutputStream out) throws DataAccessException {
