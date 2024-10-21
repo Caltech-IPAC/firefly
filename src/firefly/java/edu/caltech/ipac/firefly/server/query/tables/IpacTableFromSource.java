@@ -58,25 +58,29 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
         }
 
         var srcFile = fetchSourceFile(req);
-        return fetchDataFromFile(req, srcFile);
+        return fetchDataFromFile(req, srcFile, collectMeta(req));
     }
 
-    DataGroup fetchDataFromFile(TableServerRequest req, File srcFile) throws DataAccessException {
+    DataGroup fetchDataFromFile(TableServerRequest req, File srcFile, DataGroup meta) throws DataAccessException {
         try {
             int tblIdx = req.getIntParam(TBL_INDEX, 0);
-            DataGroup dataGroup = TableUtil.readAnyFormat(srcFile, tblIdx, req);
-
-            String type = req.getParam(TBL_TYPE, TYPE_CATALOG);
-            if (type.equals(TYPE_CATALOG)) {        // if catalog and overlay is not set, set it to "TRUE"
-                if (isEmpty(req.getMeta(MetaConst.CATALOG_OVERLAY_TYPE))) {
-                    dataGroup.getTableMeta().setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
-                }
-            }
-            return dataGroup;
-
+            DataGroup table = TableUtil.readAnyFormat(srcFile, tblIdx, req);
+            if (table != null)  table.addMetaFrom(meta);
+            return table;
         } catch (IOException e) {
             throw new DataAccessException(e.getMessage(), e);
         }
+    }
+
+    private DataGroup collectMeta(TableServerRequest req) {
+        DataGroup meta = null;
+        if (req.getParam(TBL_TYPE, TYPE_CATALOG).equals(TYPE_CATALOG)) {        // if catalog and overlay is not set, set it to "TRUE"
+            if (isEmpty(req.getMeta(MetaConst.CATALOG_OVERLAY_TYPE))) {
+                meta = new DataGroup();        // used only for meta
+                meta.getTableMeta().setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
+            }
+        }
+        return meta;
     }
 
     @Override
@@ -84,6 +88,7 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
 
         String processor = req.getParam("processor");
         String jsonSearchRequest = req.getParam(SEARCH_REQUEST);
+        DataGroup meta = collectMeta(req);
 
         try {
             dbAdapter.initDbFile();
@@ -95,9 +100,9 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
                 File srcFile = fetchSourceFile(req);
                 TableUtil.Format format = DuckDbReadable.guessFileFormat(srcFile.getAbsolutePath());
                 if (format != null && dbAdapter instanceof DuckDbAdapter duckdb) {
-                    return DuckDbReadable.castInto(format, duckdb).ingestDataDirectly(srcFile.getAbsolutePath(), req);
+                    return DuckDbReadable.castInto(format, duckdb).ingestDataDirectly(srcFile.getAbsolutePath(), meta);
                 } else {
-                    return dbAdapter.ingestData(makeDgSupplier(req, () -> fetchDataFromFile(req, srcFile)), dbAdapter.getDataTable());
+                    return dbAdapter.ingestData(makeDgSupplier(req, () -> fetchDataFromFile(req, srcFile, meta)), dbAdapter.getDataTable());
                 }
             }
         } catch (IOException e) {

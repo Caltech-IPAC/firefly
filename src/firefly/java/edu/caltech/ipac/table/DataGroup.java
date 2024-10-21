@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.util.*;
 
 import static edu.caltech.ipac.table.TableUtil.fixDuplicates;
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 
 /**
  * Object representing tabular data.  For historic reason, DataObject represent a row and DataType represent a column.
@@ -206,21 +207,40 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
         return columns.keySet().toArray(new String[columns.size()]);
     }
 
+    /**
+     * @return  a shallow clone of this DataGroup
+     * @throws CloneNotSupportedException
+     */
     @Override
     public Object clone() throws CloneNotSupportedException {
         DataGroup copy = new DataGroup(title, getDataDefinitions());
-        copy.meta = meta.clone();
+        copy.addMetaFrom(this);
+        copy.data = data;
         return copy;
     }
 
+    /**
+     * @return a clone of this DataGroup without the DATA.
+     */
     public DataGroup cloneWithoutData() {
         ArrayList<DataType> copyCols = new ArrayList<>(columns.size());
         for (DataType dt: getDataDefinitions()) {
             copyCols.add(dt.newCopyOf());
         }
         DataGroup copy = new DataGroup(title, copyCols);
-        copy.meta = meta.clone();
+        copy.addMetaFrom(this);
         return copy;
+    }
+
+    public void addMetaFrom(DataGroup dg) {
+        if (dg == null) return;
+        applyIfNotEmpty(dg.getTitle(), v -> setTitle(v));
+        dg.getTableMeta().getKeywords().forEach(kw -> getTableMeta().addKeyword(kw.getKey(), kw.getValue()));
+        dg.getTableMeta().getAttributeList().forEach(at -> addAttribute(at.getKey(), at.getValue()));
+        dg.getGroupInfos().forEach(g -> getGroupInfos().add(g));
+        dg.getLinkInfos().forEach(l -> getLinkInfos().add(l));
+        dg.getParamInfos().forEach(p -> getParamInfos().add(p));
+        dg.getResourceInfos().forEach(r -> getResourceInfos().add(r));
     }
 
     public int size() {
