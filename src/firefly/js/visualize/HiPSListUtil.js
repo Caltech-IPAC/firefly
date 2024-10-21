@@ -1,6 +1,7 @@
 import {get, isArray} from 'lodash';
 import Enum from 'enum';
 import {getAppOptions} from '../core/AppDataCntlr.js';
+import {MetaConst} from '../data/MetaConst';
 import {makeTblRequest, MAX_ROW} from '../tables/TableRequestUtil.js';
 import {dispatchTableFetch} from '../tables/TablesCntlr.js';
 import {getColumnIdx, doFetchTable} from '../tables/TableUtil.js';
@@ -98,6 +99,7 @@ export function makeHiPSRequest(tableType, sources=getHiPSSources(), mocSources,
             META_INFO: {
                 'col.Properties.PrefWidth':4,
                 'col.Properties.label':'Props',
+                [MetaConst.IMAGE_SOURCE_ID]  : 'FALSE'
             }
         });
 }
