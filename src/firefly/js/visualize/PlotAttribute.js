@@ -111,6 +111,12 @@ export const PlotAttribute= {
     /** A title to be prepended to the title */
     PRE_TITLE: 'PreTitle',
 
+    /** A header from the FITS file whose value is used in the per HDU title line */
+    HDU_TITLE_HEADER: 'HDU_TITLE_HEADER',
+
+    /** a description for the HDU_TITLE_HEADER that is use in the per HDU title line*/
+    HDU_TITLE_DESC: 'HDU_TITLE_DESC',
+
     /** a key for saving color table selection to preferences */
     PREFERENCE_COLOR_KEY : 'PreferenceColorKey',
 

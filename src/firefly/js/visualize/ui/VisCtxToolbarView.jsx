@@ -21,11 +21,12 @@ import {DropDownVerticalSeparator, ToolbarButton, ToolbarHorizontalSeparator} fr
 import BrowserInfo from '../../util/BrowserInfo.js';
 import Validate from '../../util/Validate.js';
 import {CoordinateSys} from '../CoordSys.js';
-import {getExtName, getExtType} from '../FitsHeaderUtil.js';
+import {getExtName, getExtType, getHeader} from '../FitsHeaderUtil.js';
 import {
     dispatchChangeCenterOfProjection, dispatchChangeHiPS, dispatchChangeHipsImageConversion, dispatchChangePrimePlot,
     visRoot
 } from '../ImagePlotCntlr.js';
+import {PlotAttribute} from '../PlotAttribute';
 import {
     canConvertBetweenHipsAndFits, convertHDUIdxToImageIdx, convertImageIdxToHDU, getActivePlotView, getCubePlaneCnt,
     getFormattedWaveLengthUnits, getHDU, getHDUCount, getHDUIndex, getPlotViewById, getPtWavelength, hasPlaneOnlyWLInfo,
@@ -397,12 +398,18 @@ export function MultiImageControllerView({plotView:pv}) {
         if (cIdx<0) cIdx= 0;
         length= plots.length;
         if (multiHdu) {
+            const {HDU_TITLE_DESC, HDU_TITLE_HEADER}= PlotAttribute;
+            const {attributes:att, plotDesc:desc=''}= plot;
             const hduNum= getHDU(plot);
             startStr= 'Image: ';
-            const desc= plot.plotDesc ?? '';
-            startStr= `HDU (#${hduNum}): `;
-            hduDesc= `${desc || getExtName(plot) || getExtType(plot)}`;
-            tooltip+= `HDU: ${hduNum} ${hduDesc?', '+hduDesc:''}`;
+            startStr= att[HDU_TITLE_DESC] ? att[HDU_TITLE_DESC] + ': ': `HDU (#${hduNum}): `;
+
+            const hduTitleHeader= att[HDU_TITLE_HEADER] ;
+            const reqHeaderTitle= hduTitleHeader ? `${getHeader(plot,hduTitleHeader)}` : '';
+            const reqHduInfo= (att[HDU_TITLE_DESC] && reqHeaderTitle) ? `${att[HDU_TITLE_DESC]}: ${reqHeaderTitle}, ` : '';
+            const nameOrType= getExtName(plot) || getExtType(plot);
+            hduDesc= `${desc || reqHeaderTitle || nameOrType}`;
+            tooltip+= `${reqHduInfo}HDU: ${hduNum} ${nameOrType?', '+hduDesc:''}`;
         }
         if (plot.cubeIdx>-1) {
             tooltip+= `${multiHdu ? ', ':''} Cube: ${plot.cubeIdx+1}/${getCubePlaneCnt(plot)}`;

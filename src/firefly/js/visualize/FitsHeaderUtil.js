@@ -162,7 +162,7 @@ export function makeDoubleHeaderParse(header,zeroHeader,altWcs) {
  * @return {{value:string,comment:string,idx:number}|Array.<{value:string,comment:string,idx:number}>}
  */
 function getHeaderObj(plotOrHeader,headerKey) {
-    if (!plotOrHeader) return {};
+    if (!plotOrHeader || !headerKey) return {};
     if (plotOrHeader.plotImageId) {
         if (!isImage(plotOrHeader) ) return {};
         return plotOrHeader.header?.[headerKey] ?? {};
