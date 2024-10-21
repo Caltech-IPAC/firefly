@@ -2,6 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {getCellValue} from '../../tables/TableUtil.js';
+import {PlotAttribute} from '../../visualize/PlotAttribute';
 import {makeWorldPt} from '../../visualize/Point.js';
 import {CoordinateSys} from '../../visualize/CoordSys.js';
 import {WebPlotRequest} from '../../visualize/WebPlotRequest.js';
@@ -72,6 +73,17 @@ export function makeShaPlotRequest(table, row, includeSingle,includeStandard) {
     const plot_desc = `SHA-${aorKey}`;
     const reqParams = WebPlotRequest.makeURLPlotRequest(url, plot_desc);
     const req = addCommonReqParams(reqParams, title, wp);
+
+
+    if (dataType === 'AOR') {
+        req.setAttributes(
+            {
+                [PlotAttribute.HDU_TITLE_HEADER]:'CHANNUM',
+                [PlotAttribute.HDU_TITLE_DESC]:'Channel '
+            });
+    }
+    
+
     const plotId = url;
     const retval= {};
     if (includeSingle) retval.single = req;

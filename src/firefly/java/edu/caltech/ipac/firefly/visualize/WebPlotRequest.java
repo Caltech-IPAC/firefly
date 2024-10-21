@@ -93,9 +93,6 @@ public class WebPlotRequest extends ServerRequest {
     public static final String HIDE_TITLE_DETAIL = "HideTitleDetail";
     public static final String GRID_ON = "GridOn";
     public static final String TITLE_OPTIONS = "TitleOptions";
-    public static final String POST_TITLE= "PostTitle";
-    public static final String PRE_TITLE= "PreTitle";
-    public static final String TITLE_FILENAME_MODE_PFX = "TitleFilenameModePfx";
     public static final String OVERLAY_POSITION = "OverlayPosition";
     public static final String DRAWING_SUB_GROUP_ID= "DrawingSubgroupID";
     public static final String DOWNLOAD_FILENAME_ROOT = "DownloadFileNameRoot";
