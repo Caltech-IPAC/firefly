@@ -293,6 +293,7 @@ function isSinglePartFileSupported(currentSummaryModel, acceptList) {
 
 
 function getFirstExtWithData(parts, acceptList, summaryModel) {
+    if (!parts || !summaryModel) return 0;
     if (acceptOnlyTables(acceptList)) {
         return summaryModel.tableData.data.findIndex((p) => p[1].includes(FileAnalysisType.Table));
     }
@@ -345,9 +346,10 @@ function getNextState(summaryTblId, summaryTbl, detailsTblId, analysisResult, me
     }
 
     const detailsModel = getDetailsModel(summaryModelToUseForDetails, currentReport, detailsTblId, Format.UNKNOWN);
-    if (summaryModelToUseForDetails) {
-        const {highlightedRow=0} = summaryModelToUseForDetails;
-        if (currentSummaryModel) currentSummaryModel.highlightedRow = highlightedRow;
+    if (currentSummaryModel) {
+        currentSummaryModel.highlightedRow= summaryModelToUseForDetails?.totalRows===currentSummaryModel.totalRows
+            ? summaryModelToUseForDetails.highlightedRow
+            : getFirstExtWithData(currentReport?.parts, acceptList, currentSummaryModel);
     }
 
     const newState= {message, analysisResult, report:currentReport, summaryModel:currentSummaryModel, detailsModel,
