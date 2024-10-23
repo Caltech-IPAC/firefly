@@ -24,22 +24,16 @@ const logger = Logger('Tables').tag('TablesContainer');
 
 export function TablesContainer(props) {
     const {mode='both', closeable=true, tableOptions, style, expandedMode:xMode=false} = props;
-    let {tbl_group} = props;
+    const expandedMode = useStoreConnector(() => xMode || getExpandedMode() === LO_VIEW.tables);
+    const tbl_group = expandedMode && mode !== 'standard' ? TblUtil.getTblExpandedInfo().tbl_group : props.tbl_group;
 
     const tables = useStoreConnector(() => TblUtil.getTableGroup(tbl_group)?.tables);
     const active = useStoreConnector(() => TblUtil.getTableGroup(tbl_group)?.active);
-    const expandedMode = useStoreConnector(() => xMode || getExpandedMode() === LO_VIEW.tables);
     useStoreConnector((lastTitles) => {// force a rerender if any title ui changes
         const titles= getTblIdsByGroup().map( (tbl_id) => getTableUiByTblId(tbl_id)?.title);
         if (!lastTitles) return titles;
         return (union(titles,lastTitles).length === titles?.length) ? lastTitles : titles;
     });
-
-    useEffect(() => {
-        if (expandedMode && mode !== 'standard') {
-            tbl_group = TblUtil.getTblExpandedInfo().tbl_group;
-        }
-    }, [expandedMode, mode]);
 
     logger.debug('render... tbl_group: ' + tbl_group);
 
