@@ -172,6 +172,7 @@ function makeDrawLayer(drawLayerId,
         canUserDelete: true,
         canUserHide: true,
         destroyWhenAllDetached : false, // hint to controller, when all plots have been detached, destroy this layer
+        destroyWhenAllUserDetached : false, // hint to controller, when all plots have been detached, destroy this layer
         helpLine : '',
         decimate: false, // enable decimation
         canAttachNewPlot: true,

@@ -234,7 +234,7 @@ function modifyShape(dl, plotId) {
 }
 
 function deleteLayer(dl,plotId) {
-    dispatchDetachLayerFromPlot(dl.displayGroupId,plotId,true, dl.destroyWhenAllDetached);
+    dispatchDetachLayerFromPlot(dl.displayGroupId,plotId,true, dl.destroyWhenAllDetached||dl.destroyWhenAllUserDetached);
 }
 
 function deleteMaskLayer(opv) {

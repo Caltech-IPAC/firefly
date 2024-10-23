@@ -27,9 +27,11 @@ import {isCelestialImage, isHiPS} from '../WebPlot.js';
 //define the labels and values for the radio options
 const celestialCoordOptions= [
 	{label: 'Equatorial J2000 HMS', value: 'eqj2000hms'},
-	{label: 'Equatorial J2000 decimal', value: 'eqj2000DCM' },
+	{label: 'Equatorial J2000 Decimal', value: 'eqj2000DCM' },
+	{label: 'Equatorial B1950 HMS', value: 'eqb1950'},
+	{label: 'Equatorial B1950 Decimal', value: 'eqb1950DCM'},
 	{label: 'Galactic', value: 'galactic'},
-	{label: 'Equatorial B1950', value: 'eqb1950'},
+	{label: 'Super Galactic', value: 'superGalactic'},
 	{label: 'Ecliptic J2000', value: 'eclJ2000'},
 	{label: 'Ecliptic B1950', value: 'eclB1950'},
 	{label: 'FITS Image Pixel', value: 'fitsIP'},
@@ -37,10 +39,12 @@ const celestialCoordOptions= [
 ];
 
 const hipsCoordOptions= [
-    {label: 'Equatorial J2000 HMS', value: 'eqj2000hms'},
-    {label: 'Equatorial J2000 decimal', value: 'eqj2000DCM' },
-    {label: 'Galactic', value: 'galactic'},
-    {label: 'Equatorial B1950', value: 'eqb1950'},
+	{label: 'Equatorial J2000 HMS', value: 'eqj2000hms'},
+	{label: 'Equatorial J2000 Decimal', value: 'eqj2000DCM' },
+	{label: 'Equatorial B1950 HMS', value: 'eqb1950'},
+	{label: 'Equatorial B1950 Decimal', value: 'eqb1950DCM'},
+	{label: 'Galactic', value: 'galactic'},
+	{label: 'Super Galactic', value: 'superGalactic'},
 	{label: 'Ecliptic J2000', value: 'eclJ2000'},
 	{label: 'Ecliptic B1950', value: 'eclB1950'},
 ];

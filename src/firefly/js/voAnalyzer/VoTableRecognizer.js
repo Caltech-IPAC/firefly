@@ -190,8 +190,16 @@ export class VoTableRecognizer {
                 }
             }
         } else if (posPairs[0].length > 0 && posPairs[1].length > 0) {
-            // find first exact match
-            const basicPair = posPairs.map((cols, i) => cols.find((c) => c.UCD === centerColUCDs[0][i]));
+            // find first exact match, that is a double, if not found the try first exact match
+            let basicPair = posPairs
+                .map((cols, i) => cols
+                    .find((c) => c.UCD === centerColUCDs[0][i] && (c.type==='double' || c.type==='float') ));
+            if (!basicPair[0] || !basicPair[1]) {
+                basicPair = posPairs
+                    .map((cols, i) => cols
+                        .find((c) => c.UCD === centerColUCDs[0][i]));
+            }
+
             if (basicPair[0] && basicPair[1]) {
                 pairs.push(basicPair);
             } else if (posPairs[0].length === posPairs[1].length) {

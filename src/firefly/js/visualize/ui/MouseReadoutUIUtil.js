@@ -26,7 +26,9 @@ const labelMap = {
     eclJ2000: 'ECL-J2000:',
     eclB1950: 'ECL-B1950:',
     galactic: 'Gal:',
+    superGalactic: 'SGal:',
     eqb1950: 'Eq-B1950:',
+    eqb1950DCM: 'Eq-B1950:',
     wcsCoords: 'WCS-Coords:',
     fitsIP: 'Image Pixel:',
     zeroIP: '0 Based Pix:',
@@ -145,10 +147,14 @@ export function getReadoutElement(readoutItems, readoutKey, plotId) {
             return makeCoordReturn(wp, CoordinateSys.EQ_J2000);
         case 'galactic' :
             return makeCoordReturn(wp, CoordinateSys.GALACTIC);
+        case 'superGalactic' :
+            return makeCoordReturn(wp, CoordinateSys.SUPERGALACTIC);
         case 'supergalactic' :
             return makeCoordReturn(wp, CoordinateSys.SUPERGALACTIC);
         case 'eqb1950' :
             return makeCoordReturn(wp, CoordinateSys.EQ_B1950, true);
+        case 'eqb1950DCM':
+            return makeCoordReturn(wp, CoordinateSys.EQ_B1950);
         case 'eclJ2000' :
             return makeCoordReturn(wp, CoordinateSys.ECL_J2000, false);
         case 'eclB1950' :

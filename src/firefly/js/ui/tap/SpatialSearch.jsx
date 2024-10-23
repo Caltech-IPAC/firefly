@@ -1,4 +1,4 @@
-import {FormLabel, Stack, Typography} from '@mui/joy';
+import {Box, FormLabel, Stack, Typography} from '@mui/joy';
 import {object, bool, string, func, number, shape} from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
 import {ColsShape, getColValidator} from '../../charts/ui/ColumnOrExpression.jsx';
@@ -210,11 +210,12 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel,
                 <ForceFieldGroupValid forceValid={!checkHeaderCtl.isPanelActive()}>
 
                     {!canUpload && (searchParams?.uploadInfo || uploadInfo) &&
-                        <div>
+                        <Box>
                             {<FormLabel>Spatial Type</FormLabel>}
-                            {warningMsg(`Single Shape selected: ${serviceLabel || 'This service'} does not support upload`)}
-                        </div>
-
+                            <Typography color={'warning'}>
+                                {`Upload option unavailable: ${serviceLabel || 'This service'} does not support upload`}
+                            </Typography>
+                        </Box>
                     }
                     {canUpload &&
                         <RadioGroupInputField {...{
@@ -239,14 +240,6 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel,
         </CollapsibleCheckHeader>
     );
 }
-
-const warningMsg = (msg) => {
-    return (
-        <div style={{display : 'inline-block'}}>
-            <i>{msg}</i>
-        </div>
-    );
-};
 
 const OBSCORE_UPLOAD_LAYOUT= 0;
 const OBSCORE_SINGLE_LAYOUT= 1;
