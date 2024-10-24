@@ -82,7 +82,7 @@ function updateSelect(pv, value, allPlots=true, modalEndInfo) {
             }
             setModalEndInfo({
                 closeText:'End Select',
-                closeLayer: () => onOff(pv,SelectArea.TYPE_ID,allPlots,false,modalEndInfo,'',true),
+                closeLayer: () => onOff(pv,SelectArea.TYPE_ID,allPlots,false,false,modalEndInfo,'',true),
                 offOnNewPlot: true,
                 key: 'SelectArea'
             });

@@ -32,7 +32,7 @@ export const getMarkerToolUIComponent = (drawLayer,pv) => <MarkerToolUI drawLaye
 const ID= 'OVERLAY_MARKER';
 const TYPE_ID= 'OVERLAY_MARKER_TYPE';
 const factoryDef= makeFactoryDef(TYPE_ID,creator, null, getLayerChanges,null,getMarkerToolUIComponent);
-const MarkerStatus = new Enum(['attached', 'select', 'attached_relocate', 'relocate', 'resize']);
+export const MarkerStatus = new Enum(['attached', 'select', 'attached_relocate', 'relocate', 'resize']);
 
 export const markerInterval = 3000; // time interval for showing marker with handlers and no handlers
 export default {factoryDef, TYPE_ID}; // every draw layer must default export with factoryDef and TYPE_ID
@@ -511,21 +511,20 @@ function showMarkersByTimer(dispatcher, actionType, plotId, doneStatus, timer, d
  * calculate vertex distance for catching the marker
  * @param markObj
  * @param plotId
- * @param dl
  * @param dlObj
  * @returns {{vertexDef: *, exclusiveDef: *}}
  */
-export function updateVertexInfo(markObj, plotId, dl, dlObj) {
-    var markerStatus = markObj.sType === MarkerType.Marker ? get(markObj, ['actionInfo', 'markerStatus']) :
-                                                             get(markObj, ['actionInfo', 'footprintStatus']);
-    var exclusiveDef, vertexDef;
+export function updateVertexInfo(markObj, plotId, dlObj) {
+    const markerStatus = markObj.sType === MarkerType.Marker ?
+        markObj.actionInfo?.markerStatus : markObj.actionInfo?.footprintStatus;
+    let exclusiveDef, vertexDef;
 
     if (markerStatus) {
         if (markerStatus.key === MarkerStatus.attached.key) {
             exclusiveDef = {exclusiveOnDown: true, type: 'anywhere'};
             vertexDef = {points: {[plotId]: []}, pointDist: {[plotId]: MARKER_DISTANCE}};
         } else {
-            var cc = CsysConverter.make(primePlot(visRoot(), plotId));
+            const cc = CsysConverter.make(primePlot(visRoot(), plotId));
             const {dist, centerPt} = getVertexDistance(markObj, cc);
 
             exclusiveDef = {exclusiveOnDown: true, type: 'vertexOnly'};
@@ -634,7 +633,7 @@ function createMarkerObjs(action, dl, plotId, wpt, size, prevRet, unitT) {
     var dlObj = {drawData: dl.drawData, helpLine: editHelpText};
 
     if (markerStatus) {
-        var {exclusiveDef, vertexDef} = updateVertexInfo(markObj, plotId, dl, prevRet);
+        var {exclusiveDef, vertexDef} = updateVertexInfo(markObj, plotId, prevRet);
 
         if (exclusiveDef && vertexDef) {
             return clone(dlObj, {markerStatus, vertexDef, exclusiveDef});
@@ -818,7 +817,7 @@ function attachToNewPlot(drawLayer, newPlotId) {
 
     const dlObj = {drawData: drawLayer.drawData, helpLine: editHelpText};
     if (aInfo.markerStatus) {
-        const {exclusiveDef, vertexDef} = updateVertexInfo(markerObj, newPlotId, drawLayer, drawLayer);
+        const {exclusiveDef, vertexDef} = updateVertexInfo(markerObj, newPlotId, drawLayer);
 
         if (exclusiveDef && vertexDef) {
             return clone(dlObj, {markerStatus: aInfo.markerStatus, vertexDef, exclusiveDef});

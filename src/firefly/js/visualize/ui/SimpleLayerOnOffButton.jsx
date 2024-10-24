@@ -88,11 +88,23 @@ SimpleLayerOnOffButton.propTypes= {
     sx : PropTypes.object,
 };
 
+function off(dl, pv,typeId,allPlots) {
+    dispatchDetachLayerFromPlot(typeId,pv.plotId,allPlots,dl?.destroyWhenAllDetached||dl?.destroyWhenAllUserDetached);
+    clearModalEndInfo();
+}
 
-export function onOff(pv,typeId,allPlots, plotTypeMustMatch, modalEndInfo, endText, modalLayer= false) {
+
+export function onOff(pv,typeId,allPlots, plotTypeMustMatch, modalEndInfo, endText, modalLayer= false, forceOff) {
     if (!pv || !typeId) return;
 
     const dl= getDrawLayerByType(getDlAry(), typeId);
+
+    if (forceOff) {
+        off(dl, pv,typeId,allPlots);
+        return;
+    }
+
+
     if (!dl) {
         dispatchCreateDrawLayer(typeId);
     }
@@ -103,7 +115,7 @@ export function onOff(pv,typeId,allPlots, plotTypeMustMatch, modalEndInfo, endTe
             modalEndInfo?.closeLayer?.();
             setModalEndInfo?.({
                 closeLayer: () => {
-                    onOff(pv,typeId,allPlots,plotTypeMustMatch,modalEndInfo, endText, modalLayer);
+                    onOff(pv,typeId,allPlots,plotTypeMustMatch,modalEndInfo, endText, modalLayer, true);
                 },
                 closeText: endText,
                 offOnNewPlot: true,
@@ -111,8 +123,7 @@ export function onOff(pv,typeId,allPlots, plotTypeMustMatch, modalEndInfo, endTe
         }
     }
     else {
-        dispatchDetachLayerFromPlot(typeId,pv.plotId,allPlots,dl.destroyWhenAllDetached);
-        clearModalEndInfo();
+        off(dl, pv,typeId,allPlots, plotTypeMustMatch);
     }
 }
 

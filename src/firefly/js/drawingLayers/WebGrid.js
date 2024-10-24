@@ -62,7 +62,8 @@ function creator(params) {
         isPointData:false,
         useLabels,
         canUserChangeColor: ColorChangeType.DYNAMIC,
-        destroyWhenAllDetached: true
+        destroyWhenAllDetached: false,
+        destroyWhenAllUserDetached: true,
     };
     
     return DrawLayer.makeDrawLayer( id, TYPE_ID, 'Grid', options , drawingDef, [ImagePlotCntlr.UPDATE_VIEW_SIZE, UPDATE_GRID ]);
@@ -107,7 +108,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
      let drawData;
      switch (action.type){
          case ImagePlotCntlr.ANY_REPLOT:
-             if (drawLayer.drawData.data  ) {
+             if (drawLayer.drawData?.data  ) {
                  if (action.payload.plotIdAry){
                     const data= clone(drawLayer.drawData.data);
                     action.payload.plotIdAry.forEach( (plotId) => data[plotId]= null);
@@ -126,7 +127,7 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet){
              break;
          case UPDATE_GRID:
          case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
-             if (drawLayer.drawData.data ) {
+             if (drawLayer.drawData?.data ) {
                  const data = Object.keys(drawLayer.drawData.data).reduce((d, plotId) => {
                      d[plotId] = isImage(primePlot(visRoot(), plotId)) ? drawLayer.drawData.data[plotId] : null;
                      return d;

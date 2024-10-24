@@ -166,7 +166,7 @@ export const ToolbarButton = forwardRef((props,fRef) => {
 
 ToolbarButton.propTypes= {
     icon : oneOfType([element,string]),
-    text : node,
+    text : oneOfType([element,string]),
     tip : string,
     value: string,
     title: string,
