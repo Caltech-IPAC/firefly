@@ -3,7 +3,6 @@
  */
 
 import {flatten, isArray, uniqBy} from 'lodash';
-import shallowequal from 'shallowequal';
 import {getExtName, getExtType} from '../FitsHeaderUtil.js';
 import {getCenterPtOfPlot} from '../WebPlotAnalysis';
 import {DEFAULT_THUMBNAIL_SIZE, WebPlotRequest, WPConst} from '../WebPlotRequest.js';

@@ -8,8 +8,8 @@
 
 
 ## Version 2024.3
-- 2024.3.0 - (Oct 18, 2024),  _docker tag_: `latest`, `2024.3`, `2024.3.0`
-
+- 2024.3.1 - (Oct 24, 2024),  _docker tag_: `latest`, `2024.3`, `2024.3.1`
+- 2024.3.0 - (Oct 18, 2024),  _docker tag_: `2024.3.0`
 
 ### _Notes_
 This Firefly release has a lot of new features, probably among the most new features packed into one release over the past several years.
@@ -46,7 +46,7 @@ It also includes many, many bug fixes, clean up, and optimization (not all are l
 - Fixed: chart is not recognizing short- Firefly-1516 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1595))
 - Fixed: popup not closing until second click- Firefly-1514 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1589))
 - Fixed: firefly not supporting ellipse in the region save- Firefly-1582 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1654))
-- Fixed: import JWST footprint- IRSA-6024 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1643))
+- Fixed: import JWST footprint- IRSA-6024 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1660))
 - Cleanup: Better recognition of VO table Utype- Firefly-1534 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1636))
 - Cleanup: Better tap sizing- Firefly-1562 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1634))
 - Cleanup: TAP: ADQL dark mode screen- Firefly-1509 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1590))
@@ -61,6 +61,18 @@ It also includes many, many bug fixes, clean up, and optimization (not all are l
 - plot.ly 2.32-  Firefly-1504 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1579))
 - nom.tam.fits 1.20-  Firefly-1512 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1585))
 - other package updates- Firefly-1513 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1587)), Firefly-1503 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1581))
+
+### _Patches 2024.3_
+
+- 2024.3.1
+  - Bug fix: lock by click not changing images with shift-click and updating correct value ([PR](https://github.com/Caltech-IPAC/firefly/pull/1660))
+  - Bug fix: data product viewer will use a scrollbar with pngs- Firefly-1589 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1660))
+  - Bug fix: more drawing layers are now sticky until user remove them-  Firefly-1587 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1660))
+  - Bug fix: coordinate system options for mouse readout and grid are consistent-  Firefly-1584 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1660))
+  - Bug fix: JS API: table in expanded more not switching tabs- -  IRSA-6431 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1661))
+  - Bug fix: Catalogs were not load with certain type of table uploads: Firefly-1583 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1657))
+  - Bug fix: Upload panel not showing table summary in certain cases: Firefly-1584 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1659))
+  - When looking for center ra/dec columns in a table, if more than one column has the same UCD, the parser will prefer a floating column over a string 
 
 ##### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2024.3+label%3abug)

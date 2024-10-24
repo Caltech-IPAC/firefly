@@ -14,8 +14,10 @@ import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {ANGLE_UNIT, OutlineType, getWorldOrImage, findClosestIndex, makeFootprint,
         lengthSizeUnit, updateFootprintDrawobjAngle,
         updateFootprintTranslate, updateFootprintOutline} from '../visualize/draw/MarkerFootprintObj.js';
-import {getCC, cancelTimeoutProcess, initMarkerPos, getPlot, ifUpdateOutline, hasNoProjection,
-        updateVertexInfo, updateMarkerText, translateForRelocate, getMovement, isGoodPlot} from './MarkerTool.js';
+import {
+    getCC, cancelTimeoutProcess, initMarkerPos, getPlot, ifUpdateOutline, hasNoProjection,
+    updateVertexInfo, updateMarkerText, translateForRelocate, getMovement, isGoodPlot, MarkerStatus
+} from './MarkerTool.js';
 import {getFootprintToolUIComponent} from './FootprintToolUI.jsx';
 import ShapeDataObj from '../visualize/draw/ShapeDataObj.js';
 import {clone} from '../util/WebUtil.js';
@@ -333,7 +335,8 @@ function creator(initPayload) {
         canUserChangeColor: ColorChangeType.DYNAMIC,
         canUserDelete: true,
         hasPerPlotData: true,
-        destroyWhenAllDetached: true
+        destroyWhenAllDetached: false,
+        destroyWhenAllUserDetached : true
     };
 
     const title = initPayload.title ? initPayload.title : getFootprintLayerTitle();
@@ -361,7 +364,7 @@ function getLayerChanges(drawLayer, action) {
         return null;
     }
 
-    const dd = Object.assign({}, drawLayer.drawData);
+    const dd = {...drawLayer.drawData};
     const {plotIdAry=[]} = drawLayer;
     let  retV = drawLayer;
     let  wptObj;
@@ -403,13 +406,13 @@ function getLayerChanges(drawLayer, action) {
             }
             break;
         case DrawLayerCntlr.ATTACH_LAYER_TO_PLOT:
-            if (!isEmpty(get(drawLayer, ['drawData', 'data']))) {
-                get(action.payload, 'plotIdAry', []).forEach((pId) => {
-                    if (isEmpty(get(dd, ['data', pId]))) {
+            // if (drawLayer?.drawData?.data) {
+                action.payload?.plotIdAry?.forEach((pId) => {
+                    if (isEmpty(dd?.data?.[pId])) {
                         retV = attachToNewPlot(retV, pId);
                     }
                 });
-            }
+            // }
             break;
 
         case ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION:
@@ -432,6 +435,7 @@ function getLayerChanges(drawLayer, action) {
     }
     return retV;
 }
+
 
 function getCursor(plotView, screenPt) {
     let  cursor = '';
@@ -603,10 +607,11 @@ function createFootprintObjs(action, dl, plotId, wpt, prevRet) {
 
      set(dl.drawData, [DataTypes.DATA, plotId], Object.assign(footprintObj, {actionInfo}));
 
-     const dlObj = {drawData: dl.drawData, helpLine: editHelpText};
+
+     const dlObj = {drawData: dl.drawData, helpLine: editHelpText, lastDrawData: dl.drawData.data[plotId]};
 
      if (footprintStatus) {
-         const {exclusiveDef, vertexDef} = updateVertexInfo(footprintObj, plotId, dl, prevRet);
+         const {exclusiveDef, vertexDef} = updateVertexInfo(footprintObj, plotId, prevRet);
 
          if (exclusiveDef && vertexDef) {
              return clone(dlObj, {footprintStatus, vertexDef, exclusiveDef});
@@ -670,17 +675,15 @@ function resetRotateSide(footprintObj) {
  */
 function  attachToNewPlot(drawLayer, newPlotId) {
     const data = get(drawLayer, ['drawData', 'data'], {});
-    if (isEmpty(data)) return drawLayer;
 
     const existPlotId = !isEmpty(data) && Object.keys(data).find((pId) => {
             return !isEmpty(drawLayer.drawData.data[pId]);
         });
 
-    if (!existPlotId) return drawLayer;
+    if (!existPlotId && !drawLayer.lastDrawData) return drawLayer;
 
     const { text, textLoc, renderOptions, actionInfo, translation, angle, angleUnit, regions, isRotatable, pts}
-                                                               = get(drawLayer, ['drawData', 'data', existPlotId]);
-    //const newPlotId = plotIdAry.find((pId) => isEmpty(data[pId]));
+        = drawLayer?.drawData?.data?.[existPlotId] ?? drawLayer.lastDrawData;
 
     const plot = primePlot(visRoot(), newPlotId);
     const cc = CsysConverter.make(plot);
@@ -710,19 +713,18 @@ function  attachToNewPlot(drawLayer, newPlotId) {
         footprintObj = updateFootprintOutline(footprintObj, cc, true);
     }
 
-    const aInfo = Object.assign({}, actionInfo, {currentPt: wpt});
-    set(drawLayer.drawData, [DataTypes.DATA, newPlotId], Object.assign(footprintObj, {
-        actionInfo: aInfo,
-        renderOptions, translation
-    }));
+    const aInfo = {...actionInfo, currentPt: wpt};
 
-    const dlObj = {drawData: drawLayer.drawData, helpLine: editHelpText};
+    const newDrawData= drawLayer.drawData?.data ? {...drawLayer.drawData} : {data:{}};
+    newDrawData.data[newPlotId]= {...footprintObj, actionInfo: aInfo, renderOptions, translation };
+
+    const dlObj = {drawData: newDrawData, helpLine: editHelpText};
 
     if (aInfo.footprintStatus) {
-        const {exclusiveDef, vertexDef} = updateVertexInfo(footprintObj, newPlotId, drawLayer, drawLayer);
+        const {exclusiveDef, vertexDef} = updateVertexInfo(newDrawData.data[newPlotId], newPlotId, drawLayer);
 
         if (exclusiveDef && vertexDef) {
-            return clone(dlObj, {footprintStatus: aInfo.footprintStatus, vertexDef, exclusiveDef});
+            return {...dlObj, footprintStatus: aInfo.footprintStatus, vertexDef, exclusiveDef};
         }
     }
     return dlObj;

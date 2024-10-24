@@ -134,12 +134,10 @@ const rS= {
     justifyContent: 'flex-end'
 };
 
-function getCorrectPlotView(visRoot, viewerId) {
+function getCorrectPlotView(visRoot, viewer) {
     const pv= getActivePlotView(visRoot);
-    if (!viewerId || !pv) return pv;
-    const v= getViewer(getMultiViewRoot(), viewerId);
-    if (!v) return pv;
-    const itemIdAry= v.itemIdAry ?? [];
+    if (!viewer || !pv) return pv;
+    const itemIdAry= viewer.itemIdAry ?? [];
     if (itemIdAry.includes(pv.plotId)) return pv;
     if (!itemIdAry.length) return undefined;
     return getPlotViewById(visRoot,itemIdAry[0]);
@@ -150,6 +148,7 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,manageExpand, expandGrid, moda
     const {apiToolsView}= visRoot;
     const {current:divref}= useRef({element:undefined});
     const [colorDrops,setColorDrops]= useState(true);
+    const viewer= getViewer(getMultiViewRoot(), viewerId);
 
     useEffect(() => {
         if (divref.element) {
@@ -161,9 +160,9 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,manageExpand, expandGrid, moda
             const modalEndInfo= getModalEndInfo();
             if (modalEndInfo.offOnNewPlot) closeToolbarModalLayers();
         };
-    }, []);
+    }, [viewer?.layout,viewer?.layoutDetail]);
 
-    const pv= getCorrectPlotView(visRoot, viewerId);
+    const pv= getCorrectPlotView(visRoot, viewer);
     const plot= primePlot(pv);
     const image= !isHiPS(plot);
     const hips= isHiPS(plot);
@@ -191,7 +190,9 @@ const VisMiniToolbarView= memo( ({visRoot,dlCount,manageExpand, expandGrid, moda
                     <ToolbarButton
                         color='warning'
                         text={modalEndInfo.closeText} tip={modalEndInfo.closeText}
-                        onClick={() => modalEndInfo.closeLayer(modalEndInfo.key)}/>
+                        onClick={() => {
+                            modalEndInfo.closeLayer(modalEndInfo.key);
+                        }}/>
                     <ToolbarHorizontalSeparator/>
                 </React.Fragment>
             }

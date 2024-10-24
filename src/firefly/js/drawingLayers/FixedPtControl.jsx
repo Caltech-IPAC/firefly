@@ -10,6 +10,7 @@ import {convertCelestial} from '../visualize/VisUtil.js';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 
 export function FixedPtControl({pv, wp, sx = {}}) {
+    if (!wp) return <div/>;
     const llStr = wp.type === Point.W_PT ?
         formatLonLatToString(convertCelestial(wp, CoordinateSys.EQ_J2000)) : `${Math.round(wp.x)},${Math.round(wp.y)}`;
 
@@ -27,6 +28,6 @@ export function FixedPtControl({pv, wp, sx = {}}) {
 
 FixedPtControl.propTypes = {
     pv: PropTypes.object,
-    wp: PropTypes.object.isRequired,
+    wp: PropTypes.object,
     sx: PropTypes.object
 };

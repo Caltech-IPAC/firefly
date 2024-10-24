@@ -62,7 +62,7 @@ public class WiseRequest extends TableServerRequest {
     public final static String MERGE_INT = "merge_int";
 
 
-    // Image sets (internal)
+    // Image sets (internal)   the internal dataset are being handled with gwt version in iwise can be cleaned out later
     public final static String PASS1 = "pass1";
     public final static String NEOWISER_PROV = "neowiser_prov";
     public final static String NEOWISER_YR1 = "neowiser_yr1";
@@ -75,7 +75,7 @@ public class WiseRequest extends TableServerRequest {
     public final static String NEOWISER_YR8 = "neowiser_yr8";
     public final static String NEOWISER_YR9 = "neowiser_yr9";
     public final static String NEOWISER_YR10 = "neowiser_yr10";     //yr10 going public Mar.2024
-    public final static String NEOWISER_YR11 = "neowiser_yr11";     //yr11 ongoing ingestion
+    public final static String NEOWISER_YR11 = "neowiser_yr11";     //yr11 going public Nov.2024
     public final static String PASS2_4BAND = "pass2-4band";
     public final static String PASS2_3BAND = "pass2-3band";
     public final static String PASS2_2BAND = "pass2-2band";
@@ -104,7 +104,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR8,"neowiser_p1bs_psd");
             put(NEOWISER_YR9,"neowiser_p1bs_psd");
             put(NEOWISER_YR10,"neowiser_p1bs_psd");  //yr10 going public Mar. 2024
-            put(NEOWISER_YR11,"neowiser_i1bs_psd");  //yr1 internal ongoing ingestion
+            put(NEOWISER_YR11,"neowiser_p1bs_psd");  //yr11 going public Nov. 2024
         }
     };
     private final static Map<String,String> IMAGE_SET_DESC = new HashMap<String,String>(){
@@ -130,6 +130,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR8,"NEOWISER YR8 (2 Bands)");
             put(NEOWISER_YR9,"NEOWISER YR9 (2 Bands)");
             put(NEOWISER_YR10,"NEOWISER YR10 (2 Bands)");
+            put(NEOWISER_YR11,"NEOWISER YR11 (2 Bands)");
             put(PASS2_4BAND,"Pass 2 (4 Bands)");
             put(PASS2_3BAND,"Pass 2 (3 Bands)");
             put(PASS2_2BAND, "Pass 2 (2 Bands)");
@@ -162,6 +163,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR8,"wise_neowiser_yr8");
             put(NEOWISER_YR9,"wise_neowiser_yr9");
             put(NEOWISER_YR10,"wise_neowiser_yr10");
+            put(NEOWISER_YR11,"wise_neowiser_yr11");
         }
     };
     // mappings of the dataset selected to the wise table and table source values.
@@ -195,6 +197,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR8 +"|1b", new String[]{"yr8_p1bm_frm", "yr8_p1bs_psd"});
             put(NEOWISER_YR9 +"|1b", new String[]{"yr9_p1bm_frm", "yr9_p1bs_psd"});
             put(NEOWISER_YR10 +"|1b", new String[]{"yr10_p1bm_frm", "yr10_p1bs_psd"});  //  yr10 going public Mar. 2024
+            put(NEOWISER_YR11 +"|1b", new String[]{"yr11_p1bm_frm", "yr11_p1bs_psd"});  //  yr11 going public Nov 2024
             put(MERGE_INT+"|1b", new String[]{"merge_i1bm_frm", "merge_i1bs_psd"});
             put(MERGE_INT+"|3a", new String[]{"merge_p3am_cdd", "merge_p3as_psd"});
             put(PASS2_4BAND+"|1b", new String[]{"4band_i1bm_frm", "4band_i1bs_psd"});
@@ -218,7 +221,7 @@ public class WiseRequest extends TableServerRequest {
             put(ALLSKY_4BAND, new Integer[]{712, 7101});
             put(CRYO_3BAND, new Integer[]{7101, 8744});
             put(POSTCRYO, new Integer[]{8745, 12514});
-            put(NEOWISER, new Integer[]{44212, 99799});  //public data to end of the yr5, the highest scanid for public data
+            put(NEOWISER, new Integer[]{44212, 64272});  //yr11 final scan: 64272r
 
             put(PASS1, new Integer[]{712, 12514});
             put(PASS2_4BAND, new Integer[]{712, 7101});
@@ -235,7 +238,7 @@ public class WiseRequest extends TableServerRequest {
             put(NEOWISER_YR8, new Integer[]{23447, 34601}); // 23447r is the first scan for yr8, 34601r is the last scan
             put(NEOWISER_YR9, new Integer[]{34601, 45803}); // 34601s is the first scan for yr9, 45803r is the last scan
             put(NEOWISER_YR10, new Integer[]{45804, 57041}); // 45804r is the first scan for yr10, 57041r is the last scan
-            put(NEOWISER_YR11, new Integer[]{57042, 99999}); // 57042r is the first scan for yr11
+            put(NEOWISER_YR11, new Integer[]{57042, 64272}); // 57042r is the first scan for yr11, 64272r is the final scan
         }
     };
 

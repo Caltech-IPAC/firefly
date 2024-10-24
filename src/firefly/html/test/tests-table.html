@@ -507,7 +507,7 @@ added in this test.  Open console, then
             const table2 = { tbl_id: 'table2', tableData: { columns, data } };
             const table3 = { tbl_id: 'table3', tableData: { columns, data } };
             firefly.showClientTable('single', table1);
-            firefly.showClientTable('single', table2);
+            firefly.showClientTable('tabs', table2);
             firefly.showClientTable('tabs', table3);
             [2,3].forEach(i => {
                 const {tbl_ui_id} = firefly.util.table.getTableUiByTblId("table"+i);
