@@ -8,6 +8,7 @@ import {download} from '../util/fetch';
 
 export const DATA_PRODUCTS_KEY= 'dataProducts';
 const PREFIX= 'DataProductCntlr';
+export const DATA_PRODUCT_ID_PREFIX= 'DPC';
 export const INIT_DATA_PRODUCTS= `${PREFIX}.InitDataProducts`;
 export const UPDATE_DATA_PRODUCTS= `${PREFIX}.UpdateDataProducts`;
 export const UPDATE_ACTIVE_KEY= `${PREFIX}.UpdateActiveKey`;
@@ -105,9 +106,9 @@ function initState() {
             activeFileMenuKeys: {},
             activeMenuKeys: {},
             activateParams: {
-                imageViewerId:'DPC-image-0',
-                tableGroupViewerId:'DPC-table-0',
-                chartViewerId:'DPC-chart-0'
+                imageViewerId: DATA_PRODUCT_ID_PREFIX+'-image-0',
+                tableGroupViewerId: DATA_PRODUCT_ID_PREFIX+'-table-0',
+                chartViewerId: DATA_PRODUCT_ID_PREFIX+'-chart-0'
             },
             serviceParamsAry: []
         }
@@ -244,9 +245,9 @@ const makeNewDPData= (dpId) => {
         activeFileMenuKeys: {},
         activeMenuKeys: {},
         activateParams: {
-            imageViewerId:`DPC-image-${activateCnt}`,
-            tableGroupViewerId:`DPC-table-${activateCnt}`,
-            chartViewerId:`DPC-chart-${activateCnt}`,
+            imageViewerId:`${DATA_PRODUCT_ID_PREFIX}-image-${activateCnt}`,
+            tableGroupViewerId:`${DATA_PRODUCT_ID_PREFIX}-table-${activateCnt}`,
+            chartViewerId:`${DATA_PRODUCT_ID_PREFIX}-chart-${activateCnt}`,
             dpId,
         },
         serviceParamsAry: []

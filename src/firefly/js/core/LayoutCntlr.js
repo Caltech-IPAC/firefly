@@ -6,7 +6,7 @@ import {take} from 'redux-saga/effects';
 
 import {get, isEqual, isEmpty, filter, pick, uniqBy, flatten} from 'lodash';
 import Enum from 'enum';
-import {dataProductRoot} from '../metaConvert/DataProductsCntlr.js';
+import {DATA_PRODUCT_ID_PREFIX, dataProductRoot} from '../metaConvert/DataProductsCntlr.js';
 import {getBackgroundInfo} from './background/BackgroundUtil.js';
 import {flux} from './ReduxFlux';
 import {clone} from '../util/WebUtil.js';
@@ -359,7 +359,10 @@ export function getLayouInfo() {
       the drawback is that the layout changes for tables with no numeric data or no data
     */
     // keep plot area in place if any table has a related chart
-    const hasXyPlots = !isEmpty(state[CHART_SPACE_PATH]?.data) || (hasTables && !isEmpty(getDefaultChartProps(getActiveTableId())));
+
+    const mainChartCnt= Object.values(state[CHART_SPACE_PATH]?.data ?? {})
+        ?.filter( (c) => !c.groupId.startsWith(DATA_PRODUCT_ID_PREFIX))?.length ?? 0;
+    const hasXyPlots =  mainChartCnt || (hasTables && !isEmpty(getDefaultChartProps(getActiveTableId())));
     const initLoadCompleted= layout.initLoadCompleted||hasImages||hasTables||hasXyPlots;
 
     // we should not make a new object unless something has changed
