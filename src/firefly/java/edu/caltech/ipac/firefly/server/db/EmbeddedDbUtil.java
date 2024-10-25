@@ -482,7 +482,7 @@ public class EmbeddedDbUtil {
         };
     }
 
-    static DataType[] makeDbCols(DataGroup dg) {
+    public static DataType[] makeDbCols(DataGroup dg) {
         DataType[] cols = new DataType[dg.getDataDefinitions().length + 2];
         if (dg.getDataDefintion(ROW_IDX) != null) {
             logger.error("Datagroup should not have ROW_IDX in it at the start.");
@@ -548,7 +548,7 @@ public class EmbeddedDbUtil {
      * @param cols columns to search
      * @return  a list of boolean indicating if a column contains array data type
      */
-    static List<Boolean> isColumnTypeArray(DataType[] cols) {
+    public static List<Boolean> isColumnTypeArray(DataType[] cols) {
         return Arrays.stream(cols).map(c -> c.isArrayType()).toList();
     }
 
@@ -556,7 +556,7 @@ public class EmbeddedDbUtil {
      * @param cols columns to search
      * @return  a list of
      */
-    static List<Integer> colIdxWithArrayData(DataType[] cols) {
+    public static List<Integer> colIdxWithArrayData(DataType[] cols) {
         return IntStream.range(0, cols.length)
                 .mapToObj(i -> cols[i].isArrayType() ? i : -1)
                 .filter(i -> i >= 0)

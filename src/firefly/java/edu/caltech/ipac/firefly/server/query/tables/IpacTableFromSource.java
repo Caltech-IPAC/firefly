@@ -10,6 +10,7 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
+import edu.caltech.ipac.firefly.server.db.DbDataIngestor;
 import edu.caltech.ipac.firefly.server.db.DuckDbAdapter;
 import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -30,6 +31,8 @@ import java.io.IOException;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
 import static edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource.PROC_ID;
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.SEARCH_REQUEST;
+import static edu.caltech.ipac.table.TableUtil.Format.*;
+import static edu.caltech.ipac.table.TableUtil.guessFormat;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 
@@ -99,10 +102,12 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
             } else {
                 File srcFile = fetchSourceFile(req);
                 TableUtil.Format format = DuckDbReadable.guessFileFormat(srcFile.getAbsolutePath());
-                if (format != null && dbAdapter instanceof DuckDbAdapter duckdb) {
-                    return DuckDbReadable.castInto(format, duckdb).ingestDataDirectly(srcFile.getAbsolutePath(), meta);
-                } else {
+                if (format == null) format = guessFormat(srcFile);
+
+                if (format == IPACTABLE || !(dbAdapter instanceof DuckDbAdapter)) {
                     return dbAdapter.ingestData(makeDgSupplier(req, () -> fetchDataFromFile(req, srcFile, meta)), dbAdapter.getDataTable());
+                } else {
+                    return DbDataIngestor.ingestData(format, dbAdapter, srcFile.getPath(), meta);
                 }
             }
         } catch (IOException e) {

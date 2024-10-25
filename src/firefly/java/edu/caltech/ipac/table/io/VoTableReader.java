@@ -12,7 +12,6 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.GroupInfo;
 import edu.caltech.ipac.table.IpacTableDef;
@@ -24,9 +23,12 @@ import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.xml.sax.SAXException;
+import uk.ac.starlink.table.ByteStore;
 import uk.ac.starlink.table.RowSequence;
 import uk.ac.starlink.table.StarTable;
 import uk.ac.starlink.table.StoragePolicy;
+import uk.ac.starlink.table.storage.AdaptiveByteStore;
+import uk.ac.starlink.table.storage.ByteStoreStoragePolicy;
 import uk.ac.starlink.votable.TableElement;
 import uk.ac.starlink.votable.VOElement;
 import uk.ac.starlink.votable.VOElementFactory;
@@ -41,6 +43,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +54,7 @@ import java.util.stream.Collectors;
 import static edu.caltech.ipac.table.TableUtil.getAliasName;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
-import static uk.ac.starlink.table.StoragePolicy.PREFER_MEMORY;
+import static uk.ac.starlink.table.StoragePolicy.*;
 
 /**
  * Date: Dec 5, 2011
@@ -79,6 +82,15 @@ public class VoTableReader {
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
+    private static final StoragePolicy FIREFLY = new ByteStoreStoragePolicy() {
+        protected ByteStore attemptMakeByteStore() throws IOException {
+            return new AdaptiveByteStore(Math.min(AdaptiveByteStore.getDefaultLimit(), 64*1024*1024));      // default with a max of 64mb
+        }
+        public String toString() {
+            return "StoragePolicy.FIREFLY";
+        }
+    };
+
     /**
      * returns an array of DataGroup from a vo table.
      * @param location  location of the vo table data source using automatic format detection.  Can be file or url.
@@ -93,10 +105,10 @@ public class VoTableReader {
      * to the returned DataGroup(s) based on the hints provided by the given request.
      */
     public static DataGroup[] voToDataGroups(String location, TableServerRequest request, int ...indices) throws IOException {
-        return Arrays.stream(voToDataGroups(location, false, indices)).peek(dg -> {
-            if (SpectrumMetaInspector.hasSpectrumHint(request)) SpectrumMetaInspector.searchForSpectrum(dg,true);
-        }).toArray(DataGroup[]::new);
-
+        VoTableHandler.DataGroups handler = new VoTableHandler.DataGroups(false, SpectrumMetaInspector.hasSpectrumHint(request));
+        VOElement docRoot = getVoTableRoot(location, null);
+        parse(handler, docRoot, indices);
+        return handler.getAllTable();
     }
 
     /**
@@ -118,15 +130,22 @@ public class VoTableReader {
      * enabling streaming of data rather than reading from a file.
      */
     public static DataGroup[] voToDataGroups(InputStream source, boolean headerOnly, int ...indices) throws IOException {
-        try {
-            VOElement docRoot = getVoTableRoot(source, null);
-            return voToDataGroups(docRoot, headerOnly, indices);
-        } catch (Exception e) {
-            throw new IOException("Unable to parse VOTable from stream: \n" + e.getMessage(), e);
-        }
+        VOElement docRoot = getVoTableRoot(source, null);
+        return voToDataGroups(docRoot, headerOnly, indices);
     }
 
     /**
+     * convert votable content into DataGroup mainly by collecting TABLE elements and TABLE included metadata and data
+     * For TABLE, collect attributes including ID, name, ucd, utype, ref, (as ID, title, ucd, utype, ref in DataGroup),
+     *            and child elements including DESCRIPTION, FIELD, GROUP, LINK, (as desc, columns, groups, links in DataGroup),
+     *                                         PARAM (as staticColumns in DataGroup and staticValue in DataType),
+     *                                         INFO (as meta in DataGroup)
+     *            and table data in DATA element if not headerOnly (data in DataGroup)
+     * For FIELD, collect attributes including ID, name, datatype, unit, precision, width, ref, ucd, utype
+     *                                         (as ID, keyName, type, units, precision, ref, ucd, utype in DataType)
+     *            and child elements including DESCRIPTION, LINK and VALUES
+     *                                         (as desc, links, minValue, maxValue, options, nullstring in DataType)
+     *
      * returns an array of DataGroup from a votable file.
      * @param docRoot  the root element of the votable.
      * @param headerOnly  if true, returns only the headers, not the data.
@@ -136,26 +155,9 @@ public class VoTableReader {
     private static DataGroup[] voToDataGroups(VOElement docRoot,
                                              boolean headerOnly,
                                              int ...indices) throws IOException {
-        List<DataGroup> groups = new ArrayList<>();
-
-        try {
-            List<Integer> indicesList = indices == null ? null : CollectionUtil.asList(indices);
-            List<TableElement> tableAry = getAllTableElements(docRoot);
-            for (int i = 0; i < tableAry.size(); i++) {
-                if (indices == null || indices.length == 0 || indicesList.contains(i)) {
-                    TableElement tableEl = tableAry.get(i);
-                    List<ResourceInfo> resources = getResourcesForTable(docRoot, tableEl);
-                    DataGroup dg = convertToDataGroup(tableEl, new VOStarTable(tableEl), headerOnly);
-                    if (resources != null) dg.setResourceInfos(resources);
-                    groups.add(dg);
-                }
-            }
-        } catch (Exception e) {
-            LOG.error(e);
-            throw new IOException(e.getMessage());
-        }
-
-        return groups.toArray(new DataGroup[0]);
+        VoTableHandler.DataGroups handler = new VoTableHandler.DataGroups(headerOnly, false);
+        parse(handler, docRoot, indices);
+        return handler.getAllTable();
     }
 
 
@@ -207,14 +209,9 @@ public class VoTableReader {
 
     private static VOElement getVoTableRoot(String location, StoragePolicy policy) throws IOException {
 
-        String voTablePath, url = null;
+        String voTablePath = location;
         try {
-            url = new URL(location).toString();
-        } catch (MalformedURLException ex) { /* ok to ignore.  location may not be a URL */ }
-
-        if (url == null) {
-            voTablePath = location;
-        } else {
+            String url = new URL(location).toString();
             // location is a URL, download it first.
             File tmpFile = File.createTempFile("voreader-", ".xml", QueryUtil.getTempDir(null));
             try {
@@ -225,7 +222,8 @@ public class VoTableReader {
                 LOG.error(e);
                 throw new IOException("Unable to fetch URL: "+ location + "\n" + e.getMessage(), e);
             }
-        }
+        } catch (MalformedURLException ex) { /* ok to ignore.  location may not be a URL */ }
+
 
         try {
             // at this point, voTablePath is a file path.
@@ -235,12 +233,18 @@ public class VoTableReader {
                     e.getMessage(), e);
         }
     }
-    private static VOElement getVoTableRoot(InputStream source, StoragePolicy policy) throws Exception {
-        policy = policy == null ? PREFER_MEMORY : policy;
-        VOElementFactory voFactory =  new VOElementFactory();
-        voFactory.setStoragePolicy(policy);
-        return voFactory.makeVOElement(new BufferedInputStream(source), null);
+
+    private static VOElement getVoTableRoot(InputStream source, StoragePolicy policy) throws IOException {
+        try {
+            policy = policy == null ? FIREFLY : policy;
+            VOElementFactory voFactory = new VOElementFactory();
+            voFactory.setStoragePolicy(policy);
+            return voFactory.makeVOElement(new BufferedInputStream(source), null);
+        } catch (Exception e) {
+            throw new IOException("Unable to parse VOTable from stream: \n" + e.getMessage(), e);
+        }
     }
+
 
     // get all <TABLE> from one votable file
     private static List<TableElement> getAllTableElements(VOElement docRoot) throws IOException {
@@ -296,27 +300,50 @@ public class VoTableReader {
     }
 
     /**
-     * convert votable content into DataGroup mainly by collecting TABLE elements and TABLE included metadata and data
-     * For TABLE, collect attributes including ID, name, ucd, utype, ref, (as ID, title, ucd, utype, ref in DataGroup),
-     *            and child elements including DESCRIPTION, FIELD, GROUP, LINK, (as desc, columns, groups, links in DataGroup),
-     *                                         PARAM (as staticColumns in DataGroup and staticValue in DataType),
-     *                                         INFO (as meta in DataGroup)
-     *            and table data in DATA element if not headerOnly (data in DataGroup)
-     * For FIELD, collect attributes including ID, name, datatype, unit, precision, width, ref, ucd, utype
-     *                                         (as ID, keyName, type, units, precision, ref, ucd, utype in DataType)
-     *            and child elements including DESCRIPTION, LINK and VALUES
-     *                                         (as desc, links, minValue, maxValue, options, nullstring in DataType)
+     * Parses the provided VOTable and sends events with the parsed data to the specified handler.
      *
-     * @param tableEl    TableElement object
-     * @param table      StarTable object
-     * @param headerOnly get column and metadata only (no table data)
-     * @return a DataGroup object representing a TABLE in votable file
+     * @param handler  the handler responsible for processing the parsed data.
+     * @param location the location of the VOTable; file path or URL
+     * @param indices  a list of table indices to parse. If no indices are specified, parse all tables.
+     * @throws IOException if an I/O error occurs during parsing.
      */
-    private static DataGroup convertToDataGroup(TableElement tableEl, StarTable table,  boolean headerOnly) {
+    public static void parse(VoTableHandler handler,
+                             String location,
+                             int ...indices) throws IOException {
+        VOElement docRoot = getVoTableRoot(location, FIREFLY);
+        parse(handler, docRoot, indices);
+    }
 
-        DataGroup dg = getTableHeader(tableEl);
-        List<DataType> cols = Arrays.asList(dg.getDataDefinitions());
-        dg.setInitCapacity((int)table.getRowCount());
+    private static void parse(VoTableHandler handler,
+                              VOElement docRoot,
+                              int ...indices) throws IOException {
+        try {
+            handler.start();
+            List<Integer> indicesList = indices == null ? Collections.emptyList() : Arrays.asList(Arrays.stream(indices).boxed().toArray(Integer[]::new));
+            List<TableElement> tableAry = getAllTableElements(docRoot);
+            for (int i = 0; i < tableAry.size(); i++) {
+                if (indicesList.isEmpty() || indicesList.contains(i)) {
+                    TableElement tableEl = tableAry.get(i);
+                    List<ResourceInfo> resources = getResourcesForTable(docRoot, tableEl);
+                    handler.resources(resources);
+                    handler.startTable(i);
+                    parseTable(handler, tableEl, new VOStarTable(tableEl));
+                    handler.endTable(i);
+                }
+            }
+        } catch (Exception e) {
+            LOG.error(e);
+            throw new IOException(e.getMessage());
+        } finally {
+            handler.end();
+        }
+    }
+
+    private static void parseTable(VoTableHandler handler, TableElement tableEl, StarTable table) throws DataAccessException {
+
+        DataGroup header = getTableHeader(tableEl);
+        List<DataType> cols = Arrays.asList(header.getDataDefinitions());
+        header.setInitCapacity((int)table.getRowCount());
 
         // post-process to handle custom logic
         DataType raCol = cols.stream().filter(dt -> HMS_UCD_PATTERN.matcher(String.valueOf(dt.getUCD())).matches())
@@ -324,39 +351,32 @@ public class VoTableReader {
         DataType decCol = cols.stream().filter(dt -> DMS_UCD_PATTERN.matcher(String.valueOf(dt.getUCD())).matches())
                 .findFirst().orElse(null);
         if (raCol != null && decCol != null) {
-            dg.addAttribute("POS_EQ_RA_MAIN", raCol.getKeyName());
-            dg.addAttribute("POS_EQ_DEC_MAIN", decCol.getKeyName());
+            header.addAttribute("POS_EQ_RA_MAIN", raCol.getKeyName());
+            header.addAttribute("POS_EQ_DEC_MAIN", decCol.getKeyName());
         }
 
-        // table data
+        handler.header(header);
         try {
-            if (!headerOnly) {
+            // table data
+            if (!handler.headerOnly()) {
                 RowSequence rs = table.getRowSequence();
-
                 while (rs.next()) {
-                    DataObject row = new DataObject(dg);
-                    for(int i = 0; i < cols.size(); i++) {
-                        DataType dtype = cols.get(i);
-                        Object val = rs.getCell(i);
-
-                        if (val instanceof Double cv)   {
-                            val = cv.isNaN() ? null : val;
-                        } else if (val instanceof Float cv) {
-                            val = cv.isNaN() ? null : val;
-                        } else if(val instanceof String || val instanceof Character) {
-                            val = (String.valueOf(val)).trim();
-                        }
-
-                        row.setDataElement(dtype, val);
-                    }
-                    dg.add(row);
+                    handler.data(handleVariance(rs.getRow()));
                 }
             }
         } catch (IOException e) {
             LOG.error(e);
         }
-        dg.trimToSize();
-        return dg;
+    }
+
+
+    private static Object[] handleVariance(Object[] row) {
+        for (int i = 0; i < row.length; i++) {
+            if      (row[i] instanceof Double v && v.isNaN())   row[i] = null;
+            else if (row[i] instanceof Float v && v.isNaN())    row[i] = null;
+            else if (row[i] instanceof String v)    row[i] = v.trim();
+        }
+        return row;
     }
 
     private static DataGroup getTableHeader(TableElement table) {
@@ -396,14 +416,6 @@ public class VoTableReader {
                 .forEach(el -> {
                     dg.getTableMeta().addKeyword(el.getName(), el.getAttribute("value"));
                 });
-        if (table.hasAttribute("nrows")) {
-            dg.setSize((int) table.getNrows());
-        } else {
-            // if no nrows attribute, pull in the data and count the rows.
-            try {
-                dg.setSize((int)  new VOStarTable(table).getRowCount());
-            } catch (IOException ignored) { }     // just ignore it.
-        }
         return dg;
     }
 
@@ -603,6 +615,17 @@ public class VoTableReader {
             part.setIndex(parts.size());
             part.setFileLocationIndex(parts.size());
             DataGroup dg = getTableHeader(table);
+
+            // populate number of rows
+            if (table.hasAttribute("nrows")) {
+                dg.setSize((int) table.getNrows());
+            } else {
+                // if no nrows attribute, pull in the data and count the rows.
+                try {
+                    dg.setSize((int)  new VOStarTable(table).getRowCount());
+                } catch (IOException ignored) { }     // just ignore it.
+            }
+
             Arrays.stream(dg.getDataDefinitions()).forEach(dt -> dt.setKeyName(getAliasName(dt)));  // show case-sensitive column names if exists
             List<ResourceInfo> resources = getResourcesForTable(docRoot, table);
             if (resources != null) dg.setResourceInfos(resources);

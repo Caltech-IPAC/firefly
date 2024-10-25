@@ -81,7 +81,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         return castInto(format, null);
     }
 
-    public static DuckDbReadable castInto(TableUtil.Format format, DuckDbAdapter dbAdapter) throws DataAccessException {
+    public static DuckDbReadable castInto(TableUtil.Format format, DbAdapter dbAdapter) throws DataAccessException {
         File dbFile = dbAdapter == null ? null : dbAdapter.getDbFile();
         return   switch (format) {
             case TSV -> new Tsv(dbFile);
