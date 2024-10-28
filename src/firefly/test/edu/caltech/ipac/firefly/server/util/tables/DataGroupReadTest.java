@@ -136,7 +136,7 @@ public class DataGroupReadTest {
             largeVoTableRead:  Memory Usage peak=1077.10MB  final:  0.02MB  elapsed:3.07secs  jvm:mx=1.1g
         Changes:
             FIREFLY-1591:   10/23/2024
-            - ADAPTIVE + VoTableHandler.DataGroups
+            - ADAPTIVE + TableParseHandler.Memory
                 smallVoTableRead:  Memory Usage peak=  4.00MB  final:  0.48MB  elapsed:0.06secs
                 largeVoTableRead:  Memory Usage peak=245.04MB  final:  0.10MB  elapsed:2.67secs     jvm:mx=250m
         */
@@ -165,10 +165,10 @@ public class DataGroupReadTest {
             largeVoTableRead:  elapsed:6.76secs     jvm:mx=1.1g
         Changes:
             FIREFLY-1591:   10/23/2024
-            - ADAPTIVE + VoTableHandler.Memory
+            - ADAPTIVE + TableParseHandler.Memory
                 smallVoTableRead:  elapsed:0.33secs
                 largeVoTableRead:  elapsed:6.36secs     jvm:mx=250m
-            - ADAPTIVE + VoTableHandler.DbIngest
+            - ADAPTIVE + TableParseHandler.DbIngest
                 smallVoTableRead: elapsed:0.38secs
                 largeVoTableRead: elapsed:5.25secs      jvm:mx=32m
         */
@@ -227,10 +227,13 @@ public class DataGroupReadTest {
             perfTestEmbeddedDB:  Memory Usage peak=1144.28MB  final:  4.75MB  elapsed:12.74secs
         FIREFLY-1471-table-null-val
             perfTestEmbeddedDB:  Memory Usage peak=1179.26MB  final:  4.74MB  elapsed:12.71secs
+        FIREFLY-1592: direct ingestion of IPAC table (10/28/2024)
+            Memory Usage peak= 42.28MB  final:  4.94MB  elapsed:10.22secs
+
         */
         logMemUsage(() -> {
             ConfigTest.setupServerContext(null);
-            Logger.setLogLevel(Level.TRACE);
+            Logger.setLogLevel(Level.INFO);
 
             TableServerRequest tsr = new TableServerRequest("IpacTableFromSource");
             tsr.setParam(ServerParams.SOURCE, "file://" + largeIpacTable.getPath());

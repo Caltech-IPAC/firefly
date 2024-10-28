@@ -105,7 +105,7 @@ public class VoTableReader {
      * to the returned DataGroup(s) based on the hints provided by the given request.
      */
     public static DataGroup[] voToDataGroups(String location, TableServerRequest request, int ...indices) throws IOException {
-        VoTableHandler.DataGroups handler = new VoTableHandler.DataGroups(false, SpectrumMetaInspector.hasSpectrumHint(request));
+        TableParseHandler.Memory handler = new TableParseHandler.Memory(false, SpectrumMetaInspector.hasSpectrumHint(request));
         VOElement docRoot = getVoTableRoot(location, null);
         parse(handler, docRoot, indices);
         return handler.getAllTable();
@@ -155,7 +155,7 @@ public class VoTableReader {
     private static DataGroup[] voToDataGroups(VOElement docRoot,
                                              boolean headerOnly,
                                              int ...indices) throws IOException {
-        VoTableHandler.DataGroups handler = new VoTableHandler.DataGroups(headerOnly, false);
+        TableParseHandler.Memory handler = new TableParseHandler.Memory(headerOnly, false);
         parse(handler, docRoot, indices);
         return handler.getAllTable();
     }
@@ -307,14 +307,14 @@ public class VoTableReader {
      * @param indices  a list of table indices to parse. If no indices are specified, parse all tables.
      * @throws IOException if an I/O error occurs during parsing.
      */
-    public static void parse(VoTableHandler handler,
+    public static void parse(TableParseHandler handler,
                              String location,
                              int ...indices) throws IOException {
         VOElement docRoot = getVoTableRoot(location, FIREFLY);
         parse(handler, docRoot, indices);
     }
 
-    private static void parse(VoTableHandler handler,
+    private static void parse(TableParseHandler handler,
                               VOElement docRoot,
                               int ...indices) throws IOException {
         try {
@@ -339,7 +339,7 @@ public class VoTableReader {
         }
     }
 
-    private static void parseTable(VoTableHandler handler, TableElement tableEl, StarTable table) throws DataAccessException {
+    private static void parseTable(TableParseHandler handler, TableElement tableEl, StarTable table) throws DataAccessException {
 
         DataGroup header = getTableHeader(tableEl);
         List<DataType> cols = Arrays.asList(header.getDataDefinitions());
@@ -354,9 +354,9 @@ public class VoTableReader {
             header.addAttribute("POS_EQ_RA_MAIN", raCol.getKeyName());
             header.addAttribute("POS_EQ_DEC_MAIN", decCol.getKeyName());
         }
-
-        handler.header(header);
         try {
+            handler.header(header);
+
             // table data
             if (!handler.headerOnly()) {
                 RowSequence rs = table.getRowSequence();

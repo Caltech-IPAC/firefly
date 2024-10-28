@@ -230,16 +230,24 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             StopWatch.getInstance().start("fetchDataGroup: " + req.getRequestId());
             DataGroup dg = getter.get();
             StopWatch.getInstance().stop("fetchDataGroup: " + req.getRequestId()).printLog("fetchDataGroup: " + req.getRequestId());
-
             if (dg == null) throw new DataAccessException("Failed to retrieve data");
 
             jobExecIf(v -> v.progress(70, dg.size() + " rows of data found"));
 
+            dg.addMetaFrom(collectMeta(req));
             prepareTableMeta(dg.getTableMeta(), Arrays.asList(dg.getDataDefinitions()), req);
             TableUtil.consumeColumnMeta(dg, null);      // META-INFO in the request should only be pass-along and not persist.
 
             return dg;
         };
+    }
+
+    /**
+     * @param request   the table request
+     * @return  Additional meta info to add to the DataGroup before it's being ingested into the database
+     */
+    protected DataGroup collectMeta(TableServerRequest request) {
+        return null;
     }
 
     public File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
