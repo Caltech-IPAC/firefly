@@ -117,10 +117,10 @@ FireflyLayout.propTypes = {
  * @param p.banner      banner props
  * @return {JSX.Element}
  */
-function BannerSection({menu, banner, ...rest}) {
+function BannerSection({menu, banner, useMenu=true, ...rest}) {
     return (
         <Banner key='banner'
-                menu={<Menu/>}
+                menu={useMenu? <Menu/> : undefined}
                 {...rest}
                 {...banner}
         />
