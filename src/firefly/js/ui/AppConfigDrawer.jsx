@@ -1,7 +1,8 @@
 
 import {DialogTitle, Divider, Drawer, IconButton, ModalClose, Stack, Typography} from '@mui/joy';
+import {isObject} from 'lodash';
 import {object, bool, number, oneOfType, string} from 'prop-types';
-import React, {useContext, useState} from 'react';
+import React, {isValidElement, useContext, useState} from 'react';
 import {dispatchHideDialog, isDialogVisible, SIDE_BAR_ID} from '../core/ComponentCntlr.js';
 import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
 import {useColorMode} from './FireflyRoot.jsx';
@@ -20,9 +21,7 @@ export function AppConfigDrawer({containerElement, drawerWidth= '20rem', allowMe
     const closeSideBar= () => dispatchHideDialog(SIDE_BAR_ID);
     const drawerTitleSx = {m: '0.25rem', p: 0, height: '3rem', width: '3rem'};
 
-    const appIconEl = appIcon && React.cloneElement(appIcon, {
-        sx: drawerTitleSx
-    });
+    const appIconEl = appIcon && isValidElement(appIcon) ? React.cloneElement(appIcon, { sx: drawerTitleSx }) : undefined;
 
     return (
         <Drawer container={containerElement} open={visible} onClose={() => closeSideBar()} sx={{ '--Drawer-horizontalSize': drawerWidth, ...sx}} {...props} >
