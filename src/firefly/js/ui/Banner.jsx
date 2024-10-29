@@ -4,7 +4,7 @@
 
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded.js';
 import {Box, IconButton, Sheet, Stack, Typography} from '@mui/joy';
-import React, {memo, useContext} from 'react';
+import React, {isValidElement, memo, useContext} from 'react';
 import {bool, element, node, object, shape, string} from 'prop-types';
 import {dispatchShowDialog, SIDE_BAR_ID} from '../core/ComponentCntlr.js';
 import {AppPropertiesCtx} from './AppPropertiesCtx.jsx';
@@ -20,10 +20,10 @@ const color='primary';
 export const Banner = memo( ({menu, enableVersionDialog= false, appIcon:pAppIdon, appTitle:pAppTitle, title, slotProps, sx, ...props}) => {
     const ctx = useContext(AppPropertiesCtx);
     const {appIcon=pAppIdon, appTitle=pAppTitle} = ctx;
-    const appIconEl = appIcon && React.cloneElement( appIcon, {
+    const appIconEl = appIcon && isValidElement(appIcon) ? React.cloneElement( appIcon, {
                                         onClick: () => enableVersionDialog && showFullVersionInfoDialog(appTitle),
                                         title: enableVersionDialog ? getVersionTipStr(appTitle) : ''
-                                    });
+                                    }) : undefined;
     return (
         <Sheet {...{variant, color,
             sx: (theme) => ({
@@ -33,7 +33,7 @@ export const Banner = memo( ({menu, enableVersionDialog= false, appIcon:pAppIdon
             }),
             ...props
         }}>
-            <Stack {...{direction:'row', minHeight:40, alignItems:'center', px:1,spacing: 0.5}}>
+            {Boolean(menu) && <Stack {...{direction:'row', minHeight:40, alignItems:'center', px:1,spacing: 0.5}}>
                 <AppConfigButton/>
 
                 <Stack direction='row' {...slotProps?.icon} sx={{flexGrow:0, cursor: enableVersionDialog ? 'pointer' : 'inherit', ...slotProps?.icon?.sx}} >
@@ -46,7 +46,7 @@ export const Banner = memo( ({menu, enableVersionDialog= false, appIcon:pAppIdon
                         {menu}
                     </Stack>
                 </Stack>
-            </Stack>
+            </Stack> }
         </Sheet>
     );
 });
