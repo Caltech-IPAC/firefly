@@ -151,6 +151,7 @@ export function EmbeddedPositionSearchPanel({
         overflow: 'auto',
     };
 
+    const sizeEnabled= slotProps?.sizeInput?.enabled ?? true;
     return (
         <Stack key='targetGroup' alignItems='center' height='100%' paddingBottom={insetSpacial ? 0 : 20}
            onMouseDown={() => {
@@ -164,7 +165,9 @@ export function EmbeddedPositionSearchPanel({
                     sRegion, plotId,
                     minSize: min, maxSize: max, toolbarHelpId,
                     whichOverlay: doGetSearchTypeOp(), setWhichOverlay: doToggle ? setSearchTypeOp : undefined,
-                    targetKey, sizeKey, polygonKey,
+                    targetKey,
+                    sizeKey: sizeEnabled ? sizeKey : undefined,
+                    polygonKey,
                     sx: {minHeight: 300, alignSelf: 'stretch', flexGrow:1, ...hipsTargetViewSx}
                 }}/>
             <Sheet
@@ -383,7 +386,8 @@ function ConeOp({slotProps,nullAllowed}) {
         sizeKey= DEFAULT_SIZE_KEY,
         min= 1 / 3600,
         max= 1,
-        initValue= DEFAULT_INIT_SIZE_VALUE
+        initValue= DEFAULT_INIT_SIZE_VALUE,
+        enabled= true,
     }= slotProps.sizeInput ?? {};
     const {
         targetKey=DEF_TARGET_PANEL_KEY,
@@ -400,7 +404,7 @@ function ConeOp({slotProps,nullAllowed}) {
                     feedback:{sx: {alignSelf:'center'} },
                 }
             }}/>
-            <SizeInputFields {...{
+            {enabled && <SizeInputFields {...{
                 fieldKey: sizeKey, showFeedback: true, nullAllowed: false,
                 label: 'Search Radius',
                 initialState: {unit: 'arcsec', value: initValue+'', min, max},
@@ -408,7 +412,7 @@ function ConeOp({slotProps,nullAllowed}) {
                 slotProps: {
                     feedback:{sx: {alignSelf:'center'} },
                 }
-            }} />
+            }} />}
         </Stack>
     );
 }

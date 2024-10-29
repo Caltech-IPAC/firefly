@@ -54,6 +54,7 @@ import AdsClickIcon from '@mui/icons-material/AdsClick';
 const DIALOG_ID= 'HiPSPanelPopup';
 const DEFAULT_HIPS= 'ivo://CDS/P/DSS2/color';
 const DEFAULT_FOV= 340;
+const RADIUS_DISABLED_KEY= 'none---Size';
 
 const sharedPropTypes= {
     hipsUrl: string,
@@ -106,7 +107,7 @@ VisualTargetPanel.propTypes= {
 
 export const HiPSTargetView = ({sx, hipsDisplayKey='none',
                                    hipsUrl=DEFAULT_HIPS, hipsFOVInDeg= DEFAULT_FOV, centerPt=makeWorldPt(0,0, CoordinateSys.GALACTIC),
-                                   targetKey=DEF_TARGET_PANEL_KEY, sizeKey='none---Size', polygonKey='non---Polygon',
+                                   targetKey=DEF_TARGET_PANEL_KEY, sizeKey=RADIUS_DISABLED_KEY, polygonKey='non---Polygon',
                                    whichOverlay= CONE_CHOICE_KEY, toolbarHelpId,
                                    setWhichOverlay, sRegion, coordinateSys, mocList, minSize=1/3600, maxSize=100,
                                    plotId='defaultHiPSTargetSearch', cleanup= false, groupKey}) => {
@@ -169,8 +170,10 @@ export const HiPSTargetView = ({sx, hipsDisplayKey='none',
              const wp = primePlot(visRoot(), plotId)?.attributes[PlotAttribute.USER_SEARCH_WP];
              wp && setTargetWp(wp.toString());
          }
+        const radius= sizeKey!==RADIUS_DISABLED_KEY ? userEnterSearchRadius() : undefined;
+
         updatePlotOverlayFromUserInput(plotId, whichOverlay, userEnterWorldPt(),
-            userEnterSearchRadius(), userEnterPolygon(), false, canGenerate);
+            radius, userEnterPolygon(), false, canGenerate);
         lastWhichOverlay.lastValue= whichOverlay;
     }, [getTargetWp, getHiPSRadius, getPolygon, whichOverlay]);
 
