@@ -172,7 +172,7 @@ public class RequestAgent {
             String host  = getHeader("X-Forwarded-Host", getHeader("X-Forwarded-Server", request.getServerName()));
             String port  = getHeader("X-Forwarded-Port", String.valueOf(request.getServerPort()));
             port = port.matches("443|80") ? "" : ":" + port;
-            String proxiedPath = getHeader("X-Forwarded-Path", request.getContextPath());
+            String proxiedPath = getHeader("X-Forwarded-Path", getHeader("X-Forwarded-Prefix", "") + request.getContextPath());
 
             String hostUrl = String.format("%s://%s%s", proto, host, port);
             String baseUrl = hostUrl + proxiedPath;
