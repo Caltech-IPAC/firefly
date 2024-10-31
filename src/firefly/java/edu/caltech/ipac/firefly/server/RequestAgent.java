@@ -12,9 +12,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -150,40 +147,22 @@ public class RequestAgent {
             this.response = response;
 
             // getting the base url including the application path is a bit tricky when behind reverse proxy(ies)
-            URL referer = null;
-
-            try {
-                String url = getHeader("Referer", getHeader("Origin"));
-                referer = new URL(url);
-            } catch (MalformedURLException e) {}
-
-            String proto = referer != null ? referer.getProtocol() : getHeader("X-Forwarded-Proto", request.getScheme());
-            String host  = referer != null ? referer.getHost()     : getHeader("X-Forwarded-Server", getHeader("X-Forwarded-Host", request.getServerName()));
-            String port  = referer != null && referer.getPort() > 0 ? referer.getPort()+""  : getHeader("X-Forwarded-Port", String.valueOf(request.getServerPort()));
+            String proto = getHeader("X-Forwarded-Proto", request.getScheme());
+            String host  = getHeader("X-Forwarded-Host", getHeader("X-Forwarded-Server", request.getServerName()));
+            String port  = getHeader("X-Forwarded-Port", String.valueOf(request.getServerPort()));
             port = port.matches("443|80") ? "" : ":" + port;
-
-            String contextPath = getHeader("X-Forwarded-Path");
-            if (contextPath == null && referer != null) {
-                contextPath = referer.getPath();
-                int idx = contextPath.lastIndexOf("/");
-                if (idx > 0) {
-                    contextPath = contextPath.substring(0, idx);
-                }
-            }
-            if (StringUtils.isEmpty(contextPath)) {
-                contextPath = request.getContextPath();
-            }
+            String proxiedPath = getHeader("X-Forwarded-Path", getHeader("X-Forwarded-Prefix", "") + request.getContextPath());
 
             String hostUrl = String.format("%s://%s%s", proto, host, port);
-            String baseUrl = hostUrl + contextPath;
+            String baseUrl = hostUrl + proxiedPath;
             baseUrl = baseUrl.endsWith("/") ? baseUrl :  baseUrl + "/";
 
             String requestUrl =  getHeader("X-Original-URI");
             if (requestUrl == null) {
                 String queryStr = request.getQueryString() == null ? "" : "?" + request.getQueryString();
                 String path = request.getRequestURI();
-                if (!contextPath.equals(request.getContextPath())) {
-                    path = path.replace(request.getContextPath(), contextPath);
+                if (!proxiedPath.equals(request.getContextPath())) {
+                    path = path.replace(request.getContextPath(), proxiedPath);
                 }
                 requestUrl = path + queryStr;
             }
@@ -194,7 +173,7 @@ public class RequestAgent {
             setBaseUrl(baseUrl);
             setHostUrl(hostUrl);
             setRequestUrl(requestUrl);
-            setContextPath(contextPath);
+            setContextPath(request.getContextPath());
             setRemoteIP(remoteIP);
             setSessId(request.getSession(true).getId());
 
