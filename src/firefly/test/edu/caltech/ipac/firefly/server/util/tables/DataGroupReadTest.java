@@ -7,8 +7,8 @@ import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbMonitor;
+import edu.caltech.ipac.firefly.server.db.DuckDbAdapter;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -17,6 +17,7 @@ import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.PrimitiveList;
+import edu.caltech.ipac.table.VotableTest;
 import edu.caltech.ipac.table.io.FITSTableReader;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.IpacTableWriter;
@@ -49,6 +50,7 @@ public class DataGroupReadTest {
     private static final File ipacTable = getDataFile(DataGroupReadTest.class, "DataGroupTest.tbl");
     private static final File voTable = getDataFile(DataGroupReadTest.class, "p3am_cdd.xml");
     private static final File fitsTable =getDataFile(DataGroupReadTest.class, "lsst-table.fits");
+    private static final File largeVoTable = getDataFile(VotableTest.class, "table_1mil.vot");
 
     @Test
     public void ipacTable() throws IOException {
@@ -122,6 +124,82 @@ public class DataGroupReadTest {
         Assert.assertEquals("column sortable", false, desig.isSortable());
         Assert.assertEquals("column filterable", true, desig.isFilterable());
         Assert.assertEquals("column visibility", DataType.Visibility.hidden, desig.getVisibility());
+
+    }
+
+    @Category({TestCategory.Perf.class})
+    @Test
+    public void perfTestVoTableRead() throws DataAccessException {
+        /*
+        Initial:  10/23/2024
+            smallVoTableRead:  Memory Usage peak=  3.00MB  final:  0.28MB  elapsed:0.05secs
+            largeVoTableRead:  Memory Usage peak=1077.10MB  final:  0.02MB  elapsed:3.07secs  jvm:mx=1.1g
+        Changes:
+            FIREFLY-1591:   10/23/2024
+            - ADAPTIVE + VoTableHandler.DataGroups
+                smallVoTableRead:  Memory Usage peak=  4.00MB  final:  0.48MB  elapsed:0.06secs
+                largeVoTableRead:  Memory Usage peak=245.04MB  final:  0.10MB  elapsed:2.67secs     jvm:mx=250m
+        */
+        ConfigTest.setupServerContext(null);
+        Logger.setLogLevel(Level.INFO);
+        logMemUsage(() -> {
+            try {
+                VoTableReader.voToDataGroups(voTable.getAbsolutePath());
+            } catch (Exception ignored) {}
+            return "smallVoTableRead";
+        });
+        logMemUsage(() -> {
+            try {
+                VoTableReader.voToDataGroups(largeVoTable.getAbsolutePath());
+            } catch (Exception ignored) {}
+            return "largeVoTableRead";
+        });
+    }
+
+    @Category({TestCategory.Perf.class})
+    @Test
+    public void perfTestVoTableIngest() throws DataAccessException {
+        /*
+        Initial:
+            smallVoTableRead:  elapsed:0.33secs
+            largeVoTableRead:  elapsed:6.76secs     jvm:mx=1.1g
+        Changes:
+            FIREFLY-1591:   10/23/2024
+            - ADAPTIVE + VoTableHandler.Memory
+                smallVoTableRead:  elapsed:0.33secs
+                largeVoTableRead:  elapsed:6.36secs     jvm:mx=250m
+            - ADAPTIVE + VoTableHandler.DbIngest
+                smallVoTableRead: elapsed:0.38secs
+                largeVoTableRead: elapsed:5.25secs      jvm:mx=32m
+        */
+        ConfigTest.setupServerContext(null);
+        Logger.setLogLevel(Level.INFO);
+        try {
+            File f = File.createTempFile("tst", "duckdb");
+            f.deleteOnExit();
+            new DuckDbAdapter(ext -> f).initDbFile();       // skip init pause
+        } catch (IOException ignored) {}
+        logMemUsage(() -> {
+            TableServerRequest tsr = new TableServerRequest("IpacTableFromSource");
+            tsr.setParam(ServerParams.SOURCE, "file://" + voTable.getPath());
+            tsr.setPageSize(1);
+            try {
+                SearchManager.getProcessor(tsr.getRequestId()).getData(tsr);
+            } catch (DataAccessException ignored) {}
+            DbMonitor.cleanup(true,true);
+            return "smallVoTableRead";
+        });
+
+        logMemUsage(() -> {
+            TableServerRequest tsr = new TableServerRequest("IpacTableFromSource");
+            tsr.setParam(ServerParams.SOURCE, "file://" + largeVoTable.getPath());
+            tsr.setPageSize(1);
+            try {
+                SearchManager.getProcessor(tsr.getRequestId()).getData(tsr);
+            } catch (DataAccessException ignored) {}
+            DbMonitor.cleanup(true,true);
+            return "largeVoTableRead";
+        });
 
     }
 

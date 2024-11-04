@@ -177,15 +177,17 @@ public class DuckDbAdapter extends BaseDbAdapter {
             conn.setAutoCommit(false);
             stmt.execute(createDataSql);
 
-            // using try-with-resources to automatically close the appender at the end of the scope
-            try (var appender = conn.createAppender(DuckDBConnection.DEFAULT_SCHEMA, tblName)) {
-                List<Integer> aryIdx = colIdxWithArrayData(colsAry);
-                for (int r=0; r < totalRows; r++) {
-                    Object[] row = dg.get(r).getData();
-                    aryIdx.forEach(idx -> row[idx] = serialize(row[idx]));      // serialize array data if necessary
-                    addRow(appender, row, r);
+            if (totalRows > 0) {
+                // using try-with-resources to automatically close the appender at the end of the scope
+                try (var appender = conn.createAppender(DuckDBConnection.DEFAULT_SCHEMA, tblName)) {
+                    List<Integer> aryIdx = colIdxWithArrayData(colsAry);
+                    for (int r = 0; r < totalRows; r++) {
+                        Object[] row = dg.get(r).getData();
+                        aryIdx.forEach(idx -> row[idx] = serialize(row[idx]));      // serialize array data if necessary
+                        addRow(appender, row, r);
+                    }
+                    appender.flush();
                 }
-                appender.flush();
             }
             conn.commit();
         } catch (SQLException e) {
@@ -195,7 +197,7 @@ public class DuckDbAdapter extends BaseDbAdapter {
         return totalRows;
     }
 
-    private void addRow(DuckDBAppender appender, Object[] row, int ridx) throws SQLException {
+    public static void addRow(DuckDBAppender appender, Object[] row, int ridx) throws SQLException {
         appender.beginRow();
         for (Object d : row) {
             if (d == null) {
