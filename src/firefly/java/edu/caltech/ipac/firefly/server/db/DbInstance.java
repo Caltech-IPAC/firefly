@@ -5,6 +5,9 @@ package edu.caltech.ipac.firefly.server.db;
 
 import edu.caltech.ipac.util.AppProperties;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -104,6 +107,12 @@ public class DbInstance {
     }
     public boolean isPooled() { return isPooled; }
     public void setPooled(boolean pooled) { isPooled = pooled;}
+    public boolean testConn(Connection conn) {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("SELECT 1 FROM (VALUES (0))");
+            return true;
+        } catch (SQLException e) { return false; }
+    };
 
     @Override
     public boolean equals(Object obj) {

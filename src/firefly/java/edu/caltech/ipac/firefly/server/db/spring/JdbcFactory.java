@@ -40,11 +40,8 @@ public class JdbcFactory {
      * @return
      */
     public static JdbcTemplate getTemplate(DbInstance dbInstance) {
-        DataSource datasource = getDataSource(dbInstance);
-        if (datasource == null) return null;
-        return getWith( () -> new JdbcTemplate(datasource),
-                (jdbc) -> jdbc.queryForInt("SELECT 1 FROM (VALUES (0)) AS dummy") > 0,
-                3);     // return null if failed after 3 tries
+        DataSource datasource = getWith( () -> getDataSource(dbInstance), (ds) -> ds != null,3);     // return null if failed after 3 tries
+        return  datasource == null ? null : new JdbcTemplate(datasource);
     }
 
     /**
@@ -68,11 +65,8 @@ public class JdbcFactory {
      * @return
      */
     public static SimpleJdbcTemplate getSimpleTemplate(DbInstance dbInstance) {
-        DataSource datasource = getDataSource(dbInstance);
-        if (datasource == null) return null;
-        return getWith( () -> new SimpleJdbcTemplate(datasource),
-                (jdbc) -> jdbc.queryForInt("SELECT 1 FROM (VALUES (0)) AS dummy") > 0,
-                3);     // return null if failed after 3 tries
+        DataSource datasource = getWith( () -> getDataSource(dbInstance), (ds) -> ds != null,3);     // return null if failed after 3 tries
+        return datasource == null ? null :  new SimpleJdbcTemplate(datasource);
     }
 
     /**
@@ -132,12 +126,7 @@ public class JdbcFactory {
     }
 
     private static DataSource getDirectDataSource(DbInstance dbInstance) {
-        DriverManagerDataSource driver = new DataSourceWithProps(
-                    dbInstance.dbUrl,
-                    dbInstance.userId,
-                    dbInstance.password,
-                    dbInstance.getProps()
-                );
+        DriverManagerDataSource driver = new DataSourceWithProps(dbInstance);
 
         driver.setDriverClassName(dbInstance.jdbcDriver);
         logger.trace("Getting a new database connection for " + dbInstance.dbUrl + " using DriverManager",
@@ -168,20 +157,21 @@ public class JdbcFactory {
      * not be used unless it is specifically queried.
      */
     static class DataSourceWithProps extends DriverManagerDataSource {
-        Map<String,String> props;
+        DbInstance dbInstance;
 
-        public DataSourceWithProps(String url, String username, String password, Map<String,String> props) {
-            super(url, username, password);
-            this.props = props;
+        public DataSourceWithProps(DbInstance dbi) {
+            super(dbi.dbUrl, dbi.userId, dbi.password);
+            dbInstance = dbi;
         }
 
         @Override
         protected Connection getConnectionFromDriverManager(String url, Properties props) throws SQLException {
-            return super.getConnectionFromDriverManager(url, addProps(props));
+            Connection conn = super.getConnectionFromDriverManager(url, addProps(props));
+            return (dbInstance.testConn(conn) ? conn : null);
         }
 
         private Properties addProps(Properties props) {
-            if (this.props != null) props.putAll(this.props);
+            if (dbInstance.props != null) props.putAll(dbInstance.props);
             return props;
         }
 

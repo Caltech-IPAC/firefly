@@ -145,7 +145,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 // limit 0 does not work with oracle-like syntax
                 DataGroup dg = dbAdapter.getHeaders(dbAdapter.getDataTable());
                 results = EmbeddedDbUtil.toDataGroupPart(dg, treq);
-                String error = retrieveMsgFromError(e, treq, dbAdapter);
+                String error = dbAdapter.interpretError(e); // retrieveMsgFromError(e, treq, dbAdapter);
                 results.setErrorMsg(error);
                 jobExecIf(v -> v.setError(500, error));
             }

@@ -976,7 +976,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 //
 //====================================================================
 
-    public DataAccessException handleSqlExp(String msg, Exception e) {
+    public String interpretError(Throwable e) {
         if( e instanceof UncategorizedSQLException ce) {
             //java.sql.SQLException: Binder Error: Referenced column "sldfjas" not found in FROM clause!
             //Candidate bindings: "DATA.a"
@@ -984,12 +984,22 @@ abstract public class BaseDbAdapter implements DbAdapter {
             //                              ^
             String[] parts = groupMatch("java.sql.SQLException: (.*)",  ce.getSQLException().getMessage().split("\\n")[0]);
             if (parts != null && parts.length == 1) {
-                return new DataAccessException(msg, new SQLDataException(parts[0]));
+                return parts[0];
             }
         }
-        if (e instanceof DataAccessException dax) {
+        return e.getMessage();
+    }
+
+    public DataAccessException handleSqlExp(String msg, Exception e) {
+        Throwable cause = e;
+        // find SQLException
+        while (cause != null && !(cause instanceof SQLException)) {
+            cause = cause.getCause();
+        }
+        if (cause == null)  cause = e;      // if not found, use e
+        if (cause instanceof DataAccessException dax) {
             return new DataAccessException(msg, dax.getCause());
         }
-        return new DataAccessException(msg, e);
+        return new DataAccessException(msg, new SQLDataException(interpretError(cause)));
     }
 }
