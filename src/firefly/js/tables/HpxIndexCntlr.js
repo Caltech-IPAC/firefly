@@ -1,8 +1,10 @@
-import {flatten} from 'lodash';
+import {dispatchAddTaskCount, dispatchRemoveTaskCount} from '../core/AppDataCntlr';
+import {dispatchComponentStateChange} from '../core/ComponentCntlr';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import {flux} from '../core/ReduxFlux';
 import {ang2pixNest, radecToPolar} from '../externalSource/aladinProj/HealpixIndex';
 import {logger} from '../util/Logger';
+import {DEFAULT_COVERAGE_PLOT_ID} from '../visualize/PlotViewUtil';
 import {makeWorldPt} from '../visualize/Point';
 import {convertCelestial} from '../visualize/VisUtil';
 import {findTableCenterColumns} from '../voAnalyzer/TableAnalysis';
@@ -18,6 +20,7 @@ export const MIN_ROWS_FOR_HIERARCHICAL= 1000;
 const DATA_NSIDE= 2**DATA_NORDER;
 const UINT_SCALE= 10**7;
 const MAX_MAP= 16_000_000;
+export const COVERAGE_WAITING_MSG= 'COVERAGE_WAITING_MSG';
 
 const maxTiles= {
     9: 3_145_728,
@@ -186,11 +189,17 @@ async function addTableIndex(tbl_id,dispatcher) {
         dispatcher( { type: ENABLE_HPX_INDEX, payload:{ tbl_id, csys, ready:false }});
         return;
     }
-
+    dispatchAddTaskCount(DEFAULT_COVERAGE_PLOT_ID,'HpxIndexCntrl');
 
     let lonAry;
     let latAry;
     let tableUsingRadians= false;
+
+    if (table.totalRows>1_000_000) {
+        dispatchComponentStateChange(COVERAGE_WAITING_MSG, {msg:'Fetching coverage information'});
+    }
+
+
     if (useTableArrayFetch) { // this is the normal case
         const req = makeTblReq(table,{lonCol,latCol});
         const buffer= await fetchSpacialBinary(req);
@@ -224,6 +233,7 @@ async function addTableIndex(tbl_id,dispatcher) {
     if (shouldAbort(tbl_id,runId)) return;
     dispatcher( { type: ENABLE_HPX_INDEX,
         payload:{ tbl_id, orderData, tableUsingRadians, lonAry, latAry, csys, selectionOrderData, selectAll} });
+    dispatchRemoveTaskCount(DEFAULT_COVERAGE_PLOT_ID,'HpxIndexCntrl');
 }
 
 
@@ -449,6 +459,7 @@ function doCreateHealPixWork(resolve, lonAry, latAry, csys, runId) {
     let rowIdx=0;
     const length= lonAry.length;
     let done= false;
+    let percent=0;
     const id = window.setInterval(
         () => {
             if (shouldAbort(runId)) {
@@ -462,7 +473,20 @@ function doCreateHealPixWork(resolve, lonAry, latAry, csys, runId) {
             for (; (rowIdx < length);) {
                 addOrderRow(orderData, lonAry, latAry, rowIdx, csys);
                 rowIdx++;
-                if (rowIdx % 10000 === 0) return;
+                if (rowIdx % 10000 === 0) {
+                    const newPercent= Math.trunc(100*(rowIdx/lonAry.length));
+                    if (newPercent>percent+4 && lonAry.length>750000) {
+                        percent= newPercent;
+                        if (percent<96) {
+                            dispatchComponentStateChange(COVERAGE_WAITING_MSG, {msg:`Indexing: ${percent}%`});
+                        }
+                        else {
+                            dispatchComponentStateChange(COVERAGE_WAITING_MSG, {msg:'Analyzing'});
+                        }
+
+                    }
+                    return;
+                }
             }
             done= true;
 
@@ -575,7 +599,7 @@ export function getValuesForOrder(orderData,norder) {
     for(let i=0; (i<orderData[norder]?.tiles.length);i++) {
        joinAry.push(orderData[norder]?.tiles[i].values().toArray());
     }
-    return flatten(joinAry);
+    return joinAry.flat();
 }
 
 export function getKeysForOrder(orderData,norder) {
@@ -584,7 +608,7 @@ export function getKeysForOrder(orderData,norder) {
     for(let i=0; (i<orderData[norder]?.tiles.length);i++) {
         joinAry.push(orderData[norder]?.tiles[i].keys().toArray());
     }
-    return flatten(joinAry);
+    return joinAry.flat();
 }
 
 

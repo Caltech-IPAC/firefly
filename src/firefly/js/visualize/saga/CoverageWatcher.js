@@ -129,6 +129,7 @@ const defOptions= {
 };
 
 export const COVERAGE_WATCH_CID= 'COVERAGE_WATCH_CID';
+export const COVERAGE_WAITING_MSG= 'COVERAGE_WAITING_MSG';
 export const COVERAGE_FAIL= 'fail';
 
 const baseAttributePickList= [ PlotAttribute.USER_SEARCH_WP, PlotAttribute.USER_SEARCH_RADIUS_DEG,
