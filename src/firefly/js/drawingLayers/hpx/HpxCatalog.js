@@ -1,7 +1,9 @@
 import {getPreference} from '../../core/AppDataCntlr';
 import {dispatchAddActionWatcher} from '../../core/MasterSaga';
 import {MetaConst} from '../../data/MetaConst';
-import {getHpxIndexData, getIpixForWp, hasOrderDataReady, makeHpxWpt, MIN_NORDER} from '../../tables/HpxIndexCntlr';
+import {
+    getHpxIndexData, getIpixForWp, getTile, hasOrderDataReady, makeHpxWpt, MIN_NORDER
+} from '../../tables/HpxIndexCntlr';
 import {
     dispatchTableHighlight, dispatchTableUiUpdate, TABLE_HIGHLIGHT, TABLE_REMOVE, TABLE_SELECT, TABLE_UPDATE
 } from '../../tables/TablesCntlr';
@@ -226,10 +228,8 @@ function getMaxExpandedTiles(norder,tbl_id,ipixAry) {
     let totalPts= 0;
     if (hasOrderDataReady(tbl_id) && norder<11) {
         const idxData = getHpxIndexData(tbl_id);
-        totalPts= ipixAry.reduce( (sum, ipix) => sum+idxData.orderData[norder].tiles.get(ipix).count,0);
+        totalPts= ipixAry.reduce( (sum, ipix) => sum+ getTile(idxData.orderData,norder,ipix).count,0);
     }
-
-
     if (norder<7) return totalPts < 50000 ? 4 : 1;
     if (norder<8) return totalPts < 50000 ? 6 : 2;
     if (norder<10) return totalPts < 50000 ? 18 : 4;
