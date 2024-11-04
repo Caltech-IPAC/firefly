@@ -168,7 +168,7 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, position
             cutoutOptions.ucdKeys= [...ucdKeys,ucd];
 
             // note: the size is set as a number, if is a string it is coming from the dialog
-            if (isNumber(cutoutSize) && cutoutSize===SD_DEFAULT_SPACIAL_CUTOUT_SIZE && sdSizeValue) {
+            if (isNumber(cutoutSize) && cutoutSize===SD_DEFAULT_SPACIAL_CUTOUT_SIZE && sdSizeValue!==cutoutSize) {
                 params= {[ucd] : sdSizeValue};
                 dispatchComponentStateChange(key,{ [SD_CUTOUT_KEY]: sdSizeValue } );
             }
