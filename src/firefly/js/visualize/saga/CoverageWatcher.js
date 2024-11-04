@@ -14,7 +14,9 @@ import {TableSelectOptions} from '../../drawingLayers/CatalogUI.jsx';
 import HpxCatalog from '../../drawingLayers/hpx/HpxCatalog';
 import SearchTarget from '../../drawingLayers/SearchTarget.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
-import {dispatchEnableHpxIndex, getHpxIndexData, onOrderDataReady} from '../../tables/HpxIndexCntlr';
+import {
+    DATA_NORDER, dispatchEnableHpxIndex, getHpxIndexData, MIN_NORDER, onOrderDataReady
+} from '../../tables/HpxIndexCntlr';
 import {getCornersColumns} from '../../tables/TableInfoUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
 import {TABLE_HIGHLIGHT, TABLE_LOADED, TABLE_REMOVE, TABLE_SELECT,} from '../../tables/TablesCntlr.js';
@@ -512,11 +514,13 @@ function initRequest(r,viewerId,plotId, overlayPos, wp) {
 function getBestOrderCoverageSize(hpxIndex) {
     const orderData = hpxIndex?.orderData;
     if (!orderData) return 8;
-    if (orderData[8].tiles.size < 20000) return 8;
-    if (orderData[7].tiles.size < 20000) return 7;
-    if (orderData[6].tiles.size < 20000) return 6;
-    if (orderData[5].tiles.size < 5000) return 5;
-    return 4;
+    for (let i= DATA_NORDER; i>8; i--) {
+        if (orderData[i].tiles.size<20) return i;
+    }
+    for (let i= 8; i>MIN_NORDER; i--) {
+        if (orderData[i].tiles.size<5000) return i;
+    }
+    return MIN_NORDER;
 }
 
 /**
