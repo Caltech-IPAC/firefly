@@ -1,5 +1,5 @@
 import {
-    DATA_NORDER, getAllDataIndexes, getAllSelectedIndexes, getFirstIndex, getHpxIndexData,
+    DATA_NORDER, getAllDataIndexes, getAllSelectedIndexes, getFirstIndex, getHpxIndexData, getKeysForOrder,
     getTile, idxRoot, makeHpxWpt, MIN_NORDER,
     MIN_NORDER_FOR_COVERAGE, MIN_NORDER_TO_ALWAYS_GROUP, MIN_ROWS_FOR_HIERARCHICAL, onOrderDataReady
 } from '../../tables/HpxIndexCntlr';
@@ -151,8 +151,7 @@ function hasCoverageTables(centerWp, fov, plot) {
     return Object.entries(idxRoot())
         .filter(([, idxData]) => idxData.ready)
         .filter(([, idxData]) =>
-            [...idxData.orderData[MIN_NORDER_FOR_COVERAGE]?.tiles.keys()]
-                .some((ipix) => ipixAry.includes(ipix)))
+            getKeysForOrder(idxData.orderData,MIN_NORDER_FOR_COVERAGE).some((ipix) => ipixAry.includes(ipix)))
         .map(([tbl_id]) => tbl_id);
 }
 

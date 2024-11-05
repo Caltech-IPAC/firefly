@@ -15,7 +15,7 @@ import HpxCatalog from '../../drawingLayers/hpx/HpxCatalog';
 import SearchTarget from '../../drawingLayers/SearchTarget.js';
 import {serializeDecimateInfo} from '../../tables/Decimate.js';
 import {
-    DATA_NORDER, dispatchEnableHpxIndex, getHpxIndexData, MIN_NORDER, onOrderDataReady
+    DATA_NORDER, dispatchEnableHpxIndex, getHpxIndexData, getPixelCount, getValuesForOrder, MIN_NORDER, onOrderDataReady
 } from '../../tables/HpxIndexCntlr';
 import {getCornersColumns} from '../../tables/TableInfoUtil.js';
 import {cloneRequest, makeTableFunctionRequest, MAX_ROW} from '../../tables/TableRequestUtil.js';
@@ -515,10 +515,10 @@ function getBestOrderCoverageSize(hpxIndex) {
     const orderData = hpxIndex?.orderData;
     if (!orderData) return 8;
     for (let i= DATA_NORDER; i>8; i--) {
-        if (orderData[i].tiles.size<20) return i;
+        if (getPixelCount(orderData,i)<20) return i;
     }
     for (let i= 8; i>MIN_NORDER; i--) {
-        if (orderData[i].tiles.size<5000) return i;
+        if (getPixelCount(orderData,i)<5000) return i;
     }
     return MIN_NORDER;
 }
@@ -540,10 +540,10 @@ function computeSize(options, preparedTables, usesRadians) {
             switch (covType) {
                 case CoverageType.X:
                     const hpxIndex= getHpxIndexData(t.tbl_id);
-                    const tileIndex= getBestOrderCoverageSize(hpxIndex)  ;
-                    ptAry= [...(hpxIndex?.orderData?.[tileIndex]?.tiles.values() ?? [])].map(
+                    const bestNorder= getBestOrderCoverageSize(hpxIndex)  ;
+                    ptAry= getValuesForOrder(hpxIndex?.orderData,bestNorder).map(
                         ({pixel}) => {
-                            return getCornersForCell(tileIndex,pixel,CoordSys.EQ_J2000)?.wpCorners ?? [];
+                            return getCornersForCell(bestNorder,pixel,CoordSys.EQ_J2000)?.wpCorners ?? [];
                         }).flat();
                     break;
                 case CoverageType.ORBITAL_PATH:
