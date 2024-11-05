@@ -64,6 +64,13 @@ It also includes many, many bug fixes, clean up, and optimization (not all are l
 
 ### _Patches 2024.3_
 
+
+- 2024.3.2
+  - Bug fix: Coverage now testing up to 36 million rows Firefly-1601 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1661))
+  - JS API: config to disable the menu Firefly-1595 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1663))
+  - Bug fix: Coverage center not computed correctly ([commit](https://github.com/Caltech-IPAC/firefly/commit/f3e0adb366626b323f2326c02ec8113d3c591682))
+  - Bug fix: rendering issues with data product table without chart([commit](https://github.com/Caltech-IPAC/firefly/commit/cc5d0e73f1be10d577a67103cd0984a0b058061d))
+
 - 2024.3.1
   - Bug fix: lock by click not changing images with shift-click and updating correct value ([PR](https://github.com/Caltech-IPAC/firefly/pull/1660))
   - Bug fix: data product viewer will use a scrollbar with pngs- Firefly-1589 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1660))

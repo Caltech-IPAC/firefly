@@ -1,7 +1,10 @@
+import {dispatchAddTaskCount, dispatchRemoveTaskCount} from '../core/AppDataCntlr';
+import {dispatchComponentStateChange} from '../core/ComponentCntlr';
 import {dispatchAddActionWatcher} from '../core/MasterSaga';
 import {flux} from '../core/ReduxFlux';
 import {ang2pixNest, radecToPolar} from '../externalSource/aladinProj/HealpixIndex';
 import {logger} from '../util/Logger';
+import {DEFAULT_COVERAGE_PLOT_ID} from '../visualize/PlotViewUtil';
 import {makeWorldPt} from '../visualize/Point';
 import {convertCelestial} from '../visualize/VisUtil';
 import {findTableCenterColumns} from '../voAnalyzer/TableAnalysis';
@@ -16,8 +19,16 @@ export const MIN_NORDER_FOR_COVERAGE= 2;
 export const MIN_ROWS_FOR_HIERARCHICAL= 1000;
 const DATA_NSIDE= 2**DATA_NORDER;
 const UINT_SCALE= 10**7;
+const MAX_MAP= 16_000_000;
+export const COVERAGE_WAITING_MSG= 'COVERAGE_WAITING_MSG';
 
-
+const maxTiles= {
+    9: 3_145_728,
+    10: 12_582_912,
+    11: 50_331_648,
+    12: 201_326_592,
+    13: 805_306_368,
+};
 
 /**
  * @typedef {Object} TableHpxData
@@ -178,11 +189,17 @@ async function addTableIndex(tbl_id,dispatcher) {
         dispatcher( { type: ENABLE_HPX_INDEX, payload:{ tbl_id, csys, ready:false }});
         return;
     }
-
+    dispatchAddTaskCount(DEFAULT_COVERAGE_PLOT_ID,'HpxIndexCntrl');
 
     let lonAry;
     let latAry;
     let tableUsingRadians= false;
+
+    if (table.totalRows>1_000_000) {
+        dispatchComponentStateChange(COVERAGE_WAITING_MSG, {msg:'Fetching coverage information'});
+    }
+
+
     if (useTableArrayFetch) { // this is the normal case
         const req = makeTblReq(table,{lonCol,latCol});
         const buffer= await fetchSpacialBinary(req);
@@ -216,6 +233,7 @@ async function addTableIndex(tbl_id,dispatcher) {
     if (shouldAbort(tbl_id,runId)) return;
     dispatcher( { type: ENABLE_HPX_INDEX,
         payload:{ tbl_id, orderData, tableUsingRadians, lonAry, latAry, csys, selectionOrderData, selectAll} });
+    dispatchRemoveTaskCount(DEFAULT_COVERAGE_PLOT_ID,'HpxIndexCntrl');
 }
 
 
@@ -258,16 +276,6 @@ function watchTable(action, cancelSelf, params) {
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-/**
- *
- * @param {object} orderData
- * @param {number} norder
- * @param {number} tileNumber
- * @return {TileEntry}
- */
-export function getTile(orderData, norder, tileNumber) {
-    return orderData?.[norder]?.tiles?.get(tileNumber);
-}
 
 export function getHistgramForNorder(idxData, norder) {
     return idxData?.orderData?.[norder]?.histogramInfo;
@@ -451,6 +459,7 @@ function doCreateHealPixWork(resolve, lonAry, latAry, csys, runId) {
     let rowIdx=0;
     const length= lonAry.length;
     let done= false;
+    let percent=0;
     const id = window.setInterval(
         () => {
             if (shouldAbort(runId)) {
@@ -464,13 +473,26 @@ function doCreateHealPixWork(resolve, lonAry, latAry, csys, runId) {
             for (; (rowIdx < length);) {
                 addOrderRow(orderData, lonAry, latAry, rowIdx, csys);
                 rowIdx++;
-                if (rowIdx % 10000 === 0) return;
+                if (rowIdx % 10000 === 0) {
+                    const newPercent= Math.trunc(100*(rowIdx/lonAry.length));
+                    if (newPercent>percent+4 && lonAry.length>750000) {
+                        percent= newPercent;
+                        if (percent<96) {
+                            dispatchComponentStateChange(COVERAGE_WAITING_MSG, {msg:`Indexing: ${percent}%`});
+                        }
+                        else {
+                            dispatchComponentStateChange(COVERAGE_WAITING_MSG, {msg:'Analyzing'});
+                        }
+
+                    }
+                    return;
+                }
             }
             done= true;
 
             for(let i= MIN_NORDER_FOR_COVERAGE; (i<DATA_NORDER); i++) {
                 orderData[i].histogramInfo=orderData?.[i]?.tiles ?
-                    getArrayStats( [...orderData?.[i]?.tiles?.values()]?.map( ({count}) => count)) : undefined;
+                    getArrayStats( getValuesForOrder(orderData,i).map( ({count}) => count)) : undefined;
             }
             resolve(orderData);
         });
@@ -504,10 +526,20 @@ function getArrayStats(ary) {
 
 
 
+
 function initOrderData() {
     const orderData= {};
     for(let i= MIN_NORDER_FOR_COVERAGE; (i<=DATA_NORDER); i++) {
-        orderData[i]= {norder:i, tiles: new Map()};
+        orderData[i]= {norder:i, tiles: undefined};
+
+        if (i<10) {
+            orderData[i].tiles= [new Map()];
+        }
+        else {
+            const mapCnt= Math.trunc(maxTiles[i] / MAX_MAP)+1;
+            orderData[i].tiles= [];
+            for(let j= 0; (j<mapCnt); j++) orderData[i].tiles.push(new Map());
+        }
     }
     return orderData;
 }
@@ -515,7 +547,7 @@ function initOrderData() {
 function addOrderRow(orderData,lonAry,latAry,rowIdx,csys) {
     const wp= convertCelestial(makeWorldPt( lonAry[rowIdx]/UINT_SCALE, latAry[rowIdx]/UINT_SCALE, csys));
     const pixel= getIpixForWp(wp,DATA_NSIDE);
-    const tileEntry= orderData[DATA_NORDER].tiles.get(pixel);
+    const tileEntry= getTile(orderData,DATA_NORDER,pixel);
     if (tileEntry) {
         tileEntry.tableIndexes.push(rowIdx);
         tileEntry.count= tileEntry.tableIndexes.length;
@@ -523,7 +555,7 @@ function addOrderRow(orderData,lonAry,latAry,rowIdx,csys) {
     }
     else {
         const tile= {pixel, summaryTile: false, count: 1, tableIndexes: [rowIdx]};
-        orderData[DATA_NORDER].tiles.set(pixel, tile );
+        setPixelTile(orderData,DATA_NORDER,pixel,tile);
         addHigherOrders(orderData, pixel);
     }
 }
@@ -538,6 +570,47 @@ export function getIpixForWp(wp,nside) {
 
 
 
+/**
+ *
+ * @param {object} orderData
+ * @param {number} norder
+ * @param {number} tileNumber
+ * @return {TileEntry}
+ */
+export function getTile(orderData, norder, tileNumber) {
+    const mapIdx= Math.trunc(tileNumber/MAX_MAP);
+    return orderData[norder].tiles[mapIdx] ? orderData[norder].tiles[mapIdx].get(tileNumber) : undefined;
+}
+
+export function setPixelTile(orderData,norder,pixel,tile) {
+    const mapIdx= Math.trunc(pixel/MAX_MAP);
+    orderData[norder].tiles[mapIdx].set(pixel, tile );
+}
+
+export function getPixelCount(orderData,norder) {
+    const tileMapAry= orderData[norder].tiles;
+    return tileMapAry.reduce((sum,map) => sum+map.length, 0);
+}
+
+export function getValuesForOrder(orderData,norder) {
+    if (!orderData) return [];
+    if (norder<11) return [...orderData[norder]?.tiles[0]?.values()];
+    const joinAry= [];
+    for(let i=0; (i<orderData[norder]?.tiles.length);i++) {
+       joinAry.push(orderData[norder]?.tiles[i].values().toArray());
+    }
+    return joinAry.flat();
+}
+
+export function getKeysForOrder(orderData,norder) {
+    if (norder<11) return [...orderData[norder]?.tiles[0]?.keys()];
+    const joinAry= [];
+    for(let i=0; (i<orderData[norder]?.tiles.length);i++) {
+        joinAry.push(orderData[norder]?.tiles[i].keys().toArray());
+    }
+    return joinAry.flat();
+}
+
 
 const getRetroGradeTileNumber= (tileNumber) => Math.trunc(tileNumber/4);
 
@@ -545,10 +618,10 @@ function addHigherOrders(orderData,progradePixel) {
     let pixel= progradePixel;
     for(let norder= DATA_NORDER-1; (norder>=MIN_NORDER_FOR_COVERAGE); norder--) {
         pixel= getRetroGradeTileNumber(pixel);
-        let tile= orderData[norder].tiles.get(pixel);
+        let tile= getTile(orderData,norder,pixel);
         if (!tile) {
             tile= {pixel, summaryTile: true, count: 0};
-            orderData[norder].tiles.set(pixel,tile);
+            setPixelTile(orderData,norder,pixel,tile);
         }
         tile.count++;
     }

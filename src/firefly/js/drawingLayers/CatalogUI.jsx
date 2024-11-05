@@ -170,7 +170,7 @@ function changeVisibilityScope(drawLayer,pv,value) {
 
 function showHpxOptions(drawLayer) {
     const groupOp= [];
-    for(let i= 5; i<=50;i+=5) groupOp.push({label:i+'', value:i});
+    for(let i= 5; i<=75;i+=5) groupOp.push({label:i+'', value:i});
 
     const groupTypeOp= [
         {label: 'Ellipse', value: ELLIPSE_GROUP_TYPE},
