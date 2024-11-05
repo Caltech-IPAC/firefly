@@ -323,7 +323,7 @@ export function updatePlotOverlayFromUserInput(plotId, whichOverlay, wp, radius,
     const dl = getDrawLayerByType(getDlAry(), SearchSelectTool.TYPE_ID);
     if (!dl) return;
     const isCone = whichOverlay === CONE_CHOICE_KEY;
-    const plot= primePlot(visRoot());
+    const plot= primePlot(visRoot(),plotId);
 
     dispatchChangeDrawingDef(dl.drawLayerId,{...dl.drawingDef,color:'yellow'},plotId);
     dispatchModifyCustomField(dl.drawLayerId,{isInteractive: true},plotId);

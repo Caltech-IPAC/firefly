@@ -69,7 +69,7 @@ export function createTileDataMaker() {
 
         const {centerWp, fov} = getPointMaxSide(plot, plot.viewDim);
         const coverageTblIds = hasCoverageTables(centerWp, fov, isHiPSAitoff(plot));
-        if (!coverageTblIds.includes(tbl_id)) return []; // this should force a clear for this layer
+        if (!centerWp || !coverageTblIds.includes(tbl_id)) return []; // this should force a clear for this layer
         const cells = getAllVisibleHiPSCells(norder, centerWp, fov*1.3, CoordSys.EQ_J2000, isHiPSAitoff(plot));
         const tblIdx = coverageTblIds.indexOf(tbl_id);
         const cc = CysConverter.make(plot);
