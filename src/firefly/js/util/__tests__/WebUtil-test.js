@@ -19,8 +19,8 @@ describe('A test suite for WebUtil.js', () => {
 
     test('encodeUrlString', () => {
         // use baseUrl for relative link
-        expect(encodeUrlString('/relative-path/ref', 'http://localhost'))
-                        .toBe('http://localhost/relative-path/ref');
+        expect(encodeUrlString('/relative-path/ref', 'http://localhost:8080'))
+                        .toBe('http://localhost:8080/relative-path/ref');
         // ignore baseUrl if full url is given
         expect(encodeUrlString('http://acme.org/relative-path/ref', 'http://localhost'))
                         .toBe('http://acme.org/relative-path/ref');
