@@ -384,22 +384,12 @@ function makePrecisionRenderer(tbl_ui_id, ctm_tbl_id, onChange) {
 
 function makeFilterRenderer(tbl_id, ctm_tbl_id, onChange) {
 
-    const collectFilterInfo = (data=[]) => {
-        const filterCls = FilterInfo.parse('');
-        data.filter( (row) => row[filterIdx])
-            .forEach( (row) => {
-                filterCls.setFilter(row[cnameIdx], row[filterIdx]);
-            });
-
-        return filterCls.serialize();
-    };
-
     const onFilter = (value, rowIndex, data) => {
-        const filterInfo = collectFilterInfo(data);
-        const prevFilterInfo = get(getTblById(tbl_id), 'request.filters');
-        if (filterInfo !== prevFilterInfo) {
-            onChange && onChange({filterInfo});
-        }
+        const cFilterInfo = FilterInfo.parse(getTblById(tbl_id)?.request?.filters || '');
+        const cname = data[rowIndex]?.[cnameIdx];
+        const conditions = data[rowIndex]?.[filterIdx];
+        cFilterInfo.setFilter(cname, conditions);
+        onChange?.({filterInfo: cFilterInfo.serialize()});
     };
 
     const validator = (cond, data, rowIndex) => {
