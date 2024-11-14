@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import javax.annotation.Nonnull;
 
 import static edu.caltech.ipac.table.TableUtil.getAliasName;
 
@@ -60,6 +61,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         }
         return null;
     }
+
     private static DataGroup getInfoOrNull(DuckDbReadable duckReadable, String srcFile) {
         try {
             return duckReadable.getInfo(srcFile);
@@ -81,6 +83,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         return castInto(format, null);
     }
 
+    @Nonnull
     public static DuckDbReadable castInto(TableUtil.Format format, DbAdapter dbAdapter) throws DataAccessException {
         File dbFile = dbAdapter == null ? null : dbAdapter.getDbFile();
         return   switch (format) {

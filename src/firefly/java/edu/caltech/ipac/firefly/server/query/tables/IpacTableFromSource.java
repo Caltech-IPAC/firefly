@@ -11,8 +11,6 @@ import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbDataIngestor;
-import edu.caltech.ipac.firefly.server.db.DuckDbAdapter;
-import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
@@ -61,21 +59,19 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
         }
 
         var srcFile = fetchSourceFile(req);
-        return fetchDataFromFile(req, srcFile, collectMeta(req));
+        return fetchDataFromFile(req, srcFile);
     }
 
-    DataGroup fetchDataFromFile(TableServerRequest req, File srcFile, DataGroup meta) throws DataAccessException {
+    DataGroup fetchDataFromFile(TableServerRequest req, File srcFile) throws DataAccessException {
         try {
             int tblIdx = req.getIntParam(TBL_INDEX, 0);
-            DataGroup table = TableUtil.readAnyFormat(srcFile, tblIdx, req);
-            if (table != null)  table.addMetaFrom(meta);
-            return table;
+            return TableUtil.readAnyFormat(srcFile, tblIdx, req);
         } catch (IOException e) {
             throw new DataAccessException(e.getMessage(), e);
         }
     }
 
-    private DataGroup collectMeta(TableServerRequest req) {
+    protected DataGroup collectMeta(TableServerRequest req) {
         DataGroup meta = null;
         if (req.getParam(TBL_TYPE, TYPE_CATALOG).equals(TYPE_CATALOG)) {        // if catalog and overlay is not set, set it to "TRUE"
             if (isEmpty(req.getMeta(MetaConst.CATALOG_OVERLAY_TYPE))) {
@@ -88,28 +84,24 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
 
     @Override
     protected FileInfo ingestDataIntoDb(TableServerRequest req, DbAdapter dbAdapter) throws DataAccessException {
-
-        String processor = req.getParam("processor");
-        String jsonSearchRequest = req.getParam(SEARCH_REQUEST);
-        DataGroup meta = collectMeta(req);
-
         try {
             dbAdapter.initDbFile();
-            if (!isEmpty(processor)) {
-                return dbAdapter.ingestData(makeDgSupplier(req, () -> getByProcessor(processor, req)), dbAdapter.getDataTable());
-            } else if(!isEmpty(jsonSearchRequest)) {
-                return dbAdapter.ingestData(makeDgSupplier(req, () -> getByTableRequest(jsonSearchRequest)), dbAdapter.getDataTable());
-            } else {
-                File srcFile = fetchSourceFile(req);
-                TableUtil.Format format = DuckDbReadable.guessFileFormat(srcFile.getAbsolutePath());
-                if (format == null) format = guessFormat(srcFile);
 
-                if (format == IPACTABLE || !(dbAdapter instanceof DuckDbAdapter)) {
-                    return dbAdapter.ingestData(makeDgSupplier(req, () -> fetchDataFromFile(req, srcFile, meta)), dbAdapter.getDataTable());
-                } else {
-                    return DbDataIngestor.ingestData(format, dbAdapter, srcFile.getPath(), meta);
-                }
+            String processor = req.getParam("processor");
+            String jsonSearchRequest = req.getParam(SEARCH_REQUEST);
+            File srcFile = null;
+            DbAdapter.DataGroupSupplier fetchDataGroup = null;
+            DataGroup meta = collectMeta(req);
+
+            if (!isEmpty(processor))  {
+                fetchDataGroup = () -> getByProcessor(processor, req);
+            } else if (!isEmpty(jsonSearchRequest)) {
+                fetchDataGroup = () -> getByTableRequest(jsonSearchRequest);
+            } else {
+                srcFile = fetchSourceFile(req);
             }
+            return DbDataIngestor.ingestData(req, dbAdapter, srcFile, meta, makeDgSupplier(req, fetchDataGroup));
+
         } catch (IOException e) {
             Logger.getLogger().error(e,"Failed to ingest data into the database:" + req.getRequestId());
             throw new DataAccessException(e);

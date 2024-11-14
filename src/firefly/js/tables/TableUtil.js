@@ -1183,7 +1183,7 @@ export function getColMaxVal(col, columnIndex, dataAry,
     let maxVal = '';
 
     // the 4 headers
-    [col.label || col.name, col.units, getTypeLabel(col), col.nullString].forEach( (v) => {
+    [col.label || col.name, col.units + '()', getTypeLabel(col), col.nullString].forEach( (v) => {
         if (v?.length > maxVal.length) maxVal = v;
     });
 

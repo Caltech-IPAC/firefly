@@ -14,7 +14,7 @@ import edu.caltech.ipac.table.TableUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -37,51 +37,60 @@ public final class IpacTableReader {
     }
 
     public static DataGroup read(File inf, TableServerRequest request, String... onlyColumns) throws IOException {
-        IpacTableDef tableDef = IpacTableUtil.getMetaInfo(inf);
-        BufferedReader bufferedReader = new BufferedReader(new FileReader(inf), IpacTableUtil.FILE_IO_BUFFER_SIZE);
-        return doRead(bufferedReader, request, tableDef, onlyColumns);
+        return read(new FileInputStream(inf), SpectrumMetaInspector.hasSpectrumHint(request), onlyColumns);
     }
 
     public static DataGroup read(InputStream inputStream, String... onlyColumns) throws IOException {
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream), IpacTableUtil.FILE_IO_BUFFER_SIZE);
-        IpacTableDef tableDef = IpacTableUtil.getMetaInfo(bufferedReader);
-        return  doRead(bufferedReader, null, tableDef, onlyColumns);
+        return read(inputStream, false, onlyColumns);
     }
 
-    static DataGroup doRead(BufferedReader bufferedReader, TableServerRequest request,
-                            IpacTableDef tableDef, String... onlyColumns) throws IOException {
+    public static DataGroup read(InputStream inputStream, boolean searchForSpectrum,  String... onlyColumns) throws IOException {
+        var handler = new TableParseHandler.Memory(false, searchForSpectrum);
+        parseTable(handler, inputStream, onlyColumns);
+        return handler.getTable(0);
+    }
 
-        DataGroup outData = create(tableDef, onlyColumns);
+    public static void parseTable(TableParseHandler handler, File srcFile, String... onlyColumns) throws IOException {
+        parseTable(handler, new FileInputStream(srcFile), onlyColumns);
+    }
 
+    public static void parseTable(TableParseHandler handler, InputStream inputStream, String... onlyColumns) throws IOException {
         String line = null;
-        int lineNum = tableDef.getExtras() == null ? 0 : tableDef.getExtras().getKey();
+        int lineNum = 0;
+        var bufferedReader = new BufferedReader(new InputStreamReader(inputStream), IpacTableUtil.FILE_IO_BUFFER_SIZE);
+        try (bufferedReader) {
+            handler.start();
+            handler.startTable(0);
 
-        try {
-            line = tableDef.getExtras() == null ? bufferedReader.readLine() : tableDef.getExtras().getValue();
-            lineNum++;
+            IpacTableDef tableDef = IpacTableUtil.getMetaInfo(bufferedReader);
+            DataGroup headers = create(tableDef, onlyColumns);
+            handler.header(headers);
 
-            TableUtil.ParsedColInfo[] parsedInfos = Arrays.stream(outData.getDataDefinitions())
-                                                        .map(dt -> tableDef.getParsedInfo(dt.getKeyName()))
-                                                        .toArray(TableUtil.ParsedColInfo[]::new);
-            while (line != null) {
-                Object[] row = IpacTableUtil.parseRow(line, outData.getDataDefinitions(), parsedInfos);
-                if (row != null) {
-                    outData.add(row);
-                }
-                line = bufferedReader.readLine();
+            if (!handler.headerOnly()) {
+                lineNum = tableDef.getExtras() == null ? 0 : tableDef.getExtras().getKey();
+
+                line = tableDef.getExtras() == null ? bufferedReader.readLine() : tableDef.getExtras().getValue();
                 lineNum++;
+                DataType[] cols = headers.getDataDefinitions();
+                TableUtil.ParsedColInfo[] parsedInfos = Arrays.stream(cols)
+                        .map(dt -> tableDef.getParsedInfo(dt.getKeyName()))
+                        .toArray(TableUtil.ParsedColInfo[]::new);
+                while (line != null) {
+                    Object[] row = IpacTableUtil.parseRow(line, cols, parsedInfos);
+                    if (row != null)    handler.data(row);
+                    line = bufferedReader.readLine();
+                    lineNum++;
+                }
             }
-        } catch(Exception e) {
-            String msg = e.getMessage()+"<br>on line "+lineNum+": " + line;
-            if (msg.length()>128) msg = msg.substring(0,128)+"...";
-            logger.error(e, "on line "+lineNum+": " + line);
+        } catch (Exception e) {
+            String msg = e.getMessage() + "<br>on line " + lineNum + ": " + line;
+            if (msg.length() > 128) msg = msg.substring(0, 128) + "...";
+            logger.error(e, "on line " + lineNum + ": " + line);
             throw new IOException(msg);
         } finally {
-            bufferedReader.close();
+            handler.endTable(0);
+            handler.end();
         }
-        SpectrumMetaInspector.searchForSpectrum(outData,request);
-        outData.trimToSize();
-        return outData;
     }
 
     public static FileAnalysisReport analyze(File infile, FileAnalysisReport.ReportType type) throws IOException {
