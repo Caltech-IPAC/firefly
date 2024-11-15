@@ -6,20 +6,18 @@ package edu.caltech.ipac.firefly.core;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.messaging.JsonHelper;
-import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.dpanalyze.DataProductAnalyzer;
 import edu.caltech.ipac.firefly.server.dpanalyze.DataProductAnalyzerFactory;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.table.JsonTableUtil;
-import edu.caltech.ipac.table.TableUtil;
-import edu.caltech.ipac.table.TableUtil.Format;
-import edu.caltech.ipac.table.io.DsvTableIO;
+import edu.caltech.ipac.util.FormatUtil.Format;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.FitsHDUUtil;
+import edu.caltech.ipac.util.FormatUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.ResponseMessage;
 import nom.tam.fits.FitsException;
@@ -63,7 +61,7 @@ public class FileAnalysis {
             return analyzePNG(infile, mtype);
         }
 
-        Format format = TableUtil.guessFormat(infile);
+        Format format = FormatUtil.detect(infile);
         FileAnalysisReport report= null;
         DataProductAnalyzer dpA= DataProductAnalyzerFactory.getAnalyzer(analyzerId);
         FileAnalysisReport productReport= null;
@@ -107,10 +105,10 @@ public class FileAnalysis {
                 report =  analyzeRegion(infile,mtype);
                 break;
             default:
-                report = new FileAnalysisReport(type, Format.UNKNOWN.name(), infile.length(), infile.getAbsolutePath());
+                report = new FileAnalysisReport(type, FormatUtil.Format.UNKNOWN.name(), infile.length(), infile.getAbsolutePath());
         }
 
-        if (format!=Format.FITS) {
+        if (format!= FormatUtil.Format.FITS) {
             productReport= dpA.analyze(report,infile,analyzerId,params);
         }
 
@@ -227,13 +225,13 @@ public class FileAnalysis {
 //====================================================================
 
     public static FileAnalysisReport analyzePDF(File infile, FileAnalysisReport.ReportType type) {
-        FileAnalysisReport report = new FileAnalysisReport(type, TableUtil.Format.PDF.name(), infile.length(), infile.getPath());
+        FileAnalysisReport report = new FileAnalysisReport(type, FormatUtil.Format.PDF.name(), infile.length(), infile.getPath());
         report.addPart(new FileAnalysisReport.Part(FileAnalysisReport.Type.PDF, "PDF File"));
         return report;
     }
 
     public static FileAnalysisReport analyzeUWS(File infile, FileAnalysisReport.ReportType type, Map<String, String> params) {
-        FileAnalysisReport report = new FileAnalysisReport(type, TableUtil.Format.UWS.name(), infile.length(), infile.getPath());
+        FileAnalysisReport report = new FileAnalysisReport(type, FormatUtil.Format.UWS.name(), infile.length(), infile.getPath());
         FileAnalysisReport.Part part= new FileAnalysisReport.Part(FileAnalysisReport.Type.UWS, "UWS Job File");
         part.setUrl(params.get("URL")); //make URL accessible on client side
         report.addPart(part);
@@ -241,26 +239,26 @@ public class FileAnalysis {
     }
 
     public static FileAnalysisReport analyzeTAR(File infile, FileAnalysisReport.ReportType type) {
-        FileAnalysisReport report = new FileAnalysisReport(type, TableUtil.Format.TAR.name(), infile.length(), infile.getPath());
+        FileAnalysisReport report = new FileAnalysisReport(type, FormatUtil.Format.TAR.name(), infile.length(), infile.getPath());
         report.addPart(new FileAnalysisReport.Part(FileAnalysisReport.Type.TAR, "TAR File"));
         return report;
     }
 
     public static FileAnalysisReport analyzeRegion(File infile, FileAnalysisReport.ReportType type) {
-        FileAnalysisReport report = new FileAnalysisReport(type, Format.REGION.name(), infile.length(), infile.getPath());
+        FileAnalysisReport report = new FileAnalysisReport(type, FormatUtil.Format.REGION.name(), infile.length(), infile.getPath());
         report.addPart(new FileAnalysisReport.Part(FileAnalysisReport.Type.REGION, "Region File"));
         return report;
     }
 
     public static FileAnalysisReport analyzePNG(File infile, FileAnalysisReport.ReportType type) {
-        FileAnalysisReport report = new FileAnalysisReport(type, Format.PNG.name(), infile.length(), infile.getPath());
+        FileAnalysisReport report = new FileAnalysisReport(type, FormatUtil.Format.PNG.name(), infile.length(), infile.getPath());
         report.addPart(new FileAnalysisReport.Part(FileAnalysisReport.Type.PNG, "PNG File"));
         return report;
     }
 
     private static FileAnalysisReport analyzeError(File infile, int responseCode, String contentType) {
         FileAnalysisReport report = new FileAnalysisReport(
-                FileAnalysisReport.ReportType.Details, Format.UNKNOWN.name(),
+                FileAnalysisReport.ReportType.Details, FormatUtil.Format.UNKNOWN.name(),
                 infile.length(), infile.getPath());
         FileAnalysisReport.Part part= new FileAnalysisReport.Part(FileAnalysisReport.Type.ErrorResponse, "Error");
 
@@ -279,7 +277,7 @@ public class FileAnalysis {
 
     private static FileAnalysisReport analyzeFITSError(File infile, String msg) {
         FileAnalysisReport report = new FileAnalysisReport(
-                FileAnalysisReport.ReportType.Details, Format.UNKNOWN.name(),
+                FileAnalysisReport.ReportType.Details, FormatUtil.Format.UNKNOWN.name(),
                 infile.length(), infile.getPath());
         FileAnalysisReport.Part part= new FileAnalysisReport.Part(FileAnalysisReport.Type.ErrorResponse, "Error");
         part.setDesc("Error in FITS Reading: " + msg);
@@ -288,7 +286,7 @@ public class FileAnalysis {
     }
 
     private static FileAnalysisReport analyzeLoadInBrowser(File infile, String contentType) {
-        FileAnalysisReport report = new FileAnalysisReport( FileAnalysisReport.ReportType.Details, Format.HTML.name(),
+        FileAnalysisReport report = new FileAnalysisReport( FileAnalysisReport.ReportType.Details, FormatUtil.Format.HTML.name(),
                 infile.length(), infile.getPath());
         FileAnalysisReport.Part part= new FileAnalysisReport.Part(FileAnalysisReport.Type.LoadInBrowser, "Load in browser");
         part.setDesc("Send to browser");
@@ -300,7 +298,7 @@ public class FileAnalysis {
 
     public static FileAnalysisReport makeReportFromException(Exception e) {
         FileAnalysisReport report = new FileAnalysisReport( FileAnalysisReport.ReportType.Details,
-                Format.UNKNOWN.name(), 0, "");
+                FormatUtil.Format.UNKNOWN.name(), 0, "");
         FileAnalysisReport.Part part= new FileAnalysisReport.Part(FileAnalysisReport.Type.ErrorResponse, "Error");
         String desc;
         if (e instanceof FailedRequestException fre) {

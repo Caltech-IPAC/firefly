@@ -70,7 +70,7 @@ public class AsyncTapQueryTest extends ConfigTest {
 		try {
 			String query = "SELECT * FROM fp_psc WHERE CONTAINS(POINT('J2000',ra,dec),CIRCLE('J2000',210.80225,54.34894,1.0))=1";
 			TableServerRequest req = new TableServerRequest(AsyncTapQuery.ID);
-			req.setParam(AsyncTapQuery.SVC_URL, "https://irsadev.ipac.caltech.edu/TAP");
+			req.setParam(AsyncTapQuery.SVC_URL, "https://irsa.ipac.caltech.edu/TAP");
 			req.setParam(AsyncTapQuery.QUERY, query);
 
 			String jobUrl = new AsyncTapQuery().submitJob(req);

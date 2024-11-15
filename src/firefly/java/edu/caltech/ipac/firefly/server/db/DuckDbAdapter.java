@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.AppProperties;
@@ -16,10 +17,12 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
@@ -66,6 +69,7 @@ public class DuckDbAdapter extends BaseDbAdapter {
 
     public DuckDbAdapter(DbFileCreator dbFileCreator) { this(dbFileCreator.create(NAME)); }
     public DuckDbAdapter(File dbFile) { super(dbFile); }
+    DuckDbAdapter() { super(null) ;}
 
     public String getName() { return NAME; }
 
@@ -86,9 +90,10 @@ public class DuckDbAdapter extends BaseDbAdapter {
     }
 
     void createUDFs() {
+        SimpleJdbcTemplate jdbc = getJdbc();
         for (String cf : customFunctions) {
             try {
-                execUpdate(cf);
+                jdbc.update(cf);
             } catch (Exception ex) {
                 LOGGER.error("Fail to create custom function:" + cf);
             }
@@ -200,36 +205,23 @@ public class DuckDbAdapter extends BaseDbAdapter {
     public static void addRow(DuckDBAppender appender, Object[] row, int ridx) throws SQLException {
         appender.beginRow();
         for (Object d : row) {
-            if (d == null) {
-                appender.append(null);
-            } else if (d instanceof Boolean v) {
-                appender.append(v);
-            } else if (d instanceof Byte v) {
-                appender.append(v);
-            } else if (d instanceof Short v) {
-                appender.append(v);
-            } else if (d instanceof Integer v) {
-                appender.append(v);
-            } else if (d instanceof Long v) {
-                appender.append(v);
-            } else if (d instanceof Float v) {
-                appender.append(v);
-            } else if (d instanceof Double v) {
-                appender.append(v);
-            } else if (d instanceof String v) {
-                appender.append(v);
-            } else if (d instanceof BigDecimal v) {
-                appender.appendBigDecimal(v);
-            } else if (d instanceof java.sql.Date v) {
-                appender.appendLocalDateTime(v.toLocalDate().atStartOfDay());
-            } else if (d instanceof LocalDate v) {
-                appender.appendLocalDateTime(v.atStartOfDay());
-            } else if (d instanceof LocalDateTime v) {
-                appender.appendLocalDateTime(v.atZone(ZoneOffset.UTC).toLocalDateTime());
-            } else if (d instanceof Date v) {
-                appender.appendLocalDateTime(LocalDateTime.ofInstant(v.toInstant(), ZoneOffset.UTC));  // date/time should be stored as utc.
-            } else {
-                throw new IllegalStateException("Unexpected value: " + d);
+            switch (d) {
+                case null -> appender.append(null);
+                case Boolean v -> appender.append(v);
+                case Byte v -> appender.append(v);
+                case Short v -> appender.append(v);
+                case Integer v -> appender.append(v);
+                case Long v -> appender.append(v);
+                case Float v -> appender.append(v);
+                case Double v -> appender.append(v);
+                case String v -> appender.append(v);
+                case Character v -> appender.append(v);
+                case BigDecimal v -> appender.appendBigDecimal(v);
+                case java.sql.Date v -> appender.appendLocalDateTime(v.toLocalDate().atStartOfDay());
+                case LocalDate v -> appender.appendLocalDateTime(v.atStartOfDay());
+                case LocalDateTime v -> appender.appendLocalDateTime(v.atZone(ZoneOffset.UTC).toLocalDateTime());
+                case Date v -> appender.appendLocalDateTime(LocalDateTime.ofInstant(v.toInstant(), ZoneOffset.UTC));    // date/time should be stored as utc.
+                default -> throw new IllegalStateException("Unexpected value: " + d);
             }
         }
         appender.append(ridx);         // add ROW_IDX
@@ -279,6 +271,39 @@ public class DuckDbAdapter extends BaseDbAdapter {
 
     public static String replaceLike(String input) {
         return replaceUnquoted(input, "like", "ILIKE");
+    }
+
+    public record MimeDesc(String mime, String desc) {}
+    @Nonnull
+    public static MimeDesc getMimeType(File inFile) {
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        try (Connection conn = new DuckDbAdapter().getJdbcTmpl().getDataSource().getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet extrs = stmt.executeQuery("SET extension_directory = '%s'; SELECT installed, loaded FROM duckdb_extensions() WHERE extension_name = 'magic'".formatted(tmpDir))) {
+
+            boolean installed = false;
+            boolean loaded = false;
+            if (extrs.next()) {
+                installed = extrs.getBoolean("installed");
+                loaded = extrs.getBoolean("loaded");
+            }
+            // Install and load the extension if not already done
+            if (!installed) {
+                stmt.executeUpdate("SET extension_directory = '%s'; INSTALL magic FROM community".formatted(tmpDir));
+            }
+            if (!loaded) {
+                stmt.executeUpdate("SET extension_directory = '%s'; LOAD magic".formatted(tmpDir));
+            }
+            try (ResultSet rs = stmt.executeQuery("SELECT file, magic_mime(file) AS mime, magic_type(file) AS desc FROM glob('%s')".formatted(inFile.getAbsolutePath()))) {
+                if (rs.next()) {
+                    return new MimeDesc(rs.getString("mime"), rs.getString("desc"));
+                }
+            }
+
+        } catch (SQLException ex) {
+            Logger.getLogger().error(ex, "Failed to detect mime type");
+        }
+        return new MimeDesc("application/x-unknown", "unknown");
     }
 
 }

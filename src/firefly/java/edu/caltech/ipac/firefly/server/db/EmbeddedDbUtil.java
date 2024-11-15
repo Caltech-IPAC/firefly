@@ -46,7 +46,9 @@ import static edu.caltech.ipac.firefly.server.db.DbAdapter.NULL_TOKEN;
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.ignoreCols;
 import static edu.caltech.ipac.firefly.server.db.DbInstance.USE_REAL_AS_DOUBLE;
 import static edu.caltech.ipac.table.DataGroup.ROW_IDX;
+import static edu.caltech.ipac.table.DataGroup.ROW_NUM;
 import static edu.caltech.ipac.table.TableMeta.DERIVED_FROM;
+import static edu.caltech.ipac.table.TableUtil.fixCname;
 import static edu.caltech.ipac.util.StringUtils.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.ZoneOffset.UTC;
@@ -483,6 +485,8 @@ public class EmbeddedDbUtil {
     }
 
     public static DataType[] makeDbCols(DataGroup dg) {
+        fixCname(dg, ROW_IDX);
+        fixCname(dg, ROW_NUM);
         DataType[] cols = new DataType[dg.getDataDefinitions().length + 2];
         if (dg.getDataDefintion(ROW_IDX) != null) {
             logger.error("Datagroup should not have ROW_IDX in it at the start.");

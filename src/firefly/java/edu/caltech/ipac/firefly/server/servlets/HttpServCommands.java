@@ -13,6 +13,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.FormatUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.table.TableUtil;
 import org.json.simple.JSONObject;
@@ -43,7 +44,7 @@ public class HttpServCommands {
 
             boolean tableSave = sp.getOptionalBoolean("save_to_temp", false); //if this is true, don't want to download tbl, instead load it into a tmp file
 
-            TableUtil.Format tblFormat = sp.getTableFormat();
+            FormatUtil.Format tblFormat = sp.getTableFormat();
             String fileNameExt = tblFormat.getFileNameExt();
 
             if (fileNameExt.equalsIgnoreCase(".reg")) {

@@ -17,7 +17,7 @@ import edu.caltech.ipac.firefly.visualize.PlotState;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.table.TableUtil;
-import edu.caltech.ipac.table.TableUtil.Format;
+import edu.caltech.ipac.util.FormatUtil.Format;
 import edu.caltech.ipac.visualize.plot.ImagePt;
 import edu.caltech.ipac.visualize.plot.WorldPt;
 import org.json.simple.JSONArray;

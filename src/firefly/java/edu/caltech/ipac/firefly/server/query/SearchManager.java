@@ -7,14 +7,11 @@ import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.firefly.data.*;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.util.Assert;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import edu.caltech.ipac.util.FormatUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -66,11 +63,11 @@ public class SearchManager {
         return dgp;
     }
 
-    public FileInfo save(OutputStream saveTo, TableServerRequest dataRequest, TableUtil.Format format) throws DataAccessException {
+    public FileInfo save(OutputStream saveTo, TableServerRequest dataRequest, FormatUtil.Format format) throws DataAccessException {
         return save(saveTo, dataRequest, format, TableUtil.Mode.displayed);
     }
 
-    public FileInfo save(OutputStream saveTo, TableServerRequest dataRequest, TableUtil.Format format, TableUtil.Mode mode) throws DataAccessException {
+    public FileInfo save(OutputStream saveTo, TableServerRequest dataRequest, FormatUtil.Format format, TableUtil.Mode mode) throws DataAccessException {
         try {
             SearchProcessor processor = getProcessor(dataRequest.getRequestId());
             if (dataRequest != null) {

@@ -13,8 +13,8 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import edu.caltech.ipac.table.TableUtil;
 
+import edu.caltech.ipac.util.FormatUtil;
 import edu.caltech.ipac.util.StringUtils;
 import uk.ac.starlink.table.*;
 import uk.ac.starlink.votable.*;
@@ -37,7 +37,7 @@ public class VoTableWriter {
      * @param outputFormat votable output format
      * @throws IOException on error
      */
-    public static void save(File file, DataGroup dataGroup, TableUtil.Format outputFormat)
+    public static void save(File file, DataGroup dataGroup, FormatUtil.Format outputFormat)
             throws IOException {
 
 
@@ -54,7 +54,7 @@ public class VoTableWriter {
      * @param outputFormat votable output format
      * @throws IOException on error
      */
-    public static void save(OutputStream stream, DataGroup dataGroup, TableUtil.Format outputFormat)
+    public static void save(OutputStream stream, DataGroup dataGroup, FormatUtil.Format outputFormat)
             throws IOException {
 
         FitsFactory.useThreadLocalSettings(true);  // consistent with FitsTableReader
@@ -319,7 +319,7 @@ public class VoTableWriter {
     private static class VOTableWriterImpl extends VOTableWriter {
         private DataGroup dataGroup;
 
-        private VOTableWriterImpl(TableUtil.Format outputFormat, DataGroup dataGroup) {
+        private VOTableWriterImpl(FormatUtil.Format outputFormat, DataGroup dataGroup) {
             super(getDataFormat(outputFormat), true, getVotVersion(outputFormat));
             this.dataGroup = dataGroup;
         }
@@ -386,22 +386,22 @@ public class VoTableWriter {
             writer.flush();
         }
 
-        private static DataFormat getDataFormat(TableUtil.Format outputFormat) {
+        private static DataFormat getDataFormat(FormatUtil.Format outputFormat) {
 
 
-            if (outputFormat.equals(TableUtil.Format.VO_TABLE_BINARY2)) {
+            if (outputFormat.equals(FormatUtil.Format.VO_TABLE_BINARY2)) {
                 return DataFormat.BINARY2;
-            } else if (outputFormat.equals(TableUtil.Format.VO_TABLE_BINARY)) {
+            } else if (outputFormat.equals(FormatUtil.Format.VO_TABLE_BINARY)) {
                 return DataFormat.BINARY;
-            } else if (outputFormat.equals(TableUtil.Format.VO_TABLE_FITS)) {
+            } else if (outputFormat.equals(FormatUtil.Format.VO_TABLE_FITS)) {
                 return DataFormat.FITS;
             } else {
                 return DataFormat.TABLEDATA;
             }
         }
 
-        private static VOTableVersion getVotVersion(TableUtil.Format outputFormat) {
-            return outputFormat.equals(TableUtil.Format.VO_TABLE_BINARY2) ? VOTableVersion.V13 : VOTableVersion.V12;
+        private static VOTableVersion getVotVersion(FormatUtil.Format outputFormat) {
+            return outputFormat.equals(FormatUtil.Format.VO_TABLE_BINARY2) ? VOTableVersion.V13 : VOTableVersion.V12;
         }
 
         private static void outputElement(BufferedWriter out, String s) throws IOException {

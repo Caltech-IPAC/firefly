@@ -26,6 +26,7 @@ import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.util.FormatUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.core.background.JobInfo;
@@ -44,7 +45,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX;
@@ -128,15 +128,16 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         try {
             var dbAdapter = getDbAdapter(treq);
             jobExecIf(v -> v.progress(10, "fetching data..."));
-            if (!dbAdapter.hasTable(dbAdapter.getDataTable())) {
-                StopWatch.getInstance().start("createDbFile: " + treq.getRequestId());
-                createDbFromRequest(treq, dbAdapter);
-                StopWatch.getInstance().stop("createDbFile: " + treq.getRequestId()).printLog("createDbFile: " + treq.getRequestId());
-            }
 
-            StopWatch.getInstance().start("getDataset: " + request.getRequestId());
             DataGroupPart results;
             try {
+                if (!dbAdapter.hasTable(dbAdapter.getDataTable())) {
+                    StopWatch.getInstance().start("createDbFile: " + treq.getRequestId());
+                    createDbFromRequest(treq, dbAdapter);
+                    StopWatch.getInstance().stop("createDbFile: " + treq.getRequestId()).printLog("createDbFile: " + treq.getRequestId());
+                }
+
+                StopWatch.getInstance().start("getDataset: " + request.getRequestId());
                 results = getResultSet(treq, dbAdapter);
                 jobExecIf(v -> v.progress(90, "generating results..."));
             } catch (Exception e) {
@@ -255,7 +256,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         return ipacTable;
     }
 
-    public FileInfo writeData(OutputStream out, ServerRequest request, TableUtil.Format format, TableUtil.Mode mode) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest request, FormatUtil.Format format, TableUtil.Mode mode) throws DataAccessException {
         try {
             TableServerRequest treq = (TableServerRequest) request;
             var dbAdapter =  getDbAdapter(treq);

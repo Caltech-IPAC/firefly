@@ -159,6 +159,14 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
         }
     }
 
+    public void renameColumn(String cname, String nCname) {
+        DataType dt = columns.remove(cname);
+        if (dt != null) {
+            columns.put(nCname, dt);
+            dt.rename(nCname);
+        }
+    }
+
     /**
      * @param key   if null, meta will be treated as a comment
      * @param value meta value

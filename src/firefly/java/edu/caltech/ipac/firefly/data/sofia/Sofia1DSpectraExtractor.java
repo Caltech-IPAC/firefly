@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static edu.caltech.ipac.firefly.data.sofia.VOSpectraModel.*;
-import static edu.caltech.ipac.table.TableUtil.Format.VO_TABLE_TABLEDATA;
+import static edu.caltech.ipac.util.FormatUtil.Format.VO_TABLE_TABLEDATA;
 
 /**
  * Util class to extract 1d spectra from SOFIA FITS file -

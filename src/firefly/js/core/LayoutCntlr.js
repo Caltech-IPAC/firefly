@@ -361,7 +361,7 @@ export function getLayouInfo() {
     // keep plot area in place if any table has a related chart
 
     const mainChartCnt= Object.values(state[CHART_SPACE_PATH]?.data ?? {})
-        ?.filter( (c) => !c.groupId.startsWith(DATA_PRODUCT_ID_PREFIX))?.length ?? 0;
+        ?.filter( (c) => !c.groupId?.startsWith(DATA_PRODUCT_ID_PREFIX))?.length ?? 0;
     const hasXyPlots =  mainChartCnt || (hasTables && !isEmpty(getDefaultChartProps(getActiveTableId())));
     const initLoadCompleted= layout.initLoadCompleted||hasImages||hasTables||hasXyPlots;
 

@@ -752,6 +752,21 @@ public class StringUtils {
     }
 
     /**
+     * A supplier that throws exception
+     */
+    public interface TryWithEx {
+        void run() throws Exception;
+    }
+
+    public static void tryIt(TryWithEx func) {
+        try {
+            func.run();
+        } catch (Exception e) {
+            logger.warn("tryIf failed with:" + e.getMessage());
+        }
+    }
+
+    /**
      * Execute the given function and return the value if it passes test
      * @param func  the function to execute
      * @param test  test the returned value

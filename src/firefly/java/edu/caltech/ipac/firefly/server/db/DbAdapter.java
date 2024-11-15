@@ -212,6 +212,9 @@ public interface DbAdapter {
 //=====================================================================
 //  static functions for resolving or finding suitable database adapter
 //=====================================================================
+    static DbAdapter getAdapter() {
+        return getAdapter(DEF_DB_TYPE, (dbExt) -> null);
+    }
 
     static DbAdapter getAdapter(TableServerRequest treq, DbFileCreator dbFileCreator) {
         return getAdapter(treq.getMeta(TableServerRequest.TBL_FILE_TYPE), dbFileCreator);

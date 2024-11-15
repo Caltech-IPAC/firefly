@@ -34,6 +34,7 @@ import edu.caltech.ipac.table.query.DataGroupQueryStatement;
 import edu.caltech.ipac.table.query.FilterHanlder;
 import edu.caltech.ipac.table.query.InvalidStatementException;
 import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.FormatUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -272,7 +273,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         return uid;
     }
 
-    public FileInfo writeData(OutputStream out, ServerRequest sr, TableUtil.Format format) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest sr, FormatUtil.Format format) throws DataAccessException {
         try {
             TableServerRequest request = (TableServerRequest) sr;
 

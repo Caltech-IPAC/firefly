@@ -32,7 +32,7 @@ import java.util.zip.GZIPInputStream;
  *  @author G. Turek
  *  @version $Id: FileUtil.java,v 1.61 2012/12/10 19:01:01 roby Exp $
  */
-public class FileUtil 
+public class FileUtil
 {
     public final static String jpeg = "jpeg";
     public final static String jpg  = "jpg";
@@ -83,14 +83,14 @@ public class FileUtil
      * Get the extension of a filename.
      * @param  s a file name such as <code>a.dat</code>
      * @return String the extension of the file.
-     *                A null is returned if there is no extension; 
-     *                
+     *                A null is returned if there is no extension;
+     *
      */
-  public static String getExtension(String s) 
+  public static String getExtension(String s)
   {
     String ext = "";
     int i = s.lastIndexOf('.');
-    if (i > 0 &&  i < s.length() - 1) 
+    if (i > 0 &&  i < s.length() - 1)
     {
       ext = s.substring(i+1).toLowerCase();
     }
@@ -102,9 +102,9 @@ public class FileUtil
      * @param  f a file such as <code>a.dat</code>
      * @return String the extension of the file.
      *                A null is returned if there is no extension
-     *                
+     *
      */
-  public static String getExtension(File f) 
+  public static String getExtension(File f)
   {
     return getExtension(f.getName());
   }
@@ -127,7 +127,7 @@ public class FileUtil
      * @return String the base name of the file. i.e. if "abc.dat" is
      *                passed to this method it will return "abc"
      *                A null is returned if there is no base;
-     *                
+     *
      */
   public static String getBase(String s) {
     String base;
@@ -142,12 +142,12 @@ public class FileUtil
   }
 
     /**
-     * Get the name of of a filename without the extension. 
+     * Get the name of of a filename without the extension.
      * @param  f a file name such as <code>a.dat</code>
      * @return String the base name of the file. i.e. if "abc.dat" is
      *                passed to this method it will return "abc"
      *                A null is returned if there is no base;
-     *                
+     *
      */
   public static String getBase(File f) {
     return getBase(f.getName());
@@ -163,7 +163,7 @@ public class FileUtil
                        just add the extension to the filename.
      * @return String The file with the specified extension.
      */
-    public static String setExtension (String  extensionName, 
+    public static String setExtension (String  extensionName,
                                        String  fileName,
                                        boolean replace){
         int dotPosition = fileName.lastIndexOf(".");
@@ -202,7 +202,7 @@ public class FileUtil
      * @param  fileName the extension to be replaced or added.
      * @return String The file with the specified extension.
      */
-    public static String setExtension (String  extensionName, 
+    public static String setExtension (String  extensionName,
                                        String  fileName){
        return setExtension (extensionName,fileName,true);
     }
@@ -234,7 +234,7 @@ public class FileUtil
     }
 
 
-    public static File createUniqueFileFromFile(File    f, 
+    public static File createUniqueFileFromFile(File    f,
                                                 boolean alreadyModified) {
        File    dir    = f.getParentFile();
        String  base   = getBase(f);

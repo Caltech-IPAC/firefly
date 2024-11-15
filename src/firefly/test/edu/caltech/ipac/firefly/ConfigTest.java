@@ -25,7 +25,7 @@ import java.util.UUID;
  */
 public class ConfigTest {
 
-    public static String TEST_PROP_FILE = "./config/test/app-test.prop";
+    public static String TEST_PROP_FILE = "app-test.prop";
     public static String WS_USER_ID = AppProperties.getProperty("workspace.user","test@ipac.caltech.edu");
 
     /**
@@ -43,6 +43,7 @@ public class ConfigTest {
         // Turn off logging initially.
         // use Logger.setLogLevel() anywhere else to adjust logging level.
 
+        setupServerContext(null);
         try {
             loadProperties();
         } catch (IOException e) {
@@ -58,7 +59,7 @@ public class ConfigTest {
     public static void loadProperties() throws IOException {
         // Load and overwrite test properties
         Properties props = System.getProperties();
-        AppProperties.loadClassPropertiesFromFileToPdb(new File(TEST_PROP_FILE), props);
+        AppProperties.loadClassPropertiesFromFileToPdb(ServerContext.getConfigFile(TEST_PROP_FILE), props);
     }
 
     /**
@@ -102,8 +103,11 @@ public class ConfigTest {
     }
 
     public static void setupServerContext(RequestAgent requestAgent) {
+        setupServerContext(requestAgent, null);
+    }
+
+    public static void setupServerContext(RequestAgent requestAgent, String contextName) {
         String contextPath = System.getenv("contextPath");
-        String contextName = System.getenv("contextName");
         String webappConfigPath = System.getenv("webappConfigPath");
 
         AppProperties.setProperty("CacheManager.disabled", "true");
@@ -111,7 +115,7 @@ public class ConfigTest {
 
         contextPath = contextPath == null ? "/firefly" : contextPath;
         contextName = contextName == null ? "firefly" : contextName;
-        webappConfigPath = webappConfigPath == null ? Paths.get("config/test/").toAbsolutePath().toString() : webappConfigPath;
+        webappConfigPath = webappConfigPath == null ? Paths.get("build/%s/war/WEB-INF/config".formatted(contextName)).toAbsolutePath().toString() : webappConfigPath;
 
         requestAgent = requestAgent == null ? new RequestAgent(null, "localhost", "/test", "localhost:8080/", "127.0. 0.1", UUID.randomUUID().toString(), contextPath): requestAgent;
 

@@ -18,6 +18,8 @@ import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.io.VoTableReader;
+import edu.caltech.ipac.util.FormatUtil;
+
 import java.io.*;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
 
@@ -146,7 +148,7 @@ public class IrsaLightCurveHandler implements LightCurveHandler {
         try {
             File file = File.createTempFile("lcInputTable", ".tbl", QueryUtil.getTempDir(request));
             OutputStream out = new FileOutputStream(file, false);
-            new SearchManager().save(out, sreq, TableUtil.Format.IPACTABLE);
+            new SearchManager().save(out, sreq, FormatUtil.Format.IPACTABLE);
             out.close();
             request.setLcSource(file.getAbsolutePath());
         }
