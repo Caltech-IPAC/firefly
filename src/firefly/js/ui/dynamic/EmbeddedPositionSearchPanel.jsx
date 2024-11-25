@@ -1,10 +1,10 @@
-import {Box, Sheet, Stack, Typography} from '@mui/joy';
+import {Box, FormHelperText, Sheet, Stack, Typography} from '@mui/joy';
 import React, {Fragment, useContext, useEffect, useState} from 'react';
 import {oneOf, bool, string, number, arrayOf, object, func, shape, elementType} from 'prop-types';
 import {defaultsDeep} from 'lodash';
 import CoordinateSys from '../../visualize/CoordSys.js';
-import {CONE_AREA_OPTIONS, CONE_AREA_OPTIONS_UPLOAD, CONE_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY
-} from '../../visualize/ui/CommonUIKeys.js';
+import {CONE_AREA_OPTIONS, CONE_AREA_OPTIONS_ID, CONE_AREA_OPTIONS_UPLOAD_ID, CONE_CHOICE_KEY,
+    ID_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
 import {HiPSTargetView} from '../../visualize/ui/TargetHiPSPanel.jsx';
 import {showInfoPopup} from '../PopupUtil';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
@@ -22,6 +22,8 @@ import {parseWorldPt} from 'firefly/visualize/Point';
 import {formatWorldPtToString} from 'firefly/visualize/ui/WorldPtFormat';
 import {getFieldGroupResults} from 'firefly/fieldGroup/FieldGroupUtils';
 import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
+import {ValidationField} from 'firefly/ui/ValidationField';
+import {UploadTableSelectorSingleCol} from 'firefly/ui/UploadTableSelectorSingleCol';
 
 
 const DEFAULT_FOV_DEG= 30;
@@ -32,6 +34,9 @@ const DEFAULT_SIZE_KEY= 'radius';
 const DEFAULT_INIT_SIZE_VALUE= .005;
 const DEFAULT_POLYGON_KEY= 'Polygon';
 
+const POSITION = 'POSITION';
+const ID = 'ID'; //to be used when multi-object uploads support single column upload files
+
 export const emptyHeaderSx = {
     paddingBlockStart: '0.5rem',
     paddingBlockEnd: '0.5rem',
@@ -40,7 +45,6 @@ export const emptyHeaderSx = {
     '& .MuiAccordionSummary-button': { minBlockSize: '1rem' },
     whiteSpace: 'normal',
 };
-
 
 /**
  * Shows a HiPS Image Panel with Position Search embedded in it.
@@ -80,6 +84,7 @@ export const emptyHeaderSx = {
  * @param p.doSearch function to execute when panel is submitted
  * @param p.children additional components to be wrapped inside the embedded search form (when collapsible is open)
  *
+ * @param p.useId
  */
 export function EmbeddedPositionSearchPanel({
                                                 initSelectToggle= CONE_CHOICE_KEY,
@@ -87,6 +92,7 @@ export function EmbeddedPositionSearchPanel({
                                                 insetSpacial=true,
                                                 usePosition= true,
                                                 useUpload = false,
+                                                useId = false,
                                                 usePolygon= true,
                                                 slotProps={},
                                                 doSearch,
@@ -119,6 +125,7 @@ export function EmbeddedPositionSearchPanel({
         if (doToggle) return getSearchTypeOp() ?? initToggle;
         if (usePolygon) return POLY_CHOICE_KEY;
         if (useUpload) return UPLOAD_CHOICE_KEY;
+        if (useId) return ID_CHOICE_KEY;
         return CONE_CHOICE_KEY;
     };
 
@@ -219,7 +226,7 @@ export function EmbeddedPositionSearchPanel({
                         >
                             <Slot component={SpatialSearch} slotProps={slotProps.spatialSearch}
                                   {...{rootSlotProps:slotProps,insetSpacial,uploadInfo, setUploadInfo, searchTypeOp:doGetSearchTypeOp(),
-                                      doToggle,initToggle, nullAllowed, useUpload}}
+                                      doToggle,initToggle, nullAllowed, useUpload, useId}}
                             />
                             {children}
                         </Slot>
@@ -237,6 +244,7 @@ EmbeddedPositionSearchPanel.propTypes= {
     insetSpacial: bool,
     usePosition: bool,
     usePolygon: bool,
+    useId: bool,
     useUpload: bool,
     doSearch: func,
     slotProps: shape({ // all slotProps are optional except for formPanel.onSuccess
@@ -362,7 +370,7 @@ function SearchSummary({request, targetKey, sizeKey, polygonKey, searchTypeKey, 
 }
 
 function SpatialSearch({rootSlotProps: slotProps, insetSpacial, uploadInfo, setUploadInfo, searchTypeOp, doToggle,
-                           initToggle, nullAllowed, useUpload}) {
+                           initToggle, nullAllowed, useUpload, useId}) {
     const { searchTypeKey=CONE_AREA_KEY, sx } = slotProps.spatialSearch ?? {};
 
     return (
@@ -371,10 +379,13 @@ function SpatialSearch({rootSlotProps: slotProps, insetSpacial, uploadInfo, setU
                 sx:{alignSelf: 'center'},
                 fieldKey: searchTypeKey, orientation: 'horizontal',
                 tooltip: 'Chose type of search', initialState: {value: initToggle},
-                options: useUpload ? CONE_AREA_OPTIONS_UPLOAD : CONE_AREA_OPTIONS
+                options: useUpload || useId
+                    ? (useId && !useUpload ? CONE_AREA_OPTIONS_ID : CONE_AREA_OPTIONS_UPLOAD_ID)
+                    : CONE_AREA_OPTIONS
             }} />}
             {searchTypeOp === CONE_CHOICE_KEY && <ConeOp {...{slotProps,nullAllowed}}/> }
             {searchTypeOp === POLY_CHOICE_KEY && <PolyOp {...{slotProps}}/> }
+            {searchTypeOp === ID_CHOICE_KEY && <IDOp {...{slotProps}}/>}
             {searchTypeOp === UPLOAD_CHOICE_KEY && <UploadOp {...{slotProps,uploadInfo,setUploadInfo}}/>}
         </Stack>
     );
@@ -433,7 +444,40 @@ function PolyOp({slotProps}) {
     );
 }
 
+
+function IDOp ({slotProps}) {
+    const searchById = slotProps?.searchById;
+    //Todo: this is currently specific to the Euclid (tile & object IDs), the FormHelperText should perhaps be passed via slotProps to make this generic
+    return (
+            <Stack m={1} spacing={1}>
+                <ValidationField fieldKey='ids' label='ID(s):' />
+                <FormHelperText>
+                    {searchById === 'tile' ?
+                        'Provide one or more comma separated Tile ID(s): 85950, 85951' :
+                        'Provide one or more comma separated Object ID(s): 2351674029405094360, 2354494815403521689'}
+                </FormHelperText>
+            </Stack>
+    );
+}
+
 function UploadOp({slotProps, uploadInfo, setUploadInfo}) {
+
+    const options = () => (
+        <Stack m={1} spacing={1}>
+            <RadioGroupInputField
+                fieldKey='positionOrIdUpload'
+                inline={true}
+                orientation='horizontal'
+                initialState={{ value: POSITION }}
+                options={[{ label: 'Position', value: POSITION }, { label: ID, value: ID }]}
+                label='Select the search type:'
+                tooltip='Search Type'
+            />
+        </Stack>
+    );
+
+    const searchType = useFieldGroupValue('positionOrIdUpload')[0]() || POSITION;  //Position or ID upload Search Type, defaults to Position
+
     const {
         sizeKey= DEFAULT_SIZE_KEY,
         min= 1 / 3600,
@@ -441,13 +485,17 @@ function UploadOp({slotProps, uploadInfo, setUploadInfo}) {
         initValue= DEFAULT_INIT_SIZE_VALUE
     }= slotProps.sizeInput ?? {};
 
-    return (
-        <Stack pb={0.5}>
-            <UploadTableSelectorPosCol {...{uploadInfo, setUploadInfo,
+    const searchById = slotProps.searchById;
+
+    //Multi-Object uploads in EmbeddedPositionSearchPanel, if enabled, default to position columns upload, unless searchById is provided via slotProps
+    const defaultUploadTableSelector = () => (
+        <>
+            <UploadTableSelectorPosCol {...{
+                uploadInfo, setUploadInfo,
                 slotProps: {
                     centerColsInnerStack: {sx: {ml: 1, pt: 1.5}}
                 }
-            }}/>
+            }} />
             <SizeInputFields {...{
                 fieldKey: sizeKey, showFeedback: true, nullAllowed: false,
                 label: 'Search Radius',
@@ -457,8 +505,42 @@ function UploadOp({slotProps, uploadInfo, setUploadInfo}) {
                     feedback:{sx: {alignSelf:'center'} },
                 }
             }} />
+        </>
+    );
+
+    console.log('search type in UploadOp is: ', searchType);
+    return (
+        <Stack pb={0.5}>
+            {/* Handle logic based on searchById and searchType */}
+            {searchById ? (
+                <>
+                    {searchType === POSITION && defaultUploadTableSelector()}
+                    {searchType === ID && (
+                        <Stack ml={-6} mt={-2}>
+                            <UploadTableSelectorSingleCol
+                                {...{
+                                    uploadInfo,
+                                    setUploadInfo,
+                                    slotProps: {
+                                        fileInfo: {sx: {ml: 27}},
+                                        singleColInnerStack: {sx: {ml: 3, mt: -1}},
+                                        singleColHeader: {sx: {width: '9rem'}}
+                                    },
+                                    headerTitle: searchById === 'tile'? 'Uploaded Tile ID: ' : 'Uploaded Object ID: ',
+                                    colName: searchById === 'tile' ? 'Tile ID ' : ' Object ID ',
+                                }}
+                            />
+                        </Stack>
+                    )}
+                </>
+            ) : (
+                // When searchById is undefined, show UploadTableSelectorPosCol as the default
+                defaultUploadTableSelector()
+            )}
+
+            {/* Show options only when searchById exists */}
+            {searchById && options()}
         </Stack>
 
         );
-
 }

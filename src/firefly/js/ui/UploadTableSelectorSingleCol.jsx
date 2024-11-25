@@ -10,6 +10,7 @@ import {onTableLoaded} from 'firefly/tables/TableUtil';
 import {FieldGroupCollapsible} from 'firefly/ui/panel/CollapsiblePanel';
 import {FilterInfo} from 'firefly/tables/FilterInfo';
 import {dispatchTableFilter} from 'firefly/tables/TablesCntlr';
+import PropTypes from 'prop-types';
 
 const UploadSingleColumn = 'uploadSingleColumn';
 const defaultTblId = 'singleColTable';
@@ -28,12 +29,13 @@ const defaultTblId = 'singleColTable';
  * @param props.headerTitle
  * @param props.colName
  * @param props.getUseSelectIn used for ObjectID on TAP
+ * @param props.slotProps
  * @returns {JSX.Element}
  */
 export function UploadTableSelectorSingleCol({uploadInfo, setUploadInfo,
                                                  headerTitle='Uploaded Column:',
                                                  colName = '',
-                                                 getUseSelectIn = () => {} }) {
+                                                 getUseSelectIn = () => {}, slotProps }) {
     const [getSingleCol,setSingleCol]= useFieldGroupValue(UploadSingleColumn);
     const {fileName,columns,totalRows,fileSize}= uploadInfo ?? {};
     const columnsUsed= columns?.filter( ({use}) => use)?.length ?? 0;
@@ -63,13 +65,14 @@ export function UploadTableSelectorSingleCol({uploadInfo, setUploadInfo,
                 <TextButton text={fileName ? 'Change Upload Table...' : 'Add Upload Table...'}
                             onClick={() => showUploadTableChooser(preSetUploadInfo,'singleColSelect',{colTypes: ['int','long','string'],colCount: 3})} style={{marginLeft: 42}} />
                 {haveFile && (
-                    <Typography pl={2} sx={{fontSize:'larger'}}>
+                    <Typography level='title-lg' sx={{width:200, overflow:'hidden', whiteSpace:'nowrap',
+                        textOverflow:'ellipsis', pl:1.5}}>
                         {`${fileName}`}
                     </Typography>
                 )}
             </Stack>
             {haveFile && (
-                <Stack direction='row' ml={24} justifyContent='flex-start'>
+                <Stack direction='row' ml={24} justifyContent='flex-start' sx={slotProps?.fileInfo?.sx}>
                     <Typography>
                         Rows: {totalRows},
                     </Typography>
@@ -107,14 +110,28 @@ export function UploadTableSelectorSingleCol({uploadInfo, setUploadInfo,
                     sx={{ mb: 1, ml: 24 }}
                     colKey={UploadSingleColumn}
                     colName={colName}
+                    slotProps={slotProps}
                 />
             )}
         </Stack>
     );
 }
 
+UploadTableSelectorSingleCol.propTypes = {
+    uploadInfo: PropTypes.object,
+    setUploadInfo: PropTypes.func,
+    headerTitle: PropTypes.string,
+    colName: PropTypes.string,
+    getUseSelectIn: PropTypes.func,
+    slotProps: PropTypes.shape({
+        singleColInnerStack: PropTypes.object,
+        singleColHeader: PropTypes.object,
+        fileInfo: PropTypes.object
+    })
+};
+
 export function SingleCol({singleCol, sx={},cols, colKey, openKey, colName='',
-                         headerTitle, headerPostTitle = '', openPreMessage='', headerStyle,colTblId=null}) {
+                         headerTitle, headerPostTitle = '', openPreMessage='', headerStyle,colTblId=null, slotProps}) {
     const posHeader= (
         <Box ml={-1}>
             <Typography display='inline' color={!singleCol?'warning':undefined} level='title-md' style={{...headerStyle}}>
@@ -137,8 +154,8 @@ export function SingleCol({singleCol, sx={},cols, colKey, openKey, colName='',
 
     return (
         <Box mt={1} sx={{...sx }}>
-            <Stack {...{direction:'row', spacing:1}}>
-                <Typography pt={1} sx={{width:'14rem', whiteSpace:'nowrap'}} component='div'>
+            <Stack {...{direction:'row', spacing:1, sx:{...slotProps?.singleColInnerStack?.sx} }}>
+                <Typography pt={1} sx={{width:'14rem', whiteSpace:'nowrap', ...slotProps?.singleColHeader?.sx}} component='div'>
                     {headerTitle}
                 </Typography>
                 <FieldGroupCollapsible header={posHeader}
