@@ -257,9 +257,11 @@ public class DuckDbAdapter extends BaseDbAdapter {
     @Override
     public String interpretError(Throwable e) {
         try {
-            if (e.getCause() instanceof SQLException ex) {
+            if (e instanceof SQLException ex) {
                 JSONObject json = (JSONObject) JSONValue.parse(ex.getMessage().replace("%s:".formatted(ex.getClass().getName()), ""));
-                return json.get("exception_message").toString();
+                String msg = json.get("exception_message").toString().split("\n")[0];
+                String type = getSafe(() -> json.get("error_subtype").toString(), json.get("exception_type").toString());
+                return type + ":" + msg;
             }
             return super.interpretError(e);
         } catch (Exception ex) { return e.getMessage(); }

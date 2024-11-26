@@ -992,13 +992,11 @@ abstract public class BaseDbAdapter implements DbAdapter {
 
     public DataAccessException handleSqlExp(String msg, Exception e) {
         Throwable cause = e;
-        // find SQLException
-        while (cause != null && !(cause instanceof SQLException)) {
+        while (cause != null && cause.getCause() != null) {
             cause = cause.getCause();
         }
-        if (cause == null)  cause = e;      // if not found, use e
         if (cause instanceof DataAccessException dax) {
-            return new DataAccessException(msg, dax.getCause());
+            return new DataAccessException(msg, dax.getCause());   // should not happen; DataAccessException should have a cause
         }
         return new DataAccessException(msg, new SQLDataException(interpretError(cause)));
     }
