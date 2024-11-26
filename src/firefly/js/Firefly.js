@@ -432,7 +432,11 @@ function bootstrap(props, clientAppSpecificOptions, webApiCommands) {
 
     }).then(() => {
         // when all is done, mark app as 'ready'
-        defer(() => dispatchUpdateAppData({isReady: true}));
+        defer(() => {
+            setTimeout(() => {
+                dispatchUpdateAppData({isReady: true})
+            },3);
+        });
         initWorkerContext();
     });
 }

@@ -23,7 +23,7 @@ const tableOverview= {
     },
 };
 const tableExamples= [
-    {desc:'Load A Table', params:{source: 'http://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl'}}
+    {desc:'Load A Table', params:{source: 'https://web.ipac.caltech.edu/staff/roby/demo/WiseDemoTable.tbl'}}
 ];
 
 
