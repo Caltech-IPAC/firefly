@@ -491,6 +491,7 @@ public class StringUtils {
     }
 
     public static String[] split(String source, String delimiter, int limit) {
+        if (source == null) return null;
         return Arrays.stream(source.split(delimiter, limit))
                 .map(String::trim).toArray(String[]::new);
     }

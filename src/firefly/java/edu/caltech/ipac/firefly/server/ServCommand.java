@@ -69,7 +69,7 @@ public abstract class ServCommand extends ServerCommandAccess.HttpCommand {
         String cause = null;
         for (Throwable t = e.getCause(); (t != null); t = t.getCause()) {
             String type = t instanceof EndUserException ? DataAccessException.class.getSimpleName() : t.getClass().getSimpleName();     // need to clean this up at some point
-            cause = type + ": " + t.getMessage();
+            cause = t.getMessage().contains(":") ? t.getMessage() : type + ": " + t.getMessage();
         }
         return new String[]{e.getMessage(), cause};
     }

@@ -239,6 +239,8 @@ public interface DbAdapter {
         return getAdapter(ext, (s) -> dbFile);
     }
 
+    String interpretError(Throwable e);
+
 //====================================================================
 //  Inner classes or interfaces used by this class
 //====================================================================

@@ -914,7 +914,7 @@ export function dispatchError(chartId, traceNum, reason) {
         reasonStr = '';
     } else {
         logger.error(`${message}: ${reason}`);
-        reasonStr = '';
+        reasonStr = reason;
     }
     const changes = {};
     changes[`fireflyData.${traceNum}.error`] = {message, reason: reasonStr};

@@ -12,11 +12,14 @@ import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.AppProperties;
 import org.duckdb.DuckDBAppender;
 import org.duckdb.DuckDBConnection;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
 
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
@@ -25,6 +28,7 @@ import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 
+import static edu.caltech.ipac.firefly.server.db.DuckDbUDF.*;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.*;
 import static edu.caltech.ipac.util.StringUtils.*;
 
@@ -54,20 +58,8 @@ public class DuckDbAdapter extends BaseDbAdapter {
         }
     }
 
-    private static final String [] customFunctions = {"""
-            CREATE FUNCTION decimate_key(xVal, yVal, xMin, yMin, nX, nY, xUnit, yUnit) AS
-            TRUNC((xVal-xMin)/xUnit)::INT || ':' || TRUNC((yVal-yMin)/yUnit)::INT
-            """         // make sure this matches DecimateKey.getKey()
-            ,
-            "CREATE FUNCTION lg(val) AS LOG10(val)"
-            ,
-            """
-            CREATE FUNCTION nvl2(expr1, expr2, expr3) AS
-              CASE
-                WHEN expr1 IS NOT NULL THEN expr2
-                ELSE expr3
-              END
-            """
+    private static final String [] customFunctions = {
+            decimate_key, lg, nvl2, deg2pix
     };
 
     private static final List<String> SUPPORTS = List.of("duckdb");
@@ -80,7 +72,15 @@ public class DuckDbAdapter extends BaseDbAdapter {
     protected EmbeddedDbInstance createDbInstance() {
         String filePath = getDbFile() == null ? "" : getDbFile().getAbsolutePath();
         String dbUrl = "jdbc:duckdb:" + filePath;
-        var db = new EmbeddedDbInstance(getName(), this, dbUrl, DRIVER);
+        var db = new EmbeddedDbInstance(getName(), this, dbUrl, DRIVER) {
+            public boolean testConn(Connection conn) {
+                // test connection plus additional session-scoped properties
+                try (Statement stmt = conn.createStatement()) {
+                    stmt.execute("SET errors_as_json = true");
+                    return true;
+                } catch (SQLException e) { return false; }
+            }
+        };
         db.consumeProps("memory_limit=%s,threads=%d".formatted(maxMemory, threadCnt));
         return db;
     }
@@ -252,6 +252,19 @@ public class DuckDbAdapter extends BaseDbAdapter {
             return sql.replaceAll("BEFORE .+$", "");
         }
         return sql;
+    }
+
+    @Override
+    public String interpretError(Throwable e) {
+        try {
+            if (e instanceof SQLException ex) {
+                JSONObject json = (JSONObject) JSONValue.parse(ex.getMessage().replace("%s:".formatted(ex.getClass().getName()), ""));
+                String msg = json.get("exception_message").toString().split("\n")[0];
+                String type = getSafe(() -> json.get("error_subtype").toString(), json.get("exception_type").toString());
+                return type + ":" + msg;
+            }
+            return super.interpretError(e);
+        } catch (Exception ex) { return e.getMessage(); }
     }
 
     public static DataGroup getDuckDbSettings() {

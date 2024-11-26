@@ -36,6 +36,7 @@ import {FilterInfo} from 'firefly/tables/FilterInfo.js';
 import {AddColumnButton} from 'firefly/visualize/ui/Buttons.jsx';
 import {RequiredFieldMsg} from 'firefly/ui/InputField.jsx';
 import {Stacker} from 'firefly/ui/Stacker.jsx';
+import {TableErrorMsg} from './TablePanel';
 
 
 let hideExpPopup;
@@ -71,7 +72,7 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
                         clearColumnInfo(tbl_ui_id, request, editColName, params.cname);
                         onChange?.();
                     }).catch( (err) => {
-                        showInfoPopup(parseError(err, params), 'Add Column Failed');
+                        showInfoPopup(<TableErrorMsg error={err?.cause || err}/>, 'Add Column Failed');
                     }).finally(() => setIsWorking(false));
             }
         });
@@ -84,7 +85,7 @@ export const AddOrUpdateColumn = React.memo(({tbl_ui_id, tbl_id, hidePopup, edit
                     hidePopup?.();
                     clearColumnInfo(tbl_ui_id, request, editColName);
                     onChange?.();
-                }).catch( (err) => showInfoPopup(parseError(err), 'Delete Column Failed'));
+                }).catch( (err) => showInfoPopup(<TableErrorMsg error={err?.cause || err}/>, 'Delete Column Failed'));
             }
             dispatchHideDialog(id);
         });
@@ -342,21 +343,6 @@ const Samples = () => {
         </Sheet>
     );
 };
-
-
-function parseError({cause}) {
-    if (cause) {
-        const [_, type='Unknown', msg=cause] = cause.match(/([^:]+):(.+)/) || [];
-        return  (
-            <Stack spacing={1}>
-                <Typography level='title-lg' color='danger'>{type.trim()}</Typography>
-                <Typography level='body-md'>{msg.trim()}</Typography>
-            </Stack>
-        );
-
-    } else return 'Operation failed with unexpected error.';
-}
-
 
 function getSuggestions(val) {
     if (!val) return [];
