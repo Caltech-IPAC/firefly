@@ -13,11 +13,13 @@ import {ColNameIdx, OBSTAPCOLUMNS, UCDSyntax, UtypeColIdx} from './VoConst.js';
  * @param href          the href value of the LINK
  * @param rowIdx        row index to be resolved
  * @param fval          the field's value, or cell data.  Append field's value to href, if no substitution is needed.
- * @returns {string}    the resolved href after subsitution
+ * @param encodeValues  encodeURIComponent the values.  default to false.
+ * @returns {string}    the resolved href after substitution
  */
-export function applyLinkSub(tableModel, href='', rowIdx, fval='') {
-    const rhref = applyTokenSub(tableModel, href, rowIdx, '');
+export function applyLinkSub(tableModel, href='', rowIdx, fval='', encodeValues=false) {
+    const rhref = applyTokenSub(tableModel, href, rowIdx, '', encodeValues);
     if (rhref === href) {
+        fval = encodeValues ? encodeURIComponent(fval) : fval;
         return fval ? href + fval : '';       // no substitution given, append defval to the url.  set A.1
     }
     return rhref;
@@ -31,9 +33,10 @@ export function applyLinkSub(tableModel, href='', rowIdx, fval='') {
  * @param val           the value to resolve
  * @param rowIdx        row index to be resolved
  * @param def           return value if val is nullish
- * @returns {string}    the resolved href after subsitution
+ * @param encodeValues  encodeURIComponent the values.  default to false.
+ * @returns {string}    the resolved href after substitution
  */
-export function applyTokenSub(tableModel, val='', rowIdx, def) {
+export function applyTokenSub(tableModel, val='', rowIdx, def='', encodeValues=false) {
 
     const vars = val?.match?.(/\${[\w -.]+}/g);
     let rval = val;
@@ -42,6 +45,7 @@ export function applyTokenSub(tableModel, val='', rowIdx, def) {
             const [,cname] = v.match(/\${([\w -.]+)}/) || [];
             const col = getColumnByRef(tableModel, cname);
             let cval = col ? getCellValue(tableModel, rowIdx, col.name) : '';  // if the variable cannot be resolved, return empty string
+            cval = encodeValues ? encodeURIComponent(cval) : cval;
             rval = (!cval && v === rval) ? cval : rval.replace(v, cval);
         });
     }

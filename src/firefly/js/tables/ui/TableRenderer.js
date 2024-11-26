@@ -414,6 +414,9 @@ function ViewAsText({text, ...rest}) {
 /**
  * @see {@link http://www.ivoa.net/documents/VOTable/20130920/REC-VOTable-1.3-20130920.html#ToC54}
  * LinkCell is implementing A.4 using link substitution based on A.1
+ * Adding custom vocabularies to content-role:
+ * content-role may contain more than one value. Values are separated by semicolon.
+ *   encode:values =>  apply encodeURIComponent to all the resolved values.
  */
 export const LinkCell = React.memo(({cellInfo, style, ...rest}) => {
     const {absRowIdx, col, textAlign, rvalues, tableModel} = cellInfo || getCellInfo(rest);
@@ -423,10 +426,10 @@ export const LinkCell = React.memo(({cellInfo, style, ...rest}) => {
             <div style={{textAlign, overflow: 'visible'}}>
             {
                 col.links.map( (link={}, idx) => {
-                    const {href, title, action} = link;
+                    const {href, title, action, role=''} = link;
                     const target = action || '_blank';
                     const rvalue = rvalues[idx];
-                    const rhref = applyLinkSub(tableModel, href, absRowIdx, rvalue);
+                    const rhref = applyLinkSub(tableModel, href, absRowIdx, rvalue, role.includes('encode:values'));
                     if (!rhref) return '';
                     mstyle = idx > 0 ? {marginLeft: 3, ...mstyle} : mstyle;
                     return (<ATag key={'ATag_' + idx} href={rhref}
