@@ -22,7 +22,7 @@ import java.util.List;
  */
 public class SpectrumMetaInspector {
     private static final List<String> wlColNames= Arrays.asList(
-            "wave", "wavelength", "wavelengths", "wl", "wls", "lambda", "lambda_eff", "v_lsr");
+            "wave", "wavelength", "wavelengths", "wl", "wls", "lambda", "lambda_eff", "v_lsr", "centralwavelng");
     private static final List<String> enColNames= Arrays.asList("ener", "energy", "lsr_velocity");
     private static final List<String> freqColNames= Arrays.asList("freq", "frequency", "nu");
     private static final String[] specColNames;
@@ -31,10 +31,33 @@ public class SpectrumMetaInspector {
     private static final String[] fluxColNames= new String[] {"flux", "fluxdensity", "flux_density", "flux",
             "flx", "fl", "fls", "flu", "data", "value", "signal",
             "fullap and psf (two different extractions)", "c(lambda)",
-            "t_mb", "t(k)", "main beam temperature" };
-    private static final String[] errColNames= new String[] {"err", "error", "errors", "flerr", "flerrs", "flux_error"};
-    private static final String[] errHiColNames= new String[] {"err_hi", "error_hi", "err_high", "error_high","flerr_high", "flerrs_hi"};
-    private static final String[] errLowColNames= new String[] {"err_lo", "error_lo", "err_low", "error_low","flerr_low", "flerrs_lo"};
+            "t_mb", "t(k)", "main beam temperature",
+            "flam", "pl_trandep", "especlipdep"};
+
+    private static final String[] nsTransFluxColNames= new String[] {"pl_trandep"};
+    private static final String[] nsTransErrColNames= new String[] {"pl_trandeperr"};
+    private static final String[] nsTransErrHiColNames= new String[] {"pl_trandeperr1"};
+    private static final String[] nsTransErrLowColNames= new String[] {"pl_trandeperr2"};
+
+    private static final String[] nsDirFluxColNames= new String[] {"flam"};
+    private static final String[] nsDirErrColNames= new String[] {"flamerr"};
+    private static final String[] nsDirErrHiColNames= new String[] {"flamerr1"};
+    private static final String[] nsDirErrLowColNames= new String[] {"flamerr2"};
+
+    private static final String[] nsEclFluxColNames= new String[] {"especlipdep"};
+    private static final String[] nsEclErrColNames= new String[] {"especlipdeperr"};
+    private static final String[] nsEclErrHiColNames= new String[] {"especlipdeperr1"};
+    private static final String[] nsEclErrLowColNames= new String[] {"especlipdeperr2"};
+
+
+    private static final String NS_SPEC_TYPE_TRANS= "transmission";
+    private static final String NS_SPEC_TYPE_ECLIPSE= "eclipse";
+    private static final String NS_SPEC_TYPE_DIR= "direct imaging";
+
+
+    private static final String[] errColNames= new String[] {"err", "error", "errors", "flerr", "flerrs", "flux_error", "flamerr"};
+    private static final String[] errHiColNames= new String[] {"err_hi", "error_hi", "err_high", "error_high","flerr_high", "flerrs_hi", "flamerr1"};
+    private static final String[] errLowColNames= new String[] {"err_lo", "error_lo", "err_low", "error_low","flerr_low", "flerrs_lo", "flamerr2"};
     private static final String[] orderColNames= new String[] {"order", "ord", "spec_order"};
     private static final String[] relOrderColNames= {};
     private static final String[] timeColNames= new String[] {"time", "ti"};
@@ -113,6 +136,8 @@ public class SpectrumMetaInspector {
 
         List<DataType> dtAry= Arrays.asList(dg.getDataDefinitions());
         List<GroupInfo> groupInfosList= new ArrayList<>();
+        var nonStandardSpecType= dg.getAttribute("SPEC_TYPE","").toLowerCase();
+        var nonStandardFacility= dg.getAttribute("FACILITY","").toLowerCase();
         boolean foundX= false;
         boolean foundY= false;
 
@@ -130,12 +155,7 @@ public class SpectrumMetaInspector {
 
         // look for flux
         if (hasCol(fluxColNames,dtAry, SPEC_FL_AXIS+VALUE)) {
-            List<GroupInfo.RefInfo> l= new ArrayList<>();
-            findAndAddRef(fluxColNames,dtAry,l, SPEC_FL_AXIS+VALUE);
-            findAndAddRef(errColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatError");
-            findAndAddRef(errLowColNames,dtAry,l, SPEC_FL_AXIS+".StatErrLow");
-            findAndAddRef(errHiColNames,dtAry,l, SPEC_FL_AXIS+".StatErrHigh");
-            groupInfosList.add(new GroupInfo(SPEC_FL_AXIS, "", l));
+            addFluxColumn(groupInfosList,dtAry,nonStandardSpecType);
             foundY= true;
         }
 
@@ -159,6 +179,43 @@ public class SpectrumMetaInspector {
         TableMeta meta= dg.getTableMeta();
         if (utype!=null) meta.addKeyword(TableMeta.UTYPE, utype.startsWith("spec:") ? utype : "spec:"+utype);
         else meta.addKeyword(TableMeta.UTYPE,SPEC_SPECTRUM);
+    }
+
+    public static void addFluxColumn(List<GroupInfo> groupInfosList, List<DataType> dtAry, String nonStandardSpecType) {
+        List<GroupInfo.RefInfo> l= new ArrayList<>();
+        boolean found= false;
+
+        if (nonStandardSpecType.contains(NS_SPEC_TYPE_ECLIPSE)) nonStandardSpecType= NS_SPEC_TYPE_ECLIPSE;
+
+
+        switch (nonStandardSpecType) {
+            case NS_SPEC_TYPE_DIR:
+                found= findAndAddRef(nsDirFluxColNames,dtAry,l, SPEC_FL_AXIS+VALUE);
+                findAndAddRef(nsDirErrColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatError");
+                findAndAddRef(nsDirErrLowColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrLow");
+                findAndAddRef(nsDirErrHiColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrHigh");
+                break;
+            case NS_SPEC_TYPE_ECLIPSE:
+                found= findAndAddRef(nsEclFluxColNames,dtAry,l, SPEC_FL_AXIS+VALUE);
+                findAndAddRef(nsEclErrColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatError");
+                findAndAddRef(nsEclErrLowColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrLow");
+                findAndAddRef(nsEclErrHiColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrHigh");
+                break;
+            case NS_SPEC_TYPE_TRANS:
+                found= findAndAddRef(nsTransFluxColNames,dtAry,l, SPEC_FL_AXIS+VALUE);
+                findAndAddRef(nsTransErrColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatError");
+                findAndAddRef(nsTransErrLowColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrLow");
+                findAndAddRef(nsTransErrHiColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrHigh");
+                break;
+        }
+
+        if (!found) {
+            findAndAddRef(fluxColNames,dtAry,l, SPEC_FL_AXIS+VALUE);
+            findAndAddRef(errColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatError");
+            findAndAddRef(errLowColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrLow");
+            findAndAddRef(errHiColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrHigh");
+        }
+        groupInfosList.add(new GroupInfo(SPEC_FL_AXIS, "", l));
     }
 
     public static void createSpectrumMeta(DataGroup dg, String wlColName, String fluxColName, String errColName) {
@@ -208,13 +265,14 @@ public class SpectrumMetaInspector {
         return (foundDt!=null) ? foundDt.getUCD() : null;
     }
 
-    private static void findAndAddRef(String [] possibleNames, List<DataType> dtAry,
+    private static boolean findAndAddRef(String [] possibleNames, List<DataType> dtAry,
                                       List<GroupInfo.RefInfo> list, String utype) {
         String colName= findColByUtypeOrNames(possibleNames,dtAry,utype);
-        if (colName==null) return;
+        if (colName==null) return false;
         String ucd= getUCD(dtAry,colName);
         if (StringUtils.isEmpty(ucd)) ucd= "";
         list.add(new GroupInfo.RefInfo(colName, ucd,utype));
+        return true;
     }
 
     private static void addSpectrumRef(DataGroup dg, List<DataType> dtAry, List<GroupInfo.RefInfo> list) {
