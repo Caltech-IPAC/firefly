@@ -63,6 +63,7 @@ export function PropertySheet({tbl_group='main', tbl_id, children, fetcher}){
 export function RowDetailsTable({tblOptions={}, tbl_id, highlightedRow, ...tblProps}) {
 
     const detailsTblId = `${tbl_id}-RowDetailsTable`;
+    const detailsAnchor = 'tables.rowdetails';
 
     useEffect(()=>{
         const detailsTable = tableDetailsView(tbl_id, highlightedRow, detailsTblId);
@@ -78,6 +79,7 @@ export function RowDetailsTable({tblOptions={}, tbl_id, highlightedRow, ...tblPr
             showFilters: true,
             showTypes: true,
             showUnits: false,
+            help_id: detailsAnchor,
             ...tblOptions
         });
     }, [tbl_id, highlightedRow]);
