@@ -738,6 +738,14 @@ public class URLDownload {
         /**
          * convenience function
          * set no size limit,
+         * sets true: onlyIfModified, uncompress, use credentials, allowRedirect
+         * @return Options
+         */
+        public static Options defWithRedirect() {return new Options(true,true,0,true,true,0,null);}
+
+        /**
+         * convenience function
+         * set no size limit,
          * sets true: uncompress, allowRedirect, use credentials
          * @param onlyIfModified - check for file modification
          * @return Options
