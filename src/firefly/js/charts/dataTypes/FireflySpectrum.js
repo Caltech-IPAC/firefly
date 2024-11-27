@@ -122,7 +122,8 @@ export function spectrumPlot({tbl_id, spectrumDM}) {
 
 export function getSpectrumProps(tbl_id, spectrumDM) {
 
-    spectrumDM = spectrumDM || getSpectrumDM(getTblById(tbl_id));
+    const tbl= getTblById(tbl_id);
+    spectrumDM = spectrumDM || getSpectrumDM(tbl);
     const {spectralAxis={}, fluxAxis={}, isSED, spectralFrame={}, derivedRedshift={}, target={}} = spectrumDM || {};
 
     const x = quoteNonAlphanumeric(spectralAxis.value);
@@ -131,7 +132,20 @@ export function getSpectrumProps(tbl_id, spectrumDM) {
     const xErrArray = spectralAxis.statErrHigh || spectralAxis.statError;
     const xErrArrayMinus = spectralAxis.statErrLow;
     const yErrArray = fluxAxis.statErrHigh || fluxAxis.statError;
-    const yErrArrayMinus = fluxAxis.statErrLow;
+    let yErrArrayMinus = fluxAxis.statErrLow;
+    if (yErrArray && fluxAxis.statErrLow) {
+        const hiErrCol= getColumnIdx(tbl,yErrArray);
+        const lowErrCol= getColumnIdx(tbl,fluxAxis.statErrLow);
+        let allEmpty=true;
+        const reverse= tbl.tableData.data.every( (row) => {
+            const lVal= row[lowErrCol];
+            const hVal= row[hiErrCol];
+            if (isNaN(hVal) || isNaN(lVal) || hVal===null || lVal===null) return true;
+            allEmpty= false;
+            return hVal>=0 && lVal<=0;
+        });
+        if (reverse && !allEmpty) yErrArrayMinus= '-'+fluxAxis.statErrLow;
+    }
     const xMax = spectralAxis.binHigh;
     const xMin = spectralAxis.binLow;
     const yMax = fluxAxis.upperLimit;
