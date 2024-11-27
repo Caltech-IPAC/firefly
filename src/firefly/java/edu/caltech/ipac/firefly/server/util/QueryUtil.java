@@ -143,19 +143,16 @@ public class QueryUtil {
                 return f;
             } else {
                 boolean checkForUpdates = request.getBooleanParam(URL_CHECK_FOR_NEWER, true);
-
-                //HttpURLConnection conn = (HttpURLConnection) URLDownload.makeConnection(url);
                 HttpServiceInput inputs = HttpServiceInput.createWithCredential(url.toString());
-
                 StringKey key = new StringKey(inputs.getUniqueKey());
                 File res  = (File) CacheManager.getCache().get(key);
-
                 String ext = FileUtil.getExtension(url.getPath().replaceFirst("^.*/", ""));
                 ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
                 File nFile = File.createTempFile(request.getRequestId(), ext, QueryUtil.getTempDir(request));
 
                 if (res == null) {
-                    FileInfo finfo = URLDownload.getDataToFile(url, nFile, inputs.getCookies(), inputs.getHeaders());
+                    FileInfo finfo = URLDownload.getDataToFile(url, nFile, inputs.getCookies(), inputs.getHeaders(),
+                            URLDownload.Options.defWithRedirect());
                     checkForFailures(finfo);
                     res = nFile;
                     CacheManager.getCache().put(key, res);

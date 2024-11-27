@@ -264,8 +264,9 @@ export const encodeUrlString= (urlString, baseUrl = getRootURL()) => {
         const url = new URL(urlString, baseUrl);
         let query = url.searchParams.toString();
             query = query ? '?' + query : '';
+        const port = url.port ? `:${url.port}` : '';
         const hash = url.hash ? '#' + encodeURIComponent(url.hash.substring(1)) : '';
-        return `${url.protocol}//${url.hostname}${url.pathname}${query}${hash}`;
+        return `${url.protocol}//${url.hostname}${port}${url.pathname}${query}${hash}`;
     } catch (e) {
         return urlString;
     }

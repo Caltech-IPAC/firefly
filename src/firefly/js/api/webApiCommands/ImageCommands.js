@@ -50,15 +50,15 @@ const imageExamples= [
         examples: [
             {
                 desc:'Load from URL',
-                params:{url: 'http://web.ipac.caltech.edu/staff/roby/data-products-test/1904-66_SFL.fits'}
+                params:{url: 'https://web.ipac.caltech.edu/staff/roby/data-products-test/1904-66_SFL.fits'}
                 },
             {
                 desc:'Load from URL all extensions',
-                params:{url: 'http://web.ipac.caltech.edu/staff/roby/data-products-test/j8zs05yxq_flt.fits'}
+                params:{url: 'https://web.ipac.caltech.edu/staff/roby/data-products-test/j8zs05yxq_flt.fits'}
             },
             {
                 desc:'Load from URL extension 0 and 2',
-                params:{url: 'http://web.ipac.caltech.edu/staff/roby/data-products-test/j8zs05yxq_flt.fits', MultiImageExts: '1,3' }
+                params:{url: 'https://web.ipac.caltech.edu/staff/roby/data-products-test/j8zs05yxq_flt.fits', MultiImageExts: '1,3' }
             }
         ] ,
     },

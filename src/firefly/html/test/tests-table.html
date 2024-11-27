@@ -33,11 +33,12 @@
                     ]},
                 {name: 'with html', width: 10, links: [{href: "https://ivoa.net/?id=${with html}", value: '${with html}'}]},
                 {name: 'bad url',  links:[{href: "${abc}"}]},
+                {name: 'NED Case',  links:[{href: "/reflookup?refcode=", role: "encode:values"}]},
             ];
 
             const data = [
-                ['https://irsa.ipac.caltech.edu'    , 'links'              , '<b>dollar</b> = &pound;0.81', 'bad url'],
-                ['https://irsatest.ipac.caltech.edu', 'subpath/a/ref?a=/x/y z/', '<b>dollar</b> = &pound;0.81', '']
+                ['https://irsa.ipac.caltech.edu'    , 'links'              , '<b>dollar</b> = &pound;0.81', 'bad url', '1985A&AS...59..255F'],
+                ['https://irsatest.ipac.caltech.edu', 'subpath/a/ref?a=/x/y z/', '<b>dollar</b> = &pound;0.81', '', '1966ApJS...13...65P']
             ];
             const table = { tableData: { columns, data } };
 
