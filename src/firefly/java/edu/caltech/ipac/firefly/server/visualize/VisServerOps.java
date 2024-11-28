@@ -194,7 +194,7 @@ public class VisServerOps {
         DirectStretchUtils.StretchDataInfo data;
         try {
             ActiveFitsReadGroup frGroup= CtxControl.prepare(state);
-            Cache memCache= CacheManager.getCache(Cache.TYPE_VIS_SHARED_MEM);
+            Cache memCache= CacheManager.getVisMemCache();
             CacheKey stretchDataKey= new StringKey(state.getContextString()+"byte-data");
             data= (StretchDataInfo)memCache.get(stretchDataKey);
             String fromCache= "";
@@ -371,13 +371,13 @@ public class VisServerOps {
     private static File getRegFile(String fileKey) {
         File regFile = ServerContext.convertToFile(fileKey);
         if (regFile != null && regFile.canRead()) return regFile;
-        UploadFileInfo tmp = (UploadFileInfo) (UserCache.getInstance().get(new StringKey(fileKey)));
+        UploadFileInfo tmp = (UploadFileInfo) (CacheManager.getUserCache().get(new StringKey(fileKey)));
         return tmp !=null ? tmp.getFile() : new File("");
     }
 
     private static String getRegTitle(String fileKey) {
         File f= getRegFile(fileKey);
-        UploadFileInfo fi = (UploadFileInfo) UserCache.getInstance().get(new StringKey(fileKey));
+        UploadFileInfo fi = (UploadFileInfo) CacheManager.getUserCache().get(new StringKey(fileKey));
         return (fi!=null) ? fi.getFileName() : fileKey.startsWith("UPLOAD") ? "Region file" : f.getName();
     }
 

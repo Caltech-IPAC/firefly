@@ -7,7 +7,6 @@ import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
-import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.ws.WorkspaceFactory;
@@ -39,6 +38,7 @@ public class RequestOwner implements Cloneable {
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     public static String USER_KEY = "usrkey";
+    public static int USER_KEY_EXPIRY = 3600 * 24 * 7 * 2;         // 2 weeks
     public static final String SET_USERINFO_ACTION = "app_data.setUserInfo";
     private static boolean ignoreAuth = AppProperties.getBooleanProperty("ignore.auth", false);
     private RequestAgent requestAgent;
@@ -171,7 +171,7 @@ public class RequestOwner implements Cloneable {
             }
 
             if (userInfo == null) {
-                Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
+                Cache cache = CacheManager.getLocal();
                 userInfo = (UserInfo) cache.get(new StringKey(getUserKey()));
                 if (userInfo == null) {
                     userInfo = UserInfo.newGuestUser();
@@ -238,7 +238,6 @@ public class RequestOwner implements Cloneable {
                 throw new RuntimeException("Unable to generate a new userKey after 1000 tries.");
             }
         } while (UserCache.exists(new StringKey(userKey)));
-        UserCache.create(new StringKey(userKey));
         return userKey;
     }
 
@@ -247,7 +246,7 @@ public class RequestOwner implements Cloneable {
             String cVal = requestAgent.getCookieVal(USER_KEY, "");
             if (!userKey.equals(cVal)) {
                 Cookie cookie = new Cookie(USER_KEY, userKey);
-                cookie.setMaxAge(3600 * 24 * 7 * 2);      // to live for two weeks
+                cookie.setMaxAge(USER_KEY_EXPIRY);      // to live for two weeks
                 cookie.setPath(requestAgent.getContextPath());
                 requestAgent.sendCookie(cookie);
             }

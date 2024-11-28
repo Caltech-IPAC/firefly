@@ -22,7 +22,7 @@ class ReplicatedQueueList {
 
    private static final String HOST_NAME= FileUtil.getHostname();
    private static final StringKey REP_QUEUE_MAP = new StringKey("ReplicatedEventQueueMap");
-   private static Cache getCache() { return CacheManager.getCache(Cache.TYPE_PERM_SMALL); }
+   private static Cache getCache() { return CacheManager.getLocal(); }
 
    synchronized void setQueueListForNode(List<ServerEventQueue> list)  {
       Cache cache= getCache();

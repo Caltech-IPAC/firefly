@@ -18,7 +18,7 @@ import java.io.File;
 public class CacheHelper {
 
     private static File    _cacheDir= null;
-    private final static Cache fileCache= CacheManager.getCache(Cache.TYPE_PERM_FILE);
+    private final static Cache fileCache= CacheManager.getDistributedFile();
     public static void setCacheDir(File dir) { _cacheDir= dir; }
 
     public static File makeFitsFile(BaseNetParams params) { return makeFile(params.getUniqueString()+ ".fits"); }

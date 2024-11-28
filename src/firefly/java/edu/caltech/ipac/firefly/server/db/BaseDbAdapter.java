@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.db;
 
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -65,6 +66,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
 //====================================================================
 
     public BaseDbAdapter(File dbFile) { this.dbFile = dbFile; }
+
     public File getDbFile() { return dbFile; }
 
     public DbInstance getDbInstance() {
@@ -730,7 +732,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
                 dt.getRef(),
                 dt.getMaxValue(),
                 dt.getMinValue(),
-                serialize(dt.getLinkInfos()),       // index(21) is used in HsqlDbAdapter.  if it changes, update.
+                Util.serialize(dt.getLinkInfos()),       // index(21) is used in HsqlDbAdapter.  if it changes, update.
                 dt.getDataOptions(),
                 dt.getArraySize(),
                 dt.getCellRenderer(),
@@ -908,10 +910,10 @@ abstract public class BaseDbAdapter implements DbAdapter {
         return new Object[] {
                 dg.getTitle(),
                 dg.size(),
-                serialize(dg.getGroupInfos()),
-                serialize(dg.getLinkInfos()),
-                serialize(dg.getParamInfos()),
-                serialize(dg.getResourceInfos())
+                Util.serialize(dg.getGroupInfos()),
+                Util.serialize(dg.getLinkInfos()),
+                Util.serialize(dg.getParamInfos()),
+                Util.serialize(dg.getResourceInfos())
         };
     }
 

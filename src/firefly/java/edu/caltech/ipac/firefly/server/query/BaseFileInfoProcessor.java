@@ -10,14 +10,12 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataType;
-import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
 
 
@@ -55,7 +53,7 @@ public abstract class BaseFileInfoProcessor implements SearchProcessor<FileInfo>
     }
 
     public Cache getCache(ServerRequest request) {
-        return CacheManager.getCache(Cache.TYPE_PERM_SMALL);
+        return CacheManager.getLocal();
     }
 
     public QueryDescResolver getDescResolver() {

@@ -14,6 +14,7 @@ import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
+import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
 import edu.caltech.ipac.visualize.plot.Circle;
@@ -44,7 +45,7 @@ public class PlotServUtils {
     public static final String PROCESSING_COMPLETED_MSG =  "Processing Images Completed";
 
     public static void updateProgress(ProgressStat pStat) {
-        Cache cache= UserCache.getInstance();
+        Cache cache= CacheManager.getUserCache();
         CacheKey key= new StringKey(pStat.getId());
         ProgressStat lastPstat= (ProgressStat) cache.get(key);
         boolean fireAction= true;
@@ -292,14 +293,14 @@ public class PlotServUtils {
 
 
     private static ProgressMessage getSingleStatusMessage(String key) {
-        ProgressStat stat = (ProgressStat) UserCache.getInstance().get(new StringKey(key));
+        ProgressStat stat = (ProgressStat) CacheManager.getUserCache().get(new StringKey(key));
         if (stat != null)  return new ProgressMessage(stat.getMessage(), stat.isDone());
         return EMPTY_MESSAGE;
     }
 
     private static ProgressMessage getMultiStatMessage(ProgressStat stat) {
         ProgressMessage retval;
-        Cache cache = UserCache.getInstance();
+        Cache cache = CacheManager.getUserCache();
         List<String> keyList = stat.getMemberIDList();
         ProgressStat statEntry;
 

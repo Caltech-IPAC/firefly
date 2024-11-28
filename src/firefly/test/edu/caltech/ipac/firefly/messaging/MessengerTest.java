@@ -6,8 +6,14 @@ package edu.caltech.ipac.firefly.messaging;
 
 import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.ConfigTest;
+import edu.caltech.ipac.firefly.core.RedisService;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.Ref;
+import org.apache.logging.log4j.Level;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -27,16 +33,23 @@ import static org.junit.Assert.*;
  * @version $Id: $
  */
 public class MessengerTest extends ConfigTest {
-    private boolean isOffline;
+    private static boolean isOffline;
 
     @Before
-    public void checkAlive() {
-        if (Messenger.isOffline()) {
+    public void setup() {
+        RedisService.connect();
+        if (RedisService.isOffline()) {
             System.out.println("Messenger is offline; skipping test.");
             isOffline = true;
         }
+        if (true) Logger.setLogLevel(Level.TRACE);			// for debugging.
     }
 
+    @After
+    public void teardown() {
+        RedisService.disconnect();
+        LOG.trace("tear down");
+    }
 
     @Test
     public void testMsgContent() throws InterruptedException {
@@ -76,7 +89,7 @@ public class MessengerTest extends ConfigTest {
         if (isOffline) return;
         LOG.debug("testMsgCount");
 
-        Message testMsg = new Message();
+        Message testMsg = new Message().setValue("abc", "a");
         String topic1 = "test1";
         String topic2 = "test2";
 
@@ -90,7 +103,7 @@ public class MessengerTest extends ConfigTest {
         tester.set(new CountDownLatch(4));
         Messenger.publish(topic1, testMsg);
         Messenger.publish(topic2, testMsg);
-        tester.get().await(1, TimeUnit.SECONDS);       // wait up to 1s for msg delivery..
+        tester.get().await(5, TimeUnit.SECONDS);       // wait up to 1s for msg delivery.
         assertEquals("latch(4) should drain", 0, tester.get().getCount());
 
         LOG.debug("same as above, but 1 sub removed from topic1... = 3");
@@ -131,26 +144,26 @@ public class MessengerTest extends ConfigTest {
         Subscriber sub22 = Messenger.subscribe(topic2, msg -> msg = null);
 
         LOG.debug("2 topics, 2 subs per topic.. = 2 connections");
-        Thread.sleep(100);
-        assertEquals("init", 2, Messenger.getConnectionCount());
+        Thread.sleep(300);          // give time for pool to update its stats
+        assertEquals("init", 2, RedisService.getConnectionCount());
 
         LOG.debug("remove 1 sub from topic 1.. = 2 connections");
         Messenger.unSubscribe(sub11);
         Thread.sleep(100);
-        assertEquals("3 subs left", 2, Messenger.getConnectionCount());
+        assertEquals("3 subs left", 2, RedisService.getConnectionCount());
 
         LOG.debug("remove both subs from topic 1.. = 1 connections");
         Messenger.unSubscribe(sub12);
         Thread.sleep(100);
-        assertEquals("only topic2 left", 1, Messenger.getConnectionCount());
+        assertEquals("only topic2 left", 1, RedisService.getConnectionCount());
 
         LOG.debug("remove both topic.. = 0 connections");
         Messenger.unSubscribe(sub21);
         Messenger.unSubscribe(sub22);
         Thread.sleep(100);
-        assertEquals("no subs", 0, Messenger.getConnectionCount());
+        assertEquals("no subs", 0, RedisService.getConnectionCount());
 
-        LOG.debug("Messenger stats: " + Messenger.getStats());
+        LOG.debug("Messenger stats: " + RedisService.getStats());
         LOG.debug("testSubscribe.. done!");
 
     }
@@ -159,7 +172,10 @@ public class MessengerTest extends ConfigTest {
     @Category({TestCategory.Perf.class})
     @Test
     public void perfTest() throws InterruptedException {
-        int numSent = 1000*100;
+
+        if (isOffline) return;
+
+        int numSent = 100_000;
         long startTime = System.currentTimeMillis();
         final CountDownLatch numRevc = new CountDownLatch(numSent);
 
@@ -168,14 +184,14 @@ public class MessengerTest extends ConfigTest {
             if (numRevc.getCount() == 0) {
                 long stopTime = System.currentTimeMillis();
                 System.out.println("\t elapsed time: " + (stopTime - startTime)/1000.0 + "s");
-                System.out.println("\t Messenger stats: " + Messenger.getStats());
+                System.out.println("\t Messenger stats: " + RedisService.getStats());
             }
         });
 
         // This is a performance as well as a stress test.
         // Sending a total of 100k messages using 50 simultaneous threads
-        // This will exhaust Messenger's pool size of 25 so we can see how it does under stress.
-        ExecutorService exec = Executors.newFixedThreadPool(50);
+        // This will exhaust Messenger's pool size of 100, so we can see how it does under stress.
+        ExecutorService exec = Executors.newFixedThreadPool(200);
 
         System.out.printf("Test sending %d number of messages...\n", numSent);
         for(int i = 0; i < numSent; i++) {
@@ -183,6 +199,7 @@ public class MessengerTest extends ConfigTest {
             exec.submit(() -> Messenger.publish("perfTest", new Message().setValue("idx" + finalI)));
         }
         numRevc.await();
+        Thread.sleep(100);
     }
 
 }

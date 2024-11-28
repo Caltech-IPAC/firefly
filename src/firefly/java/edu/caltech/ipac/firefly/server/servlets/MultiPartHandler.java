@@ -7,6 +7,7 @@ import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartData;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.cache.CacheManager;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -35,7 +36,7 @@ public class MultiPartHandler extends BaseHttpServlet {
 
         try {
             MultiPartData data= MultipartDataUtil.handleRequest(req);
-            UserCache.getInstance().put(data.getCacheKey(), data);
+            CacheManager.getUserCache().put(data.getCacheKey(), data);
             LOG.info("Multipart request processed.",
                      "File(s) uploaded: " + StringUtils.toString(data.getFiles()),
                      "Form parameters : " + data.getParams());

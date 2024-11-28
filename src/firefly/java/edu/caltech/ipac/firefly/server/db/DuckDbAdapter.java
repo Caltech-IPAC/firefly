@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.db;
 
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
@@ -188,7 +189,7 @@ public class DuckDbAdapter extends BaseDbAdapter {
                     List<Integer> aryIdx = colIdxWithArrayData(colsAry);
                     for (int r = 0; r < totalRows; r++) {
                         Object[] row = dg.get(r).getData();
-                        aryIdx.forEach(idx -> row[idx] = serialize(row[idx]));      // serialize array data if necessary
+                        aryIdx.forEach(idx -> row[idx] = Util.serialize(row[idx]));      // serialize array data if necessary
                         addRow(appender, row, r);
                     }
                     appender.flush();

@@ -4,12 +4,16 @@
 
 package edu.caltech.ipac.firefly.messaging;
 
+import edu.caltech.ipac.firefly.core.background.JobInfo;
+import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.data.ServerEvent.Scope;
+import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.util.AppProperties;
 
 /**
  * The message object sent or received by Messenger.  As implemented, Messenger
  * uses JSON when serialize/deserialize is needed.  However, this is an internal
- * implementation and it can be changed without breaking Messenger/Message contract.
+ * implementation, and it can be changed without breaking Messenger/Message contract.
  *
  * Date: 2019-03-15
  *
@@ -17,7 +21,7 @@ import edu.caltech.ipac.firefly.data.ServerEvent.Scope;
  * @version $Id: $
  */
 public class Message {
-    private JsonHelper helper = new JsonHelper();
+    protected JsonHelper helper = new JsonHelper();
 
     public MsgHeader getHeader() {
         Scope scope = Scope.valueOf(helper.getValue(Scope.SELF.name(), "header", "scope"));
@@ -53,5 +57,30 @@ public class Message {
 
     public String toJson() {
         return helper.toJson();
+    }
+
+//====================================================================
+//  Predefined messages
+//====================================================================
+
+    public static final class JobCompleted extends Message {
+        public static final String TOPIC = "JobCompleted";
+        static final String FROM = AppProperties.getProperty("mail.smtp.from", "donotreply@ipac.caltech.edu");
+        JobInfo job;
+        public JobCompleted(JobInfo jobInfo) {
+            job = jobInfo;
+            setHeader(Scope.CHANNEL, jobInfo.getOwner(), TOPIC, FROM);
+            helper.setValue(JobManager.toJsonObject(jobInfo), "jobInfo");
+            var user = ServerContext.getRequestOwner().getUserInfo();
+            if (user != null) {
+                helper.setValue(user.getName(), "user", "name");
+                helper.setValue(user.getEmail(), "user", "email");
+                helper.setValue(user.getLoginName(), "user", "loginName");
+            }
+            var ssoAdpt = ServerContext.getRequestOwner().getSsoAdapter();
+            if (ssoAdpt != null) {
+                helper.setValue(ssoAdpt.getAuthToken(), "user", "authToken");
+            }
+        }
     }
 }

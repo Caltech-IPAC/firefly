@@ -3,18 +3,13 @@
  */
 package edu.caltech.ipac.firefly.server.cache;
 
+import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.cache.Cache;
-import edu.caltech.ipac.util.cache.CacheKey;
-import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
+import redis.clients.jedis.Jedis;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import static edu.caltech.ipac.firefly.server.RequestOwner.USER_KEY_EXPIRY;
 
 /**
  * Date: Jul 21, 2008
@@ -22,13 +17,20 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author loi
  * @version $Id: UserCache.java,v 1.5 2009/03/23 23:55:16 loi Exp $
  */
-public class UserCache extends KeyBasedCache {
+public class UserCache extends DistribMapCache {
 
     public static Cache getInstance(){
         return new UserCache();
     }
 
     private UserCache() {
-        super(ServerContext.getRequestOwner().getUserKey());
+        super(ServerContext.getRequestOwner().getUserKey(), USER_KEY_EXPIRY);
+    }
+
+    public static boolean exists(StringKey userKey) {
+        try(Jedis redis = RedisService.getConnection()) {
+            return redis.exists(userKey.getUniqueString());
+        } catch (Exception ex) { LOG.error(ex); }
+        return false;
     }
 }

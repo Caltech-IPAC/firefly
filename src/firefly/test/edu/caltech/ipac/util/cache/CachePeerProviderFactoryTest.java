@@ -5,12 +5,15 @@
 package edu.caltech.ipac.util.cache;
 
 import edu.caltech.ipac.firefly.ConfigTest;
+import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.messaging.Messenger;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import net.sf.ehcache.CacheManager;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.distribution.CacheManagerPeerProvider;
 import net.sf.ehcache.distribution.CachePeer;
+import org.apache.logging.log4j.Level;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -80,10 +83,11 @@ public class CachePeerProviderFactoryTest extends ConfigTest {
     @BeforeClass
     public static void setUp() throws InterruptedException {
 
-        if (Messenger.isOffline()) {
+        if (RedisService.isOffline()) {
             System.out.println("Messenger is offline; skipping all tests in CachePeerProviderFactoryTest.");
             return;
         }
+        if (true) Logger.setLogLevel(Level.TRACE);			// for debugging.
 
         LOG.debug("Initial setup for PubSub, creating 3 peers");
         peer1 = createCM("PubSub", "peer1");
@@ -102,7 +106,7 @@ public class CachePeerProviderFactoryTest extends ConfigTest {
 
     @Test
     public void pubSub_InitialSetup() throws InterruptedException, RemoteException {
-        if (Messenger.isOffline()) return;
+        if (RedisService.isOffline()) return;
 
         assertEquals("Number of caches", 2, peer1.getCacheNames().length);
 
@@ -119,7 +123,7 @@ public class CachePeerProviderFactoryTest extends ConfigTest {
 
     @Test
     public void pubSub_CacheReplication() throws InterruptedException, RemoteException {
-        if (Messenger.isOffline()) return;
+        if (RedisService.isOffline()) return;
 
         LOG.debug("put a few entries into peer1... it should be replicated to the rest of the peers");
         peer1.getCache("cache_1").put(new Element("key1", "value1"));
@@ -142,7 +146,7 @@ public class CachePeerProviderFactoryTest extends ConfigTest {
 
     @Test
     public void pubSub_PeerAddDrop() throws InterruptedException, RemoteException {
-        if (Messenger.isOffline()) return;
+        if (RedisService.isOffline()) return;
 
         LOG.debug("testing drop-off.... shutdown peer1");
         peer1.shutdown();
@@ -174,7 +178,7 @@ public class CachePeerProviderFactoryTest extends ConfigTest {
 
     @Test
     public void multicast_InitialSetup() throws InterruptedException, RemoteException {
-        if (Messenger.isOffline()) return;
+        if (RedisService.isOffline()) return;
 
         assertEquals("Number of caches", 2, mcPeer1.getCacheNames().length);
 
@@ -191,7 +195,7 @@ public class CachePeerProviderFactoryTest extends ConfigTest {
 
     @Test
     public void multicast_CacheReplication() throws InterruptedException, RemoteException {
-        if (Messenger.isOffline()) return;
+        if (RedisService.isOffline()) return;
 
         LOG.debug("put a few entries into mcPeer1... it should be replicated to the rest of the peers");
         mcPeer1.getCache("cache_1").put(new Element("key1", "value1"));
@@ -214,7 +218,7 @@ public class CachePeerProviderFactoryTest extends ConfigTest {
 
     @Test
     public void multicast_PeerAddDrop() throws InterruptedException, RemoteException {
-        if (Messenger.isOffline()) return;
+        if (RedisService.isOffline()) return;
 
         LOG.debug("testing drop-off.... shutdown mcPeer1");
         mcPeer1.shutdown();

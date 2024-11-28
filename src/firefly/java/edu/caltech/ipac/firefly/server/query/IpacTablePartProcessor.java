@@ -14,7 +14,6 @@ import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.cache.PrivateCache;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -133,7 +132,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         File dgFile = null;
         try {
             TableServerRequest request = (TableServerRequest) sr;
-            Cache cache = CacheManager.getCache(Cache.TYPE_TEMP_FILE);
+            Cache cache = CacheManager.getLocalFile();
             // get unique key without page info
             StringKey key = new StringKey(this.getClass().getName(), getDataKey(request));
 
@@ -313,7 +312,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
         LOGGER.warn("<< slow getDataFile called." + this.getClass().getSimpleName());
 
-        Cache cache = CacheManager.getCache(Cache.TYPE_TEMP_FILE);
+        Cache cache = CacheManager.getLocalFile();
 
         // if decimation or sorting is requested, you cannot background writing the file to speed up response time.
         boolean noBgWrite = DecimationProcessor.getDecimateInfo(request) != null || request.getSortInfo() != null;
@@ -440,7 +439,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 //====================================================================
 
     protected Cache getCache() {
-        return new PrivateCache(ServerContext.getRequestOwner().getUserKey(), CacheManager.getCache(Cache.TYPE_PERM_FILE));
+        return CacheManager.getLocalMap(ServerContext.getRequestOwner().getUserKey());
     }
 
     /**

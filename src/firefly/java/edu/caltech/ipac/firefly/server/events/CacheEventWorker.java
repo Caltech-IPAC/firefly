@@ -20,9 +20,6 @@ import net.sf.ehcache.Element;
 import net.sf.ehcache.event.CacheEventListener;
 import net.sf.ehcache.event.NotificationScope;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
 
 /**
@@ -30,8 +27,7 @@ import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
  */
 public class CacheEventWorker implements ServerEventManager.EventWorker {
 
-    private static final String EVENT_SENDING_CACHE= Cache.TYPE_PERM_SMALL;
-    private static final Cache cache= CacheManager.getCache(EVENT_SENDING_CACHE);
+    private static final Cache cache= CacheManager.getDistributed();
 
 
     public CacheEventWorker() {

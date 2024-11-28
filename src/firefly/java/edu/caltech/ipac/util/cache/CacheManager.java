@@ -4,10 +4,15 @@
 package edu.caltech.ipac.util.cache;
 
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.cache.KeyBasedCache;
-import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.firefly.server.cache.DistribMapCache;
+import edu.caltech.ipac.firefly.server.cache.DistributedCache;
+import edu.caltech.ipac.firefly.server.cache.LocalMapCache;
+import edu.caltech.ipac.firefly.server.cache.UserCache;
+import edu.caltech.ipac.firefly.server.util.Logger;
 
 import java.util.List;
+
+import static edu.caltech.ipac.firefly.server.cache.EhcacheProvider.*;
 
 /**
  * Date: Jul 2, 2008
@@ -17,34 +22,104 @@ import java.util.List;
  */
 public class CacheManager {
 
-    private static final String DEF_TYPE = Cache.TYPE_PERM_SMALL;
     private static final String DEF_PROVIDER = "edu.caltech.ipac.firefly.server.cache.EhcacheProvider";  //  ie... "edu.caltech.ipac.firefly.server.cache.EhcacheProvider";
-    private static final String CACHEMANAGER_DISABLED_PROP = "CacheManager.disabled";
 
-    private static  Cache.Provider cacheProvider;
-    private static boolean isDisabled = false;
-
-
-    static {
-        // disable caching is it's a preference
-        isDisabled = AppProperties.getBooleanProperty(CACHEMANAGER_DISABLED_PROP, false);
-    }
+    private static Cache.Provider cacheProvider;
+    private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
 
+    /**
+     * Same as {@code getLocal}.
+     * @return A Cache that represents the local cache, backed by both memory and disk overflow.
+     */
     public static Cache getCache() {
-        return getCache(DEF_TYPE);
+        return getLocal();
     }
 
-    public static Cache getCache(String type) {
-        if (!isDisabled) {
-            try {
-                return getCacheProvider().getCache(type);
-            } catch (Exception e){
-                System.err.println("Unable to get Cache type:" + type + " returning EmptyCache.");
-            }
-        }
-        return new EmptyCache();
+    /**
+     * Returns a local cache backed by Ehcache. The cache uses both in-memory storage and overflow to disk.
+     * @return A Cache that represents the local cache, backed by both memory and disk overflow.
+     */
+    public static Cache getLocal() {
+        return getCacheProvider().getCache(PERM_SMALL);
     }
+
+    /**
+     * A variant of {@code getLocal}, specifically designed with convenience features for handling
+     * File and FileInfo objects.
+     * @return A Cache tailored for File and FileInfo objects
+     */
+    public static Cache getLocalFile() {
+        return new FileCache(getCacheProvider().getCache(PERM_SMALL));
+    }
+
+    /**
+     * A cache specifically designed for image visualization purposes.
+     * @return A Cache optimized for storing and accessing image data.
+     */
+    public static Cache getVisMemCache() {
+        return getCacheProvider().getCache(VIS_SHARED_MEM);
+    }
+
+    /**
+     * Returns a distributed cache, used for sharing cache data across
+     * different instances in a distributed environment.
+     * @return A Cache instance for distributed environments.
+     */
+    public static Cache getDistributed() {
+        return new DistributedCache();
+    }
+
+    /**
+     * A variant of {@code getDistributed}, specifically designed with convenience features for handling
+     * File and FileInfo objects.
+     * @return A Cache tailored for File and FileInfo objects in a distributed environment
+     */
+    public static Cache getDistributedFile() {
+        return new FileCache(new DistributedCache());
+    }
+
+    /**
+     * Returns a local cache specifically designed for storing data during
+     * a single session. This cache is for temporary storage
+     * of data that is specific to a user's session.
+     * @return A Cache instance for session-specific data storage.
+     */
+    public static Cache getSessionCache() {
+        return getLocalMap(ServerContext.getRequestOwner().getRequestAgent().getSessId());
+    }
+
+    /**
+     * Returns a distributed cache designed specifically for storing user-related information.
+     * This cache is intended to live longer than a typical session cache and is backed by a long-lived user key
+     * stored in a cookie, which allows user data to persist across multiple sessions.
+     * @return A distributed Cache instance for storing user-related information with persistence across sessions.
+     */
+    public static Cache getUserCache() {
+        return UserCache.getInstance();
+    }
+
+    /**
+     * Returns a local cache for storing data mapped to a unique key.
+     * @param mapKey The unique key associated with the cache.
+     * @return A Cache instance specifically for the data associated with the provided map key.
+     */
+    public static Cache getLocalMap(String mapKey) {
+        return new LocalMapCache(mapKey);
+    }
+
+    /**
+     * Returns a distributed cache designed for storing data mapped to a unique key.
+     * @param mapKey The unique key used to identify and access the data in the distributed cache.
+     * @return A Cache instance specifically for the data associated with the provided map key in the distributed environment.
+     */
+    public static Cache getDistributedMap(String mapKey) {
+        return new DistribMapCache(mapKey);
+    }
+
+//====================================================================
+//
+//====================================================================
 
     public static Cache.Provider getCacheProvider() {
         if (cacheProvider == null) {
@@ -55,7 +130,6 @@ public class CacheManager {
     }
 
     public static boolean setCacheProvider(String cacheProviderClassName) {
-        if (isDisabled) return true;
         setCacheProvider(newInstanceOf(cacheProviderClassName));
         return cacheProvider != null;
     }
@@ -64,30 +138,17 @@ public class CacheManager {
         CacheManager.cacheProvider = cacheProvider;
     }
 
-    public static boolean isDisabled() {
-        return isDisabled;
-    }
-
-    public static Cache getSessionCache() {
-        return new KeyBasedCache(ServerContext.getRequestOwner().getRequestAgent().getSessId());
-    }
-
-    public static Cache getUserCache() {
-        return new KeyBasedCache(ServerContext.getRequestOwner().getUserKey());
-    }
-
-
 //====================================================================
 //  helper functions
 //====================================================================
+
     private static Cache.Provider newInstanceOf(String className) {
-        if (className != null && className.length() > 0) {
+        if (className != null && !className.isEmpty()) {
             try {
                 Class<Cache.Provider> cc = (Class<Cache.Provider>) Cache.Provider.class.forName(className);
                 return cc.newInstance();
             } catch (Exception e) {
-                System.out.println("Can't create Cache.Provider:" + className + "\nThis could be a configuration error.");
-                e.printStackTrace();
+                LOG.error(e, "Can't create Cache.Provider:" + className + "\nThis could be a configuration error.");
             }
         }
         return null;
@@ -100,7 +161,7 @@ public class CacheManager {
      * An empty implementation of Cache.  This is a simple method to
      * disable caching by providing a permanently empty cache.
      */
-    private static class EmptyCache implements Cache {
+    public static class EmptyCache implements Cache {
 
         public void put(CacheKey key, Object value) {}
 

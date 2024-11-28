@@ -200,7 +200,7 @@ public class DuckDbAdapterTest extends ConfigTest {
 		hsqlReq.setParam(SEARCH_REQUEST, JsonTableUtil.toJsonTableRequest(hsql).toJSONString());
 
 		DataGroup duckTbl = new SearchManager().getDataGroup(duckReq).getData();
-		DataGroup hsqlTbl = new SearchManager().getDataGroup(hsqlReq).getData();
+		DataGroup hsqlTbl = new SearchManager().getDataGroup(hsqlReq).getData();		// failed. TODO
 
 		fullTableTest(duckTbl, hsqlTbl);
 

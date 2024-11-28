@@ -52,8 +52,8 @@ dependencies {
 
     implementation ('com.googlecode.json-simple:json-simple:1.1.1') { transitive = false }
 
-    // jedis
-    implementation ('redis.clients:jedis:3.1.0') { exclude group: 'org.slf4j' }
+    // jedis; support redis versions: 5.0 to 7.2 Family of releases
+    implementation ('redis.clients:jedis:4.4.8') { exclude group: 'org.slf4j' }
 
     // ehcache.  exclude core because it contains duplicated older CacheManager
     implementation ('net.sf.ehcache:ehcache:2.7.4')
@@ -98,6 +98,9 @@ dependencies {
 
     // duckdb - SQL support for parquet, csv, and tsv files
     implementation 'org.duckdb:duckdb_jdbc:1.1.3'
+
+    // embedded redis server; version ~ 6.2
+    implementation 'com.github.codemonstur:embedded-redis:1.4.3'
 }
 
 

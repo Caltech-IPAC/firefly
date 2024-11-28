@@ -773,7 +773,7 @@ public class StringUtils {
      * @param defaultValue returns when encountering exception or test fail
      * @return the value of func if it passes test.  otherwise, return null
      */
-    public static <R> R getWith(FuncWithEx<R> func, Predicate<R> test, R defaultValue) {
+    public static <R> R getIf(FuncWithEx<R> func, Predicate<R> test, R defaultValue) {
         try {
             var result = func.get();
             if (test.test(result)) return result;
@@ -790,9 +790,9 @@ public class StringUtils {
      * @param tries the number of times to try
      * @return the value of func if it passes test.  otherwise, return null
      */
-    public static <R> R getWith(FuncWithEx<R> func, Predicate<R> test, int tries) {
+    public static <R> R getIf(FuncWithEx<R> func, Predicate<R> test, int tries) {
         for (int i = 0; i < tries; i++) {
-            R v = getWith(func, test, null);
+            R v = getIf(func, test, null);
             if (v != null) return v;
         }
         return null;

@@ -21,7 +21,7 @@ import java.util.List;
 
 import static edu.caltech.ipac.firefly.server.db.DuckDbAdapter.addRow;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.colIdxWithArrayData;
-import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.serialize;
+import static edu.caltech.ipac.firefly.core.Util.serialize;
 import static edu.caltech.ipac.util.StringUtils.tryIt;
 
 /**
