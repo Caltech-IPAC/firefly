@@ -79,6 +79,7 @@ export function RowDetailsTable({tblOptions={}, tbl_id, highlightedRow, ...tblPr
             showFilters: true,
             showTypes: true,
             showUnits: false,
+            expandable: false,
             help_id: detailsAnchor,
             ...tblOptions
         });
