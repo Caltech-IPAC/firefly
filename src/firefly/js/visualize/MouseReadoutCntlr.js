@@ -117,6 +117,7 @@ const initState= () =>
             pixelSize: 'pixelSize',
             hipsMouseReadout1:'eqj2000hms',
             hipsMouseReadout2:'galactic',
+            mouseReadoutValueCopy: 'str',
             healpixPixel:'healpixPixel',
             healpixNorder:'healpixNorder',
             intFluxValueRadix: '10',
