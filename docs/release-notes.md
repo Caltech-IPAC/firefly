@@ -8,7 +8,9 @@
 
 
 ## Version 2024.3
-- 2024.3.1 - (Oct 24, 2024),  _docker tag_: `latest`, `2024.3`, `2024.3.1`
+- 2024.3.3 - (Dec 2, 2024),  _docker tag_: `2024.3.3`, `2024.3`, `latest`
+- 2024.3.2 - (Nov 5, 2024),  _docker tag_: `2024.3.2`
+- 2024.3.1 - (Oct 24, 2024),  _docker tag_: `2024.3.1`
 - 2024.3.0 - (Oct 18, 2024),  _docker tag_: `2024.3.0`
 
 ### _Notes_
@@ -64,6 +66,11 @@ It also includes many, many bug fixes, clean up, and optimization (not all are l
 
 ### _Patches 2024.3_
 
+- 2024.3.3
+  - Enhancement: Spectrum guesser: recognize more tables- Firefly-1620 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1673))
+  - Bug fix: URL Api: Image loading sometimes failing- Firefly-1621 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1672))
+  - Bug fix: URL Api: Table loading following redirects- Firefly-1617 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1672))
+  - Enhancement: Table: Added mode to do link parsing in previous way- ([commit](https://github.com/Caltech-IPAC/firefly/commit/7167b490ee8caab46d358c15d9e559321cf8ab07))
 
 - 2024.3.2
   - Bug fix: Coverage now testing up to 36 million rows Firefly-1601 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1661))
