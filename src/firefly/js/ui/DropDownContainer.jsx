@@ -12,6 +12,7 @@ import {HiPSSearchPanel} from '../visualize/ui/HiPSSearchPanel.jsx';
 import {IrsaCatalogSearch} from '../visualize/ui/IrsaCatalogSearch.jsx';
 import {ClassicNedSearchPanel, ClassicVOCatalogPanel} from '../visualize/ui/ExtraIpacSearches.jsx';
 import {ImageSearchDropDown} from '../visualize/ui/ImageSearchPanelV2.jsx';
+import {SIAv2SearchPanel} from './tap/SIASearchRootPanel';
 import {TestSearchPanel} from './TestSearchPanel';
 import {TestQueriesPanel} from './TestQueriesPanel';
 import {ChartSelectDropdown} from './ChartSelectDropdown';
@@ -40,6 +41,7 @@ export const dropDownMap = {
     ImageSelectDropDownSlateCmd: {view: <ImageSearchDropDown gridSupport={true} />, layout: flexGrowWithMax},
     ChartSelectDropDownCmd: {view: <ChartSelectDropdown />},
     TAPSearch: {view: <TapSearchPanel/>, layout: {width: '100%'}},
+    SIAv2Search: {view: <SIAv2SearchPanel/>, layout: {width: '100%'}},
     MultiTableSearchCmd: {view: <MultiSearchPanel/>,  layout: {width: '100%'}},
     FileUploadDropDownCmd: {view: <FileUploadDropdown />, layout: {width: '100%'}},
     WorkspaceDropDownCmd: {view: <WorkspaceDropdown />},
@@ -91,7 +93,7 @@ export function DropDownContainer ({style={}, visible:defVisible=false, selected
     if (layout) Object.assign(style, layout);
 
     return (
-        <Stack flexGrow={1}>
+        <Stack flexGrow={1} maxHeight={1}>
             {view && React.cloneElement(view, { initArgs } ) }
         </Stack>
     );

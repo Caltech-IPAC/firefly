@@ -539,16 +539,16 @@ const hasElements= (a) => Boolean(isArray(a) && a?.length);
 
 export const getAsEntryForTableName= (tableName) => tableName?.[0] ?? 'x';
 
-function mergeAdditionalServices(tapServices, additional) {
-    if (!hasElements(additional)) return tapServices;
+export function mergeAdditionalServices(inServices, additional) {
+    if (!hasElements(additional)) return inServices;
 
     const mergeAdditional= additional.map( (a) => {
         if (a.hide) return false;
-        const originalEntry= tapServices.find( (t) => a.label===t.label);
+        const originalEntry= inServices.find( (t) => a.label===t.label);
         return originalEntry ? {...originalEntry, ...a} : a;
     }).filter( (s) => s);
 
-    const unmodifiedOriginal= tapServices
+    const unmodifiedOriginal= inServices
         .map( (t) => {
             const match= additional.find( (a) => a.label===t.label);
             return !match && t;

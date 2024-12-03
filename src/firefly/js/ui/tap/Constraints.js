@@ -39,7 +39,6 @@ export function getHelperConstraints(tapBrowserState) {
     const adqlConstraints = [];
     const adqlConstraintErrorsArray = [];
     const siaConstraints = [];
-    const siaConstraintErrorsArray = [];
     // adqlComponents can apparently be modified during iteration in the forEach...
     Array.from(constraintFragments.values()).forEach((constraintObj) => {
         if (!constraintObj.adqlConstraintErrors?.length) {
@@ -47,14 +46,14 @@ export function getHelperConstraints(tapBrowserState) {
                 adqlConstraints.push(constraintObj.adqlConstraint);
             }
         } else {
-            adqlConstraintErrorsArray.push(constraintObj.adqlConstraintErrors);
+            adqlConstraintErrorsArray.push(constraintObj.constraintErrors);
         }
-        if (!constraintObj.siaConstraintErrors?.length) {
+        if (!constraintObj.constraintErrors?.length) {
             if (constraintObj.siaConstraints?.length > 0) {
                 siaConstraints.push(...constraintObj.siaConstraints);
             }
         } else {
-            siaConstraintErrorsArray.push(constraintObj.siaConstraintErrors);
+            adqlConstraintErrorsArray.push(constraintObj.constraintErrors);
         }
     });
     return {

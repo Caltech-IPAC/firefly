@@ -20,6 +20,9 @@ import {routeEntry, ROUTER} from './templates/router/RouteHelper.jsx';
 import {initApi} from './api/ApiBuild.js';
 import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
 import {FireflyRoot} from './ui/FireflyRoot.jsx';
+import {SIAv2SearchPanel} from './ui/tap/SIASearchRootPanel';
+import {getSIAv2Services} from './ui/tap/SiaUtil';
+import {TapSearchPanel} from './ui/tap/TapSearchRootPanel';
 import {dispatchChangeReadoutPrefs} from './visualize/MouseReadoutCntlr.js';
 import {showInfoPopup} from './ui/PopupUtil';
 import {bootstrapRedux, flux} from './core/ReduxFlux.js';
@@ -121,12 +124,21 @@ const defAppProps = {
     menu: [
         {label:'Images', action:'ImageSelectDropDownCmd', primary: true, category:IRSA_CAT},
         {label:'TAP', action: 'TAPSearch', primary: true, category: ARCHIVE},
+        {label: 'SIAv2 Searches', action: 'SIAv2Search', primary:true, category: ARCHIVE},
         {label:'IRSA Catalogs', action: 'IrsaCatalog', primary: true, category:IRSA_CAT},
         {label:'VO SCS Search', action: 'ClassicVOCatalogPanelCmd', primary: false, category: ARCHIVE},
         {label:'NED', action: 'ClassicNedSearchCmd', primary: false, category:'NED Search'},
         {label:'Upload', action: 'FileUploadDropDownCmd', primary: true},
         {label:'HiPS Search', action: 'HiPSSearchPanel', primary: false, category:ARCHIVE},
+        {label:'IRSA SIAv2', action: 'IRSA_USING_SIAv2', primary: false, category:IRSA_CAT},
     ],
+
+    dropdownPanels: [
+        <SIAv2SearchPanel lockService={true} lockedServiceName='IRSA' groupKey='IRSA_USING_SIAv2'
+                        layout= {{width: '100%'}}
+                          lockTitle='IRSA SIAv2 Search'
+                        name='IRSA_USING_SIAv2'/>,
+        ]
 };
 
 /** @type {FireflyOptions} */
@@ -185,6 +197,7 @@ const defFireflyOptions = {
     },
     tapObsCore: {
         enableObsCoreDownload: true,
+        // debug: true,
     },
     coverage : {
         // TODO: need to define all options with defaults here.  used in FFEntryPoint.js
@@ -206,6 +219,10 @@ const defFireflyOptions = {
     tap : {
         services: getTAPServices( ['IRSA', 'NED', 'NASA Exoplanet Archive', 'KOA', 'HEASARC', 'MAST Images',
                                    'CADC', 'VizieR (CDS)', 'Simbad (CDS)', 'Gaia', 'GAVO', 'HSA', 'NOIR Lab'] ),
+        defaultMaxrec: 50000
+    },
+    SIAv2 : {
+        services: getSIAv2Services( ['IRSA', 'CADC', ]),
         defaultMaxrec: 50000
     }
 };
@@ -317,6 +334,7 @@ export function startAsAppFromApi(divId, overrideProps={template: 'FireflySlate'
         props.menu= [
             { label: 'Upload', action: 'FileUploadDropDownCmd', primary:true },
             { label: 'TAP Searches', action: 'TAPSearch', primary:true, category: general },
+            { label: 'SIAv2 Searches', action: 'SIAv2Search', primary:true, category: general },
             { label: 'IRSA Images', action: 'ImageSelectDropDownSlateCmd', category: other },
             { label: 'IRSA Catalogs', action: 'IrsaCatalogDropDown', category: other },
         ];

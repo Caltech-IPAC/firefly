@@ -33,7 +33,6 @@ function getExponent(units) {
 function makeWavelengthConstraints(wavelengthSelection, rangeType, filterDefinitions, fldObj) {
     const errList= makeFieldErrorList();
     const siaConstraints= [];
-    const siaConstraintErrors= [];
     const adqlConstraintsAry = [];
 
     const {obsCoreWavelengthContains:wlContains, obsCoreWavelengthMinRange:wlMinRange,
@@ -72,9 +71,14 @@ function makeWavelengthConstraints(wavelengthSelection, rangeType, filterDefinit
             errList.checkForError(wlContains);
             if (wlContains?.valid) {
                 const range = wlContains.value;
-                const rangeList = [[`${range}${exponent}`, `${range}${exponent}`]];
-                adqlConstraintsAry.push(makeAdqlQueryRangeFragment('em_min', 'em_max', rangeList, true));
-                siaConstraints.push(...siaQueryRange('BAND', rangeList));
+                if (range) {
+                    const rangeList = [[`${range}${exponent}`, `${range}${exponent}`]];
+                    adqlConstraintsAry.push(makeAdqlQueryRangeFragment('em_min', 'em_max', rangeList, true));
+                    siaConstraints.push(...siaQueryRange('BAND', rangeList));
+                }
+                else {
+                    errList.addError('Wavelength empty');
+                }
             }
         }
         if (rangeType === 'overlaps') {
@@ -99,7 +103,7 @@ function makeWavelengthConstraints(wavelengthSelection, rangeType, filterDefinit
         }
     }
     const errAry= errList.getErrors();
-    return { valid: errAry.length===0, errAry, adqlConstraintsAry, siaConstraints, siaConstraintErrors };
+    return { valid: errAry.length===0, errAry, adqlConstraintsAry, siaConstraints};
 
 }
 
@@ -108,7 +112,7 @@ const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 const fldKeys= ['obsCoreWavelengthContains', 'obsCoreWavelengthMinRange','obsCoreWavelengthSelectionType',
                 'obsCoreWavelengthRangeType', 'obsCoreWavelengthMaxRange', 'obsCoreWavelengthUnits'];
 
-export function ObsCoreWavelengthSearch({initArgs, serviceLabel, slotProps}) {
+export function ObsCoreWavelengthSearch({initArgs, serviceLabel, slotProps,useSIAv2}) {
     const filterDefinitions = getTapObsCoreOptions(serviceLabel).filterDefinitions ?? [];
     const fdDefsKeys= filterDefinitions.length ? filterDefinitions.map((fd) =>'filter' +fd.name ) : [];
 
@@ -127,7 +131,7 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel, slotProps}) {
     useEffect(() => {
         const fldObj= makeFldObj([...fdDefsKeys, ...fldKeys]);
         const constraints= makeWavelengthConstraints(selectionType,rangeType, filterDefinitions, fldObj);
-        updatePanelStatus(constraints, constraintResult, setConstraintResult);
+        updatePanelStatus(constraints, constraintResult, setConstraintResult,useSIAv2);
     });
 
     useEffect(() => {
@@ -252,6 +256,7 @@ export function ObsCoreWavelengthSearch({initArgs, serviceLabel, slotProps}) {
 ObsCoreWavelengthSearch.propTypes = {
     initArgs: PropTypes.object,
     serviceLabel: PropTypes.string,
+    useSIAv2: PropTypes.bool,
     slotProps: PropTypes.shape({
         obsCoreWavelengthUnits: PropTypes.object,
         obsCoreFilterDefinitions: PropTypes.object,
