@@ -77,7 +77,7 @@ public class SofiaAnalyzer implements DataProductAnalyzer {
         if (inst.equals("FORCAST")) {
             if (level.equals("LEVEL_2") && (code.equals("rspspec") || code.equals("mrgspec"))) { //params.containsKey("replace") && Boolean.parseBoolean(params.get("replace"))) {
                 return  true;
-            } else if (level.equals("LEVEL_3") && (code.equals("combspec") || code.equals("calspec"))) { //params.containsKey("replace") && Boolean.parseBoolean(params.get("replace"))) {
+            } else if ((level.equals("LEVEL_3") && (code.equals("combspec"))) || (level.equals("LEVEL_3") && (code.equals("combined_spectrum")))  || code.equals("calspec")) { //params.containsKey("replace") && Boolean.parseBoolean(params.get("replace"))) {
                 return  true;
             }
         } else if (inst.equals("EXES") && level.equals("LEVEL_3")) {
