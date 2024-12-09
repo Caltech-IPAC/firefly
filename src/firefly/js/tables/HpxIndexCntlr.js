@@ -589,7 +589,7 @@ export function setPixelTile(orderData,norder,pixel,tile) {
 
 export function getPixelCount(orderData,norder) {
     const tileMapAry= orderData[norder].tiles;
-    return tileMapAry.reduce((sum,map) => sum+map.length, 0);
+    return tileMapAry.reduce((sum,map) => sum+map.size, 0);
 }
 
 export function getValuesForOrder(orderData,norder) {
