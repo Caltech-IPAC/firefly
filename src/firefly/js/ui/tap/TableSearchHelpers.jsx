@@ -72,15 +72,19 @@ export const makeFieldErrorList = () => {
 export const getPanelPrefix = (panelTitle) => panelTitle[0].toLowerCase() + panelTitle.substr(1);
 
 
-function getPanelAdqlConstraint(panelActive, panelTitle,constraintsValid,adqlConstraintsAry,firstMessage, defErrorMessage=DEF_ERR_MSG) {
-    if (!panelActive) return {adqlConstraint:'',adqlConstraintErrors:[]};
+function getPanelAdqlConstraint(panelActive, panelTitle,constraintsValid,adqlConstraintsAry,siaConstraints, firstMessage, defErrorMessage=DEF_ERR_MSG, useSIAv2=false) {
+    if (!panelActive) return {adqlConstraint:'',constraintErrors:[], siaConstraints:[]};
 
-    if (constraintsValid && adqlConstraintsAry?.length) {
-        return {adqlConstraint:adqlConstraintsAry.join(' AND '),adqlConstraintErrors:[]};
-    } else {
+    if (useSIAv2 && constraintsValid && siaConstraints?.length) {
+        return {adqlConstraint: adqlConstraintsAry.join(' AND '), constraintErrors: [], siaConstraints};
+    }
+    else if (!useSIAv2 && constraintsValid && adqlConstraintsAry?.length) {
+        return {adqlConstraint:adqlConstraintsAry.join(' AND '),constraintErrors:[], siaConstraints};
+    }
+    else {
         const msg= (!constraintsValid && firstMessage) ?
             `Error processing ${panelTitle} constraints: ${firstMessage}` : defErrorMessage;
-        return {adqlConstraint:'',adqlConstraintErrors:[msg]};
+        return {adqlConstraint:'',constraintErrors:[msg], siaConstraints:[]};
     }
 }
 
@@ -99,15 +103,15 @@ export function makePanelStatusUpdater(panelActive,panelTitle,defErrorMessage) {
      * @param {Function} setConstraintResult - a function to set the constraint result setConstraintResult(ConstraintResult)
      * @String string - panel message
      */
-    return (constraints, lastConstraintResult, setConstraintResult) => {
-        const {valid:constraintsValid,errAry, adqlConstraintsAry, siaConstraints, siaConstraintErrors,
+    return (constraints, lastConstraintResult, setConstraintResult, useSIAv2= false) => {
+        const {valid:constraintsValid,errAry, adqlConstraintsAry,
             uploadFile, TAP_UPLOAD}= constraints;
 
         const simpleError= constraintsValid ? '' : (errAry[0]|| defErrorMessage || '');
 
-        const {adqlConstraint, adqlConstraintErrors}=
-            getPanelAdqlConstraint(panelActive,panelTitle, constraintsValid,adqlConstraintsAry,errAry[0], defErrorMessage);
-        const cr = { adqlConstraint, adqlConstraintErrors, siaConstraints, siaConstraintErrors, simpleError,
+        const {adqlConstraint, constraintErrors, siaConstraints}=
+            getPanelAdqlConstraint(panelActive,panelTitle, constraintsValid,adqlConstraintsAry,constraints.siaConstraints, errAry[0], defErrorMessage, useSIAv2);
+        const cr = { adqlConstraint, constraintErrors, siaConstraints, simpleError,
             uploadFile, TAP_UPLOAD};
         if (constraintResultDiffer(cr, lastConstraintResult)) setConstraintResult(cr);
 
@@ -119,9 +123,8 @@ export function makePanelStatusUpdater(panelActive,panelTitle,defErrorMessage) {
 function constraintResultDiffer(c1, c2) {
     return (c1?.adqlConstraint !== c2?.adqlConstraint ||
         (c1.simpleError!==c2.simpleError) ||
-        !isEqual(c1.adqlConstraintErrors, c2.adqlConstraintErrors) ||
+        !isEqual(c1.constraintErrors, c2.constraintErrors) ||
         !isEqual(c1.siaConstraints, c2.siaConstraints) ||
-        !isEqual(c1.siaConstraintErrors, c2.siaConstraintErrors) ||
         c1.upload!==c2.upload ||
         c1.uploadFrom!==c2.uploadFrom ||
         c1.serverFile!==c2.serverFile ||
@@ -280,7 +283,7 @@ export function TableTypeButton({sx, lockToObsCore, setLockToObsCore}) {
     );
 }
 
-export function DebugObsCore({constraintResult, includeSia=false}) {
+export function DebugObsCore({constraintResult, includeSia=true}) {
 
     const {current:divElementRef}= useRef({divElement:undefined});
 
@@ -290,23 +293,23 @@ export function DebugObsCore({constraintResult, includeSia=false}) {
     if (!getAppOptions().tapObsCore?.debug) return false;
 
     const siaFrag= (
-        <span>
-            sia: {constraintResult?.siaConstraintErrors?.length ?
-            `Error: ${constraintResult?.siaConstraintErrors?.join(' ')}` :
-            constraintResult?.siaConstraints?.join('&')}
-        </span>
-
+        <>
+            <span style={{fontStyle: 'italic', fontSize: 'smaller'}}>sia: </span>
+            <code style={{fontSize: 'smaller'}}>
+                { constraintResult?.siaConstraints?.join('&')}
+            </code>
+        </>
     );
 
-    const adqlFrag= (
-        <code className='language-sql' style={{   background: 'none' }}>
+    const adqlFrag = (
+        <code className='language-sql' style={{background: 'none'}}>
             {constraintResult?.adqlConstraint}
         </code>
     );
 
     return (
-        <div ref={(c) => divElementRef.divElement= c} style={{marginTop:5}}>
-            <span style={{fontStyle:'italic', fontSize:'smaller'}}>adql: </span>
+        <div ref={(c) => divElementRef.divElement = c} style={{marginTop: 5}}>
+            <span style={{fontStyle: 'italic', fontSize: 'smaller'}}>adql: </span>
             <span>
                 {constraintResult?.adqlConstraint ? adqlFrag : <span>&#8709;</span>}
             </span> <br/>
@@ -375,7 +378,7 @@ export function TitleCustomizeButton({groupKey, tapBrowserState, selectBy}) {
  * @prop {Array.<String>} errAry
  * @props {Array.<String>} adqlConstraintsAry
  * @props {Array.<String>} siaConstraints
- * @props {Array.<String>} siaConstraintErrors
+ * @props {Array.<String>} constraintErrors
  */
 
 /**

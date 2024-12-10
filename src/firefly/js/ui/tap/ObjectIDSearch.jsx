@@ -3,10 +3,11 @@ import React, {useContext, useEffect, useState} from 'react';
 import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
 import {ConstraintContext} from 'firefly/ui/tap/Constraints';
 import {useFieldGroupRerender, useFieldGroupValue, useFieldGroupWatch} from 'firefly/ui/SimpleComponent';
-import {getPanelPrefix, makeCollapsibleCheckHeader, makeFieldErrorList, makePanelStatusUpdater
+import {
+    DebugObsCore, getPanelPrefix, makeCollapsibleCheckHeader, makeFieldErrorList, makePanelStatusUpdater
 } from 'firefly/ui/tap/TableSearchHelpers';
 import { ADQL_LINE_LENGTH, getAsEntryForTableName, makeUploadSchema, tapHelpId } from 'firefly/ui/tap/TapUtil';
-import PropTypes from 'prop-types';
+import {bool,string,object} from 'prop-types';
 import {ColsShape, getColValidator} from 'firefly/charts/ui/ColumnOrExpression';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 import {InputAreaFieldConnected} from '../InputAreaField.jsx';
@@ -18,10 +19,15 @@ import {doFetchTable} from 'firefly/tables/TableUtil';
 
 const UploadSingleColumn = 'uploadSingleColumn'; //UploadObjectIDColumn
 const ObjectIDColumn = 'objectIDColumn';
-const panelTitle = 'Object ID Search';
+const tapPanelTitle = 'Object ID Search';
+const siaPanelTitle = 'Observation ID Search';
 const panelValue = 'ObjectIDMatch';
 const TAB_COLUMNS_MSG = 'This will be matched against Object ID selected from the uploaded table above';
 const defaultTblId = 'singleColTable';
+const tapEnterList= 'Enter list of object IDs';
+const siaEnterList= 'Enter list of observation IDs';
+const tapFromTable= 'Load object IDs from a table';
+const siaFromTable= 'Load observation IDs from a table';
 
 const SELECT_IN_TOOLTIP=(
         <Typography width='50rem'>
@@ -35,9 +41,6 @@ const ENTRY_TYPE='entryType';
 const OBJ_ID_ENTRY='objIdEntry';
 const ENTER= 'enter';
 const UPLOAD= 'upload';
-const objIdEntryType = [
-    {label: 'Enter list of object IDs', value: ENTER}, {label: 'Load object IDs from a table', value: UPLOAD}
-];
 
 const checkHeaderCtl= makeCollapsibleCheckHeader(getPanelPrefix(panelValue));
 const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
@@ -45,7 +48,7 @@ const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 const fldListAry= [UploadSingleColumn, ObjectIDColumn, OBJ_ID_ENTRY,ENTRY_TYPE];
 let savedFileName;
 
-export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
+export function ObjectIDSearch({cols, capabilities, tableName, columnsModel, useSIAv2}) {
     const [getUploadInfo, setUploadInfo]=  useFieldGroupValue('uploadInfoObjectID');
     const [getSelectInObjList, setSelectInObjList]=  useFieldGroupValue('selectInObjList');
     const [getUseSelectIn, setUseSelectIn]=  useFieldGroupValue('useSelectIn');
@@ -58,6 +61,10 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
     const {setVal,getVal,makeFldObj}= useContext(FieldGroupCtx);
     const [clickingSelectCols, setClickingSelectCols] = useState(false);
 
+    const objIdEntryType = [
+        {label: useSIAv2 ? siaEnterList : tapEnterList, value: ENTER},
+        {label: useSIAv2 ? siaFromTable : tapFromTable, value: UPLOAD}
+    ];
 
     useFieldGroupRerender([...fldListAry, ...collapsibleCheckHeaderKeys]); // force rerender on any change
 
@@ -65,7 +72,7 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
     const [constraintResult, setConstraintResult] = useState({});
     const posOpenKey= 'objectID-column-selected-table';
 
-    const updatePanelStatus= makePanelStatusUpdater(checkHeaderCtl.isPanelActive(), 'ObjectID');
+    const updatePanelStatus= makePanelStatusUpdater(checkHeaderCtl.isPanelActive(), useSIAv2? 'Observation ID' : 'Object ID');
 
     useFieldGroupWatch([UploadSingleColumn, OBJ_ID_ENTRY],
         ([uploadCol,objIdEntry],isInit) => {
@@ -93,12 +100,16 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
     }, [entryType,objIdEntry]);
 
     useEffect(() => {
+        let isActive = false;
+        if (useSIAv2) {
+            if (checkHeaderCtl.isPanelActive()) isActive = true;
+            return;
+        }
         const errMsg= 'Object ID searches require identifying a table column containing an Object ID.  Please provide a column name.';
         const prevObjectIDcol = getVal(ObjectIDColumn);
         let prevObjectColExists = false;
         if (prevObjectIDcol) prevObjectColExists = cols.some((c) => c.name === prevObjectIDcol);
         const objectIDcol = getDefaultObjectIDval(cols);
-        let isActive = false;
         if (checkHeaderCtl.isPanelActive()) isActive = true;
         setVal(ObjectIDColumn, prevObjectColExists ? prevObjectIDcol : objectIDcol, {validator: getColValidator(cols, true, false, errMsg), valid: true});
         if (!isActive) checkHeaderCtl.setPanelActive(false); //set PanelActive to false, if it was false before the setVal call above
@@ -106,8 +117,8 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
 
     useEffect(() => {
         const constraints= makeObjectIDConstraints(makeFldObj(fldListAry), uploadInfo, tableName, canUpload,
-            getSelectInObjList(), getUseSelectIn()==='use');
-        updatePanelStatus(constraints, constraintResult, setConstraintResult);
+            getSelectInObjList(), getUseSelectIn()==='use', useSIAv2);
+        updatePanelStatus(constraints, constraintResult, setConstraintResult,useSIAv2);
     });
 
     useEffect(() => {
@@ -116,13 +127,14 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
     }, [constraintResult]);
 
     return (
-        <CollapsibleCheckHeader title={panelTitle} helpID={tapHelpId(panelPrefix)}
+        <CollapsibleCheckHeader title={useSIAv2 ? siaPanelTitle : tapPanelTitle}
+                                helpID={tapHelpId(panelPrefix)}
                                 message={constraintResult?.simpleError??''} initialStateOpen={false}>
             <Stack {...{mt: 1/2, spacing:1, position:'relative'}}>
                 {working &&  <Skeleton/>}
 
                 <Typography level='body-xs'>Performs an exact match on the ID(s) provided, not a spatial search in the neighborhood of the designated objects.</Typography>
-                {!canUpload && <Typography level='body-xs'>This search uses "Select IN" style SQL as this service does not support uploads.</Typography>}
+                {!canUpload && !useSIAv2 && <Typography level='body-xs'>This search uses "Select IN" style SQL as this service does not support uploads.</Typography>}
                 <RadioGroupInputField {...{
                     fieldKey:ENTRY_TYPE, options:objIdEntryType, initialState:{value: 'enter'},
                     orientation:'horizontal', tooltip:`Enter object ID's as list or load from a table`,
@@ -134,7 +146,7 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
                     }}/> :
                     <UploadTableSelectorObjectID {...{uploadInfo,setUploadInfo, setSelectInObjList, getUseSelectIn, setWorking}}/>
                 }
-                <SingleCol {...{
+                {!useSIAv2 && <SingleCol {...{
                     singleCol: getVal(ObjectIDColumn), cols,
                     headerTitle: 'Object ID (from table):', openKey: posOpenKey,
                     headerPostTitle: '(from the selected table on the right)',
@@ -145,13 +157,13 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
                     colName: 'Object ID',
                     clickingSelectCols,
                     setClickingSelectCols
-                }} />
+                }} />}
                 {canUpload && entryType===UPLOAD && <CheckboxGroupInputField
                     fieldKey='useSelectIn' alignment='horizontal' initialState={{ value: canUpload ? '' : 'use' }}
                     tooltip={SELECT_IN_TOOLTIP}
                     options={[{label:'Use "select IN" style SQL instead of TAP Upload', value:'use'}]}
                 />}
-
+                <DebugObsCore {...{constraintResult}}/>
             </Stack>
         </CollapsibleCheckHeader>
     );
@@ -159,9 +171,10 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel}) {
 
 ObjectIDSearch.propTypes = {
     cols: ColsShape,
-    capabilities: PropTypes.object,
-    tableName: PropTypes.string,
-    columnsModel: PropTypes.object
+    useSIAv2: bool,
+    capabilities: object,
+    tableName: string,
+    columnsModel: object
 };
 
 function getDefaultObjectIDval(cols) {
@@ -250,11 +263,12 @@ function loadTableColumn(singleCol,serverFile,setSelectInObjList,setWorking) {
 }
 
 
-function makeObjectIDConstraints(fldObj, uploadInfo, tableName, canUpload, selectInObjList, useSelectIn) {
+function makeObjectIDConstraints(fldObj, uploadInfo, tableName, canUpload, selectInObjList, useSelectIn, useSIAv2) {
     const {fileName,serverFile, columns:uploadColumns, totalRows, fileSize}= uploadInfo ?? {};
     const { [UploadSingleColumn]:uploadObjectIDCol, [ObjectIDColumn]:objectIDCol, [ENTRY_TYPE]:entryType }= fldObj;
     const errList= makeFieldErrorList();
     let adqlConstraint;
+    let siaConstraints= [];
     const uploadedObjectID = uploadObjectIDCol?.value;
     const objectID = objectIDCol?.value;
     const type= entryType?.value;
@@ -266,16 +280,22 @@ function makeObjectIDConstraints(fldObj, uploadInfo, tableName, canUpload, selec
         else if (!uploadedObjectID) errList.addError('Uploaded Table Object ID is not set');
         else if (!objectID) errList.addError('Selected Table (on the right) Object ID is not set');
     }
-    else {
+    else if (!useSIAv2) {
         if (!objectID) errList.addError('Selected Table (on the right) Object ID is not set');
         else if (!selectInObjList?.length) errList.addError(`Object id's are not set`); 
     }
 
-    if ( (useSelectIn || type===ENTER) && selectInObjList?.length) {
-        const str= makeColsLines(selectInObjList);
-        adqlConstraint = `${objectID} IN (${str})`;
+    if (useSelectIn || type===ENTER) {
+        if (selectInObjList?.length) {
+            const str= makeColsLines(selectInObjList);
+            adqlConstraint = `${objectID} IN (${str})`;
+            siaConstraints= selectInObjList.map( (id) => `ID=${id}`);
+        }
+        else {
+            errList.addError(`Enter at least one ${useSIAv2?'observation ID':'object ID'}`);
+        }
     }
-    else {
+    else if (!useSIAv2) {
         const preFix= (serverFile && canUpload) ? `${getAsEntryForTableName(tableName)}` : '';
         adqlConstraint = `(ut.${uploadedObjectID} = ${preFix}.${objectID})`;
     }
@@ -284,8 +304,7 @@ function makeObjectIDConstraints(fldObj, uploadInfo, tableName, canUpload, selec
     return {
         valid: errAry.length === 0, errAry,
         adqlConstraintsAry: adqlConstraint ? [adqlConstraint] : [],
-        siaConstraints: [],
-        siaConstraintErrors: [],
+        siaConstraints,
         TAP_UPLOAD: (useSelectIn || type===ENTER) ? undefined : makeUploadSchema(fileName, serverFile, uploadColumns, totalRows, fileSize),
         uploadFile: fileName
     };

@@ -72,6 +72,7 @@ const fldListAry= [ServerParams.USER_TARGET_WORLD_PT,SpatialRegOp,SPATIAL_TYPE,
 
 export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel, tableName, initArgs={},
                                   obsCoreEnabled:requestObsCore, capabilities, handleHiPSConnection=true,
+                                  useSIAv2= false,
                                   slotProps}) {
     const {searchParams={}}= initArgs ?? {};
     const obsCoreEnabled= requestObsCore && canSupportAtLeastOneObsCoreOption(capabilities);
@@ -129,15 +130,20 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel,
     }, [searchParams.radiusInArcSec, searchParams.wp, searchParams.corners, searchParams.uploadInfo]);
 
     useEffect(() => {
-        const {lon,lat} = formCenterColumns(columnsModel);
-        const errMsg= 'Spatial searches require identifying table columns containing equatorial coordinates.  Please provide column names.';
-        setVal(CenterLonColumns, lon, {validator: getColValidator(cols, true, false, errMsg), valid: true});
-        setVal(CenterLatColumns, lat, {validator: getColValidator(cols, true, false, errMsg), valid: true});
-        const noDefaults= !lon || !lat;
-        setVal(posOpenKey, (noDefaults) ? 'open' : 'closed');
-        if (noDefaults || disablePanel) checkHeaderCtl.setPanelActive(false);
-        checkHeaderCtl.setPanelActive(!noDefaults);
-        setPosOpenMsg(noDefaults?'':TAB_COLUMNS_MSG);
+        if (useSIAv2) {
+            setVal(posOpenKey, 'open');
+            checkHeaderCtl.setPanelActive(true);
+        }
+        else {
+            const {lon,lat} = formCenterColumns(columnsModel);
+            const errMsg= 'Spatial searches require identifying table columns containing equatorial coordinates.  Please provide column names.';
+            cols && setVal(CenterLonColumns, lon, {validator: getColValidator(cols, true, false, errMsg), valid: true});
+            cols && setVal(CenterLatColumns, lat, {validator: getColValidator(cols, true, false, errMsg), valid: true});
+            const noDefaults= !lon || !lat;
+            setVal(posOpenKey, (noDefaults) ? 'open' : 'closed');
+            if (noDefaults || disablePanel) checkHeaderCtl.setPanelActive(false);
+            checkHeaderCtl.setPanelActive(!noDefaults);
+        }
     }, [columnsModel, obsCoreEnabled]);
 
     useFieldGroupWatch([PolygonCorners,DEF_TARGET_PANEL_KEY,RadiusSize,SPATIAL_TYPE],
@@ -173,8 +179,8 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel,
     useFieldGroupWatch([cornerCalcType], () => onChangeToPolygonMethod());
 
     useEffect(() => {
-        const constraints= makeSpatialConstraints(columnsModel, obsCoreEnabled, makeFldObj(fldListAry), uploadInfo, tableName, canUpload);
-        updatePanelStatus(constraints, constraintResult, setConstraintResult);
+        const constraints= makeSpatialConstraints(columnsModel, obsCoreEnabled, makeFldObj(fldListAry), uploadInfo, tableName, canUpload,useSIAv2);
+        updatePanelStatus(constraints, constraintResult, setConstraintResult,useSIAv2);
     });
     
     useEffect(() => {
@@ -227,7 +233,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel,
                         /> }
                     <SpatialSearchLayout {...{obsCoreEnabled, initArgs, uploadInfo, setUploadInfo,
                         hipsUrl, centerWP, fovDeg, capabilities, slotProps: layoutSlotProps}} />
-                    {!obsCoreEnabled &&
+                    {!obsCoreEnabled && cols &&
                         <CenterColumns {...{lonCol: getVal(CenterLonColumns), latCol: getVal(CenterLatColumns),
                             headerTitle:'Position Columns:', openKey:posOpenKey,
                             doQuoteNonAlphanumeric:false,
@@ -327,7 +333,7 @@ const commonPropTypes = {
 
 SpatialSearch.propTypes = {
     ...commonPropTypes,
-    cols: ColsShape ?? {},
+    cols: ColsShape,
     serviceUrl: string,
     columnsModel: object,
     serviceLabel: string,
@@ -471,8 +477,9 @@ function checkPoint(worldSys, adqlCoordSys, wpField, errList) {
         if (worldPt){
             newWpt = convertCelestial(worldPt, worldSys);
             valid= true;
-        } else {
-            errList.addError('no target found');
+        }
+        else {
+            errList.addError(wpField.displayValue ? 'no target found' : 'no target provided');
         }
     }
     return {...newWpt, valid};
@@ -483,10 +490,11 @@ function checkPoint(worldSys, adqlCoordSys, wpField, errList) {
  * @param polygonCornersStr
  * @param adqlCoordSys
  * @param worldSys
+ * @param useSIAv2
  * @param {FieldErrorList} errList
  * @returns {Object}
  */
-function getPolygonUserArea(polygonCornersStr='', adqlCoordSys, worldSys, errList) {
+function getPolygonUserArea(polygonCornersStr='', adqlCoordSys, worldSys, useSIAv2, errList) {
     const splitPairs = polygonCornersStr ? polygonCornersStr.trim()?.split(',') : [];
     let valid= true;
     const newCorners = splitPairs.reduce((p, onePoint) => {
@@ -509,21 +517,33 @@ function getPolygonUserArea(polygonCornersStr='', adqlCoordSys, worldSys, errLis
 
     const cornerStr = newCorners?.reduce((p, oneCorner, idx) => {
         if (!oneCorner) return p;
-        p += oneCorner.x + ', ' + oneCorner.y;
+        const sep= useSIAv2 ? ' ' : ', ';
+        p += oneCorner.x + sep + oneCorner.y;
         if (idx < (newCorners.length - 1)) {
-            p += ', ';
+            p += sep;
         }
         return p;
     }, '') ?? '';
-    return { userArea:  valid ? `POLYGON('${adqlCoordSys}', ${cornerStr})` : '', valid};
+    if (useSIAv2) {
+        return { userArea:  valid ? `POS=POLYGON ${cornerStr}` : '', valid};
+    }
+    else {
+        return { userArea:  valid ? `POLYGON('${adqlCoordSys}', ${cornerStr})` : '', valid};
+    }
 }
 
-function getConeUserArea(wpField,radiusField, worldSys, adqlCoordSys, errList) {
+function getConeUserArea(wpField,radiusField, worldSys, adqlCoordSys, useSIAV2, errList) {
     const {valid:ptValid,x,y} = checkPoint(worldSys, adqlCoordSys, wpField, errList);
     errList.checkForError(radiusField);
     const size = radiusField?.value;
     const valid= ptValid && size && radiusField.valid;
-    const userArea = valid ? `CIRCLE('${adqlCoordSys}', ${x}, ${y}, ${size})` : '';
+    let userArea;
+    if (useSIAV2) {
+        userArea = valid ? `POS=CIRCLE ${x} ${y} ${size}` : '';
+    }
+    else {
+        userArea = valid ? `CIRCLE('${adqlCoordSys}', ${x}, ${y}, ${size})` : '';
+    }
     return {userArea, valid};
 }
 
@@ -549,15 +569,16 @@ function getUploadConeUserArea(tab, upLon, upLat, upColumns, radiusField, adqlCo
  * @param polygonCornersStr
  * @param worldSys
  * @param adqlCoordSys
+ * @param useSIAv2
  * @param {FieldErrorList} errList
  * @returns {Object}
  */
-function checkUserArea(spatialMethod, wpField, radiusSizeField, polygonCornersStr, worldSys, adqlCoordSys, errList) {
+function checkUserArea(spatialMethod, wpField, radiusSizeField, polygonCornersStr, worldSys, adqlCoordSys, useSIAv2, errList) {
     if (spatialMethod === CONE_CHOICE_KEY) {
-        return getConeUserArea(wpField, radiusSizeField, worldSys, adqlCoordSys,errList);
+        return getConeUserArea(wpField, radiusSizeField, worldSys, adqlCoordSys,useSIAv2, errList);
 
     } else if (spatialMethod === POLY_CHOICE_KEY) {
-        return getPolygonUserArea(polygonCornersStr, adqlCoordSys, worldSys, errList);
+        return getPolygonUserArea(polygonCornersStr, adqlCoordSys, worldSys, useSIAv2, errList);
     }
     return {valid:false, userArea: undefined};
 }
@@ -579,7 +600,7 @@ function makeUserAreaConstraint(regionOp, userArea, adqlCoordSys ) {
 }
 
 
-function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo, tableName, canUpload) {
+function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo, tableName, canUpload, useSIAv2) {
     const {fileName,serverFile, columns:uploadColumns, totalRows, fileSize}= uploadInfo ?? {};
     const {[CenterLonColumns]:cenLonField, [CenterLatColumns]:cenLatField,
         [ServerParams.USER_TARGET_WORLD_PT]:wpField, [RadiusSize]:radiusSizeField,
@@ -594,6 +615,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
     const spatialType= spatialTypeField?.value ?? SINGLE;
 
     let adqlConstraint = '';
+    let siaConstraint = '';
     const errList= makeFieldErrorList();
     const tabAs= 'ut';
     const validUpload= Boolean(serverFile && upLonCol && upLatCol && canUpload);
@@ -604,8 +626,13 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
         if (!upLonCol) errList.addError('Upload Longitude column have not been specified');
         if (!upLatCol) errList.addError('Upload Latitude column have not been specified');
     }
-    
-    if (!obsCoreEnabled) {
+
+    if (useSIAv2) {
+        const { valid, userArea}=
+            checkUserArea(spatialMethod, wpField,radiusSizeField, polygonCornersStr, CoordinateSys.EQ_J2000 , ICRS, true, errList);
+        if (valid)  siaConstraint = userArea;
+    }
+    else if (!obsCoreEnabled) {
         const cenLon= cenLonField?.value;
         const cenLat= cenLatField?.value;
         errList.checkForError(cenLonField);
@@ -622,7 +649,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
         if (spatialType===SINGLE) {
             if (!radiusSizeField?.value && spatialMethod === CONE_CHOICE_KEY) errList.addError('Missing radius input');
             const { valid, userArea}=
-                checkUserArea(spatialMethod, wpField,radiusSizeField, polygonCornersStr, worldSys, ICRS, errList);
+                checkUserArea(spatialMethod, wpField,radiusSizeField, polygonCornersStr, worldSys, ICRS, false, errList);
             if (valid)  adqlConstraint = `CONTAINS(${point},${userArea})=1`;
             else errList.addError('Spatial input not complete');
         }
@@ -651,7 +678,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
         } else {
             if (spatialType===SINGLE) {
                 const {valid, userArea} =
-                    checkUserArea(spatialMethod, wpField,radiusSizeField, polygonCornersStr, worldSys, ICRS, errList);
+                    checkUserArea(spatialMethod, wpField,radiusSizeField, polygonCornersStr, worldSys, ICRS, false, errList);
                 if (valid) adqlConstraint= makeUserAreaConstraint(regionOp,userArea, ICRS );
                 else errList.addError('Spatial input not complete');
             }
@@ -668,8 +695,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
     const retObj= {
         valid:  errAry.length===0, errAry,
         adqlConstraintsAry: adqlConstraint ? [adqlConstraint] : [],
-        siaConstraints:[],
-        siaConstraintErrors:[]
+        siaConstraints:siaConstraint ? [siaConstraint] : [],
     };
     if (spatialType===MULTI) {
         retObj.TAP_UPLOAD= makeUploadSchema(fileName,serverFile,uploadColumns, totalRows, fileSize);

@@ -70,8 +70,7 @@ function makeTemporalConstraints(columnsModel, fldObj) {
     errList.checkForError(timeToField);
     errList.checkForError(temporalColumnsField);
     const errAry= errList.getErrors();
-    return { valid: errAry.length===0, errAry, adqlConstraintsAry:[adqlConstraint],
-        siaConstraints:[], siaConstraintErrors:[]};
+    return { valid: errAry.length===0, errAry, adqlConstraintsAry:[adqlConstraint], siaConstraints:[]};
 }
 
 const checkHeaderCtl= makeCollapsibleCheckHeader(getPanelPrefix(Temporal));

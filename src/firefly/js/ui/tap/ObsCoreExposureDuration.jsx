@@ -62,7 +62,6 @@ function checkExposureDuration(expLenMin, expLenMax) {
 function makeExposureConstraints(rangeType, fldObj) {
     const errList= makeFieldErrorList();
     const siaConstraints= [];
-    const siaConstraintErrors= [];
     const adqlConstraintsAry = [];
 
     const {exposureSinceValue:expSince,exposureLengthMin:expLenMinField, exposureLengthMax:expLenMaxField,
@@ -106,7 +105,7 @@ function makeExposureConstraints(rangeType, fldObj) {
     if (!seenValue) errList.addError(ONE_POPULATED);
 
     const errAry= errList.getErrors();
-    return { valid: errAry.length===0 && seenValue, errAry, adqlConstraintsAry, siaConstraints, siaConstraintErrors };
+    return { valid: errAry.length===0 && seenValue, errAry, adqlConstraintsAry, siaConstraints};
 
 }
 
@@ -117,7 +116,7 @@ const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 const fldListAry= ['exposureSinceValue', 'exposureLengthMin', 'exposureLengthMax',
             'exposureMin', 'exposureMax', 'exposureSinceOptions', 'exposureRangeType'];
 
-export function ExposureDurationSearch({initArgs, slotProps}) {
+export function ExposureDurationSearch({initArgs, slotProps,useSIAv2}) {
     const {getVal,makeFldObj}= useContext(FieldGroupCtx);
     const {setConstraintFragment}= useContext(ConstraintContext);
     const [constraintResult, setConstraintResult] = useState({});
@@ -130,7 +129,7 @@ export function ExposureDurationSearch({initArgs, slotProps}) {
 
     useEffect(() => {
         const constraints= makeExposureConstraints(getVal('exposureRangeType'), makeFldObj( fldListAry));
-        updatePanelStatus(constraints, constraintResult, setConstraintResult);
+        updatePanelStatus(constraints, constraintResult, setConstraintResult,useSIAv2);
     });
 
     useEffect(() => {
@@ -169,6 +168,7 @@ export function ExposureDurationSearch({initArgs, slotProps}) {
 
 ExposureDurationSearch.propTypes = {
     initArgs: PropTypes.object,
+    useSIAv2: PropTypes.bool,
     slotProps: PropTypes.shape({
         exposureRangeType: PropTypes.object,
         exposureTimeRange: PropTypes.object,

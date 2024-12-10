@@ -86,3 +86,14 @@ export function getTableModel(tableOrId) {
     if (isObject(tableOrId)) return tableOrId;
 }
 
+export const hsaServiceSelfDescription= (tableOrId) => Boolean(getServiceSelfDescription(tableOrId));
+
+export function getServiceSelfDescription(tableOrId) {
+    const table= getTableModel(tableOrId);
+    return table.resources
+        ?.filter( (r) => r.type==='meta' && (r.utype==='adhoc:this'||r.utype==='adhoc:service'))?.[0];
+}
+
+
+
+
