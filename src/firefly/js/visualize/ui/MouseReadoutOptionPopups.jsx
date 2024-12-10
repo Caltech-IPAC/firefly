@@ -17,8 +17,8 @@ import {FieldGroup} from '../../ui/FieldGroup.jsx';
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import FieldGroupUtils, {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
-import {useFieldGroupValue} from '../../ui/SimpleComponent.jsx';
-import { dispatchChangeReadoutPrefs} from '../MouseReadoutCntlr';
+import {useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {dispatchChangeReadoutPrefs, readoutRoot} from '../MouseReadoutCntlr';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
@@ -35,7 +35,7 @@ const celestialCoordOptions= [
 	{label: 'Ecliptic J2000', value: 'eclJ2000'},
 	{label: 'Ecliptic B1950', value: 'eclB1950'},
 	{label: 'FITS Image Pixel', value: 'fitsIP'},
-	{label: 'Zero based Image Pixel', value: 'zeroIP'}
+	{label: 'Zero based Image Pixel', value: 'zeroIP'},
 ];
 
 const hipsCoordOptions= [
@@ -64,8 +64,8 @@ const groupKeys={
     hipsMouseReadout2:'COORDINATE_OPTION_FORM',
 	pixelSize: 'PIXEL_OPTION_FORM'
 };
+const copyOptsFieldKey = 'mouseReadoutValueCopy';
 
-const rightColumn = {paddingLeft:18};
 const dialogStyle = { minWidth : 300, minHeight: 100 , padding:10};
 
 
@@ -77,12 +77,12 @@ function getNoncelestialCoordOptions(noncelestialOptionTitle='WCS Coordinates') 
 	];
 }
 
-export function showMouseReadoutOptionDialog(fieldKey, radioValue, title='Choose Option', noncelestialOptionTitle=undefined) {
+export function showMouseReadoutOptionDialog(fieldKey, radioValue, copyOptionValue, title='Choose Option', noncelestialOptionTitle=undefined) {
 	const plot = primePlot(visRoot());
 	const popup = (
 		<PopupPanel title={title}  >
 			<MouseReadoutOptionDialog groupKey={groupKeys[fieldKey]} fieldKey={fieldKey}
-									  radioValue={radioValue} isHiPS={isHiPS(plot)}
+									  radioValue={radioValue} copyOptionValue={copyOptionValue} isHiPS={isHiPS(plot)}
 									  isCelestial={isCelestialImage(plot)}
 									  noncelestialOptionTitle={noncelestialOptionTitle}
 			/>
@@ -132,7 +132,7 @@ function doDispatch(fieldGroup,  fieldKey, dialogKey, hide= true){
 	},0);
 }
 
-function MouseReadoutOptionDialog({groupKey, fieldKey, radioValue, isHiPS, isCelestial, noncelestialOptionTitle}) {
+function MouseReadoutOptionDialog({groupKey, fieldKey, radioValue, copyOptionValue, isHiPS, isCelestial, noncelestialOptionTitle}) {
 		const [,setFields]= useState(FieldGroupUtils.getGroupFields(groupKey));
 		const options = (isHiPS && hipsCoordOptions) ||
 			(!isCelestial && getNoncelestialCoordOptions(noncelestialOptionTitle)) || celestialCoordOptions;
@@ -148,10 +148,10 @@ function MouseReadoutOptionDialog({groupKey, fieldKey, radioValue, isHiPS, isCel
 			};
 		},[groupKey]);
 
-		return ( groupKey==='PIXEL_OPTION_FORM' ?
+		return ( groupKey===groupKeys.pixelSize ?
 				<PixelSizeOptionDialogForm groupKey={groupKey} fieldKey={fieldKey} radioValue={radioValue} /> :
-				<CoordinateOptionDialogForm groupKey={groupKey} fieldKey={fieldKey} radioValue={radioValue}
-											optionList={options} />
+				<CoordinateOptionDialogForm {...{groupKey, fieldKey, radioValue, copyOptionValue, isHiPS, isCelestial,
+					optionList: options}}/>
 		);
 }
 
@@ -159,8 +159,10 @@ MouseReadoutOptionDialog.propTypes= {
 	groupKey:   PropTypes.string.isRequired,
 	fieldKey:   PropTypes.string.isRequired,
 	radioValue:   PropTypes.string.isRequired,
+	copyOptionValue:   PropTypes.string,
     isHiPS: PropTypes.bool.isRequired,
-	isCelestial: PropTypes.bool.isRequired
+	isCelestial: PropTypes.bool.isRequired,
+	noncelestialOptionTitle: PropTypes.string,
 };
 
 
@@ -211,7 +213,7 @@ function FluxRadixDialog({readoutPrefs, dialogId}) {
 				<Divider orientation='horizontal'/>
 				<div style={{display:'flex', width:'100%', justifyContent:'space-between'}}>
 					<CompleteButton style={{alignSelf:'flex-start'}} dialogId={dialogId} text='Close'/>
-					<HelpIcon helpId={'visualization.radixOptions'}/>
+					<HelpIcon helpId={'visualization.fitsViewer'}/>
 				</div>
 			</Stack>
 		</FieldGroup>
@@ -221,22 +223,87 @@ function FluxRadixDialog({readoutPrefs, dialogId}) {
 
 
 
-const CoordinateOptionDialogForm= ({ groupKey,fieldKey,radioValue, optionList}) => (
-		<FieldGroup groupKey={groupKey} keepState={false}>
-			<Stack {...{direction:'row', spacing:1, alignItems:'center', m:2, onClick:() => doDispatch(groupKey, fieldKey)}}>
-				<Typography {...{level:'body-md', whiteSpace:'nowrap'}}>Readout Options:</Typography>
+const CoordinateOptionDialogForm= ({ groupKey,fieldKey, copyOptionValue, optionList, isCelestial, isHiPS}) => {
+	const currentRadioValue = useStoreConnector(()=>readoutRoot()?.readoutPref?.[fieldKey], [fieldKey]);
+	const [, setCopyOptionValue] = useFieldGroupValue(copyOptsFieldKey, groupKey);
+	const [isSkyCoordDisabled, setIsSkyCoordDisabled] = useState(false);
+
+	const showCopyOpts = isHiPS || isCelestial; //do not show in nonCelestial case
+
+	useEffect(()=>{
+		//Image Pixel (IP) options exist in isCelestial case, but they don't have a WorldPt needed for SkyCoord copy option
+		if (currentRadioValue?.endsWith('IP')) {
+			setIsSkyCoordDisabled(true);
+			//revert to 'str' copy option because 'skyCoord' copy option got disabled
+			setCopyOptionValue('str');
+			dispatchChangeReadoutPrefs({[copyOptsFieldKey]: 'str'});
+		}
+		else {
+			setIsSkyCoordDisabled(false);
+		}
+	}, [currentRadioValue]);
+
+	const radioStackLayout = {
+		direction:'row', spacing: 2, alignItems: 'flex-start'
+	};
+
+	const renderReadoutOptions = () => (
+		<Stack {...{
+			...radioStackLayout,
+			onClick:() => doDispatch(groupKey, fieldKey, undefined, false)
+		}}>
+			<Typography {...{level:'body-md', whiteSpace:'nowrap'}}>Readout Options:</Typography>
+			<RadioGroupInputField
+				options={optionList} alignment={'vertical'} fieldKey={fieldKey}
+				initialState={{ tooltip: 'Please select an option', value: currentRadioValue }} />
+		</Stack>
+	);
+
+	const renderCopyOptions = () => {
+		const copyOptionList = [
+			{label: 'Readout values verbatim', value: 'str'},
+			{label: '[Python] AstroPy SkyCoord', value: 'skyCoord', disabled: isSkyCoordDisabled},
+		];
+		return (
+			<Stack {...{
+				...radioStackLayout,
+				onClick: () => doDispatch(groupKey, copyOptsFieldKey, undefined, false)
+			}}>
+				<Typography {...{level: 'body-md', whiteSpace: 'nowrap'}}>Copy Options:</Typography>
 				<RadioGroupInputField
-					options={optionList} alignment={'vertical'} fieldKey={fieldKey}
-					initialState={{ tooltip: 'Please select an option', value:radioValue }} />
+					options={copyOptionList}
+					alignment={'vertical'} fieldKey={copyOptsFieldKey}
+					initialState={{
+						tooltip: 'Please select how to copy the readout coordinates',
+						value: copyOptionValue
+					}}/>
+			</Stack>
+		);
+	};
+
+	return (
+		<FieldGroup groupKey={groupKey} keepState={false} sx={{m: 1.5}}>
+			<Stack spacing={2}>
+				{renderReadoutOptions()}
+				{showCopyOpts && renderCopyOptions()}
+				<Divider orientation='horizontal'/>
+				<Stack direction='row' sx={{width: 1, justifyContent: 'space-between'}}>
+					<CompleteButton style={{alignSelf: 'flex-start'}} dialogId={fieldKey} text='Close'/>
+					<HelpIcon helpId={'visualization.fitsViewer'}/>
+				</Stack>
 			</Stack>
 		</FieldGroup>
 	);
+};
 
 CoordinateOptionDialogForm.propTypes= {
 	groupKey:  PropTypes.string.isRequired,
 	fieldKey:  PropTypes.string,
 	radioValue: PropTypes.string.isRequired,
-	optionList: PropTypes.arrayOf(PropTypes.object).isRequired
+	copyOptionValue: PropTypes.string,
+	optionList: PropTypes.arrayOf(PropTypes.object).isRequired,
+	isCelestial: PropTypes.bool.isRequired,
+	isHiPS: PropTypes.bool.isRequired,
 };
 
 const PixelSizeOptionDialogForm= ( {groupKey,fieldKey, radioValue} ) => (

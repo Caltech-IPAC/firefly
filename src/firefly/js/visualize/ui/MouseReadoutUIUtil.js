@@ -54,8 +54,8 @@ export function getNonFluxDisplayElements(readoutData, readoutPref, isHiPS= fals
     if (isHiPS) {
         readout1= {...hipsMouseReadout1, label: labelMap[readoutPref.hipsMouseReadout1]};
         readout2= {...hipsMouseReadout2, label: labelMap[readoutPref.hipsMouseReadout2]};
-        showReadout1PrefChange= () => showMouseReadoutOptionDialog('hipsMouseReadout1', readoutPref.hipsMouseReadout1, coordOpTitle);
-        showReadout2PrefChange= () => showMouseReadoutOptionDialog('hipsMouseReadout2', readoutPref.hipsMouseReadout2, coordOpTitle);
+        showReadout1PrefChange= () => showMouseReadoutOptionDialog('hipsMouseReadout1', readoutPref.hipsMouseReadout1, readoutPref.mouseReadoutValueCopy, coordOpTitle);
+        showReadout2PrefChange= () => showMouseReadoutOptionDialog('hipsMouseReadout2', readoutPref.hipsMouseReadout2, readoutPref.mouseReadoutValueCopy, coordOpTitle);
         healpixPixelReadout= {...healpixPixel, label: labelMap.healpixPixel};
         healpixNorderReadout= {...healpixNorder, label: labelMap.healpixNorder};
     }
@@ -70,8 +70,8 @@ export function getNonFluxDisplayElements(readoutData, readoutPref, isHiPS= fals
         if (isCelestial) {
             readout1 = {...imageMouseReadout1, label: labelMap[readoutPref.imageMouseReadout1]};
             readout2= {...imageMouseReadout2, label: labelMap[readoutPref.imageMouseReadout2]};
-            showReadout1PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout1', readoutPref.imageMouseReadout1, coordOpTitle);
-            showReadout2PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout2', readoutPref.imageMouseReadout2, coordOpTitle);
+            showReadout1PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout1', readoutPref.imageMouseReadout1, readoutPref.mouseReadoutValueCopy, coordOpTitle);
+            showReadout2PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout2', readoutPref.imageMouseReadout2, readoutPref.mouseReadoutValueCopy, coordOpTitle);
         } else {
             const wcsCoordLabel = createWCSCoordsLabel(plotId);
             const wcsCoordOptionTitle = wcsCoordLabel && wcsCoordLabel.substring(0, wcsCoordLabel.length - 1);
@@ -86,8 +86,8 @@ export function getNonFluxDisplayElements(readoutData, readoutPref, isHiPS= fals
                 label2 = wcsCoordLabel;
             }
             readout2= {...imageMouseNoncelestialReadout2, label: label2 || labelMap[readoutPref.imageMouseNoncelestialReadout2]};
-            showReadout1PrefChange= () => showMouseReadoutOptionDialog('imageMouseNoncelestialReadout1', readoutPref.imageMouseNoncelestialReadout1, coordOpTitle, wcsCoordOptionTitle);
-            showReadout2PrefChange= () => showMouseReadoutOptionDialog('imageMouseNoncelestialReadout2', readoutPref.imageMouseNoncelestialReadout2, coordOpTitle, wcsCoordOptionTitle);
+            showReadout1PrefChange= () => showMouseReadoutOptionDialog('imageMouseNoncelestialReadout1', readoutPref.imageMouseNoncelestialReadout1, undefined, coordOpTitle, wcsCoordOptionTitle);
+            showReadout2PrefChange= () => showMouseReadoutOptionDialog('imageMouseNoncelestialReadout2', readoutPref.imageMouseNoncelestialReadout2, undefined, coordOpTitle, wcsCoordOptionTitle);
         }
 
 
@@ -101,7 +101,7 @@ export function getNonFluxDisplayElements(readoutData, readoutPref, isHiPS= fals
         readout1, readout2, waveLength, showWavelengthFailed,
         showReadout1PrefChange, showReadout2PrefChange, healpixPixelReadout, healpixNorderReadout,
         pixelSize: {...pixelSize, label: labelMap[readoutPref.pixelSize]},
-        showPixelPrefChange:() => showMouseReadoutOptionDialog('pixelSize', readoutPref.pixelSize, 'Choose pixel size'),
+        showPixelPrefChange:() => showMouseReadoutOptionDialog('pixelSize', readoutPref.pixelSize, undefined, 'Choose pixel size'),
     };
 }
 
@@ -110,6 +110,8 @@ export function getNonFluxReadoutElements(readoutData, readoutPref, isHiPS= fals
     const readoutItems = readoutData.readoutItems;
     const plotId = readoutData.plotId;
 
+    const copyPref = readoutPref?.mouseReadoutValueCopy || 'str';
+
     const keysToUse= Object.keys(readoutPref).filter( (key) =>
         isHiPS ?
             key.startsWith('hips') || !key.startsWith('image') :
@@ -117,8 +119,9 @@ export function getNonFluxReadoutElements(readoutData, readoutPref, isHiPS= fals
 
     const retList={};
     keysToUse.forEach( (key) =>  {
-        retList[key]=getReadoutElement(readoutItems, readoutPref[key], plotId);
+        retList[key]=getReadoutElement(readoutItems, readoutPref[key], plotId, copyPref);
     });
+
     return retList;
 }
 
@@ -127,12 +130,12 @@ export function getNonFluxReadoutElements(readoutData, readoutPref, isHiPS= fals
 /**
  * Get the mouse readouts from the standard readout and convert to the values based on the toCoordinaeName
  * @param readoutItems
- * @param readoutKey
+ * @param readoutKey Readout preference value
  * @param plotId
+ * @param copyPref Readout Copy preference value
  * @returns {*}
  */
-export function getReadoutElement(readoutItems, readoutKey, plotId) {
-
+export function getReadoutElement(readoutItems, readoutKey, plotId, copyPref) {
     if (!readoutItems) return {value:''};
 
     const wp= readoutItems?.worldPt?.value;
@@ -142,23 +145,23 @@ export function getReadoutElement(readoutItems, readoutKey, plotId) {
         case 'sPixelSize':
             return {value:makePixelReturn(readoutItems.screenPixel)};
         case 'eqj2000hms':
-            return makeCoordReturn(wp, CoordinateSys.EQ_J2000, true);
+            return makeCoordReturn(wp, CoordinateSys.EQ_J2000, copyPref, true);
         case 'eqj2000DCM' :
-            return makeCoordReturn(wp, CoordinateSys.EQ_J2000);
+            return makeCoordReturn(wp, CoordinateSys.EQ_J2000, copyPref);
         case 'galactic' :
-            return makeCoordReturn(wp, CoordinateSys.GALACTIC);
+            return makeCoordReturn(wp, CoordinateSys.GALACTIC, copyPref);
         case 'superGalactic' :
-            return makeCoordReturn(wp, CoordinateSys.SUPERGALACTIC);
+            return makeCoordReturn(wp, CoordinateSys.SUPERGALACTIC, copyPref);
         case 'supergalactic' :
-            return makeCoordReturn(wp, CoordinateSys.SUPERGALACTIC);
+            return makeCoordReturn(wp, CoordinateSys.SUPERGALACTIC, copyPref);
         case 'eqb1950' :
-            return makeCoordReturn(wp, CoordinateSys.EQ_B1950, true);
+            return makeCoordReturn(wp, CoordinateSys.EQ_B1950, copyPref, true);
         case 'eqb1950DCM':
-            return makeCoordReturn(wp, CoordinateSys.EQ_B1950);
+            return makeCoordReturn(wp, CoordinateSys.EQ_B1950, copyPref);
         case 'eclJ2000' :
-            return makeCoordReturn(wp, CoordinateSys.ECL_J2000, false);
+            return makeCoordReturn(wp, CoordinateSys.ECL_J2000, copyPref, false);
         case 'eclB1950' :
-            return makeCoordReturn(wp, CoordinateSys.ECL_B1950, false);
+            return makeCoordReturn(wp, CoordinateSys.ECL_B1950, copyPref, false);
         case 'wcsCoords' :
             const plot = primePlot(visRoot(), plotId);
             const unit = plot?.projection?.header?.cunit1 || '';
@@ -260,19 +263,29 @@ export function getFluxInfo(sndReadout, radix=10){
 
 
 
-function makeCoordReturn(wp, toCsys, hms= false) {
+function makeCoordReturn(wp, toCsys, copyPref, hms= false) {
     if (!wp) return {value:''};
     const p= convertCelestial(wp, toCsys);
     let str;
     if (hms) {
         const hmsLon = CoordUtil.convertLonToString(p.getLon(), toCsys);
         const hmsLat = CoordUtil.convertLatToString(p.getLat(), toCsys);
-        str= ` ${hmsLon}, ${hmsLat}`;
+        str= `${hmsLon}, ${hmsLat}`;
     }
     else {
         str=  sprintf('%.7f, %.7f',p.getLon(), p.getLat());
     }
-    return {value:str, copyValue:`${str} ${toCsys.toString()}`};
+
+    const copyValue = copyPref==='skyCoord' ? getPythonSkyCoord(wp) : `${str} ${toCsys.toString()}`;
+    return {value:str, copyValue};
+}
+
+function getPythonSkyCoord(wp) {
+    const csys = CoordinateSys.EQ_J2000;
+    const p = convertCelestial(wp, csys);
+    const hmsLon = CoordUtil.convertLonToString(p.getLon(), csys);
+    const hmsLat = CoordUtil.convertLatToString(p.getLat(), csys);
+    return `SkyCoord('${hmsLon} ${hmsLat}', frame='icrs')`; //ICRS frame is approximately correct for EQ J2000
 }
 
 function makeNoncelestialCoordReturn(wp, unit = '') {
