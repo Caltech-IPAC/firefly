@@ -351,6 +351,7 @@ export function getFirstIndex(orderData, norder, tileNumber) {
  */
 export function makeHpxWpt(hpxIndexData, idx) {
     if (!hpxIndexData?.latAry || !hpxIndexData?.latAry) return;
+    if (hpxIndexData.lonAry[idx]===0x7fffffff || hpxIndexData.latAry[idx]===0x7fffffff) return null;
     return makeWorldPt(
         hpxIndexData.lonAry[idx]/UINT_SCALE,
         hpxIndexData.latAry[idx]/UINT_SCALE,
@@ -545,7 +546,9 @@ function initOrderData() {
 }
 
 function addOrderRow(orderData,lonAry,latAry,rowIdx,csys) {
+    if (lonAry[rowIdx]===0x7fffffff || latAry[rowIdx]===0x7fffffff) return;
     const wp= convertCelestial(makeWorldPt( lonAry[rowIdx]/UINT_SCALE, latAry[rowIdx]/UINT_SCALE, csys));
+    if (!wp) return;
     const pixel= getIpixForWp(wp,DATA_NSIDE);
     const tileEntry= getTile(orderData,DATA_NORDER,pixel);
     if (tileEntry) {
