@@ -60,16 +60,20 @@ ChartPanelView.propTypes = {
 };
 
 
+
+
 const ResizableChartAreaInternal = React.memo((props) => {
-    const {errors, Chart, size}= props;
+    const {errors, Chart, size, chartData}= props;
     const {width:widthPx, height:heightPx}= size;
     const knownSize = widthPx && heightPx;
 
     if (!knownSize) return <div/>;
 
+    const hasData = chartData?.data?.length > errors?.length;
+
     return (
         <Stack id='chart-resizer' height={1} width={1} sx={{flexGrow:1, position:'absolute', overflow:'hidden', inset:0}}>
-            {errors.length || isUndefined(Chart) ?
+            {!hasData || isUndefined(Chart) ?
                 <ErrorPanel errors={errors}/> :
                 <Chart {...Object.assign({}, props, {widthPx, heightPx})}/>
             }
