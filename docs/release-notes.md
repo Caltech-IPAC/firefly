@@ -8,7 +8,8 @@
 
 
 ## Version 2024.3
-- 2024.3.3 - (Dec 2, 2024),  _docker tag_: `2024.3.3`, `2024.3`, `latest`
+- 2024.3.4 - (Dec 10, 2024),  _docker tag_: `2024.3.4`, `2024.3`, `latest`
+- 2024.3.3 - (Dec 2, 2024),  _docker tag_: `2024.3.3`
 - 2024.3.2 - (Nov 5, 2024),  _docker tag_: `2024.3.2`
 - 2024.3.1 - (Oct 24, 2024),  _docker tag_: `2024.3.1`
 - 2024.3.0 - (Oct 18, 2024),  _docker tag_: `2024.3.0`
@@ -65,6 +66,12 @@ It also includes many, many bug fixes, clean up, and optimization (not all are l
 - other package updates- Firefly-1513 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1587)), Firefly-1503 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1581))
 
 ### _Patches 2024.3_
+
+- 2024.3.4
+  - Enhancement: Mouse Readout: can copy to Python SkyCoord- Firefly-1572 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1674))
+  - Bug fix: null ra/dec should not be plotted on coverage map- Firefly-1597 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1679))
+  - Bug fix: Coverage map not sizing correctly- Firefly-1614 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1679))
+  - Bug fix: filtering on spectral plots with >1- Firefly-1627 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1627))
 
 - 2024.3.3
   - Enhancement: Spectrum guesser: recognize more tables- Firefly-1620 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1673))
