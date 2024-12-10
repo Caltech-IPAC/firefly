@@ -145,9 +145,11 @@ public class SearchServerCommands {
             else {
                 for(int i=0; (i<len);i++) {
                     obj= dg.get(i);
-                    long raVal= (long)((obj.getDouble(raName,0))*pow);
+                    double raD= obj.getDouble(decName,Double.NaN);
+                    long raVal= Double.isNaN(raD) ?Integer.MAX_VALUE : (long)((obj.getDouble(raName,0))*pow);
                     populateToLittleEndianByte(raVal,raByteAry,i*4);
-                    decAry[i]= (int)((obj.getDouble(decName,0))*pow);
+                    double decD= obj.getDouble(decName,Double.NaN);
+                    decAry[i]= Double.isNaN(decD) ? Integer.MAX_VALUE : (int)(decD*pow);;
                 }
             }
 
