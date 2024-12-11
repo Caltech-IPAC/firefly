@@ -81,7 +81,10 @@ public interface Job extends Callable<String> {
             setPhase(ABORTED);
             JobManager.logJobInfo(getJobInfo());
         } catch (Exception e) {
-            setError(500, e.getMessage());
+            String main = e.getMessage();
+            String cause = e.getCause() == null ? "" : e.getCause().getMessage();
+            String msg = main.isEmpty() ? cause : main + (cause.isEmpty() ? "" : ":" + cause);
+            setError(500, msg);
             JobManager.logJobInfo(getJobInfo());
             Logger.getLogger().error(e);
         }
