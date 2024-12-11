@@ -3,8 +3,10 @@ import React, {Fragment, useContext, useEffect, useState} from 'react';
 import {oneOf, bool, string, number, arrayOf, object, func, shape, elementType} from 'prop-types';
 import {defaultsDeep} from 'lodash';
 import CoordinateSys from '../../visualize/CoordSys.js';
-import {CONE_AREA_OPTIONS, CONE_AREA_OPTIONS_ID, CONE_AREA_OPTIONS_UPLOAD_ID, CONE_CHOICE_KEY,
-    ID_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
+import {
+    CONE_AREA_OPTIONS, CONE_AREA_OPTIONS_ID, CONE_AREA_OPTIONS_UPLOAD, CONE_AREA_OPTIONS_UPLOAD_ID, CONE_CHOICE_KEY,
+    ID_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY
+} from '../../visualize/ui/CommonUIKeys.js';
 import {HiPSTargetView} from '../../visualize/ui/TargetHiPSPanel.jsx';
 import {showInfoPopup} from '../PopupUtil';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
@@ -380,7 +382,7 @@ function SpatialSearch({rootSlotProps: slotProps, insetSpacial, uploadInfo, setU
                 fieldKey: searchTypeKey, orientation: 'horizontal',
                 tooltip: 'Chose type of search', initialState: {value: initToggle},
                 options: useUpload || useId
-                    ? (useId && !useUpload ? CONE_AREA_OPTIONS_ID : CONE_AREA_OPTIONS_UPLOAD_ID)
+                    ? (useId && !useUpload ? CONE_AREA_OPTIONS_ID : (!useId ? CONE_AREA_OPTIONS_UPLOAD : CONE_AREA_OPTIONS_UPLOAD_ID))
                     : CONE_AREA_OPTIONS
             }} />}
             {searchTypeOp === CONE_CHOICE_KEY && <ConeOp {...{slotProps,nullAllowed}}/> }
