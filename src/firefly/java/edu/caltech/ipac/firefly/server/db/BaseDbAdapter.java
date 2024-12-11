@@ -996,7 +996,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             cause = cause.getCause();
         }
         if (cause instanceof DataAccessException dax) {
-            return new DataAccessException(msg, dax.getCause());   // should not happen; DataAccessException should have a cause
+            return new DataAccessException(msg, dax);   // if DataAccessException, then no need to interpret the error message
         }
         return new DataAccessException(msg, new SQLDataException(interpretError(cause)));
     }

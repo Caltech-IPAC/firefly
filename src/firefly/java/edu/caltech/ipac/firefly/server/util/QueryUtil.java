@@ -28,6 +28,7 @@ import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.table.query.DataGroupQuery;
 import edu.caltech.ipac.table.query.DataGroupQueryStatement;
 import edu.caltech.ipac.util.AppProperties;
@@ -49,6 +50,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -64,6 +66,7 @@ import java.util.stream.Collectors;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.FF_SESSION_ID;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_ID;
 import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.URL_CHECK_FOR_NEWER;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * Date: Jul 14, 2008
@@ -80,7 +83,7 @@ public class QueryUtil {
 
     public static String makeUrlBase(String url) {
 
-        if (StringUtils.isEmpty(url)) return "";
+        if (isEmpty(url)) return "";
 
         if (url.toLowerCase().startsWith("http"))
             return url;
@@ -147,7 +150,7 @@ public class QueryUtil {
                 StringKey key = new StringKey(inputs.getUniqueKey());
                 File res  = (File) CacheManager.getCache().get(key);
                 String ext = FileUtil.getExtension(url.getPath().replaceFirst("^.*/", ""));
-                ext = StringUtils.isEmpty(ext) ? ".ul" : "." + ext;
+                ext = isEmpty(ext) ? ".ul" : "." + ext;
                 File nFile = File.createTempFile(request.getRequestId(), ext, QueryUtil.getTempDir(request));
 
                 if (res == null) {
@@ -169,9 +172,16 @@ public class QueryUtil {
                 }
                 return res;
             }
+        } catch (FailedRequestException ex) {
+            throw new DataAccessException(combineErrorMsg(ex.getMessage(), ex.getDetailMessage()));
         } catch (Exception ex) {
             throw new DataAccessException(ex.getMessage());
         }
+    }
+
+    public static String combineErrorMsg(String main, String cause) {
+        cause = cause == null ? "" : cause;
+        return isEmpty(main) ? cause : main + (cause.isEmpty() ? "" : ":" + cause);
     }
 
     private static URL makeUrl(String source) {
@@ -184,17 +194,37 @@ public class QueryUtil {
 
     private static void checkForFailures(FileInfo finfo) throws FailedRequestException {
         if (finfo.getResponseCode() < 200 || finfo.getResponseCode() > 300) {
-            throw new FailedRequestException("Request failed with status "+finfo.getResponseCode()+" "+
-                    finfo.getResponseCodeMsg());
+            String error = "Request failed with status %s %s".formatted(finfo.getResponseCode(), finfo.getResponseCodeMsg());
+            String details = getErrorFromContent(finfo.getFile());
+            throw new FailedRequestException(error, details);
         }
     }
 
+    private static String getErrorFromContent(File file) {
+        if (file == null || !file.canRead()) return null;
+        try {
+            String content = FileUtil.readFile(file);
+            // replace this logic with mimetype detection once 'enhanced detection PR merged'.
+            String msg = content;       // assume it's text/plain
+            String forDetection = content.trim().toLowerCase().replaceAll("\\s", "");
+            if (forDetection.contains("</votable>")) {  // try votable
+                try {
+                    msg = VoTableReader.getError(new FileInputStream(file), "n/a");
+                } catch (Exception ignored) {}
+            } else if (forDetection.contains("</html>")) {  // it's html; don't use it
+                msg = null;
+            } else if (forDetection.startsWith("{")) {  // could be json.  ignore for now
+                msg = null;
+            }
+            return msg;
+        } catch (Exception ignored) { return null;}
+    };
 
     public static DownloadRequest convertToDownloadRequest(String dlReqStr, String searchReqStr, String selInfoStr) {
         DownloadRequest retval = new DownloadRequest(convertToServerRequest(searchReqStr), null, null);
         retval.setSelectionInfo(SelectionInfo.parse(selInfoStr));
 
-        if (!StringUtils.isEmpty(dlReqStr)) {
+        if (!isEmpty(dlReqStr)) {
             try {
                 JSONObject jsonReq = (JSONObject) new JSONParser().parse(dlReqStr);
                 for (Object key : jsonReq.keySet()) {
@@ -216,7 +246,7 @@ public class QueryUtil {
      */
     public static TableServerRequest convertToServerRequest(String searchReqStr) {
         TableServerRequest retval = new TableServerRequest();
-        if (!StringUtils.isEmpty(searchReqStr)) {
+        if (!isEmpty(searchReqStr)) {
             try {
                 JSONObject jsonReq = (JSONObject) new JSONParser().parse(searchReqStr);
                 for (Object key : jsonReq.keySet()) {
@@ -308,7 +338,7 @@ public class QueryUtil {
     public static String encodeUrl(String url, List<Param> params) {
         String qStr = params == null ? "" : "?" +
                       params.stream()
-                              .filter(p -> !StringUtils.isEmpty(p.getName()))
+                              .filter(p -> !isEmpty(p.getName()))
                               .map(p -> p.getName() + "=" + encode(p.getValue()))
                               .collect(Collectors.joining("&"));
         return url + qStr;
@@ -922,7 +952,7 @@ public class QueryUtil {
     }
 
     private static Map<String, String> encodedStringToMap(String str) {
-        if (StringUtils.isEmpty(str)) return null;
+        if (isEmpty(str)) return null;
         HashMap<String, String> map = new HashMap<String, String>();
         for (String entry : str.split("&")) {
             String[] kv = entry.split("=", 2);
