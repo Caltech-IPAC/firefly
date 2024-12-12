@@ -600,7 +600,7 @@ export function getValuesForOrder(orderData,norder) {
     if (norder<11) return [...orderData[norder]?.tiles[0]?.values()];
     const joinAry= [];
     for(let i=0; (i<orderData[norder]?.tiles.length);i++) {
-       joinAry.push(orderData[norder]?.tiles[i].values().toArray());
+       joinAry.push(Array.from(orderData[norder]?.tiles[i].values()));
     }
     return joinAry.flat();
 }
@@ -609,7 +609,7 @@ export function getKeysForOrder(orderData,norder) {
     if (norder<11) return [...orderData[norder]?.tiles[0]?.keys()];
     const joinAry= [];
     for(let i=0; (i<orderData[norder]?.tiles.length);i++) {
-        joinAry.push(orderData[norder]?.tiles[i].keys().toArray());
+        joinAry.push(Array.from(orderData[norder]?.tiles[i].keys()));
     }
     return joinAry.flat();
 }
