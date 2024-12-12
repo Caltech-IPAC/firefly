@@ -6,6 +6,9 @@ package edu.caltech.ipac.table;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
+import edu.caltech.ipac.firefly.server.SrvParam;
+import edu.caltech.ipac.firefly.server.query.SearchManager;
+import edu.caltech.ipac.firefly.server.query.SearchServerCommands;
 import edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource;
 import edu.caltech.ipac.firefly.util.FileLoader;
 import org.junit.Assert;
@@ -13,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
@@ -65,6 +69,42 @@ public class IpacTableFromSourceTest extends ConfigTest {
         } catch (Exception e) {
             Assert.fail("IpacTableFromSourceTest.fromUrl failed with exception: " + e.getMessage());
         }
+    }
+
+    @Test
+    public void votableError() {
+        try {
+            // bad request, but returned 200 with error votable
+            TableServerRequest req = new TableServerRequest(IpacTableFromSource.PROC_ID);
+            req.setParam(ServerParams.SOURCE, "https://irsa.ipac.caltech.edu/SIA?POS=xxx%2083.633107%2022.014486%200.002777777777777778&MAXREC=50000");
+            new SearchManager().getDataGroup(req);
+            Assert.fail("should have thrown an exception");
+        } catch (Exception e) {
+            Assert.assertTrue(e.getCause().getMessage().contains("BAD_REQUEST"));
+        }
+
+        try {
+            // bad request.  returned 400 with error votable
+            TableServerRequest req = new TableServerRequest(IpacTableFromSource.PROC_ID);
+            req.setParam(ServerParams.SOURCE, "https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/argus/sync?REQUEST%3DdoQuery");
+            SrvParam sp = new SrvParam(new HashMap<>());
+            sp.setParam(ServerParams.REQUEST, JsonTableUtil.toJsonTableRequest(req).toJSONString());
+            new SearchServerCommands.TableSearch().doCommand(sp);
+            Assert.fail("should have thrown an exception");
+        } catch (Exception e) {
+            Assert.assertTrue(e.getCause().getMessage().contains("400 Bad Request"));
+        }
+
+        try {
+            // bad request, returned 404 with text/html;  the html body is ignored.
+            TableServerRequest req = new TableServerRequest(IpacTableFromSource.PROC_ID);
+            req.setParam(ServerParams.SOURCE, "https://irsa.ipac.caltech.edu/SxxxxIA");
+            new SearchManager().getDataGroup(req);
+            Assert.fail("should have thrown an exception");
+        } catch (Exception e) {
+            Assert.assertTrue(e.getCause().getMessage().contains("404 Not Found"));
+        }
+
     }
 
     private void verifyTableData(DataGroup data, String suffix) {

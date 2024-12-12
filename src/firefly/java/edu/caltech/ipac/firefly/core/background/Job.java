@@ -9,6 +9,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.ABORTED;
+import static edu.caltech.ipac.firefly.server.util.QueryUtil.combineErrorMsg;
 
 /**
  * Date: 9/29/21
@@ -81,9 +82,7 @@ public interface Job extends Callable<String> {
             setPhase(ABORTED);
             JobManager.logJobInfo(getJobInfo());
         } catch (Exception e) {
-            String main = e.getMessage();
-            String cause = e.getCause() == null ? "" : e.getCause().getMessage();
-            String msg = main.isEmpty() ? cause : main + (cause.isEmpty() ? "" : ":" + cause);
+            String msg = combineErrorMsg(e.getMessage(), e.getCause() == null ? null : e.getCause().getMessage());
             setError(500, msg);
             JobManager.logJobInfo(getJobInfo());
             Logger.getLogger().error(e);
