@@ -8,7 +8,8 @@
 
 
 ## Version 2024.3
-- 2024.3.4 - (Dec 10, 2024),  _docker tag_: `2024.3.4`, `2024.3`, `latest`
+- 2024.3.5 - (Dec 12, 2024),  _docker tag_: `2024.3.5`, `2024.3`, `latest`
+- 2024.3.4 - (Dec 10, 2024),  _docker tag_: `2024.3.4`,
 - 2024.3.3 - (Dec 2, 2024),  _docker tag_: `2024.3.3`
 - 2024.3.2 - (Nov 5, 2024),  _docker tag_: `2024.3.2`
 - 2024.3.1 - (Oct 24, 2024),  _docker tag_: `2024.3.1`
@@ -67,6 +68,8 @@ It also includes many, many bug fixes, clean up, and optimization (not all are l
 
 ### _Patches 2024.3_
 
+- 2024.3.5
+  - Bug fix: Coverage not showing in Safari and older Firefox < 131 ([commit](https://github.com/Caltech-IPAC/firefly/commit/5270b4e3e88c3e5d9eb5bc77d95f8e45dcf99ad2))
 - 2024.3.4
   - Enhancement: Mouse Readout: can copy to Python SkyCoord- Firefly-1572 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1674))
   - Bug fix: null ra/dec should not be plotted on coverage map- Firefly-1597 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1679))
