@@ -7,14 +7,17 @@ import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.SrvParam;
+import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchServerCommands;
 import edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource;
 import edu.caltech.ipac.firefly.util.FileLoader;
+import edu.caltech.ipac.table.io.VoTableReader;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -104,8 +107,26 @@ public class IpacTableFromSourceTest extends ConfigTest {
         } catch (Exception e) {
             Assert.assertTrue(e.getCause().getMessage().contains("404 Not Found"));
         }
-
     }
+
+    @Test
+    public void misplacedVotableError() {
+        String errorTable = """
+<?xml version="1.0" encoding="utf-8"?>
+  <VOTABLE version="1.3" xmlns="http://www.ivoa.net/xml/VOTable/v1.3">
+    <RESOURCE>
+      <INFO name="QUERY_STATUS" value="ERROR">UsageFault: Unrecognized shape in POS string &#39;XXXXX 62 -37 0.027777777777777776&#39;</INFO>
+    </RESOURCE>
+  </VOTABLE>
+          """;
+        try {
+            String error = VoTableReader.getError(new ByteArrayInputStream(errorTable.getBytes()), "n/a");
+            Assert.assertEquals("UsageFault: Unrecognized shape in POS string 'XXXXX 62 -37 0.027777777777777776'", error);
+        } catch (DataAccessException e) {
+            Assert.fail("should not have thrown an exception");
+        }
+    }
+
 
     private void verifyTableData(DataGroup data, String suffix) {
         suffix = suffix == null ? "" : suffix;

@@ -22,6 +22,9 @@ import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.util.StringUtils;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import uk.ac.starlink.table.ByteStore;
 import uk.ac.starlink.table.RowSequence;
@@ -194,14 +197,20 @@ public class VoTableReader {
                 }
             }
         }
-        // workaround for misplaced INFO attributes with errors
-        VOElement[] infos = top.getChildrenByName( "INFO" );
-        String [] namesWithMisspelling = {"QUERY_STATUS","QUERY STATUS"};
-        for (VOElement info : infos) {
-            String name = info.getName();
-            if (Arrays.asList(namesWithMisspelling).contains(name)
-                    && "ERROR".equalsIgnoreCase(info.getAttribute("value"))) {
-                error = info.getTextContent();
+        if (error == null) {
+            // workaround for misplaced INFO attributes with errors
+            NodeList infos = top.getElementsByVOTagName("INFO");            // all descendant elements
+            String [] namesWithMisspelling = {"QUERY_STATUS","QUERY STATUS"};
+            for (int i = 0; i < infos.getLength(); i++) {
+                Node node = infos.item(i);
+                if (node.getNodeType() == Node.ELEMENT_NODE) {
+                    Element info = (Element) node;
+                    String name = info.getAttribute("name");
+                    if (Arrays.asList(namesWithMisspelling).contains(name)
+                            && "ERROR".equalsIgnoreCase(info.getAttribute("value"))) {
+                        error = info.getTextContent();
+                    }
+                }
             }
         }
         return error;
