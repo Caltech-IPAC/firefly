@@ -26,7 +26,7 @@ import {
 import ImagePlotCntlr, {visRoot} from '../ImagePlotCntlr.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {
-    getDrawLayerById, getDrawLayersByType, getPlotViewAry, getPlotViewById, isDrawLayerAttached, isDrawLayerVisible,
+    getDrawLayerById, getPlotViewAry, getPlotViewById, isDrawLayerAttached, isDrawLayerVisible,
     primePlot
 } from '../PlotViewUtil.js';
 import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
@@ -195,9 +195,12 @@ function updateHpxCatalogDrawingLayer(tbl_id, tableRequest, highlightedRow) {
         return;
     }
 
-    const color= getDrawLayersByType(dlRoot(),HpxCatalog.TYPE_ID) // fine any other draw layers with this table and set the color
-        ?.find( (dl) => dl.tbl_id===tbl_id && dl.drawLayerId===coverageCatalogId(tbl_id))?.drawingDef.color;
 
+    const coverageDrawLayer= dlRoot().drawLayerAry // fine any other draw layers with this table and set the color
+        ?.find( (dl) => dl.tbl_id===tbl_id && dl.drawLayerId===coverageCatalogId(tbl_id));
+
+    if (coverageDrawLayer && coverageDrawLayer.catalogType!==CatalogType.POINT) return; // if coverage has this table and it is not a POINT then ignore
+    const color= coverageDrawLayer?.drawingDef.color;
     const catDL= dispatchCreateDrawLayer(HpxCatalog.TYPE_ID,
         {catalogId, tbl_id, title, highlightedRow, color, layersPanelLayoutId: catalogId});
     const plotIdAry= visRoot().plotViewAry
