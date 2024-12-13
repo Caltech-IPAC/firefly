@@ -153,7 +153,7 @@ public class IBE {
 
             HttpServiceInput addtlInfo = HttpServiceInput.createWithCredential(url.toString());
 
-            return URLFileInfoProcessor.retrieveViaURL(url, dir, progressKey, plotId, null, addtlInfo);
+            return URLFileInfoProcessor.retrieveViaURL(url, dir, progressKey, plotId, addtlInfo);
         } catch (DataAccessException e) {
             throw new IOException(e.getMessage(), e);
         }

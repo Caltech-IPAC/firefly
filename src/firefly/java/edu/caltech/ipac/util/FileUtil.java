@@ -51,6 +51,7 @@ public class FileUtil
     public final static String PS   = "ps";
     public final static String PDF  = "pdf";
     public final static String HTML = "html";
+    public final static String XML = "xml";
     public final static String AOR  = "aor";
     public final static String TXT  = "txt";
     public final static String TGT  = "tgt";
@@ -58,11 +59,15 @@ public class FileUtil
     public final static String TBL  = "tbl";
     public final static String NL   = "nl";
     public final static String JAR   = "jar";
+    public final static String TAR   = "tar";
     public final static String CSH   = "csh";
     public final static String SH   = "sh";
     public final static String PL   = "pl";
     public final static String SO   = "so";
     public final static String REG  = "reg";
+    public final static String CSV  = "csv";
+    public final static String TSV  = "tsv";
+    public final static String VOT  = "vot";
 
     public static final long MEG          = 1048576;
     public static final long GIG          = 1048576 * 1024;

@@ -15,7 +15,6 @@ import edu.caltech.ipac.firefly.server.visualize.PlotServUtils;
 import edu.caltech.ipac.firefly.server.visualize.ProgressStat;
 import edu.caltech.ipac.firefly.server.visualize.VisContext;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
-import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.ResponseMessage;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
@@ -24,8 +23,6 @@ import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
@@ -44,8 +41,6 @@ public class URLFileRetriever implements FileRetriever {
 
     public static final long EXPIRE_IN_SEC = 60 * 60 * 4; // 4 hours
     public static final String FITS = "fits";
-    private static List<String> extsList=
-            Arrays.asList(FileUtil.FITS, FileUtil.GZ, "tar", FileUtil.PDF, "votable", "tbl", "csv", "tsv");
 
     public FileInfo getFile(WebPlotRequest request) throws FailedRequestException, GeomException, SecurityException {
        return getFile(request,true);
@@ -81,7 +76,6 @@ public class URLFileRetriever implements FileRetriever {
                 }
             }
             params.setCheckForNewer(request.getUrlCheckForNewer());
-            params.setLocalFileExtensions(extsList);
             params.setMaxSizeToDownload(VisContext.FITS_MAX_SIZE);
             if (request.getUserDesc() != null) params.setDesc(request.getUserDesc()); // set file description
 

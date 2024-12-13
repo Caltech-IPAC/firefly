@@ -3,14 +3,13 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
-import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.net.AnyUrlParams;
 
@@ -18,8 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Map;
 
 
 /**
@@ -42,7 +39,7 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
         }
 
 
-        return retrieveViaURL(url,null,progressKey,plotId,getFileExtension(),addtlInfo );
+        return retrieveViaURL(url,null,progressKey,plotId,addtlInfo );
 
     }
 
@@ -50,15 +47,12 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
         return true;
     }
 
-    public String getFileExtension()  { return ""; }
-
     public abstract URL getURL(ServerRequest sr) throws MalformedURLException;
 
     public static FileInfo retrieveViaURL(URL url,
                                           File dir,
                                           String progressKey,
                                           String plotId,
-                                          String fileExtension,
                                           HttpServiceInput addtlInfo)
                                                  throws IOException, DataAccessException {
         FileInfo retval= null;
@@ -67,9 +61,6 @@ abstract public class URLFileInfoProcessor extends BaseFileInfoProcessor {
 
             AnyUrlParams params = new AnyUrlParams(url,progressKey,plotId);
             if (dir!=null) params.setFileDir(dir);
-            if (!StringUtils.isEmpty(fileExtension)) {
-                params.setLocalFileExtensions(Arrays.asList(fileExtension));
-            }
 
             if (addtlInfo != null) {
                 params.setAddtlInfo(addtlInfo);
