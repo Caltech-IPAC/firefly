@@ -43,7 +43,7 @@ import ImagePlotCntlr, {
 import MultiViewCntlr, {getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
 import {PlotAttribute} from '../PlotAttribute.js';
 import {onPlotComplete} from '../PlotCompleteMonitor';
-import {DEFAULT_COVERAGE_PLOT_ID, getDrawLayersByType, isDrawLayerVisible} from '../PlotViewUtil';
+import {DEFAULT_COVERAGE_PLOT_ID, getDrawLayersByType, isDrawLayerAttached, isDrawLayerVisible} from '../PlotViewUtil';
 import {getDrawLayerById, primePlot} from '../PlotViewUtil.js';
 import {makeWorldPt, pointEquals} from '../Point.js';
 import {computeCentralPtRadiusAverage} from '../VisUtil.js';
@@ -607,7 +607,12 @@ function makeOverlayCoverageDrawing() {
                     if (layer && (tableRemoved || tbl_id===affectedTblId)) {
                         drawingOptions[cId] = layer.drawingDef;    // drawingDef and selectOption is stored as layer based
                         selectOps[cId] = layer.selectOption;
-                        visibleMap[cId]= plot ? isDrawLayerVisible(layer, plot.plotId) : true;
+                        if (plot && isDrawLayerAttached(layer,plot.plotId)) {
+                            visibleMap[cId]= isDrawLayerVisible(layer, plot.plotId);
+                        }
+                        else {
+                            visibleMap[cId]= true;
+                        }
                         dispatchDestroyDrawLayer(cId);
                     }
                 });
