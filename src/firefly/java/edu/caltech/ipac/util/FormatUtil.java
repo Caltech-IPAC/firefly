@@ -124,6 +124,8 @@ public class FormatUtil {
             }
         }
 
+        if (format == null && mimeDesc.mime().equals("text/html"))  format = HTML;      // allow text/html here if all failed.
+
         if (format != null) {
             LOGGER.debug("Format: %s resolved via trial and error".formatted(format));
             return format;
@@ -159,7 +161,7 @@ public class FormatUtil {
             case "application/gzip", "application/x-gzip" -> GZIP;
             case "application/java-archive" -> JAR;
             case "application/x-tar", "application/tar" -> TAR;
-            case "application/html", "text/html" -> HTML;
+            case "application/html" -> HTML;            // some text file with HTML comments will appear as test/xml.  to avoid false positive, we will not accept text/html.
             case "application/json", "text/json" -> JSON;
             default -> null;
         };

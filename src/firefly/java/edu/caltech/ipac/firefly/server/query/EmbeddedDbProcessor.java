@@ -144,11 +144,15 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 // table data exists; but, bad grammar when querying for the resultset.
                 // should return table meta info + error message
                 // limit 0 does not work with oracle-like syntax
-                DataGroup dg = dbAdapter.getHeaders(dbAdapter.getDataTable());
-                results = EmbeddedDbUtil.toDataGroupPart(dg, treq);
-                String error = dbAdapter.handleSqlExp("", e).getCause().getMessage(); // get the message describing the cause of the exception.
-                results.setErrorMsg(error);
-                jobExecIf(v -> v.setError(500, error));
+                if (dbAdapter.hasTable(dbAdapter.getDataTable())) {
+                    DataGroup dg = dbAdapter.getHeaders(dbAdapter.getDataTable());
+                    results = EmbeddedDbUtil.toDataGroupPart(dg, treq);
+                    String error = dbAdapter.handleSqlExp("", e).getCause().getMessage(); // get the message describing the cause of the exception.
+                    results.setErrorMsg(error);
+                    jobExecIf(v -> v.setError(500, error));
+                } else {
+                    throw e;
+                }
             }
             StopWatch.getInstance().stop("getDataset: " + request.getRequestId()).printLog("getDataset: " + request.getRequestId());
 

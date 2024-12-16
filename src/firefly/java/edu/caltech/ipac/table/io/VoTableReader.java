@@ -164,13 +164,6 @@ public class VoTableReader {
         return handler.getAllTable();
     }
 
-    public static boolean isVoTable(File inFile) {
-        try {
-            DataGroup[] tbl = voToDataGroups(inFile.getAbsolutePath(), true, 0);
-            return tbl != null && tbl.length > 0;
-        } catch (Exception e) { return false; }
-    }
-
     public static String getError(InputStream inputStream, String location) throws DataAccessException {
         try {
             VOElementFactory voFactory =  new VOElementFactory();
