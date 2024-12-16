@@ -10,7 +10,7 @@ import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 import {showMouseReadoutFluxRadixDialog} from './MouseReadoutOptionPopups.jsx';
 import {getNonFluxDisplayElements, getFluxInfo} from './MouseReadoutUIUtil.js';
 import {CopyToClipboard} from './MouseReadout.jsx';
-import {dispatchChangeLockByClick, STANDARD_READOUT} from '../MouseReadoutCntlr.js';
+import {dispatchChangeLockByClick, HIPS_STANDARD_READOUT} from '../MouseReadoutCntlr.js';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton.jsx';
 import {showMouseReadoutPopout} from 'firefly/visualize/ui/MouseReadPopoutAll.jsx';
 import LaunchOutlinedIcon from '@mui/icons-material/LaunchOutlined';
@@ -18,20 +18,23 @@ import LaunchOutlinedIcon from '@mui/icons-material/LaunchOutlined';
 export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, style, slightlyTransparent=false, showOnInactive= false, radix}){
 
     const {current:divref}= useRef({element:undefined});
-    const [width,setWidth]= useState(() => 200);
+    const [haveDivRef,setHaveDivRef]= useState(false);
 
     useEffect( () => {
-        if (divref.element) {
-            const w= divref.element.getBoundingClientRect()?.width;
-            w && setWidth(w);
-        }
-    }, [divref?.element]);
+        setHaveDivRef(Boolean(divref.element));
+    }, [divref?.element,haveDivRef]);
+
+
+    const width= divref?.element?.getBoundingClientRect()?.width ?? 200;
 
     const {readoutType}= readoutData;
     if (!readoutData.readoutItems) return (<div style={{height: showOnInactive?20:0, width:showOnInactive?1:0}}/>);
 
-    const displayEle= getNonFluxDisplayElements(readoutData,  readout.readoutPref, false);
-    const {readout1, showReadout1PrefChange, showWavelengthFailed, waveLength}= displayEle;
+    const isHiPS= readoutType===HIPS_STANDARD_READOUT;
+    const displayEle= getNonFluxDisplayElements(readoutData,  readout.readoutPref, isHiPS);
+    const {readout1, showReadout1PrefChange, waveLength}= displayEle;
+    const r1Value= readout1?.value ??'';
+    const wlValue= waveLength?.value ??'';
     const {lockByClick=false}= readout??{};
     const showCopy= lockByClick;
 
@@ -59,9 +62,11 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
     const {threeColor= false}= readoutData;
     const monoFont= radix===16;
 
-    const checkboxText= width>600 ? lockByClick ? 'Click Lock: on': 'Click Lock: off' : '';
-    const doWL= fullSize && waveLength && readoutType===STANDARD_READOUT;
-    const doFlux= fullSize && readoutType===STANDARD_READOUT;
+    const doWL= ((r1Value && fullSize) || !r1Value) && waveLength && !isHiPS;
+    const doFlux= fullSize && !isHiPS;
+
+    const lockByClickLabelWidth= isHiPS ? 450 : threeColor ?  750 : 600;
+    const checkboxText= width>lockByClickLabelWidth ? lockByClick ? 'Click Lock: on': 'Click Lock: off' : '';
 
     const label3C= threeColor && doFlux ? get3CLabel(fluxArray) : '';
     const value3C= threeColor && doFlux ? get3CValue(fluxArray) : '';
@@ -80,9 +85,9 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
                                tip='Show expanded readout, thumbnail and magnifier'
                                onClick={() => showMouseReadoutPopout()}/>
 
-                <LabelItem {...{showCopy, label:readout1.label, value:readout1.value, copyValue:readout1.copyValue,
+                <LabelItem {...{showCopy, label:readout1.label, value:r1Value, copyValue:readout1.copyValue,
                     sx:{pl:1}, prefChangeFunc:showReadout1PrefChange}}/>
-                <DataItem {...{value:readout1.value, sx:{minWidth:'13rem', pl:.5} }}/>
+                <DataItem {...{value:r1Value, sx:{minWidth:!r1Value.length<3&&wlValue ? '2rem' : '13rem', pl:.5} }}/>
 
                 {doFlux && <LabelItem {...{label:fluxLabel, value:fluxValue, sx:{pl:1},
                            prefChangeFunc:() => showMouseReadoutFluxRadixDialog(readout.readoutPref)}}/> }
@@ -90,8 +95,8 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
                     sx:{minWidth:fluxWidth, pl:.5}, monoFont}}/> }
 
 
-                {doWL && <LabelItem {...{label:waveLength.label, value:waveLength.value, sx:{pl:1}}}/> }
-                {doWL && <DataItem {...{value:waveLength.value}}/> }
+                {doWL && <LabelItem {...{label:waveLength.label, value:wlValue, sx:{pl:1}}}/> }
+                {doWL && <DataItem {...{value:wlValue}}/> }
 
             </Stack>
 
