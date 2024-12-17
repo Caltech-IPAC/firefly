@@ -215,8 +215,8 @@ public class DuckDbAdapter extends BaseDbAdapter {
                 case Float v -> appender.append(v);
                 case Double v -> appender.append(v);
                 case String v -> appender.append(v);
-                case Character v -> appender.append(v);
-                case BigDecimal v -> appender.appendBigDecimal(v);
+                case Character v -> appender.append(String.valueOf(v));
+                case BigDecimal v -> appender.append(v.doubleValue());
                 case java.sql.Date v -> appender.appendLocalDateTime(v.toLocalDate().atStartOfDay());
                 case LocalDate v -> appender.appendLocalDateTime(v.atStartOfDay());
                 case LocalDateTime v -> appender.appendLocalDateTime(v.atZone(ZoneOffset.UTC).toLocalDateTime());
