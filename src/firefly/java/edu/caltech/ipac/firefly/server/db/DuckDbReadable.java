@@ -11,10 +11,10 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataGroup;
-import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.table.io.VoTableWriter;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.FormatUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.Downloader;
 
@@ -39,35 +39,39 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
     public DuckDbReadable(DbFileCreator dbFileCreator) { super(dbFileCreator); }
     DuckDbReadable(File dbFile) { super(dbFile); }
 
-    public static TableUtil.Format guessFileFormat(String srcFile) {
+    public static FormatUtil.Format guessFileFormat(File srcFile) {
 
         // based on file extension
         String fExt = FileUtil.getExtension(srcFile).toLowerCase();
         switch (fExt) {
             case Parquet.NAME, "parq" -> {
-                return TableUtil.Format.PARQUET;
+                return FormatUtil.Format.PARQUET;
             }
             case Csv.NAME -> {
-                return TableUtil.Format.CSV;
+                return FormatUtil.Format.CSV;
             }
             case Tsv.NAME -> {
-                return TableUtil.Format.TSV;
+                return FormatUtil.Format.TSV;
             }
         }
 
-        DataGroup info = getInfoOrNull(new Parquet(), srcFile);
+        DataGroup info = getInfoOrNull(FormatUtil.Format.PARQUET, srcFile.getAbsolutePath());
         if (info != null && info.getDataDefinitions() != null) {
-            return TableUtil.Format.PARQUET;
+            return FormatUtil.Format.PARQUET;
         }
         return null;
     }
 
-    private static DataGroup getInfoOrNull(DuckDbReadable duckReadable, String srcFile) {
+    /**
+     * return info or null if failed.  no exception thrown
+     * @param format format of the file
+     * @param srcFile   source file
+     * @return  DataGroup without data of the file or null. no exception thrown.
+     */
+    public static DataGroup getInfoOrNull(FormatUtil.Format format, String srcFile) {
         try {
-            return duckReadable.getInfo(srcFile);
-        } catch (Exception ignored) {
-            return null;
-        }
+            return getInfo(format, srcFile);
+        } catch (Exception ignored) { return null; }
     }
 
     String sqlReadSource(String srcFile) {
@@ -79,12 +83,12 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
      * @return returns a DuckDbReadable that can read this format. It is not attached to a dbFile and therefore will not persist.
      * @throws DataAccessException
      */
-    public static DuckDbReadable getDetachedAdapter(TableUtil.Format format) throws DataAccessException {
+    public static DuckDbReadable getDetachedAdapter(FormatUtil.Format format) throws DataAccessException {
         return castInto(format, null);
     }
 
     @Nonnull
-    public static DuckDbReadable castInto(TableUtil.Format format, DbAdapter dbAdapter) throws DataAccessException {
+    public static DuckDbReadable castInto(FormatUtil.Format format, DbAdapter dbAdapter) throws DataAccessException {
         File dbFile = dbAdapter == null ? null : dbAdapter.getDbFile();
         return   switch (format) {
             case TSV -> new Tsv(dbFile);
@@ -94,7 +98,7 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
         };
     }
 
-    public static DataGroup getInfo(TableUtil.Format format, String source) throws DataAccessException {
+    public static DataGroup getInfo(FormatUtil.Format format, String source) throws DataAccessException {
         var adapter = getDetachedAdapter(format);
         return adapter == null ? null : adapter.getInfo(source);
     }
@@ -167,7 +171,6 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
 
         public Parquet(DbFileCreator dbFileCreator) { this(dbFileCreator.create(NAME)); }
         public Parquet(File dbFile) { super(dbFile); }
-        Parquet() { this((File)null);}
 
         public String getName() { return NAME;}
         String sqlReadSource(String srcFile) {
@@ -195,8 +198,8 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
             try {
                 DataGroup headers = getHeaders(getDataTable(), StringUtils.split(treq.getInclColumns(), ","));
                 var voTable = new ByteArrayOutputStream();
-                VoTableWriter.save(voTable, headers, TableUtil.Format.VO_TABLE);
-                // FileUtil.writeStringToFile(File.createTempFile("votable-", ".vot", QueryUtil.getTempDir(treq)), voTable.toString(StandardCharsets.UTF_8));       // for testing only.  removed once done.
+                VoTableWriter.save(voTable, headers, FormatUtil.Format.VO_TABLE);
+                // FormatUtil.writeStringToFile(File.createTempFile("votable-", ".vot", QueryUtil.getTempDir(treq)), voTable.toString(StandardCharsets.UTF_8));       // for testing only.  removed once done.
                 String exportSql = """
                         COPY (%s) TO '%s' ( FORMAT PARQUET,
                             KV_METADATA {
@@ -225,7 +228,6 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
 
         public Csv(DbFileCreator dbFileCreator) { this(dbFileCreator.create(NAME)); }
         public Csv(File dbFile) { super(dbFile); }
-        Csv() { this((File)null);}
 
         public String getName() { return NAME;}
         Character getDelimiter() { return ','; }
@@ -255,7 +257,6 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
 
         public Tsv(DbFileCreator dbFileCreator) { this(dbFileCreator.create(NAME)); }
         public Tsv(File dbFile) { super(dbFile); }
-        Tsv() { this((File)null);}
 
         public String getName() { return NAME;}
         Character getDelimiter() { return '\t'; }

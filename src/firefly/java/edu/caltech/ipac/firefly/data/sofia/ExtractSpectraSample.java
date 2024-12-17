@@ -10,7 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-import static edu.caltech.ipac.table.TableUtil.Format.VO_TABLE_TABLEDATA;
+import static edu.caltech.ipac.util.FormatUtil.Format.VO_TABLE_TABLEDATA;
 
 public class ExtractSpectraSample {
 

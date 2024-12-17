@@ -181,6 +181,13 @@ public class DataType implements Serializable, Cloneable {
         }
     }
 
+    public void rename(String nCname) {
+        if (isEmpty(getID())) setID(getKeyName());      // if we change cname, save original as ID.
+        setLabel(getKeyName());
+        setKeyName(nCname);
+
+    }
+
     public String getUnits() {
         return units;
     }

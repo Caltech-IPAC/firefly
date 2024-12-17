@@ -151,11 +151,6 @@ abstract public class BaseDbAdapter implements DbAdapter {
         var dg = dataGroupSupplier.get();
         StopWatch.getInstance().printLog("  ingestData: getDataGroup");
         if (dg != null) {
-            // remove ROW_IDX or ROW_NUM if exists
-            // these are transient values and should not be persisted.
-            dg.removeDataDefinition(DataGroup.ROW_IDX);
-            dg.removeDataDefinition(DataGroup.ROW_NUM);
-
             IpacTableUtil.consumeColumnInfo(dg);
 
             StopWatch.getInstance().start("  ingestData: load data for " + forTable);

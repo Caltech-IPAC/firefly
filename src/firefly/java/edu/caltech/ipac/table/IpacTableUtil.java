@@ -516,6 +516,13 @@ public class IpacTableUtil {
         return retval;
     }
 
+    public static boolean isIpacTable(File inFile) {
+        try {
+            IpacTableDef meta = getMetaInfo(inFile);
+            return meta.getCols().size() > 0 || meta.getKeywords().size() > 0;
+        } catch (Exception e) { return false; }
+    }
+
     public static IpacTableDef getMetaInfo(File inf) throws IOException {
         BufferedReader reader = null;
         try {

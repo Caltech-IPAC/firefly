@@ -158,6 +158,15 @@ public class ServerStatus extends BaseHttpServlet {
 
     private static void showDatabaseStatus(PrintWriter writer) {
         DbAdapter.EmbeddedDbStats stats = DbMonitor.getRuntimeStats(true);
+
+        writer.printf(""" 
+            DATABASE INFORMATION
+            --------------------
+            Rows: %,15d       Peak Rows: %,15d 
+            Databases: %,10d       Peak Databases: %,10d      Total Database: %,10d
+            
+            """, stats.memRows, stats.peakMemRows, stats.memDbs, stats.peakMemDbs, stats.totalDbs);
+
         String driver;
         if (DbAdapter.DEF_DB_TYPE.equals(DuckDbAdapter.NAME)) {
             duckDbConfig(writer);
@@ -176,6 +185,7 @@ public class ServerStatus extends BaseHttpServlet {
             4. Click "Connect"
             </div>
             """, ServerContext.getRequestOwner().getBaseUrl(), driver);
+
         writer.println("Idled   Age     Rows        Columns  Tables  Total Rows       Memory  JDBC URL     (elapsed time are in min:sec; memory is in MB)");
         writer.println("------  ------  ----------  -------  ------  ----------       ------  ---------");
         DbMonitor.getDbInstances().values().stream()

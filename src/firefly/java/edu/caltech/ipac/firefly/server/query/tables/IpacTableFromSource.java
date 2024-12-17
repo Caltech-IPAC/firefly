@@ -22,6 +22,7 @@ import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataGroupPart;
 import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.util.FormatUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,8 +30,6 @@ import java.io.IOException;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
 import static edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource.PROC_ID;
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.SEARCH_REQUEST;
-import static edu.caltech.ipac.table.TableUtil.Format.*;
-import static edu.caltech.ipac.table.TableUtil.guessFormat;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 
@@ -39,6 +38,7 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
     public static final String PROC_ID = "IpacTableFromSource";
     private static final String TBL_TYPE = "tblType";
     private static final String TYPE_CATALOG = "catalog";
+    private static final String FORMAT = "format";          // format of the source file if known.
 
     /**
      * This method should not be called anymore because ingestDataIntoDb is overridden.
@@ -89,6 +89,9 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
 
             String processor = req.getParam("processor");
             String jsonSearchRequest = req.getParam(SEARCH_REQUEST);
+            int tblIdx = req.getIntParam(TBL_INDEX, 0);
+            String fmt = req.getParam(FORMAT);
+            FormatUtil.Format format = isEmpty(fmt) ? null : FormatUtil.Format.valueOf(fmt);
             File srcFile = null;
             DbAdapter.DataGroupSupplier fetchDataGroup = null;
             DataGroup meta = collectMeta(req);
@@ -100,8 +103,11 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
             } else {
                 srcFile = fetchSourceFile(req);
             }
-            return DbDataIngestor.ingestData(req, dbAdapter, srcFile, meta, makeDgSupplier(req, fetchDataGroup));
-
+            if (srcFile == null) {
+                return DbDataIngestor.ingestData(req, dbAdapter, makeDgSupplier(req, fetchDataGroup));
+            } else {
+                return DbDataIngestor.ingestData(req, dbAdapter, meta, srcFile, tblIdx, format);
+            }
         } catch (IOException e) {
             Logger.getLogger().error(e,"Failed to ingest data into the database:" + req.getRequestId());
             throw new DataAccessException(e);

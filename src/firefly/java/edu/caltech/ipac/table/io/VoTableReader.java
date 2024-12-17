@@ -21,6 +21,7 @@ import edu.caltech.ipac.table.ResourceInfo;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.CollectionUtil;
+import edu.caltech.ipac.util.FormatUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -162,7 +163,6 @@ public class VoTableReader {
         parse(handler, docRoot, indices);
         return handler.getAllTable();
     }
-
 
     public static String getError(InputStream inputStream, String location) throws DataAccessException {
         try {
@@ -348,7 +348,7 @@ public class VoTableReader {
         }
     }
 
-    private static void parseTable(TableParseHandler handler, TableElement tableEl, StarTable table) throws DataAccessException {
+    private static void parseTable(TableParseHandler handler, TableElement tableEl, StarTable table) throws IOException {
 
         DataGroup header = getTableHeader(tableEl);
         List<DataType> cols = Arrays.asList(header.getDataDefinitions());
@@ -363,18 +363,14 @@ public class VoTableReader {
             header.addAttribute("POS_EQ_RA_MAIN", raCol.getKeyName());
             header.addAttribute("POS_EQ_DEC_MAIN", decCol.getKeyName());
         }
-        try {
-            handler.header(header);
+        handler.header(header);
 
-            // table data
-            if (!handler.headerOnly()) {
-                RowSequence rs = table.getRowSequence();
-                while (rs.next()) {
-                    handler.data(handleVariance(rs.getRow()));
-                }
+        // table data
+        if (!handler.headerOnly()) {
+            RowSequence rs = table.getRowSequence();
+            while (rs.next()) {
+                handler.data(handleVariance(rs.getRow()));
             }
-        } catch (IOException e) {
-            LOG.error(e);
         }
     }
 
@@ -581,7 +577,7 @@ public class VoTableReader {
 
     public static FileAnalysisReport analyze(File infile, FileAnalysisReport.ReportType type) throws Exception {
 
-        FileAnalysisReport report = new FileAnalysisReport(type, TableUtil.Format.VO_TABLE.name(), infile.length(), infile.getPath());
+        FileAnalysisReport report = new FileAnalysisReport(type, FormatUtil.Format.VO_TABLE.name(), infile.length(), infile.getPath());
         List<FileAnalysisReport.Part> parts = tablesToParts(infile);
         parts.forEach(report::addPart);
 

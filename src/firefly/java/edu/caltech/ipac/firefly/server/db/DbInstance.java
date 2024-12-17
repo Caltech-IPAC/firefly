@@ -109,7 +109,7 @@ public class DbInstance {
     public void setPooled(boolean pooled) { isPooled = pooled;}
     public boolean testConn(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
-            stmt.execute("SELECT 1");
+            stmt.execute("SELECT 1 FROM (VALUES (0))");     // works with all DMBS
             return true;
         } catch (SQLException e) { return false; }
     };

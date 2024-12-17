@@ -97,7 +97,7 @@ dependencies {
     implementation 'junit:junit:4.12'
 
     // duckdb - SQL support for parquet, csv, and tsv files
-    implementation 'org.duckdb:duckdb_jdbc:1.0.0'
+    implementation 'org.duckdb:duckdb_jdbc:1.1.3'
 }
 
 

@@ -30,9 +30,9 @@ import java.util.Iterator;
 import java.util.List;
 
 import static edu.caltech.ipac.table.IpacTableUtil.isKnownType;
-import static edu.caltech.ipac.table.TableUtil.Format;
-import static edu.caltech.ipac.table.TableUtil.Format.CSV;
-import static edu.caltech.ipac.table.TableUtil.Format.TSV;
+import static edu.caltech.ipac.util.FormatUtil.Format;
+import static edu.caltech.ipac.util.FormatUtil.Format.CSV;
+import static edu.caltech.ipac.util.FormatUtil.Format.TSV;
 import static edu.caltech.ipac.table.TableUtil.ParsedColInfo;
 import static edu.caltech.ipac.table.TableUtil.ParsedInfo;
 import static edu.caltech.ipac.table.TableUtil.getDetails;

@@ -8,7 +8,6 @@ import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.ResourceInfo;
@@ -23,6 +22,7 @@ import java.util.List;
 import static edu.caltech.ipac.firefly.server.db.DuckDbAdapter.addRow;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.colIdxWithArrayData;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.serialize;
+import static edu.caltech.ipac.util.StringUtils.tryIt;
 
 /**
  * Date: 10/23/24
@@ -99,7 +99,7 @@ public interface TableParseHandler {
 
     class DbIngest extends Base {
         DbAdapter dbAdapter;
-        DataGroup header;
+        DataGroup table;
         DataType[] cols;
         int rowCnt;
         DuckDBAppender appender;
@@ -113,12 +113,12 @@ public interface TableParseHandler {
 
         public void header(DataGroup header) throws IOException {
             super.header(header);
-            this.header = header;
-            cols = EmbeddedDbUtil.makeDbCols(header);
+            table = header;
+            cols = EmbeddedDbUtil.makeDbCols(table);
             aryIdx = colIdxWithArrayData(cols);
 
             try {
-                dbAdapter.ingestData(() -> header, dbAdapter.getDataTable());
+                dbAdapter.ingestData(() -> table, dbAdapter.getDataTable());
 
                 // prepare to ingest data into database
                 conn = (DuckDBConnection) JdbcFactory.getDataSource(dbAdapter.getDbInstance()).getConnection();
@@ -139,18 +139,10 @@ public interface TableParseHandler {
         }
 
         public void end() {
-            try {
-                if(appender != null) {
-                    appender.flush();
-                    appender.close();
-                }
-                if(conn != null) {
-                    conn.commit();
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                Logger.getLogger().warn(e);
-            }
+            tryIt(() -> { if (conn != null)     conn.commit(); });
+            tryIt(() -> { if (appender != null) appender.close(); });
+            appender = null;
+            tryIt(() -> { if (conn != null)     conn.close(); });
         }
     }
 }

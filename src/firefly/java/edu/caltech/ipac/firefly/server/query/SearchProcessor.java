@@ -16,6 +16,7 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.table.io.IpacTableException;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.util.FormatUtil;
 import edu.caltech.ipac.util.StringUtils;
 
 import java.io.File;
@@ -39,7 +40,7 @@ public interface SearchProcessor<Type> {
 
     String getUniqueID(ServerRequest request);
     Type getData(ServerRequest request) throws DataAccessException;
-    default FileInfo writeData(OutputStream out, ServerRequest request, TableUtil.Format format, TableUtil.Mode mode) throws DataAccessException {
+    default FileInfo writeData(OutputStream out, ServerRequest request, FormatUtil.Format format, TableUtil.Mode mode) throws DataAccessException {
         return null;
     };
     boolean doCache();

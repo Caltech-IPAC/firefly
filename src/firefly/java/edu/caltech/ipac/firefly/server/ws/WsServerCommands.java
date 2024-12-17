@@ -14,6 +14,7 @@ import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.TableUtil;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.FormatUtil;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -187,7 +188,7 @@ public class WsServerCommands {
             TableServerRequest request = sp.getTableServerRequest();
             if (request == null) throw new IllegalArgumentException("Invalid/Missing table request");
 
-            TableUtil.Format tblFormat = sp.getTableFormat();
+            FormatUtil.Format tblFormat = sp.getTableFormat();
             String fileNameExt = tblFormat.getFileNameExt();
             TableUtil.Mode mode = sp.contains("mode") ? TableUtil.Mode.valueOf(sp.getOptional("mode")) : null;
 

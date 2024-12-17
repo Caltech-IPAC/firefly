@@ -34,6 +34,7 @@ import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.util.FormatUtil;
 import edu.caltech.ipac.util.StringUtils;
 import org.json.simple.JSONObject;
 
@@ -87,7 +88,7 @@ public class SearchServerCommands {
 
             if (format.toLowerCase().contains("votable")) {
                 ByteArrayOutputStream rval = new ByteArrayOutputStream();
-                processor.writeData(rval, tsr, TableUtil.Format.VO_TABLE_TABLEDATA, TableUtil.Mode.displayed);
+                processor.writeData(rval, tsr, FormatUtil.Format.VO_TABLE_TABLEDATA, TableUtil.Mode.displayed);
                 return rval.toString();
             } else {
                 DataGroupPart dgp = new SearchManager().getDataGroup(tsr, processor);

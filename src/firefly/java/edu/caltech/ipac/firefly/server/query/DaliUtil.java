@@ -23,7 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static edu.caltech.ipac.table.TableUtil.Format.VO_TABLE;
+import static edu.caltech.ipac.util.FormatUtil.Format.VO_TABLE;
 import static edu.caltech.ipac.util.StringUtils.*;
 
 /**

@@ -386,6 +386,11 @@ test {
     // listen to events in the test execution lifecycle
     beforeTest { descriptor ->
         logger.lifecycle("Running test: " + descriptor)
+        // copy sources to jsdocs build directory
+        copy {
+            from ("${fireflyPath}/config/test")
+            into "${warDir}/WEB-INF/config"
+        }
     }
 }
 

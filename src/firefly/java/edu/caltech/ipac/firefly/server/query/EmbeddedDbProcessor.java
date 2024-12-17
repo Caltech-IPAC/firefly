@@ -26,6 +26,7 @@ import edu.caltech.ipac.table.JsonTableUtil;
 import edu.caltech.ipac.util.CollectionUtil;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.util.FormatUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.core.background.JobInfo;
@@ -44,7 +45,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX;
@@ -128,26 +128,31 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         try {
             var dbAdapter = getDbAdapter(treq);
             jobExecIf(v -> v.progress(10, "fetching data..."));
-            if (!dbAdapter.hasTable(dbAdapter.getDataTable())) {
-                StopWatch.getInstance().start("createDbFile: " + treq.getRequestId());
-                createDbFromRequest(treq, dbAdapter);
-                StopWatch.getInstance().stop("createDbFile: " + treq.getRequestId()).printLog("createDbFile: " + treq.getRequestId());
-            }
 
-            StopWatch.getInstance().start("getDataset: " + request.getRequestId());
             DataGroupPart results;
             try {
+                if (!dbAdapter.hasTable(dbAdapter.getDataTable())) {
+                    StopWatch.getInstance().start("createDbFile: " + treq.getRequestId());
+                    createDbFromRequest(treq, dbAdapter);
+                    StopWatch.getInstance().stop("createDbFile: " + treq.getRequestId()).printLog("createDbFile: " + treq.getRequestId());
+                }
+
+                StopWatch.getInstance().start("getDataset: " + request.getRequestId());
                 results = getResultSet(treq, dbAdapter);
                 jobExecIf(v -> v.progress(90, "generating results..."));
             } catch (Exception e) {
                 // table data exists; but, bad grammar when querying for the resultset.
                 // should return table meta info + error message
                 // limit 0 does not work with oracle-like syntax
-                DataGroup dg = dbAdapter.getHeaders(dbAdapter.getDataTable());
-                results = EmbeddedDbUtil.toDataGroupPart(dg, treq);
-                String error = dbAdapter.handleSqlExp("", e).getCause().getMessage(); // get the message describing the cause of the exception.
-                results.setErrorMsg(error);
-                jobExecIf(v -> v.setError(500, error));
+                if (dbAdapter.hasTable(dbAdapter.getDataTable())) {
+                    DataGroup dg = dbAdapter.getHeaders(dbAdapter.getDataTable());
+                    results = EmbeddedDbUtil.toDataGroupPart(dg, treq);
+                    String error = dbAdapter.handleSqlExp("", e).getCause().getMessage(); // get the message describing the cause of the exception.
+                    results.setErrorMsg(error);
+                    jobExecIf(v -> v.setError(500, error));
+                } else {
+                    throw e;
+                }
             }
             StopWatch.getInstance().stop("getDataset: " + request.getRequestId()).printLog("getDataset: " + request.getRequestId());
 
@@ -255,7 +260,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         return ipacTable;
     }
 
-    public FileInfo writeData(OutputStream out, ServerRequest request, TableUtil.Format format, TableUtil.Mode mode) throws DataAccessException {
+    public FileInfo writeData(OutputStream out, ServerRequest request, FormatUtil.Format format, TableUtil.Mode mode) throws DataAccessException {
         try {
             TableServerRequest treq = (TableServerRequest) request;
             var dbAdapter =  getDbAdapter(treq);

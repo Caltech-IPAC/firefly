@@ -40,7 +40,7 @@ public class Logger {
                             Type(String prefix) {this.prefix = prefix;}
                         }
 
-    private static final String ARY_SEP = "\n" + AppProperties.getProperty("ArrayRenderer.padding", "    ");
+    private static final String ARY_SEP = "\n" + AppProperties.getProperty("ArrayRenderer.padding", "        ");
 
     static {
         applyIfNotEmpty(AppProperties.getProperty("logger.level"), l -> {

@@ -11,6 +11,7 @@ import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.table.TableUtil;
+import edu.caltech.ipac.util.FormatUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -95,7 +96,7 @@ public final class IpacTableReader {
 
     public static FileAnalysisReport analyze(File infile, FileAnalysisReport.ReportType type) throws IOException {
         IpacTableDef meta = IpacTableUtil.getMetaInfo(infile);
-        FileAnalysisReport report = new FileAnalysisReport(type, TableUtil.Format.IPACTABLE.name(), infile.length(), infile.getPath());
+        FileAnalysisReport report = new FileAnalysisReport(type, FormatUtil.Format.IPACTABLE.name(), infile.length(), infile.getPath());
         FileAnalysisReport.Part part = new FileAnalysisReport.Part(FileAnalysisReport.Type.Table, String.format("IPAC Table (%d cols x %s rows)", meta.getCols().size(), meta.getRowCount()));
         part.setTotalTableRows(meta.getRowCount());
         report.addPart(part);

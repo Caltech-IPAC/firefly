@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
+import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
@@ -29,6 +30,8 @@ public class HealthCheck extends BaseHttpServlet {
             // memory check
             int mem = Math.max(Math.min(StringUtils.getInt(req.getParameter("mem"), 5), 1024), 1);
             alloc = new byte[mem * 1024 * 1024];
+            // database check
+            DbAdapter.getAdapter().execQuery("select 1", null);
         } catch (OutOfMemoryError oome) {
             Logger.error(oome, "Encountered OutOfMemory during memory check");
             throw oome;

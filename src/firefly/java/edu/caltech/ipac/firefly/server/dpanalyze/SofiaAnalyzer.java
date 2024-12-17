@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static edu.caltech.ipac.table.TableUtil.Format.VO_TABLE_TABLEDATA;
+import static edu.caltech.ipac.util.FormatUtil.Format.VO_TABLE_TABLEDATA;
 
 /*
  Analyzer for SOFIA extracted Spectra from FITS 'image'

@@ -71,10 +71,6 @@ class DbMonitor {
         return dbInstances;
     }
 
-    public static DbAdapter.EmbeddedDbStats getDbStats() {
-        return dbStats;
-    }
-
     public static DbAdapter.EmbeddedDbStats getRuntimeStats() {
         return getRuntimeStats(false);
     }
