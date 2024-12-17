@@ -313,6 +313,7 @@ function getPartProdGuess(part,table,row) {
     const foundUtypes= part?.details?.resources?.map( (r) => r.utype)
         .filter( (utype='') => utype.toLowerCase().includes('spec'));
     if (foundUtypes?.length) return foundUtypes?.[0];
+    if (isSSATable(table)) return 'spectrum';
     return getProdTypeGuess(table,row);
 }
 
