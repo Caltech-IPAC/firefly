@@ -184,7 +184,7 @@ const ChartSelectionTable = ({tbl_id, chartIds, selectedChartId}) => {
     }, [showAll]);
 
     return (
-        <Stack height={125}>
+        <Stack height={125} flexShrink={0}>
             {/*--- temporarily removed to only combine charts with similar axes
                 <div style={{display: 'inline-flex', alignItems: 'center'}}>
                     <label htmlFor='showAll'>Show All Charts: </label>

@@ -383,14 +383,15 @@ test {
     maxHeapSize = "2g"
     jvmArgs '-Djava.net.preferIPv4Stack=true'
 
-    // listen to events in the test execution lifecycle
-    beforeTest { descriptor ->
-        logger.lifecycle("Running test: " + descriptor)
-        // copy sources to jsdocs build directory
+    doFirst {
         copy {
             from ("${fireflyPath}/config/test")
             into "${warDir}/WEB-INF/config"
         }
+    }
+    // listen to events in the test execution lifecycle
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
     }
 }
 
