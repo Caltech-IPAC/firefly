@@ -255,8 +255,16 @@ function updateDataProducts(factoryKey, action, firstTime, tbl_id, activateParam
     const {highlightedRow}= tableState;
 
     // keep the plotId array for 'single' layout
-    const layout= getLayoutType(getMultiViewRoot(), imageViewerId, tbl_id);
+    let layout= getLayoutType(getMultiViewRoot(), imageViewerId, tbl_id);
     const layoutDetail= getLayoutDetails(getMultiViewRoot(), imageViewerId, tbl_id);
+
+
+    if (layout===GRID && !converter.canGrid) {
+        dispatchChangeViewerLayout(viewer.viewerId,SINGLE,undefined,tbl_id);
+        layout= getLayoutType(getMultiViewRoot(), imageViewerId, tbl_id);
+    }
+
+
 
     let resultPromise;
     if (layout===SINGLE) {

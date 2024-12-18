@@ -4,6 +4,7 @@
 import {isArray,isEmpty} from 'lodash';
 import {getProdTypeGuess, getSSATitle, isSSATable} from '../voAnalyzer/TableAnalysis.js';
 import {isFitsTableDataTypeNumeric} from '../visualize/FitsHeaderUtil.js';
+import {getObsCoreData} from '../voAnalyzer/VoDataLinkServDef';
 import {dpdtChartTable, dpdtImage, dpdtTable, DPtypes, SHOW_CHART, SHOW_TABLE, AUTO} from './DataProductsType';
 import {FileAnalysisType, Format, UIEntry, UIRender} from '../data/FileAnalysis';
 import {RequestType} from '../visualize/RequestType.js';
@@ -13,18 +14,21 @@ import {createSingleImageActivate, createSingleImageExtraction} from './ImageDat
 
 /**
  *
- * @param {FileAnalysisPart} part
- * @param {WebPlotRequest} request
- * @param {TableModel} table
- * @param {number} row
- * @param {String} fileFormat (see Format object)
- * @param {String} dataTypeHint  stuff like 'spectrum', 'image', 'cube', etc
- * @param serverCacheFileKey
- * @param {ActivateParams} activateParams
- * @param {DataProductsFactoryOptions} options
+ * @param {Object} p
+ * @param {FileAnalysisPart} p.part
+ * @param {WebPlotRequest} p.request
+ * @param {TableModel} p.table
+ * @param {number} p.row
+ * @param {String} p.fileFormat (see Format object)
+ * @param {String} p.dataTypeHint  stuff like 'spectrum', 'image', 'cube', etc
+ * @param {DatalinkData} p.dlData
+ * @param {String} p.serverCacheFileKey
+ * @param {ActivateParams} p.activateParams
+ * @param {DataProductsFactoryOptions} p.options
  * @return {{tableResult: DataProductsDisplayType|Array.<DataProductsDisplayType>|undefined, imageResult: DataProductsDisplayType|undefined}}
  */
-export function analyzePart(part, request, table, row, fileFormat, dataTypeHint, serverCacheFileKey, activateParams, options) {
+export function analyzePart({part, request, table, row, fileFormat, dataTypeHint, dlData,
+                                serverCacheFileKey, activateParams, options}) {
 
     const {type,desc, fileLocationIndex}= part;
     const aTypes= findAvailableTypesForAnalysisPart(part, fileFormat);
@@ -33,7 +37,8 @@ export function analyzePart(part, request, table, row, fileFormat, dataTypeHint,
     const fileOnServer= (part.convertedFileName) ? part.convertedFileName : serverCacheFileKey;
 
     const imageResult= aTypes.includes(DPtypes.IMAGE) && type===FileAnalysisType.Image &&
-        analyzeImageResult(part, request, table, row, fileFormat, part.convertedFileName,desc,activateParams,fileLocationIndex);
+        analyzeImageResult({part, request, table, row, fileFormat, dlData, fileOnServer,
+            title:desc,activateParams,hduIdx:fileLocationIndex});
 
     const tableResult= aTypes.includes(DPtypes.TABLE) &&
         analyzeChartTableResult(false, table, row, part, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex, options);
@@ -319,7 +324,7 @@ function getPartProdGuess(part,table,row) {
 
 
 
-function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,title='', activateParams, hduIdx) {
+function analyzeImageResult({part, request, table, row, dlData, fileOnServer,title='', activateParams, hduIdx}) {
     const {interpretedData=false,uiEntry,uiRender, defaultPart=false}= part;
     if (uiEntry===UIEntry.UseSpecified && uiRender!==UIRender.Image) return undefined;
     const newReq= request.makeCopy();
@@ -338,9 +343,11 @@ function analyzeImageResult(part, request, table, row, fileFormat, fileOnServer,
     const ddTitleStr= (interpretedData || uiEntry===UIEntry.UseSpecified || fileOnServer) ?
                            `${title} (image)` :  `HDU #${hduIdx||0} (image) ${title}`;
 
+    const sourceObsCoreData= dlData ? dlData.sourceObsCoreData : getObsCoreData(table,row);
+
     return dpdtImage({name:ddTitleStr,
         activate: createSingleImageActivate(newReq,imageViewerId,table?.tbl_id,row),
-        extraction: createSingleImageExtraction(newReq),
+        extraction: createSingleImageExtraction(newReq, sourceObsCoreData, dlData ),
         request:newReq, override, interpretedData, requestDefault:Boolean(defaultPart)});
 }
 

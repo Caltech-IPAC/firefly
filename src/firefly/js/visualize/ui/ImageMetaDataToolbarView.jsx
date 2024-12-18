@@ -5,13 +5,11 @@
 import {Sheet, Stack} from '@mui/joy';
 import {isEmpty, isEqual, omit} from 'lodash';
 import React from 'react';
-import PropTypes from 'prop-types';
-import {SD_CUTOUT_KEY} from '../../metaConvert/vo/ServDescProducts';
+import PropTypes, {arrayOf, bool, func, string, object} from 'prop-types';
 import {getTblInfo} from '../../tables/TableUtil.js';
-import {getComponentState} from '../../core/ComponentCntlr.js';
 import {showCutoutSizeDialog} from '../../ui/CutoutSizeDialog.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {getObsCoreOption} from '../../ui/tap/TableSearchHelpers';
+import {findCutoutTarget, getCutoutSize, getObsCoreOption, getPreferCutout} from '../../ui/tap/ObsCoreOptions';
 import {makeFoVString} from '../ZoomUtil.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
@@ -28,12 +26,16 @@ import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
 
 
 export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType, factoryKey, serDef,
-                                             enableCutout, pixelBasedCutout,
+                                             enableCutout, pixelBasedCutout,enableCutoutFullSwitching,
+                                             cutoutToFullWarning,
                                           activeTable, makeDataProductsConverter, makeDropDown}) {
 
     const converter= makeDataProductsConverter(activeTable,factoryKey) || {};
     const {canGrid, hasRelatedBands, converterId, maxPlots, threeColor, dataProductsComponentKey}= converter ?? {};
-    const cutoutValue= useStoreConnector( () => getComponentState(dataProductsComponentKey)[SD_CUTOUT_KEY]) ?? getObsCoreOption('cutoutDefSizeDeg') ?? .01;
+    const cutoutValue= useStoreConnector( () => getCutoutSize(dataProductsComponentKey));
+    const preferCutout= useStoreConnector( () => getPreferCutout(dataProductsComponentKey,activeTable?.tbl_id));
+
+    const cutoutCenterWP= findCutoutTarget(dataProductsComponentKey,serDef,activeTable,activeTable?.highlightedRow);
 
     if (!converter) return <div/>;
     let cSize='';
@@ -102,8 +104,22 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
                     {makeDropDown ? makeDropDown() : false}
                     {enableCutout &&
                         <ToolbarButton
-                            icon={<ContentCutRoundedIcon/>}
-                            text={`${cSize}`} onClick={() => showCutoutSizeDialog(cutoutValue,pixelBasedCutout,dataProductsComponentKey)}/>
+                            icon={<ContentCutRoundedIcon/>} text={`${cSize}`}
+                            title='Showing cutout of image, click here to modify cutout or show original image (with all extensions)'
+                            onClick={() =>
+                                showCutoutSizeDialog({
+                                    showingCutout:true,cutoutDefSizeDeg:cutoutValue,pixelBasedCutout,
+                                    tbl_id:activeTable?.tbl_id, cutoutCenterWP,
+                                    dataProductsComponentKey,enableCutoutFullSwitching, cutoutToFullWarning})}/>
+                    }
+                    {!enableCutout && enableCutoutFullSwitching &&
+                        <ToolbarButton
+                            icon={<ContentCutRoundedIcon/>} text={'Off'}
+                            title='Showing original image (with all extensions), click here to show a cutout'
+                            onClick={() =>
+                                showCutoutSizeDialog({showingCutout:false,cutoutDefSizeDeg:cutoutValue,pixelBasedCutout,
+                                    tbl_id:activeTable?.tbl_id, cutoutCenterWP,
+                                    dataProductsComponentKey,enableCutoutFullSwitching})}/>
                     }
                     {metaControls &&
                         <Stack direction='row' spacing={1} alignItems='center' whiteSpace='nowrap'>
@@ -122,18 +138,20 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
 }
 
 ImageMetaDataToolbarView.propTypes= {
-    dlAry : PropTypes.arrayOf(PropTypes.object),
-    activePlotId : PropTypes.string,
-    viewerId : PropTypes.string.isRequired,
-    layoutType : PropTypes.string.isRequired,
-    viewerPlotIds : PropTypes.arrayOf(PropTypes.string).isRequired,
-    activeTable: PropTypes.object,
-    makeDataProductsConverter: PropTypes.func,
-    makeDropDown: PropTypes.func,
-    serDef: PropTypes.object,
-    enableCutout: PropTypes.bool,
-    pixelBasedCutout: PropTypes.bool,
-    factoryKey: PropTypes.string
+    dlAry : arrayOf(object),
+    activePlotId : string,
+    viewerId : string.isRequired,
+    layoutType : string.isRequired,
+    viewerPlotIds : arrayOf(PropTypes.string).isRequired,
+    activeTable: object,
+    makeDataProductsConverter: func,
+    makeDropDown: func,
+    serDef: object,
+    enableCutout: bool,
+    pixelBasedCutout: bool,
+    factoryKey: string,
+    cutoutToFullWarning: string,
+    enableCutoutFullSwitching: bool
 };
 
 

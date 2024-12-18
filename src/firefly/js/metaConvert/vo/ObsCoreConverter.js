@@ -1,4 +1,4 @@
-import {isEmpty} from 'lodash';
+import {isEmpty, isUndefined} from 'lodash';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {getCellValue, getColumns, hasRowAccess} from '../../tables/TableUtil.js';
 import {
@@ -34,37 +34,48 @@ const DEF_MAX_PLOTS= 8;
 export function makeObsCoreConverter(table,converterTemplate,options={}) {
     if (!table) return converterTemplate;
     const canRelatedGrid= options.allowImageRelatedGrid?? false;
+    let canGrid= options.canGrid;
+    if (isUndefined(canGrid) && canRelatedGrid) {
+       canGrid= true;
+    }
     const threeColor= converterTemplate.threeColor && options?.allowImageRelatedGrid;
-    const baseRetOb= {...converterTemplate,
-        initialLayout: options.dataLinkInitialLayout ?? 'single',
-        describeThreeColor: (threeColor) ? describeObsThreeColor : undefined,
-        threeColor,
-        canGrid: false,
-        maxPlots:canRelatedGrid?DEF_MAX_PLOTS:1,
-        hasRelatedBands:canRelatedGrid,
-        converterId: `ObsCore-${table.tbl_id}`};
+    const onlyImages= hasOnlyImages(table);
 
+    return {
+        ...converterTemplate,
+        initialLayout: options.dataLinkInitialLayout ?? 'single',
+        describeThreeColor: threeColor ? describeObsThreeColor : undefined,
+        threeColor,
+        canGrid: onlyImages && canGrid,
+        maxPlots: (canRelatedGrid||onlyImages) ? DEF_MAX_PLOTS : 1,
+        hasRelatedBands: canRelatedGrid,
+        converterId: `ObsCore-${table.tbl_id}`
+    };
+}
+
+function hasOnlyImages(table) {
+    if (!table) return false;
 
     const propTypeCol= getObsCoreProdTypeCol(table);
     if (propTypeCol?.enumVals) {
         const pTypes= propTypeCol.enumVals.split(',');
-        if (pTypes.every( (s) => s.toLowerCase()==='image' || s.toLowerCase()==='cube')) {
-            return {...baseRetOb, canGrid:true,maxPlots:DEF_MAX_PLOTS};
-        }
+        if (pTypes.every( (s) => s.toLowerCase()==='image' || s.toLowerCase()==='cube')) return true;
     }
 
-    if (table?.request?.filters) {
+    if (table.request?.filters) {
         const fList= table.request.filters.split(';');
         const pTFilter= fList.find( (f) => f.includes(propTypeCol.name) && f.includes('IN'));
         if (pTFilter) {
             const inList=  pTFilter.substring( pTFilter.indexOf('(')+1, pTFilter.indexOf(')')).split(',');
             if (inList.every( (s) => s.toLocaleLowerCase()==='\'image\'' || s.toLocaleLowerCase()==='\'cube\'')) {
-                return {...baseRetOb, canGrid:true,maxPlots:DEF_MAX_PLOTS};
+                return true;
             }
         }
     }
-    return baseRetOb;
+    return false;
 }
+
+
 
 function describeObsThreeColor(table, row, options) {
     const {dataSource:dlTableUrl,prodType,isVoTable,isDataLinkRow, isPng}= getObsCoreRowMetaInfo(table,row);

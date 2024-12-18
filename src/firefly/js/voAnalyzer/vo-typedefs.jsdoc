@@ -39,6 +39,7 @@
 /**
  * @typedef DlAnalysisData
  * @prop {boolean} isThis
+ * @prop {boolean} isCounterpart
  * @prop {boolean} isImage
  * @prop {boolean} isGrid
  * @prop {boolean} isAux
@@ -53,6 +54,7 @@
  * @prop {boolean} isGzip
  * @prop {boolean} isSimpleImage
  * @prop {boolean} isDownloadOnly
+ * @prop {boolean} cutoutFullPair
  */
 
 
@@ -69,9 +71,25 @@
  * @prop {String} serviceDefRef
  * @prop {ServiceDescriptorDef} serDef
  * @prop {DlAnalysisData} dlAnalysis
+ * @prop {Object} relatedDLEntries
+ * @prop {object} relatedRows
+ * @prop {ObsCoreData} sourceObsCoreData
  */
 
 
+/**
+ * @typedef ObsCoreData
+ *
+ * @prop {string} access_format
+ * @prop {string} access_url
+ * @prop {string} dataproduct_subtype
+ * @prop {string} dataproduct_type
+ * @prop {string} obs_collection
+ * @prop {string} obs_title
+ * @prop {string} s_ra
+ * @prop {string} s_dec
+ * @prop {string} s_region
+ */
 
 
 

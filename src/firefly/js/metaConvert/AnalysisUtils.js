@@ -115,18 +115,19 @@ export function makeAnalysisGetGridDataProduct(makeReq) {
  * @param obj.menuKey
  * @param obj.dataTypeHint
  * @param {ServiceDescriptorDef} [obj.serDef]
+ * @param {DatalinkData} [obj.dlData]
  * @param [obj.originalTitle]
  * @param {DataProductsFactoryOptions} [obj.options]
  * @return {function}
  */
 export function makeAnalysisActivateFunc({table, row, request, activateParams, menuKey,
-                                             dataTypeHint, serDef, originalTitle, options}) {
+                                             dataTypeHint, serDef, originalTitle, options, dlData}) {
     const analysisActivateFunc = async (menu, userInputParams) => {
         const {dpId}= activateParams;
         dispatchUpdateDataProducts(dpId, dpdtWorkingMessage(LOADING_MSG,menuKey));
         // do the uploading and analyzing
         const dPDisplayType= await doUploadAndAnalysis({ table, row, request, activateParams, dataTypeHint, options, menu,
-            serDef, userInputParams, analysisActivateFunc, originalTitle, menuKey});
+            serDef, dlData, userInputParams, analysisActivateFunc, originalTitle, menuKey});
         // activate the result of the analysis
        dispatchResult(dPDisplayType, menu,menuKey,dpId, serDef, analysisActivateFunc);
     };

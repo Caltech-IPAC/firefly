@@ -322,6 +322,7 @@ export function getProdTypeGuess(tableOrId, rowIdx) {
  * @returns {boolean}
  */
 export function isObsCoreLike(tableModel) {
+    if (!tableModel) return false;
     const cols = getColumns(tableModel);
     if (cols.findIndex((c) => get(c, 'utype', '').startsWith(obsPrefix)) >= 0) {
         return true;

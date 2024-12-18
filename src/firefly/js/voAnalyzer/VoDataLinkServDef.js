@@ -2,11 +2,19 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import {isArray} from 'lodash';
+import {MetaConst} from '../data/MetaConst';
+import {isDefined} from '../util/WebUtil';
+import {makeWorldPt, parseWorldPt} from '../visualize/Point';
+import {
+    getObsCoreAccessFormat, getObsCoreAccessURL, getObsCoreProdType, getObsCoreSRegion, isDatalinkTable, isObsCoreLike
+} from './TableAnalysis';
 import {
     adhocServiceUtype, cisxAdhocServiceUtype, standardIDs, VO_TABLE_CONTENT_TYPE,
-    SERVICE_DESC_COL_NAMES
+    SERVICE_DESC_COL_NAMES, RA_UCDs, DEC_UCDs
 } from './VoConst.js';
-import {columnIDToName, getColumnIdx, getTblRowAsObj} from '../tables/TableUtil.js';
+import {
+    columnIDToName, getCellValue, getColumnByRef, getColumnIdx, getMetaEntry, getTblRowAsObj
+} from '../tables/TableUtil.js';
 import {getTableModel} from './VoCoreUtils.js';
 
 
@@ -20,9 +28,11 @@ import {getTableModel} from './VoCoreUtils.js';
  */
 export function analyzeDatalinkRow({semantics = '', localSemantics = '', contentQualifier = '', contentType = ''}) {
     const isImage = contentType?.toLowerCase() === 'image/fits';
+    const maybeImage = contentType?.toLowerCase().includes('fits');
     const semL = semantics.toLowerCase();
     const locSemL = localSemantics.toLowerCase();
     const isThis = semL.includes('#this');
+    const isCounterpart = semL.includes('#counterpart');
     const isAux = semL === '#auxiliary';
     const isGrid = semL.includes('-grid') || (locSemL.includes('-grid') || ( locSemL.includes('#grid')));
     const isCutout = semL.includes('cutout') || semL.includes('#cutout') || semL.includes('-cutout') || locSemL.includes('cutout');
@@ -37,9 +47,8 @@ export function analyzeDatalinkRow({semantics = '', localSemantics = '', content
     const isSimpleImage= isSimpleImageType(contentType);
     const isDownloadOnly=  isDownloadType(contentType);
     return {
-        isThis, isImage, isGrid, isAux, isSpectrum, isCutout, rBand, gBand, bBand,
-        cisxPrimaryQuery, cisxConcurrentQuery,
-        isTar, isGzip, isSimpleImage, isDownloadOnly
+        isThis, isCounterpart, isImage, maybeImage, isGrid, isAux, isSpectrum, isCutout, rBand, gBand, bBand,
+        cisxPrimaryQuery, cisxConcurrentQuery, isTar, isGzip, isSimpleImage, isDownloadOnly, cutoutFullPair:false,
     };
 }
 
@@ -99,6 +108,7 @@ export function getServiceDescriptors(tableOrId, removeAsync = true) {
             ID,
             utype,
             sdSourceTable: table,
+            positionWP: parseWorldPt(getMetaEntry(table, MetaConst.SEARCH_TARGET, undefined)),
             title: desc ?? getSDDescription(table, ID) ?? 'Service Descriptor ' + idx,
             accessURL: params.find(({name}) => name==='accessURL')?.value,
             standardID: params.find(({name}) => name==='standardID')?.value,
@@ -126,13 +136,19 @@ export function getServiceDescriptors(tableOrId, removeAsync = true) {
 
 /**
  * @param {TableModel|String} dataLinkTableOrId - a TableModel or id that is a datalink call result
+ * @param {TableModel} [sourceObsCoreTbl]
+ * @param {number} [sourceObsCoreRow]
  * @return {Array.<DatalinkData>}
  */
-export function getDataLinkData(dataLinkTableOrId) {
+export function getDataLinkData(dataLinkTableOrId, sourceObsCoreTbl=undefined, sourceObsCoreRow=-1) {
     const dataLinkTable= getTableModel(dataLinkTableOrId);
     const {data}= dataLinkTable?.tableData ?? {};
     if (!data) return [];
-    return data.map((r, idx) => {
+    const sourceObsCoreData= getObsCoreData(sourceObsCoreTbl,sourceObsCoreRow);
+    const positionWP= parseWorldPt(getMetaEntry(dataLinkTable, MetaConst.SEARCH_TARGET, undefined));
+
+    const dlDataAry=  data
+        .map((r, idx) => {
             const tmpR = getTblRowAsObj(dataLinkTable, idx);
             const rowObj= Object.fromEntries(  // convert any null or undefined to empty string
                 Object.entries(tmpR).map(([k,v]) => ([k,v??''])));
@@ -146,14 +162,56 @@ export function getDataLinkData(dataLinkTableOrId) {
             const idKey= Object.keys(rowObj).find((k) => k.toLowerCase()==='id');
             const serDef= getServiceDescriptorForId(dataLinkTable,serviceDefRef,idx);
             const dlAnalysis= analyzeDatalinkRow({semantics, localSemantics, contentType, contentQualifier});
+            const prodTypeHint= contentType || sourceObsCoreData?.dataproduct_type;
             return {
                 id: rowObj[idKey],
                 contentType, contentQualifier, semantics, localSemantics, url, error_message,
-                description, size, serviceDefRef, serDef, rowIdx: idx, dlAnalysis,
+                description, size, serviceDefRef, serDef, rowIdx: idx, dlAnalysis, prodTypeHint,
+                sourceObsCoreData, relatedDLEntries: {}, positionWP,
             };
         })
-        .filter(({url='', serviceDefRef, error_message}) =>
-            serviceDefRef || error_message || url.startsWith('http') || url.startsWith('ftp'));
+        .filter(({url='', serviceDefRef, serDef, error_message}) =>
+            (serviceDefRef && serDef) || error_message || url.startsWith('http') || url.startsWith('ftp'));
+
+    dlDataAry.forEach( (dlData) => {
+        const {dlAnalysis:{isThis,isCounterpart,maybeImage,isCutout}, id}= dlData;
+        if ((isThis || isCounterpart) && maybeImage && !isCutout) {
+            const foundCutout= dlDataAry.filter( (testData) => testData.id===id && testData.dlAnalysis.isCutout);
+            if (foundCutout.length===1) setupRelatedCutout(dlData,foundCutout[0]);
+            // todo in future search for a related region for main image or cutout here
+        }
+    });
+    return dlDataAry;
+}
+
+function setupRelatedCutout(prim,cutout) {
+    prim.relatedDLEntries.cutout= cutout;
+    cutout.relatedDLEntries.fullImage= prim;
+    prim.dlAnalysis.cutoutFullPair= true;
+    cutout.dlAnalysis.cutoutFullPair= true;
+
+    //?? todo determine if this is right
+    if (prim.dlAnalysis.isThis) cutout.dlAnalysis.isThis= true;
+    if (prim.dlAnalysis.isCounterpart) cutout.dlAnalysis.isCounterpart= true;
+    if (prim.dlAnalysis.isGrid || cutout.dlAnalysis.isGrid) {
+        prim.dlAnalysis.isGrid= true;
+        cutout.dlAnalysis.isGrid= true;
+    }
+}
+
+export function getObsCoreData(tbl,row) {
+
+
+    if (!tbl || row<0) return undefined;
+    if (!isObsCoreLike(tbl)) return undefined;
+    const obsCoreData= getTblRowAsObj(tbl, row);
+    if (!obsCoreData) return undefined;
+
+    obsCoreData.dataproduct_type ??= getObsCoreProdType(tbl,row);
+    obsCoreData.s_region ??= getObsCoreSRegion(tbl,row);
+    obsCoreData.access_url ??= getObsCoreAccessURL(tbl,row);
+    obsCoreData.access_format ??= getObsCoreAccessFormat(tbl,row);
+    return obsCoreData;
 }
 
 function getServiceDescriptorForId(table, matchId, dataLinkTableRowIdx) {
@@ -184,6 +242,39 @@ export function isAnalysisTableDatalink(report) {
     const hasCorrectCols = SERVICE_DESC_COL_NAMES.every((cname) => tabColNames.includes(cname));
     if (!hasCorrectCols) return false;
     return hasCorrectCols && part.totalTableRows < 50; // 50 is arbitrary, it is protections from dealing with files that are very big
+}
+
+export function findWorldPtInServiceDef(serDef,sourceRow) {
+    if (!serDef) return;
+    const {serDefParams,sdSourceTable, dataLinkTableRowIdx} = serDef;
+    const raParam= serDefParams.find( ({UCD=''}) =>
+        RA_UCDs.find( (testUcd) => UCD.toLowerCase().includes(testUcd)) );
+    const decParam= serDefParams.find( ({UCD=''}) =>
+        DEC_UCDs.find( (testUcd) => UCD.toLowerCase().includes(testUcd)) );
+    if (!raParam && !decParam) return;
+
+    let raVal= raParam.value;
+    let decVal= decParam.value;
+
+    if (raVal && decVal) return makeWorldPt(raVal,decVal);
+    if (!sdSourceTable) return;
+
+    const hasDLTable= isDatalinkTable(sdSourceTable);
+    const hasDLRow= isDefined(dataLinkTableRowIdx);
+    const hasSourceRow= isDefined(sourceRow);
+    const row= hasDLTable && hasDLRow ? dataLinkTableRowIdx : hasSourceRow ? sourceRow : undefined;
+
+    if (!raVal && raParam.ref) {
+        const col = getColumnByRef(sdSourceTable, raParam.ref);
+        if (col && row > -1) raVal = getCellValue(sdSourceTable, row, col.name);
+    }
+
+    if (!decVal && decParam.ref) {
+        const col = getColumnByRef(sdSourceTable, decParam.ref);
+        if (col && row > -1) decVal = getCellValue(sdSourceTable, row, col.name);
+    }
+
+    return (raVal && decVal) ? makeWorldPt(raVal,decVal) : undefined;
 }
 
 

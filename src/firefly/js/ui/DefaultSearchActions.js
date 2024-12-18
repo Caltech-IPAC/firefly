@@ -1,17 +1,21 @@
 import {getMenu} from '../core/AppDataCntlr.js';
 import {makeSearchActionObj, SearchTypes} from '../core/ClickToAction.js';
 import {flux} from '../core/ReduxFlux.js';
+import {MetaConst} from '../data/MetaConst';
 import {ServerParams} from '../data/ServerParams.js';
 import {sprintf} from '../externalSource/sprintf.js';
-import {getTableUiByTblId, makeFileRequest} from '../api/ApiUtilTable.jsx';
+import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById, makeFileRequest} from '../api/ApiUtilTable.jsx';
+import {extractDatalinkTable} from '../metaConvert/TableDataProductUtils';
 import {makeVOCatalogRequest} from '../tables/TableRequestUtil.js';
 import {dispatchTableSearch} from '../tables/TablesCntlr.js';
-import {findTableCenterColumns} from '../voAnalyzer/TableAnalysis.js';
+import { findTableCenterColumns, isFormatDataLink, isObsCoreLike } from '../voAnalyzer/TableAnalysis.js';
 import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
+import {getServiceDescriptors, isDataLinkServiceDesc} from '../voAnalyzer/VoDataLinkServDef';
 import {setMultiSearchPanelTab} from './MultiSearchPanel.jsx';
 import {Format} from 'firefly/data/FileAnalysis';
 import {doJsonRequest} from 'firefly/core/JsonUtils';
 import {showInfoPopup} from 'firefly/ui/PopupUtil';
+import {getObsCoreOption} from './tap/ObsCoreOptions';
 
 //note - these two redundant function are here because of circular dependencies.
 // this file is imported very early and webpack is creating errors
@@ -143,7 +147,6 @@ export const makeDefTableSearchActions= () => {
             execute: (sa, wp) => showImage( {searchParams: {wp, type: 'hipsImage'}}),
             searchDesc: 'Display HiPS for row'
         } ),
-
         makeSearchActionObj({
             cmd: 'tableTapUpload',
             groupId: 'tableTap',
@@ -152,9 +155,21 @@ export const makeDefTableSearchActions= () => {
             searchType: SearchTypes.wholeTable,
             execute: (sa,table) => searchWholeTable(table),
             searchDesc: 'Use table as an upload to TAP search'
-        })
-];
-
+        }),
+        makeSearchActionObj({cmd:'showDatalinkTable',
+            groupId:'resolver',
+            label:'all data productions',
+            tip:'',
+            searchType: SearchTypes.point_table_only,
+            execute: () => showDatalinkTable(),
+            supported: (table) => canShowDatalinkTable(table),
+            searchDesc: ({tbl_id}) => {
+                const sourceId= getMetaEntry(tbl_id, MetaConst.OBSCORE_SOURCE_ID);
+                return getObsCoreOption( 'datalinkExtractTableDesc', sourceId,
+                    'Show table with all data products for this row (Datalink)');
+            }
+        } ),
+    ];
 };
 
 export const makeExternalSearchActions = () => {
@@ -188,7 +203,7 @@ export const makeExternalSearchActions = () => {
             min: .001,
             max: 5,
             execute: (sa,cenWpt,radius) => gotoAndSearchSimbad(cenWpt,radius),
-            searchDesc: (wp,size) => `Go to Simbad and search (cone) with radius of ${sprintf('%.4f',size)} degrees`} ),
+            searchDesc: ({wp,size}) => `Go to Simbad and search (cone) with radius of ${sprintf('%.4f',size)} degrees`} ),
     ];
 };
 
@@ -235,6 +250,20 @@ function searchNed(cenWpt,radius) {
         }
     );
     dispatchTableSearch(request);
+}
+
+function showDatalinkTable() {
+    const table= getTblById(getActiveTableId());
+    if (!table) return;
+    const row= table.highlightedRow;
+    extractDatalinkTable(table,row,`Products (row ${row})`);
+}
+
+function canShowDatalinkTable(table) {
+    const isObsCore= isObsCoreLike(table) && isFormatDataLink(table,table.highlightedRow);
+    if (isObsCore) return true;
+    const serDefAry= getServiceDescriptors(table);
+    return Boolean(serDefAry && isDataLinkServiceDesc(serDefAry[0]));
 }
 
 function searchSimbad(cenWpt,radius) {

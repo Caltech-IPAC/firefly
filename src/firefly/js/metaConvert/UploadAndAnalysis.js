@@ -5,10 +5,11 @@ import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/Mas
 import {DataProductTypes, FileAnalysisType} from '../data/FileAnalysis';
 import {MetaConst} from '../data/MetaConst';
 import {upload} from '../rpc/CoreServices.js';
-import {getMetaEntry, getTblRowAsObj} from '../tables/TableUtil';
+import {getMetaEntry, getTblById, getTblRowAsObj} from '../tables/TableUtil';
 import {hashCode} from '../util/WebUtil';
 import {isDefined} from '../util/WebUtil.js';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr';
+import {getObsCoreData} from '../voAnalyzer/VoDataLinkServDef';
 import {
     dataProductRoot, dispatchUpdateActiveKey, dispatchUpdateDataProducts,
     getActiveFileMenuKeyByKey, getDataProducts
@@ -42,14 +43,16 @@ const parseAnalysis= (serverCacheFileKey, analysisResult) =>
  * @param {DataProductsFactoryOptions} obj.options
  * @param {Array.<Object>} [obj.menu]
  * @param {ServiceDescriptorDef} [obj.serDef]
+ * @param {DatalinkData} [obj.dlData]
  * @param {Object} [obj.userInputParams]
  * @param {Function} [obj.analysisActivateFunc]
  * @param {string} [obj.originalTitle]
  * @param {string} [obj.menuKey]
+ * @param obj.serviceDescMenuList
  * @return {Promise.<DataProductsDisplayType>}
  */
 export async function doUploadAndAnalysis({ table, row, request, activateParams={}, dataTypeHint='', options, menuKey,
-                                 menu, serDef, userInputParams, analysisActivateFunc, originalTitle,serviceDescMenuList}) {
+                                 menu, serDef, dlData, userInputParams, analysisActivateFunc, originalTitle,serviceDescMenuList}) {
 
     const {dpId}= activateParams;
 
@@ -60,7 +63,7 @@ export async function doUploadAndAnalysis({ table, row, request, activateParams=
                                                   fileAnalysis.fileName&&'Download File', request.getURL());
         }
         const result=  processAnalysisResult({ table, row, request, activateParams, serverCacheFileKey,
-            fileAnalysis, dataTypeHint, analysisActivateFunc, serDef, originalTitle, options, menuKey});
+            fileAnalysis, dataTypeHint, analysisActivateFunc, serDef, dlData, originalTitle, options, menuKey});
         if (serviceDescMenuList && result) {
              return makeSingleDataProductWithMenu(activateParams.dpId,result,1,serviceDescMenuList);
         }
@@ -175,16 +178,19 @@ function makeErrorResult(message, fileName,url) {
     return dpdtMessageWithDownload(`No displayable data available for this row${message?': '+message:''}`, fileName&&'Download: '+fileName, url);
 }
 
-function makeAllImageEntry(request, path, parts, imageViewerId,  tbl_id, row, imagePartsLength) {
+function makeAllImageEntry({request, path, parts, imageViewerId,  dlData, tbl_id, row, imagePartsLength}) {
     const newReq= request.makeCopy();
     newReq.setFileName(path);
     newReq.setRequestType(RequestType.FILE);
     parts.forEach( (p) => Object.entries(p.additionalImageParams ?? {} )
             .forEach(([k,v]) => newReq.setParam(k,v)));
     const title= request.getTitle() || '';
+    const sourceObsCoreData= dlData ? dlData.sourceObsCoreData : getObsCoreData(getTblById(tbl_id),row);
     return dpdtImage({name: `Show: ${title||'Image Data'} ${imagePartsLength>1? ': All Images in File' :''}`,
+        dlData,
         activate: createSingleImageActivate(newReq,imageViewerId,tbl_id,row),
-        extraction: createSingleImageExtraction(newReq), request});
+        extraction: createSingleImageExtraction(newReq, sourceObsCoreData, dlData),
+        request});
 }
 
 /**
@@ -199,6 +205,7 @@ function makeAllImageEntry(request, path, parts, imageViewerId,  tbl_id, row, im
  * @param {String} obj.dataTypeHint  stuff like 'spectrum', 'image', 'cube', etc
  * @param {Function} obj.analysisActivateFunc
  * @param {ServiceDescriptorDef} obj.serDef
+ * @param {DatalinkData} [obj.dlData]
  * @param {String} obj.originalTitle
  * @param {DataProductsFactoryOptions} obj.options
  * @param {String} obj.menuKey
@@ -206,7 +213,7 @@ function makeAllImageEntry(request, path, parts, imageViewerId,  tbl_id, row, im
  */
 function processAnalysisResult({table, row, request, activateParams,
                                    serverCacheFileKey, fileAnalysis, dataTypeHint,
-                                  analysisActivateFunc, serDef, originalTitle, options, menuKey}) {
+                                  analysisActivateFunc, serDef, dlData, originalTitle, options, menuKey}) {
 
     const {parts,fileName,fileFormat}= fileAnalysis;
     if (!parts) return makeErrorResult('',fileName,serverCacheFileKey);
@@ -220,14 +227,14 @@ function processAnalysisResult({table, row, request, activateParams,
     return deeperInspection({
         table, row, request, activateParams,
         serverCacheFileKey, fileAnalysis, dataTypeHint,
-        analysisActivateFunc, serDef, originalTitle, url, options
+        analysisActivateFunc, serDef, dlData, originalTitle, url, options
     });
 }
 
 
 function deeperInspection({ table, row, request, activateParams,
                               serverCacheFileKey, fileAnalysis, dataTypeHint,
-                              analysisActivateFunc, serDef, originalTitle, url, options}) {
+                              analysisActivateFunc, serDef, dlData, originalTitle, url, options}) {
 
     const {parts,fileFormat, disableAllImageOption= false}= fileAnalysis;
     const {imageViewerId, dpId}= activateParams;
@@ -235,7 +242,9 @@ function deeperInspection({ table, row, request, activateParams,
     const activeItemLookupKey= hashCode(rStr);
     const fileMenu= {fileAnalysis, menu:[],activeItemLookupKey, activeItemLookupKeyOrigin:rStr};
 
-    const partAnalysis= parts.map( (p) => analyzePart(p,request, table, row, fileFormat, dataTypeHint, serverCacheFileKey,activateParams, options));
+    const partAnalysis= parts.map( (part) =>
+        analyzePart({part,request, table, row, fileFormat, dataTypeHint,
+            dlData, serverCacheFileKey,activateParams, options}));
     const imageParts= partAnalysis.filter( (pa) => pa.imageResult);
     let makeAllImageOption= !disableAllImageOption;
     if (makeAllImageOption) makeAllImageOption= imageParts.length>1 || (imageParts.length===1 && parts.length===1);
@@ -247,7 +256,8 @@ function deeperInspection({ table, row, request, activateParams,
 
 
     const imageEntry= makeAllImageOption &&
-        makeAllImageEntry(request,fileAnalysis.filePath, parts,imageViewerId,table?.tbl_id,row,imageParts.length);
+        makeAllImageEntry({request,path:fileAnalysis.filePath, parts,imageViewerId, dlData,
+            tbl_id:table?.tbl_id,row,imagePartsLength:imageParts.length});
 
     if (imageEntry) fileMenu.menu.push(imageEntry);
     partAnalysis.forEach( (pa) => {

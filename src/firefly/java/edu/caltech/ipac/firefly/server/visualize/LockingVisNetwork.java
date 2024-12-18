@@ -20,8 +20,10 @@ import edu.caltech.ipac.visualize.net.ImageServiceParams;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -34,6 +36,7 @@ import java.util.Objects;
 public class LockingVisNetwork {
 
     private static final Map<BaseNetParams, Object> _activeRequest = Collections.synchronizedMap(new HashMap<>());
+    private static final Map<BaseNetParams, DownloadProgress> activeListeners = Collections.synchronizedMap(new HashMap<>());
 
     public static FileInfo retrieveURL(AnyUrlParams params) throws FailedRequestException {
         return lockingRetrieve(params, null);
@@ -64,9 +67,10 @@ public class LockingVisNetwork {
         confirmParamsType(params);
         try {
             Object lockKey= _activeRequest.computeIfAbsent(params, k -> new Object());
+            DownloadProgress dl= makeDownloadProgressOrFind(params);
             synchronized (lockKey) {
                 return (params instanceof AnyUrlParams urlP) ?
-                    retrieveURL( urlP, makeDownloadProgress(params) ) :
+                    retrieveURL(urlP, dl) :
                         (params instanceof ImageServiceParams isParam) ?
                                 retrieveService(isParam, svcCaller) :
                                 retrieveServiceCaller((ServiceCallerParams) params);
@@ -78,9 +82,22 @@ public class LockingVisNetwork {
         }
     }
 
-    private static DownloadProgress makeDownloadProgress(BaseNetParams params) { // todo: generalize beyond just plotId
+
+
+    private static DownloadProgress makeDownloadProgressOrFind(BaseNetParams params) { // todo: generalize beyond just plotId
         if (params.getStatusKey()== null) return null;
-        return new DownloadProgress(params.getStatusKey(), params.getPlotId());
+        if (!(params instanceof AnyUrlParams)) return null;
+        DownloadProgress dl;
+
+        if (activeListeners.containsKey(params)) {
+            dl = activeListeners.get(params);
+            dl.addPlotId(params.getPlotId());
+        }
+        else {
+            dl= new DownloadProgress(params.getStatusKey(), params.getPlotId());
+            activeListeners.put(params, dl);
+        }
+        return dl;
     }
 
     private static void confirmParamsType(NetParams params) throws FailedRequestException {
@@ -122,6 +139,7 @@ public class LockingVisNetwork {
             var ops= URLDownload.Options.listenerOp(params.getMaxSizeToDownload(), dl);
             fileInfo= URLDownload.getDataToFile(params.getURL(), fileName, params.getCookies(), params.getHeaders(), ops);
             if (fileInfo.getResponseCode()==200) CacheHelper.putFileInfo(params,fileInfo);
+            activeListeners.remove(params);
             return fileInfo;
         } catch (Exception e) {
             Logger.warn(e.toString());
@@ -139,12 +157,14 @@ public class LockingVisNetwork {
     private static class DownloadProgress implements DownloadListener {
 
         private final String _key;
-        private final String _plotId;
+        private final List<String> plotIdList= new ArrayList<>();
 
         DownloadProgress(String key, String plotId) {
             _key = key;
-            _plotId = plotId;
+            plotIdList.add(plotId);
         }
+
+        void addPlotId(String plotId) {plotIdList.add(plotId);}
 
         public void dataDownloading(DownloadEvent ev) {
             if (_key == null) return;
@@ -155,7 +175,9 @@ public class LockingVisNetwork {
                 offStr = " of " + FileUtil.getSizeAsString(ev.getMax(),true);
             }
             String messStr = "Retrieved " + FileUtil.getSizeAsString(current,true) + offStr;
-            PlotServUtils.updateProgress(_key, _plotId, ProgressStat.PType.DOWNLOADING, messStr);
+            for(var plotId : plotIdList) {
+                PlotServUtils.updateProgress(_key,plotId, ProgressStat.PType.DOWNLOADING, messStr);
+            }
         }
     }
 

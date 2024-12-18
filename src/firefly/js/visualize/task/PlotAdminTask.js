@@ -9,8 +9,10 @@ import ImagePlotCntlr, {dispatchChangeActivePlotView, dispatchPlotHiPS,
 import {getExpandedViewerItemIds, findViewerWithItemId,
     getMultiViewRoot, IMAGE} from '../MultiViewCntlr.js';
 import PointSelection from '../../drawingLayers/PointSelection.js';
-import {dispatchAttachLayerToPlot, dispatchCreateDrawLayer,
-    dispatchDetachLayerFromPlot, DRAWING_LAYER_KEY} from '../DrawLayerCntlr.js';
+import {
+    dispatchAttachLayerToPlot, dispatchCreateDrawLayer, dispatchDestroyDrawLayer,
+    dispatchDetachLayerFromPlot, DRAWING_LAYER_KEY
+} from '../DrawLayerCntlr.js';
 import { getPlotViewById, applyToOnePvOrAll, isDrawLayerAttached,
     primePlot, getDrawLayerByType, removeRawDataByPlotView } from '../PlotViewUtil.js';
 import {isImage} from '../WebPlot.js';
@@ -84,6 +86,7 @@ export function changePointSelectionActionCreator(rawAction) {
         }
         else if (!enabled) {
             detachAll(plotViewAry,dl);
+            if (dl) dispatchDestroyDrawLayer(dl.drawLayerId);
         }
     };
 }

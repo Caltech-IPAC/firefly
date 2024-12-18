@@ -5,7 +5,7 @@ import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
 import {ListBoxInputField} from 'firefly/ui/ListBoxInputField';
 import {
     makeFieldErrorList, getPanelPrefix, LableSaptail, makePanelStatusUpdater,
-    Width_Column, DebugObsCore, makeCollapsibleCheckHeader, getTapObsCoreOptions, SpatialWidth
+    Width_Column, DebugObsCore, makeCollapsibleCheckHeader, SpatialWidth
 } from 'firefly/ui/tap/TableSearchHelpers';
 import {tapHelpId} from 'firefly/ui/tap/TapUtil';
 import {ValidationField} from 'firefly/ui/ValidationField';
@@ -17,6 +17,7 @@ import {useFieldGroupRerender, useFieldGroupValue, useFieldGroupWatch} from '../
 import {ConstraintContext} from './Constraints.js';
 import {AutoCompleteInput} from 'firefly/ui/AutoCompleteInput';
 import {omit} from 'lodash';
+import {getTapObsCoreOptions} from './ObsCoreOptions';
 
 const panelTitle = 'Observation Type and Source';
 const panelValue = 'ObsCore';

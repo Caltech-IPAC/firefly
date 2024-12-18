@@ -62,9 +62,9 @@ function isSupported(sa,cenWpt,radius,cornerStr,table) {
             return sa.supported(sa, cenWpt, getValidSize(sa, radius), cornerStr);
         case SearchTypes.point:
         case SearchTypes.point_table_only:
-            return sa.supported(sa, cenWpt);
+            return sa.supported(table);
         case SearchTypes.wholeTable:
-            return sa.supported(sa, table);
+            return sa.supported(table);
     }
 }
 
@@ -98,7 +98,7 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
     const makePartialList= (sActions, cenWpt, asCone) => {
 
         const buttons= sActions.map((sa,idx) => {
-            const text = getSearchTypeDesc(sa, cenWpt, radius, corners?.length);
+            const text = getSearchTypeDesc({sa, wp:cenWpt, size:radius, areaPtsLength:corners?.length, tbl_id});
             let useSep = false;
             if (lastGroupId && sa.groupId !== lastGroupId && idx!==sActions.length-1) {
                 lastGroupId = sa.groupId;
@@ -107,7 +107,6 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
             if (!lastGroupId) lastGroupId = sa.groupId;
             return (
                 <React.Fragment key={'frag=' + idx}>
-                    {/*{useSep && <DropDownVerticalSeparator key={sa.cmd + '---separator'} useLine={true} style={{marginLeft:30}}/>}*/}
                     <ToolbarButton text={text} tip={`${sa.tip} for\n${text}`}
                                    style={{paddingLeft:30}}
                                    enabled={true} horizontal={false} key={sa.cmd+text}
@@ -145,17 +144,14 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
 
     return (
         <SingleColumnMenu key='searchMenu'>
-            {doWholeTable &&
-                <Typography color='warning' level='body-sm'> Whole table actions </Typography>
-            }
+            {doWholeTable && <Typography color='warning' level='body-sm'> Whole table actions </Typography> }
             { doWholeTable && wholeTableSearchActions.map((sa) => {
-                const text = getSearchTypeDesc(sa, cenWpt, radius, corners?.length);
+                const text = getSearchTypeDesc({sa, wp:cenWpt, size:radius, areaPtsLength:corners?.length, tbl_id});
+                const tip= sa.tip ? `${sa.tip} for\n${text}` : text;
                 return (
-                    <ToolbarButton text={text} tip={`${sa.tip} for\n${text}`}
-                                   style={{paddingLeft:30}}
-                                   enabled={true} horizontal={false} key={sa.cmd+sa.tip}
-                                   visible={isSupported(sa, cenWpt, radius, cornerStr, table)}
-                                   onClick={() => doExecute(sa, cenWpt, radius, cornerStr, table)}/>
+                    <ToolbarButton {...{text, tip, horizontal:false, key:sa.cmd+sa.tip,
+                                   visible:isSupported(sa, cenWpt, radius, cornerStr, table),
+                                   onClick:() => doExecute(sa, cenWpt, radius, cornerStr, table) }}/>
                 );
             })}
             {
@@ -164,7 +160,6 @@ function SearchDropDown({searchActions, buttonRef, spacial, tbl_id}) {
                     if (idx===1 && saOrder[0].length>0 && saList.length>0) {
                         return (
                             <React.Fragment key={'frag-part-'+idx}>
-                                {/*<DropDownVerticalSeparator key={'parts'+idx+'---separator'} useLine={false} style={{marginBottom:8}}/>*/}
                                 {pList}
                             </React.Fragment>
                         );

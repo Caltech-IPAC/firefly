@@ -45,7 +45,7 @@ function dispatchSelectPoint(mouseStatePayload) {
 
 function onDetach(drawLayer,action) {
     const {plotIdAry}= action.payload;
-    plotIdAry.forEach( (plotId) => {
+    plotIdAry?.forEach( (plotId) => {
         const plot= primePlot(visRoot(),plotId);
         if (plot && plot.attributes[PlotAttribute.ACTIVE_POINT]) {
             dispatchAttributeChange(

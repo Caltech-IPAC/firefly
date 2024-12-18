@@ -1,16 +1,16 @@
 import {getCellValue} from '../../tables/TableUtil.js';
+import {getPreferCutout} from '../../ui/tap/ObsCoreOptions';
+import {getSizeAsString} from '../../util/WebUtil';
 import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {Band} from '../../visualize/Band.js';
 import {WPConst} from '../../visualize/WebPlotRequest.js';
-import {dpdtImage, dpdtMessageWithDownload, dpdtSimpleMsg, DPtypes} from '../DataProductsType.js';
+import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, dispatchUpdateDataProducts} from '../DataProductsCntlr';
+import {dpdtImage, dpdtMessageWithDownload, dpdtSimpleMsg, dpdtWorkingMessage, DPtypes} from '../DataProductsType.js';
 import {
     createGridImagesActivate, createRelatedGridImagesActivate, createSingleImageExtraction
 } from '../ImageDataProductsUtil.js';
 import {fetchDatalinkTable} from './DatalinkFetch.js';
-import {
-    filterDLList,
-    IMAGE, processDatalinkTable, RELATED_IMAGE_GRID, SPECTRUM, USE_ALL
-} from './DataLinkProcessor.js';
+import { filterDLList, IMAGE, isWarnSize, processDatalinkTable, RELATED_IMAGE_GRID, SPECTRUM, USE_ALL } from './DataLinkProcessor.js';
 
 
 /**
@@ -27,16 +27,20 @@ import {
  */
 export async function getDatalinkRelatedGridProduct({dlTableUrl, activateParams, table, row, threeColorOps, titleStr, options}) {
     try {
-        const datalinkTable = await fetchDatalinkTable(dlTableUrl);
+        dispatchUpdateDataProducts(activateParams.dpId, dpdtWorkingMessage('Loading data products...', 'working'));
+        const datalinkTable = await fetchDatalinkTable(dlTableUrl, options.datalinkTblRequestOptions);
+        const {dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY}= options;
+        const preferCutout= getPreferCutout(dataProductsComponentKey,table?.tbl_id);
 
-        const gridData = getDataLinkData(datalinkTable).filter(({dlAnalysis}) => dlAnalysis.isGrid && dlAnalysis.isImage);
+        const gridData = getDataLinkData(datalinkTable,table,row).filter(({dlAnalysis}) => dlAnalysis.isGrid && dlAnalysis.isImage);
         if (!gridData.length) return dpdtSimpleMsg('no support for related grid in datalink file');
 
+        const cutoutSwitching= dataSupportsCutoutSwitching(gridData);
 
         const dataLinkGrid = processDatalinkTable({
             sourceTable: table, row, datalinkTable, activateParams,
             baseTitle: titleStr, dlTableUrl, doFileAnalysis: false,
-            options, parsingAlgorithm: RELATED_IMAGE_GRID
+            options, parsingAlgorithm: RELATED_IMAGE_GRID,
         });
 
 
@@ -47,6 +51,16 @@ export async function getDatalinkRelatedGridProduct({dlTableUrl, activateParams,
                 result.displayType === DPtypes.PROMISE ||
                 result.displayType === DPtypes.ANALYZE))
             .map((result) => result.request);
+
+        const dlDataAry = dataLinkGrid.menu
+            .filter((result) => result?.dlData && (
+                result.displayType === DPtypes.IMAGE ||
+                result.displayType === DPtypes.PROMISE ||
+                result.displayType === DPtypes.ANALYZE))
+            .map((result) => result.dlData);
+
+        const extractItems = dataLinkGrid.menu.filter((result) => result.displayType === DPtypes.EXTRACT);
+
         
         requestAry.forEach((r, idx) => r.setPlotId(r.getPlotId() + '-related_grid-' + idx));
 
@@ -54,13 +68,30 @@ export async function getDatalinkRelatedGridProduct({dlTableUrl, activateParams,
                                           make3ColorRequestAry(requestAry,threeColorOps,datalinkTable.tbl_id);
         const activate = createRelatedGridImagesActivate({requestAry, threeColorReqAry, imageViewerId, tbl_id:table.tbl_id});
         const extraction = createSingleImageExtraction(requestAry);
-        return dpdtImage({name:'image grid', activate, extraction,
-            enableCutout:true,
+
+        const gridDlData= {...dlDataAry[0]};
+        if (preferCutout) {
+            const allSize= dlDataAry.map ( (d) => d.size).reduce((tot,v) => tot+v,0) ;
+            if (isWarnSize(allSize)) {
+                gridDlData.cutoutToFullWarning=
+                    `Warning: Loading ${requestAry.length} images with a total size of ${getSizeAsString(allSize)}, it might take awhile to load`;
+            }
+        }
+
+
+        const item= dpdtImage({name:'image grid', activate, extraction,
+            dlData: cutoutSwitching ? gridDlData : undefined,
+            enableCutout:preferCutout,
+            menu: extractItems,
             menuKey:'image-grid-0',serDef:dataLinkGrid.serDef});
+        item.menu= extractItems;
+        return item;
     } catch (reason) {
         return dpdtMessageWithDownload(`No data to display: Could not retrieve datalink data, ${reason}`, 'Download File: ' + titleStr, dlTableUrl);
     }
 }
+
+const dataSupportsCutoutSwitching= (gridData) => gridData.every( (dl) => dl.dlAnalysis.cutoutFullPair);
 
 function make3ColorRequestAry(requestAry,threeColorOps,tbl_id) {
     const plotId= `3id_${tbl_id}`;
@@ -93,7 +124,8 @@ export async function getDatalinkSingleDataProduct({ dlTableUrl,
                                                        doFileAnalysis = true,
                                                        additionalServiceDescMenuList }) {
     try {
-        const datalinkTable = await fetchDatalinkTable(dlTableUrl);
+        dispatchUpdateDataProducts(activateParams.dpId, dpdtWorkingMessage('Loading data products...', 'working'));
+        const datalinkTable = await fetchDatalinkTable(dlTableUrl, options.datalinkTblRequestOptions);
         let parsingAlgorithm = USE_ALL;
         if (options.singleViewImageOnly) parsingAlgorithm = IMAGE;
         if (options.singleViewTableOnly) parsingAlgorithm = SPECTRUM;
@@ -126,7 +158,7 @@ export async function createGridResult(promiseAry, activateParams, table, plotRo
 
 
 export async function datalinkDescribeThreeColor(dlTableUrl, table,row, options) {
-    const datalinkTable = await fetchDatalinkTable(dlTableUrl);
+    const datalinkTable = await fetchDatalinkTable(dlTableUrl, options.datalinkTblRequestOptions);
     const dataLinkGrid = processDatalinkTable({
         sourceTable: table, row, datalinkTable, activateParams:{},
         baseTitle: '', dlTableUrl, doFileAnalysis: false,

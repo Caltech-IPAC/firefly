@@ -18,9 +18,7 @@ import {getPlotGroupById} from '../visualize/PlotGroup.js';
 import {
     getActivePlotView, getPlotViewAry, getPlotViewById, isDefaultCoverageActive, isImageExpanded, primePlot
 } from '../visualize/PlotViewUtil.js';
-import {
-    AnnotationOps, getDefaultImageColorTable, isImageDataRequestedEqual, WebPlotRequest
-} from '../visualize/WebPlotRequest.js';
+import { getDefaultImageColorTable, isImageDataRequestedEqual, WebPlotRequest } from '../visualize/WebPlotRequest.js';
 import {ZoomType} from '../visualize/ZoomType.js';
 
 
@@ -101,22 +99,27 @@ function copyRequest(inR) {
 /**
  * pass a request or array of request and return an extraction function
  * @param {WebPlotRequest|Array.<WebPlotRequest>} request
+ * @param {ObsCoreData} [sourceObsCoreData]
+ * @param {DatalinkData} [dlData]
  * @return {Function}
  */
-export function createSingleImageExtraction(request) {
+export function createSingleImageExtraction(request, sourceObsCoreData, dlData) {
     if (!request) return undefined;
     const wpRequest= isArray(request) ? request.map( (r) => copyRequest(r)) : copyRequest(request);
     const plotIds= isArray(request) ? request.map( (r) => r.getPlotId()) : copyRequest(request);
+    const attributes= {};
+    if (sourceObsCoreData) attributes.sourceObsCoreData= sourceObsCoreData;
+    if (dlData) attributes.dlData= dlData;
     return () => {
         if (isArray(wpRequest)) {
             const activePlotId= getActivePlotView(visRoot())?.plotId;
             const idx= plotIds.findIndex( (id) => id===activePlotId);
             if (idx<0) return;
             dispatchPlotImage({ viewerId:DEFAULT_FITS_VIEWER_ID,
-                plotId:wpRequest[idx].getPlotId(),wpRequest:wpRequest[idx]});
+                plotId:wpRequest[idx].getPlotId(),wpRequest:wpRequest[idx], attributes});
         }
         else {
-            dispatchPlotImage({ viewerId:DEFAULT_FITS_VIEWER_ID, wpRequest});
+            dispatchPlotImage({ viewerId:DEFAULT_FITS_VIEWER_ID, wpRequest, attributes});
         }
         showPinMessage('Pinning to Image Area');
     };

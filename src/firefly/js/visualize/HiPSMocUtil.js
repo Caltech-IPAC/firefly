@@ -185,10 +185,11 @@ export function getMocOrderIndex(Nuniq) {
  * @param {string} params.uniqColName column name for uniq number
  * @param {boolean} params.tablePreloaded - true if the MOC table has already been loaded
  * @param {string} [params.color] - color string
+ * @param {string} [params.maxFetchDepth] - maximum healpix order to fetch
  * @param {string} [params.mocGroupDefColorId ] - group color id
  * @returns {T|SelectInfo|*|{}}
  */
-export function addNewMocLayer({tbl_id, title, fitsPath, mocUrl, uniqColName = 'NUNIQ',
+export function addNewMocLayer({tbl_id, title, fitsPath, mocUrl, uniqColName = 'NUNIQ', maxFetchDepth,
                                    tablePreloaded=false, color, mocGroupDefColorId }) {
     const dls = getDrawLayersByType(getDlAry(), HiPSMOC.TYPE_ID);
     let   dl = dls.find((oneLayer) => oneLayer.drawLayerId === tbl_id);
@@ -198,7 +199,7 @@ export function addNewMocLayer({tbl_id, title, fitsPath, mocUrl, uniqColName = '
         if (title) title= 'MOC - ' + title;
         const mocFitsInfo = {fitsPath, mocUrl, uniqColName, tbl_id, tablePreloaded};
         dl = dispatchCreateDrawLayer(HiPSMOC.TYPE_ID,
-            {mocFitsInfo,title,layersPanelLayoutId:'mocUIGroup', color, mocGroupDefColorId });
+            {mocFitsInfo,title,layersPanelLayoutId:'mocUIGroup', color, mocGroupDefColorId,maxFetchDepth});
     }
     return dl;
 }

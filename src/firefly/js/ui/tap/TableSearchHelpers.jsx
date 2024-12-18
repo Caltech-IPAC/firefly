@@ -1,11 +1,11 @@
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import KeyboardDoubleArrowDown from '@mui/icons-material/KeyboardDoubleArrowDown';
 
 import KeyboardDoubleArrowUp from '@mui/icons-material/KeyboardDoubleArrowUp';
-import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
-import {Box, Button, IconButton, Stack, Typography} from '@mui/joy';
+import {Box, IconButton, Stack, Typography} from '@mui/joy';
 import HelpIcon from 'firefly/ui/HelpIcon';
 import {SwitchInputFieldView} from 'firefly/ui/SwitchInputField';
-import {isEqual, isObject} from 'lodash';
+import {isEqual} from 'lodash';
 import Prism from 'prismjs';
 import PropTypes from 'prop-types';
 import React, {useEffect, useRef} from 'react';
@@ -16,7 +16,6 @@ import {RadioGroupInputFieldView} from '../RadioGroupInputFieldView.jsx';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
 import {showResultTitleDialog} from './ResultTitleDialog';
 import {ADQL_QUERY_KEY, makeTapSearchTitle, USER_ENTERED_TITLE} from './TapUtil';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 
 export const HeaderFont = {fontSize: 12, fontWeight: 'bold', alignItems: 'center'};
 
@@ -31,30 +30,6 @@ export const Width_Time_Wrapper = Width_Column + 30;
 export const SpatialPanelWidth = Math.max(Width_Time_Wrapper * 2, SpatialWidth) + LabelWidth + 10;
 
 const DEF_ERR_MSG= 'Constraints Error';
-
-
-export const getTapObsCoreOptions= (serviceLabel) =>
-    getAppOptions().tapObsCore?.[serviceLabel] ?? getAppOptions().tapObsCore ?? {};
-
-/**
- * @param key
- * @param [serviceLabel]
- * @return {*}
- */
-export function getObsCoreOption(key,serviceLabel=undefined) {
-    const slOps= serviceLabel ? getAppOptions().tapObsCore?.[serviceLabel] ?? {} : {};
-    const ops= getAppOptions().tapObsCore ?? {};
-    return slOps[key] ?? ops[key];
-}
-
-
-export function getTapObsCoreOptionsGuess(serviceLabelGuess) {
-    const {tapObsCore={}}=  getAppOptions();
-    if (!serviceLabelGuess) return tapObsCore;
-    const guessKey= Object.entries(tapObsCore)
-        .find( ([key,value]) => isObject(value) && serviceLabelGuess.includes(key))?.[0];
-    return getTapObsCoreOptions(guessKey);
-}
 
 
 /**
@@ -101,6 +76,7 @@ export function makePanelStatusUpdater(panelActive,panelTitle,defErrorMessage) {
      * @param {InputConstraints} constraints
      * @param {ConstraintResult} lastConstraintResult
      * @param {Function} setConstraintResult - a function to set the constraint result setConstraintResult(ConstraintResult)
+     * @param {boolean} useSIAv2
      * @String string - panel message
      */
     return (constraints, lastConstraintResult, setConstraintResult, useSIAv2= false) => {

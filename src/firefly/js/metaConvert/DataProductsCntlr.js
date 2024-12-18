@@ -47,6 +47,7 @@ function activateMenuItemActionCreator(rawAction) {
         const menuItem= menu.find( (m) => m.menuKey===menuKey);
         if (!menuItem) return;
         if (menuItem.displayType===DPtypes.DOWNLOAD) doDownload(menuItem.url);
+        else if (menuItem.displayType===DPtypes.EXTRACT) doExtract(menuItem);
         else dispatcher(rawAction);
     };
 }
@@ -64,6 +65,10 @@ function activateFileMenuItemActionCreator(rawAction) {
         }
         if (doDispatch) dispatcher(rawAction);
     };
+}
+
+function doExtract(menuItem) {
+    menuItem?.activate();
 }
 
 export function doDownload(url) {
