@@ -66,8 +66,13 @@ public class StatisticsProcessor extends TableFunctionProcessor {
                 row.setDataElement(columns[0], cname);
                 row.setDataElement(columns[1], desc);
                 row.setDataElement(columns[2], units);
+
+                String maxExp = col.isWholeNumber() ?
+                        "max(\"%1$s\") as \"%1$s_max\"".formatted(cname) :
+                        "max(if(\"%1$s\" = 'nan', null, \"%1$s\")) as \"%1$s_max\"".formatted(cname);    // for duckdb, NaN is greater than any other floating point number; therefore, we will exclude it by setting to null
+
                 sqlCols.add("min(\"%1$s\") as \"%1$s_min\"".formatted(cname));
-                sqlCols.add("max(\"%1$s\") as \"%1$s_max\"".formatted(cname));
+                sqlCols.add(maxExp);
                 sqlCols.add("count(\"%1$s\") as \"%1$s_count\"".formatted(cname));
                 stats.add(row);
             }
