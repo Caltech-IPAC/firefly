@@ -71,12 +71,9 @@ function setupObsCorePackaging(tbl_id) {
 }
 
 function updateSearchRequest( tbl_id='', dlParams='', sRequest=null) {
-    const hostname= new URL(sRequest.source)?.hostname;
-
+    const hostname= new URL(sRequest.source ? sRequest.source : sRequest.serviceUrl)?.hostname;
     const template= getTapObsCoreOptionsGuess(hostname)?.productTitleTemplate;
     const useSourceUrlFileName= getTapObsCoreOptionsGuess(hostname)?.packagerUsesSourceUrlFileName;
-
-
     const templateColNames= template && getColNameFromTemplate(template);
     const searchRequest = cloneDeep( sRequest);
     searchRequest.template = template;
