@@ -21,10 +21,9 @@ public class Name implements Serializable {
 
     public static final Name EVT_CONN_EST =  new Name("EVT_CONN_EST",
                                              "Event connection established.  Along with this event, you can expect connID and channel in the event's data. ie. {connID: val, channel: val}");
-    public static final Name REPORT_USER_ACTION     =  new Name("REPORT_USER_ACTION", "report a user response");
-    public static final Name ACTION                 =  new Name("FLUX_ACTION", "an action message.");
+    public static final Name REPORT_USER_ACTION     = new Name("REPORT_USER_ACTION", "report a user response");
+    public static final Name ACTION                 = new Name("FLUX_ACTION", "an action message.");
     public static final Name PING                   = new Name("PING", "keepalive ping");
-
 
     private final String _name;
     private final String _desc;
@@ -69,6 +68,11 @@ public class Name implements Serializable {
      * @return
      */
     public static Name parse(String name) {
+        if (name==null) return null;
+        if (EVT_CONN_EST.getName().equals(name)) return EVT_CONN_EST;
+        if (REPORT_USER_ACTION.getName().equals(name)) return REPORT_USER_ACTION;
+        if (ACTION.getName().equals(name)) return ACTION;
+        if (PING.getName().equals(name)) return PING;
         return new Name(name, "unknown");
     }
 }

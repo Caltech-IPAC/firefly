@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+
 /**
  * An implementation of publish-subscribe messaging pattern based on Jedis client and Redis backend.
  * This class abstract the use of threads, and it ensures that there is only 1 thread used per topic.
@@ -77,15 +79,12 @@ public class Messenger {
     }
 
     /**
-     * Send the given message.  The message's subject is used as the topic.
-     * @param msg   the message to send
+     * Publishes the given message to its topic.
+     * @param msg the message to be published
      */
-    public static void publish(Message msg) {
-        // some firefly's specific logic here...
-        String topic = msg.getHeader().getSubject();
-        publish(topic, msg);
+   public static void publish(Message msg) {
+        applyIfNotEmpty(msg.getTopic(), (topic) -> publish(topic, msg));
     }
-
 
     /**
      * Internal handler class used to manage the one-to-many relationship of Messenger's subscriber and

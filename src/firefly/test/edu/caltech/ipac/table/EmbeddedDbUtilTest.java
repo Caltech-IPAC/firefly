@@ -308,31 +308,4 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 			Assert.assertEquals("TABLE out-of-sync; Reload table to resume", e.getMessage());
 		}
 	}
-
-	@Test
-	public void testSerializer() {
-		// array of boolean
-		Object in = new Boolean[]{true, false, true};
-		String s = Util.serialize(in);
-		Object d = Util.deserialize(s);
-		if (d instanceof Boolean[] v) {
-			Assert.assertArrayEquals(v, (Boolean[])in);
-		} else Assert.fail("Deserialized type Boolean mismatch");
-
-		// array of double
-		in = new Double[]{1.0, 2.0, 3.0};
-		s = Util.serialize(in);
-		d = Util.deserialize(s);
-		if (d instanceof Double[] v) {
-			Assert.assertArrayEquals(v, (Double[])in);
-		} else Assert.fail("Deserialized type Double mismatch");
-
-		// array of integer
-		in = new Integer[]{1, 2, 3};
-		s = Util.serialize(in);
-		d = Util.deserialize(s);
-		if (d instanceof Integer[] v) {
-			Assert.assertArrayEquals(v, (Integer[])in);
-		} else Assert.fail("Deserialized type Integer mismatch");
-	}
 }

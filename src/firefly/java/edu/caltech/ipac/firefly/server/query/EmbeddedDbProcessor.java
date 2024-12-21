@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.db.DuckDbReadable;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -84,7 +85,7 @@ import static edu.caltech.ipac.util.StringUtils.*;
 abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPart>, SearchProcessor.CanGetDataFile,
                                                      SearchProcessor.CanFetchDataGroup, Job.Worker {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
-    private static final SynchronizedAccess GET_DATA_CHECKER = new SynchronizedAccess();
+    private static final Util.SynchronizedAccess GET_DATA_CHECKER = new Util.SynchronizedAccess();
     private Job job;
 
     public void setJob(Job job) {
@@ -124,7 +125,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
         // make sure multiple requests for the same data waits for the first one to create before accessing.
         String uniqueID = this.getUniqueID(request);
-        var release = GET_DATA_CHECKER.lock(uniqueID);
+        var locked = GET_DATA_CHECKER.lock(uniqueID);
         try {
             var dbAdapter = getDbAdapter(treq);
             jobExecIf(v -> v.progress(10, "fetching data..."));
@@ -170,7 +171,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             logger.error(e);
             throw e;
         } finally {
-            release.run();
+            locked.unlock();
         }
     }
 

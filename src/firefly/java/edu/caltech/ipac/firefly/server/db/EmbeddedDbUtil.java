@@ -35,6 +35,7 @@ import java.util.Date;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static edu.caltech.ipac.firefly.core.Util.Try;
 import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_PATH;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
@@ -413,10 +414,10 @@ public class EmbeddedDbUtil {
 //  into base64 string for storage.
 //====================================================================
     public static Object deserialize(ResultSet rs, String cname) {
-        return getSafe(() -> Util.deserialize(rs.getString(cname)));
+        return Try.it(() -> Util.deserialize(rs.getString(cname))).get();
     }
     public static Object deserialize(ResultSet rs, int cidx) {
-        return getSafe(() -> Util.deserialize(rs.getString(cidx)));
+        return Try.it(() -> Util.deserialize(rs.getString(cidx))).get();
     }
 //====================================================================
 //  privates functions

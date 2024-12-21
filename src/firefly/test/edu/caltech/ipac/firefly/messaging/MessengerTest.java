@@ -42,7 +42,7 @@ public class MessengerTest extends ConfigTest {
             System.out.println("Messenger is offline; skipping test.");
             isOffline = true;
         }
-        if (true) Logger.setLogLevel(Level.TRACE);			// for debugging.
+        if (false) Logger.setLogLevel(Level.TRACE);			// for debugging.
     }
 
     @After

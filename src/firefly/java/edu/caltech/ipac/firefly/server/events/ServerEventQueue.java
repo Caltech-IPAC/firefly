@@ -14,6 +14,11 @@ import org.json.simple.JSONValue;
 import java.io.Serializable;
 
 /**
+ * This class manages server events and their delivery to clients.
+ * It holds information about the connection ID, channel, and user key associated with the event queue.
+ * The class provides methods to convert events to JSON, parse JSON events, and deliver events to the appropriate clients.
+ * It also includes functionality to match events based on their scope and target information.
+ *
  * @author Trey Roby
  */
 public class ServerEventQueue implements Serializable {

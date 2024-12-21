@@ -18,7 +18,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -719,83 +718,6 @@ public class StringUtils {
      */
     public static <T> void applyIfNotEmpty(T v, Consumer<T> f){
         if (!isEmpty(v)) f.accept(v);
-    }
-
-    /**
-     * A supplier that throws exception
-     * @param <R>  the return type of this function
-     */
-    public interface FuncWithEx<R> {
-        R get() throws Exception;
-    }
-
-    /**
-     * @param func a function to execute
-     * @return the value from executing this func.  Null if func produces exception
-     */
-    public static <R> R getSafe(FuncWithEx<R> func) {
-        return getSafe(func, null);
-    }
-
-    /**
-     * @param func a function to execute
-     * @param defaultVal  return defaultVal if func produces an exception or the value is null
-     * @return the value from executing this func
-     */
-    public static <R> R getSafe(FuncWithEx<R> func, R defaultVal) {
-        try {
-            R v = func.get();
-            return v == null ? defaultVal : v;
-        } catch (Exception e) {
-            return defaultVal;
-        }
-    }
-
-    /**
-     * A supplier that throws exception
-     */
-    public interface TryWithEx {
-        void run() throws Exception;
-    }
-
-    public static void tryIt(TryWithEx func) {
-        try {
-            func.run();
-        } catch (Exception e) {
-            logger.warn("tryIf failed with:" + e.getMessage());
-        }
-    }
-
-    /**
-     * Execute the given function and return the value if it passes test
-     * @param func  the function to execute
-     * @param test  test the returned value
-     * @param defaultValue returns when encountering exception or test fail
-     * @return the value of func if it passes test.  otherwise, return null
-     */
-    public static <R> R getIf(FuncWithEx<R> func, Predicate<R> test, R defaultValue) {
-        try {
-            var result = func.get();
-            if (test.test(result)) return result;
-        } catch (Exception e) {
-            logger.info("returning (%s) because %s failed: %s".formatted(defaultValue, func.toString(), e.getMessage()));
-        }
-        return defaultValue;
-    }
-
-    /**
-     * Execute the given function and return the value if it passes test
-     * @param func  the function to execute
-     * @param test  test the returned value
-     * @param tries the number of times to try
-     * @return the value of func if it passes test.  otherwise, return null
-     */
-    public static <R> R getIf(FuncWithEx<R> func, Predicate<R> test, int tries) {
-        for (int i = 0; i < tries; i++) {
-            R v = getIf(func, test, null);
-            if (v != null) return v;
-        }
-        return null;
     }
 
     /**

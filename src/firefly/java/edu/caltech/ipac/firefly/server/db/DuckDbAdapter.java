@@ -32,6 +32,7 @@ import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
 
+import static edu.caltech.ipac.firefly.core.Util.Try;
 import static edu.caltech.ipac.firefly.server.db.DuckDbUDF.*;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.*;
 import static edu.caltech.ipac.util.StringUtils.*;
@@ -253,7 +254,8 @@ public class DuckDbAdapter extends BaseDbAdapter {
             if (e instanceof SQLException ex) {
                 JSONObject json = (JSONObject) JSONValue.parse(ex.getMessage().replace("%s:".formatted(ex.getClass().getName()), ""));
                 String msg = json.get("exception_message").toString().split("\n")[0];
-                String type = getSafe(() -> json.get("error_subtype").toString(), json.get("exception_type").toString());
+                String type = Try.it(() -> json.get("error_subtype").toString())
+                                    .getOrElse(json.get("exception_type").toString());
                 return type + ":" + msg;
             }
             return super.interpretError(e);

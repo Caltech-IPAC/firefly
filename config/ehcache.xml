@@ -118,15 +118,6 @@
         use 239.250.0.1 for org-local
         use 230.0.0.1   for global
     -->
-    <!--REPLICATE
-    <cacheManagerPeerProviderFactory
-            class="edu.caltech.ipac.util.cache.CachePeerProviderFactory"
-            properties="peerDiscovery=@ehcache.peerDiscovery@,
-                        multicastGroupAddress=@ehcache.multicast.address@,
-                        multicastGroupPort=@ehcache.multicast.port@, timeToLive=@ehcache.multicast.ttl@"
-            propertySeparator=","
-            />
-    REPLICATE-->
 
     <!--
     CacheManagerPeerListener
@@ -162,13 +153,6 @@
       messages to the listener. This should be long enough for the slowest message.
       If not specified it defaults 120000ms.
     -->
-
-    <!--REPLICATE
-    <cacheManagerPeerListenerFactory
-            class="net.sf.ehcache.distribution.RMICacheManagerPeerListenerFactory"
-            properties="socketTimeoutMillis=300000"
-                        propertySeparator="," />
-    REPLICATE-->
 
     <!--
     Cache configuration
@@ -390,7 +374,7 @@
     -->
     <cache name="PERM_SMALL"
            maxElementsInMemory="1000"
-           eternal="true"
+           eternal="false"
            memoryStoreEvictionPolicy="LRU"
            overflowToDisk="true"
            diskPersistent="true"

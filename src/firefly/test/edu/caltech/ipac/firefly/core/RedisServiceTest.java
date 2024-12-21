@@ -8,9 +8,9 @@ import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import org.apache.logging.log4j.Level;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import redis.clients.jedis.Jedis;
 
@@ -28,17 +28,17 @@ import static org.junit.Assert.assertEquals;
  */
 public class RedisServiceTest extends ConfigTest {
 
-    @Before
-    public void setup() {
+    @BeforeClass
+    public static void setup() {
         RedisService.connect();
         if (RedisService.isOffline()) {
             System.out.println("Messenger is offline; skipping test.");
         }
-        if (true) Logger.setLogLevel(Level.TRACE);			// for debugging.
+        if (false) Logger.setLogLevel(Level.TRACE);			// for debugging.
     }
 
-    @After
-    public void teardown() {
+    @AfterClass
+    public static void teardown() {
         RedisService.disconnect();
         LOG.trace("tear down");
     }

@@ -24,7 +24,10 @@ import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
 
 /**
  * @author Trey Roby
+ *
+ * @deprecated - no longer using replicating cache;  use {@link edu.caltech.ipac.firefly.server.events.MessageEventWorker} instead
  */
+@Deprecated
 public class CacheEventWorker implements ServerEventManager.EventWorker {
 
     private static final Cache cache= CacheManager.getDistributed();

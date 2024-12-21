@@ -109,7 +109,7 @@ public class DbInstance {
     public void setPooled(boolean pooled) { isPooled = pooled;}
     public boolean testConn(Connection conn) {
         try (Statement stmt = conn.createStatement()) {
-            stmt.execute("SELECT 1");     // works with all DMBS
+            stmt.execute("SELECT 1 FROM (VALUES (0))");     // HSQL required FROM clause
             return true;
         } catch (SQLException e) { return false; }
     };

@@ -89,6 +89,7 @@ public class RedisService {
                     .setting("maxmemory %s".formatted(MAX_MEM))
                     .setting("dir %s".formatted(DB_DIR))            // Directory where redis database files are stored
                     .setting("dbfilename redis.rdb")                // RDB file name
+                    .setting("save 600 1")                // RDB file name
                     .build();
             redisServer.start();
             connect();
@@ -138,25 +139,40 @@ public class RedisService {
             } catch (NoSuchAlgorithmException e) {/* ignore */}
             try (Jedis redis = getConnection()) {
 
+                var infos = redis.info().split("\r\n");
+                Arrays.stream(infos).filter(s -> s.contains("version")).findFirst()
+                        .ifPresent(s -> stats.put("version", s.split(":")[1].trim()));
+
                 stats.put("active conn", jedisPool.getNumActive());
                 stats.put("idle conn", jedisPool.getNumIdle());
                 stats.put("max conn", maxPoolSize);
                 stats.put("max-wait", jedisPool.getMaxBorrowWaitTimeMillis());
                 stats.put("avg-wait", jedisPool.getMeanBorrowWaitTimeMillis());
-                stats.put("cache-size", redis.dbSize());
-                stats.put("DB_DIR", DB_DIR);
-                stats.put("MAX_MEM", MAX_MEM);
                 stats.put("password", passwd);
-
-                Arrays.stream(redis.info().split("\r\n")).forEach((s) -> {
-                    if (!s.startsWith("#")) {
-                        String[] kv = s.split(":");
-                        stats.put(kv[0], kv[1]);
-                    }
-                });
+                stats.put("db-size", redis.dbSize());
+                addStat(stats, redis, "maxmemory");
+                addStat(stats, redis, "save");
+                addStat(stats, redis, "dir");
+                addStat(stats, redis, "dbfilename");
+                addStat(stats, redis, "appendfilename");
+                stats.put("---MEMORY STATS----", "");
+                var mem = redis.memoryStats();
+                stats.put("Total memory used", mem.get("dataset.bytes"));
+                stats.put("Total memory allocated", mem.get("allocator.allocated"));
+                stats.put("Fragmented memory", mem.get("fragmentation"));
+                stats.put("Fragmentation ratio", mem.get("allocator-fragmentation.ratio"));
+                stats.put("Number of keys stored", mem.get("keys.count"));
+                stats.put("Avg per key", mem.get("keys.bytes-per-key"));
+                stats.put("Pct of memory used", mem.get("dataset.percentage"));
+                stats.put("Peak memory used", mem.get("peak.allocated"));
             } catch (Exception ignored) {}
         }
         return stats;
+    }
+
+    public static void addStat(Map<String, Object> stats, Jedis redis, String key) {
+        var c = redis.configGet(key);
+        if (c.size() > 1) stats.put(key, c.get(1));
     }
 
     public static String getRedisHostPortDesc() {

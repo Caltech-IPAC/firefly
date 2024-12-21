@@ -87,7 +87,7 @@ public class CachePeerProviderFactoryTest extends ConfigTest {
             System.out.println("Messenger is offline; skipping all tests in CachePeerProviderFactoryTest.");
             return;
         }
-        if (true) Logger.setLogLevel(Level.TRACE);			// for debugging.
+        if (false) Logger.setLogLevel(Level.TRACE);			// for debugging.
 
         LOG.debug("Initial setup for PubSub, creating 3 peers");
         peer1 = createCM("PubSub", "peer1");

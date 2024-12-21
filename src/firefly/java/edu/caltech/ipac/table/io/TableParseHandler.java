@@ -22,8 +22,7 @@ import java.util.List;
 import static edu.caltech.ipac.firefly.server.db.DuckDbAdapter.addRow;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.colIdxWithArrayData;
 import static edu.caltech.ipac.firefly.core.Util.serialize;
-import static edu.caltech.ipac.util.StringUtils.tryIt;
-
+import static edu.caltech.ipac.firefly.core.Util.Try;
 /**
  * Date: 10/23/24
  *
@@ -139,10 +138,9 @@ public interface TableParseHandler {
         }
 
         public void end() {
-            tryIt(() -> { if (conn != null)     conn.commit(); });
-            tryIt(() -> { if (appender != null) appender.close(); });
-            appender = null;
-            tryIt(() -> { if (conn != null)     conn.close(); });
+            if (conn != null)       Try.it(() -> conn.commit());
+            if (appender != null)   Try.it(() -> appender.close());
+            if (conn != null)       Try.it(() -> conn.close());
         }
     }
 }

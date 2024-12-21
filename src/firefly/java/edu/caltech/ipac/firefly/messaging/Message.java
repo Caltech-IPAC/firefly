@@ -6,38 +6,35 @@ package edu.caltech.ipac.firefly.messaging;
 
 import edu.caltech.ipac.firefly.core.background.JobInfo;
 import edu.caltech.ipac.firefly.core.background.JobManager;
+import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.data.ServerEvent.Scope;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.util.event.Name;
 import edu.caltech.ipac.util.AppProperties;
+
+import java.io.Serializable;
+
+import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+import static edu.caltech.ipac.firefly.data.ServerEvent.*;
 
 /**
  * The message object sent or received by Messenger.  As implemented, Messenger
  * uses JSON when serialize/deserialize is needed.  However, this is an internal
  * implementation, and it can be changed without breaking Messenger/Message contract.
  *
- * Date: 2019-03-15
- *
  * @author loi
  * @version $Id: $
  */
 public class Message {
+    private static final String TOPIC_KEY = "msg_topic";
     protected JsonHelper helper = new JsonHelper();
 
-    public MsgHeader getHeader() {
-        Scope scope = Scope.valueOf(helper.getValue(Scope.SELF.name(), "header", "scope"));
-        String to = helper.getValue("", "header", "to");
-        String from = helper.getValue("", "header", "from");
-        String subject = helper.getValue("", "header", "subject");
-        MsgHeader header = new MsgHeader(scope, to, subject);
-        header.setFrom(from);
-        return header;
+    public void setTopic(String topic) {
+        setValue(topic, TOPIC_KEY);
     }
 
-    public void setHeader(Scope scope, String to, String subject, String from) {
-        helper.setValue(scope.name(), "header", "scope");
-        if (to != null) helper.setValue(to, "header", "to");
-        if (from != null) helper.setValue(from, "header", "from");
-        if (subject != null) helper.setValue(subject, "header", "subject");
+    public String getTopic() {
+        return getValue(null, TOPIC_KEY);
     }
 
     public Message setValue(Object value, String... paths) {
@@ -63,24 +60,89 @@ public class Message {
 //  Predefined messages
 //====================================================================
 
+    /**
+     * Represents a server event message that can be sent or received by the Messenger.
+     * This class encapsulates the details of a server event, including its name, target, data type, data, and source.
+     * It provides methods to construct an event from a ServerEvent object and to parse a Message object back into a ServerEvent.
+     *
+     * <p>Example usage:</p>
+     * <pre>
+     * {@code
+     * ServerEvent serverEvent = new ServerEvent(name, scope, data);
+     * Message.Event eventMessage = new Message.Event(serverEvent);
+     * }
+     * </pre>
+     **/
+    public static final class Event extends Message {
+        public static final String TOPIC = "firefly-events";
+
+        public Event(ServerEvent se) {
+            setTopic(TOPIC);
+            setValue(se.getName().getName(), "name");
+            applyIfNotEmpty(se.getTarget().getScope(), (s) -> setValue(s.name(), "target", "scope"));
+            applyIfNotEmpty(se.getTarget().getChannel(), (s) -> setValue(s, "target", "channel"));
+            applyIfNotEmpty(se.getTarget().getConnID(),  (s) -> setValue(s, "target", "connID"));
+            applyIfNotEmpty(se.getTarget().getUserKey(), (s) -> setValue(s, "target", "userKey"));
+            setValue(se.getDataType().name(), "dataType");
+            setValue(se.getData(), "data");
+            setValue(se.getFrom(), "from");
+        }
+        public static ServerEvent parse(Message msg) {
+            try {
+                Name name = Name.parse(msg.getValue(null, "name"));
+                if (name == null) return null;
+
+                Scope scope = Scope.valueOf(msg.getValue(null, "target", "scope"));
+                String connID = msg.getValue(null, "target", "connID");
+                String channel = msg.getValue(null, "target", "channel");
+                String userKey = msg.getValue(null, "target", "userKey");
+                DataType dtype = DataType.valueOf(msg.getValue(null, "dataType"));
+                Serializable data = msg.getValue(null, "data");
+                String from = msg.getValue(null, "from");
+                return new ServerEvent(name, new EventTarget(scope, connID, channel, userKey), dtype, data, from);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+    }
+
     public static final class JobCompleted extends Message {
         public static final String TOPIC = "JobCompleted";
         static final String FROM = AppProperties.getProperty("mail.smtp.from", "donotreply@ipac.caltech.edu");
         JobInfo job;
         public JobCompleted(JobInfo jobInfo) {
             job = jobInfo;
+            setTopic(TOPIC);
             setHeader(Scope.CHANNEL, jobInfo.getOwner(), TOPIC, FROM);
-            helper.setValue(JobManager.toJsonObject(jobInfo), "jobInfo");
+            setValue(JobManager.toJsonObject(jobInfo), "jobInfo");
             var user = ServerContext.getRequestOwner().getUserInfo();
             if (user != null) {
-                helper.setValue(user.getName(), "user", "name");
-                helper.setValue(user.getEmail(), "user", "email");
-                helper.setValue(user.getLoginName(), "user", "loginName");
+                setValue(user.getName(), "user", "name");
+                setValue(user.getEmail(), "user", "email");
+                setValue(user.getLoginName(), "user", "loginName");
             }
             var ssoAdpt = ServerContext.getRequestOwner().getSsoAdapter();
             if (ssoAdpt != null) {
-                helper.setValue(ssoAdpt.getAuthToken(), "user", "authToken");
+                setValue(ssoAdpt.getAuthToken(), "user", "authToken");
             }
         }
+
+        public MsgHeader getHeader() {
+            Scope scope = Scope.valueOf(getValue(Scope.SELF.name(), "header", "scope"));
+            String to = getValue("", "header", "to");
+            String from = getValue("", "header", "from");
+            String subject = getValue("", "header", "subject");
+            MsgHeader header = new MsgHeader(scope, to, subject);
+            header.setFrom(from);
+            return header;
+        }
+
+        public void setHeader(Scope scope, String to, String subject, String from) {
+            setValue(scope.name(), "header", "scope");
+            if (to != null) setValue(to, "header", "to");
+            if (from != null) setValue(from, "header", "from");
+            if (subject != null) setValue(subject, "header", "subject");
+        }
     }
+
 }

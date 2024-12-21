@@ -20,9 +20,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
-import static edu.caltech.ipac.util.StringUtils.getIf;
+import static edu.caltech.ipac.firefly.core.Util.Try;
 
 /**
  * Date: Oct 7, 2008
@@ -40,7 +41,8 @@ public class JdbcFactory {
      * @return
      */
     public static JdbcTemplate getTemplate(DbInstance dbInstance) {
-        DataSource datasource = getIf( () -> getDataSource(dbInstance), (ds) -> ds != null,3);     // return null if failed after 3 tries
+        DataSource datasource = Try.until( () -> getDataSource(dbInstance), Objects::nonNull,3)
+                                    .getOrElse((e) -> logger.info("Failed to get DataSource after 3 tries"));
         return  datasource == null ? null : new JdbcTemplate(datasource);
     }
 
@@ -65,7 +67,8 @@ public class JdbcFactory {
      * @return
      */
     public static SimpleJdbcTemplate getSimpleTemplate(DbInstance dbInstance) {
-        DataSource datasource = getIf( () -> getDataSource(dbInstance), (ds) -> ds != null,3);     // return null if failed after 3 tries
+        DataSource datasource = Try.until( () -> getDataSource(dbInstance), Objects::nonNull,3)
+                                    .getOrElse((e) -> logger.info("Failed to get DataSource after 3 tries"));
         return datasource == null ? null :  new SimpleJdbcTemplate(datasource);
     }
 
