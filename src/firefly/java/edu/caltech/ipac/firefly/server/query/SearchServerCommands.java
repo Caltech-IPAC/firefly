@@ -24,6 +24,7 @@ import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
+import edu.caltech.ipac.firefly.server.packagedata.DownloadScriptWorker;
 import edu.caltech.ipac.firefly.server.packagedata.PackagedEmail;
 import edu.caltech.ipac.firefly.server.packagedata.PackagingWorker;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -267,6 +268,7 @@ public class SearchServerCommands {
             return new SearchManager().getJSONData(request);
         }
 
+
     }
 
     public static class PackageRequest extends ServCmdJob {
@@ -275,6 +277,17 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             PackagingWorker worker = new PackagingWorker();
+            setWorker(worker);
+            return worker.doCommand(params);
+        }
+    }
+
+    public static class  DownloadScriptRequest extends ServCmdJob {
+
+        public Job.Type getType() { return Job.Type.PACKAGE; }
+
+        public String doCommand(SrvParam params) throws Exception {
+            DownloadScriptWorker worker = new DownloadScriptWorker();
             setWorker(worker);
             return worker.doCommand(params);
         }

@@ -78,9 +78,10 @@ const emailKey = 'Email';          // should match server DownloadRequest.EMAIL
  * @param props.children
  * @param props.checkSelectedRow
  * @param props.makeButton
+ * @param props.buttonText
  * @returns {*}
  */
-export function DownloadButton({tbl_id:inTblId , tbl_grp, children, checkSelectedRow=true, makeButton}) {
+export function DownloadButton({tbl_id:inTblId , tbl_grp, children, checkSelectedRow=true, makeButton, buttonText='Prepare Download'}) {
 
     const tblIdGetter = () => inTblId || getActiveTableId(tbl_grp);
     const selectInfoGetter = () => get(getTblById(tblIdGetter()), 'selectInfo');
@@ -108,7 +109,7 @@ export function DownloadButton({tbl_id:inTblId , tbl_grp, children, checkSelecte
     const isRowSelected = selectInfoCls.getSelectedCount()>0;
 
     const defButton=
-        <ToolbarButton variant={isRowSelected?'solid':'soft'} color='warning' onClick={() =>onClick()} text='Prepare Download'/>;
+        <ToolbarButton variant={isRowSelected?'solid':'soft'} color='warning' onClick={() =>onClick()} text={buttonText}/>;
 
     return (
         makeButton?.(onClick,tbl_id,isRowSelected) ?? defButton
@@ -130,11 +131,13 @@ const newBgKey = () => 'DownloadOptionPanel-' + Date.now();
 export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, help_id, children, style, title, dlParams,
                                          updateSearchRequest, updateDownloadRequest, validateOnSubmit,
                                          cancelText='Cancel', showZipStructure=true, showEmailNotify=false,
-                                         showFileLocation=true, showTitle=true, ...props}) {
+                                         showFileLocation=true, showTitle=true, downloadType='package', ...props}) {
     const {tbl_id:p_tbl_id, checkSelectedRow} = React.useContext(OptionsContext);
     const tbl_id = props.tbl_id || p_tbl_id;
 
     const [bgKey, setBgKey] = useState(newBgKey());
+
+    const downloadButtonText = downloadType === 'package' ? 'Prepare Download' : 'Download Script';
 
     const onSubmit = useCallback((formInputs={}) => {
 
@@ -176,7 +179,7 @@ export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, hel
         }
 
         const akey = newBgKey();
-        dispatchPackage(dlRequest, searchRequest, SelectInfo.newInstance(selectInfo).toString(), akey);
+        dispatchPackage(dlRequest, searchRequest, SelectInfo.newInstance(selectInfo).toString(), akey, downloadType);
         dlTitleIdx++;
         setBgKey(akey);
     }, [cutoutSize, dlParams, tbl_id]);
@@ -199,7 +202,7 @@ export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, hel
                 groupKey = {groupKey}
                 onSuccess= {onSubmit}
                 onCancel= {() => dispatchHideDialog(DOWNLOAD_DIALOG_ID)}
-                completeText='Prepare Download'
+                completeText={downloadButtonText}
                 cancelText={cancelText}
                 help_id  = {help_id}>
 
@@ -231,6 +234,7 @@ DownloadOptionPanel.propTypes = {
     cutoutSize: PropTypes.string,
     help_id:    PropTypes.string,
     title:      PropTypes.string,           // title of the dialog, appears at top of the dialog
+    downloadType: PropTypes.string, //either 'package' or 'script'
     style:      PropTypes.object,
 
     showTitle:        PropTypes.bool,           // layout Title field.  This is the title of the package request.  It will be displayed in background monitor.
@@ -239,6 +243,7 @@ DownloadOptionPanel.propTypes = {
     showFileLocation: PropTypes.bool,           // layout FileLocation field
     updateSearchRequest: PropTypes.func,   // customized parameters to be added or updated in request
     updateDownloadRequest:PropTypes.func,
+
     validateOnSubmit: PropTypes.func,      // to validate form inputs on submit
     dlParams:   PropTypes.shape({               // these params should be used as defaults value if they appears as input fields
         TitlePrefix:    PropTypes.string,           // default title of the download..  an index number will be appended to this.

@@ -129,13 +129,13 @@ export function getErrMsg(jobInfo) {
 
 export const SCRIPT_ATTRIB = new Enum(['URLsOnly', 'Unzip', 'Ditto', 'Curl', 'Wget', 'RemoveZip']);
 
-export function doPackageRequest({dlRequest, searchRequest, selectInfo, bgKey, onComplete}) {
+export function doPackageRequest({dlRequest, searchRequest, selectInfo, bgKey, downloadType, onComplete}) {
     const sentToBg = (jobInfo) => {
         dispatchJobAdd(jobInfo);
     };
 
     dispatchComponentStateChange(bgKey, {inProgress:true});
-    SearchServices.packageRequest(dlRequest, searchRequest, selectInfo)
+    SearchServices.packageRequest(dlRequest, searchRequest, selectInfo, downloadType)
         .then((jobInfo) => {
             const jobId = jobInfo?.jobId;
             const inProgress = !isDone(jobInfo);

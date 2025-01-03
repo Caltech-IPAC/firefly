@@ -167,6 +167,7 @@ public class ServerParams {
     public static final String USER_TARGET_WORLD_PT = "UserTargetWorldPt";
 
     public static final String PACKAGE_REQUEST = "packageRequest";
+    public static final String DOWNLOAD_SCRIPT_REQUEST = "downloadScriptRequest";
     public static final String TABLE_SEARCH = "tableSearch";
     public static final String QUERY_TABLE = "queryTable";
     public static final String SELECTED_VALUES = "selectedValues";

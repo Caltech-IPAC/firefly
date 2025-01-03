@@ -147,6 +147,7 @@ export const ServerParams = {
         ACTION: 'action',
         PROP: 'prop',
         PACKAGE_REQUEST: 'packageRequest',
+        DOWNLOAD_SCRIPT_REQUEST: 'downloadScriptRequest',
         TABLE_SEARCH: 'tableSearch',
         QUERY_TABLE: 'queryTable',
         SELECTED_VALUES: 'selectedValues',

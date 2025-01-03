@@ -208,7 +208,7 @@ public final class PackagingWorker implements Job.Worker {
         return msg.toString();
     }
 
-    private static String makeDownloadUrl(File f, String suggestedName) {
+    public static String makeDownloadUrl(File f, String suggestedName) {
         String fileStr = ServerContext.replaceWithPrefix(f);
         try {
             fileStr = URLEncoder.encode(fileStr, "UTF-8");
