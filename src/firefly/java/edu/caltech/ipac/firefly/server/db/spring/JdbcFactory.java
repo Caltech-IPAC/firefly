@@ -73,43 +73,16 @@ public class JdbcFactory {
     }
 
     /**
-     * return a JdbcTemplate with a single underlying connection.
-     * this allows a user to perform multiple tasks on one connection.
-     * this implementation is not thread-safe.
-     * @param dbInstance
-     * @return
+     * Returns a DataSource wrapper that ensures the underlying connection is not closed automatically.
+     * The connection will remain open until explicitly closed by the caller,
+     * allowing multiple tasks to be executed on the same connection.
+     * Note: This implementation is not thread-safe.
+     *
+     * @param dbInstance the database to connect to
+     * @return a {@link SharedDS} instance for the specified database instance
      */
-    public static JdbcTemplate getStatefulTemplate(DbInstance dbInstance) {
-        DataSource ds = getSingleConnectionDS(dbInstance);
-        return ds == null ? null : new JdbcTemplate(ds);
-    }
-
-    /**
-     * return a simple JdbcTemplate with a single underlying connection.
-     * this allow a user to perform multiple tasks on one connection.
-     * this implementation is not thread-safe.
-     * @param dbInstance
-     * @return
-     */
-    public static SimpleJdbcTemplate getStatefulSimpleTemplate(DbInstance dbInstance) {
-        DataSource ds = getSingleConnectionDS(dbInstance);
-        return ds == null ? null : new SimpleJdbcTemplate(ds);
-    }
-
-    /**
-     * return a DataSource with a single underlying connection.
-     * this allow a user to perform multiple tasks on one connection.
-     * this implementation is not thread-safe.
-     * @param dbInstance
-     * @return
-     */
-    public static DataSource getSingleConnectionDS(DbInstance dbInstance) {
-        try {
-            return new SingleConnectionDataSource(getDataSource(dbInstance).getConnection(), false);
-        } catch (SQLException e) {
-            logger.error(e);
-        }
-        return null;
+    public static SharedDS getSharedDS(DbInstance dbInstance) {
+        return new SharedDS(dbInstance);
     }
 
     public static DataSource getDataSource(DbInstance dbInstance) {
@@ -178,5 +151,29 @@ public class JdbcFactory {
             return props;
         }
 
+    }
+
+    public static class SharedDS implements AutoCloseable {
+        DataSource ds;
+        public SharedDS(DbInstance di) {
+            try {
+                ds = new SingleConnectionDataSource(getDataSource(di).getConnection(), false);
+            } catch (Exception e) {
+                logger.error(e);
+                throw new IllegalArgumentException("Failed to get DataSource");
+            }
+        }
+        public void close() throws Exception {
+            Try.it(() -> ds.getConnection().close());
+        }
+        public DataSource get() {
+            return ds;
+        }
+        public SimpleJdbcTemplate getJdbc() {
+            return new SimpleJdbcTemplate(ds);
+        }
+        public JdbcTemplate getTmpl() {
+            return new JdbcTemplate(ds);
+        }
     }
 }

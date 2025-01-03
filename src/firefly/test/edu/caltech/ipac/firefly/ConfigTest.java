@@ -118,13 +118,13 @@ public class ConfigTest {
         webappConfigPath = webappConfigPath == null ? Paths.get("build/%s/war/WEB-INF/config".formatted(contextName)).toAbsolutePath().toString() : webappConfigPath;
 
         AppProperties.setProperty("work.directory", Paths.get("build").toAbsolutePath().toString());
-        Path buildConfg = Paths.get("build/firefly/war/WEB-INF/config");
+        Path buildConfg = Paths.get(webappConfigPath);
+        System.setProperty("java.io.tmpdir", "build/%s/tmp".formatted(contextName));
 
         copyWithSub(Paths.get("./config/ehcache.xml"), buildConfg, "app-name", contextName);
         copy(Paths.get("config/test/app-test.prop"), buildConfg);
         copy(Paths.get("config/ignore_sizeof.txt"), buildConfg);
 
-        webappConfigPath = webappConfigPath != null ? webappConfigPath : buildConfg.toAbsolutePath().toString();
         requestAgent = requestAgent == null ? new RequestAgent(null, "localhost", "/test", "localhost:8080/", "127.0. 0.1", UUID.randomUUID().toString(), contextPath): requestAgent;
 
         ServerContext.getRequestOwner().setRequestAgent(requestAgent);

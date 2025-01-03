@@ -163,6 +163,12 @@ COPY firefly/docker/local.xml conf/Catalina/localhost
 #copy all wars, typically there should only be one
 COPY --from=builder /opt/work/${build_dir}/build/dist/*.war ${CATALINA_HOME}/webapps-ref/
 
+# preinstall DuckDB extensions; remember to update version when DuckDB is updated
+ARG DUCKDB_TARGET=v1.1.3/linux_amd64_gcc4
+RUN mkdir -p temp/$DUCKDB_TARGET \
+    && wget -P temp/$DUCKDB_TARGET http://community-extensions.duckdb.org/$DUCKDB_TARGET/magic.duckdb_extension.gz \
+    && gunzip -f temp/$DUCKDB_TARGET/magic.duckdb_extension.gz
+
 # Add permission to files and directories needed for runtime
 # increase max header size to avoid failing on large auth token
 WORKDIR ${CATALINA_HOME}

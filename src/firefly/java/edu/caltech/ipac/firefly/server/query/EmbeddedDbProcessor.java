@@ -193,6 +193,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                 }
             }
         } catch (Exception e) {
+            logger.error(e);
             dbAdapter.close(true);
             throw dbAdapter.handleSqlExp("", e);
         }
