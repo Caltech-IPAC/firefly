@@ -120,16 +120,34 @@ public class Util {
             return ex == null ? val : null;
         }
 
+        /**
+         * Get the value if no exception was thrown, otherwise return the default value
+         * @param defVal the default value to return if an exception was thrown
+         * @return the value if no exception was thrown, or the default value
+         */
         public T getOrElse(T defVal) {
             return ex == null ? val : defVal;
         }
 
+        /**
+         * Get the value if no exception was thrown
+         * @param onError the consumer to call if an exception was thrown
+         *                The exception is passed to the consumer
+         * @return the value if no exception was thrown, or null
+         */
         public T getOrElse(Consumer<Exception> onError) {
             if (ex == null) return val;
             onError.accept(ex);
             return null;
         }
 
+        /**
+         * Execute the given function and parameter and return a Try object that can be used to
+         * get the result or handle the exception.
+         * @param func the function to call
+         * @param param the parameter to pass to the function
+         * @return a Try object that can be used to chain operations
+         */
         public static <P, T> Try<T> it(FuncParamWithEx<P,T>  func, P param) {
             try {
                 return new Try<>(func.apply(param), null);
@@ -138,6 +156,13 @@ public class Util {
             }
         }
 
+        /**
+         * Execute the given function and return a Try object that can be used to
+         * get the result or handle the exception.
+         * This function does not take any parameters nor return a value.
+         * @param func the function to call
+         * @return a Try object that can be used to chain operations
+         */
         public static <T> Try<T> it(CallWithEx func) {
             try {
                 func.run();
@@ -147,6 +172,12 @@ public class Util {
             }
         }
 
+        /**
+         * Execute the given function and return a Try object that can be used to
+         * get the result or handle the exception.
+         * @param func the function to call
+         * @return a Try object that can be used to chain operations
+         */
         public static <T> Try<T> it(FuncWithEx<T> func) {
             try {
                 return new Try<>(func.get(), null);
@@ -156,9 +187,10 @@ public class Util {
         }
 
         /**
-         * Execute the given function until it passes test, then return the result
+         * Execute the given function until it passes test, then return a
+         * Try object that can be used to get the result or handle the exception.
          * @param func  the function to execute
-         * @param test  test the returned value
+         * @param test  a function that takes the result as a parameter and returns true if it acceptable
          * @param tries the number of times to try
          * @return Try results
          */

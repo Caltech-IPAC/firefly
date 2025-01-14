@@ -38,7 +38,7 @@ public class RequestOwner implements Cloneable {
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     public static String USER_KEY = "usrkey";
-    public static int USER_KEY_EXPIRY = 3600 * 24 * 7 * 2;         // 2 weeks
+    public static int USER_KEY_EXPIRY = AppProperties.getIntProperty("userkey.expiry", 3600 * 24 * 7 * 2);         // 2 weeks
     public static final String SET_USERINFO_ACTION = "app_data.setUserInfo";
     private static boolean ignoreAuth = AppProperties.getBooleanProperty("ignore.auth", false);
     private RequestAgent requestAgent;
