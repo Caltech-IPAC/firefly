@@ -119,7 +119,10 @@ public class ConfigTest {
 
         AppProperties.setProperty("work.directory", Paths.get("build").toAbsolutePath().toString());
         Path buildConfg = Paths.get(webappConfigPath);
-        System.setProperty("java.io.tmpdir", "build/%s/tmp".formatted(contextName));
+
+        String tmpDir = Paths.get("build/%s/tmp".formatted(contextName)).toAbsolutePath().toString();
+        new File(tmpDir).mkdirs();
+        System.setProperty("java.io.tmpdir", tmpDir);
 
         copyWithSub(Paths.get("./config/ehcache.xml"), buildConfg, "app-name", contextName);
         copy(Paths.get("config/test/app-test.prop"), buildConfg);
