@@ -1,16 +1,16 @@
-import {
-    getObsCoreProdType, getObsCoreSRegion, getSearchTarget, makeWorldPtUsingCenterColumns
-} from '../../voAnalyzer/TableAnalysis.js';
+import {getPreferCutout} from '../../ui/tap/ObsCoreOptions';
+import { getSearchTarget, makeWorldPtUsingCenterColumns } from '../../voAnalyzer/TableAnalysis.js';
 import {
     getDataLinkData, isDownloadType, isGzipType, isSimpleImageType, isTarType, isVoTable
 } from '../../voAnalyzer/VoDataLinkServDef.js';
-import {GIG} from '../../util/WebUtil.js';
+import {getSizeAsString, GIG} from '../../util/WebUtil.js';
 import {makeAnalysisActivateFunc} from '../AnalysisUtils.js';
-import {dispatchUpdateActiveKey, getActiveMenuKey, getCurrentActiveKeyID} from '../DataProductsCntlr.js';
+import {
+    DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, dispatchUpdateActiveKey, getActiveMenuKey, getCurrentActiveKeyID
+} from '../DataProductsCntlr.js';
 import {
     dpdtAnalyze, dpdtChartTable, dpdtDownload, dpdtDownloadMenuItem, dpdtFromMenu, dpdtImage, dpdtMessage,
-    dpdtMessageWithError, dpdtPNG,
-    dpdtTable, DPtypes
+    dpdtMessageWithError, dpdtPNG, dpdtTable, DPtypes
 } from '../DataProductsType.js';
 import {createSingleImageActivate, createSingleImageExtraction} from '../ImageDataProductsUtil.js';
 import {
@@ -24,6 +24,8 @@ export const USE_ALL= 'useAllAlgorithm';
 export const RELATED_IMAGE_GRID= 'relatedImageGridAlgorithm';
 export const IMAGE= 'imageAlgorithm';
 export const SPECTRUM= 'spectrumAlgorithm';
+const MAX_SIZE= 2*GIG;
+const WARN_SIZE= GIG;
 
 
 /**
@@ -44,16 +46,18 @@ export const SPECTRUM= 'spectrumAlgorithm';
 export function processDatalinkTable({sourceTable, row, datalinkTable, activateParams, baseTitle=undefined,
                                      additionalServiceDescMenuList, dlTableUrl, doFileAnalysis=true,
                                          options, parsingAlgorithm = USE_ALL}) {
-    const dataLinkData= getDataLinkData(datalinkTable);
-    const isImageGrid= options.allowImageRelatedGrid &&  dataLinkData.filter( (dl) => dl.dlAnalysis.isImage && dl.dlAnalysis.isGrid).length>1;
+    const dataLinkData= getDataLinkData(datalinkTable,sourceTable,row);
+    const {dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY}= options;
+    const preferCutout= getPreferCutout(dataProductsComponentKey,sourceTable?.tbl_id);
+    const isImageGrid= options.allowImageRelatedGrid && dataLinkData.filter( (dl) => dl.dlAnalysis.isImage && dl.dlAnalysis.isGrid).length>1;
     const isMultiTableSpectrum= dataLinkData.filter( (dl) => dl.dlAnalysis.isThis && dl.dlAnalysis.isGrid && dl.dlAnalysis.isSpectrum).length>1;
     if (parsingAlgorithm===USE_ALL && isMultiTableSpectrum) parsingAlgorithm= SPECTRUM; // todo this is probably temporary for testing
 
     const menu=  dataLinkData.length &&
         createDataLinkMenuRet({dlTableUrl,dataLinkData,sourceTable, sourceRow:row, activateParams, baseTitle,
-            additionalServiceDescMenuList, doFileAnalysis, parsingAlgorithm, options});
+            additionalServiceDescMenuList, doFileAnalysis, parsingAlgorithm, options, preferCutout});
 
-    const canShow= menu.length>0 && menu.some( (m) => m.displayType!==DPtypes.DOWNLOAD && (!m.size || m.size<GIG));
+    const canShow= menu.length>0 && menu.some( (m) => m.displayType!==DPtypes.DOWNLOAD && (!m.size || m.size<MAX_SIZE));
     const activeMenuLookupKey= dlTableUrl;
 
 
@@ -95,7 +99,7 @@ export function processDatalinkTable({sourceTable, row, datalinkTable, activateP
 }
 
 
-function addDataLinkEntries(dlTableUrl,activateParams) {
+function addExposeDataLinkEntries(dlTableUrl, activateParams) {
     return [
         dpdtTable('Show Datalink VO Table for list of products',
             createTableActivate(dlTableUrl,'Datalink VO Table', activateParams),
@@ -103,7 +107,6 @@ function addDataLinkEntries(dlTableUrl,activateParams) {
             'datalink-entry-showtable', {url:dlTableUrl}),
         dpdtDownload ( 'Download Datalink VO Table for list of products', dlTableUrl, 'datalink-entry-downloadtable', 'vo-table' )
     ];
-
 }
 
 
@@ -121,27 +124,27 @@ function convertAllToDownload(menu) {
     }).filter( (d) => d.displayType);
 }
 
-function getDLMenuEntryData({dlTableUrl, dlData,idx, sourceTable, sourceRow}) {
-    const positionWP= getSearchTarget(sourceTable?.request,sourceTable) ?? makeWorldPtUsingCenterColumns(sourceTable,sourceRow);
-    const sRegion= getObsCoreSRegion(sourceTable,sourceRow);
-    const prodType= getObsCoreProdType(sourceTable,sourceRow);
-    const contentType= dlData.contentType.toLowerCase();
-    return {positionWP,contentType, sRegion,prodType, activeMenuLookupKey:dlTableUrl??`no-table-${idx}`,menuKey:'dlt-'+idx};
+function getDLMenuEntryData({dlTableUrl, dlData={}, idx, sourceTable, sourceRow}) {
+    return {
+        positionWP: getSearchTarget(sourceTable?.request,sourceTable) ?? makeWorldPtUsingCenterColumns(sourceTable,sourceRow),
+        contentType: dlData.contentType?.toLowerCase(),
+        sRegion: dlData.sourceObsCoreData?.s_region,
+        prodType: dlData.sourceObsCoreData?.dataproduct_type,
+        activeMenuLookupKey:dlTableUrl??`no-table-${idx}`,
+        menuKey:'dlt-'+idx
+    };
 }
 
 function makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRow, options,
                         name, activateParams}) {
-    const {serDef, semantics,size,serviceDefRef,dlAnalysis}= dlData;
-    const {positionWP,sRegion,prodType,
-        activeMenuLookupKey,menuKey}= getDLMenuEntryData({dlTableUrl, dlData,idx,sourceTable,sourceRow});
-
+    const {serDef}= dlData;
+    const {positionWP, activeMenuLookupKey,menuKey}= getDLMenuEntryData({dlTableUrl, dlData,idx,sourceTable,sourceRow});
     const {title:servDescTitle=''}= serDef;
     const titleStr= baseTitle ? `${baseTitle} (${dlData.description||servDescTitle})` : (dlData.description||servDescTitle);
 
     return makeServiceDefDataProduct({
         serDef, sourceTable, sourceRow, idx, positionWP, activateParams, options, name,
-                                               titleStr, activeMenuLookupKey, menuKey,
-        datalinkExtra: {semantics, size, sRegion, prodTypeHint: dlData.contentType || prodType, serviceDefRef, dlAnalysis}
+                                               titleStr, activeMenuLookupKey, menuKey, dlData,
     });
 }
 
@@ -171,14 +174,14 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
         if (isTar) fileType= 'tar';
         if (isGzip) fileType= 'gzip';
         return isThis ?
-            dpdtDownloadMenuItem('Download file: '+name,url,menuKey,fileType,{semantics, size, activeMenuLookupKey}) :
-            dpdtDownload('Download file: '+name,url,menuKey,fileType,{semantics, size, activeMenuLookupKey});
+            dpdtDownloadMenuItem('Download file: '+name,url,menuKey,fileType,{semantics, size, activeMenuLookupKey,dlData}) :
+            dpdtDownload('Download file: '+name,url,menuKey,fileType,{semantics, size, activeMenuLookupKey, dlData});
     }
     else if (isSimpleImage) {
-        return dpdtPNG('Show PNG image: '+name,url,menuKey,{semantics, size, activeMenuLookupKey});
+        return dpdtPNG('Show PNG image: '+name,url,menuKey,{semantics, size, activeMenuLookupKey, dlData});
     }
     else if (isTooBig(size)) {
-        return dpdtDownload('Download: '+name + '(too large to show)',url,menuKey,'fits',{semantics, size, activeMenuLookupKey});
+        return dpdtDownload('Download: '+name + '(too large to show)',url,menuKey,'fits',{semantics, size, activeMenuLookupKey, dlData});
     }
     else if (dlData.dlAnalysis.isSpectrum && isVoTable(contentType)) {
         const tbl_id= getTableId(dlData.description,options,idx);
@@ -193,7 +196,7 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
             chartId,
         });
         const extract= createTableExtraction(url,description,0);
-        return dpdtChartTable('Show: ' + description, activate, extract, menuKey, {extractionText: 'Pin Table', paIdx:0, tbl_id,chartId});
+        return dpdtChartTable('Show: ' + description, activate, extract, menuKey, {extractionText: 'Pin Table', paIdx:0, tbl_id,chartId, dlData});
     }
     else if (isAnalysisType(contentType)) {
         if (doFileAnalysis) {
@@ -201,12 +204,12 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
             const prodTypeHint= dlData.dlAnalysis.isSpectrum ? 'spectrum' : (dlData.contentType || prodType);
             const request= makeObsCoreRequest(url,positionWP,name,sourceTable,sourceRow);
             const activate= makeAnalysisActivateFunc({table:sourceTable,row:sourceRow, request,
-                activateParams,menuKey, dataTypeHint, options});
+                activateParams,menuKey, dataTypeHint, options, dlData});
             return dpdtAnalyze({name:'Show: '+name,
-                activate,url,menuKey, semantics, size, activeMenuLookupKey,request, sRegion, prodTypeHint});
+                activate,url,menuKey, semantics, size, activeMenuLookupKey,request, sRegion, prodTypeHint, dlData});
         }
         else {
-            return createGuessDataType(name,menuKey,url,contentType,semantics, activateParams, positionWP,sourceTable,sourceRow,size);
+            return createGuessDataType(name,menuKey,url,contentType,semantics, activateParams, positionWP,sourceTable,sourceRow,size, dlData);
         }
     }
 }
@@ -253,15 +256,19 @@ function makeMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRo
  *
  * @param parsingAlgorithm
  * @param {Array.<DatalinkData>} dataLinkData
+ * @param {boolean} preferCutout
  * @return {Array.<DatalinkData>}
  */
-export function filterDLList(parsingAlgorithm, dataLinkData) {
+export function filterDLList(parsingAlgorithm, dataLinkData, preferCutout) {
     if (parsingAlgorithm===USE_ALL) return dataLinkData;
     if (parsingAlgorithm===IMAGE) {
         return dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.isImage);
     }
     if (parsingAlgorithm===RELATED_IMAGE_GRID) {
-        return dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.isGrid && dlAnalysis.isImage);
+        const relatedGrid= dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.isGrid && dlAnalysis.maybeImage);
+
+        return relatedGrid.filter( (g) => (
+            g.dlAnalysis.cutoutFullPair && !g.dlAnalysis.isCutout) || !g.dlAnalysis.cutoutFullPair);
     }
     if (parsingAlgorithm===SPECTRUM) {
         return dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.isSpectrum);
@@ -272,9 +279,14 @@ export function filterDLList(parsingAlgorithm, dataLinkData) {
 
 function sortMenu(menu) {
     return menu
-        .sort(({semantics:sem1,name:n1},{semantics:sem2,name:n2}) => {
-            if (isThisSem(sem1)) {
-                if (isThisSem(sem2)) {
+        .sort( (m1,m2) => {
+            const isThis1= m1.dlData?.dlAnalysis?.isThis ?? false;
+            const isThis2= m2.dlData?.dlAnalysis?.isThis ?? false;
+            const n1= m1.name;
+            const n2= m2.name;
+
+            if (isThis1) {
+                if (isThis2) {
                     if (n1?.includes('(#this)')) return -1;
                     else if (n2?.includes('(#this)')) return 1;
                     else if (n1<n2) return -1;
@@ -300,36 +312,52 @@ function sortMenu(menu) {
  * @param {ActivateParams} obj.activateParams
  * @param {Array.<DataProductsDisplayType>} [obj.additionalServiceDescMenuList]
  * @param obj.doFileAnalysis
+ * @param obj.preferCutout
  * @param {DataProductsFactoryOptions} obj.options
  * @param obj.parsingAlgorithm
  * @param obj.baseTitle
  * @return {Array.<DataProductsDisplayType>}
  */
 function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow, activateParams, baseTitle,
-                               additionalServiceDescMenuList=[], doFileAnalysis=true,
+                               additionalServiceDescMenuList=[], doFileAnalysis=true, preferCutout,
                                options, parsingAlgorithm=USE_ALL}) {
     const auxTot= dataLinkData.filter( (e) => e.semantics==='#auxiliary').length;
     let auxCnt=0;
     let primeCnt=0;
 
-    const menu= filterDLList(parsingAlgorithm,dataLinkData)
+    const menu= filterDLList(parsingAlgorithm,dataLinkData, preferCutout)
         .map( (dlData) => {
-            const {semantics,url,error_message, dlAnalysis:{isAux,isThis}}= dlData;
-            const name= makeName(semantics, url, auxTot, auxCnt, primeCnt, baseTitle);
+            const {url,error_message,
+                dlAnalysis:{isAux,isThis,cutoutFullPair,isCounterpart,isCutout}}= dlData;
+            const idx= dlData.rowIdx;
+            const name= makeName(dlData, url, auxTot, auxCnt, primeCnt, baseTitle);
             if (error_message) {
                 const edp= dpdtMessageWithError(error_message);
                 edp.complexMessage= false;
-                edp.menuKey='dlt-'+dlData.rowIdx;
+                edp.menuKey='dlt-'+idx;
                 edp.name= `Error in related data (datalink) row ${dlData.rowIdx}`;
                 return edp;
             }
-            const menuEntry= makeMenuEntry({dlTableUrl,dlData,idx:dlData.rowIdx, baseTitle, sourceTable,
-                sourceRow, options, name, doFileAnalysis, activateParams});
+
+            const menuParams= {dlTableUrl,dlData,idx, baseTitle, sourceTable,
+                            sourceRow, options, name, doFileAnalysis, activateParams};
+
+            if (cutoutFullPair) {
+                if (isCutout) return;
+                if (preferCutout && (isThis || isCounterpart)) {
+                    if (isWarnSize(dlData.size)) {
+                        dlData.relatedDLEntries.cutout.cutoutToFullWarning=
+                            `Warning: Full image file is ${getSizeAsString(dlData.size)}, it might take awhile to load`;
+                    }
+                    menuParams.dlData = dlData.relatedDLEntries.cutout;
+                }
+            }
+            const menuEntry= makeMenuEntry(menuParams);
             if (isAux) auxCnt++;
             if (isThis) primeCnt++;
             return menuEntry;
         })
-        .filter((menuEntry) => menuEntry);
+        .filter(Boolean);
 
     if (parsingAlgorithm===SPECTRUM && menu.length>1) {
 
@@ -344,14 +372,14 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
     }
 
     if (parsingAlgorithm===USE_ALL) {
-        menu.push(...additionalServiceDescMenuList,...addDataLinkEntries(dlTableUrl,activateParams));
+        menu.push(...additionalServiceDescMenuList);
     }
 
     return sortMenu(menu);
 }
 
 export function createDataLinkSingleRowItem({dlData, activateParams, baseTitle, options}) {
-    const {semantics,url,error_message, dlAnalysis:{isAux,isThis}, serDef, serviceDefRef}= dlData;
+    const {semantics,error_message, serDef, serviceDefRef}= dlData;
     const name= semantics;
     if (error_message) {
         const edp= dpdtMessageWithError(error_message);
@@ -377,22 +405,55 @@ export function createDataLinkSingleRowItem({dlData, activateParams, baseTitle, 
 const analysisTypes= ['fits', 'cube', 'table', 'spectrum', 'auxiliary'];
 
 
-function makeName(s='', url, auxTot, autCnt, primeCnt=0, baseTitle) {
-    if (baseTitle) return makeNameWithBaseTitle(s,auxTot,autCnt,primeCnt,baseTitle);
-    let name= (s==='#this' && primeCnt>0) ? '#this '+primeCnt  : s;
-    name= s.startsWith('#this') ? `Primary product (${name})` : s;
-    name= name[0]==='#' ? name.substring(1) : name;
-    name= (name==='auxiliary' && auxTot>1) ? `${name}: ${autCnt}` : name;
-    return name || url;
+function makeName(dlData, url, auxTot, autCnt, primeCnt=0, baseTitle) {
+    const {id,semantics,dlAnalysis:{isThis,isAux}}= dlData;
+    if (baseTitle) return makeNameWithBaseTitle(dlData,auxTot,autCnt,primeCnt,baseTitle);
+    const baseTitleFromId= getBaseTitleFromId(id);
+    let name= semantics[0]==='#' ? semantics.substring(1) : name;
+    if (baseTitleFromId) {
+        if (isThis) return `${baseTitleFromId}`;
+        if (isAux) return `${baseTitleFromId}: auxiliary ${auxTot>1?autCnt+'':''}`;
+        else return `${baseTitleFromId}: ${name}`;
+    }
+    else {
+        name= (isThis && primeCnt>0) ? '#this '+primeCnt  : name;
+        name= isThis ? `Primary product (${name})` : name;
+        name= (isAux && auxTot>1) ? `${name}: ${autCnt}` : name;
+        return name || url;
+    }
 }
 
-function makeNameWithBaseTitle(s='', auxTot, autCnt, primeCnt=0, baseTitle) {
-    if (!s) return baseTitle;
-    if (s.startsWith('#this')) {
+function getBaseTitleFromId(id) {
+    if (!id?.toLowerCase().startsWith('ivo:')) return;
+    try {
+        const url= new URL(id);
+        if (!url) return;
+        const sp= url.searchParams;
+        if (sp.size) {
+            const keyNames= [...sp.keys()];
+            if (keyNames.length===1) return keyNames[0];
+            return;
+        }
+        if (url.pathname.length>1) {
+            return url.pathname.substring(1);
+        }
+    }
+    catch {
+        // do nothing
+    }
+
+
+}
+
+
+function makeNameWithBaseTitle(dlData, auxTot, autCnt, primeCnt=0, baseTitle) {
+    const {semantics,dlAnalysis:{isThis,isAux}}= dlData;
+    if (!semantics) return baseTitle;
+    if (isThis) {
        return primeCnt<1 ? `${baseTitle} (#this)` : `${baseTitle} (#this ${primeCnt})`;
     }
-    if (s==='auxiliary' || s==='#auxiliary') return `auxiliary${auxTot>0?' '+autCnt:''}: ${baseTitle}`;
-    return s[0]==='#' ? `${s.substring(1)}: ${baseTitle}` : `${s}: ${baseTitle}`;
+    if (isAux) return `auxiliary${auxTot>0?' '+autCnt:''}: ${baseTitle}`;
+    return semantics[0]==='#' ? `${semantics.substring(1)}: ${baseTitle}` : `${semantics}: ${baseTitle}`;
 }
 
 
@@ -408,37 +469,37 @@ function makeNameWithBaseTitle(s='', auxTot, autCnt, primeCnt=0, baseTitle) {
  * @param table
  * @param row
  * @param size
+ * @param dlData
  * @return {DataProductsDisplayType}
  */
-export function createGuessDataType(name, menuKey, url,ct,semantics, activateParams, positionWP, table,row,size) {
+export function createGuessDataType(name, menuKey, url,ct,semantics, activateParams, positionWP, table,row,size,dlData) {
     const {imageViewerId}= activateParams;
     if (ct.includes('image') || ct.includes('fits') || ct.includes('cube')) {
         const request= makeObsCoreRequest(url,positionWP,name,table,row);
         return dpdtImage({name,
             activate: createSingleImageActivate(request,imageViewerId,table.tbl_id,row),
-            extraction: createSingleImageExtraction(request),
-            menuKey, request,url, semantics,size});
+            extraction: createSingleImageExtraction(request, dlData?.sourceObsCoreData, dlData),
+            menuKey, request,url, semantics,size,dlData});
     }
     else if (ct.includes('table') || ct.includes('spectrum') || semantics.includes('auxiliary')) {
         return dpdtTable(name,
             createTableActivate(url, semantics, activateParams, ct),
-            menuKey,{url,semantics,size} );
+            menuKey,{url,semantics,size,dlData} );
     }
     else if (isSimpleImageType(ct)) {
-        return dpdtPNG(name,url,menuKey,{semantics});
+        return dpdtPNG(name,url,menuKey,{semantics,dlData});
     }
     else if (isDownloadType(ct)) {
         let fileType;
         if (isTarType(ct)) fileType= 'tar';
         if (isGzipType('gz')) fileType= 'gzip';
-        return dpdtDownload(name,url,menuKey,fileType,{semantics});
+        return dpdtDownload(name,url,menuKey,fileType,{semantics,dlData});
     }
 }
 
 
-
-const isThisSem= (semantics) => semantics==='#this';
 const isAnalysisType= (ct) => (ct==='' || analysisTypes.some( (a) => ct.includes(a)));
-const isTooBig= (size) => size>GIG;
+const isTooBig= (size) => size>MAX_SIZE;
+export const isWarnSize= (size) => size>WARN_SIZE;
 
 

@@ -74,6 +74,7 @@ export const DPtypes= {
     CHOICE_CTI: 'chartTable',
     DOWNLOAD: 'download',
     DOWNLOAD_MENU_ITEM: 'download-menu-item',
+    EXTRACT: 'extract',
     PNG: 'png',
     ANALYZE: 'analyze',
     UNSUPPORTED: 'unsupported',
@@ -184,9 +185,9 @@ export const dpdtMessageWithError= (message,detailMsgAry) => {
  */
 export function dpdtImage({name, activate, extraction, menuKey='image-0', extractionText='Pin Image',
                               request, override, interpretedData, requestDefault, enableCutout, pixelBasedCutout,
-                              url, semantics,size, serDef }) {
+                              url, semantics,size, serDef, dlData }) {
     return { displayType:DPtypes.IMAGE, name, activate, extraction, menuKey, extractionText, enableCutout, pixelBasedCutout,
-        request, override, interpretedData, requestDefault,url, semantics,size,serDef};
+        request, override, interpretedData, requestDefault,url, semantics,size,serDef, dlData};
 }
 
 /**
@@ -234,6 +235,7 @@ export function dpdtChartTable(name, activate, extraction, menuKey='chart-table-
  * @param {boolean} [p.allowsInput]
  * @param {String} [p.standardID]
  * @param {String} [p.ID]
+ * @param {DatalinkData} [dlData]
  * @return {DataProductsDisplayType}
  */
 export function dpdtAnalyze({
@@ -251,11 +253,13 @@ export function dpdtAnalyze({
                              serviceDefRef,
                              allowsInput= false,
                              standardID,
-                             ID }) {
+                             ID,
+                             cutoutToFullWarning,
+                             dlData}) {
     return { displayType:DPtypes.ANALYZE,
         name, url, activate, serDef, menuKey, semantics,
         size, activeMenuLookupKey, request, sRegion, prodTypeHint,
-        serviceDefRef, allowsInput, standardID, ID,
+        cutoutToFullWarning, serviceDefRef, allowsInput, standardID, ID, dlData
     };
 }
 
@@ -270,6 +274,10 @@ export function dpdtAnalyze({
  */
 export function dpdtDownload(name, url, menuKey='download-0', fileType, extra={}) {
     return { displayType:DPtypes.DOWNLOAD, name, url, menuKey, fileType, ...extra};
+}
+
+export function dpdtExtract(name, activate, menuKey='extract-0') {
+    return { displayType:DPtypes.EXTRACT, name, activate, menuKey};
 }
 
 export function dpdtDownloadMenuItem(name, url, menuKey='download-0', fileType, extra={}) {

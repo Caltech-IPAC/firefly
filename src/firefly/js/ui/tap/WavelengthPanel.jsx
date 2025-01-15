@@ -9,8 +9,9 @@ import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
 import {useFieldGroupRerender, useFieldGroupWatch} from '../SimpleComponent.jsx';
 import {ValidationField} from '../ValidationField.jsx';
 import {makeAdqlQueryRangeFragment, ConstraintContext, siaQueryRange} from './Constraints.js';
+import {getTapObsCoreOptions} from './ObsCoreOptions';
 import {
-    DebugObsCore, getPanelPrefix, getTapObsCoreOptions, LeftInSearch, makeCollapsibleCheckHeader,
+    DebugObsCore, getPanelPrefix, LeftInSearch, makeCollapsibleCheckHeader,
     makeFieldErrorList,
     makePanelStatusUpdater, SmallFloatNumericWidth, SpatialWidth,
 } from './TableSearchHelpers.jsx';

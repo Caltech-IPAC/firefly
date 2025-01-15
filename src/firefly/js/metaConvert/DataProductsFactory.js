@@ -4,7 +4,7 @@
 
 import {isArray, once} from 'lodash';
 import {MetaConst} from '../data/MetaConst.js';
-import {getMetaEntry} from '../tables/TableUtil';
+import {getMetaEntry, getObjectMetaEntry} from '../tables/TableUtil';
 import {hasObsCoreLikeDataProducts, isDatalinkTable} from '../voAnalyzer/TableAnalysis.js';
 import {hasServiceDescriptors} from '../voAnalyzer/VoDataLinkServDef.js';
 import {Band} from '../visualize/Band';
@@ -284,14 +284,13 @@ function initConverterTemplates() {
  * @typedef {Object} DataProductsFactoryOptions
  *
  * @prop {boolean} [allowImageRelatedGrid]
- * @prop {boolean} [allowServiceDefGrid] - // todo: this is redundant, should remove
  * @prop {boolean} [singleViewImageOnly] - if true, the view will only show the primary image product
  * @prop {boolean} [singleViewTableOnly] - if true, the view will only show the primary table product
  * @prop {String} [dataLinkInitialLayout] - determine how a datalink obscore table trys to show the data layout, must be 'single', 'gridRelated', 'gridFull';
  * @prop {boolean} [activateServiceDef] - if possible then call the service def without giving option for user input
  * @prop {boolean} [threeColor] - if true, then for images in related grid, show the threeColor option
  * @prop {number} [maxPlots] - maximum number of plots in grid mode, this will override the factory default
- * @prop {boolean} [canGrid] - some specific factories might have parameters that override this parameter (e.g. allowServiceDefGrid)
+ * @prop {boolean} [canGrid] - some specific factories might have parameters that override this parameter
  * @prop [initialLayout]
  * @prop {string} [tableIdBase] - any tbl_id will use this string for its base
  * @prop {string} [chartIdBase] - any chartId will use this string for its base
@@ -302,6 +301,7 @@ function initConverterTemplates() {
  *                The values in this object will override one or more parameters to a service descriptor.
  *                The following are used with this prop by service descriptors to build the url to include input from the UI.
  *                see- ServDescProducts.js getComponentInputs()
+ * @prop {object} datalinkTblRequestOptions = add addition options to table request
  * @prop {Array.<string>} [paramNameKeys] - name of the parameters to put in the url from the getComponentState() return object
  * @prop {Array.<string>} [ucdKeys] - same as above but can be specified by UCD
  * @prop {Array.<string>} [utypeKeys] - same as above but can be specified by utype
@@ -313,19 +313,19 @@ function initConverterTemplates() {
 export const getDefaultFactoryOptions= once(() => ({
     dataProductsComponentKey: DEFAULT_DATA_PRODUCTS_COMPONENT_KEY,
     allowImageRelatedGrid: false,
-    allowServiceDefGrid: false, // todo: this is redundant, should remove
     singleViewImageOnly:false,
     singleViewTableOnly:false,
     dataLinkInitialLayout: 'single', //determine how a datalink obscore table trys to show the data layout, must be 'single', 'gridRelated', 'gridFull';
     activateServiceDef: false,
     threeColor: undefined,
     maxPlots: undefined,
-    canGrid: undefined, // some specific factories might have parameters that override this parameter (e.g. allowServiceDefGrid)
+    canGrid: undefined, // some specific factories might have parameters that override this parameter
     initialLayout: undefined, //todo - an datalink use this?
     tableIdBase: undefined,
     chartIdBase: undefined,
     tableIdList: [], // list of ids
     chartIdList: [],// list of ids
+    datalinkTblRequestOptions: {},
     paramNameKeys: [],
     ucdKeys: [],
     utypeKeys: [],
@@ -386,9 +386,9 @@ export function makeDataProductsConverter(table, factoryKey= undefined) {
         threeColor: options.threeColor ?? t.threeColor ?? false,
         dataProductsComponentKey: options.dataProductsComponentKey
     };
-    const retObj= t.create(table,pT, options);
+    const metaOptions= getObjectMetaEntry(table, MetaConst.DATA_PRODUCTS_FACTORY_OPTIONS, {});
+    const retObj= t.create(table,pT, {...options, ...metaOptions});
     return {options, ...retObj};
-        
 }
 
 

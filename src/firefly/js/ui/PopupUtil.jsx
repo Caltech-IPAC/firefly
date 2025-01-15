@@ -111,20 +111,20 @@ function makeContent(content) {
     );
 }
 
-export function showYesNoPopup(content, clickSelection,  title='Information') {
+export function showYesNoPopup(content, clickSelection,  title='Information', sx) {
     const results= (
         <PopupPanel title={title} >
-            {makeYesNoContent(content, clickSelection)}
+            {makeYesNoContent(content, clickSelection, sx)}
         </PopupPanel>
     );
     DialogRootContainer.defineDialog(INFO_POPUP, results);
     dispatchShowDialog(INFO_POPUP);
 }
 
-function makeYesNoContent(content, clickSelection) {
+function makeYesNoContent(content, clickSelection, sx) {
     return (
         <Stack direction='column' p={1} spacing={2}>
-            <Sheet style={{minWidth:190, maxWidth: 400, p:1}}>
+            <Sheet style={{minWidth:190, maxWidth: 400, p:1, ...sx}}>
                 {content}
             </Sheet>
             <Stack direction='row' spacing={1}>

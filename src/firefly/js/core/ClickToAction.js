@@ -55,13 +55,13 @@ export function makeSearchActionObj({ cmd, groupId, label='', tip, searchType, m
     return {cmd, label, tip, searchType, min, max, supported, execute, verb, searchDesc, groupId};
 }
 
-export function getSearchTypeDesc(sa, wp, size, areaPtsLength) {
+export function getSearchTypeDesc({sa, wp, size, areaPtsLength,tbl_id}) {
 
     const {searchDesc, searchType, verb, label, min, max}= sa;
     if (searchDesc) {
         if (isString(searchDesc)) return searchDesc;
         if (isFunction(searchDesc)) {
-            const title= searchDesc(wp,size,areaPtsLength);
+            const title= searchDesc({wp,size,areaPtsLength,tbl_id});
             if (isString(title)) return title;
         }
     }

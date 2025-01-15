@@ -221,7 +221,7 @@ public class URLDownload {
             Map<String,List<String>> reqProp= conn.getRequestProperties();
             pushPostData(conn, postData);
 
-            logHeader(postData, conn, reqProp);
+            logHeader(url.toString(), postData, conn, reqProp);
             ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
             netCopy(makeAnyInStream(conn, false), out, conn, 0, null);
             byte[] results = out.toByteArray();
@@ -247,7 +247,7 @@ public class URLDownload {
                 conn.setReadTimeout(timeoutInSec * 1000);
             }
             ((HttpURLConnection)conn).setRequestMethod("HEAD");
-            logHeader(null, conn, conn.getRequestProperties());
+            logHeader(url.toString(), null, conn, conn.getRequestProperties());
             Set<Map.Entry<String,List<String>>> hSet = getResponseCode(conn)==-1 ? null : conn.getHeaderFields().entrySet();
             HttpResultInfo result= new HttpResultInfo(null,getResponseCode(conn),conn.getContentType(),getSugestedFileName(conn));
 
@@ -367,6 +367,7 @@ public class URLDownload {
                                          int redirectCnt) throws FailedRequestException {
 
         try {
+            String originalUrl= conn.getURL().toString();
             FileInfo outFileData;
             Map<String, List<String>> reqProp = conn.getRequestProperties();
             Map<String, List<String>> sendHeaders = null;
@@ -396,7 +397,7 @@ public class URLDownload {
             //------
             //---From here on the server should be responding
             //------
-            logHeader(postData, conn, sendHeaders);
+            logHeader(originalUrl, postData, conn, sendHeaders);
             validFileSize(conn, ops.maxFileSize);
             netCopy(makeAnyInStream(conn, ops.uncompress), makeOutStream(outfile), conn, ops.maxFileSize, ops.dl);
             long elapse = System.currentTimeMillis() - start;
@@ -562,9 +563,11 @@ public class URLDownload {
         _log.warn(strList.toArray(new String[0]));
     }
 
-    public static void logHeader(URLConnection conn) { logHeader(null, conn, null); }
+    public static void logHeader(URLConnection conn) { logHeader(null,null, conn, null); }
 
-    private static void logHeader(Map<String,String> postData, URLConnection conn, Map<String,List<String>> sendHeaders) {
+    public static void logHeader(String originalUrl, URLConnection conn) { logHeader(originalUrl,null, conn, null); }
+
+    private static void logHeader(String originalUrl,  Map<String,String> postData, URLConnection conn, Map<String,List<String>> sendHeaders) {
         StringBuffer workBuff;
         try {
             String verb= "";
@@ -575,6 +578,9 @@ public class URLDownload {
             if (conn.getURL() != null) {
                 outStr.add("----------Sending " + verb);
                 outStr.add( conn.getURL().toString());
+                if (originalUrl!=null && !conn.getURL().toString().equals(originalUrl)) {
+                    outStr.add( StringUtils.pad(20, "Original URL")+": "+originalUrl);
+                }
                 if (sendHeaders!=null) {
                     for(Map.Entry<String,List<String>> se: sendHeaders.entrySet()) {
                         workBuff = new StringBuffer(100);

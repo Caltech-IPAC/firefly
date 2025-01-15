@@ -17,6 +17,12 @@ import {
 import {getActiveTableId, getTblById, onTableLoaded} from '../tables/TableUtil';
 import {getCellValue, getTblInfo} from '../tables/TableUtil.js';
 import MultiViewCntlr, {dispatchUpdateCustom, getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
+import {
+    getObsCoreAccessURL, getSearchTarget, isFormatDataLink, makeWorldPtUsingCenterColumns
+} from '../voAnalyzer/TableAnalysis';
+import {getServiceDescriptors} from '../voAnalyzer/VoDataLinkServDef';
+import {makeDlUrl} from './vo/DatalinkProducts';
+import {findDataLinkServeDescs} from './vo/ServDescConverter';
 
 
 export function createTableActivate(source, titleStr, activateParams, dataTypeHint= '', tbl_index=0) {
@@ -122,7 +128,17 @@ function loadTableAndCharts(dataTableReq, tbl_id, tableGroupViewerId, dispatchCh
     };
 }
 
-export function createTableExtraction(source,titleInfo,tbl_index,colNames,colUnits,cubePlane=0,dataTypeHint) {
+/**
+ *
+ * @param source
+ * @param titleInfo
+ * @param [tbl_index]
+ * @param [colNames]
+ * @param [colUnits]
+ * @param [cubePlane]
+ * @param [dataTypeHint]
+ */
+export function createTableExtraction(source,titleInfo,tbl_index=0,colNames,colUnits,cubePlane=0,dataTypeHint) {
     return () => {
         const ti= isString(titleInfo) ? {titleStr:titleInfo} : titleInfo;
         const dataTableReq= makeTableRequest(source,ti,undefined,tbl_index,colNames,colUnits,cubePlane,dataTypeHint, true);
@@ -130,6 +146,30 @@ export function createTableExtraction(source,titleInfo,tbl_index,colNames,colUni
             { setAsActive: false, logHistory: false, showFilters: true, showInfoButton: true });
         showPinMessage('Pinning to Table Area');
     };
+}
+
+export function extractDatalinkTable(table,row,title,setAsActive=true) {
+    let url;
+    if (isFormatDataLink(table, row)) {
+        url= getObsCoreAccessURL(table,row);
+    }
+    else {
+        const serDefAry= getServiceDescriptors(table);
+        if (!serDefAry || !serDefAry.length) return;
+        const dlSerDef= findDataLinkServeDescs(serDefAry);
+        if (!dlSerDef) return;
+        url= makeDlUrl(dlSerDef[0],table,row);
+    }
+    if (!url) return;
+
+    const positionWP = getSearchTarget(table?.request, table) ?? makeWorldPtUsingCenterColumns(table, row);
+
+
+    const dataTableReq= makeTableRequest(url,{titleStr:title},undefined,0,undefined,undefined,undefined,undefined,true);
+    if (positionWP) dataTableReq.META_INFO[MetaConst.SEARCH_TARGET]= positionWP.toString();
+
+    dispatchTableSearch(dataTableReq, {setAsActive, logHistory: false, showFilters: true, showInfoButton: true});
+    showPinMessage('Pinning to Table Area');
 }
 
 

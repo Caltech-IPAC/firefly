@@ -40,8 +40,7 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
     return (
         <Stack {...{direction:'row', alignItems:'center', height: 30}}
             divider={<ToolbarHorizontalSeparator/>}>
-            {!hasMenu ?
-                <div style={{width: 50, height: 1}}/> :
+            {hasMenu &&
                 <DropDownToolbarButton
                     text='More' tip='Other data to display' useDropDownIndicator={true}
                     sx={{pr: 2}}

@@ -11,11 +11,12 @@ import {ListBoxInputFieldView} from '../ListBoxInputField.jsx';
 import {SplitContent} from '../panel/DockLayoutPanel';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 import {AdvancedADQL} from './AdvancedADQL.jsx';
+import {getTapObsCoreOptions} from './ObsCoreOptions';
 import {showTableSelectPopup} from './TableChooser.jsx';
 
 import {TableColumnsConstraints, TableColumnsConstraintsToolbar} from './TableColumnsConstraints.jsx';
 import {
-    ADQL, SINGLE, SpatialPanelWidth, NavButtons, TableTypeButton, getTapObsCoreOptions
+    ADQL, SINGLE, SpatialPanelWidth, NavButtons, TableTypeButton
 } from './TableSearchHelpers.jsx';
 import {TableSearchMethods} from './TableSearchMethods.jsx';
 import {

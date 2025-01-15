@@ -1462,7 +1462,7 @@ function getTM(tableOrId) {
  * @return {String|undefined|*} value or the meta data or the defVal
  */
 export function getMetaEntry(tableOrId,metaKey,defVal= undefined) {
-    const tableMeta= get(getTM(tableOrId),'tableMeta');
+    const tableMeta= getTM(tableOrId)?.tableMeta;
     if (!tableMeta || !isString(metaKey)) return defVal;
     const keyUp = metaKey.toUpperCase();
     const [foundKey,value]= Object.entries(tableMeta).find( ([k]) => k.toUpperCase()===keyUp) || [];
@@ -1470,7 +1470,7 @@ export function getMetaEntry(tableOrId,metaKey,defVal= undefined) {
 }
 
 /**
- * case insensitive search of meta data for boolean a entry, if not found return the defVal
+ * Case insensitive search of meta data for a boolean entry, if not found return the defVal
  * @param {TableModel|String} tableOrId - parameters accepts the table model or tha table id
  * @param {String} metaKey - the metadata key
  * @param {boolean} [defVal= false] - the defVal to return if not found, defaults to false
@@ -1478,6 +1478,22 @@ export function getMetaEntry(tableOrId,metaKey,defVal= undefined) {
  */
 export function getBooleanMetaEntry(tableOrId,metaKey,defVal= false) {
     return toBoolean(getMetaEntry(tableOrId,metaKey,undefined),Boolean(defVal),['true','t','yes','y']);
+}
+
+/**
+ * Case insensitive search of meta data for an object entry, if not found return the defVal
+ * @param {TableModel|String} tableOrId - parameters accepts the table model or tha table id
+ * @param {String} metaKey - the metadata key
+ * @param {Object} [defVal= undefined] - the defVal to return if not found, defaults to undefined
+ * @return {Object} value or the meta data or the defVal
+ */
+export function getObjectMetaEntry(tableOrId,metaKey,defVal= undefined) {
+    try {
+        return JSON.parse(getMetaEntry(tableOrId,metaKey));
+    }
+    catch {
+        return defVal;
+    }
 }
 
 /**

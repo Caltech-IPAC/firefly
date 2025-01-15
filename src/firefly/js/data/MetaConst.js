@@ -35,6 +35,11 @@ export const MetaConst = {
     FITS_EXTRACTION_TYPE: 'FitsExtractionType',
 
     /**
+     * Search Target - the search target associated with this table
+     */
+    SEARCH_TARGET: 'SearchTarget',
+
+    /**
      * An world point in a fits FILE that is associated with this table
      */
     FITS_WORLD_PT: 'FitsWorldPoint',
@@ -183,6 +188,11 @@ export const MetaConst = {
     RELEASE_DATE_COL : 'RELEASE_DATE_COL',
 
     /**
+     * any ID can be added to a table search to identify the source for the purpose of getting source specific obscore preferences
+     */
+    OBSCORE_SOURCE_ID: 'OBSCORE_SOURCE_ID',
+
+    /**
      * if defined this table container a moving object, setting this will override any catalog evaluation
      * value can me true or false, if true then evaluate this table as a moving obj, if false then ignore
      */
@@ -228,6 +238,12 @@ export const MetaConst = {
      * If defined and true, dispatchTableSearch will be called but prevent going to results view directly
      */
     UPLOAD_TABLE: 'UploadTable',
+
+    /**
+     * if defined and an object, Then this will be table specific DataProductsFactory options
+     * @see DataProductsFactoryOptions
+     */
+    DATA_PRODUCTS_FACTORY_OPTIONS: 'DataProductFactoryOptions',
 
     /** @deprecated use CENTER_COLUMN */
     CATALOG_COORD_COLS : 'CatalogCoordColumns',

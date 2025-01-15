@@ -210,7 +210,7 @@ function SearchDropDown({searchActions, cenWpt, size, polyStr, whichOverlay}) {
                 .filter( (sa) =>
                    searchMatches(sa, whichOverlay===CONE_CHOICE_KEY, whichOverlay===POLY_CHOICE_KEY, whichOverlay===CONE_CHOICE_KEY) )
                 .map( (sa) => {
-                    const text= getSearchTypeDesc(sa,cenWpt,Number(size),polyStrLen);
+                    const text= getSearchTypeDesc({sa,wp:cenWpt,size:Number(size),areaPtsLength:polyStrLen });
                     return (
                         <ToolbarButton text={text} tip={`${sa.tip} for\n${text}`}
                                        enabled={true} horizontal={false} key={sa.cmd+sa.tip}

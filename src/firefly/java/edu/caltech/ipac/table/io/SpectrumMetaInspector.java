@@ -76,7 +76,7 @@ public class SpectrumMetaInspector {
     private static final String SPEC_TI_AXIS_ACCURACY= SPEC_TI_AXIS+ACCURACY;
     private static final String SPEC_ORDER = "spec:Data.SpectralAxis.Order";
     private static final String SPEC_REL_ORDER= "spec:Data.SpectralAxis.RelOrder";
-    private static final String spec10Version= "Spectrum v1.0";
+    private static final String spec10Version= "spectrum v1.0";
     private static final String VOCLASS= "VOCLASS";
 
     private static final String SPEC_SPECTRUM= "spec:Spectrum";
@@ -116,12 +116,9 @@ public class SpectrumMetaInspector {
         String utype;
         if (hdu!=null) {
             Header h= hdu.getHeader();
-            String voclass= h.getStringValue(VOCLASS);
-            if (voclass==null) voclass= "";
+            String voclass= h.getStringValue(VOCLASS,"").toLowerCase();
             utype= FitsReadUtil.getUtype(h);
-            if (utype==null && !spectrumHint &&
-                    !voclass.equals(spec10Version) &&
-                    !voclass.toLowerCase().startsWith("spectrum") ) {
+            if (utype==null && !spectrumHint && (voclass.equals(spec10Version) || voclass.startsWith("spectrum") )) {
                 utype= SPEC_SPECTRUM;
             }
             if (utype!=null) {

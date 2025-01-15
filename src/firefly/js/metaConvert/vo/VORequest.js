@@ -3,13 +3,14 @@ import {sprintf} from '../../externalSource/sprintf.js';
 import {getCellValue, getColumn, getMetaEntry} from '../../tables/TableUtil.js';
 import {PlotAttribute} from '../../visualize/PlotAttribute.js';
 import RangeValues from '../../visualize/RangeValues.js';
+import {RequestType} from '../../visualize/RequestType';
 import {TitleOptions, WebPlotRequest} from '../../visualize/WebPlotRequest.js';
 import {ZoomType} from '../../visualize/ZoomType.js';
 import {getSSATitle, isSSATable} from '../../voAnalyzer/TableAnalysis.js';
 
 /**
  *
- * @param dataSource
+ * @param dataSourc
  * @param positionWP
  * @param titleStr
  * @param {TableModel} table
@@ -30,6 +31,8 @@ export function makeObsCoreRequest(dataSource, positionWP, titleStr, table, row)
         r.setTitleOptions(TitleOptions.FILE_NAME);
     }
     r.setPlotId(uniqueId('obscore-'));
+    r.setWorldPt(positionWP);
+    r.setRequestType(RequestType.URL);
 
     const emMinCol = getColumn(table, 'em_max', true);
     const emMaxCol = getColumn(table, 'em_max', true);

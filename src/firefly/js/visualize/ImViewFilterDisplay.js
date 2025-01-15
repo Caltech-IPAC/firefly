@@ -19,7 +19,16 @@ export const IMAGE_VIEW_TABLE_ID = 'active-image-view-list-table';
 export const EXPANDED_OPTIONS_DIALOG_ID= 'ExpandedOptionsPopup';
 export const HIDDEN='_HIDDEN';
 
-const [NAME_IDX, WAVE_LENGTH_UM, PID_IDX, STATUS, PROJ_TYPE_DESC, WAVE_TYPE, DATA_HELP_URL, ROW_IDX] = [0, 1, 2, 3, 4, 5, 6, 7];
+const [NAME_IDX, WAVE_LENGTH_UM, PID_IDX, STATUS, PROJ_TYPE_DESC, WAVE_TYPE, DATA_HELP_URL,
+    OBS_TITLE_IDX, S_RA_IDX, S_DEC_IDX,
+    T_MIN_IDX, T_MAX_IDX, EM_MIN_IDX, EM_MAX_IDX, CALIB_LEVEL_IDX, DATAPRODUCT_TYPE_IDX, DATAPRODUCT_SUBTYPE_IDX,
+    FACILITY_NAME_IDX, INSTRUMENT_NAME_IDX,
+    OBS_COLLECTION_IDX, S_REGION_IDX, ROW_IDX] = [...Array(22).keys()];
+
+
+
+
+const wlUnits= getFormattedWaveLengthUnits('um');
 
 const columnsTemplate = [];
 columnsTemplate[NAME_IDX] = {name: 'Name', type: 'char', width: 22};
@@ -27,12 +36,7 @@ columnsTemplate[PID_IDX] = {name: 'plotId', type: 'char', width: 10, visibility:
 columnsTemplate[STATUS] = {name: 'Status', type: 'char', width: 10};
 columnsTemplate[PROJ_TYPE_DESC] = {name: 'Type', type: 'char', width: 8};
 columnsTemplate[WAVE_TYPE] = {name: 'Band', type: 'char', width: 9};
-columnsTemplate[WAVE_LENGTH_UM] = {
-    name: 'Wavelength',
-    type: 'double',
-    width: 8,
-    units: getFormattedWaveLengthUnits('um')
-};
+columnsTemplate[WAVE_LENGTH_UM] = { name: 'Wavelength', type: 'double', width: 8, units: wlUnits };
 
 columnsTemplate[DATA_HELP_URL] = {
     name: 'Help',
@@ -40,6 +44,34 @@ columnsTemplate[DATA_HELP_URL] = {
     width: 4,
     cellRenderer: 'ATag::href=${Help},target="image-doc"'+ `,label=<img src='images/info-16x16.png'/>` // eslint-disable-line
 };
+
+
+columnsTemplate[OBS_TITLE_IDX] = {name: 'obs_title', type: 'show', width: 20};
+columnsTemplate[S_RA_IDX] = {name: 's_ra', type: 'double', width: 9};
+columnsTemplate[S_DEC_IDX] = {name: 's_dec', type: 'double', width: 9};
+columnsTemplate[EM_MIN_IDX] = {name: 'em_min', type: 'double', width: 8, units: wlUnits};
+columnsTemplate[EM_MAX_IDX] = {name: 'em_max', type: 'double', width: 8, units: wlUnits};
+columnsTemplate[T_MAX_IDX] = {name: 't_max', type: 'double', width: 9};
+columnsTemplate[T_MIN_IDX] = {name: 't_min', type: 'double', width: 9};
+columnsTemplate[T_MAX_IDX] = {name: 't_max', type: 'double', width: 9};
+columnsTemplate[CALIB_LEVEL_IDX] = {name: 'calib_level', type: 'show', width: 6};
+columnsTemplate[DATAPRODUCT_TYPE_IDX] = {name: 'dataproduct_type', type: 'show', width: 20};
+columnsTemplate[DATAPRODUCT_SUBTYPE_IDX] = {name: 'dataproduct_subtype', type: 'show', width: 20};
+columnsTemplate[OBS_COLLECTION_IDX] = {name: 'obs_collection', type: 'show', width: 20};
+columnsTemplate[FACILITY_NAME_IDX] = {name: 'facility_name', type: 'show', width: 20};
+columnsTemplate[INSTRUMENT_NAME_IDX] = {name: 'instrument_name', type: 'show', width: 20};
+columnsTemplate[S_REGION_IDX] = {name: 's_region', type: 'show', width: 10};
+
+
+
+
+
+
+
+
+
+
+
 
 
 const getAttribute = (attributes, attribute, def='') => attributes?.[attribute] ?? def;
@@ -90,6 +122,25 @@ export function makeImViewDisplayModel(tbl_id, plotViewAry, allIds, oldModel) {
         row[WAVE_TYPE] = getAttribute(attributes, PlotAttribute.WAVE_TYPE);
         row[WAVE_LENGTH_UM] = parseFloat(getAttribute(attributes, PlotAttribute.WAVE_LENGTH_UM, 0.0));
         row[DATA_HELP_URL] = getAttribute(attributes, PlotAttribute.DATA_HELP_URL);
+
+        const {sourceObsCoreData}= plot.attributes;
+        if (sourceObsCoreData) {
+            row[S_RA_IDX]= sourceObsCoreData.s_ra;
+            row[S_DEC_IDX]= sourceObsCoreData.s_dec;
+            row[T_MAX_IDX]= sourceObsCoreData.t_max;
+            row[T_MIN_IDX]= sourceObsCoreData.t_min;
+            row[T_MAX_IDX]= sourceObsCoreData.t_max;
+            row[EM_MIN_IDX]= sourceObsCoreData.em_min;
+            row[EM_MAX_IDX]= sourceObsCoreData.em_max;
+            row[CALIB_LEVEL_IDX]= sourceObsCoreData.calib_level;
+            row[DATAPRODUCT_TYPE_IDX]= sourceObsCoreData.dataproduct_type;
+            row[DATAPRODUCT_SUBTYPE_IDX]= sourceObsCoreData.dataproduct_subtype;
+            row[OBS_COLLECTION_IDX]= sourceObsCoreData.obs_collection;
+            row[FACILITY_NAME_IDX]= sourceObsCoreData.facility_name;
+            row[OBS_TITLE_IDX]= sourceObsCoreData.obs_title;
+            row[INSTRUMENT_NAME_IDX]= sourceObsCoreData.instrument_name;
+            row[S_REGION_IDX]=  sourceObsCoreData.s_region;
+        }
         return row;
     });
 

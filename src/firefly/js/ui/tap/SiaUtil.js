@@ -34,7 +34,6 @@ function getMetaFromTable(table) {
     return inputParams;
 }
 
-
 export async function loadSiaV2Meta(serviceUrl) {
     if (serviceMetaCache[serviceUrl]) return serviceMetaCache[serviceUrl];
     serviceMetaCache[serviceUrl]= await doLoadSiaV2Meta(serviceUrl);

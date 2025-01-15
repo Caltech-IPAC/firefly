@@ -227,6 +227,12 @@ export function changePrimePlot(pv, nextIdx) {
     return updateTransform(pv);
 }
 
+let staticPlotCount=0;
+
+export function getNextStaticPlotCount() {
+    return ++staticPlotCount;
+}
+
 /**
  * Replace the plotAry and overlayPlotViews into the PlotView, return a new PlotView
  * @param {PlotView} pv
@@ -259,7 +265,7 @@ export function replacePlots(pv, plotAry, overlayPlotViews, expandedMode, newPlo
 
     pv.plots.forEach( (plot) => {
         plot.attributes= {...plot.attributes, ...getNewAttributes(plot)};
-        plot.plotImageId= `${pv.plotId}--${pv.plotViewCtx.plotCounter}`;
+        plot.plotImageId= `${pv.plotId}--${pv.plotViewCtx.plotCounter}--${getNextStaticPlotCount()}`;
         pv.plotViewCtx.plotCounter++;
     });
 

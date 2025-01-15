@@ -424,8 +424,7 @@ function onSIAv2SearchSubmit(request, serviceUrl, siaMeta, siaState, showErrors=
     const cStr= constraints.join('&');
     const hasMaxrec = !isNaN(parseInt(request.maxrec));
     const maxrec = parseInt(request.maxrec);
-    var baseRequestUrl= `${serviceUrl}?${cStr}`;
-
+    const baseRequestUrl= `${serviceUrl}?${cStr}`;
 
     const doSubmit = () => {
 
@@ -435,7 +434,11 @@ function onSIAv2SearchSubmit(request, serviceUrl, siaMeta, siaState, showErrors=
         if (hips) additionalSiaMeta[MetaConst.COVERAGE_HIPS]= hips;
         const title= makeNumberedTitle(userTitle || 'SIA Search');
         const treq= makeFileRequest(title,new URL(url).toString());
-        treq.META_INFO= {...treq.META_INFO, ...additionalSiaMeta};
+        treq.META_INFO= {
+            ...treq.META_INFO,
+            ...additionalSiaMeta,
+            [MetaConst.OBSCORE_SOURCE_ID] : getSiaServiceLabel(serviceUrl),
+        };
         console.log('sia search: ' + url, new URL(url).toString());
         dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true});
     };

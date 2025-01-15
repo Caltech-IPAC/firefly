@@ -440,7 +440,7 @@ function loadMocWithAbort(mocList, plotId,setMocError) {
 
         try {
             for(let i=0; (i<mocAddList.length); i++) {
-                const {mocUrl,title,mocColor}= mocAddList[i];
+                const {mocUrl,title,mocColor,maxFetchDepth}= mocAddList[i];
 
                 const tbl_id= 'MOC---'+mocUrl;
                 let add= true;
@@ -469,6 +469,7 @@ function loadMocWithAbort(mocList, plotId,setMocError) {
                     createHiPSMocLayerFromPreloadedTable({
                         plotId,
                         tbl_id,
+                        maxFetchDepth,
                         visible: true,
                         fitsPath: mocUrl,
                         title,

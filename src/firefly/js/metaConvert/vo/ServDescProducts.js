@@ -1,13 +1,14 @@
 import {isEmpty, isNumber} from 'lodash';
-import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr.js';
+import {getComponentState} from '../../core/ComponentCntlr.js';
 import {getCellValue, getColumnByRef} from '../../tables/TableUtil.js';
 import {makeCircleString} from '../../ui/dynamic/DynamicUISearchPanel';
 import {isSIAStandardID} from '../../ui/dynamic/ServiceDefTools';
+import {findCutoutTarget, getCutoutSize, getCutoutTargetOverride, setCutoutSize} from '../../ui/tap/ObsCoreOptions';
 import {makeWorldPt} from '../../visualize/Point';
 import {isDatalinkTable, isObsCoreLike} from '../../voAnalyzer/TableAnalysis';
 import {CUTOUT_UCDs, DEC_UCDs, RA_UCDs} from '../../voAnalyzer/VoConst';
 
-import {isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
+import {findWorldPtInServiceDef, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {isDefined} from '../../util/WebUtil.js';
 import {makeAnalysisActivateFunc} from '../AnalysisUtils.js';
 import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY} from '../DataProductsCntlr.js';
@@ -17,7 +18,6 @@ import {getObsCoreRowMetaInfo} from './ObsCoreConverter';
 import {makeObsCoreRequest} from './VORequest.js';
 
 
-export const SD_CUTOUT_KEY= 'sdCutoutSize';
 export const SD_DEFAULT_SPACIAL_CUTOUT_SIZE= .01;
 export const SD_DEFAULT_PIXEL_CUTOUT_SIZE= 200;
 
@@ -35,43 +35,42 @@ export const SD_DEFAULT_PIXEL_CUTOUT_SIZE= 200;
  * @param p.titleStr
  * @param p.activeMenuLookupKey
  * @param p.menuKey
- * @param [p.datalinkExtra]
  * @return {DataProductsDisplayType}
  */
 export function makeServiceDefDataProduct({
                                               name, serDef, sourceTable, sourceRow, idx, positionWP, activateParams,
-                                              options, titleStr, activeMenuLookupKey, menuKey,
-                                              datalinkExtra = {} }) {
+                                              options, titleStr, activeMenuLookupKey, menuKey, dlData={}}) {
     const {title: servDescTitle = '', accessURL, standardID, serDefParams, ID} = serDef;
     const {activateServiceDef=false}= options;
 
     const allowsInput = serDefParams.some((p) => p.allowsInput);
     const noInputRequired = serDefParams.some((p) => !p.inputRequired);
-    const {semantics, size, sRegion, prodTypeHint, serviceDefRef, dlAnalysis} = datalinkExtra;
+    const {semantics, size, serviceDefRef, dlAnalysis, prodTypeHint} = dlData;
+    const sRegion= dlData.sourceObsCoreData?.s_region ?? '';
 
-    if (dlAnalysis?.isCutout && canMakeCutoutProduct(serDef,positionWP,sourceRow)) {
+    if (dlAnalysis?.isCutout && canMakeCutoutProduct(serDef,sourceTable,sourceRow,options)) {
        return makeCutoutProduct({
-           name, serDef, sourceTable, sourceRow, idx, positionWP, activateParams,
-           options, titleStr, activeMenuLookupKey, menuKey, datalinkExtra
+           name, serDef, sourceTable, sourceRow, idx, activateParams,
+           options, titleStr, activeMenuLookupKey, menuKey, dlData,
        });
     }
     else if (activateServiceDef && noInputRequired) {
         const url= makeUrlFromParams(accessURL, serDef, idx, getComponentInputs(serDef,options));
         const request = makeObsCoreRequest(url, positionWP, titleStr, sourceTable, sourceRow);
         const activate = makeAnalysisActivateFunc({table:sourceTable, row:sourceRow, request, activateParams,
-            menuKey, dataTypeHint:prodTypeHint, serDef, options});
+            menuKey, dataTypeHint:prodTypeHint, serDef, dlData, options});
         return dpdtAnalyze({
-            name:'Show: ' + (titleStr || name), activate, url:request.getURL(), serDef, menuKey,
+            name:'Show: ' + (titleStr || name), activate, url:request.getURL(), serDef, menuKey, dlData,
             activeMenuLookupKey, request, sRegion, prodTypeHint, semantics, size, serviceDefRef});
     } else {
         const request = makeObsCoreRequest(accessURL, positionWP, titleStr, sourceTable, sourceRow);
         const activate = makeAnalysisActivateFunc({table:sourceTable, row:sourceRow, request, activateParams, menuKey,
-            dataTypeHint:prodTypeHint ?? 'unknown', serDef, originalTitle:name,options});
+            dlData, dataTypeHint:prodTypeHint ?? 'unknown', serDef, originalTitle:name,options});
         const entryName = `Show: ${titleStr || servDescTitle || `Service #${idx}: ${name}`} ${allowsInput ? ' (Input Required)' : ''}`;
         return dpdtAnalyze({
             name:entryName, activate, url:request.getURL(), serDef, menuKey,
             activeMenuLookupKey, request, allowsInput, serviceDefRef, standardID, ID,
-            semantics, size, sRegion,
+            semantics, size, sRegion, dlData,
             prodTypeHint: prodTypeHint ?? 'unknown'
             });
     }
@@ -80,9 +79,11 @@ export function makeServiceDefDataProduct({
 
 const CUTOUT_NAME_GUESS_LIST= ['size'];
 
-function canMakeCutoutProduct(serDef, positionWP,sourceRow){
+function canMakeCutoutProduct(serDef,table,sourceRow,options){
+    const key= options.dataProductsComponentKey ?? DEFAULT_DATA_PRODUCTS_COMPONENT_KEY;
     const {standardID,serDefParams} = serDef;
 
+    const positionWP= findCutoutTarget(key,serDef,table,sourceRow);
     if (!positionWP) { // look for ra/dec columns
         const wp= findWorldPtInServiceDef(serDef,sourceRow);
         if (!wp) return false;
@@ -102,54 +103,23 @@ function canMakeCutoutProduct(serDef, positionWP,sourceRow){
     return Boolean(nameGuess);
 }
 
-function findWorldPtInServiceDef(serDef,sourceRow) {
-    const {serDefParams,sdSourceTable, dataLinkTableRowIdx} = serDef;
-    const raParam= serDefParams.find( ({UCD=''}) =>
-        RA_UCDs.find( (testUcd) => UCD.toLowerCase().includes(testUcd)) );
-    const decParam= serDefParams.find( ({UCD=''}) =>
-        DEC_UCDs.find( (testUcd) => UCD.toLowerCase().includes(testUcd)) );
-    if (!raParam && !decParam) return;
 
-    let raVal= raParam.value;
-    let decVal= decParam.value;
-
-    if (raVal && decVal) return makeWorldPt(raVal,decVal);
-    if (!sdSourceTable) return;
-
-    const hasDLTable= isDatalinkTable(sdSourceTable);
-    const hasDLRow= isDefined(dataLinkTableRowIdx);
-    const hasSourceRow= isDefined(sourceRow);
-    const row= hasDLTable && hasDLRow ? dataLinkTableRowIdx : hasSourceRow ? sourceRow : undefined;
-
-    if (!raVal && raParam.ref) {
-        const col = getColumnByRef(sdSourceTable, raParam.ref);
-        if (col && row > -1) raVal = getCellValue(sdSourceTable, row, col.name);
-    }
-
-    if (!decVal && decParam.ref) {
-        const col = getColumnByRef(sdSourceTable, decParam.ref);
-        if (col && row > -1) decVal = getCellValue(sdSourceTable, row, col.name);
-    }
-
-    return (raVal && decVal) ? makeWorldPt(raVal,decVal) : undefined;
-}
-
-function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, positionWP, activateParams,
+function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, activateParams, dlData,
                              options, titleStr, menuKey}) {
 
     const {accessURL, standardID, serDefParams, sdSourceTable} = serDef;
     const key= options.dataProductsComponentKey ?? DEFAULT_DATA_PRODUCTS_COMPONENT_KEY;
-    const cutoutSize= getComponentState(key,{})[SD_CUTOUT_KEY] ?? 0.0213;
+    const cutoutSize= getCutoutSize(key);
+
     if (cutoutSize<=0) return; // must be greater than 0
-    if (!positionWP) {
-        positionWP= findWorldPtInServiceDef(serDef,sourceRow);
-    }
-    if (!positionWP) return;  // this must exist, should check in calling function
+
+    const positionWP= findCutoutTarget(key,serDef,sourceTable,sourceRow);
+    if (!positionWP) return;  // positionWP must exist
 
     let titleToUse= titleStr;
 
     if (isDefined(serDef.dataLinkTableRowIdx) && isObsCoreLike(sourceTable)) { // this service def, from datalink, in obscore (normal cawse)
-        titleToUse= getObsCoreRowMetaInfo(sourceTable,sourceRow)?.titleStr ?? titleStr;
+        titleToUse= getObsCoreRowMetaInfo(sourceTable,sourceRow)?.titleStr || name || titleStr;
     }
     let params;
     const cutoutOptions= {...options};
@@ -170,7 +140,7 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, position
             // note: the size is set as a number, if is a string it is coming from the dialog
             if (isNumber(cutoutSize) && cutoutSize===SD_DEFAULT_SPACIAL_CUTOUT_SIZE && sdSizeValue!==cutoutSize) {
                 params= {[ucd] : sdSizeValue};
-                dispatchComponentStateChange(key,{ [SD_CUTOUT_KEY]: sdSizeValue } );
+                setCutoutSize(key,sdSizeValue);
             }
             else {
                 params= {[ucd] : cutoutSize};
@@ -187,12 +157,12 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, position
             else {
                 const valNum= parseInt(nameGuess.value) || SD_DEFAULT_PIXEL_CUTOUT_SIZE;
                 params= {[nameGuess.name] : valNum};
-                dispatchComponentStateChange(key,{ [SD_CUTOUT_KEY]: valNum+'px' } );
+                setCutoutSize(key,valNum+'px');
             }
             pixelBasedCutout= true;
         }
     }
-    const url= makeUrlFromParams(accessURL, serDef, idx, getComponentInputs(serDef,cutoutOptions,params));
+    const url= makeUrlFromParams(accessURL, serDef, dlData?.rowIdx ?? idx, getComponentInputs(serDef,cutoutOptions,params));
     const request = makeObsCoreRequest(url, positionWP, titleToUse, sourceTable, sourceRow);
 
     const tbl= sourceTable ?? sdSourceTable;
@@ -200,8 +170,8 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, position
         tbl?.highlightedRow);
     return dpdtImage({
         name:'Show: Cutout: ' + (titleToUse || name),
-        activate, menuKey,
-        extraction: createSingleImageExtraction(request), enableCutout:true, pixelBasedCutout,
+        activate, menuKey, dlData,
+        extraction: createSingleImageExtraction(request, dlData?.sourceObsCoreData), enableCutout:true, pixelBasedCutout,
         request, override:false, interpretedData:false, requestDefault:false});
 }
 
@@ -210,6 +180,7 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, position
  * return a list of inputs from the user that will go into the service descriptor URL
  * @param serDef
  * @param {DataProductsFactoryOptions} options
+ * @param moreParams
  * @return {Object.<string, *>}
  */
 function getComponentInputs(serDef, options, moreParams={}) {
@@ -288,5 +259,5 @@ export function makeUrlFromParams(url, serDef, rowIdx, userInputParams = {}) {
 function logServiceDescriptor(baseUrl, sendParams, newUrl) {
     // console.log(`service descriptor base URL: ${baseUrl}`);
     // Object.entries(sendParams).forEach(([k,v]) => console.log(`param: ${k}, value: ${v}`));
-    console.log(`service descriptor new URL: ${newUrl}`);
+    // console.log(`service descriptor new URL: ${newUrl}`);
 }

@@ -9,9 +9,7 @@ import {RadioGroupInputFieldView} from '../../../ui/RadioGroupInputFieldView.jsx
 import {useStoreConnector} from '../../../ui/SimpleComponent';
 import {dispatchChangePrimePlot, visRoot} from '../../ImagePlotCntlr';
 import {NewPlotMode} from '../../MultiViewCntlr.js';
-import {
-    convertHDUIdxToImageIdx, getActivePlotView, getHDUIndex, getImageCubeIdx, getPlotViewById, hasImageCubes, primePlot
-} from '../../PlotViewUtil';
+import { convertHDUIdxToImageIdx, getActivePlotView, getHDUIndex, hasImageCubes} from '../../PlotViewUtil';
 import {ImageMetaDataToolbar} from '../ImageMetaDataToolbar.jsx';
 import {MultiImageViewer} from '../MultiImageViewer.jsx';
 
@@ -26,6 +24,7 @@ export function MultiProductChoice({ dataProductsState, dpId,
                                        tableGroupViewerId, whatToShow, onChange, mayToggle = false, factoryKey
                                    }) {
     const {serDef, enableCutout, pixelBasedCutout=false}= dataProductsState;
+    const {cutoutToFullWarning, dlAnalysis:{cutoutFullPair=false}={}}= dataProductsState.dlData ?? {};
     const primeIdx= useStoreConnector(() => getActivePlotView(visRoot())?.primeIdx ?? -1);
     const {current:showingStatus}= useRef({oldWhatToShow:undefined});
     const chartTableOptions = [{label: 'Table', value: SHOW_TABLE}, {label: 'Chart', value: SHOW_CHART}];
@@ -95,7 +94,9 @@ export function MultiProductChoice({ dataProductsState, dpId,
                     {mayToggle && toolbar}
                     <MultiImageViewer {...{
                         viewerId:imageViewerId, insideFlex:true, serDef, enableCutout,pixelBasedCutout,
+                        enableCutoutFullSwitching:cutoutFullPair,
                         canReceiveNewPlots: NewPlotMode.none.key, tableId:metaDataTableId, controlViewerMounting:false,
+                        cutoutToFullWarning,
                         makeDropDown: !mayToggle ? makeDropDown : undefined,
                         Toolbar:ImageMetaDataToolbar, factoryKey}} />
                 </Stack>

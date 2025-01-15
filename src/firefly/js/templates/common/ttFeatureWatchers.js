@@ -5,7 +5,7 @@ import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {dispatchTableUiUpdate, TABLE_LOADED} from '../../tables/TablesCntlr.js';
 import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
-import {getTapObsCoreOptions, getTapObsCoreOptionsGuess} from '../../ui/tap/TableSearchHelpers.jsx';
+import {getTapObsCoreOptions, getTapObsCoreOptionsGuess} from '../../ui/tap/ObsCoreOptions';
 import {hasObsCoreLikeDataProducts, isObsCoreLikeWithProducts} from '../../voAnalyzer/TableAnalysis.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';

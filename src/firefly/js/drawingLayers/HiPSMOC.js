@@ -61,15 +61,20 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
         if (!dl) return;
         const preloadedTbl= tablePreloaded && getTblById(tbl_id);
 
+        const filterObj= dl.maxFetchDepth ? {filters : `"${mocFitsInfo.uniqColName}" < ${4*(4**(dl.maxFetchDepth+1))}`} : {};
         if (!dl.mocTable) { // moc table is not yet loaded
             let tReq;
             if (preloadedTbl){ //load by getting the full version of a already loaded table
                 tReq= cloneRequest(preloadedTbl.request,
-                    { startIdx : 0, pageSize : MAX_ROW, inclCols: mocFitsInfo.uniqColName });
+                    { startIdx : 0, pageSize : MAX_ROW, inclCols: mocFitsInfo.uniqColName, ...filterObj});
             }
             else if (fitsPath) {       // load by getting file on server
+
                 tReq = makeTblRequest('userCatalogFromFile', 'Table Upload',
-                    {filePath: fitsPath, sourceFrom: 'isLocal'},
+                    {
+                        filePath: fitsPath, sourceFrom: 'isLocal',
+                        ...filterObj,
+                    },
                     {tbl_id: mocFitsInfo.tbl_id, pageSize: MAX_ROW, inclCols: mocFitsInfo.uniqColName});
             }
             if (!tReq) return;
@@ -162,6 +167,7 @@ function creator(initPayload) {
     dl.mocTable= undefined;
     dl.rootTitle= dl.title;
     dl.mocGroupDefColorId= mocGroupDefColorId;
+    dl.maxFetchDepth= initPayload.maxFetchDepth;
 
     dispatchAddActionWatcher({
         callback:loadMocFitsWatcher,

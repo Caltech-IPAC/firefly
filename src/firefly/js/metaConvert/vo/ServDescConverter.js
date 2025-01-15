@@ -27,14 +27,13 @@ export function makeServDescriptorConverter(table,converterTemplate,options={}) 
 
     const canRelatedGrid= options.allowImageRelatedGrid?? false;
     const threeColor= converterTemplate.threeColor && options?.allowImageRelatedGrid;
-    const allowServiceDefGrid= options.allowServiceDefGrid?? false;
     //------
     const baseRetOb = {
         ...converterTemplate,
         initialLayout: options?.dataLinkInitialLayout ?? 'single',
         describeThreeColor: (threeColor) ? describeServDefThreeColor : undefined,
         threeColor,
-        canGrid: canRelatedGrid || allowServiceDefGrid,
+        canGrid: canRelatedGrid,
         maxPlots: canRelatedGrid ? DEF_MAX_PLOTS : 1,
         hasRelatedBands: canRelatedGrid,
         converterId: `ServiceDef-${table.tbl_id}`

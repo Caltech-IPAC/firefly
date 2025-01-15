@@ -77,7 +77,12 @@ export function onTapSearchSubmit(request, serviceUrl, tapBrowserState, addition
         additionalTapMeta.serviceLabel= serviceLabel;
         if (hips) additionalTapMeta[MetaConst.COVERAGE_HIPS]= hips;
 
-        treq.META_INFO= {...treq.META_INFO, ...additionalTapMeta, ...metaInfo };
+        treq.META_INFO= {
+            ...treq.META_INFO,
+            ...additionalTapMeta,
+            ...metaInfo,
+            [MetaConst.OBSCORE_SOURCE_ID] : serviceLabel,
+        };
         dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true});
     };
 
