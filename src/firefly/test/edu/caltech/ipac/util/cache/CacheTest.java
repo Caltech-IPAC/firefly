@@ -9,7 +9,9 @@ import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import org.apache.logging.log4j.Level;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -30,14 +32,18 @@ public class CacheTest extends ConfigTest {
 
     @BeforeClass
     public static void setUp() throws InterruptedException {
-        RedisService.connect();
         setupServerContext(null);
         if (false) Logger.setLogLevel(Level.TRACE);			// for debugging.
     }
 
-    @AfterClass
-    public static void tearDown() {
-        RedisService.disconnect();
+    @Before
+    public void setup() {
+        RedisService.connect();
+    }
+
+    @After
+    public void tearDown() {
+        RedisService.teardown();
     }
 
     @Test

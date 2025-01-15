@@ -47,7 +47,7 @@ public class MessengerTest extends ConfigTest {
 
     @After
     public void teardown() {
-        RedisService.disconnect();
+        RedisService.teardown();
         LOG.trace("tear down");
     }
 

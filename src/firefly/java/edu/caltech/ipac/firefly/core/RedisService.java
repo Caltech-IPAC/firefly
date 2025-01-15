@@ -12,6 +12,7 @@ import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.Protocol;
 import redis.embedded.RedisServer;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.security.MessageDigest;
@@ -48,7 +49,7 @@ public class RedisService {
     public static final String MAX_POOL_SIZE = "redis.max.poolsize";
     private static final int REDIS_PORT = AppProperties.getIntProperty("redis.port", 6379);
     private static final String MAX_MEM = AppProperties.getProperty("redis.max.mem", "128M");
-    private static final String DB_DIR = AppProperties.getProperty("redis.db.dir", System.getProperty("java.io.tmpdir"));
+    private static final String DB_DIR = AppProperties.getProperty("redis.db.dir", System.getProperty("java.io.tmpdir")+ "/redis");
     private static final String REDIS_PASSWORD = getRedisPassword();
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
 
@@ -84,6 +85,7 @@ public class RedisService {
 
     static void startLocal() {
         try {
+            new File(DB_DIR).mkdirs();      // ensure the directory exists
             RedisServer redisServer = RedisServer.newRedisServer()
                     .port(REDIS_PORT)
                     .setting("maxmemory %s".formatted(MAX_MEM))
@@ -114,6 +116,12 @@ public class RedisService {
         } else {
             status = ONLINE;
         }
+    }
+
+    public static void teardown() {
+        disconnect();
+        File[] files = new File(DB_DIR).listFiles();
+        if (files!= null) Arrays.stream(files).forEach(File::delete);
     }
 
     public static void disconnect() {
