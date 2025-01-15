@@ -414,6 +414,10 @@ function BasicUI(props) {
 function TableSelectors({hasObsCoreTable,obsCoreEnabled, setLockToObsCore, serviceLabel,
                             sOps,schemaName,setSchemaName, realSchemaLabel, schemaIsLocked,
                             tOps,tableTableModel, tableName,setTableName}) {
+    let schemaTitle=`${serviceLabel} Tables`;
+    if (schemaIsLocked) {
+        schemaTitle=  serviceLabel?.startsWith('User') ? schemaName : `${serviceLabel}: ${schemaName}`;
+    }
     return (
         <Stack {...{direction:'row', alignItems:'center', width:1}}>
                 <Stack>
@@ -422,16 +426,14 @@ function TableSelectors({hasObsCoreTable,obsCoreEnabled, setLockToObsCore, servi
                             <Typography {...{level:'title-lg', color:'primary', component:'div' }}>
                                 <Stack {...{justifyContent:'center', height:55, overflow:'hidden'}}>
                                     <div style={{ textOverflow: 'ellipsis', whiteSpace: 'normal', overflow: 'hidden' }} >
-                                        {schemaIsLocked ?
-                                            `${serviceLabel}: ${schemaName}` :
-                                            `${serviceLabel} Tables`}
+                                        {schemaTitle}
                                     </div>
                                 </Stack>
                             </Typography>
                         </Tooltip>
                         <HelpIcon helpId={tapHelpId('selectTable')}/>
                     </Stack>
-                    {hasObsCoreTable && <TableTypeButton {...{
+                    {hasObsCoreTable && !schemaIsLocked && <TableTypeButton {...{
                         sx: {mr: 1},
                         lockToObsCore:obsCoreEnabled, setLockToObsCore}}/>}
                 </Stack>
