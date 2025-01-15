@@ -159,7 +159,7 @@ public class TableResultSearch extends IpacTablePartProcessor {
     }
 
     public static Cache getParamCache() {
-        Cache cache= CacheManager.getCache(Cache.TYPE_PERM_SMALL);
+        Cache cache= CacheManager.getLocal();
         return cache;
     }
 

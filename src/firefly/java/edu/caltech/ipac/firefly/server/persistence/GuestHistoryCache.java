@@ -85,7 +85,7 @@ public class GuestHistoryCache {
     }
 
     public static List<SearchInfo> getSearchHistory(String userKey) {
-        Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
+        Cache cache = CacheManager.getLocal();
         List<SearchInfo> searchHistory = (List<SearchInfo>) cache.get(new StringKey("GuestHistoryCache", userKey));
         return searchHistory == null ? new ArrayList<SearchInfo>() : searchHistory;
     }
@@ -96,7 +96,7 @@ public class GuestHistoryCache {
     }
 
     static void updateSearchHistory(String userKey, List<SearchInfo> searchHistory) {
-        Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
+        Cache cache = CacheManager.getLocal();
         cache.put(new StringKey("GuestHistoryCache", userKey), searchHistory, LIFE_TO_LIVE);
     }
 

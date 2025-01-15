@@ -6,11 +6,11 @@ package edu.caltech.ipac.firefly.server.servlets;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
-import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.cache.Cache;
+import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
 
@@ -223,6 +223,6 @@ public class AnyFileDownload extends BaseHttpServlet {
                                          "u", FileUtil.getSizeAsString(f.length()), "file", f.getPath());
     }
 
-    public static Cache getCache() { return UserCache.getInstance(); }
+    public static Cache getCache() { return CacheManager.getUserCache(); }
 
 }

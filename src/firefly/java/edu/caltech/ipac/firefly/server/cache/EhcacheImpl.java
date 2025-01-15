@@ -29,25 +29,15 @@ public class EhcacheImpl implements Cache {
     }
 
     public void put(CacheKey key, Object value) {
-//        logger.briefDebug("cache pre-put:" + key + " = " + StringUtils.toString(value));
         String keystr = key.getUniqueString();
         if (value == null) {
             cache.remove(keystr);
         } else {
             cache.put(new Element(keystr, value));
         }
-//        logger.briefDebug("cache aft-put:" + key + " = " + StringUtils.toString(value));
     }
 
     public void put(CacheKey key, Object value, int lifespanInSecs) {
-//        logger.briefDebug("cache pre-put:" + key +  " = " + StringUtils.toString(value) +
-//                          " lifespanInSecs:" + lifespanInSecs);
-
-        if (!cache.getCacheConfiguration().isEternal()) {
-            throw new UnsupportedOperationException("Currently, we do not support cached object" +
-                    " with idle time expiry and lifespan expiry at the same time.");
-        }
-
         String keystr = key.getUniqueString();
         if (value == null) {
             cache.remove(keystr);
@@ -56,8 +46,6 @@ public class EhcacheImpl implements Cache {
             el.setTimeToLive(lifespanInSecs);
             cache.put(el);
         }
-//        logger.briefDebug("cache aft-put:" + key +  " = " + StringUtils.toString(value) +
-//                          " lifespanInSecs:" + lifespanInSecs);
     }
 
     public Object get(CacheKey key) {

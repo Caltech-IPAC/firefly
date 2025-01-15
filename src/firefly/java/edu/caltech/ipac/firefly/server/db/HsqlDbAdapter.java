@@ -138,7 +138,7 @@ public class HsqlDbAdapter extends BaseDbAdapter {
             }
         }
         if (e instanceof DataAccessException dax) {
-            return new DataAccessException(msg, dax.getCause());
+            return new DataAccessException(msg, dax.getCause() == null ? dax : dax.getCause());   // when the cause is a DataAccessException, don't need to interpret.
         }
         return new DataAccessException(msg, e);
     }

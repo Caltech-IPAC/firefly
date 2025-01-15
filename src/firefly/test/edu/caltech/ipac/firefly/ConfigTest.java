@@ -12,12 +12,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Properties;
 import java.util.UUID;
 
 /**
- * Should load the logger and app properties to apply to any test runnner
+ * Should load the logger and app properties to apply to any test runner
  * For logger, using "test" alias name in unit test and change test properties to be used in {@link AppProperties}
  * Use the class to extend you test case and make use of particular log level
  *
@@ -29,7 +32,7 @@ public class ConfigTest {
     public static String WS_USER_ID = AppProperties.getProperty("workspace.user","test@ipac.caltech.edu");
 
     /**
-     * Use the logger in the test case that would extends this class.
+     * Use the logger in the test case that would extend this class.
      */
     public static final Logger.LoggerImpl LOG = Logger.getLogger("test");
 
@@ -110,17 +113,39 @@ public class ConfigTest {
         String contextPath = System.getenv("contextPath");
         String webappConfigPath = System.getenv("webappConfigPath");
 
-        AppProperties.setProperty("CacheManager.disabled", "true");
-        AppProperties.setProperty("work.directory", Paths.get("build").toAbsolutePath().toString());
-
         contextPath = contextPath == null ? "/firefly" : contextPath;
         contextName = contextName == null ? "firefly" : contextName;
         webappConfigPath = webappConfigPath == null ? Paths.get("build/%s/war/WEB-INF/config".formatted(contextName)).toAbsolutePath().toString() : webappConfigPath;
+
+        AppProperties.setProperty("work.directory", Paths.get("build").toAbsolutePath().toString());
+        Path buildConfg = Paths.get(webappConfigPath);
+        System.setProperty("java.io.tmpdir", "build/%s/tmp".formatted(contextName));
+
+        copyWithSub(Paths.get("./config/ehcache.xml"), buildConfg, "app-name", contextName);
+        copy(Paths.get("config/test/app-test.prop"), buildConfg);
+        copy(Paths.get("config/ignore_sizeof.txt"), buildConfg);
 
         requestAgent = requestAgent == null ? new RequestAgent(null, "localhost", "/test", "localhost:8080/", "127.0. 0.1", UUID.randomUUID().toString(), contextPath): requestAgent;
 
         ServerContext.getRequestOwner().setRequestAgent(requestAgent);
         ServerContext.init(contextPath, contextName, webappConfigPath);
+    }
+
+    private static void copy(Path src, Path dstDir) {
+        try {
+            Files.copy(src, dstDir.resolve(src.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException ignored) {}
+    }
+
+    private static void copyWithSub(Path src, Path dstDir, String token, String val) {
+        try {
+            String content = new String(Files.readAllBytes(src));
+            content = content.replace("@%s@".formatted(token), val);
+            if (!Files.exists(dstDir)) {
+                Files.createDirectories(dstDir);
+            }
+            Files.write(dstDir.resolve(src.getFileName()), content.getBytes());
+        } catch (IOException ignored) {}
     }
 
 }

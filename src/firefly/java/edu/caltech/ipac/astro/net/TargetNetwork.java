@@ -18,7 +18,7 @@ import static edu.caltech.ipac.astro.net.Resolver.UNKNOWN;
 public class TargetNetwork {
 
     public final static int TWO_MONTHS= 60 * 86400;
-    private final static Cache objCache= CacheManager.getCache(Cache.TYPE_PERM_SMALL);
+    private final static Cache objCache= CacheManager.getLocal();
 
     public static ResolvedWorldPt resolveToWorldPt(String objName, Resolver resolver) {
         if (resolver==null || resolver==UNKNOWN || resolver==NONE) {

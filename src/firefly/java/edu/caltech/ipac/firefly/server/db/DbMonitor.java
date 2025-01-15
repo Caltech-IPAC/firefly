@@ -5,13 +5,18 @@
 package edu.caltech.ipac.firefly.server.db;
 
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.util.AppProperties;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import static edu.caltech.ipac.firefly.core.Util.Try;
+import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
 
 /**
  * Date: 5/3/24
@@ -92,9 +97,11 @@ class DbMonitor {
 
     public static void updateDbStats() {
         LOGGER.trace("DbAdapter -> updateDbStats");
+        Ref<Future<?>> t = new Ref<>();
         for (DbAdapter.EmbeddedDbInstance db : dbInstances.values()) {
-            db.updateStats();
+            t.set(SHORT_TASK_EXEC.submit(db::updateStats));
         }
+        Try.it(() -> t.get().get(5, TimeUnit.SECONDS));      // run all in parallel, but wait for up to 5 seconds
     }
 
 //====================================================================

@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
+import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.messaging.Messenger;
 import edu.caltech.ipac.firefly.server.Counters;
@@ -97,7 +98,6 @@ public class ServerStatus extends BaseHttpServlet {
             EhcacheProvider prov = (EhcacheProvider) edu.caltech.ipac.util.cache.CacheManager.getCacheProvider();
 
             displayCacheInfo(writer, prov.getEhcacheManager(), sInfo);
-            displayCacheInfo(writer, prov.getSharedManager(), sInfo);
 
             if (showHeaders) {
                 skip(writer);
@@ -307,8 +307,10 @@ public class ServerStatus extends BaseHttpServlet {
     }
 
     private static void showMessagingStatus(PrintWriter w) {
-        w.println("Messenger: Redis host: " + Messenger.getRedisHostPortDesc());
-        w.println("Messaging Pool: " + Messenger.getStats());
+        w.println("Redis information: ");
+        w.println("-----------------  ");
+        Map<String, Object> stats = RedisService.getStats();
+        stats.forEach((k,v)-> w.println("  - " + k + ": " + v));
     }
 
     private static void showPackagingStatus(PrintWriter w, boolean details) {

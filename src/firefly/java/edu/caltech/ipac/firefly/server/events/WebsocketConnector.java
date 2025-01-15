@@ -142,7 +142,7 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
      * @param userKey
      */
     public static void pingClient(String userKey, String eventConnId) {
-        List<ServerEventQueue> conns = ServerEventManager.getEvQueueList();
+        List<ServerEventQueue> conns = ServerEventManager.getLocalEventQueues();
         for (ServerEventQueue seq : conns) {
             // need to notify clients that are affected by update
             if (seq.getConnID().equals(eventConnId) || seq.getUserKey().equals(userKey)) {
@@ -164,7 +164,7 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
      */
     private void updateClientConnections(String type, String channelID, String userKey) {
 //        List<ServerEventQueue> conns = ServerEventManager.getEvQueueList();
-        List<ServerEventQueue> conns = ServerEventManager.getAllServerEvQueueList();
+        List<ServerEventQueue> conns = ServerEventManager.getAllEventQueue();
         for (ServerEventQueue seq : conns) {
             // need to notify clients that are affected by update
             if (seq.getChannel().equals(channelID) || seq.getUserKey().equals(userKey)) {

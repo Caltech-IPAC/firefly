@@ -23,14 +23,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class ServerEventManager {
 
-    private static final boolean USE_CACHE_EVENT_WORKER = true;
-    private static final EventWorker eventWorker = USE_CACHE_EVENT_WORKER ?
-                                                    new CacheEventWorker() : new SimpleEventWorker();
-    private static final List<ServerEventQueue> evQueueList= new CopyOnWriteArrayList<ServerEventQueue>();
+    private static final boolean USE_MESSAGE_EVENT_WORKER = true;
+    private static final EventWorker eventWorker = USE_MESSAGE_EVENT_WORKER ?
+                                                    new MessageEventWorker() : new LocalEventWorker();
+    private static final List<ServerEventQueue> localEventQueues = new CopyOnWriteArrayList<>();
+    private static final ReplicatedQueueList allEventQueues = new ReplicatedQueueList();
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static long totalEventCnt;
     private static long deliveredEventCnt;
-    private static ReplicatedQueueList repQueueList= new ReplicatedQueueList();
 
 
     /**
@@ -99,22 +99,30 @@ public class ServerEventManager {
 
     public static void addEventQueue(ServerEventQueue queue) {
         Logger.briefInfo("Channel: create new Queue for: "+ queue.getQueueID() );
-        evQueueList.add(queue);
-        repQueueList.setQueueListForNode(evQueueList);
+        localEventQueues.add(queue);
+        allEventQueues.setQueueListForNode(localEventQueues);
     }
 
-    static List<ServerEventQueue> getEvQueueList() {
-        return evQueueList;
+    /**
+     * Get the list of ServerEventQueue that are local to this node.
+     * @return list of ServerEventQueue
+     */
+    static List<ServerEventQueue> getLocalEventQueues() {
+        return localEventQueues;
     }
 
-    static List<ServerEventQueue> getAllServerEvQueueList() {
-        return repQueueList.getCombinedNodeList();
+    /**
+     * Get the list of all ServerEventQueue across all nodes(multiple instances of Firefly).
+     * @return list of ServerEventQueue
+     */
+    static List<ServerEventQueue> getAllEventQueue() {
+        return  allEventQueues.getCombinedNodeList();
     }
 
     static void processEvent(ServerEvent ev) {
         totalEventCnt++;
         boolean delivered = false;
-        for(ServerEventQueue queue : evQueueList) {
+        for(ServerEventQueue queue : localEventQueues) {
             try {
                 if (queue.matches(ev)) {
                     try {
@@ -137,8 +145,8 @@ public class ServerEventManager {
     }
 
     public static void removeEventQueue(ServerEventQueue queue) {
-        evQueueList.remove(queue);
-        repQueueList.setQueueListForNode(evQueueList);
+        localEventQueues.remove(queue);
+        allEventQueues.setQueueListForNode(localEventQueues);
     }
 
 //====================================================================
@@ -147,7 +155,7 @@ public class ServerEventManager {
 
     public static int getActiveQueueCnt() {
         int cnt = 0;
-        for(ServerEventQueue queue : evQueueList) {
+        for(ServerEventQueue queue : localEventQueues) {
             if (queue.getEventConnector().isOpen()) {
                 cnt++;
             }
@@ -156,7 +164,7 @@ public class ServerEventManager {
     }
 
     public static List<ServerEventQueue.QueueDescription> getQueueDescriptionList(int limit) {
-        return evQueueList.stream()
+        return localEventQueues.stream()
                 .map(ServerEventQueue::convertToDescription)
                 .sorted((d1,d2) -> (int)(d2.lastPutTime()-d1.lastPutTime()))
                 .limit(limit)
@@ -173,7 +181,7 @@ public class ServerEventManager {
     public static int getActiveQueueChannelCnt(String channel) {
         int cnt = 0;
         if (StringUtils.isEmpty(channel)) return 0;
-        for(ServerEventQueue queue : evQueueList) {
+        for(ServerEventQueue queue : localEventQueues) {
             if (channel.equals(queue.getChannel()) && queue.getEventConnector().isOpen()) {
                 cnt++;
             } else {
@@ -198,10 +206,10 @@ public class ServerEventManager {
 //====================================================================
 
     public interface EventWorker {
-        public void deliver(ServerEvent sev);
+        void deliver(ServerEvent sev);
     }
 
-    private static class SimpleEventWorker implements EventWorker {
+    private static class LocalEventWorker implements EventWorker {
         public void deliver(ServerEvent sev) {
             ServerEventManager.processEvent(sev);
         }

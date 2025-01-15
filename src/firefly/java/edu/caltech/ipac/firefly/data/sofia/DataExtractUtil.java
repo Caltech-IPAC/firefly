@@ -3,16 +3,12 @@ package edu.caltech.ipac.firefly.data.sofia;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.SrvParam;
-import edu.caltech.ipac.firefly.server.cache.UserCache;
-import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.util.cache.Cache;
+import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 
 /**
@@ -36,7 +32,7 @@ public abstract class DataExtractUtil {
      */
     public File getSourceFile(ServerRequest req) {
         String fileKey = req.getParam("file");
-        Cache sessionCache = UserCache.getInstance();
+        Cache sessionCache = CacheManager.getUserCache();
         File sourceFile = ServerContext.convertToFile(fileKey);
         if (sourceFile == null || !sourceFile.canRead()) {
             UploadFileInfo tmp = (UploadFileInfo) (sessionCache.get(new StringKey(fileKey)));

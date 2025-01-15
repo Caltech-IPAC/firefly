@@ -20,31 +20,21 @@ import java.util.Map;
  */
 class ReplicatedQueueList {
 
-   private static final String HOST_NAME= FileUtil.getHostname();
-   private static final StringKey REP_QUEUE_MAP = new StringKey("ReplicatedEventQueueMap");
-   private static Cache getCache() { return CacheManager.getCache(Cache.TYPE_PERM_SMALL); }
+   private static final StringKey HOST_NAME= new StringKey(FileUtil.getHostname());
+   private static final String REP_QUEUE_MAP = "ReplicatedEventQueueMap";
+   private static Cache getCache() { return CacheManager.getDistributedMap(REP_QUEUE_MAP); }
 
    synchronized void setQueueListForNode(List<ServerEventQueue> list)  {
       Cache cache= getCache();
-      List<ServerEventQueue>  replicatedList= new ArrayList<>();
-
-      for(ServerEventQueue q : list) {
-          replicatedList.add(new ServerEventQueue(q.getConnID(),q.getChannel(),q.getUserKey(),null));
-      }
-      Map allListMap= (Map)cache.get(REP_QUEUE_MAP);
-       if (allListMap==null) allListMap= new HashMap();
-       allListMap.put(HOST_NAME,replicatedList);
-       cache.put(REP_QUEUE_MAP, allListMap);
+      cache.put(HOST_NAME, list);
    }
 
    synchronized List<ServerEventQueue> getCombinedNodeList()  {
-       Cache cache= getCache();
        List<ServerEventQueue> retList= new ArrayList<>();
-       Map allListMap= (Map)cache.get(REP_QUEUE_MAP);
-       if (allListMap==null) return Collections.emptyList();
-
-       for(Object v : allListMap.values()) retList.addAll((List)v);
-       
+       Cache cache= getCache();
+       for(String k : cache.getKeys()) {
+           retList.addAll((List)cache.get(new StringKey(k)));
+       }
        return retList;
    }
 

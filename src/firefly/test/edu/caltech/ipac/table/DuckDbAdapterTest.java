@@ -16,7 +16,6 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.DecimationProcessor;
 import edu.caltech.ipac.firefly.server.query.EmbeddedDbProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
-import edu.caltech.ipac.firefly.server.query.SearchProcessor;
 import edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.FileLoader;
@@ -29,13 +28,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -200,7 +194,7 @@ public class DuckDbAdapterTest extends ConfigTest {
 		hsqlReq.setParam(SEARCH_REQUEST, JsonTableUtil.toJsonTableRequest(hsql).toJSONString());
 
 		DataGroup duckTbl = new SearchManager().getDataGroup(duckReq).getData();
-		DataGroup hsqlTbl = new SearchManager().getDataGroup(hsqlReq).getData();
+		DataGroup hsqlTbl = new SearchManager().getDataGroup(hsqlReq).getData();		// failed. TODO
 
 		fullTableTest(duckTbl, hsqlTbl);
 
@@ -252,49 +246,6 @@ public class DuckDbAdapterTest extends ConfigTest {
 		dbAdapter.close(true);
 		assertFalse("DuckDb file is deleted", dbAdapter.getDbFile().exists());
 	}
-
-	@Test
-	public void testSynchronizedAccess() throws InterruptedException {
-		ArrayList<Long> even = new ArrayList<>();
-		ArrayList<Long> odd = new ArrayList<>();
-
-		var locker = new SearchProcessor.SynchronizedAccess();
-		Function<String,Long> setResults = (q) -> {
-			long start = System.currentTimeMillis();
-			var release = locker.lock(q);
-            try {
-				Thread.sleep(1_000);
-            } catch (InterruptedException e) {}
-			finally {
-				release.run();
-            }
-			return System.currentTimeMillis() - start;
-        };
-
-		int ntimes = 10;
-		var p = Executors.newFixedThreadPool(ntimes);		// when all threads start at the same time, all be blocked.
-		for(int i = 0; i < ntimes; i++) {
-			long a = i % 2;
-			p.submit(() -> {
-                    if (a == 0 ) {
-                        even.add(Math.round(setResults.apply("even")/1000.0));
-                    } else {
-                        odd.add(Math.round(setResults.apply("odd")/1000.0));
-                    }
-            });
-		}
-		p.shutdown();
-		if (!p.awaitTermination(10, TimeUnit.SECONDS)) {
-			System.out.println("Not all tasks completed in time.");
-		}
-//		even.forEach(System.out::println);
-//		odd.forEach(System.out::println);
-
-		assertEquals(ntimes/2, (long)Collections.max(even));
-		assertEquals(1L, (long)Collections.min(even));
-		assertEquals(ntimes/2, (long)Collections.max(odd));
-		assertEquals(1L, (long)Collections.min(odd));
-    }
 
 	@Test
 	public void testLikeSubstitution() {

@@ -9,7 +9,6 @@ import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
-import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.FileUtil;
@@ -109,7 +108,7 @@ abstract public class JsonStringProcessor implements SearchProcessor<String> {
             try {
                 jsonFile = File.createTempFile("tmp-", ".json", QueryUtil.getTempDir());
                 FileUtil.writeStringToFile(jsonFile, results);
-                CacheManager.getCache(Cache.TYPE_TEMP_FILE)
+                CacheManager.getLocalFile()
                         .put(new StringKey(getUniqueID(request)), jsonFile);
             } catch (IOException e) {
                 LOGGER.error("Cannot create temp file: " + e.getMessage());
@@ -118,7 +117,7 @@ abstract public class JsonStringProcessor implements SearchProcessor<String> {
     }
 
     protected String getCachedData(ServerRequest request) {
-        Cache cache = CacheManager.getCache(Cache.TYPE_TEMP_FILE);
+        Cache cache = CacheManager.getLocalFile();
         File jsonFile = (File)cache.get(new StringKey(getUniqueID(request)));
         if (jsonFile != null) {
             try {

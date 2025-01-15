@@ -19,7 +19,6 @@ import edu.caltech.ipac.util.cache.StringKey;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -42,7 +41,7 @@ abstract public class FileGroupsProcessor implements SearchProcessor<List<FileGr
             DownloadRequest request= (DownloadRequest)sr;
             List<FileGroup> fileGroups = null;
             StringKey key = new StringKey(FileGroupsProcessor.class.getName(), getUniqueID(request));
-            Cache cache = CacheManager.getCache(Cache.TYPE_TEMP_FILE);
+            Cache cache = CacheManager.getLocalFile();
             fileGroups = (List<FileGroup>) cache.get(key);
 
             if (fileGroups == null || isStaled(fileGroups)) {

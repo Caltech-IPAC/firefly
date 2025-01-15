@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.cache;
 
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
@@ -21,14 +20,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author loi
  * @version $Id: UserCache.java,v 1.5 2009/03/23 23:55:16 loi Exp $
  */
-public class KeyBasedCache implements Cache {
+public class LocalMapCache implements Cache {
 
     private Cache cache;
     private StringKey uniqueKey;
 
-    public KeyBasedCache(String key) {
+    public LocalMapCache(String key) {
         uniqueKey = new StringKey(key);
-        cache = CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
+        cache = CacheManager.getLocal();
     }
 
     public StringKey getUserKey() {
@@ -74,15 +73,6 @@ public class KeyBasedCache implements Cache {
         return getSessionMap().size();
     }
 
-    public static boolean exists(StringKey userKey) {
-        Cache cache = CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
-        return cache.isCached(userKey);
-    }
-
-    public static void create(StringKey userKey) {
-        Cache cache = CacheManager.getCache(Cache.TYPE_HTTP_SESSION);
-        cache.put(userKey, null);
-    }
 //====================================================================
 //
 //====================================================================

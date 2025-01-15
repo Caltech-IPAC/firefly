@@ -1,5 +1,5 @@
 <ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                            xsi:noNamespaceSchemaLocation="ehcache.xsd" name="@app-name@">
+                            xsi:noNamespaceSchemaLocation="ehcache.xsd" name="localCache">
 
     <!--
     CacheManager Configuration
@@ -118,15 +118,6 @@
         use 239.250.0.1 for org-local
         use 230.0.0.1   for global
     -->
-    <!--REPLICATE
-    <cacheManagerPeerProviderFactory
-            class="edu.caltech.ipac.util.cache.CachePeerProviderFactory"
-            properties="peerDiscovery=@ehcache.peerDiscovery@,
-                        multicastGroupAddress=@ehcache.multicast.address@,
-                        multicastGroupPort=@ehcache.multicast.port@, timeToLive=@ehcache.multicast.ttl@"
-            propertySeparator=","
-            />
-    REPLICATE-->
 
     <!--
     CacheManagerPeerListener
@@ -162,13 +153,6 @@
       messages to the listener. This should be long enough for the slowest message.
       If not specified it defaults 120000ms.
     -->
-
-    <!--REPLICATE
-    <cacheManagerPeerListenerFactory
-            class="net.sf.ehcache.distribution.RMICacheManagerPeerListenerFactory"
-            properties="socketTimeoutMillis=300000"
-                        propertySeparator="," />
-    REPLICATE-->
 
     <!--
     Cache configuration
@@ -372,106 +356,31 @@
     -->
 
     <!--
-     The data stored in this cache is relatively small and have a short idle time.
-     THIS CACHE IS DISTRIBUTED.
+     The data store in this cache is large and are meant to not exceed a specified max memory allocation.
+     This cache is shared among all web applications in the container.  it will NOT be replicated.
+     The maxBytesLocalHeap is not important here because we will automatically calculate it based on
+     pct.vis.shared.mem.size property.
     -->
-    <cache name="HTTP_SESSION"
-           maxElementsInMemory="200"
+    <cache name="VIS_SHARED_MEM"
+           maxBytesLocalHeap="100M"
            eternal="false"
-           timeToIdleSeconds="1800"
            memoryStoreEvictionPolicy="LRU"
-           overflowToDisk="true"
-           maxElementsOnDisk="0"
-           diskSpoolBufferSizeMB="5"
-           diskExpiryThreadIntervalSeconds="300"
-        >
-
-        <!--REPLICATE
-        <cacheEventListenerFactory
-               class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-               properties="asynchronousReplicationIntervalMillis=250,
-                           replicateAsynchronously=true"
-               propertySeparator=","/>
-        REPLICATE-->
-
-    </cache>
+           overflowToDisk="false"
+    />
 
     <!--
-     The data stored in this cache is relatively small, but does not expire.
-     THIS CACHE IS DISTRIBUTED.
+    The data in this cache is relatively small and does not expire by default.
+    However, if lifespanInSecs is set, objects exceeding the specified lifespan will be cleared.
     -->
     <cache name="PERM_SMALL"
            maxElementsInMemory="1000"
-           eternal="true"
+           eternal="false"
            memoryStoreEvictionPolicy="LRU"
            overflowToDisk="true"
            diskPersistent="true"
            maxElementsOnDisk="50000"
            diskSpoolBufferSizeMB="5"
            diskExpiryThreadIntervalSeconds="600"
-       >
-
-       <!--REPLICATE
-       <cacheEventListenerFactory
-           class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-           properties="asynchronousReplicationIntervalMillis=250,
-                       replicateAsynchronously=true"
-           propertySeparator=","/>
-        REPLICATE-->
- </cache>
-
-    <!--
-     This cache is reserved for file path(File) caching.  There is no idle time expiration.
-     This is similar to PERM_SMALL, except there will be a CacheEventListener to monitor 
-     the File object, and to clean up the file when the File object is evicted.
-     THIS CACHE IS DISTRIBUTED.
-    -->
-    <cache name="PERM_FILE"
-           maxElementsInMemory="5000"
-           eternal="true"
-           memoryStoreEvictionPolicy="LRU"
-           overflowToDisk="true"
-           diskPersistent="true"
-           maxElementsOnDisk="50000"
-           diskSpoolBufferSizeMB="5"
-           diskExpiryThreadIntervalSeconds="600"
-        >
-
-        <!--REPLICATE
-        <cacheEventListenerFactory
-           class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-           properties="asynchronousReplicationIntervalMillis=250,
-                       replicateAsynchronously=true"
-           propertySeparator=","/>
-        />
-        REPLICATE-->
-
-</cache>
-
-
-<!--
-This cache is reserved for file path(File) caching.  There is no idle time expiration.
-This is similar to PERM_SMALL, except there will be a CacheEventListener to monitor
-the File object, and to clean up the file when the File object is evicted.
-THIS CACHE IS DISTRIBUTED.
--->
-    <cache name="TEMP_FILE"
-           maxElementsInMemory="5000"
-           eternal="true"
-           memoryStoreEvictionPolicy="LRU"
-           overflowToDisk="false"
-           diskPersistent="false"
-        >
-
-        <!--REPLICATE
-        <cacheEventListenerFactory
-               class="net.sf.ehcache.distribution.RMICacheReplicatorFactory"
-               properties="asynchronousReplicationIntervalMillis=250,
-                           replicateAsynchronously=true"
-               propertySeparator=","/>
-           />
-        REPLICATE-->
-
-    </cache>
+    />
 
 </ehcache>

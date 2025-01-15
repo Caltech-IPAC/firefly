@@ -3,11 +3,13 @@
  */
 package edu.caltech.ipac.firefly.server.db;
 
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.util.Ref;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataType;
 import edu.caltech.ipac.util.AppProperties;
@@ -28,9 +30,13 @@ import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import static edu.caltech.ipac.firefly.core.Util.Try;
 import static edu.caltech.ipac.firefly.server.db.DuckDbUDF.*;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.*;
 import static edu.caltech.ipac.util.StringUtils.*;
@@ -42,6 +48,7 @@ import static edu.caltech.ipac.util.StringUtils.*;
 public class DuckDbAdapter extends BaseDbAdapter {
     public static final String NAME = "duckdb";
     public static final String DRIVER = "org.duckdb.DuckDBDriver";
+    public static final String EXT_DIR = AppProperties.getProperty("duckdb.ext.dir", System.getProperty("java.io.tmpdir"));
     public static String maxMemory = AppProperties.getProperty("duckdb.max.memory");        // in GB; 2G, 5.5G, etc
     private static int threadCnt=1;    // min 125mb per thread.  recommend 5gb per thread; we will config 1gb per thread but not more than 4.
 
@@ -85,7 +92,7 @@ public class DuckDbAdapter extends BaseDbAdapter {
                 } catch (SQLException e) { return false; }
             }
         };
-        db.consumeProps("memory_limit=%s,threads=%d".formatted(maxMemory, threadCnt));
+        db.consumeProps("memory_limit=%s,threads=%d,extension_directory=%s".formatted(maxMemory, threadCnt, EXT_DIR));
         return db;
     }
 
@@ -188,7 +195,7 @@ public class DuckDbAdapter extends BaseDbAdapter {
                     List<Integer> aryIdx = colIdxWithArrayData(colsAry);
                     for (int r = 0; r < totalRows; r++) {
                         Object[] row = dg.get(r).getData();
-                        aryIdx.forEach(idx -> row[idx] = serialize(row[idx]));      // serialize array data if necessary
+                        aryIdx.forEach(idx -> row[idx] = Util.serialize(row[idx]));      // serialize array data if necessary
                         addRow(appender, row, r);
                     }
                     appender.flush();
@@ -252,7 +259,8 @@ public class DuckDbAdapter extends BaseDbAdapter {
             if (e instanceof SQLException ex) {
                 JSONObject json = (JSONObject) JSONValue.parse(ex.getMessage().replace("%s:".formatted(ex.getClass().getName()), ""));
                 String msg = json.get("exception_message").toString().split("\n")[0];
-                String type = getSafe(() -> json.get("error_subtype").toString(), json.get("exception_type").toString());
+                String type = Try.it(() -> json.get("error_subtype").toString())
+                                    .getOrElse(json.get("exception_type").toString());
                 return type + ":" + msg;
             }
             return super.interpretError(e);
@@ -276,34 +284,40 @@ public class DuckDbAdapter extends BaseDbAdapter {
     public record MimeDesc(String mime, String desc) {}
     @Nonnull
     public static MimeDesc getMimeType(File inFile) {
-        String tmpDir = System.getProperty("java.io.tmpdir");
-        try (Connection conn = new DuckDbAdapter().getJdbcTmpl().getDataSource().getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet extrs = stmt.executeQuery("SET extension_directory = '%s'; SELECT installed, loaded FROM duckdb_extensions() WHERE extension_name = 'magic'".formatted(tmpDir))) {
-
-            boolean installed = false;
-            boolean loaded = false;
-            if (extrs.next()) {
-                installed = extrs.getBoolean("installed");
-                loaded = extrs.getBoolean("loaded");
+        try(JdbcFactory.SharedDS ds = JdbcFactory.getSharedDS(new DuckDbAdapter().createDbInstance())) {
+            loadExtension(ds, "magic");
+            Map<String, Object> rs = ds.getJdbc().queryForMap("SELECT file, magic_mime(file) AS mime, magic_type(file) AS desc FROM glob('%s')".formatted(inFile.getAbsolutePath()));
+            if (!rs.isEmpty()) {
+                return new MimeDesc(String.valueOf(rs.get("mime")), String.valueOf(rs.get("desc")));
             }
-            // Install and load the extension if not already done
-            if (!installed) {
-                stmt.executeUpdate("SET extension_directory = '%s'; INSTALL magic FROM community".formatted(tmpDir));
-            }
-            if (!loaded) {
-                stmt.executeUpdate("SET extension_directory = '%s'; LOAD magic".formatted(tmpDir));
-            }
-            try (ResultSet rs = stmt.executeQuery("SELECT file, magic_mime(file) AS mime, magic_type(file) AS desc FROM glob('%s')".formatted(inFile.getAbsolutePath()))) {
-                if (rs.next()) {
-                    return new MimeDesc(rs.getString("mime"), rs.getString("desc"));
-                }
-            }
-
-        } catch (SQLException ex) {
+        } catch (Exception ex) {
             Logger.getLogger().error(ex, "Failed to detect mime type");
         }
         return new MimeDesc("application/x-unknown", "unknown");
+    }
+
+    /**
+     * Loads the specified extension in DuckDB.
+     *
+     * @param ds the shared data source
+     * @param name the name of the extension to load
+     */
+    static void loadExtension(JdbcFactory.SharedDS ds, String name) {
+        SimpleJdbcTemplate jdbc = ds.getJdbc();
+        Ref<Boolean> installed = new Ref<>(false);
+        Ref<Boolean> loaded = new Ref<>(false);
+        jdbc.query("SELECT installed, loaded FROM duckdb_extensions() WHERE extension_name = '%s'".formatted(name), (rs, idx) -> {
+            installed.set(rs.getBoolean("installed"));
+            loaded.set(rs.getBoolean("loaded"));
+            return null;
+        });
+        // Install and load the extension if not already done
+        if (!installed.get()) {
+            jdbc.update("INSTALL %s FROM community".formatted(name));
+        }
+        if (!loaded.get()) {
+            jdbc.update("LOAD %s".formatted(name));
+        }
     }
 
 }

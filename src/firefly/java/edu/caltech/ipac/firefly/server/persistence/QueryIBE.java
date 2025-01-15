@@ -11,7 +11,6 @@ package edu.caltech.ipac.firefly.server.persistence;
 import edu.caltech.ipac.astro.ibe.IBE;
 import edu.caltech.ipac.astro.ibe.IbeDataSource;
 import edu.caltech.ipac.astro.ibe.IbeQueryParam;
-import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.SortInfo;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.MetaConst;
@@ -102,7 +101,7 @@ public class QueryIBE extends EmbeddedDbProcessor {
             IBE ibe = IBEUtils.getIBE(mission, paramMap);
             IbeDataSource source = ibe.getIbeDataSource();
             CacheKey cacheKey = new StringKey("ibemeta", source.getIbeHost(), source.getMission(), source.getDataset(), source.getTableName());
-            Cache cache = CacheManager.getCache(Cache.TYPE_PERM_SMALL);
+            Cache cache = CacheManager.getLocal();
             DataGroup coldefs = (DataGroup) cache.get(cacheKey);
             if (coldefs == null) {
                 File ofile = File.createTempFile(mission+"-dd", ".tbl", QueryUtil.getTempDir(request));

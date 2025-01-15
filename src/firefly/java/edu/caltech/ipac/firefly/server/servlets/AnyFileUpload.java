@@ -10,7 +10,6 @@ import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
-import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.StopWatch;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.visualize.LockingVisNetwork;
@@ -23,6 +22,7 @@ import edu.caltech.ipac.firefly.server.ws.WsServerParams;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import org.apache.commons.fileupload.FileItemIterator;
@@ -140,7 +140,7 @@ public class AnyFileUpload extends BaseHttpServlet {
             // save info in a cache for downstream use
             String fileCacheKey = sp.getOptional(CACHE_KEY);
             fileCacheKey = fileCacheKey == null ? uploadFileInfo.getPname() : fileCacheKey;
-            UserCache.getInstance().put(new StringKey(fileCacheKey), uploadFileInfo);
+            CacheManager.getUserCache().put(new StringKey(fileCacheKey), uploadFileInfo);
 
             // returns the fileCacheKey or full analysis json
             String returnVal= analyzeFile ? callAnalysis(sp,statusFileInfo,uploadFileInfo,fileCacheKey) : fileCacheKey;

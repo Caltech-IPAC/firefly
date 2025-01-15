@@ -4,6 +4,7 @@
 package edu.caltech.ipac.table;
 
 import edu.caltech.ipac.TestCategory;
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.HsqlDbAdapter;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
@@ -17,7 +18,6 @@ import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource;
 import edu.caltech.ipac.firefly.util.FileLoader;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.Level;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -28,7 +28,6 @@ import org.junit.experimental.categories.Category;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.getAdapter;
@@ -308,32 +307,5 @@ public class EmbeddedDbUtilTest extends ConfigTest {
 		}catch (DataAccessException e) {
 			Assert.assertEquals("TABLE out-of-sync; Reload table to resume", e.getMessage());
 		}
-	}
-
-	@Test
-	public void testSerializer() {
-		// array of boolean
-		Object in = new Boolean[]{true, false, true};
-		String s = EmbeddedDbUtil.serialize(in);
-		Object d = EmbeddedDbUtil.deserialize(s);
-		if (d instanceof Boolean[] v) {
-			Assert.assertArrayEquals(v, (Boolean[])in);
-		} else Assert.fail("Deserialized type Boolean mismatch");
-
-		// array of double
-		in = new Double[]{1.0, 2.0, 3.0};
-		s = EmbeddedDbUtil.serialize(in);
-		d = EmbeddedDbUtil.deserialize(s);
-		if (d instanceof Double[] v) {
-			Assert.assertArrayEquals(v, (Double[])in);
-		} else Assert.fail("Deserialized type Double mismatch");
-
-		// array of integer
-		in = new Integer[]{1, 2, 3};
-		s = EmbeddedDbUtil.serialize(in);
-		d = EmbeddedDbUtil.deserialize(s);
-		if (d instanceof Integer[] v) {
-			Assert.assertArrayEquals(v, (Integer[])in);
-		} else Assert.fail("Deserialized type Integer mismatch");
 	}
 }

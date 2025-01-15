@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.db;
 
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
@@ -26,19 +27,15 @@ import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.validation.constraints.NotNull;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.*;
 import java.util.Date;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static edu.caltech.ipac.firefly.core.Util.Try;
 import static edu.caltech.ipac.firefly.server.ServerContext.SHORT_TASK_EXEC;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_PATH;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_FILE_TYPE;
@@ -54,6 +51,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.ZoneOffset.UTC;
 
 /**
+ *  Using duckdb appender greatly improve performance when ingesting large volume of data.
+ *  But, direct BLOB support is not available.  Therefore, we will serialize Java object
+ *  into base64 string for storage.
+ *
  * @author loi
  * @version $Id: DbInstance.java,v 1.3 2012/03/15 20:35:40 loi Exp $
  */
@@ -158,7 +159,7 @@ public class EmbeddedDbUtil {
 
         if (isAry) {
             if (val instanceof Array)   return val;    // we will assume the data type matches
-            return deserialize(val.toString());        // handles base64 encoded Java serialized objects
+            return Util.deserialize(val.toString());        // handles base64 encoded Java serialized objects
         } else if (clz == String.class) {
             if (val instanceof Blob b) {
                 return new String(b.getBytes(1, (int) b.length()), UTF_8);   // handles binary UTF-8 encoded string
@@ -412,42 +413,12 @@ public class EmbeddedDbUtil {
 //  But, direct BLOB support is not available.  Therefore, we will serialize Java object
 //  into base64 string for storage.
 //====================================================================
-
-    public static String serialize(Object obj) {
-        if (obj == null) return null;
-        try {
-            ByteArrayOutputStream bstream = new ByteArrayOutputStream();
-            ObjectOutputStream ostream = new ObjectOutputStream(bstream);
-            ostream.writeObject(obj);
-            ostream.flush();
-            byte[] bytes =  bstream.toByteArray();
-            return Base64.getEncoder().encodeToString(bytes);
-        } catch (Exception e) {
-            logger.warn(e);
-            return null;
-        }
-    }
-
     public static Object deserialize(ResultSet rs, String cname) {
-        return getSafe(() -> deserialize(rs.getString(cname)));
+        return Try.it(() -> Util.deserialize(rs.getString(cname))).get();
     }
     public static Object deserialize(ResultSet rs, int cidx) {
-        return getSafe(() -> deserialize(rs.getString(cidx)));
+        return Try.it(() -> Util.deserialize(rs.getString(cidx))).get();
     }
-
-    public static Object deserialize(String base64) {
-        try {
-            if (base64 == null) return null;
-            byte[] bytes = Base64.getDecoder().decode(base64);
-            ByteArrayInputStream bstream = new ByteArrayInputStream(bytes);
-            ObjectInputStream ostream = new ObjectInputStream(bstream);
-            return ostream.readObject();
-        } catch (Exception e) {
-            logger.warn(e);
-            return null;
-        }
-    }
-
 //====================================================================
 //  privates functions
 //====================================================================
@@ -533,7 +504,7 @@ public class EmbeddedDbUtil {
                     for (int cidx = 0; cidx < cols.length; cidx++)  {
                         Object v = data.getData(cols[cidx].getKeyName(), ridx);
                         if (cIsAry.get(cidx)) {
-                            v = serialize(v);
+                            v = Util.serialize(v);
                         }
                         ps.setObject(cidx+1, v);
                     }
