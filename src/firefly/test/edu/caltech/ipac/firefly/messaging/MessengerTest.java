@@ -7,20 +7,22 @@ package edu.caltech.ipac.firefly.messaging;
 import edu.caltech.ipac.TestCategory;
 import edu.caltech.ipac.firefly.ConfigTest;
 import edu.caltech.ipac.firefly.core.RedisService;
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.util.Ref;
 import org.apache.logging.log4j.Level;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static org.junit.Assert.*;
 
@@ -94,16 +96,21 @@ public class MessengerTest extends ConfigTest {
         String topic2 = "test2";
 
         Ref<CountDownLatch> tester = new Ref<>();       // using Ref due to inner class references
-        Subscriber sub11 = Messenger.subscribe(topic1, msg -> tester.get().countDown());
-        Subscriber sub12 = Messenger.subscribe(topic1, msg -> tester.get().countDown());
-        Subscriber sub21 = Messenger.subscribe(topic2, msg -> tester.get().countDown());
-        Subscriber sub22 =Messenger.subscribe(topic2, msg -> tester.get().countDown());
+        Supplier<Subscriber> gen = () -> (Subscriber) (msg) -> {
+            tester.get().countDown();
+            LOG.debug("message received: " + tester.get().getCount());
+        };
+
+        Subscriber sub11 = Messenger.subscribe(topic1, gen.get());
+        Subscriber sub12 = Messenger.subscribe(topic1, gen.get());
+        Subscriber sub21 = Messenger.subscribe(topic2, gen.get());
+        Subscriber sub22 = Messenger.subscribe(topic2, gen.get());
 
         LOG.debug("1 msg to each topic x 2 subs per topic.. = 4");
         tester.set(new CountDownLatch(4));
         Messenger.publish(topic1, testMsg);
         Messenger.publish(topic2, testMsg);
-        tester.get().await(5, TimeUnit.SECONDS);       // wait up to 1s for msg delivery.
+        tester.get().await(1, TimeUnit.SECONDS);       // wait up to 1s for msg delivery.
         assertEquals("latch(4) should drain", 0, tester.get().getCount());
 
         LOG.debug("same as above, but 1 sub removed from topic1... = 3");
@@ -111,7 +118,7 @@ public class MessengerTest extends ConfigTest {
         Messenger.unSubscribe(sub11);
         Messenger.publish(topic1, testMsg);
         Messenger.publish(topic2, testMsg);
-        tester.get().await(1, TimeUnit.SECONDS);       // wait up to 1s for msg delivery..
+        tester.get().await(1, TimeUnit.SECONDS);       // wait up to 1s for msg delivery.
         assertEquals("latch(3)3 should drain", 0, tester.get().getCount());
 
         LOG.debug("same as above, but remove both subs from topic1... = 2");
@@ -143,25 +150,30 @@ public class MessengerTest extends ConfigTest {
         Subscriber sub21 = Messenger.subscribe(topic2, msg -> msg = null);
         Subscriber sub22 = Messenger.subscribe(topic2, msg -> msg = null);
 
-        LOG.debug("2 topics, 2 subs per topic.. = 2 connections");
-        Thread.sleep(300);          // give time for pool to update its stats
-        assertEquals("init", 2, RedisService.getConnectionCount());
+        Supplier<List<String>> topics = () -> Util.Try.it(() -> RedisService.getConnection().pubsubChannels())
+                                                     .getOrElse(Collections.emptyList());
 
-        LOG.debug("remove 1 sub from topic 1.. = 2 connections");
+        LOG.debug("2 topics, 2 subs per topic.");
+        Thread.sleep(300);          // give time for pool to update its stats
+        assertTrue("has topic1", topics.get().contains(topic1));
+        assertTrue("has topic2", topics.get().contains(topic2));
+
+        LOG.debug("remove 1 sub from topic 1.");
         Messenger.unSubscribe(sub11);
         Thread.sleep(100);
-        assertEquals("3 subs left", 2, RedisService.getConnectionCount());
+        assertTrue("has topic1", topics.get().contains(topic1));
 
-        LOG.debug("remove both subs from topic 1.. = 1 connections");
+        LOG.debug("remove both subs from topic 1.");
         Messenger.unSubscribe(sub12);
         Thread.sleep(100);
-        assertEquals("only topic2 left", 1, RedisService.getConnectionCount());
+        assertFalse("has topic1", topics.get().contains(topic1));
 
         LOG.debug("remove both topic.. = 0 connections");
         Messenger.unSubscribe(sub21);
         Messenger.unSubscribe(sub22);
         Thread.sleep(100);
-        assertEquals("no subs", 0, RedisService.getConnectionCount());
+        assertFalse("has topic1", topics.get().contains(topic1));
+        assertFalse("has topic2", topics.get().contains(topic2));
 
         LOG.debug("Messenger stats: " + RedisService.getStats());
         LOG.debug("testSubscribe.. done!");
