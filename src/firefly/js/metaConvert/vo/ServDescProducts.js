@@ -133,17 +133,29 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, activate
         const obsFieldParam= serDefParams.find( ({UCD=''}) =>
                               CUTOUT_UCDs.find( (testUcd) => UCD.toLowerCase().includes(testUcd)) );
         if (obsFieldParam) {
-            const ucd= obsFieldParam.UCD;
+            const raParam= serDefParams.find( ({UCD=''}) =>
+                RA_UCDs.find( (testUcd) => UCD.toLowerCase().includes(testUcd)) );
+            const decParam= serDefParams.find( ({UCD=''}) =>
+                DEC_UCDs.find( (testUcd) => UCD.toLowerCase().includes(testUcd)) );
+            const obsfieldUcd= obsFieldParam.UCD;
             const sdSizeValue= Number(obsFieldParam.value);
-            cutoutOptions.ucdKeys= [...ucdKeys,ucd];
+            cutoutOptions.ucdKeys= [...ucdKeys,obsfieldUcd];
 
             // note: the size is set as a number, if is a string it is coming from the dialog
             if (isNumber(cutoutSize) && cutoutSize===SD_DEFAULT_SPACIAL_CUTOUT_SIZE && sdSizeValue!==cutoutSize) {
-                params= {[ucd] : sdSizeValue};
+                params= {[obsfieldUcd] : sdSizeValue};
                 setCutoutSize(key,sdSizeValue);
             }
             else {
-                params= {[ucd] : cutoutSize};
+                params= {[obsfieldUcd] : cutoutSize};
+            }
+            if (raParam) {
+                cutoutOptions.ucdKeys.push(raParam.UCD);
+                params[raParam.UCD]= positionWP.x;
+            }
+            if (decParam) {
+                cutoutOptions.ucdKeys.push(decParam.UCD);
+                params[decParam.UCD]= positionWP.y;
             }
         }
         else { // handle pixel based cutout
