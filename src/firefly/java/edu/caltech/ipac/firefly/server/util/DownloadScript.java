@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.util;
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.StringUtils;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -26,6 +27,7 @@ public class DownloadScript {
 
     private static final  String URL_COMMENT_START= "<!--";
     private static final  String URL_COMMENT_END=  "-->";
+    private static int count = 0;
 
     public static void composeDownloadScript(File outFile,
                                              String dataSource,
@@ -88,7 +90,7 @@ public class DownloadScript {
                     writer.write(url.toString());
                     writer.newLine();
                 } else if (useCurl || useWget) {
-                    filename = findName(url.getQuery());
+                    filename = findName(url);
 
                     if (useCurl || useWget) {
 
@@ -157,15 +159,36 @@ public class DownloadScript {
         return retval;
     }
 
-    private static String findName(String query) {
-        String retval = null;
-        for (String param: query.split("&")) {
-            if (param.startsWith("return")) {
-                retval = param.split("=")[1].trim();
-                break;
+    private static String findName(URL url) {
+        String query = url.getQuery();
+
+        // Extract the last part of the path
+        String path = url.getPath();
+        if (!StringUtils.isEmpty(path)) {
+            String lastSegment = path.substring(path.lastIndexOf('/') + 1);
+            //check if the last segment has an extension
+            if (lastSegment.contains(".") && !lastSegment.startsWith(".")) {
+                return sanitizeFileName(lastSegment); //use the last segment as the file name
             }
         }
-        return retval;
+
+        // if no valid extension in the path, look for "return" parameter in the query string
+        if (query != null && !query.isEmpty()) {
+            for (String param : query.split("&")) {
+                String[] keyValue = param.split("=");
+                if (keyValue.length > 1 && keyValue[0].trim().equals("return")) {
+                    return sanitizeFileName(keyValue[1].trim());
+                }
+            }
+        }
+
+        return "download_file_" + count++;
     }
+
+    private static String sanitizeFileName(String name) {
+        //matches \ / : * etc. and other characters not allowed on most OS for file names
+        return name.replaceAll("[\\\\/:*?\"<>|]", "_"); // Replace invalid characters
+    }
+
 }
 

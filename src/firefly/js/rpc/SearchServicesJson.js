@@ -157,8 +157,9 @@ export function selectedValues({columnNames, request, selectedRows}) {
  * @param {DownloadRequest} dlRequest
  * @param {Object} searchRequest
  * @param {string} selectionInfo
+ * @param {string} downloadType
  */
-export function packageRequest(dlRequest, searchRequest, selectionInfo) {
+export function packageRequest(dlRequest, searchRequest, selectionInfo, downloadType) {
     if (!selectionInfo) {
         const {totalRow} = getTblById(searchRequest.tbl_id) || {};
         if (totalRow) {
@@ -172,6 +173,9 @@ export function packageRequest(dlRequest, searchRequest, selectionInfo) {
         [SELECTION_INFO]: selectionInfo
     };
 
+    if (downloadType === 'script') {
+        return submitJob(ServerParams.DOWNLOAD_SCRIPT_REQUEST, params); //DownloadScriptWorker will download a script with urls, per the clients scriptType
+    }
     return submitJob(ServerParams.PACKAGE_REQUEST, params);
 }
 

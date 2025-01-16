@@ -14,6 +14,7 @@ import edu.caltech.ipac.table.MappedData;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.download.URLDownload;
+import org.apache.commons.lang.ArrayUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +35,12 @@ public class ObsCorePackager extends FileGroupsProcessor {
     private static final List<String> acceptableExtensionTypes = Arrays.asList("png","jpg","jpeg","bmp","fits","tsv",
             "csv", "tbl", "fits", "json", "pdf", "tar", "html", "xml", "vot", "vot", "vot", "vot", "reg", "png", "xml");
 
+    public static final String PRODUCTS = "productTypes";
+    public static final String SCRIPT = "scriptType";
+    public static final String ACCESS_URL = "access_url";
+    public static final String ACCESS_FORMAT = "access_format";
+    public static final String SEMANTICS = "semantics";
+
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         try {
             return computeFileGroup((DownloadRequest) request);
@@ -45,6 +52,9 @@ public class ObsCorePackager extends FileGroupsProcessor {
 
     private List<FileGroup> computeFileGroup(DownloadRequest request) throws DataAccessException{
         var selectedRows = new ArrayList<>(request.getSelectedRows());
+
+        String productTypes = request.getParam(PRODUCTS); //products to download in datalink file
+        String[] products = (productTypes != null && !productTypes.trim().isEmpty()) ? productTypes.split(",") : null;
 
         List<FileInfo> fileInfos = new ArrayList<>();
         MappedData dgDataUrl = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(), selectedRows); //returns all columns
@@ -58,9 +68,9 @@ public class ObsCorePackager extends FileGroupsProcessor {
                 }
                 String access_format = (String) dgDataUrl.get(idx, "access_format");
                 URL url = new URL(access_url);
-                File tmpFile = File.createTempFile("obscorepackager-", ".download", ServerContext.getTempWorkDir());
-                FileInfo tmpFileInfo = URLDownload.getDataToFile(url, tmpFile);
-                String contentType = tmpFileInfo.getAttribute(HttpResultInfo.CONTENT_TYPE);
+
+                FileInfo fileInf1o1 = new FileInfo(access_url, null, 0);
+                FileInfo fileInf1o2 = new FileInfo(access_url, ".txt", 0);
 
                 String colNames = request.getSearchRequest().getParam("templateColNames");
                 boolean useSourceUrlFileName= request.getSearchRequest().getBooleanParam("useSourceUrlFileName",false);
@@ -72,7 +82,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
                 if (access_format != null) {
                     if (access_format.contains("datalink")) {
                         ext_file_name = getUniqueFileNameForGroup(ext_file_name, dataLinkFolders);
-                        List<FileInfo> tmpFileInfos = parseDatalink(url, ext_file_name, useSourceUrlFileName);
+                        List<FileInfo> tmpFileInfos = parseDatalink(url, ext_file_name, products, useSourceUrlFileName);
                         fileInfos.addAll(tmpFileInfos);
                     }
                     else { //non datalink entry -  such as fits,jpg etc.
@@ -80,16 +90,12 @@ public class ObsCorePackager extends FileGroupsProcessor {
                             extension = access_format.replaceAll(".*/", "");
                             ext_file_name += "." + extension;
                         }
-                        FileInfo fileInfo = new FileInfo(tmpFile.getPath(), ext_file_name, 0);
+                        FileInfo fileInfo = new FileInfo(access_url, ext_file_name, 0);
                         fileInfos.add(fileInfo);
                     }
                 }
                 else { //access_format is null, so try and get it from the url's Content_Type
-                    if (!useSourceUrlFileName || FileUtil.getExtension(ext_file_name).isEmpty()) {
-                        extension = getExtFromURL(contentType);
-                        ext_file_name += "." + extension;
-                    }
-                    FileInfo fileInfo = new FileInfo(tmpFile.getPath(), ext_file_name, 0);
+                    FileInfo fileInfo = new FileInfo(access_url, ext_file_name, 0);
                     fileInfos.add(fileInfo);
                 }
 
@@ -102,19 +108,17 @@ public class ObsCorePackager extends FileGroupsProcessor {
         return Arrays.asList(new FileGroup(fileInfos, null, 0, "ObsCore Download Files"));
     }
 
-    public static List<FileInfo> parseDatalink(URL url, String prepend_file_name, boolean useSourceUrlFileName) {
+    public static List<FileInfo> parseDatalink(URL url, String prepend_file_name, String[] products, boolean useSourceUrlFileName) {
         List<FileInfo> fileInfos = new ArrayList<>();;
         try {
-            File tmpFile = File.createTempFile("datlink-", ".xml", ServerContext.getTempWorkDir());
-            URLDownload.getDataToFile(url, tmpFile);
-            DataGroup[] groups = VoTableReader.voToDataGroups(tmpFile.getPath(), false);
+            DataGroup[] groups = VoTableReader.voToDataGroups(url.toString(), false);
             for (DataGroup dg : groups) {
                 boolean makeDataLinkFolder = false;
                 int countValidDLFiles = 0;
                 //do one initial pass through semantics column to determine if we need to create a folder for datalink files
                 for (int i=0; i < dg.size(); i++) {
-                    String sem = String.valueOf(dg.getData("semantics", i));
-                    if (sem == null) {
+                    String sem = String.valueOf(dg.getData(SEMANTICS, i));
+                    if (sem.equals("null")) {
                         continue;
                     }
                     if (testSem(sem,"#this") || testSem(sem,"#thumbnail") ||testSem(sem,"#preview") ||
@@ -127,37 +131,37 @@ public class ObsCorePackager extends FileGroupsProcessor {
                 }
 
                 for (int i=0; i < dg.size(); i++) {
-                    String accessUrl = String.valueOf(dg.getData("access_url", i));
-                    String sem = String.valueOf(dg.getData("semantics", i));
+                    String accessUrl = String.valueOf(dg.getData(ACCESS_URL, i));
+                    String sem = String.valueOf(dg.getData(SEMANTICS, i));
                     String content_type = String.valueOf(dg.getData("content_type", i));
 
-                    if (accessUrl == null || sem == null) {
+                    if (accessUrl.equals("null") || sem.equals("null")) { //todo, accessUrl will be null for #cutout, use serviceDescriptor url
                         //if only semantic (sem) is null, accessUrl may still be available, but we won't know which accessUrls ones to pick
                         continue;
                     }
 
-                    if (testSem(sem,"#this") || testSem(sem,"#thumbnail") ||testSem(sem,"#preview") ||
-                            testSem(sem,"#preview-plot")) {
+                    String ext_file_name= null;
+                    if (useSourceUrlFileName) {
+                        String fileName= new URL(accessUrl).getFile();
+                        String ext= FileUtil.getExtension(fileName);
+                        if (!ext.isEmpty()) ext_file_name= fileName;
+                    }
+                    if (ext_file_name==null){
+                        ext_file_name = prepend_file_name;
+                        ext_file_name = testSem(sem, "#this") ? ext_file_name : ext_file_name + "-" + substringAfterLast(sem, "#");
+                        String extension = "unknown";
+                        extension = content_type != null ? getExtFromURL(content_type) : getExtFromURL(accessUrl);
+                        ext_file_name += "." + extension;
+                        //create a folder only if makeDataLinkFolder is true
+                        ext_file_name = makeDataLinkFolder ? prepend_file_name + "/" + ext_file_name : ext_file_name;
+                    }
 
-                        String ext_file_name= null;
-                        if (useSourceUrlFileName) {
-                            String fileName= new URL(accessUrl).getFile();
-                            String ext= FileUtil.getExtension(fileName);
-                            if (!ext.isEmpty()) ext_file_name= fileName;
+                    if (products != null) { // Check if products exist and contains sem
+                        if (Arrays.asList(products).contains(sem) || Arrays.asList(products).contains("*")) { //* refers to all data products
+                            FileInfo fileInfo = new FileInfo(accessUrl, ext_file_name, 0);
+                            fileInfos.add(fileInfo);
                         }
-                        if (ext_file_name==null){
-                            ext_file_name = prepend_file_name;
-                            ext_file_name = testSem(sem, "#this") ? ext_file_name : ext_file_name + "-" + substringAfterLast(sem, "#");
-                            String extension = "unknown";
-                            extension = content_type != null ? getExtFromURL(content_type) : getExtFromURL(accessUrl);
-                            ext_file_name += "." + extension;
-                            //create a folder only if makeDataLinkFolder is true
-                            ext_file_name = makeDataLinkFolder ? prepend_file_name + "/" + ext_file_name : ext_file_name;
-                        }
-
-
-
-
+                    } else { //add all valid accessUrls
                         FileInfo fileInfo = new FileInfo(accessUrl, ext_file_name, 0);
                         fileInfos.add(fileInfo);
                     }

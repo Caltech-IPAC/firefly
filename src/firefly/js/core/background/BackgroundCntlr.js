@@ -110,8 +110,8 @@ export function dispatchJobCancel(jobId) {
  * @param {string} selectionInfo
  * @param {string} bgKey  used for updating UI states related to backgrounding
  */
-export function dispatchPackage(dlRequest, searchRequest, selectionInfo, bgKey) {
-    flux.process({ type : BG_Package, payload: {dlRequest, searchRequest, selectionInfo, bgKey} });
+export function dispatchPackage(dlRequest, searchRequest, selectionInfo, bgKey, downloadType) {
+    flux.process({ type : BG_Package, payload: {dlRequest, searchRequest, selectionInfo, bgKey, downloadType} });
 }
 
 
@@ -168,7 +168,7 @@ function bgSetEmail(action) {
 
 function bgPackage(action) {
     return (dispatch) => {
-        const {dlRequest={}, searchRequest, selectionInfo, bgKey=''} = action.payload;
+        const {dlRequest={}, searchRequest, selectionInfo, bgKey='', downloadType} = action.payload;
         let {fileLocation, wsSelect, BaseFileName} = dlRequest;
 
         BaseFileName = BaseFileName.endsWith('.zip') ? BaseFileName : BaseFileName.trim() + '.zip';
@@ -206,7 +206,7 @@ function bgPackage(action) {
                 jobInfo?.error && showInfoPopup(jobInfo.error);
             }
         };
-        doPackageRequest({dlRequest, searchRequest, selectInfo:selectionInfo, bgKey, onComplete});
+        doPackageRequest({dlRequest, searchRequest, selectInfo:selectionInfo, bgKey, downloadType, onComplete});
     };
 }
 
