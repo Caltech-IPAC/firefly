@@ -123,7 +123,7 @@ export function makeImViewDisplayModel(tbl_id, plotViewAry, allIds, oldModel) {
         row[WAVE_LENGTH_UM] = parseFloat(getAttribute(attributes, PlotAttribute.WAVE_LENGTH_UM, 0.0));
         row[DATA_HELP_URL] = getAttribute(attributes, PlotAttribute.DATA_HELP_URL);
 
-        const {sourceObsCoreData}= plot.attributes;
+        const {sourceObsCoreData}= plot?.attributes ?? {};
         if (sourceObsCoreData) {
             row[S_RA_IDX]= sourceObsCoreData.s_ra;
             row[S_DEC_IDX]= sourceObsCoreData.s_dec;
