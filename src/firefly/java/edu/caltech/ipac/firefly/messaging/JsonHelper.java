@@ -93,6 +93,10 @@ public class JsonHelper {
         return this;
     }
 
+    public JsonHelper setValueFromPath(Object value, String path, String pathDelim) {
+        return setValue(value, path.split(pathDelim));
+    }
+
     private Consumer getContainer(String[] paths) {
 
         Object cCont = root = ensureCont(root, paths[0]);;
