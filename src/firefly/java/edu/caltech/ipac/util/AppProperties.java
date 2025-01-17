@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -49,7 +50,7 @@ public class AppProperties {
     /**
      * all the application level set properties are kept here.
      */
-    private final static Properties _mainProperties=new Properties();
+    private final static Properties mainProperties =new Properties();
 
 
 
@@ -221,7 +222,7 @@ public class AppProperties {
           try {
                retval= System.getProperty(key, def);
           } catch (Exception e) { /*do nothing*/ }
-          if (retval==def) retval= _mainProperties.getProperty(key, def);
+          if (retval==def) retval= mainProperties.getProperty(key, def);
       }
       else {
           retval= overridePDB.getProperty(key, def);
@@ -229,6 +230,19 @@ public class AppProperties {
       return retval;
   }
 
+    public static Map<String,String> getWithStartingMatch(String startOfKey) {
+        var retMap= new HashMap<String,String>();
+        for(Map.Entry<Object,Object>  entry : System.getProperties().entrySet()) {
+            var key= entry.getKey().toString();
+            if (key.startsWith(startOfKey)) retMap.put(key,(String)entry.getValue());
+        }
+
+        for(Map.Entry<Object,Object>  entry : mainProperties.entrySet()) {
+            var key= entry.getKey().toString();
+            if (key.startsWith(startOfKey)) retMap.put(key,(String)entry.getValue());
+        }
+        return retMap;
+    }
 
 
 
@@ -241,7 +255,7 @@ public class AppProperties {
                                                 boolean    ignoreFileNotFound,
                                                 Properties loadToPDB)
             throws IOException {
-        if (_mainProperties==null) {
+        if (mainProperties ==null) {
             return;  // if _mainProperties is null then most probably we are using a server (tomcat) that has
             // done some sort of static unload during shutdown, in any normal mode of
             // operation _mainProperties is never null
@@ -249,7 +263,7 @@ public class AppProperties {
         try {
             // need to add notLoaded support
             InputStream fs= new FileInputStream( f );
-            if(loadToPDB==null) loadToPDB=_mainProperties;
+            if(loadToPDB==null) loadToPDB= mainProperties;
             addPropertiesFromStream(fs, loadToPDB);
         } catch (FileNotFoundException e) {
             if (!ignoreFileNotFound) throw e;
@@ -374,12 +388,12 @@ public class AppProperties {
     }
 
     public static void setProperty(String key, String value) {
-           if (_mainProperties==null) {
+           if (mainProperties ==null) {
                return;  // if _mainProperties is null then most probably we are using a server (tomcat) that has
                // done some sort of static unload during shutdown, in any normal mode of
                // operation _mainProperties is never null
            }
-           _mainProperties.setProperty(key, value);
+           mainProperties.setProperty(key, value);
        }
 
     public static boolean loadClassPropertiesFromFileToPdb(File file, Properties loadToPDB) {
