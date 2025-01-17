@@ -153,8 +153,10 @@ function TapSearchPanelImpl({initArgs= {}, titleOn=true, lockService=false, lock
         }
         setVal(ADQL_QUERY_KEY, '');
         setFld(ADQL_QUERY_KEY, {placeholder: '', value: ''});
-        const serviceUrl= selectedOption?.value;
-        setServiceUrl(serviceUrl);
+        if (!lockedServiceUrl) {
+            const serviceUrl= selectedOption?.value;
+            setServiceUrl(serviceUrl);
+        }
         setObsCoreTableModel(undefined);
         setSrvNameKey(getServiceNamesAsKey());
         setTapBrowserState({...getTapBrowserState(), serviceUrl});

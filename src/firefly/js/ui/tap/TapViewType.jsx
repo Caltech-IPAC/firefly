@@ -414,10 +414,7 @@ function BasicUI(props) {
 function TableSelectors({hasObsCoreTable,obsCoreEnabled, setLockToObsCore, serviceLabel,
                             sOps,schemaName,setSchemaName, realSchemaLabel, schemaIsLocked,
                             tOps,tableTableModel, tableName,setTableName}) {
-    let schemaTitle=`${serviceLabel} Tables`;
-    if (schemaIsLocked) {
-        schemaTitle=  serviceLabel?.startsWith('User') ? schemaName : `${serviceLabel}: ${schemaName}`;
-    }
+    const schemaTitle= !schemaIsLocked ? `${serviceLabel} Tables` : schemaName
     return (
         <Stack {...{direction:'row', alignItems:'center', width:1}}>
                 <Stack>
