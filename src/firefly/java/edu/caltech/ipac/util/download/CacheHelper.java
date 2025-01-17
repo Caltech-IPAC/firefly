@@ -10,6 +10,8 @@ import edu.caltech.ipac.util.cache.CacheManager;
 
 import java.io.File;
 
+import static edu.caltech.ipac.util.cache.Cache.fileInfoCheck;
+
 /**
  * This class is provides an interface for classes that use both server and client cache.  One will use one when running
  * on the server and the other when running as a client.
@@ -18,7 +20,7 @@ import java.io.File;
 public class CacheHelper {
 
     private static File    _cacheDir= null;
-    private final static Cache fileCache= CacheManager.getDistributedFile();
+    private final static Cache<FileInfo> fileCache = CacheManager.<FileInfo>getDistributed().validateOnGet(fileInfoCheck);
     public static void setCacheDir(File dir) { _cacheDir= dir; }
 
     public static File makeFitsFile(BaseNetParams params) { return makeFile(params.getUniqueString()+ ".fits"); }
@@ -34,8 +36,7 @@ public class CacheHelper {
 
     public static FileInfo getFileInfo(CacheKey key)   {
         try {
-            Object cacheObj= fileCache.get(key);
-            return (cacheObj instanceof FileInfo) ? (FileInfo)cacheObj : null;
+            return fileCache.get(key);
         } catch (Exception e) {
             try {
                 fileCache.put(key,null); // clean out the bad entry

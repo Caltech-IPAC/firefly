@@ -4,15 +4,14 @@
 package edu.caltech.ipac.firefly.server.cache;
 
 import edu.caltech.ipac.firefly.core.RedisService;
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import redis.clients.jedis.Jedis;
 
 import java.util.List;
-
-import static edu.caltech.ipac.firefly.core.Util.deserialize;
-import static edu.caltech.ipac.firefly.core.Util.serialize;
+import java.util.function.Predicate;
 
 /**
  * This class provides an implementation of a distributed cache using Redis.
@@ -32,9 +31,15 @@ import static edu.caltech.ipac.firefly.core.Util.serialize;
  * @author loi
  * @version $Id: EhcacheImpl.java,v 1.8 2009/12/16 21:43:25 loi Exp $
  */
-public class DistributedCache implements Cache {
+public class DistributedCache<T> implements Cache<T> {
     static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static final String BASE64 = "BASE64::";
+    private transient Predicate<T> getValidator;
+
+    public Cache<T> validateOnGet(Predicate<T> validator) {
+        getValidator = validator;
+        return this;
+    }
 
     public void put(CacheKey key, Object value) {
         put(key, value, 0);
@@ -48,18 +53,24 @@ public class DistributedCache implements Cache {
                         del(redis, keystr);
                     } else {
                         if (lifespanInSecs > 0) {
-                            setex(redis, keystr, v2set(value), lifespanInSecs);
+                            setex(redis, keystr, serialize(value), lifespanInSecs);
                         } else {
-                            set(redis, keystr, v2set(value));
+                            set(redis, keystr, serialize(value));
                         }
                     }
                 }
             } catch (Exception ex) { LOG.error(ex); }
     }
 
-    public Object get(CacheKey key) {
+    public T get(CacheKey key) {
         try(Jedis redis = RedisService.getConnection()) {
-            return v2get( get(redis, key.getUniqueString()) );
+            T v = (T) deserialize( get(redis, key.getUniqueString()) );
+            if (v != null && getValidator != null && !getValidator.test(v)) {
+                del(redis, key.getUniqueString());
+                return null;
+            } else {
+                return v;
+            }
         } catch (Exception ex) { LOG.error(ex); }
         return null;
     }
@@ -121,20 +132,16 @@ public class DistributedCache implements Cache {
 //  Utility functions
 //====================================================================
 
-    static String v2set(Object object) {
+    static String serialize(Object object) {
         if (object instanceof String v) {
             return v;
         } else {
-            return BASE64 + serialize(object);
+            return BASE64 + Util.serialize(object);
         }
     }
 
-    static Object v2get(Object object) {
-        if (object instanceof String v) {
-            return v.startsWith(BASE64) ? deserialize(v.substring(BASE64.length())) : v;
-        } else {
-            return object;      // this should not happen.
-        }
+    static Object deserialize(String s) {
+        return s.startsWith(BASE64) ? Util.deserialize(s.substring(BASE64.length())) : s;
     }
 
 }

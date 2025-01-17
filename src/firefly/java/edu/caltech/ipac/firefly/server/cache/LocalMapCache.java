@@ -20,9 +20,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author loi
  * @version $Id: UserCache.java,v 1.5 2009/03/23 23:55:16 loi Exp $
  */
-public class LocalMapCache implements Cache {
+public class LocalMapCache<T> implements Cache<T> {
 
-    private Cache cache;
+    private Cache<Map<CacheKey, T>> cache;
     private StringKey uniqueKey;
 
     public LocalMapCache(String key) {
@@ -34,11 +34,11 @@ public class LocalMapCache implements Cache {
         return uniqueKey;
     }
 
-    public void put(CacheKey key, Object value) {
+    public void put(CacheKey key, T value) {
         if (key == null) {
             throw  new NullPointerException("key must not be null.");
         }
-        Map<CacheKey, Object> map = getSessionMap();
+        Map<CacheKey, T> map = getSessionMap();
         if (value == null) {
             map.remove(key);
         } else {
@@ -47,12 +47,12 @@ public class LocalMapCache implements Cache {
         cache.put(uniqueKey, map);
     }
 
-    public void put(CacheKey key, Object value, int lifespanInSecs) {
+    public void put(CacheKey key, T value, int lifespanInSecs) {
         throw new UnsupportedOperationException(
                 "This cache is used to store session related information.  This operation is not supported.");
     }
 
-    public Object get(CacheKey key) {
+    public T get(CacheKey key) {
         return key == null ? null : getSessionMap().get(key);
     }
 
@@ -77,10 +77,10 @@ public class LocalMapCache implements Cache {
 //
 //====================================================================
 
-    private Map<CacheKey, Object> getSessionMap() {
-        Map<CacheKey, Object> map = (Map<CacheKey, Object>) cache.get(uniqueKey);
+    private Map<CacheKey, T> getSessionMap() {
+        Map<CacheKey, T> map = cache.get(uniqueKey);
         if (map == null) {
-            map = new ConcurrentHashMap<CacheKey, Object>(100);
+            map = new ConcurrentHashMap(100);
         }
         return map;
     }

@@ -18,6 +18,8 @@ import edu.caltech.ipac.util.cache.StringKey;
 import java.io.IOException;
 import java.util.List;
 
+import static edu.caltech.ipac.util.cache.Cache.fileInfoCheck;
+
 
 /**
  * Date: Mar 8, 2010
@@ -32,10 +34,10 @@ public abstract class BaseFileInfoProcessor implements SearchProcessor<FileInfo>
     public FileInfo getData(ServerRequest request) throws DataAccessException {
         try {
             FileInfo fi = null;
-            Cache cache = getCache(request);
+            Cache<FileInfo> cache = getCache(request);
             StringKey key = new StringKey(getClass().getName(), getUniqueID(request));
             if (doCache()) {
-                fi = cache != null ? (FileInfo) cache.get(key) : null;
+                fi = cache != null ? cache.get(key) : null;
             }
             if (fi == null) {
                 fi = loadData(request);
@@ -52,8 +54,8 @@ public abstract class BaseFileInfoProcessor implements SearchProcessor<FileInfo>
         }
     }
 
-    public Cache getCache(ServerRequest request) {
-        return CacheManager.getLocal();
+    public Cache<FileInfo> getCache(ServerRequest request) {
+        return CacheManager.<FileInfo>getLocal().validateOnGet(fileInfoCheck);
     }
 
     public QueryDescResolver getDescResolver() {

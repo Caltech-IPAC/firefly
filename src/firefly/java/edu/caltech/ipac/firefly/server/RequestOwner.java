@@ -171,8 +171,8 @@ public class RequestOwner implements Cloneable {
             }
 
             if (userInfo == null) {
-                Cache cache = CacheManager.getLocal();
-                userInfo = (UserInfo) cache.get(new StringKey(getUserKey()));
+                Cache<UserInfo> cache = CacheManager.getLocal();
+                userInfo = cache.get(new StringKey(getUserKey()));
                 if (userInfo == null) {
                     userInfo = UserInfo.newGuestUser();
                     cache.put(new StringKey(getUserKey()), userInfo);

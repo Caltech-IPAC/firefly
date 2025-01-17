@@ -9,7 +9,9 @@ import edu.caltech.ipac.util.cache.CacheKey;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * This is an implementation of Cache using Ehcache.
@@ -19,16 +21,22 @@ import java.util.List;
  * @author loi
  * @version $Id: EhcacheImpl.java,v 1.8 2009/12/16 21:43:25 loi Exp $
  */
-public class EhcacheImpl implements Cache {
+public class EhcacheImpl<T> implements Cache<T> {
     private static final Logger.LoggerImpl logger = Logger.getLogger();
 
     Ehcache cache;
+    private transient Predicate<T> getValidator;
+
+    public Cache<T> validateOnGet(Predicate<T> validator) {
+        getValidator = validator;
+        return this;
+    }
 
     public EhcacheImpl(Ehcache cache) {
         this.cache = cache;
     }
 
-    public void put(CacheKey key, Object value) {
+    public void put(CacheKey key, T value) {
         String keystr = key.getUniqueString();
         if (value == null) {
             cache.remove(keystr);
@@ -37,7 +45,7 @@ public class EhcacheImpl implements Cache {
         }
     }
 
-    public void put(CacheKey key, Object value, int lifespanInSecs) {
+    public void put(CacheKey key, T value, int lifespanInSecs) {
         String keystr = key.getUniqueString();
         if (value == null) {
             cache.remove(keystr);
@@ -48,9 +56,15 @@ public class EhcacheImpl implements Cache {
         }
     }
 
-    public Object get(CacheKey key) {
+    public T get(CacheKey key) {
         Element el = cache.get(key.getUniqueString());
-        return el == null ? null : el.getValue();
+        T v = el == null ? null : (T) el.getValue();
+        if (v != null && getValidator != null && !getValidator.test(v)) {
+            cache.remove(key.getUniqueString());
+            return null;
+        } else {
+            return v;
+        }
     }
 
     public boolean isCached(CacheKey key) {
@@ -58,7 +72,9 @@ public class EhcacheImpl implements Cache {
     }
 
     public List<String> getKeys() {
-        return cache.getKeys();
+        List<String> keys = new ArrayList<>();
+        cache.getKeys().forEach(k -> keys.add(k.toString()));
+        return keys;
     }
 
     public int getSize() {

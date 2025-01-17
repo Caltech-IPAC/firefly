@@ -116,13 +116,13 @@ public class EhcacheProvider implements Cache.Provider {
         }
     }
 
-    public Cache getCache(String type) {
+    public <T> Cache<T> getCache(String type) {
         Ehcache ehcache = getEhcacheManager(type).getCache(type);
         if (ehcache == null) {
             throw new IllegalArgumentException("Unknown cache type.  Make sure cache type '" +
                     type + "' is defined in your ehcache.xml file");
         }
-        return  new EhcacheImpl(ehcache);
+        return new EhcacheImpl<>(ehcache);
     }
 
     public void shutdown() {
@@ -139,93 +139,4 @@ public class EhcacheProvider implements Cache.Provider {
         return manager;
     }
 
-
-//====================================================================
-//  inner classes
-//====================================================================
-
-    public static class FileCache implements Cache {
-        private final Cache cache;
-
-        public FileCache(Cache cache) {
-            this.cache = cache;
-        }
-
-        public Object get(CacheKey key) {
-            Object o = cache.get(key);
-
-            if (o==null) return null;
-            else if (o instanceof File)     o= exist(key,(File)o);
-            else if (o instanceof FileInfo) o= exist(key,(FileInfo)o);
-            else  o= null;
-
-            return o;
-        }
-        // pass to delegate
-        public void put(CacheKey key, Object value) {cache.put(key, value);}
-        public void put(CacheKey key, Object value, int lifespanInSecs) {cache.put(key, value, lifespanInSecs);}
-        public boolean isCached(CacheKey key) {return cache.isCached(key);}
-        public int getSize() {return cache.getSize();}
-        public List<String> getKeys() {return cache.getKeys();}
-
-        private Object exist(CacheKey key, File f) {
-            if (f != null && !f.exists()){
-                cache.put(key, null);       // this will remove it
-                f= null;
-            }
-            return f;
-        }
-
-        private Object exist(CacheKey key, FileInfo f) {
-            Object retval= f;
-            if (exist(key,f.getFile())==null) {
-                retval= null;
-            }
-            return retval;
-        }
-    }
-
-    static class LoggingEventListener implements CacheEventListener {
-            private static final Logger.LoggerImpl logger = Logger.getLogger();
-
-            public void notifyElementRemoved(Ehcache ehcache, Element element) throws CacheException {
-                logEvent("Removed", ehcache, element);
-            }
-
-            public void notifyElementPut(Ehcache ehcache, Element element) throws CacheException {
-                logEvent("Put", ehcache, element);
-            }
-
-            public void notifyElementUpdated(Ehcache ehcache, Element element) throws CacheException {
-                logEvent("Updated", ehcache, element);
-            }
-
-            public void notifyElementExpired(Ehcache ehcache, Element element) {
-                logEvent("Expired", ehcache, element);
-    //            ehcache.evictExpiredElements();
-            }
-
-            public void notifyElementEvicted(Ehcache ehcache, Element element) {
-                logEvent("Evicted", ehcache, element);
-            }
-
-            public void notifyRemoveAll(Ehcache ehcache) {
-                logEvent("RemoveAll", ehcache, null);
-            }
-
-            public void dispose() {
-            }
-
-            public Object clone() throws CloneNotSupportedException {
-                return super.clone();
-            }
-
-            private void logEvent(String event, Ehcache cache, Element element) {
-
-    //            logger.debug("EHCACHE event: " + event,
-    //                         "Cache Name: " + cache.getName(),
-    //                         "key-value: " + element.getKey() + "-" +
-    //                         StringUtils.toString(element.getValue()));
-            }
-        }
 }

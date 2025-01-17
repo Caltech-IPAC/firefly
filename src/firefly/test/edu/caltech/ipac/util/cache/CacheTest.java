@@ -17,8 +17,9 @@ import org.junit.Test;
 
 import java.io.File;
 
-import static edu.caltech.ipac.util.cache.Cache.*;
+import static edu.caltech.ipac.util.cache.Cache.fileCheck;
 import static org.junit.Assert.*;
+import static edu.caltech.ipac.firefly.core.Util.Try;
 
 /**
  * This test suite requires a running Redis.  To start one locally..
@@ -59,15 +60,21 @@ public class CacheTest extends ConfigTest {
     }
 
     @Test
-    public void localFileCache() {
-        Cache cache = CacheManager.getLocalFile();
-        testFile(cache);
-    }
+    public void localGetValidator() {
+        Cache<File> local = CacheManager.<File>getLocal().validateOnGet(fileCheck);
+        var key = new StringKey("1");
+        local.put(key, new File("bad/path/not-found.txt"));
+        assertNull(local.get(key));
 
-    @Test
-    public void distributedFileCache() {
-        Cache cache = CacheManager.getDistributedFile();
-        testFile(cache);
+        Cache<File> dist = CacheManager.<File>getDistributed().validateOnGet(fileCheck);;
+        key = new StringKey("1");
+        dist.put(key, new File("bad/path/not-found.txt"));
+        assertNull(dist.get(key));
+
+        File a = Try.it(() -> File.createTempFile("test", ".txt")).get();
+        dist.put(key, a);
+        assertNotNull(dist.get(key));
+        a.delete();
     }
 
     @Test
@@ -86,23 +93,6 @@ public class CacheTest extends ConfigTest {
     public void distributedMap() {
         Cache cache = CacheManager.getDistributedMap("test");
         testObject(cache);
-    }
-
-    private void testFile(Cache cache) {
-        cache.put(new StringKey("1"), 1);
-        assertNull(cache.get(new StringKey("1")));
-
-        File badf = new File("bad/path/not-found.txt");
-        cache.put(new StringKey(badf.getName()), badf);
-        Object bf = cache.get(new StringKey(badf.getName()));
-        assertNull(bf);
-
-        File goodf = new File(System.getProperty("java.io.tmpdir"));
-        cache.put(new StringKey(goodf.getName()), goodf);
-        Object gf = cache.get(new StringKey(goodf.getName()));
-        assertTrue(gf instanceof File);
-        assertEquals(goodf.toString(), gf.toString());
-
     }
 
 

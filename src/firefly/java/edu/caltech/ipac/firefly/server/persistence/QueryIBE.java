@@ -101,8 +101,8 @@ public class QueryIBE extends EmbeddedDbProcessor {
             IBE ibe = IBEUtils.getIBE(mission, paramMap);
             IbeDataSource source = ibe.getIbeDataSource();
             CacheKey cacheKey = new StringKey("ibemeta", source.getIbeHost(), source.getMission(), source.getDataset(), source.getTableName());
-            Cache cache = CacheManager.getLocal();
-            DataGroup coldefs = (DataGroup) cache.get(cacheKey);
+            Cache<DataGroup> cache = CacheManager.getLocal();
+            DataGroup coldefs = cache.get(cacheKey);
             if (coldefs == null) {
                 File ofile = File.createTempFile(mission+"-dd", ".tbl", QueryUtil.getTempDir(request));
                 ibe.getMetaData(ofile);
