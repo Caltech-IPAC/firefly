@@ -470,7 +470,7 @@ function bootstrap(props, clientAppSpecificOptions, webApiCommands) {
 function mergeAppOptions(ops, overrideOps) {
     const saveOpsTapSrv= ops?.tap?.services ? [...ops.tap.services] : undefined;
     const mergedOps = mergeObjectOnly(ops, overrideOps);
-    if (saveOpsTapSrv && overrideOps.tap.services)  { // merge tap services by hands
+    if (saveOpsTapSrv && overrideOps?.tap?.services)  { // merge tap services by hands
         const newServices= mergeServices(saveOpsTapSrv, overrideOps.tap.services);
         mergedOps.tap.services= newServices;
     }
