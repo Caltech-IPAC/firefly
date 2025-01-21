@@ -23,6 +23,7 @@ import {FireflyRoot} from './ui/FireflyRoot.jsx';
 import {SIAv2SearchPanel} from './ui/tap/SIASearchRootPanel';
 import {getSIAv2Services} from './ui/tap/SiaUtil';
 import {TapSearchPanel} from './ui/tap/TapSearchRootPanel';
+import {mergeServices} from './ui/tap/TapUtil';
 import {dispatchChangeReadoutPrefs} from './visualize/MouseReadoutCntlr.js';
 import {showInfoPopup} from './ui/PopupUtil';
 import {bootstrapRedux, flux} from './core/ReduxFlux.js';
@@ -237,7 +238,8 @@ const defFireflyOptions = {
  * @param {Object} appSpecificOptions
  */
 function installOptions(appSpecificOptions) {
-    const options=  mergeObjectOnly(defFireflyOptions, appSpecificOptions); // app specific will override default
+    // const options=  mergeObjectOnly(defFireflyOptions, appSpecificOptions); // app specific will override default
+    const options=  mergeAppOptions(defFireflyOptions, appSpecificOptions); // app specific will override default
     // setup options
     dispatchAppOptions(options);
     options.disableDefaultDropDown && dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
@@ -435,7 +437,8 @@ function bootstrap(props, clientAppSpecificOptions, webApiCommands) {
         catch (err) {
             logger.error('could not retrieve valid server options');
         }
-        const appSpecificOptions = mergeObjectOnly(clientAppSpecificOptions, srvAppSpecificOptions);
+        // const appSpecificOptions = mergeObjectOnly(clientAppSpecificOptions, srvAppSpecificOptions);
+        const appSpecificOptions = mergeAppOptions(clientAppSpecificOptions, srvAppSpecificOptions);
 
         const client= await getOrCreateWsConn(); // establish websocket connection first before doing anything else.
 
@@ -457,6 +460,21 @@ function bootstrap(props, clientAppSpecificOptions, webApiCommands) {
         });
         initWorkerContext();
     });
+}
+
+/**
+ *
+ * @param ops
+ * @param overrideOps
+ */
+function mergeAppOptions(ops, overrideOps) {
+    const saveOpsTapSrv= ops?.tap?.services ? [...ops.tap.services] : undefined;
+    const mergedOps = mergeObjectOnly(ops, overrideOps);
+    if (saveOpsTapSrv && overrideOps.tap.services)  { // merge tap services by hands
+        const newServices= mergeServices(saveOpsTapSrv, overrideOps.tap.services);
+        mergedOps.tap.services= newServices;
+    }
+    return mergedOps;
 }
 
 function renderRoot(root, viewer, props, webApiCommands) {
