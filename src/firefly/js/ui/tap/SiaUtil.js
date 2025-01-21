@@ -4,7 +4,7 @@ import {makeFileRequest, setNoCache} from '../../tables/TableRequestUtil';
 import {doFetchTable} from '../../tables/TableUtil';
 import {Logger, logger} from '../../util/Logger';
 import {getServiceSelfDescription} from '../../voAnalyzer/VoCoreUtils';
-import {mergeAdditionalServices} from './TapUtil';
+import {mergeServices} from './TapUtil';
 
 
 /** * @type SiaBrowserState */
@@ -80,7 +80,7 @@ export function getServiceHiPS(serviceUrl) {
 export function getSiaServices() {
     const {SIAv2} = getAppOptions();
     const startingSiaServices= hasElements(SIAv2?.services) ? [...SIAv2.services] : [...SIA_SERVICES_FALLBACK];
-    const mergedServices= mergeAdditionalServices(startingSiaServices,SIAv2?.additional?.services);
+    const mergedServices= mergeServices(startingSiaServices,SIAv2?.additional?.services);
     mergedServices.push(...getUserServiceAry());
     return mergedServices;
 }

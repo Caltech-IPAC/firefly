@@ -539,31 +539,34 @@ const hasElements= (a) => Boolean(isArray(a) && a?.length);
 
 export const getAsEntryForTableName= (tableName) => tableName?.[0] ?? 'x';
 
-export function mergeAdditionalServices(inServices, additional) {
-    if (!hasElements(additional)) return inServices;
+export function mergeServices(startingServices, additional) {
+    if (!hasElements(additional)) return startingServices;
 
     const mergeAdditional= additional.map( (a) => {
         if (a.hide) return false;
-        const originalEntry= inServices.find( (t) => a.label===t.label);
+        const originalEntry= startingServices.find( (t) => a.label===t.label);
         return originalEntry ? {...originalEntry, ...a} : a;
     }).filter( (s) => s);
 
-    const unmodifiedOriginal= inServices
+    const unmodifiedOriginal= startingServices
         .map( (t) => {
             const match= additional.find( (a) => a.label===t.label);
             return !match && t;
         })
         .filter( (s) => s);
 
-    return [...mergeAdditional,...unmodifiedOriginal];
+    return [...mergeAdditional,...unmodifiedOriginal].filter( (s) => s.value);
 }
+
+
+
 
 // let userServices;
 
 export function getTapServices() {
     const {tap} = getAppOptions();
     const startingTapServices= hasElements(tap?.services) ? [...tap.services] : [...TAP_SERVICES_FALLBACK];
-    const mergedServices= mergeAdditionalServices(startingTapServices,tap?.additional?.services);
+    const mergedServices= mergeServices(startingTapServices,tap?.additional?.services);
     mergedServices.push(...getUserServiceAry());
     return mergedServices;
 }
