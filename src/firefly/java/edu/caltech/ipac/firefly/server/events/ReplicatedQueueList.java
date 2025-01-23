@@ -6,6 +6,7 @@
 package edu.caltech.ipac.firefly.server.events;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.cache.Cache;
+import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 
@@ -30,8 +31,8 @@ class ReplicatedQueueList {
    synchronized List<ServerEventQueue> getCombinedNodeList()  {
        List<ServerEventQueue> retList= new ArrayList<>();
        Cache<List<ServerEventQueue>> cache= getCache();
-       for(String k : cache.getKeys()) {
-           retList.addAll(cache.get(new StringKey(k)));
+       for(CacheKey k : cache.getKeys()) {
+           retList.addAll(cache.get(k));
        }
        return retList;
    }

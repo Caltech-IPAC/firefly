@@ -23,7 +23,7 @@ public class StringKey implements CacheKey, Comparable, Serializable {
     }
 
     public String getUniqueString() {
-        return key.toString();
+        return key;
     }
 
     public StringKey appendToKey(Object... ids) {

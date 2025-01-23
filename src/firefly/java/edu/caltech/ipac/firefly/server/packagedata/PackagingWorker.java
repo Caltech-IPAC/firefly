@@ -32,6 +32,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.core.background.JobManager.getJobInfo;
+import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.server.ws.WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -119,15 +122,16 @@ public final class PackagingWorker implements Job.Worker {
         closeZipFile();
 
         // JobInfo completion update
-        String summary = String.format("%,d files were packaged for a total of %,d B creating %,d zip files.", totalFiles, totalBytes, curZipIdx);
-        if (hasErrors) summary += "\nPlease, note:  There were error(s) while processing your request.  See zip's README file for details.";
-        JobInfo jobInfo = getJob().getJobInfo();
-        jobInfo.setProgress(100);
-        jobInfo.setProgressDesc(summary);
-        jobInfo.setSummary(summary);
+        updateJobInfo(getJob().getJobId(), ji -> {
+            String summary = String.format("%,d files were packaged for a total of %,d B creating %,d zip files.", totalFiles, totalBytes, curZipIdx);
+            if (hasErrors) summary += "\nPlease, note:  There were error(s) while processing your request.  See zip's README file for details.";
+            ji.setProgress(100);
+            ji.setProgressDesc(summary);
+            ji.setSummary(summary);
+        });
         getJob().setPhase(JobInfo.Phase.COMPLETED);
 
-        PackagedEmail.send(getJob().getJobInfo());
+        PackagedEmail.send(getJob().getJobId());
 
         return "";
     }
@@ -142,7 +146,7 @@ public final class PackagingWorker implements Job.Worker {
     private void updateJobProgress() throws DataAccessException.Aborted {
         Job job = getJob();
         if (job != null) {
-            JobInfo.Phase phase = job.getJobInfo().getPhase();
+            JobInfo.Phase phase = ifNotNull(getJobInfo(job.getJobId())).eval(JobInfo::getPhase);
             if (phase == JobInfo.Phase.ABORTED) throw new DataAccessException.Aborted();
 
             if (System.currentTimeMillis() - lastUpdatedTime > 2000) {

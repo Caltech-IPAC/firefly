@@ -11,9 +11,12 @@ import edu.caltech.ipac.table.DataGroup;
 import java.util.Arrays;
 import java.util.List;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.server.query.AsyncTapQuery.*;
 import static edu.caltech.ipac.firefly.server.query.DaliUtil.*;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 @SearchProcessorImpl(id = AsyncTapQuery.ID, params = {
         @ParamDoc(name = SVC_URL, desc = "base TAP url endpoint excluding '/async'"),
@@ -53,13 +56,15 @@ public class AsyncTapQuery extends UwsJobProcessor {
         DaliUtil.handleUpload(inputs, request, uploadTable);
 
         applyIfNotEmpty(request.getParam(QUERY), (v) -> inputs.setParam(QUERY, v));
-        // use table's title as RUNID.  RUNID is limited to 64 chars.  If more than 64, truncate then add '...' to indicate it was truncated.
-        applyIfNotEmpty(request.getMeta("title"), (v) -> {
-            String runId = v.length() > 64 ? v.substring(0, 61) + "..." : v;
-            // only send RUNID if it's supported.
-            if (runIdSupported)     inputs.setParam(RUNID, runId);
-            getJob().getJobInfo().setLocalRunId(runId);        // save the value locally for display
-        });
+
+        String title = request.getTblTitle();
+        if (runIdSupported && !isEmpty(title)) {
+            // use table's title as RUNID.  RUNID is limited to 64 chars.  If more than 64, truncate then add '...' to indicate it was truncated.
+            final String runId = title.length() > 64 ? title.substring(0, 61) + "..." : title;
+            inputs.setParam(RUNID, runId);
+            ifNotNull(getJob()).then((j) -> updateJobInfo(j.getJobId(), ji -> ji.setLocalRunId(runId)));    // save the value locally for display
+        }
+
         inputs.setParam(LANG, request.getParam(LANG, "ADQL"));
         inputs.setParam(REQUEST, "doQuery");
 

@@ -11,10 +11,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
+
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * Date: 11/19/24
@@ -201,9 +205,46 @@ public class Util {
             }
             return new Try<>(null, new IndexOutOfBoundsException("Exceeded max tries"));
         }
-
     }
 
+    public static class Opt<T> {
+        private final T val;
+        private Predicate<T> test;
+
+        private Opt(T val, Predicate<T> test) {
+            this.val = val;
+            this.test = test;
+        }
+
+        public Opt<T> then(Consumer<T> func) {
+            if (test.test(val)) {
+                func.accept(val);
+            }
+            return this;
+        }
+
+        public Opt<T> orElse(Consumer<T> func) {
+            if (!test.test(val)) {
+                func.accept(val);
+            }
+            return this;
+        }
+
+        public <R> R eval(Function<T, R> func) {
+            if (test.test(val)) {
+                return func.apply(val);
+            }
+            return null;
+        }
+
+        public static <T> Opt<T> ifNotEmpty(T val) {
+            return new Opt<>(val, (v) -> !isEmpty(v));
+        }
+
+        public static <T> Opt<T> ifNotNull(T val) {
+            return new Opt<>(val, Objects::nonNull);
+        }
+    }
 
     public static class SynchronizedAccess {
         private final ConcurrentHashMap<String, ReentrantLock> activeRequests = new ConcurrentHashMap<>();

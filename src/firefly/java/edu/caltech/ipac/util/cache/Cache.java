@@ -20,6 +20,7 @@ public interface Cache<T> {
     void put(CacheKey key, T value);
     void put(CacheKey key, T value, int lifespanInSecs);
     T get(CacheKey key);
+    void remove(CacheKey key);
     boolean isCached(CacheKey key);
     int getSize();
 
@@ -27,7 +28,7 @@ public interface Cache<T> {
      * returns a list of keys in this cache as string.
      * @return
      */
-    List<String> getKeys();
+    List<? extends CacheKey> getKeys();
 
     /**
      * Set a get validator for this cache.  The validator will be called before returning the value from the cache.
@@ -43,7 +44,7 @@ public interface Cache<T> {
 //====================================================================
 //  Predefined validators
 //====================================================================
-    Predicate<File> fileCheck = (f) -> f.canRead();
+    Predicate<File> fileCheck = File::canRead;
     Predicate<FileInfo> fileInfoCheck = (fi) -> fi.getFile() != null && fi.getFile().canRead();
 
 }

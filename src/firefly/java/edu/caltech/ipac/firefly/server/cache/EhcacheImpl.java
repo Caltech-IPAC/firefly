@@ -6,10 +6,10 @@ package edu.caltech.ipac.firefly.server.cache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
+import edu.caltech.ipac.util.cache.StringKey;
 import net.sf.ehcache.Ehcache;
 import net.sf.ehcache.Element;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -56,6 +56,10 @@ public class EhcacheImpl<T> implements Cache<T> {
         }
     }
 
+    public void remove(CacheKey key) {
+        cache.remove(key.getUniqueString());
+    }
+
     public T get(CacheKey key) {
         Element el = cache.get(key.getUniqueString());
         T v = el == null ? null : (T) el.getValue();
@@ -71,10 +75,8 @@ public class EhcacheImpl<T> implements Cache<T> {
         return cache.isKeyInCache(key.getUniqueString());
     }
 
-    public List<String> getKeys() {
-        List<String> keys = new ArrayList<>();
-        cache.getKeys().forEach(k -> keys.add(k.toString()));
-        return keys;
+    public List<StringKey> getKeys() {
+        return cache.getKeys().stream().map(k -> new StringKey(k.toString())).toList();
     }
 
     public int getSize() {

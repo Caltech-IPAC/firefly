@@ -39,7 +39,7 @@ public class CacheHelper {
             return fileCache.get(key);
         } catch (Exception e) {
             try {
-                fileCache.put(key,null); // clean out the bad entry
+                fileCache.remove(key); // clean out the bad entry
             } catch (Exception ignore) {}
             return null;
         }

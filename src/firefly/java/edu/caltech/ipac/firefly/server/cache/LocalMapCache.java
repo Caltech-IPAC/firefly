@@ -22,8 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class LocalMapCache<T> implements Cache<T> {
 
-    private Cache<Map<CacheKey, T>> cache;
-    private StringKey uniqueKey;
+    private final Cache<Map<CacheKey, T>> cache;
+    private final StringKey uniqueKey;
 
     public LocalMapCache(String key) {
         uniqueKey = new StringKey(key);
@@ -38,12 +38,17 @@ public class LocalMapCache<T> implements Cache<T> {
         if (key == null) {
             throw  new NullPointerException("key must not be null.");
         }
-        Map<CacheKey, T> map = getSessionMap();
-        if (value == null) {
-            map.remove(key);
-        } else {
-            map.put(key, value);
+        var map = getMappedData();
+        map.put(key, value);
+        cache.put(uniqueKey, map);
+    }
+
+    public void remove(CacheKey key) {
+        if (key == null) {
+            throw  new NullPointerException("key must not be null.");
         }
+        var map = getMappedData();
+        map.remove(key);
         cache.put(uniqueKey, map);
     }
 
@@ -53,34 +58,30 @@ public class LocalMapCache<T> implements Cache<T> {
     }
 
     public T get(CacheKey key) {
-        return key == null ? null : getSessionMap().get(key);
+        return key == null ? null : getMappedData().get(key);
     }
 
     public boolean isCached(CacheKey key) {
-        return key != null && getSessionMap().containsKey(key);
+        return key != null && getMappedData().containsKey(key);
     }
 
-    public List<String> getKeys() {
-        Set<CacheKey> keys = getSessionMap().keySet();
-        ArrayList<String> list = new ArrayList<String>(keys.size());
-        for(CacheKey ck : keys) {
-            list.add(ck.getUniqueString());
-        }
-        return list;
+    public List<CacheKey> getKeys() {
+        Set<CacheKey> keys = getMappedData().keySet();
+        return new ArrayList<>(keys);
     }
 
     public int getSize() {
-        return getSessionMap().size();
+        return getMappedData().size();
     }
 
 //====================================================================
 //
 //====================================================================
 
-    private Map<CacheKey, T> getSessionMap() {
+    private Map<CacheKey, T> getMappedData() {
         Map<CacheKey, T> map = cache.get(uniqueKey);
         if (map == null) {
-            map = new ConcurrentHashMap(100);
+            map = new ConcurrentHashMap<>(100);
         }
         return map;
     }

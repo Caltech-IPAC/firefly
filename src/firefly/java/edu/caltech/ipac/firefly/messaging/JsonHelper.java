@@ -21,7 +21,7 @@ import static edu.caltech.ipac.util.StringUtils.getInt;
  * This mimic the lodash's get/set behavior.  {@link JsonHelper#getValue(Object, String...)}} will
  * return the value at the given paths, or the given default is paths does not exist.
  * {@link JsonHelper#setValue(Object, String...)} will set the given value at the given paths.
- * Along the paths, if it does not exists, a Map or ArrayList will be created depending its path type.
+ * Along the paths, if it does not exist, a Map or ArrayList will be created depending on its path type.
  * When the path is an integer, it will assume it's an index to an ArrayList.  Otherwise, it's a key to a Map.
  *
  * Date: 2019-03-15
@@ -67,11 +67,11 @@ public class JsonHelper {
         Object current = root;
         for (String p : paths) {
             if (current == null) return def;
-            if (current instanceof List) {
+            if (current instanceof List clist) {
                 int idx = getInt(p, -1);
-                current = idx < 0 ? null : ((List) current).get(idx);
-            } else if(current instanceof Map) {
-                current = ((Map)current).get(p);
+                current = idx < 0 ? null : clist.get(idx);
+            } else if(current instanceof Map cmap) {
+                current = cmap.get(p);
             }
         }
         if (current==null) return def;
@@ -107,12 +107,10 @@ public class JsonHelper {
             cCont = getCont(cCont, ckey, nkey);
         }
 
-        if (cCont instanceof List) {
-            List alist = (List) cCont;
+        if (cCont instanceof List alist) {
             int idx = getInt(nkey, -1);
             return (v) -> alist.set(idx, v);
-        } else if (cCont instanceof Map) {
-            Map amap = (Map) cCont;
+        } else if (cCont instanceof Map amap) {
             String finalkey = nkey;
             return (v) -> amap.put(finalkey, v);
         }
@@ -122,16 +120,15 @@ public class JsonHelper {
     private Object ensureCont(Object cont, String key) {
         int idx = getInt(key, -1);
         if (cont == null) {
-            cont = idx == -1 ? new HashMap() :new ArrayList();
+            cont = idx == -1 ? new HashMap() : new ArrayList();
         }
-        if (idx >= 0 && cont instanceof List)  cont = ensureList((List) cont, idx);
+        if (idx >= 0 && cont instanceof List clist)  cont = ensureList(clist, idx);
         return cont;
     }
 
     private Object getCont(Object source, String key, String nkey) {
 
-        if (source instanceof List) {
-            List clist = (List) source;
+        if (source instanceof List clist) {
             int idx = getInt(key, -1);
             ensureList(clist, idx);
             Object cont = clist.get(idx);
@@ -142,8 +139,7 @@ public class JsonHelper {
                 cont = ensureCont(cont, nkey);
             }
             return cont;
-        } else if (source instanceof Map) {
-            Map cmap = (Map) source;
+        } else if (source instanceof Map cmap) {
             Object cont = cmap.get(key);
             if (cont == null) {
                 cont = ensureCont(cont, nkey);

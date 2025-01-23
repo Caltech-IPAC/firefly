@@ -153,6 +153,8 @@ public class CacheManager {
             return null;
         }
 
+        public void remove(CacheKey key) {}
+
         public boolean isCached(CacheKey key) {
             return false;
         }

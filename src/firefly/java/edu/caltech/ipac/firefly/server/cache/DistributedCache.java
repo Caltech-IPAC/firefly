@@ -5,11 +5,14 @@ package edu.caltech.ipac.firefly.server.cache;
 
 import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.core.Util;
+import edu.caltech.ipac.firefly.core.Util.Try;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
+import edu.caltech.ipac.util.cache.StringKey;
 import redis.clients.jedis.Jedis;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -62,6 +65,12 @@ public class DistributedCache<T> implements Cache<T> {
             } catch (Exception ex) { LOG.error(ex); }
     }
 
+    public void remove(CacheKey key) {
+        try(Jedis redis = RedisService.getConnection()) {
+            del(redis, key.getUniqueString());
+        } catch (Exception ex) { LOG.error(ex); }
+    }
+
     public T get(CacheKey key) {
         try(Jedis redis = RedisService.getConnection()) {
             T v = (T) deserialize( get(redis, key.getUniqueString()) );
@@ -82,9 +91,9 @@ public class DistributedCache<T> implements Cache<T> {
         return false;
     }
 
-    public List<String> getKeys() {
+    public List<StringKey> getKeys() {
         try(Jedis redis = RedisService.getConnection()) {
-            return keys(redis);
+            return keys(redis).stream().map(StringKey::new).toList();
         } catch (Exception ex) { LOG.error(ex); }
         return null;
     }
@@ -116,8 +125,10 @@ public class DistributedCache<T> implements Cache<T> {
         redis.setex(key, lifespanInSecs, value);
     }
 
+    @Nonnull
     List<String> keys(Jedis redis) {
-        return redis.keys("*").stream().toList();
+        var keys = redis.keys("*");
+        return keys == null ? List.of() : keys.stream().toList();
     }
 
     boolean exists(Jedis redis, String key) {
@@ -133,6 +144,7 @@ public class DistributedCache<T> implements Cache<T> {
 //====================================================================
 
     static String serialize(Object object) {
+        if (object == null) return null;
         if (object instanceof String v) {
             return v;
         } else {
@@ -141,7 +153,10 @@ public class DistributedCache<T> implements Cache<T> {
     }
 
     static Object deserialize(String s) {
-        return s.startsWith(BASE64) ? Util.deserialize(s.substring(BASE64.length())) : s;
+        if (s == null) return null;
+        return !s.startsWith(BASE64) ? s :
+                Try.it(() -> Util.deserialize(s.substring(BASE64.length())))
+                        .getOrElse((e) -> LOG.trace("Failed to deserialize: " + e.getMessage(), s));
     }
 
 }

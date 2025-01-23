@@ -32,7 +32,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase;
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.core.background.JobInfo.*;
+import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.server.network.HttpServices.*;
 import static edu.caltech.ipac.firefly.server.query.DaliUtil.*;
 import static edu.caltech.ipac.util.StringUtils.*;
@@ -128,10 +130,10 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         HttpServices.Status status = HttpServices.postData(input, (method) -> {
             jobUrl.set(HttpServices.getResHeader(method, "Location", null));
             if (jobUrl.has()) {
-                applyIfNotEmpty(getJob(), v -> v.getJobInfo().setDataOrigin(jobUrl.get()));
+                ifNotNull(getJob()).then((j) -> updateJobInfo(j.getJobId(), ji -> ji.setDataOrigin(jobUrl.get())));
                 return HttpServices.Status.ok();
             } else {
-                // Location header contains jobUrl.  Must be an error when there's not Location header
+                // Location header contains jobUrl.  Must be an error when there's not a Location header
                 String error = HttpServices.isOk(method) ? parseError(method, input.getRequestUrl())
                         : String.format("Error submitting job to %s: %s", input.getRequestUrl(), method.getStatusText());
 
@@ -318,29 +320,29 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                 }
             }
             if (prefix.has() && root.getTagName().equals(prefix + "job")) {              // verify that this is a UWS job doc
-                String id = getVal(root, prefix + "jobId");
+                String id = getVal(root, prefix + JOB_ID);
                 JobInfo jobInfo = new JobInfo(id);
-                applyIfNotEmpty(getVal(root, prefix + "runId"), jobInfo::setRunId);
-                applyIfNotEmpty(getVal(root, prefix + "ownerId"), jobInfo::setOwner);
-                applyIfNotEmpty(getVal(root, prefix + "phase"), v -> jobInfo.setPhase(Phase.valueOf(v)));
+                applyIfNotEmpty(getVal(root, prefix + RUN_ID), jobInfo::setRunId);
+                applyIfNotEmpty(getVal(root, prefix + OWNER_ID), jobInfo::setOwner);
+                applyIfNotEmpty(getVal(root, prefix + PHASE), v -> jobInfo.setPhase(Phase.valueOf(v)));
 
-                applyIfNotEmpty(getVal(root, prefix + "quote"), v -> jobInfo.setQuote(getInstant(v)));
-                applyIfNotEmpty(getVal(root, prefix + "creationTime"), v -> jobInfo.setCreationTime(getInstant(v)));
-                applyIfNotEmpty(getVal(root, prefix + "startTime"), v -> jobInfo.setStartTime(getInstant(v)));
-                applyIfNotEmpty(getVal(root, prefix + "endTime"), v -> jobInfo.setEndTime(getInstant(v)));
-                applyIfNotEmpty(getVal(root, prefix + "executionDuration"), v -> jobInfo.setExecutionDuration(Integer.parseInt(v)));
-                applyIfNotEmpty(getVal(root, prefix + "destruction"), v -> jobInfo.setDestruction(getInstant(v)));
+                applyIfNotEmpty(getVal(root, prefix + QUOTE), v -> jobInfo.setQuote(getInstant(v)));
+                applyIfNotEmpty(getVal(root, prefix + CREATION_TIME), v -> jobInfo.setCreationTime(getInstant(v)));
+                applyIfNotEmpty(getVal(root, prefix + START_TIME), v -> jobInfo.setStartTime(getInstant(v)));
+                applyIfNotEmpty(getVal(root, prefix + END_TIME), v -> jobInfo.setEndTime(getInstant(v)));
+                applyIfNotEmpty(getVal(root, prefix + EXECUTION_DURATION), v -> jobInfo.setExecutionDuration(Integer.parseInt(v)));
+                applyIfNotEmpty(getVal(root, prefix + DESTRUCTION), v -> jobInfo.setDestruction(getInstant(v)));
 
-                applyIfNotEmpty(getEl(root, prefix + "parameters"), params -> {
-                    NodeList plist = params.getElementsByTagName(prefix + "parameter");
+                applyIfNotEmpty(getEl(root, prefix + PARAMETERS), params -> {
+                    NodeList plist = params.getElementsByTagName(prefix + PARAMETER);
                     for (int i = 0; i < plist.getLength(); i++) {
                         Node p = plist.item(i);
                         jobInfo.getParams().put(getAttr(p, "id"), p.getTextContent());
                     }
                 });
 
-                applyIfNotEmpty(getEl(root, prefix + "results"), results -> {
-                    NodeList rlist = results.getElementsByTagName(prefix + "result");
+                applyIfNotEmpty(getEl(root, prefix + RESULTS), results -> {
+                    NodeList rlist = results.getElementsByTagName(prefix + RESULT);
                     for (int i = 0; i < rlist.getLength(); i++) {
                         Node r = rlist.item(i);
                         jobInfo.getResults().add(
@@ -354,10 +356,10 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                     }
                 });
 
-                applyIfNotEmpty(getEl(root, "uws:errorSummary"), errsum -> {
-                    String type = errsum.getAttribute("type");
+                applyIfNotEmpty(getEl(root, prefix + ERROR_SUMMARY), errsum -> {
+                    String type = errsum.getAttribute(ERROR_TYPE);
                     int code = type.equals("transient") ? 500 : 400;
-                    String msg = getVal(errsum, prefix + "message");
+                    String msg = getVal(errsum, prefix + ERROR_MSG);
                     if (!isEmpty(msg)) {
                         jobInfo.setError(new JobInfo.Error(code, msg));
                     }

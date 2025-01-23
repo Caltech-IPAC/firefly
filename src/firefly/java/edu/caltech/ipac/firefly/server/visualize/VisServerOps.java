@@ -199,7 +199,7 @@ public class VisServerOps {
             data= (StretchDataInfo)memCache.get(stretchDataKey);
             String fromCache= "";
             if (data!=null && data.isRangeValuesMatching(state) && data.findMostCompressAry(ct)!=null) {
-                if (ct==CompressType.FULL || ct==CompressType.HALF) memCache.put(stretchDataKey, null); // this the two types then this is the last time we need this data
+                if (ct==CompressType.FULL || ct==CompressType.HALF) memCache.remove(stretchDataKey); // this the two types then this is the last time we need this data
                 fromCache= " (from Cache)";
             }
             else {

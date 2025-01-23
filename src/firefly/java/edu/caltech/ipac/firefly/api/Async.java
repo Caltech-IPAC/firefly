@@ -4,6 +4,7 @@
 
 package edu.caltech.ipac.firefly.api;
 
+import edu.caltech.ipac.firefly.core.background.JobUtil;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerCommandAccess;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -21,7 +22,6 @@ import java.util.List;
 
 import static edu.caltech.ipac.firefly.data.ServerParams.JOB_ID;
 import static edu.caltech.ipac.util.StringUtils.*;
-import static edu.caltech.ipac.firefly.core.background.JobManager.toJson;
 
 /**
  * Follows UWS pattern for async job processing.
@@ -96,7 +96,7 @@ public class Async extends BaseHttpServlet {
     private static void listUserJob(HttpServletResponse res) throws Exception {
         // list all jobs for current user; /CmdSrv/async
         List<JobInfo> list = JobManager.list();
-        sendResponse(JobManager.toJsonJobList(list), res);
+        sendResponse(JobUtil.toJsonJobList(list), res);
     }
 
     private static void submitJob(HttpServletResponse res, SrvParam params) throws Exception {
@@ -111,7 +111,7 @@ public class Async extends BaseHttpServlet {
     }
 
     private static void getJobInfo(HttpServletResponse res, String jobId) throws Exception {
-        sendResponse(toJson(JobManager.getJobInfo(jobId)), res);
+        sendResponse(JobUtil.toJson(JobManager.getJobInfo(jobId)), res);
     }
 
     private static void updateJob(HttpServletResponse res, SrvParam params, String jobId) throws Exception {
@@ -129,7 +129,7 @@ public class Async extends BaseHttpServlet {
         String phase = req.getParameter("PHASE");
         if (String.valueOf(phase).equals("ABORT")) {
             JobInfo fi = JobManager.abort(jobId, "Abort by user");
-            sendResponse(toJson(fi), res);
+            sendResponse(JobUtil.toJson(fi), res);
         }
     }
 
@@ -154,8 +154,9 @@ public class Async extends BaseHttpServlet {
             info = new JobInfo("NULL");
         }
         res.setStatus(code);
+        info.setPhase(JobInfo.Phase.ERROR);
         info.setError(new JobInfo.Error(code, message));
-        sendResponse(toJson(info), res);
+        sendResponse(JobUtil.toJson(info), res);
     }
 
     private static void sendResponse(String json, HttpServletResponse res) throws Exception {
