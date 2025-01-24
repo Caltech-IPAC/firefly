@@ -6,6 +6,34 @@
   - use docker tag: `nightly`
   - [Notes on the next version](next-release-details.md)
 
+## Version 2025.1
+- 2024.5.0 - (Jan 30, 2025),  _docker tag_: `2025.1.0`
+
+### _Notes_
+Major updates in ingesting tables, SIAv2 and better handling of obscore table cutouts
+
+#### Major Features
+ - Improve cutout handling Firefly-1633([PR](https://github.com/Caltech-IPAC/firefly/pull/1689)),
+Firefly-1581([PR](https://github.com/Caltech-IPAC/firefly/pull/1581))
+ - SIAv2 implementation Firefly-1622([PR](https://github.com/Caltech-IPAC/firefly/pull/1677))
+ - Support image sub-highlighting Firefly-1571([PR](https://github.com/Caltech-IPAC/firefly/pull/1642))
+
+#### Not user facing
+ - Improved table ingest speed Firefly-1592([PR](https://github.com/Caltech-IPAC/firefly/pull/1667)), 
+Firefly-1591([PR](https://github.com/Caltech-IPAC/firefly/pull/1662)), Firefly-1592([PR](https://github.com/Caltech-IPAC/firefly/pull/1667)) 
+ - Improve file type detection Firefly-1615([PR](https://github.com/Caltech-IPAC/firefly/pull/1670)), 
+
+#### Bug fix / cleanup
+- Fixed: cascade combining spectra broken: Firefly-1635([PR](https://github.com/Caltech-IPAC/firefly/pull/1683)), 
+- Fixed: improved mouse readout for bottom layout: Firefly-1624([PR](https://github.com/Caltech-IPAC/firefly/pull/1682)), 
+- Fixed: table tab color wrong: Firefly-1612([PR](https://github.com/Caltech-IPAC/firefly/pull/1681)), 
+ 
+
+##### _Pull Requests in this release_
+- [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2025.1+label%3abug)
+- [All PRs](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr++milestone%3a2025.1+)
+
+
 
 ## Version 2024.3
 - 2024.3.5 - (Dec 12, 2024),  _docker tag_: `2024.3.5`, `2024.3`, `latest`
