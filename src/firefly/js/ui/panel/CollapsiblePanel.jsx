@@ -33,9 +33,9 @@ CollapsiblePanel.propTypes = {
 };
 
 
-export function FieldGroupCollapsible({slotProps, ...props}) {
+export function FieldGroupCollapsible({slotProps, sx, ...props}) {
     return (
-        <CollapsibleGroup {...slotProps?.root}>
+        <CollapsibleGroup {...{...slotProps?.root, sx}}>
             <FieldGroupCollapsibleItem slotProps={slotProps} {...props} />
         </CollapsibleGroup>
     );

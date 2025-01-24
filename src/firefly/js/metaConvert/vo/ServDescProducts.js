@@ -1,11 +1,11 @@
 import {isEmpty, isNumber} from 'lodash';
 import {getComponentState} from '../../core/ComponentCntlr.js';
-import {getCellValue, getColumnByRef} from '../../tables/TableUtil.js';
+import {getCellValue} from '../../tables/TableUtil.js';
 import {makeCircleString} from '../../ui/dynamic/DynamicUISearchPanel';
 import {isSIAStandardID} from '../../ui/dynamic/ServiceDefTools';
-import {findCutoutTarget, getCutoutSize, getCutoutTargetOverride, setCutoutSize} from '../../ui/tap/ObsCoreOptions';
-import {makeWorldPt} from '../../visualize/Point';
-import {isDatalinkTable, isObsCoreLike} from '../../voAnalyzer/TableAnalysis';
+import {findCutoutTarget, getCutoutErrorStr, getCutoutSize, setCutoutSize, } from '../../ui/tap/ObsCoreOptions';
+import {PlotAttribute} from '../../visualize/PlotAttribute';
+import {isObsCoreLike} from '../../voAnalyzer/TableAnalysis';
 import {CUTOUT_UCDs, DEC_UCDs, RA_UCDs} from '../../voAnalyzer/VoConst';
 
 import {findWorldPtInServiceDef, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
@@ -30,6 +30,7 @@ export const SD_DEFAULT_PIXEL_CUTOUT_SIZE= 200;
  * @param p.sourceRow
  * @param p.idx
  * @param p.positionWP
+ * @param p.dlData
  * @param p.activateParams
  * @param {DataProductsFactoryOptions} p.options
  * @param p.titleStr
@@ -83,7 +84,7 @@ function canMakeCutoutProduct(serDef,table,sourceRow,options){
     const key= options.dataProductsComponentKey ?? DEFAULT_DATA_PRODUCTS_COMPONENT_KEY;
     const {standardID,serDefParams} = serDef;
 
-    const positionWP= findCutoutTarget(key,serDef,table,sourceRow);
+    const {positionWP}= findCutoutTarget(key,serDef,table,sourceRow);
     if (!positionWP) { // look for ra/dec columns
         const wp= findWorldPtInServiceDef(serDef,sourceRow);
         if (!wp) return false;
@@ -113,7 +114,7 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, activate
 
     if (cutoutSize<=0) return; // must be greater than 0
 
-    const positionWP= findCutoutTarget(key,serDef,sourceTable,sourceRow);
+    const {requestedType,foundType,positionWP}= findCutoutTarget(key,serDef,sourceTable,sourceRow);
     if (!positionWP) return;  // positionWP must exist
 
     let titleToUse= titleStr;
@@ -176,6 +177,9 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, activate
     }
     const url= makeUrlFromParams(accessURL, serDef, dlData?.rowIdx ?? idx, getComponentInputs(serDef,cutoutOptions,params));
     const request = makeObsCoreRequest(url, positionWP, titleToUse, sourceTable, sourceRow);
+    if (foundType!==requestedType) {
+        request.setAttributes({[PlotAttribute.USER_WARNINGS]: getCutoutErrorStr(foundType,requestedType)});
+    }
 
     const tbl= sourceTable ?? sdSourceTable;
     const activate= createSingleImageActivate(request,activateParams.imageViewerId, tbl?.tbl_id,

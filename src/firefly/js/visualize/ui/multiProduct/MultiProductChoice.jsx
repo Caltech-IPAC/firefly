@@ -23,8 +23,8 @@ export function MultiProductChoice({ dataProductsState, dpId,
                                        makeDropDown, chartViewerId, imageViewerId, metaDataTableId,
                                        tableGroupViewerId, whatToShow, onChange, mayToggle = false, factoryKey
                                    }) {
-    const {serDef, enableCutout, pixelBasedCutout=false}= dataProductsState;
-    const {cutoutToFullWarning, dlAnalysis:{cutoutFullPair=false}={}}= dataProductsState.dlData ?? {};
+    const {enableCutout, pixelBasedCutout=false}= dataProductsState;
+    const {serDef, cutoutToFullWarning, dlAnalysis:{cutoutFullPair=false}={}}= dataProductsState.dlData ?? {};
     const primeIdx= useStoreConnector(() => getActivePlotView(visRoot())?.primeIdx ?? -1);
     const {current:showingStatus}= useRef({oldWhatToShow:undefined});
     const chartTableOptions = [{label: 'Table', value: SHOW_TABLE}, {label: 'Chart', value: SHOW_CHART}];

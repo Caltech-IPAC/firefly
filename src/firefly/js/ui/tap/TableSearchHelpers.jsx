@@ -80,15 +80,14 @@ export function makePanelStatusUpdater(panelActive,panelTitle,defErrorMessage) {
      * @String string - panel message
      */
     return (constraints, lastConstraintResult, setConstraintResult, useSIAv2= false) => {
-        const {valid:constraintsValid,errAry, adqlConstraintsAry,
+        const {valid:constraintsValid,errAry, adqlConstraintsAry, cutoutType= undefined,
             uploadFile, TAP_UPLOAD}= constraints;
 
         const simpleError= constraintsValid ? '' : (errAry[0]|| defErrorMessage || '');
 
         const {adqlConstraint, constraintErrors, siaConstraints}=
             getPanelAdqlConstraint(panelActive,panelTitle, constraintsValid,adqlConstraintsAry,constraints.siaConstraints, errAry[0], defErrorMessage, useSIAv2);
-        const cr = { adqlConstraint, constraintErrors, siaConstraints, simpleError,
-            uploadFile, TAP_UPLOAD};
+        const cr = { adqlConstraint, constraintErrors, siaConstraints, simpleError, uploadFile, TAP_UPLOAD, cutoutType};
         if (constraintResultDiffer(cr, lastConstraintResult)) setConstraintResult(cr);
 
         return simpleError;

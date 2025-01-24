@@ -2,14 +2,19 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Sheet, Stack} from '@mui/joy';
+import {Box, Sheet, Stack, Typography} from '@mui/joy';
 import {isEmpty, isEqual, omit} from 'lodash';
 import React from 'react';
 import PropTypes, {arrayOf, bool, func, string, object} from 'prop-types';
 import {getTblInfo} from '../../tables/TableUtil.js';
 import {showCutoutSizeDialog} from '../../ui/CutoutSizeDialog.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {findCutoutTarget, getCutoutSize, getObsCoreOption, getPreferCutout} from '../../ui/tap/ObsCoreOptions';
+import {
+    findCutoutTarget, getCutoutErrorStr, getCutoutSize, getCutoutTargetType, getObsCoreOption, getPreferCutout,
+    ROW_POSITION,
+    SEARCH_POSITION,
+    USER_ENTERED_POSITION
+} from '../../ui/tap/ObsCoreOptions';
 import {makeFoVString} from '../ZoomUtil.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
@@ -23,7 +28,12 @@ import {ImagePager} from './ImagePager.jsx';
 import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
 import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
+import ReadMoreRoundedIcon from '@mui/icons-material/ReadMoreRounded';
+import CrisisAlertRoundedIcon from '@mui/icons-material/CrisisAlertRounded';
+import AccessibilityRoundedIcon from '@mui/icons-material/AccessibilityRounded';
 
+const SHOWING_FULL='SHOWING_FULL';
+const SHOWING_CUTOUT='SHOWING_CUTOUT';
 
 export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType, factoryKey, serDef,
                                              enableCutout, pixelBasedCutout,enableCutoutFullSwitching,
@@ -32,23 +42,8 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
 
     const converter= makeDataProductsConverter(activeTable,factoryKey) || {};
     const {canGrid, hasRelatedBands, converterId, maxPlots, threeColor, dataProductsComponentKey}= converter ?? {};
-    const cutoutValue= useStoreConnector( () => getCutoutSize(dataProductsComponentKey));
-    const preferCutout= useStoreConnector( () => getPreferCutout(dataProductsComponentKey,activeTable?.tbl_id));
-
-    const cutoutCenterWP= findCutoutTarget(dataProductsComponentKey,serDef,activeTable,activeTable?.highlightedRow);
 
     if (!converter) return <div/>;
-    let cSize='';
-    if (dataProductsComponentKey&&enableCutout) {
-        if (pixelBasedCutout) {
-            cSize= cutoutValue+'';
-        }
-        else {
-            cSize= makeFoVString(Number(cutoutValue));
-        }
-
-    }
-
 
     const layoutDetail= getLayoutDetails(getMultiViewRoot(), viewerId, activeTable?.tbl_id);
     const viewer= getViewer(getMultiViewRoot(), viewerId);
@@ -67,9 +62,17 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
         metaControls= false;
     }
 
-    const gridConfig=[];
-    const gridValue= layoutType===SINGLE ? 'one' : layoutType===GRID && layoutDetail!==GRID_RELATED ? 'gridFull' : 'gridRelated';
+    const cutoutMode= enableCutout
+        ? SHOWING_CUTOUT :
+        enableCutoutFullSwitching
+            ? SHOWING_FULL : undefined;
 
+    const gridValue= layoutType===SINGLE
+        ? 'one' :
+        layoutType===GRID && layoutDetail!==GRID_RELATED
+            ? 'gridFull' : 'gridRelated';
+
+    const gridConfig=[];
     if (showMultiImageOps) {
         gridConfig.push(
             { value:'one', title:'Show single image at full size',
@@ -102,25 +105,8 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
                 <Stack direction='row' alignItems='center' divider={<ToolbarHorizontalSeparator/>}
                        sx={{ pl: 1/2, flexWrap:'wrap'}}>
                     {makeDropDown ? makeDropDown() : false}
-                    {enableCutout &&
-                        <ToolbarButton
-                            icon={<ContentCutRoundedIcon/>} text={`${cSize}`}
-                            title='Showing cutout of image, click here to modify cutout or show original image (with all extensions)'
-                            onClick={() =>
-                                showCutoutSizeDialog({
-                                    showingCutout:true,cutoutDefSizeDeg:cutoutValue,pixelBasedCutout,
-                                    tbl_id:activeTable?.tbl_id, cutoutCenterWP,
-                                    dataProductsComponentKey,enableCutoutFullSwitching, cutoutToFullWarning})}/>
-                    }
-                    {!enableCutout && enableCutoutFullSwitching &&
-                        <ToolbarButton
-                            icon={<ContentCutRoundedIcon/>} text={'Off'}
-                            title='Showing original image (with all extensions), click here to show a cutout'
-                            onClick={() =>
-                                showCutoutSizeDialog({showingCutout:false,cutoutDefSizeDeg:cutoutValue,pixelBasedCutout,
-                                    tbl_id:activeTable?.tbl_id, cutoutCenterWP,
-                                    dataProductsComponentKey,enableCutoutFullSwitching})}/>
-                    }
+                    {cutoutMode && <CutoutButton {...{dataProductsComponentKey,activeTable, serDef,pixelBasedCutout,
+                        enableCutoutFullSwitching, cutoutToFullWarning, cutoutMode }}/> }
                     {metaControls &&
                         <Stack direction='row' spacing={1} alignItems='center' whiteSpace='nowrap'>
                             {showMultiImageOps && <DisplayTypeButtonGroup {...{value:gridValue, config:gridConfig }}/>}
@@ -153,6 +139,87 @@ ImageMetaDataToolbarView.propTypes= {
     cutoutToFullWarning: string,
     enableCutoutFullSwitching: bool
 };
+
+function CutoutButton({dataProductsComponentKey,activeTable, serDef,pixelBasedCutout,
+                          enableCutoutFullSwitching, cutoutToFullWarning, cutoutMode}) {
+    const cutoutValue= useStoreConnector( () => getCutoutSize(dataProductsComponentKey));
+    const {positionWP:cutoutCenterWP, requestedType,foundType}= findCutoutTarget(dataProductsComponentKey,serDef,activeTable,activeTable?.highlightedRow);
+    const cutoutTypeError= requestedType!==foundType;
+    const cSize= dataProductsComponentKey ? pixelBasedCutout ? cutoutValue+'' : makeFoVString(Number(cutoutValue)) : '';
+
+    if (!dataProductsComponentKey || !activeTable) return;
+
+    if (cutoutMode===SHOWING_FULL) {
+        return (
+            <ToolbarButton
+                icon={<ContentCutRoundedIcon/>} text={'Off'}
+                title='Showing original image (with all extensions), click here to show a cutout'
+                onClick={() =>
+                    showCutoutSizeDialog({showingCutout:false,cutoutDefSizeDeg:cutoutValue,pixelBasedCutout,
+                        tbl_id:activeTable?.tbl_id, cutoutCenterWP, serDef,
+                        dataProductsComponentKey,enableCutoutFullSwitching})}/>
+            );
+    }
+    else if (cutoutMode===SHOWING_CUTOUT) {
+        return (
+            <ToolbarButton
+                icon={
+                    <CutoutIcon
+                        type={getCutoutTargetType(dataProductsComponentKey,activeTable?.tbl_id, serDef)}
+                        showTypeError={cutoutTypeError}
+                    />}
+                text={`${cSize}`}
+                title={
+                    <Stack>
+                        <Typography>
+                            Showing cutout of image, click here to modify cutout or show original image (with all extensions)
+                        </Typography>
+                        {
+                            cutoutTypeError &&
+                            <Typography color='warning'>
+                                {getCutoutErrorStr(foundType,requestedType)}
+                            </Typography>
+
+                        }
+                    </Stack>
+                }
+                onClick={() =>
+                    showCutoutSizeDialog({
+                        showingCutout:true,cutoutDefSizeDeg:cutoutValue,pixelBasedCutout,
+                        tbl_id:activeTable?.tbl_id, cutoutCenterWP, serDef,
+                        dataProductsComponentKey,enableCutoutFullSwitching, cutoutToFullWarning})}
+            />
+        );
+    }
+
+}
+
+
+const CutoutIcon= ({type, showTypeError}) => {
+    if (!type) return <ContentCutRoundedIcon/>;
+
+    let typeIcon;
+    const sx={position:'absolute', transform: 'scale(.9)', top:3, left:15};
+    switch (type) {
+        case USER_ENTERED_POSITION:
+            typeIcon= <AccessibilityRoundedIcon {...{color: showTypeError?'danger':undefined ,sx:{...sx}}}/>;
+            break;
+        case SEARCH_POSITION:
+            typeIcon= <CrisisAlertRoundedIcon {...{color: showTypeError?'danger':undefined ,sx:{...sx, transform:'scale(.8)', top:sx.top+1}}}/>;
+            break;
+        case ROW_POSITION:
+            typeIcon= <ReadMoreRoundedIcon {...{color: showTypeError?'danger':undefined ,sx:{...sx,transform:'scale(1.1)', left:sx.left-2}}}/>;
+            break;
+    }
+    const icon= (
+        <Box sx={{width:24,height:24, position:'relative'}}>
+            <ContentCutRoundedIcon sx={{position:'absolute', top:4, left:-1}}/>
+            {typeIcon}
+        </Box>
+    );
+    return icon;
+};
+
 
 
 async function showThreeColorOps(viewerId,converter, table, converterId) {

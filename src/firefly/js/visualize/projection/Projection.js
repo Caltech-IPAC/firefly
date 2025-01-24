@@ -5,7 +5,7 @@
 import {Projection as AladinProjection} from '../../externalSource/aladinProj/AladinProjections.js';
 import {CoordinateSys} from '../CoordSys.js';
 import {makeImagePt, makeProjectionPt, makeWorldPt} from '../Point.js';
-import {computeDistance, convertAngle, isAngleUnit} from '../VisUtil.js';
+import {computeDistance, convertAngle, isAngleUnit, pointInRec} from '../VisUtil.js';
 import {AitoffProjection} from './AitoffProjection.js';
 import {ARCProjection} from './ARCProjection.js';
 import {CartesianProjection} from './CartesianProjection.js';
@@ -364,4 +364,19 @@ export function makeHiPSProjection(coordinateSys, lon = 0, lat = 0, fullSky = fa
 		crval2: lat
 	};
 	return makeProjection({header, coorindateSys: coordinateSys.toString()});
+}
+
+/**
+ * User world coordinates determine if a point is in a rectangle,
+ * This function will create a transformation for the test. It does not require a plot
+ * @param {Array.<WorldPt>} wpAry - Point that make up the rectangle, array length should be 4
+ * @param {WorldPt} testWp
+ * @return {boolean} true if the world point in the rectangle
+ */
+export function pointIn(wpAry, testWp) {
+	if (!testWp || !wpAry?.length) return false;
+	const projection= makeHiPSProjection(CoordinateSys.EQ_J2000, wpAry[0].x, wpAry[0].y, true);
+	const testIm= projection.getImageCoords(testWp.x,testWp.y);
+	const imageAry= wpAry.map( (wp) => projection.getImageCoords(wp.x,wp.y));
+	return pointInRec(testIm,imageAry);
 }

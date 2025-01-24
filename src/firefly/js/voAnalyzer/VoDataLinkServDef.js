@@ -109,6 +109,7 @@ export function getServiceDescriptors(tableOrId, removeAsync = true) {
             utype,
             sdSourceTable: table,
             positionWP: parseWorldPt(getMetaEntry(table, MetaConst.SEARCH_TARGET, undefined)),
+            rowWP: parseWorldPt(getMetaEntry(table, MetaConst.ROW_TARGET, undefined)),
             title: desc ?? getSDDescription(table, ID) ?? 'Service Descriptor ' + idx,
             accessURL: params.find(({name}) => name==='accessURL')?.value,
             standardID: params.find(({name}) => name==='standardID')?.value,
@@ -146,6 +147,8 @@ export function getDataLinkData(dataLinkTableOrId, sourceObsCoreTbl=undefined, s
     if (!data) return [];
     const sourceObsCoreData= getObsCoreData(sourceObsCoreTbl,sourceObsCoreRow);
     const positionWP= parseWorldPt(getMetaEntry(dataLinkTable, MetaConst.SEARCH_TARGET, undefined));
+    const rowWP= parseWorldPt(getMetaEntry(dataLinkTable, MetaConst.ROW_TARGET, undefined));
+    const sRegion= getMetaEntry(dataLinkTable, MetaConst.S_REGION, undefined);
 
     const dlDataAry=  data
         .map((r, idx) => {
@@ -167,7 +170,7 @@ export function getDataLinkData(dataLinkTableOrId, sourceObsCoreTbl=undefined, s
                 id: rowObj[idKey],
                 contentType, contentQualifier, semantics, localSemantics, url, error_message,
                 description, size, serviceDefRef, serDef, rowIdx: idx, dlAnalysis, prodTypeHint,
-                sourceObsCoreData, relatedDLEntries: {}, positionWP,
+                sourceObsCoreData, relatedDLEntries: {}, positionWP, rowWP, sRegion,
             };
         })
         .filter(({url='', serviceDefRef, serDef, error_message}) =>

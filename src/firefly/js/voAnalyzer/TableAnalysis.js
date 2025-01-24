@@ -6,7 +6,7 @@ import {MetaConst} from '../data/MetaConst.js';
 import {defDataSourceGuesses} from '../metaConvert/DefaultConverter.js';
 import {getCornersColumns} from '../tables/TableInfoUtil.js';
 import {
-    getBooleanMetaEntry, getCellValue, getColumn, getColumns, getMetaEntry, isTableUsingRadians
+    getBooleanMetaEntry, getCellValue, getColumn, getColumns, getMetaEntry, getObjectMetaEntry, isTableUsingRadians
 } from '../tables/TableUtil.js';
 import {isDefined} from '../util/WebUtil.js';
 import CoordinateSys from '../visualize/CoordSys.js';
@@ -29,14 +29,17 @@ export function isOrbitalPathTable(tableOrId) {
 /**
  * find the center column base on the table model of catalog or image metadata
  * Investigate table meta data a return a CoordColsDescription for two columns that represent and object in the row
- * @param {TableModel|undefined} table
+ * @param {TableModel|String} tableOrId - a table model or a table id
  * @param {boolean} acceptArrayCol - if true then allow of a single column with an array entry for RA and Dec
  * @return {CoordColsDescription|null|undefined}
  */
-export function findTableCenterColumns(table, acceptArrayCol = false) {
+export function findTableCenterColumns(tableOrId, acceptArrayCol = false) {
+    const table = getTableModel(tableOrId);
     const tblRecog = get(table, ['tableData', 'columns']) && VoTableRecognizer.newInstance(table);
     return tblRecog && tblRecog.getCenterColumns(acceptArrayCol);
 }
+
+export const isRowTargetCapable= (tbl_id) => Boolean(findTableCenterColumns(tbl_id));
 
 export function findImageCenterColumns(tableOrId) {
     const table = getTableModel(tableOrId);
@@ -46,16 +49,16 @@ export function findImageCenterColumns(tableOrId) {
 
 /**
  * If there are center columns defined with this table then return a WorldPt
- * @param table
+ * @param {TableModel|String} tableOrId - a table model or a table id
  * @param row
  * @return {WorldPt|undefined} a world point or undefined it no center columns exist
  */
-export function makeWorldPtUsingCenterColumns(table, row) {
+export function makeWorldPtUsingCenterColumns(tableOrId, row) {
+    const table = getTableModel(tableOrId);
     if (!table || isUndefined(row)) return;
     const cen = findTableCenterColumns(table);
     return cen && makeWorldPt(getCellValue(table, row, cen.lonCol), getCellValue(table, row, cen.latCol), cen.csys);
 }
-
 /**
  * find ObsCore defined 's_region' column
  * @param table
@@ -120,6 +123,15 @@ export function isTableWithRegion(tableOrId) {
     return Boolean(VoTableRecognizer.newInstance(table).getVODefinedRegionColumn());
 }
 
+export function getTableRegionColumn(tableOrId) {
+    const table = getTableModel(tableOrId);
+    if (!table) return;
+    return VoTableRecognizer.newInstance(table).getVODefinedRegionColumn();
+}
+
+
+
+
 function getObsCoreTableColumn(tableOrId, name) {
     const entry = getObsTabColEntry(name);
     if (!entry) return;
@@ -159,6 +171,7 @@ export function hasObsCoreLikeDataProducts(tableOrId) {
     const hasProdType = getObsCoreProdTypeCol(table);
     return Boolean(hasUrl && hasFormat && hasProdType);
 }
+
 
 export function isDatalinkTable(tableOrId) {
     const columns = getTableModel(tableOrId)?.tableData?.columns?.map( (c) => c?.name?.toLowerCase() ?? '') ?? [];
@@ -400,6 +413,15 @@ export function getSSATitle(tableOrId,row) {
             if (c?.utype?.toLowerCase().includes(SSA_TITLE_UTYPE )) return true;
         });
     return foundCol.length>0 ? getCellValue(table,row,foundCol[0].name) : undefined;
+}
+
+
+export function getSearchTargetFromTable(tableOrId) {
+    const table= getTableModel(tableOrId);
+    if (!table) return;
+    const wpFromMeta= parseWorldPt(getMetaEntry(table, MetaConst.SEARCH_TARGET, undefined));
+    if (wpFromMeta) return wpFromMeta;
+    return getSearchTarget(table?.request, table);
 }
 
 export function getSearchTarget(r, tableModel, searchTargetStr, overlayPositionStr) {

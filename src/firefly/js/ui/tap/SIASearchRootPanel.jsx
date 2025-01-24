@@ -398,6 +398,11 @@ const noRowLimitMsg = (
     </div>
 );
 
+function getCutoutType(siaState) {
+    return siaState?.constraintFragments?.get('spatial')?.cutoutType ??
+        siaState?.constraintFragments?.get('location')?.cutoutType;
+}
+
 
 function onSIAv2SearchSubmit(request, serviceUrl, siaMeta, siaState, showErrors=true) {
 
@@ -430,6 +435,7 @@ function onSIAv2SearchSubmit(request, serviceUrl, siaMeta, siaState, showErrors=
 
         const url= `${baseRequestUrl}${hasMaxrec?'&MAXREC='+maxrec : ''}`;
         const additionalSiaMeta= {serviceLabel: getSiaServiceLabel(serviceUrl)};
+        if (getCutoutType(siaState)) additionalSiaMeta[MetaConst.OBSCORE_CUTOUT_TYPE]= getCutoutType(siaState);
         const hips= getServiceHiPS(serviceUrl);
         if (hips) additionalSiaMeta[MetaConst.COVERAGE_HIPS]= hips;
         const title= makeNumberedTitle(userTitle || 'SIA Search');

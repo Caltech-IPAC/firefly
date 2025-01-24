@@ -22,6 +22,7 @@ import {useFieldGroupRerender, useFieldGroupValue, useFieldGroupWatch} from '../
 import {SizeInputFields} from '../SizeInputField.jsx';
 import {DEF_TARGET_PANEL_KEY} from '../TargetPanel.jsx';
 import {ConstraintContext} from './Constraints.js';
+import {ROW_POSITION, SEARCH_POSITION} from './ObsCoreOptions';
 import {
     DebugObsCore, getPanelPrefix, makeCollapsibleCheckHeader, makeFieldErrorList, makePanelStatusUpdater,
     } from './TableSearchHelpers.jsx';
@@ -599,6 +600,17 @@ function makeUserAreaConstraint(regionOp, userArea, adqlCoordSys ) {
     }
 }
 
+function getCutoutTypeFromRegionOp(regionOp) {
+    switch (regionOp) {
+        case 'contains_point': return SEARCH_POSITION;
+        case 'contains_shape': return SEARCH_POSITION;
+        case 'contained_by_shape': return ROW_POSITION;
+        case 'intersects': return ROW_POSITION;
+        case 'center_contained': return SEARCH_POSITION;
+    }
+    return SEARCH_POSITION;
+}
+
 
 function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo, tableName, canUpload, useSIAv2) {
     const {fileName,serverFile, columns:uploadColumns, totalRows, fileSize}= uploadInfo ?? {};
@@ -696,6 +708,7 @@ function makeSpatialConstraints(columnsModel, obsCoreEnabled, fldObj, uploadInfo
         valid:  errAry.length===0, errAry,
         adqlConstraintsAry: adqlConstraint ? [adqlConstraint] : [],
         siaConstraints:siaConstraint ? [siaConstraint] : [],
+        cutoutType: getCutoutTypeFromRegionOp(regionOp),
     };
     if (spatialType===MULTI) {
         retObj.TAP_UPLOAD= makeUploadSchema(fileName,serverFile,uploadColumns, totalRows, fileSize);
