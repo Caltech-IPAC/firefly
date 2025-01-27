@@ -6,8 +6,8 @@
   - use docker tag: `nightly`
   - [Notes on the next version](next-release-details.md)
 
-## Version 2025.1 (preliminary)
-- 2024.5.0 - (Jan 30, 2025),  _docker tag_: `2025.1`, `2025.1.0`, `latest`
+## Version 2025.1
+- 2024.5.0 - (Jan 27, 2025),  _docker tag_: `2025.1`, `2025.1.0`, `latest`
 
 ### _Notes_
 #### Major updates in ingesting tables, SIAv2 and better handling of obscore table cutouts
