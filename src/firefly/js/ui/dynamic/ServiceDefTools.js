@@ -158,27 +158,35 @@ function makeExamples(inExample) {
  * @param {Number} [fovSize]
  * @returns {Array.<FieldDef>}
  */
-export function makeFieldDefs(serDefParams, sRegion, searchAreaInfo = {}, hidePredefinedStringFields = false, hipsUrl, fovSize) {
+export function makeFieldDefsWithOptions({serDefParams, sRegion, searchAreaInfo = {},
+                                             hidePredefinedStringFields = true,
+                                             hipsUrl, fovSize}) {
     const {filteredParams, posDef} = prefilterRADec(serDefParams, searchAreaInfo);
     const fdAry = filteredParams
         .filter((serDefParam) => !serDefParam.ref)
-        .map((serDefParam) => makeFieldDef(serDefParam,sRegion,searchAreaInfo,hidePredefinedStringFields,hipsUrl,fovSize) );
+        .map((serDefParam) => makeFieldDef({serDefParam,sRegion,searchAreaInfo,hidePredefinedStringFields,hipsUrl,fovSize}) );
     if (posDef) fdAry.push(posDef);
     return fdAry;
+}
+
+export function makeFieldDefs(serDefParams) {
+    return makeFieldDefsWithOptions({serDefParams});
+
 }
 
 
 /**
  *
- * @param {ServiceDescriptorInputParam} serDefParam
- * @param {String} [sRegion]
- * @param {SearchAreaInfo} [searchAreaInfo]
- * @param {boolean} [hidePredefinedStringFields]
- * @param {String} [hipsUrl]
- * @param {Number} [fovSize]
+ * @param {Object} p
+ * @param {ServiceDescriptorInputParam} p.serDefParam
+ * @param {String} [p.sRegion]
+ * @param {SearchAreaInfo} [p.searchAreaInfo]
+ * @param {boolean} [p.hidePredefinedStringFields]
+ * @param {String} [p.hipsUrl]
+ * @param {Number} [p.fovSize]
  * @return {FieldDef}
  */
-function makeFieldDef(serDefParam, sRegion, searchAreaInfo, hidePredefinedStringFields, hipsUrl, fovSize) {
+function makeFieldDef({serDefParam, sRegion, searchAreaInfo, hidePredefinedStringFields, hipsUrl, fovSize}) {
         if (!serDefParam) return;
         if (serDefParam.options) {
             return doMakeEnumDef(serDefParam);
@@ -219,6 +227,7 @@ function getMOCList(searchAreaInfo) {
                 mocUrl : searchAreaInfo[k],
                 title : searchAreaInfo['mocDesc'+cnt] ?? 'MOC'+cnt,
                 mocColor: searchAreaInfo['mocColor'+cnt],
+                maxFetchDepth: searchAreaInfo['maxFetchDepth'+cnt]
             };
         });
     return mocAry.length ? mocAry : undefined;
@@ -342,9 +351,10 @@ function doMakeNumberDef(serDefParam) {
 /**
  *
  * @param {Object} cisxUI
+ * @param {number} defaultMaxMOCFetchDepth
  * @return {SearchAreaInfo}
  */
-export function makeSearchAreaInfo(cisxUI) {
+export function makeSearchAreaInfo(cisxUI, defaultMaxMOCFetchDepth) {
     if (!cisxUI) return;
     const tmpObj = cisxUI.reduce((obj, {name, value, UCD}) => {
         switch (name) {
@@ -368,7 +378,8 @@ export function makeSearchAreaInfo(cisxUI) {
     const hipsProjCsys = hips_frame?.trim().toLowerCase()==='galactic' ? CoordinateSys.GALACTIC : CoordinateSys.EQ_J2000;
     const ptCsys= ptIsGalactic ? CoordinateSys.GALACTIC : CoordinateSys.EQ_J2000;
     const centerWp = makeWorldPt(hips_initial_ra, hips_initial_dec, ptCsys);
-    return {...tmpObj, ...mocsObj, centerWp, coordinateSys: hipsProjCsys.toString()};
+    return {...tmpObj, ...mocsObj, centerWp,
+        coordinateSys: hipsProjCsys.toString(), maxFetchDepth:defaultMaxMOCFetchDepth};
 }
 
 
