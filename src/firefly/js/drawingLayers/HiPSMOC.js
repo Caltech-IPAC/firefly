@@ -60,11 +60,19 @@ function loadMocFitsWatcher(action, cancelSelf, params, dispatch, getState) {
         const dl = getDrawLayerById(getDlAry(), tbl_id);
         if (!dl) return;
         const preloadedTbl= tablePreloaded && getTblById(tbl_id);
-
-        const filterObj= dl.maxFetchDepth ? {filters : `"${mocFitsInfo.uniqColName}" < ${4*(4**(dl.maxFetchDepth+1))}`} : {};
+        let filterObj= {};
+        let maxDepth= undefined;
+        if (dl.maxFetchDepth) {
+            maxDepth= 4*(4**(dl.maxFetchDepth+1));
+            filterObj= {filters : `"${mocFitsInfo.uniqColName}" < ${maxDepth}`};
+        }
         if (!dl.mocTable) { // moc table is not yet loaded
             let tReq;
             if (preloadedTbl){ //load by getting the full version of a already loaded table
+
+                      // in this case we may have 1 test row loaded. test to see if it is greater than the filter
+                if (preloadedTbl.tableData.data[0][0] > maxDepth)  filterObj= {}; //abort filtering
+
                 tReq= cloneRequest(preloadedTbl.request,
                     { startIdx : 0, pageSize : MAX_ROW, inclCols: mocFitsInfo.uniqColName, ...filterObj});
             }

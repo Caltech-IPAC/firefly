@@ -3,16 +3,15 @@
  */
 
 import {Stack, Typography} from '@mui/joy';
-import {arrayOf, func, object, string} from 'prop-types';
+import {func, object, string} from 'prop-types';
 import React, {memo} from 'react';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser.js';
 import {computeCentralPtRadiusAverage} from '../../visualize/VisUtil.js';
-import CompleteButton from '../CompleteButton.jsx';
 import {FieldGroup} from '../FieldGroup.jsx';
 import {convertRequest, DynLayoutPanelTypes} from './DynamicUISearchPanel.jsx';
 import {showInfoPopup} from '../PopupUtil.jsx';
-import {getStandardIdType, hasAnySpacial, makeFieldDefs} from './ServiceDefTools.js';
+import {getStandardIdType, hasAnySpacial, makeFieldDefsWithOptions} from './ServiceDefTools.js';
 import ShapeDataObj from '../../visualize/draw/ShapeDataObj.js';
 
 /**
@@ -21,6 +20,7 @@ import ShapeDataObj from '../../visualize/draw/ShapeDataObj.js';
  * @prop {String} examples
  * @prop {String} moc
  * @prop {String} mocDesc
+ * @prop {number} maxFetchDepth
  * @prop {String} HiPS
  * @prop {String} hips_initial_fov
  * @prop {String} standardID
@@ -44,8 +44,8 @@ export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDef, setSe
         console.log(wp);
     }
 
-    const fieldDefAry= makeFieldDefs(serDef?.serDefParams, sRegion, undefined, true,
-        getAppOptions()?.coverage?.hipsSourceURL, fovSize);
+    const fieldDefAry= makeFieldDefsWithOptions({
+        serDefParams:serDef?.serDefParams, sRegion, hipsUrl:getAppOptions()?.coverage?.hipsSourceURL, fovSize });
 
     const submitSearch= (r) => {
         const convertedR= convertRequest(r,fieldDefAry,getStandardIdType(standardID));
@@ -88,7 +88,7 @@ export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDef, setSe
 });
 
 ServiceDescriptorPanel.propTypes= {
-    serDefParams: arrayOf(object),
+    serDef: object,
     title: string,
     serviceDefRef: string,
     setSearchParams: func,
