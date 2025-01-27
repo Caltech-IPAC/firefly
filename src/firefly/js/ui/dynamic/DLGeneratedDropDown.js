@@ -35,7 +35,7 @@ import {CIRCLE, POINT, POSITION, RANGE} from './DynamicDef.js';
 import {convertRequest, findTargetFromRequest} from './DynamicUISearchPanel.jsx';
 import {getSpacialSearchType, hasValidSpacialSearch} from './DynComponents.jsx';
 import {confirmDLMenuItem} from './FetchDatalinkTable.js';
-import {getStandardIdType, ingestInitArgs, makeFieldDefs, makeSearchAreaInfo} from './ServiceDefTools.js';
+import { getStandardIdType, ingestInitArgs, makeFieldDefsWithOptions, makeSearchAreaInfo } from './ServiceDefTools.js';
 
 
 export const DL_UI_LIST= 'DL_UI_LIST';
@@ -128,7 +128,7 @@ export function DLGeneratedDropDown({initArgs={},
     const currentIdx= useStoreConnector(() => getTblById(registryTblId)?.highlightedRow ?? -1);
     const [url,setUrl]= useState();
     const [searchAttributes,setSearchAttributes]= useState({});
-    const {makeRegistryRequest,findUrlInReg,getCollectionUrl,getCollectionAttributes}=
+    const {makeRegistryRequest,findUrlInReg,getCollectionUrl,getCollectionAttributes, defaultMaxMOCFetchDepth}=
         { ...defaultRegistrySearchDef, ...registrySearchDef};
 
     registryData[name] ??= { regLoaded: false, hasRegistry:true, regLoading: false, loadedTblIdCache:undefined, savedUrl: undefined};
@@ -192,7 +192,7 @@ export function DLGeneratedDropDown({initArgs={},
     }
 
     return (<DLGeneratedDropDownTables {...{registryTblId,regLoaded, loadedTblIds, setLoadedTblIds, url,
-        searchAttributes, groupKey, slotProps, findUrlInReg, initArgs, hasRegistry}}/>);
+        searchAttributes, groupKey, slotProps, findUrlInReg, initArgs, hasRegistry,defaultMaxMOCFetchDepth}}/>);
 }
 
 DLGeneratedDropDown.propTypes= {
@@ -230,7 +230,8 @@ DLGeneratedDropDown.propTypes= {
 
 
 function DLGeneratedDropDownTables({registryTblId, regLoaded, loadedTblIds, setLoadedTblIds, url, hasRegistry,
-                                       searchAttributes, groupKey, slotProps, findUrlInReg, initArgs}) {
+                                       searchAttributes, groupKey, slotProps,
+                                       findUrlInReg, initArgs, defaultMaxMOCFetchDepth}) {
 
     const [sideBarShowing, setSideBarShowing]= useState(true);
     const currentTblId= loadedTblIds?.[url];
@@ -265,7 +266,9 @@ function DLGeneratedDropDownTables({registryTblId, regLoaded, loadedTblIds, setL
     const qAna= analyzeQueries(currentTblId);
     return (
         <Sheet sx={{display:'flex', flexDirection: 'row', width:1, height:1, minWidth:800, minHeight:400}}>
-            <DLGeneratedTableSearch {...{currentTblId, qAna, groupKey, initArgs, sideBar, regHasUrl, url, regLoaded,slotProps, sideBarShowing, setSideBarShowing}}/>
+            <DLGeneratedTableSearch {...{currentTblId, qAna, groupKey, initArgs, sideBar, regHasUrl, url,
+                regLoaded,slotProps, sideBarShowing,
+                setSideBarShowing, defaultMaxMOCFetchDepth}}/>
         </Sheet>
     );
 }
@@ -277,7 +280,8 @@ const executeInitTargetOnce= makeSearchOnce(false);
 
 
 function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar, regHasUrl, url,
-                                    sideBarShowing, slotProps, regLoaded, setSideBarShowing}) {
+                                    sideBarShowing, slotProps, regLoaded,
+                                    setSideBarShowing, defaultMaxMOCFetchDepth}) {
     const [,setCallId]= useState('none');
     const [{onClick},setClickFuncImpl]= useState({});
     const tabsKey= 'Tabs-'+currentTblId;
@@ -300,7 +304,7 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
         }
     }, [onClick, initArgs?.urlApi?.callId, matchUrl]);
 
-    const fdAry= makePrimarySearchFieldDefAry(qAna,initArgs);
+    const fdAry= makePrimarySearchFieldDefAry(qAna,initArgs,defaultMaxMOCFetchDepth);
 
     const searchObjFds= fdAry
         ?.map((fds,idx) => {
@@ -404,9 +408,10 @@ function getCisxUI(qAnaOrSd) {
  *
  * @param {QueryAnalysis} qAna - the description of all the searches to do for this table
  * @param {Object} initArgs
+ * @param {number} defaultMaxMOCFetchDepth
  * @return {Array.<Array.<FieldDef>>}
  */
-function makePrimarySearchFieldDefAry(qAna, initArgs) {
+function makePrimarySearchFieldDefAry(qAna, initArgs, defaultMaxMOCFetchDepth) {
     return qAna?.primarySearchDef.map( (fd) => {
         const {serviceDef}= fd; //todo handle case with only an access url
         if (!serviceDef) return;
@@ -414,10 +419,16 @@ function makePrimarySearchFieldDefAry(qAna, initArgs) {
         const utype= getUtype(serviceDef);
         let fdEntryAry;
         if (utype===cisxAdhocServiceUtype && standId.startsWith(standardIDs.tap) && serviceDef.cisxTokenSub) {
-            fdEntryAry= makeFieldDefs(serviceDef.cisxTokenSub, undefined, makeSearchAreaInfo(getCisxUI(serviceDef)), false);
+            fdEntryAry= makeFieldDefsWithOptions({
+                serDefParams:serviceDef.cisxTokenSub,
+                searchAreaInfo:makeSearchAreaInfo(getCisxUI(serviceDef), defaultMaxMOCFetchDepth),
+                hidePredefinedStringFields:false});
         }
         else {
-            fdEntryAry= makeFieldDefs(serviceDef.serDefParams, undefined, makeSearchAreaInfo(getCisxUI(serviceDef)), true);
+            fdEntryAry= makeFieldDefsWithOptions({
+                serDefParams:serviceDef.serDefParams,
+                searchAreaInfo:makeSearchAreaInfo(getCisxUI(serviceDef), defaultMaxMOCFetchDepth)
+            });
         }
         if (!isEmpty(initArgs.urlApi)) {
             const originalWp= fdEntryAry.find((fd) => fd.type===POSITION)?.initValue ?? fdEntryAry.find((fd) => fd.type===CIRCLE)?.targetDetails?.centerPt;
