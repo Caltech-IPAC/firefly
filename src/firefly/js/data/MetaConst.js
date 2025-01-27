@@ -35,9 +35,19 @@ export const MetaConst = {
     FITS_EXTRACTION_TYPE: 'FitsExtractionType',
 
     /**
-     * Search Target - the search target associated with this table
+     * Search Target - the search target associated with this table, used with extracting datalink
      */
     SEARCH_TARGET: 'SearchTarget',
+
+    /**
+     * S_REGION the would defined the whole table, used with extracting datalink
+     */
+    S_REGION: 'S_REGION',
+
+    /**
+     * the center point for a row from the source table, used with extracting datalink
+     */
+    ROW_TARGET: 'ROW_TARGET',
 
     /**
      * An world point in a fits FILE that is associated with this table
@@ -191,6 +201,11 @@ export const MetaConst = {
      * any ID can be added to a table search to identify the source for the purpose of getting source specific obscore preferences
      */
     OBSCORE_SOURCE_ID: 'OBSCORE_SOURCE_ID',
+
+    /**
+     * If we are doing cutout, this is the default type, either: ROW_POSITION or SEARCH_POSITION
+     */
+    OBSCORE_CUTOUT_TYPE: 'OBSCORE_CUTOUT_TYPE',
 
     /**
      * if defined this table container a moving object, setting this will override any catalog evaluation

@@ -70,11 +70,10 @@ export function onTapSearchSubmit(request, serviceUrl, tapBrowserState, addition
         const title= makeNumberedTitle(userTitle || makeTapSearchTitle(adqlClean,serviceUrl));
         const treq = makeTblRequest('AsyncTapQuery', title, params);
         setNoCache(treq);
-        const additionalTapMeta= {};
-        if (!isUserEnteredADQL) {
-            additionalTapMeta[PREF_KEY]= `${tapBrowserState.schemaName}-${tapBrowserState.tableName}`;
-        }
-        additionalTapMeta.serviceLabel= serviceLabel;
+        const cutoutType= getCutoutType(tapBrowserState);
+        const additionalTapMeta= {serviceLabel};
+        if (!isUserEnteredADQL) additionalTapMeta[PREF_KEY]= `${tapBrowserState.schemaName}-${tapBrowserState.tableName}`;
+        if (cutoutType) additionalTapMeta[MetaConst.OBSCORE_CUTOUT_TYPE]= cutoutType;
         if (hips) additionalTapMeta[MetaConst.COVERAGE_HIPS]= hips;
 
         treq.META_INFO= {
@@ -101,6 +100,9 @@ export function onTapSearchSubmit(request, serviceUrl, tapBrowserState, addition
     return false;
 }
 
+function getCutoutType(tapBrowserState) {
+  return tapBrowserState?.constraintFragments?.get('spatial')?.cutoutType;
+}
 
 
 /**

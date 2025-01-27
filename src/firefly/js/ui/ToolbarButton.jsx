@@ -169,7 +169,7 @@ ToolbarButton.propTypes= {
     text : oneOfType([element,string]),
     tip : string,
     value: string,
-    title: string,
+    title: oneOfType([element,string]),
     pressed: bool,
     shortcutHelp : bool,
     badgeCount : number,

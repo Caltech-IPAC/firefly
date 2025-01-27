@@ -53,6 +53,9 @@ export const VisInlineToolbarView = memo( (props) => {
 
 function getWarningsAry(pv) {
     const warnings= primePlot(visRoot(),pv.plotId)?.attributes[PlotAttribute.USER_WARNINGS] ?? {};
+    if (isString(warnings)) {
+        return [<Typography>{warnings}</Typography>];
+    }
     return Object.entries(warnings ?? {})
         .filter(([k]) => (k!=='title' && k!=='tooltip'))
         .map(([,v]) => v);
@@ -62,12 +65,13 @@ function getWarningsAry(pv) {
 
 function WarningsAlert({pv}) {
     const warnings= primePlot(visRoot(),pv.plotId)?.attributes[PlotAttribute.USER_WARNINGS] ?? {};
+    const defaultTip= isString(warnings) ? warnings : 'click for warnings';
     const warnAry= getWarningsAry(pv);
     if (!warnAry?.length) return;
 
     return (
         <WarningButton {...{
-            tip:warnings.tooltip ?? 'warnings',
+            tip:warnings.tooltip ?? defaultTip,
             onClick: () => {
                 const wc= (
                     <Stack {...{spacing:1, width:1}}>

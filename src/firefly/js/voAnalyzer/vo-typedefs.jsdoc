@@ -74,6 +74,9 @@
  * @prop {Object} relatedDLEntries
  * @prop {object} relatedRows
  * @prop {ObsCoreData} sourceObsCoreData
+ * @prop {WorldPt} positionWP if there is a MetaConst.SEARCH_TARGET in datalink table it is propagated here
+ * @prop {WorldPt} rowWP if there is a MetaConst.ROW_TARGET in datalink table it is propagated here
+ * @prop {String} sRegion if there is a MetaConst.S_REGION in datalink table it is propagated here
  */
 
 
@@ -154,6 +157,8 @@
  * @prop {CISXui} [cisxUI] - names should be one of: HiPS, FOV, hips_initial_ra, hips_initial_dec, moc, examples, hipsCtype1, hipsCtype2
  * @prop {Array.<ServiceDescriptorInputParam>} [cisxTokenSub]
  * @prop {Array.<ServiceDescriptorInputParam>} serDefParams
+ * @prop {WorldPt} positionWP if there is a MetaConst.SEARCH_TARGET in datalink table it is propagated here
+ * @prop {WorldPt} rowWP if there is a MetaConst.ROW_TARGET in datalink table it is propagated here
  */
 
 /**

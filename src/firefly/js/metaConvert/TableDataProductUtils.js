@@ -18,7 +18,7 @@ import {getActiveTableId, getTblById, onTableLoaded} from '../tables/TableUtil';
 import {getCellValue, getTblInfo} from '../tables/TableUtil.js';
 import MultiViewCntlr, {dispatchUpdateCustom, getMultiViewRoot, getViewer} from '../visualize/MultiViewCntlr.js';
 import {
-    getObsCoreAccessURL, getSearchTarget, isFormatDataLink, makeWorldPtUsingCenterColumns
+    getObsCoreAccessURL, getObsCoreSRegion, getSearchTarget, isFormatDataLink, makeWorldPtUsingCenterColumns
 } from '../voAnalyzer/TableAnalysis';
 import {getServiceDescriptors} from '../voAnalyzer/VoDataLinkServDef';
 import {makeDlUrl} from './vo/DatalinkProducts';
@@ -162,11 +162,15 @@ export function extractDatalinkTable(table,row,title,setAsActive=true) {
     }
     if (!url) return;
 
-    const positionWP = getSearchTarget(table?.request, table) ?? makeWorldPtUsingCenterColumns(table, row);
+    const positionWP = getSearchTarget(table?.request, table)
+    const sRegion= getObsCoreSRegion(table,row);
+    const rowWP=  makeWorldPtUsingCenterColumns(table, row);
 
 
     const dataTableReq= makeTableRequest(url,{titleStr:title},undefined,0,undefined,undefined,undefined,undefined,true);
     if (positionWP) dataTableReq.META_INFO[MetaConst.SEARCH_TARGET]= positionWP.toString();
+    if (sRegion) dataTableReq.META_INFO[MetaConst.S_REGION]= sRegion;
+    if (rowWP) dataTableReq.META_INFO[MetaConst.ROW_TARGET]= rowWP.toString();
 
     dispatchTableSearch(dataTableReq, {setAsActive, logHistory: false, showFilters: true, showInfoButton: true});
     showPinMessage('Pinning to Table Area');

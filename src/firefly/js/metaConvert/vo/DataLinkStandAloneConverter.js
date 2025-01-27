@@ -32,5 +32,5 @@ export async function getDatalinkStandAlineDataProduct(table, row, activateParam
             dlData = !isCutout ? dlData : dlData.relatedDLEntries.fullImage;
         }
     }
-    return createDataLinkSingleRowItem({dlData, activateParams, baseTitle:'Datalink data', options});
+    return createDataLinkSingleRowItem({dlData, activateParams, options});
 }

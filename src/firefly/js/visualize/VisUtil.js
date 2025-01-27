@@ -870,6 +870,22 @@ export function segmentIntersectRect(point1, point2,  view_corners) {
     return false;
 }
 
+/**
+ * Determine if a point is in a rectangle
+ * assume a non-slanted rectangular area
+ * @param point1
+ * @param view_corners
+ * @return {boolean}
+ */
+export function pointInRec(point1, view_corners) {
+    const xAry = view_corners.map((one_corner) => one_corner.x);
+    const yAry = view_corners.map((one_corner) => one_corner.y);
+    const xMin = Math.min(...xAry);
+    const xMax = Math.max(...xAry);
+    const yMin = Math.min(...yAry);
+    const yMax = Math.max(...yAry);
+    return (point1.x >= xMin && point1.y >= yMin && point1.x <= xMax && point1.y <= yMax);
+}
 
 
 /**
