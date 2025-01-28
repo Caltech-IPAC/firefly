@@ -24,6 +24,7 @@ function positionValidateInternal(s, hard, nullAllowed= true) {
     // validate ObjName
     if (inputType===PositionParsedInputType.Name) {
         if (hard) throw 'Object names must be more than one character';
+        return {valid,inputType};
     }
     else {
         // check coordinate system

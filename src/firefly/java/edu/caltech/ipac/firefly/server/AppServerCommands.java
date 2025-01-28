@@ -21,6 +21,7 @@ import java.util.Map;
 
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.getDouble;
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 public class AppServerCommands {
     private static final String SPA_NAME = "spaName";
@@ -138,34 +139,48 @@ public class AppServerCommands {
     }
 
 
+    private static final String STRING_START="::STRING::";
+    private static final int SS_OFFSET= STRING_START.length();
     private static final String HELP_BASE_URL = "help.base.url";
     private static final String OP_ROOT = "OP_";
     private static final String EMPTY_APP_PROP = "{}";
     private static final int OP_ROOT_LENGTH = OP_ROOT.length();
     private static String getAppOptions() {
-        String appOptStr = AppProperties.getProperty(JsonProperty.FIREFLY_OPTIONS, EMPTY_APP_PROP);
-        var extraProps= AppProperties.getWithStartingMatch(OP_ROOT);
-        JsonHelper jHelp= JsonHelper.parse(appOptStr);
-        try{
-            extraProps.forEach((k, v) -> setToJson(jHelp, k, v));
-            applyIfNotEmpty(AppProperties.getProperty(HELP_BASE_URL), v -> jHelp.setValue(v,HELP_BASE_URL));
-            return jHelp.toJson();
-        } catch (IllegalArgumentException pe){
+        String appOptStr= EMPTY_APP_PROP;
+        try {
+            appOptStr = AppProperties.getProperty(JsonProperty.FIREFLY_OPTIONS, EMPTY_APP_PROP);
+            if (isEmpty(appOptStr)) appOptStr = EMPTY_APP_PROP; // this check to see if the property returns ''
+            var extraProps = AppProperties.getWithStartingMatch(OP_ROOT);
+            var jsonData = JsonHelper.parse(appOptStr);
+            try{
+                extraProps.forEach((k, v) -> setToJson(jsonData, k, v));
+                applyIfNotEmpty(AppProperties.getProperty(HELP_BASE_URL), v -> jsonData.setValue(v,HELP_BASE_URL));
+            }
+            catch (Exception e){
+                Logger.getLogger().error(String.format("Could not add props to %s", appOptStr));
+                extraProps.forEach((k, v) -> Logger.getLogger().error("Could not add- "+ k+ ": "+v));
+            }
+            return jsonData.toJson();
+        } catch (Exception e) {
             Logger.getLogger().error(String.format("Failed parsing %s", appOptStr));
-            extraProps.forEach((k, v) -> Logger.getLogger().error("Could not add- "+ k+ ": "+v));
             return EMPTY_APP_PROP;
         }
-        catch (Exception e){
-            Logger.getLogger().error(String.format("Could not add props to %s", appOptStr));
-            extraProps.forEach((k, v) -> Logger.getLogger().error("Could not add- "+ k+ ": "+v));
-            return jHelp.toJson();
-        }
+
+
     }
+
+
 
     private static void setToJson(JsonHelper jhelp, String key, String valStr) {
         if (key.length()<=OP_ROOT_LENGTH) return;
-        double num= getDouble(valStr);
-        Object val= Double.isNaN(num) ? valStr : num;
+        Object val;
+        if (valStr.startsWith(STRING_START)) {
+            val= valStr.substring(SS_OFFSET).replaceAll("_", " ");
+        }
+        else {
+            double num= getDouble(valStr);
+            val= Double.isNaN(num) ? valStr : num;
+        }
         jhelp.setValueFromPath(val,key.substring(OP_ROOT_LENGTH),"_");
     }
 }

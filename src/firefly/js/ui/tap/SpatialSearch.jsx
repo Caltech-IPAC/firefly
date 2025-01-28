@@ -22,7 +22,7 @@ import {useFieldGroupRerender, useFieldGroupValue, useFieldGroupWatch} from '../
 import {SizeInputFields} from '../SizeInputField.jsx';
 import {DEF_TARGET_PANEL_KEY} from '../TargetPanel.jsx';
 import {ConstraintContext} from './Constraints.js';
-import {ROW_POSITION, SEARCH_POSITION} from './ObsCoreOptions';
+import {getObsCoreOption, ROW_POSITION, SEARCH_POSITION} from './ObsCoreOptions';
 import {
     DebugObsCore, getPanelPrefix, makeCollapsibleCheckHeader, makeFieldErrorList, makePanelStatusUpdater,
     } from './TableSearchHelpers.jsx';
@@ -232,7 +232,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel,
                             sx:{'label' : {width: SpatialLabelSpatial}},
                         }}
                         /> }
-                    <SpatialSearchLayout {...{obsCoreEnabled, initArgs, uploadInfo, setUploadInfo,
+                    <SpatialSearchLayout {...{obsCoreEnabled, initArgs, uploadInfo, setUploadInfo, serviceLabel,
                         hipsUrl, centerWP, fovDeg, capabilities, slotProps: layoutSlotProps}} />
                     {!obsCoreEnabled && cols &&
                         <CenterColumns {...{lonCol: getVal(CenterLonColumns), latCol: getVal(CenterLatColumns),
@@ -262,7 +262,7 @@ function getSpacialLayoutMode(spacialType, obsCoreEnabled, canUpload) {
 }
 
 
-const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInfo,
+const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInfo, serviceLabel,
                                  hipsUrl, centerWP, fovDeg, capabilities, slotProps}) => {
 
     const {getVal}= useContext(FieldGroupCtx);
@@ -287,7 +287,7 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
                 <Stack spacing={1} direction='column'>
                     <RegionOpField {...{initArgs, capabilities, ...slotProps?.regionOpField}}/>
                     {!containsPoint && <ConeOrAreaField {...slotProps?.coneOrAreaField}/>}
-                    { (isCone || containsPoint) && <TargetPanelForSpacial {...{hipsUrl, centerWP, fovDeg, ...slotProps?.targetPanel}}/>}
+                    { (isCone || containsPoint) && <TargetPanelForSpacial {...{serviceLabel, hipsUrl, centerWP, fovDeg, ...slotProps?.targetPanel}}/>}
                     {!containsPoint && radiusOrPolygon}
                 </Stack>
             );
@@ -303,7 +303,7 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
             return (
                 <Stack spacing={1} direction='column'>
                     <ConeOrAreaField {...slotProps?.coneOrAreaField}/>
-                    {isCone && <TargetPanelForSpacial {...{hipsUrl, centerWP, fovDeg, ...slotProps?.targetPanel}}/>}
+                    {isCone && <TargetPanelForSpacial {...{serviceLabel, hipsUrl, centerWP, fovDeg, ...slotProps?.targetPanel}}/>}
                     {radiusOrPolygon}
                 </Stack>
             );
@@ -427,13 +427,17 @@ const RegionOpField= ({initArgs, capabilities, ...props}) => {
     );
 };
 
-function TargetPanelForSpacial({hasRadius=true,
+function TargetPanelForSpacial({hasRadius=true, serviceLabel,
                                    hipsUrl= getAppOptions().coverage?.hipsSourceURL  ??  'ivo://CDS/P/2MASS/color',
                                    centerWP, fovDeg=240, ...props}) {
+
+    const targetPanelExampleRow1= getObsCoreOption('targetPanelExampleRow1', serviceLabel);
+    const targetPanelExampleRow2= getObsCoreOption('targetPanelExampleRow2', serviceLabel);
     return (
-        <VisualTargetPanel sizeKey={hasRadius? RadiusSize : undefined}
-                           hipsDisplayKey={fovDeg} hipsUrl={hipsUrl} hipsFOVInDeg={fovDeg}
-                           centerPt={parseWorldPt(centerWP)} {...props} />
+        <VisualTargetPanel {...{sizeKey:hasRadius? RadiusSize : undefined,
+                           targetPanelExampleRow1, targetPanelExampleRow2,
+                           hipsDisplayKey:fovDeg, hipsUrl, hipsFOVInDeg:fovDeg,
+                           centerPt:parseWorldPt(centerWP), ...props }}/>
     );
 }
 

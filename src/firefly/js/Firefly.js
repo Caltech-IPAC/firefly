@@ -199,6 +199,14 @@ const defFireflyOptions = {
     tapObsCore: {
         enableObsCoreDownload: true,
         // debug: true,
+        // todo BEGIN- remove these lines after testing
+        targetPanelExampleRow1: ['11, 11', '22.2 -33.3', '4h11m59s -32d51m59s equ j2000', '0 0 gal'],
+        targetPanelExampleRow2: ['5h55m55s -55d55m55s equ j2000'],
+        IRSA: {
+            targetPanelExampleRow1: ['55, 66', '5 -6', '4h11m59s -32d51m59s equ j2000', '5 6 gal'],
+            targetPanelExampleRow2: ['1h11m11s -22d22m22s equ j2000'],
+        }
+        // todo END- remove these lines after testing
     },
     coverage : {
         // TODO: need to define all options with defaults here.  used in FFEntryPoint.js
@@ -225,7 +233,7 @@ const defFireflyOptions = {
     SIAv2 : {
         services: getSIAv2Services( ['IRSA', 'CADC', ]),
         defaultMaxrec: 50000
-    }
+    },
 };
 
 
