@@ -165,7 +165,7 @@ public final class DownloadScriptWorker implements Job.Worker {
     private void updateJobProgress() throws DataAccessException.Aborted {
         Job job = getJob();
         if (job != null) {
-            JobInfo.Phase phase = ifNotNull(getJobInfo(getJob().getJobId())).eval(JobInfo::getPhase);
+            JobInfo.Phase phase = ifNotNull(getJobInfo(getJob().getJobId())).get(JobInfo::getPhase);
             if (phase == JobInfo.Phase.ABORTED) throw new DataAccessException.Aborted();
             if (System.currentTimeMillis() - lastUpdatedTime > 2000) {
                 lastUpdatedTime = System.currentTimeMillis();

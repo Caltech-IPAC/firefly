@@ -105,7 +105,7 @@ public class JobManager {
         } catch (TimeoutException e) {
             // it's ok; job may take longer to complete
         } catch (Exception e) {
-            ifNotNull(getJobInfo(jobId)).then(ji -> {
+            ifNotNull(getJobInfo(jobId)).apply(ji -> {
                 if (ji.getPhase() != ERROR) {
                     job.setError(500, e.getMessage());
                 }
@@ -113,7 +113,7 @@ public class JobManager {
             LOG.error(e);
         }
 
-        JobInfo.Phase phase = ifNotNull(getJobInfo(jobId)).eval(JobInfo::getPhase);
+        JobInfo.Phase phase = ifNotNull(getJobInfo(jobId)).get(JobInfo::getPhase);
         if (future.isDone() && phase != ERROR && phase != ABORTED) {
             sendUpdate(jobId, (ji) -> ji.setPhase(COMPLETED));
         } else {
@@ -166,7 +166,7 @@ public class JobManager {
     }
 
     public static String results(String jobId) {
-        return ifNotNull(getJobInfo(jobId)).eval(JobUtil::toJsonResults);
+        return ifNotNull(getJobInfo(jobId)).get(JobUtil::toJsonResults);
     }
 
 //====================================================================
