@@ -48,9 +48,6 @@ const boolKeys=[ 'selectable' , 'showTitle', 'removable', 'showUnits', 'showFilt
 
 
 function validateTable(params) {
-    // if (isEmpty(params)) {
-    //     return {valid:false,msg:`url contains unsupported params: ${badParams?badParams.join():''}`,badParams};
-    // }
     if (!params.source) {
         return {valid:false,msg:'the source parameter is required'};
     }

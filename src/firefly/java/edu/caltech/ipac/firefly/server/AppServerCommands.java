@@ -139,8 +139,8 @@ public class AppServerCommands {
     }
 
 
-    private static final String STRING_START="::STRING::";
-    private static final int SS_OFFSET= STRING_START.length();
+//    private static final String STRING_START="::STRING::";
+//    private static final int SS_OFFSET= STRING_START.length();
     private static final String HELP_BASE_URL = "help.base.url";
     private static final String OP_ROOT = "OP_";
     private static final String EMPTY_APP_PROP = "{}";
@@ -174,13 +174,13 @@ public class AppServerCommands {
     private static void setToJson(JsonHelper jhelp, String key, String valStr) {
         if (key.length()<=OP_ROOT_LENGTH) return;
         Object val;
-        if (valStr.startsWith(STRING_START)) {
-            val= valStr.substring(SS_OFFSET).replaceAll("_", " ");
-        }
-        else {
+//        if (valStr.startsWith(STRING_START)) {
+//            val= valStr.substring(SS_OFFSET).replaceAll("_", " ");
+//        }
+//        else {
             double num= getDouble(valStr);
             val= Double.isNaN(num) ? valStr : num;
-        }
+//        }
         jhelp.setValueFromPath(val,key.substring(OP_ROOT_LENGTH),"_");
     }
 }
