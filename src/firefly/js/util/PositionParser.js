@@ -35,7 +35,7 @@ export function parsePosition(s) {
     inputType= determineType(s);
     if (inputType ===PositionParsedInputType.Name) {
         objName= s;
-        valid = s.length>1;
+        valid = s.length>1 && s.split(' ')?.length<6;
     }
     else if (inputType ===PositionParsedInputType.DB_ID) {
         const r= parseDBIdToCoord(s);

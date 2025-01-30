@@ -9,18 +9,25 @@ import edu.caltech.ipac.util.download.BaseNetParams;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class AnyUrlParams extends BaseNetParams {
+    public static List<String> DEF_EXT_LIST=
+            Arrays.asList(
+                    "ul", FileUtil.FITS, FileUtil.GZ, FileUtil.TAR, FileUtil.PDF, FileUtil.GZ, FileUtil.REG,
+                    "votable", FileUtil.VOT, FileUtil.XML, FileUtil.TBL, FileUtil.CSV, FileUtil.TSV,
+                    FileUtil.jpeg, FileUtil.jpg, FileUtil.png, FileUtil.bmp, FileUtil.gif, FileUtil.tiff, FileUtil.tif);
+
     private final static int MAX_LENGTH = 30;
     private final URL _url;
     private final Map<String,String> cookies= new HashMap<>();
     private String _loginName= null;
     private String _securityCookie= null;
     private boolean _checkForNewer= false;
-    private List<String> _localFileExtensions = null;
+    private final List<String> _localFileExtensions = DEF_EXT_LIST;
     private String _desc = null;
     private File _dir = null; // if null, the use the default dir
     private long _maxSizeToDownload= 0L;
@@ -77,16 +84,9 @@ public class AnyUrlParams extends BaseNetParams {
         }
         //note: "=","," signs causes problem in download servlet.
         retval = retval.replaceAll("[ :\\[\\]\\/\\\\|\\*\\?<>\\=\\,]","\\-");
-        if (_localFileExtensions!=null) {
-            String ext= FileUtil.getExtension(fileStr);
-            if (_localFileExtensions.contains(ext)) {
-                retval = retval + "." + ext;
-            }
-            else {
-                retval = retval + "." + _localFileExtensions.get(0);
-            }
-        }
-        return retval;
+        String ext= FileUtil.getExtension(fileStr);
+        var fileExt= _localFileExtensions.contains(ext) ? ext : _localFileExtensions.getFirst();
+        return retval + "." + fileExt;
     }
 
     public void setLoginName(String name) { _loginName= name; }
@@ -111,20 +111,6 @@ public class AnyUrlParams extends BaseNetParams {
         if (addtlInfo != null && addtlInfo.getCookies() != null) retval.putAll(addtlInfo.getCookies());
         return retval;
     }
-
-    public String getAllCookiesAsString() {
-        if (cookies.size()==0) return null;
-        StringBuilder sb= new StringBuilder(200);
-        for(Map.Entry<String,String> entry : cookies.entrySet()) {
-            if (sb.length()>0) sb.append("; ");
-            sb.append(entry.getKey());
-            sb.append("=");
-            sb.append(entry.getValue());
-        }
-        return sb.toString();
-    }
-
-    public void setLocalFileExtensions(List<String> extList) { _localFileExtensions = extList; }
 
     public void setDesc(String desc) { _desc = desc; }
     public String getDesc() { return _desc; }

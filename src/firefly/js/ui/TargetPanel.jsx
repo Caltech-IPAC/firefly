@@ -25,7 +25,7 @@ const nedThenSimbad= 'nedthensimbad';
 const simbadThenNed= 'simbadthenned';
 
 const TargetPanelView = (props) =>{
-    const {showHelp, feedback, valid, message, onChange, value, button, slotProps,
+    const {showHelp, feedback, valid, message, onChange, value, button, slotProps, fieldKey,
         children, resolver, showResolveSourceOp= true, showExample= true,
         label= LABEL_DEFAULT,
         targetPanelExampleRow1, targetPanelExampleRow2,
@@ -63,7 +63,7 @@ const TargetPanelView = (props) =>{
     return (
         <Stack direction='column'>
             {positionInput}
-            {(showExample || !showHelp) && <TargetFeedback {...{showHelp, feedback,
+            {(showExample || !showHelp) && <TargetFeedback {...{showHelp, feedback, fieldKey,
                 targetPanelExampleRow1, targetPanelExampleRow2, examples, ...slotProps?.feedback}}/> }
         </Stack>
     );
@@ -181,6 +181,31 @@ function handleOnChange(value, source, params, fireValueChange) {
 
 }
 
+
+
+export function ingestNewTargetValue(value, setter, params, ) {
+    const {resolver= nedThenSimbad}= params ?? {};
+
+    const displayValue= value;
+
+    const parseResults= parseTarget(displayValue, undefined, resolver);
+    let {resolvePromise}= parseResults;
+
+    const targetResolve= (asyncParseResults) => {
+        return asyncParseResults ? setter(makePayloadAndUpdateActive(displayValue, asyncParseResults, null, resolver)) : null;
+    };
+
+    resolvePromise= resolvePromise ? resolvePromise.then(targetResolve) : null;
+
+
+    setter(makePayloadAndUpdateActive(displayValue,parseResults, resolvePromise, resolver));
+
+}
+
+
+
+
+
 /**
  * Make a payload and update the active target, Note: this function has as side effect to fires an action to update the active target
  * @param displayValue
@@ -224,7 +249,7 @@ export const TargetPanel = memo( ({fieldKey= DEF_TARGET_PANEL_KEY,initialState= 
                                 fieldKey, initialState,
                                 confirmValueOnInit: (v, props,initialState,computedState) => replaceValue(v,defaultToActiveTarget,computedState)});
     const newProps= computeProps(viewProps, restOfProps, fieldKey, groupKey);
-    return ( <TargetPanelView {...newProps}
+    return ( <TargetPanelView {...{...newProps,fieldKey}}
                               onChange={(value,source) => handleOnChange(value,source,newProps, fireValueChange)}/>);
 });
 
