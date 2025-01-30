@@ -46,7 +46,7 @@ public class ServerEventManager {
      * @param action
      */
     public static void fireAction(FluxAction action, ServerEvent.Scope scope) {
-        fireJsonAction(action.toString(), scope);
+        fireAction(action, makeTarget(scope));
     }
 
     /**
@@ -56,16 +56,6 @@ public class ServerEventManager {
      */
     public static void fireAction(FluxAction action, ServerEvent.EventTarget target) {
         fireJsonAction(action.toString(), target);
-    }
-
-    /**
-     * Send this JSON string action to the client based on the given scope
-     * @param actionStr
-     * @param scope
-     */
-    public static void fireJsonAction(String actionStr, ServerEvent.Scope scope) {
-        ServerEvent sev = new ServerEvent(Name.ACTION, scope, ServerEvent.DataType.JSON, actionStr);
-        ServerEventManager.fireEvent(sev);
     }
 
     /**
@@ -84,16 +74,27 @@ public class ServerEventManager {
         if (sev == null || sev.getTarget() == null || !sev.getTarget().hasDestination()) {
             LOG.warn("Something is wrong with this ServerEvent: " + String.valueOf(sev));
         } else {
-            ServerEvent.Scope scope = sev.getTarget().getScope();
-            // if target is missing key information, get it from RequestOwner
-            if (scope == ServerEvent.Scope.CHANNEL && sev.getTarget().getChannel() == null) {
-                sev.getTarget().setChannel(ServerContext.getRequestOwner().getEventChannel());
-            } else if (scope == ServerEvent.Scope.USER && sev.getTarget().getUserKey() == null) {
-                sev.getTarget().setUserKey(ServerContext.getRequestOwner().getUserKey());
-            } else if (scope == ServerEvent.Scope.SELF && sev.getTarget().getConnID() == null) {
-                sev.getTarget().setConnID(ServerContext.getRequestOwner().getEventConnID());
-            }
+            autoFillTarget(sev.getTarget());
             eventWorker.deliver(sev);
+        }
+    }
+
+    public static ServerEvent.EventTarget makeTarget(ServerEvent.Scope scope) {
+        var target = new ServerEvent.EventTarget(scope);
+        autoFillTarget(target);
+        return target;
+    }
+
+    private static void autoFillTarget(ServerEvent.EventTarget target) {
+        if (target == null) return;
+        ServerEvent.Scope scope = target.getScope();
+        // if target is missing key information, get it from RequestOwner
+        if (scope == ServerEvent.Scope.CHANNEL && target.getChannel() == null) {
+            target.setChannel(ServerContext.getRequestOwner().getEventChannel());
+        } else if (scope == ServerEvent.Scope.USER && target.getUserKey() == null) {
+            target.setUserKey(ServerContext.getRequestOwner().getUserKey());
+        } else if (scope == ServerEvent.Scope.SELF && target.getConnID() == null) {
+            target.setConnID(ServerContext.getRequestOwner().getEventConnID());
         }
     }
 

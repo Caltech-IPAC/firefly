@@ -41,8 +41,8 @@ abstract public class FileGroupsProcessor implements SearchProcessor<List<FileGr
             DownloadRequest request= (DownloadRequest)sr;
             List<FileGroup> fileGroups = null;
             StringKey key = new StringKey(FileGroupsProcessor.class.getName(), getUniqueID(request));
-            Cache cache = CacheManager.getLocalFile();
-            fileGroups = (List<FileGroup>) cache.get(key);
+            Cache<List<FileGroup>> cache = CacheManager.getLocal();
+            fileGroups = cache.get(key);
 
             if (fileGroups == null || isStaled(fileGroups)) {
                 fileGroups = loadData(request);

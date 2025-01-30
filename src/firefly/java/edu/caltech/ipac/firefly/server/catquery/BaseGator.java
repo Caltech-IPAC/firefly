@@ -33,10 +33,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.Arrays;
 import java.util.List;
 
-import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 
 
 /**
@@ -111,7 +111,7 @@ public abstract class BaseGator extends EmbeddedDbProcessor {
             boolean isPost = isPost(req);
             URL url = createURL(req, isPost);
 
-            applyIfNotEmpty(getJob(), v -> v.getJobInfo().setDataOrigin(url.toString()));
+            ifNotNull(getJob()).then( j -> updateJobInfo(j.getJobId(), ji -> ji.setDataOrigin(url.toString())));
 
             if (isPost) {
                 _postBuilder = new MultiPartPostBuilder(url.toString());

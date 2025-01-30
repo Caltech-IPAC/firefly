@@ -47,6 +47,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.core.background.JobManager.getJobInfo;
+import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW;
 import static edu.caltech.ipac.firefly.data.table.MetaConst.HIGHLIGHTED_ROW_BY_ROWIDX;
 import static edu.caltech.ipac.firefly.server.db.DbAdapter.*;
@@ -164,7 +167,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
             results.getData().getTableMeta().setAttribute(DataGroupPart.LOADING_STATUS, DataGroupPart.State.COMPLETED.name());
 
-            jobExecIf(v -> v.getJobInfo().setSummary(String.format("%,d rows found", totalRows)));
+            jobExecIf(j -> updateJobInfo(j.getJobId(), ji -> ji.setSummary(String.format("%,d rows found", totalRows))));
 
             return results;
         }catch (Exception e) {
@@ -567,7 +570,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     protected void jobExecIf(Consumer<Job> f) throws DataAccessException {
         Job job = getJob();
         if (job != null) {
-            JobInfo.Phase phase = job.getJobInfo().getPhase();
+            JobInfo.Phase phase = ifNotNull(getJobInfo(job.getJobId())).get(JobInfo::getPhase);
             if (phase == JobInfo.Phase.EXECUTING) f.accept(job);
             if (phase == JobInfo.Phase.ABORTED) throw new DataAccessException.Aborted();
         }

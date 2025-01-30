@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static org.junit.Assert.*;
 import static edu.caltech.ipac.firefly.core.Util.*;
 
@@ -174,6 +175,76 @@ public class UtilTest extends ConfigTest {
         assertEquals(ntimes/2, (long)Collections.max(odd));
         assertEquals(1L, (long)Collections.min(odd));
     }
+
+    @Test
+    public void optTestGet() {
+        int a = ifNotNull(12).get();                // because input is not null, it returns the value
+        assertEquals(12, a);
+
+        int a1 = ifNotNull(12).get(v -> v + 1);    // because input is not null, it calls the function with it and return the result.
+        assertEquals(13, a1);
+
+        String b1 = ifNotNull(123456)
+                .get((v) -> String.valueOf(v).substring(3));     // it can also transform the value and return a different type
+        assertEquals("456", b1);
+    }
+
+    @Test
+    public void optTestApply() {
+        // similar to get(), but it does not return a value
+        AtomicInteger a = new AtomicInteger(0);
+        ifNotNull(12).apply(a::set);                // because input is not null, apply is called
+        assertEquals(12, a.get());
+
+        AtomicInteger a1 = new AtomicInteger(0);
+        ifNotNull(null).apply(v -> a1.set(-1));    // because input is not null, it skips apply
+        assertEquals(0, a1.get());
+    }
+
+    @Test
+    public void optTestException() {
+        int a1 = ifNotNull(() -> Integer.parseInt("1"))
+                        .orElse(-1)      // skip
+                        .get(v -> v + 1);       // because input function returns 1, it calls the function with it and return the result.
+        assertEquals(2, a1);
+
+        int a2 = ifNotNull(() -> Integer.parseInt("xxx"))
+                .orElse(-1)           // because input function throws an exception, it returns the default value
+                .get();
+        assertEquals(-1, a2);
+    }
+
+    @Test
+    public void optTestChain() {
+
+        Integer a2 = ifNotNull((Integer)null)
+                        .then(v -> v + 1)       // skip because input is null
+                        .get();                 // if input is null, it should return null without calling the function
+        assertNull(a2);
+
+        int a3 = ifNotNull((Integer)null)
+                        .then(v -> v + 1)       // skip because input is null
+                        .orElse(v -> -1)        // execute this instead
+                        .get();                 // return the result
+        assertEquals(-1, a3);
+
+        String b = ifNotNull(123456)
+                        .then((v) -> String.valueOf(v).substring(3))      // convert int to String
+                        .orElse(v -> "null")                                        // skip
+                        .get();                                                     // return the result
+        assertEquals("456", b);
+
+        var c = Opt.ifNotNull("test")
+                        .orElse(String::toUpperCase)   // skip
+                        .get();
+        assertEquals("test", c);              // since the value was valid, orElse does not apply
+
+        var c1 = Opt.ifNotNull(null)
+                .orElse("default")
+                .get();
+        assertEquals("default", c1);
+    }
+
 
 
 }

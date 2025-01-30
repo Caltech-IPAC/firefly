@@ -17,10 +17,10 @@ import static edu.caltech.ipac.firefly.server.RequestOwner.USER_KEY_EXPIRY;
  * @author loi
  * @version $Id: UserCache.java,v 1.5 2009/03/23 23:55:16 loi Exp $
  */
-public class UserCache extends DistribMapCache {
+public class UserCache<T> extends DistribMapCache<T> {
 
-    public static Cache getInstance(){
-        return new UserCache();
+    public static <T> Cache<T> getInstance(){
+        return new UserCache<>();
     }
 
     private UserCache() {

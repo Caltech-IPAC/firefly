@@ -45,7 +45,7 @@ public class GuestHistoryCache {
     public static void removeSearch(final String userKey, final int... searchIds) {
         boolean needUpdate = false;
         List<SearchInfo> sh = getSearchHistory(userKey);
-        ArrayList<SearchInfo> newSh = new ArrayList<SearchInfo>(sh);
+        ArrayList<SearchInfo> newSh = new ArrayList<>(sh);
         for(int id : searchIds) {
             for (int i=0; i< newSh.size(); i++) {
                 if (newSh.get(i).getQueryID() == id) {
@@ -85,9 +85,9 @@ public class GuestHistoryCache {
     }
 
     public static List<SearchInfo> getSearchHistory(String userKey) {
-        Cache cache = CacheManager.getLocal();
-        List<SearchInfo> searchHistory = (List<SearchInfo>) cache.get(new StringKey("GuestHistoryCache", userKey));
-        return searchHistory == null ? new ArrayList<SearchInfo>() : searchHistory;
+        Cache<List<SearchInfo>> cache = CacheManager.getLocal();
+        List<SearchInfo> searchHistory = cache.get(new StringKey("GuestHistoryCache", userKey));
+        return searchHistory == null ? new ArrayList<>() : searchHistory;
     }
 
     public static List<SearchInfo> getSearchHistory() {
@@ -96,7 +96,7 @@ public class GuestHistoryCache {
     }
 
     static void updateSearchHistory(String userKey, List<SearchInfo> searchHistory) {
-        Cache cache = CacheManager.getLocal();
+        Cache<List<SearchInfo>> cache = CacheManager.getLocal();
         cache.put(new StringKey("GuestHistoryCache", userKey), searchHistory, LIFE_TO_LIVE);
     }
 

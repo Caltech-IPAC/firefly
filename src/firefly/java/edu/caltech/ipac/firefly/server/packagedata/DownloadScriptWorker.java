@@ -27,6 +27,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.core.background.JobManager.getJobInfo;
+import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.*;
 import static edu.caltech.ipac.firefly.server.packagedata.PackagingWorker.makeDownloadUrl;
 import static edu.caltech.ipac.firefly.server.ws.WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH;
@@ -144,16 +147,17 @@ public final class DownloadScriptWorker implements Job.Worker {
             throw new DataAccessException("Operation aborted:" + dlreq.getRequestId(), new IllegalArgumentException("Unable to resolve a search processor for this request"));
         }
 
-        // JobInfo completion update
-        String summary = String.format("%,d files were processed.", totalFiles);
-        if (hasErrors) summary += "\nPlease, note:  There were error(s) while processing your request.";
-        JobInfo jobInfo = getJob().getJobInfo();
-        jobInfo.setProgress(100);
-        jobInfo.setProgressDesc(summary);
-        jobInfo.setSummary(summary);
+        updateJobInfo(getJob().getJobId(), ji -> {
+            // JobInfo completion update
+            String summary = String.format("%,d files were processed.", totalFiles);
+            if (hasErrors) summary += "\nPlease, note:  There were error(s) while processing your request.";
+            ji.setProgress(100);
+            ji.setProgressDesc(summary);
+            ji.setSummary(summary);
+        });
         getJob().setPhase(JobInfo.Phase.COMPLETED);
 
-        PackagedEmail.send(getJob().getJobInfo());
+        PackagedEmail.send(getJob().getJobId());
 
         return "";
     }
@@ -161,7 +165,7 @@ public final class DownloadScriptWorker implements Job.Worker {
     private void updateJobProgress() throws DataAccessException.Aborted {
         Job job = getJob();
         if (job != null) {
-            JobInfo.Phase phase = job.getJobInfo().getPhase();
+            JobInfo.Phase phase = ifNotNull(getJobInfo(getJob().getJobId())).get(JobInfo::getPhase);
             if (phase == JobInfo.Phase.ABORTED) throw new DataAccessException.Aborted();
             if (System.currentTimeMillis() - lastUpdatedTime > 2000) {
                 lastUpdatedTime = System.currentTimeMillis();

@@ -199,6 +199,6 @@ public class RedisService {
         if(!isOffline()) {
             return jedisPool.getResource();
         }
-        throw new ConnectException("Unable to connect to Redis at " + REDIS_HOST + ":" + REDIS_PORT);
+        throw new ConnectException("Unable to connect to Redis at " + redisHost + ":" + REDIS_PORT);
     }
 }

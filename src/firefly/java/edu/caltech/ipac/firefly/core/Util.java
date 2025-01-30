@@ -11,10 +11,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
+
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * Date: 11/19/24
@@ -201,9 +206,146 @@ public class Util {
             }
             return new Try<>(null, new IndexOutOfBoundsException("Exceeded max tries"));
         }
-
     }
 
+    /**
+     * A lightweight optional wrapper that allows conditional execution of functions
+     * based on the input value.
+     * @see edu.caltech.ipac.firefly.core.UtilTest for sample usage
+     * @param <T> The type of the value contained in this Opt instance.
+     */
+    public static class Opt<T> {
+        private final T val;
+        private Predicate<T> test;
+
+        private Opt(T val, Predicate<T> test) {
+            this.val = val;
+            this.test = test;
+        }
+
+        /**
+         * Applies the given function if the value passes the predicate check and returns a new Opt instance for chaining.
+         * @param func The function to apply.
+         * @param <R>  The return type of the function.
+         * @return A new Opt containing the function result if the value is valid, otherwise an empty Opt.
+         */
+        public <R> Opt<R> then(Function<T, R> func) {
+            if (test.test(val)) {
+                return  new Opt<>(func.apply(val), (v)->true);
+            } else {
+                return new Opt<>(null, (v)->false);
+            }
+        }
+
+        /**
+         * Applies the given function if the value does not pass the predicate check and returns a new Opt instance for chaining.
+         * @param func The function to apply.
+         * @param <R>  The return type of the function.
+         * @return A new Opt containing the function result if the value is invalid, otherwise an empty Opt.
+         */
+        public <R> Opt<R> orElse(Function<T, R> func) {
+            if (!test.test(val)) {
+                return  new Opt<>(func.apply(val), (v)->true);
+            } else {
+                return (Opt<R>)this;
+            }
+        }
+
+        /**
+         * Returns an Opt containing the default value if the value does not pass the predicate check for chaining
+         * @param defVal The default value.
+         * @param <R>    The type of the default value.
+         * @return A new Opt containing the default value if the original value is invalid, otherwise returns this instance.
+         */
+        public <R> Opt<R> orElse(R defVal) {
+            if (!test.test(val)) {
+                return  new Opt<>(defVal, (v)->true);
+            } else {
+                return (Opt<R>)this;
+            }
+        }
+
+        /**
+         * Call the given function if the value is valid.
+         * @param func The function to call.
+         */
+        public void apply(Consumer<T> func) {
+            if (test.test(val)) {
+                func.accept(val);
+            }
+        }
+
+        /**
+         * @return Returns the value if valid, otherwise returns null.
+         */
+        public T get() {
+            if (test.test(val)) {
+                return val;
+            } else {
+                return null;
+            }
+        }
+
+        /**
+         * @param defVal The default value to return if the value is invalid.
+         * @return Returns the value if valid, otherwise returns the specified default value.
+         */
+        public T get(T defVal) {
+            if (test.test(val)) {
+                return val;
+            } else {
+                return defVal;
+            }
+        }
+
+        /**
+         * Applies the given function to the value if valid and returns the result.
+         * @param func The function to apply.
+         * @param <R>  The return type of the function.
+         * @return The function result or null if the value is invalid.
+         */
+        public <R> R get(Function<T, R> func) {
+            if (test.test(val)) {
+                return  func.apply(val);
+            } else {
+                return null;
+            }
+        }
+
+        /**
+         * Creates an Opt instance if the provided value is not empty (null or empty-string).
+         * @param val The value to check.
+         * @param <T> The type of the value.
+         * @return A new Opt instance if the value is not empty, otherwise an empty Opt.
+         */
+        public static <T> Opt<T> ifNotEmpty(T val) {
+            return new Opt<>(val, (v) -> !isEmpty(v));
+        }
+
+        /**
+         * Creates an Opt instance if the provided value is not null.
+         * @param val The value to check.
+         * @param <T> The type of the value.
+         * @return A new Opt instance if the value is not null, otherwise an empty Opt.
+         */
+        public static <T> Opt<T> ifNotNull(T val) {
+            return new Opt<>(val, Objects::nonNull);
+        }
+
+        /**
+         * Creates an Opt instance from a value returned by a function.
+         * @param val The function providing the value.
+         * @param <T> The type of the value.
+         * @return A new Opt instance if the function returns a non-null value, otherwise an empty Opt.
+         */
+        public static <T> Opt<T> ifNotNull(Supplier<T> val) {
+            try {
+                return new Opt<>(val.get(), Objects::nonNull);
+            } catch (Exception e) {
+                return new Opt<>(null, (v)->false);
+            }
+        }
+    }
 
     public static class SynchronizedAccess {
         private final ConcurrentHashMap<String, ReentrantLock> activeRequests = new ConcurrentHashMap<>();

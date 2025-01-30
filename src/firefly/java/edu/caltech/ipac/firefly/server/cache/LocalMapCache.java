@@ -20,10 +20,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author loi
  * @version $Id: UserCache.java,v 1.5 2009/03/23 23:55:16 loi Exp $
  */
-public class LocalMapCache implements Cache {
+public class LocalMapCache<T> implements Cache<T> {
 
-    private Cache cache;
-    private StringKey uniqueKey;
+    private final Cache<Map<CacheKey, T>> cache;
+    private final StringKey uniqueKey;
 
     public LocalMapCache(String key) {
         uniqueKey = new StringKey(key);
@@ -34,53 +34,54 @@ public class LocalMapCache implements Cache {
         return uniqueKey;
     }
 
-    public void put(CacheKey key, Object value) {
+    public void put(CacheKey key, T value) {
         if (key == null) {
             throw  new NullPointerException("key must not be null.");
         }
-        Map<CacheKey, Object> map = getSessionMap();
-        if (value == null) {
-            map.remove(key);
-        } else {
-            map.put(key, value);
-        }
+        var map = getMappedData();
+        map.put(key, value);
         cache.put(uniqueKey, map);
     }
 
-    public void put(CacheKey key, Object value, int lifespanInSecs) {
+    public void remove(CacheKey key) {
+        if (key == null) {
+            throw  new NullPointerException("key must not be null.");
+        }
+        var map = getMappedData();
+        map.remove(key);
+        cache.put(uniqueKey, map);
+    }
+
+    public void put(CacheKey key, T value, int lifespanInSecs) {
         throw new UnsupportedOperationException(
                 "This cache is used to store session related information.  This operation is not supported.");
     }
 
-    public Object get(CacheKey key) {
-        return key == null ? null : getSessionMap().get(key);
+    public T get(CacheKey key) {
+        return key == null ? null : getMappedData().get(key);
     }
 
     public boolean isCached(CacheKey key) {
-        return key != null && getSessionMap().containsKey(key);
+        return key != null && getMappedData().containsKey(key);
     }
 
-    public List<String> getKeys() {
-        Set<CacheKey> keys = getSessionMap().keySet();
-        ArrayList<String> list = new ArrayList<String>(keys.size());
-        for(CacheKey ck : keys) {
-            list.add(ck.getUniqueString());
-        }
-        return list;
+    public List<CacheKey> getKeys() {
+        Set<CacheKey> keys = getMappedData().keySet();
+        return new ArrayList<>(keys);
     }
 
     public int getSize() {
-        return getSessionMap().size();
+        return getMappedData().size();
     }
 
 //====================================================================
 //
 //====================================================================
 
-    private Map<CacheKey, Object> getSessionMap() {
-        Map<CacheKey, Object> map = (Map<CacheKey, Object>) cache.get(uniqueKey);
+    private Map<CacheKey, T> getMappedData() {
+        Map<CacheKey, T> map = cache.get(uniqueKey);
         if (map == null) {
-            map = new ConcurrentHashMap<CacheKey, Object>(100);
+            map = new ConcurrentHashMap<>(100);
         }
         return map;
     }

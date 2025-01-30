@@ -296,9 +296,6 @@ public class EmbeddedDbUtil {
     }
 
     public static void enumeratedValuesCheckBG(DbAdapter dbAdapter, DataGroupPart results, TableServerRequest treq) {
-        RequestOwner owner = ServerContext.getRequestOwner();
-        ServerEvent.EventTarget target = new ServerEvent.EventTarget(ServerEvent.Scope.SELF, owner.getEventConnID(),
-                owner.getEventChannel(), owner.getUserKey());
         SHORT_TASK_EXEC.submit(() -> {
             enumeratedValuesCheck(dbAdapter, results, treq);
             DataGroup updates = new DataGroup(null, results.getData().getDataDefinitions());
@@ -307,7 +304,7 @@ public class EmbeddedDbUtil {
             changes.remove("totalRows");        //changes contains only the columns with 0 rows.. we don't want to update totalRows
 
             FluxAction action = new FluxAction(FluxAction.TBL_UPDATE, changes);
-            ServerEventManager.fireAction(action, target);
+            ServerEventManager.fireAction(action, ServerEvent.Scope.SELF);
         });
     }
     public static void enumeratedValuesCheck(DbAdapter dbAdapter, DataGroupPart results, TableServerRequest treq) {

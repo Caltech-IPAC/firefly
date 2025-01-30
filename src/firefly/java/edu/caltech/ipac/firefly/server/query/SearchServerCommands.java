@@ -12,6 +12,7 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.core.background.JobInfo;
 import edu.caltech.ipac.firefly.core.background.JobManager;
+import edu.caltech.ipac.firefly.core.background.JobUtil;
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.core.background.ServCmdJob;
 import edu.caltech.ipac.firefly.data.ServerEvent;
@@ -66,7 +67,7 @@ public class SearchServerCommands {
 
     public static class TableSearch extends ServCmdJob {
         public Job.Type getType() {
-            JobInfo jInfo = getJobInfo();
+            JobInfo jInfo = JobManager.getJobInfo(getJobId());
             Type type = jInfo == null || jInfo.getType() == null ? Type.SEARCH : jInfo.getType();
             return type;
         }
@@ -298,7 +299,7 @@ public class SearchServerCommands {
         public String doCommand(SrvParam params) throws Exception {
             String jobId = params.getRequired(JOB_ID);
             JobInfo info = JobManager.setMonitored(jobId, true);
-            return JobManager.toJson(info);
+            return JobUtil.toJson(info);
         }
     }
 
@@ -307,7 +308,7 @@ public class SearchServerCommands {
         public String doCommand(SrvParam params) throws Exception {
             String jobId = params.getRequired(JOB_ID);
             JobInfo info = JobManager.setMonitored(jobId, false);
-            return JobManager.toJson(info);
+            return JobUtil.toJson(info);
         }
     }
 
@@ -316,7 +317,7 @@ public class SearchServerCommands {
         public String doCommand(SrvParam params) throws Exception {
             String jobId = params.getRequired(JOB_ID);
             JobInfo info = JobManager.abort(jobId, "Aborted by user");
-            return JobManager.toJson(info);
+            return JobUtil.toJson(info);
         }
     }
 
@@ -348,8 +349,8 @@ public class SearchServerCommands {
                 applyIfNotEmpty(local.getLocalRunId(), uws::setLocalRunId);
             }
 
-            if (uws != null) return JobManager.toJson(uws);
-            return local != null ? JobManager.toJson(local) : null;
+            if (uws != null) return JobUtil.toJson(uws);
+            return local != null ? JobUtil.toJson(local) : null;
         }
     }
 
@@ -359,7 +360,7 @@ public class SearchServerCommands {
             String id = params.getRequired(JOB_ID);
             String email = params.getOptional(EMAIL);
             JobInfo info = JobManager.sendEmail(id, email);
-            return JobManager.toJson(info);
+            return JobUtil.toJson(info);
         }
     }
 

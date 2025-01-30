@@ -120,7 +120,7 @@ public class FitsCacher {
 
     private static void prepareCacheSpace(FileInfo fitsFileInfo) {
         memCache.put(fitsFileInfo, (HasSizeOf) () -> fitsFileInfo.getFile().length()); //force the cache to make space
-        memCache.put(fitsFileInfo, null);
+        memCache.remove(fitsFileInfo);
     }
 
     private static void logTime(FileInfo fitsFileInfo, long time) {
@@ -151,7 +151,7 @@ public class FitsCacher {
             return fitsDataInfo;
         }
         else {
-            memCache.put(key,null);
+            memCache.remove(key);
             return null;
         }
     }

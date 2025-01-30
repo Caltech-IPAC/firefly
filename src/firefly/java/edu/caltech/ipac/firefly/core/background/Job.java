@@ -6,7 +6,6 @@ import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.util.Logger;
 
 import java.util.concurrent.Callable;
-import java.util.function.Consumer;
 
 import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.ABORTED;
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.combineErrorMsg;
@@ -39,12 +38,13 @@ public interface Job extends Callable<String> {
 
     String run() throws Exception;
 
-    default JobInfo getJobInfo() {return JobManager.getJobInfo(getJobId()); }
-
-    default void setPhase(JobInfo.Phase phase) { setIf(getJobInfo(), v -> v.setPhase(phase)); }
+    default void setPhase(JobInfo.Phase phase) { JobManager.sendUpdate(getJobId(), v -> v.setPhase(phase)); }
 
     default void setError(int code, String msg) {
-        setIf(getJobInfo(), v -> v.setError(new JobInfo.Error(code, msg)));
+        JobManager.sendUpdate(getJobId(), v -> {
+            v.setError(new JobInfo.Error(code, msg));
+            v.setPhase(JobInfo.Phase.ERROR);
+        });
     }
 
     /**
@@ -52,39 +52,37 @@ public interface Job extends Callable<String> {
      * @param desc
      */
     default void progressDesc(String desc) {
-        setIf(getJobInfo(), v -> v.setProgressDesc(desc));
+        JobManager.sendUpdate(getJobId(), v -> v.setProgressDesc(desc));
     }
 
-    default void progress(int progress) { setIf(getJobInfo(), v -> v.setProgress(progress)); }
+    default void progress(int progress) {
+        JobManager.sendUpdate(getJobId(), v -> v.setProgress(progress));
+    }
 
     default void progress(int progress, String desc) {
-        setIf(getJobInfo(), v -> {
+        JobManager.sendUpdate(getJobId(), v -> {
             v.setProgress(progress);
             v.setProgressDesc(desc);
         });
     }
 
     default void addResult(JobInfo.Result result) {
-        setIf(getJobInfo(), v -> v.addResult(result));
+        JobManager.sendUpdate(getJobId(), v -> v.addResult(result));
     }
 
     default String call() {
 
         setPhase(JobInfo.Phase.EXECUTING);
-        JobManager.logJobInfo(getJobInfo());
 
         try {
             String results = run();
             setPhase(JobInfo.Phase.COMPLETED);
-            JobManager.logJobInfo(getJobInfo());
             return results;
         } catch (InterruptedException | DataAccessException.Aborted e) {
             setPhase(ABORTED);
-            JobManager.logJobInfo(getJobInfo());
         } catch (Exception e) {
             String msg = combineErrorMsg(e.getMessage(), e.getCause() == null ? null : e.getCause().getMessage());
             setError(500, msg);
-            JobManager.logJobInfo(getJobInfo());
             Logger.getLogger().error(e);
         }
         return null;
@@ -113,22 +111,6 @@ public interface Job extends Callable<String> {
         default Type getType() {return Type.SEARCH;}
         default void onAbort() {}
         default void onComplete() {}
-    }
-
-//====================================================================
-//
-//====================================================================
-
-    /**
-     * If JobInfo is not null, apply the update, then immediately send
-     * update notifications
-     * @param f
-     */
-    static void setIf(JobInfo info, Consumer<JobInfo> f){
-        if (info != null) {
-            f.accept(info);
-            JobManager.sendUpdate(info);
-        }
     }
 
 }

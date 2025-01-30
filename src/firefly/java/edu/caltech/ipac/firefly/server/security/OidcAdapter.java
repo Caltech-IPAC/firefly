@@ -131,8 +131,8 @@ public class OidcAdapter implements SsoAdapter {
     }
 
     public void clearAuthInfo() {
-        CacheManager.getSessionCache().put(new StringKey(AUTH_TOKEN_KEY), null);
-        CacheManager.getSessionCache().put(new StringKey(USER_INFO_KEY), null);
+        CacheManager.getSessionCache().remove(new StringKey(AUTH_TOKEN_KEY));
+        CacheManager.getSessionCache().remove(new StringKey(USER_INFO_KEY));
     }
 
     public Map<String, String> getIdentities() {

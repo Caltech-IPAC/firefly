@@ -15,7 +15,7 @@ import java.util.List;
  * @author loi
  * @version $Id: EhcacheImpl.java,v 1.8 2009/12/16 21:43:25 loi Exp $
  */
-public class DistribMapCache extends DistributedCache {
+public class DistribMapCache<T> extends DistributedCache<T> {
     String mapKey;
     long lifespanInSecs;
 

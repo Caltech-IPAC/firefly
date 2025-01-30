@@ -65,6 +65,7 @@ import static edu.caltech.ipac.firefly.data.TableServerRequest.PAGE_SIZE;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.SORT_INFO;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.START_IDX;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_ID;
+import static edu.caltech.ipac.util.cache.Cache.fileCheck;
 
 
 /**
@@ -132,7 +133,8 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         File dgFile = null;
         try {
             TableServerRequest request = (TableServerRequest) sr;
-            Cache cache = CacheManager.getLocalFile();
+            Cache<File> cache = CacheManager.<File>getLocal().validateOnGet(fileCheck);
+
             // get unique key without page info
             StringKey key = new StringKey(this.getClass().getName(), getDataKey(request));
 
@@ -149,7 +151,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
                 }
                 synchronized (lockKey) {
                     if (!lockKeyCreator) {
-                        dgFile = validateFile((File) cache.get(key));
+                        dgFile = validateFile(cache.get(key));
                     }
                     if (dgFile == null) {
                         dgFile = getDataFile(request);
@@ -312,7 +314,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
     public File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {
         LOGGER.warn("<< slow getDataFile called." + this.getClass().getSimpleName());
 
-        Cache cache = CacheManager.getLocalFile();
+        Cache<File> cache = CacheManager.getLocal();  // validateFile is called.  no need to set validator
 
         // if decimation or sorting is requested, you cannot background writing the file to speed up response time.
         boolean noBgWrite = DecimationProcessor.getDecimateInfo(request) != null || request.getSortInfo() != null;
@@ -335,7 +337,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         CollectionUtil.Filter<DataObject>[] filters = QueryUtil.convertToDataFilter(request.getFilters());
         if (filters != null && filters.length > 0) {
             key = key.appendToKey((Object[]) filters);
-            File filterFile = validateFile((File) cache.get(key));
+            File filterFile = validateFile(cache.get(key));
             if (filterFile == null) {
                 filterFile = File.createTempFile(getFilePrefix(request), ".tbl", QueryUtil.getTempDir(request));
                 doFilter(filterFile, resultsFile, filters, request);
@@ -348,7 +350,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         SortInfo sortInfo = request.getSortInfo();
         if (sortInfo != null) {
             key = key.appendToKey(sortInfo);
-            File sortedFile = validateFile((File) cache.get(key));
+            File sortedFile = validateFile(cache.get(key));
             if (sortedFile == null) {
                 sortedFile = File.createTempFile(getFilePrefix(request), ".tbl", QueryUtil.getTempDir(request));
                 doSort(resultsFile, sortedFile, sortInfo, request);
@@ -361,7 +363,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         DecimateInfo decimateInfo = DecimationProcessor.getDecimateInfo(request);
         if (decimateInfo != null) {
             key = key.appendToKey(decimateInfo);
-            File deciFile = validateFile((File) cache.get(key));
+            File deciFile = validateFile(cache.get(key));
             if (deciFile == null) {
                 // only read in the required columns
                 String xColExpr = decimateInfo.getxColumnName();
@@ -382,7 +384,7 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
         String ic = request.getParam(TableServerRequest.INCL_COLUMNS);
         if (decimateInfo == null && !StringUtils.isEmpty(ic) && !ic.equals("ALL")) {
             key = key.appendToKey(ic);
-            File subFile = validateFile((File) cache.get(key));
+            File subFile = validateFile(cache.get(key));
             if (subFile == null) {
                 subFile = File.createTempFile(getFilePrefix(request), ".tbl", QueryUtil.getTempDir(request));
                 String sql = "select col " + ic + " from " + resultsFile.getAbsolutePath() + " into " + subFile.getAbsolutePath() + " with complete_header";
@@ -505,8 +507,8 @@ abstract public class IpacTablePartProcessor implements SearchProcessor<DataGrou
 
         StringKey key = new StringKey(IpacTablePartProcessor.class.getName(), getUniqueID(request));
 
-        Cache cache = getCache();
-        File cfile = validateFile((File) cache.get(key));
+        Cache<File> cache = getCache();
+        File cfile = validateFile(cache.get(key));
 
         boolean isFromCache = true;
         if (cfile == null) {

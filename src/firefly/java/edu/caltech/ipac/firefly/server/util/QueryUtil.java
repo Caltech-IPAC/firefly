@@ -63,6 +63,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.firefly.core.background.JobUtil.jobIdToDir;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.FF_SESSION_ID;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_ID;
 import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.URL_CHECK_FOR_NEWER;
@@ -101,8 +102,14 @@ public class QueryUtil {
      * @return
      */
     public static File getTempDir(TableServerRequest tsr) {
-        File rootDir = tsr == null || tsr.getJobId() == null ? ServerContext.getTempWorkDir() : ServerContext.getPermWorkDir();
-        File tempDir = new File(rootDir, getSessPrefix(tsr));
+        if (tsr == null) { return new File(ServerContext.getTempWorkDir(), "bad-requests");}
+        File tempDir;
+        if (tsr.getJobId() != null) {
+            var baseDir = new File(ServerContext.getStageWorkDir(), "jobs");
+            tempDir = new File(baseDir, jobIdToDir(tsr.getJobId()));
+        } else {
+            tempDir = new File(ServerContext.getTempWorkDir(), getSessPrefix(tsr));
+        }
         if (!tempDir.exists()) tempDir.mkdirs();
         return tempDir;
     }

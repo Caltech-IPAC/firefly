@@ -32,7 +32,7 @@ public class CacheManager {
      * Same as {@code getLocal}.
      * @return A Cache that represents the local cache, backed by both memory and disk overflow.
      */
-    public static Cache getCache() {
+    public static <T> Cache<T> getCache() {
         return getLocal();
     }
 
@@ -40,24 +40,15 @@ public class CacheManager {
      * Returns a local cache backed by Ehcache. The cache uses both in-memory storage and overflow to disk.
      * @return A Cache that represents the local cache, backed by both memory and disk overflow.
      */
-    public static Cache getLocal() {
+    public static <T> Cache<T> getLocal() {
         return getCacheProvider().getCache(PERM_SMALL);
-    }
-
-    /**
-     * A variant of {@code getLocal}, specifically designed with convenience features for handling
-     * File and FileInfo objects.
-     * @return A Cache tailored for File and FileInfo objects
-     */
-    public static Cache getLocalFile() {
-        return new FileCache(getCacheProvider().getCache(PERM_SMALL));
     }
 
     /**
      * A cache specifically designed for image visualization purposes.
      * @return A Cache optimized for storing and accessing image data.
      */
-    public static Cache getVisMemCache() {
+    public static <T> Cache<T> getVisMemCache() {
         return getCacheProvider().getCache(VIS_SHARED_MEM);
     }
 
@@ -66,17 +57,8 @@ public class CacheManager {
      * different instances in a distributed environment.
      * @return A Cache instance for distributed environments.
      */
-    public static Cache getDistributed() {
-        return new DistributedCache();
-    }
-
-    /**
-     * A variant of {@code getDistributed}, specifically designed with convenience features for handling
-     * File and FileInfo objects.
-     * @return A Cache tailored for File and FileInfo objects in a distributed environment
-     */
-    public static Cache getDistributedFile() {
-        return new FileCache(new DistributedCache());
+    public static <T> Cache<T> getDistributed() {
+        return new DistributedCache<T>();
     }
 
     /**
@@ -85,7 +67,7 @@ public class CacheManager {
      * of data that is specific to a user's session.
      * @return A Cache instance for session-specific data storage.
      */
-    public static Cache getSessionCache() {
+    public static <T> Cache<T> getSessionCache() {
         return getLocalMap(ServerContext.getRequestOwner().getRequestAgent().getSessId());
     }
 
@@ -95,7 +77,7 @@ public class CacheManager {
      * stored in a cookie, which allows user data to persist across multiple sessions.
      * @return A distributed Cache instance for storing user-related information with persistence across sessions.
      */
-    public static Cache getUserCache() {
+    public static <T> Cache<T> getUserCache() {
         return UserCache.getInstance();
     }
 
@@ -104,8 +86,8 @@ public class CacheManager {
      * @param mapKey The unique key associated with the cache.
      * @return A Cache instance specifically for the data associated with the provided map key.
      */
-    public static Cache getLocalMap(String mapKey) {
-        return new LocalMapCache(mapKey);
+    public static <T> Cache<T> getLocalMap(String mapKey) {
+        return new LocalMapCache<>(mapKey);
     }
 
     /**
@@ -113,8 +95,8 @@ public class CacheManager {
      * @param mapKey The unique key used to identify and access the data in the distributed cache.
      * @return A Cache instance specifically for the data associated with the provided map key in the distributed environment.
      */
-    public static Cache getDistributedMap(String mapKey) {
-        return new DistribMapCache(mapKey);
+    public static <T> Cache<T> getDistributedMap(String mapKey) {
+        return new DistribMapCache<>(mapKey);
     }
 
 //====================================================================
@@ -170,6 +152,8 @@ public class CacheManager {
         public Object get(CacheKey key) {
             return null;
         }
+
+        public void remove(CacheKey key) {}
 
         public boolean isCached(CacheKey key) {
             return false;

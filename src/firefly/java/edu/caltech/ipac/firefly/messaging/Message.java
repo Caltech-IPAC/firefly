@@ -4,13 +4,10 @@
 
 package edu.caltech.ipac.firefly.messaging;
 
-import edu.caltech.ipac.firefly.core.background.JobInfo;
-import edu.caltech.ipac.firefly.core.background.JobManager;
+import edu.caltech.ipac.firefly.core.Util.Try;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.data.ServerEvent.Scope;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.util.event.Name;
-import edu.caltech.ipac.util.AppProperties;
 
 import java.io.Serializable;
 
@@ -44,6 +41,10 @@ public class Message {
 
     public <T> T getValue(T def, String... paths) throws ClassCastException {
         return helper.getValue(def, paths);
+    }
+
+    public int getInt(int def, String... paths) throws ClassCastException {
+        return Try.it(() -> helper.getValue(def, paths)).getOrElse(def);
     }
 
     public static Message parse(String json) {
@@ -103,45 +104,6 @@ public class Message {
             } catch (Exception e) {
                 return null;
             }
-        }
-    }
-
-    public static final class JobCompleted extends Message {
-        public static final String TOPIC = "JobCompleted";
-        static final String FROM = AppProperties.getProperty("mail.smtp.from", "donotreply@ipac.caltech.edu");
-        JobInfo job;
-        public JobCompleted(JobInfo jobInfo) {
-            job = jobInfo;
-            setTopic(TOPIC);
-            setHeader(Scope.CHANNEL, jobInfo.getOwner(), TOPIC, FROM);
-            setValue(JobManager.toJsonObject(jobInfo), "jobInfo");
-            var user = ServerContext.getRequestOwner().getUserInfo();
-            if (user != null) {
-                setValue(user.getName(), "user", "name");
-                setValue(user.getEmail(), "user", "email");
-                setValue(user.getLoginName(), "user", "loginName");
-            }
-            var ssoAdpt = ServerContext.getRequestOwner().getSsoAdapter();
-            if (ssoAdpt != null) {
-                setValue(ssoAdpt.getAuthToken(), "user", "authToken");
-            }
-        }
-
-        public MsgHeader getHeader() {
-            Scope scope = Scope.valueOf(getValue(Scope.SELF.name(), "header", "scope"));
-            String to = getValue("", "header", "to");
-            String from = getValue("", "header", "from");
-            String subject = getValue("", "header", "subject");
-            MsgHeader header = new MsgHeader(scope, to, subject);
-            header.setFrom(from);
-            return header;
-        }
-
-        public void setHeader(Scope scope, String to, String subject, String from) {
-            setValue(scope.name(), "header", "scope");
-            if (to != null) setValue(to, "header", "to");
-            if (from != null) setValue(from, "header", "from");
-            if (subject != null) setValue(subject, "header", "subject");
         }
     }
 

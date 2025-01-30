@@ -16,6 +16,7 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 
+import javax.annotation.Nonnull;
 import javax.servlet.http.Cookie;
 import java.io.File;
 import java.util.Date;
@@ -161,6 +162,7 @@ public class RequestOwner implements Cloneable {
         return getSsoAdapter() != null && getSsoAdapter().getAuthToken() != null;
     }
 
+    @Nonnull
     public UserInfo getUserInfo() {
         if (userInfo == null) {
             if (isAuthUser() && !ignoreAuth) {
@@ -171,8 +173,8 @@ public class RequestOwner implements Cloneable {
             }
 
             if (userInfo == null) {
-                Cache cache = CacheManager.getLocal();
-                userInfo = (UserInfo) cache.get(new StringKey(getUserKey()));
+                Cache<UserInfo> cache = CacheManager.getLocal();
+                userInfo = cache.get(new StringKey(getUserKey()));
                 if (userInfo == null) {
                     userInfo = UserInfo.newGuestUser();
                     cache.put(new StringKey(getUserKey()), userInfo);

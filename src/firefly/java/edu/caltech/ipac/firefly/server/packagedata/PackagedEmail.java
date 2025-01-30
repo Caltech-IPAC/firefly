@@ -9,6 +9,7 @@ package edu.caltech.ipac.firefly.server.packagedata;
  */
 
 
+import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.server.ServerContext;
@@ -59,10 +60,11 @@ public class PackagedEmail {
 
 
     /**
-     * Send an email to the user that his files are ready
-     * @param jobInfo JobInfo
+     * Email the user that his files are ready
+     * @param jobId job id
      */
-    public static void send(JobInfo jobInfo) {
+    public static void send(String jobId) {
+        JobInfo jobInfo = JobManager.getJobInfo(jobId);
         DownloadRequest dlreq = jobInfo.getSrvParams().getDownloadRequest();
         String email = dlreq.getEmail();
 
