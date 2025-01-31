@@ -743,7 +743,16 @@ export function convertAngle(from, to, angle) {
             numAngle = numAngle * Math.PI/180.0;
             toIdx = 0;
         }
-        return numAngle * Math.pow(60.0, (toIdx - fromIdx));
+        const v=  numAngle * Math.pow(60.0, (toIdx - fromIdx));
+        switch (to) {
+            case 'arcsec':
+                return Math.trunc(1000*v)/1000;
+            case 'arcmin':
+                return Math.trunc(100000*v)/100000;
+            case 'degree':
+                return v;
+        }
+        return v;
     }
 }
 

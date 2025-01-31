@@ -1,4 +1,4 @@
-import {getPreferCutout} from '../../ui/tap/ObsCoreOptions';
+import {getPreferCutout} from '../../ui/tap/Cutout';
 import { getSearchTarget, makeWorldPtUsingCenterColumns } from '../../voAnalyzer/TableAnalysis.js';
 import {
     getDataLinkData, isDownloadType, isGzipType, isSimpleImageType, isTarType, isVoTable

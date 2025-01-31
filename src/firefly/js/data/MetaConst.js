@@ -200,7 +200,7 @@ export const MetaConst = {
     /**
      * any ID can be added to a table search to identify the source for the purpose of getting source specific obscore preferences
      */
-    OBSCORE_SOURCE_ID: 'OBSCORE_SOURCE_ID',
+    DATA_SERVICE_ID: 'DATA_SERVICE_ID',
 
     /**
      * If we are doing cutout, this is the default type, either: ROW_POSITION or SEARCH_POSITION

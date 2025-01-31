@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-    ADQL_QUERY_KEY, getAsEntryForTableName, getServiceHiPS, getServiceLabel,
+    ADQL_QUERY_KEY, getAsEntryForTableName, getServiceHiPS, getServiceId, getServiceLabel,
     makeNumberedTitle,
     makeTapSearchTitle,
     maybeQuote, TAP_UPLOAD_SCHEMA,
@@ -80,7 +80,7 @@ export function onTapSearchSubmit(request, serviceUrl, tapBrowserState, addition
             ...treq.META_INFO,
             ...additionalTapMeta,
             ...metaInfo,
-            [MetaConst.OBSCORE_SOURCE_ID] : serviceLabel,
+            [MetaConst.DATA_SERVICE_ID] : getServiceId(serviceUrl),
         };
         dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true});
     };

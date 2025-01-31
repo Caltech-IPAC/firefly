@@ -22,7 +22,8 @@ import {useFieldGroupRerender, useFieldGroupValue, useFieldGroupWatch} from '../
 import {SizeInputFields} from '../SizeInputField.jsx';
 import {DEF_TARGET_PANEL_KEY} from '../TargetPanel.jsx';
 import {ConstraintContext} from './Constraints.js';
-import {getObsCoreOption, ROW_POSITION, SEARCH_POSITION} from './ObsCoreOptions';
+import {ROW_POSITION, SEARCH_POSITION} from './Cutout';
+import {getDataServiceOption} from './DataServicesOptions';
 import {
     DebugObsCore, getPanelPrefix, makeCollapsibleCheckHeader, makeFieldErrorList, makePanelStatusUpdater,
     } from './TableSearchHelpers.jsx';
@@ -71,7 +72,7 @@ const fldListAry= [ServerParams.USER_TARGET_WORLD_PT,SpatialRegOp,SPATIAL_TYPE,
             SpatialMethod,RadiusSize, PolygonCorners,CenterLonColumns,CenterLatColumns,
     UploadCenterLonColumns, UploadCenterLatColumns, cornerCalcType];
 
-export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel, tableName, initArgs={},
+export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, columnsModel, tableName, initArgs={},
                                   obsCoreEnabled:requestObsCore, capabilities, handleHiPSConnection=true,
                                   useSIAv2= false,
                                   slotProps}) {
@@ -232,7 +233,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, columnsModel,
                             sx:{'label' : {width: SpatialLabelSpatial}},
                         }}
                         /> }
-                    <SpatialSearchLayout {...{obsCoreEnabled, initArgs, uploadInfo, setUploadInfo, serviceLabel,
+                    <SpatialSearchLayout {...{obsCoreEnabled, initArgs, uploadInfo, setUploadInfo, serviceLabel, serviceId,
                         hipsUrl, centerWP, fovDeg, capabilities, slotProps: layoutSlotProps}} />
                     {!obsCoreEnabled && cols &&
                         <CenterColumns {...{lonCol: getVal(CenterLonColumns), latCol: getVal(CenterLatColumns),
@@ -262,7 +263,7 @@ function getSpacialLayoutMode(spacialType, obsCoreEnabled, canUpload) {
 }
 
 
-const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInfo, serviceLabel,
+const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInfo, serviceLabel, serviceId,
                                  hipsUrl, centerWP, fovDeg, capabilities, slotProps}) => {
 
     const {getVal}= useContext(FieldGroupCtx);
@@ -287,7 +288,7 @@ const SpatialSearchLayout = ({initArgs, obsCoreEnabled, uploadInfo, setUploadInf
                 <Stack spacing={1} direction='column'>
                     <RegionOpField {...{initArgs, capabilities, ...slotProps?.regionOpField}}/>
                     {!containsPoint && <ConeOrAreaField {...slotProps?.coneOrAreaField}/>}
-                    { (isCone || containsPoint) && <TargetPanelForSpacial {...{serviceLabel, hipsUrl, centerWP, fovDeg, ...slotProps?.targetPanel}}/>}
+                    { (isCone || containsPoint) && <TargetPanelForSpacial {...{serviceId, hipsUrl, centerWP, fovDeg, ...slotProps?.targetPanel}}/>}
                     {!containsPoint && radiusOrPolygon}
                 </Stack>
             );
@@ -427,12 +428,12 @@ const RegionOpField= ({initArgs, capabilities, ...props}) => {
     );
 };
 
-function TargetPanelForSpacial({hasRadius=true, serviceLabel,
+function TargetPanelForSpacial({hasRadius=true, serviceId,
                                    hipsUrl= getAppOptions().coverage?.hipsSourceURL  ??  'ivo://CDS/P/2MASS/color',
                                    centerWP, fovDeg=240, ...props}) {
 
-    const targetPanelExampleRow1= getObsCoreOption('targetPanelExampleRow1', serviceLabel);
-    const targetPanelExampleRow2= getObsCoreOption('targetPanelExampleRow2', serviceLabel);
+    const targetPanelExampleRow1= getDataServiceOption('targetPanelExampleRow1', serviceId);
+    const targetPanelExampleRow2= getDataServiceOption('targetPanelExampleRow2', serviceId);
     return (
         <VisualTargetPanel {...{sizeKey:hasRadius? RadiusSize : undefined,
                            targetPanelExampleRow1, targetPanelExampleRow2,

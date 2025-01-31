@@ -276,7 +276,7 @@ function Services({serviceUrl, servicesShowing, siaOps, onSiaServiceOptionSelect
                                     onSiaServiceOptionSelect, clearServiceOnDelete:value===serviceUrl}}/>),
                         }} /> )}
                     <FormHelperText sx={{m: .25}}>
-                        {enterUrl ? 'Type the url of a TAP service & press enter' : 'Choose a SIAv2 service from the list'}
+                        {enterUrl ? 'Type the url of a SIAv2 service & press enter' : 'Choose a SIAv2 service from the list'}
                     </FormHelperText>
                 </Stack>
             </Stack>
@@ -443,7 +443,7 @@ function onSIAv2SearchSubmit(request, serviceUrl, siaMeta, siaState, showErrors=
         treq.META_INFO= {
             ...treq.META_INFO,
             ...additionalSiaMeta,
-            [MetaConst.OBSCORE_SOURCE_ID] : getSiaServiceLabel(serviceUrl),
+            [MetaConst.DATA_SERVICE_ID] : getSiaServiceLabel(serviceUrl),
         };
         console.log('sia search: ' + url, new URL(url).toString());
         dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true});

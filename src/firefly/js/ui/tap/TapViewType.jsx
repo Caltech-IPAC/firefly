@@ -11,7 +11,7 @@ import {ListBoxInputFieldView} from '../ListBoxInputField.jsx';
 import {SplitContent} from '../panel/DockLayoutPanel';
 import {useFieldGroupMetaState} from '../SimpleComponent.jsx';
 import {AdvancedADQL} from './AdvancedADQL.jsx';
-import {getTapObsCoreOptions} from './ObsCoreOptions';
+import {getDataServiceOption} from './DataServicesOptions';
 import {showTableSelectPopup} from './TableChooser.jsx';
 
 import {TableColumnsConstraints, TableColumnsConstraintsToolbar} from './TableColumnsConstraints.jsx';
@@ -21,7 +21,7 @@ import {
 import {TableSearchMethods} from './TableSearchMethods.jsx';
 import {
     defTapBrowserState, getLoadedCapability, getTapServices, isCapabilityLoaded, loadTapCapabilities, loadTapColumns,
-    loadTapSchemas, loadTapTables, tapHelpId, loadObsCoreMetadata, ADQL_QUERY_KEY, SERVICE_EXIST_ERROR
+    loadTapSchemas, loadTapTables, tapHelpId, loadObsCoreMetadata, ADQL_QUERY_KEY, SERVICE_EXIST_ERROR, getServiceId
 } from './TapUtil.js';
 
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
@@ -298,8 +298,9 @@ function BasicUI(props) {
 
     const loadObsCoreMeta = (serviceUrl, obsCoreTableModel) => {
         const [, obsCoreTable] = obsCoreTableModel?.tableData?.data?.[0];
-        const supportsObsCoreMetadataLoad = getTapObsCoreOptions(serviceLabel)?.enableMetadataLoad ?? false;
-        
+        const serviceId= getServiceId(serviceUrl);
+        const supportsObsCoreMetadataLoad = getDataServiceOption('enableMetadataLoad', serviceId, false);
+
         if (!obsCoreTable || !supportsObsCoreMetadataLoad) {
             setObsCoreMetadataModel(undefined); //indicates loading attempt wasn't made
         }

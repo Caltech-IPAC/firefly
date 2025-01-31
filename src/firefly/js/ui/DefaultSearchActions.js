@@ -15,7 +15,7 @@ import {setMultiSearchPanelTab} from './MultiSearchPanel.jsx';
 import {Format} from 'firefly/data/FileAnalysis';
 import {doJsonRequest} from 'firefly/core/JsonUtils';
 import {showInfoPopup} from 'firefly/ui/PopupUtil';
-import {getObsCoreOption} from './tap/ObsCoreOptions';
+import {getDataServiceOption, getDataServiceOptionByTable} from './tap/DataServicesOptions';
 
 //note - these two redundant function are here because of circular dependencies.
 // this file is imported very early and webpack is creating errors
@@ -164,8 +164,7 @@ export const makeDefTableSearchActions= () => {
             execute: () => showDatalinkTable(),
             supported: (table) => canShowDatalinkTable(table),
             searchDesc: ({tbl_id}) => {
-                const sourceId= getMetaEntry(tbl_id, MetaConst.OBSCORE_SOURCE_ID);
-                return getObsCoreOption( 'datalinkExtractTableDesc', sourceId,
+                return getDataServiceOptionByTable( 'datalinkExtractTableDesc', tbl_id,
                     'Show table with all data products for this row (Datalink)');
             }
         } ),

@@ -9,11 +9,11 @@ import {isEqual} from 'lodash';
 import Prism from 'prismjs';
 import PropTypes from 'prop-types';
 import React, {useEffect, useRef} from 'react';
-import {getAppOptions} from '../../api/ApiUtil.js';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 import {FieldGroupAccordionPanel} from '../panel/AccordionPanel.jsx';
 import {RadioGroupInputFieldView} from '../RadioGroupInputFieldView.jsx';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
+import {getDataServiceOption} from './DataServicesOptions';
 import {showResultTitleDialog} from './ResultTitleDialog';
 import {ADQL_QUERY_KEY, makeTapSearchTitle, USER_ENTERED_TITLE} from './TapUtil';
 
@@ -265,7 +265,7 @@ export function DebugObsCore({constraintResult, includeSia=true}) {
     useEffect(() => {
         divElementRef.divElement&& Prism.highlightAllUnder(divElementRef.divElement);// highlight help text/code snippets
     });
-    if (!getAppOptions().tapObsCore?.debug) return false;
+    if (!getDataServiceOption('debug')) return false;
 
     const siaFrag= (
         <>

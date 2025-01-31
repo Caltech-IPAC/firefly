@@ -1,6 +1,7 @@
 import {isEmpty, isUndefined} from 'lodash';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {getCellValue, getColumns, hasRowAccess} from '../../tables/TableUtil.js';
+import {getDataServiceOption} from '../../ui/tap/DataServicesOptions';
 import {
     getObsCoreAccessURL, getObsCoreProdTypeCol, getObsReleaseDate, getObsTitle, getProdTypeGuess, getSearchTarget,
     isFormatDataLink,
@@ -243,7 +244,7 @@ export function getObsCoreRowMetaInfo(table,row) {
 
 function createObsCoreTitle(table,row) {
  // 1. try a template
-    const template= getAppOptions().tapObsCore?.productTitleTemplate;
+    const template= getDataServiceOption('productTitleTemplate');
     if (template?.trim()==='') return ''; // setting template to empty string disables all title guessing
     if (!template) {
         const templateColNames= template && getColNameFromTemplate(template);

@@ -60,6 +60,13 @@ export function getSiaServiceLabel(serviceUrl) {
     return (serviceUrl && (siaOps.find( (e) => e.value===serviceUrl)?.label)) || '';
 }
 
+export function getSiaServiceId(serviceUrl) {
+    const siaOps= getSiaServices();
+    const id= (serviceUrl && (siaOps.find( (e) => e.value===serviceUrl)?.serviceId));
+    if (id) return id;
+    return getSiaServiceLabel(serviceUrl).replaceAll(/\s/g,'');
+}
+
 export const getServiceNamesAsKey= () => getSiaServiceOptions().map(({label}) => label).join('-');
 
 export const getSiaServiceOptions= () =>
@@ -119,13 +126,13 @@ export function deleteUserService(serviceUrl) {
 
 
 
-export function getSIAv2Services(nameList) {
+export function getSIAv2ServicesByName(nameList) {
     const services= makeServices();
     if (!nameList) return services;
 
     return nameList.map( (name) => {
             const foundService= services.find( (s) => s.label===name);
-            if (!foundService) Logger('TapKnownServices').warn(`TAP Service: '${name}' was not found`);
+            if (!foundService) Logger('sigKnownServices').warn(`SIA Service: '${name}' was not found`);
             return foundService;
         })
         .filter( (v) => v);
@@ -133,8 +140,8 @@ export function getSIAv2Services(nameList) {
 
 function makeServices() {
     return [
-        siaEntry('IRSA', 'https://irsa.ipac.caltech.edu/SIA'),
-        siaEntry('CADC', 'https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/sia/v2query', cadcMetaOptionsFallback),
+        siaEntry('IRSA', 'IRSA', 'https://irsa.ipac.caltech.edu/SIA'),
+        siaEntry('CADC', 'CADC', 'https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/sia/v2query', cadcMetaOptionsFallback),
     ];
 }
 
@@ -193,6 +200,6 @@ export const ALL_FALLBACK_META_OPTIONS= [
 
 
 
-const siaEntry= (label,url, metaOptions) =>
-    ({ label, value: url, metaOptions});
+const siaEntry= (serviceId, label,url, metaOptions) =>
+    ({ serviceId, label, value: url, metaOptions});
 
