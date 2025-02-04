@@ -116,7 +116,7 @@ const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 const fldListAry= ['exposureSinceValue', 'exposureLengthMin', 'exposureLengthMax',
             'exposureMin', 'exposureMax', 'exposureSinceOptions', 'exposureRangeType'];
 
-export function ExposureDurationSearch({initArgs, slotProps,useSIAv2}) {
+export function ExposureDurationSearch({initArgs, slotProps,useSIAv2, showLengthInput=true}) {
     const {getVal,makeFldObj}= useContext(FieldGroupCtx);
     const {setConstraintFragment}= useContext(ConstraintContext);
     const [constraintResult, setConstraintResult] = useState({});
@@ -157,7 +157,8 @@ export function ExposureDurationSearch({initArgs, slotProps,useSIAv2}) {
                             : <ExposureSince {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive(),
                                 ...slotProps?.exposureSince}} />
                         }
-                        <ExposureLength {...{initArgs, turnOnPanel, panelActive:checkHeaderCtl.isPanelActive()}}/>
+                        {showLengthInput &&
+                            <ExposureLength {...{initArgs, turnOnPanel, panelActive: checkHeaderCtl.isPanelActive()}}/>}
                         <DebugObsCore {...{constraintResult}}/>
                     </Stack>
                 </ForceFieldGroupValid>
@@ -173,7 +174,8 @@ ExposureDurationSearch.propTypes = {
         exposureRangeType: PropTypes.object,
         exposureTimeRange: PropTypes.object,
         exposureSince: PropTypes.object,
-    })
+    }),
+    showLengthInput: PropTypes.bool,
 };
 
 
