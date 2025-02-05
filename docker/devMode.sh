@@ -14,4 +14,5 @@ for n in *.war; do \
 done
 
 cd ${CATALINA_HOME}
-${CATALINA_HOME}/launchTomcat.sh
+#${CATALINA_HOME}/launchTomcat.sh
+python3 ${CATALINA_HOME}/entrypoint.py

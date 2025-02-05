@@ -56,7 +56,7 @@ public class ServerStatus extends BaseHttpServlet {
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
 
-        boolean showHeaders = Boolean.parseBoolean(req.getParameter("headers"));
+        boolean showDebug = Boolean.parseBoolean(req.getParameter("debug"));
         boolean execGC = Boolean.parseBoolean(req.getParameter("execGC"));
         boolean showJobDetails = Boolean.parseBoolean(req.getParameter("job.details"));
 
@@ -72,7 +72,7 @@ public class ServerStatus extends BaseHttpServlet {
             writer.println("Available Actions");
             writer.println("--------------------");
             writer.println("<li><a href=./status>Default View</a>:   Default set of information");
-            writer.println("<li><a href=./status?headers=true>Full Headers</a>:   Display all request's headers");
+            writer.println("<li><a href=./status?debug=true>Debug Info</a>:     Display information for debugging; request headers, system properties, etc.");
             writer.println("<li><a href=./status?job.details=true>Job Details</a>:    View detailed Async Job Information");
             writer.println("<li><a href=./status?execGC=true>Trigger GC</a>:     Invoke JVM garbage collection");
             skip(writer);
@@ -99,9 +99,11 @@ public class ServerStatus extends BaseHttpServlet {
 
             displayCacheInfo(writer, prov.getEhcacheManager(), sInfo);
 
-            if (showHeaders) {
+            if (showDebug) {
                 skip(writer);
                 showHeaders(writer, req);
+                skip(writer);
+                showSystemProperties(writer);
             }
 
             writer.println("</pre>");
@@ -317,6 +319,21 @@ public class ServerStatus extends BaseHttpServlet {
         w.println("Async Job Information");
         w.println();
         w.println(JobManager.getStatistics(details));
+    }
+
+    private static void showSystemProperties(PrintWriter w) {
+
+        w.println("System Properties");
+        w.println("-----------------");
+
+        // Get system properties
+        var props = System.getProperties();
+
+        // Iterate through properties and print them
+        for (String key : props.stringPropertyNames()) {
+            String value = props.getProperty(key);
+            w.println(String.format("    %s: %s", key, value));
+        }
     }
 
     private static void showHeaders(PrintWriter w, HttpServletRequest req) {

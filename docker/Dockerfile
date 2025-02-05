@@ -34,7 +34,7 @@ RUN yarn install --ignore-platform --frozen-lockfile
 FROM node_module AS dev_env
 
 RUN apt-get update \
-    && apt-get install -y vim procps \
+    && apt-get install -y vim procps python3 \
 # cleanup
     && rm -rf /var/lib/apt/lists/*;
 
@@ -52,7 +52,7 @@ ENV env=local
 WORKDIR ${CATALINA_HOME}
 
 # Tomcat scripts, config files, etc
-COPY firefly/docker/*.sh ./
+COPY firefly/docker/*.sh firefly/docker/*.py ./
 COPY firefly/docker/tomcat-users.xml conf/
 
 # set up directory protections, copy stuff around, add tomcat user and group
@@ -120,7 +120,7 @@ ARG gid=91
 # - this is a big part of the layer so do it early
 # - emacs removed because it is so big: to readd emacs: emacs-nox
 RUN apt-get update && apt-get install -y \
-        vim procps wget unzip \
+        vim procps wget unzip python3 \
         && rm -rf /var/lib/apt/lists/*;
 
 # These are the users replaceable environment variables, basically runtime arguments
@@ -132,7 +132,8 @@ RUN apt-get update && apt-get install -y \
 ENV JVM_CORES=0\
     DEBUG=false \
     CLEANUP_INTERVAL=12h \
-    PROPS=''
+    PROPS='' \
+    PYTHONUNBUFFERED=1
 
 # ----------------------------------------------------------
 # ----------------------------------------------------------
@@ -153,7 +154,7 @@ RUN mkdir -p conf/Catalina/localhost /local/www /firefly/config /firefly/workare
   && rm -r logs && ln -s /firefly/logs logs
 
 # These are the file that are executed at startup: start tomcat, logging, help, etc
-COPY firefly/docker/*.sh firefly/docker/*.txt ${CATALINA_HOME}/
+COPY firefly/docker/*.sh firefly/docker/*.txt firefly/docker/*.py ${CATALINA_HOME}/
 
 # Tomcat config files, tomcat-users is for the admin username and password
 # context.xml set delegate to true for we can use the classpath of tomcat
@@ -182,4 +183,5 @@ EXPOSE 8080 5050
 USER tomcat
 
 #CMD ["/bin/bash", "./launchTomcat.sh"]
-ENTRYPOINT ["/bin/bash", "-c", "./launchTomcat.sh ${*}", "--"]
+#ENTRYPOINT ["/bin/bash", "-c", "./launchTomcat.sh ${*}", "--"]
+ENTRYPOINT ["python3", "./entrypoint.py"]
