@@ -75,13 +75,13 @@ public class DecimationProcessor extends TableFunctionProcessor {
         deciFunc.setCols(deciInfo.getxExp(), deciInfo.getyExp());
 
         int dataPoints = Math.min(deciKey.getxCount(), deciKey.getyCount());
-        int deciEnableSize = deciInfo.getDeciEnableSize() > 0 ? deciInfo.getDeciEnableSize() : DECI_ENABLE_SIZE;
+        int deciEnableSize = deciInfo.getDeciEnableSize() > -1 ? deciInfo.getDeciEnableSize() : DECI_ENABLE_SIZE;
         String tblName = getResultSetTable(treq);
         if (dataPoints < deciEnableSize) {
             String sql = """
                 CREATE TABLE %s as (
                 SELECT %s as "%s", %s as "%s", ROW_NUM as "rowidx", ROW_NUMBER() OVER () AS %s, ROW_NUMBER() OVER () AS %s,
-                FROM %s
+                FROM %s)
                 """.formatted(tblName, deciInfo.getxExp(), deciKey.getXCol(), deciInfo.getyExp(), deciKey.getYCol(), ROW_NUM, ROW_IDX, dataTbl);
             dbAdapter.execUpdate(sql);
         } else {
