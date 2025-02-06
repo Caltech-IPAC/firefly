@@ -1,4 +1,4 @@
-import {getPreferCutout} from '../../ui/tap/ObsCoreOptions';
+import {getPreferCutout} from '../../ui/tap/Cutout';
 import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY} from '../DataProductsCntlr';
 import {createDataLinkSingleRowItem} from './DataLinkProcessor.js';

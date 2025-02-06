@@ -21,7 +21,7 @@ import {initApi} from './api/ApiBuild.js';
 import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
 import {FireflyRoot} from './ui/FireflyRoot.jsx';
 import {SIAv2SearchPanel} from './ui/tap/SIASearchRootPanel';
-import {getSIAv2Services} from './ui/tap/SiaUtil';
+import {getSIAv2ServicesByName} from './ui/tap/SiaUtil';
 import {TapSearchPanel} from './ui/tap/TapSearchRootPanel';
 import {mergeServices} from './ui/tap/TapUtil';
 import {dispatchChangeReadoutPrefs} from './visualize/MouseReadoutCntlr.js';
@@ -41,7 +41,7 @@ import {showLostConnection} from './ui/LostConnection.jsx';
 import {recordHistory} from './core/History.js';
 import {setDefaultImageColorTable} from './visualize/WebPlotRequest.js';
 import {initWorkerContext} from './threadWorker/WorkerAccess.js';
-import {getTAPServices} from './ui/tap/TapKnownServices.js';
+import {getTAPServicesByName} from './ui/tap/TapKnownServices.js';
 import {loadAllJobs} from './core/background/BackgroundUtil.js';
 import {
     makeDefImageSearchActions, makeDefTableSearchActions, makeDefTapSearchActions, makeExternalSearchActions
@@ -196,7 +196,7 @@ const defFireflyOptions = {
         defaultColorTable: 1,
         canCreateExtractionTable: false,
     },
-    tapObsCore: {
+    dataServiceOptions: {
         enableObsCoreDownload: true,
         // debug: true,
     },
@@ -218,12 +218,12 @@ const defFireflyOptions = {
         ...makeDefImageSearchActions(),
     ],
     tap : {
-        services: getTAPServices( ['IRSA', 'NED', 'NASA Exoplanet Archive', 'KOA', 'HEASARC', 'MAST Images',
-                                   'CADC', 'VizieR (CDS)', 'Simbad (CDS)', 'Gaia', 'GAVO', 'HSA', 'NOIR Lab'] ),
+        services: getTAPServicesByName( ['IRSA', 'NED', 'ExoplanetArchive', 'KOA', 'HEASARC', 'MASTImages',
+                                   'CADC', 'VizieR', 'Simbad', 'Gaia', 'GAVO', 'HSA', 'NOIRLab'] ),
         defaultMaxrec: 50000
     },
     SIAv2 : {
-        services: getSIAv2Services( ['IRSA', 'CADC', ]),
+        services: getSIAv2ServicesByName( ['IRSA', 'CADC', ]),
         defaultMaxrec: 50000
     },
 };

@@ -1,12 +1,14 @@
 import React from 'react';
 import {cloneDeep, once} from 'lodash';
-import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
+import {MetaConst} from '../../data/MetaConst';
 import {dispatchTableUiUpdate, TABLE_LOADED} from '../../tables/TablesCntlr.js';
 import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
-import {getTapObsCoreOptions, getTapObsCoreOptionsGuess} from '../../ui/tap/ObsCoreOptions';
-import {hasObsCoreLikeDataProducts, isObsCoreLikeWithProducts} from '../../voAnalyzer/TableAnalysis.js';
+import {
+    getDataServiceOption, getDataServiceOptionByTable, getDataServiceOptions, getDataServiceOptionsFallback,
+} from '../../ui/tap/DataServicesOptions';
+import {hasObsCoreLikeDataProducts} from '../../voAnalyzer/TableAnalysis.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {getActiveRowToImageDef } from '../../visualize/saga/ActiveRowToImageWatcher.js';
@@ -57,11 +59,11 @@ function setupObsCorePackaging(tbl_id) {
 
     const {request}=table;
     let enabled;
-    if (request.QUERY && request.serviceUrl && getMetaEntry(table,'serviceLabel')) { // if known TAP service request
-        enabled= getTapObsCoreOptions(getMetaEntry(table,'serviceLabel'))?.enableObsCoreDownload;
+    if (request.QUERY && request.serviceUrl) { // if known TAP service request
+        enabled= getDataServiceOptionByTable('enableObsCoreDownload',table);
     }
     else {
-        enabled= getAppOptions()?.tapObsCore?.enableObsCoreDownload;
+        enabled= getDataServiceOption('enableObsCoreDownload');
     }
     if (!enabled) return;
 
@@ -72,8 +74,10 @@ function setupObsCorePackaging(tbl_id) {
 
 function updateSearchRequest( tbl_id='', dlParams='', sRequest=null) {
     const hostname= new URL(sRequest.source ? sRequest.source : sRequest.serviceUrl)?.hostname;
-    const template= getTapObsCoreOptionsGuess(hostname)?.productTitleTemplate;
-    const useSourceUrlFileName= getTapObsCoreOptionsGuess(hostname)?.packagerUsesSourceUrlFileName;
+    const serviceId= getMetaEntry(tbl_id,MetaConst.DATA_SERVICE_ID);
+    const ops= getDataServiceOptionsFallback(serviceId, hostname) ?? {};
+    const template= ops.productTitleTemplate;
+    const useSourceUrlFileName= ops.packagerUsesSourceUrlFileName;
     const templateColNames= template && getColNameFromTemplate(template);
     const searchRequest = cloneDeep( sRequest);
     searchRequest.template = template;

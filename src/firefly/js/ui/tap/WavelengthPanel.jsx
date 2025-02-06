@@ -9,7 +9,7 @@ import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
 import {useFieldGroupRerender, useFieldGroupValue, useFieldGroupWatch} from '../SimpleComponent.jsx';
 import {ValidationField} from '../ValidationField.jsx';
 import {makeAdqlQueryRangeFragment, ConstraintContext, siaQueryRange} from './Constraints.js';
-import {getTapObsCoreOptions} from './ObsCoreOptions';
+import {getDataServiceOption} from './DataServicesOptions';
 import {
     DebugObsCore, getPanelPrefix, LeftInSearch, makeCollapsibleCheckHeader,
     makeFieldErrorList,
@@ -268,8 +268,8 @@ WavelengthOptions.propTypes = {
 };
 
 
-export function ObsCoreWavelengthSearch({ initArgs, serviceLabel, slotProps, useSIAv2 }) {
-    const filterDefinitions = getTapObsCoreOptions(serviceLabel).filterDefinitions ?? [];
+export function ObsCoreWavelengthSearch({ initArgs, serviceId, slotProps, useSIAv2 }) {
+    const filterDefinitions = getDataServiceOption('filterDefinitions', serviceId, []);
     const fdDefsKeys = filterDefinitions.length ? filterDefinitions.map((fd) => 'filter' + fd.name) : [];
     const fldKeys = Object.values(obsCoreWvlFieldKeys);
 
@@ -316,7 +316,7 @@ export function ObsCoreWavelengthSearch({ initArgs, serviceLabel, slotProps, use
 
 ObsCoreWavelengthSearch.propTypes = {
     initArgs: PropTypes.object,
-    serviceLabel: PropTypes.string,
+    serviceId: PropTypes.string,
     useSIAv2: PropTypes.bool,
     slotProps: PropTypes.shape({
         root: PropTypes.object,

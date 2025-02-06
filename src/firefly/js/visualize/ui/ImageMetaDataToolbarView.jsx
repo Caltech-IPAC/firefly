@@ -10,11 +10,8 @@ import {getTblInfo} from '../../tables/TableUtil.js';
 import {showCutoutSizeDialog} from '../../ui/CutoutSizeDialog.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {
-    findCutoutTarget, getCutoutErrorStr, getCutoutSize, getCutoutTargetType, getObsCoreOption, getPreferCutout,
-    ROW_POSITION,
-    SEARCH_POSITION,
-    USER_ENTERED_POSITION
-} from '../../ui/tap/ObsCoreOptions';
+    findCutoutTarget, getCutoutErrorStr, getCutoutSize, getCutoutTargetType,
+    ROW_POSITION, SEARCH_POSITION, USER_ENTERED_POSITION } from '../../ui/tap/Cutout';
 import {makeFoVString} from '../ZoomUtil.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';

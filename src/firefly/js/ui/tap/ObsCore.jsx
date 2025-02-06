@@ -12,12 +12,11 @@ import {ValidationField} from 'firefly/ui/ValidationField';
 import {bool, string, object, shape, func, elementType} from 'prop-types';
 import {ColsShape} from '../../charts/ui/ColumnOrExpression';
 import {FieldGroupCtx, ForceFieldGroupValid} from '../FieldGroup.jsx';
-import {FormPanel} from '../FormPanel';
 import {useFieldGroupRerender, useFieldGroupValue, useFieldGroupWatch} from '../SimpleComponent.jsx';
 import {ConstraintContext} from './Constraints.js';
 import {AutoCompleteInput} from 'firefly/ui/AutoCompleteInput';
 import {omit} from 'lodash';
-import {getTapObsCoreOptions} from './ObsCoreOptions';
+import {getDataServiceOption} from './DataServicesOptions';
 
 const panelTitle = 'Observation Type and Source';
 const panelValue = 'ObsCore';
@@ -162,15 +161,15 @@ const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 const fldListAry= ['obsCoreCalibrationLevel', 'obsCoreTypeSelection', 'obsCoreSubType', 'obsCoreInstrumentName', 'obsCoreCollection', 'siaFacility'];
 
 
-export function ObsCoreSearch({sx, cols, obsCoreMetadataModel, serviceLabel, initArgs={}, useSIAv2, slotProps={}}) {
+export function ObsCoreSearch({sx, cols, obsCoreMetadataModel, serviceId,
+                                  initArgs={}, useSIAv2, slotProps={}}) {
     const {urlApi={}}= initArgs;
     const {setConstraintFragment}= useContext(ConstraintContext);
-    const tapObsCoreOps= getTapObsCoreOptions(serviceLabel);
     const {makeFldObj}= useContext(FieldGroupCtx);
-    const obsCoreCollectionOptions =  tapObsCoreOps.obsCoreCollection ?? {};
-    const obsCoreCalibrationLevelOptions =  tapObsCoreOps.obsCoreCalibrationLevel ?? {};
-    const obsCoreSubTypeOptions =  tapObsCoreOps.obsCoreSubType ?? {};
-    const obsCoreInstrumentNameOptions =  tapObsCoreOps.obsCoreInstrumentName ?? {};
+    const obsCoreCollectionOptions =  getDataServiceOption('obsCoreCollection',serviceId,{});
+    const obsCoreCalibrationLevelOptions =  getDataServiceOption('obsCoreCalibrationLevel',serviceId,{});
+    const obsCoreSubTypeOptions =  getDataServiceOption('obsCoreSubType',serviceId,{});
+    const obsCoreInstrumentNameOptions =  getDataServiceOption('obsCoreInstrumentName',serviceId,{});
 
     const [constraintResult, setConstraintResult] = useState({});
     useFieldGroupRerender([...fldListAry, ...collapsibleCheckHeaderKeys]); // force rerender on any change
@@ -326,7 +325,7 @@ ObsCoreSearch.propTypes = {
     fields: object,
     sx: object,
     obsCoreMetadataModel: object,
-    serviceLabel: string,
+    serviceId: string,
     slotProps: shape({
         innerStack: shape({
             sx: object

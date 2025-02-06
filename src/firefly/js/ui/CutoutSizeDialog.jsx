@@ -17,7 +17,7 @@ import {RadioGroupInputField} from './RadioGroupInputField';
 import {
     getCutoutSize, getCutoutTargetType, ROW_POSITION, SEARCH_POSITION, setAllCutoutParams, setPreferCutout,
     USER_ENTERED_POSITION
-} from './tap/ObsCoreOptions';
+} from './tap/Cutout';
 import {intValidator} from '../util/Validate';
 import CompleteButton from './CompleteButton.jsx';
 import DialogRootContainer from './DialogRootContainer.jsx';

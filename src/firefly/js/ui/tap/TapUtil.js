@@ -591,7 +591,7 @@ export function addUserService(serviceUrl) {
 
     const maxNum = usedNumAry?.length ? Math.max(...usedNumAry) : 0;
     const label= userServices.every( (s) => s.label!==baseName) ? baseName : baseName + ` - ${maxNum + 1}`;
-    userServices.push({ label, value: serviceUrl, userAdded: true});
+    userServices.push({ label, serviceId:label.replaceAll(/\s/g,''), value: serviceUrl, userAdded: true});
     dispatchAddPreference(USER_SERVICE_PREFS, userServices);
 }
 
@@ -781,6 +781,13 @@ export function getAvailableColumns(columnsModel){
 export function getServiceLabel(serviceUrl) {
     const tapOps= getTapServiceOptions();
     return (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.labelOnly)) || '';
+}
+
+export function getServiceId(serviceUrl) {
+    const tapOps= getTapServices();
+    const id= (serviceUrl && (tapOps.find( (e) => e.value===serviceUrl)?.serviceId));
+    if (id) return id;
+    return getServiceLabel(serviceUrl).replaceAll(/\s/g,'');
 }
 
 export function getServiceHiPS(serviceUrl) {

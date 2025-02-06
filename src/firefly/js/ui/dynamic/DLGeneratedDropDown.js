@@ -128,8 +128,8 @@ export function DLGeneratedDropDown({initArgs={},
     const currentIdx= useStoreConnector(() => getTblById(registryTblId)?.highlightedRow ?? -1);
     const [url,setUrl]= useState();
     const [searchAttributes,setSearchAttributes]= useState({});
-    const {makeRegistryRequest,findUrlInReg,getCollectionUrl,getCollectionAttributes, defaultMaxMOCFetchDepth}=
-        { ...defaultRegistrySearchDef, ...registrySearchDef};
+    const {makeRegistryRequest,findUrlInReg,getCollectionUrl,getCollectionAttributes,
+        defaultMaxMOCFetchDepth, dataServiceId}= { ...defaultRegistrySearchDef, ...registrySearchDef};
 
     registryData[name] ??= { regLoaded: false, hasRegistry:true, regLoading: false, loadedTblIdCache:undefined, savedUrl: undefined};
 
@@ -191,7 +191,7 @@ export function DLGeneratedDropDown({initArgs={},
         );
     }
 
-    return (<DLGeneratedDropDownTables {...{registryTblId,regLoaded, loadedTblIds, setLoadedTblIds, url,
+    return (<DLGeneratedDropDownTables {...{registryTblId,regLoaded, loadedTblIds, setLoadedTblIds, url, dataServiceId,
         searchAttributes, groupKey, slotProps, findUrlInReg, initArgs, hasRegistry,defaultMaxMOCFetchDepth}}/>);
 }
 
@@ -230,7 +230,7 @@ DLGeneratedDropDown.propTypes= {
 
 
 function DLGeneratedDropDownTables({registryTblId, regLoaded, loadedTblIds, setLoadedTblIds, url, hasRegistry,
-                                       searchAttributes, groupKey, slotProps,
+                                       searchAttributes, groupKey, slotProps, dataServiceId,
                                        findUrlInReg, initArgs, defaultMaxMOCFetchDepth}) {
 
     const [sideBarShowing, setSideBarShowing]= useState(true);
@@ -267,7 +267,7 @@ function DLGeneratedDropDownTables({registryTblId, regLoaded, loadedTblIds, setL
     return (
         <Sheet sx={{display:'flex', flexDirection: 'row', width:1, height:1, minWidth:800, minHeight:400}}>
             <DLGeneratedTableSearch {...{currentTblId, qAna, groupKey, initArgs, sideBar, regHasUrl, url,
-                regLoaded,slotProps, sideBarShowing,
+                regLoaded,slotProps, sideBarShowing, dataServiceId,
                 setSideBarShowing, defaultMaxMOCFetchDepth}}/>
         </Sheet>
     );
@@ -280,7 +280,7 @@ const executeInitTargetOnce= makeSearchOnce(false);
 
 
 function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar, regHasUrl, url,
-                                    sideBarShowing, slotProps, regLoaded,
+                                    sideBarShowing, slotProps, regLoaded, dataServiceId,
                                     setSideBarShowing, defaultMaxMOCFetchDepth}) {
     const [,setCallId]= useState('none');
     const [{onClick},setClickFuncImpl]= useState({});
@@ -327,7 +327,7 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
 
     const isAllSky= toBoolean(getCisxUI(qAna)?.find( (e) => e.name==='data_covers_allsky')?.value);
     const docRows= qAna?.urlRows.filter( ({semantic}) => semantic?.toLowerCase().endsWith('documentation'));
-    const submitSearch= (request) => doSubmitSearch(request,docRows,qAna,fdAry,searchObjFds,tabsKey);
+    const submitSearch= (request) => doSubmitSearch(request,dataServiceId, docRows,qAna,fdAry,searchObjFds,tabsKey);
 
     return (
         <Sheet sx={{width:1,height:1}}>
@@ -462,7 +462,7 @@ const NotLoaded= ({regHasUrl,regLoaded, url}) => (
 );
 
 
-const doSubmitSearch= (r,docRows,qAna,fdAry,searchObjFds,tabsKey) => {
+const doSubmitSearch= (r,dataServiceId, docRows,qAna,fdAry,searchObjFds,tabsKey) => {
     const {fds, standardID, idx}=
         searchObjFds.length===1 ? searchObjFds[0] : searchObjFds.find(({ID}) => ID===r[tabsKey]) ?? {};
 
@@ -483,6 +483,7 @@ const doSubmitSearch= (r,docRows,qAna,fdAry,searchObjFds,tabsKey) => {
         return false;
     }
     const extraMeta = docRows?.[0] ? {[META.doclink.url]: docRows[0].accessUrl, [META.doclink.desc]: docRows[0].desc} : {};
+    extraMeta[MetaConst.DATA_SERVICE_ID]= dataServiceId;
     handleSearch(convertedR,qAna,fdAry, idx, extraMeta, selectedConcurrent);
     return true;
 };

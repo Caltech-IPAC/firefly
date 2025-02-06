@@ -3,15 +3,15 @@
  */
 import {Logger} from 'firefly/util/Logger.js';
 
-const tapEntry= (label,url,hipsUrl, fovDeg,centerWP, schemaLabel, examples) =>
-    ({ label, value: url, examples, fovDeg, hipsUrl, centerWP, schemaLabel});
+const tapEntry= (serviceId, label,url,hipsUrl, fovDeg,centerWP, schemaLabel, examples) =>
+    ({ serviceId, label, value: url, examples, fovDeg, hipsUrl, centerWP, schemaLabel});
 
-export function getTAPServices(nameList) {
+export function getTAPServicesByName(nameList) {
     const services= makeServices();
     if (!nameList) return services;
 
     return nameList.map( (name) => {
-            const foundService= services.find( (s) => s.label===name);
+            const foundService= services.find( (s) => s.label===name || s.serviceId===name);
             if (!foundService) Logger('TapKnownServices').warn(`TAP Service: '${name}' was not found`);
             return foundService;
         })
@@ -20,23 +20,22 @@ export function getTAPServices(nameList) {
 
 function makeServices() {
     return [
-        tapEntry('IRSA', 'https://irsa.ipac.caltech.edu/TAP', undefined,undefined,undefined, 'Project', irsaExamples() ),
-        tapEntry('NED', 'https://ned.ipac.caltech.edu/tap/',undefined,undefined,undefined,undefined, nedExamples()),
-        tapEntry('NASA Exoplanet Archive', 'https://exoplanetarchive.ipac.caltech.edu/TAP/'),
-        tapEntry('KOA', 'https://koa.ipac.caltech.edu/TAP/'),
-        tapEntry('HEASARC', 'https://heasarc.gsfc.nasa.gov/xamin/vo/tap'),
-        tapEntry('MAST Images', 'https://vao.stsci.edu/CAOMTAP/TapService.aspx'),
-        tapEntry('CADC', 'https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/argus/'),
+        tapEntry('IRSA', 'IRSA', 'https://irsa.ipac.caltech.edu/TAP', undefined,undefined,undefined, 'Project', irsaExamples() ),
+        tapEntry('NED', 'NED', 'https://ned.ipac.caltech.edu/tap/',undefined,undefined,undefined,undefined, nedExamples()),
+        tapEntry('ExoplanetArchive', 'NASA Exoplanet Archive', 'https://exoplanetarchive.ipac.caltech.edu/TAP/'),
+        tapEntry('KOA', 'KOA', 'https://koa.ipac.caltech.edu/TAP/'),
+        tapEntry('HEASARC', 'HEASARC', 'https://heasarc.gsfc.nasa.gov/xamin/vo/tap'),
+        tapEntry('MASTImages', 'MAST Images', 'https://vao.stsci.edu/CAOMTAP/TapService.aspx'),
+        tapEntry('CADC', 'CADC', 'https://ws.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/argus/'),
         // CDS???
-        tapEntry('VizieR (CDS)', 'https://tapvizier.u-strasbg.fr/TAPVizieR/tap/'),
-        tapEntry('Simbad (CDS)', 'https://simbad.u-strasbg.fr/simbad/sim-tap'),
+        tapEntry('VizieR', 'VizieR (CDS)', 'https://tapvizier.u-strasbg.fr/TAPVizieR/tap/'),
+        tapEntry('Simbad', 'Simbad (CDS)', 'https://simbad.u-strasbg.fr/simbad/sim-tap'),
         // more ESA??
-        tapEntry('Gaia', 'https://gea.esac.esa.int/tap-server/tap',undefined,undefined,undefined, undefined, gaiaExamples()),
-        tapEntry('GAVO', 'https://dc.g-vo.org/tap'),
-        tapEntry('HSA',  'https://archives.esac.esa.int/hsa/whsa-tap-server/tap'),
-        tapEntry('NOIR Lab',  'https://datalab.noirlab.edu/tap'),
+        tapEntry('Gaia', 'Gaia', 'https://gea.esac.esa.int/tap-server/tap',undefined,undefined,undefined, undefined, gaiaExamples()),
+        tapEntry('GAVO', 'GAVO', 'https://dc.g-vo.org/tap'),
+        tapEntry('HSA', 'HSA',  'https://archives.esac.esa.int/hsa/whsa-tap-server/tap'),
+        tapEntry('NOIRLab', 'NOIR Lab',  'https://datalab.noirlab.edu/tap'),
     ];
-
 }
 
 

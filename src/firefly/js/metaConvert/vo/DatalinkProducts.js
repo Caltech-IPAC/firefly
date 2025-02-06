@@ -1,5 +1,5 @@
 import {getCellValue} from '../../tables/TableUtil.js';
-import {getPreferCutout} from '../../ui/tap/ObsCoreOptions';
+import {getPreferCutout} from '../../ui/tap/Cutout';
 import {getSizeAsString} from '../../util/WebUtil';
 import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {Band} from '../../visualize/Band.js';
