@@ -5,7 +5,7 @@
 
 
 ## Version 2024.3
-- 2024.3.5 - (Dec 12, 2024),  _docker tag_: `2024.3.5`, `2024.3`, `latest`
+- 2024.3.5 - (Dec 12, 2024),  _docker tag_: `2024.3.5`, `2024.3`
 - 2024.3.4 - (Dec 10, 2024),  _docker tag_: `2024.3.4`,
 - 2024.3.3 - (Dec 2, 2024),  _docker tag_: `2024.3.3`
 - 2024.3.2 - (Nov 5, 2024),  _docker tag_: `2024.3.2`
@@ -173,7 +173,7 @@ It also includes many, many bug fixes, clean up, and optimization (not all are l
 
 
 ## Version 2024.1
-- 2024.1.1 - (April 15, 2024),  _docker tag_: `latest`, `2024.1`, `2024.1.1`
+- 2024.1.1 - (April 15, 2024),  _docker tag_:  `2024.1`, `2024.1.1`
 - 2024.1.0 - (April 8, 2024),  _docker tag_: `2024.1.0`
 
 ### _Notes_
