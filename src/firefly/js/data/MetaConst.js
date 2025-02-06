@@ -245,11 +245,6 @@ export const MetaConst = {
     LOAD_TO_DATALINK_UI : 'LoadToServiceDescriptorUI',
 
     /**
-     * determine how a datalink obscore table trys to show the data layout, must be 'single', 'gridRelated', 'gridFull';
-     */
-    DATALINK_INITIAL_LAYOUT : 'DatalinkInitialLayout',
-
-    /**
      * If defined and true, dispatchTableSearch will be called but prevent going to results view directly
      */
     UPLOAD_TABLE: 'UploadTable',

@@ -1481,18 +1481,29 @@ export function getBooleanMetaEntry(tableOrId,metaKey,defVal= false) {
 }
 
 /**
- * Case insensitive search of meta data for an object entry, if not found return the defVal
+ * Case-insensitive search of metadata for an object entry, if not found return the defVal.
+ * Metadata of the form metaKey_??? is also supported and will be combined into the object
  * @param {TableModel|String} tableOrId - parameters accepts the table model or tha table id
  * @param {String} metaKey - the metadata key
  * @param {Object} [defVal= undefined] - the defVal to return if not found, defaults to undefined
- * @return {Object} value or the meta data or the defVal
+ * @return {Object} value of the metadata or the defVal
  */
 export function getObjectMetaEntry(tableOrId,metaKey,defVal= undefined) {
+    const tableMeta= getTM(tableOrId)?.tableMeta;
+    if (!tableMeta || !isString(metaKey)) return defVal;
+    const keyUp = metaKey.toUpperCase()+'_';
+    const matchAry= Object.entries(tableMeta).filter( ([k]) => k.toUpperCase().startsWith(keyUp));
+    const matchObj= matchAry.reduce((obj,[k,v]) => {
+        const newKey= k.substring(keyUp.length);
+        set(obj,newKey.split('_'),v);
+        return obj;
+    }, {});
     try {
-        return JSON.parse(getMetaEntry(tableOrId,metaKey));
+        const retVal= JSON.parse(getMetaEntry(tableOrId,metaKey));
+        return {...retVal, ...matchObj};
     }
     catch {
-        return defVal;
+        return isEmpty(matchObj) ? defVal : matchObj;
     }
 }
 

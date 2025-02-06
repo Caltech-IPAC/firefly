@@ -8,7 +8,7 @@ import {
 } from 'firefly/visualize/ui/ExtraIpacSearches.jsx';
 import {StatefulTabs, Tab} from 'firefly/ui/panel/TabPanel.jsx';
 import {TapSearchPanel} from 'firefly/ui/tap/TapSearchRootPanel.jsx';
-import {IrsaCatalogSearch} from 'firefly/visualize/ui/IrsaCatalogSearch.jsx';
+import {IrsaCatalogSearch, IrsaCatalogSearchDefault} from 'firefly/visualize/ui/IrsaCatalogSearch.jsx';
 import {FileUploadDropdown} from 'firefly/ui/FileUploadDropdown.jsx';
 import {getAppOptions} from 'firefly/api/ApiUtil.js';
 import {dispatchComponentStateChange} from 'firefly/core/ComponentCntlr.js';
@@ -18,7 +18,7 @@ const multiSearchComponents= [
         id: 'irsacat',
         title: 'IRSA Catalogs',
         tip: 'Query IRSA Tables',
-        Component: IrsaCatalogSearch,
+        Component: IrsaCatalogSearchDefault,
     },
     {
         id: 'tap',

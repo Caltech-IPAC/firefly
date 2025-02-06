@@ -83,8 +83,8 @@ export function showPopup({ID, content, title='Options', modal = false}) {
  * Show a simple information popup
  *
  * @param {string | object} content can be a string or a react component
- * @param {string} title
- * @param {Object} sx
+ * @param {string} [title]
+ * @param {Object} [sx]
  * @return {object}
  */
 export function showInfoPopup(content, title='Information', sx) {

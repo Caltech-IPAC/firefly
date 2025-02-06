@@ -9,7 +9,7 @@ import {Alert, Stack} from '@mui/joy';
 import {getDropDownInfo} from '../core/LayoutCntlr.js';
 import {SearchPanel} from './SearchPanel';
 import {HiPSSearchPanel} from '../visualize/ui/HiPSSearchPanel.jsx';
-import {IrsaCatalogSearch} from '../visualize/ui/IrsaCatalogSearch.jsx';
+import {IrsaCatalogSearchDefault} from '../visualize/ui/IrsaCatalogSearch.jsx';
 import {ClassicNedSearchPanel, ClassicVOCatalogPanel} from '../visualize/ui/ExtraIpacSearches.jsx';
 import {ImageSearchDropDown} from '../visualize/ui/ImageSearchPanelV2.jsx';
 import {SIAv2SearchPanel} from './tap/SIASearchRootPanel';
@@ -46,7 +46,7 @@ export const dropDownMap = {
     FileUploadDropDownCmd: {view: <FileUploadDropdown />, layout: {width: '100%'}},
     WorkspaceDropDownCmd: {view: <WorkspaceDropdown />},
     DLGeneratedDropDownCmd: {view: <DLGeneratedDropDown name='DLGeneratedDropDownCmd' loadRegistry={false}/>, layout: {width: '100%'}},
-    IrsaCatalog: {view: <IrsaCatalogSearch/>, layout: {width: '100%'}},
+    IrsaCatalog: {view: <IrsaCatalogSearchDefault/>, layout: {width: '100%'}},
     ClassicVOCatalogPanelCmd : {view: <ClassicVOCatalogPanel/>, layout: {width: '100%'}},
     ClassicNedSearchCmd : {view: <ClassicNedSearchPanel/>, layout: {width: '100%'}},
     // --- testing
