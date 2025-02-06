@@ -115,10 +115,10 @@ public class QueryUtil {
     }
 
     /**
-     * returns a hierarchical temporary directory.
+     * returns a temporary directory based on a user's session ID.
      * @return
      */
-    public static File getTempDir(ServerRequest req) {
+    public static File getSessDir(TableServerRequest req) {
         File tempDir = new File(ServerContext.getTempWorkDir(), getSessPrefix(req));
         if (!tempDir.exists()) tempDir.mkdirs();
         return tempDir;
