@@ -7,8 +7,8 @@
   - [Notes on the next version](next-release-details.md)
 
 ## Version 2025.1
-- 2024.5.1 - (Feb  6, 2025),  _docker tag_: `2025.1`, `2025.1.1`, `latest`
-- 2024.5.0 - (Jan 27, 2025),  _docker tag_: `2025.1.0`
+- 2025.1.1 - (Feb  6, 2025),  _docker tag_: `2025.1`, `2025.1.1`, `latest`
+- 2025.1.0 - (Jan 27, 2025),  _docker tag_: `2025.1.0`
 
 ### _Notes_
 #### Major updates in ingesting tables, SIAv2 and better handling of obscore table cutouts
