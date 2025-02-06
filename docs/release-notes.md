@@ -7,7 +7,8 @@
   - [Notes on the next version](next-release-details.md)
 
 ## Version 2025.1
-- 2024.5.0 - (Jan 27, 2025),  _docker tag_: `2025.1`, `2025.1.0`, `latest`
+- 2024.5.1 - (Feb  6, 2025),  _docker tag_: `2025.1`, `2025.1.1`, `latest`
+- 2024.5.0 - (Jan 27, 2025),  _docker tag_: `2025.1.0`
 
 ### _Notes_
 #### Major updates in ingesting tables, SIAv2 and better handling of obscore table cutouts
@@ -28,7 +29,12 @@ Firefly-1591([PR](https://github.com/Caltech-IPAC/firefly/pull/1662)), Firefly-1
 - Fixed: cascade combining spectra broken- Firefly-1635([PR](https://github.com/Caltech-IPAC/firefly/pull/1683)), 
 - Fixed: improved mouse readout for bottom layout- Firefly-1624([PR](https://github.com/Caltech-IPAC/firefly/pull/1682)), 
 - Fixed: table tab color wrong- Firefly-1612([PR](https://github.com/Caltech-IPAC/firefly/pull/1681)), 
- 
+
+### _Patches 2025.1_
+
+- 2025.1.1
+  - Bug fix: Sometime heatmap fails to display after filtering- Firefly-1652 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1700))
+  - Bug fix: NaNs values should not show up in Heatmap- Firefly-1649 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1701))
 
 ##### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2025.1+label%3abug)
