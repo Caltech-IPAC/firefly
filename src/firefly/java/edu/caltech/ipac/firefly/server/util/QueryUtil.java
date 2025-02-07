@@ -102,15 +102,14 @@ public class QueryUtil {
      * @return
      */
     public static File getTempDir(TableServerRequest tsr) {
-        if (tsr == null) { return new File(ServerContext.getTempWorkDir(), "bad-requests");}
         File tempDir;
-        if (tsr.getJobId() != null) {
+        if (tsr != null && !isEmpty(tsr.getJobId())) {
             var baseDir = new File(ServerContext.getStageWorkDir(), "jobs");
             tempDir = new File(baseDir, jobIdToDir(tsr.getJobId()));
         } else {
             tempDir = new File(ServerContext.getTempWorkDir(), getSessPrefix(tsr));
         }
-        if (!tempDir.exists()) tempDir.mkdirs();
+        tempDir.mkdirs();
         return tempDir;
     }
 

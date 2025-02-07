@@ -25,6 +25,7 @@ import java.util.Map;
 
 import static edu.caltech.ipac.firefly.core.RedisService.Status.ONLINE;
 import static edu.caltech.ipac.firefly.core.RedisService.Status.OFFLINE;
+import static edu.caltech.ipac.firefly.core.Util.Try;
 
 
 /**
@@ -94,16 +95,18 @@ public class RedisService {
                     .setting("save 600 1")                // RDB file name
                     .build();
             redisServer.start();
-            connect();
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                Try.it(redisServer::stop).getOrElse((e) -> LOG.error(e,"Failed to stop Redis"));
+            }));
+
+
         } catch (IOException ignored) {}
     }
 
-    public static void connect() throws RuntimeException {
+    public static boolean connect() throws RuntimeException {
         if (jedisPool != null && !jedisPool.isClosed()) {
-            status = Status.ONLINE;
-            return;
+                return true;   // already connected
         }
-
         jedisPool = createJedisPool();
         if (jedisPool == null && redisHost.equals("localhost")) {
             // can't connect; will start up embedded version if localhost
@@ -113,8 +116,10 @@ public class RedisService {
         if (jedisPool == null) {
             LOG.error("Unable to connect to Redis at " + redisHost + ":" + REDIS_PORT);
             status = Status.FAIL_TO_CONNECT;
+            return false;
         } else {
             status = ONLINE;
+            return true;
         }
     }
 
@@ -138,43 +143,41 @@ public class RedisService {
 
         LinkedHashMap<String, Object> stats = new LinkedHashMap<>();
         stats.put("status", getRedisHostPortDesc());
-        if (!isOffline()) {
-            String passwd = "";
-            try {
-                if (REDIS_PASSWORD != null) {
-                    passwd = new String(MessageDigest.getInstance("MD5").digest(REDIS_PASSWORD.getBytes()));
-                }
-            } catch (NoSuchAlgorithmException e) {/* ignore */}
-            try (Jedis redis = getConnection()) {
+        String passwd = "";
+        try {
+            if (REDIS_PASSWORD != null) {
+                passwd = new String(MessageDigest.getInstance("MD5").digest(REDIS_PASSWORD.getBytes()));
+            }
+        } catch (NoSuchAlgorithmException e) {/* ignore */}
+        try (Jedis redis = getConnection()) {
 
-                var infos = redis.info().split("\r\n");
-                Arrays.stream(infos).filter(s -> s.contains("version")).findFirst()
-                        .ifPresent(s -> stats.put("version", s.split(":")[1].trim()));
+            var infos = redis.info().split("\r\n");
+            Arrays.stream(infos).filter(s -> s.contains("version")).findFirst()
+                    .ifPresent(s -> stats.put("version", s.split(":")[1].trim()));
 
-                stats.put("active conn", jedisPool.getNumActive());
-                stats.put("idle conn", jedisPool.getNumIdle());
-                stats.put("max conn", maxPoolSize);
-                stats.put("max-wait", jedisPool.getMaxBorrowWaitTimeMillis());
-                stats.put("avg-wait", jedisPool.getMeanBorrowWaitTimeMillis());
-                stats.put("password", passwd);
-                stats.put("db-size", redis.dbSize());
-                addStat(stats, redis, "maxmemory");
-                addStat(stats, redis, "save");
-                addStat(stats, redis, "dir");
-                addStat(stats, redis, "dbfilename");
-                addStat(stats, redis, "appendfilename");
-                stats.put("---MEMORY STATS----", "");
-                var mem = redis.memoryStats();
-                stats.put("Total memory used", mem.get("dataset.bytes"));
-                stats.put("Total memory allocated", mem.get("allocator.allocated"));
-                stats.put("Fragmented memory", mem.get("fragmentation"));
-                stats.put("Fragmentation ratio", mem.get("allocator-fragmentation.ratio"));
-                stats.put("Number of keys stored", mem.get("keys.count"));
-                stats.put("Avg per key", mem.get("keys.bytes-per-key"));
-                stats.put("Pct of memory used", mem.get("dataset.percentage"));
-                stats.put("Peak memory used", mem.get("peak.allocated"));
-            } catch (Exception ignored) {}
-        }
+            stats.put("active conn", jedisPool.getNumActive());
+            stats.put("idle conn", jedisPool.getNumIdle());
+            stats.put("max conn", maxPoolSize);
+            stats.put("max-wait", jedisPool.getMaxBorrowWaitTimeMillis());
+            stats.put("avg-wait", jedisPool.getMeanBorrowWaitTimeMillis());
+            stats.put("password", passwd);
+            stats.put("db-size", redis.dbSize());
+            addStat(stats, redis, "maxmemory");
+            addStat(stats, redis, "save");
+            addStat(stats, redis, "dir");
+            addStat(stats, redis, "dbfilename");
+            addStat(stats, redis, "appendfilename");
+            stats.put("---MEMORY STATS----", "");
+            var mem = redis.memoryStats();
+            stats.put("Total memory used", mem.get("dataset.bytes"));
+            stats.put("Total memory allocated", mem.get("allocator.allocated"));
+            stats.put("Fragmented memory", mem.get("fragmentation"));
+            stats.put("Fragmentation ratio", mem.get("allocator-fragmentation.ratio"));
+            stats.put("Number of keys stored", mem.get("keys.count"));
+            stats.put("Avg per key", mem.get("keys.bytes-per-key"));
+            stats.put("Pct of memory used", mem.get("dataset.percentage"));
+            stats.put("Peak memory used", mem.get("peak.allocated"));
+        } catch (Exception ignored) {}
         return stats;
     }
 
@@ -187,16 +190,8 @@ public class RedisService {
         return redisHost + ":" + REDIS_PORT + " ("+ getStatus() + ")";
     }
 
-    public static boolean isOffline() {
-        return !getStatus().equals(ONLINE);
-    }
-
-    public static int getConnectionCount() {
-        return isOffline() ? -1 : jedisPool.getNumActive();
-    }
-
     public static Jedis getConnection() throws Exception {
-        if(!isOffline()) {
+        if (connect()) {
             return jedisPool.getResource();
         }
         throw new ConnectException("Unable to connect to Redis at " + redisHost + ":" + REDIS_PORT);
