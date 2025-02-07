@@ -21,7 +21,7 @@ import {
     primePlot, getPlotStateAry, getPlotViewById, getImageCubeIdx, getPtWavelength,
     getWavelengthParseFailReason, getWaveLengthUnits, hasPixelLevelWLInfo, hasPlaneOnlyWLInfo,
     isImageCube, wavelengthInfoParsedSuccessfully, } from '../PlotViewUtil';
-import {getBixPix} from '../FitsHeaderUtil.js';
+import {getFluxRadix} from 'firefly/visualize/ui/MouseReadoutUIUtil';
 
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -251,7 +251,7 @@ function makeImagePlotAsyncReadout(plotView, worldPt, screenPt, imagePt, threeCo
     const plot= primePlot(plotView);
     const readoutItems= makeImmediateReadout(plot, worldPt, screenPt, imagePt, threeColor, healpixPixel, norder);
     const {readoutPref}= readoutRoot();
-    const radix= Number(getBixPix(plot)>0 ? readoutPref.intFluxValueRadix : readoutPref.floatFluxValueRadix);
+    const radix= getFluxRadix(readoutPref, plot);
     return doFluxCall(plotView,imagePt).then( (fluxResult) => {
         return makeReadoutWithFlux(readoutItems,primePlot(plotView), fluxResult, radix, threeColor);
     });

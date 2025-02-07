@@ -34,7 +34,7 @@ public class DirectFitsAccessData implements Serializable {
     public int naxis1() { return getIntHeader(NAXIS1,0); }
     public int naxis2() { return getIntHeader(NAXIS2,0); }
     public double cDelt2() { return getDoubleHeader(CDELT2,0.0); }
-    public double bScale() { return getDoubleHeader(BSCALE,0.0); }
+    public double bScale() { return getDoubleHeader(BSCALE,1.0); }
     public double bZero() { return getDoubleHeader(BZERO,0.0); }
     public String blankValue() { return getStringHeader(BLANK_VALUE,""); }
     public long dataOffset() { return getLongHeader(DATA_OFFSET,0L); }

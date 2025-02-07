@@ -15,6 +15,7 @@ import CoordinateSys from '../CoordSys.js';
 import {showMouseReadoutOptionDialog} from './MouseReadoutOptionPopups.jsx';
 import {getFormattedWaveLengthUnits, primePlot} from '../PlotViewUtil';
 import {showInfoPopup} from '../../ui/PopupUtil';
+import {getBixPix, getBScale, getBZero} from 'firefly/visualize/FitsHeaderUtil';
 
 
 const myFormat= (v,precision) => !isNaN(v) ? sprintf(`%.${precision}f`,v) : '';
@@ -40,6 +41,17 @@ const labelMap = {
 };
 
 const coordOpTitle= 'Choose readout coordinates';
+
+export const getFluxRadix = (readoutPref, primePlot) => {
+    // From FITS 4.00 (https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf), p. 14-15, Table 11 and section 4.4.2.5
+    const isFluxInt = getBixPix(primePlot)>0 && getBScale(primePlot)===1 && (getBZero(primePlot)===0
+            // OR if bZero was used as follows for representation of unsigned-integer data
+            || (getBixPix(primePlot)===8 && getBZero(primePlot)===-128)
+            || (getBixPix(primePlot)===16 && getBZero(primePlot)===32768)
+            || (getBixPix(primePlot)===32 && getBZero(primePlot)===2147483648)
+        );
+    return Number(isFluxInt ? readoutPref.intFluxValueRadix : readoutPref.floatFluxValueRadix);
+};
 
 export function getNonFluxDisplayElements(readoutData, readoutPref, isHiPS= false) {
     const objList= getNonFluxReadoutElements(readoutData,  readoutPref, isHiPS);

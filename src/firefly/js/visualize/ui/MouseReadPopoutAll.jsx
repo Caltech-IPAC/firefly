@@ -13,10 +13,9 @@ import {getAppOptions} from 'firefly/core/AppDataCntlr.js';
 import {ThumbnailView} from 'firefly/visualize/ui/ThumbnailView.jsx';
 import {MagnifiedView} from 'firefly/visualize/ui/MagnifiedView.jsx';
 import {getActivePlotView, getPlotViewById, primePlot} from 'firefly/visualize/PlotViewUtil.js';
-import {getFluxInfo, getNonFluxDisplayElements} from 'firefly/visualize/ui/MouseReadoutUIUtil.js';
+import {getFluxInfo, getFluxRadix, getNonFluxDisplayElements} from 'firefly/visualize/ui/MouseReadoutUIUtil.js';
 import {DataReadoutItem, MouseReadoutLock} from 'firefly/visualize/ui/MouseReadout.jsx';
 import {isImage} from 'firefly/visualize/WebPlot.js';
-import {getBixPix} from '../FitsHeaderUtil.js';
 import {showMouseReadoutFluxRadixDialog} from './MouseReadoutOptionPopups.jsx';
 
 export const MOUSE_READOUT_DIALOG_ID= 'MouseReadoutPopoutAll';
@@ -55,7 +54,7 @@ function PopoutMouseReadoutContents({vr,currMouseState, readout, readoutData}) {
     const lockByClick= isLockByClick(readoutRoot());
     const pvToUse= lockByClick ? pv : mousePv;
     const {readoutPref}= readoutRoot();
-    const radix= Number(getBixPix(primePlot(pvToUse))>0 ? readoutPref.intFluxValueRadix : readoutPref.floatFluxValueRadix);
+    const radix= getFluxRadix(readoutPref, primePlot(pvToUse));
 
     return (
         <div>

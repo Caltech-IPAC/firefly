@@ -43,9 +43,12 @@ public class PixelValue {
 				case -64 -> getLongBase16String(Double.doubleToLongBits(v));
 				default -> "";
 			};
-			String resultType= isInt(header) ? Result.TYPE_DECIMAL_INT : Result.TYPE_FLOAT;
-			String status= getValStatus(v,isInt(header));
-			return new Result(status,resultType,scaleValue(v,header)+"",base16);
+			boolean isHeaderInt = isInt(header);
+			String resultType= isHeaderInt ? Result.TYPE_DECIMAL_INT : Result.TYPE_FLOAT;
+			String status= getValStatus(v,isHeaderInt);
+			double scaledV = scaleValue(v,header);
+			String base10 = isHeaderInt ? Integer.toString((int)scaledV): scaledV+"";
+			return new Result(status,resultType,base10,base16);
 		}
 		else {
 			return !Double.isNaN(v) ?
@@ -150,7 +153,15 @@ public class PixelValue {
 		};
 	}
 
-	private static boolean isInt(DirectFitsAccessData h) { return h.bitpix()>0;}
+	private static boolean isInt(DirectFitsAccessData h) {
+		// From FITS 4.00 (https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf), p. 14-15, Table 11 and section 4.4.2.5
+		return (h.bitpix()>0 && h.bScale()==1.0 && (h.bZero()==0
+				// OR if bZero was used as follows for representation of unsigned-integer data
+				|| (h.bitpix()==8 && h.bZero()==-128.0)
+				|| (h.bitpix()==16 && h.bZero()==32768.0)
+				|| (h.bitpix()==32 && h.bZero()==2147483648.0)
+		));
+	}
 
 	private static double readValue(RandomAccessFile fits_file, long file_pointer, DirectFitsAccessData h, double blankValueDouble)
 			throws IOException{
