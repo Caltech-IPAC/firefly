@@ -6,28 +6,69 @@ import random
 import base64
 import subprocess
 import shlex
+import shutil
+from pathlib import Path
+from zipfile import ZipFile
+from typing import List
 
+SLIDES: str = "\n" + ("=" * 40) + "\n"
 
-def extract_war_files(webapps_dir, webapps_ref, path_prefix):
+def extract(source: Path, destination: Path, prefix:str = "/", kind: str = "war"):    
+    """Extract a file to a destination directory.
+
+    Args:
+        source (Path): Source directory to extract from
+        destination (Path): Destination directory to extract to
+        prefix (str, optional): Prefix extracted filepaths. Default is "/".
+        kind (str, optional): File extension to extract. Default is "war".
     """
-    Prepare webapps on first-time startup:
-    - Extract WAR files from webapps-ref to webapps.
-    - Modify log4j to send logs to stdout.
-    - Modify context path (pathPrefix) if given.
+    print(f"{SLIDES} Extracting {kind.upper()} files {SLIDES}")
+    extractions: dict[str, Path] = {}
+    for item in source.iterdir():
+        # Only extract specified file extensions
+        if item.is_file() and item.suffix == f".{kind}":
+            filename = item.stem
 
-    :param webapps_dir: Path to the webapps directory.
-    :param webapps_ref: Path to the webapps reference directory.
-    :param path_prefix: Prefix for the context path.
-    """
-    if not os.listdir(webapps_dir):
-        for war in os.listdir(webapps_ref):
-            if war.endswith(".war"):
-                fn = os.path.splitext(war)[0]
-                prefix = path_prefix.replace("/", "#").strip("#")
-                war_dir = os.path.join(webapps_dir, f"{prefix}#{fn}" if prefix else fn)
-                os.makedirs(war_dir, exist_ok=True)
-                subprocess.call(["unzip", "-oqd", war_dir, os.path.join(webapps_ref, war)])
-                subprocess.call(["sed", "-E", "-i.bak", "s/##out--//", os.path.join(war_dir, "WEB-INF/classes/log4j2.properties")])
+            # Configure prefix for extracted files
+            prefix = prefix.replace("/", "#").strip("#")
+            if prefix:
+                filename = f"{prefix}#{filename}"
+
+            # Create landing directory for extracted files
+            landing = destination / filename      
+            landing.mkdir(parents=True, exist_ok=True)
+            
+            # Extract archive to landing directory
+            print(f"Extracting {item} to {landing}")
+            with ZipFile(item, "r") as archive:
+                archive.extractall(landing)
+            print(f"Extracted {item} to {landing}")
+            extractions[filename] = landing
+            
+            # Modify log4j to send logs to stdout
+            log4j = destination / "WEB-INF/classes/log4j2.properties"
+            if log4j.exists():
+                # Create backup as log4j.properties.bak
+                print(f"Modifying {log4j}")
+                shutil.copy(log4j, log4j.with_suffix(".bak"))
+                with open(log4j, 'r+') as file:
+                    content = file.read()
+                    content = content.replace("##out--", "")
+                    file.seek(0)
+                    file.write(content)
+                    file.truncate()
+    
+    # Copy secondary files for extracted archives to landing directory
+    for filename, landing in extractions.items():
+        origin = source / f"{filename}"
+        for item in origin.iterdir():
+            if item.is_dir():
+                print(f"Copying directory {item} to {landing}")
+                shutil.copytree(item, landing / item.name, dirs_exist_ok=True)
+            else:
+                print(f"Copying file {item} to {landing}")
+                shutil.copy2(item, landing / item.name)
+    print(f"{SLIDES} Extractions complete {SLIDES}")
 
 
 def add_multi_props_env_var():
@@ -120,32 +161,35 @@ def log_env_info(path_prefix, visualize_fits_search_path):
     """)
 
 
-def show_help(name):
-    """Show help message and exit."""
+def show_help(name:str, webapps_ref: Path):
+    """Show help message and examples.
+
+    Args:
+        name (str): Application name
+        webapps_ref (Path): Reference webapps directory
+    """
     with open("./start-examples.txt") as f:
         print(f.read().replace("ipac/firefly", name))
 
-    war_files = [f for f in os.listdir(webapps_ref) if f.endswith(".war")]
-    if war_files and war_files[0] == "firefly.war":
-        with open("./customize-firefly.txt") as f:
-            print(f.read())
+    for item in webapps_ref.iterdir():
+        if item.is_file() and item.stem == "firefly" and item.suffix == ".war" :
+            with open("./customize-firefly.txt") as f:
+                print(f.read())
     sys.exit(0)
 
-
-def dry_run(cmd, webapps_dir):
+def dry_run(cmd: List[str], webapps: Path):
     """Display a dry run of the command and environment setup."""
-    print("\n\n----------------------")
-    print(f"Command: {' '.join(cmd)}")
+    
+    print(f"\n{SLIDES} DRY RUN {SLIDES}")
+    print(f"COMMAND      : {' '.join(cmd)}")
     print(f"CATALINA_OPTS: {os.getenv('CATALINA_OPTS')}\n")
-
-    print(f"Contents of '{webapps_dir}':")
-    for item in os.listdir(webapps_dir):
-        item_path = os.path.join(webapps_dir, item)
-        if os.path.isdir(item_path):
-            print(f" [DIR]  {item}")
+    print(f"WEBAPPS      : {webapps}':")
+    for item in webapps.iterdir():
+        if item.is_dir():
+            print(f" [DIR]  {item.name}")
         else:
-            print(f" [FILE] {item}")
-    print()
+            print(f" [FILE] {item.name}")
+    print(f"{SLIDES} DRY RUN COMPLETE {SLIDES}")
     sys.exit(0)
 
 
@@ -208,18 +252,18 @@ def main():
     # Setup examples
     subprocess.call("./setupFireflyExample.sh", shell=True)
 
-    # Prepare webapps on first-time startup
-    webapps_dir = os.path.join(catalina_home, "webapps")
-    webapps_ref = os.path.join(catalina_home, "webapps-ref")
-    extract_war_files(webapps_dir, webapps_ref, path_prefix)
+    catalina: Path = Path(catalina_home)
+    webapps_ref: Path = catalina / "webapps-ref"
+    webapps: Path = catalina / "webapps"
+    extract(source = webapps_ref, destination=webapps, prefix = path_prefix, kind="war")
 
     # check for no-ops flags
     if len(sys.argv) > 1:
         arg = sys.argv[1]
         if arg in ["--help", "-help", "-h"]:
-            show_help(name)
+            show_help(name, webapps_ref)
         elif arg == "--dry-run":
-            dry_run(cmd, webapps_dir)
+            dry_run(cmd, webapps)
 
     # Start background cleanup
     subprocess.Popen([f"{catalina_home}/cleanup.sh", "/firefly/workarea", "/firefly/shared-workarea"])
