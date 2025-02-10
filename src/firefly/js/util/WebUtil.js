@@ -856,36 +856,40 @@ export function tokenSub(valObs, str='') {
  */
 export async function lowLevelDoFetch(url, options, doValidation, loggerFunc) {
     if (options.params) {
-        const params = toNameValuePairs(options.params);        // convert to name-value pairs if it's a simple object.
-        if (options.method.toLowerCase() === 'get') {
+        const params = toNameValuePairs(options.params); // Convert to name-value pairs
+        const method = options.method.toLowerCase();
+
+        if (method === 'get') {
             url = encodeUrl(url, params);
         } else {
             url = encodeUrl(url);
             if (!options.body) {
-                // if 'post' but, body is not provided, add the parameters into the body.
-                if (options.method.toLowerCase() === 'post') {
-                    options.headers['Content-type'] = 'application/x-www-form-urlencoded';
-                    options.body = params.map(({name, value = ''}) => encodeURIComponent(name) + '=' + encodeURIComponent(value))
-                        .join('&');
-                } else if (options.method.toLowerCase() === 'multipart') {
-                    options.method = 'post';
+                // Handle POST and multipart/form-data encoding
+                if (method === 'post') {
+                    // if 'post' but, body is not provided, add the parameters into the body.
+                    options.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
+                    options.body = params.map(({
+                                                   name,
+                                                   value = ''
+                                               }) => `${encodeURIComponent(name)}=${encodeURIComponent(value)}`).join('&');
+                } else if (method === 'multipart') {
+                    options.method = 'post'; // Ensure method is set correctly
                     const data = new FormData();
-                    params.forEach(({name, value}) => {
-                        data.append(name, value);
-                    });
+                    params.forEach(({name, value}) => data.append(name, value));
                     options.body = data;
+                    delete options.headers['Content-Type']; // Let browser set it for FormData
                 }
-                Reflect.deleteProperty(options, 'params');
             }
         }
+        Reflect.deleteProperty(options, 'params');
     }
 
-    loggerFunc?.({url, options});
-    // do the actually fetch, then return a promise.
-    const response= await fetch(url, options);
+    loggerFunc?.({ url, options });
+    // do the actual fetch, then return a promise.
+    const response = await fetch(url, options);
     if (!doValidation || response.ok) return response;
-    else if (response.status === 401) throw new Error('You are no longer logged in');
-    else throw new Error(`Request failed with status ${response.status}: ${url}`);
+    if (response.status === 401) throw new Error('You are no longer logged in');
+    throw new Error(`Request failed with status ${response.status}: ${url}`);
 }
 
 export function getStatusFromFetchError(eStr) {
