@@ -14,13 +14,14 @@ import {BG_JOB_ADD} from './BackgroundCntlr.js';
 import {jsonFetch} from '../JsonUtils.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import * as SearchServices from '../../rpc/SearchServicesJson.js';
+import {logger} from '../../util/Logger';
 
 
 
 export const submitJob = (cmd, params) => {
     // submit this job.  No need to add it into flux.  Server will push update to it.
     params[ServerParams.COMMAND] = cmd;
-    return jsonFetch(getCmdSrvAsyncURL(), params, true);
+    return jsonFetch(getCmdSrvAsyncURL(), params, true).catch( (e) => { logger.error(e); });
 };
 
 export const modifyJob = (jobId, cmd, params) => {

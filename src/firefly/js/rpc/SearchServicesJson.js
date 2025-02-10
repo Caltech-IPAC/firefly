@@ -172,11 +172,8 @@ export function packageRequest(dlRequest, searchRequest, selectionInfo, download
         [ServerParams.REQUEST]: JSON.stringify(searchRequest),
         [SELECTION_INFO]: selectionInfo
     };
-
-    if (downloadType === 'script') {
-        return submitJob(ServerParams.DOWNLOAD_SCRIPT_REQUEST, params); //DownloadScriptWorker will download a script with urls, per the clients scriptType
-    }
-    return submitJob(ServerParams.PACKAGE_REQUEST, params);
+    const cmd = downloadType === 'script' ? ServerParams.DOWNLOAD_SCRIPT_REQUEST : ServerParams.PACKAGE_REQUEST;
+    return submitJob(cmd, params);
 }
 
 
