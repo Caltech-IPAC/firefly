@@ -68,6 +68,7 @@ export class CatalogConstraintsPanel extends PureComponent {
         this.iAmMounted = true;
         const {catname, createDDRequest, dd_short, showFormType = true} = this.props;
 
+        resetConstraints(this.props.groupKey, this.props.fieldKey);
         this.fetchDD(catname, makeFormType(showFormType, dd_short), createDDRequest, true, this.afterFetchDD); //short form as default
     }
 
@@ -98,7 +99,7 @@ export class CatalogConstraintsPanel extends PureComponent {
     render() {
         const {tableModel} = this.state;
         const {error} = tableModel || {};
-        const {catname, dd_short, fieldKey, showFormType=true, createDDRequest, groupKey} = this.props;
+        const {catname, dd_short, fieldKey, showFormType=true, createDDRequest, groupKey, showSqlSection= false} = this.props;
 
         const resetButton = () => {
             const ddShort = makeFormType(showFormType, dd_short);
@@ -137,7 +138,7 @@ export class CatalogConstraintsPanel extends PureComponent {
                 </Stack>
                 <Stack spacing={1} flexGrow={1}>
                     <TablePanelConnected {...{tableModel, fieldKey}} />
-                    {!error && renderSqlArea()}
+                    {!error && showSqlSection && renderSqlArea()}
                 </Stack>
             </Stack>
         );
@@ -342,7 +343,8 @@ CatalogConstraintsPanel.propTypes = {
     groupKey: PropTypes.string.isRequired,
     showFormType: PropTypes.bool,
     processId: PropTypes.string,
-    createDDRequest: PropTypes.func.isRequired
+    createDDRequest: PropTypes.func.isRequired,
+    showSqlSection: PropTypes.bool,
 };
 
 CatalogConstraintsPanel.defaultProps = {

@@ -15,9 +15,9 @@
             app: {
                 template: 'FireflyViewer',          // set to app mode, instead of api.
                 menu: [
-                    {label:'Images', action:'ImageSelectDropDownCmd'},
-                    {label:'Charts', action:'ChartSelectDropDownCmd'},
-                    {label:'Upload', action: 'FileUploadDropDownCmd'},
+                    {label:'Images', action:'ImageSelectDropDownCmd', primary:true},
+                    {label:'Charts', action:'ChartSelectDropDownCmd', primary:true},
+                    {label:'Upload', action: 'FileUploadDropDownCmd', primary:true},
                     {label:'Workspace', action: 'WorkspaceDropDownCmd'},
                     {label:'TAP & IRSA Searches', action: 'MultiTableSearchCmd'},
                     {label:'Test Searches', action:'TestSearches'},
@@ -109,6 +109,25 @@
                         SurveyKey: '1b',
                         SurveyKeyBand: '4'
                     }
+                },
+                gatorProtocol: {
+                    title: 'LSDB Searches',
+                    searchOptionsMask: 'Cone,Elliptical,Box,Polygon',
+                    services: [
+                        {
+                            serviceId: 'troy',
+                            label: 'Troy Test',
+                            value: 'https://troyraen.irsakudev.ipac.caltech.edu',
+                            searchOptionsMask: 'Cone,Polygon,box'
+                        },
+                        {
+                            serviceId: 'IRSATEST',
+                            label: 'Irsa Test',
+                            value: 'https://irsa.ipac.caltech.edu',
+                            showSqlSection: true,
+                            searchOptionsMask: 'Cone,Elliptical,Box,Polygon,Multi-Object,All Sky'
+                        },
+                    ],
                 }
             })
         };

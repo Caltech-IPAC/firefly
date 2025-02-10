@@ -7,7 +7,7 @@ import 'isomorphic-fetch';
 import {Stack, Typography} from '@mui/joy';
 import React from 'react';
 import {createRoot} from 'react-dom/client';
-import {set, defer, once} from 'lodash';
+import {set, defer, once, isArray} from 'lodash';
 import 'styles/global.css';
 
 import {APP_LOAD, dispatchAppOptions, dispatchUpdateAppData} from './core/AppDataCntlr.js';
@@ -22,7 +22,6 @@ import {dispatchUpdateLayoutInfo} from './core/LayoutCntlr.js';
 import {FireflyRoot} from './ui/FireflyRoot.jsx';
 import {SIAv2SearchPanel} from './ui/tap/SIASearchRootPanel';
 import {getSIAv2ServicesByName} from './ui/tap/SiaUtil';
-import {TapSearchPanel} from './ui/tap/TapSearchRootPanel';
 import {mergeServices} from './ui/tap/TapUtil';
 import {dispatchChangeReadoutPrefs} from './visualize/MouseReadoutCntlr.js';
 import {showInfoPopup} from './ui/PopupUtil';
@@ -39,6 +38,7 @@ import {dispatchOnAppReady} from './core/AppDataCntlr.js';
 import {getBootstrapRegistry} from './core/BootstrapRegistry.js';
 import {showLostConnection} from './ui/LostConnection.jsx';
 import {recordHistory} from './core/History.js';
+import {GatorProtocolRootPanel} from './visualize/ui/GatorProtocolRootPanel';
 import {setDefaultImageColorTable} from './visualize/WebPlotRequest.js';
 import {initWorkerContext} from './threadWorker/WorkerAccess.js';
 import {getTAPServicesByName} from './ui/tap/TapKnownServices.js';
@@ -139,7 +139,8 @@ const defAppProps = {
                         layout= {{width: '100%'}}
                           lockTitle='IRSA SIAv2 Search'
                         name='IRSA_USING_SIAv2'/>,
-        ]
+    ]
+
 };
 
 /** @type {FireflyOptions} */
@@ -250,6 +251,7 @@ function installOptions(appSpecificOptions) {
     if (options.imageScrollsToHighlightedTableRow!==visRoot().autoScrollToHighlightedTableRow) {
         dispatchChangeTableAutoScroll(options.imageScrollsToHighlightedTableRow);
     }
+    return options;
 
 }
 
@@ -278,14 +280,36 @@ function fireflyInit(props, appSpecificOptions={}, webApiCommands) {
         set(appSpecificOptions, 'table.showPropertySheetButton', appSpecificOptions?.table?.showPropertySheetButton ?? true);
     }
 
-    installOptions(appSpecificOptions);
+    const finalOptions= installOptions(appSpecificOptions);
+    const finalAppProps= setupGatorProtocolPanel(finalOptions,appProps);
 
+    if (viewer) window.firefly= {...window.firefly, finalAppProps, finalOptions};
     // initialize UI or API depending on entry mode.
     documentReady().then(() => {
-        viewer ? renderRoot(undefined, viewer, appProps,webApiCommands) : initApi(props);
+        viewer ? renderRoot(undefined, viewer, finalAppProps,webApiCommands) : initApi(props);
     });
     initDone = true;
 }
+
+function setupGatorProtocolPanel(installedOptions, appProps) {
+    if (!installedOptions.gatorProtocol?.services?.length) return appProps;
+    if (!isArray(appProps.menu)) return appProps;
+    const title=installedOptions.gatorProtocol.title ?? 'Gator Proto';
+    const gatorProtoMenuItem= {
+        label: title,
+        action: 'GatorProtocol',
+        primary: installedOptions.gatorProtocol.primary ?? true,
+        category:ARCHIVE
+    };
+
+    const ddPanels= appProps.dropdownPanels ?? [];
+    const gpPanel= <GatorProtocolRootPanel name='GatorProtocol' title={title}/>;
+    const menu= [...appProps.menu, gatorProtoMenuItem];
+    const dropdownPanels= [...ddPanels, gpPanel];
+    return {...appProps, menu, dropdownPanels};
+}
+
+
 
 /*
  *

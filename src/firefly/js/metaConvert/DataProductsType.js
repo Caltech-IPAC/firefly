@@ -33,7 +33,7 @@
  * @prop {String} [message] - (used with type message) required it type is 'message' or 'promise'
  * @prop {boolean} [isWorkingState]- (used with type message) if defined this means we are in a transitive/loading state. expect regular updates
  * @prop {boolean} complexMessage - (used with type message) - use with message display type. indicates it is a complex message with more functionality
- * @prop {Array.<String>} (used with type message, only when complexMessage is true) detailMsgAry
+ * @prop {Array.<String>} detailMsgAry - (used with type message, only when complexMessage is true)
  * @prop {String} resetMenuKey (used with type message)
  * @prop {boolean} singleDownload - (used with type message) (menu with dpdtDownload as first item in array is required) (also set to true with DPtypes.DOWNLOAD_MENU_ITEM) give a message with a file to download
  *

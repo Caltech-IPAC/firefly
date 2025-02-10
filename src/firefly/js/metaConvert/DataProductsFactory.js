@@ -5,6 +5,8 @@
 import {isArray, once} from 'lodash';
 import {MetaConst} from '../data/MetaConst.js';
 import {getMetaEntry, getObjectMetaEntry} from '../tables/TableUtil';
+import {getDataServiceOption} from '../ui/tap/DataServicesOptions';
+import {getBoolean, toBoolean} from '../util/WebUtil';
 import {hasObsCoreLikeDataProducts, isDatalinkTable} from '../voAnalyzer/TableAnalysis.js';
 import {hasServiceDescriptors} from '../voAnalyzer/VoDataLinkServDef.js';
 import {Band} from '../visualize/Band';
@@ -15,7 +17,7 @@ import {dpdtImage} from './DataProductsType';
 import {
     createGridImagesActivate, createRelatedDataGridActivate, createSingleImageActivate, createSingleImageExtraction
 } from './ImageDataProductsUtil.js';
-import {findADataSourceColumn, makeRequestForUnknown, makeRequestSimpleMoving} from './DefaultConverter.js';
+import {findADataSourceColumn, makeRequestForUnknown} from './DefaultConverter.js';
 import {makeAtlasPlotRequest} from './missions/AtlasRequestList.js';
 import {makeShaPlotRequest, makeShaViewCreate} from './missions/ShaRequestList.js';
 import {make2MassPlotRequest} from './missions/TwoMassRequestList.js';
@@ -23,7 +25,8 @@ import {makeWisePlotRequest, makeWiseViewCreate} from './missions/WiseRequestLis
 import {makeZtfPlotRequest, makeZtfViewCreate} from './missions/ZtfRequestList.js';
 import {getDatalinkStandAlineDataProduct, makeDatalinkStaneAloneConverter} from './vo/DataLinkStandAloneConverter';
 import {
-    getObsCoreDataProduct, getObsCoreGridDataProduct, getObsCoreRelatedDataProduct, makeObsCoreConverter
+    getObsCoreDataProduct, getObsCoreGridDataProduct, getObsCoreRelatedDataProduct, makeObsCoreConverter,
+    OBSCORE_DEF_MAX_PLOTS
 } from './vo/ObsCoreConverter.js';
 import {
     getServiceDescGridDataProduct, getServiceDescRelatedDataProduct, getServiceDescSingleDataProduct,
@@ -31,6 +34,9 @@ import {
 } from './vo/ServDescConverter.js';
 
 export const DEFAULT_CONVERTER_ID= 'DEFAULT_CONVERTER';
+export const IMAGE_ONLY= 'IMAGE_ONLY';
+export const TABLE_ONLY= 'TABLE_ONLY';
+export const NO_LIMIT= 'NO_LIMIT';
 
 
 function matchById(table,id)  {
@@ -170,6 +176,7 @@ function initConverterTemplates() {
             getSingleDataProduct: getSingleDataProductWrapper(makeWisePlotRequest),
             getGridDataProduct: getGridDataProductWrapper(makeWisePlotRequest),
             getRelatedDataProduct: getRelatedDataProductWrapper(makeWisePlotRequest),
+            threeColor: false,
         },
         {
             converterId: 'sha',
@@ -179,6 +186,7 @@ function initConverterTemplates() {
                 makeAnalysisGetSingleDataProduct(makeShaPlotRequest)(table, row, activateParams, options, 'spectrum'),
             getRelatedDataProduct: () => Promise.reject('related data products not supported'),
             getGridDataProduct: getGridDataProductWrapper(makeShaPlotRequest),
+            threeColor: false,
         },
         {
             converterId: 'atlas',
@@ -190,6 +198,7 @@ function initConverterTemplates() {
             getSingleDataProduct: getSingleDataProductWrapper(makeAtlasPlotRequest),
             getGridDataProduct: getGridDataProductWrapper(makeAtlasPlotRequest),
             getRelatedDataProduct: getRelatedDataProductWrapper(makeAtlasPlotRequest),
+            threeColor: false,
         },
         {
             converterId: 'twomass',
@@ -215,6 +224,7 @@ function initConverterTemplates() {
             getSingleDataProduct: getSingleDataProductWrapper(makeZtfPlotRequest),
             getGridDataProduct: getGridDataProductWrapper(makeZtfPlotRequest),
             getRelatedDataProduct: getRelatedDataProductWrapper(makeZtfPlotRequest),
+            threeColor: false,
         },
         {
             converterId: 'DataLinkStandaloneTable',
@@ -232,8 +242,8 @@ function initConverterTemplates() {
             converterId: 'ObsCore',
             tableMatches: hasObsCoreLikeDataProducts,
             create: makeObsCoreConverter,
-            threeColor: false,
-            hasRelatedBands: false,
+            threeColor: undefined,
+            hasRelatedBands: undefined,
             canGrid: true,
             maxPlots: 8,
             getSingleDataProduct: getObsCoreDataProduct,
@@ -244,25 +254,13 @@ function initConverterTemplates() {
             converterId: 'ServiceDescriptors',
             tableMatches: hasServiceDescriptors,
             create: makeServDescriptorConverter,
-            threeColor: false,
-            hasRelatedBands: false,
+            threeColor: undefined,
+            hasRelatedBands: undefined,
             canGrid: false,
-            maxPlots: 1,
+            maxPlots: OBSCORE_DEF_MAX_PLOTS,
             getSingleDataProduct: getServiceDescSingleDataProduct,
             getGridDataProduct: getServiceDescGridDataProduct,
             getRelatedDataProduct: getServiceDescRelatedDataProduct,
-        },
-        {
-            converterId: 'SimpleMoving',
-            tableMatches: () => false,
-            create: simpleCreate,
-            threeColor: false,
-            hasRelatedBands: false,
-            canGrid: false,
-            maxPlots: 12,
-            getSingleDataProduct: getSingleDataProductWrapper(makeRequestSimpleMoving),
-            getGridDataProduct: () => Promise.reject('grid not supported'),
-            getRelatedDataProduct: () => Promise.reject('related data products not supported')
         },
         {                            // this one should be last, it is the fallback
             converterId: DEFAULT_CONVERTER_ID,
@@ -283,20 +281,17 @@ function initConverterTemplates() {
 /**
  * @typedef {Object} DataProductsFactoryOptions
  *
- * @prop {boolean} [allowImageRelatedGrid]
- * @prop {boolean} [singleViewImageOnly] - if true, the view will only show the primary image product
- * @prop {boolean} [singleViewTableOnly] - if true, the view will only show the primary table product
- * @prop {String} [dataLinkInitialLayout] - determine how a datalink obscore table trys to show the data layout, must be 'single', 'gridRelated', 'gridFull';
+ * @prop {string} [limitViewerDisplay] - can be 'IMAGE_ONLY', 'TABLE_ONLY', defaults to 'NO_LIMIT';
  * @prop {boolean} [activateServiceDef] - if possible then call the service def without giving option for user input
  * @prop {boolean} [threeColor] - if true, then for images in related grid, show the threeColor option
  * @prop {number} [maxPlots] - maximum number of plots in grid mode, this will override the factory default
  * @prop {boolean} [canGrid] - some specific factories might have parameters that override this parameter
- * @prop [initialLayout]
  * @prop {string} [tableIdBase] - any tbl_id will use this string for its base
  * @prop {string} [chartIdBase] - any chartId will use this string for its base
  * @prop {string} [tableIdList] - an array of table object that will be used instead of generating a table id. form: {description,tbl_id}
  * @prop {string} [chartIdList] - an array of table ids that will be used instead of generating a chart id: {description,chartId}
- *
+ * @prop {string} [initialLayout] - one of 'single', 'gridRelated', 'gridFull'
+ * @prop {boolean} hasRelatedBands
  * @prop {string} [dataProductsComponentKey] - this is the key use when calling getComponentState() to get a key,value object.
  *                The values in this object will override one or more parameters to a service descriptor.
  *                The following are used with this prop by service descriptors to build the url to include input from the UI.
@@ -312,23 +307,20 @@ function initConverterTemplates() {
  */
 export const getDefaultFactoryOptions= once(() => ({
     dataProductsComponentKey: DEFAULT_DATA_PRODUCTS_COMPONENT_KEY,
-    allowImageRelatedGrid: false,
-    singleViewImageOnly:false,
-    singleViewTableOnly:false,
-    dataLinkInitialLayout: 'single', //determine how a datalink obscore table trys to show the data layout, must be 'single', 'gridRelated', 'gridFull';
+    limitViewerDisplay: NO_LIMIT,
     activateServiceDef: false,
     threeColor: undefined,
     maxPlots: undefined,
     canGrid: undefined, // some specific factories might have parameters that override this parameter
-    initialLayout: undefined, //todo - an datalink use this?
+    initialLayout: undefined,
     tableIdBase: undefined,
     chartIdBase: undefined,
     tableIdList: [], // list of ids
     chartIdList: [],// list of ids
     datalinkTblRequestOptions: {},
-    paramNameKeys: [],
-    ucdKeys: [],
-    utypeKeys: [],
+    paramNameKeys: [], // experimental - might be used with obscure cutout services, for not unnecessary, I will probably remove
+    ucdKeys: [], // experimental - might be used with obscure cutout services, for not unnecessary, I will probably remove
+    utypeKeys: [], // experimental - might be used with obscure cutout services, for not unnecessary, I will probably remove
 }));
 
 
@@ -374,20 +366,27 @@ export function removeAllButSingleConverter(keepId,factoryKey)  {
  * @return {DataProductsConvertType}
  */
 export function makeDataProductsConverter(table, factoryKey= undefined) {
-    const t= getConverterTemplates(factoryKey).find( (template) => template.tableMatches(table) );
-    if (!t) return;
+    const inTemplate= getConverterTemplates(factoryKey).find( (template) => template.tableMatches(table) );
+    if (!inTemplate) return;
+    const defaultsObs= { maxPlots: 1, initialLayout: SINGLE};
+    const t= {...defaultsObs,...inTemplate};
     const options= getFactoryTemplateOptions(factoryKey);
     // most options are specific to a factory but these below are common to all
+
+    const metaOptions= getObjectMetaEntry(table, MetaConst.DATA_PRODUCTS_FACTORY_OPTIONS, {});
+    const dataServiceOptions= getDataServiceOption(MetaConst.DATA_PRODUCTS_FACTORY_OPTIONS, table, {});
+    const combinedOps= {...options, ...dataServiceOptions, ...metaOptions};
+
     const pT= {
         ...t,
-        canGrid: options.canGrid ?? t.canGrid ?? false,
-        maxPlots: options.maxPlots ?? t.maxPlots ?? 1,
-        initialLayout: options.initialLayout ?? t.initialLayout ?? SINGLE,
-        threeColor: options.threeColor ?? t.threeColor ?? false,
-        dataProductsComponentKey: options.dataProductsComponentKey
+        canGrid: toBoolean(combinedOps.canGrid ?? t.canGrid),
+        maxPlots: Number(combinedOps.maxPlots ?? t.maxPlots),
+        initialLayout: combinedOps.initialLayout ?? t.initialLayout,
+        threeColor: toBoolean(combinedOps.threeColor ?? t.threeColor),
+        hasRelatedBands: toBoolean(combinedOps.hasRelatedBands?? t.hasRelatedBands),
+        dataProductsComponentKey: combinedOps.dataProductsComponentKey,
     };
-    const metaOptions= getObjectMetaEntry(table, MetaConst.DATA_PRODUCTS_FACTORY_OPTIONS, {});
-    const retObj= t.create(table,pT, {...options, ...metaOptions});
+    const retObj= t.create(table,pT, combinedOps);
     return {options, ...retObj};
 }
 

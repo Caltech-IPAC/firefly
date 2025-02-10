@@ -49,7 +49,7 @@ export function processDatalinkTable({sourceTable, row, datalinkTable, activateP
     const dataLinkData= getDataLinkData(datalinkTable,sourceTable,row);
     const {dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY}= options;
     const preferCutout= getPreferCutout(dataProductsComponentKey,sourceTable?.tbl_id);
-    const isImageGrid= options.allowImageRelatedGrid && dataLinkData.filter( (dl) => dl.dlAnalysis.isImage && dl.dlAnalysis.isGrid).length>1;
+    const isImageGrid= options.hasRelatedBands && dataLinkData.filter( (dl) => dl.dlAnalysis.isImage && dl.dlAnalysis.isGrid).length>1;
     const isMultiTableSpectrum= dataLinkData.filter( (dl) => dl.dlAnalysis.isThis && dl.dlAnalysis.isGrid && dl.dlAnalysis.isSpectrum).length>1;
     if (parsingAlgorithm===USE_ALL && isMultiTableSpectrum) parsingAlgorithm= SPECTRUM; // todo this is probably temporary for testing
 

@@ -3,28 +3,25 @@
  */
 
 import {Box, Card, Stack, Typography} from '@mui/joy';
-import React, {PureComponent, useContext} from 'react';
-import PropTypes from 'prop-types';
-import {get} from 'lodash';
+import React, {useContext, useEffect} from 'react';
+import {object, bool, number, string, shape} from 'prop-types';
+import Enum from 'enum';
 import {getAppOptions} from '../core/AppDataCntlr.js';
 
-import {ValidationField} from '../ui/ValidationField.jsx';
-import {dispatchValueChange} from '../fieldGroup/FieldGroupCntlr.js';
-import {TargetPanel} from '../ui/TargetPanel.jsx';
+import {ValidationField} from './ValidationField';
+import {TargetPanel} from './TargetPanel';
 import {VisualPolygonPanel} from '../visualize/ui/TargetHiPSPanel.jsx';
 
 import {isHiPS} from '../visualize/WebPlot.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
 import Validate from '../util/Validate.js';
-import Enum from 'enum';
-import FieldGroupUtils from '../fieldGroup/FieldGroupUtils.js';
 import {RadioGroupInputField} from './RadioGroupInputField.jsx';
 import {ListBoxInputField} from './ListBoxInputField.jsx';
 import {SizeInputFields} from './SizeInputField.jsx';
 import {UploadOptionsDialog} from './UploadOptionsDialog.jsx';
 import {getWorkspaceConfig} from '../visualize/WorkspaceCntlr.js';
 import {FieldGroup, FieldGroupCtx} from './FieldGroup.jsx';
-import {useFieldGroupWatch} from './SimpleComponent';
+import {useFieldGroupValue, useFieldGroupWatch} from './SimpleComponent';
 
 import CsysConverter from '../visualize/CsysConverter.js';
 import {primePlot, getActivePlotView, getFoV} from '../visualize/PlotViewUtil.js';
@@ -33,99 +30,70 @@ import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {getValueInScreenPixel} from '../visualize/draw/ShapeDataObj.js';
 import {hasWCSProjection} from '../visualize/PlotViewUtil';
 
+export const CatalogSearchMethodType= ({groupKey, sx, ...rest}) => (
+        <FieldGroup groupKey={groupKey} keepState={true} sx={{height:1, ...sx}}>
+            <CatalogSearchMethodTypeImpl {...rest}/>
+        </FieldGroup>
+    );
+
+CatalogSearchMethodType.propTypes = {
+    groupKey: string.isRequired,
+    polygonDefWhenPlot: bool,
+    searchOptionsMask: string,  //string of comma separate options 'Cone,Elliptical,Box,Polygon,Multi-Object,All Sky'
+    coneMax: number,
+    boxMax: number,
+    withPos: bool,
+    sx: object
+};
+
 /*
  Component which suppose to handle the catalog method search such as cone, elliptical,etc.
  each of the option has different option panel associated
  */
-export class CatalogSearchMethodType extends PureComponent {
+export function CatalogSearchMethodTypeImpl({polygonDefWhenPlot, withPos=true, searchOptionsMask, coneMax, boxMax}) {
+    const {getFld,setFld,groupKey} = useContext(FieldGroupCtx);
+    const coneSize= useFieldGroupValue('conesize')[0]();
+    const spatial= useFieldGroupValue('spatial')[0]() ?? SpatialMethod.Cone.value;
+    const imageCornerCalc= useFieldGroupValue('imageCornerCalc')[0]() ?? 'image';
 
-    constructor(props) {
-        super(props);
+    useEffect(() => {
+        const max= spatial===SpatialMethod.Box.value ? boxMax : coneMax;
+        if (getFld('conesize')?.max!==max) setFld('conesize', {min:1/3600,max});
+    }, [coneSize,spatial]);
 
-        this.state = {
-            fields: FieldGroupUtils.getGroupFields(this.props.groupKey)
-        };
+    const plot = primePlot(visRoot());
+    const polyIsDef= polygonDefWhenPlot && plot;
+    const searchType = withPos ? spatial : SpatialMethod['All Sky'].value;
 
-
-    }
-
-    componentWillUnmount() {
-        if (this.removeListener) this.removeListener();
-        this.iAmMounted = false;
-    }
-
-    componentDidMount() {
-        this.iAmMounted = true;
-        this.removeListener = FieldGroupUtils.bindToStore(this.props.groupKey, (fields) => {
-            if (this.iAmMounted) this.setState({fields});
-        });
-    }
-
-    UNSAFE_componentWillReceiveProps(nextProps) {
-        // const fields= FieldGroupUtils.getGroupFields(this.nextProps.groupKey);
-        const {coneMax, boxMax, groupKey}= nextProps;
-        if (coneMax && boxMax && groupKey) {
-            const fields= FieldGroupUtils.getGroupFields(this.props.groupKey);
-            if (this.iAmMounted) this.setState({fields});
-            const searchType = get(fields, 'spatial.value', SpatialMethod.Cone.value);
-            const max= searchType===SpatialMethod.Box.value ? boxMax : coneMax;
-
-            if (fields.conesize.max!==max) {
-                dispatchValueChange({fieldKey:'conesize', groupKey, max, min:1/3600});
-            }
-        }
-    }
-
-    render() {
-        const {fields}= this.state;
-        const {groupKey, polygonDefWhenPlot, withPos=true, searchOption, sx}= this.props;
-
-        const plot = primePlot(visRoot());
-        const polyIsDef= polygonDefWhenPlot && plot;
-        const searchType = withPos ? get(fields, 'spatial.value', SpatialMethod.Cone.value)
-                                   : SpatialMethod['All Sky'].value;
-
-        return (
-            <FieldGroup groupKey={groupKey} keepState={true} sx={{height:1, ...sx}}>
-                <Card sx={{height:1}}>
-                    <Stack spacing={2}>
-                        {spatialSelection(withPos, polyIsDef, searchOption)}
-                        {renderTargetPanel(groupKey, searchType)}
-                        <SizeArea {...{groupKey, searchType, imageCornerCalc: fields?.imageCornerCalc?.value ?? 'image'}}/>
-                    </Stack>
-                </Card>
-            </FieldGroup>
-        );
-
-    }
-
-
+    return (
+        <Card sx={{height:1}}>
+            <Stack spacing={2}>
+                {spatialSelection(withPos, polyIsDef, searchOptionsMask)}
+                {renderTargetPanel(groupKey, searchType)}
+                <SizeArea {...{groupKey, searchType, imageCornerCalc}}/>
+            </Stack>
+        </Card>
+    );
 }
-/*
-Display the speicified options in case a list of options is given, otherwise display all options.
- [
- {value: 'Cone', label: 'Cone' },
- {value: 'Elliptical', label: 'Elliptical' },
- {value: 'Box', label: 'Box' },
- {value: 'Polygon', label: 'Polygon' },
- {value: 'Multi-Object', label: 'Multi-Object' },
- {value: 'All-Sky', label: 'All Sky' }
- ]*/
+
+
 const spatialOptions = (searchTypes) => {
-    var l = [];
+    const l = [];
     SpatialMethod.enums.forEach(function (enumItem) {
             if (!searchTypes || searchTypes.includes(enumItem.value)) {
-                var o = {};
-                o.label = enumItem.key;
-                o.value = enumItem.value;
-                l.push(o);
+                l.push({label: enumItem.key, value: enumItem.value});
             }
         }
     );
     return l;
 };
 
-const spatialSelection = (withPos, polyIsDef, searchOption) => {
+const spatialSelection = (withPos, polyIsDef, searchOptionsMask) => {
+    const searchOption=
+        searchOptionsMask?.trim() ?
+            searchOptionsMask.trim().split(',')
+                .map( (s) => SpatialMethod.get(s)?.value)
+                .filter(Boolean) : undefined;
     const spatialWithPos = (
         <ListBoxInputField
             fieldKey='spatial'
@@ -159,9 +127,9 @@ export function calcCornerString(pv, method) {
     var pt1, pt2, pt3, pt4;
     const plot = primePlot(pv);
     const sel= plot.attributes[PlotAttribute.SELECTION];
-    var w = plot.dataWidth;
-    var h = plot.dataHeight;
-    var cc = CsysConverter.make(plot);
+    const cc = CsysConverter.make(plot);
+    let w = plot.dataWidth;
+    let h = plot.dataHeight;
     const radiusSearch = getFoV(pv) > maxHipsRadiusSearch ? maxHipsRadiusSearch * 3600 : getFoV(pv) * 3600; // in arcsec
 
     if (method==='image' || (!sel && method==='area-selection') ) {
@@ -186,7 +154,7 @@ export function calcCornerString(pv, method) {
     else if (method==='viewport') {
         const {viewDim, scrollX, scrollY}= pv;
         const {screenSize}= plot;
-        var sx1, sx3, sy1, sy3;
+        let sx1, sx3, sy1, sy3;
         if (viewDim.width<screenSize.width) {
             sx1= scrollX;
             sx3= scrollX+ viewDim.width;
@@ -255,7 +223,7 @@ function radiusInField({label = 'Radius'}= {}) {
 }
 
 radiusInField.propTypes = {
-   label: PropTypes.string
+   label: string
 };
 
 function SizeArea({groupKey, searchType, imageCornerCalc}) {
@@ -399,15 +367,15 @@ export function PolygonDataArea({imageCornerCalc,
 }
 
 PolygonDataArea.propTypes = {
-    imageCornerCalc: PropTypes.string,
-    hipsUrl: PropTypes.string,
-    centerWP: PropTypes.string,
-    fovDeg: PropTypes.number,
-    showCornerTypeField: PropTypes.bool,
-    slotProps: PropTypes.shape({
-        cornerType: PropTypes.object,
-        polygonPanel: PropTypes.object,
-        polygonHelp: PropTypes.object,
+    imageCornerCalc: string,
+    hipsUrl: string,
+    centerWP: string,
+    fovDeg: number,
+    showCornerTypeField: bool,
+    slotProps: shape({
+        cornerType: object,
+        polygonPanel: object,
+        polygonHelp: object,
     })
 };
 
@@ -423,14 +391,6 @@ function renderTargetPanel(groupKey, searchType) {
     );
 }
 
-CatalogSearchMethodType.propTypes = {
-    groupKey: PropTypes.string.isRequired,
-    polygonDefWhenPlot: PropTypes.bool,
-    searchOption: PropTypes.arrayOf(PropTypes.string),
-    coneMax: PropTypes.number,
-    boxMax: PropTypes.number,
-    withPos: PropTypes.bool
-};
 
 // Enumerate spatial methods - see SearchMethod values in edu.caltech.ipac.firefly.server.catquery.GatorQuery
 export const SpatialMethod = new Enum({

@@ -3,99 +3,159 @@
  */
 
 import {Divider, Sheet, Skeleton, Stack, Typography} from '@mui/joy';
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
+import {MetaConst} from '../../data/MetaConst';
 import {FormPanel} from '../../ui/FormPanel.jsx';
-import {set, get, merge, isEmpty, isFunction, memoize} from 'lodash';
+import {set, merge, isFunction} from 'lodash';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
 import {doFetchTable} from '../../tables/TableUtil.js';
 import {makeIrsaCatalogRequest} from '../../tables/TableRequestUtil.js';
 import {CatalogConstraintsPanel} from './CatalogConstraintsPanel.jsx';
-import {FieldGroup} from '../../ui/FieldGroup.jsx';
-import FieldGroupUtils, {getFieldVal, setFieldValue} from '../../fieldGroup/FieldGroupUtils';
+import {FieldGroup, FieldGroupCtx} from '../../ui/FieldGroup.jsx';
 import {ServerParams} from '../../data/ServerParams.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {CatalogSearchMethodType, SpatialMethod} from '../../ui/CatalogSearchMethodType.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
-import {parseWorldPt} from '../../visualize/Point.js';
+import {parseWorldPt} from '../Point';
 import {convertAngle} from '../VisUtil.js';
+import {getGatorProtoServiceId} from './GatorProtocolUtil';
 import {masterTableFilter} from './IrsaMasterTableFilters.js';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
 
 import {PREF_KEY} from 'firefly/tables/TablePref.js';
-import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
+import {useFieldGroupValue} from 'firefly/ui/SimpleComponent.jsx';
 import {OptionListField} from 'firefly/ui/OptionListField.jsx';
 import {GridMask} from 'firefly/ui/panel/MaskPanel.jsx';
 
-/**
- * group key for fieldgroup comp
- */
+/** * @deprecated */
 export const irsaCatalogGroupKey = 'CATALOG_PANEL';
-export const gkeySpacial = 'CATALOG_PANEL_spacial';
 
 const RADIUS_COL = '7';
 const constraintskey = 'inputconstraint';
 
 
-export function IrsaCatalogSearch() {
+const makeSpacialGroupKey= (groupKey) => groupKey+'__spacial';
 
+export function IrsaCatalogSearchDefault() {
     return (
-        <FieldGroup groupKey={irsaCatalogGroupKey} keepState={true} sx={{position:'relative', flexGrow:1}}>
-            <FormPanel sx={{position:'absolute', inset:0, overflow:'hidden', maxWidth:'100em', margin:'0 auto'}}
-                groupKey={() => ([irsaCatalogGroupKey, gkeySpacial])}
-                onSuccess={onSearchSubmit}
-                onError={onSearchFail}
-                cancelText=''
-                help_id={'catalogs.irsacatalogs'}
-                slotProps={{
-                    input: {overflow: 'auto'},
-                }}>
-
-                <Stack spacing={1} height={1}>
-                    <Stack direction='row' spacing={1} height='24em'>
-                        <ProjectPart/>
-                        <PositionPart/>
-                    </Stack>
-                    <Stack flexGrow={1}>
-                        <TableConstraint/>
-                    </Stack>
-                </Stack>
-            </FormPanel>
+        <FieldGroup groupKey='CATALOG_PANEL_DEFAULT' keepState={true} sx={{position:'relative', flexGrow:1}}>
+            <IrsaCatalogSearch sx={{margin:'0 auto'}} showSqlSection={true} title='IRSA Catalogs'/>
         </FieldGroup>
     );
-
 }
 
-function ProjectPart() {
-    const {catmaster} = useMasterTableInfo() || {};
-    const valP = useStoreConnector(() => getFieldVal(irsaCatalogGroupKey, 'project'));
-    const valC = useStoreConnector(() => getFieldVal(irsaCatalogGroupKey, 'catalog'));
+
+
+
+export function IrsaCatalogSearch({sx, serviceUrl, showSqlSection, searchOptionsMask, title}) {
+    const [working, setWorking]= useState(true);
+    const [masterTableData, setMasterTableData]= useState(undefined);
+    const {groupKey} = useContext(FieldGroupCtx);
+    const [getValP,setValP] = useFieldGroupValue('project');
+    const [getValC,setValC]= useFieldGroupValue('catalog');
+
+    useEffect( () => {
+        setValP(undefined);
+        setValC(undefined);
+        const getMaster= async () => {
+            setMasterTableData(await getMasterTable(serviceUrl));
+            setWorking(false);
+        };
+        if (getMasterFromCache(serviceUrl)) {
+            setWorking(false);
+            setMasterTableData(getMasterFromCache(serviceUrl));
+        }
+        else {
+            setWorking(true);
+            void getMaster();
+        }
+    }, [serviceUrl]);
+
+    const showWarning= !working && !masterTableData;
+
+    return (
+        <FormPanel sx={{position:'relative', inset:0, overflow:'hidden', maxWidth:'100em', ...sx}}
+                   groupKey={() => ([groupKey, makeSpacialGroupKey(groupKey)])}
+                   onSuccess={(request) => onSearchSubmit(request,groupKey,serviceUrl) }
+                   onError={onSearchFail}
+                   cancelText=''
+                   help_id={'catalogs.irsacatalogs'}
+                   slotProps={{
+                       input: {overflow: 'auto'},
+                   }}>
+
+            {showWarning ?
+                <ServiceWarning title={title} serviceUrl={serviceUrl}/> :
+                <Stack spacing={1} height={1}>
+                    <Stack direction='row' spacing={1} height='24em'>
+                        <ProjectPart {...{serviceUrl, masterTableData, working}}/>
+                        <PositionPart {...{serviceUrl, masterTableData, working, searchOptionsMask}}/>
+                    </Stack>
+                    <Stack flexGrow={1}>
+                        <TableConstraint {...{serviceUrl, showSqlSection, masterTableData, working}}/>
+                    </Stack>
+                </Stack>
+            }
+        </FormPanel>
+    );
+}
+
+
+function ServiceWarning({error,title,serviceUrl}) {
+    if (error)  {
+        return (
+            <Stack>
+                <Typography level='h3' color='warning' sx={{textAlign:'center', mt:5}}>Error</Typography>
+                <Typography color='warning' sx={{textAlign:'center', mt:5}}>{error}</Typography>
+            </Stack>
+        );
+    }
+    else {
+        const msg=  serviceUrl ?
+            `${title} Service is not responding or not available. Select another Service` :
+            `${title} Service is not responding or not available`;
+        return (
+            <Typography level='h3' color='warning' sx={{textAlign: 'center', mt: 5}}>
+                {msg}
+            </Typography>
+        );
+    }
+}
+
+
+
+function ProjectPart({serviceUrl, masterTableData={}}) {
+    const {catmaster} = masterTableData;
+    const [getValP,setValP] = useFieldGroupValue('project');
+    const [getValC,setValC] = useFieldGroupValue('catalog');
+    const [getValT,setValT] = useFieldGroupValue('cattable');
 
     useEffect(() => {
         if (catmaster) {
-            setFieldValue(irsaCatalogGroupKey, 'project', catmaster[0].project);
+            setValP(catmaster[0].project);
         }
-    }, [catmaster]);    // when catmaster is available, set select first project
+    }, [catmaster, serviceUrl]);    // when catmaster is available, set select first project
 
     useEffect(() => {
-        if (catmaster && valP) {
-            const cat = catmaster?.find((p) => p.project === valP)?.subproject[0]?.value;
-            cat && setFieldValue(irsaCatalogGroupKey, 'catalog', cat);
+        if (catmaster && getValP()) {
+            const cat = catmaster?.find((p) => p.project === getValP())?.subproject[0]?.value;
+            cat && setValC(cat);
         }
-    }, [valP]);     // if project changes, select first catalog of that project
+    }, [catmaster,getValP, serviceUrl]);     // if project changes, select first catalog of that project
 
     useEffect(() => {
-        if (catmaster && valP) {
-            const optCatTable = getCatalogOptions(catmaster, valP, valC);
+        if (catmaster && getValP()) {
+            const optCatTable = getCatalogOptions(catmaster, getValP(), getValC());
             const table = optCatTable?.[0].value;
-            table && setFieldValue(irsaCatalogGroupKey, 'cattable', table);
+            table && setValT(table);
         }
-    }, [valC]);     // if catalog changes, select first table of that catalog
+    }, [getValC, serviceUrl]);     // if catalog changes, select first table of that catalog
 
-    if (!(catmaster && valP && valC)) return <GridMask cols={1} rows={2} sx={{flexGrow:1}}/>;
+    if (!(catmaster && getValP() && getValC())) return <GridMask cols={1} rows={2} sx={{flexGrow:1}}/>;
 
     const optProjects = getProjectOptions(catmaster);
-    const optCatalogs = getSubProjectOptions(catmaster, valP);
-    const optCatTable = getCatalogOptions(catmaster, valP, valC);
+    const optCatalogs = getSubProjectOptions(catmaster, getValP());
+    const optCatTable = getCatalogOptions(catmaster, getValP(), getValC());
 
     return (
         <Sheet component={Stack} variant='outlined' sx={{flexGrow:1, borderRadius:'var(--joy-radius-md)'}}>
@@ -120,7 +180,7 @@ function ProjectPart() {
             <Divider/>
             <OptionListField fieldKey='cattable'
                              size='sm'
-                             value={valC}
+                             value={getValC()}
                              options={optCatTable}
                              sx={{overflow: 'auto', height:'20.3em'}}
                              decorator={catTableRenderer}
@@ -160,13 +220,14 @@ function catTableRenderer(opt) {
     );
 }
 
-function PositionPart() {
+function PositionPart({masterTableData={}, searchOptionsMask}) {
 
-    const {catmaster, cols} = useMasterTableInfo() || {};
+    const {groupKey} = useContext(FieldGroupCtx);
+    const {catmaster, cols} = masterTableData;
 
-    const valP = useStoreConnector(() => getFieldVal(irsaCatalogGroupKey, 'project'));
-    const valC = useStoreConnector(() => getFieldVal(irsaCatalogGroupKey, 'catalog'));
-    const valT = useStoreConnector(() => getFieldVal(irsaCatalogGroupKey, 'cattable'));
+    const valP = useFieldGroupValue('project')[0]();
+    const valC = useFieldGroupValue('catalog')[0]();
+    const valT = useFieldGroupValue('cattable')[0]();
 
     const optCatTable = getCatalogOptions(catmaster, valP, valC);
     const selCatTable = optCatTable?.find((c) => c.value === valT);
@@ -175,28 +236,32 @@ function PositionPart() {
 
     const POS_COL = cols.findIndex((c) => c?.name?.toLowerCase() === 'pos');
 
-    const polygonDefWhenPlot= get(getAppOptions(), 'catalogSpatialOp')==='polygonWhenPlotExist';
+    const polygonDefWhenPlot= getAppOptions().catalogSpatialOp==='polygonWhenPlotExist';
     const radius = parseFloat(selCatTable.cat[RADIUS_COL]);
     const coneMax= radius / 3600;
     const boxMax= coneMax*2;
     const withPos = (selCatTable?.cat[POS_COL] || 'y').includes('y');
 
     return (
-        <CatalogSearchMethodType groupKey={gkeySpacial} sx={{height:'24em', minWidth:'35em'}}
-                                 polygonDefWhenPlot={polygonDefWhenPlot}
-                                 coneMax={coneMax} boxMax={boxMax} withPos={withPos}
-        />
-
+        <CatalogSearchMethodType {...{groupKey:makeSpacialGroupKey(groupKey), sx:{height:'24em', minWidth:'35em'},
+                                 polygonDefWhenPlot, searchOptionsMask, coneMax, boxMax, withPos}} />
     );
 }
 
-function TableConstraint() {
+function TableConstraint({serviceUrl,  masterTableData={}, showSqlSection}) {
 
-    const masterTableInfo = useMasterTableInfo();
-    const valP = useStoreConnector(() => getFieldVal(irsaCatalogGroupKey, 'project'));
-    const valC = useStoreConnector(() => getFieldVal(irsaCatalogGroupKey, 'catalog'));
-    const cattableValue = useStoreConnector(() => getFieldVal(irsaCatalogGroupKey, 'cattable'));
-    const ddform = useStoreConnector(() => getFieldVal(irsaCatalogGroupKey, 'ddform', 'true'));
+    const {groupKey} = useContext(FieldGroupCtx);
+    const masterTableInfo= masterTableData ?? {};
+    const valP= useFieldGroupValue('project')[0]();
+    const valC= useFieldGroupValue('catalog')[0]();
+    const [getCatTableValue,setCatTableValue] = useFieldGroupValue('cattable');
+    const cattableValue = getCatTableValue();
+    const ddform = useFieldGroupValue('ddform')[0]() || 'true';
+
+    useEffect(() => {
+        setCatTableValue(undefined);
+    }, [serviceUrl]);
+
 
     if (!(masterTableInfo && valP && valC)) return  <Skeleton  variant='rectangle' sx={{flexGrow:1}}/>;
 
@@ -212,41 +277,33 @@ function TableConstraint() {
                                  catname={catname0}
                                  dd_short={ddform}
                                  tbl_id={tbl_id}
-                                 groupKey={irsaCatalogGroupKey}
+                                 showSqlSection={showSqlSection}
+                                 groupKey={groupKey}
                                  createDDRequest={()=>{
-                                     return {id: 'GatorDD', catalog: catname0, short: shortdd};
+                                     return {id: 'GatorDD', GatorHost:serviceUrl, catalog: catname0, short: shortdd};
                                  }}
         />
     );
 }
 
+const masterDataCache= {};
 
-function useMasterTableInfo () {
-    const [masterTableInfo, setMasterTableInfo] = useState();
 
-    useEffect(() => {
-        async function fetchData() {
-            const resp = await getMasterTable();
-            setMasterTableInfo(resp);
-            hasMasterTable = true;
-        };
-        fetchData();
-    }, []);
-    return masterTableInfo;
+async function getMasterTable(serviceUrl) {
+    if (masterDataCache[serviceUrl]) return masterDataCache[serviceUrl];
+    masterDataCache[serviceUrl] = await loadMasterTable(serviceUrl);
+    return masterDataCache[serviceUrl];
 }
 
-let hasMasterTable;       // this is needed because onSearchSubmit cannot be async
-const getMasterTable = memoize(async function() {
-    return await loadMasterTable();
-});
+const getMasterFromCache= (serviceUrl) => masterDataCache[serviceUrl];
 
-async function loadMasterTable () {
+async function loadMasterTable (serviceUrl) {
 
-    const request = {id: 'irsaCatalogMasterTable'}; //Fetch master table
+    const request = {id: 'irsaCatalogMasterTable', GatorHost:serviceUrl}; //Fetch master table
     return doFetchTable(request).then((originalTableModel) => {
 
-        const filter= get(getAppOptions(), 'irsaCatalogFilter', 'defaultFilter');
-        const tableModel= isFunction(filter) ? filter(tableModel) : masterTableFilter[filter](originalTableModel);
+        const filter= getAppOptions().irsaCatalogFilter ?? 'defaultFilter';
+        const tableModel= isFunction(filter) ? filter(tableModel) : masterTableFilter[filter](originalTableModel); // todo- I am sure there is an existing error here. I don't have time to study it now
 
         var data = tableModel.tableData.data;
 
@@ -319,12 +376,9 @@ async function loadMasterTable () {
 
 
 
-export function validateConstraints(groupKey) {
-    const {tableconstraints} = FieldGroupUtils.getGroupFields(groupKey);
-
-    var errMsg = get(tableconstraints, ['value', 'errorConstraints'], '');
-
-    if (!isEmpty(errMsg)) {
+export function validateConstraints(request, groupKey) {
+    const errMsg= request[groupKey].tableconstraints?.errorConstraints;
+    if (errMsg) {
         showInfoPopup(errMsg);
         return false;
     }
@@ -335,12 +389,13 @@ function onSearchFail() {
     showInfoPopup('One or more fields are not valid');
 }
 
-function onSearchSubmit(request) {
+function onSearchSubmit(request, catalogGroupKey, serviceUrl) {
 
-    if (!hasMasterTable) {
+    if (!masterDataCache[serviceUrl]) {
         showInfoPopup('Error: Master table was not loaded.');
         return false;
     }
+    const gkeySpacial= makeSpacialGroupKey(catalogGroupKey);
     const spacPart = request[gkeySpacial] || {};
     const {spatial} = spacPart;
     const wp = parseWorldPt(spacPart[ServerParams.USER_TARGET_WORLD_PT]);
@@ -350,25 +405,26 @@ function onSearchSubmit(request) {
         showInfoPopup('Target is required','Error');
         return false;
     }
-    if (validateConstraints(irsaCatalogGroupKey)) {
-        doCatalog(request);
+    if (validateConstraints(request, catalogGroupKey)) {
+        doCatalog(request, catalogGroupKey, serviceUrl);
     }
     return true;
 }
 
 
-function doCatalog(request) {
+function doCatalog(request, catalogGroupKey, serviceUrl) {
 
-    const catPart= request[irsaCatalogGroupKey];
+    const gkeySpacial= makeSpacialGroupKey(catalogGroupKey);
+    const catPart= request[catalogGroupKey];
     const spacPart= request[gkeySpacial] || {};
     const {catalog, project, cattable}= catPart;
     const {spatial='AllSky'}= spacPart;  // if there is no 'spatial' field (catalog with no position information case)
 
     const conesize = convertAngle('deg', 'arcsec', spacPart.conesize);
-    var title = `${catPart.project}-${catPart.cattable}`;
-    var tReq = {};
+    let title = `${catPart.project}-${catPart.cattable}`;
+    let tReq;
     if (spatial === SpatialMethod.get('Multi-Object').value) {
-        var filename = get(spacPart, 'fileUpload');
+        const filename = spacPart?.fileUpload;
 
         title += '-MultiObject';
         tReq = makeIrsaCatalogRequest(title, catPart.project, catPart.cattable, {
@@ -380,7 +436,7 @@ function doCatalog(request) {
     } else {
         title += ` (${spatial}`;
         if (spatial === SpatialMethod.Elliptical.value) {
-            title += Number(get(spacPart, 'posangle', 0)) + '_' + Number(get(spacPart, 'axialratio', 0.26));
+            title += Number(spacPart?.posangle ?? 0) + '_' + Number(spacPart?.axialratio ?? 0.26);
         }
         if (spatial === SpatialMethod.Box.value || spatial === SpatialMethod.Cone.value || spatial === SpatialMethod.Elliptical.value) {
             title += ':' + conesize + '\'\'';
@@ -388,7 +444,8 @@ function doCatalog(request) {
         title += ')';
         tReq = makeIrsaCatalogRequest(title, project, cattable, {
             SearchMethod: spatial,
-            RequestedDataSet: catalog
+            RequestedDataSet: catalog,
+            GatorHost:serviceUrl
         });
     }
 
@@ -397,8 +454,8 @@ function doCatalog(request) {
     // (Gator search method for elliptical is cone)
     if (spatial === SpatialMethod.Elliptical.value) {
 
-        const pa = get(spacPart, 'posangle', 0);
-        const ar = get(spacPart, 'axialratio', 0.26);
+        const pa = spacPart?.posangle ?? 0;
+        const ar = spacPart?.axialratio ?? 0.26;
 
         // see PA and RATIO string values in edu.caltech.ipac.firefly.server.catquery.GatorQuery
         merge(tReq, {'posang': pa, 'ratio': ar});
@@ -419,8 +476,7 @@ function doCatalog(request) {
         tReq.polygon = spacPart.polygoncoords;
     }
 
-    const {tableconstraints} = FieldGroupUtils.getGroupFields(irsaCatalogGroupKey);
-    const sql = tableconstraints.value;
+    const sql= request[catalogGroupKey]?.tableconstraints;
     tReq.constraints = '';
     let addAnd = false;
     if (sql.constraints.length > 0) {
@@ -428,8 +484,7 @@ function doCatalog(request) {
         addAnd = true;
     }
 
-    const {txtareasql} = FieldGroupUtils.getGroupFields(irsaCatalogGroupKey);
-    const sqlTxt = txtareasql.value?.trim() ?? '';
+    const sqlTxt = request[catalogGroupKey]?.txtareasql?.value?.trim() ?? '';
     if (sqlTxt.length > 0) {
         tReq.constraints += (addAnd ? ' AND ' : '') + validateSql(sqlTxt);
     }
@@ -441,6 +496,8 @@ function doCatalog(request) {
     //console.log('final request: ' + JSON.stringify(tReq));
 
     set(tReq, `META_INFO.${PREF_KEY}`, `${tReq.catalogProject}-${tReq.catalog}`);
+    const serviceId= getGatorProtoServiceId(serviceUrl);
+    tReq.META_INFO[MetaConst.DATA_SERVICE_ID]= serviceId;
     dispatchTableSearch(tReq, {backgroundable:true});
 }
 

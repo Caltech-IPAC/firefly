@@ -1,4 +1,4 @@
-import {isEmpty} from 'lodash';
+import {isEmpty, isUndefined} from 'lodash';
 import {hasRowAccess} from '../../tables/TableUtil.js';
 import {getSearchTarget, makeWorldPtUsingCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
@@ -21,21 +21,19 @@ const DEF_MAX_PLOTS= 8;
  * @return {DataProductsConvertType}
  */
 export function makeServDescriptorConverter(table,converterTemplate,options={}) {
-    if (!table) return converterTemplate;
-    const descriptors = getServiceDescriptors(table);
-    if (!descriptors || !findDataLinkServeDescs(descriptors)?.length) return converterTemplate;
+    if (!table || !findDataLinkServeDescs(getServiceDescriptors(table))?.length) return converterTemplate;
 
-    const canRelatedGrid= options.allowImageRelatedGrid?? false;
-    const threeColor= converterTemplate.threeColor && options?.allowImageRelatedGrid;
+    const {hasRelatedBands=false, maxPlots, initialLayout,canGrid=false}= converterTemplate;
+    const threeColor= isUndefined(converterTemplate.threeColor) ? hasRelatedBands : converterTemplate.threeColor;
     //------
     const baseRetOb = {
         ...converterTemplate,
-        initialLayout: options?.dataLinkInitialLayout ?? 'single',
+        initialLayout: initialLayout ?? 'single',
         describeThreeColor: (threeColor) ? describeServDefThreeColor : undefined,
         threeColor,
-        canGrid: canRelatedGrid,
-        maxPlots: canRelatedGrid ? DEF_MAX_PLOTS : 1,
-        hasRelatedBands: canRelatedGrid,
+        canGrid,
+        maxPlots: maxPlots ?? 1,
+        hasRelatedBands,
         converterId: `ServiceDef-${table.tbl_id}`
     };
     return baseRetOb;
@@ -106,5 +104,5 @@ export async function getServiceDescRelatedDataProduct(table, row, threeColorOps
 
 
 
-export const findDataLinkServeDescs= (sdAry) => sdAry?.filter( (serDef) => isDataLinkServiceDesc(serDef));
+export const findDataLinkServeDescs= (sdAry=[]) => sdAry.filter( (serDef) => isDataLinkServiceDesc(serDef));
 

@@ -183,7 +183,7 @@ public abstract class BaseGator extends EmbeddedDbProcessor {
                         "Receiving errors from Gator, stat=" + stat.getValue());
             }
 
-        } else if (errStr.toLowerCase().contains(ANY_ERR_STR)) {
+        } else if (errStr.toLowerCase().contains(ANY_ERR_STR) && !errStr.startsWith("|")) {
             handleErr(outFile,
                     "IRSA search failed. Catalog is unavailable",
                     "Receiving unrecognized errors from Gator, Error: " + errStr);

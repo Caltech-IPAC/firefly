@@ -6,7 +6,7 @@ import {MetaConst} from '../data/MetaConst.js';
 import {defDataSourceGuesses} from '../metaConvert/DefaultConverter.js';
 import {getCornersColumns} from '../tables/TableInfoUtil.js';
 import {
-    getBooleanMetaEntry, getCellValue, getColumn, getColumns, getMetaEntry, getObjectMetaEntry, isTableUsingRadians
+    getBooleanMetaEntry, getCellValue, getColumn, getColumns, getMetaEntry, isTableUsingRadians
 } from '../tables/TableUtil.js';
 import {isDefined} from '../util/WebUtil.js';
 import CoordinateSys from '../visualize/CoordSys.js';
