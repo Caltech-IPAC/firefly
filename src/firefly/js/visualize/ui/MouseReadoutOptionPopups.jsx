@@ -10,6 +10,7 @@
 import {Divider, Stack, Typography} from '@mui/joy';
 import React, {useState,useEffect} from 'react';
 import PropTypes from 'prop-types';
+import {dispatchAddPreference} from '../../core/AppDataCntlr';
 import CompleteButton from '../../ui/CompleteButton.jsx';
 import HelpIcon from '../../ui/HelpIcon.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
@@ -18,7 +19,13 @@ import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
 import FieldGroupUtils, {getFieldGroupResults} from '../../fieldGroup/FieldGroupUtils.js';
 import {useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {dispatchChangeReadoutPrefs, readoutRoot} from '../MouseReadoutCntlr';
+import {
+	dispatchChangeReadoutPrefs, readoutRoot,
+	MR_ECL1950, MR_ECLJ2000, MR_EQB1950, MR_EQB1950_DCM, MR_EQJ2000_DCM, MR_EQJ2000_HMS,
+	MR_FIELD_HIPS_MOUSE_READOUT1, MR_FIELD_HIPS_MOUSE_READOUT2,
+	MR_FIELD_IMAGE_MOUSE_READOUT1, MR_FIELD_IMAGE_MOUSE_READOUT2,
+	MR_FITS_IP, MR_GALACTIC, MR_PIXEL_SIZE, MR_SPIXEL_SIZE, MR_SUPER_GALACTIC, MR_ZERO_IP,
+} from '../MouseReadoutCntlr';
 import {dispatchShowDialog, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {primePlot} from '../PlotViewUtil.js';
 import {visRoot} from '../ImagePlotCntlr.js';
@@ -26,42 +33,42 @@ import {isCelestialImage, isHiPS} from '../WebPlot.js';
 
 //define the labels and values for the radio options
 const celestialCoordOptions= [
-	{label: 'Equatorial J2000 HMS', value: 'eqj2000hms'},
-	{label: 'Equatorial J2000 Decimal', value: 'eqj2000DCM' },
-	{label: 'Equatorial B1950 HMS', value: 'eqb1950'},
-	{label: 'Equatorial B1950 Decimal', value: 'eqb1950DCM'},
-	{label: 'Galactic', value: 'galactic'},
-	{label: 'Super Galactic', value: 'superGalactic'},
-	{label: 'Ecliptic J2000', value: 'eclJ2000'},
-	{label: 'Ecliptic B1950', value: 'eclB1950'},
-	{label: 'FITS Image Pixel', value: 'fitsIP'},
-	{label: 'Zero based Image Pixel', value: 'zeroIP'},
+	{label: 'Equatorial J2000 HMS', value: MR_EQJ2000_HMS},
+	{label: 'Equatorial J2000 Decimal', value: MR_EQJ2000_DCM },
+	{label: 'Equatorial B1950 HMS', value: MR_EQB1950},
+	{label: 'Equatorial B1950 Decimal', value: MR_EQB1950_DCM},
+	{label: 'Galactic', value: MR_GALACTIC},
+	{label: 'Super Galactic', value: MR_SUPER_GALACTIC},
+	{label: 'Ecliptic J2000', value: MR_ECLJ2000},
+	{label: 'Ecliptic B1950', value: MR_ECL1950},
+	{label: 'FITS Image Pixel', value: MR_FITS_IP},
+	{label: 'Zero based Image Pixel', value: MR_ZERO_IP},
 ];
 
 const hipsCoordOptions= [
-	{label: 'Equatorial J2000 HMS', value: 'eqj2000hms'},
-	{label: 'Equatorial J2000 Decimal', value: 'eqj2000DCM' },
-	{label: 'Equatorial B1950 HMS', value: 'eqb1950'},
-	{label: 'Equatorial B1950 Decimal', value: 'eqb1950DCM'},
-	{label: 'Galactic', value: 'galactic'},
-	{label: 'Super Galactic', value: 'superGalactic'},
-	{label: 'Ecliptic J2000', value: 'eclJ2000'},
-	{label: 'Ecliptic B1950', value: 'eclB1950'},
+	{label: 'Equatorial J2000 HMS', value: MR_EQJ2000_HMS},
+	{label: 'Equatorial J2000 Decimal', value: MR_EQJ2000_DCM},
+	{label: 'Equatorial B1950 HMS', value: MR_EQB1950},
+	{label: 'Equatorial B1950 Decimal', value: MR_EQB1950_DCM},
+	{label: 'Galactic', value: MR_GALACTIC},
+	{label: 'Super Galactic', value: MR_SUPER_GALACTIC},
+	{label: 'Ecliptic J2000', value: MR_ECLJ2000},
+	{label: 'Ecliptic B1950', value: MR_ECL1950},
 ];
 
 
 const pixelOptions = [
-	{label: 'Pixel Size', value: 'pixelSize'},
-	{label: 'Screen Pixel Size', value: 'sPixelSize' }
+	{label: 'Pixel Size', value: MR_PIXEL_SIZE},
+	{label: 'Screen Pixel Size', value: MR_SPIXEL_SIZE }
 ];
 
 const groupKeys={
-	imageMouseReadout1:'COORDINATE_OPTION_FORM',
+	[MR_FIELD_IMAGE_MOUSE_READOUT1]:'COORDINATE_OPTION_FORM',
 	imageMouseNoncelestialReadout1:'COORDINATE_OPTION_FORM',
-	imageMouseReadout2:'COORDINATE_OPTION_FORM',
+	[MR_FIELD_IMAGE_MOUSE_READOUT2]:'COORDINATE_OPTION_FORM',
 	imageMouseNoncelestialReadout2:'COORDINATE_OPTION_FORM',
-	hipsMouseReadout1:'COORDINATE_OPTION_FORM',
-    hipsMouseReadout2:'COORDINATE_OPTION_FORM',
+	[MR_FIELD_HIPS_MOUSE_READOUT1]:'COORDINATE_OPTION_FORM',
+	[MR_FIELD_HIPS_MOUSE_READOUT2]:'COORDINATE_OPTION_FORM',
 	pixelSize: 'PIXEL_OPTION_FORM'
 };
 const copyOptsFieldKey = 'mouseReadoutValueCopy';
@@ -117,13 +124,15 @@ function doDispatch(fieldGroup,  fieldKey, dialogKey, hide= true){
 		if (prefValue==='fitsIP' || prefValue==='zeroIP' ) {
             dispatchChangeReadoutPrefs({[fieldKey]:prefValue});
         }
-		else if (fieldKey==='imageMouseReadout1' || fieldKey==='hipsMouseReadout1') {
-            dispatchChangeReadoutPrefs({imageMouseReadout1:prefValue});
-            dispatchChangeReadoutPrefs({hipsMouseReadout1:prefValue});
+		else if (fieldKey===MR_FIELD_IMAGE_MOUSE_READOUT1 || fieldKey===MR_FIELD_HIPS_MOUSE_READOUT1) {
+            dispatchChangeReadoutPrefs({[MR_FIELD_IMAGE_MOUSE_READOUT1]:prefValue, [MR_FIELD_HIPS_MOUSE_READOUT1]:prefValue});
+			dispatchAddPreference(MR_FIELD_IMAGE_MOUSE_READOUT1, prefValue);
+			dispatchAddPreference(MR_FIELD_HIPS_MOUSE_READOUT1, prefValue);
         }
-        else if (fieldKey==='imageMouseReadout2' || fieldKey==='hipsMouseReadout2') {
-            dispatchChangeReadoutPrefs({imageMouseReadout2:prefValue});
-            dispatchChangeReadoutPrefs({hipsMouseReadout2:prefValue});
+        else if (fieldKey===MR_FIELD_IMAGE_MOUSE_READOUT2 || fieldKey===MR_FIELD_HIPS_MOUSE_READOUT2) {
+            dispatchChangeReadoutPrefs({[MR_FIELD_IMAGE_MOUSE_READOUT2]:prefValue, [MR_FIELD_HIPS_MOUSE_READOUT2]:prefValue});
+			dispatchAddPreference(MR_FIELD_IMAGE_MOUSE_READOUT2, prefValue);
+			dispatchAddPreference(MR_FIELD_HIPS_MOUSE_READOUT2, prefValue);
         }
         else {
             dispatchChangeReadoutPrefs({[fieldKey]:prefValue});

@@ -23,7 +23,7 @@ import {FireflyRoot} from './ui/FireflyRoot.jsx';
 import {SIAv2SearchPanel} from './ui/tap/SIASearchRootPanel';
 import {getSIAv2ServicesByName} from './ui/tap/SiaUtil';
 import {mergeServices} from './ui/tap/TapUtil';
-import {dispatchChangeReadoutPrefs} from './visualize/MouseReadoutCntlr.js';
+import {dispatchChangeReadoutPrefs, initReadoutPrefs} from './visualize/MouseReadoutCntlr.js';
 import {showInfoPopup} from './ui/PopupUtil';
 import {bootstrapRedux, flux} from './core/ReduxFlux.js';
 import {getOrCreateWsConn} from './core/messaging/WebSocketClient.js';
@@ -108,7 +108,7 @@ const ARCHIVE= 'Archive Searches';
  *                                  the catalog panel will show the polygon option as default when possible
  * @prop {Array.<string> } imageMasterSources -  default - ['ALL'], source to build image master data from
  * @prop {Array.<string> } imageMasterSourcesOrder - for the image dialog sort order of the projects, anything not listed is put on bottom
- * @prop {PROP_SHEET} table.propertySheet - specifies how to show propertySheet
+ * @prop {Object} table.propertySheet - specifies how to show propertySheet
  */
 
 /** @type {AppProps} */
@@ -243,6 +243,7 @@ function installOptions(appSpecificOptions) {
     const options=  mergeAppOptions(defFireflyOptions, appSpecificOptions); // app specific will override default
     // setup options
     dispatchAppOptions(options);
+    initReadoutPrefs();
     options.disableDefaultDropDown && dispatchUpdateLayoutInfo({disableDefaultDropDown:true});
     options.readoutDefaultPref && dispatchChangeReadoutPrefs(options.readoutDefaultPref);
     options.wcsMatchType && dispatchWcsMatch({matchType:options.wcsMatchType, lockMatch:true});
@@ -426,7 +427,6 @@ export const firefly = {
     bootstrap
 };
 
-/* eslint-disable  quotes */
 
 
 /**
@@ -479,7 +479,7 @@ function bootstrap(props, clientAppSpecificOptions, webApiCommands) {
         // when all is done, mark app as 'ready'
         defer(() => {
             setTimeout(() => {
-                dispatchUpdateAppData({isReady: true})
+                dispatchUpdateAppData({isReady: true});
             },3);
         });
         initWorkerContext();
