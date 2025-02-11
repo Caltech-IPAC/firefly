@@ -6,9 +6,8 @@
 import React, {forwardRef} from 'react';
 import PropTypes from 'prop-types';
 import {omit} from 'lodash';
-import {getBixPix} from '../FitsHeaderUtil.js';
 import {SINGLE, GRID} from '../MultiViewCntlr.js';
-import {getPlotViewById, primePlot} from '../PlotViewUtil.js';
+import {primePlot} from '../PlotViewUtil.js';
 import {MultiItemViewerView} from './MultiItemViewerView.jsx';
 import {ImageViewer} from '../iv/ImageViewer';
 import {useMouseStoreConnector} from 'firefly/visualize/ui/MouseStoreConnector.jsx';
@@ -17,6 +16,7 @@ import {isLockByClick, readoutRoot} from 'firefly/visualize/MouseReadoutCntlr.js
 import {MouseReadoutBottomLine} from 'firefly/visualize/ui/MouseReadoutBottomLine.jsx';
 import {isDialogVisible} from 'firefly/core/ComponentCntlr.js';
 import {MOUSE_READOUT_DIALOG_ID} from 'firefly/visualize/ui/MouseReadPopoutAll.jsx';
+import {getFluxRadix} from 'firefly/visualize/ui/MouseReadoutUIUtil';
 
 
 function makeState() {
@@ -60,8 +60,8 @@ export const MultiImageViewerView = forwardRef( (props, ref) => {
     }
     
     const {readoutPref}= readoutRoot();
-    const pvToUse= isLockByClick(readoutRoot()) ? primePlot(visRoot) : getPlotViewById(visRoot,lastMouseCtx().plotId);
-    const radix= Number(getBixPix(primePlot(pvToUse))>0 ? readoutPref.intFluxValueRadix : readoutPref.floatFluxValueRadix);
+    const pvToUse= isLockByClick(readoutRoot()) ? primePlot(visRoot) : primePlot(visRoot,lastMouseCtx().plotId);
+    const radix= getFluxRadix(readoutPref, pvToUse);
 
     if (layoutType===SINGLE || viewerPlotIds?.length===1) {
         return (
