@@ -239,6 +239,6 @@ public class JobInfo implements Serializable {
 //====================================================================
 
     public static record Error ( int code, String msg) implements Serializable {}
-    public static record Result(String href, String hrefType, String mimeType, String size){};
+    public static record Result(String href, String hrefType, String mimeType, String size) implements Serializable {};
 
 }

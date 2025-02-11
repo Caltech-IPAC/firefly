@@ -12,6 +12,7 @@ import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoD
 import {tokenSub} from '../../util/WebUtil.js';
 import {uploadAndAnalyze} from '../AnalysisUtils.js';
 import {dispatchUpdateActiveKey} from '../DataProductsCntlr.js';
+import {IMAGE_ONLY} from '../DataProductsFactory';
 import {dpdtFromMenu, dpdtMessageWithDownload, dpdtPNG, dpdtSimpleMsg,} from '../DataProductsType.js';
 import {createGuessDataType} from './DataLinkProcessor.js';
 import {
@@ -22,7 +23,7 @@ import {createServDescMenuRet} from './ServDescProducts.js';
 import {makeObsCoreRequest} from './VORequest.js';
 
 const GIG= 1048576 * 1024;
-const DEF_MAX_PLOTS= 8;
+export const OBSCORE_DEF_MAX_PLOTS= 8;
 
 
 /**
@@ -34,22 +35,24 @@ const DEF_MAX_PLOTS= 8;
  */
 export function makeObsCoreConverter(table,converterTemplate,options={}) {
     if (!table) return converterTemplate;
-    const canRelatedGrid= options.allowImageRelatedGrid?? false;
-    let canGrid= options.canGrid;
-    if (isUndefined(canGrid) && canRelatedGrid) {
-       canGrid= true;
-    }
-    const threeColor= converterTemplate.threeColor && options?.allowImageRelatedGrid;
+
+    const {maxPlots, initialLayout }= converterTemplate;
+    const hasDl= Boolean(getDLServiceDesc(table)) || isFormatDataLink(table,0);
+    const hasRelatedBands= Boolean(hasDl && converterTemplate.hasRelatedBands);
+    const canGrid= converterTemplate.canGrid ?? hasRelatedBands;
     const onlyImages= hasOnlyImages(table);
+    const threeColor= isUndefined(converterTemplate.threeColor) ? hasRelatedBands : converterTemplate.threeColor;
+
+    if (hasRelatedBands && (!onlyImages && options.limitViewerDisplay!==IMAGE_ONLY)) relatedBandWarning();
 
     return {
         ...converterTemplate,
-        initialLayout: options.dataLinkInitialLayout ?? 'single',
+        initialLayout: initialLayout ?? 'single',
         describeThreeColor: threeColor ? describeObsThreeColor : undefined,
         threeColor,
         canGrid: onlyImages && canGrid,
-        maxPlots: (canRelatedGrid||onlyImages) ? DEF_MAX_PLOTS : 1,
-        hasRelatedBands: canRelatedGrid,
+        maxPlots: (hasRelatedBands||onlyImages) ? maxPlots : 1,
+        hasRelatedBands,
         converterId: `ObsCore-${table.tbl_id}`
     };
 }
@@ -112,7 +115,7 @@ export function getObsCoreGridDataProduct(table, plotRows, activateParams, optio
  */
 export async function getObsCoreRelatedDataProduct(table, row, threeColorOps, highlightPlotId, activateParams, options) {
 
-    const canGrid= options?.allowImageRelatedGrid ?? false;
+    const canGrid= options?.hasRelatedBands ?? false;
     if (!canGrid) return Promise.reject('related data products not supported');
     const {titleStr,dataSource,prodType,isVoTable,isDataLinkRow, isPng}= getObsCoreRowMetaInfo(table,row);
     const errMsg= doErrorChecks(table,row,prodType,dataSource,isDataLinkRow,isVoTable);
@@ -149,6 +152,11 @@ export function getObsCoreDataProduct(table, row, activateParams, options) {
         }));
 
     return getObsCoreSingleDataProduct({table, row, activateParams, serviceDescMenuList, dlDescriptors, options});
+}
+
+function getDLServiceDesc(table) {
+    const descriptorsInFile= getServiceDescriptors(table);
+    return descriptorsInFile ? descriptorsInFile?.filter( (dDesc) => isDataLinkServiceDesc(dDesc))[0] : undefined;
 }
 
 
@@ -278,4 +286,8 @@ function getColNameFromTemplate(template) {
     return template.match(/\${[\w -.]+}/g)?.map( (s) => s.substring(2,s.length-1));
 }
 
+function relatedBandWarning() {
+    console.log('ObsCoreConverter: Warning: unable to show related bands for this table');
+    console.log('ObsCoreConverter: hasRelatedBands is set to true, this table must have only images or options.limitViewerDisplay must be IMAGE_ONLY');
+}
 

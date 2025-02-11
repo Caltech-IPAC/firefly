@@ -5,6 +5,7 @@ import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {Band} from '../../visualize/Band.js';
 import {WPConst} from '../../visualize/WebPlotRequest.js';
 import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, dispatchUpdateDataProducts} from '../DataProductsCntlr';
+import {IMAGE_ONLY, TABLE_ONLY} from '../DataProductsFactory';
 import {dpdtImage, dpdtMessageWithDownload, dpdtSimpleMsg, dpdtWorkingMessage, DPtypes} from '../DataProductsType.js';
 import {
     createGridImagesActivate, createRelatedGridImagesActivate, createSingleImageExtraction
@@ -127,8 +128,8 @@ export async function getDatalinkSingleDataProduct({ dlTableUrl,
         dispatchUpdateDataProducts(activateParams.dpId, dpdtWorkingMessage('Loading data products...', 'working'));
         const datalinkTable = await fetchDatalinkTable(dlTableUrl, options.datalinkTblRequestOptions);
         let parsingAlgorithm = USE_ALL;
-        if (options.singleViewImageOnly) parsingAlgorithm = IMAGE;
-        if (options.singleViewTableOnly) parsingAlgorithm = SPECTRUM;
+        if (options.limitViewerDisplay===IMAGE_ONLY) parsingAlgorithm = IMAGE;
+        if (options.limitViewerDisplay===TABLE_ONLY) parsingAlgorithm = SPECTRUM;
 
         return processDatalinkTable({
             sourceTable, row, datalinkTable, activateParams, baseTitle: titleStr,

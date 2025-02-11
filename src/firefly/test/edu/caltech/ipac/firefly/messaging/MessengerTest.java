@@ -39,8 +39,7 @@ public class MessengerTest extends ConfigTest {
 
     @Before
     public void setup() {
-        RedisService.connect();
-        if (RedisService.isOffline()) {
+        if (!RedisService.connect()) {
             System.out.println("Messenger is offline; skipping test.");
             isOffline = true;
         }

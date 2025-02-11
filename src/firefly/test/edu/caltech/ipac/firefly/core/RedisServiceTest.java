@@ -32,8 +32,7 @@ public class RedisServiceTest extends ConfigTest {
 
     @Before
     public void setup() {
-        RedisService.connect();
-        if (RedisService.isOffline()) {
+        if (!RedisService.connect()) {
             System.out.println("Messenger is offline; skipping test.");
         }
         if (false) Logger.setLogLevel(Level.TRACE);			// for debugging.
@@ -73,7 +72,7 @@ public class RedisServiceTest extends ConfigTest {
 
     private void testRedis() {
 
-        if (RedisService.isOffline()) return;
+        if (!RedisService.connect()) return;
 
         assertEquals(RedisService.Status.ONLINE, RedisService.getStatus());
 

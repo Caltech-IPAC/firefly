@@ -102,23 +102,22 @@ public class QueryUtil {
      * @return
      */
     public static File getTempDir(TableServerRequest tsr) {
-        if (tsr == null) { return new File(ServerContext.getTempWorkDir(), "bad-requests");}
         File tempDir;
-        if (tsr.getJobId() != null) {
+        if (tsr != null && !isEmpty(tsr.getJobId())) {
             var baseDir = new File(ServerContext.getStageWorkDir(), "jobs");
             tempDir = new File(baseDir, jobIdToDir(tsr.getJobId()));
         } else {
             tempDir = new File(ServerContext.getTempWorkDir(), getSessPrefix(tsr));
         }
-        if (!tempDir.exists()) tempDir.mkdirs();
+        tempDir.mkdirs();
         return tempDir;
     }
 
     /**
-     * returns a hierarchical temporary directory.
+     * returns a temporary directory based on a user's session ID.
      * @return
      */
-    public static File getTempDir(ServerRequest req) {
+    public static File getSessDir(TableServerRequest req) {
         File tempDir = new File(ServerContext.getTempWorkDir(), getSessPrefix(req));
         if (!tempDir.exists()) tempDir.mkdirs();
         return tempDir;

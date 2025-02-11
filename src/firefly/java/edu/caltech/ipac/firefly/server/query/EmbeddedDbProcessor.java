@@ -119,7 +119,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
     public DbAdapter getDbAdapter(TableServerRequest treq) {
         String reqId = treq.getRequestId();
         String hash = DigestUtils.md5Hex(getUniqueID(treq));
-        DbFileCreator dbFileCreator = (ext) -> new File(QueryUtil.getTempDir(treq), "%s_%s.%s".formatted(reqId, hash, ext));
+        DbFileCreator dbFileCreator = (ext) -> new File(QueryUtil.getSessDir(treq), "%s_%s.%s".formatted(reqId, hash, ext));
         return DbAdapter.getAdapter(treq, dbFileCreator);
     }
 

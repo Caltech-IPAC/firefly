@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.catquery;
 
+import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.network.HttpServices;
@@ -31,7 +32,8 @@ import java.util.stream.Collectors;
 @SearchProcessorImpl(id = "irsaCatalogMasterTable")
 public class CatMasterTableQuery extends EmbeddedDbProcessor {
 
-    private static final String MASTER_LOC = QueryUtil.makeUrlBase(BaseGator.DEF_HOST) + "/cgi-bin/Gator/nph-scan?mode=ascii";
+    private static final String MASTER_PARAMS= "/cgi-bin/Gator/nph-scan?mode=ascii";
+    private static final String MASTER_LOC = QueryUtil.makeUrlBase(BaseGator.DEF_HOST) + MASTER_PARAMS;
 
     static String getIrsaBaseUrl() {
         String baseUrl = AppProperties.getProperty("irsa.base.url", "https://irsa.ipac.caltech.edu");
@@ -41,7 +43,10 @@ public class CatMasterTableQuery extends EmbeddedDbProcessor {
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
 
         IpacTableHandler handler = new IpacTableHandler();
-        HttpServices.Status status = HttpServices.getData(new HttpServiceInput(MASTER_LOC), handler);
+        var locStr= req.getParam(CatalogRequest.GATOR_HOST);
+        String urlStr= MASTER_LOC;
+        if (!StringUtils.isEmpty(locStr)) urlStr= locStr+MASTER_PARAMS;
+        HttpServices.Status status = HttpServices.getData(new HttpServiceInput(urlStr), handler);
         if (status.isError()) {
             throw new DataAccessException("Unable to parse Master Table", status.getException());
         }
