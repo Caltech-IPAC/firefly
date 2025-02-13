@@ -14,24 +14,25 @@ from typing import List
 SLIDES: str = "\n" + ("=" * 40) + "\n"
 
 
-def extract(source: Path, destination: Path, prefix: str = "/", kind: str = "war"):
+def extract(source: Path, destination: Path, prefix: str = "/"):
     """Extract a file to a destination directory.
 
     Args:
         source (Path): Source directory to extract from
         destination (Path): Destination directory to extract to
         prefix (str, optional): Prefix extracted filepaths. Default is "/".
-        kind (str, optional): File extension to extract. Default is "war".
 
     Raises:
         FileNotFoundError: If source directory does not exist.
+        FileExistsError: If destination directory already exists.
     """
     extractions: dict[str, Path] = {}
+    # Default file extension to extract
+    kind: str = "war"
     print(f"{SLIDES} Extracting Files {SLIDES}")
     print(f"Source     : {source}")
     print(f"Destination: {destination}")
     print(f"Prefix     : {prefix}")
-    print(f"Kind       : {kind}")
     print("\n")
 
     if not source.exists() or not source.is_dir():
@@ -41,40 +42,50 @@ def extract(source: Path, destination: Path, prefix: str = "/", kind: str = "war
         # Only extract specified file extensions
         if item.is_file() and item.suffix == f".{kind}":
             filename = item.stem
-            print(f"Extracting: {item}")
             # Configure prefix for extracted files
-            prefix = prefix.replace("/", "#").strip("#")
-            if prefix:
-                landing = destination / f"{prefix}#{filename}"
-            else:
-                landing = destination / filename
+            landing = pathfix(destination, prefix, filename)
 
-            # Create landing directory if it does not exist
-            print(f"    Preparing -> {landing}")
-            landing.mkdir(parents=True, exist_ok=True)
             # Extract archive to landing directory
-            print(f"    Extracting {item} -> {landing}")
-            with ZipFile(item, "r") as archive:
-                archive.extractall(landing)
-            extractions[filename] = landing
+            if expand(item, landing):
+                extractions[filename] = landing
+
             # Modify log4j to send logs to stdout
-            log4j = destination / "WEB-INF/classes/log4j2.properties"
-            if log4j.exists():
-                # Create backup as log4j.properties.bak
-                print(f"    Modifying {log4j}")
-                shutil.copy(log4j, log4j.with_suffix(".bak"))
-                with open(log4j, "r+", encoding="utf-8") as file:
-                    content = file.read()
-                    content = content.replace("##out--", "")
-                    file.seek(0)
-                    file.write(content)
-                    file.truncate()
+            logfix(landing)
 
     # Copy secondary files for extracted archives to landing directory
+    copy(source, extractions)
+    print(f"{SLIDES} Extractions Done {SLIDES}")
+
+
+def pathfix(destination: Path, prefix: str, filename: str) -> Path:
+    """Fix the path for extracted files to include a prefix.
+
+    Args:
+        destination (Path): Top-level directory for extracted files.
+        prefix (str): URL prefix for extracted files.
+        filename (str): Name of the extracted file.
+
+    Returns:
+        Path: Path to extracted file with prefix.
+    """
+    prefix = prefix.replace("/", "#").strip("#")
+    if prefix:
+        landing = destination / f"{prefix}#{filename}"
+    else:
+        landing = destination / filename
+    return landing
+
+
+def copy(source: Path, extractions: dict[str, Path]):
+    """Copy project files from source to landing directory.
+
+    Args:
+        source (Path): Source directory to copy from
+        extractions (dict[str, Path]): Extracted files to copy to landing directory.
+    """
     for filename, landing in extractions.items():
         origin = source / f"{filename}"
         if origin.exists() and origin.is_dir():
-            print(f"Post Init: {origin}")
             for item in origin.iterdir():
                 if item.is_dir():
                     print(f"    Copying tree {item} -> {landing}")
@@ -82,7 +93,56 @@ def extract(source: Path, destination: Path, prefix: str = "/", kind: str = "war
                 else:
                     print(f"    Copying file {item} -> {landing}")
                     shutil.copy2(item, landing / item.name)
-    print(f"{SLIDES} Extractions Done {SLIDES}")
+
+
+def expand(archive: Path, landing: Path) -> bool:
+    """Extract a WAR archive to a landing directory.
+
+    Args:
+        archive (Path): WAR archive to extract
+        landing (Path): Destination directory to extract to
+
+    Raises:
+        error: Unknown error during extraction
+
+    Returns:
+        bool: True if extraction is successful.
+    """
+    try:
+        print(f"Extracting {archive}")
+        # Create landing directory if it does not exist
+        landing.mkdir(parents=True, exist_ok=False)
+        print(f"    Created DIR -> {landing}")
+        # Extract archive to landing directory
+        with ZipFile(archive, "r") as source:
+            source.extractall(landing)
+        print(f"    Extracted WAR {archive} -> {landing}")
+    except FileExistsError as error:
+        print(f"    Destination exists: {error}")
+        print(f"    Skipping {archive} extraction")
+    except Exception as error:
+        print(f"    Unknown extracting {archive}: {error}")
+        raise error
+    return True
+
+
+def logfix(landing: Path):
+    """Modify log4j2.properties to send logs to stdout.
+
+    Args:
+        landing (Path): Base path for extracted files.
+    """
+    log4j = landing / "WEB-INF/classes/log4j2.properties"
+    if log4j.exists():
+        # Create backup as log4j.properties.bak
+        print(f"    Modifying {log4j}")
+        shutil.copy(log4j, log4j.with_suffix(".bak"))
+        with open(log4j, "r+", encoding="utf-8") as file:
+            content = file.read()
+            content = content.replace("##out--", "")
+            file.seek(0)
+            file.write(content)
+            file.truncate()
 
 
 def add_multi_props_env_var():
@@ -142,7 +202,7 @@ def log_env_info(path_prefix: str, visualize_fits_search_path: str):
             Description                      Name                          Value
             -----------                      --------                      -----
             Admin username                   ADMIN_USER                    {os.getenv('ADMIN_USER')}
-            Admin password          s         ADMIN_PASSWORD                {os.getenv('ADMIN_PASSWORD')}
+            Admin password                   ADMIN_PASSWORD                {os.getenv('ADMIN_PASSWORD')}
             Additional data path             VISUALIZE_FITS_SEARCH_PATH    {visualize_fits_search_path}
             Clean internal (e.g., 720m, 5h)  CLEANUP_INTERVAL              {os.getenv('CLEANUP_INTERVAL', '')}
             Context path prefix              PATH_PREFIX                   {path_prefix}
@@ -289,7 +349,7 @@ def main():
     catalina: Path = Path(catalina_home)
     webapps_ref: Path = catalina / "webapps-ref"
     webapps: Path = catalina / "webapps"
-    extract(source=webapps_ref, destination=webapps, prefix=path_prefix, kind="war")
+    extract(source=webapps_ref, destination=webapps, prefix=path_prefix)
 
     # check for no-ops flags
     if len(sys.argv) > 1:

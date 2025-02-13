@@ -1,13 +1,20 @@
+"""This module contains the unit tests for the entrypoint script."""
+
 import unittest
 from unittest.mock import patch
 import os
 import shutil
 from pathlib import Path
-from zipfile import ZipFile
+import tempfile
 import entrypoint  # Import your script
 
 
 class TestEntrypoint(unittest.TestCase):
+    """Entrypoint Test Class.
+
+    Args:
+        unittest (obj): The unittest class.
+    """
 
     @patch.dict(
         os.environ,
@@ -66,6 +73,55 @@ class TestEntrypoint(unittest.TestCase):
 
         for option in expected_options:
             self.assertIn(option, result)
+
+    def setUp(self):
+        """Set up the test environment"""
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp_dir.cleanup)
+        self.source = Path(self.temp_dir.name) / "source"
+        self.destination = Path(self.temp_dir.name) / "destination"
+        self.source.mkdir()
+        (self.source / "sample.txt").write_text("content")
+        shutil.make_archive(str(self.source / "sample"), "zip", self.source)
+        # Rename the zip file to war
+        os.rename(self.source / "sample.zip", self.source / "sample.war")
+
+    def test_extract_success(self):
+        """Test the extract function with a successful extraction"""
+        # Call the function
+        entrypoint.extract(self.source, self.destination, "/mock/prefix")
+
+        # Assertions
+        output = self.destination / "mock#prefix#sample"
+        self.assertTrue(output.exists())
+        self.assertTrue(output.is_dir())
+        self.assertTrue((output / "sample.txt").exists())
+
+        # Cleanup output directory
+        shutil.rmtree(output)
+
+    def test_extract_source_not_exist(self):
+        """Test the extract function when the source does not exist"""
+        # Remove source directory to simulate non-existence
+        shutil.rmtree(self.source)
+        # Call the function
+        with self.assertRaises(FileNotFoundError):
+            entrypoint.extract(self.source, self.destination, "/mock/prefix")
+
+    def test_extract_copy_secondary_files(self):
+        """Test the extract function with additional files in the source directory"""
+        additional = self.source / "sample"
+        additional.mkdir()
+        (additional / "sampler.txt").write_text("contents")
+
+        # Call the function
+        entrypoint.extract(self.source, self.destination, "/")
+
+        # Assertions
+        output = self.destination / "sample"
+        self.assertTrue(output.exists())
+        self.assertTrue(output.is_dir())
+        self.assertTrue((output / "sampler.txt").exists())
 
 
 if __name__ == "__main__":
