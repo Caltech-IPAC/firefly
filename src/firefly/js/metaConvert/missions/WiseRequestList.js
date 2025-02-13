@@ -42,37 +42,41 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
         const req= svcBuilder(plotId, reqKey, title, rowNum, extraParams);
         req.setAttributes({[PlotAttribute.PREFERENCE_COLOR_KEY]:'wise-color-pref'});
         const subsize = get(table, 'request.subsize');
-        const {UserTargetWorldPt, sizeUnit, refSourceId, sourceId} = get(table, 'request', {});
+        const {UserTargetWorldPt, sizeUnit, refSourceId, sourceId,coaddId,scanId} = get(table, 'request', {});
 
 
         const setSubSize= () => req.setParam('subsize', `${sizeUnit? convertAngle(sizeUnit, 'deg', subsize) : subsize}`);
         let wp;
-        if (subsize>0) {
-            if (getMetaEntry(table,'DataType')==='MOS') {
-                const ra_obj= getCellValue(table,row,'ra_obj');
-                const dec_obj= getCellValue(table,row,'dec_obj');
-                if (ra_obj && dec_obj) {
-                    wp = makeWorldPt(ra_obj, dec_obj, CoordinateSys.EQ_J2000);
-                    req.setParam('center', `${ra_obj},${dec_obj}`);
-                    req.setParam('in_ra', `${ra_obj}`);
-                    req.setParam('in_dec', `${dec_obj}`);
+        // for position search overlay the search object/position
+        if (getMetaEntry(table,'DataType')==='MOS') {
+            const ra_obj= getCellValue(table,row,'ra_obj');
+            const dec_obj= getCellValue(table,row,'dec_obj');
+            if (ra_obj && dec_obj) {
+                wp = makeWorldPt(ra_obj, dec_obj, CoordinateSys.EQ_J2000);
+                req.setParam('center', `${ra_obj},${dec_obj}`);
+                req.setParam('in_ra', `${ra_obj}`);
+                req.setParam('in_dec', `${dec_obj}`);
+                if (subsize > 0) {
                     setSubSize();
-                }
-            } else if (UserTargetWorldPt || sourceId) {
-                const ra_in= getCellValue(table,row,'in_ra');
-                const dec_in= getCellValue(table,row,'in_dec');
-                // cutout is requested when in_ra, in_dec, and subsize are set (see WiseIbeDataSource)
-                if (!isNil(ra_in) && !isNil(dec_in)) {
-                    req.setParam('center', `${ra_in},${dec_in}`);
-                    req.setParam('in_ra', `${ra_in}`);
-                    req.setParam('in_dec', `${dec_in}`);
-                    setSubSize();
-                    wp = makeWorldPt(ra_in, dec_in, CoordinateSys.EQ_J2000);
                 }
             }
-            wp && req.setOverlayPosition(wp);
+        } else if (UserTargetWorldPt || sourceId) {
+            const ra_in= getCellValue(table,row,'in_ra');
+            const dec_in= getCellValue(table,row,'in_dec');
+            // cutout is requested when in_ra, in_dec, and subsize are set (see WiseIbeDataSource)
+            if (!isNil(ra_in) && !isNil(dec_in)) {
+                wp = makeWorldPt(ra_in, dec_in, CoordinateSys.EQ_J2000);
+                req.setParam('center', `${ra_in},${dec_in}`);
+                req.setParam('in_ra', `${ra_in}`);
+                req.setParam('in_dec', `${dec_in}`);
+                if (subsize > 0) {
+                    setSubSize();
+                }
+            }
         }
-        if (refSourceId) {
+
+        // for none position search use reference ra/dec (crval1, crval2) for overlay
+        if (refSourceId || coaddId || scanId) {
             const ra_in= getCellValue(table,row,'crval1');
             const dec_in= getCellValue(table,row,'crval2');
             //no cutout
@@ -82,8 +86,8 @@ export function makeWisePlotRequest(table, row, includeSingle, includeStandard, 
                 req.setParam('in_dec', `${dec_in}`);
                 wp = makeWorldPt(ra_in, dec_in, CoordinateSys.EQ_J2000);
             }
-            wp && req.setOverlayPosition(wp);
         }
+        wp && req.setOverlayPosition(wp);
         return req;
     };
 
