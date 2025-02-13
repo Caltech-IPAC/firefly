@@ -5,7 +5,7 @@ services:
       context: ../
       dockerfile: firefly/docker/Dockerfile
     ports:
-      - "8081:8080"
+      - "8080:8080"
     env_file:
       - ./firefly-docker.env
 
