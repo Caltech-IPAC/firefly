@@ -136,7 +136,7 @@ def logfix(landing: Path):
     if log4j.exists():
         # Create backup as log4j.properties.bak
         print(f"    Modifying {log4j}")
-        shutil.copy(log4j, log4j.with_suffix(".bak"))
+        shutil.copy(log4j, log4j.with_name(log4j.name + ".bak"))
         with open(log4j, "r+", encoding="utf-8") as file:
             content = file.read()
             content = content.replace("##out--", "")
