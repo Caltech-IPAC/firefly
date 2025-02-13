@@ -118,7 +118,7 @@ public final class DownloadScriptWorker implements Job.Worker {
 
                     //retrieve attributes based on scriptType
                     List<ScriptAttributes> attribute = scriptTypeMap.getOrDefault(scriptType.toLowerCase(), text);
-                    DownloadScript.composeDownloadScript(outFile, "Euclid", urlList, attribute);
+                    DownloadScript.composeDownloadScript(outFile, dlreq.getDataSource(), urlList, attribute);
 
                     if (outFile.exists()) {
                         String fileExtension = scriptTypeToExtension.getOrDefault(scriptType.toLowerCase(), ".txt");
