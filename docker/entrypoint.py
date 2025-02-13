@@ -6,28 +6,143 @@ import random
 import base64
 import subprocess
 import shlex
+import shutil
+from pathlib import Path
+from zipfile import ZipFile
+from typing import List
+
+SLIDES: str = "\n" + ("=" * 40) + "\n"
 
 
-def extract_war_files(webapps_dir, webapps_ref, path_prefix):
+def extract(source: Path, destination: Path, prefix: str = "/"):
+    """Extract a file to a destination directory.
+
+    Args:
+        source (Path): Source directory to extract from
+        destination (Path): Destination directory to extract to
+        prefix (str, optional): Prefix extracted filepaths. Default is "/".
+
+    Raises:
+        FileNotFoundError: If source directory does not exist.
+        FileExistsError: If destination directory already exists.
     """
-    Prepare webapps on first-time startup:
-    - Extract WAR files from webapps-ref to webapps.
-    - Modify log4j to send logs to stdout.
-    - Modify context path (pathPrefix) if given.
+    extractions: dict[str, Path] = {}
+    # Default file extension to extract
+    kind: str = "war"
+    print(f"{SLIDES} Extracting Files {SLIDES}")
+    print(f"Source     : {source}")
+    print(f"Destination: {destination}")
+    print(f"Prefix     : {prefix}")
+    print("\n")
 
-    :param webapps_dir: Path to the webapps directory.
-    :param webapps_ref: Path to the webapps reference directory.
-    :param path_prefix: Prefix for the context path.
+    if not source.exists() or not source.is_dir():
+        raise FileNotFoundError(f"Source directory does not exist: {source}")
+
+    for item in source.iterdir():
+        # Only extract specified file extensions
+        if item.is_file() and item.suffix == f".{kind}":
+            filename = item.stem
+            # Configure prefix for extracted files
+            landing = pathfix(destination, prefix, filename)
+
+            # Extract archive to landing directory
+            if expand(item, landing):
+                extractions[filename] = landing
+
+            # Modify log4j to send logs to stdout
+            logfix(landing)
+
+    # Copy secondary files for extracted archives to landing directory
+    copy(source, extractions)
+    print(f"{SLIDES} Extractions Done {SLIDES}")
+
+
+def pathfix(destination: Path, prefix: str, filename: str) -> Path:
+    """Fix the path for extracted files to include a prefix.
+
+    Args:
+        destination (Path): Top-level directory for extracted files.
+        prefix (str): URL prefix for extracted files.
+        filename (str): Name of the extracted file.
+
+    Returns:
+        Path: Path to extracted file with prefix.
     """
-    if not os.listdir(webapps_dir):
-        for war in os.listdir(webapps_ref):
-            if war.endswith(".war"):
-                fn = os.path.splitext(war)[0]
-                prefix = path_prefix.replace("/", "#").strip("#")
-                war_dir = os.path.join(webapps_dir, f"{prefix}#{fn}" if prefix else fn)
-                os.makedirs(war_dir, exist_ok=True)
-                subprocess.call(["unzip", "-oqd", war_dir, os.path.join(webapps_ref, war)])
-                subprocess.call(["sed", "-E", "-i.bak", "s/##out--//", os.path.join(war_dir, "WEB-INF/classes/log4j2.properties")])
+    prefix = prefix.replace("/", "#").strip("#")
+    if prefix:
+        landing = destination / f"{prefix}#{filename}"
+    else:
+        landing = destination / filename
+    return landing
+
+
+def copy(source: Path, extractions: dict[str, Path]):
+    """Copy project files from source to landing directory.
+
+    Args:
+        source (Path): Source directory to copy from
+        extractions (dict[str, Path]): Extracted files to copy to landing directory.
+    """
+    for filename, landing in extractions.items():
+        origin = source / f"{filename}"
+        if origin.exists() and origin.is_dir():
+            for item in origin.iterdir():
+                if item.is_dir():
+                    print(f"    Copying tree {item} -> {landing}")
+                    shutil.copytree(item, landing / item.name, dirs_exist_ok=True)
+                else:
+                    print(f"    Copying file {item} -> {landing}")
+                    shutil.copy2(item, landing / item.name)
+
+
+def expand(archive: Path, landing: Path) -> bool:
+    """Extract a WAR archive to a landing directory.
+
+    Args:
+        archive (Path): WAR archive to extract
+        landing (Path): Destination directory to extract to
+
+    Raises:
+        error: Unknown error during extraction
+
+    Returns:
+        bool: True if extraction is successful.
+    """
+    try:
+        print(f"Extracting {archive}")
+        # Create landing directory if it does not exist
+        landing.mkdir(parents=True, exist_ok=False)
+        print(f"    Created DIR -> {landing}")
+        # Extract archive to landing directory
+        with ZipFile(archive, "r") as source:
+            source.extractall(landing)
+        print(f"    Extracted WAR {archive} -> {landing}")
+    except FileExistsError as error:
+        print(f"    Destination exists: {error}")
+        print(f"    Skipping {archive} extraction")
+    except Exception as error:
+        print(f"    Unknown extracting {archive}: {error}")
+        raise error
+    return True
+
+
+def logfix(landing: Path):
+    """Modify log4j2.properties to send logs to stdout.
+
+    Args:
+        landing (Path): Base path for extracted files.
+    """
+    log4j = landing / "WEB-INF/classes/log4j2.properties"
+    if log4j.exists():
+        # Create backup as log4j.properties.bak
+        print(f"    Modifying {log4j}")
+        shutil.copy(log4j, log4j.with_name(log4j.name + ".bak"))
+        with open(log4j, "r+", encoding="utf-8") as file:
+            content = file.read()
+            content = content.replace("##out--", "")
+            file.seek(0)
+            file.write(content)
+            file.truncate()
 
 
 def add_multi_props_env_var():
@@ -77,9 +192,10 @@ def add_single_prop_env_vars():
     return props_opts
 
 
-def log_env_info(path_prefix, visualize_fits_search_path):
+def log_env_info(path_prefix: str, visualize_fits_search_path: str):
     """Log environment variables and configuration information."""
-    print(f"""
+    print(
+        f"""
     ========== Information: You can set environment variables using -e on the docker run line =====
 
     Environment Variables:
@@ -117,35 +233,44 @@ def log_env_info(path_prefix, visualize_fits_search_path):
     Command line options:
             --help  : show help message, examples, stop
             --debug : start in debug mode
-    """)
+    """
+    )
 
 
-def show_help(name):
-    """Show help message and exit."""
-    with open("./start-examples.txt") as f:
+def show_help(name: str, webapps_ref: Path):
+    """Show help message and examples.
+
+    Args:
+        name (str): Application name
+        webapps_ref (Path): Reference webapps directory
+    """
+    with open("./start-examples.txt", encoding="utf-8") as f:
         print(f.read().replace("ipac/firefly", name))
 
-    war_files = [f for f in os.listdir(webapps_ref) if f.endswith(".war")]
-    if war_files and war_files[0] == "firefly.war":
-        with open("./customize-firefly.txt") as f:
-            print(f.read())
+    for item in webapps_ref.iterdir():
+        if item.is_file() and item.stem == "firefly" and item.suffix == ".war":
+            with open("./customize-firefly.txt", encoding="utf-8") as f:
+                print(f.read())
     sys.exit(0)
 
 
-def dry_run(cmd, webapps_dir):
-    """Display a dry run of the command and environment setup."""
-    print("\n\n----------------------")
-    print(f"Command: {' '.join(cmd)}")
-    print(f"CATALINA_OPTS: {os.getenv('CATALINA_OPTS')}\n")
+def dry_run(cmd: List[str], webapps: Path):
+    """Display a dry run of the command and environment setup.
 
-    print(f"Contents of '{webapps_dir}':")
-    for item in os.listdir(webapps_dir):
-        item_path = os.path.join(webapps_dir, item)
-        if os.path.isdir(item_path):
-            print(f" [DIR]  {item}")
+    Args:
+        cmd (List[str]): Command to run
+        webapps (Path): Webapps directory
+    """
+    print(f"\n{SLIDES} DRY RUN {SLIDES}")
+    print(f"COMMAND      : {' '.join(cmd)}")
+    print(f"CATALINA_OPTS: {os.getenv('CATALINA_OPTS')}\n")
+    print(f"WEBAPPS      : {webapps}':")
+    for item in webapps.iterdir():
+        if item.is_dir():
+            print(f" [DIR]  {item.name}")
         else:
-            print(f" [FILE] {item}")
-    print()
+            print(f" [FILE] {item.name}")
+    print(f"{SLIDES} DRY RUN COMPLETE {SLIDES}")
     sys.exit(0)
 
 
@@ -159,29 +284,40 @@ def main():
     start_mode = os.getenv("START_MODE", "run")
     name = os.getenv("BUILD_TIME_NAME", "ipac/firefly")
     admin_user = os.getenv("ADMIN_USER", "admin")
-    admin_password = os.getenv("ADMIN_PASSWORD", base64.b64encode(str(random.randint(100000, 999999)).encode()).decode()[:8])
+    admin_password = os.getenv(
+        "ADMIN_PASSWORD",
+        base64.b64encode(str(random.randint(100000, 999999)).encode()).decode()[:8],
+    )
     use_admin_auth = os.getenv("USE_ADMIN_AUTH", "true").lower()
-    path_prefix = os.getenv("PATH_PREFIX") or os.getenv("baseURL") or ""      # use PATH_PREFIX; baseURL is for backward compatibility
+    path_prefix = (
+        os.getenv("PATH_PREFIX") or os.getenv("baseURL") or ""
+    )  # use PATH_PREFIX; baseURL is for backward compatibility
 
-    vis_path = "/external" if not visualize_fits_search_path \
+    vis_path = (
+        "/external"
+        if not visualize_fits_search_path
         else f"/external:{visualize_fits_search_path}"
+    )
 
-    catalina_opts = " ".join([
-        f"-XX:InitialRAMPercentage={os.getenv('INIT_RAM_PERCENT', '10')}",
-        f"-XX:MaxRAMPercentage={os.getenv('MAX_RAM_PERCENT', '80')}",
-        "-XX:+UnlockExperimentalVMOptions", "-XX:TrimNativeHeapInterval=30000",
-        f"-DADMIN_USER={admin_user}",
-        f"-DADMIN_PASSWORD={admin_password}",
-        f"-Dhost.name={os.getenv('HOSTNAME', '')}",
-        f"-Dserver.cores={os.getenv('JVM_CORES', '')}",
-        "-Djava.net.preferIPv4Stack=true",
-        "-Dwork.directory=/firefly/workarea",
-        "-Dshared.work.directory=/firefly/shared-workarea",
-        "-Dserver_config_dir=/firefly/config",
-        "-Dstats.log.dir=/firefly/logs/statistics",
-        "-Dalerts.dir=/firefly/alerts",
-        f"-Dvisualize.fits.search.path={vis_path}"
-    ])
+    catalina_opts = " ".join(
+        [
+            f"-XX:InitialRAMPercentage={os.getenv('INIT_RAM_PERCENT', '10')}",
+            f"-XX:MaxRAMPercentage={os.getenv('MAX_RAM_PERCENT', '80')}",
+            "-XX:+UnlockExperimentalVMOptions",
+            "-XX:TrimNativeHeapInterval=30000",
+            f"-DADMIN_USER={admin_user}",
+            f"-DADMIN_PASSWORD={admin_password}",
+            f"-Dhost.name={os.getenv('HOSTNAME', '')}",
+            f"-Dserver.cores={os.getenv('JVM_CORES', '')}",
+            "-Djava.net.preferIPv4Stack=true",
+            "-Dwork.directory=/firefly/workarea",
+            "-Dshared.work.directory=/firefly/shared-workarea",
+            "-Dserver_config_dir=/firefly/config",
+            "-Dstats.log.dir=/firefly/logs/statistics",
+            "-Dalerts.dir=/firefly/alerts",
+            f"-Dvisualize.fits.search.path={vis_path}",
+        ]
+    )
 
     # Remove admin protection if disabled
     if use_admin_auth == "false":
@@ -196,7 +332,9 @@ def main():
     os.environ["CATALINA_OPTS"] = catalina_opts
     os.environ["ADMIN_USER"] = admin_user
     os.environ["ADMIN_PASSWORD"] = admin_password
-    debug_mode = os.getenv("DEBUG", "false").lower() == "true" or (len(sys.argv) > 1 and sys.argv[1] == "--debug")
+    debug_mode = os.getenv("DEBUG", "false").lower() == "true" or (
+        len(sys.argv) > 1 and sys.argv[1] == "--debug"
+    )
     cmd = [f"{catalina_home}/bin/catalina.sh"]
     if debug_mode:
         cmd.append("jpda")
@@ -208,21 +346,23 @@ def main():
     # Setup examples
     subprocess.call("./setupFireflyExample.sh", shell=True)
 
-    # Prepare webapps on first-time startup
-    webapps_dir = os.path.join(catalina_home, "webapps")
-    webapps_ref = os.path.join(catalina_home, "webapps-ref")
-    extract_war_files(webapps_dir, webapps_ref, path_prefix)
+    catalina: Path = Path(catalina_home)
+    webapps_ref: Path = catalina / "webapps-ref"
+    webapps: Path = catalina / "webapps"
+    extract(source=webapps_ref, destination=webapps, prefix=path_prefix)
 
     # check for no-ops flags
     if len(sys.argv) > 1:
         arg = sys.argv[1]
         if arg in ["--help", "-help", "-h"]:
-            show_help(name)
+            show_help(name, webapps_ref)
         elif arg == "--dry-run":
-            dry_run(cmd, webapps_dir)
+            dry_run(cmd, webapps)
 
     # Start background cleanup
-    subprocess.Popen([f"{catalina_home}/cleanup.sh", "/firefly/workarea", "/firefly/shared-workarea"])
+    subprocess.Popen(
+        [f"{catalina_home}/cleanup.sh", "/firefly/workarea", "/firefly/shared-workarea"]
+    )
 
     # Start Tomcat; Replace the current process with Tomcat
     print("Starting Tomcat...")
