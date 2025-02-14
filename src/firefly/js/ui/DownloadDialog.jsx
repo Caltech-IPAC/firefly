@@ -27,6 +27,7 @@ import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {Stack, Typography, Box} from '@mui/joy';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton';
+import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
 const OptionsContext = React.createContext();
@@ -299,6 +300,21 @@ export function DownloadCutout({fieldKey='dlCutouts'}) {
         />
     );
 }
+
+export function ScriptTypeOptions({fieldKey='scriptType', ...props}) {
+    return (
+        <RadioGroupInputField
+            fieldKey={fieldKey}
+            orientation={'horizontal'}
+            initialState={{value: 'curl'}}
+            options={[{label: 'Curl', value: 'curl'}, {label: 'Wget', value: 'wget'}, {label: 'Plain Text (URLs)', value: 'urls'}]}
+            label='Download Script:'
+            tooltip='Choose the download script type'
+            {...props}
+        />
+    );
+}
+
 export function EmailNotification({style, groupKey}) {
     const enableEmail = useStoreConnector(() => getFieldVal(groupKey, emailNotif));
 
