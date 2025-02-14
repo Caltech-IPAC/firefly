@@ -515,7 +515,10 @@ function initRequest(r,viewerId,plotId, overlayPos, wp) {
 function getBestOrderCoverageSize(hpxIndex) {
     const orderData = hpxIndex?.orderData;
     if (!orderData) return 8;
-    for (let i= DATA_NORDER; i>8; i--) {
+
+    const start= DATA_NORDER-1;
+
+    for (let i= start; i>8; i--) {
         if (getPixelCount(orderData,i)<20) return i;
     }
     for (let i= 8; i>MIN_NORDER; i--) {

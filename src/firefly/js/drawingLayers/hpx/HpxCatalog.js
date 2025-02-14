@@ -7,7 +7,7 @@ import {
 import {
     dispatchTableHighlight, dispatchTableUiUpdate, TABLE_HIGHLIGHT, TABLE_REMOVE, TABLE_SELECT, TABLE_UPDATE
 } from '../../tables/TablesCntlr';
-import {getMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil';
+import {getCellValue, getMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil';
 import CysConverter from '../../visualize/CsysConverter';
 import {COLOR_HIGHLIGHTED_PT, getNextColor, makeDrawingDef} from '../../visualize/draw/DrawingDef';
 import DrawLayer, {ColorChangeType, DataTypes} from '../../visualize/draw/DrawLayer';
@@ -23,10 +23,11 @@ import ImagePlotCntlr, {dispatchUseTableAutoScroll, visRoot} from '../../visuali
 import {
     getCenterOfProjection, getConnectedPlotsIds, getDrawLayerById, getPlotViewIdListByPositionLock, primePlot
 } from '../../visualize/PlotViewUtil';
-import {pointEquals} from '../../visualize/Point';
+import {makeWorldPt, pointEquals} from '../../visualize/Point';
 import {makeTableColorTitle} from '../../visualize/ui/DrawLayerUIComponents';
 import {MouseState} from '../../visualize/VisMouseSync';
 import {isHiPS, isImage} from '../../visualize/WebPlot';
+import {findTableCenterColumns, makeWorldPtUsingCenterColumns} from '../../voAnalyzer/TableAnalysis';
 import {CatalogType} from '../Catalog';
 import {getUIComponent} from '../CatalogUI';
 import {
@@ -261,9 +262,10 @@ function getDrawData(dataType, plotId, drawLayer, action, lastDataRet) {
 function getHighlightData(dl) {
     if (isNaN(dl.highlightedRow)) return [];
     const idxData= getHpxIndexData(dl.tbl_id);
-    if (!idxData) return [];
+     // two ways to fine the highlighted point, one should always work
+    let wpt= makeWorldPtUsingCenterColumns(dl.tbl_id,dl.highlightedRow);
+    if (!wpt && idxData) wpt= makeHpxWpt(idxData,dl.highlightedRow);
 
-    const wpt= makeHpxWpt(idxData,dl.highlightedRow);
     if (!wpt) return [];
     const s = dl.drawingDef.size+2 || 5;
     const s2 = DrawUtil.getSymbolSizeBasedOn(DrawSymbol.X, Object.assign({}, dl.drawingDef, {size: s}));
@@ -365,11 +367,20 @@ const tableAborts= {};
 async function makeTileDataAndUpdate(dl, plotId, tbl_id, clearExpanded=true, newExpanded) {
     const abortId= `${dl.drawLayerId}-${tbl_id}-${plotId}`;
     tableAborts[abortId]?.();
-    const {makeTileData, abort}= createTileDataMaker();
-    tableAborts[abortId]= abort;
-    const newDrawData= await makeTileData(dl, plotId, tbl_id, clearExpanded ? {} : newExpanded ?? dl.expandedTiles);
+    const expanded= clearExpanded ? {} : newExpanded ?? dl.expandedTiles;
+    const tileMaker= createTileDataMaker({drawLayer:dl, plotId, tbl_id,expanded});
+    tableAborts[abortId]= tileMaker.abort;
+    const newDrawData= await tileMaker.makeTileData(dl, plotId, tbl_id, );
     if (!newDrawData) return;
+    updateDrawDataOnLayer(newDrawData, dl, plotId, newExpanded, clearExpanded);
 
+    if (tileMaker.hasPartialTileUpdate()) {
+        const updatedNewDrawData= await tileMaker.getSecondaryPartialTileUpdate();
+        if (updatedNewDrawData) updateDrawDataOnLayer(updatedNewDrawData, dl, plotId, newExpanded, clearExpanded);
+    }
+}
+
+function updateDrawDataOnLayer(newDrawData, dl, plotId, newExpanded, clearExpanded, ) {
     const updatedDl= getDrawLayerById(dlRoot(),dl.drawLayerId);
     const newDl= {...updatedDl};
     if (!newDl.drawData) newDl.drawData={data:{}};
@@ -378,4 +389,5 @@ async function makeTileDataAndUpdate(dl, plotId, tbl_id, clearExpanded=true, new
     if (clearExpanded) newDl.expandedTiles={};
     dispatchUpdateDrawLayer(newDl);
     dispatchForceDrawLayerUpdate(dl.drawLayerId, plotId);
+
 }

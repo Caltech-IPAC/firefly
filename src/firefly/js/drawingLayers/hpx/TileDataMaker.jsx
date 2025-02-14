@@ -1,7 +1,10 @@
+import {uniq} from 'lodash';
 import {
-    DATA_NORDER, getAllDataIndexes, getAllSelectedIndexes, getFirstIndex, getHpxIndexData, getKeysForOrder,
-    getTile, idxRoot, makeHpxWpt, MIN_NORDER,
-    MIN_NORDER_FOR_COVERAGE, MIN_NORDER_TO_ALWAYS_GROUP, MIN_ROWS_FOR_HIERARCHICAL, onOrderDataReady
+    DATA_NORDER, fetchPartialData, getAllSelectedIndexes, getHpxIndexData,
+    getKeysForOrder,
+    getTile, idxRoot, MIN_NORDER,
+    MIN_NORDER_FOR_COVERAGE, MIN_NORDER_TO_ALWAYS_GROUP, MIN_ROWS_FOR_HIERARCHICAL, onOrderDataReady,
+    getAllWptsIdxsForTile, getRetroGradeIpix, isSummaryTile,
 } from '../../tables/HpxIndexCntlr';
 import {getTblById} from '../../tables/TableUtil';
 import CoordSys from '../../visualize/CoordSys';
@@ -15,128 +18,197 @@ import {makeSingleDrawPoint, makeSmartGridTypeGroupDrawPoint} from './HpxDraw';
 
 const MAX_SYNC_AREA = 1_000_000;
 
-export function createTileDataMaker() {
-    let isAborted = false;
+/**
+ *
+ * @param obj
+ * @param obj.drawLayer
+ * @param obj.plotId
+ * @param obj.tbl_id
+ * @param obj.expanded
+ * @return {{abort: function, makeTileData, hasPartialTileUpdate, getSecondaryPartialTileUpdate}
+ */
+export function createTileDataMaker({drawLayer, plotId, tbl_id, expanded={}}) {
+    let doAbort = false;
+    let partialPromise= undefined;
+    let partialUpdateAvailable= false;
+    const isAborted= () => doAbort;
 
-    const makeTileDataAll = async (drawLayer, plotId, tbl_id, expanded = {}) => {
+    const makeTileDataAll = async () => {
         const table = getTblById(tbl_id);
         const plot = primePlot(visRoot(), plotId);
         if (!drawLayer || !plot?.viewDim || !table) return;
         await onOrderDataReady(tbl_id);
 
-        if (isAborted) return;
+        if (isAborted()) return;
 
+        const tileDataParams= setupTileDataParams(drawLayer,table,plot,expanded);
 
-        const minGroupSize= drawLayer.groupType===HEAT_MAP_GROUP_TYPE ? 0 : drawLayer.minGroupSize;
-
-        const idxData = getHpxIndexData(tbl_id);
-        if (!idxData) return;
-
-        let showLabels= true;
-        let norder;
-        let groupType= drawLayer.groupType;
-        if (drawLayer.groupType===HEAT_MAP_GROUP_TYPE) {
-            const result= getHeatMapNorder(getCatalogNorderlevel(plot, MIN_NORDER, DATA_NORDER, HPX_GRID_SIZE_LARGE));
-            showLabels= result.showLabels && drawLayer.heatMapLabels;
-            norder= result.norder;
-        }
-        else {
-            norder = getCatalogNorderlevel(plot, MIN_NORDER, DATA_NORDER, drawLayer.gridSize);
+        const {idxData,unloadedNorder,unloadedTiles}= tileDataParams;
+        if (idxData?.partialIndexData && unloadedTiles?.length) {
+            partialUpdateAvailable= true;
+            partialPromise= fetchPartialData(table,unloadedNorder,unloadedTiles);
         }
 
-        if (getFoV(plot) > 176) {
-            norder= 2;
-            groupType= BOX_GROUP_TYPE;
-        }
+        return doMakeTileData(tileDataParams);
+    };
 
-
-        const expandedTiles = {};
-        const {viewDim = {width: 1, height: 1}} = plot;
-        let doAsync = viewDim.width * viewDim.height > MAX_SYNC_AREA;
-        if (expanded[plotId]?.norder && expanded[plotId]?.ipixAry?.length) {
-            expandedTiles[expanded[plotId].norder] = expanded[plotId].ipixAry;
-            doAsync = true;
-        }
-        else if (visRoot().wcsMatchType && visRoot().plotViewAry.length>5) {
-            doAsync= true;
-        }
-        else if (drawLayer.groupType===HEAT_MAP_GROUP_TYPE) {
-            doAsync= true;
-        }
-
-        const {drawingDef} = drawLayer;
-        const {selectAll = false} = table.selectInfo ?? {};
-
-        const {centerWp, fov} = getPointMaxSide(plot, plot.viewDim);
-        const coverageTblIds = hasCoverageTables(centerWp, fov, isHiPSAitoff(plot));
-        if (!centerWp || !coverageTblIds.includes(tbl_id)) return []; // this should force a clear for this layer
-        const cells = getAllVisibleHiPSCells(norder, centerWp, fov*1.3, CoordSys.EQ_J2000, isHiPSAitoff(plot));
-        const tblIdx = coverageTblIds.indexOf(tbl_id);
-        const cc = CysConverter.make(plot);
-
-        const tileDataParams = {
-            cc,
-            minGroupSize,
-            idxData,
-            cells,
-            norder,
-            showLabels,
-            drawingDef,
-            expandedTiles,
-            selectAll,
-            tblIdx,
-            totalRows: table.totalRows,
-            groupType,
-            heatMapStretch:drawLayer.heatMapStretch,
-        };
-
-        return doAsync ?
-            new Promise((resolve) => doMakeTileDataInterval({resolve, ...tileDataParams})) :
+    const doMakeTileData= (tileDataParams) => {
+        return tileDataParams.doAsync ?
+            new Promise((resolve) => doMakeTileDataInterval(isAborted, {resolve, ...tileDataParams})) :
             doMakeTileDataSync(tileDataParams);
     };
 
-    const doMakeTileDataSync = ({cells, ...tileDataParams}) => {
-        let plotData = [];
-        for (let index = 0; index < cells.length; index++) {
-            const pts = getDrawDataForCell({cell: cells[index], ...tileDataParams});
-            plotData= addTo(plotData,pts);
-        }
-        return plotData;
-    };
-
-    const doMakeTileDataInterval = ({resolve, cells, ...tileDataParams}) => {
-
-        let plotData = [];
-        let done = false;
-        let index = 0;
-        const length = cells.length;
-
-        const id = window.setInterval(
-            () => {
-                if (isAborted) resolve(undefined);
-                if (done || isAborted) {
-                    done = true;
-                    window.clearInterval(id);
-                    return;
-                }
-
-                for (; index < length;) {
-                    const pts = getDrawDataForCell({cell: cells[index], ...tileDataParams});
-                    plotData= addTo(plotData,pts);
-                    index++;
-                    if (pts.length > 300) return;
-                }
-                done = true;
-                resolve(plotData);
-            }
-        );
+    const getSecondaryPartialTileUpdate= async () => {
+        if (!partialPromise || !partialUpdateAvailable || isAborted()) return;
+        await partialPromise;
+        if (isAborted()) return;
+        const table = getTblById(tbl_id);
+        const plot = primePlot(visRoot(), plotId);
+        const tileDataParams= setupTileDataParams(drawLayer,table,plot,expanded);
+        return doMakeTileData(tileDataParams);
     };
 
     return {
-        abort: () => isAborted = true,
-        makeTileData: async (drawLayer, plotId, tbl_id, expanded) => makeTileDataAll(drawLayer, plotId, tbl_id, expanded)
+        abort: () => doAbort = true,
+        makeTileData: async (drawLayer, plotId, tbl_id, expanded) => makeTileDataAll(drawLayer, plotId, tbl_id, expanded),
+        hasPartialTileUpdate: () => !isAborted() && partialUpdateAvailable,
+        getSecondaryPartialTileUpdate,
     };
 }
+
+
+
+const doMakeTileDataSync = ({cells, ...tileDataParams}) => {
+    let plotData = [];
+    if (!cells) return plotData;
+    for (let index = 0; index < cells.length; index++) {
+        const {drawObjs,missingCells} = getDrawDataForCell({cell: cells[index], ...tileDataParams});
+        plotData= addTo(plotData,drawObjs);
+    }
+    return plotData;
+};
+
+
+function doMakeTileDataInterval(isAborted, {resolve, cells, ...tileDataParams}) {
+
+    let plotData = [];
+    let done = false;
+    let index = 0;
+    const length = cells.length;
+
+    const id = window.setInterval(
+        () => {
+            if (isAborted()) resolve(undefined);
+            if (done || isAborted()) {
+                done = true;
+                window.clearInterval(id);
+                return;
+            }
+            for (; index < length;) {
+                const {drawObjs, missingCells} = getDrawDataForCell({cell: cells[index], ...tileDataParams});
+                plotData= addTo(plotData,drawObjs);
+                index++;
+                if (drawObjs.length > 300) return;
+            }
+            done = true;
+            resolve(plotData);
+        }
+    );
+};
+
+function setupTileDataParams(drawLayer, table, plot, expanded) {
+
+    const {plotId}= plot;
+    const {tbl_id}= table;
+    const minGroupSize= drawLayer.groupType===HEAT_MAP_GROUP_TYPE ? 0 : drawLayer.minGroupSize;
+
+    const idxData = getHpxIndexData(tbl_id);
+    if (!idxData) return;
+
+    let showLabels= true;
+    let norder;
+    let groupType= drawLayer.groupType;
+    const isHeat= drawLayer.groupType===HEAT_MAP_GROUP_TYPE;
+    norder= getCatalogNorderlevel(plot, MIN_NORDER, DATA_NORDER, isHeat ? HPX_GRID_SIZE_LARGE : drawLayer.gridSize);
+
+    if (isHeat) { //modify labels and norder for heatmap
+        const result= getHeatMapNorder(norder);
+        showLabels= result.showLabels && drawLayer.heatMapLabels;
+        norder= result.norder;
+    }
+
+    if (getFoV(plot) > 176) {
+        norder= 2;
+        groupType= BOX_GROUP_TYPE;
+    }
+
+
+    const expandedTiles = {};
+    const {viewDim = {width: 1, height: 1}} = plot;
+    let doAsync = viewDim.width * viewDim.height > MAX_SYNC_AREA;
+    if (expanded[plotId]?.norder && expanded[plotId]?.ipixAry?.length) {
+        expandedTiles[expanded[plotId].norder] = expanded[plotId].ipixAry;
+        doAsync = true;
+    }
+    else if (visRoot().wcsMatchType && visRoot().plotViewAry.length>5) {
+        doAsync= true;
+    }
+    else if (drawLayer.groupType===HEAT_MAP_GROUP_TYPE) {
+        doAsync= true;
+    }
+
+    const {drawingDef} = drawLayer;
+    const {selectAll = false} = table.selectInfo ?? {};
+    const totalRows= table.totalRows;
+
+    const {centerWp, fov} = getPointMaxSide(plot, plot.viewDim);
+    const coverageTblIds = hasCoverageTables(centerWp, fov, isHiPSAitoff(plot));
+    if (!centerWp || !coverageTblIds.includes(tbl_id)) return []; // this should force a clear for this layer
+    const cells = getAllVisibleHiPSCells(norder, centerWp, fov*1.3, CoordSys.EQ_J2000, isHiPSAitoff(plot));
+    const tblIdx = coverageTblIds.indexOf(tbl_id);
+    const cc = CysConverter.make(plot);
+
+
+    let unloadedNorder= undefined;
+    let unloadedTiles= undefined;
+    if (idxData.partialIndexData) {
+        const ipixList= norder===DATA_NORDER ? uniq(cells.map((c) => getRetroGradeIpix(c.ipix))) : cells.map((c) => c.ipix);
+        const tileNorder= norder===DATA_NORDER ? norder-1 : norder;
+        const startingUnloadedTiles= getUnloadedTileList( {
+            ipixList, minGroupSize, idxData, norder, tileNorder,
+            expandedTiles, totalRows, groupType, forceShow:norder===DATA_NORDER
+        });
+        if (startingUnloadedTiles.length) { // retrograde the norder even further
+            //todo - the retro grade decision could be influenced by how big the table is
+            unloadedNorder= tileNorder===DATA_NORDER-1 ? tileNorder-2 : tileNorder>10 ? tileNorder-1 : tileNorder;
+            const ipixDiff= tileNorder-unloadedNorder;
+            unloadedTiles= uniq(startingUnloadedTiles.map( (t) => getRetroGradeIpix(t.pixel,ipixDiff)))
+                .map( (ipix) => getTile(idxData.orderData,unloadedNorder,ipix));
+        }
+    }
+
+    const tileDataParams = {
+        doAsync,
+        cc,
+        minGroupSize,
+        idxData,
+        cells,
+        norder,
+        showLabels,
+        drawingDef,
+        expandedTiles,
+        selectAll,
+        tblIdx,
+        totalRows,
+        groupType,
+        heatMapStretch:drawLayer.heatMapStretch,
+        unloadedNorder,
+        unloadedTiles,
+    };
+    return tileDataParams;
+}
+
+
 
 function addTo(ary,addAry) {
     if (addAry.length>50) return [...ary,...addAry];
@@ -166,45 +238,68 @@ function getDrawDataForCell({ cell, minGroupSize, cc, idxData, norder, expandedT
 
     const tileData = getTile(idxData.orderData, norder, cell.ipix);
     const selectionTileData = getTile(idxData.selectionOrderData, norder, cell.ipix);
-    const {count = 0} = tileData ?? {};
-    if (!count) return [];
-    if (tileData.summaryTile) {
-        const doShow= showAllPoints || (groupType!==HEAT_MAP_GROUP_TYPE && norder > MIN_NORDER_TO_ALWAYS_GROUP-2 && count < 4);
-        if (expandedTiles?.[norder]?.includes(cell.ipix) || doShow) { // if we should force expanded groups
-            const expandedIdxs = getAllDataIndexes(idxData, norder, cell.ipix);
-            const selectedIndexes = getAllSelectedIndexes(idxData, norder, cell.ipix);
-            return expandedIdxs.map((idx) => {
-                const selected = isSelected(selectedIndexes.includes(idx));
-                const wp = makeHpxWpt(idxData, idx);
-                return makeSingleDrawPoint(selected, idx, wp, drawingDef);
-            });
-        } else if (count > 1 && count < minGroupSize && norder >= MIN_NORDER_TO_ALWAYS_GROUP) { // expand if group is small
-            const selectedIndexes = getAllSelectedIndexes(idxData, norder, cell.ipix);
-            return getAllDataIndexes(idxData, norder, cell.ipix).map((idx) => {
-                const selected = isSelected(selectedIndexes.includes(idx));
-                const wp = makeHpxWpt(idxData, idx);
-                return makeSingleDrawPoint(selected, idx, wp, drawingDef);
-            });
-        } else if (count === 1 && groupType!==HEAT_MAP_GROUP_TYPE) { // only 1 point in group
-            const selected = isSelected(Boolean(selectionTileData?.count));
-            const idxAry = getFirstIndex(idxData.orderData, norder, cell.ipix);
-            const wp = makeHpxWpt(idxData, idxAry[0]);
-            return [makeSingleDrawPoint(selected, idxAry[0], wp, drawingDef)];
-        } else {  // show the group - most common case
+    const {count = 0, pixel:ipix} = tileData ?? {};
+    let drawObjs= [];
+    const missingCells= undefined;
+    if (!count) return {drawObjs,missingCells};
+    if (isSummaryTile(tileData)) {
+        if (alwaysShow(count,ipix,showAllPoints,groupType,minGroupSize, expandedTiles, norder)) {
+            drawObjs= getDrawObsFromTableIndexes(idxData,drawingDef,norder, tileData,isSelected);
+        }
+        else {  // show the group - most common case
             const selected = Boolean(selectionTileData?.count) || selectAll;
             const sCnt= selectionTileData?.count ?? 0;
             const selectedCnt= selectAll ? count-sCnt : sCnt;
             const groupTypeToUse= belowMinRow ? BOX_GROUP_TYPE  : groupType;
-            return makeSmartGridTypeGroupDrawPoint(
-                {idxData, count, norder, showLabels, ipix:tileData.pixel, cell, cc,
+            drawObjs= makeSmartGridTypeGroupDrawPoint(
+                {idxData, count, norder, showLabels, ipix, cell, cc,
                 drawingDef, selected, selectedCnt, tblIdx, groupType:groupTypeToUse,heatMapStretch});
         }
     } else { // draw the points if at the data level
         const selectedIndexes = selectionTileData?.tableIndexes ?? [];
-        return tileData.tableIndexes.map((idx) => {
-            const wp = makeHpxWpt(idxData, idx);
+
+        const resultAry= getAllWptsIdxsForTile(idxData,norder,tileData.pixel);
+        drawObjs= resultAry.map( ({wp,idx}) => {
             return makeSingleDrawPoint(isSelected(selectedIndexes.includes(idx)), idx, wp, drawingDef);
         });
     }
+    return {drawObjs,missingCells};
+}
+ function isMissingDrawDataTile({ ipix, minGroupSize, idxData, tileNorder, norder, expandedTiles, totalRows, groupType, forceShow}) {
+     const belowMinRow= totalRows < MIN_ROWS_FOR_HIERARCHICAL;
+     const showAllPoints = norder > MIN_NORDER_TO_ALWAYS_GROUP && belowMinRow;
+     const tileData = getTile(idxData.orderData, tileNorder, ipix);
+     if (!tileData?.count || tileData.indexesLoaded) return;
+     if (forceShow) return tileData;
+     if (!isSummaryTile(tileData)) return tileData;
+     return alwaysShow(tileData.count, ipix, showAllPoints, groupType,minGroupSize, expandedTiles, norder) ? tileData : undefined;
+}
+
+
+function getUnloadedTileList({ipixList, ...tileDataParams}) {
+    const missingTiles= ipixList
+        .map( (ipix) => isMissingDrawDataTile({ipix,...tileDataParams}))
+        .filter(Boolean);
+    return missingTiles;
+}
+
+
+function alwaysShow(count, ipix, showAllPoints, groupType, minGroupSize, expandedTiles, norder) {
+    if (showAllPoints) return true;
+    if (groupType!==HEAT_MAP_GROUP_TYPE && norder > MIN_NORDER_TO_ALWAYS_GROUP-2 && count < 4) return true;
+    if (expandedTiles?.[norder]?.includes(ipix)) return true;
+    return (count > 1 && count < minGroupSize && norder >= MIN_NORDER_TO_ALWAYS_GROUP);
+}
+
+function getDrawObsFromTableIndexes(idxData, drawingDef, norder, tileData, isSelected) {
+    const {pixel}= tileData;
+    const selectedIndexes = getAllSelectedIndexes(idxData, norder, pixel);
+    const resultAry= getAllWptsIdxsForTile(idxData,norder,tileData.pixel);
+
+    const drawObjs= resultAry.map( ({wp,idx}) => {
+        const selected = isSelected(selectedIndexes.includes(idx));
+        return makeSingleDrawPoint(selected, idx, wp, drawingDef);
+    });
+    return drawObjs;
 
 }
