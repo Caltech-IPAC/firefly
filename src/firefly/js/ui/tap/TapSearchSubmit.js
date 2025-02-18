@@ -23,7 +23,7 @@ import {dispatchHideDialog} from 'firefly/core/ComponentCntlr';
 import {makeColsLines, tableColumnsConstraints} from 'firefly/ui/tap/TableColumnsConstraints';
 
 
-export function onTapSearchSubmit(request, serviceUrl, tapBrowserState, additionalClauses='', metaInfo={}) {
+export function onTapSearchSubmit(request, serviceUrl, tapBrowserState, additionalClauses='', metaInfo={}, tblOptions={}) {
     const isUserEnteredADQL = (request.selectBy === 'adql');
     let adql;
     let isUpload;
@@ -82,7 +82,7 @@ export function onTapSearchSubmit(request, serviceUrl, tapBrowserState, addition
             ...metaInfo,
             [MetaConst.DATA_SERVICE_ID] : getServiceId(serviceUrl),
         };
-        dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true});
+        dispatchTableSearch(treq, {backgroundable: true, showFilters: true, showInfoButton: true, ...tblOptions});
     };
 
     if (!hasMaxrec && !adql.toUpperCase().match(/ TOP | WHERE /)) {
