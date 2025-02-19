@@ -432,14 +432,14 @@ export function getSearchTarget(r, tableModel, searchTargetStr, overlayPositionS
     if (pos) return parseWorldPt(pos);
     if (!r) return;
     if (r.UserTargetWorldPt) return parseWorldPt(r.UserTargetWorldPt);
-    if (r.QUERY) return extractCircleFromADQL(r.QUERY);
+    if (r.QUERY) return extractWorldPtFromADQL(r.QUERY);
     if (r.source?.toLowerCase()?.includes('circle')) return extractCircleFromUrl(r.source);
 }
 
 function extractCircleFromUrl(url) {
     const params = new URL(url)?.searchParams;
     if (!params) return;
-    if (params.has('ADQL')) return extractCircleFromADQL(params.get('ADQL'));
+    if (params.has('ADQL')) return extractWorldPtFromADQL(params.get('ADQL'));
     if (params.has('POS')) return extractCircleFromPOS(params.get('POS'));
     const pts = [...params.entries()]
         .map(([, v]) => v)
@@ -459,19 +459,15 @@ function extractCircleFromPOS(circleStr) {
     return makeWorldPt(raNum, decNum);
 }
 
-function extractCircleFromADQL(adql) {
-    const regEx = /CIRCLE\s?\(.*\)/;
-    const result = regEx.exec(adql);
-    if (!result) return;
-    const circle = result[0];
-    const parts = circle.split(',');
-    if (parts.length < 4) return;
-    let cStr = parts[0].split('(')[1];
-    if (!cStr) return;
-    if (cStr.startsWith(`\'`) && cStr.endsWith(`\'`)) { // eslint-disable-line quotes
-        cStr = cStr.substring(1, cStr.length - 1);
-    }
-    if (!isNaN(Number(parts[1])) && !isNaN(Number(parts[1]))) {
-        return makeWorldPt(parts[1], parts[2], CoordinateSys.parse(cStr));
+function extractWorldPtFromADQL(adql) {
+    //for case-insensitive capturing of CIRCLE('<cStr>', <lonStr>, <latStr>, <radius>) or POINT('<cStr>', <lonStr>, <latStr>)
+    const regExp = /(CIRCLE|POINT)\(\s*'(.*?)'\s*,\s*([\d.-]+)\s*,\s*([\d.-]+).*?\)/i;
+
+    const match = adql.match(regExp);
+    if (!match) return;
+
+    const [, , cStr, lonStr, latStr] = match;
+    if (!isNaN(Number(lonStr)) && !isNaN(Number(latStr))) {
+        return makeWorldPt(lonStr, latStr, CoordinateSys.parse(cStr));
     }
 }
