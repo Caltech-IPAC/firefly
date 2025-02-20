@@ -5,6 +5,10 @@
 import {fill, isString} from 'lodash';
 import {sprintf} from '../../externalSource/sprintf';
 import {
+    MR_ECL1950, MR_ECLJ2000, MR_EQB1950, MR_EQB1950_DCM, MR_EQJ2000_DCM,
+    MR_EQJ2000_HMS, MR_FIELD_HIPS_MOUSE_READOUT1, MR_FIELD_HIPS_MOUSE_READOUT2, MR_FIELD_IMAGE_MOUSE_READOUT1,
+    MR_FIELD_IMAGE_MOUSE_READOUT2, MR_FITS_IP, MR_WL, MR_ZERO_IP,
+    MR_GALACTIC, MR_HEALPIX_NORDER, MR_HEALPIX_PIXEL, MR_PIXEL_SIZE, MR_SPIXEL_SIZE, MR_SUPER_GALACTIC, MR_WCS_COORDS,
     STATUS_NAN, STATUS_UNAVAILABLE, STATUS_UNDEFINED, STATUS_VALUE, TYPE_DECIMAL_INT, TYPE_EMPTY, TYPE_FLOAT
 } from '../MouseReadoutCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
@@ -22,22 +26,22 @@ const myFormat= (v,precision) => !isNaN(v) ? sprintf(`%.${precision}f`,v) : '';
 
 
 const labelMap = {
-    eqj2000hms: 'EQ-J2000:',
-    eqj2000DCM: 'EQ-J2000:',
-    eclJ2000: 'ECL-J2000:',
-    eclB1950: 'ECL-B1950:',
-    galactic: 'Gal:',
-    superGalactic: 'SGal:',
-    eqb1950: 'Eq-B1950:',
-    eqb1950DCM: 'Eq-B1950:',
-    wcsCoords: 'WCS-Coords:',
-    fitsIP: 'Image Pixel:',
-    zeroIP: '0 Based Pix:',
-    pixelSize: 'Pixel Size:',
-    sPixelSize: 'Screen Pixel Size:',
-    healpixPixel: 'Pixel: ',
-    healpixNorder: 'Norder: ',
-    wl: 'Wavelength: ',
+    [MR_EQJ2000_HMS]: 'EQ-J2000:',
+    [MR_EQJ2000_DCM]: 'EQ-J2000:',
+    [MR_ECLJ2000]: 'ECL-J2000:',
+    [MR_ECL1950]: 'ECL-B1950:',
+    [MR_GALACTIC]: 'Gal:',
+    [MR_SUPER_GALACTIC]: 'SGal:',
+    [MR_EQB1950]: 'Eq-B1950:',
+    [MR_EQB1950_DCM]: 'Eq-B1950:',
+    [MR_WCS_COORDS]: 'WCS-Coords:',
+    [MR_FITS_IP]: 'Image Pixel:',
+    [MR_ZERO_IP]: '0 Based Pix:',
+    [MR_PIXEL_SIZE]: 'Pixel Size:',
+    [MR_SPIXEL_SIZE]: 'Screen Pixel Size:',
+    [MR_HEALPIX_PIXEL]: 'Pixel: ',
+    [MR_HEALPIX_NORDER]: 'Norder: ',
+    [MR_WL]: 'Wavelength: ',
 };
 
 const coordOpTitle= 'Choose readout coordinates';
@@ -66,8 +70,8 @@ export function getNonFluxDisplayElements(readoutData, readoutPref, isHiPS= fals
     if (isHiPS) {
         readout1= {...hipsMouseReadout1, label: labelMap[readoutPref.hipsMouseReadout1]};
         readout2= {...hipsMouseReadout2, label: labelMap[readoutPref.hipsMouseReadout2]};
-        showReadout1PrefChange= () => showMouseReadoutOptionDialog('hipsMouseReadout1', readoutPref.hipsMouseReadout1, readoutPref.mouseReadoutValueCopy, coordOpTitle);
-        showReadout2PrefChange= () => showMouseReadoutOptionDialog('hipsMouseReadout2', readoutPref.hipsMouseReadout2, readoutPref.mouseReadoutValueCopy, coordOpTitle);
+        showReadout1PrefChange= () => showMouseReadoutOptionDialog(MR_FIELD_HIPS_MOUSE_READOUT1, readoutPref[MR_FIELD_HIPS_MOUSE_READOUT1], readoutPref.mouseReadoutValueCopy, coordOpTitle);
+        showReadout2PrefChange= () => showMouseReadoutOptionDialog(MR_FIELD_HIPS_MOUSE_READOUT2, readoutPref[MR_FIELD_HIPS_MOUSE_READOUT2], readoutPref.mouseReadoutValueCopy, coordOpTitle);
         healpixPixelReadout= {...healpixPixel, label: labelMap.healpixPixel};
         healpixNorderReadout= {...healpixNorder, label: labelMap.healpixNorder};
     }
@@ -82,8 +86,8 @@ export function getNonFluxDisplayElements(readoutData, readoutPref, isHiPS= fals
         if (isCelestial) {
             readout1 = {...imageMouseReadout1, label: labelMap[readoutPref.imageMouseReadout1]};
             readout2= {...imageMouseReadout2, label: labelMap[readoutPref.imageMouseReadout2]};
-            showReadout1PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout1', readoutPref.imageMouseReadout1, readoutPref.mouseReadoutValueCopy, coordOpTitle);
-            showReadout2PrefChange= () => showMouseReadoutOptionDialog('imageMouseReadout2', readoutPref.imageMouseReadout2, readoutPref.mouseReadoutValueCopy, coordOpTitle);
+            showReadout1PrefChange= () => showMouseReadoutOptionDialog(MR_FIELD_IMAGE_MOUSE_READOUT1, readoutPref[MR_FIELD_IMAGE_MOUSE_READOUT1], readoutPref.mouseReadoutValueCopy, coordOpTitle);
+            showReadout2PrefChange= () => showMouseReadoutOptionDialog(MR_FIELD_IMAGE_MOUSE_READOUT2, readoutPref[MR_FIELD_IMAGE_MOUSE_READOUT2], readoutPref.mouseReadoutValueCopy, coordOpTitle);
         } else {
             const wcsCoordLabel = createWCSCoordsLabel(plotId);
             const wcsCoordOptionTitle = wcsCoordLabel && wcsCoordLabel.substring(0, wcsCoordLabel.length - 1);
@@ -152,43 +156,41 @@ export function getReadoutElement(readoutItems, readoutKey, plotId, copyPref) {
 
     const wp= readoutItems?.worldPt?.value;
     switch (readoutKey) {
-        case 'pixelSize':
+        case MR_PIXEL_SIZE:
             return {value:makePixelReturn(readoutItems.pixel)};
-        case 'sPixelSize':
+        case MR_SPIXEL_SIZE:
             return {value:makePixelReturn(readoutItems.screenPixel)};
-        case 'eqj2000hms':
+        case MR_EQJ2000_HMS:
             return makeCoordReturn(wp, CoordinateSys.EQ_J2000, copyPref, true);
-        case 'eqj2000DCM' :
+        case MR_EQJ2000_DCM:
             return makeCoordReturn(wp, CoordinateSys.EQ_J2000, copyPref);
-        case 'galactic' :
+        case MR_GALACTIC:
             return makeCoordReturn(wp, CoordinateSys.GALACTIC, copyPref);
-        case 'superGalactic' :
+        case MR_SUPER_GALACTIC :
             return makeCoordReturn(wp, CoordinateSys.SUPERGALACTIC, copyPref);
-        case 'supergalactic' :
-            return makeCoordReturn(wp, CoordinateSys.SUPERGALACTIC, copyPref);
-        case 'eqb1950' :
+        case MR_EQB1950:
             return makeCoordReturn(wp, CoordinateSys.EQ_B1950, copyPref, true);
-        case 'eqb1950DCM':
+        case MR_EQB1950_DCM:
             return makeCoordReturn(wp, CoordinateSys.EQ_B1950, copyPref);
-        case 'eclJ2000' :
+        case MR_ECLJ2000:
             return makeCoordReturn(wp, CoordinateSys.ECL_J2000, copyPref, false);
-        case 'eclB1950' :
+        case MR_ECL1950:
             return makeCoordReturn(wp, CoordinateSys.ECL_B1950, copyPref, false);
-        case 'wcsCoords' :
+        case MR_WCS_COORDS:
             const plot = primePlot(visRoot(), plotId);
             const unit = plot?.projection?.header?.cunit1 || '';
             return {value:makeNoncelestialCoordReturn(wp, unit)};
-        case 'fitsIP' :
+        case MR_FITS_IP:
             return {value:makeImagePtReturn(readoutItems?.fitsImagePt?.value)};
-        case 'zeroIP' :
+        case MR_ZERO_IP:
             return {value:makeImagePtReturn(readoutItems?.zeroBasedImagePt?.value)};
-        case 'healpixPixel' :
+        case MR_HEALPIX_PIXEL:
             const {healpixPixel}= readoutItems;
             return {value: (healpixPixel && healpixPixel.value) ? `${healpixPixel.value}` : ''};
-        case 'healpixNorder' :
+        case MR_HEALPIX_NORDER:
             const {healpixNorder}= readoutItems;
             return {value: (healpixNorder && healpixNorder.value) ? `${healpixNorder.value}` : ''};
-        case 'wl' :
+        case MR_WL:
             const {wl}= readoutItems;
             if (!wl) return {value:undefined};
             return {value:makeWLReturn(wl.value, getFormattedWaveLengthUnits(wl.unit))};

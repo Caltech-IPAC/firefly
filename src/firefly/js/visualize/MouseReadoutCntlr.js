@@ -2,12 +2,16 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
+import {getPreference} from '../core/AppDataCntlr';
 import {flux} from '../core/ReduxFlux.js';
+import {DEFAULT_HPX_GROUP_TYPE, HPX_GROUP_TYPE_PREF} from '../drawingLayers/hpx/HpxCatalogUtil';
+import CoordinateSys from './CoordSys';
+import {visRoot} from './ImagePlotCntlr';
+import {primePlot} from './PlotViewUtil';
 
 export const READOUT_PREFIX= 'ReadoutCntlr';
 export const CHANGE_LOCK_BY_CLICK= `${READOUT_PREFIX}.ChangeLockByClick`;
 export const CHANGE_READOUT_PREFS= `${READOUT_PREFIX}.ChangeReadoutPref`;
-export const CHANGE_LOCK_UNLOCK_BY_CLICK= `${READOUT_PREFIX}.ChangeLockUnlockByClick`;
 export const READOUT_KEY= 'readout';
 export const STANDARD_READOUT= 'standardImageReadout';
 export const HIPS_STANDARD_READOUT= 'standardHiPSReadout';
@@ -29,6 +33,30 @@ export const TYPE_BASE16= 'BASE16';
 export const TYPE_BASE_OTHER= 'BASE_OTHER';
 
 
+export const MR_PIXEL_SIZE= 'pixelSize';
+export const MR_SPIXEL_SIZE= 'sPixelSize';
+export const MR_EQJ2000_HMS= 'eqj2000hms';
+export const MR_EQJ2000_DCM= 'eqj2000DCM';
+export const MR_GALACTIC= 'galactic';
+export const MR_SUPER_GALACTIC= 'superGalactic';
+export const MR_EQB1950= 'eqb1950';
+export const MR_EQB1950_DCM= 'eqb1950DCM';
+export const MR_ECLJ2000= 'eclJ2000';
+export const MR_ECL1950= 'eclB1950';
+export const MR_WCS_COORDS= 'wcsCoords';
+export const MR_FITS_IP= 'fitsIP';
+export const MR_ZERO_IP= 'zeroIP';
+export const MR_HEALPIX_PIXEL= 'healpixPixel';
+export const MR_HEALPIX_NORDER='healpixNorder';
+export const MR_WL= 'wl';
+
+export const MR_FIELD_IMAGE_MOUSE_READOUT1= 'imageMouseReadout1';
+export const MR_FIELD_IMAGE_MOUSE_READOUT2= 'imageMouseReadout2';
+export const MR_FIELD_HIPS_MOUSE_READOUT1= 'hipsMouseReadout1';
+export const MR_FIELD_HIPS_MOUSE_READOUT2= 'hipsMouseReadout2';
+
+
+
 
 export function readoutRoot() { return flux.getState()[READOUT_KEY]; }
 
@@ -45,11 +73,21 @@ export default {
 export const dispatchChangeLockByClick= (lockByClick) =>
     flux.process({type: CHANGE_LOCK_BY_CLICK, payload: {lockByClick}});
 
-export const dispatchChangeLockUnlockByClick= (isLocked) =>
-    flux.process({type: CHANGE_LOCK_UNLOCK_BY_CLICK, payload: {isLocked}});
-
 export const dispatchChangeReadoutPrefs= (readoutPref) =>
     flux.process({type: CHANGE_READOUT_PREFS, payload: {readoutPref}});
+
+
+
+export function initReadoutPrefs() {
+    dispatchChangeReadoutPrefs(
+        {
+            [MR_FIELD_IMAGE_MOUSE_READOUT1]: getPreference(MR_FIELD_IMAGE_MOUSE_READOUT1,MR_EQJ2000_HMS),
+            [MR_FIELD_IMAGE_MOUSE_READOUT2]: getPreference(MR_FIELD_IMAGE_MOUSE_READOUT2,MR_FITS_IP),
+            [MR_FIELD_HIPS_MOUSE_READOUT1]: getPreference(MR_FIELD_HIPS_MOUSE_READOUT1,MR_EQJ2000_HMS),
+            [MR_FIELD_HIPS_MOUSE_READOUT2]: getPreference(MR_FIELD_HIPS_MOUSE_READOUT2,MR_GALACTIC),
+        }
+    );
+}
 
 //======================================== Utility Functions =============================
 //======================================== Utility Functions =============================
@@ -93,35 +131,33 @@ function reducer(state=initState(), action={}) {
     switch (action.type) {
         case CHANGE_LOCK_BY_CLICK:
             return {...state,lockByClick:action.payload.lockByClick};
-        case CHANGE_LOCK_UNLOCK_BY_CLICK:
-            return {...state,isLocked:action.payload.isLocked};
         case CHANGE_READOUT_PREFS:
-            const readoutPref = state.readoutPref;
-            const key = Object.keys(action.payload.readoutPref);
-            readoutPref[key]=action.payload.readoutPref[ key];
-            return {...state,readoutPref:{...state.readoutPref,...readoutPref}};
+            return {...state,readoutPref: {...state.readoutPref, ...action.payload.readoutPref}};
         default:
             return state;
     }
 }
+
 
 const initState= () =>
     ({
         lockByClick : false,
         isLocked: false,
         readoutPref :{
-            imageMouseReadout1:'eqj2000hms',
-            imageMouseReadout2: 'fitsIP',
-            imageMouseNoncelestialReadout1: 'wcsCoords',
-            imageMouseNoncelestialReadout2: 'fitsIP',
-            pixelSize: 'pixelSize',
-            hipsMouseReadout1:'eqj2000hms',
-            hipsMouseReadout2:'galactic',
+            imageMouseReadout1:MR_EQJ2000_HMS,
+            imageMouseReadout2: MR_FITS_IP,
+            [MR_FIELD_IMAGE_MOUSE_READOUT1]: MR_EQJ2000_HMS, //getPreference(MR_FIELD_IMAGE_MOUSE_READOUT1,MR_EQJ2000_HMS),
+            [MR_FIELD_IMAGE_MOUSE_READOUT2]: MR_FITS_IP, //getPreference(MR_FIELD_IMAGE_MOUSE_READOUT2,MR_FITS_IP),
+            imageMouseNoncelestialReadout1: MR_WCS_COORDS,
+            imageMouseNoncelestialReadout2: MR_FITS_IP,
+            pixelSize: MR_PIXEL_SIZE,
+            [MR_FIELD_HIPS_MOUSE_READOUT1]: MR_EQJ2000_HMS, //getPreference(MR_FIELD_HIPS_MOUSE_READOUT1,MR_EQJ2000_HMS),
+            [MR_FIELD_HIPS_MOUSE_READOUT2]: MR_GALACTIC, //getPreference(MR_FIELD_HIPS_MOUSE_READOUT2,MR_GALACTIC),
             mouseReadoutValueCopy: 'str',
-            healpixPixel:'healpixPixel',
-            healpixNorder:'healpixNorder',
+            healpixPixel: MR_HEALPIX_PIXEL,
+            healpixNorder: MR_HEALPIX_NORDER,
             intFluxValueRadix: '10',
             floatFluxValueRadix: '10',
-            wl:'wl',
+            wl: MR_WL,
         }
     });
