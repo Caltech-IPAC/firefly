@@ -15,6 +15,7 @@ import edu.caltech.ipac.util.StringUtils;
 import java.util.Arrays;
 
 import static edu.caltech.ipac.firefly.server.query.HealpixProcessor.*;
+import static edu.caltech.ipac.table.DataGroup.HEALPIX_IDX;
 import static edu.caltech.ipac.util.StringUtils.split;
 
 @SearchProcessorImpl(id = HealpixProcessor.ID, params = {
@@ -28,7 +29,7 @@ import static edu.caltech.ipac.util.StringUtils.split;
 /**
  * Handles indexing of data and generates the pixel map for BASE_ORDER.
  * See healpy-java.sql for implementation of deg2pix() function.
- * The added index column is called healpix_idx
+ * The added index column is called ff_healpix_idx
  * The pixel map contains two columns: pixel and count.
  * Supports two modes: map and points.
  *   map: Generates and returns the pixel map.
@@ -89,7 +90,7 @@ public class HealpixProcessor extends TableFunctionProcessor {
             results = dbAdapter.execQuery(sql, null);
         } else if (mode.equals(POINTS)) {
             if (pixels == null || pixels.length == 0) throw new DataAccessException("POINTS mode: pixels parameter is missing");
-            String lhs = orderDelta > 0 ? "TRUNC(healpix_idx/4^%s)".formatted(orderDelta) : "healpix_idx";
+            String lhs = orderDelta > 0 ? "TRUNC(%s/4^%s)".formatted(HEALPIX_IDX, orderDelta) : HEALPIX_IDX;
             String rhs =  pixels.length == 1 ? " = %s".formatted(pixels[0]) : " IN (%s)".formatted(String.join(",", pixels));
             String sql = "SELECT %s, %s, ROW_NUM from %s WHERE %s %s".formatted(ra, dec, dataTable, lhs, rhs);   // need ra,dec(?)
             results = dbAdapter.execQuery(sql, null);
@@ -113,13 +114,14 @@ public class HealpixProcessor extends TableFunctionProcessor {
 
             // create healpix index at BASE_ORDER
             StopWatch.getInstance().start("HealpixProcessor: create index");
-            dbAdapter.execUpdate("ALTER TABLE %s ADD COLUMN healpix_idx LONG".formatted(dataTable));
-            dbAdapter.execUpdate("UPDATE %s SET healpix_idx = deg2pix(%s, %s, %s)".formatted(dataTable, BASE_ORDER, ra, dec));
+            dbAdapter.execUpdate("ALTER TABLE %s DROP COLUMN IF EXISTS %s".formatted(dataTable, HEALPIX_IDX));  // remove existing index
+            dbAdapter.execUpdate("ALTER TABLE %s ADD COLUMN %s LONG".formatted(dataTable, HEALPIX_IDX));
+            dbAdapter.execUpdate("UPDATE %s SET %s = deg2pix(%s, %s, %s)".formatted(dataTable, HEALPIX_IDX, BASE_ORDER, ra, dec));
             StopWatch.getInstance().printLog("HealpixProcessor: create index");
 
             // create healpix map at BASE_ORDER
             StopWatch.getInstance().start("HealpixProcessor: create pixel map");
-            dbAdapter.execUpdate("create table %s as (select healpix_idx as 'pixel', count() as 'count' from %s group by 1)".formatted(healpixTable, dataTable));
+            dbAdapter.execUpdate("create table %s as (select %s as 'pixel', count() as 'count' from %s group by 1)".formatted(healpixTable, HEALPIX_IDX, dataTable));
             StopWatch.getInstance().printLog("HealpixProcessor: create pixel map");
 
         }

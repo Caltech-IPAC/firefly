@@ -19,6 +19,7 @@ public class DataGroup implements Serializable, Cloneable, Iterable<DataObject> 
 
     public static final String ROW_IDX = "ROW_IDX";               // this contains the original row index of the table before any sorting or filtering
     public static final String ROW_NUM = "ROW_NUM";               // this is row number of the current dataset. (oracle's rownum)
+    public static final String HEALPIX_IDX = "ff_healpix_idx";    // generated healpix index column
 
     private LinkedHashMap<String, DataType> columns = new LinkedHashMap<>();
     private HashMap<String, PrimitiveList> data = new HashMap<>();

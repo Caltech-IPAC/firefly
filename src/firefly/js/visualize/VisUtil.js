@@ -107,7 +107,7 @@ export function getLatDist(lat1,lat2) {
 /**
  * Convert from one coordinate system to another. No action, if the world point coordinate system is non-celestial.
  *
- * @param {WorldPt} wpt the world point to convert
+ * @param {WorldPt|undefined} wpt the world point to convert
  * @param {CoordinateSys} to CoordSys, the coordinate system to convert to; defaults to J2000, ignored for non-celestial world points
  * @return {WorldPt|undefined} the world point in the new coordinate system
  */

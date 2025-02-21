@@ -1,5 +1,5 @@
 import chroma from 'chroma-js';
-import {getHistgramForNorder, getProGradeTileNumbers, getTile} from '../../tables/HpxIndexCntlr';
+import {getHistgramForNorder, getProGradeTilePixels, getTile} from '../../tables/HpxIndexCntlr';
 import {getBWBackground} from '../../util/Color';
 import CoordSys from '../../visualize/CoordSys';
 import {TextLocation} from '../../visualize/draw/DrawingDef';
@@ -178,7 +178,7 @@ function getDevPointAry(idxData,cc, cell, ipix,norder) {
     const devC = cell.wpCorners.map((wp) => cc.getDeviceCoords(wp)).filter(Boolean);
     if (devC.length < 4) return devC;
 
-    let pgTiles= getProGradeTileNumbers(ipix).map( (ipix) => getTile(idxData.orderData, norder+1, ipix));
+    let pgTiles= getProGradeTilePixels(ipix).map( (ipix) => getTile(idxData.orderData, norder+1, ipix));
     pgTiles= pgTiles?.filter(Boolean);
     if (!pgTiles || pgTiles.length!==4) return devC;
     let useAllTiles= pgTiles.every( (t) => t);
@@ -191,7 +191,7 @@ function getDevPointAry(idxData,cc, cell, ipix,norder) {
     else {
         const filteredPg= pgTiles.filter( (t) => t);
         if (filteredPg.length===1) {
-            const pgTilesDeeper= getProGradeTileNumbers(filteredPg[0].pixel)
+            const pgTilesDeeper= getProGradeTilePixels(filteredPg[0].pixel)
                 .map( (ipix) => getTile(idxData.orderData, norder+2, ipix))
                 .filter( (t) => t);
             if (pgTilesDeeper.length===1) {

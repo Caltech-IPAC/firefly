@@ -11,8 +11,8 @@ import {
 import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {tokenSub} from '../../util/WebUtil.js';
 import {uploadAndAnalyze} from '../AnalysisUtils.js';
+import {IMAGE_ONLY} from '../DataProductConst';
 import {dispatchUpdateActiveKey} from '../DataProductsCntlr.js';
-import {IMAGE_ONLY} from '../DataProductsFactory';
 import {dpdtFromMenu, dpdtMessageWithDownload, dpdtPNG, dpdtSimpleMsg,} from '../DataProductsType.js';
 import {createGuessDataType} from './DataLinkProcessor.js';
 import {

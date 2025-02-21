@@ -243,9 +243,10 @@ export function dispatchTableHighlight(tbl_id, highlightedRow, request) {
  * update the selectInfo of the given table by tbl_id.
  * @param tbl_id
  * @param selectInfo
+ * @param {{row:number,hpxSelectList}} context - can object that may include additional relevant data related to the update, row is a single row change
  */
-export function dispatchTableSelect(tbl_id, selectInfo) {
-    flux.process( {type: TABLE_SELECT, payload: {tbl_id, selectInfo} });
+export function dispatchTableSelect(tbl_id, selectInfo, context={}) {
+    flux.process( {type: TABLE_SELECT, payload: {tbl_id, selectInfo, context} });
 }
 
 /**

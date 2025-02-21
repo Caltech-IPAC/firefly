@@ -6,18 +6,18 @@ import {isArray, once} from 'lodash';
 import {MetaConst} from '../data/MetaConst.js';
 import {getMetaEntry, getObjectMetaEntry} from '../tables/TableUtil';
 import {getDataServiceOption} from '../ui/tap/DataServicesOptions';
-import {getBoolean, toBoolean} from '../util/WebUtil';
-import {hasObsCoreLikeDataProducts, isDatalinkTable} from '../voAnalyzer/TableAnalysis.js';
-import {hasServiceDescriptors} from '../voAnalyzer/VoDataLinkServDef.js';
+import {toBoolean} from '../util/WebUtil';
 import {Band} from '../visualize/Band';
 import {SINGLE} from '../visualize/MultiViewCntlr';
+import {hasObsCoreLikeDataProducts, isDatalinkTable} from '../voAnalyzer/TableAnalysis.js';
+import {hasServiceDescriptors} from '../voAnalyzer/VoDataLinkServDef.js';
 import {makeAnalysisGetGridDataProduct, makeAnalysisGetSingleDataProduct} from './AnalysisUtils.js';
-import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY} from './DataProductsCntlr.js';
+import {DEFAULT_CONVERTER_ID, DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, NO_LIMIT} from './DataProductConst';
 import {dpdtImage} from './DataProductsType';
+import {findADataSourceColumn, makeRequestForUnknown} from './DefaultConverter.js';
 import {
     createGridImagesActivate, createRelatedDataGridActivate, createSingleImageActivate, createSingleImageExtraction
 } from './ImageDataProductsUtil.js';
-import {findADataSourceColumn, makeRequestForUnknown} from './DefaultConverter.js';
 import {makeAtlasPlotRequest} from './missions/AtlasRequestList.js';
 import {makeShaPlotRequest, makeShaViewCreate} from './missions/ShaRequestList.js';
 import {make2MassPlotRequest} from './missions/TwoMassRequestList.js';
@@ -32,11 +32,6 @@ import {
     getServiceDescGridDataProduct, getServiceDescRelatedDataProduct, getServiceDescSingleDataProduct,
     makeServDescriptorConverter
 } from './vo/ServDescConverter.js';
-
-export const DEFAULT_CONVERTER_ID= 'DEFAULT_CONVERTER';
-export const IMAGE_ONLY= 'IMAGE_ONLY';
-export const TABLE_ONLY= 'TABLE_ONLY';
-export const NO_LIMIT= 'NO_LIMIT';
 
 
 function matchById(table,id)  {
@@ -348,8 +343,12 @@ export function setFactoryTemplateOptions(factoryKey='DEFAULT_FACTORY', options)
     FACTORY_OPTIONS[factoryKey]= {...getDefaultFactoryOptions(), ...options};
 }
 
-export function getFactoryTemplateOptions(factoryKey='DEFAULT_FACTORY') {
-    return FACTORY_OPTIONS[factoryKey] ?? getDefaultFactoryOptions();
+export function getFactoryTemplateOptions(factoryKey) {
+    const options=  FACTORY_OPTIONS[factoryKey??'DEFAULT_FACTORY'] ?? getDefaultFactoryOptions();
+    if (factoryKey && options.dataProductsComponentKey===DEFAULT_DATA_PRODUCTS_COMPONENT_KEY) {
+        options.dataProductsComponentKey= factoryKey;
+    }
+    return options;
 }
 
 export function removeAllButSingleConverter(keepId,factoryKey)  {
@@ -375,7 +374,7 @@ export function makeDataProductsConverter(table, factoryKey= undefined) {
 
     const metaOptions= getObjectMetaEntry(table, MetaConst.DATA_PRODUCTS_FACTORY_OPTIONS, {});
     const dataServiceOptions= getDataServiceOption(MetaConst.DATA_PRODUCTS_FACTORY_OPTIONS, table, {});
-    const combinedOps= {...options, ...dataServiceOptions, ...metaOptions};
+    const combinedOps= {dataProductsComponentKey: factoryKey, ...options, ...dataServiceOptions, ...metaOptions};
 
     const pT= {
         ...t,

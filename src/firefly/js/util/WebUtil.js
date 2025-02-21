@@ -904,3 +904,67 @@ export function setIf(object, path, value, predicate=isUndefined) {
     const cv = get(object, path);
     if (predicate?.(cv)) set(object, path, value);
 }
+
+/**
+ * Process through an array or list and acting on each element. Return a promise that will return true if
+ * interation successfully completes
+ *
+ * @param {object} params
+ * @param params.iterator - iterator through an array or list
+ * @param {function} params.processValue - function to act on the next value of the interator
+ * @param {number} [params.intervalBreak] - how ofter the stop looping
+ * @param {function} [params.percentUpdate] - will call with percentage every 5 percent
+ * @param {number} [params.length] - length of the data being processed, only required if using percentUpdate
+ * @param {function} [params.shouldAbort] - call occasionally - return true if should abort, promise will return false
+ * @return {Promise<Boolean>}
+ */
+export function createBackgroundRunner({
+                                          iterator,
+                                          processValue,
+                                          intervalBreak= 10000,
+                                          percentUpdate= () => undefined,
+                                          length,
+                                          shouldAbort= () => false} ) {
+
+    let i=0;
+    let isDone= false;
+    let intervalID= undefined;
+    let percent= 0;
+
+    const showProgress= (i,length) => {
+        if (length < 750000 || i % 10000 !== 0) return percent;
+        const newPercent = Math.trunc(100 * (i / length));
+        if (newPercent > percent + 4) {
+            percent = newPercent;
+            percentUpdate(percent);
+        }
+        return percent;
+    };
+
+    const worker= (resolve) => {
+        if (shouldAbort()) {
+            isDone=true;
+            resolve(false);
+            window.clearInterval(intervalID);
+            return;
+        }
+        if (isDone) window.clearInterval(intervalID);
+        for (; (!isDone);) {
+            const {value, done}= iterator.next();
+            isDone= done;
+            if (!isDone) {
+                processValue(value, i);
+                i++;
+                if (length && percentUpdate) showProgress(i,length);
+                if (i % intervalBreak === 0) return;
+            }
+        }
+        resolve(true);
+    };
+
+
+    return new Promise( (resolve) => {
+        intervalID = window.setInterval(() => worker(resolve));
+    } );
+}
+

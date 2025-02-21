@@ -257,7 +257,7 @@ function toNum(v) {
  * @param {boolean} [detectHMS] - if lon and lat are in sexagesimal, convert to number
  *                              coordinate system must equatorial
  * @param {boolean} [angleInRadian] - if true then convert to degrees
- * @return {WorldPt}
+ * @return {WorldPt|undefined}
  *
  * @Function makeWorldPt
  * @public

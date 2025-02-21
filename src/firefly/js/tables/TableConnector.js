@@ -92,7 +92,7 @@ export function onRowSelect(tbl_id, checked, rowIndex) {
     const selectInfo = tableModel.selectInfo ? cloneDeep(tableModel.selectInfo) : {};
     const selectInfoCls = SelectInfo.newInstance(selectInfo, startIdx);
     selectInfoCls.setRowSelect(rowIndex, checked);
-    TblCntlr.dispatchTableSelect(tbl_id, selectInfoCls.data);
+    TblCntlr.dispatchTableSelect(tbl_id, selectInfoCls.data, {row:rowIndex});
 }
 
 export function onToggleTextView(tbl_ui_id, textView) {

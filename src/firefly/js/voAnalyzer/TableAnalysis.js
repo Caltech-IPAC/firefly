@@ -57,7 +57,10 @@ export function makeWorldPtUsingCenterColumns(tableOrId, row) {
     const table = getTableModel(tableOrId);
     if (!table || isUndefined(row)) return;
     const cen = findTableCenterColumns(table);
-    return cen && makeWorldPt(getCellValue(table, row, cen.lonCol), getCellValue(table, row, cen.latCol), cen.csys);
+    const lon= getCellValue(table, row, cen.lonCol);
+    const lat= getCellValue(table, row, cen.latCol);
+    if (!cen || isUndefined(lon) || isUndefined(lat)) return;
+    return makeWorldPt(lon, lat, cen.csys);
 }
 /**
  * find ObsCore defined 's_region' column
