@@ -1,5 +1,5 @@
 import {getPreferCutout} from '../../ui/tap/Cutout';
-import { getSearchTarget, makeWorldPtUsingCenterColumns } from '../../voAnalyzer/TableAnalysis.js';
+import { getSearchTarget } from '../../voAnalyzer/TableAnalysis.js';
 import {
     getDataLinkData, isDownloadType, isGzipType, isSimpleImageType, isTarType, isVoTable
 } from '../../voAnalyzer/VoDataLinkServDef.js';
@@ -123,9 +123,9 @@ function convertAllToDownload(menu) {
     }).filter( (d) => d.displayType);
 }
 
-function getDLMenuEntryData({dlTableUrl, dlData={}, idx, sourceTable, sourceRow}) {
+function getDLMenuEntryData({dlTableUrl, dlData={}, idx, sourceTable}) {
     return {
-        positionWP: getSearchTarget(sourceTable?.request,sourceTable) ?? makeWorldPtUsingCenterColumns(sourceTable,sourceRow),
+        positionWP: getSearchTarget(sourceTable?.request,sourceTable),
         contentType: dlData.contentType?.toLowerCase(),
         sRegion: dlData.sourceObsCoreData?.s_region,
         prodType: dlData.sourceObsCoreData?.dataproduct_type,
