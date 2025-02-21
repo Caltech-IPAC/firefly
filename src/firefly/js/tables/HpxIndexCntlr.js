@@ -6,7 +6,7 @@ import {flux} from '../core/ReduxFlux';
 import {ang2pixNest, radecToPolar} from '../externalSource/aladinProj/HealpixIndex';
 import {logger} from '../util/Logger';
 import {blockWhileAsyncIdWaiting, synchronizeAsyncFunctionById} from '../util/SynchronizeAsync';
-import {isDefined} from '../util/WebUtil';
+import {createBackgroundRunner, isDefined} from '../util/WebUtil';
 import {DEFAULT_COVERAGE_PLOT_ID} from '../visualize/PlotViewUtil';
 import {makeWorldPt} from '../visualize/Point';
 import {convertCelestial} from '../visualize/VisUtil';
@@ -23,10 +23,12 @@ export const MIN_NORDER= 4;
 export const MIN_NORDER_TO_ALWAYS_GROUP= 4;
 export const MIN_NORDER_FOR_COVERAGE= 2;
 export const MIN_ROWS_FOR_HIERARCHICAL= 1000;
+export const MIN_TOTAL_ROWS_FOR_PARTIAL= 50000;
 const DATA_NSIDE= 2**DATA_NORDER;
 const UINT_SCALE= 10**7;
 const MAX_MAP= 16_000_000;
 export const COVERAGE_WAITING_MSG= 'COVERAGE_WAITING_MSG';
+export const HPX_WORKING_KEY= 'HPX_WORKING';
 
 const maxTiles= {
     9: 3_145_728,
@@ -74,9 +76,8 @@ const maxTiles= {
  * @prop {boolean} summaryTile - true for all levels except bottom
  * @prop {boolean} indexesLoaded
  * @prop {Number} count
- * @prop {Array.<Number>} tableIndexes - summary tiles only have one entry
- * @prop {Map} precomputedTileWP
- *
+ * @prop {Array.<Number>} tableIndexes - indexes of the table, used with full indexing
+ * @prop {Map} precomputedTileWP - map of table indexes to world point, used with partial indexing
  */
 
 
@@ -213,7 +214,7 @@ async function addTableIndex(tbl_id,dispatcher) {
         dispatcher( { type: ENABLE_HPX_INDEX, payload:{ tbl_id, csys, ready:false }});
         return;
     }
-    dispatchAddTaskCount(DEFAULT_COVERAGE_PLOT_ID,'HpxIndexCntrl');
+    dispatchAddTaskCount(DEFAULT_COVERAGE_PLOT_ID,HPX_WORKING_KEY);
     dispatcher( { type: ORDER_DATA_READY, payload:{ready:false,tbl_id} });
 
     if (table.totalRows>1_000_000) {
@@ -222,15 +223,12 @@ async function addTableIndex(tbl_id,dispatcher) {
     let orderData;
     let lonAry= undefined, latAry= undefined;
 
-//TODO automate
-//TODO automate
-    const partialIndexData= true;
-//TODO automate
-//TODO automate
-    if (partialIndexData) {
-        orderData= await fetchPartialTableHealpixIndex(table,maxInitialLoadNorder,runId);
-    }
-    else {
+    let partialIndexData= shouldUsePartialIndexType(table);
+    if (partialIndexData) orderData= await fetchPartialTableHealpixIndex(table,maxInitialLoadNorder,runId);
+    
+    if (!orderData) {
+        if (partialIndexData) console.log('HpxIndexCntlr: partial table indexing failed, using full');
+        partialIndexData= false;
         const results= await fetchFullTableHealpixIndex(table,runId);
         orderData= results.orderData;
         lonAry= results.lonAry;
@@ -246,9 +244,13 @@ async function addTableIndex(tbl_id,dispatcher) {
     dispatcher( { type: ENABLE_HPX_INDEX,
         payload:{ tbl_id, orderData, tableUsingRadians, lonAry, latAry, csys, selectionOrderData,
             selectAll, partialIndexData, maxInitialLoadNorder} });
-    dispatchRemoveTaskCount(DEFAULT_COVERAGE_PLOT_ID,'HpxIndexCntrl');
+    dispatchRemoveTaskCount(DEFAULT_COVERAGE_PLOT_ID,HPX_WORKING_KEY);
 }
 
+function shouldUsePartialIndexType(table) {
+    //TODO determine when best to use full index and when to use partial. Is there any other factor beyond total rows
+    return table?.totalRows>MIN_TOTAL_ROWS_FOR_PARTIAL;
+}
 
 
 async function fetchPartialTableHealpixIndex(table,maxInitialLoadNorder,runId) {
@@ -264,6 +266,10 @@ async function fetchPartialTableHealpixIndex(table,maxInitialLoadNorder,runId) {
         META_INFO: {tbl_id: `${table.tbl_id}-map-hpxIndex-Norder-${norder}`}
     };
     const mapDataTable= await doFetchTable(req);
+    if (mapDataTable.error) {
+        console.log(`HpxIndexCntlr: partial table indexing error: ${mapDataTable.error}`);
+        return;
+    }
     if (shouldAbort(table.tbl_id,runId)) return;
     return await createPartialHealpixIndexAsync(table.tbl_id,mapDataTable,runId);
 }
@@ -317,8 +323,8 @@ function watchTable(action, cancelSelf, params) {
             break;
 
         case TABLE_SELECT:
-            const {selectInfo,sourceInfo={}}= action.payload;
-            const {singleDeltaIdx,hpxSelectList}= sourceInfo;
+            const {selectInfo,context={}}= action.payload;
+            const {row:singleDeltaIdx,hpxSelectList}= context;
             void handleSelection(dispatcher,tbl_id,selectInfo,hpxSelectList,singleDeltaIdx);
             break;
 
@@ -335,14 +341,6 @@ async function handleSelection(dispatcher,tbl_id,selectInfo,hpxSelectList,single
         await createSelectionHealPixIndexAsync(tbl_id, lonAry, latAry, csys, exceptions);
     dispatcher( { type: ADD_SELECTION_HPX_INDEX, payload:{ready:true,selectionOrderData, selectAll,tbl_id} });
 }
-
-
-
-
-
-
-
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 export function getHistgramForNorder(idxData, norder) {
@@ -363,13 +361,14 @@ export const getAllDataIndexes= (idxData, norder, tileNumber) =>
  * @return {Array<Number>}
  */
 function getAllIndexes(orderData, norder, tileNumber) {
-    const tile= getTile(orderData, norder, tileNumber);
-    if (!tile) return [];
+    const tileEntry= getTile(orderData, norder, tileNumber);
+    if (!tileEntry) return [];
     if (norder===DATA_NORDER) {
-        if (!tile?.tableIndexes?.length) return [];
-        return tile.tableIndexes;
+        if (tileEntry?.precomputedTileWP)  return [...tileEntry.precomputedTileWP.keys()];
+        if (tileEntry?.tableIndexes?.length) return tileEntry.tableIndexes;
+        return [];
     }
-    const pgIdxs= getProGradeTileNumbers(tileNumber);
+    const pgIdxs= getProGradeTilePixels(tileNumber);
     return [
         ...getAllIndexes(orderData,norder+1,pgIdxs[0]),
         ...getAllIndexes(orderData,norder+1,pgIdxs[1]),
@@ -382,10 +381,10 @@ function getAllDataOrderTiles(orderData, norder, tileNumber) {
     const tile= getTile(orderData, norder, tileNumber);
     if (!tile) return [];
     if (norder===DATA_NORDER) {
-        if (!tile?.tableIndexes?.length) return [];
+        if (!tile?.tableIndexes?.length && !tile?.precomputedTileWP?.size) return [];
         return [tile];
     }
-    const pgIdxs= getProGradeTileNumbers(tileNumber);
+    const pgIdxs= getProGradeTilePixels(tileNumber);
     return [
         ...getAllDataOrderTiles(orderData,norder+1,pgIdxs[0]),
         ...getAllDataOrderTiles(orderData,norder+1,pgIdxs[1]),
@@ -396,33 +395,14 @@ function getAllDataOrderTiles(orderData, norder, tileNumber) {
 
 function findTileByIdx(orderData, idx) {
     for(const tileMap of orderData[DATA_NORDER].tiles) {
-        const retTile= tileMap.values().find( (t) => t.indexesLoaded && t.tableIndexes?.includes(idx));
+        const retTile= tileMap.values().find( (t) => {
+            if (t.indexesLoaded) return false;
+            if (t.precomputedTileWP) return t.precomputedTileWP.has(idx);
+            return t.tableIndexes?.includes(idx);
+        });
         if (retTile) return retTile;
     }
 }
-
-// /**
-//  *
-//  * @param orderData
-//  * @param norder
-//  * @param tileNumber
-//  * @return {Array<Number>}
-//  */
-// export function getFirstIndex(orderData, norder, tileNumber) {
-//     const tile= getTile(orderData, norder, tileNumber);
-//     if (!tile) return [];
-//     if (norder===DATA_NORDER) {
-//         if (!tile?.tableIndexes?.length) return [];
-//         return [tile.tableIndexes[0]];
-//     }
-//     const pgIdxs= getProGradeTileNumbers(tileNumber);
-//
-//     let idxAry= getFirstIndex(orderData,norder+1,pgIdxs[0]);
-//     if (!idxAry.length) idxAry= getFirstIndex(orderData,norder+1,pgIdxs[1]);
-//     if (!idxAry.length) idxAry= getFirstIndex(orderData,norder+1,pgIdxs[2]);
-//     if (!idxAry.length) idxAry= getFirstIndex(orderData,norder+1,pgIdxs[3]);
-//     return idxAry;
-// }
 
 /**
  *
@@ -460,16 +440,19 @@ export function makeHpxWpt(hpxIndexData, idx) {
  */
 export function getWptsIdxsByTile(hpxIndexData, tileEntry) {
     let wpAry= [];
+    let idxAry=[];
     if (hpxIndexData.partialIndexData) {
         if (!tileEntry.indexesLoaded) return {wpAry:[], idxAry:[]};
         if (tileEntry?.precomputedTileWP) {
-            wpAry= tileEntry.tableIndexes.map((idx) => tileEntry.precomputedTileWP.get(idx));
+            wpAry= [...tileEntry.precomputedTileWP.values()];
+            idxAry= [...tileEntry.precomputedTileWP.keys()];
         }
     }
     else {
         wpAry= tileEntry.tableIndexes.map((idx) => makeHpxWpt(hpxIndexData, idx));
+        idxAry= tileEntry.tableIndexes;
     }
-    return {wpAry,idxAry:tileEntry.tableIndexes};
+    return {wpAry,idxAry};
 }
 
 /**
@@ -525,8 +508,8 @@ export function onOrderDataReady(tbl_id) {
 
 
 
-export function getProGradeTileNumbers(tileNumber) {
-    const base= tileNumber*4;
+export function getProGradeTilePixels(pixel) {
+    const base= pixel*4;
     return [base,base+1,base+2,base+3];
 }
 
@@ -538,44 +521,6 @@ function initRunId(tbl_id) {
     return runId;
 }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-export function createLargeTaskRunner(iterator, doValueFunc, shouldAbort= () => false) {
-    return new Promise( (resolve) => doRunnerWork(resolve, iterator, doValueFunc, shouldAbort) );
-}
-
-function doRunnerWork(resolve, iterator, doValueFunc, shouldAbort) {
-    let i=0;
-    let isDone= false;
-    let intervalID= undefined;
-
-    const worker= () => {
-        if (shouldAbort()) {
-            isDone=true;
-            resolve(false);
-            window.clearInterval(intervalID);
-            return;
-        }
-        if (isDone) window.clearInterval(intervalID);
-        for (; (!isDone);) {
-            const {value, done}= iterator.next();
-            isDone= done;
-            if (!isDone) {
-                doValueFunc(value, i);
-                i++;
-                if (i % 10000 === 0) return;
-            }
-        }
-        resolve(true);
-    };
-    intervalID = window.setInterval(worker);
-}
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
 
 export async function createSelectionHealPixIndexAsync(tbl_id, lonAry, latAry, csys, exceptions) {
     const selectionOrderData= initOrderData();
@@ -583,7 +528,7 @@ export async function createSelectionHealPixIndexAsync(tbl_id, lonAry, latAry, c
     const addRow= (rowIdx) => {
         addOrderRow(selectionOrderData,lonAry,latAry,rowIdx,csys);
     };
-    const finished= await createLargeTaskRunner(exceptions.keys(), addRow);
+    const finished= await createBackgroundRunner({iterator:exceptions.keys(), processValue:addRow});
     return finished ? selectionOrderData : initOrderData();
 }
 
@@ -599,7 +544,7 @@ export async function createPartialSelectionHealPixIndexAsync(tbl_id,exceptions,
             addPartialOrderRow(selectionOrderData, entry.dataNorderTile.precomputedTileWP.get(entry.idx),
                 entry.idx, MIN_NORDER,true);
         };
-        const finished= await createLargeTaskRunner(hpxSelectList.values(), addEntry);
+        const finished= await createBackgroundRunner({iterator:hpxSelectList.values(), processValue:addEntry});
         return finished ? selectionOrderData : initOrderData();
     }
     else if (isDefined(singleDeltaIdx)) { // optimization: handle single row change (from table checkbox click)
@@ -622,19 +567,13 @@ export async function createPartialSelectionHealPixIndexAsync(tbl_id,exceptions,
         const wp= makeWorldPt(row[0],row[1],csys);
         addPartialOrderRow(selectionOrderData,wp,row[2],MIN_NORDER,true);
     };
-    const finished= await createLargeTaskRunner(selectedTable.tableData.data.values(), addRow);
+    const finished= await createBackgroundRunner({iterator:selectedTable.tableData.data.values(), processValue:addRow});
     return finished ? selectionOrderData : initOrderData();
 }
 
-function showProgress(rowIdx,percent,length) {
-    if (length<750000 || rowIdx % 10000 !== 0) return percent;
-    const newPercent= Math.trunc(100*(rowIdx/length));
-    if (newPercent>percent+4) {
-        percent= newPercent;
-        const msg= percent<96 ? `Indexing: ${percent}%` : 'Analyzing';
-        dispatchComponentStateChange(COVERAGE_WAITING_MSG, {msg});
-    }
-    return percent;
+function showProgressMsg(percent) {
+    const msg= percent<95 ? `Indexing: ${percent}%` : 'Analyzing';
+    dispatchComponentStateChange(COVERAGE_WAITING_MSG, {msg});
 }
 
 async function createPartialHealpixIndexAsync(tbl_id, mapDataTable, runId) {
@@ -644,15 +583,16 @@ async function createPartialHealpixIndexAsync(tbl_id, mapDataTable, runId) {
     const PIXEL_IDX= 0;
     const COUNT_IDX= 1;
     const rows= mapDataTable.tableData.data;
-    let percent=0;
 
     if (!rows) return orderData;
 
     const addRow= (v,rowIdx) => {
         addHigherOrdersForPartial(orderData,rows[rowIdx][PIXEL_IDX], rows[rowIdx][COUNT_IDX], searchNorder);
-        percent= showProgress(rowIdx,percent,rows.length);
     };
-    const finished= await createLargeTaskRunner(rows.values(), addRow, () => shouldAbort(tbl_id,runId));
+
+    const finished= await createBackgroundRunner({iterator:rows.values(), processValue:addRow,
+        percentUpdate: showProgressMsg, length:rows.length,
+        shouldAbort:() => shouldAbort(tbl_id,runId)});
     for(let i= MIN_NORDER_FOR_COVERAGE; (i<DATA_NORDER); i++) {
         orderData[i].histogramInfo=orderData?.[i]?.tiles ?
             getArrayStats( getValuesForOrder(orderData,i).map( ({count}) => count)) : undefined;
@@ -662,12 +602,14 @@ async function createPartialHealpixIndexAsync(tbl_id, mapDataTable, runId) {
 
 async function createHealPixIndexAsync(lonAry,latAry,csys,tbl_id,runId) {
     const orderData= initOrderData();
-    let percent=0;
     const addRow= (v,rowIdx) => {
         addOrderRow(orderData,lonAry,latAry,rowIdx,csys);
-        percent= showProgress(rowIdx,percent,lonAry.length);
     };
-    const finished= await createLargeTaskRunner(lonAry.values(), addRow, () => shouldAbort(tbl_id,runId));
+    const finished= await createBackgroundRunner({iterator:lonAry.values(), processValue:addRow,
+        percentUpdate: showProgressMsg, length:lonAry.length,
+        shouldAbort:() => shouldAbort(tbl_id,runId)});
+
+
     for(let i= MIN_NORDER_FOR_COVERAGE; (i<DATA_NORDER); i++) {
         orderData[i].histogramInfo=orderData?.[i]?.tiles ?
             getArrayStats( getValuesForOrder(orderData,i).map( ({count}) => count)) : undefined;
@@ -731,29 +673,32 @@ function addOrderRow(orderData,lonAry,latAry,rowIdx,csys) {
 function addPartialOrderRow(orderData,wp,rowIdx,lowestNorder,addSummaryTiles=false) {
     const pixel= getIpixForWp(wp,DATA_NSIDE);
     const tileEntry= getOrInitDataTile(orderData,DATA_NORDER,pixel,true);
-    const hasIdx= tileEntry.tableIndexes.includes(rowIdx);
+    const hasIdx= tileEntry.precomputedTileWP.has(rowIdx);
     if (addSummaryTiles && hasIdx) return;
 
     if (!hasIdx) {
         tileEntry.precomputedTileWP.set(rowIdx,wp);
-        tileEntry.tableIndexes.push(rowIdx);
-        tileEntry.count= tileEntry.tableIndexes.length;
+        tileEntry.count= tileEntry.precomputedTileWP.size;
+        if (lowestNorder===DATA_NORDER) return;
+        addSummaryTiles ?
+            buildRetroIndex(orderData,lowestNorder,pixel) :
+            markRetroLoaded(orderData,lowestNorder,pixel);
     }
+}
 
-    if (lowestNorder===DATA_NORDER) return;
-    // if the retro grade is already marked as loaded, just return
-    if (!addSummaryTiles && getTile(orderData,lowestNorder,getRetroGradeIpix(pixel,DATA_NORDER-lowestNorder))?.indexesLoaded) return;
-
-
-    // mark the retro grade tiles as loaded
+function markRetroLoaded(orderData, lowestNorder,pixel) {
     let nextPixel= pixel;
     for(let norder= DATA_NORDER-1; (norder>=lowestNorder); norder--) {
         nextPixel = getRetroGradeIpix(nextPixel);
-        if (addSummaryTiles) {
-            getOrInitSummaryTile(orderData,norder,nextPixel).count++;
-        } else {
-            getAndMarkLoadedTile(orderData, norder, nextPixel);
-        }
+        getAndMarkLoadedTile(orderData, norder, nextPixel);
+    }
+}
+
+function buildRetroIndex(orderData, lowestNorder,pixel) {
+    let nextPixel= pixel;
+    for(let norder= DATA_NORDER-1; (norder>=lowestNorder); norder--) {
+        nextPixel = getRetroGradeIpix(nextPixel);
+        getOrInitSummaryTile(orderData,norder,nextPixel).count++;
     }
 }
 
@@ -761,8 +706,9 @@ function addPartialOrderRow(orderData,wp,rowIdx,lowestNorder,addSummaryTiles=fal
 function removePartialOrderRow(orderData,wp,rowIdx,lowestNorder) {
     const pixel= getIpixForWp(wp,DATA_NSIDE);
     const tileEntry= getTile(orderData,DATA_NORDER,pixel);
-    if (!tileEntry || !tileEntry.tableIndexes.includes(rowIdx)) return;
-    tileEntry.tableIndexes.splice(rowIdx,1);
+    if (!tileEntry || !tileEntry.precomputedTileWP.has(rowIdx)) return;
+    // tileEntry.tableIndexes.splice(rowIdx,1);
+    tileEntry.precomputedTileWP.delete(rowIdx);
 
     let nextPixel= pixel;
     for(let norder= DATA_NORDER-1; (norder>=lowestNorder); norder--) {
@@ -808,8 +754,9 @@ function getOrInitSummaryTile(orderData, norder, pixel, indexesLoaded=true) {
 function getOrInitDataTile(orderData, norder, pixel, useWpMap) {
     let tile = getTile(orderData, norder, pixel);
     if (tile) return tile;
-    tile= {pixel, count: 0, tableIndexes: [], indexesLoaded:true};
+    tile= {pixel, count: 0, indexesLoaded:true};
     if (useWpMap) tile.precomputedTileWP= new Map();
+    else  tile.tableIndexes= [];
     setPixelTile(orderData,norder,pixel,tile);
     return tile;
 }
@@ -823,6 +770,17 @@ function getAndMarkLoadedTile(orderData, norder, pixel) {
     const tile = getTile(orderData, norder, pixel);
     if (tile) tile.indexesLoaded = true;
     return tile;
+}
+
+export function isIndexesLoaded(orderData, norder, tileData) {
+    if (!tileData) return false;
+    if (tileData.indexesLoaded) return true;
+    return false;
+}
+
+export function getTileTableIndexes(tileData) {
+    if (!tileData) return [];
+    return tileData.precomputedTileWP ? [...tileData.precomputedTileWP.keys()] : tileData.tableIndexes;
 }
 
 export function setPixelTile(orderData,norder,pixel,tile) {
@@ -890,12 +848,10 @@ export async function fetchPartialData(tableOrId, norder, tiles) {
 
     const table = getTableModel(tableOrId);
     const {tbl_id}= table;
-    const asyncKey= 'fetchPartialData-'+tbl_id;
     await onOrderDataReady(tbl_id);
-    await blockWhileAsyncIdWaiting(asyncKey);
     const idxData = getHpxIndexData(tbl_id);
 
-    const searchTiles= tiles.filter( (t) => !getTile(idxData.orderData, norder, t.pixel)?.indexesLoaded);
+    const searchTiles= tiles.filter( (t) => !isIndexesLoaded(idxData.orderData, norder, t));
     if (!searchTiles.length) return;
     const missingPixels= searchTiles.map((t) => t.pixel);
 
@@ -903,6 +859,9 @@ export async function fetchPartialData(tableOrId, norder, tiles) {
     const finalNorder= (searchTiles.length> 10) ? norder-1 : norder;
 
 
+    const pixStr=pixels.join(',');
+    const asyncKey= 'fetchPartialData-'+tbl_id+'--' + pixStr;
+    await blockWhileAsyncIdWaiting(asyncKey);
     const {lonCol,latCol,csys} = findTableCenterColumns(table);
     const request = {
         id:'HealpixIndex',
@@ -910,7 +869,7 @@ export async function fetchPartialData(tableOrId, norder, tiles) {
         order:finalNorder,
         ra:lonCol,
         dec:latCol,
-        pixels: pixels.join(','),
+        pixels: pixStr,
         searchRequest: table.request,
     };
 

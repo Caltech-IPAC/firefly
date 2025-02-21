@@ -7,7 +7,7 @@ import {
 import {
     dispatchTableHighlight, dispatchTableUiUpdate, TABLE_HIGHLIGHT, TABLE_REMOVE, TABLE_SELECT, TABLE_UPDATE
 } from '../../tables/TablesCntlr';
-import {getCellValue, getMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil';
+import {getMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil';
 import CysConverter from '../../visualize/CsysConverter';
 import {COLOR_HIGHLIGHTED_PT, getNextColor, makeDrawingDef} from '../../visualize/draw/DrawingDef';
 import DrawLayer, {ColorChangeType, DataTypes} from '../../visualize/draw/DrawLayer';
@@ -23,11 +23,11 @@ import ImagePlotCntlr, {dispatchUseTableAutoScroll, visRoot} from '../../visuali
 import {
     getCenterOfProjection, getConnectedPlotsIds, getDrawLayerById, getPlotViewIdListByPositionLock, primePlot
 } from '../../visualize/PlotViewUtil';
-import {makeWorldPt, pointEquals} from '../../visualize/Point';
+import {pointEquals} from '../../visualize/Point';
 import {makeTableColorTitle} from '../../visualize/ui/DrawLayerUIComponents';
 import {MouseState} from '../../visualize/VisMouseSync';
 import {isHiPS, isImage} from '../../visualize/WebPlot';
-import {findTableCenterColumns, makeWorldPtUsingCenterColumns} from '../../voAnalyzer/TableAnalysis';
+import {makeWorldPtUsingCenterColumns} from '../../voAnalyzer/TableAnalysis';
 import {CatalogType} from '../Catalog';
 import {getUIComponent} from '../CatalogUI';
 import {

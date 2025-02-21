@@ -1,6 +1,7 @@
+import {dispatchAddTaskCount, dispatchRemoveTaskCount} from '../../core/AppDataCntlr';
 import {FilterInfo} from '../../tables/FilterInfo';
 import {
-    DATA_NORDER, ensureDataForSelection, getAllWptsIdxsForTile, getHpxIndexData, getValuesForOrder,
+    DATA_NORDER, ensureDataForSelection, getAllWptsIdxsForTile, getHpxIndexData, getValuesForOrder, HPX_WORKING_KEY,
 } from '../../tables/HpxIndexCntlr';
 import {SelectInfo} from '../../tables/SelectInfo';
 import {dispatchTableFilter, dispatchTableSelect} from '../../tables/TablesCntlr';
@@ -11,7 +12,7 @@ import CysConverter from '../../visualize/CsysConverter';
 import {dlRoot} from '../../visualize/DrawLayerCntlr';
 import {getCatalogNorderlevel, getCornersForCell} from '../../visualize/HiPSUtil';
 import {PlotAttribute} from '../../visualize/PlotAttribute';
-import {getAllDrawLayersForPlot, primePlot} from '../../visualize/PlotViewUtil';
+import {DEFAULT_COVERAGE_PLOT_ID, getAllDrawLayersForPlot, primePlot} from '../../visualize/PlotViewUtil';
 import {detachSelectArea} from '../../visualize/ui/SelectAreaDropDownView';
 import {contains, containsEllipse} from '../../visualize/VisUtil';
 import SelectArea from '../SelectArea';
@@ -109,7 +110,7 @@ async function doSelect(dl, p, sel, selectedShape) {
     const selectInfoCls = SelectInfo.newInstance({rowCount: dl.drawData.data.length});
     const hpxSelectList = await getHpxSelectedPts(dl, p, sel, selectedShape);
     hpxSelectList.forEach(({idx}) => selectInfoCls.setRowSelect(idx, true));
-    dispatchTableSelect(dl.tbl_id, selectInfoCls.data, {hpxSelectList});
+    dispatchTableSelect(dl.tbl_id, selectInfoCls.data, {hpxSelectList, row:undefined});
 }
 
 async function doFilter(dl, p, sel, selectedShape) {
@@ -119,10 +120,10 @@ async function doFilter(dl, p, sel, selectedShape) {
     const filterInfoCls = FilterInfo.parse(filterInfo);
     const hpxSelectList= await getHpxSelectedPts(dl, p, sel, selectedShape);
     const idxAry= hpxSelectList.map( (e) => e.idx);
-    const filter = `IN (${idxAry.length === 0 ? -1 : idxAry.toString()})`;     //  ROW_IDX is always positive.. use -1 to force no row selected
+    const filter = idxAry.length ? `IN (${idxAry.toString()})` : undefined;
     filterInfoCls.setFilter('ROW_IDX', filter);
     const newRequest = {tbl_id: tbl.tbl_id, filters: filterInfoCls.serialize()};
-    dispatchTableFilter(newRequest);
+    if (filter) dispatchTableFilter(newRequest);
 }
 
 
@@ -139,8 +140,8 @@ async function getHpxSelectedPts(dl, p, sel, selectedShape) {
     const idxData = getHpxIndexData(dl.tbl_id);
     const norder = getCatalogNorderlevel(p, minNOrder, idxData.maxInitialLoadNorder,dl.gridSize);
     const allTileDataList = getValuesForOrder(idxData.orderData, norder) ?? [];
-    const selectedIdxs = await getSelectedHealPixFromShape(dl.tbl_id, sel, p, allTileDataList, norder, selectedShape);
-    return selectedIdxs;
+    const selectedPixels = await getSelectedHealPixFromShape(dl.tbl_id, sel, p, allTileDataList, norder, selectedShape);
+    return selectedPixels;
 }
 
 async function getSelectedHealPixFromShape(tbl_id, selection, plot, tileList, norder, selectedShape) {
@@ -196,7 +197,9 @@ async function getSelectedHealPix(tbl_id, cc, pt0, pt1, tileList, norder, contai
         if (devC.some((pt) => containsTest(pt))) selectedTiles.push(tile);
     });
 
+    dispatchAddTaskCount(DEFAULT_COVERAGE_PLOT_ID,HPX_WORKING_KEY);
     idxData= await ensureDataForSelection(tbl_id,norder,selectedTiles);
+    dispatchRemoveTaskCount(DEFAULT_COVERAGE_PLOT_ID,HPX_WORKING_KEY);
 
     // const selectedTableIdxList = [];
     const hpxSelectList= [];
@@ -204,7 +207,6 @@ async function getSelectedHealPix(tbl_id, cc, pt0, pt1, tileList, norder, contai
         getAllWptsIdxsForTile(idxData,norder,tile.pixel)
             .forEach(({wp,idx,dataNorderTile}) => {
                 const pt = cc.getDeviceCoords(wp); //
-                // if (containsTest(pt)) selectedTableIdxList.push(idx);
                 if (containsTest(pt)) hpxSelectList.push({idx,dataNorderTile});
             });
     });

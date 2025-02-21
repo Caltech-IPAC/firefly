@@ -4,7 +4,7 @@ import {
     getKeysForOrder,
     getTile, idxRoot, MIN_NORDER,
     MIN_NORDER_FOR_COVERAGE, MIN_NORDER_TO_ALWAYS_GROUP, MIN_ROWS_FOR_HIERARCHICAL, onOrderDataReady,
-    getAllWptsIdxsForTile, getRetroGradeIpix, isSummaryTile,
+    getAllWptsIdxsForTile, getRetroGradeIpix, isSummaryTile, isIndexesLoaded, getTileTableIndexes,
 } from '../../tables/HpxIndexCntlr';
 import {getTblById} from '../../tables/TableUtil';
 import CoordSys from '../../visualize/CoordSys';
@@ -256,7 +256,7 @@ function getDrawDataForCell({ cell, minGroupSize, cc, idxData, norder, expandedT
                 drawingDef, selected, selectedCnt, tblIdx, groupType:groupTypeToUse,heatMapStretch});
         }
     } else { // draw the points if at the data level
-        const selectedIndexes = selectionTileData?.tableIndexes ?? [];
+        const selectedIndexes = getTileTableIndexes(selectionTileData);
 
         const resultAry= getAllWptsIdxsForTile(idxData,norder,tileData.pixel);
         drawObjs= resultAry.map( ({wp,idx}) => {
@@ -269,7 +269,7 @@ function getDrawDataForCell({ cell, minGroupSize, cc, idxData, norder, expandedT
      const belowMinRow= totalRows < MIN_ROWS_FOR_HIERARCHICAL;
      const showAllPoints = norder > MIN_NORDER_TO_ALWAYS_GROUP && belowMinRow;
      const tileData = getTile(idxData.orderData, tileNorder, ipix);
-     if (!tileData?.count || tileData.indexesLoaded) return;
+     if (!tileData?.count || isIndexesLoaded(idxData.orderData,norder.tileData)) return;
      if (forceShow) return tileData;
      if (!isSummaryTile(tileData)) return tileData;
      return alwaysShow(tileData.count, ipix, showAllPoints, groupType,minGroupSize, expandedTiles, norder) ? tileData : undefined;

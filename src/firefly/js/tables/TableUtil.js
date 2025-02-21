@@ -631,7 +631,7 @@ export function getSelectedData(tbl_id, columnNames=[]) {
  */
 export function getSelectedDataSync(tbl_id, columnNames=[]) {
     const {tableModel, tableMeta, selectInfo} = local.getTblInfoById(tbl_id);
-    const selectedRows = [...SelectInfo.newInstance(selectInfo).getSelected()];  // get selected row idx as an array
+    const selectedRows = Array.from(SelectInfo.newInstance(selectInfo).getSelected());  // get selected row idx as an array
 
     if (columnNames.length === 0) {
         columnNames = getAllColumns(tableModel).map( (c) => c.name);       // return all columns
