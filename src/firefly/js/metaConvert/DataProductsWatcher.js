@@ -24,7 +24,7 @@ import {findGridTableRows} from './TableDataProductUtils.js';
 import {dispatchAddTableTypeWatcherDef} from '../core/MasterSaga.js';
 import {zoomPlotPerViewSize, resetImageFullGridActivePlot, changeTableHighlightToMatchPlotView} from './ImageDataProductsUtil.js';
 import {
-    DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, dataProductRoot, dispatchUpdateDataProducts, getActivateParams
+    dataProductRoot, dispatchUpdateDataProducts, getActivateParams
 } from './DataProductsCntlr.js';
 import {dpdtMessage, dpdtSimpleMsg, DPtypes} from './DataProductsType.js';
 import {UserZoomTypes} from '../visualize/ZoomUtil.js';
@@ -161,7 +161,7 @@ function watchDataProductsTable(tbl_id, action, cancelSelf, params) {
             break;
 
         case ComponentCntlr.COMPONENT_STATE_CHANGE:
-            const {dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY}= getFactoryTemplateOptions(factoryKey) ??{};
+            const {dataProductsComponentKey}= getFactoryTemplateOptions(factoryKey) ??{};
             if (action.payload.componentId===dataProductsComponentKey) {
                 abortPromise= updateDataProducts(factoryKey, action, firstTime, tbl_id, activateParams, abortLastPromise);
             }

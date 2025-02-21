@@ -6,7 +6,7 @@ import {
 import {getSizeAsString, GIG} from '../../util/WebUtil.js';
 import {makeAnalysisActivateFunc} from '../AnalysisUtils.js';
 import {
-    DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, dispatchUpdateActiveKey, getActiveMenuKey, getCurrentActiveKeyID
+    dispatchUpdateActiveKey, getActiveMenuKey, getCurrentActiveKeyID
 } from '../DataProductsCntlr.js';
 import {
     dpdtAnalyze, dpdtChartTable, dpdtDownload, dpdtDownloadMenuItem, dpdtFromMenu, dpdtImage, dpdtMessage,
@@ -47,8 +47,7 @@ export function processDatalinkTable({sourceTable, row, datalinkTable, activateP
                                      additionalServiceDescMenuList, dlTableUrl, doFileAnalysis=true,
                                          options, parsingAlgorithm = USE_ALL}) {
     const dataLinkData= getDataLinkData(datalinkTable,sourceTable,row);
-    const {dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY}= options;
-    const preferCutout= getPreferCutout(dataProductsComponentKey,sourceTable?.tbl_id);
+    const preferCutout= getPreferCutout(options.dataProductsComponentKey,sourceTable?.tbl_id);
     const isImageGrid= options.hasRelatedBands && dataLinkData.filter( (dl) => dl.dlAnalysis.isImage && dl.dlAnalysis.isGrid).length>1;
     const isMultiTableSpectrum= dataLinkData.filter( (dl) => dl.dlAnalysis.isThis && dl.dlAnalysis.isGrid && dl.dlAnalysis.isSpectrum).length>1;
     if (parsingAlgorithm===USE_ALL && isMultiTableSpectrum) parsingAlgorithm= SPECTRUM; // todo this is probably temporary for testing

@@ -1,6 +1,7 @@
 import {isObject, isString} from 'lodash';
 import {dispatchComponentStateChange, getComponentState} from '../../core/ComponentCntlr';
 import {MetaConst} from '../../data/MetaConst';
+import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY} from '../../metaConvert/DataProductConst';
 import {getMetaEntry} from '../../tables/TableUtil';
 import {parseObsCoreRegion} from '../../util/ObsCoreSRegionParser';
 import {parseWorldPt} from '../../visualize/Point';
@@ -9,7 +10,7 @@ import {
     getObsCoreSRegion, getSearchTargetFromTable, isRowTargetCapable, makeWorldPtUsingCenterColumns
 } from '../../voAnalyzer/TableAnalysis';
 import {findWorldPtInServiceDef} from '../../voAnalyzer/VoDataLinkServDef';
-import {getDataServiceOption, getDataServiceOptionByTable} from './DataServicesOptions';
+import {getDataServiceOptionByTable} from './DataServicesOptions';
 
 const PREFER_CUTOUT_KEY = 'preferCutout';
 const SD_CUTOUT_SIZE_KEY = 'sdCutoutSize';
@@ -43,13 +44,13 @@ export function getPreferCutout(dataProductsComponentKey, tbl_id) {
  * @param {String} tbl_id
  * @param {boolean} preferCutout
  */
-export function setPreferCutout(dataProductsComponentKey, tbl_id, preferCutout) {
+export function setPreferCutout(dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, tbl_id, preferCutout) {
     const result = getComponentState(dataProductsComponentKey)[PREFER_CUTOUT_KEY] ?? {};
     const newState = {...result, [tbl_id]: preferCutout, LAST_PREF: preferCutout};
     dispatchComponentStateChange(dataProductsComponentKey, {[PREFER_CUTOUT_KEY]: newState});
 }
 
-export function getCutoutSize(dataProductsComponentKey, tbl_id) {
+export function getCutoutSize(dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, tbl_id) {
     return getComponentState(dataProductsComponentKey, {})[SD_CUTOUT_SIZE_KEY] ??
         getDataServiceOptionByTable('cutoutDefSizeDeg', tbl_id, SD_DEFAULT_SPACIAL_CUTOUT_SIZE);
 }
@@ -67,7 +68,8 @@ export const setCutoutSize = (dataProductsComponentKey, cutoutSize) =>
  * @param overrideTarget
  * @param preferCutout
  */
-export function setAllCutoutParams(dataProductsComponentKey, tbl_id, serDef, cutoutType, cutoutSize, overrideTarget = undefined, preferCutout = true) {
+export function setAllCutoutParams(dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, tbl_id, serDef, cutoutType,
+                                   cutoutSize, overrideTarget = undefined, preferCutout = true) {
     const result = getComponentState(dataProductsComponentKey);
     const newPreferState = {...result[PREFER_CUTOUT_KEY], [tbl_id]: preferCutout, LAST_PREF: preferCutout};
 
@@ -86,10 +88,10 @@ export function setAllCutoutParams(dataProductsComponentKey, tbl_id, serDef, cut
         });
 }
 
-export const setCutoutTargetOverride = (dataProductsComponentKey, wp) =>
+export const setCutoutTargetOverride = (dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, wp) =>
     dispatchComponentStateChange(dataProductsComponentKey, {[SD_CUTOUT_WP_OVERRIDE]: wp});
 
-export const getCutoutTargetOverride = (dataProductsComponentKey) =>
+export const getCutoutTargetOverride = (dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY) =>
     getComponentState(dataProductsComponentKey, {})[SD_CUTOUT_WP_OVERRIDE];
 
 function getIdForCutoutType(tbl_id, serDef) {
@@ -104,7 +106,7 @@ function getIdForCutoutType(tbl_id, serDef) {
     return {lookupTblId, canDoRow};
 }
 
-export function getCutoutTargetType(dataProductsComponentKey, tbl_id, serDef) {
+export function getCutoutTargetType(dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, tbl_id, serDef) {
 
     const {lookupTblId, canDoRow} = getIdForCutoutType(tbl_id, serDef);
     const cutoutTypeObj = getComponentState(dataProductsComponentKey, {})[SD_CUTOUT_TYPE];
@@ -128,7 +130,7 @@ export function getCutoutTargetType(dataProductsComponentKey, tbl_id, serDef) {
     return SEARCH_POSITION;
 }
 
-export function findPreferredCutoutTarget(dataProductsComponentKey, serDef, table, row) {
+export function findPreferredCutoutTarget(dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, serDef, table, row) {
     const cutoutType = getCutoutTargetType(dataProductsComponentKey, table?.tbl_id, serDef);
     let positionWP;
     let foundType;
@@ -154,7 +156,7 @@ export function findPreferredCutoutTarget(dataProductsComponentKey, serDef, tabl
     return {requestedType, foundType, positionWP: positionWP ?? findWorldPtInServiceDef(serDef, row)};
 }
 
-export function findCutoutTarget(dataProductsComponentKey, serDef, table, row) {
+export function findCutoutTarget(dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, serDef, table, row) {
     const result = findPreferredCutoutTarget(dataProductsComponentKey, serDef, table, row);
     const {positionWP} = result;
     const sRegion = getObsCoreSRegion(table, row);

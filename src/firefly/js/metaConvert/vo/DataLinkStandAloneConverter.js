@@ -1,6 +1,5 @@
 import {getPreferCutout} from '../../ui/tap/Cutout';
 import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
-import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY} from '../DataProductsCntlr';
 import {createDataLinkSingleRowItem} from './DataLinkProcessor.js';
 
 /**
@@ -18,7 +17,7 @@ export function makeDatalinkStaneAloneConverter(table,converterTemplate,options=
 
 export async function getDatalinkStandAlineDataProduct(table, row, activateParams, options) {
     const dataLinkData= getDataLinkData(table);
-    const {dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY}= options;
+    const {dataProductsComponentKey}= options;
     const preferCutout= getPreferCutout(dataProductsComponentKey,table?.tbl_id);
 
     let dlData= dataLinkData?.[row];

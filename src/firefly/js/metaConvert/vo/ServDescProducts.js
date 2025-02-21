@@ -11,7 +11,6 @@ import {CUTOUT_UCDs, DEC_UCDs, RA_UCDs} from '../../voAnalyzer/VoConst';
 import {findWorldPtInServiceDef, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {isDefined} from '../../util/WebUtil.js';
 import {makeAnalysisActivateFunc} from '../AnalysisUtils.js';
-import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY} from '../DataProductsCntlr.js';
 import {dpdtAnalyze, dpdtImage} from '../DataProductsType.js';
 import {createSingleImageActivate, createSingleImageExtraction} from '../ImageDataProductsUtil';
 import {getObsCoreRowMetaInfo} from './ObsCoreConverter';
@@ -81,10 +80,9 @@ export function makeServiceDefDataProduct({
 const CUTOUT_NAME_GUESS_LIST= ['size'];
 
 function canMakeCutoutProduct(serDef,table,sourceRow,options){
-    const key= options.dataProductsComponentKey ?? DEFAULT_DATA_PRODUCTS_COMPONENT_KEY;
     const {standardID,serDefParams} = serDef;
 
-    const {positionWP}= findCutoutTarget(key,serDef,table,sourceRow);
+    const {positionWP}= findCutoutTarget(options.dataProductsComponentKey,serDef,table,sourceRow);
     if (!positionWP) { // look for ra/dec columns
         const wp= findWorldPtInServiceDef(serDef,sourceRow);
         if (!wp) return false;
@@ -109,7 +107,7 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, activate
                              options, titleStr, menuKey}) {
 
     const {accessURL, standardID, serDefParams, sdSourceTable} = serDef;
-    const key= options.dataProductsComponentKey ?? DEFAULT_DATA_PRODUCTS_COMPONENT_KEY;
+    const key= options.dataProductsComponentKey;
     const cutoutSize= getCutoutSize(key);
 
     if (cutoutSize<=0) return; // must be greater than 0
@@ -200,7 +198,7 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, activate
  * @return {Object.<string, *>}
  */
 function getComponentInputs(serDef, options, moreParams={}) {
-    const key= options.dataProductsComponentKey ?? DEFAULT_DATA_PRODUCTS_COMPONENT_KEY;
+    const key= options.dataProductsComponentKey;
     const valueObj= {...getComponentState(key,{}), ...moreParams};
     if (isEmpty(valueObj)) return {};
     const {serDefParams}= serDef;

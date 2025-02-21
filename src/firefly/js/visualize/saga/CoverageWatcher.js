@@ -346,7 +346,10 @@ async function updateCoverage(tbl_id, viewerId, preparedTables, options, tblCatI
         if (covType===CoverageType.X) {
             dispatchEnableHpxIndex({tbl_id});
             await onOrderDataReady(tbl_id);
-             preparedTables[tbl_id] = table;
+            preparedTables[tbl_id] = table;
+        }
+        if (covType===CoverageType.REGION) {
+            dispatchEnableHpxIndex({tbl_id});
         }
         const usesRadians= isTableUsingRadians(table);
 

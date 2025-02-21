@@ -4,8 +4,8 @@ import {getSizeAsString} from '../../util/WebUtil';
 import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {Band} from '../../visualize/Band.js';
 import {WPConst} from '../../visualize/WebPlotRequest.js';
-import {DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, dispatchUpdateDataProducts} from '../DataProductsCntlr';
-import {IMAGE_ONLY, TABLE_ONLY} from '../DataProductsFactory';
+import {IMAGE_ONLY, TABLE_ONLY} from '../DataProductConst';
+import {dispatchUpdateDataProducts} from '../DataProductsCntlr';
 import {dpdtImage, dpdtMessageWithDownload, dpdtSimpleMsg, dpdtWorkingMessage, DPtypes} from '../DataProductsType.js';
 import {
     createGridImagesActivate, createRelatedGridImagesActivate, createSingleImageExtraction
@@ -30,8 +30,7 @@ export async function getDatalinkRelatedGridProduct({dlTableUrl, activateParams,
     try {
         dispatchUpdateDataProducts(activateParams.dpId, dpdtWorkingMessage('Loading data products...', 'working'));
         const datalinkTable = await fetchDatalinkTable(dlTableUrl, options.datalinkTblRequestOptions);
-        const {dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY}= options;
-        const preferCutout= getPreferCutout(dataProductsComponentKey,table?.tbl_id);
+        const preferCutout= getPreferCutout(options.dataProductsComponentKey,table?.tbl_id);
 
         const gridData = getDataLinkData(datalinkTable,table,row).filter(({dlAnalysis}) => dlAnalysis.isGrid && dlAnalysis.isImage);
         if (!gridData.length) return dpdtSimpleMsg('no support for related grid in datalink file');

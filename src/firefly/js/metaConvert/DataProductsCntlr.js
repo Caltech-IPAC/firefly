@@ -1,9 +1,9 @@
-import {flux} from '../core/ReduxFlux';
+import {get, isArray, isObject} from 'lodash';
 import {REINIT_APP} from '../core/AppDataCntlr';
-import {isArray, isObject,get} from 'lodash';
-import {dpdtMessage, DPtypes} from './DataProductsType';
-import {encodeUrl, getRootURL} from '../util/WebUtil';
+import {flux} from '../core/ReduxFlux';
 import {download} from '../util/fetch';
+import {encodeUrl, getRootURL} from '../util/WebUtil';
+import {dpdtMessage, DPtypes} from './DataProductsType';
 
 
 export const DATA_PRODUCTS_KEY= 'dataProducts';
@@ -15,7 +15,6 @@ export const UPDATE_ACTIVE_KEY= `${PREFIX}.UpdateActiveKey`;
 export const ACTIVATE_MENU_ITEM= `${PREFIX}.ActivateMenuItem`;
 export const ACTIVATE_FILE_MENU_ITEM= `${PREFIX}.ActivateFileMenuItem`;
 export const SET_SEARCH_PARAMS= `${PREFIX}.SetSearchParams`;
-export const DEFAULT_DATA_PRODUCTS_COMPONENT_KEY= `${PREFIX}.defaultComponentDataKey`;
 
 export function dataProductRoot() { return flux.getState()[DATA_PRODUCTS_KEY]; }
 
