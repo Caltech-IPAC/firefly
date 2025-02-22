@@ -1,13 +1,14 @@
 import {getMenu} from '../core/AppDataCntlr.js';
 import {makeSearchActionObj, SearchTypes} from '../core/ClickToAction.js';
 import {flux} from '../core/ReduxFlux.js';
-import {MetaConst} from '../data/MetaConst';
 import {ServerParams} from '../data/ServerParams.js';
 import {sprintf} from '../externalSource/sprintf.js';
-import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById, makeFileRequest} from '../api/ApiUtilTable.jsx';
+import {
+    getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById, makeFileRequest, onTableLoaded
+} from '../api/ApiUtilTable.jsx';
 import {extractDatalinkTable} from '../metaConvert/TableDataProductUtils';
 import {makeVOCatalogRequest} from '../tables/TableRequestUtil.js';
-import {dispatchTableSearch} from '../tables/TablesCntlr.js';
+import {dispatchTableSearch, dispatchTableUpdate} from '../tables/TablesCntlr.js';
 import { findTableCenterColumns, isFormatDataLink, isObsCoreLike } from '../voAnalyzer/TableAnalysis.js';
 import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
 import {getServiceDescriptors, isDataLinkServiceDesc} from '../voAnalyzer/VoDataLinkServDef';
@@ -15,7 +16,7 @@ import {setMultiSearchPanelTab} from './MultiSearchPanel.jsx';
 import {Format} from 'firefly/data/FileAnalysis';
 import {doJsonRequest} from 'firefly/core/JsonUtils';
 import {showInfoPopup} from 'firefly/ui/PopupUtil';
-import {getDataServiceOption, getDataServiceOptionByTable} from './tap/DataServicesOptions';
+import {getDataServiceOptionByTable} from './tap/DataServicesOptions';
 
 //note - these two redundant function are here because of circular dependencies.
 // this file is imported very early and webpack is creating errors
@@ -276,7 +277,16 @@ function searchSimbad(cenWpt,radius) {
     };
     const url = base + '?' + new URLSearchParams(params).toString();
     const request= makeFileRequest('Simbad', url);
+    const {tbl_id}= request.META_INFO;
     dispatchTableSearch(request);
+    onTableLoaded(tbl_id).then( (table) => {
+        if (!table.error) return;
+        const lon= sprintf('%.5f',cenWpt.getLon());
+        const lat= sprintf('%.5f',cenWpt.getLat());
+        const radStr= sprintf('%.5f',Number(radius));
+        const error= `No data found for SIMBAD cone search with center ${lon}, ${lat} and radius ${radStr} degrees`;
+        dispatchTableUpdate({...table,error});
+    });
 }
 
 function gotoAndSearchSimbad(cenWpt,radius) {

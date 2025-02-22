@@ -186,7 +186,7 @@ export function getReadoutElement(readoutItems, readoutKey, plotId, copyPref) {
             return {value:makeImagePtReturn(readoutItems?.zeroBasedImagePt?.value)};
         case MR_HEALPIX_PIXEL:
             const {healpixPixel}= readoutItems;
-            return {value: (healpixPixel && healpixPixel.value) ? `${healpixPixel.value}` : ''};
+            return {value: (healpixPixel && healpixPixel.value) ? `${healpixPixel.value.toString(16)}` : ''};
         case MR_HEALPIX_NORDER:
             const {healpixNorder}= readoutItems;
             return {value: (healpixNorder && healpixNorder.value) ? `${healpixNorder.value}` : ''};
