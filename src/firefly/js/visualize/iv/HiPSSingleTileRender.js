@@ -35,7 +35,7 @@ function getCorrection(tileSize, norder,desiredNorder,isMaxOrder) {
         else return .01;
     }
     else {
-        return tileSize < 80 ? .05 : tileSize < 150 ? .035 : .01;
+        return tileSize < 80 ? .05 : tileSize < 150 ? .035 : .005;
     }
 }
 
@@ -54,10 +54,8 @@ function getCorrection(tileSize, norder,desiredNorder,isMaxOrder) {
  * @param {number} desiredNorder
  */
 export function drawOneHiPSTile(ctx, img, cornersAry, tileSize, offset, isMaxOrder, norder, desiredNorder) {
-    const triangles= norder===2 || (tileSize < 70) ? 2 : 4;
+    const triangles= norder > isMaxOrder && desiredNorder>norder ? 4 : 2;
     const correction= getCorrection(tileSize,norder,desiredNorder,isMaxOrder);
-    // correction= window.cor ?? correction;
-    // window.firefly.debug && console.log(`tri:${triangles}, tileSize:${tileSize}, maxOrder:${isMaxOrder}, ${norder}, ${desiredNorder}, ${correction}`);
 
     if (triangles===2) {
         const triangle1= [{x:tileSize, y:tileSize}, {x:tileSize, y:0}, {x:0, y:tileSize}];
@@ -67,63 +65,28 @@ export function drawOneHiPSTile(ctx, img, cornersAry, tileSize, offset, isMaxOrd
         drawTexturedTriangle(ctx, img,offset, ...triangle2, cornersAry[1], cornersAry[3], cornersAry[2], correction, true);
     }
     else if (triangles===4) {
-        const mp=tileSize/2;
-        const cMx= cornersAry.reduce( (total,pt) => total+pt.x, 0)/cornersAry.length;
-        const cMy= cornersAry.reduce( (total,pt) => total+pt.y, 0)/cornersAry.length;
-        const cPt= {x:cMx,y:cMy};
-
-        const [triangle1, triangle2, triangle3, triangle4]= makeSource4Triangle({x:mp, y:mp}, 0, tileSize);
-        drawTexturedTriangle(ctx, img, offset, ...triangle1, cornersAry[0], cPt, cornersAry[1], correction, false); // 3 >
-        drawTexturedTriangle(ctx, img, offset, ...triangle2, cornersAry[1], cPt, cornersAry[2], correction, false); // 12 ^
-        drawTexturedTriangle(ctx, img, offset, ...triangle3, cornersAry[3], cPt, cornersAry[2], correction, false); // 9 <
-        drawTexturedTriangle(ctx, img, offset, ...triangle4, cornersAry[0], cPt, cornersAry[3], correction, false); // 6 v
+        draw4Triangles(ctx, img, correction, offset, cornersAry,tileSize);
     }
-    else if (triangles===16) { // keep this section around if we have to use it, it is not complete and not tested
-        // const mp=tileSize/2;
-        // const cMx= cornersAry.reduce( (total,pt) => total+pt.x, 0)/cornersAry.length;
-        // const cMy= cornersAry.reduce( (total,pt) => total+pt.y, 0)/cornersAry.length;
-        // const cPt= {x:cMx,y:cMy};
-        //
-        //
-        //
-        //
-        //
-        // bottom - right
-        // const sec1cp= mp+mp/2;
-        // const sec1CenPt= {x:sec1cp, y:sec1cp};
-        // const triangle1_1= [{x:tileSize, y:tileSize}, sec1CenPt, {x:tileSize, y:mp}];  // 3
-        // const triangle1_2= [{x:tileSize, y:tileSize}, sec1CenPt, {x:mp, y:tileSize}];  // 6
-        // const triangle1_3= [{x:mp, y:tileSize}, sec1CenPt, {x:mp, y:mp}];              // 9
-        // const triangle1_4= [{x:mp, y:mp}, sec1CenPt, {x:tileSize, y:tileSize}];        // 12
-
-        // const srcTriangles= [
-        //     ...makeSource4Triangle(mp+(mp/2),mp,tileSize), // bottom right
-        //     ...makeSource4Triangle(mp-(mp/2), mp,tileSize), // top right
-        //     ...makeSource4Triangle(mp+(mp/2), 0,mp), // bottom left
-        //     ...makeSource4Triangle(mp/2, 0,mp), // bottom left
-        // ];
-
-
-
-        // top - right
-        // const sec2cp= mp-mp/2;
-        // const sec2CenPt= {x:sec2cp,y:sec2cp};
-        //
-        //
-        //
-        //
-        //
-        // // const triangle1= [{x:tileSize-delta, y:tileSize-delta}, {x:mp-delta, y:mp-delta}, {x:tileSize-delta, y:delta}];
-        // const triangle2= [{x:tileSize-delta, y:delta}, {x:mp-delta, y:mp-delta}, {x:delta, y:delta}];
-        // const triangle3= [{x:delta, y:tileSize-delta}, {x:mp-delta, y:mp-delta}, {x:delta, y:delta}];
-        // const triangle4= [{x:tileSize-delta, y:tileSize-delta}, {x:mp-delta, y:mp-delta}, {x:delta, y:tileSize-delta}];
-        //
-        // drawTexturedTriangle(ctx, img, offset, ...triangle1, cornersAry[0], cPt, cornersAry[1], correction);
-        // drawTexturedTriangle(ctx, img, offset, ...triangle2, cornersAry[1], cPt, cornersAry[2], correction);
-        // drawTexturedTriangle(ctx, img, offset, ...triangle3, cornersAry[3], cPt, cornersAry[2], correction);
-        // drawTexturedTriangle(ctx, img, offset, ...triangle4, cornersAry[0], cPt, cornersAry[3], correction);
+    else if (triangles===8) { // keep this section around if we have to use it, it is not complete and not tested
+        //todo - will probably never do this
     }
 }
+
+
+function draw4Triangles(ctx, img, correction, offset, cornersAry,tileSize) {
+    const mp=tileSize/2;
+    const cMx= cornersAry.reduce( (total,pt) => total+pt.x, 0)/cornersAry.length;
+    const cMy= cornersAry.reduce( (total,pt) => total+pt.y, 0)/cornersAry.length;
+    const cPt= {x:cMx,y:cMy};
+
+    const [triangle1, triangle2, triangle3, triangle4]= makeSource4Triangle({x:mp, y:mp}, 0, tileSize);
+    drawTexturedTriangle(ctx, img, offset, ...triangle1, cornersAry[0], cPt, cornersAry[1], correction, false); // 3 >
+    drawTexturedTriangle(ctx, img, offset, ...triangle2, cornersAry[1], cPt, cornersAry[2], correction, false); // 12 ^
+    drawTexturedTriangle(ctx, img, offset, ...triangle3, cornersAry[3], cPt, cornersAry[2], correction, false); // 9 <
+    drawTexturedTriangle(ctx, img, offset, ...triangle4, cornersAry[0], cPt, cornersAry[3], correction, false); // 6 v
+}
+
+
 
 const scaleCoeff = 0.01;
 

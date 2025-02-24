@@ -6,6 +6,7 @@ import {Box, Chip, Stack, Switch, Tooltip, Typography} from '@mui/joy';
 import React, {memo, useEffect, useRef, useState} from 'react';
 import {object, bool, number} from 'prop-types';
 import BrowserInfo from '../../util/BrowserInfo.js';
+import {EMPTY_BUNIT_DEFAULT} from '../FitsHeaderUtil';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 import {showMouseReadoutFluxRadixDialog} from './MouseReadoutOptionPopups.jsx';
 import {getNonFluxDisplayElements, getFluxInfo} from './MouseReadoutUIUtil.js';
@@ -144,12 +145,14 @@ const LabelItem= memo(({showCopy=false, label='', value='', copyValue='', prefCh
 });
 
 const DataItem= memo(({ value='', unit='', monoFont=false, sx}) => {
+    const isEmptyUnit= unit===EMPTY_BUNIT_DEFAULT;
     const mStyle= monoFont ? {fontFamily:'monospace', whiteSpace:'nowrap'} : {whiteSpace:'nowrap'};
-    const vStr=value+'';
+    const vStr=isEmptyUnit ? value + ' (no units defined in file)'  : value+' ' + unit;
     return (
         <Stack {...{direction:'row', className:'ff-readout-value', alignItems:'center', sx }}>
             <Typography level='body-sm' color='warning'  title={vStr} sx={mStyle}>{value}</Typography>
-            {unit && <Typography level='body-sm' color='warning' title={vStr} sx={{pl:.25}}>{unit}</Typography>}
+            {unit && <Typography level='body-sm' color={!isEmptyUnit ? 'warning' : undefined}  title={vStr}
+                                 sx={{pl:.25, opacity:isEmptyUnit?.5:1}}>{unit}</Typography>}
         </Stack>
     );
 });

@@ -10,13 +10,12 @@ import {findCoordSys, EQUATORIAL_J, EQUATORIAL_B, GALACTIC_JSYS,
     ECLIPTIC_B, SUPERGALACTIC_JSYS, ECLIPTIC_J, NONCELESTIAL} from '../CoordSys.js';
 import {MAX_SIP_LENGTH} from './ProjectionUtil.js';
 import {makeProjectionNew} from './Projection.js';
-import {getHeader, makeHeaderParse, HdrConst} from '../FitsHeaderUtil.js';
+import {getHeader, makeHeaderParse, HdrConst, EMPTY_BUNIT_DEFAULT} from '../FitsHeaderUtil.js';
 
 const CD1_1_HEADERS= ['CD1_1','CD001001'];
 const CD1_2_HEADERS= ['CD1_2','CD001002'];
 const CD2_1_HEADERS= ['CD2_1','CD002001'];
 const CD2_2_HEADERS= ['CD2_2','CD002002'];
-
 
 function getHeaderListD(parse, list, def, altWcs) {
 	const key= list.find( (i) =>  parse.header[i+altWcs]);
@@ -369,7 +368,7 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
 
 
     p.bunit = parse.getValue(HdrConst.BUNIT);
-    if (!p.bunit) p.bunit = 'DN';
+    if (!p.bunit) p.bunit = EMPTY_BUNIT_DEFAULT;
     p.fluxUnits= getFluxUnits(parse, zeroHeader);
 
 
@@ -380,7 +379,7 @@ export function parseSpacialHeaderInfo(header, altWcs='', zeroHeader) {
 function getFluxUnits(parse, zeroHeader) {
     let bunit = parse.getValue(HdrConst.BUNIT, 'NONE');
     if (bunit==='NONE') {
-        bunit= zeroHeader  ? getHeader(zeroHeader, 'BUNIT', 'DN') : 'DN';
+        bunit= zeroHeader  ? getHeader(zeroHeader, 'BUNIT', EMPTY_BUNIT_DEFAULT) : EMPTY_BUNIT_DEFAULT;
     }
     if (bunit.startsWith('HITS')) return 'frames';
 

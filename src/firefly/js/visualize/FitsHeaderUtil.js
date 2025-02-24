@@ -51,6 +51,7 @@ export const HdrConst= {
 };
 
 
+export const EMPTY_BUNIT_DEFAULT='---';
 
 
 export function makeHeaderParse(header, altWcs='') {
