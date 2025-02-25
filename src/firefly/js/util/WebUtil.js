@@ -842,6 +842,49 @@ export function tokenSub(valObs, str='') {
     return replaceStr;
 }
 
+
+// todo- the following two functions are not used but keep the around for awhile
+//       remove in a few months (8/25?) if still not being used
+// export function subCompare(str1, str2, minSubstringLength=2) {
+//     // Search possible substrings from largest to smallest:
+//     for (let i=str1.length; i>=minSubstringLength; i--) {
+//         for (let j=0; j <= (str1.length - i); j++) {
+//             const substring = str1.substr(j,i);
+//             const k = str2.indexOf(substring);
+//             if (k !== -1) {
+//                 return { str1, str2, found : true, substring, str1Index : j, str2Index : k};
+//             }
+//         }
+//     }
+//     return { found : false };
+// }
+//
+// /**
+//  *
+//  * @param {string} str1
+//  * @param {string} str2
+//  * @param minSubstringLength
+//  * @return {{str1: string, str2: string, found: boolean, substring: string, str1Index: number, str2Index: number}
+//  */
+// export function endCompare(str1, str2, minSubstringLength=2) {
+//     if (!str1 || !str2) return { found : false };
+//     for (let i=0; i <= (str1.length-1); i++) {
+//         const substring = str1.substring(i);
+//         const found = substring.length>=minSubstringLength ?  str2.endsWith(substring) : false;
+//         if (found) {
+//             return { str1, str2, found, substring, str1Index : i, str2Index: str2.indexOf(substring)};
+//         }
+//     }
+//     return { found : false };
+// }
+
+
+
+
+
+
+
+
 /**
  * File is safe to use from a WebWorker
  */

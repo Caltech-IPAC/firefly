@@ -152,7 +152,7 @@ const DataItem= memo(({ value='', unit='', monoFont=false, sx}) => {
         <Stack {...{direction:'row', className:'ff-readout-value', alignItems:'center', sx }}>
             <Typography level='body-sm' color='warning'  title={vStr} sx={mStyle}>{value}</Typography>
             {unit && <Typography level='body-sm' color={!isEmptyUnit ? 'warning' : undefined}  title={vStr}
-                                 sx={{pl:.25, opacity:isEmptyUnit?.5:1}}>{unit}</Typography>}
+                                 sx={{pl:.25, opacity:isEmptyUnit?.35:1}}>{unit}</Typography>}
         </Stack>
     );
 });

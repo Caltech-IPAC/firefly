@@ -117,8 +117,8 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, activate
 
     let titleToUse= titleStr;
 
-    if (isDefined(serDef.dataLinkTableRowIdx) && isObsCoreLike(sourceTable)) { // this service def, from datalink, in obscore (normal cawse)
-        titleToUse= getObsCoreRowMetaInfo(sourceTable,sourceRow)?.titleStr || name || titleStr;
+    if (isDefined(serDef.dataLinkTableRowIdx)) {
+        titleToUse= getObsCoreRowMetaInfo(sourceTable,sourceRow).titleStr || name || titleStr;
     }
     let params;
     const cutoutOptions= {...options};

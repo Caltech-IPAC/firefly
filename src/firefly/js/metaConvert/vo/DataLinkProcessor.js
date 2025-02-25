@@ -1,5 +1,5 @@
 import {getPreferCutout} from '../../ui/tap/Cutout';
-import { getSearchTarget } from '../../voAnalyzer/TableAnalysis.js';
+import {getSearchTarget, obsCoreTableHasOnlyImages} from '../../voAnalyzer/TableAnalysis.js';
 import {
     getDataLinkData, isDownloadType, isGzipType, isSimpleImageType, isTarType, isVoTable
 } from '../../voAnalyzer/VoDataLinkServDef.js';
@@ -41,16 +41,20 @@ const WARN_SIZE= GIG;
  * @param {String} [params.parsingAlgorithm] - which type of DL data
  * @param {DataProductsFactoryOptions} [params.options] - which type of DL data
  * @param {string} [params.baseTitle]
+ * @param {boolean} [params.useForTableGrid] - this result is part of a table grid Result
  * @return {DataProductsDisplayType}
  */
 export function processDatalinkTable({sourceTable, row, datalinkTable, activateParams, baseTitle=undefined,
                                      additionalServiceDescMenuList, dlTableUrl, doFileAnalysis=true,
-                                         options, parsingAlgorithm = USE_ALL}) {
+                                         options, parsingAlgorithm = USE_ALL, useForTableGrid}) {
     const dataLinkData= getDataLinkData(datalinkTable,sourceTable,row);
     const preferCutout= getPreferCutout(options.dataProductsComponentKey,sourceTable?.tbl_id);
-    const isImageGrid= options.hasRelatedBands && dataLinkData.filter( (dl) => dl.dlAnalysis.isImage && dl.dlAnalysis.isGrid).length>1;
+    const isRelatedImageGrid= options.hasRelatedBands && dataLinkData.filter( (dl) => dl.dlAnalysis.isImage && dl.dlAnalysis.isGrid).length>1;
     const isMultiTableSpectrum= dataLinkData.filter( (dl) => dl.dlAnalysis.isThis && dl.dlAnalysis.isGrid && dl.dlAnalysis.isSpectrum).length>1;
-    if (parsingAlgorithm===USE_ALL && isMultiTableSpectrum) parsingAlgorithm= SPECTRUM; // todo this is probably temporary for testing
+    if (parsingAlgorithm===USE_ALL) {
+        if (isMultiTableSpectrum) parsingAlgorithm= SPECTRUM;
+        else if (obsCoreTableHasOnlyImages(sourceTable)) parsingAlgorithm= IMAGE;
+    }
 
     const menu=  dataLinkData.length &&
         createDataLinkMenuRet({dlTableUrl,dataLinkData,sourceTable, sourceRow:row, activateParams, baseTitle,
@@ -63,52 +67,22 @@ export function processDatalinkTable({sourceTable, row, datalinkTable, activateP
     if (canShow) {
         let index= -1;
         const {dpId}= activateParams;
-        const activeMenuKey= getActiveMenuKey(dpId, dlTableUrl);
-        if (isImageGrid) {
-            const lastSource= getCurrentActiveKeyID(dpId);
-            const lastKey= getActiveMenuKey(dpId, lastSource);
-            index= menu.findIndex( (m) => m.menuKey===lastKey);
+        const activeMenuKey= getActiveMenuKey(dpId, activeMenuLookupKey);
+        if (!useForTableGrid) {
+            if (isRelatedImageGrid) {
+                const lastSource= getCurrentActiveKeyID(dpId);
+                const lastKey= getActiveMenuKey(dpId, lastSource);
+                index= menu.findIndex( (m) => m.menuKey===lastKey);
+            }
+            if (index<0) index= menu.findIndex( (m) => m.menuKey===activeMenuKey);
+            if (index<0) index= 0;
+            dispatchUpdateActiveKey({dpId, activeMenuKeyChanges:{[activeMenuLookupKey]:menu[index].menuKey}});
         }
-        if (index<0) index= menu.findIndex( (m) => m.menuKey===activeMenuKey);
-        if (index<0) index= 0;
-        dispatchUpdateActiveKey({dpId, activeMenuKeyChanges:{[activeMenuLookupKey]:menu[index].menuKey}});
         return dpdtFromMenu(menu,index,dlTableUrl);
     }
 
-    if (menu.length>0) {
-        const dMenu= menu.length && convertAllToDownload(menu);
-
-        const msgMenu= [
-            ...dMenu,
-            dpdtTable('Show Datalink VO Table for list of products',
-                createTableActivate(dlTableUrl,'Datalink VO Table', activateParams),
-                createTableExtraction(dlTableUrl,'Datalink VO Table'),
-                'nd0-showtable', {url:dlTableUrl}),
-            dpdtDownload ( 'Download Datalink VO Table for list of products', dlTableUrl, 'nd1-downloadtable', 'vo-table' ),
-        ];
-        const msg= dMenu.length?
-            'You may only download data for this row - nothing to display':
-            'No displayable data available for this row';
-        return dpdtMessage( msg, msgMenu, {activeMenuLookupKey,singleDownload:true});
-    }
-    else {
-        return dpdtMessage('No data available for this row',undefined,{activeMenuLookupKey});
-    }
-
+    return dpdtMessage('No data available for this row',undefined,{activeMenuLookupKey});
 }
-
-
-function addExposeDataLinkEntries(dlTableUrl, activateParams) {
-    return [
-        dpdtTable('Show Datalink VO Table for list of products',
-            createTableActivate(dlTableUrl,'Datalink VO Table', activateParams),
-            createTableExtraction(dlTableUrl,'Datalink VO Table'),
-            'datalink-entry-showtable', {url:dlTableUrl}),
-        dpdtDownload ( 'Download Datalink VO Table for list of products', dlTableUrl, 'datalink-entry-downloadtable', 'vo-table' )
-    ];
-}
-
-
 
 function convertAllToDownload(menu) {
     return menu.map( (d) =>  {
@@ -276,7 +250,16 @@ export function filterDLList(parsingAlgorithm, dataLinkData, preferCutout) {
 }
 
 
-function sortMenu(menu) {
+function sortMenu(menu, relatedGridImageOrder) {
+    if (relatedGridImageOrder?.length && menu.every( (m) => m.dlData.labelDLExt)) {
+        return sortRelatedGrid(menu, relatedGridImageOrder);
+    }
+    else {
+       return basicSortMenu(menu);
+    }
+}
+
+function basicSortMenu(menu) {
     return menu
         .sort( (m1,m2) => {
             const isThis1= m1.dlData?.dlAnalysis?.isThis ?? false;
@@ -299,6 +282,17 @@ function sortMenu(menu) {
             }
         })
         .sort((s1) => s1.name==='(#this)' ? -1 : 0);
+}
+
+function sortRelatedGrid(menu, relatedGridImageOrder) {
+    const sortedMenu= [];
+    relatedGridImageOrder.forEach( (item) => {
+        const foundEntries= menu.filter( (m) => m.dlData.labelDLExt===item);
+        sortedMenu.push(...foundEntries);
+    });
+    const foundEntries= menu.filter( (m) => !relatedGridImageOrder.includes(m.dlData.labelDLExt) );
+    sortedMenu.push(...foundEntries);
+    return sortedMenu;
 }
 
 /**
@@ -359,7 +353,6 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
         .filter(Boolean);
 
     if (parsingAlgorithm===SPECTRUM && menu.length>1) {
-
         const singleItemMenu= menu.filter( (m) => m.displayType===DPtypes.CHOICE_CTI && m.tbl_id);
         const activateObj= Object.fromEntries(singleItemMenu.map( ({tbl_id,activate,chartId}) => [tbl_id,{activate,chartId}]));
         const extractionObj= Object.fromEntries(singleItemMenu.map( (m) => [m.tbl_id,m.extraction]));
@@ -370,12 +363,36 @@ function createDataLinkMenuRet({dlTableUrl, dataLinkData, sourceTable, sourceRow
             {extractionText: 'Pin Table', paIdx:0})];
     }
 
+    if (menu?.length) {
+        menu.forEach( (m) => {
+            const {labelDLExt, bandpassNameDLExt}= m.dlData ?? {};
+            if (labelDLExt || bandpassNameDLExt) {
+                m.menuKey= makeBandLabelMenuKey(labelDLExt,bandpassNameDLExt);
+            }
+        });
+    }
+
     if (parsingAlgorithm===USE_ALL) {
         menu.push(...additionalServiceDescMenuList);
     }
 
-    return sortMenu(menu);
+    return sortMenu(menu, options.relatedGridImageOrder);
 }
+
+const BAND_MARKER= '__BAND:';
+const LABEL_MARKER= '__LABEL:';
+
+function makeBandLabelMenuKey(label='',band='') {
+    let v= '--';
+    if (label) v+= LABEL_MARKER+label;
+    if (band) v+= BAND_MARKER+band;
+    return v;
+}
+
+export const hasBandInMenuKey= (menuKey='',band='') => menuKey.endsWith(`${BAND_MARKER}${band}`);
+export const hasLabelInMenuKey= (menuKey='',label='') => menuKey.includes(`${LABEL_MARKER}${label}`);
+export const findMenuKeyWithName= (keyAry,name) => name && keyAry.find( (k) => k.includes(LABEL_MARKER+name));
+
 
 export function createDataLinkSingleRowItem({dlData, activateParams, baseTitle, options}) {
     const {semantics,error_message, serDef, serviceDefRef}= dlData;
@@ -405,10 +422,11 @@ const analysisTypes= ['fits', 'cube', 'table', 'spectrum', 'auxiliary'];
 
 
 function makeName(dlData, url, auxTot, autCnt, primeCnt=0, baseTitle) {
-    const {id,semantics,dlAnalysis:{isThis,isAux}}= dlData;
+    const {id,semantics,labelDLExt, dlAnalysis:{isThis,isAux}}= dlData;
+    if (labelDLExt) return labelDLExt;
     if (baseTitle) return makeNameWithBaseTitle(dlData,auxTot,autCnt,primeCnt,baseTitle);
     const baseTitleFromId= getBaseTitleFromId(id);
-    let name= semantics[0]==='#' ? semantics.substring(1) : name;
+    let name= semantics[0]==='#' ? semantics.substring(1) : 'unknown';
     if (baseTitleFromId) {
         if (isThis) return `${baseTitleFromId}`;
         if (isAux) return `${baseTitleFromId}: auxiliary ${auxTot>1?autCnt+'':''}`;

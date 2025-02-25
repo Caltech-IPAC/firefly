@@ -60,15 +60,17 @@
 
 /**
  * @typedef DatalinkData
- * @prop {String} description
- * @prop {String} url
- * @prop {String} contentType
- * @prop {String} contentQualifier
- * @prop {String} semantics
- * @prop {String} localSemantics
- * @prop {number} size
+ * @prop {String} description - from description column
+ * @prop {String} url - from access_url column
+ * @prop {String} contentType - from content_type column
+ * @prop {String} contentQualifier - from content_qualifier column
+ * @prop {String} semantics - from semantics column
+ * @prop {String} localSemantics - from local_semantics column
+ * @prop {number} size - from content_length column
  * @prop {number} rowIdx
- * @prop {String} serviceDefRef
+ * @prop {String} serviceDefRef - from service_def  column
+ * @prop {String} labelDLExt - the label, this is an extension to the standard, from label column, only used if defined
+ * @prop {String} bandpassNameDLExt- the bandpassName, this is an extension to the standard, from bandpass_name column, only used if defined
  * @prop {ServiceDescriptorDef} serDef
  * @prop {DlAnalysisData} dlAnalysis
  * @prop {Object} relatedDLEntries

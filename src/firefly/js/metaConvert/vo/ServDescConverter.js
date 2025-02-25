@@ -23,18 +23,20 @@ const DEF_MAX_PLOTS= 8;
 export function makeServDescriptorConverter(table,converterTemplate,options={}) {
     if (!table || !findDataLinkServeDescs(getServiceDescriptors(table))?.length) return converterTemplate;
 
-    const {hasRelatedBands=false, maxPlots, initialLayout,canGrid=false}= converterTemplate;
+    const {hasRelatedBands=false, maxPlots, initialLayout}= converterTemplate;
     const threeColor= isUndefined(converterTemplate.threeColor) ? hasRelatedBands : converterTemplate.threeColor;
+    const canGrid= converterTemplate.canGrid ?? hasRelatedBands;
     //------
     const baseRetOb = {
         ...converterTemplate,
         initialLayout: initialLayout ?? 'single',
         describeThreeColor: (threeColor) ? describeServDefThreeColor : undefined,
         threeColor,
-        canGrid,
+        canGrid: Boolean(canGrid),
         maxPlots: maxPlots ?? 1,
         hasRelatedBands,
-        converterId: `ServiceDef-${table.tbl_id}`
+        converterId: `ServiceDef-${table.tbl_id}`,
+        relatedGridImageOrder: options.relatedGridImageOrder
     };
     return baseRetOb;
 }
@@ -86,7 +88,7 @@ export async function getServiceDescSingleDataProduct(table, row, activateParams
 
 export async function getServiceDescGridDataProduct(table, plotRows, activateParams, options) {
     const pAry= plotRows.map( (pR) => getServiceDescSingleDataProduct(table,pR.row,activateParams,options, false));
-    return createGridResult(pAry,activateParams,table,plotRows);
+    return createGridResult(pAry,activateParams,table,plotRows,options);
 }
 
 export async function getServiceDescRelatedDataProduct(table, row, threeColorOps, highlightPlotId, activateParams, options) {

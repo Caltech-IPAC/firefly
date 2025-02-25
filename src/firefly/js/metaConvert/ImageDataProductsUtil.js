@@ -1,4 +1,4 @@
-import {dispatchAddActionWatcher} from 'firefly/core/MasterSaga.js';
+import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
 import {DPtypes} from 'firefly/metaConvert/DataProductsType.js';
 import {showPinMessage} from 'firefly/ui/PopupUtil.jsx';
 import {logger} from 'firefly/util/Logger.js';
@@ -6,6 +6,7 @@ import {difference, get, isArray, isEmpty, union} from 'lodash';
 import {ServerRequest} from '../data/ServerRequest.js';
 import {dispatchTableHighlight} from '../tables/TablesCntlr.js';
 import {getActiveTableId, getCellValue, getTblById} from '../tables/TableUtil.js';
+import {uniqueID} from '../util/WebUtil';
 import {allBandAry} from '../visualize/Band.js';
 import ImagePlotCntlr, {
     dispatchChangeActivePlotView, dispatchDeletePlotView, dispatchPlotGroup, dispatchPlotImage, dispatchZoom, visRoot
@@ -28,10 +29,14 @@ export function createRelatedDataGridActivate(reqRet, imageViewerId, tbl_id, hig
     return () => replotImageDataProducts(highlightPlotId, true, imageViewerId, tbl_id, reqRet.standard, reqRet.threeColor);
 }
 
-export function createRelatedGridImagesActivate({requestAry:inReqAry, threeColorReqAry, imageViewerId, tbl_id, serDef}) {
+export function createRelatedGridImagesActivate({requestAry:inReqAry, threeColorReqAry, imageViewerId,
+                                                    tbl_id, onActivePvChanged, highlightPlotId}) {
     const reqAry= inReqAry.filter( (r) => r);
-    if (tbl_id) reqAry.forEach( (r) => r.setAttributes({ [PlotAttribute.RELATED_TABLE_ID]: tbl_id }));
-    return () => replotImageDataProducts(reqAry[0]?.getPlotId(), true, imageViewerId, tbl_id, reqAry, threeColorReqAry);
+    if (tbl_id) reqAry.forEach( (r) => r.setAttributes({ [PlotAttribute.RELATED_TABLE_ID]: tbl_id}) );
+    reqAry.forEach( (r,idx) => r.setAttributes({ [PlotAttribute.RELATED_GRID_IMAGE_COUNT]: idx}) );
+    const hPid= highlightPlotId ?? reqAry[0]?.getPlotId();
+    return () => replotImageDataProducts(hPid, true, imageViewerId, tbl_id,
+        reqAry, threeColorReqAry,onActivePvChanged);
 }
 
 /**
@@ -40,9 +45,10 @@ export function createRelatedGridImagesActivate({requestAry:inReqAry, threeColor
  * @param {string} imageViewerId
  * @param {string} tbl_id
  * @param {Array.<Object>} plotRows
+ * @param {String} [highlightPlotId]
  * @return {undefined|function(): void}
  */
-export function createGridImagesActivate(inReqAry, imageViewerId, tbl_id, plotRows) {
+export function createGridImagesActivate(inReqAry, imageViewerId, tbl_id, plotRows, highlightPlotId) {
     const reqAry= inReqAry
         .map( (r,idx) => {
             if (!r) return;
@@ -57,7 +63,7 @@ export function createGridImagesActivate(inReqAry, imageViewerId, tbl_id, plotRo
         } )
         .filter( (r) =>r);
     const pR= plotRows.filter( (pR) => pR.highlight).find( (pR) => pR.plotId);
-    const highlightPlotId= pR && pR.plotId;
+    highlightPlotId ??= pR && pR.plotId;
     return () => replotImageDataProducts(highlightPlotId, true, imageViewerId, tbl_id, reqAry);
 }
 
@@ -85,6 +91,7 @@ export function createSingleImageActivate(request, imageViewerId, tbl_id, highli
 }
 
 let extractedPlotId= 1;
+const pvChangeActionWatcherIdSet= new Set();
 
 
 function copyRequest(inR) {
@@ -126,6 +133,28 @@ export function createSingleImageExtraction(request, sourceObsCoreData, dlData) 
 }
 
 /** @type actionWatcherCallback */
+function watchForPvChange(action, cancelSelf, params) {
+    const {payload,type}= action;
+
+    if (type===ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW) {
+        params?.onActivePvChanged(payload.plotId);
+        return;
+    }
+    logger.warn('watchForPvChange: should never get here.');
+    cancelSelf();
+}
+
+export function setupWatchForPvChange(watcherId, onActivePvChanged) {
+    dispatchAddActionWatcher( {
+        callback: watchForPvChange,
+        id: watcherId,
+        params: {onActivePvChanged},
+        actions: [ImagePlotCntlr.CHANGE_ACTIVE_PLOT_VIEW]
+    } );
+}
+
+
+/** @type actionWatcherCallback */
 function watchForCompletedPlot(action, cancelSelf, params) {
     const {afterComplete, plotId}= params;
     const {payload,type}= action;
@@ -139,7 +168,7 @@ function watchForCompletedPlot(action, cancelSelf, params) {
         if (!payload.pvNewPlotInfoAry.some( (n) => n.plotId===plotId)) {
             return;
         }
-        afterComplete();
+        afterComplete(getPlotViewById(visRoot(),plotId));
         cancelSelf();
         return;
     }
@@ -166,6 +195,24 @@ export function zoomPlotPerViewSize(plotId, zoomType) {
     }
 }
 
+function onImagePlotComplete(plotId,onComplete) {
+    const afterComplete= (pv) => {
+        onComplete(pv);
+    };
+    const pv= getPlotViewById(visRoot(),plotId);
+    if (pv?.serverCall==='working') {
+        dispatchAddActionWatcher( {
+            callback: watchForCompletedPlot,
+            params: {plotId, afterComplete},
+            actions: [ImagePlotCntlr.PLOT_IMAGE, ImagePlotCntlr.PLOT_IMAGE_FAIL]
+        } );
+    }
+    else {
+        afterComplete(pv);
+    }
+
+}
+
 ///=========================
 
 export function resetImageFullGridActivePlot(tbl_id, plotIdAry) {
@@ -177,9 +224,14 @@ export function resetImageFullGridActivePlot(tbl_id, plotIdAry) {
     plotIdAry.find((pId) => {
         const plot = primePlot(vr, pId);
         if (!plot) return false;
+        const relatedRow= Number(plot.attributes?.[PlotAttribute.RELATED_TABLE_ROW] ??-1);
 
-        if (Number(get(plot.attributes, PlotAttribute.RELATED_TABLE_ROW, -1)) !== highlightedRow) return false;
+        if (relatedRow !== highlightedRow) return false;
 
+        if (plot.attributes[PlotAttribute.RELATED_GRID_IMAGE_COUNT] &&
+            plot.attributes[PlotAttribute.RELATED_GRID_IMAGE_COUNT] > 0) {
+           return false;
+        }
         dispatchChangeActivePlotView(pId);
         return true;
     });
@@ -205,17 +257,20 @@ export function changeTableHighlightToMatchPlotView(plotId, tbl_id) {
  * @param {string} tbl_id table id of the table with the data products
  * @param {Array.<WebPlotRequest>} reqAry an array of request to execute
  * @param {Array.<WebPlotRequest>} [threeReqAry] an array of request for a three color plot, optional, max 3 entries, r,g,b
+ * @param {function} [onActivePvChanged] called when the active pv changes
  */
-function replotImageDataProducts(activePlotId, makeActive, imageViewerId, tbl_id, reqAry, threeReqAry)  {
+function replotImageDataProducts(activePlotId, makeActive, imageViewerId, tbl_id, reqAry, threeReqAry, onActivePvChanged)  {
     const groupId= `${imageViewerId}-${tbl_id||'no-table-group'}-standard`;
     reqAry= reqAry.filter( (r) => r);
+    let workingActivePlotId= activePlotId;
     reqAry.forEach( (r) => {
             const foundPv= getPlotViewAry(visRoot()).find( (pv) =>
                 pv.plotGroupId===groupId && isImageDataRequestedEqual(pv.request, r));
-            if (foundPv) r.setPlotId(foundPv.request.getPlotId());
+            if (foundPv) {
+                if (activePlotId===r.getPlotId()) workingActivePlotId= foundPv.request.getPlotId();
+                r.setPlotId(foundPv.request.getPlotId());
+            }
         });
-
-
 
     let plottingIds= reqAry.map( (r) =>  r && r.getPlotId()).filter( (id) => id);
     let threeCPlotId;
@@ -262,12 +317,18 @@ function replotImageDataProducts(activePlotId, makeActive, imageViewerId, tbl_id
     const wpRequestAry= makePlottingList(reqAry);
     if (!isEmpty(wpRequestAry)) {
         dispatchPlotGroup({wpRequestAry, viewerId:imageViewerId, holdWcsMatch:true,
-            setNewPlotAsActive: makeActive && !activePlotId,
+            // setNewPlotAsActive: makeActive && workingActivePlotId,
             pvOptions: { userCanDeletePlots: false, menuItemKeys:{imageSelect : false}, useSticky:true },
             attributes: { tbl_id }
         });
     }
-    if (makeActive && activePlotId) dispatchChangeActivePlotView(activePlotId);
+    if (makeActive && workingActivePlotId) {
+        onImagePlotComplete(workingActivePlotId,
+            (pv) => setTimeout(() => {
+                console.log(`change plot view ${workingActivePlotId}`);
+                pv && dispatchChangeActivePlotView(workingActivePlotId);
+            }, 1000));
+    }
 
 
     // prepare three color Plot
@@ -282,27 +343,52 @@ function replotImageDataProducts(activePlotId, makeActive, imageViewerId, tbl_id
                 });
         }
     }
-    // const layoutType= getLayoutType(getMultiViewRoot(),imageViewerId);
 
-    return ({nextDisplayType, nextMetaDataTableId}) => { // return the cleanup function
-        if (isImageExpanded(visRoot().expandedMode)) return;
-        const layoutType= getLayoutType(getMultiViewRoot(),imageViewerId,tbl_id);
-        if (nextDisplayType===DPtypes.IMAGE && layoutType===GRID && tbl_id===nextMetaDataTableId) {
-            return;
-        }
-        const table= getTblById(getActiveTableId());
-        getPlotViewAry(visRoot())
-            .filter( (pv) => pv.plotGroupId===groupId)
-            .filter( (pv) => {
-                const plot= primePlot(pv);
-                if (!table || !plot) return true;
-                return Number(plot.attributes[PlotAttribute.RELATED_TABLE_ROW])!== table.highlightedRow||
-                       plot.attributes[PlotAttribute.RELATED_TABLE_ID]!==table.tbl_id;
-            })
-            .forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId}) );
-        plottingThree && dispatchDeletePlotView({plotId:threeCPlotId});
-    };
+
+    let onChangeId;
+    if (pvChangeActionWatcherIdSet.size) {
+        [...pvChangeActionWatcherIdSet].forEach( (id) => dispatchCancelActionWatcher(id));
+        pvChangeActionWatcherIdSet.clear();
+    }
+    if (onActivePvChanged) {
+        onChangeId= uniqueID();
+        pvChangeActionWatcherIdSet.add(onChangeId);
+        setupWatchForPvChange(onChangeId,onActivePvChanged);
+    }
+
+    // const layoutType= getLayoutType(getMultiViewRoot(),imageViewerId);
+    return (multProductViewerInfo) =>  // return the cleanup function
+        cleanupPlotViews(multProductViewerInfo,imageViewerId,tbl_id,groupId,plottingThree,threeCPlotId, onChangeId);
 }
+
+
+function cleanupPlotViews({nextDisplayType, nextMetaDataTableId},
+                          imageViewerId, tbl_id, groupId, plottingThree, threeCPlotId, onChangeId) {
+    if (onChangeId) {
+        dispatchCancelActionWatcher(onChangeId);
+        pvChangeActionWatcherIdSet.delete(onChangeId);
+
+    }
+    if (isImageExpanded(visRoot().expandedMode)) return;
+    const layoutType= getLayoutType(getMultiViewRoot(),imageViewerId,tbl_id);
+    if (nextDisplayType===DPtypes.IMAGE && layoutType===GRID && tbl_id===nextMetaDataTableId) {
+        return;
+    }
+    const table= getTblById(getActiveTableId());
+    getPlotViewAry(visRoot())
+        .filter( (pv) => pv.plotGroupId===groupId)
+        .filter( (pv) => {
+            const plot= primePlot(pv);
+            if (!table || !plot) return true;
+            return Number(plot.attributes[PlotAttribute.RELATED_TABLE_ROW])!== table.highlightedRow||
+                plot.attributes[PlotAttribute.RELATED_TABLE_ID]!==table.tbl_id;
+        })
+        .forEach( (pv) => dispatchDeletePlotView({plotId:pv.plotId}) );
+    plottingThree && dispatchDeletePlotView({plotId:threeCPlotId});
+}
+
+
+
 
 function makePlottingList(reqAry) {
     return reqAry.filter( (r) => {
