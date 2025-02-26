@@ -5,7 +5,6 @@ package edu.caltech.ipac.firefly.server.cache;
 
 import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.core.Util;
-import edu.caltech.ipac.firefly.core.Util.Try;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
@@ -80,7 +79,10 @@ public class DistributedCache<T> implements Cache<T> {
             } else {
                 return v;
             }
-        } catch (Exception ex) { LOG.error(ex); }
+        } catch (Exception ex) {
+            remove(key);
+            LOG.warn("Encountered %s while retrieving key=%s; removing entry from cache.".formatted(ex.getClass().getName(), key) );
+        }
         return null;
     }
 
@@ -152,11 +154,9 @@ public class DistributedCache<T> implements Cache<T> {
         }
     }
 
-    static Object deserialize(String s) {
+    static Object deserialize(String s) throws Exception {
         if (s == null) return null;
-        return !s.startsWith(BASE64) ? s :
-                Try.it(() -> Util.deserialize(s.substring(BASE64.length())))
-                        .getOrElse((e) -> LOG.trace("Failed to deserialize: " + e.getMessage(), s));
+        return !s.startsWith(BASE64) ? s : Util.deserialize(s.substring(BASE64.length()));
     }
 
 }

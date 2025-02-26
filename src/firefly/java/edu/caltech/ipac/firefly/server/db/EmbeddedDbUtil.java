@@ -159,7 +159,7 @@ public class EmbeddedDbUtil {
 
         if (isAry) {
             if (val instanceof Array)   return val;    // we will assume the data type matches
-            return Util.deserialize(val.toString());        // handles base64 encoded Java serialized objects
+            return Try.it(()-> Util.deserialize(val.toString())).get();        // handles base64 encoded Java serialized objects; ignore errors
         } else if (clz == String.class) {
             if (val instanceof Blob b) {
                 return new String(b.getBytes(1, (int) b.length()), UTF_8);   // handles binary UTF-8 encoded string

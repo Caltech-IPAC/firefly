@@ -232,17 +232,16 @@ export function uwsJobInfo(jobUrl, jobId) {
 
 /**
  * @param {string} email
+ * @param {boolean} sendNotif
  * @return {Promise}
  */
-export function setEmail(email) {
-    const idList= Object.keys(getBackgroundJobs() || {});
-    const paramList= idList.map( (id) => {
-        return {name:ServerParams.ID, value: id};
-    } );
-    if(paramList.length > 0) {
-        paramList.push({name:ServerParams.EMAIL, value:email});
-        return doJsonRequest(ServerParams.SET_EMAIL, paramList);
-    }
+export function setBgInfo(email, sendNotif) {
+
+    const params = [
+        {name:ServerParams.EMAIL, value:email},
+        {name:ServerParams.SEND_NOTIF, value:sendNotif}
+    ];
+    return doJsonRequest(ServerParams.SET_BG_INFO, params);
 }
 
 /**

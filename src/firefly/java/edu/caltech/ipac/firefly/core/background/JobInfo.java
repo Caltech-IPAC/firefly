@@ -4,15 +4,14 @@
 
 package edu.caltech.ipac.firefly.core.background;
 
+import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.AppProperties;
-import edu.caltech.ipac.util.StringUtils;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,8 +50,8 @@ public class JobInfo implements Serializable {
     public static final String ERROR_MSG = "message";
     public static final String JOB_INFO = "jobInfo";
 
-    // these are additional info that's not in uws:job defined props
-    // in serialized form, it will go under uws:jobInfo block
+    // These are additional info that's not in defined in uws:job but is needed by Firefly
+    // In serialized form, it will go under uws:jobInfo block
     public static final String PROGRESS = "progress";
     public static final String PROGRESS_DESC = "progressDesc";
     public static final String JOB_TYPE = "type";
@@ -77,20 +76,7 @@ public class JobInfo implements Serializable {
     private List<Result> results = new ArrayList<>();
     private Error error;
 
-    // these are additional info that's not in uws:job defined props
-    // in serialized form, it will go under uws:jobInfo block
-    private int progress;
-    private String progressDesc;
-    private Job.Type type;
-    private String summary;
-    private String dataOrigin;
-    private boolean monitored;
-    private String label;
-    private String localRunId;
-
-    // not sent to client
-    private String eventConnId;
-
+    final private AuxData auxData = new AuxData();
 
     public JobInfo(String id) {
         this.jobId = id;
@@ -107,11 +93,8 @@ public class JobInfo implements Serializable {
         this.runId = runId;
     }
 
-    public String getLabel() {
-        return label;
-    }
-    public void setLabel(String label) {
-        this.label = label;
+    public AuxData getAuxData() {
+        return auxData;
     }
 
     public Phase getPhase() {
@@ -128,7 +111,7 @@ public class JobInfo implements Serializable {
                 break;
             case COMPLETED:
                 endTime = Instant.now();
-                progress = 100;
+                auxData.setProgress(100);
         }
     }
 
@@ -186,31 +169,6 @@ public class JobInfo implements Serializable {
     public Instant getQuote() { return quote; }
     public void setQuote(Instant time) { quote = time; }
 
-    public Job.Type getType() { return type; }
-    public void setType(Job.Type type) { this.type = type; }
-
-    public String getEventConnId() { return eventConnId; }
-    public void setEventConnId(String eventConnId) { this.eventConnId = eventConnId; }
-
-    public boolean isMonitored() { return monitored;}
-    public void setMonitored(boolean monitored) {
-        this.monitored = monitored;
-    }
-
-    /**
-     * a number between 0 and 100 representing the job's percentage of completion.
-     * @param progress
-     */
-    public void setProgress(int progress) { this.progress = Math.min(Math.max(progress, 0), 100); }
-    public int getProgress() { return progress; }
-
-    public String getProgressDesc() { return progressDesc; }
-    public void setProgressDesc(String progressDesc) { this.progressDesc = progressDesc;}
-
-    // Not all services support UWS RUNID.  Store info here instead.
-    public String getLocalRunId() { return localRunId; }
-    public void setLocalRunId(String localRunId) { this.localRunId = localRunId;}
-
     public void addResult(Result result) { results.add(result);}
 
     /**
@@ -221,12 +179,6 @@ public class JobInfo implements Serializable {
     }
     public void setExecutionDuration(int duration) { executionDuration = duration; }
 
-    public String getSummary() { return summary; }
-    public void setSummary(String summary) { this.summary = summary;}
-
-    public String getDataOrigin() { return dataOrigin; }
-    public void setDataOrigin(String dataOrigin) { this.dataOrigin = dataOrigin;}
-
     /**
      * @return a SrvParam from the flatten params map
      */
@@ -234,11 +186,85 @@ public class JobInfo implements Serializable {
         return SrvParam.makeSrvParamSimpleMap(params);
     }
 
+    public void copyFrom(JobInfo ji) {
+        if (ji == null || ji == this) return;
+
+        this.jobId = ji.jobId;
+        this.runId = ji.runId;
+        this.owner = ji.owner;
+        this.phase = ji.phase;
+        this.quote = ji.quote;
+        this.creationTime = ji.creationTime;
+        this.startTime = ji.startTime;
+        this.endTime = ji.endTime;
+        this.executionDuration = ji.executionDuration;
+        this.destruction = ji.destruction;
+        this.params = new HashMap<>(ji.params);
+        this.results = new ArrayList<>(ji.results);
+        this.error = ji.error;
+    }
+
 //====================================================================
 //
 //====================================================================
 
-    public static record Error ( int code, String msg) implements Serializable {}
-    public static record Result(String href, String hrefType, String mimeType, String size) implements Serializable {};
+    public record Error ( int code, String msg) implements Serializable {}
+    public record Result(String href, String mimeType, String size) implements Serializable {};
 
+    /**
+     * Additional information required by Firefly that is not defined in `uws:job`.
+     * Only some of this information will be sent to the client, and when it is,
+     * it will be placed in the `uws:jobInfo` block.
+     */
+    public static class AuxData implements Serializable {
+        int progress;
+        String progressDesc;
+        Job.Type type;
+        String summary;
+        String dataOrigin;
+        boolean monitored;
+        String label;
+        String localRunId;  // Not all services support UWS RUNID.  Store info here instead.
+
+        // these are not sent to client
+        String eventConnId;
+        String refJobId;    // similar to JOB_ID, but used internally to identify the job
+        String refHost;     // the host where the job is running on
+        UserInfo userInfo;  // firefly user who initiated the job
+
+        public UserInfo getUserInfo() { return userInfo; }
+        public void setUserInfo(UserInfo userInfo) { this.userInfo = userInfo; }
+
+        public String getRefJobId() { return refJobId; }
+        public void setRefJobId(String refJobId) { this.refJobId = refJobId;}
+
+        public String getRefHost() { return refHost; }
+        public void setRefHost(String refHost) { this.refHost = refHost;}
+
+        public int getProgress() { return progress; }
+        public void setProgress(int progress) { this.progress = Math.min(Math.max(progress, 0), 100); }
+
+        public String getProgressDesc() { return progressDesc; }
+        public void setProgressDesc(String progressDesc) { this.progressDesc = progressDesc; }
+
+        public Job.Type getType() { return type; }
+        public void setType(Job.Type type) { this.type = type; }
+
+        public String getSummary() { return summary; }
+        public void setSummary(String summary) { this.summary = summary; }
+
+        public String getDataOrigin() { return dataOrigin; }
+        public void setDataOrigin(String dataOrigin) { this.dataOrigin = dataOrigin; }
+
+        public boolean isMonitored() { return monitored; }
+        public void setMonitored(boolean monitored) { this.monitored = monitored; }
+
+        public String getLabel() { return label; }
+        public void setLabel(String label) { this.label = label; }
+
+        public String getLocalRunId() { return localRunId; }
+        public void setLocalRunId(String localRunId) { this.localRunId = localRunId; }
+
+        public String getEventConnId() { return eventConnId; }
+        public void setEventConnId(String eventConnId) { this.eventConnId = eventConnId; }    }
 }

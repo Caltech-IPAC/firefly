@@ -130,7 +130,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         HttpServices.Status status = HttpServices.postData(input, (method) -> {
             jobUrl.set(HttpServices.getResHeader(method, "Location", null));
             if (jobUrl.has()) {
-                ifNotNull(getJob()).then((j) -> updateJobInfo(j.getJobId(), ji -> ji.setDataOrigin(jobUrl.get())));
+                ifNotNull(getJob()).then((j) -> updateJobInfo(j.getJobId(), ji -> ji.getAuxData().setDataOrigin(jobUrl.get())));
                 return HttpServices.Status.ok();
             } else {
                 // Location header contains jobUrl.  Must be an error when there's not a Location header
@@ -348,7 +348,6 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                         jobInfo.getResults().add(
                                 new JobInfo.Result(
                                     getAttr(r,"xlink:href"),
-                                    getAttr(r,"xlink:type"),        // added for completeness. No idea how it's used.
                                     getAttr(r, "mime-type"),
                                     getAttr(r, "size")
                                 )

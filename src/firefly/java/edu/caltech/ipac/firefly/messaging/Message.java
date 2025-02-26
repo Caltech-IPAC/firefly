@@ -23,7 +23,7 @@ import static edu.caltech.ipac.firefly.data.ServerEvent.*;
  * @version $Id: $
  */
 public class Message {
-    private static final String TOPIC_KEY = "msg_topic";
+    public static final String TOPIC_KEY = "msg_topic";
     protected JsonHelper helper = new JsonHelper();
 
     public void setTopic(String topic) {
@@ -56,6 +56,11 @@ public class Message {
     public String toJson() {
         return helper.toJson();
     }
+
+    protected void replaceWith(Message msg) {
+        this.helper = msg.helper;
+    }
+
 
 //====================================================================
 //  Predefined messages

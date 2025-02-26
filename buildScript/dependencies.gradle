@@ -59,8 +59,8 @@ dependencies {
     implementation ('net.sf.ehcache:ehcache:2.7.4')
     implementation ('net.sf.ehcache:ehcache-web:2.0.4') {exclude group: 'net.sf.ehcache', module: 'ehcache-core'}
 
-    // java mail api
-    implementation 'javax.mail:javax.mail-api:1.6.2', 'javax.activation:activation:1.1.1'
+    // java mail
+    implementation 'org.eclipse.angus:jakarta.mail:2.0.2'
 
     // josso
     implementation ('org.josso:josso-ws:1.8.5') { transitive = false }

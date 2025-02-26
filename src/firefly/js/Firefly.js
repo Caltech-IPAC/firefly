@@ -227,6 +227,12 @@ const defFireflyOptions = {
         services: getSIAv2ServicesByName( ['IRSA', 'CADC', ]),
         defaultMaxrec: 50000
     },
+    background : {
+        notification: {
+            enable: false,          // enable notification feature
+            showEmail: false,       // display email input field; if true, enable will be set to true
+        }
+    },
 };
 
 

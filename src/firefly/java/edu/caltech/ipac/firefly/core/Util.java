@@ -65,17 +65,12 @@ public class Util {
      * @param base64 the Base64-encoded string representing the serialized object
      * @return the deserialized Java object, or null.
      */
-    public static Object deserialize(String base64) {
-        try {
+    public static Object deserialize(String base64) throws Exception {
             if (base64 == null) return null;
             byte[] bytes = Base64.getDecoder().decode(base64);
             ByteArrayInputStream bstream = new ByteArrayInputStream(bytes);
             ObjectInputStream ostream = new ObjectInputStream(bstream);
             return ostream.readObject();
-        } catch (Exception e) {
-            logger.warn(e);
-            return null;
-        }
     }
 
 

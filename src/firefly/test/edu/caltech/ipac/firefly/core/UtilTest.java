@@ -29,7 +29,7 @@ import static edu.caltech.ipac.firefly.core.Util.*;
 public class UtilTest extends ConfigTest {
 
     @Test
-    public void arrayOfBoolean() {
+    public void arrayOfBoolean() throws Exception {
         Object in = new Boolean[]{true, false, true};
         String s = serialize(in);
         Object d = deserialize(s);
@@ -39,7 +39,7 @@ public class UtilTest extends ConfigTest {
     }
 
     @Test
-    public void arrayOfDouble() {
+    public void arrayOfDouble() throws Exception {
         Object in = new Double[]{1.0, 2.0, 3.0};
         String s = serialize(in);
         Object d = deserialize(s);
@@ -49,7 +49,7 @@ public class UtilTest extends ConfigTest {
     }
 
     @Test
-    public void arrayOfInt() {
+    public void arrayOfInt() throws Exception {
         Object in = new Integer[]{1, 2, 3};
         String s = serialize(in);
         Object d = deserialize(s);
@@ -72,7 +72,7 @@ public class UtilTest extends ConfigTest {
     }
 
     @Test
-    public void deserializeValidString() {
+    public void deserializeValidString() throws Exception {
         String original = "testString";
         String serialized = serialize(original);
         Object deserialized = deserialize(serialized);
@@ -80,13 +80,13 @@ public class UtilTest extends ConfigTest {
     }
 
     @Test
-    public void deserializeInvalidString() {
+    public void deserializeInvalidString() throws Exception {
         Object deserialized = deserialize("invalidBase64");
         assertNull(deserialized);
     }
 
     @Test
-    public void deserializeNullString() {
+    public void deserializeNullString() throws Exception {
         Object deserialized = deserialize(null);
         assertNull(deserialized);
     }

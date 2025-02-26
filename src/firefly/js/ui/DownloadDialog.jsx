@@ -31,7 +31,7 @@ import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
 const OptionsContext = React.createContext();
-const emailNotif = 'enableEmailNotification';
+const sendNotif = 'enableNotification';
 const emailKey = 'Email';          // should match server DownloadRequest.EMAIL
 
 /**
@@ -160,8 +160,8 @@ export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, hel
         //make a download request
         let dlRequest = makeTblRequest(FileGroupProcessor, formInputs.Title, Object.assign(dlParams, {cutoutSize}, formInputs));
 
-        if (!dlParams[emailNotif]) Reflect.deleteProperty(dlRequest, emailKey);
-        Reflect.deleteProperty(dlRequest, emailNotif);
+        if (!dlParams[sendNotif]) Reflect.deleteProperty(dlRequest, emailKey);
+        Reflect.deleteProperty(dlRequest, sendNotif);
 
         //make a search request
         let searchRequest = cloneDeep(request);
@@ -316,16 +316,16 @@ export function ScriptTypeOptions({fieldKey='scriptType', ...props}) {
 }
 
 export function EmailNotification({style, groupKey}) {
-    const enableEmail = useStoreConnector(() => getFieldVal(groupKey, emailNotif));
+    const sendNotif = useStoreConnector(() => getFieldVal(groupKey, sendNotif));
 
     return (
         <Box sx={{...style}} spacing={1}>
             <Stack width={250} mt={2}>
-                <CheckboxGroupInputField fieldKey={emailNotif}
+                <CheckboxGroupInputField fieldKey={sendNotif}
                                      initialState= {{value: ''}}
                                      options={[{label:'Enable email notification', value: 'true'}]}/>
             </Stack>
-            {enableEmail &&
+            {sendNotif &&
                 <ValidationField
                     fieldKey={emailKey}
                     validator={Validate.validateEmail.bind(null, 'an email field')}

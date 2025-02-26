@@ -2,11 +2,14 @@ package edu.caltech.ipac.firefly.core.background;
 
 import edu.caltech.ipac.firefly.api.Async;
 import edu.caltech.ipac.firefly.core.Util;
+import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.messaging.Message;
+import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.time.Instant;
 import java.util.Arrays;
@@ -24,7 +27,7 @@ public class JobUtil {
 
     public static void logJobInfo(JobInfo info) {
         if (info == null) return;
-        LOG.debug(String.format("JOB:%s  owner:%s  phase:%s  msg:%s", info.getJobId(), info.getOwner(), info.getPhase(), info.getSummary()));
+        LOG.debug(String.format("JOB:%s  owner:%s  phase:%s  msg:%s", info.getJobId(), info.getOwner(), info.getPhase(), info.getAuxData().getSummary()));
         LOG.trace(String.format("JOB: %s details: %s", info.getJobId(), toJson(info)));
     }
 
@@ -34,10 +37,14 @@ public class JobUtil {
      * limited to a one-year range. The resulting format is "HOSTNAME_TIMESTAMP", with a maximum of 20 characters.
      * @return the next unique job ID for this host
      */
-    static String nextJobId() {
-        String hname = Util.Try.it(() -> InetAddress.getLocalHost().getHostName()).getOrElse("SYS").split("\\.")[0];
+    static String nextRefJobId() {
+        String hname = hostName();
         hname = hname.length() < 9 ? hname : hname.substring(hname.length() - 8);
         return "%s_%d".formatted(hname, System.currentTimeMillis() % yearMs);
+    }
+
+    public static String hostName() {
+        return Util.Try.it(() -> InetAddress.getLocalHost().getHostName()).getOrElse("SYS").split("\\.")[0];
     }
 
     public static String jobIdToDir(String jobId) {
@@ -73,15 +80,37 @@ public class JobUtil {
         applyIfNotEmpty(msg.<JSONObject>getValue(null, JobEvent.JOB, ERROR_SUMMARY), v -> {
             info.setError(new JobInfo.Error(getInt(v.get(ERROR_TYPE), 500), v.get(ERROR_MSG).toString()));
         });
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, JOB_TYPE), (v) -> info.setType(Job.Type.valueOf(v.toString())));
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, LABEL), info::setLabel);
-        applyIfNotEmpty(msg.<Long>getValue(null, JobEvent.JOB, JOB_INFO, PROGRESS), (v) -> info.setProgress(v.intValue()));
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, MONITORED), info::setMonitored);
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, PROGRESS_DESC), info::setProgressDesc);
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, DATA_ORIGIN), info::setDataOrigin);
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, SUMMARY), info::setSummary);
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, LOCAL_RUN_ID), info::setLocalRunId);
+        AuxData aux = info.getAuxData();
+        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, JOB_TYPE), v -> aux.setType(Job.Type.valueOf(v.toString())));
+        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, LABEL), aux::setLabel);
+        applyIfNotEmpty(msg.<Long>getValue(null, JobEvent.JOB, JOB_INFO, PROGRESS), v -> aux.setProgress(v.intValue()));
+        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, MONITORED), aux::setMonitored);
+        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, PROGRESS_DESC), aux::setProgressDesc);
+        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, DATA_ORIGIN), aux::setDataOrigin);
+        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, SUMMARY), aux::setSummary);
+        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, LOCAL_RUN_ID), aux::setLocalRunId);
+
+        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, "refJobId"), aux::setRefJobId);
+        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, "refHost"), aux::setRefHost);
+        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, "userInfo"), v -> aux.setUserInfo(jsonToUserInfo((JSONObject) v)));
+
         return info;
+    }
+
+    public static JSONObject userInfoToJson(UserInfo userInfo) {
+        JSONObject rval = new JSONObject();
+        rval.put("firstName", userInfo.getFirstName());
+        rval.put("lastName", userInfo.getLastName());
+        rval.put("email", userInfo.getEmail());
+        return rval;
+    }
+
+    public static UserInfo jsonToUserInfo(JSONObject userInfo) {
+        UserInfo rval = new UserInfo();
+        rval.setFirstName(String.valueOf(userInfo.get("firstName")));
+        rval.setLastName(String.valueOf(userInfo.get("lastName")));
+        rval.setEmail(String.valueOf(userInfo.get("email")));
+        return rval;
     }
 
     public static JSONObject toJsonObject(JobInfo info) {
@@ -120,14 +149,19 @@ public class JobUtil {
         if (inclInternProps) {
             JSONObject addtlInfo = new JSONObject();
             rval.put(JOB_INFO, addtlInfo);
-            applyIfNotEmpty(info.getType(), v -> addtlInfo.put(JOB_TYPE, v.toString()));
-            applyIfNotEmpty(info.getLabel(), v -> addtlInfo.put(LABEL, v));
-            applyIfNotEmpty(info.getProgress(), v -> addtlInfo.put(PROGRESS, v));
-            applyIfNotEmpty(info.isMonitored(), v -> addtlInfo.put(MONITORED, v));
-            applyIfNotEmpty(info.getProgressDesc(), v -> addtlInfo.put(PROGRESS_DESC, v));
-            applyIfNotEmpty(info.getDataOrigin(), v -> addtlInfo.put(DATA_ORIGIN, v));
-            applyIfNotEmpty(info.getSummary(), v -> addtlInfo.put(SUMMARY, v));
-            applyIfNotEmpty(info.getLocalRunId(), v -> addtlInfo.put(LOCAL_RUN_ID, v));
+            AuxData aux = info.getAuxData();
+            applyIfNotEmpty(aux.getType(), v -> addtlInfo.put(JOB_TYPE, v.toString()));
+            applyIfNotEmpty(aux.getLabel(), v -> addtlInfo.put(LABEL, v));
+            applyIfNotEmpty(aux.getProgress(), v -> addtlInfo.put(PROGRESS, v));
+            applyIfNotEmpty(aux.isMonitored(), v -> addtlInfo.put(MONITORED, v));
+            applyIfNotEmpty(aux.getProgressDesc(), v -> addtlInfo.put(PROGRESS_DESC, v));
+            applyIfNotEmpty(aux.getDataOrigin(), v -> addtlInfo.put(DATA_ORIGIN, v));
+            applyIfNotEmpty(aux.getSummary(), v -> addtlInfo.put(SUMMARY, v));
+            applyIfNotEmpty(aux.getLocalRunId(), v -> addtlInfo.put(LOCAL_RUN_ID, v));
+
+            applyIfNotEmpty(aux.getRefHost(), v -> addtlInfo.put("refHost", v));
+            applyIfNotEmpty(aux.getRefJobId(), v -> addtlInfo.put("refJobId", v));
+            applyIfNotEmpty(aux.getUserInfo(), v -> addtlInfo.put("userInfo", userInfoToJson(v)));
         }
 
         return rval;
@@ -151,7 +185,7 @@ public class JobUtil {
     }
 
     public static Result toResult(JSONObject jo) {
-        return new Result(getStr(jo, "href"), getStr(jo, "hrefType"), getStr(jo, "mimeType"), getStr(jo, "size"));
+        return new Result(getStr(jo, "href"), getStr(jo, "mimeType"), getStr(jo, "size"));
     }
 
     /**
@@ -184,4 +218,10 @@ public class JobUtil {
         return rval.toJSONString();
     }
 
+    public static File getJobWorkDir(String jobId) {
+        var baseDir = new File(ServerContext.getStageWorkDir(), "jobs");
+        File dir = new File(baseDir, jobIdToDir(jobId));
+        dir.mkdirs();
+        return dir;
+    }
 }

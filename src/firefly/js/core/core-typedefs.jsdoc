@@ -123,7 +123,7 @@
  * Top-level.  Information on background jobs. Object is keyed by ID.
  * @typedef {Object} BackgroundInfo
  * @prop {string} email                     email to notify when background job is completed
- * @prop {boolean} enableEmail              true to send email notification when job is done
+ * @prop {boolean} sendNotif                true to send notification when job is completed
  * @prop {string} showDlScript              show download script link
  * @prop {Object.<string, JobInfo>} jobs    a map of background job and its jobInfo.
  */

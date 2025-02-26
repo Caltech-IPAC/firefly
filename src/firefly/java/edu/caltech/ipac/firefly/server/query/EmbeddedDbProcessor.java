@@ -166,7 +166,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
             results.getData().getTableMeta().setAttribute(DataGroupPart.LOADING_STATUS, DataGroupPart.State.COMPLETED.name());
 
-            jobExecIf(j -> updateJobInfo(j.getJobId(), ji -> ji.setSummary(String.format("%,d rows found", totalRows))));
+            jobExecIf(j -> updateJobInfo(j.getJobId(), ji -> ji.getAuxData().setSummary(String.format("%,d rows found", totalRows))));
 
             return results;
         }catch (Exception e) {

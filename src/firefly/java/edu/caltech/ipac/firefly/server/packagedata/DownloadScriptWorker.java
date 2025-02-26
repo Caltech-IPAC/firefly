@@ -122,7 +122,7 @@ public final class DownloadScriptWorker implements Job.Worker {
 
                     if (outFile.exists()) {
                         String fileExtension = scriptTypeToExtension.getOrDefault(scriptType.toLowerCase(), ".txt");
-                        getJob().addResult(new JobInfo.Result(makeDownloadUrl(outFile, suggestedName + fileExtension), null, MediaType.PLAIN_TEXT_UTF_8.toString(), outFile.length() + ""));
+                        getJob().addResult(new JobInfo.Result(makeDownloadUrl(outFile, suggestedName + fileExtension), MediaType.PLAIN_TEXT_UTF_8.toString(), outFile.length() + ""));
 
                         // handle 'save to Workspace' option:  pushes downloaded script (.sh or .txt) to workspace
                         if (!isEmpty(wsDestPath)) {
@@ -151,9 +151,9 @@ public final class DownloadScriptWorker implements Job.Worker {
             // JobInfo completion update
             String summary = String.format("%,d files were processed.", totalFiles);
             if (hasErrors) summary += "\nPlease, note:  There were error(s) while processing your request.";
-            ji.setProgress(100);
-            ji.setProgressDesc(summary);
-            ji.setSummary(summary);
+            ji.getAuxData().setProgress(100);
+            ji.getAuxData().setProgressDesc(summary);
+            ji.getAuxData().setSummary(summary);
         });
         getJob().setPhase(JobInfo.Phase.COMPLETED);
 

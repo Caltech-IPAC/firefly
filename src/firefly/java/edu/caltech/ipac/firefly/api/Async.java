@@ -40,6 +40,7 @@ import static edu.caltech.ipac.util.StringUtils.*;
 public class Async extends BaseHttpServlet {
 
     static private final Logger.LoggerImpl logger = Logger.getLogger();
+    static private String ASYNC_URL = null;
 
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
@@ -104,7 +105,7 @@ public class Async extends BaseHttpServlet {
         if (job != null) {
             JobInfo info = JobManager.submit(job);
             res.setHeader("Location", getAsyncUrl() + info.getJobId());
-            res.setStatus(301);
+            res.setStatus(303);
         } else {
             sendErrorResponse(404, null, "Command not found: " + params.getCommandKey(), res);
         }
@@ -169,10 +170,13 @@ public class Async extends BaseHttpServlet {
     }
 
     static public String getAsyncUrl() {
-        RequestOwner ro = ServerContext.getRequestOwner();
-        String spath = ro.getRequestAgent().getServletPath();     // from config =>  /CmdSrv/async
-        spath = spath == null ? "" : spath.substring(1);
-        return ro.getBaseUrl() + spath + "/";
+        if (ASYNC_URL == null) {
+            RequestOwner ro = ServerContext.getRequestOwner();
+            String spath = ro.getRequestAgent().getServletPath();     // from config =>  /CmdSrv/async
+            spath = spath == null ? "" : spath.substring(1);
+            ASYNC_URL = ro.getBaseUrl() + spath + "/";
+        }
+        return ASYNC_URL;
     }
 
 

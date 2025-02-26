@@ -125,9 +125,9 @@ public final class PackagingWorker implements Job.Worker {
         updateJobInfo(getJob().getJobId(), ji -> {
             String summary = String.format("%,d files were packaged for a total of %,d B creating %,d zip files.", totalFiles, totalBytes, curZipIdx);
             if (hasErrors) summary += "\nPlease, note:  There were error(s) while processing your request.  See zip's README file for details.";
-            ji.setProgress(100);
-            ji.setProgressDesc(summary);
-            ji.setSummary(summary);
+            ji.getAuxData().setProgress(100);
+            ji.getAuxData().setProgressDesc(summary);
+            ji.getAuxData().setSummary(summary);
         });
         getJob().setPhase(JobInfo.Phase.COMPLETED);
 
@@ -165,7 +165,7 @@ public final class PackagingWorker implements Job.Worker {
             int zippedFiles = curFileInfoIdx - startFileInfoIdx;
             ZipHandler.addReadmeZipEntry(zout,zipMessage(zippedFiles, zippedBytes, failed, denied));
             zout.setComment(String.format("Files %s-%s", startFileInfoIdx, curFileInfoIdx));
-            getJob().addResult(new JobInfo.Result(makeDownloadUrl(zipFile, suggestedName), null, MediaType.ZIP.toString(), zipFile.length()+""));
+            getJob().addResult(new JobInfo.Result(makeDownloadUrl(zipFile, suggestedName), MediaType.ZIP.toString(), zipFile.length()+""));
             failed.clear();
             denied.clear();
             zippedBytes = 0;

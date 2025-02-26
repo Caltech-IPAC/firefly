@@ -27,7 +27,7 @@ export const BG_MONITOR_SHOW    = `${BACKGROUND_PATH}.bgMonitorShow`;
 export const BG_JOB_ADD         = `${BACKGROUND_PATH}.bgJobAdd`;
 export const BG_JOB_REMOVE      = `${BACKGROUND_PATH}.bgJobRemove`;
 export const BG_JOB_CANCEL      = `${BACKGROUND_PATH}.bgJobCancel`;
-export const BG_SET_EMAIL       = `${BACKGROUND_PATH}.bgSetEmail`;
+export const BG_SET_INFO       = `${BACKGROUND_PATH}.bgSetInfo`;
 export const BG_Package         = `${BACKGROUND_PATH}.bgPackage`;
 
 export default {actionCreators, reducers};
@@ -36,7 +36,7 @@ export default {actionCreators, reducers};
 function actionCreators() {
     return {
         [BG_MONITOR_SHOW]: bgMonitorShow,
-        [BG_SET_EMAIL]: bgSetEmail,
+        [BG_SET_INFO]: bgSetInfo,
         [BG_Package]: bgPackage,
         [BG_JOB_ADD]: bgJobAdd,
         [BG_JOB_REMOVE]: bgJobRemove,
@@ -75,8 +75,8 @@ export function dispatchBgJobInfo(jobInfo) {
  * set the email used for background status notification 
  * @param {string}  email
  */
-export function dispatchBgSetEmailInfo({email, enableEmail}) {
-    flux.process({ type : BG_SET_EMAIL, payload: {email, enableEmail} });
+export function dispatchBgSetInfo({email, sendNotif}) {
+    flux.process({ type : BG_SET_INFO, payload: {email, sendNotif} });
 }
 
 /**
@@ -156,12 +156,10 @@ function bgJobCancel(action) {
     };
 }
 
-function bgSetEmail(action) {
+function bgSetInfo(action) {
     return (dispatch) => {
-        const {email} = action.payload;
-        if (!isNil(email)) {
-            SearchServices.setEmail(email);
-        }
+        const {email, sendNotif} = action.payload;
+        SearchServices.setBgInfo(email, sendNotif);
         dispatch(action);
     };
 }
@@ -223,11 +221,10 @@ function reducer(state={}, action={}) {
             }
             return nstate;
             break;
-        case BG_SET_EMAIL : {
-            const {email, enableEmail} = action.payload;
-            let nstate = state;
-            if (!isNil(email)) nstate = updateSet(state, 'email', email);
-            if (!isNil(enableEmail)) nstate = updateSet(state, 'enableEmail', enableEmail);
+        case BG_SET_INFO : {
+            const {email, sendNotif} = action.payload;
+            let nstate = updateSet(state, 'email', email);
+            nstate  = updateSet(nstate, 'sendNotif', sendNotif);
             return nstate;
             break;
         }

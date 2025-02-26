@@ -54,8 +54,7 @@ import java.nio.channels.WritableByteChannel;
 import java.util.ArrayList;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.data.ServerParams.EMAIL;
-import static edu.caltech.ipac.firefly.data.ServerParams.JOB_ID;
+import static edu.caltech.ipac.firefly.data.ServerParams.*;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -68,7 +67,7 @@ public class SearchServerCommands {
     public static class TableSearch extends ServCmdJob {
         public Job.Type getType() {
             JobInfo jInfo = JobManager.getJobInfo(getJobId());
-            Type type = jInfo == null || jInfo.getType() == null ? Type.SEARCH : jInfo.getType();
+            Type type = jInfo == null || jInfo.getAuxData().getType() == null ? Type.SEARCH : jInfo.getAuxData().getType();
             return type;
         }
 
@@ -321,17 +320,12 @@ public class SearchServerCommands {
         }
     }
 
-    public static class SetEmail extends ServCommand {
+    public static class SetBgInfo extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            String email = params.getRequired(EMAIL);
-            JobManager.list().forEach(jobInfo -> {
-                String cEmail = jobInfo.getParams().get(EMAIL);
-                    if (!email.equals(cEmail)) {
-                        jobInfo.getParams().put(EMAIL, email);
-                    }
-                }
-            );
+            String email = params.getOptional(EMAIL);
+            boolean sendNotif = params.getOptionalBoolean(SEND_NOTIF, false);
+            JobManager.setBackgroundInfo(new JobManager.BackGroundInfo(sendNotif, email));
             return "true";
         }
     }
@@ -346,7 +340,7 @@ public class SearchServerCommands {
 
             if (uws != null && local != null) {
                 // apply additional local info as needed
-                applyIfNotEmpty(local.getLocalRunId(), uws::setLocalRunId);
+                applyIfNotEmpty(local.getAuxData().getLocalRunId(), v -> uws.getAuxData().setLocalRunId(v));
             }
 
             if (uws != null) return JobUtil.toJson(uws);
