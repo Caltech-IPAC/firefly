@@ -271,7 +271,7 @@ export function makeUrlFromParams(url, serDef, rowIdx, userInputParams = {}) {
     return newUrl.toString();
 }
 function logServiceDescriptor(baseUrl, sendParams, newUrl) {
-    // console.log(`service descriptor base URL: ${baseUrl}`);
-    // Object.entries(sendParams).forEach(([k,v]) => console.log(`param: ${k}, value: ${v}`));
-    // console.log(`service descriptor new URL: ${newUrl}`);
+     //console.log(`service descriptor base URL: ${baseUrl}`);
+     //Object.entries(sendParams).forEach(([k,v]) => console.log(`param: ${k}, value: ${v}`));
+     //console.log(`service descriptor new URL: ${newUrl}`);
 }

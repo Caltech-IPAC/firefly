@@ -3,16 +3,18 @@ import {cloneDeep, once} from 'lodash';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {MetaConst} from '../../data/MetaConst';
 import {dispatchTableUiUpdate, TABLE_LOADED} from '../../tables/TablesCntlr.js';
-import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
+import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById, getTblInfo} from '../../tables/TableUtil.js';
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
-import {
-    getDataServiceOption, getDataServiceOptionByTable, getDataServiceOptions, getDataServiceOptionsFallback,
+import {getDataServiceOption, getDataServiceOptionByTable, getDataServiceOptionsFallback,
 } from '../../ui/tap/DataServicesOptions';
 import {hasObsCoreLikeDataProducts} from '../../voAnalyzer/TableAnalysis.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {getActiveRowToImageDef } from '../../visualize/saga/ActiveRowToImageWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
+import {useStoreConnector} from 'firefly/ui/SimpleComponent';
+import {findCutoutTarget, getCutoutSize} from 'firefly/ui/tap/Cutout';
+import {getTableModel} from 'firefly/voAnalyzer/VoCoreUtils';
 
 export const getAllStartIds= ()=> [
     getMocWatcherDef().id,
@@ -91,8 +93,18 @@ function getColNameFromTemplate(template) {
 }
 
 const PrepareDownload = React.memo(() => {
-    const tblTitle = getTblById(getActiveTableId())?.title ?? 'unknown';
+    const tbl_id = getActiveTableId();
+    const tblTitle = getTblById(tbl_id)?.title ?? 'unknown';
     const baseFileName = tblTitle.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_.-]/g, '_');
+
+    const tblModel = getTableModel(tbl_id);
+    const cutoutValue = useStoreConnector( () => getCutoutSize());
+
+    const tblInfo = getTblInfo(tblModel);
+    const cutoutTargetVals = findCutoutTarget('', {}, tblModel, tblInfo?.highlightedRow);
+    const ra = cutoutTargetVals?.positionWP?.x;
+    const dec = cutoutTargetVals?.positionWP.y;
+
     return (
         <div>
             <DownloadButton>
@@ -102,6 +114,8 @@ const PrepareDownload = React.memo(() => {
                     dlParams: {
                         FileGroupProcessor:'ObsCorePackager',
                         dlCutout: 'orig',
+                        centerCols: ra + ',' + dec,
+                        cutoutValue,
                         TitlePrefix: tblTitle,
                         help_id:'table.obsCorePackage',
                         BaseFileName:`${baseFileName}`}}}/>
