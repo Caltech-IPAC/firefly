@@ -1,14 +1,17 @@
 import {getAppOptions} from '../../api/ApiUtil.js';
+import {getIpixForWp, getProGradeTilePixels} from '../../tables/HpxIndexCntlr';
 import DrawObj from './DrawObj';
 import {makeWorldPt} from '../Point.js';
 import {isEmpty, has, set, isUndefined} from 'lodash';
 import {makeRegionPolygon} from '../region/Region.js';
 import {drawRegions} from '../region/RegionDrawer.js';
-import {getMocOrderIndex, getMocSidePointsNuniq, getCornerForPix, getMocNuniq,
-        isTileVisibleByPosition, initSidePoints, NSIDE4} from '../HiPSMocUtil.js';
+import {
+    getMocOrderIndex, getMocSidePointsNuniq, getCornerForPix, getMocNuniq,
+    isTileVisibleByPosition, initSidePoints, NSIDE4, getSidePointsNorder, NSIDE2
+} from '../HiPSMocUtil.js';
 import {getHealpixCornerTool,  getAllVisibleHiPSCells, getPointMaxSide, getHiPSNorderlevel} from '../HiPSUtil.js';
 import DrawOp from './DrawOp.js';
-import CsysConverter from '../CsysConverter.js';
+import CsysConverter, {CysConverter} from '../CsysConverter.js';
 import {Style, TextLocation,DEFAULT_FONT_SIZE} from './DrawingDef.js';
 import {rateOpacity} from '../../util/Color.js';
 import {distanceToPolygon} from '../VisUtil.js';
@@ -214,12 +217,16 @@ export class MocGroup {
         return (order >= this.minOrder && order <= this.maxOrder && has(this.groupInLevels, [order]));
     }
 
-    getMaxDisplayOrder() {
+    getMaxDisplayOrder(fov) {
         const MAX_DEPTH = getAppOptions()?.hips?.mocMaxDepth ?? 5;
         const {norder} = getHiPSNorderlevel(this.plot);
 
         this.hipsOrder = norder;
         this.displayOrder = Math.max(this.minOrder, this.hipsOrder) + MAX_DEPTH;
+
+        //for the wide FOV the moc does not need to got has deep
+        if (fov>300 && this.displayOrder>6) this.displayOrder-=2;
+        else if (fov>290 && this.displayOrder>6) this.displayOrder-=1;
     }
 
     getVisibleTileMap() {          // init the visibleMap by finding visible tiles with the order less than displayOrder
@@ -443,7 +450,7 @@ export class MocGroup {
 
         if (!this.inCollectVisibleTiles) {
             this.initCollection(plot);
-            this.getMaxDisplayOrder();
+            this.getMaxDisplayOrder(getFoV(plot));
             this.getVisibleTileMap();
 
             this.searchVisibleTiles();      // filter out invisible tiles first, update this.vTiles
@@ -542,24 +549,66 @@ export function createDrawObjsInMoc(mocObj, plot, mocCsys, startIdx, endIdx, sto
     if (startIdx === 0) {
         mocObj.drawObjAry = [];
     }
+    const fov= getFoV(plot);
 
     const drawObjs = allCells.slice(startIdx, endIdx+1).reduce((prev, oneCell) => {
         const {norder, npix, nuniq, isParentTile} = oneCell;
         const drawObj = createOneDrawObjInMoc(nuniq, norder, npix, displayOrder, hipsOrder,  mocCsys,
                                               regionOptions, mocGroup.isAllSky, isParentTile);
 
-        if (drawObj) {
-            drawObj.style = style;
-            if (isParentTile) {       // this fill color is specifically for the round-up tile
-                const opacity= drawObj.style===Style.FILL ? PTILE_OPACITY_RATIO : OUTLINE_OPACITY_RATIO;
-                drawObj.fillColor = rateOpacity(color, opacity);
-            }
-            prev.push(drawObj);
+        let drawObjAry;
+        if (fov>70 && drawObj?.mocInfo.norder<4) {
+            drawObjAry= confirmGoodObj(plot, drawObj, mocObj,mocCsys);
+        }
+
+        if (!drawObjAry && drawObj) drawObjAry= [drawObj];
+
+        if (drawObjAry) {
+            drawObjAry.forEach( (dObj) => {
+                dObj.style = style;
+                if (isParentTile) {       // this fill color is specifically for the round-up tile
+                    const opacity= dObj.style===Style.FILL ? PTILE_OPACITY_RATIO : OUTLINE_OPACITY_RATIO;
+                    dObj.fillColor = rateOpacity(color, opacity);
+                }
+                prev.push(dObj);
+            });
         }
         return prev;
     }, []);
 
     return drawObjs;
+}
+
+function confirmGoodObj(plot, inDrawObj, inMocObj, mocCsys, maxDepth=4) {
+    const {mocInfo}= inDrawObj;
+    if (mocInfo.norder>maxDepth) return [inDrawObj];
+    const cc= CysConverter.make(plot);
+    const {pts}= inDrawObj;
+    const wrapping= pts.some( (pt,idx) => cc.coordsWrap(pt, pts[idx-1]));
+    if (!wrapping) return [inDrawObj];
+
+    const {displayOrder, regionOptions={}, mocGroup} = inMocObj;
+    const nPixAry= getProGradeTilePixels(mocInfo.npix);
+    const proNorder= mocInfo.norder+1;
+    const nextDrawObjAry= nPixAry.map( (proNpix) => {
+        if (!getSidePointsNorder(proNorder, proNpix)) {
+            const {ipix,wpCorners}=  getHealpixCornerTool().makeCornersForPix(proNpix, 2**proNorder, mocCsys);
+            getSidePointsNorder(proNorder, proNpix,wpCorners);
+        }
+        
+        return createOneDrawObjInMoc(getMocNuniq(proNorder,proNpix), proNorder, proNpix,
+            displayOrder, mocInfo.hipsOrder,  mocCsys,
+            regionOptions, mocGroup.isAllSky, true);
+
+    });
+
+    const results= [];
+    nextDrawObjAry.forEach( (nDrawObj) => {
+        const resultAry= confirmGoodObj(plot,nDrawObj,inMocObj, mocCsys, maxDepth);
+        if (resultAry?.length) results.push(...resultAry);
+    });
+
+    return results;
 }
 
 

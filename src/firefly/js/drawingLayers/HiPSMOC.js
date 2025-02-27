@@ -2,16 +2,15 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 import Enum from 'enum';
-import {debounce, get, set, isEmpty, cloneDeep, isString} from 'lodash';
+import {get, set, isEmpty, cloneDeep, isString} from 'lodash';
 import {makeDrawingDef, TextLocation, Style} from '../visualize/draw/DrawingDef.js';
 import DrawLayer, {DataTypes, ColorChangeType}  from '../visualize/draw/DrawLayer.js';
 import {makeFactoryDef} from '../visualize/draw/DrawLayerFactory.js';
 import {primePlot, getDrawLayerById, getPlotViewIdListInOverlayGroup} from '../visualize/PlotViewUtil.js';
-import {visRoot} from '../visualize/ImagePlotCntlr.js';
 import DrawLayerCntlr, {DRAWING_LAYER_KEY, dispatchUpdateDrawLayer, dlRoot} from '../visualize/DrawLayerCntlr.js';
 import MocObj, {createDrawObjsInMoc, setMocDisplayOrder, MocGroup} from '../visualize/draw/MocObj.js';
 import {getUIComponent} from './HiPSMOCUI.jsx';
-import ImagePlotCntlr from '../visualize/ImagePlotCntlr.js';
+import ImagePlotCntlr, {visRoot} from '../visualize/ImagePlotCntlr.js';
 import {getMetaEntry, getTblById} from '../tables/TableUtil.js';
 import {makeTblRequest} from '../tables/TableRequestUtil.js';
 import {MAX_ROW} from '../tables/TableRequestUtil.js';
@@ -187,7 +186,7 @@ function creator(initPayload) {
 }
 
 class UpdateStatus {
-    constructor(maxChunk=500) {
+    constructor(maxChunk=5000) {
         this.done = false;               // when total is the same as processed
         this.maxChunk = maxChunk;        // set once
         // when setInterval starts
@@ -391,7 +390,8 @@ function updateMocData(dl, plotId) {
         updateStatus.newMocObj = newMocObj;
     } else if (updateStatus.newMocObj.mocGroup.isInCollection()) {
          const {mocGroup} = updateStatus.newMocObj;
-         mocGroup.collectVisibleTilesFromMoc(plot,updateStatus.storedSidePoints, 20);
+         // mocGroup.collectVisibleTilesFromMoc(plot,updateStatus.storedSidePoints, 20);
+         mocGroup.collectVisibleTilesFromMoc(plot,updateStatus.storedSidePoints);
 
          if (!mocGroup.isInCollection()) {
              setMocDisplayOrder(updateStatus.newMocObj);
@@ -465,7 +465,6 @@ function updateDrawLayer(drawObjAry, drawLayer, plotId) {
  * @param updateMethod
  */
 function abortUpdate(dl, updateStatusAry, pId, updateMethod = LayerUpdateMethod.none) {
-    //console.log('update method = ' + updateMethod.key);
     if (updateMethod === LayerUpdateMethod.byTrueAry) {
         const {processedTiles} = updateStatusAry[pId];
         updateDrawLayer(processedTiles, dl, pId);
@@ -512,7 +511,7 @@ function asyncComputeDrawData(drawLayer, action) {
         const newDrawLayer = {...drawLayer, drawData: dd};
         dispatchUpdateDrawLayer(newDrawLayer);
     } else {
-        mocRedrawDebounce(drawLayer, action);
+        mocRedraw(drawLayer, action);
     }
 }
 
@@ -520,16 +519,11 @@ function mocRedraw(drawLayer,action) {
     const {plotId, plotIdAry} = action.payload;
     const {visiblePlotIdAry, updateStatusAry} = drawLayer;
 
-    let pIdAry = [];
-    if (plotIdAry) {
-        pIdAry = plotIdAry;
-    } else if (action.type === ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION ) {
-        if (plotId) {
-            pIdAry = getPlotViewIdListInOverlayGroup(visRoot(), plotId);
-        }
-    } else if (plotId) {
-        pIdAry = [plotId];
-    }
+    const pIdAry= plotIdAry ?? action.type === ImagePlotCntlr.CHANGE_CENTER_OF_PROJECTION
+        ? getPlotViewIdListInOverlayGroup(visRoot(), plotId)
+        : plotId ? [plotId] : [];
+
+
 
     pIdAry.forEach((pId) => {
         if (visiblePlotIdAry.includes(pId) && get(updateStatusAry, pId)) {
@@ -541,5 +535,3 @@ function mocRedraw(drawLayer,action) {
     });
 
 }
-
-const mocRedrawDebounce= debounce(mocRedraw,60);
