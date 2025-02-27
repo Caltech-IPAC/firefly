@@ -134,7 +134,7 @@ export function EmbeddedPositionSearchPanel({
 
     if (useUpload && !sizeEnabled && enabledSearchTypes.length===2) {
         // because in this case, 'Cone' or 'Polygon' label won't make sense
-        searchTypeToggleOptions[0].label = 'Single-object';
+        searchTypeToggleOptions[0].label = 'Single Object';
     }
 
     const {
@@ -207,7 +207,7 @@ export function EmbeddedPositionSearchPanel({
                 <CollapsibleGroup variant={'plain'}>
                     <CollapsibleItem {...{
                         componentKey:'embedSearchPanel', isOpen:true, title:'Please select a search type',
-                        header: (isOpen) => (<Header {...{isOpen, doSearch, targetKey, sizeKey, polygonKey, searchTypeKey, slotProps}}/>),
+                        header: (isOpen) => (<Header {...{isOpen, doSearch, targetKey, sizeKey, polygonKey, searchTypeKey, searchTypeToggleOptions, slotProps}}/>),
                         slotProps: {
                             header: {
                                 sx: emptyHeaderSx,
@@ -300,11 +300,11 @@ EmbeddedPositionSearchPanel.propTypes= {
     }),
 };
 
-const Header = function({isOpen, slotProps={}, targetKey, sizeKey, polygonKey, searchTypeKey}) {
+const Header = function({isOpen, slotProps={}, targetKey, sizeKey, polygonKey, searchTypeKey, searchTypeToggleOptions}) {
     const {groupKey} = useContext(FieldGroupCtx);
     const reqObj = getFieldGroupResults(groupKey,true);
 
-    useFieldGroupRerender([targetKey,sizeKey,polygonKey,searchTypeKey]);
+    useFieldGroupRerender([targetKey,sizeKey,polygonKey,searchTypeKey, searchTypeToggleOptions]);
 
     return (
         isOpen ?
@@ -320,7 +320,7 @@ const Header = function({isOpen, slotProps={}, targetKey, sizeKey, polygonKey, s
                     cancelText=''>
                     <Stack {...{width:'100%', alignItems:'center'}}>
                         <Slot {...{component:SearchSummary, slotProps:slotProps.searchSummary, request:reqObj,
-                            targetKey, sizeKey, polygonKey, searchTypeKey}}/>
+                            targetKey, sizeKey, polygonKey, searchTypeKey, searchTypeToggleOptions}}/>
                     </Stack>
                 </FormPanel>
             </Stack>
@@ -328,49 +328,54 @@ const Header = function({isOpen, slotProps={}, targetKey, sizeKey, polygonKey, s
 };
 
 
-function SearchSummary({request, targetKey, sizeKey, polygonKey, searchTypeKey, getSummaryInfo}) {
-    let {searchType, target, radius, polyCoords} = getSummaryInfo?.(request) ?? {};
-    searchType ??= request?.[searchTypeKey] === CONE_CHOICE_KEY ? 'Cone' : (request?.[searchTypeKey] === POLY_CHOICE_KEY  ? 'Polygon' : 'Multi-Object');
-    target ??= request?.[targetKey];
-    radius ??= request?.[sizeKey];
-    polyCoords ??= request?.[polygonKey];
+function SearchSummary({request, targetKey, sizeKey, polygonKey, searchTypeKey, searchTypeToggleOptions, getSearchType}) {
+    let {value: searchTypeValue, label: searchTypeLabel} = getSearchType?.(request) ?? {};
+    searchTypeValue ??= request?.[searchTypeKey];
+    if (!searchTypeValue) return false; //since searchTypeValue determines all the following summary info to be displayed
 
-    const userEnterWorldPt= () =>  parseWorldPt(target);
-    const coords = searchType === 'Cone' ? formatWorldPtToString(userEnterWorldPt()) : polyCoords;
+    searchTypeLabel ??= searchTypeToggleOptions.find(({value})=>value===searchTypeValue)?.label ?? searchTypeValue;
 
-    //in case of Multi-Object, get the fileName & rows
-    const fileName = searchType === 'Multi-Object' ? request?.uploadInfo?.fileName : undefined;
-    const rows = searchType === 'Multi-Object' ? request?.uploadInfo?.totalRows : undefined;
+    const target = request?.[targetKey];
+    const polyCoords = request?.[polygonKey];
+    const coords = searchTypeValue === POLY_CHOICE_KEY ? polyCoords
+        : formatWorldPtToString(parseWorldPt(target)); // for cone, point, etc.
 
-    const keyVal = (k, v, isLast, key) => (
-        <Fragment key={key+''}>
-            <Typography component='span' color={'primary'}>{k}: </Typography> {v}
-            {!isLast && ', '}
-        </Fragment>
-    );
+    const radius = request?.[sizeKey];
+    const fileName = request?.uploadInfo?.fileName;
+    const rows = request?.uploadInfo?.totalRows;
 
-    //Label/Key & Value pairs do display, calculating here to determine easily where the last comma should be
     const keyValuePairs = [
-        //TODO: Search Type's 'v' needs to come from label of toggle options, not hard-coded searchType strings in this function
-        { k: 'Search Type', v: searchType },
-        ...(radius && searchType === 'Cone' ? [{ k: 'Search Radius', v: radius }] : []),
-        ...(coords && searchType !== 'Multi-Object' ? [{ k: 'Coordinates', v: coords }] : []),
-        ...(fileName && rows && searchType === 'Multi-Object' ? [
-            { k: 'File Name', v: fileName },
-            { k: 'Rows', v: rows }
-        ] : [])
+        { k: 'Search Type', v: searchTypeLabel },
+        ...(radius && searchTypeValue === CONE_CHOICE_KEY ? [{ k: 'Search Radius', v: radius }] : []),
+        ...(coords && searchTypeValue !== UPLOAD_CHOICE_KEY ? [{ k: 'Coordinates', v: coords }] : []),
+        ...(fileName && rows && searchTypeValue === UPLOAD_CHOICE_KEY
+            ? [{ k: 'File Name', v: fileName }, { k: 'Rows', v: rows }] : [])
     ];
 
     return (
         <Stack>
             <Typography color={'neutral'} level='body-md'>
-                {keyValuePairs.map((pair, index) =>
-                    keyVal(pair.k, pair.v, index === keyValuePairs.length - 1, index)
-                )}
+                {keyValuePairs.map((pair, index, pairs) => (
+                    <Fragment key={index}>
+                        <Typography component='span' color={'primary'}>{pair.k}: </Typography> {pair.v}
+                        {index < pairs.length - 1 && ', '}
+                    </Fragment>
+                ))}
             </Typography>
         </Stack>
     );
 }
+
+SearchSummary.propTypes = {
+    request: object,
+    targetKey: string,
+    sizeKey: string,
+    polygonKey: string,
+    searchTypeKey: string,
+    searchTypeToggleOptions: arrayOf(shape({value: string, label: string})),
+    getSearchType: func, // for customizing the logic of how searchType.value and searchType.label is determined
+};
+
 
 function SpatialSearch({rootSlotProps: slotProps, insetSpacial, uploadInfo, setUploadInfo, searchTypeOp, doToggle,
                            initToggle, nullAllowed, searchTypeToggleOptions}) {
