@@ -70,6 +70,7 @@ export const LC = {
     META_ERR_NAMES: 'ts_errorNames',
 
     META_MISSION: MetaConst.TS_DATASET,
+    UPLOAD_FILENAME: 'uploadFileName',
     MISSION_DATA: 'missionEntries',
     GENERAL_DATA:'generalEntries',
 
@@ -104,6 +105,10 @@ function getDEC(layoutInfo) {
 
 function getCoordSys(layoutInfo) {
     return get(layoutInfo, [LC.MISSION_DATA, LC.META_COORD_SYS]);
+}
+
+function getUploadFileName(layoutInfo) {
+    return get(layoutInfo, ['missionEntries', LC.UPLOAD_FILENAME]);
 }
 
 function getCutoutSize(layoutInfo) {
@@ -472,6 +477,7 @@ function clearResults(layoutInfo) {
         missionEntries: null,
         generalEntries: null,
         fullRawTable: null,
+        rawTableRequest: null,
         rawTableColumns:null,
         error:''
     });
@@ -496,8 +502,9 @@ function handleNewSearch(layoutInfo, action) {
  */
 function handleRawTableLoad(layoutInfo, tblId) {
     const rawTable = getTblById(tblId);
+    const uploadedFilename = rawTable.request.uploadFileName;
     const generalEntries = get(layoutInfo, LC.GENERAL_DATA) || getGeneralEntries();
-    const {converterData, missionEntries} = makeMissionEntries(rawTable.tableMeta);
+    const {converterData, missionEntries} = makeMissionEntries(rawTable.tableMeta, layoutInfo, uploadedFilename);
 
     if (!converterData) {
         logger.error('Unknown mission or no converter');
@@ -734,6 +741,7 @@ export function setupImages(layoutInfo, invokedBy=TABLE_FETCH){
     const newPlotIdAry = makePlotIds(tableModel.highlightedRow, tableModel.totalRows, count);
     const maxPlotIdAry = makePlotIds(tableModel.highlightedRow, tableModel.totalRows, LC.MAX_IMAGE_CNT);
     const cutoutSize = getCutoutSize(layoutInfo);
+    const uploadFilename = getUploadFileName(layoutInfo) || '';
 
     try {
         newPlotIdAry.forEach((plotId) => {

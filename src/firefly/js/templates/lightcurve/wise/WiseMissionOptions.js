@@ -127,7 +127,6 @@ export function wiseOnNewRawTable(rawTable, missionEntries, generalEntries, conv
         [LC.META_FLUX_NAMES]: get(metaInfo, LC.META_FLUX_NAMES, numericalCols),
         [LC.META_URL_CNAME]: get(metaInfo, LC.META_URL_CNAME, defaultDataSource),
         [LC.META_FLUX_BAND]: get(metaInfo, LC.META_FLUX_BAND, 'w1')
-
     };
 
     missionEntries = Object.assign({}, missionEntries, defaultValues);
