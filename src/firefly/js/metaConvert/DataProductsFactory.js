@@ -2,10 +2,10 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {isArray, once} from 'lodash';
+import {isArray, isUndefined, once} from 'lodash';
 import {MetaConst} from '../data/MetaConst.js';
 import {getMetaEntry, getObjectMetaEntry} from '../tables/TableUtil';
-import {getDataServiceOption} from '../ui/tap/DataServicesOptions';
+import {getDataServiceOptionByTable} from '../ui/tap/DataServicesOptions';
 import {toBoolean} from '../util/WebUtil';
 import {Band} from '../visualize/Band';
 import {SINGLE} from '../visualize/MultiViewCntlr';
@@ -251,7 +251,7 @@ function initConverterTemplates() {
             create: makeServDescriptorConverter,
             threeColor: undefined,
             hasRelatedBands: undefined,
-            canGrid: false,
+            canGrid: undefined,
             maxPlots: OBSCORE_DEF_MAX_PLOTS,
             getSingleDataProduct: getServiceDescSingleDataProduct,
             getGridDataProduct: getServiceDescGridDataProduct,
@@ -312,6 +312,7 @@ export const getDefaultFactoryOptions= once(() => ({
     chartIdBase: undefined,
     tableIdList: [], // list of ids
     chartIdList: [],// list of ids
+    relatedGridImageOrder: undefined,
     datalinkTblRequestOptions: {},
     paramNameKeys: [], // experimental - might be used with obscure cutout services, for not unnecessary, I will probably remove
     ucdKeys: [], // experimental - might be used with obscure cutout services, for not unnecessary, I will probably remove
@@ -373,22 +374,24 @@ export function makeDataProductsConverter(table, factoryKey= undefined) {
     // most options are specific to a factory but these below are common to all
 
     const metaOptions= getObjectMetaEntry(table, MetaConst.DATA_PRODUCTS_FACTORY_OPTIONS, {});
-    const dataServiceOptions= getDataServiceOption(MetaConst.DATA_PRODUCTS_FACTORY_OPTIONS, table, {});
+    const dataServiceOptions= getDataServiceOptionByTable(MetaConst.DATA_PRODUCTS_FACTORY_OPTIONS, table, {});
     const combinedOps= {dataProductsComponentKey: factoryKey, ...options, ...dataServiceOptions, ...metaOptions};
 
     const pT= {
         ...t,
-        canGrid: toBoolean(combinedOps.canGrid ?? t.canGrid),
+        canGrid: asBooleanOrUndefined(combinedOps.canGrid ?? t.canGrid),
         maxPlots: Number(combinedOps.maxPlots ?? t.maxPlots),
         initialLayout: combinedOps.initialLayout ?? t.initialLayout,
-        threeColor: toBoolean(combinedOps.threeColor ?? t.threeColor),
-        hasRelatedBands: toBoolean(combinedOps.hasRelatedBands?? t.hasRelatedBands),
+        threeColor: asBooleanOrUndefined(combinedOps.threeColor ?? t.threeColor),
+        hasRelatedBands: asBooleanOrUndefined(combinedOps.hasRelatedBands?? t.hasRelatedBands),
         dataProductsComponentKey: combinedOps.dataProductsComponentKey,
+        relatedGridImageOrder: combinedOps.relatedGridImageOrder,
     };
     const retObj= t.create(table,pT, combinedOps);
-    return {options, ...retObj};
+    return {options:combinedOps, ...retObj};
 }
 
+const asBooleanOrUndefined= (v) => isUndefined(v) ? undefined : toBoolean(v);
 
 function findTableMetaEntry(table,ids) {
     const testIdAry= isArray(ids) ? ids : [ids];

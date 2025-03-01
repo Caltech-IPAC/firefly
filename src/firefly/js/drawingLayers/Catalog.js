@@ -164,7 +164,8 @@ function saveLastDown(mouseStatePayload) {
  * @param mouseStatePayload
  */
 function highlightChange(mouseStatePayload) {
-    const {drawLayer,plotId,screenPt}= mouseStatePayload;
+    const {drawLayer,plotId,screenPt,shiftDown}= mouseStatePayload;
+    if (shiftDown) return;
     const plot= primePlot(visRoot(),plotId);
     const center= getCenterOfProjection(plot);
     if (lastProjectionCenter && (!pointEquals(center, lastProjectionCenter?.center) || lastProjectionCenter.plotId!==plotId)) return;

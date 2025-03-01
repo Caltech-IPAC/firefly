@@ -474,3 +474,25 @@ function extractWorldPtFromADQL(adql) {
         return makeWorldPt(lonStr, latStr, CoordinateSys.parse(cStr));
     }
 }
+
+export function obsCoreTableHasOnlyImages(table) {
+    if (!table) return false;
+
+    const propTypeCol = getObsCoreProdTypeCol(table);
+    if (propTypeCol?.enumVals) {
+        const pTypes = propTypeCol.enumVals.split(',');
+        if (pTypes.every((s) => s.toLowerCase() === 'image' || s.toLowerCase() === 'cube')) return true;
+    }
+
+    if (table.request?.filters) {
+        const fList = table.request.filters.split(';');
+        const pTFilter = fList.find((f) => f.includes(propTypeCol.name) && f.includes('IN'));
+        if (pTFilter) {
+            const inList = pTFilter.substring(pTFilter.indexOf('(') + 1, pTFilter.indexOf(')')).split(',');
+            if (inList.every((s) => s.toLocaleLowerCase() === '\'image\'' || s.toLocaleLowerCase() === '\'cube\'')) {
+                return true;
+            }
+        }
+    }
+    return false;
+}

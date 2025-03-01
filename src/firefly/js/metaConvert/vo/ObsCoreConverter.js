@@ -1,15 +1,12 @@
 import {isEmpty, isUndefined} from 'lodash';
-import {getAppOptions} from '../../core/AppDataCntlr.js';
 import {getCellValue, getColumns, hasRowAccess} from '../../tables/TableUtil.js';
 import {getDataServiceOption} from '../../ui/tap/DataServicesOptions';
+import {tokenSub} from '../../util/WebUtil.js';
 import {
-    getObsCoreAccessURL, getObsCoreProdTypeCol, getObsReleaseDate, getObsTitle, getProdTypeGuess, getSearchTarget,
-    isFormatDataLink,
-    isFormatPng,
-    isFormatVoTable, makeWorldPtUsingCenterColumns
+    getObsCoreAccessURL, getObsReleaseDate, getObsTitle, getProdTypeGuess, getSearchTarget, isFormatDataLink,
+    isFormatPng, isFormatVoTable, makeWorldPtUsingCenterColumns, obsCoreTableHasOnlyImages
 } from '../../voAnalyzer/TableAnalysis.js';
 import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
-import {tokenSub} from '../../util/WebUtil.js';
 import {uploadAndAnalyze} from '../AnalysisUtils.js';
 import {IMAGE_ONLY} from '../DataProductConst';
 import {dispatchUpdateActiveKey} from '../DataProductsCntlr.js';
@@ -36,11 +33,11 @@ export const OBSCORE_DEF_MAX_PLOTS= 8;
 export function makeObsCoreConverter(table,converterTemplate,options={}) {
     if (!table) return converterTemplate;
 
-    const {maxPlots, initialLayout }= converterTemplate;
+    const {maxPlots, initialLayout, relatedGridImageOrder}= converterTemplate;
     const hasDl= Boolean(getDLServiceDesc(table)) || isFormatDataLink(table,0);
     const hasRelatedBands= Boolean(hasDl && converterTemplate.hasRelatedBands);
     const canGrid= converterTemplate.canGrid ?? hasRelatedBands;
-    const onlyImages= hasOnlyImages(table);
+    const onlyImages= obsCoreTableHasOnlyImages(table);
     const threeColor= isUndefined(converterTemplate.threeColor) ? hasRelatedBands : converterTemplate.threeColor;
 
     if (hasRelatedBands && (!onlyImages && options.limitViewerDisplay!==IMAGE_ONLY)) relatedBandWarning();
@@ -53,30 +50,9 @@ export function makeObsCoreConverter(table,converterTemplate,options={}) {
         canGrid: onlyImages && canGrid,
         maxPlots: (hasRelatedBands||onlyImages) ? maxPlots : 1,
         hasRelatedBands,
-        converterId: `ObsCore-${table.tbl_id}`
+        converterId: `ObsCore-${table.tbl_id}`,
+        relatedGridImageOrder,
     };
-}
-
-function hasOnlyImages(table) {
-    if (!table) return false;
-
-    const propTypeCol= getObsCoreProdTypeCol(table);
-    if (propTypeCol?.enumVals) {
-        const pTypes= propTypeCol.enumVals.split(',');
-        if (pTypes.every( (s) => s.toLowerCase()==='image' || s.toLowerCase()==='cube')) return true;
-    }
-
-    if (table.request?.filters) {
-        const fList= table.request.filters.split(';');
-        const pTFilter= fList.find( (f) => f.includes(propTypeCol.name) && f.includes('IN'));
-        if (pTFilter) {
-            const inList=  pTFilter.substring( pTFilter.indexOf('(')+1, pTFilter.indexOf(')')).split(',');
-            if (inList.every( (s) => s.toLocaleLowerCase()==='\'image\'' || s.toLocaleLowerCase()==='\'cube\'')) {
-                return true;
-            }
-        }
-    }
-    return false;
 }
 
 
@@ -98,8 +74,8 @@ function describeObsThreeColor(table, row, options) {
  */
 export function getObsCoreGridDataProduct(table, plotRows, activateParams, options) {
         const pAry= plotRows.map( (pR) => getObsCoreSingleDataProduct(
-            { table ,row:pR.row,activateParams,doFileAnalysis:false,options} ));
-    return createGridResult(pAry,activateParams,table,plotRows);
+            { table ,row:pR.row,activateParams,doFileAnalysis:false,options, useForTableGrid:true} ));
+    return createGridResult(pAry,activateParams,table,plotRows,options);
 }
 
 
@@ -183,10 +159,12 @@ function doErrorChecks(table, row, prodType, dataSource, isDataLink, isVoTable) 
  * @param {Array.<DataProductsDisplayType>} [obj.serviceDescMenuList]
  * @param {ServiceDescriptorDef} [obj.dlDescriptors]
  * @param {boolean} [obj.doFileAnalysis] - if true the build a menu if possible
+ * @param {boolean} [obj.useForTableGrid] - this result is part of a table grid Result
  * @param {DataProductsFactoryOptions} obj.options
  * @return {Promise.<DataProductsDisplayType>}
  */
-async function getObsCoreSingleDataProduct({table, row, activateParams, serviceDescMenuList, dlDescriptors, doFileAnalysis= true, options}) {
+async function getObsCoreSingleDataProduct({table, row, activateParams, serviceDescMenuList, dlDescriptors,
+                                               doFileAnalysis= true, options, useForTableGrid=false}) {
 
     const {size,titleStr,dataSource,prodType,isVoTable,isDataLinkRow, isPng}= getObsCoreRowMetaInfo(table,row);
     const errMsg= doErrorChecks(table,row,prodType,dataSource,isDataLinkRow,isVoTable);
@@ -194,7 +172,7 @@ async function getObsCoreSingleDataProduct({table, row, activateParams, serviceD
 
     if (isDataLinkRow) {
         return getDatalinkSingleDataProduct({dlTableUrl:dataSource, options, sourceTable:table, row,
-            activateParams,titleStr, additionalServiceDescMenuList:serviceDescMenuList, doFileAnalysis});
+            activateParams,titleStr, additionalServiceDescMenuList:serviceDescMenuList, doFileAnalysis, useForTableGrid});
     }
     else if (isPng) {
         return dpdtPNG('PNG image',dataSource);

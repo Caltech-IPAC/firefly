@@ -10,7 +10,7 @@ import {getSSATitle, isSSATable} from '../../voAnalyzer/TableAnalysis.js';
 
 /**
  *
- * @param dataSourc
+ * @param dataSource
  * @param positionWP
  * @param titleStr
  * @param {TableModel} table
@@ -23,7 +23,7 @@ export function makeObsCoreRequest(dataSource, positionWP, titleStr, table, row)
     r.setZoomType(ZoomType.FULL_SCREEN);
     const ssa= isSSATable(table);
     const titleStringToUse= ssa ? getSSATitle(table,row) ?? 'spectrum' : titleStr;
-    if (titleStringToUse?.length > 7) {
+    if (titleStringToUse?.length > 2) {
         r.setTitleOptions(TitleOptions.NONE);
         r.setTitle(titleStringToUse);
     }

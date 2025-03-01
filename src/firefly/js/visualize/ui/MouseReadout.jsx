@@ -5,6 +5,7 @@
 import {Chip, Stack, Switch, Typography} from '@mui/joy';
 import React, {Fragment,memo, useState} from 'react';
 import {number,string,oneOfType,object,func,bool} from 'prop-types';
+import {EMPTY_BUNIT_DEFAULT} from '../FitsHeaderUtil';
 import {dispatchChangePointSelection} from '../ImagePlotCntlr.js';
 import {dispatchChangeLockByClick} from '../MouseReadoutCntlr.js';
 import {copyToClipboard} from '../../util/WebUtil';
@@ -55,6 +56,7 @@ const baseLS={whiteSpace:'nowrap', textOverflow: 'ellipsis'};
 
 export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueStyle={}, showCopy=false,
                                         label='', value='', unit='', copyValue='', prefChangeFunc=undefined, monoFont=false}) => {
+    const isEmptyUnit= unit===EMPTY_BUNIT_DEFAULT;
     const lS= lArea ? {gridArea:lArea,...baseLS,...labelStyle} : {...baseLS,...labelStyle};
     const vS= vArea ? {gridArea:vArea,...baseVS, ...valueStyle} : {...baseVS,...valueStyle};
     const cS= cArea ? {gridArea:cArea, overflow:'hidden', justifySelf:'center'} : undefined;
@@ -76,6 +78,7 @@ export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueSt
     }
 
     const mStyle= monoFont ? {fontFamily:'monospace'} : {};
+    const vStr=isEmptyUnit ? value + ' (no units defined in file)'  : value+' ' + unit;
 
     return (
         <Fragment>
@@ -84,9 +87,10 @@ export const DataReadoutItem= memo(({lArea, vArea, cArea, labelStyle={}, valueSt
                 : <Typography level='body-sm' title={value+''} sx={{...mouseReadoutLabelSx, ...lS}} onClick={prefChangeFunc}>{label}</Typography>
             }
             <Typography level='body-sm' color='warning' sx={{...vS, ...mStyle}} title={value+''}> {value} </Typography>
-            <Typography level='body-sm' color='warning' sx={vS} title={value+''}>
+            <Typography level='body-sm' color='warning' sx={vS} title={vStr}>
                 <span style={mStyle}> {value}</span>
-                <span> {unit}</span>
+                {unit && <Typography level='body-sm' color={!isEmptyUnit ? 'warning' : undefined}  title={vStr}
+                                     sx={{pl:.25, opacity:isEmptyUnit?.35:1}}>{unit}</Typography>}
             </Typography>
             {clipComponent}
         </Fragment>

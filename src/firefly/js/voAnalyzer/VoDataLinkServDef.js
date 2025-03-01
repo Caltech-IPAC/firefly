@@ -6,7 +6,7 @@ import {MetaConst} from '../data/MetaConst';
 import {isDefined} from '../util/WebUtil';
 import {makeWorldPt, parseWorldPt} from '../visualize/Point';
 import {
-    getObsCoreAccessFormat, getObsCoreAccessURL, getObsCoreProdType, getObsCoreSRegion, isDatalinkTable, isObsCoreLike
+    getObsCoreAccessFormat, getObsCoreAccessURL, getObsCoreProdType, getObsCoreSRegion, isDatalinkTable, isObsCoreLike,
 } from './TableAnalysis';
 import {
     adhocServiceUtype, cisxAdhocServiceUtype, standardIDs, VO_TABLE_CONTENT_TYPE,
@@ -160,6 +160,7 @@ export function getDataLinkData(dataLinkTableOrId, sourceObsCoreTbl=undefined, s
                 semantics, local_semantics: localSemantics, service_def: serviceDefRef,
                 content_type: contentType, content_qualifier: contentQualifier,
                 access_url: url, description, content_length: size, error_message,
+                label: labelDLExt, bandpass_name: bandpassNameDLExt
             } = rowObj;
 
             const idKey= Object.keys(rowObj).find((k) => k.toLowerCase()==='id');
@@ -171,6 +172,7 @@ export function getDataLinkData(dataLinkTableOrId, sourceObsCoreTbl=undefined, s
                 contentType, contentQualifier, semantics, localSemantics, url, error_message,
                 description, size, serviceDefRef, serDef, rowIdx: idx, dlAnalysis, prodTypeHint,
                 sourceObsCoreData, relatedDLEntries: {}, positionWP, rowWP, sRegion,
+                labelDLExt, bandpassNameDLExt
             };
         })
         .filter(({url='', serviceDefRef, serDef, error_message}) =>
