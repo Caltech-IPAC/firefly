@@ -513,6 +513,8 @@ export function getProGradeTilePixels(pixel) {
     return [base,base+1,base+2,base+3];
 }
 
+export const getRetroGradeIpix= (ipix, retroCnt=1) => retroCnt ? Math.trunc(ipix/(4**retroCnt)) : ipix;
+
 const tableRunIds= {};
 const shouldAbort= (tbl_id, runId) => runId!==tableRunIds[tbl_id];
 function initRunId(tbl_id) {
@@ -813,8 +815,6 @@ export function getKeysForOrder(orderData,norder) {
 }
 
 
-export const getRetroGradeIpix= (ipix, retroCnt=1) => retroCnt ? Math.trunc(ipix/(4**retroCnt)) : ipix;
-export const getProGradeIpix= (ipix, proCnt=1) => proCnt ? ipix*(4**proCnt) : ipix;
 
 
 function incrementHigherOrders(orderData, progradePixel) {

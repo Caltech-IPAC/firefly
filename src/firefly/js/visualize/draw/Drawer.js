@@ -3,13 +3,13 @@
  */
 
 
-import {get, isFunction, isEmpty, isArray} from 'lodash';
-import Point, {makeScreenPt,makeImagePt,pointEquals} from '../Point.js';
+import {isFunction, isEmpty, isArray} from 'lodash';
+import {makeScreenPt,makeImagePt} from '../Point.js';
 import {dispatchAddTaskCount, dispatchRemoveTaskCount, makeTaskId, getTaskCount} from '../../core/AppDataCntlr.js';
 import BrowserInfo, {Browser} from '../../util/BrowserInfo.js';
 import {Style} from './DrawingDef.js';
 import DrawUtil from './DrawUtil.js';
-import Color, {getRGBA, toRGBAString} from '../../util/Color.js';
+import {getRGBA, toRGBAString} from '../../util/Color.js';
 import CsysConverter, {CCUtil} from '../CsysConverter.js';
 import {POINT_DATA_OBJ} from './PointDataObj.js';
 import {DrawingType} from './DrawObj.js';
@@ -18,48 +18,32 @@ import {isHiPS, isImage} from '../WebPlot';
 import {hasWCSProjection} from '../PlotViewUtil';
 
 
-const ENABLE_COLORMAP= false;
 let drawerCnt=0;
 
 export class Drawer {
 
-
     constructor() {
-        this.drawerID;
-        this.drawingDef= null;
-        this.data;
-        this.highlightData;
+        this.drawingDef= undefined;
         this.selectedIndexes=[];
 
-        this.plot= null;
-        this.primaryCanvas= null;
-        this.selectCanvas= null;
-        this.highlightCanvas= null;
-        this.drawingCanceler= null;
+        this.plot= undefined;
+        this.primaryCanvas= undefined;
+        this.selectCanvas= undefined;
+        this.highlightCanvas= undefined;
+        this.drawingCanceler= undefined;
         this.plotTaskId= makeTaskId('drawer');
         this.isPointData= false;
-        this.decimate= false;
-
-        this.decimatedData= null;
-        this.decimateDim= null;
-        this.lastDecimationPt= null;
-        this.lastDecimationColor= null;
-        //this.highPriorityLayer= false;
         this.drawerId= drawerCnt++; // only used for debugging
-        this.deferredDrawingCompletedCB= null;
+        this.deferredDrawingCompletedCB= undefined;
     }
 
 
     dispose() {
-        this.primaryCanvas= null;
-        this.selectCanvas= null;
-        this.highlightCanvas= null;
-        this.data= null;
-        this.decimatedData= null;
+        this.primaryCanvas= undefined;
+        this.selectCanvas= undefined;
+        this.highlightCanvas= undefined;
+        this.data= undefined;
     }
-
-
-    setEnableDecimationDrawing(d) { this.decimate= d; } // future use maybe
 
     cancelRedraw() {
         if (this.drawingCanceler) {
@@ -127,21 +111,12 @@ export class Drawer {
 
         const selectedUpdated= (selectedIndexes!==this.selectedIndexes) || viewUpdated;
 
-
-        if (data!==this.data || this.plot!==plot) {
-            this.decimatedData= null;
-        }
-
         if (!primaryUpdated && !selectedUpdated  && !forceUpdate) return;
 
         this.plot= plot;
         this.data= data;
         this.selectedIndexes = selectedIndexes;
         this.drawingDef = drawingDef;
-
-
-
-
 
         // ======== DEBUG =============================
         // var changes= [this.primaryCanvas ? '' : 'no canvas'];
@@ -162,10 +137,6 @@ export class Drawer {
         // if (true && primaryUpdated) console.log(`Drawer ${this.drawerId}: redraw- changes: ${changeStr}`);
         // =====================================
 
-
-
-
-
         if (primaryUpdated || forceUpdate) {
             if (zfact!==oldZfact) {
                 this.clear();
@@ -177,10 +148,6 @@ export class Drawer {
         if (selectedUpdated || forceUpdate) {
             this.updateDataSelectLayer();
         }
-
-
-
-
     }
 
 
@@ -280,12 +247,10 @@ export class Drawer {
         let selectedData;
         if (isArray(selectedIndexes)) {
             if (isEmpty(selectedIndexes)) return;
-            selectedData= this.decimateData(this.decimate,
-                selectedIndexes.map( (dataIdx)=> data[dataIdx]), cc,false,null);
+            selectedData= selectedIndexes.map( (dataIdx)=> data[dataIdx]);
         }
         else if (isFunction(selectedIndexes)) {
-            selectedData= this.decimateData(this.decimate,
-                data.filter( (d,idx)=> selectedIndexes(idx)), cc,false,null);
+            selectedData= data.filter( (d,idx)=> selectedIndexes(idx));
         }
         else {
             return;
@@ -317,8 +282,7 @@ export class Drawer {
         if (!canvas) return;
         if (!isEmpty(data)) {
             let params;
-            this.decimatedData= this.decimateData(this.decimate, data, cc,true,this.decimatedData);
-            const drawData= this.decimatedData;
+            const drawData= data;
             if (drawData.length>500) {
                 const offscreenCanvas= initOffScreenCanvas(canvas.width, canvas.height);
                 params= makeDrawingParams(offscreenCanvas, drawingDef,cc,drawData,
@@ -341,50 +305,6 @@ export class Drawer {
             this.removeTask();
         }
     }
-
-
-    //decimateData(decimate, inData, cc, useColormap, oldDecimatedData) {
-    //    if (decimate && inData.length>150) {
-    //        return this.doDecimateData(inData,oldDecimatedData,cc,useColormap);
-    //    }
-    //    else {
-    //        return inData;
-    //    }
-    //}
-
-    /**
-     *
-     * @param decimate
-     * @param inData
-     * @param cc
-     * @param useColormap
-     * @param oldDecimatedData
-     * @return {*}
-     */
-    decimateData(decimate, inData, cc, useColormap, oldDecimatedData) {
-        if (!decimate || inData.length<=150) return inData;
-
-        let retData= inData;
-        const dim = cc.viewDim;
-        const spt= cc.getScreenCoords(makeScreenPt(0,0));
-        const defCol= this.drawingDef.color;
-        if (!oldDecimatedData ||
-            dim.width!==this.decimateDim.width ||
-            dim.height!==this.decimateDim.height ||
-            defCol!==this.lastDecimationColor ||
-            !pointEquals(spt,this.lastDecimationPt))  {
-            retData= doDecimation(inData, cc, useColormap);
-            this.lastDecimationColor= defCol;
-            this.lastDecimationPt=spt;
-            this.decimateDim= dim;
-        }
-        else if (oldDecimatedData) {
-            retData= oldDecimatedData;
-        }
-        return retData;
-    }
-
-
 
     doDrawing(params) {
         if (params.begin) {
@@ -463,15 +383,6 @@ export class Drawer {
 //------------------ private static functions
 //=======================================================================
 
-
-function nextPt(i,fuzzLevel, max) {
-    i= Math.trunc(i);
-    const remainder= i%fuzzLevel;
-    let retval= (remainder===0) ? i : i+(fuzzLevel-remainder);
-    if (retval===max) retval= max-1;
-    return retval;
-}
-
 /**
  *
  * @param canvas
@@ -515,31 +426,14 @@ function initOffScreenCanvas(width, height) {
 }
 
 
-/**
- *
- * @param {{x:number,y:number,type:string}} pt
- * @param {{x:number,y:number,type:string}}mSpPt
- * @param {CysConverter} cc
- * @return {*}
- */
-function getScreenCoords(pt, mSpPt, cc) {
-    if (pt.type===Point.W_PT) {
-        const success= cc.getScreenCoordsOptimize(pt,mSpPt);
-        return success ? mSpPt : null;
-    }
-    else {
-        return cc.getScreenCoords(pt);
-    }
-}
-
-
-
 function makeDrawingDeferred(drawer,params) {
+    // let i=0;
     const id= window.setInterval( () => {
-        if (params.done) {
-            window.clearInterval(id);
-        }
+        if (params.done) window.clearInterval(id);
+        // console.time('drawing ' +i);
         drawer.doDrawing(params);
+        // console.timeEnd('drawing ' +i);
+        // i++;
     },0);
     params.id= id;
     return () => window.clearInterval(id);
@@ -588,21 +482,21 @@ function drawChunkOptimized(drawList, params) {
     const ctx=params.canvas.getContext('2d');
 
     let drawDefForFinalDraw= params.drawingDef;
+    let funcAry;
 
     if (drawList[0].style===Style.DESTINATION_OUTLINE) {
 
-        const newDL= drawList.map( (d) => ({...d,style:Style.STANDARD}));
         DrawUtil.beginPath(ctx,params.drawingDef.color,3);
-        for(const obj of newDL) {
-            drawObj(ctx, params.drawingDef, params.csysConv, obj,params.vpPtM, true);
+        DrawUtil.recordDrawing();
+        for(let i= 0; (i<drawList.length); i++) {
+            drawObj(ctx, params.drawingDef, params.csysConv, {...drawList[i],style:Style.STANDARD}, params.vpPtM, true);
         }
+        funcAry= DrawUtil.endRecordDrawing();
         DrawUtil.stroke(ctx);
 
         ctx.globalCompositeOperation='destination-out';
         DrawUtil.beginPath(ctx,params.drawingDef.color,1);
-        for(const obj of newDL) {
-            drawObj(ctx, params.drawingDef, params.csysConv, obj,params.vpPtM, true);
-        }
+        funcAry.forEach( (f) => f());
         ctx.stroke();
 
         const rgba= getRGBA(params.drawingDef.color);
@@ -611,8 +505,8 @@ function drawChunkOptimized(drawList, params) {
     }
 
     DrawUtil.beginPath(ctx,params.drawingDef.color,params.drawingDef.lineWidth);
-    for(const obj of drawList) {
-        drawObj(ctx, drawDefForFinalDraw, params.csysConv, obj,params.vpPtM, true);
+    for(let i= 0; (i<drawList.length); i++) {
+        drawObj(ctx, drawDefForFinalDraw, params.csysConv, drawList[i],params.vpPtM, true);
     }
     DrawUtil.stroke(ctx);
     ctx.globalCompositeOperation='source-over';
@@ -638,11 +532,9 @@ function getNextChuck(params) {
     let objColor;
     const {drawingDef}= params;
     let i;
-
-
     let obj= params.next.value;
     const color= drawingDef.color;
-    const lineWidth=  get(obj,'lineWidth',false) || drawingDef.lineWidth || 1;
+    const lineWidth=  obj?.lineWidth || drawingDef.lineWidth || 1;
 
     for(i= 0; (!params.next.done && i<params.maxChunk ); ) {
         obj= params.next.value;
@@ -652,7 +544,7 @@ function getNextChuck(params) {
             if (optimize) {
                 objLineWidth= obj.lineWidth || lineWidth;
                 objColor= obj.color || color;
-                optimize= (DrawOp.usePathOptimization(obj,drawingDef) &&
+                optimize= (DrawOp.usePathOptimization(obj,drawingDef) &&  //eslint-disable-line
                     lineWidth===objLineWidth &&
                     color===objColor);
             }
@@ -662,19 +554,14 @@ function getNextChuck(params) {
     return {drawList,optimize};
 }
 
-
-
-
 function getMaxChunk(drawData,isPointData) {
-    let maxChunk= 1;
-    if (!drawData.length) return maxChunk;
+    if (!drawData?.length) return 1;
     if (isPointData) {
-        maxChunk= BrowserInfo.isBrowser(Browser.SAFARI) || BrowserInfo.isBrowser(Browser.CHROME) ? 2000 : 500;
+        return BrowserInfo.isBrowser(Browser.SAFARI) || BrowserInfo.isBrowser(Browser.CHROME) ? 2000 : 500;
     }
     else {
-        maxChunk= BrowserInfo.isBrowser(Browser.SAFARI) || BrowserInfo.isBrowser(Browser.CHROME) ? 1000 : 200;
+        return BrowserInfo.isBrowser(Browser.SAFARI) || BrowserInfo.isBrowser(Browser.CHROME) ? 2000 : 500;
     }
-    return maxChunk;
 }
 
 
@@ -685,123 +572,3 @@ function updateCanvasSize(w,h,...cAry) {
         if (c.height!==h) c.height= h;
     });
 }
-
-function makeColorMap(mapSize,color) {
-    return Color.makeSimpleColorMap(color,mapSize,true);
-}
-
-
-function setupColorMap(data, maxEntry) {
-    const colorMap= makeColorMap(maxEntry);
-    if (colorMap)  {
-        let cnt;
-        let obj= null;
-        let idx;
-        if (maxEntry>colorMap.length) {
-            const maxCnt = maxEntry+1; // to include draw obj with cnt==maxEntry into the last color band
-            for(obj of data) {
-                cnt= obj.representCnt || 1;
-                idx = cnt*colorMap.length/maxCnt;
-                obj.color=colorMap[idx];
-            }
-        }  else {
-            for(obj of data) {
-                cnt= obj.representCnt || 1;
-                //if (cnt>colorMap.length) cnt=colorMap.length;
-                obj.color=colorMap[cnt-1];
-            }
-        }
-    }
-}
-
-function doDecimation(inData, cc, useColormap) {
-    let i,j;
-    const dim = cc.viewDim;
-
-    const supportCmap= useColormap && ENABLE_COLORMAP;
-
-    //var drawArea= dim.width*dim.height;
-    //var percentCov= inData.length/drawArea;
-
-    const fuzzLevel= 5;
-    //var start = Date.now();
-
-    const {width,height}= dim;
-
-    const decimateObs= new Array(width);
-    for(i=0; (i<decimateObs.length);i++) decimateObs[i]= new Array(height);
-
-    const seedPt= makeScreenPt(0,0);
-    let sPt;
-    let pt;
-    let maxEntry= -1;
-    let entryCnt;
-
-//        GwtUtil.getClientLogger().log(Level.INFO,"doDecimation: " + (enterCnt++) + ",data.size= "+ _data.size() +
-//                ",drawID="+drawerID+
-//                ",data="+Integer.toHexString(_data.hashCode()));
-
-    const first200= [];
-    // let decimatedAddCnt= 0;
-    let totalInViewPortCnt= 0;
-
-    for(const obj of inData) {
-        if (obj) {
-            pt= DrawOp.getCenterPt(obj);
-            if (pt.type===Point.W_PT) {
-                sPt= cc.pointInPlotRoughGuess(pt) ? getScreenCoords(pt,seedPt,cc) : null;
-            }
-            else {
-                sPt= getScreenCoords(pt,seedPt,cc);
-            }
-
-        }
-        else {
-            sPt= null;
-        }
-        if (sPt) {
-            i= nextPt(sPt.x,fuzzLevel,width);
-            j= nextPt(sPt.y, fuzzLevel,height);
-            if (i>=0 && j>=0 && i<width && j<height) {
-                if (!decimateObs[i][j]) {
-                    decimateObs[i][j]= supportCmap ? Object.assign({},obj) : obj;
-                    if (supportCmap) {
-                        decimateObs[i][j].representCnt= obj.representCnt;
-                        entryCnt= decimateObs[i][j].representCnt;
-                        if (entryCnt>maxEntry) maxEntry= entryCnt;
-                    }
-                    // decimatedAddCnt++;
-                }
-                else {
-                    if (supportCmap) {
-                        decimateObs[i][j].representCnt+=(obj.representCnt||1);
-                        entryCnt= decimateObs[i][j].representCnt;
-                        if (entryCnt>maxEntry) maxEntry= entryCnt;
-                    }
-                }
-                if (totalInViewPortCnt<200) first200.push(obj);
-                totalInViewPortCnt++;
-            }
-        }
-    }
-
-    let retData;
-    if (totalInViewPortCnt<200) {
-        retData= first200;
-    }
-    else {
-        retData= [];
-        for(i= 0; (i<decimateObs.length); i++) {
-            for(j= 0; (j<decimateObs[i].length); j++) {
-                if (decimateObs[i][j]) retData.push(decimateObs[i][j]);
-            }
-        }
-    }
-
-
-
-    if (supportCmap) setupColorMap(retData,maxEntry);
-
-    return retData;
-}
-

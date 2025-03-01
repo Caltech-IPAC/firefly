@@ -13,8 +13,23 @@ export default {getColor, beginPath, stroke, fill, strokeRec, drawLine, drawText
                 drawEmpCross, drawDiamond, drawDot, drawCircle, drawEllipse, drawBoxcircle,
                 drawArrow, drawRotate, clear,clearCanvas, fillRec, getDrawingSize, polygonPath,
                 getSymbolSize, getSymbolSizeBasedOn, beginFillPath, endFillPath, fillPath,
-                drawArrowOnLine
-                };
+                drawArrowOnLine, recordDrawing, endRecordDrawing };
+
+let recording;
+
+export function recordDrawing() {
+    recording=[];
+}
+
+export function endRecordDrawing() {
+    const r= recording;
+    recording=undefined;
+    return r;
+}
+
+function addRecord(f) {
+    recording?.push(f);
+}
 
 function drawHandledLine(ctx, color, sx, sy, ex, ey, onlyAddToPath= false) {
     let slope= NaN;
@@ -60,6 +75,8 @@ function drawHandledLine(ctx, color, sx, sy, ex, ey, onlyAddToPath= false) {
 
     }
     if (!onlyAddToPath) stroke(ctx);
+
+    recording && addRecord(() => drawHandledLine(ctx, color, sx, sy, ex, ey, onlyAddToPath));
 }
 
 function drawInnerRecWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2) {
@@ -86,6 +103,7 @@ function drawInnerRecWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2) 
     drawHandledLine(ctx, color, x3,y3,x0,y0,true);
 
     stroke(ctx);
+    recording && addRecord(() => drawInnerRecWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2));
 }
 
 function drawCircleWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2, outerThickness = 0) {
@@ -103,6 +121,7 @@ function drawCircleWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2, ou
 
     drawCircle(ctx, x0, y0, color,   radius,lineWidth);
     // drawEllipse(ctx, x0, y0, color, lineWidth, r1, r2, 0);
+    recording && addRecord(() => drawCircleWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2, outerThickness) );
 }
 
 function drawEclipseWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2, outerThickness = 0) {
@@ -118,6 +137,7 @@ function drawEclipseWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2, o
     r2 = Math.max(r2 - outerThickness, 1);
 
     drawEllipse(ctx, x0, y0, color, lineWidth, r1, r2, 0);
+    recording && addRecord(() => drawEclipseWithHandles(ctx, color, lineWidth, inX1, inY1, inX2, inY2, outerThickness) );
 }
 
 
@@ -171,6 +191,10 @@ function drawText(drawTextAry,text, x,y,color,
     if (padDing) style.padding = padDing;
 
     drawTextAry.push({text,style});
+    recording && addRecord(() =>
+        drawText(drawTextAry,text, x,y,color, renderOptions, fontFamily, size, fontWeight, fontStyle,
+                          backGroundColor, padDing,rotationAngle)
+    );
 }
 
 /**
@@ -218,6 +242,9 @@ function drawTextCanvas(ctx, text, x,y,color= 'red', renderOptions= {}, location
         ctx.fillText(text,x,y);
     }
     ctx.restore();
+    recording && addRecord(() =>
+        drawTextCanvas(ctx, text, x,y,color, renderOptions, locationOptions, fontOptions)
+    );
 }
 
 /**
@@ -257,17 +284,20 @@ function beginPath(ctx,color,lineWidth,renderOptions) {
     ctx.strokeStyle=color;
     if (renderOptions) addStyle(ctx,renderOptions);
     ctx.beginPath();
+    recording && addRecord(() => beginPath(ctx,color,lineWidth,renderOptions) );
 }
 
 
 function stroke(ctx) {
     ctx.stroke();
     ctx.restore();
+    recording && addRecord(() => stroke(ctx) );
 }
 
 function fill(ctx,fillPath) {
     ctx.fill(fillPath);
     ctx.restore();
+    recording && addRecord(() => fill(ctx,fillPath) );
 }
 
 /**
@@ -283,6 +313,7 @@ function beginFillPath(ctx, renderOptions, color ='', strokeColor='') {
     if (strokeColor) ctx.strokeStyle = strokeColor;
     if (renderOptions) addStyle(ctx,renderOptions);
     ctx.beginPath();
+    recording && addRecord(() => beginFillPath(ctx, renderOptions, color, strokeColor) );
 }
 
 /**
@@ -296,6 +327,7 @@ function endFillPath(ctx, close = true, bStroke = true) {
     ctx.fill();
     if (bStroke) ctx.stroke();
     ctx.restore();
+    recording && addRecord(() => endFillPath(ctx, close, bStroke) );
 }
 
 function addStyle(ctx,renderOptions) {
@@ -324,6 +356,7 @@ function addStyle(ctx,renderOptions) {
     if (!isNil(rotAngle)) {
         ctx.rotate(rotAngle);
     }
+    recording && addRecord(() => addStyle(ctx,renderOptions) );
 }
 
 /**
@@ -344,6 +377,8 @@ function strokeRec(ctx, color, lineWidth, x, y, width, height, renderOptions) {
     ctx.strokeStyle=color;
     ctx.strokeRect(x,y,width,height);
     ctx.restore();
+
+    recording && addRecord(() => strokeRec(ctx, color, lineWidth, x, y, width, height, renderOptions) );
 }
 
 /**
@@ -367,6 +402,7 @@ function drawLine(ctx,color, lineWidth, sx, sy, ex, ey,renderOptions) {
     ctx.lineTo(ex, ey);
     ctx.stroke();
     ctx.restore();
+    recording && addRecord(() => drawLine(ctx,color, lineWidth, sx, sy, ex, ey,renderOptions) );
 }
 
 function drawPath(ctx, color, lineWidth, pts, close, renderOptions) {
@@ -382,6 +418,7 @@ function drawPath(ctx, color, lineWidth, pts, close, renderOptions) {
     if (close) ctx.closePath();
     ctx.stroke();
     ctx.restore();
+    recording && addRecord(() => drawPath(ctx, color, lineWidth, pts, close, renderOptions) );
 }
 
 function polygonPath(ctx, pts, close, fillColor, strokeColor) {
@@ -393,6 +430,7 @@ function polygonPath(ctx, pts, close, fillColor, strokeColor) {
     });
     if (fillColor) ctx.fillStyle = fillColor;
     if (strokeColor) ctx.strokeStyle = strokeColor;
+    recording && addRecord(() => polygonPath(ctx, pts, close, fillColor, strokeColor) );
 }
 
 function fillPath(ctx, color, pts, close, renderOptions, strokeColor='') {
@@ -412,6 +450,7 @@ function fillPath(ctx, color, pts, close, renderOptions, strokeColor='') {
     if (strokeColor) ctx.stroke();
 
     ctx.restore();
+    recording && addRecord(() => fillPath(ctx, color, pts, close, renderOptions, strokeColor) );
 }
 
 function rotateAroundScreenPt(worldPt, plot, angle, centerScreenPt) {
@@ -426,7 +465,9 @@ function rotateAroundScreenPt(worldPt, plot, angle, centerScreenPt) {
     const temp_y1 = x1 * Math.sin(angle) + y1 * Math.cos(angle);
 
     // TRANSLATE BACK
-    return plot.getWorldCoords(makeScreenPt(temp_x1 + xc, temp_y1 + yc));
+    const retval= plot.getWorldCoords(makeScreenPt(temp_x1 + xc, temp_y1 + yc));
+    recording && addRecord(() => rotateAroundScreenPt(worldPt, plot, angle, centerScreenPt) );
+    return retval;
 }
 
 
@@ -439,6 +480,7 @@ function drawX(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath) {
     ctx.moveTo(x-size,y+size);
     ctx.lineTo(x+size,y-size);
     if (!onlyAddToPath) stroke(ctx);
+    recording && addRecord(() => drawX(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath) );
 }
 
 function drawSquareX(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath) {
@@ -451,6 +493,7 @@ function drawSquareX(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToP
 function drawSquare(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath) {
     if (onlyAddToPath) {
         ctx.rect(x - size, y - size, 2 * size, 2 * size);
+        recording && addRecord(() => drawSquare(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath) );
     }
     else {
         strokeRec(ctx,color,lineWidth,x-size,y-size, 2*size, 2*size,renderOptions);
@@ -473,6 +516,7 @@ function drawCross(ctx, x, y, color, size,lineWidth,renderOptions, onlyAddToPath
     ctx.moveTo(x,y-size);
     ctx.lineTo(x,y+size);
     if (!onlyAddToPath) stroke(ctx);
+    recording && addRecord(() => drawCross(ctx, x, y, color, size,lineWidth,renderOptions, onlyAddToPath) );
 }
 
 
@@ -494,6 +538,7 @@ function drawPointMarker(ctx, x, y, color, size,lineWidth,renderOptions, onlyAdd
 
     if (!onlyAddToPath) stroke(ctx);
     drawCircle(ctx, x, y, color, Math.trunc(size*.8), lineWidth, renderOptions, onlyAddToPath);
+    recording && addRecord(() => drawPointMarker(ctx, x, y, color, size,lineWidth,renderOptions, onlyAddToPath) );
 }
 
 
@@ -522,6 +567,7 @@ function drawDiamond(ctx, x, y, color, size,lineWidth,renderOptions, onlyAddToPa
     ctx.moveTo(x-size,y);
     ctx.lineTo(x,y-size);
     if (!onlyAddToPath) stroke(ctx);
+    recording && addRecord(() => drawDiamond(ctx, x, y, color, size,lineWidth,renderOptions, onlyAddToPath) );
 }
 
 
@@ -537,6 +583,7 @@ function drawDot(ctx, x, y, color, size, lineWidth,renderOptions, onlyAddToPath)
     }
 
     if (!onlyAddToPath) stroke(ctx);
+    recording && addRecord(() => drawDot(ctx, x, y, color, size, lineWidth,renderOptions, onlyAddToPath) );
 }
 
 
@@ -554,6 +601,7 @@ function drawArrow(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPat
     ctx.moveTo(x, y);
     ctx.lineTo(x-size*1, y);
     if (!onlyAddToPath) stroke(ctx);
+    recording && addRecord(() => drawArrow(ctx, x, y, color, size,lineWidth, renderOptions, onlyAddToPath) );
 }
 
 /**
@@ -591,6 +639,7 @@ function drawRotate(ctx, x, y, color, size, lineWidth,renderOptions, onlyAddToPa
     //ctx.moveTo(yc-2*r, 0);
     //ctx.rect(0, yc-2*r, size, size);
     if (!onlyAddToPath) stroke(ctx);
+    recording && addRecord(() => drawRotate(ctx, x, y, color, size, lineWidth,renderOptions, onlyAddToPath) );
 }
 
 /**
@@ -611,6 +660,9 @@ function drawEllipse(ctx, x, y, color, lineWidth, r1, r2, angle, renderOptions, 
     if (!onlyAddToPath) beginPath(ctx, color, lineWidth, renderOptions);
     ctx.ellipse(x, y, r1, r2, angle, 0, 2*Math.PI);
     if (!onlyAddToPath) stroke(ctx);
+    recording && addRecord(() =>
+        drawEllipse(ctx, x, y, color, lineWidth, r1, r2, angle, renderOptions, onlyAddToPath )
+    );
 }
 
 function drawSymbol(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
@@ -659,6 +711,7 @@ function drawSymbol(ctx, x, y, drawParams, renderOptions, onlyAddToPath) {
         default :
             break;
     }
+    recording && addRecord(() => drawSymbol(ctx, x, y, drawParams, renderOptions, onlyAddToPath) );
 }
 
 function getDrawingSize(size, symbol) {
@@ -758,6 +811,7 @@ function drawCircle(ctx, x, y, color,  size,lineWidth, renderOptions= null, only
     }
     ctx.arc(x, y, radius, 0, 2 * Math.PI);
     if (!onlyAddToPath) stroke(ctx);
+    recording && addRecord(() => drawCircle(ctx, x, y, color,  size,lineWidth, renderOptions, onlyAddToPath) );
 }
 
 function fillRec(ctx, color, x, y, width, height, renderOptions, strokeColor) {
@@ -771,6 +825,7 @@ function fillRec(ctx, color, x, y, width, height, renderOptions, strokeColor) {
         ctx.strokeRect(x, y, width, height);
     }
     ctx.restore();
+    recording && addRecord(() => fillRec(ctx, color, x, y, width, height, renderOptions, strokeColor) );
 }
 
 
@@ -778,6 +833,7 @@ function fillRec(ctx, color, x, y, width, height, renderOptions, strokeColor) {
 function clear(ctx,width,height) {
     if (!ctx) return;
     ctx.clearRect(0,0,width,height);
+    recording && addRecord(() => clear(ctx,width,height) );
 }
 
 
@@ -809,4 +865,5 @@ function drawArrowOnLine(ctx, fromPt, toPt, color) {
     pts.push(makeDevicePt(toPt.x - aD * Math.cos(angle + aAngle), toPt.y - aD * Math.sin(angle + aAngle)));
 
     fillPath(ctx, color, pts, true);
+    recording && addRecord(() => drawArrowOnLine(ctx, fromPt, toPt, color) );
 }
