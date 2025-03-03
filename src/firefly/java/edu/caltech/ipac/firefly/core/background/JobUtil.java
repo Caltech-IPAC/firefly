@@ -23,7 +23,7 @@ import static edu.caltech.ipac.util.StringUtils.*;
 
 public class JobUtil {
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
-    private static final long yearMs = 365*24*60*60*1000L;  // one year in milliseconds
+    private static final long yearMs = 365*24*60*60*1000L;  // one year in milliseconds; 31_536_000_000
 
     public static void logJobInfo(JobInfo info) {
         if (info == null) return;
@@ -47,10 +47,16 @@ public class JobUtil {
         return Util.Try.it(() -> InetAddress.getLocalHost().getHostName()).getOrElse("SYS").split("\\.")[0];
     }
 
+    /**
+     * The directory name is derived from the 8th to the 11th number of System.currentTimeMillis. (~ 2.78 hours each increment)
+     * Since the job ID is limited to yearMs(11 digits), we'll take the first 4 digits.
+     * @param jobId the job ID
+     * @return the directory name for the given job ID
+     */
     public static String jobIdToDir(String jobId) {
         if (isEmpty(jobId)) return jobId;
         String[] parts = jobId.split("_");
-        return isEmpty(parts[1]) ? jobId : parts[0] + "_" + parts[1].substring(0, 4);       // keeping 7 digits in ms(2.78hrs) within the same directory;
+        return isEmpty(parts[1]) ? jobId : parts[0] + "_" + parts[1].substring(0, 4);
     }
 
     public static String toJson(JobInfo info) {

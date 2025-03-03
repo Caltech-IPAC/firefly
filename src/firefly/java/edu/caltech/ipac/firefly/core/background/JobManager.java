@@ -345,7 +345,7 @@ public class JobManager {
         UserInfo uInfo = ServerContext.getRequestOwner().getUserInfo();
         email = isEmpty(email) && !uInfo.isGuestUser() ? uInfo.getEmail() : email;
         String firstName = ifNotNull(uInfo.getFirstName()).orElse("").get();
-        String lastName = ifNotNull(uInfo.getLastName()).orElse("Guest").get();
+        String lastName = ifNotNull(uInfo.getLastName()).orElse("").get();
         UserInfo retval = new UserInfo(uInfo.getLoginName(), null);
         retval.setEmail(email);
         retval.setLastName(lastName);

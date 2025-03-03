@@ -42,7 +42,7 @@ public class DownloadScript {
     private static int count = 0;
 
 
-    static final String scriptHeader = """
+    static final String SCRIPT_HEADER = """
         #! /bin/sh
         cat <<EOF
         ************************************************
@@ -56,6 +56,11 @@ public class DownloadScript {
         EOF
         """.stripIndent();
 
+    static final String UNZIP_CMD = """
+            if command -v unzip &> /dev/null; then
+                unzip -qq -d %s %s
+            fi
+            """.stripIndent();
 
     public static void composeDownloadScript(File outFile,
                                              String dataSource,
@@ -243,7 +248,7 @@ public class DownloadScript {
             if (is(URLsOnly, attribs)) {      // most tools do not natively support comments; maybe we should exclude them.
                 writer.printf("# Date: %s --- Download %s from %s \n",new Date(), dataDesc, FROM_ORG);
             } else {
-                writer.printf(scriptHeader, new Date(), dataDesc, FROM_ORG);
+                writer.printf(SCRIPT_HEADER, new Date(), dataDesc, FROM_ORG);
             }
 
             boolean doUnzip = is(Unzip, attribs);
@@ -253,7 +258,7 @@ public class DownloadScript {
                 writer.println(cmd.apply(urlInfo));
                 if (doUnzip && urlInfo.getName().endsWith(".zip")) {
                     String dest = isEmpty(urlInfo.getPath()) ? "." : urlInfo.getPath();
-                    writer.println("unzip -qq -d %s %s".formatted(dest, urlInfo.getFilePath()));
+                    writer.println(UNZIP_CMD.formatted(dest, urlInfo.getFilePath()));
                 }
                 writer.println();
             }

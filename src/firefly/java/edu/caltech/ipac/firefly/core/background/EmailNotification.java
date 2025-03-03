@@ -64,10 +64,27 @@ public class EmailNotification implements JobCompletedHandler {
         If you need help, contact us at %s.
         """.stripIndent();
 
+    String zipSuccess = """
+        Dear %s,
+        
+        Your job has successfully completed. You can now download the packaged data using any of the scripts or links below:
+        
+        Curl Script: %s
+        Wget Script: %s
+        Direct URLs: %s
+        
+        The curl and wget scripts provide two ways to automate the download process -- simply run either script in your terminal to download all of the zip files. The third link here provides a list of URLs that point to the packaged zip files. These scripts and links should work for 72 hours. To uncompress the files you have downloaded, doubleclick on them, or type "unzip foo.zip". To unzip multiple files at once, type "unzip '*.zip'" (the single quotes are important), or "unzip *.zip" -- you have to escape the wildcard. Some Windows users have reported having difficulty unzipping files; we recommend using 7-zip (https://www.7-zip.org/download.html).
+        
+        If you need help, contact us at %s.
+        """.stripIndent();
+
+
     public void processEvent(JobManager.JobCompletedEvent ev, JobInfo jobInfo) {
         // send email notification
         String email = jobInfo.getAuxData().getUserInfo().getEmail();
         String name = jobInfo.getAuxData().getUserInfo().getName();
+        name = isEmpty(name) ? "Astronomer" : name;
+        Job.Type type = jobInfo.getAuxData().type;
 
         if (isEmpty(email)) {
             Logger.getLogger().info("No email address found for job: %s;  skip Email Notification".formatted(jobInfo.getJobId()));
@@ -77,15 +94,16 @@ public class EmailNotification implements JobCompletedHandler {
             String msg = failure.formatted(name, jobInfo.getJobId(), jobInfo.getError().msg(), contact);
             Try.it(() -> EMailUtil.sendMessage(new String[]{email}, null, null, subject, msg))
                     .getOrElse(e -> Logger.getLogger().error(e));
-        }else if (jobInfo.getAuxData().type == Job.Type.SEARCH) {
+        } else if (type == Job.Type.SEARCH) {
             String msg = searchCompleted.formatted(name, ServerContext.getRequestOwner().getBaseUrl(), contact);
             Try.it(() -> EMailUtil.sendMessage(new String[]{email}, null, null, subject, msg))
                     .getOrElse(e -> Logger.getLogger().error(e));
         } else {
+            String successTpl = (type == Job.Type.PACKAGE) ? zipSuccess : success;
             String curlScript = getDownloadURL(makeScript(jobInfo, Curl), null);
             String wgetScript = getDownloadURL(makeScript(jobInfo, Wget), null);
             String directUrls = getDownloadURL(makeScript(jobInfo, ScriptAttributes.URLsOnly), null);
-            String msg = success.formatted(name, curlScript, wgetScript, directUrls, contact);
+            String msg = successTpl.formatted(name, curlScript, wgetScript, directUrls, contact);
             Try.it(() -> EMailUtil.sendMessage(new String[]{email}, null, null, subject, msg))
                         .getOrElse(e -> Logger.getLogger().error(e));
         }
