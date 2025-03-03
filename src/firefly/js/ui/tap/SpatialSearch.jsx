@@ -45,7 +45,7 @@ export const RadiusSize = 'coneSize';
 export const SpatialMethod = 'spatialMethod';
 export const PolygonCorners = 'polygoncoords';
 const cornerCalcType= 'imageCornerCalc';
-const SpatialRegOp= 'spatialRegionOperation';
+export const SpatialRegOp= 'spatialRegionOperation';
 export const SINGLE= 'single';
 export const MULTI= 'multi';
 
