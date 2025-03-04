@@ -18,6 +18,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import static java.net.HttpURLConnection.HTTP_CLIENT_TIMEOUT;
@@ -28,6 +30,8 @@ import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
  * @author Trey Roby
  */
 public class HiPSRetrieve {
+
+    private static final List<String> extList= Arrays.asList("jpg", "jpeg", "png", "webp");
 
     public static FileInfo retrieveHiPSData(String urlStr, String pathExt, boolean alwaysUseCached) {
         try {
@@ -83,8 +87,8 @@ public class HiPSRetrieve {
 
     private static boolean imageRequest(File f) {
         if (f==null) return false;
-        String fLowStr= f.getAbsolutePath().toLowerCase();
-        return fLowStr.endsWith("jpg") || fLowStr.endsWith("jpeg") || fLowStr.endsWith("png");
+        String lowerF= f.getAbsolutePath().toLowerCase();
+        return extList.stream().anyMatch(lowerF::contains);
     }
 
     private static boolean isValid(File f) {

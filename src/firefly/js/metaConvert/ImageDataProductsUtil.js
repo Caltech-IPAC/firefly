@@ -325,7 +325,6 @@ function replotImageDataProducts(activePlotId, makeActive, imageViewerId, tbl_id
     if (makeActive && workingActivePlotId) {
         onImagePlotComplete(workingActivePlotId,
             (pv) => setTimeout(() => {
-                console.log(`change plot view ${workingActivePlotId}`);
                 pv && dispatchChangeActivePlotView(workingActivePlotId);
             }, 1000));
     }
