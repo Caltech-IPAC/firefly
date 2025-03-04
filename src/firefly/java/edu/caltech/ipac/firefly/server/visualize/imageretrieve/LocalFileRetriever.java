@@ -8,7 +8,6 @@
 package edu.caltech.ipac.firefly.server.visualize.imageretrieve;
 
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;

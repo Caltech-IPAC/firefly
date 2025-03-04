@@ -11,7 +11,7 @@ import java.util.Map;
  * @author tatianag
  * @version $Id: UserInfo.java,v 1.15 2012/07/16 23:30:10 loi Exp $
  */
-public class UserInfo implements Serializable, Cloneable {
+public class UserInfo implements Serializable {
 
     public static final String GUEST = "Guest";
 
@@ -29,6 +29,7 @@ public class UserInfo implements Serializable, Cloneable {
     private int userId = -1;
     private String loginName;
     private String pass;
+    private String userKey;
     private HashMap<String, String> preferences = new HashMap<String,String>(3);
     private RoleList roles;
 
@@ -54,6 +55,9 @@ public class UserInfo implements Serializable, Cloneable {
 
     public String getPassword() { return pass; }
     public void setPassword(String password) { this.pass = password;}
+
+    public void setUserKey(String userKey) { this.userKey = userKey; }
+    public String getUserKey() { return userKey; }
 
     public String getName() { return getFirstName()+" "+getLastName(); }
 
@@ -186,17 +190,5 @@ public class UserInfo implements Serializable, Cloneable {
         preferences = preferences == null ? "" : "Preferences: \n" + preferences;
         return userInfo + preferences;
     }
-
-    /*
-     * Clone with the same reference of preferences
-     */
-    public UserInfo clone() {
-        UserInfo clone = new UserInfo(loginName, pass);
-        clone.preferences = preferences == null ? null : (HashMap<String, String>) preferences.clone();
-        clone.roles = roles == null ? null : (RoleList) roles.clone();
-        clone.props = props == null ? null : (HashMap<String, String>) props.clone();
-        return clone;
-    }
-
 }
 

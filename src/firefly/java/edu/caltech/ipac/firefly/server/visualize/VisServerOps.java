@@ -6,7 +6,6 @@ package edu.caltech.ipac.firefly.server.visualize;
 import edu.caltech.ipac.firefly.data.BandInfo;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
-import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.multipart.UploadFileInfo;
 import edu.caltech.ipac.firefly.server.visualize.DirectStretchUtils.CompressType;
