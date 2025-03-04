@@ -214,7 +214,7 @@ public class AnyFileDownload extends BaseHttpServlet {
         String retFileStr= (local!=null) ? local : f.getName();
         if (retFileStr.equals(USE_SERVER_NAME)) retFileStr= f.getName();
         if (!isEmpty(retFileStr)) {
-            res.addHeader("Content-Disposition", "attachment; filename=\"%s\"".formatted(retFileStr));
+            res.addHeader("Content-Disposition", "attachment; filename=" + retFileStr);
         }
 
 
