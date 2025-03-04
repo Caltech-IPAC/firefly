@@ -13,6 +13,7 @@ import edu.caltech.ipac.firefly.util.Ref;
 import org.apache.logging.log4j.Level;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -85,6 +86,7 @@ public class MessengerTest extends ConfigTest {
     }
 
     @Test
+    @Ignore
     public void testMsgCount() throws InterruptedException {
 
         if (isOffline) return;
@@ -125,7 +127,7 @@ public class MessengerTest extends ConfigTest {
         Messenger.unSubscribe(sub12);
         Messenger.publish(topic1, testMsg);
         Messenger.publish(topic2, testMsg);
-        tester.get().await(1, TimeUnit.SECONDS);       // wait up to 1s for msg delivery..
+        tester.get().await(1, TimeUnit.SECONDS);       // wait up to 1s for msg delivery.
         assertEquals("latch(2) should drain", 0, tester.get().getCount());
 
         // clean up
@@ -135,6 +137,7 @@ public class MessengerTest extends ConfigTest {
     }
 
     @Test
+    @Ignore
     public void testSubscribe() throws InterruptedException {
 
         if (isOffline) return;

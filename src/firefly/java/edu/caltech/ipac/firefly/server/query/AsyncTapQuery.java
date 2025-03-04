@@ -62,7 +62,7 @@ public class AsyncTapQuery extends UwsJobProcessor {
             // use table's title as RUNID.  RUNID is limited to 64 chars.  If more than 64, truncate then add '...' to indicate it was truncated.
             final String runId = title.length() > 64 ? title.substring(0, 61) + "..." : title;
             inputs.setParam(RUNID, runId);
-            ifNotNull(getJob()).then((j) -> updateJobInfo(j.getJobId(), ji -> ji.setLocalRunId(runId)));    // save the value locally for display
+            ifNotNull(getJob()).then((j) -> updateJobInfo(j.getJobId(), ji -> ji.getAuxData().setLocalRunId(runId)));    // save the value locally for display
         }
 
         inputs.setParam(LANG, request.getParam(LANG, "ADQL"));

@@ -30,8 +30,10 @@ import java.util.*;
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.JobManager.getJobInfo;
 import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
+import static edu.caltech.ipac.firefly.core.background.JobUtil.getJobWorkDir;
 import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.*;
 import static edu.caltech.ipac.firefly.server.packagedata.PackagingWorker.makeDownloadUrl;
+import static edu.caltech.ipac.firefly.server.servlets.AnyFileDownload.getDownloadURL;
 import static edu.caltech.ipac.firefly.server.ws.WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -114,7 +116,7 @@ public final class DownloadScriptWorker implements Job.Worker {
                         urlList.add(new URL(url));
                     }
 
-                    File outFile = File.createTempFile("download-results", ".sh", ServerContext.getStageWorkDir());
+                    File outFile = File.createTempFile("download-results", ".sh", getJobWorkDir(getJob().getJobId()));
 
                     //retrieve attributes based on scriptType
                     List<ScriptAttributes> attribute = scriptTypeMap.getOrDefault(scriptType.toLowerCase(), text);
@@ -122,7 +124,7 @@ public final class DownloadScriptWorker implements Job.Worker {
 
                     if (outFile.exists()) {
                         String fileExtension = scriptTypeToExtension.getOrDefault(scriptType.toLowerCase(), ".txt");
-                        getJob().addResult(new JobInfo.Result(makeDownloadUrl(outFile, suggestedName + fileExtension), null, MediaType.PLAIN_TEXT_UTF_8.toString(), outFile.length() + ""));
+                        getJob().addResult(new JobInfo.Result(getDownloadURL(outFile, suggestedName + fileExtension), MediaType.PLAIN_TEXT_UTF_8.toString(), outFile.length() + ""));
 
                         // handle 'save to Workspace' option:  pushes downloaded script (.sh or .txt) to workspace
                         if (!isEmpty(wsDestPath)) {
@@ -151,9 +153,9 @@ public final class DownloadScriptWorker implements Job.Worker {
             // JobInfo completion update
             String summary = String.format("%,d files were processed.", totalFiles);
             if (hasErrors) summary += "\nPlease, note:  There were error(s) while processing your request.";
-            ji.setProgress(100);
-            ji.setProgressDesc(summary);
-            ji.setSummary(summary);
+            ji.getAuxData().setProgress(100);
+            ji.getAuxData().setProgressDesc(summary);
+            ji.getAuxData().setSummary(summary);
         });
         getJob().setPhase(JobInfo.Phase.COMPLETED);
 

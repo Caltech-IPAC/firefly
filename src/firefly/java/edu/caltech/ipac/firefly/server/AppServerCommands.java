@@ -3,10 +3,14 @@
  */
 package edu.caltech.ipac.firefly.server;
 
+import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.data.Alert;
+import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.messaging.JsonHelper;
+import edu.caltech.ipac.firefly.server.events.FluxAction;
+import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
@@ -19,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.getDouble;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
@@ -38,6 +43,15 @@ public class AppServerCommands {
             UserInfo userInfo = ServerContext.getRequestOwner().getUserInfo();
             LOG.info("Init "+spaName);
             LOG.debug("User info for this client: " + userInfo);
+
+            // setup initial email notification
+            JobManager.BackGroundInfo bgInfo = JobManager.getBackgroundInfo();
+            String email = ifNotNull(ServerContext.getRequestOwner().getUserInfo()).get(v -> v.isGuestUser() ? bgInfo.email() : v.getEmail());
+            FluxAction action = new FluxAction("background.bgSetInfo");
+            action.setValue(email, "email");
+            action.setValue(bgInfo.sendNotif(), "sendNotif");
+            ServerEventManager.fireAction(action, ServerEvent.Scope.SELF);
+
             return "true";
         }
     }

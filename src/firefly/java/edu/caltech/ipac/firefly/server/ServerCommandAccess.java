@@ -70,7 +70,7 @@ public class ServerCommandAccess {
         _cmdMap.put(ServerParams.ADD_JOB,                new SearchServerCommands.AddBgJob());
         _cmdMap.put(ServerParams.REMOVE_JOB,             new SearchServerCommands.RemoveBgJob());
         _cmdMap.put(ServerParams.CANCEL,                 new SearchServerCommands.Cancel());
-        _cmdMap.put(ServerParams.SET_EMAIL,              new SearchServerCommands.SetEmail());
+        _cmdMap.put(ServerParams.SET_BG_INFO,            new SearchServerCommands.SetBgInfo());
         _cmdMap.put(ServerParams.RESEND_EMAIL,           new SearchServerCommands.ResendEmail());
         _cmdMap.put(ServerParams.CREATE_DOWNLOAD_SCRIPT, new SearchServerCommands.CreateDownloadScript());
         _cmdMap.put(ServerParams.UWS_JOB_INFO,           new SearchServerCommands.UwsJobInfo());

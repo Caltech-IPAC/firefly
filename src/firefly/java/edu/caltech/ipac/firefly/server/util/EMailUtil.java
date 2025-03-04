@@ -6,14 +6,11 @@ package edu.caltech.ipac.firefly.server.util;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.ThrowableUtil;
 
-import javax.mail.*;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import javax.naming.Context;
+import jakarta.mail.*;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
 import java.util.Date;
 import java.util.Properties;
 
@@ -37,29 +34,23 @@ public class EMailUtil {
     private static Session getMailSession() throws EMailUtilException {
         Session session;
         try {
-            if (MAIL_SESSION_BY_PROP) {
-                Properties properties = System.getProperties();
-                properties.setProperty("mail.transport.protocol", AppProperties.getProperty("mail.transport.protocol"));
-                properties.setProperty("mail.smtp.host", AppProperties.getProperty("mail.smtp.host"));
-                properties.setProperty("mail.smtp.auth", AppProperties.getProperty("mail.smtp.auth"));
-                properties.setProperty("mail.smtp.port", AppProperties.getProperty("mail.smtp.port"));
-                properties.setProperty("mail.smtp.from", AppProperties.getProperty("mail.smtp.from"));
-                properties.setProperty("mail.smtp.starttls.enable", AppProperties.getProperty("mail.smtp.starttls.enable"));
-                session = Session.getDefaultInstance(properties);
-            } else {
-                Context initCtx = new InitialContext();
-                Context envCtx = (Context) initCtx.lookup("java:comp/env");
-                session =(Session) envCtx.lookup(MAIL_SESSION);
-            }
+            Properties properties = new Properties();
+            properties.setProperty("mail.transport.protocol", AppProperties.getProperty("mail.transport.protocol"));
+            properties.setProperty("mail.smtp.host", AppProperties.getProperty("mail.smtp.host"));
+            properties.setProperty("mail.smtp.auth", AppProperties.getProperty("mail.smtp.auth"));
+            properties.setProperty("mail.smtp.port", AppProperties.getProperty("mail.smtp.port"));
+            properties.setProperty("mail.smtp.from", AppProperties.getProperty("mail.smtp.from"));
+            properties.setProperty("mail.smtp.starttls.enable", AppProperties.getProperty("mail.smtp.starttls.enable"));
+            session = Session.getInstance(properties);
+
         } catch (Exception e) {
-            String msg = "Unable to send message, mail session not found on server.  Fail to look up session from " +
-                    ( MAIL_SESSION_BY_PROP ? " JNDI name = " + MAIL_SESSION : " prop file." );
-            Logger.info(msg+"; "+e.getMessage());
+            String msg = "Unable to send message, mail session not found on server. Failed to look up session from " +
+                    (MAIL_SESSION_BY_PROP ? "JNDI name = " + MAIL_SESSION : " property file.");
+            Logger.info(msg + "; " + e.getMessage());
             throw new EMailUtilException(msg);
         }
         return session;
     }
-
 
     public static void sendMessage(String[] to, String[] cc, String[] bcc, String subject, String messageBody)
             throws EMailUtilException {
@@ -71,62 +62,43 @@ public class EMailUtil {
     public static void sendMessage(String[] to, String[] cc, String[] bcc, String subject, String messageBody, Session mailSession, boolean isHTML)
             throws EMailUtilException {
 
-        String toList = "";
-        String ccList = "";
-        String bccList = "";
+        String toList = String.join(",", to != null ? to : new String[]{});
+        String ccList = String.join(",", cc != null ? cc : new String[]{});
+        String bccList = String.join(",", bcc != null ? bcc : new String[]{});
+
+        if (toList.isEmpty()) {
+            throw new EMailUtilException("The TO address list cannot be empty. Must have at least one recipient.");
+        }
+
         try {
-            if (to != null) {
-                for (int i = 0; i < to.length; i++) {
-                    if (i == to.length - 1) {
-                        toList += to[i];
-                    } else {
-                        toList += to[i] + ",";
-                    }
-                }
-            } else {
-                throw new EMailUtilException("The TO address list cannot be empty, must have at least one destination address.");
-            }
-            if (cc != null) {
-                for (int i = 0; i < cc.length; i++) {
-                    if (i == cc.length - 1) {
-                        ccList += cc[i];
-                    } else {
-                        ccList += cc[i] + ",";
-                    }
-                }
-            }
-            if (bcc != null) {
-                for (int i = 0; i < bcc.length; i++) {
-                    if (i == bcc.length - 1) {
-                        bccList += bcc[i];
-                    } else {
-                        bccList += bcc[i] + ",";
-                    }
-                }
-            }
             Message msg = new MimeMessage(mailSession);
             msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toList, false));
-            msg.setRecipients(Message.RecipientType.CC, InternetAddress.parse(ccList, false));
-            msg.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(bccList, false));
+            if (!ccList.isEmpty()) {
+                msg.setRecipients(Message.RecipientType.CC, InternetAddress.parse(ccList, false));
+            }
+            if (!bccList.isEmpty()) {
+                msg.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(bccList, false));
+            }
             msg.setSubject(subject);
             msg.setSentDate(new Date());
-            // Content is stored in a MIME multi-part message
-            // with one body part
+
+            // Create message body
             MimeBodyPart mbp = new MimeBodyPart();
-            if(isHTML) {
+            if (isHTML) {
                 mbp.setContent(messageBody, "text/html");
-            }
-            else {
+            } else {
                 mbp.setText(messageBody);
             }
+
             Multipart mp = new MimeMultipart();
             mp.addBodyPart(mbp);
             msg.setContent(mp);
+
             Transport.send(msg);
         } catch (MessagingException e) {
             Logger.warn(ThrowableUtil.getStackTraceAsString(e));
             String msg = "Unable to send message, e-mail system not responding";
-            Logger.warn(msg +": "+e.getMessage());
+            Logger.warn(msg + ": " + e.getMessage());
             throw new EMailUtilException(msg);
         }
     }

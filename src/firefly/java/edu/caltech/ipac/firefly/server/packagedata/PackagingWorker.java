@@ -35,6 +35,10 @@ import java.util.zip.ZipOutputStream;
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.JobManager.getJobInfo;
 import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
+import static edu.caltech.ipac.firefly.core.background.JobUtil.getJobWorkDir;
+import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.Curl;
+import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.Wget;
+import static edu.caltech.ipac.firefly.server.servlets.AnyFileDownload.getDownloadURL;
 import static edu.caltech.ipac.firefly.server.ws.WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -56,7 +60,7 @@ public final class PackagingWorker implements Job.Worker {
     private ZipOutputStream zout = null;
     private List<String> failed = new ArrayList<>();
     private List<String> denied = new ArrayList<>();
-    private int curZipIdx = 0;
+    private int curZipIdx = -1;
     private int startFileInfoIdx = 0;
     private int curFileInfoIdx = 0;
     private long lastUpdatedTime = System.currentTimeMillis();
@@ -125,9 +129,9 @@ public final class PackagingWorker implements Job.Worker {
         updateJobInfo(getJob().getJobId(), ji -> {
             String summary = String.format("%,d files were packaged for a total of %,d B creating %,d zip files.", totalFiles, totalBytes, curZipIdx);
             if (hasErrors) summary += "\nPlease, note:  There were error(s) while processing your request.  See zip's README file for details.";
-            ji.setProgress(100);
-            ji.setProgressDesc(summary);
-            ji.setSummary(summary);
+            ji.getAuxData().setProgress(100);
+            ji.getAuxData().setProgressDesc(summary);
+            ji.getAuxData().setSummary(summary);
         });
         getJob().setPhase(JobInfo.Phase.COMPLETED);
 
@@ -165,7 +169,7 @@ public final class PackagingWorker implements Job.Worker {
             int zippedFiles = curFileInfoIdx - startFileInfoIdx;
             ZipHandler.addReadmeZipEntry(zout,zipMessage(zippedFiles, zippedBytes, failed, denied));
             zout.setComment(String.format("Files %s-%s", startFileInfoIdx, curFileInfoIdx));
-            getJob().addResult(new JobInfo.Result(makeDownloadUrl(zipFile, suggestedName), null, MediaType.ZIP.toString(), zipFile.length()+""));
+            getJob().addResult(new JobInfo.Result(makeDownloadUrl(zipFile, suggestedName, curZipIdx), MediaType.ZIP.toString(), zipFile.length()+""));
             failed.clear();
             denied.clear();
             zippedBytes = 0;
@@ -189,7 +193,7 @@ public final class PackagingWorker implements Job.Worker {
     private void newZipFile() throws FileNotFoundException {
         curZipIdx++;
         startFileInfoIdx = curFileInfoIdx;
-        zipFile = getZipFile(getJob().getJobId(), curZipIdx);
+        zipFile = getZipFile(getJob().getJobId(), suggestedName, curZipIdx);
         zout = new ZipOutputStream(new FileOutputStream(zipFile));
         zout.setMethod(ZipOutputStream.DEFLATED);
         zout.setLevel(ZipHandler.COMPRESSION_LEVEL);
@@ -212,28 +216,16 @@ public final class PackagingWorker implements Job.Worker {
         return msg.toString();
     }
 
-    public static String makeDownloadUrl(File f, String suggestedName) {
-        String fileStr = ServerContext.replaceWithPrefix(f);
-        try {
-            fileStr = URLEncoder.encode(fileStr, "UTF-8");
-            suggestedName = suggestedName == null ? "DownloadPackage" : suggestedName;
-            if (f.getName().contains("_")) {        // has multiple idx
-                suggestedName += "-part" + f.getName().split("_")[1];
-            }
-            suggestedName = URLEncoder.encode(suggestedName, "UTF-8");
-        } catch (Exception e) {/*ignore*/}
-
-        return ServerContext.getRequestOwner().getBaseUrl() + DOWNLOAD_SERVLET_PATH + "?" +
-                AnyFileDownload.FILE_PARAM + "=" + fileStr + "&" +
-                AnyFileDownload.RETURN_PARAM + "=" + suggestedName + "&" +
-                AnyFileDownload.LOG_PARAM + "=true&";
+    public static String makeDownloadUrl(File f, String suggestedName, int packageIdx) {
+        suggestedName = suggestedName == null ? "DownloadPackage" : suggestedName;
+        return getDownloadURL(f, "%s%s.zip".formatted(suggestedName, packageIdx > 0 ? "-part" + packageIdx : ""));
     }
 
-    private static File getZipFile(String jobId, int packageIdx) {
-        File stagingDir = ServerContext.getStageWorkDir();
-        String fname = String.format("%s%s.zip", jobId, (packageIdx > 0 ? "_" + packageIdx : ""));
-        return new File(stagingDir, fname);
-
+    private static File getZipFile(String jobId, String suggestedName, int packageIdx) {
+        File jobDir = getJobWorkDir(jobId);
+        String hash = jobId.substring(jobId.length()-4);      // safe; id is always greater than 4 chars
+        String fname = String.format("%s-%s%s.zip", suggestedName, hash, (packageIdx > 0 ? "_" + packageIdx : ""));
+        return new File(jobDir, fname);
     }
 
 }

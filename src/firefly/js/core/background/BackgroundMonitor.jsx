@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import {isEmpty, isNil} from 'lodash';
+import {isEmpty} from 'lodash';
 
 import DialogRootContainer from '../../ui/DialogRootContainer.jsx';
 import {PopupPanel} from '../../ui/PopupPanel.jsx';
@@ -13,7 +13,7 @@ import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../ComponentCntlr.js';
 import {getBackgroundInfo, isActive, isAborted, isDone, isSuccess, getJobInfo, canCreateScript
 } from './BackgroundUtil.js';
-import {dispatchBgJobInfo, dispatchJobRemove, dispatchBgSetEmailInfo, dispatchJobCancel} from './BackgroundCntlr.js';
+import {dispatchBgJobInfo, dispatchJobRemove, dispatchBgSetInfo, dispatchJobCancel} from './BackgroundCntlr.js';
 import {showScriptDownloadDialog} from '../../ui/ScriptDownloadDialog.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
@@ -30,6 +30,7 @@ import DOWNLOAED from 'html/images/blue_check-on_10x10.gif';
 import FAILED from 'html/images/exclamation16x16.gif';
 import INFO from 'html/images/info-icon.png';
 import CompleteButton from 'firefly/ui/CompleteButton';
+import {getAppOptions} from '../AppDataCntlr';
 
 
 export function showBackgroundMonitor(show=true) {
@@ -48,7 +49,7 @@ export function showBackgroundMonitor(show=true) {
 
  function BackgroundMonitor() {
 
-    const {jobs={}, email, enableEmail, help_id} = useStoreConnector(() => getBackgroundInfo());
+    const {jobs={}, email, sendNotif, help_id} = useStoreConnector(() => getBackgroundInfo());
 
     const items = Object.values(jobs)
                     .filter((job) => job.jobInfo?.monitored)
@@ -63,12 +64,15 @@ export function showBackgroundMonitor(show=true) {
             <Box {...{flexGrow: 1, overflow: 'auto'}}>
                 {!isEmpty(items) && items}
             </Box>
-            <BgFooter {...{help_id, email, enableEmail}}/>
+            <BgFooter {...{help_id, email, sendNotif}}/>
         </Stack>
     );
 }
 
-function BgFooter ({help_id='basics.bgmon', email, enableEmail}) {
+function BgFooter ({help_id='basics.bgmon', email, sendNotif}) {
+
+    const {enable, showEmail}= getAppOptions()?.background?.notification || {};
+    const showNotify = enable || showEmail;
 
     const onHide = () => {
         showBackgroundMonitor(false);
@@ -76,46 +80,46 @@ function BgFooter ({help_id='basics.bgmon', email, enableEmail}) {
 
     const onEmailChanged = (v) => {
         if (v?.valid) {
-            if (email !== v.value) dispatchBgSetEmailInfo({email: v.value});
+            if (email !== v.value) dispatchBgSetInfo({email: v.value, sendNotif});
         }
     };
 
-    enableEmail = isNil(enableEmail) ? !!email : enableEmail;
-    const toggleEnableEmail = (e) => {
+    const toggleSendNotif = (e) => {
         const checked = e.target.checked;
-        const m_email = checked ? email : '';
-        dispatchBgSetEmailInfo({email: m_email, enableEmail: checked});
+        dispatchBgSetInfo({email, sendNotif: checked});
 
     };
 
-      // TODO: email is commented out, when we make a notification plan we can re-add it.
-
     return (
-        <Stack direction='row' alignItems='flex-start' justifyContent='space-between'>
-            <Tooltip title='Hide Background Monitor'>
-                <CompleteButton color='primary' onSuccess={onHide} text={'Hide'} />
-            </Tooltip>
-            <Stack>
-                {/*<Checkbox p={1} size='sm' checked={enableEmail} onChange={toggleEnableEmail} label={'Enable email notification'}/>*/ }
-                {enableEmail &&
-                    <Stack direction='row' alignItems='center' width={200}>
-                        <Typography component='label' level='title-md' sx={{mr: 1}}>
-                            Email:
-                        </Typography>
-                        <InputField
-                            validator={Validate.validateEmail.bind(null, 'an email field')}
-                            tooltip='Enter an email to be notified when a process completes.'
-                            slotProps={{label:{sx:{ml:0}}}}
-                            value={email}
-                            placeholder='Enter an email to get notification'
-                            sx={{width:170}}
-                            onChange={onEmailChanged}
-                            actOn={['blur','enter']}
-                        />
+        <Stack alignItems='center'>
+            <Stack direction='row' width={1} alignItems='center' justifyContent='space-between'>
+                <Tooltip title='Hide Background Monitor'>
+                    <CompleteButton color='primary' onSuccess={onHide} text={'Hide'} />
+                </Tooltip>
+                {showNotify &&
+                    <Stack direction='row'>
+                        <Checkbox p={1} size='sm' checked={sendNotif} onChange={toggleSendNotif} label={'Enable completion notification'}/>
                     </Stack>
                 }
+                <HelpIcon helpId={help_id}/>
             </Stack>
-            <HelpIcon helpId={help_id}/>
+            {sendNotif && showEmail &&
+                <Stack direction='row' alignItems='center'>
+                    <Typography component='label' level='title-md' sx={{mr: 1}}>
+                        Email:
+                    </Typography>
+                    <InputField
+                        validator={Validate.validateEmail.bind(null, 'an email field')}
+                        tooltip='Enter an email to be notified when a process completes.'
+                        slotProps={{label:{sx:{ml:0}}}}
+                        value={email}
+                        placeholder='Enter an email to get notification'
+                        sx={{width:250}}
+                        onChange={onEmailChanged}
+                        actOn={['blur','enter']}
+                    />
+                </Stack>
+            }
         </Stack>
         );
 }

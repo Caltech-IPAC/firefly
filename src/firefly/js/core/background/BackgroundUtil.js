@@ -91,13 +91,12 @@ export function getBgEmail() {
 }
 
 /**
- * returns the email related info.  Currently, it's email and enableEmail.
+ * returns the background related info.  Currently, it's email and sendNotif.
  * @returns {object.<string>}
  */
-export function getBgEmailInfo() {
-    let {email, enableEmail} =  get(flux.getState(), BACKGROUND_PATH) || {};
-    enableEmail = isNil(enableEmail) ? !!email : enableEmail;
-    return {email, enableEmail};
+export function getBgInfo() {
+    const {email, sendNotif} =  get(flux.getState(), BACKGROUND_PATH) || {};
+    return {email, sendNotif};
 }
 
 export function canCreateScript(jobInfo) {

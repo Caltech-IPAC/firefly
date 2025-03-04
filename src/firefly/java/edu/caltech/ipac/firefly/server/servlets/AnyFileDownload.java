@@ -13,12 +13,15 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.URLDownload;
+import edu.caltech.ipac.visualize.net.URLParms;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+
+import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
  * Date: Feb 11, 2007
@@ -44,6 +47,22 @@ public class AnyFileDownload extends BaseHttpServlet {
     private static final String HIPS_CACHE_CONTROL= "must-revalidate, max-age=1800";
     private static final String SHORT_CACHE_CONTROL = "must-revalidate, max-age=300";
     private static final String STATIC_CACHE_CONTROL= "max-age=86400";
+
+    private static final String BASE_URL = "servlet/Download?"+ LOG_PARAM +"=true&" + FILE_PARAM +"=";
+    private static final String RET_FILE = "&"+RETURN_PARAM+"=";
+
+
+    public static String getDownloadURL(File file, String suggestedFileName) {
+        if (file==null) return null;
+
+        String fname= URLParms.encode(ServerContext.replaceWithPrefix(file));
+        if (fname!= null) {
+            String retFile = isEmpty(suggestedFileName) ? "" : RET_FILE + URLParms.encode(suggestedFileName);
+            return ServerContext.getRequestOwner().getBaseUrl() + BASE_URL + fname + retFile;
+        } else {
+            return null;
+        }
+    }
 
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
         if (req.getParameterMap().containsKey(HIPS_PARAM)) {
@@ -194,8 +213,8 @@ public class AnyFileDownload extends BaseHttpServlet {
 
         String retFileStr= (local!=null) ? local : f.getName();
         if (retFileStr.equals(USE_SERVER_NAME)) retFileStr= f.getName();
-        if (!StringUtils.isEmpty(retFileStr)) {
-            res.addHeader("Content-Disposition", "attachment; filename="+retFileStr);
+        if (!isEmpty(retFileStr)) {
+            res.addHeader("Content-Disposition", "attachment; filename=\"%s\"".formatted(retFileStr));
         }
 
 

@@ -63,6 +63,7 @@ public class ServerParams {
     public static final String PLOT_ID = "plotId";
     public static final String POLLING = "polling";
     public static final String EMAIL = "email";
+    public static final String SEND_NOTIF = "sendNotif";
     public static final String ATTRIBUTE = "attribute";
     public static final String FILE = "file";
     public static final String PLOT_EXTERNAL = "PlotExternal";
@@ -137,7 +138,7 @@ public class ServerParams {
     public static final String ADD_JOB = "addBgJob";
     public static final String REMOVE_JOB = "removeBgJob";
     public static final String CANCEL= "cancel";
-    public static final String SET_EMAIL= "setEmail";
+    public static final String SET_BG_INFO = "setBgInfo";
     public static final String RESEND_EMAIL= "resendEmail";
     public static final String CREATE_DOWNLOAD_SCRIPT= "createDownoadScript";
     public static final String UWS_JOB_INFO= "uwsJobInfo";

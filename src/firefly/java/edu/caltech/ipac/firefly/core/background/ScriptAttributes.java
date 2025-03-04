@@ -12,5 +12,5 @@ package edu.caltech.ipac.firefly.core.background;
 /**
 * @author Trey Roby
 */
-public enum ScriptAttributes {URLsOnly, Unzip, Ditto, Curl, Wget, RemoveZip}
+public enum ScriptAttributes {URLsOnly, Unzip, Ditto, Curl, Wget, RemoveZip, MakeDirs}
 

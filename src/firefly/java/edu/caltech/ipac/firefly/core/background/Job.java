@@ -52,17 +52,17 @@ public interface Job extends Callable<String> {
      * @param desc
      */
     default void progressDesc(String desc) {
-        JobManager.sendUpdate(getJobId(), v -> v.setProgressDesc(desc));
+        JobManager.sendUpdate(getJobId(), v -> v.getAuxData().setProgressDesc(desc));
     }
 
     default void progress(int progress) {
-        JobManager.sendUpdate(getJobId(), v -> v.setProgress(progress));
+        JobManager.sendUpdate(getJobId(), v -> v.getAuxData().setProgress(progress));
     }
 
     default void progress(int progress, String desc) {
         JobManager.sendUpdate(getJobId(), v -> {
-            v.setProgress(progress);
-            v.setProgressDesc(desc);
+            v.getAuxData().setProgress(progress);
+            v.getAuxData().setProgressDesc(desc);
         });
     }
 

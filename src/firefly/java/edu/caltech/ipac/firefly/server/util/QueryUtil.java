@@ -8,6 +8,7 @@ import edu.caltech.ipac.astro.net.TargetNetwork;
 import edu.caltech.ipac.astro.target.IpacTableTargetsParser;
 import edu.caltech.ipac.astro.target.TargetFixedSingle;
 import edu.caltech.ipac.firefly.core.EndUserException;
+import edu.caltech.ipac.firefly.core.background.JobUtil;
 import edu.caltech.ipac.firefly.data.CatalogRequest;
 import edu.caltech.ipac.firefly.data.DecimateInfo;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
@@ -63,7 +64,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static edu.caltech.ipac.firefly.core.background.JobUtil.jobIdToDir;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.FF_SESSION_ID;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_ID;
 import static edu.caltech.ipac.firefly.visualize.WebPlotRequest.URL_CHECK_FOR_NEWER;
@@ -104,8 +104,7 @@ public class QueryUtil {
     public static File getTempDir(TableServerRequest tsr) {
         File tempDir;
         if (tsr != null && !isEmpty(tsr.getJobId())) {
-            var baseDir = new File(ServerContext.getStageWorkDir(), "jobs");
-            tempDir = new File(baseDir, jobIdToDir(tsr.getJobId()));
+            tempDir = JobUtil.getJobWorkDir(tsr.getJobId());
         } else {
             tempDir = new File(ServerContext.getTempWorkDir(), getSessPrefix(tsr));
         }
