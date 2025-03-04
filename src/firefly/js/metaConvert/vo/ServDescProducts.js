@@ -143,7 +143,7 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, activate
             // note: the size is set as a number, if is a string it is coming from the dialog
             if (isNumber(cutoutSize) && cutoutSize===SD_DEFAULT_SPACIAL_CUTOUT_SIZE && sdSizeValue!==cutoutSize) {
                 params= {[obsfieldUcd] : sdSizeValue};
-                setCutoutSize(key,sdSizeValue);
+                setCutoutSize(key,sdSizeValue, sourceTable?.tbl_id);
             }
             else {
                 params= {[obsfieldUcd] : cutoutSize};
@@ -168,7 +168,7 @@ function makeCutoutProduct({ name, serDef, sourceTable, sourceRow, idx, activate
             else {
                 const valNum= parseInt(nameGuess.value) || SD_DEFAULT_PIXEL_CUTOUT_SIZE;
                 params= {[nameGuess.name] : valNum};
-                setCutoutSize(key,valNum+'px');
+                setCutoutSize(key,valNum+'px', sourceTable?.tbl_id);
             }
             pixelBasedCutout= true;
         }

@@ -7,13 +7,16 @@ import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById, getTblInf
 import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {getDataServiceOption, getDataServiceOptionByTable, getDataServiceOptionsFallback,
 } from '../../ui/tap/DataServicesOptions';
-import {hasObsCoreLikeDataProducts} from '../../voAnalyzer/TableAnalysis.js';
+import {findTableCenterColumns, hasObsCoreLikeDataProducts} from '../../voAnalyzer/TableAnalysis.js';
 import {getCatalogWatcherDef} from '../../visualize/saga/CatalogWatcher.js';
 import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {getActiveRowToImageDef } from '../../visualize/saga/ActiveRowToImageWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent';
-import {findCutoutTarget, getCutoutSize} from 'firefly/ui/tap/Cutout';
+import {
+    findCutoutTarget, getCutoutSize, getCutoutTargetType, ROW_POSITION, SEARCH_POSITION, tblIdToKey,
+    USER_ENTERED_POSITION
+} from 'firefly/ui/tap/Cutout';
 import {getTableModel} from 'firefly/voAnalyzer/VoCoreUtils';
 
 export const getAllStartIds= ()=> [
@@ -92,7 +95,7 @@ function getColNameFromTemplate(template) {
     return template.match(/\${[\w -.]+}/g)?.map( (s) => s.substring(2,s.length-1));
 }
 
-const PrepareDownload = React.memo(() => {
+const PrepareDownload = () => {
     const tbl_id = getActiveTableId();
     const tblTitle = getTblById(tbl_id)?.title ?? 'unknown';
     const baseFileName = tblTitle.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_.-]/g, '_');
@@ -100,10 +103,21 @@ const PrepareDownload = React.memo(() => {
     const tblModel = getTableModel(tbl_id);
     const cutoutValue = useStoreConnector( () => getCutoutSize());
 
-    const tblInfo = getTblInfo(tblModel);
-    const cutoutTargetVals = findCutoutTarget('', {}, tblModel, tblInfo?.highlightedRow);
+    // const tblInfo = getTblInfo(tblModel);
+    // const cutoutTargetVals = findCutoutTarget('', {}, tblModel, tblInfo?.highlightedRow);
+    // const ra = cutoutTargetVals?.positionWP?.x;
+    // const dec = cutoutTargetVals?.positionWP.y;
+    ////////// todo
+    ////////// todo
+    const dataProductsComponentKey= tblIdToKey(tbl_id);
+    const cutoutTargetVals = findCutoutTarget(dataProductsComponentKey, undefined, tblModel, tblModel.highlightedRow);
+    const passRaDec= cutoutTargetVals.foundType===SEARCH_POSITION || cutoutTargetVals.foundType===USER_ENTERED_POSITION;
     const ra = cutoutTargetVals?.positionWP?.x;
     const dec = cutoutTargetVals?.positionWP.y;
+    const {lonCol,latCol}= findTableCenterColumns(tbl_id);
+
+    ////////// todo
+    ////////// todo
 
     return (
         <div>
@@ -114,7 +128,8 @@ const PrepareDownload = React.memo(() => {
                     dlParams: {
                         FileGroupProcessor:'ObsCorePackager',
                         dlCutout: 'orig',
-                        centerCols: ra + ',' + dec,
+                        cutoutPosition: passRaDec ? ra + ',' + dec : '',
+                        centerCols: cutoutTargetVals.foundType===ROW_POSITION ? lonCol + ',' + latCol : '',
                         cutoutValue,
                         TitlePrefix: tblTitle,
                         help_id:'table.obsCorePackage',
@@ -122,4 +137,4 @@ const PrepareDownload = React.memo(() => {
             </DownloadButton>
         </div>
     );
-});
+};
