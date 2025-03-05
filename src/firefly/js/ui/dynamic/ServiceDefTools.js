@@ -12,6 +12,7 @@ import {
     makePointDef,
     makePolygonDef, makeRangeDef, makeTargetDef, makeUnknownDef, POINT, POLYGON, POSITION, RANGE, UNKNOWN
 } from './DynamicDef.js';
+import {getServiceDescriptors, isDataLinkServiceDesc} from 'firefly/voAnalyzer/VoDataLinkServDef';
 
 /**
  * @param {Array.<FieldDef>} fieldDefAry
@@ -525,4 +526,38 @@ export function ingestInitArgs(fdAry, args) {
         }
     });
 }
+
+//check for and return a datalink service descriptor url and input params, if one is found
+export function checkForDatalinkServDesc(tblModel) {
+    const serviceDescriptors = getServiceDescriptors(tblModel);
+
+    if (!serviceDescriptors) return null;
+
+    if (serviceDescriptors) {
+        for (const sd of serviceDescriptors) {
+            //serviceDescriptors.forEach((sd) => {
+            const isDatalinkSerDesc = isDataLinkServiceDesc(sd);
+            if (isDatalinkSerDesc) {
+                const productUrl = {
+                    accessURL: sd?.accessURL || '',
+                    inputParams: {}
+                };
+
+                if (sd?.serDefParams) {
+                    for (const param of sd.serDefParams) {
+                        productUrl.inputParams[param?.name] = {value: param.value, ref: param.ref};
+                    }
+                }
+
+                //return only when valid datalink access url is found
+                if (productUrl.accessURL || Object.keys(productUrl.inputParams).length > 0) {
+                    return productUrl;
+                }
+
+            }
+        }
+    }
+    return null; //no valid datalink service descriptor found
+}
+
 

@@ -5,6 +5,7 @@ import {synchronizeAsyncFunctionById} from '../../util/SynchronizeAsync';
 import { getObsCoreAccessURL, isFormatDataLink, isObsCoreLike } from '../../voAnalyzer/TableAnalysis';
 import {getTableModel} from '../../voAnalyzer/VoCoreUtils';
 import {getDataLinkData, getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef';
+import {makeDlUrl} from './DatalinkProducts';
 
 let dlTableCache = new Map();
 const maxEntries = 30;
@@ -51,6 +52,7 @@ export async function fetchSemanticList(tableOrId,row=0) {
     else {
         const dlDescriptor= getServiceDescriptors(table)?.filter( (dDesc) => isDataLinkServiceDesc(dDesc))[0];
         url= dlDescriptor?.accessURL;
+        url= makeDlUrl(dlDescriptor,table, row);
     }
     if (!url) return [];
     return await fetchDatalinkTableSemanticList(url);

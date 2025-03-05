@@ -12,6 +12,7 @@ import {
 import {findWorldPtInServiceDef} from '../../voAnalyzer/VoDataLinkServDef';
 import {getDataServiceOptionByTable} from './DataServicesOptions';
 
+const ALL_DATA_PRODUCT_COMPONENTS= 'ALL_DATA_PRODUCT_COMPONENTS';
 const PREFER_CUTOUT_KEY = 'preferCutout';
 const SD_CUTOUT_SIZE_KEY = 'sdCutoutSize';
 const SD_CUTOUT_WP_OVERRIDE = 'sdCutoutWpOverride';
@@ -38,6 +39,14 @@ export function getPreferCutout(dataProductsComponentKey, tbl_id) {
     return result[tbl_id] ?? result.LAST_PREF ?? DEF_PREFER_CUTOUT;
 }
 
+function updateAllDataProductsCompenents(tbl_id, dataProductsComponentKey) {
+    if (!tbl_id || !dataProductsComponentKey) return;
+    const all = getComponentState(ALL_DATA_PRODUCT_COMPONENTS);
+    if (all[tbl_id]!==dataProductsComponentKey) {
+        dispatchComponentStateChange(ALL_DATA_PRODUCT_COMPONENTS, {...all, [tbl_id]:dataProductsComponentKey});
+    }
+}
+
 /**
  *
  * @param {String} dataProductsComponentKey
@@ -48,15 +57,24 @@ export function setPreferCutout(dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_C
     const result = getComponentState(dataProductsComponentKey)[PREFER_CUTOUT_KEY] ?? {};
     const newState = {...result, [tbl_id]: preferCutout, LAST_PREF: preferCutout};
     dispatchComponentStateChange(dataProductsComponentKey, {[PREFER_CUTOUT_KEY]: newState});
+    updateAllDataProductsCompenents(tbl_id, dataProductsComponentKey);
 }
+
 
 export function getCutoutSize(dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, tbl_id) {
     return getComponentState(dataProductsComponentKey, {})[SD_CUTOUT_SIZE_KEY] ??
         getDataServiceOptionByTable('cutoutDefSizeDeg', tbl_id, SD_DEFAULT_SPACIAL_CUTOUT_SIZE);
 }
 
-export const setCutoutSize = (dataProductsComponentKey, cutoutSize) =>
-    dispatchComponentStateChange(dataProductsComponentKey, {[SD_CUTOUT_SIZE_KEY]: cutoutSize});
+export function setCutoutSize(dataProductsComponentKey, cutoutSize, tbl_id) {
+    const result = getComponentState(dataProductsComponentKey);
+    const newState= {
+        ...result,
+        [SD_CUTOUT_SIZE_KEY]: cutoutSize,
+    };
+    dispatchComponentStateChange(dataProductsComponentKey, newState);
+    updateAllDataProductsCompenents(tbl_id, dataProductsComponentKey);
+}
 
 /**
  *  equivalent to setPreferCutout, setCutoutSize, setCutoutTargetOverride
@@ -79,6 +97,7 @@ export function setAllCutoutParams(dataProductsComponentKey=DEFAULT_DATA_PRODUCT
     if (overrideTarget && isString(overrideTarget)) {
         wp = parseWorldPt(overrideTarget);
     }
+
     dispatchComponentStateChange(dataProductsComponentKey,
         {
             [PREFER_CUTOUT_KEY]: newPreferState,
@@ -86,10 +105,10 @@ export function setAllCutoutParams(dataProductsComponentKey=DEFAULT_DATA_PRODUCT
             [SD_CUTOUT_WP_OVERRIDE]: wp,
             [SD_CUTOUT_TYPE]: newCutoutTypeState,
         });
+    updateAllDataProductsCompenents(tbl_id, dataProductsComponentKey);
 }
 
-export const setCutoutTargetOverride = (dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY, wp) =>
-    dispatchComponentStateChange(dataProductsComponentKey, {[SD_CUTOUT_WP_OVERRIDE]: wp});
+export const tblIdToKey= (tbl_id) => getComponentState(ALL_DATA_PRODUCT_COMPONENTS)?.[tbl_id] ?? DEFAULT_DATA_PRODUCTS_COMPONENT_KEY;
 
 export const getCutoutTargetOverride = (dataProductsComponentKey=DEFAULT_DATA_PRODUCTS_COMPONENT_KEY) =>
     getComponentState(dataProductsComponentKey, {})[SD_CUTOUT_WP_OVERRIDE];
