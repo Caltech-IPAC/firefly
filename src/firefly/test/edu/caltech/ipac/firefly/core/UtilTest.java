@@ -81,8 +81,10 @@ public class UtilTest extends ConfigTest {
 
     @Test
     public void deserializeInvalidString() throws Exception {
-        Object deserialized = deserialize("invalidBase64");
-        assertNull(deserialized);
+        try {
+            deserialize("invalidBase64");
+            fail("Should have thrown an exception");
+        } catch (Exception ignored) {}
     }
 
     @Test

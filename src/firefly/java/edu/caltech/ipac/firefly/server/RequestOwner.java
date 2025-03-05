@@ -150,7 +150,7 @@ public class RequestOwner implements Cloneable {
     }
 
     public boolean isAuthUser() {
-        return getSsoAdapter() != null && getSsoAdapter().getAuthToken() != null;
+        return ifNotNull(getSsoAdapter()).get(SsoAdapter::getAuthToken) != null;
     }
 
     /**
@@ -223,9 +223,10 @@ public class RequestOwner implements Cloneable {
      *  @return the authenticated user info, or null if not authenticated.
      */
     private UserInfo getAuthUser() {
-        UserInfo userInfo = isAuthUser() && !ignoreAuth ? ssoAdapter.getUserInfo() : null;
+        if (ignoreAuth || !isAuthUser()) return null;
+        UserInfo userInfo = getSsoAdapter().getUserInfo();
         if (userInfo == null) {
-            ssoAdapter.clearAuthInfo();
+            getSsoAdapter().clearAuthInfo();
         } else {
             userInfo.setUserKey(userKeyFrom(userInfo.getLoginName()));
         }
@@ -250,7 +251,7 @@ public class RequestOwner implements Cloneable {
     }
 
     private String userKeyFrom(String val) {
-        return UUID.nameUUIDFromBytes(val.getBytes(UTF_8)).toString();
+        return UUID.nameUUIDFromBytes(String.valueOf(val).getBytes(UTF_8)).toString();
     }
 
     private void notifyClient(UserInfo userInfo) {
