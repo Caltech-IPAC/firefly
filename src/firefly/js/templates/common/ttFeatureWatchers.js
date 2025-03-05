@@ -1,10 +1,10 @@
-import React from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {cloneDeep, once} from 'lodash';
 import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {MetaConst} from '../../data/MetaConst';
 import {dispatchTableUiUpdate, TABLE_LOADED} from '../../tables/TablesCntlr.js';
-import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById, getTblInfo} from '../../tables/TableUtil.js';
-import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
+import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
+import {DownloadButton, DownloadOptionPanel, ScriptTypeOptions} from '../../ui/DownloadDialog.jsx';
 import {getDataServiceOption, getDataServiceOptionByTable, getDataServiceOptionsFallback,
 } from '../../ui/tap/DataServicesOptions';
 import {findTableCenterColumns, hasObsCoreLikeDataProducts} from '../../voAnalyzer/TableAnalysis.js';
@@ -13,11 +13,13 @@ import {getUrlLinkWatcherDef} from '../../visualize/saga/UrlLinkWatcher.js';
 import {getActiveRowToImageDef } from '../../visualize/saga/ActiveRowToImageWatcher.js';
 import {getMocWatcherDef} from '../../visualize/saga/MOCWatcher.js';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent';
-import {
-    findCutoutTarget, getCutoutSize, getCutoutTargetType, ROW_POSITION, SEARCH_POSITION, tblIdToKey,
-    USER_ENTERED_POSITION
+import {findCutoutTarget, getCutoutSize, ROW_POSITION, tblIdToKey,
 } from 'firefly/ui/tap/Cutout';
 import {getTableModel} from 'firefly/voAnalyzer/VoCoreUtils';
+import {fetchSemanticList} from 'firefly/metaConvert/vo/DatalinkFetch';
+import {checkForDatalinkServDesc} from 'firefly/ui/dynamic/ServiceDefTools';
+import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
+import {Stack} from '@mui/joy';
 
 export const getAllStartIds= ()=> [
     getMocWatcherDef().id,
@@ -100,24 +102,67 @@ const PrepareDownload = () => {
     const tblTitle = getTblById(tbl_id)?.title ?? 'unknown';
     const baseFileName = tblTitle.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_.-]/g, '_');
 
+    const [semList, setSemList] = useState([]);
+
+    // Fetch semList on mount when tbl_id changes
+    useEffect(() => {
+        fetchSemanticList(tbl_id).then(setSemList);
+    }, [tbl_id]);
+
+    const labelMap = useMemo(() => ({
+        '#this': 'Primary Product',
+        '#cutout': 'Cutouts',
+        '#counterpart': 'Counterpart',
+        '#noise': 'Noise',
+        '#auxiliary': 'Auxiliary',
+        '#progenitor': 'Progenitor',
+        '#thumbnail': 'Thumbnail',
+        '#preview': 'Preview',
+        '#package': 'Package',
+        '#weight': 'Weight'
+    }), []);
+
+    //dynamically generate options from semList
+    const dynamicOptions = useMemo(() => {
+        let options;
+        if (semList.length > 0) {
+            //use semList if available
+            options = semList.map((value) => ({
+                label: labelMap[value] || value.replace(/^#/, ''), //strip "#" if using raw value as fallback for a cleaner label in the UI
+                value
+            }));
+        } else {
+            options = []; //fallback only to "All data" only below
+        }
+
+        //ensure '*' ("All data") is always included, even as a fallback when semList is empty
+        options.push({ label: 'All data', value: '*' });
+        return options;
+    }, [semList, labelMap]);
+
     const tblModel = getTableModel(tbl_id);
     const cutoutValue = useStoreConnector( () => getCutoutSize());
 
-    // const tblInfo = getTblInfo(tblModel);
-    // const cutoutTargetVals = findCutoutTarget('', {}, tblModel, tblInfo?.highlightedRow);
-    // const ra = cutoutTargetVals?.positionWP?.x;
-    // const dec = cutoutTargetVals?.positionWP.y;
-    ////////// todo
-    ////////// todo
     const dataProductsComponentKey= tblIdToKey(tbl_id);
     const cutoutTargetVals = findCutoutTarget(dataProductsComponentKey, undefined, tblModel, tblModel.highlightedRow);
-    const passRaDec= cutoutTargetVals.foundType===SEARCH_POSITION || cutoutTargetVals.foundType===USER_ENTERED_POSITION;
-    const ra = cutoutTargetVals?.positionWP?.x;
-    const dec = cutoutTargetVals?.positionWP.y;
-    const {lonCol,latCol}= findTableCenterColumns(tbl_id);
+    const centerCols = findTableCenterColumns(tbl_id);
 
-    ////////// todo
-    ////////// todo
+    //this will be null if no datalink service descriptor is found, else it will return the access url and input params from the service descriptor
+    const datalinkServDesc = useStoreConnector(() => checkForDatalinkServDesc(tblModel));
+
+    let ra = cutoutTargetVals?.positionWP?.x;
+    let dec = cutoutTargetVals?.positionWP.y;
+
+    if (cutoutTargetVals.foundType === ROW_POSITION) {
+        //server side should use center cols to get ra/dec from the file if user selects this option
+        ra = null;
+        dec = null;
+    }
+
+    const position = {
+        centerColNames: { lonCol: centerCols?.lonCol, latCol: centerCols?.latCol },
+        centerColValues: { ra, dec }
+    };
 
     return (
         <div>
@@ -128,12 +173,20 @@ const PrepareDownload = () => {
                     dlParams: {
                         FileGroupProcessor:'ObsCorePackager',
                         dlCutout: 'orig',
-                        cutoutPosition: passRaDec ? ra + ',' + dec : '',
-                        centerCols: cutoutTargetVals.foundType===ROW_POSITION ? lonCol + ',' + latCol : '',
+                        position,
                         cutoutValue,
+                        datalinkServiceDescriptor: datalinkServDesc,
                         TitlePrefix: tblTitle,
                         help_id:'table.obsCorePackage',
-                        BaseFileName:`${baseFileName}`}}}/>
+                        BaseFileName:`${baseFileName}`}}}>
+                    <Stack spacing={1}>
+                        <CheckboxGroupInputField
+                            fieldKey='productTypes'
+                            options={dynamicOptions}
+                            initialState={{value: '*'}}
+                            label='Products to Download: ' />
+                    </Stack>
+                </DownloadOptionPanel>
             </DownloadButton>
         </div>
     );

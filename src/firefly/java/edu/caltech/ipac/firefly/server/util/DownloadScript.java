@@ -207,15 +207,30 @@ public class DownloadScript {
 
         // if no valid extension in the path, look for "return" parameter in the query string
         if (query != null && !query.isEmpty()) {
+            String fallbackPath = null;
             for (String param : query.split("&")) {
                 String[] keyValue = param.split("=");
-                if (keyValue.length > 1 && keyValue[0].trim().equals("return")) {
-                    return sanitizeFileName(keyValue[1].trim());
+                if (keyValue.length > 1) {
+                    String key = keyValue[0].trim();
+                    String value = keyValue[1].trim();
+
+                    if (key.equals("return")) {
+                        return sanitizeFileName(value);
+                    } else if (key.equals("path") || key.equals("file")) {
+                        fallbackPath = value;
+                    }
+                }
+            }
+            //if a "return" parameter was not found, but "path" or "file" exist, extract the filename from "path" / "file"
+            if (fallbackPath != null && fallbackPath.contains("/")) {
+                String fallbackName = fallbackPath.substring(fallbackPath.lastIndexOf('/') + 1);
+                if (fallbackName.contains(".") && !fallbackName.startsWith(".")) {
+                    return sanitizeFileName(fallbackName);
                 }
             }
         }
 
-        return "download_file_" + count++;
+        return "download_file_" + count++; //final fallback if mo filename was retrieved from the URL
     }
 
     private static String sanitizeFileName(String name) {

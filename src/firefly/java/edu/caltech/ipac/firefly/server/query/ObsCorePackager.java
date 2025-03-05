@@ -20,6 +20,7 @@ import java.util.*;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.getSelectedData;
 import static edu.caltech.ipac.util.FileUtil.getUniqueFileNameForGroup;
 import static org.apache.commons.lang.StringUtils.substringAfterLast;
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 
 @SearchProcessorImpl(id = "ObsCorePackager")
 public class ObsCorePackager extends FileGroupsProcessor {
@@ -38,7 +39,12 @@ public class ObsCorePackager extends FileGroupsProcessor {
     public static final String DATALINK_SER_DEF = "datalinkServiceDescriptor";
     public static final String ADHOC_SERVICE = "adhoc:service";
     public static final String DATALINK = "datalink";
-    public static final String CENTER_COLS = "centerCols";
+    public static final String CENTER_COL_NAMES = "centerColNames";
+    public static final String CENTER_COL_VALS = "centerColValues";
+    public static final String LON_COL = "lonCol";
+    public static final String LAT_COL = "latCol";
+    public static final String RA = "ra";
+    public static final String DEC = "dec";
     public static final String CUTOUT_VALUE = "cutoutValue";
     public static final String SER_DEF_ACCESS_URL = "accessURL";
     public static final String SER_DEF_INPUT_PARAMS = "inputParams";
@@ -47,10 +53,25 @@ public class ObsCorePackager extends FileGroupsProcessor {
     public static final String VALUE = "value";
     public static final String TEMPLATE_COL_NAMES = "templateColNames";
     public static final String USE_SOURCE_FILE_NAME = "useSourceUrlFileName";
+    public static final String POSITION = "position";
 
     private static final List<String> CUTOUT_UCDs= Arrays.asList("phys.size","phys.size.radius","phys.angSize", "pos.spherical.r");
     private static final List<String>  RA_UCDs= List.of("pos.eq.ra");
     private static final List<String>  DEC_UCDs= List.of("pos.eq.dec");
+
+    record CenterCols(String lonCol, String latCol) {}
+
+    record CenterColValues(String ra, String dec) {}
+
+    public record Position(CenterCols centerColNames, CenterColValues centerColValues) {}
+
+    record ServDescUrl(String partialUrl, List<MissingParam> missingParams) {
+        public boolean isValid() {
+            return !StringUtils.isEmpty(partialUrl);
+        }
+    }
+
+    record MissingParam(String paramName, String refId) {}
 
     public List<FileGroup> loadData(ServerRequest request) throws IOException, DataAccessException {
         try {
@@ -162,17 +183,28 @@ public class ObsCorePackager extends FileGroupsProcessor {
         String productTypes = request.getParam(PRODUCTS);
         String[] products = (productTypes != null && !productTypes.trim().isEmpty()) ? productTypes.split(",") : null;
 
-        //to be used for cutouts (in the Service descriptor url query string)
-        String centerColParam = request.getParam(CENTER_COLS);
-        String[] centerCols = (centerColParam != null && !centerColParam.trim().isEmpty()) ? centerColParam.split(",") : null;
         String cutoutValue = request.getParam(CUTOUT_VALUE);
-        String ra = centerCols[0];
-        String dec = centerCols[1];
-
         boolean useSourceUrlFileName= request.getSearchRequest().getBooleanParam(USE_SOURCE_FILE_NAME,false);
 
         try {
             DataGroup[] groups = VoTableReader.voToDataGroups(url.toString(), false);
+
+            String pos = request.getParam(POSITION);
+            Position position = getPosition(pos);
+            String ra, dec;
+
+            ra = ifNotNull(position.centerColValues().ra())
+                    .get(v -> v.equals("null") ? null : v);  // Ensure "null" is treated as null
+
+            dec = ifNotNull(position.centerColValues().dec())
+                    .get(v -> v.equals("null") ? null : v);
+
+            if (ra == null || dec == null) { //if ra dec are null, use center columns to get the lon & lat values from the file
+                String lonCol = position.centerColNames.lonCol(); //for ra/lon
+                String latCol = position.centerColNames.latCol(); //for dec/lat
+                ra = Objects.toString(dgDataUrl.get(idx, lonCol), null);
+                dec = Objects.toString(dgDataUrl.get(idx, latCol), null);
+            }
 
             //to be used for cutout service descriptor url
             String serDefUrl = "";
@@ -214,6 +246,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
                             if (serDefUrls.containsKey(serviceDef)) { //if we have already found this service descriptor url
                                 result = serDefUrls.get(serviceDef);
                             } else { //else, parse this service descriptor to create a product url using access_url and the inputParams
+                                if (ra == null || dec == null || cutoutValue == null) continue; //cannot create service descriptor url
                                 result = createCutoutSerDefUrl(groups, serviceDef, ra, dec, cutoutValue);
                                 serDefUrls.put(serviceDef, result);
                             }
@@ -280,7 +313,6 @@ public class ObsCorePackager extends FileGroupsProcessor {
         }
         return fileInfos;
     }
-
 
     private static boolean testSem(String sem, String val) {
         return (sem!=null && sem.toLowerCase().endsWith(val));
@@ -352,6 +384,21 @@ public class ObsCorePackager extends FileGroupsProcessor {
 
     //the code below parses the service descriptors for cutouts to create a cutout product URL (and to check for a ServDesc containing datalink in non-obscore fileseu)
 
+    private static Position getPosition(String pos) {
+        JSONObject jsonObject = new JSONObject(pos);
+        JSONObject centerColsJson = jsonObject.getJSONObject(CENTER_COL_NAMES);
+        CenterCols centerColNames = new CenterCols(
+                String.valueOf(centerColsJson.get(LON_COL)),
+                String.valueOf(centerColsJson.get(LAT_COL))
+        );
+        JSONObject centerColValuesJson = jsonObject.getJSONObject(CENTER_COL_VALS);
+        CenterColValues centerColValues = new CenterColValues(
+                String.valueOf(centerColValuesJson.get(RA)),
+                String.valueOf(centerColValuesJson.get(DEC))
+        );
+        return new Position(centerColNames, centerColValues);
+    }
+
     private static ServDescUrl createCutoutSerDefUrl(DataGroup[] groups, String serviceDefId, String ra, String dec, String cutoutValue) {
         for (DataGroup dg : groups) {
             for (ResourceInfo ri : dg.getResourceInfos()) {
@@ -422,22 +469,40 @@ public class ObsCorePackager extends FileGroupsProcessor {
                 }
             }
 
+            //if either one of ra/dec/cutoutValue is null, try and find them in inputParams (default value), else return invalid service descriptor
+            boolean raResolved = (ra != null);
+            boolean decResolved = (dec != null);
+            boolean cutoutResolved = (cutoutValue != null);
+
             //Append other valid params (where value is not null or empty) (excluding RA, DEC, CUTOUT)
             for (ParamInfo param : inputParams) {
                 String ucd = param.getUCD();
-                if (isMatch(ucd, CUTOUT_UCDs) || isMatch(ucd, RA_UCDs) || isMatch(ucd, DEC_UCDs)) continue;
-
                 String key = param.getKeyName();
                 String value = param.getStringValue();
+
+                //if ra, dec or cutoutValue is null, check if you can use default vals in the service descriptor
+                if ((isMatch(ucd, RA_UCDs) && raResolved) ||
+                        (isMatch(ucd, DEC_UCDs) && decResolved) ||
+                        (isMatch(ucd, CUTOUT_UCDs) && cutoutResolved)) {
+                    continue; //skip processing for RA, DEC, or CUTOUT if they were provided in the function arguments
+                }
 
                 if (StringUtils.isEmpty(key)) continue;
 
                 if (param.getRef() != null && StringUtils.isEmpty(value)) {
                     missingParams.add(new MissingParam(key, param.getRef()));
-                } else if (value != null && !value.isEmpty()) {
+                } else if (!StringUtils.isEmpty(value)) {
                     queryString.append("&").append(key).append("=").append(value);
+                    //mark RA, DEC, or CUTOUT as resolved if we find a value for them
+                    if (isMatch(ucd, RA_UCDs)) ra = value;
+                    if (isMatch(ucd, DEC_UCDs)) dec = value;
+                    if (isMatch(ucd, CUTOUT_UCDs)) cutoutValue = value;
                 }
             }
+        }
+
+        if (ra == null || dec == null || cutoutValue == null) { //final check, if one of these values is null, cannot create service descriptor url
+            return new ServDescUrl("", Collections.emptyList()); //invalid service descriptor
         }
 
         return new ServDescUrl(accessUrl + "?" + queryString.toString(), missingParams);
@@ -459,15 +524,6 @@ public class ObsCorePackager extends FileGroupsProcessor {
         }
         return false;
     }
-
-
-    record ServDescUrl(String partialUrl, List<MissingParam> missingParams) {
-        public boolean isValid() {
-            return !StringUtils.isEmpty(partialUrl);
-        }
-    }
-
-    record MissingParam(String paramName, String refId) {}
 
     private static ServDescUrl createUrlFromServDesc(String datalinkServDesc) {
         String accessUrl = null;
