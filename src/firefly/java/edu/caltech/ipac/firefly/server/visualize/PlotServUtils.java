@@ -4,7 +4,6 @@
 package edu.caltech.ipac.firefly.server.visualize;
 
 import edu.caltech.ipac.astro.net.TargetNetwork;
-import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.util.Logger;

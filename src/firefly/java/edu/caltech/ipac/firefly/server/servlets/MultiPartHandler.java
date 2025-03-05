@@ -3,7 +3,6 @@
  */
 package edu.caltech.ipac.firefly.server.servlets;
 
-import edu.caltech.ipac.firefly.server.cache.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.multipart.MultiPartData;
 import edu.caltech.ipac.util.StringUtils;

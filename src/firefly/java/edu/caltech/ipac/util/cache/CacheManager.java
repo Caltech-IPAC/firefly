@@ -7,7 +7,7 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.DistribMapCache;
 import edu.caltech.ipac.firefly.server.cache.DistributedCache;
 import edu.caltech.ipac.firefly.server.cache.LocalMapCache;
-import edu.caltech.ipac.firefly.server.cache.UserCache;
+import edu.caltech.ipac.firefly.server.UserCache;
 import edu.caltech.ipac.firefly.server.util.Logger;
 
 import java.util.List;

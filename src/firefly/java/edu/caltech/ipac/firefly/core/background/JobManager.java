@@ -262,12 +262,23 @@ public class JobManager {
             if (info.getPhase() == COMPLETED && !isCompleted) {
                 runningJobs.remove(info.getJobId());
                 if (info.getAuxData().isMonitored()) {
-                    Messenger.publish(new JobCompletedEvent(info));       // notify all instances this job is completed
+                    publishCompleted(info);
                 }
             }
             logJobInfo(info);
         }
     }
+
+    static void publishCompleted(JobInfo jobInfo) {
+        if (jobInfo != null) {
+            BackGroundInfo bgInfo = getBackgroundInfo();
+            if (bgInfo.sendNotif()) {
+                if (isEmpty(jobInfo.getAuxData().getUserInfo().getEmail())) jobInfo.getAuxData().getUserInfo().setEmail(bgInfo.email);
+                Messenger.publish(new JobCompletedEvent(jobInfo));       // notify all instances this job is completed
+            }
+        }
+    }
+    
 
     /**
      * internal method to notify all clients with the updated jobInfo

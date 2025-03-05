@@ -339,7 +339,7 @@ public class StringUtils {
      * @return Returns true is the given string is either null, or an empty string.
      */
     public static boolean isEmpty(String s) {
-        return s == null || s.trim().length() == 0;
+        return s == null || s.trim().isEmpty();
     }
 
     public static boolean isAnyEmpty(String... sAry) {

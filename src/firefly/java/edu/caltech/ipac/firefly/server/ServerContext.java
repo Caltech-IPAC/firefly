@@ -831,7 +831,7 @@ public class ServerContext {
     static class RequestOwnerThreadLocal extends InheritableThreadLocal<RequestOwner> {
         @Override
         protected RequestOwner initialValue() {
-            return new RequestOwner(null, new Date());
+            return new RequestOwner(new Date());
         }
 
         @Override
