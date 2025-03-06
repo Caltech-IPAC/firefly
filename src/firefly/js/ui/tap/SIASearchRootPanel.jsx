@@ -422,7 +422,7 @@ function onSIAv2SearchSubmit(request, serviceUrl, siaMeta, siaState, showErrors=
     const constraints= cAry.map( (f) =>  f.siaConstraints).filter( (c) => c?.length).flat();
 
     if (!constraints.length && !errors.length) {
-        if (showErrors) showInfoPopup('You much enter some search parameters', 'Error');
+        if (showErrors) showInfoPopup('At least one search constraint must be provided', 'Error');
         return false;
     }
 
