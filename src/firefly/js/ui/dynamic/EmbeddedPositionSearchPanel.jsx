@@ -152,7 +152,7 @@ export function EmbeddedPositionSearchPanel({
     const defFormPanelProps= slotProps.formPanel ? {
         help_id: 'embeddedDefaultSearchPanelHelp',
         cancelText:'',
-        completeText:'Submit', groupKey,
+        completeText:'Search', groupKey,
         onError:() => showInfoPopup('Fix errors and search again', 'Error'),
     } : {};
 
