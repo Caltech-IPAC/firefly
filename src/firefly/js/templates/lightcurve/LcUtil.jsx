@@ -208,11 +208,12 @@ export function getMissionEntries(generalEntries, missionEntries,tblColumns){
  */
 export function getMissionInfo(missionEntries, tblModel){
     const converterId = get(missionEntries, LC.META_MISSION);
-    const missionName = getMissionName(converterId) || 'Mission';
+    const missionName = getMissionName(converterId) || 'Unspecified';
 
     const layoutInfo = getLayouInfo();
     const period =  get(layoutInfo, ['periodRange','period'], '');
-    const title = get(tblModel, 'request.uploadFileName','');
+    //const title = get(tblModel, 'request.uploadFileName','');   // this would return empty string for unspecified mission case
+    const title =  get(layoutInfo, 'missionEntries.uploadFileName');
     //if the name is too long, truncates it and displays it as a tip
     const uploadedFileName =( title && title.length>20)?title.substring(0, 20)+'...':title;
     return {missionName, period, title, uploadedFileName};
