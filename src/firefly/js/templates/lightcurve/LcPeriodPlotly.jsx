@@ -22,10 +22,10 @@ import {dispatchActiveTableChanged} from '../../tables/TablesCntlr.js';
 import FieldGroupUtils from '../../fieldGroup/FieldGroupUtils';
 import FieldGroupCntlr, {dispatchMultiValueChange} from '../../fieldGroup/FieldGroupCntlr.js';
 import {getActiveTableId, getColumnIdx, getTblById} from '../../tables/TableUtil.js';
-import {LC, updateLayoutDisplay, getValidValueFrom, getFullRawTable} from './LcManager.js';
+import {LC, updateLayoutDisplay, getValidValueFrom, getFullRawTable, getUploadFileName} from './LcManager.js';
 import {doPFCalculate, getPhase} from './LcPhaseTable.js';
 import {LcPeriodogram, cancelPeriodogram, popupId, startPeriodogramPopup} from './LcPeriodogram.jsx';
-import {getTypeData} from './LcUtil.jsx';
+import {getTypeData, getMissionInfo, getMissionEntries} from './LcUtil.jsx';
 import {LO_VIEW, getLayouInfo,dispatchUpdateLayoutInfo} from '../../core/LayoutCntlr.js';
 import {isDialogVisible, dispatchHideDialog} from '../../core/ComponentCntlr.js';
 import {updateSet} from '../../util/WebUtil.js';
@@ -60,7 +60,8 @@ const fKeyDef = {
     max: {fkey: 'periodMax', label: 'Period Max (day)'},
     tz: {fkey: 'tzero', label: 'Zero Point Time'},
     period: {fkey: 'period', label: 'Period (day)'},
-    tzmax: {fkey: 'tzeroMax', label: ''}
+    tzmax: {fkey: 'tzeroMax', label: ''},
+    uploadedfile: {fkey: 'uploadedFile', label: ''},
 };
 
 const STEP = 1;            // step for slider
@@ -75,6 +76,7 @@ const PERIOD_MIN = 0.0;      // set the period min value at 0, validation for pe
 // min:  minimum period
 // max:  maximum period
 // period: period for phase folding
+// uploadedFile: uploaded filename
 
 const defValues= {
     [fKeyDef.time.fkey]: Object.assign(getTypeData(fKeyDef.time.fkey, '',
@@ -91,7 +93,8 @@ const defValues= {
     [fKeyDef.max.fkey]: Object.assign(getTypeData(fKeyDef.max.fkey, '', 'minimum period in days', 0),
         {validator: null}),
     [fKeyDef.period.fkey]: Object.assign(getTypeData(fKeyDef.period.fkey, '', '', `${fKeyDef.period.label}:`, labelWidth-10),
-        {validator: null})
+        {validator: null}),
+    [fKeyDef.uploadedfile.fkey]: Object.assign(getTypeData(fKeyDef.uploadedfile.fkey, '', 'Uploaded Filename', 0))
 };
 
 const defPeriod = {
@@ -99,12 +102,12 @@ const defPeriod = {
     [fKeyDef.tzmax.fkey]: {value: ''},
     [fKeyDef.min.fkey]: {value: ''},
     [fKeyDef.max.fkey]: {value: ''},
-    [fKeyDef.period.fkey]: {value: ''}
+    [fKeyDef.period.fkey]: {value: ''},
 };
 
 let periodRange;        // period range based on raw table, set based on the row table, and unchangable
 let periodErr;          // error message for period setting
-
+let uploadedFile;        // uploaded filename
 
 function lastFrom(strAry) {
     return strAry.length > 0 ? strAry[strAry.length - 1] : '';
@@ -120,7 +123,8 @@ export class LcPeriodPlotly extends PureComponent {
 
         const layoutInfo = getLayouInfo();
         periodRange = get(layoutInfo, 'periodRange');
-
+        uploadedFile = layoutInfo.missionEntries.uploadFileName;
+        const uploadedFilename =  get(layoutInfo, 'missionEntries.uploadFileName');
         const fields = FieldGroupUtils.getGroupFields(pfinderkey);
         this.state = Object.assign({}, pick(layoutInfo, ['mode']), {displayMode: props.displayMode, fields});
 
@@ -608,6 +612,10 @@ function LcPFOptions({fields}) {
                         <Stack direction='row' spacing={2} alignItems='flexStart' sx={{flexGrow: 1}}>
                             <Typography level='body-sm'> {PERIOD_FINDER_HELP} </Typography>
                             <HelpIcon helpId={'findpTSV.settings'}/>
+                        </Stack>
+                        <Stack direction='row' spacing={2} alignItems='flexStart' sx={{flexGrow: 1}}>
+                            <Typography level='body-sm'>Uploaded Filename: </Typography>
+                            <Typography color='warning'> {uploadedFile} </Typography>
                         </Stack>
                         <Stack {...{direction:'row', spacing:3, sx:{flexGrow:1}}}>
                             <Stack {...{direction:'row', spacing:1}}>

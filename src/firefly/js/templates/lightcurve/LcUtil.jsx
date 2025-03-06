@@ -46,7 +46,7 @@ ReadOnlyText.propTypes = {
  * @param   {object} layoutInfo - the layout of the UI
  * @returns {{converterData: *, missionEntries: (*|{})}}
  */
-export function makeMissionEntries(tableMeta, layoutInfo={}) {
+export function makeMissionEntries(tableMeta, layoutInfo={}, uploadFileName) {
     var converterData = getConverter(get(tableMeta, LC.META_MISSION)) || getConverter();
     var missionEntries = layoutInfo.missionEntries || {};
     Object.assign(missionEntries, {
@@ -57,7 +57,8 @@ export function makeMissionEntries(tableMeta, layoutInfo={}) {
         [LC.META_TIME_NAMES]: get(tableMeta, LC.META_TIME_NAMES, converterData.timeNames),
         [LC.META_FLUX_NAMES]: get(tableMeta, LC.META_FLUX_NAMES, converterData.yNames),
         [LC.META_ERR_NAMES]: get(tableMeta, LC.META_ERR_NAMES, converterData.yErrNames),
-        [LC.META_FLUX_BAND]: get(tableMeta, LC.META_FLUX_BAND, converterData.bandName)
+        [LC.META_FLUX_BAND]: get(tableMeta, LC.META_FLUX_BAND, converterData.bandName),
+        [LC.UPLOAD_FILENAME]: uploadFileName,
     });
     return {converterData, missionEntries};
 }
@@ -121,7 +122,8 @@ export function getInitialDefaultValues(labelWidth, missionName) {
             'Cutout Size (arcmin)', 100)),
         [LC.META_URL_CNAME]: Object.assign(getTypeData(LC.META_URL_CNAME, '',
             'Image url column name',
-            'Source Column', labelWidth))
+            'Source Column', labelWidth)),
+        [LC.UPLOAD_FILENAME]: Object.assign(getTypeData(LC.UPLOAD_FILENAME, ''))
 
     };
 
@@ -206,14 +208,14 @@ export function getMissionEntries(generalEntries, missionEntries,tblColumns){
  */
 export function getMissionInfo(missionEntries, tblModel){
     const converterId = get(missionEntries, LC.META_MISSION);
-    const missionName = getMissionName(converterId) || 'Mission';
+    const missionName = getMissionName(converterId) || 'Unspecified';
 
     const layoutInfo = getLayouInfo();
     const period =  get(layoutInfo, ['periodRange','period'], '');
-    const title = get(tblModel, 'request.uploadFileName','');
+    //const title = get(tblModel, 'request.uploadFileName','');   // this would return empty string for unspecified mission case
+    const title =  get(layoutInfo, 'missionEntries.uploadFileName');
     //if the name is too long, truncates it and displays it as a tip
     const uploadedFileName =( title && title.length>20)?title.substring(0, 20)+'...':title;
-
     return {missionName, period, title, uploadedFileName};
 }
 

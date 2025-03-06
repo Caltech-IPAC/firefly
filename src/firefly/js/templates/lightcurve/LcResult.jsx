@@ -78,7 +78,7 @@ export class LcResult extends PureComponent {
         const content = {};
         const cutoutSize = convertData?.noImageCutout ? undefined : generalEntries.cutoutSize ?? 5;
         const cutoutSizeInDeg = convertAngle('arcmin','deg', cutoutSize).toString();
-        const mission = getMissionName(converterId) || 'Mission';
+        const mission = getMissionName(converterId) || 'Unspecified';
         var visToolbar;
         if (showImages) {
             content.imagePlot = (<LcImageViewerContainer key='res-images'
