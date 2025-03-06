@@ -68,7 +68,7 @@ public class FitsRead implements Serializable, HasSizeOf {
         this.planeNumber = cube ? planeNumber : 0;
         this.cube = cube;
         this.hduNumber = header.getIntValue(SPOT_EXT, 0);
-        this.bunit= hdu.getBUnit()!=null ? hdu.getBUnit() : "DN";
+        this.bunit= hdu.getBUnit()!=null ? hdu.getBUnit() : "---";
 
         if (deferredRead && tileCompress) {
             throw new IllegalArgumentException("FitsRead cannot do deferred readying with compressed images ");
