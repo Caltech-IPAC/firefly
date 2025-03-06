@@ -1,0 +1,7 @@
+services:
+ healpy :
+    image: healpy-app:${BUILD_TAG:-latest}  # value taken from shell, or latest
+    build: .
+    command: bash 
+    volumes:
+      - .:/app
