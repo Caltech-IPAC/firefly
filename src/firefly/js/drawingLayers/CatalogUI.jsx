@@ -170,7 +170,11 @@ function changeVisibilityScope(drawLayer,pv,value) {
 
 function showHpxOptions(drawLayer) {
     const groupOp= [];
-    for(let i= 5; i<=75;i+=5) groupOp.push({label:i+'', value:i});
+    const {minGroupSize=10}= drawLayer ?? {};
+    for(let i= 10; i<=165;i+=10) {
+        groupOp.push({label:i+'', value:i});
+        if (minGroupSize>i && minGroupSize<i+10) groupOp.push({label:minGroupSize+'', value:minGroupSize});
+    }
 
     const groupTypeOp= [
         {label: 'Ellipse', value: ELLIPSE_GROUP_TYPE},
@@ -204,7 +208,7 @@ function showHpxOptions(drawLayer) {
             {!heatmap && <ListBoxInputFieldView
                 label='Min Group' tooltip='Choose min grouping'
                 sx={{minWidth: '10rem'}}
-                options={groupOp} value={drawLayer.minGroupSize}
+                options={groupOp} value={minGroupSize}
                 onChange={(ev, newValue) => {
                     dispatchModifyCustomField(drawLayer.drawLayerId, {minGroupSize:newValue});
                     AppDataCntlr.dispatchAddPreference(HPX_MIN_GROUP_PREF,newValue);
