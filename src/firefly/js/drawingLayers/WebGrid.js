@@ -66,7 +66,7 @@ function creator(params) {
         destroyWhenAllUserDetached: true,
     };
     
-    return DrawLayer.makeDrawLayer( id, TYPE_ID, 'Grid', options , drawingDef, [ImagePlotCntlr.UPDATE_VIEW_SIZE, UPDATE_GRID ]);
+    return DrawLayer.makeDrawLayer( id, TYPE_ID, 'Coordinate Grid', options , drawingDef, [ImagePlotCntlr.UPDATE_VIEW_SIZE, UPDATE_GRID ]);
 }
 
  /**
