@@ -132,7 +132,7 @@ const newBgKey = () => 'DownloadOptionPanel-' + Date.now();
 export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, help_id, children, style, title, dlParams,
                                          updateSearchRequest, updateDownloadRequest, validateOnSubmit,
                                          cancelText='Cancel', showZipStructure=true, showEmailNotify=false,
-                                         showFileLocation=true, showTitle=true, downloadType='package', ...props}) {
+                                         showFileLocation=true, showTitle=true, downloadType='package', saveAsProps={}, ...props}) {
     const {tbl_id:p_tbl_id, checkSelectedRow} = React.useContext(OptionsContext);
     const tbl_id = props.tbl_id || p_tbl_id;
 
@@ -190,10 +190,11 @@ export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, hel
     const maskPanel = (<BgMaskPanel key={bgKey} componentKey={bgKey}
                                    onMaskComplete={() =>hideDownloadDialog()}/>);
 
-    const saveAsProps = {
+    saveAsProps = {
         initialState: {
             value: get(dlParams, 'BaseFileName')
-        }
+        },
+        ...saveAsProps
     };
     const dlTitle = get(dlParams, 'TitlePrefix', 'Download') + '-' + dlTitleIdx;
     const preTitleMessage = dlParams?.PreTitleMessage ?? '';

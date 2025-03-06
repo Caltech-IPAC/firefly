@@ -256,7 +256,7 @@ function showDatalinkTable() {
     const table= getTblById(getActiveTableId());
     if (!table) return;
     const row= table.highlightedRow;
-    extractDatalinkTable(table,row,`Products (row ${row})`);
+    extractDatalinkTable(table,row,table.title + `: Products row ${row+1}`); //row+1 for better UX for user (since row is 0 based)
 }
 
 function canShowDatalinkTable(table) {
