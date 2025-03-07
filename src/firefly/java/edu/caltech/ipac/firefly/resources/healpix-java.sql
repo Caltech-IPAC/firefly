@@ -13,8 +13,8 @@ AS
 	((128 & i) << 7)  -- Check bit 7 and shift
 ;
 
--- java's >>> bitwise shift for int64
-CREATE OR REPLACE FUNCTION rightShift(v, n) AS (v >> n) & ((1::LONG << (64 - n)) - 1);
+-- java's >>> unsigned bitwise right shift for int64
+CREATE OR REPLACE FUNCTION uRightShift(v, n) AS (v >> n) & ((1::LONG << (64 - n)) - 1);
 
 -- Return remainder of the division v1/v2; positive and smaller than v2
 -- v1 dividend; can be positive or negative
@@ -36,8 +36,8 @@ CREATE OR REPLACE FUNCTION rightShift(v, n) AS (v >> n) & ((1::LONG << (64 - n))
 --     END
 -- );
 
--- original code uses >>>, but our rightShift() replacement is slow.
--- will use >> instead, assuming v is never negative.
+-- original code uses >>>, but our uRightShift() replacement is slow.
+-- for optimal performance, we will use >> instead, assuming v is never negative.
 CREATE OR REPLACE FUNCTION spread_bits(v)
 AS (
     SELECT (
@@ -86,8 +86,8 @@ AS (
         SELECT
             jp,
             jm,
-            jp >> n_order AS ifp,                   -- in {0,4}
-            jm >> n_order AS ifm
+            uRightShift(jp, n_order) AS ifp,                   -- in {0,4}
+            uRightShift(jm, n_order) AS ifm
         FROM equ_2
     ),
     equ_f AS (
