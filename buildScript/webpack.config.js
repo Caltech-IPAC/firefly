@@ -173,8 +173,9 @@ export default function makeWebpackConfig(config) {
             use: ['@svgr/webpack'],
         },
         {
-            test: /\.(png|jpg|gif)$/,
-            type: 'asset/inline'
+            test: /\.(png|jpg|gif|webp)$/,
+            // webpack will automatically choose 'asset/inline' (data URI) for <8KB and 'asset/resource' (file path) otherwise
+            type: 'asset', // see https://webpack.js.org/guides/asset-modules/#general-asset-type
         }
     ];
 
