@@ -1,6 +1,6 @@
 # Notes for next Release
 
-## Version 2025.3
+## Version 2025.2
 - 2025.2.0 - (March xx, 2025???), planned _docker tag_: `2025.2`, `2025.2.0`, `latest`
 
 
