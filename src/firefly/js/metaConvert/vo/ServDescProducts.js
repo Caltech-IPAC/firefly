@@ -5,7 +5,6 @@ import {makeCircleString} from '../../ui/dynamic/DynamicUISearchPanel';
 import {isSIAStandardID} from '../../ui/dynamic/ServiceDefTools';
 import {findCutoutTarget, getCutoutErrorStr, getCutoutSize, setCutoutSize} from '../../ui/tap/Cutout';
 import {PlotAttribute} from '../../visualize/PlotAttribute';
-import {isObsCoreLike} from '../../voAnalyzer/TableAnalysis';
 import {CUTOUT_UCDs, DEC_UCDs, RA_UCDs} from '../../voAnalyzer/VoConst';
 
 import {findWorldPtInServiceDef, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
