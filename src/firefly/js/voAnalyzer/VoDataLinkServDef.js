@@ -250,8 +250,8 @@ export function isAnalysisTableDatalink(report) {
 }
 
 export function findWorldPtInServiceDef(serDef,sourceRow) {
-    if (!serDef) return;
-    const {serDefParams,sdSourceTable, dataLinkTableRowIdx} = serDef;
+    const {serDefParams,sdSourceTable, dataLinkTableRowIdx} = serDef ?? {};
+    if (!serDefParams || !sdSourceTable) return;
     const raParam= serDefParams.find( ({UCD=''}) =>
         RA_UCDs.find( (testUcd) => UCD.toLowerCase().includes(testUcd)) );
     const decParam= serDefParams.find( ({UCD=''}) =>
@@ -262,7 +262,6 @@ export function findWorldPtInServiceDef(serDef,sourceRow) {
     let decVal= decParam.value;
 
     if (raVal && decVal) return makeWorldPt(raVal,decVal);
-    if (!sdSourceTable) return;
 
     const hasDLTable= isDatalinkTable(sdSourceTable);
     const hasDLRow= isDefined(dataLinkTableRowIdx);
