@@ -150,8 +150,9 @@ const PrepareDownload = () => {
     //this will be null if no datalink service descriptor is found, else it will return the access url and input params from the service descriptor
     const datalinkServDesc = useStoreConnector(() => checkForDatalinkServDesc(tblModel));
 
+    if (!tblModel?.totalRows) return;
     let ra = cutoutTargetVals?.positionWP?.x;
-    let dec = cutoutTargetVals?.positionWP.y;
+    let dec = cutoutTargetVals?.positionWP?.y;
 
     if (cutoutTargetVals.foundType === ROW_POSITION) {
         //server side should use center cols to get ra/dec from the file if user selects this option

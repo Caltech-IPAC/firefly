@@ -1,13 +1,29 @@
 # Notes for next Release
 
 ## Version 2024.3 (unreleased, rough target: Oct 8)
-- 2025.2 - development
-  - docker tag: `nightly`
 
+## Version 2025.2
+- 2025.1.1 - (March 10, 2025),  _docker tag_: `2025.2`, `2025.2.0`, `latest`
 
 ### _Notes_
-This will be a smaller release
 
+### _Notes_
+#### put description here
+
+#### Major Features
+- Improved datalink cutout handling- Firefly-1666([PR](https://github.com/Caltech-IPAC/firefly/pull/1717)), Firefly-1662 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1715))
+- Healpix catalog display will even larger tables (50 million or more)- Firefly-1661 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1713))
+
+#### Not user facing
+- Improved job completion framework- Firefly-1609([PR](https://github.com/Caltech-IPAC/firefly/pull/1719)), 
+
+#### Bug fix
+- Better Simbad search errors- IRSA-6654 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1714))
+- Fixed multiple MOC issues- Firefly-1663 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1716))
+
+
+### _Patches 2025.1_
+_initial release_
                                         
 ##### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2025.2+label%3abug)
