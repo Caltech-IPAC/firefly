@@ -4,9 +4,9 @@
 
 
 import React, {useEffect} from 'react';
-import PropTypes, {element, node, object, shape, string} from 'prop-types';
+import PropTypes, {node, object, shape, string} from 'prop-types';
 import {Divider, Typography} from '@mui/joy';
-import {cloneDeep} from 'lodash/lang.js';
+import {cloneDeep, defaultsDeep} from 'lodash';
 
 import {
     dispatchSetMenu,
@@ -153,69 +153,94 @@ function closeExpanded() {
     dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
 }
 
-export function HydraLanding({icon, title, desc, bgImage, slotProps={}, ...props} ) {
+const HydraAppBranding = ({title, desc}) => (
+    <Stacker direction='column' alignItems='start'>
+        <Typography level='h4'>{title || 'Welcome message here'}</Typography>
+        <Typography level='body-md'>{desc || 'Additional description of this application'}</Typography>
+    </Stacker>
+);
 
-    const Greetings = () => (
-        <Stacker startDecorator={icon} direction='column' alignItems='start'>
-            <Typography level='h4'>{title || 'Welcome message here'}</Typography>
-            <Typography level='body-md'>{desc || 'Additional description of this application'}</Typography>
-        </Stacker>
-    );
+const defaultCommonProps = ({title, desc}) => ({
+    bgMonitorHint: { sx: { right: 50 } },
+    topSection: { title, desc }
+});
 
-    const mSlotProps = cloneDeep(slotProps || {});
-    setIfUndefined(mSlotProps,'bgMonitorHint.sx.right', 50);
 
-    if (bgImage) {
-        setIfUndefined(mSlotProps, 'bgContainer', {
-            // TODO: move it to Landing page?
-            sx: {backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center',},
-        });
-        setIfUndefined(mSlotProps, 'contentSection.sx', (theme) => {
+const defaultPropsWithoutBgImage = ({icon}) => ({
+    contentSection: { sx: { maxWidth: '80rem', mx: 'auto' } },
+    topSection: { component: HydraAppBranding }, // use custom topSection instead of DefaultAppBranding
+    bottomSection: { icon }
+});
+
+const defaultPropsWithBgImage = ({bgImage}) => ({
+    // visually combine topSection & bottomSection into contentSection that can contrast with the bgContainer
+    bgContainer: {
+        sx: {
+            display: 'flex', flexGrow: 1,
+            backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center'
+        }
+    },
+    contentSection: {
+        sx: (theme) => {
             // background image will remain same in both the theme modes, and we need text to contrast with the image,
-            // so we create a dark overlay and put text over it as if it's dark theme
+            // so we create a translucent dark overlay and put text over it as if it's dark theme
             const darkPalette = theme.colorSchemes.dark.palette;
             return {
                 maxWidth: '56rem', m: 'auto',
-                backgroundColor: hexColorWithAlpha(darkPalette.background.surface.split(', ')?.[1]?.slice(0,-1) ?? '#000', 0.6),
-                backdropFilter: 'blur(1px)', // for glass-effect
-                '.MuiTypography-body-md, .MuiTypography-body-lg' : {color: darkPalette.text.secondary},
-                '.MuiTypography-h2': {color: darkPalette.text.primary},
-                '.MuiTypography-colorPrimary': {color: `rgb(${darkPalette.primary.mainChannel})`},
-                '.MuiDivider-root': {backgroundColor: darkPalette.neutral.solidBg},
+                backgroundColor: hexColorWithAlpha(darkPalette.background.surface.split(', ')?.[1]?.slice(0, -1) ?? '#000', 0.6),
+                backdropFilter: 'blur(1px)',
+                '.MuiTypography-body-md, .MuiTypography-body-lg': { color: darkPalette.text.secondary },
+                '.MuiTypography-h2': { color: darkPalette.text.primary },
+                '.MuiTypography-colorPrimary': { color: `rgb(${darkPalette.primary.mainChannel})` },
+                '.MuiDivider-root': { backgroundColor: darkPalette.neutral.solidBg }
             };
-        });
-        setIfUndefined(mSlotProps, 'contentSection.divider', (<Divider sx={{width: '4rem', alignSelf: 'center'}}/>));
-        // TODO: need to adjust top section vs greetings logic
-        setIfUndefined(mSlotProps, 'topSection.appTitle', title);
-        setIfUndefined(mSlotProps, 'topSection.appDescription', desc);
-        setIfUndefined(mSlotProps, 'bottomSection', {icon: false, slotProps: {
-            root: {sx: {py: 4, pb: 0, backgroundColor: 'transparent'}}
-        }});
+        },
+        divider: <Divider sx={{ width: '4rem', alignSelf: 'center' }} />
+    },
+    bottomSection: {
+        icon: false, // to prevent default being applied (on undefined)
+        slotProps: {
+            root: { sx: { py: 4, pb: 0, backgroundColor: 'transparent' } }
+        }
     }
-    else {
-        setIfUndefined(mSlotProps, 'topSection.component', Greetings);      // use custom topSection
-        setIfUndefined(mSlotProps, 'contentSection.sx', {maxWidth: '80em', mx: 'auto'});   // limit page's width
-    }
+});
+
+
+export function HydraLanding({icon, title, desc, bgImage, slotProps={}, ...props} ) {
+    const mSlotProps = cloneDeep(slotProps);
+    defaultsDeep(mSlotProps, defaultCommonProps({title, desc}));
+
+    bgImage
+        ? defaultsDeep(mSlotProps, defaultPropsWithBgImage({bgImage}))
+        : defaultsDeep(mSlotProps, defaultPropsWithoutBgImage({icon}));
 
     return <LandingPage slotProps={mSlotProps} {...props}/>;
 }
 
 HydraLanding.propTypes = {
-    icon: element,
+    icon: node,
     title: string,
     desc: node,
+    bgImage: string,
     ...LandingPage.propTypes,
 };
 
 
 export function applyLayoutFix({slotProps, props}) {
     const mSlotProps = cloneDeep(slotProps || {});
+    defaultsDeep(mSlotProps, {
+        banner: {
+            slotProps: {
+                // Adjust banner for appIcon
+                icon: {
+                    style: { marginTop: -40 }, // Won't take precedence if defined in sx
+                    sx: { color: 'primary.softActiveColor' } // Same as active tab's font color
+                },
+                tabs: { pl: '120px' }
+            }
+        },
+        landing: { title: props?.appTitle }
+    });
 
-    // adjust banner for appIcon
-    setIfUndefined(mSlotProps,'banner.slotProps.icon.style.marginTop', -40); //won't take precedence if defined in sx
-    setIfUndefined(mSlotProps,'banner.slotProps.icon.sx', {color: 'primary.softActiveColor'}); //same as active tab's font color
-    setIfUndefined(mSlotProps,'banner.slotProps.tabs.pl', '120px');
-
-    setIfUndefined(mSlotProps,'landing.title', props?.appTitle);
     return mSlotProps;
 }

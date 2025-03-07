@@ -24,7 +24,7 @@ export function LandingPage({slotProps={}, sx, ...props}) {
     const defSlotProps = {
         tabsMenuHint: {appTitle, id: APP_HINT_IDS.TABS_MENU, hintText: 'Choose a tab to search for or upload data.', sx: { left: '16rem' }},
         bgMonitorHint: {appTitle, id: APP_HINT_IDS.BG_MONITOR, hintText: 'Load job results from background monitor', tipPlacement: 'end', sx: { right: 8 }},
-        topSection: { appTitle },
+        topSection: { title: `Welcome to ${appTitle}` },
         bottomSection: {
                 icon: <QueryStats sx={{ width: '6rem', height: '6rem' }} />,
                 text: 'Getting Started',
@@ -57,7 +57,7 @@ export function LandingPage({slotProps={}, sx, ...props}) {
                 },
             }}>
                 <Stack justifyContent='space-between' width={1} spacing={1}>
-                    <Box display={'flex'} flexGrow={1} {...slotProps?.bgContainer}>
+                    <Box {...slotProps?.bgContainer}>
                         <Stack spacing={2} width={1} px={4} py={3} {...slotProps?.contentSection}>
                             <Slot component={DefaultAppBranding} {...defSlotProps.topSection} slotProps={slotProps?.topSection}/>
                             <Slot component={EmptyResults} {...defSlotProps.bottomSection} slotProps={slotProps?.bottomSection}/>
@@ -71,11 +71,11 @@ export function LandingPage({slotProps={}, sx, ...props}) {
 }
 
 
-function DefaultAppBranding({appTitle, appDescription}) {
+function DefaultAppBranding({title, desc}) {
     return (
         <Stack spacing={.25} alignItems='center'>
-            <Typography fontSize='xl3' color='neutral'>{`Welcome to ${appTitle}`}</Typography>
-            {appDescription && <Typography level={'body-md'}>{appDescription}</Typography>}
+            <Typography fontSize='xl3' color='neutral'>{title}</Typography>
+            {desc && <Typography level='body-md' textAlign='center'>{desc}</Typography>}
         </Stack>
     );
 }
@@ -201,8 +201,8 @@ LandingPage.propTypes = {
 
 
 DefaultAppBranding.propTypes = {
-    appTitle: string,
-    appDescription: string,
+    title: string,
+    desc: string,
 };
 
 
