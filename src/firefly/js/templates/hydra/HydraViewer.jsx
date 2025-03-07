@@ -5,7 +5,7 @@
 
 import React, {useEffect} from 'react';
 import PropTypes, {element, node, object, shape, string} from 'prop-types';
-import {Typography} from '@mui/joy';
+import {Divider, Typography} from '@mui/joy';
 import {cloneDeep} from 'lodash/lang.js';
 
 import {
@@ -32,6 +32,7 @@ import {LandingPage} from 'firefly/templates/fireflyviewer/LandingPage.jsx';
 import {Stacker} from 'firefly/ui/Stacker.jsx';
 import {setIf as setIfUndefined} from 'firefly/util/WebUtil.js';
 import {handleInitialAppNavigation} from 'firefly/templates/common/FireflyLayout';
+import {hexColorWithAlpha} from 'firefly/util/Color';
 
 
 /*
@@ -152,7 +153,7 @@ function closeExpanded() {
     dispatchSetLayoutMode(LO_MODE.expanded, LO_VIEW.none);
 }
 
-export function HydraLanding({icon, title, desc, slotProps={}, ...props} ) {
+export function HydraLanding({icon, title, desc, bgImage, slotProps={}, ...props} ) {
 
     const Greetings = () => (
         <Stacker startDecorator={icon} direction='column' alignItems='start'>
@@ -163,8 +164,38 @@ export function HydraLanding({icon, title, desc, slotProps={}, ...props} ) {
 
     const mSlotProps = cloneDeep(slotProps || {});
     setIfUndefined(mSlotProps,'bgMonitorHint.sx.right', 50);
-    setIfUndefined(mSlotProps,'topSection.component', Greetings);      // use custom topSection
-    setIfUndefined(mSlotProps,'contentSection.sx', {maxWidth: '80em', mx: 'auto'});   // limit page's width
+
+    if (bgImage) {
+        setIfUndefined(mSlotProps, 'bgContainer', {
+            // TODO: move it to Landing page?
+            sx: {backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center',},
+        });
+        setIfUndefined(mSlotProps, 'contentSection.sx', (theme) => {
+            // background image will remain same in both the theme modes, and we need text to contrast with the image,
+            // so we create a dark overlay and put text over it as if it's dark theme
+            const darkPalette = theme.colorSchemes.dark.palette;
+            return {
+                maxWidth: '56rem', m: 'auto',
+                backgroundColor: hexColorWithAlpha(darkPalette.background.surface.split(', ')?.[1]?.slice(0,-1) ?? '#000', 0.6),
+                backdropFilter: 'blur(1px)', // for glass-effect
+                '.MuiTypography-body-md, .MuiTypography-body-lg' : {color: darkPalette.text.secondary},
+                '.MuiTypography-h2': {color: darkPalette.text.primary},
+                '.MuiTypography-colorPrimary': {color: `rgb(${darkPalette.primary.mainChannel})`},
+                '.MuiDivider-root': {backgroundColor: darkPalette.neutral.solidBg},
+            };
+        });
+        setIfUndefined(mSlotProps, 'contentSection.divider', (<Divider sx={{width: '4rem', alignSelf: 'center'}}/>));
+        // TODO: need to adjust top section vs greetings logic
+        setIfUndefined(mSlotProps, 'topSection.appTitle', title);
+        setIfUndefined(mSlotProps, 'topSection.appDescription', desc);
+        setIfUndefined(mSlotProps, 'bottomSection', {icon: false, slotProps: {
+            root: {sx: {py: 4, pb: 0, backgroundColor: 'transparent'}}
+        }});
+    }
+    else {
+        setIfUndefined(mSlotProps, 'topSection.component', Greetings);      // use custom topSection
+        setIfUndefined(mSlotProps, 'contentSection.sx', {maxWidth: '80em', mx: 'auto'});   // limit page's width
+    }
 
     return <LandingPage slotProps={mSlotProps} {...props}/>;
 }

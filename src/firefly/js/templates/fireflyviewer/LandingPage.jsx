@@ -1,6 +1,6 @@
-import {Button, Divider, Sheet, Snackbar, Stack, Typography} from '@mui/joy';
+import {Box, Button, Divider, Sheet, Snackbar, Stack, Typography} from '@mui/joy';
 import React, {useContext, useState} from 'react';
-import {elementType, shape, object, string, arrayOf, element, oneOf} from 'prop-types';
+import {elementType, shape, object, string, arrayOf, oneOf, node} from 'prop-types';
 import QueryStats from '@mui/icons-material/QueryStats';
 import TipsAndUpdates from '@mui/icons-material/TipsAndUpdates';
 
@@ -29,7 +29,6 @@ export function LandingPage({slotProps={}, sx, ...props}) {
                 icon: <QueryStats sx={{ width: '6rem', height: '6rem' }} />,
                 text: 'Getting Started',
                 subtext: undefined,
-                // subtext: undefined,
                 summaryText: 'Visualizations of the results will appear in this tab',
                 actionItems: [
                     { text: 'Search for data', subtext: 'using the tabs above' },
@@ -57,11 +56,13 @@ export function LandingPage({slotProps={}, sx, ...props}) {
                     dispatchShowDropDown({view:fileDropEventAction, initArgs: {searchParams: {dropEvent: newEv}}});
                 },
             }}>
-                <Stack justifyContent='space-between' width={1}>
-                    <Stack spacing={2} width={1} px={4} py={3} {...slotProps?.contentSection}>
-                        <Slot component={DefaultAppBranding} {...defSlotProps.topSection} slotProps={slotProps?.topSection}/>
-                        <Slot component={EmptyResults} {...defSlotProps.bottomSection} slotProps={slotProps?.bottomSection}/>
-                    </Stack>
+                <Stack justifyContent='space-between' width={1} spacing={1}>
+                    <Box display={'flex'} flexGrow={1} {...slotProps?.bgContainer}>
+                        <Stack spacing={2} width={1} px={4} py={3} {...slotProps?.contentSection}>
+                            <Slot component={DefaultAppBranding} {...defSlotProps.topSection} slotProps={slotProps?.topSection}/>
+                            <Slot component={EmptyResults} {...defSlotProps.bottomSection} slotProps={slotProps?.bottomSection}/>
+                        </Stack>
+                    </Box>
                     {footer ? footer : undefined}
                 </Stack>
             </FileDropZone>
@@ -80,7 +81,7 @@ function DefaultAppBranding({appTitle, appDescription}) {
 }
 
 
-function EmptyResults({icon, text, subtext, summaryText, actionItems}) {
+function EmptyResults({icon, text, subtext, summaryText, actionItems, slotProps}) {
     const renderActionItem = ({text, subtext}) => (
         <Stack spacing={.5} alignItems='center'>
             <Typography level={'title-lg'} color={'primary'}>{text}</Typography>
@@ -89,7 +90,7 @@ function EmptyResults({icon, text, subtext, summaryText, actionItems}) {
     );
 
     return (
-        <Sheet variant='soft' sx={{pt: 8, pb: 4, px: 2}}>
+        <Sheet variant='soft' sx={{pt: 8, pb: 4, px: 2}} {...slotProps?.root}>
             <Stack spacing={10} alignItems='center'>
                 <Stack spacing={Boolean(subtext) ? 6 : 3}>
                     <Stack spacing={2} alignItems='center'>
@@ -194,6 +195,7 @@ LandingPage.propTypes = {
             ...EmptyResults.propTypes,      // defaults to EmptyResults.propTypes
         }),
         contentSection: object,
+        bgContainer: object,
     })
 };
 
@@ -205,13 +207,14 @@ DefaultAppBranding.propTypes = {
 
 
 EmptyResults.propTypes = {
-    icon: element,
+    icon: node,
     text: string,
     subtext: string,
     actionItems: arrayOf(shape({
         text: string,
         subtext: string
-    }))
+    })),
+    slotProps: object,
 };
 
 

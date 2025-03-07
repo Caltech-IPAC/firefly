@@ -13,6 +13,8 @@ export const toRGB= (color) => chroma.valid(color) ? chroma(color).rgb() : [0,0,
  */
 export const getRGBA= (color)  => chroma.valid(color) ? chroma(color).rgba() : [0,0,0,1];
 
+export const hexColorWithAlpha = (color, alpha) => chroma.valid(color) ? chroma(color).alpha(alpha).hex() : color;
+
 
 export const brighter = (colorStr,level=1) =>
     chroma.valid(colorStr) ? chroma(colorStr).brighten(level).toString() : undefined;
