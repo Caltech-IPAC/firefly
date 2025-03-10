@@ -182,7 +182,7 @@ public class WebsocketConnector implements ServerEventQueue.EventConnector {
                             if (!l.contains(q.getConnID())) l.add(q.getConnID());
                         });
                 FluxAction action = new FluxAction(type, connInfo);
-                ServerEventManager.fireAction(action, ServerEvent.Scope.SELF);
+                ServerEventManager.fireAction(action, new ServerEvent.EventTarget(ServerEvent.Scope.SELF, seq.getConnID(), null, null));
             }
         }
     }
