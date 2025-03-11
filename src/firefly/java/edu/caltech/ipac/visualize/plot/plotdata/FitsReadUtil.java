@@ -4,6 +4,7 @@
 
 package edu.caltech.ipac.visualize.plot.plotdata;
 
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.visualize.VisUtil;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
@@ -288,6 +289,19 @@ public class FitsReadUtil {
 
     }
 
+    public static float[] dataArrayFromHDUAndPlane(File file, int hduNumber, int planeNumber) {
+        try (Fits fits = new Fits(file)) {
+            BasicHDU<?> hdu= fits.read()[hduNumber];
+            if (!(hdu instanceof ImageHDU)) return null;
+            var h= hdu.getHeader();
+            return (float [])dataArrayFromFitsFile((ImageHDU)hdu, 0,0,getNaxis1(h),getNaxis2(h), planeNumber,Float.TYPE);
+        }
+        catch (Exception e) {
+            Logger.getLogger("FitsRead").error(e,"Could not read FITS data");
+            return null;
+        }
+    }
+
     /**
      * This returns a 1d array of double.  This is not interchangable with getImageHDUDataInFloatArray. It is used
      * mostly for tables and if not as efficent.
@@ -414,6 +428,10 @@ public class FitsReadUtil {
         } catch (IOException ignore) {
         }
     }
+
+
+
+
 
     /**
      *

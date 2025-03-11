@@ -45,9 +45,8 @@ public class DirectStretchUtils {
     public static StretchDataInfo getStretchDataMask(PlotState state, ActiveFitsReadGroup frGroup, int tileSize, long maskBits)
             throws Exception {
         FitsRead fr= frGroup.getFitsRead(state.firstBand());
-        float [] float1d= fr.getRawFloatAry();
+        float [] flip1d= fr.getRawFloatAryFlipped(false);
         StretchVars sv= getStretchVars(fr,tileSize, CompressType.FULL);
-        float [] flip1d= flipFloatArray(float1d,sv.totWidth,sv.totHeight);
         List<ImageMask> maskList=  new ArrayList<>();
 
         for(int j= 0; (j<31); j++) {
@@ -63,12 +62,12 @@ public class DirectStretchUtils {
     private static StretchDataInfo getStretchStandard(PlotState state, FitsRead fr, int tileSize, CompressType ct)
             throws Exception {
         StretchVars sv= getStretchVars(fr,tileSize, ct);
-        float [] float1d= fr.getRawFloatAry();
-        float [] flip1d= flipFloatArray(float1d,sv.totWidth,sv.totHeight);
+        float [] flip1d= fr.getRawFloatAryFlipped(true);
         RangeValues rv= state.getRangeValues();
+        Histogram histogram= fr.getHistogram();
 
         var sTileList = doTileStretch(sv,tileSize, StretchStandardTile::new,
-                (stdef, strContainer) -> () -> strContainer.stretch(stdef, rv, flip1d,fr.getHeader(),fr.getHistogram()) );
+                (stdef, strContainer) -> () -> strContainer.stretch(stdef, rv, flip1d,fr.getHeader(),histogram) );
         return buildStandardResult(sTileList,rv,sv.totWidth,sv.totHeight,ct);
     }
 
@@ -153,11 +152,11 @@ public class DirectStretchUtils {
 
     private static void invokeList(List<Callable<Void>> taskList) throws Exception {
         if (taskList.size()==1) {
-            taskList.get(0).call();
+            taskList.getFirst().call();
         }
         else {
             var results= exeService.invokeAll(taskList);
-            if (results.stream().filter(Future::isCancelled).toList().size()>0) {
+            if (!results.stream().filter(Future::isCancelled).toList().isEmpty()) {
                 throw new InterruptedException("Not all tiles completed");
             }
         }
@@ -206,7 +205,7 @@ public class DirectStretchUtils {
         for(Band band : bands) {
             FitsRead bandFr= frGroup.getFitsRead(band);
             idx= band.getIdx();
-            float1dAry[idx] = flipFloatArray(bandFr.getRawFloatAry(),totWidth,totHeight);
+            float1dAry[idx] = bandFr.getRawFloatAryFlipped(false);
             imHeadAry[idx]= new ImageHeader(bandFr.getHeader());
             histAry[idx]= bandFr.getHistogram();
         }

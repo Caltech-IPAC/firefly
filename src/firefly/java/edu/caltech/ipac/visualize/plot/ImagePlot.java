@@ -22,7 +22,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * This is the major subclass implementation of Plot.  This class plots fits data.
+ * This class is now only used for creating PNG file, not for interactive visualization
  * @author Trey Roby
  */
 public class ImagePlot implements Serializable {

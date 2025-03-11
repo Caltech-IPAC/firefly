@@ -58,8 +58,7 @@ public class FitsReadFactory {
             else {
                 planeNumber++;
             }
-            File file= cube ? f : null;
-            fitsReadAry[i]= new FitsRead(lastHdu, zeroHeader, file, clearHdu, cube, cube?planeNumber:0);
+            fitsReadAry[i]= new FitsRead(lastHdu, zeroHeader, f, clearHdu, cube, cube?planeNumber:0);
         }
         return fitsReadAry;
     }
