@@ -15,6 +15,7 @@
 - Healpix catalog display will even larger tables (50 million or more)- Firefly-1661 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1713))
 - Readout options are saved as preferences- Firefly-1660 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1707))
 - Target Panel: example clickable- Firefly-441 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1696))
+- Time Series: Now shows loaded file name in period finder- IRSA-4725 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1721))
 
 #### Not user facing
 - Improved job completion framework- Firefly-1609([PR](https://github.com/Caltech-IPAC/firefly/pull/1719)),
