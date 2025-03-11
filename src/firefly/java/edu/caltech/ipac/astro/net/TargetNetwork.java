@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.astro.net;
 
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.download.FailedRequestException;
@@ -18,7 +19,7 @@ import static edu.caltech.ipac.astro.net.Resolver.UNKNOWN;
 public class TargetNetwork {
 
     public final static int TWO_MONTHS= 60 * 86400;
-    private final static Cache objCache= CacheManager.getLocal();
+    private final static Cache objCache= getLocalCache();
 
     public static ResolvedWorldPt resolveToWorldPt(String objName, Resolver resolver) {
         if (resolver==null || resolver==UNKNOWN || resolver==NONE) {
@@ -61,6 +62,15 @@ public class TargetNetwork {
             return (a!=null) ? a.getWorldPt() : null;
         } catch (FailedRequestException e) {
             return null;
+        }
+    }
+
+    private static Cache<?> getLocalCache() {
+        try {
+            return CacheManager.getLocal();
+        } catch (Throwable e) {
+            Logger.warn("Could not get cache, this is normal when running test");
+            return new CacheManager.EmptyCache();
         }
     }
 }

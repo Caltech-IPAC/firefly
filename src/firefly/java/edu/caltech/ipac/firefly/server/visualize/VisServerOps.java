@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
@@ -69,6 +70,10 @@ public class VisServerOps {
     static {
         VisContext.init();
     }
+    private static final CacheKey BYTE_STRETCH_SEMAPHORE = new StringKey("BYTE_STRETCH_SEMAPHORE");
+    private static final int MAX_SEMAPHORE_WAIT_SECS = 360;
+    private static final int BYTE_STRETCH_MAX_ACCESS_CNT = 1;
+    private static final String BYTE_STRETCH_SEMAPHORE_KEY = "BYTE_STRETCH_SEMAPHORE";
 
     /**
      * create a new 3 color plot
@@ -178,7 +183,7 @@ public class VisServerOps {
         List<PixelValue.Result> fluxList= new ArrayList<>(baseList);
         for(int i=1; (i<stateAry.length);i++) {
             var faHOverlayList= Collections.singletonList(stateAry[i].getFileAndHeaderInfo(Band.NO_BAND));
-            fluxList.add(getFileFlux(faHOverlayList, ipt).get(0));
+            fluxList.add(getFileFlux(faHOverlayList, ipt).getFirst());
         }
         return fluxList;
     }
@@ -189,11 +194,50 @@ public class VisServerOps {
                 .toList();
     }
 
+    private static Semaphore getUserSemaphore() {
+        Cache<Semaphore> cache= CacheManager.getSessionCache();
+        Semaphore userSemaphore= cache.get(BYTE_STRETCH_SEMAPHORE);
+        if (userSemaphore != null) return userSemaphore;;
+        synchronized (BYTE_STRETCH_SEMAPHORE_KEY ) {
+            userSemaphore= cache.get(BYTE_STRETCH_SEMAPHORE);
+            if (userSemaphore != null) return userSemaphore;;
+            userSemaphore= new Semaphore(BYTE_STRETCH_MAX_ACCESS_CNT);
+            cache.put(BYTE_STRETCH_SEMAPHORE, userSemaphore);
+            return userSemaphore;
+        }
+    }
+
+    private static void acquireSemaphore(Semaphore userSemaphore) throws InterruptedException {
+        var accessGained= userSemaphore.tryAcquire(MAX_SEMAPHORE_WAIT_SECS, TimeUnit.SECONDS); // try to get the semaphore for 5 minutes
+        if (!accessGained && userSemaphore.availablePermits()==0) { // something is wrong, reset the semaphore
+            _log.info("Unexpected semaphore state: semaphore not released after 5 minutes, resetting semaphore (this should never happen)");
+            userSemaphore.release(BYTE_STRETCH_MAX_ACCESS_CNT);
+            userSemaphore.acquire();
+        }
+    }
+
+    public static byte[] getByteStretchArrayWithUserLocking(PlotState state,
+                                                            int tileSize,
+                                                            boolean mask,
+                                                            long maskBits,
+                                                            CompressType ct) throws Exception {
+        Semaphore userSemaphore = getUserSemaphore();
+        try {
+            acquireSemaphore(userSemaphore);
+            return getByteStretchArray(state,tileSize,mask,maskBits,ct);
+        } catch (InterruptedException e) {
+            throw new Exception("Unexpected InterruptedException", e);
+        } finally {
+            userSemaphore.release();
+        }
+    }
+
+
     public static byte[] getByteStretchArray(PlotState state, int tileSize, boolean mask, long maskBits, CompressType ct) {
         DirectStretchUtils.StretchDataInfo data;
         try {
             ActiveFitsReadGroup frGroup= CtxControl.prepare(state);
-            Cache memCache= CacheManager.getVisMemCache();
+            Cache<Object> memCache= CacheManager.getVisMemCache();
             CacheKey stretchDataKey= new StringKey(state.getContextString()+"byte-data");
             data= (StretchDataInfo)memCache.get(stretchDataKey);
             String fromCache= "";
@@ -221,7 +265,7 @@ public class VisServerOps {
         List<WebPlotResult> resultsList= Arrays.stream(stateAry).map((s) -> crop(s, c1, c2, cropMultiAll)).toList();
         boolean success= resultsList.stream().filter(r -> !r.success()).toList().isEmpty();
         WebPlotResult result = WebPlotResult.make(WebPlotResult.RESULT_ARY, resultsList.toArray(new WebPlotResult[0]));
-        return success ? result : resultsList.get(0);
+        return success ? result : resultsList.getFirst();
     }
 
 
@@ -348,7 +392,11 @@ public class VisServerOps {
             return WebPlotResult.make(
                     WebPlotResult.DATA_HISTOGRAM, hist.getHistogramArray(),
                     WebPlotResult.DATA_BIN_MEAN_ARRAY, hist.getMeanBinDataAry(fr.getBscale(),fr.getBzero()),
-                    WebPlotResult.DATA_BIN_COLOR_IDX, fr.getHistColors(hist, state.getRangeValues(band)) );
+                    WebPlotResult.DATA_BIN_COLOR_IDX, fr.getHistColors(hist, state.getRangeValues(band)),
+                    WebPlotResult.DATA_MIN, hist.getDNMin(),
+                    WebPlotResult.DATA_MAX, hist.getDNMax(),
+                    WebPlotResult.LARGE_BIN_PERCENT, hist.getLargeBinPercent()
+            );
         } catch (Throwable e) {
             return createError("on getColorHistogram", state, e);
         }
@@ -406,7 +454,7 @@ public class VisServerOps {
                 tmpLine = tmpLine.trim();
                 if (!tmpLine.startsWith("#")) rAsStrList.add(tmpLine);
             }
-            if (rAsStrList.size() == 0) msgList.add("no region is defined in the footprint file");
+            if (rAsStrList.isEmpty()) msgList.add("no region is defined in the footprint file");
 
             return WebPlotResult.make(
                     WebPlotResult.REGION_DATA, StringUtils.combineStringList(rAsStrList),
@@ -433,7 +481,7 @@ public class VisServerOps {
                         if (!tmpLine.startsWith("#") && ((tmpLine.contains("tag={" + tag)) || (!tmpLine.contains("tag"))))
                             rAsStrList.add(tmpLine);
                     }
-                    if (rAsStrList.size() == 0) msgList.add("no region is defined in the footprint file");
+                    if (rAsStrList.isEmpty()) msgList.add("no region is defined in the footprint file");
                 } catch (Exception e) {
                     return createError("on getFootprintRegion", e);
                 }

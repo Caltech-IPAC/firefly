@@ -136,6 +136,15 @@ public class VisJsonSerializer {
                 for(double v : dAry) ary.add(v);
                 putJsonAry(map, WebPlotResult.DATA_BIN_MEAN_ARRAY, ary);
             }
+            if (res.containsKey(WebPlotResult.DATA_MIN)) {
+                putDouble(map, WebPlotResult.DATA_MIN, (double)res.getResult(WebPlotResult.DATA_MIN));
+            }
+            if (res.containsKey(WebPlotResult.DATA_MAX)) {
+                putDouble(map, WebPlotResult.DATA_MAX, (double)res.getResult(WebPlotResult.DATA_MAX));
+            }
+            if (res.containsKey(WebPlotResult.LARGE_BIN_PERCENT)) {
+                putDouble(map, WebPlotResult.LARGE_BIN_PERCENT, (double)res.getResult(WebPlotResult.LARGE_BIN_PERCENT));
+            }
             if (res.containsKey(WebPlotResult.DATA_BIN_COLOR_IDX)) {
                 byte[] bAry = (byte[]) res.getResult(WebPlotResult.DATA_BIN_COLOR_IDX);
                 JSONArray ary = new JSONArray();
@@ -332,10 +341,6 @@ public class VisJsonSerializer {
     private static JSONObject serializeWebFitsData(WebFitsData wfData) {
         if (wfData==null) return null;
         JSONObject map = new JSONObject();
-        putDoubleNot0(map, "dataMin", wfData.dataMin());
-        putDoubleNot0(map,"dataMax", wfData.dataMax());
-        putDoubleNot0(map,"largeBinPercent", wfData.largeBinPercent());
-        putStr(map, "fluxUnits", wfData.fluxUnits());
         putNum(map, "getFitsFileSize", wfData.fitsFileSize());
         return map;
     }

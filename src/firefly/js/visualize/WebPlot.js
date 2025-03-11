@@ -4,6 +4,7 @@
 import {ZoomType} from 'firefly/visualize/ZoomType.js';
 import {isArray, isBoolean, isEmpty, isNumber, isUndefined} from 'lodash';
 import {memorizeLastCall} from '../util/WebUtil';
+import {Band} from './Band';
 import CoordinateSys from './CoordSys.js';
 import {CysConverter} from './CsysConverter.js';
 import PlotState, {makePlotStateShimForHiPS} from './PlotState';
@@ -69,7 +70,7 @@ export const RDConst= {
  * @prop {number} zoomFactor - the zoom factor
  * @prop {boolean} blank - true if the is a blank plot, default to false
  * @prop {string} title - title of the plot
- * @prop {WebFitsData} webFitsData -  needs documentation
+ * @prop {WebFitsData} webFitsData
  * @prop {ImageTileData} tileData -  object contains the image tile information
  * @prop {CoordinateSys} imageCoordSys - the image coordinate system
  * @prop {Dimension} screenSize - width/height in screen pixels
@@ -93,11 +94,7 @@ export const RDConst= {
  * @public
  * @typedef {Object} WebFitsData
  *
- * @prop {number} dataMin
- * @prop {number} dataMax
- * @prop {number} largeBinPercent,
  * @prop {number} fitsFileSize
- * @prop {number} fluxUnits
  */
 
 
@@ -238,7 +235,6 @@ export const RDConst= {
  * @prop wlTableRelatedAry
  * @prop wlData
  * @prop getFitsFileSize
- * @prop fluxUnits
  */
 
 
@@ -384,7 +380,7 @@ export const WebPlot= {
         const fluxUnitAry= processHeaderAry.map( (p) => p.fluxUnits);
         const rawData= {
             useRed: true, useGreen: true, useBlue:true,
-            bandData:processHeaderAry.map( (pH) => ({processHeader:pH, datamin: pH.datamin, datamax:pH.datamax, bias:.5,contrast:1}))
+            bandData:processHeaderAry.map( (pH) => ({processHeader:pH, bias:.5,contrast:1}))
         };
 
 
@@ -461,7 +457,7 @@ export const WebPlot= {
             imagePlot.webFitsData=
                 imagePlot.webFitsData.map( (wfd) => {
                     let newWfd=  { ...wfd, dataMin: wfd?.dataMin ?? 0, dataMax: wfd?.dataMax ?? 0 };
-                    if (cubeCtx) newWfd= {...newWfd, fluxUnits:cubeCtx.fluxUnits, getFitsFileSize:cubeCtx.getFitsFileSize};
+                    if (cubeCtx) newWfd= {...newWfd, getFitsFileSize:cubeCtx.getFitsFileSize};
                     return newWfd;
                 });
         }
@@ -728,7 +724,9 @@ export const getScreenPixScaleArcSec= memorizeLastCall((plot) => {
 },8);
 
 
-export const getFluxUnits= (plot,band) => (!plot || !band || !isImage(plot)) ? '' : plot.fluxUnitAry[band.value];
+export const getFluxUnits= (plot,band=Band.NO_BAND) => {
+   return  (!plot || !band || !isImage(plot)) ? '' : plot.fluxUnitAry[band.value];
+};
 
 
 /**

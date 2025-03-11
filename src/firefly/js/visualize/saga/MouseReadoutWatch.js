@@ -314,7 +314,7 @@ function doFluxCall(plotView,iPt) {
 function getFlux(result, plot) {
     const fluxArray = [];
     if (result.NO_BAND) {
-        fluxArray[0]= {...result.NO_BAND, unit: getFluxUnits(plot,Band.NO_BAND)};
+        fluxArray[0]= {...result.NO_BAND, unit: getFluxUnits(plot)};
     }
     else {
         const bands = plot.plotState.getBands();

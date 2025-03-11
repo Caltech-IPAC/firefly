@@ -113,7 +113,7 @@ public class VisServerCommands {
                 ct= CompressType.FULL;
             }
 
-            byte[] data = VisServerOps.getByteStretchArray(state,tileSize,mask,maskBits,ct);
+            byte[] data = VisServerOps.getByteStretchArrayWithUserLocking(state,tileSize,mask,maskBits,ct);
 
             res.setContentType("application/octet-stream");
             ByteBuffer byteBuf = ByteBuffer.wrap(data);

@@ -58,7 +58,7 @@ export function keepZAxisExtraction(pt, pv, plot, filename, refHDUNum, extractio
     const wlUnit = getWaveLengthUnits(plot);
     const wpt = CCUtil.getWorldCoords(plot, pt);
     const fluxUnit = getHduPlotStartIndexes(pv)
-        .map((idx) => ({hdu: getHDU(pv.plots[idx]), unit: getFluxUnits(pv.plots[idx], Band.NO_BAND)}))
+        .map((idx) => ({hdu: getHDU(pv.plots[idx]), unit: getFluxUnits(pv.plots[idx])}))
         .map(({hdu, unit}) => `${hdu}=${unit}`);
 
     const tbl_id = getNextTblId();

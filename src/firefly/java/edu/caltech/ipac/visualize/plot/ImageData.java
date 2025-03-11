@@ -216,7 +216,7 @@ public class ImageData implements Serializable {
                     imHeadAry[i]=null;
                     histAry[i]=null;
                 } else {
-                    float1dAry[i] = fitsReadAry[i].getRawFloatAry();
+                    float1dAry[i] = fitsReadAry[i].getRawFloatAryStandard();
                     imHeadAry[i]= new ImageHeader(fitsReadAry[i].getHeader());
                     histAry[i]= fitsReadAry[i].getHistogram();
                 }

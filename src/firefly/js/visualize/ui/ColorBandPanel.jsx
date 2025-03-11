@@ -5,7 +5,7 @@
 import {Box, Skeleton, Stack, Typography} from '@mui/joy';
 import React, {memo, useState, useEffect, useRef} from 'react';
 import PropTypes from 'prop-types';
-import {debounce, get} from 'lodash';
+import {debounce, get, isUndefined} from 'lodash';
 import {sprintf} from '../../externalSource/sprintf';
 import {ValidationField} from '../../ui/ValidationField.jsx';
 import {ListBoxInputField} from '../../ui/ListBoxInputField.jsx';
@@ -45,7 +45,7 @@ const histImStyle= {
 
 export const ColorBandPanel= memo(({fields,plot,band, groupKey}) => {
     const [exit, setExit]= useState(true);
-    const [{dataHistogram, dataBinMeanArray, dataBinColorIdx}, setDisplayState]= useState({});
+    const [{dataHistogram, dataBinMeanArray, dataBinColorIdx, dataMin, dataMax, largeBinPercent}, setDisplayState]= useState({});
     const [histReadout, setHistReadout]= useState({histValue:0,histMean:0,histIdx:0});
     const {plotId, plotState}= plot ?? {};
     const doMask= false;
@@ -72,11 +72,14 @@ export const ColorBandPanel= memo(({fields,plot,band, groupKey}) => {
             const dataHistogram= result.DataHistogram;
             const dataBinMeanArray= result.DataBinMeanArray;
             const dataBinColorIdx= result.DataBinColorIdx;
+            const dataMin= result.DataMin;
+            const dataMax= result.DataMax;
+            const largeBinPercent= result.LargeBinPercent;
             lastProps.rvStr= plot.plotState.getRangeValues(band).toString();
             lastProps.plotId= plotId;
             lastProps.groupKey=groupKey;
             lastProps.band= band;
-            mounted && setDisplayState({dataHistUrl,cbarUrl,dataHistogram,dataBinMeanArray, dataBinColorIdx});
+            mounted && setDisplayState({dataHistUrl,cbarUrl,dataHistogram,dataBinMeanArray, dataBinColorIdx, dataMin, dataMax, largeBinPercent});
         });
         return retFunc;
     }, [plotId, plotState, groupKey, band] );
@@ -112,7 +115,7 @@ export const ColorBandPanel= memo(({fields,plot,band, groupKey}) => {
             <ZscaleCheckbox/>
             <ColorInput fields={fields} bandReplot={bandReplot}/>
             <Stack {...{spacing:1, direction:'column', alignItems:'center'}}>
-                <SuggestedValuesPanel {...{plot,band}}/>
+                <SuggestedValuesPanel {...{plot,band,dataMin,dataMax}}/>
                 <img style={cbarImStyle} src={cbarUrl} key={cbarUrl}/>
             </Stack>
        </Stack>
@@ -136,24 +139,19 @@ function ColorInput({fields,bandReplot}) {
     else return renderStandard();
 }
 
-const readTopBaseStyle= { fontSize: '11px', paddingBottom:5, height:16 };
-const dataStyle= { color: 'red' };
-
-function SuggestedValuesPanel({plot,band}) {
-    const fitsData= plot.webFitsData[band.value];
-    const {dataMin, dataMax} = fitsData;
-    const dataMaxStr = `Data Max: ${sprintf('%.6f',dataMax)} `;
-    const dataMinStr = `Data Min: ${sprintf('%.6f', dataMin)}`;
+function SuggestedValuesPanel({dataMin,dataMax}) {
+    const dataMaxStr = isUndefined(dataMax) ? '' : `Data Max: ${sprintf('%.6f',dataMax)} `;
+    const dataMinStr = isUndefined(dataMin) ? '' : `Data Min: ${sprintf('%.6f', dataMin)}`;
+    if (!dataMaxStr && !dataMaxStr) return;
 
     return (
         <Stack sx={{alignItems:'center'}}>
-            {(dataMin || dataMax) &&
-                <Typography level='body-xs'>
-                    {dataMinStr}
-                    <span style={{paddingLeft:'2rem'}}/>
-                    {dataMaxStr}
-                </Typography>
-            }
+            <Typography level='body-xs'>
+                <Stack direction='row' spacing={3}>
+                    <span>{dataMinStr}</span>
+                    <span>{dataMaxStr}</span>
+                </Stack>
+            </Typography>
         </Stack>
     );
 }

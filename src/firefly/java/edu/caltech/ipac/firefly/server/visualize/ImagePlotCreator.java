@@ -12,7 +12,6 @@ import edu.caltech.ipac.firefly.visualize.WebFitsData;
 import edu.caltech.ipac.firefly.visualize.WebPlotRequest;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.visualize.plot.ActiveFitsReadGroup;
-import edu.caltech.ipac.visualize.plot.Histogram;
 import edu.caltech.ipac.visualize.plot.RangeValues;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsRead;
 import edu.caltech.ipac.visualize.plot.plotdata.GeomException;
@@ -168,16 +167,7 @@ public class ImagePlotCreator {
         long fileLength= (f!=null && f.canRead()) ? f.length() : 0;
         FitsRead fr=  frGroup.getFitsReadAry()[band.getIdx()];
         if (fr==null) return null;
-        double dataMin= Double.NaN;
-        double dataMax= Double.NaN;
-        double largeBinPercent= 0;
-        if (!fr.isDeferredRead()) {
-            Histogram hist= fr.getHistogram();
-            dataMin= hist.getDNMin() * fr.getBscale() + fr.getBzero();
-            dataMax= hist.getDNMax() * fr.getBscale() + fr.getBzero();
-            largeBinPercent= hist.getLargeBinPercent();
-        }
-        return new WebFitsData( dataMin, dataMax, largeBinPercent, fileLength, fr.getFluxUnits());
+        return new WebFitsData( fileLength);
     }
 
     private static Map<Band,WebFitsData> noBandMap(WebFitsData wfd) { return Collections.singletonMap(NO_BAND,wfd);}
