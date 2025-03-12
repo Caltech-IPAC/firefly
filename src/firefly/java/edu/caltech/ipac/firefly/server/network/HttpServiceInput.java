@@ -6,12 +6,16 @@ package edu.caltech.ipac.firefly.server.network;
 
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
+import edu.caltech.ipac.util.KeyVal;
 
 import java.io.File;
 import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -24,7 +28,7 @@ import static edu.caltech.ipac.util.StringUtils.isEmpty;
  */
 public class HttpServiceInput implements Cloneable, Serializable {
     private String requestUrl;
-    private Map<String, String> params;
+    private Map<String, List<String>> params = new HashMap<>();
     private Map<String, String> headers;
     private Map<String, String> cookies;
     private Map<String, File> files;
@@ -62,13 +66,59 @@ public class HttpServiceInput implements Cloneable, Serializable {
         return this;
     }
 
+    /**
+     * @return a {@code Map<String, String>} where each key maps to a comma-separated string of its values
+     */
     public Map<String, String> getParams() {
-        return params;
+        return params.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        ent -> String.join(",", ent.getValue())
+                ));
     }
-    public HttpServiceInput setParam(String key, String value) {
+
+    /**
+     * This method creates a {@link KeyVal} for each individual key-value pair,
+     * so if a key maps to multiple values, there will be multiple {@code KeyVal} entries.
+     * @return a list of key-value pairs representing all parameters stored in this input.
+     */
+    public List<KeyVal<String, String>> getParamPairs() {
+        List<KeyVal<String, String>> result = new ArrayList<>();
+
+        for (Map.Entry<String, List<String>> entry : params.entrySet()) {
+            String key = entry.getKey();
+            for (String value : entry.getValue()) {
+                result.add(new KeyVal<>(key, value));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Sets one or more values for the specified parameter.
+     * @param key       the parameter key to set; ignored if {@code null} or empty
+     * @param values    the parameter values to associate with the key; can be {@code null} or empty to remove the key
+     * @return this {@code HttpServiceInput} instance for method chaining
+     */
+    public HttpServiceInput setParam(String key, String ...values) {
         if (isEmpty(key)) return this;
-        if (params == null) params = new HashMap<>();
-        params.put(key, value);
+        if (values == null || values.length == 0) {
+            params.remove(key);
+        } else {
+            Arrays.stream(values).forEach(v -> addParam(key, v));
+        }
+        return this;
+    }
+
+    /**
+     * Adds a value to the parameter list.
+     * @param key   the parameter key to set
+     * @param value the value to add
+     * @return this {@code HttpServiceInput} instance for method chaining
+     */
+    public HttpServiceInput addParam(String key, String value) {
+        if (isEmpty(key)) return this;
+        params.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
         return this;
     }
 

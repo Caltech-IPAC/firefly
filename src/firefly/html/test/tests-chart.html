@@ -570,6 +570,51 @@
     </script>
 </template>
 
+<template title="Chart with columns map with Display Name" class="tpl xxl" >
+    <div id="expected">
+        <ul class='expected-list'>
+            <li>Filtering data using chart's filter icon.</li>
+        </ul>
+    </div>
+    <div id="actual" class="flow-h" style="width: 1200px">
+        <div id="tableHere" class="box"></div>
+        <div id="multiChartsHere" class="box x2"></div>
+    </div>
+    <script>
+
+        irsaviewer_init();
+
+        onFireflyLoaded= function(firefly) {
+
+            tblReq =  firefly.util.table.makeIrsaCatalogRequest('allwise-500', 'WISE', 'allwise_p3as_psd',
+                {   position: '10.68479;41.26906;EQ_J2000',
+                    SearchMethod: 'Cone',
+                    radius: 300
+                },
+                {                    
+                    META_INFO: {
+                        "col.ra.label": 'Right Ascension',
+                        "col.dec.label": 'Declination',
+                    }
+                }
+            );
+            firefly.showTable('tableHere', tblReq);
+
+            // table id to reference in the charts
+            tableId = tblReq.tbl_id;
+
+            scatter1 = [{
+                tbl_id: tableId,  // id of the table where to find column references
+                x: 'tables::ra',  // reference to column "ra"
+                y: 'tables::dec', // reference to column "dec"
+                mode: 'markers'   // plotly attribute, see https://plot.ly/javascript/reference/#scatter
+            }];
+            firefly.showChart('multiChartsHere', {data: scatter1});
+        }
+    </script>
+</template>
+
+
 
 <!-- this is where test cases will be attached-->
 <div id="tst-container"/>
