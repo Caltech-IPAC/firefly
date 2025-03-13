@@ -8,7 +8,7 @@
 
 
 ## Version 2025.2
-- 2025.2.0 - (March 12, 2025), planned _docker tag_: `2025.2`, `2025.2.0`, `latest`
+- 2025.2.0 - (March 14, 2025), planned _docker tag_: `2025.2`, `2025.2.0`, `latest`
 
 #### Major Features
 - Improved datalink cutout handling- Firefly-1666([PR](https://github.com/Caltech-IPAC/firefly/pull/1717)), Firefly-1662 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1715))
