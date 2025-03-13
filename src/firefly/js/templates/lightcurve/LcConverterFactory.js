@@ -91,6 +91,8 @@ const converters = {
         onNewRawTable: wiseOnNewRawTable,
         onFieldUpdate: wiseOnFieldUpdate,
         rawTableRequest: wiseRawTableRequest,
+        sliderRangeMin: 0.1,
+        sliderRangeMax: 2,
         /*timeNames: ['mjd'],*/
         /*yNames: ['w1mpro_ep', 'w2mpro_ep', 'w3mpro_ep', 'w4mpro_ep'],*/
         yErrNames: '',
@@ -135,6 +137,8 @@ const converters = {
         onNewRawTable: ptfOnNewRawTable,
         onFieldUpdate: ptfOnFieldUpdate,
         rawTableRequest: ptfRawTableRequest,
+        sliderRangeMin: 0.001,
+        sliderRangeMax: 100,
         yErrNames: '',
         dataSource: 'pid',
         webplotRequestCreator: getWebPlotRequestViaPTFIbe,
@@ -155,6 +159,8 @@ const converters = {
         onNewRawTable: ztfOnNewRawTable,
         onFieldUpdate: ztfOnFieldUpdate,
         rawTableRequest: ztfRawTableRequest,
+        sliderRangeMin: 0.001,
+        sliderRangeMax: 100,
         yErrNames: '',
         dataSource: 'field',
         webplotRequestCreator: getWebPlotRequestViaZTFIbe,

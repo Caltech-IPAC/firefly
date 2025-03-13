@@ -312,9 +312,10 @@ function updateFullRawTable(callback) {
         }, []);
 
         var [tzero, tzeroMax] = arr.length > 0 ? [Math.min(...arr), Math.max(...arr)] : [0.0, 0.0];
-        var max = 365;
-        var min = Math.pow(10, -3);   // 0.001
-
+        // if no mission defined max value, set default 365
+        var max = get(layoutInfo, [LC.MISSION_DATA, LC.SLIDER_RANGE_MAX]) ?? 365;
+        // if no mission defined min value, set default 0.001
+        var min = get(layoutInfo, [LC.MISSION_DATA, LC.SLIDER_RANGE_MIN]) ?? Math.pow(10, -3);
         // var period = get( FieldGroupUtils.getGroupFields(LC.FG_PERIOD_FINDER), ['period', 'value'], '');
 
         const period = '';
