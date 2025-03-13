@@ -29,7 +29,7 @@
 - Table: does not function correctly when a column contains non-ASCII characters- Firefly-1616 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1716))
 
 
-### _Patches 2025.1_
+### _Patches 2025.2_
 _initial release_
 
 ##### _Pull Requests in this release_
