@@ -162,7 +162,7 @@ function setupTileDataParams(drawLayer, table, plot, expanded) {
     const totalRows= table.totalRows;
 
     const {centerWp, fov} = getPointMaxSide(plot, plot.viewDim);
-    const coverageTblIds = hasCoverageTables(centerWp, fov, isHiPSAitoff(plot));
+    const coverageTblIds = hasCoverageTables(centerWp, fov, plot);
     if (!centerWp || !coverageTblIds.includes(tbl_id)) return []; // this should force a clear for this layer
     const cells = getAllVisibleHiPSCells(norder, centerWp, fov*1.3, CoordSys.EQ_J2000, isHiPSAitoff(plot));
     const tblIdx = coverageTblIds.indexOf(tbl_id);
@@ -217,13 +217,13 @@ function addTo(ary,addAry) {
 }
 
 function hasCoverageTables(centerWp, fov, plot) {
-    const cells = getAllVisibleHiPSCells(MIN_NORDER_FOR_COVERAGE, centerWp, fov, CoordSys.EQ_J2000, isHiPSAitoff(plot));
+    const cells = getAllVisibleHiPSCells(MIN_NORDER_FOR_COVERAGE+2, centerWp, fov, CoordSys.EQ_J2000, isHiPSAitoff(plot));
     if (!cells?.length) return 0;
     const ipixAry = cells.map(({ipix}) => ipix);
     return Object.entries(idxRoot())
         .filter(([, idxData]) => idxData.ready)
         .filter(([, idxData]) =>
-            getKeysForOrder(idxData.orderData,MIN_NORDER_FOR_COVERAGE).some((ipix) => ipixAry.includes(ipix)))
+            getKeysForOrder(idxData.orderData,MIN_NORDER_FOR_COVERAGE+2).some((ipix) => ipixAry.includes(ipix)))
         .map(([tbl_id]) => tbl_id);
 }
 
