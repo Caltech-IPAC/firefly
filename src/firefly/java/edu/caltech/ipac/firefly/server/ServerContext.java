@@ -855,11 +855,12 @@ public class ServerContext {
                 ServletContext cntx = servletContextEvent.getServletContext();
                 ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(WEBAPP_CONFIG_LOC));
                 VersionUtil.initVersion(cntx);  // can be called multiple times, only inits on the first call
-                SCHEDULE_TASK_EXEC.scheduleAtFixedRate(
-                        () -> DbMonitor.cleanup(false),
-                        DbMonitor.CLEANUP_INTVL,
-                        DbMonitor.CLEANUP_INTVL,
-                        TimeUnit.MILLISECONDS);
+                // we're using DuckDB exclusively for embedded database.  No need for cleanup.
+//                SCHEDULE_TASK_EXEC.scheduleAtFixedRate(
+//                        () -> DbMonitor.cleanup(false),
+//                        DbMonitor.CLEANUP_INTVL,
+//                        DbMonitor.CLEANUP_INTVL,
+//                        TimeUnit.SECONDS);
             } catch (Throwable e) {
                 e.printStackTrace();
             }
@@ -868,7 +869,7 @@ public class ServerContext {
         public void contextDestroyed(ServletContextEvent servletContextEvent) {
             try {
                 System.out.println("contextDestroyed...");
-                DbMonitor.cleanup(true, false);
+//                DbMonitor.cleanup(true, false);
                 ((EhcacheProvider)CacheManager.getCacheProvider()).shutdown();
                 try {
                     SHORT_TASK_EXEC.shutdownNow();

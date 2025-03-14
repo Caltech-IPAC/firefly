@@ -8,7 +8,8 @@
 
 
 ## Version 2025.2
-- 2025.2.0 - (March 14, 2025), planned _docker tag_: `2025.2`, `2025.2.0`, `latest`
+- 2025.2.1 - (March 14, 2025), planned _docker tag_: `2025.2`, `2025.2.1`, `latest`
+- 2025.2.0 - (March 13, 2025), planned _docker tag_: `2025.2.0`
 
 #### Major Features
 - Improved datalink cutout handling- Firefly-1666([PR](https://github.com/Caltech-IPAC/firefly/pull/1717)), Firefly-1662 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1715))
@@ -30,7 +31,8 @@
 
 
 ### _Patches 2025.2_
-_initial release_
+- Bug fix: prevent excessive thread use- Firefly-1683 ([PR](https://github.com/Caltech-IPAC/firefly/pull/1727))
+- Bug fix: computation of healpix for visible tables to rough ([commit](https://github.com/Caltech-IPAC/firefly/commit/48df3f87857b01209a9cb0e54876c8ed2f1d2721))
 
 ##### _Pull Requests in this release_
 - [All Bug Fixes](https://github.com/caltech-ipac/firefly/pulls?q=is%3apr+milestone%3a2025.2+label%3abug)
