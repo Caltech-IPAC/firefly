@@ -217,13 +217,14 @@ function addTo(ary,addAry) {
 }
 
 function hasCoverageTables(centerWp, fov, plot) {
-    const cells = getAllVisibleHiPSCells(MIN_NORDER_FOR_COVERAGE+2, centerWp, fov, CoordSys.EQ_J2000, isHiPSAitoff(plot));
+    const norder= fov > 4 ? MIN_NORDER_FOR_COVERAGE : MIN_NORDER_FOR_COVERAGE+2;
+    const cells = getAllVisibleHiPSCells(norder, centerWp, fov, CoordSys.EQ_J2000, isHiPSAitoff(plot));
     if (!cells?.length) return 0;
     const ipixAry = cells.map(({ipix}) => ipix);
     return Object.entries(idxRoot())
         .filter(([, idxData]) => idxData.ready)
         .filter(([, idxData]) =>
-            getKeysForOrder(idxData.orderData,MIN_NORDER_FOR_COVERAGE+2).some((ipix) => ipixAry.includes(ipix)))
+            getKeysForOrder(idxData.orderData,norder).some((ipix) => ipixAry.includes(ipix)))
         .map(([tbl_id]) => tbl_id);
 }
 
