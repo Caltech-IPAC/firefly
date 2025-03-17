@@ -1,6 +1,6 @@
 import React, {useEffect, useRef} from 'react';
 import PropTypes from 'prop-types';
-import {get, set, cloneDeep} from 'lodash';
+import {get, set, cloneDeep, isArray} from 'lodash';
 import {PlotlyWrapper} from './PlotlyWrapper.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 
@@ -45,6 +45,8 @@ export function PlotlyChartArea({chartId, widthPx, heightPx, thumbnail}) {
     }, []);
 
     pdata.push(traceShallowCopy(data[activeTrace]));
+
+    applyDataFixes(pdata);
 
     //let pdata = data.map((e) => Object.assign({}, e)); // create shallow copy of data elements to avoid sharing x,y,z arrays
     let annotations = getAnnotations(chartId);
@@ -194,7 +196,7 @@ function onClick(chartId) {
     return (evData) => {
         // for scatter, points array has one element, for the top trace only,
         // we should have active trace, its related selected, and its highlight traces on top
-        const {activeTrace=0, curveNumberMap} = getChartData(chartId);
+        const {activeTrace=0, curveNumberMap=[]} = getChartData(chartId);
         const curveNumber = get(evData.points, `${0}.curveNumber`);
         const highlighted = get(evData.points, `${0}.pointNumber`);
         const curveName = get(evData.points, `${0}.data.name`);
@@ -323,4 +325,30 @@ function onSelect(chartId) {
             }
         }
     };
+}
+
+
+function applyDataFixes(data) {
+    if (!data || !isArray(data)) return;
+    data.map((trace) => {
+        fixSelectionInLinesMode(trace);
+    });
+}
+
+/**
+ * Plotly does not return any points in the plotly_selected event when a trace is configured with mode='lines'.
+ * As a workaround, we change the mode to 'lines+markers' and make the markers invisible.
+ * @param trace
+ */
+function fixSelectionInLinesMode(trace) {
+    if (trace?.type?.startsWith('scatter')) {
+        if (trace.mode === 'lines') {
+            trace.mode = 'lines+markers';
+            trace.marker = {opacity: 0};
+        } else {
+            if (trace?.marker?.opacity === 0) {     // reset if it was set to 0
+                delete trace.marker.opacity;
+            }
+        }
+    }
 }
