@@ -6,7 +6,7 @@ import {ToolbarButton} from '../../ui/ToolbarButton.jsx';
 
 import {dispatchChartUpdate, dispatchChartFilterSelection, dispatchChartSelect, getChartData, dispatchSetActiveTrace, dispatchChartExpanded, resetChart} from '../ChartsCntlr.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
-import {getTblById, clearFilters, getColumnIdx, getColumnType, getActiveTableId} from '../../tables/TableUtil.js';
+import {getTblById, clearFilters, getColumnIdx, getColumnType, getActiveTableId, getTableUiByTblId} from '../../tables/TableUtil.js';
 import {dispatchSetLayoutMode, LO_MODE, LO_VIEW} from '../../core/LayoutCntlr.js';
 import {getActiveViewerItemId} from './MultiChartViewer.jsx';
 import {downloadChart} from './PlotlyWrapper.jsx';
@@ -15,8 +15,8 @@ import {getColValStats} from '../TableStatsCntlr.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {showOptionsPopup} from '../../ui/PopupUtil.jsx';
 import {CHART_ADDNEW, CHART_TRACE_MODIFY, showChartsDialog} from './ChartSelectPanel.jsx';
-import {FilterEditorWrapper} from './FilterEditorWrapper.jsx';
-import {isScatter2d} from '../ChartUtil.js';
+import {TableFilterPopup} from '../../tables/ui/FilterEditor';
+import {getTblIdFromChart, isScatter2d} from '../ChartUtil.js';
 import {
     DEFAULT_PLOT2D_VIEWER_ID, findViewerWithItemId, getLayoutType, getMultiViewRoot, PLOT2D
 } from '../../visualize/MultiViewCntlr.js';
@@ -290,9 +290,13 @@ function SaveBtn({chartId}) {
 }
 
 function FiltersBtn({chartId}) {
-    return (
-        <FilterButton onClick={() => showFilterDialog(chartId)}/>
-    );
+    const tbl_id = getTblIdFromChart(chartId);
+    const {tbl_ui_id} = getTableUiByTblId(tbl_id) || {};
+    if (tbl_id && tbl_ui_id) {
+        return <FilterButton onClick={() => showFilterDialog(tbl_id, tbl_ui_id)}/>;
+    } else {
+        return null;        // no table associated with this chart
+    }
 }
 
 function OptionsBtn({chartId}) {
@@ -373,14 +377,12 @@ function ClearFilter({tbl_id}) {
 
 /**
  * Creates and shows the modal dialog with filter options.
- * @param {string} chartId
+ * @param {string} tbl_id
+ * @param {string} tbl_ui_id
  */
-function showFilterDialog(chartId) {
-    const {data, fireflyData, activeTrace} = getChartData(chartId);
-    const tbl_id = get(data, `${activeTrace}.tbl_id`) || get(fireflyData, `${activeTrace}.tbl_id`);
-    const content= (
-        <FilterEditorWrapper tbl_id={tbl_id}/>
-    );
-
-    showOptionsPopup({content, title: 'Filters', modal: true, show: true});
+function showFilterDialog(tbl_id, tbl_ui_id) {
+    showOptionsPopup({
+        content: <TableFilterPopup tbl_id={tbl_id} tbl_ui_id={tbl_ui_id}/>,
+        title: 'Filters', modal: true, show: true
+    });
 }

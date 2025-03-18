@@ -2,22 +2,16 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React, {PureComponent, useEffect, useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
 import PropTypes from 'prop-types';
 import {Box, Button, Link, Sheet, Stack, Typography} from '@mui/joy';
-import {isEmpty, cloneDeep, get} from 'lodash';
+import {cloneDeep, get} from 'lodash';
 import SplitPane from 'react-split-pane';
 import Tree from 'rc-tree';
 import 'rc-tree/assets/index.css';
 
-import {BasicTableViewWithConnector} from './BasicTableView.jsx';
-import {SelectInfo} from '../SelectInfo.js';
-import {createInputCell} from './TableRenderer.js';
-import {FILTER_CONDITION_TTIPS, FILTER_TTIPS, FilterInfo, getFiltersAsSql} from '../FilterInfo.js';
-import {sortTableData, calcColumnWidths, getTableUiByTblId, getTableUiById, getSqlFilter, DOC_FUNCTIONS_URL} from '../TableUtil.js';
-import {InputAreaField} from '../../ui/InputAreaField.jsx';
-import {toBoolean} from '../../util/WebUtil.js';
-import {NOT_CELL_DATA} from './TableRenderer.js';
+import {FilterInfo, getFiltersAsSql} from '../FilterInfo.js';
+import {getTableUiById, getSqlFilter, DOC_FUNCTIONS_URL} from '../TableUtil.js';
 import {SplitContent} from '../../ui/panel/DockLayoutPanel.jsx';
 import {InputAreaFieldConnected} from '../../ui/InputAreaField.jsx';
 import {RadioGroupInputField} from '../../ui/RadioGroupInputField.jsx';
@@ -29,171 +23,30 @@ import {CopyToClipboard} from '../../visualize/ui/MouseReadout';
 
 import RIGHT_ARROW from 'html/images/right-arrow-in-16x16.png';
 import {applyFilterChanges} from 'firefly/tables/TableConnector';
+import {makeConnector} from '../TableConnector';
+import {TablePanelOptions} from './TablePanelOptions';
 
-
-export class FilterEditor extends PureComponent {
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        const {columns, selectable, onChange, sortInfo, filterInfo= ''} = this.props;
-        let {tbl_ui_id, tbl_id} = this.props;
-        tbl_ui_id = tbl_ui_id || get(getTableUiByTblId(tbl_id), 'tbl_ui_id');
-        tbl_id = tbl_id || get(getTableUiById(tbl_ui_id), 'tbl_id');
-
-        if (isEmpty(columns)) return false;
-
-        const {allowUnits} = getTableUiById(tbl_ui_id)||{};
-        const {cols, data, selectInfoCls} = prepareOptionData(columns, sortInfo, filterInfo, selectable, allowUnits);
-        const callbacks = makeCallbacks(onChange, columns, data, filterInfo);
-        const renderers = makeRenderers(callbacks.onFilter, tbl_id);
-        
-        return (
-            <Stack spacing={1} flexGrow={1} overflow='hidden'>
-                <BasicTableViewWithConnector
-                    columns={cols}
-                    rowHeight={26}
-                    selectable={selectable}
-                    {...{data, selectInfoCls, sortInfo, callbacks, renderers, tbl_ui_id: `${tbl_ui_id}_FilterEditor`}}
-                />
-                <InputAreaField
-                    value={filterInfo}
-                    label='Filters:'
-                    validator={FilterInfo.validator.bind(null,columns)}
-                    tooltip={FILTER_TTIPS}
-                    minRows={3}
-                    onChange={callbacks.onAllFilter}
-                    actOn={['blur', 'enter']}
-                    showWarning={false}
+/*----------------------------------------------  Filter only TablePanelOptions -----------------------------------------------*/
+export function TableFilterPopup({tbl_id, tbl_ui_id}) {
+    const connector = makeConnector(tbl_id);
+    const clearFilter = () => connector.applyFilterChanges({filterInfo: '', sqlFilter: ''});
+    return (
+        <Stack height={450} width={650} overflow='hidden' position='relative' sx={{resize:'both', minWidth:550, minHeight:200}}>
+            <Stack position='absolute' sx={{inset:'5px'}}>
+                <TablePanelOptions tbl_id={tbl_id} tbl_ui_id={tbl_ui_id}
+                                   onChange={connector.onOptionUpdate}
+                                   onOptionReset={connector.onOptionReset}
+                                   clearFilter={clearFilter}
+                                   allowColumnSelection={false}
+                                   slotProps={{
+                                       header: {component: null},
+                                       columnOptTab: {name: 'Basic Column Filter'},
+                                   }}
                 />
             </Stack>
-        );
-    }
-}
-
-FilterEditor.propTypes = {
-    tbl_id: PropTypes.string,
-    tbl_ui_id: PropTypes.string,
-    columns: PropTypes.arrayOf(PropTypes.object),
-    selectable: PropTypes.bool,
-    sortInfo: PropTypes.string,
-    filterInfo: PropTypes.string,
-    onChange: PropTypes.func
-};
-
-FilterEditor.defaultProps = {
-    selectable: true
-};
-
-function prepareOptionData(columns, sortInfo, filterInfo, selectable, allowUnits) {
-
-    var cols = [
-        {name: 'Column', fixed: true},
-        {name: 'Filter', fixed: true},
-        {name: 'Units', visibility: (allowUnits ? 'show' : 'hidden')},
-        {name: '', visibility: 'hidden'},
-        {name: 'Selected', visibility: 'hidden'}
-    ];
-
-    const filterInfoCls = FilterInfo.parse(filterInfo);
-    columns = columns.filter((c) => c.visibility !== 'hidden');
-    var data = columns.map( (v) => {
-        const filter = toBoolean(v.filterable, true) ? filterInfoCls.getFilter(v.name) || '' : NOT_CELL_DATA;
-        return [v.label||v.name||'', filter, v.units||'', v.desc||'', v.visibility !== 'hide'];
-    } );
-    sortTableData(data, cols, sortInfo);
-
-    const widths = calcColumnWidths(cols, data);
-    cols[0].prefWidth = Math.min(widths[0], 20);  // adjust width of column for optimum display.
-    cols[1].prefWidth = Math.max(46 - widths[0] - widths[2] - widths[3] - (selectable? 3 : 0), 12);  // expand filter field to fill in empty space.
-    cols[2].prefWidth = Math.min(widths[2], 12);
-    if (widths[3]) {
-        cols[3] = {name: 'Description', prefWidth: widths[3], visibility: 'show'};
-    }
-
-    var selectInfoCls = SelectInfo.newInstance({rowCount: data.length});
-    selectInfoCls.data.rowCount = data.length;
-    data.forEach( (v, idx) => {
-        selectInfoCls.setRowSelect(idx, get(v, '4', true));
-    } );
-    return {cols, data, selectInfoCls};
-}
-
-function makeCallbacks(onChange, columns, data, orgFilterInfo='') {
-    var onSelectAll = (checked) => {
-        const nColumns = columns.map((c) => {
-            var col = cloneDeep(c);
-            if (col.visibility !== 'hidden') {
-                col.visibility = checked ? 'show' : 'hide';
-            }
-            return col;
-        });
-        onChange && onChange({columns: nColumns});
-    };
-
-    var onRowSelect = (checked, rowIdx) => {
-        const selColName = get(data, [rowIdx, 0]);
-        const nColumns = cloneDeep(columns);
-        const selCol = nColumns.find((col) => col.name === selColName || col.label === selColName);
-        selCol && (selCol.visibility = checked ? 'show' : 'hide');
-        onChange && onChange({columns: nColumns});
-    };
-
-    var onSort = (sortInfoString) => {
-        const sortInfo = sortInfoString;
-        onChange && onChange({sortInfo});
-
-    };
-
-    const onAllFilter = (fieldVal) => {
-        if (fieldVal.valid) {
-            if (fieldVal.value !== orgFilterInfo) {
-                onChange && onChange({filterInfo: fieldVal.value});
-            }
-        }
-    };
-
-    const onFilter = (fieldVal) => {
-        if (fieldVal.valid) {
-            const filterInfo = collectFilterInfo(data, orgFilterInfo);
-            if (filterInfo !== orgFilterInfo) {
-                onChange && onChange({filterInfo});
-            }
-        }
-    };
-
-    return {onSelectAll, onRowSelect, onSort, onFilter, onAllFilter};
-}
-
-function collectFilterInfo(data, orgFilterInfo) {
-    const filterCls = FilterInfo.parse(orgFilterInfo);
-    // filter the cells with a value or previous value
-    data.filter( (row) => row[1]||filterCls.getFilter(row[0])).forEach( (row) => {
-        if (row[1] !== NOT_CELL_DATA) {
-            filterCls.setFilter(row[0], row[1]);
-        }
-    });
-    return filterCls.serialize();
-}
-
-function makeRenderers(onFilter, tbl_id) {
-    const style = {width: '100%', backgroundColor: 'white', boxSizing: 'border-box'};
-    const validator = (cond, data, rowIndex) => {
-        const cname = get(data, [rowIndex, 0]);
-        return FilterInfo.conditionValidator(cond, tbl_id, cname);
-    };
-    
-    const filterCellRenderer = createInputCell(
-        FILTER_CONDITION_TTIPS,
-        undefined,
-        validator,
-        onFilter,
-        style
+        </Stack>
     );
-    return {Filter: {cellRenderer: filterCellRenderer}};
 }
-
 
 /*----------------------------------------------  Advanced Filter panel -----------------------------------------------*/
 

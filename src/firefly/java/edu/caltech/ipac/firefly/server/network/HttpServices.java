@@ -6,6 +6,7 @@ package edu.caltech.ipac.firefly.server.network;
 import com.google.common.net.HttpHeaders;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
 import edu.caltech.ipac.util.FileUtil;
+import edu.caltech.ipac.util.KeyVal;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.CollectionUtil;
@@ -241,7 +242,7 @@ public class HttpServices {
 
             handleHeaders(method, input.getHeaders());
 
-            handleParams(method, input.getParams(), input.getFiles());
+            handleParams(method, input.getParamPairs(), input.getFiles());
 
             logRequestStart(method, input);
 
@@ -427,16 +428,14 @@ public class HttpServices {
         }
     }
 
-    private static void handleParams(HttpMethod method, Map<String,String> params, Map<String,File> files) throws FileNotFoundException {
+    private static void handleParams(HttpMethod method, List<KeyVal<String, String>> params, Map<String,File> files) throws FileNotFoundException {
         if (method instanceof PostMethod) {
             PostMethod postMethod = (PostMethod) method;
             if (files != null) {
                 // this is a multipart request
                 List<Part> parts = new ArrayList<>();
                 if (params != null) {
-                    for(String key : params.keySet()) {
-                        parts.add(new StringPart(key, params.get(key)));
-                    }
+                    params.forEach((p) -> parts.add(new StringPart(p.getKey(), p.getValue())));
                 }
                 for(String key : files.keySet()) {
                     parts.add(new FilePart(key, files.get(key)));
@@ -445,17 +444,16 @@ public class HttpServices {
 
             } else {
                 if (params != null) {
-                    params.entrySet().stream()
-                            .forEach( (e) -> postMethod.addParameter(e.getKey(), e.getValue()) );
+                    params.forEach((p) -> postMethod.addParameter(p.getKey(), p.getValue()));
                 }
             }
         } else {
             if (isEmpty(method.getQueryString())) {
-                if (params != null && params.size() > 0) {
-                    List<NameValuePair> args = new ArrayList<>();
-                    params.entrySet().stream()
-                            .forEach( (e) -> args.add(new NameValuePair(e.getKey(), e.getValue())) );
-                    method.setQueryString(args.toArray(new NameValuePair[0]));
+                if (params != null && !params.isEmpty()) {
+                    NameValuePair[] args = params.stream()
+                            .map((p) -> new NameValuePair(p.getKey(), p.getValue()))
+                            .toArray(NameValuePair[]::new);
+                    method.setQueryString(args);
                 }
             }
         }

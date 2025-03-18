@@ -3,16 +3,16 @@
  */
 
 import React, {useCallback, useEffect} from 'react';
-import PropTypes from 'prop-types';
+import {bool, func, shape, string, object} from 'prop-types';
 import {Box, Button, Checkbox, Divider, Stack, Typography} from '@mui/joy';
 import {badgeClasses} from '@mui/joy/Badge';
 
-import {cloneDeep, get, isEmpty} from 'lodash';
+import {cloneDeep, defaultsDeep, get, isEmpty} from 'lodash';
 
 import {setSqlFilter, SqlTableFilter} from './FilterEditor.jsx';
 import {InputField} from '../../ui/InputField.jsx';
 import {intValidator} from '../../util/Validate.js';
-import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
+import {Slot, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableAddLocal, dispatchTableFilter, dispatchTableRemove, dispatchTableUiUpdate, TABLE_SELECT} from '../TablesCntlr.js';
 import {
     calcColumnWidths, COL_TYPE, getColumn, getColumnValues, getFilterCount, getSqlFilter, getTableUiById,
@@ -30,23 +30,23 @@ import {getTblPrefKey} from '../TablePref.js';
 import {showAddOrUpdateColumn} from './AddOrUpdateColumn.jsx';
 import {BY_SCROLL} from './BasicTableView.jsx';
 
-import EDIT from 'html/images/16x16_edit_icon.png';
 import ModeEditOutlinedIcon from '@mui/icons-material/ModeEditOutlined';
 import {MAX_ROW} from 'firefly/tables/TableRequestUtil';
 import {ClearFilterButton} from 'firefly/visualize/ui/Buttons.jsx';
 import {Stacker} from 'firefly/ui/Stacker.jsx';
 
 
-export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOptionReset, clearFilter}) => {
+export function TablePanelOptions({tbl_ui_id, tbl_id, onChange, onOptionReset, clearFilter, allowColumnSelection=true, slotProps, ...props}) {
 
     const uiState = useStoreConnector(() => getTableUiById(tbl_ui_id));
     const ctm_tbl_id = `${tbl_ui_id}-columnOptions`;
-    const showAdvFilter = !isClientTable(tbl_id);
-    const showTblPrefMsg = getTblPrefKey(tbl_ui_id);
-
+    const showTblPrefMsg = getTblPrefKey(tbl_ui_id) && allowColumnSelection;
+    const showAdvFilter = !isClientTable(tbl_id) && slotProps?.advFilterTab?.component !== null;
+    const showColumnOpt = slotProps?.columnOptTab?.component !== null;
     const {sql=''} = getSqlFilter(tbl_id);
+
     const advFilterName = 'Advanced Filter';
-    const label = () => {
+    const advFilterLabel = () => {
         if (!sql) return advFilterName;
         return (
             <Stack direction='row' spacing={1/2}>
@@ -85,37 +85,61 @@ export const TablePanelOptions = React.memo(({tbl_ui_id, tbl_id, onChange, onOpt
     const onSqlFilterChanged = ({op, sql}) =>  onChange({sqlFilter: sql ? `${op}::${sql}` : ''});
     const actions = useCallback(() => <OptionsFilterStats tbl_id={ctm_tbl_id}/>, [ctm_tbl_id]);
 
+    const mainContent = () => {
+        if (showColumnOpt && showAdvFilter) {
+            return (
+                <Stack flexGrow={1} overflow='hidden'>
+                    <StatefulTabs componentKey={`${tbl_id}-options`} actions={actions}>
+                        <Tab {...defaultsDeep(slotProps?.columnOptTab, {name:'Column Options', sx:{p:1}}) }>
+                            <Slot component={ColumnOptions} {...{tbl_id, tbl_ui_id, ctm_tbl_id, onChange, allowColumnSelection}} slotProps={slotProps?.columnOpt}/>
+                        </Tab>
+                        {showAdvFilter &&
+                            <Tab {...defaultsDeep(slotProps?.advFilterTab, {name: advFilterName, label:advFilterLabel()}) }>
+                                <Slot component={SqlTableFilter} {...{tbl_id, tbl_ui_id}} onChange={onSqlFilterChanged} slotProps={slotProps?.advFilter}/>
+                            </Tab>
+                        }
+                    </StatefulTabs>
+                </Stack>
+            );
+        } else {
+            return (
+                <Stack flexGrow={1} overflow='hidden'>
+                    {showColumnOpt && <Slot component={ColumnOptions} {...{tbl_id, tbl_ui_id, ctm_tbl_id, onChange, allowColumnSelection}} slotProps={slotProps?.columnOpt}/>}
+                    {showAdvFilter && <Slot component={SqlTableFilter} {...{tbl_id, tbl_ui_id}} onChange={onSqlFilterChanged} slotProps={slotProps?.advFilter}/>}
+                </Stack>
+            );
+        }
+    };
+
     return (
-        <Stack height={1} p={1} pt={0} spacing={1}>
-            <Options {...{uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChange}} />
-            <Stack flexGrow={1} overflow='hidden'>
-                <StatefulTabs componentKey={`${tbl_id}-options`} actions={actions}>
-                    <Tab name='Column Options' sx={{p:1}}>
-                        <ColumnOptions {...{tbl_id, tbl_ui_id, ctm_tbl_id, onChange}} />
-                    </Tab>
-                    {showAdvFilter &&
-                    <Tab name={advFilterName} label={label()}>
-                        <SqlTableFilter {...{tbl_id, tbl_ui_id}} onChange={onSqlFilterChanged} />
-                    </Tab>
-                    }
-                </StatefulTabs>
-            </Stack>
+        <Stack height={1} p={1} pt={0} spacing={1} {...props}>
+            <Slot component={Options} {...{uiState, tbl_id, tbl_ui_id, ctm_tbl_id, onOptionReset, onChange}} slotProps={slotProps?.header}/>
+            {mainContent()}
             {showTblPrefMsg && <TablePrefMsg/>}
-            <Stacker endDecorator={<HelpIcon helpId={'tables.options'}/>}>
+            <Slot component={Stacker} endDecorator={<HelpIcon helpId={'tables.options'}/>} slotProps={slotProps?.submitBar}>
                 <Button variant='solid' color='primary' onClick={onClose}>Close</Button>
-                <Button onClick={onReset}>Reset column selection</Button>
-                <Button onClick={onRemoveFilters}>Remove all filters</Button>
-            </Stacker>
+                {allowColumnSelection && <Button onClick={onReset}>Reset column selection</Button>}
+                {(showColumnOpt || showColumnOpt) && <Button onClick={onRemoveFilters}>Remove all filters</Button>}
+            </Slot>
         </Stack>
     );
-});
+}
 
 TablePanelOptions.propTypes = {
-    tbl_ui_id: PropTypes.string,
-    tbl_id: PropTypes.string,
-    onChange: PropTypes.func,
-    onOptionReset: PropTypes.func,
-    clearFilter: PropTypes.func
+    tbl_ui_id: string,
+    tbl_id: string,
+    onChange: func,
+    onOptionReset: func,
+    clearFilter: func,
+    allowColumnSelection: bool,
+    slotProps: shape({      // component: null to hide
+        header: shape({...Stack.propTypes}),
+        columnOptTab: object,       // Tab.propTypes, but cannot use Tab here because of forwardRef issue
+        columnOpt: shape({...ColumnOptions.propTypes}),
+        advFilterTab: object,
+        advFilter: shape({...SqlTableFilter.propTypes}),
+        submitBar: shape({...Stacker.propTypes}),
+    })
 };
 
 function OptionsFilterStats({tbl_id}) {
@@ -196,7 +220,7 @@ const filterIdx = 1;
 const typeIdx = 4;
 
 
-export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChange}) => {
+export function ColumnOptions ({tbl_id, tbl_ui_id, ctm_tbl_id, onChange, allowColumnSelection=true}) {
 
     const columns =  useStoreConnector( () => getTableUiById(tbl_ui_id)?.columns || []);
     const ckey = columns?.map((c) => c.name).join('|');
@@ -251,13 +275,20 @@ export const ColumnOptions = React.memo(({tbl_id, tbl_ui_id, ctm_tbl_id, onChang
                 showOptionButton = {false}
                 showTypes={false}
                 showFilters={true}
-                selectable = {true}
+                selectable = {allowColumnSelection}
                 rowHeight = {26}
                 highlightedRowHandler = {()=>undefined}
             />
         </Stack>
     );
-});
+}
+ColumnOptions.propTypes = {
+    tbl_id: string,
+    tbl_ui_id: string,
+    ctm_tbl_id: string,
+    onChange: func,
+    selectable: bool
+};
 
 function TablePrefMsg() {
 
