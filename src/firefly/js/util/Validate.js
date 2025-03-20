@@ -31,12 +31,12 @@ const makePrecisionStr= function(value,precision) {
     else return '';
 };
 
-const makeErrorMessage= function(description,min,max,precision) {
+const makeErrorMessage= function(description,min,max,makeMinMaxStr) {
     let retval= '';
     const hasMin= (min !== undefined && min!==null);
     const hasMax= (min !== undefined && min!==null);
-    const minStr= makePrecisionStr(min,precision);
-    const maxStr= makePrecisionStr(max,precision);
+    const minStr= makeMinMaxStr(min);
+    const maxStr= makeMinMaxStr(max);
     description= description || '';
     if (hasMin && hasMax) {
         retval= description + ': must be between ' + minStr + ' and ' + maxStr;
@@ -50,7 +50,8 @@ const makeErrorMessage= function(description,min,max,precision) {
     return retval;
 };
 
-const validateRange = function(min,max,precision,description,dType, valStr, nullAllowed) {
+const validateRange = function(min,max,precision,description,dType, valStr, nullAllowed, makeMinMaxStr) {
+    if (!makeMinMaxStr) makeMinMaxStr = (value) => makePrecisionStr(value, precision);
     const retval= {
         valid : true,
         message : ''
@@ -61,17 +62,17 @@ const validateRange = function(min,max,precision,description,dType, valStr, null
             const v = dType.convertFunc(valStr);
             if (!isInRange(v, min, max) || isNaN(v)) {
                 retval.valid = false;
-                retval.message = makeErrorMessage(description, min, max, precision);
+                retval.message = makeErrorMessage(description, min, max, makeMinMaxStr);
             }
         }
         else {
             retval.valid = false;
-            retval.message = description + ': must be a '+ dType.dataTypeDesc + makeErrorMessage(null, min, max, precision);
+            retval.message = description + ': must be a '+ dType.dataTypeDesc + makeErrorMessage(null, min, max, makeMinMaxStr);
         }
     }
     else if (!nullAllowed) {
         retval.valid = false;
-        retval.message = description + ': must be a '+ dType.dataTypeDesc + makeErrorMessage(null, min, max, precision);
+        retval.message = description + ': must be a '+ dType.dataTypeDesc + makeErrorMessage(null, min, max, makeMinMaxStr);
     }
     return retval;
 };
@@ -150,8 +151,8 @@ export const intRange = function(min,max,description, valStr, nullAllowed=true) 
    return validateRange(min,max,null,description,typeInject.asInt,valStr, nullAllowed);
 };
 
-export const floatRange = function(min,max,precision, description, valStr, nullAllowed=true) {
-    return validateRange(min,max,precision,description,typeInject.asFloat,valStr, nullAllowed);
+export const floatRange = function(min,max,precision, description, valStr, nullAllowed=true, makeMinMaxStr) {
+    return validateRange(min,max,precision,description,typeInject.asFloat,valStr, nullAllowed, makeMinMaxStr);
 };
 
 export const isFloat = function(description, valStr) {

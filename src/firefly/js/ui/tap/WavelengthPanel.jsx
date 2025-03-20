@@ -1,7 +1,7 @@
 import {Divider, Stack, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
-import {floatValidator, maximumPositiveFloatValidator, minimumPositiveFloatValidator} from '../../util/Validate.js';
+import { maximumPositiveFloatValidator, minimumPositiveFloatValidator} from '../../util/Validate.js';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 import {FieldGroupCtx, ForceFieldGroupValid} from '../FieldGroup.jsx';
 import {ListBoxInputField} from '../ListBoxInputField.jsx';
@@ -13,9 +13,10 @@ import {getDataServiceOption} from './DataServicesOptions';
 import {
     DebugObsCore, getPanelPrefix, LeftInSearch, makeCollapsibleCheckHeader,
     makeFieldErrorList,
-    makePanelStatusUpdater, SmallFloatNumericWidth, SpatialWidth,
+    makePanelStatusUpdater, SpatialWidth,
 } from './TableSearchHelpers.jsx';
 import {tapHelpId} from './TapUtil.js';
+import {BASE_UNIT, convertWavelengthStr, WavelengthInputField} from 'firefly/ui/WavelengthInputField';
 
 const panelTitle = 'Spectral Coverage';
 const panelValue = 'Wavelength';
@@ -77,13 +78,14 @@ function makeWavelengthConstraints(filterDefinitions, fldObj) {
             errList.addError('at least one filter must be checked');
         }
     } else { //wavelengthSelection fld is undefined (because of no filters), or 'numerical' (radio option)
-        const exponent= getExponent(wlUnits?.value);
+        const exponent= getExponent(wlContains?.unit); //TODO: remove it after range input field is ready
         if (rangeType?.value === 'contains') {
             errList.checkForError(wlContains);
             if (wlContains?.valid) {
-                const range = wlContains.value;
-                if (range) {
-                    const rangeList = [[`${range}${exponent}`, `${range}${exponent}`]];
+                // value is represented in BASE_UNIT but 'em_min' and 'em_max' in query fragment are in m (meters)
+                const rangeBound = convertWavelengthStr(wlContains.value, BASE_UNIT, 'm');
+                if (rangeBound) {
+                    const rangeList = [[rangeBound, rangeBound]];
                     adqlConstraintsAry.push(makeAdqlQueryRangeFragment('em_min', 'em_max', rangeList, true));
                     siaConstraints.push(...siaQueryRange('BAND', rangeList));
                 }
@@ -128,6 +130,7 @@ export function WavelengthOptions({initArgs, fieldKeys, filterDefinitions, slotP
     const hasFilters = filterDefinitions?.length > 0;
     const useNumerical = !hasFilters || getSelectionType() === 'numerical';
 
+    // TODO: remove this once range component is ready
     const units = (
         <Stack direction='row' alignItems='center'>
             <Divider orientation='vertical' />
@@ -199,17 +202,14 @@ export function WavelengthOptions({initArgs, fieldKeys, filterDefinitions, slotP
                     </div>
                     {getRangeType() === 'contains' && (
                         <div style={{ display: 'flex' }}>
-                            <ValidationField
-                                fieldKey={fieldKeys.wvlContains}
-                                size={SmallFloatNumericWidth}
-                                inputStyle={{ overflow: 'auto', height: 16 }}
-                                placeholder='enter wavelength'
-                                sx={{ '& .MuiInput-root': { 'paddingInlineEnd': 0 } }}
-                                validator={floatValidator(0, 100e15, 'Wavelength')}
-                                endDecorator={units}
-                                initialState={{ value: initArgs?.urlApi?.wvlContains || '' }}
-                                {...slotProps?.wvlContains}
-                            />
+                            <WavelengthInputField fieldKey={fieldKeys.wvlContains}
+                                                  inputStyle={{ overflow: 'auto', height: 16 }}
+                                                  placeholder='enter wavelength'
+                                                  initialState={{
+                                                      value: initArgs?.urlApi?.wvlContains || '',
+                                                      unit: initArgs?.urlApi?.wvlUnits || 'nm'
+                                                  }}
+                                                  {...slotProps?.wvlContains} />
                         </div>
                     )}
                     {getRangeType() === 'overlaps' && (
