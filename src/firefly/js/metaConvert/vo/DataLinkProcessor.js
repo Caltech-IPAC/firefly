@@ -235,7 +235,7 @@ function makeMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRo
 export function filterDLList(parsingAlgorithm, dataLinkData, preferCutout) {
     if (parsingAlgorithm===USE_ALL) return dataLinkData;
     if (parsingAlgorithm===IMAGE) {
-        return dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.isImage);
+        return dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.maybeImage);
     }
     if (parsingAlgorithm===RELATED_IMAGE_GRID) {
         const relatedGrid= dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.isGrid && dlAnalysis.maybeImage);
