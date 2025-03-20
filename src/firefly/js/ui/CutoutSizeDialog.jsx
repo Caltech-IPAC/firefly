@@ -193,7 +193,7 @@ function CutoutSizePanel({showingCutout,cutoutDefSizeDeg,pixelBasedCutout,dataPr
                                                 cutoutToFullWarning,tbl_id)}/>
                     }
                 </Stack>
-                <HelpIcon helpId={'visualization.rotate'} />
+                <HelpIcon helpId={'visualization.cutout'} />
             </Stack>
         </Stack>
     );
