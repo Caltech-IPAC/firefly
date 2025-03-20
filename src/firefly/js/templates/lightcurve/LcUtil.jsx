@@ -59,6 +59,8 @@ export function makeMissionEntries(tableMeta, layoutInfo={}, uploadFileName) {
         [LC.META_ERR_NAMES]: get(tableMeta, LC.META_ERR_NAMES, converterData.yErrNames),
         [LC.META_FLUX_BAND]: get(tableMeta, LC.META_FLUX_BAND, converterData.bandName),
         [LC.UPLOAD_FILENAME]: uploadFileName,
+        [LC.SLIDER_RANGE_MIN]: converterData.sliderRangeMin,
+        [LC.SLIDER_RANGE_MAX]: converterData.sliderRangeMax
     });
     return {converterData, missionEntries};
 }
@@ -123,8 +125,10 @@ export function getInitialDefaultValues(labelWidth, missionName) {
         [LC.META_URL_CNAME]: Object.assign(getTypeData(LC.META_URL_CNAME, '',
             'Image url column name',
             'Source Column', labelWidth)),
-        [LC.UPLOAD_FILENAME]: Object.assign(getTypeData(LC.UPLOAD_FILENAME, ''))
-
+        [LC.UPLOAD_FILENAME]: Object.assign(getTypeData(LC.UPLOAD_FILENAME, '')),
+        [LC.SLIDER_RANGE_MIN]: Object.assign(getTypeData(LC.SLIDER_RANGE_MIN, '')),
+        [LC.SLIDER_RANGE_MAX]: Object.assign(getTypeData(LC.SLIDER_RANGE_MAX, ''))
+        
     };
 
     switch (missionName){
@@ -152,7 +156,7 @@ export function getInitialDefaultValues(labelWidth, missionName) {
                 [LC.META_FLUX_BAND]: Object.assign(getTypeData(LC.META_FLUX_BAND, '',        '' +
                     'Select WISE band for images to be displayed',        'Image display:', 70)),
                 [LC.META_ERR_CNAME]: Object.assign(getTypeData(LC.META_ERR_CNAME, '',
-                    'value error column name',       'Error Column:', labelWidth))
+                    'value error column name',       'Error Column:', labelWidth)),
             };
             return Object.assign ({},commonDefault, wiseDefault );
         case 'ptf':

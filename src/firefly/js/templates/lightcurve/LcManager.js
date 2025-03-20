@@ -73,6 +73,8 @@ export const LC = {
     UPLOAD_FILENAME: 'uploadFileName',
     MISSION_DATA: 'missionEntries',
     GENERAL_DATA:'generalEntries',
+    SLIDER_RANGE_MIN: 'sliderRangeMin',
+    SLIDER_RANGE_MAX: 'sliderRangeMax',
 
     TABLE_PAGESIZE: MAX_ROW
 };
