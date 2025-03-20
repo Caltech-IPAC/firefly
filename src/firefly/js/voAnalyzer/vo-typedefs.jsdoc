@@ -41,6 +41,7 @@
  * @prop {boolean} isThis
  * @prop {boolean} isCounterpart
  * @prop {boolean} isImage
+ * @prop {boolean} maybeImage - the file is probably a fits file with an image
  * @prop {boolean} isGrid
  * @prop {boolean} isAux
  * @prop {boolean} isSpectrum

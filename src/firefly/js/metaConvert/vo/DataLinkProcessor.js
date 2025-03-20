@@ -78,7 +78,7 @@ export function processDatalinkTable({sourceTable, row, datalinkTable, activateP
             if (index<0) index= 0;
             dispatchUpdateActiveKey({dpId, activeMenuKeyChanges:{[activeMenuLookupKey]:menu[index].menuKey}});
         }
-        return dpdtFromMenu(menu,index,dlTableUrl);
+        return dpdtFromMenu(menu,index<0?0:index,dlTableUrl);
     }
 
     return dpdtMessage('No data available for this row',undefined,{activeMenuLookupKey});
@@ -235,7 +235,7 @@ function makeMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTable, sourceRo
 export function filterDLList(parsingAlgorithm, dataLinkData, preferCutout) {
     if (parsingAlgorithm===USE_ALL) return dataLinkData;
     if (parsingAlgorithm===IMAGE) {
-        return dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.isImage);
+        return dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.maybeImage);
     }
     if (parsingAlgorithm===RELATED_IMAGE_GRID) {
         const relatedGrid= dataLinkData.filter( ({dlAnalysis}) => dlAnalysis.isGrid && dlAnalysis.maybeImage);
