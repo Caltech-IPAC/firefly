@@ -347,6 +347,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
                         Node r = rlist.item(i);
                         jobInfo.getResults().add(
                                 new JobInfo.Result(
+                                    getAttr(r, "id"),
                                     getAttr(r,"xlink:href"),
                                     getAttr(r, "mime-type"),
                                     getAttr(r, "size")

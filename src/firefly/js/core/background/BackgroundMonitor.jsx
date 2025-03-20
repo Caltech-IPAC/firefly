@@ -11,7 +11,8 @@ import {InputField} from '../../ui/InputField.jsx';
 import Validate from '../../util/Validate.js';
 import {HelpIcon} from '../../ui/HelpIcon.jsx';
 import {dispatchShowDialog, dispatchHideDialog} from '../ComponentCntlr.js';
-import {getBackgroundInfo, isActive, isAborted, isDone, isSuccess, getJobInfo, canCreateScript
+import {
+    getBackgroundInfo, isActive, isAborted, isDone, isSuccess, getJobInfo, canCreateScript, isSearchJob
 } from './BackgroundUtil.js';
 import {dispatchBgJobInfo, dispatchJobRemove, dispatchBgSetInfo, dispatchJobCancel} from './BackgroundCntlr.js';
 import {showScriptDownloadDialog} from '../../ui/ScriptDownloadDialog.jsx';
@@ -53,9 +54,9 @@ export function showBackgroundMonitor(show=true) {
 
     const items = Object.values(jobs)
                     .filter((job) => job.jobInfo?.monitored)
-                    .map( (job) =>  job.jobInfo?.type === 'PACKAGE' ?
-                        <PackageJob key={job.jobId} jobInfo={job} /> :
-                        <SearchJob key={job.jobId} jobInfo={job} />
+                    .map( (job) =>  isSearchJob(job) ?
+                        <SearchJob key={job.jobId} jobInfo={job} /> :
+                        <PackageJob key={job.jobId} jobInfo={job} />
                     );
 
     return (
@@ -221,7 +222,7 @@ function JobProgress({jobInfo}) {
     } else if (isAborted(jobInfo)) {
         return <Typography>{jobInfo?.error || 'Job aborted'}</Typography>;
     } else if (isSuccess(jobInfo)) {
-        if (type === 'PACKAGE') {
+        if (!isSearchJob(jobInfo)) {
             return jobInfo?.results?.length === 1 ? <PackageItem {...{SINGLE:true, jobId, index:0}} /> : <div/> ;
         } else {
             const showTable = () => {
@@ -240,12 +241,12 @@ function JobProgress({jobInfo}) {
 function PackageItem({SINGLE, jobId, index}) {
     const jobInfo = useStoreConnector(() => getJobInfo(jobId));
 
-    const {parameters, downloadState} = jobInfo;
+    const {parameters, downloadState, results} = jobInfo;
     const dlreq = JSON.parse(parameters?.downloadRequest);
     const dlState = downloadState?.[index];
 
     const doDownload = () => {
-        const url = jobInfo?.results?.[index]?.href;
+        const url = results?.[index]?.href;
         if (!url) {
             showInfoPopup('Bad URL. Cannot download');
             return;
@@ -257,7 +258,7 @@ function PackageItem({SINGLE, jobId, index}) {
             dispatchBgJobInfo( updateSet(jobInfo, ['downloadState',index], 'FAIL') );
         });
     };
-    const dlmsg = SINGLE ? 'Download Now' : `Download Part #${index+1}`;
+    const dlmsg = SINGLE ? 'Download Now' : results?.[index]?.id || `Download Part #${index+1}`;
 
 
     const action = dlreq?.WS_DEST_PATH

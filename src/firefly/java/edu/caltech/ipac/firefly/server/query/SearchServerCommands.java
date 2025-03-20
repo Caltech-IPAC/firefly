@@ -26,7 +26,6 @@ import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.packagedata.DownloadScriptWorker;
-import edu.caltech.ipac.firefly.server.packagedata.PackagedEmail;
 import edu.caltech.ipac.firefly.server.packagedata.PackagingWorker;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.firefly.util.event.Name;
@@ -273,7 +272,7 @@ public class SearchServerCommands {
 
     public static class PackageRequest extends ServCmdJob {
 
-        public Job.Type getType() { return Job.Type.PACKAGE; }
+        public Job.Type getType() { return PackagingWorker.JOB_TYPE; }
 
         public String doCommand(SrvParam params) throws Exception {
             PackagingWorker worker = new PackagingWorker();
@@ -284,7 +283,7 @@ public class SearchServerCommands {
 
     public static class  DownloadScriptRequest extends ServCmdJob {
 
-        public Job.Type getType() { return Job.Type.PACKAGE; }
+        public Job.Type getType() { return DownloadScriptWorker.JOB_TYPE; }
 
         public String doCommand(SrvParam params) throws Exception {
             DownloadScriptWorker worker = new DownloadScriptWorker();
@@ -373,16 +372,18 @@ public class SearchServerCommands {
 
         @Override
         public String doCommand(SrvParam params) throws Exception {
-            String id = params.getRequired(JOB_ID);
-            String file = params.getRequired(ServerParams.FILE);
-            String source = params.getRequired(ServerParams.SOURCE);
-            List<String> attStrList = params.getOptionalList(ServerParams.ATTRIBUTE);
-            List<ScriptAttributes> attList= new ArrayList<ScriptAttributes>(5);
-            for(String a : attStrList) {
-                attList.add(Enum.valueOf(ScriptAttributes.class,a));
-            }
-            String url = PackagedEmail.makeScriptAndLink(JobManager.getJobInfo(id), source, attList);
-            return url;
+// this is no longer a feature.  we'll revisit this later
+//            String id = params.getRequired(JOB_ID);
+//            String file = params.getRequired(ServerParams.FILE);
+//            String source = params.getRequired(ServerParams.SOURCE);
+//            List<String> attStrList = params.getOptionalList(ServerParams.ATTRIBUTE);
+//            List<ScriptAttributes> attList= new ArrayList<ScriptAttributes>(5);
+//            for(String a : attStrList) {
+//                attList.add(Enum.valueOf(ScriptAttributes.class,a));
+//            }
+//            String url = PackagedEmail.makeScriptAndLink(JobManager.getJobInfo(id), source, attList);
+//            return url;
+            return "";
         }
     }
 
