@@ -78,7 +78,7 @@ export function processDatalinkTable({sourceTable, row, datalinkTable, activateP
             if (index<0) index= 0;
             dispatchUpdateActiveKey({dpId, activeMenuKeyChanges:{[activeMenuLookupKey]:menu[index].menuKey}});
         }
-        return dpdtFromMenu(menu,index,dlTableUrl);
+        return dpdtFromMenu(menu,index<0?0:index,dlTableUrl);
     }
 
     return dpdtMessage('No data available for this row',undefined,{activeMenuLookupKey});
