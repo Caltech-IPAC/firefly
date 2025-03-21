@@ -6,5 +6,5 @@ package edu.caltech.ipac.firefly.visualize;
 /**
  * @author Trey Roby
  */
-public record WebFitsData(double dataMin, double dataMax, double largeBinPercent, long fitsFileSize, String fluxUnits) { }
+public record WebFitsData(long fitsFileSize) { }
 

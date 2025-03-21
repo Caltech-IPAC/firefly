@@ -25,6 +25,9 @@ public record WebPlotResult(boolean success,
     public static final String DATA_HISTOGRAM= "DataHistogram";
     public static final String DATA_BIN_MEAN_ARRAY= "DataBinMeanArray";
     public static final String DATA_BIN_COLOR_IDX= "DataBinColorIdx";
+    public static final String DATA_MIN= "DataMin";
+    public static final String DATA_MAX= "DataMax";
+    public static final String LARGE_BIN_PERCENT= "LargeBinPercent";
     public static final String REGION_FILE_NAME = "RegionFileName";
     public static final String BAND_INFO= "Band_Info";
     public static final String REGION_ERRORS= "RegionErrors";
@@ -35,6 +38,7 @@ public record WebPlotResult(boolean success,
     public static final List<String> keyList= Arrays.asList(
             PLOT_CREATE, PLOT_CREATE_HEADER, STRING, DATA_HISTOGRAM,
             DATA_BIN_MEAN_ARRAY, DATA_BIN_COLOR_IDX, REGION_FILE_NAME, BAND_INFO, REGION_ERRORS,
+            DATA_MIN, DATA_MAX, LARGE_BIN_PERCENT,
             REGION_DATA, TITLE, RESULT_ARY);
 
 //======================================================================

@@ -7,6 +7,7 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -250,20 +251,17 @@ public class CollectionUtil {
 
     }
 
+    @SafeVarargs
     public static <T> List<T> asList(T... items) {
 
         ArrayList<T> list = new ArrayList<T>(items.length);
-        if (items != null) {
-            for (T item : items) {
-                list.add(item);
-            }
-        }
+        Collections.addAll(list, items);
         return list;
     }
 
     public static <T> boolean matches(int cursorIdx, T src, List<Filter<T>> filters) {
         if ( filters !=  null ) {
-            cursorIdx = cursorIdx < 0 ? 0 : cursorIdx;
+            cursorIdx = Math.max(cursorIdx, 0);
             for(Filter<T> f : filters) {
                 boolean accept = f.isRowIndexBased() ? f.accept(cursorIdx) : f.accept(src);
                 if (!accept) {

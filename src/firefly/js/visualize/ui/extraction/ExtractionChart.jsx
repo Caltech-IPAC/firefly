@@ -62,7 +62,7 @@ function makePlotlyDataObj(xDataAry, yDataAry, x, y, ttXStr, ttYStr, makeXDesc =
 
 export function genSliceChartData(plot, ipt1, ipt2, xDataAry, yDataAry, x, y, pointSize, combineOp, title, reversed) {
     const unitStr = hasWCSProjection(plot) ? ' (arcsec)' : '';
-    const yUnits = getFluxUnits(plot, Band.NO_BAND);
+    const yUnits = getFluxUnits(plot);
     const yAxisLabel = getExtName(plot) || 'HDU# ' + getHDU(plot);
     return {
         plotlyDivStyle,
@@ -77,7 +77,7 @@ export function genPointChartData(plot, dataAry, imPtAry, x, y, pointSize, combi
     const xAxis = chartXAxis === 'imageX' ? imPtAry.map((pt) => pt.x) : imPtAry.map((pt) => pt.y);
     const xAxisTitle = chartXAxis === 'imageX' ? 'Image X' : 'Image Y';
     const xLabel = (i) => `(${imPtAry[i].x},${imPtAry[i].y})`;
-    const yUnits = getFluxUnits(plot, Band.NO_BAND);
+    const yUnits = getFluxUnits(plot);
     const yAxisLabel = getExtName(plot) || 'HDU# ' + getHDU(plot);
 
     return {

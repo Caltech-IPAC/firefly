@@ -48,12 +48,16 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static edu.caltech.ipac.firefly.visualize.Band.NO_BAND;
 
@@ -69,6 +73,12 @@ public class VisServerOps {
     static {
         VisContext.init();
     }
+    private static final Map<String, SemContainer> activeUserSemaphores = Collections.synchronizedMap(new HashMap<>());
+    private static final int MAX_SINGLE_USER_REQUEST_BYTE_STRETCH = 1;
+    private static final int MAX_SEMAPHORE_WAIT_SECS = 360;
+    private static final AtomicLong callCnt = new AtomicLong(0);
+    private static final long MAP_CLEANUP = 5000L;
+    private static final long AGE_OFFSET= 12*60*60*100; // 12 hours
 
     /**
      * create a new 3 color plot
@@ -178,7 +188,7 @@ public class VisServerOps {
         List<PixelValue.Result> fluxList= new ArrayList<>(baseList);
         for(int i=1; (i<stateAry.length);i++) {
             var faHOverlayList= Collections.singletonList(stateAry[i].getFileAndHeaderInfo(Band.NO_BAND));
-            fluxList.add(getFileFlux(faHOverlayList, ipt).get(0));
+            fluxList.add(getFileFlux(faHOverlayList, ipt).getFirst());
         }
         return fluxList;
     }
@@ -189,11 +199,60 @@ public class VisServerOps {
                 .toList();
     }
 
+    private static Semaphore getUserSemaphore() {
+        var cnt= callCnt.incrementAndGet();
+        String userKey= ServerContext.getRequestOwner().getUserKey();
+        var retSem= activeUserSemaphores.computeIfAbsent( userKey,
+                k -> new SemContainer(new Semaphore(MAX_SINGLE_USER_REQUEST_BYTE_STRETCH), new Date().getTime()+AGE_OFFSET));
+        if (cnt % MAP_CLEANUP == 0) { // check every 5000 request, remove any entries over 12 hours old
+            long now= new Date().getTime();
+            var oldKeys= activeUserSemaphores.entrySet().stream()
+                    .filter( e -> e.getValue().expireTime <now && !e.getKey().equals(userKey))
+                    .map(Map.Entry::getKey)
+                    .toList();
+            oldKeys.forEach(activeUserSemaphores::remove);
+        }
+        return retSem.semaphore();
+    }
+
+    
+    private record SemContainer(Semaphore semaphore, long expireTime) {}
+
+    private static void acquireSemaphore(Semaphore userSemaphore) throws InterruptedException {
+        var accessGained= userSemaphore.tryAcquire(MAX_SEMAPHORE_WAIT_SECS, TimeUnit.SECONDS); // try to get the semaphore for 5 minutes, normal
+        if (!accessGained && userSemaphore.availablePermits()==0) { // something is wrong, reset the semaphore
+            _log.info("Unexpected semaphore state: semaphore not released after 5 minutes, resetting semaphore (this should never happen)");
+            userSemaphore.release(MAX_SINGLE_USER_REQUEST_BYTE_STRETCH);
+            userSemaphore.acquire();
+        }
+    }
+
+
+    public static byte[] getByteStretchArrayWithUserLocking(PlotState state,
+                                                            int tileSize,
+                                                            boolean mask,
+                                                            long maskBits,
+                                                            CompressType ct) throws Exception {
+
+        Semaphore userSemaphore = getUserSemaphore();
+        try {
+            acquireSemaphore(userSemaphore);
+            return getByteStretchArray(state,tileSize,mask,maskBits,ct);
+        } catch (InterruptedException e) {
+            throw new Exception("Unexpected InterruptedException", e);
+        } finally {
+            userSemaphore.release();
+        }
+    }
+
+
+
+
     public static byte[] getByteStretchArray(PlotState state, int tileSize, boolean mask, long maskBits, CompressType ct) {
         DirectStretchUtils.StretchDataInfo data;
         try {
             ActiveFitsReadGroup frGroup= CtxControl.prepare(state);
-            Cache memCache= CacheManager.getVisMemCache();
+            Cache<Object> memCache= CacheManager.getVisMemCache();
             CacheKey stretchDataKey= new StringKey(state.getContextString()+"byte-data");
             data= (StretchDataInfo)memCache.get(stretchDataKey);
             String fromCache= "";
@@ -221,7 +280,7 @@ public class VisServerOps {
         List<WebPlotResult> resultsList= Arrays.stream(stateAry).map((s) -> crop(s, c1, c2, cropMultiAll)).toList();
         boolean success= resultsList.stream().filter(r -> !r.success()).toList().isEmpty();
         WebPlotResult result = WebPlotResult.make(WebPlotResult.RESULT_ARY, resultsList.toArray(new WebPlotResult[0]));
-        return success ? result : resultsList.get(0);
+        return success ? result : resultsList.getFirst();
     }
 
 
@@ -348,7 +407,11 @@ public class VisServerOps {
             return WebPlotResult.make(
                     WebPlotResult.DATA_HISTOGRAM, hist.getHistogramArray(),
                     WebPlotResult.DATA_BIN_MEAN_ARRAY, hist.getMeanBinDataAry(fr.getBscale(),fr.getBzero()),
-                    WebPlotResult.DATA_BIN_COLOR_IDX, fr.getHistColors(hist, state.getRangeValues(band)) );
+                    WebPlotResult.DATA_BIN_COLOR_IDX, fr.getHistColors(hist, state.getRangeValues(band)),
+                    WebPlotResult.DATA_MIN, hist.getDNMin(),
+                    WebPlotResult.DATA_MAX, hist.getDNMax(),
+                    WebPlotResult.LARGE_BIN_PERCENT, hist.getLargeBinPercent()
+            );
         } catch (Throwable e) {
             return createError("on getColorHistogram", state, e);
         }
@@ -406,7 +469,7 @@ public class VisServerOps {
                 tmpLine = tmpLine.trim();
                 if (!tmpLine.startsWith("#")) rAsStrList.add(tmpLine);
             }
-            if (rAsStrList.size() == 0) msgList.add("no region is defined in the footprint file");
+            if (rAsStrList.isEmpty()) msgList.add("no region is defined in the footprint file");
 
             return WebPlotResult.make(
                     WebPlotResult.REGION_DATA, StringUtils.combineStringList(rAsStrList),
@@ -433,7 +496,7 @@ public class VisServerOps {
                         if (!tmpLine.startsWith("#") && ((tmpLine.contains("tag={" + tag)) || (!tmpLine.contains("tag"))))
                             rAsStrList.add(tmpLine);
                     }
-                    if (rAsStrList.size() == 0) msgList.add("no region is defined in the footprint file");
+                    if (rAsStrList.isEmpty()) msgList.add("no region is defined in the footprint file");
                 } catch (Exception e) {
                     return createError("on getFootprintRegion", e);
                 }
