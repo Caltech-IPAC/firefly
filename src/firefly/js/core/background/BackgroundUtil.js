@@ -82,6 +82,10 @@ export function getJobInfo(jobId) {
     return get(flux.getState(), [BACKGROUND_PATH, 'jobs', jobId]);
 }
 
+export function isSearchJob(job) {
+    return job?.jobInfo?.type === 'SEARCH' || job?.jobInfo?.type === 'UWS';
+}
+
 /**
  * returns the email used for background status notification.
  * @returns {string}

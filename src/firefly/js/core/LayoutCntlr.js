@@ -7,7 +7,7 @@ import {take} from 'redux-saga/effects';
 import {get, isEqual, isEmpty, filter, pick, uniqBy, flatten} from 'lodash';
 import Enum from 'enum';
 import {DATA_PRODUCT_ID_PREFIX, dataProductRoot} from '../metaConvert/DataProductsCntlr.js';
-import {getBackgroundInfo} from './background/BackgroundUtil.js';
+import {getBackgroundInfo, isSearchJob} from './background/BackgroundUtil.js';
 import {flux} from './ReduxFlux';
 import {clone} from '../util/WebUtil.js';
 import {
@@ -418,7 +418,7 @@ export function getResultCounts() {
     const pinChartCnt= getViewer(getMultiViewRoot(), PINNED_CHART_VIEWER_ID)?.itemIdAry?.length ?? 0;
     const {jobs={}}= getBackgroundInfo() ?? {};
     const bgTableCnt= Object.values(jobs)
-        .filter((job) => job.jobInfo?.monitored && job.jobInfo?.type !== 'PACKAGE')?.length ?? 0;
+        .filter((job) => job.jobInfo?.monitored && isSearchJob(job))?.length ?? 0;
     return {haveResults,tableCnt,tableLoadingCnt,imageCnt,imageLoadingCnt,pinChartCnt,bgTableCnt};
 }
 

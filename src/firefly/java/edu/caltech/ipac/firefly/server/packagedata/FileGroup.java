@@ -36,6 +36,9 @@ public class FileGroup implements Iterable<FileInfo>, HasAccessInfos {
 //----------------------- Constructors ---------------------------------
 //======================================================================
 
+    public FileGroup(Collection<FileInfo> fileList) {
+        this(fileList, null, 0, null);
+    }
 
     public FileGroup(Collection<FileInfo> fileList,
                      File baseDir,

@@ -285,7 +285,7 @@ public class Util {
          * @param defVal The default value to return if the value is invalid.
          * @return Returns the value if valid, otherwise returns the specified default value.
          */
-        public T get(T defVal) {
+        public T getOrElse(T defVal) {
             if (test.test(val)) {
                 return val;
             } else {

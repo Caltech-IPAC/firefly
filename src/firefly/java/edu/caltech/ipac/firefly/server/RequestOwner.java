@@ -164,7 +164,7 @@ public class RequestOwner implements Cloneable {
         if (userInfo == null) {
             userInfo = getAuthUser();
             if (userInfo == null) {
-                String userKey = ifNotNull(getUserKeyFromClient()).get(newUserKey());
+                String userKey = ifNotNull(getUserKeyFromClient()).getOrElse(newUserKey());
                 UserCache<UserInfo> userInfoCache = UserCache.getInstance(userKey);
                 userInfo = userInfoCache.get(USER_INFO_KEY);
                 if (userInfo == null) {

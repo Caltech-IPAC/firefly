@@ -15,7 +15,6 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.events.WebsocketConnector;
-import edu.caltech.ipac.firefly.server.packagedata.PackagedEmail;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
 import edu.caltech.ipac.util.cache.Cache;
@@ -188,8 +187,9 @@ public class JobManager {
 
     public static JobInfo sendEmail(String jobId, String email) {
         updateJobInfo(jobId, (ji) -> ji.getParams().put(EMAIL, email));
-        PackagedEmail.send(jobId);
-        return getJobInfo(jobId);
+        JobInfo jobInfo = getJobInfo(jobId);
+        if (jobInfo != null) EmailNotification.sendNotification(jobInfo);
+        return jobInfo;
     }
 
     public static String results(String jobId) {

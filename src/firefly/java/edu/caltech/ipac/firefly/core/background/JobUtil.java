@@ -141,7 +141,7 @@ public class JobUtil {
         if (!info.getParams().isEmpty()) rval.put(PARAMETERS, info.getParams());
 
         if (info.getPhase() == COMPLETED && info.getResults().isEmpty()) {
-            rval.put(RESULTS, Arrays.asList(toJsonResult(asyncUrl + info.getJobId() + "/results/result", null, null)));
+            rval.put(RESULTS, Arrays.asList(toJsonResult(new Result("result", asyncUrl + info.getJobId() + "/results/result", null, null))));
         } else if (!info.getResults().isEmpty()) {
             rval.put(RESULTS, toResults(info.getResults()));
         }
@@ -174,15 +174,17 @@ public class JobUtil {
     }
 
     public static List<JSONObject> toResults(List<JobInfo.Result> results) {
-        return results.stream().map(r -> toJsonResult(r.href(), r.mimeType(), r.size()))
+        return results.stream().map(r -> toJsonResult(r))
                 .collect(Collectors.toList());
     }
 
-    public static JSONObject toJsonResult(String href, String mimeType, String size) {
+    public static JSONObject toJsonResult(JobInfo.Result result) {
+        if (result == null) return null;
         JSONObject ro = new JSONObject();
-        applyIfNotEmpty(href, v -> ro.put("href", v));
-        applyIfNotEmpty(mimeType, v -> ro.put("mimeType", v));
-        applyIfNotEmpty(size, v -> ro.put("size", v));
+        applyIfNotEmpty(result.id(), v -> ro.put("id", v));
+        applyIfNotEmpty(result.href(), v -> ro.put("href", v));
+        applyIfNotEmpty(result.mimeType(), v -> ro.put("mimeType", v));
+        applyIfNotEmpty(result.size(), v -> ro.put("size", v));
         return ro;
     }
 
@@ -191,7 +193,7 @@ public class JobUtil {
     }
 
     public static Result toResult(JSONObject jo) {
-        return new Result(getStr(jo, "href"), getStr(jo, "mimeType"), getStr(jo, "size"));
+        return new Result(getStr(jo,"id"), getStr(jo, "href"), getStr(jo, "mimeType"), getStr(jo, "size"));
     }
 
     /**

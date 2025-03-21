@@ -4,13 +4,14 @@
 
 package edu.caltech.ipac.firefly.server.packagedata;
 
-import com.google.common.net.MediaType;
+import java.io.File;
+import java.util.*;
+import java.util.function.Function;
+
+import edu.caltech.ipac.firefly.core.background.JobUtil;
 import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
-import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
-import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
@@ -22,20 +23,13 @@ import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
 import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.core.background.JobInfo;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
-
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
-import static edu.caltech.ipac.firefly.core.background.JobManager.getJobInfo;
 import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
-import static edu.caltech.ipac.firefly.core.background.JobUtil.getJobWorkDir;
 import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.*;
-import static edu.caltech.ipac.firefly.server.packagedata.PackagingWorker.makeDownloadUrl;
 import static edu.caltech.ipac.firefly.server.servlets.AnyFileDownload.getDownloadURL;
 import static edu.caltech.ipac.firefly.server.ws.WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
+import static edu.caltech.ipac.firefly.core.Util.Try;
 
 /**
  * Downloads a script with products from the List<FileInfo>
@@ -45,40 +39,14 @@ import static edu.caltech.ipac.util.StringUtils.isEmpty;
  */
 public final class DownloadScriptWorker implements Job.Worker {
 
-    private static final String DOWNLOAD_SERVLET_PATH = "servlet/Download";
+    public static final Job.Type JOB_TYPE = Job.Type.SCRIPT;
+
     private static final Logger.LoggerImpl logger = Logger.getLogger();
-
-    private Job job;
-    private List<String> failed = new ArrayList<>();
-    private int curFileInfoIdx = 0;
-    private long lastUpdatedTime = System.currentTimeMillis();
-    private int lastUpdatedPct;
-    private int totalFiles;
-    private String wsDestPath;
-    private boolean hasErrors;
-    private String suggestedName;
-
-    private static final List<ScriptAttributes> wget= Arrays.asList(Wget);
-    private static final List<ScriptAttributes> curl= Arrays.asList(Curl);
-    private static final List<ScriptAttributes> text= Arrays.asList(URLsOnly);
-
     public static final String SCRIPT = "scriptType";
 
-    private static final Map<String, List<ScriptAttributes>> scriptTypeMap = new HashMap<>();
-    static {
-        scriptTypeMap.put("wget", wget);
-        scriptTypeMap.put("curl", curl);
-        scriptTypeMap.put("urls", text);
-    }
+    private Job job;
 
-    private static final Map<String, String> scriptTypeToExtension = new HashMap<>();
-    static {
-        scriptTypeToExtension.put("wget", ".sh");
-        scriptTypeToExtension.put("curl", ".sh");
-        scriptTypeToExtension.put("urls", ".txt");
-    }
-
-    public Job.Type getType() { return Job.Type.PACKAGE; }
+    public Job.Type getType() { return JOB_TYPE; }
 
     public void setJob(Job job) {
         this.job = job;
@@ -93,93 +61,82 @@ public final class DownloadScriptWorker implements Job.Worker {
     public String doCommand(SrvParam params) throws Exception {
 
         DownloadRequest dlreq = params.getDownloadRequest();
-
-        String scriptType = dlreq.getParam(SCRIPT); //curl, wget, or "urls" for plain list of URLs
-
-        wsDestPath = isEmpty(dlreq.getParam(DownloadRequest.FILE_LOC)) ? null : dlreq.getParam(DownloadRequest.WS_DEST_PATH);
-
-        SearchProcessor processor = SearchManager.getProcessor(dlreq.getRequestId());
-        if (processor instanceof FileGroupsProcessor) {
-            List<FileGroup> result = ((FileGroupsProcessor) processor).getData(dlreq);
-
-            totalFiles = result.stream().mapToInt(fg -> fg.getSize()).sum();
-
-            suggestedName = dlreq.getBaseFileName();
-
-            try {
-                for (FileGroup fg : result) {
-                    List<URL> urlList = new ArrayList<>();
-                    for (FileInfo fi : fg) {
-                        updateJobProgress();
-                        HttpServiceInput req = fi.getRequestInfo();
-                        String url = req.getRequestUrl();
-                        urlList.add(new URL(url));
-                    }
-
-                    File outFile = File.createTempFile("download-results", ".sh", getJobWorkDir(getJob().getJobId()));
-
-                    //retrieve attributes based on scriptType
-                    List<ScriptAttributes> attribute = scriptTypeMap.getOrDefault(scriptType.toLowerCase(), text);
-                    DownloadScript.composeDownloadScript(outFile, dlreq.getDataSource(), urlList, attribute);
-
-                    if (outFile.exists()) {
-                        String fileExtension = scriptTypeToExtension.getOrDefault(scriptType.toLowerCase(), ".txt");
-                        getJob().addResult(new JobInfo.Result(getDownloadURL(outFile, suggestedName + fileExtension), MediaType.PLAIN_TEXT_UTF_8.toString(), outFile.length() + ""));
-
-                        // handle 'save to Workspace' option:  pushes downloaded script (.sh or .txt) to workspace
-                        if (!isEmpty(wsDestPath)) {
-                            String wsFilePath = wsDestPath + suggestedName + fileExtension;
-                            try {
-                                new WsServerUtils().putFile(
-                                        new WsServerParams().set(CURRENTRELPATH, wsFilePath),
-                                        outFile);
-                            } catch (IOException e) {
-                                logger.error(e);
-                            }
-                        }
-                    }
-                }
-            }
-            catch(Exception e){
-                failed.add(e.getMessage());
-            }
-            hasErrors = hasErrors || !failed.isEmpty();
-        }
-        else {
-            throw new DataAccessException("Operation aborted:" + dlreq.getRequestId(), new IllegalArgumentException("Unable to resolve a search processor for this request"));
-        }
+        String scriptType = dlreq.getParam(SCRIPT); //curl, wget, or "urls" for plain list of URLs;  (LLY: should ignore and create all 3 types)
+        String suggestedName = ifNotNull(dlreq.getBaseFileName()).getOrElse("download");
+        String dataDesc = dlreq.getDataSource();
+        String wsDestPath = isEmpty(dlreq.getParam(DownloadRequest.FILE_LOC)) ? null : dlreq.getParam(DownloadRequest.WS_DEST_PATH);
 
         updateJobInfo(getJob().getJobId(), ji -> {
-            // JobInfo completion update
-            String summary = String.format("%,d files were processed.", totalFiles);
-            if (hasErrors) summary += "\nPlease, note:  There were error(s) while processing your request.";
-            ji.getAuxData().setProgress(100);
-            ji.getAuxData().setProgressDesc(summary);
-            ji.getAuxData().setSummary(summary);
+            ji.getAuxData().setProgress(10);
+            ji.getAuxData().setProgressDesc("Validating inputs");
         });
-        getJob().setPhase(JobInfo.Phase.COMPLETED);
 
-        PackagedEmail.send(getJob().getJobId());
+        try {
+            SearchProcessor processor = SearchManager.getProcessor(dlreq.getRequestId());
+            if (!(processor instanceof FileGroupsProcessor)) {
+                throw new DataAccessException("Operation aborted:" + dlreq.getRequestId(), new IllegalArgumentException("Unable to resolve a search processor for this request"));
+            }
 
+            updateJobInfo(getJob().getJobId(), ji -> {
+                ji.getAuxData().setProgress(20);
+                ji.getAuxData().setProgressDesc("Processing the request");
+            });
+
+            List<FileGroup> result = ((FileGroupsProcessor) processor).getData(dlreq);
+            int totalFiles = result.stream().mapToInt(fg -> fg.getSize()).sum();
+
+            updateJobInfo(getJob().getJobId(), ji -> {
+                ji.getAuxData().setProgress(80);
+                ji.getAuxData().setProgressDesc("Generating the results");
+            });
+
+            File curlScript = makeScript(result, Curl, dataDesc);
+            File wgetScript = makeScript(result, Wget, dataDesc);
+            File urlsFile = makeScript(result, URLsOnly, dataDesc);
+
+            Function<ScriptAttributes, String> suggName = (type) -> {
+                String ext = type.equals(URLsOnly) ? "txt" : "sh";
+                return "%s-%s.%s".formatted(suggestedName, type.name().toLowerCase(), ext);
+            };
+
+            // handle 'save to Workspace' option:  pushes downloaded script (.sh or .txt) to workspace  (LLY: should probably ignore.  what is the use case?)
+            if (!isEmpty(wsDestPath)) {
+                Try.it(() -> new WsServerUtils().putFile(new WsServerParams().set(CURRENTRELPATH, wsDestPath + suggName.apply(Curl)), curlScript));
+                Try.it(() -> new WsServerUtils().putFile(new WsServerParams().set(CURRENTRELPATH, wsDestPath + suggName.apply(Wget)), wgetScript));
+                Try.it(() -> new WsServerUtils().putFile(new WsServerParams().set(CURRENTRELPATH, wsDestPath + suggName.apply(URLsOnly)), urlsFile));
+            }
+
+            String curlScriptUrl = getDownloadURL(curlScript, suggName.apply(Curl));
+            String wgetScriptUrl = getDownloadURL(wgetScript, suggName.apply(Wget));
+            String urlsFileUrl = getDownloadURL(urlsFile, suggName.apply(URLsOnly));
+
+            getJob().addResult(new JobInfo.Result("url-list", urlsFileUrl, "text/plain", urlsFile.length() + ""));
+            getJob().addResult(new JobInfo.Result("curl-script", curlScriptUrl, "text/x-shellscript", curlScript.length() + ""));
+            getJob().addResult(new JobInfo.Result("wget-script", wgetScriptUrl, "text/x-shellscript", wgetScript.length() + ""));
+
+            updateJobInfo(getJob().getJobId(), ji -> {
+                // JobInfo completion update
+                String summary = String.format("%,d files were processed.", totalFiles);
+                ji.getAuxData().setProgress(100);
+                ji.getAuxData().setProgressDesc(summary);
+                ji.getAuxData().setSummary(summary);
+            });
+            getJob().setPhase(JobInfo.Phase.COMPLETED);
+
+        } catch(Exception e){
+            getJob().setError(500, e.getMessage());
+        }
         return "";
     }
 
-    private void updateJobProgress() throws DataAccessException.Aborted {
-        Job job = getJob();
-        if (job != null) {
-            JobInfo.Phase phase = ifNotNull(getJobInfo(getJob().getJobId())).get(JobInfo::getPhase);
-            if (phase == JobInfo.Phase.ABORTED) throw new DataAccessException.Aborted();
-            if (System.currentTimeMillis() - lastUpdatedTime > 2000) {
-                lastUpdatedTime = System.currentTimeMillis();
-                int pct = (int) ((float)curFileInfoIdx / totalFiles * 100);
-                if ( pct != lastUpdatedPct) {
-                    lastUpdatedPct = pct;
-                    job.progress(pct, String.format("%d of %d completed", curFileInfoIdx, totalFiles));
-                }
-            }
-        }
+    File makeScript(List<FileGroup> results, ScriptAttributes type, String dataDesc) {
+        String id = getJob().getJobId();
+        String fname = type == Curl ? "curl_script_%s.sh" : type   == Wget ? "wget_script_%s.sh" : "urls_%s.txt";
+        fname = fname.formatted(id.substring(id.length()-4));      // safe; id is always greater than 4 chars
+        File script = new File(JobUtil.getJobWorkDir(id), fname);
+        DownloadScript.createScript(script, dataDesc, results, type, MakeDirs);
+        return script;
     }
-    
 }
 /*
  * THIS SOFTWARE AND ANY RELATED MATERIALS WERE CREATED BY THE CALIFORNIA
