@@ -49,6 +49,7 @@ import static edu.caltech.ipac.util.StringUtils.isEmpty;
  * @version : $
  */
 public final class PackagingWorker implements Job.Worker {
+    public static final Job.Type JOB_TYPE = Job.Type.PACKAGE;
 
     private static final String DOWNLOAD_SERVLET_PATH = "servlet/Download";
     private static final long MAX_ZIP_FILE_SIZE = AppProperties.getLongProperty("download.data.bytesize", 1024*1024*1024*16L);
@@ -72,7 +73,7 @@ public final class PackagingWorker implements Job.Worker {
     private String wsDestPath;
     private boolean hasErrors;
 
-    public Job.Type getType() { return Job.Type.PACKAGE; }
+    public Job.Type getType() { return JOB_TYPE; }
 
     public void setJob(Job job) {
         this.job = job;
@@ -135,8 +136,6 @@ public final class PackagingWorker implements Job.Worker {
         });
         getJob().setPhase(JobInfo.Phase.COMPLETED);
 
-        PackagedEmail.send(getJob().getJobId());
-
         return "";
     }
 
@@ -169,7 +168,9 @@ public final class PackagingWorker implements Job.Worker {
             int zippedFiles = curFileInfoIdx - startFileInfoIdx;
             ZipHandler.addReadmeZipEntry(zout,zipMessage(zippedFiles, zippedBytes, failed, denied));
             zout.setComment(String.format("Files %s-%s", startFileInfoIdx, curFileInfoIdx));
-            getJob().addResult(new JobInfo.Result(makeDownloadUrl(zipFile, suggestedName, curZipIdx), MediaType.ZIP.toString(), zipFile.length()+""));
+            String suggName = suggestedName == null ? "DownloadPackage" : suggestedName;
+            suggName = "%s%s.zip".formatted(suggName, curZipIdx > 0 ? "-part" + curZipIdx : "");
+            getJob().addResult(new JobInfo.Result(suggName,  getDownloadURL(zipFile, suggName), MediaType.ZIP.toString(), zipFile.length()+""));
             failed.clear();
             denied.clear();
             zippedBytes = 0;
@@ -214,11 +215,6 @@ public final class PackagingWorker implements Job.Worker {
             msg.append(String.join("\n", failed));
         }
         return msg.toString();
-    }
-
-    public static String makeDownloadUrl(File f, String suggestedName, int packageIdx) {
-        suggestedName = suggestedName == null ? "DownloadPackage" : suggestedName;
-        return getDownloadURL(f, "%s%s.zip".formatted(suggestedName, packageIdx > 0 ? "-part" + packageIdx : ""));
     }
 
     private static File getZipFile(String jobId, String suggestedName, int packageIdx) {

@@ -209,7 +209,7 @@ public class JobInfo implements Serializable {
 //====================================================================
 
     public record Error ( int code, String msg) implements Serializable {}
-    public record Result(String href, String mimeType, String size) implements Serializable {};
+    public record Result(String id, String href, String mimeType, String size) implements Serializable {};
 
     /**
      * Additional information required by Firefly that is not defined in `uws:job`.

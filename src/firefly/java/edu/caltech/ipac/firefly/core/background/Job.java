@@ -18,7 +18,7 @@ import static edu.caltech.ipac.firefly.server.util.QueryUtil.combineErrorMsg;
  */
 public interface Job extends Callable<String> {
 
-    enum Type {SEARCH, UWS, PACKAGE}
+    enum Type {SEARCH, UWS, PACKAGE, SCRIPT}
 
     String getJobId();
 

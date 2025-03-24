@@ -1,6 +1,7 @@
 package edu.caltech.ipac.firefly.util;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.firefly.server.util.DownloadScript;
 import org.junit.After;
 import org.junit.Before;
@@ -28,10 +29,10 @@ public class DownloadScriptTest {
 
     @Test
     public void urlsOnly() throws Exception {
-        List<FileInfo> fileInfoList = List.of(
+        List<FileGroup> fileInfoList = List.of(new FileGroup(List.of(
                 new FileInfo("https://example.com/file1.txt", "mydata/file1.txt", 0),
                 new FileInfo("https://example.com/file2.txt", "mydata/file1.txt", 0)
-        );
+        )));
 
         DownloadScript.createScript(tempScript, "Test Data", fileInfoList, URLsOnly);
 
@@ -44,12 +45,12 @@ public class DownloadScriptTest {
 
     @Test
     public void wget() throws Exception {
-        List<FileInfo> fileInfoList = List.of(
+        List<FileGroup> fileInfoList = List.of(new FileGroup(List.of(
                 new FileInfo("https://example.com/file1.zip", "dir1/file1.zip", 0),
                 new FileInfo("https://example.com/file1.zip", null, 0),
                 new FileInfo("https://example.com/file1.zip", "file1.zip", 0),
                 new FileInfo("https://example.com/file1.zip", "dir2/", 0)
-        );
+        )));
 
         DownloadScript.createScript(tempScript, "Test Data", fileInfoList, Wget, Unzip);
 
@@ -63,12 +64,12 @@ public class DownloadScriptTest {
 
     @Test
     public void curl() throws Exception {
-        List<FileInfo> fileInfoList = List.of(
+        List<FileGroup> fileInfoList = List.of(new FileGroup(List.of(
                 new FileInfo("https://example.com/file1.zip", "dir1/file1.zip", 0),
                 new FileInfo("https://example.com/file1.zip", null, 0),
                 new FileInfo("https://example.com/file1.zip", "file1.zip", 0),
                 new FileInfo("https://example.com/file1.zip", "dir2/", 0)
-        );
+        )));
 
         DownloadScript.createScript(tempScript, "Test Data", fileInfoList, Curl, Unzip, MakeDirs);
 
@@ -82,10 +83,10 @@ public class DownloadScriptTest {
 
     @Test
     public void wgetUnzip() throws Exception {
-        List<FileInfo> fileInfoList = List.of(
+        List<FileGroup> fileInfoList = List.of(new FileGroup(List.of(
                 new FileInfo("https://example.com/file1.txt", "mydata/file1.txt", 0),
                 new FileInfo("https://example.com/file1.txt", "mydata/file2.zip", 0)
-        );
+        )));
 
         DownloadScript.createScript(tempScript, "Test Data", fileInfoList, Wget, Unzip, MakeDirs);
 
