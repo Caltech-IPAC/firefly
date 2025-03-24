@@ -372,17 +372,7 @@ public class SearchServerCommands {
 
         @Override
         public String doCommand(SrvParam params) throws Exception {
-// this is no longer a feature.  we'll revisit this later
-//            String id = params.getRequired(JOB_ID);
-//            String file = params.getRequired(ServerParams.FILE);
-//            String source = params.getRequired(ServerParams.SOURCE);
-//            List<String> attStrList = params.getOptionalList(ServerParams.ATTRIBUTE);
-//            List<ScriptAttributes> attList= new ArrayList<ScriptAttributes>(5);
-//            for(String a : attStrList) {
-//                attList.add(Enum.valueOf(ScriptAttributes.class,a));
-//            }
-//            String url = PackagedEmail.makeScriptAndLink(JobManager.getJobInfo(id), source, attList);
-//            return url;
+            // this is no longer a feature.  we'll remove it at some point
             return "";
         }
     }

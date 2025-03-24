@@ -136,8 +136,6 @@ public final class PackagingWorker implements Job.Worker {
         });
         getJob().setPhase(JobInfo.Phase.COMPLETED);
 
-//        PackagedEmail.send(getJob().getJobId());
-
         return "";
     }
 

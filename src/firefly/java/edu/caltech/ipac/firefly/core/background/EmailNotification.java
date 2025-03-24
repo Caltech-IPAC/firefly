@@ -34,7 +34,9 @@ public class EmailNotification implements JobCompletedHandler {
         Your job has successfully completed. You can now download the generated data using the links below:
         
         Curl Script: %s
+        
         Wget Script: %s
+        
         Direct URLs: %s
         
         For your convenience, the curl and wget scripts will automate the download process. Simply run the appropriate script in your terminal.
@@ -69,7 +71,9 @@ public class EmailNotification implements JobCompletedHandler {
         Your job has successfully completed. You can now download the packaged data using any of the scripts or links below:
         
         Curl Script: %s
+        
         Wget Script: %s
+        
         Direct URLs: %s
         
         The curl and wget scripts provide two ways to automate the download process -- simply run either script in your terminal to download all of the zip files. The third link here provides a list of URLs that point to the packaged zip files. These scripts and links should work for 72 hours. To uncompress the files you have downloaded, doubleclick on them, or type "unzip foo.zip". To unzip multiple files at once, type "unzip '*.zip'" (the single quotes are important), or "unzip *.zip" -- you have to escape the wildcard. Some Windows users have reported having difficulty unzipping files; we recommend using 7-zip (https://www.7-zip.org/download.html).
