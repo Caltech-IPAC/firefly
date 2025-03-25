@@ -1,13 +1,11 @@
-import {Divider, Stack, Typography} from '@mui/joy';
+import {Stack, Typography} from '@mui/joy';
 import PropTypes from 'prop-types';
 import React, {useContext, useEffect, useState} from 'react';
-import { maximumPositiveFloatValidator, minimumPositiveFloatValidator} from '../../util/Validate.js';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 import {FieldGroupCtx, ForceFieldGroupValid} from '../FieldGroup.jsx';
 import {ListBoxInputField} from '../ListBoxInputField.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
 import {useFieldGroupRerender, useFieldGroupValue, useFieldGroupWatch} from '../SimpleComponent.jsx';
-import {ValidationField} from '../ValidationField.jsx';
 import {makeAdqlQueryRangeFragment, ConstraintContext, siaQueryRange} from './Constraints.js';
 import {getDataServiceOption} from './DataServicesOptions';
 import {
@@ -16,7 +14,12 @@ import {
     makePanelStatusUpdater, SpatialWidth,
 } from './TableSearchHelpers.jsx';
 import {tapHelpId} from './TapUtil.js';
-import {BASE_UNIT, convertWavelengthStr, WavelengthInputField} from 'firefly/ui/WavelengthInputField';
+import {
+    BASE_UNIT,
+    convertWavelengthStr,
+    WavelengthInputField,
+    WavelengthRangeInput
+} from 'firefly/ui/WavelengthInputField';
 
 const panelTitle = 'Spectral Coverage';
 const panelValue = 'Wavelength';
@@ -28,18 +31,7 @@ const obsCoreWvlFieldKeys = {
     wvlContains: 'obsCoreWavelengthContains',
     wvlMin: 'obsCoreWavelengthMinRange',
     wvlMax: 'obsCoreWavelengthMaxRange',
-    wvlUnits: 'obsCoreWavelengthUnits',
 };
-
-function getExponent(units) {
-    switch (units) {
-        case 'nm': return 'e-9';
-        case 'angstrom': return 'e-10';
-        case 'um': return 'e-6';
-        default: return '';
-    }
-}
-
 
 function makeWavelengthConstraints(filterDefinitions, fldObj) {
     const errList= makeFieldErrorList();
@@ -48,7 +40,7 @@ function makeWavelengthConstraints(filterDefinitions, fldObj) {
 
     const {[obsCoreWvlFieldKeys.selectionType]:wavelengthSelection, [obsCoreWvlFieldKeys.rangeType]:rangeType,
         [obsCoreWvlFieldKeys.wvlContains]:wlContains, [obsCoreWvlFieldKeys.wvlMin]:wlMinRange,
-        [obsCoreWvlFieldKeys.wvlMax]:wlMaxRange, [obsCoreWvlFieldKeys.wvlUnits]:wlUnits} = fldObj;
+        [obsCoreWvlFieldKeys.wvlMax]:wlMaxRange} = fldObj;
 
 
     // pull out the fields we care about
@@ -78,11 +70,10 @@ function makeWavelengthConstraints(filterDefinitions, fldObj) {
             errList.addError('at least one filter must be checked');
         }
     } else { //wavelengthSelection fld is undefined (because of no filters), or 'numerical' (radio option)
-        const exponent= getExponent(wlContains?.unit); //TODO: remove it after range input field is ready
         if (rangeType?.value === 'contains') {
             errList.checkForError(wlContains);
             if (wlContains?.valid) {
-                // value is represented in BASE_UNIT but 'em_min' and 'em_max' in query fragment are in m (meters)
+                // value is represented in BASE_UNIT but 'em_min' and 'em_max' in query fragment are in m (meters) so convert to m
                 const rangeBound = convertWavelengthStr(wlContains.value, BASE_UNIT, 'm');
                 if (rangeBound) {
                     const rangeList = [[rangeBound, rangeBound]];
@@ -99,17 +90,12 @@ function makeWavelengthConstraints(filterDefinitions, fldObj) {
             errList.checkForError(wlMaxRange);
             const anyHasValue = wlMinRange?.value || wlMaxRange?.value;
             if (anyHasValue) {
-                const minValue = wlMinRange?.value?.length === 0 ? '-Inf' : wlMinRange?.value ?? '-Inf';
-                const maxValue = wlMaxRange?.value?.length === 0 ? '+Inf' : wlMaxRange?.value ?? '+Inf';
-                const lowerValue = minValue === '-Inf' ? minValue : `${minValue}${exponent}`;
-                const upperValue = maxValue === '+Inf' ? maxValue : `${maxValue}${exponent}`;
+                // value is represented in BASE_UNIT but 'em_min' and 'em_max' in query fragment are in m (meters) so convert to m
+                const lowerValue = convertWavelengthStr(wlMinRange?.value, BASE_UNIT, 'm') || '-Inf';
+                const upperValue = convertWavelengthStr(wlMaxRange?.value, BASE_UNIT, 'm') || 'Inf';
                 const rangeList = [[lowerValue, upperValue]];
-                if (!lowerValue.endsWith('Inf') && !upperValue.endsWith('Inf') && Number(lowerValue) > Number(upperValue)) {
-                    errList.addError('the max wavelength is smaller than the min wavelength');
-                } else {
-                    adqlConstraintsAry.push(makeAdqlQueryRangeFragment('em_min', 'em_max', rangeList));
-                    siaConstraints.push(...siaQueryRange('BAND', rangeList));
-                }
+                adqlConstraintsAry.push(makeAdqlQueryRangeFragment('em_min', 'em_max', rangeList));
+                siaConstraints.push(...siaQueryRange('BAND', rangeList));
             } else {
                 errList.addError('at least one field must be populated');
             }
@@ -129,30 +115,6 @@ export function WavelengthOptions({initArgs, fieldKeys, filterDefinitions, slotP
 
     const hasFilters = filterDefinitions?.length > 0;
     const useNumerical = !hasFilters || getSelectionType() === 'numerical';
-
-    // TODO: remove this once range component is ready
-    const units = (
-        <Stack direction='row' alignItems='center'>
-            <Divider orientation='vertical' />
-            <ListBoxInputField
-                fieldKey={fieldKeys.wvlUnits}
-                options={[
-                    { label: 'microns', value: 'um' },
-                    { label: 'nanometers', value: 'nm' },
-                    { label: 'angstroms', value: 'angstrom' },
-                ]}
-                slotProps={{
-                    input: {
-                        variant: 'plain',
-                        sx: { minHeight: 'unset' },
-                    },
-                }}
-                initialState={{ value: initArgs?.urlApi?.wvlUnits || 'nm' }}
-                multiple={false}
-                {...slotProps?.wvlUnits}
-            />
-        </Stack>
-    );
 
     return (
         <Stack spacing={2}>
@@ -213,26 +175,23 @@ export function WavelengthOptions({initArgs, fieldKeys, filterDefinitions, slotP
                         </div>
                     )}
                     {getRangeType() === 'overlaps' && (
-                        <Stack direction='row' spacing={1} alignItems='center'>
-                            <ValidationField
-                                fieldKey={fieldKeys.wvlMin}
-                                sx={{ '& .MuiInput-root': { 'width': 100 } }}
-                                validator={minimumPositiveFloatValidator('Min Wavelength')}
-                                placeholder='-Inf'
-                                initialState={{ value: initArgs?.urlApi?.wvlMin }}
-                                {...slotProps?.wvlMin}
-                            />
-                            <Typography level='body-md'>to</Typography>
-                            <ValidationField
-                                fieldKey={fieldKeys.wvlMax}
-                                sx={{ '& .MuiInput-root': { 'width': 100 } }}
-                                validator={maximumPositiveFloatValidator('Max Wavelength')}
-                                placeholder='+Inf'
-                                initialState={{ value: initArgs?.urlApi?.wvlMax }}
-                                {...slotProps?.wvlMax}
-                            />
-                            {units}
-                        </Stack>
+                        <WavelengthRangeInput minFieldKey={fieldKeys.wvlMin} maxFieldKey={fieldKeys.wvlMax}
+                                              slotProps={{
+                                                  wvlMin: {
+                                                      initialState: {
+                                                          value: initArgs?.urlApi?.wvlMin || '',
+                                                          unit: initArgs?.urlApi?.wvlUnits || 'nm'
+                                                      },
+                                                      ...slotProps?.wvlMin
+                                                  },
+                                                  wvlMax: {
+                                                      initialState: {
+                                                          value: initArgs?.urlApi?.wvlMax || '',
+                                                          unit: initArgs?.urlApi?.wvlUnits || 'nm'
+                                                      },
+                                                      ...slotProps?.wvlMax
+                                                  }
+                                              }}/>
                     )}
                 </Stack>
             )}
@@ -248,7 +207,6 @@ WavelengthOptions.propTypes = {
         wvlContains: PropTypes.string,
         wvlMin: PropTypes.string,
         wvlMax: PropTypes.string,
-        wvlUnits: PropTypes.string,
     }).isRequired,
     filterDefinitions: PropTypes.arrayOf(PropTypes.shape({
         name: PropTypes.string,
