@@ -85,7 +85,7 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
     const fluxArray = getFluxInfo(readoutData, radix);
     const hipsPixel= showHealpixPixel && isHiPS;
     const showCopy= readout.lockByClick;
-    const {readout1, readout2, showReadout1PrefChange, showReadout2PrefChange, showWavelengthFailed, waveLength}= displayEle;
+    const {readout1, readout2, showReadout1PrefChange, showReadout2PrefChange, showWavelengthFailed, waveLength, bandWidth}= displayEle;
 
     return (
         <Box sx={{
@@ -127,6 +127,9 @@ function Readout({readout, readoutData, showHealpixPixel=false, radix}){
             {!threeColor && waveLength && image &&
                 <DataReadoutItem lArea='greenLabel' vArea='greenValue' label={waveLength.label} value={waveLength.value}
                                                      prefChangeFunc={showWavelengthFailed} /> }
+            {!threeColor && bandWidth && image &&
+                <DataReadoutItem lArea='blueLabel' vArea='blueValue' label={bandWidth.label} value={bandWidth.value}
+                                 prefChangeFunc={showWavelengthFailed} /> }
             {threeColor && <DataReadoutItem lArea='greenLabel' vArea='greenValue'
                                             monoFont={radix===16}
                                             prefChangeFunc={() =>showMouseReadoutFluxRadixDialog(readout.readoutPref)}

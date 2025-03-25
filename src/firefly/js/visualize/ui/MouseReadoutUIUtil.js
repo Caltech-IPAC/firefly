@@ -9,7 +9,8 @@ import {
     MR_EQJ2000_HMS, MR_FIELD_HIPS_MOUSE_READOUT1, MR_FIELD_HIPS_MOUSE_READOUT2, MR_FIELD_IMAGE_MOUSE_READOUT1,
     MR_FIELD_IMAGE_MOUSE_READOUT2, MR_FITS_IP, MR_WL, MR_ZERO_IP,
     MR_GALACTIC, MR_HEALPIX_NORDER, MR_HEALPIX_PIXEL, MR_PIXEL_SIZE, MR_SPIXEL_SIZE, MR_SUPER_GALACTIC, MR_WCS_COORDS,
-    STATUS_NAN, STATUS_UNAVAILABLE, STATUS_UNDEFINED, STATUS_VALUE, TYPE_DECIMAL_INT, TYPE_EMPTY, TYPE_FLOAT
+    STATUS_NAN, STATUS_UNAVAILABLE, STATUS_UNDEFINED, STATUS_VALUE, TYPE_DECIMAL_INT, TYPE_EMPTY, TYPE_FLOAT,
+    MR_BAND_WIDTH
 } from '../MouseReadoutCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {convertCelestial} from '../VisUtil';
@@ -42,6 +43,7 @@ const labelMap = {
     [MR_HEALPIX_PIXEL]: 'Pixel: ',
     [MR_HEALPIX_NORDER]: 'Norder: ',
     [MR_WL]: 'Wavelength: ',
+    [MR_BAND_WIDTH]: 'Band Width: ',
 };
 
 const coordOpTitle= 'Choose readout coordinates';
@@ -61,10 +63,10 @@ export function getNonFluxDisplayElements(readoutData, readoutPref, isHiPS= fals
     const objList= getNonFluxReadoutElements(readoutData,  readoutPref, isHiPS);
 
     const {imageMouseReadout1, imageMouseReadout2, imageMouseNoncelestialReadout1, imageMouseNoncelestialReadout2,
-        hipsMouseReadout1, hipsMouseReadout2, pixelSize, healpixPixel, healpixNorder, wl} = objList;
+        hipsMouseReadout1, hipsMouseReadout2, pixelSize, healpixPixel, healpixNorder, wl, bandWidth} = objList;
 
 
-    let readout1, readout2, healpixPixelReadout, healpixNorderReadout, waveLength;
+    let readout1, readout2, healpixPixelReadout, healpixNorderReadout, waveLength, bandWidthField= undefined;
     let showReadout1PrefChange, showReadout2PrefChange, showWavelengthFailed;
 
     if (isHiPS) {
@@ -108,13 +110,16 @@ export function getNonFluxDisplayElements(readoutData, readoutPref, isHiPS= fals
 
 
         if (wl?.value) {
-            waveLength= {...wl, label:labelMap.wl};
+            waveLength= {...wl, label:labelMap[MR_WL]};
             showWavelengthFailed= readoutItems.wl.failReason ? () => showInfoPopup(readoutItems.wl.failReason) : undefined;
+        }
+        if (bandWidth?.value) {
+            bandWidthField= {...bandWidth, label:labelMap[MR_BAND_WIDTH]};
         }
     }
 
     return {
-        readout1, readout2, waveLength, showWavelengthFailed,
+        readout1, readout2, waveLength, bandWidth:bandWidthField, showWavelengthFailed,
         showReadout1PrefChange, showReadout2PrefChange, healpixPixelReadout, healpixNorderReadout,
         pixelSize: {...pixelSize, label: labelMap[readoutPref.pixelSize]},
         showPixelPrefChange:() => showMouseReadoutOptionDialog('pixelSize', readoutPref.pixelSize, undefined, 'Choose pixel size'),
@@ -194,6 +199,10 @@ export function getReadoutElement(readoutItems, readoutKey, plotId, copyPref) {
             const {wl}= readoutItems;
             if (!wl) return {value:undefined};
             return {value:makeWLReturn(wl.value, getFormattedWaveLengthUnits(wl.unit))};
+        case MR_BAND_WIDTH:
+            const {bandWidth}= readoutItems;
+            if (!bandWidth) return {value:undefined};
+            return {value:makeWLReturn(bandWidth.value, getFormattedWaveLengthUnits(bandWidth.unit))};
     }
 
     return {value:''};

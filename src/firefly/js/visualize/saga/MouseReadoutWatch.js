@@ -20,7 +20,8 @@ import {mouseUpdatePromise, fireMouseReadoutChange} from '../VisMouseSync';
 import {
     primePlot, getPlotStateAry, getPlotViewById, getImageCubeIdx, getPtWavelength,
     getWavelengthParseFailReason, getWaveLengthUnits, hasPixelLevelWLInfo, hasPlaneOnlyWLInfo,
-    isImageCube, wavelengthInfoParsedSuccessfully, } from '../PlotViewUtil';
+    isImageCube, wavelengthInfoParsedSuccessfully, getPtSpectralCoords, getBandWidthUnits,
+} from '../PlotViewUtil';
 import {getFluxRadix} from 'firefly/visualize/ui/MouseReadoutUIUtil';
 
 
@@ -394,17 +395,22 @@ function makeWLResult(plot,imagePt= undefined) {
         if (wavelengthInfoParsedSuccessfully(plot)) {
             if (!imagePt) return;
             const cubeIdx= (isImageCube(plot) && getImageCubeIdx(plot)) || 0;
-            const wlValue= getPtWavelength(plot, imagePt, cubeIdx);
-            return makeValueReadoutItem('Wavelength', wlValue, getWaveLengthUnits(plot), 4);
+            // const wlValue= getPtWavelength(plot, imagePt, cubeIdx);
+            const specCoords= getPtSpectralCoords(plot, imagePt, cubeIdx);
+            return {
+                wl: makeValueReadoutItem('Wavelength', specCoords[0] ?? 0, getWaveLengthUnits(plot), 4),
+                bandWidth: makeValueReadoutItem('Wavelength', specCoords[1] ?? 0, getBandWidthUnits(plot), 4),
+
+            };
         }
         else {
             const item=  makeValueReadoutItem('Wavelength', 'Failed', '', 4);
             item.failReason= getWavelengthParseFailReason(plot);
-            return item;
+            return {wl:item, bandWidth:item};
         }
     }
     else {
-        return undefined;
+        return {};
     }
 }
 
@@ -433,12 +439,12 @@ function makeReadout(plot, worldPt, screenPt, imagePt) {
             title: makeDescriptionItem(plot.title),
             pixel: makeValueReadoutItem('Pixel Size', pixScale.value, pixScale.unit, 3),
             screenPixel:makeValueReadoutItem('Screen Pixel Size', screenPixScale.value, screenPixScale.unit, 3),
-            wl: makeWLResult(plot,imagePt)
+            ...makeWLResult(plot,imagePt)
         };
     }
     else {
         return {
-            wl: makeWLResult(plot)
+            ...makeWLResult(plot)
         };
     }
 
