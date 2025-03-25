@@ -8,8 +8,11 @@ import PropTypes from 'prop-types';
 import {Divider, Sheet, Stack} from '@mui/joy';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
+import {HIDDEN} from '../ImViewFilterDisplay';
 import {ViewerScroll} from '../iv/ExpandedTools.jsx';
-import {dispatchChangeViewerLayout, getMultiViewRoot, getViewer} from '../MultiViewCntlr.js';
+import {
+    dispatchChangeViewerLayout, EXPANDED_MODE_RESERVED, getMultiViewRoot, getViewer, getViewerItemIds
+} from '../MultiViewCntlr.js';
 import {dispatchChangeActivePlotView, ExpandType} from '../ImagePlotCntlr.js';
 import {BeforeButton, DisplayTypeButtonGroup, NextButton } from './Buttons.jsx';
 import {ViewOptionsButton} from './ExpandedOptionsPopup.jsx';
@@ -26,9 +29,13 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, tool
     if (cIdx<0) cIdx= 0;
 
     const moreThanOne= viewerPlotIds.length>1;
+    let multipleForImageList= moreThanOne;
     const nextIdx= cIdx===viewerPlotIds.length-1 ? 0 : cIdx+1;
     const prevIdx= cIdx ? cIdx-1 : viewerPlotIds.length-1;
     const viewer= getViewer(getMultiViewRoot(), viewerId);
+    if (!multipleForImageList) {
+        multipleForImageList= getViewerItemIds(getMultiViewRoot(),EXPANDED_MODE_RESERVED+HIDDEN).length>0;
+    }
     const layout= viewer?.layout ?? 'grid';
     const scroll= viewer?.scroll ?? false;
 
@@ -52,7 +59,7 @@ export function MultiViewStandardToolbar({visRoot, viewerId, viewerPlotIds, tool
                             }
                         ]
                     }}/>}
-                    {useImageList && moreThanOne && <ViewOptionsButton title='Pinned Images' viewerId={viewerId}/> }
+                    {useImageList && multipleForImageList && <ViewOptionsButton title='Pinned Images' viewerId={viewerId}/> }
                     {moreThanOne && layout==='grid' &&
                         <>
                             <ToolbarHorizontalSeparator/>
