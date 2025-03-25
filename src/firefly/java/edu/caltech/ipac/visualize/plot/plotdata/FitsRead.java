@@ -4,7 +4,6 @@
 package edu.caltech.ipac.visualize.plot.plotdata;
 
 import edu.caltech.ipac.firefly.data.HasSizeOf;
-import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.visualize.plot.CoordinateSys;
 import edu.caltech.ipac.visualize.plot.Histogram;
 import edu.caltech.ipac.visualize.plot.ImageHeader;
@@ -21,10 +20,10 @@ import nom.tam.image.compression.hdu.CompressedImageHDU;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.SPOT_EXT;
 import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.SPOT_OFF;
-import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.dataArrayFromFitsFile;
 import static edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil.getHeaderSize;
 
 
@@ -43,13 +42,15 @@ public class FitsRead implements Serializable, HasSizeOf {
     private final Header header;
     private Histogram hist;
     private final File file;
-    private final boolean deferredRead;
     private final CoordinateSys coordinateSys;
     private final int maptype;
     private final double cdelt1;
     private final String bunit;
     private long estimatedBaseSize=0;
     private final boolean tileCompress;
+    private boolean dataFlipped= false;
+    private boolean requestedFlipped= false;
+    private final String syncKey;
 
 
     /**
@@ -64,26 +65,20 @@ public class FitsRead implements Serializable, HasSizeOf {
         this.hdu= makeImageHDU(imageHdu);
         this.header = hdu.getHeader();
         this.zeroHeader= zeroHeader;
-        this.deferredRead = cube && file!=null;
         this.planeNumber = cube ? planeNumber : 0;
         this.cube = cube;
         this.hduNumber = header.getIntValue(SPOT_EXT, 0);
         this.bunit= hdu.getBUnit()!=null ? hdu.getBUnit() : "---";
-
-        if (deferredRead && tileCompress) {
-            throw new IllegalArgumentException("FitsRead cannot do deferred readying with compressed images ");
-        }
 
         ImageHeader imageHeader = new ImageHeader(header, header.getLongValue(SPOT_OFF, 0), planeNumber);
         this.maptype= imageHeader.maptype;
         this.cdelt1= imageHeader.cdelt1;
         this.coordinateSys= imageHeader.determineCoordSys();
 
-
-        float1d = deferredRead ? null : FitsReadUtil.getImageHDUDataInFloatArray(hdu); //convert to float to do all the calculations
+        float1d = (!tileCompress && file!=null) ? null : FitsReadUtil.getImageHDUDataInFloatArray(hdu); //convert to float to do all the calculations, todo: why is readying different here
 
         if (clearHdu) hdu= null;
-
+        syncKey= makeSyncKey();
     }
 
     private static ImageHDU makeImageHDU(BasicHDU<?> hdu) throws FitsException {
@@ -109,8 +104,6 @@ public class FitsRead implements Serializable, HasSizeOf {
     public String getExtType(String defVal) { return FitsReadUtil.getExtType(header,defVal); }
     public String getExtType() { return getExtType(""); }
 
-    public boolean isDeferredRead() { return deferredRead; }
-
     public String getOrigin() {
         return header.getStringValue(ImageHeader.ORIGIN)!=null ? header.getStringValue(ImageHeader.ORIGIN) : "";
     }
@@ -120,17 +113,69 @@ public class FitsRead implements Serializable, HasSizeOf {
 
     public float[] getRawFloatAry() {
         if (float1d!=null) return float1d;
-        if (!deferredRead) throw new IllegalArgumentException("FitsRead not setup for deferred reading");
-        try (Fits fits = new Fits(this.file)) {
-            BasicHDU<?> hdu= fits.read()[this.hduNumber];
-            if (!(hdu instanceof ImageHDU)) return null;
-            float1d= (float [])dataArrayFromFitsFile((ImageHDU)hdu, 0,0,getNaxis1(),getNaxis2(), planeNumber,Float.TYPE);
-            return float1d;
+        float1d= FitsReadUtil.dataArrayFromHDUAndPlane(this.file,this.hduNumber, planeNumber);
+        return float1d;
+    }
+
+    private String makeSyncKey() {
+        String ctxStr= this.file!=null ? this.file.getAbsolutePath() : LocalDateTime.now().toString();
+        return ctxStr+"--"+this.hduNumber+"--"+this.planeNumber;
+    }
+
+    public float[] getRawFloatAryFlipped(boolean cacheOnSecondRequest) {
+        float[] retAry;
+        synchronized (syncKey) {
+            if (float1d==null && cacheOnSecondRequest && !requestedFlipped) {
+                retAry= FitsReadUtil.dataArrayFromHDUAndPlane(this.file,this.hduNumber, planeNumber);
+                flipInPlace(retAry,getNaxis1(),getNaxis2());
+            }
+            else {
+                retAry= getRawFloatAry();
+                if (!dataFlipped) {
+                    flipInPlace(retAry,getNaxis1(),getNaxis2());
+                    dataFlipped = true;
+                }
+            }
+            requestedFlipped= true;
+            return retAry;
         }
-        catch (Exception e) {
-            Logger.getLogger("FitsRead").error(e,"Could not ready cube FITS plane");
-            return null;
+    }
+
+    public float[] getRawFloatAryStandard() {
+        synchronized (syncKey) {
+            float[] retAry = getRawFloatAry();
+            if (dataFlipped) {
+                flipInPlace(retAry, getNaxis1(), getNaxis2());
+                dataFlipped = false;
+            }
+            return retAry;
         }
+    }
+
+    private static void flipInPlace(float [] float1d, int naxis1, int naxis2) {
+        int idx=0;
+        float val;
+        for (int y= naxis2-1; y>=naxis2/2; y--) {
+            for (int x= 0; x<naxis1; x++) {
+                val= float1d[idx];
+                float1d[idx]= float1d[y*naxis1+x];
+                float1d[y*naxis1+x]= val;
+                idx++;
+                if (idx==(naxis1*naxis2)/2) return;
+            }
+        }
+    }
+
+    private static float [] flipFloatArray(float [] float1d, int naxis1, int naxis2) {
+        float [] flipped= new float[float1d.length];
+        int idx=0;
+        for (int y= naxis2-1; y>=0; y--) {
+            for (int x= 0; x<naxis1; x++) {
+                flipped[idx]= float1d[y*naxis1+x];
+                idx++;
+            }
+        }
+        return flipped;
     }
 
     public static RangeValues getDefaultFutureStretch() { return DEFAULT_RANGE_VALUE; }
@@ -283,7 +328,7 @@ public class FitsRead implements Serializable, HasSizeOf {
      * This method return the physical data value at the pixels as an one dimensional array
      */
     public float[] getDataFloat() {
-        float[] floatAry= getRawFloatAry();
+        float[] floatAry= getRawFloatAryStandard();
         if (getBscale()==1.0 && getBzero()==0) return floatAry;
         float[] fData = new float[floatAry.length];
         float bscale= (float) getBscale();

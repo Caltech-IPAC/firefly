@@ -58,9 +58,12 @@ public class HorizonsEphPairs {
 
         try {
             String urlStr = horizonsServer + path + "?sstr="+ URLEncoder.encode(idOrName, "UTF-8");
-            URL url = new URL(urlStr);
-            String jsonStrResult = URLDownload.getDataFromURL(url, null,null,null).getResultAsString();
-            JsonHelper json= JsonHelper.parse(jsonStrResult);
+            var result = URLDownload.getDataFromURL(new URL(urlStr), null,null,null);
+            if (result.getResponseCode() != 200) {
+                throw new FailedRequestException("failed to retrieve ephemeris pairs, response code: " + result.getResponseCode());
+            }
+            var json= JsonHelper.parse(result.getResultAsString());
+
 
             JSONArray rList= json.getValue(new JSONArray(), "result");
             List<HorizonsResults> horizonsResults= new ArrayList<>();

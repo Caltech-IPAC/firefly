@@ -9,7 +9,7 @@ import {getActiveTableId, getCellValue, getTblById} from '../tables/TableUtil.js
 import {uniqueID} from '../util/WebUtil';
 import {allBandAry} from '../visualize/Band.js';
 import ImagePlotCntlr, {
-    dispatchChangeActivePlotView, dispatchDeletePlotView, dispatchPlotGroup, dispatchPlotImage, dispatchZoom, visRoot
+    dispatchChangeActivePlotView, dispatchDeletePlotView, dispatchPlotImage, dispatchZoom, visRoot
 } from '../visualize/ImagePlotCntlr.js';
 import {
     DEFAULT_FITS_VIEWER_ID, dispatchReplaceViewerItems, getLayoutType, getMultiViewRoot, getViewerItemIds, GRID, IMAGE
@@ -213,8 +213,6 @@ function onImagePlotComplete(plotId,onComplete) {
 
 }
 
-///=========================
-
 export function resetImageFullGridActivePlot(tbl_id, plotIdAry) {
     if (!tbl_id || isEmpty(plotIdAry)) return;
 
@@ -315,12 +313,15 @@ function replotImageDataProducts(activePlotId, makeActive, imageViewerId, tbl_id
 
     // prepare standard plot
     const wpRequestAry= makePlottingList(reqAry);
-    if (!isEmpty(wpRequestAry)) {
-        dispatchPlotGroup({wpRequestAry, viewerId:imageViewerId, holdWcsMatch:true,
-            // setNewPlotAsActive: makeActive && workingActivePlotId,
-            pvOptions: { userCanDeletePlots: false, menuItemKeys:{imageSelect : false}, useSticky:true },
-            attributes: { tbl_id }
-        });
+    if (wpRequestAry?.length) {
+        wpRequestAry.forEach( (wpRequest) =>
+            dispatchPlotImage({
+                wpRequest, plotId:wpRequest.getPlotId(),holdWcsMatch:true,
+                viewerId:imageViewerId,
+                pvOptions: { userCanDeletePlots: false, menuItemKeys:{imageSelect : false}, useSticky:true },
+                attributes: { tbl_id }
+
+            }) );
     }
     if (makeActive && workingActivePlotId) {
         onImagePlotComplete(workingActivePlotId,

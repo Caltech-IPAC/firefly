@@ -2,7 +2,6 @@ package edu.caltech.ipac.firefly.server.rpc;
 
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.server.SrvParam;
-import org.json.simple.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
 import java.util.HashMap;

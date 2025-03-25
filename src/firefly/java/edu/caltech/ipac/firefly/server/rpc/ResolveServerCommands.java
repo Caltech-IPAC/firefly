@@ -102,7 +102,7 @@ public class ResolveServerCommands {
                 wrapperAry.add(result);
 
             }catch (Exception e){
-                logger.error("Could not resolve object name: "+ sp.getRequired(ServerParams.OBJ_NAME));
+                logger.error("Could not resolve object name: "+ " "+ e +" " + sp.getRequired(ServerParams.OBJ_NAME));
 
                 result.put("success", "false");
                 result.put("error", e.getMessage());

@@ -213,11 +213,6 @@ function clearLocalStretchData(plot) {
     entry.dataType= CLEARED;
 }
 
-// keep code around
-// function isNoisyImage(plot) {
-//     if (isNaN(plot?.webFitsData?.[Band.NO_BAND.value]?.largeBinPercent)) return false;
-//     return (!isThreeColor(plot) && plot.webFitsData[Band.NO_BAND.value].largeBinPercent>.03);
-// }
 
 export function getDataCompress(plotImageId) {
     return getEntry(plotImageId)?.rawTileDataGroup?.dataCompress;
@@ -301,12 +296,21 @@ export async function loadStretchData(pv, plot, dispatcher) {
         if (fatal) {
             Logger('RawDataOps').warn(`dispatch the the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
             if (dataCompress!==FULL) {
-                await requestAgain(reqId, plotId, plot, 1, FULL, workerKey, dispatcher);
+                // Logger('RawDataOps').warn(`requesting again: ${dataCompress}`);
+                dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
+                    payload:{plotId, description:'Failed: Could not retrieve image render data' }});
+                // await requestAgain(reqId, plotId, plot, 1, dataCompress, workerKey, dispatcher);
             }
             else {
                 dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
                     payload:{plotId, description:'Failed: Could not retrieve image render data' }});
             }
+        }
+
+        else {
+            Logger('RawDataOps').warn(`non fatal, dispatch the the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
+            dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
+                payload:{plotId, description:'Failed: Could not retrieve image render data' }});
         }
     }
 }
@@ -363,17 +367,24 @@ async function requestAgain(reqId, plotId, plot, waitTime, dataCompress, workerK
     if (!plot) return false;
     const {plotImageId}= plot;
     await delay(waitTime);
-    if (imageIdsRequested.get(plotImageId)!==reqId) return false; // abort another request for this image has started
+    if (imageIdsRequested.get(plotImageId)!==reqId) {
+        Logger('RawDataOps').warn('request again: aborted with duplicate');
+        return false;
+    } // abort another request for this image has started
     const {success,fatal}= await loadStandardStretchData(workerKey, plot,
                        { dataCompress, backgroundUpdate: true, checkForPlotUpdate: true});
     if (success) {
+        Logger('RawDataOps').warn(`request again: success BYTE_DATA_REFRESH: ${dataCompress}`);
         dispatcher({ type: ImagePlotCntlr.BYTE_DATA_REFRESH, payload:{plotId, imageOverlayId:undefined, plotImageId}});
     }
     else {
         if (fatal) {
-            Logger('RawDataOps').warn(`dispatch the the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
+            Logger('RawDataOps').warn(`request again: dispatch the the plot failed on BYTE_DATA_REFRESH: ${dataCompress}`);
             dispatcher({ type: ImagePlotCntlr.PLOT_IMAGE_FAIL,
                 payload:{plotId, description:'Failed: Could not retrieve image render data' }});
+        }
+        else {
+            Logger('RawDataOps').warn(`should never happen: request again: non fatal failure BYTE_DATA_REFRESH: ${dataCompress}`);
         }
     }
     return success;

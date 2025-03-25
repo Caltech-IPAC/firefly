@@ -2,9 +2,16 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 package edu.caltech.ipac.visualize.plot;
-import edu.caltech.ipac.firefly.data.HasSizeOf;
 
-import java.util.Arrays;
+import edu.caltech.ipac.firefly.data.HasSizeOf;
+import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.util.StopWatch;
+
+import java.util.ArrayList;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Creates a histogram of an image
@@ -22,55 +29,210 @@ public class Histogram implements HasSizeOf {
     private static final int HISTSIZ = 2048;     /* half size of hist array */
     private static final boolean debug= false;
 
-    private final int[] hist;
+    private int[] hist;
     private double histMin;
     private double histBinsize;
     private final double irafMin;
     private final double irafMax;
     private final double largeBinPercent;
 
+    private final static ExecutorService exeService= Executors.newWorkStealingPool();
 
 
     public Histogram(float[] float1dArray, double datamin, double datamax) {
 
-	   /*
-        If the datamin or datamax is NaN, adjust them
-		 */
+//        StopWatch.getInstance().start("minMax");
+
         if (Double.isNaN(datamin) || Double.isNaN(datamax)) {
-            datamax = -Double.MAX_VALUE;
-            datamin = Double.MAX_VALUE;
-            for (int k = 0; k < float1dArray.length; k++) {
-                if (!Double.isNaN(float1dArray[k])) {
-                    if (float1dArray[k] < datamin)
-                        datamin = float1dArray[k];
-                    if (float1dArray[k] > datamax)
-                        datamax = float1dArray[k];
-                }
-            }
+            MinMax minMax = findMinMax(float1dArray);
+            datamin = minMax.min;
+            datamax = minMax.max;
         }
 
-        hist = new int[HISTSIZ2 + 1];
 
-        double histDatamax = -Double.MAX_VALUE;
-        double histDatamin = Double.MAX_VALUE;
+//        StopWatch.getInstance().stop("minMax");
+//        Logger.briefInfo("minMax="+t);
+//        StopWatch.getInstance().printLog("minMax", StopWatch.Unit.SECONDS);
+
+        double histDatamax;
+        double histDatamin;
 
         histMin = datamin;
         double histMax = datamax;
         boolean doing_redo = false;
 
+        StopWatch.getInstance().start("histogram");
+        int count=0;
         while (true) {
+            count++;
 
             boolean redo_flag = false;
-            histBinsize =getHistBinSize(histMax );
-             //reintialize the hist to 0
-            Arrays.fill(hist, 0);
-            int underflowCount = 0;
-            int overflowCount = 0;
-            for (int k = 0; k < float1dArray.length; k++)
-            {
-                if (!Double.isNaN(float1dArray[k]))
-                {
-                   int i = (int) ((float1dArray[k] - histMin) / histBinsize);
+            histBinsize =getHistBinSize(histMax);
+            HistEntry histEntry= makeHistogramEntry(float1dArray,histMin,histBinsize);
+            hist= histEntry.hist;
+            histDatamin = histEntry.histDatamin;
+            histDatamax = histEntry.histDatamax;
+
+            printDebugInfo(histMax, histEntry.underflowCount, histEntry.overflowCount);
+            datamin = histDatamin;
+            datamax = histDatamax;
+
+	        /* redo if more than 1% of pixels fell off histogram */
+            if (histEntry.underflowCount > float1dArray.length * .01) redo_flag = true;
+            if (histEntry.overflowCount > float1dArray.length * .01) redo_flag = true;
+
+            /* check if we got a good spread */
+
+            if (!redo_flag && !doing_redo) { /* don't bother checking if we already want a redo */
+	           /* see what happens if we lop off top and bottom 0.05% of hist */
+                int lowLimit = getLowLimit();
+                int histMaxIndex = getHighSumIndex(lowLimit) + 1;
+                int histMinIndex = getLowSumIndex(lowLimit);
+                if (histMaxIndex==-1 || histMinIndex==-1) {
+                    break;
+                }
+
+                if ((histMaxIndex - histMinIndex) < HISTSIZ) {
+                    histMax = (histMaxIndex * histBinsize) + histMin;
+                    histMin = (histMinIndex * histBinsize) + histMin;
+                    redo_flag = true;   /* we can spread it out by factor of 2 */
+                }
+            } else {
+                if (!doing_redo) {
+                    histMax = datamax;
+                    histMin = datamin;
+                }
+            }
+
+
+            if ( !doing_redo  &&  redo_flag ) {
+                if (debug) System.out.println("rebuilding histogram . . ");
+                doing_redo = true;
+            } else
+                break;
+
+        }
+
+        irafMin = datamin;
+        irafMax = datamax;
+        largeBinPercent= computeLargeBinPercent(float1dArray.length);
+//        StopWatch.getInstance().stop("histogram");
+//        t= StopWatch.getInstance().getTracker("histogram").getElapsedTime(StopWatch.Unit.SECONDS);
+//        Logger.briefInfo("histogram="+t+ ", count=" +count);
+    }
+
+    private static HistEntry makeHistogramEntry(float[] float1dArray, double histMin, double histBinsize) {
+
+        var hist = new int[HISTSIZ2 + 1];
+        var overflowCount = 0;
+        var underflowCount = 0;
+        double histDatamax = -Double.MAX_VALUE;
+        double histDatamin = Double.MAX_VALUE;
+        try {
+            var len = float1dArray.length< 10000 ? 1 : 4;
+            var taskList = new ArrayList<Callable<Void>>();
+            var partSize = float1dArray.length / 4;
+            var phistList = new ArrayList<PartialHistogram>();
+
+
+            for (int i = 0; i < len; i++) {
+                var stop = i < len - 1 ? (i+1) * partSize : float1dArray.length;
+                var pHist = new PartialHistogram(float1dArray, i * partSize, stop, histMin, histBinsize);
+                phistList.add(pHist);
+                taskList.add(pHist::makeHistPartial);
+            }
+
+            // call in threads
+            if (taskList.size() == 1) {
+                taskList.getFirst().call();
+            } else {
+                var results = exeService.invokeAll(taskList);
+                if (!results.stream().filter(Future::isCancelled).toList().isEmpty()) {
+                    throw new InterruptedException("Not all threads completed");
+                }
+            }
+
+            // assemble results
+            for (PartialHistogram pHist : phistList) {
+                overflowCount += pHist.overflowCount;
+                underflowCount += pHist.underflowCount;
+                for (int i = 0; i < HISTSIZ2; i++) {
+                    hist[i] += pHist.partialHist[i];
+                }
+                if (pHist.histDatamin < histDatamin) histDatamin = pHist.histDatamin;
+                if (pHist.histDatamax > histDatamax) histDatamax = pHist.histDatamax;
+            }
+        } catch (Exception e) {
+            Logger.warn(e, "Histgram Entry failed");
+        }
+        return new HistEntry(hist,overflowCount,underflowCount, histDatamin, histDatamax);
+    }
+
+
+    private record HistEntry(int[] hist, int overflowCount, int underflowCount, double histDatamin, double histDatamax) {};
+    private record MinMax(double min, double max) {};
+
+    private MinMax findMinMax(float[] float1dArray) {
+        double datamin= Double.MAX_VALUE;
+        double datamax= -Double.MAX_VALUE;
+        try {
+            var taskList = new ArrayList<Callable<Void>>();
+            var len = float1dArray.length< 10000 ? 1 : 4;
+            var partSize = float1dArray.length / 4;
+            var pMinMaxList = new ArrayList<PartialMinMax>();
+
+            for (int i = 0; i < len; i++) {
+                var stop = i < len - 1 ? (i+1) * partSize : float1dArray.length;
+                var pMinMax = new PartialMinMax(float1dArray, i * partSize, stop);
+                pMinMaxList.add(pMinMax );
+                taskList.add(pMinMax::findPartialMinMax);
+            }
+            // call in threads
+            if (taskList.size() == 1) {
+                taskList.getFirst().call();
+            } else {
+                var results = exeService.invokeAll(taskList);
+                if (!results.stream().filter(Future::isCancelled).toList().isEmpty()) {
+                    throw new InterruptedException("Not all threads completed");
+                }
+            }
+
+            // assemble results
+            for (PartialMinMax pMinMax : pMinMaxList) {
+                if (pMinMax.datamin < datamin) datamin = pMinMax.datamin;
+                if (pMinMax.datamin > datamax) datamax = pMinMax.datamax;
+            }
+        } catch (Exception e) {
+            Logger.warn(e, "Histgram Entry failed");
+        }
+        return new MinMax(datamin,datamax);
+
+    }
+
+    private static class PartialHistogram {
+        int []  partialHist = new int[HISTSIZ2 + 1];
+        int underflowCount = 0;
+        int overflowCount = 0;
+        float[] float1dArray;
+        int start;
+        int stop;
+        double histMin;
+        double histBinsize;
+        double histDatamax = -Double.MAX_VALUE;
+        double histDatamin = Double.MAX_VALUE;
+
+        PartialHistogram(float[] float1dArray, int start, int stop, double histMin, double histBinsize) {
+            this.float1dArray = float1dArray;
+            this.start = start;
+            this.stop = stop;
+            this.histMin = histMin;
+            this.histBinsize = histBinsize;
+        }
+
+         Void makeHistPartial() {
+            for (int k = start; k < stop; k++) {
+                if (!Double.isNaN(float1dArray[k])) {
+                    int i = (int) ((float1dArray[k] - histMin) / histBinsize);
                     if (i<0) {
                         underflowCount++;
                     }
@@ -78,91 +240,55 @@ public class Histogram implements HasSizeOf {
                         overflowCount++;
                     }
                     else {
-                        hist[i] ++;
+                        partialHist[i] ++;
                     }
                     if (float1dArray[k] < histDatamin) histDatamin = float1dArray[k];
                     if (float1dArray[k] > histDatamax) histDatamax = float1dArray[k];
                 }
             }
+            return null;
+        }
+    }
 
+    private static class PartialMinMax {
+        float[] float1dArray;
+        int start;
+        int stop;
+        double datamin= Double.MAX_VALUE;
+        double datamax= -Double.MAX_VALUE;
 
-            printDebugInfo(histMax, underflowCount, overflowCount);
-            datamin = histDatamin;
-            datamax = histDatamax;
-
-	        /* redo if more than 1% of pixels fell off histogram */
-            if (underflowCount > float1dArray.length * .01)
-                redo_flag = true;
-            if (overflowCount > float1dArray.length * .01)
-                redo_flag = true;
-
-            /* check if we got a good spread */
-
-            if (!redo_flag && !doing_redo) { /* don't bother checking if we already want a redo */
-
-	           /* see what happens if we lop off top and bottom 0.05% of hist */
-
-                int lowLimit = getLowLimit();
-
-                int histMaxIndex = getHighSumIndex(lowLimit) + 1;
-
-                int histMinIndex = getLowSumIndex(lowLimit);
-
-                if (histMaxIndex==-1 || histMinIndex==-1){
-                    break;
-                }
-
-                if ((histMaxIndex - histMinIndex) < HISTSIZ) {
-
-                    histMax = (histMaxIndex * histBinsize) + histMin;
-                    histMin = (histMinIndex * histBinsize) + histMin;
-                    redo_flag = true;   /* we can spread it out by factor of 2 */
-                }
-            } else {
-
-                if (!doing_redo) {
-
-                    histMax = datamax;
-                    histMin = datamin;
-                }
-            }
-
-
-            if (debug) System.out.println("done");
-
-            if ( !doing_redo  &&  redo_flag ) {
-                if (debug) System.out.println("rebuilding histogram . . ");
-                doing_redo = true;
-            } else
-                break;
+        PartialMinMax(float[] float1dArray, int start, int stop) {
+            this.float1dArray = float1dArray;
+            this.start = start;
+            this.stop = stop;
         }
 
-        irafMin = datamin;
-        irafMax = datamax;
-        largeBinPercent= computeLargeBinPercent(float1dArray.length);
+        Void findPartialMinMax() {
+            float v;
+            for (int k = start; k < stop; k++) {
+                v= float1dArray[k];
+                if (v < datamin) datamin = v;
+                if (v > datamax) datamax = v;
+            }
+            return null;
+        }
     }
 
 
-    private double  getHistBinSize(double histMax){
+    private double getHistBinSize(double histMax){
         double  hbinsiz = (histMax - histMin) / HISTSIZ2;
-        if (hbinsiz == 0.0)
-            hbinsiz = 1.0;
+        if (hbinsiz == 0.0) hbinsiz = 1.0;
         return hbinsiz;
     }
     private int getLowSumIndex(int lowLimit)  {
-
         int lowSum = 0;
         for (int i = 0; i < HISTSIZ2; i++) {
-
             lowSum += hist[i];
             if (lowSum > lowLimit) {
                 return i;
             }
-
         }
-
        return -1;
-
     }
 
 
@@ -179,9 +305,7 @@ public class Histogram implements HasSizeOf {
 
     private int getLowLimit() {
         int goodpix = 0;
-        for (int i = 0; i < HISTSIZ2; i++)
-            goodpix += hist[i];
-
+        for (int i = 0; i < HISTSIZ2; i++) goodpix += hist[i];
         return (int) (goodpix * 0.0005);
     }
 
