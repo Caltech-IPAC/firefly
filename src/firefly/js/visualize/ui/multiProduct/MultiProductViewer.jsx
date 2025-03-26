@@ -127,11 +127,11 @@ const MultiProductViewerImpl= memo(({ dpId, activateParams, metaDataTableId, noP
 function ViewerRender({dpId, dataProductsState, noProductMessage, metaDataTableId, makeDropDown, activateParams,
                           setCurrentCTIChoice, ctiChoice, ctLookupKey, getInput, doResetButton, factoryKey}) {
     const {displayType=DPtypes.UNSUPPORTED, menu, singleDownload, isWorkingState, message, activeMenuLookupKey,
-        menuKey, imageActivate, url, serDef, serviceDefRef, sRegion, name:title, standardID }= dataProductsState;
+        menuKey, imageActivate, url, serDef, serviceDefRef, sRegion, name:title, standardID,fileType}= dataProductsState;
     const {imageViewerId,chartViewerId,tableGroupViewerId}=  activateParams;
     switch (displayType) {
         case DPtypes.ANALYZE :
-            if (!getInput) return (<ProductMessage {...{menu, singleDownload, makeDropDown, isWorkingState, message}}/>);
+            if (!getInput) return (<ProductMessage {...{menu, makeDropDown, isWorkingState, message}}/>);
             return (<ServiceDescriptorPanel {...{
                 serDef, serviceDefRef, title, makeDropDown, sRegion, standardID,
                 setSearchParams: (params) => dispatchSetSearchParams({dpId,activeMenuLookupKey,menuKey,params}),
@@ -140,7 +140,8 @@ function ViewerRender({dpId, dataProductsState, noProductMessage, metaDataTableI
         case DPtypes.PROMISE :
             return <AdvancedMessage {...{dpId, dataProductsState, noProductMessage, doResetButton, makeDropDown}}/>;
         case DPtypes.DOWNLOAD_MENU_ITEM :
-            return (<ProductMessage {...{menu, singleDownload, makeDropDown, message}} />);
+            return (<ProductMessage {...{menu, singleDownload, makeDropDown, message:'This file type cannot be displayed',
+                url, downloadName:title, downloadFileType:fileType}} />);
         case DPtypes.IMAGE :
             return (<MultiProductChoice {...{dataProductsState,dpId,makeDropDown,metaDataTableId, imageViewerId,whatToShow:SHOW_IMAGE, factoryKey}}/>);
         case DPtypes.TABLE :
@@ -164,7 +165,7 @@ function ViewerRender({dpId, dataProductsState, noProductMessage, metaDataTableI
     }
 
     if (noProductMessage) {
-        return (<ProductMessage {...{menu, singleDownload, makeDropDown, isWorkingState, message:noProductMessage}} />);
+        return (<ProductMessage {...{menu, makeDropDown, isWorkingState, message:noProductMessage}} />);
     }
     else {
         return (<div/>);

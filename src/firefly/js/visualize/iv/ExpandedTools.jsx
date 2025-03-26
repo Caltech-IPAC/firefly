@@ -11,6 +11,7 @@ import {ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {
     ExpandType, dispatchChangeExpandedMode, dispatchExpandedAutoPlay, visRoot,
 } from '../ImagePlotCntlr.js';
+import {HIDDEN} from '../ImViewFilterDisplay';
 import {primePlot, getActivePlotView} from '../PlotViewUtil.js';
 import {CloseButton} from '../../ui/CloseButton.jsx';
 import {DisplayTypeButtonGroup} from '../ui/Buttons.jsx';
@@ -18,6 +19,7 @@ import {ViewOptionsButton} from '../ui/ExpandedOptionsPopup.jsx';
 import {dispatchChangeActivePlotView} from '../ImagePlotCntlr.js';
 import {
     getMultiViewRoot, getExpandedViewerItemIds, getViewer, EXPANDED_MODE_RESERVED, dispatchViewerScroll,
+    getViewerItemIds,
 } from '../MultiViewCntlr.js';
 import {VisMiniToolbar} from 'firefly/visualize/ui/VisMiniToolbar.jsx';
 
@@ -125,7 +127,9 @@ export const ViewerScroll= ({viewerId,count,checked}) => (
 
 
 function WhichView({expandedMode}) {
-    const showViewButtons= getExpandedViewerItemIds(getMultiViewRoot()).length>1;
+    const showViewButtons= getExpandedViewerItemIds(getMultiViewRoot()).length>1 ||
+                 getViewerItemIds(getMultiViewRoot(),EXPANDED_MODE_RESERVED+HIDDEN).length>0;
+        
     const value= expandedMode===ExpandType.SINGLE ? 'one' : 'grid';
     return (
         <Stack direction='row' alignItems='center' pl={1}>

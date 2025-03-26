@@ -105,7 +105,7 @@ export function getCombinedItemIds(viewerId, hiddenViewerId) {
 
 export function makeImViewDisplayModel(tbl_id, plotViewAry, allIds, oldModel) {
     const pvAry= allIds.map( (id) => getPlotViewById(visRoot(),id));
-    const data = pvAry.map((pv) => {
+    const data = pvAry.map((pv,idx) => {
         const plot = primePlot(pv);
         const attributes = plot ? plot.attributes : pv.request.getAttributes();
         const {plotId, serverCall, plottingStatusMsg, request} = pv;
@@ -122,6 +122,7 @@ export function makeImViewDisplayModel(tbl_id, plotViewAry, allIds, oldModel) {
         row[WAVE_TYPE] = getAttribute(attributes, PlotAttribute.WAVE_TYPE);
         row[WAVE_LENGTH_UM] = parseFloat(getAttribute(attributes, PlotAttribute.WAVE_LENGTH_UM, 0.0));
         row[DATA_HELP_URL] = getAttribute(attributes, PlotAttribute.DATA_HELP_URL);
+        row[ROW_IDX]= idx;
 
         const {sourceObsCoreData}= plot?.attributes ?? {};
         if (sourceObsCoreData) {

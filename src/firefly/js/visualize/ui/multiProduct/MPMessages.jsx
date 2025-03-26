@@ -17,16 +17,20 @@ export function AdvancedMessage({dpId, dataProductsState, noProductMessage, doRe
     }
     else {
         const useMessage= noProductsAvailable && noProductMessage ? noProductMessage : message;
-        return (<ProductMessage {...{menu, singleDownload, makeDropDown, isWorkingState, message:useMessage}} />);
+        const downloadName= singleDownload ? menu?.[0]?.name : undefined;
+        const downloadFileType= singleDownload? menu?.[0]?.fileType : undefined;
+        return (<ProductMessage {...{menu, singleDownload, makeDropDown, isWorkingState,
+            message:useMessage, downloadName, downloadFileType}} />);
     }
 }
 
 
-export function ProductMessage({menu, singleDownload, makeDropDown, isWorkingState=false, message, url}) {
-    let dMsg = singleDownload && (menu?.[0].name ?? '');
-    if (dMsg && menu?.[0].fileType) dMsg = `${dMsg}, type: ${menu[0].fileType}`;
+export function ProductMessage({menu, singleDownload=false, makeDropDown, isWorkingState=false, message, url,
+                     downloadName, downloadFileType}) {
+    let dMsg = singleDownload && (downloadName ?? 'Download');
+    if (singleDownload && downloadFileType) dMsg = `${dMsg}, type: ${downloadFileType}`;
     let actionUrl = url;
-    if (singleDownload && !url) actionUrl = isArray(menu) && menu.length && menu[0].url;
+    if (singleDownload && !url) actionUrl = isArray(menu) && Boolean(menu.length) && menu[0].url;
 
     return (
         <Stack {...{width: '100%', height: '100%'}}>
