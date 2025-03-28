@@ -33,9 +33,10 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
 
     const isHiPS= readoutType===HIPS_STANDARD_READOUT;
     const displayEle= getNonFluxDisplayElements(readoutData,  readout.readoutPref, isHiPS);
-    const {readout1, showReadout1PrefChange, waveLength}= displayEle;
+    const {readout1, showReadout1PrefChange, waveLength, bandWidth}= displayEle;
     const r1Value= readout1?.value ??'';
     const wlValue= waveLength?.value ??'';
+    const bwValue= bandWidth?.value ??'';
     const {lockByClick=false}= readout??{};
     const showCopy= lockByClick;
 
@@ -59,7 +60,7 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
         return <div/>;
     }
 
-    const fullSize= width>500;
+    const fullSize= width>520;
     const {threeColor= false}= readoutData;
     const monoFont= radix===16;
 
@@ -76,11 +77,13 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
 
     const fluxLabel= threeColor ? label3C : labelStand;
     const fluxValue= threeColor ? value3C : valueStand;
-    const fluxWidth= threeColor ? '9rem' : '7rem';
+    const fluxWidth= threeColor ? '9.5rem' : '8rem';
+
+    let wlStr= doWL ? `${wlValue}${bwValue?' / ':''}${bwValue||''}` : '';
 
     return (
         <Stack {...{direction:'row', sx, ref: (c) => divref.element=c}}>
-            <Stack {...{direction:'row', alignItems:'center', sx:{'& .ff-readout-value':{pl:.5}} }}>
+            <Stack {...{direction:'row', alignItems:'center', sx:{'& .ff-readout-value':{pl:.25}} }}>
 
                 <ToolbarButton icon={<LaunchOutlinedIcon/>}
                                tip='Show expanded readout, thumbnail and magnifier'
@@ -88,16 +91,19 @@ export function MouseReadoutBottomLine({readout, readoutData, readoutShowing, st
 
                 <LabelItem {...{showCopy, label:readout1.label, value:r1Value, copyValue:readout1.copyValue,
                     sx:{pl:1}, prefChangeFunc:showReadout1PrefChange}}/>
-                <DataItem {...{value:r1Value, sx:{minWidth:!r1Value.length<3&&wlValue ? '2rem' : '13rem', pl:.5} }}/>
+                <DataItem {...{value:r1Value,
+                    sx:{
+                        minWidth: r1Value.length<3&&wlValue ? '2.5rem' : '13rem',
+                        } }}/>
 
                 {doFlux && <LabelItem {...{label:fluxLabel, value:fluxValue, sx:{pl:1},
                            prefChangeFunc:() => showMouseReadoutFluxRadixDialog(readout.readoutPref)}}/> }
                 {doFlux && <DataItem {...{value:fluxValue, unit: threeColor? '' :fluxArray[0].unit,
-                    sx:{minWidth:fluxWidth, pl:.5}, monoFont}}/> }
+                    sx:{minWidth:fluxWidth}, monoFont}}/> }
 
 
                 {doWL && <LabelItem {...{label:waveLength.label, value:wlValue, sx:{pl:1}}}/> }
-                {doWL && <DataItem {...{value:wlValue}}/> }
+                {doWL && <DataItem {...{value:wlStr}}/> }
 
             </Stack>
 
@@ -152,7 +158,7 @@ const DataItem= memo(({ value='', unit='', monoFont=false, sx}) => {
         <Stack {...{direction:'row', className:'ff-readout-value', alignItems:'center', sx }}>
             <Typography level='body-sm' color='warning'  title={vStr} sx={mStyle}>{value}</Typography>
             {unit && <Typography level='body-sm' color={!isEmptyUnit ? 'warning' : undefined}  title={vStr}
-                                 sx={{pl:.25, opacity:isEmptyUnit?.35:1}}>{unit}</Typography>}
+                                 sx={{pl:.25, whiteSpace: 'nowrap', opacity:isEmptyUnit?.35:1}}>{unit}</Typography>}
         </Stack>
     );
 });

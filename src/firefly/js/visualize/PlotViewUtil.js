@@ -940,6 +940,10 @@ export function getWaveLengthUnits(plot) {
     return plot.wlData?.spectralCoords?.[0].units ?? '';
 }
 
+export function getBandWidthUnits(plot) {
+    if (!plot || !hasWLInfo(plot)) return '';
+    return plot.wlData?.spectralCoords?.[1].units ?? '';
+}
 
 
 /**
@@ -971,6 +975,8 @@ export function getFormattedWaveLengthUnits(plotOrStr, anyPartOfStr=false) {
 export const getPtWavelength= (plot, pt, cubeIdx) =>
     (plot && hasWLInfo(plot) && getWavelength(CCUtil.getImageCoords(plot,pt),cubeIdx,plot.wlData))?.[0] ?? 0;
 
+export const getPtSpectralCoords= (plot, pt, cubeIdx) =>
+    (plot && hasWLInfo(plot) && getWavelength(CCUtil.getImageCoords(plot,pt),cubeIdx,plot.wlData)) ?? [0,0];
 
 //=============================================================
 //=============================================================

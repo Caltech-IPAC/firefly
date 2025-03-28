@@ -49,6 +49,7 @@ export const MR_ZERO_IP= 'zeroIP';
 export const MR_HEALPIX_PIXEL= 'healpixPixel';
 export const MR_HEALPIX_NORDER='healpixNorder';
 export const MR_WL= 'wl';
+export const MR_BAND_WIDTH= 'bandWidth';
 
 export const MR_FIELD_IMAGE_MOUSE_READOUT1= 'imageMouseReadout1';
 export const MR_FIELD_IMAGE_MOUSE_READOUT2= 'imageMouseReadout2';
@@ -159,5 +160,6 @@ const initState= () =>
             intFluxValueRadix: '10',
             floatFluxValueRadix: '10',
             wl: MR_WL,
+            bandWidth: MR_BAND_WIDTH,
         }
     });
