@@ -20,6 +20,24 @@ export const RtoD = 180.0 / Math.PI;
 export const toDegrees = (angle) => angle * (180 / Math.PI);
 export const toRadians = (angle) => (angle * Math.PI) / 180;
 
+/**
+ * @typedef {Object} WavelengthUnitDefinition
+ * @property {number} m - The equivalent value in meters.
+ * @property {string} name - The full unit name in ASCII characters.
+ * @property {string} symbol - The shorter unit symbol using Unicode characters.
+ */
+
+/**
+ * Mapping of wavelength unit keys to their definitions.
+ * @type {Object.<string, WavelengthUnitDefinition>}
+ */
+export const WAVELENGTH_UNITS = {
+    // key: { m: meters equivalent, name: full string in ASCII, symbol: shorter string with Unicode characters }
+    m: { m: 1, name: 'meters', symbol: 'm' },
+    um: { m: 1e-6, name: 'microns', symbol: 'μm' },
+    nm: { m: 1e-9, name: 'nanometers', symbol: 'nm' },
+    angstrom: { m: 1e-10, name: 'angstroms', symbol: 'Å' },
+};
 
 //======================================================================
 //----------------------- Public Methods -------------------------------

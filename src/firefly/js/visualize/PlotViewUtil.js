@@ -15,7 +15,7 @@ import {makeDevicePt, makeImagePt, makeWorldPt, pointEquals} from './Point.js';
 import {getWavelength} from './projection/Wavelength.js';
 import {removeRawData} from './rawData/RawDataCache.js';
 import {hasClearedDataInStore, hasLocalStretchByteDataInStore} from './rawData/RawDataOps.js';
-import {computeDistance} from './VisUtil';
+import {computeDistance, WAVELENGTH_UNITS} from './VisUtil';
 import {isHiPS, isHiPSAitoff, isImage} from './WebPlot.js';
 
 
@@ -949,7 +949,7 @@ export function getWaveLengthUnits(plot) {
  * @return {string}
  */
 export function getFormattedWaveLengthUnits(plotOrStr, anyPartOfStr=false) {
-    const MICRON_SYMBOL= String.fromCharCode(0x03BC)+'m';
+    const MICRON_SYMBOL= WAVELENGTH_UNITS.um.symbol;
     const uStr= isString(plotOrStr) ? plotOrStr : getWaveLengthUnits(plotOrStr);
     if (anyPartOfStr) {
         return uStr.replace(new RegExp('microns|micron|um|micrometers','gi'),MICRON_SYMBOL);
