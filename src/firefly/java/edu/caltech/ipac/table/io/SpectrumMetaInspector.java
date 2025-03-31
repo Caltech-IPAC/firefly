@@ -10,7 +10,6 @@ import edu.caltech.ipac.table.TableMeta;
 import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.BasicHDU;
-import nom.tam.fits.Header;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,7 +28,7 @@ public class SpectrumMetaInspector {
     private static final String[] waveLoColName= new String[] {"wave_lo"};
     private static final String[] waveHiColName= new String[] {"wave_hi"};
     private static final String[] fluxColNames= new String[] {"flux", "fluxdensity", "flux_density", "flux",
-            "flx", "fl", "fls", "flu", "data", "value", "signal",
+            "flx", "fl", "fls", "flu", "data", "value", "signal", "SurfBrtness",
             "fullap and psf (two different extractions)", "c(lambda)",
             "t_mb", "t(k)", "main beam temperature",
             "flam", "pl_trandep", "especlipdep"};
@@ -55,7 +54,9 @@ public class SpectrumMetaInspector {
     private static final String NS_SPEC_TYPE_DIR= "direct imaging";
 
 
-    private static final String[] errColNames= new String[] {"err", "error", "errors", "flerr", "flerrs", "flux_error", "flamerr"};
+    private static final String[] errColNames= new String[] {
+            "err", "error", "errors", "flerr", "flerrs",
+            "flux_error", "flamerr", "err_Flux", "flux_error", "flux_unc"};
     private static final String[] errHiColNames= new String[] {"err_hi", "error_hi", "err_high", "error_high","flerr_high", "flerrs_hi", "flamerr1"};
     private static final String[] errLowColNames= new String[] {"err_lo", "error_lo", "err_low", "error_low","flerr_low", "flerrs_lo", "flamerr2"};
     private static final String[] orderColNames= new String[] {"order", "ord", "spec_order"};
@@ -80,6 +81,9 @@ public class SpectrumMetaInspector {
     private static final String VOCLASS= "VOCLASS";
 
     private static final String SPEC_SPECTRUM= "spec:Spectrum";
+    private static final String SPEC_DATA= "spec:Data";
+    private static final String SPEC_SPECTRUM_DATA= "spec:Spectrum.Data";
+    private static final String SPEC= "spec:";
 
     static {
         List<String> l= new ArrayList<>(wlColNames);
@@ -105,31 +109,51 @@ public class SpectrumMetaInspector {
     }
 
     /**
-     * Look at the FITS meta data for spectrum data model information. If found insert it into
-     * the Data group
+     * Look at the metadata for spectrum data model information. If found insert it into
+     * the Data group.
+     * <br>
+     * spectrumHint only applies to non-FITS files
+     * Guesser will look for columns that could possibly be spectral columns and build spectral data model
+     * <br>
+     * if fits file
+     *    op 1: if claims to be a spectrum (utype or VOCLASS) then search the columns for the correct utypes, if found build spectral data model
+     *    op 2: use guesser: always if no claim to be a spectrum
+     * <br>
+     * if a votable (we treat is as a votable if it has any groups)
+     *    use guesser: only if no utype and spectrumHint is true, otherwise just return
+     * <br>
+     * if this file another type of table, probably ipac table
+     *    op 1: if utype set, then search the columns for the correct utypes, if found build spectral data model
+     *    op 2: if no spectrumHint and not utype then return
+     *    op 3. use guesser: if spectrumHint and no utype
+     *
+     *
+     *
      * @param dg the data group to insert spectral data model information.
      * @param hdu the HDU that is the source of this DataGroup
      * @param spectrumHint if true, then do not require the utype to be set in the file and do more guessing
      */
     public static void searchForSpectrum(DataGroup dg, BasicHDU<?> hdu, boolean spectrumHint) {
 
-        String utype;
-        if (hdu!=null) {
-            Header h= hdu.getHeader();
-            String voclass= h.getStringValue(VOCLASS,"").toLowerCase();
-            utype= FitsReadUtil.getUtype(h);
-            if (utype==null && !spectrumHint && (voclass.equals(spec10Version) || voclass.startsWith("spectrum") )) {
+        String utype= (hdu==null) ? dg.getAttribute(TableMeta.UTYPE) : FitsReadUtil.getUtype(hdu.getHeader());
+        if (hdu!=null) { // fits will either use guesser or look for UCDs only
+            String voClass= hdu.getHeader().getStringValue(VOCLASS,"").toLowerCase();
+            if (utype==null && (voClass.equals(spec10Version) || voClass.startsWith("spectrum") )) {
                 utype= SPEC_SPECTRUM;
             }
-            if (utype!=null) {
-                dg.getTableMeta().addKeyword(TableMeta.UTYPE,utype);
-                return;
-            }
         }
-        else {
-            utype= dg.getAttribute(TableMeta.UTYPE);
-            if (utype==null && !spectrumHint) return;
+        else if (!spectrumHint) { // determine if we are to continue or just return
+            var treatAsVoTable= hasSpecGroups(dg); // note- a VOTable does not need any further data model building
+            if (treatAsVoTable || utype==null) return;
         }
+
+        // if useOnlyUType is true then all the matching will be by utype (not guessing of columns)
+        boolean useOnlyUType= utype!=null; // if table claims to be a spectrum, so only use utype
+
+        // if I have reached this point in the code then I am trying to build the spectral model
+        // the model will be built by either
+        //    - guessing columns or checking utype
+        //    - checking utype only
 
         List<DataType> dtAry= Arrays.asList(dg.getDataDefinitions());
         List<GroupInfo> groupInfosList= new ArrayList<>();
@@ -139,32 +163,32 @@ public class SpectrumMetaInspector {
         boolean foundY= false;
 
         // look for wavelength
-        if (hasCol(specColNames,dtAry, SPEC_SPECT_AXIS+".Value")) {
+        if (hasCol(specColNames,dtAry, SPEC_SPECT_AXIS+".Value", useOnlyUType)) {
             List<GroupInfo.RefInfo> l= new ArrayList<>();
-            addSpectrumRef(dg, dtAry,l);
-            findAndAddRef(orderColNames,dtAry,l, SPEC_ORDER);
-            findAndAddRef(relOrderColNames,dtAry,l, SPEC_REL_ORDER);
-            findAndAddRef(waveLoColName,dtAry,l, SPEC_SPECT_AXIS+ACCURACY+".BinLow");
-            findAndAddRef(waveHiColName,dtAry,l, SPEC_SPECT_AXIS+ACCURACY+".BinHigh");
+            addSpectrumRef(dg, dtAry,l, useOnlyUType);
+            findAndAddRef(orderColNames,dtAry,l, SPEC_ORDER, useOnlyUType);
+            findAndAddRef(relOrderColNames,dtAry,l, SPEC_REL_ORDER, useOnlyUType);
+            findAndAddRef(waveLoColName,dtAry,l, SPEC_SPECT_AXIS+ACCURACY+".BinLow", useOnlyUType);
+            findAndAddRef(waveHiColName,dtAry,l, SPEC_SPECT_AXIS+ACCURACY+".BinHigh", useOnlyUType);
             groupInfosList.add(new GroupInfo(SPEC_SPECT_AXIS, "",l));
             foundX= true;
         }
 
         // look for flux
-        if (hasCol(fluxColNames,dtAry, SPEC_FL_AXIS+VALUE)) {
-            addFluxColumn(groupInfosList,dtAry,nonStandardSpecType);
+        if (hasCol(fluxColNames,dtAry, SPEC_FL_AXIS+VALUE, useOnlyUType)) {
+            addFluxColumn(groupInfosList,dg,dtAry,nonStandardSpecType, useOnlyUType);
             foundY= true;
         }
 
         // look for time
-        if (hasCol(timeColNames,dtAry, SPEC_TI_AXIS+".Value")) {
+        if (hasCol(timeColNames,dtAry, SPEC_TI_AXIS+".Value", useOnlyUType)) {
             List<GroupInfo.RefInfo> l= new ArrayList<>();
-            findAndAddRef(timeColNames,dtAry,l,  SPEC_TI_AXIS+VALUE);
-            findAndAddRef(timeErrColNames,dtAry,l, SPEC_TI_AXIS_ACCURACY+".TimeError");
-            findAndAddRef(timeErrLoColNames,dtAry,l, SPEC_TI_AXIS_ACCURACY+".TimeErrLow");
-            findAndAddRef(timeErrHiColNames,dtAry,l, SPEC_TI_AXIS_ACCURACY+".TimeErrHigh");
-            findAndAddRef(timeLoColName,dtAry,l, SPEC_TI_AXIS_ACCURACY+".BinLow");
-            findAndAddRef(timeHiColName,dtAry,l, SPEC_TI_AXIS_ACCURACY+".BinHigh");
+            findAndAddRef(timeColNames,dtAry,l,  SPEC_TI_AXIS+VALUE, useOnlyUType);
+            findAndAddRef(timeErrColNames,dtAry,l, SPEC_TI_AXIS_ACCURACY+".TimeError", useOnlyUType);
+            findAndAddRef(timeErrLoColNames,dtAry,l, SPEC_TI_AXIS_ACCURACY+".TimeErrLow", useOnlyUType);
+            findAndAddRef(timeErrHiColNames,dtAry,l, SPEC_TI_AXIS_ACCURACY+".TimeErrHigh", useOnlyUType);
+            findAndAddRef(timeLoColName,dtAry,l, SPEC_TI_AXIS_ACCURACY+".BinLow", useOnlyUType);
+            findAndAddRef(timeHiColName,dtAry,l, SPEC_TI_AXIS_ACCURACY+".BinHigh", useOnlyUType);
             groupInfosList.add(new GroupInfo(SPEC_TI_AXIS, "",l));
             foundY= true;
         }
@@ -172,13 +196,22 @@ public class SpectrumMetaInspector {
         // finish - there must be two axis to insert anything
         if (!foundX || !foundY) return;
 
-        dg.setGroupInfos(groupInfosList);
+        var newGroupList= new ArrayList<>(dg.getGroupInfos());
+        newGroupList.addAll(groupInfosList);
+        dg.setGroupInfos(newGroupList);
         TableMeta meta= dg.getTableMeta();
         if (utype!=null) meta.addKeyword(TableMeta.UTYPE, utype.startsWith("spec:") ? utype : "spec:"+utype);
         else meta.addKeyword(TableMeta.UTYPE,SPEC_SPECTRUM);
     }
 
-    public static void addFluxColumn(List<GroupInfo> groupInfosList, List<DataType> dtAry, String nonStandardSpecType) {
+    public static boolean hasSpecGroups(DataGroup dg) {
+        return dg.getGroupInfos().stream()
+                .filter(g -> g!=null && g.getName()!=null && g.getName().toLowerCase().startsWith(SPEC))
+                .anyMatch(g -> true);
+    }
+
+    public static void addFluxColumn(List<GroupInfo> groupInfosList, DataGroup dg,
+                                     List<DataType> dtAry, String nonStandardSpecType, boolean useOnlyUType) {
         List<GroupInfo.RefInfo> l= new ArrayList<>();
         boolean found= false;
 
@@ -187,30 +220,30 @@ public class SpectrumMetaInspector {
 
         switch (nonStandardSpecType) {
             case NS_SPEC_TYPE_DIR:
-                found= findAndAddRef(nsDirFluxColNames,dtAry,l, SPEC_FL_AXIS+VALUE);
-                findAndAddRef(nsDirErrColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatError");
-                findAndAddRef(nsDirErrLowColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrLow");
-                findAndAddRef(nsDirErrHiColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrHigh");
+                found= findAndAddRef(nsDirFluxColNames,dtAry,l, SPEC_FL_AXIS+VALUE, false);
+                findAndAddRef(nsDirErrColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatError", false);
+                findAndAddRef(nsDirErrLowColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrLow", false);
+                findAndAddRef(nsDirErrHiColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrHigh", false);
                 break;
             case NS_SPEC_TYPE_ECLIPSE:
-                found= findAndAddRef(nsEclFluxColNames,dtAry,l, SPEC_FL_AXIS+VALUE);
-                findAndAddRef(nsEclErrColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatError");
-                findAndAddRef(nsEclErrLowColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrLow");
-                findAndAddRef(nsEclErrHiColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrHigh");
+                found= findAndAddRef(nsEclFluxColNames,dtAry,l, SPEC_FL_AXIS+VALUE, false);
+                findAndAddRef(nsEclErrColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatError", false);
+                findAndAddRef(nsEclErrLowColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrLow", false);
+                findAndAddRef(nsEclErrHiColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrHigh", false);
                 break;
             case NS_SPEC_TYPE_TRANS:
-                found= findAndAddRef(nsTransFluxColNames,dtAry,l, SPEC_FL_AXIS+VALUE);
-                findAndAddRef(nsTransErrColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatError");
-                findAndAddRef(nsTransErrLowColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrLow");
-                findAndAddRef(nsTransErrHiColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrHigh");
+                found= findAndAddRef(nsTransFluxColNames,dtAry,l, SPEC_FL_AXIS+VALUE, false);
+                findAndAddRef(nsTransErrColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatError", false);
+                findAndAddRef(nsTransErrLowColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrLow", false);
+                findAndAddRef(nsTransErrHiColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrHigh", false);
                 break;
         }
 
         if (!found) {
-            findAndAddRef(fluxColNames,dtAry,l, SPEC_FL_AXIS+VALUE);
-            findAndAddRef(errColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatError");
-            findAndAddRef(errLowColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrLow");
-            findAndAddRef(errHiColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrHigh");
+            addFluxRef(dg,dtAry,l,useOnlyUType);
+            addErrorRef(dg,dtAry,l,useOnlyUType);
+            findAndAddRef(errLowColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrLow", useOnlyUType);
+            findAndAddRef(errHiColNames,dtAry,l, SPEC_FL_AXIS_ACCURACY+".StatErrHigh", useOnlyUType);
         }
         groupInfosList.add(new GroupInfo(SPEC_FL_AXIS, "", l));
     }
@@ -236,7 +269,7 @@ public class SpectrumMetaInspector {
     }
 
 
-    private static String findCol(String[] options, List<DataType> dtAry) {
+    private static String findColbyFallBack(String[] options, List<DataType> dtAry) {
         return dtAry.stream()
                 .filter(dt -> dt.getUType()==null && find(Arrays.asList(options),dt.getKeyName())!=null)    // only guess at column if it does not have a utype
                 .map(DataType::getKeyName)
@@ -244,16 +277,29 @@ public class SpectrumMetaInspector {
                 .orElse(null);
     }
 
-    private static String findColByUtypeOrNames(String[] possibleNames, List<DataType> dtAry, String utype) {
+    private static String findColByUtypeList(List<DataType> dtAry, List<String> utypeList) {
         return dtAry.stream()
-                .filter(dt -> dt.getUType()!=null && dt.getUType().equals(utype))
+                .filter(dt -> dt.getUType() != null && utypeList.contains(dt.getUType()))
                 .map(DataType::getKeyName)
                 .findAny()
-                .orElse(findCol(possibleNames,dtAry));
+                .orElse(null);
     }
 
-    private static boolean hasCol(String[] possibleNames, List<DataType> dtAry, String utype) {
-        return findColByUtypeOrNames(possibleNames,dtAry,utype)!=null;
+    private static String findColByUtype(List<DataType> dtAry, String utype) {
+        var utypeList = new ArrayList<>(Collections.singletonList(utype));
+        if (utype.startsWith(SPEC_DATA)) utypeList.add(utype.replace(SPEC_DATA, SPEC_SPECTRUM_DATA));
+        return findColByUtypeList(dtAry, utypeList);
+    }
+
+    private static String findCol(List<DataType> dtAry, String utype,
+                                  String[] possibleNames, boolean useOnlyUType) {
+        String utypeCol= findColByUtype(dtAry,utype);
+        if (useOnlyUType || utypeCol!=null) return utypeCol;
+        return findColbyFallBack(possibleNames,dtAry);
+    }
+
+    private static boolean hasCol(String[] possibleNames, List<DataType> dtAry, String utype, boolean useOnlyUtype) {
+        return findCol(dtAry,utype,possibleNames,useOnlyUtype)!=null;
     }
 
     private static String getUCD(List<DataType> dtAry, String colName) {
@@ -263,8 +309,8 @@ public class SpectrumMetaInspector {
     }
 
     private static boolean findAndAddRef(String [] possibleNames, List<DataType> dtAry,
-                                      List<GroupInfo.RefInfo> list, String utype) {
-        String colName= findColByUtypeOrNames(possibleNames,dtAry,utype);
+                                      List<GroupInfo.RefInfo> list, String utype, boolean useOnlyUtype) {
+        String colName= findCol(dtAry,utype,possibleNames,useOnlyUtype);
         if (colName==null) return false;
         String ucd= getUCD(dtAry,colName);
         if (StringUtils.isEmpty(ucd)) ucd= "";
@@ -272,9 +318,9 @@ public class SpectrumMetaInspector {
         return true;
     }
 
-    private static void addSpectrumRef(DataGroup dg, List<DataType> dtAry, List<GroupInfo.RefInfo> list) {
+    private static void addSpectrumRef(DataGroup dg, List<DataType> dtAry, List<GroupInfo.RefInfo> list, boolean useOnlyUtype) {
         String utype= SPEC_SPECT_AXIS+VALUE;
-        String colName= findColByUtypeOrNames(specColNames,dtAry,utype);
+        String colName= findCol(dtAry,utype,specColNames,useOnlyUtype);
         if (colName==null) return;
         insertWlUnitsIfEmpty(dg,dtAry,colName);
         String ucd= getUCD(dtAry,colName);
@@ -282,15 +328,69 @@ public class SpectrumMetaInspector {
         list.add(new GroupInfo.RefInfo(colName, ucd,utype));
     }
 
+    private static void addErrorRef(DataGroup dg, List<DataType> dtAry, List<GroupInfo.RefInfo> list, boolean useOnlyUType) {
+        String utype= SPEC_FL_AXIS_ACCURACY+".StatError";
+        String colName= findCol(dtAry,utype,errColNames,useOnlyUType);
+        if (colName==null) return;
+        insertErrorUnitsIfEmpty(dg,dtAry,colName);
+        String ucd= getUCD(dtAry,colName);
+        if (StringUtils.isEmpty(ucd)) ucd= "";
+        list.add(new GroupInfo.RefInfo(colName, ucd,utype));
+    }
+
+    private static void addFluxRef(DataGroup dg, List<DataType> dtAry, List<GroupInfo.RefInfo> list, boolean useOnlyUType) {
+        String utype= SPEC_FL_AXIS+VALUE;
+        String colName= findCol(dtAry,utype,fluxColNames,useOnlyUType);
+        if (colName==null) return;
+        insertFluxUnitsIfEmpty(dg,dtAry,colName);
+        String ucd= getUCD(dtAry,colName);
+        if (StringUtils.isEmpty(ucd)) ucd= "";
+        list.add(new GroupInfo.RefInfo(colName, ucd,utype));
+    }
+
+
     private static void insertWlUnitsIfEmpty(DataGroup dg, List<DataType> dtAry, String colName) {
-        DataType specDt= dtAry.stream().filter(dt -> colName.equals(dt.getKeyName())).findAny().orElse(null);
+        DataType specDt= getDataTypeWithColName(dtAry,colName);
         if (specDt==null || !StringUtils.isEmpty(specDt.getUnits())) return;
-        // Add a list of metadata checks to set units, right now only one....
+        // a list of metadata checks to set units, this can keep growing over time
         if (anyMatchingAttribute(dg, "INSTRUM","IRSX")) { // IRSX attribute is always microns
             specDt.setUnits("microns");
-            return;
+        }
+        else if (anyMatchingAttribute(dg, "Instrument","SPIRE") || anyMatchingAttribute(dg, "Instrument","PACS")) {
+            setUnit(dg,specDt,"waveunit", "microns");
         }
         // add more unit checks here
+    }
+
+    private static void insertFluxUnitsIfEmpty(DataGroup dg, List<DataType> dtAry, String colName) {
+        DataType fluxDt= getDataTypeWithColName(dtAry,colName);
+        if (fluxDt==null || !StringUtils.isEmpty(fluxDt.getUnits())) return;
+        // a list of metadata checks to set units, this can keep growing over time
+        if (anyMatchingAttribute(dg, "Instrument","SPIRE")) { // IRSX attribute is always microns
+            setUnit(dg,fluxDt,"surfacebrightnessunit", "Jy/arcsec^2");
+        }
+        else if (anyMatchingAttribute(dg, "Instrument","PACS")) {
+            setUnit(dg,fluxDt,"fluxunit", "Jy");
+        }
+        // add more unit checks here
+    }
+
+    private static void insertErrorUnitsIfEmpty(DataGroup dg, List<DataType> dtAry, String colName) {
+        DataType fluxDt= getDataTypeWithColName(dtAry,colName);
+        if (fluxDt==null || !StringUtils.isEmpty(fluxDt.getUnits())) return;
+            // a list of metadata checks to set units, this can keep growing over time
+        if (anyMatchingAttribute(dg, "Instrument","PACS")) {
+            setUnit(dg,fluxDt,"errorunit", "Jy");
+        }
+        // add more unit checks here
+    }
+
+    private static DataType getDataTypeWithColName(List<DataType> dtAry, String colName) {
+        return dtAry.stream().filter(dt -> colName.equals(dt.getKeyName())).findAny().orElse(null);
+    }
+
+    private static void setUnit(DataGroup dg, DataType dt, String unitAttr, String def) {
+        dt.setUnits(dg.getAttribute(unitAttr,def));
     }
 
     private static boolean anyMatchingAttribute(DataGroup dg, String partialKey, String partialValue) {
