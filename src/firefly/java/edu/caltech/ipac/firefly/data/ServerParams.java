@@ -138,6 +138,7 @@ public class ServerParams {
     public static final String ADD_JOB = "addBgJob";
     public static final String REMOVE_JOB = "removeBgJob";
     public static final String CANCEL= "cancel";
+    public static final String ARCHIVE= "archive";
     public static final String SET_BG_INFO = "setBgInfo";
     public static final String RESEND_EMAIL= "resendEmail";
     public static final String CREATE_DOWNLOAD_SCRIPT= "createDownoadScript";

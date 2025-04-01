@@ -125,12 +125,12 @@
  * @prop {string} email                     email to notify when background job is completed
  * @prop {boolean} sendNotif                true to send notification when job is completed
  * @prop {string} showDlScript              show download script link
- * @prop {Object.<string, JobInfo>} jobs    a map of background job and its jobInfo.
+ * @prop {Object.<string, Job>} jobs    a map of background job and its jobInfo.
  */
 
 /**
- * Background jobInfo of one job.
- * @typedef {Object} JobInfo
+ * Background job data.
+ * @typedef {Object} Job
  * @prop {string} jobId         unique identifier for this job
  * @prop {string} ownerId       ID of the job creator
  * @prop {string} phase         execution phase.  One of PENDING, QUEUED, EXECUTING, COMPLETED, ERROR, ABORTED
@@ -139,12 +139,18 @@
  * @prop {number} executionDuration duration (in seconds) the job is allowed to run. 0 means unlimited
  * @prop {string} destruction   the time at which the whole job + records + results will be destroyed
  * @prop {string} parameters    the parameters to the job
+ * @prop {string} error         error message if there's an error
  * @prop {string[]} results     the results for the job - can also be retrieved at /{jobs}/{job-id}/results
+ * @prop {JobInfo} jobInfo      internal information about the job
+ */
+
+/**
+ * Internal job information.  Used by Firefly to manage the job.
+ * @typedef {Object} JobInfo
  * @prop {string} type          type of job. One of SEARCH, PACKAGE
  * @prop {boolean} monitored    true if UI is monitoring the job
  * @prop {number} progress      progress of the job as a percentage.  0-100, where 100 is done
  * @prop {string} progressDesc  a description of the current progress
- * @prop {string} error         error message if there's an error
  */
 
 /*=========================================================================*/

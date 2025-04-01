@@ -21,6 +21,7 @@ import edu.caltech.ipac.util.cache.Cache;
 import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
+import org.apache.axis.wsdl.symbolTable.BackslashUtil;
 import org.apache.commons.lang.text.StrBuilder;
 
 import javax.annotation.Nonnull;
@@ -52,9 +53,13 @@ import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.*;
  */
 public class JobManager {
 
-    private static final int KEEP_ALIVE_INTERVAL = AppProperties.getIntProperty("job.keepalive.interval", 30);    // default keepalive interval in seconds
-    private static final int WAIT_COMPLETE = AppProperties.getIntProperty("job.wait.complete", 1);                // wait for complete after submit in seconds
-    private static final int MAX_PACKAGERS = AppProperties.getIntProperty("job.max.packagers", 10);               // maximum number of simultaneous packaging threads
+    public static final String BG_INFO = "background.info";
+    public static final long CLEANUP_INTVL_MINS = AppProperties.getIntProperty("job.cleanup.interval", 60);     // run cleanup once every 60 minutes
+    private static final int KEEP_ALIVE_INTERVAL = AppProperties.getIntProperty("job.keepalive.interval", 30);  // default keepalive interval in seconds
+    private static final int WAIT_COMPLETE = AppProperties.getIntProperty("job.wait.complete", 1);              // wait for complete after submit in seconds
+    private static final int MAX_PACKAGERS = AppProperties.getIntProperty("job.max.packagers", 10);             // maximum number of simultaneous packaging threads
+    private static final int ARCHIVE_RETENTION_PERIOD = AppProperties.getIntProperty("job.archive.retention.period", 24*7);   // Time in hours to keep a job in the archived state before deletion.  Default to 7 days.
+    private static final int ARCHIVE_AFTER = AppProperties.getIntProperty("job.archive.after", 24*7);           // Time in hours to keep a job after it has completed before archiving.  Default to 7 days.
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static final ExecutorService packagers = Executors.newFixedThreadPool(MAX_PACKAGERS);
@@ -62,7 +67,7 @@ public class JobManager {
     private static final HashMap<String, JobEntry> runningJobs = new HashMap<>();
     private static final Cache<JobInfo> allJobInfos = CacheManager.getDistributedMap("ALL_JOB_INFOS");
     private static final String COMPLETED_HANDLER = AppProperties.getProperty("job.completed.handler");
-    public static final String BG_INFO = "background.info";
+
 
     static {
         if (!isEmpty(COMPLETED_HANDLER)) {
@@ -86,7 +91,7 @@ public class JobManager {
     public static List<JobInfo> list() {
         String owner = ServerContext.getRequestOwner().getUserKey();
         return getAllJobs().stream()
-                  .filter(info -> info != null && owner.equals(info.getOwner()))
+                  .filter(info -> owner.equals(info.getOwner()) && info.getAuxData().isMonitored())  // only return monitored jobs belonging to the current user
                   .toList();
     }
 
@@ -174,15 +179,12 @@ public class JobManager {
     }
 
     public static JobInfo setMonitored(String jobId, boolean isMonitored) {
-        JobInfo jobInfo = updateJobInfo(jobId, ji -> {
+        JobInfo jobInfo = sendUpdate(jobId, ji -> {
             if (ji.getAuxData().isMonitored() != isMonitored) {
                 ji.getAuxData().setMonitored(isMonitored);
             }
         });
-        if (jobInfo != null ) {
-            Messenger.publish(new JobEvent(JobEvent.EventType.MONITORED, jobInfo));      // notify all instances AFTER jobInfo is updated
-        }
-        return getJobInfo(jobId);
+        return jobInfo;
     }
 
     public static JobInfo sendEmail(String jobId, String email) {
@@ -243,11 +245,12 @@ public class JobManager {
      * @param jobId the ID of the job to update
      * @param func the function to apply to the JobInfo
      */
-    public static void sendUpdate(String jobId, Consumer<JobInfo> func) {
+    public static JobInfo sendUpdate(String jobId, Consumer<JobInfo> func) {
         JobInfo jobInfo = updateJobInfo(jobId, func);
         if (jobInfo != null) {
             Messenger.publish(new JobEvent(JobEvent.EventType.UPDATED, jobInfo));
         }
+        return jobInfo;
     }
 
     /**
@@ -419,7 +422,7 @@ public class JobManager {
 
     public static class JobEvent extends Message {
         public static final String TOPIC = "JobEvent";
-        public enum EventType { UPDATED, COMPLETED, ABORTED, MONITORED }
+        public enum EventType { UPDATED, COMPLETED, ABORTED }
         public static final String JOB = "job";
         public static String TYPE = "type";
 
@@ -453,5 +456,18 @@ public class JobManager {
             }
             return null;
         }
+    }
+
+    public static void cleanup() {
+        allJobInfos.getKeys().forEach( k -> {
+            JobInfo job = allJobInfos.get(k);
+            if (!job.getAuxData().isMonitored() && job.getEndTime().plus(1, ChronoUnit.HOURS).isBefore(Instant.now())) {
+                allJobInfos.remove(k);      // remove non-monitored job after 1 hour
+            } else if (TERMINATED_PHASES.contains(job.getPhase()) && job.getEndTime().plus(ARCHIVE_AFTER, ChronoUnit.HOURS).isBefore(Instant.now())) {
+                updateJobInfo(job.getJobId(), jobInfo -> jobInfo.setPhase(ARCHIVED));
+            } else if (job.getPhase().equals(ARCHIVED) && job.getEndTime().plus(ARCHIVE_RETENTION_PERIOD, ChronoUnit.HOURS).isBefore(Instant.now())) {
+                allJobInfos.remove(k);
+            }
+        });
     }
 }

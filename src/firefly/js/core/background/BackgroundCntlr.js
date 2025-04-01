@@ -27,6 +27,7 @@ export const BG_MONITOR_SHOW    = `${BACKGROUND_PATH}.bgMonitorShow`;
 export const BG_JOB_ADD         = `${BACKGROUND_PATH}.bgJobAdd`;
 export const BG_JOB_REMOVE      = `${BACKGROUND_PATH}.bgJobRemove`;
 export const BG_JOB_CANCEL      = `${BACKGROUND_PATH}.bgJobCancel`;
+export const BG_JOB_ARCHIVE      = `${BACKGROUND_PATH}.bgJobArchive`;
 export const BG_SET_INFO       = `${BACKGROUND_PATH}.bgSetInfo`;
 export const BG_Package         = `${BACKGROUND_PATH}.bgPackage`;
 
@@ -40,7 +41,8 @@ function actionCreators() {
         [BG_Package]: bgPackage,
         [BG_JOB_ADD]: bgJobAdd,
         [BG_JOB_REMOVE]: bgJobRemove,
-        [BG_JOB_CANCEL]: bgJobCancel
+        [BG_JOB_CANCEL]: bgJobCancel,
+        [BG_JOB_ARCHIVE]: bgJobArchive
     };
 }
 
@@ -65,7 +67,7 @@ export function dispatchBgMonitorShow({show=true}) {
 
 /**
  * Add/update the jobInfo of the background job referenced by jobId.
- * @param {JobInfo}  jobInfo
+ * @param {Job}  jobInfo
  */
 export function dispatchBgJobInfo(jobInfo) {
     flux.process({ type : BG_JOB_INFO, payload: jobInfo });
@@ -93,6 +95,14 @@ export function dispatchJobAdd(jobInfo) {
  */
 export function dispatchJobRemove(jobId) {
     flux.process({ type : BG_JOB_REMOVE, payload: {jobId} });
+}
+
+/**
+ * Archive the job
+ * @param {string} jobId
+ */
+export function dispatchJobArchive(jobId) {
+    flux.process({ type : BG_JOB_ARCHIVE, payload: {jobId} });
 }
 
 /**
@@ -151,6 +161,16 @@ function bgJobCancel(action) {
         const {jobId} = action.payload;
         if (jobId) {
             SearchServices.cancel(jobId);
+            dispatch(action);
+        }
+    };
+}
+
+function bgJobArchive(action) {
+    return (dispatch) => {
+        const {jobId} = action.payload;
+        if (jobId) {
+            SearchServices.archive(jobId);
             dispatch(action);
         }
     };
@@ -228,9 +248,6 @@ function reducer(state={}, action={}) {
             return nstate;
             break;
         }
-        case BG_JOB_ADD :
-        case BG_JOB_CANCEL :
-        case BG_JOB_REMOVE :
         default:
             return state;
     }

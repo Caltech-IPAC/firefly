@@ -64,7 +64,6 @@ export const SHOW_DROPDOWN      = `${LAYOUT_PATH}.showDropDown`;
 export const ADD_CELL           = `${LAYOUT_PATH}.addCell`;
 export const REMOVE_CELL        = `${LAYOUT_PATH}.removeCell`;
 export const ENABLE_SPECIAL_VIEWER= `${LAYOUT_PATH}.enableSpecialViewer`;
-export const MENU_UPDATE      = `${LAYOUT_PATH}.menuUpdate`;
 
 
 export const TRIVIEW_ICov_Ch_T= 'TRIVIEW_ICov_Ch_T'; //top left: image/cov, top right: charts, bottom: tables
@@ -265,14 +264,6 @@ export function dispatchSetLayoutInfo(layoutInfo) {
  */
 export function dispatchShowDropDown({view, menuItem, initArgs}) {
     flux.process({type: SHOW_DROPDOWN, payload: {visible: true, view, menuItem, initArgs}});
-}
-
-/**
- * update menu with the new one
- * @param menu the new menu object
- */
-export function dispatchUpdateMenu(menu) {
-    flux.process({ type : MENU_UPDATE, payload: {menu} });
 }
 
 /**

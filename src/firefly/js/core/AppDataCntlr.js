@@ -24,6 +24,7 @@ export const ADD_TASK_COUNT = `${APP_DATA_PATH}.addTaskCount`;
 export const REMOVE_TASK_COUNT = `${APP_DATA_PATH}.removeTaskCount`;
 export const ACTIVE_TARGET = `${APP_DATA_PATH}.activeTarget`;
 export const APP_OPTIONS = `${APP_DATA_PATH}.appOptions`;
+export const MENU_UPDATE = `${APP_DATA_PATH}.menuUpdate`;
 
 export const ADD_PREF = `${APP_DATA_PATH}.addPreference`;
 export const REMOVE_PREF = `${APP_DATA_PATH}.removePreference`;
@@ -55,7 +56,8 @@ function actionCreators() {
     return {
         [GRAB_WINDOW_FOCUS]:     grabWindowFocus,
         [HELP_LOAD]:  onlineHelpLoad,
-        [LOAD_SEARCHES]:  loadSearches
+        [LOAD_SEARCHES]:  loadSearches,
+        [MENU_UPDATE]: setMenu
     };
 }
 
@@ -129,7 +131,7 @@ export function dispatchRemovePreference(name) {
  * @param menu the menu object to set.
  */
 export function dispatchSetMenu(menu) {
-    flux.process({ type : APP_UPDATE, payload: {menu} });
+    flux.process({ type : MENU_UPDATE, payload: {menu} });
 }
 
 /**
@@ -367,6 +369,19 @@ function loadSearches(action) {
 
         Object.assign(searchInfo, rest, {flow, renderAsMenuItems, allSearchItems, groups});
         dispatch({ type : APP_UPDATE, payload: {searches: {activeSearch}}});
+    };
+}
+
+function setMenu(action) {
+    return (dispatch) => {
+        const menu = action.payload?.menu;
+        if (menu?.showBgMonitor ?? true) {
+            menu.menuItems ??= [];
+            if (!menu.menuItems.some((item) => item.action === 'BackgroundMonitorCmd')) {
+                menu.menuItems.push({ label: 'Background Monitor', action: 'BackgroundMonitorCmd', primary: true });
+            }
+        }
+        dispatch(action);
     };
 }
 

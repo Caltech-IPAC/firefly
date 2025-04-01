@@ -9,6 +9,7 @@ import {Logger} from '../../util/Logger.js';
 import {showJobInfo} from './JobInfo.jsx';
 import {getJobInfo} from './BackgroundUtil.js';
 import {InfoButton} from 'firefly/visualize/ui/Buttons.jsx';
+import {showBackgroundMonitor} from './BackgroundMonitor';
 
 const logger = Logger('BgMaskPanel');
 
@@ -33,6 +34,7 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, mask, show
         if (jobInfo) {
             dispatchComponentStateChange(componentKey, {inProgress:false});
             dispatchJobAdd(jobInfo);
+            showBackgroundMonitor(true);
         }
     };
     const abort = () => {

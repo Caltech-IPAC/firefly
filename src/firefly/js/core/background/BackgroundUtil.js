@@ -16,7 +16,7 @@ import {ServerParams} from '../../data/ServerParams.js';
 import * as SearchServices from '../../rpc/SearchServicesJson.js';
 import {logger} from '../../util/Logger';
 
-
+export const Phase = new Enum(['PENDING', 'QUEUED', 'EXECUTING', 'COMPLETED', 'ERROR', 'ABORTED', 'HELD', 'SUSPENDED', 'ARCHIVED']);
 
 export const submitJob = (cmd, params) => {
     // submit this job.  No need to add it into flux.  Server will push update to it.
@@ -76,10 +76,10 @@ export function getBackgroundJobs() {
 /**
  * returns background jobInfo for the given jobId.
  * @param jobId
- * @returns {JobInfo}
+ * @returns {Job}
  */
 export function getJobInfo(jobId) {
-    return get(flux.getState(), [BACKGROUND_PATH, 'jobs', jobId]);
+    return getBackgroundJobs()?.[jobId];
 }
 
 export function isSearchJob(job) {
@@ -108,23 +108,34 @@ export function canCreateScript(jobInfo) {
 }
 
 export function isDone(jobInfo) {
-    return ['COMPLETED', 'ERROR', 'ABORTED'].includes(jobInfo?.phase);
+    return Phase.get('COMPLETED | ERROR | ABORTED | ARCHIVED').has(jobInfo?.phase);
 }
 
 export function isFail(jobInfo) {
-    return ['ERROR', 'ABORTED'].includes(jobInfo?.phase);
-}
-
-export function isAborted(jobInfo) {
-    return 'ABORTED' === jobInfo?.phase;
-}
-
-export function isSuccess(jobInfo) {
-    return jobInfo?.phase === 'COMPLETED';
+    return Phase.get('ERROR | ABORTED').has(jobInfo?.phase);
 }
 
 export function isActive(jobInfo) {
-    return ['PENDING', 'QUEUED', 'EXECUTING'].includes(jobInfo?.phase);
+    return Phase.get('PENDING | QUEUED | EXECUTING').has(jobInfo?.phase);
+}
+export function isArchived(jobInfo) {
+    return Phase.ARCHIVED.is(jobInfo?.phase);
+}
+
+export function isAborted(jobInfo) {
+    return Phase.ABORTED.is(jobInfo?.phase);
+}
+
+export function isPending(jobInfo) {
+    return Phase.PENDING.is(jobInfo?.phase);
+}
+
+export function isQueued(jobInfo) {
+    return Phase.QUEUED.is(jobInfo?.phase);
+}
+
+export function isSuccess(jobInfo) {
+    return Phase.COMPLETED.is(jobInfo?.phase);
 }
 
 export function getErrMsg(jobInfo) {

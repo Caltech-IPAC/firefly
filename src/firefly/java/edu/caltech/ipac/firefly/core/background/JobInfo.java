@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -28,6 +29,7 @@ import java.util.Map;
 public class JobInfo implements Serializable {
 
     public enum Phase {PENDING, QUEUED, EXECUTING, COMPLETED, ERROR, ABORTED, HELD, SUSPENDED, ARCHIVED, UNKNOWN}
+    public static final Set<Phase> TERMINATED_PHASES = Set.of(Phase.COMPLETED, Phase.ERROR, Phase.ABORTED);
     private static final int LIFE_SPAN = AppProperties.getIntProperty("job.lifespan", 60*60*24);        // default lifespan in seconds; kill job if exceed
 
     // these are uws:job defined properties

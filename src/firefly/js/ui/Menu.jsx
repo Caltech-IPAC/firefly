@@ -2,7 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import PendingActionsOutlinedIcon from '@mui/icons-material/PendingActionsOutlined.js';
 import {
     Badge, Button, Chip, CircularProgress, Divider, IconButton, ListItemDecorator, Sheet,
     Stack, Tab, TabList, Tabs, Tooltip, Typography
@@ -15,7 +14,6 @@ import {
     COMMAND, dispatchAddPreference, dispatchSetMenu,
     getMenu, getPreference, getSelectedMenuItem, getUserInfo
 } from '../core/AppDataCntlr.js';
-import {getBackgroundInfo, isActive} from '../core/background/BackgroundUtil.js';
 import {flux} from '../core/ReduxFlux.js';
 import {dispatchHideDropDown, dispatchShowDropDown, getLayouInfo, getResultCounts} from '../core/LayoutCntlr.js';
 import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
@@ -153,7 +151,6 @@ function AdjustableMenu({menuTabItems, helpItem, selected, dropDown, showBgMonit
             <MenuTabBar {...{menuTabItems,size,selected,dropDown, displayMask, setElement}}/>
             <Stack {...{direction:'row', alignItems:'center', alignSelf:'center', divider}} >
                 {size==='lg' && showBgMonitor  && <React.Fragment/>}
-                {showBgMonitor && <BgMonitorButton size={size}/> }
                 {showHelp && <AppHelpButton {...{ menuItem:helpItem,size}}/>}
                 {showUserInfo && <UserInfo/>}
             </Stack>
@@ -619,23 +616,3 @@ function getCounts(prev={}) {
     return results;
 }
 
-const showBgMonAction = { type:'COMMAND',
-    action: 'background.bgMonitorShow',
-    label: 'Background Monitor',
-    desc: 'Watch and retrieve background tasks for packaging and catalogs'
-};
-
-
-function BgMonitorButton ({sx,size}) {
-    const {jobs={}} = useStoreConnector(() => getBackgroundInfo());
-
-    const monitoredJobs = Object.values(jobs).filter( (info) => info?.jobInfo?.monitored );
-    const isWorking = monitoredJobs.some( (info) => isActive(info) );
-
-    const buttonSize= size==='lg' ? 'sm' : size==='md' ? 'lg' : 'md';
-
-    return (
-        <MenuItemButton {...{ sx, size:buttonSize, menuItem:showBgMonAction, isWorking,
-            icon:size!=='lg' ? <PendingActionsOutlinedIcon/> : undefined,
-            badgeCount: monitoredJobs.length }}/>);
-}

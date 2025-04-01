@@ -131,6 +131,7 @@ export const ServerParams = {
         REMOVE_JOB: 'removeBgJob',
         ADD_JOB: 'addBgJob',
         CANCEL: 'cancel',
+        ARCHIVE: 'archive',
         SET_BG_INFO: 'setBgInfo',
         SET_ATTR: 'setAttribute',
         RESEND_EMAIL: 'resendEmail',

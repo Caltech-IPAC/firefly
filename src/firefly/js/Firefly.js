@@ -231,7 +231,8 @@ const defFireflyOptions = {
         notification: {
             enable: false,          // enable notification feature
             showEmail: false,       // display email input field; if true, enable will be set to true
-        }
+        },
+        autoSendSearches: undefined // searches that match defined regex pattern will be automatically sent to the background.
     },
 };
 

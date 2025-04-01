@@ -355,7 +355,7 @@ function ActionDropdown({text, actions, onChange}) {
 /**
  * A wrapper tag that handles default styles, textAlign, and actions.
  */
-export const CellWrapper =  React.memo( (props) => {
+export const CellWrapper =  (props) => {
     const {tbl_id, startIdx, CellRenderer, style, columnKey, col, rowIndex, data, height, width} = props;
 
     const cellInfo = getCellInfo({columnKey, col, rowIndex, data, tbl_id, startIdx});
@@ -367,10 +367,10 @@ export const CellWrapper =  React.memo( (props) => {
             {content}
         </Stack>
     );
-
     return CellRenderer?.allowActions ? <ContentEllipsis sx={{height:1, width:1}} {...{textAlign, text}}>{content}</ContentEllipsis> : contentWithWrapper;
+};
 
-}, skipCellRender);
+export const FixedCellWrapper = React.memo( CellWrapper, skipCellRender);
 
 function skipCellRender(prev={}, next={}) {
     const {width, colIdx, rowIndex} = prev;
