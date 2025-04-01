@@ -1,3 +1,4 @@
+import {isEmpty} from 'lodash';
 import React from 'react';
 import {object, bool, element, shape, elementType} from 'prop-types';
 import {Stack, Sheet, LinearProgress} from '@mui/joy';
@@ -12,9 +13,10 @@ import {Slot, useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
 import {MainPanel} from 'firefly/templates/common/MainPanel.jsx';
 import {AppConfigDrawer} from '../../ui/AppConfigDrawer.jsx';
 import {getActionFromUrl} from 'firefly/core/History';
-import {SHOW_DROPDOWN} from 'firefly/core/LayoutCntlr';
+import {getDropDownInfo, SHOW_DROPDOWN} from 'firefly/core/LayoutCntlr';
 import {flux} from 'firefly/core/ReduxFlux';
 import {APP_HINT_IDS, appHintPrefName} from 'firefly/templates/fireflyviewer/LandingPage';
+import {InitArgsCtx} from './InitArgsCtx';
 
 /*
  __________________________________________
@@ -62,6 +64,7 @@ export function FireflyLayout({footer, useDefaultExpandedView,
 
     const menu = useStoreConnector(getMenu);
     const isReady = useStoreConnector(isAppReady);
+    const initArgs  = useStoreConnector(getInitArgs);
 
     const bannerProps = pick(props, ['appTitle', 'appIcon']);
 
@@ -83,9 +86,11 @@ export function FireflyLayout({footer, useDefaultExpandedView,
                 <Alerts />
                 <Slot component={AppConfigDrawer} slotProps={slotProps?.drawer}/>
             </Stack>
-            <MainPanel {...{footer, useDefaultExpandedView, dropDownComponent}}>
-                {children}
-            </MainPanel>
+            <InitArgsCtx.Provider value={{initArgs}}>
+                <MainPanel {...{footer, useDefaultExpandedView, dropDownComponent}}>
+                    {children}
+                </MainPanel>
+            </InitArgsCtx.Provider>
         </Sheet>
     );
 }
@@ -105,6 +110,12 @@ FireflyLayout.propTypes = {
         dropdown: object
     })
 };
+
+function getInitArgs() {
+    const {initArgs}= getDropDownInfo() ?? {};
+    if (isEmpty(initArgs)) return;
+    return initArgs;
+}
 
 
 
