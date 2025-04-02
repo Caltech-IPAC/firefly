@@ -11,6 +11,7 @@ import {getModuleName, getProp, getRootURL, isFullURL} from '../util/WebUtil.js'
 import {dispatchRemoteAction} from './JsonUtils.js';
 import {getWsConn} from './messaging/WebSocketClient';
 import {getLayouInfo} from 'firefly/core/LayoutCntlr';
+import {makeBackgroundMonitorMenuItem} from './background/JobHistory';
 
 export const APP_DATA_PATH = 'app_data';
 export const COMMAND = 'COMMAND';
@@ -378,7 +379,7 @@ function setMenu(action) {
         if (menu?.showBgMonitor ?? true) {
             menu.menuItems ??= [];
             if (!menu.menuItems.some((item) => item.action === 'BackgroundMonitorCmd')) {
-                menu.menuItems.push({ label: 'Background Monitor', action: 'BackgroundMonitorCmd', primary: true });
+                menu.menuItems.push(makeBackgroundMonitorMenuItem());
             }
         }
         dispatch(action);

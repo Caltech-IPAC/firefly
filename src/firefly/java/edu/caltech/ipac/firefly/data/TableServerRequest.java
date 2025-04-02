@@ -39,6 +39,8 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
     public static final String FF_SESSION_ID = "ffSessionId";
     public static final String TBL_INDEX = "tbl_index";     // the table to show if it's a multi-table file.
     public static final String SELECT_INFO = "selectInfo";  // a property of META_INFO.  deserialize into SelectionInfo.java
+    public static final String DATA_SERVICE_ID = "DATA_SERVICE_ID";     // a property of META_INFO. this meta if exists contains the ID of service of the requested data
+
     private static final List<String> SYS_PARAMS = Arrays.asList(REQUEST_CLASS,INCL_COLUMNS,SORT_INFO,FILTERS,SQL_FILTER,PAGE_SIZE,START_IDX,FIXED_LENGTH,META_INFO,TBL_ID, FF_SESSION_ID);
 
     private int pageSize = -1;
@@ -98,6 +100,10 @@ public class TableServerRequest extends ServerRequest implements Serializable, C
 
     public String getTblTitle() {
         return getMeta(TITLE);
+    }
+
+    public String getSvcId() {
+        return getMeta(DATA_SERVICE_ID);
     }
 
     @Override

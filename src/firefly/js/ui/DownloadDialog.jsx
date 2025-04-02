@@ -239,7 +239,7 @@ DownloadOptionPanel.propTypes = {
     downloadType: PropTypes.string, //either 'package' or 'script'
     style:      PropTypes.object,
 
-    showTitle:        PropTypes.bool,           // layout Title field.  This is the title of the package request.  It will be displayed in background monitor.
+    showTitle:        PropTypes.bool,           // layout Title field.  This is the title of the package request.  It will be displayed in Job History.
     showZipStructure: PropTypes.bool,           // layout ZipStructure field
     showEmailNotify:  PropTypes.bool,           // layout EmailNotification field
     showFileLocation: PropTypes.bool,           // layout FileLocation field

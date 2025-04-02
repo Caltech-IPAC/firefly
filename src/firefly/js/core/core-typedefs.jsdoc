@@ -148,9 +148,12 @@
  * Internal job information.  Used by Firefly to manage the job.
  * @typedef {Object} JobInfo
  * @prop {string} type          type of job. One of SEARCH, PACKAGE
+ * @prop {string} label         job label for display
+ * @prop {string} svcId         service ID
  * @prop {boolean} monitored    true if UI is monitoring the job
  * @prop {number} progress      progress of the job as a percentage.  0-100, where 100 is done
  * @prop {string} progressDesc  a description of the current progress
+ * @prop {string} summary       summary of the job
  */
 
 /*=========================================================================*/

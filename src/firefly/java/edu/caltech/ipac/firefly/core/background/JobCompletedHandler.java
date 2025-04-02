@@ -20,13 +20,12 @@ public interface JobCompletedHandler extends Subscriber {
 
     @Override
     default void onMessage(Message msg) {
-        JobCompletedEvent ev = JobCompletedEvent.fromMsg(msg);
-        if (ev == null) return;
+        if (!JobCompletedEvent.isJobCompletedEvent(msg)) return;
 
-        JobInfo jobInfo = JobUtil.fromMsg(ev);
+        JobInfo jobInfo = JobManager.JobEvent.getJobInfo(msg);
         String host = jobInfo.getAuxData().getRefHost();
         if (host != null && host.equals(JobUtil.hostName())) {
-            processEvent(ev, jobInfo);
+            processEvent(new JobCompletedEvent(jobInfo), jobInfo);
         }
     }
 }

@@ -20,7 +20,6 @@ import {dispatchComponentStateChange} from '../core/ComponentCntlr.js';
 import {dispatchJobAdd} from '../core/background/BackgroundCntlr.js';
 import {fixPageSize} from './TableUtil.js';
 import {SelectInfo} from 'firefly/tables/SelectInfo';
-import {showBackgroundMonitor} from '../core/background/BackgroundMonitor';
 
 
 export const TABLE_SPACE_PATH = 'table_space';
@@ -664,8 +663,6 @@ function syncFetch(request, hlRowIdx, dispatch, tbl_id) {
 
 function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
     unset(request, 'META_INFO.backgroundable');
-    const autoSendSearches = getAppOptions()?.background?.autoSendSearches;
-    const doAutoSend = autoSendSearches && new RegExp(autoSendSearches).test(request.id);
 
     const onComplete = (jobInfo) => {
         if (isSuccess(jobInfo)) {
@@ -675,26 +672,23 @@ function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
         }
     };
 
-    const sentToBg = (jobInfo) => {
+    const hide = (jobInfo) => {
         dispatchTblResultsRemove(tbl_id);
-        dispatchJobAdd(jobInfo);
-        showBackgroundMonitor(true);
+        dispatchComponentStateChange(bgKey, {inProgress:false});
     };
 
     const bgKey = TblUtil.makeBgKey(tbl_id);
-    dispatchComponentStateChange(bgKey, {inProgress:true});
+    dispatchComponentStateChange(bgKey, {inProgress:true, hide:false});
     asyncFetchTable(request)
         .then ( (jobInfo) => {
             const jobId = jobInfo?.jobId;
-            if (doAutoSend) {
-                sentToBg(jobInfo);
-                return;
-            }
+            dispatchJobAdd(jobInfo);
+
             const inProgress = !isDone(jobInfo);
             dispatchComponentStateChange(bgKey, {inProgress, jobId});
             if (inProgress) {
                 // not done; track progress
-                trackBackgroundJob({jobId, key: bgKey, onComplete, sentToBg});
+                trackBackgroundJob({jobId, key: bgKey, onComplete, hide});
             } else {
                 onComplete(jobInfo);
             }

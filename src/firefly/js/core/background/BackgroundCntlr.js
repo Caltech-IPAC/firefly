@@ -2,16 +2,14 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import React from 'react';
-import {isNil, isObject} from 'lodash';
-
 import {flux} from '../ReduxFlux';
+
 import {updateSet} from '../../util/WebUtil.js';
-import {showBackgroundMonitor} from './BackgroundMonitor.jsx';
+import {showJobMonitor, showMultiResults} from './JobHistory.jsx';
 import {isSuccess} from './BackgroundUtil.js';
 import * as SearchServices from '../../rpc/SearchServicesJson.js';
 import {doPackageRequest} from './BackgroundUtil.js';
-import {showInfoPopup, hideInfoPopup} from '../../ui/PopupUtil.jsx';
+import {showInfoPopup} from '../../ui/PopupUtil.jsx';
 import {WORKSPACE} from '../../ui/WorkspaceSelectPane.jsx';
 import {validateFileName} from '../../ui/WorkspaceViewer.jsx';
 import {dispatchWorkspaceUpdate} from '../../visualize/WorkspaceCntlr.js';
@@ -55,15 +53,6 @@ function reducers() {
 
 
 /*---------------------------- DISPATCHERS -----------------------------*/
-
-/**
- * Action to show/hide the background monitor.  To hide, set showBgMonitor to false
- * @param {Object}  p   payload
- * @param {boolean} p.showBgMonitor
- */
-export function dispatchBgMonitorShow({show=true}) {
-    flux.process({ type : BG_MONITOR_SHOW, payload: {show} });
-}
 
 /**
  * Add/update the jobInfo of the background job referenced by jobId.
@@ -131,7 +120,7 @@ export function dispatchPackage(dlRequest, searchRequest, selectionInfo, bgKey, 
 function bgMonitorShow(action) {
     return (dispatch) => {
         const {show=true} = action.payload;
-        showBackgroundMonitor(show);
+        showJobMonitor(show);
         dispatch(action);
     };
 }
@@ -150,6 +139,7 @@ function bgJobRemove(action) {
     return (dispatch) => {
         const {jobId} = action.payload;
         if (jobId) {
+            SearchServices.cancel(jobId);
             SearchServices.removeBgJob(jobId);
             dispatch(action);
         }
@@ -194,11 +184,6 @@ function bgPackage(action) {
             if (!validateFileName(wsSelect, BaseFileName)) return false;
         }
 
-        const showBgMonitor = () => {
-            showBackgroundMonitor();
-            hideInfoPopup();
-        };
-
         const onComplete = (jobInfo) => {
             const results = jobInfo?.results;     // on immediate download, there can only be one item(file).
             if (isSuccess(jobInfo)) {
@@ -207,14 +192,7 @@ function bgPackage(action) {
                     dispatchWorkspaceUpdate();
                 } else {
                     if (results?.length > 1) {
-                        dispatchJobAdd(jobInfo);
-                        const msg = (
-                            <div style={{fontStyle: 'italic', width: 275}}>This download resulted in multiple files.<br/>
-                                See <div onClick={showBgMonitor} className='clickable' style={{color: 'blue', display: 'inline'}} >Background Monitor</div> for download options
-                            </div>
-                        );
-                        showInfoPopup(msg, 'Multipart download');
-
+                        showMultiResults(jobInfo);
                     } else {
                         const url= jobInfo?.results?.[0]?.href;
                         download(url);

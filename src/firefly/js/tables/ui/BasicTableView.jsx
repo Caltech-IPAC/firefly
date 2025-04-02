@@ -10,7 +10,7 @@ import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, set, isEmpty, isUndefined, omitBy, pick} from 'lodash';
 
 import {
-    getCellValue, getColMaxVal, getColMaxValues, getColumns, getProprietaryInfo, getTableState, getTableUiById,
+    getColMaxVal, getColMaxValues, getColumns, getProprietaryInfo, getTableState, getTableUiById,
     getTblById, hasRowAccess, hasSubHighlightRows, isClientTable, isSubHighlightRow, tableTextView, TBL_STATE,
     uniqueTblUiId
 } from '../TableUtil.js';
@@ -447,7 +447,7 @@ function makeColumnTag(props, col, idx) {
 
     if (col.visibility && col.visibility !== 'show') return false;
     const HeadRenderer = get(renderers, [col.name, 'headRenderer'], showHeader ? HeaderCell : ({})=>null);
-    const CellRenderer = get(renderers, [col.name, 'cellRenderer'], cellRenderers?.[idx]);
+    const CellRenderer = renderers?.[col.name]?.cellRenderer || cellRenderers?.[idx];
     const fixed = col.fixed || false;
     const {resizable=true} = col;
 

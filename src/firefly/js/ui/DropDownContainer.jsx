@@ -24,7 +24,7 @@ import {MultiSearchPanel} from 'firefly/ui/MultiSearchPanel.jsx';
 import {TapSearchPanel} from 'firefly/ui/tap/TapSearchRootPanel.jsx';
 import {DLGeneratedDropDown} from './dynamic/DLGeneratedDropDown.js';
 import {useStoreConnector} from 'firefly/ui/SimpleComponent.jsx';
-import {BackgroundMonitor} from '../core/background/BackgroundMonitor';
+import {JobHistory} from '../core/background/JobHistory';
 
 
 export const flexGrowWithMax = {width: '100%', maxWidth: 1400};
@@ -46,7 +46,7 @@ export const dropDownMap = {
     SIAv2Search: {view: <SIAv2SearchPanel/>, layout: {width: '100%'}},
     MultiTableSearchCmd: {view: <MultiSearchPanel/>,  layout: {width: '100%'}},
     FileUploadDropDownCmd: {view: <FileUploadDropdown />, layout: {width: '100%'}},
-    BackgroundMonitorCmd: {view: <BackgroundMonitor />, layout: {width: '100%'}},
+    BackgroundMonitorCmd: {view: <JobHistory />, layout: {width: '100%'}},
     WorkspaceDropDownCmd: {view: <WorkspaceDropdown />},
     DLGeneratedDropDownCmd: {view: <DLGeneratedDropDown name='DLGeneratedDropDownCmd' loadRegistry={false}/>, layout: {width: '100%'}},
     IrsaCatalog: {view: <IrsaCatalogSearchDefault/>, layout: {width: '100%'}},

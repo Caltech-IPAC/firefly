@@ -2,14 +2,14 @@ import React, {useEffect} from 'react';
 import {bool, string, func, object, element} from 'prop-types';
 import {Button, LinearProgress, Skeleton, Stack, Typography} from '@mui/joy';
 
-import {dispatchJobAdd, dispatchJobCancel} from './BackgroundCntlr.js';
 import {dispatchComponentStateChange, getComponentState} from '../ComponentCntlr.js';
 import {useStoreConnector, Slot} from '../../ui/SimpleComponent.jsx';
 import {Logger} from '../../util/Logger.js';
 import {showJobInfo} from './JobInfo.jsx';
-import {getJobInfo} from './BackgroundUtil.js';
+import {getJobInfo, isActive} from './BackgroundUtil.js';
 import {InfoButton} from 'firefly/visualize/ui/Buttons.jsx';
-import {showBackgroundMonitor} from './BackgroundMonitor';
+import {showJobMonitor} from './JobHistory';
+import {dispatchJobRemove} from './BackgroundCntlr';
 
 const logger = Logger('BgMaskPanel');
 
@@ -30,28 +30,6 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, mask, show
                            const {jobId} = getComponentState(componentKey);
                            return jobId && getJobInfo(jobId);
                        });
-    const sendToBg = () => {
-        if (jobInfo) {
-            dispatchComponentStateChange(componentKey, {inProgress:false});
-            dispatchJobAdd(jobInfo);
-            showBackgroundMonitor(true);
-        }
-    };
-    const abort = () => {
-        if (jobInfo) {
-            dispatchComponentStateChange(componentKey, {inProgress:false});
-            dispatchJobCancel(jobInfo.jobId);
-        }
-    };
-
-    const msg = jobInfo?.errorSummary?.message || jobInfo?.jobInfo?.progressDesc || 'Working...';
-
-    const Options = () => (
-        <Stack direction='row' spacing={1}>
-            <Button variant='solid' color='primary' disabled={!jobInfo} onClick={sendToBg}>Send to background</Button>
-            <Button disabled={!jobInfo} onClick={abort}>Cancel</Button>
-        </Stack>
-    );
 
     const errorInJob= ['ERROR', 'ABORTED'].includes(jobInfo?.phase);
 
@@ -59,12 +37,25 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, mask, show
         (jobInfo && !inProgress && !errorInJob) && onMaskComplete?.();
     }, [inProgress, jobInfo, errorInJob]);
 
+    const doHide = () => {
+        dispatchComponentStateChange(componentKey, {hide:true});
+    };
 
+    const doCancel = () => {
+        if (jobInfo) dispatchJobRemove(jobInfo.jobId);
+        doHide();
+    };
+
+    const msg = jobInfo?.errorSummary?.message || jobInfo?.jobInfo?.progressDesc || 'Working...';
     logger.debug(inProgress ? 'show' : 'hide');
     if (inProgress) {
         return (
             <MaskP msg={msg} jobInfo={jobInfo} mask={mask} {...props}>
-                <Options/>
+                <Stack direction='row' spacing={1}>
+                    <Button variant='solid' color='primary' onClick={doHide}>Send to background</Button>
+                    <Button variant='solid' color='primary' onClick={() => showJobMonitor(true)}>Job Monitor</Button>
+                    <Button variant='soft' onClick={doCancel}>Cancel</Button>
+                </Stack>
             </MaskP>
         );
     } else if (errorInJob && showError) {
@@ -84,11 +75,13 @@ function MaskP({msg, jobInfo, children, mask=<Skeleton/>, ...props}) {
             {mask}
             <Stack whiteSpace='nowrap' position='absolute' zIndex={10} top='50%' left='50%' spacing={2} sx={{transform: 'translate(-50%, -50%)'}}>
                 <Stack direction='row' alignItems='center' justifyContent='center' spacing={1}>
-                    <Typography level='title-md' color='warning' fontStyle='italic' noWrap={true}>{msg}</Typography>
+                    <Stack >
+                        <Typography level='title-md' color='warning' fontStyle='italic' noWrap={true}>{msg}</Typography>
+                        {isActive(jobInfo) && <LinearProgress color='neutral'/>}
+                    </Stack>
                     <InfoButton enabled={!!jobInfo} onClick={showInfo}/>
                 </Stack>
                 {children}
-                <LinearProgress color='neutral'/>
             </Stack>
         </Slot>
 
