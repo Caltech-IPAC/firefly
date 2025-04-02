@@ -526,8 +526,17 @@ function makeSelectObj(firstPt,currentPt, offsetCal, cc) {
         const adjDist = lookupDistance(lon1, lon2, cc, pref);
         const opDist = lookupDistance(lat1, lat2, cc, pref);
 
-        const adj = ShapeDataObj.makeLine(cc.getWorldCoords(lon1),cc.getWorldCoords(lon2));
-        const op = ShapeDataObj.makeLine(cc.getWorldCoords(lat1), cc.getWorldCoords(lat2));
+
+        let adj, op;
+        if (pref !== PIXEL) {
+            adj = ShapeDataObj.makeLine(cc.getWorldCoords(lon1),cc.getWorldCoords(lon2));
+            op = ShapeDataObj.makeLine(cc.getWorldCoords(lat1), cc.getWorldCoords(lat2));
+        }
+        else {
+            adj = ShapeDataObj.makeLine(cc.getImageCoords(lon1),cc.getImageCoords(lon2));
+            op = ShapeDataObj.makeLine(cc.getImageCoords(lat1), cc.getImageCoords(lat2));
+
+        }
 
         adj.lineWidth = LWIDTH;
         op.lineWidth = LWIDTH;

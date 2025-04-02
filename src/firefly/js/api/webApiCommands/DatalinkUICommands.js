@@ -27,7 +27,7 @@ const idExamples= [
     {
         desc:'load to UI using id and show the data set chooser',
         params:{
-            id: 'dss',
+            id: 'iras_iga',
             showChooser: 'true'
         }
     },

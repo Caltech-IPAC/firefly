@@ -1,4 +1,4 @@
-import {isEmpty, uniq} from 'lodash';
+import {isEmpty, once, uniq} from 'lodash';
 import {isDialogVisible} from '../core/ComponentCntlr.js';
 import { getExpandedMode, LO_VIEW, SET_LAYOUT, SET_LAYOUT_MODE, UPDATE_LAYOUT } from '../core/LayoutCntlr.js';
 import {dispatchAddActionWatcher} from '../core/MasterSaga.js';
@@ -28,44 +28,47 @@ const [NAME_IDX, WAVE_LENGTH_UM, PID_IDX, STATUS, PROJ_TYPE_DESC, WAVE_TYPE, DAT
 
 
 
-const wlUnits= getFormattedWaveLengthUnits('um');
-
-const columnsTemplate = [];
-columnsTemplate[NAME_IDX] = {name: 'Name', type: 'char', width: 22};
-columnsTemplate[PID_IDX] = {name: 'plotId', type: 'char', width: 10, visibility: 'hidden'};
-columnsTemplate[STATUS] = {name: 'Status', type: 'char', width: 10};
-columnsTemplate[PROJ_TYPE_DESC] = {name: 'Type', type: 'char', width: 8};
-columnsTemplate[WAVE_TYPE] = {name: 'Band', type: 'char', width: 9};
-columnsTemplate[WAVE_LENGTH_UM] = { name: 'Wavelength', type: 'double', width: 8, units: wlUnits };
-
-columnsTemplate[DATA_HELP_URL] = {
-    name: 'Help',
-    type: 'location',
-    width: 4,
-    cellRenderer: 'ATag::href=${Help},target="image-doc"'+ `,label=<img src='images/info-16x16.png'/>` // eslint-disable-line
-};
-
-
-columnsTemplate[OBS_TITLE_IDX] = {name: 'obs_title', type: 'show', width: 20};
-columnsTemplate[S_RA_IDX] = {name: 's_ra', type: 'double', width: 9};
-columnsTemplate[S_DEC_IDX] = {name: 's_dec', type: 'double', width: 9};
-columnsTemplate[EM_MIN_IDX] = {name: 'em_min', type: 'double', width: 8, units: wlUnits};
-columnsTemplate[EM_MAX_IDX] = {name: 'em_max', type: 'double', width: 8, units: wlUnits};
-columnsTemplate[T_MAX_IDX] = {name: 't_max', type: 'double', width: 9};
-columnsTemplate[T_MIN_IDX] = {name: 't_min', type: 'double', width: 9};
-columnsTemplate[T_MAX_IDX] = {name: 't_max', type: 'double', width: 9};
-columnsTemplate[CALIB_LEVEL_IDX] = {name: 'calib_level', type: 'show', width: 6};
-columnsTemplate[DATAPRODUCT_TYPE_IDX] = {name: 'dataproduct_type', type: 'show', width: 20};
-columnsTemplate[DATAPRODUCT_SUBTYPE_IDX] = {name: 'dataproduct_subtype', type: 'show', width: 20};
-columnsTemplate[OBS_COLLECTION_IDX] = {name: 'obs_collection', type: 'show', width: 20};
-columnsTemplate[FACILITY_NAME_IDX] = {name: 'facility_name', type: 'show', width: 20};
-columnsTemplate[INSTRUMENT_NAME_IDX] = {name: 'instrument_name', type: 'show', width: 20};
-columnsTemplate[S_REGION_IDX] = {name: 's_region', type: 'show', width: 10};
 
 
 
 
 
+const getColumnTemplate= once(() => {
+    const wlUnits= getFormattedWaveLengthUnits('um');
+
+    const columnsTemplate = [];
+    columnsTemplate[NAME_IDX] = {name: 'Name', type: 'char', width: 22};
+    columnsTemplate[PID_IDX] = {name: 'plotId', type: 'char', width: 10, visibility: 'hidden'};
+    columnsTemplate[STATUS] = {name: 'Status', type: 'char', width: 10};
+    columnsTemplate[PROJ_TYPE_DESC] = {name: 'Type', type: 'char', width: 8};
+    columnsTemplate[WAVE_TYPE] = {name: 'Band', type: 'char', width: 9};
+    columnsTemplate[WAVE_LENGTH_UM] = { name: 'Wavelength', type: 'double', width: 8, units: wlUnits };
+
+    columnsTemplate[DATA_HELP_URL] = {
+        name: 'Help',
+        type: 'location',
+        width: 4,
+        cellRenderer: 'ATag::href=${Help},target="image-doc"'+ `,label=<img src='images/info-16x16.png'/>` // eslint-disable-line
+    };
+
+
+    columnsTemplate[OBS_TITLE_IDX] = {name: 'obs_title', type: 'show', width: 20};
+    columnsTemplate[S_RA_IDX] = {name: 's_ra', type: 'double', width: 9};
+    columnsTemplate[S_DEC_IDX] = {name: 's_dec', type: 'double', width: 9};
+    columnsTemplate[EM_MIN_IDX] = {name: 'em_min', type: 'double', width: 8, units: wlUnits};
+    columnsTemplate[EM_MAX_IDX] = {name: 'em_max', type: 'double', width: 8, units: wlUnits};
+    columnsTemplate[T_MAX_IDX] = {name: 't_max', type: 'double', width: 9};
+    columnsTemplate[T_MIN_IDX] = {name: 't_min', type: 'double', width: 9};
+    columnsTemplate[T_MAX_IDX] = {name: 't_max', type: 'double', width: 9};
+    columnsTemplate[CALIB_LEVEL_IDX] = {name: 'calib_level', type: 'show', width: 6};
+    columnsTemplate[DATAPRODUCT_TYPE_IDX] = {name: 'dataproduct_type', type: 'show', width: 20};
+    columnsTemplate[DATAPRODUCT_SUBTYPE_IDX] = {name: 'dataproduct_subtype', type: 'show', width: 20};
+    columnsTemplate[OBS_COLLECTION_IDX] = {name: 'obs_collection', type: 'show', width: 20};
+    columnsTemplate[FACILITY_NAME_IDX] = {name: 'facility_name', type: 'show', width: 20};
+    columnsTemplate[INSTRUMENT_NAME_IDX] = {name: 'instrument_name', type: 'show', width: 20};
+    columnsTemplate[S_REGION_IDX] = {name: 's_region', type: 'show', width: 10};
+    return columnsTemplate;
+});
 
 
 
@@ -145,7 +148,7 @@ export function makeImViewDisplayModel(tbl_id, plotViewAry, allIds, oldModel) {
         return row;
     });
 
-    const columns = [...columnsTemplate];
+    const columns = [...getColumnTemplate()];
     columns[PROJ_TYPE_DESC].enumVals = makeEnumValues(data, PROJ_TYPE_DESC);
     columns[WAVE_TYPE].enumVals = makeEnumValues(data, WAVE_TYPE);
     columns[STATUS].enumVals = makeEnumValues(data, STATUS);

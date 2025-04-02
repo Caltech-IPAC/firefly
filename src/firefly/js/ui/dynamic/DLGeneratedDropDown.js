@@ -319,6 +319,7 @@ function DLGeneratedTableSearch({currentTblId, qAna, groupKey, initArgs, sideBar
     useEffect(() => { // on table change: recenter hips if no target entered, change hips if new one is specified
         if (!currentTblId) return;
         const request= getFieldGroupResults(groupKey);
+        if (!searchObjFds) return;
         const fds= searchObjFds.length===1 ?
             searchObjFds[0].fds :
             searchObjFds.find(({ID}) => ID===request[tabsKey])?.fds;

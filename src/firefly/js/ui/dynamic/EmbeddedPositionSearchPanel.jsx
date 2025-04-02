@@ -3,8 +3,7 @@ import React, {Fragment, useContext, useEffect, useState} from 'react';
 import {oneOf, bool, string, number, arrayOf, object, func, shape, elementType} from 'prop-types';
 import {defaultsDeep} from 'lodash';
 import CoordinateSys from '../../visualize/CoordSys.js';
-import {CONE_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY
-} from '../../visualize/ui/CommonUIKeys.js';
+import {CONE_CHOICE_KEY, POLY_CHOICE_KEY, UPLOAD_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
 import {HiPSTargetView} from '../../visualize/ui/TargetHiPSPanel.jsx';
 import {showInfoPopup} from '../PopupUtil';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
@@ -70,6 +69,7 @@ export const emptyHeaderSx = {
  * of a corresponding component in `EmbeddedPositionSearchPanel.propTypes`.
  *
  * @param p
+ * @param p.initArgs
  * @param p.initSelectToggle initially selected option in spatialSearch's radio toggle (cone, polygon or multi-object)
  * @param p.nullAllowed
  * @param p.insetSpacial
@@ -82,6 +82,7 @@ export const emptyHeaderSx = {
  *
  */
 export function EmbeddedPositionSearchPanel({
+                                                initArgs={},
                                                 initSelectToggle,
                                                 nullAllowed= false,
                                                 insetSpacial=true,
@@ -93,15 +94,30 @@ export function EmbeddedPositionSearchPanel({
                                                 children
                                             } ) {
 
+    const {targetKey=DEF_TARGET_PANEL_KEY}= slotProps.targetPanel ?? {};
+    const {polygonKey=DEFAULT_POLYGON_KEY, }= slotProps.polygonField ?? {};
+    const {sizeKey= DEFAULT_SIZE_KEY, min= 1 / 3600, max= 1, enabled:sizeEnabled=true}= slotProps.sizeInput ?? {};
+
     const {groupKey}= useContext(FieldGroupCtx);
     const {searchTypeKey=CONE_AREA_KEY}= slotProps.spatialSearch ?? {};
 
     const [getSearchTypeOp, setSearchTypeOp] = useFieldGroupValue(searchTypeKey);
+    const [, setPolygon] = useFieldGroupValue(polygonKey);
+    const [, setSize] = useFieldGroupValue(sizeKey);
     const [getUploadInfo, setUploadInfo]= useFieldGroupValue('uploadInfo');
     const uploadInfo= getUploadInfo() || undefined;
 
     const [isHovered, setIsHovered] = useState(true);
     const [isSearchPanel, setIsSearchPanel] = useState(false);
+    const {urlApi:{polygon:polygonInit,radiusInArcSec:radiusInArcSecInit}={}}= initArgs;
+
+    useEffect(() => {
+        if (polygonInit) {
+            setSearchTypeOp(POLY_CHOICE_KEY);
+            setPolygon(polygonInit);
+        }
+        if (radiusInArcSecInit) setSize(radiusInArcSecInit/3600);
+    }, [polygonInit,radiusInArcSecInit]);
 
     //conditionally show UploadTableChooser only when uploadInfo is empty - TAP like behavior
     useEffect(() => {
@@ -128,9 +144,6 @@ export function EmbeddedPositionSearchPanel({
         return initToggle;
     };
 
-    const {targetKey=DEF_TARGET_PANEL_KEY}= slotProps.targetPanel ?? {};
-    const {polygonKey=DEFAULT_POLYGON_KEY, }= slotProps.polygonField ?? {};
-    const {sizeKey= DEFAULT_SIZE_KEY, min= 1 / 3600, max= 1, enabled:sizeEnabled=true}= slotProps.sizeInput ?? {};
 
     if (useUpload && !sizeEnabled && enabledSearchTypes.length===2) {
         // because in this case, 'Cone' or 'Polygon' label won't make sense
@@ -174,7 +187,7 @@ export function EmbeddedPositionSearchPanel({
                     coordinateSys: CoordinateSys.parse(csysStr) ?? CoordinateSys.EQ_J2000,
                     sRegion, plotId,
                     minSize: min, maxSize: max, toolbarHelpId,
-                    whichOverlay: doGetSearchTypeOp(), setWhichOverlay: doToggle ? setSearchTypeOp : undefined,
+                    getWhichOverlay: doGetSearchTypeOp, setWhichOverlay: doToggle ? setSearchTypeOp : undefined,
                     targetKey,
                     sizeKey: sizeEnabled ? sizeKey : undefined,
                     polygonKey,
@@ -249,6 +262,7 @@ EmbeddedPositionSearchPanel.propTypes= {
     usePolygon: bool,
     useUpload: bool,
     doSearch: func,
+    initArgs: shape({ searchParams: object, urlApi: object, }),
     slotProps: shape({ // all slotProps are optional except for formPanel.onSuccess
         formPanel : shape({
             onSuccess: func,  // note- onSuccess is required for this panel to function like a FormPanel

@@ -397,16 +397,18 @@ function summaryModelEqual(sm1,sm2) {
 }
 
 function makeSummaryModel(report, summaryTblId, acceptList) {
+    const isFits= report?.fileFormat===Format.FITS;
     const columns = [
-        {name: 'Index', type: 'int', desc: 'Extension Index'},
+        {name: 'Index', label:isFits? 'HDU' : 'Index', type: 'int', desc: 'Extension Index', width:isFits?3:5},
         {name: 'Type', type: 'char', desc: 'Data Type'},
-        {name: 'Description', type: 'char', desc: 'Extension Description', width: 30},
+        {name: 'Description', type: 'char', desc: 'Extension Description', width: 40},
         {name: 'AllowedType', type: 'boolean', desc: 'Type in AcceptList', visibility: 'hidden'}
     ];
     const {parts=[]} = report;
     const data = parts.map( (p) => {
         const naxis= getIntHeaderFromAnalysis('NAXIS',p,0);
         const entryType = (naxis===1 && p.type===FileAnalysisType.Image)?FileAnalysisType.Table :p.type;
+        const descPrefix= (naxis===1 && p.type===FileAnalysisType.Image)? '1D image, load as table, ' : '';
         const isMoc=  isMOCFitsFromUploadAnalsysis(report)?.valid;
         const isDatalink=  isAnalysisTableDatalink(report);
         let isImageAllowed = true;
@@ -422,7 +424,8 @@ function makeSummaryModel(report, summaryTblId, acceptList) {
         if (entryType === FileAnalysisType.Table || entryType === FileAnalysisType.Image) {
             allowedType = entryType === FileAnalysisType.Table? isTableAllowed: isImageAllowed;
         }
-        return [p.index, entryType , p.desc, allowedType];
+        const desc= p.desc ? descPrefix+p.desc : '';
+        return [p.index+1, entryType , desc, allowedType];
     });
 
     const summaryModel = {
@@ -440,7 +443,7 @@ function makeSummaryModel(report, summaryTblId, acceptList) {
 function getDetailsModel(tableModel, report, detailsTblId, UNKNOWN_FORMAT) {
     if (!tableModel) return;
     const {highlightedRow=0} = tableModel;
-    const partNum = getCellValue(tableModel, highlightedRow, 'Index');
+    const partNum = getCellValue(tableModel, highlightedRow, 'Index')-1;
     const type = getCellValue(tableModel, highlightedRow, 'Type');
     if (type===UNKNOWN_FORMAT) return undefined;
     const details = report?.parts?.[partNum]?.details;
@@ -669,7 +672,7 @@ function MultiDataSet({summaryModel, detailsModel, isMoc, acceptOneItem}) {
                 </Typography>
             }
             <Box sx={{height:1, position:'relative'}}>
-                <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={350}>
+                <SplitPane split='vertical' maxSize={-20} minSize={20} defaultSize={525}>
                     {acceptOneItem && <TablePanel {...{showTypes:false, title:'File Summary', tableModel:summaryModel,
                         ...tblOptions, selectable:false, }} />}
                     {!acceptOneItem && <TablePanel {...{sx:{mr:1}, showTypes:false, title:'File Summary', tableModel:summaryModel,
