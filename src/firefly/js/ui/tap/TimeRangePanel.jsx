@@ -68,7 +68,7 @@ export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, sx={},
                     label={minLabel}
                     tooltip={fromTip}
                     makePicker={
-                        makeDatePickerPopup('select "from" time', getVal(minKey), timeMode,
+                        makeDatePickerPopup(minLabel, getVal(minKey), timeMode,
                             (value) => setNewTimeValue(minKey,value) )}
                     value={initArgs?.urlApi?.exposureMin || getVal(minKey)}
                     isTimeModeFixed={Boolean(fixedTimeMode)}
@@ -79,7 +79,7 @@ export function TimeRangePanel({initArgs, panelActive=true, turnOnPanel, sx={},
                     label={maxLabel}
                     tooltip={toTip}
                     makePicker={
-                        makeDatePickerPopup('select "to" time', getVal(maxKey), timeMode,
+                        makeDatePickerPopup(maxLabel, getVal(maxKey), timeMode,
                             (value) => setNewTimeValue(maxKey,value) )}
                     value={initArgs?.urlApi?.exposureMax || getVal(maxKey)}
                     isTimeModeFixed={Boolean(fixedTimeMode)}

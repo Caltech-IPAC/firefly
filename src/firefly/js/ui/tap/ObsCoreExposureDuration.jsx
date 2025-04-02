@@ -179,7 +179,7 @@ ExposureDurationSearch.propTypes = {
 };
 
 
-function ExposureSince({initArgs, turnOnPanel}) {
+function ExposureSince({initArgs, turnOnPanel, slotProps}) {
 
     useFieldGroupWatch(['exposureSinceValue'], ([expSince],isInit) => expSince && !isInit && turnOnPanel());
 
@@ -207,9 +207,12 @@ function ExposureSince({initArgs, turnOnPanel}) {
                                         variant:'plain',
                                         sx:{minHeight:'unset'}
                                     } }}
-                                initialState={{value: initArgs?.urlApi?.exposureSinceOptions || 'hours'}}/>
+                                initialState={{value: initArgs?.urlApi?.exposureSinceOptions || 'hours'}}
+                                {...slotProps?.sinceOptions}
+                            />
 
                         </Stack>),
+                ...slotProps?.sinceValue
             }} />
         </Stack>
     );

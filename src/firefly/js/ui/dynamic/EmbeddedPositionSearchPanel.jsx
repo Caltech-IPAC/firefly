@@ -331,6 +331,7 @@ const Header = function({isOpen, slotProps={}, targetKey, sizeKey, polygonKey, s
                     slotProps={{
                         searchBar: {p:0, justifyContent: 'right'},
                     }}
+                    completeText={slotProps?.formPanel.completeText}
                     cancelText=''>
                     <Stack {...{width:'100%', alignItems:'center'}}>
                         <Slot {...{component:SearchSummary, slotProps:slotProps.searchSummary, request:reqObj,
