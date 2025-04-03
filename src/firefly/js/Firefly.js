@@ -199,6 +199,7 @@ const defFireflyOptions = {
     },
     dataServiceOptions: {
         enableObsCoreDownload: true,
+        generateDownloadFileName: true //todo: remove this before merging this PR FIREFLY-1693
         // debug: true,
     },
     coverage : {

@@ -26,6 +26,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipOutputStream;
 
+import static edu.caltech.ipac.util.download.URLDownload.getFileNameFromUrl;
+import static java.util.Optional.ofNullable;
+import static org.reflections.util.Utils.isEmpty;
+
 /**
  * @author tatianag
  * @version $Id: ZipHandler.java,v 1.48 2012/08/08 18:30:49 roby Exp $
@@ -64,11 +68,13 @@ public class ZipHandler {
         ZipEntry zipEntry = null;
         long totalBytes = 0;
 
-        String filename = fi.getExternalName();     // file name before it has gone through FileNameResolver
+        String filename = fi.getExternalName();
+
         try {
 
             is = getInputStream(fi.getInternalFilename(), fi, baseDir);  // filename may change if FileNameResolver is set
             String zipEntryComment = "(" + fi.getSizeInBytes() + "b) ";
+            //getExternalName/suggestedName,
             filename = FileUtil.getUniqueFileNameForGroup(fi.getExternalName(), dupMap);
 
             int inBufSize = 4096;
@@ -173,9 +179,11 @@ public class ZipHandler {
                 URLConnection uc = URLDownload.makeConnection(url, cookies, headers);
                 uc.setRequestProperty("Accept", "text/plain");
 
-                if (fi.hasFileNameResolver()) {
+                String extName = ofNullable(fi.getExternalName()).orElse("").trim();
+                if (extName.isEmpty() || extName.endsWith("/")) {
                     String suggestedFilename = URLDownload.getSugestedFileName(uc);
-                    fi.setExternalName(fi.resolveFileName(suggestedFilename));
+                    suggestedFilename = isEmpty(suggestedFilename) ? getFileNameFromUrl(url) : suggestedFilename;
+                    fi.setExternalName(extName + suggestedFilename);
                 }
 
                 is = uc.getInputStream();

@@ -43,19 +43,24 @@ async function doMultRequestTableFetch(fetchKey, url, requestOptions) {
 }
 
 export async function fetchSemanticList(tableOrId,row=0) {
-    const table= getTableModel(tableOrId);
-    if (!table) return [];
-    let url;
-    if (isObsCoreLike(table) || isFormatDataLink(table,row)) {
-        url= getObsCoreAccessURL(table,row);
+    try {
+        const table = getTableModel(tableOrId);
+        if (!table) return [];
+        let url;
+        if (isObsCoreLike(table) || isFormatDataLink(table, row)) {
+            url = getObsCoreAccessURL(table, row);
+        } else {
+            const dlDescriptor = getServiceDescriptors(table)?.filter((dDesc) => isDataLinkServiceDesc(dDesc))[0];
+            url = dlDescriptor?.accessURL;
+            url = makeDlUrl(dlDescriptor, table, row);
+        }
+        if (!url) return [];
+        return await fetchDatalinkTableSemanticList(url);
     }
-    else {
-        const dlDescriptor= getServiceDescriptors(table)?.filter( (dDesc) => isDataLinkServiceDesc(dDesc))[0];
-        url= dlDescriptor?.accessURL;
-        url= makeDlUrl(dlDescriptor,table, row);
+    catch (err) {
+        console.error('fetchSemanticList call failed');
+        return [];
     }
-    if (!url) return [];
-    return await fetchDatalinkTableSemanticList(url);
 }
 
 export async function fetchDatalinkTableSemanticList(url, requestOptions={}) {

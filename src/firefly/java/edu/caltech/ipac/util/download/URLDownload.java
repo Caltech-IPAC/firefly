@@ -109,8 +109,28 @@ public class URLDownload {
         String[] strs = disposition.split(";");
         if (strs.length != 2) return null;
         String[] fname = strs[1].split("=");
-        if (fname[0].toLowerCase().contains("filename")) return fname[1];
+        if (fname[0].toLowerCase().contains("filename")) {
+            return sanitizeFilename(fname[1]);
+        }
         return null;
+    }
+
+    public static String getFileNameFromUrl(URL url) {
+        if (url == null) return null;
+        String urlPath = url.getPath();
+        String suggestedFileName = urlPath.substring(urlPath.lastIndexOf('/') + 1);
+        return sanitizeFilename(suggestedFileName);
+    }
+
+    public static String sanitizeFilename(String fName) {
+        if (StringUtils.isEmpty(fName)) return "";
+        //trim leading/trailing whitespace and quotes
+        fName = fName.trim().replaceAll("^[\"']+|[\"']+$", "");
+        //replace unwanted characters
+        fName = fName.replaceAll("[^a-zA-Z0-9._-]", "_");
+        //remove leading/trailing underscores
+        fName = fName.replaceAll("^_+", "").replaceAll("_+$", "");
+        return fName;
     }
 
     private static int getResponseCode(URLConnection conn) {

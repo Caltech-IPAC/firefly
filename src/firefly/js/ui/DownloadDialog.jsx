@@ -274,8 +274,8 @@ export function ZipStructure({fieldKey='zipType'}) {
         <ListBoxInputField
             fieldKey = {fieldKey}
             initialState = {{
-                tooltip: 'Zip File Structure',
-                label : 'Zip File Structure:'
+                tooltip: 'File Structure',
+                label : 'File Structure:'
             }}
             options = {[
                 {label: 'Structured (with folders)', value: 'folder'},

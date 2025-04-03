@@ -8,7 +8,6 @@ import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.data.table.SelectionInfo;
-import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.spring.JdbcFactory;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
@@ -246,13 +245,14 @@ public class EmbeddedDbUtil {
         if (cols != null && cols.length > 0) {
             ArrayList<String> colsAry = new ArrayList<>(Arrays.asList(cols));
             if (!colsAry.contains(DataGroup.ROW_NUM)) {
-                // add ROW_NUM into the returned results if not asked
+                //add ROW_NUM into the returned results if not asked
                 colsAry.add(DataGroup.ROW_NUM);
                 cols = colsAry.toArray(new String[colsAry.size()]);
             }
         }
         MappedData results = new MappedData();
         DataGroup data = getSelectedData(searchRequest, selRows, cols);
+
         for (DataObject row : data) {
             int idx = row.getIntData(DataGroup.ROW_NUM);
             for (DataType dt : data.getDataDefinitions()) {

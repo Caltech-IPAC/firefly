@@ -4,7 +4,7 @@ import {dispatchAddTableTypeWatcherDef} from '../../core/MasterSaga.js';
 import {MetaConst} from '../../data/MetaConst';
 import {dispatchTableUiUpdate, TABLE_LOADED} from '../../tables/TablesCntlr.js';
 import {getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById} from '../../tables/TableUtil.js';
-import {DownloadButton, DownloadOptionPanel, ScriptTypeOptions} from '../../ui/DownloadDialog.jsx';
+import {DownloadButton, DownloadOptionPanel} from '../../ui/DownloadDialog.jsx';
 import {getDataServiceOption, getDataServiceOptionByTable, getDataServiceOptionsFallback,
 } from '../../ui/tap/DataServicesOptions';
 import {findTableCenterColumns, hasObsCoreLikeDataProducts} from '../../voAnalyzer/TableAnalysis.js';
@@ -20,6 +20,7 @@ import {fetchSemanticList} from 'firefly/metaConvert/vo/DatalinkFetch';
 import {checkForDatalinkServDesc} from 'firefly/ui/dynamic/ServiceDefTools';
 import {CheckboxGroupInputField} from 'firefly/ui/CheckboxGroupInputField';
 import {Stack} from '@mui/joy';
+import {ToolbarButton} from 'firefly/ui/ToolbarButton';
 
 export const getAllStartIds= ()=> [
     getMocWatcherDef().id,
@@ -37,7 +38,6 @@ export function startTTFeatureWatchers(startIds=[
     startIds.includes(getActiveRowToImageDef().id) && dispatchAddTableTypeWatcherDef(getActiveRowToImageDef());
     startIds.includes(getObsCoreWatcherDef().id) && dispatchAddTableTypeWatcherDef(getObsCoreWatcherDef());
 }
-
 
 
 /** @type {TableWatcherDef} */
@@ -80,7 +80,9 @@ function setupObsCorePackaging(tbl_id) {
 }
 
 function updateSearchRequest( tbl_id='', dlParams='', sRequest=null) {
-    const hostname= new URL(sRequest.source ? sRequest.source : sRequest.serviceUrl)?.hostname;
+    const hostname = sRequest?.source || sRequest?.serviceUrl
+        ? new URL(sRequest.source || sRequest.serviceUrl).hostname
+        : null;
     const serviceId= getMetaEntry(tbl_id,MetaConst.DATA_SERVICE_ID);
     const ops= getDataServiceOptionsFallback(serviceId, hostname) ?? {};
     const template= ops.productTitleTemplate;
@@ -97,16 +99,21 @@ function getColNameFromTemplate(template) {
     return template.match(/\${[\w -.]+}/g)?.map( (s) => s.substring(2,s.length-1));
 }
 
-const PrepareDownload = () => {
-    const tbl_id = getActiveTableId();
-    const tblTitle = getTblById(tbl_id)?.title ?? 'unknown';
+export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showFileStructure=false,
+                                               downloadType='package', dataSource, fileName}) => {
+    const tbl_id = table_id || getActiveTableId();
+    const tblTitle = tbl_title || (getTblById(tbl_id)?.title ?? 'unknown');
     const baseFileName = tblTitle.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_.-]/g, '_');
 
     const [semList, setSemList] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Fetch semList on mount when tbl_id changes
     useEffect(() => {
-        fetchSemanticList(tbl_id).then(setSemList);
+        setLoading(true);
+        fetchSemanticList(tbl_id).then( (result) => {
+            setSemList(result);
+            setLoading(false);
+        });
     }, [tbl_id]);
 
     const labelMap = useMemo(() => ({
@@ -122,6 +129,7 @@ const PrepareDownload = () => {
         '#weight': 'Weight'
     }), []);
 
+
     //dynamically generate options from semList
     const dynamicOptions = useMemo(() => {
         let options;
@@ -134,23 +142,26 @@ const PrepareDownload = () => {
         } else {
             options = []; //fallback only to "All data" only below
         }
-
         //ensure '*' ("All data") is always included, even as a fallback when semList is empty
         options.push({ label: 'All data', value: '*' });
         return options;
     }, [semList, labelMap]);
 
     const tblModel = getTableModel(tbl_id);
-    const cutoutValue = useStoreConnector( () => getCutoutSize());
+
+    const cutoutValue = useStoreConnector( () => getCutoutSize(viewerId ?? undefined));
 
     const dataProductsComponentKey= tblIdToKey(tbl_id);
-    const cutoutTargetVals = findCutoutTarget(dataProductsComponentKey, undefined, tblModel, tblModel.highlightedRow);
+
+    const generateDownloadFileName= getDataServiceOptionByTable('generateDownloadFileName', tbl_id, false);
+
+
+    const cutoutTargetVals = findCutoutTarget(viewerId ?? dataProductsComponentKey, undefined, tblModel, tblModel.highlightedRow);
     const centerCols = findTableCenterColumns(tbl_id);
-
     //this will be null if no datalink service descriptor is found, else it will return the access url and input params from the service descriptor
-    const datalinkServDesc = useStoreConnector(() => checkForDatalinkServDesc(tblModel));
-
+    const isDatalinkSerDesc = useStoreConnector(() => checkForDatalinkServDesc(tblModel));
     if (!tblModel?.totalRows) return;
+
     let ra = cutoutTargetVals?.positionWP?.x;
     let dec = cutoutTargetVals?.positionWP?.y;
 
@@ -159,36 +170,54 @@ const PrepareDownload = () => {
         ra = null;
         dec = null;
     }
-
     const position = {
         centerColNames: { lonCol: centerCols?.lonCol, latCol: centerCols?.latCol },
         centerColValues: { ra, dec }
     };
 
     return (
-        <div>
-            <DownloadButton>
-                <DownloadOptionPanel {...{
-                    updateSearchRequest,
-                    showZipStructure: false, //flattened files, except for datalink (with more than one valid file)
-                    dlParams: {
-                        FileGroupProcessor:'ObsCorePackager',
-                        dlCutout: 'orig',
-                        position,
-                        cutoutValue,
-                        datalinkServiceDescriptor: datalinkServDesc,
-                        TitlePrefix: tblTitle,
-                        help_id:'table.obsCorePackage',
-                        BaseFileName:`${baseFileName}`}}}>
-                    <Stack spacing={1}>
-                        <CheckboxGroupInputField
-                            fieldKey='productTypes'
-                            options={dynamicOptions}
-                            initialState={{value: '*'}}
-                            label='Products to Download: ' />
-                    </Stack>
-                </DownloadOptionPanel>
-            </DownloadButton>
-        </div>
+        <>
+            {loading && <ToolbarButton enabled={false} variant={'soft'} color='warning' text={downloadType === 'script' ? 'Generate Download Script' : 'Prepare Download'}/>}
+            {!loading &&
+                <Stack>
+                    <DownloadButton
+                        buttonText = {downloadType === 'script' ? 'Generate Download Script' : 'Prepare Download'}>
+                        <DownloadOptionPanel {...{
+                            updateSearchRequest,
+                            groupKey: tbl_id,
+                            tbl_id,
+                            showZipStructure: showFileStructure, //default to false (flattened)
+                            downloadType,
+                            saveAsProps: {label: 'File name:'},
+                            dlParams: {
+                                FileGroupProcessor:'ObsCorePackager',
+                                worker: downloadType === 'script' ? 'DownloadScriptWorker' : 'PackagingWorker',
+                                dlCutout: 'orig',
+                                position,
+                                cutoutValue,
+                                generateDownloadFileName,
+                                datalinkServiceDescriptor: isDatalinkSerDesc,
+                                viewerId,
+                                DataSource: dataSource,
+                                TitlePrefix: tblTitle,
+                                help_id:'table.obsCorePackage',
+                                BaseFileName: fileName ?? `${baseFileName}`
+                            }}}>
+                            <Stack spacing={1}>
+                                <CheckboxGroupInputField
+                                    fieldKey='productTypes'
+                                        options={dynamicOptions}
+                                        initialState={{value: '*'}}
+                                        label='Products to Download: ' />
+                            </Stack>
+                        </DownloadOptionPanel>
+                    </DownloadButton>
+                </Stack>
+            }
+        </>
     );
+});
+
+PrepareDownload.Props = {
+    tbl_id: String,
 };
