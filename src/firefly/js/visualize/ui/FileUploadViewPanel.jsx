@@ -425,7 +425,7 @@ function makeSummaryModel(report, summaryTblId, acceptList) {
             allowedType = entryType === FileAnalysisType.Table? isTableAllowed: isImageAllowed;
         }
         const desc= p.desc ? descPrefix+p.desc : '';
-        return [p.index+1, entryType , desc, allowedType];
+        return [p.index, entryType , desc, allowedType];
     });
 
     const summaryModel = {
@@ -443,7 +443,7 @@ function makeSummaryModel(report, summaryTblId, acceptList) {
 function getDetailsModel(tableModel, report, detailsTblId, UNKNOWN_FORMAT) {
     if (!tableModel) return;
     const {highlightedRow=0} = tableModel;
-    const partNum = getCellValue(tableModel, highlightedRow, 'Index')-1;
+    const partNum = getCellValue(tableModel, highlightedRow, 'Index');
     const type = getCellValue(tableModel, highlightedRow, 'Type');
     if (type===UNKNOWN_FORMAT) return undefined;
     const details = report?.parts?.[partNum]?.details;
