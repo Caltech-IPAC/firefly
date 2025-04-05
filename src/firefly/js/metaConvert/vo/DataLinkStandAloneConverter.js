@@ -16,14 +16,15 @@ export function makeDatalinkStaneAloneConverter(table,converterTemplate,options=
 }
 
 export async function getDatalinkStandAlineDataProduct(table, row, activateParams, options) {
-    const dataLinkData= getDataLinkData(table);
+    const dataLinkData= getDataLinkData(table,true);
     const {dataProductsComponentKey}= options;
     const preferCutout= getPreferCutout(dataProductsComponentKey,table?.tbl_id);
 
     let dlData= dataLinkData?.[row];
-    const {isCutout,cutoutFullPair}= dlData.dlAnalysis;
+    if (!dlData) return;
+    const {isCutout,cutoutFullPair,usableEntry}= dlData.dlAnalysis;
 
-    if (cutoutFullPair) {
+    if (cutoutFullPair && usableEntry) {
         if (preferCutout) {
             dlData = isCutout ? dlData : dlData.relatedDLEntries.cutout;
         }

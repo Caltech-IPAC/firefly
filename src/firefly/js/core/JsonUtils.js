@@ -37,7 +37,7 @@ export function jsonFetch(url, params, doPost, useBigInt) {
                     if (toBoolean(result[0].success)) {
                         resolve(result[0].data ? result[0].data : result[0]);
                     } else if (has(result, '0.error')) {
-                        reject(new Error(result[0].error, { cause: result[0].cause1}));
+                        reject(new Error(result[0].error, { cause: result[0].cause1 ?? result[0].cause}));
                     } else {
                         reject(new Error(`Unrecognized result: ${result}`));
                     }

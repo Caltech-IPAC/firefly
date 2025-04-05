@@ -11,7 +11,7 @@ import {
     dispatchUpdateActiveKey, dispatchUpdateDataProducts, getActiveMenuKey, getCurrentActiveKeyID
 } from '../DataProductsCntlr';
 import {
-    dpdtFromMenu, dpdtImage, dpdtMessageWithDownload, dpdtSimpleMsg, dpdtWorkingMessage, DPtypes
+    dpdtFromMenu, dpdtImage, dpdtMessageWithDownload, dpdtMessageWithError, dpdtSimpleMsg, dpdtWorkingMessage, DPtypes
 } from '../DataProductsType.js';
 import {
     createGridImagesActivate, createRelatedGridImagesActivate, createSingleImageExtraction
@@ -42,7 +42,7 @@ export async function getDatalinkRelatedGridProduct({dlTableUrl, activateParams,
         const datalinkTable = await fetchDatalinkTable(dlTableUrl, options.datalinkTblRequestOptions);
         const preferCutout= getPreferCutout(options.dataProductsComponentKey,table?.tbl_id);
 
-        const gridData = getDataLinkData(datalinkTable,table,row).filter(({dlAnalysis}) => dlAnalysis.isGrid && dlAnalysis.isImage);
+        const gridData = getDataLinkData(datalinkTable,false, table,row).filter(({dlAnalysis}) => dlAnalysis.isGrid && dlAnalysis.isImage);
         if (!gridData.length) return dpdtSimpleMsg('no support for related grid in datalink file');
 
         const cutoutSwitching= dataSupportsCutoutSwitching(gridData);
@@ -171,6 +171,12 @@ export async function getDatalinkSingleDataProduct({ dlTableUrl,
         });
     } catch (reason) {
         //todo - what about if when the data link fetch fails but there is a serviceDescMenuList - what to do? does it matter?
+        if (reason.cause?.includes('DataAccessException')) {
+            const eStr=  reason.cause;
+            if (Number(eStr?.split('status').pop().trim().split(' ')[0]) > 0) { // if there is a number status in the cause
+                return dpdtMessageWithError(eStr, [dlTableUrl]);
+            }
+        }
         return dpdtMessageWithDownload(`No data to display: Could not retrieve datalink data, ${reason}`, 'Download File: ' + titleStr, dlTableUrl);
     }
 }

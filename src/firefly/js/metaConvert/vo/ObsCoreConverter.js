@@ -7,10 +7,10 @@ import {
     isFormatPng, isFormatVoTable, makeWorldPtUsingCenterColumns, obsCoreTableHasOnlyImages
 } from '../../voAnalyzer/TableAnalysis.js';
 import {getServiceDescriptors, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
-import {uploadAndAnalyze} from '../AnalysisUtils.js';
+import {makePngEntry, uploadAndAnalyze} from '../AnalysisUtils.js';
 import {IMAGE_ONLY} from '../DataProductConst';
 import {dispatchUpdateActiveKey} from '../DataProductsCntlr.js';
-import {dpdtFromMenu, dpdtMessageWithDownload, dpdtPNG, dpdtSimpleMsg,} from '../DataProductsType.js';
+import {dpdtFromMenu, dpdtMessageWithDownload, dpdtSimpleMsg,} from '../DataProductsType.js';
 import {createGuessDataType} from './DataLinkProcessor.js';
 import {
     createGridResult, datalinkDescribeThreeColor, getDatalinkRelatedGridProduct, getDatalinkSingleDataProduct, makeDlUrl
@@ -175,7 +175,7 @@ async function getObsCoreSingleDataProduct({table, row, activateParams, serviceD
             activateParams,titleStr, additionalServiceDescMenuList:serviceDescMenuList, doFileAnalysis, useForTableGrid});
     }
     else if (isPng) {
-        return dpdtPNG('PNG image',dataSource);
+        return makePngEntry(dataSource);
     }
     else if (size>GIG) {
         return dpdtMessageWithDownload('Data is too large to load', 'Download File: '+titleStr, dataSource);

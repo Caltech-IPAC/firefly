@@ -45,24 +45,14 @@ function activateMenuItemActionCreator(rawAction) {
         if (!menu) return;
         const menuItem= menu.find( (m) => m.menuKey===menuKey);
         if (!menuItem) return;
-        if (menuItem.displayType===DPtypes.DOWNLOAD) doDownload(menuItem.url);
-        else if (menuItem.displayType===DPtypes.EXTRACT) doExtract(menuItem);
+        if (menuItem.displayType===DPtypes.EXTRACT) doExtract(menuItem);
         else dispatcher(rawAction);
     };
 }
 
 function activateFileMenuItemActionCreator(rawAction) {
     return (dispatcher) => {
-        const {fileMenu, newActiveFileMenuKey}= rawAction.payload;
-        let doDispatch= true;
-        if (fileMenu && fileMenu.menu && newActiveFileMenuKey) {
-            const menuItem= fileMenu.menu.find( (m) => m.menuKey===newActiveFileMenuKey);
-            if (menuItem && menuItem.displayType===DPtypes.DOWNLOAD) {
-                doDownload(menuItem.url);
-                doDispatch= false;
-            }
-        }
-        if (doDispatch) dispatcher(rawAction);
+        dispatcher(rawAction);
     };
 }
 
@@ -360,18 +350,15 @@ function activateMenuItem(state,action) {
                 dpData.dataProducts= {...aMenuItem, menuKey, menu, fileMenu, activeMenuKey:menuKey, activeMenuLookupKey};
                 break;
             case DPtypes.PNG:
-                dpData.dataProducts= {...aMenuItem, menuKey, menu, activeMenuKey:menuKey, activeMenuLookupKey};
-                break;
+            case DPtypes.TXT:
             case DPtypes.DOWNLOAD:
-                dpData.dataProducts= {...aMenuItem, menuKey, menu, activeMenuKey:menuKey, activeMenuLookupKey};
-                break;
             case DPtypes.DOWNLOAD_MENU_ITEM:
-                dpData.dataProducts= {...aMenuItem, menuKey, menu, activeMenuKey:menuKey, singleDownload: true, activeMenuLookupKey};
+            case DPtypes.MESSAGE:
+                dpData.dataProducts= {...aMenuItem, menuKey, menu, activeMenuKey:menuKey, activeMenuLookupKey};
                 break;
             case DPtypes.ANALYZE:
                 dpData.dataProducts= {...aMenuItem, menuKey, menu, activeMenuKey:menuKey, activeMenuLookupKey};
-            case DPtypes.MESSAGE:
-                dpData.dataProducts= {...aMenuItem, menuKey, menu, activeMenuKey:menuKey, activeMenuLookupKey};
+                break;
         }
 
     }

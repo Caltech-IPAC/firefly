@@ -1,20 +1,25 @@
 import {FileAnalysisType} from '../data/FileAnalysis.js';
 import {hasRowAccess} from '../tables/TableUtil.js';
 import {PlotAttribute} from '../visualize/PlotAttribute.js';
+import {getObsCoreAccessFormat, getObsTitle} from '../voAnalyzer/TableAnalysis';
+import {
+    isGzipType, isHtmlType, isJSONType, isPDFType, isPlainTextType, isSimpleImageType, isTarType, isYamlType
+} from '../voAnalyzer/VoDataLinkServDef';
 import {dispatchActivateFileMenuItem, dispatchUpdateDataProducts} from './DataProductsCntlr.js';
 import {
-    dpdtImage, dpdtMessage, dpdtMessageWithDownload, dpdtPNG, dpdtSimpleMsg, dpdtWorkingMessage, dpdtWorkingPromise,
+    dpdtDownload,
+    dpdtImage, dpdtMessage, dpdtMessageWithDownload, dpdtPNG, dpdtSimpleMsg, dpdtText, dpdtWorkingMessage,
+    dpdtWorkingPromise,
     DPtypes
 } from './DataProductsType.js';
 import {createGridImagesActivate} from './ImageDataProductsUtil.js';
 import {doUploadAndAnalysis} from './UploadAndAnalysis.js';
+import {getObsCoreDataProduct} from './vo/ObsCoreConverter';
 
 const LOADING_MSG= 'Loading...';
 
 const gridEntryHasImages= (parts) => parts.find( (p) => p.type===FileAnalysisType.Image);
 
-const makeErrorResult= (message, fileName,url) =>
-    dpdtMessageWithDownload(`No displayable data available for this row${message?': '+message:''}`, fileName&&'Download: '+fileName, url);
 
 
 
@@ -34,8 +39,10 @@ export function makeAnalysisGetSingleDataProduct(makeReq) {
 
 
 export async function uploadAndAnalyze({request, table, row, activateParams, dataTypeHint = '', options, serviceDescMenuList}) {
+    const ct= getObsCoreAccessFormat(table,row);
+    const obsTitle= getObsTitle(table,row);
     if (!hasRowAccess(table, row)) dpdtSimpleMsg('You do not have access to this data.');
-    if (isNonAnalysisType(request)) return fileExtensionSingleProductAnalysis(request);
+    if (isNonServerAnalysisType(request?.getURL(), ct)) return doFileNameAndTypeAnalysis({url:request?.getURL(),ct, obsTitle});
     const analysisPromise = doUploadAndAnalysis({table, row, request, activateParams, dataTypeHint, options, serviceDescMenuList});
     return dpdtWorkingPromise(LOADING_MSG, analysisPromise, request);
 }
@@ -162,24 +169,159 @@ function dispatchResult(dpType, menu,menuKey,dpId, serDef, analysisActivateFunc)
 }
 
 
+export const isNonServerAnalysisType= (url, ct) => Boolean(doFileNameAndTypeAnalysis({url,ct}));
 
-function fileExtensionSingleProductAnalysis(request,idx=0) {
-    const url= request.getURL();
+export function doFileNameAndTypeAnalysis({url, ct, wrapWithMessage=true, name, obsTitle}) {
     if (!url) return undefined;
     let ext='';
     const i = url.lastIndexOf('.');
     if (i > 0 &&  i < url.length - 1) ext = url.substring(i+1).toLowerCase();
+    let item= undefined;
+    const imExt= [ 'jpeg', 'jpg', 'png', 'gif'];
 
-    if (ext.includes('tar')) {
-        return dpdtMessageWithDownload('Cannot display TAR file, you may only download it', 'Download TAR File', url);
-    }
-    else if (ext.includes('pdf')) {
-        return dpdtMessageWithDownload('Cannot display PDF file, you may only download it', 'Download PDF File', url);
-    }
-    else if (ext.includes('jpeg') || ext.includes('png') || ext.includes('jpg') || ext.includes('gig')) {
-        return dpdtPNG('Show PNG image',url,'dlt-'+idx);
-    }
-    return undefined;
+    if (isUsableDownloadType(ext,ct)) item= makeDownloadType(url,ext,ct,wrapWithMessage, name, obsTitle);
+    else if (imExt.some( (e) => ext.includes(e)) || isSimpleImageType(ct)) item= makePngEntry(url, name, obsTitle);
+    else if (ext.endsWith('txt') || isPlainTextType(ct)) item= makeTextEntry(url, name, obsTitle);
+    else if (ext.endsWith('yaml') || isYamlType(ct)) item= makeYamlEntry(url, name, obsTitle);
+    else if (ext.endsWith('json') || isJSONType(ct))  item= makeJsonEntry(url, name, obsTitle);
+    if (item) item.contentType= ct;
+    return item;
 }
 
-const isNonAnalysisType= (request) => Boolean(fileExtensionSingleProductAnalysis(request));
+
+export function isUsableDownloadType(ext='', ct) {
+    const downloadExts= [ 'tar', 'pdf', 'html', 'gzip'];
+    if (downloadExts.some( (e) => ext.includes(e))) return true;
+    if (!ct) return false;
+    if (isTarType(ct)) return true;
+    if (isGzipType(ct)) return true;
+    if (isPDFType(ct)) return true;
+    if (isHtmlType(ct)) return true;
+    return false;
+}
+
+
+export function makeDownloadType(url,ext,ct,wrapWithMessage,name, obsTitle) {
+    const ctL= ct?.toLowerCase();
+    let downloadItem;
+    if (ext.includes('tar') || isTarType(ctL)) {
+        downloadItem= makeTarEntry(url, name, obsTitle);
+    }
+    else if (ext.includes('pdf') || isPDFType(ct)) {
+        downloadItem= makePdfEntry(url, name, obsTitle);
+    }
+    else if (ext.includes('gzip') || isGzipType(ctL)) {
+        downloadItem= makeGzipEntry(url,name, obsTitle);
+    }
+    else if (ext.endsWith('html') || isHtmlType(ct)) {
+        downloadItem= makeHtmlEntry(url, name, obsTitle);
+    }
+    else {
+        downloadItem= makeAnyEntry(url,name, obsTitle);
+    }
+    if (downloadItem) {
+        return wrapWithMessage ? dpdtMessage(downloadItem.message, [downloadItem]) : downloadItem;
+    }
+}
+
+function makeOtMsg(obsTitle) {
+    if (!obsTitle) return '';
+    const otBase= obsTitle.length>25 ? obsTitle.substring(0,29) : obsTitle;
+    return ` (${otBase})`;
+}
+
+
+export function makePdfEntry(url,name, obsTitle) {
+    const otMsg= makeOtMsg(obsTitle);
+    return dpdtDownload('Download PDF File'+otMsg, url, 'download-0', 'pdf',
+        {
+            message: 'This is a PDF file. It may be downloaded or opened in another tab',
+            loadInBrowserMsg: 'Open PDF File'+otMsg,
+            dropDownText: name ? `${name}${otMsg} (pdf file)` : undefined,
+        }
+    );
+}
+
+export function makeHtmlEntry(url,name, obsTitle) {
+    const otMsg= makeOtMsg(obsTitle);
+    return dpdtDownload('Open', url, 'download-0', 'html',
+        {
+            message: 'This is a web page or web application. It can be open in another tab',
+            loadInBrowserMsg: 'Open Page'+otMsg,
+            dropDownText: name ? `${name}${otMsg} (html)` : undefined,
+        }
+    );
+}
+
+export function makeJsonEntry(url,name, obsTitle) {
+    const otMsg= makeOtMsg(obsTitle);
+    return dpdtText('Show JSON file'+otMsg, url, undefined,
+        {
+            dropDownText: name ? `${name}${otMsg} (JSON File)` : undefined,
+            fileType: 'json',
+        }
+    );
+}
+
+export function makeTarEntry(url,name, obsTitle) {
+    const otMsg= makeOtMsg(obsTitle);
+    return dpdtDownload('Download TAR File'+otMsg, url, 'download-0', 'tar',
+        {
+            message: 'This is a TAR file. It may only be downloaded',
+            dropDownText: name ? `${name}${otMsg} (tar file)` : undefined,
+        }
+    );
+}
+
+export function makeGzipEntry(url,name,obsTitle) {
+    const otMsg= makeOtMsg(obsTitle);
+    return dpdtDownload('Download GZip File'+otMsg, url, 'download-0', 'gzip',
+        {
+            message: 'This is a GZip file. It may only be downloaded',
+            dropDownText: name ? `${name}${otMsg} (GZip file)` : undefined,
+        }
+    );
+}
+
+export function makeAnyEntry(url,name, obsTitle) {
+    const otMsg= makeOtMsg(obsTitle);
+    return dpdtDownload('Download File'+otMsg, url, 'download-0', 'unknown',
+        {
+            message: 'This file may only only be downloaded',
+            dropDownText: name ? `${name}${otMsg} (GZip file)` : undefined,
+        }
+    );
+}
+
+export function makePngEntry(url,name, obsTitle) {
+    const otMsg= makeOtMsg(obsTitle);
+    return dpdtPNG('Show PNG image'+otMsg,url,undefined,
+        {
+            dropDownText: name ? `${name}${otMsg} (image)` : undefined,
+        }
+    );
+}
+
+export function makeTextEntry(url,name, obsTitle) {
+    const otMsg= makeOtMsg(obsTitle);
+    return dpdtText('Show text file'+otMsg,url, undefined,
+        {
+            dropDownText: name ? `${name}${otMsg} (Plain text file)` : undefined,
+            fileType: 'text',
+        }
+    );
+}
+
+
+export function makeYamlEntry(url,name, obsTitle) {
+    const otMsg= makeOtMsg(obsTitle);
+    return dpdtText('Show yaml file'+otMsg,url,undefined,
+        {
+            dropDownText: name ? `${name}${otMsg}  (Plain text file)` : undefined,
+            fileType: 'yaml',
+        }
+    );
+}
+
+const makeErrorResult= (message, fileName,url) =>
+    dpdtMessageWithDownload(`No displayable data available for this row${message?': '+message:''}`, fileName&&'Download: '+fileName, url);

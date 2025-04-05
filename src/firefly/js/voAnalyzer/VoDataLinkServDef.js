@@ -6,7 +6,8 @@ import {MetaConst} from '../data/MetaConst';
 import {isDefined} from '../util/WebUtil';
 import {makeWorldPt, parseWorldPt} from '../visualize/Point';
 import {
-    getObsCoreAccessFormat, getObsCoreAccessURL, getObsCoreProdType, getObsCoreSRegion, isDatalinkTable, isObsCoreLike,
+    getObsCoreAccessFormat, getObsCoreAccessURL, getObsCoreProdType, getObsCoreSRegion, getSearchTarget,
+    isDatalinkTable, isObsCoreLike,
 } from './TableAnalysis';
 import {
     adhocServiceUtype, cisxAdhocServiceUtype, standardIDs, VO_TABLE_CONTENT_TYPE,
@@ -42,21 +43,33 @@ export function analyzeDatalinkRow({semantics = '', localSemantics = '', content
     const bBand = semL.includes('-blue') || locSemL.includes('-blue');
     const cisxPrimaryQuery = semL.endsWith('cisx#primary-query') || (isThis && locSemL.endsWith('cisx#primary-query'));
     const cisxConcurrentQuery = semL.endsWith('cisx#concurrent-query') || (isThis && locSemL.endsWith('cisx#concurrent-query'));
-    const isTar= isTarType(contentType);
-    const isGzip= isGzipType(contentType);
     const isSimpleImage= isSimpleImageType(contentType);
     const isDownloadOnly=  isDownloadType(contentType);
     return {
         isThis, isCounterpart, isImage, maybeImage, isGrid, isAux, isSpectrum, isCutout, rBand, gBand, bBand,
-        cisxPrimaryQuery, cisxConcurrentQuery, isTar, isGzip, isSimpleImage, isDownloadOnly, cutoutFullPair:false,
+        cisxPrimaryQuery, cisxConcurrentQuery, isSimpleImage, isDownloadOnly, cutoutFullPair:false,
     };
 }
 
-export const isTarType= (ct='') => ct.includes('tar');
-export const isGzipType= (ct='') => ct.includes('gz');
+export const isGzipType= (ct='') => ct.includes('gzip') || ct.includes('gz');
+export const isPlainTextType= (ct='') => ct.toLowerCase()==='text/plain';
+export const isHtmlType= (ct='') => ct.toLowerCase()==='text/html' || ct.toLowerCase()==='application/html';
 export const isSimpleImageType= (ct='') => ct.includes('jpeg') || ct.includes('png') || ct.includes('jpg') || ct.includes('gif');
+export const isPDFType= (ct='') => ct.toLowerCase()==='application/pdf' || ct.toLowerCase()==='application/x-pdf';
+export const isJSONType= (ct='') => ct.toLowerCase()==='application/json' || ct.toLowerCase()==='application/x-json';
 export const isVoTable= (ct='') => ct===VO_TABLE_CONTENT_TYPE;
+export const isTarType= (ct='') => ct.toLowerCase()==='application/tar' || ct.toLowerCase()==='application/x-tar';
+export const isYamlType= (ct='') => {
+    const ymlList= ['application/yaml', 'application/x-yaml', 'text/yaml'];
+    const ctL= ct.toLowerCase();
+    return ymlList.some( (y) => ctL===y);
+};
 export const isDownloadType= (ct='') => isTarType(ct) || isGzipType(ct) || ct.includes('octet-stream');
+export function getDownloadTypeDesc(contentType) {
+    if (!isDownloadType(contentType)) return '';
+    if (isTarType(contentType)) return 'tar';
+    if (isGzipType(contentType)) return 'gzip';
+}
 
 /**
  * determine is a service descriptor is a datalink service descriptor
@@ -137,11 +150,12 @@ export function getServiceDescriptors(tableOrId, removeAsync = true) {
 
 /**
  * @param {TableModel|String} dataLinkTableOrId - a TableModel or id that is a datalink call result
+ * @param {boolean} [includeUnusable] include entries that have errors, are async service descriptors, or have other problems
  * @param {TableModel} [sourceObsCoreTbl]
  * @param {number} [sourceObsCoreRow]
  * @return {Array.<DatalinkData>}
  */
-export function getDataLinkData(dataLinkTableOrId, sourceObsCoreTbl=undefined, sourceObsCoreRow=-1) {
+export function getDataLinkData(dataLinkTableOrId, includeUnusable= false, sourceObsCoreTbl=undefined, sourceObsCoreRow=-1) {
     const dataLinkTable= getTableModel(dataLinkTableOrId);
     const {data}= dataLinkTable?.tableData ?? {};
     if (!data) return [];
@@ -150,7 +164,7 @@ export function getDataLinkData(dataLinkTableOrId, sourceObsCoreTbl=undefined, s
     const rowWP= parseWorldPt(getMetaEntry(dataLinkTable, MetaConst.ROW_TARGET, undefined));
     const sRegion= getMetaEntry(dataLinkTable, MetaConst.S_REGION, undefined);
 
-    const dlDataAry=  data
+    const dlDataAryAll=  data
         .map((r, idx) => {
             const tmpR = getTblRowAsObj(dataLinkTable, idx);
             const rowObj= Object.fromEntries(  // convert any null or undefined to empty string
@@ -166,19 +180,21 @@ export function getDataLinkData(dataLinkTableOrId, sourceObsCoreTbl=undefined, s
             const idKey= Object.keys(rowObj).find((k) => k.toLowerCase()==='id');
             const serDef= getServiceDescriptorForId(dataLinkTable,serviceDefRef,idx);
             const dlAnalysis= analyzeDatalinkRow({semantics, localSemantics, contentType, contentQualifier});
+            dlAnalysis.usableEntry= (serviceDefRef && serDef) || error_message || url.startsWith('http') || url.startsWith('ftp');
             const prodTypeHint= contentType || sourceObsCoreData?.dataproduct_type;
             return {
                 id: rowObj[idKey],
-                contentType, contentQualifier, semantics, localSemantics, url, error_message,
+                contentType:contentType?.toLowerCase(), contentQualifier, semantics, localSemantics, url, error_message,
                 description, size, serviceDefRef, serDef, rowIdx: idx, dlAnalysis, prodTypeHint,
                 sourceObsCoreData, relatedDLEntries: {}, positionWP, rowWP, sRegion,
                 labelDLExt, bandpassNameDLExt
             };
-        })
-        .filter(({url='', serviceDefRef, serDef, error_message}) =>
-            (serviceDefRef && serDef) || error_message || url.startsWith('http') || url.startsWith('ftp'));
+        });
+
+    const dlDataAry= includeUnusable ? dlDataAryAll : dlDataAryAll.filter((dl) => dl.dlAnalysis.usableEntry);
 
     dlDataAry.forEach( (dlData) => {
+        if (!dlData.dlAnalysis.usableEntry) return;
         const {dlAnalysis:{isThis,isCounterpart,maybeImage,isCutout}, id}= dlData;
         if ((isThis || isCounterpart) && maybeImage && !isCutout) {
             const foundCutout= dlDataAry.filter( (testData) => testData.id===id && testData.dlAnalysis.isCutout);

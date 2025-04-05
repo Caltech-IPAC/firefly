@@ -159,7 +159,7 @@ public class AnyFileDownload extends BaseHttpServlet {
         File dFile= File.createTempFile("tmp-","-"+fileName ,ServerContext.getUploadDir());
         FileInfo fi;
         try {
-            fi = URLDownload.getDataToFile(url, dFile);
+            fi = URLDownload.getDataToFile(url, dFile, null, null, URLDownload.Options.defWithRedirect());
         } catch (FailedRequestException e) {
             res.sendError(404, e.toString());
             return;

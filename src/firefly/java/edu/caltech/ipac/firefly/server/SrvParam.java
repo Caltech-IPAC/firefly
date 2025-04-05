@@ -216,6 +216,20 @@ public class SrvParam {
         }
     }
 
+    public long getOptionalLong(String key, long defValue) {
+        String[] ary = paramMap.get(key);
+        if (ary != null && ary.length>0) {
+            try {
+                return Long.parseLong(ary[0]);
+            } catch (NumberFormatException e) {
+                return defValue;
+            }
+        }
+        else {
+            return defValue;
+        }
+    }
+
     public int getOptionalInt(String key, int defValue) {
         String[] ary = paramMap.get(key);
         if (ary != null && ary.length>0) {

@@ -13,7 +13,10 @@ import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.security.SsoAdapter;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.server.visualize.imageretrieve.URLFileRetriever;
 import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.FileUtil;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -55,6 +58,38 @@ public class AppServerCommands {
             return "true";
         }
     }
+
+    public static class TextFile extends ServCommand {
+        
+        public String doCommand(SrvParam sp) throws Exception {
+            long maxSize= sp.getOptionalLong(ServerParams.MAX_FILE_SIZE, FileUtil.MEG);
+            JSONObject obj= new JSONObject();
+            JSONArray retAry= new JSONArray();
+            retAry.add(obj);
+            var fileInfo= new URLFileRetriever().getFile(sp.getRequired(ServerParams.URL));
+            if (fileInfo.getResponseCode() != 200) {
+                obj.put("success", false);
+                obj.put("error", "Error retrieving file, status: "+fileInfo.getResponseCode());
+                obj.put("cause", "Error retrieving file, status: "+fileInfo.getResponseCode());
+            }
+            if (fileInfo.getFile().length() > maxSize) {
+                var sizeStr= FileUtil.getSizeAsString(fileInfo.getFile().length());
+                obj.put("success", false);
+                obj.put("error", "File too large, size: "+sizeStr);
+                obj.put("cause", "File too large, size: "+sizeStr);
+            }
+            else {
+                String data= FileUtil.readFile(fileInfo.getFile());
+                obj.put("success", true);
+                obj.put("data", data);
+            }
+            return retAry.toString();
+        }
+    }
+
+
+
+
 
     public static class JsonProperty extends ServCommand {
         static final String INVENTORY_PROP = "inventory.serverURLAry";

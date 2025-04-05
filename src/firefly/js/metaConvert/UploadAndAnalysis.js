@@ -10,12 +10,13 @@ import {hashCode} from '../util/WebUtil';
 import {isDefined} from '../util/WebUtil.js';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr';
 import {getObsCoreData} from '../voAnalyzer/VoDataLinkServDef';
+import {makePdfEntry, makePngEntry, makeTarEntry} from './AnalysisUtils';
 import {
     dataProductRoot, dispatchUpdateActiveKey, dispatchUpdateDataProducts,
     getActiveFileMenuKeyByKey, getDataProducts
 } from './DataProductsCntlr';
 import {
-    dpdtImage, dpdtMessage, dpdtMessageWithDownload, dpdtMessageWithError, dpdtPNG, dpdtUploadError, DPtypes,
+    dpdtImage, dpdtMessage, dpdtMessageWithDownload, dpdtMessageWithError, dpdtUploadError, DPtypes,
 } from './DataProductsType';
 import {dpdtSendToBrowser} from './DataProductsType.js';
 import {createSingleImageActivate, createSingleImageExtraction} from './ImageDataProductsUtil';
@@ -186,7 +187,7 @@ function makeAllImageEntry({request, path, parts, imageViewerId,  dlData, tbl_id
             .forEach(([k,v]) => newReq.setParam(k,v)));
     const title= request.getTitle() || '';
     const sourceObsCoreData= dlData ? dlData.sourceObsCoreData : getObsCoreData(getTblById(tbl_id),row);
-    return dpdtImage({name: `Show: ${title||'Image Data'} ${imagePartsLength>1? ': All Images in File' :''}`,
+    return dpdtImage({name: `${title||'Image Data'} ${imagePartsLength>1? ': All Images in File' :''}`,
         dlData,
         activate: createSingleImageActivate(newReq,imageViewerId,tbl_id,row),
         extraction: createSingleImageExtraction(newReq, sourceObsCoreData, dlData),
@@ -302,7 +303,7 @@ function deeperInspection({ table, row, request, activateParams,
 function makeErrorDP(parts, fileFormat, url) {
     if (parts.every( (p) => p.type===FileAnalysisType.HeaderOnly) && fileFormat==='FITS') {
         const msg= 'You may only download this File - Nothing to display - FITS file has only header HDUs';
-        return dpdtMessageWithDownload(msg, 'Download File', url, fileFormat==='FITS'&&'FITS');
+        return dpdtMessageWithDownload(msg, 'Download File', url);
     }
     else {
         return dpdtMessage('Cannot analyze file');
@@ -322,13 +323,13 @@ function makeErrorDP(parts, fileFormat, url) {
 function getImmediateResponse(fileFormat,request,url,serDef,parts,menuKey) {
     switch (fileFormat) {
         case FileAnalysisType.PDF:
-            return dpdtMessageWithDownload('Cannot not display PDF file, you may only download it', 'Download PDF File', url);
+            return makePdfEntry(url);
         case FileAnalysisType.TAR:
-            return dpdtMessageWithDownload('Cannot not display Tar file, you may only download it', 'Download Tar File', url);
+            return makeTarEntry(url);
         case FileAnalysisType.REGION:
             return dpdtMessageWithDownload('Cannot not display Region file, you may only download it', 'Download Region File', url);
         case FileAnalysisType.PNG:
-            return dpdtPNG('PNG Image', url);
+            return makePngEntry(url);
         case FileAnalysisType.HTML:
             return dpdtSendToBrowser(url, serDef?.serDefParams);
         case FileAnalysisType.Unknown:

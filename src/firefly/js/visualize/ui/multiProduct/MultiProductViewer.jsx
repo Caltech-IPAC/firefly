@@ -18,7 +18,7 @@ import {
     PLOT2D, SINGLE
 } from '../../MultiViewCntlr.js';
 import {createMakeDropdownFunc} from './DPDropdown.jsx';
-import {AdvancedMessage, ProductMessage} from './MPMessages.jsx';
+import {AdvancedMessage, ProductDownload, ProductMessage, TextFileViewer} from './MPMessages.jsx';
 import {MultiProductChoice} from './MultiProductChoice.jsx';
 
 const getInitList= () => dataProductRoot().map( ({dpId}) => dpId);
@@ -58,14 +58,14 @@ const MultiProductViewerImpl= memo(({ dpId, activateParams, metaDataTableId, noP
     const [lookupKey, setLookKey] = useState(undefined);
     const dataProductsState = useStoreConnector((old) => {
             const newDp= getDataProducts(dataProductRoot(),dpId)||{};
-            return (!old || (newDp!==old && newDp.displayType && newDp.displayType!==DPtypes.DOWNLOAD)) ? newDp : old;
+            return (!old || (newDp!==old && newDp.displayType)) ? newDp : old;
         }, [dpId, metaDataTableId, factoryKey]);
     const serviceParamsAry = useStoreConnector(() => getServiceParamsAry(dataProductRoot(),dpId));
 
     const {imageViewerId,chartViewerId}= activateParams;
 
     const {displayType=DPtypes.UNSUPPORTED, menu,fileMenu, isWorkingState, menuKey,
-        activeMenuLookupKey,singleDownload= false, chartTableDefOption=SHOW_CHART,
+        activeMenuLookupKey,chartTableDefOption=SHOW_CHART,
         imageActivate, allowsInput=false, serDef= undefined}= dataProductsState;
     let {activate}= dataProductsState;
     const extraction= enableExtraction && dataProductsState.extraction;
@@ -109,7 +109,7 @@ const MultiProductViewerImpl= memo(({ dpId, activateParams, metaDataTableId, noP
     const doResetButton= displayType!==DPtypes.ANALYZE && !isWorkingState && Boolean(searchParams || serDef?.serDefParams?.some( (sdp) => !sdp.ref));
 
     const getInput= displayType===DPtypes.ANALYZE && allowsInput && !searchParams;
-    const showMenu= !singleDownload || (singleDownload && (displayType===DPtypes.DOWNLOAD_MENU_ITEM || displayType===DPtypes.MESSAGE));
+    const showMenu= shouldShowMenu(dataProductsState);
     const doMakeDropdown= menu?.length || fileMenu?.menu?.length || extraction;
 
     const makeDropDown= doMakeDropdown ?
@@ -123,11 +123,21 @@ const MultiProductViewerImpl= memo(({ dpId, activateParams, metaDataTableId, noP
     );
 });
 
+function shouldShowMenu(dataProductsState) {
+    const {menu, displayType}= dataProductsState;
+    let showMenu= menu?.length>0;
+    if (showMenu && menu.length===1 &&
+        displayType===DPtypes.MESSAGE && menu[0].displayType===DPtypes.DOWNLOAD) {
+        showMenu= false;
+    }
+    return showMenu;
+}
+
 
 function ViewerRender({dpId, dataProductsState, noProductMessage, metaDataTableId, makeDropDown, activateParams,
                           setCurrentCTIChoice, ctiChoice, ctLookupKey, getInput, doResetButton, factoryKey}) {
-    const {displayType=DPtypes.UNSUPPORTED, menu, singleDownload, isWorkingState, message, activeMenuLookupKey,
-        menuKey, imageActivate, url, serDef, serviceDefRef, sRegion, name:title, standardID,fileType}= dataProductsState;
+    const {displayType=DPtypes.UNSUPPORTED, menu, isWorkingState, message, activeMenuLookupKey,
+        menuKey, imageActivate, url, serDef, serviceDefRef, sRegion, name:title, standardID}= dataProductsState;
     const {imageViewerId,chartViewerId,tableGroupViewerId}=  activateParams;
     switch (displayType) {
         case DPtypes.ANALYZE :
@@ -140,8 +150,10 @@ function ViewerRender({dpId, dataProductsState, noProductMessage, metaDataTableI
         case DPtypes.PROMISE :
             return <AdvancedMessage {...{dpId, dataProductsState, noProductMessage, doResetButton, makeDropDown}}/>;
         case DPtypes.DOWNLOAD_MENU_ITEM :
-            return (<ProductMessage {...{menu, singleDownload, makeDropDown, message:'This file type cannot be displayed',
-                url, downloadName:title, downloadFileType:fileType}} />);
+        case DPtypes.DOWNLOAD:
+            return (<ProductDownload {...{ menu, makeDropDown, message:message || 'This file type cannot be displayed',
+                downloadName:title, url, loadInBrowserMsg:dataProductsState.loadInBrowserMsg,
+                fileType:dataProductsState.fileType } } />);
         case DPtypes.IMAGE :
             return (<MultiProductChoice {...{dataProductsState,dpId,makeDropDown,metaDataTableId, imageViewerId,whatToShow:SHOW_IMAGE, factoryKey}}/>);
         case DPtypes.TABLE :
@@ -162,6 +174,8 @@ function ViewerRender({dpId, dataProductsState, noProductMessage, metaDataTableI
                 }} />);
         case DPtypes.PNG :
             return (<ProductPNG {...{makeDropDown, url}}/>);
+        case DPtypes.TXT :
+            return (<TextFileViewer {...{makeDropDown, menu, url, fileType:dataProductsState.fileType}}/>);
     }
 
     if (noProductMessage) {

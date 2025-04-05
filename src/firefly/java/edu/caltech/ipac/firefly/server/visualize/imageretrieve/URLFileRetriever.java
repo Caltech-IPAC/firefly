@@ -46,6 +46,12 @@ public class URLFileRetriever implements FileRetriever {
        return getFile(request,true);
     }
 
+    public FileInfo getFile(String urlStr) throws FailedRequestException, GeomException, SecurityException {
+        WebPlotRequest request = WebPlotRequest.makeURLPlotRequest(urlStr);
+        request.setUrlCheckForNewer(true);
+        return getFile(request,true);
+    }
+
     public FileInfo getFile(WebPlotRequest request, boolean handleAllErrors) throws FailedRequestException, GeomException, SecurityException {
         FileInfo fitsFileInfo;
         String urlStr = request.getURL();

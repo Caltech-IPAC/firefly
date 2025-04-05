@@ -35,6 +35,12 @@ export function getJsonProperty(property) {
     return doJsonRequest(ServerParams.JSON_PROPERTY, {[ServerParams.PROP]:property});
 }
 
+export function getTextFile(url,maxSize) {
+    const params= {[ServerParams.URL]:url};
+    if (maxSize) params[ServerParams.MAX_FILE_SIZE]= maxSize;
+    return doJsonRequest(ServerParams.TEXT_FILE, params);
+}
+
 
 /**
  * Upload a URL, File, Blob, or WebPlotRequest to the server, using AnyFileUpload on the firefly server side.

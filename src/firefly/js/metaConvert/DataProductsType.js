@@ -23,6 +23,7 @@
  *
  * @prop {string} displayType one of 'image', 'message', 'promise', 'table', 'png', 'download, 'xyplot', 'analyze'
  * @prop {String} [name]
+ * @prop {String} [dropDownText]
  * @prop {String} menuKey - unique key of this item
  * @prop {Function} [activate] - function to plot 'image', 'table', 'xyplot', require for those
  * @prop {Function} [imageActivate] (only used with CHOICE_CTI) function to plot 'image', used when there is already an activate for a table
@@ -76,6 +77,7 @@ export const DPtypes= {
     DOWNLOAD_MENU_ITEM: 'download-menu-item',
     EXTRACT: 'extract',
     PNG: 'png',
+    TXT: 'txt',
     ANALYZE: 'analyze',
     UNSUPPORTED: 'unsupported',
 };
@@ -145,12 +147,11 @@ export const dpdtSendToBrowser= (url, serDefParams) => {
  * @param {String} message
  * @param {String} titleStr download title str
  * @param {String} url download url
- * @param {String} [fileType]
+ * @param {String} [loadInBrowserMsg]
  * @return {DataProductsDisplayType}
  */
-export const dpdtMessageWithDownload= (message,titleStr, url,fileType=undefined) => {
-    const singleDownload= Boolean(titleStr && url);
-    return dpdtMessage(message,singleDownload ?[dpdtDownload(titleStr,url,'download-0',fileType)] : undefined,{singleDownload} );
+export const dpdtMessageWithDownload= (message,titleStr, url, loadInBrowserMsg=undefined) => {
+    return dpdtMessage(message, [dpdtDownload(titleStr,url,'download-0',undefined, {loadInBrowserMsg})]);
 };
 
 export const dpdtMessageWithError= (message,detailMsgAry) => {
@@ -181,13 +182,17 @@ export const dpdtMessageWithError= (message,detailMsgAry) => {
  * @param [p.url]
  * @param [p.semantics]
  * @param [p.size]
+ * @param [p.dlData]
+ * @param [p.serDef]
+ * @param [p.enableCutout]
+ * @param [p.pixelBasedCutout]
  * @return {DataProductsDisplayType}
  */
 export function dpdtImage({name, activate, extraction, menuKey='image-0', extractionText='Pin Image',
                               request, override, interpretedData, requestDefault, enableCutout, pixelBasedCutout,
-                              url, semantics,size, serDef, dlData }) {
+                              dropDownText, url, semantics,size, serDef, dlData }) {
     return { displayType:DPtypes.IMAGE, name, activate, extraction, menuKey, extractionText, enableCutout, pixelBasedCutout,
-        request, override, interpretedData, requestDefault,url, semantics,size,serDef, dlData};
+        dropDownText, request, override, interpretedData, requestDefault,url, semantics,size,serDef, dlData};
 }
 
 /**
@@ -235,7 +240,8 @@ export function dpdtChartTable(name, activate, extraction, menuKey='chart-table-
  * @param {boolean} [p.allowsInput]
  * @param {String} [p.standardID]
  * @param {String} [p.ID]
- * @param {DatalinkData} [dlData]
+ * @param {DatalinkData} [p.dlData]
+ * @param {DatalinkData} [p.cutoutToFullWarning]
  * @return {DataProductsDisplayType}
  */
 export function dpdtAnalyze({
@@ -281,7 +287,7 @@ export function dpdtExtract(name, activate, menuKey='extract-0') {
 }
 
 export function dpdtDownloadMenuItem(name, url, menuKey='download-0', fileType, extra={}) {
-    return { displayType:DPtypes.DOWNLOAD_MENU_ITEM, name, url, menuKey, singleDownload: true, fileType, ...extra};
+    return { displayType:DPtypes.DOWNLOAD_MENU_ITEM, name, url, menuKey, fileType, ...extra};
 }
 
 /**
@@ -294,6 +300,10 @@ export function dpdtDownloadMenuItem(name, url, menuKey='download-0', fileType, 
  */
 export function dpdtPNG(name, url, menuKey='png-0', extra={}) {
     return { displayType:DPtypes.PNG, name, url, menuKey, ...extra};
+}
+
+export function dpdtText(name, url, menuKey='text-0', extra={}) {
+    return { displayType:DPtypes.TXT, name, url, menuKey, ...extra};
 }
 
 /**

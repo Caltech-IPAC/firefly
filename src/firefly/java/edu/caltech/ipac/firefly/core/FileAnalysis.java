@@ -68,7 +68,7 @@ public class FileAnalysis {
         if (responseCode>=400) {
             return analyzeError(infile, responseCode, contentType);
         }
-        if (contentType!=null && contentType.toLowerCase().equals("text/html")) {
+        if (contentType!=null && contentType.equalsIgnoreCase("text/html")) {
             return analyzeLoadInBrowser(infile, contentType);
         }
         switch (format) {
