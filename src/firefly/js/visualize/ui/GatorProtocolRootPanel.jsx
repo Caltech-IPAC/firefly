@@ -35,10 +35,13 @@ function GatorProtocolPanelImpl({initArgs, lockedServiceUrl, lockedServiceName, 
     const gpOps= getGatorProtoServiceOptions();
     const servicesShowing= true;
     const showWarning= !serviceUrl;
+    const [enterUrl,setEnterUrl]=  useFieldGroupValue('enterUrl');
 
     useEffect( () => {
         if (!serviceUrl) {
-            setServiceUrl(getInitServiceUrl(initArgs,gpOps, lockedServiceUrl,lockedServiceName));
+            const initUrl= getInitServiceUrl(initArgs,gpOps, lockedServiceUrl,lockedServiceName);
+            setServiceUrl(initUrl);
+            if (!initUrl) setEnterUrl(true);
         }
     },[]);
 
@@ -49,7 +52,7 @@ function GatorProtocolPanelImpl({initArgs, lockedServiceUrl, lockedServiceName, 
         setServiceUrl(serviceUrl);
     };
     const searchOptionsMask= serviceUrl ?
-        (getGatorProtoService(serviceUrl)?.searchOptionsMask ?? getAppOptions().gatorProtocol.searchOptionsMask) : undefined;
+        (getGatorProtoService(serviceUrl)?.searchOptionsMask ?? getAppOptions()?.gatorProtocol?.searchOptionsMask) : undefined;
     const showSqlSection= serviceUrl ? getGatorProtoService(serviceUrl)?.showSqlSection : true;
 
     return (
@@ -115,14 +118,14 @@ function Services({serviceUrl, servicesShowing, gpOps, onGatorProtoServiceOption
                     <Typography {...{level:'title-lg', color:'primary', sx:{width:'17rem', mr:1} }}>
                         Select Source
                     </Typography>
-                    <SwitchInputField {...{ size:'sm', endDecorator:'Enter my URL', fieldKey:'enterUrl',
+                    { Boolean(gpOps?.length) &&  <SwitchInputField {...{ size:'sm', endDecorator:'Enter my URL', fieldKey:'enterUrl',
                         initState:{value:false},
                         sx: {
                             alignSelf: 'flex-start',
                             '--Switch-trackWidth': '20px',
                             '--Switch-trackHeight': '12px',
                         },
-                    }} />
+                    }} /> }
                 </Stack>
                 <Stack>
                     {enterUrl ? (
@@ -142,7 +145,7 @@ function Services({serviceUrl, servicesShowing, gpOps, onGatorProtoServiceOption
                         <ListBoxInputFieldView {...{
                             sx:{'& .MuiSelect-root':{width:'46.5rem'}},
                             options:gpOps, value:serviceUrl,
-                            placeholder:'Choose SIAv2 Service...',
+                            placeholder:'Choose LSDB Service...',
                             startDecorator:!gpOps.length ? <Button loading={true}/> : undefined,
                             onChange:(ev, value) => {
                                 onGatorProtoServiceOptionSelect({value});
@@ -200,6 +203,6 @@ function getInitServiceUrl(initArgs,gpOps, lockedServiceUrl,lockedServiceName) {
         const url= gpOps.find( ({labelOnly}) => labelOnly===lockedServiceName)?.value;
         if (url) return url;
     }
-    const {serviceUrl=gpOps[0].value} = gpOps;
+    const {serviceUrl=gpOps?.[0]?.value} = gpOps;
     return serviceUrl;
 }

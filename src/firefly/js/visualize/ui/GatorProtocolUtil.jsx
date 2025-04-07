@@ -53,7 +53,7 @@ export function addGatorProtoUserService(serviceUrl) {
         value: serviceUrl,
         userAdded: true,
         showSqlSection:false,
-        searchOptionsMask: getAppOptions().gatorProtocol.searchOptionsMask
+        searchOptionsMask: getAppOptions()?.gatorProtocol?.searchOptionsMask
     });
     dispatchAddPreference(USER_SERVICE_PREFS, userServices);
 }

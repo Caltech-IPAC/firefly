@@ -299,21 +299,27 @@ function fireflyInit(props, appSpecificOptions={}, webApiCommands) {
 }
 
 function setupGatorProtocolPanel(installedOptions, appProps) {
-    if (!installedOptions.gatorProtocol?.services?.length) return appProps;
-    if (!isArray(appProps.menu)) return appProps;
-    const title=installedOptions.gatorProtocol.title ?? 'Gator Proto';
+    const title=installedOptions?.gatorProtocol?.title ?? 'LSDB Searches';
+    const ddPanels= appProps.dropdownPanels ?? [];
     const gatorProtoMenuItem= {
         label: title,
-        action: 'GatorProtocol',
-        primary: installedOptions.gatorProtocol.primary ?? true,
+        action: 'GatorProtocolRootPanel',
+        primary: installedOptions?.gatorProtocol?.primary ?? true,
         category:ARCHIVE
     };
-
-    const ddPanels= appProps.dropdownPanels ?? [];
-    const gpPanel= <GatorProtocolRootPanel name='GatorProtocol' title={title}/>;
-    const menu= [...appProps.menu, gatorProtoMenuItem];
-    const dropdownPanels= [...ddPanels, gpPanel];
-    return {...appProps, menu, dropdownPanels};
+    if (window.location.search.substring(1).split('view=').pop().split('&')[0]==='GatorProtocolRootPanel') {
+        if (!isArray(appProps.menu)) return appProps;
+        const menu= [...appProps.menu, gatorProtoMenuItem];
+        return {...appProps, menu, dropdownPanels:ddPanels};
+    }
+    else {
+        if (!installedOptions.gatorProtocol?.services?.length) return appProps;
+        if (!isArray(appProps.menu)) return appProps;
+        const gpPanel= <GatorProtocolRootPanel name='GatorProtocol' title={title}/>;
+        const menu= [...appProps.menu, gatorProtoMenuItem];
+        const dropdownPanels= [...ddPanels, gpPanel];
+        return {...appProps, menu, dropdownPanels};
+    }
 }
 
 
