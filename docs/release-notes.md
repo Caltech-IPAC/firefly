@@ -8,7 +8,8 @@
 
 
 ## Version 2025.2
-- 2025.2.2 - (March 20, 2025), _docker tag_: `2025.2`, `2025.2.2`, `latest`
+- 2025.2.3 - (April 8, 2025), _docker tag_: `2025.2.3`, `2025.2`, `latest`
+- 2025.2.2 - (March 20, 2025), _docker tag_: `2025.2.2`,
 - 2025.2.1 - (March 14, 2025), _docker tag_: `2025.2.1`
 - 2025.2.0 - (March 13, 2025), _docker tag_: `2025.2.0`
 
@@ -32,6 +33,10 @@
 
 
 ### _Patches 2025.2_
+- 2025.2.3
+  - Enhancement: Enable experimental LSDB panel behind url api option - Firefly-1702: ([PR](https://github.com/Caltech-IPAC/firefly/pull/1740))
+  - Bug fix: Multi product viewer referencing tar files crash- Firefly-1688: ([PR](https://github.com/Caltech-IPAC/firefly/pull/1732))
+  - Bug fix: Image filtering with checkbox broken- Firefly-1689: ([PR](https://github.com/Caltech-IPAC/firefly/pull/1732))
 - 2025.2.2
   - Bug fix: datalink processing not recognizing application/fits as image ([commit](https://github.com/Caltech-IPAC/firefly/commit/f5b447e6a22e1ef53131b61926efc516411527af))
 - 2025.2.1
