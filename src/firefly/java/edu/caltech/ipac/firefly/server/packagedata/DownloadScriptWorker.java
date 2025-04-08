@@ -134,7 +134,7 @@ public final class DownloadScriptWorker implements Job.Worker {
         String fname = type == Curl ? "curl_script_%s.sh" : type   == Wget ? "wget_script_%s.sh" : "urls_%s.txt";
         fname = fname.formatted(id.substring(id.length()-4));      // safe; id is always greater than 4 chars
         File script = new File(JobUtil.getJobWorkDir(id), fname);
-        DownloadScript.createScript(script, dataDesc, results, type, MakeDirs);
+        DownloadScript.createScript(script, dataDesc, results, type);
         return script;
     }
 }

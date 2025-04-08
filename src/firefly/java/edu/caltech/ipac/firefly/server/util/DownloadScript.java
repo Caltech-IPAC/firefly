@@ -77,6 +77,7 @@ static final String funcTmpl = """
             [ -n "$filePath" ] && cd - > /dev/null
             return 1
           }
+          [zip-logic-added-here]
           [ -n "$filePath" ] && cd - > /dev/null
         }
         """.stripIndent();
@@ -88,6 +89,15 @@ static final String funcTmpl = """
           cmd="wget --content-disposition"
             [ -n "$fileName" ] && opts="wget -O $fileName"
           """);
+
+    static final String zipFunc = """
+          # Unzip logic
+          if [ -n "$fileName" ] && [ -f "$fileName" ] && echo "$fileName" | grep -qE '\\.zip$'; then
+            if command -v unzip &> /dev/null; then
+              unzip -qq "$fileName"
+            fi
+          fi
+        """;
 //====================================================================
 
 
@@ -114,21 +124,14 @@ static final String funcTmpl = """
                 return;
             }
 
-            boolean doUnzip = is(Unzip, attribs);
-
             writer.printf(SCRIPT_HEADER, new Date(), dataDesc, FROM_ORG);
-            if (is(Wget, attribs)) {
-                writer.println(wgetFunc);
-            } else if (is(Curl, attribs)) {
-                writer.println(curlFunc);
-            }
+
+            String func = is(Wget, attribs) ? wgetFunc : curlFunc;
+            func = func.replace("[zip-logic-added-here]", (is(Unzip, attribs) ? zipFunc : ""));
+            writer.println(func);
 
             for (UrlInfo urlInfo : urlInfos) {
                 writer.println("download_file '%s' '%s' '%s'".formatted(urlInfo.getHref(), urlInfo.getPath(), urlInfo.getName()));
-                if (doUnzip && urlInfo.getName().endsWith(".zip")) {
-                    String dest = isEmpty(urlInfo.getPath()) ? "." : urlInfo.getPath();
-                    writer.println(UNZIP_CMD.formatted(dest, urlInfo.getFilePath()));
-                }
             }
 
         } catch (IOException e) {

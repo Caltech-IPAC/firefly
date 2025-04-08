@@ -52,14 +52,13 @@ public class DownloadScriptTest {
                 new FileInfo("https://example.com/file1.zip", "dir2/", 0)
         )));
 
-        DownloadScript.createScript(tempScript, "Test Data", fileInfoList, Wget, Unzip);
+        DownloadScript.createScript(tempScript, "Test Data", fileInfoList, Wget);
 
         List<String> lines = Files.readAllLines(tempScript.toPath());
 
         assertTrue("Script should have header", lines.get(0).startsWith("#! /bin/sh"));
         assertTrue("Wget command should be present", lines.stream().anyMatch(line -> line.contains("wget ")));
-        assertTrue("Unzip command should be present", lines.stream().anyMatch(line -> line.contains("unzip ")));
-        assertFalse("Mkdir should NOT be present", lines.stream().anyMatch(line -> line.contains("mkdir ")));
+        assertFalse("Unzip command should NOt be present", lines.stream().anyMatch(line -> line.contains("unzip -qq")));
     }
 
     @Test
@@ -71,14 +70,15 @@ public class DownloadScriptTest {
                 new FileInfo("https://example.com/file1.zip", "dir2/", 0)
         )));
 
-        DownloadScript.createScript(tempScript, "Test Data", fileInfoList, Curl, Unzip, MakeDirs);
+        DownloadScript.createScript(tempScript, "Test Data", fileInfoList, Curl, Unzip);
 
         List<String> lines = Files.readAllLines(tempScript.toPath());
 
         assertTrue("Script should have header", lines.get(0).startsWith("#! /bin/sh"));
         assertTrue("Curl command should be present", lines.stream().anyMatch(line -> line.contains("curl ")));
-        assertTrue("Should set output file", lines.stream().anyMatch(line -> line.contains(" -o dir1/file1.zip")));
+        assertTrue("Should set output file", lines.stream().anyMatch(line -> line.contains("file1.zip")));
         assertTrue("Mkdir should be present", lines.stream().anyMatch(line -> line.contains("mkdir ")));
+        assertTrue("Unzip command should be present", lines.stream().anyMatch(line -> line.contains("unzip -qq")));
     }
 
     @Test
@@ -88,12 +88,12 @@ public class DownloadScriptTest {
                 new FileInfo("https://example.com/file1.txt", "mydata/file2.zip", 0)
         )));
 
-        DownloadScript.createScript(tempScript, "Test Data", fileInfoList, Wget, Unzip, MakeDirs);
+        DownloadScript.createScript(tempScript, "Test Data", fileInfoList, Wget, Unzip);
 
         List<String> lines = Files.readAllLines(tempScript.toPath());
 
         assertTrue("Script should have header", lines.get(0).startsWith("#! /bin/sh"));
         assertTrue("Wget command should be present", lines.stream().anyMatch(line -> line.contains("wget ")));
-        assertTrue("Unzip command should be present", lines.stream().anyMatch(line -> line.contains("unzip -qq -d mydata mydata/file2.zip")));
+        assertTrue("Unzip command should be present", lines.stream().anyMatch(line -> line.contains("unzip -qq")));
     }
 }
