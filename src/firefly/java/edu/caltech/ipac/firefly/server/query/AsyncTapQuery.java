@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -45,6 +46,10 @@ public class AsyncTapQuery extends UwsJobProcessor {
 //            "https://dc.g-vo.org/tap",                          // Accepted the parameter, but did not return its value
 //            "https://archives.esac.esa.int/hsa/whsa-tap-server/tap"     // Accepted the parameter, but did not return its value
     );
+
+    public Job.Type getType() {
+        return Job.Type.TAP;
+    }
 
     public HttpServiceInput createInput(TableServerRequest request) throws DataAccessException {
         var serviceUrl = request.getParam(SVC_URL);
