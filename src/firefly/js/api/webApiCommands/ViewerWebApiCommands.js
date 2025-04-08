@@ -1,5 +1,6 @@
 import {isEmpty} from 'lodash';
 import {getImageCommands} from './ImageCommands';
+import {getLsdbCommands} from './LsdbCommands';
 import {getTableCommands} from './TableCommands';
 import {getTapCommands} from './TapCommands';
 
@@ -13,6 +14,7 @@ export function getFireflyViewerWebApiCommands(cmdNameList, tapPanelList=[]) {
         ...getImageCommands(),
         ...getTableCommands(),
         ...getTapCommands(tapPanelList),
+        ...getLsdbCommands()
     ];
 
     if (isEmpty(cmdNameList)) return allCommands;

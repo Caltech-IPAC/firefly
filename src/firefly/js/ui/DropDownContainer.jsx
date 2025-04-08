@@ -7,6 +7,7 @@ import PropTypes from 'prop-types';
 import {Alert, Stack} from '@mui/joy';
 
 import {getDropDownInfo} from '../core/LayoutCntlr.js';
+import {GatorProtocolRootPanel} from '../visualize/ui/GatorProtocolRootPanel';
 import {SearchPanel} from './SearchPanel';
 import {HiPSSearchPanel} from '../visualize/ui/HiPSSearchPanel.jsx';
 import {IrsaCatalogSearchDefault} from '../visualize/ui/IrsaCatalogSearch.jsx';
@@ -47,6 +48,7 @@ export const dropDownMap = {
     WorkspaceDropDownCmd: {view: <WorkspaceDropdown />},
     DLGeneratedDropDownCmd: {view: <DLGeneratedDropDown name='DLGeneratedDropDownCmd' loadRegistry={false}/>, layout: {width: '100%'}},
     IrsaCatalog: {view: <IrsaCatalogSearchDefault/>, layout: {width: '100%'}},
+    GatorProtocolRootPanel: {view:<GatorProtocolRootPanel name='GatorProtocol' title={'LSDB'}/>, layout: {width: '100%'}},
     ClassicVOCatalogPanelCmd : {view: <ClassicVOCatalogPanel/>, layout: {width: '100%'}},
     ClassicNedSearchCmd : {view: <ClassicNedSearchPanel/>, layout: {width: '100%'}},
     // --- testing
