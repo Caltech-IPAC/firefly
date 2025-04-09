@@ -62,7 +62,7 @@ export const emptyHeaderSx = {
  *                  - *State: Polygon*:
  *                      - `polygonField` slot - PolygonField
  *                  - *State: Upload*:
- *                      - UploadTableSelectorPosCol
+ *                      - `uploadColSelector` slot - UploadTableSelectorPosCol
  *                      - `sizeInput` slot - SizeInputFields
  *              - `children` prop
  *          - *State: collapsible is closed*:
@@ -234,7 +234,8 @@ export function EmbeddedPositionSearchPanel({
                                 }
                             },
                             content: {
-                                sx: { '& .MuiAccordionDetails-content.Mui-expanded': { padding: 0 } }
+                                // '>' to prevent the style defined here from bleeding into child collapsibles
+                                sx: { '>.MuiAccordionDetails-content.Mui-expanded': { padding: 0 } }
                             }
                         } }}>
                         <Slot component={slotProps.formPanel ? FormPanel : Box}
@@ -305,6 +306,7 @@ EmbeddedPositionSearchPanel.propTypes= {
             initValue: number,
             sx: object,
         }),
+        uploadColSelector: shape({...UploadTableSelectorPosCol.propTypes}),
         searchSummary: shape({
             component: elementType,
             getSummaryInfo: func,
@@ -481,9 +483,7 @@ function UploadOp({slotProps, uploadInfo, setUploadInfo}) {
     return (
         <Stack pb={0.5}>
             <UploadTableSelectorPosCol {...{uploadInfo, setUploadInfo,
-                slotProps: {
-                    centerColsInnerStack: {sx: {ml: 1, pt: 1.5}}
-                }
+                ...slotProps?.uploadColSelector
             }}/>
             {enabled && <SizeInputFields {...{
                 fieldKey: sizeKey, showFeedback: true, nullAllowed: false,
@@ -495,7 +495,5 @@ function UploadOp({slotProps, uploadInfo, setUploadInfo}) {
                 }
             }} />}
         </Stack>
-
-        );
-
+    );
 }

@@ -88,8 +88,8 @@ ColumnOrExpression.propTypes = {
     sx: PropTypes.object,
 };
 
-export function ColumnFld({cols, groupKey, fieldKey, initValue, label, tooltip='Table column', slotProps, sx,
-                              doQuoteNonAlphanumeric,
+export function ColumnFld({cols, groupKey, fieldKey, initValue, label, tooltip, slotProps, sx,
+                              doQuoteNonAlphanumeric, orientation,
                            name, nullAllowed, canBeExpression=false, readOnly, helper, required, validator,
                               placeholder, colTblId=null,onSearchClicked=null}) {
     const value = initValue || getFieldVal(groupKey, fieldKey);
@@ -97,6 +97,7 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, tooltip='
     const {valid=true, message=''} = value ? colValidator(value) : {};
     const context= useContext(FieldGroupCtx);
     groupKey= groupKey || context.groupKey;
+    tooltip ??= `Choose ${name} column`;
 
     let val = value;
     const onColSelected = (colName) => {
@@ -134,7 +135,7 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, tooltip='
                            }}
                            disableClearable={true}
                            endDecorator={!readOnly && helper ? helper : undefined}
-                           {...{required,readOnly,placeholder,sx}}
+                           {...{required,readOnly,placeholder,sx,orientation}}
                            slotProps={defaultsDeep(slotProps,
                                {tooltip: {
                                    disableInteractive: true, //to hide tooltip when hovering over it, to prevent its long size blocking other fields
@@ -170,6 +171,7 @@ ColumnFld.propTypes = {
         label: object,
         tooltip: object
     }),
-    sx: object
+    sx: object,
+    orientation: PropTypes.string,
 };
 
