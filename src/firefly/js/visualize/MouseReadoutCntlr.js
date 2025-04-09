@@ -4,10 +4,8 @@
 
 import {getPreference} from '../core/AppDataCntlr';
 import {flux} from '../core/ReduxFlux.js';
-import {DEFAULT_HPX_GROUP_TYPE, HPX_GROUP_TYPE_PREF} from '../drawingLayers/hpx/HpxCatalogUtil';
-import CoordinateSys from './CoordSys';
-import {visRoot} from './ImagePlotCntlr';
-import {primePlot} from './PlotViewUtil';
+import Enum from 'enum';
+
 
 export const READOUT_PREFIX= 'ReadoutCntlr';
 export const CHANGE_LOCK_BY_CLICK= `${READOUT_PREFIX}.ChangeLockByClick`;
@@ -56,6 +54,14 @@ export const MR_FIELD_IMAGE_MOUSE_READOUT2= 'imageMouseReadout2';
 export const MR_FIELD_HIPS_MOUSE_READOUT1= 'hipsMouseReadout1';
 export const MR_FIELD_HIPS_MOUSE_READOUT2= 'hipsMouseReadout2';
 
+/**
+ * Equatorial Coordinates Representation Type
+ * @typedef {Enum} EQ_TYPE
+ * @prop DCM Decimal Degrees
+ * @prop HMS Hour Minute Second
+ */
+/** @type EQ_TYPE */
+export const EQ_TYPE = new Enum(['DCM', 'HMS'], {ignoreCase: true});
 
 
 
@@ -145,8 +151,6 @@ const initState= () =>
         lockByClick : false,
         isLocked: false,
         readoutPref :{
-            imageMouseReadout1:MR_EQJ2000_HMS,
-            imageMouseReadout2: MR_FITS_IP,
             [MR_FIELD_IMAGE_MOUSE_READOUT1]: MR_EQJ2000_HMS, //getPreference(MR_FIELD_IMAGE_MOUSE_READOUT1,MR_EQJ2000_HMS),
             [MR_FIELD_IMAGE_MOUSE_READOUT2]: MR_FITS_IP, //getPreference(MR_FIELD_IMAGE_MOUSE_READOUT2,MR_FITS_IP),
             imageMouseNoncelestialReadout1: MR_WCS_COORDS,

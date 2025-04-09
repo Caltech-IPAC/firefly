@@ -10,7 +10,7 @@ import {
     MR_FIELD_IMAGE_MOUSE_READOUT2, MR_FITS_IP, MR_WL, MR_ZERO_IP,
     MR_GALACTIC, MR_HEALPIX_NORDER, MR_HEALPIX_PIXEL, MR_PIXEL_SIZE, MR_SPIXEL_SIZE, MR_SUPER_GALACTIC, MR_WCS_COORDS,
     STATUS_NAN, STATUS_UNAVAILABLE, STATUS_UNDEFINED, STATUS_VALUE, TYPE_DECIMAL_INT, TYPE_EMPTY, TYPE_FLOAT,
-    MR_BAND_WIDTH
+    MR_BAND_WIDTH, EQ_TYPE
 } from '../MouseReadoutCntlr.js';
 import {visRoot} from '../ImagePlotCntlr.js';
 import {convertCelestial} from '../VisUtil';
@@ -47,6 +47,10 @@ const labelMap = {
 };
 
 const coordOpTitle= 'Choose readout coordinates';
+
+export const getEqTypeFromMR = (readoutKey) => readoutKey.toUpperCase().startsWith('EQ')
+    ? (readoutKey.toUpperCase().endsWith('DCM') ? EQ_TYPE.DCM : EQ_TYPE.HMS)
+    : undefined; // undefined type if not Equatorial readout
 
 export const getFluxRadix = (readoutPref, primePlot) => {
     // From FITS 4.00 (https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf), p. 14-15, Table 11 and section 4.4.2.5

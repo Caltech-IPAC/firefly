@@ -109,12 +109,14 @@ function makeWavelengthConstraints(filterDefinitions, fldObj) {
 const checkHeaderCtl= makeCollapsibleCheckHeader(getPanelPrefix(panelValue));
 const {CollapsibleCheckHeader, collapsibleCheckHeaderKeys}= checkHeaderCtl;
 
-export function WavelengthOptions({initArgs, fieldKeys, filterDefinitions, slotProps }) {
+export function WavelengthOptions({initArgs, fieldKeys, filterDefinitionsLabel, filterDefinitions, fixedRangeType, slotProps }) {
     const [getSelectionType,] = useFieldGroupValue(fieldKeys.selectionType);
     const [getRangeType,] = useFieldGroupValue(fieldKeys.rangeType);
 
     const hasFilters = filterDefinitions?.length > 0;
     const useNumerical = !hasFilters || getSelectionType() === 'numerical';
+    const useRangeContains = fixedRangeType ? fixedRangeType === 'contains' : getRangeType() === 'contains';
+    const useRangeOverlaps = fixedRangeType ? fixedRangeType === 'overlaps' : getRangeType() === 'overlaps';
 
     return (
         <Stack spacing={2}>
@@ -130,8 +132,10 @@ export function WavelengthOptions({initArgs, fieldKeys, filterDefinitions, slotP
 
             {hasFilters && getSelectionType() === 'filter' && (
                 <Stack spacing={1} {...slotProps?.filterBandsWvlOptions}>
-                    <Typography level='title-sm'>Require coverage at the approximate center of these filters:</Typography>
-                    <Stack spacing={.5} style={{ marginLeft: LeftInSearch }}>
+                    {filterDefinitionsLabel && (
+                        <Typography level='title-sm'>{filterDefinitionsLabel}</Typography>
+                    )}
+                    <Stack spacing={.5} style={{ marginLeft: filterDefinitionsLabel ? LeftInSearch : 0 }}>
                         {filterDefinitions.map((filterDefinition) => (
                             <CheckboxGroupInputField
                                 key={'filter' + filterDefinition.name + 'Key'}
@@ -148,21 +152,23 @@ export function WavelengthOptions({initArgs, fieldKeys, filterDefinitions, slotP
 
             {useNumerical && (
                 <Stack spacing={1} {...slotProps?.numericalWvlOptions}>
-                    <div style={{ display: 'flex' }}>
-                        <ListBoxInputField
-                            fieldKey={fieldKeys.rangeType}
-                            options={[
-                                { label: 'contains', value: 'contains' },
-                                { label: 'overlaps', value: 'overlaps' },
-                            ]}
-                            initialState={{ value: initArgs?.urlApi?.rangeType || 'contains' }}
-                            label='Select observations whose wavelength coverage'
-                            orientation='vertical'
-                            multiple={false}
-                            {...slotProps?.rangeType}
-                        />
-                    </div>
-                    {getRangeType() === 'contains' && (
+                    {!fixedRangeType && (
+                        <div style={{display: 'flex'}}>
+                            <ListBoxInputField
+                                fieldKey={fieldKeys.rangeType}
+                                options={[
+                                    {label: 'contains', value: 'contains'},
+                                    {label: 'overlaps', value: 'overlaps'},
+                                ]}
+                                initialState={{value: initArgs?.urlApi?.rangeType || 'contains'}}
+                                label='Select observations whose wavelength coverage'
+                                orientation='vertical'
+                                multiple={false}
+                                {...slotProps?.rangeType}
+                            />
+                        </div>
+                    )}
+                    {useRangeContains && (
                         <div style={{ display: 'flex' }}>
                             <WavelengthInputField fieldKey={fieldKeys.wvlContains}
                                                   inputStyle={{ overflow: 'auto', height: 16 }}
@@ -174,7 +180,7 @@ export function WavelengthOptions({initArgs, fieldKeys, filterDefinitions, slotP
                                                   {...slotProps?.wvlContains} />
                         </div>
                     )}
-                    {getRangeType() === 'overlaps' && (
+                    {useRangeOverlaps && (
                         <WavelengthRangeInput minFieldKey={fieldKeys.wvlMin} maxFieldKey={fieldKeys.wvlMax}
                                               slotProps={{
                                                   wvlMin: {
@@ -208,10 +214,12 @@ WavelengthOptions.propTypes = {
         wvlMin: PropTypes.string,
         wvlMax: PropTypes.string,
     }).isRequired,
+    filterDefinitionsLabel: PropTypes.string,
     filterDefinitions: PropTypes.arrayOf(PropTypes.shape({
         name: PropTypes.string,
         options: PropTypes.arrayOf(PropTypes.shape({ value: PropTypes.string, label: PropTypes.string }))
     })),
+    fixedRangeType: PropTypes.oneOf(['contains', 'overlaps']),
     slotProps: PropTypes.shape({
         selectionType: PropTypes.object,
         rangeType: PropTypes.object,
@@ -263,7 +271,10 @@ export function ObsCoreWavelengthSearch({ initArgs, serviceId, slotProps, useSIA
         >
             <Stack {...{ spacing: 2, width: SpatialWidth, justifyContent: 'flex-start', ...slotProps?.root }}>
                 <ForceFieldGroupValid forceValid={!checkHeaderCtl.isPanelActive()}>
-                    <WavelengthOptions {...{initArgs, fieldKeys: obsCoreWvlFieldKeys, filterDefinitions,
+                    <WavelengthOptions {...{initArgs,
+                        fieldKeys: obsCoreWvlFieldKeys,
+                        filterDefinitionsLabel: 'Require coverage at the approximate center of these filters:',
+                        filterDefinitions,
                         slotProps: slotProps?.wavelengthOptions}}/>
                     <DebugObsCore {...{ constraintResult }} />
                 </ForceFieldGroupValid>

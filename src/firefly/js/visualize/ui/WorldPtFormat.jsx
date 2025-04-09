@@ -2,8 +2,10 @@ import {Typography} from '@mui/joy';
 import React, {Fragment} from 'react';
 import {coordToString} from '../../ui/PositionFieldDef.js';
 import CoordUtil from '../CoordUtil';
-import Point, {isValidPoint} from '../Point';
+import Point, {isValidPoint, parseWorldPt} from '../Point';
 import {sprintf} from '../../externalSource/sprintf.js';
+import {isString} from 'lodash';
+import {EQ_TYPE} from 'firefly/visualize/MouseReadoutCntlr';
 
 const valToStr= (v) => sprintf('%.6f',v);
 
@@ -30,31 +32,47 @@ export function formatWorldPt(wp, pad=3, useBold=true) {
 }
 
 export function formatWorldPtToString(wp,addNewLIne=false) {
-    if (!isValidPoint(wp)) return '';
-    if (wp.type!==Point.W_PT) return `${wp.x}, ${wp.y}`;
-    const lonStr = valToStr(wp.getLon());
-    const latStr = valToStr(wp.getLat());
-    const hmsRa = CoordUtil.convertLonToString(wp.getLon(), wp.getCoordSys());
-    const hmsDec = CoordUtil.convertLatToString(wp.getLat(), wp.getCoordSys());
-    const csys = coordToString(wp.getCoordSys());
+    const actualWp= isValidPoint(wp) ? wp : (isString(wp) ? parseWorldPt(wp) : undefined);
+    if (!actualWp) return '';
 
-    const coordStr= `${lonStr}, ${latStr}  or${addNewLIne?'\n':''}   ${hmsRa}, ${hmsDec} ${csys}`;
-    if (!wp.objName) return coordStr;
-    return wp.resolver ?
-        `${wp.objName} - by ${wp.resolver.toString().toUpperCase()} - ${coordStr}` :
-        `${wp.objName} - ${coordStr}`;
+    if (actualWp.type!==Point.W_PT) return `${actualWp.x}, ${actualWp.y}`;
+    const lonStr = valToStr(actualWp.getLon());
+    const latStr = valToStr(actualWp.getLat());
+    const hmsRa = CoordUtil.convertLonToString(actualWp.getLon(), actualWp.getCoordSys());
+    const hmsDec = CoordUtil.convertLatToString(actualWp.getLat(), actualWp.getCoordSys());
+    const csys = coordToString(actualWp.getCoordSys());
+
+    const coordStr= `${lonStr}, ${latStr}  or${addNewLIne?'\n':''}  ${hmsRa}, ${hmsDec} ${csys}`;
+    if (!actualWp.objName) return coordStr;
+    return actualWp.resolver ?
+        `${actualWp.objName} - by ${actualWp.resolver.toString().toUpperCase()} - ${coordStr}` :
+        `${actualWp.objName} - ${coordStr}`;
 }
 
-export function formatWorldPtToStringSimple(wp) {
-    if (!isValidPoint(wp)) return '';
-    if (wp.objName) return wp.objName;
-    if (wp.type!==Point.W_PT) return `${wp.x}, ${wp.y}`;
-    const lonStr = valToStr(wp.getLon());
-    const latStr = valToStr(wp.getLat());
-    const hmsRa = CoordUtil.convertLonToString(wp.getLon(), wp.getCoordSys());
-    const hmsDec = CoordUtil.convertLatToString(wp.getLat(), wp.getCoordSys());
-    const csys = coordToString(wp.getCoordSys());
-    return `${lonStr}, ${latStr}  or   ${hmsRa}, ${hmsDec} ${csys}`;
+/**
+ *
+ * @param wp {WorldPt|string} World Point object or serialised as a string
+ * @param eqType {EQ_TYPE|undefined} format to decimal or to HMS, or to both types if `undefined` (which is the default)
+ * @returns {string}
+ */
+export function formatWorldPtToStringSimple(wp,eqType) {
+    const actualWp= isValidPoint(wp) ? wp : (isString(wp) ? parseWorldPt(wp) : undefined);
+    if (!actualWp) return '';
+
+    if (actualWp.objName) return actualWp.objName;
+    if (actualWp.type!==Point.W_PT) return `${actualWp.x}, ${actualWp.y}`;
+    const lonStr = valToStr(actualWp.getLon());
+    const latStr = valToStr(actualWp.getLat());
+    const hmsRa = CoordUtil.convertLonToString(actualWp.getLon(), actualWp.getCoordSys());
+    const hmsDec = CoordUtil.convertLatToString(actualWp.getLat(), actualWp.getCoordSys());
+    const csys = coordToString(actualWp.getCoordSys());
+    const dcmCoordStr = `${lonStr}, ${latStr}`;
+    const hmsCoordStr = `${hmsRa}, ${hmsDec}`;
+
+    const coordStr= eqType===EQ_TYPE.DCM ? dcmCoordStr
+        : (eqType===EQ_TYPE.HMS ? hmsCoordStr
+            : `${dcmCoordStr}  or  ${hmsCoordStr}`);
+    return `${coordStr} ${csys}`;
 }
 
 export function formatLonLatToString(wp) {

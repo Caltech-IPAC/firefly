@@ -1,5 +1,5 @@
 import {Box, Sheet, Stack, Typography} from '@mui/joy';
-import React, {Fragment, useContext, useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {oneOf, bool, string, number, arrayOf, object, func, shape, elementType} from 'prop-types';
 import {defaultsDeep} from 'lodash';
 import CoordinateSys from '../../visualize/CoordSys.js';
@@ -17,10 +17,13 @@ import {UploadTableSelectorPosCol} from 'firefly/ui/UploadTableSelectorPosCol';
 import {showUploadTableChooser} from 'firefly/ui/UploadTableChooser';
 import {CollapsibleGroup, CollapsibleItem} from 'firefly/ui/panel/CollapsiblePanel';
 import {FormPanel} from 'firefly/ui/FormPanel';
-import {parseWorldPt} from 'firefly/visualize/Point';
-import {formatWorldPtToString} from 'firefly/visualize/ui/WorldPtFormat';
+import {formatWorldPtToStringSimple} from 'firefly/visualize/ui/WorldPtFormat';
 import {getFieldGroupResults} from 'firefly/fieldGroup/FieldGroupUtils';
 import {FieldGroupCtx} from 'firefly/ui/FieldGroup';
+import {getPreference} from 'firefly/core/AppDataCntlr';
+import {MR_EQJ2000_HMS, MR_FIELD_HIPS_MOUSE_READOUT1} from 'firefly/visualize/MouseReadoutCntlr';
+import {getEqTypeFromMR} from 'firefly/visualize/ui/MouseReadoutUIUtil';
+import {toMaxFixed} from 'firefly/util/MathUtil';
 
 
 const DEFAULT_FOV_DEG= 30;
@@ -327,10 +330,11 @@ const Header = function({isOpen, slotProps={}, targetKey, sizeKey, polygonKey, s
                 <FormPanel
                     onSuccess={slotProps?.formPanel.onSuccess}
                     direction='row'
-                    sx={{width:1}}
+                    sx={{width:1, alignItems: 'center', justifyContent:'space-between'}}
                     slotProps={{
-                        searchBar: {p:0, justifyContent: 'right'},
+                        searchBar: {p:0},
                     }}
+                    completeText={slotProps?.formPanel.completeText}
                     cancelText=''>
                     <Stack {...{width:'100%', alignItems:'center'}}>
                         <Slot {...{component:SearchSummary, slotProps:slotProps.searchSummary, request:reqObj,
@@ -351,30 +355,30 @@ function SearchSummary({request, targetKey, sizeKey, polygonKey, searchTypeKey, 
 
     const target = request?.[targetKey];
     const polyCoords = request?.[polygonKey];
+    const coordPref = getPreference(MR_FIELD_HIPS_MOUSE_READOUT1, MR_EQJ2000_HMS);
     const coords = searchTypeValue === POLY_CHOICE_KEY ? polyCoords
-        : formatWorldPtToString(parseWorldPt(target)); // for cone, point, etc.
+        : formatWorldPtToStringSimple(target, getEqTypeFromMR(coordPref)); // for cone, point, etc.
 
-    const radius = request?.[sizeKey];
+    const radius = request?.[sizeKey]; // in degrees
     const fileName = request?.uploadInfo?.fileName;
     const rows = request?.uploadInfo?.totalRows;
 
-    const keyValuePairs = [
-        { k: 'Search Type', v: searchTypeLabel },
-        ...(radius && searchTypeValue === CONE_CHOICE_KEY ? [{ k: 'Search Radius', v: radius }] : []),
-        ...(coords && searchTypeValue !== UPLOAD_CHOICE_KEY ? [{ k: 'Coordinates', v: coords }] : []),
-        ...(fileName && rows && searchTypeValue === UPLOAD_CHOICE_KEY
-            ? [{ k: 'File Name', v: fileName }, { k: 'Rows', v: rows }] : [])
-    ];
+    const summaryFragments = [];
+    if (radius && searchTypeValue === CONE_CHOICE_KEY) {
+        summaryFragments.push(`${toMaxFixed(radius, 6).toString()}° at `);
+    }
+    if (coords && searchTypeValue !== UPLOAD_CHOICE_KEY) {
+        summaryFragments.push(coords);
+    }
+    if (fileName && rows && searchTypeValue === UPLOAD_CHOICE_KEY) {
+        summaryFragments.push(`${rows} rows in '${fileName}'`);
+    }
 
     return (
         <Stack>
             <Typography color={'neutral'} level='body-md'>
-                {keyValuePairs.map((pair, index, pairs) => (
-                    <Fragment key={index}>
-                        <Typography component='span' color={'primary'}>{pair.k}: </Typography> {pair.v}
-                        {index < pairs.length - 1 && ', '}
-                    </Fragment>
-                ))}
+                <Typography component='span' color={'primary'}>{searchTypeLabel}: </Typography>
+                {summaryFragments.join('') || 'NIL'}
             </Typography>
         </Stack>
     );
