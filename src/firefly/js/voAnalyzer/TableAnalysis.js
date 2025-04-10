@@ -44,7 +44,7 @@ export const isRowTargetCapable= (tbl_id) => Boolean(findTableCenterColumns(tbl_
 export function findImageCenterColumns(tableOrId) {
     const table = getTableModel(tableOrId);
     const tblRecog = get(table, ['tableData', 'columns']) && VoTableRecognizer.newInstance(table);
-    return getMetaEntry(table, MetaConst.FITS_FILE_PATH) && tblRecog?.getImagePtColumnsOnMeta();
+    return getMetaEntry(table, MetaConst.IMAGE_COLUMN) && tblRecog?.getImagePtColumnsOnMeta();
 }
 
 /**
