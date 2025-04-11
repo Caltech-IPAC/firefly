@@ -208,7 +208,7 @@ function makeFieldDef({serDefParam, sRegion, searchAreaInfo, hidePredefinedStrin
             return doMakeAreaDef(serDefParam);
         }
         else if (isNumberField(serDefParam)) {
-            return doMakeNumberDef(serDefParam);
+            return doMakeNumberDef(serDefParam,hidePredefinedStringFields);
         } else {
             return doMakeUnknownDef(serDefParam,hidePredefinedStringFields);
         }
@@ -309,7 +309,7 @@ function doMakeAreaDef(serDefParam) {
     return makeAreaDef({ key:name, desc: tooltip, tooltip, initValue, minValue, maxValue});
 }
 
-function doMakeNumberDef(serDefParam) {
+function doMakeNumberDef(serDefParam, hidePredefinedStringFields) {
     const {type, optionalParam: nullAllowed, value = '', name, desc: tooltip, units = ''} = serDefParam;
     const key= name;
     const desc= name;
@@ -343,7 +343,8 @@ function doMakeNumberDef(serDefParam) {
         });
     }
     else {
-        return makeUnknownDef({key: name, desc: name, tooltip, units, initValue: workingValue});
+        return makeUnknownDef({key: name, desc: name, tooltip, units, initValue: workingValue,
+            hide: Boolean(value && hidePredefinedStringFields) });
     }
 
 }
