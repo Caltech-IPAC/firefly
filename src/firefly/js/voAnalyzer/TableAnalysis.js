@@ -57,6 +57,7 @@ export function makeWorldPtUsingCenterColumns(tableOrId, row) {
     const table = getTableModel(tableOrId);
     if (!table || isUndefined(row)) return;
     const cen = findTableCenterColumns(table);
+    if (!cen) return;
     const lon= getCellValue(table, row, cen.lonCol);
     const lat= getCellValue(table, row, cen.latCol);
     if (!cen || isUndefined(lon) || isUndefined(lat)) return;

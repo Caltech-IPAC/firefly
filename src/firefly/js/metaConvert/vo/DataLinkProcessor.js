@@ -1,10 +1,13 @@
 import {getPreferCutout} from '../../ui/tap/Cutout';
 import {getSearchTarget, obsCoreTableHasOnlyImages} from '../../voAnalyzer/TableAnalysis.js';
 import {
-    getDataLinkData, isDownloadType, isGzipType, isSimpleImageType, isTarType, isVoTable
+    getDataLinkData, getDownloadTypeDesc, isDownloadType, isSimpleImageType, isVoTable
 } from '../../voAnalyzer/VoDataLinkServDef.js';
 import {getSizeAsString, GIG} from '../../util/WebUtil.js';
-import {makeAnalysisActivateFunc} from '../AnalysisUtils.js';
+import {
+    doFileNameAndTypeAnalysis,
+    isNonServerAnalysisType, isUsableDownloadType, makeAnalysisActivateFunc, makeDownloadType
+} from '../AnalysisUtils.js';
 import {
     dispatchUpdateActiveKey, getActiveMenuKey, getCurrentActiveKeyID
 } from '../DataProductsCntlr.js';
@@ -47,7 +50,7 @@ const WARN_SIZE= GIG;
 export function processDatalinkTable({sourceTable, row, datalinkTable, activateParams, baseTitle=undefined,
                                      additionalServiceDescMenuList, dlTableUrl, doFileAnalysis=true,
                                          options, parsingAlgorithm = USE_ALL, useForTableGrid}) {
-    const dataLinkData= getDataLinkData(datalinkTable,sourceTable,row);
+    const dataLinkData= getDataLinkData(datalinkTable,false, sourceTable,row);
     const preferCutout= getPreferCutout(options.dataProductsComponentKey,sourceTable?.tbl_id);
     const isRelatedImageGrid= options.hasRelatedBands && dataLinkData.filter( (dl) => dl.dlAnalysis.isImage && dl.dlAnalysis.isGrid).length>1;
     const isMultiTableSpectrum= dataLinkData.filter( (dl) => dl.dlAnalysis.isThis && dl.dlAnalysis.isGrid && dl.dlAnalysis.isSpectrum).length>1;
@@ -84,23 +87,9 @@ export function processDatalinkTable({sourceTable, row, datalinkTable, activateP
     return dpdtMessage('No data available for this row',undefined,{activeMenuLookupKey});
 }
 
-function convertAllToDownload(menu) {
-    return menu.map( (d) =>  {
-        if (d.displayType===DPtypes.DOWNLOAD) return {...d};
-        if (d.url) return {...d, displayType:DPtypes.DOWNLOAD};
-        if (d.request && d.request.getURL && d.request.getURL()) {
-            return {...d,displayType:DPtypes.DOWNLOAD, url:d.request.getURL()};
-        }
-        else {
-            return {};
-        }
-    }).filter( (d) => d.displayType);
-}
-
 function getDLMenuEntryData({dlTableUrl, dlData={}, idx, sourceTable}) {
     return {
         positionWP: getSearchTarget(sourceTable?.request,sourceTable),
-        contentType: dlData.contentType?.toLowerCase(),
         sRegion: dlData.sourceObsCoreData?.s_region,
         prodType: dlData.sourceObsCoreData?.dataproduct_type,
         activeMenuLookupKey:dlTableUrl??`no-table-${idx}`,
@@ -133,28 +122,29 @@ function makeDLServerDefMenuEntry({dlTableUrl, dlData,idx, baseTitle, sourceTabl
  * @param p.doFileAnalysis
  * @param p.name
  * @param {ActivateParams} p.activateParams
- * @return {DataProductsDisplayType|{displayType: string, menuKey: string, name: *, singleDownload: boolean, url: *, fileType: *}}
+ * @return {DataProductsDisplayType|{displayType: string, menuKey: string, name: *, url: *, fileType: *}}
  */
 function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRow, options,
                                       doFileAnalysis, name, activateParams}) {
 
-    const {semantics,size,url, dlAnalysis:{isThis, isDownloadOnly, isTar, isGzip,isSimpleImage}, description }= dlData;
-    const {positionWP,sRegion,prodType, activeMenuLookupKey,menuKey, contentType}=
+    const {semantics,size,url, dlAnalysis:{isThis, isDownloadOnly, isSimpleImage}, contentType, description}= dlData;
+    const {positionWP,sRegion,prodType, activeMenuLookupKey,menuKey}=
         getDLMenuEntryData({dlTableUrl, dlData,idx,sourceTable,sourceRow});
 
-    if (isDownloadOnly) {
-        let fileType;
-        if (isTar) fileType= 'tar';
-        if (isGzip) fileType= 'gzip';
-        return isThis ?
-            dpdtDownloadMenuItem('Download file: '+name,url,menuKey,fileType,{semantics, size, activeMenuLookupKey,dlData}) :
-            dpdtDownload('Download file: '+name,url,menuKey,fileType,{semantics, size, activeMenuLookupKey, dlData});
-    }
-    else if (isSimpleImage) {
+    if (isSimpleImage) {
         return dpdtPNG('Show PNG image: '+name,url,menuKey,{semantics, size, activeMenuLookupKey, dlData});
     }
     else if (isTooBig(size)) {
         return dpdtDownload('Download: '+name + '(too large to show)',url,menuKey,'fits',{semantics, size, activeMenuLookupKey, dlData});
+    }
+    else if (isNonServerAnalysisType(url,contentType)) {
+        const item= doFileNameAndTypeAnalysis({url,ct:contentType,wrapWithMessage:false, name});
+        item.menuKey= menuKey;
+        item.dlData= dlData;
+        item.semantics= semantics;
+        item.size= size;
+        item.activeMenuLookupKey= activeMenuLookupKey;
+        return item;
     }
     else if (dlData.dlAnalysis.isSpectrum && isVoTable(contentType)) {
         const tbl_id= getTableId(dlData.description,options,idx);
@@ -169,7 +159,7 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
             chartId,
         });
         const extract= createTableExtraction(url,description,0);
-        return dpdtChartTable('Show: ' + description, activate, extract, menuKey, {extractionText: 'Pin Table', paIdx:0, tbl_id,chartId, dlData});
+        return dpdtChartTable(description, activate, extract, menuKey, {extractionText: 'Pin Table', paIdx:0, tbl_id,chartId, dlData});
     }
     else if (isAnalysisType(contentType)) {
         if (doFileAnalysis) {
@@ -178,7 +168,7 @@ function makeDLAccessUrlMenuEntry({dlTableUrl, dlData,idx, sourceTable, sourceRo
             const request= makeObsCoreRequest(url,positionWP,name,sourceTable,sourceRow);
             const activate= makeAnalysisActivateFunc({table:sourceTable,row:sourceRow, request,
                 activateParams,menuKey, dataTypeHint, options, dlData});
-            return dpdtAnalyze({name:'Show: '+name,
+            return dpdtAnalyze({name,
                 activate,url,menuKey, semantics, size, activeMenuLookupKey,request, sRegion, prodTypeHint, dlData});
         }
         else {
@@ -395,17 +385,10 @@ export const findMenuKeyWithName= (keyAry,name) => name && keyAry.find( (k) => k
 
 
 export function createDataLinkSingleRowItem({dlData, activateParams, baseTitle, options}) {
-    const {semantics,error_message, serDef, serviceDefRef}= dlData;
-    const name= semantics;
-    if (error_message) {
-        const edp= dpdtMessageWithError(error_message);
-        edp.complexMessage= false;
-        edp.menuKey='dlt-'+dlData.rowIdx;
-        edp.name= `Error in related data (datalink) row ${dlData.rowIdx}`;
-        return edp;
-    }
-    if (serviceDefRef && !serDef) {
-        const edp= dpdtMessageWithError('Datalink row has an unsupported or missing service descriptor (async service descriptors are not supported)');
+    const name= dlData.semantics;
+    const error= hasError(dlData);
+    if (error) {
+        const edp= dpdtMessageWithError(error);
         edp.complexMessage= false;
         edp.menuKey='dlt-'+dlData.rowIdx;
         edp.name= `Error in related data (datalink) row ${dlData.rowIdx}`;
@@ -415,6 +398,15 @@ export function createDataLinkSingleRowItem({dlData, activateParams, baseTitle, 
         options, name, doFileAnalysis:true, activateParams});
     return menuEntry;
 
+}
+
+export function hasError(dlData) {
+    const {error_message, serDef, serviceDefRef}= dlData;
+    if (error_message) return error_message;
+    if (!dlData.dlAnalysis.usableEntry) return 'This (datalink) row is not usable by the application';
+    if (serviceDefRef && !serDef)  {
+        return 'Datalink row has an unsupported or missing service descriptor (async service descriptors are not supported)';
+    }
 }
 
 
@@ -506,11 +498,9 @@ export function createGuessDataType(name, menuKey, url,ct,semantics, activatePar
     else if (isSimpleImageType(ct)) {
         return dpdtPNG(name,url,menuKey,{semantics,dlData});
     }
-    else if (isDownloadType(ct)) {
-        let fileType;
-        if (isTarType(ct)) fileType= 'tar';
-        if (isGzipType('gz')) fileType= 'gzip';
-        return dpdtDownload(name,url,menuKey,fileType,{semantics,dlData});
+    else if (isUsableDownloadType(undefined,ct)) {
+        // return dpdtDownload(name,url,menuKey,getDownloadTypeDesc(ct),{semantics,dlData});
+        return {...makeDownloadType(url,undefined,ct,false), menuKey, semantics, size, dlData};
     }
 }
 

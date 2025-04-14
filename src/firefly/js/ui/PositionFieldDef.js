@@ -3,6 +3,7 @@ import CoordinateSys from '../visualize/CoordSys.js';
 import CoordUtil from '../visualize/CoordUtil.js';
 
 import {sprintf} from '../externalSource/sprintf.js';
+import Point, {isValidPoint} from '../visualize/Point';
 import {convertCelestial} from '../visualize/VisUtil';
 
 const errMsgRoot= 'Error: ';
@@ -89,7 +90,7 @@ function getEQJ2000(wp) {
  * @return String
  */
 export function formatPosForHelp(wp) {
-    if (wp ===null) return '';
+    if (!isValidPoint(wp) || wp.type!==Point.W_PT) return '';
     let s;
     const lonStr = sprintf('%.5f',wp.getLon());
     const latStr = sprintf('%.5f',wp.getLat());

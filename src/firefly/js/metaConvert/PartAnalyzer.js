@@ -345,7 +345,7 @@ function analyzeImageResult({part, request, table, row, dlData, fileOnServer,tit
 
     const sourceObsCoreData= dlData ? dlData.sourceObsCoreData : getObsCoreData(table,row);
 
-    return dpdtImage({name:ddTitleStr,
+    return dpdtImage({name:ddTitleStr, dlData,
         activate: createSingleImageActivate(newReq,imageViewerId,table?.tbl_id,row),
         extraction: createSingleImageExtraction(newReq, sourceObsCoreData, dlData ),
         request:newReq, override, interpretedData, requestDefault:Boolean(defaultPart)});

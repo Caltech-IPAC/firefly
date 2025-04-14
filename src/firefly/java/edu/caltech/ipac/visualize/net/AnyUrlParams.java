@@ -18,7 +18,7 @@ public class AnyUrlParams extends BaseNetParams {
     public static List<String> DEF_EXT_LIST=
             Arrays.asList(
                     "ul", FileUtil.FITS, FileUtil.GZ, FileUtil.TAR, FileUtil.PDF, FileUtil.GZ, FileUtil.REG,
-                    "votable", FileUtil.VOT, FileUtil.XML, FileUtil.TBL, FileUtil.CSV, FileUtil.TSV,
+                    "votable", FileUtil.VOT, FileUtil.XML, FileUtil.TBL, FileUtil.CSV, FileUtil.TSV, FileUtil.TXT,
                     FileUtil.jpeg, FileUtil.jpg, FileUtil.png, FileUtil.bmp, FileUtil.gif, FileUtil.tiff, FileUtil.tif);
 
     private final static int MAX_LENGTH = 30;

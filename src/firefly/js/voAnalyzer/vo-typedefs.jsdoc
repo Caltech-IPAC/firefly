@@ -51,11 +51,10 @@
  * @prop {boolean} bBand
  * @prop {boolean} cisxPrimaryQuery
  * @prop {boolean} cisxConcurrentQuery
- * @prop {boolean} isTar
- * @prop {boolean} isGzip
  * @prop {boolean} isSimpleImage
  * @prop {boolean} isDownloadOnly
  * @prop {boolean} cutoutFullPair
+ * @prop {boolean} usableEntry
  */
 
 

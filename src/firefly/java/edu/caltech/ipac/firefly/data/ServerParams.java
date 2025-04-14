@@ -179,7 +179,9 @@ public class ServerParams {
 
     public static final String INIT_APP = "CmdInitApp";
     public static final String JSON_PROPERTY= "CmdJsonProperty";
+    public static final String TEXT_FILE= "CmdTextFile";
     public static final String LOGOUT = "CmdLogout";
+    public static final String MAX_FILE_SIZE = "maxFileSize";
     public static final String TILE_SIZE = "tileSize";
     public static final String DATA_COMPRESS = "dataCompress";
     public static final String POINT_SIZE= "pointSize";
