@@ -19,6 +19,7 @@
     "blissfuljs": "~1.0",
     "chroma-js": "~2.4.0",
     "core-js": "~3.37",
+    "dompurify": "~3.2.5",
     "enum": "~3.0",
     "fixed-data-table-2": "~2.0.4",
     "immutability-helper": "~3.1",

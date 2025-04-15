@@ -23,7 +23,7 @@ public interface JobCompletedHandler extends Subscriber {
         if (!JobCompletedEvent.isJobCompletedEvent(msg)) return;
 
         JobInfo jobInfo = JobManager.JobEvent.getJobInfo(msg);
-        String host = jobInfo.getAuxData().getRefHost();
+        String host = jobInfo.getMeta().getRunHost();
         if (host != null && host.equals(JobUtil.hostName())) {
             processEvent(new JobCompletedEvent(jobInfo), jobInfo);
         }

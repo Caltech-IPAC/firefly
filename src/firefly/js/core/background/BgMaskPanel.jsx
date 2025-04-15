@@ -42,7 +42,7 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, mask, show
     };
 
     const doCancel = () => {
-        if (jobInfo) dispatchJobRemove(jobInfo.jobId);
+        if (jobInfo) dispatchJobRemove(jobInfo?.meta?.jobId);
         doHide();
     };
 
@@ -67,7 +67,7 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, mask, show
 
 function MaskP({msg, jobInfo, children, mask=<Skeleton/>, ...props}) {
     const showInfo = () => {
-        showJobInfo(jobInfo.jobId);
+        showJobInfo(jobInfo?.meta?.jobId);
     };
 
     return (

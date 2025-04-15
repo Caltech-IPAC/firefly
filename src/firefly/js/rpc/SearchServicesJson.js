@@ -10,7 +10,7 @@
 import {get, pickBy, cloneDeep, has, isUndefined} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
-import {submitJob, getBackgroundJobs, getJobInfo, Phase} from '../core/background/BackgroundUtil.js';
+import {submitJob, getJobInfo, Phase} from '../core/background/BackgroundUtil.js';
 import {dispatchBgJobInfo} from '../core/background/BackgroundCntlr.js';
 import {encodeUrl, updateSet, getCmdSrvSyncURL} from '../util/WebUtil.js';
 

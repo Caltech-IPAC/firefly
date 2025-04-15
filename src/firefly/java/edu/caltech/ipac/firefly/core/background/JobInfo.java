@@ -4,7 +4,6 @@
 
 package edu.caltech.ipac.firefly.core.background;
 
-import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.AppProperties;
 
@@ -50,6 +49,7 @@ public class JobInfo implements Serializable {
     public static final String ERROR_SUMMARY = "errorSummary";
     public static final String ERROR_TYPE = "type";
     public static final String ERROR_MSG = "message";
+    public static final String META = "meta";
     public static final String JOB_INFO = "jobInfo";
 
     // These are additional info that's not in defined in uws:job but is needed by Firefly
@@ -58,16 +58,19 @@ public class JobInfo implements Serializable {
     public static final String PROGRESS_DESC = "progressDesc";
     public static final String JOB_TYPE = "type";
     public static final String SUMMARY = "summary";
-    public static final String DATA_ORIGIN = "dataOrigin";
+    public static final String SVC_URL = "svcUrl";
     public static final String MONITORED = "monitored";
-    public static final String LABEL = "label";
+    public static final String TITLE = "title";
     public static final String SVC_ID = "svcId";
-    public static final String LOCAL_RUN_ID = "localRunId";
-
+    public static final String RUN_HOST = "runHost";
+    public static final String USER_ID = "userId";
+    public static final String USER_KEY = "userKey";
+    public static final String USER_NAME = "userName";
+    public static final String USER_EMAIL = "userEmail";
 
     private String jobId;
     private String runId;
-    private String owner;
+    private String ownerId;
     private Phase phase;
     private Instant quote;
     private Instant creationTime;
@@ -79,12 +82,18 @@ public class JobInfo implements Serializable {
     private List<Result> results = new ArrayList<>();
     private Error error;
 
-    final private AuxData auxData = new AuxData();
+    //meta contains essential information needed to manage the job
+    final private Meta meta = new Meta();
+    //aux holds auxiliary data passed along as part of the usw::jobInfo block.
+    final private Aux aux = new Aux();
 
-    public JobInfo(String id) {
+    public JobInfo() {}
+    public JobInfo(String id) { setJobId(id); }
+
+    public void setJobId(String id) {
         this.jobId = id;
+        if (meta.jobId == null) meta.jobId = id;
     }
-
     public String getJobId() {
         return jobId;
     }
@@ -96,8 +105,11 @@ public class JobInfo implements Serializable {
         this.runId = runId;
     }
 
-    public AuxData getAuxData() {
-        return auxData;
+    public Meta getMeta() {
+        return meta;
+    }
+    public Aux getAux() {
+        return aux;
     }
 
     public Phase getPhase() {
@@ -106,16 +118,6 @@ public class JobInfo implements Serializable {
 
     public void setPhase(Phase phase) {
         this.phase = phase;
-        switch (phase) {
-            case UNKNOWN:
-            case ERROR:
-            case ABORTED:
-                endTime = Instant.now();
-                break;
-            case COMPLETED:
-                endTime = Instant.now();
-                auxData.setProgress(100);
-        }
     }
 
     public Error getError() {
@@ -123,6 +125,7 @@ public class JobInfo implements Serializable {
     }
 
     public void setError(Error error) {
+        setPhase(Phase.ERROR);
         this.error = error;
     }
 
@@ -141,10 +144,10 @@ public class JobInfo implements Serializable {
 
     public void setParams(Map<String,String> params) { this.params = params; }
 
-    public String getOwner() { return owner;}
+    public String getOwnerId() { return ownerId;}
 
-    public void setOwner(String owner) {
-        this.owner = owner;
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
     }
 
     public Instant getCreationTime() {
@@ -186,25 +189,25 @@ public class JobInfo implements Serializable {
      * @return a SrvParam from the flatten params map
      */
     public SrvParam getSrvParams() {
-        return SrvParam.makeSrvParamSimpleMap(params);
+        return SrvParam.makeSrvParamSimpleMap(getMeta().getParams());
     }
 
-    public void copyFrom(JobInfo ji) {
-        if (ji == null || ji == this) return;
+    public void copyFrom(JobInfo extJob) {
+        if (extJob == null || extJob == this) return;
 
-        this.jobId = ji.jobId;
-        this.runId = ji.runId;
-        this.owner = ji.owner;
-        this.phase = ji.phase;
-        this.quote = ji.quote;
-        this.creationTime = ji.creationTime;
-        this.startTime = ji.startTime;
-        this.endTime = ji.endTime;
-        this.executionDuration = ji.executionDuration;
-        this.destruction = ji.destruction;
-        this.params = new HashMap<>(ji.params);
-        this.results = new ArrayList<>(ji.results);
-        this.error = ji.error;
+        this.jobId=extJob.jobId;
+        this.runId = extJob.runId;
+        this.ownerId = extJob.ownerId;
+        this.phase = extJob.phase;
+        this.quote = extJob.quote;
+        this.creationTime = extJob.creationTime;
+        this.startTime = extJob.startTime;
+        this.endTime = extJob.endTime;
+        this.executionDuration = extJob.executionDuration;
+        this.destruction = extJob.destruction;
+        this.params = new HashMap<>(extJob.params);
+        this.results = new ArrayList<>(extJob.results);
+        this.error = extJob.error;
     }
 
 //====================================================================
@@ -219,34 +222,44 @@ public class JobInfo implements Serializable {
      * Only some of this information will be sent to the client, and when it is,
      * it will be placed in the `uws:jobInfo` block.
      */
-    public static class AuxData implements Serializable {
+    public static class Meta implements Serializable {
+        String jobId;
+        String runId;
+        Map<String, String> params = new HashMap<>();
+        String userKey;
+        Job.Type type;
         int progress;
         String progressDesc;
-        Job.Type type;
         String summary;
-        String dataOrigin;
         boolean monitored;
-        String label;
         String svcId;       // the service id that this job is associated with
-        String localRunId;  // Not all services support UWS RUNID.  Store info here instead.
+        String runHost;     // the host where the job is running on
 
         // these are not sent to client
         String eventConnId;
-        String refJobId;    // similar to JOB_ID, but used internally to identify the job
-        String refHost;     // the host where the job is running on
-        UserInfo userInfo;  // firefly user who initiated the job
 
-        public UserInfo getUserInfo() { return userInfo; }
-        public void setUserInfo(UserInfo userInfo) { this.userInfo = userInfo; }
+        public String getJobId() { return jobId;}
+        public void setJobId(String jobId) { this.jobId = jobId; }
 
-        public String getRefJobId() { return refJobId; }
-        public void setRefJobId(String refJobId) { this.refJobId = refJobId;}
+        public String getRunId() { return runId; }
+        public void setRunId(String runId) { this.runId = runId; }
 
-        public String getRefHost() { return refHost; }
-        public void setRefHost(String refHost) { this.refHost = refHost;}
+        public Map<String, String> getParams() { return params; }
+        public void setParams(Map<String, String> params) { this.params = params; }
+
+        public String getUserKey() { return userKey; }
+        public void setUserKey(String userKey) { this.userKey = userKey;}
+
+        public String getRunHost() { return runHost; }
+        public void setRunHost(String runHost) { this.runHost = runHost;}
 
         public int getProgress() { return progress; }
         public void setProgress(int progress) { this.progress = Math.min(Math.max(progress, 0), 100); }
+
+        public void setProgress(int progress, String desc) {
+            setProgress(progress);
+            setProgressDesc(desc);
+        }
 
         public String getProgressDesc() { return progressDesc; }
         public void setProgressDesc(String progressDesc) { this.progressDesc = progressDesc; }
@@ -257,21 +270,42 @@ public class JobInfo implements Serializable {
         public String getSummary() { return summary; }
         public void setSummary(String summary) { this.summary = summary; }
 
-        public String getDataOrigin() { return dataOrigin; }
-        public void setDataOrigin(String dataOrigin) { this.dataOrigin = dataOrigin; }
-
         public boolean isMonitored() { return monitored; }
         public void setMonitored(boolean monitored) { this.monitored = monitored; }
-
-        public String getLabel() { return label; }
-        public void setLabel(String label) { this.label = label; }
 
         public String getSvcId() { return svcId; }
         public void setSvcId(String svcId) { this.svcId = svcId; }
 
-        public String getLocalRunId() { return localRunId; }
-        public void setLocalRunId(String localRunId) { this.localRunId = localRunId; }
-
         public String getEventConnId() { return eventConnId; }
-        public void setEventConnId(String eventConnId) { this.eventConnId = eventConnId; }    }
+        public void setEventConnId(String eventConnId) { this.eventConnId = eventConnId; }
+    }
+
+    /**
+     * Additional information required by Firefly that is not defined in `uws:job`.
+     * Only some of this information will be sent to the client, and when it is,
+     * it will be placed in the `uws:jobInfo` block.
+     */
+    public static class Aux implements Serializable {
+        String userId;
+        String userName;
+        String userEmail;   // may need to be generic so that other user's info can be stored amd passed around
+        String title;
+        String svcUrl;      // the service URL associated with this job
+
+        public String getUserId() { return userId; }
+        public void setUserId(String userId) { this.userId = userId;}
+
+        public String getUserName() { return userName; }
+        public void setUserName(String userName) { this.userName = userName;}
+
+        public String getUserEmail() { return userEmail; }
+        public void setUserEmail(String userEmail) { this.userEmail = userEmail;}
+
+        public String getTitle() { return title; }
+        public void setTitle(String title) { this.title = title; }
+
+        public String getSvcUrl() { return svcUrl; }
+        public void setSvcUrl(String svcUrl) { this.svcUrl = svcUrl; }
+    }
+
 }

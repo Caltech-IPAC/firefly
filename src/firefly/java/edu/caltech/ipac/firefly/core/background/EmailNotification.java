@@ -87,10 +87,10 @@ public class EmailNotification implements JobCompletedHandler {
     }
 
     public static void sendNotification(JobInfo jobInfo) {
-        String email = jobInfo.getAuxData().getUserInfo().getEmail();
-        String name = jobInfo.getAuxData().getUserInfo().getName();
+        String email = jobInfo.getAux().getUserEmail();
+        String name = jobInfo.getAux().getUserName();
         name = isEmpty(name) ? "Astronomer" : name;
-        Job.Type type = jobInfo.getAuxData().type;
+        Job.Type type = jobInfo.getMeta().getType();
 
         if (isEmpty(email)) {
             Logger.getLogger().info("No email address found for job: %s;  skip Email Notification".formatted(jobInfo.getJobId()));
@@ -134,7 +134,7 @@ public class EmailNotification implements JobCompletedHandler {
     public static File makeScript(JobInfo jobInfo, ScriptAttributes type) {
         List<DownloadScript.UrlInfo> urlInfos = ifNotNull(jobInfo.getResults())
                 .get(list -> list.stream().map(r -> new DownloadScript.UrlInfo(r.href(), null)).toList());
-        String id = jobInfo.getAuxData().getRefJobId();
+        String id = jobInfo.getJobId();
         String fname = type == Curl ? "curl_script_%s.sh" : type   == Wget ? "wget_script_%s.sh" : "urls_%s.txt";
         fname = fname.formatted(id.substring(id.length()-4));      // safe; id is always greater than 4 chars
         File script = new File(JobUtil.getJobWorkDir(id), fname);

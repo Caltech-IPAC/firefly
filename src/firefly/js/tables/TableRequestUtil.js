@@ -344,7 +344,7 @@ export function setNoCache(request) {
  * @returns {Request} returns search request from the given jobId
  */
 export function getRequestFromJob(jobId) {
-    const request = getJobInfo(jobId)?.parameters?.[ServerParams.REQUEST];
+    const request = getJobInfo(jobId)?.meta?.parameters?.[ServerParams.REQUEST];
     return request ? JSON.parse(request) : {};
 }
 

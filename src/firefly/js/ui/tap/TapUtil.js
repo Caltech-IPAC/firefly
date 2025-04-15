@@ -11,7 +11,7 @@ import {Logger} from '../../util/Logger.js';
 import {getProp, hashCode} from '../../util/WebUtil.js';
 
 const logger = Logger('TapUtil');
-const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&';
+const qFragment = '/sync?REQUEST=doQuery&LANG=ADQL&RUNID=TAP_SCHEMA&';
 
 export const ADQL_LINE_LENGTH = 100;
 export const ADQL_UPLOAD_TABLE_NAME= 'upload_table';
@@ -335,8 +335,8 @@ async function doLoadObsCoreMetadata(serviceUrl, obscoreTable) {
     }
 }
 
-function makeTapRequest(serviceUrl, QUERY, title) {
-    const url = serviceUrl + qFragment + 'QUERY=' + encodeURIComponent(QUERY);
+function makeTapSchemaRequest(serviceUrl, QUERY, title) {
+    const url = serviceUrl + qFragment +  'QUERY=' + encodeURIComponent(QUERY);
     return makeFileRequest(title, url, undefined, {pageSize: MAX_ROW});
 
 }
@@ -347,7 +347,7 @@ async function loadSchemaDefJoin(serviceUrl) {
                     INNER JOIN tap_schema.tables ON  tap_schema.tables.schema_name = tap_schema.schemas.schema_name
                 `.replace(/\s+/g, ' ').trim();
 
-    const tableModel= await doFetchTable(makeTapRequest(serviceUrl, QUERY, 'loadSchemaDefJoin'));
+    const tableModel= await doFetchTable(makeTapSchemaRequest(serviceUrl, QUERY, 'loadSchemaDefJoin'));
 
     // manually fix duplicate 'description' column because cannot select individual column to rename
     const schemaDesc = tableModel.tableData.columns.find((col) => col.name.toLowerCase().startsWith('description'));
@@ -389,8 +389,8 @@ async function loadSchemaDefNoJoin(serviceUrl) {
     const schemasQuery = 'SELECT * FROM tap_schema.schemas';
     const tablesQuery  = 'SELECT * FROM tap_schema.tables';
 
-    const schemas = await doFetchTable(makeTapRequest(serviceUrl, schemasQuery, 'loadSchemaDefNoJoin-schemas'));
-    const tables  = await doFetchTable(makeTapRequest(serviceUrl, tablesQuery, 'loadSchemaDefNoJoin-tables'));
+    const schemas = await doFetchTable(makeTapSchemaRequest(serviceUrl, schemasQuery, 'loadSchemaDefNoJoin-schemas'));
+    const tables  = await doFetchTable(makeTapSchemaRequest(serviceUrl, tablesQuery, 'loadSchemaDefNoJoin-tables'));
 
     const schemaIdx = getColumnIdx(schemas, 'schema_index');
     const schemaNameIdx = getColumnIdx(schemas, 'schema_name');

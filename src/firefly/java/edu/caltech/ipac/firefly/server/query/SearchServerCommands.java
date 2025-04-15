@@ -13,7 +13,6 @@ import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.core.background.JobInfo;
 import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.core.background.JobUtil;
-import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.core.background.ServCmdJob;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.data.ServerParams;
@@ -50,11 +49,9 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
 import java.util.List;
 
 import static edu.caltech.ipac.firefly.data.ServerParams.*;
-import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
@@ -66,7 +63,7 @@ public class SearchServerCommands {
     public static class TableSearch extends ServCmdJob {
         public Job.Type getType() {
             JobInfo jInfo = JobManager.getJobInfo(getJobId());
-            Type type = jInfo == null || jInfo.getAuxData().getType() == null ? Type.SEARCH : jInfo.getAuxData().getType();
+            Type type = jInfo == null || jInfo.getMeta().getType() == null ? Type.SEARCH : jInfo.getMeta().getType();
             return type;
         }
 
@@ -347,12 +344,10 @@ public class SearchServerCommands {
             JobInfo local = isEmpty(jobId) ? null : JobManager.getJobInfo(jobId);
 
             if (uws != null && local != null) {
-                // apply additional local info as needed
-                applyIfNotEmpty(local.getAuxData().getLocalRunId(), v -> uws.getAuxData().setLocalRunId(v));
+                local.copyFrom(uws);
             }
-
-            if (uws != null) return JobUtil.toJson(uws);
-            return local != null ? JobUtil.toJson(local) : null;
+            return local != null ? JobUtil.toJson(local) :
+                    uws != null ? JobUtil.toJson(uws) : null;
         }
     }
 

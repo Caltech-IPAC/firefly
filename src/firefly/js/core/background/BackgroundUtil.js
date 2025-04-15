@@ -98,7 +98,11 @@ export function getJobInfo(jobId) {
 }
 
 export function isSearchJob(job) {
-    return job?.jobInfo?.type === 'SEARCH' || job?.jobInfo?.type === 'UWS';
+    return ['SEARCH', 'UWS', 'TAP'].includes(job?.meta?.type);
+}
+
+export function isMonitored(job) {
+    return !!job?.meta?.monitored;
 }
 
 /**
@@ -133,6 +137,11 @@ export function isFail(jobInfo) {
 export function isActive(jobInfo) {
     return Phase.get('PENDING | QUEUED | EXECUTING').has(Phase.get(jobInfo?.phase));
 }
+
+export function isExecuting(jobInfo) {
+    return Phase.EXECUTING.is(Phase.get(jobInfo?.phase));
+}
+
 export function isArchived(jobInfo) {
     return Phase.ARCHIVED.is(Phase.get(jobInfo?.phase));
 }
@@ -164,7 +173,7 @@ export function doPackageRequest({dlRequest, searchRequest, selectInfo, bgKey, d
     dispatchComponentStateChange(bgKey, {inProgress:true, hide:false});
     SearchServices.packageRequest(dlRequest, searchRequest, selectInfo, downloadType)
         .then((jobInfo) => {
-            const jobId = jobInfo?.jobId;
+            const jobId = jobInfo?.meta?.jobId;
             if (isNil(jobId))  return;
             dispatchJobAdd(jobInfo);
             const inProgress = !isDone(jobInfo);
@@ -194,7 +203,7 @@ function bgTracker(action, cancelSelf, params={}) {
     const {jobId, key, onComplete, hide} = params;
     const {type, payload:jobInfo} = action || {};
 
-    if ( type === BG_JOB_INFO && jobInfo?.jobId === jobId) {
+    if ( type === BG_JOB_INFO && jobInfo?.meta?.jobId === jobId) {
         if (isDone(jobInfo)) {
             cancelSelf();
             dispatchComponentStateChange(key, {inProgress:false});

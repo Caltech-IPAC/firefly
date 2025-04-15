@@ -111,7 +111,7 @@ public abstract class BaseGator extends EmbeddedDbProcessor {
             boolean isPost = isPost(req);
             URL url = createURL(req, isPost);
 
-            ifNotNull(getJob()).then( j -> updateJobInfo(j.getJobId(), ji -> ji.getAuxData().setDataOrigin(url.toString())));
+            ifNotNull(getJob()).then( j -> updateJobInfo(j.getJobId(), ji -> ji.getAux().setSvcUrl(url.toString())));
 
             if (isPost) {
                 _postBuilder = new MultiPartPostBuilder(url.toString());

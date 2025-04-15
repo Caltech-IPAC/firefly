@@ -5,7 +5,7 @@ import moment from 'moment';
 import {uniq} from 'lodash';
 
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent';
-import {getBackgroundInfo, getJobInfo, getPhaseTips, isActive, isArchived, isDone, isFail, isSearchJob, isSuccess, Phase} from './BackgroundUtil';
+import {getBackgroundInfo, getJobInfo, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, Phase} from './BackgroundUtil';
 import {TablePanel} from '../../tables/ui/TablePanel';
 import {getAppOptions} from '../AppDataCntlr';
 import {dispatchBgJobInfo, dispatchBgSetInfo, dispatchJobCancel, dispatchJobRemove} from './BackgroundCntlr';
@@ -70,7 +70,7 @@ export function makeBackgroundMonitorMenuItem() {
     const label = getAppOptions()?.background?.history?.label || 'Job Monitor';
     const TabRenderer =  React.forwardRef((props, ref) => {
         const {jobs={}} = useStoreConnector(() => getBackgroundInfo());
-        const loading = Object.values(jobs).some((j) => isActive(j));
+        const loading = Object.values(jobs).some((j) => isExecuting(j));
         return (
             <Tab ref={ref} {...props}>
                 {loading && <ListItemDecorator>{workingIndicator}</ListItemDecorator>}
@@ -220,15 +220,15 @@ function PhaseRenderer({cellInfo}) {
 
 function ControlRenderer({cellInfo}) {
     const {value:jobId} = cellInfo;
-    const job = getJobInfo(jobId);
-    if (!job?.jobId) return null;
+    const job = useStoreConnector(() => getJobInfo(jobId), [jobId]);
+    if (!job?.meta?.jobId) return null;
 
     return  (
         <Stack mx={2} direction='row' justifyContent='right'>
             <Progress job={job}/>
             <Results job={job}/>
-            <Abort job={job}/>
             <InfoPopup job={job}/>
+            <Abort job={job}/>
             <Delete job={job}/>
         </Stack>
     );
@@ -237,32 +237,33 @@ function ControlRenderer({cellInfo}) {
 function Delete({job}) {
     const doDelete = () => {
         showYesNoPopup('Are you sure that you want to delete this Job?',(id, yes) => {
-            if (yes) dispatchJobRemove(job.jobId);
+            if (yes) dispatchJobRemove(job?.meta?.jobId);
             dispatchHideDialog(id);
         });
     };
-    return isDone(job) && <IconButton  title={`Delete job ${job.jobId}`} color='danger' onClick={doDelete}><DeleteOutlineOutlinedIcon/></IconButton>;
+    return isDone(job) && <IconButton  title={`Delete job ${job?.meta?.jobId}`} color='danger' onClick={doDelete}><DeleteOutlineOutlinedIcon/></IconButton>;
 }
 
 function Abort({job}) {
     if (!Phase.EXECUTING.is(job?.phase)) return null;
-    return <IconButton  title={`Abort job ${job.jobId}`} color='danger' onClick={() => dispatchJobCancel(job.jobId)}><StopCircleOutlinedIcon/></IconButton>;
+    const title = job?.jobInfo?.title || job.jobId;
+    return <IconButton  title={`Abort job ${title}`} color='danger' onClick={() => dispatchJobCancel(job?.meta?.jobId)}><StopCircleOutlinedIcon/></IconButton>;
 }
 
 function InfoPopup({job}) {
-    return <InfoButton color='warning' iconButtonSize='34px' onClick={() => showJobInfo(job.jobId)}/>;
+    return <InfoButton color='warning' iconButtonSize='34px' onClick={() => showJobInfo(job?.meta?.jobId)}/>;
 }
 
 
 function Progress({job}) {
     if (!Phase.EXECUTING.is(job?.phase)) return null;
-    return <Button loading title={job?.jobInfo?.progressDesc} variant='plain' />;
+    return <Button loading title={job?.meta?.progressDesc} variant='plain' />;
 }
 
 function Results({job}) {
     if (!isSuccess(job)) return null;
     if (isSearchJob(job)) {
-        return <IconButton  title='Show Search Result' color='success' onClick={() => showTable(job.jobId)}><InsightsIcon/></IconButton>;
+        return <IconButton  title='Show Search Result' color='success' onClick={() => showTable(job?.meta?.jobId)}><InsightsIcon/></IconButton>;
     } else if (job?.results?.length === 1) {
         return <DownloadBtn job={job}/>;
     } else {
@@ -271,7 +272,7 @@ function Results({job}) {
 }
 
 function DownloadBtn({job, index=0}) {
-    const dlState = useStoreConnector( () => getJobInfo(job.jobId)?.downloadState?.[index], [job.jobId, index]);
+    const dlState = useStoreConnector( () => getJobInfo(job?.meta?.jobId)?.downloadState?.[index], [job?.meta?.jobId, index]);
     const stateMap = (state) => ({
         DONE: ['neutral', 'Downloaded'],
         FAIL: ['danger', 'Download may have failed or timed out'],
@@ -299,13 +300,13 @@ function convertToTableModel(jobs, tbl_id) {
 
     const data = jobs?.map((job) =>
         [
-            job.jobInfo?.label ?? job.jobId,
-            job.jobInfo?.svcId,
-            job.jobInfo?.type,
+            job.jobInfo?.title ?? job.meta.jobId,
+            job.meta?.svcId,
+            job.meta?.type,
             job.startTime && moment.utc(job.startTime).format('YYYY-MM-DD HH:mm:ss'),
             job.endTime && moment.utc(job.endTime).format('YYYY-MM-DD HH:mm:ss'),
             job.phase,
-            job.jobId
+            job.meta?.jobId
         ]);
 
     // add enum values for Phase column
@@ -354,7 +355,7 @@ function doDownload(job, index) {
 
 function getMonitoredJob(jobMap) {
     return (jobMap ? Object.values(jobMap) : [])
-        .filter((job) => job?.jobInfo?.monitored)                   // only monitored jobs
+        .filter((job) => job?.meta?.monitored)                   // only monitored jobs
         .sort((a,b) => b.startTime?.localeCompare(a.startTime));
 }
 

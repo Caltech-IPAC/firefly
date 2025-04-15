@@ -666,7 +666,7 @@ function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
 
     const onComplete = (jobInfo) => {
         if (isSuccess(jobInfo)) {
-            syncFetch(getRequestFromJob(jobInfo.jobId), hlRowIdx, dispatch, tbl_id);
+            syncFetch(getRequestFromJob(jobInfo?.meta?.jobId), hlRowIdx, dispatch, tbl_id);
         } else {
             dispatch({type: TABLE_UPDATE, payload: TblUtil.createErrorTbl(tbl_id, getErrMsg(jobInfo))});
         }
@@ -681,7 +681,7 @@ function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
     dispatchComponentStateChange(bgKey, {inProgress:true, hide:false});
     asyncFetchTable(request)
         .then ( (jobInfo) => {
-            const jobId = jobInfo?.jobId;
+            const jobId = jobInfo?.meta?.jobId;
             dispatchJobAdd(jobInfo);
 
             const inProgress = !isDone(jobInfo);

@@ -48,7 +48,7 @@ public abstract class ServCmdJob extends ServCommand implements Job {
 
     public void setJobId(String jobId) {
         this.jobId = jobId;
-        updateJobInfo(jobId, ji -> ji.setParams(params.flatten()));
+        updateJobInfo(jobId, ji -> ji.getMeta().setParams(params.flatten()));
     }
 
     public Worker getWorker() {
@@ -64,9 +64,9 @@ public abstract class ServCmdJob extends ServCommand implements Job {
             this.worker = worker;
             worker.setJob(this);
             sendUpdate(getJobId(), ji -> {      // needs to update clients, because these values may change after the job has submitted
-                ji.getAuxData().setType(worker.getType());
-                ji.getAuxData().setLabel(worker.getLabel());
-                ji.getAuxData().setSvcId(worker.getSvcId());
+                ji.getMeta().setType(worker.getType());
+                ji.getAux().setTitle(worker.getLabel());
+                ji.getMeta().setSvcId(worker.getSvcId());
             });
         }
     }

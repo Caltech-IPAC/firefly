@@ -211,7 +211,7 @@ function reducer(state={}, action={}) {
 
     switch (action.type) {
         case BG_JOB_INFO:
-            const {jobId} = action.payload;
+            const jobId = action.payload?.meta?.jobId;
             let nstate = state;
             if (jobId) {
                 const updates = {jobs: {[jobId]: action.payload}};
