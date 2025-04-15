@@ -15,6 +15,8 @@ export const POLYGON = 'polygon';
 export const UPLOAD = 'upload';
 export const RANGE = 'range';
 export const CIRCLE = 'circle';
+export const WAVELENGTH = 'wavelength';
+export const SIA_OBSCORE_OPS = 'siaObsCoreOps';
 
 /**
  * @param {Object} obj
@@ -52,6 +54,34 @@ export function makeTargetDef({
             targetKey: defTargetKey, sRegion,
             targetPanelExampleRow1, targetPanelExampleRow2
         }
+    };
+}
+
+export function makeWavelengthDef({key} ) {
+
+    return {
+        type: WAVELENGTH,
+        key: key ?? WAVELENGTH,
+    };
+}
+
+export function makeObsCoreOps({
+                                   useCalibrationLevel=true,
+                                   useProductType=true,
+                                   useSubType= false,
+                                   useFacility=true,
+                                   useInstrumentName=true,
+                                   useCollection=true } ) {
+
+    return {
+        type: SIA_OBSCORE_OPS,
+        key: SIA_OBSCORE_OPS+'-key',
+        useCalibrationLevel,
+        useProductType,
+        useFacility,
+        useInstrumentName,
+        useCollection,
+        useSubType
     };
 }
 

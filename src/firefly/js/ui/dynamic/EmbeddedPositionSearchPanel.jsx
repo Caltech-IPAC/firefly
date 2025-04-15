@@ -422,6 +422,7 @@ function ConeOp({slotProps,nullAllowed}) {
         max= 1,
         initValue= DEFAULT_INIT_SIZE_VALUE,
         enabled= true,
+        sx={},
     }= slotProps.sizeInput ?? {};
     const {
         targetKey=DEF_TARGET_PANEL_KEY,
@@ -442,7 +443,7 @@ function ConeOp({slotProps,nullAllowed}) {
                 fieldKey: sizeKey, showFeedback: true, nullAllowed: false,
                 label: 'Search Radius',
                 initialState: {unit: 'arcsec', value: initValue+'', min, max},
-                sx: {'.ff-Input': {width: 1}},
+                sx: {'.ff-Input': {width: 1}, ...sx},
                 slotProps: {
                     feedback:{sx: {alignSelf:'center'} },
                 }
@@ -473,7 +474,8 @@ function UploadOp({slotProps, uploadInfo, setUploadInfo}) {
         min= 1 / 3600,
         max= 1,
         initValue= DEFAULT_INIT_SIZE_VALUE,
-        enabled= true
+        enabled= true,
+        sx,
     }= slotProps.sizeInput ?? {};
 
     return (
@@ -487,7 +489,7 @@ function UploadOp({slotProps, uploadInfo, setUploadInfo}) {
                 fieldKey: sizeKey, showFeedback: true, nullAllowed: false,
                 label: 'Search Radius',
                 initialState: {unit: 'arcsec', value: initValue + '', min, max},
-                sx: {'.ff-Input': {width: 1}, pt: 0.5},
+                sx: {'.ff-Input': {width: 1}, pt: 0.5, ...sx},
                 slotProps: {
                     feedback: {sx: {alignSelf: 'center'}},
                 }

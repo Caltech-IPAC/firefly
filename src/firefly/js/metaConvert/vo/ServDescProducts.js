@@ -1,7 +1,7 @@
 import {isEmpty, isNumber} from 'lodash';
 import {getComponentState} from '../../core/ComponentCntlr.js';
 import {getCellValue} from '../../tables/TableUtil.js';
-import {makeCircleString} from '../../ui/dynamic/DynamicUISearchPanel';
+import {CONTEXT_PARAMS_STR, makeCircleString} from '../../ui/dynamic/DynamicUISearchPanel';
 import {isSIAStandardID} from '../../ui/dynamic/ServiceDefTools';
 import {findCutoutTarget, getCutoutErrorStr, getCutoutSize, setCutoutSize} from '../../ui/tap/Cutout';
 import {PlotAttribute} from '../../visualize/PlotAttribute';
@@ -255,22 +255,24 @@ export function createServDescMenuRet({ descriptors, positionWP, table, row,
 }
 
 export function makeUrlFromParams(url, serDef, rowIdx, userInputParams = {}) {
-    const sendParams = {};
+    if (!url) return undefined;
+    const sendParams = new URLSearchParams();
     serDef?.serDefParams  // if it is defaulted, then set it
         ?.filter(({value}) => isDefined(value))
-        .forEach(({name, value}) => sendParams[name] = value);
+        .forEach(({name, value}) => sendParams.set(name, value));
     serDef?.serDefParams // if it is referenced, then set it
         ?.filter(({ref}) => ref)
-        .forEach((p) => sendParams[p.name] = getCellValue(serDef.sdSourceTable, rowIdx, p.colName));
-    userInputParams && Object.entries(userInputParams).forEach(([k, v]) => v && (sendParams[k] = v));
-    const newUrl = new URL(url);
-    if (!newUrl) return undefined;
-    Object.entries(sendParams).forEach(([k, v]) => newUrl.searchParams.append(k, v));
-    logServiceDescriptor(newUrl, sendParams, newUrl.toString());
-    return newUrl.toString();
+        .forEach((p) => sendParams.set(p.name, getCellValue(serDef.sdSourceTable, rowIdx, p.colName)));
+    Object.entries(userInputParams)
+        .forEach(([k, v]) => v && k!==CONTEXT_PARAMS_STR && sendParams.set(k,v));
+
+    const additionalParams= new URLSearchParams(userInputParams?.[CONTEXT_PARAMS_STR]);
+    const params= new URLSearchParams([...sendParams, ...additionalParams]);
+    const newUrl= params.size ? url+'?'+params.toString() : url;
+    logServiceDescriptor(newUrl, params, newUrl);
+    return newUrl;
 }
-function logServiceDescriptor(baseUrl, sendParams, newUrl) {
-     //console.log(`service descriptor base URL: ${baseUrl}`);
-     //Object.entries(sendParams).forEach(([k,v]) => console.log(`param: ${k}, value: ${v}`));
-     //console.log(`service descriptor new URL: ${newUrl}`);
+function logServiceDescriptor(baseUrl, params, newUrl) {
+     // console.log(`service descriptor base URL: ${baseUrl}`);
+     // console.log(`service descriptor new URL: ${newUrl}`);
 }

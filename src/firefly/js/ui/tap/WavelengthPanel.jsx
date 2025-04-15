@@ -253,8 +253,8 @@ export function ObsCoreWavelengthSearch({ initArgs, serviceId, slotProps, useSIA
     });
 
     useEffect(() => {
-        setConstraintFragment(panelPrefix, constraintResult);
-        return () => setConstraintFragment(panelPrefix, '');
+        setConstraintFragment?.(panelPrefix, constraintResult);
+        return () => setConstraintFragment?.(panelPrefix, '');
     }, [constraintResult]);
 
     useFieldGroupWatch([...fdDefsKeys, obsCoreWvlFieldKeys.wvlContains, obsCoreWvlFieldKeys.wvlMin, obsCoreWvlFieldKeys.wvlMax],

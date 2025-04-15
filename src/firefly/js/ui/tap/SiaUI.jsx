@@ -1,9 +1,9 @@
-import React from 'react';
 import {Stack, Typography} from '@mui/joy';
+import React from 'react';
 import {ObjectIDSearch} from './ObjectIDSearch';
 import {ObsCoreSearch} from './ObsCore';
 import {ExposureDurationSearch} from './ObsCoreExposureDuration';
-import {ALL_FALLBACK_META_OPTIONS, getServiceMetaOptions, getSiaServiceId} from './SiaUtil';
+import {getServiceMetaOptions, getSiaServiceId, makeObsCoreMetadataModel} from './SiaUtil';
 import {SpatialSearch} from './SpatialSearch';
 import {ObsCoreWavelengthSearch} from './WavelengthPanel';
 
@@ -34,84 +34,8 @@ export function SiaUI({initArgs, serviceUrl, serviceLabel, siaMeta, sx={}}) {
     );
 }
 
-const metaNameMap= {
-    BAND: 'band',
-    CALIB:'calib',
-    COLLECTION: 'obs_collection',
-    DPTYPE: 'dataproduct_type',
-    EXPTIME: 'exptime',
-    FACILITY: 'facility',
-    FORMAT: 'format',
-    FOV: 'fov',
-    ID:'ID',
-    INSTRUMENT:'instrument_name',
-    POL: 'POL',
-    POS:'POS',
-    SPATRES: 'spatres',
-    SPECRP: 'specrp',
-    TARGET:'target',
-    TIME:'time',
-    TIMERE:'timere'
-};
-
-const toColName= (name) => metaNameMap[name]??name;
-
 const importantMetaParams= [ 'DPTYPE', 'BAND', 'CALIB', 'COLLECTION', 'FACILITY', 'INSTRUMENT' ];
 
 const hasSomeImportantMeta= (siaMeta) =>
     Boolean(siaMeta?.params?.some( (entry) => importantMetaParams.includes(entry.name.toUpperCase())) );
 
-function makeObsCoreMetadataModel(siaMeta,fallbackMetaOptions=[]) {
-
-    const rows= siaMeta?.params
-        ?.map( ({name,options}) => {
-            if (!options) return [];
-            return options .split(',') .filter(Boolean).map( (v) => [ toColName(name), v]);
-        })
-        .flat() ?? [];
-
-    fallbackMetaOptions.forEach( (entry) => {
-        const name= toColName(entry.name);
-        if (rows.some( (row) => row[0]===name)) return;
-        const values= entry.options.split(',').map( (s) => s.trim());
-        values.forEach( (v) => rows.push([name,v]));
-    });
-
-    ALL_FALLBACK_META_OPTIONS.forEach( (entry) => {
-        const name= toColName(entry.name);
-        if (rows.some( (row) => row[0]===name)) return;
-        const values= entry.options.split(',').map( (s) => s.trim());
-        values.forEach( (v) => rows.push([name,v]));
-    });
-
-    ALL_FALLBACK_META_OPTIONS.forEach( (entry) => {
-        const name= toColName(entry.name);
-        if (!entry.optionNames && !entry.values) return;
-        const optionValueAry= entry.options.split(',').map( (s) => s.trim());
-        const optionNameAry= entry.optionNames.split(',').map( (s) => s.trim());
-        if (optionNameAry.length!==optionValueAry.length) return;
-
-        const optionRowsWithoutNames= rows.filter( (r) => r[0]===name && r[1] && !r[2]);
-
-        optionRowsWithoutNames.forEach( (r) => {
-            const idx= optionValueAry.findIndex( (v) => v===r[1]);
-            if (idx===-1) return;
-            r[2]= optionNameAry[idx];
-        });
-    });
-
-    return {
-        tableMeta: siaMeta.params.reduce( (obj, {name,desc}) => ( {...obj, [name]: desc}), {}),
-        tableData: {
-            columns: [
-                {name:'column_name', type:'char'},
-                {name:'column_options', type:'char'},
-                {name:'column_labels', type:'char'}
-            ],
-            data: rows,
-        },
-        title: 'loadObsCoreMetadata',
-        type: 'table',
-        totalRows: rows.length
-    };
-}

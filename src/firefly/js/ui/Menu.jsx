@@ -7,7 +7,7 @@ import {
     Stack, Tab, TabList, Tabs, Tooltip, Typography
 } from '@mui/joy';
 import {tabClasses} from '@mui/joy/Tab';
-import {debounce} from 'lodash';
+import {debounce, isFunction} from 'lodash';
 import React, {forwardRef, memo, useCallback, useContext, useEffect, useRef, useState} from 'react';
 import shallowequal from 'shallowequal';
 import {
@@ -82,7 +82,7 @@ export function Menu() {
         if (!selected) return;
         const selectedItem= menuItems.find(({action}) => (action===selected));
         if (!selectedItem) return;
-        const isVisible=  selectedItem.visible ?? selectedItem.primary;
+        const isVisible= itemVisible(selectedItem);
         if (!isVisible && selected === selectedItem.action) {
             const newMenuItems= menuItems.map( (mi) => mi===selectedItem ? {...mi, visible:true} : mi);
             updateMenu(appTitle, {...menu, menuItems:newMenuItems, selected});
@@ -194,6 +194,7 @@ function MenuTabBar({menuTabItems=[], size, selected, dropDown, displayMask, set
     const tabItems= [
         <ResultsTab {...{key:'results-tab', size, color, variant, ref: (c) => setElement('results-tab ',c)}}/>,
         ...menuTabItems
+            .filter( isItemEnabled)
             .map(({action,label,TabRenderer,title}, idx) =>
             {
                 const tabProps = {key: idx, value:action, disableIndicator:true, color, variant,
@@ -237,14 +238,23 @@ function MenuTabBar({menuTabItems=[], size, selected, dropDown, displayMask, set
 }
 
 function itemVisible(menuItem) {
-     const {visible, primary,type} = menuItem;
+     const {visible, type} = menuItem;
      if (type==='COMMAND') return true;
-    return visible ?? primary;
+    return Boolean(visible ?? isItemPrimary(menuItem));
+}
+
+function isItemEnabled(item={}) {
+    const {enabled=true}= item;
+    return isFunction(enabled) ? Boolean(enabled(item)) : enabled;
+}
+
+function isItemPrimary(item={}) {
+    const {primary=false}= item;
+    return isFunction(primary) ? Boolean(primary(item)) : primary;
 }
 
 function updateMenu(appTitle, menu) {
-    const pref= menu.menuItems
-        .map( (mi)  => [mi.action, Boolean(mi.visible ?? mi.primary)] );
+    const pref= menu.menuItems.map( (mi)  => [mi.action, itemVisible(mi)] );
     dispatchAddPreference(MENU_PREF_ROOT+appTitle, Object.fromEntries(pref));
     dispatchSetMenu(menu);
 }
@@ -287,6 +297,7 @@ function getButtonSize(tabWidths,tabBarElement,lastButtonSize, showHelp,showUser
     }
     return 'sm';
 }
+
 
 
 function getButtonDisplayMask(tabWidths,tabBarElement,selectedTabIdx, showHelp,showUserInfo) {
@@ -384,7 +395,7 @@ function SideBarView({menu,appTitle,closeSideBar,haveResults,selected,dropDown,
                                 variant='outlined'
                                 onClick={() => {
                                     const newMI= menu.menuItems.map( (mi) => ({...mi, visible: undefined}) );
-                                    const selected= newMI.find( (m) => m.action===menu.selected && m.primary)?.action;
+                                    const selected= newMI.find( (m) => m.action===menu.selected && isItemPrimary(m))?.action;
                                     if (!selected) dispatchHideDropDown();
                                     updateMenu(appTitle, {...menu, selected, menuItems: newMI});
                                 }}>
@@ -435,6 +446,7 @@ function SideBarView({menu,appTitle,closeSideBar,haveResults,selected,dropDown,
                         {/* Other no-category items, if any */}
                         {Boolean(noCatItems?.length) &&
                             menuItems
+                                .filter( isItemEnabled)
                                 .filter( ({category}) => !category )
                                 .map( (item) => (<SideBarItem {...{key:item.label, item,selected,menu,closeSideBar, allowMenuHide, sx:itemLayoutSx}}/>) )
                         }
@@ -446,6 +458,7 @@ function SideBarView({menu,appTitle,closeSideBar,haveResults,selected,dropDown,
                             {Boolean(cat) && <Typography key={cat} level='title-sm'>{cat}</Typography>}
                             {
                                 menuItems
+                                    .filter( isItemEnabled)
                                     .filter( ({category}) => category===cat )
                                     .map( (item) => (<SideBarItem {...{key:item.label, item,selected,menu,closeSideBar, allowMenuHide, sx:itemLayoutSx}}/>) )
                             }
@@ -460,7 +473,7 @@ function SideBarView({menu,appTitle,closeSideBar,haveResults,selected,dropDown,
 function tabsUpdated(menu) {
     if (!menu?.menuItems) return false;
     return menu.menuItems.some( (mi) => {
-        return (mi.visible??mi.primary)!==mi.primary;
+        return (mi.visible??isItemPrimary(mi))!==isItemPrimary(mi);
     });
 }
 
@@ -562,12 +575,12 @@ function SideBarItem({item,selected,menu,closeSideBar,allowMenuHide,icon,sx}) {
     };
 
     if (!item) return <div>missing</div>;
-    const {title,action,label,visible,primary}= item;
+    const {title,action,label}= item;
     return (
         <Stack direction='row' sx={sx}>
             <ToolbarButton tip={getTip(title,action)} icon={icon} text={label}
                            pressed={selected===action} onClick= {() => onClick(item)}  />
-            {(allowMenuHide && (visible ?? primary)) &&
+            {(allowMenuHide && itemVisible(item)) &&
                 <Chip {...{
                     className: 'hideTab',
                     onClick:() => {
