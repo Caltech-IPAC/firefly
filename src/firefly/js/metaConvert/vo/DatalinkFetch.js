@@ -47,18 +47,21 @@ export async function fetchSemanticList(tableOrId,row=0) {
         const table = getTableModel(tableOrId);
         if (!table) return [];
         let url;
-        if (isObsCoreLike(table) || isFormatDataLink(table, row)) {
+        if (isObsCoreLike(table) && isFormatDataLink(table, row)) {
             url = getObsCoreAccessURL(table, row);
-        } else {
-            const dlDescriptor = getServiceDescriptors(table)?.filter((dDesc) => isDataLinkServiceDesc(dDesc))[0];
-            url = dlDescriptor?.accessURL;
-            url = makeDlUrl(dlDescriptor, table, row);
+        }
+        if (!url) {
+            const serDefAry = getServiceDescriptors(table);
+            if (serDefAry) {
+                const dlDescriptor = serDefAry && serDefAry.filter((dDesc) => isDataLinkServiceDesc(dDesc))[0];
+                if (dlDescriptor?.accessURL) url = makeDlUrl(dlDescriptor, table, row);
+            }
         }
         if (!url) return [];
         return await fetchDatalinkTableSemanticList(url);
     }
     catch (err) {
-        console.error('fetchSemanticList call failed');
+        console.error('fetchSemanticList call failed',err);
         return [];
     }
 }
