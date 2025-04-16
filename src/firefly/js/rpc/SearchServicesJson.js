@@ -10,7 +10,7 @@
 import {get, pickBy, cloneDeep, has, isUndefined} from 'lodash';
 import {ServerParams} from '../data/ServerParams.js';
 import {doJsonRequest} from '../core/JsonUtils.js';
-import {submitJob, getBackgroundJobs, getJobInfo} from '../core/background/BackgroundUtil.js';
+import {submitJob, getBackgroundJobs, getJobInfo, Phase} from '../core/background/BackgroundUtil.js';
 import {dispatchBgJobInfo} from '../core/background/BackgroundCntlr.js';
 import {encodeUrl, updateSet, getCmdSrvSyncURL} from '../util/WebUtil.js';
 
@@ -209,7 +209,7 @@ export function removeBgJob(jobId) {
     const params = {[ServerParams.JOB_ID]: jobId};
     return doJsonRequest(ServerParams.REMOVE_JOB, params).then( (jobInfo) => {
         if (!jobInfo) {     // job is not on the server.. remove it locally
-            dispatchBgJobInfo(updateSet(getJobInfo(jobId), 'jobInfo.monitored', false));
+            dispatchBgJobInfo(updateSet(getJobInfo(jobId), 'phase', Phase.ARCHIVED));
         }
     });
 }
@@ -222,6 +222,16 @@ export function removeBgJob(jobId) {
 export function cancel(jobId) {
     const params = {[ServerParams.JOB_ID]: jobId};
     return doJsonRequest(ServerParams.CANCEL, params);
+}
+
+/**
+ * Archive this job
+ * @param {string} jobId background job id
+ * @return {Promise}
+ */
+export function archive(jobId) {
+    const params = {[ServerParams.JOB_ID]: jobId};
+    return doJsonRequest(ServerParams.ARCHIVE, params);
 }
 
 export function uwsJobInfo(jobUrl, jobId) {

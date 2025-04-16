@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -28,6 +29,7 @@ import java.util.Map;
 public class JobInfo implements Serializable {
 
     public enum Phase {PENDING, QUEUED, EXECUTING, COMPLETED, ERROR, ABORTED, HELD, SUSPENDED, ARCHIVED, UNKNOWN}
+    public static final Set<Phase> TERMINATED_PHASES = Set.of(Phase.COMPLETED, Phase.ERROR, Phase.ABORTED);
     private static final int LIFE_SPAN = AppProperties.getIntProperty("job.lifespan", 60*60*24);        // default lifespan in seconds; kill job if exceed
 
     // these are uws:job defined properties
@@ -59,6 +61,7 @@ public class JobInfo implements Serializable {
     public static final String DATA_ORIGIN = "dataOrigin";
     public static final String MONITORED = "monitored";
     public static final String LABEL = "label";
+    public static final String SVC_ID = "svcId";
     public static final String LOCAL_RUN_ID = "localRunId";
 
 
@@ -224,6 +227,7 @@ public class JobInfo implements Serializable {
         String dataOrigin;
         boolean monitored;
         String label;
+        String svcId;       // the service id that this job is associated with
         String localRunId;  // Not all services support UWS RUNID.  Store info here instead.
 
         // these are not sent to client
@@ -261,6 +265,9 @@ public class JobInfo implements Serializable {
 
         public String getLabel() { return label; }
         public void setLabel(String label) { this.label = label; }
+
+        public String getSvcId() { return svcId; }
+        public void setSvcId(String svcId) { this.svcId = svcId; }
 
         public String getLocalRunId() { return localRunId; }
         public void setLocalRunId(String localRunId) { this.localRunId = localRunId; }

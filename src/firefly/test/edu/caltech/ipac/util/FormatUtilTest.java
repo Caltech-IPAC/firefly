@@ -131,5 +131,9 @@ public class FormatUtilTest extends ConfigTest {
 
         tfile = FileLoader.resolveFile("edu/caltech/ipac/firefly/server/query/ptf-lc.tbl");
         assertEquals(tfile.getName(), "text/plain", FormatUtil.getMimeType(tfile).mime());
+
+        tfile = FileLoader.resolveFile("stripe82-testfits/calexp-i-0-366,0.fits.gz");
+        String mtype = FormatUtil.getMimeType(tfile).mime();
+        assertEquals(tfile.getName(), "application/gzip", mtype);
     }
 }

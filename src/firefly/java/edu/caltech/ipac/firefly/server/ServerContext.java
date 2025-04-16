@@ -4,8 +4,8 @@
 package edu.caltech.ipac.firefly.server;
 
 import com.sun.management.OperatingSystemMXBean;
+import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
-import edu.caltech.ipac.firefly.server.db.DbMonitor;
 import edu.caltech.ipac.firefly.server.query.SearchProcessorFactory;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.VersionUtil;
@@ -30,7 +30,6 @@ import javax.websocket.server.HandshakeRequest;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -855,12 +854,11 @@ public class ServerContext {
                 ServletContext cntx = servletContextEvent.getServletContext();
                 ServerContext.init(cntx.getContextPath(), cntx.getServletContextName(), cntx.getRealPath(WEBAPP_CONFIG_LOC));
                 VersionUtil.initVersion(cntx);  // can be called multiple times, only inits on the first call
-                // we're using DuckDB exclusively for embedded database.  No need for cleanup.
-//                SCHEDULE_TASK_EXEC.scheduleAtFixedRate(
-//                        () -> DbMonitor.cleanup(false),
-//                        DbMonitor.CLEANUP_INTVL,
-//                        DbMonitor.CLEANUP_INTVL,
-//                        TimeUnit.SECONDS);
+                SCHEDULE_TASK_EXEC.scheduleAtFixedRate(
+                        () -> JobManager.cleanup(),
+                        JobManager.CLEANUP_INTVL_MINS,
+                        JobManager.CLEANUP_INTVL_MINS,
+                        TimeUnit.MINUTES);
             } catch (Throwable e) {
                 e.printStackTrace();
             }

@@ -58,7 +58,7 @@ const imageStubMap = {
  * @prop {string} text text representation of the value, e.g. after number format
  * @prop {boolean} isArray true if value is an array
  * @prop {int} absRowIdx the absolute row index
- * @prop {string} textAlign one of middle, right, left
+ * @prop {string} textAlign one of center, right, left, or auto
  * @prop {TableModel} tableModel the full table model; data, columns, meta, etc
  */
 
@@ -261,13 +261,13 @@ function getCellInfo({col, rowIndex, data, columnKey, tbl_id, startIdx=0}) {
     const isArray = Array.isArray(value);
     let text = formatValue(col, value);
     let rvalues = [value];
-    let textAlign = col.align;
+    let textAlign = col.align ?? 'auto';
+    if (textAlign === 'auto') textAlign = isColumnType(col, COL_TYPE.NUMBER);
 
     if (col.links) {
         rvalues =  col.links.map( ({value:val}) => applyTokenSub(tableModel, val, absRowIdx, value) );
         text = rvalues.join(' ');
     }
-    textAlign = textAlign || rvalues.length > 1 ? 'middle': isColumnType(col, COL_TYPE.NUMBER) ? 'right' : 'left';
     return {col, value, rvalues, text, isArray, textAlign, absRowIdx, tableModel};
 }
 
@@ -355,7 +355,7 @@ function ActionDropdown({text, actions, onChange}) {
 /**
  * A wrapper tag that handles default styles, textAlign, and actions.
  */
-export const CellWrapper =  React.memo( (props) => {
+export const CellWrapper =  (props) => {
     const {tbl_id, startIdx, CellRenderer, style, columnKey, col, rowIndex, data, height, width} = props;
 
     const cellInfo = getCellInfo({columnKey, col, rowIndex, data, tbl_id, startIdx});
@@ -367,10 +367,10 @@ export const CellWrapper =  React.memo( (props) => {
             {content}
         </Stack>
     );
-
     return CellRenderer?.allowActions ? <ContentEllipsis sx={{height:1, width:1}} {...{textAlign, text}}>{content}</ContentEllipsis> : contentWithWrapper;
+};
 
-}, skipCellRender);
+export const FixedCellWrapper = React.memo( CellWrapper, skipCellRender);
 
 function skipCellRender(prev={}, next={}) {
     const {width, colIdx, rowIndex} = prev;

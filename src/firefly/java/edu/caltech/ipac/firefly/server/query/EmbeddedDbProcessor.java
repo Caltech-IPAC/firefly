@@ -100,6 +100,10 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
     public String getLabel() { return getJob().getParams().getTableServerRequest().getTblTitle(); }
 
+    public String getSvcId() {
+        return getJob().getParams().getTableServerRequest().getSvcId();
+    }
+
     /**
      * Fetches the data for the given search request.  This method should perform a fetch for fresh
      * data.  Caching should not be performed here.

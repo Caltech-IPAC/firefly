@@ -319,6 +319,15 @@ public class SearchServerCommands {
         }
     }
 
+    public static class Archive extends ServCommand {
+
+        public String doCommand(SrvParam params) throws Exception {
+            String jobId = params.getRequired(JOB_ID);
+            JobInfo info = JobManager.sendUpdate(jobId, jobInfo -> jobInfo.setPhase(JobInfo.Phase.ARCHIVED));
+            return JobUtil.toJson(info);
+        }
+    }
+
     public static class SetBgInfo extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {

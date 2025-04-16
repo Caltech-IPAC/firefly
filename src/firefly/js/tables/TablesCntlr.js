@@ -327,7 +327,6 @@ export function dispatchActiveTableChanged(tbl_id, tbl_group='main') {
 
 function tableSearch(action) {
     return (dispatch) => {
-        //dispatch(validate(FETCH_TABLE, action));
         if (!action.err) {
             dispatch(action);
             var {request={}, options={}} = action.payload;
@@ -664,6 +663,7 @@ function syncFetch(request, hlRowIdx, dispatch, tbl_id) {
 
 function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
     unset(request, 'META_INFO.backgroundable');
+
     const onComplete = (jobInfo) => {
         if (isSuccess(jobInfo)) {
             syncFetch(getRequestFromJob(jobInfo.jobId), hlRowIdx, dispatch, tbl_id);
@@ -672,21 +672,23 @@ function asyncFetch(request, hlRowIdx, dispatch, tbl_id) {
         }
     };
 
-    const sentToBg = (jobInfo) => {
+    const hide = (jobInfo) => {
         dispatchTblResultsRemove(tbl_id);
-        dispatchJobAdd(jobInfo);
+        dispatchComponentStateChange(bgKey, {inProgress:false});
     };
 
     const bgKey = TblUtil.makeBgKey(tbl_id);
-    dispatchComponentStateChange(bgKey, {inProgress:true});
+    dispatchComponentStateChange(bgKey, {inProgress:true, hide:false});
     asyncFetchTable(request)
         .then ( (jobInfo) => {
             const jobId = jobInfo?.jobId;
+            dispatchJobAdd(jobInfo);
+
             const inProgress = !isDone(jobInfo);
             dispatchComponentStateChange(bgKey, {inProgress, jobId});
             if (inProgress) {
                 // not done; track progress
-                trackBackgroundJob({jobId, key: bgKey, onComplete, sentToBg});
+                trackBackgroundJob({jobId, key: bgKey, onComplete, hide});
             } else {
                 onComplete(jobInfo);
             }

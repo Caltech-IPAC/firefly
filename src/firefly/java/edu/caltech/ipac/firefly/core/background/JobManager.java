@@ -4,6 +4,7 @@
 
 package edu.caltech.ipac.firefly.core.background;
 
+import edu.caltech.ipac.firefly.api.Async;
 import edu.caltech.ipac.firefly.core.Util.Try;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
@@ -22,6 +23,7 @@ import edu.caltech.ipac.util.cache.CacheKey;
 import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import org.apache.commons.lang.text.StrBuilder;
+import org.json.simple.JSONObject;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
@@ -29,6 +31,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -42,6 +45,7 @@ import static edu.caltech.ipac.firefly.data.ServerParams.EMAIL;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 import static edu.caltech.ipac.firefly.core.background.Job.Type.PACKAGE;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.*;
+import static java.util.Optional.ofNullable;
 
 
 /**
@@ -52,9 +56,13 @@ import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.*;
  */
 public class JobManager {
 
-    private static final int KEEP_ALIVE_INTERVAL = AppProperties.getIntProperty("job.keepalive.interval", 30);    // default keepalive interval in seconds
-    private static final int WAIT_COMPLETE = AppProperties.getIntProperty("job.wait.complete", 1);                // wait for complete after submit in seconds
-    private static final int MAX_PACKAGERS = AppProperties.getIntProperty("job.max.packagers", 10);               // maximum number of simultaneous packaging threads
+    public static final String BG_INFO = "background.info";
+    public static final long CLEANUP_INTVL_MINS = AppProperties.getIntProperty("job.cleanup.interval", 60);     // run cleanup once every 60 minutes
+    private static final int KEEP_ALIVE_INTERVAL = AppProperties.getIntProperty("job.keepalive.interval", 30);  // default keepalive interval in seconds
+    private static final int WAIT_COMPLETE = AppProperties.getIntProperty("job.wait.complete", 1);              // wait for complete after submit in seconds
+    private static final int MAX_PACKAGERS = AppProperties.getIntProperty("job.max.packagers", 10);             // maximum number of simultaneous packaging threads
+    private static final int ARCHIVE_RETENTION_PERIOD = AppProperties.getIntProperty("job.archive.retention.period", 24*7);   // Time in hours to keep a job in the archived state before deletion.  Default to 7 days.
+    private static final int ARCHIVE_AFTER = AppProperties.getIntProperty("job.archive.after", 24*7);           // Time in hours to keep a job after it has completed before archiving.  Default to 7 days.
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static final ExecutorService packagers = Executors.newFixedThreadPool(MAX_PACKAGERS);
@@ -62,7 +70,7 @@ public class JobManager {
     private static final HashMap<String, JobEntry> runningJobs = new HashMap<>();
     private static final Cache<JobInfo> allJobInfos = CacheManager.getDistributedMap("ALL_JOB_INFOS");
     private static final String COMPLETED_HANDLER = AppProperties.getProperty("job.completed.handler");
-    public static final String BG_INFO = "background.info";
+
 
     static {
         if (!isEmpty(COMPLETED_HANDLER)) {
@@ -85,9 +93,11 @@ public class JobManager {
      */
     public static List<JobInfo> list() {
         String owner = ServerContext.getRequestOwner().getUserKey();
-        return getAllJobs().stream()
-                  .filter(info -> info != null && owner.equals(info.getOwner()))
-                  .toList();
+        return ofNullable(getAllJobs())
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(info -> owner.equals(info.getOwner()) && info.getAuxData().isMonitored())  // only return monitored jobs belonging to the current user
+                .toList();
     }
 
     public static JobInfo submit(Job job) {
@@ -174,15 +184,12 @@ public class JobManager {
     }
 
     public static JobInfo setMonitored(String jobId, boolean isMonitored) {
-        JobInfo jobInfo = updateJobInfo(jobId, ji -> {
+        JobInfo jobInfo = sendUpdate(jobId, ji -> {
             if (ji.getAuxData().isMonitored() != isMonitored) {
                 ji.getAuxData().setMonitored(isMonitored);
             }
         });
-        if (jobInfo != null ) {
-            Messenger.publish(new JobEvent(JobEvent.EventType.MONITORED, jobInfo));      // notify all instances AFTER jobInfo is updated
-        }
-        return getJobInfo(jobId);
+        return jobInfo;
     }
 
     public static JobInfo sendEmail(String jobId, String email) {
@@ -243,11 +250,12 @@ public class JobManager {
      * @param jobId the ID of the job to update
      * @param func the function to apply to the JobInfo
      */
-    public static void sendUpdate(String jobId, Consumer<JobInfo> func) {
+    public static JobInfo sendUpdate(String jobId, Consumer<JobInfo> func) {
         JobInfo jobInfo = updateJobInfo(jobId, func);
         if (jobInfo != null) {
             Messenger.publish(new JobEvent(JobEvent.EventType.UPDATED, jobInfo));
         }
+        return jobInfo;
     }
 
     /**
@@ -259,7 +267,10 @@ public class JobManager {
         if (key != null) {
             boolean isCompleted = ifNotNull(allJobInfos.get(key)).get(JobInfo::getPhase) == COMPLETED;
             allJobInfos.put(key, info);
-            if (info.getPhase() == COMPLETED && !isCompleted) {
+            if (info.getPhase() == COMPLETED && !isCompleted) {     // job changed from not completed to completed
+                if (info.getResults().isEmpty()) {                  // if no results, add a default result
+                    info.setResults(List.of(new Result("result", Async.getAsyncUrl() + info.getJobId() + "/results/result", null, null)));
+                }
                 runningJobs.remove(info.getJobId());
                 if (info.getAuxData().isMonitored()) {
                     publishCompleted(info);
@@ -284,7 +295,7 @@ public class JobManager {
      * internal method to notify all clients with the updated jobInfo
      * @param jobInfo
      */
-    static void updateClient(JobInfo jobInfo) {
+    private static void updateClient(JobInfo jobInfo) {
         if (jobInfo == null) return;
         // send updated jobInfo to client
         FluxAction addAction = new FluxAction(FluxAction.JOB_INFO, toJsonObject(jobInfo));
@@ -408,18 +419,19 @@ public class JobManager {
 
     private static class JobEventHandler implements Subscriber {
         public void onMessage(Message msg) {
-            JobEvent.EventType type = JobEvent.EventType.valueOf(msg.getValue(null, JobEvent.TYPE));
-            JobInfo jobInfo = fromMsg(msg);
-            updateClient(jobInfo);        // update jobInfo to client
-            if (type == JobEvent.EventType.ABORTED) {
-                handleAborted(jobInfo);
-            }
+            ifNotNull(JobEvent.getJobInfo(msg)).apply(jobInfo -> {
+                updateClient(jobInfo);        // update jobInfo to client
+                JobEvent.EventType type = Try.it(() -> JobEvent.EventType.valueOf(msg.getValue(null, JobEvent.TYPE))).get();
+                if (type == JobEvent.EventType.ABORTED) {
+                    handleAborted(jobInfo);
+                }
+            });
         }
     }
 
     public static class JobEvent extends Message {
         public static final String TOPIC = "JobEvent";
-        public enum EventType { UPDATED, COMPLETED, ABORTED, MONITORED }
+        public enum EventType { UPDATED, COMPLETED, ABORTED }
         public static final String JOB = "job";
         public static String TYPE = "type";
 
@@ -427,6 +439,18 @@ public class JobManager {
             setTopic(TOPIC);
             setValue(type.toString(), TYPE);
             if (jobInfo != null) setValue(toJsonObject(jobInfo), JOB);
+        }
+
+        public static JobInfo getJobInfo(Message msg) {
+            if (msg.getValue(null, JOB) instanceof JSONObject jo) {
+                return toJobInfo(jo);
+            }
+            return null;
+        }
+
+        public static boolean isJobEvent(Message msg) {
+            EventType type = Try.it(() -> EventType.valueOf(msg.getValue("", TYPE))).get();
+            return type != null && msg.getValue(null, JOB) != null;
         }
     }
 
@@ -442,16 +466,27 @@ public class JobManager {
             setTopic(TOPIC);
         }
 
-        //====================================================================
-        // convenience functions
-        //====================================================================
-        public static JobCompletedEvent fromMsg(Message msg) {
-            JobCompletedEvent jce = new JobCompletedEvent(null);
-            jce.replaceWith(msg);
-            if (COMPLETED.equals(valueOf(jce.getValue(UNKNOWN.name(), TYPE))) && jce.getValue("", TOPIC_KEY).equals(TOPIC)) {
-                return jce;
-            }
-            return null;
+        public static boolean isJobCompletedEvent(Message msg) {
+            EventType type = Try.it(() -> EventType.valueOf(msg.getValue("", TYPE))).get();      // make sure it does not fail on back messages
+            return type == EventType.COMPLETED &&
+                    msg.getValue("", TOPIC_KEY).equals(TOPIC) &&
+                    msg.getValue(null, JOB) != null;
         }
+    }
+
+    public static void cleanup() {
+        allJobInfos.getKeys().forEach( k -> {
+            JobInfo job = allJobInfos.get(k);
+            if (!job.getAuxData().isMonitored() && job.getEndTime().plus(1, ChronoUnit.HOURS).isBefore(Instant.now())) {
+                LOG.info("Removing non-monitored job: " + k);
+                allJobInfos.remove(k);      // remove non-monitored job after 1 hour
+            } else if (TERMINATED_PHASES.contains(job.getPhase()) && job.getEndTime().plus(ARCHIVE_AFTER, ChronoUnit.HOURS).isBefore(Instant.now())) {
+                LOG.info("Archiving job: " + k);
+                updateJobInfo(job.getJobId(), jobInfo -> jobInfo.setPhase(ARCHIVED));
+            } else if (job.getPhase().equals(ARCHIVED) && job.getEndTime().plus(ARCHIVE_RETENTION_PERIOD, ChronoUnit.HOURS).isBefore(Instant.now())) {
+                LOG.info("Removing archived job: " + k);
+                allJobInfos.remove(k);
+            }
+        });
     }
 }

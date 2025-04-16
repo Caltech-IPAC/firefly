@@ -8,15 +8,30 @@ import Enum from 'enum';
 import {flux} from '../ReduxFlux';
 import {BACKGROUND_PATH, BG_JOB_INFO, dispatchBgJobInfo, dispatchJobAdd} from './BackgroundCntlr.js';
 import {getCmdSrvAsyncURL} from '../../util/WebUtil.js';
-import {dispatchComponentStateChange} from '../ComponentCntlr.js';
+import {COMPONENT_STATE_CHANGE, dispatchComponentStateChange, getComponentState} from '../ComponentCntlr.js';
 import {dispatchAddActionWatcher} from '../MasterSaga.js';
-import {BG_JOB_ADD} from './BackgroundCntlr.js';
 import {jsonFetch} from '../JsonUtils.js';
 import {ServerParams} from '../../data/ServerParams.js';
 import * as SearchServices from '../../rpc/SearchServicesJson.js';
 import {logger} from '../../util/Logger';
 
+export const Phase = new Enum(['PENDING', 'QUEUED', 'EXECUTING', 'COMPLETED', 'ERROR', 'ABORTED', 'HELD', 'SUSPENDED', 'ARCHIVED', 'UNKNOWN'], {ignoreCase: true});
 
+export function getPhaseTips(phase) {
+    const tips = {
+        [Phase.PENDING]: 'The job is accepted by the service but not yet committed for execution by the client',
+        [Phase.QUEUED]: 'Job is awaiting execution; the service is temporarily busy',
+        [Phase.EXECUTING]: 'Job is currently running',
+        [Phase.COMPLETED]: 'Job has completed; result(s) available for viewing or download',
+        [Phase.ERROR]: 'Job has failed; detailed error information may be available',
+        [Phase.ABORTED]: 'Job has been terminated by user or administrator',
+        [Phase.HELD]: 'The job is HELD pending execution and will not automatically be executed',
+        [Phase.SUSPENDED]: 'Job temporarily paused by the system',
+        [Phase.ARCHIVED]: 'Minimal job record retained for reference, but results have been deleted',
+        [Phase.UNKNOWN]: 'The job is in an unknown state.',
+    };
+    return tips[phase] || '';
+}
 
 export const submitJob = (cmd, params) => {
     // submit this job.  No need to add it into flux.  Server will push update to it.
@@ -76,10 +91,10 @@ export function getBackgroundJobs() {
 /**
  * returns background jobInfo for the given jobId.
  * @param jobId
- * @returns {JobInfo}
+ * @returns {Job}
  */
 export function getJobInfo(jobId) {
-    return get(flux.getState(), [BACKGROUND_PATH, 'jobs', jobId]);
+    return getBackgroundJobs()?.[jobId];
 }
 
 export function isSearchJob(job) {
@@ -108,23 +123,34 @@ export function canCreateScript(jobInfo) {
 }
 
 export function isDone(jobInfo) {
-    return ['COMPLETED', 'ERROR', 'ABORTED'].includes(jobInfo?.phase);
+    return Phase.get('COMPLETED | ERROR | ABORTED | ARCHIVED').has(Phase.get(jobInfo?.phase));
 }
 
 export function isFail(jobInfo) {
-    return ['ERROR', 'ABORTED'].includes(jobInfo?.phase);
-}
-
-export function isAborted(jobInfo) {
-    return 'ABORTED' === jobInfo?.phase;
-}
-
-export function isSuccess(jobInfo) {
-    return jobInfo?.phase === 'COMPLETED';
+    return Phase.get('ERROR | ABORTED').has(Phase.get(jobInfo?.phase));
 }
 
 export function isActive(jobInfo) {
-    return ['PENDING', 'QUEUED', 'EXECUTING'].includes(jobInfo?.phase);
+    return Phase.get('PENDING | QUEUED | EXECUTING').has(Phase.get(jobInfo?.phase));
+}
+export function isArchived(jobInfo) {
+    return Phase.ARCHIVED.is(Phase.get(jobInfo?.phase));
+}
+
+export function isAborted(jobInfo) {
+    return Phase.ABORTED.is(Phase.get(jobInfo?.phase));
+}
+
+export function isPending(jobInfo) {
+    return Phase.PENDING.is(Phase.get(jobInfo?.phase));
+}
+
+export function isQueued(jobInfo) {
+    return Phase.QUEUED.is(Phase.get(jobInfo?.phase));
+}
+
+export function isSuccess(jobInfo) {
+    return Phase.COMPLETED.is(Phase.get(jobInfo?.phase));
 }
 
 export function getErrMsg(jobInfo) {
@@ -134,29 +160,28 @@ export function getErrMsg(jobInfo) {
 export const SCRIPT_ATTRIB = new Enum(['URLsOnly', 'Unzip', 'Ditto', 'Curl', 'Wget', 'RemoveZip']);
 
 export function doPackageRequest({dlRequest, searchRequest, selectInfo, bgKey, downloadType, onComplete}) {
-    const sentToBg = (jobInfo) => {
-        dispatchJobAdd(jobInfo);
-    };
 
-    dispatchComponentStateChange(bgKey, {inProgress:true});
+    dispatchComponentStateChange(bgKey, {inProgress:true, hide:false});
     SearchServices.packageRequest(dlRequest, searchRequest, selectInfo, downloadType)
         .then((jobInfo) => {
             const jobId = jobInfo?.jobId;
+            if (isNil(jobId))  return;
+            dispatchJobAdd(jobInfo);
             const inProgress = !isDone(jobInfo);
             dispatchComponentStateChange(bgKey, {inProgress, jobId});
             if (inProgress) {
                 // not done; track progress
-                trackBackgroundJob({jobId, key: bgKey, onComplete, sentToBg});
+                trackBackgroundJob({jobId, key: bgKey, onComplete});
             } else {
                 onComplete?.(jobInfo);
             }
         });
 }
 
-export function trackBackgroundJob({jobId, key, onComplete, sentToBg}) {
-    dispatchAddActionWatcher({  actions:[BG_JOB_INFO,BG_JOB_ADD],
+export function trackBackgroundJob({jobId, key, onComplete, hide}) {
+    dispatchAddActionWatcher({  actions:[BG_JOB_INFO,COMPONENT_STATE_CHANGE],
                 callback: bgTracker,
-                params: {jobId, key, onComplete, sentToBg}});
+                params: {jobId, key, onComplete, hide}});
 }
 
 /**
@@ -166,22 +191,17 @@ export function trackBackgroundJob({jobId, key, onComplete, sentToBg}) {
  * @param params
  */
 function bgTracker(action, cancelSelf, params={}) {
-    const {jobId, key, onComplete, sentToBg} = params;
-    const jobInfo = action.payload || {};
-    if ( jobInfo?.jobId === jobId) {
-        switch (action.type) {
-            case BG_JOB_INFO:
-                if (isDone(jobInfo)) {
-                    cancelSelf();
-                    dispatchComponentStateChange(key, {inProgress:false});
-                    onComplete?.(jobInfo);
-                }
-                break;
-            case BG_JOB_ADD:
-                cancelSelf();
-                dispatchComponentStateChange(key, {inProgress:false});
-                sentToBg?.(jobInfo);
-                break;
+    const {jobId, key, onComplete, hide} = params;
+    const {type, payload:jobInfo} = action || {};
+
+    if ( type === BG_JOB_INFO && jobInfo?.jobId === jobId) {
+        if (isDone(jobInfo)) {
+            cancelSelf();
+            dispatchComponentStateChange(key, {inProgress:false});
+            onComplete?.(jobInfo);
         }
+    } else if (getComponentState(key)?.hide) {
+        cancelSelf();
+        hide?.();
     }
 }

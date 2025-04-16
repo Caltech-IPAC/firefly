@@ -10,14 +10,14 @@ import {wrapResizer} from '../../ui/SizeMeConfig.js';
 import {get, set, isEmpty, isUndefined, omitBy, pick} from 'lodash';
 
 import {
-    getCellValue, getColMaxVal, getColMaxValues, getColumns, getProprietaryInfo, getTableState, getTableUiById,
+    getColMaxVal, getColMaxValues, getColumns, getProprietaryInfo, getTableState, getTableUiById,
     getTblById, hasRowAccess, hasSubHighlightRows, isClientTable, isSubHighlightRow, tableTextView, TBL_STATE,
     uniqueTblUiId
 } from '../TableUtil.js';
 import {SelectInfo} from '../SelectInfo.js';
 import {FilterInfo} from '../FilterInfo.js';
 import {SortInfo} from '../SortInfo.js';
-import {CellWrapper, getPxWidth, HeaderCell, headerStyle, makeDefaultRenderer, SelectableCell, SelectableHeader} from './TableRenderer.js';
+import {CellWrapper, FixedCellWrapper, getPxWidth, HeaderCell, headerStyle, makeDefaultRenderer, SelectableCell, SelectableHeader} from './TableRenderer.js';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {dispatchTableUiUpdate, TBL_UI_UPDATE} from '../TablesCntlr.js';
 import {Logger} from '../../util/Logger.js';
@@ -447,12 +447,19 @@ function makeColumnTag(props, col, idx) {
 
     if (col.visibility && col.visibility !== 'show') return false;
     const HeadRenderer = get(renderers, [col.name, 'headRenderer'], showHeader ? HeaderCell : ({})=>null);
-    const CellRenderer = get(renderers, [col.name, 'cellRenderer'], cellRenderers?.[idx] || makeDefaultRenderer(col,tbl_id, startIdx));
+    const CellRenderer = renderers?.[col.name]?.cellRenderer || cellRenderers?.[idx];
     const fixed = col.fixed || false;
     const {resizable=true} = col;
 
-    const cell = ({height, width, columnKey, rowIndex}) =>
-                    <CellWrapper {...{height, width, columnKey, rowIndex, data, col, colIdx:idx, tbl_id, startIdx, CellRenderer}} />;
+    const cell = ({height, width, columnKey, rowIndex}) => {
+        const props = {height, width, columnKey, rowIndex, data, col, colIdx:idx, tbl_id, startIdx};
+         if (CellRenderer) {
+             return <CellWrapper CellRenderer={CellRenderer} {...props} />;
+         } else {
+             return <FixedCellWrapper CellRenderer={makeDefaultRenderer(col, tbl_id, startIdx)} {...props} />;
+         }
+    };
+
     return (
         <Column
             key={col.name}

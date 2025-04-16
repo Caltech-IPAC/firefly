@@ -109,6 +109,7 @@ public interface Job extends Callable<String> {
         Job getJob();
         default String getLabel(){ return ""; }
         default Type getType() {return Type.SEARCH;}
+        default String getSvcId() {return "IRSA";}
         default void onAbort() {}
         default void onComplete() {}
     }

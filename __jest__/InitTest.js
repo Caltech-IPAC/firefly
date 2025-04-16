@@ -30,9 +30,9 @@ jest.mock('firefly/util/BrowserInfo.js', () => {
     };
 });
 
-jest.mock('firefly/core/background/BackgroundMonitor.jsx', () => {
+jest.mock('firefly/core/background/JobHistory.jsx', () => {
     return {
-        showBackgroundMonitor: () => '',
+        showJobMonitor: () => '',
     };
 });
 

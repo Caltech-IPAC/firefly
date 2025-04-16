@@ -3,7 +3,6 @@ package edu.caltech.ipac.firefly.core.background;
 import edu.caltech.ipac.firefly.api.Async;
 import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
-import edu.caltech.ipac.firefly.messaging.Message;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import org.json.simple.JSONArray;
@@ -13,12 +12,15 @@ import java.io.File;
 import java.net.InetAddress;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import edu.caltech.ipac.firefly.core.background.JobManager.JobEvent;
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.*;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.COMPLETED;
+import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.ERROR;
 import static edu.caltech.ipac.util.StringUtils.*;
 
 public class JobUtil {
@@ -67,42 +69,6 @@ public class JobUtil {
 //====================================================================
 //  JSON serialization
 //====================================================================
-    public static JobInfo fromMsg(Message msg) {
-        JobInfo info = new JobInfo(msg.getValue(null, JobEvent.JOB, JOB_ID));
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, RUN_ID), info::setRunId);
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, OWNER_ID), info::setOwner);
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, PHASE), v -> info.setPhase(Phase.valueOf(v.toString())));
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, QUOTE), v -> info.setQuote(Instant.parse(v.toString())));
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, CREATION_TIME), v -> info.setCreationTime(Instant.parse(v.toString())));
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, START_TIME), v -> info.setStartTime(Instant.parse(v.toString())));
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, END_TIME), v -> info.setEndTime(Instant.parse(v.toString())));
-        applyIfNotEmpty(msg.<Long>getValue(null, JobEvent.JOB, EXECUTION_DURATION), (v) -> info.setExecutionDuration(v.intValue()));
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, DESTRUCTION), v -> info.setDestruction(Instant.parse(v.toString())));
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, PARAMETERS), info::setParams);
-        applyIfNotEmpty(msg.<JSONArray>getValue(null, JobEvent.JOB, RESULTS), (v) -> {
-            List<Result> results = v.stream().map(o -> toResult((JSONObject) o)).toList();
-            info.setResults(results);
-        });
-        applyIfNotEmpty(msg.<JSONObject>getValue(null, JobEvent.JOB, ERROR_SUMMARY), v -> {
-            info.setError(new JobInfo.Error(getInt(v.get(ERROR_TYPE), 500), v.get(ERROR_MSG).toString()));
-        });
-        AuxData aux = info.getAuxData();
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, JOB_TYPE), v -> aux.setType(Job.Type.valueOf(v.toString())));
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, LABEL), aux::setLabel);
-        applyIfNotEmpty(msg.<Long>getValue(null, JobEvent.JOB, JOB_INFO, PROGRESS), v -> aux.setProgress(v.intValue()));
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, MONITORED), aux::setMonitored);
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, PROGRESS_DESC), aux::setProgressDesc);
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, DATA_ORIGIN), aux::setDataOrigin);
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, SUMMARY), aux::setSummary);
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, LOCAL_RUN_ID), aux::setLocalRunId);
-
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, "refJobId"), aux::setRefJobId);
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, "refHost"), aux::setRefHost);
-        applyIfNotEmpty(msg.getValue(null, JobEvent.JOB, JOB_INFO, "userInfo"), v -> aux.setUserInfo(jsonToUserInfo((JSONObject) v)));
-
-        return info;
-    }
-
     public static JSONObject userInfoToJson(UserInfo userInfo) {
         JSONObject rval = new JSONObject();
         rval.put("firstName", userInfo.getFirstName());
@@ -125,7 +91,6 @@ public class JobUtil {
 
     public static JSONObject toJsonObject(JobInfo info, boolean inclInternProps) {
         if (info == null) return null;
-        String asyncUrl = Async.getAsyncUrl();
 
         JSONObject rval = new JSONObject();
         rval.put(JOB_ID, info.getJobId());
@@ -140,9 +105,7 @@ public class JobUtil {
         applyIfNotEmpty(info.getDestruction(), v -> rval.put(DESTRUCTION, v.toString()));
         if (!info.getParams().isEmpty()) rval.put(PARAMETERS, info.getParams());
 
-        if (info.getPhase() == COMPLETED && info.getResults().isEmpty()) {
-            rval.put(RESULTS, Arrays.asList(toJsonResult(new Result("result", asyncUrl + info.getJobId() + "/results/result", null, null))));
-        } else if (!info.getResults().isEmpty()) {
+        if (!info.getResults().isEmpty()) {
             rval.put(RESULTS, toResults(info.getResults()));
         }
         applyIfNotEmpty(info.getError(), v -> {
@@ -163,6 +126,7 @@ public class JobUtil {
             applyIfNotEmpty(aux.getProgressDesc(), v -> addtlInfo.put(PROGRESS_DESC, v));
             applyIfNotEmpty(aux.getDataOrigin(), v -> addtlInfo.put(DATA_ORIGIN, v));
             applyIfNotEmpty(aux.getSummary(), v -> addtlInfo.put(SUMMARY, v));
+            applyIfNotEmpty(aux.getSvcId(), v -> addtlInfo.put(SVC_ID, v));
             applyIfNotEmpty(aux.getLocalRunId(), v -> addtlInfo.put(LOCAL_RUN_ID, v));
 
             applyIfNotEmpty(aux.getRefHost(), v -> addtlInfo.put("refHost", v));
@@ -170,6 +134,65 @@ public class JobUtil {
             applyIfNotEmpty(aux.getUserInfo(), v -> addtlInfo.put("userInfo", userInfoToJson(v)));
         }
 
+        return rval;
+    }
+
+    public static JobInfo toJobInfo(JSONObject json) {
+        if (isEmpty(json)) return null;
+        JobInfo rval = ifNotNull(json.get(JOB_ID)).get(v -> new JobInfo(v.toString()));
+        if (rval == null) return null;
+
+        ifNotNull(json.get(RUN_ID)).apply(v -> rval.setRunId(v.toString()));
+        ifNotNull(json.get(OWNER_ID)).apply(v -> rval.setOwner(v.toString()));
+        ifNotNull(json.get(PHASE)).apply(v -> rval.setPhase(Phase.valueOf(v.toString())));
+        ifNotNull(json.get(OWNER_ID)).apply(v -> rval.setOwner(v.toString()));
+        ifNotNull(json.get(QUOTE)).apply(v -> rval.setQuote(Instant.parse(v.toString())));
+        ifNotNull(json.get(CREATION_TIME)).apply(v -> rval.setCreationTime(Instant.parse(v.toString())));
+        ifNotNull(json.get(START_TIME)).apply(v -> rval.setStartTime(Instant.parse(v.toString())));
+        ifNotNull(json.get(END_TIME)).apply(v -> rval.setEndTime(Instant.parse(v.toString())));
+        ifNotNull(json.get(EXECUTION_DURATION)).apply(v -> rval.setExecutionDuration(((Long) v).intValue()));
+        ifNotNull(json.get(DESTRUCTION)).apply(v -> rval.setDestruction(Instant.parse(v.toString())));
+
+        ifNotNull(json.get(PARAMETERS)).apply(v -> {
+            if (v instanceof JSONObject jo) {
+                Map<String, String> params = new HashMap<>();
+                jo.forEach((key,val) -> params.put(String.valueOf(key), String.valueOf(val)));
+                rval.setParams(params);
+            }
+        });
+        ifNotNull(json.get(RESULTS)).apply(v -> {
+            if (v instanceof JSONArray ja) {
+                List<Result> results = ja.stream().map(o -> toResult((JSONObject) o)).toList();
+                rval.setResults(results);
+            }
+        });
+        ifNotNull(json.get(ERROR)).apply(v -> {
+            if (v instanceof JSONObject jo) {
+                int code = getInt(jo.get(ERROR_TYPE), 500);
+                String msg = String.valueOf(jo.get(ERROR_MSG));
+                rval.setError(new JobInfo.Error(code, msg));
+            }
+        });
+        ifNotNull(json.get(JOB_INFO)).apply(v -> {
+            if (v instanceof JSONObject ji) {
+                ifNotNull(ji.get(JOB_TYPE)).apply(t -> rval.getAuxData().setType(Job.Type.valueOf(t.toString())));
+                ifNotNull(ji.get(LABEL)).apply(l -> rval.getAuxData().setLabel(l.toString()));
+                ifNotNull(ji.get(PROGRESS)).apply(p -> rval.getAuxData().setProgress(((Long) p).intValue()));
+                ifNotNull(ji.get(MONITORED)).apply(m -> rval.getAuxData().setMonitored((Boolean) m));
+                ifNotNull(ji.get(PROGRESS_DESC)).apply(d -> rval.getAuxData().setProgressDesc(d.toString()));
+                ifNotNull(ji.get(DATA_ORIGIN)).apply(o -> rval.getAuxData().setDataOrigin(o.toString()));
+                ifNotNull(ji.get(SUMMARY)).apply(s -> rval.getAuxData().setSummary(s.toString()));
+                ifNotNull(ji.get(SVC_ID)).apply(s -> rval.getAuxData().setSvcId(s.toString()));
+                ifNotNull(ji.get(LOCAL_RUN_ID)).apply(s -> rval.getAuxData().setLocalRunId(s.toString()));
+                ifNotNull(ji.get("refHost")).apply(s -> rval.getAuxData().setRefHost(s.toString()));
+                ifNotNull(ji.get("refJobId")).apply(s -> rval.getAuxData().setRefJobId(s.toString()));
+                ifNotNull(ji.get("userInfo")).apply(s -> {
+                    if (s instanceof JSONObject u) {
+                        rval.getAuxData().setUserInfo(jsonToUserInfo(u));
+                    }
+                });
+            }
+        });
         return rval;
     }
 

@@ -231,6 +231,14 @@ const defFireflyOptions = {
         notification: {
             enable: false,          // enable notification feature
             showEmail: false,       // display email input field; if true, enable will be set to true
+        },
+        history: {
+            label: 'Job Monitor',    // label for the background monitor button
+            note: `
+                Note: The displayed jobs are limited to your current session.
+                A "session" may refer to your browser or the account you're currently logged in with.
+                Jobs older than 14 days will not appear.
+            `.trim(),
         }
     },
 };

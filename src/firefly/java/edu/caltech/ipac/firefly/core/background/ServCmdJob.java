@@ -9,7 +9,7 @@ import edu.caltech.ipac.firefly.server.ServCommand;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
 
-import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
+import static edu.caltech.ipac.firefly.core.background.JobManager.*;
 
 /**
  * A base class which extends ServCommand function into a Job/Worker async processing
@@ -63,9 +63,10 @@ public abstract class ServCmdJob extends ServCommand implements Job {
         if (jobId != null) {
             this.worker = worker;
             worker.setJob(this);
-            updateJobInfo(getJobId(), ji -> {
+            sendUpdate(getJobId(), ji -> {      // needs to update clients, because these values may change after the job has submitted
                 ji.getAuxData().setType(worker.getType());
                 ji.getAuxData().setLabel(worker.getLabel());
+                ji.getAuxData().setSvcId(worker.getSvcId());
             });
         }
     }

@@ -2,7 +2,6 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import PendingActionsOutlinedIcon from '@mui/icons-material/PendingActionsOutlined.js';
 import {
     Badge, Button, Chip, CircularProgress, Divider, IconButton, ListItemDecorator, Sheet,
     Stack, Tab, TabList, Tabs, Tooltip, Typography
@@ -12,10 +11,9 @@ import {debounce} from 'lodash';
 import React, {forwardRef, memo, useCallback, useContext, useEffect, useRef, useState} from 'react';
 import shallowequal from 'shallowequal';
 import {
-    COMMAND, dispatchAddPreference, dispatchSetMenu,
+    COMMAND, dispatchAddPreference, dispatchSetMenu, getAppOptions,
     getMenu, getPreference, getSelectedMenuItem, getUserInfo
 } from '../core/AppDataCntlr.js';
-import {getBackgroundInfo, isActive} from '../core/background/BackgroundUtil.js';
 import {flux} from '../core/ReduxFlux.js';
 import {dispatchHideDropDown, dispatchShowDropDown, getLayouInfo, getResultCounts} from '../core/LayoutCntlr.js';
 import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
@@ -52,13 +50,12 @@ export const menuTabsBorderSx = (theme) => ({
     borderColor: theme.vars.palette.neutral.outlinedBorder //if we need blue accent, can use primary.outlinedBorder or primary.outlinedActiveBg (lighter)
 });
 
-
 export function Menu() {
     const [ready,setReady]= useState(false);
     const [,setWindowWidth]= useState(window?.innerWidth??1000);
     const {appTitle, showUserInfo} = useContext(AppPropertiesCtx);
     const menu= useStoreConnector(() => getMenu());
-    const {menuItems=[], showBgMonitor=true} = menu;
+    const {menuItems=[]} = menu;
     const layoutInfo= getLayouInfo() ?? {};
     const {dropDown={}}=  layoutInfo;
     const selected= getSelectedMenuItem(menu,dropDown);
@@ -102,12 +99,12 @@ export function Menu() {
     const helpItem= menuItems?.find(({action,type}) => (action==='app_data.helpLoad' && type==='COMMAND'));
 
     return (<AdjustableMenu
-            {...{menuTabItems,helpItem,selected,dropDown, showBgMonitor,showUserInfo}}/>
+            {...{menuTabItems,helpItem,selected,dropDown, showUserInfo}}/>
     );
 }
 
 
-function AdjustableMenu({menuTabItems, helpItem, selected, dropDown, showBgMonitor,showUserInfo}) {
+function AdjustableMenu({menuTabItems, helpItem, selected, dropDown, showUserInfo}) {
     const [maskTestRender,setMaskTestRender]= useState(false);
     const [tabCount,setTabCount]= useState(-1); // use for forcing re-renders, don't start tracking until we know the tab bar element
     const {current:tbarElement}= useRef({element:undefined});
@@ -142,7 +139,7 @@ function AdjustableMenu({menuTabItems, helpItem, selected, dropDown, showBgMonit
 
     const selectedIdx= menuTabItems?.findIndex( ({action}) => action===selected);
     const {size,displayMask}= getTabDisplayInfo(selectedIdx, tabRenderedInfo.tabWidths,tbarElement.element,
-        lastButtonSize.size, showBgMonitor,showHelp,showUserInfo);
+        lastButtonSize.size, showHelp,showUserInfo);
 
     lastButtonSize.size= size;
 
@@ -152,37 +149,13 @@ function AdjustableMenu({menuTabItems, helpItem, selected, dropDown, showBgMonit
         <Stack direction='row' justifyContent={'space-between'} alignItems='flex-end' ref={(c) => setTabBarElement(c) }>
             <MenuTabBar {...{menuTabItems,size,selected,dropDown, displayMask, setElement}}/>
             <Stack {...{direction:'row', alignItems:'center', alignSelf:'center', divider}} >
-                {size==='lg' && showBgMonitor  && <React.Fragment/>}
-                {showBgMonitor && <BgMonitorButton size={size}/> }
+                {size==='lg' && <React.Fragment/>}
                 {showHelp && <AppHelpButton {...{ menuItem:helpItem,size}}/>}
                 {showUserInfo && <UserInfo/>}
             </Stack>
         </Stack>
     );
 }
-
-function MenuItemButton({menuItem, icon, size='lg', clickHandler, isWorking=false, badgeCount=0, sx}) {
-    const variant= 'plain';
-    const color= 'neutral';
-
-    const startDecorator= isWorking ? <CircularProgress {...{sx:{'--CircularProgress-size':'12px'}, size:'sm' }}/> : undefined;
-
-    const item=(
-        icon ?
-            (<IconButton {...{ className: 'ff-MenuItem', size, color, variant,
-                onClick: () => onClickHandler(clickHandler,menuItem)}}>
-                {icon}
-            </IconButton>) :
-            (<Button {...{startDecorator, className: 'ff-MenuItem', size, color, variant,
-                sx:{whiteSpace:'nowrap', ...sx},
-                onClick: () => onClickHandler(clickHandler,menuItem) }}>
-                {menuItem.label}
-            </Button>)
-    );
-    return !badgeCount ? item : <Badge {...{badgeContent:badgeCount}}> {item} </Badge>;
-}
-
-
 
 function tabDivider(size, placeAtEnd=true) {
     return {
@@ -218,18 +191,16 @@ function MenuTabBar({menuTabItems=[], size, selected, dropDown, displayMask, set
     const variant='soft';
     const color='primary';
 
-
     const tabItems= [
         <ResultsTab {...{key:'results-tab', size, color, variant, ref: (c) => setElement('results-tab ',c)}}/>,
         ...menuTabItems
-            .map(({action,label,title}, idx) =>
+            .map(({action,label,TabRenderer,title}, idx) =>
             {
-                const tab= (
-                    <Tab {...{ key: idx, value:action, disableIndicator:true, color, variant,
-                        ref: (c) => setElement(idx+'',c),
-                        sx: (theme) => ({ ...setupTabCss(theme,size) }) }} >
-                        {label}
-                    </Tab>);
+                const tabProps = {key: idx, value:action, disableIndicator:true, color, variant,
+                    ref: (c) => setElement(idx+'',c),
+                    sx: (theme) => ({ ...setupTabCss(theme,size) })
+                };
+                const tab= TabRenderer ? <TabRenderer {...tabProps} /> : <Tab {...tabProps}> {label}</Tab>;
                 const tip= getTip(title,action);
                 return tip ? <Tooltip key={idx} title={tip}>{tab}</Tooltip> : tab;
             }
@@ -285,23 +256,22 @@ function getTabBarRealWidth(tabBarElement) {
 }
 
 
-function getTabDisplayInfo(selectedIdx,tabWidths,tabBarElement,lastButtonSize,showBgMonitor,showHelp,showUserInfo) {
-    const size= getButtonSize(tabWidths,tabBarElement,lastButtonSize,showBgMonitor,showHelp,showUserInfo);
+function getTabDisplayInfo(selectedIdx,tabWidths,tabBarElement,lastButtonSize,showHelp,showUserInfo) {
+    const size= getButtonSize(tabWidths,tabBarElement,lastButtonSize,showHelp,showUserInfo);
     const displayMask= size==='sm' && lastButtonSize==='sm' ?
-        getButtonDisplayMask(tabWidths, tabBarElement, selectedIdx, showBgMonitor,showHelp,showUserInfo) : undefined;
+        getButtonDisplayMask(tabWidths, tabBarElement, selectedIdx, showHelp,showUserInfo) : undefined;
     return {size,displayMask};
 }
 
 const sumAry= (ary) => ary.reduce( (total,num) => num ? total+num : total,0);
 
-function getButtonSize(tabWidths,tabBarElement,lastButtonSize,showBgMonitor,showHelp,showUserInfo) {
+function getButtonSize(tabWidths,tabBarElement,lastButtonSize, showHelp,showUserInfo) {
     if (!tabBarElement) return 'lg';
 
     const tabBarRealWidth =  getTabBarRealWidth(tabBarElement);
     const sumTabWidth= sumAry(Object.values(tabWidths));
 
-    const bgMon= showBgMonitor ? lastButtonSize==='lg'?175:50 : 0;
-    const bTotal= sumTabWidth+ bgMon + (showHelp?50:0) + (showUserInfo?50:0);
+    const bTotal= sumTabWidth + (showHelp?50:0) + (showUserInfo?50:0);
 
     if (lastButtonSize==='lg') {
         if (bTotal < tabBarRealWidth) return 'lg';
@@ -319,8 +289,8 @@ function getButtonSize(tabWidths,tabBarElement,lastButtonSize,showBgMonitor,show
 }
 
 
-function getButtonDisplayMask(tabWidths,tabBarElement,selectedTabIdx, showBgMonitor,showHelp,showUserInfo) {
-    const usedWith= (showBgMonitor?50:0) + (showHelp?50:0) + (showUserInfo?50:0);
+function getButtonDisplayMask(tabWidths,tabBarElement,selectedTabIdx, showHelp,showUserInfo) {
+    const usedWith= (showHelp?50:0) + (showUserInfo?50:0);
     const tabBarRealWidth =  getTabBarRealWidth(tabBarElement) - usedWith;
     const sizeAry= Object.values(tabWidths);
     const maskAry= sizeAry.map( () => true);
@@ -512,7 +482,7 @@ function doTabChange(action,menuTabItems) {
 }
 
 
-const workingIndicator= (
+export const workingIndicator= (
     <CircularProgress
         color='success'
         sx={{
@@ -558,6 +528,7 @@ function ResultsTip({useBadge=false,children}) {
     const {haveResults,tableCnt,tableLoadingCnt, imageCnt, imageLoadingCnt, bgTableCnt, pinChartCnt}= useStoreConnector(getCounts);
     const badgeCnt=useBadge && tableCnt+imageCnt+pinChartCnt;
     if (!haveResults) return children;
+    const jobHistoryLabel = getAppOptions()?.background?.history?.label;
     const ttWrap= (
         <Tooltip
             followCursor={true}
@@ -568,7 +539,7 @@ function ResultsTip({useBadge=false,children}) {
                     {tableCnt>0 && <Typography>{`${tableCnt} table${tableCnt>1?'s':''}`}</Typography>}
                     {tableLoadingCnt>0 && <Typography>{`${tableLoadingCnt} table${tableLoadingCnt>1?'s':''} still loading`}</Typography>}
                     {pinChartCnt>0 && <Typography>{`${pinChartCnt} pinned chart${pinChartCnt>1?'s':''}`}</Typography>}
-                    {bgTableCnt>0 && <Typography>{`${bgTableCnt} table${bgTableCnt>1?'s':''} in Background Monitor`}</Typography>}
+                    {bgTableCnt>0 && <Typography>{`${bgTableCnt} table${bgTableCnt>1?'s':''} in ${jobHistoryLabel}`}</Typography>}
                 </Stack> )}>
             {children}
         </Tooltip>
@@ -619,23 +590,3 @@ function getCounts(prev={}) {
     return results;
 }
 
-const showBgMonAction = { type:'COMMAND',
-    action: 'background.bgMonitorShow',
-    label: 'Background Monitor',
-    desc: 'Watch and retrieve background tasks for packaging and catalogs'
-};
-
-
-function BgMonitorButton ({sx,size}) {
-    const {jobs={}} = useStoreConnector(() => getBackgroundInfo());
-
-    const monitoredJobs = Object.values(jobs).filter( (info) => info?.jobInfo?.monitored );
-    const isWorking = monitoredJobs.some( (info) => isActive(info) );
-
-    const buttonSize= size==='lg' ? 'sm' : size==='md' ? 'lg' : 'md';
-
-    return (
-        <MenuItemButton {...{ sx, size:buttonSize, menuItem:showBgMonAction, isWorking,
-            icon:size!=='lg' ? <PendingActionsOutlinedIcon/> : undefined,
-            badgeCount: monitoredJobs.length }}/>);
-}
