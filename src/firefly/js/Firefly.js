@@ -199,6 +199,7 @@ const defFireflyOptions = {
     },
     dataServiceOptions: {
         enableObsCoreDownload: true,
+        generateDownloadFileName: false
         // debug: true,
     },
     coverage : {

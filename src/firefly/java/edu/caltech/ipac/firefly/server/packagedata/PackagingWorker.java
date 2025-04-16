@@ -110,7 +110,7 @@ public final class PackagingWorker implements Job.Worker {
 
                     curFileInfoIdx++;
                     try {
-                        zippedBytes += zipHandler.addZipEntry(zout, fi);
+                        zippedBytes += (int) zipHandler.addZipEntry(zout, fi);
                         totalBytes += zippedBytes;
                     } catch (AccessDeniedException e) {
                         denied.add(e.getMessage());
