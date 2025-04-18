@@ -279,12 +279,12 @@ export function getPointMaxSide(plot, viewDim) {
 
 /**
  *
- * @param {PlotView} pv
+ * @param {PlotView|undefined} pv
  * @param {number} fov in degrees
  * @return {number} a zoom level
  */
 export function getHiPSZoomLevelForFOV(pv, fov) {
-    const {width,height}=pv.viewDim;
+    const {width,height}=pv?.viewDim ?? {};
     const plot= primePlot(pv);
     if (!plot || !width || !height) return 1;
    

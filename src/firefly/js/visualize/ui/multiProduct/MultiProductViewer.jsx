@@ -137,13 +137,13 @@ function shouldShowMenu(dataProductsState) {
 function ViewerRender({dpId, dataProductsState, noProductMessage, metaDataTableId, makeDropDown, activateParams,
                           setCurrentCTIChoice, ctiChoice, ctLookupKey, getInput, doResetButton, factoryKey}) {
     const {displayType=DPtypes.UNSUPPORTED, menu, isWorkingState, message, activeMenuLookupKey,
-        menuKey, imageActivate, url, serDef, serviceDefRef, sRegion, name:title, standardID}= dataProductsState;
+        menuKey, imageActivate, url, serDef, serviceDefRef, sRegion, name:title}= dataProductsState;
     const {imageViewerId,chartViewerId,tableGroupViewerId}=  activateParams;
     switch (displayType) {
         case DPtypes.ANALYZE :
             if (!getInput) return (<ProductMessage {...{menu, makeDropDown, isWorkingState, message}}/>);
             return (<ServiceDescriptorPanel {...{
-                serDef, serviceDefRef, title, makeDropDown, sRegion, standardID,
+                serDef, serviceDefRef, title, makeDropDown, sRegion,
                 setSearchParams: (params) => dispatchSetSearchParams({dpId,activeMenuLookupKey,menuKey,params}),
             }} />);
         case DPtypes.MESSAGE :

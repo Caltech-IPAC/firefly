@@ -1,7 +1,7 @@
 import {makeExamples} from 'firefly/api/WebApi';
-import {dispatchShowDropDown, dispatchUpdateMenu} from 'firefly/core/LayoutCntlr';
+import {dispatchShowDropDown} from 'firefly/core/LayoutCntlr';
 import {isUndefined} from 'lodash';
-import {getMenu} from '../../core/AppDataCntlr';
+import {dispatchSetMenu, getMenu} from '../../core/AppDataCntlr';
 
 
 const lsdbOverview= {
@@ -39,7 +39,7 @@ function enablePanel(cmd,inParams) {
             const newMenuItems= [...menuItems];
             const dlDrop= lsdbMenuItem;
             newMenuItems.splice(1,0,dlDrop);
-            dispatchUpdateMenu({selected,showBgMonitor,menuItems:newMenuItems});
+            dispatchSetMenu({selected,showBgMonitor,menuItems:newMenuItems});
         }
         dispatchShowDropDown({view:'GatorProtocolRootPanel'});
     },10);

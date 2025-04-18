@@ -18,13 +18,16 @@ import {ListBoxInputField} from '../ListBoxInputField.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
 import {useFieldGroupValue} from '../SimpleComponent.jsx';
 import {SizeInputFields} from '../SizeInputField.jsx';
+import {ObsCoreSearch} from '../tap/ObsCore';
+import {ObsCoreWavelengthSearch} from '../tap/WavelengthPanel';
 import {TargetPanel} from '../TargetPanel.jsx';
 import {ValidationField} from '../ValidationField.jsx';
 import {
-    AREA, CHECKBOX, CIRCLE, CONE_AREA_KEY, ENUM, FLOAT, INT, POINT, POLYGON, POSITION, UNKNOWN, UPLOAD
+    AREA, CHECKBOX, CIRCLE, CONE_AREA_KEY, ENUM, FLOAT, INT, POINT, POLYGON, POSITION, SIA_OBSCORE_OPS, UNKNOWN, UPLOAD,
+    WAVELENGTH
 } from './DynamicDef.js';
 import {EmbeddedPositionSearchPanel} from './EmbeddedPositionSearchPanel.jsx';
-import {findFieldDefType} from './ServiceDefTools.js';
+import {findFieldDefType, hasType} from './ServiceDefTools.js';
 
 const DEF_LABEL_WIDTH = 100;
 export const DEF_AREA_EXAMPLE = 'Example: 20.7 21.5, 20.5 20.5, 21.5 20.5, 21.5 21.5';
@@ -64,44 +67,103 @@ export function getSpacialSearchType(request, fieldDefAry) {
  * @param params.fieldDefAry
  * @param params.noLabels
  * @param params.popupHiPS
+ * @param params.popupHiPS
  * @param params.toolbarHelpId
  * @param params.plotId
  * @param params.insetSpacial
  * @returns {{}}
  */
-export function makeAllFields({fieldDefAry, noLabels=false, popupHiPS, toolbarHelpId,
+export function makeAllFields({fieldDefAry:inFieldDefAry, noLabels=false, popupHiPS, toolbarHelpId,
                                   plotId='defaultHiPSTargetSearch', insetSpacial=false, submitSearch} )  {
 
-    // polygon is not created directly, we need to determine who will create creat a polygon field
-    const workingFieldDefAry= fieldDefAry.filter( ({hide}) => !hide);
-    const hasPoly = Boolean(findFieldDefType(workingFieldDefAry,POLYGON));
-    const hasPoint = Boolean(findFieldDefType(workingFieldDefAry,POINT));
-    const circle= findFieldDefType(workingFieldDefAry,CIRCLE);
-    const hasCircle= Boolean(circle);
-    const hasSpacialAndArea= Boolean((findFieldDefType(workingFieldDefAry,POINT) || findFieldDefType(workingFieldDefAry,POSITION)) &&
-        findFieldDefType(workingFieldDefAry,AREA));
-    const hasPointAndArea= hasPoint && findFieldDefType(workingFieldDefAry,AREA);
-    const spacialManagesArea= hasSpacialAndArea && countFieldDefType(workingFieldDefAry,AREA)===1;
+    const fieldDefAry= inFieldDefAry.filter( ({hide}) => !hide);
+    const {hasCircle, hasPointAndArea, hasSpacialAndArea}= getFieldSpacialInfo(fieldDefAry);
+    const spacialManagesArea= hasSpacialAndArea && countFieldDefType(fieldDefAry,AREA)===1;
 
     let dynSpacialPanel= undefined;
-    const manageAllSpacial= (hasCircle || hasPointAndArea);
+    let SiaWLPanel= undefined;
+    let SiaObsCorePanel = undefined;
     if (hasCircle || hasSpacialAndArea || hasPointAndArea) {
-        dynSpacialPanel= popupHiPS ?
-                        makeDynSpacialPanel({fieldDefAry:workingFieldDefAry, popupHiPS, manageAllSpacial, plotId, toolbarHelpId}) :
-                        makeDynSpacialPanel({fieldDefAry:workingFieldDefAry, popupHiPS,
-                            plotId,toolbarHelpId, insetSpacial, submitSearch});
+        dynSpacialPanel= makeDynPanel({fieldDefAry, popupHiPS, plotId, insetSpacial, submitSearch, toolbarHelpId});
+    }
+    if (hasType(fieldDefAry,WAVELENGTH)) {
+       SiaWLPanel= ({dataServiceId}) => <ObsCoreWavelengthSearch {...{serviceId:dataServiceId,useSIAv2:true}}/>;
+    }
+
+
+    if (hasType(fieldDefAry,SIA_OBSCORE_OPS)) {
+        const obsDef= findFieldDefType(fieldDefAry,SIA_OBSCORE_OPS);
+        SiaObsCorePanel = ({dataServiceId,obsCoreMetadataModel}) =>
+            <ObsCoreSearch {...{obsCoreMetadataModel,serviceId:dataServiceId,useSIAv2:true, ...obsDef}}/>;
     }
 
     const panels = {
         DynSpacialPanel: dynSpacialPanel,
-        areaFields: spacialManagesArea ? [] : makeAllAreaFields(workingFieldDefAry),
-        checkBoxFields: makeCheckboxFields(workingFieldDefAry),
-        ...makeInputFields(workingFieldDefAry, noLabels)
+        areaFields: spacialManagesArea ? [] : makeAllAreaFields(fieldDefAry),
+        checkBoxFields: makeCheckboxFields(fieldDefAry),
+        SiaWLPanel,
+        SiaObsCorePanel,
+        ...makeInputFields(fieldDefAry, noLabels)
     };
-    panels.useArea = Boolean(panels.areaFields.length);
     panels.useSpacial = Boolean(dynSpacialPanel);
     return panels;
 }
+
+
+function makeDynPanel({fieldDefAry, popupHiPS, plotId='defaultHiPSTargetSearch', insetSpacial=false, submitSearch, toolbarHelpId}) {
+    const {targetDetails, manageAllSpacial}= getFieldSpacialInfo(fieldDefAry);
+    const areaType = findFieldDefType(fieldDefAry, AREA);
+    const circleType = findFieldDefType(fieldDefAry, CIRCLE);
+    const sizeKey = areaType?.key ?? circleType?.targetDetails.sizeKey;
+
+    if (sizeKey && manageAllSpacial && targetDetails?.hipsUrl) {
+        return popupHiPS ?
+            makeCircleAndPolyPopup({fieldDefAry, plotId, toolbarHelpId}) : // popup not used anymore
+            makeEmbeddedPositionSearchPanelWrapper({fieldDefAry, plotId,toolbarHelpId, insetSpacial, submitSearch}); // normal case
+    }
+    else { // fallback - rarely used
+        return targetDetails?.hipsUrl ?
+            makeDynSpacialPanelFallback({fieldDefAry, popupHiPS, plotId, toolbarHelpId}) :
+            makeSimpleTarget(fieldDefAry); // simple target: usually means something not set up right
+    }
+}
+
+
+function getFieldSpacialInfo(fieldDefAry) {
+    const hasPoly= hasType(fieldDefAry,POLYGON);
+    const hasPoint= hasType(fieldDefAry,POINT);
+    const hasArea= hasType(fieldDefAry,AREA);
+    const hasCircle= hasType(fieldDefAry,CIRCLE);
+    const hasPointAndArea= hasPoint && hasArea;
+    const manageAllSpacial= (hasCircle || hasPointAndArea);
+
+    const targetDetails= getTargetDetails(fieldDefAry);
+    return {
+        hasPoly, hasPoint, hasArea, hasCircle, targetDetails,
+        hasPointAndArea, manageAllSpacial,
+        hasSpacialAndArea: (hasPoint || hasType(fieldDefAry,POSITION)) && hasArea
+    };
+}
+
+function getTargetDetails(fieldDefAry)  {
+    const hasPoint= hasType(fieldDefAry,POINT);
+    const hasArea= hasType(fieldDefAry,AREA);
+    const hasPointAndArea= hasPoint && hasArea;
+    const hasCircle= hasType(fieldDefAry,CIRCLE);
+    const manageAllSpacial= (hasCircle || hasPointAndArea);
+    const posType = findFieldDefType(fieldDefAry, POINT) ?? findFieldDefType(fieldDefAry, POSITION) ;
+    const circleType = findFieldDefType(fieldDefAry, CIRCLE);
+    const polyType= manageAllSpacial && findFieldDefType(fieldDefAry, POLYGON);
+    if (!posType && !circleType) return <div/>;
+    let {targetDetails} = posType ?? circleType;
+    const { hipsUrl} = targetDetails ?? polyType?.targetDetails ?? {};
+    if (!targetDetails.hipsUrl && hipsUrl) targetDetails= {...targetDetails, hipsUrl};
+    return targetDetails;
+}
+
+
+
+
 
 const countFieldDefType= (fieldDefAry, type) => fieldDefAry.filter( (entry) => entry.type===type).length;
 
@@ -174,7 +236,7 @@ function CircleAndPolyFieldPopup({fieldDefAry, typeForCircle= CIRCLE, plotId='de
 }
 
 
-export function PositionAndPolyFieldEmbed({fieldDefAry, plotId, toolbarHelpId, insetSpacial,
+export function EmbeddedPositionSearchPanelWrapper({fieldDefAry, plotId, toolbarHelpId, insetSpacial,
                                        slotProps={}, children}) {
 
     const polyType = findFieldDefType(fieldDefAry, POLYGON);
@@ -218,13 +280,14 @@ export function PositionAndPolyFieldEmbed({fieldDefAry, plotId, toolbarHelpId, i
                     coordinateSys: csysStr,
                 },
                 targetPanel: { targetKey, targetPanelExampleRow1, targetPanelExampleRow2, },
-                sizeInput: {min:minValue,max:maxValue,sizeKey, initValue: searchAreaInDeg},
+                sizeInput: { ...slotProps.sizeInput, min:minValue,max:maxValue,sizeKey, initValue: searchAreaInDeg},
                 polygonField: {
                     polygonKey,
                     polygonExampleRow1:polyType?.targetDetails?.targetPanelExampleRow1,
                     polygonExampleRow2:polyType?.targetDetails?.targetPanelExampleRow2,
                 },
                 formPanel: slotProps.FormPanel,
+                spatialSearch: slotProps.spatialSearch,
             }
             }}>
             {children}
@@ -357,15 +420,54 @@ export function PolygonField({ fieldKey, desc = 'Coordinates', initValue = '', s
     );
 }
 
-function makeDynSpacialPanel({fieldDefAry, manageAllSpacial= true, popupHiPS= false,
+
+function makeEmbeddedPositionSearchPanelWrapper({fieldDefAry,
                              plotId= 'defaultHiPSTargetSearch', toolbarHelpId, insetSpacial, submitSearch}) {
+
     const DynSpacialPanel= ({slotProps, children}) => {
+        return (
+            <EmbeddedPositionSearchPanelWrapper {...{fieldDefAry, plotId, insetSpacial, slotProps, toolbarHelpId, submitSearch}}>
+                {children}
+            </EmbeddedPositionSearchPanelWrapper>
+        );
+    };
+    return DynSpacialPanel;
+}
+
+function makeCircleAndPolyPopup({fieldDefAry, plotId= 'defaultHiPSTargetSearch', toolbarHelpId}) {
+    const circleType = findFieldDefType(fieldDefAry, CIRCLE);
+    const DynSpacialPanel= () => {
+        return (
+            <CircleAndPolyFieldPopup {...{fieldDefAry,typeForCircle:circleType?CIRCLE:POSITION, plotId, toolbarHelpId}}/>
+        );
+    };
+    return DynSpacialPanel;
+}
+
+function makeSimpleTarget({fieldDefAry}) {
+    const posType = findFieldDefType(fieldDefAry, POINT) ??
+        findFieldDefType(fieldDefAry, POSITION) ??
+        findFieldDefType(fieldDefAry, CIRCLE);
+    const {nullAllowed = false} = posType;
+    const {targetPanelExampleRow1, targetPanelExampleRow2}=  getTargetDetails(fieldDefAry) ?? {};
+    const DynSpacialPanel= () => {
+        return <TargetPanel {...{nullAllowed, targetPanelExampleRow1, targetPanelExampleRow2}}/>;
+    };
+    return DynSpacialPanel;
+
+}
+
+
+
+function makeDynSpacialPanelFallback({fieldDefAry, popupHiPS= false, plotId= 'defaultHiPSTargetSearch', toolbarHelpId}) {
+    const DynSpacialPanel= () => {
+        const {targetDetails, manageAllSpacial}= getFieldSpacialInfo(fieldDefAry);
         const posType = findFieldDefType(fieldDefAry, POINT) ?? findFieldDefType(fieldDefAry, POSITION) ;
         const areaType = findFieldDefType(fieldDefAry, AREA);
         const circleType = findFieldDefType(fieldDefAry, CIRCLE);
         const polyType= manageAllSpacial && findFieldDefType(fieldDefAry, POLYGON);
         if (!posType && !circleType) return <div/>;
-        const {targetDetails, nullAllowed = false, minValue, maxValue} = posType ?? circleType;
+        const {nullAllowed = false, minValue, maxValue} = posType ?? circleType;
 
         const {
             hipsUrl, centerPt, hipsFOVInDeg = 240, coordinateSys: csysStr = 'EQ_J2000', mocList,
@@ -374,41 +476,28 @@ function makeDynSpacialPanel({fieldDefAry, manageAllSpacial= true, popupHiPS= fa
         const coordinateSys = CoordinateSys.parse(csysStr) ?? CoordinateSys.EQ_J2000;
         const sizeKey = areaType?.key ?? circleType?.targetDetails.sizeKey;
 
-        if (!hipsUrl && !targetDetails) {
-            return <TargetPanel {...{nullAllowed, targetPanelExampleRow1, targetPanelExampleRow2}}/>;
-        }
-
-        if (manageAllSpacial && sizeKey) {
-            return popupHiPS ?
-                <CircleAndPolyFieldPopup {...{fieldDefAry,typeForCircle:circleType?CIRCLE:POSITION, plotId, toolbarHelpId}}/> :
-                <PositionAndPolyFieldEmbed {...{fieldDefAry, plotId, insetSpacial, slotProps, toolbarHelpId, submitSearch}}>
-                    {children}
-                </PositionAndPolyFieldEmbed>;
+        if (popupHiPS) {
+            return (<VisualTargetPanel {...{
+                hipsUrl, centerPt, hipsFOVInDeg, mocList, nullAllowed, coordinateSys, sizeKey, plotId,
+                minSize: minValue, maxSize: maxValue, toolbarHelpId,
+                targetPanelExampleRow1, targetPanelExampleRow2 }} />);
         }
         else {
-            if (popupHiPS) {
-                return (<VisualTargetPanel {...{
-                    hipsUrl, centerPt, hipsFOVInDeg, mocList, nullAllowed, coordinateSys, sizeKey, plotId,
-                    minSize: minValue, maxSize: maxValue, toolbarHelpId,
-                    targetPanelExampleRow1, targetPanelExampleRow2 }} />);
-            }
-            else {
-                return (
-                    <Stack key='targetGroup' {...{alignItems: 'center', alignSelf: 'stretch', height:1}}>
-                        <HiPSTargetView {...{
-                            hipsUrl, centerPt, hipsFOVInDeg, mocList, coordinateSys,
-                            minSize: minValue, maxSize: maxValue,
-                            plotId, toolbarHelpId,
-                            targetKey: 'UserTargetWorldPt', sizeKey, sx: {flexGrow:1, alignSelf: 'stretch'}
+            return (
+                <Stack key='targetGroup' {...{alignItems: 'center', alignSelf: 'stretch', height:1}}>
+                    <HiPSTargetView {...{
+                        hipsUrl, centerPt, hipsFOVInDeg, mocList, coordinateSys,
+                        minSize: minValue, maxSize: maxValue,
+                        plotId, toolbarHelpId,
+                        targetKey: 'UserTargetWorldPt', sizeKey, sx: {flexGrow:1, alignSelf: 'stretch'}
+                    }}/>
+                    <div style={{display: 'flex', flexDirection: 'column'}}>
+                        <TargetPanel {...{
+                            sx: {pt: 1}, key: 'targetPanel', nullAllowed,
+                            targetPanelExampleRow1, targetPanelExampleRow2
                         }}/>
-                        <div style={{display: 'flex', flexDirection: 'column'}}>
-                            <TargetPanel {...{
-                                sx: {pt: 1}, key: 'targetPanel', nullAllowed,
-                                targetPanelExampleRow1, targetPanelExampleRow2
-                            }}/>
-                        </div>
-                    </Stack> );
-            }
+                    </div>
+                </Stack> );
         }
     };
     return DynSpacialPanel;

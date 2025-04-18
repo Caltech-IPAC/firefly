@@ -9,27 +9,32 @@ import CoordinateSys from '../../visualize/CoordSys.js';
 import {makeWorldPt, parseWorldPt} from '../../visualize/Point.js';
 import {
     AREA, CHECKBOX, CIRCLE, ENUM, FLOAT, INT, makeAreaDef, makeCircleDef, makeEnumDef, makeFloatDef, makeIntDef,
-    makePointDef,
-    makePolygonDef, makeRangeDef, makeTargetDef, makeUnknownDef, POINT, POLYGON, POSITION, RANGE, UNKNOWN
+    makeObsCoreOps,
+    makePointDef, makePolygonDef, makeRangeDef, makeTargetDef, makeUnknownDef, makeWavelengthDef,
+    POINT, POLYGON, POSITION, RANGE, UNKNOWN
 } from './DynamicDef.js';
 import {getServiceDescriptors, isDataLinkServiceDesc} from 'firefly/voAnalyzer/VoDataLinkServDef';
+
+
+
+/**
+ * @param {Array.<FieldDef>} fieldDefAry
+ * @param {string} type
+ * @return {Boolean}
+ */
+export const hasType = (fieldDefAry, type) => Boolean(fieldDefAry.find((e) => e.type === type));
 
 /**
  * @param {Array.<FieldDef>} fieldDefAry
  * @param {string} type
  * @return {FieldDef}
  */
-export const findFieldDefType = (fieldDefAry, type) => fieldDefAry.find((entry) => entry.type === type);
+export const findFieldDefType = (fieldDefAry, type) => fieldDefAry.find((e) => e.type === type);
 
-export function hasAnySpacial(fieldDefAry) {
-    return Boolean(
-        findFieldDefType(fieldDefAry,POLYGON) ||
-        findFieldDefType(fieldDefAry,CIRCLE) ||
-        findFieldDefType(fieldDefAry,POSITION) ||
-        findFieldDefType(fieldDefAry,POINT) ||
-        findFieldDefType(fieldDefAry,AREA)
-    );
-}
+export const hasAnySpacial= (fieldDefAry) =>
+    hasType(fieldDefAry,POLYGON) || hasType(fieldDefAry,CIRCLE) ||
+    hasType(fieldDefAry,POSITION) || hasType(fieldDefAry,POINT) ||
+    hasType(fieldDefAry,AREA);
 
 export const isSIAStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.sia);
 export const isSSAStandardID = (standardID) => standardID?.toLowerCase().startsWith(standardIDs.ssa);
@@ -112,10 +117,8 @@ const isNumberField = ({type, minValue, maxValue, value}) =>
     (!isNaN(Number(value)) || !isNaN(Number(minValue)) || !isNaN(Number(maxValue)));
 
 function prefilterRADec(serDefParams, searchAreaInfo = {}) {
-    let foundRa = serDefParams.find(({UCD}) => UCD === 'pos.eq.ra');
-    if (!foundRa) foundRa= serDefParams.find(({name}) => name === 'ra');
-    let foundDec = serDefParams.find(({UCD}) => UCD === 'pos.eq.dec');
-    if (!foundDec) foundDec= serDefParams.find(({name}) => name === 'dec');
+    const foundRa= findParamByUCDOrName(serDefParams,'pos.eq.ra', 'ra');
+    const foundDec= findParamByUCDOrName(serDefParams,'pos.eq.dec', 'dec');
     if (!foundRa?.name || !foundDec?.name) return {filteredParams: serDefParams, posDef: undefined};
 
     const filteredParams = serDefParams.filter(({UCD,name}) =>
@@ -132,6 +135,60 @@ function prefilterRADec(serDefParams, searchAreaInfo = {}) {
         targetPanelExampleRow1: searchAreaInfo.examples ? searchAreaInfo.examples.split('|') : undefined
     });
     return {posDef, filteredParams};
+}
+
+function prefilterWavelength(serDefParams, standardID) {
+    // const foundWlMin =  findParamByUCDAndName(serDefParams,'em.wl;stat.min','em_min');
+    const foundWlBand =  findParamByUCDAndName(serDefParams,'em.wl','BAND');
+    if (!isSIAStandardID(standardID) || !foundWlBand?.name) {
+        return {filteredParams: serDefParams, wlDef: undefined};
+    }
+    const filteredParams = serDefParams.filter(({UCD,name}) => UCD !== 'em.wl' && name !== 'BAND');
+    const wlDef= makeWavelengthDef({key: foundWlBand.name});
+    return {filteredParams, wlDef};
+}
+
+function prefilterObsCoreOps(serDefParams, standardID) {
+    if (!isSIAStandardID(standardID)) return {filteredParams: serDefParams, obsDef: undefined};
+    const useCalibrationLevel= Boolean(findParamByUCDAndName(serDefParams,'meta.code;obs.calib','CALIB'));
+    const useProductType= Boolean(findParamByUCDAndName(serDefParams,'meta.id','DPTYPE'));
+    const useSubType= Boolean(findParamByUCDAndName(serDefParams,'meta.id','DPSUBTYPE'));
+    const useFacility=  Boolean(findParamByUCDAndName(serDefParams,'meta.id;instr.tel','FACILITY'));
+    const useInstrumentName=  Boolean(findParamByUCDAndName(serDefParams,'meta.id;instr','INSTRUMENT'));
+    const useCollection= Boolean(findParamByUCDAndName(serDefParams,'meta.id','COLLECTION'));
+
+
+    if (!useCalibrationLevel && !useProductType && !useFacility && !useInstrumentName && !useCollection) {
+        return {filteredParams: serDefParams, obsDef: undefined};
+    }
+    const filteredParams = serDefParams.filter(({name,UCD}) =>
+        !((UCD==='meta.code;obs.calib' && name==='CALIB') ||
+            (UCD==='meta.id' && name==='DPTYPE') ||
+            (UCD==='meta.id' && name==='DPSUBTYPE') ||
+            (UCD==='meta.id;instr.tel' && name==='FACILITY') ||
+            (UCD==='meta.id;instr' && name==='INSTRUMENT') ||
+            (UCD==='meta.id' && name==='COLLECTION'))
+    );
+
+    const obsDef= makeObsCoreOps({
+        useCalibrationLevel,
+        useProductType,
+        useSubType,
+        useFacility,
+        useInstrumentName,
+        useCollection } );
+
+    return {filteredParams, obsDef};
+}
+
+function findParamByUCDOrName(serDefParams, UCD, name){
+    const p= serDefParams.find((aParam) => aParam.UCD === UCD);
+    if (p) return p;
+    return serDefParams.find((aParam) => aParam.name === name);
+}
+
+function findParamByUCDAndName(serDefParams, UCD, name){
+    return serDefParams.find((aParam) => aParam.UCD === UCD && aParam.name === name);
 }
 
 function makeExamples(inExample) {
@@ -151,30 +208,36 @@ function makeExamples(inExample) {
 
 /**
  *
- * @param {Array.<ServiceDescriptorInputParam>} serDefParams
- * @param {String} [sRegion]
- * @param {SearchAreaInfo} [searchAreaInfo]
- * @param {boolean} [hidePredefinedStringFields]
- * @param {String} [hipsUrl]
- * @param {Number} [fovSize]
+ * @param {Object} p
+ * @param {ServiceDescriptorDef} p.serviceDef
+ * @param {String} [p.sRegion]
+ * @param {SearchAreaInfo} [p.searchAreaInfo]
+ * @param {boolean} [p.hidePredefinedStringFields]
+ * @param {String} [p.hipsUrl]
+ * @param {Number} [p.fovSize]
  * @returns {Array.<FieldDef>}
  */
-export function makeFieldDefsWithOptions({serDefParams, sRegion, searchAreaInfo = {},
+export function sdToFieldDefAry({serviceDef, sRegion, searchAreaInfo = {},
                                              hidePredefinedStringFields = true,
                                              hipsUrl, fovSize}) {
-    const {filteredParams, posDef} = prefilterRADec(serDefParams, searchAreaInfo);
+    if (!serviceDef?.serDefParams) return [];
+    const {filteredParams, fdAry:complexFdAry}= prefilterComplexParams(serviceDef, searchAreaInfo);
     const fdAry = filteredParams
         .filter((serDefParam) => !serDefParam.ref)
         .map((serDefParam) => makeFieldDef({serDefParam,sRegion,searchAreaInfo,hidePredefinedStringFields,hipsUrl,fovSize}) );
+    return [...fdAry,...complexFdAry];
+}
+
+function prefilterComplexParams(serviceDef, searchAreaInfo) {
+    const {filteredParams:f1, posDef} = prefilterRADec(serviceDef.serDefParams, searchAreaInfo);
+    const {filteredParams:f2, wlDef} = prefilterWavelength(f1, serviceDef.standardID);
+    const {filteredParams, obsDef} = prefilterObsCoreOps(f2, serviceDef.standardID);
+    const fdAry= [];
     if (posDef) fdAry.push(posDef);
-    return fdAry;
+    if (wlDef) fdAry.push(wlDef);
+    if (obsDef) fdAry.push(obsDef);
+    return {filteredParams,fdAry};
 }
-
-export function makeFieldDefs(serDefParams) {
-    return makeFieldDefsWithOptions({serDefParams});
-
-}
-
 
 /**
  *
@@ -344,7 +407,7 @@ function doMakeNumberDef(serDefParam, hidePredefinedStringFields) {
     }
     else {
         return makeUnknownDef({key: name, desc: name, tooltip, units, initValue: workingValue,
-            hide: Boolean(value && hidePredefinedStringFields) });
+            hide: Boolean(value && hidePredefinedStringFields), nullAllowed:true});
     }
 
 }
@@ -388,7 +451,7 @@ export function makeSearchAreaInfo(cisxUI, defaultMaxMOCFetchDepth) {
 function findMocs(cisxUI) {
     const mocColor= cisxUI.filter( (obj) => obj?.name?.toLowerCase().startsWith('moc_color'));
     const moc=  cisxUI.filter( (obj) => obj?.name?.toLowerCase()==='moc' || obj?.name?.match(/moc\d+$/i) );
-    const combinedObj= [...mocColor,...moc].reduce( (obj, {name, value, UCD, desc}) => {
+    const combinedObj= [...mocColor,...moc].reduce( (obj, {name, value, desc}) => {
         if (name.startsWith('moc_color')) {
             obj['mocColor'+ name.substring(9,name.length)]= value;
         }
@@ -406,7 +469,7 @@ function findMocs(cisxUI) {
 
 let tblCnt=1;
 
-export function makeServiceDescriptorSearchRequest(request, serviceDescriptor, extraMeta={}) {
+export function makeServiceDescriptorSearchRequest(request, siaConstraints,serviceDescriptor, extraMeta={}) {
     const {standardID = '', accessURL, utype, serDefParams, title, cisxUI=[]} = serviceDescriptor;
     const hiddenColumns= cisxUI.find( (e) => e.name==='hidden_columns')?.value;
     const tblSortOrder= cisxUI.find( (e) => e.name==='table_sort_order')?.value;
@@ -426,7 +489,14 @@ export function makeServiceDescriptorSearchRequest(request, serviceDescriptor, e
     const options= {...sortObj, META_INFO: { ...hideObj, ...extraMeta }};
 
     if (isSIAStandardID(standardID)) {
-        const url = accessURL + '?' + new URLSearchParams(request).toString();
+        const reqParams= new URLSearchParams(request);
+        const siaParams= new URLSearchParams();
+        siaConstraints.forEach( (s) => {
+            const [k,v]= s.split('=');
+            if (k && v) siaParams.append(k,v);
+        });
+        const params= new URLSearchParams([...reqParams, ...siaParams]);
+        const url= params.size ? accessURL+'?'+params.toString() : accessURL;
         return makeFileRequest(tblTitle, url, undefined, options);   //todo- figure out title
     }
     else if (isSSAStandardID(standardID)) {
@@ -531,34 +601,29 @@ export function ingestInitArgs(fdAry, args) {
 //check for and return a datalink service descriptor url and input params, if one is found
 export function checkForDatalinkServDesc(tblModel) {
     const serviceDescriptors = getServiceDescriptors(tblModel);
-
     if (!serviceDescriptors) return null;
 
-    if (serviceDescriptors) {
-        for (const sd of serviceDescriptors) {
-            //serviceDescriptors.forEach((sd) => {
-            const isDatalinkSerDesc = isDataLinkServiceDesc(sd);
-            if (isDatalinkSerDesc) {
-                const productUrl = {
-                    accessURL: sd?.accessURL || '',
-                    inputParams: {}
-                };
+    for (const sd of serviceDescriptors) {
+        //serviceDescriptors.forEach((sd) => {
+        const isDatalinkSerDesc = isDataLinkServiceDesc(sd);
+        if (isDatalinkSerDesc) {
+            const productUrl = {
+                accessURL: sd?.accessURL || '',
+                inputParams: {}
+            };
 
-                if (sd?.serDefParams) {
-                    for (const param of sd.serDefParams) {
-                        productUrl.inputParams[param?.name] = {value: param.value, ref: param.ref};
-                    }
+            if (sd?.serDefParams) {
+                for (const param of sd.serDefParams) {
+                    productUrl.inputParams[param?.name] = {value: param.value, ref: param.ref};
                 }
-
-                //return only when valid datalink access url is found
-                if (productUrl.accessURL || Object.keys(productUrl.inputParams).length > 0) {
-                    return productUrl;
-                }
-
             }
+
+            //return only when valid datalink access url is found
+            if (productUrl.accessURL || Object.keys(productUrl.inputParams).length > 0) {
+                return productUrl;
+            }
+
         }
     }
     return null; //no valid datalink service descriptor found
 }
-
-

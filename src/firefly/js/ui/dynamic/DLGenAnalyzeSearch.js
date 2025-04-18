@@ -3,15 +3,13 @@ import {MetaConst} from '../../data/MetaConst.js';
 import {dispatchTableSearch} from '../../tables/TablesCntlr.js';
 import {getMetaEntry} from '../../tables/TableUtil.js';
 import {Logger} from '../../util/Logger.js';
-import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from '../../visualize/ui/CommonUIKeys.js';
+import {getDataLinkData} from '../../voAnalyzer/VoDataLinkServDef.js';
 import {CIRCLE, POINT, POLYGON} from './DynamicDef.js';
 import {
     convertCircleToPointArea, convertPointAreaToCircle, isCircleSearch, isPointAreaSearch, isPolySearch
 } from './DynamicUISearchPanel.jsx';
-import {findFieldDefType, makeFieldDefs, makeServiceDescriptorSearchRequest} from './ServiceDefTools.js';
-
-
+import {findFieldDefType, makeServiceDescriptorSearchRequest, sdToFieldDefAry} from './ServiceDefTools.js';
 
 
 /**
@@ -44,8 +42,8 @@ export function analyzeQueries(tbl_id) {
 }
 
 
-export function makeAllSearchRequest(request, primeSd, concurrentSDAry, primaryFdAry, extraPrimaryMeta) {
-    const primeRequest= makeServiceDescriptorSearchRequest(request,primeSd,extraPrimaryMeta);
+export function makeAllSearchRequest(request, siaConstraints, primeSd, concurrentSDAry, primaryFdAry, extraPrimaryMeta) {
+    const primeRequest= makeServiceDescriptorSearchRequest(request,siaConstraints, primeSd,extraPrimaryMeta);
     const concurrentRequestAry= concurrentSDAry
         .map( (sd) => {
             const newR= convertRequestToSecondary(request, primaryFdAry?.[0], sd.serviceDef, primeSd.standardID);
@@ -59,14 +57,14 @@ export function makeAllSearchRequest(request, primeSd, concurrentSDAry, primaryF
 /**
  * Do all the searches defined
  * @param request
+ * @param siaConstraints
  * @param {QueryAnalysis} qAna
  * @param primaryFdAry
  * @param idx
  * @param {object} extraMeta            // additional table meta to include with the TableSearch
  * @param {String} selectedConcurrent - space separated name of searches to execute
- * @param docRows   URLs to documentation
  */
-export function handleSearch(request, qAna, primaryFdAry, idx, extraMeta={}, selectedConcurrent) {
+export function handleSearch(request, siaConstraints, qAna, primaryFdAry, idx, extraMeta={}, selectedConcurrent) {
     const primeSd= qAna.primarySearchDef[idx].serviceDef;
     const {coverage,bandDesc}= qAna.primarySearchDef[idx];
     const {cisxUI}= qAna.primarySearchDef[0].serviceDef;
@@ -81,7 +79,7 @@ export function handleSearch(request, qAna, primaryFdAry, idx, extraMeta={}, sel
     extraMeta= {coverage,bandDesc, ...extraMeta};
     if (preferredHips) extraMeta[MetaConst.COVERAGE_HIPS]=preferredHips;
 
-    const tableRequestAry= makeAllSearchRequest(request, primeSd,concurrentSDAry, primaryFdAry, extraMeta);
+    const tableRequestAry= makeAllSearchRequest(request, siaConstraints, primeSd,concurrentSDAry, primaryFdAry, extraMeta);
 
     tableRequestAry.forEach( (dataTableReq) => {
         Logger('DLGeneratedDropDown').debug(dataTableReq);
@@ -92,7 +90,7 @@ export function handleSearch(request, qAna, primaryFdAry, idx, extraMeta={}, sel
 }
 
 function convertRequestToSecondary(request, primaryFdAry, secondServDef, primStandardID) {
-    const sFdAry= makeFieldDefs(secondServDef.serDefParams);
+    const sFdAry= sdToFieldDefAry({serviceDef:secondServDef});
     if (isCircleSearch(primaryFdAry) || isPointAreaSearch(sFdAry)) {
         return convertCircleToPointArea(request, primaryFdAry, sFdAry, primStandardID, secondServDef.standardID);
     }
@@ -103,7 +101,7 @@ function convertRequestToSecondary(request, primaryFdAry, secondServDef, primSta
 }
 
 function getServiceDefSpacialSupports(serviceDef) {
-    const fdAry= makeFieldDefs(serviceDef.serDefParams);
+    const fdAry= sdToFieldDefAry({serviceDef});
     const retAry=[];
     if (isCircleSearch(fdAry)) retAry.push(CIRCLE);
     if (isPointAreaSearch(fdAry)) retAry.push(POINT);
@@ -116,7 +114,7 @@ export function hasSpatialTypes(serviceDef) {
 }
 
 export function isSpatialTypeSupported(serviceDef, spacialType) {
-    const fdAry= makeFieldDefs(serviceDef.serDefParams);
+    const fdAry= sdToFieldDefAry({serviceDef});
     if (spacialType===CONE_CHOICE_KEY) {
         return isCircleSearch(fdAry) || isPointAreaSearch(fdAry) || Boolean(findFieldDefType(fdAry,POINT));
     }
@@ -134,6 +132,28 @@ export function isSpatialTypeSupported(serviceDef, spacialType) {
  * @prop {Array.<SearchDefinition>} urlRows - should be not service def just a simple URL to call
  */
 
+
+/**
+ * @param {QueryAnalysis|ServiceDescriptorDef} qAnaOrSd - accept a QueryAnalysis or a ServiceDescriptorDef
+ * @return {CISXui|Array} ui parameters or an empty array
+ */
+export function getCisxUI(qAnaOrSd) {
+    if (!qAnaOrSd) return [];
+    if (qAnaOrSd.primarySearchDef) { // is QueryAnalysis
+        return qAnaOrSd.primarySearchDef[0]?.serviceDef?.cisxUI ?? [];
+    } else if (qAnaOrSd.accessURL) { // is ServiceDescriptorDef
+        return qAnaOrSd.cisxUI ?? [];
+    }
+    return [];
+}
+
+export function getCisxUIValue(qAnaOrSd, name) {
+    return getCisxUI(qAnaOrSd).find((e) => e.name === name)?.value;
+}
+
+export function getCisxUIUCD(qAnaOrSd, name) {
+    return getCisxUI(qAnaOrSd).find((e) => e.name === name)?.UCD;
+}
 
 /**
  * @typedef {Object} SearchDefinition

@@ -15,14 +15,16 @@ import {FieldGroup} from '../FieldGroup.jsx';
 import {FormPanel} from '../FormPanel.jsx';
 import {showInfoPopup} from '../PopupUtil.jsx';
 import {Slot} from '../SimpleComponent';
+import {setIf as setIfUndefined} from 'firefly/util/WebUtil.js';
 import {
-    AREA, CHECKBOX, CIRCLE, CONE_AREA_KEY, ENUM, FLOAT, INT, POINT, POLYGON, POSITION, UNKNOWN
+    AREA, CHECKBOX, CIRCLE, CONE_AREA_KEY, ENUM, FLOAT, INT, POINT, POLYGON, POSITION, SIA_OBSCORE_OPS, UNKNOWN,
+    WAVELENGTH
 } from './DynamicDef.js';
-import {
-    getSpacialSearchType, hasValidSpacialSearch, makeAllFields, makeUnitsStr
-} from './DynComponents.jsx';
+import { getSpacialSearchType, hasValidSpacialSearch, makeAllFields, makeUnitsStr } from './DynComponents.jsx';
 import {findFieldDefType} from './ServiceDefTools.js';
 
+export const DEFER_TO_CONTEXT= 'DEFER_TO_CONTEXT';
+export const CONTEXT_PARAMS_STR= 'CONTEXT_PARAMS_STR';
 
 const defaultOnError= () => showInfoPopup('One or more fields are not valid', 'Invalid Data');
 
@@ -84,20 +86,26 @@ export function convertRequest(request, fieldDefAry, standardIDType) {
         switch (type) {
             case FLOAT: case INT: case AREA: case ENUM:
                 out[key]= request[key];
-                return out;
+                break;
             case UNKNOWN:
                 if (isDefined(request[key])) out[key]= request[key];
-                return out;
+                break;
             case POLYGON:
                 if (standardIDType===standardIDs.sia) out[key]= 'POLYGON ' +cleanupPolygonString(request[polygonKey]);
                 else if (standardIDType===standardIDs.soda) out[key]= cleanupPolygonString(request[polygonKey]);
                 else out[key]=request[polygonKey];
-                return out;
+                break;
             case CHECKBOX:
                 const value= Object.entries(request)
                     .find( ([k]) => k.includes(key))?.[1]?.includes(key) ?? false;
                 out[key]= value;
-                return out;
+                break;
+            case WAVELENGTH:
+                if (standardIDType===standardIDs.sia) out[WAVELENGTH]= DEFER_TO_CONTEXT;
+                break;
+            case SIA_OBSCORE_OPS:
+                if (standardIDType===standardIDs.sia) out[SIA_OBSCORE_OPS]= DEFER_TO_CONTEXT;
+                break;
             case POSITION:
                 if (raKey && decKey) {
                     const wp= convertCelestial(parseWorldPt(request[key]), CoordinateSys.EQ_J2000);
@@ -107,22 +115,22 @@ export function convertRequest(request, fieldDefAry, standardIDType) {
                 else {
                     out[key]= request[targetKey];
                 }
-                return out;
+                break;
             case POINT:
                 if (targetKey) {
                     const wp= convertCelestial(parseWorldPt(request[targetKey]), CoordinateSys.EQ_J2000);
                     if (wp) out[key]= makePointString(wp.x, wp.y,standardIDType);
                 }
-                return out;
+                break;
             case CIRCLE:
                 if (targetKey) {
                     const radius= request[sizeKey];
                     const wp= convertCelestial(parseWorldPt(request[targetKey]), CoordinateSys.EQ_J2000);
                     if (radius && wp) out[key]= makeCircleString(wp.x,wp.y,radius,standardIDType);
                 }
-                return out;
-            default: return out;
+                break;
         }
+        return out;
     }, {});
     const hiddenFields= fieldDefAry
         .reduce( (obj,{hide, key,initValue}) => {
@@ -204,54 +212,15 @@ export function findTargetFromRequest(request, fieldDefAry) {
     return wp;
 }
 
-
-function SimpleDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='defaultHiPSTargetSearch', toolbarHelpId}) {
-    const { DynSpacialPanel, areaFields, polyPanel, checkBoxFields, fieldsInputAry, opsInputAry,
-        useSpacial, useArea}= makeAllFields({ fieldDefAry,popupHiPS, plotId, toolbarHelpId});
-
-    let iFieldLayout;
-    if (fieldsInputAry.length || opsInputAry.length) {
-        iFieldLayout= (
-            <>
-                <div key='top' style={{paddingTop:5}}/>
-                {fieldsInputAry}
-                {Boolean(fieldsInputAry.length) && <div key='pad' style={{paddingTop:5}}/>}
-                {opsInputAry}
-            </>);
-    }
-
-
-    return (
-        <div style={style}>
-            {useSpacial &&
-                <Stack {...{alignItems:'center', height:'100%'}}>
-                    <DynSpacialPanel/>
-                </Stack>}
-            {Boolean(polyPanel) &&
-                <Stack {...{alignItems:'center'}}> {polyPanel} </Stack>}
-            <div style={{paddingLeft:5, display:'flex', flexDirection:'column'}}>
-                {useArea &&
-                    <Stack key='a' {...{pt:1/2}}>
-                        {areaFields}
-                    </Stack>}
-                <div style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
-                    {Boolean(iFieldLayout) && <div>{iFieldLayout}</div>}
-                    {Boolean(checkBoxFields) &&
-                        <Stack {...{pt:1/2, pl:8, alignSelf:'center'}}>
-                            {checkBoxFields}
-                        </Stack> }
-                </div>
-            </div>
-        </div>
-    );
-}
-
 function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='defaultHiPSTargetSearch', toolbarHelpId,
-                                 childComponents, slotProps, submitSearch, children}) {
-    const { DynSpacialPanel, areaFields, polyPanel, checkBoxFields, fieldsInputAry, opsInputAry,
-        useSpacial, useArea}= makeAllFields({ fieldDefAry,popupHiPS, plotId, toolbarHelpId, insetSpacial:true, submitSearch});
+                                 obsCoreMetadataModel,
+                                 childComponents, slotProps={}, submitSearch, dataServiceId, children}) {
+    const { DynSpacialPanel, areaFields, polyPanel, checkBoxFields, fieldsInputAry, opsInputAry, SiaWLPanel,
+        SiaObsCorePanel,
+        useSpacial}= makeAllFields({ fieldDefAry,popupHiPS, plotId, toolbarHelpId, insetSpacial:true, submitSearch});
 
-    let iFieldLayout;
+    let iFieldLayout= undefined;
+    let nonSpacialComponents= undefined;
     if (fieldsInputAry.length || opsInputAry.length) {
         iFieldLayout= (
             <Stack>
@@ -264,62 +233,75 @@ function InsetDynSearchPanel({style={}, fieldDefAry, popupHiPS= false, plotId='d
             </Stack>);
     }
 
+    const nonSpacialList= [polyPanel, areaFields?.length, iFieldLayout, checkBoxFields, SiaWLPanel,
+        SiaObsCorePanel, childComponents];
+    const hasNonSpacial= nonSpacialList.some(Boolean);
 
-
-    const nonSpacial = (Boolean(polyPanel) || useArea || Boolean(iFieldLayout) || Boolean(checkBoxFields) || childComponents)
-        ? (<Stack className='non-spatial'>
-            {Boolean(polyPanel) &&
-                <div style={{display:'flex', flexDirection:'column', alignItems:'center'}}> {polyPanel} </div>}
-            <div style={{paddingLeft:5, display:'flex', flexDirection:'column', alignSelf:'flex-start'}}>
-                {useArea &&
-                    <div key='a' style={{paddingTop:5, display:'flex', flexDirection:'column'}}>
-                        {areaFields}
-                    </div>}
-                <div style={{display:'flex', flexDirection:'row', alignItems:'center'}}>
-                    {Boolean(iFieldLayout) && <div >{iFieldLayout}</div>}
-                    {Boolean(checkBoxFields) &&
-                        <div style={{padding: '5px 0 0 45px', display:'flex', flexDirection:'column', alignSelf:'center'}}>
-                            {checkBoxFields}
-                        </div> }
+    if (hasNonSpacial) {
+        nonSpacialComponents= (
+            <Stack className='non-spatial'>
+                {Boolean(polyPanel) && <Stack {...{direction:'column', alignItems:'center'}}> {polyPanel} </Stack>}
+                <div style={{paddingLeft:5, display:'flex', flexDirection:'column', alignSelf:'flex-start'}}>
+                    {Boolean(areaFields?.length) &&
+                        <div key='a' style={{paddingTop:5, display:'flex', flexDirection:'column'}}>
+                            {areaFields}
+                        </div>}
+                    <Stack spacing={1}>
+                        {Boolean(SiaObsCorePanel) && <SiaObsCorePanel {...{dataServiceId,obsCoreMetadataModel}} />}
+                        {Boolean(SiaWLPanel) && <SiaWLPanel {...{dataServiceId,obsCoreMetadataModel}} />}
+                    </Stack>
+                    <Stack {...{direction:'row', alignItems:'center'}}>
+                        {Boolean(iFieldLayout) && <div>{iFieldLayout}</div>}
+                        {Boolean(checkBoxFields) &&
+                            <div style={{padding: '5px 0 0 45px', display:'flex', flexDirection:'column', alignSelf:'center'}}>
+                                {checkBoxFields}
+                            </div> }
+                    </Stack>
                 </div>
-            </div>
-            {childComponents && childComponents}
-        </Stack>)
-        : undefined; //to avoid rendering empty div (that takes spacing in Stack)
+                {childComponents}
+            </Stack>
+        );
+    }
 
 
     if (!useSpacial) {
         return (
             <div style={style}>
-                <Slot {...{
-                    component: FormPanel,
-                    slotProps: slotProps?.FormPanel,
-                    help_id: 'dynDefaultSearchPanelHelp',
+                <Slot {...{ component: FormPanel,
+                    slotProps: slotProps?.FormPanel, help_id: 'dynDefaultSearchPanelHelp',
                     onError:() => showInfoPopup('Fix errors and search again', 'Error'),
-                    cancelText:'',
-                    completeText:'Submit',
-                }} >
-                    {nonSpacial}
+                    cancelText:'', completeText:'Submit'}} >
+                    {nonSpacialComponents}
                     {children}
                 </Slot>
             </div>
         );
     }
 
+    const spacialSlotProps= {...slotProps};
+    setIfUndefined(spacialSlotProps, 'spatialSearch.sx.alignItems', 'stretch');
+    setIfUndefined(spacialSlotProps, 'spatialSearch.sx.ml', 'auto');
+    setIfUndefined(spacialSlotProps, 'spatialSearch.sx.mr', 'auto');
+
+
     return (
         <div style={style}>
             <Stack {...{alignItems:'center', height:'100%'}}>
-                <DynSpacialPanel otherComponents={nonSpacial} slotProps={slotProps}>
-                    {children}
+                <DynSpacialPanel slotProps={spacialSlotProps}>
+                    <Stack {...{spacing:1, my:1}}>
+                        {nonSpacialComponents}
+                        {children}
+                    </Stack>
                 </DynSpacialPanel>
             </Stack>
         </div>
     );
 }
 
+// this panel is experimental
 function GridDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='defaultHiPSTargetSearch', toolbarHelpId}) {
-    const { DynSpacialPanel, areaFields, checkBoxFields, fieldsInputAry, opsInputAry,
-        useArea, useSpacial}= makeAllFields({ fieldDefAry,noLabels:true, plotId, popupHiPS, toolbarHelpId});
+    const { DynSpacialPanel, areaFields, checkBoxFields, fieldsInputAry, opsInputAry, SiaWLPanel, dataServiceId,
+        SiaObsCorePanel, useSpacial}= makeAllFields({ fieldDefAry,noLabels:true, plotId, popupHiPS, toolbarHelpId});
 
 const labelAry= fieldDefAry
         .filter( ({type}) => type===INT || type===FLOAT || type===ENUM || type===UNKNOWN)
@@ -351,7 +333,8 @@ const labelAry= fieldDefAry
             {useSpacial &&
                 <Stack {...{alignItems:'center', alignSelf:'stretch'}}>
                     {<DynSpacialPanel/>}
-                    {useArea && <> {areaFields} </>}
+                    {Boolean(SiaWLPanel) && <SiaWLPanel {...{dataServiceId}}/>}
+                    {Boolean(areaFields?.length) && <> {areaFields} </>}
                 </Stack>
             }
             {Boolean(checkBoxFields) && <div key='b' style={{paddingTop:5, display:'flex', flexDirection:'column'}}>
@@ -362,9 +345,52 @@ const labelAry= fieldDefAry
     );
 }
 
+// this panel is experimental
+function SimpleDynSearchPanel({style={}, fieldDefAry, popupHiPS= true, plotId='defaultHiPSTargetSearch', dataServiceId, toolbarHelpId}) {
+    const { DynSpacialPanel, areaFields, polyPanel, checkBoxFields, fieldsInputAry, opsInputAry, SiaWLPanel,
+        SiaObsCorePanel, useSpacial}= makeAllFields({ fieldDefAry,popupHiPS, plotId, toolbarHelpId});
+
+    let iFieldLayout;
+    if (fieldsInputAry.length || opsInputAry.length) {
+        iFieldLayout= (
+            <>
+                <div key='top' style={{paddingTop:5}}/>
+                {fieldsInputAry}
+                {Boolean(fieldsInputAry.length) && <div key='pad' style={{paddingTop:5}}/>}
+                {opsInputAry}
+            </>);
+    }
+
+
+    return (
+        <div style={style}>
+            {useSpacial &&
+                <Stack {...{alignItems:'center', height:'100%'}}>
+                    <DynSpacialPanel/>
+                </Stack>}
+            {Boolean(polyPanel) &&
+                <Stack {...{alignItems:'center'}}> {polyPanel} </Stack>}
+            <Stack {...{pl:1/2, spacing:1}}>
+                {Boolean(areaFields?.length) &&
+                    <Stack key='a' {...{pt:1/2}}>
+                        {areaFields}
+                    </Stack>}
+                <Stack {...{spacing:1, alignItems:'center'}}>
+                    {Boolean(SiaWLPanel) && <SiaWLPanel {...{dataServiceId}} /> }
+                    {Boolean(iFieldLayout) && <div>{iFieldLayout}</div>}
+                    {Boolean(checkBoxFields) &&
+                        <Stack {...{pt:1/2, pl:8, alignSelf:'center'}}>
+                            {checkBoxFields}
+                        </Stack> }
+                </Stack>
+            </Stack>
+        </div>
+    );
+}
+
 
 export const DynLayoutPanelTypes= {
-    Simple: SimpleDynSearchPanel,
+    Simple: SimpleDynSearchPanel, //experimental
     Inset: InsetDynSearchPanel,
-    Grid: GridDynSearchPanel,
+    Grid: GridDynSearchPanel, //experimental
 };

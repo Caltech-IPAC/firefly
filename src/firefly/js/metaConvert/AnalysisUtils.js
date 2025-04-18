@@ -14,7 +14,6 @@ import {
 } from './DataProductsType.js';
 import {createGridImagesActivate} from './ImageDataProductsUtil.js';
 import {doUploadAndAnalysis} from './UploadAndAnalysis.js';
-import {getObsCoreDataProduct} from './vo/ObsCoreConverter';
 
 const LOADING_MSG= 'Loading...';
 

@@ -570,7 +570,7 @@ export function dispatchProcessScroll({plotId,scrollPt, disableBoundCheck=false,
  *
  * @param {Object}  p
  * @param {string} p.plotId
- * @param {WorldPt} [p.centerProjPt] new center, if undefined just keep the same center
+ * @param {WorldPt|undefined} [p.centerProjPt] new center, if undefined just keep the same center
  * @param {boolean} [p.fullSky] if true AITOFF, false half sky, undefined then don't change
  * @param {Function} [p.dispatcher] only for special dispatching uses such as remote
  */
