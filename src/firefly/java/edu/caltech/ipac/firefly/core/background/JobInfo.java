@@ -4,6 +4,7 @@
 
 package edu.caltech.ipac.firefly.core.background;
 
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.util.AppProperties;
 
@@ -15,6 +16,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 
 
 /**
@@ -28,7 +31,7 @@ import java.util.Set;
 public class JobInfo implements Serializable {
 
     public enum Phase {PENDING, QUEUED, EXECUTING, COMPLETED, ERROR, ABORTED, HELD, SUSPENDED, ARCHIVED, UNKNOWN}
-    public static final Set<Phase> TERMINATED_PHASES = Set.of(Phase.COMPLETED, Phase.ERROR, Phase.ABORTED);
+    public static final Set<Phase> CLEANUP_PHASES_EXCLUDES = Set.of(Phase.PENDING, Phase.QUEUED, Phase.EXECUTING, Phase.SUSPENDED);
     private static final int LIFE_SPAN = AppProperties.getIntProperty("job.lifespan", 60*60*24);        // default lifespan in seconds; kill job if exceed
 
     // these are uws:job defined properties
@@ -58,15 +61,17 @@ public class JobInfo implements Serializable {
     public static final String PROGRESS_DESC = "progressDesc";
     public static final String JOB_TYPE = "type";
     public static final String SUMMARY = "summary";
-    public static final String SVC_URL = "svcUrl";
+    public static final String JOB_URL = "jobUrl";
     public static final String MONITORED = "monitored";
     public static final String TITLE = "title";
     public static final String SVC_ID = "svcId";
+    public static final String APP_URL = "appUrl";
     public static final String RUN_HOST = "runHost";
     public static final String USER_ID = "userId";
     public static final String USER_KEY = "userKey";
     public static final String USER_NAME = "userName";
     public static final String USER_EMAIL = "userEmail";
+    public static final String SEND_NOTIF = "sendNotif";
 
     private String jobId;
     private String runId;
@@ -108,12 +113,14 @@ public class JobInfo implements Serializable {
     public Meta getMeta() {
         return meta;
     }
-    public Aux getAux() {
-        return aux;
-    }
+    public Aux getAux() {return aux; }
 
     public Phase getPhase() {
         return phase;
+    }
+
+    public void setPhase(String phase) {
+        this.phase = Util.Try.it(() -> Phase.valueOf(phase)).getOrElse(Phase.UNKNOWN);  // convert to Phase enum or UNKNOWN
     }
 
     public void setPhase(Phase phase) {
@@ -192,22 +199,27 @@ public class JobInfo implements Serializable {
         return SrvParam.makeSrvParamSimpleMap(getMeta().getParams());
     }
 
-    public void copyFrom(JobInfo extJob) {
-        if (extJob == null || extJob == this) return;
+    public void copyFrom(JobInfo uws) {
+        if (uws == null || uws == this) return;
 
-        this.jobId=extJob.jobId;
-        this.runId = extJob.runId;
-        this.ownerId = extJob.ownerId;
-        this.phase = extJob.phase;
-        this.quote = extJob.quote;
-        this.creationTime = extJob.creationTime;
-        this.startTime = extJob.startTime;
-        this.endTime = extJob.endTime;
-        this.executionDuration = extJob.executionDuration;
-        this.destruction = extJob.destruction;
-        this.params = new HashMap<>(extJob.params);
-        this.results = new ArrayList<>(extJob.results);
-        this.error = extJob.error;
+        this.jobId=uws.jobId;
+        this.runId = uws.runId;
+        this.ownerId = uws.ownerId;
+        this.phase = uws.phase;
+        this.quote = uws.quote;
+        this.creationTime = uws.creationTime;
+        this.startTime = uws.startTime;
+        this.endTime = uws.endTime;
+        this.executionDuration = uws.executionDuration;
+        this.destruction = uws.destruction;
+        this.params = new HashMap<>(uws.params);
+        this.results = new ArrayList<>(uws.results);
+        this.error = uws.error;
+        ifNotNull(uws.aux.getJobUrl()).apply(aux::setJobUrl);
+        ifNotNull(uws.aux.getUserId()).apply(aux::setUserId);
+        ifNotNull(uws.aux.getUserName()).apply(aux::setUserName);
+        ifNotNull(uws.aux.getUserEmail()).apply(aux::setUserEmail);
+        ifNotNull(uws.aux.getTitle()).apply(aux::setTitle);
     }
 
 //====================================================================
@@ -234,6 +246,8 @@ public class JobInfo implements Serializable {
         boolean monitored;
         String svcId;       // the service id that this job is associated with
         String runHost;     // the host where the job is running on
+        String appUrl;      // the URL of the app that created this job
+        boolean sendNotif;
 
         // these are not sent to client
         String eventConnId;
@@ -276,8 +290,14 @@ public class JobInfo implements Serializable {
         public String getSvcId() { return svcId; }
         public void setSvcId(String svcId) { this.svcId = svcId; }
 
+        public String getAppUrl() { return appUrl; }
+        public void setAppUrl(String appUrl) { this.appUrl = appUrl; }
+
         public String getEventConnId() { return eventConnId; }
         public void setEventConnId(String eventConnId) { this.eventConnId = eventConnId; }
+
+        public boolean getSendNotif() { return sendNotif; }
+        public void setSendNotif(boolean flg) { this.sendNotif = flg; }
     }
 
     /**
@@ -290,7 +310,7 @@ public class JobInfo implements Serializable {
         String userName;
         String userEmail;   // may need to be generic so that other user's info can be stored amd passed around
         String title;
-        String svcUrl;      // the service URL associated with this job
+        String jobUrl;      // the service URL associated with this job
 
         public String getUserId() { return userId; }
         public void setUserId(String userId) { this.userId = userId;}
@@ -304,8 +324,8 @@ public class JobInfo implements Serializable {
         public String getTitle() { return title; }
         public void setTitle(String title) { this.title = title; }
 
-        public String getSvcUrl() { return svcUrl; }
-        public void setSvcUrl(String svcUrl) { this.svcUrl = svcUrl; }
+        public String getJobUrl() { return jobUrl; }
+        public void setJobUrl(String jobUrl) { this.jobUrl = jobUrl; }
     }
 
 }

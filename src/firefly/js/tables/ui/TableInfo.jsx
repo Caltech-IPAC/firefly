@@ -189,7 +189,7 @@ export function LinkTag({href, title}) {
             <Stack overflow='hidden' direction='row' spacing={.75} alignItems='baseline'>
                 <CopyToClipboard value={href} size={16} buttonStyle={{backgroundColor: 'unset'}} style={{alignSelf: 'end'}}/>
                 <Link level='body-sm' href={href} title={title} target='Links'
-                      sx={{overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                      sx={{overflow: 'hidden', textOverflow: 'ellipsis', display: 'block', whiteSpace: 'nowrap'}}>
                     {title}
                 </Link>
             </Stack>

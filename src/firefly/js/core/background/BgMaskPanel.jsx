@@ -38,9 +38,12 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, mask, show
     }, [inProgress, jobInfo, errorInJob]);
 
     const doHide = () => {
-        dispatchComponentStateChange(componentKey, {hide:true});
+        dispatchComponentStateChange(componentKey, {inProgress: false, hide:true});
     };
-
+    const doShowMonitor = () => {
+        doHide();
+        showJobMonitor(true);
+    };
     const doCancel = () => {
         if (jobInfo) dispatchJobRemove(jobInfo?.meta?.jobId);
         doHide();
@@ -53,7 +56,7 @@ export const BgMaskPanel = React.memo(({componentKey, onMaskComplete, mask, show
             <MaskP msg={msg} jobInfo={jobInfo} mask={mask} {...props}>
                 <Stack direction='row' spacing={1}>
                     <Button variant='solid' color='primary' onClick={doHide}>Send to background</Button>
-                    <Button variant='solid' color='primary' onClick={() => showJobMonitor(true)}>Job Monitor</Button>
+                    <Button variant='solid' color='primary' onClick={doShowMonitor}>Job Monitor</Button>
                     <Button variant='soft' onClick={doCancel}>Cancel</Button>
                 </Stack>
             </MaskP>

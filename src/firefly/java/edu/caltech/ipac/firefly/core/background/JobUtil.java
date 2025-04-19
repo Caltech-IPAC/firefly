@@ -25,21 +25,24 @@ import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.*;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.COMPLETED;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.ERROR;
+import static edu.caltech.ipac.firefly.core.background.JobManager.getAllUserJobs;
 import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.server.query.UwsJobProcessor.*;
 import static edu.caltech.ipac.util.StringUtils.*;
 import static edu.caltech.ipac.firefly.core.Util.Try;
 
 public class JobUtil {
+    // Services are defined as strings with three fields (url|serviceId|serviceType), separated by commas. Only url is required; the others are optional.
     public static final List<String> UWS_HISTORY_SVCS = Arrays.stream(AppProperties.getProperty("uws.history.svcs", "")
                                                             .split(",")).map(String::trim).toList();        // urls separated by comma
     public static final List<String> RUNID_IGNORE = Arrays.stream(AppProperties.getProperty("uws.runid.ignore", "")
                                                             .split(",")).map(String::trim).toList();        // strings separated by comma
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static final long yearMs = 365*24*60*60*1000L;  // one year in milliseconds; 31_536_000_000
-    public static final List<String> runIdIgnoreList = List.of("TAP_SCHEMA");      // ignore job with these RUNID when importing external jobs
+    public static final List<String> runIdIgnoreList = new ArrayList<>();
 
     static {
+        runIdIgnoreList.add("TAP_SCHEMA");      // Firefly uses this when querying the tap schema
         if (!RUNID_IGNORE.isEmpty()) runIdIgnoreList.addAll(RUNID_IGNORE);
     }
 
@@ -84,20 +87,28 @@ public class JobUtil {
 
     /**
      * Import job histories from the given service URL.
-     * @param history current job history
-     * @param svcUrl the service URL to import job histories from
+     * @param svcDef the service to import job histories from
      * @return the number of job histories imported
      */
-    public static int importJobHistories(List<JobInfo> history, String svcUrl) {
+    public static int importJobHistories(String svcDef) {
         int count = 0;
-        if (isEmpty(svcUrl)) return count;
 
-        HttpServiceInput input = HttpServiceInput.createWithCredential(svcUrl.trim());
-        Ref<List<Result>> jobList = new Ref<>();
+        String[] svcParts = ifNotNull(svcDef).getOrElse("").split("\\|", 3);
+        String url = svcParts[0].trim();
+        String svcId = svcParts.length > 1 ? svcParts[1].trim() : null;
+        String svcType = svcParts.length > 2 ? svcParts[2].trim() : null;
+
+        if (url.isEmpty()) return count;
+
+        LOG.debug("Importing job histories from %s; svcId=%s svcType=%s".formatted(url, svcId, svcType));
+        List<JobInfo> history = getAllUserJobs();
+
+        HttpServiceInput input = HttpServiceInput.createWithCredential(url);
+        Ref<List<JobInfo>> jobList = new Ref<>();
         HttpServices.getData(input, r -> {
            Try.it(() -> {
                 Document doc = parse(r.getResponseBodyAsStream());
-                jobList.set(convertToJobList(doc));
+                jobList.set(convertToJobList(doc, url));
             }).getOrElse(e -> {
                 throw new UnsupportedOperationException(e.getMessage());
             });
@@ -105,30 +116,35 @@ public class JobUtil {
         });
         if (jobList.get() == null || jobList.get().isEmpty()) return count;
 
-        for (Result job : jobList.get()) {
-            JobInfo uws = Try.it(() -> getUwsJobInfo(job.href())).get();
+        // remove jobs with no URL or runId in the ignore list
+        boolean hasBadJobs = jobList.get().removeIf(j -> j.getAux().getJobUrl() == null || runIdIgnoreList.contains(String.valueOf(j.getRunId())));
+        if (hasBadJobs) LOG.debug("Some jobs with no URL or ignored runId were removed from list");
+
+        for (JobInfo job : jobList.get()) {
+            JobInfo uws = Try.it(() -> getUwsJobInfo(job.getAux().getJobUrl())).get();
             if (uws == null) {
-                LOG.debug("Failed to get job info for " + job.href());
+                LOG.debug("Failed to get job info for " + job.getAux().getJobUrl());
             } else if (runIdIgnoreList.contains(String.valueOf(uws.getRunId()))) {
-                LOG.debug("Ignoring job at %s with RUNID=%s".formatted(job.href(),uws.getRunId()));
+                LOG.debug("Ignoring job at %s with RUNID=%s".formatted(job.getAux().getJobUrl(), uws.getRunId()));
             } else {
                 count++;
                 String jobId = uws.getJobId();
                 JobInfo jobInfo = findJobInfo(jobId, history);
-                mergeJobInfo(jobInfo, uws, job.href());
-                LOG.trace("Job added href=%s jobId=%s".formatted(job.href(),uws.getJobId()));
+                mergeJobInfo(jobInfo, uws, svcId, svcType);
+                LOG.trace("Job added jobUrl=%s jobId=%s".formatted(job.getAux().getJobUrl(),uws.getJobId()));
             }
         }
-        LOG.debug("Imported %d job histories from %s".formatted(count, svcUrl));
+        LOG.debug("%d job histories imported".formatted(count));
         return count;
     }
 
-    public static JobInfo mergeJobInfo(JobInfo local, JobInfo uws, String href) {
+    public static JobInfo mergeJobInfo(JobInfo local, JobInfo uws, String svcId, String svcType) {
         String jobId = local == null ? nextJobId() : local.getMeta().getJobId();
         return updateJobInfo(jobId, true, ji -> {
             ji.copyFrom(uws);
-            ji.getMeta().setType(Job.Type.UWS);
-            ji.getAux().setSvcUrl(href);
+            Job.Type type = Try.it(() -> Job.Type.valueOf(svcType)).getOrElse(Job.Type.UWS);
+            ji.getMeta().setType(type);
+            ji.getMeta().setSvcId(svcId);
         });
     }
 
@@ -179,7 +195,7 @@ public class JobUtil {
         applyIfNotEmpty(info.getAux().getUserId(), v -> jsonAux.put(USER_ID, v));
         applyIfNotEmpty(info.getAux().getUserName(), v -> jsonAux.put(USER_NAME, v));
         applyIfNotEmpty(info.getAux().getUserEmail(), v -> jsonAux.put(USER_EMAIL, v));
-        applyIfNotEmpty(info.getAux().getSvcUrl(), v -> jsonAux.put(SVC_URL, v));
+        applyIfNotEmpty(info.getAux().getJobUrl(), v -> jsonAux.put(JobInfo.JOB_URL, v));
 
         JSONObject jsonMeta = new JSONObject();
         rval.put(META, jsonMeta);
@@ -193,7 +209,9 @@ public class JobUtil {
         applyIfNotEmpty(meta.getSummary(), v -> jsonMeta.put(SUMMARY, v));
         applyIfNotEmpty(meta.isMonitored(), v -> jsonMeta.put(MONITORED, v));
         applyIfNotEmpty(meta.getSvcId(), v -> jsonMeta.put(SVC_ID, v));
+        applyIfNotEmpty(meta.getAppUrl(), v -> jsonMeta.put(APP_URL, v));
         applyIfNotEmpty(meta.getRunHost(), v -> jsonMeta.put(RUN_HOST, v));
+        applyIfNotEmpty(meta.getSendNotif(), v -> jsonMeta.put(SEND_NOTIF, v));
 
         if (!meta.getParams().isEmpty()) jsonMeta.put(PARAMETERS, meta.getParams());
 
@@ -207,7 +225,7 @@ public class JobUtil {
 
         ifNotNull(json.get(RUN_ID)).apply(v -> rval.setRunId(v.toString()));
         ifNotNull(json.get(OWNER_ID)).apply(v -> rval.setOwnerId(v.toString()));
-        ifNotNull(json.get(PHASE)).apply(v -> rval.setPhase(Phase.valueOf(v.toString())));
+        ifNotNull(json.get(PHASE)).apply(v -> rval.setPhase(v.toString()));
         ifNotNull(json.get(QUOTE)).apply(v -> rval.setQuote(Instant.parse(v.toString())));
         ifNotNull(json.get(CREATION_TIME)).apply(v -> rval.setCreationTime(Instant.parse(v.toString())));
         ifNotNull(json.get(START_TIME)).apply(v -> rval.setStartTime(Instant.parse(v.toString())));
@@ -236,7 +254,9 @@ public class JobUtil {
                 ifNotNull(ji.get(SUMMARY)).apply(s -> rval.getMeta().setSummary(s.toString()));
                 ifNotNull(ji.get(MONITORED)).apply(m -> rval.getMeta().setMonitored((Boolean) m));
                 ifNotNull(ji.get(SVC_ID)).apply(s -> rval.getMeta().setSvcId(s.toString()));
+                ifNotNull(ji.get(APP_URL)).apply(s -> rval.getMeta().setAppUrl(s.toString()));
                 ifNotNull(ji.get(RUN_HOST)).apply(s -> rval.getMeta().setRunHost(s.toString()));
+                ifNotNull(ji.get(SEND_NOTIF)).apply(o -> rval.getMeta().setSendNotif((Boolean) o));
 
                 ifNotNull(toParameters(ji.get(PARAMETERS))).apply(p -> rval.getMeta().setParams(p));
             }
@@ -247,7 +267,7 @@ public class JobUtil {
                 ifNotNull(ji.get(USER_ID)).apply(s -> rval.getAux().setUserId(s.toString()));
                 ifNotNull(ji.get(USER_NAME)).apply(s -> rval.getAux().setUserName(s.toString()));
                 ifNotNull(ji.get(USER_EMAIL)).apply(s -> rval.getAux().setUserEmail(s.toString()));
-                ifNotNull(ji.get(SVC_URL)).apply(o -> rval.getAux().setSvcUrl(o.toString()));
+                ifNotNull(ji.get(JobInfo.JOB_URL)).apply(o -> rval.getAux().setJobUrl(o.toString()));
             }
         });
         return rval;

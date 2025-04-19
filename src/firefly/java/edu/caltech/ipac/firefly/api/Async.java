@@ -14,16 +14,12 @@ import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.core.background.JobInfo;
 import edu.caltech.ipac.firefly.core.background.JobManager;
-import edu.caltech.ipac.util.AppProperties;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Arrays;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.core.background.JobUtil.UWS_HISTORY_SVCS;
-import static edu.caltech.ipac.firefly.core.background.JobUtil.importJobHistories;
 import static edu.caltech.ipac.firefly.data.ServerParams.JOB_ID;
 import static edu.caltech.ipac.util.StringUtils.*;
 
@@ -100,12 +96,6 @@ public class Async extends BaseHttpServlet {
     private static void listUserJob(HttpServletResponse res) throws Exception {
         // list all jobs for current user; /CmdSrv/async
         List<JobInfo> list = JobManager.list();
-
-        UWS_HISTORY_SVCS.forEach(svc -> {
-            int count = importJobHistories(list, svc);
-            logger.info("imported " + count + " jobs from " + svc);
-        });
-
         sendResponse(JobUtil.toJsonJobList(list), res);
     }
 

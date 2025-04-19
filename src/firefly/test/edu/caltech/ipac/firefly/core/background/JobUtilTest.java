@@ -19,7 +19,6 @@ import java.util.List;
 
 import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.core.background.JobUtil.mergeJobInfo;
-import static edu.caltech.ipac.firefly.core.background.JobUtil.nextJobId;
 import static org.junit.Assert.*;
 
 /**
@@ -40,8 +39,18 @@ public class JobUtilTest extends ConfigTest {
 
         xmlJobList = """
             <uws:jobs xmlns:uws="http://www.ivoa.net/xml/UWS/v1.0" xmlns:xlink="http://www.w3.org/1999/xlink">
-              <uws:jobref id="job-001" xlink:href="http://example.org/uws/jobs/job-001"/>
-              <uws:jobref id="job-002" xlink:href="http://example.org/uws/jobs/job-002"/>
+              <uws:jobref id="job-001" xlink:href="http://example.org/uws/jobs/job-001">
+                  <uws:phase>COMPLETED</uws:phase>
+                  <uws:runId>runid</uws:runId>
+                  <uws:ownerId>sys</uws:ownerId>
+                  <uws:creationTime>2025-04-08T22:12:09.705Z</uws:creationTime>
+              </uws:jobref>
+              <uws:jobref id="job-002">
+                  <uws:phase>COMPLETED</uws:phase>
+                  <uws:runId>runid</uws:runId>
+                  <uws:ownerId>sys</uws:ownerId>
+                  <uws:creationTime>2025-04-08T22:12:09.705Z</uws:creationTime>
+              </uws:jobref>
             </uws:jobs>
         """.stripIndent();
 
@@ -70,7 +79,7 @@ public class JobUtilTest extends ConfigTest {
           },
           "errorSummary": {"message": "Exceeded execution duration", "type": "fatal"},
           "jobInfo": {
-            "svcUrl": "https://irsa.ipac.caltech.edu/TAP/async/64618972",
+            "jobUrl": "https://irsa.ipac.caltech.edu/TAP/async/64618972",
             "title" : "allwise_p3as_psd - irsa"                         ,
             "userId": "Guest"
           }
@@ -97,7 +106,7 @@ public class JobUtilTest extends ConfigTest {
             }
           ],
           "jobInfo": {
-            "svcUrl": "https://irsa.ipac.caltech.edu/TAP/async/64618972",
+            "jobUrl": "https://irsa.ipac.caltech.edu/TAP/async/64618972",
             "title" : "allwise_p3as_psd - irsa"                         ,
             "userId": "Guest"
           }
@@ -120,7 +129,7 @@ public class JobUtilTest extends ConfigTest {
             }
           ],
           "jobInfo": {
-            "svcUrl": "https://irsa.ipac.caltech.edu/TAP/async/64618972",
+            "jobUrl": "https://irsa.ipac.caltech.edu/TAP/async/64618972",
             "title" : "allwise_p3as_psd - irsa"                         ,
             "userId": "Guest"
           }
@@ -144,23 +153,25 @@ public class JobUtilTest extends ConfigTest {
 
     @Test
     public void parseUwsJobs() throws Exception {
-        List<JobInfo.Result> uwsJobs = UwsJobProcessor.convertToJobList( UwsJobProcessor.parse( new ByteArrayInputStream(xmlJobList.getBytes())));
+        List<JobInfo> uwsJobs = UwsJobProcessor.convertToJobList( UwsJobProcessor.parse( new ByteArrayInputStream(xmlJobList.getBytes())), "http://example.org/uws/jobs");
         assertEquals(2, uwsJobs.size());
-        assertEquals("job-001", uwsJobs.get(0).id());
-        assertEquals("http://example.org/uws/jobs/job-001", uwsJobs.get(0).href());
-        assertEquals("job-002", uwsJobs.get(1).id());
-        assertEquals("http://example.org/uws/jobs/job-002", uwsJobs.get(1).href());
+        assertEquals("job-001", uwsJobs.get(0).getJobId());
+        assertEquals("http://example.org/uws/jobs/job-001", uwsJobs.get(0).getAux().getJobUrl());
+        assertEquals("job-002", uwsJobs.get(1).getJobId());
+        assertEquals("http://example.org/uws/jobs/job-002", uwsJobs.get(1).getAux().getJobUrl());
     }
 
     @Test
     public void convertUwsJobToJobInfo() throws Exception {
-        List<JobInfo.Result> uwsJobs = UwsJobProcessor.convertToJobList( UwsJobProcessor.parse( new ByteArrayInputStream(xmlJobList.getBytes())));
-        List<JobInfo> jobInfos = uwsJobs.stream().map(ref -> mergeJobInfo(null, new JobInfo(ref.id()), ref.href())).toList();
+        List<JobInfo> uwsJobs = UwsJobProcessor.convertToJobList( UwsJobProcessor.parse( new ByteArrayInputStream(xmlJobList.getBytes())), "http://example.org/uws/jobs");
+        List<JobInfo> jobInfos = uwsJobs.stream().map(ref -> mergeJobInfo(null, ref, "IRSA", "TAP")).toList();
         assertEquals(2, jobInfos.size());
         assertEquals("job-001", jobInfos.get(0).getJobId());
-        assertEquals("http://example.org/uws/jobs/job-001", jobInfos.get(0).getAux().getSvcUrl());
+        assertEquals("http://example.org/uws/jobs/job-001", jobInfos.get(0).getAux().getJobUrl());
         assertEquals("job-002", jobInfos.get(1).getJobId());
-        assertEquals("http://example.org/uws/jobs/job-002", jobInfos.get(1).getAux().getSvcUrl());
+        assertEquals("http://example.org/uws/jobs/job-002", jobInfos.get(1).getAux().getJobUrl());
+        assertEquals("IRSA", jobInfos.get(0).getMeta().getSvcId());
+        assertEquals(Job.Type.TAP, jobInfos.get(0).getMeta().getType());
     }
 
 }

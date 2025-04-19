@@ -13,6 +13,7 @@ import edu.caltech.ipac.firefly.messaging.Messenger;
 import edu.caltech.ipac.firefly.messaging.Subscriber;
 import edu.caltech.ipac.firefly.server.RequestOwner;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.cache.DistribMapCache;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
 import edu.caltech.ipac.firefly.server.events.WebsocketConnector;
@@ -24,6 +25,7 @@ import edu.caltech.ipac.util.cache.CacheManager;
 import edu.caltech.ipac.util.cache.StringKey;
 import org.apache.commons.lang.text.StrBuilder;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
@@ -41,6 +43,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotEmpty;
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.*;
 import static edu.caltech.ipac.firefly.core.background.JobUtil.*;
@@ -64,14 +67,13 @@ public class JobManager {
     private static final int KEEP_ALIVE_INTERVAL = AppProperties.getIntProperty("job.keepalive.interval", 30);  // default keepalive interval in seconds
     private static final int WAIT_COMPLETE = AppProperties.getIntProperty("job.wait.complete", 1);              // wait for complete after submit in seconds
     private static final int MAX_PACKAGERS = AppProperties.getIntProperty("job.max.packagers", 10);             // maximum number of simultaneous packaging threads
-    private static final int ARCHIVE_RETENTION_PERIOD = AppProperties.getIntProperty("job.archive.retention.period", 24*7);   // Time in hours to keep a job in the archived state before deletion.  Default to 7 days.
-    private static final int ARCHIVE_AFTER = AppProperties.getIntProperty("job.archive.after", 24*7);           // Time in hours to keep a job after it has completed before archiving.  Default to 7 days.
+    private static final int JOB_RETENTION_PERIOD = AppProperties.getIntProperty("job.retention.period", 24*14);   // Time in hours to keep a job before deletion.  Default to 14 days.
 
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static final ExecutorService packagers = Executors.newFixedThreadPool(MAX_PACKAGERS);
     private static final ExecutorService searches = Executors.newCachedThreadPool();
     private static final HashMap<String, JobEntry> runningJobs = new HashMap<>();
-    private static final Cache<JobInfo> allJobInfos = CacheManager.getDistributedMap("ALL_JOB_INFOS");
+    private static final Cache<JobInfo> allJobInfos = new DistribMapCache<>("ALL_JOB_INFOS", JOB_RETENTION_PERIOD*60*60*2L, new JobInfoSerializer()); // twice the retention period; default to 28 days
     private static final String COMPLETED_HANDLER = AppProperties.getProperty("job.completed.handler");
 
 
@@ -95,12 +97,10 @@ public class JobManager {
      * @return a list of JobInfo belonging to the current request owner
      */
     public static List<JobInfo> list() {
-        String userKey = ServerContext.getRequestOwner().getUserKey();
-        return ofNullable(getAllJobs())
-                .orElse(Collections.emptyList())
-                .stream()
-                .filter(info -> userKey.equals(info.getMeta().getUserKey()) && info.getMeta().isMonitored())  // only return monitored jobs belonging to the current user
-                .toList();
+        UWS_HISTORY_SVCS.forEach(svc -> {
+            Try.it(() -> importJobHistories(svc)).getOrElse(LOG::error);
+        });
+        return getAllUserJobs();
     }
 
     public static JobInfo submit(Job job) {
@@ -111,11 +111,6 @@ public class JobManager {
             ji.setCreationTime(start);
             ji.setDestruction(start.plus(7, ChronoUnit.DAYS));
             ji.getMeta().setType(job.getType());
-            ji.getMeta().setUserKey(reqOwner.getUserKey());
-            ji.getMeta().setEventConnId(reqOwner.getEventConnID());
-            ji.getMeta().setRunHost(hostName());
-            ji.getMeta().setMonitored(true);                // all async jobs are monitored by default
-            setupUserProps(ji);
         });
         // update Job after jobInfo has been created
         job.runAs(reqOwner);
@@ -223,7 +218,7 @@ public class JobManager {
         JobInfo info = getJobInfo(jobId);
         if (info == null && addIfNoFound) {
             info = new JobInfo(jobId);
-            info.getMeta().setJobId(jobId);
+            initNewJob(info);
         }
         if (info == null || func == null) return null;
         func.accept(info);
@@ -269,31 +264,16 @@ public class JobManager {
 
     static void publishCompleted(JobInfo jobInfo) {
         if (jobInfo != null) {
-            BackGroundInfo bgInfo = getBackgroundInfo();
-            if (bgInfo.sendNotif()) {
-                if (isEmpty(jobInfo.getAux().getUserEmail())) jobInfo.getAux().setUserEmail(bgInfo.email);
+            if (jobInfo.getMeta().getSendNotif()) {
                 Messenger.publish(new JobCompletedEvent(jobInfo));       // notify all instances this job is completed
             }
         }
     }
-    
 
-    /**
-     * internal method to notify all clients with the updated jobInfo
-     * @param jobInfo
-     */
-    private static void updateClient(JobInfo jobInfo) {
-        if (jobInfo == null) return;
-        // send updated jobInfo to client
-        FluxAction addAction = new FluxAction(FluxAction.JOB_INFO, toJsonObject(jobInfo));
-        ServerEvent.EventTarget evt = new ServerEvent.EventTarget(ServerEvent.Scope.USER);
-        evt.setUserKey(jobInfo.getMeta().getUserKey());
-        ServerEventManager.fireAction(addAction, evt);
-    }
-
+    public record BackGroundInfo(boolean notifEnabled, String email) implements Serializable {}
 
 //====================================================================
-//
+//  Job statistics
 //====================================================================
 
     /**
@@ -355,25 +335,47 @@ public class JobManager {
     }
 
     /**
-     * User info specifically for Job Notification
+     * Get all jobs that belong to the current user
+     * @return a list of JobInfo that belong to the current user
      */
-    private static void setupUserProps(JobInfo ji) {
-        String email = getBackgroundInfo().email;
-        UserInfo uInfo = ServerContext.getRequestOwner().getUserInfo();
-        email = isEmpty(email) && !uInfo.isGuestUser() ? uInfo.getEmail() : email;
-        String name = Stream.of(uInfo.getFirstName(), uInfo.getLastName())
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.joining(" "));
+    static List<JobInfo> getAllUserJobs() {
+        String userKey = ServerContext.getRequestOwner().getUserKey();
+        return ofNullable(getAllJobs())
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(info -> userKey.equals(info.getMeta().getUserKey()) && info.getMeta().isMonitored())  // only return monitored jobs belonging to the current user
+                .toList();
 
+    }
+
+//====================================================================
+//  internal methods
+//====================================================================
+
+    /**
+     * Setup required job meta and other information used by internal sub-systems.
+     * @param ji the JobInfo to initialize
+     */
+    private static void initNewJob(JobInfo ji) {
+        // set required job meta
+        RequestOwner reqOwner = ServerContext.getRequestOwner();
+        ji.getMeta().setJobId(ji.getJobId());
+        ji.getMeta().setUserKey(reqOwner.getUserKey());
+        ji.getMeta().setEventConnId(reqOwner.getEventConnID());
+        ji.getMeta().setRunHost(hostName());
+        ji.getMeta().setAppUrl(ServerContext.getRequestOwner().getBaseUrl());
+        ji.getMeta().setMonitored(true);                // all async jobs are monitored by default
+
+        // set user info
+        UserInfo uInfo = reqOwner.getUserInfo();
+        String email = ifNotEmpty(ji.getAux().getUserEmail()).getOrElse(uInfo.getEmail());
+        String name = Stream.of(uInfo.getFirstName(), uInfo.getLastName())
+                .filter(Objects::nonNull)
+                .collect(Collectors.joining(" "));
         ji.getAux().setUserName(name);
         ji.getAux().setUserEmail(email);
         ji.getAux().setUserId(uInfo.getLoginName());
     }
-
-    public record BackGroundInfo(boolean sendNotif, String email) implements Serializable {}
-//====================================================================
-//
-//====================================================================
 
     private static CacheKey cacheKey(JobInfo jobInfo) {
         return cacheKey(jobInfo.getMeta().getJobId());
@@ -424,6 +426,24 @@ public class JobManager {
             });
         }
     }
+
+    /**
+     * internal method to notify all clients with the updated jobInfo
+     * @param jobInfo
+     */
+    private static void updateClient(JobInfo jobInfo) {
+        if (jobInfo == null) return;
+        // send updated jobInfo to client
+        FluxAction addAction = new FluxAction(FluxAction.JOB_INFO, toJsonObject(jobInfo));
+        ServerEvent.EventTarget evt = new ServerEvent.EventTarget(ServerEvent.Scope.USER);
+        evt.setUserKey(jobInfo.getMeta().getUserKey());
+        ServerEventManager.fireAction(addAction, evt);
+    }
+
+//====================================================================
+//  inner classes
+//====================================================================
+
 
     public static class JobEvent extends Message {
         public static final String TOPIC = "JobEvent";
@@ -476,13 +496,31 @@ public class JobManager {
             if (!job.getMeta().isMonitored() && job.getEndTime().plus(1, ChronoUnit.HOURS).isBefore(Instant.now())) {
                 LOG.info("Removing non-monitored job: " + k);
                 allJobInfos.remove(k);      // remove non-monitored job after 1 hour
-            } else if (TERMINATED_PHASES.contains(job.getPhase()) && job.getEndTime().plus(ARCHIVE_AFTER, ChronoUnit.HOURS).isBefore(Instant.now())) {
-                LOG.info("Archiving job: " + k);
-                updateJobInfo(job.getMeta().getJobId(), jobInfo -> jobInfo.setPhase(ARCHIVED));
-            } else if (job.getPhase().equals(ARCHIVED) && job.getEndTime().plus(ARCHIVE_RETENTION_PERIOD, ChronoUnit.HOURS).isBefore(Instant.now())) {
-                LOG.info("Removing archived job: " + k);
+            } else if (!CLEANUP_PHASES_EXCLUDES.contains(job.getPhase()) && job.getEndTime().plus(JOB_RETENTION_PERIOD, ChronoUnit.HOURS).isBefore(Instant.now())) {
+                LOG.info("Removing expired job: " + k);
                 allJobInfos.remove(k);
             }
         });
+    }
+
+    /**
+     * This serializer is used to serialize JobInfo objects for storage in the cache.
+     * Instead of using the default Java serialization, it uses a JSON string.
+     */
+    private static class JobInfoSerializer implements DistribMapCache.Serializer {
+
+        public String serialize(Object obj) {
+            if (obj instanceof JobInfo jobInfo) {
+                return toJson(jobInfo);
+            }
+            return null;
+        }
+
+        public Object deserialize(String str) throws Exception{
+            if (str != null) {
+                return toJobInfo((JSONObject) new JSONParser().parse(str));
+            }
+            return null;
+        }
     }
 }

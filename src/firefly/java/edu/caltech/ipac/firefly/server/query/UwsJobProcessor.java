@@ -32,7 +32,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static edu.caltech.ipac.firefly.core.Util.Try;
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.*;
 import static edu.caltech.ipac.firefly.core.background.JobManager.getJobInfo;
@@ -110,7 +109,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
             throw new DataAccessException(e.getMessage());
         } finally {
             sendJobUpdate(ji -> {
-                ji.getAux().setSvcUrl(jobUrl);
+                ji.getAux().setJobUrl(jobUrl);
             });
         }
 
@@ -326,15 +325,31 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
 
     private static final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
-    public static List<Result> convertToJobList(Document doc) throws Exception {
-        List<Result> rval = new java.util.ArrayList<>();
+    /**
+     * Convert a UWS job list document to a list of partially populated JobInfo.
+     * @param doc  the xml document to parse
+     * @return a list of partially populated JobInfo
+     * @throws Exception if an error occurs
+     */
+    public static List<JobInfo> convertToJobList(Document doc, String svcUrl) throws Exception {
+        List<JobInfo> rval = new java.util.ArrayList<>();
         String prefix = getUwsNS(doc);
         Element jobs = doc.getDocumentElement();
         if (jobs != null && jobs.getTagName().equals(prefix + JOBS)) {
             NodeList jlist = jobs.getElementsByTagName(prefix + JOB_REF);
             for (int i = 0; i < jlist.getLength(); i++) {
                 Node r = jlist.item(i);
-                rval.add( new JobInfo.Result( getAttr(r, "id"), getAttr(r,"xlink:href"),null,null));
+                JobInfo ji = new JobInfo(getAttr(r, "id"));
+                String jobUrl = ifNotNull(getAttr(r, "xlink:href")).getOrElse(svcUrl + "/" + ji.getJobId());
+                ji.getAux().setJobUrl(jobUrl)   ;
+
+                if (r instanceof Element el) {
+                    ifNotNull(getVal(el, prefix + PHASE)).apply(ji::setPhase);
+                    ifNotNull(getVal(el, prefix + RUN_ID)).apply(ji::setRunId);
+                    ifNotNull(getVal(el, prefix + OWNER_ID)).apply(ji::setOwnerId);
+                    ifNotNull(getVal(el, prefix + CREATION_TIME)).apply(v -> ji.setCreationTime(getInstant(v)));
+                }
+                rval.add(ji);
             }
         }
         return rval;
@@ -348,9 +363,7 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
             JobInfo jobInfo = new JobInfo(id);
             applyIfNotEmpty(getVal(root, prefix + RUN_ID), jobInfo::setRunId);
             applyIfNotEmpty(getVal(root, prefix + OWNER_ID), jobInfo::setOwnerId);
-            applyIfNotEmpty(getVal(root, prefix + PHASE), v -> jobInfo.setPhase(
-                    Try.it(() -> Phase.valueOf(v)).getOrElse(Phase.UNKNOWN))
-            );
+            applyIfNotEmpty(getVal(root, prefix + PHASE), jobInfo::setPhase);
             applyIfNotEmpty(getVal(root, prefix + QUOTE), v -> jobInfo.setQuote(getInstant(v)));
             applyIfNotEmpty(getVal(root, prefix + CREATION_TIME), v -> jobInfo.setCreationTime(getInstant(v)));
             applyIfNotEmpty(getVal(root, prefix + START_TIME), v -> jobInfo.setStartTime(getInstant(v)));

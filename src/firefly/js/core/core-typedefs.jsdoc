@@ -123,8 +123,7 @@
  * Top-level.  Information on background jobs. Object is keyed by ID.
  * @typedef {Object} BackgroundInfo
  * @prop {string} email                     email to notify when background job is completed
- * @prop {boolean} sendNotif                true to send notification when job is completed
- * @prop {string} showDlScript              show download script link
+ * @prop {string} notifEnabled              indicates if this application supports job completion notification
  * @prop {Object.<string, Job>} jobs    a map of background job and its jobInfo.
  */
 
@@ -149,7 +148,7 @@
  * Additional job information.
  * @typedef {Object} JobInfo
  * @prop {string} title         job title for display
- * @prop {string} svcUrl        URL of the service running the job
+ * @prop {string} jobUrl        URL to the job
  * @prop {string} userId        Firefly user ID associated with the job
  * @prop {string} userName      Firefly username associated with the job
  * @prop {string} userEmail     email associated with the job
@@ -167,6 +166,7 @@
  * @prop {number} progress      progress of the job as a percentage.  0-100, where 100 is done
  * @prop {string} progressDesc  a description of the current progress
  * @prop {string} summary       summary of the job
+ * @prop {boolean} sendNotif    if true, send notification when job is done
  */
 
 /*=========================================================================*/

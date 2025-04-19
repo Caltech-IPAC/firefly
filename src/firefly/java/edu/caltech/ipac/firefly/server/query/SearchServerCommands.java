@@ -51,6 +51,8 @@ import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.List;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.core.background.JobManager.sendUpdate;
 import static edu.caltech.ipac.firefly.data.ServerParams.*;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -320,7 +322,7 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             String jobId = params.getRequired(JOB_ID);
-            JobInfo info = JobManager.sendUpdate(jobId, jobInfo -> jobInfo.setPhase(JobInfo.Phase.ARCHIVED));
+            JobInfo info = sendUpdate(jobId, jobInfo -> jobInfo.setPhase(JobInfo.Phase.ARCHIVED));
             return JobUtil.toJson(info);
         }
     }
@@ -329,8 +331,8 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             String email = params.getOptional(EMAIL);
-            boolean sendNotif = params.getOptionalBoolean(SEND_NOTIF, false);
-            JobManager.setBackgroundInfo(new JobManager.BackGroundInfo(sendNotif, email));
+            boolean notifEnabled = params.getOptionalBoolean(NOTIF_ENABLED, false);
+            JobManager.setBackgroundInfo(new JobManager.BackGroundInfo(notifEnabled, email));
             return "true";
         }
     }
@@ -351,13 +353,17 @@ public class SearchServerCommands {
         }
     }
 
-    public static class ResendEmail extends ServCommand {
+    public static class SetJobNotif extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            String id = params.getRequired(JOB_ID);
+            String jobId = params.getRequired(JOB_ID);
+            boolean notifEnabled = params.getRequiredBoolean(NOTIF_ENABLED);
             String email = params.getOptional(EMAIL);
-            JobInfo info = JobManager.sendEmail(id, email);
-            return JobUtil.toJson(info);
+            JobInfo info = sendUpdate(jobId, ji -> {
+                ji.getMeta().setSendNotif(notifEnabled);
+                ji.getAux().setUserEmail(email);
+            });
+            return info != null ? JobUtil.toJson(info) : "false";
         }
     }
 

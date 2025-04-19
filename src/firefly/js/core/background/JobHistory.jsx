@@ -1,14 +1,14 @@
 import React, {useEffect} from 'react';
 import {object, string, shape} from 'prop-types';
-import {Checkbox, IconButton, Button, Sheet, Stack, Typography, ListItemDecorator, Tab} from '@mui/joy';
+import {IconButton, Button, Sheet, Stack, Typography, ListItemDecorator, Tab} from '@mui/joy';
 import moment from 'moment';
-import {uniq} from 'lodash';
+import {isEmpty, uniq} from 'lodash';
 
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent';
-import {getBackgroundInfo, getJobInfo, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, Phase} from './BackgroundUtil';
+import {getBackgroundInfo, getJobInfo, getJobTitle, getPhaseTips, isActive, isArchived, isDone, isExecuting, isFail, isSearchJob, isSuccess, Phase} from './BackgroundUtil';
 import {TablePanel} from '../../tables/ui/TablePanel';
 import {getAppOptions} from '../AppDataCntlr';
-import {dispatchBgJobInfo, dispatchBgSetInfo, dispatchJobCancel, dispatchJobRemove} from './BackgroundCntlr';
+import {dispatchBgJobInfo, dispatchBgSetInfo, dispatchJobCancel, dispatchJobRemove, dispatchSetJobNotif} from './BackgroundCntlr';
 import {InputField} from '../../ui/InputField';
 import Validate from '../../util/Validate';
 import {getRequestFromJob} from '../../tables/TableRequestUtil';
@@ -29,6 +29,8 @@ import DownloadIcon from '@mui/icons-material/Download';
 import ReadMoreIcon from '@mui/icons-material/ReadMore';
 import StopCircleOutlinedIcon from '@mui/icons-material/StopCircleOutlined';
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined';
+import NotificationsOffIcon from '@mui/icons-material/NotificationsOff';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 
 export function JobHistory({initArgs, help_id, slotProps, ...props}) {
     const {title, table, note, ...rest} = getAppOptions()?.background?.history || {};
@@ -104,13 +106,13 @@ export function showMultiResults(job) {
 // ----------------------------------Start of private functions ------------------------------------------//
 
 function TitleSection({summary, notification, ...props}) {
-    const {jobs:jobMap={}, email, sendNotif} = useStoreConnector(() => getBackgroundInfo());
+    const {jobs:jobMap={}, email, notifEnabled} = useStoreConnector(() => getBackgroundInfo());
     const jobs = getMonitoredJob(jobMap);
 
     return (
         <Stack component={Sheet} variant='soft' borderRadius={4} padding={1} spacing={1} {...props}>
             <Slot component={JobSummary} jobs={jobs} slotProps={summary}/>
-            <Slot component={Notification} {...{email, sendNotif}} slotProps={notification}/>
+            <Slot component={Notification} {...{email, notifEnabled}} slotProps={notification}/>
         </Stack>
     );
 }
@@ -139,45 +141,32 @@ function JobSummary({jobs, ...props}) {
     );
 }
 
-function Notification({email='', sendNotif, ...props}) {
+function Notification({email='', notifEnabled, ...props}) {
     const {enable, showEmail}= getAppOptions()?.background?.notification || {};
-    const showNotify = enable || showEmail;
 
-    if (!showNotify) return null;
+    useEffect(() => {
+        dispatchBgSetInfo({email, notifEnabled: enable});    // sync client with server
+    }, []);
+
+    if (!showEmail) return null;
 
     const onEmailChanged = (v) => {
-        if (v?.valid && email !== v.value) dispatchBgSetInfo({email: v.value, sendNotif});
-    };
-
-    const toggleSendNotif = (e) => {
-        dispatchBgSetInfo({email, sendNotif: e.target.checked});
+        if (v?.valid && email !== v.value) dispatchBgSetInfo({email: v.value, notifEnabled});
     };
 
     return (
         <Stack direction='row' gap={5} {...props}>
-            <Typography level='title-md' color='primary' mr={2}>Notification</Typography>
-            <Stack direction='row' gap={9} alignItems='center'>
-                <Stack direction='row'>
-                    <Checkbox p={1} size='sm' checked={sendNotif} onChange={toggleSendNotif} label={'Enable'}/>
-                </Stack>
-                {showEmail &&
-                    <Stack direction='row' alignItems='center'>
-                        <Typography component='label' level='title-md' sx={{mr: 1}}>
-                            Email:
-                        </Typography>
-                        <InputField
-                            validator={Validate.validateEmail.bind(null, 'an email field')}
-                            tooltip='Enter an email to be notified when a process completes.'
-                            slotProps={{label:{sx:{ml:0}}}}
-                            value={email || ''}
-                            placeholder='Enter an email to get notification'
-                            sx={{width:250}}
-                            onChange={onEmailChanged}
-                            actOn={['blur','enter']}
-                        />
-                    </Stack>
-                }
-            </Stack>
+            <Typography level='title-md' color='primary'>Notification Email</Typography>
+            <InputField
+                validator={Validate.validateEmail.bind(null, 'an email field')}
+                tooltip='Enter an email to be notified when a process completes.'
+                slotProps={{label:{sx:{ml:0}}}}
+                value={email || ''}
+                placeholder='Enter an email to get notification'
+                sx={{width:250}}
+                onChange={onEmailChanged}
+                actOn={['blur','enter']}
+            />
         </Stack>
     );
 }
@@ -228,7 +217,6 @@ function ControlRenderer({cellInfo}) {
             <Progress job={job}/>
             <Results job={job}/>
             <InfoPopup job={job}/>
-            <Abort job={job}/>
             <Delete job={job}/>
         </Stack>
     );
@@ -241,29 +229,55 @@ function Delete({job}) {
             dispatchHideDialog(id);
         });
     };
-    return isDone(job) && <IconButton  title={`Delete job ${job?.meta?.jobId}`} color='danger' onClick={doDelete}><DeleteOutlineOutlinedIcon/></IconButton>;
+    const title = job?.jobInfo?.title || job.jobId;
+    if (isDone(job)) {
+        return <IconButton  title={`Delete job ${job?.meta?.jobId}`} color='danger' onClick={doDelete}><DeleteOutlineOutlinedIcon/></IconButton>;
+    } else if (isExecuting(job)) {
+        return <IconButton  title={`Abort job ${title}`} color='danger' onClick={() => dispatchJobCancel(job?.meta?.jobId)}><StopCircleOutlinedIcon/></IconButton>;
+    }
 }
 
-function Abort({job}) {
-    if (!Phase.EXECUTING.is(job?.phase)) return null;
-    const title = job?.jobInfo?.title || job.jobId;
-    return <IconButton  title={`Abort job ${title}`} color='danger' onClick={() => dispatchJobCancel(job?.meta?.jobId)}><StopCircleOutlinedIcon/></IconButton>;
-}
 
 function InfoPopup({job}) {
     return <InfoButton color='warning' iconButtonSize='34px' onClick={() => showJobInfo(job?.meta?.jobId)}/>;
 }
 
-
 function Progress({job}) {
     if (!Phase.EXECUTING.is(job?.phase)) return null;
-    return <Button loading title={job?.meta?.progressDesc} variant='plain' />;
+    return(
+        <>
+            <Button loading title={job?.meta?.progressDesc} variant='plain' color='success'/>
+            <NotifBtn jobId={job.meta?.jobId} enable={job.meta?.sendNotif}/>
+        </>
+    );
+
 }
+
+function NotifBtn ({jobId, enable}) {
+    const {email, notifEnabled} = useStoreConnector(() => getBackgroundInfo());
+    const {showEmail}= getAppOptions()?.background?.notification || {};
+
+    if (!notifEnabled || !jobId) return null;
+
+    const toggleSendNotif = (enable) => {
+        if (enable && showEmail && !email) {
+            showInfoPopup('You must provide a valid email address to receive notifications.');
+        } else {
+            dispatchSetJobNotif({jobId, enable, email});
+        }
+    };
+
+    const title = enable ? 'Notification is enabled. Click to disable.' : 'Notification is disabled. Click to enable';
+    const icon = enable ? <NotificationsActiveIcon/> : <NotificationsOffIcon/>;
+    return <IconButton title={title} color='primary' onClick={() => toggleSendNotif(!enable)}>{icon}</IconButton>;
+}
+
 
 function Results({job}) {
     if (!isSuccess(job)) return null;
     if (isSearchJob(job)) {
-        return <IconButton  title='Show Search Result' color='success' onClick={() => showTable(job?.meta?.jobId)}><InsightsIcon/></IconButton>;
+        const onClick = showResults(job?.meta?.jobId);
+        return <IconButton  title='Show Search Result' disabled={!onClick} color='success' onClick={onClick}><InsightsIcon/></IconButton>;
     } else if (job?.results?.length === 1) {
         return <DownloadBtn job={job}/>;
     } else {
@@ -300,7 +314,7 @@ function convertToTableModel(jobs, tbl_id) {
 
     const data = jobs?.map((job) =>
         [
-            job.jobInfo?.title ?? job.meta.jobId,
+            getJobTitle(job),
             job.meta?.svcId,
             job.meta?.type,
             job.startTime && moment.utc(job.startTime).format('YYYY-MM-DD HH:mm:ss'),
@@ -331,11 +345,14 @@ function defaultRequest(doFilter) {
     return {sortInfo, filters};
 }
 
-function showTable(jobId) {
-    const request = getRequestFromJob(jobId);
-    if (request) {
-        dispatchTableSearch(request);
-        showJobMonitor(false);
+function showResults(jobId) {
+    // assuming job returns a table;  will expand to other types in the future
+    const request = getRequestFromJob(jobId);  // the request is initiated from Firefly
+    if (!isEmpty(request)) {
+        return () => {
+            dispatchTableSearch(request);
+            showJobMonitor(false);
+        };
     }
 }
 

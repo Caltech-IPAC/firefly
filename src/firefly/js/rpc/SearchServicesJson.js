@@ -242,14 +242,14 @@ export function uwsJobInfo(jobUrl, jobId) {
 
 /**
  * @param {string} email
- * @param {boolean} sendNotif
+ * @param {boolean} notifEnabled
  * @return {Promise}
  */
-export function setBgInfo(email, sendNotif) {
+export function setBgInfo(email, notifEnabled) {
 
     const params = [
         {name:ServerParams.EMAIL, value:email},
-        {name:ServerParams.SEND_NOTIF, value:sendNotif}
+        {name:ServerParams.NOTIF_ENABLED, value:notifEnabled}
     ];
     return doJsonRequest(ServerParams.SET_BG_INFO, params);
 }
@@ -259,8 +259,12 @@ export function setBgInfo(email, sendNotif) {
  * @param {string} email
  * @return {Promise}
  */
-export function resendEmail(email) {
-    return doJsonRequest(ServerParams.RESEND_EMAIL, {[ServerParams.EMAIL]: email});
+export function setJobNotif(jobId, enable, email) {
+    return doJsonRequest(ServerParams.SET_JOB_NOTIF, {
+        [ServerParams.JOB_ID]: jobId,
+        [ServerParams.NOTIF_ENABLED]: enable,
+        [ServerParams.EMAIL]: email
+    });
 }
 
 /**

@@ -101,6 +101,14 @@ export function isSearchJob(job) {
     return ['SEARCH', 'UWS', 'TAP'].includes(job?.meta?.type);
 }
 
+export function isTapJob(job) {
+    return job?.meta?.type === 'TAP';
+}
+
+export function getJobTitle(job) {
+    return job.jobInfo?.title ?? job.runId ?? job.jobId;
+}
+
 export function isMonitored(job) {
     return !!job?.meta?.monitored;
 }
@@ -118,8 +126,8 @@ export function getBgEmail() {
  * @returns {object.<string>}
  */
 export function getBgInfo() {
-    const {email, sendNotif} =  get(flux.getState(), BACKGROUND_PATH) || {};
-    return {email, sendNotif};
+    const {email, notifEnabled} =  get(flux.getState(), BACKGROUND_PATH) || {};
+    return {email, notifEnabled};
 }
 
 export function canCreateScript(jobInfo) {

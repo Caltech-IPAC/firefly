@@ -52,7 +52,7 @@ public class AppServerCommands {
             String email = ifNotNull(ServerContext.getRequestOwner().getUserInfo()).get(v -> v.isGuestUser() ? bgInfo.email() : v.getEmail());
             FluxAction action = new FluxAction("background.bgSetInfo");
             action.setValue(email, "email");
-            action.setValue(bgInfo.sendNotif(), "sendNotif");
+            action.setValue(bgInfo.notifEnabled(), "notifEnabled");
             ServerEventManager.fireAction(action, ServerEvent.Scope.SELF);
 
             return "true";
