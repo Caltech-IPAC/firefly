@@ -129,7 +129,16 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
             setUploadInfo(searchParams.uploadInfo);
             checkHeaderCtl.setPanelActive(true);
         }
-    }, [searchParams.radiusInArcSec, searchParams.wp, searchParams.corners, searchParams.uploadInfo]);
+    }, [searchParams.radiusInArcSec, searchParams.corners, searchParams.uploadInfo]);
+
+    const spatialMethod= getVal(SpatialMethod)??CONE_CHOICE_KEY;
+    useEffect(() => {
+        // if method change from first use effect we need to set the target panel, since it was not rendered
+        // this is a separate effect since it has to wait for the method to change
+        if (searchParams.wp && spatialMethod===CONE_CHOICE_KEY) {
+            setVal(DEF_TARGET_PANEL_KEY,searchParams.wp);
+        }
+    }, [spatialMethod, searchParams.wp]);
 
     useEffect(() => {
         if (useSIAv2) {

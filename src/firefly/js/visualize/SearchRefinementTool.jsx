@@ -16,7 +16,7 @@ import {useFieldGroupValue, useStoreConnector} from '../ui/SimpleComponent.jsx';
 import {SizeInputFields} from '../ui/SizeInputField.jsx';
 import {DEF_TARGET_PANEL_KEY, TargetPanel} from '../ui/TargetPanel.jsx';
 import {ToolbarButton} from '../ui/ToolbarButton.jsx';
-import {getDlAry} from './DrawLayerCntlr.js';
+import {dispatchDestroyDrawLayer, getDlAry} from './DrawLayerCntlr.js';
 import {visRoot} from './ImagePlotCntlr.js';
 import {getDrawLayerByType, getPlotViewById, primePlot} from './PlotViewUtil.js';
 import {parseWorldPt} from './Point.js';
@@ -43,7 +43,10 @@ export function showSearchRefinementTool({popupClosing, element, plotId, cone,
         dispatchHideDialog(SEARCH_REFINEMENT_DIALOG_ID);
         popupClosing?.();
         const dl = getDrawLayerByType(getDlAry(), SearchSelectTool.TYPE_ID);
-        if (dl?.isInteractive) closeToolbarModalLayers();
+        if (dl?.isInteractive) {
+            dispatchDestroyDrawLayer(dl.drawLayerId)
+            closeToolbarModalLayers();
+        }
     };
 
     const panel= (
@@ -82,7 +85,7 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
     const modalEndInfo = useStoreConnector(() => getModalEndInfo());
 
     const pv= useStoreConnector(() => getPlotViewById(visRoot(),plotId));
-    const [getConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY, GROUP_KEY);
+    const [getConeAreaOp,setConeAreaOp] = useFieldGroupValue(CONE_AREA_KEY, GROUP_KEY);
     const [getWP,setWP] = useFieldGroupValue(DEF_TARGET_PANEL_KEY, GROUP_KEY);
     const [getPoly,setPoly] = useFieldGroupValue(POLYGON_KEY, GROUP_KEY);
     const [getSize,setSize] = useFieldGroupValue(SIZE_KEY, GROUP_KEY);
@@ -93,6 +96,13 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
     const {min,max,hasRadius}= evalSearchActions(searchActions);
     const whichOverlay= searchTypes===POLY_CONE ? getConeAreaOp() :
                               searchTypes===CONE_CHOICE_KEY ? CONE_CHOICE_KEY : POLY_CHOICE_KEY;
+
+    const getWhichOverlay= () => searchTypes===POLY_CONE ? getConeAreaOp() :
+                                  searchTypes===CONE_CHOICE_KEY ? CONE_CHOICE_KEY : POLY_CHOICE_KEY
+    const setWhichOverlay= (op) => {
+        (searchTypes===POLY_CONE)  && setConeAreaOp(op);
+    };
+    const whichOveraly= getWhichOverlay();
 
 
     useEffect(() => {
@@ -116,7 +126,8 @@ function SearchRefinementTool({searchActions, plotId, searchAreaInDeg, wp, polyg
     useEffect(() => { // if plot view changes then update the target or polygon field
         updateUIFromPlot({
             plotId,
-            undefined, whichOverlay,
+            setWhichOverlay,
+            whichOverlay:getWhichOverlay(),
             setTargetWp:setWP,
             getTargetWp:getWP,
             setHiPSRadius:setSize,

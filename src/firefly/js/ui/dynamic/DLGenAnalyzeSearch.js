@@ -84,7 +84,7 @@ export function handleSearch(request, siaConstraints, qAna, primaryFdAry, idx, e
     tableRequestAry.forEach( (dataTableReq) => {
         Logger('DLGeneratedDropDown').debug(dataTableReq);
         if (dataTableReq) {
-            dispatchTableSearch(dataTableReq);
+            dispatchTableSearch(dataTableReq, {backgroundable:true});
         }
     });
 }
