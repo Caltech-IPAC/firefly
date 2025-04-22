@@ -138,7 +138,7 @@ public class EmailNotification implements JobCompletedHandler {
 
     public static File makeScript(JobInfo jobInfo, ScriptAttributes type) {
         List<DownloadScript.UrlInfo> urlInfos = ifNotNull(jobInfo.getResults())
-                .get(list -> list.stream().map(r -> new DownloadScript.UrlInfo(r.href(), null)).toList());
+                .get(list -> list.stream().map(r -> new DownloadScript.UrlInfo(r.href(), null, null)).toList());
         String id = jobInfo.getJobId();
         String fname = type == Curl ? "curl_script_%s.sh" : type   == Wget ? "wget_script_%s.sh" : "urls_%s.txt";
         fname = fname.formatted(id.substring(id.length()-4));      // safe; id is always greater than 4 chars

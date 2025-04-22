@@ -21,6 +21,7 @@ public class HttpResultInfo {
     public static final String CONTENT_TYPE= "contentType";
     public static final String SIZE_IN_BYTES= "sizeInBytes";
     public static final String EXTERNAL_NAME= "externalName";
+    public static final String SUFFIX= "suffix";
 
     private final byte[] result;
 

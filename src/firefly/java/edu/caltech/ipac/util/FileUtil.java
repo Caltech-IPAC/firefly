@@ -851,6 +851,20 @@ public class FileUtil
         return retHost;
     }
 
+    public static String appendSuffixBeforeExtension(String fName, String suffix) {
+        if (fName == null || suffix == null) return fName;
+
+        int lastDotIndex = fName.lastIndexOf('.');
+        if (lastDotIndex == -1) {
+            return fName + suffix; //no extension found, just append suffix
+        }
+
+        String name = FileUtil.getBase(fName);
+        String extension = FileUtil.getExtension(fName);
+
+        return name + "-" + suffix + "." + extension;
+    }
+
     //============================================================================
     //                       File Directory Utilities
     //============================================================================

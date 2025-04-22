@@ -27,7 +27,6 @@ import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {Stack, Typography, Box} from '@mui/joy';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton';
-import {RadioGroupInputField} from 'firefly/ui/RadioGroupInputField';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
 const OptionsContext = React.createContext();
@@ -132,7 +131,7 @@ const newBgKey = () => 'DownloadOptionPanel-' + Date.now();
 export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, help_id, children, style, title, dlParams,
                                          updateSearchRequest, updateDownloadRequest, validateOnSubmit,
                                          cancelText='Cancel', showZipStructure=true, showEmailNotify=false,
-                                         showFileLocation=true, showTitle=true, downloadType='package', saveAsProps={}, ...props}) {
+                                         showFileLocation=true, showTitle=true, downloadType='package', ...props}) {
     const {tbl_id:p_tbl_id, checkSelectedRow} = React.useContext(OptionsContext);
     const tbl_id = props.tbl_id || p_tbl_id;
 
@@ -190,13 +189,7 @@ export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, hel
     const maskPanel = (<BgMaskPanel key={bgKey} componentKey={bgKey}
                                    onMaskComplete={() =>hideDownloadDialog()}/>);
 
-    saveAsProps = {
-        initialState: {
-            value: get(dlParams, 'BaseFileName')
-        },
-        ...saveAsProps
-    };
-    const dlTitle = get(dlParams, 'TitlePrefix', 'Download') + '-' + dlTitleIdx;
+    const dlTitle = get(dlParams, 'BaseFileName', 'Download' + '-' + dlTitleIdx); //use BaseFileName as title as well
     const preTitleMessage = dlParams?.PreTitleMessage ?? '';
     return (
         <Stack sx ={{m:1/2, position: 'relative', minWidth:400, height:'auto', ...style}}>
@@ -213,14 +206,14 @@ export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, hel
                             {preTitleMessage}
                         </Typography>
                     )}
-                    <Stack spacing={1}>
+                    <Stack spacing={2}>
                         {showTitle && <TitleField {...{value:dlTitle}}/>}
 
                         {children}
 
                         {cutoutSize         && <DownloadCutout />}
                         {showZipStructure   && <ZipStructure />}
-                        {showFileLocation   && <WsSaveOptions {...{groupKey, labelWidth:110, saveAsProps}}/>}
+                        {showFileLocation   && <WsSaveOptions {...{groupKey, labelWidth:110}}/>}
                         {showEmailNotify    && <EmailNotification {...{groupKey}}/>}
                     </Stack>
                 </FieldGroup>
@@ -262,7 +255,7 @@ export function TitleField({style={}, value, label='Title:', size=30}) {
     return (
         <ValidationField
             forceReinit={true}
-            fieldKey='Title'
+            fieldKey='BaseFileName' //title on the UI will also be used as file name on the backend
             tooltip='Enter a description to identify this download.'
             {...{validator:NotBlank, initialState:{value}, label, size, style}}
         />
@@ -298,20 +291,6 @@ export function DownloadCutout({fieldKey='dlCutouts'}) {
                 {label: 'Specified Cutouts', value: 'cut'},
                 {label: 'Original Images', value: 'orig'}
             ]}
-        />
-    );
-}
-
-export function ScriptTypeOptions({fieldKey='scriptType', ...props}) {
-    return (
-        <RadioGroupInputField
-            fieldKey={fieldKey}
-            orientation={'horizontal'}
-            initialState={{value: 'curl'}}
-            options={[{label: 'Curl', value: 'curl'}, {label: 'Wget', value: 'wget'}, {label: 'Plain Text (URLs)', value: 'urls'}]}
-            label='Download Script:'
-            tooltip='Choose the download script type'
-            {...props}
         />
     );
 }

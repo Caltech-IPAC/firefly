@@ -188,7 +188,6 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
                             tbl_id,
                             showZipStructure: showFileStructure, //default to false (flattened)
                             downloadType,
-                            saveAsProps: {label: 'File name:'},
                             dlParams: {
                                 FileGroupProcessor:'ObsCorePackager',
                                 worker: downloadType === 'script' ? 'DownloadScriptWorker' : 'PackagingWorker',
@@ -199,9 +198,8 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
                                 datalinkServiceDescriptor: isDatalinkSerDesc,
                                 viewerId,
                                 DataSource: dataSource,
-                                TitlePrefix: tblTitle,
                                 help_id:'table.obsCorePackage',
-                                BaseFileName: fileName ?? `${baseFileName}`
+                                BaseFileName: fileName ? fileName+ `_${baseFileName}` : `${baseFileName}`
                             }}}>
                             <Stack spacing={1}>
                                 <CheckboxGroupInputField

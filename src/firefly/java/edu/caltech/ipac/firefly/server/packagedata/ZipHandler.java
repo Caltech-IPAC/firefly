@@ -4,6 +4,7 @@
 package edu.caltech.ipac.firefly.server.packagedata;
 
 import edu.caltech.ipac.firefly.data.FileInfo;
+import edu.caltech.ipac.util.StringUtils;
 import edu.caltech.ipac.util.download.URLDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.util.AppProperties;
@@ -180,10 +181,16 @@ public class ZipHandler {
                 uc.setRequestProperty("Accept", "text/plain");
 
                 String extName = ofNullable(fi.getExternalName()).orElse("").trim();
+                String suffix = fi.getSuffix();
                 if (extName.isEmpty() || extName.endsWith("/")) {
                     String suggestedFilename = URLDownload.getSugestedFileName(uc);
                     suggestedFilename = isEmpty(suggestedFilename) ? getFileNameFromUrl(url) : suggestedFilename;
-                    fi.setExternalName(extName + suggestedFilename);
+                    extName = extName + suggestedFilename;
+                    fi.setExternalName(extName);
+                }
+
+                if (!StringUtils.isEmpty(suffix)) {
+                    fi.setExternalName(FileUtil.appendSuffixBeforeExtension(extName, suffix));
                 }
 
                 is = uc.getInputStream();

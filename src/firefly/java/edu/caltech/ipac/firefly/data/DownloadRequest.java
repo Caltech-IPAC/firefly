@@ -74,7 +74,7 @@ public class DownloadRequest extends ServerRequest implements Serializable {
 
     public String getDataSource() { return getParam(DATA_SOURCE); }
 
-    public String getTitle() { return getParam(TITLE); }
+    public String getTitle() { return getParam(BASE_FILE_NAME); }
 
     public String getEmail() { return getParam(EMAIL); }
 

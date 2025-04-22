@@ -9,6 +9,8 @@ import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.packagedata.FileGroup;
 import edu.caltech.ipac.table.IpacTableUtil;
 import edu.caltech.ipac.util.AppProperties;
+import edu.caltech.ipac.util.StringUtils;
+import edu.caltech.ipac.util.download.URLDownload;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -52,7 +54,7 @@ public class DownloadScript {
             fi
             """.stripIndent();
 
-//====================================================================
+   /*//====================================================================
 //  Consistent behavior for both curl and wget:
 //  - Both curl and wget must follow redirects.
 //  - Command exits with non-zero status on failure or error http status code.
@@ -64,7 +66,7 @@ public class DownloadScript {
 //      * If no file name is provided, use the remote file name from the URL, or from the Content-Disposition header if available.
 //        * curl will overwrite an existing file, whereas wget will create a new file with a numbered suffix to avoid overwriting.
 //====================================================================
-static final String funcTmpl = """
+    static final String funcTmpl = """
         download_file() {
           href="$1"; filePath="$2"; fileName="$3"
         
@@ -90,6 +92,105 @@ static final String funcTmpl = """
           cmd="wget --content-disposition"
             [ -n "$fileName" ] && opts="wget -O $fileName"
           """);
+
+    static final String zipFunc = """
+          # Unzip logic
+          if [ -n "$fileName" ] && [ -f "$fileName" ] && echo "$fileName" | grep -qE '\\.zip$'; then
+            if command -v unzip &> /dev/null; then
+              unzip -qq "$fileName"
+            fi
+          fi
+        """;
+//====================================================================*/
+
+
+//todo: uncomment this after old script (above) works reliably with IRSA services again, then try the new script below
+//====================================================================
+//  Consistent behavior for both curl and wget:
+//  - Both curl and wget must follow redirects.
+//  - Command exits with non-zero status on failure or error http status code.
+//  - If UrlInfo.filePath is provided:
+//      * If it ends with '/', treat it as a directory.
+//      * Otherwise, treat it as a file path (including possible subdirectories).
+//  - When downloading:
+//      * Save the file to the specified path.
+//      * If no file name is provided, use the remote file name from the URL, or from the Content-Disposition header if available.
+//        * curl will overwrite an existing file, whereas wget will create a new file with a numbered suffix to avoid overwriting.
+//====================================================================
+static final String funcTmpl = """
+    download_file() {
+   
+      href="$1"
+      targetDir="$2"
+      baseFileName="$3"
+      suffix="$4"
+   
+      startDir=$(pwd)
+
+      # create temp dir
+      tmpDir=$(mktemp -d)
+      cd "$tmpDir" || return 1
+
+      echo ">> downloading ${href} ..."
+      %s
+      $cmd "$href" || {
+        echo ">> ERROR: failed to download ${href}"
+        cd "$startDir"
+        rm -rf "$tmpDir"
+        return 1
+      }
+
+      # get most recently modified file
+      downloadedFile=$(ls -t | head -n 1)
+
+      # determine filename
+      if [ -n "$baseFileName" ]; then
+        ext="${baseFileName##*.}"
+        name="${baseFileName%.*}"
+      else
+        ext="${downloadedFile##*.}"
+        name="${downloadedFile%.*}"
+      fi
+
+      # Apply suffix, if available
+      finalName="$name"
+      [ -n "$suffix" ] && finalName="${finalName}-$suffix"
+      finalFile="${finalName}.${ext}"
+
+      # create target dir in current directory
+      if [ -n "$targetDir" ]; then
+        destDir="$startDir/$targetDir"
+      else
+        destDir="$startDir"
+      fi
+      mkdir -p "$destDir"
+
+      # resolve naming conflicts
+      destPath="$destDir/$finalFile"
+      count=1
+      while [ -e "$destPath" ]; do
+        destPath="$destDir/${finalName} (${count}).${ext}"
+        count=$((count + 1))
+      done
+
+      # move file to main directory and cleanup
+      mv "$downloadedFile" "$destPath"
+      echo ">> Saved as $destPath"
+
+      cd "$startDir"
+      rm -rf "$tmpDir"
+    }
+""".stripIndent();
+
+
+    static final String curlFunc = funcTmpl
+            .replace("%s", "cmd=\"curl -fLJO\"")
+            .stripIndent();
+
+    static final String wgetFunc = funcTmpl
+            .replace("%s", "cmd=\"wget --content-disposition\"")
+            .stripIndent();
+
 
     static final String zipFunc = """
           # Unzip logic
@@ -132,7 +233,7 @@ static final String funcTmpl = """
             writer.println(func);
 
             for (UrlInfo urlInfo : urlInfos) {
-                writer.println("download_file '%s' '%s' '%s'".formatted(urlInfo.getHref(), urlInfo.getPath(), urlInfo.getName()));
+                writer.println("download_file '%s' '%s' '%s' '%s'".formatted(urlInfo.getHref(), urlInfo.getPath(), urlInfo.getName(), urlInfo.getSuffix()));
             }
 
         } catch (IOException e) {
@@ -167,7 +268,8 @@ static final String funcTmpl = """
         String baseDirPath = ifNotNull(baseDir).get(f -> f.getPath().endsWith("/") ? f.getPath() : f.getPath() + "/");
         String href = ifNotNull(fi.getInternalFilename()).get(ServerContext::resolveUrl);
         String extName = ifNotNull(fi.getExternalName()).getOrElse(baseDirPath);
-        return new UrlInfo(href, extName);
+        String suffix = ifNotNull(fi.getSuffix()).getOrElse("");
+        return new UrlInfo(href, extName, suffix);
     }
 
 //====================================================================
@@ -176,11 +278,13 @@ static final String funcTmpl = """
         private final String href;
         private final boolean isDir;
         private final File filePath;
+        private final String suffix;
 
-        public UrlInfo(String href, String filePath) {
+        public UrlInfo(String href, String filePath, String suffix) {
             this.href = href;
             this.isDir = String.valueOf(filePath).endsWith("/");
             this.filePath = isEmpty(filePath) ? null : new File(filePath);
+            this.suffix = suffix;
         }
         public String getName() {
             return isDir || filePath == null ? "" : filePath.getName();
@@ -193,6 +297,9 @@ static final String funcTmpl = """
         }
         public String getHref() {
             return href;
+        }
+        public String getSuffix() {
+            return suffix;
         }
         public String getFilePath() {
             return isEmpty(getPath()) ? getName() : getPath() + "/" + getName();

@@ -38,9 +38,8 @@ export const WORKSPACE = 'isWs';
  */
 export function WsSaveOptions (props) {
     const {groupKey, style, labelWidth} = props;
-    let {fileLocProps={}, saveAsProps={}} = props;
+    let {fileLocProps={}} = props;
 
-    saveAsProps = {label:'Save as:', labelWidth, wrapperStyle:{margin: '3px 0'}, size:30, ...saveAsProps};
     fileLocProps = {label:'File Location:', labelWidth, ...fileLocProps};
 
     const loc      = useStoreConnector(() => getFieldVal(groupKey, 'fileLocation'));
@@ -54,7 +53,6 @@ export function WsSaveOptions (props) {
 
     return (
         <Stack style={style} spacing={1}>
-            <ValidationField fieldKey='BaseFileName' forceReinit={true} {...saveAsProps}/>
             { useWs &&
                 <RadioGroupInputField
                     fieldKey='fileLocation'
@@ -77,7 +75,6 @@ WsSaveOptions.propTypes = {
     style:          PropTypes.string,
     labelWidth:     PropTypes.number,
     fileLocProps:   PropTypes.object,       // properties to send into the File Location radio button..  see render function for defaults
-    saveAsProps:    PropTypes.object        // properties to send into the Save As input box..  see render function for defaults
 };
 
 
