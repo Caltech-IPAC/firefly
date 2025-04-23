@@ -13,6 +13,8 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static edu.caltech.ipac.util.FormatUtil.Format.*;
 import static org.junit.Assert.assertEquals;
@@ -119,6 +121,86 @@ public class FormatUtilTest extends ConfigTest {
 
         tfile = FileLoader.resolveFile("edu/caltech/ipac/table/iris.csv");
         assertEquals(tfile.getName(), PARQUET, FormatUtil.detect(tfile));
+    }
+
+    @Test
+    public void csvSingleColumn() throws IOException {
+        String content = """
+                ssObjectId_user
+                5977535780727431144
+                4350915375550808373
+                5977535780727431144""".stripIndent();
+        Path tmp = Files.createTempFile("test", ".cat");
+        tmp.toFile().deleteOnExit();
+        Files.writeString(tmp, content);
+        assertEquals("singleColumnCsv", CSV, FormatUtil.detect(tmp.toFile()));
+    }
+
+    @Test
+    public void csvMissingData() throws IOException {
+        String content = """
+                ssObjectId_user, bad_column_with_missing_data_at_row1
+                5977535780727431144
+                4350915375550808373, 2
+                5977535780727431144, 3""".stripIndent();
+        Path tmp = Files.createTempFile("test", ".cat");
+        tmp.toFile().deleteOnExit();
+        Files.writeString(tmp, content);
+        assertEquals("csvMissingData", UNKNOWN, FormatUtil.detect(tmp.toFile()));
+    }
+
+    @Test
+    public void csvMissingHeader() throws IOException {
+        String content = """
+                ssObjectId_user
+                5977535780727431144, 2
+                4350915375550808373, 3
+                5977535780727431144, 4""".stripIndent();
+        Path tmp = Files.createTempFile("test", ".cat");
+        tmp.toFile().deleteOnExit();
+        Files.writeString(tmp, content);
+        assertEquals("csvMissingHeader", UNKNOWN, FormatUtil.detect(tmp.toFile()));
+    }
+
+    @Test
+    public void tsvWith2Cols() throws IOException {
+        String content = """
+                ssObjectId_user\trow_num
+                5977535780727431144\t1
+                4350915375550808373\t2
+                5977535780727431144\t3""".stripIndent();
+        Path tmp = Files.createTempFile("test", ".cat");
+        tmp.toFile().deleteOnExit();
+        Files.writeString(tmp, content);
+        assertEquals("tsvWith2Cols", TSV, FormatUtil.detect(tmp.toFile()));
+    }
+
+    @Test
+    public void falsePositive() throws IOException {
+        String content = """
+                ssObjectId_user\trow_num
+                5977535780727431144\t1\t2
+                4350915375550808373\t2
+                5977535780727431144\t3""".stripIndent();
+        Path tmp = Files.createTempFile("test", ".cat");
+        tmp.toFile().deleteOnExit();
+        Files.writeString(tmp, content);
+        // badly formatted TSV that we returned as a single column CSV
+        // this is unavoidable because you may have a valid one-column CSV file with a tab(s) in it
+        assertEquals("falsePositive", CSV, FormatUtil.detect(tmp.toFile()));
+    }
+
+    @Test
+    public void badMixedDelimiters() throws IOException {
+        String content = """
+                ssObjectId_user\trow_num
+                5977535780727431144, 1
+                4350915375550808373\t2
+                5977535780727431144\t3""".stripIndent();
+        Path tmp = Files.createTempFile("test", ".cat");
+        tmp.toFile().deleteOnExit();
+        Files.writeString(tmp, content);
+        assertEquals("badMixedDelimiters", UNKNOWN, FormatUtil.detect(tmp.toFile()));
     }
 
     @Test

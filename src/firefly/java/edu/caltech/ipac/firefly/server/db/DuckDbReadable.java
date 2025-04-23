@@ -28,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import javax.annotation.Nonnull;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.table.TableUtil.getAliasName;
 
 /**
@@ -249,6 +250,26 @@ public abstract class DuckDbReadable extends DuckDbAdapter {
             } catch (Exception e) {
                 throw new DataAccessException(e);
             }
+        }
+        public static FormatUtil.Format detect(String srcFile) {
+            try {
+                DuckDbReadable adpt = getDetachedAdapter(FormatUtil.Format.CSV);
+                DataGroup tbl = adpt.execQuery("select HasHeader, Delimiter,  SkipRows from sniff_csv('%s')".formatted(srcFile), null);
+                boolean hasHeader = ifNotNull(tbl.getData("HasHeader", 0)).then(v -> Boolean.parseBoolean(v.toString())).getOrElse(false);
+                String delim = ifNotNull(tbl.getData("Delimiter", 0)).get(Object::toString);
+                int skipRows = ifNotNull(tbl.getData("SkipRows", 0)).then(v -> Integer.parseInt(v.toString())).getOrElse(0);
+                if (hasHeader && delim != null && skipRows == 0) {
+                    if (delim.equals(",")) {
+                        return FormatUtil.Format.CSV;
+                    } else if (delim.equals("\t")) {
+                        return FormatUtil.Format.TSV;
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.warn(e);
+            }
+            LOGGER.info("Failed to detect format: %s".formatted(srcFile));
+            return null;
         }
     }
 
