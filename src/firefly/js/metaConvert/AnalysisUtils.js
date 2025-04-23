@@ -170,17 +170,22 @@ function dispatchResult(dpType, menu,menuKey,dpId, serDef, analysisActivateFunc)
 
 export const isNonServerAnalysisType= (url, ct) => Boolean(doFileNameAndTypeAnalysis({url,ct}));
 
+export function getExtensionFromUrl(url) {
+    if (!url) return '';
+    const i = url.lastIndexOf('.');
+    if (i > 0 &&  i < url.length - 1) return url.substring(i+1).toLowerCase();
+    return '';
+}
+
 export function doFileNameAndTypeAnalysis({url, ct, wrapWithMessage=true, name, obsTitle}) {
     if (!url) return undefined;
-    let ext='';
-    const i = url.lastIndexOf('.');
-    if (i > 0 &&  i < url.length - 1) ext = url.substring(i+1).toLowerCase();
+    const ext= getExtensionFromUrl(url);
     let item= undefined;
     const imExt= [ 'jpeg', 'jpg', 'png', 'gif'];
 
     if (isUsableDownloadType(ext,ct)) item= makeDownloadType(url,ext,ct,wrapWithMessage, name, obsTitle);
     else if (imExt.some( (e) => ext.includes(e)) || isSimpleImageType(ct)) item= makePngEntry(url, name, obsTitle);
-    else if (ext.endsWith('txt') || isPlainTextType(ct)) item= makeTextEntry(url, name, obsTitle);
+    // else if (ext.endsWith('txt') || isPlainTextType(ct)) item= makeTextEntry(url, name, obsTitle);
     else if (ext.endsWith('yaml') || isYamlType(ct)) item= makeYamlEntry(url, name, obsTitle);
     else if (ext.endsWith('json') || isJSONType(ct))  item= makeJsonEntry(url, name, obsTitle);
     if (item) item.contentType= ct;

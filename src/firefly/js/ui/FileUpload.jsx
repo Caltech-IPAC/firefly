@@ -195,14 +195,18 @@ function makeDoUpload(file, type, isFromURL, fileAnalysis) {
     };
 }
 
+const getUploadUrl= (fileOrUrl) =>
+    isString(fileOrUrl) ? fileOrUrl?.trim() : fileOrUrl?.name ? fileOrUrl.name.trim() : undefined;
+
 function doUpload(isFromURL, fileOrUrl, fileAnalysis, params={}) {
-    if (isFromURL && !validateUrl('',fileOrUrl).valid) {
+    const url= getUploadUrl(fileOrUrl);
+    if (isFromURL && !validateUrl('',url).valid) {
         return Promise.resolve({status:404,message:'bad Url'});
     }
     const faFunction= isFunction(fileAnalysis) && fileAnalysis;
-    faFunction && faFunction(true, isString(fileOrUrl) ? fileOrUrl : fileOrUrl?.name ? fileOrUrl.name : undefined);
+    faFunction && faFunction(true, url);
     if (fileAnalysis) fileAnalysis=true;
-    return upload(fileOrUrl, Boolean(fileAnalysis), params)
+    return upload(url, Boolean(fileAnalysis), params)
         .then( (results) => {
             faFunction && faFunction?.(false);
             return results;

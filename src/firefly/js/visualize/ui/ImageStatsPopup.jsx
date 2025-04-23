@@ -280,7 +280,7 @@ const ImageAreaStatsTableRow= ({isTitle,statsRow, plotId}) => {
     });
 
     return (
-        <tr style={trS} onMouseOver={onMouseHover} onMouseOut={onMouseOut}> {tableCells} </tr>
+        <tr style={trS} onMouseOver={onMouseHover} onMouseOut={onMouseOut}>{tableCells}</tr>
     );
 };
 

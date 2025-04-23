@@ -2,15 +2,16 @@ import {RequestType} from 'firefly/api/ApiUtilImage.jsx';
 import {isArray} from 'lodash';
 import {getAppOptions} from '../core/AppDataCntlr';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../core/MasterSaga';
-import {DataProductTypes, FileAnalysisType} from '../data/FileAnalysis';
+import {DataProductTypes, FileAnalysisType, Format} from '../data/FileAnalysis';
 import {MetaConst} from '../data/MetaConst';
 import {upload} from '../rpc/CoreServices.js';
 import {getMetaEntry, getTblById, getTblRowAsObj} from '../tables/TableUtil';
 import {hashCode} from '../util/WebUtil';
 import {isDefined} from '../util/WebUtil.js';
 import ImagePlotCntlr from '../visualize/ImagePlotCntlr';
+import {getObsTitle} from '../voAnalyzer/TableAnalysis';
 import {getObsCoreData} from '../voAnalyzer/VoDataLinkServDef';
-import {makePdfEntry, makePngEntry, makeTarEntry} from './AnalysisUtils';
+import {getExtensionFromUrl, makePdfEntry, makePngEntry, makeTarEntry, makeTextEntry} from './AnalysisUtils';
 import {
     dataProductRoot, dispatchUpdateActiveKey, dispatchUpdateDataProducts,
     getActiveFileMenuKeyByKey, getDataProducts
@@ -59,10 +60,6 @@ export async function doUploadAndAnalysis({ table, row, request, activateParams=
 
 
     const processAnalysis= (serverCacheFileKey, fileFormat, fileAnalysis) => {
-        if (!fileAnalysis.parts || fileFormat==='UNKNOWN') {
-            return dpdtMessageWithDownload('No displayable data available for this row: Unknown file type',
-                                                  fileAnalysis.fileName&&'Download File', request.getURL());
-        }
         const result=  processAnalysisResult({ table, row, request, activateParams, serverCacheFileKey,
             fileAnalysis, dataTypeHint, analysisActivateFunc, serDef, dlData, originalTitle, options, menuKey});
         if (serviceDescMenuList && result) {
@@ -217,8 +214,14 @@ function processAnalysisResult({table, row, request, activateParams,
                                   analysisActivateFunc, serDef, dlData, originalTitle, options, menuKey}) {
 
     const {parts,fileName,fileFormat}= fileAnalysis;
-    if (!parts) return makeErrorResult('',fileName,serverCacheFileKey);
 
+    if (fileFormat===Format.TEXT) {
+        return makeTextEntry(request.getURL(),undefined,getObsTitle(table,row));
+    }
+    if (!parts || fileFormat===Format.UNKNOWN) {
+        return dpdtMessageWithDownload('No displayable data available for this row: Unknown file type',
+            fileName&&'Download File', request.getURL());
+    }
 
     const url= request.getURL() || serverCacheFileKey;
 

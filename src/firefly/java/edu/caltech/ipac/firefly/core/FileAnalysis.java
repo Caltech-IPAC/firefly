@@ -12,12 +12,12 @@ import edu.caltech.ipac.firefly.server.dpanalyze.DataProductAnalyzerFactory;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.IpacTableDef;
 import edu.caltech.ipac.table.JsonTableUtil;
-import edu.caltech.ipac.util.FormatUtil.Format;
 import edu.caltech.ipac.table.io.IpacTableReader;
 import edu.caltech.ipac.table.io.VoTableReader;
 import edu.caltech.ipac.util.FileUtil;
 import edu.caltech.ipac.util.FitsHDUUtil;
 import edu.caltech.ipac.util.FormatUtil;
+import edu.caltech.ipac.util.FormatUtil.Format;
 import edu.caltech.ipac.util.download.FailedRequestException;
 import edu.caltech.ipac.util.download.ResponseMessage;
 import nom.tam.fits.FitsException;
@@ -26,6 +26,8 @@ import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -55,12 +57,11 @@ public class FileAnalysis {
         File infile= fileInfo.getFile();
         int responseCode= fileInfo.getResponseCode();
         String contentType= fileInfo.getContentType();
-        String ct= contentType!=null ? contentType.toLowerCase() : null;
+        String ct= contentType!=null ? contentType.toLowerCase() : "";
 
-        if (ct!=null && (ct.contains("png") || ct.contains("jpg") || ct.contains("jpeg") || ct.contains("bmp") || ct.contains("gif"))) {
+        if (ct.contains("png") || ct.contains("jpg") || ct.contains("jpeg") || ct.contains("bmp") || ct.contains("gif")) {
             return analyzePNG(infile, mtype);
         }
-
         Format format = FormatUtil.detect(infile);
         FileAnalysisReport report= null;
         DataProductAnalyzer dpA= DataProductAnalyzerFactory.getAnalyzer(analyzerId);
@@ -105,7 +106,7 @@ public class FileAnalysis {
                 report =  analyzeRegion(infile,mtype);
                 break;
             default:
-                report = new FileAnalysisReport(type, FormatUtil.Format.UNKNOWN.name(), infile.length(), infile.getAbsolutePath());
+                report= analyseByContentType(fileInfo,ct);
         }
 
         if (format!= FormatUtil.Format.FITS) {
@@ -119,10 +120,29 @@ public class FileAnalysis {
                 productReport.setAnalyzerFound(DataProductAnalyzerFactory.hasAnalyzer(analyzerId));
             }
         }
-
-
         return productReport;
     }
+
+    private static FileAnalysisReport analyseByContentType(FileInfo fileInfo, String ct) {
+        String ext= "";
+        try {
+            new URL(fileInfo.getDesc());
+            ext= FileUtil.getExtension(fileInfo.getDesc());
+        } catch (MalformedURLException e)  { /* ignore */ }
+
+        File infile= fileInfo.getFile();;
+        var type= FileAnalysisReport.ReportType.Normal;
+
+        if (ct.contains("text/plain") || ext.equalsIgnoreCase(FileUtil.TXT)) {
+            var report= new FileAnalysisReport(type, Format.TEXT.name(), infile.length(), infile.getAbsolutePath());
+            report.addPart(new FileAnalysisReport.Part(FileAnalysisReport.Type.TEXT, "Text File"));
+            return report;
+        }
+        else {
+            return new FileAnalysisReport(type, Format.UNKNOWN.name(), infile.length(), infile.getAbsolutePath());
+        }
+    }
+
 
     private static FileAnalysisReport analyzeDuckReadable(File infile, Format format, FileAnalysisReport.ReportType type) {
         try {
