@@ -199,14 +199,13 @@ const getUploadUrl= (fileOrUrl) =>
     isString(fileOrUrl) ? fileOrUrl?.trim() : fileOrUrl?.name ? fileOrUrl.name.trim() : undefined;
 
 function doUpload(isFromURL, fileOrUrl, fileAnalysis, params={}) {
-    const url= getUploadUrl(fileOrUrl);
-    if (isFromURL && !validateUrl('',url).valid) {
+    if (isFromURL && !validateUrl('',getUploadUrl(fileOrUrl)).valid) {
         return Promise.resolve({status:404,message:'bad Url'});
     }
     const faFunction= isFunction(fileAnalysis) && fileAnalysis;
-    faFunction && faFunction(true, url);
+    faFunction && faFunction(true, isString(fileOrUrl) ? fileOrUrl : fileOrUrl?.name ? fileOrUrl.name : undefined);
     if (fileAnalysis) fileAnalysis=true;
-    return upload(url, Boolean(fileAnalysis), params)
+    return upload(fileOrUrl, Boolean(fileAnalysis), params)
         .then( (results) => {
             faFunction && faFunction?.(false);
             return results;
