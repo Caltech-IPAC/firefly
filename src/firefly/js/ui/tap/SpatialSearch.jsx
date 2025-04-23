@@ -114,6 +114,7 @@ export function SpatialSearch({sx, cols, serviceUrl, serviceLabel, serviceId, co
         if (searchParams.corners) {
             setVal(SpatialMethod,POLY_CHOICE_KEY);
             setVal(SpatialRegOp,'center_contained');
+            setVal('imageCornerCalc', 'user');
             setVal(PolygonCorners,searchParams.corners);
             checkHeaderCtl.setPanelActive(true);
         }
