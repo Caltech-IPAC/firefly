@@ -49,6 +49,7 @@ export const Format= {
     FIXEDTARGETS: 'FIXEDTARGETS',
     FITS: 'FITS',
     JSON: 'JSON',
+    TEXT: 'TEXT',
     PDF: 'PDF',
     TAR: 'TAR',
     PNG: 'PNG',

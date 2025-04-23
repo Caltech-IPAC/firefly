@@ -37,6 +37,7 @@ public class FormatUtil {
         CSV("csv", ".csv"),
         IPACTABLE("ipac", ".tbl"),
         UNKNOWN("null", null),
+        TEXT("text", "txt"),
         FIXEDTARGETS("fixed-targets", ".tbl"),
         FITS("fits",".fits"),
         JSON("json", ".json"),

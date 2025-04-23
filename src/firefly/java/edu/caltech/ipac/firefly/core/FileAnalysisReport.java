@@ -25,7 +25,7 @@ public class FileAnalysisReport {
         Normal,             // a report with all parts populated, but not details
         Details}            // a full report with details
 
-    public enum Type {Image, Table, Spectrum, HeaderOnly, PDF, TAR, REGION, PNG, ErrorResponse, LoadInBrowser, UWS, Unknown}
+    public enum Type {Image, Table, Spectrum, HeaderOnly, PDF, TAR, REGION, PNG, ErrorResponse, LoadInBrowser, UWS, TEXT, Unknown}
     public enum UIRender {Table, Chart, Image, NotSpecified}
     public enum UIEntry {UseSpecified, UseGuess, UseAll}
     public enum ChartTableDefOption {auto, showChart, showTable, showImage};
