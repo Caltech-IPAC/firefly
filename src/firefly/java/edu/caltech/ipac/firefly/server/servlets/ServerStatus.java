@@ -5,7 +5,6 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.core.background.JobManager;
-import edu.caltech.ipac.firefly.messaging.Messenger;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
@@ -39,6 +38,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static edu.caltech.ipac.firefly.server.ServerContext.ACCESS_TEST_EXT;
+import static edu.caltech.ipac.firefly.core.Util.Try;
 
 
 /**
@@ -77,33 +77,34 @@ public class ServerStatus extends BaseHttpServlet {
             writer.println("<li><a href=./status?execGC=true>Trigger GC</a>:     Invoke JVM garbage collection");
             skip(writer);
 
-            showCountStatus(writer);
+            Try.it(() -> showCountStatus(writer)).getOrElse(e -> writer.println("Failed to load Count Status: " + e.getMessage()));
             skip(writer);
 
-            showPackagingStatus(writer, showJobDetails);
+            Try.it(() -> showPackagingStatus(writer, showJobDetails)).getOrElse(e -> writer.println("Failed to Packaging Status: " + e.getMessage()));
             skip(writer);
 
-            showMessagingStatus(writer);
+            Try.it(() -> showMessagingStatus(writer)).getOrElse(e -> writer.println("Failed to load Messaging Status: " + e.getMessage()));
             skip(writer);
 
-            showEventsStatus(writer);
+            Try.it(() -> showEventsStatus(writer)).getOrElse(e -> writer.println("Failed to load Event Status: " + e.getMessage()));
             skip(writer);
 
-            showDatabaseStatus(writer);
+            Try.it(() -> showDatabaseStatus(writer)).getOrElse(e -> writer.println("Failed to load Database Status: " + e.getMessage()));
             skip(writer);
 
-            showWorkAreaStatus(writer);
+            Try.it(() -> showWorkAreaStatus(writer)).getOrElse(e -> writer.println("Failed to load Work Area Status: " + e.getMessage()));
             skip(writer);
 
             EhcacheProvider prov = (EhcacheProvider) edu.caltech.ipac.util.cache.CacheManager.getCacheProvider();
 
-            displayCacheInfo(writer, prov.getEhcacheManager(), sInfo);
+            Try.it(() -> displayCacheInfo(writer, prov.getEhcacheManager(), sInfo)).getOrElse(e -> writer.println("Failed to load Cache Info: " + e.getMessage()));
 
             if (showDebug) {
                 skip(writer);
-                showHeaders(writer, req);
+                Try.it(() -> showHeaders(writer, req)).getOrElse(e -> writer.println("Failed to load Request Headers: " + e.getMessage()));
+
                 skip(writer);
-                showSystemProperties(writer);
+                Try.it(() -> showSystemProperties(writer)).getOrElse(e -> writer.println("Failed to load System Properties: " + e.getMessage()));
             }
 
             writer.println("</pre>");

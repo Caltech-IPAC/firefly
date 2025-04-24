@@ -108,20 +108,16 @@ public class FormatUtil {
         }
 
         // all failed; fallback to trial and error
-        if ( mime.startsWith("text/") ) {     // including "text/xml"
+        if ( mime.startsWith("text/") && !FileUtil.getExtension(inFile).equalsIgnoreCase("html")) {     // including "text/xml"
             // if text file, we'll test it against ipactable, region, csv, and tsv
             if (isIpacTable(inFile)) {
                 format = IPACTABLE;
             } else if (isRegionFile(inFile)) {
                 format = REGION;
             } else {
-                DataGroup csv = DuckDbReadable.getInfoOrNull(CSV, inFile.getAbsolutePath());
-                DataGroup tsv = DuckDbReadable.getInfoOrNull(TSV, inFile.getAbsolutePath());
-                int csvCols = csv == null ? 0 : csv.getDataDefinitions().length - 1;
-                int tsvCols = tsv == null ? 0 : tsv.getDataDefinitions().length - 1;
-                if (csvCols + tsvCols > 0) {
-                    format =  tsvCols > csvCols ? TSV : CSV;
-                }
+                // check for csv or tsv
+                Format dformat = DuckDbReadable.Csv.detect(inFile.getAbsolutePath());
+                if (dformat != null) format = dformat;
             }
         }
 
@@ -162,7 +158,7 @@ public class FormatUtil {
             case "application/gzip", "application/x-gzip" -> GZIP;
             case "application/java-archive" -> JAR;
             case "application/x-tar", "application/tar" -> TAR;
-            case "application/html" -> HTML;            // some text file with HTML comments will appear as test/xml.  to avoid false positive, we will not accept text/html.
+            case "application/html" -> HTML;            // some text file with HTML comments will appear as text/html.  to avoid false positive, we will not accept text/html.
             case "application/json", "text/json" -> JSON;
             default -> null;
         };

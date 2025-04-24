@@ -30,6 +30,7 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -354,9 +355,16 @@ public class JobManager {
     }
 
     static List<JobInfo> getAllJobs() {
-        return allJobInfos.getKeys().stream()
-                .map(allJobInfos::get)
-                .filter(Objects::nonNull).toList();
+        List<? extends CacheKey> keys = allJobInfos.getKeys();
+        if (keys == null || keys.isEmpty()) return Collections.emptyList();
+        ArrayList<JobInfo> rval = new ArrayList<JobInfo>(keys.size());
+        for (CacheKey key : keys) {
+            JobInfo jobInfo = ifNotNull(() -> allJobInfos.get(key)).get();  // ignore error
+            if (jobInfo != null) {
+                rval.add(jobInfo);
+            }
+        }
+        return rval;
     }
 
     /**

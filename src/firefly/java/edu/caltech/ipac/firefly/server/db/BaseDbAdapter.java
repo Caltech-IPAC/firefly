@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.INCL_COLUMNS;
 import static edu.caltech.ipac.firefly.data.TableServerRequest.parseSqlFilter;
 import static edu.caltech.ipac.firefly.server.db.DbMonitor.getDbInstances;
@@ -293,7 +294,7 @@ abstract public class BaseDbAdapter implements DbAdapter {
             LOGGER.warn("execQuery failed with error: " + e.getMessage(),
                     "sql: " + sql,
                     "refTable: " + refTable,
-                    "dbFile: " + getDbFile().getAbsolutePath());
+                    "dbFile: " + ifNotNull(getDbFile()).get(File::getAbsolutePath));
             throw handleSqlExp("Query failed", e);
         }
     }
