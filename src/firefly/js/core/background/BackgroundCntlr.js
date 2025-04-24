@@ -25,8 +25,9 @@ export const BG_MONITOR_SHOW    = `${BACKGROUND_PATH}.bgMonitorShow`;
 export const BG_JOB_ADD         = `${BACKGROUND_PATH}.bgJobAdd`;
 export const BG_JOB_REMOVE      = `${BACKGROUND_PATH}.bgJobRemove`;
 export const BG_JOB_CANCEL      = `${BACKGROUND_PATH}.bgJobCancel`;
-export const BG_JOB_ARCHIVE      = `${BACKGROUND_PATH}.bgJobArchive`;
-export const BG_SET_INFO       = `${BACKGROUND_PATH}.bgSetInfo`;
+export const BG_JOB_SET_NOTIF   = `${BACKGROUND_PATH}.bgJobSetNotif`;
+export const BG_JOB_ARCHIVE     = `${BACKGROUND_PATH}.bgJobArchive`;
+export const BG_SET_INFO        = `${BACKGROUND_PATH}.bgSetInfo`;
 export const BG_Package         = `${BACKGROUND_PATH}.bgPackage`;
 
 export default {actionCreators, reducers};
@@ -40,7 +41,8 @@ function actionCreators() {
         [BG_JOB_ADD]: bgJobAdd,
         [BG_JOB_REMOVE]: bgJobRemove,
         [BG_JOB_CANCEL]: bgJobCancel,
-        [BG_JOB_ARCHIVE]: bgJobArchive
+        [BG_JOB_ARCHIVE]: bgJobArchive,
+        [BG_JOB_SET_NOTIF]: bgSetJobNofif
     };
 }
 
@@ -66,8 +68,8 @@ export function dispatchBgJobInfo(jobInfo) {
  * set the email used for background status notification 
  * @param {string}  email
  */
-export function dispatchBgSetInfo({email, sendNotif}) {
-    flux.process({ type : BG_SET_INFO, payload: {email, sendNotif} });
+export function dispatchBgSetInfo({email, notifEnabled}) {
+    flux.process({ type : BG_SET_INFO, payload: {email, notifEnabled} });
 }
 
 /**
@@ -100,6 +102,17 @@ export function dispatchJobArchive(jobId) {
  */
 export function dispatchJobCancel(jobId) {
     flux.process({ type : BG_JOB_CANCEL, payload: {jobId} });
+}
+
+/**
+ * Set whether to send notification for this job.
+ * @param {object} p
+ * @param {string} p.jobId
+ * @param {boolean} p.enable notification for this job
+ * @param {string} p.email email address to send notification to, if notification by email is enabled
+ */
+export function dispatchSetJobNotif({jobId, enable, email}) {
+    flux.process({ type : BG_JOB_SET_NOTIF, payload: {jobId, enable, email} });
 }
 
 /**
@@ -156,6 +169,14 @@ function bgJobCancel(action) {
     };
 }
 
+function bgSetJobNofif(action) {
+    return (dispatch) => {
+        const {jobId, enable, email} = action.payload;
+        SearchServices.setJobNotif(jobId, enable, email);
+        dispatch(action);
+    };
+}
+
 function bgJobArchive(action) {
     return (dispatch) => {
         const {jobId} = action.payload;
@@ -168,8 +189,8 @@ function bgJobArchive(action) {
 
 function bgSetInfo(action) {
     return (dispatch) => {
-        const {email, sendNotif} = action.payload;
-        SearchServices.setBgInfo(email, sendNotif);
+        const {email, notifEnabled} = action.payload;
+        SearchServices.setBgInfo(email, notifEnabled);
         dispatch(action);
     };
 }
@@ -211,7 +232,7 @@ function reducer(state={}, action={}) {
 
     switch (action.type) {
         case BG_JOB_INFO:
-            const {jobId} = action.payload;
+            const jobId = action.payload?.meta?.jobId;
             let nstate = state;
             if (jobId) {
                 const updates = {jobs: {[jobId]: action.payload}};
@@ -220,9 +241,9 @@ function reducer(state={}, action={}) {
             return nstate;
             break;
         case BG_SET_INFO : {
-            const {email, sendNotif} = action.payload;
+            const {email, notifEnabled} = action.payload;
             let nstate = updateSet(state, 'email', email);
-            nstate  = updateSet(nstate, 'sendNotif', sendNotif);
+            nstate  = updateSet(nstate, 'notifEnabled', notifEnabled);
             return nstate;
             break;
         }

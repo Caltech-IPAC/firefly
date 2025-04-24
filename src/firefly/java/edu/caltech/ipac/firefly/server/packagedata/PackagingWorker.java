@@ -7,13 +7,11 @@ package edu.caltech.ipac.firefly.server.packagedata;
 import com.google.common.net.MediaType;
 import edu.caltech.ipac.firefly.data.DownloadRequest;
 import edu.caltech.ipac.firefly.data.FileInfo;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.SrvParam;
 import edu.caltech.ipac.firefly.server.query.DataAccessException;
 import edu.caltech.ipac.firefly.server.query.FileGroupsProcessor;
 import edu.caltech.ipac.firefly.server.query.SearchManager;
 import edu.caltech.ipac.firefly.server.query.SearchProcessor;
-import edu.caltech.ipac.firefly.server.servlets.AnyFileDownload;
 import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.ws.WsServerParams;
 import edu.caltech.ipac.firefly.server.ws.WsServerUtils;
@@ -26,18 +24,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipOutputStream;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
-import static edu.caltech.ipac.firefly.core.background.JobManager.getJobInfo;
 import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
 import static edu.caltech.ipac.firefly.core.background.JobUtil.getJobWorkDir;
-import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.Curl;
-import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.Wget;
 import static edu.caltech.ipac.firefly.server.servlets.AnyFileDownload.getDownloadURL;
 import static edu.caltech.ipac.firefly.server.ws.WsServerParams.WS_SERVER_PARAMS.CURRENTRELPATH;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
@@ -130,11 +124,10 @@ public final class PackagingWorker implements Job.Worker {
         updateJobInfo(getJob().getJobId(), ji -> {
             String summary = String.format("%,d files were packaged for a total of %,d B creating %,d zip files.", totalFiles, totalBytes, curZipIdx);
             if (hasErrors) summary += "\nPlease, note:  There were error(s) while processing your request.  See zip's README file for details.";
-            ji.getAuxData().setProgress(100);
-            ji.getAuxData().setProgressDesc(summary);
-            ji.getAuxData().setSummary(summary);
+            ji.getMeta().setProgress(100);
+            ji.getMeta().setProgressDesc(summary);
+            ji.getMeta().setSummary(summary);
         });
-        getJob().setPhase(JobInfo.Phase.COMPLETED);
 
         return "";
     }
@@ -147,18 +140,15 @@ public final class PackagingWorker implements Job.Worker {
     }
 
     private void updateJobProgress() throws DataAccessException.Aborted {
-        Job job = getJob();
-        if (job != null) {
-            JobInfo.Phase phase = ifNotNull(getJobInfo(job.getJobId())).get(JobInfo::getPhase);
-            if (phase == JobInfo.Phase.ABORTED) throw new DataAccessException.Aborted();
-
-            if (System.currentTimeMillis() - lastUpdatedTime > 2000) {
-                lastUpdatedTime = System.currentTimeMillis();
-                int pct = (int) ((float)curFileInfoIdx / totalFiles * 100);
-                if ( pct != lastUpdatedPct) {
-                    lastUpdatedPct = pct;
-                    job.progress(pct, String.format("%d of %d completed", curFileInfoIdx, totalFiles));
-                }
+        if (System.currentTimeMillis() - lastUpdatedTime > 2000) {
+            lastUpdatedTime = System.currentTimeMillis();
+            int pct = (int) ((float)curFileInfoIdx / totalFiles * 100);
+            if ( pct != lastUpdatedPct) {
+                lastUpdatedPct = pct;
+                sendJobUpdate(ji -> {
+                    ji.getMeta().setProgress(pct);
+                    ji.getMeta().setProgressDesc(String.format("%d of %d completed", curFileInfoIdx, totalFiles));
+                });
             }
         }
     }
@@ -170,7 +160,10 @@ public final class PackagingWorker implements Job.Worker {
             zout.setComment(String.format("Files %s-%s", startFileInfoIdx, curFileInfoIdx));
             String suggName = suggestedName == null ? "DownloadPackage" : suggestedName;
             suggName = "%s%s.zip".formatted(suggName, curZipIdx > 0 ? "-part" + curZipIdx : "");
-            getJob().addResult(new JobInfo.Result(suggName,  getDownloadURL(zipFile, suggName), MediaType.ZIP.toString(), zipFile.length()+""));
+
+            var result = new JobInfo.Result(suggName,  getDownloadURL(zipFile, suggName), MediaType.ZIP.toString(), zipFile.length()+"");
+            sendJobUpdate(ji -> ji.addResult(result));
+
             failed.clear();
             denied.clear();
             zippedBytes = 0;

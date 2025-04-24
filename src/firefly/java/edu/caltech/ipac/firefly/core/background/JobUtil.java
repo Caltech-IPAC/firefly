@@ -1,16 +1,20 @@
 package edu.caltech.ipac.firefly.core.background;
 
 import edu.caltech.ipac.firefly.api.Async;
-import edu.caltech.ipac.firefly.core.Util;
-import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.ServerContext;
+import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
+import edu.caltech.ipac.firefly.server.network.HttpServices;
 import edu.caltech.ipac.firefly.server.util.Logger;
+import edu.caltech.ipac.firefly.util.Ref;
+import edu.caltech.ipac.util.AppProperties;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.w3c.dom.Document;
 
 import java.io.File;
 import java.net.InetAddress;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -21,16 +25,31 @@ import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.*;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.COMPLETED;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.Phase.ERROR;
+import static edu.caltech.ipac.firefly.core.background.JobManager.getAllUserJobs;
+import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
+import static edu.caltech.ipac.firefly.server.query.UwsJobProcessor.*;
 import static edu.caltech.ipac.util.StringUtils.*;
+import static edu.caltech.ipac.firefly.core.Util.Try;
 
 public class JobUtil {
+    // Services are defined as strings with three fields (url|serviceId|serviceType), separated by commas. Only url is required; the others are optional.
+    public static final List<String> UWS_HISTORY_SVCS = Arrays.stream(AppProperties.getProperty("uws.history.svcs", "")
+                                                            .split(",")).map(String::trim).toList();        // urls separated by comma
+    public static final List<String> RUNID_IGNORE = Arrays.stream(AppProperties.getProperty("uws.runid.ignore", "")
+                                                            .split(",")).map(String::trim).toList();        // strings separated by comma
     private static final Logger.LoggerImpl LOG = Logger.getLogger();
     private static final long yearMs = 365*24*60*60*1000L;  // one year in milliseconds; 31_536_000_000
+    public static final List<String> runIdIgnoreList = new ArrayList<>();
+
+    static {
+        runIdIgnoreList.add("TAP_SCHEMA");      // Firefly uses this when querying the tap schema
+        if (!RUNID_IGNORE.isEmpty()) runIdIgnoreList.addAll(RUNID_IGNORE);
+    }
 
     public static void logJobInfo(JobInfo info) {
         if (info == null) return;
-        LOG.debug(String.format("JOB:%s  owner:%s  phase:%s  msg:%s", info.getJobId(), info.getOwner(), info.getPhase(), info.getAuxData().getSummary()));
-        LOG.trace(String.format("JOB: %s details: %s", info.getJobId(), toJson(info)));
+        LOG.debug(String.format("JOB:%s  userKey:%s  phase:%s  msg:%s", info.getMeta().getJobId(), info.getMeta().getUserKey(), info.getPhase(), info.getMeta().getSummary()));
+        LOG.trace(String.format("JOB: %s details: %s", info.getMeta().getJobId(), toJson(info)));
     }
 
     /**
@@ -39,14 +58,14 @@ public class JobUtil {
      * limited to a one-year range. The resulting format is "HOSTNAME_TIMESTAMP", with a maximum of 20 characters.
      * @return the next unique job ID for this host
      */
-    static String nextRefJobId() {
+    static String nextJobId() {
         String hname = hostName();
         hname = hname.length() < 9 ? hname : hname.substring(hname.length() - 8);
         return "%s_%d".formatted(hname, System.currentTimeMillis() % yearMs);
     }
 
     public static String hostName() {
-        return Util.Try.it(() -> InetAddress.getLocalHost().getHostName()).getOrElse("SYS").split("\\.")[0];
+        return Try.it(() -> InetAddress.getLocalHost().getHostName()).getOrElse("SYS").split("\\.")[0];
     }
 
     /**
@@ -66,36 +85,92 @@ public class JobUtil {
         return jsonObject == null ? "null" : jsonObject.toJSONString();
     }
 
+    /**
+     * Import job histories from the given service URL.
+     * @param svcDef the service to import job histories from
+     * @return the number of job histories imported
+     */
+    public static int importJobHistories(String svcDef) {
+        int count = 0;
+
+        String[] svcParts = ifNotNull(svcDef).getOrElse("").split("\\|", 3);
+        String url = svcParts[0].trim();
+        String svcId = svcParts.length > 1 ? svcParts[1].trim() : null;
+        String svcType = svcParts.length > 2 ? svcParts[2].trim() : null;
+
+        if (url.isEmpty()) return count;
+
+        LOG.debug("Importing job histories from %s; svcId=%s svcType=%s".formatted(url, svcId, svcType));
+        List<JobInfo> history = getAllUserJobs();
+
+        HttpServiceInput input = HttpServiceInput.createWithCredential(url);
+        Ref<List<JobInfo>> jobList = new Ref<>();
+        HttpServices.getData(input, r -> {
+           Try.it(() -> {
+                Document doc = parse(r.getResponseBodyAsStream());
+                jobList.set(convertToJobList(doc, url));
+            }).getOrElse(e -> {
+                throw new UnsupportedOperationException(e.getMessage());
+            });
+           return HttpServices.Status.ok();
+        });
+        if (jobList.get() == null || jobList.get().isEmpty()) return count;
+
+        // remove jobs with no URL or runId in the ignore list
+        boolean hasBadJobs = jobList.get().removeIf(j -> j.getAux().getJobUrl() == null || runIdIgnoreList.contains(String.valueOf(j.getRunId())));
+        if (hasBadJobs) LOG.debug("Some jobs with no URL or ignored runId were removed from list");
+
+        for (JobInfo job : jobList.get()) {
+            JobInfo uws = Try.it(() -> getUwsJobInfo(job.getAux().getJobUrl())).get();
+            if (uws == null) {
+                LOG.debug("Failed to get job info for " + job.getAux().getJobUrl());
+            } else if (runIdIgnoreList.contains(String.valueOf(uws.getRunId()))) {
+                LOG.debug("Ignoring job at %s with RUNID=%s".formatted(job.getAux().getJobUrl(), uws.getRunId()));
+            } else {
+                count++;
+                String jobId = uws.getJobId();
+                JobInfo jobInfo = findJobInfo(jobId, history);
+                mergeJobInfo(jobInfo, uws, svcId, svcType);
+                LOG.trace("Job added jobUrl=%s jobId=%s".formatted(job.getAux().getJobUrl(),uws.getJobId()));
+            }
+        }
+        LOG.debug("%d job histories imported".formatted(count));
+        return count;
+    }
+
+    public static JobInfo mergeJobInfo(JobInfo local, JobInfo uws, String svcId, String svcType) {
+        String jobId = local == null ? nextJobId() : local.getMeta().getJobId();
+        return updateJobInfo(jobId, true, ji -> {
+            ji.copyFrom(uws);
+            Job.Type type = Try.it(() -> Job.Type.valueOf(svcType)).getOrElse(Job.Type.UWS);
+            ji.getMeta().setType(type);
+            ji.getMeta().setSvcId(svcId);
+        });
+    }
+
+    public static JobInfo findJobInfo(String uwsJobId, List<JobInfo> mylist) {
+        if (mylist == null || mylist.isEmpty()) return null;
+        for(JobInfo ji : mylist) {
+            if (ji.getJobId().equals(uwsJobId)) return ji;
+        }
+
+        return null;
+    }
+
+    ;
+
 //====================================================================
 //  JSON serialization
 //====================================================================
-    public static JSONObject userInfoToJson(UserInfo userInfo) {
-        JSONObject rval = new JSONObject();
-        rval.put("firstName", userInfo.getFirstName());
-        rval.put("lastName", userInfo.getLastName());
-        rval.put("email", userInfo.getEmail());
-        return rval;
-    }
-
-    public static UserInfo jsonToUserInfo(JSONObject userInfo) {
-        UserInfo rval = new UserInfo();
-        rval.setFirstName(String.valueOf(userInfo.get("firstName")));
-        rval.setLastName(String.valueOf(userInfo.get("lastName")));
-        rval.setEmail(String.valueOf(userInfo.get("email")));
-        return rval;
-    }
 
     public static JSONObject toJsonObject(JobInfo info) {
-        return toJsonObject(info, true);
-    }
 
-    public static JSONObject toJsonObject(JobInfo info, boolean inclInternProps) {
         if (info == null) return null;
 
         JSONObject rval = new JSONObject();
         rval.put(JOB_ID, info.getJobId());
         applyIfNotEmpty(info.getRunId(), v -> rval.put(RUN_ID, v));
-        applyIfNotEmpty(info.getOwner(), v -> rval.put(OWNER_ID, v));
+        applyIfNotEmpty(info.getOwnerId(), v -> rval.put(OWNER_ID, v));
         applyIfNotEmpty(info.getPhase(), v -> rval.put(PHASE, v.toString()));
         applyIfNotEmpty(info.getQuote(), v -> rval.put(QUOTE, v.toString()));
         applyIfNotEmpty(info.getCreationTime(), v -> rval.put(CREATION_TIME, v.toString()));
@@ -103,11 +178,10 @@ public class JobUtil {
         applyIfNotEmpty(info.getEndTime(), v -> rval.put(END_TIME, v.toString()));
         applyIfNotEmpty(info.executionDuration(), v -> rval.put(EXECUTION_DURATION, v));
         applyIfNotEmpty(info.getDestruction(), v -> rval.put(DESTRUCTION, v.toString()));
-        if (!info.getParams().isEmpty()) rval.put(PARAMETERS, info.getParams());
 
-        if (!info.getResults().isEmpty()) {
-            rval.put(RESULTS, toResults(info.getResults()));
-        }
+        if (!info.getParams().isEmpty()) rval.put(PARAMETERS, info.getParams());
+        if (!info.getResults().isEmpty())  rval.put(RESULTS, toResults(info.getResults()));
+
         applyIfNotEmpty(info.getError(), v -> {
             JSONObject errSum = new JSONObject();
             errSum.put(ERROR_MSG, v.msg());
@@ -115,24 +189,31 @@ public class JobUtil {
             rval.put(ERROR_SUMMARY, errSum);
         });
 
-        if (inclInternProps) {
-            JSONObject addtlInfo = new JSONObject();
-            rval.put(JOB_INFO, addtlInfo);
-            AuxData aux = info.getAuxData();
-            applyIfNotEmpty(aux.getType(), v -> addtlInfo.put(JOB_TYPE, v.toString()));
-            applyIfNotEmpty(aux.getLabel(), v -> addtlInfo.put(LABEL, v));
-            applyIfNotEmpty(aux.getProgress(), v -> addtlInfo.put(PROGRESS, v));
-            applyIfNotEmpty(aux.isMonitored(), v -> addtlInfo.put(MONITORED, v));
-            applyIfNotEmpty(aux.getProgressDesc(), v -> addtlInfo.put(PROGRESS_DESC, v));
-            applyIfNotEmpty(aux.getDataOrigin(), v -> addtlInfo.put(DATA_ORIGIN, v));
-            applyIfNotEmpty(aux.getSummary(), v -> addtlInfo.put(SUMMARY, v));
-            applyIfNotEmpty(aux.getSvcId(), v -> addtlInfo.put(SVC_ID, v));
-            applyIfNotEmpty(aux.getLocalRunId(), v -> addtlInfo.put(LOCAL_RUN_ID, v));
+        JSONObject jsonAux = new JSONObject();
+        rval.put(JOB_INFO, jsonAux);
+        applyIfNotEmpty(info.getAux().getTitle(), v -> jsonAux.put(TITLE, v));
+        applyIfNotEmpty(info.getAux().getUserId(), v -> jsonAux.put(USER_ID, v));
+        applyIfNotEmpty(info.getAux().getUserName(), v -> jsonAux.put(USER_NAME, v));
+        applyIfNotEmpty(info.getAux().getUserEmail(), v -> jsonAux.put(USER_EMAIL, v));
+        applyIfNotEmpty(info.getAux().getJobUrl(), v -> jsonAux.put(JobInfo.JOB_URL, v));
 
-            applyIfNotEmpty(aux.getRefHost(), v -> addtlInfo.put("refHost", v));
-            applyIfNotEmpty(aux.getRefJobId(), v -> addtlInfo.put("refJobId", v));
-            applyIfNotEmpty(aux.getUserInfo(), v -> addtlInfo.put("userInfo", userInfoToJson(v)));
-        }
+        JSONObject jsonMeta = new JSONObject();
+        rval.put(META, jsonMeta);
+        Meta meta = info.getMeta();
+        applyIfNotEmpty(meta.getJobId(), v -> jsonMeta.put(JOB_ID, v));
+        applyIfNotEmpty(meta.getRunId(), v -> jsonMeta.put(RUN_ID, v));
+        applyIfNotEmpty(meta.getUserKey(), v -> jsonMeta.put(USER_KEY, v));
+        applyIfNotEmpty(meta.getType(), v -> jsonMeta.put(JOB_TYPE, v.toString()));
+        applyIfNotEmpty(meta.getProgress(), v -> jsonMeta.put(PROGRESS, v));
+        applyIfNotEmpty(meta.getProgressDesc(), v -> jsonMeta.put(PROGRESS_DESC, v));
+        applyIfNotEmpty(meta.getSummary(), v -> jsonMeta.put(SUMMARY, v));
+        applyIfNotEmpty(meta.isMonitored(), v -> jsonMeta.put(MONITORED, v));
+        applyIfNotEmpty(meta.getSvcId(), v -> jsonMeta.put(SVC_ID, v));
+        applyIfNotEmpty(meta.getAppUrl(), v -> jsonMeta.put(APP_URL, v));
+        applyIfNotEmpty(meta.getRunHost(), v -> jsonMeta.put(RUN_HOST, v));
+        applyIfNotEmpty(meta.getSendNotif(), v -> jsonMeta.put(SEND_NOTIF, v));
+
+        if (!meta.getParams().isEmpty()) jsonMeta.put(PARAMETERS, meta.getParams());
 
         return rval;
     }
@@ -143,9 +224,8 @@ public class JobUtil {
         if (rval == null) return null;
 
         ifNotNull(json.get(RUN_ID)).apply(v -> rval.setRunId(v.toString()));
-        ifNotNull(json.get(OWNER_ID)).apply(v -> rval.setOwner(v.toString()));
-        ifNotNull(json.get(PHASE)).apply(v -> rval.setPhase(Phase.valueOf(v.toString())));
-        ifNotNull(json.get(OWNER_ID)).apply(v -> rval.setOwner(v.toString()));
+        ifNotNull(json.get(OWNER_ID)).apply(v -> rval.setOwnerId(v.toString()));
+        ifNotNull(json.get(PHASE)).apply(v -> rval.setPhase(v.toString()));
         ifNotNull(json.get(QUOTE)).apply(v -> rval.setQuote(Instant.parse(v.toString())));
         ifNotNull(json.get(CREATION_TIME)).apply(v -> rval.setCreationTime(Instant.parse(v.toString())));
         ifNotNull(json.get(START_TIME)).apply(v -> rval.setStartTime(Instant.parse(v.toString())));
@@ -153,19 +233,9 @@ public class JobUtil {
         ifNotNull(json.get(EXECUTION_DURATION)).apply(v -> rval.setExecutionDuration(((Long) v).intValue()));
         ifNotNull(json.get(DESTRUCTION)).apply(v -> rval.setDestruction(Instant.parse(v.toString())));
 
-        ifNotNull(json.get(PARAMETERS)).apply(v -> {
-            if (v instanceof JSONObject jo) {
-                Map<String, String> params = new HashMap<>();
-                jo.forEach((key,val) -> params.put(String.valueOf(key), String.valueOf(val)));
-                rval.setParams(params);
-            }
-        });
-        ifNotNull(json.get(RESULTS)).apply(v -> {
-            if (v instanceof JSONArray ja) {
-                List<Result> results = ja.stream().map(o -> toResult((JSONObject) o)).toList();
-                rval.setResults(results);
-            }
-        });
+        ifNotNull(toParameters(json.get(PARAMETERS))).apply(p -> rval.setParams(p));
+        ifNotNull(toResults(json.get(RESULTS))).apply(r -> rval.setResults(r));
+
         ifNotNull(json.get(ERROR)).apply(v -> {
             if (v instanceof JSONObject jo) {
                 int code = getInt(jo.get(ERROR_TYPE), 500);
@@ -173,24 +243,31 @@ public class JobUtil {
                 rval.setError(new JobInfo.Error(code, msg));
             }
         });
+        ifNotNull(json.get(META)).apply(v -> {
+            if (v instanceof JSONObject ji) {
+                ifNotNull(ji.get(JOB_ID)).apply(s -> rval.getMeta().setJobId(s.toString()));
+                ifNotNull(ji.get(RUN_ID)).apply(s -> rval.getMeta().setRunId(s.toString()));
+                ifNotNull(ji.get(USER_KEY)).apply(s -> rval.getMeta().setUserKey(s.toString()));
+                ifNotNull(ji.get(JOB_TYPE)).apply(t -> rval.getMeta().setType(Job.Type.valueOf(t.toString())));
+                ifNotNull(ji.get(PROGRESS)).apply(p -> rval.getMeta().setProgress(((Long) p).intValue()));
+                ifNotNull(ji.get(PROGRESS_DESC)).apply(d -> rval.getMeta().setProgressDesc(d.toString()));
+                ifNotNull(ji.get(SUMMARY)).apply(s -> rval.getMeta().setSummary(s.toString()));
+                ifNotNull(ji.get(MONITORED)).apply(m -> rval.getMeta().setMonitored((Boolean) m));
+                ifNotNull(ji.get(SVC_ID)).apply(s -> rval.getMeta().setSvcId(s.toString()));
+                ifNotNull(ji.get(APP_URL)).apply(s -> rval.getMeta().setAppUrl(s.toString()));
+                ifNotNull(ji.get(RUN_HOST)).apply(s -> rval.getMeta().setRunHost(s.toString()));
+                ifNotNull(ji.get(SEND_NOTIF)).apply(o -> rval.getMeta().setSendNotif((Boolean) o));
+
+                ifNotNull(toParameters(ji.get(PARAMETERS))).apply(p -> rval.getMeta().setParams(p));
+            }
+        });
         ifNotNull(json.get(JOB_INFO)).apply(v -> {
             if (v instanceof JSONObject ji) {
-                ifNotNull(ji.get(JOB_TYPE)).apply(t -> rval.getAuxData().setType(Job.Type.valueOf(t.toString())));
-                ifNotNull(ji.get(LABEL)).apply(l -> rval.getAuxData().setLabel(l.toString()));
-                ifNotNull(ji.get(PROGRESS)).apply(p -> rval.getAuxData().setProgress(((Long) p).intValue()));
-                ifNotNull(ji.get(MONITORED)).apply(m -> rval.getAuxData().setMonitored((Boolean) m));
-                ifNotNull(ji.get(PROGRESS_DESC)).apply(d -> rval.getAuxData().setProgressDesc(d.toString()));
-                ifNotNull(ji.get(DATA_ORIGIN)).apply(o -> rval.getAuxData().setDataOrigin(o.toString()));
-                ifNotNull(ji.get(SUMMARY)).apply(s -> rval.getAuxData().setSummary(s.toString()));
-                ifNotNull(ji.get(SVC_ID)).apply(s -> rval.getAuxData().setSvcId(s.toString()));
-                ifNotNull(ji.get(LOCAL_RUN_ID)).apply(s -> rval.getAuxData().setLocalRunId(s.toString()));
-                ifNotNull(ji.get("refHost")).apply(s -> rval.getAuxData().setRefHost(s.toString()));
-                ifNotNull(ji.get("refJobId")).apply(s -> rval.getAuxData().setRefJobId(s.toString()));
-                ifNotNull(ji.get("userInfo")).apply(s -> {
-                    if (s instanceof JSONObject u) {
-                        rval.getAuxData().setUserInfo(jsonToUserInfo(u));
-                    }
-                });
+                ifNotNull(ji.get(TITLE)).apply(l -> rval.getAux().setTitle(l.toString()));
+                ifNotNull(ji.get(USER_ID)).apply(s -> rval.getAux().setUserId(s.toString()));
+                ifNotNull(ji.get(USER_NAME)).apply(s -> rval.getAux().setUserName(s.toString()));
+                ifNotNull(ji.get(USER_EMAIL)).apply(s -> rval.getAux().setUserEmail(s.toString()));
+                ifNotNull(ji.get(JobInfo.JOB_URL)).apply(o -> rval.getAux().setJobUrl(o.toString()));
             }
         });
         return rval;
@@ -215,8 +292,26 @@ public class JobUtil {
         return jo.get(key) == null ? null : jo.get(key).toString();
     }
 
-    public static Result toResult(JSONObject jo) {
-        return new Result(getStr(jo,"id"), getStr(jo, "href"), getStr(jo, "mimeType"), getStr(jo, "size"));
+    public static Map<String,String> toParameters(Object o) {
+        if (o instanceof JSONObject jo) {
+            Map<String, String> params = new HashMap<>();
+            jo.forEach((key,val) -> params.put(String.valueOf(key), String.valueOf(val)));
+            return params;
+        }
+        return null;
+    }
+
+    public static List<Result> toResults(Object o) {
+        if (o instanceof JSONArray ja) {
+            List<Result> reval = new ArrayList<>(ja.size());
+            for(Object item : ja) {
+                if (item instanceof JSONObject jo) {
+                    reval.add(new Result(getStr(jo, "id"), getStr(jo, "href"), getStr(jo, "mimeType"), getStr(jo, "size")));
+                }
+            }
+            return reval;
+        }
+        return null;
     }
 
     /**
@@ -227,7 +322,7 @@ public class JobUtil {
         JSONObject rval = new JSONObject();
         if (infos != null && infos.size() > 0) {
             // object with "jobs": array of JobInfo urls
-            List<String> urls = infos.stream().map(i -> i.getJobId()).collect(Collectors.toList());
+            List<String> urls = infos.stream().map(i -> i.getMeta().getJobId()).collect(Collectors.toList());
             rval.put("jobs", urls);
         }
         return rval.toJSONString();
@@ -241,7 +336,7 @@ public class JobUtil {
         JSONObject rval = new JSONObject();
         if (info.getPhase() == COMPLETED) {
             if (info.getResults().size() == 0) {
-                rval.put("results", Arrays.asList(Async.getAsyncUrl() + info.getJobId() + "/results/result"));
+                rval.put("results", Arrays.asList(Async.getAsyncUrl() + info.getMeta().getJobId() + "/results/result"));
             } else {
                 rval.put("results", info.getResults());
             }

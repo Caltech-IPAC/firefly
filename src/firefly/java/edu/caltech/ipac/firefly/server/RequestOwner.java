@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server;
 
+import edu.caltech.ipac.firefly.core.Util;
 import edu.caltech.ipac.firefly.data.userdata.UserInfo;
 import edu.caltech.ipac.firefly.server.events.FluxAction;
 import edu.caltech.ipac.firefly.server.events.ServerEventManager;
@@ -162,7 +163,7 @@ public class RequestOwner implements Cloneable {
     @Nonnull
     public UserInfo getUserInfo() {
         if (userInfo == null) {
-            userInfo = getAuthUser();
+            userInfo = ifNotNull(this::getAuthUser).get();
             if (userInfo == null) {
                 String userKey = ifNotNull(getUserKeyFromClient()).getOrElse(newUserKey());
                 UserCache<UserInfo> userInfoCache = UserCache.getInstance(userKey);

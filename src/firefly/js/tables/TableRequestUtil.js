@@ -8,7 +8,7 @@ import {getTblById, uniqueTblId} from './TableUtil.js';
 import {SelectInfo} from './SelectInfo.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {WS_HOME} from '../visualize/WorkspaceCntlr.js';
-import {getJobInfo} from '../core/background/BackgroundUtil.js';
+import {getJobInfo, getJobTitle, isTapJob} from '../core/background/BackgroundUtil.js';
 import {fetchTable} from 'firefly/rpc/SearchServicesJson';
 import {Logger} from '../util/Logger.js';
 
@@ -344,8 +344,21 @@ export function setNoCache(request) {
  * @returns {Request} returns search request from the given jobId
  */
 export function getRequestFromJob(jobId) {
-    const request = getJobInfo(jobId)?.parameters?.[ServerParams.REQUEST];
-    return request ? JSON.parse(request) : {};
+    const job = getJobInfo(jobId);
+    if (job) {
+        const request = job.meta?.parameters?.[ServerParams.REQUEST];
+        if (request) {
+            return JSON.parse(request);             // initiated by Firefly
+        } else if (isTapJob(job) && job.jobInfo?.jobUrl) {
+            const href = job.jobInfo.jobUrl + '/results/result';
+            return makeFileRequest(getJobTitle(job), href);
+        } else {
+            const href = job?.results?.find((r) => r?.href?.startsWith?.('http'))?.href; // attempt to load the first result where href is an url
+            if (href) return makeFileRequest(getJobTitle(job), href);
+        }
+    }
+    logger.error('Unable to create a request from this job', job);
+    return {};
 }
 
 /**

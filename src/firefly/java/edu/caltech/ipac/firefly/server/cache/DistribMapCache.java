@@ -24,6 +24,11 @@ public class DistribMapCache<T> extends DistributedCache<T> {
     }
 
     public DistribMapCache(String mapKey, long lifespanInSecs) {
+        this(mapKey, lifespanInSecs, new JavaSerializer());
+    }
+
+    public DistribMapCache(String mapKey, long lifespanInSecs, Serializer serializer) {
+        super(serializer);
         this.mapKey = mapKey;
         this.lifespanInSecs = lifespanInSecs;
     }

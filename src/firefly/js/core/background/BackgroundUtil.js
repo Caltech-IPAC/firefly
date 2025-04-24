@@ -98,7 +98,19 @@ export function getJobInfo(jobId) {
 }
 
 export function isSearchJob(job) {
-    return job?.jobInfo?.type === 'SEARCH' || job?.jobInfo?.type === 'UWS';
+    return ['SEARCH', 'UWS', 'TAP'].includes(job?.meta?.type);
+}
+
+export function isTapJob(job) {
+    return job?.meta?.type === 'TAP';
+}
+
+export function getJobTitle(job) {
+    return job.jobInfo?.title ?? job.runId ?? job.jobId;
+}
+
+export function isMonitored(job) {
+    return !!job?.meta?.monitored;
 }
 
 /**
@@ -114,8 +126,8 @@ export function getBgEmail() {
  * @returns {object.<string>}
  */
 export function getBgInfo() {
-    const {email, sendNotif} =  get(flux.getState(), BACKGROUND_PATH) || {};
-    return {email, sendNotif};
+    const {email, notifEnabled} =  get(flux.getState(), BACKGROUND_PATH) || {};
+    return {email, notifEnabled};
 }
 
 export function canCreateScript(jobInfo) {
@@ -133,6 +145,11 @@ export function isFail(jobInfo) {
 export function isActive(jobInfo) {
     return Phase.get('PENDING | QUEUED | EXECUTING').has(Phase.get(jobInfo?.phase));
 }
+
+export function isExecuting(jobInfo) {
+    return Phase.EXECUTING.is(Phase.get(jobInfo?.phase));
+}
+
 export function isArchived(jobInfo) {
     return Phase.ARCHIVED.is(Phase.get(jobInfo?.phase));
 }
@@ -164,7 +181,7 @@ export function doPackageRequest({dlRequest, searchRequest, selectInfo, bgKey, d
     dispatchComponentStateChange(bgKey, {inProgress:true, hide:false});
     SearchServices.packageRequest(dlRequest, searchRequest, selectInfo, downloadType)
         .then((jobInfo) => {
-            const jobId = jobInfo?.jobId;
+            const jobId = jobInfo?.meta?.jobId;
             if (isNil(jobId))  return;
             dispatchJobAdd(jobInfo);
             const inProgress = !isDone(jobInfo);
@@ -194,7 +211,7 @@ function bgTracker(action, cancelSelf, params={}) {
     const {jobId, key, onComplete, hide} = params;
     const {type, payload:jobInfo} = action || {};
 
-    if ( type === BG_JOB_INFO && jobInfo?.jobId === jobId) {
+    if ( type === BG_JOB_INFO && jobInfo?.meta?.jobId === jobId) {
         if (isDone(jobInfo)) {
             cancelSelf();
             dispatchComponentStateChange(key, {inProgress:false});

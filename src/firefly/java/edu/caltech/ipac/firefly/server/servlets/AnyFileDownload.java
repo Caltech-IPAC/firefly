@@ -51,14 +51,17 @@ public class AnyFileDownload extends BaseHttpServlet {
     private static final String BASE_URL = "servlet/Download?"+ LOG_PARAM +"=true&" + FILE_PARAM +"=";
     private static final String RET_FILE = "&"+RETURN_PARAM+"=";
 
-
     public static String getDownloadURL(File file, String suggestedFileName) {
+        return getDownloadURL(file, suggestedFileName, ServerContext.getRequestOwner().getBaseUrl());
+    }
+
+    public static String getDownloadURL(File file, String suggestedFileName, String baseUrl) {
         if (file==null) return null;
 
         String fname= URLParms.encode(ServerContext.replaceWithPrefix(file));
         if (fname!= null) {
             String retFile = isEmpty(suggestedFileName) ? "" : RET_FILE + URLParms.encode(suggestedFileName);
-            return ServerContext.getRequestOwner().getBaseUrl() + BASE_URL + fname + retFile;
+            return baseUrl + BASE_URL + fname + retFile;
         } else {
             return null;
         }

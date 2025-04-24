@@ -5,7 +5,6 @@
 package edu.caltech.ipac.firefly.core.background;
 
 import edu.caltech.ipac.firefly.core.Util.Try;
-import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.util.DownloadScript;
 import edu.caltech.ipac.firefly.server.util.EMailUtil;
 import edu.caltech.ipac.firefly.server.util.Logger;
@@ -17,6 +16,7 @@ import java.util.List;
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.*;
 import static edu.caltech.ipac.firefly.server.servlets.AnyFileDownload.getDownloadURL;
+import static edu.caltech.ipac.firefly.server.util.DownloadScript.makeScriptFilename;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
@@ -87,10 +87,12 @@ public class EmailNotification implements JobCompletedHandler {
     }
 
     public static void sendNotification(JobInfo jobInfo) {
-        String email = jobInfo.getAuxData().getUserInfo().getEmail();
-        String name = jobInfo.getAuxData().getUserInfo().getName();
+        String email = jobInfo.getAux().getUserEmail();
+        String name = jobInfo.getAux().getUserName();
         name = isEmpty(name) ? "Astronomer" : name;
-        Job.Type type = jobInfo.getAuxData().type;
+        Job.Type type = jobInfo.getMeta().getType();
+
+        if (!jobInfo.getMeta().getSendNotif()) return;       // notification is disabled/off for this job
 
         if (isEmpty(email)) {
             Logger.getLogger().info("No email address found for job: %s;  skip Email Notification".formatted(jobInfo.getJobId()));
@@ -103,13 +105,16 @@ public class EmailNotification implements JobCompletedHandler {
                     .getOrElse(e -> Logger.getLogger().error(e));
 
         } else if (type == Job.Type.PACKAGE) {
-
-            String curlScript = getDownloadURL(makeScript(jobInfo, Curl), null);
-            String wgetScript = getDownloadURL(makeScript(jobInfo, Wget), null);
-            String directUrls = getDownloadURL(makeScript(jobInfo, ScriptAttributes.URLsOnly), null);
-            String msg = zipSuccess.formatted(name, curlScript, wgetScript, directUrls, contact);
-            Try.it(() -> EMailUtil.sendMessage(new String[]{email}, null, null, subject, msg))
-                    .getOrElse(e -> Logger.getLogger().error(e));
+            try {
+                String sugName = ifNotNull(jobInfo.getAux().getTitle()).getOrElse("Download");
+                String curlScript = getDownloadURL(makeScript(jobInfo, Curl), makeScriptFilename(Curl, sugName), jobInfo.getMeta().getAppUrl());
+                String wgetScript = getDownloadURL(makeScript(jobInfo, Wget), makeScriptFilename(Wget, sugName), jobInfo.getMeta().getAppUrl());
+                String directUrls = getDownloadURL(makeScript(jobInfo, ScriptAttributes.URLsOnly), makeScriptFilename(URLsOnly, sugName), jobInfo.getMeta().getAppUrl());
+                String msg = zipSuccess.formatted(name, curlScript, wgetScript, directUrls, contact);
+                EMailUtil.sendMessage(new String[]{email}, null, null, subject, msg);
+            } catch (Exception e) {
+                Logger.getLogger().error(e);
+            }
 
         } else if (type == Job.Type.SCRIPT) {
 
@@ -118,7 +123,7 @@ public class EmailNotification implements JobCompletedHandler {
                     .getOrElse(e -> Logger.getLogger().error(e));
         } else {
 
-            String msg = searchCompleted.formatted(name, ServerContext.getRequestOwner().getBaseUrl(), contact);
+            String msg = searchCompleted.formatted(name, jobInfo.getMeta().getAppUrl(), contact);
             Try.it(() -> EMailUtil.sendMessage(new String[]{email}, null, null, subject, msg))
                     .getOrElse(e -> Logger.getLogger().error(e));
         }
@@ -134,7 +139,7 @@ public class EmailNotification implements JobCompletedHandler {
     public static File makeScript(JobInfo jobInfo, ScriptAttributes type) {
         List<DownloadScript.UrlInfo> urlInfos = ifNotNull(jobInfo.getResults())
                 .get(list -> list.stream().map(r -> new DownloadScript.UrlInfo(r.href(), null)).toList());
-        String id = jobInfo.getAuxData().getRefJobId();
+        String id = jobInfo.getJobId();
         String fname = type == Curl ? "curl_script_%s.sh" : type   == Wget ? "wget_script_%s.sh" : "urls_%s.txt";
         fname = fname.formatted(id.substring(id.length()-4));      // safe; id is always greater than 4 chars
         File script = new File(JobUtil.getJobWorkDir(id), fname);

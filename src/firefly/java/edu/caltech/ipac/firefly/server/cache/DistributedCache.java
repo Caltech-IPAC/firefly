@@ -38,6 +38,15 @@ public class DistributedCache<T> implements Cache<T> {
     private static final String BASE64 = "BASE64::";
     private transient Predicate<T> getValidator;
 
+    private Serializer serializer;
+
+    public DistributedCache() {
+        this(new JavaSerializer());
+    }
+    public DistributedCache(Serializer serializer) {
+        this.serializer = serializer;
+    }
+
     public Cache<T> validateOnGet(Predicate<T> validator) {
         getValidator = validator;
         return this;
@@ -55,9 +64,9 @@ public class DistributedCache<T> implements Cache<T> {
                         del(redis, keystr);
                     } else {
                         if (lifespanInSecs > 0) {
-                            setex(redis, keystr, serialize(value), lifespanInSecs);
+                            setex(redis, keystr, serializer.serialize(value), lifespanInSecs);
                         } else {
-                            set(redis, keystr, serialize(value));
+                            set(redis, keystr, serializer.serialize(value));
                         }
                     }
                 }
@@ -72,7 +81,7 @@ public class DistributedCache<T> implements Cache<T> {
 
     public T get(CacheKey key) {
         try(Jedis redis = RedisService.getConnection()) {
-            T v = (T) deserialize( get(redis, key.getUniqueString()) );
+            T v = (T) serializer.deserialize( get(redis, key.getUniqueString()) );
             if (v != null && getValidator != null && !getValidator.test(v)) {
                 del(redis, key.getUniqueString());
                 return null;
@@ -145,18 +154,26 @@ public class DistributedCache<T> implements Cache<T> {
 //  Utility functions
 //====================================================================
 
-    static String serialize(Object object) {
-        if (object == null) return null;
-        if (object instanceof String v) {
-            return v;
-        } else {
-            return BASE64 + Util.serialize(object);
-        }
+    public interface Serializer {
+        String serialize(Object object);
+        Object deserialize(String s) throws Exception;
     }
 
-    static Object deserialize(String s) throws Exception {
-        if (s == null) return null;
-        return !s.startsWith(BASE64) ? s : Util.deserialize(s.substring(BASE64.length()));
+    public static class JavaSerializer implements Serializer {
+
+        public String serialize(Object object) {
+            if (object == null) return null;
+            if (object instanceof String v) {
+                return v;
+            } else {
+                return BASE64 + Util.serialize(object);
+            }
+        }
+
+        public Object deserialize(String s) throws Exception {
+            if (s == null) return null;
+            return !s.startsWith(BASE64) ? s : Util.deserialize(s.substring(BASE64.length()));
+        }
     }
 
 }

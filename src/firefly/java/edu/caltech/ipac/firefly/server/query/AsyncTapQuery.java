@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server.query;
 
+import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
@@ -46,6 +47,10 @@ public class AsyncTapQuery extends UwsJobProcessor {
 //            "https://archives.esac.esa.int/hsa/whsa-tap-server/tap"     // Accepted the parameter, but did not return its value
     );
 
+    public Job.Type getType() {
+        return Job.Type.TAP;
+    }
+
     public HttpServiceInput createInput(TableServerRequest request) throws DataAccessException {
         var serviceUrl = request.getParam(SVC_URL);
         var uploadTable= request.getParam(UPLOAD_TNAME);
@@ -62,7 +67,7 @@ public class AsyncTapQuery extends UwsJobProcessor {
             // use table's title as RUNID.  RUNID is limited to 64 chars.  If more than 64, truncate then add '...' to indicate it was truncated.
             final String runId = title.length() > 64 ? title.substring(0, 61) + "..." : title;
             inputs.setParam(RUNID, runId);
-            ifNotNull(getJob()).then((j) -> updateJobInfo(j.getJobId(), ji -> ji.getAuxData().setLocalRunId(runId)));    // save the value locally for display
+            updateJob(ji -> ji.getMeta().setRunId(runId));  // save the value locally for display
         }
 
         inputs.setParam(LANG, request.getParam(LANG, "ADQL"));

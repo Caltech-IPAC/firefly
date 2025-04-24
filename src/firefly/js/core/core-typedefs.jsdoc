@@ -123,15 +123,14 @@
  * Top-level.  Information on background jobs. Object is keyed by ID.
  * @typedef {Object} BackgroundInfo
  * @prop {string} email                     email to notify when background job is completed
- * @prop {boolean} sendNotif                true to send notification when job is completed
- * @prop {string} showDlScript              show download script link
+ * @prop {string} notifEnabled              indicates if this application supports job completion notification
  * @prop {Object.<string, Job>} jobs    a map of background job and its jobInfo.
  */
 
 /**
  * Background job data.
  * @typedef {Object} Job
- * @prop {string} jobId         unique identifier for this job
+ * @prop {string} jobId         jobId for display only
  * @prop {string} ownerId       ID of the job creator
  * @prop {string} phase         execution phase.  One of PENDING, QUEUED, EXECUTING, COMPLETED, ERROR, ABORTED
  * @prop {string} startTime     start time in UTC
@@ -141,19 +140,33 @@
  * @prop {string} parameters    the parameters to the job
  * @prop {string} error         error message if there's an error
  * @prop {string[]} results     the results for the job - can also be retrieved at /{jobs}/{job-id}/results
- * @prop {JobInfo} jobInfo      internal information about the job
+ * @prop {JobInfo} jobInfo      additional information about the job
+ * @prop {JobMeta} meta         internal information about the job
+ */
+
+/**
+ * Additional job information.
+ * @typedef {Object} JobInfo
+ * @prop {string} title         job title for display
+ * @prop {string} jobUrl        URL to the job
+ * @prop {string} userId        Firefly user ID associated with the job
+ * @prop {string} userName      Firefly username associated with the job
+ * @prop {string} userEmail     email associated with the job
  */
 
 /**
  * Internal job information.  Used by Firefly to manage the job.
- * @typedef {Object} JobInfo
- * @prop {string} type          type of job. One of SEARCH, PACKAGE
- * @prop {string} label         job label for display
- * @prop {string} svcId         service ID
+ * @typedef {Object} JobMeta
+ * @prop {string} jobId         unique identifier for this job
+ * @prop {string} runId         local runId for internal use
+ * @prop {string} userKey       owner of this job
+ * @prop {string} type          type of job. One of SEARCH, UWS, TAP, PACKAGE, SCRIPT
+ * @prop {string} svcId         an identifier for the service that this job is associated with
  * @prop {boolean} monitored    true if UI is monitoring the job
  * @prop {number} progress      progress of the job as a percentage.  0-100, where 100 is done
  * @prop {string} progressDesc  a description of the current progress
  * @prop {string} summary       summary of the job
+ * @prop {boolean} sendNotif    if true, send notification when job is done
  */
 
 /*=========================================================================*/

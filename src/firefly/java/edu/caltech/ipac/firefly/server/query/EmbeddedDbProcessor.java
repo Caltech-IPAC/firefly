@@ -134,7 +134,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
         var locked = GET_DATA_CHECKER.lock(uniqueID);
         try {
             var dbAdapter = getDbAdapter(treq);
-            jobExecIf(v -> v.progress(10, "fetching data..."));
+            sendJobUpdate(ji -> ji.getMeta().setProgress(10, "fetching data..."));
 
             DataGroupPart results;
             try {
@@ -146,7 +146,11 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
                 StopWatch.getInstance().start("getDataset: " + request.getRequestId());
                 results = getResultSet(treq, dbAdapter);
-                jobExecIf(v -> v.progress(90, "generating results..."));
+                int totalRows = results.getRowCount();
+                sendJobUpdate(v -> {
+                    v.getMeta().setProgress(90, "generating results...");
+                    sendJobUpdate(ji -> ji.getMeta().setSummary(String.format("%,d rows found", totalRows)));
+                });
             } catch (Exception e) {
                 // table data exists; but, bad grammar when querying for the resultset.
                 // should return table meta info + error message
@@ -156,7 +160,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
                     results = EmbeddedDbUtil.toDataGroupPart(dg, treq);
                     String error = dbAdapter.handleSqlExp("", e).getCause().getMessage(); // get the message describing the cause of the exception.
                     results.setErrorMsg(error);
-                    jobExecIf(v -> v.setError(500, error));
+                    sendJobUpdate(ji -> ji.setError( new JobInfo.Error(500, error)));      // because an error table is returned
                 } else {
                     throw e;
                 }
@@ -165,15 +169,10 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
             // ensure all meta are collected and set accordingly
             TableUtil.consumeColumnMeta(results.getData(), treq);
-
-            int totalRows = results.getRowCount();
-
             results.getData().getTableMeta().setAttribute(DataGroupPart.LOADING_STATUS, DataGroupPart.State.COMPLETED.name());
 
-            jobExecIf(j -> updateJobInfo(j.getJobId(), ji -> ji.getAuxData().setSummary(String.format("%,d rows found", totalRows))));
-
             return results;
-        }catch (Exception e) {
+        } catch (Exception e) {
             logger.error(e);
             throw e;
         } finally {
@@ -241,7 +240,7 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
             StopWatch.getInstance().stop("fetchDataGroup: " + req.getRequestId()).printLog("fetchDataGroup: " + req.getRequestId());
             if (dg == null) throw new DataAccessException("Failed to retrieve data");
 
-            jobExecIf(v -> v.progress(70, dg.size() + " rows of data found"));
+            sendJobUpdate(v -> v.getMeta().setProgress(70, dg.size() + " rows of data found"));
 
             dg.addMetaFrom(collectMeta(req));
             prepareTableMeta(dg.getTableMeta(), Arrays.asList(dg.getDataDefinitions()), req);

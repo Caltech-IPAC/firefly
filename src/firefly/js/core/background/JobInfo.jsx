@@ -69,64 +69,30 @@ export async function showUwsJob({jobUrl, jobId}) {
 }
 
 
-export function JobInfo({jobId, sx, tbl_id}) {
-    const {phase, startTime, endTime, results, errorSummary, jobInfo={}} = useStoreConnector(() => getJobInfo(jobId) || {});
-    const {dataOrigin, summary, type} = jobInfo;
-    return (
-        <Stack spacing={.5} p={1} sx={sx}>
-            <KeywordBlock label='Phase' value={phase}/>
-            <KeywordBlock label='Start Time' value={startTime}/>
-            {endTime && <KeywordBlock label='End Time' value={endTime}/>}
-            <DataOrigin {...{dataOrigin, type, jobId}}/>
-            <FinalMsg {...{phase, results, errorSummary, summary, tbl_id}}/>
-            <KeywordBlock label='ID' value={jobId} title='Internal query identifier, usable for diagnostics'/>
-        </Stack>
-    );
-}
-
-function DataOrigin({dataOrigin, type, jobId}) {
-    if (!dataOrigin) return null;
-    const isUws = type === 'UWS';
-    const label = isUws ? 'UWS Job URL' : 'Service URL';
-    if (!isUws) return <KeywordBlock label={label} value={dataOrigin} asLink={true}/>;
-    return (
-        <Stack direction='row' spacing={1}>
-            <KeywordBlock sx={{width: 425, alignItems:'center'}} label={label} value={dataOrigin} asLink={true}/>
-            <Button ml={1/2} size='sm' onClick={() => showUwsJob({jobId, jobUrl:dataOrigin})}>Show</Button>
-        </Stack>
-    );
-}
-
-function FinalMsg({phase, summary, error, tbl_id}) {
-    if (phase === 'COMPLETED') {
-        return (
-            <Stack direction='row' spacing={1} alignItems='center'>
-                <KeywordBlock label='Summary' value={summary}/>
-                <OverflowMarker tbl_id={tbl_id} showText={true}/>
-            </Stack>
-        );
-    } else if(phase === 'ERROR') {
-        return <KeywordBlock label='Error' value={error}/>;
-    } else return null;
+export function JobInfo({jobId, ...props}) {
+    const jobInfo = useStoreConnector(() => getJobInfo(jobId) || {});
+    return <UwsJobInfo jobInfo={jobInfo} {...props}/>;
 }
 
 export function UwsJobInfo({jobInfo, sx, isOpen=false}) {
-    const hrefs = jobInfo?.results?.map((r) => r.href);
+    const {results, parameters, errorSummary, meta, jobInfo:aux, ...rest} = jobInfo;
+    const hrefs = results?.map((r) => r.href);
+    const hasMoreSection = hrefs || parameters || errorSummary || aux;
     return (
         <Stack spacing={.5} p={1} sx={sx}>
-            {Object.entries(jobInfo)
-                    .filter(([k]) => !['parameters', 'results', 'errorSummary', 'jobInfo'].includes(k))
+            {Object.entries(rest)
+                    .filter(([k, v]) => k && v)
                     .map(([k,v]) => <KeywordBlock key={k} label={k} value={v}/>)
             }
-            {
-                <KeywordBlock key='runId' label='runId' value={jobInfo?.jobInfo?.localRunId}/>
-            }
-            <CollapsibleGroup>
-                <OptionalBlock label='parameters' value={jobInfo.parameters} isOpen={isOpen}/>
-                <OptionalBlock label='results' value={hrefs} asLink={true} isOpen={isOpen}/>
-                <OptionalBlock label='errorSummary' value={jobInfo.errorSummary} isOpen={isOpen}/>
-            </CollapsibleGroup>
-
+            {/*{ meta?.runId && <KeywordBlock key='localRunId' label='local runId' value={meta.runId}/>}*/}
+            { hasMoreSection && (
+                <CollapsibleGroup>
+                    <OptionalBlock label='parameters' value={parameters} isOpen={isOpen}/>
+                    <OptionalBlock label='results' value={hrefs} asLink={true} isOpen={isOpen}/>
+                    <OptionalBlock label='errorSummary' value={errorSummary} isOpen={isOpen}/>
+                    <OptionalBlock label='jobInfo' value={aux} isOpen={isOpen}/>
+                </CollapsibleGroup>
+            )}
         </Stack>
     );
 }
@@ -136,7 +102,11 @@ function OptionalBlock({label, value, asLink, isOpen}) {
     return (
         <CollapsibleItem componentKey={`JobInfo-${label}`} header={label} isOpen={isOpen}>
             <Stack spacing={.5}>
-                {Object.entries(value).map(([k, v]) => <KeywordBlock key={k} label={k} value={v} asLink={asLink}/>)}
+                {Object.entries(value).map(([k, v]) => {
+                        const isLink = asLink ?? /^https?:\/\//.test(v?.toLowerCase?.());
+                        return <KeywordBlock key={k} label={k} value={v} asLink={isLink}/>;
+                    }
+                )}
             </Stack>
         </CollapsibleItem>
     );

@@ -13,7 +13,6 @@ import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.core.background.JobInfo;
 import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.core.background.JobUtil;
-import edu.caltech.ipac.firefly.core.background.ScriptAttributes;
 import edu.caltech.ipac.firefly.core.background.ServCmdJob;
 import edu.caltech.ipac.firefly.data.ServerEvent;
 import edu.caltech.ipac.firefly.data.ServerParams;
@@ -50,11 +49,11 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
-import java.util.ArrayList;
 import java.util.List;
 
+import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
+import static edu.caltech.ipac.firefly.core.background.JobManager.sendUpdate;
 import static edu.caltech.ipac.firefly.data.ServerParams.*;
-import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
 /**
@@ -66,7 +65,7 @@ public class SearchServerCommands {
     public static class TableSearch extends ServCmdJob {
         public Job.Type getType() {
             JobInfo jInfo = JobManager.getJobInfo(getJobId());
-            Type type = jInfo == null || jInfo.getAuxData().getType() == null ? Type.SEARCH : jInfo.getAuxData().getType();
+            Type type = jInfo == null || jInfo.getMeta().getType() == null ? Type.SEARCH : jInfo.getMeta().getType();
             return type;
         }
 
@@ -323,7 +322,7 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             String jobId = params.getRequired(JOB_ID);
-            JobInfo info = JobManager.sendUpdate(jobId, jobInfo -> jobInfo.setPhase(JobInfo.Phase.ARCHIVED));
+            JobInfo info = sendUpdate(jobId, jobInfo -> jobInfo.setPhase(JobInfo.Phase.ARCHIVED));
             return JobUtil.toJson(info);
         }
     }
@@ -332,8 +331,8 @@ public class SearchServerCommands {
 
         public String doCommand(SrvParam params) throws Exception {
             String email = params.getOptional(EMAIL);
-            boolean sendNotif = params.getOptionalBoolean(SEND_NOTIF, false);
-            JobManager.setBackgroundInfo(new JobManager.BackGroundInfo(sendNotif, email));
+            boolean notifEnabled = params.getOptionalBoolean(NOTIF_ENABLED, false);
+            JobManager.setBackgroundInfo(new JobManager.BackGroundInfo(notifEnabled, email));
             return "true";
         }
     }
@@ -347,22 +346,24 @@ public class SearchServerCommands {
             JobInfo local = isEmpty(jobId) ? null : JobManager.getJobInfo(jobId);
 
             if (uws != null && local != null) {
-                // apply additional local info as needed
-                applyIfNotEmpty(local.getAuxData().getLocalRunId(), v -> uws.getAuxData().setLocalRunId(v));
+                local.copyFrom(uws);
             }
-
-            if (uws != null) return JobUtil.toJson(uws);
-            return local != null ? JobUtil.toJson(local) : null;
+            return local != null ? JobUtil.toJson(local) :
+                    uws != null ? JobUtil.toJson(uws) : null;
         }
     }
 
-    public static class ResendEmail extends ServCommand {
+    public static class SetJobNotif extends ServCommand {
 
         public String doCommand(SrvParam params) throws Exception {
-            String id = params.getRequired(JOB_ID);
+            String jobId = params.getRequired(JOB_ID);
+            boolean notifEnabled = params.getRequiredBoolean(NOTIF_ENABLED);
             String email = params.getOptional(EMAIL);
-            JobInfo info = JobManager.sendEmail(id, email);
-            return JobUtil.toJson(info);
+            JobInfo info = sendUpdate(jobId, ji -> {
+                ji.getMeta().setSendNotif(notifEnabled);
+                ji.getAux().setUserEmail(email);
+            });
+            return info != null ? JobUtil.toJson(info) : "false";
         }
     }
 

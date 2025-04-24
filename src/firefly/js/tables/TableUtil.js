@@ -5,9 +5,9 @@
 import {chunk, cloneDeep, get, has, isArray, isEmpty, isNil, isObject, isPlainObject, isString, isUndefined, omitBy,
     padEnd, set, uniqueId, omit, uniq} from 'lodash';
 import Enum from 'enum';
+import DOMPurify from 'dompurify';
 
 import {getWsConnId} from '../core/AppDataCntlr.js';
-import {doJsonRequest} from '../core/JsonUtils';
 import {sprintf} from '../externalSource/sprintf.js';
 import {fetchUrl} from '../util/fetch';
 import {makeFileRequest, MAX_ROW} from './TableRequestUtil.js';
@@ -24,9 +24,12 @@ import {MetaConst} from '../data/MetaConst';
 import {getCmdSrvSyncURL, toBoolean, strictParseInt} from '../util/WebUtil';
 import {upload} from '../rpc/CoreServices.js';
 import {dd2sex} from '../visualize/CoordUtil.js';
+import {Logger} from '../util/Logger';
 
 export const SYS_COLUMNS = ['ROW_IDX', 'ROW_NUM'];
 export const DOC_FUNCTIONS_URL = 'https://duckdb.org/docs/sql/functions/overview.html';
+const HtmlRegex = /<\/?[a-z][\s\S]*>|&[a-zA-Z]+;/i;     // this will detect HTML Entities as well
+const logger = Logger('Tables').tag('TableUtil');
 
 // this is so test can mock the function when used within it's module
 const local = {
@@ -1579,6 +1582,16 @@ export function isOverflow(tbl_id) {
 
     const results = resources?.find((r) => r.type === 'results');
     return results?.infos?.QUERY_STATUS === 'OVERFLOW';
+}
+
+export function isHtml(text) {
+    return HtmlRegex.test(text);
+}
+
+export function cleanHtml(text) {
+    const clean = DOMPurify.sanitize(text);
+    if (DOMPurify.removed) logger.debug(`cleanHtml removed: ${DOMPurify.removed}`);
+    return clean;
 }
 
 /*-------------------------------------private------------------------------------------------*/

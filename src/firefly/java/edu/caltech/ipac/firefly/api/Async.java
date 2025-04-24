@@ -42,7 +42,6 @@ public class Async extends BaseHttpServlet {
     static private final Logger.LoggerImpl logger = Logger.getLogger();
     static private String ASYNC_URL = null;
 
-
     protected void processRequest(HttpServletRequest req, HttpServletResponse res) throws Exception {
 
         String[] path = isEmpty(req.getPathInfo()) ? new String[0] : req.getPathInfo().substring(1).split("/");
@@ -104,7 +103,7 @@ public class Async extends BaseHttpServlet {
         Job job = ServerCommandAccess.getCmdJob(params);
         if (job != null) {
             JobInfo info = JobManager.submit(job);
-            res.setHeader("Location", getAsyncUrl() + info.getJobId());
+            res.setHeader("Location", getAsyncUrl() + info.getMeta().getJobId());
             res.setStatus(303);
         } else {
             sendErrorResponse(404, null, "Command not found: " + params.getCommandKey(), res);
@@ -144,7 +143,7 @@ public class Async extends BaseHttpServlet {
         SrvParam params = info.getSrvParams();
         Job job = ServerCommandAccess.getCmdJob(params);
         if (job != null && job.getType() == Job.Type.SEARCH) {
-            job.setJobId(info.getJobId());
+            job.setJobId(info.getMeta().getJobId());
             String json = job.run();
             sendResponse(json, res);
         }

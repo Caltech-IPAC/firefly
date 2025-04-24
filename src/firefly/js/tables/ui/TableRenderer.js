@@ -8,7 +8,7 @@ import {get, isEmpty, isString, omit, set, toNumber} from 'lodash';
 import {Box, Button, Checkbox, Chip, Link, MenuItem, Sheet, Stack, Tooltip, Typography} from '@mui/joy';
 
 import {FILTER_CONDITION_TTIPS, FilterInfo, NULL_TOKEN} from '../FilterInfo.js';
-import {COL_TYPE, formatValue, getCellValue, getColumn, getColumnIdx, getRowValues, getTblById, getTypeLabel, isColumnType, isOfType, splitCols, splitVals} from '../TableUtil.js';
+import {cleanHtml, COL_TYPE, formatValue, getCellValue, getColumn, getColumnIdx, getRowValues, getTblById, getTypeLabel, isColumnType, isHtml, isOfType, splitCols, splitVals} from '../TableUtil.js';
 import {SortInfo} from '../SortInfo.js';
 import {InputField} from '../../ui/InputField.jsx';
 import {SORT_ASC, UNSORTED} from '../SortInfo';
@@ -35,8 +35,6 @@ import {FilterButton} from 'firefly/visualize/ui/Buttons.jsx';
 
 
 export const headerStyle = {fontSize:'var(--joy-fontSize-sm)', fontWeight:'var(--joy-fontWeight-md)'};  // maybe faulty becuase it's translated from Typography title-sm, which is dynamic.
-
-const html_regex = /<.+>|&.+;/;           // A rough detection of html elements or entities
 
 const imageStubMap = {
     info: <img style={{width:'14px'}} src={infoIcon} alt='info'/>
@@ -394,7 +392,7 @@ function ViewAsText({text, ...rest}) {
         } catch (e) {}      // if text is not JSON, just show as is.
     }
 
-    const content = doFmt && html_regex.test(text) ? <div dangerouslySetInnerHTML={{__html: text}}/> : <Typography whiteSpace='pre'>{text}</Typography>;
+    const content = doFmt && isHtml(text) ? <div dangerouslySetInnerHTML={{__html: cleanHtml(text)}}/> : <Typography whiteSpace='pre'>{text}</Typography>;
 
     const label = 'View with formatting';
     return (
@@ -735,7 +733,7 @@ export const ATag = React.memo(({cellInfo, label, title, href, target, style={},
     if (imgStubKey) {
         label = imageStubMap[imgStubKey] || <img data-src={imgStubKey}/>;   // if a src is given but, not found.. show bad img.
     } else {
-        label = html_regex.test(label) ? <div dangerouslySetInnerHTML={{__html: label}}/> : label;
+        label = isHtml(label) ? <div dangerouslySetInnerHTML={{__html: cleanHtml(label)}}/> : label;
     }
     href = encodeUrlString(href);
     return href ? <Link {...{title, href, target, style}}> {label} </Link> : '';
@@ -744,7 +742,7 @@ export const ATag = React.memo(({cellInfo, label, title, href, target, style={},
 export const TextCell = React.memo(({cellInfo, text, ...rest}) => {
     const {absRowIdx, tableModel, value, text:fmtVal} = cellInfo || getCellInfo(rest);
     text  = applyTokenSub(tableModel, text, absRowIdx, fmtVal);
-    return html_regex.test(text) ? <div dangerouslySetInnerHTML={{__html: text}}/> : text;
+    return isHtml(text) ? <div dangerouslySetInnerHTML={{__html: cleanHtml(text)}}/> : text;
 });
 
 export const ColorSwatch = React.memo(({cellInfo, text, size, ...rest}) => {

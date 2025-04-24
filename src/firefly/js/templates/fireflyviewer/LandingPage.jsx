@@ -4,7 +4,7 @@ import {elementType, shape, object, string, arrayOf, oneOf, node} from 'prop-typ
 import QueryStats from '@mui/icons-material/QueryStats';
 import TipsAndUpdates from '@mui/icons-material/TipsAndUpdates';
 
-import {getBackgroundInfo, isSearchJob} from '../../core/background/BackgroundUtil.js';
+import {getBackgroundInfo, isMonitored, isSearchJob} from '../../core/background/BackgroundUtil.js';
 import {dispatchShowDropDown} from '../../core/LayoutCntlr.js';
 import {AppPropertiesCtx} from '../../ui/AppPropertiesCtx.jsx';
 import {Slot, useStoreConnector} from '../../ui/SimpleComponent.jsx';
@@ -42,7 +42,7 @@ export function LandingPage({slotProps={}, sx, ...props}) {
 
     const {jobs = {}} = useStoreConnector(() => getBackgroundInfo());
     const items = Object.values(jobs)
-        .filter((job) => job.jobInfo?.monitored && isSearchJob(job));
+        .filter((job) => isMonitored(job) && isSearchJob(job));
     const haveBgJobs = items.length > 0;
 
     return (

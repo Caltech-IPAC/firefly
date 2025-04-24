@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Function;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.ScriptAttributes.*;
@@ -142,6 +143,11 @@ static final String funcTmpl = """
                     "ScriptAttributes: "+ Arrays.toString(attributes));
         }
     }
+
+    public static String makeScriptFilename(ScriptAttributes type, String suggName) {
+        String ext = type.equals(URLsOnly) ? "txt" : "sh";
+        return "%s-%s.%s".formatted(suggName, type.name().toLowerCase(), ext);
+    };
 
     static List<UrlInfo> convertToUrlInfo(List<FileGroup> fileGroups) {
         ArrayList<UrlInfo> urlInfos = new ArrayList<>();

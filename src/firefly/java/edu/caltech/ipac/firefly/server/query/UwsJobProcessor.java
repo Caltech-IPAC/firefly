@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
 import static edu.caltech.ipac.firefly.core.background.JobInfo.*;
-import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
+import static edu.caltech.ipac.firefly.core.background.JobManager.getJobInfo;
 import static edu.caltech.ipac.firefly.server.network.HttpServices.*;
 import static edu.caltech.ipac.firefly.server.query.DaliUtil.*;
 import static edu.caltech.ipac.util.StringUtils.*;
@@ -51,8 +51,10 @@ import static edu.caltech.ipac.util.StringUtils.*;
 public class UwsJobProcessor extends EmbeddedDbProcessor {
     public static final String ID = "UwsJob";
     public static final String JOB_URL = "jobUrl";
-
     private static final Logger.LoggerImpl logger = Logger.getLogger();
+    private static final String JOBS = "jobs";
+    private static final String JOB_REF = "jobref";
+
     private String jobUrl;
 
     /**
@@ -70,49 +72,85 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
 
 
     public Job.Type getType() { return Job.Type.UWS; }
+    public boolean isSelfManaged() { return true; }         // defer to remote UWS service for job update
+
+    public void onAbort() {
+        // send abort request.  ignore if there's error
+        if (isEmpty(jobUrl)) return;
+        String phaseUrl = jobUrl.trim().replaceAll("/$", "") + "/phase" ;        // remove trailing slash
+        HttpServices.postData(
+                HttpServiceInput.createWithCredential(phaseUrl)
+                        .setParam("PHASE", "ABORT")
+        );
+        Logger.getLogger().debug("UWS job aborted: " + jobUrl);
+    }
 
 //====================================================================
 //  implements EmbeddedDbProcessor
 //====================================================================
 
     public DataGroup fetchDataGroup(TableServerRequest req) throws DataAccessException {
-
-        jobUrl = req.getParam(JOB_URL);
-        if (jobUrl == null) {
-            jobUrl = submitJob(req);
-            if (jobUrl != null) runJob(jobUrl);
+        // this worker is self-managed, so it needs to update job status
+        try {
+            jobUrl = req.getParam(JOB_URL);
+            if (jobUrl == null) {
+                jobUrl = submitJob(req);
+                if (jobUrl != null) runJob(jobUrl);
+                updateJob(ji -> {
+                    ji.setPhase(Phase.PENDING);
+                    ji.getMeta().setProgress(10, "UWS job submitted");
+                });
+            }
+        } catch (Exception e) {
+            updateJob(ji -> {
+                ji.setError(new JobInfo.Error(400, e.getMessage()));
+                ji.getMeta().setProgress(100);
+            });
+            throw new DataAccessException(e.getMessage());
+        } finally {
+            sendJobUpdate(ji -> {
+                ji.getAux().setJobUrl(jobUrl);
+            });
         }
 
         int cnt = 0;
         try {
             while (true) {
                 cnt++;
-                switch (getPhase(jobUrl)) {
-                    case COMPLETED:
-                        return getResult(req);
-                    case ERROR:
-                    case UNKNOWN: {
-                        String error = getError(jobUrl);
-                        applyIfNotEmpty(getJob(), v -> v.setError(400,  error));
-                        throw new DataAccessException( error );
-                    }
-                    case ABORTED:
-                        if (getJob() != null) getJob().setPhase(Phase.ABORTED);
-                        throw new DataAccessException.Aborted();
-                    case PENDING:
-                    case EXECUTING:
-                    case QUEUED:
-                    default:
-                    {
-                        int wait = cnt < 3 ? 500 : cnt < 20 ? 1000 : 2000;
-                        TimeUnit.MILLISECONDS.sleep(wait);
+                JobInfo uwsJob = getUwsJobInfo(jobUrl);
+                if (uwsJob == null) {
+                    String msg = "Failed to retrieve UWS job info";
+                    updateJob(ji -> ji.setError(new JobInfo.Error(500, msg)));
+                    throw new DataAccessException(msg);
+                }
+
+                updateJob(ji -> ji.copyFrom(uwsJob));
+                Phase phase = ifNotNull(uwsJob.getPhase()).getOrElse(Phase.UNKNOWN);
+
+                if (phase == Phase.COMPLETED) {
+                    return getResult(req);
+                } else if (phase == Phase.ABORTED) {
+                    throw new DataAccessException.Aborted();        // exit; stop tracking
+                } else if (phase == Phase.UNKNOWN) {
+                    updateJob(ji -> ji.setError(new JobInfo.Error(500, "Unknown phase")));
+                } else {
+                    int wait = cnt < 3 ? 500 : cnt < 20 ? 1000 : 2000;
+                    TimeUnit.MILLISECONDS.sleep(wait);
+                    if (phase == Phase.EXECUTING) {
+                        int progress = (int)(95 * (1 - Math.pow(2.0 / 3.0, cnt)));
+                        sendJobUpdate(ji -> {
+                            ji.getMeta().setProgress(progress, "Job is being processed");
+                            ji.setPhase(phase);
+                        });
                     }
                 }
-                jobExecIf(v -> v=null);         // check job phase.. exit loop if aborted.
             }
         } catch (InterruptedException e) {
-            onAbort();
             throw new DataAccessException.Aborted();
+        } finally {
+            sendJobUpdate(ji -> {
+                ji.getMeta().setProgress(100);
+            });
         }
     }
 
@@ -130,14 +168,12 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         HttpServices.Status status = HttpServices.postData(input, (method) -> {
             jobUrl.set(HttpServices.getResHeader(method, "Location", null));
             if (jobUrl.has()) {
-                ifNotNull(getJob()).then((j) -> updateJobInfo(j.getJobId(), ji -> ji.getAuxData().setDataOrigin(jobUrl.get())));
                 return HttpServices.Status.ok();
             } else {
                 // Location header contains jobUrl.  Must be an error when there's not a Location header
                 String error = HttpServices.isOk(method) ? parseError(method, input.getRequestUrl())
                         : String.format("Error submitting job to %s: %s", input.getRequestUrl(), method.getStatusText());
 
-                applyIfNotEmpty(getJob(), v -> v.setError(method.getStatusCode(), error));
                 return new HttpServices.Status(400, error);
             }
         });
@@ -151,14 +187,14 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
             jobUrl = jobUrl.trim().replaceAll("/$", "");        // cleanup URL
             HttpServices.postData(HttpServiceInput.createWithCredential(jobUrl + "/phase").setParam("PHASE", "RUN"));
         }
-        applyIfNotEmpty(getJob(), v -> v.progressDesc("UWS job submitted..."));
     }
 
     public String getJobUrl() { return jobUrl; }
 
     public DataGroup getResult(TableServerRequest request) throws DataAccessException {
 
-        JobInfo jobInfo = getUwsJobInfo(jobUrl);
+        JobInfo jobInfo = ifNotNull(getJob()).get(j -> getJobInfo(j.getJobId()));
+        if (jobInfo == null) jobInfo = getUwsJobInfo(jobUrl);           // there's no job when it's not running in the background
 
         if (jobInfo == null || jobInfo.getResults().size() < 1) {
             throw createDax("UWS job completed without results", jobUrl, null);
@@ -234,7 +270,8 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         Ref<JobInfo> jInfo = new Ref<>();
         HttpServices.Status status = getWithAuth(jobUrl, method -> {
             try {
-                jInfo.set(parse(getResponseBodyAsStream(method)));
+                Document doc = parse(getResponseBodyAsStream(method));
+                jInfo.set(convertToJobInfo(doc));
                 return HttpServices.Status.ok();
             } catch (Exception e) {
                 return new HttpServices.Status(400, e.getMessage());
@@ -243,20 +280,6 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
         if (status.isError()) throw createDax("Fail to fetch UWS job info", jobUrl, status.getException());
 
         return jInfo.get();
-    }
-
-    public static void onAbort(String jobUrl) {
-        cancel(jobUrl);
-    }
-
-    public static boolean cancel(String jobUrl) {
-        if (isEmpty(jobUrl)) return false;
-        HttpServiceInput input = new HttpServiceInput(jobUrl + "/phase").setParam("PHASE", Phase.ABORTED.name());
-        boolean cancelled = !HttpServices.getWithAuth(input, m -> HttpServices.Status.ok()).isError();
-        if (cancelled) {
-            Logger.getLogger().debug("UWS job cancelled: " + jobUrl);
-        }
-        return cancelled;
     }
 
     public static Phase getPhase(String jobUrl) throws DataAccessException {
@@ -302,73 +325,115 @@ public class UwsJobProcessor extends EmbeddedDbProcessor {
 
     private static final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
-    public static JobInfo parse(InputStream is) throws Exception {
+    /**
+     * Convert a UWS job list document to a list of partially populated JobInfo.
+     * @param doc  the xml document to parse
+     * @return a list of partially populated JobInfo
+     * @throws Exception if an error occurs
+     */
+    public static List<JobInfo> convertToJobList(Document doc, String svcUrl) throws Exception {
+        List<JobInfo> rval = new java.util.ArrayList<>();
+        String prefix = getUwsNS(doc);
+        Element jobs = doc.getDocumentElement();
+        if (jobs != null && jobs.getTagName().equals(prefix + JOBS)) {
+            NodeList jlist = jobs.getElementsByTagName(prefix + JOB_REF);
+            for (int i = 0; i < jlist.getLength(); i++) {
+                Node r = jlist.item(i);
+                JobInfo ji = new JobInfo(getAttr(r, "id"));
+                String jobUrl = ifNotNull(getAttr(r, "xlink:href")).getOrElse(svcUrl + "/" + ji.getJobId());
+                ji.getAux().setJobUrl(jobUrl)   ;
+
+                if (r instanceof Element el) {
+                    ifNotNull(getVal(el, prefix + PHASE)).apply(ji::setPhase);
+                    ifNotNull(getVal(el, prefix + RUN_ID)).apply(ji::setRunId);
+                    ifNotNull(getVal(el, prefix + OWNER_ID)).apply(ji::setOwnerId);
+                    ifNotNull(getVal(el, prefix + CREATION_TIME)).apply(v -> ji.setCreationTime(getInstant(v)));
+                }
+                rval.add(ji);
+            }
+        }
+        return rval;
+    }
+
+    public static JobInfo convertToJobInfo(Document doc) throws Exception {
+        String prefix = getUwsNS(doc);
+        Element root = doc.getDocumentElement();
+        if (prefix != null && root.getTagName().equals(prefix + "job")) {              // verify that this is a UWS job doc
+            String id = getVal(root, prefix + JOB_ID);
+            JobInfo jobInfo = new JobInfo(id);
+            applyIfNotEmpty(getVal(root, prefix + RUN_ID), jobInfo::setRunId);
+            applyIfNotEmpty(getVal(root, prefix + OWNER_ID), jobInfo::setOwnerId);
+            applyIfNotEmpty(getVal(root, prefix + PHASE), jobInfo::setPhase);
+            applyIfNotEmpty(getVal(root, prefix + QUOTE), v -> jobInfo.setQuote(getInstant(v)));
+            applyIfNotEmpty(getVal(root, prefix + CREATION_TIME), v -> jobInfo.setCreationTime(getInstant(v)));
+            applyIfNotEmpty(getVal(root, prefix + START_TIME), v -> jobInfo.setStartTime(getInstant(v)));
+            applyIfNotEmpty(getVal(root, prefix + END_TIME), v -> jobInfo.setEndTime(getInstant(v)));
+            applyIfNotEmpty(getVal(root, prefix + EXECUTION_DURATION), v -> jobInfo.setExecutionDuration(Integer.parseInt(v)));
+            applyIfNotEmpty(getVal(root, prefix + DESTRUCTION), v -> jobInfo.setDestruction(getInstant(v)));
+
+            applyIfNotEmpty(getEl(root, prefix + PARAMETERS), params -> {
+                NodeList plist = params.getElementsByTagName(prefix + PARAMETER);
+                for (int i = 0; i < plist.getLength(); i++) {
+                    Node p = plist.item(i);
+                    jobInfo.getParams().put(getAttr(p, "id"), p.getTextContent());
+                }
+            });
+
+            applyIfNotEmpty(getEl(root, prefix + RESULTS), results -> {
+                NodeList rlist = results.getElementsByTagName(prefix + RESULT);
+                for (int i = 0; i < rlist.getLength(); i++) {
+                    Node r = rlist.item(i);
+                    jobInfo.getResults().add(
+                            new JobInfo.Result(
+                                getAttr(r, "id"),
+                                getAttr(r,"xlink:href"),
+                                getAttr(r, "mime-type"),
+                                getAttr(r, "size")
+                            )
+                    );
+                }
+            });
+
+            applyIfNotEmpty(getEl(root, prefix + ERROR_SUMMARY), errsum -> {
+                String type = errsum.getAttribute(ERROR_TYPE);
+                int code = type.equals("transient") ? 500 : 400;
+                String msg = getVal(errsum, prefix + ERROR_MSG);
+                if (!isEmpty(msg)) {
+                    jobInfo.setError(new JobInfo.Error(code, msg));
+                }
+            });
+
+            return jobInfo;
+        }
+        throw new ParseException("Invalid UWS job document", 0);
+    }
+
+    public static Document parse(InputStream is) throws Exception {
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document doc = builder.parse(is);
         if (doc != null) {
-            Element root = doc.getDocumentElement();
+            return doc;
+        }
+        throw new ParseException("Invalid UWS response", 0);
+    }
 
-            final Ref<String> prefix = new Ref<>();
-            // resolve uws prefix:  normally empty-string for default namespace or 'uws' when prefix is used.
-            NamedNodeMap attribs = root.getAttributes();
-            for (int i = 0; i < attribs.getLength(); i++) {
-                String name = attribs.item(i).getNodeName();
-                String val = attribs.item(i).getNodeValue();
-                if (name.startsWith("xmlns") && val != null && val.toLowerCase().contains("www.ivoa.net/xml/uws")) {
-                    String[] parts = name.split(":");
-                    prefix.set(parts.length == 1 ? "" : parts[1].trim() + ":");
-                }
-            }
-            if (prefix.has() && root.getTagName().equals(prefix + "job")) {              // verify that this is a UWS job doc
-                String id = getVal(root, prefix + JOB_ID);
-                JobInfo jobInfo = new JobInfo(id);
-                applyIfNotEmpty(getVal(root, prefix + RUN_ID), jobInfo::setRunId);
-                applyIfNotEmpty(getVal(root, prefix + OWNER_ID), jobInfo::setOwner);
-                applyIfNotEmpty(getVal(root, prefix + PHASE), v -> jobInfo.setPhase(Phase.valueOf(v)));
-
-                applyIfNotEmpty(getVal(root, prefix + QUOTE), v -> jobInfo.setQuote(getInstant(v)));
-                applyIfNotEmpty(getVal(root, prefix + CREATION_TIME), v -> jobInfo.setCreationTime(getInstant(v)));
-                applyIfNotEmpty(getVal(root, prefix + START_TIME), v -> jobInfo.setStartTime(getInstant(v)));
-                applyIfNotEmpty(getVal(root, prefix + END_TIME), v -> jobInfo.setEndTime(getInstant(v)));
-                applyIfNotEmpty(getVal(root, prefix + EXECUTION_DURATION), v -> jobInfo.setExecutionDuration(Integer.parseInt(v)));
-                applyIfNotEmpty(getVal(root, prefix + DESTRUCTION), v -> jobInfo.setDestruction(getInstant(v)));
-
-                applyIfNotEmpty(getEl(root, prefix + PARAMETERS), params -> {
-                    NodeList plist = params.getElementsByTagName(prefix + PARAMETER);
-                    for (int i = 0; i < plist.getLength(); i++) {
-                        Node p = plist.item(i);
-                        jobInfo.getParams().put(getAttr(p, "id"), p.getTextContent());
-                    }
-                });
-
-                applyIfNotEmpty(getEl(root, prefix + RESULTS), results -> {
-                    NodeList rlist = results.getElementsByTagName(prefix + RESULT);
-                    for (int i = 0; i < rlist.getLength(); i++) {
-                        Node r = rlist.item(i);
-                        jobInfo.getResults().add(
-                                new JobInfo.Result(
-                                    getAttr(r, "id"),
-                                    getAttr(r,"xlink:href"),
-                                    getAttr(r, "mime-type"),
-                                    getAttr(r, "size")
-                                )
-                        );
-                    }
-                });
-
-                applyIfNotEmpty(getEl(root, prefix + ERROR_SUMMARY), errsum -> {
-                    String type = errsum.getAttribute(ERROR_TYPE);
-                    int code = type.equals("transient") ? 500 : 400;
-                    String msg = getVal(errsum, prefix + ERROR_MSG);
-                    if (!isEmpty(msg)) {
-                        jobInfo.setError(new JobInfo.Error(code, msg));
-                    }
-                });
-
-                return jobInfo;
+    /**
+     * @param doc the XML document to check
+     * @return the UWS namespace prefix, or null if it's not a UWS document
+     */
+    public static String getUwsNS(Document doc) {
+        Element root = doc.getDocumentElement();
+        // resolve uws prefix:  normally empty-string for default namespace or 'uws' when prefix is used.
+        NamedNodeMap attribs = root.getAttributes();
+        for (int i = 0; i < attribs.getLength(); i++) {
+            String name = attribs.item(i).getNodeName();
+            String val = attribs.item(i).getNodeValue();
+            if (name.startsWith("xmlns") && val != null && val.toLowerCase().contains("www.ivoa.net/xml/uws")) {
+                String[] parts = name.split(":", 2);
+                return parts.length == 1 ? "" : parts[1].trim() + ":";
             }
         }
-        throw new ParseException("Invalid UWS job document", 0);
+        return null;
     }
 
     private static Instant getInstant(String v) {
