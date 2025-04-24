@@ -20,6 +20,7 @@ export const REMOVE_VIEWER= `${IMAGE_MULTI_VIEW_PREFIX}.RemoveViewer`;
 export const VIEWER_MOUNTED= `${IMAGE_MULTI_VIEW_PREFIX}.viewMounted`;
 export const VIEWER_UNMOUNTED= `${IMAGE_MULTI_VIEW_PREFIX}.viewUnmounted`;
 export const VIEWER_SCROLL= `${IMAGE_MULTI_VIEW_PREFIX}.viewScroll`;
+export const BOTTOM_UI_COMPONENT= `${IMAGE_MULTI_VIEW_PREFIX}.bottomUIComponent`;
 export const ADD_VIEWER_ITEMS= `${IMAGE_MULTI_VIEW_PREFIX}.addViewerItems`;
 export const REMOVE_VIEWER_ITEMS= `${IMAGE_MULTI_VIEW_PREFIX}.removeViewerItems`;
 export const REPLACE_VIEWER_ITEMS= `${IMAGE_MULTI_VIEW_PREFIX}.replaceViewerItems`;
@@ -83,6 +84,7 @@ function initState() {
      * @prop {boolean} scroll - if true, the ui can build the grid view to scroll
      * @prop {Object|String} layoutDetail - may be any object, string, etc- Hint for the UI, can be any string but with 2 reserved  GRID_RELATED, GRID_FULL
      * @prop {boolean} internallyManaged - this viewer is managed by other viewers
+     * @prop {function} bottomUIComponent - function that will return a component
      * @prop {object} customData: {}
      *
      * @global
@@ -106,6 +108,7 @@ function initState() {
             containerType : IMAGE,
             layoutDetail : 'none',
             customData: {},
+            bottomUIComponent: undefined,
             renderTreeId: undefined
         },
         {
@@ -120,6 +123,7 @@ function initState() {
             containerType : IMAGE,
             layoutDetail : 'none',
             customData: {},
+            bottomUIComponent: undefined,
             renderTreeId: undefined,
             lastActiveItemId: ''
         },
@@ -135,6 +139,7 @@ function initState() {
             containerType : PLOT2D,
             layoutDetail : 'none',
             customData: {},
+            bottomUIComponent: undefined,
             renderTreeId: undefined,
             lastActiveItemId: ''
         },
@@ -149,6 +154,7 @@ function initState() {
             containerType : WRAPPER,
             layoutDetail : 'none',
             customData: {},
+            bottomUIComponent: undefined,
             renderTreeId: undefined,
             lastActiveItemId: ''
         }
@@ -224,6 +230,7 @@ export const dispatchReplaceViewerItems= (viewerId, itemIdAry, containerType) =>
     flux.process({type: REPLACE_VIEWER_ITEMS , payload: {viewerId, itemIdAry, containerType} });
 
 
+
 /**
  * @param {string} viewerId
  */
@@ -236,6 +243,9 @@ export const dispatchViewerUnmounted= (viewerId) => flux.process({type: VIEWER_U
 
 export const dispatchViewerScroll= ({viewerId,scroll=false}) =>
     flux.process({type: VIEWER_SCROLL , payload: {viewerId,scroll} });
+
+export const dispatchBottomUIComponent= ({viewerId,bottomUIComponent=undefined}) =>
+    flux.process({type: BOTTOM_UI_COMPONENT, payload: {viewerId,bottomUIComponent} });
 
 /**
  *
@@ -449,6 +459,8 @@ function reducer(state=initState(), action={}) {
             return changeMount(state,payload.viewerId,false);
         case VIEWER_SCROLL:
             return changeScroll(state,payload.viewerId,payload.scroll);
+        case BOTTOM_UI_COMPONENT:
+            return changeBottomUIComponent(state,payload.viewerId,payload.bottomUIComponent);
         case UPDATE_VIEWER_CUSTOM_DATA:
             return updateCustomData(state,action);
         case ImagePlotCntlr.DELETE_PLOT_VIEW:
@@ -625,16 +637,20 @@ function changeLayout(state,action) {
 
 function changeMount(state,viewerId,mounted) {
     const viewer= state.find( (entry) => entry.viewerId===viewerId);
-    if (!viewer) return state;
-    if (viewer.mounted===mounted) return state;
+    if (!viewer || viewer.mounted===mounted) return state;
     return state.map( (entry) => entry.viewerId===viewerId ? {...entry, mounted} : entry);
 }
 
 function changeScroll(state,viewerId,scroll) {
     const viewer= state.find( (entry) => entry.viewerId===viewerId);
-    if (!viewer) return state;
-    if (viewer.scroll===scroll) return state;
+    if (!viewer || viewer.scroll===scroll) return state;
     return state.map( (entry) => entry.viewerId===viewerId ? {...entry, scroll} : entry);
+}
+
+function changeBottomUIComponent(state,viewerId,bottomUIComponent) {
+    const viewer= state.find( (entry) => entry.viewerId===viewerId);
+    if (!viewer || viewer.bottomUIComponent===bottomUIComponent) return state;
+    return state.map( (entry) => entry.viewerId===viewerId ? {...entry, bottomUIComponent} : entry);
 }
 
 function updateCustomData(state,action) {

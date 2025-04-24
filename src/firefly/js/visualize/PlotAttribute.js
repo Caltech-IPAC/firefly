@@ -137,10 +137,10 @@ export const PlotAttribute= {
 
 
     /** A source datalink (or similar) table row that was used to construct this plot */
-    RELATED_TABLE_ROW : 'DATALINK_TABLE_ROW',
+    RELATED_TABLE_ROW : 'RELATED_TABLE_ROW',
 
     /** A source datalink (or similar) table id related that was used to construct this plot */
-    RELATED_TABLE_ID : 'DATALINK_TABLE_ID',
+    RELATED_TABLE_ID : 'RELATED_TABLE_ID',
 
     RELATED_GRID_IMAGE_COUNT : 'RELATED_GRID_IMAGE_COUNT',
 

@@ -477,7 +477,7 @@ export function makeMultiTableActivate(activateObj,activateParams) {
             const tbl_id= getActiveTableId(activateParams.tableGroupViewerId);
             if (tbl_id) {
                 const table= getTblById(tbl_id);
-                lastTblId= table.tbl_id;
+                lastTblId= table?.tbl_id;
             }
             dispatchCancelActionWatcher(id);
             deActivateAry.forEach((d) => d?.());
