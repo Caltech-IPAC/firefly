@@ -5,13 +5,14 @@
 import {Box, Sheet, Stack, Typography} from '@mui/joy';
 import {isEmpty, isEqual, omit} from 'lodash';
 import React from 'react';
-import PropTypes, {arrayOf, bool, func, string, object} from 'prop-types';
+import PropTypes, {arrayOf, bool, func, string, object, element, any} from 'prop-types';
 import {getTblInfo} from '../../tables/TableUtil.js';
 import {showCutoutSizeDialog} from '../../ui/CutoutSizeDialog.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
 import {
     findCutoutTarget, getCutoutErrorStr, getCutoutSize, getCutoutTargetType,
     ROW_POSITION, SEARCH_POSITION, USER_ENTERED_POSITION } from '../../ui/tap/Cutout';
+import {ViewerScroll} from '../iv/ExpandedTools';
 import {makeFoVString} from '../ZoomUtil.js';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../ui/ToolbarButton.jsx';
 import {showInfoPopup} from '../../ui/PopupUtil.jsx';
@@ -34,7 +35,7 @@ const SHOWING_CUTOUT='SHOWING_CUTOUT';
 
 export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType, factoryKey, serDef,
                                              enableCutout, pixelBasedCutout,enableCutoutFullSwitching,
-                                             cutoutToFullWarning,
+                                             cutoutToFullWarning, containerElement,
                                           activeTable, makeDataProductsConverter, makeDropDown}) {
 
     const converter= makeDataProductsConverter(activeTable,factoryKey) || {};
@@ -42,15 +43,21 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
 
     if (!converter) return <div/>;
 
+    const viewer= getViewer(getMultiViewRoot(), viewerId) ?? {scroll:false};
     const layoutDetail= getLayoutDetails(getMultiViewRoot(), viewerId, activeTable?.tbl_id);
-    const viewer= getViewer(getMultiViewRoot(), viewerId);
+
+
+
 
     // single mode stuff
 
-    const showThreeColorButton= threeColor && viewer?.layout===GRID &&
+    const showThreeColorButton= threeColor && viewer.layout===GRID &&
         layoutDetail!==GRID_FULL && !(viewerPlotIds[0].includes(GRID_FULL.toLowerCase()));
     const showPager= activeTable && canGrid && layoutType===GRID && layoutDetail===GRID_FULL;
     const showMultiImageOps= canGrid || hasRelatedBands;
+
+    const {width,height}= containerElement?.getBoundingClientRect() ?? {width:0,height:0};
+    const showScroll= showMultiImageOps && (width>height || viewer.scroll);
 
 
     let metaControls= true;
@@ -58,6 +65,7 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
         !(layoutType===SINGLE && viewerPlotIds.length>1) && !showPager) {
         metaControls= false;
     }
+
 
     const cutoutMode= enableCutout
         ? SHOWING_CUTOUT :
@@ -111,6 +119,12 @@ export function ImageMetaDataToolbarView({viewerId, viewerPlotIds=[], layoutType
                                 <ThreeColor tip='Create three color image'
                                             onClick={() => showThreeColorOps(viewerId,converter,activeTable,converterId)}/>
                             }
+                            {showScroll &&
+                                <>
+                                    <ToolbarHorizontalSeparator/>
+                                    <ViewerScroll {...{viewerId,checked:viewer.scroll,count:viewerPlotIds.length}}/>
+                                </>
+                            }
                         </Stack> }
                     {showPager && <ImagePager pageSize={maxPlots} tbl_id={activeTable.tbl_id}/>}
                 </Stack>
@@ -134,7 +148,8 @@ ImageMetaDataToolbarView.propTypes= {
     pixelBasedCutout: bool,
     factoryKey: string,
     cutoutToFullWarning: string,
-    enableCutoutFullSwitching: bool
+    enableCutoutFullSwitching: bool,
+    containerElement: any,
 };
 
 function CutoutButton({dataProductsComponentKey,activeTable, serDef,pixelBasedCutout,

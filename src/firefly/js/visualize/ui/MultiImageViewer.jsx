@@ -111,9 +111,7 @@ export class MultiImageViewer extends PureComponent {
             <MultiImageViewerView {...newProps}
                                   viewerPlotIds={viewer.itemIdAry}
                                   layoutType={layoutType}
-                                  inlineTitle={true}
                                   handleToolbar={handleToolbar}
-                                  aboveTitle={false}
                                   scrollGrid={viewer?.scroll ?? false}
                                   visRoot={visRoot}
                                   ref={(c) => this.rootWidget= c}

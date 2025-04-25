@@ -2,8 +2,8 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {IconButton, Stack, Switch, Typography} from '@mui/joy';
-import React from 'react';
+import {Box, Button, Chip, IconButton, Stack, Switch, Typography} from '@mui/joy';
+import React, {useEffect, useState} from 'react';
 import {object,number} from 'prop-types';
 import Enum from 'enum';
 import {CatalogType} from 'firefly/drawingLayers/Catalog.js';
@@ -12,13 +12,16 @@ import {isEmpty, startCase} from 'lodash';
 import * as AppDataCntlr from '../core/AppDataCntlr';
 import {dispatchHideDialog, isDialogVisible} from '../core/ComponentCntlr.js';
 import {MIN_ROWS_FOR_HIERARCHICAL} from '../tables/HpxIndexCntlr';
+import {dispatchTableHighlight} from '../tables/TablesCntlr';
 import {getTblById} from '../tables/TableUtil';
 import {ListBoxInputFieldView} from '../ui/ListBoxInputField';
 import {INFO_POPUP, showInfoPopup} from '../ui/PopupUtil.jsx';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
+import {useStoreConnector} from '../ui/SimpleComponent';
+import BrowserInfo from '../util/BrowserInfo';
 import {DataTypes} from '../visualize/draw/DrawLayer.js';
 import {dispatchChangeVisibility, dispatchModifyCustomField, GroupingScope} from '../visualize/DrawLayerCntlr.js';
-import {dispatchViewerScroll} from '../visualize/MultiViewCntlr';
+import {dispatchBottomUIComponent, dispatchViewerScroll} from '../visualize/MultiViewCntlr';
 import {isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
 import {InfoButton} from '../visualize/ui/Buttons.jsx';
 
@@ -260,3 +263,44 @@ CatalogUI.propTypes= {
 };
 
 
+export function OptionalHighlight({viewerId, tbl_id,highlightRow, originalCurrentRow, tableRequest,renderTime}) {
+    const [visible,setVisible]= useState(true);
+    const currentRow= useStoreConnector(() => getTblById(tbl_id)?.highlightedRow);
+
+
+    const sx= (theme) => ({
+        alignItems:'center',
+        borderRadius: '5px',
+        overflow:'hidden',
+        border: '2px solid rgba(0,0,0,.1)',
+        borderColor: theme.vars.palette.warning.outlinedColor,
+        backgroundColor: theme.vars.palette.neutral.softBg,
+        visibility: visible ? 'visible' : 'hidden',
+        mb: 2,
+    });
+    
+
+    useEffect(() => {
+        setVisible(true);
+        const id= setTimeout(() => setVisible(false),10000); // 10 seconds
+        return () => clearTimeout(id);
+    }, [viewerId,tbl_id,highlightRow,originalCurrentRow,renderTime]);
+
+    useEffect(() => {
+        if (originalCurrentRow!==currentRow) setVisible(false);
+    }, [currentRow]);
+
+    return (
+        <Stack {...{sx}}>
+            <Stack {...{direction:'row', p:1, spacing:2, alignItems:'center'}}>
+                <Typography color='warning' level='body-lg'>{`Change table highlight to row ${highlightRow}? New images will load.`}</Typography>
+                <Chip variant='solid' color='primary' size='lg' onClick={() => {
+                    dispatchTableHighlight(tbl_id, highlightRow, tableRequest);
+                    dispatchBottomUIComponent({viewerId});
+                }}> Yes </Chip>
+                <Chip variant='solid' color='primary' size='lg' onClick={() => dispatchBottomUIComponent({viewerId}) }> No </Chip>
+            </Stack>
+        </Stack>
+
+    );
+}
