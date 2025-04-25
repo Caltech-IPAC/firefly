@@ -11,6 +11,7 @@ import {dispatchChangePointSelection, visRoot} from '../visualize/ImagePlotCntlr
 import {PlotAttribute} from '../visualize/PlotAttribute';
 import {primePlot} from '../visualize/PlotViewUtil';
 import {parseWorldPt} from '../visualize/Point';
+import {makeFoVString} from '../visualize/ZoomUtil';
 import {getSearchTargetFromTable, isRowTargetCapable} from '../voAnalyzer/TableAnalysis';
 import {FieldGroupCollapsible} from './panel/CollapsiblePanel';
 import {RadioGroupInputField} from './RadioGroupInputField';
@@ -141,9 +142,14 @@ function CutoutSizePanel({showingCutout,cutoutDefSizeDeg,pixelBasedCutout,dataPr
                 value:SEARCH_POSITION,
             });
     }
+    const cutoutInfoStr= showingCutout
+            ? `Current cutout size: ${makeFoVString(Number(cutoutValue))}`
+            : 'Now displaying full image. Cutouts are turned off.';
+
     return (
         <Stack justifyContent='space-between' alignItems='center' spacing={1} minWidth='25rem' ml={1}>
             <Stack spacing={4} minWidth={'40rem'}>
+                <Typography level='title-md'>{cutoutInfoStr}</Typography>
                 { pixelBasedCutout ?
                     <ValidationField {...{
                         nullAllowed: false,

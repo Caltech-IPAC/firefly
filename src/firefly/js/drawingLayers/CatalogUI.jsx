@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Box, Button, Chip, IconButton, Stack, Switch, Typography} from '@mui/joy';
+import {Chip, IconButton, Stack, Switch, Typography} from '@mui/joy';
 import React, {useEffect, useState} from 'react';
 import {object,number} from 'prop-types';
 import Enum from 'enum';
@@ -18,10 +18,9 @@ import {ListBoxInputFieldView} from '../ui/ListBoxInputField';
 import {INFO_POPUP, showInfoPopup} from '../ui/PopupUtil.jsx';
 import {RadioGroupInputFieldView} from '../ui/RadioGroupInputFieldView.jsx';
 import {useStoreConnector} from '../ui/SimpleComponent';
-import BrowserInfo from '../util/BrowserInfo';
 import {DataTypes} from '../visualize/draw/DrawLayer.js';
 import {dispatchChangeVisibility, dispatchModifyCustomField, GroupingScope} from '../visualize/DrawLayerCntlr.js';
-import {dispatchBottomUIComponent, dispatchViewerScroll} from '../visualize/MultiViewCntlr';
+import {dispatchBottomUIComponent} from '../visualize/MultiViewCntlr';
 import {isDrawLayerVisible} from '../visualize/PlotViewUtil.js';
 import {InfoButton} from '../visualize/ui/Buttons.jsx';
 
