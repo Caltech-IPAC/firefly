@@ -203,6 +203,11 @@ export const MetaConst = {
     DATA_SERVICE_ID: 'DATA_SERVICE_ID',
 
     /**
+     * object that can override config
+     */
+    DATA_SERVICE_OPTIONS: 'dataServiceOptions',
+
+    /**
      * If we are doing cutout, this is the default type, either: ROW_POSITION or SEARCH_POSITION
      */
     OBSCORE_CUTOUT_TYPE: 'OBSCORE_CUTOUT_TYPE',

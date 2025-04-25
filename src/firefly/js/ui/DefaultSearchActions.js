@@ -4,13 +4,16 @@ import {flux} from '../core/ReduxFlux.js';
 import {ServerParams} from '../data/ServerParams.js';
 import {sprintf} from '../externalSource/sprintf.js';
 import {
-    getActiveTableId, getMetaEntry, getTableUiByTblId, getTblById, makeFileRequest, onTableLoaded
+    getActiveTableId, getAllColumns, getMetaEntry, getTableUiByTblId, getTblById, getTblRowAsObj, makeFileRequest,
+    onTableLoaded
 } from '../api/ApiUtilTable.jsx';
 import {extractDatalinkTable} from '../metaConvert/TableDataProductUtils';
 import {makeVOCatalogRequest} from '../tables/TableRequestUtil.js';
 import {dispatchTableSearch, dispatchTableUpdate} from '../tables/TablesCntlr.js';
+import {tokenSub} from '../util/WebUtil';
 import { findTableCenterColumns, isFormatDataLink, isObsCoreLike } from '../voAnalyzer/TableAnalysis.js';
 import {DEFAULT_FITS_VIEWER_ID} from '../visualize/MultiViewCntlr.js';
+import {getTableModel} from '../voAnalyzer/VoCoreUtils';
 import {getServiceDescriptors, isDataLinkServiceDesc} from '../voAnalyzer/VoDataLinkServDef';
 import {setMultiSearchPanelTab} from './MultiSearchPanel.jsx';
 import {Format} from 'firefly/data/FileAnalysis';
@@ -105,6 +108,24 @@ export const makeDefImageSearchActions = () => {
 
 export const makeDefTableSearchActions= () => {
     return [
+        makeSearchActionObj({cmd:'showDatalinkTable',
+            groupId:'resolver',
+            label:'all data productions',
+            tip:'',
+            searchType: SearchTypes.point_table_only,
+            execute: () => showDatalinkTable(),
+            supported: (table) => canShowDatalinkTable(table),
+            searchDesc: ({tbl_id}) => {
+                const table= getTableModel(tbl_id);
+                const defStr= getDataServiceOptionByTable( 'datalinkExtractTableDesc', table,
+                    'Show table with all data products for this row (Datalink)');
+
+                const colObj= getTblRowAsObj(table, table.highlightedRow);
+                // const cNames= getAllColumns(getTableModel(tbl_id)).map( (c) => c.name);
+                const retStr= tokenSub(colObj,defStr);
+                return retStr;
+            }
+        } ),
         makeSearchActionObj({cmd:'tableNed',
             groupId:'resolver',
             label:'NED',
@@ -157,18 +178,6 @@ export const makeDefTableSearchActions= () => {
             execute: (sa,table) => searchWholeTable(table),
             searchDesc: 'Use table as an upload to TAP search'
         }),
-        makeSearchActionObj({cmd:'showDatalinkTable',
-            groupId:'resolver',
-            label:'all data productions',
-            tip:'',
-            searchType: SearchTypes.point_table_only,
-            execute: () => showDatalinkTable(),
-            supported: (table) => canShowDatalinkTable(table),
-            searchDesc: ({tbl_id}) => {
-                return getDataServiceOptionByTable( 'datalinkExtractTableDesc', tbl_id,
-                    'Show table with all data products for this row (Datalink)');
-            }
-        } ),
     ];
 };
 
