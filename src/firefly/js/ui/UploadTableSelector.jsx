@@ -21,8 +21,24 @@ import {onTableLoaded} from 'firefly/tables/TableUtil';
 // GENERIC components and helpers
 //--------------------------------------------------------------------------------------------------------------------
 
+/**
+ * A generic component that allows users to select an upload table and map its columns to the required fields.
+ *
+ * @param props
+ * @param props.uploadInfo {Object} - state passed from parent that contains upload table info: columns, filename, etc.
+ * @param props.setUploadInfo {function} - uploadInfo state setter
+ * @param props.columnFields {ColumnFieldsType[]} - array of objects that define the column fields: fieldKey, name are
+ * required keys, guessValue and any key that can be passed to ColumnFld as props is optional
+ * @param props.columnMappingPanelKey {string} - key for the collapsible panel that contains column mapping
+ * @param props.allowUploadColumnsSelection {boolean} - if true, show a button to select columns to upload
+ * (note: this is different from columns mapping; selected upload columns can be more than the mapped columns)
+ * @param props.defaultUploadColumnsSelection {DefaultColsEnabled} - default selection of columns to upload
+ * @param props.slotProps {Object} - slotProps for the component
+ * @returns {Element}
+ */
 export function UploadTableSelector({uploadInfo, setUploadInfo, columnFields=[], columnMappingPanelKey,
-                                        allowUploadColumnsSelection=true, slotProps}) {
+                                        allowUploadColumnsSelection=true, defaultUploadColumnsSelection,
+                                        slotProps}) {
     const {getVal, setVal, register, unregister}= useContext(FieldGroupCtx);
     const columnFieldValues = useStoreConnector(() => columnFields.map(({fieldKey}) => getVal(fieldKey)));
 
@@ -113,9 +129,8 @@ export function UploadTableSelector({uploadInfo, setUploadInfo, columnFields=[],
         <Stack spacing={.5}>
             <Stack {...{direction:'row', spacing: 1.5, alignItems:'center'}}>
                 <TextButton text={(fileName&&haveTable) ? 'Change Upload Table...' : 'Add Upload Table...'}
-                            // TODO: for single col case, prevent pos col getting selected by doing
-                            // showUploadTableChooser(preSetUploadInfo,'singleColSelect',{colTypes: ['int','long','string'],colCount: 3})
-                             onClick={() => showUploadTableChooser(preSetUploadInfo)} />
+                            onClick={() => showUploadTableChooser(preSetUploadInfo, undefined,
+                                defaultUploadColumnsSelection)} />
                 {haveTable &&
                     <Typography level='title-lg' sx={{maxWidth: '15rem', overflow:'hidden', whiteSpace:'nowrap',
                         textOverflow:'ellipsis'}}>
@@ -147,6 +162,15 @@ export function UploadTableSelector({uploadInfo, setUploadInfo, columnFields=[],
     );
 }
 
+/**
+ * @typedef {Object} ColumnFieldsType
+ *
+ * @prop {string} fieldKey
+ * @prop {string} name
+ * @prop {function(columns):string} guessValue
+ * @prop {*} [additionalProps] - Any additional key that can be passed to ColumnFld as prop.
+ */
+
 const columnFieldsType = PropTypes.arrayOf(PropTypes.shape({
     ...omit({...ColumnFld.propTypes}, ['cols']), //because cols come from uploadInfo
     guessValue: PropTypes.func //(columns) => string
@@ -158,6 +182,10 @@ UploadTableSelector.propTypes = {
     columnFields: columnFieldsType,
     columnMappingPanelKey: PropTypes.string,
     allowUploadColumnsSelection: PropTypes.bool,
+    defaultUploadColumnsSelection: PropTypes.shape({
+        colTypes: PropTypes.arrayOf(PropTypes.string),
+        colCount: PropTypes.number
+    }),
     slotProps: PropTypes.shape({
         fileInfo: PropTypes.object,
         columnMappingPanel: PropTypes.shape({
@@ -167,7 +195,26 @@ UploadTableSelector.propTypes = {
     })
 };
 
-
+/**
+ * A generic component that shows a collapsible panel for mapping columns, with a header and column input fields.
+ * Note: this a controlled component whose state is managed by the parent component, generally an UploadTableSelector.
+ *
+ * @param props
+ * @param props.cols {Columns[]} - All available columns to select mappings from
+ * @param props.columnFieldValues {string[]} - array of field values, one for each column field in FieldGroupState
+ * @param props.columnFields {ColumnFieldsType[]} - array of objects that define the column fields: fieldKey, name are
+ * required keys, guessValue and any key that can be passed to ColumnFld as props is optional
+ * @param props.panelKey {string} - key for the collapsible panel that contains column mapping
+ * @param props.headerTitle {Node} - (prefix) title of the header
+ * @param props.getHeaderColumnMapping {function(string[]):string} - function to render the text in header for column mapping
+ * @param props.headerPostTitle {string} - (suffix) title text to show after the column mapping in header
+ * @param props.openPreMessage {string} - message to show before column input fields when the panel is open
+ * @param props.sx {Object} - sx prop used by the FieldGroupCollapsible
+ * @param props.slotProps {Object} - slotProps for the component
+ * @param props.children {Node} - children to render inside the panel. Note: this will override the default rendering
+ * of column input fields
+ * @returns {Element}
+ */
 export function ColumnMappingPanel({cols, columnFieldValues, columnFields, panelKey,
                                        headerTitle='Mapped Columns:', getHeaderColumnMapping, headerPostTitle = '',
                                        openPreMessage='', sx, slotProps, children}) {
@@ -218,7 +265,7 @@ ColumnMappingPanel.propTypes = {
     columnFieldValues: PropTypes.arrayOf(PropTypes.string).isRequired,
     columnFields: columnFieldsType.isRequired,
     panelKey: PropTypes.string.isRequired,
-    headerTitle: PropTypes.string,
+    headerTitle: PropTypes.node,
     getHeaderColumnMapping: PropTypes.func, //(columnFieldValues) => node
     headerPostTitle: PropTypes.string,
     openPreMessage: PropTypes.string,
@@ -231,7 +278,13 @@ ColumnMappingPanel.propTypes = {
     children: PropTypes.node,
 };
 
-
+/** A convenience wrapper around ColumnFld to use in ColumnMappingPanel.
+ *
+ * @param props - same as ColumnFld props
+ * @param props.cols {Columns} - all column options for the ColumnFld
+ * @param props.fieldKey {string} - key for the column field
+ * @param props.name {string} - name of the column field
+ */
 export const MappedColumnFld = ({cols, fieldKey, name, ...props}) => (
     <ColumnFld fieldKey={fieldKey} cols={cols} name={name} //the 3 required props
                // use following defaults if not present in props
@@ -368,7 +421,9 @@ const selectorSingleColSlotProps = {
 
 export function UploadTableSelectorSingleCol(props) {
     return (
-        <UploadTableSelector {...{columnFields: singleColumnFields('Object ID'),
+        <UploadTableSelector {...{
+            columnFields: singleColumnFields('Object ID'),
+            defaultUploadColumnsSelection: { colTypes: ['int', 'long', 'string'], colCount: 3 },
             ...props,
             slotProps: defaultsDeep({...props?.slotProps}, selectorSingleColSlotProps)}}/>
     );
