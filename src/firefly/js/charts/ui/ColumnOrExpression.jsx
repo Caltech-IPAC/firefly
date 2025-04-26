@@ -91,7 +91,7 @@ ColumnOrExpression.propTypes = {
 export function ColumnFld({cols, groupKey, fieldKey, initValue, label, tooltip, slotProps, sx,
                               doQuoteNonAlphanumeric, orientation,
                            name, nullAllowed, canBeExpression=false, readOnly, helper, required, validator,
-                              placeholder, colTblId=null,onSearchClicked=null}) {
+                              placeholder, colTblId, onSearchBtnClicked}) {
     const value = initValue || getFieldVal(groupKey, fieldKey);
     const colValidator = getColValidator(cols, !nullAllowed, canBeExpression);
     const {valid=true, message=''} = value ? colValidator(value) : {};
@@ -110,10 +110,9 @@ export function ColumnFld({cols, groupKey, fieldKey, initValue, label, tooltip, 
             <ToolbarButton icon={MAGNIFYING_GLASS}
                            tip={`Select ${name} column`}
                            onClick={(e) => {
-                               if (!onSearchClicked || onSearchClicked()) {
-                                   showColSelectPopup(cols, onColSelected, `Choose ${name}`, 'OK',
-                                       val, false, colTblId,doQuoteNonAlphanumeric);
-                               }
+                               onSearchBtnClicked?.(e);
+                               showColSelectPopup(cols, onColSelected, `Choose ${name}`, 'OK',
+                                       val, false, colTblId, doQuoteNonAlphanumeric);
                            }}
             />
         );
@@ -162,7 +161,7 @@ ColumnFld.propTypes = {
     helper: PropTypes.element,
     doQuoteNonAlphanumeric: PropTypes.bool,
     colTblId: PropTypes.string,
-    onSearchClicked: PropTypes.func,
+    onSearchBtnClicked: PropTypes.func,
     placeholder: PropTypes.string,
     validator: PropTypes.func,
     slotProps: shape({

@@ -12,10 +12,13 @@ import {showUploadTableChooser} from 'firefly/ui/UploadTableChooser';
 import {showColSelectPopup} from 'firefly/charts/ui/ColSelectView';
 import {getSizeAsString} from 'firefly/util/WebUtil';
 import {FieldGroupCollapsible} from 'firefly/ui/panel/CollapsiblePanel';
+import {FilterInfo} from 'firefly/tables/FilterInfo';
+import {dispatchTableFilter} from 'firefly/tables/TablesCntlr';
+import {onTableLoaded} from 'firefly/tables/TableUtil';
 
 
 //--------------------------------------------------------------------------------------------------------------------
-// GENERIC components
+// GENERIC components and helpers
 //--------------------------------------------------------------------------------------------------------------------
 
 export function UploadTableSelector({uploadInfo, setUploadInfo, columnFields=[], columnMappingPanelKey,
@@ -48,6 +51,11 @@ export function UploadTableSelector({uploadInfo, setUploadInfo, columnFields=[],
 
     useEffect(() => {
         if (!columns) return;
+
+        // if there is only one column in the upload table and only one column field, set that column as column field value
+        if (columns?.length === 1 && columnFields?.length === 1) {
+            setVal(columnFields[0].fieldKey, columns[0].name);
+        }
 
         // if columns (aka uploaded table) changed, guess column field values and set them in field group state
         const guessedColValues = [];
@@ -105,6 +113,8 @@ export function UploadTableSelector({uploadInfo, setUploadInfo, columnFields=[],
         <Stack spacing={.5}>
             <Stack {...{direction:'row', spacing: 1.5, alignItems:'center'}}>
                 <TextButton text={(fileName&&haveTable) ? 'Change Upload Table...' : 'Add Upload Table...'}
+                            // TODO: for single col case, prevent pos col getting selected by doing
+                            // showUploadTableChooser(preSetUploadInfo,'singleColSelect',{colTypes: ['int','long','string'],colCount: 3})
                              onClick={() => showUploadTableChooser(preSetUploadInfo)} />
                 {haveTable &&
                     <Typography level='title-lg' sx={{maxWidth: '15rem', overflow:'hidden', whiteSpace:'nowrap',
@@ -178,28 +188,28 @@ export function ColumnMappingPanel({cols, columnFieldValues, columnFields, panel
     );
 
     return (
-        <Stack sx={{mt: 1/2, ...sx}}>
-            <FieldGroupCollapsible header={panelHeader}
-                                   initialState={{value:'closed'}} fieldKey={panelKey}>
-                <Stack spacing={2}>
-                    {openPreMessage &&
-                        <Typography {...slotProps?.openPreMessage} sx={{...slotProps?.openPreMessage?.sx}}>
-                            {openPreMessage}
-                        </Typography>
-                    }
-                    {!children && (
-                        <Stack {...{spacing: 1, ...slotProps?.columnFieldsRoot}}>
-                            {columnFields.map((columnField) => (
-                                <Box key={columnField.fieldKey} display='inline-flex'>
-                                    <MappedColumnFld cols={cols} {...columnField}/>
-                                </Box>
-                            ))}
-                        </Stack>
-                    )}
-                    {children}
-                </Stack>
-            </FieldGroupCollapsible>
-        </Stack>
+        <FieldGroupCollapsible fieldKey={panelKey} initialState={{value:'open'}}
+                               header={panelHeader}
+                               sx={{mt: 1/2, ...sx}}
+                               slotProps={slotProps?.panelRoot}>
+            <Stack spacing={2}>
+                {openPreMessage &&
+                    <Typography {...slotProps?.openPreMessage} sx={{...slotProps?.openPreMessage?.sx}}>
+                        {openPreMessage}
+                    </Typography>
+                }
+                {!children && (
+                    <Stack {...{spacing: 1, ...slotProps?.columnFieldsRoot}}>
+                        {columnFields.map((columnField) => (
+                            <Box key={columnField.fieldKey} display='inline-flex'>
+                                <MappedColumnFld cols={cols} {...columnField}/>
+                            </Box>
+                        ))}
+                    </Stack>
+                )}
+                {children}
+            </Stack>
+        </FieldGroupCollapsible>
     );
 }
 
@@ -214,11 +224,13 @@ ColumnMappingPanel.propTypes = {
     openPreMessage: PropTypes.string,
     sx: PropTypes.object,
     slotProps: PropTypes.shape({
+        panelRoot: PropTypes.object,
         openPreMessage: PropTypes.object,
         columnFieldsRoot: PropTypes.object,
     }),
     children: PropTypes.node,
 };
+
 
 export const MappedColumnFld = ({cols, fieldKey, name, ...props}) => (
     <ColumnFld fieldKey={fieldKey} cols={cols} name={name} //the 3 required props
@@ -228,6 +240,29 @@ export const MappedColumnFld = ({cols, fieldKey, name, ...props}) => (
                validator={getColValidator(cols, true, false)}
                {...props}/>
 );
+
+
+/**
+ * Filter the column table associated with a ColumnFld, by UCD. This helps in reducing column choices to most relevant ones.
+ *
+ * @param cols {Columns} - all column options for the ColumnFld
+ * @param colTblId {string} - id of the column selection table that appears in a popup when the search button is clicked on a ColumnFld
+ * @param ucd {string} - UCD to filter by
+ */
+export function filterMappedColFldTbl(cols, colTblId, ucd) {
+    onTableLoaded(colTblId).then((tbl) => {
+        const colsWithUcd = cols.filter((col) => { if (col.ucd) {return col.ucd.includes(ucd);} });
+        if (colsWithUcd.length > 1) {
+            if (!tbl) return;
+            const filterInfo = tbl?.request?.filters;
+            const filterInfoCls = FilterInfo.parse(filterInfo);
+            const ucdFilter = `like '%${ucd}%'`;
+            filterInfoCls.setFilter('UCD', ucdFilter);
+            const newRequest = {tbl_id: tbl.tbl_id, filters: filterInfoCls.serialize()};
+            dispatchTableFilter(newRequest);
+        }
+    });
+}
 
 
 //--------------------------------------------------------------------------------------------------------------------
@@ -305,4 +340,66 @@ CenterColumns.propTypes = {
     openPreMessage: PropTypes.string,
     slotProps: ColumnMappingPanel.propTypes.slotProps,
     children: PropTypes.node
+};
+
+
+//--------------------------------------------------------------------------------------------------------------------
+// ID (Single Column) specific components and helpers
+//--------------------------------------------------------------------------------------------------------------------
+
+export const UploadSingleColumn = 'uploadSingleColumn';
+export const singleColumnFields = (colName='ID', colField={}) => [
+    {
+        fieldKey: UploadSingleColumn,
+        name: `${colName} Column`, label: colName, placeholder: `choose ${colName} column`,
+        ...colField
+    }
+];
+
+const selectorSingleColSlotProps = {
+    fileInfo: {},
+    columnMappingPanel: {
+        panelKey: 'upload-single-column',
+        headerTitle: 'Uploaded ID Column:',
+        headerPostTitle: '(from the uploaded table)',
+        slotProps: {}
+    }
+};
+
+export function UploadTableSelectorSingleCol(props) {
+    return (
+        <UploadTableSelector {...{columnFields: singleColumnFields('Object ID'),
+            ...props,
+            slotProps: defaultsDeep({...props?.slotProps}, selectorSingleColSlotProps)}}/>
+    );
+}
+
+export function SingleCol({singleCol, cols, headerTitle='ID Column:', headerPostTitle='', openPreMessage='',
+                              openKey, colKey, colTblId, colName, slotProps}) {
+    const columnFields = singleColumnFields(colName, {
+        fieldKey: colKey,
+        colTblId,
+        onSearchBtnClicked: () => filterMappedColFldTbl(cols, colTblId, 'meta.id')
+    });
+
+    const customSlotProps = defaultsDeep({...slotProps}, selectorSingleColSlotProps.columnMappingPanel.slotProps);
+
+    return (
+      <ColumnMappingPanel cols={cols} columnFieldValues={[singleCol]} columnFields={columnFields} panelKey={openKey}
+                          headerTitle={headerTitle} headerPostTitle={headerPostTitle} openPreMessage={openPreMessage}
+                          slotProps={customSlotProps} />
+    );
+}
+
+SingleCol.propTypes = {
+    singleCol: PropTypes.string,
+    cols: PropTypes.arrayOf(PropTypes.object),
+    headerTitle: PropTypes.node,
+    openKey: PropTypes.string,
+    headerPostTitle: PropTypes.string,
+    openPreMessage: PropTypes.string,
+    colKey: PropTypes.string,
+    colTblId: PropTypes.string,
+    colName: PropTypes.string,
+    slotProps: ColumnMappingPanel.propTypes.slotProps
 };
