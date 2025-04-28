@@ -1,7 +1,8 @@
 import {isObject} from 'lodash';
 import {getAppOptions} from '../../core/AppDataCntlr';
 import {MetaConst} from '../../data/MetaConst';
-import {getMetaEntry} from '../../tables/TableUtil';
+import {getMetaEntry, getObjectMetaEntry} from '../../tables/TableUtil';
+import {getServiceMetaOptions} from './SiaUtil';
 
 const dsOps= () => getAppOptions().dataServiceOptions ?? {};
 
@@ -31,6 +32,8 @@ export function getDataServiceOption(key, dataServiceId = undefined, defVal=unde
  * @return {*}
  */
 export function getDataServiceOptionByTable(key, tableOrId, defVal=undefined) {
+    const entry= getObjectMetaEntry(tableOrId, MetaConst.DATA_SERVICE_OPTIONS)?.[key];
+    if (entry) return entry;
     return getDataServiceOption(key, getMetaEntry(tableOrId,MetaConst.DATA_SERVICE_ID), defVal);
 }
 
