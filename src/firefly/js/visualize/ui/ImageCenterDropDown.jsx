@@ -101,7 +101,7 @@ export function ImageCenterDropDown({visRoot:vr, visible, mi}) {
     const dropDown= (
         <SingleColumnMenu>
 
-            <ToolbarButton text='Pan by table row' tip='Center selected images position of the highlighted row'
+            <ToolbarButton text='Pan by table row' tip='Center coverage or pinned images position of the highlighted row'
                            enabled={coordTables}
                            horizontal={false} key={'pan-table'}
                            hasCheckBox={true} checkBoxOn={vr.autoScrollToHighlightedTableRow}

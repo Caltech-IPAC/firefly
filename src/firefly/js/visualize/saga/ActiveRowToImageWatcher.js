@@ -4,6 +4,7 @@
 
 import {isString, isObject, once} from 'lodash';
 import {TABLE_LOADED, TABLE_SELECT,TABLE_HIGHLIGHT,TABLE_REMOVE,TABLE_UPDATE,TBL_RESULTS_ACTIVE} from '../../tables/TablesCntlr.js';
+import {isDefined} from '../../util/WebUtil';
 import {findTableCenterColumns} from '../../voAnalyzer/TableAnalysis.js';
 import {visRoot, dispatchRecenter, dispatchChangeSubHighPlotView} from '../ImagePlotCntlr.js';
 import {
@@ -11,7 +12,9 @@ import {
 } from '../../tables/TableUtil.js';
 import {computeBoundingBoxInDeviceCoordsForPlot, isFullyOnScreen} from '../WebPlotAnalysis';
 import {makeAnyPt} from '../Point.js';
-import { getActivePlotView, hasWCSProjection, primePlot, } from '../PlotViewUtil';
+import {
+    DEFAULT_COVERAGE_PLOT_ID, getActivePlotView, getPlotViewById, hasWCSProjection, primePlot,
+} from '../PlotViewUtil';
 import {CysConverter} from '../CsysConverter';
 import ImagePlotCntlr, {dispatchPlotImage, dispatchUseTableAutoScroll} from '../ImagePlotCntlr';
 import {isTableUsingRadians} from '../../tables/TableUtil';
@@ -87,51 +90,71 @@ const isImageAitoff= (plot) => (isImage(plot) && plot.projection.isWrappingProje
 /**
  * return true if the point is not one the display
  * @param {PlotView} pv
- * @param {WorldPt} wp
- * @param {TableModel} tbl
+ * @param {WorldPt|Point} wp
  * @param {boolean} force
  * @return {boolean}
  */
-function shouldRecenterSimple(pv,wp, tbl, force) {
+function shouldCenterOnTableRow(pv, wp, force) {
     const plot= primePlot(pv);
+    if (!plot) return false;
     if (force) {
         if (!isImageAitoff(plot)) return true; // if not an image aitoff projection
         return !(isFullyOnScreen(plot,pv.viewDim));
-    }
-    if (!plot) return false;
-    const {attributes}= plot;
-    if (tbl.tbl_id===attributes[PlotAttribute.RELATED_TABLE_ID] && attributes[PlotAttribute.RELATED_TABLE_ROW]) {
-        if (Number(attributes[PlotAttribute.RELATED_TABLE_ROW])!==tbl.highlightedRow) return;
     }
     const cc= CysConverter.make(plot);
     return !cc.pointOnDisplay(wp);
 }
 
+function recenterImageActiveRow(tbl_id, force=false) {
+    const pv = getActivePlotView(visRoot());
+    if (!pv) return;
+    recenterPlotViewActiveRow(pv, tbl_id, force);
+    if (pv.plotId!==DEFAULT_COVERAGE_PLOT_ID) {
+        const covPv = getPlotViewById(visRoot(),DEFAULT_COVERAGE_PLOT_ID);
+        if (!covPv) return;
+        recenterPlotViewActiveRow(covPv, tbl_id, force);
+
+    }
+}
 
 /**
+ * recenter the image on the active row.
  *
+ * for this to happen: autoScrollToHighlightedTableRow===true, the table must exist and have a center ra/dec,
+ * the image much exist, and the image cannot be a MultiProductViewer image driven by a data product table.
+ *
+ * Therefore, types of image that recenter are usually pinned images or coverage images.
+ *
+ * @param {PlotView} pv PlotView to recenter
  * @param tbl_id the table id
  * @param force force a recenter under all cases
  */
-function recenterImageActiveRow(tbl_id, force=false) {
+function recenterPlotViewActiveRow(pv, tbl_id, force=false) {
 
     const vr= visRoot();
     if (!force && !vr.autoScrollToHighlightedTableRow) return;
-    const table= getTblById(tbl_id);
-    if (!findTableCenterColumns(table)) return;
+    const plot = primePlot(pv);
+    if (!plot || !hasWCSProjection(plot)) return;
+    const wp= getRowCenterWorldPt(tbl_id);
+    if (!wp) return;
+
+    const {attributes}= plot;
+    if (tbl_id===attributes[PlotAttribute.RELATED_TABLE_ID] &&
+        isDefined(attributes[PlotAttribute.RELATED_TABLE_ROW]) &&
+        !attributes[PlotAttribute.USER_PINNED_IMAGE]) {
+        // Data product table images are very transient and should not recenter
+        // When the image is drive by a data product table, then doing this is almost always undesirable.
+        // In many grid view cases this will fource some images off the screen
+        return;
+    }
+
 
     if (!vr.useAutoScrollToHighlightedTableRow) {
         dispatchUseTableAutoScroll(true);
         return;
     }
-    const pv = getActivePlotView(visRoot());
-    const plot = primePlot(pv);
 
-    if (!plot || !hasWCSProjection(plot)) return;
-    const wp= getRowCenterWorldPt(table);
-    if (!wp) return;
-
-    if (shouldRecenterSimple(pv,wp,table,force)) {
+    if (shouldCenterOnTableRow(pv,wp,force)) {
         isImageAitoff(plot) && willFitOnScreenAtCurrentZoom(pv) ?
             dispatchRecenter({plotId: plot.plotId, centerOnImage:true}) : dispatchRecenter({plotId: plot.plotId, centerPt: wp});
         if (plot && isImage(plot) && plot.attributes[PlotAttribute.REPLOT_WITH_NEW_CENTER]) {
@@ -142,8 +165,6 @@ function recenterImageActiveRow(tbl_id, force=false) {
             dispatchPlotImage({plotId:pv.plotId, wpRequest:r, hipsImageConversion:pv.plotViewCtx.hipsImageConversion,
                         attributes:plot.attributes});
         }
-
-
     }
 }
 

@@ -14,7 +14,7 @@ import ImagePlotCntlr, {
 import {
     DEFAULT_FITS_VIEWER_ID, dispatchReplaceViewerItems, getLayoutType, getMultiViewRoot, getViewerItemIds, GRID, IMAGE
 } from '../visualize/MultiViewCntlr.js';
-import {PlotAttribute} from '../visualize/PlotAttribute.js';
+import {PlotAttribute as PlotAttribues, PlotAttribute} from '../visualize/PlotAttribute.js';
 import {getPlotGroupById} from '../visualize/PlotGroup.js';
 import {
     getActivePlotView, getPlotViewAry, getPlotViewById, isDefaultCoverageActive, isImageExpanded, primePlot
@@ -114,7 +114,7 @@ export function createSingleImageExtraction(request, sourceObsCoreData, dlData) 
     if (!request) return undefined;
     const wpRequest= isArray(request) ? request.map( (r) => copyRequest(r)) : copyRequest(request);
     const plotIds= isArray(request) ? request.map( (r) => r.getPlotId()) : copyRequest(request);
-    const attributes= {};
+    const attributes= {[PlotAttribues.USER_PINNED_IMAGE]:true};
     if (sourceObsCoreData) attributes.sourceObsCoreData= sourceObsCoreData;
     if (dlData) attributes.dlData= dlData;
     return () => {
