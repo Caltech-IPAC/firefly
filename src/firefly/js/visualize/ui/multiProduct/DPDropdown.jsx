@@ -9,7 +9,7 @@ import {DPtypes} from '../../../metaConvert/DataProductsType.js';
 import {SingleColumnMenu} from '../../../ui/DropDownMenu.jsx';
 import {DropDownToolbarButton} from '../../../ui/DropDownToolbarButton.jsx';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../../ui/ToolbarButton.jsx';
-import {PinButton} from '../Buttons.jsx';
+import {ChangeSearch, PinButton} from '../Buttons.jsx';
 
 /**
  *
@@ -63,15 +63,16 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
                 }
             {showRedoSearchButton && analysisActivateFunc &&
                 <Stack direction='row'>
-                    <ToolbarButton
-                        text='Redo Search' tip='Redo Search'
-                        onClick={() => {
+                    <ChangeSearch {...{
+                        tip:`Enter new search parameters: ${originalTitle}`,
+                        onClick:() => {
                             dispatchSetSearchParams({dpId, activeMenuLookupKey, menuKey, params: undefined});
                             dispatchUpdateDataProducts(dpId, {
                                 ...dataProductsState, allowsInput: true, name: originalTitle,
                                 displayType: DPtypes.ANALYZE, activate: analysisActivateFunc
                             });
-                        }}/>
+                        },
+                    }} />
                 </Stack>
             }
         </Stack>

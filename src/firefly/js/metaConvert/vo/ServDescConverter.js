@@ -82,7 +82,9 @@ export async function getServiceDescSingleDataProduct(table, row, activateParams
             additionalServiceDescMenuList:!isEmpty(menu)?menu:undefined});
     }
     else {
-        return dpdtFromMenu(menu,index,activeMenuLookupKey,true);
+        // there will be no menu if the there is only one service descriptor, and it is not datalink
+        // no menu is a common case.
+        return menu.length===1 ? menu[0] : dpdtFromMenu(menu,index,activeMenuLookupKey,true);
     }
 }
 

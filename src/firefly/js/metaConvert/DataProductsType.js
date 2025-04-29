@@ -226,6 +226,7 @@ export function dpdtChartTable(name, activate, extraction, menuKey='chart-table-
  *
  * @param {object} p
  * @param {String} p.name
+ * @param {String} p.dropDownText
  * @param {function} p.activate
  * @param {String} p.url
  * @param {ServiceDescriptorDef} p.serDef
@@ -246,6 +247,7 @@ export function dpdtChartTable(name, activate, extraction, menuKey='chart-table-
  */
 export function dpdtAnalyze({
                              name,
+                             dropDownText,
                              activate,
                              url,
                              serDef= undefined,
@@ -263,7 +265,7 @@ export function dpdtAnalyze({
                              cutoutToFullWarning,
                              dlData}) {
     return { displayType:DPtypes.ANALYZE,
-        name, url, activate, serDef, menuKey, semantics,
+        name, dropDownText, url, activate, serDef, menuKey, semantics,
         size, activeMenuLookupKey, request, sRegion, prodTypeHint,
         cutoutToFullWarning, serviceDefRef, allowsInput, standardID, ID, dlData
     };

@@ -2,7 +2,7 @@
  * License information at https://github.com/Caltech-IPAC/firefly/blob/master/License.txt
  */
 
-import {Stack, Typography} from '@mui/joy';
+import {Card, Stack, Typography} from '@mui/joy';
 import {func, object, string} from 'prop-types';
 import React, {memo, useContext, useEffect, useState} from 'react';
 import {getAppOptions} from '../../core/AppDataCntlr.js';
@@ -49,12 +49,17 @@ export const ServiceDescriptorPanel= memo(({ serviceDefRef='none', serDef, setSe
     const fieldDefAry= sdToFieldDefAry({
         serviceDef:serDef, sRegion, hipsUrl:getAppOptions()?.coverage?.hipsSourceURL, fovSize });
 
+    const hasSpacial= hasAnySpacial(fieldDefAry);
+    const formSx= hasSpacial ? {} : { ml: 1/2, mr: 2, mt: 2 };
+
     return (
-        <Stack {...{direction:'row', key:serviceDefRef, width:1, height:1}}>
-            <Stack {...{direction:'column', p:.25, width:1}}>
+        <Stack {...{direction:'row', key:serviceDefRef, width:1, height:hasSpacial ? 1 : undefined}}>
+            <Stack {...{component:hasSpacial?undefined:Card,
+                direction:'column', p:hasSpacial?.25: undefined, width:1, ...formSx,
+                variant: hasSpacial ? undefined : 'outlined', }}>
                 <Stack {...{direction:'row', alignItems:'center'}}>
                     {makeDropDown?.()}
-                    <Typography level= {title?.length>30 ? 'body-xs' : 'body-sm'}>{title}</Typography>
+                    <Typography level= {title?.length>80 ? 'title-sm' : 'title-lg'}>{title}</Typography>
                 </Stack>
 
                 <FieldGroup groupKey={GROUP_KEY} keepState={false} style={{display:'flex', flexGrow:1}}>
@@ -108,6 +113,8 @@ function SDPanelContent({fieldDefAry, plotId, serDef={}, setSearchParams, dataSe
         setSearchParams(convertedR);
     };
 
+    const hasSpacial= hasAnySpacial(fieldDefAry);
+
     return (
         <ConstraintContext.Provider value={constraintCtx}>
             <DynLayoutPanelTypes.Inset fieldDefAry={fieldDefAry} style={{width: '100%'}}
@@ -122,7 +129,7 @@ function SDPanelContent({fieldDefAry, plotId, serDef={}, setSearchParams, dataSe
                 <Stack direction='column' alignItems='flex-start' p={.25}>
                     <Stack {...{direction:'row', justifyContent:'space-between', alignItems:'flex-start',
                         pt:.5, pr:.5, width:'100%', alignSelf:'flex-start' }}>
-                        {hasAnySpacial(fieldDefAry) &&
+                        {hasSpacial &&
                             <Typography level='body-xs'>Enter search position or click on background HiPS</Typography>}
                     </Stack>
                 </Stack>
