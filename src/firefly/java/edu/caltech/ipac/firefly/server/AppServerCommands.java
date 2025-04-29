@@ -3,6 +3,7 @@
  */
 package edu.caltech.ipac.firefly.server;
 
+import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.core.background.JobManager;
 import edu.caltech.ipac.firefly.data.Alert;
 import edu.caltech.ipac.firefly.data.ServerEvent;
@@ -20,6 +21,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import redis.clients.jedis.Jedis;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,6 +56,9 @@ public class AppServerCommands {
             action.setValue(email, "email");
             action.setValue(bgInfo.notifEnabled(), "notifEnabled");
             ServerEventManager.fireAction(action, ServerEvent.Scope.SELF);
+
+            // check for redis connection
+            if (RedisService.getFailSince() != null)  RedisService.updateConnectionStatus(true);
 
             return "true";
         }

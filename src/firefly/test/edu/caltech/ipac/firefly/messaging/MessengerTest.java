@@ -36,14 +36,9 @@ import static org.junit.Assert.*;
  * @version $Id: $
  */
 public class MessengerTest extends ConfigTest {
-    private static boolean isOffline;
 
     @Before
     public void setup() {
-        if (!RedisService.connect()) {
-            System.out.println("Messenger is offline; skipping test.");
-            isOffline = true;
-        }
         if (false) Logger.setLogLevel(Level.TRACE);			// for debugging.
     }
 
@@ -56,7 +51,6 @@ public class MessengerTest extends ConfigTest {
     @Test
     public void testMsgContent() throws InterruptedException {
 
-        if (isOffline) return;
         LOG.debug("testMsgContent");
 
         String topic = "testPublish";
@@ -89,7 +83,6 @@ public class MessengerTest extends ConfigTest {
     @Ignore
     public void testMsgCount() throws InterruptedException {
 
-        if (isOffline) return;
         LOG.debug("testMsgCount");
 
         Message testMsg = new Message().setValue("abc", "a");
@@ -140,7 +133,6 @@ public class MessengerTest extends ConfigTest {
     @Ignore
     public void testSubscribe() throws InterruptedException {
 
-        if (isOffline) return;
         LOG.debug("testSubscribe");
 
         String topic1 = "test1";
@@ -186,8 +178,6 @@ public class MessengerTest extends ConfigTest {
     @Category({TestCategory.Perf.class})
     @Test
     public void perfTest() throws InterruptedException {
-
-        if (isOffline) return;
 
         int numSent = 100_000;
         long startTime = System.currentTimeMillis();

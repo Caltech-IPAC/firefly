@@ -153,6 +153,17 @@ export function dispatchUpdateAppData(appData) {
 }
 
 /**
+ * updates connection status.
+ * @param p
+ * @param p.lost    true if connection is lost
+ * @param p.reason  reason for the lost connection
+ * @returns {{type: string, payload: *}}
+ */
+export function dispatchConnectionStatus({lost, reason}) {
+    flux.process({ type : APP_UPDATE, payload: {connectionStatus: {lost, reason} }});
+}
+
+/**
  * Notify other apps this app is ready
  */
 export function dispatchNotifyRemoteAppReady() {
@@ -208,6 +219,10 @@ export function makeViewerChannel(channel, file) {
 
 export function isAppReady() {
     return get(flux.getState(), [APP_DATA_PATH, 'isReady']);
+}
+
+export function getConnectionStatus() {
+    return get(flux.getState(), [APP_DATA_PATH, 'connectionStatus']);
 }
 
 export function getSearchInfo() {

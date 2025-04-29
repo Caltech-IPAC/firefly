@@ -6,8 +6,7 @@ import {pickBy} from 'lodash';
 import {parseUrl, getRootURL} from '../../util/WebUtil.js';
 import {Logger} from '../../util/Logger.js';
 import {WSCH} from '../History.js';
-import {getAppOptions} from '../AppDataCntlr.js';
-import {showLostConnection, hideLostConnection} from '../../ui/LostConnection.jsx';
+import {dispatchConnectionStatus, getAppOptions} from '../AppDataCntlr.js';
 
 export const CH_ID = 'channelID';
 
@@ -55,7 +54,7 @@ export function getOrCreateWsConn(baseUrl=getRootURL()) {
     const p = new Promise( (resolve, reject) => {
         const mResolve = (proxy) => {
             conns[baseUrl] = proxy;
-            hideLostConnection();
+            dispatchConnectionStatus({lost: false, reason: null});
             resolve?.(proxy);
         };
         const mReject = (e) => {
@@ -126,7 +125,7 @@ function makeWsConn(baseUrl, resolve, reject) {
             window.addEventListener('online', () => {
                 window.removeEventListener('online', connectWhenOnline);
                 logger.debug('online detected -> attempting to re-connect');
-                getOrCreateWsConn().catch(() => showLostConnection());
+                getOrCreateWsConn().catch(() => dispatchConnectionStatus({lost: true, reason: 'You are no longer connected to the server'}));
             });
         };
         window.addEventListener('offline', connectWhenOnline);
@@ -170,7 +169,7 @@ function makeWsConn(baseUrl, resolve, reject) {
         };
         window.addEventListener('focus', _handler);
         if (requireWs && window.navigator.onLine) {
-            showLostConnection();
+            dispatchConnectionStatus({lost: true, reason: 'You are no longer connected to the server'});
         }
     };
 

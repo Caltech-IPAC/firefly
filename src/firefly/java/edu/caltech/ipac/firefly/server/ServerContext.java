@@ -146,7 +146,7 @@ public class ServerContext {
         configDirname = configDirname == null ? null : configDirname + "/" + contextName;
 
         if (StringUtils.isEmpty(contextName)) {
-            String errmsg = " is not setup correctly.  System will not function properly";
+            String errmsg = "Failed to init.  System will not function properly";
             throw new RuntimeException(errmsg);
         };
 

@@ -68,7 +68,9 @@ public class ServerEventManager {
         ServerEventManager.fireEvent(sev);
     }
 
-
+    public static ServerEvent convertTo(FluxAction action, ServerEvent.Scope scope) {
+        return new ServerEvent(Name.ACTION, makeTarget(scope), action.toString());
+    }
 
     public static void fireEvent(ServerEvent sev) {
         if (sev == null || sev.getTarget() == null || !sev.getTarget().hasDestination()) {
@@ -120,7 +122,8 @@ public class ServerEventManager {
         return  allEventQueues.getCombinedNodeList();
     }
 
-    static void processEvent(ServerEvent ev) {
+    // bypass distributed event messaging.  should not be call directly unless you know exactly why it's needed.
+    public static void processEvent(ServerEvent ev) {
         totalEventCnt++;
         boolean delivered = false;
         for(ServerEventQueue queue : localEventQueues) {

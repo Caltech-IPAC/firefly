@@ -5,6 +5,7 @@ package edu.caltech.ipac.firefly.server.servlets;
 
 import edu.caltech.ipac.firefly.core.RedisService;
 import edu.caltech.ipac.firefly.core.background.JobManager;
+import edu.caltech.ipac.firefly.messaging.Messenger;
 import edu.caltech.ipac.firefly.server.Counters;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.cache.EhcacheProvider;
@@ -28,6 +29,8 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
@@ -314,6 +317,16 @@ public class ServerStatus extends BaseHttpServlet {
         w.println("-----------------  ");
         Map<String, Object> stats = RedisService.getStats();
         stats.forEach((k,v)-> w.println("  - " + k + ": " + v));
+
+        w.println("\nMessenger info: ");
+        w.println("-----------------  ");
+        w.println("  Subscribed Topics: " + Messenger.getSubscribedTopics());
+        for (Map.Entry<String, Messenger.SubscriberHandler> entry : Messenger.getSubscribers().entrySet()) {
+            String topic = entry.getKey();
+            Messenger.SubscriberHandler handler = entry.getValue();
+            w.println("  - Topic: " + "%-20s".formatted(topic) + " Status: " + (String.format(handler.getFailSince() == null ? "OK" :
+                    "Failed since " + DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault()).format(handler.getFailSince()))));
+        }
     }
 
     private static void showPackagingStatus(PrintWriter w, boolean details) {
