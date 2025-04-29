@@ -194,7 +194,6 @@ function makeHighlightDeferred(drawLayer,plotId,screenPt,worldPt) {
                     const table= getTblById(tbl_id);
                     if (drawLayer.tbl_id===plot.attributes[PlotAttribute.RELATED_TABLE_ID] &&
                         isDefined(plot.attributes[PlotAttribute.RELATED_TABLE_ROW])) {
-                        console.log('found');
                         const viewerId= findViewerWithItemId(getMultiViewRoot(),plotId,IMAGE);
                         if (!viewerId || data[closestIdx].fromRow===table.highlightedRow) {
                             viewerId && dispatchBottomUIComponent({viewerId});

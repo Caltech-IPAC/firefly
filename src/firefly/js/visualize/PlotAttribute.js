@@ -157,5 +157,7 @@ export const PlotAttribute= {
     USER_SEARCH_RADIUS_DEG: 'USER_SEARCH_RADIUS_DEG',
 
     /** an object warnings: {key: string, warning:string} */
-    USER_WARNINGS: 'USER_WARNINGS'
+    USER_WARNINGS: 'USER_WARNINGS',
+
+    USER_PINNED_IMAGE: 'USER_PINNED_IMAGE',
 };
