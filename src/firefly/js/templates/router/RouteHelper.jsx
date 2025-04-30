@@ -6,7 +6,12 @@ import {isFunction} from 'lodash';
 import {
     dispatchOnAppReady, dispatchSetMenu, FORM_CANCEL, FORM_SUBMIT, getMenu
 } from '../../core/AppDataCntlr.js';
-import {dispatchHideDropDown, dispatchSetLayoutInfo, getDropDownInfo} from '../../core/LayoutCntlr.js';
+import {
+    dispatchHideDropDown,
+    dispatchSetLayoutInfo,
+    dispatchShowDropDown,
+    getDropDownInfo
+} from '../../core/LayoutCntlr.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from '../../core/MasterSaga.js';
 import {FireflyRoot} from '../../ui/FireflyRoot.jsx';
 import {useStoreConnector} from '../../ui/SimpleComponent.jsx';
@@ -114,7 +119,6 @@ export function useDropdownRoute() {
             const menuItem = getMenuItem(pathname);
             if (menuItem) {     // the requested pathname is in the menu
                 dispatchSetLayoutInfo({dropDown:{view: menuItem.action, menuItem, visible: true}});
-                dispatchSetMenu({selected: menuItem.action});
             } else if (visible) {
                 dispatchHideDropDown();     // it's not a menu path, hide dropdown
             }

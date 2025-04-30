@@ -15,11 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static edu.caltech.ipac.firefly.data.HttpResultInfo.CONTENT_TYPE;
-import static edu.caltech.ipac.firefly.data.HttpResultInfo.EXTERNAL_NAME;
-import static edu.caltech.ipac.firefly.data.HttpResultInfo.RESPONSE_CODE;
-import static edu.caltech.ipac.firefly.data.HttpResultInfo.RESPONSE_CODE_MSG;
-import static edu.caltech.ipac.firefly.data.HttpResultInfo.SIZE_IN_BYTES;
+import static edu.caltech.ipac.firefly.data.HttpResultInfo.*;
 
 
 public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
@@ -90,6 +86,7 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
     }
 
 
+
     public static FileInfo blankFilePlaceholder() {
         FileInfo fi= new FileInfo();
         fi.putAttribute(BLANK,true+"");
@@ -143,12 +140,22 @@ public class FileInfo implements HasAccessInfo, Serializable, CacheKey {
 
     public String getExternalName() { return getAttribute(EXTERNAL_NAME); }
 
+    public String getSuffix() { return getAttribute(SUFFIX); }
+
     public String getContentType() { return getAttribute(CONTENT_TYPE); }
 
     public void setInternalName(String filename) {
         if (filename!=null) putAttribute(INTERNAL_NAME,filename);
     }
     public void setExternalName(String filename) { putAttribute(EXTERNAL_NAME,filename); }
+
+    public void setSuffix(String filename) {
+        if (StringUtils.isEmpty(filename)) {
+            attributes.remove(SUFFIX);
+        } else {
+            putAttribute(SUFFIX,filename);
+        }
+    }
 
     public long getSizeInBytes() { return StringUtils.getInt(getAttribute(SIZE_IN_BYTES),0); }
 

@@ -178,6 +178,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
                     String productUrl = accessUrl;
 
                     String fileName = null;
+                    String suffix = null;
 
                     if (accessUrl == null || sem == null) {
                         //if only semantic (sem) is null, accessUrl may still be available, but we won't know which accessUrls ones to pick
@@ -187,6 +188,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
                                 productUrl = getCutoutSerDefUrl(serDefUrls, serviceDef, positionColVals, cutoutValue, groups, dg, i);//serDefUrl;
                                 if (isEmpty(productUrl)) continue;
                                 if (!isEmpty(file)) fileName = file.substring(file.lastIndexOf('/') + 1);
+                                suffix = "cutout";
                         }
                         else continue;
                     }
@@ -211,10 +213,12 @@ public class ObsCorePackager extends FileGroupsProcessor {
                     if (products != null) { // Check if products exist and contains sem
                         if (Arrays.asList(products).contains(sem) || Arrays.asList(products).contains("*")) { //* refers to all data products
                             FileInfo fileInfo = new FileInfo(productUrl, ext_file_name, 0);
+                            fileInfo.setSuffix(suffix);
                             fileInfos.add(fileInfo);
                         }
                     } else { //add all valid productUrls (accessUrls or cutout service descriptor urls)
                         FileInfo fileInfo = new FileInfo(productUrl, ext_file_name, 0);
+                        fileInfo.setSuffix(suffix);
                         fileInfos.add(fileInfo);
                     }
                 }
