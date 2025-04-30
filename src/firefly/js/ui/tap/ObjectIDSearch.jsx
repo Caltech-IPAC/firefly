@@ -12,17 +12,15 @@ import {ColsShape, getColValidator} from 'firefly/charts/ui/ColumnOrExpression';
 import {CheckboxGroupInputField} from '../CheckboxGroupInputField.jsx';
 import {InputAreaFieldConnected} from '../InputAreaField.jsx';
 import {RadioGroupInputField} from '../RadioGroupInputField.jsx';
-import {SingleCol, UploadTableSelectorSingleCol
-} from 'firefly/ui/UploadTableSelectorSingleCol';
+import {SingleCol, UploadSingleColumn, UploadTableSelectorSingleCol} from 'firefly/ui/UploadTableSelector';
 import {makeFileRequest, MAX_ROW} from 'firefly/tables/TableRequestUtil';
 import {doFetchTable} from 'firefly/tables/TableUtil';
 
-const UploadSingleColumn = 'uploadSingleColumn'; //UploadObjectIDColumn
 const ObjectIDColumn = 'objectIDColumn';
 const tapPanelTitle = 'Object ID Search';
 const siaPanelTitle = 'Observation ID Search';
 const panelValue = 'ObjectIDMatch';
-const TAB_COLUMNS_MSG = 'This will be matched against Object ID selected from the uploaded table above';
+const TAB_COLUMNS_MSG = 'This will be matched against Object ID(s) entered or uploaded above';
 const defaultTblId = 'singleColTable';
 const tapEnterList= 'Enter list of object IDs';
 const siaEnterList= 'Enter list of observation IDs';
@@ -59,7 +57,6 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel, use
     const {canUpload=false}= capabilities ?? {};
     const [openMsg, setOpenMsg]= useState(TAB_COLUMNS_MSG);
     const {setVal,getVal,makeFldObj}= useContext(FieldGroupCtx);
-    const [clickingSelectCols, setClickingSelectCols] = useState(false);
 
     const objIdEntryType = [
         {label: useSIAv2 ? siaEnterList : tapEnterList, value: ENTER},
@@ -148,15 +145,12 @@ export function ObjectIDSearch({cols, capabilities, tableName, columnsModel, use
                 }
                 {!useSIAv2 && <SingleCol {...{
                     singleCol: getVal(ObjectIDColumn), cols,
-                    headerTitle: 'Object ID (from table):', openKey: posOpenKey,
+                    openKey: posOpenKey,
                     headerPostTitle: '(from the selected table on the right)',
                     openPreMessage:openMsg,
-                    headerStyle:{paddingLeft:1},
                     colKey: ObjectIDColumn,
                     colTblId: defaultTblId,
                     colName: 'Object ID',
-                    clickingSelectCols,
-                    setClickingSelectCols
                 }} />}
                 {canUpload && entryType===UPLOAD && <CheckboxGroupInputField
                     fieldKey='useSelectIn' alignment='horizontal' initialState={{ value: canUpload ? '' : 'use' }}
@@ -205,27 +199,21 @@ export function makeColsLines(objAry) {
 }
 
 export function UploadTableSelectorObjectID({uploadInfo, setUploadInfo, setSelectInObjList, getUseSelectIn, setWorking}) {
-    const [getSingleCol,setSingleCol]= useFieldGroupValue(UploadSingleColumn);
+    const [getSingleCol,] = useFieldGroupValue(UploadSingleColumn);
+    const [allowColSelection, setAllowColSelection] = useState(true);
 
     useEffect(() => {
-        const columns = uploadInfo?.columns;
-        if (columns?.length === 1) {
-            setSingleCol(columns[0].name);
-        }
-        if (getSingleCol()) {
-            const cObj = columns.find((col) => col.name === getSingleCol());
-            if (cObj) cObj.use = true;
-        }
-        uploadInfo = { ...uploadInfo, columns };
-        setUploadInfo(uploadInfo);
         if (getUseSelectIn() === 'use') {
+            setAllowColSelection(false);
             loadTableColumn(getSingleCol(), uploadInfo.serverFile, setSelectInObjList, setWorking);
         }
+        else setAllowColSelection(true);
     }, [getSingleCol, getUseSelectIn]);
 
-    return ( <UploadTableSelectorSingleCol uploadInfo={uploadInfo} setUploadInfo={setUploadInfo}
-        headerTitle={'Uploaded Object ID:'} colName={'Object ID'} getUseSelectIn={getUseSelectIn}
-    />);
+    return (
+        <UploadTableSelectorSingleCol uploadInfo={uploadInfo} setUploadInfo={setUploadInfo}
+                                      allowUploadColumnsSelection={allowColSelection}/>
+    );
 }
 
 async function getColumnFromUploadTable(tableOnServer, columnName) {

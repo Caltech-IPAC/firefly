@@ -31,14 +31,18 @@ import {showUploadTableChooser} from '../UploadTableChooser.js';
 import {
     getAsEntryForTableName, getColumnAttribute, getTapServices, makeUploadSchema, maybeQuote, tapHelpId
 } from './TapUtil.js';
-import {CenterColumns, UploadTableSelectorPosCol} from 'firefly/ui/UploadTableSelectorPosCol';
+import {
+    CenterColumns,
+    UploadCenterLatColumns,
+    UploadCenterLonColumns,
+    UploadTableSelector,
+    UploadTableSelectorPosCol
+} from 'firefly/ui/UploadTableSelector';
 import {CONE_CHOICE_KEY, POLY_CHOICE_KEY} from 'firefly/visualize/ui/CommonUIKeys';
 import {defaultsDeep} from 'lodash';
 
 const CenterLonColumns = 'centerLonColumns';
 const CenterLatColumns = 'centerLatColumns';
-const UploadCenterLonColumns = 'uploadCenterLonColumns';
-const UploadCenterLatColumns = 'uploadCenterLatColumns';
 const Spatial = 'Spatial';
 export const SPATIAL_TYPE= 'SPATIAL_TYPE';
 export const RadiusSize = 'coneSize';
@@ -339,7 +343,7 @@ const commonPropTypes = {
         targetPanel: object,
         radiusField: shape({...SizeInputFields.propTypes}),
         polygonDataArea: shape({...PolygonDataArea.propTypes}),
-        uploadTableSelector: shape({...UploadTableSelectorPosCol.propTypes}),
+        uploadTableSelector: shape({...UploadTableSelector.propTypes}),
     })
 };
 

@@ -13,7 +13,7 @@ import {DEF_TARGET_PANEL_KEY, TargetPanel} from '../TargetPanel.jsx';
 import {CONE_AREA_KEY} from './DynamicDef.js';
 import {DEF_AREA_EXAMPLE, PolygonField} from './DynComponents.jsx';
 
-import {UploadTableSelectorPosCol} from 'firefly/ui/UploadTableSelectorPosCol';
+import {UploadTableSelector, UploadTableSelectorPosCol} from 'firefly/ui/UploadTableSelector';
 import {showUploadTableChooser} from 'firefly/ui/UploadTableChooser';
 import {CollapsibleGroup, CollapsibleItem} from 'firefly/ui/panel/CollapsiblePanel';
 import {FormPanel} from 'firefly/ui/FormPanel';
@@ -53,23 +53,23 @@ export const emptyHeaderSx = {
  * EmbeddedPositionSearchPanel - Stack of:
  *   - `hipsTargetView` slot - HiPSTargetView
  *   - `searchRoot` slot - embedded Sheet that contains a Collapsible, containing:
- *      - `formPanel` slot - FormPanel with CompleteBtn, containing:
+ *      - `formPanel` slot^ - FormPanel with CompleteBtn, containing:
  *          - *State: collapsible is open*:
- *              - `spatialSearch` slot - a wrapper with radio options for search types:
+ *              - `spatialSearch` slot^ - a wrapper with radio options for search types:
  *                  - *State: Cone*:
  *                      - `targetPanel` slot - TargetPanel
  *                      - `sizeInput` slot - SizeInputFields
  *                  - *State: Polygon*:
  *                      - `polygonField` slot - PolygonField
  *                  - *State: Upload*:
- *                      - UploadTableSelectorPosCol
+ *                      - `uploadTableSelector` slot^ - UploadTableSelectorPosCol
  *                      - `sizeInput` slot - SizeInputFields
  *              - `children` prop
  *          - *State: collapsible is closed*:
- *              - `searchSummary` slot - summary text
+ *              - `searchSummary` slot^ - summary text
  *
- * Note: Not all of these slots can be replaced by another component, check if `component` is defined in the `slotProps`
- * of a corresponding component in `EmbeddedPositionSearchPanel.propTypes`.
+ * Note: slots marked with `^` can be overridden by another component (also indicated by the `component` prop defined in
+ * the `slotProps` of a corresponding component in `EmbeddedPositionSearchPanel.propTypes`).
  *
  * @param p
  * @param p.initArgs
@@ -234,7 +234,8 @@ export function EmbeddedPositionSearchPanel({
                                 }
                             },
                             content: {
-                                sx: { '& .MuiAccordionDetails-content.Mui-expanded': { padding: 0 } }
+                                // '>' to prevent the style defined here from bleeding into child collapsibles
+                                sx: { '>.MuiAccordionDetails-content.Mui-expanded': { padding: 0 } }
                             }
                         } }}>
                         <Slot component={slotProps.formPanel ? FormPanel : Box}
@@ -304,6 +305,10 @@ EmbeddedPositionSearchPanel.propTypes= {
             max: number,
             initValue: number,
             sx: object,
+        }),
+        uploadTableSelector: shape({
+            component: elementType,
+            ...UploadTableSelector.propTypes
         }),
         searchSummary: shape({
             component: elementType,
@@ -480,11 +485,8 @@ function UploadOp({slotProps, uploadInfo, setUploadInfo}) {
 
     return (
         <Stack pb={0.5}>
-            <UploadTableSelectorPosCol {...{uploadInfo, setUploadInfo,
-                slotProps: {
-                    centerColsInnerStack: {sx: {ml: 1, pt: 1.5}}
-                }
-            }}/>
+            <Slot component={UploadTableSelectorPosCol} //can be overridden by a custom component based on UploadTableSelector
+                  {...{uploadInfo, setUploadInfo, ...slotProps?.uploadTableSelector}}/>
             {enabled && <SizeInputFields {...{
                 fieldKey: sizeKey, showFeedback: true, nullAllowed: false,
                 label: 'Search Radius',
@@ -495,7 +497,5 @@ function UploadOp({slotProps, uploadInfo, setUploadInfo}) {
                 }
             }} />}
         </Stack>
-
-        );
-
+    );
 }

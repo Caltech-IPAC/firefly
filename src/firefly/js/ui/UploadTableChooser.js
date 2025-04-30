@@ -172,6 +172,7 @@ function applyDefColumnSelection(columns,defaultColsEnabled) {
         columnsSelected = defaultColumnsSelector(columns,colTypes,colCount);
     }
     else {
+        //TODO: don't select position columns by default, UploadTableSelector can be used for non position columns fields too
         const {lonCol='', latCol=''} = findTableCenterColumns({tableData:{columns}}) ?? {}; //centerCols
         columnsSelected = columns.map((col) => col.name === lonCol || col.name === latCol? ({...col, use:true}) :  ({...col, use:false})); //select position cols only
     }
@@ -215,16 +216,11 @@ const LoadedTables= (props) => {
     return (
         <Stack width={1} height={1}>
             <Typography level={'title-lg'} color={'neutral'} p={1}>
-                {'Select one of the existing tables below to load into the TAP panel: '}
+                {'Select one of the existing tables below to load'}
             </Typography>
             <FieldGroup groupKey={groupKey} keepState={keepState} sx={{flexGrow: 1}}>
-                <FormPanel onSuccess={onSubmit} onCancel={onCancel} completeText='Load Table'
-                    slotProps={{
-                        searchBar: {p:1/2},
-                    }}>
-
+                <FormPanel onSuccess={onSubmit} onCancel={onCancel} completeText='Load Table'>
                     <TablePanel tbl_id={tbl_id+'-ui'} tbl_ui_id={tbl_id+'-ui'} tableModel={tableModel} border={false} showTypes={false}
-                                sx={{position: 'absolute', inset:0}}
                                 showToolbar={false} showFilters={true} selectable={false} showOptionButton={false}/>
                 </FormPanel>
             </FieldGroup>
