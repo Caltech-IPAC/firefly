@@ -79,12 +79,9 @@ public class WiseLightCurveFileGroupsProcessor extends FileGroupsProcessor {
             cutFlag = true;
         }
 
-        // values = folder or flat
-        String zipType = request.getParam("zipType");
-        boolean zipFolders = true;
-        if (zipType != null && zipType.equalsIgnoreCase("flat")) {
-            zipFolders = false;
-        }
+        // values = true for flattened, false for folder/structured
+        boolean isFlattenedStructure = request.getBooleanParam("isFlattenedStructure");
+        boolean zipFolders = !isFlattenedStructure; //is isFlattenedStructure is null, getBooleanParam will return false and the default will always be true for zipFolders
 
         // build file types list
         ArrayList<WiseFileRetrieve.IMG_TYPE> types = new ArrayList<WiseFileRetrieve.IMG_TYPE>();

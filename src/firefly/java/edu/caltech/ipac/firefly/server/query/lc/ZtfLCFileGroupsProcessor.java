@@ -64,9 +64,9 @@ public class ZtfLCFileGroupsProcessor extends FileGroupsProcessor {
         String dlCutouts = request.getParam("dlCutouts");
         boolean doCutout = dlCutouts != null && dlCutouts.equalsIgnoreCase("cut");
 
-        // values = folder or flat
-        String zipType = request.getParam("zipType");
-        boolean doFolders = zipType != null && zipType.equalsIgnoreCase("folder");
+        // values = true for flattened, false for folder/structured
+        boolean isFlattenedStructure = request.getBooleanParam("isFlattenedStructure");
+        boolean doFolders = !isFlattenedStructure;
 
         MappedData dgData = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(), selectedRows);
 

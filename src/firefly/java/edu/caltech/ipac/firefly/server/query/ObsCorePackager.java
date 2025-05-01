@@ -46,7 +46,6 @@ public class ObsCorePackager extends FileGroupsProcessor {
     public static final String RA = "ra";
     public static final String DEC = "dec";
     public static final String CUTOUT_VALUE = "cutoutValue";
-    public static final String ZIP_TYPE = "zipType";
     public static final String SER_DEF_ACCESS_URL = "accessURL";
     public static final String SER_DEF_INPUT_PARAMS = "inputParams";
     public static final String CIRCLE = "circle";
@@ -90,6 +89,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
             var selectedRows = new ArrayList<>(request.getSelectedRows());
             MappedData dgDataUrl = EmbeddedDbUtil.getSelectedMappedData(request.getSearchRequest(), selectedRows); //returns all columns
             DataGroup dg = getSelectedData(request.getSearchRequest(), selectedRows);
+            Map<String, Integer> prefixCounter = new HashMap<>();
 
             String datalinkServDesc = request.getParam(DATALINK_SER_DEF); //check for a non-obscore table containing a Datalink Service Descriptor
             String pos = request.getParam(POSITION);
@@ -114,16 +114,15 @@ public class ObsCorePackager extends FileGroupsProcessor {
                 String colNames = request.getSearchRequest().getParam(TEMPLATE_COL_NAMES);
                 String[] cols = colNames != null ? colNames.split(",") : null;
                 String fileNamePrefix = getFileNamePrefix(idx, cols, dgDataUrl, url, positionColVals); //this will be used as folder name, and as prefix for individual file names
+                fileNamePrefix = makeUniquePrefix(fileNamePrefix, prefixCounter);
 
-                String zipType = request.getParam(ZIP_TYPE); //flat or folder
-                
                 boolean isDatalink = (datalinkServDesc != null) || (access_format != null && access_format.contains(DATALINK));
 
                 if (isDatalink) {
                     List<FileInfo> tmpFileInfos = parseDatalink(url, request, dgDataUrl, idx, fileNamePrefix, positionColVals);
                     fileInfos.addAll(tmpFileInfos);
                 } else {
-                    String extName = "folder".equalsIgnoreCase(zipType) ? fileNamePrefix + "/" : null; //if flattened, no external name, just set null
+                    String extName = null;
                     FileInfo fileInfo = new FileInfo(access_url, extName, 0);
                     fileInfos.add(fileInfo);
                 }
@@ -138,7 +137,7 @@ public class ObsCorePackager extends FileGroupsProcessor {
 
     public static List<FileInfo> parseDatalink(URL url, DownloadRequest request, MappedData dgDataUrl, int idx, String prepend_file_name, List<String> positionColVals) {
         List<FileInfo> fileInfos = new ArrayList<>();
-        String zipType = request.getParam(ZIP_TYPE); //flattened downloads or folders
+        boolean isFlattenedStructure = request.getBooleanParam("isFlattenedStructure"); //true if flattened, else false for structured logic
         boolean generateDownloadFileName = Boolean.parseBoolean(Objects.toString(request.getParam(GENERATE_DOWNLOAD_FILE_NAME), "false"));
 
         String productTypes = request.getParam(PRODUCTS); //products to download in datalink file
@@ -161,14 +160,19 @@ public class ObsCorePackager extends FileGroupsProcessor {
                         continue;
                     }
 
-                    if (testSem(sem,"#this") || testSem(sem,"#thumbnail") ||testSem(sem,"#preview") ||
-                            testSem(sem,"#preview-plot")) {
-                        countValidDLFiles++;
+                    if (products != null) { // Check if products exist and contains sem
+                        if (Arrays.asList(products).contains(sem) || Arrays.asList(products).contains("*")) { //* refers to all data products
+                            countValidDLFiles++;
+                        }
+                    }
+                    else countValidDLFiles++;
+
+                    if (countValidDLFiles > 1) {
+                        makeDataLinkFolder = true;
+                        break;
                     }
                 }
-                if (countValidDLFiles > 1) {
-                    makeDataLinkFolder = true;
-                }
+
                 for (int i=0; i < dg.size(); i++) {
                     String accessUrl = Objects.toString(dg.getData(ACCESS_URL, i), null);
                     String sem = Objects.toString(dg.getData(SEMANTICS, i), null);
@@ -201,13 +205,11 @@ public class ObsCorePackager extends FileGroupsProcessor {
                         String extension = "unknown";
                         extension = content_type != null ? getExtFromURL(content_type) : getExtFromURL(productUrl);
                         ext_file_name += "." + extension;
-                        ext_file_name = ("folder".equalsIgnoreCase(zipType) || (zipType == null && makeDataLinkFolder))
-                                ? prepend_file_name + "/" + ext_file_name
-                                : ext_file_name;
+                        ext_file_name = (isFlattenedStructure || (!makeDataLinkFolder)) ?
+                                ext_file_name : prepend_file_name + "/" + ext_file_name;
                     } else {
-                        ext_file_name = ("folder".equalsIgnoreCase(zipType) || (zipType == null && makeDataLinkFolder))
-                                ? (prepend_file_name + "/" + (fileName != null ? fileName : ""))
-                                : fileName;
+                        ext_file_name = (isFlattenedStructure || (!makeDataLinkFolder)) ?
+                                ext_file_name : (prepend_file_name + "/" + (fileName != null ? fileName : ""));
                     }
 
                     if (products != null) { // Check if products exist and contains sem
@@ -229,6 +231,25 @@ public class ObsCorePackager extends FileGroupsProcessor {
         }
         return fileInfos;
     }
+
+    private static String makeUniquePrefix(String basePrefix, Map<String, Integer> prefixCounter) {
+        if (!prefixCounter.containsKey(basePrefix)) {
+            prefixCounter.put(basePrefix, 1);
+            return basePrefix;
+        } else {
+            int count = prefixCounter.get(basePrefix);
+            String newPrefix;
+            newPrefix = basePrefix + "-" + count;
+            while (prefixCounter.containsKey(newPrefix)) {
+                count++;
+                newPrefix = basePrefix + "-" + count;
+            }
+            prefixCounter.put(basePrefix, count);  //update original base count
+            prefixCounter.put(newPrefix, 1); //mark newPrefix as used
+            return newPrefix;
+        }
+    }
+
 
     public static String getCutoutSerDefUrl(Map<String, ServDescUrl> serDefUrls, String serviceDef, List<String> positionColVals, String cutoutValue, DataGroup[] groups, DataGroup dg, int idx) {
         String serDefUrl = "";
