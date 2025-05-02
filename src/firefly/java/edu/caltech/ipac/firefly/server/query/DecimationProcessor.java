@@ -87,10 +87,18 @@ public class DecimationProcessor extends TableFunctionProcessor {
         } else {
             String sql = """
                 CREATE TABLE %s as (
-                SELECT FIRST(%s) as "%s", FIRST(%s) as "%s", FIRST(ROW_NUM) as "rowidx", count(*) as "weight", %s as "dkey", ROW_NUMBER() OVER () AS %s, ROW_NUMBER() OVER () AS %s,
-                FROM %s WHERE "%s" IS NOT NULL AND "%s" IS NOT NULL
-                GROUP BY "dkey" )
-                """.formatted(tblName, deciInfo.getxExp(), deciKey.getXCol(), deciInfo.getyExp(), deciKey.getYCol(), deciFunc, ROW_NUM, ROW_IDX, dataTbl, deciKey.getXCol(), deciKey.getYCol());
+                SELECT *, ROW_NUMBER() OVER () AS %s, ROW_NUMBER() OVER () AS %s
+                FROM (
+                    SELECT
+                       FIRST(%s) as "%s",
+                       FIRST(%s) as "%s",
+                       FIRST(ROW_NUM) as "rowidx",
+                       count(*) as "weight",
+                       %s as "dkey"
+                    FROM %s GROUP BY "dkey"
+                ) WHERE "%s" IS NOT NULL AND "%s" IS NOT NULL
+                )
+                """.formatted(tblName, ROW_NUM, ROW_IDX, deciInfo.getxExp(), deciKey.getXCol(), deciInfo.getyExp(), deciKey.getYCol(), deciFunc, dataTbl, deciKey.getXCol(), deciKey.getYCol());
             dbAdapter.execUpdate(sql);
 
             // add decimation info to the returned table
