@@ -155,7 +155,9 @@ export function computeCentralPointAndRadius(inPoints) {
     let radius;
     let maxRadius = Number.NEGATIVE_INFINITY;
 
-    const points= inPoints.map((wp) => convertToJ2000(wp));
+    const points= inPoints
+        .map((wp) => convertToJ2000(wp))
+        .filter(Boolean);
 
 
     /* get max,min of lon and lat */
@@ -165,19 +167,19 @@ export function computeCentralPointAndRadius(inPoints) {
     let minLat = Number.POSITIVE_INFINITY;
 
     points.forEach((pt) => {
-        if (pt.x > maxLon) {
-            maxLon = pt.x;
-        }
-        if (pt.x < minLon) {
-            minLon = pt.x;
-        }
-        if (pt.y > maxLat) {
-            maxLat = pt.y;
-        }
-        if (pt.y < minLat) {
-            minLat = pt.y;
-        }
-    });
+            if (pt.x > maxLon) {
+                maxLon = pt.x;
+            }
+            if (pt.x < minLon) {
+                minLon = pt.x;
+            }
+            if (pt.y > maxLat) {
+                maxLat = pt.y;
+            }
+            if (pt.y < minLat) {
+                minLat = pt.y;
+            }
+        });
     if (maxLon - minLon > 180) {
         minLon = 360 + minLon;
     }

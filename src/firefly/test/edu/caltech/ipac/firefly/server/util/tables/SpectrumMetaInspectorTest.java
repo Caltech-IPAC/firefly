@@ -52,7 +52,7 @@ public class SpectrumMetaInspectorTest extends ConfigTest {
         BasicHDU<?>[] hdus;
         try (Fits fits = new Fits(f)) {
             hdus = fits.read();
-            DataGroup dg= FITSTableReader.convertFitsToDataGroup(f.getPath(), null, FITSTableReader.DEFAULT, 0);
+            DataGroup dg= FITSTableReader.convertFitsToDataGroup(f.getPath(), null, 0);
             SpectrumMetaInspector.searchForSpectrum(dg,hdus[0],false);
             hasSpecInfo(dg);
         }

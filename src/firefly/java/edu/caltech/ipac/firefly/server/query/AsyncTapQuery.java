@@ -6,16 +6,25 @@ package edu.caltech.ipac.firefly.server.query;
 import edu.caltech.ipac.firefly.core.background.Job;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
 import edu.caltech.ipac.firefly.server.network.HttpServiceInput;
+import edu.caltech.ipac.firefly.server.util.Logger;
 import edu.caltech.ipac.firefly.server.util.QueryUtil;
 import edu.caltech.ipac.table.DataGroup;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static edu.caltech.ipac.firefly.core.Util.Opt.ifNotNull;
-import static edu.caltech.ipac.firefly.core.background.JobManager.updateJobInfo;
-import static edu.caltech.ipac.firefly.server.query.AsyncTapQuery.*;
-import static edu.caltech.ipac.firefly.server.query.DaliUtil.*;
+import static edu.caltech.ipac.firefly.server.query.AsyncTapQuery.LANG;
+import static edu.caltech.ipac.firefly.server.query.AsyncTapQuery.QUERY;
+import static edu.caltech.ipac.firefly.server.query.AsyncTapQuery.SVC_URL;
+import static edu.caltech.ipac.firefly.server.query.AsyncTapQuery.UPLOAD_TNAME;
+import static edu.caltech.ipac.firefly.server.query.DaliUtil.MAXREC;
+import static edu.caltech.ipac.firefly.server.query.DaliUtil.MAXREC_DESC;
+import static edu.caltech.ipac.firefly.server.query.DaliUtil.REQUEST;
+import static edu.caltech.ipac.firefly.server.query.DaliUtil.RUNID;
+import static edu.caltech.ipac.firefly.server.query.DaliUtil.UPLOAD;
+import static edu.caltech.ipac.firefly.server.query.DaliUtil.UPLOAD_COLUMNS;
+import static edu.caltech.ipac.firefly.server.query.DaliUtil.UPLOAD_COLUMNS_DESC;
+import static edu.caltech.ipac.firefly.server.query.DaliUtil.UPLOAD_DESC;
 import static edu.caltech.ipac.util.StringUtils.applyIfNotEmpty;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
 
@@ -72,6 +81,14 @@ public class AsyncTapQuery extends UwsJobProcessor {
 
         inputs.setParam(LANG, request.getParam(LANG, "ADQL"));
         inputs.setParam(REQUEST, "doQuery");
+
+        String syncVersion= serviceUrl+ "/sync" + "?" +
+                "lang=ADQL" + "&" +
+                "REQUEST=doQUERY" + "&" +
+                "QUERY=" + request.getParam(QUERY);
+
+        String upTabInfo=  (uploadTable != null) ? " (not shown, upload table) " : "";
+        Logger.getLogger().info("Async TAP query, showing sync version for debugging "+upTabInfo, syncVersion);
 
         return inputs;
     }

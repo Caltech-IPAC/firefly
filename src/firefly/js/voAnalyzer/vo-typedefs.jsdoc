@@ -150,6 +150,7 @@
  * @prop {string} title
  * @prop {string} accessURL
  * @prop {string} standardID
+ * @prop {string} internalServiceDescriptorID
  * @prop {string} ID
  * @prop {TableModel} sdSourceTable - the table where this service descriptor cambe from
  * @prop {string} utype

@@ -16,17 +16,6 @@ export const FileAnalysisType = {
     UWS: 'UWS'
 };
 
-export const DataProductTypes = {
-    spectrum : 'spectrum',
-    image : 'image',
-    cube : 'cube',
-    sed : 'sed',
-    timeseries : 'timeseries',
-    visibility : 'visibility',
-    event : 'event',
-    mesurements : 'mesurements',
-};
-
 export const UIRender = {
     Table: 'Table',
     Chart: 'Chart',
@@ -59,6 +48,12 @@ export const Format= {
     VO_TABLE_BINARY: 'VO_TABLE_BINARY',
     VO_TABLE_BINARY2: 'VO_TABLE_BINARY2',
     VO_TABLE_FITS: 'VO_TABLE_FITS'
+};
+
+export const TableDataType= {
+    NotSpecified: 'NotSpecified',
+    Spectrum: 'Spectrum',
+    LightCurve: 'LightCurve'
 };
 
 export const ChartType = {
@@ -140,7 +135,7 @@ export const makeFileAnalysisPart= (index,fileLocationIndex=0) => (
  *  @prop {number} index - index of the part (may be different from fileLocationIndex)
  *  @prop {string} desc
  *  @prop {number} fileLocationIndex - either the FITS HDU number or some other location scheme
- *  @prop {string} [convertedFileName] - only set if this entry is has a alternate file than the one analyzed
+ *  @prop {string} [convertedFileName] - only set if this entry is having a alternate file than the one analyzed
  *  @prop {string} [convertedFileFormat] - format string
  *  @prop {FileAnalysisChartParams} [chartParams]
  *  @prop {Array.<string>} [tableColumnNames] only use for a fits image that is read as a table
@@ -148,6 +143,7 @@ export const makeFileAnalysisPart= (index,fileLocationIndex=0) => (
  *  @prop {boolean} [defaultPart]
  *  @prop {boolean} [interpretedData] - should be true if this is data that has been added to the original
  *  @prop {string} chartTableDefOption - only used if there is a chart on of 'auto', 'showChart', 'showTable', 'showImage'
+ *  @prop {string} tableDataType - one of 'NotSpecified', 'Spectrum', 'LightCurve'
  *  @prop {TableModel} [details]
  *  @prop {Number} [totalTableRows] if the part is a table the number of rows in the table, otherwise undefined
  *

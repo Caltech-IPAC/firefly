@@ -37,6 +37,7 @@
  * @prop {Array.<String>} detailMsgAry - (used with type message, only when complexMessage is true)
  * @prop {String} resetMenuKey (used with type message)
  * @prop {boolean} singleDownload - (used with type message) (menu with dpdtDownload as first item in array is required) (also set to true with DPtypes.DOWNLOAD_MENU_ITEM) give a message with a file to download
+ * @prop {Object} fileMenu
  *
  * @prop {Promise} [promise] - (used with type promise) required it type is 'promise'
  *
@@ -236,7 +237,6 @@ export function dpdtChartTable(name, activate, extraction, menuKey='chart-table-
  * @param {String} p.activeMenuLookupKey
  * @param {WebPlotRequest} p.request
  * @param {String} [p.sRegion]
- * @param {String} [p.prodTypeHint]
  * @param {String} [p.serviceDefRef]
  * @param {boolean} [p.allowsInput]
  * @param {String} [p.standardID]
@@ -257,7 +257,6 @@ export function dpdtAnalyze({
                              activeMenuLookupKey,
                              request,
                              sRegion,
-                             prodTypeHint= 'unknown',
                              serviceDefRef,
                              allowsInput= false,
                              standardID,
@@ -266,7 +265,7 @@ export function dpdtAnalyze({
                              dlData}) {
     return { displayType:DPtypes.ANALYZE,
         name, dropDownText, url, activate, serDef, menuKey, semantics,
-        size, activeMenuLookupKey, request, sRegion, prodTypeHint,
+        size, activeMenuLookupKey, request, sRegion,
         cutoutToFullWarning, serviceDefRef, allowsInput, standardID, ID, dlData
     };
 }

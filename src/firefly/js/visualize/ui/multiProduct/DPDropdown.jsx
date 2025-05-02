@@ -1,13 +1,15 @@
 import {Stack} from '@mui/joy';
-import React from 'react';
+import React, {useEffect} from 'react';
 import {array, object, string} from 'prop-types';
 import {
     dispatchActivateFileMenuItem, dispatchActivateMenuItem,
     dispatchSetSearchParams, dispatchUpdateDataProducts, getActiveFileMenuKey, getActiveMenuKey
 } from '../../../metaConvert/DataProductsCntlr.js';
 import {DPtypes} from '../../../metaConvert/DataProductsType.js';
+import {getActiveTableId, getTblById} from '../../../tables/TableUtil';
 import {SingleColumnMenu} from '../../../ui/DropDownMenu.jsx';
-import {DropDownToolbarButton} from '../../../ui/DropDownToolbarButton.jsx';
+import {DropDownToolbarButton, hideDefaultToolbarDropdown} from '../../../ui/DropDownToolbarButton.jsx';
+import {useStoreConnector} from '../../../ui/SimpleComponent';
 import {ToolbarButton, ToolbarHorizontalSeparator} from '../../../ui/ToolbarButton.jsx';
 import {ChangeSearch, PinButton} from '../Buttons.jsx';
 
@@ -37,6 +39,17 @@ export function createMakeDropdownFunc({ dpId, dataProductsState, showMenu, extr
 function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpId, hasFileMenu, fileMenu,
                       analysisActivateFunc, showRedoSearchButton, activeMenuLookupKey,
                       extraction, extractionText}) {
+
+    const idAndRow= useStoreConnector(() => {
+        const tbl_id= getActiveTableId();
+        const tbl= getTblById(tbl_id);
+        return `${tbl_id}--${tbl?.highlightedRow}`;
+    });
+    useEffect(() => {
+        hideDefaultToolbarDropdown();
+        return () => hideDefaultToolbarDropdown();
+    }, [dataProductsState.name,idAndRow]);
+
     return (
         <Stack {...{direction:'row', alignItems:'center', height: 30}}
             divider={<ToolbarHorizontalSeparator/>}>
@@ -44,6 +57,7 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
                 <DropDownToolbarButton
                     text='More' tip='Other data to display' useDropDownIndicator={true}
                     sx={{pr: 2}}
+                    key={dataProductsState.name}
                     dropDown={<OtherOptionsDropDown {...{menu, dpId, activeMenuLookupKey}} />}
                 />
                 }
@@ -53,6 +67,7 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
                     <DropDownToolbarButton
                         text='File Contents' tip='Other data in file' useDropDownIndicator={true}
                         style={{pr: 2}}
+                        key={dataProductsState.name+'--filemenu'}
                         dropDown={<FileMenuDropDown {...{fileMenu, dpId}} />}/>
                 </Stack>
             }
@@ -66,10 +81,14 @@ function DropDown({dataProductsState, menuKey, originalTitle, hasMenu, menu, dpI
                     <ChangeSearch {...{
                         tip:`Enter new search parameters: ${originalTitle}`,
                         onClick:() => {
-                            dispatchSetSearchParams({dpId, activeMenuLookupKey, menuKey, params: undefined});
+                            dispatchSetSearchParams({dpId, activeMenuLookupKey, menuKey, params: undefined,
+                                autoActiveStatus : {
+                                    [dataProductsState?.serDef?.internalServiceDescriptorID]: false
+                                }
+                            });
                             dispatchUpdateDataProducts(dpId, {
-                                ...dataProductsState, allowsInput: true, name: originalTitle,
-                                displayType: DPtypes.ANALYZE, activate: analysisActivateFunc
+                                ...dataProductsState, allowsInput: true, name: originalTitle??dataProductsState.name,
+                                displayType: DPtypes.ANALYZE, activate: analysisActivateFunc,
                             });
                         },
                     }} />

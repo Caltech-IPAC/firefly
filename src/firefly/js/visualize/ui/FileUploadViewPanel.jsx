@@ -29,7 +29,7 @@ import {isLsstFootprintTable} from '../task/LSSTFootprintTask.js';
 import {useFieldGroupMetaState, useFieldGroupValue, useStoreConnector} from '../../ui/SimpleComponent.jsx';
 
 import {getIntHeaderFromAnalysis} from '../../metaConvert/PartAnalyzer';
-import {FileAnalysisType} from '../../data/FileAnalysis';
+import {FileAnalysisType, TableDataType} from '../../data/FileAnalysis';
 import {Format} from '../../data/FileAnalysis';
 import {dispatchValueChange} from 'firefly/fieldGroup/FieldGroupCntlr.js';
 import {dispatchAddActionWatcher, dispatchCancelActionWatcher} from 'firefly/core/MasterSaga.js';
@@ -499,13 +499,21 @@ function TableDisplayOption({isMoc, isDatalink, summaryTblId, currentReport, cur
         );
     }
 
+    const foundSpec= selectedTables.some( (idx) =>
+        currentReport.parts[idx].tableDataType===TableDataType.Spectrum);
+
+    const specPref= foundSpec ?
+        selectedTables.length > 1 ?
+            'Some table appears to be a Spectra, ' :
+            'Table appears to be a spectra. ' : '';
+
     return (
         <div style={{marginTop: 3}}>
                 {acceptList.includes(SPECTRUM_TABLES) && <CheckboxGroupInputField
                     sx={{mx:1}}
                     options={[{value: 'spectrum',
                         title:'If possible - interpret table columns names to fit into a spectrum data model',
-                        label:'Attempt to interpret tables as spectra'}]}
+                        label:specPref+'Attempt to interpret tables as spectra'}]}
                     fieldKey='tablesAsSpectrum'
                 />}
         </div>

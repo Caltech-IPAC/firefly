@@ -937,12 +937,12 @@ export function getCubePlaneFromWavelength(pv,wl,imPt) {
  */
 export function getWaveLengthUnits(plot) {
     if (!plot || !hasWLInfo(plot)) return '';
-    return plot.wlData?.spectralCoords?.[0].units ?? '';
+    return plot.wlData?.spectralCoords?.[0]?.units ?? '';
 }
 
 export function getBandWidthUnits(plot) {
     if (!plot || !hasWLInfo(plot)) return '';
-    return plot.wlData?.spectralCoords?.[1].units ?? '';
+    return plot.wlData?.spectralCoords?.[1]?.units ?? '';
 }
 
 

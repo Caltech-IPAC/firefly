@@ -7,6 +7,8 @@ import edu.caltech.ipac.firefly.core.FileAnalysisReport;
 import edu.caltech.ipac.table.DataGroup;
 import edu.caltech.ipac.table.DataObject;
 import edu.caltech.ipac.table.DataType;
+import edu.caltech.ipac.table.io.FITSTableReader;
+import edu.caltech.ipac.table.io.SpectrumMetaInspector;
 import edu.caltech.ipac.visualize.plot.plotdata.FitsReadUtil;
 import nom.tam.fits.BasicHDU;
 import nom.tam.fits.Fits;
@@ -26,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static edu.caltech.ipac.firefly.core.FileAnalysisReport.TableDataType.NotSpecified;
+import static edu.caltech.ipac.firefly.core.FileAnalysisReport.TableDataType.Spectrum;
 import static edu.caltech.ipac.firefly.core.FileAnalysisReport.Type.*;
 
 
@@ -86,6 +90,8 @@ public class FitsHDUUtil {
                     }
                     part.setTotalTableRows(tHdu.getNRows());
                     part.setDesc(desc);
+                    var spec= SpectrumMetaInspector.isPossiblySpectrum(FITSTableReader.readTableHeader(parts[i]),parts[i]);
+                    part.setTableDataType(spec ? Spectrum : NotSpecified);
                 }
                 if (ptype == Image) {
                     if (desc==null) desc= "";

@@ -63,19 +63,23 @@ export async function getServiceDescSingleDataProduct(table, row, activateParams
 
     const descriptors= getServiceDescriptors(table);
     if (!descriptors) return dpdtSimpleMsg('Could not find any service descriptors');
-    if (!hasRowAccess(table, row)) return dpdtSimpleMsg('You do not have access to these data.');
+    if (!hasRowAccess(table, row)) return dpdtSimpleMsg('You do not have access to this data.');
+    const dlDescriptors= findDataLinkServeDescs(descriptors);
 
     const positionWP= getSearchTarget(table.request,table) ?? makeWorldPtUsingCenterColumns(table,row);
 
+    const byRow= dlDescriptors?.length;
 
-    const activeMenuLookupKey= `${descriptors[0].accessURL}--${table.tbl_id}--${row}`;
+    const activeMenuLookupKey= byRow
+        ? `${descriptors[0].accessURL}--${table.tbl_id}--${row}`
+        : `${descriptors[0].accessURL}--${table.tbl_id}--allRows`;
     const menu= createServDescMenuRet({descriptors,positionWP,table,row,
         activateParams,activeMenuLookupKey, options});
     const activeMenuKey= getActiveMenuKey(activateParams.dpId, activeMenuLookupKey);
     let index= menu.findIndex( (m) => m.menuKey===activeMenuKey);
     if (index<0) index= 0;
 
-    const dlTableUrl= makeDlUrl(findDataLinkServeDescs(descriptors)[0],table, row);
+    const dlTableUrl= makeDlUrl(dlDescriptors[0],table, row);
     if (dlTableUrl) {
         return getDatalinkSingleDataProduct({dlTableUrl, options, sourceTable:table, row,
             activateParams, titleStr:'',
@@ -108,5 +112,6 @@ export async function getServiceDescRelatedDataProduct(table, row, threeColorOps
 
 
 
-export const findDataLinkServeDescs= (sdAry=[]) => sdAry.filter( (serDef) => isDataLinkServiceDesc(serDef));
+export const findDataLinkServeDescs= (sdAry=[]) =>
+    sdAry?.filter( (serDef) => isDataLinkServiceDesc(serDef) ?? []);
 
