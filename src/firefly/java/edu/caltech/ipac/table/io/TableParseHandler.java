@@ -131,7 +131,7 @@ public interface TableParseHandler {
         public void data(Object[] row) throws IOException {
             try {
                 aryIdx.forEach(idx -> row[idx] = serialize(row[idx]));      // serialize array data if necessary
-                addRow(appender, row, ++rowCnt);
+                addRow(appender, row, rowCnt++);
             } catch (SQLException e) {
                 throw new IOException(e);
             }
