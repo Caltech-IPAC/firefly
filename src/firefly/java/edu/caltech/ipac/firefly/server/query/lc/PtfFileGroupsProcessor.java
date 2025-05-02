@@ -58,9 +58,9 @@ public class PtfFileGroupsProcessor extends FileGroupsProcessor {
         String dlCutouts = request.getParam("dlCutouts");
         boolean doCutout = dlCutouts != null && dlCutouts.equalsIgnoreCase("cut");
 
-        // values = folder or flat
-        String zipType = request.getParam("zipType");
-        boolean doFolders = zipType != null && zipType.equalsIgnoreCase("folder");
+        // values = true for flattened, false for folder/structured
+        boolean isFlattenedStructure = request.getBooleanParam("isFlattenedStructure");
+        boolean doFolders = !isFlattenedStructure;
 
         List<String> types = new ArrayList<String>();
 

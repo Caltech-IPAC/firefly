@@ -27,6 +27,7 @@ import {CheckboxGroupInputField} from './CheckboxGroupInputField.jsx';
 import {getFieldVal} from '../fieldGroup/FieldGroupUtils.js';
 import {Stack, Typography, Box} from '@mui/joy';
 import {ToolbarButton} from 'firefly/ui/ToolbarButton';
+import {SwitchInputField} from 'firefly/ui/SwitchInputField';
 
 const DOWNLOAD_DIALOG_ID = 'Download Options';
 const OptionsContext = React.createContext();
@@ -212,7 +213,7 @@ export function DownloadOptionPanel ({groupKey='DownloadDialog', cutoutSize, hel
                         {children}
 
                         {cutoutSize         && <DownloadCutout />}
-                        {showZipStructure   && <ZipStructure />}
+                        {showZipStructure && <FileStructure/>}
                         {showFileLocation   && <WsSaveOptions {...{groupKey, labelWidth:110}}/>}
                         {showEmailNotify    && <EmailNotification {...{groupKey}}/>}
                     </Stack>
@@ -233,7 +234,6 @@ DownloadOptionPanel.propTypes = {
     style:      PropTypes.object,
 
     showTitle:        PropTypes.bool,           // layout Title field.  This is the title of the package request.  It will be displayed in Job History.
-    showZipStructure: PropTypes.bool,           // layout ZipStructure field
     showEmailNotify:  PropTypes.bool,           // layout EmailNotification field
     showFileLocation: PropTypes.bool,           // layout FileLocation field
     updateSearchRequest: PropTypes.func,   // customized parameters to be added or updated in request
@@ -262,21 +262,10 @@ export function TitleField({style={}, value, label='Title:', size=30}) {
     );
 }
 
-export function ZipStructure({fieldKey='zipType'}) {
-    return (
-        <ListBoxInputField
-            fieldKey = {fieldKey}
-            initialState = {{
-                tooltip: 'File Structure',
-                label : 'File Structure:'
-            }}
-            options = {[
-                {label: 'Structured (with folders)', value: 'folder'},
-                {label: 'Flattened (no folders)', value: 'flat'}
-            ]}
-        />
-
-    );
+export function FileStructure({fieldKey='isFlattenedStructure'}) {
+    return (<SwitchInputField fieldKey={fieldKey}
+                              label={'Flattened File Structure'}
+                              initialState={{value: false}}/>);
 }
 
 export function DownloadCutout({fieldKey='dlCutouts'}) {

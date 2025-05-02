@@ -186,7 +186,6 @@ export const PrepareDownload = React.memo(({table_id, tbl_title, viewerId, showF
                             updateSearchRequest,
                             groupKey: tbl_id,
                             tbl_id,
-                            showZipStructure: showFileStructure, //default to false (flattened)
                             downloadType,
                             dlParams: {
                                 FileGroupProcessor:'ObsCorePackager',
