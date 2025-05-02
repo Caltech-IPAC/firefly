@@ -25,12 +25,14 @@ import {createSingleImageActivate, createSingleImageExtraction} from './ImageDat
  * @param {String} p.serverCacheFileKey
  * @param {ActivateParams} p.activateParams
  * @param {DataProductsFactoryOptions} p.options
+ * @param {String} title
  * @return {{tableResult: DataProductsDisplayType|Array.<DataProductsDisplayType>|undefined, imageResult: DataProductsDisplayType|undefined}}
  */
 export function analyzePart({part, request, table, row, fileFormat, dataTypeHint, dlData,
-                                serverCacheFileKey, activateParams, options}) {
+                                serverCacheFileKey, activateParams, options={}, title}) {
 
     const {type,desc, fileLocationIndex}= part;
+    const titleToUse= title ?? desc;
     const aTypes= findAvailableTypesForAnalysisPart(part, fileFormat);
     if (isEmpty(aTypes)) return {imageResult:false, tableResult:false};
 
@@ -41,7 +43,7 @@ export function analyzePart({part, request, table, row, fileFormat, dataTypeHint
             title:desc,activateParams,hduIdx:fileLocationIndex});
 
     const tableResult= aTypes.includes(DPtypes.TABLE) &&
-        analyzeChartTableResult(false, table, row, part, fileFormat, fileOnServer,desc,dataTypeHint,activateParams,fileLocationIndex, options);
+        analyzeChartTableResult(false, table, row, part, fileFormat, fileOnServer,titleToUse??desc,dataTypeHint,activateParams,fileLocationIndex, options);
 
     return {imageResult, tableResult};
 }
@@ -206,7 +208,7 @@ function getTableDropTitleStr(title,part,fileFormat,tableOnly) {
  * @param {DataProductsFactoryOptions} options
  * @return {DataProductsDisplayType|undefined}
  */
-function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOnServer, title, dataTypeHint='', activateParams, tbl_index=0, options) {
+function analyzeChartTableResult(tableOnly, table, row, part, fileFormat, fileOnServer, title, dataTypeHint='', activateParams, tbl_index=0, options={}) {
     const {uiEntry,uiRender,chartParamsAry, interpretedData=false, defaultPart:requestDefault= false}= part;
     const partFormat= part.convertedFileFormat||fileFormat;
     if (uiEntry===UIEntry.UseSpecified) {

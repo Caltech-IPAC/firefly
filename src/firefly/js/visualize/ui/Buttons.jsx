@@ -64,6 +64,8 @@ import FitIcon from '@mui/icons-material/ZoomInMapOutlined';
 import FillIcon from '@mui/icons-material/OpenInFullOutlined';
 import OneXIcon from '@mui/icons-material/TimesOneMobiledataOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
+import ChangeCircleIcon from '@mui/icons-material/ChangeCircle';
+
 
 import FiberManualRecordRoundedIcon from '@mui/icons-material/FiberManualRecordRounded';
 
@@ -252,6 +254,7 @@ export const CropButton= (props) => ( <TB {...{ icon: <CropRoundedIcon/>, ...pro
 export const StatsButton= (props) => ( <TB {...{ icon: <FunctionsOutlinedIcon/>, ...props}}/>);
 export const ExpandAll= (props) => ( <TB {...{icon: <UnfoldMoreOutlinedIcon/>, ...props}}/>);
 export const CollapseAll= (props) => ( <TB {...{icon: <UnfoldLessOutlinedIcon/>, ...props}}/>);
+export const ChangeSearch= (props) => ( <TB {...{icon: <ChangeCircleIcon/>, ...props}}/>);
 
 export const FiltersOffButton= (props) => ( <TB {...{ icon: <ClearFilterIco/>, ...props}}/>);
 

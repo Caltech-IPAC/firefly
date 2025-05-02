@@ -303,7 +303,7 @@ function initConverterTemplates() {
 export const getDefaultFactoryOptions= once(() => ({
     dataProductsComponentKey: DEFAULT_DATA_PRODUCTS_COMPONENT_KEY,
     limitViewerDisplay: NO_LIMIT,
-    activateServiceDef: false,
+    activateServiceDef: undefined,
     threeColor: undefined,
     maxPlots: undefined,
     canGrid: undefined, // some specific factories might have parameters that override this parameter

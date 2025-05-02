@@ -54,7 +54,8 @@ const parseAnalysis= (serverCacheFileKey, analysisResult) =>
  * @return {Promise.<DataProductsDisplayType>}
  */
 export async function doUploadAndAnalysis({ table, row, request, activateParams={}, dataTypeHint='', options, menuKey,
-                                 menu, serDef, dlData, userInputParams, analysisActivateFunc, originalTitle,serviceDescMenuList}) {
+                                              menu, serDef, dlData, userInputParams, analysisActivateFunc,
+                                              originalTitle,serviceDescMenuList}) {
 
     const {dpId}= activateParams;
 
@@ -245,10 +246,11 @@ function deeperInspection({ table, row, request, activateParams,
     const rStr= request.toString();
     const activeItemLookupKey= hashCode(rStr);
     const fileMenu= {fileAnalysis, menu:[],activeItemLookupKey, activeItemLookupKeyOrigin:rStr};
+    const title= parts.length===1 ? originalTitle : undefined;
 
     const partAnalysis= parts.map( (part) =>
         analyzePart({part,request, table, row, fileFormat, dataTypeHint,
-            dlData, serverCacheFileKey,activateParams, options}));
+            dlData, serverCacheFileKey,activateParams, options, title}));
     const imageParts= partAnalysis.filter( (pa) => pa.imageResult);
     let makeAllImageOption= !disableAllImageOption;
     if (makeAllImageOption) makeAllImageOption= imageParts.length>1 || (imageParts.length===1 && parts.length===1);

@@ -1,10 +1,11 @@
-import {isEmpty, isNumber} from 'lodash';
+import {isEmpty, isNumber, isUndefined} from 'lodash';
 import {getComponentState} from '../../core/ComponentCntlr.js';
 import {getCellValue} from '../../tables/TableUtil.js';
 import {CONTEXT_PARAMS_STR, makeCircleString} from '../../ui/dynamic/DynamicUISearchPanel';
 import {isSIAStandardID} from '../../ui/dynamic/ServiceDefTools';
 import {findCutoutTarget, getCutoutErrorStr, getCutoutSize, setCutoutSize} from '../../ui/tap/Cutout';
 import {PlotAttribute} from '../../visualize/PlotAttribute';
+import {isCatalog, isObsCoreLike} from '../../voAnalyzer/TableAnalysis';
 import {CUTOUT_UCDs, DEC_UCDs, RA_UCDs} from '../../voAnalyzer/VoConst';
 
 import {findWorldPtInServiceDef, isDataLinkServiceDesc} from '../../voAnalyzer/VoDataLinkServDef.js';
@@ -23,6 +24,7 @@ export const SD_DEFAULT_PIXEL_CUTOUT_SIZE= 200;
  *
  * @param {Object} p
  * @param p.name
+ * @param p.dropDownText
  * @param p.serDef
  * @param p.sourceTable
  * @param p.sourceRow
@@ -36,9 +38,9 @@ export const SD_DEFAULT_PIXEL_CUTOUT_SIZE= 200;
  * @param p.menuKey
  * @return {DataProductsDisplayType}
  */
-export function makeServiceDefDataProduct({
-                                              name, serDef, sourceTable, sourceRow, idx, positionWP, activateParams,
-                                              options, titleStr, activeMenuLookupKey, menuKey, dlData={}}) {
+export function makeServiceDefDataProduct({ dropDownText, name, serDef, sourceTable, sourceRow, idx, positionWP,
+                                              activateParams, options, titleStr, activeMenuLookupKey, menuKey, dlData={}}) {
+
     const {title: servDescTitle = '', accessURL, standardID, serDefParams, ID} = serDef;
     const {activateServiceDef=false}= options;
 
@@ -57,17 +59,20 @@ export function makeServiceDefDataProduct({
         const url= makeUrlFromParams(accessURL, serDef, idx, getComponentInputs(serDef,options));
         const request = makeObsCoreRequest(url, positionWP, titleStr, sourceTable, sourceRow);
         const activate = makeAnalysisActivateFunc({table:sourceTable, row:sourceRow, request, activateParams,
-            menuKey, dataTypeHint:prodTypeHint, serDef, dlData, options});
+            menuKey, dataTypeHint:prodTypeHint, serDef, dlData, originalTitle:name, options});
+        const tName= (titleStr || name);
         return dpdtAnalyze({
-            name:'Show: ' + (titleStr || name), activate, url:request.getURL(), serDef, menuKey, dlData,
+            name:tName, dropDownText: dropDownText ?? 'Show: '+tName,
+            activate, url:request.getURL(), serDef, menuKey, dlData,
             activeMenuLookupKey, request, sRegion, prodTypeHint, semantics, size, serviceDefRef});
     } else {
         const request = makeObsCoreRequest(accessURL, positionWP, titleStr, sourceTable, sourceRow);
         const activate = makeAnalysisActivateFunc({table:sourceTable, row:sourceRow, request, activateParams, menuKey,
             dlData, dataTypeHint:prodTypeHint ?? 'unknown', serDef, originalTitle:name,options});
-        const entryName = `Show: ${titleStr || servDescTitle || `Service #${idx}: ${name}`} ${allowsInput ? ' (Input Required)' : ''}`;
+        const tName = `${titleStr || servDescTitle || `Service #${idx}: ${name}`} ${allowsInput ? ' (Input Required)' : ''}`;
         return dpdtAnalyze({
-            name:entryName, activate, url:request.getURL(), serDef, menuKey,
+            name:tName, dropDownText: dropDownText ?? 'Show: '+tName,
+            activate, url:request.getURL(), serDef, menuKey,
             activeMenuLookupKey, request, allowsInput, serviceDefRef, standardID, ID,
             semantics, size, sRegion, dlData,
             prodTypeHint: prodTypeHint ?? 'unknown'
@@ -240,15 +245,27 @@ function getComponentInputs(serDef, options, moreParams={}) {
  * @return {Array.<DataProductsDisplayType>}
  */
 export function createServDescMenuRet({ descriptors, positionWP, table, row,
-                                          activateParams, activeMenuLookupKey, options }) {
+                                        activateParams, activeMenuLookupKey, options,
+                                      }) {
+
+    let options0= options;
+    if (isUndefined(options.activateServiceDef) && !isObsCoreLike(table) && isCatalog(table)) {
+        // common case: a catalog table, activateServiceDef not specifically set
+        // go ahead and call the first service descriptor, it is probably a time series or a spectrum
+        options0={...options,activateServiceDef:true};
+    }
+
     return descriptors
         .filter((sDesc) => !isDataLinkServiceDesc(sDesc))
         .map((serDef, idx) => {
             return makeServiceDefDataProduct({
-                name: 'Show: ' + serDef.title,
+                name: serDef.title,
+                dropDownText: 'Show: ' + serDef.title,
                 serDef, positionWP,
                 sourceTable: table, sourceRow: row, idx: row,
-                activateParams, options, activeMenuLookupKey,
+                activateParams,
+                options: idx===0 ? options0 : options,
+                activeMenuLookupKey,
                 titleStr: serDef.title, menuKey: 'serdesc-dlt-' + idx
             });
         });
@@ -266,9 +283,10 @@ export function makeUrlFromParams(url, serDef, rowIdx, userInputParams = {}) {
     Object.entries(userInputParams)
         .forEach(([k, v]) => v && k!==CONTEXT_PARAMS_STR && sendParams.set(k,v));
 
+    const inputURL= new URL(url);
     const additionalParams= new URLSearchParams(userInputParams?.[CONTEXT_PARAMS_STR]);
-    const params= new URLSearchParams([...sendParams, ...additionalParams]);
-    const newUrl= params.size ? url+'?'+params.toString() : url;
+    const params= new URLSearchParams([...inputURL.searchParams, ...sendParams, ...additionalParams]);
+    const newUrl= params.size ? inputURL.toString().split('?')[0]+'?'+params.toString() : url;
     logServiceDescriptor(newUrl, params, newUrl);
     return newUrl;
 }

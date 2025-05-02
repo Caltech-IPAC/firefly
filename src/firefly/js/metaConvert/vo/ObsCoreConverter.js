@@ -194,7 +194,7 @@ async function getObsCoreSingleDataProduct({table, row, activateParams, serviceD
         const positionWP= getSearchTarget(table.request,table) ?? makeWorldPtUsingCenterColumns(table,row);
         const request= makeObsCoreRequest(dataSource, positionWP, titleStr,table,row);
         const primDPType= doFileAnalysis ?
-            await uploadAndAnalyze({request,table,row,activateParams,serviceDescMenuList}) :
+            await uploadAndAnalyze({request,table,row,activateParams,serviceDescMenuList,originalTitle:request.getTitle()}) :
             createGuessDataType(titleStr,'guess-0',dataSource,prodType,undefined,activateParams, positionWP,table,row,size);
         return makeSingleDataProductWithMenu(activateParams.dpId, primDPType,size, serviceDescMenuList);
     }

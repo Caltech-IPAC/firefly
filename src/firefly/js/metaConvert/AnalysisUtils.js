@@ -37,12 +37,13 @@ export function makeAnalysisGetSingleDataProduct(makeReq) {
 }
 
 
-export async function uploadAndAnalyze({request, table, row, activateParams, dataTypeHint = '', options, serviceDescMenuList}) {
+export async function uploadAndAnalyze({request, table, row, activateParams, dataTypeHint = '', options, serviceDescMenuList, originalTitle}) {
     const ct= getObsCoreAccessFormat(table,row);
     const obsTitle= getObsTitle(table,row);
     if (!hasRowAccess(table, row)) dpdtSimpleMsg('You do not have access to this data.');
     if (isNonServerAnalysisType(request?.getURL(), ct)) return doFileNameAndTypeAnalysis({url:request?.getURL(),ct, obsTitle});
-    const analysisPromise = doUploadAndAnalysis({table, row, request, activateParams, dataTypeHint, options, serviceDescMenuList});
+    const analysisPromise = doUploadAndAnalysis({table, row, request, activateParams, dataTypeHint,
+        options, originalTitle, serviceDescMenuList});
     return dpdtWorkingPromise(LOADING_MSG, analysisPromise, request);
 }
 

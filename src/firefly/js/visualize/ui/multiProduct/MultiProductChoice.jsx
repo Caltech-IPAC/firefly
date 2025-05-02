@@ -7,6 +7,7 @@ import {getMetaEntry, getTableGroup, getTblById, onTableLoaded} from '../../../t
 import {TablesContainer} from '../../../tables/ui/TablesContainer.jsx';
 import {RadioGroupInputFieldView} from '../../../ui/RadioGroupInputFieldView.jsx';
 import {useStoreConnector} from '../../../ui/SimpleComponent';
+import {ToolbarHorizontalSeparator} from '../../../ui/ToolbarButton';
 import {dispatchChangePrimePlot, visRoot} from '../../ImagePlotCntlr';
 import {NewPlotMode} from '../../MultiViewCntlr.js';
 import { convertHDUIdxToImageIdx, getActivePlotView, getHDUIndex, hasImageCubes} from '../../PlotViewUtil';
@@ -66,7 +67,7 @@ export function MultiProductChoice({ dataProductsState, dpId,
 
 
     const toolbar = (
-        <Stack {...{direction:'row', alignItems:'center', height:30}}>
+        <Stack {...{direction:'row', alignItems:'center', height:30, divider:<ToolbarHorizontalSeparator/>}}>
             {makeDropDown && <Box sx={{height: 30}}> {makeDropDown()} </Box>}
             {mayToggle && <RadioGroupInputFieldView {...{options, value: whatToShow, buttonGroup: true, onChange}} />}
         </Stack>);
