@@ -49,18 +49,19 @@ const LOAD_UWS=7;
 
 const imageWarning = 'Only loading the table(s), ignoring any selected image(s).';
 const tableWarning = 'Only loading the image(s), ignoring any selected table(s).';
+export const fileAnalysisErr = {valid: false, errorMsg: 'Could not analyze the file.', title: 'File Analysis Error'};
 
 
 export function resultSuccess(request) {
 
-    const {report, detailsModel, summaryModel, groupKey, acceptList, uniqueTypes,
-        acceptOneItem}= request.additionalParams ?? {};
+    const {message, report, detailsModel, summaryModel, groupKey, acceptList,
+        uniqueTypes, acceptOneItem} = request.additionalParams ?? {};
     const summaryTblId = groupKey; //FileUploadAnalysis
     const fileCacheKey = getFileCacheKey(groupKey);
 
     //determine if the file type or selections are valid to be loaded
     const {valid, errorMsg, title} = determineValidity(acceptList, uniqueTypes, summaryModel,
-        summaryTblId, report, acceptOneItem);
+        summaryTblId, report, acceptOneItem, message);
 
     if (!valid) {
         showInfoPopup(errorMsg, title);
@@ -229,8 +230,8 @@ const errorObj = {
     tblNotAcceptedErr: {valid: false, errorMsg: 'You may not load tables from here.', title: 'File Type Mismatch'},
 };
 
-function determineValidity(acceptList, uniqueTypes, summaryModel, summaryTblId,
-                           report, acceptOneItem) {
+export function determineValidity(acceptList, uniqueTypes, summaryModel, summaryTblId,
+                           report, acceptOneItem, message) {
     let {errorMsg, title} = '';
     let valid = true;
 
@@ -247,6 +248,10 @@ function determineValidity(acceptList, uniqueTypes, summaryModel, summaryTblId,
     const isMocFits =  isMOCFitsFromUploadAnalsysis(report);
     const isDL=  isAnalysisTableDatalink(report);
 
+    if (!report) {// report is the basis for all the checks below, handle it early on if undefined
+        errorMsg = message || fileAnalysisErr.errorMsg;
+        return {...fileAnalysisErr, errorMsg};
+    }
 
     if (uniqueTypes.includes(REGIONS) && !acceptRegions(acceptList)) {
         return errorObj.regionMismatchErr;
