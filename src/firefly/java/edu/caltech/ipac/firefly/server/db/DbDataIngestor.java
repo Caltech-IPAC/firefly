@@ -22,6 +22,7 @@ import static edu.caltech.ipac.util.FormatUtil.Format.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.function.Consumer;
 
 /**
  * Date: 10/24/24
@@ -31,15 +32,11 @@ import java.io.IOException;
  */
 public class DbDataIngestor {
 
-    public static FileInfo ingestData(TableServerRequest req, DbAdapter dbAdapter, DataGroup meta, File srcFile) throws DataAccessException {
-        return ingestData(req, dbAdapter, meta, srcFile, 0);
+    public static FileInfo ingestData(TableServerRequest req, DbAdapter dbAdapter, Consumer<DataGroup> extraMetaSetter, File srcFile, int tblIdx) throws DataAccessException {
+        return ingestData(req, dbAdapter, extraMetaSetter, srcFile, tblIdx, null);
     }
 
-    public static FileInfo ingestData(TableServerRequest req, DbAdapter dbAdapter, DataGroup meta, File srcFile, int tblIdx) throws DataAccessException {
-        return ingestData(req, dbAdapter, meta, srcFile, tblIdx, null);
-    }
-
-    public static FileInfo ingestData(TableServerRequest req, DbAdapter dbAdapter, DataGroup meta, File srcFile, int tblIdx, FormatUtil.Format format) throws DataAccessException {
+    public static FileInfo ingestData(TableServerRequest req, DbAdapter dbAdapter, Consumer<DataGroup> extraMetaSetter, File srcFile, int tblIdx, FormatUtil.Format format) throws DataAccessException {
 
         // spectrum hint as well as some other parameters in `req` are coupled with how FITSTableReader read the table.
         // this is why `req` is needed as a parameter here.
@@ -50,9 +47,9 @@ public class DbDataIngestor {
             String source = srcFile.getAbsolutePath();
             format = format == null ? FormatUtil.detect(srcFile) : format;
             return switch (format) {
-                case IPACTABLE -> ingestIpacTable(dbAdapter, srcFile, meta, searchForSpectrum);
-                case VO_TABLE -> ingestVoTable(dbAdapter, source, meta, tblIdx, searchForSpectrum);
-                case CSV, TSV, PARQUET -> ingestDuckReadable(format, dbAdapter, source, meta, searchForSpectrum);
+                case IPACTABLE -> ingestIpacTable(dbAdapter, srcFile, extraMetaSetter, searchForSpectrum);
+                case VO_TABLE -> ingestVoTable(dbAdapter, source, extraMetaSetter, tblIdx, searchForSpectrum);
+                case CSV, TSV, PARQUET -> ingestDuckReadable(format, dbAdapter, source, extraMetaSetter, searchForSpectrum);
                 case FITS -> ingestFitsTable(req, dbAdapter, source, tblIdx);
                 case JSON -> ingestJsonTable(req, dbAdapter, srcFile, searchForSpectrum);
                 default -> throw new DataAccessException("Unsupported format (%s), file: %s".formatted(format, source));
@@ -73,9 +70,9 @@ public class DbDataIngestor {
     //  Supporting functions
     //====================================================================
 
-    static FileInfo ingestDuckReadable(FormatUtil.Format format, DbAdapter dbAdapter, String source, DataGroup meta, boolean searchForSpectrum)  throws IOException, DataAccessException {
+    static FileInfo ingestDuckReadable(FormatUtil.Format format, DbAdapter dbAdapter, String source, Consumer<DataGroup> extraMetaSetter, boolean searchForSpectrum)  throws IOException, DataAccessException {
         if (dbAdapter instanceof DuckDbAdapter) {
-            return DuckDbReadable.castInto(format, dbAdapter).ingestDataDirectly(source, meta);
+            return DuckDbReadable.castInto(format, dbAdapter).ingestDataDirectly(source, extraMetaSetter);
         } else if (format == PARQUET) {
             throw new DataAccessException("Unsupported format (%s), file: %s".formatted(format, source));
         } else {
@@ -84,9 +81,9 @@ public class DbDataIngestor {
         }
     }
 
-    static FileInfo ingestVoTable(DbAdapter dbAdapter, String source, DataGroup meta, int tblIdx, boolean searchForSpectrum) throws IOException, DataAccessException {
+    static FileInfo ingestVoTable(DbAdapter dbAdapter, String source, Consumer<DataGroup> extraMetaSetter, int tblIdx, boolean searchForSpectrum) throws IOException, DataAccessException {
         if (dbAdapter instanceof DuckDbAdapter) {
-            VoTableReader.parse(new TableParseHandler.DbIngest(dbAdapter, meta, searchForSpectrum), source, tblIdx);
+            VoTableReader.parse(new TableParseHandler.DbIngest(dbAdapter, extraMetaSetter, searchForSpectrum), source, tblIdx);
             return new FileInfo(dbAdapter.getDbFile());
         } else {
             DataGroup table = VoTableReader.voToDataGroups(source, tblIdx)[0];
@@ -94,9 +91,9 @@ public class DbDataIngestor {
         }
     }
 
-    static FileInfo ingestIpacTable(DbAdapter dbAdapter, File source, DataGroup meta, boolean searchForSpectrum) throws IOException, DataAccessException {
+    static FileInfo ingestIpacTable(DbAdapter dbAdapter, File source, Consumer<DataGroup> extraMetaSetter, boolean searchForSpectrum) throws IOException, DataAccessException {
         if (dbAdapter instanceof DuckDbAdapter) {
-            IpacTableReader.parseTable(new TableParseHandler.DbIngest(dbAdapter, meta, searchForSpectrum), source);   // only the first table.
+            IpacTableReader.parseTable(new TableParseHandler.DbIngest(dbAdapter, extraMetaSetter, searchForSpectrum), source);   // only the first table.
             return new FileInfo(dbAdapter.getDbFile());
         } else {
             DataGroup table = IpacTableReader.read(source);

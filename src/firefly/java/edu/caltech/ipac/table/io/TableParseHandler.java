@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static edu.caltech.ipac.firefly.server.db.DuckDbAdapter.addRow;
 import static edu.caltech.ipac.firefly.server.db.EmbeddedDbUtil.colIdxWithArrayData;
@@ -41,12 +42,12 @@ public interface TableParseHandler {
 
     abstract class Base implements TableParseHandler {
         protected List<ResourceInfo> resourceInfo;
-        DataGroup meta;     // additional meta to include with along with the data
+        Consumer<DataGroup> extraMetaSetter;     // additional meta to include with along with the data
         protected boolean headerOnly;
         protected boolean searchForSpectrum;
 
-        public Base(DataGroup meta, boolean headerOnly, boolean searchForSpectrum) {
-            this.meta = meta;
+        public Base(Consumer<DataGroup> extraMetaSetter, boolean headerOnly, boolean searchForSpectrum) {
+            this.extraMetaSetter = extraMetaSetter;
             this.headerOnly = headerOnly;
             this.searchForSpectrum = searchForSpectrum;
         }
@@ -56,7 +57,7 @@ public interface TableParseHandler {
         }
 
         public void header(DataGroup header) throws IOException {
-            header.addMetaFrom(meta);
+            if (extraMetaSetter != null)    extraMetaSetter.accept(header);
             header.setResourceInfos(resourceInfo);
             if (searchForSpectrum) SpectrumMetaInspector.searchForSpectrum(header,true);
         }
@@ -105,8 +106,8 @@ public interface TableParseHandler {
         DuckDBConnection conn;
         List<Integer> aryIdx;
 
-        public DbIngest(DbAdapter dbAdapter, DataGroup meta, boolean searchForSpectrum) {
-            super(meta, false, searchForSpectrum);
+        public DbIngest(DbAdapter dbAdapter, Consumer<DataGroup> extraMetaSetter, boolean searchForSpectrum) {
+            super(extraMetaSetter, false, searchForSpectrum);
             this.dbAdapter = dbAdapter;
         }
 

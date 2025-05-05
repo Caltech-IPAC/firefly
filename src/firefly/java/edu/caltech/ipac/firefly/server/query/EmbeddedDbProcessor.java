@@ -242,20 +242,16 @@ abstract public class EmbeddedDbProcessor implements SearchProcessor<DataGroupPa
 
             sendJobUpdate(v -> v.getMeta().setProgress(70, dg.size() + " rows of data found"));
 
-            dg.addMetaFrom(collectMeta(req));
-            prepareTableMeta(dg.getTableMeta(), Arrays.asList(dg.getDataDefinitions()), req);
-            TableUtil.consumeColumnMeta(dg, null);      // META-INFO in the request should only be pass-along and not persist.
-
+            makeExtraMetaSetter(req).accept(dg);
             return dg;
         };
     }
 
-    /**
-     * @param request   the table request
-     * @return  Additional meta info to add to the DataGroup before it's being ingested into the database
-     */
-    protected DataGroup collectMeta(TableServerRequest request) {
-        return null;
+    protected Consumer<DataGroup> makeExtraMetaSetter(TableServerRequest req) {
+        return dg -> {
+            prepareTableMeta(dg.getTableMeta(), Arrays.asList(dg.getDataDefinitions()), req);
+            TableUtil.consumeColumnMeta(dg, null);      // META-INFO in the request should only be pass-along and not persist.
+        };
     }
 
     public File getDataFile(TableServerRequest request) throws IpacTableException, IOException, DataAccessException {

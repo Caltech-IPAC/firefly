@@ -7,7 +7,6 @@ import edu.caltech.ipac.firefly.data.FileInfo;
 import edu.caltech.ipac.firefly.data.ServerParams;
 import edu.caltech.ipac.firefly.data.ServerRequest;
 import edu.caltech.ipac.firefly.data.TableServerRequest;
-import edu.caltech.ipac.firefly.data.table.MetaConst;
 import edu.caltech.ipac.firefly.server.ServerContext;
 import edu.caltech.ipac.firefly.server.db.DbAdapter;
 import edu.caltech.ipac.firefly.server.db.DbDataIngestor;
@@ -26,8 +25,10 @@ import edu.caltech.ipac.util.FormatUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.function.Consumer;
 
 import static edu.caltech.ipac.firefly.data.TableServerRequest.TBL_INDEX;
+import static edu.caltech.ipac.firefly.data.table.MetaConst.CATALOG_OVERLAY_TYPE;
 import static edu.caltech.ipac.firefly.server.query.tables.IpacTableFromSource.PROC_ID;
 import static edu.caltech.ipac.firefly.server.util.QueryUtil.SEARCH_REQUEST;
 import static edu.caltech.ipac.util.StringUtils.isEmpty;
@@ -71,15 +72,19 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
         }
     }
 
-    protected DataGroup collectMeta(TableServerRequest req) {
-        DataGroup meta = null;
-        if (req.getParam(TBL_TYPE, TYPE_CATALOG).equals(TYPE_CATALOG)) {        // if catalog and overlay is not set, set it to "TRUE"
-            if (isEmpty(req.getMeta(MetaConst.CATALOG_OVERLAY_TYPE))) {
-                meta = new DataGroup();        // used only for meta
-                meta.getTableMeta().setAttribute(MetaConst.CATALOG_OVERLAY_TYPE, "TRUE");
+    @Override
+    protected Consumer<DataGroup> makeExtraMetaSetter(TableServerRequest req) {
+        var sup = super.makeExtraMetaSetter(req);
+        return dg -> {
+            if (sup != null) sup.accept(dg);
+            if (!dg.getTableMeta().contains(CATALOG_OVERLAY_TYPE)) {                    // when CATALOG_OVERLAY_TYPE is not set, apply defaults
+                if (req.getParam(TBL_TYPE, TYPE_CATALOG).equals(TYPE_CATALOG)) {        // if catalog and overlay is not set, set it to "TRUE"
+                    if (isEmpty(req.getMeta(CATALOG_OVERLAY_TYPE))) {
+                        dg.getTableMeta().setAttribute(CATALOG_OVERLAY_TYPE, "TRUE");
+                    }
+                }
             }
-        }
-        return meta;
+        };
     }
 
     @Override
@@ -94,7 +99,6 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
             FormatUtil.Format format = isEmpty(fmt) ? null : FormatUtil.Format.valueOf(fmt);
             File srcFile = null;
             DbAdapter.DataGroupSupplier fetchDataGroup = null;
-            DataGroup meta = collectMeta(req);
 
             if (!isEmpty(processor))  {
                 fetchDataGroup = () -> getByProcessor(processor, req);
@@ -106,7 +110,7 @@ public class IpacTableFromSource extends EmbeddedDbProcessor {
             if (srcFile == null) {
                 return DbDataIngestor.ingestData(req, dbAdapter, makeDgSupplier(req, fetchDataGroup));
             } else {
-                return DbDataIngestor.ingestData(req, dbAdapter, meta, srcFile, tblIdx, format);
+                return DbDataIngestor.ingestData(req, dbAdapter, makeExtraMetaSetter(req), srcFile, tblIdx, format);
             }
         } catch (IOException e) {
             Logger.getLogger().error(e,"Failed to ingest data into the database:" + req.getRequestId());
