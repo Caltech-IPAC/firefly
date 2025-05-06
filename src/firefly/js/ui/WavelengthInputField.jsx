@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import PropTypes from 'prop-types';
-import {Divider, FormHelperText, Stack, Typography} from '@mui/joy';
+import {Divider, FormControl, FormHelperText, FormLabel, Stack, Typography} from '@mui/joy';
 import {isNaN, memoize} from 'lodash';
 import {ListBoxInputFieldView} from 'firefly/ui/ListBoxInputField';
 import {useFieldGroupConnector} from './FieldGroupConnector.jsx';
@@ -80,7 +80,7 @@ export const WavelengthUnitsView = ({ unit, onChange, ...props }) => (
  * value, displayValue, unit to the parent that controls the state.
  */
 function WavelengthInputFieldView({min=MIN_WVL, max=MAX_WVL, sx, slotProps, inputStyle={},
-                                      orientation='vertical', label='Wavelength: ', showFeedback=false,
+                                      orientation='vertical', label, showFeedback=false,
                                       placeholder='Enter wavelength', tooltip='Enter wavelength within the valid range',
                                       onChange, valid, message, unit, value, displayValue}) {
 
@@ -227,7 +227,7 @@ WavelengthInputField.propTypes = {
 
 const MIN_MAX_WVL_RANGE_ERR = 'Max wavelength must not be smaller than Min wavelength';
 
-export function WavelengthRangeInput({minFieldKey, maxFieldKey, slotProps}) {
+export function WavelengthRangeInput({minFieldKey, maxFieldKey, label, slotProps, ...props}) {
     const [getMinVal] = useFieldGroupValue(minFieldKey);
     const [getMaxVal] = useFieldGroupValue(maxFieldKey);
 
@@ -242,27 +242,29 @@ export function WavelengthRangeInput({minFieldKey, maxFieldKey, slotProps}) {
     };
 
     return (
-        <Stack direction='row' spacing={1} alignItems='center'
-               sx={{ '& .MuiInput-root': { 'width': '14rem' } }}
-               {...slotProps?.root}>
-            <WavelengthInputField fieldKey={minFieldKey}
-                                  label=''
-                                  placeholder='Min wavelength'
-                                  description='Min wavelength'
-                                  validator={(value)=>minMaxWvlRangeValidator(value, getMaxVal(), false)}
-                                  {...slotProps?.wvlMin} />
-            <Typography level='body-md'>to</Typography>
-            <WavelengthInputField fieldKey={maxFieldKey}
-                                  label=''
-                                  placeholder='Max wavelength'
-                                  description='Max wavelength'
-                                  validator={(value)=>minMaxWvlRangeValidator(value, getMinVal(), true)}
-                                  {...slotProps?.wvlMax} />
-        </Stack>
+        <FormControl {...props}>
+            {label && <FormLabel>{label}</FormLabel>}
+            <Stack direction='row' spacing={1} alignItems='center'
+                   sx={{ '& .MuiInput-root': { 'width': '14rem' } }}
+                   {...slotProps?.root}>
+                <WavelengthInputField fieldKey={minFieldKey}
+                                      placeholder='Min wavelength'
+                                      description='Min wavelength'
+                                      validator={(value)=>minMaxWvlRangeValidator(value, getMaxVal(), false)}
+                                      {...slotProps?.wvlMin} />
+                <Typography level='body-md'>to</Typography>
+                <WavelengthInputField fieldKey={maxFieldKey}
+                                      placeholder='Max wavelength'
+                                      description='Max wavelength'
+                                      validator={(value)=>minMaxWvlRangeValidator(value, getMinVal(), true)}
+                                      {...slotProps?.wvlMax} />
+            </Stack>
+        </FormControl>
     );
 }
 
 WavelengthRangeInput.propTypes = {
+    label: PropTypes.node,
     minFieldKey: PropTypes.string.isRequired,
     maxFieldKey: PropTypes.string.isRequired,
     slotProps: PropTypes.shape({
