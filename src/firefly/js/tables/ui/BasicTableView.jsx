@@ -26,13 +26,11 @@ import 'fixed-data-table-2/dist/fixed-data-table.css';
 import {updateSet} from 'firefly/util/WebUtil.js';
 import {TableMask} from 'firefly/ui/panel/MaskPanel.jsx';
 import {TableErrorMsg} from 'firefly/tables/ui/TablePanel.jsx';
+import {BY_SCROLL, BY_TABLE} from '../reducer/TableUiReducer';
 
 const logger = Logger('Tables').tag('BasicTable');
 const noDataMsg = 'No Data Found';
 const noDataFromFilter = 'No data match these criteria';
-
-export const BY_SCROLL = 'byScroll';
-
 
 // Override default fixed-data-table-2 css with joy-ui colors and styles
 const tableStyleOverrides = {
@@ -375,7 +373,7 @@ const TextView = ({columns, data, width, height}) => {
 
 function correctScrollTopIfNeeded(maxScrollWidth, scrollTop, width, height, rowHeight, hlRowIdx, triggeredBy) {
     const rowHpos = hlRowIdx * rowHeight;
-    if (triggeredBy !== BY_SCROLL) {
+    if (triggeredBy === BY_TABLE) {     // FIREFLY-1729: don't correct scroll on column resize.
         // delta is a workaround for the horizontal scrollbar hiding part of the last row when visible
         const delta = maxScrollWidth > width ? (.5*rowHeight) : 0;
 

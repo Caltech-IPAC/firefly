@@ -510,8 +510,9 @@ function tableSort(action) {
             const [nreq, tableStub, tableModel] = setupTableOps(tbl_id, request);
             if (!tableStub) return;
 
-            // rollback changes to keep current highlighted row.  instead set highlighted to 0.
+            // rollback changes from IRSA-2421(keep current highlighted row on sort).
             // TblUtil.setHlRowByRowIdx(nreq, tableModel);
+            // set highlighted to 0 on sort. (FIREFLY-360 based on CCB FIREFLY-267)
             nreq.startIdx = 0;
 
             dispatch({type:TABLE_FETCH, payload: tableStub});
